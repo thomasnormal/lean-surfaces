@@ -5,60 +5,63 @@ hypotheses, and — because you will spend your life looking at them — how to
 read a goal state when `py_prove` is *not* doing everything for you, plus
 what the delaborators show you versus what is really there.
 
-## 1. The file
+## 1. The files
+
+`Examples/tut_03/`, three-file layout as before. The program:
 
 ```python
-# Examples/python/tut_03.py
+# Examples/tut_03/tut_03.py
 def relu(x: int) -> int:
     if x < 0:
         return 0
     return x
+```
 
+The statements live in
+[`Examples/tut_03/spec.lean`](../../Examples/tut_03/spec.lean) (each
+`:= by proofs`, plus a `#guard_msgs`/`#check` delaborator regression that
+§5 explains); this tutorial is about the *proofs*, so here is the proof
+module in full:
 
-# lean[
-# /-! Tutorial 03 (docs/tutorial/03-branching-and-preconditions.md):
-# hypotheses as preconditions, branching, and reading goal states. -/
-# #py_check tut_03.relu(5) = 5
-# #py_check tut_03.relu(-5) = 0
-# #py_check tut_03.relu(0) = 0
-#
-# /-- Unconditional total correctness: `py_prove` splits the symbolic
-# branch left by `if x < 0:` and closes both arms with `omega` (which
-# knows `max`). -/
-# theorem relu_total (x : PyInt) : tut_03.relu(x) ==> max x 0 := by
-#   py_prove [tut_03]
-#
-# /-- With a precondition, the spec simplifies: on nonnegative inputs
-# `relu` is the identity. A precondition is an ordinary named hypothesis —
-# but `py_prove` (unlike `py_begin`) does not restate `Py*`-branded
-# hypotheses for `omega`, so the `have` line re-lands `hx` at `Int` first
-# (docs/tutorial/06-when-proofs-fail.md, failure mode 5). -/
-# theorem relu_of_nonneg (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
-#   have hx' : (0 : Int) ≤ x := hx
-#   py_prove [tut_03]
-#
-# /-- The same theorem with the proof spelled out, for reading goal states
-# (docs/tutorial/03-branching-and-preconditions.md walks through each
-# step's goal). -/
-# theorem relu_of_nonneg' (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
-#   have hx' : (0 : Int) ≤ x := hx
-#   refine ⟨32, ?_⟩
-#   py_simp [callFunction, tut_03]
-#   split <;> py_simp
-#   omega
-#
-# /-! Delaborator regression (LeanModels/Python/Delab.lean): statements
-# print back in surface notation. -/
-#
-# /-- info: relu_total (x : PyInt) : tut_03.relu(x) ==> max x 0 -/
-# #guard_msgs in
-# #check relu_total
-# ]
+```lean
+-- Examples/tut_03/proof.lean (header comment elided)
+import LeanModels
+
+namespace Examples.tut_03.proof
+
+open LeanModels LeanModels.Python
+
+load_program tut_03 from "Examples/tut_03/tut_03.json"
+
+/-- Unconditional total correctness: `py_prove` splits the symbolic
+branch left by `if x < 0:` and closes both arms with `omega` (which
+knows `max`). -/
+theorem relu_total (x : PyInt) : tut_03.relu(x) ==> max x 0 := by
+  py_prove [tut_03]
+
+/-- With a precondition: the `have` line re-lands `hx` at `Int` for
+`py_prove`'s `omega` closer (docs/tutorial/06-when-proofs-fail.md,
+failure mode 5). -/
+theorem relu_of_nonneg (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
+  have hx' : (0 : Int) ≤ x := hx
+  py_prove [tut_03]
+
+/-- The same theorem with the proof spelled out, for reading goal states
+(docs/tutorial/03-branching-and-preconditions.md walks through each
+step's goal). -/
+theorem relu_of_nonneg' (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
+  have hx' : (0 : Int) ≤ x := hx
+  refine ⟨32, ?_⟩
+  py_simp [callFunction, tut_03]
+  split <;> py_simp
+  omega
+
+end Examples.tut_03.proof
 ```
 
 ## 2. Branching: the `my_abs` pattern
 
-`relu_total` is the [`my_abs`](../../Examples/python/my_abs.py) pattern from
+`relu_total` is the [`my_abs`](../../Examples/my_abs/my_abs.py) pattern from
 the gallery ([../spec-surface.md](../spec-surface.md) §1): the Python branch
 condition `x < 0` is symbolic — the interpreter cannot decide it for an
 arbitrary `x` — so symbolic execution leaves an `ite` in the goal. `py_prove`
@@ -97,14 +100,14 @@ straight through ascriptions on branded variables. Write the precondition
 the other way around (`hx : x ≤ 0`) and the natural transcriptions
 `(x : Int) ≤ 0`, `x ≤ (0 : Int)` — even `(x : Int) ≤ (0 : Int)` — all
 re-land at `PyInt`; the restatement that works flips the relation to put
-the literal first. Verbatim from the mirror-image companion
-[`val_negpart.py`](../../Examples/python/val_negpart.py):
+the literal first. The mirror-image shape (a `neg_part` returning `-x` on
+nonpositive inputs):
 
 ```lean
--- Examples/python/val_negpart.py (lean block excerpt; builds via Examples/ValNegpart.lean)
-theorem negpart_of_nonpos (x : PyInt) (hx : x ≤ 0) : val_negpart.neg_part(x) ==> -x := by
+-- (illustrative — the flipped-precondition restatement; reproduced against a scratch program)
+theorem negpart_of_nonpos (x : PyInt) (hx : x ≤ 0) : neg_part(x) ==> -x := by
   have hx' : (0 : Int) ≥ x := hx
-  py_prove [val_negpart]
+  py_prove [neg_part]
 ```
 
 The reproduced failures, and the goal-side variant of the same blindness
@@ -114,8 +117,8 @@ that no restatement can fix, are in [tutorial 06, mode
 ## 4. Reading a goal state
 
 `relu_of_nonneg'` proves the same theorem with the automation unrolled.
-Follow along in your editor — the states below are captured verbatim from
-the current tree.
+Follow along in your editor (open `Examples/tut_03/proof.lean`) — the
+states below are captured verbatim from the current tree.
 
 **Step 0 — the goal as stated.** Before any tactic:
 
@@ -232,8 +235,8 @@ first. Details: [tutorial 06, failure mode
 5](06-when-proofs-fail.md#5-omega-ignores-a-pyint-typed-hypothesis).
 
 **The restatement itself is still invisible.** With the precondition
-running the other way (`hx : x ≤ 0`,
-[`val_negpart.py`](../../Examples/python/val_negpart.py)), restating by
+running the other way (`hx : x ≤ 0`, the `neg_part` shape of §3),
+restating by
 ascription — `have hx' : x ≤ (0 : Int) := hx`, or `(x : Int) ≤ 0` —
 changes nothing: `py_prove` fails with the same un-split dump, whose
 context shows the tell (reproduced; elided below the turnstile):

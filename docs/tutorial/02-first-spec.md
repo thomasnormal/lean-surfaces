@@ -4,48 +4,93 @@
 `==>` arrow, the `py_prove` tactic, what `#py_check` buys you, and — most
 important — what the theorem actually *means*.
 
-## 1. The file
+## 1. The files
+
+The example is the directory `Examples/tut_02/` in the three-file layout
+of tutorial 01. The program:
 
 ```python
-# Examples/python/tut_02.py
+# Examples/tut_02/tut_02.py
 def square(x):
     return x * x
-
-
-# lean[
-# /-! Tutorial 02 (docs/tutorial/02-first-spec.md): the `==>` arrow and
-# `py_prove` on straight-line code. -/
-# #py_check tut_02.square(5) = 25
-# #py_check tut_02.square(-4) = 16
-# #py_check tut_02.square(0) = 0
-#
-# /-- Total correctness: `square(x)` terminates and returns `x * x`, for
-# every Python int `x`. One tactic; no `Val`, no fuel, no AST in sight. -/
-# theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by
-#   py_prove [tut_02]
-#
-# /-- Whatever `square(x)` returns equals `x * x` — the relational reading,
-# via the hypothesis-position arrow `⇓` and determinism-modulo-fuel
-# (`CallsTo.typed_int_eq`, Surface.lean). -/
-# theorem square_result (x r : PyInt) (h : tut_02.square(x) ⇓ r) : r = x * x :=
-#   CallsTo.typed_int_eq h (square_total x)
-#
-# /-- Squares are nonnegative — once `square_result` pins the result, the
-# rest is ordinary mathematics with ordinary Lean tools; the interpreter
-# never reappears. -/
-# theorem square_nonneg (x r : PyInt) (h : tut_02.square(x) ⇓ r) : 0 ≤ r := by
-#   rw [square_result x r h]
-#   rcases Int.le_total 0 x with hx | hx
-#   · exact Int.mul_nonneg hx hx
-#   · have := Int.mul_nonneg (a := -x) (b := -x) (by omega) (by omega)
-#     rwa [Int.neg_mul_neg] at this
-# ]
 ```
 
-Extract and build as in tutorial 01:
+`spec.lean` is the readable contract — the checks, then every theorem
+*statement*, each closed by the `proofs` tactic:
+
+```lean
+-- Examples/tut_02/spec.lean (header comment elided)
+import Examples.tut_02.proof
+
+open LeanModels LeanModels.Python
+
+load_program tut_02 from "Examples/tut_02/tut_02.json"
+
+/-! Tutorial 02 (docs/tutorial/02-first-spec.md): the `==>` arrow and
+`py_prove` on straight-line code. -/
+#py_check tut_02.square(5) = 25
+#py_check tut_02.square(-4) = 16
+#py_check tut_02.square(0) = 0
+
+/-- Total correctness: `square(x)` terminates and returns `x * x`, for
+every Python int `x`. One tactic; no `Val`, no fuel, no AST in sight
+(`Examples/tut_02/proof.lean`). -/
+theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by proofs
+
+/-- Whatever `square(x)` returns equals `x * x` — the relational reading,
+via the hypothesis-position arrow `⇓` and determinism-modulo-fuel
+(`CallsTo.typed_int_eq`, Surface.lean). -/
+theorem square_result (x r : PyInt) (h : tut_02.square(x) ⇓ r) : r = x * x := by proofs
+
+/-- Squares are nonnegative — once `square_result` pins the result, the
+rest is ordinary mathematics with ordinary Lean tools; the interpreter
+never reappears. -/
+theorem square_nonneg (x r : PyInt) (h : tut_02.square(x) ⇓ r) : 0 ≤ r := by proofs
+```
+
+The real proofs live in `proof.lean`, one theorem per spec-side statement,
+same names, wrapped in the namespace matching the module path:
+
+```lean
+-- Examples/tut_02/proof.lean (header comment and docstrings elided)
+import LeanModels
+
+namespace Examples.tut_02.proof
+
+open LeanModels LeanModels.Python
+
+load_program tut_02 from "Examples/tut_02/tut_02.json"
+
+theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by
+  py_prove [tut_02]
+
+theorem square_result (x r : PyInt) (h : tut_02.square(x) ⇓ r) : r = x * x :=
+  CallsTo.typed_int_eq h (square_total x)
+
+theorem square_nonneg (x r : PyInt) (h : tut_02.square(x) ⇓ r) : 0 ≤ r := by
+  rw [square_result x r h]
+  rcases Int.le_total 0 x with hx | hx
+  · exact Int.mul_nonneg hx hx
+  · have := Int.mul_nonneg (a := -x) (b := -x) (by omega) (by omega)
+    rwa [Int.neg_mul_neg] at this
+
+end Examples.tut_02.proof
+```
+
+Two conventions to absorb once, because every example uses them. The
+statements are **duplicated** between the two files — Lean has no forward
+declarations — and the duplication is *typechecked*: the spec-side
+`:= by proofs` resolves the same-name twin in `Examples.tut_02.proof` and
+fails loudly if the twin is missing or its statement drifted. And the split
+is uniform: `spec.lean` states, `proof.lean` proves — a reader (human or
+AI) gets the whole contract from `spec.lean` without wading through
+tactics.
+
+Extract once (envelope only), then build; proof iteration afterwards is
+pure Lean — edit, rebuild:
 
 ```console
-$ python3 extractors/python/extract.py Examples/python/tut_02.py
+$ python3 extractors/python/extract.py Examples/tut_02/tut_02.py
 $ lake build
 ```
 
@@ -121,8 +166,8 @@ theorem. They are not.
   the run returns `.ok r`, then `r = …`" — universally quantified over fuel,
   and **vacuously true** if the interpreter never returns `.ok` at all. The
   concrete checks demonstrate the "if" side is inhabited. That is the house
-  convention: every example file's first block is `#py_check` lines
-  ([README](../../README.md), "`#guard` non-vacuity convention").
+  convention: every spec file opens with `#py_check` lines
+  ([README](../../README.md), "`#py_check` non-vacuity convention").
 
 ## 5. The relational form: `⇓`
 

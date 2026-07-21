@@ -4,7 +4,7 @@ import LeanModels.Sv.Tests
 /-!
 # `toggle` — a T-flip-flop against its golden model (`LeanModels.Sv`)
 
-New-design walkthrough for `Examples/sv/toggle.sv`:
+New-design walkthrough for `Examples/toggle/toggle.sv`:
 
 ```systemverilog
 module toggle (input logic clk, rst, en, output logic q);
@@ -14,11 +14,12 @@ module toggle (input logic clk, rst, en, output logic q);
 endmodule
 ```
 
-following the recipe of `LeanModels/Sv/Proofs.lean` ("a new design needs one
-cycle lemma, one trace function, and pure mathematics"):
+following the recipe of the per-design proof modules
+(`Examples/<design>/proof.lean` — "a new design needs one cycle lemma, one
+trace function, and pure mathematics"):
 
 * `toggleDesign` — hand-built literal, certified node-for-node equal to the
-  extracted envelope `Examples/sv/toggle.sv.json` by the `#eval` below;
+  extracted envelope `Examples/toggle/toggle.sv.json` by the `#eval` below;
 * `#sv_check` — concrete runs (reset, toggle, hold, and the pre-reset x);
 * `toggle_cycleStep` → `toggle_run` → `toggle_total` — the ∀σ canonical
   trace, by the threshold-fuel + `choose_singleton` script;
@@ -42,7 +43,7 @@ namespace LeanModels.Sv
 
 /-! ## The design (extractor-certified literal) -/
 
-/-- `Examples/sv/toggle.sv`, hand-transcribed; the `#eval` below certifies
+/-- `Examples/toggle/toggle.sv`, hand-transcribed; the `#eval` below certifies
 node-for-node equality with the extracted envelope (same discipline as
 `Tests.lean`'s `checkIngest`). -/
 def toggleDesign : Design :=
@@ -60,9 +61,9 @@ def toggleDesign : Design :=
           none)))] }
 
 #eval show IO Unit from do
-  let d ← EnvelopeIngest.loadFile "Examples/sv/toggle.sv.json"
+  let d ← EnvelopeIngest.loadFile "Examples/toggle/toggle.sv.json"
   unless d == toggleDesign do
-    throw (IO.userError "Examples/sv/toggle.sv.json ≠ toggleDesign")
+    throw (IO.userError "Examples/toggle/toggle.sv.json ≠ toggleDesign")
   unless !d.hasUnsupported do
     throw (IO.userError "toggle envelope has unsupported nodes")
 
@@ -100,8 +101,8 @@ theorem initState_toggle :
        ("en", LVec.xVec 1), ("q", LVec.xVec 1)] := rfl
 
 /-- Sub-step 1 on the toggle state shape, in `appIn` form (exact for every
-stimulus, partial entries included — `Proofs.lean`'s `applyInputs_counter`
-pattern). -/
+stimulus, partial entries included — `Examples/counter/proof.lean`'s
+`applyInputs_counter` pattern). -/
 theorem applyInputs_toggle (inputs : SvState) (c r e v : LVec) :
     applyInputs toggleDesign inputs [("clk", c), ("rst", r), ("en", e), ("q", v)] =
       [("clk", appIn inputs "clk" c), ("rst", appIn inputs "rst" r),
@@ -139,7 +140,8 @@ def toggleTrace (c r e v : LVec) : List SvState → List SvState
     sampled [("clk", c), ("rst", r), ("en", e), ("q", v)] "en" = e.condTrue := by
   simp [sampled, SvState.lookup]
 
-/-! ## The ∀σ canonical run (threshold-fuel script from `Proofs.lean`) -/
+/-! ## The ∀σ canonical run (the per-design proof modules' threshold-fuel
+script) -/
 
 /-- One symbolic `toggle` cycle, ∀ σ (threshold form, slack 8): the edge
 phase is a singleton, so σ is irrelevant (`choose_singleton`), and `q`

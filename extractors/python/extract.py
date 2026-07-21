@@ -13,10 +13,12 @@ For each source file ``foo.py`` this writes:
     including per-example directories (``Examples/tri/tri.py`` →
     ``Examples/tri/tri.json``).
   * ``<companion-dir>/<PascalCaseStem>.lean``: the generated companion file
-    described in docs/DESIGN.md (default companion dir: Examples/) — ONLY
-    when the source contains at least one ``# lean[`` block. A pure source
-    (no blocks — the three-file per-example layout, where spec.lean and
-    proof.lean are hand-written) gets an envelope and nothing else.
+    described in docs/DESIGN.md (default companion dir: the source file's
+    own directory, so ``Examples/sum_to/sum_to.py`` →
+    ``Examples/sum_to/SumTo.lean``) — ONLY when the source contains at
+    least one ``# lean[`` block. A pure source (no blocks — the three-file
+    per-example layout, where spec.lean and proof.lean are hand-written)
+    gets an envelope and nothing else.
 
 Guarantees:
   * Never fails on syntactically valid Python — unknown constructs become
@@ -528,6 +530,10 @@ def process_file(source_path, companion_dir):
         # spec/proof .lean files are hand-written siblings, never generated.
         return
 
+    if companion_dir is None:
+        # Default: the companion lives next to its source (per-example
+        # directory layout — Examples/sum_to/sum_to.py → Examples/sum_to/).
+        companion_dir = os.path.dirname(source_path) or "."
     companion_path = os.path.join(companion_dir, pascal_case(stem) + ".lean")
     check_companion_overwritable(companion_path)
     companion_text = generate_companion(stem, source_rel, json_rel, source_sha256, blocks)
@@ -546,8 +552,9 @@ def main(argv=None):
     parser.add_argument("sources", nargs="+", metavar="file.py")
     parser.add_argument(
         "--companion-dir",
-        default="Examples",
-        help="directory for generated companion .lean files (default: Examples/)",
+        default=None,
+        help="directory for generated companion .lean files "
+        "(default: the source file's own directory)",
     )
     args = parser.parse_args(argv)
 

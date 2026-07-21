@@ -29,7 +29,7 @@ would be invisible in the theorem.
 
 Second, translations *bury semantic divergences*; a deep embedding surfaces
 them. The house example is floor division
-([spec-surface.md §2](spec-surface.md), [Examples/python/midpoint.py](../Examples/python/midpoint.py)):
+([spec-surface.md §2](spec-surface.md), [Examples/midpoint/midpoint.py](../Examples/midpoint/midpoint.py)):
 Python's `//` floors, so `7 // -2 == -4`, while Lean's `Int` divisions
 truncate or round differently (`(7 : Int) / -2 = -3`). A translator has to
 pick some Lean division for `//`, and whichever it picks is silently wrong

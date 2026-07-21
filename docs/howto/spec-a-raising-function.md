@@ -19,25 +19,35 @@ divisor, an out-of-range index — not one it constructs.
 Non-vacuity first, in surface syntax (real file, checked by `lake build`):
 
 ```lean
--- Examples/Arith.lean (generated from Examples/python/arith.py; two lines from the check block)
+-- Examples/arith/spec.lean (two lines from the check block)
 #py_check arith.floordiv(7, 0) raises .zeroDivisionError
 #py_check arith.idx(3) raises .indexError
 ```
 
-Then the universally quantified theorem. The error path of `floordiv`
-(`return a // b` with `b = 0`) is loop-free, so `py_prove` closes it:
+Then the universally quantified theorem — stated in `spec.lean`:
 
 ```lean
--- Examples/Arith.lean (generated from Examples/python/arith.py)
+-- Examples/arith/spec.lean (excerpt)
 /-- Exceptions as specified behavior (docs/spec-surface.md example 4, in
 its v0 form: the tier has no `raise` statement, but *runtime* errors are
 real and provable): `floordiv(a, 0)` terminates by raising
 `ZeroDivisionError`, for every `a` — the `==>!` arrow (`Raises`,
-Surface.lean). The error path is loop-free, so `py_prove` closes it. -/
+Surface.lean). The error path is loop-free, so `py_prove` closes it
+(`Examples/arith/proof.lean`). -/
+theorem floordiv_zero (a : PyInt) : arith.floordiv(a, 0) ==>! .zeroDivisionError := by proofs
+
+/-- Same shape for `%`: `mod(a, 0)` raises for every `a`. -/
+theorem mod_zero (a : PyInt) : arith.mod(a, 0) ==>! .zeroDivisionError := by proofs
+```
+
+The error path of `floordiv` (`return a // b` with `b = 0`) is loop-free,
+so `py_prove` closes it in the proof module:
+
+```lean
+-- Examples/arith/proof.lean (excerpt; docstrings elided)
 theorem floordiv_zero (a : PyInt) : arith.floordiv(a, 0) ==>! .zeroDivisionError := by
   py_prove [arith]
 
-/-- Same shape for `%`: `mod(a, 0)` raises for every `a`. -/
 theorem mod_zero (a : PyInt) : arith.mod(a, 0) ==>! .zeroDivisionError := by
   py_prove [arith]
 ```
@@ -82,7 +92,7 @@ on a raising spec therefore usually means "wrong claim", not "hard proof".
 Check what really happens first:
 
 ```
-lake exe leanmodels-run Examples/python/arith.json mod 7 0
+lake exe leanmodels-run Examples/arith/arith.json mod 7 0
 {"status":"exn","exn":"ZeroDivisionError"}
 ```
 

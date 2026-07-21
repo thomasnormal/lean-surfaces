@@ -19,7 +19,7 @@ It runs `lake build` once up front, then prints a table
 (`case | cpython | lean | verdict`) and a summary line like:
 
 ```
-103 cases: 0 failed, 2 whitelisted-unsupported, 101 matched
+130 cases: 0 failed, 3 whitelisted-unsupported, 127 matched
 ```
 
 Exit status is non-zero on any non-whitelisted mismatch. Flags: `--no-build`
@@ -35,7 +35,7 @@ stdout, exit 0 for every *semantic* result (`exn`/`timeout`/`unsupported`
 are results, not failures):
 
 ```
-lake exe leanmodels-run Examples/python/tri.json tri 10
+lake exe leanmodels-run Examples/tri/tri.json tri 10
 {"status":"ok","value":{"t":"int","v":"55"}}
 ```
 
@@ -47,7 +47,7 @@ list of argument tuples. Real rows:
 ```json
 [
   {"file": "Examples/gcd/gcd.py", "function": "gcd", "args": [[12, 18], [18, 12], [5, 0], [0, 5], [7, 13], [0, 0], [270, 192], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
-  {"file": "Examples/python/arith.py", "function": "powi", "args": [[2, -1]], "expect": "unsupported"}
+  {"file": "Examples/arith/arith.py", "function": "powi", "args": [[2, -1]], "expect": "unsupported"}
 ]
 ```
 
@@ -58,10 +58,8 @@ list of argument tuples. Real rows:
 - `args` — a list of argument lists (integers only; the runner parses args
   as arbitrary-precision ints). Functions taking non-int arguments (lists,
   strings) therefore have no expressible rows in v0: cover their concrete
-  behavior with `#py_check` lines in the source file — the surface command
+  behavior with `#py_check` lines in the spec file — the surface command
   takes full terms — and record the gap in the file's non-vacuity block.
-  [`Examples/python/ag_head.py`](../../Examples/python/ag_head.py) is the
-  pattern.
 - `expect` — `"match"` (default): CPython and Lean canonical outcomes must
   be equal, exceptions included (compared by canonical class name —
   [reference, error classes](../reference.md#error-classes)).

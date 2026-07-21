@@ -36,22 +36,23 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full normative contract.
 
 ## v0: the Python vertical slice
 
-The workflow:
+The workflow — the **three-file example layout** (`Examples/<name>/`):
 
-1. Write a Python file with theorems in `# lean[ ... # ]` comment blocks.
+1. Put a pure Python file in its own example directory: `Examples/tri/tri.py`.
+   No annotations; nothing in it knows Lean exists.
 2. Run the extractor:
-   `python3 extractors/python/extract.py Examples/python/sum_to.py`
-   This emits `Examples/python/sum_to.json` (the AST envelope) and the
-   companion file `Examples/SumTo.lean` with your blocks spliced in verbatim.
-3. `lake build` — Lean ingests the JSON at elaboration time, defines
-   `sum_to : Module` as a literal AST term, and checks your proofs.
+   `python3 extractors/python/extract.py Examples/tri/tri.py`
+   This emits `Examples/tri/tri.json` — the AST envelope, next to the
+   source — and nothing else.
+3. Write two Lean files beside it. `spec.lean` is the readable contract:
+   the program load, the `#py_check` non-vacuity runs, and every theorem
+   *statement*, each proved `:= by proofs`. `proof.lean` holds the real
+   proofs. `lake build` ingests the JSON at elaboration time, defines
+   `tri : Module` as a literal AST term, and checks everything.
 
-Two worked examples (`Examples/tri/`, `Examples/gcd/`) use the **three-file
-layout** instead: a pure `.py` (no lean-blocks; the extractor emits the
-envelope and no companion), a hand-written `spec.lean` holding the
-non-vacuity checks and every theorem *statement* (each proved `:= by
-proofs`), and a `proof.lean` holding the real proofs (see the `proofs`
-tactic in `LeanModels/Python/Surface.lean`).
+Proof work iterates in **pure Lean**: edit `spec.lean`/`proof.lean`,
+rebuild. The extractor re-enters the loop only when the `.py` itself
+changes (then re-run step 2 to refresh the envelope).
 
 ### Example: `Examples/tri/`
 
@@ -66,29 +67,41 @@ def tri(n):
 ```
 
 ```lean
--- Examples/tri/proof.lean (the loop proof; statement + checks in Examples/tri/spec.lean)
-theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
-    grind
-  all_goals grind
+-- Examples/tri/spec.lean (excerpt)
+load_program tri from "Examples/tri/tri.json"
+
+#py_check tri(10) = 55
+#py_check tri(0) = 0
+...
+theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by proofs
 ```
 
-The theorem says: for every `n ≥ 0`, running the *actual Python program* through
-the verified interpreter terminates and returns `n(n+1)/2`. The user supplies
-the loop invariant, the decreasing measure, and the closing arithmetic
-([`omega`](https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html)/[`grind`](https://lean-lang.org/doc/reference/latest/The--grind--tactic/)) — the same content a pure-Lean proof of the same fact would
-need (see `Examples/tri/spec.lean` for the statements, the `#py_check`
-non-vacuity checks, and the derived `@[spec]` corollary forms).
+The theorem says: for every `n ≥ 0`, running the *actual Python program*
+through the verified interpreter terminates and returns `n(n+1)/2`. The
+real proof lives in `Examples/tri/proof.lean` — the statement restated
+under the same name (Lean has no forward declarations; the spec-side
+`:= by proofs` resolves the twin and typechecks the duplication), plus the
+only content no tactic can invent: the loop invariant, the decreasing
+measure, and the closing arithmetic (`py_begin`/`py_loop`, then
+[`omega`](https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html)/[`grind`](https://lean-lang.org/doc/reference/latest/The--grind--tactic/))
+— the same content a pure-Lean proof of the same fact would need.
+`spec.lean` also carries the derived `@[spec]` corollary forms; the
+`proofs` tactic is defined in `LeanModels/Python/Surface.lean`.
 
-The theorem is **partial correctness**: *if* the fuel-bounded interpreter
-returns a value, that value is `n(n+1)/2`. That shape can be vacuously true if
-the interpreter never returns `.ok` (bug, wrong tier, whatever). Hence the
-**`#guard` non-vacuity convention**: every example's first block runs the
-function on concrete inputs and checks the result at elaboration time, so the
-"if" side is demonstrably inhabited before any theorem is trusted.
+The `@[spec]` corollaries are **partial correctness**: *if* the
+fuel-bounded interpreter returns a value, that value is `n(n+1)/2`. That
+shape can be vacuously true if the interpreter never returns `.ok` (bug,
+wrong tier, whatever). Hence the **`#py_check` non-vacuity convention**:
+every spec file opens by running the function on concrete inputs and
+checking the results at elaboration time, so the "if" side is demonstrably
+inhabited before any theorem is trusted.
+
+**Inline mode — also available.** Theorems can instead live in
+`# lean[ … # ]` comment blocks inside the `.py` itself; the extractor then
+also generates a companion `.lean` file with the blocks spliced in
+verbatim. Exactly one example stays in this mode as its end-to-end
+showcase — `Examples/sum_to/` (source `sum_to.py`, generated companion
+`SumTo.lean`; it is also the spec-surface acceptance-test artifact).
 
 The runner and differential harness close the loop:
 
@@ -107,6 +120,55 @@ lake build && python3 tools/docs_check.py && python3 harness/diff_test.py
 block in `docs/`, this README, and `AGENTS.md` must match the referenced file
 verbatim (marker convention in the script's header).
 
+## SystemVerilog: the same pipeline, where the interpreter is the simulator
+
+The SV lane (`LeanModels/Sv/**`) is a 4-state (`0/1/X/Z`) cycle-level
+scheduler semantics with the LRM's same-region ordering freedom modeled as an
+**explicit schedule oracle** `σ` — so theorems quantify over *every legal
+schedule*, a property no simulator run can check. Same per-example layout:
+
+```verilog
+// Examples/race_blk/race_blk.sv
+module race_blk (input logic clk);          // blocking assigns: a race
+  logic [7:0] a = 8'd1, b = 8'd2;
+  always @(posedge clk) a = b;
+  always @(posedge clk) b = a;
+endmodule
+```
+
+Concrete runs in `#sv_check` surface syntax — including the same design under
+*two different legal schedules*, with different outcomes:
+
+```lean
+-- Examples/race_blk/spec.lean
+#sv_check raceBlkDesign [[clk := 1]] shows a = [2], b = [2]
+#sv_check raceBlkDesign [[clk := 1]] under σ_rev shows a = [1], b = [1]
+```
+
+```lean
+-- Examples/race_blk/spec.lean
+theorem race_blk_not_deterministic : ¬ Deterministic raceBlkDesign := by proofs
+```
+
+That nondeterminism theorem is the point: a simulator shows you *one*
+schedule; the proof shows the race exists across *all* of them. Dually,
+`Examples/counter/spec.lean` proves the gallery's golden-model refinement —
+for every legal schedule, from the first sampled reset the counter follows
+its one-line Lean model:
+
+```lean
+-- Examples/counter/spec.lean
+theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by proofs
+```
+
+Validation is differential, like the Python lane: `harness/sv/diff_test.py`
+replays the same stimuli through a real simulator and the Lean interpreter
+and diffs the traces — against **Xcelium** where installed (`--sim auto`
+prefers it) and **Icarus Verilog** otherwise (installed in cloud CI via apt),
+including the x/z 4-state cases. The startup-`x` behavior (`count` is `x`
+through every pre-reset edge, because `x + 1 = x`) is LRM truth that
+2-state simulators hide — here it is both tested and part of the proofs.
+
 ## Repo layout
 
 | Path | What |
@@ -119,10 +181,9 @@ verbatim (marker convention in the script's header).
 | `LeanModels/Python/Semantics.lean` | Fuel-based definitional interpreter |
 | `LeanModels/Python/Logic.lean` | `ToExpr`, `load_program` macro, `CallsTo`, `@[spec]` |
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
-| `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator |
-| `Examples/python/*.py` | Example sources (+ generated `.json` envelopes) |
-| `Examples/*.lean` | Generated companion files (one per lean-block example) |
-| `Examples/tri/`, `Examples/gcd/` | Three-file examples: pure `.py` + envelope + hand-written `spec.lean`/`proof.lean` (`proofs` tactic, Surface.lean) |
+| `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
+| `Examples/<name>/` | One directory per example — three-file layout: pure `<name>.py` + generated `<name>.json` envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
+| `Examples/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/` | Differential tests vs CPython (`diff_test.py`, `cases.json`) |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
@@ -150,10 +211,11 @@ dependencies. Extractor/harness require only Python ≥ 3.9 stdlib.
 
 ## Roadmap (not built — do not expect it in this tree)
 
-- **SystemVerilog**: scheduler core with 4-state values (`0/1/X/Z`); the event
-  scheduler's nondeterminism as an explicit oracle, enabling schedule-oracle
-  theorems ("for every legal schedule, …"). This is the payoff of the oracle
-  principle.
+- **SystemVerilog beyond M0** (the built slice is described above): event-driven
+  time (`initial`, `#` delays), hierarchy/instantiation, and the full-LRM tiers
+  measured by the 21k-test conformance census (`docs/sv-corpus-coverage.md`) —
+  frequency-ordered, like the Python tier roadmap. See `docs/sv-design-m0.md`
+  and `docs/sv-integration-checklist.md` for what is deliberately deferred.
 - **C++ and Rust lanes**: same pipeline (Clang / syn frontends → envelope →
   deep embedding → tiered interpreter).
 - **`mvcgen` integration**: hook the spec layer into Lean's verification

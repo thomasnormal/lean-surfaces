@@ -23,11 +23,13 @@ step  "py-harness"      python3 harness/diff_test.py --no-build
 step  "extractor-tests" python3 extractors/python/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
-# SV lane: needs Xcelium (xrun) — present on this host, absent on generic CI.
-if command -v xrun >/dev/null 2>&1; then
+# SV lane: needs a simulator — Xcelium (xrun, lab host) or Icarus Verilog
+# (iverilog, generic CI). diff_test.py --sim auto prefers xrun; a mismatch
+# under either simulator is a hard failure.
+if command -v xrun >/dev/null 2>&1 || command -v iverilog >/dev/null 2>&1; then
   maybe "sv-harness"    harness/sv/diff_test.py   python3 harness/sv/diff_test.py
 else
-  echo "=== [sv-harness] SKIP (xrun not on PATH)"; skip+=("sv-harness")
+  echo "=== [sv-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv-harness")
 fi
 
 echo

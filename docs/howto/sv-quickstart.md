@@ -1,13 +1,16 @@
 # SystemVerilog lane — quickstart (M0)
 
 Status: the M0 vertical slice ("scheduler core") plus a first typed spec
-surface are in the tree and green, but **deliberately not integrated**:
-nothing under `LeanModels/Sv/` is imported from `LeanModels.lean`, so plain
-`lake build` does not build (or know about) the SV lane. That is the M0 contract
-([sv-design-m0.md](../sv-design-m0.md)) — integration is a later, explicit
-step, and further SV work is in progress in this repo. Everything below was
-run against the current tree; where a piece is not built yet it is marked
-*in progress*.
+surface are in the tree and green, but **only partially integrated**:
+nothing under `LeanModels/Sv/` is imported from `LeanModels.lean`; the SV
+examples do, however, live in per-example directories under `Examples/`
+(three-file layout, like the Python lane), so their `spec.lean`/`proof.lean`
+files build under the `Examples` glob of plain `lake build` — pulling the
+`LeanModels/Sv/**` modules in transitively. The M0 contract is
+([sv-design-m0.md](../sv-design-m0.md)); full integration is a later,
+explicit step, and further SV work is in progress in this repo. Everything
+below was run against the current tree; where a piece is not built yet it
+is marked *in progress*.
 
 ## What exists
 
@@ -15,21 +18,27 @@ run against the current tree; where a piece is not built yet it is marked
   *not* the Python-lane `python3`). Envelope contract:
   [sv-envelope-schema.md](../sv-envelope-schema.md) (schema `sv-0.1`,
   elaborated widths, `Unsupported` nodes, deterministic output).
-- **Examples**: `Examples/sv/{adder,counter,race_blk,swap_nba,toggle,xsel}.sv`
-  with checked-in `.sv.json` envelopes.
+- **Examples**: per-example directories
+  `Examples/{adder,counter,race_blk,swap_nba,toggle,xsel}/` — each holds
+  `<name>.sv` with its checked-in `<name>.sv.json` envelope, plus
+  `spec.lean`/`proof.lean` where theorems exist (`swap_nba`, `counter`,
+  `race_blk`; `adder`/`xsel` are demo-only spec files; `toggle`'s
+  walkthrough lives in `LeanModels/Sv/ToggleExample.lean`).
 - **Semantics + proofs**: the M0 stack `LeanModels/Sv/{Basic,Ast,Json,
-  Semantics,Obs,Proofs,Tests}.lean` — 4-state values (`0/1/x/z`),
-  cycle-level scheduler semantics with an explicit **schedule oracle** σ,
-  and the four M0 theorems in `Proofs.lean` (`run_deterministic`,
-  `swap_nba_spec` for *all* schedules, `race_blk_racy` exhibiting two
-  schedules with different traces, `counter_from_reset`). This is the oracle
+  Semantics,Obs,Tests}.lean` — 4-state values (`0/1/x/z`),
+  cycle-level scheduler semantics with an explicit **schedule oracle** σ —
+  and the four M0 theorems: `run_deterministic` (`Obs.lean`),
+  `swap_nba_spec` for *all* schedules
+  (`Examples/swap_nba/proof.lean`), `race_blk_racy` exhibiting two
+  schedules with different traces (`Examples/race_blk/proof.lean`), and
+  `counter_from_reset` (`Examples/counter/proof.lean`). This is the oracle
   principle paying off: scheduler nondeterminism is a quantified argument,
   and `race_blk`'s race is a theorem, not a flake.
 - **Typed spec surface (M0 cycle-level slice)**: `LeanModels/Sv/Surface.lean`
   (the judgments `d ⊨ P`, `d / stim ⇓[σ] tr`, `d ⊑@clk[from rst] model`, and
   the `sv_prove` tactic), `Delab.lean` (goals and `#check` output print back
   in surface notation, plus surface forms of the M0 theorems),
-  `ToggleExample.lean` (new-design walkthrough: `Examples/sv/toggle.sv`
+  `ToggleExample.lean` (new-design walkthrough: `Examples/toggle/toggle.sv`
   proved against its golden model), and `SelfCheck.lean` (the self-check
   tier for the conformance corpus). What exactly is implemented vs gallery
   target is recorded in the "Implementation status" note of
@@ -53,30 +62,31 @@ run against the current tree; where a piece is not built yet it is marked
 From the repo root:
 
 ```
-python3.12 extractors/sv/extract.py Examples/sv/adder.sv
+python3.12 extractors/sv/extract.py Examples/adder/adder.sv
 ```
 
-writes `Examples/sv/adder.sv.json` next to the source — byte-identical to
+writes `Examples/adder/adder.sv.json` next to the source — byte-identical to
 the checked-in envelope (deterministic output; verified by re-running on the
 tree). The extractor never fails on valid SV: out-of-tier constructs become
 `{"kind": "Unsupported", "sv_kind": <slang class>, "text": …}` nodes.
 
 ## Typecheck the semantics and the M0 theorems
 
-The SV lane is invisible to `lake build`; check files directly (from the
-repo root — each verified green on the current tree):
+Plain `lake build` now covers the SV example specs/proofs (they sit under
+the `Examples` glob). To check individual files directly (from the repo
+root — each verified green on the current tree):
 
 ```
-lake env lean LeanModels/Sv/Proofs.lean
+lake env lean Examples/swap_nba/spec.lean
 lake env lean LeanModels/Sv/Tests.lean
 lake env lean LeanModels/Sv/ToggleExample.lean
 ```
 
-`Proofs.lean` imports `Obs.lean` → `Semantics.lean` → `Ast.lean` →
-`Basic.lean`, so the first command transitively checks the scheduler stack;
-`Tests.lean` additionally pulls in `Json.lean` and the typed surface
-`Surface.lean`; `ToggleExample.lean` pulls in `Delab.lean` (and through it
-`Surface.lean` + `Proofs.lean`). `SelfCheck.lean` checks the same way.
+`Obs.lean` imports `Semantics.lean` → `Ast.lean` → `Basic.lean`, so any of
+these transitively checks the scheduler stack; `Tests.lean` additionally
+pulls in `Json.lean` and the typed surface `Surface.lean`;
+`ToggleExample.lean` pulls in `Delab.lean` (and through it `Surface.lean`
++ `Obs.lean`). `SelfCheck.lean` checks the same way.
 
 ## Run the differential harness vs Xcelium
 
@@ -142,7 +152,7 @@ ModuleNotFoundError: No module named 'pyslang'
 an SV envelope it fails at parse:
 
 ```
-leanmodels-run: 'Examples/sv/adder.sv.json' is not a valid envelope: envelope: field 'module': property not found: module
+leanmodels-run: 'Examples/adder/adder.sv.json' is not a valid envelope: envelope: field 'module': property not found: module
 ```
 
 There is no SV lake exe in M0 — the harness drives

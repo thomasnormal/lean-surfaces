@@ -1,21 +1,31 @@
 #!/usr/bin/env python3
-"""SV M0 differential harness: Lean cycle semantics vs Xcelium (ground truth).
+"""SV M0 differential harness: Lean cycle semantics vs a reference simulator.
+
+Backends (--sim): Xcelium `xrun` (normative for M0, present on the lab host)
+and Icarus Verilog `iverilog`/`vvp` (portable, used on generic CI; 4-state,
+so x/z cases are in scope). Default `auto` prefers xrun, falls back to
+iverilog, and — so CI step logic stays simple — prints a SKIP line and exits
+0 when NO simulator is on PATH. When a simulator exists, any mismatch is a
+hard failure.
 
 Per case in harness/sv/cases.json:
   1. generate a testbench (gen_tb.py) from the case + the example's extractor
-     envelope, run it under `xrun -sv` in a /tmp work dir, and collect the
-     canonical `CYCLE <k> <name>=<binary>...` lines (negedge-sampled);
+     envelope (Examples/<name>/<name>.sv.json), run it under the selected
+     simulator in a /tmp work dir, and collect the canonical
+     `CYCLE <k> <name>=<binary>...` lines (negedge-sampled);
   2. run the Lean interpreter on the same envelope + case via
      `lake env lean --run harness/sv/runner.lean` and collect its lines;
-  3. diff line-by-line. A case passes iff the Xcelium trace equals the Lean
+  3. diff line-by-line. A case passes iff the simulator trace equals the Lean
      trace for some schedule in the case's `accept_sigmas` (default: just
      `src`, source order; `race_blk` legitimately accepts `src` or `rev` and
      the table reports which one matched).
 
-Any mismatch is an interpreter bug (Xcelium is normative for M0).
+Any mismatch is an interpreter bug (the simulator is normative for M0).
 
-Usage: python3 harness/sv/diff_test.py [--case NAME] [--workdir DIR] [--keep]
-Exit status: 0 iff every selected case passed.
+Usage: python3 harness/sv/diff_test.py [--sim {auto,xrun,iverilog}]
+                                       [--case NAME] [--workdir DIR] [--keep]
+Exit status: 0 iff every selected case passed (or no simulator exists in
+--sim auto, reported as SKIP).
 
 Prerequisite plumbing: the runner imports LeanModels.Sv.*, whose oleans are
 NOT built by plain `lake build` (the SV lane is invisible to it in M0), so
@@ -93,6 +103,49 @@ def run_xcelium(example_sv, tb_text, workdir):
     return cycle_lines(p.stdout)
 
 
+def run_iverilog(example_sv, tb_text, workdir):
+    os.makedirs(workdir, exist_ok=True)
+    tb_path = os.path.join(workdir, "tb.sv")
+    with open(tb_path, "w") as f:
+        f.write(tb_text)
+    sim_path = os.path.join(workdir, "sim")
+    p = run_cmd(["iverilog", "-g2012", "-o", sim_path, tb_path, example_sv],
+                cwd=workdir, timeout=300)
+    if p.returncode != 0:
+        raise HarnessError("iverilog failed (%d) in %s:\n%s\n%s"
+                           % (p.returncode, workdir, p.stdout[-3000:], p.stderr[-2000:]))
+    p = run_cmd(["vvp", sim_path], cwd=workdir, timeout=600)
+    if p.returncode != 0:
+        raise HarnessError("vvp failed (%d) in %s:\n%s\n%s"
+                           % (p.returncode, workdir, p.stdout[-3000:], p.stderr[-2000:]))
+    return cycle_lines(p.stdout)
+
+
+# name -> (runner, tools that must be on PATH)
+SIMULATORS = {
+    "xrun": (run_xcelium, ("xrun",)),
+    "iverilog": (run_iverilog, ("iverilog", "vvp")),
+}
+
+
+def sim_available(name):
+    return all(shutil.which(t) for t in SIMULATORS[name][1])
+
+
+def resolve_sim(requested):
+    """Return the simulator name to use, or None for a --sim auto SKIP."""
+    if requested != "auto":
+        if not sim_available(requested):
+            missing = [t for t in SIMULATORS[requested][1] if not shutil.which(t)]
+            raise HarnessError("--sim %s requested but not on PATH (missing: %s)"
+                               % (requested, ", ".join(missing)))
+        return requested
+    for name in ("xrun", "iverilog"):  # xrun (normative) preferred
+        if sim_available(name):
+            return name
+    return None
+
+
 def run_lean(envelope_rel, case_name, sigma):
     cmd = ["lake", "env", "lean", "--run", RUNNER,
            envelope_rel, os.path.join("harness", "sv", "cases.json"),
@@ -105,24 +158,36 @@ def run_lean(envelope_rel, case_name, sigma):
     return cycle_lines(p.stdout)
 
 
-def show_diff(case_name, sigma, xcel, lean):
-    print("  MISMATCH for case '%s' (sigma=%s): Xcelium (ground truth) vs Lean:" % (case_name, sigma))
-    n = max(len(xcel), len(lean))
+def show_diff(sim, case_name, sigma, sim_lines, lean):
+    print("  MISMATCH for case '%s' (sigma=%s): %s (ground truth) vs Lean:"
+          % (case_name, sigma, sim))
+    n = max(len(sim_lines), len(lean))
     for i in range(n):
-        x = xcel[i] if i < len(xcel) else "<missing>"
+        x = sim_lines[i] if i < len(sim_lines) else "<missing>"
         l = lean[i] if i < len(lean) else "<missing>"
         marker = " " if x == l else "!"
-        print("  %s xcelium: %s" % (marker, x))
+        print("  %s %8s: %s" % (marker, sim, x))
         if x != l:
-            print("  %s    lean: %s" % (marker, l))
+            print("  %s     lean: %s" % (marker, l))
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--sim", choices=["auto", "xrun", "iverilog"], default="auto",
+                    help="simulator backend (auto: xrun if on PATH, else "
+                         "iverilog, else SKIP with exit 0)")
     ap.add_argument("--case", help="run only the named case")
-    ap.add_argument("--workdir", help="xrun work dir (default: mkdtemp under /tmp)")
+    ap.add_argument("--workdir", help="simulator work dir (default: mkdtemp under /tmp)")
     ap.add_argument("--keep", action="store_true", help="keep the work dir")
     args = ap.parse_args()
+
+    sim = resolve_sim(args.sim)
+    if sim is None:
+        print("SKIP: no simulator on PATH (want xrun or iverilog+vvp) -- "
+              "nothing verified, exiting 0")
+        return 0
+    run_sim = SIMULATORS[sim][0]
+    print("simulator: %s" % sim)
 
     with open(CASES_JSON) as f:
         cases_doc = json.load(f)
@@ -149,33 +214,34 @@ def main():
         for s in sigmas:
             if s not in SIGMA_NAMES:
                 raise HarnessError("case %s: unknown sigma '%s'" % (name, s))
-        envelope_rel = os.path.join("Examples", "sv", example + ".sv.json")
-        example_sv = os.path.join(REPO, "Examples", "sv", example + ".sv")
+        envelope_rel = os.path.join("Examples", example, example + ".sv.json")
+        example_sv = os.path.join(REPO, "Examples", example, example + ".sv")
         with open(os.path.join(REPO, envelope_rel)) as f:
             envelope = json.load(f)
 
         print("case %-20s (%s, %d cycles) ..." % (name, example, len(case["stimulus"])))
         tb_text = gen_tb.generate_tb(envelope, case)
-        xcel = run_xcelium(example_sv, tb_text, os.path.join(workroot, name))
-        if len(xcel) != len(case["stimulus"]):
-            raise HarnessError("case %s: xrun produced %d CYCLE lines for %d cycles"
-                               % (name, len(xcel), len(case["stimulus"])))
+        sim_trace = run_sim(example_sv, tb_text, os.path.join(workroot, name))
+        if len(sim_trace) != len(case["stimulus"]):
+            raise HarnessError("case %s: %s produced %d CYCLE lines for %d cycles"
+                               % (name, sim, len(sim_trace), len(case["stimulus"])))
 
         matched = None
         lean_by_sigma = {}
         for sigma in sigmas:
             lean = run_lean(envelope_rel, name, sigma)
             lean_by_sigma[sigma] = lean
-            if lean == xcel:
+            if lean == sim_trace:
                 matched = sigma
                 break
         if matched is None:
             all_pass = False
             for sigma in sigmas:
-                show_diff(name, sigma, xcel, lean_by_sigma[sigma])
+                show_diff(sim, name, sigma, sim_trace, lean_by_sigma[sigma])
         results.append((name, example, len(case["stimulus"]), sigmas, matched))
 
     print()
+    print("simulator: %s" % sim)
     print("%-22s %-10s %7s  %-18s %s" % ("CASE", "EXAMPLE", "CYCLES", "SIGMA", "RESULT"))
     print("-" * 72)
     for name, example, ncyc, sigmas, matched in results:

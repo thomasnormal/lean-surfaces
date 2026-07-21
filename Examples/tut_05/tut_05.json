@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/tut_05/tut_05.py",
-  "source_sha256": "42d0661ff9877e804f3c167cbca4319618aea4b370a7aeb32e90c4e71743dcc9",
+  "source_sha256": "cfd2b01384feeffec86acce7a2640b0164692bf43c4c03e560a8ee5a39372f0d",
   "module": {
     "kind": "Module",
     "body": [
@@ -211,11 +211,5 @@
       }
     ]
   },
-  "lean_blocks": [
-    {
-      "first_line": 11,
-      "last_line": 53,
-      "text": "/-! Tutorial 05 (docs/tutorial/05-exceptions-and-partial.md): the `==>!`\narrow for raising runs, the strengthened partial arrow `~~>`, and why\nthe weak \"if it returns then v\" form is banned. -/\n#py_check tut_05.pymod(7, 3) = 1\n#py_check tut_05.pymod(-7, 3) = 2\n#py_check tut_05.pymod(7, -3) = -2\n#py_check tut_05.pymod(7, 0) raises .zeroDivisionError\n#py_check tut_05.countdown(5) = 0\n#py_check tut_05.countdown(0) = 0\n#py_check tut_05.countdown(-3) = -3\n\n/-- A raise as specified behavior: for every `a`, `pymod(a, 0)`\nterminates by raising `ZeroDivisionError`. `py_prove` closes `==>!`\ngoals for loop-free bodies just like `==>` ones. -/\ntheorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by\n  py_prove [tut_05]\n\n/-- Total correctness of the countdown for `n \u2265 0` \u2014 a single-clause\nloop proof. The theorem binder `n` shadows the mutated Python variable\n`n`, so `(state := [n])` names the environment slot and the lambda\nbinder is free to be `k` (tutorial 04's shadowing trap). -/\ntheorem countdown_total (n : PyInt) (hn : 0 \u2264 n) : tut_05.countdown(n) ==> (0 : Int) := by\n  py_begin [tut_05]\n  py_loop (state := [n])\n          (inv := fun (k : Int) => 0 \u2264 k)\n          (dec := fun (k : Int) => k.toNat)\n  all_goals grind\n\n/-- The strengthened partial arrow: every run of `countdown(n)` with\n`n \u2265 0`, at every fuel, either times out or returns exactly `0` \u2014 no\nexception, no `unsupported`, no other value. Free from `countdown_total`\nby determinism modulo fuel (`CallsTo.partialTo`, via `py_corollary`). -/\ntheorem countdown_partial (n : PyInt) (hn : 0 \u2264 n) : tut_05.countdown(n) ~~> (0 : Int) := by\n  py_corollary [countdown_total]\n\n/-- Why the weak reading is banned: `~~>` is *falsifiable* on raising\nprograms. \"If `pymod(7, 0)` returns, it returns 42\" is vacuously true \u2014\nthe call raises. The strengthened `pymod(7, 0) ~~> 42` is refutable, and\nhere is the refutation (`PartialTo.not_raises`, Surface.lean). -/\ntheorem no_partial_spec_for_raising_call : \u00ac (tut_05.pymod(7, 0) ~~> (42 : Int)) :=\n  fun h => h.not_raises (pymod_zero_raises 7)"
-    }
-  ]
+  "lean_blocks": []
 }

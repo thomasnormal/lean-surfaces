@@ -57,8 +57,7 @@ theorem swap_nba_runs (σ : ScheduleOracle) (stim : List SvState) :
 sorry, no native_decide — standard axioms only) -/
 
 /--
-info: swap_nba_swaps :
-  swapNbaDesign ⊨ onPosedge fun s s' => s'.lookup "a" = s.lookup "b" ∧ s'.lookup "b" = s.lookup "a"
+info: swap_nba_swaps : swapNbaDesign ⊨ onPosedge fun s s' => s'.lookup "a" = s.lookup "b" ∧ s'.lookup "b" = s.lookup "a"
 -/
 #guard_msgs in
 #check swap_nba_swaps

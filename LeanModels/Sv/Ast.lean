@@ -148,7 +148,7 @@ where
 
 /-! ## Smoke tests: hand-written `counter` and `race_blk` designs -/
 
-/-- `Examples/sv/counter.sv`, hand-transcribed (the JSON-ingested version
+/-- `Examples/counter/counter.sv`, hand-transcribed (the JSON-ingested version
 lives in `Json.lean` tests). -/
 private def counterDesign : Design :=
   { name := "counter"

@@ -1,7 +1,8 @@
 # CI for lean_models. Mirrors tools/ci.sh (the local entry point — keep in sync).
-# The SV differential harness needs Xcelium and only runs where `xrun` exists
-# (self-hosted); tools/ci.sh auto-skips it elsewhere, so this workflow is safe
-# on stock GitHub runners.
+# The SV differential harness runs against Xcelium (`xrun`) where it exists
+# (self-hosted) and otherwise against Icarus Verilog (`iverilog`, installed
+# below via apt); tools/ci.sh auto-skips it only when neither simulator is
+# present, so this workflow is safe on stock GitHub runners.
 name: ci
 on:
   push:
@@ -23,5 +24,7 @@ jobs:
           key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
       - name: Notebook dependencies
         run: python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
+      - name: Icarus Verilog (SV differential-harness simulator)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog
       - name: Full check
         run: bash tools/ci.sh

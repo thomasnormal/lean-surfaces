@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/tut_03/tut_03.py",
-  "source_sha256": "372e3dd4b4a5d2e25607256ca971ff406b88e090e5526ee17b299fc149f29364",
+  "source_sha256": "b0435ab709511fca6f8cc67ce89a95d6b85ce66cd372a1817408cc6ae85f0770",
   "module": {
     "kind": "Module",
     "body": [
@@ -127,11 +127,5 @@
       }
     ]
   },
-  "lean_blocks": [
-    {
-      "first_line": 7,
-      "last_line": 45,
-      "text": "/-! Tutorial 03 (docs/tutorial/03-branching-and-preconditions.md):\nhypotheses as preconditions, branching, and reading goal states. -/\n#py_check tut_03.relu(5) = 5\n#py_check tut_03.relu(-5) = 0\n#py_check tut_03.relu(0) = 0\n\n/-- Unconditional total correctness: `py_prove` splits the symbolic\nbranch left by `if x < 0:` and closes both arms with `omega` (which\nknows `max`). -/\ntheorem relu_total (x : PyInt) : tut_03.relu(x) ==> max x 0 := by\n  py_prove [tut_03]\n\n/-- With a precondition, the spec simplifies: on nonnegative inputs\n`relu` is the identity. A precondition is an ordinary named hypothesis \u2014\nbut `py_prove` (unlike `py_begin`) does not restate `Py*`-branded\nhypotheses for `omega`, so the `have` line re-lands `hx` at `Int` first\n(docs/tutorial/06-when-proofs-fail.md, failure mode 5). -/\ntheorem relu_of_nonneg (x : PyInt) (hx : 0 \u2264 x) : tut_03.relu(x) ==> x := by\n  have hx' : (0 : Int) \u2264 x := hx\n  py_prove [tut_03]\n\n/-- The same theorem with the proof spelled out, for reading goal states\n(docs/tutorial/03-branching-and-preconditions.md walks through each\nstep's goal). -/\ntheorem relu_of_nonneg' (x : PyInt) (hx : 0 \u2264 x) : tut_03.relu(x) ==> x := by\n  have hx' : (0 : Int) \u2264 x := hx\n  refine \u27e832, ?_\u27e9\n  py_simp [callFunction, tut_03]\n  split <;> py_simp\n  omega\n\n/-! Delaborator regression (LeanModels/Python/Delab.lean): statements\nprint back in surface notation. -/\n\n/-- info: relu_total (x : PyInt) : tut_03.relu(x) ==> max x 0 -/\n#guard_msgs in\n#check relu_total"
-    }
-  ]
+  "lean_blocks": []
 }

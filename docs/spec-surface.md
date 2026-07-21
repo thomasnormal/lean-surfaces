@@ -11,15 +11,20 @@ print back in arrow notation, `ToVal` stripped inside judgment positions
 only; `⇓` prints as `==>`; below the judgment boundary — after `unfold
 CallsTo`/`obtain` — fuel and `callFunction` stay visible by design), and
 `py_prove` closing straight-line *and branching* total goals
-(`Examples/python/add.py`: `add(a, b) ==> a + b := by py_prove [add]`;
+(`Examples/add/proof.lean`: `add(a, b) ==> a + b := by py_prove [add]`;
 `my_abs` likewise), **loop proofs in clause form** via `py_begin` + `py_loop`
 (`LeanModels/Python/LoopTactic.lean` — supply only `(inv := …)` and
 `(dec := …)` lambdas over the loop's variables, plus `(state := […])` when a
 mutated Python variable shadows a theorem binder; residual goals are
 `omega`/`grind`-shaped arithmetic; see `Examples/tri/proof.lean`,
-`Examples/gcd/proof.lean`, `Examples/python/sum_to.py`), and
+`Examples/gcd/proof.lean`, `Examples/sum_to/sum_to.py`), and
 `py_corollary [tot]` closing the standard corollary shapes
-in one call. Acceptance-tested: a fresh user proved `sum_to` first-try, 8
+in one call. The examples live in the **three-file layout**
+(`Examples/<name>/`: pure `.py` + envelope + `spec.lean` statements, each
+`:= by proofs`, resolved against the sibling `proof.lean` by the `proofs`
+tactic, Surface.lean); `Examples/sum_to/` stays inline-mode as the
+spec-surface acceptance-test artifact. Acceptance-tested: a fresh user
+proved `sum_to` first-try, 8
 lines vs 13 for the analogous pure-Lean proof. Not yet: `≃` /
 `Py.Terminates` / contract triples, recursion automation (`py_lift` helps;
 full `py_induction` deemed not worth it yet). The rest of this document
@@ -50,7 +55,7 @@ Callee specs are `@[spec]` lemmas, consumed at call sites by `py_prove [g_spec]`
 ### 1. Warm-up — branching, total correctness
 
 ```python
-# Examples/python/my_abs.py (function only)
+# Examples/my_abs/my_abs.py (function only)
 def my_abs(x: int) -> int:
     if x < 0:
         return -x
@@ -63,7 +68,7 @@ def my_abs(x: int) -> int:
 ### 2. Python semantics visible in the spec — floor division
 
 ```python
-# Examples/python/midpoint.py (function only)
+# Examples/midpoint/midpoint.py (function only)
 def midpoint(a: int, b: int) -> int:
     return (a + b) // 2
 ```

@@ -35,7 +35,7 @@ so no shadowing problem arises.
 positionally, freeing the binders to be anything (here `s`/`k`):
 
 ```lean
--- Examples/SumTo.lean (generated from Examples/python/sum_to.py)
+-- Examples/sum_to/SumTo.lean (generated from Examples/sum_to/sum_to.py)
 theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
   py_begin [sum_to]
   py_loop (state := [s, n])

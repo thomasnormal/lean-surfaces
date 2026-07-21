@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/tut_06/tut_06.py",
-  "source_sha256": "f83950d040fae4702c6454a0f6990841e99f2357938f599eca2b00f167838d2f",
+  "source_sha256": "0bd30ab879e9bb9d149aa0fd53c2d43f7d742f84012969808493d90b92730594",
   "module": {
     "kind": "Module",
     "body": [
@@ -223,11 +223,5 @@
       }
     ]
   },
-  "lean_blocks": [
-    {
-      "first_line": 12,
-      "last_line": 34,
-      "text": "/-! Tutorial 06 (docs/tutorial/06-when-proofs-fail.md): the *fixed*\nversions of that tutorial's failure walkthroughs. Every broken variant\nshown in the tutorial was reproduced against exactly this program. -/\n#py_check tut_06.count_up(5) = 5\n#py_check tut_06.count_up(0) = 0\n\n/-- Failure modes 1 and 2, fixed: `count_up` has a loop, so `py_prove`\ncannot close it \u2014 `py_begin`/`py_loop` with the *right* invariant can.\nThe invariant needs both the range conjuncts: dropping `i \u2264 n` strands\nthe exit goal (tutorial 06 shows the stuck state). -/\ntheorem count_up_total (n : PyInt) (hn : 0 \u2264 n) : tut_06.count_up(n) ==> n := by\n  py_begin [tut_06]\n  py_loop (inv := fun (i : Int) => 0 \u2264 i \u2227 i \u2264 n)\n          (dec := fun (i : Int) => (n - i).toNat)\n  all_goals grind\n\n/-! Failure mode 6: `a / b` is true division \u2014 a float, outside the v0\nsemantic tier. The interpreter refuses *loudly* (`Res.unsupported`,\nnever a wrong value); `unsupported` has no surface arrow on purpose, so\nthe check stays a raw `#guard \u2026 matches`. -/\n#guard (callFunction tut_06 \"true_div\" #[.int 7, .int 2] 100 matches .unsupported _)"
-    }
-  ]
+  "lean_blocks": []
 }

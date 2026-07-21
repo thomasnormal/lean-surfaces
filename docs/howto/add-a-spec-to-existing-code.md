@@ -1,34 +1,112 @@
 # How to add a spec to existing Python code
 
-Two ways: annotate the source with a `# lean[` block (the house style), or
-write a sidecar Lean file and leave the source untouched. Judgment syntax:
+The house style is the **three-file layout**: the Python source stays pure
+(untouched by Lean), and two hand-written Lean files next to it carry the
+contract and the proofs. A single inline alternative (`# lean[` blocks in
+the source) remains as a showcased feature — see the end. Judgment syntax:
 [reference](../reference.md#the-judgment-family); design rationale:
 [spec-surface.md](../spec-surface.md).
 
-## Option A: a `# lean[` block in the source
+## The three-file layout
 
-Anatomy (from the real file `Examples/python/add.py`; the actual block
-continues with the derived corollary forms before the closing `# ]` — the
-anatomy is unchanged):
+Give the code its own directory `Examples/<name>/` (the stem must be a
+valid Lean identifier — it becomes the module constant and the surface
+callee) and put the source there:
 
 ```python
-# Examples/python/add.py (excerpt; block shortened)
+# Examples/add/add.py (the whole program)
 def add(a, b):
     return a + b
+```
+
+Extract the envelope — for a block-less source this writes
+`Examples/add/add.json` next to the source and nothing else:
+
+```
+python3 extractors/python/extract.py Examples/add/add.py
+```
+
+Write `spec.lean`: the program load, the `#py_check` non-vacuity runs
+(first, always), and every theorem *statement*, each proved `:= by proofs`:
+
+```lean
+-- Examples/add/spec.lean (excerpt)
+import Examples.add.proof
+
+open LeanModels LeanModels.Python
+
+load_program add from "Examples/add/add.json"
+
+/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,
+Surface.lean — fixed generous fuel; minimal-fuel pinning retired). -/
+#py_check add(2, 3) = 5
+#py_check add(-2, 3) = 1
+...
+theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by proofs
+```
+
+Write `proof.lean`: every theorem stated in `spec.lean`, restated under
+the **same name** with the real proof, wrapped in the namespace equal to
+its module path. It loads its own copy of the same envelope; the `proofs`
+tactic bridges the two program constants by unfolding:
+
+```lean
+-- Examples/add/proof.lean (excerpt)
+import LeanModels
+
+namespace Examples.add.proof
+
+open LeanModels LeanModels.Python
+
+load_program add from "Examples/add/add.json"
+
+/-- Total correctness: straight-line body, one `py_prove`. -/
+theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by
+  py_prove [add]
+
+end Examples.add.proof
+```
+
+Then `lake build` from the repo root (the `Examples.+` glob picks the new
+modules up automatically). The statement duplication between the two files
+is by design — Lean has no forward declarations — and it is typechecked:
+the spec-side `:= by proofs` resolves `Examples.add.proof.add_total` and
+fails loudly on a missing or drifted twin. From here on iteration is pure
+Lean: edit `spec.lean`/`proof.lean`, rebuild; re-run the extractor only
+when the `.py` changes.
+
+Also add the function's concrete cases to `harness/cases.json` and run
+`python3 harness/diff_test.py` **before** proving
+([run-the-differential-harness.md](run-the-differential-harness.md)).
+
+Which tactic closes which goal: [reference, tactic table](../reference.md#tactics).
+Loop-free bodies are `py_prove [add]`; loops need `py_begin`/`py_loop`
+(see `Examples/tri/proof.lean`); recursion needs `py_lift`
+(see `Examples/fib/proof.lean`).
+
+## Inline mode (the showcased alternative)
+
+Theorems can instead live in the source itself, in `# lean[ … # ]` comment
+blocks that the extractor splices verbatim into a generated companion
+file. Exactly one example ships in this mode —
+[`Examples/sum_to/`](../../Examples/sum_to/sum_to.py) (companion
+`Examples/sum_to/SumTo.lean`):
+
+```python
+# Examples/sum_to/sum_to.py (excerpt)
+def sum_to(n: int) -> int:
+    s = 0
+    while n > 0:
+        s += n
+        n -= 1
+    return s
 
 
 # lean[
 # /-! Non-vacuity: concrete runs in surface syntax (`#py_check`,
 # Surface.lean — fixed generous fuel; minimal-fuel pinning retired). -/
-# #py_check add(2, 3) = 5
-# #py_check add(-2, 3) = 1
-#
-# /-- The typed surface form: total correctness — `add` terminates and
-# returns `a + b` — with no `Val`, no fuel, one tactic. (Not `@[spec]`: that
-# attribute takes Hoare-triple/simp shapes; the ∃-fuel arrow is neither.) -/
-# theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by
-#   py_prove [add]
-# ]
+# #py_check sum_to(10) = 55
+# #py_check sum_to(0) = 0
 ```
 
 The rules ([DESIGN.md](../DESIGN.md), "`# lean[ ... # ]` blocks", normative):
@@ -39,70 +117,30 @@ The rules ([DESIGN.md](../DESIGN.md), "`# lean[ ... # ]` blocks", normative):
 - Inner lines lose the leading `#` and at most one following space; the rest
   is spliced **verbatim** into the companion file. Blank lines inside are fine.
 - Lines starting with `import ` are hoisted (deduped) to the companion header.
-- Convention: the **first** block is `#py_check` non-vacuity runs — the
-  arrows are ∃-fuel statements, and the concrete runs prove the "∃" side is
-  inhabited before anyone trusts a theorem.
+- The first block is `#py_check` non-vacuity runs, as everywhere.
 
-Then, from the repo root:
-
-```
-python3 extractors/python/extract.py Examples/python/add.py
-lake build
-```
-
-The extractor writes `Examples/python/add.json` (the AST envelope) and
-regenerates `Examples/Add.lean` (the companion: a header with the source
-sha256, `load_program add from "Examples/python/add.json"`, then your blocks
-verbatim). `lake build` ingests the JSON at elaboration time and checks your
-proofs. The file stem must be a valid Lean identifier — it becomes the module
-constant (`add : Module`) and the surface callee (`add(a, b)`).
-
-Which tactic closes which goal: [reference, tactic table](../reference.md#tactics).
-Loop-free bodies are `py_prove [add]`; loops need `py_begin`/`py_loop`
-(see `Examples/tri/proof.lean`); recursion needs `py_lift`
-(see `Examples/python/fib.py`).
-
-## Option B: a sidecar Lean file
-
-When you cannot (or don't want to) edit the source, put theorems in a
-hand-written `.lean` file. Both patterns below are the real file
-`Examples/SidecarDemo.lean`, which `lake build` checks (the `Examples.+` glob
-picks up any `Examples/*.lean`):
-
-```lean
--- Examples/SidecarDemo.lean (excerpt)
-/-- Sidecar pattern 1 — import the generated companion and state more
-theorems about the program constant it defines (`my_abs`, loaded by
-`Examples/MyAbs.lean`). Note the `Int` (not `PyInt`) binders: this proof
-ends in `omega`, whose syntactic atom matching does not see through the
-`PyInt` brand outside `py_begin` (which unbrands hypotheses for you). -/
-theorem my_abs_nonneg (x r : Int) (h : my_abs(x) ⇓ r) : 0 ≤ r := by
-  have hr : r = |x| := by py_corollary [my_abs_spec]
-  omega
-```
-
-```lean
--- Examples/SidecarDemo.lean (excerpt)
-load_program my_abs_again from "Examples/python/my_abs.json"
-
-theorem my_abs_again_total (x : PyInt) : my_abs_again.my_abs(x) ==> |x| := by
-  py_prove [my_abs_again]
-```
-
-Pattern 2 needs only the envelope: if the source has no `# lean[` blocks at
-all, run the extractor once to produce the `.json`, load it under any fresh
-name, and use the dotted callee (`my_abs_again.my_abs(x)`) — the identifier
-splits into module constant and Python function name.
+In inline mode the loop is edit-`.py` → re-extract → build (the extractor
+regenerates both the envelope and the companion; the companion is
+`AUTOGENERATED … DO NOT EDIT`).
 
 ## What can go wrong
 
-**Unclosed block.** Forget the closing `# ]`:
+**Missing proof twin.** A spec-side `:= by proofs` whose theorem has no
+same-name counterpart in `proof.lean` (not written yet, misnamed, or
+declared outside the namespace wrapper):
 
 ```
-error: unclosed.py:4: unclosed '# lean[' block (no matching '# ]')
+error: no proof named add_total in Examples.add.proof — add it to proof.lean
 ```
 
-Fix: add a line containing exactly `# ]`.
+**Drifted twin.** If the twin exists but its statement differs (binders,
+hypotheses, value expression), the tactic's closing alternatives fail —
+make the two statements identical again; never "fix" it by proving in the
+spec file.
+
+**`:= by proofs` outside a spec module.** The tactic pairs `….spec` with
+its sibling `….proof`; anywhere else it refuses
+(``proofs: current module `<M>` is not an `<example>.spec` module …``).
 
 **Invalid stem.** `bad-stem.py`:
 
@@ -112,8 +150,8 @@ error: bad-stem.py: stem 'bad-stem' is not a valid identifier (must match ^[A-Za
 
 Fix: rename the file (`bad_stem.py`).
 
-**Wrong envelope path in a sidecar.** `load_program` resolves paths against
-the current working directory — the repo root under `lake build`:
+**Wrong envelope path.** `load_program` resolves paths against the
+current working directory — the repo root under `lake build`:
 
 ```
 error: load_program: cannot read 'Examples/python/nope.json': no such file or directory (error code: 4294967294)
@@ -136,7 +174,7 @@ did not evaluate to `true`
 ```
 
 Run the function to see what it actually returns:
-`lake exe leanmodels-run Examples/python/add.json add 2 3`.
+`lake exe leanmodels-run Examples/add/add.json add 2 3`.
 
 **`py_prove` on a function with a loop** fails with `unsolved goals` and a
 goal containing a frozen `execWhile` applied to a large AST literal. That
@@ -145,6 +183,12 @@ leak *is* the signal: `py_prove` only does loop-free bodies — switch to
 [handle-shadowed-loop-variables.md](handle-shadowed-loop-variables.md) if the
 loop mutates a variable your theorem binds).
 
-**Companion edited by hand.** Companions are regenerated on every extractor
-run (`AUTOGENERATED … DO NOT EDIT`); your edits will be overwritten. Specs
-belong in the `# lean[` block or a sidecar.
+**Unclosed inline block** (inline mode only). Forget the closing `# ]`:
+
+```
+error: unclosed.py:4: unclosed '# lean[' block (no matching '# ]')
+```
+
+**Companion edited by hand** (inline mode only). Companions are regenerated
+on every extractor run; your edits will be overwritten. Inline specs belong
+in the `# lean[` block — or migrate the example to the three-file layout.

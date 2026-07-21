@@ -6,8 +6,8 @@ contracts live in [DESIGN.md](DESIGN.md) (interpreter, formats) and
 [spec-surface.md](spec-surface.md) (surface design, including layers not yet
 built). Task-oriented walkthroughs: [howto/](howto/).
 
-Everything Lean below lives in namespace `LeanModels.Python` (companion files
-`open` it for you).
+Everything Lean below lives in namespace `LeanModels.Python` (the example
+`spec.lean`/`proof.lean` files `open` it for you).
 
 ## The judgment family
 
@@ -105,11 +105,12 @@ this table is the index, the docstrings are the manual.
 | `#py_check f(a, b) = v` | `#guard callFunction f "f" #[ToVal.toVal a, ToVal.toVal b] 4096 == .ok (ToVal.toVal v)` — a concrete elaboration-time run (fixed generous fuel; cost is proportional to actual steps, not fuel) |
 | `#py_check f(a, b) raises e` | same at `.exn (e : PyErr)`, e.g. `#py_check arith.mod(7, 0) raises .zeroDivisionError` |
 | raw `#guard` | for what the surface form cannot say: `.unsupported` outcomes (`#guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)`) and spec-side math facts |
-| `load_program tri from "Examples/python/tri.json"` | reads the envelope at elaboration time, defines `tri : Module` as a literal term (path relative to the `lake build` cwd = repo root) |
+| `load_program tri from "Examples/tri/tri.json"` | reads the envelope at elaboration time, defines `tri : Module` as a literal term (path relative to the `lake build` cwd = repo root) |
 | `#print_program tri` | logs the `Repr` of a loaded program |
 
-Convention: every example's **first** lean block is `#py_check` non-vacuity
-runs, so the ∃-fuel theorems below it are demonstrably not vacuous.
+Convention: every example's `spec.lean` **opens** with `#py_check`
+non-vacuity runs, so the ∃-fuel theorems below them are demonstrably not
+vacuous.
 
 ## `Py*` types and marshalling
 
@@ -138,7 +139,7 @@ Gotcha (verified): `omega`'s atom matching is syntactic and does not see
 through the brands — a comparison headed at `PyInt`, hypothesis or goal, is
 invisible to it. `py_begin` unbrands hypotheses for you; in manual proofs
 use `Int` binders where a proof ends in `omega`
-(see [`Examples/SidecarDemo.lean`](../Examples/SidecarDemo.lean)). When
+(as `add_spec`/`tri_spec` do). When
 restating a branded hypothesis instead, put an `Int`-typed term on the
 comparison's **left** (`have hx' : (0 : Int) ≥ x := hx`) — ascribing the
 branded variable does not unbrand — and close brand-headed *goals* with
@@ -185,7 +186,7 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 
 | Command | What |
 |---|---|
-| `python3 extractors/python/extract.py <file.py> [more…] [--companion-dir DIR]` | writes `<file>.json` (envelope) next to the source + `<CompanionDir>/<PascalStem>.lean` (default `Examples/`) — the companion only when the source has `# lean[` blocks (block-less three-file sources get the envelope alone), and never over a hand-written file at that path; deterministic; out-of-vocabulary constructs become `Unsupported` nodes — errors on syntax errors, non-identifier stems, unclosed `# lean[` blocks, hand-written file at the companion path |
+| `python3 extractors/python/extract.py <file.py> [more…] [--companion-dir DIR]` | writes `<file>.json` (envelope) next to the source + `<CompanionDir>/<PascalStem>.lean` (default companion dir: the source file's own directory) — the companion only when the source has `# lean[` blocks (block-less three-file sources get the envelope alone), and never over a hand-written file at that path; deterministic; out-of-vocabulary constructs become `Unsupported` nodes — errors on syntax errors, non-identifier stems, unclosed `# lean[` blocks, hand-written file at the companion path |
 | `lake exe leanmodels-run <envelope.json> <function> [args…] [--fuel N]` | one JSON line: `{"status":"ok","value":…}` \| `{"status":"exn","exn":"…"}` \| `{"status":"timeout"}` \| `{"status":"unsupported","msg":"…"}`; args are integers; default fuel 10000; exit 0 for every canonical result |
 | `python3 harness/diff_test.py [--cases F] [--fuel N] [--no-build] [--runner CMD]` | CPython vs Lean on `harness/cases.json`; exits non-zero on any non-whitelisted mismatch ([howto](howto/run-the-differential-harness.md)) |
 | `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header); exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
@@ -207,10 +208,9 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 | `LeanModels/Python/LoopTactic.lean` | `py_begin` / `py_loop` |
 | `LeanModels/Python/Delab.lean` | delaborators: goals print in arrow notation |
 | `LeanModels/Python/Tests.lean` | interpreter smoke tests |
-| `extractors/python/extract.py` | extractor + `# lean[` scanner + companion generator |
-| `Examples/python/*.py` | example sources (+ generated `.json`) |
-| `Examples/*.lean` | generated companions (exception: `SidecarDemo.lean`, hand-written) |
-| `Examples/tri/`, `Examples/gcd/` | three-file examples: pure `.py` + envelope + hand-written `spec.lean` (statements, `:= by proofs`) / `proof.lean` (real proofs) — `proofs` tactic, Surface.lean |
+| `extractors/python/extract.py` | extractor + `# lean[` scanner + companion generator (inline mode) |
+| `Examples/<name>/` | one directory per example, three-file layout: pure `<name>.py` + generated `<name>.json` envelope + hand-written `spec.lean` (statements, `:= by proofs`) / `proof.lean` (real proofs) — `proofs` tactic, Surface.lean |
+| `Examples/sum_to/` | the one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/diff_test.py`, `harness/cases.json` | differential harness vs CPython |
-| `LeanModels/Sv/**`, `extractors/sv/**`, `Examples/sv/**`, `harness/sv/**`, `docs/sv-*.md` | SystemVerilog lane: M0 scheduler core + typed-surface slice (not imported by `lake build` — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |
+| `LeanModels/Sv/**`, `extractors/sv/**`, `harness/sv/**`, `docs/sv-*.md`, SV example dirs (`Examples/swap_nba/`, `Examples/counter/`, `Examples/race_blk/`, `Examples/adder/`, `Examples/xsel/`, `Examples/toggle/`) | SystemVerilog lane: M0 scheduler core + typed-surface slice (not imported by `LeanModels.lean`; the SV example specs build under the `Examples` glob — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |

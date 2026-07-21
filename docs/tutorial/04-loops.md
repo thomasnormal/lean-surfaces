@@ -143,11 +143,15 @@ the rest.
 
 ## (d) The shadowing trap and `(state := …)`
 
-Look at [`sum_to.py`](../../Examples/python/sum_to.py) — the counting-*down*
-version, and the worked hard case:
+Look at [`sum_to.py`](../../Examples/sum_to/sum_to.py) — the
+counting-*down* version, and the worked hard case. (`Examples/sum_to/` is
+the tree's one *inline-mode* example: its theorems live in `# lean[ … # ]`
+blocks inside the `.py`, spliced into a generated companion `SumTo.lean` —
+the statements and tactics are exactly what a `spec.lean`/`proof.lean`
+pair would hold.)
 
 ```python
-# Examples/python/sum_to.py (function only)
+# Examples/sum_to/sum_to.py (function only)
 def sum_to(n: int) -> int:
     s = 0
     while n > 0:
@@ -175,7 +179,7 @@ positionally, freeing the lambda binders to be anything — here `s` and `k`.
 The real theorem, verbatim from the tree:
 
 ```lean
--- Examples/python/sum_to.py (lean block; builds via Examples/SumTo.lean)
+-- Examples/sum_to/sum_to.py (lean block; builds via Examples/sum_to/SumTo.lean)
 theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
   py_begin [sum_to]
   py_loop (state := [s, n])
@@ -197,13 +201,10 @@ theorem also binds, you need `(state := …)`.** (Recipe form:
 ## (e) Worked end to end
 
 First `tri`, the loop you analyzed in (a) — theorem verbatim from
-[`Examples/tri/proof.lean`](../../Examples/tri/proof.lean). (`tri` and
-`gcd` use the *three-file layout* — pure `.py`, statements and `#py_check`
-checks in `spec.lean`, real proofs in `proof.lean`; `spec.lean` also
-derives the `@[spec]`/`⇓` corollary forms, see
-[../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md).
-This tutorial's own companion keeps the embedded lean-block layout you
-already know.)
+[`Examples/tri/proof.lean`](../../Examples/tri/proof.lean); its statement
+is re-stated `:= by proofs` in `spec.lean`, which also derives the
+`@[spec]`/`⇓` corollary forms
+([../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md)).
 
 ```lean
 -- Examples/tri/proof.lean (statement re-stated in Examples/tri/spec.lean)
@@ -221,16 +222,17 @@ no `(state := …)` because `tri` never mutates `n`, exit bullet pins
 `i' = n + 1`, `grind` does the algebra (including the division step
 `2*total = (n+1)*n ⇒ total = n*(n+1)/2`).
 
-Now the exercise, solved fresh: **factorial by loop**. New wrinkle: the spec
-is not a polynomial, so you write a spec-side model (`factSpec`, exactly as
-[`fib.py`](../../Examples/python/fib.py) writes `fibSpec`) plus one bridge
-lemma in the `Int` shape the invariant produces. Hand-run `fact(4)`
-(row per test): `(r, i)` = (1,1), (1,2), (2,3), (6,4), (24,5) → exit,
-return 24. In every row `r = (i-1)!` — that is the invariant; ranges
-`1 ≤ i ≤ n+1`; measure `n + 1 - i` iterations left. The whole file:
+Now the exercise, solved fresh: **factorial by loop**
+(`Examples/tut_04/`). New wrinkle: the spec is not a polynomial, so you
+write a spec-side model (`factSpec`, exactly as
+[`fib/proof.lean`](../../Examples/fib/proof.lean) writes `fibSpec`) plus
+one bridge lemma in the `Int` shape the invariant produces. Hand-run
+`fact(4)` (row per test): `(r, i)` = (1,1), (1,2), (2,3), (6,4), (24,5) →
+exit, return 24. In every row `r = (i-1)!` — that is the invariant; ranges
+`1 ≤ i ≤ n+1`; measure `n + 1 - i` iterations left. The program:
 
 ```python
-# Examples/python/tut_04.py
+# Examples/tut_04/tut_04.py
 def fact(n):
     r = 1
     i = 1
@@ -238,65 +240,88 @@ def fact(n):
         r *= i
         i += 1
     return r
+```
 
+The proof module — model, bridge lemma, the loop proof, and the corollary
+forms (note `factSpec`/`factSpec_step` are declared at the *root*
+namespace with `_root_`: the spec-side statements must mention the same
+constant, and a recursive definition — unlike the program literals — would
+not bridge by unfolding):
 
-# lean[
-# /-! Tutorial 04 (docs/tutorial/04-loops.md): the worked exercise —
-# factorial by loop, proved end-to-end with `py_begin`/`py_loop`. -/
-# #py_check tut_04.fact(5) = 120
-# #py_check tut_04.fact(1) = 1
-# #py_check tut_04.fact(0) = 1
-# #py_check tut_04.fact(-2) = 1
-#
-# /-- Mathematical factorial: `1, 1, 2, 6, 24, 120, …` — the spec-side
-# model, `Int`-valued so it lands where the marshalled result lives. -/
-# def factSpec : Nat → Int
-#   | 0 => 1
-#   | n + 1 => (n + 1 : Int) * factSpec n
-#
-# #guard factSpec 5 == 120
-#
-# /-- The unfolding step of `factSpec` in the exact `Int` shape the loop
-# invariant produces: for `1 ≤ i`, `factSpec i.toNat` peels off one factor
-# `i`. `grind` consumes this in the invariant-preservation goal. -/
-# theorem factSpec_step (i : Int) (hi : 1 ≤ i) :
-#     factSpec i.toNat = i * factSpec (i - 1).toNat := by
-#   have h : i.toNat = (i - 1).toNat + 1 := by omega
-#   rw [h, factSpec]
-#   congr 1
-#   omega
-#
-# /-- Total correctness for `n ≥ 0`: `fact(n)` terminates and returns `n!`
-# — in clause form (LoopTactic.lean). Invariant: `r` holds the factorial
-# of everything already multiplied in (`r = factSpec (i-1).toNat`), plus
-# the range `1 ≤ i ≤ n + 1`; measure: iterations left, `(n + 1 - i)`.
-# Residual goals: the exit algebra (`hcont` + range force `i' = n + 1`,
-# then `hinv3` *is* the claim), and preservation/decrease/initial all fall
-# to `grind` armed with `factSpec`'s equations and `factSpec_step`. -/
-# theorem fact_total (n : PyInt) (hn : 0 ≤ n) : tut_04.fact(n) ==> factSpec n.toNat := by
-#   py_begin [tut_04]
-#   py_loop (inv := fun (r i : Int) => 1 ≤ i ∧ i ≤ n + 1 ∧ r = factSpec (i - 1).toNat)
-#           (dec := fun (r i : Int) => (n + 1 - i).toNat)
-#   · obtain rfl : i' = n + 1 := by omega
-#     simpa using hinv3
-#   all_goals grind [factSpec, factSpec_step]
-#
-# set_option warning.simp.varHead false in
-# /-- `fact(n)` returns `n!` for `n ≥ 0`: any successful run, at any fuel,
-# yields exactly `.int (factSpec n.toNat)`. A determinism corollary of
-# `fact_total` — one `py_corollary` (Surface.lean). -/
-# @[spec] theorem fact_spec (n : Int) (hn : 0 ≤ n) {fuel : Nat} {r : Val}
-#     (h : callFunction tut_04 "fact" #[.int n] fuel = .ok r) :
-#     r = .int (factSpec n.toNat) := by
-#   py_corollary [fact_total]
-#
-# set_option warning.simp.varHead false in
-# /-- The typed surface form: binders are `PyInt`, the result is bound
-# relationally with `⇓`, and neither `Val` nor fuel appears. -/
-# @[spec] theorem fact_correct (n r : PyInt) (hn : 0 ≤ n) (h : tut_04.fact(n) ⇓ r) :
-#     r = factSpec n.toNat := by
-#   py_corollary [fact_total]
-# ]
+```lean
+-- Examples/tut_04/proof.lean (header comment elided)
+import LeanModels
+
+namespace Examples.tut_04.proof
+
+open LeanModels LeanModels.Python
+
+load_program tut_04 from "Examples/tut_04/tut_04.json"
+
+/-- Mathematical factorial: `1, 1, 2, 6, 24, 120, …` — the spec-side
+model, `Int`-valued so it lands where the marshalled result lives. -/
+def _root_.factSpec : Nat → Int
+  | 0 => 1
+  | n + 1 => (n + 1 : Int) * factSpec n
+
+/-- The unfolding step of `factSpec` in the exact `Int` shape the loop
+invariant produces: for `1 ≤ i`, `factSpec i.toNat` peels off one factor
+`i`. `grind` consumes this in the invariant-preservation goal. -/
+theorem _root_.factSpec_step (i : Int) (hi : 1 ≤ i) :
+    factSpec i.toNat = i * factSpec (i - 1).toNat := by
+  have h : i.toNat = (i - 1).toNat + 1 := by omega
+  rw [h, factSpec]
+  congr 1
+  omega
+
+/-- Total correctness for `n ≥ 0`: `fact(n)` terminates and returns `n!`
+— in clause form (LoopTactic.lean). Invariant: `r` holds the factorial
+of everything already multiplied in (`r = factSpec (i-1).toNat`), plus
+the range `1 ≤ i ≤ n + 1`; measure: iterations left, `(n + 1 - i)`.
+Residual goals: the exit algebra (`hcont` + range force `i' = n + 1`,
+then `hinv3` *is* the claim), and preservation/decrease/initial all fall
+to `grind` armed with `factSpec`'s equations and `factSpec_step`. -/
+theorem fact_total (n : PyInt) (hn : 0 ≤ n) : tut_04.fact(n) ==> factSpec n.toNat := by
+  py_begin [tut_04]
+  py_loop (inv := fun (r i : Int) => 1 ≤ i ∧ i ≤ n + 1 ∧ r = factSpec (i - 1).toNat)
+          (dec := fun (r i : Int) => (n + 1 - i).toNat)
+  · obtain rfl : i' = n + 1 := by omega
+    simpa using hinv3
+  all_goals grind [factSpec, factSpec_step]
+
+set_option warning.simp.varHead false in
+/-- Determinism corollary of `fact_total` — one `py_corollary`
+(Surface.lean). -/
+theorem fact_spec (n : Int) (hn : 0 ≤ n) {fuel : Nat} {r : Val}
+    (h : callFunction tut_04 "fact" #[.int n] fuel = .ok r) :
+    r = .int (factSpec n.toNat) := by
+  py_corollary [fact_total]
+
+set_option warning.simp.varHead false in
+/-- The typed surface form, another `py_corollary` of `fact_total`. -/
+theorem fact_correct (n r : PyInt) (hn : 0 ≤ n) (h : tut_04.fact(n) ⇓ r) :
+    r = factSpec n.toNat := by
+  py_corollary [fact_total]
+
+end Examples.tut_04.proof
+```
+
+[`Examples/tut_04/spec.lean`](../../Examples/tut_04/spec.lean) re-states
+all three theorems `:= by proofs` (the `@[spec]` attribute and the
+`set_option` prefix live on the spec side too — the spec file is the
+contract), opens with the `#py_check` runs plus
+`#guard factSpec 5 == 120` pinning the model at its defining value:
+
+```lean
+-- Examples/tut_04/spec.lean (excerpt)
+#py_check tut_04.fact(5) = 120
+#py_check tut_04.fact(1) = 1
+#py_check tut_04.fact(0) = 1
+#py_check tut_04.fact(-2) = 1
+
+#guard factSpec 5 == 120
+...
+theorem fact_total (n : PyInt) (hn : 0 ≤ n) : tut_04.fact(n) ==> factSpec n.toNat := by proofs
 ```
 
 Notes on the three non-obvious lines:

@@ -5,10 +5,12 @@ and `~~>` (strengthened partial correctness). Along the way: why the weak
 partial form is deliberately *not offered*, and the `gcd` sign bug — the
 house cautionary tale about writing specs before differential testing.
 
-## 1. The file
+## 1. The files
+
+`Examples/tut_05/`, three-file layout. The program:
 
 ```python
-# Examples/python/tut_05.py
+# Examples/tut_05/tut_05.py
 def pymod(a, b):
     return a % b
 
@@ -17,52 +19,55 @@ def countdown(n):
     while n > 0:
         n -= 1
     return n
-
-
-# lean[
-# /-! Tutorial 05 (docs/tutorial/05-exceptions-and-partial.md): the `==>!`
-# arrow for raising runs, the strengthened partial arrow `~~>`, and why
-# the weak "if it returns then v" form is banned. -/
-# #py_check tut_05.pymod(7, 3) = 1
-# #py_check tut_05.pymod(-7, 3) = 2
-# #py_check tut_05.pymod(7, -3) = -2
-# #py_check tut_05.pymod(7, 0) raises .zeroDivisionError
-# #py_check tut_05.countdown(5) = 0
-# #py_check tut_05.countdown(0) = 0
-# #py_check tut_05.countdown(-3) = -3
-#
-# /-- A raise as specified behavior: for every `a`, `pymod(a, 0)`
-# terminates by raising `ZeroDivisionError`. `py_prove` closes `==>!`
-# goals for loop-free bodies just like `==>` ones. -/
-# theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by
-#   py_prove [tut_05]
-#
-# /-- Total correctness of the countdown for `n ≥ 0` — a single-clause
-# loop proof. The theorem binder `n` shadows the mutated Python variable
-# `n`, so `(state := [n])` names the environment slot and the lambda
-# binder is free to be `k` (tutorial 04's shadowing trap). -/
-# theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 : Int) := by
-#   py_begin [tut_05]
-#   py_loop (state := [n])
-#           (inv := fun (k : Int) => 0 ≤ k)
-#           (dec := fun (k : Int) => k.toNat)
-#   all_goals grind
-#
-# /-- The strengthened partial arrow: every run of `countdown(n)` with
-# `n ≥ 0`, at every fuel, either times out or returns exactly `0` — no
-# exception, no `unsupported`, no other value. Free from `countdown_total`
-# by determinism modulo fuel (`CallsTo.partialTo`, via `py_corollary`). -/
-# theorem countdown_partial (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ~~> (0 : Int) := by
-#   py_corollary [countdown_total]
-#
-# /-- Why the weak reading is banned: `~~>` is *falsifiable* on raising
-# programs. "If `pymod(7, 0)` returns, it returns 42" is vacuously true —
-# the call raises. The strengthened `pymod(7, 0) ~~> 42` is refutable, and
-# here is the refutation (`PartialTo.not_raises`, Surface.lean). -/
-# theorem no_partial_spec_for_raising_call : ¬ (tut_05.pymod(7, 0) ~~> (42 : Int)) :=
-#   fun h => h.not_raises (pymod_zero_raises 7)
-# ]
 ```
+
+The contract, from `spec.lean` — note the `raises` check form and that the
+last statement is a *negated* spec:
+
+```lean
+-- Examples/tut_05/spec.lean (header comment and docstrings elided)
+#py_check tut_05.pymod(7, 3) = 1
+#py_check tut_05.pymod(-7, 3) = 2
+#py_check tut_05.pymod(7, -3) = -2
+#py_check tut_05.pymod(7, 0) raises .zeroDivisionError
+#py_check tut_05.countdown(5) = 0
+#py_check tut_05.countdown(0) = 0
+#py_check tut_05.countdown(-3) = -3
+
+theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by proofs
+
+theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 : Int) := by proofs
+
+theorem countdown_partial (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ~~> (0 : Int) := by proofs
+
+theorem no_partial_spec_for_raising_call : ¬ (tut_05.pymod(7, 0) ~~> (42 : Int)) := by proofs
+```
+
+And the real proofs, from `proof.lean`:
+
+```lean
+-- Examples/tut_05/proof.lean (header comment and docstrings elided)
+theorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by
+  py_prove [tut_05]
+
+theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 : Int) := by
+  py_begin [tut_05]
+  py_loop (state := [n])
+          (inv := fun (k : Int) => 0 ≤ k)
+          (dec := fun (k : Int) => k.toNat)
+  all_goals grind
+
+theorem countdown_partial (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ~~> (0 : Int) := by
+  py_corollary [countdown_total]
+
+theorem no_partial_spec_for_raising_call : ¬ (tut_05.pymod(7, 0) ~~> (42 : Int)) :=
+  fun h => h.not_raises (pymod_zero_raises 7)
+```
+
+(`countdown_total` is a single-clause loop proof; the theorem binder `n`
+shadows the mutated Python variable `n`, so `(state := [n])` names the
+environment slot and the lambda binder is free to be `k` — tutorial 04's
+shadowing trap.)
 
 ## 2. `==>!` — a raise is a postcondition, not a failure
 

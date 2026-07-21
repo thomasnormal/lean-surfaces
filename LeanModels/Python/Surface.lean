@@ -82,6 +82,19 @@ instance {α} [ToVal α] : ToVal (List α) :=
 @[simp] theorem toVal_list {α} [ToVal α] (xs : List α) :
     (ToVal.toVal xs : Val) = .list (xs.map ToVal.toVal).toArray := rfl
 
+/-- Python `int` 3-tuples — the `extended_gcd` return shape (added for
+`Examples/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
+`×` is right-nested, so a generic `Prod` instance could not distinguish the
+Python values `(a, b, c)` and `(a, (b, c))` — they inhabit the *same* Lean
+type — and would silently marshal one as the other. This instance commits the
+concrete `PyInt × PyInt × PyInt` type to the flat 3-tuple reading (the only
+one the gallery uses); nested-tuple values stay explicit `Val`s. -/
+instance : ToVal (PyInt × PyInt × PyInt) :=
+  ⟨fun t => .tuple #[.int t.1, .int t.2.1, .int t.2.2]⟩
+
+@[simp] theorem toVal_int_triple (t : PyInt × PyInt × PyInt) :
+    (ToVal.toVal t : Val) = .tuple #[.int t.1, .int t.2.1, .int t.2.2] := rfl
+
 /-! ## Judgments -/
 
 /-- Terminates raising `e` (the `==>!` arrow). `CallsTo` (Logic.lean) is the
@@ -518,6 +531,18 @@ theorem CallsTo.typed_int_eq {m : Module} {f : String} {args : Array Val}
     {r e : Int} (h : CallsTo m f args (.int r))
     (ht : CallsTo m f args (.int e)) : r = e :=
   Val.int.inj (CallsTo.functional h ht)
+
+/-- Determinism on the int-triple surface — `CallsTo.typed_int_eq`'s 3-tuple
+analog (added for `Examples/rsa_inverse`, whose `extended_gcd` returns a
+Python 3-tuple): a `⇓`-bound triple result equals the triple value of any
+`CallsTo` fact; componentwise injectivity peels the marshalling. -/
+theorem CallsTo.typed_int3_eq {m : Module} {f : String} {args : Array Val}
+    {r e : PyInt × PyInt × PyInt} (h : CallsTo m f args (ToVal.toVal r))
+    (ht : CallsTo m f args (ToVal.toVal e)) : r = e := by
+  have := CallsTo.functional h ht
+  obtain ⟨r1, r2, r3⟩ := r
+  obtain ⟨e1, e2, e3⟩ := e
+  simp_all
 
 open Lean Lean.Parser.Tactic in
 /-- `py_corollary [tot, extras…]` — close a standard corollary of the

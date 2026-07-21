@@ -120,6 +120,42 @@ lake build && python3 tools/docs_check.py && python3 harness/diff_test.py
 block in `docs/`, this README, and `AGENTS.md` must match the referenced file
 verbatim (marker convention in the script's header).
 
+## Real-world demo: `python-rsa`'s modular inverse, proved as shipped
+
+`Examples/rsa_inverse/` vendors `extended_gcd` and `inverse` from
+**python-rsa 4.9.1 byte-verbatim** (provenance and segment hashes in the
+file header; authenticity re-verified against an independent re-download)
+and proves total correctness of the modular-inverse routine:
+
+```lean
+-- Examples/rsa_inverse/spec.lean
+theorem inverse_spec (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
+    (hco : Int.gcd x n = 1) :
+    ∃ r : PyInt, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧
+      rsa_inverse.inverse(x, n) ==> r := by proofs
+```
+
+```lean
+-- Examples/rsa_inverse/spec.lean
+theorem inverse_no_raise (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
+    (hco : Int.gcd x n = 1) (e : PyErr) :
+    ¬ rsa_inverse.inverse(x, n) ==>! e := by proofs
+```
+
+Two things make this more than an exercise. First, `inverse` contains a
+`raise NotRelativePrimeError` — an out-of-tier construct — and the proof
+handles it by **unreachability**: under `gcd x n = 1` symbolic execution
+never enters that branch, so full language coverage is not required to
+prove real functions, only the reachable code. Second, proving the loop
+surfaced a fact about the shipped library: the textbook Bézout identity
+`i*a + j*b = gcd` is **false** for its outputs — the post-loop
+negative-coefficient wrap shifts them (`extended_gcd(3, 7) = (1, 5, 1)`,
+and `5·3 + 1·7 = 22 ≠ 1`). The honest contract, and what the proof
+establishes, is *modular* Bézout (`(i*a) % b = gcd % b` with the wrap
+ranges) — which is exactly what `inverse` needs, so the library is
+correct, but its real invariant is subtly different from the one its
+docstring implies. That distinction is invisible to testing.
+
 ## SystemVerilog: the same pipeline, where the interpreter is the simulator
 
 The SV lane (`LeanModels/Sv/**`) is a 4-state (`0/1/X/Z`) cycle-level

@@ -1,0 +1,98 @@
+{
+  "_comment": "SV M0 differential-harness cases (docs/sv-design-m0.md, 'Differential harness vs Xcelium'). Per case: example name (Examples/sv/<example>.sv + .sv.json), signals to sample (canonical line 'CYCLE <k> <name>=<binary>...', sampled at negedge after NBA settle), and one stimulus object per cycle: input-port name -> MSB-first binary string (exact declared width; digits 0 1 x z). An input absent from a cycle's entry holds its previous value (initially x). accept_sigmas (default ['src']): Lean schedules the Xcelium trace may match; race_blk legitimately matches either source or reverse order.",
+  "fuel": 1000,
+  "cases": [
+    {
+      "name": "adder_directed",
+      "example": "adder",
+      "signals": ["a", "b", "s"],
+      "stimulus": [
+        {"a": "00000001", "b": "00000010"},
+        {"a": "11111111", "b": "00000001"},
+        {"a": "10101010", "b": "01010101"},
+        {"a": "00000000", "b": "00000000"},
+        {"a": "01111111", "b": "01111111"}
+      ]
+    },
+    {
+      "name": "adder_x",
+      "example": "adder",
+      "signals": ["a", "b", "s"],
+      "stimulus": [
+        {"a": "0000000x", "b": "00000001"},
+        {"a": "00000011", "b": "00000100"},
+        {"a": "zzzzzzzz", "b": "00000001"},
+        {"a": "00000001", "b": "000000x0"},
+        {"a": "xxxxxxxx", "b": "xxxxxxxx"}
+      ]
+    },
+    {
+      "name": "counter_reset",
+      "example": "counter",
+      "signals": ["rst", "count"],
+      "stimulus": [
+        {"rst": "0"},
+        {"rst": "1"},
+        {"rst": "0"},
+        {"rst": "0"},
+        {"rst": "0"},
+        {"rst": "1"},
+        {"rst": "0"},
+        {"rst": "0"}
+      ]
+    },
+    {
+      "name": "counter_xrst",
+      "example": "counter",
+      "signals": ["rst", "count"],
+      "stimulus": [
+        {"rst": "1"},
+        {"rst": "x"},
+        {"rst": "0"},
+        {"rst": "z"}
+      ]
+    },
+    {
+      "name": "race_blk_one_edge",
+      "example": "race_blk",
+      "signals": ["a", "b"],
+      "accept_sigmas": ["src", "rev"],
+      "stimulus": [
+        {}
+      ]
+    },
+    {
+      "name": "swap_nba_swap",
+      "example": "swap_nba",
+      "signals": ["a", "b"],
+      "stimulus": [
+        {},
+        {},
+        {},
+        {}
+      ]
+    },
+    {
+      "name": "xsel_directed",
+      "example": "xsel",
+      "signals": ["sel", "a", "b", "y"],
+      "stimulus": [
+        {"sel": "1", "a": "00001111", "b": "11110000"},
+        {"sel": "0", "a": "00001111", "b": "11110000"},
+        {"sel": "1", "a": "10100101", "b": "01011010"},
+        {"sel": "0", "a": "10100101", "b": "01011010"}
+      ]
+    },
+    {
+      "name": "xsel_x",
+      "example": "xsel",
+      "signals": ["sel", "a", "b", "y"],
+      "stimulus": [
+        {"sel": "x", "a": "00001111", "b": "11110000"},
+        {"sel": "z", "a": "00001111", "b": "11110000"},
+        {"sel": "1", "a": "0000xx11", "b": "11110000"},
+        {"sel": "0", "a": "00001111", "b": "zzzz0000"}
+      ]
+    }
+  ]
+}

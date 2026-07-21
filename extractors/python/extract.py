@@ -1,0 +1,500 @@
+#!/usr/bin/env python3
+"""Python -> standardized AST envelope extractor, lean[ block scanner, and
+Lean companion-file generator for the lean_models project.
+
+Usage (run from the repo root):
+
+    python3 extractors/python/extract.py <file.py> [more.py ...] [--companion-dir DIR]
+
+For each source file ``foo.py`` this writes:
+
+  * ``foo.json`` next to the source: the envelope described in
+    docs/envelope-schema.md (schema v0.1).
+  * ``<companion-dir>/<PascalCaseStem>.lean``: the generated companion file
+    described in docs/DESIGN.md (default companion dir: Examples/).
+
+Guarantees:
+  * Never fails on syntactically valid Python — unknown constructs become
+    ``Unsupported`` nodes.
+  * Deterministic: same input bytes => same output bytes.
+  * Hard errors (non-zero exit): unreadable file, syntactically invalid
+    Python, invalid stem, unclosed ``# lean[`` block.
+
+Python 3.9 compatible.
+"""
+
+import argparse
+import ast
+import hashlib
+import json
+import os
+import platform
+import re
+import sys
+
+SCHEMA_VERSION = "0.1"
+FRONTEND = {"name": "cpython-ast", "version": platform.python_version()}
+
+STEM_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+LEAN_OPEN_RE = re.compile(r"^\s*#\s*lean\[\s*$")
+LEAN_CLOSE_RE = re.compile(r"^\s*#\s*\]\s*$")
+COMMENT_PREFIX_RE = re.compile(r"^\s*#")
+
+ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow")
+ALLOWED_UNARYOPS = ("USub", "Not")
+ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE")
+
+UNSUPPORTED_TEXT_LIMIT = 200
+
+
+class ExtractError(Exception):
+    """Fatal extractor error (message is printed to stderr, exit code 1)."""
+
+
+# ---------------------------------------------------------------------------
+# AST -> envelope nodes
+# ---------------------------------------------------------------------------
+
+def span(node):
+    return {
+        "lineno": node.lineno,
+        "col_offset": node.col_offset,
+        "end_lineno": node.end_lineno,
+        "end_col_offset": node.end_col_offset,
+    }
+
+
+def unparse_truncated(node):
+    try:
+        text = ast.unparse(node)
+    except Exception:
+        text = ""
+    return text[:UNSUPPORTED_TEXT_LIMIT]
+
+
+def unsupported(node, py_kind=None):
+    return {
+        "kind": "Unsupported",
+        "span": span(node),
+        "py_kind": py_kind if py_kind is not None else type(node).__name__,
+        "text": unparse_truncated(node),
+    }
+
+
+def convert_expr(node):
+    if isinstance(node, ast.Constant):
+        v = node.value
+        if v is True or v is False:  # bool before int: bool is an int subtype
+            const = {"type": "bool", "value": v}
+        elif isinstance(v, int):
+            const = {"type": "int", "repr": str(v)}
+        elif isinstance(v, str):
+            const = {"type": "str", "value": v}
+        elif v is None:
+            const = {"type": "none"}
+        else:  # float / bytes / complex / Ellipsis / ...
+            return unsupported(node, "Constant:" + type(v).__name__)
+        return {"kind": "Constant", "span": span(node), "value": const}
+
+    if isinstance(node, ast.Name):
+        return {"kind": "Name", "span": span(node), "id": node.id}
+
+    if isinstance(node, ast.BinOp):
+        op = type(node.op).__name__
+        if op not in ALLOWED_BINOPS:
+            return unsupported(node, "BinOp:" + op)
+        return {
+            "kind": "BinOp",
+            "span": span(node),
+            "left": convert_expr(node.left),
+            "op": op,
+            "right": convert_expr(node.right),
+        }
+
+    if isinstance(node, ast.UnaryOp):
+        op = type(node.op).__name__
+        if op not in ALLOWED_UNARYOPS:
+            return unsupported(node, "UnaryOp:" + op)
+        return {
+            "kind": "UnaryOp",
+            "span": span(node),
+            "op": op,
+            "operand": convert_expr(node.operand),
+        }
+
+    if isinstance(node, ast.BoolOp):
+        return {
+            "kind": "BoolOp",
+            "span": span(node),
+            "op": type(node.op).__name__,  # And / Or only
+            "values": [convert_expr(v) for v in node.values],
+        }
+
+    if isinstance(node, ast.Compare):
+        ops = [type(o).__name__ for o in node.ops]
+        for op in ops:
+            if op not in ALLOWED_CMPOPS:
+                return unsupported(node, "Compare:" + op)
+        return {
+            "kind": "Compare",
+            "span": span(node),
+            "left": convert_expr(node.left),
+            "ops": ops,
+            "comparators": [convert_expr(c) for c in node.comparators],
+        }
+
+    if isinstance(node, ast.Call):
+        reasons = []
+        if node.keywords:
+            reasons.append("keywords")
+        if any(isinstance(a, ast.Starred) for a in node.args):
+            reasons.append("starred args")
+        return {
+            "kind": "Call",
+            "span": span(node),
+            "func": convert_expr(node.func),
+            "args": [convert_expr(a) for a in node.args],
+            "call_unsupported": ", ".join(reasons) if reasons else None,
+        }
+
+    if isinstance(node, (ast.List, ast.Tuple)):
+        return {
+            "kind": type(node).__name__,
+            "span": span(node),
+            "elts": [convert_expr(e) for e in node.elts],
+        }
+
+    if isinstance(node, ast.Subscript):
+        # CPython >= 3.9: `slice` is the index expr itself when it is a plain
+        # expression; Slice (and pre-3.9 ExtSlice/Index) => whole node Unsupported.
+        sl = node.slice
+        sl_kind = type(sl).__name__
+        if sl_kind in ("Slice", "ExtSlice", "Index"):
+            return unsupported(node, "Subscript:" + sl_kind)
+        return {
+            "kind": "Subscript",
+            "span": span(node),
+            "value": convert_expr(node.value),
+            "index": convert_expr(sl),
+        }
+
+    return unsupported(node)
+
+
+def convert_param(p):
+    return {"arg": p.arg, "span": span(p)}
+
+
+def _walk_scope(fn):
+    """All nodes of fn's own scope: descends the body but not into nested
+    scopes (defs/lambdas/classes — Unsupported nodes in v0 anyway)."""
+    stack = list(ast.iter_child_nodes(fn))
+    while stack:
+        node = stack.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda,
+                             ast.ClassDef)):
+            continue
+        yield node
+        stack.extend(ast.iter_child_nodes(node))
+
+
+def _assigned_names(fn):
+    """Names the function body assigns (CPython's static-locals rule makes
+    these local THROUGHOUT the body). Params excluded."""
+    names = set()
+    for node in _walk_scope(fn):
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+        elif isinstance(node, (ast.AugAssign, ast.AnnAssign, ast.For)):
+            targets = [node.target]
+        else:
+            continue
+        for t in targets:
+            for n in ast.walk(t):
+                if isinstance(n, ast.Name):
+                    names.add(n.id)
+    return names
+
+
+def _shadowed_calls(fn):
+    """Called names that the body also assigns: CPython would treat the callee
+    as an (initially unbound) local, so a dynamic-env interpreter cannot be
+    faithful. Emitted as `locals_unsupported` so the interpreter refuses loudly."""
+    assigned = _assigned_names(fn)
+    hits = set()
+    for node in _walk_scope(fn):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id in assigned:
+                hits.add(node.func.id)
+    return sorted(hits)
+
+
+def convert_stmt(node):
+    if isinstance(node, ast.FunctionDef):
+        a = node.args
+        params = [convert_param(p) for p in list(a.posonlyargs) + list(a.args)]
+        reasons = []
+        if a.defaults:
+            reasons.append("defaults")
+        if a.vararg is not None:
+            reasons.append("*args")
+        if a.kwonlyargs:
+            reasons.append("keyword-only args")
+        if a.kwarg is not None:
+            reasons.append("**kwargs")
+        if node.decorator_list:
+            reasons.append("decorators")
+        return {
+            "kind": "FunctionDef",
+            "span": span(node),
+            "name": node.name,
+            "args": params,
+            "args_unsupported": ", ".join(reasons) if reasons else None,
+            "locals_unsupported": (
+                "calls locally-assigned name(s) (static-locals rule): "
+                + ", ".join(shadowed)
+                if (shadowed := _shadowed_calls(node))
+                else None
+            ),
+            "body": [convert_stmt(s) for s in node.body],
+        }
+
+    if isinstance(node, ast.Return):
+        return {
+            "kind": "Return",
+            "span": span(node),
+            "value": convert_expr(node.value) if node.value is not None else None,
+        }
+
+    if isinstance(node, ast.Assign):
+        return {
+            "kind": "Assign",
+            "span": span(node),
+            "targets": [convert_expr(t) for t in node.targets],
+            "value": convert_expr(node.value),
+        }
+
+    if isinstance(node, ast.AugAssign):
+        op = type(node.op).__name__
+        if op not in ALLOWED_BINOPS:
+            return unsupported(node, "AugAssign:" + op)
+        return {
+            "kind": "AugAssign",
+            "span": span(node),
+            "target": convert_expr(node.target),
+            "op": op,
+            "value": convert_expr(node.value),
+        }
+
+    if isinstance(node, ast.While):
+        return {
+            "kind": "While",
+            "span": span(node),
+            "test": convert_expr(node.test),
+            "body": [convert_stmt(s) for s in node.body],
+            "orelse": [convert_stmt(s) for s in node.orelse],
+        }
+
+    if isinstance(node, ast.If):
+        return {
+            "kind": "If",
+            "span": span(node),
+            "test": convert_expr(node.test),
+            "body": [convert_stmt(s) for s in node.body],
+            "orelse": [convert_stmt(s) for s in node.orelse],
+        }
+
+    if isinstance(node, ast.Expr):
+        return {"kind": "Expr", "span": span(node), "value": convert_expr(node.value)}
+
+    if isinstance(node, ast.Pass):
+        return {"kind": "Pass", "span": span(node)}
+    if isinstance(node, ast.Break):
+        return {"kind": "Break", "span": span(node)}
+    if isinstance(node, ast.Continue):
+        return {"kind": "Continue", "span": span(node)}
+
+    return unsupported(node)
+
+
+# ---------------------------------------------------------------------------
+# lean[ block scanner
+# ---------------------------------------------------------------------------
+
+def strip_comment_marker(line):
+    """Strip the leading ^\\s*# and at most one following space.
+
+    Lines inside a block that do not carry a comment marker (e.g. blank lines)
+    are kept verbatim.
+    """
+    m = COMMENT_PREFIX_RE.match(line)
+    if m is None:
+        return line
+    rest = line[m.end():]
+    if rest.startswith(" "):
+        rest = rest[1:]
+    return rest
+
+
+def scan_lean_blocks(lines, path):
+    """Return [{"first_line": ..., "last_line": ..., "text": ...}, ...].
+
+    first_line/last_line are the 1-based line numbers of the `# lean[` and
+    `# ]` marker lines. text is the joined inner lines, comment markers
+    stripped, no trailing newline. Unclosed block => ExtractError.
+    """
+    blocks = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        if LEAN_OPEN_RE.match(lines[i]):
+            first_line = i + 1
+            j = i + 1
+            inner = []
+            while j < n and not LEAN_CLOSE_RE.match(lines[j]):
+                inner.append(strip_comment_marker(lines[j]))
+                j += 1
+            if j >= n:
+                raise ExtractError(
+                    "%s:%d: unclosed '# lean[' block (no matching '# ]')"
+                    % (path, first_line)
+                )
+            blocks.append(
+                {"first_line": first_line, "last_line": j + 1, "text": "\n".join(inner)}
+            )
+            i = j + 1
+        else:
+            i += 1
+    return blocks
+
+
+# ---------------------------------------------------------------------------
+# Companion generation
+# ---------------------------------------------------------------------------
+
+def pascal_case(stem):
+    """my_func -> MyFunc (split on '_', uppercase first letter of each part)."""
+    return "".join(p[:1].upper() + p[1:] for p in stem.split("_"))
+
+
+def generate_companion(stem, source_rel, json_rel, source_sha256, blocks):
+    hoisted = []  # deduped, order-preserving across all blocks
+    block_bodies = []
+    for b in blocks:
+        body_lines = []
+        for ln in b["text"].split("\n") if b["text"] != "" else []:
+            if ln.startswith("import "):
+                if ln not in hoisted:
+                    hoisted.append(ln)
+            else:
+                body_lines.append(ln)
+        block_bodies.append("\n".join(body_lines))
+
+    parts = [
+        "/-",
+        "AUTOGENERATED by extractors/python/extract.py — DO NOT EDIT.",
+        "source: " + source_rel,
+        "sha256: " + source_sha256,
+        "-/",
+        "import LeanModels",
+    ]
+    parts.extend(hoisted)
+    parts.append("")
+    parts.append("open LeanModels LeanModels.Python")
+    parts.append("")
+    parts.append('load_program %s from "%s"' % (stem, json_rel))
+    for body in block_bodies:
+        if body.strip() == "":
+            continue  # block contained only imports (or nothing)
+        parts.append("")
+        parts.append(body)
+    return "\n".join(parts) + "\n"
+
+
+# ---------------------------------------------------------------------------
+# Driver
+# ---------------------------------------------------------------------------
+
+def rel_posix(path):
+    """Normalize a user-supplied path for use inside emitted files."""
+    return os.path.normpath(path).replace(os.sep, "/")
+
+
+def process_file(source_path, companion_dir):
+    stem = os.path.splitext(os.path.basename(source_path))[0]
+    if not STEM_RE.match(stem):
+        raise ExtractError(
+            "%s: stem %r is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)"
+            % (source_path, stem)
+        )
+
+    try:
+        with open(source_path, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        raise ExtractError("%s: cannot read: %s" % (source_path, e))
+
+    source_sha256 = hashlib.sha256(data).hexdigest()
+    try:
+        text = data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        raise ExtractError("%s: not valid UTF-8: %s" % (source_path, e))
+
+    try:
+        tree = ast.parse(text, filename=source_path)
+    except SyntaxError as e:
+        raise ExtractError("%s: syntax error: %s" % (source_path, e))
+
+    blocks = scan_lean_blocks(text.splitlines(), source_path)
+
+    source_rel = rel_posix(source_path)
+    json_rel = os.path.splitext(source_rel)[0] + ".json"
+
+    envelope = {
+        "schema_version": SCHEMA_VERSION,
+        "language": "python",
+        "frontend": {"name": FRONTEND["name"], "version": FRONTEND["version"]},
+        "source_file": source_rel,
+        "source_sha256": source_sha256,
+        "module": {"kind": "Module", "body": [convert_stmt(s) for s in tree.body]},
+        "lean_blocks": blocks,
+    }
+
+    json_path = os.path.splitext(source_path)[0] + ".json"
+    with open(json_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(envelope, f, indent=2)
+        f.write("\n")
+
+    companion_path = os.path.join(companion_dir, pascal_case(stem) + ".lean")
+    companion_text = generate_companion(stem, source_rel, json_rel, source_sha256, blocks)
+    os.makedirs(companion_dir, exist_ok=True)
+    with open(companion_path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(companion_text)
+
+
+def main(argv=None):
+    sys.setrecursionlimit(10000)
+    parser = argparse.ArgumentParser(
+        prog="extract.py",
+        description="Extract Python sources to envelope JSON + Lean companion files "
+        "(run from the repo root).",
+    )
+    parser.add_argument("sources", nargs="+", metavar="file.py")
+    parser.add_argument(
+        "--companion-dir",
+        default="Examples",
+        help="directory for generated companion .lean files (default: Examples/)",
+    )
+    args = parser.parse_args(argv)
+
+    try:
+        for src in args.sources:
+            process_file(src, args.companion_dir)
+    except ExtractError as e:
+        print("error: %s" % e, file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

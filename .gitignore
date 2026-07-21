@@ -1,0 +1,6 @@
+.lake/
+__pycache__/
+*.pyc
+*.olean
+harness/sv/conformance/census.json
+notebooks/work/

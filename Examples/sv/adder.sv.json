@@ -1,0 +1,122 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "source_file": "Examples/sv/adder.sv",
+  "source_sha256": "d078ae546305d852af83e963c991cbc0f81f6a7f647f9598c675e836ea138c09",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "adder",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 34,
+              "end_line": 1,
+              "end_col": 35
+            },
+            "name": "a",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 37,
+              "end_line": 1,
+              "end_col": 38
+            },
+            "name": "b",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 34,
+              "end_line": 2,
+              "end_col": 35
+            },
+            "name": "s",
+            "dir": "out",
+            "width": 8
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 3,
+              "col": 10,
+              "end_line": 3,
+              "end_col": 19
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 3,
+                "col": 10,
+                "end_line": 3,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "s"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 3,
+                "col": 14,
+                "end_line": 3,
+                "end_col": 19
+              },
+              "width": 8,
+              "op": "+",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 14,
+                  "end_line": 3,
+                  "end_col": 15
+                },
+                "width": 8,
+                "name": "a"
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 18,
+                  "end_line": 3,
+                  "end_col": 19
+                },
+                "width": 8,
+                "name": "b"
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,37 @@
+def sum_to(n: int) -> int:
+    s = 0
+    while n > 0:
+        s += n
+        n -= 1
+    return s
+
+
+# lean[
+# /-! Non-vacuity: concrete runs in surface syntax (`#py_check`,
+# Surface.lean — fixed generous fuel; minimal-fuel pinning retired). -/
+# #py_check sum_to(10) = 55
+# #py_check sum_to(0) = 0
+#
+# /-- Total correctness for `n ≥ 0`: `sum_to(n)` terminates and returns the
+# `n`-th triangular number — in clause form (LoopTactic.lean). The loop
+# counts *down*: the Python variable `n` is mutated, so the theorem binder
+# `n` shadows it and the invariant must mention the initial value — hence
+# `(state := [s, n])` (the escape hatch, exactly as in
+# Examples/python/gcd.py), with lambda binders `s`/`k` for the running sum
+# and the current countdown value. Invariant: `s` already holds the summed
+# tail `(k+1) + ⋯ + n`, stated multiplication-free as
+# `2*s = (n - k)*(n + k + 1)`, plus the range `0 ≤ k ≤ n`; the measure is
+# `k` itself. Residual goals are pure arithmetic on named atoms: the exit
+# algebra (first bullet: `hcont` and the range force `k' = 0`, then `grind`
+# finishes the division), then invariant preservation, measure decrease,
+# and the initial invariant, all closed by `grind`. No `Val`, no fuel, no
+# AST anywhere. -/
+# theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
+#   py_begin [sum_to]
+#   py_loop (state := [s, n])
+#           (inv := fun (s k : Int) => 0 ≤ k ∧ k ≤ n ∧ 2 * s = (n - k) * (n + k + 1))
+#           (dec := fun (s k : Int) => k.toNat)
+#   · obtain rfl : k' = 0 := by omega
+#     grind
+#   all_goals grind
+# ]

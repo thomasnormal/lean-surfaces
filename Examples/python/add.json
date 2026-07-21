@@ -1,0 +1,95 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/add.py",
+  "source_sha256": "208dd5239d3dcf353d3f291a5381034ea36a4f1433b5eba1c0e8d49b22e9dd97",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 16
+        },
+        "name": "add",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 1,
+              "col_offset": 8,
+              "end_lineno": 1,
+              "end_col_offset": 9
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 12
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 15,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 5,
+      "last_line": 45,
+      "text": "/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,\nSurface.lean \u2014 fixed generous fuel; minimal-fuel pinning retired). -/\n#py_check add(2, 3) = 5\n#py_check add(-2, 3) = 1\n\n/-- The typed surface form: total correctness \u2014 `add` terminates and\nreturns `a + b` \u2014 with no `Val`, no fuel, one tactic. (Not `@[spec]`: that\nattribute takes Hoare-triple/simp shapes; the \u2203-fuel arrow is neither.) -/\ntheorem add_total (a b : PyInt) : add(a, b) ==> a + b := by\n  py_prove [add]\n\nset_option warning.simp.varHead false in\n/-- `add(a, b)` returns `a + b` on int inputs: any successful run, at any\nfuel, yields exactly `.int (a + b)` (partial correctness). A determinism\ncorollary of `add_total` \u2014 one `py_corollary` (Surface.lean). -/\n@[spec] theorem add_spec (a b : Int) {fuel : Nat} {r : Val}\n    (h : callFunction add \"add\" #[.int a, .int b] fuel = .ok r) :\n    r = .int (a + b) := by\n  py_corollary [add_total]\n\n/-- The strengthened partial arrow: every run of `add(a, b)`, at every\nfuel, either times out or returns exactly `a + b` \u2014 no exception, no\n`unsupported`, no other value. Note `add_spec` alone could NOT give this\n(it speaks only about `.ok` results); it is instead free from `add_total`,\nbecause the interpreter is deterministic modulo fuel and total correctness\nsubsumes the strengthened partial judgment (`CallsTo.partialTo`). -/\ntheorem add_partial (a b : PyInt) : add(a, b) ~~> a + b := by\n  py_corollary [add_total]\n\n/-! Delaborator regression (LeanModels/Python/Delab.lean): the statements\nprint back in surface notation \u2014 the goal state is the interface. -/\n\n/-- info: add_total (a b : PyInt) : add(a, b) ==> a + b -/\n#guard_msgs in\n#check add_total\n\n/-- info: add_partial (a b : PyInt) : add(a, b) ~~> a + b -/\n#guard_msgs in\n#check add_partial"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+# CI for lean_models. Mirrors tools/ci.sh (the local entry point — keep in sync).
+# The SV differential harness needs Xcelium and only runs where `xrun` exists
+# (self-hosted); tools/ci.sh auto-skips it elsewhere, so this workflow is safe
+# on stock GitHub runners.
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install elan (pinned toolchain comes from lean-toolchain)
+        run: |
+          curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+      - name: Cache lake build
+        uses: actions/cache@v4
+        with:
+          path: .lake
+          key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
+      - name: Notebook dependencies
+        run: python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
+      - name: Full check
+        run: bash tools/ci.sh

@@ -1,0 +1,174 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "source_file": "Examples/sv/race_blk.sv",
+  "source_sha256": "d5f99aa0cffc4b6b708b7eca4e1f4073684bc05af2503161f080b10745143b71",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "race_blk",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 30,
+              "end_line": 1,
+              "end_col": 33
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": 1
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 23
+            },
+            "name": "a",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 19,
+                "end_line": 2,
+                "end_col": 23
+              },
+              "width": 8,
+              "bits": "00000001"
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 25,
+              "end_line": 2,
+              "end_col": 33
+            },
+            "name": "b",
+            "width": 8,
+            "init": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 29,
+                "end_line": 2,
+                "end_col": 33
+              },
+              "width": 8,
+              "bits": "00000010"
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 31
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 3,
+                "col": 25,
+                "end_line": 3,
+                "end_col": 31
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 25,
+                  "end_line": 3,
+                  "end_col": 26
+                },
+                "width": 8,
+                "name": "a"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 29,
+                  "end_line": 3,
+                  "end_col": 30
+                },
+                "width": 8,
+                "name": "b"
+              }
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 4,
+              "end_col": 31
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 4,
+                "col": 25,
+                "end_line": 4,
+                "end_col": 31
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 4,
+                  "col": 25,
+                  "end_line": 4,
+                  "end_col": 26
+                },
+                "width": 8,
+                "name": "b"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 4,
+                  "col": 29,
+                  "end_line": 4,
+                  "end_col": 30
+                },
+                "width": 8,
+                "name": "a"
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

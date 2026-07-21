@@ -1,0 +1,243 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/tut_04.py",
+  "source_sha256": "1875c112786391c6a31041bd5e4ec85d35675b3a2a7b62549beb4836b885c97d",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 12
+        },
+        "name": "fact",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 1,
+              "col_offset": 9,
+              "end_lineno": 1,
+              "end_col_offset": 10
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 5
+                },
+                "id": "r"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 8,
+                "end_lineno": 2,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 4,
+                  "end_lineno": 3,
+                  "end_col_offset": 5
+                },
+                "id": "i"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 3,
+                "col_offset": 8,
+                "end_lineno": 3,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 4,
+                "col_offset": 10,
+                "end_lineno": 4,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 10,
+                  "end_lineno": 4,
+                  "end_col_offset": 11
+                },
+                "id": "i"
+              },
+              "ops": [
+                "LtE"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 15,
+                    "end_lineno": 4,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 8,
+                  "end_lineno": 5,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 8,
+                    "end_lineno": 5,
+                    "end_col_offset": 9
+                  },
+                  "id": "r"
+                },
+                "op": "Mult",
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 13,
+                    "end_lineno": 5,
+                    "end_col_offset": 14
+                  },
+                  "id": "i"
+                }
+              },
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 8,
+                  "end_lineno": 6,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 8,
+                    "end_lineno": 6,
+                    "end_col_offset": 9
+                  },
+                  "id": "i"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 13,
+                    "end_lineno": 6,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 7,
+              "col_offset": 4,
+              "end_lineno": 7,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 7,
+                "col_offset": 11,
+                "end_lineno": 7,
+                "end_col_offset": 12
+              },
+              "id": "r"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 10,
+      "last_line": 66,
+      "text": "/-! Tutorial 04 (docs/tutorial/04-loops.md): the worked exercise \u2014\nfactorial by loop, proved end-to-end with `py_begin`/`py_loop`. -/\n#py_check tut_04.fact(5) = 120\n#py_check tut_04.fact(1) = 1\n#py_check tut_04.fact(0) = 1\n#py_check tut_04.fact(-2) = 1\n\n/-- Mathematical factorial: `1, 1, 2, 6, 24, 120, \u2026` \u2014 the spec-side\nmodel, `Int`-valued so it lands where the marshalled result lives. -/\ndef factSpec : Nat \u2192 Int\n  | 0 => 1\n  | n + 1 => (n + 1 : Int) * factSpec n\n\n#guard factSpec 5 == 120\n\n/-- The unfolding step of `factSpec` in the exact `Int` shape the loop\ninvariant produces: for `1 \u2264 i`, `factSpec i.toNat` peels off one factor\n`i`. `grind` consumes this in the invariant-preservation goal. -/\ntheorem factSpec_step (i : Int) (hi : 1 \u2264 i) :\n    factSpec i.toNat = i * factSpec (i - 1).toNat := by\n  have h : i.toNat = (i - 1).toNat + 1 := by omega\n  rw [h, factSpec]\n  congr 1\n  omega\n\n/-- Total correctness for `n \u2265 0`: `fact(n)` terminates and returns `n!`\n\u2014 in clause form (LoopTactic.lean). Invariant: `r` holds the factorial\nof everything already multiplied in (`r = factSpec (i-1).toNat`), plus\nthe range `1 \u2264 i \u2264 n + 1`; measure: iterations left, `(n + 1 - i)`.\nResidual goals: the exit algebra (`hcont` + range force `i' = n + 1`,\nthen `hinv3` *is* the claim), and preservation/decrease/initial all fall\nto `grind` armed with `factSpec`'s equations and `factSpec_step`. -/\ntheorem fact_total (n : PyInt) (hn : 0 \u2264 n) : tut_04.fact(n) ==> factSpec n.toNat := by\n  py_begin [tut_04]\n  py_loop (inv := fun (r i : Int) => 1 \u2264 i \u2227 i \u2264 n + 1 \u2227 r = factSpec (i - 1).toNat)\n          (dec := fun (r i : Int) => (n + 1 - i).toNat)\n  \u00b7 obtain rfl : i' = n + 1 := by omega\n    simpa using hinv3\n  all_goals grind [factSpec, factSpec_step]\n\nset_option warning.simp.varHead false in\n/-- `fact(n)` returns `n!` for `n \u2265 0`: any successful run, at any fuel,\nyields exactly `.int (factSpec n.toNat)`. A determinism corollary of\n`fact_total` \u2014 one `py_corollary` (Surface.lean). -/\n@[spec] theorem fact_spec (n : Int) (hn : 0 \u2264 n) {fuel : Nat} {r : Val}\n    (h : callFunction tut_04 \"fact\" #[.int n] fuel = .ok r) :\n    r = .int (factSpec n.toNat) := by\n  py_corollary [fact_total]\n\nset_option warning.simp.varHead false in\n/-- The typed surface form: binders are `PyInt`, the result is bound\nrelationally with `\u21d3`, and neither `Val` nor fuel appears. -/\n@[spec] theorem fact_correct (n r : PyInt) (hn : 0 \u2264 n) (h : tut_04.fact(n) \u21d3 r) :\n    r = factSpec n.toNat := by\n  py_corollary [fact_total]"
+    }
+  ]
+}

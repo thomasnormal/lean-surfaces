@@ -1,0 +1,184 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "source_file": "Examples/sv/counter.sv",
+  "source_sha256": "ced43d285ae516e39164aadd568ab145811a1638f73ee93f5345137a540393de",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 6,
+          "end_col": 10
+        },
+        "name": "counter",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 30,
+              "end_line": 1,
+              "end_col": 33
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 35,
+              "end_line": 1,
+              "end_col": 38
+            },
+            "name": "rst",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 36,
+              "end_line": 2,
+              "end_col": 41
+            },
+            "name": "count",
+            "dir": "out",
+            "width": 8
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 5,
+              "end_col": 36
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "If",
+              "span": {
+                "line": 4,
+                "col": 5,
+                "end_line": 5,
+                "end_col": 36
+              },
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 4,
+                  "col": 9,
+                  "end_line": 4,
+                  "end_col": 12
+                },
+                "width": 1,
+                "name": "rst"
+              },
+              "then": {
+                "kind": "NonblockingAssign",
+                "span": {
+                  "line": 4,
+                  "col": 14,
+                  "end_line": 4,
+                  "end_col": 26
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 4,
+                    "col": 14,
+                    "end_line": 4,
+                    "end_col": 19
+                  },
+                  "width": 8,
+                  "name": "count"
+                },
+                "value": {
+                  "kind": "Literal",
+                  "span": {
+                    "line": 4,
+                    "col": 23,
+                    "end_line": 4,
+                    "end_col": 25
+                  },
+                  "width": 8,
+                  "bits": "00000000"
+                }
+              },
+              "else": {
+                "kind": "NonblockingAssign",
+                "span": {
+                  "line": 5,
+                  "col": 14,
+                  "end_line": 5,
+                  "end_col": 36
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 14,
+                    "end_line": 5,
+                    "end_col": 19
+                  },
+                  "width": 8,
+                  "name": "count"
+                },
+                "value": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 5,
+                    "col": 23,
+                    "end_line": 5,
+                    "end_col": 35
+                  },
+                  "width": 8,
+                  "op": "+",
+                  "left": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 23,
+                      "end_line": 5,
+                      "end_col": 28
+                    },
+                    "width": 8,
+                    "name": "count"
+                  },
+                  "right": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 31,
+                      "end_line": 5,
+                      "end_col": 35
+                    },
+                    "width": 8,
+                    "bits": "00000001"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

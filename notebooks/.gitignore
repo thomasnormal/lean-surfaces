@@ -1,0 +1,5 @@
+# Scratch working directory for the Jupyter track (%%pyfile / %%lean magics):
+# extracted envelopes, generated companions, the precompiled NotebookHeader,
+# and per-cell temp modules. Safe to delete; rebuilt by re-running notebooks.
+work/
+.ipynb_checkpoints/

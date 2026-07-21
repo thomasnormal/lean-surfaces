@@ -1,0 +1,144 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/my_abs.py",
+  "source_sha256": "e69dc0a17853b7cb794ad25ef4fa187f69d84f736181544c955f2c24b5dee0e7",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 12
+        },
+        "name": "my_abs",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 17
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 2,
+                "col_offset": 7,
+                "end_lineno": 2,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 7,
+                  "end_lineno": 2,
+                  "end_col_offset": 8
+                },
+                "id": "x"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 11,
+                    "end_lineno": 2,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 8,
+                  "end_lineno": 3,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "UnaryOp",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 15,
+                    "end_lineno": 3,
+                    "end_col_offset": 17
+                  },
+                  "op": "USub",
+                  "operand": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 3,
+                      "col_offset": 16,
+                      "end_lineno": 3,
+                      "end_col_offset": 17
+                    },
+                    "id": "x"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 4,
+                "col_offset": 11,
+                "end_lineno": 4,
+                "end_col_offset": 12
+              },
+              "id": "x"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 7,
+      "last_line": 32,
+      "text": "/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,\nSurface.lean \u2014 fixed generous fuel; minimal-fuel pinning retired). -/\n#py_check my_abs(5) = 5\n#py_check my_abs(-5) = 5\n#py_check my_abs(0) = 0\n\n/-- Total correctness (gallery example 1): `my_abs(x)` terminates and\nreturns `|x|` (`Int.natAbs`-based, LeanModels/Python/Surface.lean).\n`py_prove` handles the branch itself: its branch-splitting alternative\n`split`s the residual `ite` from the symbolic `if x < 0:` and finishes\neach side with `omega` (which understands `natAbs` natively). (Not\n`@[spec]`: that attribute takes Hoare-triple/simp shapes; the \u2203-fuel\narrow is neither \u2014 see Examples/python/add.py.) -/\ntheorem my_abs_spec (x : PyInt) : my_abs(x) ==> |x| := by\n  py_prove [my_abs]\n\nset_option warning.simp.varHead false in\n/-- `my_abs(x)` returns `|x|` on int inputs: any successful run, at any\nfuel, yields exactly `.int |x|`. A determinism corollary of `my_abs_spec`\n\u2014 one `py_corollary` (Surface.lean). -/\n@[spec] theorem my_abs_run_spec (x : Int) {fuel : Nat} {r : Val}\n    (h : callFunction my_abs \"my_abs\" #[.int x] fuel = .ok r) :\n    r = .int |x| := by\n  py_corollary [my_abs_spec]"
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/midpoint.py",
+  "source_sha256": "bde96ce945c7ec0d1b0821b5d22586bf01d0d9d58aa7abd0b18176be1f20df81",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 23
+        },
+        "name": "midpoint",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 1,
+              "col_offset": 13,
+              "end_lineno": 1,
+              "end_col_offset": 19
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 1,
+              "col_offset": 21,
+              "end_lineno": 1,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 23
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 12,
+                  "end_lineno": 2,
+                  "end_col_offset": 17
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 12,
+                    "end_lineno": 2,
+                    "end_col_offset": 13
+                  },
+                  "id": "a"
+                },
+                "op": "Add",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 16,
+                    "end_lineno": 2,
+                    "end_col_offset": 17
+                  },
+                  "id": "b"
+                }
+              },
+              "op": "FloorDiv",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 22,
+                  "end_lineno": 2,
+                  "end_col_offset": 23
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "2"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 5,
+      "last_line": 48,
+      "text": "/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,\nSurface.lean) \u2014 including the negative-operand cases where floor division\n(`Int.fdiv`) and Lean's truncating `Int.div` disagree: `midpoint(-3, -5)\n= -4`, `midpoint(3, -4) = -1` (CPython floors; truncation would give `0`). -/\n#py_check midpoint(3, 5) = 4\n#py_check midpoint(-3, -5) = -4\n#py_check midpoint(3, -4) = -1\n#py_check midpoint(0, 0) = 0\n\n/-- Total correctness (gallery example 2): the general theorem must say\n`Int.fdiv` \u2014 Python `//` floors, and the divergence from truncating\ndivision is visible in the statement, never buried in a translation.\nStraight-line body: `py_prove` closes it outright (`py_simp` reduces\n`evalBinOp .floorDiv` to `Int.fdiv` and discharges the `2 = 0` divisor\nguard). (Not `@[spec]`: the \u2203-fuel arrow is not a Hoare-triple/simp\nshape \u2014 see Examples/python/add.py.) -/\ntheorem midpoint_spec (a b : PyInt) : midpoint(a, b) ==> Int.fdiv (a + b) 2 := by\n  py_prove [midpoint]\n\nset_option linter.unusedVariables false in\n/-- The prettier `/` form under the gallery's sign hypotheses, derived\nfrom `midpoint_spec` by rewriting the returned value (`Int.fdiv (a + b) 2\n= (a + b) / 2` via `Int.fdiv_eq_ediv_of_nonneg`, passed to `py_corollary`\nas the value bridge) \u2014 NOT by re-executing the body. Note: core Lean's\n`Int` `/` is Euclidean division (`Int.ediv`), which already agrees with\nfloor division for every *positive divisor*, so on this toolchain\n`ha`/`hb` are not load-bearing (recorded for the honest reading \u2014 hence\nthe silenced unused-variable linter); the statement is the normative\ngallery one (docs/spec-surface.md \u00a72). -/\ntheorem midpoint_nonneg (a b : PyInt) (ha : 0 \u2264 a) (hb : 0 \u2264 b) :\n    midpoint(a, b) ==> (a + b) / 2 := by\n  py_corollary [midpoint_spec, Int.fdiv_eq_ediv_of_nonneg]\n\nset_option warning.simp.varHead false in\n/-- `midpoint(a, b)` returns `\u230a(a + b) / 2\u230b` on int inputs: any successful\nrun, at any fuel, yields exactly `.int (Int.fdiv (a + b) 2)`. A\ndeterminism corollary of `midpoint_spec` \u2014 one `py_corollary`\n(Surface.lean). -/\n@[spec] theorem midpoint_run_spec (a b : Int) {fuel : Nat} {r : Val}\n    (h : callFunction midpoint \"midpoint\" #[.int a, .int b] fuel = .ok r) :\n    r = .int (Int.fdiv (a + b) 2) := by\n  py_corollary [midpoint_spec]"
+    }
+  ]
+}

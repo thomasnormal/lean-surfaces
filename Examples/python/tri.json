@@ -1,0 +1,254 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/tri.py",
+  "source_sha256": "2511358e11f84c535dadf0e7f0cc52062a3029ed1c48681be24d6ec26a110f42",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 16
+        },
+        "name": "tri",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 1,
+              "col_offset": 8,
+              "end_lineno": 1,
+              "end_col_offset": 9
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 19
+            },
+            "targets": [
+              {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "elts": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 2,
+                      "col_offset": 4,
+                      "end_lineno": 2,
+                      "end_col_offset": 9
+                    },
+                    "id": "total"
+                  },
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 2,
+                      "col_offset": 11,
+                      "end_lineno": 2,
+                      "end_col_offset": 12
+                    },
+                    "id": "i"
+                  }
+                ]
+              }
+            ],
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 2,
+                "col_offset": 15,
+                "end_lineno": 2,
+                "end_col_offset": 19
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 15,
+                    "end_lineno": 2,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 18,
+                    "end_lineno": 2,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 3,
+                "col_offset": 10,
+                "end_lineno": 3,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 10,
+                  "end_lineno": 3,
+                  "end_col_offset": 11
+                },
+                "id": "i"
+              },
+              "ops": [
+                "LtE"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 15,
+                    "end_lineno": 3,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 8,
+                  "end_lineno": 4,
+                  "end_col_offset": 18
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 8,
+                    "end_lineno": 4,
+                    "end_col_offset": 13
+                  },
+                  "id": "total"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 17,
+                    "end_lineno": 4,
+                    "end_col_offset": 18
+                  },
+                  "id": "i"
+                }
+              },
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 8,
+                  "end_lineno": 5,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 8,
+                    "end_lineno": 5,
+                    "end_col_offset": 9
+                  },
+                  "id": "i"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 13,
+                    "end_lineno": 5,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 6,
+                "col_offset": 11,
+                "end_lineno": 6,
+                "end_col_offset": 16
+              },
+              "id": "total"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 9,
+      "last_line": 65,
+      "text": "/-! Non-vacuity: concrete runs in surface syntax (`#py_check`,\nSurface.lean \u2014 fixed generous fuel; minimal-fuel pinning retired). -/\n#py_check tri(10) = 55\n#py_check tri(0) = 0\n#py_check tri(-3) = 0\n\n/-- Total correctness for `n \u2265 0`: `tri(n)` terminates and returns the\n`n`-th triangular number \u2014 in clause form (LoopTactic.lean). `py_begin`\nsymbolically executes the entry up to the loop; `py_loop` proves the loop\nby the generic while rule from just two clauses \u2014 the invariant\n(`total = 0 + 1 + \u22ef + (i-1)`, stated multiplication-free as\n`2*total = i*(i-1)`, plus the range `0 \u2264 i \u2264 n + 1`) and the decreasing\nmeasure `n + 1 - i` \u2014 deriving the logical state, its environment\nrendering, the test value, and the body's step by unification. Residual\ngoals are pure arithmetic on named atoms: the exit algebra (first bullet:\n`\u00ac i' \u2264 n` and the range force `i' = n + 1`, then `grind` finishes the\ndivision), then invariant preservation, measure decrease, and the initial\ninvariant, all closed by `grind`. No `Val`, no fuel, no AST anywhere. -/\ntheorem tri_total (n : PyInt) (hn : 0 \u2264 n) : tri(n) ==> n * (n + 1) / 2 := by\n  py_begin [tri]\n  py_loop (inv := fun (total i : Int) => 0 \u2264 i \u2227 i \u2264 n + 1 \u2227 2 * total = i * (i - 1))\n          (dec := fun (total i : Int) => (n + 1 - i).toNat)\n  \u00b7 obtain rfl : i' = n + 1 := by omega\n    grind\n  all_goals grind\n\n/-- Total correctness for `n < 0`: the loop never runs and `tri(n)` returns\n`0`, all at constant fuel. -/\ntheorem tri_neg_total (n : PyInt) (hn : n < 0) : tri(n) ==> (0 : Int) := by\n  have h0 : \u00ac ((0 : Int) \u2264 n) := by have hn' : (0 : Int) > n := hn; omega\n  exact CallsTo.intro 8 (by py_simp [callFunction, execWhile, tri, h0])\n\nset_option warning.simp.varHead false in\n/-- `tri(n)` returns the `n`-th triangular number `n*(n+1)/2` for `n \u2265 0`:\nany successful run, at any fuel, yields exactly `.int (n*(n+1)/2)`. A\ndeterminism corollary of `tri_total` \u2014 one `py_corollary` (Surface.lean). -/\n@[spec] theorem tri_spec (n : Int) (hn : 0 \u2264 n) {fuel : Nat} {r : Val}\n    (h : callFunction tri \"tri\" #[.int n] fuel = .ok r) :\n    r = .int (n * (n + 1) / 2) := by\n  py_corollary [tri_total]\n\nset_option warning.simp.varHead false in\n/-- `tri(n)` returns `0` for `n < 0` (the loop body never runs). A\ndeterminism corollary of `tri_neg_total`. -/\n@[spec] theorem tri_neg_spec (n : Int) (hn : n < 0) {fuel : Nat} {r : Val}\n    (h : callFunction tri \"tri\" #[.int n] fuel = .ok r) :\n    r = .int 0 := by\n  py_corollary [tri_neg_total]\n\nset_option warning.simp.varHead false in\n/-- The typed surface form of `tri_spec`: binders are `PyInt`, the result is\nbound relationally with `\u21d3`, and neither `Val` nor fuel appears. -/\n@[spec] theorem tri_correct (n r : PyInt) (hn : 0 \u2264 n) (h : tri(n) \u21d3 r) :\n    r = n * (n + 1) / 2 := by\n  py_corollary [tri_total]"
+    }
+  ]
+}

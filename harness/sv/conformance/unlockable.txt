@@ -1,0 +1,11 @@
+chapter-11/11.10.1--string-literal-bitwise-operand.sv
+chapter-11/11.10.1--string-literal-relational-operand.sv
+chapter-11/11.3.2--precedence-bitwise-and-over-xor.sv
+chapter-11/11.3.2--precedence-bitwise-xor-over-or.sv
+chapter-11/11.4.11--conditional-operator-right-associative.sv
+chapter-11/11.4.4--relational-operators-basic.sv
+chapter-11/11.4.4--unsigned-comparison.sv
+chapter-11/11.7.1--unsigned-comparison-large-values.sv
+chapter-6/6.16--string-literal-both-literals-integral-comparison.sv
+chapter-6/6.9.1--vector-unsigned-wrap-modulo-v3.sv
+chapter-6/6.9.2--vectored-net-no-bitselect.sv

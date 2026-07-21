@@ -1,0 +1,13 @@
+name = "lean-models"
+defaultTargets = ["LeanModels", "Examples", "leanmodels-run"]
+
+[[lean_lib]]
+name = "LeanModels"
+
+[[lean_lib]]
+name = "Examples"
+globs = ["Examples.+"]
+
+[[lean_exe]]
+name = "leanmodels-run"
+root = "Main"

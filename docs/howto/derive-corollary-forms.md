@@ -29,14 +29,18 @@ corollary of `add_total` — one `py_corollary` (Surface.lean). -/
 **2. Typed `⇓` form** (no `Val`, no fuel):
 
 ```lean
--- Examples/Tri.lean (generated from Examples/python/tri.py)
+-- Examples/python/tut_04.py (lean block; builds via Examples/Tut04.lean)
 set_option warning.simp.varHead false in
-/-- The typed surface form of `tri_spec`: binders are `PyInt`, the result is
-bound relationally with `⇓`, and neither `Val` nor fuel appears. -/
-@[spec] theorem tri_correct (n r : PyInt) (hn : 0 ≤ n) (h : tri(n) ⇓ r) :
-    r = n * (n + 1) / 2 := by
-  py_corollary [tri_total]
+/-- The typed surface form: binders are `PyInt`, the result is bound
+relationally with `⇓`, and neither `Val` nor fuel appears. -/
+@[spec] theorem fact_correct (n r : PyInt) (hn : 0 ≤ n) (h : tut_04.fact(n) ⇓ r) :
+    r = factSpec n.toNat := by
+  py_corollary [fact_total]
 ```
+
+(The same shape in the three-file layout: `tri_correct` in
+[`Examples/tri/spec.lean`](../../Examples/tri/spec.lean), stated
+`:= by proofs` with the `py_corollary` proof in `proof.lean`.)
 
 **3. Strengthened partial `~~>`** (free from totality via
 `CallsTo.partialTo` — determinism modulo fuel):

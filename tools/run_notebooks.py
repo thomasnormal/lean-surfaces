@@ -18,7 +18,9 @@ specs, wrong invariants — their error output is the lesson):
 
 Any other cell error is fatal. Executed notebooks are saved back in place
 (outputs included — the failing cells' goal states stay visible on disk);
-``--no-save`` checks without writing.
+``--no-save`` checks without writing. Before saving, each cell's transient
+``metadata.execution`` timestamps (nbclient bookkeeping) are stripped so a
+rerun with unchanged outputs produces no metadata-only diff churn.
 
 Exit code 0 iff every notebook ran clean. Requires nbformat + nbclient and
 a ``python3`` kernelspec (ipykernel). ``lake build`` must have been run at
@@ -121,6 +123,11 @@ def run_notebook(path, timeout, save):
               % (path.name, dt, n_code, n_expected))
 
     if save:
+        # Strip nbclient's per-cell execution timestamps: they change on
+        # every run even when the outputs do not, and are pure diff churn.
+        for cell in nb.cells:
+            if cell.cell_type == "code":
+                cell.metadata.pop("execution", None)
         nbformat.write(nb, str(path))
     return ok, dt
 

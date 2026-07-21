@@ -1,0 +1,233 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/tut_06/tut_06.py",
+  "source_sha256": "f83950d040fae4702c6454a0f6990841e99f2357938f599eca2b00f167838d2f",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 12
+        },
+        "name": "count_up",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 1,
+              "col_offset": 13,
+              "end_lineno": 1,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 5
+                },
+                "id": "i"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 8,
+                "end_lineno": 2,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 3,
+                "col_offset": 10,
+                "end_lineno": 3,
+                "end_col_offset": 15
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 10,
+                  "end_lineno": 3,
+                  "end_col_offset": 11
+                },
+                "id": "i"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 14,
+                    "end_lineno": 3,
+                    "end_col_offset": 15
+                  },
+                  "id": "n"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 8,
+                  "end_lineno": 4,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 8,
+                    "end_lineno": 4,
+                    "end_col_offset": 9
+                  },
+                  "id": "i"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 13,
+                    "end_lineno": 4,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 5,
+                "col_offset": 11,
+                "end_lineno": 5,
+                "end_col_offset": 12
+              },
+              "id": "i"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 16
+        },
+        "name": "true_div",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 8,
+              "col_offset": 13,
+              "end_lineno": 8,
+              "end_col_offset": 14
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 8,
+              "col_offset": 16,
+              "end_lineno": 8,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 9,
+                "col_offset": 11,
+                "end_lineno": 9,
+                "end_col_offset": 16
+              },
+              "py_kind": "BinOp:Div",
+              "text": "a / b"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 12,
+      "last_line": 34,
+      "text": "/-! Tutorial 06 (docs/tutorial/06-when-proofs-fail.md): the *fixed*\nversions of that tutorial's failure walkthroughs. Every broken variant\nshown in the tutorial was reproduced against exactly this program. -/\n#py_check tut_06.count_up(5) = 5\n#py_check tut_06.count_up(0) = 0\n\n/-- Failure modes 1 and 2, fixed: `count_up` has a loop, so `py_prove`\ncannot close it \u2014 `py_begin`/`py_loop` with the *right* invariant can.\nThe invariant needs both the range conjuncts: dropping `i \u2264 n` strands\nthe exit goal (tutorial 06 shows the stuck state). -/\ntheorem count_up_total (n : PyInt) (hn : 0 \u2264 n) : tut_06.count_up(n) ==> n := by\n  py_begin [tut_06]\n  py_loop (inv := fun (i : Int) => 0 \u2264 i \u2227 i \u2264 n)\n          (dec := fun (i : Int) => (n - i).toNat)\n  all_goals grind\n\n/-! Failure mode 6: `a / b` is true division \u2014 a float, outside the v0\nsemantic tier. The interpreter refuses *loudly* (`Res.unsupported`,\nnever a wrong value); `unsupported` has no surface arrow on purpose, so\nthe check stays a raw `#guard \u2026 matches`. -/\n#guard (callFunction tut_06 \"true_div\" #[.int 7, .int 2] 100 matches .unsupported _)"
+    }
+  ]
+}

@@ -48,7 +48,7 @@ What still leaks (by design or by Lean's rules — documented, not hidden):
 
 Pinned renderings: the regression tests at the bottom of this file (bound-
 variable modules, self-contained) and `#guard_msgs`-checked `#check
-add_total` / `#check add_partial` in `Examples/python/add.py`'s lean block.
+add_total` / `#check add_partial` in `Examples/add/add.py`'s lean block.
 -/
 
 namespace LeanModels.Python
@@ -119,7 +119,7 @@ def unexpandPartialTo : Unexpander
 
 Bound-variable modules keep these self-contained; the loaded-program
 renderings (`add_total`, `add_partial`) are pinned in
-`Examples/python/add.py`'s lean block. Each rendering also re-elaborates to
+`Examples/add/add.py`'s lean block. Each rendering also re-elaborates to
 the proposition it displays — the `rfl` roundtrips at the end. -/
 
 section DelabTests

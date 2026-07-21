@@ -15,10 +15,10 @@ residual goals and how `grind`/`omega` eat them, (d) the shadowing trap and
 
 ## (a) Finding the invariant: run the loop by hand
 
-Take [`tri.py`](../../Examples/python/tri.py), the triangular-number loop:
+Take [`tri.py`](../../Examples/tri/tri.py), the triangular-number loop:
 
 ```python
-# Examples/python/tri.py (function only; the full file appears in (e))
+# Examples/tri/tri.py (the whole program; its proof appears in (e))
 def tri(n):
     total, i = 0, 0
     while i <= n:
@@ -197,12 +197,16 @@ theorem also binds, you need `(state := …)`.** (Recipe form:
 ## (e) Worked end to end
 
 First `tri`, the loop you analyzed in (a) — theorem verbatim from
-[`tri.py`](../../Examples/python/tri.py) (which also derives the
-`@[spec]`/`⇓` corollary forms; see
-[../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md)):
+[`Examples/tri/proof.lean`](../../Examples/tri/proof.lean). (`tri` and
+`gcd` use the *three-file layout* — pure `.py`, statements and `#py_check`
+checks in `spec.lean`, real proofs in `proof.lean`; `spec.lean` also
+derives the `@[spec]`/`⇓` corollary forms, see
+[../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md).
+This tutorial's own companion keeps the embedded lean-block layout you
+already know.)
 
 ```lean
--- Examples/python/tri.py (lean block; builds via Examples/Tri.lean)
+-- Examples/tri/proof.lean (statement re-stated in Examples/tri/spec.lean)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
   py_begin [tri]
   py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
@@ -295,7 +299,7 @@ def fact(n):
 # ]
 ```
 
-Notes on the two non-obvious lines:
+Notes on the three non-obvious lines:
 
 - `factSpec_step` exists because the preservation goal lives at `Int`
   (`factSpec (i + 1 - 1).toNat`) while `factSpec` recurses at `Nat`; the
@@ -308,6 +312,16 @@ Notes on the two non-obvious lines:
   determinism modulo fuel does the work. That is
   [../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md)'s
   topic; from here on, take them as boilerplate.
+- `set_option warning.simp.varHead false in` is not ritual. The raw ∀-fuel
+  corollary is a *conditional simp lemma* whose rewrite head is the
+  **variable** `r` — that head shape is precisely what lets an `@[spec]`
+  lemma rewrite whatever a run bound, and it is also a shape Lean warns
+  about (`Left-hand side of simp theorem has a variable as head symbol. …`
+  — full message in [tutorial 06, bonus quick
+  hits](06-when-proofs-fail.md#bonus-quick-hits)). The shape being
+  intentional, the house style silences the warning declaration by
+  declaration with the `set_option … in` prefix — every example file does
+  the same.
 
 **Exercise for you** (no solution in the tree — that is the point): prove
 `sum of squares` — `s += i*i` — against `n*(n+1)*(2*n+1)/6`, stated

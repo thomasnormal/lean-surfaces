@@ -1,8 +1,7 @@
 import LeanModels.Sv.Surface
-import LeanModels.Sv.Proofs
 
 /-!
-# Delaborators + surface forms of the M0 theorems (`LeanModels.Sv`)
+# Delaborators for the SV surface judgments (`LeanModels.Sv`)
 
 For an AI prover the goal state IS the interface (the Python lane's
 `Delab.lean` lesson): a judgment that *elaborates* from
@@ -19,16 +18,12 @@ print in the same surface notation the theorems are written in:
 `Deterministic d` already prints as itself (plain application — the gallery's
 `Sv.Deterministic` shape) and needs no unexpander.
 
-**This file also holds the surface restatements of the M0 theorems** —
-`swap_nba_swaps`, `race_blk_race`, `counter_refines`, the `⇓[σ]`
-non-vacuity forms, and `sv_prove`-closed determinism corollaries — because
-`Surface.lean` deliberately does not import `Proofs.lean` (`Tests.lean` must
-import the surface machinery, and `Proofs.lean`'s public example names —
-e.g. `raceStim` — collide with `Tests.lean`'s pre-existing private copies).
-The raw fuel/`run`-form theorems stay in `Proofs.lean`; everything here
-derives from them (the Python corollary pattern), so the surface forms are
-corollaries, never re-proofs. Theorem 1's surface form (`run_functional`)
-lives in `Surface.lean` (it needs only Obs.lean).
+The per-design M0 theorems live in the three-file example layout
+(`Examples/<design>/spec.lean` states them, `Examples/<design>/proof.lean`
+proves them — raw fuel/`run` forms and their `sv_prove` surface
+corollaries); the design-specific rendering and axiom pins live in those
+spec files. Theorem 1's surface form (`run_functional`) is in
+`Surface.lean` (it needs only Obs.lean).
 
 What still leaks (by design — documented, not hidden):
 
@@ -46,7 +41,7 @@ What still leaks (by design — documented, not hidden):
 
 Pinned renderings: the `#guard_msgs`-checked `#check`s at the bottom, plus
 `rfl` round-trips (every rendering re-elaborates to the proposition it
-displays) and `#print axioms` pins for the surface theorems.
+displays).
 -/
 
 namespace LeanModels.Sv
@@ -82,89 +77,12 @@ def unexpandRefinesFromReset : Unexpander
       | _ => throw ()
   | _ => throw ()
 
-/-! ## Bridges: raw (Proofs.lean) forms ↔ surface forms
-
-The raw theorems speak `sampledRst`/`counterModelRun`/`"count"`; the
-judgments speak `sampled · rst`/`modelRun model`/`Design.firstOutput d`.
-Each bridge is one definitional or one-induction lemma, consumed as
-`sv_prove` simp extras. -/
-
-/-- `sampledRst` (Proofs.lean) is the generic `sampled` at `"rst"`. -/
-theorem sampledRst_eq : sampledRst = fun s => sampled s "rst" := rfl
-
-/-- `counterModelRun` (Proofs.lean) is `modelRun` at `counterModel`. -/
-theorem counterModelRun_eq (s : BitVec 8) (rs : List Bool) :
-    counterModelRun s rs = modelRun counterModel s rs := by
-  induction rs generalizing s with
-  | nil => rfl
-  | cons r rs ih => simp [counterModelRun, modelRun, ih]
-
-/-- `counter`'s observed column is its (only) output port, `count`. -/
-theorem counter_firstOutput : counterDesign.firstOutput = "count" := rfl
-
-/-! ## The M0 theorems in surface form
-
-Raw forms stay in `Proofs.lean` (∀-fuel hypothesis shape); each surface form
-below is an `sv_prove` corollary. Theorem 1 (`run_functional`) is in
-`Surface.lean`. -/
-
-/-- **M0 theorem 2, surface form** (gallery `swap_nba_spec` shape): under
-every schedule, every posedge step swaps `a`/`b` — the pre-edge startup
-state included. Corollary of `swap_nba_spec`. -/
-theorem swap_nba_swaps :
-    swapNbaDesign ⊨ onPosedge fun s s' =>
-      SvState.lookup s' "a" = SvState.lookup s "b" ∧
-      SvState.lookup s' "b" = SvState.lookup s "a" := by
-  sv_prove [swap_nba_spec]
-
-/-- **M0 theorem 3, surface form** (gallery `race_blk_racy` content): two
-legal schedules, the same 1-cycle stimulus, two different traces — stated in
-the `⇓[σ]` run judgment. Corollary of (in fact: identical to)
-`race_blk_racy`. -/
-theorem race_blk_race :
-    ∃ (σ₁ σ₂ : ScheduleOracle) (tr₁ tr₂ : List SvState),
-      (raceBlkDesign / raceStim ⇓[σ₁] tr₁) ∧ (raceBlkDesign / raceStim ⇓[σ₂] tr₂) ∧
-      tr₁ ≠ tr₂ := by
-  sv_prove [race_blk_racy]
-
-/-- **M0 theorem 4, surface form** — the gallery's
-`counter ⊑@clk[from rst] counterModel`, verbatim: from the first sampled
-reset, the sampled `count` column follows the golden model, for every legal
-schedule and every abstract pre-reset state. Corollary of
-`counter_from_reset` through the three bridges. -/
-theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by
-  sv_prove [counter_from_reset, sampledRst_eq, counterModelRun_eq, counter_firstOutput]
-
-/-! ### Non-vacuity and determinism, in surface notation
-
-The `⊨`/`⊑@` forms are hypothesis-conditioned; these pin that the runs they
-condition on exist (canonical traces, every σ), and re-derive the
-`Sv.Deterministic` facts through `sv_prove`'s totality arm. -/
-
-/-- `swap_nba` really runs, under every schedule: the canonical swapped
-trace, in `⇓[σ]` form (= `swap_nba_total`). -/
-theorem swap_nba_runs (σ : ScheduleOracle) (stim : List SvState) :
-    swapNbaDesign / stim ⇓[σ]
-      swapNbaTrace (LVec.xVec 1) (LVec.ofNat 8 1) (LVec.ofNat 8 2) stim := by
-  sv_prove [swap_nba_total σ stim]
-
-/-- `counter` really runs, under every schedule (= `counter_total`). -/
-theorem counter_runs (σ : ScheduleOracle) (stim : List SvState) :
-    counterDesign / stim ⇓[σ]
-      counterTrace (LVec.xVec 1) (LVec.xVec 1) (LVec.xVec 8) stim := by
-  sv_prove [counter_total σ stim]
-
--- `sv_prove`'s Deterministic-from-totality arm re-derives the Proofs.lean
--- determinism bonuses; the not-deterministic gallery shape is arm 1.
-example : Deterministic swapNbaDesign := by sv_prove [swap_nba_total]
-example : Deterministic counterDesign := by sv_prove [counter_total]
-example : ¬ Deterministic raceBlkDesign := by sv_prove [race_blk_not_deterministic]
-
 /-! ## Pinned renderings (regression tests)
 
 Each `#check` is `#guard_msgs`-pinned to the surface rendering; the `rfl`
 round-trips confirm every rendering re-elaborates to the proposition it
-displays. -/
+displays. The per-design renderings (`swap_nba_swaps`, `counter_refines`,
+`race_blk_race`, …) are pinned in their `Examples/<design>/spec.lean`. -/
 
 section DelabTests
 
@@ -185,31 +103,6 @@ section DelabTests
 #check ∀ (d : Design) (model : BitVec 8 → Bool → BitVec 8),
   RefinesFromReset d "clk" "rst" (Design.firstOutput d) model
 
-/--
-info: LeanModels.Sv.swap_nba_swaps :
-  swapNbaDesign ⊨ onPosedge fun s s' => s'.lookup "a" = s.lookup "b" ∧ s'.lookup "b" = s.lookup "a"
--/
-#guard_msgs in
-#check swap_nba_swaps
-
-/-- info: LeanModels.Sv.counter_refines : counterDesign ⊑@clk[from rst] counterModel -/
-#guard_msgs in
-#check counter_refines
-
-/--
-info: LeanModels.Sv.race_blk_race :
-  ∃ σ₁ σ₂ tr₁ tr₂, raceBlkDesign / raceStim ⇓[σ₁] tr₁ ∧ raceBlkDesign / raceStim ⇓[σ₂] tr₂ ∧ tr₁ ≠ tr₂
--/
-#guard_msgs in
-#check race_blk_race
-
-/--
-info: LeanModels.Sv.swap_nba_runs (σ : ScheduleOracle) (stim : List SvState) :
-  swapNbaDesign / stim ⇓[σ] swapNbaTrace (LVec.xVec 1) (LVec.ofNat 8 1) (LVec.ofNat 8 2) stim
--/
-#guard_msgs in
-#check swap_nba_runs
-
 -- Round-trips: every rendering above re-elaborates to what it displays.
 example (d : Design) (P : TraceProp) : (d ⊨ P) = Models d P := rfl
 example (d : Design) (σ : ScheduleOracle) (stim tr : List SvState) :
@@ -220,19 +113,7 @@ example (d : Design) (model : BitVec 8 → Bool → BitVec 8) :
 
 end DelabTests
 
-/-! ## Axiom pins (surface theorems use only the standard axioms) -/
-
-/-- info: 'LeanModels.Sv.swap_nba_swaps' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms swap_nba_swaps
-
-/-- info: 'LeanModels.Sv.race_blk_race' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms race_blk_race
-
-/-- info: 'LeanModels.Sv.counter_refines' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in
-#print axioms counter_refines
+/-! ## Axiom pin (surface theorems use only the standard axioms) -/
 
 /-- info: 'LeanModels.Sv.run_functional' depends on axioms: [propext] -/
 #guard_msgs in

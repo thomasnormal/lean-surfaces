@@ -1,0 +1,172 @@
+{
+  "schema_version": "sv-0.1",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "source_file": "Examples/xsel/xsel.sv",
+  "source_sha256": "f146491b9ba0aee4d34a8235991f0b4fb12cecca9c80c5fdc1567b961de2a7b6",
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 7,
+          "end_col": 10
+        },
+        "name": "xsel",
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 27,
+              "end_line": 1,
+              "end_col": 30
+            },
+            "name": "sel",
+            "dir": "in",
+            "width": 1
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 33,
+              "end_line": 2,
+              "end_col": 34
+            },
+            "name": "a",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 36,
+              "end_line": 2,
+              "end_col": 37
+            },
+            "name": "b",
+            "dir": "in",
+            "width": 8
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 33,
+              "end_line": 3,
+              "end_col": 34
+            },
+            "name": "y",
+            "dir": "out",
+            "width": 8
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 6,
+              "end_col": 20
+            },
+            "body": {
+              "kind": "If",
+              "span": {
+                "line": 5,
+                "col": 5,
+                "end_line": 6,
+                "end_col": 20
+              },
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 5,
+                  "col": 9,
+                  "end_line": 5,
+                  "end_col": 12
+                },
+                "width": 1,
+                "name": "sel"
+              },
+              "then": {
+                "kind": "BlockingAssign",
+                "span": {
+                  "line": 5,
+                  "col": 14,
+                  "end_line": 5,
+                  "end_col": 20
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 14,
+                    "end_line": 5,
+                    "end_col": 15
+                  },
+                  "width": 8,
+                  "name": "y"
+                },
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 5,
+                    "col": 18,
+                    "end_line": 5,
+                    "end_col": 19
+                  },
+                  "width": 8,
+                  "name": "a"
+                }
+              },
+              "else": {
+                "kind": "BlockingAssign",
+                "span": {
+                  "line": 6,
+                  "col": 14,
+                  "end_line": 6,
+                  "end_col": 20
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 14,
+                    "end_line": 6,
+                    "end_col": 15
+                  },
+                  "width": 8,
+                  "name": "y"
+                },
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 18,
+                    "end_line": 6,
+                    "end_col": 19
+                  },
+                  "width": 8,
+                  "name": "b"
+                }
+              }
+            }
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -1,0 +1,221 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/tut_05/tut_05.py",
+  "source_sha256": "42d0661ff9877e804f3c167cbca4319618aea4b370a7aeb32e90c4e71743dcc9",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 16
+        },
+        "name": "pymod",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 1,
+              "col_offset": 10,
+              "end_lineno": 1,
+              "end_col_offset": 11
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 1,
+              "col_offset": 13,
+              "end_lineno": 1,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 15,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 12
+        },
+        "name": "countdown",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 5,
+              "col_offset": 14,
+              "end_lineno": 5,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 7,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 6,
+                "col_offset": 10,
+                "end_lineno": 6,
+                "end_col_offset": 15
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 10,
+                  "end_lineno": 6,
+                  "end_col_offset": 11
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 14,
+                    "end_lineno": 6,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 7,
+                  "col_offset": 8,
+                  "end_lineno": 7,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 7,
+                    "col_offset": 8,
+                    "end_lineno": 7,
+                    "end_col_offset": 9
+                  },
+                  "id": "n"
+                },
+                "op": "Sub",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 7,
+                    "col_offset": 13,
+                    "end_lineno": 7,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 8,
+                "col_offset": 11,
+                "end_lineno": 8,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 11,
+      "last_line": 53,
+      "text": "/-! Tutorial 05 (docs/tutorial/05-exceptions-and-partial.md): the `==>!`\narrow for raising runs, the strengthened partial arrow `~~>`, and why\nthe weak \"if it returns then v\" form is banned. -/\n#py_check tut_05.pymod(7, 3) = 1\n#py_check tut_05.pymod(-7, 3) = 2\n#py_check tut_05.pymod(7, -3) = -2\n#py_check tut_05.pymod(7, 0) raises .zeroDivisionError\n#py_check tut_05.countdown(5) = 0\n#py_check tut_05.countdown(0) = 0\n#py_check tut_05.countdown(-3) = -3\n\n/-- A raise as specified behavior: for every `a`, `pymod(a, 0)`\nterminates by raising `ZeroDivisionError`. `py_prove` closes `==>!`\ngoals for loop-free bodies just like `==>` ones. -/\ntheorem pymod_zero_raises (a : PyInt) : tut_05.pymod(a, 0) ==>! .zeroDivisionError := by\n  py_prove [tut_05]\n\n/-- Total correctness of the countdown for `n \u2265 0` \u2014 a single-clause\nloop proof. The theorem binder `n` shadows the mutated Python variable\n`n`, so `(state := [n])` names the environment slot and the lambda\nbinder is free to be `k` (tutorial 04's shadowing trap). -/\ntheorem countdown_total (n : PyInt) (hn : 0 \u2264 n) : tut_05.countdown(n) ==> (0 : Int) := by\n  py_begin [tut_05]\n  py_loop (state := [n])\n          (inv := fun (k : Int) => 0 \u2264 k)\n          (dec := fun (k : Int) => k.toNat)\n  all_goals grind\n\n/-- The strengthened partial arrow: every run of `countdown(n)` with\n`n \u2265 0`, at every fuel, either times out or returns exactly `0` \u2014 no\nexception, no `unsupported`, no other value. Free from `countdown_total`\nby determinism modulo fuel (`CallsTo.partialTo`, via `py_corollary`). -/\ntheorem countdown_partial (n : PyInt) (hn : 0 \u2264 n) : tut_05.countdown(n) ~~> (0 : Int) := by\n  py_corollary [countdown_total]\n\n/-- Why the weak reading is banned: `~~>` is *falsifiable* on raising\nprograms. \"If `pymod(7, 0)` returns, it returns 42\" is vacuously true \u2014\nthe call raises. The strengthened `pymod(7, 0) ~~> 42` is refutable, and\nhere is the refutation (`PartialTo.not_raises`, Surface.lean). -/\ntheorem no_partial_spec_for_raising_call : \u00ac (tut_05.pymod(7, 0) ~~> (42 : Int)) :=\n  fun h => h.not_raises (pymod_zero_raises 7)"
+    }
+  ]
+}

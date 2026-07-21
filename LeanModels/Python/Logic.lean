@@ -46,7 +46,7 @@ deriving instance Lean.ToExpr for Module
 
 open Lean Elab Command in
 /--
-`load_program tri from "Examples/python/tri.json"` reads the standardized
+`load_program tri from "Examples/tri/tri.json"` reads the standardized
 envelope JSON at **elaboration time** and defines `tri : Module` as a
 **literal** first-order term (via the `ToExpr` instances above), so proofs can
 unfold it. The path is resolved relative to the current working directory,

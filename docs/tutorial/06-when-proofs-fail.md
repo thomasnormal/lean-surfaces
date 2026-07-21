@@ -2,8 +2,9 @@
 
 Every error below was reproduced against the current tree (scratch files
 under `/tmp`, programs from `Examples/python/`), and every quoted message is
-pasted, not paraphrased. Format: **symptom → diagnosis → fix**. The fixed
-versions live in [`tut_06.py`](../../Examples/python/tut_06.py):
+pasted, not paraphrased. Format: **symptom → diagnosis → fix**. Most fixed
+versions live in [`tut_06.py`](../../Examples/python/tut_06.py) (modes 5
+and 7 point at their own companion files):
 
 ```python
 # Examples/python/tut_06.py
@@ -236,26 +237,59 @@ makes an `omega` bullet after `py_loop` unable to use a theorem-level
 hypothesis like `hn : 0 ≤ n` even though residual-goal facts (`hcont`,
 `hinv*`) work fine.
 
-**Diagnosis.** `PyInt` is *definitionally* `Int`, but a hypothesis stated
-over a `PyInt` binder is elaborated with `PyInt`-headed instances
-(`@LE.le PyInt …`), and `omega`'s atom matching is syntactic — it does not
-unfold the brand, so the hypothesis contributes nothing ("No usable
-constraints found"). Facts produced *by the tactics* (split hypotheses,
-`hcont`, `hinv*`) are built at `Int` and unaffected. `grind` is also
-unaffected (it sees through reducible abbreviations) — which is why the
-house style closes loop residuals with `grind`, and why this bites mostly
-around `py_prove` and hand-written `omega` bullets.
+**Diagnosis.** `PyInt` is *definitionally* `Int`, but `omega` ingests a
+comparison only when its head type is literally `Int` or `Nat` — its atom
+matching is syntactic and does not unfold the brand. A comparison headed at
+`PyInt` (`@LE.le PyInt …`, as a hypothesis over a `PyInt` binder
+elaborates) is skipped wholesale, **whether it is a hypothesis or the
+goal** — hence "No usable constraints found". Which operand decides the
+head type? The *leftmost* one with an intrinsic type
+([tutorial 03 §3](03-branching-and-preconditions.md#3-preconditions-are-hypotheses--one-gotcha)),
+and ascriptions on branded variables are looked through. Facts produced
+*by the tactics* (split hypotheses, `hcont`, `hinv*`) are built at `Int`
+and unaffected; inside an already-`Int`-headed comparison, brand-headed
+*atoms* are also fine (`relu_total`'s arms close although `max x 0` was
+elaborated at `PyInt`). `grind` is unaffected everywhere (it matches up to
+reducible unfolding) — which is why the house style closes loop residuals
+with `grind`, and why this bites mostly around `py_prove` and hand-written
+`omega` bullets.
 
-**Fix.** Restate the hypothesis at `Int` — one line, before the tactic that
-needs it:
+**Fix.** Three cases.
+
+*A hypothesis you wrote* — restate it at `Int`, with a genuinely
+`Int`-typed term as the **left** operand:
 
 ```lean
-have hx' : (0 : Int) ≤ x := hx
+have hx' : (0 : Int) ≤ x := hx    -- for hx : 0 ≤ x
+have hx' : (0 : Int) ≥ x := hx    -- for hx : x ≤ 0 — flip to keep Int on the left
 ```
 
-Real instance: `relu_of_nonneg` in
-[`tut_03.py`](../../Examples/python/tut_03.py). Alternatively close with
-`grind` instead of `omega` where that fits the goal.
+Ascribing the branded variable does not work, on either side or both:
+`(x : Int) ≤ 0`, `x ≤ (0 : Int)`, and `(x : Int) ≤ (0 : Int)` all re-land
+at `PyInt` (reproduced — each still fails exactly as above, and the
+restated hypothesis prints identically to the original: no visible
+difference is the tell). Real instances: `relu_of_nonneg` in
+[`tut_03.py`](../../Examples/python/tut_03.py) and, for the flipped
+direction, `negpart_of_nonpos` in
+[`val_negpart.py`](../../Examples/python/val_negpart.py).
+
+*A `by_cases` you are about to run* — `by_cases h1 : x < 0` over a `PyInt`
+binder produces a brand-headed `h1` with the same problem. Either put an
+`Int` term on the left here too (`by_cases h1 : (0 : Int) > x`), or keep
+`omega` out of it: pass `h1` to `py_simp` as a rewrite and close with
+`grind` ([`ag_clamp01.py`](../../Examples/python/ag_clamp01.py), mode 7).
+
+*The goal itself* — a brand-headed goal comparison (typical: spec-side
+`max`/`min` over `Py*` binders in a pure-math lemma of your own) cannot be
+restated, and no hypothesis surgery helps (reproduced):
+
+```lean
+-- (illustrative — broken)
+example (x : PyInt) : max 0 (min 1 x) ≤ 1 := by omega
+```
+
+fails with the same "No usable constraints found", while the identical
+statement over `x : Int` closes. Switch the closer: `grind` proves both.
 
 ## 6. The loud `.unsupported` — you left the semantic tier
 
@@ -294,6 +328,71 @@ whitelist it in the harness with `"expect": "unsupported"`
 ([`harness/cases.json`](../../harness/cases.json) does exactly this for
 `true_div`).
 
+## 7. py_prove on two sequential ifs — the branch recipe runs out
+
+**Symptom.** The body is loop-free and branching — `py_prove`'s home turf —
+yet it leaves the un-split branch nest of mode 1, with no `execWhile`
+anywhere in it. Reproduced against
+[`ag_clamp01.py`](../../Examples/python/ag_clamp01.py):
+
+```python
+# Examples/python/ag_clamp01.py (function only)
+def clamp01(x):
+    if x < 0:
+        return 0
+    if x > 1:
+        return 1
+    return x
+```
+
+```lean
+-- (illustrative — broken)
+theorem clamp01_total (x : PyInt) : ag_clamp01.clamp01(x) ==> max 0 (min 1 x) := by
+  py_prove [ag_clamp01]
+```
+
+```
+error: unsolved goals
+x : PyInt
+⊢ ∃ a b,
+    (∃ a_1 b_1,
+        (∃ a,
+            (if x < 0 then Res.ok (Val.bool true) else Res.ok (Val.bool false)) = Res.ok a ∧
+...
+```
+
+**Diagnosis.** A known v0 limitation of `py_prove`. Its branch alternative
+is a *single* `split <;> py_simp <;> omega` round, which handles one
+symbolic branch point. With two *sequential* `if`s, the arm that falls
+through to the second `if` gets re-executed by `py_simp`'s full simp set,
+which rewrites the surviving `ite` into a disjunction that `split` can no
+longer attack — run the manual script of
+[tutorial 03 §4](03-branching-and-preconditions.md#4-reading-a-goal-state)
+and the second `split` says so directly (reproduced):
+
+```
+error: Tactic `split` failed: Could not split an `if` or `match` expression in the goal
+```
+
+So read the `py_prove` docstring's "straight-line *and branching*" as "one
+symbolic branch point"; nested/sequential branching needs the recipe below
+(the GOAL-SHAPE table in [AGENTS.md](../../AGENTS.md) carries the same
+caveat).
+
+**Fix.** Decide the branch conditions *before* executing: `by_cases` each
+condition up front, pass the case facts to `py_simp` as rewrites so every
+`if` reduces during symbolic execution, and close with `grind` — not
+`omega`: the `by_cases` hypotheses over the `PyInt` binder are
+brand-headed (mode 5). The working proof, verbatim:
+
+```lean
+-- Examples/python/ag_clamp01.py (lean block excerpt; builds via Examples/AgClamp01.lean)
+theorem clamp01_total (x : PyInt) : ag_clamp01.clamp01(x) ==> max 0 (min 1 x) := by
+  refine ⟨32, ?_⟩
+  by_cases h1 : x < 0 <;> by_cases h2 : 1 < x <;>
+    py_simp [callFunction, ag_clamp01, h1, h2] <;> grind
+```
+
 ## Bonus quick hits
 
 All reproduced; one line each.
@@ -323,10 +422,24 @@ error: py_loop: `dec` must bind exactly the 2 variables of `inv`
 residue `⊢ x * x = x + x`. Fix the spec.
 
 **Heartbeat timeout from `py_prove`** (`(deterministic) timeout at 'whnf',
-maximum number of heartbeats (200000) has been reached`): symbolic execution
+maximum number of heartbeats (200000) has been reached` — the location tag
+after `timeout at` varies with elaborator state): symbolic execution
 could not reduce to your claim. Two known causes: the program literal is
 missing (`py_prove []` — pass `py_prove [tut_02]`), or an `==>!` spec names
 the wrong exception ([tutorial 05](05-exceptions-and-partial.md#what-can-go-wrong)).
+
+**Variable-headed simp warning on a raw `@[spec]` corollary:**
+
+```
+warning: Left-hand side of simp theorem has a variable as head symbol. This means the theorem will be tried on every simp step, which can be expensive. This may be acceptable for `local` or `scoped` simp lemmas.
+Use `set_option warning.simp.varHead false` to disable this warning.
+```
+
+Not a mistake — the raw ∀-fuel form *is* a conditional simp lemma whose
+rewrite head is the bound result variable, deliberately
+([tutorial 04](04-loops.md#e-worked-end-to-end), notes). Prefix the
+declaration with `set_option warning.simp.varHead false in`, as every
+example file does.
 
 **Body outside the v1 loop recipe** (`return`/`break` in the body,
 non-`Int` loop variable):

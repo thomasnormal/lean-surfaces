@@ -8,7 +8,7 @@ import LeanModels.Python.Logic
 `#guard` tests for every row of DESIGN.md's "Semantic decisions" table
 (AST literals, checked against CPython 3.9 behavior), plus end-to-end
 `#eval`-time checks that read the extractor-generated envelopes in
-`Examples/python/*.json`, parse them with `Json.lean`, and run
+`Examples/<name>/<name>.json`, parse them with `Json.lean`, and run
 `callFunction` on the result (loud `IO.userError` on any mismatch, so
 `lake build` fails if anything regresses).
 -/
@@ -364,19 +364,19 @@ private def checkCall (path : System.FilePath) (fn : String) (args : Array Val)
     throw (IO.userError
       s!"{path}: {fn} {repr args} (fuel {fuel}) = {repr got}, expected {repr expected}")
 
-#eval checkCall "Examples/python/tri.json" "tri" #[.int 10] 1000 (.ok (.int 55))
-#eval checkCall "Examples/python/tri.json" "tri" #[.int 0] 1000 (.ok (.int 0))
-#eval checkCall "Examples/python/tri.json" "tri" #[.int (-3)] 1000 (.ok (.int 0))
-#eval checkCall "Examples/python/tri.json" "tri" #[.int 10] 5 .timeout
-#eval checkCall "Examples/python/fib.json" "fib" #[.int 10] 1000 (.ok (.int 55))
-#eval checkCall "Examples/python/fib.json" "fib" #[.int 1] 1000 (.ok (.int 1))
-#eval checkCall "Examples/python/fib.json" "fib" #[.int (-5)] 1000 (.ok (.int (-5)))
-#eval checkCall "Examples/python/add.json" "add" #[.int 2, .int 3] 1000 (.ok (.int 5))
-#eval checkCall "Examples/python/add.json" "add" #[.int (-2), .int 3] 1000 (.ok (.int 1))
-#eval checkCall "Examples/python/add.json" "add" #[.str "ab", .str "cd"] 1000 (.ok (.str "abcd"))
-#eval checkCall "Examples/python/add.json" "add" #[.str "ab", .int 1] 1000
+#eval checkCall "Examples/tri/tri.json" "tri" #[.int 10] 1000 (.ok (.int 55))
+#eval checkCall "Examples/tri/tri.json" "tri" #[.int 0] 1000 (.ok (.int 0))
+#eval checkCall "Examples/tri/tri.json" "tri" #[.int (-3)] 1000 (.ok (.int 0))
+#eval checkCall "Examples/tri/tri.json" "tri" #[.int 10] 5 .timeout
+#eval checkCall "Examples/fib/fib.json" "fib" #[.int 10] 1000 (.ok (.int 55))
+#eval checkCall "Examples/fib/fib.json" "fib" #[.int 1] 1000 (.ok (.int 1))
+#eval checkCall "Examples/fib/fib.json" "fib" #[.int (-5)] 1000 (.ok (.int (-5)))
+#eval checkCall "Examples/add/add.json" "add" #[.int 2, .int 3] 1000 (.ok (.int 5))
+#eval checkCall "Examples/add/add.json" "add" #[.int (-2), .int 3] 1000 (.ok (.int 1))
+#eval checkCall "Examples/add/add.json" "add" #[.str "ab", .str "cd"] 1000 (.ok (.str "abcd"))
+#eval checkCall "Examples/add/add.json" "add" #[.str "ab", .int 1] 1000
         (.exn (.typeError "unsupported operand type(s) for +: 'str' and 'int'"))
-#eval checkCall "Examples/python/add.json" "nosuch" #[] 1000 (.exn (.nameError "nosuch"))
+#eval checkCall "Examples/add/add.json" "nosuch" #[] 1000 (.exn (.nameError "nosuch"))
 
 /-! ## Spec layer end-to-end: `load_program` → literal `Module` → proofs
 
@@ -387,7 +387,7 @@ exercises the whole pipeline (extractor JSON → parser → `ToExpr` literal →
 compiled interpreter); the `example` confirms the literal also unfolds for
 *proofs*, by plain kernel reduction (`rfl` — no `native_decide`). -/
 
-load_program add from "Examples/python/add.json"
+load_program add from "Examples/add/add.json"
 
 #guard callFunction add "add" #[.int 2, .int 3] 100 == .ok (.int 5)
 

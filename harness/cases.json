@@ -1,10 +1,10 @@
 [
   {"file": "Examples/python/add.py", "function": "add", "args": [[2, 3], [-2, 3], [2, -3], [-2, -3], [0, 0]], "expect": "match"},
-  {"file": "Examples/python/tri.py", "function": "tri", "args": [[10], [0], [-3]], "expect": "match"},
+  {"file": "Examples/tri/tri.py", "function": "tri", "args": [[10], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/fib.py", "function": "fib", "args": [[0], [1], [10]], "expect": "match"},
   {"file": "Examples/python/my_abs.py", "function": "my_abs", "args": [[5], [-5], [0], [-7], [1]], "expect": "match"},
   {"file": "Examples/python/midpoint.py", "function": "midpoint", "args": [[3, 5], [-3, -5], [-3, 4], [3, -4], [0, 0], [7, 8]], "expect": "match"},
-  {"file": "Examples/python/gcd.py", "function": "gcd", "args": [[12, 18], [18, 12], [5, 0], [0, 5], [7, 13], [0, 0], [270, 192], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
+  {"file": "Examples/gcd/gcd.py", "function": "gcd", "args": [[12, 18], [18, 12], [5, 0], [0, 5], [7, 13], [0, 0], [270, 192], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
   {"file": "Examples/python/sum_to.py", "function": "sum_to", "args": [[10], [0], [1], [-3], [100]], "expect": "match"},
   {"file": "Examples/python/arith.py", "function": "floordiv", "args": [[7, 2], [-7, 2], [7, -2], [-7, -2], [6, 3], [0, 5], [7, 0], [-7, 0], [0, 0]], "expect": "match"},
   {"file": "Examples/python/arith.py", "function": "mod", "args": [[7, 2], [-7, 2], [7, -2], [-7, -2], [6, 3], [0, 5], [7, 0], [-7, 0], [0, 0]], "expect": "match"},
@@ -17,9 +17,11 @@
   {"file": "Examples/python/tut_01.py", "function": "double", "args": [[21], [0], [-7]], "expect": "match"},
   {"file": "Examples/python/tut_02.py", "function": "square", "args": [[5], [-4], [0]], "expect": "match"},
   {"file": "Examples/python/tut_03.py", "function": "relu", "args": [[5], [-5], [0]], "expect": "match"},
+  {"file": "Examples/python/val_negpart.py", "function": "neg_part", "args": [[5], [-5], [0], [7], [-1]], "expect": "match"},
   {"file": "Examples/python/tut_04.py", "function": "fact", "args": [[5], [1], [0], [-2]], "expect": "match"},
   {"file": "Examples/python/tut_05.py", "function": "pymod", "args": [[7, 3], [-7, 3], [7, -3], [7, 0]], "expect": "match"},
   {"file": "Examples/python/tut_05.py", "function": "countdown", "args": [[5], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/tut_06.py", "function": "count_up", "args": [[5], [0], [-3]], "expect": "match"},
-  {"file": "Examples/python/tut_06.py", "function": "true_div", "args": [[7, 2]], "expect": "unsupported"}
+  {"file": "Examples/python/tut_06.py", "function": "true_div", "args": [[7, 2]], "expect": "unsupported"},
+  {"file": "Examples/python/ag_clamp01.py", "function": "clamp01", "args": [[-5], [-1], [0], [1], [2], [7]], "expect": "match"}
 ]

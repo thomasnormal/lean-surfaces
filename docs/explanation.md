@@ -4,7 +4,9 @@ This is the understanding-oriented piece: the design arguments behind the
 framework, with pointers into the tree where each one is load-bearing. The
 normative contracts live in [DESIGN.md](DESIGN.md) and
 [spec-surface.md](spec-surface.md); the workflow lives in the
-[README](../README.md); the prover's manual is [AGENTS.md](../AGENTS.md).
+[README](../README.md) and the [tutorial series](tutorial/index.md); the
+lookup tables are in [reference.md](reference.md); the prover's manual is
+[AGENTS.md](../AGENTS.md).
 
 ## Deep embedding, because the prover has to read the program
 
@@ -126,7 +128,7 @@ CPython via [harness/diff_test.py](../harness/diff_test.py) on
 ground truth, *not our reading of the spec*. Two catches made this mandatory
 methodology rather than hygiene:
 
-- **The gcd sign catch** ([Examples/python/gcd.py](../Examples/python/gcd.py),
+- **The gcd sign catch** ([Examples/gcd/spec.lean](../Examples/gcd/spec.lean),
   [spec-surface.md §3](spec-surface.md)). The obvious spec
   `gcd(a, b) ==> Int.gcd a b` is *false*: Python's `%` is `Int.fmod`, so
   `gcd(4, -6)` computes `4 % -6 = -2` and returns `-2` — CPython agrees, the
@@ -164,7 +166,7 @@ from `diverges` ([spec-surface.md §10](spec-surface.md)) — hitting an
 unsupported construct can't hide as non-termination, and `~~>` specs are
 falsifiable on unsupported programs. In the harness, `"expect":
 "unsupported"` entries are a *whitelist of documented tier gaps*, printed in
-the results table; any non-whitelisted mismatch fails the run. The one
-whitelisted Python case today (`powi(2, -1)` — floats are out of tier) is
-listed next to seventy-odd matched ones, which is the honest shape of a
-coverage claim: measured, with the gaps named.
+the results table; any non-whitelisted mismatch fails the run. The two
+whitelisted Python cases today (`powi(2, -1)` and `true_div(7, 2)` — floats
+are out of the v0 tier) are listed next to a hundred and one matched ones,
+which is the honest shape of a coverage claim: measured, with the gaps named.

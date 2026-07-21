@@ -13,7 +13,7 @@ order as specified below; same input bytes ⇒ same output bytes.
   "schema_version": "0.1",
   "language": "python",
   "frontend": {"name": "cpython-ast", "version": "3.9.25"},
-  "source_file": "Examples/python/tri.py",
+  "source_file": "Examples/python/sum_to.py",
   "source_sha256": "<hex sha256 of source bytes>",
   "module": { "kind": "Module", "body": [ <stmt>... ] },
   "lean_blocks": [ {"first_line": 9, "last_line": 14, "text": "theorem ...\n..."} ]
@@ -82,6 +82,7 @@ as `USub(Constant 5)`) | `{"type":"bool","value":true}` | `{"type":"str","value"
 
 `add.py`:
 ```python
+# Examples/python/add.py (function only)
 def add(a, b):
     return a + b
 ```

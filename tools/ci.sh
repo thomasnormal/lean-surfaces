@@ -20,6 +20,7 @@ maybe() { # maybe <name> <required-file> <command...>
 
 step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
+step  "extractor-tests" python3 extractors/python/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
 # SV lane: needs Xcelium (xrun) — present on this host, absent on generic CI.

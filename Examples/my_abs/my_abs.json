@@ -1,0 +1,138 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/my_abs/my_abs.py",
+  "source_sha256": "4c28600a3048c9d73214ed16db3480b1dc97f6ced012ea711439f5016679d317",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 12
+        },
+        "name": "my_abs",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 17
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 2,
+                "col_offset": 7,
+                "end_lineno": 2,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 7,
+                  "end_lineno": 2,
+                  "end_col_offset": 8
+                },
+                "id": "x"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 11,
+                    "end_lineno": 2,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 8,
+                  "end_lineno": 3,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "UnaryOp",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 15,
+                    "end_lineno": 3,
+                    "end_col_offset": 17
+                  },
+                  "op": "USub",
+                  "operand": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 3,
+                      "col_offset": 16,
+                      "end_lineno": 3,
+                      "end_col_offset": 17
+                    },
+                    "id": "x"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 4,
+                "col_offset": 11,
+                "end_lineno": 4,
+                "end_col_offset": 12
+              },
+              "id": "x"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

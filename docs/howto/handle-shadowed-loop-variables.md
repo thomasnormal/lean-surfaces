@@ -13,7 +13,7 @@ If no theorem binder collides with a mutated Python variable, name the
 lambda binders exactly like the Python variables and omit `state`:
 
 ```lean
--- Examples/Tri.lean (generated from Examples/python/tri.py)
+-- Examples/tri/proof.lean (three-file layout)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
   py_begin [tri]
   py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
@@ -51,7 +51,7 @@ theorem binders `a b` (the invariant needs the initial values on its
 right-hand side):
 
 ```lean
--- Examples/Gcd.lean (generated from Examples/python/gcd.py, proof body elided)
+-- Examples/gcd/proof.lean (three-file layout, proof body elided)
 theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
   py_begin [gcd]
   py_loop (state := [a, b])
@@ -87,12 +87,17 @@ misspelled (`totl` instead of `total`) — check the printed environment list
 before reaching for `state`.
 
 **`dec` arity.** The measure must bind exactly the invariant's variables
-(reproduced): `error: py_loop: 'dec' must bind exactly the 2 variables of
-'inv'`.
+(reproduced):
+
+```
+error: py_loop: `dec` must bind exactly the 2 variables of `inv`
+```
 
 **No `hentry`.** `py_loop` before `py_begin [prog]` (reproduced):
-`error: py_loop: no 'hentry' hypothesis in context — run 'py_begin [<prog>]'
-first`.
+
+```
+error: py_loop: no `hentry` hypothesis in context — run `py_begin [<prog>]` first
+```
 
 **Out-of-recipe loops.** `py_loop`'s v1 restrictions are deliberate: one
 `while` per function, `Int`-valued loop variables, no

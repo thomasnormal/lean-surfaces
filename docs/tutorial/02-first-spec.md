@@ -130,6 +130,11 @@ theorem. They are not.
 write `h : tut_02.square(x) ⇓ r` — "the call returns `r`" — and conclude
 things *about* `r`. It is the same judgment as `==>` (and prints back as
 `==>`); the point is binding the result instead of specifying it.
+
+How to type it: `⇓` is the judgment family's one non-ASCII symbol (`==>`,
+`~~>`, `==>!` are plain ASCII). Editors with the standard Lean 4
+abbreviations insert it when you type `\d=` (or `\Downarrow`) followed by a
+space; outside such an editor, copy it from any example file.
 `square_nonneg` then never mentions the interpreter again: once the result is
 pinned, you are doing ordinary mathematics with ordinary Lean tools. This
 division of labor — interpreter facts in one step, mathematics after — is

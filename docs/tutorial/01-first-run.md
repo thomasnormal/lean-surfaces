@@ -17,8 +17,10 @@ from the repository root.
 The layout, in one breath: Python sources and their generated JSON envelopes
 live in `Examples/python/`, generated Lean companion files in `Examples/`,
 the framework in `LeanModels/`, the extractor in `extractors/python/`, the
-CPython differential harness in `harness/`. The full table is in the
-[README](../../README.md#repo-layout).
+CPython differential harness in `harness/`. (Two worked examples,
+`Examples/tri/` and `Examples/gcd/`, use a per-example directory layout with
+hand-written proof files instead — tutorial 04 visits them.) The full table
+is in the [README](../../README.md#repo-layout).
 
 ## 1. Write the file
 
@@ -131,12 +133,17 @@ Why believe the Lean interpreter implements Python? Because it is
 differentially tested against CPython. `harness/cases.json` lists cases; the
 tutorial functions are already in it:
 
+<!-- docs-check: harness/cases.json -->
 ```json
-{"file": "Examples/python/tut_01.py", "function": "double", "args": [[21], [0], [-7]], "expect": "match"},
+  {"file": "Examples/python/tut_01.py", "function": "double", "args": [[21], [0], [-7]], "expect": "match"},
 ```
 
 (that line is verbatim from [`harness/cases.json`](../../harness/cases.json)
-— append an analogous one for your own file). Then:
+— append an analogous one for your own file; while experimenting you can
+leave the shared list untouched and point the harness at a private one
+instead, `python3 harness/diff_test.py --cases my_cases.json` — the path is
+taken relative to the repo root; all flags in the
+[how-to](../howto/run-the-differential-harness.md)). Then:
 
 ```console
 $ python3 harness/diff_test.py
@@ -192,7 +199,7 @@ error: Examples/python/tut_01.py:5: unclosed '# lean[' block (no matching '# ]')
 **Invalid stem.** Name the file `tut-01.py` and:
 
 ```
-error: tut-01.py: stem 'tut-01' is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)
+error: Examples/python/tut-01.py: stem 'tut-01' is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)
 ```
 
 The stem becomes the Lean identifier for your module, so it must be one.

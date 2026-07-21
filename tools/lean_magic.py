@@ -36,10 +36,24 @@ Magics provided (see notebooks/01-pipeline.ipynb for the guided tour):
     Run BOTH CPython (on the working ``.py`` file, in a subprocess) and the
     Lean runner on the same call; show the two canonical outcomes side by
     side with a MATCH / MISMATCH verdict.  This is the project's
-    differential-testing methodology in one line.
+    differential-testing methodology in one line.  A MISMATCH raises
+    ``DiffMismatchError`` after the table is displayed — a failed
+    differential test is a failure, so headless runs
+    (tools/run_notebooks.py) catch semantic regressions in untagged cells;
+    tag a cell ``expected-error`` if the mismatch itself is the lesson.
 
 Everything is anchored at the repo root (parent of ``tools/``); the magics
 work regardless of the notebook server's cwd.  Python 3.9 compatible.
+
+Extractor-side note (documented here because ``%%pyfile`` invokes it):
+``extractors/python/extract.py`` embeds the source path in the companion
+file's ``/- … -/`` header comment.  A path containing ``/-`` (any directory
+segment starting with ``-``, e.g. under some scratch roots) would open a
+*nested* Lean block comment — the extractor now detects such paths and
+switches the whole header to inert ``--`` line comments (regression-tested
+in the extractor).  The magics were always structurally immune anyway:
+``%%pyfile`` names are ``STEM_RE``-validated identifiers extracted at the
+repo-relative path ``notebooks/work/<name>.py``.
 """
 
 import ast
@@ -127,6 +141,11 @@ class ExtractionError(Exception):
     """A %%pyfile cell could not be extracted (details were displayed above)."""
 
 
+class DiffMismatchError(Exception):
+    """A %pydiff comparison found CPython and the Lean interpreter
+    disagreeing (the side-by-side table was displayed above)."""
+
+
 # ---------------------------------------------------------------------------
 # Small display helpers (inline styles only; theme-neutral colors)
 # ---------------------------------------------------------------------------
@@ -175,6 +194,13 @@ def _block(color, label, body):
 
 def _show(*fragments):
     display(HTML("".join(fragments)))
+
+
+def _usage_error(msg):
+    """Show a readable error banner, then return the UsageDisplayed to raise
+    (keeps the class contract: the message was displayed before the raise)."""
+    _show(_banner(_SEV_COLOR["error"], msg))
+    return UsageDisplayed(msg)
 
 
 # ---------------------------------------------------------------------------
@@ -228,10 +254,15 @@ class LeanMagics(Magics):
             [self._lean_exe] if self._lean_exe else ["lake", "env", "lean"]
         ) + list(extra_args) + [str(path)]
         t0 = time.monotonic()
-        proc = subprocess.run(
-            cmd, cwd=str(REPO_ROOT), env=env, capture_output=True, text=True,
-            timeout=LEAN_CELL_TIMEOUT,
-        )
+        try:
+            proc = subprocess.run(
+                cmd, cwd=str(REPO_ROOT), env=env, capture_output=True,
+                text=True, timeout=LEAN_CELL_TIMEOUT,
+            )
+        except subprocess.TimeoutExpired:
+            return (124, "lean timed out after %ds on %s"
+                    % (LEAN_CELL_TIMEOUT, Path(path).name),
+                    time.monotonic() - t0)
         dt = time.monotonic() - t0
         out = (proc.stdout or "") + (proc.stderr or "")
         return proc.returncode, out, dt
@@ -261,21 +292,21 @@ class LeanMagics(Magics):
                 if stem == modstem:
                     if fname in self._functions_of(p):
                         return stem, p
-                    raise UsageDisplayed(
+                    raise _usage_error(
                         "'%s.json' defines no function '%s'" % (stem, fname)
                     )
-            raise UsageDisplayed(
+            raise _usage_error(
                 "no envelope '%s.json' in notebooks/work/ — extract it with "
                 "%%%%pyfile %s.py first" % (modstem, modstem)
             )
         hits = [(stem, p) for stem, p in envs if fname in self._functions_of(p)]
         if not hits:
-            raise UsageDisplayed(
+            raise _usage_error(
                 "no extracted file defines '%s' — extract one with "
                 "%%%%pyfile first (work dir: notebooks/work/)" % fname
             )
         if len(hits) > 1:
-            raise UsageDisplayed(
+            raise _usage_error(
                 "'%s' is defined in several files (%s) — disambiguate as "
                 "<file>.%s(...)" % (fname, ", ".join(s for s, _ in hits), fname)
             )
@@ -582,8 +613,13 @@ class LeanMagics(Magics):
         if fuel is not None:
             cmd += ["--fuel", str(fuel)]
         t0 = time.monotonic()
-        proc = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True,
-                              text=True, timeout=RUNNER_TIMEOUT)
+        try:
+            proc = subprocess.run(cmd, cwd=str(REPO_ROOT), capture_output=True,
+                                  text=True, timeout=RUNNER_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            raise _usage_error("leanmodels-run timed out after %ds (wall "
+                               "clock, not fuel) on %s" % (RUNNER_TIMEOUT, fname)
+                               ) from None
         dt = time.monotonic() - t0
         if proc.returncode != 0:
             _show(_banner(_SEV_COLOR["error"], "leanmodels-run failed"),
@@ -661,6 +697,11 @@ class LeanMagics(Magics):
         )
         if cpy.get("status") == "harness-error":
             raise UsageDisplayed("CPython side failed: %s" % cpy.get("msg"))
+        if not match:
+            raise DiffMismatchError(
+                "%s: CPython and the Lean interpreter disagree — see the "
+                "table above (tag the cell 'expected-error' if the mismatch "
+                "is the lesson)" % call) from None
         return None
 
 

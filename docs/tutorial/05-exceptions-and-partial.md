@@ -122,8 +122,10 @@ docstrings.
 
 ## 5. The cautionary tale: `gcd` and the sign of `%`
 
-[`gcd.py`](../../Examples/python/gcd.py) is the worked partial/total pair in
-the tree — read it now; it is short. The theorem you would naively write is
+[`Examples/gcd/`](../../Examples/gcd/spec.lean) is the worked partial/total
+pair in the tree (three-file layout: the program in `gcd.py`, statements and
+checks in `spec.lean`, proofs in `proof.lean`) — read `spec.lean` now; it is
+short. The theorem you would naively write is
 
 ```lean
 -- (illustrative — this statement is FALSE, do not add it to a file)
@@ -136,7 +138,7 @@ It is false. Python's `%` is `Int.fmod` (sign follows the divisor), so
 checks, verbatim:
 
 ```lean
--- Examples/python/gcd.py (lean block excerpt; builds via Examples/Gcd.lean)
+-- Examples/gcd/spec.lean (excerpt)
 #py_check gcd(4, -6) = -2
 #guard Int.gcd 4 (-6) == 2
 ```
@@ -147,7 +149,7 @@ loop proof shaped exactly like tutorial 04 taught you (note
 `Int.gcd x y = Int.gcd a b` must mention the initial values):
 
 ```lean
--- Examples/python/gcd.py (lean block excerpt)
+-- Examples/gcd/proof.lean (excerpt; statements re-stated in Examples/gcd/spec.lean)
 theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
   py_begin [gcd]
   py_loop (state := [a, b])

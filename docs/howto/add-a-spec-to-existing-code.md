@@ -59,7 +59,7 @@ constant (`add : Module`) and the surface callee (`add(a, b)`).
 
 Which tactic closes which goal: [reference, tactic table](../reference.md#tactics).
 Loop-free bodies are `py_prove [add]`; loops need `py_begin`/`py_loop`
-(see `Examples/python/tri.py`); recursion needs `py_lift`
+(see `Examples/tri/proof.lean`); recursion needs `py_lift`
 (see `Examples/python/fib.py`).
 
 ## Option B: a sidecar Lean file
@@ -141,7 +141,7 @@ Run the function to see what it actually returns:
 **`py_prove` on a function with a loop** fails with `unsolved goals` and a
 goal containing a frozen `execWhile` applied to a large AST literal. That
 leak *is* the signal: `py_prove` only does loop-free bodies — switch to
-`py_begin [prog]` + `py_loop` ([tri.py](../../Examples/python/tri.py), and
+`py_begin [prog]` + `py_loop` ([Examples/tri/proof.lean](../../Examples/tri/proof.lean), and
 [handle-shadowed-loop-variables.md](handle-shadowed-loop-variables.md) if the
 loop mutates a variable your theorem binds).
 

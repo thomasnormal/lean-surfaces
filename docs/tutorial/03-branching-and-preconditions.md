@@ -66,6 +66,11 @@ handles this itself: its branch-splitting alternative runs `split`,
 re-executes each arm, and finishes with `omega`. One tactic call still
 suffices; the spec-side `max x 0` is understood natively by `omega`.
 
+One branch *point*, that is. A second sequential `if` in the same body is
+outside `py_prove`'s single-round recipe — a known v0 limitation, with a
+loud symptom and a short `by_cases` recipe that replaces it:
+[tutorial 06, mode 7](06-when-proofs-fail.md#7-py_prove-on-two-sequential-ifs--the-branch-recipe-runs-out).
+
 ## 3. Preconditions are hypotheses — one gotcha
 
 A precondition is nothing special: an ordinary named hypothesis, exactly as
@@ -82,6 +87,29 @@ the proof fails ([tutorial 06, failure mode
 raw error). `grind` is not affected, and the loop tactics of
 [tutorial 04](04-loops.md) mostly shield you; for `py_prove`, restate the
 hypothesis at `Int` (one `have`) and move on.
+
+One more thing to know before you write that `have`: it is
+**position-sensitive**. What lands `hx'` at `Int` is not the ascription as
+such — it is the genuinely `Int`-typed term (here the literal `(0 : Int)`)
+standing as the *left* operand: the comparison elaborator resolves the
+relation's type from its leftmost intrinsically-typed operand, and it looks
+straight through ascriptions on branded variables. Write the precondition
+the other way around (`hx : x ≤ 0`) and the natural transcriptions
+`(x : Int) ≤ 0`, `x ≤ (0 : Int)` — even `(x : Int) ≤ (0 : Int)` — all
+re-land at `PyInt`; the restatement that works flips the relation to put
+the literal first. Verbatim from the mirror-image companion
+[`val_negpart.py`](../../Examples/python/val_negpart.py):
+
+```lean
+-- Examples/python/val_negpart.py (lean block excerpt; builds via Examples/ValNegpart.lean)
+theorem negpart_of_nonpos (x : PyInt) (hx : x ≤ 0) : val_negpart.neg_part(x) ==> -x := by
+  have hx' : (0 : Int) ≥ x := hx
+  py_prove [val_negpart]
+```
+
+The reproduced failures, and the goal-side variant of the same blindness
+that no restatement can fix, are in [tutorial 06, mode
+5](06-when-proofs-fail.md#5-omega-ignores-a-pyint-typed-hypothesis).
 
 ## 4. Reading a goal state
 
@@ -203,19 +231,41 @@ fallback left the un-split goal. Fix: `have hx' : (0 : Int) ≤ x := hx`
 first. Details: [tutorial 06, failure mode
 5](06-when-proofs-fail.md#5-omega-ignores-a-pyint-typed-hypothesis).
 
+**The restatement itself is still invisible.** With the precondition
+running the other way (`hx : x ≤ 0`,
+[`val_negpart.py`](../../Examples/python/val_negpart.py)), restating by
+ascription — `have hx' : x ≤ (0 : Int) := hx`, or `(x : Int) ≤ 0` —
+changes nothing: `py_prove` fails with the same un-split dump, whose
+context shows the tell (reproduced; elided below the turnstile):
+
+```
+error: unsolved goals
+x : PyInt
+hx : x ≤ 0
+hx' : x ≤ 0
+⊢ ∃ a b,
+...
+```
+
+`hx'` prints exactly like `hx` — the ascription bought nothing (§3: the
+relation's type comes from the leftmost intrinsically-typed operand). Put
+the `Int` literal on the left: `have hx' : (0 : Int) ≥ x := hx`.
+
 **`omega` right after `split`.** In the manual script, the arms are *not*
 arithmetic yet — they are interpreter states (the arm still ends in
-`Res.ok … = Res.ok …`). `omega` on that reports, confusingly (reproduced):
+`Res.ok … = Res.ok …`). `split <;> omega` here closes the `x < 0` arm (its
+hypotheses contradict `hx'`) but on the surviving arm reports, confusingly
+(reproduced):
 
 ```
 error: omega could not prove the goal:
 a possible counterexample may satisfy the constraints
-  a ≤ -1
+  a ≥ 0
 where
  a := x
 ```
 
-— it saw the split hypothesis `x < 0` but no arithmetic *goal*. Re-execute
+— it saw the split hypothesis `¬x < 0` but no arithmetic *goal*. Re-execute
 first: `split <;> py_simp`, then `omega`.
 
 **Reading `⇓` output as a different judgment.** `#check square_result`

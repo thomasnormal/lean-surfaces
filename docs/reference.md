@@ -96,6 +96,7 @@ this table is the index, the docstrings are the manual.
 | `py_corollary` | `py_corollary [tot]` or `py_corollary [tot, extras…]` | any of the four standard corollaries of a total theorem `tot` ([howto](howto/derive-corollary-forms.md)) | nothing on success |
 | `py_simp` | `py_simp [extras]` / `py_simp [extras] at h` | one frame of symbolic execution: `simp` with all interpreter equations *except* `callFunction`/`execWhile` (frozen at symbolic fuel); pass program literals explicitly (`py_simp [tri]`) | whatever `simp` leaves |
 | `py_threshold` | `py_threshold k [extras]` / `py_threshold k` | a fuel-threshold obligation `∃ f₀, ∀ F, f₀ ≤ F → <run> = .ok v` for straight-line code, at threshold `k` | residual symbolic branches, if the `split <;> simp_all` mop-up cannot close them |
+| `proofs` | `:= by proofs` (only in a three-file `spec.lean`) | closes a spec-file statement with its `proof.lean` twin: same declaration name, module `….spec` ↔ sibling namespace `….proof` | nothing on success; precise errors for a missing twin or a non-`spec` module |
 
 ## `#py_check` and other commands
 
@@ -134,10 +135,15 @@ unfolding lemma `toVal_int`, `toVal_nat`, …):
 | `ToVal (List α)` given `ToVal α` | `xs ↦ .list (xs.map toVal).toArray` |
 
 Gotcha (verified): `omega`'s atom matching is syntactic and does not see
-through the brands — a hypothesis or literal at type `PyInt` is invisible to
-it. `py_begin` unbrands hypotheses for you; in manual proofs use `Int`
-binders where a proof ends in `omega`
-(see [`Examples/SidecarDemo.lean`](../Examples/SidecarDemo.lean)).
+through the brands — a comparison headed at `PyInt`, hypothesis or goal, is
+invisible to it. `py_begin` unbrands hypotheses for you; in manual proofs
+use `Int` binders where a proof ends in `omega`
+(see [`Examples/SidecarDemo.lean`](../Examples/SidecarDemo.lean)). When
+restating a branded hypothesis instead, put an `Int`-typed term on the
+comparison's **left** (`have hx' : (0 : Int) ≥ x := hx`) — ascribing the
+branded variable does not unbrand — and close brand-headed *goals* with
+`grind`, which unfolds reducibly
+([tutorial 06, mode 5](tutorial/06-when-proofs-fail.md#5-omega-ignores-a-pyint-typed-hypothesis)).
 
 ## Error classes
 
@@ -179,9 +185,10 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 
 | Command | What |
 |---|---|
-| `python3 extractors/python/extract.py <file.py> [more…] [--companion-dir DIR]` | writes `<file>.json` (envelope) next to the source + `<CompanionDir>/<PascalStem>.lean` (default `Examples/`); deterministic; never fails on valid Python |
+| `python3 extractors/python/extract.py <file.py> [more…] [--companion-dir DIR]` | writes `<file>.json` (envelope) next to the source + `<CompanionDir>/<PascalStem>.lean` (default `Examples/`) — the companion only when the source has `# lean[` blocks (block-less three-file sources get the envelope alone), and never over a hand-written file at that path; deterministic; out-of-vocabulary constructs become `Unsupported` nodes — errors on syntax errors, non-identifier stems, unclosed `# lean[` blocks, hand-written file at the companion path |
 | `lake exe leanmodels-run <envelope.json> <function> [args…] [--fuel N]` | one JSON line: `{"status":"ok","value":…}` \| `{"status":"exn","exn":"…"}` \| `{"status":"timeout"}` \| `{"status":"unsupported","msg":"…"}`; args are integers; default fuel 10000; exit 0 for every canonical result |
 | `python3 harness/diff_test.py [--cases F] [--fuel N] [--no-build] [--runner CMD]` | CPython vs Lean on `harness/cases.json`; exits non-zero on any non-whitelisted mismatch ([howto](howto/run-the-differential-harness.md)) |
+| `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header); exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
 
 ## File map
 
@@ -203,6 +210,7 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 | `extractors/python/extract.py` | extractor + `# lean[` scanner + companion generator |
 | `Examples/python/*.py` | example sources (+ generated `.json`) |
 | `Examples/*.lean` | generated companions (exception: `SidecarDemo.lean`, hand-written) |
+| `Examples/tri/`, `Examples/gcd/` | three-file examples: pure `.py` + envelope + hand-written `spec.lean` (statements, `:= by proofs`) / `proof.lean` (real proofs) — `proofs` tactic, Surface.lean |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/diff_test.py`, `harness/cases.json` | differential harness vs CPython |
-| `LeanModels/Sv/**`, `extractors/sv/**`, `Examples/sv/**`, `harness/sv/**`, `docs/sv-*.md` | SystemVerilog lane, M0 (not yet imported by `lake build` — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |
+| `LeanModels/Sv/**`, `extractors/sv/**`, `Examples/sv/**`, `harness/sv/**`, `docs/sv-*.md` | SystemVerilog lane: M0 scheduler core + typed-surface slice (not imported by `lake build` — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |

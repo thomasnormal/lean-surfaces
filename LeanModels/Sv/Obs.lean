@@ -14,7 +14,7 @@ fuel arithmetic.
 Structure:
 
 * `Res` monad normalization simp lemmas (`Res.ok_bind`, `Res.bind_eq_ok`, …)
-  — the do-notation stepping rules `sv_simp` (Proofs.lean) relies on.
+  — the do-notation stepping rules `sv_simp` (end of this file) relies on.
 * **Value-core lemma layer** (logically Basic.lean material, kept here so the
   Basic → Ast → Semantics files stay byte-untouched): `LawfulBEq Logic` /
   `LawfulBEq LVec` (hence `LawfulBEq SvState` via the core `Prod`/`List`
@@ -642,7 +642,7 @@ theorem Runs.at_least {d : Design} {σ : ScheduleOracle} {stim tr : List SvState
 
 /-- All legal schedules yield the same trace — the gallery's
 `Sv.Deterministic` at M0's cycle level. `swap_nba` satisfies it, `race_blk`
-refutes it (Proofs.lean). -/
+refutes it (`Examples/swap_nba/proof.lean`, `Examples/race_blk/proof.lean`). -/
 def Deterministic (d : Design) : Prop :=
   ∀ (σ₁ σ₂ : ScheduleOracle) (stim tr₁ tr₂ : List SvState),
     Runs d σ₁ stim tr₁ → Runs d σ₂ stim tr₂ → tr₁ = tr₂
@@ -745,5 +745,67 @@ theorem Obs.existsUnique (d : Design) (σ : ScheduleOracle) (stim : List SvState
     ∃ o, Obs d σ stim o ∧ ∀ o', Obs d σ stim o' → o' = o := by
   obtain ⟨o, ho⟩ := Obs.total d σ stim
   exact ⟨o, ho, fun o' ho' => Obs.det ho' ho⟩
+
+/-! ## `sv_simp` — one stack frame of symbolic execution
+
+Shared per-design proof kit (used by every `Examples/<design>/proof.lean`
+and `ToggleExample.lean`). Mirror of the Python lane's `py_simp` freeze
+discipline: simp with every interpreter equation EXCEPT the recursion
+points, which stay frozen so threshold/inversion lemmas can be applied to
+them:
+
+* `combSettle` — the comb-settle fixpoint loop (resolve with
+  `combSettle_nil` on comb-free designs, or `combSettle_at_least`);
+* `runFrom` — `run`'s stimulus recursion (resolve by induction over the
+  stimulus, or `run_at_least`/`Runs.at_least`).
+
+`Design.combIndices`/`Design.edgeIndices` are also left out: for a concrete
+design they are decided by a one-line `rfl` lemma (see
+`swapNba_edgeIndices` in `Examples/swap_nba/proof.lean`), which keeps goals
+free of `List.range`/`filter` noise. Pass design-specific facts
+(`swapNba_p0`, …) as extras, exactly like passing the program literal to
+`py_simp`. -/
+
+open Lean Lean.Parser.Tactic in
+/-- `sv_simp [extra, lemmas] (at h)?` — one stack frame's worth of symbolic
+execution of the SV interpreter: simp with every interpreter equation except
+the frozen recursion points `combSettle` and `runFrom` (see the section
+comment above). Pass design-specific facts (`swapNba_p0`, program literals,
+branch hypotheses) as extras. -/
+macro (name := svSimpTactic) "sv_simp" "[" args:(simpStar <|> simpErase <|> simpLemma),*
+    "]" loc:(location)? : tactic => do
+  let extra : Syntax.TSepArray
+      [`Lean.Parser.Tactic.simpStar, `Lean.Parser.Tactic.simpErase,
+       `Lean.Parser.Tactic.simpLemma] "," := ⟨args.elemsAndSeps⟩
+  `(tactic| set_option linter.unusedSimpArgs false in
+      simp [execStmts, execStmt, evalExpr, evalExprs, evalUnaryOp, evalBinOp,
+            readSignal, SvState.lookup, SvState.set, SvState.showSignal,
+            runCombProcess, combPass, runEdgeProcess, edgePass, commitNba,
+            applyInputs, initState, cycleStep, run, Process.isCombPhase,
+            Process.isEdgePhase, Design.inputNames, Design.outputNames,
+            and_assoc, $extra,*] $(loc)?)
+
+@[inherit_doc svSimpTactic]
+macro "sv_simp" loc:(Lean.Parser.Tactic.location)? : tactic =>
+  `(tactic| sv_simp [] $(loc)?)
+
+/-! ## Applied inputs (shared canonical-trace vocabulary) -/
+
+/-- The value an input port holds after sub-step 1 of a cycle: the stimulus
+entry's value if present, else the held previous value. Canonical traces are
+written in terms of `appIn`, so they are exact for *every* stimulus (partial
+entries included). -/
+def appIn (inputs : SvState) (name : String) (old : LVec) : LVec :=
+  (SvState.lookup inputs name).getD old
+
+/-! ## M0 theorem 1: `run` is a function of `(design, σ, fuel, stimulus)`
+
+Stated to pin it, per the contract ("should be `rfl`-adjacent"). The
+substantive determinism facts are `run_det`/`Runs.functional` above
+(cross-fuel at fixed σ) and the per-design `swap_nba_det`/`counter_det`
+(cross-schedule, `Examples/<design>/proof.lean`). -/
+
+theorem run_deterministic (d : Design) (σ : ScheduleOracle) (fuel : Nat)
+    (stim : List SvState) : run d σ fuel stim = run d σ fuel stim := rfl
 
 end LeanModels.Sv

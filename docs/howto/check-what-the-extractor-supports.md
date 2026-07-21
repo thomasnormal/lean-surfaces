@@ -1,8 +1,10 @@
 # How to check what the extractor (and interpreter) supports
 
 Coverage is layered ([DESIGN.md](../DESIGN.md), the four axes): the extractor
-**never fails** on valid Python — anything outside its vocabulary becomes an
-`Unsupported` node in the envelope — and the interpreter fails **loudly**
+**never fails on constructs** — anything outside its vocabulary becomes an
+`Unsupported` node in the envelope (its only errors are syntax errors,
+non-identifier stems, and unclosed `# lean[` blocks) — and the interpreter
+fails **loudly**
 (`Res.unsupported`, with a message naming the construct) when execution
 reaches anything outside the v0 semantic tier. Nothing is silently faked, so
 "is my program supported?" is always answerable mechanically.
@@ -28,8 +30,8 @@ Extract, then query the JSON (schema:
 the CPython class name in `py_kind` and the unparsed source text:
 
 ```
-python3 extractors/python/extract.py Examples/python/tri.py
-jq '[.. | objects | select(.kind? == "Unsupported") | .py_kind] | unique' Examples/python/tri.json
+python3 extractors/python/extract.py Examples/tri/tri.py
+jq '[.. | objects | select(.kind? == "Unsupported") | .py_kind] | unique' Examples/tri/tri.json
 []
 ```
 

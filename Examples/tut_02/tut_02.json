@@ -1,0 +1,86 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/tut_02/tut_02.py",
+  "source_sha256": "e8bc4d683548c563939830517275e2ea5faf7828ab0d40c2d88672405065dfd9",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 16
+        },
+        "name": "square",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 12
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "id": "x"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 15,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "x"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": [
+    {
+      "first_line": 5,
+      "last_line": 32,
+      "text": "/-! Tutorial 02 (docs/tutorial/02-first-spec.md): the `==>` arrow and\n`py_prove` on straight-line code. -/\n#py_check tut_02.square(5) = 25\n#py_check tut_02.square(-4) = 16\n#py_check tut_02.square(0) = 0\n\n/-- Total correctness: `square(x)` terminates and returns `x * x`, for\nevery Python int `x`. One tactic; no `Val`, no fuel, no AST in sight. -/\ntheorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by\n  py_prove [tut_02]\n\n/-- Whatever `square(x)` returns equals `x * x` \u2014 the relational reading,\nvia the hypothesis-position arrow `\u21d3` and determinism-modulo-fuel\n(`CallsTo.typed_int_eq`, Surface.lean). -/\ntheorem square_result (x r : PyInt) (h : tut_02.square(x) \u21d3 r) : r = x * x :=\n  CallsTo.typed_int_eq h (square_total x)\n\n/-- Squares are nonnegative \u2014 once `square_result` pins the result, the\nrest is ordinary mathematics with ordinary Lean tools; the interpreter\nnever reappears. -/\ntheorem square_nonneg (x r : PyInt) (h : tut_02.square(x) \u21d3 r) : 0 \u2264 r := by\n  rw [square_result x r h]\n  rcases Int.le_total 0 x with hx | hx\n  \u00b7 exact Int.mul_nonneg hx hx\n  \u00b7 have := Int.mul_nonneg (a := -x) (b := -x) (by omega) (by omega)\n    rwa [Int.neg_mul_neg] at this"
+    }
+  ]
+}

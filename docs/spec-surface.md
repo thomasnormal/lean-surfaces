@@ -16,8 +16,9 @@ CallsTo`/`obtain` — fuel and `callFunction` stay visible by design), and
 (`LeanModels/Python/LoopTactic.lean` — supply only `(inv := …)` and
 `(dec := …)` lambdas over the loop's variables, plus `(state := […])` when a
 mutated Python variable shadows a theorem binder; residual goals are
-`omega`/`grind`-shaped arithmetic; see `Examples/python/tri.py`, `gcd.py`,
-`sum_to.py`), and `py_corollary [tot]` closing the standard corollary shapes
+`omega`/`grind`-shaped arithmetic; see `Examples/tri/proof.lean`,
+`Examples/gcd/proof.lean`, `Examples/python/sum_to.py`), and
+`py_corollary [tot]` closing the standard corollary shapes
 in one call. Acceptance-tested: a fresh user proved `sum_to` first-try, 8
 lines vs 13 for the analogous pure-Lean proof. Not yet: `≃` /
 `Py.Terminates` / contract triples, recursion automation (`py_lift` helps;
@@ -49,6 +50,7 @@ Callee specs are `@[spec]` lemmas, consumed at call sites by `py_prove [g_spec]`
 ### 1. Warm-up — branching, total correctness
 
 ```python
+# Examples/python/my_abs.py (function only)
 def my_abs(x: int) -> int:
     if x < 0:
         return -x
@@ -61,6 +63,7 @@ def my_abs(x: int) -> int:
 ### 2. Python semantics visible in the spec — floor division
 
 ```python
+# Examples/python/midpoint.py (function only)
 def midpoint(a: int, b: int) -> int:
     return (a + b) // 2
 ```
@@ -79,6 +82,7 @@ visible in the statement, never buried in a translation.
 ### 3. Partial vs. total, separated — gcd
 
 ```python
+# Examples/gcd/gcd.py (the whole program — three-file layout)
 def gcd(a: int, b: int) -> int:
     while b != 0:
         a, b = b, a % b

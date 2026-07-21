@@ -19,12 +19,16 @@ It runs `lake build` once up front, then prints a table
 (`case | cpython | lean | verdict`) and a summary line like:
 
 ```
-79 cases: 0 failed, 1 whitelisted-unsupported, 78 matched
+103 cases: 0 failed, 2 whitelisted-unsupported, 101 matched
 ```
 
 Exit status is non-zero on any non-whitelisted mismatch. Flags: `--no-build`
 (skip the up-front build), `--fuel N` (pass to the runner; default 10000),
 `--cases FILE`, `--runner CMD`.
+
+The harness is one third of the full check triad —
+`lake build && python3 tools/docs_check.py && python3 harness/diff_test.py`
+— the standard gate before finishing any change (proofs or docs).
 
 To probe a single call by hand, use the runner directly — one JSON line on
 stdout, exit 0 for every *semantic* result (`exn`/`timeout`/`unsupported`
@@ -42,7 +46,7 @@ list of argument tuples. Real rows:
 
 ```json
 [
-  {"file": "Examples/python/gcd.py", "function": "gcd", "args": [[12, 18], [18, 12], [5, 0], [0, 5], [7, 13], [0, 0], [270, 192], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
+  {"file": "Examples/gcd/gcd.py", "function": "gcd", "args": [[12, 18], [18, 12], [5, 0], [0, 5], [7, 13], [0, 0], [270, 192], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
   {"file": "Examples/python/arith.py", "function": "powi", "args": [[2, -1]], "expect": "unsupported"}
 ]
 ```
@@ -52,7 +56,12 @@ list of argument tuples. Real rows:
   (run `python3 extractors/python/extract.py <file>` first).
 - `function` — module-level function name.
 - `args` — a list of argument lists (integers only; the runner parses args
-  as arbitrary-precision ints).
+  as arbitrary-precision ints). Functions taking non-int arguments (lists,
+  strings) therefore have no expressible rows in v0: cover their concrete
+  behavior with `#py_check` lines in the source file — the surface command
+  takes full terms — and record the gap in the file's non-vacuity block.
+  [`Examples/python/ag_head.py`](../../Examples/python/ag_head.py) is the
+  pattern.
 - `expect` — `"match"` (default): CPython and Lean canonical outcomes must
   be equal, exceptions included (compared by canonical class name —
   [reference, error classes](../reference.md#error-classes)).
@@ -102,6 +111,7 @@ Raise `--fuel`; if it persists, the function may not terminate on that input.
 ```
 leanmodels-run: arguments must be integers, got 'x'
 usage: leanmodels-run <envelope.json> <function> [args...] [--fuel N]
+  args are parsed as (arbitrary-precision) integers; default fuel 10000
 ```
 
 The runner (and therefore the harness `args`) only takes ints in v0. Note a

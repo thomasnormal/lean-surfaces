@@ -40,40 +40,48 @@ The workflow:
 
 1. Write a Python file with theorems in `# lean[ ... # ]` comment blocks.
 2. Run the extractor:
-   `python3 extractors/python/extract.py Examples/python/tri.py`
-   This emits `Examples/python/tri.json` (the AST envelope) and the companion
-   file `Examples/Tri.lean` with your blocks spliced in verbatim.
+   `python3 extractors/python/extract.py Examples/python/sum_to.py`
+   This emits `Examples/python/sum_to.json` (the AST envelope) and the
+   companion file `Examples/SumTo.lean` with your blocks spliced in verbatim.
 3. `lake build` — Lean ingests the JSON at elaboration time, defines
-   `tri : Module` as a literal AST term, and checks your proofs.
+   `sum_to : Module` as a literal AST term, and checks your proofs.
 
-### Example: `Examples/python/tri.py`
+Two worked examples (`Examples/tri/`, `Examples/gcd/`) use the **three-file
+layout** instead: a pure `.py` (no lean-blocks; the extractor emits the
+envelope and no companion), a hand-written `spec.lean` holding the
+non-vacuity checks and every theorem *statement* (each proved `:= by
+proofs`), and a `proof.lean` holding the real proofs (see the `proofs`
+tactic in `LeanModels/Python/Surface.lean`).
+
+### Example: `Examples/tri/`
 
 ```python
+# Examples/tri/tri.py (the whole program)
 def tri(n):
-    total = 0
-    i = 0
+    total, i = 0, 0
     while i <= n:
         total += i
         i += 1
     return total
+```
 
-# lean[
-# #py_check tri(10) = 55
-# #py_check tri(0) = 0
-#
-# theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-#   py_begin [tri]
-#   py_loop (inv := fun (total i : Int) => 2 * total = i * (i - 1) ∧ 0 ≤ i ∧ i ≤ n + 1)
-#           (dec := fun (total i : Int) => (n + 1 - i).toNat)
-#   all_goals grind
-# ]
+```lean
+-- Examples/tri/proof.lean (the loop proof; statement + checks in Examples/tri/spec.lean)
+theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
+  py_begin [tri]
+  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+          (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  · obtain rfl : i' = n + 1 := by omega
+    grind
+  all_goals grind
 ```
 
 The theorem says: for every `n ≥ 0`, running the *actual Python program* through
 the verified interpreter terminates and returns `n(n+1)/2`. The user supplies
-only the loop invariant and the decreasing measure — the same content a
-pure-Lean proof of the same fact would need (see `Examples/python/tri.py` for
-the full file, including the derived `@[spec]` corollary forms).
+the loop invariant, the decreasing measure, and the closing arithmetic
+(`omega`/`grind`) — the same content a pure-Lean proof of the same fact would
+need (see `Examples/tri/spec.lean` for the statements, the `#py_check`
+non-vacuity checks, and the derived `@[spec]` corollary forms).
 
 The theorem is **partial correctness**: *if* the fuel-bounded interpreter
 returns a value, that value is `n(n+1)/2`. That shape can be vacuously true if
@@ -85,9 +93,19 @@ function on concrete inputs and checks the result at elaboration time, so the
 The runner and differential harness close the loop:
 
 ```
-lake exe leanmodels-run Examples/python/tri.json tri 10   # one-line JSON result
+lake exe leanmodels-run Examples/tri/tri.json tri 10      # one-line JSON result
 python3 harness/diff_test.py                              # Lean vs CPython on harness/cases.json
 ```
+
+The full check before you finish any change (proofs *or* docs) is the triad:
+
+```
+lake build && python3 tools/docs_check.py && python3 harness/diff_test.py
+```
+
+`tools/docs_check.py` keeps the documentation honest: every path-marked code
+block in `docs/`, this README, and `AGENTS.md` must match the referenced file
+verbatim (marker convention in the script's header).
 
 ## Repo layout
 
@@ -103,9 +121,11 @@ python3 harness/diff_test.py                              # Lean vs CPython on h
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator |
 | `Examples/python/*.py` | Example sources (+ generated `.json` envelopes) |
-| `Examples/*.lean` | Generated companion files (one per example) |
+| `Examples/*.lean` | Generated companion files (one per lean-block example) |
+| `Examples/tri/`, `Examples/gcd/` | Three-file examples: pure `.py` + envelope + hand-written `spec.lean`/`proof.lean` (`proofs` tactic, Surface.lean) |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/` | Differential tests vs CPython (`diff_test.py`, `cases.json`) |
+| `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
 Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned), core Lean only — no package
 dependencies. Extractor/harness require only Python ≥ 3.9 stdlib.

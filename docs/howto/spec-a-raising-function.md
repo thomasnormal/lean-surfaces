@@ -67,16 +67,17 @@ message/name string, and your spec must match it character-for-character
 **Heartbeat timeout on string-valued calls.** (Verified on the current
 tree.) A `==>!` goal whose call carries a *string argument* — e.g.
 `add(a, "x") ==>! .typeError "…"` — sends `py_prove`'s symbolic execution
-into a `(deterministic) timeout at 'isDefEq', maximum number of heartbeats
-(200000) has been reached`. Symbolic string equality blows up in defeq
-checking. Practical v0 raising specs stay on int inputs; pin string-input
-error behavior with `#py_check … raises …` (concrete evaluation, cheap)
-instead of a theorem.
+into a heartbeat timeout: `` (deterministic) timeout at `whnf`, maximum
+number of heartbeats (200000) has been reached `` (the reported site varies
+— the wrong-error case below dies at `isDefEq`). Symbolic string equality
+blows up in reduction/defeq checking. Practical v0 raising specs stay on
+int inputs; pin string-input error behavior with `#py_check … raises …`
+(concrete evaluation, cheap) instead of a theorem.
 
 **Wrong error value.** (Verified.) A wrong error class under `py_prove` —
 e.g. claiming `arith.mod(a, 0) ==>! .indexError` — does *not* fail with a
-readable mismatch: `py_prove`'s fallback alternatives churn until the same
-`(deterministic) timeout at 'isDefEq'` heartbeat error. A heartbeat timeout
+readable mismatch: `py_prove`'s fallback alternatives churn until a
+`` (deterministic) timeout at `isDefEq` `` heartbeat error. A heartbeat timeout
 on a raising spec therefore usually means "wrong claim", not "hard proof".
 Check what really happens first:
 

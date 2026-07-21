@@ -79,7 +79,7 @@ theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
 The theorem says: for every `n ≥ 0`, running the *actual Python program* through
 the verified interpreter terminates and returns `n(n+1)/2`. The user supplies
 the loop invariant, the decreasing measure, and the closing arithmetic
-(`omega`/`grind`) — the same content a pure-Lean proof of the same fact would
+([`omega`](https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html)/[`grind`](https://lean-lang.org/doc/reference/latest/The--grind--tactic/)) — the same content a pure-Lean proof of the same fact would
 need (see `Examples/tri/spec.lean` for the statements, the `#py_check`
 non-vacuity checks, and the derived `@[spec]` corollary forms).
 

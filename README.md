@@ -77,16 +77,30 @@ theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by 
 ```
 
 The theorem says: for every `n ≥ 0`, running the *actual Python program*
-through the verified interpreter terminates and returns `n(n+1)/2`. The
-real proof lives in `Examples/tri/proof.lean` — the statement restated
-under the same name (Lean has no forward declarations; the spec-side
-`:= by proofs` resolves the twin and typechecks the duplication), plus the
-only content no tactic can invent: the loop invariant, the decreasing
-measure, and the closing arithmetic (`py_begin`/`py_loop`, then
-[`omega`](https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html)/[`grind`](https://lean-lang.org/doc/reference/latest/The--grind--tactic/))
-— the same content a pure-Lean proof of the same fact would need.
-`spec.lean` also carries the derived `@[spec]` corollary forms; the
-`proofs` tactic is defined in `LeanModels/Python/Surface.lean`.
+through the verified interpreter terminates and returns `n(n+1)/2`. And the
+proof — in `Examples/tri/proof.lean`, where the statement is restated under
+the same name (Lean has no forward declarations; the spec-side `:= by proofs`
+resolves the twin and typechecks the duplication) — is only the content no
+tactic can invent: the loop invariant, the decreasing measure, and closing
+arithmetic:
+
+```lean
+-- Examples/tri/proof.lean (proof body; illustrative until the vcgen campaign lands)
+theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
+  py_begin [tri]
+  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+          (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  · obtain rfl : i' = n + 1 := by omega
+    grind
+  all_goals grind
+```
+
+That is the *entire* proof — the same invariant and measure a pure-Lean
+proof of the same fact would need
+([`omega`](https://leanprover-community.github.io/mathlib4_docs/Lean/Elab/Tactic/Omega.html)/[`grind`](https://lean-lang.org/doc/reference/latest/The--grind--tactic/)
+close the arithmetic residue). No `Val`, no fuel, no AST. `spec.lean` also
+carries the derived `@[spec]` corollary forms; the `proofs` tactic is
+defined in `LeanModels/Python/Surface.lean`.
 
 The `@[spec]` corollaries are **partial correctness**: *if* the
 fuel-bounded interpreter returns a value, that value is `n(n+1)/2`. That
@@ -146,6 +160,22 @@ theorem inverse_no_raise (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     ¬ rsa_inverse.inverse(x, n) ==>! e := by proofs
 ```
 
+The proof (`Examples/rsa_inverse/proof.lean`, ~380 lines behind the
+137-line spec) is built around one object — the loop invariant over the
+seven-variable state, here in its heart:
+
+```lean
+-- Examples/rsa_inverse/proof.lean (invariant core; illustrative until the vcgen campaign lands)
+private def egcdInv (A B : Int) : EgcdS → Prop
+  | (a, b, x, y, lx, ly, _) =>
+    0 < a ∧ 0 ≤ b ∧ b < a ∧ Int.gcd a b = Int.gcd A B ∧
+    a = lx * A + ly * B ∧ b = x * A + y * B ∧ …
+```
+
+— gcd preservation, the two Bézout identities, and a sign-alternation
+block (the coefficient pairs flip signs each iteration) whose magnitude
+bounds are what make the post-loop wrap land in range.
+
 Two things make this more than an exercise. First, `inverse` contains a
 `raise NotRelativePrimeError` — an out-of-tier construct — and the proof
 handles it by **unreachability**: under `gcd x n = 1` symbolic execution
@@ -191,14 +221,31 @@ theorem race_blk_not_deterministic : ¬ Deterministic raceBlkDesign := by proofs
 ```
 
 That nondeterminism theorem is the point: a simulator shows you *one*
-schedule; the proof shows the race exists across *all* of them. Dually,
-`Examples/counter/spec.lean` proves the gallery's golden-model refinement —
-for every legal schedule, from the first sampled reset the counter follows
-its one-line Lean model:
+schedule; the proof shows the race exists across *all* of them — and the
+proof is two concrete schedule witnesses plus kernel evaluation:
+
+```lean
+-- Examples/race_blk/proof.lean
+theorem race_blk_not_deterministic : ¬ Deterministic raceBlkDesign := by
+  intro h
+  have := h σ_src σ_rev raceStim _ _ ⟨8, race_blk_src⟩ ⟨8, race_blk_rev⟩
+  exact absurd this (by decide)
+```
+
+Dually, `Examples/counter/spec.lean` proves the gallery's golden-model
+refinement — for every legal schedule, from the first sampled reset the
+counter follows its one-line Lean model — with the proof riding the
+canonical-trace lemmas through `sv_prove`:
 
 ```lean
 -- Examples/counter/spec.lean
 theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by proofs
+```
+
+```lean
+-- Examples/counter/proof.lean
+theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by
+  sv_prove [counter_from_reset, sampledRst_eq, counterModelRun_eq, counter_firstOutput]
 ```
 
 All six extracted designs are proved in this layout: `swap_nba`
@@ -248,6 +295,13 @@ load_netlist divider from "Examples/divider/divider.json"
     all assignments satisfying Kirchhoff + Ohm, not one solver run. -/
 theorem divider_out : divider ⊨dc (v "out" = 10/3) := by proofs
 theorem divider_wellposed : WellPosed divider := by proofs
+```
+
+```lean
+-- Examples/divider/proof.lean (illustrative — lands with the lane)
+theorem divider_out : divider ⊨dc (v "out" = 10/3) := by
+  spice_solve   -- exact Gaussian elimination over ℚ + per-circuit uniqueness,
+                -- all kernel-checked; no invariant needed: DC is one linear solve
 ```
 
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the

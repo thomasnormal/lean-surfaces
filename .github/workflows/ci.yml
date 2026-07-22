@@ -23,7 +23,10 @@ jobs:
           path: .lake
           key: lake-${{ runner.os }}-${{ hashFiles('lean-toolchain', 'lakefile.toml') }}
       - name: Notebook dependencies
-        run: python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
+        run: |
+          python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
+          # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang
+          python3.12 -m pip install --user pyslang || python3 -m pip install --user pyslang
       - name: Icarus Verilog (SV differential-harness simulator)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog
       - name: Full check

@@ -217,6 +217,50 @@ including the x/z 4-state cases. The startup-`x` behavior (`count` is `x`
 through every pre-reset edge, because `x + 1 = x`) is LRM truth that
 2-state simulators hide — here it is both tested and part of the proofs.
 
+## Analog circuits: physical laws as definitions, contracts as interfaces
+
+The third lane (`LeanModels/Spice/**`, landing now — fences below flip to
+drift-checked markers as the files merge) takes SPICE netlists. No new
+axioms enter: Kirchhoff's laws and the device laws are the *definition* of
+the satisfaction relation — `Satisfies c a` means "KCL holds at every node,
+every element obeys its law, ground is 0" — exactly as `callFunction`
+defines Python's semantics. And because linear DC circuits with rational
+element values have exactly rational operating points, theorems are **exact
+kernel arithmetic over ℚ**: it is ngspice, running the same netlist in
+floating point, that *approximates our answers* in the differential harness
+— not the other way round.
+
+```spice
+* Examples/divider/divider.cir (illustrative — lands with the lane)
+V1 in 0 DC 5
+R1 in out 1k
+R2 out 0 2k
+.end
+```
+
+```lean
+-- Examples/divider/spec.lean (illustrative — lands with the lane)
+load_netlist divider from "Examples/divider/divider.json"
+
+#spice_check divider shows out = 10/3       -- exact, not 3.333…
+
+/-- Every physically admissible state has v(out) = 10/3: universal over
+    all assignments satisfying Kirchhoff + Ohm, not one solver run. -/
+theorem divider_out : divider ⊨dc (v "out" = 10/3) := by proofs
+theorem divider_wellposed : WellPosed divider := by proofs
+```
+
+The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
+extractor and semantics, and a linear block's interface is captured
+*exactly* by a small port contract (`I = Y·V + J` — k² rationals, however
+large the block's interior). Sub-blocks are proved once, composed by the
+`compose_contracts` metatheorem, and global properties follow from local
+ones — the capstone theorem quantifies over an **infinite family of
+circuits** (`∀ N`, an N-section attenuator chain outputs exactly
+`(2/3)^N · 5` volts, by induction over the circuit structure): a statement
+no simulator can even express, and the intended workflow for circuits too
+large to simulate flat.
+
 ## Repo layout
 
 | Path | What |

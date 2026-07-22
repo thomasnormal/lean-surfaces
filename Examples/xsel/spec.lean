@@ -1,39 +1,30 @@
 /-
-Examples/xsel — the three-file example layout (SV lane), demo-only form:
+Examples/xsel — the three-file example layout (SV lane):
 
   xsel.sv      — the design (always_comb if/else mux)
   xsel.sv.json — generated envelope (extractors/sv/extract.py)
-  spec.lean    — THIS FILE: the design literal, envelope certification,
-                 and concrete runs in surface syntax (`#sv_check`)
+  spec.lean    — THIS FILE: envelope certification, concrete runs in
+                 surface syntax (`#sv_check`), and the surface-form
+                 theorem STATEMENTS, each proved `:= by proofs`
+  proof.lean   — the real proofs (namespace `Examples.xsel.proof`)
 
-No theorems have been proved about `xsel` yet, so there is no `proof.lean`
-(the three-file layout drops to two files; when the first theorem lands,
-its raw form and proof move to a new `Examples/xsel/proof.lean` —
-namespace `Examples.xsel.proof` — and its surface statement is stated here
-`:= by proofs`). Since no proof module holds the design constant, the
-literal lives here, certified node-for-node equal to the extracted
-envelope by the `#eval` below.
+`proofs` (LeanModels/Python/Surface.lean — the tactic is lane-agnostic)
+resolves each declaration's name against the sibling proof module. The
+statement duplication between spec and proof is BY DESIGN (Lean has no
+forward declarations) and is typechecked by the `:= by proofs` reference.
+Unlike the Python lane there is no per-file `load_program`: the design
+constant lives once in proof.lean, the spec opens it, and the `#eval`
+below certifies it node-for-node equal to the extracted envelope.
 -/
+import Examples.xsel.proof
 import LeanModels.Sv.Tests
+import LeanModels
 
 open LeanModels.Sv
+open Examples.xsel.proof (xselDesign xselTrace)
 
-/-- `Examples/xsel/xsel.sv` (`always_comb` if/else mux on `sel`),
-hand-transcribed. -/
-def xselDesign : Design :=
-  { name := "xsel"
-    decls := #[
-      { name := "sel", width := 1, isInput := true },
-      { name := "a", width := 8, isInput := true },
-      { name := "b", width := 8, isInput := true },
-      { name := "y", width := 8, isOutput := true }]
-    processes := #[
-      .alwaysComb (.ifStmt (.ident "sel")
-        (.blockingAssign "y" (.ident "a"))
-        (some (.blockingAssign "y" (.ident "b"))))] }
-
-/-! Envelope certification: the hand-built design literal is node-for-node
-the extracted envelope (a mismatch fails the file). -/
+/-! Envelope certification: the proof module's hand-built design literal is
+node-for-node the extracted envelope (a mismatch fails the file). -/
 #eval show IO Unit from do
   let d ← EnvelopeIngest.loadFile "Examples/xsel/xsel.sv.json"
   unless d == xselDesign do
@@ -54,3 +45,77 @@ harness/sv/cases.json). -/
 -- simulator picks b, it does NOT merge a/b bitwise
 #sv_check xselDesign [[sel := "x", a := 0xAA, b := 0x55]] shows y = ["01010101"]
 #sv_check xselDesign [[sel := "z", a := 0xAA, b := 0x55]] shows y = ["01010101"]
+
+/-- **Gallery example 5, known-select form** (`xsel_known`): for every
+legal schedule and every stimulus, any settled snapshot with an embedded
+`Bool` select and embedded `BitVec 8` data inputs shows the Lean-level mux
+`y = if sel then a else b`. Raw form and proof:
+`Examples/xsel/proof.lean`. -/
+theorem xsel_known (s : Bool) (a b : BitVec 8) :
+    xselDesign ⊨ spec fun _stim tr =>
+      ∀ (i : Nat) (st : SvState), tr[i]? = some st →
+        SvState.lookup st "sel" = some (LVec.ofBool s) →
+        SvState.lookup st "a" = some (LVec.ofBitVec a) →
+        SvState.lookup st "b" = some (LVec.ofBitVec b) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (if s then a else b)) := by proofs
+
+/-- **Gallery example 5, X-optimism form** (`xsel_x_else`): a `sel` of `x`
+or `z` takes the ELSE branch — `y = b`, never a bitwise `a`/`b` merge —
+per LRM §12.4 (an `if` condition evaluating to zero, x, or z is not-true).
+The `v = lx ∨ v = lz` hypothesis folds the gallery's `Logic.lz` twin into
+the one statement. Real hardware might do anything; that the simulator's
+optimism is *provable* makes the simulation/hardware gap a stateable
+property instead of folklore. -/
+theorem xsel_x_else (v : Logic) (hv : v = Logic.lx ∨ v = Logic.lz) :
+    xselDesign ⊨ spec fun _stim tr =>
+      ∀ (i : Nat) (st : SvState) (vb : LVec), tr[i]? = some st →
+        SvState.lookup st "sel" = some (LVec.ofLogic v) →
+        SvState.lookup st "b" = some vb →
+        SvState.lookup st "y" = some vb := by proofs
+
+/-- `xsel` really runs, under every schedule: the canonical settled trace
+(x startup included), in `⇓[σ]` form. -/
+theorem xsel_runs (σ : ScheduleOracle) (stim : List SvState) :
+    xselDesign / stim ⇓[σ] xselTrace (LVec.xVec 1) (LVec.xVec 8) (LVec.xVec 8) stim := by
+  proofs
+
+/-! ## Pinned renderings + axiom pins (the surface prints as written; no
+sorry, no native_decide — standard axioms only) -/
+
+/--
+info: xsel_known (s : Bool) (a b : BitVec 8) :
+  xselDesign ⊨
+    spec fun _stim tr =>
+      ∀ (i : Nat) (st : SvState),
+        tr[i]? = some st →
+          st.lookup "sel" = some (LVec.ofBool s) →
+            st.lookup "a" = some (LVec.ofBitVec a) →
+              st.lookup "b" = some (LVec.ofBitVec b) → st.lookup "y" = some (LVec.ofBitVec (if s = true then a else b))
+-/
+#guard_msgs in
+#check xsel_known
+
+/--
+info: xsel_x_else (v : Logic) (hv : v = Logic.lx ∨ v = Logic.lz) :
+  xselDesign ⊨
+    spec fun _stim tr =>
+      ∀ (i : Nat) (st : SvState) (vb : LVec),
+        tr[i]? = some st → st.lookup "sel" = some (LVec.ofLogic v) → st.lookup "b" = some vb → st.lookup "y" = some vb
+-/
+#guard_msgs in
+#check xsel_x_else
+
+/--
+info: xsel_runs (σ : ScheduleOracle) (stim : List SvState) :
+  xselDesign / stim ⇓[σ] xselTrace (LVec.xVec 1) (LVec.xVec 8) (LVec.xVec 8) stim
+-/
+#guard_msgs in
+#check xsel_runs
+
+/-- info: 'xsel_known' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms xsel_known
+
+/-- info: 'xsel_x_else' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms xsel_x_else

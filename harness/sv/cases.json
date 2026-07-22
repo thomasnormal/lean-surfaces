@@ -93,6 +93,33 @@
         {"sel": "1", "a": "0000xx11", "b": "11110000"},
         {"sel": "0", "a": "00001111", "b": "zzzz0000"}
       ]
+    },
+    {
+      "name": "toggle_directed",
+      "example": "toggle",
+      "signals": ["rst", "en", "q"],
+      "stimulus": [
+        {"rst": "1", "en": "0"},
+        {"rst": "0", "en": "1"},
+        {"en": "1"},
+        {"en": "0"},
+        {"en": "1"},
+        {"rst": "1"},
+        {"rst": "0", "en": "1"}
+      ]
+    },
+    {
+      "name": "toggle_x",
+      "example": "toggle",
+      "signals": ["rst", "en", "q"],
+      "stimulus": [
+        {"rst": "0", "en": "1"},
+        {"rst": "1", "en": "0"},
+        {"rst": "0", "en": "x"},
+        {"en": "z"},
+        {"en": "1"},
+        {"rst": "x", "en": "1"}
+      ]
     }
   ]
 }

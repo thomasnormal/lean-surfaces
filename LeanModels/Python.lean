@@ -7,6 +7,9 @@ import LeanModels.Python.Surface
 import LeanModels.Python.Semantics
 import LeanModels.Python.Logic
 import LeanModels.Python.Obs
+import LeanModels.Python.VC
+import LeanModels.Python.VC2
+import LeanModels.Python.VCTests
 import LeanModels.Python.LoopTactic
 import LeanModels.Python.Delab
 import LeanModels.Python.Tests

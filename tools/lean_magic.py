@@ -42,6 +42,43 @@ Magics provided (see notebooks/01-pipeline.ipynb for the guided tour):
     (tools/run_notebooks.py) catch semantic regressions in untagged cells;
     tag a cell ``expected-error`` if the mismatch itself is the lesson.
 
+SV-lane magics (notebooks/03-systemverilog.ipynb; ``docs/sv-design-m0.md``
+is the tier contract):
+
+``%%svfile <name>.sv``
+    The ``%%pyfile`` of the SV lane: write the cell body to
+    ``notebooks/work/<name>.sv``, run the SV extractor
+    (``python3.12 extractors/sv/extract.py``, needs pyslang) producing
+    ``<name>.sv.json`` next to it, and summarize the envelope inline:
+    modules with ports/decls, processes, and any ``Unsupported`` nodes.
+    INVALID SystemVerilog (syntax/semantic errors) fails the cell with
+    pyslang's formatted diagnostics before extraction — the extractor's
+    never-fail contract covers valid-but-out-of-tier input only, and
+    without this gate a typo would degrade silently to ``Unsupported``
+    nodes under a green banner.
+    SV envelopes are NOT part of the Python ``NotebookHeader`` (the SV lane
+    has no ``load_program``; ``%%lean`` cells reach SV designs through the
+    ``+Module`` import extension below).
+
+``%svrun <design> [--sigma src|rev] [--cycles N] [--stim <json|file>]``
+    Run the M0 cycle interpreter on the working envelope
+    (``notebooks/work/<design>.sv.json``) via the existing harness runner
+    (``lake env lean --run harness/sv/runner.lean`` — reusing the captured
+    ``lake env``), and pretty-print the per-cycle signal table with 4-state
+    values rendered as-is (``x``/``z`` highlighted).  ``--sigma`` picks the
+    schedule oracle (``src`` = source/declaration order, Xcelium's
+    empirical order; ``rev`` = reversed) — the same design can legally
+    differ between the two, which is the SV notebook's showpiece.
+    ``--stim`` is an inline JSON list (one object per cycle,
+    ``{"rst": "1"}`` or ``{"rst": 1}`` — ints are rendered at declared
+    width) or a path to such a file; absent inputs hold (initially x).
+    Without ``--stim``, ``--cycles N`` (default 4) drives N hold cycles.
+
+``%%lean`` also accepts ``+<Module.Path>`` tokens on its line (e.g.
+``%%lean sv_cell +Examples.swap_nba.spec``): each adds an ``import`` to the
+cell's preamble, which is how SV cells reach the per-example spec/proof
+modules (built by ``lake build``; the Python lane never needs this).
+
 Everything is anchored at the repo root (parent of ``tools/``); the magics
 work regardless of the notebook server's cwd.  Python 3.9 compatible.
 
@@ -77,10 +114,14 @@ WORK_DIR = REPO_ROOT / "notebooks" / "work"
 CELLS_DIR = WORK_DIR / "cells"
 EXTRACTOR = REPO_ROOT / "extractors" / "python" / "extract.py"
 RUNNER_BIN = REPO_ROOT / ".lake" / "build" / "bin" / "leanmodels-run"
+SV_EXTRACTOR = REPO_ROOT / "extractors" / "sv" / "extract.py"
+SV_RUNNER = REPO_ROOT / "harness" / "sv" / "runner.lean"
+SV_PYTHON = "python3.12"  # the SV extractor's interpreter (pyslang)
 HEADER_NAME = "NotebookHeader"
 HEADER_CACHE = WORK_DIR / "header_cache.meta"
 
 STEM_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+MODPATH_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 MSG_RE = re.compile(
     r"^(?P<path>\S+?\.lean):(?P<line>\d+):(?P<col>\d+): "
     r"(?P<sev>error|warning|info): ?(?P<text>.*)$"
@@ -130,6 +171,29 @@ try:
     print(json.dumps({"status": "ok", "value": canon(v)}))
 except ValueError as e:
     print(json.dumps({"status": "unmappable", "msg": str(e)}))
+"""
+
+
+# Diagnostics gate run by %%svfile before extraction (python3.12 + pyslang,
+# same frontend as the extractor). Exit 1 + formatted report on stdout iff
+# the design has error-severity diagnostics; exit 0 when clean; any other
+# outcome is a driver failure and the magic falls through to the extractor.
+_SV_DIAG_DRIVER = r"""
+import sys
+import pyslang
+from pyslang.ast import Compilation
+from pyslang.syntax import SyntaxTree
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+tree = SyntaxTree.fromText(text, name=path)
+comp = Compilation()
+comp.addSyntaxTree(tree)
+diags = comp.getAllDiagnostics()
+if any(d.isError() for d in diags):
+    # Report ALL diagnostics so notes ("to match this '('") stay attached.
+    sys.stdout.write(pyslang.DiagnosticEngine.reportAll(tree.sourceManager, diags))
+    sys.exit(1)
+sys.exit(0)
 """
 
 
@@ -469,9 +533,28 @@ class LeanMagics(Magics):
 
     @cell_magic
     def lean(self, line, cell):
-        """%%lean [<name>] — check the cell as Lean code against the loaded
-        programs; show #py_check/#eval output or the error with goal state."""
-        name = line.strip()
+        """%%lean [<name>] [+<Module.Path> ...] — check the cell as Lean code
+        against the loaded programs; show #py_check/#eval output or the error
+        with goal state. Each +Module token adds an import to the preamble
+        (how SV cells reach Examples.<name>.spec modules)."""
+        toks = line.split()
+        extra_imports = []
+        name = ""
+        for tok in toks:
+            if tok.startswith("+"):
+                mod = tok[1:]
+                if not MODPATH_RE.match(mod):
+                    _show(_banner(_SEV_COLOR["error"],
+                                  "usage: %%lean [<name>] [+Module.Path ...]",
+                                  "bad import token %r" % tok))
+                    raise UsageDisplayed("bad %%lean import: %r" % tok)
+                extra_imports.append(mod)
+            elif not name:
+                name = tok
+            else:
+                _show(_banner(_SEV_COLOR["error"],
+                              "usage: %%lean [<name>] [+Module.Path ...]"))
+                raise UsageDisplayed("bad %%lean line: %r" % line.strip())
         if name and (not STEM_RE.match(name) or name == HEADER_NAME):
             _show(_banner(_SEV_COLOR["error"],
                           "usage: %%lean [<name>]  (bare identifier)"))
@@ -490,6 +573,8 @@ class LeanMagics(Magics):
             for stem, p in self._envelopes():
                 rel = p.relative_to(REPO_ROOT).as_posix()
                 preamble.append('load_program %s from "%s"' % (stem, rel))
+        for mod in extra_imports:
+            preamble.append("import %s" % mod)
         preamble.append("open LeanModels LeanModels.Python")
         preamble.append("")
         offset = len(preamble)
@@ -510,7 +595,8 @@ class LeanMagics(Magics):
             if not blocks:
                 frags.append(_block(_SEV_COLOR["output"], None,
                                     "(no output — definitions compiled, "
-                                    "#py_check guards held, proofs checked)"))
+                                    "#py_check/#sv_check guards held, "
+                                    "proofs checked)"))
         else:
             frags.append(_banner(
                 _SEV_COLOR["error"],
@@ -704,6 +790,302 @@ class LeanMagics(Magics):
                 "is the lesson)" % call) from None
         return None
 
+    # -- SV lane: %%svfile -------------------------------------------------
+
+    @cell_magic
+    def svfile(self, line, cell):
+        """%%svfile <name>.sv — write the cell to notebooks/work/, run the
+        SV extractor (python3.12 + pyslang), summarize the envelope."""
+        name = line.strip()
+        if name.endswith(".sv"):
+            name = name[:-3]
+        if not STEM_RE.match(name) or name == HEADER_NAME:
+            _show(_banner(
+                _SEV_COLOR["error"], "usage: %%svfile <name>.sv",
+                "name must be a bare identifier",
+            ))
+            raise UsageDisplayed("bad %%svfile name: %r" % line.strip())
+        sv_path = WORK_DIR / (name + ".sv")
+        sv_path.write_text(cell if cell.endswith("\n") else cell + "\n",
+                           encoding="utf-8")
+        rel = sv_path.relative_to(REPO_ROOT).as_posix()
+        py312 = shutil.which(SV_PYTHON)
+        if py312 is None:
+            _show(_banner(_SEV_COLOR["error"],
+                          "%s not found — the SV extractor needs python3.12 "
+                          "+ pyslang" % SV_PYTHON))
+            raise UsageDisplayed("no %s on PATH" % SV_PYTHON)
+        t0 = time.monotonic()
+        # Diagnostics gate: invalid SV fails here with compiler messages
+        # instead of degrading to Unsupported nodes under a green banner.
+        try:
+            diag = subprocess.run(
+                [py312, "-c", _SV_DIAG_DRIVER, rel],
+                cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=60,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            diag = None  # driver trouble: let the extractor have its say
+        if diag is not None and diag.returncode == 1 and diag.stdout.strip():
+            # Drop any stale envelope so %svrun cannot run an old design.
+            try:
+                (WORK_DIR / (name + ".sv.json")).unlink()
+            except OSError:
+                pass
+            _show(
+                _banner(_SEV_COLOR["error"],
+                        "invalid SystemVerilog: %s.sv" % name,
+                        "pyslang diagnostics below — nothing extracted"),
+                _block(_SEV_COLOR["error"], None, diag.stdout.strip()),
+            )
+            raise UsageDisplayed("pyslang errors in %s.sv" % name)
+        proc = subprocess.run(
+            [py312, str(SV_EXTRACTOR), rel],
+            cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=60,
+        )
+        dt = time.monotonic() - t0
+        self.timings.append(("svfile", name, dt))
+        if proc.returncode != 0:
+            _show(
+                _banner(_SEV_COLOR["error"], "extraction failed: %s.sv" % name),
+                _block(_SEV_COLOR["error"], None,
+                       (proc.stderr or proc.stdout).strip()),
+            )
+            raise UsageDisplayed("SV extractor failed for %s.sv" % name)
+
+        envl = json.loads(
+            (WORK_DIR / (name + ".sv.json")).read_text(encoding="utf-8"))
+        frags = [_banner(
+            _SEV_COLOR["ok"], "extracted %s.sv → %s.sv.json" % (name, name),
+            "%.2fs, schema %s, %s %s" % (
+                dt, envl.get("schema_version", "?"),
+                envl.get("frontend", {}).get("name", "?"),
+                envl.get("frontend", {}).get("version", "?")),
+        )]
+        for m in envl["design"]["modules"]:
+            lines = []
+            for p in m.get("ports", []):
+                if p.get("kind") == "Port":
+                    lines.append("  %-3s %-12s [%d bit%s]"
+                                 % (p["dir"], p["name"], p["width"],
+                                    "s" if p["width"] != 1 else ""))
+                else:
+                    lines.append("  (unsupported port)")
+            for d in m.get("decls", []):
+                if d.get("kind") in ("Var", "Net"):
+                    init = " (init)" if d.get("init") else ""
+                    lines.append("  %-3s %-12s [%d bit%s]%s"
+                                 % (d["kind"].lower(), d["name"], d["width"],
+                                    "s" if d["width"] != 1 else "", init))
+            for pr in m.get("processes", []):
+                k = pr.get("kind")
+                if k == "AlwaysPosedge":
+                    lines.append("  process %s @(posedge %s)"
+                                 % (pr.get("style"), pr.get("clock")))
+                elif k == "AlwaysComb":
+                    lines.append("  process always_comb")
+                elif k == "Assign":
+                    tgt = pr.get("target", {}).get("name", "?")
+                    lines.append("  process assign %s = …" % tgt)
+                else:
+                    # Unsupported nodes carry sv_kind; supported envelope
+                    # nodes outside M0 (e.g. Initial, self-check tier) only
+                    # their kind — either way, name what the M0 interpreter
+                    # will refuse.
+                    lines.append("  process (outside M0: %s)"
+                                 % pr.get("sv_kind", k or "?"))
+            frags.append(_block(_SEV_COLOR["info"],
+                                "module %s" % m.get("name", "?"),
+                                "\n".join(lines) if lines else "(empty)"))
+        unsupported = []
+        self._walk_sv_unsupported(envl["design"], unsupported)
+        if unsupported:
+            frags.append(_block(
+                _SEV_COLOR["warning"],
+                "Unsupported nodes (representable; the interpreter refuses "
+                "them loudly)",
+                "\n".join(unsupported),
+            ))
+        _show(*frags)
+
+    def _walk_sv_unsupported(self, node, acc):
+        if isinstance(node, dict):
+            if node.get("kind") == "Unsupported":
+                line = node.get("span", {}).get("line", "?")
+                text = (node.get("text") or "").splitlines()
+                acc.append("line %s: %s   %s" % (
+                    line, node.get("sv_kind", "?"),
+                    text[0][:80] if text else ""))
+            for v in node.values():
+                self._walk_sv_unsupported(v, acc)
+        elif isinstance(node, list):
+            for v in node:
+                self._walk_sv_unsupported(v, acc)
+
+    # -- SV lane: %svrun ---------------------------------------------------
+
+    @line_magic
+    def svrun(self, line):
+        """%svrun <design> [--sigma src|rev] [--cycles N] [--stim <json|file>]
+        — run the M0 cycle interpreter (harness/sv/runner.lean) on the
+        working envelope; show the per-cycle 4-state signal table."""
+        usage = ("usage: %svrun <design> [--sigma src|rev] [--cycles N] "
+                 "[--stim <json|file>]")
+        toks = shlex.split(line)
+        design, sigma, cycles, stim_arg = None, "src", None, None
+        i = 0
+        while i < len(toks):
+            t = toks[i]
+            if t == "--sigma":
+                i += 1
+                sigma = toks[i] if i < len(toks) else ""
+            elif t == "--cycles":
+                i += 1
+                try:
+                    cycles = int(toks[i])
+                except (IndexError, ValueError):
+                    raise _usage_error(usage) from None
+            elif t == "--stim":
+                i += 1
+                stim_arg = toks[i] if i < len(toks) else None
+            elif design is None and not t.startswith("-"):
+                design = t
+            else:
+                raise _usage_error(usage)
+            i += 1
+        if design is None or sigma not in ("src", "rev"):
+            raise _usage_error(usage)
+        if design.endswith(".sv"):
+            design = design[:-3]
+
+        env_path = WORK_DIR / (design + ".sv.json")
+        if not env_path.exists():
+            raise _usage_error(
+                "no envelope notebooks/work/%s.sv.json — extract the design "
+                "with %%%%svfile %s.sv first" % (design, design))
+        envl = json.loads(env_path.read_text(encoding="utf-8"))
+        modules = envl["design"]["modules"]
+        if len(modules) != 1:
+            raise _usage_error("envelope has %d modules; the M0 runner wants "
+                               "exactly one" % len(modules))
+        mod = modules[0]
+        widths = {}
+        signals = []
+        for p in mod.get("ports", []) + mod.get("decls", []):
+            if "name" in p:
+                signals.append(p["name"])
+                widths[p["name"]] = p.get("width", 1)
+
+        # Stimulus: inline JSON list, a JSON file, or N hold cycles.
+        if stim_arg is not None:
+            try:
+                stim = json.loads(stim_arg)
+            except ValueError:
+                stim_path = Path(stim_arg)
+                if not stim_path.is_absolute():
+                    stim_path = REPO_ROOT / stim_arg
+                try:
+                    stim = json.loads(stim_path.read_text(encoding="utf-8"))
+                except (OSError, ValueError) as e:
+                    raise _usage_error("--stim is neither inline JSON nor a "
+                                       "readable JSON file (%s)" % e) from None
+            if not isinstance(stim, list) or not all(
+                    isinstance(c, dict) for c in stim):
+                raise _usage_error("--stim must be a JSON list of objects "
+                                   "(one per cycle)")
+        else:
+            stim = [{} for _ in range(cycles if cycles is not None else 4)]
+        norm = []
+        for c in stim:
+            entry = {}
+            for k, v in c.items():
+                if isinstance(v, bool) or not isinstance(v, (int, str)):
+                    raise _usage_error(
+                        "stimulus value for %r must be a binary string or an "
+                        "int" % k)
+                if isinstance(v, int):
+                    w = widths.get(k, 1)
+                    entry[k] = format(v % (1 << w), "0%db" % w)
+                else:
+                    entry[k] = v
+            norm.append(entry)
+
+        cases_path = WORK_DIR / (design + ".nbcases.json")
+        cases_path.write_text(json.dumps({
+            "fuel": 1000,
+            "cases": [{"name": "nb", "example": mod.get("name"),
+                       "signals": signals, "stimulus": norm}],
+        }, indent=2) + "\n", encoding="utf-8")
+
+        env = self._lake_env()
+        cmd = ([self._lean_exe] if self._lean_exe else ["lake", "env", "lean"])
+        cmd += ["--run", str(SV_RUNNER),
+                env_path.relative_to(REPO_ROOT).as_posix(),
+                cases_path.relative_to(REPO_ROOT).as_posix(), "nb", sigma]
+        t0 = time.monotonic()
+        try:
+            proc = subprocess.run(cmd, cwd=str(REPO_ROOT), env=env,
+                                  capture_output=True, text=True,
+                                  timeout=RUNNER_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            raise _usage_error("SV runner timed out after %ds (wall clock) on "
+                               "%s" % (RUNNER_TIMEOUT, design)) from None
+        dt = time.monotonic() - t0
+        self.timings.append(("svrun", design, dt))
+        if proc.returncode != 0:
+            _show(_banner(_SEV_COLOR["error"], "SV runner failed on %s"
+                          % design),
+                  _block(_SEV_COLOR["error"], None,
+                         (proc.stderr or proc.stdout).strip()))
+            raise UsageDisplayed("SV runner exited %d" % proc.returncode)
+
+        rows = []  # (cycle, {name: bits})
+        for ln in proc.stdout.splitlines():
+            parts = ln.split()
+            if len(parts) >= 2 and parts[0] == "CYCLE":
+                vals = dict(p.split("=", 1) for p in parts[2:] if "=" in p)
+                rows.append((parts[1], vals))
+        sigma_desc = ("σ_src (source order — Xcelium's empirical order)"
+                      if sigma == "src" else "σ_rev (reversed order)")
+        _show(
+            _banner(_SEV_COLOR["ok"],
+                    "%s: %d cycle(s) under %s" % (design, len(rows), sigma_desc),
+                    "lean --run harness/sv/runner.lean, %.2fs" % dt),
+            self._sv_table(signals, rows),
+        )
+        return None
+
+    def _sv_table(self, signals, rows):
+        """Per-cycle signal table; x/z digits highlighted, known multi-bit
+        values annotated with their decimal reading."""
+
+        def cell(bits):
+            shown = _esc(bits)
+            if "x" in bits or "z" in bits:
+                shown = re.sub("([xz]+)",
+                               '<span style="color:%s;font-weight:bold">\\1'
+                               "</span>" % _SEV_COLOR["warning"], shown)
+            elif len(bits) > 1 and set(bits) <= {"0", "1"}:
+                shown += ('<span style="color:#888"> (%d)</span>'
+                          % int(bits, 2))
+            return shown
+
+        head = "".join(
+            "<th style='text-align:left;padding:2px 14px 2px 0'>%s</th>"
+            % _esc(s) for s in signals)
+        body = ""
+        for k, vals in rows:
+            tds = "".join(
+                "<td style='padding:2px 14px 2px 0'>%s</td>"
+                % cell(vals.get(s, "?")) for s in signals)
+            body += ("<tr><td style='color:#888;padding:2px 14px 2px 0'>%s"
+                     "</td>%s</tr>" % (_esc(k), tds))
+        return (
+            '<table style="font-family:monospace;font-size:13px;'
+            'border-collapse:collapse;margin:4px 0">'
+            "<tr><th style='text-align:left;padding:2px 14px 2px 0'>cycle</th>"
+            "%s</tr>%s</table>" % (head, body)
+        )
+
 
 class UsageDisplayed(Exception):
     """Raised after a self-explanatory error was already displayed."""
@@ -751,7 +1133,8 @@ def load_ipython_extension(ipython):
         _block(
             _SEV_COLOR["info"], None,
             "repo root : %s\nwork dir  : %s (scratch, gitignored)\n"
-            "runner    : %s\nmagics    : %%%%pyfile  %%%%lean  %%pyrun  %%pydiff"
+            "runner    : %s\nmagics    : %%%%pyfile  %%%%lean  %%pyrun  "
+            "%%pydiff  %%%%svfile  %%svrun"
             % (REPO_ROOT, WORK_DIR.relative_to(REPO_ROOT), runner),
         ),
     )

@@ -24,7 +24,10 @@ rerun with unchanged outputs produces no metadata-only diff churn.
 
 Exit code 0 iff every notebook ran clean. Requires nbformat + nbclient and
 a ``python3`` kernelspec (ipykernel). ``lake build`` must have been run at
-the repo root first — the magics reuse its artifacts.
+the repo root first — the magics reuse its artifacts. The default glob
+covers every tutorial notebook, including ``03-systemverilog.ipynb``, whose
+``%%svfile`` cells additionally need ``python3.12`` + pyslang (the SV
+extractor) on the host.
 """
 
 import argparse

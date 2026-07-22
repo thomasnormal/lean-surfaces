@@ -25,6 +25,8 @@ through `ToVal.toVal` (table below).
 | `f(a, b) ⇓ r` | same judgment, hypothesis position: binds a typed result | identical to `==>` (`CallsTo …`); prints back as `==>` |
 | `f(a, b) ==>! e` | terminates by raising `e` | `Raises f "f" #[ToVal.toVal a, ToVal.toVal b] (e : PyErr)` |
 | `f(a, b) ~~> v` | strengthened partial: every run either times out or returns exactly `v` | `PartialTo f "f" #[ToVal.toVal a, ToVal.toVal b] (ToVal.toVal v)` |
+| `PyTriple m P ss Q` (py_vcgen layer, [VC.lean](../LeanModels/Python/VC.lean); no surface syntax yet) | flow-aware total-correctness triple over a statement list: `Q : PyPost` has arms `next`/`ret`/`brk`/`cont`/`err`, timeout excluded by the threshold shape | `∀ env, P env → ∃ t, ∀ F ≥ t, Q.holds (execStmts m F env ss)` (statement level: `PyStmtTriple`; rules in VC.lean's docstring) |
+| `callsTo_iff_triple` / `raises_iff_triple` (py_vcgen layer 2, [VC2.lean](../LeanModels/Python/VC2.lean): while rule, call rules, `@[py_spec]` registry) | arrow⇄triple bridges: `f(args) ==> v` (resp. `==>! e`) iff the whole-function-body triple from entry env `mkCallEnv f.params args` | `CallsTo m f args v ↔ PyTriple m (· = mkCallEnv …) body { next := fun _ => v = .none, ret := fun w _ => w = v }` (raise side through the `err` arm; recursion pattern: [VCTests.lean](../LeanModels/Python/VCTests.lean)) |
 
 with (copied from the tree):
 

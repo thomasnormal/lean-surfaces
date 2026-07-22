@@ -110,11 +110,15 @@ lake exe leanmodels-run Examples/tri/tri.json tri 10      # one-line JSON result
 python3 harness/diff_test.py                              # Lean vs CPython on harness/cases.json
 ```
 
-The full check before you finish any change (proofs *or* docs) is the triad:
+The full check before you finish any change (proofs *or* docs) is:
 
 ```
-lake build && python3 tools/docs_check.py && python3 harness/diff_test.py
+bash tools/ci.sh
 ```
+
+which runs the Lean build, the CPython differential harness, the extractor
+tests, the docs checker, the notebooks, and the SV differential harness
+(skipped only when no simulator is on PATH).
 
 `tools/docs_check.py` keeps the documentation honest: every path-marked code
 block in `docs/`, this README, and `AGENTS.md` must match the referenced file
@@ -197,6 +201,14 @@ its one-line Lean model:
 theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by proofs
 ```
 
+All six extracted designs are proved in this layout: `swap_nba`
+(the nonblocking swap is correct under *every* schedule), `adder` (known
+inputs add — and one `x`/`z` bit in either operand x-poisons all eight sum
+bits, the LRM §11.4.3 whole-vector collapse), `xsel` (X-optimism: an `x`
+or `z` select provably takes the `else` branch, per §12.4), and `toggle`
+(a reset/enable T-flip-flop refining its two-input golden model from the
+first sampled reset).
+
 Validation is differential, like the Python lane: `harness/sv/diff_test.py`
 replays the same stimuli through a real simulator and the Lean interpreter
 and diffs the traces — against **Xcelium** where installed (`--sim auto`
@@ -218,10 +230,10 @@ through every pre-reset edge, because `x + 1 = x`) is LRM truth that
 | `LeanModels/Python/Logic.lean` | `ToExpr`, `load_program` macro, `CallsTo`, `@[spec]` |
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
-| `Examples/<name>/` | One directory per example — three-file layout: pure `<name>.py` + generated `<name>.json` envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
+| `Examples/<name>/` | One directory per example — three-file layout: pure source (`<name>.py` / `<name>.sv`) + generated envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
 | `Examples/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
-| `harness/` | Differential tests vs CPython (`diff_test.py`, `cases.json`) |
+| `harness/` | Differential tests: `diff_test.py` vs CPython, `sv/diff_test.py` vs Xcelium/Icarus (each with its `cases.json`) |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
 Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned), core Lean only — no package

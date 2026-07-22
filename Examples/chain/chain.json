@@ -1,0 +1,214 @@
+{
+  "schema_version": "spice-0.1",
+  "language": "spice",
+  "frontend": {
+    "name": "spice-extract",
+    "version": "0.1"
+  },
+  "source_file": "Examples/chain/chain.cir",
+  "source_sha256": "2ba53f39fcae3bcc9f4e55f6714bc57c8ae8dd3d9cab516cbb4f4f4c3680029f",
+  "netlist": {
+    "kind": "Netlist",
+    "title": "chain -- attn: L-section attenuator with iterative impedance 3k (showpiece)",
+    "subckts": [
+      {
+        "kind": "Subckt",
+        "span": {
+          "line": 29,
+          "end_line": 32
+        },
+        "name": "attn",
+        "ports": [
+          "a",
+          "b"
+        ],
+        "body": [
+          {
+            "kind": "R",
+            "span": {
+              "line": 30,
+              "end_line": 30
+            },
+            "name": "r1",
+            "nodes": [
+              "a",
+              "b"
+            ],
+            "value": {
+              "num": 1000,
+              "den": 1
+            }
+          },
+          {
+            "kind": "R",
+            "span": {
+              "line": 31,
+              "end_line": 31
+            },
+            "name": "r2",
+            "nodes": [
+              "b",
+              "0"
+            ],
+            "value": {
+              "num": 6000,
+              "den": 1
+            }
+          }
+        ]
+      }
+    ],
+    "cards": [
+      {
+        "kind": "V",
+        "span": {
+          "line": 33,
+          "end_line": 33
+        },
+        "name": "v1",
+        "nodes": [
+          "in",
+          "0"
+        ],
+        "value": {
+          "num": 5,
+          "den": 1
+        }
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 34,
+          "end_line": 34
+        },
+        "name": "x1",
+        "subckt": "attn",
+        "connections": [
+          "in",
+          "out1"
+        ]
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 35,
+          "end_line": 35
+        },
+        "name": "rt1",
+        "nodes": [
+          "out1",
+          "0"
+        ],
+        "value": {
+          "num": 3000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 36,
+          "end_line": 36
+        },
+        "name": "x2a",
+        "subckt": "attn",
+        "connections": [
+          "in",
+          "m2"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 37,
+          "end_line": 37
+        },
+        "name": "x2b",
+        "subckt": "attn",
+        "connections": [
+          "m2",
+          "out2"
+        ]
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 38,
+          "end_line": 38
+        },
+        "name": "rt2",
+        "nodes": [
+          "out2",
+          "0"
+        ],
+        "value": {
+          "num": 3000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 39,
+          "end_line": 39
+        },
+        "name": "x3a",
+        "subckt": "attn",
+        "connections": [
+          "in",
+          "n1"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 40,
+          "end_line": 40
+        },
+        "name": "x3b",
+        "subckt": "attn",
+        "connections": [
+          "n1",
+          "n2"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 41,
+          "end_line": 41
+        },
+        "name": "x3c",
+        "subckt": "attn",
+        "connections": [
+          "n2",
+          "out3"
+        ]
+      },
+      {
+        "kind": "R",
+        "span": {
+          "line": 42,
+          "end_line": 42
+        },
+        "name": "rt3",
+        "nodes": [
+          "out3",
+          "0"
+        ],
+        "value": {
+          "num": 3000,
+          "den": 1
+        }
+      },
+      {
+        "kind": "Op",
+        "span": {
+          "line": 43,
+          "end_line": 43
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

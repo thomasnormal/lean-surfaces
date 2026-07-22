@@ -1,0 +1,37 @@
+r2r -- 4-bit R-2R DAC as a subckt (R = 1k, 2R = 2k), one driven instance
+* Ladder (MSB at out): 2k termination at n0, per-bit 2k legs into
+* n0..n2,out, 1k series rungs n0-n1-n2-out. Driven at each bit input with
+* an ideal 0V/5V source, the unloaded output is the drive-assumption
+* contract  v(out) = 5 * (8*b3 + 4*b2 + 2*b1 + b0) / 16  exactly.
+* Lean-side theorem (spec.lean): forall b : Fin 4 -> Bool, driven at
+* (if b i then 5 else 0), v(out) = 5 * binVal b / 16 (16-way case split).
+*
+* This instance drives pattern b3b2b1b0 = 1010 (value 10):
+* ngspice 46 prevalidation (~/.local/bin/ngspice -b r2r.cir, .op):
+*   Node    Voltage                      exact
+*   out     3.125000e+00                 25/8 = 5*10/16
+*   x1.n2   2.187500e+00                 35/16
+*   x1.n1   2.343750e+00                 75/32
+*   x1.n0   1.171875e+00                 75/64
+*   d3, d1 = 5.000000e+00; d2, d0 = 0.000000e+00
+* Other patterns (same deck, bit sources edited; ngspice 46, .op):
+*   0001 -> v(out) = 3.125000e-01        5/16  = 5*1/16
+*   1111 -> v(out) = 4.687500e+00        75/16 = 5*15/16
+*   0110 -> v(out) = 1.875000e+00        15/8  = 5*6/16
+.subckt r2r b3 b2 b1 b0 out
+rterm n0 0 2k
+rb0 b0 n0 2k
+r01 n0 n1 1k
+rb1 b1 n1 2k
+r12 n1 n2 1k
+rb2 b2 n2 2k
+r23 n2 out 1k
+rb3 b3 out 2k
+.ends r2r
+vb3 d3 0 dc 5
+vb2 d2 0 dc 0
+vb1 d1 0 dc 5
+vb0 d0 0 dc 0
+x1 d3 d2 d1 d0 out r2r
+.op
+.end

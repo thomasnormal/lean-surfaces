@@ -1,0 +1,16 @@
+divider -- 5V into a 1k/2k resistive divider (spice lane leaf example)
+* The M0 leaf case: v(out) = 5 * 2k/(1k+2k) = 10/3 exactly.
+* Lean-side theorems (spec.lean): for EVERY satisfying assignment,
+* a.volt "out" = 10/3, plus WellPosed (existence + uniqueness).
+*
+* ngspice 46 prevalidation (~/.local/bin/ngspice -b divider.cir, .op):
+*   Node    Voltage                      exact
+*   out     3.333333e+00                 10/3
+*   in      5.000000e+00                 5
+*   Source  Current
+*   v1#branch  -1.66667e-03              -1/600
+v1 in 0 dc 5
+r1 in out 1k
+r2 out 0 2k
+.op
+.end

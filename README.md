@@ -306,6 +306,8 @@ kernel arithmetic over ℚ**: it is ngspice, running the same netlist in
 floating point, that *approximates our answers* in the differential harness
 — not the other way round.
 
+![Five-volt resistor divider: 1 kOhm from input to output and 2 kOhm from output to ground](docs/assets/divider-circuit.svg)
+
 <!-- docs-check: Examples/divider/divider.cir -->
 ```spice
 v1 in 0 dc 5

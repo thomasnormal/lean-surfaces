@@ -1,0 +1,4 @@
+* No ground reference: both exact MNA and ngspice report a singular matrix.
+R1 a b 1k
+.op
+.end

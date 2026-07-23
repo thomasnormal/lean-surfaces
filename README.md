@@ -142,8 +142,28 @@ verbatim (marker convention in the script's header).
 
 `Examples/rsa_inverse/` vendors `extended_gcd` and `inverse` from
 **python-rsa 4.9.1 byte-verbatim** (provenance and segment hashes in the
-file header; authenticity re-verified against an independent re-download)
-and proves total correctness of the modular-inverse routine:
+file header; authenticity re-verified against an independent re-download):
+
+```python
+# Examples/rsa_inverse/rsa_inverse.py (inverse function)
+def inverse(x: int, n: int) -> int:
+    """Returns the inverse of x % n under multiplication, a.k.a x^-1 (mod n)
+
+    >>> inverse(7, 4)
+    3
+    >>> (inverse(143, 4) * 143) % 4
+    1
+    """
+
+    (divider, inv, _) = extended_gcd(x, n)
+
+    if divider != 1:
+        raise NotRelativePrimeError(x, n, divider)
+
+    return inv
+```
+
+The spec proves total correctness of that routine:
 
 ```lean
 -- Examples/rsa_inverse/spec.lean
@@ -237,6 +257,16 @@ refinement — for every legal schedule, from the first sampled reset the
 counter follows its one-line Lean model — with the proof riding the
 canonical-trace lemmas through `sv_prove`:
 
+```verilog
+// Examples/counter/counter.sv
+module counter (input  logic clk, rst,
+                output logic [7:0] count);
+  always_ff @(posedge clk)
+    if (rst) count <= '0;
+    else     count <= count + 8'd1;
+endmodule
+```
+
 ```lean
 -- Examples/counter/spec.lean
 theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by proofs
@@ -266,8 +296,7 @@ through every pre-reset edge, because `x + 1 = x`) is LRM truth that
 
 ## Analog circuits: physical laws as definitions, contracts as interfaces
 
-The third lane (`LeanModels/Spice/**`, landing now — fences below flip to
-drift-checked markers as the files merge) takes SPICE netlists. No new
+The third lane (`LeanModels/Spice/**`) takes SPICE netlists. No new
 axioms enter: Kirchhoff's laws and the device laws are the *definition* of
 the satisfaction relation — `Satisfies c a` means "KCL holds at every node,
 every element obeys its law, ground is 0" — exactly as `callFunction`
@@ -277,31 +306,34 @@ kernel arithmetic over ℚ**: it is ngspice, running the same netlist in
 floating point, that *approximates our answers* in the differential harness
 — not the other way round.
 
+<!-- docs-check: Examples/divider/divider.cir -->
 ```spice
-* Examples/divider/divider.cir (illustrative — lands with the lane)
-V1 in 0 DC 5
-R1 in out 1k
-R2 out 0 2k
+v1 in 0 dc 5
+r1 in out 1k
+r2 out 0 2k
+.op
 .end
 ```
 
 ```lean
--- Examples/divider/spec.lean (illustrative — lands with the lane)
+-- Examples/divider/spec.lean
 load_netlist divider from "Examples/divider/divider.json"
 
-#spice_check divider shows out = 10/3       -- exact, not 3.333…
+#spice_check divider shows "out" = (10 / 3 : Rat)
 
-/-- Every physically admissible state has v(out) = 10/3: universal over
-    all assignments satisfying Kirchhoff + Ohm, not one solver run. -/
-theorem divider_out : divider ⊨dc (v "out" = 10/3) := by proofs
+theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by proofs
 theorem divider_wellposed : WellPosed divider := by proofs
 ```
 
 ```lean
--- Examples/divider/proof.lean (illustrative — lands with the lane)
-theorem divider_out : divider ⊨dc (v "out" = 10/3) := by
-  spice_solve   -- exact Gaussian elimination over ℚ + per-circuit uniqueness,
-                -- all kernel-checked; no invariant needed: DC is one linear solve
+-- Examples/divider/proof.lean (proof excerpt)
+theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by
+  intro assignment h
+  unfold SatisfiesNetlist at h
+  rw [divider_flatten] at h
+  simp [Satisfies, dividerFlat, FlatNetlist.nodes, kclSum, currentInto,
+    deviceLawHolds] at h
+  grind
 ```
 
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
@@ -309,11 +341,14 @@ extractor and semantics, and a linear block's interface is captured
 *exactly* by a small port contract (`I = Y·V + J` — k² rationals, however
 large the block's interior). Sub-blocks are proved once, composed by the
 `compose_contracts` metatheorem, and global properties follow from local
-ones — the capstone theorem quantifies over an **infinite family of
-circuits** (`∀ N`, an N-section attenuator chain outputs exactly
-`(2/3)^N · 5` volts, by induction over the circuit structure): a statement
-no simulator can even express, and the intended workflow for circuits too
-large to simulate flat.
+ones. The capstone pairs an actual `chain : Nat → Netlist` hierarchy with
+`chain_contract`, which quantifies over an **infinite family of boundary
+compositions**: after proving one attenuator section once, induction shows an
+N-section, 3k-terminated chain outputs exactly `(2/3)^N · 5` volts.
+This is a statement no simulator can express and the intended workflow for
+circuits too large to flatten. The theorem is behavioral because M0 has not
+yet introduced a capture-avoiding AST constructor for synthesizing the
+composed `.SUBCKT`; it does not pretend such a constructor exists.
 
 ## Repo layout
 
@@ -331,7 +366,7 @@ large to simulate flat.
 | `Examples/<name>/` | One directory per example — three-file layout: pure source (`<name>.py` / `<name>.sv`) + generated envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
 | `Examples/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
-| `harness/` | Differential tests: `diff_test.py` vs CPython, `sv/diff_test.py` vs Xcelium/Icarus (each with its `cases.json`) |
+| `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and exact SPICE DC vs ngspice |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
 Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned), core Lean only — no package

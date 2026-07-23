@@ -1,0 +1,5 @@
+* One resistor directly across an ideal 5 V source.
+V1 in 0 DC 5
+R1 in 0 1k
+.op
+.end

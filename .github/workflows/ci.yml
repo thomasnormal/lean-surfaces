@@ -27,7 +27,7 @@ jobs:
           python3 -m pip install --user nbformat nbclient jupyter-core ipykernel
           # SV extraction (notebook 03 + extractors/sv) runs under python3.12 + pyslang
           python3.12 -m pip install --user pyslang || python3 -m pip install --user pyslang
-      - name: Icarus Verilog (SV differential-harness simulator)
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog
+      - name: Circuit simulators (SV and SPICE differential harnesses)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog ngspice
       - name: Full check
         run: bash tools/ci.sh

@@ -21,15 +21,25 @@ maybe() { # maybe <name> <required-file> <command...>
 step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
 step  "extractor-tests" python3 extractors/python/test_extract.py
+step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
-# SV lane: needs a simulator — Xcelium (xrun, lab host) or Icarus Verilog
-# (iverilog, generic CI). diff_test.py --sim auto prefers xrun; a mismatch
-# under either simulator is a hard failure.
-if command -v xrun >/dev/null 2>&1 || command -v iverilog >/dev/null 2>&1; then
-  maybe "sv-harness"    harness/sv/diff_test.py   python3 harness/sv/diff_test.py
+# SV lane: prefer Icarus when installed (generic CI and license-free local
+# runs); otherwise use Xcelium on lab hosts. A mismatch is a hard failure.
+if command -v iverilog >/dev/null 2>&1; then
+  maybe "sv-harness" harness/sv/diff_test.py python3 harness/sv/diff_test.py --sim iverilog
+elif command -v xrun >/dev/null 2>&1; then
+  maybe "sv-harness" harness/sv/diff_test.py python3 harness/sv/diff_test.py --sim xrun
 else
   echo "=== [sv-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv-harness")
+fi
+
+# SPICE lane: ngspice is the floating-point differential oracle for the exact
+# rational DC solver.
+if command -v ngspice >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ngspice" ]; then
+  maybe "spice-harness" harness/spice/diff_test.py python3 harness/spice/diff_test.py --no-build
+else
+  echo "=== [spice-harness] SKIP (ngspice not found)"; skip+=("spice-harness")
 fi
 
 echo

@@ -159,9 +159,9 @@ A linear block's EXACT interface abstraction — not an approximation, an
 equality of behaviors:
 
 ```lean
-structure PortContract (k : Nat) where
-  Y : Matrix k k Rat   -- port admittance
-  J : Vec k Rat        -- source term
+structure PortContract (k : Nat) (Value : Type := Rat) where
+  Y : Matrix k k Value -- port admittance
+  J : Vec k Value      -- source term
 -- port relation: I = Y ⬝ V + J
 ```
 
@@ -207,22 +207,29 @@ Y_attn = ⎡  1/1000   −1/1000 ⎤     J_attn = ⎡ 0 ⎤
          ⎣ −1/1000    7/6000 ⎦              ⎣ 0 ⎦
 ```
 
-**THE metatheorem** (phase Compose): wiring blocks by their ports, the
-composite's contract/behavior is determined by the component **contracts
-alone — internals never re-enter**. Shape: a wiring `W` of blocks
-`blk₁ … blkₘ` (port-node identifications + designated external ports) plus
-`HasContract blkᵢ Cᵢ` for each `i` yields
-`HasContract (W applied to blks) (composeC W [C₁, …, Cₘ])` where `composeC`
-is a **computable function of the contracts only** (eliminate the internal
-port equations by exact Gaussian elimination on the merged Y/J data; the
-nonsingularity of the eliminated block surfaces as a hypothesis, discharged
-by kernel computation on concrete contracts). The Compose phase must
-deliver at least the instance the showpiece needs:
-`cascade : PortContract 2 → PortContract 2 → PortContract 2` with
-`HasContract b₁ C₁ → HasContract b₂ C₂ → HasContract (b₁ ⋈ b₂)
-(cascade C₁ C₂)` for series 2-port chaining (b₁'s output port wired to
-b₂'s input port, the shared node internalized), plus termination of a
-2-port into a 1-port.
+`reduceLeaf blk k` performs this reduction computably with exact arithmetic:
+it fixes every port voltage to zero to obtain `J`, then performs one unit-basis
+drive per port to obtain the columns of `Y`. Each drive is an ordinary checked
+MNA solve. The returned matrix is computational evidence; the generic
+`hasContract_of_leafCertificate` theorem turns a proof-carrying reduction
+certificate into both `HasContract.sound` and `HasContract.realize`. Tests
+check that reducing the extracted `attn` block returns the hand-derived matrix
+above exactly.
+
+**M0 composition metatheorem.** `CascadeBehavior` existentially wires the
+output port of one two-port block to the input port of another (equal shared
+voltage, currents into the two blocks summing to zero). `cascade` computes
+the exact 2x2 Schur complement, and `cascade_contracts` proves, in both
+directions, that `CascadeBehavior` is exactly the affine relation described
+by that contract. The reverse direction explicitly consumes both blocks'
+`HasContract.realize` fields, so composition is not projection-only.
+
+The result is deliberately a theorem about the composite **behavior**, not
+`HasContract` for a fabricated `Subckt`: M0 has no capture-avoiding AST
+wiring/renaming constructor that could build such a value honestly. Adding
+that constructor and lifting `cascade_contracts` to a physical composed
+`Subckt` is deferred; no theorem may pretend it already exists. The public
+workflow name `compose_contracts` is an alias of this exact behavioral theorem.
 
 ## Solver
 
@@ -231,13 +238,15 @@ Exact Gaussian elimination over `Rat`, computable, in Lean:
 * Build the MNA system for a `FlatNetlist`: unknowns = non-ground node
   voltages + branch currents of `V`/`L` devices; equations = KCL rows +
   device-law rows.
-* `solve : FlatNetlist → Except SolveError (Assignment × Certificate)` (or
-  equivalent split): produces the exact solution and an elimination
-  certificate witnessing nonsingularity.
-* **Per-circuit soundness**: `Satisfies c (solve c)` via the `Decidable`
-  instance on the concrete assignment — a kernel check.
-* **Uniqueness per circuit**: from the certificate, any two satisfying
-  assignments agree on the netlist's support (`WellPosed`).
+* `solve : FlatNetlist → Except SolveError Assignment` runs total exact
+  Gauss–Jordan elimination and rejects zero resistances, duplicate MNA branch
+  names, and singular matrices.
+* **Generic soundness**: `solve_satisfies` follows from a final evaluation of
+  the definitional `Satisfies` predicate on the candidate. Thus matrix assembly
+  and elimination are not trusted.
+* **Uniqueness per circuit**: example proofs establish that any two satisfying
+  assignments agree on the netlist's support (`WellPosed`) by exact rational
+  algebra. A reusable generic nonsingularity certificate is deferred.
 * Symbolic COMPONENT values are a **stretch goal only** (attempt
   `divider_formula` late; report honestly if it doesn't land). The ∀-N
   showpiece needs induction over STRUCTURE with concrete values — fully
@@ -259,13 +268,16 @@ results are recorded as comments in the file itself.
    (universal over ALL satisfying assignments), plus `WellPosed divider`
    (existence + on-support uniqueness). ngspice: `out = 3.333333e+00`,
    exact `10/3`.
-2. **chain** — THE SHOWPIECE. `attn` = the 2-port L-section above;
-   Lean-side family `chain : Nat → Netlist` instantiates the *extracted*
-   subckt N times (5V source, N cascaded `attn` instances, 3k
-   termination). Theorems: `section_contract` (once, MNA elimination),
-   `chain_contract` (**∀ N**, by induction via `cascade`/compose — this is
-   the compositional-verification demonstration), `chain_attenuates` :
-   **∀ N ≥ 1, `a.volt "out" = (2/3)^N * 5`** exactly. Section design
+2. **chain** — THE SHOWPIECE. `attn` = the 2-port L-section above.
+   `chain : Nat → Netlist` constructs the actual hierarchical family from N
+   instances of that extracted definition; an N=5 `#spice_check`, beyond the
+   three committed ngspice instances, validates flattening and exact solving.
+   `section_contract` proves the extracted leaf once. `LoadedChain` is the
+   recursive boundary relation for N copies followed by a 3k termination;
+   each step wires equal voltage and opposite interface current and exposes
+   no internal assignment. `chain_contract` proves **∀ N** that the boundary
+   behavior is exactly output `(2/3)^N * input` and input current
+   `input/3000`; `chain_attenuates` specializes the drive to 5V. Section design
    rationale: `attn` has iterative impedance
    `Z = 1k + (6k ∥ Z) ⇒ Z = 3k`; terminated in 3k every section sees 3k
    looking right, so each stage's loaded ratio is
@@ -299,6 +311,13 @@ flattening node-for-node, internals included. `tools/ci.sh` gets one
 additive `maybe`-step gated on ngspice's presence (mirroring the SV
 harness pattern); a mismatch under ngspice is a hard failure.
 
+The harness also covers a resistor directly across a voltage source, a current
+source driving a divider, and a floating resistor network. For the last case,
+Lean's exact solver returns `.singular`; ngspice exits successfully after a
+fallback operating-point attempt but emits `singular matrix`, so the harness
+classifies the two outcomes together instead of accepting ngspice's arbitrary
+zero-voltage fallback as a unique solution.
+
 ## Definition of done (M0)
 
 1. Extractor deterministic (double-run byte-identical), suffix unit tests
@@ -310,14 +329,16 @@ harness pattern); a mismatch under ngspice is a hard failure.
    (verify gate); no `sorry`/`admit`/`native_decide`; `flatten` and
    `solve` total functions (no `partial`).
 3. `divider_out` + `WellPosed divider` proved.
-4. `section_contract`, `chain_contract` (∀ N, by induction via the compose
-   metatheorem), `chain_attenuates` (∀ N ≥ 1, exact `(2/3)^N * 5`)
+4. `section_contract`, behavioral `chain_contract` (∀ N, by induction over
+   boundary composition), `chain_attenuates` (exact `(2/3)^N * 5`)
    proved — the ∀-N showpiece.
 5. The r2r drive-assumption theorem proved for all 16 bit vectors.
-6. `HasContract` stated as the double inclusion; the compose metatheorem
-   proved with contracts-only data flow.
-7. Harness green vs ngspice 46 on all three netlists (node voltages AND
-   the recorded branch currents).
+6. `HasContract` stated as the double inclusion; `reduceLeaf` computes exact
+   matrices; `compose_contracts`/`cascade_contracts` are proved with
+   contracts-only data flow. Physical AST composition remains deferred until
+   a capture-avoiding wiring constructor exists.
+7. Harness green vs ngspice 46 on all three netlists plus the edge and singular
+   cases (node voltages and recorded branch currents).
 8. `bash tools/ci.sh` green; the Python and SV lanes untouched and green;
    `LeanModels.lean` gains exactly one import line; README gains exactly
    one section (Verify phase) including the line: ngspice approximates

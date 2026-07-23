@@ -1,0 +1,52 @@
+[
+  {
+    "name": "divider",
+    "source": "Examples/divider/divider.cir",
+    "probes": {"in": "5", "out": "10/3", "@v1": "-1/600"}
+  },
+  {
+    "name": "chain-1-2-3",
+    "source": "Examples/chain/chain.cir",
+    "probes": {"out1": "10/3", "out2": "20/9", "out3": "40/27", "@v1": "-1/200"}
+  },
+  {
+    "name": "r2r-1010",
+    "source": "Examples/r2r/r2r.cir",
+    "drives": {"vb3": 5, "vb2": 0, "vb1": 5, "vb0": 0},
+    "probes": {"out": "25/8"}
+  },
+  {
+    "name": "r2r-0001",
+    "source": "Examples/r2r/r2r.cir",
+    "drives": {"vb3": 0, "vb2": 0, "vb1": 0, "vb0": 5},
+    "probes": {"out": "5/16"}
+  },
+  {
+    "name": "r2r-1111",
+    "source": "Examples/r2r/r2r.cir",
+    "drives": {"vb3": 5, "vb2": 5, "vb1": 5, "vb0": 5},
+    "probes": {"out": "75/16"}
+  },
+  {
+    "name": "r2r-0110",
+    "source": "Examples/r2r/r2r.cir",
+    "drives": {"vb3": 0, "vb2": 5, "vb1": 5, "vb0": 0},
+    "probes": {"out": "15/8"}
+  },
+  {
+    "name": "single-r-across-v",
+    "source": "harness/spice/fixtures/single_r_across_v.cir",
+    "probes": {"in": "5", "@v1": "-1/200"}
+  },
+  {
+    "name": "isource-divider",
+    "source": "harness/spice/fixtures/isource_divider.cir",
+    "probes": {"in": "2", "mid": "1"}
+  },
+  {
+    "name": "floating-singular",
+    "source": "harness/spice/fixtures/floating.cir",
+    "expect_error": "singular",
+    "probes": {}
+  }
+]

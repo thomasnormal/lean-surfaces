@@ -173,7 +173,7 @@ private def dividerEnvelope : String := r#"{
   "schema_version": "spice-0.1",
   "language": "spice",
   "frontend": {"name": "spice-extract", "version": "0.1"},
-  "source_file": "Examples/divider/divider.cir",
+  "source_file": "Examples/spice/divider/divider.cir",
   "source_sha256": "placeholder",
   "netlist": {
     "kind": "Netlist", "title": "divider", "subckts": [],

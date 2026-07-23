@@ -15,10 +15,10 @@ residual goals and how `grind`/`omega` eat them, (d) the shadowing trap and
 
 ## (a) Finding the invariant: run the loop by hand
 
-Take [`tri.py`](../../Examples/tri/tri.py), the triangular-number loop:
+Take [`tri.py`](../../Examples/python/tri/tri.py), the triangular-number loop:
 
 ```python
-# Examples/tri/tri.py (the whole program; its proof appears in (e))
+# Examples/python/tri/tri.py (the whole program; its proof appears in (e))
 def tri(n):
     total, i = 0, 0
     while i <= n:
@@ -143,15 +143,15 @@ the rest.
 
 ## (d) The shadowing trap and `(state := …)`
 
-Look at [`sum_to.py`](../../Examples/sum_to/sum_to.py) — the
-counting-*down* version, and the worked hard case. (`Examples/sum_to/` is
+Look at [`sum_to.py`](../../Examples/python/sum_to/sum_to.py) — the
+counting-*down* version, and the worked hard case. (`Examples/python/sum_to/` is
 the tree's one *inline-mode* example: its theorems live in `# lean[ … # ]`
 blocks inside the `.py`, spliced into a generated companion `SumTo.lean` —
 the statements and tactics are exactly what a `spec.lean`/`proof.lean`
 pair would hold.)
 
 ```python
-# Examples/sum_to/sum_to.py (function only)
+# Examples/python/sum_to/sum_to.py (function only)
 def sum_to(n: int) -> int:
     s = 0
     while n > 0:
@@ -179,7 +179,7 @@ positionally, freeing the lambda binders to be anything — here `s` and `k`.
 The real theorem, verbatim from the tree:
 
 ```lean
--- Examples/sum_to/sum_to.py (lean block; builds via Examples/sum_to/SumTo.lean)
+-- Examples/python/sum_to/sum_to.py (lean block; builds via Examples/python/sum_to/SumTo.lean)
 theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
   py_begin [sum_to]
   py_loop (state := [s, n])
@@ -201,13 +201,13 @@ theorem also binds, you need `(state := …)`.** (Recipe form:
 ## (e) Worked end to end
 
 First `tri`, the loop you analyzed in (a) — theorem verbatim from
-[`Examples/tri/proof.lean`](../../Examples/tri/proof.lean); its statement
+[`Examples/python/tri/proof.lean`](../../Examples/python/tri/proof.lean); its statement
 is re-stated `:= by proofs` in `spec.lean`, which also derives the
 `@[spec]`/`⇓` corollary forms
 ([../howto/derive-corollary-forms.md](../howto/derive-corollary-forms.md)).
 
 ```lean
--- Examples/tri/proof.lean (statement re-stated in Examples/tri/spec.lean)
+-- Examples/python/tri/proof.lean (statement re-stated in Examples/python/tri/spec.lean)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
   py_begin [tri]
   py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
@@ -223,16 +223,16 @@ no `(state := …)` because `tri` never mutates `n`, exit bullet pins
 `2*total = (n+1)*n ⇒ total = n*(n+1)/2`).
 
 Now the exercise, solved fresh: **factorial by loop**
-(`Examples/tut_04/`). New wrinkle: the spec is not a polynomial, so you
+(`Examples/python/tut_04/`). New wrinkle: the spec is not a polynomial, so you
 write a spec-side model (`factSpec`, exactly as
-[`fib/proof.lean`](../../Examples/fib/proof.lean) writes `fibSpec`) plus
+[`fib/proof.lean`](../../Examples/python/fib/proof.lean) writes `fibSpec`) plus
 one bridge lemma in the `Int` shape the invariant produces. Hand-run
 `fact(4)` (row per test): `(r, i)` = (1,1), (1,2), (2,3), (6,4), (24,5) →
 exit, return 24. In every row `r = (i-1)!` — that is the invariant; ranges
 `1 ≤ i ≤ n+1`; measure `n + 1 - i` iterations left. The program:
 
 ```python
-# Examples/tut_04/tut_04.py
+# Examples/python/tut_04/tut_04.py
 def fact(n):
     r = 1
     i = 1
@@ -249,14 +249,14 @@ constant, and a recursive definition — unlike the program literals — would
 not bridge by unfolding):
 
 ```lean
--- Examples/tut_04/proof.lean (header comment elided)
+-- Examples/python/tut_04/proof.lean (header comment elided)
 import LeanModels
 
-namespace Examples.tut_04.proof
+namespace Examples.python.tut_04.proof
 
 open LeanModels LeanModels.Python
 
-load_program tut_04 from "Examples/tut_04/tut_04.json"
+load_program tut_04 from "Examples/python/tut_04/tut_04.json"
 
 /-- Mathematical factorial: `1, 1, 2, 6, 24, 120, …` — the spec-side
 model, `Int`-valued so it lands where the marshalled result lives. -/
@@ -303,17 +303,17 @@ theorem fact_correct (n r : PyInt) (hn : 0 ≤ n) (h : tut_04.fact(n) ⇓ r) :
     r = factSpec n.toNat := by
   py_corollary [fact_total]
 
-end Examples.tut_04.proof
+end Examples.python.tut_04.proof
 ```
 
-[`Examples/tut_04/spec.lean`](../../Examples/tut_04/spec.lean) re-states
+[`Examples/python/tut_04/spec.lean`](../../Examples/python/tut_04/spec.lean) re-states
 all three theorems `:= by proofs` (the `@[spec]` attribute and the
 `set_option` prefix live on the spec side too — the spec file is the
 contract), opens with the `#py_check` runs plus
 `#guard factSpec 5 == 120` pinning the model at its defining value:
 
 ```lean
--- Examples/tut_04/spec.lean (excerpt)
+-- Examples/python/tut_04/spec.lean (excerpt)
 #py_check tut_04.fact(5) = 120
 #py_check tut_04.fact(1) = 1
 #py_check tut_04.fact(0) = 1

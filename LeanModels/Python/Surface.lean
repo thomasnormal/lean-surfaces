@@ -36,7 +36,7 @@ that surface for the pure tier:
 * `execWhile_total_of_invariant` + `py_threshold` — the generic while rule:
   a loop lemma becomes an instantiation (logical state, invariant, step,
   measure) with its two interpreter obligations discharged by threshold
-  evaluation at `c + f₀` fuel (`Examples/tri/tri.py`, `Examples/gcd/gcd.py`);
+  evaluation at `c + f₀` fuel (`Examples/python/tri/tri.py`, `Examples/python/gcd/gcd.py`);
 * `#py_check` — non-vacuity checks in surface syntax:
   `#py_check fib(10) = 55` / `#py_check arith.mod(7, 0) raises
   .zeroDivisionError` guard a concrete interpreter run at a fixed generous
@@ -83,7 +83,7 @@ instance {α} [ToVal α] : ToVal (List α) :=
     (ToVal.toVal xs : Val) = .list (xs.map ToVal.toVal).toArray := rfl
 
 /-- Python `int` 3-tuples — the `extended_gcd` return shape (added for
-`Examples/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
+`Examples/python/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
 `×` is right-nested, so a generic `Prod` instance could not distinguish the
 Python values `(a, b, c)` and `(a, (b, c))` — they inhabit the *same* Lean
 type — and would silently marshal one as the other. This instance commits the
@@ -140,7 +140,7 @@ hypothesis provides (`∃ fuel, execWhile … = .ok (env', flow)`). The
 resulting `h : ∀ F, f₀ ≤ F → execWhile … F … = .ok p` is a *conditional
 rewrite rule*: after one `rw [execWhile.eq_2]; py_simp […]` body step,
 `simp (disch := omega) only [h]` closes the frozen loop occurrence at
-whatever fuel the symbolic execution produced (`Examples/tri/tri.py`) —
+whatever fuel the symbolic execution produced (`Examples/python/tri/tri.py`) —
 no exact-offset fuel bookkeeping. Caveat: when the loop lemma was applied at
 metavariable spans (module- and span-agnostic lemmas instantiated with `_`),
 `simp` cannot index `h`; splice it with the conditional `rw [h]` instead and
@@ -161,7 +161,7 @@ logical effect `step`, and a decreasing measure. The conclusion: from any
 invariant state, *some* fuel runs the loop to completion, landing in an
 invariant state where the test is false. All fuel bookkeeping is internal —
 a loop lemma becomes pure invariant/measure mathematics plus two symbolic
-executions (`Examples/tri/tri.py`, `Examples/gcd/gcd.py`).
+executions (`Examples/python/tri/tri.py`, `Examples/python/gcd/gcd.py`).
 
 v1 restrictions (deliberate; they match every loop in the gallery so far):
 the `orelse` block is `[]`, and on every invariant-and-continuing state the
@@ -234,7 +234,7 @@ mops up a residual symbolic branch with `split <;> simp_all` (e.g. a
 comparison that executed to `if i ≤ n then .ok (.bool true) else …` against
 the spec-side `.ok (.bool (decide (i ≤ n)))`). Pass facts the execution
 needs as `extras` — e.g. the divisor-nonzero hypothesis that decides `%`'s
-`ZeroDivisionError` guard (`Examples/gcd/gcd.py`). -/
+`ZeroDivisionError` guard (`Examples/python/gcd/gcd.py`). -/
 macro (name := pyThresholdTactic) "py_threshold" k:num
     "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic => do
   let extra : Syntax.TSepArray
@@ -442,7 +442,7 @@ theorem PartialTo.iff_obs {m : Module} {f : String} {args : Array Val}
 
 open Lean Lean.Parser.Tactic in
 /-- `py_lift ⟨f₀, h⟩ := e with [prog]` — the house-style opener for splicing
-a recursive run into a symbolic execution (`Examples/fib/fib.py`): `e` is
+a recursive run into a symbolic execution (`Examples/python/fib/fib.py`): `e` is
 any `CallsTo` fact (typically the induction hypothesis at a smaller
 argument); the macro takes its fuel-threshold form (`CallsTo.at_least`) and
 symbolically normalizes it, binding the threshold `f₀` and
@@ -475,7 +475,7 @@ e.g. `py_prove [add]`), and discharges residual value equations with
 `ite` inside the existential nest; the branch-splitting attempt case-splits
 it with `split` (which reaches under the `∃` binders — `split_ifs` does not
 exist on this toolchain), re-executes each arm with `py_simp`, and finishes
-with `omega`, so `Examples/my_abs/my_abs.py`'s `my_abs(x) ==> |x|` closes by
+with `omega`, so `Examples/python/my_abs/my_abs.py`'s `my_abs(x) ==> |x|` closes by
 bare `py_prove [my_abs]`. Attempt order is load-bearing: the all-tactic
 attempts come first and are guarded by `done`, because an `exact … (by …)`
 alternative *commits* inside `first` even when its nested `by` block fails
@@ -533,7 +533,7 @@ theorem CallsTo.typed_int_eq {m : Module} {f : String} {args : Array Val}
   Val.int.inj (CallsTo.functional h ht)
 
 /-- Determinism on the int-triple surface — `CallsTo.typed_int_eq`'s 3-tuple
-analog (added for `Examples/rsa_inverse`, whose `extended_gcd` returns a
+analog (added for `Examples/python/rsa_inverse`, whose `extended_gcd` returns a
 Python 3-tuple): a `⇓`-bound triple result equals the triple value of any
 `CallsTo` fact; componentwise injectivity peels the marshalling. -/
 theorem CallsTo.typed_int3_eq {m : Module} {f : String} {args : Array Val}
@@ -591,7 +591,7 @@ macro "py_corollary" "[" tot:term "]" : tactic =>
 
 /-! ## The three-file example layout: the `proofs` tactic
 
-Per-example directories `Examples/<name>/` split an example into
+Per-example directories `Examples/python/<name>/` split an example into
 `spec.lean` — `load_program`, `#py_check` lines, docstrings, and theorem
 *statements*, each proved `:= by proofs` — and `proof.lean`, the real
 proofs, wrapped in a namespace equal to its module path
@@ -606,9 +606,9 @@ by unfolding. -/
 open Lean Elab Tactic in
 /-- `proofs` — close a spec-file theorem with its proof-file twin. Reads the
 current declaration's name (e.g. `tri_total`) and the current module name
-(e.g. `Examples.tri.spec`), rewrites the module's last component `spec` →
+(e.g. `Examples.python.tri.spec`), rewrites the module's last component `spec` →
 `proof`, resolves `<proof-module-namespace>.<decl-name>`
-(`Examples.tri.proof.tri_total`), and closes the goal with
+(`Examples.python.tri.proof.tri_total`), and closes the goal with
 `first | exact thm | (apply thm <;> assumption)` — `exact` when the proof
 theorem's remaining shape matches outright, `apply … <;> assumption` to
 instantiate binders against the goal and discharge side hypotheses
@@ -657,7 +657,7 @@ theorem gcd_emod_step {a : Int} (ha : 0 ≤ a) (b : Int) :
 nonnegative divisor `fmod` coincides with `%`
 (`Int.fmod_eq_emod_of_nonneg`), so this is `gcd_emod_step` in the exact
 shape the interpreter emits — the invariant-preservation step of
-`Examples/gcd/gcd.py`'s `gcd_total`. The sign hypotheses
+`Examples/python/gcd/gcd.py`'s `gcd_total`. The sign hypotheses
 are not decoration: `Int.gcd 4 (-6) = 2` but `(4).fmod (-6) = -2` keeps the
 loop below zero, and CPython agrees (harness case `gcd(4, -6) → -2`). -/
 theorem gcd_fmod_step {a b : Int} (ha : 0 ≤ a) (hb : 0 ≤ b) :

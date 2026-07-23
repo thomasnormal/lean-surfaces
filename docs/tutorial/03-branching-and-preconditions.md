@@ -7,10 +7,10 @@ what the delaborators show you versus what is really there.
 
 ## 1. The files
 
-`Examples/tut_03/`, three-file layout as before. The program:
+`Examples/python/tut_03/`, three-file layout as before. The program:
 
 ```python
-# Examples/tut_03/tut_03.py
+# Examples/python/tut_03/tut_03.py
 def relu(x: int) -> int:
     if x < 0:
         return 0
@@ -18,20 +18,20 @@ def relu(x: int) -> int:
 ```
 
 The statements live in
-[`Examples/tut_03/spec.lean`](../../Examples/tut_03/spec.lean) (each
+[`Examples/python/tut_03/spec.lean`](../../Examples/python/tut_03/spec.lean) (each
 `:= by proofs`, plus a `#guard_msgs`/`#check` delaborator regression that
 §5 explains); this tutorial is about the *proofs*, so here is the proof
 module in full:
 
 ```lean
--- Examples/tut_03/proof.lean (header comment elided)
+-- Examples/python/tut_03/proof.lean (header comment elided)
 import LeanModels
 
-namespace Examples.tut_03.proof
+namespace Examples.python.tut_03.proof
 
 open LeanModels LeanModels.Python
 
-load_program tut_03 from "Examples/tut_03/tut_03.json"
+load_program tut_03 from "Examples/python/tut_03/tut_03.json"
 
 /-- Unconditional total correctness: `py_prove` splits the symbolic
 branch left by `if x < 0:` and closes both arms with `omega` (which
@@ -56,12 +56,12 @@ theorem relu_of_nonneg' (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
   split <;> py_simp
   omega
 
-end Examples.tut_03.proof
+end Examples.python.tut_03.proof
 ```
 
 ## 2. Branching: the `my_abs` pattern
 
-`relu_total` is the [`my_abs`](../../Examples/my_abs/my_abs.py) pattern from
+`relu_total` is the [`my_abs`](../../Examples/python/my_abs/my_abs.py) pattern from
 the gallery ([../spec-surface.md](../spec-surface.md) §1): the Python branch
 condition `x < 0` is symbolic — the interpreter cannot decide it for an
 arbitrary `x` — so symbolic execution leaves an `ite` in the goal. `py_prove`
@@ -117,7 +117,7 @@ that no restatement can fix, are in [tutorial 06, mode
 ## 4. Reading a goal state
 
 `relu_of_nonneg'` proves the same theorem with the automation unrolled.
-Follow along in your editor (open `Examples/tut_03/proof.lean`) — the
+Follow along in your editor (open `Examples/python/tut_03/proof.lean`) — the
 states below are captured verbatim from the current tree.
 
 **Step 0 — the goal as stated.** Before any tactic:

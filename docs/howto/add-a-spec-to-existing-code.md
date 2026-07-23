@@ -9,33 +9,33 @@ the source) remains as a showcased feature — see the end. Judgment syntax:
 
 ## The three-file layout
 
-Give the code its own directory `Examples/<name>/` (the stem must be a
+Give the code its own directory `Examples/python/<name>/` (the stem must be a
 valid Lean identifier — it becomes the module constant and the surface
 callee) and put the source there:
 
 ```python
-# Examples/add/add.py (the whole program)
+# Examples/python/add/add.py (the whole program)
 def add(a, b):
     return a + b
 ```
 
 Extract the envelope — for a block-less source this writes
-`Examples/add/add.json` next to the source and nothing else:
+`Examples/python/add/add.json` next to the source and nothing else:
 
 ```
-python3 extractors/python/extract.py Examples/add/add.py
+python3 extractors/python/extract.py Examples/python/add/add.py
 ```
 
 Write `spec.lean`: the program load, the `#py_check` non-vacuity runs
 (first, always), and every theorem *statement*, each proved `:= by proofs`:
 
 ```lean
--- Examples/add/spec.lean (excerpt)
-import Examples.add.proof
+-- Examples/python/add/spec.lean (excerpt)
+import Examples.python.add.proof
 
 open LeanModels LeanModels.Python
 
-load_program add from "Examples/add/add.json"
+load_program add from "Examples/python/add/add.json"
 
 /-! Non-vacuity: concrete runs in surface syntax (`#py_check`,
 Surface.lean — fixed generous fuel; minimal-fuel pinning retired). -/
@@ -51,26 +51,26 @@ its module path. It loads its own copy of the same envelope; the `proofs`
 tactic bridges the two program constants by unfolding:
 
 ```lean
--- Examples/add/proof.lean (excerpt)
+-- Examples/python/add/proof.lean (excerpt)
 import LeanModels
 
-namespace Examples.add.proof
+namespace Examples.python.add.proof
 
 open LeanModels LeanModels.Python
 
-load_program add from "Examples/add/add.json"
+load_program add from "Examples/python/add/add.json"
 
 /-- Total correctness: straight-line body, one `py_prove`. -/
 theorem add_total (a b : PyInt) : add(a, b) ==> a + b := by
   py_prove [add]
 
-end Examples.add.proof
+end Examples.python.add.proof
 ```
 
 Then `lake build` from the repo root (the `Examples.+` glob picks the new
 modules up automatically). The statement duplication between the two files
 is by design — Lean has no forward declarations — and it is typechecked:
-the spec-side `:= by proofs` resolves `Examples.add.proof.add_total` and
+the spec-side `:= by proofs` resolves `Examples.python.add.proof.add_total` and
 fails loudly on a missing or drifted twin. From here on iteration is pure
 Lean: edit `spec.lean`/`proof.lean`, rebuild; re-run the extractor only
 when the `.py` changes.
@@ -81,19 +81,19 @@ Also add the function's concrete cases to `harness/cases.json` and run
 
 Which tactic closes which goal: [reference, tactic table](../reference.md#tactics).
 Loop-free bodies are `py_prove [add]`; loops need `py_begin`/`py_loop`
-(see `Examples/tri/proof.lean`); recursion needs `py_lift`
-(see `Examples/fib/proof.lean`).
+(see `Examples/python/tri/proof.lean`); recursion needs `py_lift`
+(see `Examples/python/fib/proof.lean`).
 
 ## Inline mode (the showcased alternative)
 
 Theorems can instead live in the source itself, in `# lean[ … # ]` comment
 blocks that the extractor splices verbatim into a generated companion
 file. Exactly one example ships in this mode —
-[`Examples/sum_to/`](../../Examples/sum_to/sum_to.py) (companion
-`Examples/sum_to/SumTo.lean`):
+[`Examples/python/sum_to/`](../../Examples/python/sum_to/sum_to.py) (companion
+`Examples/python/sum_to/SumTo.lean`):
 
 ```python
-# Examples/sum_to/sum_to.py (excerpt)
+# Examples/python/sum_to/sum_to.py (excerpt)
 def sum_to(n: int) -> int:
     s = 0
     while n > 0:
@@ -130,7 +130,7 @@ same-name counterpart in `proof.lean` (not written yet, misnamed, or
 declared outside the namespace wrapper):
 
 ```
-error: no proof named add_total in Examples.add.proof — add it to proof.lean
+error: no proof named add_total in Examples.python.add.proof — add it to proof.lean
 ```
 
 **Drifted twin.** If the twin exists but its statement differs (binders,
@@ -154,8 +154,8 @@ Fix: rename the file (`bad_stem.py`).
 current working directory — the repo root under `lake build`:
 
 ```
-error: load_program: cannot read 'Examples/python/nope.json': no such file or directory (error code: 4294967294)
-  file: Examples/python/nope.json
+error: load_program: cannot read 'Examples/python/nope/nope.json': no such file or directory (error code: 4294967294)
+  file: Examples/python/nope/nope.json
 (relative paths resolve against the current working directory — the package root under `lake build`; current cwd: '/home/thomas-ahle/lean_models')
 ```
 
@@ -174,12 +174,12 @@ did not evaluate to `true`
 ```
 
 Run the function to see what it actually returns:
-`lake exe leanmodels-run Examples/add/add.json add 2 3`.
+`lake exe leanmodels-run Examples/python/add/add.json add 2 3`.
 
 **`py_prove` on a function with a loop** fails with `unsolved goals` and a
 goal containing a frozen `execWhile` applied to a large AST literal. That
 leak *is* the signal: `py_prove` only does loop-free bodies — switch to
-`py_begin [prog]` + `py_loop` ([Examples/tri/proof.lean](../../Examples/tri/proof.lean), and
+`py_begin [prog]` + `py_loop` ([Examples/python/tri/proof.lean](../../Examples/python/tri/proof.lean), and
 [handle-shadowed-loop-variables.md](handle-shadowed-loop-variables.md) if the
 loop mutates a variable your theorem binds).
 

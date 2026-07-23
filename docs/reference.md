@@ -107,7 +107,7 @@ this table is the index, the docstrings are the manual.
 | `#py_check f(a, b) = v` | `#guard callFunction f "f" #[ToVal.toVal a, ToVal.toVal b] 4096 == .ok (ToVal.toVal v)` — a concrete elaboration-time run (fixed generous fuel; cost is proportional to actual steps, not fuel) |
 | `#py_check f(a, b) raises e` | same at `.exn (e : PyErr)`, e.g. `#py_check arith.mod(7, 0) raises .zeroDivisionError` |
 | raw `#guard` | for what the surface form cannot say: `.unsupported` outcomes (`#guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)`) and spec-side math facts |
-| `load_program tri from "Examples/tri/tri.json"` | reads the envelope at elaboration time, defines `tri : Module` as a literal term (path relative to the `lake build` cwd = repo root) |
+| `load_program tri from "Examples/python/tri/tri.json"` | reads the envelope at elaboration time, defines `tri : Module` as a literal term (path relative to the `lake build` cwd = repo root) |
 | `#print_program tri` | logs the `Repr` of a loaded program |
 
 Convention: every example's `spec.lean` **opens** with `#py_check`
@@ -211,8 +211,8 @@ program: [howto/check-what-the-extractor-supports.md](howto/check-what-the-extra
 | `LeanModels/Python/Delab.lean` | delaborators: goals print in arrow notation |
 | `LeanModels/Python/Tests.lean` | interpreter smoke tests |
 | `extractors/python/extract.py` | extractor + `# lean[` scanner + companion generator (inline mode) |
-| `Examples/<name>/` | one directory per example, three-file layout: pure `<name>.py` + generated `<name>.json` envelope + hand-written `spec.lean` (statements, `:= by proofs`) / `proof.lean` (real proofs) — `proofs` tactic, Surface.lean |
-| `Examples/sum_to/` | the one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
+| `Examples/python/<name>/` | one directory per Python example, three-file layout: pure `<name>.py` + generated `<name>.json` envelope + hand-written `spec.lean` (statements, `:= by proofs`) / `proof.lean` (real proofs) — `proofs` tactic, Surface.lean |
+| `Examples/python/sum_to/` | the one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/diff_test.py`, `harness/cases.json` | differential harness vs CPython |
-| `LeanModels/Sv/**`, `extractors/sv/**`, `harness/sv/**`, `docs/sv-*.md`, SV example dirs (`Examples/swap_nba/`, `Examples/counter/`, `Examples/race_blk/`, `Examples/adder/`, `Examples/xsel/`, `Examples/toggle/`) | SystemVerilog lane: M0 scheduler core + typed-surface slice (not imported by `LeanModels.lean`; the SV example specs build under the `Examples` glob — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |
+| `LeanModels/Sv/**`, `extractors/sv/**`, `harness/sv/**`, `docs/sv-*.md`, SV example dirs (`Examples/system-verilog/swap_nba/`, `Examples/system-verilog/counter/`, `Examples/system-verilog/race_blk/`, `Examples/system-verilog/adder/`, `Examples/system-verilog/xsel/`, `Examples/system-verilog/toggle/`) | SystemVerilog lane: M0 scheduler core + typed-surface slice (not imported by `LeanModels.lean`; the SV example specs build under the `Examples` glob — see [howto/sv-quickstart.md](howto/sv-quickstart.md)) |

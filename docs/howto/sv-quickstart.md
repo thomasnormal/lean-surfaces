@@ -3,7 +3,8 @@
 Status: the M0 vertical slice ("scheduler core") plus a first typed spec
 surface are in the tree and green, but **only partially integrated**:
 nothing under `LeanModels/Sv/` is imported from `LeanModels.lean`; the SV
-examples do, however, live in per-example directories under `Examples/`
+examples do, however, live in per-example directories under
+`Examples/system-verilog/`
 (three-file layout, like the Python lane), so their `spec.lean`/`proof.lean`
 files build under the `Examples` glob of plain `lake build` — pulling the
 `LeanModels/Sv/**` modules in transitively. The M0 contract is
@@ -19,7 +20,8 @@ is marked *in progress*.
   [sv-envelope-schema.md](../sv-envelope-schema.md) (schema `sv-0.1`,
   elaborated widths, `Unsupported` nodes, deterministic output).
 - **Examples**: per-example directories
-  `Examples/{adder,counter,race_blk,swap_nba,toggle,xsel}/` — each holds
+  `Examples/system-verilog/{adder,counter,race_blk,swap_nba,toggle,xsel}/` —
+  each holds
   `<name>.sv` with its checked-in `<name>.sv.json` envelope, plus
   `spec.lean`/`proof.lean` where theorems exist (`swap_nba`, `counter`,
   `race_blk`; `adder`/`xsel` are demo-only spec files; `toggle`'s
@@ -29,16 +31,16 @@ is marked *in progress*.
   cycle-level scheduler semantics with an explicit **schedule oracle** σ —
   and the four M0 theorems: `run_deterministic` (`Obs.lean`),
   `swap_nba_spec` for *all* schedules
-  (`Examples/swap_nba/proof.lean`), `race_blk_racy` exhibiting two
-  schedules with different traces (`Examples/race_blk/proof.lean`), and
-  `counter_from_reset` (`Examples/counter/proof.lean`). This is the oracle
+  (`Examples/system-verilog/swap_nba/proof.lean`), `race_blk_racy` exhibiting two
+  schedules with different traces (`Examples/system-verilog/race_blk/proof.lean`), and
+  `counter_from_reset` (`Examples/system-verilog/counter/proof.lean`). This is the oracle
   principle paying off: scheduler nondeterminism is a quantified argument,
   and `race_blk`'s race is a theorem, not a flake.
 - **Typed spec surface (M0 cycle-level slice)**: `LeanModels/Sv/Surface.lean`
   (the judgments `d ⊨ P`, `d / stim ⇓[σ] tr`, `d ⊑@clk[from rst] model`, and
   the `sv_prove` tactic), `Delab.lean` (goals and `#check` output print back
   in surface notation, plus surface forms of the M0 theorems),
-  `ToggleExample.lean` (new-design walkthrough: `Examples/toggle/toggle.sv`
+  `ToggleExample.lean` (new-design walkthrough: `Examples/system-verilog/toggle/toggle.sv`
   proved against its golden model), and `SelfCheck.lean` (the self-check
   tier for the conformance corpus). What exactly is implemented vs gallery
   target is recorded in the "Implementation status" note of
@@ -62,10 +64,10 @@ is marked *in progress*.
 From the repo root:
 
 ```
-python3.12 extractors/sv/extract.py Examples/adder/adder.sv
+python3.12 extractors/sv/extract.py Examples/system-verilog/adder/adder.sv
 ```
 
-writes `Examples/adder/adder.sv.json` next to the source — byte-identical to
+writes `Examples/system-verilog/adder/adder.sv.json` next to the source — byte-identical to
 the checked-in envelope (deterministic output; verified by re-running on the
 tree). The extractor never fails on valid SV: out-of-tier constructs become
 `{"kind": "Unsupported", "sv_kind": <slang class>, "text": …}` nodes.
@@ -77,7 +79,7 @@ the `Examples` glob). To check individual files directly (from the repo
 root — each verified green on the current tree):
 
 ```
-lake env lean Examples/swap_nba/spec.lean
+lake env lean Examples/system-verilog/swap_nba/spec.lean
 lake env lean LeanModels/Sv/Tests.lean
 lake env lean LeanModels/Sv/ToggleExample.lean
 ```
@@ -152,7 +154,7 @@ ModuleNotFoundError: No module named 'pyslang'
 an SV envelope it fails at parse:
 
 ```
-leanmodels-run: 'Examples/adder/adder.sv.json' is not a valid envelope: envelope: field 'module': property not found: module
+leanmodels-run: 'Examples/system-verilog/adder/adder.sv.json' is not a valid envelope: envelope: field 'module': property not found: module
 ```
 
 There is no SV lake exe in M0 — the harness drives

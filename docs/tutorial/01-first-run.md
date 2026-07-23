@@ -15,8 +15,8 @@ fetches it automatically. There are no Lean package dependencies. The
 extractor and harness need only Python ≥ 3.9 standard library. Run everything
 from the repository root.
 
-The layout, in one breath: every example is one directory `Examples/<name>/`
-holding the Python source `<name>.py`, its generated JSON envelope
+The layout, in one breath: every Python example is one directory
+`Examples/python/<name>/` holding the source `<name>.py`, its generated JSON envelope
 `<name>.json`, and hand-written Lean files next to them — `spec.lean`
 (checks and theorem statements) and, once there are real proofs,
 `proof.lean`. The framework lives in `LeanModels/`, the extractor in
@@ -25,12 +25,12 @@ full table is in the [README](../../README.md#repo-layout).
 
 ## 1. Write the file
 
-We use `Examples/tut_01/`; substitute any name you like — the stem must be
+We use `Examples/python/tut_01/`; substitute any name you like — the stem must be
 a valid identifier (`tut_01` is fine, `tut-01` is rejected, see
 [What can go wrong](#what-can-go-wrong)).
 
 ```python
-# Examples/tut_01/tut_01.py
+# Examples/python/tut_01/tut_01.py
 def double(x):
     return 2 * x
 ```
@@ -41,11 +41,11 @@ exists, and CPython runs it unchanged.
 ## 2. Extract
 
 ```console
-$ python3 extractors/python/extract.py Examples/tut_01/tut_01.py
+$ python3 extractors/python/extract.py Examples/python/tut_01/tut_01.py
 ```
 
 Silent on success (exit code 0). It wrote **one** file:
-`Examples/tut_01/tut_01.json` — the AST envelope: CPython's own `ast`
+`Examples/python/tut_01/tut_01.json` — the AST envelope: CPython's own `ast`
 module parsed your file, and the extractor dumped the tree into the
 standardized JSON format ([../envelope-schema.md](../envelope-schema.md)),
 next to the source. The extractor never fails on valid Python: constructs
@@ -56,15 +56,15 @@ one).
 ## 3. Write the spec file
 
 The Lean side of the example is a hand-written file you own, not generated
-output. Create `Examples/tut_01/spec.lean`:
+output. Create `Examples/python/tut_01/spec.lean`:
 
 ```lean
--- Examples/tut_01/spec.lean (header comment elided)
+-- Examples/python/tut_01/spec.lean (header comment elided)
 import LeanModels
 
 open LeanModels LeanModels.Python
 
-load_program tut_01 from "Examples/tut_01/tut_01.json"
+load_program tut_01 from "Examples/python/tut_01/tut_01.json"
 
 /-! Tutorial 01 (docs/tutorial/01-first-run.md): the whole pipeline on a
 three-line file. Non-vacuity checks only — the theorems start in
@@ -91,7 +91,7 @@ From here on, iteration is **pure Lean**: you edit `spec.lean` (later also
 *Also available — inline mode.* Theorems can instead be embedded in the
 `.py` inside `# lean[ … # ]` comment blocks, which the extractor splices
 into a generated companion file. Exactly one example ships in that mode as
-its showcase, [`Examples/sum_to/`](../../Examples/sum_to/sum_to.py); this
+its showcase, [`Examples/python/sum_to/`](../../Examples/python/sum_to/sum_to.py); this
 series teaches the three-file layout throughout.
 
 ## 4. Build
@@ -112,9 +112,9 @@ interpreter really computed `42`, `0`, and `-14`.
 The same interpreter is compiled into a CLI:
 
 ```console
-$ lake exe leanmodels-run Examples/tut_01/tut_01.json double 21
+$ lake exe leanmodels-run Examples/python/tut_01/tut_01.json double 21
 {"status":"ok","value":{"t":"int","v":"42"}}
-$ lake exe leanmodels-run Examples/tut_01/tut_01.json double 21 --fuel 1
+$ lake exe leanmodels-run Examples/python/tut_01/tut_01.json double 21 --fuel 1
 {"status":"timeout"}
 ```
 
@@ -133,7 +133,7 @@ tutorial functions are already in it:
 
 <!-- docs-check: harness/cases.json -->
 ```json
-  {"file": "Examples/tut_01/tut_01.py", "function": "double", "args": [[21], [0], [-7]], "expect": "match"},
+  {"file": "Examples/python/tut_01/tut_01.py", "function": "double", "args": [[21], [0], [-7]], "expect": "match"},
 ```
 
 (that line is verbatim from [`harness/cases.json`](../../harness/cases.json)
@@ -190,7 +190,7 @@ shows how to tell the three apart in one `#eval`.
 **Invalid stem.** Name the file `tut-01.py` and:
 
 ```
-error: Examples/tut_01/tut-01.py: stem 'tut-01' is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)
+error: Examples/python/tut_01/tut-01.py: stem 'tut-01' is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)
 ```
 
 The stem becomes the Lean identifier for your module, so it must be one.

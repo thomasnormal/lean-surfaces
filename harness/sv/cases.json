@@ -1,5 +1,5 @@
 {
-  "_comment": "SV M0 differential-harness cases (docs/sv-design-m0.md, 'Differential harness vs Xcelium'). Per case: example name (Examples/<example>/<example>.sv + .sv.json), signals to sample (canonical line 'CYCLE <k> <name>=<binary>...', sampled at negedge after NBA settle), and one stimulus object per cycle: input-port name -> MSB-first binary string (exact declared width; digits 0 1 x z). An input absent from a cycle's entry holds its previous value (initially x). accept_sigmas (default ['src']): Lean schedules the Xcelium trace may match; race_blk legitimately matches either source or reverse order.",
+  "_comment": "SV M0 differential-harness cases (docs/sv-design-m0.md, 'Differential harness vs Xcelium'). Per case: example name (Examples/system-verilog/<example>/<example>.sv + .sv.json), signals to sample (canonical line 'CYCLE <k> <name>=<binary>...', sampled at negedge after NBA settle), and one stimulus object per cycle: input-port name -> MSB-first binary string (exact declared width; digits 0 1 x z). An input absent from a cycle's entry holds its previous value (initially x). accept_sigmas (default ['src']): Lean schedules the Xcelium trace may match; race_blk legitimately matches either source or reverse order.",
   "fuel": 1000,
   "cases": [
     {

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Testbench generator for the SV M0 differential harness (python3 / 3.9+).
 
-Given an extractor envelope (Examples/<example>/<example>.sv.json — the ports are
+Given an extractor envelope
+(Examples/system-verilog/<example>/<example>.sv.json — the ports are
 read from here, so the TB is generated against exactly what the Lean side
 ingests) and one case from harness/sv/cases.json, emits a self-checkingly
 *observable* testbench:

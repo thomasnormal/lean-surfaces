@@ -147,7 +147,7 @@ class ExtractorTests(unittest.TestCase):
 
     def test_default_companion_dir_is_source_dir(self):
         # Per-example layout: with companion_dir=None the companion must land
-        # NEXT TO the source (Examples/sum_to/sum_to.py → Examples/sum_to/
+        # NEXT TO the source (Examples/python/sum_to/sum_to.py → Examples/python/sum_to/
         # SumTo.lean), not in any fixed root.
         srcdir = os.path.join(self.tmp, "sum_to")
         os.makedirs(srcdir)

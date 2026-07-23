@@ -18,7 +18,7 @@ the LRM prescribes for a simulator), not hardware netlists; where the two diverg
 ## Pipeline (mirrors the Python lane)
 
 slang (`--ast-json`) → standardized envelope → `load_design counter from
-"Examples/sv/counter.sv.json"` → typed wrappers generated from elaboration info
+"Examples/system-verilog/counter/counter.sv.json"` → typed wrappers generated from elaboration info
 (a `State` structure with one field per signal, port types as `LVec n`), plus
 `// lean[ ... // ]` comment blocks spliced into companions, `@[spec]`, and an
 `sv_prove` tactic front door.
@@ -340,7 +340,7 @@ module tri_acc (input  logic clk, rst, start,
 endmodule
 ```
 ```lean
--- tri(n) ==> r is the PYTHON judgment for Examples/python/tri.py
+-- tri(n) ==> r is the PYTHON judgment for Examples/python/tri/tri.py
 theorem tri_acc_refines_python (n : PyInt) (h0 : 0 ≤ n) (hbound : n < 2 ^ 15)
     (hpy : tri(n) ==> r) :
     tri_acc ⊨ Sv.transaction

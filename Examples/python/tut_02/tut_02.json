@@ -1,0 +1,80 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/tut_02/tut_02.py",
+  "source_sha256": "e4406709fbceb3412dc910add4b536fb33490f9c2cc451570246369fc2c95373",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 16
+        },
+        "name": "square",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 12
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "id": "x"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 15,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "x"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

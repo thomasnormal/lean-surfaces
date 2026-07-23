@@ -133,7 +133,7 @@ prescribes. Strong induction on the measure — the
 arms instead of being ruled out. `orelse = []` only (module docstring).
 Instantiate directly (instead of via `PyStmtTriple.whileLoop`) when the
 loop occurrence is already an `execWhile` term, e.g. after hand-unrolling
-an iteration à la `Examples/rsa_inverse`. -/
+an iteration à la `Examples/python/rsa_inverse`. -/
 theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
     {Q : PyPost} (Inv : Env → Prop) (μ : Env → Nat) (tv : Env → Val)
     (htest : ∀ env, Inv env → EvalsTo m env test (tv env))

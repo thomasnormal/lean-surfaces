@@ -19,7 +19,8 @@ print in the same surface notation the theorems are written in:
 `Sv.Deterministic` shape) and needs no unexpander.
 
 The per-design M0 theorems live in the three-file example layout
-(`Examples/<design>/spec.lean` states them, `Examples/<design>/proof.lean`
+(`Examples/system-verilog/<design>/spec.lean` states them,
+`Examples/system-verilog/<design>/proof.lean`
 proves them — raw fuel/`run` forms and their `sv_prove` surface
 corollaries); the design-specific rendering and axiom pins live in those
 spec files. Theorem 1's surface form (`run_functional`) is in
@@ -82,7 +83,8 @@ def unexpandRefinesFromReset : Unexpander
 Each `#check` is `#guard_msgs`-pinned to the surface rendering; the `rfl`
 round-trips confirm every rendering re-elaborates to the proposition it
 displays. The per-design renderings (`swap_nba_swaps`, `counter_refines`,
-`race_blk_race`, …) are pinned in their `Examples/<design>/spec.lean`. -/
+`race_blk_race`, …) are pinned in their
+`Examples/system-verilog/<design>/spec.lean`. -/
 
 section DelabTests
 

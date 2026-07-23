@@ -642,7 +642,7 @@ theorem Runs.at_least {d : Design} {σ : ScheduleOracle} {stim tr : List SvState
 
 /-- All legal schedules yield the same trace — the gallery's
 `Sv.Deterministic` at M0's cycle level. `swap_nba` satisfies it, `race_blk`
-refutes it (`Examples/swap_nba/proof.lean`, `Examples/race_blk/proof.lean`). -/
+refutes it (`Examples/system-verilog/swap_nba/proof.lean`, `Examples/system-verilog/race_blk/proof.lean`). -/
 def Deterministic (d : Design) : Prop :=
   ∀ (σ₁ σ₂ : ScheduleOracle) (stim tr₁ tr₂ : List SvState),
     Runs d σ₁ stim tr₁ → Runs d σ₂ stim tr₂ → tr₁ = tr₂
@@ -748,7 +748,8 @@ theorem Obs.existsUnique (d : Design) (σ : ScheduleOracle) (stim : List SvState
 
 /-! ## `sv_simp` — one stack frame of symbolic execution
 
-Shared per-design proof kit (used by every `Examples/<design>/proof.lean`
+Shared per-design proof kit (used by every
+`Examples/system-verilog/<design>/proof.lean`
 and `ToggleExample.lean`). Mirror of the Python lane's `py_simp` freeze
 discipline: simp with every interpreter equation EXCEPT the recursion
 points, which stay frozen so threshold/inversion lemmas can be applied to
@@ -761,7 +762,7 @@ them:
 
 `Design.combIndices`/`Design.edgeIndices` are also left out: for a concrete
 design they are decided by a one-line `rfl` lemma (see
-`swapNba_edgeIndices` in `Examples/swap_nba/proof.lean`), which keeps goals
+`swapNba_edgeIndices` in `Examples/system-verilog/swap_nba/proof.lean`), which keeps goals
 free of `List.range`/`filter` noise. Pass design-specific facts
 (`swapNba_p0`, …) as extras, exactly like passing the program literal to
 `py_simp`. -/
@@ -803,7 +804,7 @@ def appIn (inputs : SvState) (name : String) (old : LVec) : LVec :=
 Stated to pin it, per the contract ("should be `rfl`-adjacent"). The
 substantive determinism facts are `run_det`/`Runs.functional` above
 (cross-fuel at fixed σ) and the per-design `swap_nba_det`/`counter_det`
-(cross-schedule, `Examples/<design>/proof.lean`). -/
+(cross-schedule, `Examples/system-verilog/<design>/proof.lean`). -/
 
 theorem run_deterministic (d : Design) (σ : ScheduleOracle) (fuel : Nat)
     (stim : List SvState) : run d σ fuel stim = run d σ fuel stim := rfl

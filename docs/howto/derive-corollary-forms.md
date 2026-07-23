@@ -20,7 +20,7 @@ the point.
 shape — this is the one automation consumes at call sites):
 
 ```lean
--- Examples/add/spec.lean (excerpt)
+-- Examples/python/add/spec.lean (excerpt)
 set_option warning.simp.varHead false in
 /-- `add(a, b)` returns `a + b` on int inputs: any successful run, at any
 fuel, yields exactly `.int (a + b)` (partial correctness). A determinism
@@ -31,7 +31,7 @@ corollary of `add_total` — one `py_corollary` (Surface.lean). -/
 ```
 
 ```lean
--- Examples/add/proof.lean (excerpt; docstring elided)
+-- Examples/python/add/proof.lean (excerpt; docstring elided)
 theorem add_spec (a b : Int) {fuel : Nat} {r : Val}
     (h : callFunction add "add" #[.int a, .int b] fuel = .ok r) :
     r = .int (a + b) := by
@@ -41,7 +41,7 @@ theorem add_spec (a b : Int) {fuel : Nat} {r : Val}
 **2. Typed `⇓` form** (no `Val`, no fuel):
 
 ```lean
--- Examples/tut_04/spec.lean (excerpt)
+-- Examples/python/tut_04/spec.lean (excerpt)
 set_option warning.simp.varHead false in
 /-- The typed surface form: binders are `PyInt`, the result is bound
 relationally with `⇓`, and neither `Val` nor fuel appears. -/
@@ -50,14 +50,14 @@ relationally with `⇓`, and neither `Val` nor fuel appears. -/
 ```
 
 (Same shape everywhere: `tri_correct` in
-[`Examples/tri/spec.lean`](../../Examples/tri/spec.lean). The proof side
+[`Examples/python/tri/spec.lean`](../../Examples/python/tri/spec.lean). The proof side
 is one `py_corollary [fact_total]`.)
 
 **3. Strengthened partial `~~>`** (free from totality via
 `CallsTo.partialTo` — determinism modulo fuel):
 
 ```lean
--- Examples/add/proof.lean (excerpt; docstring elided)
+-- Examples/python/add/proof.lean (excerpt; docstring elided)
 theorem add_partial (a b : PyInt) : add(a, b) ~~> a + b := by
   py_corollary [add_total]
 ```
@@ -66,7 +66,7 @@ theorem add_partial (a b : PyInt) : add(a, b) ~~> a + b := by
 value; pass the bridging rewrite as an extra:
 
 ```lean
--- Examples/midpoint/proof.lean (excerpt; docstring and a linter set_option elided)
+-- Examples/python/midpoint/proof.lean (excerpt; docstring and a linter set_option elided)
 theorem midpoint_nonneg (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) :
     midpoint(a, b) ==> (a + b) / 2 := by
   py_corollary [midpoint_spec, Int.fdiv_eq_ediv_of_nonneg]
@@ -75,7 +75,7 @@ theorem midpoint_nonneg (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) :
 Side hypotheses of `tot` (like `0 ≤ n`) are discharged by `assumption` — the
 corollary must carry them too. When `tot` is indexed differently, instantiate
 it in the bracket: `py_corollary [fib_total n.toNat]` (see
-`Examples/fib/proof.lean`; the `Nat`→`Int` marshalling bridge
+`Examples/python/fib/proof.lean`; the `Nat`→`Int` marshalling bridge
 `Int.toNat_of_nonneg` is always included by default).
 
 ## When `@[spec]` applies — and when it does not

@@ -1,0 +1,83 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/tut_01/tut_01.py",
+  "source_sha256": "0992f2f8cc75665f6907a881df9b42e292cff1e392bc7679e2f4cbd325a698d9",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 16
+        },
+        "name": "double",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 11,
+              "end_lineno": 1,
+              "end_col_offset": 12
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 2,
+                "col_offset": 11,
+                "end_lineno": 2,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 11,
+                  "end_lineno": 2,
+                  "end_col_offset": 12
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "2"
+                }
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 15,
+                  "end_lineno": 2,
+                  "end_col_offset": 16
+                },
+                "id": "x"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

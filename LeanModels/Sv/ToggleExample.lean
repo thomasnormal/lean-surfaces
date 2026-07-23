@@ -6,12 +6,12 @@ import LeanModels.Sv.Delab
 The `toggle` T-flip-flop walkthrough that used to live in this file has been
 promoted to the three-file example layout, like every other proved SV design:
 
-* `Examples/toggle/toggle.sv` — the design (`always_ff` reset/enable toggle)
-* `Examples/toggle/toggle.sv.json` — generated envelope
-* `Examples/toggle/spec.lean` — envelope certification, `#sv_check`
+* `Examples/system-verilog/toggle/toggle.sv` — the design (`always_ff` reset/enable toggle)
+* `Examples/system-verilog/toggle/toggle.sv.json` — generated envelope
+* `Examples/system-verilog/toggle/spec.lean` — envelope certification, `#sv_check`
   non-vacuity runs, and the surface theorem statements (`:= by proofs`)
-* `Examples/toggle/proof.lean` — the real proofs (namespace
-  `Examples.toggle.proof`), relocated from this file verbatim: the certified
+* `Examples/system-verilog/toggle/proof.lean` — the real proofs (namespace
+  `Examples.«system-verilog».toggle.proof`), relocated from this file verbatim: the certified
   design literal, the ∀σ canonical trace (`toggle_cycleStep` → `toggle_run` →
   `toggle_total`), the golden model
   `fun q (rst, en) => if rst then false else if en then !q else q`, and the
@@ -20,11 +20,11 @@ promoted to the three-file example layout, like every other proved SV design:
 This file remains (it is imported by `LeanModels.lean`, keeping the lane
 explicitly in `lake build`) as the home of the **`Bool` embedding for 1-bit
 signals** — `LVec.ofBool` and its `~`-commutation lemma — which is shared
-spec-surface vocabulary: `Examples/toggle/proof.lean` uses it for the golden
-model's state, `Examples/xsel/proof.lean` for the known-select theorem. It
+spec-surface vocabulary: `Examples/system-verilog/toggle/proof.lean` uses it for the golden
+model's state, `Examples/system-verilog/xsel/proof.lean` for the known-select theorem. It
 also hosts the **comb settle-loop helpers** (`combSettle_step`/
 `combSettle_idem`) shared by the comb-phase examples
-(`Examples/adder/proof.lean`, `Examples/xsel/proof.lean`). Neither can live
+(`Examples/system-verilog/adder/proof.lean`, `Examples/system-verilog/xsel/proof.lean`). Neither can live
 in `Basic.lean`/`Obs.lean` (kept byte-untouched during the concurrent
 workflows), and both belong to `LeanModels.Sv`, not to any one example.
 -/

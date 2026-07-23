@@ -40,7 +40,7 @@ Guarantees:
   "schema_version": "spice-0.1",
   "language": "spice",
   "frontend": {"name": "spice-extract", "version": "0.1"},
-  "source_file": "Examples/divider/divider.cir",
+  "source_file": "Examples/spice/divider/divider.cir",
   "source_sha256": "<hex sha256 of the source bytes>",
   "netlist": {"kind": "Netlist", "title": "...", "subckts": [<Subckt>...], "cards": [<card>...]},
   "lean_blocks": []
@@ -222,7 +222,7 @@ under `ngspice -b`. Semantically a no-op for the Lean ingester.
 
 ## Worked example
 
-`Examples/divider/divider.cir` (comment lines elided here; the committed
+`Examples/spice/divider/divider.cir` (comment lines elided here; the committed
 file carries the ngspice prevalidation results as comments):
 
 ```spice
@@ -234,7 +234,7 @@ r2 out 0 2k
 .end
 ```
 
-`Examples/divider/divider.json` (exact extractor output):
+`Examples/spice/divider/divider.json` (exact extractor output):
 
 ```json
 {
@@ -244,7 +244,7 @@ r2 out 0 2k
     "name": "spice-extract",
     "version": "0.1"
   },
-  "source_file": "Examples/divider/divider.cir",
+  "source_file": "Examples/spice/divider/divider.cir",
   "source_sha256": "f609f5aa0e7de88a891177983fa6b6495a520fe1387d2c2931c5dcdd11f74577",
   "netlist": {
     "kind": "Netlist",

@@ -18,13 +18,15 @@ SystemVerilog lanes retain their core-only dependency boundary.
 ## CONCURRENCY RULES (the py_vcgen workflow is active in this repo)
 
 SPICE lane agents may create/edit ONLY: `extractors/spice/**`,
-`LeanModels/Spice/**` (new), `Examples/{divider,chain,r2r}/**` (new),
+`LeanModels/Spice/**` (new),
+`Examples/spice/{divider,chain,r2r}/**` (new),
 `harness/spice/**`, `docs/spice-*.md`, `tools/ci.sh` (one additive
 maybe-step), `.github/workflows/ci.yml` (one additive ngspice apt step),
 `README.md` (ONE section, Verify phase only), `LeanModels.lean` (one import
 line, integration time only). FORBIDDEN: `LeanModels/Python/VC*`,
 `LeanModels/Python/VCTactic*`, proof internals of
-`Examples/{nested_flow,tri,gcd,sum_to,rsa_inverse}`, `docs/reference.md`,
+`Examples/python/{nested_flow,tri,gcd,sum_to,rsa_inverse}`,
+`docs/reference.md`,
 `AGENTS.md` (py_vcgen owns those), and everything else not listed. Never
 `git commit`; scratch in `/tmp`.
 
@@ -266,7 +268,7 @@ Exact Gaussian elimination over `Rat`, computable, in Lean:
 For a nonsingular loaded deck,
 
 ```lean
-load_netlist divider from "Examples/divider/divider.json"
+load_netlist divider from "Examples/spice/divider/divider.json"
 ```
 
 also generates `divider_flat`, `divider_flatten`, `divider_solution`, and
@@ -288,10 +290,10 @@ axiom.
 
 ## Examples (three-file layout + lane-agnostic `proofs` tactic)
 
-`Examples/<name>/{<name>.cir, <name>.json, spec.lean, proof.lean}` —
+`Examples/spice/<name>/{<name>.cir, <name>.json, spec.lean, proof.lean}` —
 `spec.lean` holds envelope certification (ingested envelope ==
 hand-built/generated literal, `hasUnsupported` check, mirroring
-`Examples/counter/spec.lean`), non-vacuity `#eval`/`#guard` runs, and every
+`Examples/system-verilog/counter/spec.lean`), non-vacuity `#eval`/`#guard` runs, and every
 theorem STATEMENT proved `:= by proofs` (the tactic from
 `LeanModels/Python/Surface.lean` is lane-agnostic); `proof.lean` holds the
 real proofs. All `.cir` files are ngspice-46-prevalidated; the `.op`

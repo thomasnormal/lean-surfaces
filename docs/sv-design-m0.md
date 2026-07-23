@@ -8,7 +8,7 @@ part 2) for where this is going; `docs/DESIGN.md` for the Python-lane precedent.
 ## CONCURRENCY RULES (another workflow is fixing the Python lane in this repo)
 
 SV M0 agents may create/edit ONLY: `extractors/sv/**`, `LeanModels/Sv/**`,
-`Examples/sv/**`, `harness/sv/**`, `docs/sv-*.md`. FORBIDDEN (read-only):
+`Examples/system-verilog/**`, `harness/sv/**`, `docs/sv-*.md`. FORBIDDEN (read-only):
 `lakefile.toml`, `lean-toolchain`, `LeanModels.lean`, `LeanModels/Core/**`,
 `LeanModels/Python/**`, `Main.lean`, `Examples/python/**`, `Examples/*.lean`
 (the glob `Examples.+` is part of `lake build`!), `harness/*.py`, `harness/cases.json`,
@@ -46,7 +46,8 @@ Ports in/out. Processes: `always_ff @(posedge <clk>)`, `always @(posedge <clk>)`
 ternary `?:`; concatenation `{a, b}`. Everything else: representable as
 `Unsupported`, interpreter returns `.unsupported` (loud) when reached.
 M0 target examples (all already Xcelium-verified in the galleries):
-`adder`, `counter`, `race_blk`, `swap_nba`, `xsel` → `Examples/sv/*.sv`.
+`adder`, `counter`, `race_blk`, `swap_nba`, `xsel` →
+`Examples/system-verilog/<name>/<name>.sv`.
 
 ## 4-state value core (normative — these facts were verified on Xcelium)
 

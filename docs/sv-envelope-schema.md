@@ -33,7 +33,7 @@ Guarantees:
   "schema_version": "sv-0.1",
   "language": "systemverilog",
   "frontend": {"name": "pyslang", "version": "11.0.0"},
-  "source_file": "Examples/sv/adder.sv",
+  "source_file": "Examples/system-verilog/adder/adder.sv",
   "source_sha256": "<hex sha256 of the source bytes>",
   "design": {"kind": "Design", "modules": [<module>...], "others": [<Unsupported>...]},
   "lean_blocks": []
@@ -233,7 +233,7 @@ behind width-changing conversions in M0 code and therefore surface as
 
 ## Worked example
 
-`Examples/sv/adder.sv`:
+`Examples/system-verilog/adder/adder.sv`:
 
 ```systemverilog
 module adder (input  logic [7:0] a, b,
@@ -242,7 +242,7 @@ module adder (input  logic [7:0] a, b,
 endmodule
 ```
 
-`Examples/sv/adder.sv.json` (exact extractor output):
+`Examples/system-verilog/adder/adder.sv.json` (exact extractor output):
 
 ```json
 {
@@ -252,7 +252,7 @@ endmodule
     "name": "pyslang",
     "version": "11.0.0"
   },
-  "source_file": "Examples/sv/adder.sv",
+  "source_file": "Examples/system-verilog/adder/adder.sv",
   "source_sha256": "d078ae546305d852af83e963c991cbc0f81f6a7f647f9598c675e836ea138c09",
   "design": {
     "kind": "Design",

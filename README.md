@@ -36,13 +36,14 @@ See [docs/DESIGN.md](docs/DESIGN.md) for the full normative contract.
 
 ## v0: the Python vertical slice
 
-The workflow — the **three-file example layout** (`Examples/<name>/`):
+The workflow — the **three-file example layout**
+(`Examples/<language>/<name>/`):
 
-1. Put a pure Python file in its own example directory: `Examples/tri/tri.py`.
+1. Put a pure Python file in its own example directory: `Examples/python/tri/tri.py`.
    No annotations; nothing in it knows Lean exists.
 2. Run the extractor:
-   `python3 extractors/python/extract.py Examples/tri/tri.py`
-   This emits `Examples/tri/tri.json` — the AST envelope, next to the
+   `python3 extractors/python/extract.py Examples/python/tri/tri.py`
+   This emits `Examples/python/tri/tri.json` — the AST envelope, next to the
    source — and nothing else.
 3. Write two Lean files beside it. `spec.lean` is the readable contract:
    the program load, the `#py_check` non-vacuity runs, and every theorem
@@ -54,10 +55,10 @@ Proof work iterates in **pure Lean**: edit `spec.lean`/`proof.lean`,
 rebuild. The extractor re-enters the loop only when the `.py` itself
 changes (then re-run step 2 to refresh the envelope).
 
-### Example: `Examples/tri/`
+### Example: `Examples/python/tri/`
 
 ```python
-# Examples/tri/tri.py (the whole program)
+# Examples/python/tri/tri.py (the whole program)
 def tri(n):
     total, i = 0, 0
     while i <= n:
@@ -67,8 +68,8 @@ def tri(n):
 ```
 
 ```lean
--- Examples/tri/spec.lean (excerpt)
-load_program tri from "Examples/tri/tri.json"
+-- Examples/python/tri/spec.lean (excerpt)
+load_program tri from "Examples/python/tri/tri.json"
 
 #py_check tri(10) = 55
 #py_check tri(0) = 0
@@ -78,14 +79,14 @@ theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by 
 
 The theorem says: for every `n ≥ 0`, running the *actual Python program*
 through the verified interpreter terminates and returns `n(n+1)/2`. And the
-proof — in `Examples/tri/proof.lean`, where the statement is restated under
+proof — in `Examples/python/tri/proof.lean`, where the statement is restated under
 the same name (Lean has no forward declarations; the spec-side `:= by proofs`
 resolves the twin and typechecks the duplication) — is only the content no
 tactic can invent: the loop invariant, the decreasing measure, and closing
 arithmetic:
 
 ```lean
--- Examples/tri/proof.lean (proof body; illustrative until the vcgen campaign lands)
+-- Examples/python/tri/proof.lean (proof body; illustrative until the vcgen campaign lands)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
   py_begin [tri]
   py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
@@ -114,13 +115,13 @@ inhabited before any theorem is trusted.
 `# lean[ … # ]` comment blocks inside the `.py` itself; the extractor then
 also generates a companion `.lean` file with the blocks spliced in
 verbatim. Exactly one example stays in this mode as its end-to-end
-showcase — `Examples/sum_to/` (source `sum_to.py`, generated companion
+showcase — `Examples/python/sum_to/` (source `sum_to.py`, generated companion
 `SumTo.lean`; it is also the spec-surface acceptance-test artifact).
 
 The runner and differential harness close the loop:
 
 ```
-lake exe leanmodels-run Examples/tri/tri.json tri 10      # one-line JSON result
+lake exe leanmodels-run Examples/python/tri/tri.json tri 10      # one-line JSON result
 python3 harness/diff_test.py                              # Lean vs CPython on harness/cases.json
 ```
 
@@ -140,12 +141,12 @@ verbatim (marker convention in the script's header).
 
 ## Real-world demo: `python-rsa`'s modular inverse, proved as shipped
 
-`Examples/rsa_inverse/` vendors `extended_gcd` and `inverse` from
+`Examples/python/rsa_inverse/` vendors `extended_gcd` and `inverse` from
 **python-rsa 4.9.1 byte-verbatim** (provenance and segment hashes in the
 file header; authenticity re-verified against an independent re-download):
 
 ```python
-# Examples/rsa_inverse/rsa_inverse.py (inverse function)
+# Examples/python/rsa_inverse/rsa_inverse.py (inverse function)
 def inverse(x: int, n: int) -> int:
     """Returns the inverse of x % n under multiplication, a.k.a x^-1 (mod n)
 
@@ -166,7 +167,7 @@ def inverse(x: int, n: int) -> int:
 The spec proves total correctness of that routine:
 
 ```lean
--- Examples/rsa_inverse/spec.lean
+-- Examples/python/rsa_inverse/spec.lean
 theorem inverse_spec (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) :
     ∃ r : PyInt, 0 ≤ r ∧ r < n ∧ (r * x) % n = 1 ∧
@@ -174,18 +175,18 @@ theorem inverse_spec (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
 ```
 
 ```lean
--- Examples/rsa_inverse/spec.lean
+-- Examples/python/rsa_inverse/spec.lean
 theorem inverse_no_raise (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     (hco : Int.gcd x n = 1) (e : PyErr) :
     ¬ rsa_inverse.inverse(x, n) ==>! e := by proofs
 ```
 
-The proof (`Examples/rsa_inverse/proof.lean`, ~380 lines behind the
+The proof (`Examples/python/rsa_inverse/proof.lean`, ~380 lines behind the
 137-line spec) is built around one object — the loop invariant over the
 seven-variable state, here in its heart:
 
 ```lean
--- Examples/rsa_inverse/proof.lean (invariant core; illustrative until the vcgen campaign lands)
+-- Examples/python/rsa_inverse/proof.lean (invariant core; illustrative until the vcgen campaign lands)
 private def egcdInv (A B : Int) : EgcdS → Prop
   | (a, b, x, y, lx, ly, _) =>
     0 < a ∧ 0 ≤ b ∧ b < a ∧ Int.gcd a b = Int.gcd A B ∧
@@ -218,7 +219,7 @@ scheduler semantics with the LRM's same-region ordering freedom modeled as an
 schedule*, a property no simulator run can check. Same per-example layout:
 
 ```verilog
-// Examples/race_blk/race_blk.sv
+// Examples/system-verilog/race_blk/race_blk.sv
 module race_blk (input logic clk);          // blocking assigns: a race
   logic [7:0] a = 8'd1, b = 8'd2;
   always @(posedge clk) a = b;
@@ -230,13 +231,13 @@ Concrete runs in `#sv_check` surface syntax — including the same design under
 *two different legal schedules*, with different outcomes:
 
 ```lean
--- Examples/race_blk/spec.lean
+-- Examples/system-verilog/race_blk/spec.lean
 #sv_check raceBlkDesign [[clk := 1]] shows a = [2], b = [2]
 #sv_check raceBlkDesign [[clk := 1]] under σ_rev shows a = [1], b = [1]
 ```
 
 ```lean
--- Examples/race_blk/spec.lean
+-- Examples/system-verilog/race_blk/spec.lean
 theorem race_blk_not_deterministic : ¬ Deterministic raceBlkDesign := by proofs
 ```
 
@@ -245,20 +246,20 @@ schedule; the proof shows the race exists across *all* of them — and the
 proof is two concrete schedule witnesses plus kernel evaluation:
 
 ```lean
--- Examples/race_blk/proof.lean
+-- Examples/system-verilog/race_blk/proof.lean
 theorem race_blk_not_deterministic : ¬ Deterministic raceBlkDesign := by
   intro h
   have := h σ_src σ_rev raceStim _ _ ⟨8, race_blk_src⟩ ⟨8, race_blk_rev⟩
   exact absurd this (by decide)
 ```
 
-Dually, `Examples/counter/spec.lean` proves the gallery's golden-model
+Dually, `Examples/system-verilog/counter/spec.lean` proves the gallery's golden-model
 refinement — for every legal schedule, from the first sampled reset the
 counter follows its one-line Lean model — with the proof riding the
 canonical-trace lemmas through `sv_prove`:
 
 ```verilog
-// Examples/counter/counter.sv
+// Examples/system-verilog/counter/counter.sv
 module counter (input  logic clk, rst,
                 output logic [7:0] count);
   always_ff @(posedge clk)
@@ -268,12 +269,12 @@ endmodule
 ```
 
 ```lean
--- Examples/counter/spec.lean
+-- Examples/system-verilog/counter/spec.lean
 theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by proofs
 ```
 
 ```lean
--- Examples/counter/proof.lean
+-- Examples/system-verilog/counter/proof.lean
 theorem counter_refines : counterDesign ⊑@clk[from rst] counterModel := by
   sv_prove [counter_from_reset, sampledRst_eq, counterModelRun_eq, counter_firstOutput]
 ```
@@ -308,7 +309,7 @@ floating point, that *approximates our answers* in the differential harness
 
 ![Five-volt resistor divider: 1 kOhm from input to output and 2 kOhm from output to ground](docs/assets/divider-circuit.svg)
 
-<!-- docs-check: Examples/divider/divider.cir -->
+<!-- docs-check: Examples/spice/divider/divider.cir -->
 ```spice
 v1 in 0 dc 5
 r1 in out 1k
@@ -318,8 +319,8 @@ r2 out 0 2k
 ```
 
 ```lean
--- Examples/divider/spec.lean
-load_netlist divider from "Examples/divider/divider.json"
+-- Examples/spice/divider/spec.lean
+load_netlist divider from "Examples/spice/divider/divider.json"
 
 #spice_check divider shows "out" = (10 / 3 : Rat)
 
@@ -327,7 +328,7 @@ theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by proofs
 ```
 
 ```lean
--- Examples/divider/proof.lean
+-- Examples/spice/divider/proof.lean
 theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by
   spice_solve
 ```
@@ -367,8 +368,10 @@ composed `.SUBCKT`; it does not pretend such a constructor exists.
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
 | `LeanModels/Spice.lean` | Mathlib-enabled SPICE lane umbrella |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
-| `Examples/<name>/` | One directory per example — three-file layout: pure source (`<name>.py` / `<name>.sv`) + generated envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
-| `Examples/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
+| `Examples/python/<name>/` | Python examples: pure `.py` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
+| `Examples/system-verilog/<name>/` | SystemVerilog examples: pure `.sv` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
+| `Examples/spice/<name>/` | SPICE examples: pure `.cir` netlist + generated envelope + hand-written `spec.lean` and `proof.lean` |
+| `Examples/python/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
 | `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and exact SPICE DC vs ngspice |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |

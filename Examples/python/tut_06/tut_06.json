@@ -1,0 +1,227 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/tut_06/tut_06.py",
+  "source_sha256": "0bd30ab879e9bb9d149aa0fd53c2d43f7d742f84012969808493d90b92730594",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 12
+        },
+        "name": "count_up",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 1,
+              "col_offset": 13,
+              "end_lineno": 1,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 4,
+                  "end_lineno": 2,
+                  "end_col_offset": 5
+                },
+                "id": "i"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 2,
+                "col_offset": 8,
+                "end_lineno": 2,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 14
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 3,
+                "col_offset": 10,
+                "end_lineno": 3,
+                "end_col_offset": 15
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 10,
+                  "end_lineno": 3,
+                  "end_col_offset": 11
+                },
+                "id": "i"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 14,
+                    "end_lineno": 3,
+                    "end_col_offset": 15
+                  },
+                  "id": "n"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 8,
+                  "end_lineno": 4,
+                  "end_col_offset": 14
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 8,
+                    "end_lineno": 4,
+                    "end_col_offset": 9
+                  },
+                  "id": "i"
+                },
+                "op": "Add",
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 13,
+                    "end_lineno": 4,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 5,
+                "col_offset": 11,
+                "end_lineno": 5,
+                "end_col_offset": 12
+              },
+              "id": "i"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 8,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 16
+        },
+        "name": "true_div",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 8,
+              "col_offset": 13,
+              "end_lineno": 8,
+              "end_col_offset": 14
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 8,
+              "col_offset": 16,
+              "end_lineno": 8,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 9,
+                "col_offset": 11,
+                "end_lineno": 9,
+                "end_col_offset": 16
+              },
+              "py_kind": "BinOp:Div",
+              "text": "a / b"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

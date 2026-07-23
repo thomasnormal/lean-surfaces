@@ -1,0 +1,202 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/ag_clamp01/ag_clamp01.py",
+  "source_sha256": "df5958c79c3ef1fa5ffa3426980952c55ecd76eb300934f894e50910c44f4c8a",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 12
+        },
+        "name": "clamp01",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 1,
+              "col_offset": 12,
+              "end_lineno": 1,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 2,
+                "col_offset": 7,
+                "end_lineno": 2,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 2,
+                  "col_offset": 7,
+                  "end_lineno": 2,
+                  "end_col_offset": 8
+                },
+                "id": "x"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 2,
+                    "col_offset": 11,
+                    "end_lineno": 2,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 8,
+                  "end_lineno": 3,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 3,
+                    "col_offset": 15,
+                    "end_lineno": 3,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 4,
+                "col_offset": 7,
+                "end_lineno": 4,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 7,
+                  "end_lineno": 4,
+                  "end_col_offset": 8
+                },
+                "id": "x"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 11,
+                    "end_lineno": 4,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 8,
+                  "end_lineno": 5,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 15,
+                    "end_lineno": 5,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 6,
+                "col_offset": 11,
+                "end_lineno": 6,
+                "end_col_offset": 12
+              },
+              "id": "x"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

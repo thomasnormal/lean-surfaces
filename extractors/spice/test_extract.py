@@ -7,7 +7,7 @@ Covers: exact suffix/decimal value parsing (the normative table in
 docs/spice-envelope-schema.md), logical-line assembly (title, comments,
 continuations, .end), the M0 card vocabulary, .subckt/.ends nesting and
 error demotion, Unsupported routing, and byte-identical double runs on
-the committed Examples/{divider,chain,r2r} netlists.
+the committed Examples/spice/{divider,chain,r2r} netlists.
 """
 
 import json
@@ -217,14 +217,14 @@ class TestEnvelope(unittest.TestCase):
                          ["kind", "span", "name", "nodes", "value"])
 
     def test_output_path(self):
-        self.assertEqual(extract.output_path("Examples/divider/divider.cir"),
-                         "Examples/divider/divider.json")
+        self.assertEqual(extract.output_path("Examples/spice/divider/divider.cir"),
+                         "Examples/spice/divider/divider.json")
         self.assertEqual(extract.output_path("foo.sp"), "foo.json")
 
 
 class TestCommittedExamples(unittest.TestCase):
-    EXAMPLES = ["Examples/divider/divider.cir", "Examples/chain/chain.cir",
-                "Examples/r2r/r2r.cir"]
+    EXAMPLES = ["Examples/spice/divider/divider.cir", "Examples/spice/chain/chain.cir",
+                "Examples/spice/r2r/r2r.cir"]
 
     def _has_unsupported(self, node):
         if isinstance(node, dict):

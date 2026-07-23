@@ -16,9 +16,9 @@ marker, in one of two forms:
    whose first token is a repo-root-relative path, optionally followed by a
    free-form (conventionally parenthesized) annotation:
 
-       # Examples/tut_01/tut_01.py
-       -- Examples/tri/spec.lean (excerpt)
-       -- Examples/sum_to/sum_to.py (lean block; builds via Examples/sum_to/SumTo.lean)
+       # Examples/python/tut_01/tut_01.py
+       -- Examples/python/tri/spec.lean (excerpt)
+       -- Examples/python/sum_to/sum_to.py (lean block; builds via Examples/python/sum_to/SumTo.lean)
 
    `#` markers for hash-comment blocks (python), `--` markers for Lean
    blocks. The marker line itself is doc-only and excluded from matching.

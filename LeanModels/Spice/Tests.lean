@@ -3,9 +3,9 @@ import LeanModels.Spice.Surface
 
 namespace LeanModels.Spice
 
-load_netlist dividerFixture from "Examples/divider/divider.json"
-load_netlist chainFixture from "Examples/chain/chain.json"
-load_netlist r2rFixture from "Examples/r2r/r2r.json"
+load_netlist dividerFixture from "Examples/spice/divider/divider.json"
+load_netlist chainFixture from "Examples/spice/chain/chain.json"
+load_netlist r2rFixture from "Examples/spice/r2r/r2r.json"
 
 #guard dividerFixture.hasUnsupported == false
 #guard chainFixture.hasUnsupported == false

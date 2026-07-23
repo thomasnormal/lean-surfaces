@@ -13,7 +13,7 @@ If no theorem binder collides with a mutated Python variable, name the
 lambda binders exactly like the Python variables and omit `state`:
 
 ```lean
--- Examples/tri/proof.lean (three-file layout)
+-- Examples/python/tri/proof.lean (three-file layout)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
   py_begin [tri]
   py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
@@ -35,7 +35,7 @@ so no shadowing problem arises.
 positionally, freeing the binders to be anything (here `s`/`k`):
 
 ```lean
--- Examples/sum_to/SumTo.lean (generated from Examples/sum_to/sum_to.py)
+-- Examples/python/sum_to/SumTo.lean (generated from Examples/python/sum_to/sum_to.py)
 theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
   py_begin [sum_to]
   py_loop (state := [s, n])
@@ -51,7 +51,7 @@ theorem binders `a b` (the invariant needs the initial values on its
 right-hand side):
 
 ```lean
--- Examples/gcd/proof.lean (three-file layout, proof body elided)
+-- Examples/python/gcd/proof.lean (three-file layout, proof body elided)
 theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
   py_begin [gcd]
   py_loop (state := [a, b])

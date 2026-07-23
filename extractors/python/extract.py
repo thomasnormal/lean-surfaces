@@ -10,12 +10,12 @@ For each source file ``foo.py`` this writes:
 
   * ``foo.json`` next to the source: the envelope described in
     docs/envelope-schema.md (schema v0.1). Sources may live anywhere,
-    including per-example directories (``Examples/tri/tri.py`` →
-    ``Examples/tri/tri.json``).
+    including per-example directories (``Examples/python/tri/tri.py`` →
+    ``Examples/python/tri/tri.json``).
   * ``<companion-dir>/<PascalCaseStem>.lean``: the generated companion file
     described in docs/DESIGN.md (default companion dir: the source file's
-    own directory, so ``Examples/sum_to/sum_to.py`` →
-    ``Examples/sum_to/SumTo.lean``) — ONLY when the source contains at
+    own directory, so ``Examples/python/sum_to/sum_to.py`` →
+    ``Examples/python/sum_to/SumTo.lean``) — ONLY when the source contains at
     least one ``# lean[`` block. A pure source (no blocks — the three-file
     per-example layout, where spec.lean and proof.lean are hand-written)
     gets an envelope and nothing else.
@@ -532,7 +532,7 @@ def process_file(source_path, companion_dir):
 
     if companion_dir is None:
         # Default: the companion lives next to its source (per-example
-        # directory layout — Examples/sum_to/sum_to.py → Examples/sum_to/).
+        # directory layout — Examples/python/sum_to/sum_to.py → Examples/python/sum_to/).
         companion_dir = os.path.dirname(source_path) or "."
     companion_path = os.path.join(companion_dir, pascal_case(stem) + ".lean")
     check_companion_overwritable(companion_path)

@@ -10,7 +10,7 @@ hard failure.
 
 Per case in harness/sv/cases.json:
   1. generate a testbench (gen_tb.py) from the case + the example's extractor
-     envelope (Examples/<name>/<name>.sv.json), run it under the selected
+     envelope (Examples/system-verilog/<name>/<name>.sv.json), run it under the selected
      simulator in a /tmp work dir, and collect the canonical
      `CYCLE <k> <name>=<binary>...` lines (negedge-sampled);
   2. run the Lean interpreter on the same envelope + case via
@@ -214,8 +214,10 @@ def main():
         for s in sigmas:
             if s not in SIGMA_NAMES:
                 raise HarnessError("case %s: unknown sigma '%s'" % (name, s))
-        envelope_rel = os.path.join("Examples", example, example + ".sv.json")
-        example_sv = os.path.join(REPO, "Examples", example, example + ".sv")
+        envelope_rel = os.path.join(
+            "Examples", "system-verilog", example, example + ".sv.json")
+        example_sv = os.path.join(
+            REPO, "Examples", "system-verilog", example, example + ".sv")
         with open(os.path.join(REPO, envelope_rel)) as f:
             envelope = json.load(f)
 

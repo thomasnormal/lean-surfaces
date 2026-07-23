@@ -29,7 +29,7 @@ would be invisible in the theorem.
 
 Second, translations *bury semantic divergences*; a deep embedding surfaces
 them. The house example is floor division
-([spec-surface.md §2](spec-surface.md), [Examples/midpoint/midpoint.py](../Examples/midpoint/midpoint.py)):
+([spec-surface.md §2](spec-surface.md), [Examples/python/midpoint/midpoint.py](../Examples/python/midpoint/midpoint.py)):
 Python's `//` floors, so `7 // -2 == -4`, while Lean's `Int` divisions
 truncate or round differently (`(7 : Int) / -2 = -3`). A translator has to
 pick some Lean division for `//`, and whichever it picks is silently wrong
@@ -128,7 +128,7 @@ CPython via [harness/diff_test.py](../harness/diff_test.py) on
 ground truth, *not our reading of the spec*. Two catches made this mandatory
 methodology rather than hygiene:
 
-- **The gcd sign catch** ([Examples/gcd/spec.lean](../Examples/gcd/spec.lean),
+- **The gcd sign catch** ([Examples/python/gcd/spec.lean](../Examples/python/gcd/spec.lean),
   [spec-surface.md §3](spec-surface.md)). The obvious spec
   `gcd(a, b) ==> Int.gcd a b` is *false*: Python's `%` is `Int.fmod`, so
   `gcd(4, -6)` computes `4 % -6 = -2` and returns `-2` — CPython agrees, the

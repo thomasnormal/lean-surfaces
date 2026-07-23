@@ -3,11 +3,11 @@
 Every error below was reproduced against the current tree (scratch files
 under `/tmp`, programs from `Examples/`), and every quoted message is
 pasted, not paraphrased. Format: **symptom → diagnosis → fix**. Most fixed
-versions live in [`Examples/tut_06/`](../../Examples/tut_06/tut_06.py)
+versions live in [`Examples/python/tut_06/`](../../Examples/python/tut_06/tut_06.py)
 (modes 5 and 7 point at their own examples):
 
 ```python
-# Examples/tut_06/tut_06.py
+# Examples/python/tut_06/tut_06.py
 def count_up(n):
     i = 0
     while i < n:
@@ -20,7 +20,7 @@ def true_div(a, b):
 ```
 
 ```lean
--- Examples/tut_06/proof.lean (header comment elided)
+-- Examples/python/tut_06/proof.lean (header comment elided)
 /-- Failure modes 1 and 2, fixed: `count_up` has a loop, so `py_prove`
 cannot close it — `py_begin`/`py_loop` with the *right* invariant can.
 The invariant needs both the range conjuncts: dropping `i ≤ n` strands
@@ -33,7 +33,7 @@ theorem count_up_total (n : PyInt) (hn : 0 ≤ n) : tut_06.count_up(n) ==> n := 
 ```
 
 ```lean
--- Examples/tut_06/spec.lean (excerpt)
+-- Examples/python/tut_06/spec.lean (excerpt)
 #py_check tut_06.count_up(5) = 5
 #py_check tut_06.count_up(0) = 0
 ...
@@ -79,7 +79,7 @@ forever.
 
 **Fix.** The loop tactics, with the two clauses only you can supply
 ([tutorial 04](04-loops.md)) — the working proof is `count_up_total` in
-`Examples/tut_06/proof.lean` above.
+`Examples/python/tut_06/proof.lean` above.
 
 ## 2. Wrong invariant — the exit goal is stuck
 
@@ -125,7 +125,7 @@ conjuncts are part of the invariant. With `0 ≤ i ∧ i ≤ n`, the exit has
 ## 3. Shadowed loop variable — (state := …) missing
 
 **Symptom** (the loud face). On
-[`sum_to.py`](../../Examples/sum_to/sum_to.py), lambda binders `(s k)`
+[`sum_to.py`](../../Examples/python/sum_to/sum_to.py), lambda binders `(s k)`
 without the escape hatch:
 
 ```
@@ -269,7 +269,7 @@ Ascribing the branded variable does not work, on either side or both:
 at `PyInt` (reproduced — each still fails exactly as above, and the
 restated hypothesis prints identically to the original: no visible
 difference is the tell). Real instance: `relu_of_nonneg` in
-[`Examples/tut_03/proof.lean`](../../Examples/tut_03/proof.lean); the
+[`Examples/python/tut_03/proof.lean`](../../Examples/python/tut_03/proof.lean); the
 flipped direction is the `negpart_of_nonpos` shape of
 [tutorial 03 §3](03-branching-and-preconditions.md#3-preconditions-are-hypotheses--one-gotcha).
 
@@ -277,7 +277,7 @@ flipped direction is the `negpart_of_nonpos` shape of
 binder produces a brand-headed `h1` with the same problem. Either put an
 `Int` term on the left here too (`by_cases h1 : (0 : Int) > x`), or keep
 `omega` out of it: pass `h1` to `py_simp` as a rewrite and close with
-`grind` ([`Examples/ag_clamp01/proof.lean`](../../Examples/ag_clamp01/proof.lean), mode 7).
+`grind` ([`Examples/python/ag_clamp01/proof.lean`](../../Examples/python/ag_clamp01/proof.lean), mode 7).
 
 *The goal itself* — a brand-headed goal comparison (typical: spec-side
 `max`/`min` over `Py*` binders in a pure-math lemma of your own) cannot be
@@ -303,7 +303,7 @@ LeanModels.Python.Res.unsupported "unsupported expression 'BinOp:Div'"
 or the runner says
 
 ```console
-$ lake exe leanmodels-run Examples/tut_06/tut_06.json true_div 7 2
+$ lake exe leanmodels-run Examples/python/tut_06/tut_06.json true_div 7 2
 {"status":"unsupported","msg":"unsupported expression 'BinOp:Div'"}
 ```
 
@@ -323,7 +323,7 @@ flagged: [../howto/check-what-the-extractor-supports.md](../howto/check-what-the
 
 **Fix.** Stay on the tier (rewrite `a / b` as `a // b` if integer division
 was meant), or record the gap honestly: keep the function, assert the
-refusal (`#guard … matches .unsupported _`, as `Examples/tut_06/spec.lean`
+refusal (`#guard … matches .unsupported _`, as `Examples/python/tut_06/spec.lean`
 does), and whitelist it in the harness with `"expect": "unsupported"`
 ([`harness/cases.json`](../../harness/cases.json) does exactly this for
 `true_div`).
@@ -333,10 +333,10 @@ does), and whitelist it in the harness with `"expect": "unsupported"`
 **Symptom.** The body is loop-free and branching — `py_prove`'s home turf —
 yet it leaves the un-split branch nest of mode 1, with no `execWhile`
 anywhere in it. Reproduced against
-[`ag_clamp01.py`](../../Examples/ag_clamp01/ag_clamp01.py):
+[`ag_clamp01.py`](../../Examples/python/ag_clamp01/ag_clamp01.py):
 
 ```python
-# Examples/ag_clamp01/ag_clamp01.py (function only)
+# Examples/python/ag_clamp01/ag_clamp01.py (function only)
 def clamp01(x):
     if x < 0:
         return 0
@@ -386,7 +386,7 @@ condition up front, pass the case facts to `py_simp` as rewrites so every
 brand-headed (mode 5). The working proof, verbatim:
 
 ```lean
--- Examples/ag_clamp01/proof.lean (excerpt; statement re-stated in Examples/ag_clamp01/spec.lean)
+-- Examples/python/ag_clamp01/proof.lean (excerpt; statement re-stated in Examples/python/ag_clamp01/spec.lean)
 theorem clamp01_total (x : PyInt) : ag_clamp01.clamp01(x) ==> max 0 (min 1 x) := by
   refine ⟨32, ?_⟩
   by_cases h1 : x < 0 <;> by_cases h2 : 1 < x <;>

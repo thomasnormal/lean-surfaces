@@ -75,7 +75,7 @@ is the tier contract):
     Without ``--stim``, ``--cycles N`` (default 4) drives N hold cycles.
 
 ``%%lean`` also accepts ``+<Module.Path>`` tokens on its line (e.g.
-``%%lean sv_cell +Examples.swap_nba.spec``): each adds an ``import`` to the
+``%%lean sv_cell +Examples.«system-verilog».swap_nba.spec``): each adds an ``import`` to the
 cell's preamble, which is how SV cells reach the per-example spec/proof
 modules (built by ``lake build``; the Python lane never needs this).
 
@@ -121,7 +121,8 @@ HEADER_NAME = "NotebookHeader"
 HEADER_CACHE = WORK_DIR / "header_cache.meta"
 
 STEM_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-MODPATH_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+MODPATH_SEG = r"(?:[A-Za-z_][A-Za-z0-9_]*|«[^«»\r\n]+»)"
+MODPATH_RE = re.compile(r"^" + MODPATH_SEG + r"(?:\." + MODPATH_SEG + r")*$")
 MSG_RE = re.compile(
     r"^(?P<path>\S+?\.lean):(?P<line>\d+):(?P<col>\d+): "
     r"(?P<sev>error|warning|info): ?(?P<text>.*)$"

@@ -267,7 +267,7 @@ private def addEnvelopeText : String := r#"{
   "schema_version": "0.1",
   "language": "python",
   "frontend": {"name": "cpython-ast", "version": "3.9.25"},
-  "source_file": "Examples/python/add.py",
+  "source_file": "Examples/python/add/add.py",
   "source_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
   "module": {
     "kind": "Module",
@@ -308,7 +308,7 @@ private def addEnvelopeChecks : Bool :=
   | .ok env =>
     env.schemaVersion == "0.1" &&
     env.language == "python" &&
-    env.sourceFile == "Examples/python/add.py" &&
+    env.sourceFile == "Examples/python/add/add.py" &&
     env.module.topLevel.isEmpty &&
     env.leanBlocks.isEmpty &&
     (match env.module.functions.toList with

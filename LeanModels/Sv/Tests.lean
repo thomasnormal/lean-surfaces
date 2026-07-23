@@ -6,7 +6,8 @@ import LeanModels.Sv.Surface
 # SV M0 scheduler smoke tests (`LeanModels.Sv`)
 
 `#guard` tests of `Semantics.lean` on hand-built copies of the five M0
-gallery designs (transcribed to match `Examples/<design>/<design>.sv.json` exactly),
+gallery designs (transcribed to match
+`Examples/system-verilog/<design>/<design>.sv.json` exactly),
 covering every Xcelium-verified outcome the design contract names, plus the
 loud paths (`.timeout` on a comb loop, `.unsupported` on out-of-tier
 nodes).
@@ -19,7 +20,8 @@ as an expression node), so this file carries a self-contained adapter for
 the real schema — `namespace EnvelopeIngest` — which reuses `parseExpr`
 from `Json.lean` (whose expression vocabulary does match) and re-parses
 everything above it. The `#eval` blocks at the bottom read
-`Examples/<design>/<design>.sv.json` from disk (paths relative to the repo root, where
+`Examples/system-verilog/<design>/<design>.sv.json` from disk (paths relative
+to the repo root, where
 `lake env lean` runs per the contract), check the ingested designs against
 the hand-built ones node-for-node, and re-run the semantic checks on the
 ingested designs — a mismatch fails the file, so a green
@@ -44,7 +46,8 @@ private def isUnsupported : Res (List SvState) → Bool
 private def b8 (n : Nat) : LVec := .ofNat 8 n
 private def bit (n : Nat) : LVec := .ofNat 1 n
 
-/-! ## Hand-built designs (exact transcriptions of `Examples/<design>/<design>.sv`) -/
+/-! ## Hand-built designs
+(exact transcriptions of `Examples/system-verilog/<design>/<design>.sv`) -/
 
 private def adderD : Design :=
   { name := "adder"
@@ -516,11 +519,11 @@ private def checkIngest (path : String) (expected : Design) : IO Design := do
 
 #eval show IO Unit from do
   -- byte-real envelopes must ingest to EXACTLY the hand-built designs ...
-  let adder ← checkIngest "Examples/adder/adder.sv.json" adderD
-  let counter ← checkIngest "Examples/counter/counter.sv.json" counterD
-  let race ← checkIngest "Examples/race_blk/race_blk.sv.json" raceBlkD
-  let swap ← checkIngest "Examples/swap_nba/swap_nba.sv.json" swapNbaD
-  let xsel ← checkIngest "Examples/xsel/xsel.sv.json" xselD
+  let adder ← checkIngest "Examples/system-verilog/adder/adder.sv.json" adderD
+  let counter ← checkIngest "Examples/system-verilog/counter/counter.sv.json" counterD
+  let race ← checkIngest "Examples/system-verilog/race_blk/race_blk.sv.json" raceBlkD
+  let swap ← checkIngest "Examples/system-verilog/swap_nba/swap_nba.sv.json" swapNbaD
+  let xsel ← checkIngest "Examples/system-verilog/xsel/xsel.sv.json" xselD
   -- ... and the ingested designs must reproduce the Xcelium-verified outcomes
   check "counter.sv.json: x → reset → count trace" <|
     sigTrace (run counter σ_src 64 counterStim) "count" ==

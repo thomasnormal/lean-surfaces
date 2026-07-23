@@ -30,8 +30,8 @@ Extract, then query the JSON (schema:
 the CPython class name in `py_kind` and the unparsed source text:
 
 ```
-python3 extractors/python/extract.py Examples/tri/tri.py
-jq '[.. | objects | select(.kind? == "Unsupported") | .py_kind] | unique' Examples/tri/tri.json
+python3 extractors/python/extract.py Examples/python/tri/tri.py
+jq '[.. | objects | select(.kind? == "Unsupported") | .py_kind] | unique' Examples/python/tri/tri.json
 []
 ```
 
@@ -56,7 +56,7 @@ Three per-node flags mark *callability* limits rather than parse limits —
 check them per function:
 
 ```
-jq '.module.body[] | select(.kind == "FunctionDef") | {name, args_unsupported, locals_unsupported}' Examples/add/add.json
+jq '.module.body[] | select(.kind == "FunctionDef") | {name, args_unsupported, locals_unsupported}' Examples/python/add/add.json
 {
   "name": "add",
   "args_unsupported": null,
@@ -81,7 +81,7 @@ at runtime (e.g. `2 ** -1`). The runner's `unsupported` status is the ground
 truth, message included:
 
 ```
-lake exe leanmodels-run Examples/arith/arith.json powi 2 -1
+lake exe leanmodels-run Examples/python/arith/arith.json powi 2 -1
 {"status":"unsupported","msg":"'**' with a negative exponent (float result) is outside the v0 tier"}
 ```
 
@@ -89,7 +89,7 @@ In Lean, the same check is a raw `#guard` (the `unsupported` outcome is a
 tier gap, not a Python result, so it deliberately has no `#py_check` form):
 
 ```lean
--- Examples/arith/spec.lean (excerpt)
+-- Examples/python/arith/spec.lean (excerpt)
 #guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
 ```
 

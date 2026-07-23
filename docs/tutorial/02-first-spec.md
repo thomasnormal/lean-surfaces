@@ -6,11 +6,11 @@ important — what the theorem actually *means*.
 
 ## 1. The files
 
-The example is the directory `Examples/tut_02/` in the three-file layout
+The example is the directory `Examples/python/tut_02/` in the three-file layout
 of tutorial 01. The program:
 
 ```python
-# Examples/tut_02/tut_02.py
+# Examples/python/tut_02/tut_02.py
 def square(x):
     return x * x
 ```
@@ -19,12 +19,12 @@ def square(x):
 *statement*, each closed by the `proofs` tactic:
 
 ```lean
--- Examples/tut_02/spec.lean (header comment elided)
-import Examples.tut_02.proof
+-- Examples/python/tut_02/spec.lean (header comment elided)
+import Examples.python.tut_02.proof
 
 open LeanModels LeanModels.Python
 
-load_program tut_02 from "Examples/tut_02/tut_02.json"
+load_program tut_02 from "Examples/python/tut_02/tut_02.json"
 
 /-! Tutorial 02 (docs/tutorial/02-first-spec.md): the `==>` arrow and
 `py_prove` on straight-line code. -/
@@ -34,7 +34,7 @@ load_program tut_02 from "Examples/tut_02/tut_02.json"
 
 /-- Total correctness: `square(x)` terminates and returns `x * x`, for
 every Python int `x`. One tactic; no `Val`, no fuel, no AST in sight
-(`Examples/tut_02/proof.lean`). -/
+(`Examples/python/tut_02/proof.lean`). -/
 theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by proofs
 
 /-- Whatever `square(x)` returns equals `x * x` — the relational reading,
@@ -52,14 +52,14 @@ The real proofs live in `proof.lean`, one theorem per spec-side statement,
 same names, wrapped in the namespace matching the module path:
 
 ```lean
--- Examples/tut_02/proof.lean (header comment and docstrings elided)
+-- Examples/python/tut_02/proof.lean (header comment and docstrings elided)
 import LeanModels
 
-namespace Examples.tut_02.proof
+namespace Examples.python.tut_02.proof
 
 open LeanModels LeanModels.Python
 
-load_program tut_02 from "Examples/tut_02/tut_02.json"
+load_program tut_02 from "Examples/python/tut_02/tut_02.json"
 
 theorem square_total (x : PyInt) : tut_02.square(x) ==> x * x := by
   py_prove [tut_02]
@@ -74,13 +74,13 @@ theorem square_nonneg (x r : PyInt) (h : tut_02.square(x) ⇓ r) : 0 ≤ r := by
   · have := Int.mul_nonneg (a := -x) (b := -x) (by omega) (by omega)
     rwa [Int.neg_mul_neg] at this
 
-end Examples.tut_02.proof
+end Examples.python.tut_02.proof
 ```
 
 Two conventions to absorb once, because every example uses them. The
 statements are **duplicated** between the two files — Lean has no forward
 declarations — and the duplication is *typechecked*: the spec-side
-`:= by proofs` resolves the same-name twin in `Examples.tut_02.proof` and
+`:= by proofs` resolves the same-name twin in `Examples.python.tut_02.proof` and
 fails loudly if the twin is missing or its statement drifted. And the split
 is uniform: `spec.lean` states, `proof.lean` proves — a reader (human or
 AI) gets the whole contract from `spec.lean` without wading through
@@ -90,7 +90,7 @@ Extract once (envelope only), then build; proof iteration afterwards is
 pure Lean — edit, rebuild:
 
 ```console
-$ python3 extractors/python/extract.py Examples/tut_02/tut_02.py
+$ python3 extractors/python/extract.py Examples/python/tut_02/tut_02.py
 $ lake build
 ```
 

@@ -60,7 +60,7 @@ obligations, the fuel splice) is now *derived*:
   `(state := [a, b])` is the escape hatch for binder-name capture: the `inv`
   binder names must normally *be* the Python variable names, but when those
   names are shadowed by ambient theorem binders the invariant needs to
-  mention (e.g. `gcd`'s initial values, `Examples/gcd/gcd.py`), `state`
+  mention (e.g. `gcd`'s initial values, `Examples/python/gcd/gcd.py`), `state`
   lists the Python variable names to use — each entry must name a variable
   in the loop's environment (matched **by name**, in any order), and the
   i-th listed name pairs with the i-th `inv`/`dec` lambda binder, freeing
@@ -464,7 +464,7 @@ variable names (they select the loop variables from the environment);
 `(state := [a, b])`, given *before* `inv`, names the environment variables
 positionally instead — the escape hatch for when ambient theorem binders
 shadow the Python names and the invariant must mention them (initial values,
-`Examples/gcd/gcd.py`). Residual goals (exit algebra with primed
+`Examples/python/gcd/gcd.py`). Residual goals (exit algebra with primed
 variables, invariant preservation, measure decrease, initial invariant) are
 pure mathematics over named atoms, the invariant's conjuncts split into
 `hinv1`, `hinv2`, … and the loop test as `hcont` — see the module

@@ -1,0 +1,15 @@
+ideal series-source voltage adder
+* Vleft establishes v(mid) = 2V. Vright is stacked on that node and
+* establishes v(out) - v(mid) = 3V, so the unloaded output is 5V.
+*
+* The Lean theorem is symbolic: for arbitrary rational left and right
+* source values, every satisfying DC assignment has
+*   v(out) = left + right.
+*
+* ngspice 46 prevalidation (.op):
+*   mid = 2.000000e+00; out = 5.000000e+00
+*   vleft#branch = 0; vright#branch = 0
+vleft mid 0 dc 2
+vright out mid dc 3
+.op
+.end

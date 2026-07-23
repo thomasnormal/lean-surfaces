@@ -19,7 +19,7 @@ SystemVerilog lanes retain their core-only dependency boundary.
 
 SPICE lane agents may create/edit ONLY: `extractors/spice/**`,
 `LeanModels/Spice/**` (new),
-`Examples/spice/{divider,chain,r2r}/**` (new),
+`Examples/spice/{adder,divider,chain,r2r}/**` (new),
 `harness/spice/**`, `docs/spice-*.md`, `tools/ci.sh` (one additive
 maybe-step), `.github/workflows/ci.yml` (one additive ngspice apt step),
 `README.md` (ONE section, Verify phase only), `LeanModels.lean` (one import

@@ -340,6 +340,12 @@ supports `WellPosed` and safety-envelope theorems. `#spice_op divider` and
 `#spice_equations divider` expose the exact operating point and MNA system
 when needed.
 
+The [series-source adder](Examples/spice/adder/spec.lean) is symbolic rather
+than tied to one operating point: for every `left right : Rat`, Lean proves
+`v(out) = left + right` and `WellPosed (seriesAdder left right)`. Its checked
+`.cir` instance stacks 2 V and 3 V sources and is differentially verified at
+exactly 5 V.
+
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
 extractor and semantics, and a linear block's interface is captured
 *exactly* by a small port contract (`I = Y·V + J` — k² rationals, however

@@ -1,5 +1,10 @@
 [
   {
+    "name": "adder",
+    "source": "Examples/spice/adder/adder.cir",
+    "probes": {"mid": "2", "out": "5", "@vleft": "0", "@vright": "0"}
+  },
+  {
     "name": "divider",
     "source": "Examples/spice/divider/divider.cir",
     "probes": {"in": "5", "out": "10/3", "@v1": "-1/600"}

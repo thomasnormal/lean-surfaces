@@ -60,6 +60,10 @@ def flattenLeafSubckt (subckt : Subckt) : Except FlattenError FlatNetlist := do
   for card in subckt.body do
     match card with
     | .element element => elements := elements.push element
+    | .mosfet mosfet =>
+        throw (.unsupported "M" s!"MOS transistor {mosfet.name}")
+    | .mosModel model =>
+        throw (.unsupported ".model" s!"MOS model {model.name}")
     | .op _ => pure ()
     | .xInstance inst => throw (.missingSubckt inst.subckt)
     | .unsupported card => throw (.unsupported card.spiceKind card.text)

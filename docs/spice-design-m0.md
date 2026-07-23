@@ -19,7 +19,7 @@ SystemVerilog lanes retain their core-only dependency boundary.
 
 SPICE lane agents may create/edit ONLY: `extractors/spice/**`,
 `LeanModels/Spice/**` (new),
-`Examples/spice/{adder,divider,chain,r2r}/**` (new),
+`Examples/spice/{and_gate,divider,chain,r2r}/**` (new),
 `harness/spice/**`, `docs/spice-*.md`, `tools/ci.sh` (one additive
 maybe-step), `.github/workflows/ci.yml` (one additive ngspice apt step),
 `README.md` (ONE section, Verify phase only), `LeanModels.lean` (one import
@@ -68,10 +68,12 @@ the other way round.
   extractor, schema, and AST.
 * `.op` is the one supported analysis card (semantic no-op: `Satisfies` IS
   the operating point).
-* Everything else — diodes, transistors, controlled sources, `.tran`,
-  `.ac`, parameters — becomes an `Unsupported` card, **loud**: `flatten`
-  (and hence everything downstream) refuses a netlist with a reachable
-  `Unsupported` card.
+* MOS `M` cards and `.model name nmos|pmos` cards are structured for the
+  ideal-switch tier below. The exact linear `flatten`/MNA path still rejects
+  them loudly.
+* Everything else — diodes, BJTs, controlled sources, `.tran`, `.ac`,
+  parameters outside MOS model tails — becomes an `Unsupported` card,
+  **loud**: downstream semantics never silently discard it.
 
 ## Frontend
 
@@ -160,6 +162,34 @@ convention (`x1.n0` — verified against ngspice 46 output):
 `c ⊨ a` iff `flatten c = .ok f` and `Satisfies f a`. ngspice flattens
 subckts natively, so the harness cross-checks our `flatten` + solve against
 its flat solve on the same file, internal nodes included.
+
+## Ideal-switch MOS semantics
+
+`LeanModels/Spice/Switch.lean` gives structured transistor decks a separate
+Boolean semantics:
+
+```lean
+structure LogicState where
+  level : String → Bool
+
+def MosfetSwitchLaw (c : Netlist) (s : LogicState) (m : Mosfet) : Prop :=
+  match c.findMosModel m.model with
+  | some .nmos => s.level m.gate = true  → s.level m.drain = s.level m.source
+  | some .pmos => s.level m.gate = false → s.level m.drain = s.level m.source
+  | none => False
+```
+
+An off device imposes no relation. Bulk nodes are preserved in the AST but
+body effects are not modeled. `SwitchSatisfies` requires every card to be a
+voltage-source driver, MOS transistor/model, or `.op`, then conjoins every
+device law. `BinaryGateContract` has two parts for every input vector:
+soundness (all satisfying states produce the advertised output) and
+realizability (at least one satisfying state exists).
+
+This is a theorem about the named ideal-switch abstraction, not a theorem
+about nonlinear MOS/BSIM current equations. `harness/spice/switch_diff_test.py`
+closes the engineering loop by running the same source deck through ngspice
+for every Boolean vector and checking explicit analog logic bands.
 
 ## The central objects: port contracts
 
@@ -330,6 +360,11 @@ results are recorded as comments in the file itself.
    the mixed-signal-ready contract; the SV-counter ramp theorem is **M1**
    (below), not built now. ngspice: pattern 1010 → `3.125` = `25/8`;
    0001 → `5/16`; 1111 → `75/16`; 0110 → `15/8`.
+4. **and_gate** — six-transistor CMOS NAND followed by an inverter.
+   `cmos_and_correct` proves `out = a && b` for all four Boolean input
+   vectors under `SwitchSatisfies`, including a realizability witness for
+   each vector. The ngspice harness drives `a,b` at 0/5 V and checks all
+   output and intermediate NAND voltages against 0.5/4.5 V logic bands.
 
 ## Differential harness vs ngspice 46
 
@@ -354,10 +389,15 @@ fallback operating-point attempt but emits `singular matrix`, so the harness
 classifies the two outcomes together instead of accepting ngspice's arbitrary
 zero-voltage fallback as a unique solution.
 
+`harness/spice/switch_diff_test.py` is the complementary transistor check.
+It does not compare against the exact linear solver; it validates the
+switch abstraction's truth-table conclusion against ngspice operating points
+for every input vector.
+
 ## Definition of done (M0)
 
 1. Extractor deterministic (double-run byte-identical), suffix unit tests
-   green, all three examples extract **Unsupported-free**; schema doc
+   green, all four examples extract **Unsupported-free**; schema doc
    written; `Unsupported` path exercised in tests (diode, `.tran`,
    `PULSE`, params). *(Delivered by the Contract phase.)*
 2. Every `LeanModels/Spice/*.lean` green; **zero `axiom` declarations in
@@ -369,13 +409,15 @@ zero-voltage fallback as a unique solution.
    boundary composition), `chain_attenuates` (exact `(2/3)^N * 5`)
    proved — the ∀-N showpiece.
 5. The r2r drive-assumption theorem proved for all 16 bit vectors.
-6. `HasContract` stated as the double inclusion; `reduceLeaf` computes exact
+6. The CMOS AND gate truth table and realizability are proved under the
+   ideal-switch semantics; ngspice passes all four analog vectors.
+7. `HasContract` stated as the double inclusion; `reduceLeaf` computes exact
    matrices; `compose_contracts`/`cascade_contracts` are proved with
    contracts-only data flow. Physical AST composition remains deferred until
    a capture-avoiding wiring constructor exists.
-7. Harness green vs ngspice 46 on all three netlists plus the edge and singular
+8. Harness green vs ngspice 46 on all four netlists plus the edge and singular
    cases (node voltages and recorded branch currents).
-8. `bash tools/ci.sh` green; the Python and SV lanes untouched and green;
+9. `bash tools/ci.sh` green; the Python and SV lanes untouched and green;
    `LeanModels.lean` gains exactly one import line; README gains exactly
    one section (Verify phase) including the line: ngspice approximates
    our exact answers.
@@ -394,5 +436,5 @@ zero-voltage fallback as a unique solution.
   (re, im), same exact-elimination story; caps/inductors get their
   frequency-domain laws.
 * `.tran` (needs real/interval numerics or exact event sequences),
-  nonlinear devices (D/Q/M), controlled sources (E/G/F/H), `.param`,
-  `.include`, `.model`.
+  nonlinear device equations (D/Q/M), controlled sources (E/G/F/H),
+  `.param`, `.include`, and richer model semantics.

@@ -69,9 +69,9 @@ reserved and always `[]` in M0.
 * **Case-insensitivity.** SPICE is case-insensitive: every identifier
   (device names, node names, subckt names, keywords) is lowercased in the
   envelope. `Unsupported.text` keeps original case.
-* Blank lines are skipped. Tokens are whitespace-separated (M0 does not
-  support parenthesized/comma syntax; cards using it go `Unsupported` via
-  the form checks).
+* Blank lines are skipped. Tokens are whitespace-separated. Parenthesized
+  MOS model parameters remain in the source for ngspice but are intentionally
+  outside the structured polarity-only model node.
 
 ## Spans
 
@@ -123,8 +123,10 @@ case, truncated to 200 chars). Tags the extractor emits:
 
 | tag | meaning |
 |---|---|
-| `D`, `Q`, `M`, `E`, `G`, `F`, `H`, `B`, `K`, ... (uppercase element letter) | element kind outside M0: diodes, BJTs, MOSFETs, controlled sources, coupled inductors, ... |
-| `.tran`, `.ac`, `.dc`, `.model`, `.param`, `.include`, `.control`, `.endc`, ... (the dot word) | dot-card outside M0 (a `.control` block is NOT swallowed: each of its lines surfaces as its own card, most of them `Unsupported` — loud) |
+| `D`, `Q`, `E`, `G`, `F`, `H`, `B`, `K`, ... (uppercase element letter) | element kind outside the structured vocabulary: diodes, BJTs, controlled sources, coupled inductors, ... |
+| `.tran`, `.ac`, `.dc`, `.param`, `.include`, `.control`, `.endc`, ... (the dot word) | dot-card outside the structured vocabulary (a `.control` block is NOT swallowed: each of its lines surfaces as its own card, most of them `Unsupported` — loud) |
+| `M:form` | MOS card not exactly `Mxxx drain gate source bulk model` |
+| `Model:form` | `.model` missing a name or using a type other than `nmos`/`pmos` |
 | `R:form` / `C:form` / `L:form` / `V:form` / `I:form` | wrong token count for the M0 grammar — extra parameters (`tc=`), source transients (`PULSE`, `SIN`, `AC`), ... |
 | `R:value` / `C:value` / `L:value` / `V:value` / `I:value` | value token is not a number |
 | `X:form` | X card with fewer than 2 tokens after the name, or containing `=` (instance parameters) |
@@ -145,10 +147,10 @@ Key order: `kind`, `title`, `subckts`, `cards`.
 
 * `subckts`: the **top-level** `.subckt` definitions, in source order.
   (A demoted definition appears here as `Unsupported`.)
-* `cards`: all other top-level cards (elements, `X` instances, `Op`,
-  `Unsupported`), in source order. SPICE card order carries no semantics;
-  the split into two lists is for the ingester's convenience (subckt lookup
-  by name).
+* `cards`: all other top-level cards (elements, MOS transistors/models,
+  `X` instances, `Op`, `Unsupported`), in source order. SPICE card order
+  carries no semantics; the split into two lists is for the ingester's
+  convenience (subckt lookup by name).
 
 ## `Subckt`
 
@@ -194,6 +196,24 @@ parameters, `AC`/`PULSE`/`SIN` transients) demotes the card to
 `Unsupported`. Element names keep their full (lowercased) spelling,
 including the kind letter: `R1` → `"r1"`. The extractor does not check name
 uniqueness or value sign/zero — those are `WellPosed` obligations in Lean.
+
+## MOS cards — `M` and `Model`
+
+The transistor switch tier structures four-terminal MOS cards and the
+polarity of their model declarations:
+
+```json
+{"kind": "M", "span": {...}, "name": "m1", "nodes": ["d", "g", "s", "b"], "model": "nmod"}
+{"kind": "Model", "span": {...}, "name": "nmod", "polarity": "nmos"}
+```
+
+`Mxxx drain gate source bulk model` must have exactly those six tokens.
+`.model name nmos|pmos ...` records only `name` and `polarity`; remaining
+model parameters stay in the original `.cir` deck for ngspice. This is
+intentional: `LeanModels.Spice.Switch` proves gates against an ideal
+on/off connectivity abstraction, while ngspice validates the full analog
+deck. The exact linear-DC `flatten`/MNA path rejects both structured card
+kinds loudly instead of pretending they are linear elements.
 
 ## `X` — subcircuit instance
 

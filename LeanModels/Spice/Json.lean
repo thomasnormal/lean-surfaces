@@ -87,6 +87,33 @@ private def parseInstance (json : Json) : Except String Instance :=
       subckt := ← getString json "subckt"
       connections := ← parseStringArray (← getField json "connections") }
 
+private def parseMosfet (json : Json) : Except String Mosfet :=
+  withCtx "M" do
+    let nodes ← parseStringArray (← getField json "nodes")
+    unless nodes.size == 4 do
+      throw s!"field \"nodes\" must contain drain, gate, source, and bulk, got {nodes.size}"
+    let some drain := nodes[0]? | throw "missing drain node"
+    let some gate := nodes[1]? | throw "missing gate node"
+    let some source := nodes[2]? | throw "missing source node"
+    let some bulk := nodes[3]? | throw "missing bulk node"
+    return {
+      span := ← parseSpan (← getField json "span")
+      name := ← getString json "name"
+      drain, gate, source, bulk
+      model := ← getString json "model" }
+
+private def parseMosPolarity : String → Except String MosPolarity
+  | "nmos" => .ok .nmos
+  | "pmos" => .ok .pmos
+  | polarity => .error s!"unknown MOS polarity {polarity.quote}"
+
+private def parseMosModel (json : Json) : Except String MosModel :=
+  withCtx "Model" do
+    return {
+      span := ← parseSpan (← getField json "span")
+      name := ← getString json "name"
+      polarity := ← parseMosPolarity (← getString json "polarity") }
+
 private def parseUnsupported (json : Json) : Except String Unsupported :=
   withCtx "Unsupported" do
     return {
@@ -101,6 +128,8 @@ mutual
     match kind with
     | "R" | "C" | "L" | "V" | "I" =>
         return .element (← parseElement kind json)
+    | "M" => return .mosfet (← parseMosfet json)
+    | "Model" => return .mosModel (← parseMosModel json)
     | "X" => return .xInstance (← parseInstance json)
     | "Op" => return .op (← parseSpan (← getField json "span"))
     | "Unsupported" => return .unsupported (← parseUnsupported json)

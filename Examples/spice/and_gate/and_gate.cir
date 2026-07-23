@@ -1,0 +1,22 @@
+transistor-level CMOS AND gate
+* ngspice 46 .op validation, va/vb driven at 0V or 5V:
+*   00: out=1.2525e-08, nand=5
+*   01: out=1.2525e-08, nand=5
+*   10: out=1.2525e-08, nand=5
+*   11: out=5,          nand=5.01e-08
+* NAND stage: parallel PMOS pull-up and series NMOS pull-down.
+mpa nand a vdd vdd pmod
+mpb nand b vdd vdd pmod
+mna nand a nseries 0 nmod
+mnb nseries b 0 0 nmod
+* Inverter stage converts NAND to AND.
+mpinv out nand vdd vdd pmod
+mninv out nand 0 0 nmod
+* Supplies and input drivers; the harness rewrites va/vb over all four vectors.
+vddsrc vdd 0 dc 5
+va a 0 dc 0
+vb b 0 dc 0
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0)
+.model pmod pmos (level=1 vto=-1 kp=50u lambda=0)
+.op
+.end

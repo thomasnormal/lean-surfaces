@@ -58,6 +58,10 @@ def flattenCards (defs : Array (SubcktEntry Value)) :
   | fuel + 1, active, path, renames, card :: rest => do
       let head ← match card with
         | .element element => pure [renameElement path renames element]
+        | .mosfet mosfet =>
+            throw (.unsupported "M" s!"MOS transistor {mosfet.name}")
+        | .mosModel model =>
+            throw (.unsupported ".model" s!"MOS model {model.name}")
         | .op _ => pure []
         | .unsupported card => throw (.unsupported card.spiceKind card.text)
         | .subckt subckt => throw (.nestedSubckt subckt.name)

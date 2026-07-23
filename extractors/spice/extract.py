@@ -12,8 +12,9 @@ tri.json convention): the envelope described in
 docs/spice-envelope-schema.md (schema "spice-0.1").
 
 Guarantees:
-  * Never fails on valid SPICE -- anything outside the M0 card vocabulary
-    becomes an ``Unsupported`` card (tag + source text, <= 200 chars).
+  * Never fails on valid SPICE -- anything outside the linear-DC and
+    polarity-only MOS card vocabulary becomes an ``Unsupported`` card
+    (tag + source text, <= 200 chars).
   * Deterministic: same input bytes => same output bytes. json indent=2,
     ASCII, one trailing newline; fixed key order: "kind" first, then
     "span", then the card's fields in the order documented in
@@ -223,6 +224,30 @@ def instance_node(card):
         "connections": toks[1:-1],
     }
 
+def mosfet_node(card):
+    toks = [t.lower() for t in card["tokens"]]
+    if len(toks) != 6:
+        return unsupported(card, "M:form")
+    return {
+        "kind": "M",
+        "span": span_of(card),
+        "name": toks[0],
+        "nodes": toks[1:5],
+        "model": toks[5],
+    }
+
+
+def mos_model_node(card):
+    toks = [t.lower() for t in card["tokens"]]
+    if len(toks) < 3 or toks[2] not in ("nmos", "pmos"):
+        return unsupported(card, "Model:form")
+    return {
+        "kind": "Model",
+        "span": span_of(card),
+        "name": toks[1],
+        "polarity": toks[2],
+    }
+
 
 def parse_cards(cards):
     """Build (subckts, top_cards).  Top-level .subckt definitions go to
@@ -284,10 +309,14 @@ def parse_cards(cards):
                     emit({"kind": "Op", "span": span_of(card)})
                 else:
                     emit(unsupported(card, "Op:form"))
+            elif first == ".model":
+                emit(mos_model_node(card))
             else:
                 emit(unsupported(card, first))
         elif c0 in _ELEMENTS:
             emit(element_node(card))
+        elif c0 == "m":
+            emit(mosfet_node(card))
         elif c0 == "x":
             emit(instance_node(card))
         else:

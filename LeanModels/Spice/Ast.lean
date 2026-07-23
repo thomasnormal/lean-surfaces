@@ -33,6 +33,36 @@ structure Element (Value : Type := Rat) where
   value : Value
 deriving Repr, BEq, Inhabited
 
+/-- Channel polarity for the ideal-switch MOS tier. -/
+inductive MosPolarity where
+  | nmos
+  | pmos
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- A four-terminal MOS transistor (`M` card).
+
+The AST retains the model name instead of assigning device behavior here.
+The linear-DC semantics rejects this card, while the switch semantics resolves
+the referenced `.model` declaration. -/
+structure Mosfet where
+  span : Span
+  name : String
+  drain : String
+  gate : String
+  source : String
+  bulk : String
+  model : String
+deriving Repr, BEq, Inhabited
+
+/-- The polarity-bearing portion of a `.model ... nmos|pmos` declaration.
+Analog model parameters remain in the source deck for ngspice; the formal
+switch tier deliberately depends only on channel polarity. -/
+structure MosModel where
+  span : Span
+  name : String
+  polarity : MosPolarity
+deriving Repr, BEq, Inhabited
+
 /-- A subcircuit instance (`X` card). -/
 structure Instance where
   span : Span
@@ -53,6 +83,8 @@ mutual
   represented faithfully here and rejected later by M0 flattening. -/
   inductive Card (Value : Type := Rat) where
     | element (element : Element Value)
+    | mosfet (mosfet : Mosfet)
+    | mosModel (model : MosModel)
     | xInstance (inst : Instance)
     | op (span : Span)
     | unsupported (card : Unsupported)
@@ -102,7 +134,7 @@ where
     | .definition subckt => subckt.body.any cardHas
     | .unsupported _ => true
   cardHas : Card Value → Bool
-    | .element _ | .xInstance _ | .op _ => false
+    | .element _ | .mosfet _ | .mosModel _ | .xInstance _ | .op _ => false
     | .unsupported _ => true
     -- A nested definition is a distinct flattening error before its body is reached.
     | .subckt _ => false

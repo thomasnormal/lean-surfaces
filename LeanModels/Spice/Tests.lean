@@ -1,15 +1,32 @@
 import LeanModels.Spice.Compose
 import LeanModels.Spice.Surface
+import LeanModels.Spice.Switch
 
 namespace LeanModels.Spice
 
 load_netlist dividerFixture from "Examples/spice/divider/divider.json"
 load_netlist chainFixture from "Examples/spice/chain/chain.json"
 load_netlist r2rFixture from "Examples/spice/r2r/r2r.json"
+load_netlist andGateFixture from "Examples/spice/and_gate/and_gate.json"
 
 #guard dividerFixture.hasUnsupported == false
 #guard chainFixture.hasUnsupported == false
 #guard r2rFixture.hasUnsupported == false
+#guard andGateFixture.hasUnsupported == false
+
+#guard match andGateFixture.cards[0]? with
+  | some (.mosfet mosfet) =>
+      mosfet.name == "mpa" && mosfet.gate == "a" &&
+        mosfet.model == "pmod"
+  | _ => false
+
+#guard match andGateFixture.findMosModel "nmod" with
+  | some .nmos => true
+  | _ => false
+
+#guard match flatten andGateFixture with
+  | .error (.unsupported "M" _) => true
+  | _ => false
 
 #guard match flatten dividerFixture with
   | .ok flat => flat.elements.size == 3 &&

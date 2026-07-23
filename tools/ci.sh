@@ -35,11 +35,13 @@ else
 fi
 
 # SPICE lane: ngspice is the floating-point differential oracle for the exact
-# rational DC solver.
+# rational DC solver and the analog validation oracle for switch-level gates.
 if command -v ngspice >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ngspice" ]; then
   maybe "spice-harness" harness/spice/diff_test.py python3 harness/spice/diff_test.py --no-build
+  maybe "spice-switch-harness" harness/spice/switch_diff_test.py python3 harness/spice/switch_diff_test.py
 else
   echo "=== [spice-harness] SKIP (ngspice not found)"; skip+=("spice-harness")
+  echo "=== [spice-switch-harness] SKIP (ngspice not found)"; skip+=("spice-switch-harness")
 fi
 
 echo

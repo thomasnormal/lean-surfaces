@@ -7,7 +7,7 @@ Covers: exact suffix/decimal value parsing (the normative table in
 docs/spice-envelope-schema.md), logical-line assembly (title, comments,
 continuations, .end), the M0 card vocabulary, .subckt/.ends nesting and
 error demotion, Unsupported routing, and byte-identical double runs on
-the committed Examples/spice/{adder,divider,chain,r2r} netlists.
+the committed Examples/spice/{and_gate,divider,chain,r2r} netlists.
 """
 
 import json
@@ -141,15 +141,33 @@ class TestCards(unittest.TestCase):
         (op,) = cards_of("t\n.op\n")
         self.assertEqual(op, {"kind": "Op", "span": {"line": 2, "end_line": 2}})
 
+    def test_mosfet_and_model(self):
+        cards = cards_of(
+            "t\nM1 D G S B NMOD\n.model NMOD NMOS (level=1 vto=1)\n"
+        )
+        self.assertEqual(cards[0], {
+            "kind": "M",
+            "span": {"line": 2, "end_line": 2},
+            "name": "m1",
+            "nodes": ["d", "g", "s", "b"],
+            "model": "nmod",
+        })
+        self.assertEqual(cards[1], {
+            "kind": "Model",
+            "span": {"line": 3, "end_line": 3},
+            "name": "nmod",
+            "polarity": "nmos",
+        })
+
     def test_unsupported_cards_are_loud_not_fatal(self):
-        deck = ("t\nd1 a 0 dmod\nm1 d g s b nmos\nq1 c b e npn\n"
+        deck = ("t\nd1 a 0 dmod\nm1 d g s nmos\nq1 c b e npn\n"
                 "e1 a 0 b 0 2\n.tran 1n 1u\n.model dmod d\n"
                 "v2 in 0 pulse (0 5 0 1n 1n 5n 10n)\n"
                 "r9 a b 1k tc=1,2\nx9 a b sub p=3\n.op extra\n")
         cards = cards_of(deck)
         self.assertTrue(all(c["kind"] == "Unsupported" for c in cards))
         self.assertEqual([c["spice_kind"] for c in cards],
-                         ["D", "M", "Q", "E", ".tran", ".model",
+                         ["D", "M:form", "Q", "E", ".tran", "Model:form",
                           "V:form", "R:form", "X:form", "Op:form"])
         self.assertTrue(all(len(c["text"]) <= 200 for c in cards))
 
@@ -223,7 +241,7 @@ class TestEnvelope(unittest.TestCase):
 
 
 class TestCommittedExamples(unittest.TestCase):
-    EXAMPLES = ["Examples/spice/adder/adder.cir",
+    EXAMPLES = ["Examples/spice/and_gate/and_gate.cir",
                 "Examples/spice/divider/divider.cir",
                 "Examples/spice/chain/chain.cir",
                 "Examples/spice/r2r/r2r.cir"]

@@ -340,11 +340,13 @@ supports `WellPosed` and safety-envelope theorems. `#spice_op divider` and
 `#spice_equations divider` expose the exact operating point and MNA system
 when needed.
 
-The [series-source adder](Examples/spice/adder/spec.lean) is symbolic rather
-than tied to one operating point: for every `left right : Rat`, Lean proves
-`v(out) = left + right` and `WellPosed (seriesAdder left right)`. Its checked
-`.cir` instance stacks 2 V and 3 V sources and is differentially verified at
-exactly 5 V.
+The [CMOS AND gate](Examples/spice/and_gate/spec.lean) starts the nonlinear
+device tier with an extracted six-transistor NAND-plus-inverter deck. Lean
+proves its complete Boolean contract under an explicit ideal-switch
+abstraction: every satisfying state has `out = a && b`, and a satisfying
+state exists for every input vector. The claim is deliberately not a proof
+of the nonlinear MOS equations. A separate ngspice harness runs the same
+deck at all four 0/5 V input vectors and checks low ≤ 0.5 V and high ≥ 4.5 V.
 
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
 extractor and semantics, and a linear block's interface is captured

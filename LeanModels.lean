@@ -7,4 +7,3 @@ import LeanModels.Python
 import LeanModels.Sv.Tests
 import LeanModels.Sv.SelfCheck
 import LeanModels.Sv.ToggleExample
-import LeanModels.Spice.Tests

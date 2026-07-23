@@ -8,8 +8,12 @@ contract style this mirrors), `docs/spice-envelope-schema.md` (the extractor
 payload, normative for the ingester), `docs/DESIGN.md` (Python-lane
 precedent).
 
-Toolchain: Lean v4.33.0-rc1, **core only** — no Mathlib, no real numbers.
-`bash tools/ci.sh` green at the end of every phase.
+Toolchain: Lean v4.33.0-rc1 plus the matching Mathlib tag for the SPICE
+**proof surface only** (`norm_num`, `linarith`, and later linear-algebra
+infrastructure). The SPICE AST, semantics, flattener, and exact solver remain
+computable over core `Rat`; no real numbers enter M0. The Python and
+SystemVerilog lanes retain their core-only dependency boundary.
+`bash tools/ci.sh` is green at the end of every phase.
 
 ## CONCURRENCY RULES (the py_vcgen workflow is active in this repo)
 
@@ -43,7 +47,9 @@ every named theorem. Never `sorry`/`admit`/`native_decide`.
 Core `Rat` (ℚ). Linear DC circuits over rational component values have
 exactly rational solutions, so the entire pipeline — netlist, MNA system,
 Gaussian elimination, solution, theorem statements — is exact and
-kernel-computable, and equality is decidable. The README line (Verify
+kernel-computable, and equality is decidable. Mathlib supplies proof
+automation and reusable algebraic abstractions; it does not change the
+numeric representation or become an oracle. The README line (Verify
 phase): **ngspice (floating point) approximates our exact answers**, not
 the other way round.
 
@@ -246,11 +252,39 @@ Exact Gaussian elimination over `Rat`, computable, in Lean:
   and elimination are not trusted.
 * **Uniqueness per circuit**: example proofs establish that any two satisfying
   assignments agree on the netlist's support (`WellPosed`) by exact rational
-  algebra. A reusable generic nonsingularity certificate is deferred.
+  algebra. `load_netlist` emits finite solution data and a checked
+  satisfaction theorem; `spice_solve` combines those artifacts with the
+  concrete equations to prove both universal properties and `WellPosed`
+  goals. A reusable generic nonsingularity certificate is deferred.
 * Symbolic COMPONENT values are a **stretch goal only** (attempt
   `divider_formula` late; report honestly if it doesn't land). The ∀-N
   showpiece needs induction over STRUCTURE with concrete values — fully
   kernel-computable; do not block on symbolic elimination.
+
+## Proof surface
+
+For a nonsingular loaded deck,
+
+```lean
+load_netlist divider from "Examples/divider/divider.json"
+```
+
+also generates `divider_flat`, `divider_flatten`, `divider_solution`, and
+`divider_solution_satisfies`. Proof authors normally use the public surface
+instead of those implementation artifacts:
+
+* `#spice_check divider shows "out" = (10 / 3 : Rat)` is the concrete
+  non-vacuity check.
+* `#spice_op divider` prints the exact operating point.
+* `#spice_equations divider` prints the exact augmented MNA system.
+* `spice_solve` infers the circuit from a `⊨dc` or `WellPosed` goal;
+  `spice_solve [divider]` is the explicit form.
+
+The executable solver supplies finite data. The generated satisfaction
+certificate is independently reduced against `Satisfies`, and the universal
+proof unfolds the finite circuit equations. Mathlib tactics normalize and
+solve the resulting rational algebra; no solver result is installed as an
+axiom.
 
 ## Examples (three-file layout + lane-agnostic `proofs` tactic)
 

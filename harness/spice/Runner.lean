@@ -26,7 +26,7 @@ def main (args : List String) : IO UInt32 := do
           | .ok flat =>
               match solve flat with
               | .error error =>
-                  IO.eprintln s!"solve error: {repr error}"
+                  IO.eprintln s!"solve error: {error.describe}"
                   pure 1
               | .ok assignment =>
                   for probe in probes do

@@ -15,25 +15,67 @@ enter `n1` with coefficient `-1` and enter `n2` with coefficient `1`.
 
 namespace LeanModels.Spice
 
-/-- Loud failures from validation, elimination, or the final semantic check. -/
-inductive SolveError where
-  | zeroResistance (name : String)
-  | duplicateBranchName (name : String)
-  | singular (column : Nat)
-  | candidateRejected
-deriving Repr, BEq, DecidableEq, Inhabited
-
 /-- An MNA unknown is either a non-ground voltage or a named branch current. -/
 inductive Unknown where
   | voltage (node : String)
   | current (name : String)
 deriving Repr, BEq, DecidableEq, Inhabited
 
+@[simp] theorem Unknown.beq_voltage_voltage (left right : String) :
+    ((Unknown.voltage left == Unknown.voltage right) : Bool) = (left == right) := rfl
+
+@[simp] theorem Unknown.beq_current_current (left right : String) :
+    ((Unknown.current left == Unknown.current right) : Bool) = (left == right) := rfl
+
+@[simp] theorem Unknown.beq_voltage_current (left right : String) :
+    ((Unknown.voltage left == Unknown.current right) : Bool) = false := rfl
+
+@[simp] theorem Unknown.beq_current_voltage (left right : String) :
+    ((Unknown.current left == Unknown.voltage right) : Bool) = false := rfl
+
+/-- Loud failures from validation, elimination, or the final semantic check. -/
+inductive SolveError where
+  | zeroResistance (name : String)
+  | duplicateBranchName (name : String)
+  | singular (column : Nat) (unknown : Option Unknown := none)
+  | candidateRejected
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- Human-readable solver failure, including the first unconstrained MNA
+unknown when elimination can identify it. -/
+def SolveError.describe : SolveError → String
+  | .zeroResistance name => s!"zero resistance in '{name}'"
+  | .duplicateBranchName name => s!"duplicate branch-current name '{name}'"
+  | .singular column (some (.voltage node)) =>
+      s!"singular MNA system at column {column}: unconstrained voltage '{node}'"
+  | .singular column (some (.current name)) =>
+      s!"singular MNA system at column {column}: unconstrained branch current '{name}'"
+  | .singular column none => s!"singular MNA system at column {column}"
+  | .candidateRejected => "the computed candidate does not satisfy the circuit equations"
+
 /-- A square linear system `A x = b`, stored as augmented rows `[A | b]`. -/
 structure LinearSystem where
   unknowns : List Unknown
   rows : List (List Rat)
 deriving Repr, BEq, Inhabited
+
+/-- Finite, decidable output of exact elimination. Unlike `Assignment`, this
+data has decidable equality and can therefore be embedded in generated proof
+artifacts. -/
+structure Solution where
+  unknowns : List Unknown
+  values : List Rat
+deriving Repr, BEq, DecidableEq, Inhabited
+
+def Unknown.describe : Unknown → String
+  | .voltage node => s!"V({node})"
+  | .current name => s!"I({name})"
+
+/-- Exact operating-point table for interactive inspection. -/
+def Solution.describe (solution : Solution) : String :=
+  solution.unknowns.zip solution.values
+    |>.map (fun (unknown, value) => s!"{unknown.describe} = {value}")
+    |> String.intercalate "\n"
 
 private def nonGroundNodes (netlist : FlatNetlist) : List String :=
   netlist.nodes.filter (· != "0")
@@ -103,6 +145,18 @@ def assemble (netlist : FlatNetlist) : LinearSystem :=
     | _ => none
   { unknowns := us, rows := kclRows ++ lawRows }
 
+/-- Exact augmented MNA system for interactive inspection. -/
+def LinearSystem.describe (system : LinearSystem) : String :=
+  let header := system.unknowns.map Unknown.describe |> String.intercalate ", "
+  let rows := system.rows.map fun row =>
+    match row.reverse with
+    | [] => "[]"
+    | rhs :: reversedCoefficients =>
+        let coefficients := reversedCoefficients.reverse.map toString
+          |> String.intercalate ", "
+        s!"[{coefficients}] = {rhs}"
+  String.intercalate "\n" (s!"unknowns: {header}" :: rows)
+
 private def replaceAt (xs : List α) (index : Nat) (value : α) : List α :=
   xs.take index ++ value :: xs.drop (index + 1)
 
@@ -152,56 +206,95 @@ termination_by column => dimension - column
 /-- Total exact Gauss-Jordan elimination of a square augmented system. -/
 def gaussJordan (system : LinearSystem) : Except SolveError (List Rat) := do
   let dimension := system.unknowns.length
-  let reduced ← gaussJordan.go dimension 0 system.rows
-  pure (reduced.take dimension |>.map fun row => row[dimension]!)
+  match gaussJordan.go dimension 0 system.rows with
+  | .error (.singular column _) =>
+      .error (.singular column system.unknowns[column]?)
+  | .error error => .error error
+  | .ok reduced =>
+      pure (reduced.take dimension |>.map fun row => row[dimension]!)
 
-private def lookupSolution (pairs : List (Unknown × Rat)) (wanted : Unknown) : Rat :=
+def lookupSolution (pairs : List (Unknown × Rat)) (wanted : Unknown) : Rat :=
   (pairs.find? (fun pair => pair.1 == wanted)).map (·.2) |>.getD 0
 
-private def assignmentOf (us : List Unknown) (values : List Rat) : Assignment :=
+@[simp] theorem lookupSolution_nil (wanted : Unknown) :
+    lookupSolution [] wanted = 0 := by
+  rfl
+
+@[simp] theorem lookupSolution_cons (unknown : Unknown) (value : Rat)
+    (rest : List (Unknown × Rat)) (wanted : Unknown) :
+    lookupSolution ((unknown, value) :: rest) wanted =
+      if unknown == wanted then value else lookupSolution rest wanted := by
+  unfold lookupSolution
+  split <;> simp_all [List.find?]
+
+def assignmentOf (us : List Unknown) (values : List Rat) : Assignment :=
   let pairs := us.zip values
   { volt := fun node =>
       if node == "0" then 0 else lookupSolution pairs (.voltage node)
     cur := fun name => lookupSolution pairs (.current name) }
 
-/-- Unchecked MNA candidate. This is kept separate so `solve` can establish
-soundness by evaluating the semantic predicate on the candidate. -/
-def solveCandidate (netlist : FlatNetlist) : Except SolveError Assignment := do
+/-- Convert finite solver output into the semantic total-function assignment. -/
+def Solution.assignment (solution : Solution) : Assignment :=
+  assignmentOf solution.unknowns solution.values
+
+/-- Unchecked finite MNA candidate. -/
+def solveCandidateData (netlist : FlatNetlist) : Except SolveError Solution := do
   validate netlist
   let system := assemble netlist
   let values ← gaussJordan system
-  pure (assignmentOf system.unknowns values)
+  pure { unknowns := system.unknowns, values }
 
-private def checkedSolution (netlist : FlatNetlist) (assignment : Assignment) :
-    Except SolveError Assignment :=
-  if _h : Satisfies netlist assignment then .ok assignment
+/-- Backward-compatible unchecked assignment projection. -/
+def solveCandidate (netlist : FlatNetlist) : Except SolveError Assignment :=
+  (solveCandidateData netlist).map Solution.assignment
+
+private def checkedSolutionData (netlist : FlatNetlist) (solution : Solution) :
+    Except SolveError Solution :=
+  if _h : Satisfies netlist solution.assignment then .ok solution
   else .error .candidateRejected
+
+/-- Exact checked finite solve. This is the proof-generation interface:
+successful results have decidable equality and can be stored as literals. -/
+def solveData (netlist : FlatNetlist) : Except SolveError Solution :=
+  match solveCandidateData netlist with
+  | .error error => .error error
+  | .ok solution => checkedSolutionData netlist solution
 
 /-- Exact checked DC solve. Singular and malformed systems fail loudly. -/
 def solve (netlist : FlatNetlist) : Except SolveError Assignment :=
-  match solveCandidate netlist with
-  | .error error => .error error
-  | .ok assignment => checkedSolution netlist assignment
+  (solveData netlist).map Solution.assignment
 
-private theorem checkedSolution_satisfies {netlist : FlatNetlist}
-    {candidate assignment : Assignment}
-    (h : checkedSolution netlist candidate = .ok assignment) :
-    Satisfies netlist assignment := by
-  unfold checkedSolution at h
+private theorem checkedSolutionData_satisfies {netlist : FlatNetlist}
+    {candidate solution : Solution}
+    (h : checkedSolutionData netlist candidate = .ok solution) :
+    Satisfies netlist solution.assignment := by
+  unfold checkedSolutionData at h
   split at h
   · next hs =>
       simp at h
-      subst assignment
+      subst solution
       exact hs
   · simp at h
+
+/-- A successful finite solution satisfies the definitional circuit laws. -/
+theorem solution_satisfies {netlist : FlatNetlist} {solution : Solution}
+    (h : solveData netlist = .ok solution) :
+    Satisfies netlist solution.assignment := by
+  unfold solveData at h
+  generalize hr : solveCandidateData netlist = result at h
+  cases result with
+  | error error => simp at h
+  | ok candidate => exact checkedSolutionData_satisfies h
 
 /-- Generic soundness theorem for every successful checked solve. -/
 theorem solve_satisfies {netlist : FlatNetlist} {assignment : Assignment}
     (h : solve netlist = .ok assignment) : Satisfies netlist assignment := by
   unfold solve at h
-  generalize hr : solveCandidate netlist = result at h
+  generalize hr : solveData netlist = result at h
   cases result with
-  | error error => simp at h
-  | ok candidate => exact checkedSolution_satisfies h
+  | error error => cases h
+  | ok solution =>
+      cases h
+      exact solution_satisfies hr
 
 end LeanModels.Spice

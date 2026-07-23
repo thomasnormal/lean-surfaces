@@ -29,5 +29,7 @@ jobs:
           python3.12 -m pip install --user pyslang || python3 -m pip install --user pyslang
       - name: Circuit simulators (SV and SPICE differential harnesses)
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends iverilog ngspice
+      - name: Restore Mathlib build cache
+        run: lake exe cache get
       - name: Full check
         run: bash tools/ci.sh

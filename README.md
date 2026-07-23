@@ -322,19 +322,20 @@ load_netlist divider from "Examples/divider/divider.json"
 #spice_check divider shows "out" = (10 / 3 : Rat)
 
 theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by proofs
-theorem divider_wellposed : WellPosed divider := by proofs
 ```
 
 ```lean
--- Examples/divider/proof.lean (proof excerpt)
+-- Examples/divider/proof.lean
 theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by
-  intro assignment h
-  unfold SatisfiesNetlist at h
-  rw [divider_flatten] at h
-  simp [Satisfies, dividerFlat, FlatNetlist.nodes, kclSum, currentInto,
-    deviceLawHolds] at h
-  grind
+  spice_solve
 ```
+
+`load_netlist` generates the exact flattened deck, finite MNA solution, and
+a kernel-checked satisfaction certificate; `spice_solve` proves the
+universal property from the resulting equations. The same surface also
+supports `WellPosed` and safety-envelope theorems. `#spice_op divider` and
+`#spice_equations divider` expose the exact operating point and MNA system
+when needed.
 
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
 extractor and semantics, and a linear block's interface is captured
@@ -362,6 +363,7 @@ composed `.SUBCKT`; it does not pretend such a constructor exists.
 | `LeanModels/Python/Semantics.lean` | Fuel-based definitional interpreter |
 | `LeanModels/Python/Logic.lean` | `ToExpr`, `load_program` macro, `CallsTo`, `@[spec]` |
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
+| `LeanModels/Spice.lean` | Mathlib-enabled SPICE lane umbrella |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
 | `Examples/<name>/` | One directory per example — three-file layout: pure source (`<name>.py` / `<name>.sv`) + generated envelope + hand-written `spec.lean` (checks + statements, `:= by proofs`) and `proof.lean` (real proofs; namespace = module path) |
 | `Examples/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
@@ -369,8 +371,11 @@ composed `.SUBCKT`; it does not pretend such a constructor exists.
 | `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and exact SPICE DC vs ngspice |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
-Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned), core Lean only — no package
-dependencies. Extractor/harness require only Python ≥ 3.9 stdlib.
+Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned). The Python and
+SystemVerilog lanes use core Lean only. The SPICE proof surface depends on
+the matching Mathlib release for exact algebra automation; its semantics,
+MNA solver, and generated certificates remain computable definitions over
+core `Rat`. Extractor/harness require only Python ≥ 3.9 stdlib.
 
 ## v0 limitations (honest list)
 

@@ -18,6 +18,15 @@ load_netlist r2rFixture from "Examples/r2r/r2r.json"
       | .error _ => false
   | .error _ => false
 
+#guard dividerFixture_solution.describe ==
+  "V(in) = 5\nV(out) = 10/3\nI(v1) = -1/600"
+
+#guard (assemble dividerFixture_flat).describe ==
+  "unknowns: V(in), V(out), I(v1)\n" ++
+  "[-1/1000, 1/1000, -1] = 0\n" ++
+  "[1/1000, -3/2000, 0] = 0\n" ++
+  "[1, 0, 0] = 5"
+
 #guard match flatten chainFixture with
   | .ok flat => flat.elements.size == 16 &&
       match solve flat with
@@ -53,6 +62,7 @@ two-port admittance matrix exactly, not merely within a numeric tolerance. -/
   | _ => false
 
 #print axioms solve_satisfies
+#print axioms solution_satisfies
 #print axioms cascade_contracts
 #print axioms compose_contracts
 #print axioms tellegen_nodal

@@ -1,0 +1,42 @@
+transistor-level CMOS one-bit half-adder
+* ngspice 46 operating points (low <= 0.5 V, high >= 4.5 V):
+* a=0 b=0: sum=12.525n, carry=12.525n
+* a=0 b=5: sum=5,       carry=12.525n
+* a=5 b=0: sum=5,       carry=12.525n
+* a=5 b=5: sum=12.525n, carry=5
+* Reusable six-transistor AND: NAND followed by an inverter.
+.subckt and2 a b out vdd
+mpa nand a vdd vdd pmod
+mpb nand b vdd vdd pmod
+mna nand a nseries 0 nmod
+mnb nseries b 0 0 nmod
+mpinv out nand vdd vdd pmod
+mninv out nand 0 0 nmod
+.ends and2
+* Reusable six-transistor OR: NOR followed by an inverter.
+.subckt or2 a b out vdd
+mpa pseries a vdd vdd pmod
+mpb nor b pseries vdd pmod
+mna nor a 0 0 nmod
+mnb nor b 0 0 nmod
+mpinv out nor vdd vdd pmod
+mninv out nor 0 0 nmod
+.ends or2
+* Reusable CMOS inverter.
+.subckt inv input out vdd
+mp out input vdd vdd pmod
+mn out input 0 0 nmod
+.ends inv
+* carry = a AND b
+xcarry a b carry vdd and2
+* sum = (a OR b) AND NOT(carry)
+xany a b any vdd or2
+xnotcarry carry ncarry vdd inv
+xsum any ncarry sum vdd and2
+vddsrc vdd 0 dc 5
+va a 0 dc 0
+vb b 0 dc 0
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0)
+.model pmod pmos (level=1 vto=-1 kp=50u lambda=0)
+.op
+.end

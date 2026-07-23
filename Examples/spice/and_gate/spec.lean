@@ -9,9 +9,18 @@ load_netlist andGateDeck from "Examples/spice/and_gate/and_gate.json"
   | .error (.unsupported "M" _) => true
   | _ => false
 
+/-- Any six-transistor NAND-plus-inverter block satisfying the individual MOS
+conducting-path laws computes Boolean AND. -/
+theorem cmos_and_from_device_laws
+    {left right nand series output vdd ground : Bool}
+    (hlaws : CmosAndDeviceLaws left right nand series output vdd ground)
+    (hvdd : vdd = true) (hground : ground = false) :
+    output = Bool.and left right := by proofs
+
 /-- For all four input vectors, every ideal-switch state of the extracted
 CMOS network has `out = a && b`, and at least one such state exists. -/
 theorem cmos_and_correct :
     BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
 
+#print axioms cmos_and_from_device_laws
 #print axioms cmos_and_correct

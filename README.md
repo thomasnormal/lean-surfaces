@@ -348,6 +348,13 @@ state exists for every input vector. The claim is deliberately not a proof
 of the nonlinear MOS equations. A separate ngspice harness runs the same
 deck at all four 0/5 V input vectors and checks low ≤ 0.5 V and high ≥ 4.5 V.
 
+The [one-bit CMOS half-adder](Examples/spice/half_adder/spec.lean) is the
+first hierarchical transistor example: two reusable AND subcircuits, an OR,
+and an inverter produce `sum = a xor b` and `carry = a and b`. Its Lean proof
+expands the extracted `.SUBCKT` instances to 20 individual MOS laws and
+reuses the AND device-law theorem twice; the ngspice harness checks both
+outputs for all four input vectors.
+
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
 extractor and semantics, and a linear block's interface is captured
 *exactly* by a small port contract (`I = Y·V + J` — k² rationals, however

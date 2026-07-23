@@ -8,14 +8,21 @@ load_netlist dividerFixture from "Examples/spice/divider/divider.json"
 load_netlist chainFixture from "Examples/spice/chain/chain.json"
 load_netlist r2rFixture from "Examples/spice/r2r/r2r.json"
 load_netlist andGateFixture from "Examples/spice/and_gate/and_gate.json"
+load_netlist halfAdderFixture from "Examples/spice/half_adder/half_adder.json"
 
 #guard dividerFixture.hasUnsupported == false
 #guard chainFixture.hasUnsupported == false
 #guard r2rFixture.hasUnsupported == false
 #guard andGateFixture.hasUnsupported == false
+#guard halfAdderFixture.hasUnsupported == false
+
+#guard match flattenSwitch halfAdderFixture with
+  | .ok flat => halfAdderFixture.subckts.size == 3 &&
+      flat.subckts.isEmpty && flat.cards.size == 25
+  | .error _ => false
 
 #guard match andGateFixture.cards[0]? with
-  | some (.mosfet mosfet) =>
+  | some (Card.mosfet mosfet) =>
       mosfet.name == "mpa" && mosfet.gate == "a" &&
         mosfet.model == "pmod"
   | _ => false

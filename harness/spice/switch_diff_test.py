@@ -10,9 +10,26 @@ from pathlib import Path
 import diff_test
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = "Examples/spice/and_gate/and_gate.cir"
 LOW_MAX = 0.5
 HIGH_MIN = 4.5
+DESIGNS = [
+    {
+        "name": "and",
+        "source": "Examples/spice/and_gate/and_gate.cir",
+        "probes": [
+            ("out", lambda left, right: bool(left and right)),
+            ("nand", lambda left, right: not bool(left and right)),
+        ],
+    },
+    {
+        "name": "half-adder",
+        "source": "Examples/spice/half_adder/half_adder.cir",
+        "probes": [
+            ("sum", lambda left, right: bool(left ^ right)),
+            ("carry", lambda left, right: bool(left and right)),
+        ],
+    },
+]
 
 
 def in_logic_band(voltage, expected):
@@ -24,42 +41,40 @@ def main():
     parser.parse_args()
     spice = diff_test.ngspice_path()
     failures = 0
-    print(f"{'inputs':8} {'out':>12} {'nand':>12}  verdict")
-    print("-" * 46)
+    checks = 0
+    print(f"{'design/input/probe':28} {'voltage':>12}  expected  verdict")
+    print("-" * 64)
     with tempfile.TemporaryDirectory(prefix="leanmodels-spice-switch-") as tmp:
         directory = Path(tmp)
-        for left in (0, 1):
-            for right in (0, 1):
-                case = {
-                    "name": f"and-{left}{right}",
-                    "source": SOURCE,
-                    "drives": {"va": 5 * left, "vb": 5 * right},
-                }
-                deck, envelope = diff_test.materialize(case, directory)
-                parsed = json.loads(envelope.read_text())
-                kinds = [card["kind"] for card in parsed["netlist"]["cards"]]
-                if "Unsupported" in kinds:
-                    raise RuntimeError(f"{case['name']}: extractor lost a MOS card")
-                run = subprocess.run(
-                    [spice, "-b", str(deck)], cwd=ROOT, check=True,
-                    capture_output=True, text=True)
-                output = run.stdout + run.stderr
-                out_voltage = diff_test.parse_ngspice(output, "out")
-                nand_voltage = diff_test.parse_ngspice(output, "nand")
-                expected = bool(left and right)
-                ok = (
-                    in_logic_band(out_voltage, expected)
-                    and in_logic_band(nand_voltage, not expected)
-                )
-                failures += not ok
-                verdict = "MATCH" if ok else "MISMATCH"
-                print(
-                    f"{left}{right:1} {out_voltage:12.8g} "
-                    f"{nand_voltage:12.8g}  {verdict}"
-                )
-    print("-" * 46)
+        for design in DESIGNS:
+            for left in (0, 1):
+                for right in (0, 1):
+                    case = {
+                        "name": f"{design['name']}-{left}{right}",
+                        "source": design["source"],
+                        "drives": {"va": 5 * left, "vb": 5 * right},
+                    }
+                    deck, envelope = diff_test.materialize(case, directory)
+                    parsed = json.loads(envelope.read_text())
+                    if parsed["netlist"]["kind"] != "Netlist":
+                        raise RuntimeError(f"{case['name']}: invalid envelope")
+                    run = subprocess.run(
+                        [spice, "-b", str(deck)], cwd=ROOT, check=True,
+                        capture_output=True, text=True)
+                    output = run.stdout + run.stderr
+                    for probe, expected_fn in design["probes"]:
+                        voltage = diff_test.parse_ngspice(output, probe)
+                        expected = expected_fn(left, right)
+                        ok = in_logic_band(voltage, expected)
+                        failures += not ok
+                        checks += 1
+                        verdict = "MATCH" if ok else "MISMATCH"
+                        label = f"{design['name']}/{left}{right}/{probe}"
+                        level = "high" if expected else "low"
+                        print(f"{label:28} {voltage:12.8g}  {level:>8}  {verdict}")
+    print("-" * 64)
     print(
-        f"4 vectors: {failures} failed "
+        f"{checks} checks: {failures} failed "
         f"(low <= {LOW_MAX} V, high >= {HIGH_MIN} V)"
     )
     raise SystemExit(1 if failures else 0)

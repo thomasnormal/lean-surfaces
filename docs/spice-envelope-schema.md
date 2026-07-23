@@ -214,6 +214,9 @@ intentional: `LeanModels.Spice.Switch` proves gates against an ideal
 on/off connectivity abstraction, while ngspice validates the full analog
 deck. The exact linear-DC `flatten`/MNA path rejects both structured card
 kinds loudly instead of pretending they are linear elements.
+The switch-level `flattenSwitch` path instead retains `M` and `Model` cards
+while expanding `X` instances, so transistor submodules can be proved once
+and reused in a hierarchical circuit.
 
 ## `X` — subcircuit instance
 

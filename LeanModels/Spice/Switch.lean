@@ -1,4 +1,4 @@
-import LeanModels.Spice.Ast
+import LeanModels.Spice.Semantics
 
 /-!
 # Ideal-switch MOS semantics
@@ -18,6 +18,55 @@ namespace LeanModels.Spice
 /-- Boolean logic levels assigned to every named circuit node. -/
 structure LogicState where
   level : String → Bool
+
+/-- Rename every terminal of a MOS transistor during hierarchical expansion. -/
+def renameMosfet (path : String) (renames : List (String × String))
+    (mosfet : Mosfet) : Mosfet :=
+  { mosfet with
+    name := qualify path mosfet.name
+    drain := renameNode path renames mosfet.drain
+    gate := renameNode path renames mosfet.gate
+    source := renameNode path renames mosfet.source
+    bulk := renameNode path renames mosfet.bulk }
+
+/-- Hierarchical expansion for the switch tier. Unlike the linear `flatten`,
+this retains MOS transistors and model declarations as cards. -/
+def flattenSwitchCards (defs : Array (SubcktEntry Rat)) :
+    Nat → List String → String → List (String × String) → List Card →
+      Except FlattenError (List Card)
+  | 0, _, _, _, _ => .error .depth
+  | _ + 1, _, _, _, [] => .ok []
+  | fuel + 1, active, path, renames, card :: rest => do
+      let head ← match card with
+        | .element element =>
+            pure [.element (renameElement path renames element)]
+        | .mosfet mosfet =>
+            pure [.mosfet (renameMosfet path renames mosfet)]
+        | .mosModel model => pure [.mosModel model]
+        | .op _ => pure []
+        | .unsupported card =>
+            throw (.unsupported card.spiceKind card.text)
+        | .subckt subckt => throw (.nestedSubckt subckt.name)
+        | .xInstance inst =>
+            let subckt ← match findSubckt defs inst.subckt with
+              | some subckt => pure subckt
+              | none => throw (.missingSubckt inst.subckt)
+            if active.contains subckt.name then
+              throw (.recursion subckt.name)
+            if subckt.ports.size != inst.connections.size then
+              throw (.portArity inst.name subckt.ports.size inst.connections.size)
+            let actuals := inst.connections.toList.map (renameNode path renames)
+            let localRenames := subckt.ports.toList.zip actuals
+            flattenSwitchCards defs fuel (subckt.name :: active)
+              (qualify path inst.name) localRenames subckt.body.toList
+      let tail ← flattenSwitchCards defs fuel active path renames rest
+      pure (head ++ tail)
+
+/-- Expand `.SUBCKT` instances while preserving switch-level device cards. -/
+def flattenSwitch (netlist : Netlist) : Except FlattenError Netlist := do
+  let cards ← flattenSwitchCards netlist.subckts (flattenBudget netlist)
+    [] "" [] netlist.cards.toList
+  pure { title := netlist.title, subckts := #[], cards := cards.toArray }
 
 /-- Find the first structured MOS model declaration with the requested name. -/
 def Netlist.findMosModel (netlist : Netlist) (name : String) : Option MosPolarity :=
@@ -58,12 +107,12 @@ def SwitchCardsSatisfy (netlist : Netlist) (state : LogicState) :
       SwitchCardLaw netlist state card ∧
         SwitchCardsSatisfy netlist state rest
 
-/-- A flat transistor deck satisfies every ideal-switch device law.
-Hierarchy and non-source linear elements are intentionally rejected in this
-first low-level gate tier. -/
+/-- A transistor deck satisfies every ideal-switch device law after
+hierarchical expansion. Non-source linear elements remain outside this tier. -/
 def SwitchSatisfies (netlist : Netlist) (state : LogicState) : Prop :=
-  netlist.subckts = #[] ∧
-    SwitchCardsSatisfy netlist state netlist.cards.toList
+  match flattenSwitch netlist with
+  | .error _ => False
+  | .ok flat => SwitchCardsSatisfy flat state flat.cards.toList
 
 /-- Supply and input assumptions for a two-input CMOS gate. -/
 def DrivesTwo (state : LogicState) (leftName rightName : String)
@@ -72,6 +121,18 @@ def DrivesTwo (state : LogicState) (leftName rightName : String)
   state.level "vdd" = true ∧
   state.level leftName = left ∧
   state.level rightName = right
+
+/-- The six conducting-path implications contributed by a static-CMOS NAND
+followed by an inverter. This is the physical interface reused by larger
+switch-level circuits containing an AND submodule. -/
+def CmosAndDeviceLaws
+    (left right nand series output vdd ground : Bool) : Prop :=
+  (left = false → nand = vdd) ∧
+  (right = false → nand = vdd) ∧
+  (left = true → nand = series) ∧
+  (right = true → series = ground) ∧
+  (nand = false → output = vdd) ∧
+  (nand = true → output = ground)
 
 /-- An exact Boolean contract for a transistor-level two-input gate.
 
@@ -85,6 +146,17 @@ def BinaryGateContract (netlist : Netlist)
     (∀ state, SwitchSatisfies netlist state →
       DrivesTwo state leftName rightName left right →
       state.level outputName = operation left right) ∧
+    ∃ state, SwitchSatisfies netlist state ∧
+      DrivesTwo state leftName rightName left right
+
+/-- Full functional contract for a one-bit half-adder. -/
+def HalfAdderContract (netlist : Netlist)
+    (leftName rightName sumName carryName : String) : Prop :=
+  ∀ left right,
+    (∀ state, SwitchSatisfies netlist state →
+      DrivesTwo state leftName rightName left right →
+      state.level sumName = Bool.xor left right ∧
+        state.level carryName = (left && right)) ∧
     ∃ state, SwitchSatisfies netlist state ∧
       DrivesTwo state leftName rightName left right
 

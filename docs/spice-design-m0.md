@@ -19,7 +19,7 @@ SystemVerilog lanes retain their core-only dependency boundary.
 
 SPICE lane agents may create/edit ONLY: `extractors/spice/**`,
 `LeanModels/Spice/**` (new),
-`Examples/spice/{and_gate,divider,chain,r2r}/**` (new),
+`Examples/spice/{and_gate,half_adder,divider,chain,r2r}/**` (new),
 `harness/spice/**`, `docs/spice-*.md`, `tools/ci.sh` (one additive
 maybe-step), `.github/workflows/ci.yml` (one additive ngspice apt step),
 `README.md` (ONE section, Verify phase only), `LeanModels.lean` (one import
@@ -365,6 +365,14 @@ results are recorded as comments in the file itself.
    vectors under `SwitchSatisfies`, including a realizability witness for
    each vector. The ngspice harness drives `a,b` at 0/5 V and checks all
    output and intermediate NAND voltages against 0.5/4.5 V logic bands.
+5. **half_adder** — a hierarchical 20-transistor CMOS circuit built from
+   two `and2` instances, one `or2`, and one inverter.
+   `half_adder_correct` proves `sum = Bool.xor a b` and
+   `carry = Bool.and a b` for all four input vectors. Its proof expands the
+   extracted `.SUBCKT` hierarchy to individual MOS switch laws and invokes
+   the already-proved `cmos_and_from_device_laws` theorem for both AND
+   instances. The ngspice harness independently checks both outputs in the
+   analog deck at all four 0/5 V vectors.
 
 ## Differential harness vs ngspice 46
 
@@ -390,14 +398,14 @@ classifies the two outcomes together instead of accepting ngspice's arbitrary
 zero-voltage fallback as a unique solution.
 
 `harness/spice/switch_diff_test.py` is the complementary transistor check.
-It does not compare against the exact linear solver; it validates the
-switch abstraction's truth-table conclusion against ngspice operating points
-for every input vector.
+It does not compare against the exact linear solver; it validates the AND
+gate and hierarchical half-adder switch conclusions against ngspice
+operating points for every input vector.
 
 ## Definition of done (M0)
 
 1. Extractor deterministic (double-run byte-identical), suffix unit tests
-   green, all four examples extract **Unsupported-free**; schema doc
+   green, all five examples extract **Unsupported-free**; schema doc
    written; `Unsupported` path exercised in tests (diode, `.tran`,
    `PULSE`, params). *(Delivered by the Contract phase.)*
 2. Every `LeanModels/Spice/*.lean` green; **zero `axiom` declarations in
@@ -411,13 +419,16 @@ for every input vector.
 5. The r2r drive-assumption theorem proved for all 16 bit vectors.
 6. The CMOS AND gate truth table and realizability are proved under the
    ideal-switch semantics; ngspice passes all four analog vectors.
-7. `HasContract` stated as the double inclusion; `reduceLeaf` computes exact
+7. The hierarchical CMOS half-adder reuses the AND device-law theorem and
+   proves both sum and carry from the flattened transistor laws; ngspice
+   passes all four input vectors.
+8. `HasContract` stated as the double inclusion; `reduceLeaf` computes exact
    matrices; `compose_contracts`/`cascade_contracts` are proved with
    contracts-only data flow. Physical AST composition remains deferred until
    a capture-avoiding wiring constructor exists.
-8. Harness green vs ngspice 46 on all four netlists plus the edge and singular
+9. Harness green vs ngspice 46 on all five netlists plus the edge and singular
    cases (node voltages and recorded branch currents).
-9. `bash tools/ci.sh` green; the Python and SV lanes untouched and green;
+10. `bash tools/ci.sh` green; the Python and SV lanes untouched and green;
    `LeanModels.lean` gains exactly one import line; README gains exactly
    one section (Verify phase) including the line: ngspice approximates
    our exact answers.

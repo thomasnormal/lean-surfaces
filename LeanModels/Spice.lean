@@ -1,5 +1,9 @@
 import LeanModels.Spice.Tests
-import LeanModels.Spice.Switch
+import LeanModels.Spice.Cmos
+import LeanModels.Spice.DeviceLevels
+import LeanModels.Spice.Mos1
+import LeanModels.Spice.Mos1Logic
+import LeanModels.Spice.Ripple
 
 /-!
 # SPICE lane umbrella

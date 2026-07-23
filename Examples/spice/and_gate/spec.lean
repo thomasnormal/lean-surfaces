@@ -22,5 +22,11 @@ CMOS network has `out = a && b`, and at least one such state exists. -/
 theorem cmos_and_correct :
     BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
 
+/-- The same extracted transistor deck proved directly against its exact
+ngspice MOS Level-1 equations and KCL, within the 0–5 V operating envelope. -/
+theorem cmos_and_mos1_correct :
+    Mos1BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
+
 #print axioms cmos_and_from_device_laws
 #print axioms cmos_and_correct
+#print axioms cmos_and_mos1_correct

@@ -3,14 +3,15 @@ import LeanModels.Spice.Semantics
 /-!
 # Ideal-switch MOS semantics
 
-This tier gives transistor-level CMOS decks a small, explicit digital
-abstraction. An NMOS conducts exactly when its gate is high; a PMOS conducts
+This tier gives transistor-level CMOS decks a small, explicit *ideal-switch
+abstraction*. An NMOS conducts exactly when its gate is high; a PMOS conducts
 exactly when its gate is low; a conducting device equates its drain and source
 logic levels. Off devices impose no relation.
 
-This is not a model of nonlinear MOS currents. The same extracted deck is
-checked with ngspice to validate that its analog operating points lie inside
-the chosen logic-level bands.
+This is not a physical NMOS/PMOS I-V model: it has no voltage, current,
+threshold, KCL, body effect, leakage, delay, or contention semantics. The same
+extracted deck is checked with ngspice to validate that its analog operating
+points lie inside the chosen logic-level bands.
 -/
 
 namespace LeanModels.Spice
@@ -113,51 +114,5 @@ def SwitchSatisfies (netlist : Netlist) (state : LogicState) : Prop :=
   match flattenSwitch netlist with
   | .error _ => False
   | .ok flat => SwitchCardsSatisfy flat state flat.cards.toList
-
-/-- Supply and input assumptions for a two-input CMOS gate. -/
-def DrivesTwo (state : LogicState) (leftName rightName : String)
-    (left right : Bool) : Prop :=
-  state.level "0" = false ∧
-  state.level "vdd" = true ∧
-  state.level leftName = left ∧
-  state.level rightName = right
-
-/-- The six conducting-path implications contributed by a static-CMOS NAND
-followed by an inverter. This is the physical interface reused by larger
-switch-level circuits containing an AND submodule. -/
-def CmosAndDeviceLaws
-    (left right nand series output vdd ground : Bool) : Prop :=
-  (left = false → nand = vdd) ∧
-  (right = false → nand = vdd) ∧
-  (left = true → nand = series) ∧
-  (right = true → series = ground) ∧
-  (nand = false → output = vdd) ∧
-  (nand = true → output = ground)
-
-/-- An exact Boolean contract for a transistor-level two-input gate.
-
-The first conjunct is soundness: every switch-model state has the advertised
-output. The second is realizability: the switch constraints are consistent
-for every input vector. -/
-def BinaryGateContract (netlist : Netlist)
-    (leftName rightName outputName : String)
-    (operation : Bool → Bool → Bool) : Prop :=
-  ∀ left right,
-    (∀ state, SwitchSatisfies netlist state →
-      DrivesTwo state leftName rightName left right →
-      state.level outputName = operation left right) ∧
-    ∃ state, SwitchSatisfies netlist state ∧
-      DrivesTwo state leftName rightName left right
-
-/-- Full functional contract for a one-bit half-adder. -/
-def HalfAdderContract (netlist : Netlist)
-    (leftName rightName sumName carryName : String) : Prop :=
-  ∀ left right,
-    (∀ state, SwitchSatisfies netlist state →
-      DrivesTwo state leftName rightName left right →
-      state.level sumName = Bool.xor left right ∧
-        state.level carryName = (left && right)) ∧
-    ∃ state, SwitchSatisfies netlist state ∧
-      DrivesTwo state leftName rightName left right
 
 end LeanModels.Spice

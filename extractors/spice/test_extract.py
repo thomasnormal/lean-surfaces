@@ -157,6 +157,10 @@ class TestCards(unittest.TestCase):
             "span": {"line": 3, "end_line": 3},
             "name": "nmod",
             "polarity": "nmos",
+            "parameters": [
+                {"name": "level", "value": {"num": 1, "den": 1}},
+                {"name": "vto", "value": {"num": 1, "den": 1}},
+            ],
         })
 
     def test_unsupported_cards_are_loud_not_fatal(self):

@@ -342,18 +342,27 @@ when needed.
 
 The [CMOS AND gate](Examples/spice/and_gate/spec.lean) starts the nonlinear
 device tier with an extracted six-transistor NAND-plus-inverter deck. Lean
-proves its complete Boolean contract under an explicit ideal-switch
-abstraction: every satisfying state has `out = a && b`, and a satisfying
-state exists for every input vector. The claim is deliberately not a proof
-of the nonlinear MOS equations. A separate ngspice harness runs the same
-deck at all four 0/5 V input vectors and checks low ≤ 0.5 V and high ≥ 4.5 V.
+proves `out = a && b` directly from the deck's restricted ngspice MOS
+Level-1 channel equations, voltage-source laws, KCL, and an explicit 0--5 V
+operating envelope. The older ideal-switch theorem remains as a separate,
+coarser abstraction. A differential harness runs the same deck in ngspice at
+all four 0/5 V input vectors and checks low ≤ 0.5 V and high ≥ 4.5 V.
 
 The [one-bit CMOS half-adder](Examples/spice/half_adder/spec.lean) is the
 first hierarchical transistor example: two reusable AND subcircuits, an OR,
 and an inverter produce `sum = a xor b` and `carry = a and b`. Its Lean proof
-expands the extracted `.SUBCKT` instances to 20 individual MOS laws and
-reuses the AND device-law theorem twice; the ngspice harness checks both
-outputs for all four input vectors.
+expands the extracted `.SUBCKT` instances to 20 individual MOS1 equations and
+reuses the MOS1 AND theorem twice. The
+[ripple-adder example](Examples/spice/ripple_adder/spec.lean) builds a full
+adder from three such half-adders and proves the unsigned-addition equation
+for every bit width by induction; its committed four-bit, 240-transistor deck
+is checked by ngspice at several vectors.
+
+This is currently an end-to-end theorem from the stated compact-model
+physics, not yet from microscopic semiconductor physics. The exact assurance
+boundary and the unproved quantum-transport, drift-diffusion, ngspice-solver,
+and flattened-wiring refinement obligations are recorded in
+[the device-level specification](docs/spice-device-levels.md).
 
 The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
 extractor and semantics, and a linear block's interface is captured

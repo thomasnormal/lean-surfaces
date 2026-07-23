@@ -6,7 +6,7 @@
     "version": "0.1"
   },
   "source_file": "Examples/spice/and_gate/and_gate.cir",
-  "source_sha256": "10b118d3e510caa2739549d39d4f291e69fcd457bbe0aa1741660be0655c3ac3",
+  "source_sha256": "765e030573d6caff0f2441ff1ef25b2468690c8f0185be2842b99d8011ccac33",
   "netlist": {
     "kind": "Netlist",
     "title": "transistor-level CMOS AND gate",
@@ -157,7 +157,44 @@
           "end_line": 19
         },
         "name": "nmod",
-        "polarity": "nmos"
+        "polarity": "nmos",
+        "parameters": [
+          {
+            "name": "level",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "vto",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "kp",
+            "value": {
+              "num": 1,
+              "den": 10000
+            }
+          },
+          {
+            "name": "lambda",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          },
+          {
+            "name": "is",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          }
+        ]
       },
       {
         "kind": "Model",
@@ -166,7 +203,44 @@
           "end_line": 20
         },
         "name": "pmod",
-        "polarity": "pmos"
+        "polarity": "pmos",
+        "parameters": [
+          {
+            "name": "level",
+            "value": {
+              "num": 1,
+              "den": 1
+            }
+          },
+          {
+            "name": "vto",
+            "value": {
+              "num": -1,
+              "den": 1
+            }
+          },
+          {
+            "name": "kp",
+            "value": {
+              "num": 1,
+              "den": 20000
+            }
+          },
+          {
+            "name": "lambda",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          },
+          {
+            "name": "is",
+            "value": {
+              "num": 0,
+              "den": 1
+            }
+          }
+        ]
       },
       {
         "kind": "Op",

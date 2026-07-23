@@ -69,9 +69,9 @@ reserved and always `[]` in M0.
 * **Case-insensitivity.** SPICE is case-insensitive: every identifier
   (device names, node names, subckt names, keywords) is lowercased in the
   envelope. `Unsupported.text` keeps original case.
-* Blank lines are skipped. Tokens are whitespace-separated. Parenthesized
-  MOS model parameters remain in the source for ngspice but are intentionally
-  outside the structured polarity-only model node.
+* Blank lines are skipped. Tokens are whitespace-separated. Numeric
+  `name=value` MOS model parameters, with or without surrounding parentheses,
+  are retained as exact rationals.
 
 ## Spans
 
@@ -199,21 +199,29 @@ uniqueness or value sign/zero — those are `WellPosed` obligations in Lean.
 
 ## MOS cards — `M` and `Model`
 
-The transistor switch tier structures four-terminal MOS cards and the
-polarity of their model declarations:
+The transistor tiers structure four-terminal MOS cards and the polarity plus
+numeric parameters of their model declarations:
 
 ```json
 {"kind": "M", "span": {...}, "name": "m1", "nodes": ["d", "g", "s", "b"], "model": "nmod"}
-{"kind": "Model", "span": {...}, "name": "nmod", "polarity": "nmos"}
+{"kind": "Model", "span": {...}, "name": "nmod", "polarity": "nmos",
+ "parameters": [
+   {"name": "level", "value": {"num": 1, "den": 1}},
+   {"name": "vto", "value": {"num": 1, "den": 1}},
+   {"name": "kp", "value": {"num": 1, "den": 10000}},
+   {"name": "lambda", "value": {"num": 0, "den": 1}},
+   {"name": "is", "value": {"num": 0, "den": 1}}
+ ]}
 ```
 
 `Mxxx drain gate source bulk model` must have exactly those six tokens.
-`.model name nmos|pmos ...` records only `name` and `polarity`; remaining
-model parameters stay in the original `.cir` deck for ngspice. This is
-intentional: `LeanModels.Spice.Switch` proves gates against an ideal
-on/off connectivity abstraction, while ngspice validates the full analog
-deck. The exact linear-DC `flatten`/MNA path rejects both structured card
-kinds loudly instead of pretending they are linear elements.
+`.model name nmos|pmos ...` records `name`, `polarity`, and each numeric
+`name=value` parameter. A malformed or nonnumeric parameter demotes the card
+to `Unsupported`/`Model:param`; no value is guessed. The ideal-switch tier
+reads only polarity, while the MOS1 tier requires and consumes `level`,
+`vto`, `kp`, `lambda`, and `is` from this array. The exact linear-DC
+`flatten`/MNA path rejects both structured card kinds loudly instead of
+pretending they are linear elements.
 The switch-level `flattenSwitch` path instead retains `M` and `Model` cards
 while expanding `X` instances, so transistor submodules can be proved once
 and reused in a hierarchical circuit.

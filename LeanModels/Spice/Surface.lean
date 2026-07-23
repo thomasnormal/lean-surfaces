@@ -23,6 +23,7 @@ deriving instance Lean.ToExpr for ElementKind
 deriving instance Lean.ToExpr for Element
 deriving instance Lean.ToExpr for MosPolarity
 deriving instance Lean.ToExpr for Mosfet
+deriving instance Lean.ToExpr for MosParameter
 deriving instance Lean.ToExpr for MosModel
 deriving instance Lean.ToExpr for Instance
 deriving instance Lean.ToExpr for Unsupported

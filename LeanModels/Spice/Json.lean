@@ -107,12 +107,20 @@ private def parseMosPolarity : String → Except String MosPolarity
   | "pmos" => .ok .pmos
   | polarity => .error s!"unknown MOS polarity {polarity.quote}"
 
+private def parseMosParameter (json : Json) : Except String MosParameter :=
+  withCtx "model parameter" do
+    return {
+      name := ← getString json "name"
+      value := ← parseRat (← getField json "value") }
+
 private def parseMosModel (json : Json) : Except String MosModel :=
   withCtx "Model" do
     return {
       span := ← parseSpan (← getField json "span")
       name := ← getString json "name"
-      polarity := ← parseMosPolarity (← getString json "polarity") }
+      polarity := ← parseMosPolarity (← getString json "polarity")
+      parameters :=
+        ← (← (← getField json "parameters").getArr?).mapM parseMosParameter }
 
 private def parseUnsupported (json : Json) : Except String Unsupported :=
   withCtx "Unsupported" do

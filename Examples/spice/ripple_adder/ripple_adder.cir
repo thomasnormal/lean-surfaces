@@ -1,0 +1,53 @@
+four-bit ripple adder from transistor-level half-adders
+* Each full adder uses three half adders. The third half adder combines the
+* mutually-exclusive carry terms; its carry output is intentionally unused.
+.subckt and2 a b out vdd
+mpa nand a vdd vdd pmod
+mpb nand b vdd vdd pmod
+mna nand a nseries 0 nmod
+mnb nseries b 0 0 nmod
+mpinv out nand vdd vdd pmod
+mninv out nand 0 0 nmod
+.ends and2
+.subckt or2 a b out vdd
+mpa pseries a vdd vdd pmod
+mpb nor b pseries vdd pmod
+mna nor a 0 0 nmod
+mnb nor b 0 0 nmod
+mpinv out nor vdd vdd pmod
+mninv out nor 0 0 nmod
+.ends or2
+.subckt inv input out vdd
+mp out input vdd vdd pmod
+mn out input 0 0 nmod
+.ends inv
+.subckt half_adder a b sum carry vdd
+xcarry a b carry vdd and2
+xany a b any vdd or2
+xnotcarry carry ncarry vdd inv
+xsum any ncarry sum vdd and2
+.ends half_adder
+.subckt full_adder a b cin sum cout vdd
+xfirst a b propagate generated vdd half_adder
+xsecond propagate cin sum propagated_carry vdd half_adder
+xcarry generated propagated_carry cout unused vdd half_adder
+.ends full_adder
+* LSB first: A=10 (1010), B=3 (0011), Cin=0; expected Sum=13, Cout=0.
+xbit0 a0 b0 cin sum0 c1 vdd full_adder
+xbit1 a1 b1 c1 sum1 c2 vdd full_adder
+xbit2 a2 b2 c2 sum2 c3 vdd full_adder
+xbit3 a3 b3 c3 sum3 cout vdd full_adder
+vddsrc vdd 0 dc 5
+va0 a0 0 dc 0
+va1 a1 0 dc 5
+va2 a2 0 dc 0
+va3 a3 0 dc 5
+vb0 b0 0 dc 5
+vb1 b1 0 dc 5
+vb2 b2 0 dc 0
+vb3 b3 0 dc 0
+vcin cin 0 dc 0
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.model pmod pmos (level=1 vto=-1 kp=50u lambda=0 is=0)
+.op
+.end

@@ -191,6 +191,32 @@ about nonlinear MOS/BSIM current equations. `harness/spice/switch_diff_test.py`
 closes the engineering loop by running the same source deck through ngspice
 for every Boolean vector and checking explicit analog logic bands.
 
+## Post-M0 MOS1 physical proof extension
+
+The ideal-switch tier remains available, but it is no longer the strongest
+transistor result. `LeanModels/Spice/Mos1.lean` gives the extracted decks a
+real-valued DC semantics for a deliberately restricted ngspice MOS Level-1
+profile:
+
+* the exact `.model` values are preserved in the JSON envelope;
+* `mos1ForwardCurrent` defines cutoff, triode, and saturation channel current;
+* independent voltage sources obey their voltage law;
+* gate and body currents are zero in the named profile;
+* every non-ground terminal node obeys KCL; and
+* all circuit nodes lie in an explicit 0--5 V operating envelope.
+
+The committed profile requires `LEVEL=1`, `VTO=1/-1`, positive `KP`,
+`LAMBDA=0`, `IS=0`, and the default `W/L=1`. A model outside that profile is
+rejected rather than silently approximated. `cmos_and_mos1_correct` and
+`half_adder_mos1_correct` prove the extracted AND and 20-transistor half-adder
+directly from these equations. `ripple_adder_mos1_correct` composes physical
+half-adder observations and proves the unsigned-addition equation for every
+width.
+
+This extension is a compact-model physics result, not yet a microscopic one.
+The specified model levels, proved assurance segment, and open refinement
+obligations are normative in `docs/spice-device-levels.md`.
+
 ## The central objects: port contracts
 
 A linear block's EXACT interface abstraction — not an approximation, an
@@ -447,5 +473,5 @@ operating points for every input vector.
   (re, im), same exact-elimination story; caps/inductors get their
   frequency-domain laws.
 * `.tran` (needs real/interval numerics or exact event sequences),
-  nonlinear device equations (D/Q/M), controlled sources (E/G/F/H),
+  diode/BJT and higher MOS/BSIM models, controlled sources (E/G/F/H),
   `.param`, `.include`, and richer model semantics.

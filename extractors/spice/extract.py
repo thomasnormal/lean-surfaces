@@ -13,7 +13,7 @@ docs/spice-envelope-schema.md (schema "spice-0.1").
 
 Guarantees:
   * Never fails on valid SPICE -- anything outside the linear-DC and
-    polarity-only MOS card vocabulary becomes an ``Unsupported`` card
+    numeric MOS model-card vocabulary becomes an ``Unsupported`` card
     (tag + source text, <= 200 chars).
   * Deterministic: same input bytes => same output bytes. json indent=2,
     ASCII, one trailing newline; fixed key order: "kind" first, then
@@ -241,11 +241,25 @@ def mos_model_node(card):
     toks = [t.lower() for t in card["tokens"]]
     if len(toks) < 3 or toks[2] not in ("nmos", "pmos"):
         return unsupported(card, "Model:form")
+    raw_parameters = toks[3:]
+    if raw_parameters:
+        raw_parameters[0] = raw_parameters[0].lstrip("(")
+        raw_parameters[-1] = raw_parameters[-1].rstrip(")")
+    parameters = []
+    for token in raw_parameters:
+        if "=" not in token:
+            return unsupported(card, "Model:param")
+        name, raw_value = token.split("=", 1)
+        value = parse_value(raw_value)
+        if not name or value is None:
+            return unsupported(card, "Model:param")
+        parameters.append({"name": name, "value": value_json(value)})
     return {
         "kind": "Model",
         "span": span_of(card),
         "name": toks[1],
         "polarity": toks[2],
+        "parameters": parameters,
     }
 
 

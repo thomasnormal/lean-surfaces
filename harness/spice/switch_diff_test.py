@@ -31,9 +31,63 @@ DESIGNS = [
     },
 ]
 
+RIPPLE_VECTORS = [
+    (0, 0, 0),
+    (10, 3, 0),
+    (15, 1, 0),
+    (15, 15, 1),
+]
+
 
 def in_logic_band(voltage, expected):
     return voltage >= HIGH_MIN if expected else voltage <= LOW_MAX
+
+
+def bit(value, index):
+    return bool((value >> index) & 1)
+
+
+def run_ripple_checks(spice, directory):
+    failures = 0
+    checks = 0
+    for left, right, carry_in in RIPPLE_VECTORS:
+        expected = left + right + carry_in
+        drives = {
+            **{f"va{i}": 5 * bit(left, i) for i in range(4)},
+            **{f"vb{i}": 5 * bit(right, i) for i in range(4)},
+            "vcin": 5 * carry_in,
+        }
+        case = {
+            "name": f"ripple-{left}-{right}-{carry_in}",
+            "source": "Examples/spice/ripple_adder/ripple_adder.cir",
+            "drives": drives,
+        }
+        deck, envelope = diff_test.materialize(case, directory)
+        parsed = json.loads(envelope.read_text())
+        if parsed["netlist"]["kind"] != "Netlist":
+            raise RuntimeError(f"{case['name']}: invalid envelope")
+        run = subprocess.run(
+            [spice, "-b", str(deck)], cwd=ROOT, check=True,
+            capture_output=True, text=True)
+        output = run.stdout + run.stderr
+        probes = [
+            *(f"sum{i}" for i in range(4)),
+            "cout",
+        ]
+        expected_bits = [
+            *(bit(expected, i) for i in range(4)),
+            bit(expected, 4),
+        ]
+        for probe, expected_bit in zip(probes, expected_bits):
+            voltage = diff_test.parse_ngspice(output, probe)
+            ok = in_logic_band(voltage, expected_bit)
+            failures += not ok
+            checks += 1
+            verdict = "MATCH" if ok else "MISMATCH"
+            label = f"ripple/{left}+{right}+{carry_in}/{probe}"
+            level = "high" if expected_bit else "low"
+            print(f"{label:28} {voltage:12.8g}  {level:>8}  {verdict}")
+    return checks, failures
 
 
 def main():
@@ -72,6 +126,9 @@ def main():
                         label = f"{design['name']}/{left}{right}/{probe}"
                         level = "high" if expected else "low"
                         print(f"{label:28} {voltage:12.8g}  {level:>8}  {verdict}")
+        ripple_checks, ripple_failures = run_ripple_checks(spice, directory)
+        checks += ripple_checks
+        failures += ripple_failures
     print("-" * 64)
     print(
         f"{checks} checks: {failures} failed "

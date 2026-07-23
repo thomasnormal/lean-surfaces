@@ -54,13 +54,21 @@ structure Mosfet where
   model : String
 deriving Repr, BEq, Inhabited
 
-/-- The polarity-bearing portion of a `.model ... nmos|pmos` declaration.
-Analog model parameters remain in the source deck for ngspice; the formal
-switch tier deliberately depends only on channel polarity. -/
+/-- One exact numeric parameter from a `.model` declaration. -/
+structure MosParameter (Value : Type := Rat) where
+  name : String
+  value : Value
+deriving Repr, BEq, Inhabited
+
+/-- A numeric `.model ... nmos|pmos` declaration.
+
+The ideal-switch tier reads only `polarity`; compact-model semantics also
+consume the exact parameter array. -/
 structure MosModel where
   span : Span
   name : String
   polarity : MosPolarity
+  parameters : Array MosParameter
 deriving Repr, BEq, Inhabited
 
 /-- A subcircuit instance (`X` card). -/

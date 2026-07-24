@@ -2,9 +2,10 @@ import Examples.spice.and_gate.proof
 
 open LeanModels.Spice
 
-load_netlist andGateDeck from "Examples/spice/and_gate/and_gate.json"
+load_mos1 andGateDeck from "Examples/spice/and_gate/and_gate.json"
 
 #guard andGateDeck.hasUnsupported == false
+#guard andGateDeck.toMos1 matches .ok _
 #guard match flatten andGateDeck with
   | .error (.unsupported "M" _) => true
   | _ => false
@@ -22,10 +23,14 @@ CMOS network has `out = a && b`, and at least one such state exists. -/
 theorem cmos_and_correct :
     BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
 
+abbrev andGateMos1 := Examples.spice.and_gate.proof.andGateMos1
+
 /-- The same extracted transistor deck proved directly against its exact
 ngspice MOS Level-1 equations and KCL, within the 0–5 V operating envelope. -/
 theorem cmos_and_mos1_correct :
-    Mos1BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
+    Mos1BinaryGateContract andGateMos1
+      (node! andGateMos1 "a") (node! andGateMos1 "b")
+      (node! andGateMos1 "out") (· && ·) := by proofs
 
 #print axioms cmos_and_from_device_laws
 #print axioms cmos_and_correct

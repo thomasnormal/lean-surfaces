@@ -1,5 +1,6 @@
 import LeanModels.Spice.Cmos
 import LeanModels.Spice.DeviceLevels
+import LeanModels.Spice.Mos1Circuit
 
 /-!
 # MOS Level 1 compact-model specification
@@ -13,48 +14,19 @@ to the DC channel equation.
 
 namespace LeanModels.Spice
 
-/-- Supported DC parameters of the MOS1 channel equation. `threshold` is the
-positive normalized threshold magnitude for either polarity. -/
+/-- Real-valued parameters consumed by the channel equation. These are
+obtained from the exact validated `Mos1Model`, not from named parameters. -/
 structure Mos1Params where
   polarity : MosPolarity
   threshold : ℝ
   beta : ℝ
   lambda : ℝ
 
-/-- Look up one exact model parameter by its case-normalized name. -/
-def MosModel.parameter? (model : MosModel) (name : String) : Option Rat :=
-  model.parameters.toList.findSome? fun parameter =>
-    if parameter.name == name then some parameter.value else none
-
-/-- Find the complete structured model declaration referenced by a device. -/
-def Netlist.findMosModelCard (netlist : Netlist)
-    (name : String) : Option MosModel :=
-  netlist.cards.toList.findSome? fun
-    | .mosModel model => if model.name == name then some model else none
-    | _ => none
-
-/-- Interpret exactly the supported ngspice MOS1 profile. Device dimensions
-are omitted in the example decks, so ngspice's default `W/L = 1` makes
-`beta = KP`. Threshold is normalized to a positive magnitude for PMOS.
-`IS=0` is required because junction-current equations are outside this
-restricted channel-only profile. -/
-noncomputable def Mos1Params.ofModel? (model : MosModel) : Option Mos1Params := do
-  let level ← model.parameter? "level"
-  if level != 1 then none else
-  let vto ← model.parameter? "vto"
-  let beta ← model.parameter? "kp"
-  let lambda ← model.parameter? "lambda"
-  let junctionSaturation ← model.parameter? "is"
-  if junctionSaturation != 0 then none else
-  let threshold : ℝ :=
-    match model.polarity with
-    | .nmos => (vto : ℝ)
-    | .pmos => -(vto : ℝ)
-  pure {
-    polarity := model.polarity
-    threshold
-    beta := (beta : ℝ)
-    lambda := (lambda : ℝ) }
+noncomputable def Mos1Model.params (model : Mos1Model) : Mos1Params :=
+  { polarity := model.polarity
+    threshold := (model.threshold : ℝ)
+    beta := (model.transconductance : ℝ)
+    lambda := (model.channelLengthModulation : ℝ) }
 
 /-- Forward channel-current magnitude for normalized terminal voltages.
 
@@ -75,88 +47,68 @@ def Mos1ChannelSpec (params : Mos1Params)
     (vgs vds drainCurrent : ℝ) : Prop :=
   0 ≤ vds ∧ drainCurrent = mos1ForwardCurrent params vgs vds
 
-/-- Real-valued DC state for a MOS1 circuit. The current associated with a
-voltage source is positive from its first terminal to its second terminal. -/
+/-- Real-valued DC state for a typed MOS1 circuit. Source current is positive
+from the voltage source's positive terminal to its negative terminal. -/
 structure Mos1CircuitState where
-  voltage : String → ℝ
-  sourceCurrent : String → ℝ
+  voltage : NodeId → ℝ
+  sourceCurrent : SourceId → ℝ
 
-/-- The drain-to-source current of one MOS card, using the source orientation
-written in the deck. PMOS channel current has the opposite conventional sign. -/
-noncomputable def mos1DrainCurrent (netlist : Netlist)
-    (state : Mos1CircuitState) (mosfet : Mosfet) : ℝ :=
-  match netlist.findMosModelCard mosfet.model >>= Mos1Params.ofModel? with
-  | none => 0
-  | some params =>
-      match params.polarity with
-      | .nmos =>
-          mos1ForwardCurrent params
-            (state.voltage mosfet.gate - state.voltage mosfet.source)
-            (state.voltage mosfet.drain - state.voltage mosfet.source)
-      | .pmos =>
-          -mos1ForwardCurrent params
-            (state.voltage mosfet.source - state.voltage mosfet.gate)
-            (state.voltage mosfet.source - state.voltage mosfet.drain)
+/-- Drain-to-source current using the source orientation written in the deck.
+PMOS channel current has the opposite conventional sign. -/
+noncomputable def mos1DrainCurrent
+    (state : Mos1CircuitState) (transistor : Mos1Transistor) : ℝ :=
+  let params := transistor.model.params
+  match params.polarity with
+  | .nmos =>
+      mos1ForwardCurrent params
+        (state.voltage transistor.gate - state.voltage transistor.source)
+        (state.voltage transistor.drain - state.voltage transistor.source)
+  | .pmos =>
+      -mos1ForwardCurrent params
+        (state.voltage transistor.source - state.voltage transistor.gate)
+        (state.voltage transistor.source - state.voltage transistor.drain)
 
-/-- Current leaving one node through one supported MOS1-tier card. MOS gate
-and bulk currents are zero in this restricted DC channel model. -/
-noncomputable def mos1CardCurrentLeaving (netlist : Netlist)
-    (state : Mos1CircuitState) (node : String) : Card → ℝ
-  | .element element =>
-      match element.kind with
-      | .vsource =>
-          if node == element.n1 then state.sourceCurrent element.name
-          else if node == element.n2 then -state.sourceCurrent element.name
-          else 0
-      | _ => 0
-  | .mosfet mosfet =>
-      if node == mosfet.drain then mos1DrainCurrent netlist state mosfet
-      else if node == mosfet.source then -mos1DrainCurrent netlist state mosfet
+/-- Current leaving one node through one typed device. MOS gate and bulk
+currents are zero in this restricted DC channel model. -/
+noncomputable def mos1DeviceCurrentLeaving
+    (state : Mos1CircuitState) (target : NodeId) : Mos1Device → ℝ
+  | .voltageSource source =>
+      if target = source.positive then state.sourceCurrent source.id
+      else if target = source.negative then -state.sourceCurrent source.id
       else 0
-  | _ => 0
+  | .transistor transistor =>
+      if target = transistor.drain then mos1DrainCurrent state transistor
+      else if target = transistor.source then -mos1DrainCurrent state transistor
+      else 0
 
 /-- Total current leaving a named node. -/
-noncomputable def mos1Kcl (netlist : Netlist)
-    (state : Mos1CircuitState) (node : String) : ℝ :=
-  netlist.cards.toList.foldl
-    (fun total card => total + mos1CardCurrentLeaving netlist state node card) 0
+noncomputable def mos1Kcl (circuit : Mos1Circuit)
+    (state : Mos1CircuitState) (target : NodeId) : ℝ :=
+  circuit.devices.toList.foldl
+    (fun total device => total + mos1DeviceCurrentLeaving state target device) 0
 
-/-- Nodes mentioned by cards whose currents participate in the MOS1 DC
-semantics. Duplicates are harmless in the universal KCL condition. -/
-def mos1CardNodes : Card → List String
-  | .element element => [element.n1, element.n2]
-  | .mosfet mosfet =>
-      [mosfet.drain, mosfet.gate, mosfet.source, mosfet.bulk]
-  | _ => []
+/-- Nodes mentioned by one typed device. Duplicates are harmless in the
+universal KCL condition. -/
+abbrev mos1DeviceNodes := Mos1Device.nodes
 
-def mos1Nodes (netlist : Netlist) : List String :=
-  netlist.cards.toList.flatMap mos1CardNodes
+abbrev mos1Nodes := Mos1Circuit.nodes
 
-/-- Constitutive and operating-region requirements for one flattened card. -/
-noncomputable def Mos1CardLaw (netlist : Netlist)
-    (state : Mos1CircuitState) : Card → Prop
-  | .element element =>
-      match element.kind with
-      | .vsource =>
-          state.voltage element.n1 - state.voltage element.n2 =
-            (element.value : ℝ)
-      | _ => False
-  | .mosfet mosfet =>
-      match netlist.findMosModelCard mosfet.model >>= Mos1Params.ofModel? with
-      | none => False
-      | some params =>
-          match params.polarity with
-          | .nmos =>
-              0 ≤ state.voltage mosfet.drain - state.voltage mosfet.source
-          | .pmos =>
-              0 ≤ state.voltage mosfet.source - state.voltage mosfet.drain
-  | .mosModel model => (Mos1Params.ofModel? model).isSome
-  | .op _ => True
-  | .xInstance _ | .unsupported _ | .subckt _ => False
+/-- Constitutive and operating-orientation requirement for one typed device. -/
+noncomputable def Mos1DeviceLaw
+    (state : Mos1CircuitState) : Mos1Device → Prop
+  | .voltageSource source =>
+      state.voltage source.positive - state.voltage source.negative =
+        (source.voltage : ℝ)
+  | .transistor transistor =>
+      match transistor.model.polarity with
+      | .nmos =>
+          0 ≤ state.voltage transistor.drain - state.voltage transistor.source
+      | .pmos =>
+          0 ≤ state.voltage transistor.source - state.voltage transistor.drain
 
 /-- The ngspice Level-1 DC semantics used by the proofs:
 
-* hierarchy is expanded without discarding MOS cards;
+* hierarchy and model references have already been validated;
 * every source and channel satisfies its constitutive equation;
 * ground is zero;
 * KCL holds at every non-ground terminal node.
@@ -164,23 +116,35 @@ noncomputable def Mos1CardLaw (netlist : Netlist)
 Junction currents, body effect, capacitance, and geometry-dependent corrections
 are deliberately outside this named profile. -/
 noncomputable def Mos1Satisfies
-    (netlist : Netlist) (state : Mos1CircuitState) : Prop :=
-  match flattenSwitch netlist with
-  | .error _ => False
-  | .ok flat =>
-      state.voltage "0" = 0 ∧
-      (∀ card ∈ flat.cards.toList, Mos1CardLaw flat state card) ∧
-      ∀ node ∈ mos1Nodes flat, node ≠ "0" → mos1Kcl flat state node = 0
+    (circuit : Mos1Circuit) (state : Mos1CircuitState) : Prop :=
+  state.voltage ground = 0 ∧
+  (∀ device ∈ circuit.devices.toList, Mos1DeviceLaw state device) ∧
+  ∀ target ∈ mos1Nodes circuit, target ≠ ground →
+    mos1Kcl circuit state target = 0
 
 /-- An operating envelope for static CMOS proofs. This is a named theorem
 precondition, not an axiom: all observed nodes must remain between the supply
 rails. -/
 def Mos1WithinSupply
-    (netlist : Netlist) (state : Mos1CircuitState) : Prop :=
-  match flattenSwitch netlist with
-  | .error _ => False
-  | .ok flat =>
-      ∀ node ∈ mos1Nodes flat, 0 ≤ state.voltage node ∧ state.voltage node ≤ 5
+    (circuit : Mos1Circuit) (state : Mos1CircuitState) : Prop :=
+  ∀ target ∈ mos1Nodes circuit,
+    0 ≤ state.voltage target ∧ state.voltage target ≤ 5
+
+/-- Extract KCL at a circuit-checked non-ground node. -/
+theorem Mos1Satisfies.kclAt
+    {circuit : Mos1Circuit} {state : Mos1CircuitState}
+    (hsatisfies : Mos1Satisfies circuit state)
+    (target : circuit.Node) (hnonground : target.1 ≠ ground) :
+    mos1Kcl circuit state target.1 = 0 := by
+  exact hsatisfies.2.2 target.1 target.2 hnonground
+
+/-- Extract the supply bounds at a circuit-checked node. -/
+theorem Mos1WithinSupply.boundsAt
+    {circuit : Mos1Circuit} {state : Mos1CircuitState}
+    (hbounded : Mos1WithinSupply circuit state)
+    (target : circuit.Node) :
+    0 ≤ state.voltage target.1 ∧ state.voltage target.1 ≤ 5 := by
+  exact hbounded target.1 target.2
 
 /-- Exact voltage associated with a Boolean input or output. -/
 def logicVoltage : Bool → ℝ
@@ -189,43 +153,43 @@ def logicVoltage : Bool → ℝ
 
 /-- Ideal external voltage drivers for a two-input MOS1 block. -/
 def Mos1DrivesTwo (state : Mos1CircuitState)
-    (leftName rightName : String) (left right : Bool) : Prop :=
-  state.voltage "0" = 0 ∧
-  state.voltage "vdd" = 5 ∧
-  state.voltage leftName = logicVoltage left ∧
-  state.voltage rightName = logicVoltage right
+    (leftNode rightNode : NodeId) (left right : Bool) : Prop :=
+  state.voltage ground = 0 ∧
+  state.voltage supply = 5 ∧
+  state.voltage leftNode = logicVoltage left ∧
+  state.voltage rightNode = logicVoltage right
 
 /-- Soundness contract for an extracted two-input block under the MOS1
 equations and the explicitly named static-CMOS supply envelope. -/
-noncomputable def Mos1BinaryGateContract (netlist : Netlist)
-    (leftName rightName outputName : String)
+noncomputable def Mos1BinaryGateContract (circuit : Mos1Circuit)
+    (leftNode rightNode outputNode : NodeId)
     (operation : Bool → Bool → Bool) : Prop :=
   ∀ left right state,
-    Mos1Satisfies netlist state →
-    Mos1WithinSupply netlist state →
-    Mos1DrivesTwo state leftName rightName left right →
-    state.voltage outputName = logicVoltage (operation left right)
+    Mos1Satisfies circuit state →
+    Mos1WithinSupply circuit state →
+    Mos1DrivesTwo state leftNode rightNode left right →
+    state.voltage outputNode = logicVoltage (operation left right)
 
 /-- Soundness contract for a MOS1 half-adder. -/
-noncomputable def Mos1HalfAdderContract (netlist : Netlist)
-    (leftName rightName sumName carryName : String) : Prop :=
+noncomputable def Mos1HalfAdderContract (circuit : Mos1Circuit)
+    (leftNode rightNode sumNode carryNode : NodeId) : Prop :=
   ∀ left right state,
-    Mos1Satisfies netlist state →
-    Mos1WithinSupply netlist state →
-    Mos1DrivesTwo state leftName rightName left right →
-    state.voltage sumName = logicVoltage (Bool.xor left right) ∧
-      state.voltage carryName = logicVoltage (Bool.and left right)
+    Mos1Satisfies circuit state →
+    Mos1WithinSupply circuit state →
+    Mos1DrivesTwo state leftNode rightNode left right →
+    state.voltage sumNode = logicVoltage (Bool.xor left right) ∧
+      state.voltage carryNode = logicVoltage (Bool.and left right)
 
 /-- One rail-valued observation of a physical MOS1 half-adder instance. -/
-noncomputable def Mos1HalfAdderObservation (netlist : Netlist)
-    (leftName rightName sumName carryName : String)
+noncomputable def Mos1HalfAdderObservation (circuit : Mos1Circuit)
+    (leftNode rightNode sumNode carryNode : NodeId)
     (left right sum carry : Bool) : Prop :=
   ∃ state,
-    Mos1Satisfies netlist state ∧
-    Mos1WithinSupply netlist state ∧
-    Mos1DrivesTwo state leftName rightName left right ∧
-    state.voltage sumName = logicVoltage sum ∧
-    state.voltage carryName = logicVoltage carry
+    Mos1Satisfies circuit state ∧
+    Mos1WithinSupply circuit state ∧
+    Mos1DrivesTwo state leftNode rightNode left right ∧
+    state.voltage sumNode = logicVoltage sum ∧
+    state.voltage carryNode = logicVoltage carry
 
 theorem logicVoltage_injective : Function.Injective logicVoltage := by
   intro left right h
@@ -235,12 +199,12 @@ theorem logicVoltage_injective : Function.Injective logicVoltage := by
 /-- A proved physical half-adder contract refines each observable instance to
 the implementation-independent Boolean half-adder behavior. -/
 theorem Mos1HalfAdderContract.observation_sound
-    {netlist : Netlist} {leftName rightName sumName carryName : String}
+    {circuit : Mos1Circuit} {leftNode rightNode sumNode carryNode : NodeId}
     (hcontract :
-      Mos1HalfAdderContract netlist leftName rightName sumName carryName)
+      Mos1HalfAdderContract circuit leftNode rightNode sumNode carryNode)
     {left right sum carry : Bool}
     (hobservation :
-      Mos1HalfAdderObservation netlist leftName rightName sumName carryName
+      Mos1HalfAdderObservation circuit leftNode rightNode sumNode carryNode
         left right sum carry) :
     HalfAdderBehavior left right sum carry := by
   rcases hobservation with

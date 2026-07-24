@@ -199,6 +199,9 @@ real-valued DC semantics for a deliberately restricted ngspice MOS Level-1
 profile:
 
 * the exact `.model` values are preserved in the JSON envelope;
+* `Netlist.toMos1` validates that raw source representation into a typed
+  `Mos1Circuit`, resolving model references and separating node, source,
+  transistor, and model identifiers;
 * `mos1ForwardCurrent` defines cutoff, triode, and saturation channel current;
 * independent voltage sources obey their voltage law;
 * gate and body currents are zero in the named profile;
@@ -207,11 +210,25 @@ profile:
 
 The committed profile requires `LEVEL=1`, `VTO=1/-1`, positive `KP`,
 `LAMBDA=0`, `IS=0`, and the default `W/L=1`. A model outside that profile is
-rejected rather than silently approximated. `cmos_and_mos1_correct` and
+rejected rather than silently approximated. An accepted `load_netlist name`
+command emits a literal typed companion named `name_mos1`; MOS1 semantics and
+contracts consume this representation rather than raw card strings.
+`cmos_and_mos1_correct` and
 `half_adder_mos1_correct` prove the extracted AND and 20-transistor half-adder
 directly from these equations. `ripple_adder_mos1_correct` composes physical
 half-adder observations and proves the unsigned-addition equation for every
 width.
+
+For MOS1-facing files, `load_mos1 name from "path.json"` is the preferred
+command. It has the same literal-ingestion behavior but makes conversion
+failure an immediate elaboration error instead of silently omitting the
+`name_mos1` companion. The proof surface also provides:
+
+* `node! circuit "name"`, which constructs a `NodeId` only after kernel
+  evaluation proves that the validated circuit contains it;
+* `#mos1_nodes circuit`, which prints the distinct validated names; and
+* `mos1_extract hs hb at circuit [...]`, which derives named KCL and voltage
+  bound hypotheses without repeating membership proofs.
 
 This extension is a compact-model physics result, not yet a microscopic one.
 The specified model levels, proved assurance segment, and open refinement

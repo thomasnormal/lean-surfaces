@@ -342,6 +342,13 @@ when needed.
 
 The [CMOS AND gate](Examples/spice/and_gate/spec.lean) starts the nonlinear
 device tier with an extracted six-transistor NAND-plus-inverter deck. Lean
+validates its raw source AST into `andGateDeck_mos1 : Mos1Circuit`, where
+nodes, sources, transistors, and models have distinct identifier types and
+each transistor carries its resolved exact model parameters. The physical
+semantics never looks up a model or port through a bare `String`.
+`load_mos1` fails loudly if that validation cannot be performed, `node!`
+checks every port name against the loaded circuit, and `mos1_extract`
+generates the local KCL and voltage-bound facts used in the proof. Lean then
 proves `out = a && b` directly from the deck's restricted ngspice MOS
 Level-1 channel equations, voltage-source laws, KCL, and an explicit 0--5 V
 operating envelope. The older ideal-switch theorem remains as a separate,

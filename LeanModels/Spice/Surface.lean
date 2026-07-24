@@ -5,13 +5,17 @@ import LeanModels.Python.Surface
 import LeanModels.Spice.Json
 import LeanModels.Spice.Semantics
 import LeanModels.Spice.Solve
+import LeanModels.Spice.Mos1Circuit
+import LeanModels.Spice.Mos1
 
 /-!
 # SPICE specification surface
 
 `load_netlist` turns an extracted JSON envelope into a literal `Netlist` at
-elaboration time. The `⊨dc` judgment is universal: every assignment obeying
-the flattened physical laws must satisfy the stated property.
+elaboration time. When MOS1 validation succeeds it also declares a literal,
+model-resolved `Mos1Circuit`. The `⊨dc` judgment is universal: every
+assignment obeying the flattened physical laws must satisfy the stated
+property.
 -/
 
 namespace LeanModels.Spice
@@ -34,13 +38,23 @@ deriving instance Lean.ToExpr for Netlist
 deriving instance Lean.ToExpr for FlatNetlist
 deriving instance Lean.ToExpr for Unknown
 deriving instance Lean.ToExpr for Solution
+deriving instance Lean.ToExpr for NodeId
+deriving instance Lean.ToExpr for SourceId
+deriving instance Lean.ToExpr for TransistorId
+deriving instance Lean.ToExpr for ModelId
+deriving instance Lean.ToExpr for Mos1Model
+deriving instance Lean.ToExpr for Mos1VoltageSource
+deriving instance Lean.ToExpr for Mos1Transistor
+deriving instance Lean.ToExpr for Mos1Device
+deriving instance Lean.ToExpr for Mos1Circuit
 
 open Lean Elab Command in
 /-- Read a `spice-0.1` envelope at elaboration time and declare a literal
-`Netlist`. Successful flattening and solving also declare four companion
-artifacts: `<name>_flat`, `<name>_flatten`, `<name>_solution`, and
-`<name>_solution_satisfies`. The path is relative to the package root under
-`lake build`. -/
+`Netlist`. Successful linear flattening and solving also declare
+`<name>_flat`, `<name>_flatten`, `<name>_solution`, and
+`<name>_solution_satisfies`. A netlist accepted by the MOS1 validator declares
+the literal typed companion `<name>_mos1`. The path is relative to the package
+root under `lake build`. -/
 elab "load_netlist " name:ident " from " path:str : command => do
   let pathString := path.getString
   let contents ←
@@ -63,6 +77,7 @@ elab "load_netlist " name:ident " from " path:str : command => do
     match flatResult with
     | .ok flat => (solveData flat).toOption
     | .error _ => none
+  let mos1Result := envelope.netlist.toMos1
   liftCoreM do
     addAndCompile <| .defnDecl {
       name := declarationName
@@ -100,6 +115,18 @@ elab "load_netlist " name:ident " from " path:str : command => do
       enableRealizationsForConst solutionName
       addDocStringCore solutionName
         s!"Exact finite MNA solution generated from `{declarationName}`."
+    if let .ok circuit := mos1Result then
+      let mos1Name := companionName "_mos1"
+      addAndCompile <| .defnDecl {
+        name := mos1Name
+        levelParams := []
+        type := Lean.mkConst ``LeanModels.Spice.Mos1Circuit
+        value := Lean.toExpr circuit
+        hints := .abbrev
+        safety := .safe }
+      enableRealizationsForConst mos1Name
+      addDocStringCore mos1Name
+        s!"Validated typed MOS1 circuit generated from `{declarationName}`."
   if let .ok _ := flatResult then
     let flatName := companionName "_flat"
     let flattenName := companionName "_flatten"
@@ -125,7 +152,64 @@ elab "load_netlist " name:ident " from " path:str : command => do
   liftTermElabM do
     Term.addTermInfo' name (Lean.mkConst declarationName) (isBinder := true)
 
+open Lean Elab Command in
+/-- Load a netlist while requiring successful conversion to the typed MOS1
+representation. Unlike `load_netlist`, validation failure is an immediate,
+descriptive elaboration error. -/
+elab "load_mos1 " name:ident " from " path:str : command => do
+  let pathString := path.getString
+  let contents ←
+    match ← (IO.FS.readFile ⟨pathString⟩).toBaseIO with
+    | .ok contents => pure contents
+    | .error error =>
+        throwErrorAt path "load_mos1: cannot read '{pathString}': {toString error}"
+  let envelope ←
+    match parseEnvelopeString contents with
+    | .ok envelope => pure envelope
+    | .error error =>
+        throwErrorAt path "load_mos1: invalid envelope '{pathString}': {error}"
+  match envelope.netlist.toMos1 with
+  | .error error =>
+      throwErrorAt path "load_mos1: {error.describe}"
+  | .ok _ =>
+      elabCommand (← `(load_netlist $name from $path))
+
 macro "#print_netlist " name:ident : command => `(#eval (repr $name))
+
+syntax:max "node! " term:max str : term
+
+open Lean Elab Term in
+/-- Construct a node identifier only when the loaded circuit contains it.
+Membership is discharged by kernel evaluation of the literal typed circuit. -/
+elab_rules : term
+  | `(node! $circuit:term $name:str) => do
+      let circuitExpr ←
+        elabTerm circuit (some (mkConst ``Mos1Circuit))
+      let candidate := mkApp (mkConst ``node) (mkStrLit name.getString)
+      let membershipSyntax ←
+        `((node $name) ∈ Mos1Circuit.nodes $circuit)
+      let membership ←
+        elabTerm membershipSyntax (some (mkSort .zero))
+      let proof ←
+        try
+          let proof ← Meta.mkDecideProof membership
+          Meta.check proof
+          let proofType ← Meta.inferType proof
+          unless ← Meta.isDefEq proofType membership do
+            throwError "node membership did not reduce to true"
+          pure proof
+        catch _ =>
+          throwErrorAt name
+            "node!: `{name.getString}` is not present in the circuit; \
+            use `#mos1_nodes <circuit>` to inspect its validated nodes"
+      pure <| mkApp3 (mkConst ``Mos1Circuit.checkedNode)
+        circuitExpr candidate proof
+
+open Lean Elab Command in
+/-- Print the distinct validated node names of a loaded MOS1 circuit. -/
+elab "#mos1_nodes " circuit:term : command => do
+  elabCommand
+    (← `(#eval IO.println (Mos1Circuit.describeNodes $circuit:term)))
 
 open Lean Elab Command in
 /-- Print the exact rational operating point generated by `load_netlist`. -/
@@ -251,5 +335,40 @@ elab "spice_solve" "[" netlist:term "]" : tactic => do
     | some name => SpiceSolveTactic.run name
     | none => throwErrorAt netlist
         "spice_solve: expected a loaded netlist constant"
+
+declare_syntax_cat mos1ExtractItem
+syntax str " => " ident "," ident : mos1ExtractItem
+syntax (name := mos1Extract)
+  "mos1_extract " ident ident " at " term:max
+    " [" mos1ExtractItem,* "]" : tactic
+
+open Lean Elab Tactic in
+/-- Extract KCL and supply-bound hypotheses at several validated MOS1 nodes.
+Each item is `"node" => kclName, boundsName`. Node membership and the
+non-ground side condition are proved by kernel reduction. -/
+elab_rules : tactic
+  | `(tactic| mos1_extract $hs:ident $hb:ident at $circuit:term
+        [$items,*]) => do
+      for item in items.getElems do
+        match item with
+        | `(mos1ExtractItem| $name:str => $hkcl:ident, $hbounds:ident) =>
+            if name.getString == "0" then
+              throwErrorAt name
+                "mos1_extract: ground has no KCL obligation in `Mos1Satisfies`"
+            withMainContext do
+              let _ ← Term.elabTerm
+                (← `(node! $circuit $name)) (some (mkConst ``NodeId))
+            evalTactic (← `(tactic|
+              have $hkcl :=
+                Mos1Satisfies.kclAt $hs
+                  (target :=
+                    (⟨node $name, by decide⟩ : Mos1Circuit.Node $circuit))
+                  (by decide)))
+            evalTactic (← `(tactic|
+              have $hbounds :=
+                Mos1WithinSupply.boundsAt $hb
+                  (target :=
+                    (⟨node $name, by decide⟩ : Mos1Circuit.Node $circuit))))
+        | _ => throwErrorAt item "mos1_extract: malformed node entry"
 
 end LeanModels.Spice

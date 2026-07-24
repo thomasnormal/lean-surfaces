@@ -51,10 +51,20 @@ ngspice realization check, not monolithic formal verification of the deck.
 The deck profile is explicit: `LEVEL=1`, `VTO=1/-1`, positive `KP`,
 `LAMBDA=0`, `IS=0`, omitted device dimensions (`W/L=1`), steady DC, no gate
 or body current, source-oriented channels, and all observed nodes within the
-0--5 V supply envelope. `Mos1Params.ofModel?` rejects a deck that does not
-provide this profile. The logic theorems are soundness results: any satisfying
-state in the envelope has the specified output. They do not currently prove
-existence of an operating point or derive the supply envelope.
+0--5 V supply envelope. `Netlist.toMos1` rejects a deck that does not provide
+this profile. Successful validation produces a `Mos1Circuit`: node, voltage
+source, transistor, and model identifiers have distinct Lean types; every
+transistor contains its resolved `Mos1Model`; and the required parameters are
+named structure fields rather than a string-keyed array. The logic theorems
+are soundness results: any satisfying state in the envelope has the specified
+output. They do not currently prove existence of an operating point or derive
+the supply envelope.
+
+The `load_mos1` proof command requires that validation step to succeed.
+Circuit ports written with `node!` are checked against the resulting literal
+circuit during elaboration, and `mos1_extract` produces KCL and supply-bound
+facts from `Mos1Satisfies`/`Mos1WithinSupply`; these commands add no semantic
+assumptions.
 
 ngspice applies numerical `gmin` regularization to otherwise floating internal
 nodes. Consequently its low outputs are about 12.5 nV rather than mathematical

@@ -226,6 +226,18 @@ The switch-level `flattenSwitch` path instead retains `M` and `Model` cards
 while expanding `X` instances, so transistor submodules can be proved once
 and reused in a hierarchical circuit.
 
+This JSON vocabulary is a lossless source boundary, not the MOS1 semantic
+representation. `Netlist.toMos1` expands hierarchy, validates the supported
+profile, resolves every model reference, and returns a typed `Mos1Circuit`.
+Its nodes, voltage sources, transistors, and models use distinct identifier
+types, and its `Mos1Model` has fixed exact-rational fields. Missing models,
+unsupported devices, and invalid parameter profiles are conversion errors.
+For an accepted deck, `load_netlist gate from "gate.json"` also declares the
+literal typed value `gate_mos1`; MOS1 proofs operate on that value and do not
+perform string-keyed model lookup. `load_mos1` is the strict proof-facing
+variant: it reports validation failure at the source path and refuses to
+declare the circuit.
+
 ## `X` — subcircuit instance
 
 Key order: `kind`, `span`, `name`, `subckt`, `connections`.

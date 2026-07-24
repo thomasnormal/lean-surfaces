@@ -6,7 +6,7 @@ namespace Examples.spice.and_gate.proof
 
 open LeanModels.Spice
 
-load_netlist andGateDeck from "Examples/spice/and_gate/and_gate.json"
+load_mos1 andGateDeck from "Examples/spice/and_gate/and_gate.json"
 
 /-- A reusable AND-block theorem derived only from the six MOS switch laws. -/
 theorem cmos_and_from_device_laws
@@ -59,16 +59,8 @@ theorem cmos_and_correct :
 
 /-! ## Ngspice MOS Level 1 proof -/
 
-private def andMos1Flat : Netlist :=
-  { andGateDeck with cards := andGateDeck.cards.pop }
-
-private theorem andMos1_flatten :
-    flattenSwitch andGateDeck = .ok andMos1Flat := by
-  rfl
-
-private theorem andMos1_cards :
-    andMos1Flat.cards.toList = andGateDeck.cards.toList.dropLast := by
-  rfl
+def andGateMos1 : Mos1Circuit :=
+  andGateDeck_mos1
 
 private noncomputable def nCurrent (vgs vds : ℝ) : ℝ :=
   mos1ForwardCurrent
@@ -83,50 +75,52 @@ private noncomputable def pCurrent (vsg vsd : ℝ) : ℝ :=
 /-- KCL at the three internal nodes, reduced from the literal extracted deck.
 The coefficients come from its exact `KP`, `VTO`, and `LAMBDA` parameters. -/
 private theorem andMos1_equations (state : Mos1CircuitState)
-    (hs : Mos1Satisfies andGateDeck state)
-    (hb : Mos1WithinSupply andGateDeck state) :
-    (0 ≤ state.voltage "nand" ∧ state.voltage "nand" ≤ 5) ∧
-    (0 ≤ state.voltage "nseries" ∧ state.voltage "nseries" ≤ 5) ∧
-    (0 ≤ state.voltage "out" ∧ state.voltage "out" ≤ 5) ∧
-    (-pCurrent (state.voltage "vdd" - state.voltage "a")
-          (state.voltage "vdd" - state.voltage "nand") +
-        -pCurrent (state.voltage "vdd" - state.voltage "b")
-          (state.voltage "vdd" - state.voltage "nand") +
-        nCurrent (state.voltage "a" - state.voltage "nseries")
-          (state.voltage "nand" - state.voltage "nseries") = 0) ∧
-    (-nCurrent (state.voltage "a" - state.voltage "nseries")
-          (state.voltage "nand" - state.voltage "nseries") +
-        nCurrent (state.voltage "b" - state.voltage "0")
-          (state.voltage "nseries" - state.voltage "0") = 0) ∧
-    (-pCurrent (state.voltage "vdd" - state.voltage "nand")
-          (state.voltage "vdd" - state.voltage "out") +
-        nCurrent (state.voltage "nand" - state.voltage "0")
-          (state.voltage "out" - state.voltage "0") = 0) := by
-  unfold Mos1Satisfies at hs
-  unfold Mos1WithinSupply at hb
-  rw [andMos1_flatten] at hs hb
-  rcases hs with ⟨_, _, hkcl⟩
-  have hnand := hkcl "nand" (by decide) (by decide)
-  have hnseries := hkcl "nseries" (by decide) (by decide)
-  have hout := hkcl "out" (by decide) (by decide)
-  have bnand := hb "nand" (by decide)
-  have bnseries := hb "nseries" (by decide)
-  have bout := hb "out" (by decide)
+    (hs : Mos1Satisfies andGateMos1 state)
+    (hb : Mos1WithinSupply andGateMos1 state) :
+    (0 ≤ state.voltage (node "nand") ∧
+      state.voltage (node "nand") ≤ 5) ∧
+    (0 ≤ state.voltage (node "nseries") ∧
+      state.voltage (node "nseries") ≤ 5) ∧
+    (0 ≤ state.voltage (node "out") ∧
+      state.voltage (node "out") ≤ 5) ∧
+    (-pCurrent (state.voltage supply - state.voltage (node "a"))
+          (state.voltage supply - state.voltage (node "nand")) +
+        -pCurrent (state.voltage supply - state.voltage (node "b"))
+          (state.voltage supply - state.voltage (node "nand")) +
+        nCurrent (state.voltage (node "a") -
+            state.voltage (node "nseries"))
+          (state.voltage (node "nand") -
+            state.voltage (node "nseries")) = 0) ∧
+    (-nCurrent (state.voltage (node "a") -
+          state.voltage (node "nseries"))
+          (state.voltage (node "nand") -
+            state.voltage (node "nseries")) +
+        nCurrent (state.voltage (node "b") - state.voltage ground)
+          (state.voltage (node "nseries") - state.voltage ground) = 0) ∧
+    (-pCurrent (state.voltage supply - state.voltage (node "nand"))
+          (state.voltage supply - state.voltage (node "out")) +
+        nCurrent (state.voltage (node "nand") - state.voltage ground)
+      (state.voltage (node "out") - state.voltage ground) = 0) := by
+  mos1_extract hs hb at andGateMos1 [
+    "nand" => hnand, bnand,
+    "nseries" => hnseries, bnseries,
+    "out" => hout, bout]
   unfold mos1Kcl at hnand hnseries hout
-  rw [andMos1_cards] at hnand hnseries hout
-  simp [andGateDeck, mos1CardCurrentLeaving, mos1DrainCurrent] at hnand hnseries hout
-  simp [andMos1Flat, andGateDeck, Netlist.findMosModelCard,
-    Mos1Params.ofModel?, MosModel.parameter?, List.findSome?] at hnand hnseries hout
+  simp [andGateMos1, andGateDeck_mos1,
+    mos1DeviceCurrentLeaving, mos1DrainCurrent,
+    Mos1Model.params, node] at hnand hnseries hout
   exact ⟨bnand, bnseries, bout,
-    by simpa [nCurrent, pCurrent] using hnand,
-    by simpa [nCurrent] using hnseries,
-    by simpa [nCurrent, pCurrent] using hout⟩
+    by simpa [nCurrent, pCurrent, node, supply] using hnand,
+    by simpa [nCurrent, node, ground] using hnseries,
+    by simpa [nCurrent, pCurrent, node, ground, supply] using hout⟩
 
 /-- The extracted six-transistor deck implements AND directly from the
 ngspice Level-1 channel equations, voltage-source laws, and KCL. The supply
 envelope is an explicit premise rather than an unproved device abstraction. -/
 theorem cmos_and_mos1_correct :
-    Mos1BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by
+    Mos1BinaryGateContract andGateMos1
+      (node! andGateMos1 "a") (node! andGateMos1 "b")
+      (node! andGateMos1 "out") (· && ·) := by
   intro left right state hs hb hd
   rcases andMos1_equations state hs hb with
     ⟨bnand, bnseries, bout, hnand, hnseries, hout⟩

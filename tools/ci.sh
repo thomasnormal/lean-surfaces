@@ -22,7 +22,9 @@ step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
 step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
-step  "verilog-a-extractor-tests" python3 extractors/veriloga/test_extract.py
+# The Verilog-A extractor drives a pinned OpenVAF checkout (gitignored, ~785MB
+# with build tree) — present on lab hosts, absent on stock runners.
+maybe "verilog-a-extractor-tests" extractors/veriloga/openvaf_ast/Cargo.toml python3 extractors/veriloga/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
 # SV lane: prefer Icarus when installed (generic CI and license-free local

@@ -321,6 +321,24 @@ macro_rules
       let vs ← args.getElems.mapM fun a => `(ToVal.toVal $a)
       `(#guard callFunction $m $s #[$vs,*] 4096 == .exn ($e : PyErr))
 
+/-- `py_check` — the tactic twin of `#py_check`: close a concrete-run *goal*
+by making Lean actually run the program. It handles exactly the two concrete
+judgment shapes — `f(args) ==> v` (supplies the fuel witness, then kernel
+evaluation decides `callFunction … = .ok (toVal v)` by `rfl`) and
+`f(args) ==>! e` (same, against `.exn e`) — at the command's fixed generous
+fuel (4096; concrete runs cost time proportional to actual steps, not to
+fuel, so generosity is free). Anything symbolic — a free variable in an
+argument or the result, a `~~>`/`⇓` goal, a loop bound to induct on — is
+out of scope by design: reach for `py_prove` or the loop machinery instead.
+Implementation note: the run attempt is all-tactic and `fail`-terminated —
+an `exact ⟨4096, by rfl⟩` alternative would *commit* inside `first` even
+when the nested `by` block fails (see the `py_prove` docstring). -/
+macro (name := pyCheckTactic) "py_check" : tactic =>
+  `(tactic| first
+      | (refine ⟨4096, ?_⟩
+         rfl)
+      | fail "py_check: not a concrete run — the goal must be `f(args) ==> v` or `f(args) ==>! e` with literal arguments, and the run at fuel 4096 must produce exactly the stated value (resp. exception); symbolic goals want `py_prove` or a loop lemma instead")
+
 /-! ## `~~>` connectives
 
 The truth table of the arrows, each entry proved below. Note the task-sheet

@@ -314,7 +314,7 @@ differential harnesses, not the other way round.
 
 ![Five-volt resistor divider: 1 kOhm from input to output and 2 kOhm from output to ground](docs/assets/divider-circuit.svg)
 
-<!-- docs-check: Examples/spice/typed_divider/typed_divider.cir -->
+<!-- docs-check: Examples/spice/typed_divider/typed_divider.cir (illustrative — lands with the typed-circuit cutover) -->
 ```spice
 Typed circuit architecture divider
 V1 in 0 DC 5
@@ -325,7 +325,7 @@ R2 out 0 2k
 ```
 
 ```lean
--- Examples/spice/typed_divider/spec.lean
+-- Examples/spice/typed_divider/spec.lean (illustrative — lands with the typed-circuit cutover)
 load_circuit typedDivider from
   "Examples/spice/typed_divider/typed_divider.cir"
 
@@ -341,7 +341,7 @@ theorem typed_divider_realizable :
 ```
 
 ```lean
--- Examples/spice/typed_divider/proof.lean
+-- Examples/spice/typed_divider/proof.lean (illustrative — lands with the typed-circuit cutover)
 theorem typed_divider_out :
     typedDivider ⊨dc {
       v, _i => v (node! typedDivider "out") = 10 / 3

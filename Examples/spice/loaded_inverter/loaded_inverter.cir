@@ -1,0 +1,9 @@
+loaded CMOS inverter with explicit output capacitance
+* Component ports are in, out, vdd, and ground. Supplies and input drivers
+* belong to the run environment and are deliberately absent from this deck.
+mp out in vdd vdd pmod
+mn out in 0 0 nmod
+cload out 0 1p
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.model pmod pmos (level=1 vto=-1 kp=50u lambda=0 is=0)
+.end

@@ -1,17 +1,24 @@
+import LeanModels.Python.Surface
 import Examples.spice.r2r.proof
 
-open LeanModels.Spice
-open Examples.spice.r2r.proof
+open LeanModels.Circuit
 
-private def bits1010 : Fin 4 → Bool
-  | ⟨0, _⟩ => false
-  | ⟨1, _⟩ => true
-  | ⟨2, _⟩ => false
-  | ⟨3, _⟩ => true
+load_circuit r2rDeck from "Examples/spice/r2r/r2r.cir"
 
-#spice_check r2rCircuit bits1010 shows "out" = (25 / 8 : Rat)
+#circuit_check r2rDeck dc shows "out" = (25 / 8 : Rat)
 
-theorem r2r_guarantee (bits : Fin 4 → Bool) :
-    r2rCircuit bits ⊨dc { v, _i => v "out" = 5 * binVal bits / 16 } := by proofs
+/-- The source-backed R-2R component satisfies its exact transfer relation
+for every four-bit environment drive vector. -/
+theorem r2r_guarantee (bits : Fin 4 → Bool)
+    (assignment : RealDCAssignment)
+    (h : RealDCSatisfies r2rDeck
+      (Examples.spice.r2r.proof.r2rWorld bits) assignment) :
+    assignment.voltage Examples.spice.r2r.proof.outputNode =
+      5 * Examples.spice.r2r.proof.binVal bits / 16 := by proofs
+
+theorem r2r_realizable (bits : Fin 4 → Bool) :
+    ∃ assignment, RealDCSatisfies r2rDeck
+      (Examples.spice.r2r.proof.r2rWorld bits) assignment := by proofs
 
 #print axioms r2r_guarantee
+#print axioms r2r_realizable

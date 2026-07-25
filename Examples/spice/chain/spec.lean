@@ -1,16 +1,22 @@
 import Examples.spice.chain.proof
 
-open LeanModels.Spice
+open LeanModels.Circuit
 open Examples.spice.chain.proof
 
-/- This instance is deliberately beyond the three sections in `chain.cir`:
-it checks that the executable AST family, hierarchy flattener, and exact MNA
-solver agree on a newly generated composite. -/
-#spice_check chain 5 shows "out5" = (2 / 3 : Rat) ^ 5 * 5
+load_circuit chainSpecDeck from "Examples/spice/chain/chain.cir"
 
-theorem attn_is_extracted : chainDeck.subckts[0]? = some (.definition attn) := by proofs
+#circuit_check chainSpecDeck dc shows "out3" = (2 / 3 : Rat) ^ 3 * 5
 
-theorem section_contract : HasContract attn attnContract := by proofs
+theorem attn_is_extracted :
+    attn.name = "attn" ∧ attn.portNames = #["a", "b"] := by proofs
+
+theorem section_contract :
+    HasExactContract attn.PortBehavior attnContract := by proofs
+
+theorem two_section_contract :
+    HasExactContract
+      (CascadeRelation attn.PortBehavior attn.PortBehavior)
+      (cascade attnContract attnContract) := by proofs
 
 theorem chain_contract (sections : Nat) (input output inputCurrent : Rat) :
     LoadedChain sections input output inputCurrent ↔
@@ -20,6 +26,24 @@ theorem chain_attenuates (sections : Nat) (output inputCurrent : Rat)
     (h : LoadedChain sections 5 output inputCurrent) :
     output = (2 / 3 : Rat) ^ sections * 5 := by proofs
 
+theorem approx_attenuator_contract :
+    HasErrorBoundedContract ApproxAttenuatorBehavior
+      ApproxAttenuatorContract := by proofs
+
+theorem two_approx_attenuators_contract :
+    HasErrorBoundedContract
+      (SerialScalarRelation ApproxAttenuatorBehavior
+        ApproxAttenuatorBehavior)
+      (composeErrorContracts ApproxAttenuatorContract
+        ApproxAttenuatorContract) := by proofs
+
+theorem two_approx_attenuators_error :
+    (composeErrorContracts ApproxAttenuatorContract
+      ApproxAttenuatorContract).error = (1 / 60 : ℝ) := by proofs
+
 #print axioms section_contract
+#print axioms two_section_contract
 #print axioms chain_contract
 #print axioms chain_attenuates
+#print axioms two_approx_attenuators_contract
+#print axioms two_approx_attenuators_error

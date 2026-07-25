@@ -54,7 +54,11 @@ def DCDevice.negative : DCDevice → NodeId
   | .capacitor _ _ negative _
   | .inductor _ _ negative _ => negative
 
-/-- Hierarchy-free, dimension-checked electrical DC circuit. -/
+/-- Hierarchy-free electrical DC circuit over exact rational values. Node and
+device references are index-checked against this literal circuit; physical
+dimensions are declared in `Nature.lean` but not checked by any elaboration
+path yet (see the known-gaps note in
+`docs/circuit-assurance-architecture.md`). -/
 structure DCCircuit where
   title : String
   nodeNames : Array String

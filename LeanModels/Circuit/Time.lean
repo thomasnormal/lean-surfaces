@@ -3,8 +3,8 @@ import Mathlib.Data.Real.Basic
 /-!
 # Dense and hybrid time
 
-Continuous DAE capabilities use `DenseTrace`.  `HybridTime` is the common
-timeline available to future event-driven and Verilog-AMS semantics; its
+Continuous DAE capabilities use `DenseTrace`. `HybridTime` is the common
+timeline available to future event-driven mixed-signal semantics; its
 microstep distinguishes multiple ordered events at one physical time.
 -/
 

@@ -1,27 +1,11 @@
 import Examples.spice.and_gate.proof
+import LeanModels.Python.Surface
 
-open LeanModels.Spice
+open LeanModels.Circuit LeanModels.Spice
 
-load_mos1 andGateDeck from "Examples/spice/and_gate/and_gate.json"
+load_circuit andGateDeck from "Examples/spice/and_gate/and_gate.cir"
 
-#guard andGateDeck.hasUnsupported == false
-#guard andGateDeck.toMos1 matches .ok _
-#guard match flatten andGateDeck with
-  | .error (.unsupported "M" _) => true
-  | _ => false
-
-/-- Any six-transistor NAND-plus-inverter block satisfying the individual MOS
-conducting-path laws computes Boolean AND. -/
-theorem cmos_and_from_device_laws
-    {left right nand series output vdd ground : Bool}
-    (hlaws : CmosAndDeviceLaws left right nand series output vdd ground)
-    (hvdd : vdd = true) (hground : ground = false) :
-    output = Bool.and left right := by proofs
-
-/-- For all four input vectors, every ideal-switch state of the extracted
-CMOS network has `out = a && b`, and at least one such state exists. -/
-theorem cmos_and_correct :
-    BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by proofs
+#guard sharedToMos1Circuit andGateDeck matches .ok _
 
 abbrev andGateMos1 := Examples.spice.and_gate.proof.andGateMos1
 
@@ -29,9 +13,7 @@ abbrev andGateMos1 := Examples.spice.and_gate.proof.andGateMos1
 ngspice MOS Level-1 equations and KCL, within the 0–5 V operating envelope. -/
 theorem cmos_and_mos1_correct :
     Mos1BinaryGateContract andGateMos1
-      (node! andGateMos1 "a") (node! andGateMos1 "b")
-      (node! andGateMos1 "out") (· && ·) := by proofs
+      (mos_node! andGateMos1 "a") (mos_node! andGateMos1 "b")
+      (mos_node! andGateMos1 "out") (· && ·) := by proofs
 
-#print axioms cmos_and_from_device_laws
-#print axioms cmos_and_correct
 #print axioms cmos_and_mos1_correct

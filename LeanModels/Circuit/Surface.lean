@@ -621,7 +621,7 @@ elab_rules : command
           safety, realizability, and domain closure must be bundled over the \
           same behavior and allowed-world predicate"
       let assuranceArguments := assuranceType.getAppArgs
-      unless assuranceArguments.size == 9 do
+      unless assuranceArguments.size == 10 do
         throwErrorAt assurance
           "#assurance_report: malformed `AssuranceCase` type for \
           `{assuranceName}`"
@@ -664,7 +664,7 @@ elab_rules : command
   source hash: {provenance.hash}
   frontend: direct Lean SPICE parser; hierarchy checked ({hierarchy})
   model validity: {validity}
-  {assuranceName}: typed assurance case; safety + realizability + domain closure; axioms=[{assuranceAxioms}]
+  {assuranceName}: source-bound typed assurance case; checked projection + safety + realizability + domain closure; axioms=[{assuranceAxioms}]
 {String.intercalate "\n" rows.toList}
   external simulators: validation only; never theorem premises"
 

@@ -27,6 +27,21 @@ def ngspice_path():
 
 def materialize(case, directory):
     source = (ROOT / case["source"]).read_text()
+    injected = []
+    for name, drive in case.get("inject_drives", {}).items():
+        node, value = drive
+        injected.append(f"{name} {node} 0 dc {value}")
+    if injected:
+        source, count = re.subn(
+            r"(?im)^(\.op\s*)$",
+            "\n".join([*injected, r"\g<1>"]),
+            source,
+            count=1,
+        )
+        if count != 1:
+            raise RuntimeError(
+                f"{case['name']}: component deck has no unique .op insertion point"
+            )
     for name, value in case.get("drives", {}).items():
         pattern = rf"(?im)^({re.escape(name)}\s+\S+\s+0\s+(?:dc\s+)?)\S+"
         source, count = re.subn(pattern, rf"\g<1>{value}", source)
@@ -34,15 +49,7 @@ def materialize(case, directory):
             raise RuntimeError(f"{case['name']}: could not replace drive {name}")
     deck = directory / f"{case['name']}.cir"
     deck.write_text(source)
-    subprocess.run(
-        ["python3", str(ROOT / "extractors/spice/extract.py"), str(deck)],
-        cwd=ROOT, check=True, capture_output=True, text=True)
-    # Ask ngspice for enough digits to support the documented 1e-6 relative
-    # comparison. The exact envelope is generated first because `.options`
-    # is deliberately outside the M0 semantic card vocabulary.
-    lines = deck.read_text().splitlines()
-    deck.write_text("\n".join([lines[0], ".options numdgt=15", *lines[1:]]) + "\n")
-    return deck, deck.with_suffix(".json")
+    return deck
 
 
 def parse_ngspice(text, probe):
@@ -55,12 +62,12 @@ def parse_ngspice(text, probe):
     return float(match.group(1))
 
 
-def run_lean(json_path, probes, no_build):
+def run_lean(deck_path, probes, no_build):
     if not no_build:
-        subprocess.run(["lake", "build", "LeanModels.Spice.Tests"], cwd=ROOT, check=True)
+        subprocess.run(["lake", "build", "circuit-dc-runner"], cwd=ROOT, check=True)
     result = subprocess.run(
-        ["lake", "env", "lean", "--run", "harness/spice/Runner.lean",
-         str(json_path), *probes], cwd=ROOT, check=True, capture_output=True, text=True)
+        ["lake", "exe", "circuit-dc-runner", str(deck_path), *probes],
+        cwd=ROOT, check=True, capture_output=True, text=True)
     values = {}
     for line in result.stdout.splitlines():
         name, numerator, denominator = line.split("\t")
@@ -68,12 +75,12 @@ def run_lean(json_path, probes, no_build):
     return values
 
 
-def run_lean_raw(json_path, probes, no_build):
+def run_lean_raw(deck_path, probes, no_build):
     if not no_build:
-        subprocess.run(["lake", "build", "LeanModels.Spice.Tests"], cwd=ROOT, check=True)
+        subprocess.run(["lake", "build", "circuit-dc-runner"], cwd=ROOT, check=True)
     return subprocess.run(
-        ["lake", "env", "lean", "--run", "harness/spice/Runner.lean",
-         str(json_path), *probes], cwd=ROOT, capture_output=True, text=True)
+        ["lake", "exe", "circuit-dc-runner", str(deck_path), *probes],
+        cwd=ROOT, capture_output=True, text=True)
 
 
 def close(exact, approximate):
@@ -96,15 +103,17 @@ def main():
         directory = Path(tmp)
         built = args.no_build
         for case in cases:
-            deck, envelope = materialize(case, directory)
+            deck = materialize(case, directory)
             run = subprocess.run([spice, "-b", str(deck)], cwd=ROOT,
                                  check=True, capture_output=True, text=True)
             probes = list(case["probes"])
             if case.get("expect_error") == "singular":
-                lean_run = run_lean_raw(envelope, probes, built)
+                lean_run = run_lean_raw(deck, probes, built)
                 built = True
                 lean_singular = (lean_run.returncode != 0 and
-                                 "singular" in lean_run.stderr.lower())
+                                 any(word in lean_run.stderr.lower() for word in
+                                     ("singular", "underdetermined", "inconsistent",
+                                      "no ground node")))
                 ngspice_singular = "singular matrix" in (
                     run.stdout + run.stderr).lower()
                 ok = lean_singular and ngspice_singular
@@ -112,7 +121,7 @@ def main():
                 verdict = "MATCH (singular)" if ok else "MISMATCH"
                 print(f"{case['name']:28} {'singular':>16} {'singular':>16}  {verdict}")
                 continue
-            lean = run_lean(envelope, probes, built)
+            lean = run_lean(deck, probes, built)
             built = True
             for probe, expected_text in case["probes"].items():
                 expected = Fraction(expected_text)

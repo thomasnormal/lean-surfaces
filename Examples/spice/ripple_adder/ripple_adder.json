@@ -6,16 +6,16 @@
     "version": "0.1"
   },
   "source_file": "Examples/spice/ripple_adder/ripple_adder.cir",
-  "source_sha256": "66947ef0a4227422a659c5e7b0520ecf17b0645846097c33d30c3806f7aef5fe",
+  "source_sha256": "b64f7f7b95973d9e8b7d33bac5590c3f5ee216da8ba08a27593523fdf62cc74c",
   "netlist": {
     "kind": "Netlist",
-    "title": "four-bit ripple adder from transistor-level half-adders",
+    "title": "literal 50-bit ripple adder from transistor-level half-adders",
     "subckts": [
       {
         "kind": "Subckt",
         "span": {
-          "line": 4,
-          "end_line": 11
+          "line": 3,
+          "end_line": 10
         },
         "name": "and2",
         "ports": [
@@ -28,8 +28,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 5,
-              "end_line": 5
+              "line": 4,
+              "end_line": 4
             },
             "name": "mpa",
             "nodes": [
@@ -43,8 +43,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 6,
-              "end_line": 6
+              "line": 5,
+              "end_line": 5
             },
             "name": "mpb",
             "nodes": [
@@ -58,8 +58,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 7,
-              "end_line": 7
+              "line": 6,
+              "end_line": 6
             },
             "name": "mna",
             "nodes": [
@@ -73,8 +73,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 8,
-              "end_line": 8
+              "line": 7,
+              "end_line": 7
             },
             "name": "mnb",
             "nodes": [
@@ -88,8 +88,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 9,
-              "end_line": 9
+              "line": 8,
+              "end_line": 8
             },
             "name": "mpinv",
             "nodes": [
@@ -103,8 +103,8 @@
           {
             "kind": "M",
             "span": {
-              "line": 10,
-              "end_line": 10
+              "line": 9,
+              "end_line": 9
             },
             "name": "mninv",
             "nodes": [
@@ -271,8 +271,8 @@
       {
         "kind": "Subckt",
         "span": {
-          "line": 24,
-          "end_line": 29
+          "line": 25,
+          "end_line": 30
         },
         "name": "half_adder",
         "ports": [
@@ -286,8 +286,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 25,
-              "end_line": 25
+              "line": 26,
+              "end_line": 26
             },
             "name": "xcarry",
             "subckt": "and2",
@@ -301,8 +301,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 26,
-              "end_line": 26
+              "line": 27,
+              "end_line": 27
             },
             "name": "xany",
             "subckt": "or2",
@@ -316,8 +316,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 27,
-              "end_line": 27
+              "line": 28,
+              "end_line": 28
             },
             "name": "xnotcarry",
             "subckt": "inv",
@@ -330,8 +330,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 28,
-              "end_line": 28
+              "line": 29,
+              "end_line": 29
             },
             "name": "xsum",
             "subckt": "and2",
@@ -347,8 +347,8 @@
       {
         "kind": "Subckt",
         "span": {
-          "line": 30,
-          "end_line": 34
+          "line": 32,
+          "end_line": 36
         },
         "name": "full_adder",
         "ports": [
@@ -363,8 +363,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 31,
-              "end_line": 31
+              "line": 33,
+              "end_line": 33
             },
             "name": "xfirst",
             "subckt": "half_adder",
@@ -379,8 +379,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 32,
-              "end_line": 32
+              "line": 34,
+              "end_line": 34
             },
             "name": "xsecond",
             "subckt": "half_adder",
@@ -395,8 +395,8 @@
           {
             "kind": "X",
             "span": {
-              "line": 33,
-              "end_line": 33
+              "line": 35,
+              "end_line": 35
             },
             "name": "xcarry",
             "subckt": "half_adder",
@@ -415,8 +415,8 @@
       {
         "kind": "X",
         "span": {
-          "line": 36,
-          "end_line": 36
+          "line": 38,
+          "end_line": 38
         },
         "name": "xbit0",
         "subckt": "full_adder",
@@ -432,8 +432,8 @@
       {
         "kind": "X",
         "span": {
-          "line": 37,
-          "end_line": 37
+          "line": 39,
+          "end_line": 39
         },
         "name": "xbit1",
         "subckt": "full_adder",
@@ -449,8 +449,8 @@
       {
         "kind": "X",
         "span": {
-          "line": 38,
-          "end_line": 38
+          "line": 40,
+          "end_line": 40
         },
         "name": "xbit2",
         "subckt": "full_adder",
@@ -466,8 +466,8 @@
       {
         "kind": "X",
         "span": {
-          "line": 39,
-          "end_line": 39
+          "line": 41,
+          "end_line": 41
         },
         "name": "xbit3",
         "subckt": "full_adder",
@@ -476,175 +476,797 @@
           "b3",
           "c3",
           "sum3",
+          "c4",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 42,
+          "end_line": 42
+        },
+        "name": "xbit4",
+        "subckt": "full_adder",
+        "connections": [
+          "a4",
+          "b4",
+          "c4",
+          "sum4",
+          "c5",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 43,
+          "end_line": 43
+        },
+        "name": "xbit5",
+        "subckt": "full_adder",
+        "connections": [
+          "a5",
+          "b5",
+          "c5",
+          "sum5",
+          "c6",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 44,
+          "end_line": 44
+        },
+        "name": "xbit6",
+        "subckt": "full_adder",
+        "connections": [
+          "a6",
+          "b6",
+          "c6",
+          "sum6",
+          "c7",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 45,
+          "end_line": 45
+        },
+        "name": "xbit7",
+        "subckt": "full_adder",
+        "connections": [
+          "a7",
+          "b7",
+          "c7",
+          "sum7",
+          "c8",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 46,
+          "end_line": 46
+        },
+        "name": "xbit8",
+        "subckt": "full_adder",
+        "connections": [
+          "a8",
+          "b8",
+          "c8",
+          "sum8",
+          "c9",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 47,
+          "end_line": 47
+        },
+        "name": "xbit9",
+        "subckt": "full_adder",
+        "connections": [
+          "a9",
+          "b9",
+          "c9",
+          "sum9",
+          "c10",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 48,
+          "end_line": 48
+        },
+        "name": "xbit10",
+        "subckt": "full_adder",
+        "connections": [
+          "a10",
+          "b10",
+          "c10",
+          "sum10",
+          "c11",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 49,
+          "end_line": 49
+        },
+        "name": "xbit11",
+        "subckt": "full_adder",
+        "connections": [
+          "a11",
+          "b11",
+          "c11",
+          "sum11",
+          "c12",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 50,
+          "end_line": 50
+        },
+        "name": "xbit12",
+        "subckt": "full_adder",
+        "connections": [
+          "a12",
+          "b12",
+          "c12",
+          "sum12",
+          "c13",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 51,
+          "end_line": 51
+        },
+        "name": "xbit13",
+        "subckt": "full_adder",
+        "connections": [
+          "a13",
+          "b13",
+          "c13",
+          "sum13",
+          "c14",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 52,
+          "end_line": 52
+        },
+        "name": "xbit14",
+        "subckt": "full_adder",
+        "connections": [
+          "a14",
+          "b14",
+          "c14",
+          "sum14",
+          "c15",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 53,
+          "end_line": 53
+        },
+        "name": "xbit15",
+        "subckt": "full_adder",
+        "connections": [
+          "a15",
+          "b15",
+          "c15",
+          "sum15",
+          "c16",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 54,
+          "end_line": 54
+        },
+        "name": "xbit16",
+        "subckt": "full_adder",
+        "connections": [
+          "a16",
+          "b16",
+          "c16",
+          "sum16",
+          "c17",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 55,
+          "end_line": 55
+        },
+        "name": "xbit17",
+        "subckt": "full_adder",
+        "connections": [
+          "a17",
+          "b17",
+          "c17",
+          "sum17",
+          "c18",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 56,
+          "end_line": 56
+        },
+        "name": "xbit18",
+        "subckt": "full_adder",
+        "connections": [
+          "a18",
+          "b18",
+          "c18",
+          "sum18",
+          "c19",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 57,
+          "end_line": 57
+        },
+        "name": "xbit19",
+        "subckt": "full_adder",
+        "connections": [
+          "a19",
+          "b19",
+          "c19",
+          "sum19",
+          "c20",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 58,
+          "end_line": 58
+        },
+        "name": "xbit20",
+        "subckt": "full_adder",
+        "connections": [
+          "a20",
+          "b20",
+          "c20",
+          "sum20",
+          "c21",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 59,
+          "end_line": 59
+        },
+        "name": "xbit21",
+        "subckt": "full_adder",
+        "connections": [
+          "a21",
+          "b21",
+          "c21",
+          "sum21",
+          "c22",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 60,
+          "end_line": 60
+        },
+        "name": "xbit22",
+        "subckt": "full_adder",
+        "connections": [
+          "a22",
+          "b22",
+          "c22",
+          "sum22",
+          "c23",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 61,
+          "end_line": 61
+        },
+        "name": "xbit23",
+        "subckt": "full_adder",
+        "connections": [
+          "a23",
+          "b23",
+          "c23",
+          "sum23",
+          "c24",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 62,
+          "end_line": 62
+        },
+        "name": "xbit24",
+        "subckt": "full_adder",
+        "connections": [
+          "a24",
+          "b24",
+          "c24",
+          "sum24",
+          "c25",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 63,
+          "end_line": 63
+        },
+        "name": "xbit25",
+        "subckt": "full_adder",
+        "connections": [
+          "a25",
+          "b25",
+          "c25",
+          "sum25",
+          "c26",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 64,
+          "end_line": 64
+        },
+        "name": "xbit26",
+        "subckt": "full_adder",
+        "connections": [
+          "a26",
+          "b26",
+          "c26",
+          "sum26",
+          "c27",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 65,
+          "end_line": 65
+        },
+        "name": "xbit27",
+        "subckt": "full_adder",
+        "connections": [
+          "a27",
+          "b27",
+          "c27",
+          "sum27",
+          "c28",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 66,
+          "end_line": 66
+        },
+        "name": "xbit28",
+        "subckt": "full_adder",
+        "connections": [
+          "a28",
+          "b28",
+          "c28",
+          "sum28",
+          "c29",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 67,
+          "end_line": 67
+        },
+        "name": "xbit29",
+        "subckt": "full_adder",
+        "connections": [
+          "a29",
+          "b29",
+          "c29",
+          "sum29",
+          "c30",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 68,
+          "end_line": 68
+        },
+        "name": "xbit30",
+        "subckt": "full_adder",
+        "connections": [
+          "a30",
+          "b30",
+          "c30",
+          "sum30",
+          "c31",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 69,
+          "end_line": 69
+        },
+        "name": "xbit31",
+        "subckt": "full_adder",
+        "connections": [
+          "a31",
+          "b31",
+          "c31",
+          "sum31",
+          "c32",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 70,
+          "end_line": 70
+        },
+        "name": "xbit32",
+        "subckt": "full_adder",
+        "connections": [
+          "a32",
+          "b32",
+          "c32",
+          "sum32",
+          "c33",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 71,
+          "end_line": 71
+        },
+        "name": "xbit33",
+        "subckt": "full_adder",
+        "connections": [
+          "a33",
+          "b33",
+          "c33",
+          "sum33",
+          "c34",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 72,
+          "end_line": 72
+        },
+        "name": "xbit34",
+        "subckt": "full_adder",
+        "connections": [
+          "a34",
+          "b34",
+          "c34",
+          "sum34",
+          "c35",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 73,
+          "end_line": 73
+        },
+        "name": "xbit35",
+        "subckt": "full_adder",
+        "connections": [
+          "a35",
+          "b35",
+          "c35",
+          "sum35",
+          "c36",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 74,
+          "end_line": 74
+        },
+        "name": "xbit36",
+        "subckt": "full_adder",
+        "connections": [
+          "a36",
+          "b36",
+          "c36",
+          "sum36",
+          "c37",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 75,
+          "end_line": 75
+        },
+        "name": "xbit37",
+        "subckt": "full_adder",
+        "connections": [
+          "a37",
+          "b37",
+          "c37",
+          "sum37",
+          "c38",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 76,
+          "end_line": 76
+        },
+        "name": "xbit38",
+        "subckt": "full_adder",
+        "connections": [
+          "a38",
+          "b38",
+          "c38",
+          "sum38",
+          "c39",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 77,
+          "end_line": 77
+        },
+        "name": "xbit39",
+        "subckt": "full_adder",
+        "connections": [
+          "a39",
+          "b39",
+          "c39",
+          "sum39",
+          "c40",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 78,
+          "end_line": 78
+        },
+        "name": "xbit40",
+        "subckt": "full_adder",
+        "connections": [
+          "a40",
+          "b40",
+          "c40",
+          "sum40",
+          "c41",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 79,
+          "end_line": 79
+        },
+        "name": "xbit41",
+        "subckt": "full_adder",
+        "connections": [
+          "a41",
+          "b41",
+          "c41",
+          "sum41",
+          "c42",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 80,
+          "end_line": 80
+        },
+        "name": "xbit42",
+        "subckt": "full_adder",
+        "connections": [
+          "a42",
+          "b42",
+          "c42",
+          "sum42",
+          "c43",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 81,
+          "end_line": 81
+        },
+        "name": "xbit43",
+        "subckt": "full_adder",
+        "connections": [
+          "a43",
+          "b43",
+          "c43",
+          "sum43",
+          "c44",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 82,
+          "end_line": 82
+        },
+        "name": "xbit44",
+        "subckt": "full_adder",
+        "connections": [
+          "a44",
+          "b44",
+          "c44",
+          "sum44",
+          "c45",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 83,
+          "end_line": 83
+        },
+        "name": "xbit45",
+        "subckt": "full_adder",
+        "connections": [
+          "a45",
+          "b45",
+          "c45",
+          "sum45",
+          "c46",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 84,
+          "end_line": 84
+        },
+        "name": "xbit46",
+        "subckt": "full_adder",
+        "connections": [
+          "a46",
+          "b46",
+          "c46",
+          "sum46",
+          "c47",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 85,
+          "end_line": 85
+        },
+        "name": "xbit47",
+        "subckt": "full_adder",
+        "connections": [
+          "a47",
+          "b47",
+          "c47",
+          "sum47",
+          "c48",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 86,
+          "end_line": 86
+        },
+        "name": "xbit48",
+        "subckt": "full_adder",
+        "connections": [
+          "a48",
+          "b48",
+          "c48",
+          "sum48",
+          "c49",
+          "vdd"
+        ]
+      },
+      {
+        "kind": "X",
+        "span": {
+          "line": 87,
+          "end_line": 87
+        },
+        "name": "xbit49",
+        "subckt": "full_adder",
+        "connections": [
+          "a49",
+          "b49",
+          "c49",
+          "sum49",
           "cout",
           "vdd"
         ]
       },
       {
-        "kind": "V",
-        "span": {
-          "line": 40,
-          "end_line": 40
-        },
-        "name": "vddsrc",
-        "nodes": [
-          "vdd",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 41,
-          "end_line": 41
-        },
-        "name": "va0",
-        "nodes": [
-          "a0",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 42,
-          "end_line": 42
-        },
-        "name": "va1",
-        "nodes": [
-          "a1",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 43,
-          "end_line": 43
-        },
-        "name": "va2",
-        "nodes": [
-          "a2",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 44,
-          "end_line": 44
-        },
-        "name": "va3",
-        "nodes": [
-          "a3",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 45,
-          "end_line": 45
-        },
-        "name": "vb0",
-        "nodes": [
-          "b0",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 46,
-          "end_line": 46
-        },
-        "name": "vb1",
-        "nodes": [
-          "b1",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 47,
-          "end_line": 47
-        },
-        "name": "vb2",
-        "nodes": [
-          "b2",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 48,
-          "end_line": 48
-        },
-        "name": "vb3",
-        "nodes": [
-          "b3",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 49,
-          "end_line": 49
-        },
-        "name": "vcin",
-        "nodes": [
-          "cin",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
         "kind": "Model",
         "span": {
-          "line": 50,
-          "end_line": 50
+          "line": 88,
+          "end_line": 88
         },
         "name": "nmod",
         "polarity": "nmos",
@@ -689,8 +1311,8 @@
       {
         "kind": "Model",
         "span": {
-          "line": 51,
-          "end_line": 51
+          "line": 89,
+          "end_line": 89
         },
         "name": "pmod",
         "polarity": "pmos",
@@ -735,8 +1357,8 @@
       {
         "kind": "Op",
         "span": {
-          "line": 52,
-          "end_line": 52
+          "line": 90,
+          "end_line": 90
         }
       }
     ]

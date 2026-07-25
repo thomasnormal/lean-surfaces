@@ -62,7 +62,8 @@ def SampleConnects
     ElectricalToLogic levels sample.voltage bit
 
 /-- A mixed behavior relates a completed digital trace to analog samples.
-This is where a transient DAE model or VAMS connect module is plugged in. -/
+This is where a transient DAE model or a future connect-module interpretation
+is plugged in. -/
 abbrev MixedBehavior :=
   List SvState → List AnalogSample → Prop
 

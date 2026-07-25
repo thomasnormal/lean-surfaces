@@ -1,0 +1,8 @@
+Robust divider nominal topology
+* The proof treats these as nominal values and quantifies over fabricated
+* resistance values and run-specific supply voltage.
+V1 in 0 DC 5
+R1 in out 1k
+R2 out 0 2k
+.op
+.end

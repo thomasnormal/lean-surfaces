@@ -12,10 +12,8 @@ mnb nseries b 0 0 nmod
 * Inverter stage converts NAND to AND.
 mpinv out nand vdd vdd pmod
 mninv out nand 0 0 nmod
-* Supplies and input drivers; the harness rewrites va/vb over all four vectors.
-vddsrc vdd 0 dc 5
-va a 0 dc 0
-vb b 0 dc 0
+* vdd, a, and b are component ports. The ngspice harness supplies temporary
+* voltage sources for each test vector; they are not part of this netlist.
 .model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
 .model pmod pmos (level=1 vto=-1 kp=50u lambda=0 is=0)
 .op

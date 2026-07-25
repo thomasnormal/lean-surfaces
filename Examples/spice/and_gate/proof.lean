@@ -1,65 +1,14 @@
-import LeanModels.Spice.Surface
-import LeanModels.Spice.Cmos
+import LeanModels.Circuit.Surface
+import LeanModels.Spice.Mos1Surface
 import LeanModels.Spice.Mos1Logic
 
 namespace Examples.spice.and_gate.proof
 
 open LeanModels.Spice
 
-load_mos1 andGateDeck from "Examples/spice/and_gate/and_gate.json"
+load_circuit andGateDeck from "Examples/spice/and_gate/and_gate.cir"
 
-/-- A reusable AND-block theorem derived only from the six MOS switch laws. -/
-theorem cmos_and_from_device_laws
-    {left right nand series output vdd ground : Bool}
-    (hlaws : CmosAndDeviceLaws left right nand series output vdd ground)
-    (hvdd : vdd = true) (hground : ground = false) :
-    output = Bool.and left right := by
-  rcases left with _ | _ <;> rcases right with _ | _ <;>
-    simp [CmosAndDeviceLaws] at hlaws ⊢ <;> grind
-
-/-- A satisfying internal-node assignment for each Boolean input vector. -/
-private def andState (left right : Bool) : LogicState :=
-  { level := fun node =>
-      if node == "vdd" then true
-      else if node == "a" then left
-      else if node == "b" then right
-      else if node == "nand" then !(left && right)
-      else if node == "nseries" then left && !right
-      else if node == "out" then left && right
-      else false }
-
-private theorem andGateDeviceLaws (state : LogicState)
-    (hsatisfies : SwitchSatisfies andGateDeck state) :
-    CmosAndDeviceLaws
-      (state.level "a") (state.level "b")
-      (state.level "nand") (state.level "nseries")
-      (state.level "out") (state.level "vdd") (state.level "0") := by
-  simpa [SwitchSatisfies, flattenSwitch, flattenSwitchCards, flattenBudget,
-    SwitchCardsSatisfy, SwitchCardLaw, MosfetSwitchLaw,
-    Netlist.findMosModel, andGateDeck, renameElement, renameMosfet,
-    renameNode, lookupRename, qualify, CmosAndDeviceLaws] using hsatisfies
-
-/-- The extracted six-transistor CMOS network implements Boolean AND under
-the ideal-switch MOS semantics. -/
-theorem cmos_and_correct :
-    BinaryGateContract andGateDeck "a" "b" "out" (· && ·) := by
-  intro left right
-  constructor
-  · intro state hsatisfies hdrives
-    have hout := cmos_and_from_device_laws
-      (andGateDeviceLaws state hsatisfies) hdrives.2.1 hdrives.1
-    simpa [hdrives.2.2.1, hdrives.2.2.2] using hout
-  · refine ⟨andState left right, ?_, ?_⟩
-    · rcases left with _ | _ <;> rcases right with _ | _ <;>
-        simp [SwitchSatisfies, flattenSwitch, flattenSwitchCards,
-          flattenBudget, SwitchCardLaw, MosfetSwitchLaw,
-          SwitchCardsSatisfy, Netlist.findMosModel, andGateDeck, andState,
-          renameElement, renameMosfet, renameNode, lookupRename, qualify]
-    · simp [DrivesTwo, andState]
-
-/-! ## Ngspice MOS Level 1 proof -/
-
-def andGateMos1 : Mos1Circuit :=
+def andGateMos1 : Mos1ResolvedCircuit :=
   andGateDeck_mos1
 
 private noncomputable def nCurrent (vgs vds : ℝ) : ℝ :=
@@ -75,7 +24,8 @@ private noncomputable def pCurrent (vsg vsd : ℝ) : ℝ :=
 /-- KCL at the three internal nodes, reduced from the literal extracted deck.
 The coefficients come from its exact `KP`, `VTO`, and `LAMBDA` parameters. -/
 private theorem andMos1_equations (state : Mos1CircuitState)
-    (hs : Mos1Satisfies andGateMos1 state)
+    (hs : Mos1ComponentSatisfies andGateMos1
+      [supply, node "a", node "b"] state)
     (hb : Mos1WithinSupply andGateMos1 state) :
     (0 ≤ state.voltage (node "nand") ∧
       state.voltage (node "nand") ≤ 5) ∧
@@ -119,8 +69,8 @@ ngspice Level-1 channel equations, voltage-source laws, and KCL. The supply
 envelope is an explicit premise rather than an unproved device abstraction. -/
 theorem cmos_and_mos1_correct :
     Mos1BinaryGateContract andGateMos1
-      (node! andGateMos1 "a") (node! andGateMos1 "b")
-      (node! andGateMos1 "out") (· && ·) := by
+      (mos_node! andGateMos1 "a") (mos_node! andGateMos1 "b")
+      (mos_node! andGateMos1 "out") (· && ·) := by
   intro left right state hs hb hd
   rcases andMos1_equations state hs hb with
     ⟨bnand, bnseries, bout, hnand, hnseries, hout⟩

@@ -7,7 +7,8 @@ Covers: exact suffix/decimal value parsing (the normative table in
 docs/spice-envelope-schema.md), logical-line assembly (title, comments,
 continuations, .end), the M0 card vocabulary, .subckt/.ends nesting and
 error demotion, Unsupported routing, and byte-identical double runs on
-the committed Examples/spice/{and_gate,half_adder,divider,chain,r2r} netlists.
+the committed Examples/spice/{and_gate,half_adder,divider,chain,r2r,
+robust_divider,loaded_rc} netlists.
 """
 
 import json
@@ -249,7 +250,9 @@ class TestCommittedExamples(unittest.TestCase):
                 "Examples/spice/half_adder/half_adder.cir",
                 "Examples/spice/divider/divider.cir",
                 "Examples/spice/chain/chain.cir",
-                "Examples/spice/r2r/r2r.cir"]
+                "Examples/spice/r2r/r2r.cir",
+                "Examples/spice/robust_divider/robust_divider.cir",
+                "Examples/spice/loaded_rc/loaded_rc.cir"]
 
     def _has_unsupported(self, node):
         if isinstance(node, dict):

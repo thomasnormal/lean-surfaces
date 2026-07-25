@@ -1,48 +1,22 @@
-import LeanModels.Spice.Compose
-import LeanModels.Spice.Surface
+import LeanModels.Circuit
+import LeanModels.Python.Surface
 
 namespace Examples.spice.chain.proof
 
-open LeanModels.Spice
+open LeanModels.Circuit
 
-load_netlist chainDeck from "Examples/spice/chain/chain.json"
+load_circuit chainDeck from "Examples/spice/chain/chain.cir"
 
 private abbrev p0 : Fin 2 := ⟨0, by decide⟩
 private abbrev p1 : Fin 2 := ⟨1, by decide⟩
 
-/-- The extracted `attn` definition, named explicitly for contract proofs. -/
-def attn : Subckt :=
-  { span := ⟨29, 32⟩, name := "attn", ports := #["a", "b"],
-    body := #[
-      .element ⟨.resistor, ⟨30, 30⟩, "r1", "a", "b", 1000⟩,
-      .element ⟨.resistor, ⟨31, 31⟩, "r2", "b", "0", 6000⟩] }
+/-- Checked leaf block obtained from the parsed `.subckt attn`, not re-entered
+as Lean circuit data. -/
+def attn : DCBlock := subcircuit! chainDeck "attn"
 
-theorem attn_is_extracted : chainDeck.subckts[0]? = some (.definition attn) := by
-  rfl
-
-/-- Boundary node after a given number of sections. -/
-def chainNode : Nat → String
-  | 0 => "in"
-  | index + 1 => "out" ++ toString (index + 1)
-
-private def chainInstance (index : Nat) : Card :=
-  .xInstance
-    { span := ⟨0, 0⟩
-      name := "x" ++ toString (index + 1)
-      subckt := "attn"
-      connections := #[chainNode index, chainNode (index + 1)] }
-
-/-- An actual hierarchical SPICE AST family, built from `sections` instances
-of the one extracted `attn` definition and its matched 3k termination. -/
-def chain (sections : Nat) : Netlist :=
-  let instances := (List.range sections).map chainInstance |>.toArray
-  { title := "matched attenuator chain"
-    subckts := #[.definition attn]
-    cards :=
-      #[.element ⟨.vsource, ⟨0, 0⟩, "v1", "in", "0", 5⟩] ++
-      instances ++
-      #[.element ⟨.resistor, ⟨0, 0⟩, "rterm", chainNode sections, "0", 3000⟩,
-        .op ⟨0, 0⟩] }
+theorem attn_is_extracted :
+    attn.name = "attn" ∧ attn.portNames = #["a", "b"] := by
+  exact ⟨rfl, rfl⟩
 
 /-- Exact two-port admittance of the L-section. -/
 def attnContract : PortContract 2 :=
@@ -52,10 +26,11 @@ def attnContract : PortContract 2 :=
       else if col = p0 then -1 / 1000 else 7 / 6000
     J := fun _ => 0 }
 
-private def attnAssignment (voltage : Vec 2) : Assignment :=
-  { volt := fun node =>
-      if node == "a" then voltage p0 else if node == "b" then voltage p1 else 0
-    cur := fun _ => 0 }
+private def attnAssignment (voltage : Vec 2) : DCAssignment :=
+  { voltages := #[voltage p0, voltage p1, 0]
+    currents := #[
+      (voltage p0 - voltage p1) / 1000,
+      voltage p1 / 6000] }
 
 private theorem vec2_ext {left right : Vec 2}
     (h0 : left p0 = right p0) (h1 : left p1 = right p1) : left = right := by
@@ -69,45 +44,57 @@ private theorem vec2_ext {left right : Vec 2}
     subst i
     exact h1
 
-/-- The section is proved once, independently of any surrounding chain. -/
-theorem section_contract : HasContract attn attnContract := by
+/-- The section contract follows from the two resistor laws and boundary KCL
+of the checked source block. -/
+theorem section_contract :
+    HasExactContract attn.PortBehavior attnContract := by
   constructor
   · intro voltage current behavior
-    rcases behavior with ⟨_, flat, hflat, assignment, _, hports, _, _, hkcl⟩
-    simp [attn, flattenLeafSubckt] at hflat
-    change Except.ok { elements := #[
-      ⟨.resistor, ⟨30, 30⟩, "r1", "a", "b", 1000⟩,
-      ⟨.resistor, ⟨31, 31⟩, "r2", "b", "0", 6000⟩] } = .ok flat at hflat
-    cases hflat
+    rcases behavior with
+      ⟨_, _, assignment, _, _, hground, hdevices, _, hports, hkcl⟩
+    have hr1 := hdevices
+      (.resistor ⟨0⟩ ⟨0⟩ ⟨1⟩ 1000) (by simp [attn])
+    have hr2 := hdevices
+      (.resistor ⟨1⟩ ⟨1⟩ ⟨2⟩ 6000) (by simp [attn])
     have hv0 := hports p0
     have hv1 := hports p1
     have hi0 := hkcl p0
     have hi1 := hkcl p1
-    simp [attn, Subckt.portName, kclSum, currentInto] at hv0 hv1 hi0 hi1
+    simp [attn, DCBlock.portNode,
+      DCCircuit.kcl, DCDevice.currentLeaving, DCDevice.positive,
+      DCDevice.negative, DCDevice.id, DCDevice.lawHolds,
+      DCAssignment.voltage, DCAssignment.current] at hground hr1 hr2 hv0 hv1 hi0 hi1
     apply vec2_ext
     · simp [attnContract, PortContract.apply, matVec, dot]
       grind
     · simp [attnContract, PortContract.apply, matVec, dot]
       grind
   · intro voltage current hcurrent
-    refine ⟨by rfl, { elements := #[
-        ⟨.resistor, ⟨30, 30⟩, "r1", "a", "b", 1000⟩,
-        ⟨.resistor, ⟨31, 31⟩, "r2", "b", "0", 6000⟩] }, by rfl,
-      attnAssignment voltage, ?_, ?_, ?_, ?_, ?_⟩
-    · simp [attnAssignment]
+    refine ⟨by rfl, ?_, attnAssignment voltage,
+      by rfl, by rfl, ?_, ?_, ?_, ?_, ?_⟩
+    · unfold attn
+      simp [DCCircuit.isValid, DCDevice.id,
+        DCDevice.positive, DCDevice.negative]
+    · simp [attn, attnAssignment, DCAssignment.voltage]
+    · intro device hmember
+      simp [attn] at hmember
+      rcases hmember with rfl | rfl <;>
+        simp [attnAssignment, DCDevice.lawHolds,
+          DCAssignment.voltage, DCAssignment.current]
+    · intro node hnode hinternal
+      rcases node with ⟨index⟩
+      simp [attn, DCCircuit.nodes] at hnode
+      simp [DCBlock.IsInternalNode, attn] at hinternal
+      interval_cases index <;> simp_all
     · intro i
       have hi : i = p0 ∨ i = p1 := by
         have : i.val = 0 ∨ i.val = 1 := by omega
         rcases this with h | h
         · left; apply Fin.ext; exact h
         · right; apply Fin.ext; exact h
-      rcases hi with rfl | rfl <;> simp [attn, Subckt.portName, attnAssignment]
-    · intro element hmem
-      simp at hmem
-      rcases hmem with rfl | rfl <;> trivial
-    · intro node hinternal
-      simp [IsInternalNode, attn, FlatNetlist.nodes] at hinternal
-      rcases hinternal.1 with rfl | rfl | rfl <;> simp_all
+      rcases hi with rfl | rfl <;>
+        simp [attn, DCBlock.portNode,
+          attnAssignment, DCAssignment.voltage]
     · intro i
       have hc := congrFun hcurrent i
       have hi : i = p0 ∨ i = p1 := by
@@ -116,12 +103,27 @@ theorem section_contract : HasContract attn attnContract := by
         · left; apply Fin.ext; exact h
         · right; apply Fin.ext; exact h
       rcases hi with rfl | rfl
-      · simp [attn, Subckt.portName, attnAssignment, kclSum, currentInto,
-          attnContract, PortContract.apply, matVec, dot] at hc ⊢
+      · simp [attn, DCBlock.portNode,
+          attnAssignment, DCCircuit.kcl, DCDevice.currentLeaving,
+          DCDevice.positive, DCDevice.negative, DCDevice.id,
+          DCAssignment.current, attnContract, PortContract.apply,
+          matVec, dot] at hc ⊢
         grind
-      · simp [attn, Subckt.portName, attnAssignment, kclSum, currentInto,
-          attnContract, PortContract.apply, matVec, dot] at hc ⊢
+      · simp [attn, DCBlock.portNode,
+          attnAssignment, DCCircuit.kcl, DCDevice.currentLeaving,
+          DCDevice.positive, DCDevice.negative, DCDevice.id,
+          DCAssignment.current, attnContract, PortContract.apply,
+          matVec, dot] at hc ⊢
         grind
+
+/-- Generic contract composition eliminates the shared node without reopening
+either section implementation. -/
+theorem two_section_contract :
+    HasExactContract
+      (CascadeRelation attn.PortBehavior attn.PortBehavior)
+      (cascade attnContract attnContract) := by
+  apply compose_contracts section_contract section_contract
+  norm_num [cascadeDenominator, attnContract]
 
 /-- Two-component vector constructor used at a cascade boundary. -/
 def pair2 (first second : Rat) : Vec 2
@@ -135,7 +137,8 @@ def LoadedChain : Nat → Rat → Rat → Rat → Prop
       output = input ∧ inputCurrent = input / 3000
   | sections + 1, input, output, inputCurrent =>
       ∃ shared outputCurrent,
-        PortBehavior attn (pair2 input shared) (pair2 inputCurrent outputCurrent) ∧
+        attn.PortBehavior (pair2 input shared)
+          (pair2 inputCurrent outputCurrent) ∧
         LoadedChain sections shared output (-outputCurrent)
 
 /-- Contract of an arbitrary matched cascade. This is the compositional
@@ -186,5 +189,43 @@ theorem chain_attenuates (sections : Nat) (output inputCurrent : Rat)
     (h : LoadedChain sections 5 output inputCurrent) :
     output = (2 / 3 : Rat) ^ sections * 5 :=
   (chain_contract sections 5 output inputCurrent).mp h |>.1
+
+/-! An error-bounded reduced view uses the same compositional discipline but
+does not pretend its nominal gain is exact. -/
+
+noncomputable def ApproxAttenuatorContract : ScalarErrorContract :=
+  {
+    gain := 2 / 3
+    bias := 0
+    error := 1 / 100
+    error_nonnegative := by norm_num }
+
+noncomputable def ApproxAttenuatorBehavior : ScalarPortRelation :=
+  ApproxAttenuatorContract.Admits
+
+theorem approx_attenuator_contract :
+    HasErrorBoundedContract ApproxAttenuatorBehavior
+      ApproxAttenuatorContract := by
+  constructor
+  · intro input output h
+    exact h
+  · intro input
+    refine ⟨ApproxAttenuatorContract.apply input, ?_⟩
+    simp [ApproxAttenuatorBehavior, ScalarErrorContract.Admits,
+      ApproxAttenuatorContract]
+
+theorem two_approx_attenuators_contract :
+    HasErrorBoundedContract
+      (SerialScalarRelation ApproxAttenuatorBehavior
+        ApproxAttenuatorBehavior)
+      (composeErrorContracts ApproxAttenuatorContract
+        ApproxAttenuatorContract) :=
+  compose_error_bounded_contracts approx_attenuator_contract
+    approx_attenuator_contract
+
+theorem two_approx_attenuators_error :
+    (composeErrorContracts ApproxAttenuatorContract
+      ApproxAttenuatorContract).error = (1 / 60 : ℝ) := by
+  norm_num [composeErrorContracts, ApproxAttenuatorContract, abs_of_nonneg]
 
 end Examples.spice.chain.proof

@@ -65,8 +65,8 @@ wrong inclusion direction.
 `LeanModels/Circuit/Time.lean` provides both dense traces and superdense
 hybrid time. Continuous DAE capabilities use dense time today. The delivered
 mixed-signal slice uses an ordered microstep at each physical sample time;
-full event execution for lowered Verilog-AMS `cross`, `timer`, and digital
-events remains a separate semantic layer.
+full event execution for future analog and digital event constructs remains a
+separate semantic layer.
 
 `LeanModels/Circuit/Transient.lean` defines scalar and vector DAE residuals.
 The physical finite-horizon relation requires every state coordinate to be
@@ -230,15 +230,21 @@ storage capacitor. The reusable deck has no wordline or bitline sources.
 Its checked adapter resolves the storage, wordline, and bitline nodes and
 requires the named NMOS model profile.
 
-This deliberately thin slice proves two operations from the actual access
-MOS current:
+This deliberately thin slice separates a device-derived operation from a
+definitional one:
 
-* with the wordline low, MOS1 cutoff and `IS=0` make the capacitor charge and
-  storage voltage exactly constant for the full finite horizon; and
-* with the wordline high and bitline at ground, the write-zero DAE is exactly
-  the normalized MOS1 channel current divided by the extracted capacitance.
-  A behavior exists, remains between ground and supply without overshoot, and
-  satisfies the inherited exponential settling deadline.
+* write-zero is derived from the device law: with the wordline high and
+  bitline at ground, the write-zero DAE field is proved equal to the
+  normalized MOS1 channel current divided by the extracted capacitance
+  (`dram1T1C_writeField_eq_mos1`). A behavior exists, remains between ground
+  and supply without overshoot, and satisfies the inherited exponential
+  settling deadline — all through the loaded-inverter MOS1 analysis; and
+* hold retention is definitional, not derived: the hold-mode DAE field is
+  *defined* to be zero, and constancy of the stored voltage is a conjunct of
+  `Dram1T1CBehavior` itself. MOS1 cutoff with `IS=0` is the recorded modeling
+  rationale, but no MOS current or wordline voltage is consulted in the hold
+  branch; the retention theorem restates what the behavior definition
+  asserts.
 
 The slice does not idealize unsupported operations. Ngspice and Spectre
 validate hold and write-zero in temporary testbenches only.
@@ -258,16 +264,26 @@ evidence.
 ## Validation slice 9: loaded DRAM read and arbitrary-size bank
 
 `Examples/spice/dram_bitcell/` adds an explicit bitline capacitance to the
-typed 1T1C component. Charge conservation derives the shared voltage and
-proves an exact nominal `5/22 V` sense margin. Reads are realizable,
-nondestructive at the digital contract, and restore the stored rail.
+typed 1T1C component. This read slice is spec-level, not device-derived: the
+charge-sharing shared voltage is a *definition* (`dramSharedVoltage`, the
+standard charge-conservation formula), and `DramReadBehavior` definitionally
+asserts that formula together with an ideal relational sense stage and a
+restore that writes back the sensed rail. The access transistor's MOS1 law is
+never consulted by the read relation; its extracted parameters are checked by
+the topology adapter only. What *is* derived is arithmetic over that
+definitional relation: the sign of the sense signal, the exact nominal
+`5/22 V` margin, and read correctness/nondestructiveness given the ideal
+sense component. The proved `nominalRead` parameters are hand-written scaled
+values whose ratio matches the extracted deck capacitances; no theorem links
+them to the extracted farad values.
 
 The sense/restore relation is an explicit ideal component capability. Its
 future transistor-level refinement is visible rather than silently assumed.
 The cell contract composes into read and write refinement theorems for every
-bank width.
+bank width; the bank write relation is itself definitional
+(`Function.update`) and mentions no circuit at all.
 
-## Validation slice 10: mixed-signal sampled refinement
+## Validation slice 10: frontend-independent sampled refinement
 
 `Circuit.MixedSignal` uses superdense sample times, voltage bands, and
 explicit logic/electrical connect relations. `MixedRuns` embeds the existing
@@ -275,10 +291,10 @@ SystemVerilog `Runs` judgment, including its quantified legal schedule
 oracle. The composition theorem transports any proved SV trace property and
 the sampled analog connection relation without defining a second scheduler.
 
-`VerilogAMS.Ast` is a typed lowering target for disciplines, connect modules,
-and events. It is intentionally not a handwritten source parser. OpenVAF
-continues to own the Verilog-A subset; source-level mixed Verilog-AMS waits
-for a suitable pinned third-party AST frontend.
+This relation is not a Verilog-AMS frontend or execution semantics. OpenVAF
+owns the active Verilog-A subset. Full mixed Verilog-AMS support is deferred
+in `docs/backlog.md` and will require a suitable pinned third-party AST
+frontend.
 
 ## Source and validation boundary
 
@@ -316,16 +332,18 @@ energy bounds, separate backward-Euler semantics, operating-point
 linearization, exact small-signal AC, provenance records, checked assurance
 reports, and an OpenVAF-backed minimal Verilog-A contribution frontend.
 It also includes deterministic bounded-noise propagation, exact finite
-whole-world yield, charge-sharing DRAM read/restore contracts composed for
-arbitrary bank widths, and sampled analog/SV refinement over the existing
-all-schedule SV semantics.
+whole-world yield, spec-level charge-sharing DRAM read/restore contracts
+composed for arbitrary bank widths (definitional relations; see slice 9),
+and sampled analog/SV refinement over the existing all-schedule SV
+semantics.
 The loaded-inverter slice additionally validates charge accounting,
 nonlinear real DC existence, correlated PVT worlds, finite-horizon nonlinear
 transient existence, no-overshoot/domain invariance, and an exponential
 settling bound.
 The thin 1T1C slice then demonstrates source-backed dynamic storage,
-environment-controlled access, exact zero-leakage retention, and a
-MOS1-derived write operation without embedding testbench drivers.
+environment-controlled access, exact zero-leakage retention (asserted
+definitionally by the hold-mode behavior; see slice 7), and a MOS1-derived
+write operation without embedding testbench drivers.
 
 The following architecture pieces remain to be implemented or generalized:
 
@@ -339,8 +357,26 @@ The following architecture pieces remain to be implemented or generalized:
 * error-bounded model reduction and continuous/numerical refinement;
 * spectral/stochastic noise processes, general statistical yield, and
   electrothermal interpretations; and
-* the remaining Verilog-A language plus a source-level mixed-signal
-  Verilog-AMS frontend backed by a suitable pinned third-party AST.
+* the remaining Verilog-A language.
+
+Full Verilog-AMS is a separate deferred project; its parser, elaboration,
+hybrid scheduling, and proof gates are recorded in `docs/backlog.md`.
+
+### Known gaps (audited 2026-07-25, queued)
+
+* `#assurance_report` semantic linkage. As audited, the `AssuranceCase`
+  circuit parameter was phantom: the gate checked source provenance and the
+  circuit constant, not any semantic connection, so an assurance case whose
+  behavior had no relation to the circuit passed the report. The
+  `SourceBinding` field added in this change makes the artifact-to-behavior
+  derivation explicit and auditable, but it does not force the connection: a
+  binding whose `behaviorOf` ignores its model still elaborates and still
+  passes the report. Redesign queued: tie the reported behavior to the
+  circuit's own `Behavior` type rather than to a user-supplied function.
+* Elaboration-time dimension checking. `Nature.lean` declares SI dimensions,
+  natures, and conservative/signal disciplines, but that machinery is not
+  wired into any elaboration path: dimensionally invalid values currently
+  elaborate without complaint. Implementation queued.
 
 Physical applicability remains conditional on evidence that the selected
 component envelope covers fabricated devices throughout the proved invariant

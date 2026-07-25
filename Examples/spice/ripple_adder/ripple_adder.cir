@@ -1,6 +1,5 @@
-four-bit ripple adder from transistor-level half-adders
-* Each full adder uses three half adders. The third half adder combines the
-* mutually-exclusive carry terms; its carry output is intentionally unused.
+literal 50-bit ripple adder from transistor-level half-adders
+* and2 is a six-transistor NAND followed by a CMOS inverter.
 .subckt and2 a b out vdd
 mpa nand a vdd vdd pmod
 mpb nand b vdd vdd pmod
@@ -9,6 +8,7 @@ mnb nseries b 0 0 nmod
 mpinv out nand vdd vdd pmod
 mninv out nand 0 0 nmod
 .ends and2
+* or2 is a six-transistor NOR followed by a CMOS inverter.
 .subckt or2 a b out vdd
 mpa pseries a vdd vdd pmod
 mpb nor b pseries vdd pmod
@@ -21,32 +21,70 @@ mninv out nor 0 0 nmod
 mp out input vdd vdd pmod
 mn out input 0 0 nmod
 .ends inv
+* The proved 20-transistor half-adder: carry=a&b; sum=(a|b)&~carry.
 .subckt half_adder a b sum carry vdd
 xcarry a b carry vdd and2
 xany a b any vdd or2
 xnotcarry carry ncarry vdd inv
 xsum any ncarry sum vdd and2
 .ends half_adder
+* Our full-adder is exactly three copies of the proved half-adder.
 .subckt full_adder a b cin sum cout vdd
 xfirst a b propagate generated vdd half_adder
 xsecond propagate cin sum propagated_carry vdd half_adder
 xcarry generated propagated_carry cout unused vdd half_adder
 .ends full_adder
-* LSB first: A=10 (1010), B=3 (0011), Cin=0; expected Sum=13, Cout=0.
+* Fifty literal stages, least-significant bit first.
 xbit0 a0 b0 cin sum0 c1 vdd full_adder
 xbit1 a1 b1 c1 sum1 c2 vdd full_adder
 xbit2 a2 b2 c2 sum2 c3 vdd full_adder
-xbit3 a3 b3 c3 sum3 cout vdd full_adder
-vddsrc vdd 0 dc 5
-va0 a0 0 dc 0
-va1 a1 0 dc 5
-va2 a2 0 dc 0
-va3 a3 0 dc 5
-vb0 b0 0 dc 5
-vb1 b1 0 dc 5
-vb2 b2 0 dc 0
-vb3 b3 0 dc 0
-vcin cin 0 dc 0
+xbit3 a3 b3 c3 sum3 c4 vdd full_adder
+xbit4 a4 b4 c4 sum4 c5 vdd full_adder
+xbit5 a5 b5 c5 sum5 c6 vdd full_adder
+xbit6 a6 b6 c6 sum6 c7 vdd full_adder
+xbit7 a7 b7 c7 sum7 c8 vdd full_adder
+xbit8 a8 b8 c8 sum8 c9 vdd full_adder
+xbit9 a9 b9 c9 sum9 c10 vdd full_adder
+xbit10 a10 b10 c10 sum10 c11 vdd full_adder
+xbit11 a11 b11 c11 sum11 c12 vdd full_adder
+xbit12 a12 b12 c12 sum12 c13 vdd full_adder
+xbit13 a13 b13 c13 sum13 c14 vdd full_adder
+xbit14 a14 b14 c14 sum14 c15 vdd full_adder
+xbit15 a15 b15 c15 sum15 c16 vdd full_adder
+xbit16 a16 b16 c16 sum16 c17 vdd full_adder
+xbit17 a17 b17 c17 sum17 c18 vdd full_adder
+xbit18 a18 b18 c18 sum18 c19 vdd full_adder
+xbit19 a19 b19 c19 sum19 c20 vdd full_adder
+xbit20 a20 b20 c20 sum20 c21 vdd full_adder
+xbit21 a21 b21 c21 sum21 c22 vdd full_adder
+xbit22 a22 b22 c22 sum22 c23 vdd full_adder
+xbit23 a23 b23 c23 sum23 c24 vdd full_adder
+xbit24 a24 b24 c24 sum24 c25 vdd full_adder
+xbit25 a25 b25 c25 sum25 c26 vdd full_adder
+xbit26 a26 b26 c26 sum26 c27 vdd full_adder
+xbit27 a27 b27 c27 sum27 c28 vdd full_adder
+xbit28 a28 b28 c28 sum28 c29 vdd full_adder
+xbit29 a29 b29 c29 sum29 c30 vdd full_adder
+xbit30 a30 b30 c30 sum30 c31 vdd full_adder
+xbit31 a31 b31 c31 sum31 c32 vdd full_adder
+xbit32 a32 b32 c32 sum32 c33 vdd full_adder
+xbit33 a33 b33 c33 sum33 c34 vdd full_adder
+xbit34 a34 b34 c34 sum34 c35 vdd full_adder
+xbit35 a35 b35 c35 sum35 c36 vdd full_adder
+xbit36 a36 b36 c36 sum36 c37 vdd full_adder
+xbit37 a37 b37 c37 sum37 c38 vdd full_adder
+xbit38 a38 b38 c38 sum38 c39 vdd full_adder
+xbit39 a39 b39 c39 sum39 c40 vdd full_adder
+xbit40 a40 b40 c40 sum40 c41 vdd full_adder
+xbit41 a41 b41 c41 sum41 c42 vdd full_adder
+xbit42 a42 b42 c42 sum42 c43 vdd full_adder
+xbit43 a43 b43 c43 sum43 c44 vdd full_adder
+xbit44 a44 b44 c44 sum44 c45 vdd full_adder
+xbit45 a45 b45 c45 sum45 c46 vdd full_adder
+xbit46 a46 b46 c46 sum46 c47 vdd full_adder
+xbit47 a47 b47 c47 sum47 c48 vdd full_adder
+xbit48 a48 b48 c48 sum48 c49 vdd full_adder
+xbit49 a49 b49 c49 sum49 cout vdd full_adder
 .model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
 .model pmod pmos (level=1 vto=-1 kp=50u lambda=0 is=0)
 .op

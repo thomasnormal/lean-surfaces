@@ -1,0 +1,7 @@
+Loaded RC step-response network
+VSTEP in 0 DC 5
+RDRIVE in out 1k
+RLOAD out 0 2k
+CLOAD out 0 1u
+.op
+.end

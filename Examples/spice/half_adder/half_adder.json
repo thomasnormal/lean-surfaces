@@ -6,7 +6,7 @@
     "version": "0.1"
   },
   "source_file": "Examples/spice/half_adder/half_adder.cir",
-  "source_sha256": "83c9c9eeb26d70276194a3d3ea4c648da70dd8af15f330cb41945d3a4b9a24d5",
+  "source_sha256": "5345fdba32aec5c23b14bc5330a9274cb2105b702cb43d04e4d1e2faadd59356",
   "netlist": {
     "kind": "Netlist",
     "title": "transistor-level CMOS one-bit half-adder",
@@ -330,58 +330,10 @@
         ]
       },
       {
-        "kind": "V",
-        "span": {
-          "line": 36,
-          "end_line": 36
-        },
-        "name": "vddsrc",
-        "nodes": [
-          "vdd",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 37,
-          "end_line": 37
-        },
-        "name": "va",
-        "nodes": [
-          "a",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
+        "kind": "Model",
         "span": {
           "line": 38,
           "end_line": 38
-        },
-        "name": "vb",
-        "nodes": [
-          "b",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "Model",
-        "span": {
-          "line": 39,
-          "end_line": 39
         },
         "name": "nmod",
         "polarity": "nmos",
@@ -426,8 +378,8 @@
       {
         "kind": "Model",
         "span": {
-          "line": 40,
-          "end_line": 40
+          "line": 39,
+          "end_line": 39
         },
         "name": "pmod",
         "polarity": "pmos",
@@ -472,8 +424,8 @@
       {
         "kind": "Op",
         "span": {
-          "line": 41,
-          "end_line": 41
+          "line": 40,
+          "end_line": 40
         }
       }
     ]

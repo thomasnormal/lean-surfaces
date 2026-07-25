@@ -1,0 +1,7 @@
+* Loaded RC low-pass; AC analysis uses a unit small-signal input
+vdrive in 0 dc 0
+rdrive in out 1k
+rload out 0 2k
+cload out 0 1u
+.op
+.end

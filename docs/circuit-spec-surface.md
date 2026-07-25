@@ -34,6 +34,14 @@ simulator result is a premise of a theorem.
 | Verilog-A contribution subset | `Examples/verilog-a/resistor/` |
 | SV/analog sampled connection | `Examples/mixed-signal/counter_connect/` |
 
+The two DRAM rows need precision about what is derived versus defined:
+write-zero dynamics in `dram_1t1c` are derived from the MOS1 channel law, but
+hold retention is asserted definitionally by `Dram1T1CBehavior`; and the
+`dram_bitcell` read slice's charge-sharing voltage, ideal sense stage, and
+rail restore are definitional relations — only their sign/margin arithmetic
+and the bank composition theorems are derived from them (see
+`docs/spice-device-levels.md`).
+
 ## Surface contract
 
 ### Loading and checked names

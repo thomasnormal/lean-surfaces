@@ -2,7 +2,6 @@
 """Validate transistor-gate logic levels against ngspice operating points."""
 
 import argparse
-import json
 import subprocess
 import tempfile
 from pathlib import Path
@@ -31,11 +30,12 @@ DESIGNS = [
     },
 ]
 
+RIPPLE_WIDTH = 50
 RIPPLE_VECTORS = [
     (0, 0, 0),
-    (10, 3, 0),
-    (15, 1, 0),
-    (15, 15, 1),
+    ((1 << 49) + 10, (1 << 48) + 3, 0),
+    ((1 << 50) - 1, 1, 0),
+    ((1 << 50) - 1, (1 << 50) - 1, 1),
 ]
 
 
@@ -52,31 +52,35 @@ def run_ripple_checks(spice, directory):
     checks = 0
     for left, right, carry_in in RIPPLE_VECTORS:
         expected = left + right + carry_in
-        drives = {
-            **{f"va{i}": 5 * bit(left, i) for i in range(4)},
-            **{f"vb{i}": 5 * bit(right, i) for i in range(4)},
-            "vcin": 5 * carry_in,
+        inject_drives = {
+            "vddsrc": ("vdd", 5),
+            **{
+                f"va{i}": (f"a{i}", 5 * bit(left, i))
+                for i in range(RIPPLE_WIDTH)
+            },
+            **{
+                f"vb{i}": (f"b{i}", 5 * bit(right, i))
+                for i in range(RIPPLE_WIDTH)
+            },
+            "vcin": ("cin", 5 * carry_in),
         }
         case = {
             "name": f"ripple-{left}-{right}-{carry_in}",
             "source": "Examples/spice/ripple_adder/ripple_adder.cir",
-            "drives": drives,
+            "inject_drives": inject_drives,
         }
-        deck, envelope = diff_test.materialize(case, directory)
-        parsed = json.loads(envelope.read_text())
-        if parsed["netlist"]["kind"] != "Netlist":
-            raise RuntimeError(f"{case['name']}: invalid envelope")
+        deck = diff_test.materialize(case, directory)
         run = subprocess.run(
             [spice, "-b", str(deck)], cwd=ROOT, check=True,
             capture_output=True, text=True)
         output = run.stdout + run.stderr
         probes = [
-            *(f"sum{i}" for i in range(4)),
+            *(f"sum{i}" for i in range(RIPPLE_WIDTH)),
             "cout",
         ]
         expected_bits = [
-            *(bit(expected, i) for i in range(4)),
-            bit(expected, 4),
+            *(bit(expected, i) for i in range(RIPPLE_WIDTH)),
+            bit(expected, RIPPLE_WIDTH),
         ]
         for probe, expected_bit in zip(probes, expected_bits):
             voltage = diff_test.parse_ngspice(output, probe)
@@ -106,12 +110,13 @@ def main():
                     case = {
                         "name": f"{design['name']}-{left}{right}",
                         "source": design["source"],
-                        "drives": {"va": 5 * left, "vb": 5 * right},
+                        "inject_drives": {
+                            "vddsrc": ("vdd", 5),
+                            "va": ("a", 5 * left),
+                            "vb": ("b", 5 * right),
+                        },
                     }
-                    deck, envelope = diff_test.materialize(case, directory)
-                    parsed = json.loads(envelope.read_text())
-                    if parsed["netlist"]["kind"] != "Netlist":
-                        raise RuntimeError(f"{case['name']}: invalid envelope")
+                    deck = diff_test.materialize(case, directory)
                     run = subprocess.run(
                         [spice, "-b", str(deck)], cwd=ROOT, check=True,
                         capture_output=True, text=True)

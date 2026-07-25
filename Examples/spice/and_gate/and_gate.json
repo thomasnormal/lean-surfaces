@@ -6,7 +6,7 @@
     "version": "0.1"
   },
   "source_file": "Examples/spice/and_gate/and_gate.cir",
-  "source_sha256": "765e030573d6caff0f2441ff1ef25b2468690c8f0185be2842b99d8011ccac33",
+  "source_sha256": "7900453b34c476f9eeb63353e06668f397a2fb5b0735c7a3ac337d2b6d5724e8",
   "netlist": {
     "kind": "Netlist",
     "title": "transistor-level CMOS AND gate",
@@ -103,58 +103,10 @@
         "model": "nmod"
       },
       {
-        "kind": "V",
-        "span": {
-          "line": 16,
-          "end_line": 16
-        },
-        "name": "vddsrc",
-        "nodes": [
-          "vdd",
-          "0"
-        ],
-        "value": {
-          "num": 5,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
+        "kind": "Model",
         "span": {
           "line": 17,
           "end_line": 17
-        },
-        "name": "va",
-        "nodes": [
-          "a",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "V",
-        "span": {
-          "line": 18,
-          "end_line": 18
-        },
-        "name": "vb",
-        "nodes": [
-          "b",
-          "0"
-        ],
-        "value": {
-          "num": 0,
-          "den": 1
-        }
-      },
-      {
-        "kind": "Model",
-        "span": {
-          "line": 19,
-          "end_line": 19
         },
         "name": "nmod",
         "polarity": "nmos",
@@ -199,8 +151,8 @@
       {
         "kind": "Model",
         "span": {
-          "line": 20,
-          "end_line": 20
+          "line": 18,
+          "end_line": 18
         },
         "name": "pmod",
         "polarity": "pmos",
@@ -245,8 +197,8 @@
       {
         "kind": "Op",
         "span": {
-          "line": 21,
-          "end_line": 21
+          "line": 19,
+          "end_line": 19
         }
       }
     ]

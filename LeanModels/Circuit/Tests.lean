@@ -11,6 +11,8 @@ load_circuit assuranceMismatchCircuit from
   "Examples/spice/loaded_rc/loaded_rc.cir"
 load_circuit sharedMosGate from
   "Examples/spice/and_gate/and_gate.cir"
+load_circuit gndAliasFixture from
+  "Examples/spice/gnd_alias/gnd_alias.cir"
 
 #guard directDivider.nodeNames == #["in", "0", "out"]
 #guard directDivider.deviceNames == #["v1", "r1", "r2"]
@@ -25,6 +27,9 @@ load_circuit sharedMosGate from
 theorem directDivider_trivial_assurance :
     AssuranceCase directDivider (NominalDCBehavior directDivider)
       (fun _world => True)
+      (SourceBinding.identity directDivider
+        (fun _circuit => NominalDCBehavior directDivider)
+        (fun _circuit _world => True))
       (fun _world _assignment _internal => True)
       (fun _world _assignment _internal => True) := by
   constructor
@@ -42,6 +47,14 @@ error: #assurance_report: `LeanModels.Circuit.Tests.directDivider_trivial_assura
 #guard_msgs in
 #assurance_report assuranceMismatchCircuit using
   directDivider_trivial_assurance []
+
+/- ngspice aliases the node name `gnd` (any case) to ground `0`. A deck
+mixing `gnd`, `GND`, and `0` must elaborate to the single-ground topology and
+reproduce ngspice's answer: v(in) = 5 V, v1#branch = -10 mA. -/
+#guard gndAliasFixture.nodeNames == #["in", "0"]
+#guard gndAliasFixture.ground == ⟨1⟩
+#circuit_check gndAliasFixture dc shows "in" = (5 : Rat)
+#guard gndAliasFixture_solution.currents == #[-1 / 100, 1 / 200, 1 / 200]
 
 #guard Spice.parseValue "1k" == some 1000
 #guard Spice.parseValue "2.2meg" == some 2200000

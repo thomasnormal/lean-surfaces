@@ -314,7 +314,7 @@ differential harnesses, not the other way round.
 
 ![Five-volt resistor divider: 1 kOhm from input to output and 2 kOhm from output to ground](docs/assets/divider-circuit.svg)
 
-<!-- docs-check: Examples/spice/typed_divider/typed_divider.cir (illustrative — lands with the typed-circuit cutover) -->
+<!-- docs-check: Examples/spice/typed_divider/typed_divider.cir -->
 ```spice
 Typed circuit architecture divider
 V1 in 0 DC 5
@@ -325,7 +325,7 @@ R2 out 0 2k
 ```
 
 ```lean
--- Examples/spice/typed_divider/spec.lean (illustrative — lands with the typed-circuit cutover)
+-- Examples/spice/typed_divider/spec.lean
 load_circuit typedDivider from
   "Examples/spice/typed_divider/typed_divider.cir"
 
@@ -341,7 +341,7 @@ theorem typed_divider_realizable :
 ```
 
 ```lean
--- Examples/spice/typed_divider/proof.lean (illustrative — lands with the typed-circuit cutover)
+-- Examples/spice/typed_divider/proof.lean
 theorem typed_divider_out :
     typedDivider ⊨dc {
       v, _i => v (node! typedDivider "out") = 10 / 3
@@ -423,11 +423,12 @@ pretend SPICE has parametric netlist syntax.
 Verilog-A uses a separate source boundary. A pinned OpenVAF Reloaded typed
 AST performs preprocessing and parsing, and Lean checks a deterministic
 projection before lowering contributions into the same relational circuit
-core. Unsupported constructs are rejected. The mixed Verilog-AMS work
-currently provides typed disciplines, connect/event lowering targets, and a
-sampled refinement theorem over the real SV scheduler. There is deliberately
-no handwritten AMS parser: a source-level frontend waits for a suitable
-pinned third-party AST.
+core. Unsupported constructs are rejected. Verilog-A is the active analog
+HDL scope. Full Verilog-AMS source parsing, connect-module elaboration, and
+hybrid execution semantics are deferred in
+[the backlog](docs/backlog.md). The frontend-independent sampled analog/SV
+relation remains useful infrastructure, but it is not presented as
+Verilog-AMS support.
 
 ## Repo layout
 
@@ -444,7 +445,6 @@ pinned third-party AST.
 | `LeanModels/Spice.lean` | Mathlib-enabled SPICE lane umbrella |
 | `LeanModels/Circuit/**` | Analysis-independent relational assurance core |
 | `LeanModels/VerilogA/**` | Typed Verilog-A contribution lowering |
-| `LeanModels/VerilogAMS/**` | Mixed-signal discipline/connect/event lowering target |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
 | `extractors/veriloga/` | Pinned OpenVAF typed-AST projection; no handwritten Verilog-A parser |
 | `Examples/python/<name>/` | Python examples: pure `.py` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
@@ -481,6 +481,11 @@ core `Rat`. Extractor/harness require only Python ≥ 3.9 stdlib.
 
 ## Roadmap (not built — do not expect it in this tree)
 
+- **Verilog-AMS**: unified analog/digital source parsing, connect-module
+  insertion, and superdense mixed-signal execution are explicitly deferred.
+  The active analog HDL frontend is Verilog-A. See
+  [`docs/backlog.md`](docs/backlog.md) for the prerequisites and assurance
+  gates.
 - **SystemVerilog beyond M0** (the built slice is described above): event-driven
   time (`initial`, `#` delays), hierarchy/instantiation, and the full-LRM tiers
   measured by the 21k-test conformance census (`docs/sv-corpus-coverage.md`) —

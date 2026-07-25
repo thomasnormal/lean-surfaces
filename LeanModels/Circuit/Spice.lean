@@ -112,6 +112,14 @@ private def words (text : String) : List String :=
 def parseValue (token : String) : Option Rat :=
   ExactLiteral.parse token
 
+/-- ngspice aliases the node name `gnd` (case-insensitively) to the ground
+node `0`. Keeping that dialect rule in the frontend prevents kernel-checked
+answers over a silently distinct `gnd` node that contradict the reference
+simulator. -/
+private def normalizeNode (name : String) : String :=
+  let lowered := name.toLower
+  if lowered == "gnd" then "0" else lowered
+
 private def parseDevice (line : Nat) (text : String) :
     Except ParseError SourceDevice := do
   let tokens := words text
@@ -128,14 +136,16 @@ private def parseDevice (line : Nat) (text : String) :
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .resistor, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'v', [_name, positive, negative, value] =>
       let value ← match parseValue value with
         | some value => pure value
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .voltageSource, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'v', [_name, positive, negative, dc, value] =>
       unless dc.toLower == "dc" do throw (.malformed line text)
       let value ← match parseValue value with
@@ -143,14 +153,16 @@ private def parseDevice (line : Nat) (text : String) :
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .voltageSource, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'i', [_name, positive, negative, value] =>
       let value ← match parseValue value with
         | some value => pure value
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .currentSource, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'i', [_name, positive, negative, dc, value] =>
       unless dc.toLower == "dc" do throw (.malformed line text)
       let value ← match parseValue value with
@@ -158,21 +170,24 @@ private def parseDevice (line : Nat) (text : String) :
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .currentSource, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'c', [_name, positive, negative, value] =>
       let value ← match parseValue value with
         | some value => pure value
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .capacitor, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | 'l', [_name, positive, negative, value] =>
       let value ← match parseValue value with
         | some value => pure value
         | none => throw (.malformed line text)
       pure {
         span := ⟨line⟩, kind := .inductor, name
-        positive := positive.toLower, negative := negative.toLower, value }
+        positive := normalizeNode positive, negative := normalizeNode negative
+        value }
   | _, _ => throw (.unsupported line text)
 
 private def parseInstance (line : Nat) (text : String) :
@@ -187,7 +202,7 @@ private def parseInstance (line : Nat) (text : String) :
             span := ⟨line⟩
             name := name.toLower
             subcircuit := subcircuit.toLower
-            connections := connections.map String.toLower |>.toArray }
+            connections := connections.map normalizeNode |>.toArray }
       | _ => throw (.malformed line text)
   | _ => throw (.malformed line text)
 
@@ -198,10 +213,10 @@ private def parseMosfet (line : Nat) (text : String) :
       pure {
         span := ⟨line⟩
         name := name.toLower
-        drain := drain.toLower
-        gate := gate.toLower
-        source := source.toLower
-        bulk := bulk.toLower
+        drain := normalizeNode drain
+        gate := normalizeNode gate
+        source := normalizeNode source
+        bulk := normalizeNode bulk
         model := model.toLower }
   | _ => throw (.malformed line text)
 
@@ -275,7 +290,7 @@ def parse (source : String) : Except ParseError SourceCircuit := do
           if ports.isEmpty then throw (.malformed line text)
           activeName := some name.toLower
           activeLine := line
-          activePorts := ports.map String.toLower |>.toArray
+          activePorts := ports.map normalizeNode |>.toArray
           activeDevices := #[]
           activeMosfets := #[]
           activeInstances := #[]

@@ -1,0 +1,6 @@
+* Critically damped two-node RLC discharge
+cstore n1 0 1u
+lpath n1 n2 1u
+rload n2 0 2
+.op
+.end

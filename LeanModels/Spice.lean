@@ -15,6 +15,8 @@ import LeanModels.Spice.RLC
 import LeanModels.Spice.LoadedInverter
 import LeanModels.Spice.Dram1T1C
 import LeanModels.Spice.DramBitcell
+import LeanModels.Spice.DramBank
+import LeanModels.Spice.DramArray
 
 /-!
 # SPICE lane umbrella

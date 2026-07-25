@@ -5,6 +5,16 @@
     "probes": {"in": "5", "out": "10/3", "@v1": "-1/600"}
   },
   {
+    "name": "robust-divider-nominal",
+    "source": "Examples/spice/robust_divider/robust_divider.cir",
+    "probes": {"in": "5", "out": "10/3", "@v1": "-1/600"}
+  },
+  {
+    "name": "loaded-rc-dc",
+    "source": "Examples/spice/loaded_rc/loaded_rc.cir",
+    "probes": {"in": "5", "out": "10/3", "@vstep": "-1/600"}
+  },
+  {
     "name": "chain-1-2-3",
     "source": "Examples/spice/chain/chain.cir",
     "probes": {"out1": "10/3", "out2": "20/9", "out3": "40/27", "@v1": "-1/200"}

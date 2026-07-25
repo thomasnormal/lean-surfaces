@@ -1,186 +1,49 @@
 import Examples.spice.and_gate.spec
-import LeanModels.Spice.Surface
-import LeanModels.Spice.Cmos
+import LeanModels.Circuit.Surface
+import LeanModels.Spice.Mos1Surface
 import LeanModels.Spice.Mos1Logic
 
 namespace Examples.spice.half_adder.proof
 
 open LeanModels.Spice
 
-load_mos1 halfAdderDeck from "Examples/spice/half_adder/half_adder.json"
+load_circuit halfAdderDeck from "Examples/spice/half_adder/half_adder.cir"
 
-/-- The computed, hierarchy-free switch deck. -/
-private def halfAdderSwitchFlat : Netlist :=
-  (flattenSwitch halfAdderDeck).toOption.getD default
-
-private theorem halfAdder_flattenSwitch :
-    flattenSwitch halfAdderDeck = .ok halfAdderSwitchFlat := by
-  rfl
-
-/-- The six switch implications contributed by a CMOS NOR followed by an
-inverter. -/
-private def CmosOrDeviceLaws
-    (left right series nor output vdd ground : Bool) : Prop :=
-  (left = false → series = vdd) ∧
-  (right = false → nor = series) ∧
-  (left = true → nor = ground) ∧
-  (right = true → nor = ground) ∧
-  (nor = false → output = vdd) ∧
-  (nor = true → output = ground)
-
-private theorem cmos_or_from_device_laws
-    {left right series nor output vdd ground : Bool}
-    (hlaws : CmosOrDeviceLaws left right series nor output vdd ground)
-    (hvdd : vdd = true) (hground : ground = false) :
-    output = Bool.or left right := by
-  rcases left with _ | _ <;> rcases right with _ | _ <;>
-    simp [CmosOrDeviceLaws] at hlaws ⊢ <;> grind
-
-/-- The two switch implications contributed by a CMOS inverter. -/
-private def CmosInverterDeviceLaws
-    (input output vdd ground : Bool) : Prop :=
-  (input = false → output = vdd) ∧
-  (input = true → output = ground)
-
-private theorem cmos_inverter_from_device_laws
-    {input output vdd ground : Bool}
-    (hlaws : CmosInverterDeviceLaws input output vdd ground)
-    (hvdd : vdd = true) (hground : ground = false) :
-    output = !input := by
-  rcases input with _ | _ <;>
-    simp [CmosInverterDeviceLaws] at hlaws ⊢ <;> grind
-
-/-- The four physical submodule contracts read from the flattened hierarchy. -/
-private def HalfAdderDeviceLaws (state : LogicState) : Prop :=
-  CmosAndDeviceLaws
-      (state.level "a") (state.level "b")
-      (state.level "xcarry.nand") (state.level "xcarry.nseries")
-      (state.level "carry") (state.level "vdd") (state.level "0") ∧
-  CmosOrDeviceLaws
-      (state.level "a") (state.level "b")
-      (state.level "xany.pseries") (state.level "xany.nor")
-      (state.level "any") (state.level "vdd") (state.level "0") ∧
-  CmosInverterDeviceLaws
-      (state.level "carry") (state.level "ncarry")
-      (state.level "vdd") (state.level "0") ∧
-  CmosAndDeviceLaws
-      (state.level "any") (state.level "ncarry")
-      (state.level "xsum.nand") (state.level "xsum.nseries")
-      (state.level "sum") (state.level "vdd") (state.level "0")
-
-private theorem halfAdderDeviceLaws (state : LogicState)
-    (hsatisfies : SwitchSatisfies halfAdderDeck state) :
-    HalfAdderDeviceLaws state := by
-  unfold SwitchSatisfies at hsatisfies
-  rw [halfAdder_flattenSwitch] at hsatisfies
-  dsimp [halfAdderSwitchFlat, flattenSwitch, flattenSwitchCards,
-    flattenBudget, halfAdderDeck, renameElement, renameMosfet, renameNode,
-    lookupRename, qualify, findSubckt] at hsatisfies
-  simpa [Except.bind, Except.pure, Except.instMonad, Bind.bind, Pure.pure,
-    Option.getD, Except.toOption, List.append, List.findSome?,
-    SwitchCardsSatisfy, SwitchCardLaw,
-    MosfetSwitchLaw, and_assoc,
-    Netlist.findMosModel, HalfAdderDeviceLaws, CmosAndDeviceLaws,
-    CmosOrDeviceLaws, CmosInverterDeviceLaws,
-    flattenSwitch, flattenSwitchCards, flattenBudget, halfAdderDeck,
-    renameElement, renameMosfet, renameNode, lookupRename, qualify,
-    findSubckt] using hsatisfies
-
-/-- One concrete internal-node realization for each input vector. -/
-private def halfAdderState (left right : Bool) : LogicState :=
+/-- Boolean rail assignment used only to exhibit non-vacuity witnesses. -/
+private def halfAdderLevel (left right : Bool) (name : String) : Bool :=
   let carry := Bool.and left right
   let any := Bool.or left right
   let ncarry := !carry
   let sum := Bool.xor left right
-  { level := fun node =>
-      if node == "vdd" then true
-      else if node == "a" then left
-      else if node == "b" then right
-      else if node == "carry" then carry
-      else if node == "xcarry.nand" then !carry
-      else if node == "xcarry.nseries" then Bool.and left (!right)
-      else if node == "any" then any
-      else if node == "xany.nor" then !any
-      else if node == "xany.pseries" then !left
-      else if node == "ncarry" then ncarry
-      else if node == "sum" then sum
-      else if node == "xsum.nand" then !(Bool.and any ncarry)
-      else if node == "xsum.nseries" then Bool.and any (!ncarry)
-      else false }
+  if name == "vdd" then true
+  else if name == "a" then left
+  else if name == "b" then right
+  else if name == "carry" then carry
+  else if name == "xcarry.nand" then !carry
+  else if name == "xcarry.nseries" then Bool.and left (!right)
+  else if name == "any" then any
+  else if name == "xany.nor" then !any
+  else if name == "xany.pseries" then !left
+  else if name == "ncarry" then ncarry
+  else if name == "sum" then sum
+  else if name == "xsum.nand" then !(Bool.and any ncarry)
+  else if name == "xsum.nseries" then Bool.and any (!ncarry)
+  else false
 
-/-- The extracted hierarchical transistor network implements a one-bit
-half-adder. Both AND instances reuse `cmos_and_from_device_laws`. -/
-theorem half_adder_correct :
-    HalfAdderContract halfAdderDeck "a" "b" "sum" "carry" := by
-  intro left right
-  constructor
-  · intro state hsatisfies hdrives
-    rcases halfAdderDeviceLaws state hsatisfies with
-      ⟨hcarryLaws, horLaws, hinverterLaws, hsumLaws⟩
-    have hcarry := cmos_and_from_device_laws
-      hcarryLaws hdrives.2.1 hdrives.1
-    have hany := cmos_or_from_device_laws
-      horLaws hdrives.2.1 hdrives.1
-    have hncarry := cmos_inverter_from_device_laws
-      hinverterLaws hdrives.2.1 hdrives.1
-    have hsum := cmos_and_from_device_laws
-      hsumLaws hdrives.2.1 hdrives.1
-    rw [hdrives.2.2.1, hdrives.2.2.2] at hcarry hany
-    rw [hcarry] at hncarry
-    rw [hany, hncarry] at hsum
-    constructor
-    · rcases left with _ | _ <;> rcases right with _ | _ <;>
-        simpa using hsum
-    · exact hcarry
-  · refine ⟨halfAdderState left right, ?_, ?_⟩
-    · rcases left with _ | _ <;> rcases right with _ | _ <;>
-        unfold SwitchSatisfies <;>
-        rw [halfAdder_flattenSwitch] <;>
-        dsimp [halfAdderSwitchFlat, flattenSwitch, flattenSwitchCards,
-          flattenBudget, halfAdderDeck, renameElement, renameMosfet,
-          renameNode, lookupRename, qualify, findSubckt] <;>
-        simp [Except.bind, Except.pure, Bind.bind, Pure.pure,
-          Option.getD, Except.toOption, List.findSome?,
-          SwitchCardsSatisfy, SwitchCardLaw,
-          MosfetSwitchLaw, Netlist.findMosModel, halfAdderState,
-          flattenSwitchCards,
-          renameElement, renameMosfet, renameNode, lookupRename, qualify,
-          findSubckt]
-    · simp [DrivesTwo, halfAdderState]
 
-/-- Exact two-way interface abstraction of the proved transistor block. -/
-theorem half_adder_interface
-    {left right sum carry : Bool} :
-    HalfAdderObservation halfAdderDeck "a" "b" "sum" "carry"
-        left right sum carry ↔
-      HalfAdderBehavior left right sum carry := by
-  constructor
-  · rintro ⟨state, hsatisfies, hdrives, hsum, hcarry⟩
-    have houtputs :=
-      (half_adder_correct left right).1 state hsatisfies hdrives
-    exact ⟨hsum.symm.trans houtputs.1, hcarry.symm.trans houtputs.2⟩
-  · rintro ⟨hsum, hcarry⟩
-    rcases (half_adder_correct left right).2 with
-      ⟨state, hsatisfies, hdrives⟩
-    have houtputs :=
-      (half_adder_correct left right).1 state hsatisfies hdrives
-    exact ⟨state, hsatisfies, hdrives,
-      houtputs.1.trans hsum.symm, houtputs.2.trans hcarry.symm⟩
-
-/-! ## Ngspice MOS Level 1 proof -/
-
-def halfAdderMos1 : Mos1Circuit :=
+def halfAdderMos1 : Mos1ResolvedCircuit :=
   halfAdderDeck_mos1
 
 /-- Each hierarchical submodule's local KCL equations, extracted from the
 single flattened 20-transistor deck. CMOS gate terminals draw zero current in
 this MOS1 profile, so fanout does not add a term to a driving output's KCL. -/
 private theorem halfAdderMos1Equations (state : Mos1CircuitState)
-    (hs : Mos1Satisfies halfAdderMos1 state)
+    (hs : Mos1ComponentSatisfies halfAdderMos1
+      [supply, node "a", node "b"] state)
     (hb : Mos1WithinSupply halfAdderMos1 state)
     {left right : Bool}
     (hd : Mos1DrivesTwo state
-      (node! halfAdderMos1 "a") (node! halfAdderMos1 "b") left right) :
+      (mos_node! halfAdderMos1 "a") (mos_node! halfAdderMos1 "b") left right) :
     Mos1AndEquations (logicVoltage left) (logicVoltage right)
       (state.voltage (node "xcarry.nand"))
       (state.voltage (node "xcarry.nseries"))
@@ -208,7 +71,8 @@ private theorem halfAdderMos1Equations (state : Mos1CircuitState)
     "xsum.nseries" => hSumSeries, bSumSeries,
     "sum" => hSum, bSum]
   unfold mos1Kcl at hcarryNand hcarrySeries hcarry hOrSeries hNor hAny hNcarry hSumNand hSumSeries hSum
-  simp [halfAdderMos1, halfAdderDeck_mos1, mos1DeviceCurrentLeaving,
+  simp [halfAdderMos1, halfAdderDeck_mos1,
+    mos1DeviceCurrentLeaving,
     mos1DrainCurrent, Mos1Model.params, node] at hcarryNand hcarrySeries hcarry hOrSeries hNor hAny hNcarry hSumNand hSumSeries hSum
   rcases hd with ⟨hground, hvdd, hleft, hright⟩
   have hground' : state.voltage ⟨"0"⟩ = 0 := by
@@ -247,8 +111,8 @@ from its ngspice Level-1 equations and KCL. Both AND instances reuse
 `mos1_and_from_equations`; no ideal-switch premise occurs in this theorem. -/
 theorem half_adder_mos1_correct :
     Mos1HalfAdderContract halfAdderMos1
-      (node! halfAdderMos1 "a") (node! halfAdderMos1 "b")
-      (node! halfAdderMos1 "sum") (node! halfAdderMos1 "carry") := by
+      (mos_node! halfAdderMos1 "a") (mos_node! halfAdderMos1 "b")
+      (mos_node! halfAdderMos1 "sum") (mos_node! halfAdderMos1 "carry") := by
   intro left right state hs hb hd
   rcases halfAdderMos1Equations state hs hb hd with
     ⟨hcarryEq, horEq, hinverterEq, hsumEq⟩
@@ -261,5 +125,47 @@ theorem half_adder_mos1_correct :
   · rcases left with _ | _ <;> rcases right with _ | _ <;>
       simpa [logicVoltage] using hsum
   · exact hcarry
+
+/-- Exact rail-valued state used to show that the open MOS1 component
+contract is non-vacuous for every Boolean input vector. -/
+private noncomputable def halfAdderMos1Witness
+    (left right : Bool) : Mos1CircuitState :=
+  { voltage := fun target =>
+      logicVoltage (halfAdderLevel left right target.name)
+    sourceCurrent := fun _ => 0 }
+
+set_option maxHeartbeats 1000000 in
+theorem half_adder_mos1_observation_exists (left right : Bool) :
+    Mos1HalfAdderObservation halfAdderMos1
+      (mos_node! halfAdderMos1 "a") (mos_node! halfAdderMos1 "b")
+      (mos_node! halfAdderMos1 "sum") (mos_node! halfAdderMos1 "carry")
+      left right (Bool.xor left right) (Bool.and left right) := by
+  refine ⟨halfAdderMos1Witness left right, ?_, ?_, ?_, ?_, ?_⟩
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1ComponentSatisfies,
+        halfAdderMos1Witness, halfAdderMos1,
+        halfAdderDeck_mos1, halfAdderLevel, mos1Nodes, Mos1ResolvedCircuit.nodes,
+        Mos1Device.nodes, Mos1DeviceLaw, mos1Kcl, mos1DeviceCurrentLeaving,
+        mos1DrainCurrent, Mos1Model.params, mos1ForwardCurrent, logicVoltage,
+        ground, supply, node] <;> norm_num
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1WithinSupply,
+        halfAdderMos1Witness, halfAdderMos1,
+        halfAdderDeck_mos1, halfAdderLevel, mos1Nodes, Mos1ResolvedCircuit.nodes,
+        Mos1Device.nodes, logicVoltage]
+  · rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [Mos1DrivesTwo,
+        halfAdderMos1Witness, halfAdderMos1,
+        halfAdderDeck_mos1, halfAdderLevel, logicVoltage,
+        ground, supply, node]
+  all_goals
+    rcases left with _ | _ <;> rcases right with _ | _
+    all_goals
+      simp [
+      halfAdderMos1Witness, halfAdderMos1,
+        halfAdderDeck_mos1, halfAdderLevel, logicVoltage, node]
 
 end Examples.spice.half_adder.proof

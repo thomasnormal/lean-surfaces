@@ -174,20 +174,25 @@ error: py_loop: loop variable `k` is not in the loop environment [n,
  s] — when the Python variable names are shadowed by ambient binders, name them with `(state := [...])`
 ```
 
-`(state := [s, n])` is the fix: it names the *environment* variables
+`(state := [s, n])` is `py_loop`'s fix: it names the *environment* variables
 positionally, freeing the lambda binders to be anything — here `s` and `k`.
-The real theorem, verbatim from the tree:
+The real file is proved through the VC walker (`py_vcgen`, VCTactic.lean),
+whose counterpart is a private core that renames the initial value to `N`;
+verbatim from the tree:
 
 ```lean
 -- Examples/python/sum_to/sum_to.py (lean block; builds via Examples/python/sum_to/SumTo.lean)
-theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
-  py_begin [sum_to]
-  py_loop (state := [s, n])
-          (inv := fun (s k : Int) => 0 ≤ k ∧ k ≤ n ∧ 2 * s = (n - k) * (n + k + 1))
-          (dec := fun (s k : Int) => k.toNat)
-  · obtain rfl : k' = 0 := by omega
+private theorem sum_to_core (N : PyInt) (hN : 0 ≤ N) : sum_to(N) ==> N * (N + 1) / 2 := by
+  py_vcgen [sum_to]
+    (inv := fun (s n : Int) => 0 ≤ n ∧ n ≤ N ∧ 2 * s = (N - n) * (N + n + 1))
+    (dec := fun (s n : Int) => n.toNat)
+  case ret =>
+    obtain rfl : n' = 0 := by omega
     grind
   all_goals grind
+
+theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 :=
+  sum_to_core n hn
 ```
 
 Beware the **silent** version of this trap: if you name the binder `n`
@@ -209,16 +214,17 @@ is re-stated `:= by proofs` in `spec.lean`, which also derives the
 ```lean
 -- Examples/python/tri/proof.lean (statement re-stated in Examples/python/tri/spec.lean)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  py_vcgen [tri]
+    (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+    (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  case ret =>
+    obtain rfl : i' = n + 1 := by omega
     grind
   all_goals grind
 ```
 
 Every piece is now familiar: invariant and measure from the table in (a),
-no `(state := …)` because `tri` never mutates `n`, exit bullet pins
+no renamed binders because `tri` never mutates `n`, the `ret` case pins
 `i' = n + 1`, `grind` does the algebra (including the division step
 `2*total = (n+1)*n ⇒ total = n*(n+1)/2`).
 

@@ -14,7 +14,16 @@ You are proving real Python programs correct in Lean 4 (`leanprover/lean4:v4.33.
 8. A SystemVerilog lane (`LeanModels/Sv/**`, `harness/sv/**`, and the SV example dirs `Examples/system-verilog/swap_nba/`, `Examples/system-verilog/counter/`, `Examples/system-verilog/race_blk/`, `Examples/system-verilog/adder/`, `Examples/system-verilog/xsel/`, `Examples/system-verilog/toggle/`) is mid-integration: not imported by `LeanModels.lean`, but its example `spec.lean`/`proof.lean` files build under the `Examples` glob (pulling `LeanModels/Sv/**` in transitively). It has its own contract ([docs/sv-design-m0.md](docs/sv-design-m0.md)) and harness (`harness/sv/diff_test.py`). Leave it alone unless it is your task.
 9. Your deliverable: theorem statements in `spec.lean` (`:= by proofs`) with the real proofs in the sibling `proof.lean`, keeping `lake build` green from the repo root.
 10. Read the docstrings of [Surface.lean](LeanModels/Python/Surface.lean) and [LoopTactic.lean](LeanModels/Python/LoopTactic.lean) before proving anything nontrivial — they are the tactic reference; this file only indexes them. Lookup tables (exact elaborations, tactic/type/CLI index): [docs/reference.md](docs/reference.md).
-11. py_vcgen (v2 proof layer, in progress, additive): [LeanModels/Python/VC.lean](LeanModels/Python/VC.lean) — flow-aware total-correctness triples (`PyPost` arms `next`/`ret`/`brk`/`cont`/`err`, `PyTriple`/`PyStmtTriple` in fuel-threshold form) plus the structural rules — and [LeanModels/Python/VC2.lean](LeanModels/Python/VC2.lean) — the while rule (`PyStmtTriple.whileLoop`: invariant + measure, loop flow routed through the arms), the call rules and the `@[py_spec]` registry (arrow-form lemmas; local hypotheses interchangeable — recursion pattern proved in [LeanModels/Python/VCTests.lean](LeanModels/Python/VCTests.lean)), and the arrow⇄triple bridges (`callsTo_iff_triple`/`raises_iff_triple`). The module docstrings are the contract. Example proofs do not use it yet.
+11. py_vcgen (v2 proof layer, in progress, additive): [LeanModels/Python/VC.lean](LeanModels/Python/VC.lean) — flow-aware total-correctness triples (`PyPost` arms `next`/`ret`/`brk`/`cont`/`err`, `PyTriple`/`PyStmtTriple` in fuel-threshold form) plus the structural rules — and [LeanModels/Python/VC2.lean](LeanModels/Python/VC2.lean) — the while rule (`PyStmtTriple.whileLoop`: invariant + measure, loop flow routed through the arms), the call rules and the `@[py_spec]` registry (arrow-form lemmas; local hypotheses interchangeable — recursion pattern proved in [LeanModels/Python/VCTests.lean](LeanModels/Python/VCTests.lean)), and the arrow⇄triple bridges (`callsTo_iff_triple`/`raises_iff_triple`), plus [LeanModels/Python/VCTactic.lean](LeanModels/Python/VCTactic.lean) — the `py_vcgen` walker tactic (layer 3): from a `==>`/`⇓`, `PyTriple`, or `∃ v, CallsTo … v ∧ Φ v` goal, per-loop `inv`/`dec` clauses (optional `exit<i>` for `break`-carrying loops; omitted clauses become delayed `inv<i>`/`dec<i>` goals) leave only named-atom math residuals. The module docstrings are the contract. The loop examples (tri, gcd, sum_to, rsa_inverse, nested_flow) are proved with it; goal-shape table below.
+
+    Goal shape → `py_vcgen` (all in one call; residuals are clause math only):
+    | straight-line `f(args) ==> v` | `py_vcgen [prog]`, no clauses |
+    | one loop | `py_vcgen [prog] (inv := fun (<loop's Python names> : Int) => …) (dec := fun … => ….toNat)` |
+    | nested loops / `break` / mid-loop `return` | i-th clause pair ↔ i-th `while` in source order, plus `(exit<i> := …)` when a break-carrying loop's continuation needs more than the invariant — [Examples/python/nested_flow/proof.lean](Examples/python/nested_flow/proof.lean) |
+    | relational result | state `∃ v, CallsTo m "f" args v ∧ Φ v` and walk it — [Examples/python/rsa_inverse/proof.lean](Examples/python/rsa_inverse/proof.lean) |
+    | call in the body | put the callee fact in scope as a local `CallsTo` hypothesis (rsa `inverse_core`), or `@[py_spec]` |
+
+    Migration pitfalls: theorem binders shadowing the Python names go to a private core with renamed binders (`gcd_core`); a disjunctive invariant block must be ONE `abbrev` so the residual splitter keeps it whole (rsa `EgcdPhase`); orient invariant equations sum-to-variable (`lx * A + ly * B = a`), or they rewrite the symbolic environment; `omega` still consumes only unbranded comparisons — rebrand hypotheses (`have hn2 : (2:Int) ≤ n := hn`) or work in an `Int` core.
 
 ## The workflow
 
@@ -58,37 +67,39 @@ Elaboration notes: the identifier is both the loaded module constant and the fun
 | loop provably never runs (guard false at entry) | constant-fuel witness: `exact CallsTo.intro 8 (by py_simp [callFunction, execWhile, f, h0])` — see `tri_neg_total` in `Examples/python/tri/proof.lean` |
 | threshold obligation `∃ f₀, ∀ F, f₀ ≤ F → <straight-line run> = .ok v` (hand-rolled loop lemmas) | `py_threshold 32 [facts…]` |
 
-The proof to imitate for loops (real file, checked by `lake build`):
+The proof to imitate for loops (real file, checked by `lake build` — the example proofs go through `py_vcgen`, item 11):
 
 ```lean
 -- Examples/python/tri/proof.lean (three-file layout; statement re-stated in Examples/python/tri/spec.lean)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  py_vcgen [tri]
+    (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+    (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  case ret =>
+    obtain rfl : i' = n + 1 := by omega
     grind
   all_goals grind
 ```
 
-With shadowed binders (`gcd` mutates `a`, `b`; the invariant needs the *initial* values):
+With shadowed binders (`gcd` mutates `a`, `b`; the invariant needs the *initial* values, so they get renamed core binders):
 
 ```lean
 -- Examples/python/gcd/proof.lean (three-file layout; statement re-stated in Examples/python/gcd/spec.lean)
-theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
-  py_begin [gcd]
-  py_loop (state := [a, b])
-          (inv := fun (x y : Int) => 0 ≤ x ∧ 0 ≤ y ∧ Int.gcd x y = Int.gcd a b)
-          (dec := fun (x y : Int) => y.toNat)
-  · grind [Int.gcd_zero_right, Int.natAbs_of_nonneg]
-  · exact ⟨hinv2, Int.fmod_nonneg hinv1 hinv2, by rw [gcd_fmod_step hinv1 hinv2, hinv3]⟩
-  · have := Int.fmod_lt_of_pos x (show (0:Int) < y by omega)
+private theorem gcd_core (A B : PyInt) (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    gcd(A, B) ==> Int.gcd A B := by
+  py_vcgen [gcd]
+    (inv := fun (a b : Int) => 0 ≤ a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B)
+    (dec := fun (a b : Int) => b.toNat)
+  · exact ⟨a, ⟨rfl, hx⟩, hcore.1, by rw [← hcore.2.2, hx, Int.gcd_zero_right]⟩
+  · exact Int.fmod_nonneg hinv1 hinv2
+  · rw [gcd_fmod_step hinv1 hinv2]; exact hinv3
+  · have := Int.fmod_lt_of_pos a (show (0:Int) < b by omega)
     have := Int.fmod_nonneg hinv1 hinv2
     omega
-  · exact ⟨ha, hb, trivial⟩
+  · grind [Int.gcd_zero_right, Int.natAbs_of_nonneg]
 ```
 
-Residual-goal order after `py_loop`: exit algebra, invariant preservation, measure decrease, initial invariant; any unclosed interpreter obligation is appended last, never dropped.
+Residual-goal order after `py_vcgen`: walk order — init, then per loop exit/preservation/decrease, then the `return` forks; any unclosed obligation is appended, never dropped (`py_loop` order: exit algebra, preservation, decrease, initial invariant).
 
 ## Failure modes
 

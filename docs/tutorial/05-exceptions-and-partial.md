@@ -149,23 +149,24 @@ checks, verbatim:
 ```
 
 and the honest theorems carry sign hypotheses (`0 ≤ a`, `0 ≤ b`) — with the
-loop proof shaped exactly like tutorial 04 taught you (note
-`(state := [a, b])`: the loop mutates both, and the invariant
-`Int.gcd x y = Int.gcd a b` must mention the initial values):
+loop proof shaped exactly like tutorial 04 taught you (the loop mutates
+both `a` and `b`, and the invariant must mention the initial values — so
+the core renames them `A`/`B`, cf. the shadowing how-to):
 
 ```lean
 -- Examples/python/gcd/proof.lean (excerpt; statements re-stated in Examples/python/gcd/spec.lean)
-theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
-  py_begin [gcd]
-  py_loop (state := [a, b])
-          (inv := fun (x y : Int) => 0 ≤ x ∧ 0 ≤ y ∧ Int.gcd x y = Int.gcd a b)
-          (dec := fun (x y : Int) => y.toNat)
-  · grind [Int.gcd_zero_right, Int.natAbs_of_nonneg]
-  · exact ⟨hinv2, Int.fmod_nonneg hinv1 hinv2, by rw [gcd_fmod_step hinv1 hinv2, hinv3]⟩
-  · have := Int.fmod_lt_of_pos x (show (0:Int) < y by omega)
+private theorem gcd_core (A B : PyInt) (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    gcd(A, B) ==> Int.gcd A B := by
+  py_vcgen [gcd]
+    (inv := fun (a b : Int) => 0 ≤ a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B)
+    (dec := fun (a b : Int) => b.toNat)
+  · exact ⟨a, ⟨rfl, hx⟩, hcore.1, by rw [← hcore.2.2, hx, Int.gcd_zero_right]⟩
+  · exact Int.fmod_nonneg hinv1 hinv2
+  · rw [gcd_fmod_step hinv1 hinv2]; exact hinv3
+  · have := Int.fmod_lt_of_pos a (show (0:Int) < b by omega)
     have := Int.fmod_nonneg hinv1 hinv2
     omega
-  · exact ⟨ha, hb, trivial⟩
+  · grind [Int.gcd_zero_right, Int.natAbs_of_nonneg]
 
 theorem gcd_partial (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ~~> Int.gcd a b := by
   py_corollary [gcd_total]

@@ -86,12 +86,13 @@ tactic can invent: the loop invariant, the decreasing measure, and closing
 arithmetic:
 
 ```lean
--- Examples/python/tri/proof.lean (proof body; illustrative until the vcgen campaign lands)
+-- Examples/python/tri/proof.lean
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  py_vcgen [tri]
+    (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+    (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  case ret =>
+    obtain rfl : i' = n + 1 := by omega
     grind
   all_goals grind
 ```
@@ -181,21 +182,25 @@ theorem inverse_no_raise (x n : PyInt) (hx : 0 < x) (hn : 1 < n)
     ¬ rsa_inverse.inverse(x, n) ==>! e := by proofs
 ```
 
-The proof (`Examples/python/rsa_inverse/proof.lean`, ~380 lines behind the
-137-line spec) is built around one object — the loop invariant over the
-seven-variable state, here in its heart:
+The proof (`Examples/python/rsa_inverse/proof.lean`, ~140 non-comment
+lines behind the 137-line spec — down from ~330 before the VC walker) is
+built around one object — the loop invariant over the six loop variables,
+supplied as a clause to a single `py_vcgen` call:
 
 ```lean
--- Examples/python/rsa_inverse/proof.lean (invariant core; illustrative until the vcgen campaign lands)
-private def egcdInv (A B : Int) : EgcdS → Prop
-  | (a, b, x, y, lx, ly, _) =>
-    0 < a ∧ 0 ≤ b ∧ b < a ∧ Int.gcd a b = Int.gcd A B ∧
-    a = lx * A + ly * B ∧ b = x * A + y * B ∧ …
+-- Examples/python/rsa_inverse/proof.lean (the loop clauses)
+  py_vcgen [rsa_inverse]
+    (inv := fun (a b x y lx ly : Int) =>
+      0 < a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B ∧
+      lx * A + ly * B = a ∧ x * A + y * B = b ∧ EgcdPhase A B a b x y lx ly)
+    (dec := fun (a b x y lx ly : Int) => b.toNat)
 ```
 
 — gcd preservation, the two Bézout identities, and a sign-alternation
-block (the coefficient pairs flip signs each iteration) whose magnitude
-bounds are what make the post-loop wrap land in range.
+block (`EgcdPhase`: the coefficient pairs flip signs each iteration) whose
+magnitude bounds are what make the post-loop wrap land in range. The
+manual rule instantiation, threshold plumbing, and first-iteration unroll
+that the pre-walker proof needed are all gone — the walker derives them.
 
 Two things make this more than an exercise. First, `inverse` contains a
 `raise NotRelativePrimeError` — an out-of-tier construct — and the proof
@@ -303,57 +308,83 @@ the satisfaction relation — `Satisfies c a` means "KCL holds at every node,
 every element obeys its law, ground is 0" — exactly as `callFunction`
 defines Python's semantics. And because linear DC circuits with rational
 element values have exactly rational operating points, theorems are **exact
-kernel arithmetic over ℚ**: it is ngspice, running the same netlist in
-floating point, that *approximates our answers* in the differential harness
-— not the other way round.
+kernel arithmetic over ℚ**: it is ngspice and Cadence Spectre, running the
+same netlist in floating point, that *approximate our answers* in the
+differential harnesses, not the other way round.
 
 ![Five-volt resistor divider: 1 kOhm from input to output and 2 kOhm from output to ground](docs/assets/divider-circuit.svg)
 
-<!-- docs-check: Examples/spice/divider/divider.cir -->
+<!-- docs-check: Examples/spice/typed_divider/typed_divider.cir -->
 ```spice
-v1 in 0 dc 5
-r1 in out 1k
-r2 out 0 2k
+Typed circuit architecture divider
+V1 in 0 DC 5
+R1 in out 1k
+R2 out 0 2k
 .op
 .end
 ```
 
 ```lean
--- Examples/spice/divider/spec.lean
-load_netlist divider from "Examples/spice/divider/divider.json"
+-- Examples/spice/typed_divider/spec.lean
+load_circuit typedDivider from
+  "Examples/spice/typed_divider/typed_divider.cir"
 
-#spice_check divider shows "out" = (10 / 3 : Rat)
+#circuit_check typedDivider dc shows "out" = (10 / 3 : Rat)
 
-theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by proofs
+theorem typed_divider_out :
+    typedDivider ⊨dc {
+      v, _i => v (node! typedDivider "out") = 10 / 3
+    } := by proofs
+
+theorem typed_divider_realizable :
+    RealizableDC typedDivider := by proofs
 ```
 
 ```lean
--- Examples/spice/divider/proof.lean
-theorem divider_out : divider ⊨dc { v, _i => v "out" = 10 / 3 } := by
-  spice_solve
+-- Examples/spice/typed_divider/proof.lean
+theorem typed_divider_out :
+    typedDivider ⊨dc {
+      v, _i => v (node! typedDivider "out") = 10 / 3
+    } := by
+  circuit_dc
+
+theorem typed_divider_realizable :
+    RealizableDC typedDivider := by
+  circuit_dc
 ```
 
-`load_netlist` generates the exact flattened deck, finite MNA solution, and
-a kernel-checked satisfaction certificate; `spice_solve` proves the
-universal property from the resulting equations. The same surface also
-supports `WellPosed` and safety-envelope theorems. `#spice_op divider` and
-`#spice_equations divider` expose the exact operating point and MNA system
-when needed.
+`load_circuit` parses the `.cir` source directly in Lean, checks names and
+hierarchy, and generates an exact finite MNA solution with a kernel-checked
+satisfaction certificate. `circuit_dc` proves the universal property from
+the resulting physical equations. The separate realizability theorem makes
+the universal claim non-vacuous.
+
+The analysis-independent [circuit assurance
+core](docs/circuit-assurance-architecture.md) extends that exact DC lane with
+relational real-valued behavior and separate safety, realizability,
+determinacy, and model-domain obligations. The
+[robust divider](Examples/spice/robust_divider/spec.lean) proves a tight
+output interval across source and resistor corners without sampling. The
+[loaded RC network](Examples/spice/loaded_rc/spec.lean) proves continuous DAE
+existence and uniqueness, monotone no-overshoot settling, an explicit
+epsilon deadline, and a separate backward-Euler no-overshoot theorem for
+every positive timestep.
 
 The [CMOS AND gate](Examples/spice/and_gate/spec.lean) starts the nonlinear
-device tier with an extracted six-transistor NAND-plus-inverter deck. Lean
-validates its raw source AST into `andGateDeck_mos1 : Mos1Circuit`, where
+device tier with a six-transistor NAND-plus-inverter deck. Lean
+validates the shared typed circuit into a resolved MOS1 capability, where
 nodes, sources, transistors, and models have distinct identifier types and
 each transistor carries its resolved exact model parameters. The physical
 semantics never looks up a model or port through a bare `String`.
-`load_mos1` fails loudly if that validation cannot be performed, `node!`
-checks every port name against the loaded circuit, and `mos1_extract`
-generates the local KCL and voltage-bound facts used in the proof. Lean then
-proves `out = a && b` directly from the deck's restricted ngspice MOS
-Level-1 channel equations, voltage-source laws, KCL, and an explicit 0--5 V
-operating envelope. The older ideal-switch theorem remains as a separate,
-coarser abstraction. A differential harness runs the same deck in ngspice at
-all four 0/5 V input vectors and checks low ≤ 0.5 V and high ≥ 4.5 V.
+`load_circuit` parses the `.cir` source directly and fails loudly if
+the requested MOS1 projection cannot be performed. `mos_node!` checks every port name
+against the loaded circuit, and `mos1_extract` generates the local KCL and
+voltage-bound facts used in the proof. Testbench voltage sources are absent
+from the component deck; inputs and `vdd` are explicit driven ports. Lean
+then proves `out = a && b` directly from the deck's restricted MOS Level-1
+channel equations, internal/output KCL, and an explicit 0--5 V operating
+envelope. Differential harnesses run the same component in ngspice and
+Spectre with temporary 0/5 V drivers and check low ≤ 0.5 V and high ≥ 4.5 V.
 
 The [one-bit CMOS half-adder](Examples/spice/half_adder/spec.lean) is the
 first hierarchical transistor example: two reusable AND subcircuits, an OR,
@@ -362,28 +393,41 @@ expands the extracted `.SUBCKT` instances to 20 individual MOS1 equations and
 reuses the MOS1 AND theorem twice. The
 [ripple-adder example](Examples/spice/ripple_adder/spec.lean) builds a full
 adder from three such half-adders and proves the unsigned-addition equation
-for every bit width by induction; its committed four-bit, 240-transistor deck
-is checked by ngspice at several vectors.
+for every bit width by induction. Its committed driver-free 50-bit hierarchy
+contains 50 literal instances of that full-adder. Lean checks that expansion
+produces exactly 150 calls to an electrically identical copy of the proved
+half-adder, then applies the parametric theorem; ngspice and Spectre
+independently check all 50 sum bits and carry-out at several vectors. The
+hierarchy represents 3,000 MOS transistors without flattening them into the
+proof term.
 
 This is currently an end-to-end theorem from the stated compact-model
 physics, not yet from microscopic semiconductor physics. The exact assurance
-boundary and the unproved quantum-transport, drift-diffusion, ngspice-solver,
+boundary and the unproved quantum-transport, drift-diffusion, simulator-solver,
 and flattened-wiring refinement obligations are recorded in
 [the device-level specification](docs/spice-device-levels.md).
 
-The lane is **compositional from day one**: `.SUBCKT` hierarchy is in the
-extractor and semantics, and a linear block's interface is captured
+The lane is **compositional from day one**: `.SUBCKT` hierarchy is retained by
+the direct Lean frontend, and a linear block's interface is captured
 *exactly* by a small port contract (`I = Y·V + J` — k² rationals, however
 large the block's interior). Sub-blocks are proved once, composed by the
 `compose_contracts` metatheorem, and global properties follow from local
-ones. The capstone pairs an actual `chain : Nat → Netlist` hierarchy with
-`chain_contract`, which quantifies over an **infinite family of boundary
-compositions**: after proving one attenuator section once, induction shows an
-N-section, 3k-terminated chain outputs exactly `(2/3)^N · 5` volts.
-This is a statement no simulator can express and the intended workflow for
-circuits too large to flatten. The theorem is behavioral because M0 has not
-yet introduced a capture-avoiding AST constructor for synthesizing the
-composed `.SUBCKT`; it does not pretend such a constructor exists.
+ones. The capstone extracts one `attn` subcircuit from `chain.cir`, proves its
+two-port relation in both directions, and defines `LoadedChain` only at the
+contract boundary. `chain_contract` then quantifies over an **infinite family
+of boundary compositions**: induction shows an N-section, 3k-terminated
+chain outputs exactly `(2/3)^N · 5` volts. The committed three-section deck
+checks source elaboration and simulator agreement; the all-N theorem does not
+pretend SPICE has parametric netlist syntax.
+
+Verilog-A uses a separate source boundary. A pinned OpenVAF Reloaded typed
+AST performs preprocessing and parsing, and Lean checks a deterministic
+projection before lowering contributions into the same relational circuit
+core. Unsupported constructs are rejected. The mixed Verilog-AMS work
+currently provides typed disciplines, connect/event lowering targets, and a
+sampled refinement theorem over the real SV scheduler. There is deliberately
+no handwritten AMS parser: a source-level frontend waits for a suitable
+pinned third-party AST.
 
 ## Repo layout
 
@@ -398,13 +442,17 @@ composed `.SUBCKT`; it does not pretend such a constructor exists.
 | `LeanModels/Python/Logic.lean` | `ToExpr`, `load_program` macro, `CallsTo`, `@[spec]` |
 | `LeanModels/Python/Tests.lean` | Interpreter smoke tests (`#guard` / `#eval`) |
 | `LeanModels/Spice.lean` | Mathlib-enabled SPICE lane umbrella |
+| `LeanModels/Circuit/**` | Analysis-independent relational assurance core |
+| `LeanModels/VerilogA/**` | Typed Verilog-A contribution lowering |
+| `LeanModels/VerilogAMS/**` | Mixed-signal discipline/connect/event lowering target |
 | `extractors/python/extract.py` | Extractor + `# lean[` scanner + companion generator (inline mode) |
+| `extractors/veriloga/` | Pinned OpenVAF typed-AST projection; no handwritten Verilog-A parser |
 | `Examples/python/<name>/` | Python examples: pure `.py` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
 | `Examples/system-verilog/<name>/` | SystemVerilog examples: pure `.sv` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
-| `Examples/spice/<name>/` | SPICE examples: pure `.cir` netlist + generated envelope + hand-written `spec.lean` and `proof.lean` |
+| `Examples/spice/<name>/` | SPICE examples: pure `.cir` component + hand-written `spec.lean` and `proof.lean` |
 | `Examples/python/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
 | `Main.lean` | `leanmodels-run` CLI |
-| `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and exact SPICE DC vs ngspice |
+| `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and circuit semantics vs ngspice/Spectre |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 
 Toolchain: `leanprover/lean4:v4.33.0-rc1` (pinned). The Python and

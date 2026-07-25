@@ -1,5 +1,5 @@
 name = "lean-models"
-defaultTargets = ["LeanModels", "Examples", "leanmodels-run"]
+defaultTargets = ["LeanModels", "Examples", "leanmodels-run", "circuit-dc-runner"]
 
 [[require]]
 name = "mathlib"
@@ -12,7 +12,24 @@ name = "LeanModels"
 [[lean_lib]]
 name = "Examples"
 globs = ["Examples.+"]
+needs = ["circuitSources", "verilogASources"]
+
+[[input_dir]]
+name = "circuitSources"
+path = "Examples/spice"
+text = true
+filter = { extension = ["cir"] }
+
+[[input_dir]]
+name = "verilogASources"
+path = "Examples/verilog-a"
+text = true
+filter = { extension = ["va", "json"] }
 
 [[lean_exe]]
 name = "leanmodels-run"
 root = "Main"
+
+[[lean_exe]]
+name = "circuit-dc-runner"
+root = "LeanModels.Circuit.DCRunner"

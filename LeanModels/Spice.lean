@@ -1,16 +1,27 @@
+import LeanModels.Circuit
 import LeanModels.Spice.Tests
-import LeanModels.Spice.Cmos
 import LeanModels.Spice.DeviceLevels
-import LeanModels.Spice.Mos1Circuit
 import LeanModels.Spice.Mos1
 import LeanModels.Spice.Mos1Logic
+import LeanModels.Spice.Mos1Resolved
+import LeanModels.Spice.Mos1Surface
+import LeanModels.Spice.Logic
 import LeanModels.Spice.Ripple
+import LeanModels.Spice.RippleNetlist
+import LeanModels.Spice.RobustDivider
+import LeanModels.Spice.LoadedRC
+import LeanModels.Spice.LoadedRCAC
+import LeanModels.Spice.RLC
+import LeanModels.Spice.LoadedInverter
+import LeanModels.Spice.Dram1T1C
+import LeanModels.Spice.DramBitcell
 
 /-!
 # SPICE lane umbrella
 
 Import this module for the exact-DC SPICE semantics, solver, proof surface,
-contract composition, ideal-switch MOS semantics, and smoke tests. Mathlib is
-intentionally confined to this lane's proof surface; `import LeanModels`
-remains core-only for the Python and SystemVerilog lanes.
+contract composition, robust real-valued assurance, transient DAE semantics,
+ideal-switch MOS semantics, and smoke tests. Mathlib is intentionally
+confined to the circuit lane; the Python and SystemVerilog semantics remain
+core-only.
 -/

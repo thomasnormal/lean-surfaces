@@ -16,22 +16,22 @@ open LeanModels LeanModels.Python
 
 load_program tri from "Examples/python/tri/tri.json"
 
-/-- Total correctness for `n ≥ 0`, in clause form (LoopTactic.lean):
-`py_begin` symbolically executes the entry up to the loop; `py_loop` proves
-the loop by the generic while rule from just two clauses — the invariant
-(`total = 0 + 1 + ⋯ + (i-1)`, stated multiplication-free as
-`2*total = i*(i-1)`, plus the range `0 ≤ i ≤ n + 1`) and the decreasing
-measure `n + 1 - i` — deriving the logical state, its environment
-rendering, the test value, and the body's step by unification. Residual
-goals are pure arithmetic on named atoms: the exit algebra (first bullet:
-`¬ i' ≤ n` and the range force `i' = n + 1`, then `grind` finishes the
-division), then invariant preservation, measure decrease, and the initial
-invariant, all closed by `grind`. No `Val`, no fuel, no AST anywhere. -/
+/-- Total correctness for `n ≥ 0`, by the VC walker (`py_vcgen`,
+VCTactic.lean): one call bridges the arrow goal to the whole-body triple
+and walks it, opening the loop from the same two clauses `py_loop` took —
+the invariant (`total = 0 + 1 + ⋯ + (i-1)`, stated multiplication-free
+as `2*total = i*(i-1)`, plus the range `0 ≤ i ≤ n + 1`) and the measure
+`n + 1 - i`. Residual goals are pure arithmetic on named atoms: the
+`return` (exit algebra: the negated test and the range force
+`i' = n + 1`, then `grind` finishes the division), then preservation,
+decrease, and the initial invariant, all closed by `grind`. No `Val`, no
+fuel, no AST anywhere. -/
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  py_vcgen [tri]
+    (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+    (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  case ret =>
+    obtain rfl : i' = n + 1 := by omega
     grind
   all_goals grind
 

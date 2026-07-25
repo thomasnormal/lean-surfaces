@@ -1,11 +1,13 @@
 # How to handle shadowed loop variables
 
-`py_loop`'s `inv`/`dec` clauses are lambdas whose **binder names select the
-loop variables by name** from the loop's environment. That breaks when a
-theorem binder shadows the Python variable the invariant must talk about —
-the `(state := […])` clause is the escape hatch. Full mechanics: the
-docstrings in
-[`LeanModels/Python/LoopTactic.lean`](../../LeanModels/Python/LoopTactic.lean).
+`py_loop`'s and `py_vcgen`'s `inv`/`dec` clauses are lambdas whose **binder
+names select the loop variables by name** from the loop's environment. That
+breaks when a theorem binder shadows the Python variable the invariant must
+talk about. `py_loop` has the `(state := […])` escape hatch; `py_vcgen`
+(which the migrated example files use) instead renames the *initial* values
+in a private core theorem. Full mechanics: the docstrings in
+[`LeanModels/Python/LoopTactic.lean`](../../LeanModels/Python/LoopTactic.lean)
+and [`LeanModels/Python/VCTactic.lean`](../../LeanModels/Python/VCTactic.lean).
 
 ## When you don't need it
 
@@ -15,10 +17,11 @@ lambda binders exactly like the Python variables and omit `state`:
 ```lean
 -- Examples/python/tri/proof.lean (three-file layout)
 theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
-  py_begin [tri]
-  py_loop (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
-          (dec := fun (total i : Int) => (n + 1 - i).toNat)
-  · obtain rfl : i' = n + 1 := by omega
+  py_vcgen [tri]
+    (inv := fun (total i : Int) => 0 ≤ i ∧ i ≤ n + 1 ∧ 2 * total = i * (i - 1))
+    (dec := fun (total i : Int) => (n + 1 - i).toNat)
+  case ret =>
+    obtain rfl : i' = n + 1 := by omega
     grind
   all_goals grind
 ```
@@ -29,37 +32,41 @@ so no shadowing problem arises.
 
 ## When you do: the loop mutates a name your theorem binds
 
-`sum_to` counts *down* by mutating `n`. The theorem binder `n` must mean the
-*initial* value inside the invariant, so the lambda binders cannot be named
-`s`/`n` — `(state := [s, n])` names the Python environment variables
-positionally, freeing the binders to be anything (here `s`/`k`):
+`sum_to` counts *down* by mutating `n`. The clause binders must be the
+Python names `s`/`n`, and the invariant must mention the *initial* value —
+so a private core renames it to `N`, and the public statement instantiates
+the core (with `py_loop`, the same escape is `(state := [s, n])` plus
+free binder names):
 
 ```lean
 -- Examples/python/sum_to/SumTo.lean (generated from Examples/python/sum_to/sum_to.py)
-theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 := by
-  py_begin [sum_to]
-  py_loop (state := [s, n])
-          (inv := fun (s k : Int) => 0 ≤ k ∧ k ≤ n ∧ 2 * s = (n - k) * (n + k + 1))
-          (dec := fun (s k : Int) => k.toNat)
-  · obtain rfl : k' = 0 := by omega
+private theorem sum_to_core (N : PyInt) (hN : 0 ≤ N) : sum_to(N) ==> N * (N + 1) / 2 := by
+  py_vcgen [sum_to]
+    (inv := fun (s n : Int) => 0 ≤ n ∧ n ≤ N ∧ 2 * s = (N - n) * (N + n + 1))
+    (dec := fun (s n : Int) => n.toNat)
+  case ret =>
+    obtain rfl : n' = 0 := by omega
     grind
   all_goals grind
+
+theorem sum_to_total (n : PyInt) (hn : 0 ≤ n) : sum_to(n) ==> n * (n + 1) / 2 :=
+  sum_to_core n hn
 ```
 
 Same situation in `gcd`, where *both* loop variables are shadowed by the
 theorem binders `a b` (the invariant needs the initial values on its
-right-hand side):
+right-hand side — capitalized core binders `A`/`B`):
 
 ```lean
--- Examples/python/gcd/proof.lean (three-file layout, proof body elided)
-theorem gcd_total (a b : PyInt) (ha : 0 ≤ a) (hb : 0 ≤ b) : gcd(a, b) ==> Int.gcd a b := by
-  py_begin [gcd]
-  py_loop (state := [a, b])
-          (inv := fun (x y : Int) => 0 ≤ x ∧ 0 ≤ y ∧ Int.gcd x y = Int.gcd a b)
-          (dec := fun (x y : Int) => y.toNat)
+-- Examples/python/gcd/proof.lean (three-file layout, residual bullets elided)
+private theorem gcd_core (A B : PyInt) (hA : 0 ≤ A) (hB : 0 ≤ B) :
+    gcd(A, B) ==> Int.gcd A B := by
+  py_vcgen [gcd]
+    (inv := fun (a b : Int) => 0 ≤ a ∧ 0 ≤ b ∧ Int.gcd a b = Int.gcd A B)
+    (dec := fun (a b : Int) => b.toNat)
 ```
 
-Rules (from the `py_loop` docstring):
+Rules (`py_loop`, from its docstring):
 
 - `(state := […])` comes **before** `(inv := …)`.
 - Each entry must name a variable of the loop's environment; entries are

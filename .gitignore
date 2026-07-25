@@ -4,3 +4,5 @@ __pycache__/
 *.olean
 harness/sv/conformance/census.json
 notebooks/work/
+extractors/veriloga/
+target/

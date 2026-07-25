@@ -25,5 +25,6 @@
   {"file": "Examples/python/ag_clamp01/ag_clamp01.py", "function": "clamp01", "args": [[-5], [-1], [0], [1], [2], [7]], "expect": "match"},
   {"file": "Examples/python/rsa_inverse/rsa_inverse.py", "function": "extended_gcd", "args": [[12, 18], [18, 12], [270, 192], [5, 0], [0, 5], [0, 0], [7, 13], [17, 3120], [3120, 17], [4, -6], [-4, 6], [-6, -4]], "expect": "match"},
   {"file": "Examples/python/rsa_inverse/rsa_inverse.py", "function": "inverse", "args": [[3, 7], [7, 40], [17, 3120], [1, 2], [41, 7], [143, 4], [65537, 1000003], [-3, 7]], "expect": "match"},
-  {"file": "Examples/python/rsa_inverse/rsa_inverse.py", "function": "inverse", "args": [[4, 6]], "expect": "unsupported"}
+  {"file": "Examples/python/rsa_inverse/rsa_inverse.py", "function": "inverse", "args": [[4, 6]], "expect": "unsupported"},
+  {"file": "Examples/python/nested_flow/nested_flow.py", "function": "first_factor", "args": [[2], [3], [4], [9], [15], [25], [49], [91], [97], [121], [1], [0], [-7]], "expect": "match"}
 ]

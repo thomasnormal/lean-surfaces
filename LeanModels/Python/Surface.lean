@@ -321,23 +321,45 @@ macro_rules
       let vs ← args.getElems.mapM fun a => `(ToVal.toVal $a)
       `(#guard callFunction $m $s #[$vs,*] 4096 == .exn ($e : PyErr))
 
+open Lean Elab Tactic in
 /-- `py_check` — the tactic twin of `#py_check`: close a concrete-run *goal*
 by making Lean actually run the program. It handles exactly the two concrete
 judgment shapes — `f(args) ==> v` (supplies the fuel witness, then kernel
 evaluation decides `callFunction … = .ok (toVal v)` by `rfl`) and
 `f(args) ==>! e` (same, against `.exn e`) — at the command's fixed generous
 fuel (4096; concrete runs cost time proportional to actual steps, not to
-fuel, so generosity is free). Anything symbolic — a free variable in an
-argument or the result, a `~~>`/`⇓` goal, a loop bound to induct on — is
-out of scope by design: reach for `py_prove` or the loop machinery instead.
-Implementation note: the run attempt is all-tactic and `fail`-terminated —
-an `exact ⟨4096, by rfl⟩` alternative would *commit* inside `first` even
-when the nested `by` block fails (see the `py_prove` docstring). -/
-macro (name := pyCheckTactic) "py_check" : tactic =>
-  `(tactic| first
+fuel, so generosity is free).
+
+The honest boundary: the closing step is *kernel reduction*, and kernel
+reduction happily runs branch-free bodies on open terms too — `add(a, b)
+==> a + b` with free `a`, `b` reduces to `.ok (.int (a + b)) = .ok (.int
+(a + b))` without ever inspecting the variables, so bare `rfl` would close
+a genuinely symbolic theorem. That would let the non-vacuity checker double
+as the proof, so `py_check` refuses up front: the guard below fails on any
+goal whose arguments or result mention a variable (free or metavariable),
+BEFORE attempting the run. Concrete non-vacuity is this tactic's single
+job; symbolic goals — `add(a, b) ==> a + b`, `my_abs(x) ==> |x|`, any
+`~~>`/`⇓` form, a loop bound to induct on — belong to `py_prove` and the
+loop machinery. Implementation note: the run attempt is all-tactic and
+`fail`-terminated — an `exact ⟨4096, by rfl⟩` alternative would *commit*
+inside `first` even when the nested `by` block fails (see the `py_prove`
+docstring). -/
+elab (name := pyCheckTactic) "py_check" : tactic => do
+  let msg := "py_check: not a concrete run — the goal must be `f(args) ==> v` or `f(args) ==>! e` with literal arguments, and the run at fuel 4096 must produce exactly the stated value (resp. exception); symbolic goals want `py_prove` or a loop lemma instead"
+  let g ← getMainGoal
+  let t := (← instantiateMVars (← g.getType)).cleanupAnnotations
+  unless t.isAppOfArity ``CallsTo 4 || t.isAppOfArity ``Raises 4 do
+    throwError msg
+  -- The symbolic-goal guard: arguments and result must be variable-free
+  -- (kernel reduction would otherwise "prove" symbolic branch-free goals).
+  let symbolic (e : Lean.Expr) : Bool := e.hasFVar || e.hasExprMVar
+  if symbolic (t.getArg! 2) || symbolic (t.getArg! 3) then
+    throwError msg
+  let msgStx := Syntax.mkStrLit msg
+  evalTactic (← `(tactic| first
       | (refine ⟨4096, ?_⟩
          rfl)
-      | fail "py_check: not a concrete run — the goal must be `f(args) ==> v` or `f(args) ==>! e` with literal arguments, and the run at fuel 4096 must produce exactly the stated value (resp. exception); symbolic goals want `py_prove` or a loop lemma instead")
+      | fail $msgStx))
 
 /-! ## `~~>` connectives
 
@@ -483,6 +505,27 @@ macro "py_lift" "⟨" fid:ident "," hid:ident "⟩" " := " e:term " with "
     (obtain ⟨$fid, $hid⟩ := ($e).at_least
      py_simp [$extra,*] at $hid:ident))
 
+open Lean Elab Tactic in
+/-- Post-check appended to every `py_prove` pipeline (internal — not meant
+to be called directly): when the pipeline's residual goals still mention
+interpreter internals (`callFunction`/`execWhile`/`execStmts`/`Res`/`Val`/
+`Flow`, …), the run left interpreter *state* unresolved — a raw goal dump
+would be noise, so fail with a curated message pointing at the loop and
+manual routes instead. Residual goals that are clean arithmetic pass
+through untouched (they are useful; `py_prove` leaves them on purpose). -/
+elab "py_prove_residual_guard" : tactic => do
+  let roots : List Name :=
+    [``callFunction, ``execWhile, ``execStmts, ``execStmt, ``evalExpr,
+     ``evalExprs, ``Res, ``Val, ``Flow]
+  for g in (← getGoals) do
+    let t ← instantiateMVars (← g.getType)
+    let dirty := t.find? fun e =>
+      match e with
+      | .const n _ => roots.any fun r => r == n || r.isPrefixOf n
+      | _ => false
+    if dirty.isSome then
+      throwError "py_prove's recipe covers straight-line and simple branching bodies; this body left interpreter state unresolved. For a loop, use `py_vcgen [prog] (inv := fun … => …) (dec := fun … => …)` — or bare `py_vcgen [prog]` to have the invariant and measure requested as goals; for the manual route see `py_simp`/`py_threshold`/`execWhile_at_least`."
+
 open Lean Lean.Parser.Tactic in
 /-- `py_prove [prog, extra…]` closes total-correctness goals (`f(a, b) ==> v`,
 `f(a) ==>! e`) for straight-line *and branching* loop-free bodies: it
@@ -494,14 +537,21 @@ e.g. `py_prove [add]`), and discharges residual value equations with
 it with `split` (which reaches under the `∃` binders — `split_ifs` does not
 exist on this toolchain), re-executes each arm with `py_simp`, and finishes
 with `omega`, so `Examples/python/my_abs/my_abs.py`'s `my_abs(x) ==> |x|` closes by
-bare `py_prove [my_abs]`. Attempt order is load-bearing: the all-tactic
-attempts come first and are guarded by `done`, because an `exact … (by …)`
-alternative *commits* inside `first` even when its nested `by` block fails
-(the failure is recovered with `sorry` and merely logged) — a fallback
-placed after it would be unreachable. Loops and recursion still need their
+bare `py_prove [my_abs]`. Every attempt is all-tactic and (where it must
+close the goal) `done`-guarded — an `exact … (by …)` alternative would
+*commit* inside `first` even when its nested `by` block fails (the failure
+is recovered with `sorry` and merely logged as a raw goal dump), making
+every fallback after it unreachable and the "proof" silently sorried;
+that exact trap produced the interpreter-state walls the residual guard
+below now curates. Loops and recursion still need their
 invariant/induction lemmas (see `py_lift` / `execWhile_at_least`) — that
 automation arrives with the bridge layer; `py_prove` is the front door that
-grows, not a promise it keeps yet. -/
+grows, not a promise it keeps yet. Failure shape: when the pipeline leaves
+goals that still mention interpreter internals (a loop's frozen
+`execWhile`, `Res`/`Val` state), `py_prove` fails with a curated pointer to
+`py_vcgen`/`py_simp`/`py_threshold` instead of surfacing the raw dump
+(`py_prove_residual_guard` above); clean *arithmetic* residuals are still
+left open — those are useful. -/
 macro "py_prove" "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic => do
   let extra : Syntax.TSepArray
       [`Lean.Parser.Tactic.simpStar, `Lean.Parser.Tactic.simpErase,
@@ -516,10 +566,13 @@ macro "py_prove" "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic 
             | split <;> py_simp <;> omega
             | omega
           done)
-       | exact CallsTo.intro 32 (by py_simp [callFunction, $extra,*])
+       | (refine CallsTo.intro 32 ?_
+          py_simp [callFunction, $extra,*]
+          done)
        | refine ⟨32, ?_⟩ <;> py_simp [callFunction, $extra,*]
        | (py_simp [callFunction, $extra,*]
-          all_goals try (first | rfl | omega))))
+          all_goals try (first | rfl | omega))
+     py_prove_residual_guard))
 
 /-! ## `py_corollary` — the standard corollaries, one call each
 

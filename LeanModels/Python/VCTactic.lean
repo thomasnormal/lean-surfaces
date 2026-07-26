@@ -20,7 +20,10 @@ Surface:
   source order, goals `case inv<i> ⊢ Int → ⋯ → Prop` and
   `case dec<i> ⊢ Int → ⋯ → Nat` (over the loop's *assigned* variables, in
   environment order) come first; assigning them instantiates the math
-  residuals that mention them.
+  residuals that mention them. A `break`-carrying loop additionally gets
+  `case exit<i> ⊢ Int → ⋯ → Prop` (same binders) — the exit-clause request
+  the clause form takes as `(exit<i> := …)`; without it the loop's exit
+  fact would silently weaken to the bare invariant.
 * `py_vcgen [prog] (inv := fun (x y : Int) => …) (dec := fun (x y : Int) => …)`
   — clause form: the i-th `(inv := …) (dec := …)` pair belongs to the i-th
   `while` in source order (any label starting with `inv` resp. `dec` works:
@@ -74,8 +77,12 @@ execution):
 Residual goals are pure mathematics over named atoms (`py_loop`
 presentation: invariant conjuncts split into `hinv1`, `hinv2`, …; the loop
 test as `hcont`; branch facts as `hif`; post-loop values primed), tagged
-`init`, `preserve`, `dec`, `exit`, `ret`, `err`, `side`. Anything the
-recipes cannot close is *appended* as a goal, never dropped.
+`init`, `preserve`, `dec`, `exit`, `ret`, `err`, `side`. When several
+residuals share a tag (two `preserve` goals from split invariant
+conjuncts), the first keeps the bare tag and the rest are numbered
+(`preserve2`, `preserve3`, …) — `case preserve => …` would otherwise
+silently take only the first. Anything the recipes cannot close is
+*appended* as a goal, never dropped.
 
 Entry forms: a `CallsTo` goal (`==>`/`⇓`; bridged via `PyTriple.callsTo`,
 so a body that can fall off the end leaves a `v = None` residual), or a
@@ -633,6 +640,10 @@ structure VCCtx where
   residuals : IO.Ref (Array MVarId)
   clauseGoals : IO.Ref (Array MVarId)
   delayed : IO.Ref (Array (Nat × Lean.Expr × Lean.Expr))
+  /-- Delayed exit-clause metavariables (loop index ↦ mvar): in delayed mode
+  a `break`-carrying loop gets its exit clause requested as a goal
+  (`exit<i>`), mirroring `inv<i>`/`dec<i>`. -/
+  delayedExits : IO.Ref (Array (Nat × Lean.Expr))
 
 /-- `MVarId.apply`, dropping the delayed inv/dec clause metavariables from
 the returned goals (they are tracked separately and would otherwise leak
@@ -641,6 +652,23 @@ def applyC (ctx : VCCtx) (g : MVarId) (e : Lean.Expr) : MetaM (List MVarId) := d
   let gs ← g.apply e
   let cg ← ctx.clauseGoals.get
   return gs.filter (fun g' => !cg.contains g')
+
+/-- Scrub plumbing hypotheses out of an `exit`-tagged residual: the
+symbolic environment tail `tl` (and any shadowed copies) is presentation
+noise once the shape solving is done — clear every clearable hypothesis so
+named; `env`/`heqE` no longer arise (`destructInvHyp` substitutes them
+away). A `tl` the goal still mentions (an environment-growth exit fact
+quantifying over the tail, `nested_flow`'s inner loop) survives — it is
+content there, not noise. -/
+def scrubExitNoise (g : MVarId) : MetaM MVarId := do
+  let fvs ← g.withContext do
+    let mut fvs : Array FVarId := #[]
+    for d in ← getLCtx do
+      if d.isImplementationDetail then continue
+      if [`tl, `env, `heqE].contains d.userName.eraseMacroScopes then
+        fvs := fvs.push d.fvarId
+    pure fvs
+  g.tryClearMany fvs
 
 /-- Present a residual goal: cleanup simp, `assumption` attempt, tag, push.
 Never drops a goal it cannot close. -/
@@ -657,6 +685,7 @@ def addResidual (ctx : VCCtx) (g : MVarId) (tag : Name) : MetaM Unit := do
         | none => pure false) with
     | true => return
     | false =>
+      let g ← if tag == `exit then scrubExitNoise g else pure g
       g.setTag tag
       ctx.residuals.modify (·.push g)
 
@@ -1105,7 +1134,10 @@ def normalizePre (ctx : VCCtx) (introNames : Array Name) (hypName : Name)
 
 /-- Destructure an invariant hypothesis `∃ x₁ … tail, env = shape ∧ core`
 (introducing the witnesses under `names` and the core under `hcore`), and
-rewrite the goal's `env` to the shape. Used by the `htest`/`hexit`
+substitute the goal's `env` by the shape. The environment equation is
+`subst`-eliminated — the same machinery the `init` path uses — rather than
+merely rewritten into the target, so neither `env` nor the `heqE` equation
+survives into residual goals' contexts. Used by the `htest`/`hexit`
 obligation dischargers. -/
 def destructInvHyp (g : MVarId) (hFv : FVarId) (names : Array Name) :
     MetaM MVarId := do
@@ -1116,9 +1148,7 @@ def destructInvHyp (g : MVarId) (hFv : FVarId) (names : Array Name) :
     g := g'
     fv := restFv
   let (heqFv, _, g') ← casesTwo g fv `heqE `hcore
-  g'.withContext do
-    let r ← g'.rewrite (← g'.getType) (mkFVar heqFv)
-    g'.replaceTargetEq r.eNew r.eqProof
+  Meta.subst g' heqFv
 
 /-- Try to close an equation goal by `rfl` up to unfolding. -/
 def tryRflClose (g : MVarId) : MetaM Bool := do
@@ -1547,13 +1577,35 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
           ctx.clauseGoals.modify (fun a => (a.push invM.mvarId!).push decM.mvarId!)
           ctx.delayed.modify (·.push (li, invM, decM))
           pure (invM, decM, slotNames)
-    let exitInfo? ← exitT?.mapM fun t => do
-      let u ← instantiateMVars (← Term.withSynthesize (Term.elabTerm t none))
-      let ebs := (lamBinderNames u).map (·.toString)
-      for b in ebs do
-        unless binders.contains b do
-          throwError "py_vcgen: `exit` variable `{b}` must be one of the loop's `inv` binders ({binders})"
-      pure (u, ebs)
+    let exitInfo? : Option (Lean.Expr × Array String) ← do
+      match exitT? with
+      | some t => do
+        let u ← instantiateMVars (← Term.withSynthesize (Term.elabTerm t none))
+        let ebs := (lamBinderNames u).map (·.toString)
+        for b in ebs do
+          unless binders.contains b do
+            throwError "py_vcgen: `exit` variable `{b}` must be one of the loop's `inv` binders ({binders})"
+        pure (some (u, ebs))
+      | none =>
+        -- Delayed mode: a `break`-carrying loop needs its exit clause just
+        -- as it needs `inv`/`dec` — request it as a goal (`exit<i>`) over
+        -- the same binders instead of silently weakening the exit fact to
+        -- the bare invariant. Clause mode (an `inv`/`dec` pair given for
+        -- this loop, `exit` omitted) is unchanged.
+        if ctx.clauses[li]?.isSome || !hasBrk then
+          pure none
+        else
+          match (← ctx.delayedExits.get).find? (·.1 == li) with
+          | some (_, e) => pure (some (e, binders))
+          | none => do
+            let mut exTy : Lean.Expr := mkSort .zero
+            for _ in binders do
+              exTy ← mkArrow intTy exTy
+            let exM ← mkFreshExprMVar exTy .syntheticOpaque
+            exM.mvarId!.setTag (Name.mkSimple s!"exit{li+1}")
+            ctx.clauseGoals.modify (·.push exM.mvarId!)
+            ctx.delayedExits.modify (·.push (li, exM))
+            pure (some (exM, binders))
     let decls : Array (Name × (Array Lean.Expr → TacticM Lean.Expr)) :=
       (slotEntries.map (fun p =>
         (Name.mkSimple p.1,
@@ -1686,7 +1738,7 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let primed := (slotNames.map (fun n => Name.mkSimple (n ++ "'"))).push `tl'
     let g2 ← normalizePre ctx primed `hAll g2
     let hAllFv2 ← findHyp g2 `hAll
-    let hasCont := exitT?.isSome || !hasBrk
+    let hasCont := exitInfo?.isSome || !hasBrk
     let g2 ←
       if hasCont then do
         let (hInvFv2, _, g2) ← casesTwo g2 hAllFv2 `hinv `hcont
@@ -1713,6 +1765,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
     let residuals ← IO.mkRef (#[] : Array MVarId)
     let clauseGoals ← IO.mkRef (#[] : Array MVarId)
     let delayed ← IO.mkRef (#[] : Array (Nat × Lean.Expr × Lean.Expr))
+    let delayedExits ← IO.mkRef (#[] : Array (Nat × Lean.Expr))
     let tgt := (← instantiateMVars (← g.getType)).cleanupAnnotations
     if tgt.isAppOfArity ``CallsTo 4 then
       let m := tgt.getArg! 0
@@ -1721,7 +1774,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let v := tgt.getArg! 3
       let ctx0 : VCCtx :=
         { pack, mE := m, clauses, exits, loops := #[], residuals, clauseGoals,
-          delayed }
+          delayed, delayedExits }
       let (rF, prfF) ← captureRun pack
         (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
       let rF' ← whnfR rF
@@ -1751,7 +1804,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let (ss, _) ← parseListLit (tgt.getArg! 2)
       let ctx : VCCtx :=
         { pack, mE := m, clauses, exits, loops := ← collectLoops ss, residuals,
-          clauseGoals, delayed }
+          clauseGoals, delayed, delayedExits }
       walk ctx topTags g
     else if tgt.isAppOfArity ``Exists 2 then
       -- `∃ v, CallsTo m f args v ∧ Φ v` — the relational bridge
@@ -1768,7 +1821,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let fnameE := c.getArg! 1
       let ctx0 : VCCtx :=
         { pack, mE := m, clauses, exits, loops := #[], residuals, clauseGoals,
-          delayed }
+          delayed, delayedExits }
       let (rF, prfF) ← captureRun pack
         (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
       let rF' ← whnfR rF
@@ -1796,6 +1849,29 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       throwError "py_vcgen: the goal must be a `==>`/`⇓` (CallsTo) statement or a `PyTriple`:{indentExpr tgt}"
     let cg ← clauseGoals.get
     let rs ← residuals.get
+    -- Number duplicate residual tags: `case preserve => …` silently takes
+    -- only the FIRST of several same-tag goals, so a duplicated tag is a
+    -- trap. The first same-tag goal keeps the bare tag (existing `case
+    -- ret`/`case dec` uses and positional bullets stay valid); later ones
+    -- get numbered variants (`preserve2`, `preserve3`, …), skipping any
+    -- name already taken by a clause goal (a delayed `exit2`).
+    let mut taken : Array Name := #[]
+    for g in cg do taken := taken.push (← g.getTag)
+    let mut tags : Array Name := #[]
+    for g in rs do tags := tags.push (← g.getTag)
+    let mut seen : Array Name := #[]
+    for i in [0:rs.size] do
+      let t := tags[i]!
+      if seen.contains t then
+        let mut j := 2
+        let mut nm := Name.mkSimple s!"{t}{j}"
+        while taken.contains nm || tags.contains nm || seen.contains nm do
+          j := j + 1
+          nm := Name.mkSimple s!"{t}{j}"
+        rs[i]!.setTag nm
+        seen := seen.push nm
+      else
+        seen := seen.push t
     replaceMainGoal (cg.toList ++ rs.toList)
 
 end PyVCGen
@@ -1812,8 +1888,10 @@ open Lean Elab Tactic PyVCGen in
 discharging every interpreter obligation; the i-th `inv`/`dec` clause pair
 instantiates the i-th `while` (source order). With clauses omitted the
 invariants/measures are left as delayed goals `inv1`/`dec1`/… (mvcgen
-style). Residual goals are pure mathematics over named atoms, tagged
-`init`/`preserve`/`dec`/`exit`/`ret`/`err`/`side`. -/
+style), plus `exit<i>` for a `break`-carrying loop. Residual goals are
+pure mathematics over named atoms, tagged
+`init`/`preserve`/`dec`/`exit`/`ret`/`err`/`side` (same-tag duplicates
+numbered: `preserve`, `preserve2`, …). -/
 elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic => do
   let mut invs : Array Term := #[]
   let mut decs : Array Term := #[]

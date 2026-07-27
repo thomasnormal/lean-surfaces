@@ -49,6 +49,7 @@ if command -v ngspice >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ngspice" ]; then
   maybe "spice-ac-ngspice" harness/spice/ac_test.py python3 harness/spice/ac_test.py --sim ngspice
   maybe "spice-loaded-inverter-ngspice" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim ngspice
   maybe "spice-dram-1t1c-ngspice" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim ngspice
+  maybe "spice-amp-ngspice" harness/spice/amp_test.py python3 harness/spice/amp_test.py
 else
   echo "=== [spice-harness] SKIP (ngspice not found)"; skip+=("spice-harness")
   echo "=== [spice-switch-harness] SKIP (ngspice not found)"; skip+=("spice-switch-harness")
@@ -59,6 +60,7 @@ else
   echo "=== [spice-ac-ngspice] SKIP (ngspice not found)"; skip+=("spice-ac-ngspice")
   echo "=== [spice-loaded-inverter-ngspice] SKIP (ngspice not found)"; skip+=("spice-loaded-inverter-ngspice")
   echo "=== [spice-dram-1t1c-ngspice] SKIP (ngspice not found)"; skip+=("spice-dram-1t1c-ngspice")
+  echo "=== [spice-amp-ngspice] SKIP (ngspice not found)"; skip+=("spice-amp-ngspice")
 fi
 
 # Spectre is proprietary and unavailable on stock GitHub runners. Lab hosts
@@ -69,12 +71,14 @@ if command -v spectre >/dev/null 2>&1; then
   maybe "verilog-a-spectre" harness/veriloga/spectre_test.py python3 harness/veriloga/spectre_test.py
   maybe "spice-loaded-inverter-spectre" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim spectre
   maybe "spice-dram-1t1c-spectre" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim spectre
+  maybe "spice-amp-spectre" harness/spice/amp_test.py python3 harness/spice/amp_test.py --sim spectre
 else
   echo "=== [spectre-harness] SKIP (spectre not found)"; skip+=("spectre-harness")
   echo "=== [spice-ac-spectre] SKIP (spectre not found)"; skip+=("spice-ac-spectre")
   echo "=== [verilog-a-spectre] SKIP (spectre not found)"; skip+=("verilog-a-spectre")
   echo "=== [spice-loaded-inverter-spectre] SKIP (spectre not found)"; skip+=("spice-loaded-inverter-spectre")
   echo "=== [spice-dram-1t1c-spectre] SKIP (spectre not found)"; skip+=("spice-dram-1t1c-spectre")
+  echo "=== [spice-amp-spectre] SKIP (spectre not found)"; skip+=("spice-amp-spectre")
 fi
 
 echo

@@ -1,0 +1,30 @@
+resistor-loaded NMOS common-source amplifier stage
+* Component ports are in (gate), out (drain), vdd (supply), and ground.
+* Supplies and gate drivers belong to the run environment and are
+* deliberately absent from this deck (testbench-free, reusable component).
+*
+* Bias design for provability (exact rational arithmetic):
+*   VDD = 5, VTO = 1, KP = 400u (W/L = 1 default), so beta = 1/2500 A/V^2,
+*   RD = 12k, so beta*RD = 24/5.
+*   Saturation:  Vout(Vin) = VDD - (beta*RD/2)*(Vin-VTO)^2
+*                          = 5 - (12/5)*(Vin-1)^2.
+*   Edge of saturation solves the square-law-meets-load-line quadratic
+*   Vout = Vov:  (beta*RD/2)*Vov^2 + Vov - VDD = 0, i.e.
+*                12*Vov^2 + 5*Vov - 25 = 0,
+*   discriminant 5^2 + 4*12*25 = 1225 = 35^2 (a perfect square BY DESIGN),
+*   so Vov* = (-5 + 35)/24 = 5/4 exactly: saturation for Vin in (1, 9/4].
+*   Nominal bias Vin0 = 2: Vov = 1, ID = beta/2 = 200uA,
+*                Vout0 = 5 - 12000*(1/5000) = 13/5 = 2.6 V exactly.
+*   Small-signal gain at Vin0 (for the gain campaign):
+*                dVout/dVin = -beta*RD*(Vin0-VTO) = -24/5.
+* ngspice-46 .op validation (vdd=5):
+*   vin=0.5  -> out=5.0        (cutoff)
+*   vin=1.0  -> out=5.0        (edge of cutoff)
+*   vin=1.5  -> out=4.4        (= 22/5, saturation)
+*   vin=2.0  -> out=2.6        (= 13/5, designed bias; vdd#branch = -200uA)
+*   vin=2.25 -> out=1.25       (= 5/4, exact edge of saturation)
+*   vin=3.0  -> out=0.5369857  (triode, = (53 - sqrt(1609))/24, irrational)
+m1 out in 0 0 nmod
+rd vdd out 12k
+.model nmod nmos (level=1 vto=1 kp=400u lambda=0 is=0)
+.end

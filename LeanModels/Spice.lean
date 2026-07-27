@@ -17,6 +17,8 @@ import LeanModels.Spice.Dram1T1C
 import LeanModels.Spice.DramBitcell
 import LeanModels.Spice.DramBank
 import LeanModels.Spice.DramArray
+import LeanModels.Spice.CommonSource
+import LeanModels.Spice.DiffPair
 
 /-!
 # SPICE lane umbrella

@@ -105,7 +105,7 @@ structure DramBankTransaction (rows columns : Nat) where
 
 /-- A completed operation satisfies both the functional bank transition and
 the minimum analog latency promised by the implementation. -/
-noncomputable def DramBankTransactionBehavior
+noncomputable def DramBankTransactionContract
     (timing : DramBankTiming)
     (transaction : DramBankTransaction rows columns) : Prop :=
   DramBankStep transaction.before transaction.request
@@ -166,7 +166,7 @@ theorem canonical_dram_transaction_realizable
     (before : DramMatrixState rows columns)
     (request : DramBankRequest rows columns)
     (acceptedAt : HybridTime) :
-    DramBankTransactionBehavior timing
+    DramBankTransactionContract timing
       (canonicalDramTransaction timing before request acceptedAt) := by
   constructor
   · cases request <;>

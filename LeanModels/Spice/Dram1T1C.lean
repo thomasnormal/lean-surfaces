@@ -1,4 +1,5 @@
 import LeanModels.Spice.LoadedInverter
+import LeanModels.Circuit.Equation
 
 /-!
 # Thin open 1T1C DRAM cell
@@ -9,10 +10,13 @@ bitline drivers are run-world inputs, not fixed testbench sources in the
 component deck.
 
 Write-zero is exactly the rail-driven NMOS discharge already verified for the
-loaded inverter. Hold uses MOS1 cutoff and zero leakage, so stored charge is
-constant. Write-one threshold loss, destructive read/charge sharing, leakage,
-and sense-amplifier interaction are intentionally deferred to the full DRAM
-slice.
+loaded inverter. Hold uses an ideal zero-leakage DAE field; exact constancy is
+derived from that evolution law and the initial condition rather than asserted
+as a behavior clause. In the nonnegative rail domain, a theorem identifies
+that zero field with the KCL field of the bidirectional MOS1 access device
+held below threshold. Write-one threshold loss, destructive read/charge
+sharing, leakage, and sense-amplifier interaction are intentionally deferred
+to the full DRAM slice.
 -/
 
 namespace LeanModels.Spice
@@ -149,22 +153,49 @@ noncomputable def dram1T1CDAE : ScalarDAE Dram1T1CWorld where
   residual world _time storage derivative :=
     derivative = dram1T1CField world storage
 
+inductive Dram1T1CClause where
+  | initialCondition
+  | evolution
+deriving Repr, DecidableEq
+
+/-- The open-cell behavior contains only its initial condition and physical
+DAE evolution. Hold constancy is derived below, not stored as a clause. -/
+noncomputable def Dram1T1CProgram :
+    EquationProgram Dram1T1CClause Dram1T1CWorld Dram1T1CBoundary Unit where
+  origin
+    | .initialCondition => .initialCondition "storage capacitor voltage"
+    | .evolution => .evolution "1T1C hold/write DAE"
+  equation clause world boundary _internal :=
+    match clause, world.environment.mode with
+    | .initialCondition, .hold =>
+        boundary.storageVoltage 0 = world.environment.initialVoltage
+    | .initialCondition, .writeZero => True
+    | .evolution, .hold =>
+        dram1T1CDAE.ACBehavesOn world world.environment.horizon
+          boundary.storageVoltage
+    | .evolution, .writeZero =>
+        LoadedInverterBehavior world.asLoadedInverter
+          ⟨boundary.storageVoltage⟩ ()
+
 /-- Public behavior: hold is a physical constant-charge DAE trace; write-zero
 uses the charge-consistent loaded-MOS DAE. -/
 noncomputable def Dram1T1CBehavior :
     Behavior Dram1T1CWorld Dram1T1CBoundary Unit :=
-  fun world boundary _internal =>
-    match world.environment.mode with
-    | .hold =>
-        boundary.storageVoltage 0 = world.environment.initialVoltage ∧
-        dram1T1CDAE.ACBehavesOn world world.environment.horizon
-          boundary.storageVoltage ∧
-        ∀ time ∈ Icc 0 world.environment.horizon,
-          boundary.storageVoltage time =
-            world.environment.initialVoltage
-    | .writeZero =>
-        LoadedInverterBehavior world.asLoadedInverter
-          ⟨boundary.storageVoltage⟩ ()
+  Dram1T1CProgram.behavior
+
+theorem dram1T1CEquationManifest :
+    EquationManifest Dram1T1CProgram [] := by
+  constructor
+  · simp
+  · intro contract hcontract
+    rcases hcontract with ⟨clause, hclause⟩
+    cases clause <;>
+      simp [Dram1T1CProgram] at hclause ⊢
+
+theorem dram1T1CProgram_physicsOnly :
+    Dram1T1CProgram.PhysicsOnly := by
+  intro clause
+  cases clause <;> rfl
 
 theorem dram1T1C_writeField_eq_mos1
     {world : Dram1T1CWorld} (hadmissible : Dram1T1CAdmissible world)
@@ -187,7 +218,39 @@ theorem dram1T1C_writeField_eq_mos1
     if_true]
   rw [railCurrent_eq_mos1 hbeta.le hthreshold1.le hstorage0]
 
-private theorem dram1T1C_hold_physical
+/-- Inside the nonnegative rail domain, the ideal zero-leakage hold field is
+exactly the storage-capacitor KCL field obtained from the bidirectional MOS1
+access device with its wordline held low. -/
+theorem dram1T1C_holdField_eq_mos1
+    {world : Dram1T1CWorld}
+    (hadmissible : Dram1T1CAdmissible world)
+    (hmode : world.environment.mode = .hold)
+    {storage bitline : ℝ}
+    (hstorage : 0 ≤ storage)
+    (hbitline : 0 ≤ bitline) :
+    dram1T1CField world storage =
+      -(mos1TerminalCurrent
+          { polarity := .nmos
+            threshold := world.fabricated.threshold
+            beta := world.fabricated.beta
+            lambda := 0 }
+          0 storage bitline) /
+        world.fabricated.storageCapacitance := by
+  have hcurrent :
+      mos1TerminalCurrent
+          { polarity := .nmos
+            threshold := world.fabricated.threshold
+            beta := world.fabricated.beta
+            lambda := 0 }
+          0 storage bitline = 0 := by
+    apply mos1TerminalCurrent_nmos_eq_zero_of_cutoff
+    · linarith [hadmissible.2.2.1]
+    · linarith [hadmissible.2.2.1]
+  simp [dram1T1CField, hmode, hcurrent]
+
+/-- The constant trace realizes the zero-field hold DAE on every nonnegative
+horizon. -/
+theorem dram1T1C_hold_dae_realizable
     {world : Dram1T1CWorld}
     (hmode : world.environment.mode = .hold)
     (hhorizon : 0 ≤ world.environment.horizon) :
@@ -201,21 +264,56 @@ private theorem dram1T1C_hold_physical
         refine ⟨0, hasDerivAt_const time _, ?_⟩
         simp [dram1T1CDAE, dram1T1CField, hmode]
 
+/-- In hold mode, the DAE residual forces zero derivative. Absolute
+continuity and the initial-condition clause therefore derive exact retention
+throughout the requested horizon. -/
+theorem dram1T1C_hold_retention_from_dae
+    {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
+    (hmode : world.environment.mode = .hold)
+    (hbehavior : Dram1T1CBehavior world boundary ()) :
+    ∀ time ∈ Icc 0 world.environment.horizon,
+      boundary.storageVoltage time =
+        world.environment.initialVoltage := by
+  have hinitial :
+      boundary.storageVoltage 0 = world.environment.initialVoltage := by
+    simpa [Dram1T1CBehavior, Dram1T1CProgram, hmode] using
+      hbehavior .initialCondition
+  have hevolution :
+      dram1T1CDAE.ACBehavesOn world world.environment.horizon
+        boundary.storageVoltage := by
+    simpa [Dram1T1CBehavior, Dram1T1CProgram, hmode] using
+      hbehavior .evolution
+  have hconstant :=
+    dram1T1CDAE.constant_on_of_residual_forces_zero hevolution
+      (fun _time _storage derivative hresidual => by
+        simpa [dram1T1CDAE, dram1T1CField, hmode] using hresidual)
+  intro time htime
+  exact (hconstant time htime).trans hinitial
+
 theorem dram1T1C_realizable :
     RealizableUnder Dram1T1CBehavior Dram1T1CAdmissible := by
   intro world hadmissible
   cases hmode : world.environment.mode with
   | hold =>
       refine ⟨⟨fun _time => world.environment.initialVoltage⟩, (), ?_⟩
-      rw [Dram1T1CBehavior, hmode]
-      exact ⟨rfl, dram1T1C_hold_physical hmode hadmissible.2.2.2.2.2.2,
-        fun _time _htime => rfl⟩
+      intro clause
+      cases clause
+      case initialCondition =>
+        simp [Dram1T1CProgram, hmode]
+      case evolution =>
+        simpa [Dram1T1CProgram, hmode] using
+          dram1T1C_hold_dae_realizable hmode hadmissible.2.2.2.2.2.2
   | writeZero =>
       obtain ⟨boundary, internal, hbehavior⟩ :=
         loadedInverter_realizable world.asLoadedInverter
           hadmissible.asLoadedInverter
-      exact ⟨⟨boundary.outputVoltage⟩, internal, by
-        simpa [Dram1T1CBehavior, hmode] using hbehavior⟩
+      refine ⟨⟨boundary.outputVoltage⟩, internal, ?_⟩
+      intro clause
+      cases clause
+      case initialCondition =>
+        simp [Dram1T1CProgram, hmode]
+      case evolution =>
+        simpa [Dram1T1CProgram, hmode] using hbehavior
 
 theorem dram1T1C_dae :
     SafeUnder Dram1T1CBehavior Dram1T1CAdmissible
@@ -225,72 +323,16 @@ theorem dram1T1C_dae :
   intro world boundary _internal _hadmissible hbehavior
   cases hmode : world.environment.mode with
   | hold =>
-      rw [Dram1T1CBehavior, hmode] at hbehavior
-      exact hbehavior.2.1
+      simpa [Dram1T1CProgram, hmode] using hbehavior .evolution
   | writeZero =>
-      rw [Dram1T1CBehavior, hmode] at hbehavior
-      have hphysical := hbehavior.1.2
+      have hloaded :
+          LoadedInverterBehavior world.asLoadedInverter
+            ⟨boundary.storageVoltage⟩ () := by
+        simpa [Dram1T1CProgram, hmode] using hbehavior .evolution
+      have hphysical := hloaded.1.2
       simpa [ScalarDAE.ACBehavesOn, dram1T1CDAE,
         loadedInverterDAE, dram1T1CField, hmode,
         Dram1T1CWorld.asLoadedInverter, deterministicWorld] using hphysical
-
-def Dram1T1CValidityDomain
-    (world : Dram1T1CWorld) (boundary : Dram1T1CBoundary)
-    (_internal : Unit) : Prop :=
-  NoOvershoot boundary.storageVoltage 0 world.environment.supply
-    world.environment.horizon
-
-theorem dram1T1C_stays_in_domain :
-    StaysWithinValidityDomain Dram1T1CBehavior Dram1T1CAdmissible
-      Dram1T1CValidityDomain := by
-  intro world boundary _internal hadmissible hbehavior
-  cases hmode : world.environment.mode with
-  | hold =>
-      rw [Dram1T1CBehavior, hmode] at hbehavior
-      intro time htime0 htimeH
-      rw [hbehavior.2.2 time ⟨htime0, htimeH⟩]
-      exact ⟨hadmissible.2.2.2.2.1, hadmissible.2.2.2.2.2.1⟩
-  | writeZero =>
-      rw [Dram1T1CBehavior, hmode] at hbehavior
-      intro time htime0 htimeH
-      exact loadedInverter_no_overshoot hadmissible.asLoadedInverter
-        hbehavior.2 time ⟨htime0, htimeH⟩
-
-theorem dram1T1C_hold_retention
-    {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
-    (hmode : world.environment.mode = .hold)
-    (hbehavior : Dram1T1CBehavior world boundary ()) :
-    ∀ time ∈ Icc 0 world.environment.horizon,
-      boundary.storageVoltage time = world.environment.initialVoltage := by
-  rw [Dram1T1CBehavior, hmode] at hbehavior
-  exact hbehavior.2.2
-
-theorem dram1T1C_write_zero_settles
-    {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
-    (hadmissible : Dram1T1CAdmissible world)
-    (hmode : world.environment.mode = .writeZero)
-    (hbehavior : Dram1T1CBehavior world boundary ())
-    {tolerance deadline : ℝ}
-    (htolerance : 0 ≤ tolerance)
-    (hdeadline0 : 0 ≤ deadline)
-    (hdeadlineH : deadline ≤ world.environment.horizon)
-    (hdeadline :
-      world.environment.initialVoltage *
-          Real.exp
-            (-loadedInverterDecayRate world.asLoadedInverter * deadline) ≤
-        tolerance) :
-    SettlesWithin boundary.storageVoltage 0 tolerance deadline
-      world.environment.horizon := by
-  have hloaded :
-      LoadedInverterBehavior world.asLoadedInverter
-        ⟨boundary.storageVoltage⟩ () := by
-    simpa [Dram1T1CBehavior, hmode] using hbehavior
-  have hsettles :=
-    loadedInverter_settles_within hadmissible.asLoadedInverter hloaded.2
-      htolerance hdeadline0 hdeadlineH
-  apply hsettles
-  simpa [loadedInverterInitialError, loadedInverterError,
-    Dram1T1CWorld.asLoadedInverter, deterministicWorld] using hdeadline
 
 end LeanModels.Spice
 

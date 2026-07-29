@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 from pathlib import Path
 import re
 import shutil
@@ -24,6 +25,9 @@ STEP = 0.2e-9
 
 
 def executable(name: str) -> str:
+    configured = os.environ.get(f"{name.upper()}_BIN")
+    if configured and Path(configured).is_file():
+        return configured
     found = shutil.which(name)
     if found:
         return found
@@ -31,6 +35,10 @@ def executable(name: str) -> str:
         local = Path.home() / ".local/bin/ngspice"
         if local.exists():
             return str(local)
+    if name == "spectre":
+        installed = Path("/opt/cadence/installs/SPECTRE231/bin/spectre")
+        if installed.exists():
+            return str(installed)
     raise SystemExit(f"{name} not found")
 
 

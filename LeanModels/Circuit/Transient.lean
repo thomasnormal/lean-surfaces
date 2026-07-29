@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Calculus.Deriv.Basic
 import Mathlib.MeasureTheory.Function.AbsolutelyContinuous
+import Mathlib.MeasureTheory.Integral.IntervalIntegral.AbsolutelyContinuousFun
 import LeanModels.Circuit.Behavior
 import LeanModels.Circuit.Time
 
@@ -154,6 +155,36 @@ theorem ScalarDAE.acBehavesOn_of_smooth
     measurableSet_uIcc fun time htime => by
       rw [Set.uIcc_of_le hsmooth.1] at htime
       exact hsmooth.2 time htime.1 htime.2
+
+/-- If every residual solution has zero derivative, every physical scalar-DAE
+trajectory is constant on its horizon. This turns a device/evolution fact into
+an endpoint theorem without adding constancy to the behavior relation. -/
+theorem ScalarDAE.constant_on_of_residual_forces_zero
+    {dae : ScalarDAE World} {world : World} {horizon : ℝ}
+    {trace : DenseTrace ℝ}
+    (hbehavior : dae.ACBehavesOn world horizon trace)
+    (hzero :
+      ∀ time value derivative,
+        dae.residual world time value derivative → derivative = 0) :
+    ∀ time ∈ Set.Icc 0 horizon, trace time = trace 0 := by
+  have hzeroDerivativeRestricted :
+      ∀ᵐ time ∂MeasureTheory.volume.restrict (Set.uIcc 0 horizon),
+        HasDerivAt trace 0 time := by
+    filter_upwards [hbehavior.2.2] with time htime
+    obtain ⟨derivative, hderivative, hresidual⟩ := htime
+    exact hderivative.congr_deriv (hzero time (trace time) derivative hresidual)
+  have hzeroDerivative :
+      ∀ᵐ time,
+        time ∈ Set.uIcc 0 horizon → HasDerivAt trace 0 time :=
+    MeasureTheory.ae_imp_of_ae_restrict hzeroDerivativeRestricted
+  obtain ⟨constant, hconstant⟩ :=
+    hbehavior.2.1.const_of_ae_hasDerivAt_zero hzeroDerivative
+  intro time htime
+  have htime' : time ∈ Set.uIcc 0 horizon := by
+    simpa [Set.uIcc_of_le hbehavior.1] using htime
+  have hzero' : (0 : ℝ) ∈ Set.uIcc 0 horizon := by
+    simp [hbehavior.1]
+  exact (hconstant time htime').trans (hconstant 0 hzero').symm
 
 /-- A DC equilibrium is a zero-derivative point of the transient residual. -/
 def ScalarDAE.Equilibrium (dae : ScalarDAE World)

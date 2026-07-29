@@ -31,6 +31,33 @@ consumes this typed case rather than inferring non-vacuity from an arbitrary
 list of theorem names, and rejects a case attached to a different source
 circuit.
 
+## Equation provenance and the specification boundary
+
+Declarative behavior can smuggle a desired result into its premises unless
+the equation/specification boundary is enforced. `Circuit.Equation` therefore
+represents behavior as an `EquationProgram`: every clause carries exactly one
+origin (`deviceLaw`, `connectionLaw`, `environment`, `initialCondition`,
+`evolution`, or `importedContract`), and the behavior relation is generated
+from all of those clauses.
+
+Imported endpoint contracts are permitted during staged development, but
+`EquationManifest` enumerates them completely and `#equation_report` exposes
+them in proof output. `#equation_guard program forbids [specification]` scans
+the program's transitive project dependencies and rejects a program that
+calls a forbidden specification, even through a helper definition. CI
+compiles an intentionally contaminated program and requires this rejection.
+
+For the DRAM bank, `DramBankCore.lean` contains equations, manifests, and
+realizability witnesses. `DramBankCoreSpec.lean` imports that core and
+contains observation specifications, safety, domain closure, and digital
+refinement. The reverse import is impossible. Current manifests state
+that the read program imports no contracts, while the write phase imports
+only the preceding proved read endpoint. Selected read restore and write
+results are derived from source-backed finite-horizon trajectories:
+`[0 V, 1 V]` for zero and `[3 V, 4 V]` for one after 1 ns. Unselected
+wordline storage is derived from scalar 1T1C hold trajectories. During write,
+other selected-row cells continue their sense-clamped restore trajectories.
+
 ## Worlds and uncertainty
 
 `LeanModels/Circuit/World.lean` separates a fabricated instance from its
@@ -230,24 +257,38 @@ storage capacitor. The reusable deck has no wordline or bitline sources.
 Its checked adapter resolves the storage, wordline, and bitline nodes and
 requires the named NMOS model profile.
 
-This deliberately thin slice separates a device-derived operation from a
-definitional one:
+This deliberately thin slice separates device-derived operations from the
+one remaining idealized mode:
 
 * write-zero is derived from the device law: with the wordline high and
   bitline at ground, the write-zero DAE field is proved equal to the
   normalized MOS1 channel current divided by the extracted capacitance
   (`dram1T1C_writeField_eq_mos1`). A behavior exists, remains between ground
   and supply without overshoot, and satisfies the inherited exponential
-  settling deadline — all through the loaded-inverter MOS1 analysis; and
-* hold retention is definitional, not derived: the hold-mode DAE field is
-  *defined* to be zero, and constancy of the stored voltage is a conjunct of
-  `Dram1T1CBehavior` itself. MOS1 cutoff with `IS=0` is the recorded modeling
-  rationale, but no MOS current or wordline voltage is consulted in the hold
-  branch; the retention theorem restates what the behavior definition
-  asserts.
+  settling deadline — all through the loaded-inverter MOS1 analysis;
+* write-one is a separate source-backed `DramWriteBehavior`. The checked
+  adapter projects threshold, transconductance, and storage capacitance from
+  the open cell deck. Primitive bidirectional MOS1 current plus capacitor KCL
+  reduces to a proved piecewise field, whose closed-form trajectory is proved
+  to be the unique absolutely-continuous behavior from its initial voltage.
+  Every admitted trajectory stays below the threshold-loss target and,
+  from 0 V, enters `[3 V, 4 V]` within 1 ns. Safety, realizability, and rail
+  closure are reported together; and
+* hold constancy is derived from the initial condition and the
+  absolutely-continuous DAE: the hold-mode residual forces zero derivative,
+  and a reusable calculus theorem proves every physical trace constant. The
+  equation manifest is empty. The hold field is still *defined* to be zero;
+  MOS1 cutoff with `IS=0` is the recorded modeling rationale, but no MOS
+  current or wordline voltage is yet consulted in that branch.
 
-The slice does not idealize unsupported operations. Ngspice and Spectre
-validate hold and write-zero in temporary testbenches only.
+The write-one theorem intentionally does not claim an exact finite-time
+4 V endpoint. For the nominal unboosted LEVEL=1 model, every storage voltage
+between `VWL - Vt` and the 5 V bitline is a zero-current equilibrium; Lean
+exhibits 4 V and 5 V as distinct equilibria. The transient and its deadline,
+not the static equilibrium relation, select the useful write band. Read charge
+sharing and nonzero-leakage retention remain outside this thin slice. Ngspice
+and Spectre validate hold, write-zero, and write-one in temporary testbenches
+only.
 
 ## Validation slice 8: bounded noise and finite yield
 
@@ -283,7 +324,152 @@ The cell contract composes into read and write refinement theorems for every
 bank width; the bank write relation is itself definitional
 (`Function.update`) and mentions no circuit at all.
 
-## Validation slice 10: frontend-independent sampled refinement
+## Validation slice 10: source-validated 2x2 endpoint-contract prototype
+
+`Examples/spice/dram_bank_2x2/` is an open component deck with four physical
+1T1C cells, shared wordlines and bitlines, a transistor-level row decoder,
+precharge devices, one two-inverter sense path and restore transmission gate
+per column, a post-sense read mux, and a column-selected write path. Supplies,
+address rails, complementary controls, data input, initial charge, and phase
+timing are testbench concerns and do not appear as fixed sources in the
+proved component.
+
+The strict source adapter checks all 46 flattened devices, all capacitor
+values, every terminal and boundary node, and the three MOS1 model profiles
+before returning `DramBank2x2Layout`. The physical semantics uses
+source/drain-symmetric terminal current, because access-transistor charge
+sharing reverses current direction according to the stored value.
+
+The proof is compositional, but its boundary is deliberately narrow:
+
+* one 1T1C endpoint contract derives charge conservation and access-device
+  equilibrium from the extracted capacitances and MOS1 parameters;
+* row activation composes that cell theorem across both columns;
+* transistor equations characterize decoder, transmission gates, the
+  two-inverter nominal sense path, and read muxing;
+* the precharged bitline is the 10 ns endpoint of the enabled MOS1 plus
+  300 fF bitline-capacitor DAE; Lean proves its unique trace stays below
+  `5/2 V` and reaches at least `2.47 V`, rather than importing an equilibrium;
+* every cell on an unselected wordline carries a source-parameterized 1T1C
+  hold trace whose initial condition and zero-leakage DAE derive preservation
+  at the connected phase endpoint;
+* every selected-row cell follows a finite-horizon source-backed restore
+  trajectory with its bitline clamped to the sense output;
+* during a column write, other selected-row cells continue those clamped
+  restore trajectories while unselected rows remain in cutoff hold; and
+* the resulting read and write endpoints place zero in `[0 V, 1 V]` and one
+  in `[3 V, 4 V]`.
+
+For both read and write, Lean proves universal safety, realizability, and
+0--5 V validity-domain closure. The read equation manifest explicitly records
+the legacy two-inverter sense endpoint contract; the write theorem consumes
+the read endpoint phase and then derives its selected and unselected-column
+trajectories. Separate
+refinement theorems connect its observations to `DramBankStep`. These are
+non-vacuous theorems. Precharge timing is now a physical trajectory result;
+the remaining timing gap is the connection from charge sharing into the
+regenerative differential sense phase.
+
+The current sense path is two cascaded inverters. Its discrimination lemmas
+cover conservative low/high shared-voltage bands. The relation is still
+single-ended and static, and admits a non-rail solution at its switching
+boundary. No bank-level regenerative-latch, offset, resolution-time, or
+metastability-exclusion theorem is claimed. The source-derived precharge and
+charge-sharing phases do prove a uniform `3/22 V` differential relative to
+an otherwise precharged reference. A separate contract bridge preserves
+fixed `BL` and `BLref` identities and proves the nominal latch's local
+regenerative direction for both bit polarities, together with pointwise
+residual realizability. The 2x2 deck does not instantiate that connection.
+
+`Examples/spice/dram_sense_amp/` now supplies the next source-backed vertical
+slice: a cross-coupled differential latch with two explicit capacitors. Its
+equation manifest contains only initial conditions and the primitive
+capacitor/MOS1 KCL evolution. The kernel proves source projection, both rail
+equilibria, and a realizable midpoint metastable equilibrium. It also proves
+an exact scalar differential-mode reduction of the primitive residual,
+physical-trajectory lifting, local residual realizability, and regenerative
+direction throughout the balanced interval between midpoint and rail. The
+first operating region additionally has an exact exponential,
+absolutely-continuous behavior witness lifted all the way into the equation
+program. An integrating-factor proof makes that scalar trajectory unique
+among first-region solutions. The exhibited primitive behavior has a proved
+rail-domain bound and reaches any requested positive first-region margin by
+an explicit logarithmic deadline. The separate specification module defines
+margin and resolution predicates, and the equation dependency guard proves
+the DAE does not depend on either. Picard-Lindelof now constructs an
+absolutely-continuous primitive trajectory across all three MOS regions for
+every finite horizon and every initial balanced deviation in `[0, 5/2]`.
+A source-derived barrier proves that witness stays in the rail domain. A
+global five-region source field, bounded-image Lipschitz certificate, and
+Grönwall argument prove finite-horizon determinacy without a rail premise.
+Consequently every admissible balanced scalar trajectory remains in the
+basin and moves monotonically toward the selected rail. At the primitive
+two-node level, the MOS/KCL equations make squared common-mode error
+nonincreasing inside the rail rectangle. Therefore every rail-valid vector
+trajectory with balanced initial data stays balanced, projects into the
+exact scalar view, and is determinate. For arbitrary nominal unbalanced
+initial data, a globally Lipschitz clamped field now constructs an inhabited
+finite-horizon primitive DAE behavior; a source-field barrier keeps that
+witness in the rail rectangle, so the extension agrees with the primitive
+MOS/KCL equations throughout. Determinacy of every arbitrary unbalanced
+vector behavior is still open. At the local level,
+however, a source-backed device-order theorem proves that every ordered,
+nonterminal state anywhere in the rail rectangle has a strictly growing
+voltage differential. Positive source-projected capacitances construct a
+residual witness at every state. Unbalanced determinacy and convergence,
+mismatched-device and offset coverage, and quantitative rail settling remain
+intentionally open.
+
+This slice does not derive a single continuous trajectory across every bank
+phase or a
+`DramBankTransactionContract` deadline. Ngspice and Spectre independently
+validate precharge, charge-sharing targets, sensing, restoration, and writes.
+The harness deliberately requires restoration to finish before write; a
+shorter restore window exposed incomplete recovery of the other selected-row
+cell. Simulator timing is evidence, not a theorem premise. The zero-leakage
+MOS1 profile does not establish physical retention, refresh, or stressed-PVT
+coverage.
+
+## Validation slice 10a: generalized 256x32 DRAM bank
+
+`Examples/spice/dram_bank_256x32/` scales the endpoint-contract argument
+without scaling the proof by the number of cells. A reusable 32-cell row is
+instantiated 256 times in the concrete open `.cir` component. The fail-closed
+loader validates all row instances, bitline capacitances, per-column paths,
+and model profiles. Separate kernel-checked certificates derive every numeric
+field and the typed cell/row/subarray/column/bank topology from the embedded
+source, then prove the complete `SourceCircuit.toDramBank` projection.
+
+The endpoint-contract theorem quantifies over arbitrary `rows` and `columns`.
+Instantiating it proves all-address read and write safety, realizability,
+0--5 V domain closure, and refinement to `DramBankStep` for 8,192 cells,
+relative to an explicitly reported legacy two-inverter sense endpoint
+contract. The read restore and selected write phases have the same derived
+1 ns logic-band guarantee as the 2x2 bank.
+
+The generated 256x32 source now goes beyond that endpoint theorem: every
+column contains a precharged reference bitline, paired transmission-gate
+couplers, and an isolated four-MOS/two-capacitor differential latch with
+separate sense rails. The strict source projection checks that connection and
+derives the latch thresholds, transconductance, and capacitances. A
+source-instance theorem proves the primitive latch residual is realizable and
+that every rail-valid, correctly ordered nonterminal post-coupling state has
+the correct regenerative derivative. A source-derived finite coupling
+trajectory now establishes that state from the already-derived `3/22 V`
+bitline/reference margin after every positive coupling duration. The proof
+uses the four capacitor-KCL/MOS1 equations, proves pair-charge conservation,
+no overshoot, finite-horizon realizability, and `[2 V, 3 V]` domain closure,
+then derives the latch's correct initial regenerative direction. The
+coupling endpoint now initializes an inhabited finite-horizon primitive latch
+behavior whose two nodes are proved to remain in the 0--5 V model domain. The
+missing refinement is determinacy and convergence of that unbalanced latch
+behavior followed by physical restore. Until those land, the whole-bank
+endpoint theorem retains the imported legacy sense contract and does not
+claim a continuous transaction deadline. Ngspice and Spectre separately
+exercise both read and write polarities through the 16,000-plus-device
+hierarchy.
+
+## Validation slice 11: frontend-independent sampled refinement
 
 `Circuit.MixedSignal` uses superdense sample times, voltage bands, and
 explicit logic/electrical connect relations. `MixedRuns` embeds the existing
@@ -333,17 +519,20 @@ linearization, exact small-signal AC, provenance records, checked assurance
 reports, and an OpenVAF-backed minimal Verilog-A contribution frontend.
 It also includes deterministic bounded-noise propagation, exact finite
 whole-world yield, spec-level charge-sharing DRAM read/restore contracts
-composed for arbitrary bank widths (definitional relations; see slice 9),
-and sampled analog/SV refinement over the existing all-schedule SV
-semantics.
+composed for arbitrary bank widths (definitional relations; see slice 9), a
+source-validated 2x2 bank endpoint contract with read/write refinement
+(see slice 10), and sampled analog/SV refinement over the existing
+all-schedule SV semantics.
 The loaded-inverter slice additionally validates charge accounting,
 nonlinear real DC existence, correlated PVT worlds, finite-horizon nonlinear
 transient existence, no-overshoot/domain invariance, and an exponential
 settling bound.
 The thin 1T1C slice then demonstrates source-backed dynamic storage,
-environment-controlled access, exact zero-leakage retention (asserted
-definitionally by the hold-mode behavior; see slice 7), and a MOS1-derived
-write operation without embedding testbench drivers.
+environment-controlled access, exact zero-leakage retention (derived from
+the hold DAE and its initial condition; the zero field is the ideal compact
+model choice), MOS1-derived write-zero, and a source-projected write-one
+trajectory with determinacy and a one-nanosecond logic-band guarantee, all
+without embedding testbench drivers.
 
 The following architecture pieces remain to be implemented or generalized:
 
@@ -362,17 +551,18 @@ The following architecture pieces remain to be implemented or generalized:
 Full Verilog-AMS is a separate deferred project; its parser, elaboration,
 hybrid scheduling, and proof gates are recorded in `docs/backlog.md`.
 
-### Known gaps (audited 2026-07-25, queued)
+### Known gaps (audited 2026-07-25)
 
-* `#assurance_report` semantic linkage. As audited, the `AssuranceCase`
-  circuit parameter was phantom: the gate checked source provenance and the
-  circuit constant, not any semantic connection, so an assurance case whose
-  behavior had no relation to the circuit passed the report. The
-  `SourceBinding` field added in this change makes the artifact-to-behavior
-  derivation explicit and auditable, but it does not force the connection: a
-  binding whose `behaviorOf` ignores its model still elaborates and still
-  passes the report. Redesign queued: tie the reported behavior to the
-  circuit's own `Behavior` type rather than to a user-supplied function.
+* Semantic adapters remain proof-relevant code. `SourceBinding` closes the
+  former phantom-circuit hole by requiring the exact checked projection and
+  by making both behavior and allowed worlds definitionally arise from its
+  projected model. Lean cannot infer the informal fact that an arbitrary
+  adapter function uses every model field. Each source adapter therefore
+  needs a strict projection theorem and an audit of the resulting semantics.
+  The 2x2 bank adapter enumerates every device and model and its assurance
+  cases consume the resulting typed layout; a user-written projection that
+  simply returns an unrelated model would remain an explicit, reviewable
+  trusted definition rather than a hidden theorem premise.
 * Elaboration-time dimension checking. `Nature.lean` declares SI dimensions,
   natures, and conservative/signal disciplines, but that machinery is not
   wired into any elaboration path: dimensionally invalid values currently

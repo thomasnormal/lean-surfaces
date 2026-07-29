@@ -1,4 +1,5 @@
 import LeanModels.Circuit.Behavior
+import LeanModels.Circuit.Equation
 import LeanModels.Circuit.Nature
 import LeanModels.Circuit.Discipline
 import LeanModels.Circuit.World

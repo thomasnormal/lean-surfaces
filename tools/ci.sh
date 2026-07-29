@@ -22,6 +22,14 @@ step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
 step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
+maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \
+  python3 Examples/spice/dram_bank_256x32/generate.py --check
+maybe "spice-dram-bank-256x32-adversarial" harness/spice/dram_bank_256x32_source_test.lean \
+  lake env lean --run harness/spice/dram_bank_256x32_source_test.lean
+maybe "spice-dram-sense-adversarial" harness/spice/dram_sense_amp_source_test.lean \
+  lake env lean --run harness/spice/dram_sense_amp_source_test.lean
+maybe "circuit-equation-provenance" harness/spice/equation_provenance_test.py \
+  python3 harness/spice/equation_provenance_test.py
 # The Verilog-A extractor drives a pinned OpenVAF checkout (gitignored, ~785MB
 # with build tree) — present on lab hosts, absent on stock runners.
 maybe "verilog-a-extractor-tests" extractors/veriloga/openvaf_ast/Cargo.toml python3 extractors/veriloga/test_extract.py
@@ -47,9 +55,12 @@ if command -v ngspice >/dev/null 2>&1 || [ -x "$HOME/.local/bin/ngspice" ]; then
   maybe "spice-parser-agreement" harness/spice/parser_agreement.py python3 harness/spice/parser_agreement.py
   maybe "spice-typed-dc" harness/spice/typed_dc_test.py python3 harness/spice/typed_dc_test.py
   maybe "spice-ac-ngspice" harness/spice/ac_test.py python3 harness/spice/ac_test.py --sim ngspice
+  maybe "spice-amp-ngspice" harness/spice/amp_test.py python3 harness/spice/amp_test.py
   maybe "spice-loaded-inverter-ngspice" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim ngspice
   maybe "spice-dram-1t1c-ngspice" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim ngspice
-  maybe "spice-amp-ngspice" harness/spice/amp_test.py python3 harness/spice/amp_test.py
+  maybe "spice-dram-bank-ngspice" harness/spice/dram_bank_2x2_transient_test.py python3 harness/spice/dram_bank_2x2_transient_test.py --sim ngspice
+  maybe "spice-dram-bank-256x32-ngspice" harness/spice/dram_bank_256x32_transient_test.py python3 harness/spice/dram_bank_256x32_transient_test.py --sim ngspice
+  maybe "spice-dram-sense-ngspice" harness/spice/dram_sense_amp_transient_test.py python3 harness/spice/dram_sense_amp_transient_test.py --sim ngspice
 else
   echo "=== [spice-harness] SKIP (ngspice not found)"; skip+=("spice-harness")
   echo "=== [spice-switch-harness] SKIP (ngspice not found)"; skip+=("spice-switch-harness")
@@ -58,27 +69,40 @@ else
   echo "=== [spice-parser-agreement] SKIP (ngspice not found)"; skip+=("spice-parser-agreement")
   echo "=== [spice-typed-dc] SKIP (ngspice not found)"; skip+=("spice-typed-dc")
   echo "=== [spice-ac-ngspice] SKIP (ngspice not found)"; skip+=("spice-ac-ngspice")
+  echo "=== [spice-amp-ngspice] SKIP (ngspice not found)"; skip+=("spice-amp-ngspice")
   echo "=== [spice-loaded-inverter-ngspice] SKIP (ngspice not found)"; skip+=("spice-loaded-inverter-ngspice")
   echo "=== [spice-dram-1t1c-ngspice] SKIP (ngspice not found)"; skip+=("spice-dram-1t1c-ngspice")
-  echo "=== [spice-amp-ngspice] SKIP (ngspice not found)"; skip+=("spice-amp-ngspice")
+  echo "=== [spice-dram-bank-ngspice] SKIP (ngspice not found)"; skip+=("spice-dram-bank-ngspice")
+  echo "=== [spice-dram-bank-256x32-ngspice] SKIP (ngspice not found)"; skip+=("spice-dram-bank-256x32-ngspice")
+  echo "=== [spice-dram-sense-ngspice] SKIP (ngspice not found)"; skip+=("spice-dram-sense-ngspice")
 fi
 
 # Spectre is proprietary and unavailable on stock GitHub runners. Lab hosts
 # run it as an independent second oracle when the licensed binary is present.
-if command -v spectre >/dev/null 2>&1; then
+if command -v spectre >/dev/null 2>&1 || \
+    [ -x "${SPECTRE_BIN:-/opt/cadence/installs/SPECTRE231/bin/spectre}" ]; then
+  if ! command -v spectre >/dev/null 2>&1; then
+    export PATH="$(dirname "${SPECTRE_BIN:-/opt/cadence/installs/SPECTRE231/bin/spectre}"):$PATH"
+  fi
   maybe "spectre-harness" harness/spice/spectre_test.py python3 harness/spice/spectre_test.py
   maybe "spice-ac-spectre" harness/spice/ac_test.py python3 harness/spice/ac_test.py --sim spectre
+  maybe "spice-amp-spectre" harness/spice/amp_test.py python3 harness/spice/amp_test.py --sim spectre
   maybe "verilog-a-spectre" harness/veriloga/spectre_test.py python3 harness/veriloga/spectre_test.py
   maybe "spice-loaded-inverter-spectre" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim spectre
   maybe "spice-dram-1t1c-spectre" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim spectre
-  maybe "spice-amp-spectre" harness/spice/amp_test.py python3 harness/spice/amp_test.py --sim spectre
+  maybe "spice-dram-bank-spectre" harness/spice/dram_bank_2x2_transient_test.py python3 harness/spice/dram_bank_2x2_transient_test.py --sim spectre
+  maybe "spice-dram-bank-256x32-spectre" harness/spice/dram_bank_256x32_transient_test.py python3 harness/spice/dram_bank_256x32_transient_test.py --sim spectre
+  maybe "spice-dram-sense-spectre" harness/spice/dram_sense_amp_transient_test.py python3 harness/spice/dram_sense_amp_transient_test.py --sim spectre
 else
   echo "=== [spectre-harness] SKIP (spectre not found)"; skip+=("spectre-harness")
   echo "=== [spice-ac-spectre] SKIP (spectre not found)"; skip+=("spice-ac-spectre")
+  echo "=== [spice-amp-spectre] SKIP (spectre not found)"; skip+=("spice-amp-spectre")
   echo "=== [verilog-a-spectre] SKIP (spectre not found)"; skip+=("verilog-a-spectre")
   echo "=== [spice-loaded-inverter-spectre] SKIP (spectre not found)"; skip+=("spice-loaded-inverter-spectre")
   echo "=== [spice-dram-1t1c-spectre] SKIP (spectre not found)"; skip+=("spice-dram-1t1c-spectre")
-  echo "=== [spice-amp-spectre] SKIP (spectre not found)"; skip+=("spice-amp-spectre")
+  echo "=== [spice-dram-bank-spectre] SKIP (spectre not found)"; skip+=("spice-dram-bank-spectre")
+  echo "=== [spice-dram-bank-256x32-spectre] SKIP (spectre not found)"; skip+=("spice-dram-bank-256x32-spectre")
+  echo "=== [spice-dram-sense-spectre] SKIP (spectre not found)"; skip+=("spice-dram-sense-spectre")
 fi
 
 echo

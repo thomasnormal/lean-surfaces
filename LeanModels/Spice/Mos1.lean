@@ -107,6 +107,326 @@ theorem mos1ForwardCurrent_zero_drop
   · have hoverdrive : 0 ≤ vgs - params.threshold := by linarith
     simp [hcutoff, hoverdrive]
 
+/-- A bidirectional NMOS channel is cut off when the gate is below threshold
+relative to both channel terminals. The statement is orientation-independent,
+which is essential for access and pass transistors. -/
+theorem mos1TerminalCurrent_nmos_eq_zero_of_cutoff
+    (threshold beta lambda gate drain source : ℝ)
+    (hgateDrain : gate - drain ≤ threshold)
+    (hgateSource : gate - source ≤ threshold) :
+    mos1TerminalCurrent
+        { polarity := .nmos, threshold, beta, lambda }
+        gate drain source = 0 := by
+  unfold mos1TerminalCurrent
+  by_cases horder : source ≤ drain
+  · simp [horder, mos1ForwardCurrent, hgateSource]
+  · simp [horder, mos1ForwardCurrent, hgateDrain]
+
+/-- With positive transconductance, zero channel-length modulation, and a
+forward-oriented channel, the MOS1 current magnitude is nonnegative. -/
+theorem mos1ForwardCurrent_nonneg
+    (polarity : LeanModels.Circuit.MosPolarity) (threshold beta vgs vds : ℝ)
+    (hbeta : 0 ≤ beta) (hvds : 0 ≤ vds) :
+    0 ≤ mos1ForwardCurrent
+      { polarity, threshold, beta, lambda := 0 } vgs vds := by
+  unfold mos1ForwardCurrent
+  split
+  · norm_num
+  next hon =>
+    split
+    next htriode =>
+      have hoverdrive : 0 < vgs - threshold := by linarith
+      have hshape :
+          0 ≤ (vgs - threshold) * vds - vds ^ 2 / 2 := by
+        nlinarith [mul_nonneg hvds
+          (show 0 ≤ vgs - threshold - vds / 2 by linarith)]
+      positivity
+    next hsaturation =>
+      positivity
+
+/-- A zero-channel-length-modulation NMOS channel is passive: terminal
+current has the same sign as the voltage drop from the named drain to the
+named source. This statement is invariant under the dynamic source/drain
+selection used by pass devices. -/
+theorem mos1TerminalCurrent_nmos_mul_drop_nonneg
+    (threshold beta gate drain source : ℝ)
+    (hbeta : 0 ≤ beta) :
+    0 ≤
+      mos1TerminalCurrent
+          { polarity := .nmos, threshold, beta, lambda := 0 }
+          gate drain source *
+        (drain - source) := by
+  unfold mos1TerminalCurrent
+  by_cases horder : source ≤ drain
+  · rw [if_pos horder]
+    exact mul_nonneg
+      (mos1ForwardCurrent_nonneg .nmos threshold beta
+        (gate - source) (drain - source) hbeta (sub_nonneg.mpr horder))
+      (sub_nonneg.mpr horder)
+  · rw [if_neg horder]
+    have hreverse : drain ≤ source := le_of_not_ge horder
+    exact mul_nonneg_of_nonpos_of_nonpos
+      (neg_nonpos.mpr
+        (mos1ForwardCurrent_nonneg .nmos threshold beta
+          (gate - drain) (source - drain) hbeta
+          (sub_nonneg.mpr hreverse)))
+      (sub_nonpos.mpr hreverse)
+
+theorem mos1TerminalCurrent_nmos_nonneg_of_source_le_drain
+    (threshold beta gate drain source : ℝ)
+    (hbeta : 0 ≤ beta) (horder : source ≤ drain) :
+    0 ≤
+      mos1TerminalCurrent
+        { polarity := .nmos, threshold, beta, lambda := 0 }
+        gate drain source := by
+  simp only [mos1TerminalCurrent, horder, if_true]
+  exact mos1ForwardCurrent_nonneg .nmos threshold beta
+    (gate - source) (drain - source) hbeta (sub_nonneg.mpr horder)
+
+theorem mos1TerminalCurrent_nmos_nonpos_of_drain_le_source
+    (threshold beta gate drain source : ℝ)
+    (hbeta : 0 ≤ beta) (horder : drain ≤ source) :
+    mos1TerminalCurrent
+        { polarity := .nmos, threshold, beta, lambda := 0 }
+        gate drain source ≤ 0 := by
+  by_cases hequal : source ≤ drain
+  · have : drain = source := le_antisymm horder hequal
+    subst source
+    simp [mos1TerminalCurrent, mos1ForwardCurrent_zero_drop]
+  · simp only [mos1TerminalCurrent, hequal, if_false]
+    exact neg_nonpos.mpr
+      (mos1ForwardCurrent_nonneg .nmos threshold beta
+        (gate - drain) (source - drain) hbeta
+        (sub_nonneg.mpr horder))
+
+/-- With zero channel-length modulation, forward MOS1 current is monotone in
+the drain-source drop. This is a primitive device-law fact used by several
+compositional circuit arguments. -/
+theorem mos1ForwardCurrent_mono_drop_zero_lambda
+    (polarity : LeanModels.Circuit.MosPolarity)
+    (threshold beta vgs : ℝ)
+    (hbeta : 0 ≤ beta) {vds₁ vds₂ : ℝ} (hle : vds₁ ≤ vds₂) :
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs vds₁ ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs vds₂ := by
+  unfold mos1ForwardCurrent
+  by_cases hcutoff : vgs ≤ threshold
+  · simp [hcutoff]
+  · simp only [hcutoff, if_false]
+    have hon : threshold < vgs := lt_of_not_ge hcutoff
+    by_cases h₂ : vds₂ ≤ vgs - threshold
+    · have h₁ : vds₁ ≤ vgs - threshold := le_trans hle h₂
+      simp only [h₁, h₂, if_true]
+      have hproduct :
+          0 ≤ beta * ((vds₂ - vds₁) *
+            ((vgs - threshold) - (vds₁ + vds₂) / 2)) :=
+        mul_nonneg hbeta
+          (mul_nonneg (by linarith) (by linarith))
+      nlinarith [hproduct]
+    · by_cases h₁ : vds₁ ≤ vgs - threshold
+      · simp only [h₁, if_true, h₂, if_false]
+        nlinarith [mul_nonneg hbeta
+          (sq_nonneg (vgs - threshold - vds₁))]
+      · simp only [h₁, h₂, if_false]
+        nlinarith
+
+/-- With zero channel-length modulation and a nonnegative forward drop,
+forward MOS1 current is monotone in gate drive. -/
+theorem mos1ForwardCurrent_mono_gate_zero_lambda
+    (polarity : LeanModels.Circuit.MosPolarity)
+    (threshold beta vds : ℝ)
+    (hbeta : 0 ≤ beta) (hvds : 0 ≤ vds)
+    {vgs₁ vgs₂ : ℝ} (hle : vgs₁ ≤ vgs₂) :
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs₁ vds ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs₂ vds := by
+  by_cases h1 : vgs₁ ≤ threshold
+  · have hzero :
+        mos1ForwardCurrent
+          { polarity, threshold, beta, lambda := 0 } vgs₁ vds = 0 := by
+      unfold mos1ForwardCurrent
+      rw [if_pos h1]
+    rw [hzero]
+    exact mos1ForwardCurrent_nonneg polarity threshold beta vgs₂ vds
+      hbeta hvds
+  · have h2 : ¬ vgs₂ ≤ threshold := fun h => h1 (hle.trans h)
+    unfold mos1ForwardCurrent
+    rw [if_neg h1, if_neg h2]
+    have hon1 : threshold < vgs₁ := lt_of_not_ge h1
+    by_cases t1 : vds ≤ vgs₁ - threshold
+    · have t2 : vds ≤ vgs₂ - threshold := by linarith
+      rw [if_pos t1, if_pos t2]
+      nlinarith [mul_nonneg hbeta
+        (mul_nonneg hvds (sub_nonneg.mpr hle))]
+    · rw [if_neg t1]
+      by_cases t2 : vds ≤ vgs₂ - threshold
+      · rw [if_pos t2]
+        nlinarith [mul_nonneg hbeta
+            (mul_nonneg
+              (by linarith : (0 : ℝ) ≤
+                vds - (vgs₁ - threshold))
+              (by linarith : (0 : ℝ) ≤
+                vds + (vgs₁ - threshold))),
+          mul_nonneg hbeta
+            (mul_nonneg
+              (by linarith : (0 : ℝ) ≤
+                vgs₂ - threshold - vds)
+              hvds)]
+      · rw [if_neg t2]
+        nlinarith [mul_nonneg hbeta
+          (mul_nonneg
+            (by linarith : (0 : ℝ) ≤ vgs₂ - vgs₁)
+            (by linarith : (0 : ℝ) ≤
+              vgs₁ + vgs₂ - 2 * threshold))]
+
+/-- For a nonnegative threshold and zero channel-length modulation, assigning
+the larger of two nonnegative voltages to the gate and the smaller to the
+drain drop cannot reduce the forward current. This is the device-law ordering
+used by cross-coupled differential stages. -/
+theorem mos1ForwardCurrent_cross_mono_zero_lambda
+    (polarity : LeanModels.Circuit.MosPolarity)
+    (threshold beta low high : ℝ)
+    (hthreshold : 0 ≤ threshold) (hbeta : 0 ≤ beta)
+    (hlow : 0 ≤ low) (hle : low ≤ high) :
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } low high ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } high low := by
+  rcases hle.eq_or_lt with hEq | hlt
+  · subst high
+    exact le_rfl
+  unfold mos1ForwardCurrent
+  by_cases hlowCutoff : low ≤ threshold
+  · rw [if_pos hlowCutoff]
+    split
+    · exact le_rfl
+    · split
+      · have hoverdrive : 0 < high - threshold := by linarith
+        have hshape :
+            0 ≤ (high - threshold) * low - low ^ 2 / 2 := by
+          nlinarith [mul_nonneg hlow
+            (show 0 ≤ high - threshold - low / 2 by linarith)]
+        positivity
+      · positivity
+  · have hhighCutoff : ¬ high ≤ threshold := by
+      linarith
+    have hleftSaturation : ¬ high ≤ low - threshold := by linarith
+    rw [if_neg hlowCutoff, if_neg hleftSaturation,
+      if_neg hhighCutoff]
+    by_cases hrightTriode : low ≤ high - threshold
+    · rw [if_pos hrightTriode]
+      have hshape :
+          (low - threshold) ^ 2 / 2 ≤
+            (high - threshold) * low - low ^ 2 / 2 := by
+        nlinarith [
+          mul_nonneg hlow
+            (show 0 ≤ high - low - threshold by linarith),
+          mul_nonneg hthreshold
+            (show 0 ≤ 2 * low - threshold by linarith)]
+      nlinarith [mul_nonneg hbeta
+        (sub_nonneg.mpr hshape)]
+    · rw [if_neg hrightTriode]
+      have hsq :
+          (low - threshold) ^ 2 ≤
+            (high - threshold) ^ 2 := by
+        nlinarith [mul_nonneg
+          (show 0 ≤ high - low by linarith)
+          (show 0 ≤ high + low - 2 * threshold by linarith)]
+      nlinarith [mul_nonneg hbeta (sub_nonneg.mpr hsq)]
+
+/-- The cross ordering is strict when the larger gate drive is above
+threshold and the smaller drain drop is positive. -/
+theorem mos1ForwardCurrent_cross_strict_zero_lambda
+    (polarity : LeanModels.Circuit.MosPolarity)
+    (threshold beta low high : ℝ)
+    (hthreshold : 0 ≤ threshold) (hbeta : 0 < beta)
+    (hlow : 0 < low) (hthresholdHigh : threshold < high)
+    (hlt : low < high) :
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } low high <
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } high low := by
+  unfold mos1ForwardCurrent
+  by_cases hlowCutoff : low ≤ threshold
+  · rw [if_pos hlowCutoff, if_neg (not_le.mpr hthresholdHigh)]
+    by_cases hrightTriode : low ≤ high - threshold
+    · rw [if_pos hrightTriode]
+      have hshape :
+          0 < (high - threshold) * low - low ^ 2 / 2 := by
+        nlinarith [mul_pos hlow
+          (show 0 < high - threshold - low / 2 by linarith)]
+      positivity
+    · rw [if_neg hrightTriode]
+      positivity
+  · have hleftSaturation : ¬ high ≤ low - threshold := by
+      linarith
+    rw [if_neg hlowCutoff, if_neg hleftSaturation,
+      if_neg (not_le.mpr hthresholdHigh)]
+    by_cases hrightTriode : low ≤ high - threshold
+    · rw [if_pos hrightTriode]
+      have hshape :
+          (low - threshold) ^ 2 / 2 <
+            (high - threshold) * low - low ^ 2 / 2 := by
+        have hproduct :
+            threshold ^ 2 < low * (high - low) := by
+          rcases hthreshold.eq_or_lt with hthresholdZero
+              | hthresholdPositive
+          · subst threshold
+            simpa using mul_pos hlow (sub_pos.mpr hlt)
+          · calc
+              threshold ^ 2 = threshold * threshold := by ring
+              _ < low * threshold :=
+                mul_lt_mul_of_pos_right
+                  (show threshold < low by linarith)
+                  hthresholdPositive
+              _ ≤ low * (high - low) :=
+                mul_le_mul_of_nonneg_left
+                  (show threshold ≤ high - low by linarith)
+                  hlow.le
+        nlinarith
+      nlinarith [mul_pos hbeta
+        (sub_pos.mpr hshape)]
+    · rw [if_neg hrightTriode]
+      have hsq :
+          (low - threshold) ^ 2 <
+            (high - threshold) ^ 2 := by
+        nlinarith [mul_pos
+          (show 0 < high - low by linarith)
+          (show 0 < high + low - 2 * threshold by linarith)]
+      nlinarith [mul_pos hbeta (sub_pos.mpr hsq)]
+
+/-- Lowering gate drive and drain-source drop by the same nonnegative amount
+cannot increase a forward-oriented MOS1 current, provided the lowered drop
+remains nonnegative. -/
+theorem mos1ForwardCurrent_mono_common_shift
+    (polarity : LeanModels.Circuit.MosPolarity)
+    (threshold beta vgs vds shift : ℝ)
+    (hbeta : 0 ≤ beta) (hshift : 0 ≤ shift)
+    (hvds : 0 ≤ vds - shift) :
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 }
+        (vgs - shift) (vds - shift) ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs vds := by
+  calc
+    mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 }
+        (vgs - shift) (vds - shift) ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 }
+        vgs (vds - shift) :=
+      mos1ForwardCurrent_mono_gate_zero_lambda
+        polarity threshold beta (vds - shift) hbeta hvds
+        (sub_le_self vgs hshift)
+    _ ≤
+      mos1ForwardCurrent
+        { polarity, threshold, beta, lambda := 0 } vgs vds :=
+      mos1ForwardCurrent_mono_drop_zero_lambda
+        polarity threshold beta vgs hbeta
+        (sub_le_self vds hshift)
+
 /-- Swapping the written channel terminals reverses the terminal current. -/
 theorem mos1TerminalCurrent_swap
     (params : Mos1Params) (gate drain source : ℝ) :
@@ -483,28 +803,6 @@ theorem mos1_on_zero_current_iff
     · intro hvds
       subst vds
       norm_num at hregion
-
-/-- With positive transconductance, zero channel-length modulation, and a
-forward-oriented channel, the MOS1 current magnitude is nonnegative. -/
-theorem mos1ForwardCurrent_nonneg
-    (polarity : LeanModels.Circuit.MosPolarity) (threshold beta vgs vds : ℝ)
-    (hbeta : 0 ≤ beta) (hvds : 0 ≤ vds) :
-    0 ≤ mos1ForwardCurrent
-      { polarity, threshold, beta, lambda := 0 } vgs vds := by
-  unfold mos1ForwardCurrent
-  split
-  · norm_num
-  next hon =>
-    split
-    next htriode =>
-      have hoverdrive : 0 < vgs - threshold := by linarith
-      have hshape :
-          0 ≤ (vgs - threshold) * vds - vds ^ 2 / 2 := by
-        nlinarith [mul_nonneg hvds
-          (show 0 ≤ vgs - threshold - vds / 2 by linarith)]
-      positivity
-    next hsaturation =>
-      positivity
 
 /-- A strongly-on, forward-oriented MOS1 channel with positive `KP` and
 `LAMBDA=0` carries zero current exactly when its terminal voltage drop is

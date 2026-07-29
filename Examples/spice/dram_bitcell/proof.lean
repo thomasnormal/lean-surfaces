@@ -25,8 +25,19 @@ noncomputable def nominalRead : DramReadParameters :=
     bitlineCapacitance := 300
     precharge := 5 / 2 }
 
+def DramBitcellReadSpecification
+    (stored : Bool) (observation : DramReadObservation) : Prop :=
+  observation.sensed = stored ∧
+    observation.restoredVoltage = dramStoredVoltage nominalRead stored
+
 theorem nominalRead_admissible : DramReadAdmissible nominalRead := by
   norm_num [DramReadAdmissible, nominalRead]
+
+theorem dram_bitcell_equation_manifest (stored : Bool) :
+    EquationManifest
+      (DramReadProgram nominalRead stored)
+      ["ideal sense discriminator", "ideal restore endpoint"] :=
+  dramReadEquationManifest
 
 theorem dram_bitcell_read_realizable (stored : Bool) :
     ∃ observation, DramReadBehavior nominalRead stored observation :=
@@ -49,17 +60,21 @@ theorem dram_bank_read_all_widths
     {width : Nat} {before : DramBankState width} {address : Fin width}
     {output : Bool} {after : DramBankState width}
     (hread :
-      DramBankReadBehavior nominalRead before address output after) :
+      DramBankReadContract nominalRead before address output after) :
     output = before.bits address ∧ after = before :=
   dram_bank_read_refines nominalRead_admissible hread
 
 theorem dram_bank_write_all_widths
     {width : Nat} {before after : DramBankState width}
     {address : Fin width} {input : Bool}
-    (hwrite : DramBankWriteBehavior before address input after) :
+    (hwrite : DramBankWriteContract before address input after) :
     after.bits address = input ∧
       ∀ other, other ≠ address →
         after.bits other = before.bits other :=
   dram_bank_write_refines hwrite
+
+#equation_guard DramReadProgram forbids [DramBitcellReadSpecification]
+
+#equation_report dram_bitcell_equation_manifest
 
 end Examples.spice.dram_bitcell.proof

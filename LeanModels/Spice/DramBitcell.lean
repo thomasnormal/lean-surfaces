@@ -1,4 +1,5 @@
 import LeanModels.Spice.Dram1T1C
+import LeanModels.Circuit.Equation
 
 /-!
 # Charge-sharing DRAM read and parameterized bank
@@ -92,7 +93,7 @@ noncomputable def dramSharedVoltage
       parameter.bitlineCapacitance * parameter.precharge) /
     (parameter.storageCapacitance + parameter.bitlineCapacitance)
 
-def IdealSenseBehavior
+def IdealSenseContract
     (parameter : DramReadParameters) (voltage : ℝ) (sensed : Bool) : Prop :=
   (sensed = true ∧ parameter.precharge < voltage) ∨
     (sensed = false ∧ voltage < parameter.precharge)
@@ -102,13 +103,50 @@ structure DramReadObservation where
   sensed : Bool
   restoredVoltage : ℝ
 
+inductive DramReadClause where
+  | chargeSharing
+  | idealSense
+  | idealRestore
+deriving Repr, DecidableEq
+
+noncomputable def DramReadProgram
+    (parameter : DramReadParameters) (stored : Bool) :
+    EquationProgram DramReadClause Unit DramReadObservation Unit where
+  origin
+    | .chargeSharing => .connectionLaw "capacitor charge conservation"
+    | .idealSense => .importedContract "ideal sense discriminator"
+    | .idealRestore => .importedContract "ideal restore endpoint"
+  equation clause _world observation _internal :=
+    match clause with
+    | .chargeSharing =>
+        observation.sharedVoltage = dramSharedVoltage parameter stored
+    | .idealSense =>
+        IdealSenseContract parameter observation.sharedVoltage
+          observation.sensed
+    | .idealRestore =>
+        observation.restoredVoltage =
+          dramStoredVoltage parameter observation.sensed
+
 noncomputable def DramReadBehavior
     (parameter : DramReadParameters) (stored : Bool)
     (observation : DramReadObservation) : Prop :=
-  observation.sharedVoltage = dramSharedVoltage parameter stored ∧
-  IdealSenseBehavior parameter observation.sharedVoltage observation.sensed ∧
-  observation.restoredVoltage =
-    dramStoredVoltage parameter observation.sensed
+  (DramReadProgram parameter stored).behavior () observation ()
+
+theorem dramReadEquationManifest :
+    EquationManifest
+      (DramReadProgram parameter stored)
+      ["ideal sense discriminator", "ideal restore endpoint"] := by
+  constructor
+  · intro contract hcontract
+    simp at hcontract
+    rcases hcontract with rfl | rfl
+    · exact ⟨.idealSense, rfl⟩
+    · exact ⟨.idealRestore, rfl⟩
+  · intro contract hcontract
+    rcases hcontract with ⟨clause, hclause⟩
+    cases clause <;>
+      simp [DramReadProgram] at hclause ⊢
+    all_goals subst contract <;> simp
 
 theorem dram_read_signal
     {parameter : DramReadParameters}
@@ -208,10 +246,15 @@ theorem dram_read_realizable
     { sharedVoltage := dramSharedVoltage parameter stored
       sensed := stored
       restoredVoltage := dramStoredVoltage parameter stored }
-  refine ⟨observation, rfl, ?_, rfl⟩
-  rcases stored with _ | _
-  · exact Or.inr ⟨rfl, dram_read_signal_sign hadmissible false⟩
-  · exact Or.inl ⟨rfl, dram_read_signal_sign hadmissible true⟩
+  refine ⟨observation, ?_⟩
+  intro clause
+  cases clause
+  case chargeSharing => rfl
+  case idealSense =>
+    rcases stored with _ | _
+    · exact Or.inr ⟨rfl, dram_read_signal_sign hadmissible false⟩
+    · exact Or.inl ⟨rfl, dram_read_signal_sign hadmissible true⟩
+  case idealRestore => rfl
 
 /-- Every admissible read returns the stored bit and restores its rail. -/
 theorem dram_read_correct
@@ -222,7 +265,9 @@ theorem dram_read_correct
     observation.sensed = stored ∧
       observation.restoredVoltage =
         dramStoredVoltage parameter stored := by
-  rcases hbehavior with ⟨hshared, hsense, hrestore⟩
+  have hshared := hbehavior .chargeSharing
+  have hsense := hbehavior .idealSense
+  have hrestore := hbehavior .idealRestore
   have hsign := dram_read_signal_sign hadmissible stored
   rcases stored with _ | _
   · simp only [Bool.false_eq_true, ↓reduceIte] at hsign
@@ -231,10 +276,12 @@ theorem dram_read_correct
         rw [← hshared] at hsign
         linarith
       exact hfalse.elim
-    · exact ⟨hsensed, by simpa [hsensed] using hrestore⟩
+    · exact ⟨hsensed, by
+        simpa [DramReadProgram, hsensed] using hrestore⟩
   · simp only [↓reduceIte] at hsign
     rcases hsense with ⟨hsensed, _hright⟩ | ⟨hsensed, hwrong⟩
-    · exact ⟨hsensed, by simpa [hsensed] using hrestore⟩
+    · exact ⟨hsensed, by
+        simpa [DramReadProgram, hsensed] using hrestore⟩
     · have hfalse : False := by
         rw [← hshared] at hsign
         linarith
@@ -245,7 +292,7 @@ theorem dram_read_correct
 structure DramBankState (width : Nat) where
   bits : Fin width → Bool
 
-def DramBankReadBehavior
+def DramBankReadContract
     (parameter : DramReadParameters) {width : Nat}
     (before : DramBankState width) (address : Fin width)
     (output : Bool) (after : DramBankState width) : Prop :=
@@ -258,7 +305,7 @@ theorem dram_bank_read_realizable
     (hadmissible : DramReadAdmissible parameter)
     {width : Nat} (before : DramBankState width) (address : Fin width) :
     ∃ output after,
-      DramBankReadBehavior parameter before address output after := by
+      DramBankReadContract parameter before address output after := by
   obtain ⟨observation, hread⟩ :=
     dram_read_realizable hadmissible (before.bits address)
   exact ⟨observation.sensed, before, observation, hread, rfl, rfl⟩
@@ -269,13 +316,13 @@ theorem dram_bank_read_refines
     (hadmissible : DramReadAdmissible parameter)
     {width : Nat} {before : DramBankState width} {address : Fin width}
     {output : Bool} {after : DramBankState width}
-    (hread : DramBankReadBehavior parameter before address output after) :
+    (hread : DramBankReadContract parameter before address output after) :
     output = before.bits address ∧ after = before := by
   rcases hread with ⟨observation, hcell, houtput, hstate⟩
   have hcorrect := dram_read_correct hadmissible hcell
   exact ⟨houtput.trans hcorrect.1, hstate⟩
 
-def DramBankWriteBehavior {width : Nat}
+def DramBankWriteContract {width : Nat}
     (before : DramBankState width) (address : Fin width)
     (input : Bool) (after : DramBankState width) : Prop :=
   after.bits = Function.update before.bits address input
@@ -283,7 +330,7 @@ def DramBankWriteBehavior {width : Nat}
 theorem dram_bank_write_refines
     {width : Nat} {before after : DramBankState width}
     {address : Fin width} {input : Bool}
-    (hwrite : DramBankWriteBehavior before address input after) :
+    (hwrite : DramBankWriteContract before address input after) :
     after.bits address = input ∧
       ∀ other, other ≠ address →
         after.bits other = before.bits other := by

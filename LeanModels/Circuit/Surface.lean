@@ -1,6 +1,7 @@
 import LeanModels.Circuit.Block
 import LeanModels.Circuit.AC
 import LeanModels.Circuit.Assurance
+import LeanModels.Circuit.Equation
 import LeanModels.Spice.Mos1Resolved
 import Mathlib.Tactic
 import Lean.Util.CollectAxioms
@@ -580,6 +581,84 @@ private def checkedAxiomText {m : Type → Type} [Monad m] [Lean.MonadEnv m]
     if axioms.isEmpty then pure "none"
     else pure (String.intercalate ", " (axioms.toList.map toString))
 
+private def projectDeclaration (name : Lean.Name) : Bool :=
+  name.toString.startsWith "LeanModels." ||
+    name.toString.startsWith "Examples."
+
+private partial def declarationDependsOn
+    (environment : Lean.Environment)
+    (declaration : Lean.Name) (forbidden : Array Lean.Name)
+    (visited : Lean.NameSet := {}) : Bool :=
+  if visited.contains declaration then
+    false
+  else
+    match environment.find? declaration with
+    | none => false
+    | some info =>
+        let visited := visited.insert declaration
+        let constants :=
+          info.type.getUsedConstants ++
+            (info.value? true |>.map (·.getUsedConstants) |>.getD #[])
+        constants.any fun used =>
+          forbidden.contains used ||
+            (projectDeclaration used &&
+              declarationDependsOn environment used forbidden visited)
+
+syntax (name := circuitEquationGuard)
+  "#equation_guard " ident " forbids " "[" ident,* "]" : command
+
+open Lean Elab Command in
+elab_rules : command
+  | `(#equation_guard $program:ident forbids [$blocked:ident,*]) => do
+      let programName ← liftCoreM <|
+        Lean.Elab.realizeGlobalConstNoOverloadWithInfo program
+      let mut forbiddenNames : Array Lean.Name := #[]
+      for identifier in blocked.getElems do
+        forbiddenNames := forbiddenNames.push (← liftCoreM <|
+          Lean.Elab.realizeGlobalConstNoOverloadWithInfo identifier)
+      if declarationDependsOn (← getEnv) programName forbiddenNames then
+        throwErrorAt program
+          "#equation_guard: `{programName}` transitively depends on a \
+          forbidden specification declaration"
+      logInfo m!"Equation dependency guard for {programName}: no forbidden \
+        specification dependencies"
+
+syntax (name := circuitEquationReport)
+  "#equation_report " ident : command
+
+open Lean Elab Command in
+elab_rules : command
+  | `(#equation_report $manifest:ident) => do
+      let manifestName ← liftCoreM <|
+        Lean.Elab.realizeGlobalConstNoOverloadWithInfo manifest
+      let manifestInfo ← match (← getEnv).find? manifestName with
+        | some info => pure info
+        | none =>
+            throwErrorAt manifest
+              "#equation_report: unknown manifest `{manifestName}`"
+      let manifestType := declarationResultType manifestInfo.type
+      unless manifestType.getAppFn.constName? ==
+          some ``EquationManifest do
+        throwErrorAt manifest
+          "#equation_report: `{manifestName}` is not an \
+          `EquationManifest`"
+      let arguments := manifestType.getAppArgs
+      unless arguments.size == 6 do
+        throwErrorAt manifest
+          "#equation_report: malformed `EquationManifest` type for \
+          `{manifestName}`"
+      let imported := arguments[5]!
+      let importedText ← liftTermElabM do
+        pure (toString (← Meta.ppExpr imported))
+      let axiomText ←
+        match ← checkedAxiomText manifestName with
+        | .ok text => pure text
+        | .error error =>
+            throwErrorAt manifest "#equation_report: {error}"
+      logInfo m!"Equation provenance for {manifestName}
+  imported contracts: {importedText}
+  manifest complete; axioms=[{axiomText}]"
+
 syntax (name := circuitAssuranceReport)
   "#assurance_report " term:max " using " ident " [" ident,* "]" : command
 
@@ -588,12 +667,12 @@ elab_rules : command
   | `(#assurance_report $circuit:term using $assurance:ident
       [$declarations:ident,*]) => do
       let circuitExpr ← liftTermElabM <|
-        Term.elabTerm circuit (some (mkConst ``ElaboratedCircuit))
+        Term.elabTerm circuit none
       let circuitName ← match circuitExpr.getAppFn.constName? with
         | some name => pure name
         | none =>
             throwErrorAt circuit
-              "#assurance_report: expected a `load_circuit` constant"
+              "#assurance_report: expected a checked source constant"
       let provenance ←
         match (circuitProvenanceTables.getState (← getEnv)).find?
             circuitName with
@@ -664,7 +743,7 @@ elab_rules : command
   source hash: {provenance.hash}
   frontend: direct Lean SPICE parser; hierarchy checked ({hierarchy})
   model validity: {validity}
-  {assuranceName}: source-bound typed assurance case; checked projection + safety + realizability + domain closure; axioms=[{assuranceAxioms}]
+  {assuranceName}: source-bound typed assurance case; checked source binding + safety + realizability + domain closure; axioms=[{assuranceAxioms}]
 {String.intercalate "\n" rows.toList}
   external simulators: validation only; never theorem premises"
 

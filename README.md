@@ -401,6 +401,108 @@ independently check all 50 sum bits and carry-out at several vectors. The
 hierarchy represents 3,000 MOS transistors without flattening them into the
 proof term.
 
+The open
+[1T1C cell](Examples/spice/dram_1t1c/spec.lean) now has a source-backed
+write-one phase as well as hold and write-zero. Lean projects the MOS
+threshold, transconductance, and 30 fF storage capacitance from the `.cir`
+deck, derives the piecewise capacitor/MOS1 DAE, and proves every physical
+trajectory from the same initial voltage equals its closed-form solution.
+From a discharged cell, every such trajectory enters `[3 V, 4 V]` within
+1 ns and never exceeds 4 V; a separate theorem constructs the behavior.
+Exact finite-time arrival at 4 V is deliberately absent because the static
+unboosted model admits an interval of zero-current equilibria. Ngspice and
+Spectre only validate these claims numerically.
+
+The [2x2 DRAM bank](Examples/spice/dram_bank_2x2/spec.lean) is a
+**source-validated compositional transient-endpoint prototype**. Its open
+`.cir` deck contains four 1T1C cells plus transistor decoder, precharge,
+two-inverter sense/restore, read mux, and write paths. Lean derives
+the enabled precharge-MOS/300 fF bitline DAE and proves that its unique
+trajectory reaches `[2.47 V, 2.5 V]` in 10 ns without overshoot. Charge
+sharing consumes that finite-time endpoint rather than an assumed
+equilibrium. Lean also proves the endpoint relation non-vacuous and
+domain-bounded. Cells on unselected wordlines carry physical
+zero-leakage 1T1C hold traces, from which preservation is derived. For every
+column, selected-row read restoration follows the source-backed
+MOS1/capacitor DAE for 1 ns with the bitline clamped by its sense path. The
+same physical trajectory continues on unselected columns during a write.
+The 2x2 and 256x32 proofs derive `[0 V, 1 V]` for zero and `[3 V, 4 V]` for
+one, while cells on unselected rows are exactly preserved. The read equation
+manifest explicitly reports its imported legacy two-inverter endpoint
+contract; write imports the read endpoint phase. The 2x2 deck's static
+two-inverter path is proved only over conservative low/high bands. It is not a
+differential regenerative sense amplifier and has no dynamic resolution,
+offset, or metastability-exclusion theorem. The source-derived charge-sharing
+equations prove at least `3/22 V` against an otherwise precharged reference
+for either bit, and a fixed-line composition theorem proves that a nominal
+four-MOS latch locally amplifies the corresponding sign with a paired KCL
+residual witness. The 2x2 source does not instantiate that connection.
+
+The separate
+[differential sense-amplifier example](Examples/spice/dram_sense_amp/spec.lean)
+starts that replacement from an open component deck: four cross-coupled
+MOS1 devices and two explicit bitline capacitors. Lean projects the complete
+typed topology and parameters from the `.cir` source, generates a two-node
+capacitor/KCL DAE, exhibits both rail equilibria, and also exhibits the
+matched midpoint metastable behavior. Lean then derives an exact scalar
+differential-mode DAE from the primitive two-node residual, proves the view
+can be lifted back to a physical vector trajectory, and proves pointwise
+regeneration throughout the balanced basin `0 < deviation < 5/2`: the
+selected node rises, its complement falls, and their common mode is
+preserved. It also exhibits the exact nonconstant trajectory
+`d(t) = d(0) * exp(10^9 t)` and proves that trajectory satisfies the
+primitive DAE for every finite horizon on which `d(t) ≤ 1/2`. Within that
+region the scalar solution is unique, and the exhibited primitive behavior
+stays between the supply rails and reaches any requested positive
+differential by the source-derived logarithmic deadline. Beyond that closed
+form, Picard-Lindelof constructs a primitive DAE trajectory through all three
+MOS regions for every finite horizon and every initial deviation in
+`[0, 5/2]`; a proved barrier keeps the witness between the rails. Determinacy
+does not assume that barrier: a global source-field Lipschitz proof and
+Grönwall show that every balanced scalar AC trajectory from the same initial
+state equals the witness. Thus all such trajectories stay between the rails.
+They also regenerate monotonically toward the selected rail. A separate
+common-mode energy proof now starts from the primitive two-node KCL
+equations: every rail-valid vector behavior with balanced initial data stays
+on the balanced manifold, projects exactly into the scalar DAE, and is
+therefore determinate. Without assuming balanced common mode, Lean also
+proves the local physical direction: at every ordered, nonterminal state in
+the 0--5 V rectangle, the primitive DAE strictly increases the voltage
+differential. A source-capacitance witness inhabits the residual at every
+state. For arbitrary nominal unbalanced initial voltages, Lean now constructs
+a primitive finite-horizon DAE behavior and proves a barrier keeps both latch
+nodes inside `[0 V, 5 V]`. Uniqueness of all unbalanced physical behaviors,
+convergence, mismatched-device and offset margin, and quantitative settling
+to a rail tolerance remain open. Ngspice and Spectre independently validate
+resolution in both directions.
+
+The endpoint contract is dimension-generic. The concrete
+[256x32 bank](Examples/spice/dram_bank_256x32/spec.lean) instantiates it for
+8,192 1T1C cells without enumerating cells in the proof. The loader rejects
+malformed hierarchy and unsupported model profiles. Separate kernel theorems
+project its numeric parameters and typed cell/row/subarray/column/bank
+topology from the embedded source. Unlike the 2x2 source, each 256x32 column
+now contains a precharged reference line, paired transmission-gate coupling,
+and a four-MOS/two-capacitor differential latch with separately driven sense
+rails. Lean projects that topology and its latch parameters, proves the
+primitive residual is inhabited, and proves that any rail-valid,
+correctly-ordered nonterminal state reached by coupling regenerates in the
+correct direction. Lean now also constructs the finite transmission-gate
+trajectory from the derived bitline/reference state: it satisfies the four
+capacitor-KCL/MOS1 equations, conserves each pair's charge, stays in
+`[2 V, 3 V]` without overshoot, exists for every finite nonnegative horizon,
+and establishes the required fixed-polarity latch ordering after every
+positive duration. Feeding that state into the primitive latch residual
+proves the differential initially regenerates in the correct direction. The
+coupling endpoint now also initializes an inhabited finite-horizon
+four-MOS/two-capacitor DAE behavior whose two node voltages are proved to stay
+inside the supply rails. Unbalanced determinacy, convergence, its resolution
+deadline, and physical restore are still open, so the whole-bank endpoint
+theorem continues to report the legacy sense contract as an imported
+dependency. Ngspice and Spectre exercise both polarities
+through the 16,000-plus-device hierarchy as validation, never as theorem
+premises.
+
 This is currently an end-to-end theorem from the stated compact-model
 physics, not yet from microscopic semiconductor physics. The exact assurance
 boundary and the unproved quantum-transport, drift-diffusion, simulator-solver,

@@ -18,10 +18,22 @@ structure ModelId where
   index : Nat
 deriving Repr, BEq, DecidableEq, Inhabited
 
+@[simp] theorem ModelId.beq_mk (left right : Nat) :
+    (ModelId.mk left == ModelId.mk right) = (left == right) := by
+  rfl
+
 inductive MosPolarity where
   | nmos
   | pmos
 deriving Repr, BEq, DecidableEq, Inhabited
+
+@[simp] theorem MosPolarity.beq_nmos :
+    (MosPolarity.nmos == MosPolarity.nmos) = true := by
+  rfl
+
+@[simp] theorem MosPolarity.beq_pmos :
+    (MosPolarity.pmos == MosPolarity.pmos) = true := by
+  rfl
 
 /-- The typed parameters of the explicitly supported long-channel MOS
 profile. Named source parameters are resolved before this artifact exists. -/

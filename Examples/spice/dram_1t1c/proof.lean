@@ -1,4 +1,6 @@
 import LeanModels.Spice.Dram1T1C
+import LeanModels.Spice.Dram1T1CSpec
+import LeanModels.Spice.DramWriteSpec
 import LeanModels.Circuit.Surface
 
 namespace Examples.spice.dram_1t1c.proof
@@ -33,6 +35,55 @@ theorem dram1T1CNominal_eq :
         storageCapacitance := 3 / 100000000000000 } := by
   unfold dram1T1CNominal
   rw [dram_1t1c_topology]
+
+noncomputable def dram1T1CWriteInstance : DramWriteInstance :=
+  dram1T1CNominal.instance.asDramWriteInstance
+
+theorem dram_1t1c_write_instance_from_source :
+    dram1T1CWriteInstance =
+      { threshold := 1
+        beta := 1 / 10000
+        storageCapacitance := 3 / 100000000000000 } := by
+  simp [dram1T1CWriteInstance, dram1T1CNominal_eq,
+    Dram1T1CNominal.instance, Dram1T1CInstance.asDramWriteInstance]
+
+noncomputable def dram1T1CWriteOneWorld
+    (initialStorage horizon : ℝ) : DramWriteWorld :=
+  deterministicWorld dram1T1CWriteInstance
+    { wordlineVoltage := 5
+      bitlineVoltage := 5
+      initialStorage
+      horizon }
+
+noncomputable def dram1T1CWriteOneAllowedOf
+    (nominal : Dram1T1CNominal) (world : DramWriteWorld) : Prop :=
+  ∃ initialStorage horizon,
+    world =
+      deterministicWorld nominal.instance.asDramWriteInstance
+        { wordlineVoltage := 5
+          bitlineVoltage := 5
+          initialStorage
+          horizon } ∧
+      0 ≤ initialStorage ∧ initialStorage ≤ 4 ∧
+      (1 / 1000000000 : ℝ) ≤ horizon
+
+noncomputable def Dram1T1CWriteOneAllowed : DramWriteWorld → Prop :=
+  dram1T1CWriteOneAllowedOf dram1T1CNominal
+
+theorem dram_1t1c_write_one_world_from_source
+    (initialStorage horizon : ℝ) :
+    dram1T1CWriteOneWorld initialStorage horizon =
+      nominalDramWriteOneWorld initialStorage horizon := by
+  rw [dram1T1CWriteOneWorld, nominalDramWriteOneWorld,
+    dram_1t1c_write_instance_from_source]
+
+theorem dram_1t1c_equation_manifest :
+    EquationManifest Dram1T1CProgram [] :=
+  dram1T1CEquationManifest
+
+theorem dram_1t1c_physics_only :
+    Dram1T1CProgram.PhysicsOnly :=
+  dram1T1CProgram_physicsOnly
 
 /-- The source deck fixes device parameters. Run controls and initial charge
 remain universally quantified through the environment. -/
@@ -103,6 +154,25 @@ theorem dram_1t1c_write_uses_mos1
         world.fabricated.storageCapacitance := by
   exact dram1T1C_writeField_eq_mos1 hallowed.2 hstorage0
 
+/-- The hold field agrees with the primitive bidirectional MOS1/capacitor KCL
+inside the proved nonnegative voltage domain. -/
+theorem dram_1t1c_hold_uses_mos1
+    {world : Dram1T1CWorld}
+    (hallowed : Dram1T1CExampleAllowed world)
+    (hmode : world.environment.mode = .hold)
+    {storage bitline : ℝ}
+    (hstorage : 0 ≤ storage)
+    (hbitline : 0 ≤ bitline) :
+    dram1T1CField world storage =
+      -(mos1TerminalCurrent
+          { polarity := .nmos
+            threshold := world.fabricated.threshold
+            beta := world.fabricated.beta
+            lambda := 0 }
+          0 storage bitline) /
+        world.fabricated.storageCapacitance := by
+  exact dram1T1C_holdField_eq_mos1 hallowed.2 hmode hstorage hbitline
+
 theorem dram_1t1c_write_zero_settles
     {world : Dram1T1CWorld} {boundary : Dram1T1CBoundary}
     (hallowed : Dram1T1CExampleAllowed world)
@@ -122,10 +192,141 @@ theorem dram_1t1c_write_zero_settles
   exact dram1T1C_write_zero_settles hallowed.2 hmode hbehavior
     htolerance hdeadline0 hdeadlineH hdeadline
 
+theorem dram_1t1c_write_one_equation_manifest :
+    EquationManifest DramWriteProgram [] :=
+  dramWriteEquationManifest
+
+theorem dram_1t1c_write_one_physics_only :
+    DramWriteProgram.PhysicsOnly :=
+  dramWriteProgram_physicsOnly
+
+/-- Every source-backed nominal write-one trajectory starting from zero
+enters the `[3 V, 4 V]` band within one nanosecond. -/
+theorem dram_1t1c_write_one_settles
+    {horizon : ℝ} {boundary : DramWriteBoundary}
+    (hdeadline : (1 / 1000000000 : ℝ) ≤ horizon)
+    (hbehavior :
+      DramWriteBehavior (dram1T1CWriteOneWorld 0 horizon) boundary ()) :
+    DramWriteOneNanosecondSpecification
+      (dram1T1CWriteOneWorld 0 horizon) boundary () := by
+  rw [dram_1t1c_write_one_world_from_source] at hbehavior ⊢
+  exact nominalDramWriteOne_zero_to_high_by_one_ns hdeadline hbehavior
+
+/-- The same source-backed write guarantee is inhabited, ruling out vacuous
+universal correctness. -/
+theorem dram_1t1c_write_one_realizable
+    {horizon : ℝ} (hdeadline : (1 / 1000000000 : ℝ) ≤ horizon) :
+    ∃ boundary,
+      DramWriteBehavior
+          (dram1T1CWriteOneWorld 0 horizon) boundary () ∧
+        DramWriteOneNanosecondSpecification
+          (dram1T1CWriteOneWorld 0 horizon) boundary () := by
+  rw [dram_1t1c_write_one_world_from_source]
+  exact
+    nominalDramWriteOne_zero_to_high_by_one_ns_realizable hdeadline
+
+noncomputable def dram1T1CWriteOneSourceBinding :
+    SourceBinding dram1T1C DramWriteBehavior Dram1T1CWriteOneAllowed :=
+  SourceBinding.checked LeanModels.Spice.ElaboratedCircuit.toDram1T1CNominal
+    dram1T1C dram1T1CNominal
+    (by
+      change dram1T1C.toDram1T1CNominal = .ok dram1T1CNominal
+      unfold dram1T1CNominal
+      rw [dram_1t1c_topology])
+    (fun _nominal => DramWriteBehavior)
+    dram1T1CWriteOneAllowedOf
+
+theorem dram_1t1c_write_one_safe :
+    SafeUnder DramWriteBehavior Dram1T1CWriteOneAllowed
+      DramWriteOneNanosecondSpecification := by
+  intro world boundary _internal hallowed hbehavior
+  rcases hallowed with
+    ⟨initialStorage, horizon, hworld, hinitial0, hinitial4, hdeadline⟩
+  subst world
+  have hworldSource :
+      deterministicWorld dram1T1CNominal.instance.asDramWriteInstance
+          { wordlineVoltage := 5
+            bitlineVoltage := 5
+            initialStorage
+            horizon } =
+        nominalDramWriteOneWorld initialStorage horizon := by
+    change dram1T1CWriteOneWorld initialStorage horizon =
+      nominalDramWriteOneWorld initialStorage horizon
+    exact dram_1t1c_write_one_world_from_source initialStorage horizon
+  rw [hworldSource] at hbehavior ⊢
+  apply nominalDramWriteOne_settles_within
+    hinitial4 (by linarith) hbehavior
+  · norm_num
+  · norm_num
+  · exact hdeadline
+  · have hdenominator :=
+      nominalDramWriteOneTrace_denominator_pos
+        hinitial4 (show (0 : ℝ) ≤ 1 / 1000000000 by norm_num)
+    rw [div_le_iff₀ hdenominator]
+    norm_num [nominalDramWriteOneRate]
+    linarith
+
+theorem dram_1t1c_write_one_realizable_all :
+    RealizableUnder DramWriteBehavior Dram1T1CWriteOneAllowed := by
+  intro world hallowed
+  rcases hallowed with
+    ⟨initialStorage, horizon, hworld, _hinitial0, hinitial4, hdeadline⟩
+  subst world
+  have hworldSource :
+      deterministicWorld dram1T1CNominal.instance.asDramWriteInstance
+          { wordlineVoltage := 5
+            bitlineVoltage := 5
+            initialStorage
+            horizon } =
+        nominalDramWriteOneWorld initialStorage horizon := by
+    change dram1T1CWriteOneWorld initialStorage horizon =
+      nominalDramWriteOneWorld initialStorage horizon
+    exact dram_1t1c_write_one_world_from_source initialStorage horizon
+  rw [hworldSource]
+  obtain ⟨boundary, hbehavior⟩ :=
+    nominalDramWriteOne_realizable hinitial4 (by linarith)
+  exact ⟨boundary, (), hbehavior⟩
+
+theorem dram_1t1c_write_one_domain :
+    StaysWithinValidityDomain DramWriteBehavior
+      Dram1T1CWriteOneAllowed DramWriteRailDomain := by
+  intro world boundary _internal hallowed hbehavior
+  rcases hallowed with
+    ⟨initialStorage, horizon, hworld, hinitial0, hinitial4, hdeadline⟩
+  subst world
+  have hworldSource :
+      deterministicWorld dram1T1CNominal.instance.asDramWriteInstance
+          { wordlineVoltage := 5
+            bitlineVoltage := 5
+            initialStorage
+            horizon } =
+        nominalDramWriteOneWorld initialStorage horizon := by
+    change dram1T1CWriteOneWorld initialStorage horizon =
+      nominalDramWriteOneWorld initialStorage horizon
+    exact dram_1t1c_write_one_world_from_source initialStorage horizon
+  rw [hworldSource] at hbehavior ⊢
+  have hnoOvershoot :=
+    nominalDramWriteOne_no_overshoot
+      hinitial4 (by linarith) hbehavior
+  intro time htime0 htimeH
+  have hbounds := hnoOvershoot time htime0 htimeH
+  exact ⟨hinitial0.trans hbounds.1, hbounds.2.trans (by norm_num)⟩
+
+theorem dram_1t1c_write_one_assurance :
+    AssuranceCase dram1T1C DramWriteBehavior Dram1T1CWriteOneAllowed
+      dram1T1CWriteOneSourceBinding
+      DramWriteOneNanosecondSpecification DramWriteRailDomain :=
+  ⟨dram_1t1c_write_one_safe, dram_1t1c_write_one_realizable_all,
+    dram_1t1c_write_one_domain⟩
+
 theorem dram_1t1c_assurance :
     AssuranceCase dram1T1C Dram1T1CBehavior Dram1T1CExampleAllowed
       dram1T1CSourceBinding
       Dram1T1CValidityDomain Dram1T1CValidityDomain :=
   ⟨dram_1t1c_domain, dram_1t1c_realizable, dram_1t1c_domain⟩
+
+#equation_guard Dram1T1CProgram forbids [Dram1T1CValidityDomain]
+#equation_guard DramWriteProgram forbids
+  [DramWriteOneNanosecondSpecification, DramWriteRailDomain]
 
 end Examples.spice.dram_1t1c.proof

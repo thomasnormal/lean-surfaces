@@ -1,0 +1,17 @@
+open transistor-level 2x2 DRAM array core
+* Reusable 1T1C storage cell. Wordline and bitline are component ports.
+.subckt dram_cell store word bit
+maccess store word bit 0 nmod
+cstore store 0 30f
+.ends dram_cell
+* Row 0.
+xcell00 store00 word0 bit0 dram_cell
+xcell01 store01 word0 bit1 dram_cell
+* Row 1.
+xcell10 store10 word1 bit0 dram_cell
+xcell11 store11 word1 bit1 dram_cell
+* Shared column loads. Testbench precharge/sense/write circuitry is external.
+cbit0 bit0 0 300f
+cbit1 bit1 0 300f
+.model nmod nmos (level=1 vto=1 kp=100u lambda=0 is=0)
+.end

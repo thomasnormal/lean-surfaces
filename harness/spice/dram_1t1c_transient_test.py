@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate hold and write-zero for the proved open 1T1C cell."""
+"""Validate the proved hold, write-zero, and write-one 1T1C phases."""
 
 from __future__ import annotations
 
@@ -16,22 +16,28 @@ SOURCE = ROOT / "Examples/spice/dram_1t1c/dram_1t1c.cir"
 HORIZON = 5e-9
 STEP = 5e-12
 WRITE_RATE = (100e-6 * 4.0**2) / (2.0 * 30e-15 * 5.0)
+WRITE_ONE_RATE = 100e-6 / (2.0 * 30e-15)
 
 
-def materialize(directory: Path, hold: bool) -> Path:
+def materialize(directory: Path, mode: str) -> Path:
     source = SOURCE.read_text()
     source, count = re.subn(r"(?im)^\.end\s*$", "", source, count=1)
     if count != 1:
         raise RuntimeError("1T1C source has no unique .end")
-    word = 0 if hold else 5
-    initial = 3 if hold else 5
-    name = "hold" if hold else "write_zero"
-    deck = directory / f"dram_1t1c_{name}.cir"
+    if mode == "hold":
+        word, bit, initial = 0, 0, 3
+    elif mode == "write_zero":
+        word, bit, initial = 5, 0, 5
+    elif mode == "write_one":
+        word, bit, initial = 5, 5, 0
+    else:
+        raise ValueError(f"unsupported 1T1C mode: {mode}")
+    deck = directory / f"dram_1t1c_{mode}.cir"
     deck.write_text(
         source.rstrip()
         + "\n"
         + f"vword word 0 dc {word}\n"
-        + "vbit bit 0 dc 0\n"
+        + f"vbit bit 0 dc {bit}\n"
         + f".ic v(store)={initial}\n"
         + f".tran {STEP:g} {HORIZON:g} uic\n"
         + ".print tran v(store)\n"
@@ -82,6 +88,40 @@ def check_write(rows: list[tuple[float, float]]) -> int:
     return failures
 
 
+def write_one_trace(time: float) -> float:
+    return 4.0 - 4.0 / (1.0 + WRITE_ONE_RATE * 4.0 * max(time, 0.0))
+
+
+def check_write_one(rows: list[tuple[float, float]]) -> int:
+    failures = 0
+    previous = rows[0][1]
+    at_one_ns = None
+    max_model_error = 0.0
+    for time, voltage in rows:
+        expected = write_one_trace(time)
+        max_model_error = max(max_model_error, abs(voltage - expected))
+        if time >= 1e-9 and at_one_ns is None:
+            at_one_ns = voltage
+        if (
+            voltage < -2e-5
+            or voltage > 4.0 + 2e-5
+            or voltage + 2e-5 < previous
+            or abs(voltage - expected) > 2e-2
+        ):
+            failures += 1
+            break
+        previous = voltage
+    endpoint = rows[-1][1]
+    if at_one_ns is None or not (3.0 - 2e-2 <= at_one_ns <= 4.0 + 2e-5):
+        failures += 1
+    print(
+        f"write-one: {len(rows):4} points, v(store)={endpoint:.9g}, "
+        f"max closed-form error={max_model_error:.3g}, "
+        f"bounded/monotone/in-band={'yes' if failures == 0 else 'NO'}"
+    )
+    return failures
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", choices=("ngspice", "spectre"), required=True)
@@ -93,12 +133,25 @@ def main() -> int:
     ) as tmp:
         directory = Path(tmp)
         failures += check_hold(
-            run(args.sim, executable, materialize(directory, True), directory)
+            run(args.sim, executable, materialize(directory, "hold"), directory)
         )
         failures += check_write(
-            run(args.sim, executable, materialize(directory, False), directory)
+            run(
+                args.sim,
+                executable,
+                materialize(directory, "write_zero"),
+                directory,
+            )
         )
-    print(f"{args.sim}: 1T1C hold/write-zero: {failures} failed")
+        failures += check_write_one(
+            run(
+                args.sim,
+                executable,
+                materialize(directory, "write_one"),
+                directory,
+            )
+        )
+    print(f"{args.sim}: 1T1C hold/write-zero/write-one: {failures} failed")
     return 1 if failures else 0
 
 

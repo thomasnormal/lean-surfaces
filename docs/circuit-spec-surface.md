@@ -7,7 +7,8 @@ the implemented subset; the table below is the implementation ledger. The
 exact divider, robust divider, hierarchy/contracts,
 loaded-RC transient, vector RLC, loaded MOS inverter, exact AC and stability,
 bounded noise/finite yield, thin and loaded DRAM cells, arbitrary-size bank,
-minimal Verilog-A, and sampled mixed-signal slices are implemented. MOS
+the source-validated 2x2 DRAM endpoint contract, minimal Verilog-A, and sampled
+mixed-signal slices are implemented. MOS
 examples elaborate `.cir` source directly; Verilog-A uses the pinned OpenVAF
 typed AST frontend. New work must either elaborate the relevant surface below
 or deliberately revise this document in the same change.
@@ -26,21 +27,105 @@ simulator result is a premise of a theorem.
 | continuous RC + backward Euler | `Examples/spice/loaded_rc/` |
 | vector RLC energy invariant | `Examples/spice/rlc_discharge/` |
 | loaded MOS1 transient | `Examples/spice/loaded_inverter/` |
-| thin 1T1C storage | `Examples/spice/dram_1t1c/` |
+| thin 1T1C hold and write phases | `Examples/spice/dram_1t1c/` |
 | loaded DRAM read + parametric bank | `Examples/spice/dram_bitcell/` |
+| 2x2 DRAM endpoint contract | `Examples/spice/dram_bank_2x2/` |
+| 256x32 DRAM endpoint contract | `Examples/spice/dram_bank_256x32/` |
 | exact AC linearization | `Examples/spice/ac_lowpass/` |
 | bounded noise + finite yield | `Examples/spice/robust_divider/` |
 | MOS1 composition | `Examples/spice/{and_gate,half_adder,ripple_adder}/` |
 | Verilog-A contribution subset | `Examples/verilog-a/resistor/` |
 | SV/analog sampled connection | `Examples/mixed-signal/counter_connect/` |
 
-The two DRAM rows need precision about what is derived versus defined:
-write-zero dynamics in `dram_1t1c` are derived from the MOS1 channel law, but
-hold retention is asserted definitionally by `Dram1T1CBehavior`; and the
+The DRAM rows need precision about what is derived versus defined:
+write-zero dynamics in `dram_1t1c` are derived from the MOS1 channel law.
+Hold constancy is derived from the initial condition and the
+absolutely-continuous zero-field DAE, so it is not a behavior conclusion;
+inside the nonnegative rail domain the zero field is proved equal to the
+cut-off bidirectional MOS1 access-device KCL field. Write-one uses a separate
+physics-only program whose parameters are projected from the same open source
+deck. Lean derives its complete piecewise MOS1/capacitor field, proves the
+unique closed-form trajectory, and proves a source-backed `[3 V, 4 V]`
+one-nanosecond guarantee from a discharged cell. Exact finite-time 4 V is not
+claimed: the nominal static equations have a whole threshold-loss interval
+of equilibria. The
 `dram_bitcell` read slice's charge-sharing voltage, ideal sense stage, and
 rail restore are definitional relations — only their sign/margin arithmetic
 and the bank composition theorems are derived from them (see
-`docs/spice-device-levels.md`).
+`docs/spice-device-levels.md`). The `dram_bank_2x2` slice is a
+source-validated compositional transient-endpoint prototype. It derives the
+enabled MOS1/bitline-capacitor precharge trajectory and its 10 ns
+`[2.47 V, 2.5 V]` endpoint, then propagates that interval through
+charge-sharing and the static sense decision bands. It also derives
+unselected-wordline zero-leakage hold preservation and device/KCL facts.
+After sensing, every
+selected-row cell follows a source-derived finite-horizon restore DAE while
+its bitline remains clamped to the sense output. The same dimension-generic
+proof gives read and write endpoints in `[0 V, 1 V]` for zero and
+`[3 V, 4 V]` for one. The read equation manifest explicitly reports the
+legacy two-inverter sense endpoint contract; the write program imports the
+read endpoint phase. Its
+two-inverter sense relation covers conservative low/high voltage bands, but
+is not a regenerative differential margin, metastability, or sensing-time
+theorem. It refines this contract to `DramBankStep`; continuous sense-phase
+semantics must still connect the differential latch to the bank transaction.
+The bank equations now derive a uniform `3/22 V` signed margin against an
+otherwise precharged reference. `DramBankSenseBridge` proves, with fixed
+physical line identities and paired residual realizability, that the nominal
+four-MOS latch initially amplifies this sign at every address. This is a
+composition theorem: the 2x2 deck still contains the two-inverter path and
+does not instantiate the differential connection.
+The `dram_sense_amp` slice is the source-backed physical successor: its
+cross-coupled MOS1/capacitor DAE proves rail and midpoint equilibria are
+inhabited. An exact derived scalar view is proved equivalent to the primitive
+residual on the balanced manifold and lifts scalar physical trajectories
+back into the vector DAE. For every `0 < deviation < 5/2`, the primitive
+residual forces the selected node upward, its complement downward, and zero
+common-mode derivative; a residual witness is provided for every such point.
+For the first MOS region, the named exponential trace
+`d(t) = d(0) * exp(10^9 t)` is proved absolutely continuous, proved to
+satisfy the scalar DAE, lifted into the vector DAE, and packaged as an
+inhabited equation-program behavior. Every scalar solution that remains in
+that region is proved equal to this trace. The named primitive behavior stays
+inside the supply rails and reaches a requested positive differential by
+`max 0 (log(required / d(0)) / 10^9)`.
+Its margin and resolution predicates live in a downstream spec module and
+are explicitly forbidden dependencies of the equation program. A separate
+Picard-Lindelof construction supplies a primitive trajectory across all three
+MOS regions for every finite horizon and every initial deviation in
+`[0, 5/2]`, with a proved rail-domain barrier. A global source-field
+Lipschitz proof makes every balanced scalar AC trajectory with the same
+initial deviation equal to that witness, so `NoOvershoot` holds without a
+rail premise and regeneration is monotone throughout the finite horizon.
+For the full source-derived two-node DAE, a KCL energy theorem proves that
+every rail-valid vector trajectory with balanced initial data remains on the
+balanced manifold. Such trajectories project exactly into the scalar view
+and are determinate. For arbitrary common mode, a source-backed pointwise
+theorem now proves that every ordered, nonterminal rail-valid state has a
+strictly increasing voltage differential; a paired residual witness makes
+the premise inhabited at every state. A globally Lipschitz proof extension
+now constructs a nominal unbalanced primitive-DAE behavior for every finite
+horizon; an inward-pointing barrier proves that witness stays in the rail
+square, where the extension agrees exactly with the four source-derived MOS
+currents. Unbalanced determinacy and convergence, mismatched-device and
+offset margin, and quantitative rail-settling timing remain future theorem
+shapes.
+The `dram_bank_256x32` slice instantiates the generalized endpoint theorem;
+its fail-closed source loader emits kernel-checked parameter and typed
+cell/row/subarray/column/bank topology certificates for the embedded source.
+Their composition proves the complete deck projection. Its generated columns
+also contain a source-projected reference line, paired coupling gates, and
+the four-MOS/two-capacitor latch. Lean proves pointwise residual realizability
+and correct local regeneration from any `CouplingReady` state. A physical
+finite-horizon transmission-gate trajectory now derives that state from the
+bank's bitline/reference bounds after every positive coupling duration,
+while proving pair-charge conservation, no overshoot, realizability, and
+`[2 V, 3 V]` domain closure. That endpoint now initializes an inhabited
+finite-horizon primitive latch behavior with proved 0--5 V domain closure.
+Unbalanced determinacy, global convergence, and physical restore remain open,
+so the generalized
+endpoint theorem still reports the legacy sense endpoint contract as
+imported. Scaling adds no per-cell proof cases.
 
 ## Surface contract
 
@@ -153,6 +238,22 @@ nonstandard axioms, or lacks its structurally required safety, realizability,
 or domain proof. View constructors reject an over-approximation used for a
 witness and an under-approximation used for universal safety; claimed
 validity/refinement edges require their own certificates.
+
+Behavior definitions use provenance-carrying equation programs. Two commands
+make that boundary visible and enforceable:
+
+```lean
+#equation_guard DramBankCoreReadProgram forbids
+  [DramBankCoreReadSpecification, DramBankCoreWriteSpecification]
+
+#equation_report dram_bank_256x32_read_equation_manifest
+```
+
+The guard rejects direct or transitive dependencies from the equation
+program to either specification. The report prints the complete set of
+imported contracts. The DRAM read program reports `[]`; its finite-horizon
+restore endpoint is derived from the primitive DAE. The write program reports
+only the preceding proved read phase.
 
 ## Gallery
 

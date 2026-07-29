@@ -1,4 +1,5 @@
 import LeanModels.Python.VC2
+import LeanModels.Python.VCTactic
 
 /-!
 # py_vcgen layer-2 tests: the recursion pattern and the `@[py_spec]` registry
@@ -142,5 +143,24 @@ open Lean in
   let specs ← Lean.labelled `py_spec
   unless specs.contains ``fact_spec do
     throwError "@[py_spec] registry does not contain fact_spec"
+
+/-! ## Round-3 regression: the ∃-relational `py_vcgen` entry
+
+The playtest found `py_vcgen` rejecting `∃ v, f(args) ==> v ∧ Φ v` goals —
+the surface `==>` elaborates the result slot as `ToVal.toVal v`, which the
+entry matcher required to be a literal bound variable. Both accepted binder
+shapes are pinned end-to-end here (a loop-carrying relational statement is
+additionally smoke-tested in VCTactic.lean). -/
+
+/-- Marshalled binder (`PyInt`): the exact surface form the playtest wrote —
+result slot `ToVal.toVal v` — bridged by `PyTriple.exists_callsTo_toVal`. -/
+example : ∃ v : PyInt, factM.fact(0) ==> v ∧ 0 < v := by
+  py_vcgen [factM, factFn, factPlusOneFn]
+  all_goals omega
+
+/-- Raw `Val` binder used literally — the shape the matcher always accepted
+(`PyTriple.exists_callsTo`), pinned against regression. -/
+example : ∃ v, CallsTo factM "fact" #[.int 0] v ∧ v = .int 1 := by
+  py_vcgen [factM, factFn, factPlusOneFn]
 
 end LeanModels.Python.VCTests

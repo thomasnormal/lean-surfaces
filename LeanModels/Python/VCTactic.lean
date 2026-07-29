@@ -16,21 +16,29 @@ Surface:
 * `py_vcgen [prog]` / `py_vcgen [prog, aux…]` (extra idents are additional
   constants to unfold during captured runs — hand-built `FunctionDefn`
   constants of test modules) — walk with no loop clauses: each loop's
-  invariant and measure are left as *delayed goals* (mvcgen-style): for the i-th loop in
-  source order, goals `case inv<i> ⊢ Int → ⋯ → Prop` and
-  `case dec<i> ⊢ Int → ⋯ → Nat` (over the loop's *assigned* variables, in
-  environment order) come first; assigning them instantiates the math
-  residuals that mention them. A `break`-carrying loop additionally gets
-  `case exit<i> ⊢ Int → ⋯ → Prop` (same binders) — the exit-clause request
-  the clause form takes as `(exit<i> := …)`; without it the loop's exit
-  fact would silently weaken to the bare invariant.
+  invariant and measure are left as *delayed goals* (mvcgen-style): for the
+  i-th loop in source order, goals `case inv<i>` and `case dec<i>` come
+  first, presenting the loop's *assigned* variables as a NAMED binder
+  telescope in the goal context — `total i : Int ⊢ Prop` resp. `⊢ Nat` —
+  so the clause is written as a bare proposition/measure over the Python
+  names (`case inv1 => exact 0 ≤ i`, `case dec1 => exact i.toNat`), NOT as
+  a lambda. (Design note: a function-typed goal `Int → ⋯ → Prop` would be
+  consumed *positionally* by `exact fun … => …`, silently cross-wiring
+  binders written in the wrong order — with the telescope in the context
+  there is no order to get wrong, and a stray lambda is a loud type
+  error.) Assigning them instantiates the math residuals that mention
+  them. A `break`-carrying loop additionally gets `case exit<i>` (same
+  telescope) — the exit-clause request the clause form takes as
+  `(exit<i> := …)`; without it the loop's exit fact would silently weaken
+  to the bare invariant.
 * `py_vcgen [prog] (inv := fun (x y : Int) => …) (dec := fun (x y : Int) => …)`
   — clause form: the i-th `(inv := …) (dec := …)` pair belongs to the i-th
   `while` in source order (any label starting with `inv` resp. `dec` works:
   `inv1`, `dec1`, …; loops are indexed by a pre-scan, so an `if`-fork that
   reaches the same loop twice consumes the same pair twice). Binder names
   must be the Python names of variables **assigned in that loop's body** and
-  present at loop entry (they select the environment slots, exactly as
+  present at loop entry — matched BY NAME, in any order (they select the
+  environment slots, exactly as
   `py_loop`); unassigned variables stay pinned to their current symbolic
   values, so the invariant refers to them directly (`n` in `tri`, `oa`/`ob`
   in `extended_gcd` need no clause mention). A clause for an inner loop is
@@ -85,10 +93,13 @@ silently take only the first. Anything the recipes cannot close is
 *appended* as a goal, never dropped.
 
 Entry forms: a `CallsTo` goal (`==>`/`⇓`; bridged via `PyTriple.callsTo`,
-so a body that can fall off the end leaves a `v = None` residual), or a
-`PyTriple` goal whose precondition reduces to `fun env => env = <literal>`
-(the relational route: state `∃ v, CallsTo … v ∧ Φ v` via
-`PyTriple.exists_callsTo` below, then `py_vcgen` the triple).
+so a body that can fall off the end leaves a `v = None` residual); a
+`PyTriple` goal whose precondition reduces to `fun env => env = <literal>`;
+or a relational existential `∃ v, f(args) ==> v ∧ Φ v` — with a raw
+`Val`-typed binder used literally (bridged via `PyTriple.exists_callsTo`)
+or a marshalled spec-typed binder (`∃ v : PyInt, f(args) ==> v ∧ Φ v`, the
+surface elaboration putting `ToVal.toVal v` in the result slot; bridged
+via `PyTriple.exists_callsTo_toVal`).
 
 v1 restrictions (deliberate): loop clause variables are `Int`-valued and
 must exist at loop entry; loop `orelse` is empty (the layer-2 rule's
@@ -299,6 +310,29 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
   | exn e => exact hr.elim
   | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
   | unsupported msg => exact hr.elim
+
+/-- The relational bridge, marshalled form: `exists_callsTo` with the
+existential ranging over a *spec type* `α` (`PyInt`, `PyBool`, …) rather
+than raw `Val`. This is the shape the surface notation actually produces —
+`∃ v : PyInt, f(args) ==> v ∧ Φ v` elaborates the returned-value slot as
+`ToVal.toVal v`, not as the bound variable itself — so it is the form
+`py_vcgen`'s existential entry bridges through for a non-`Val` binder. The
+triple's `ret` arm asserts the returned value is the marshalling of some
+`x : α` satisfying `Φ` (the walker discharges the `w = ToVal.toVal x`
+equation by unification at each captured return site, leaving `Φ x` as the
+`ret` residual). -/
+theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
+    {fname : String} {f : FunctionDefn} {args : Array Val} {Φ : α → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        { next := fun _ => False
+          ret := fun w _ => ∃ x : α, w = ToVal.toVal x ∧ Φ x }) :
+    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x := by
+  obtain ⟨v, hv, x, rfl, hΦ⟩ :=
+    PyTriple.exists_callsTo hf hargsOk hlocalsOk harity h
+  exact ⟨x, hv, hΦ⟩
 
 /-! ## The walker (meta level) -/
 
@@ -1084,6 +1118,20 @@ def mkExistsNest (fvs : Array Lean.Expr) (body : Lean.Expr) :
     b ← mkAppM ``Exists #[lam]
   return b
 
+/-- Name the function metavariable behind an introduced delayed clause
+(`fun x₁ … => ?m x₁ …`, the delayed-assigned twin `MVarId.introN` leaves
+when the end of the run introduces a clause goal's named binder telescope)
+after the clause (`inv1`, `dec1`, `exit1`, …), so residual goals display
+its occurrences as `?inv1 s n` rather than an anonymous `?m.123 s n`. The
+user-facing goal (the pending `Prop`/`Nat` metavariable) carries the same
+tag; only it appears in the goal list, so `case inv1` is unambiguous. -/
+def tagClauseFn (e : Lean.Expr) (nm : Name) : MetaM Unit := do
+  let mut b := e
+  while b.isLambda do
+    b := b.bindingBody!
+  if let .mvar id := b.getAppFn then
+    id.setTag nm
+
 /-- Strip an `∃`/`∧` precondition down to `fun env => env = E`, introducing
 existential witnesses with `introNames` (in order) and the pure part as a
 hypothesis named `hypName`. Applies the precondition-normalization rules
@@ -1565,11 +1613,19 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
           for (n, v) in slotEntries do
             unless (← whnfR v).isAppOfArity ``Val.int 1 do
               throwError "py_vcgen: delayed clauses need Int-valued loop variables; `{n}` is not — give explicit clauses"
+          -- The clause metavariables stay plain function-typed mvars (what
+          -- the walker weaves through the proof — a flex application that
+          -- is safe to appear BARE in simp-generated congruence proofs,
+          -- `congrArg ?dec1 h`), but their pi binders CARRY THE PYTHON
+          -- NAMES: the end of the run (`runPyVcgen`) introduces this named
+          -- telescope into the user-facing goal (`total i : Int ⊢ Prop`),
+          -- so the clause is written as a bare proposition/measure over
+          -- the names and no positional lambda exists to cross-wire.
           let mut invTy : Lean.Expr := mkSort .zero
           let mut decTy : Lean.Expr := Lean.mkConst ``Nat
-          for _ in slotNames do
-            invTy ← mkArrow intTy invTy
-            decTy ← mkArrow intTy decTy
+          for n in slotNames.reverse do
+            invTy := .forallE (Name.mkSimple n) intTy invTy .default
+            decTy := .forallE (Name.mkSimple n) intTy decTy .default
           let invM ← mkFreshExprMVar invTy .syntheticOpaque
           let decM ← mkFreshExprMVar decTy .syntheticOpaque
           invM.mvarId!.setTag (Name.mkSimple s!"inv{li+1}")
@@ -1598,9 +1654,12 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
           match (← ctx.delayedExits.get).find? (·.1 == li) with
           | some (_, e) => pure (some (e, binders))
           | none => do
+            -- Same named-binder pi shape as the delayed `inv`/`dec` goals
+            -- above (`case exit<i>`; the telescope is introduced at the
+            -- end of the run).
             let mut exTy : Lean.Expr := mkSort .zero
-            for _ in binders do
-              exTy ← mkArrow intTy exTy
+            for n in binders.reverse do
+              exTy := .forallE (Name.mkSimple n) intTy exTy .default
             let exM ← mkFreshExprMVar exTy .syntheticOpaque
             exM.mvarId!.setTag (Name.mkSimple s!"exit{li+1}")
             ctx.clauseGoals.modify (·.push exM.mvarId!)
@@ -1807,16 +1866,35 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
           clauseGoals, delayed, delayedExits }
       walk ctx topTags g
     else if tgt.isAppOfArity ``Exists 2 then
-      -- `∃ v, CallsTo m f args v ∧ Φ v` — the relational bridge
+      -- `∃ v, f(args) ==> v ∧ Φ v` — the relational bridge. TWO binder
+      -- shapes are accepted, because the surface notation and the raw form
+      -- elaborate the returned-value slot differently: a raw `Val`-typed
+      -- binder used literally (`∃ v, CallsTo m f args v ∧ Φ v` — bridged by
+      -- `PyTriple.exists_callsTo`), and a marshalled spec-typed binder —
+      -- `∃ v : PyInt, f(args) ==> v ∧ Φ v` puts `ToVal.toVal v`, NOT the
+      -- bare variable, in the result slot (bridged by
+      -- `PyTriple.exists_callsTo_toVal`). Matching the marshalling
+      -- syntactically here (rather than requiring a literal `.bvar 0`) is
+      -- what makes the advertised surface form actually walk.
+      let badShape :=
+        m!"py_vcgen: an existential goal must be `∃ v, f(args) ==> v ∧ Φ v` — one binder, the `==>`/`CallsTo` conjunct FIRST, and the returned-value slot exactly the bound variable (raw `Val`-typed, or marshalled through `ToVal.toVal` as the surface `∃ v : PyInt, f(args) ==> v ∧ Φ v`); the module, callee, and arguments may not mention the binder. Got:{indentExpr tgt}"
       let .lam _ _ pBody _ := tgt.getArg! 1
-        | throwError "py_vcgen: unsupported existential goal:{indentExpr tgt}"
+        | throwError badShape
       unless pBody.isAppOfArity ``And 2 do
-        throwError "py_vcgen: an existential goal must be `∃ v, CallsTo … v ∧ Φ v`:{indentExpr tgt}"
+        throwError badShape
       let c := pBody.getArg! 0
-      unless c.isAppOfArity ``CallsTo 4 && c.getArg! 3 == .bvar 0 &&
-          !(c.getArg! 0).hasLooseBVars && !(c.getArg! 1).hasLooseBVars &&
-          !(c.getArg! 2).hasLooseBVars do
-        throwError "py_vcgen: an existential goal must be `∃ v, CallsTo … v ∧ Φ v`:{indentExpr tgt}"
+      unless c.isAppOfArity ``CallsTo 4 && !(c.getArg! 0).hasLooseBVars &&
+          !(c.getArg! 1).hasLooseBVars && !(c.getArg! 2).hasLooseBVars do
+        throwError badShape
+      let rSlot := c.getArg! 3
+      let marshalled ←
+        if rSlot == .bvar 0 then
+          pure false
+        else if rSlot.isAppOfArity ``ToVal.toVal 3 &&
+            rSlot.getArg! 2 == .bvar 0 then
+          pure true
+        else
+          throwError badShape
       let m := c.getArg! 0
       let fnameE := c.getArg! 1
       let ctx0 : VCCtx :=
@@ -1828,8 +1906,12 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       unless rF'.isAppOfArity ``Option.some 2 do
         throwError "py_vcgen: could not resolve the callee in the module (`findFunction` reduced to{indentExpr rF})"
       let fLit := rF'.getArg! 1
-      let bridgeT ← appOpt ``PyTriple.exists_callsTo
-        #[some m, some fnameE, some fLit]
+      let bridgeT ←
+        if marshalled then
+          appOpt ``PyTriple.exists_callsTo_toVal
+            #[none, none, some m, some fnameE, some fLit]
+        else
+          appOpt ``PyTriple.exists_callsTo #[some m, some fnameE, some fLit]
       let gs ← g.apply bridgeT
       let mut h : Option MVarId := none
       for gg in gs do
@@ -1848,6 +1930,34 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
     else
       throwError "py_vcgen: the goal must be a `==>`/`⇓` (CallsTo) statement or a `PyTriple`:{indentExpr tgt}"
     let cg ← clauseGoals.get
+    -- Present each delayed clause goal with its NAMED binder telescope
+    -- introduced into the goal context (`total i : Int ⊢ Prop`), read off
+    -- the pi binder names `handleWhile` stamped (the Python variable
+    -- names): the user writes a bare proposition/measure over those names,
+    -- so no positional lambda exists to cross-wire against the environment
+    -- order. The introduction happens only HERE, after the walk: the
+    -- function-typed clause metavariable itself is what the walk wove
+    -- through the proof term, where it may appear bare in simp-generated
+    -- congruence proofs (`congrArg ?dec1 h`) — introducing the telescope
+    -- at creation time (a delayed-assigned abstraction) leaves such bare
+    -- under-applied delayed metavariables unexpandable at final
+    -- instantiation, i.e. kernel-visible metavariables.
+    let mut cgOut : Array MVarId := #[]
+    for g in cg do
+      let tag ← g.getTag
+      let mut names : Array Name := #[]
+      let mut ty ← instantiateMVars (← g.getType)
+      while ty.isForall do
+        names := names.push ty.bindingName!
+        ty := ty.bindingBody!
+      if names.isEmpty then
+        cgOut := cgOut.push g
+      else
+        let (_, g') ← g.introN names.size names.toList
+        g'.setTag tag
+        tagClauseFn (← instantiateMVars (mkMVar g)) tag
+        cgOut := cgOut.push g'
+    let cg := cgOut
     let rs ← residuals.get
     -- Number duplicate residual tags: `case preserve => …` silently takes
     -- only the FIRST of several same-tag goals, so a duplicated tag is a
@@ -1884,12 +1994,16 @@ syntax pyVcgenClause := " (" ident " := " term ")"
 open Lean Elab Tactic PyVCGen in
 /-- `py_vcgen [prog] (inv := fun (x y : Int) => …) (dec := fun (x y : Int) => …) …`
 — the VC-generating walker (module docstring): bridge a `==>`/`⇓`
-(`CallsTo`) or `PyTriple` goal to the function-body triple and walk it,
-discharging every interpreter obligation; the i-th `inv`/`dec` clause pair
-instantiates the i-th `while` (source order). With clauses omitted the
-invariants/measures are left as delayed goals `inv1`/`dec1`/… (mvcgen
-style), plus `exit<i>` for a `break`-carrying loop. Residual goals are
-pure mathematics over named atoms, tagged
+(`CallsTo`), `PyTriple`, or relational `∃ v, f(args) ==> v ∧ Φ v` goal to
+the function-body triple and walk it, discharging every interpreter
+obligation; the i-th `inv`/`dec` clause pair instantiates the i-th `while`
+(source order; clause binders are matched to loop variables BY NAME, any
+order). With clauses omitted the invariants/measures are left as delayed
+goals `inv1`/`dec1`/… (mvcgen style), plus `exit<i>` for a
+`break`-carrying loop; a delayed goal presents the loop's variables as
+named context binders (`total i : Int ⊢ Prop`) and is closed with a bare
+proposition/measure over those names (`case inv1 => exact 0 ≤ i`) — no
+lambda. Residual goals are pure mathematics over named atoms, tagged
 `init`/`preserve`/`dec`/`exit`/`ret`/`err`/`side` (same-tag duplicates
 numbered: `preserve`, `preserve2`, …). -/
 elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic => do
@@ -1964,12 +2078,22 @@ example : CallsTo vcgenM "cd" #[.int 5] (.int 0) := by
                     (dec := fun (i : Int) => i.toNat)
   all_goals omega
 
-/-- Delayed-clause (mvcgen-style) form: assign `inv1`/`dec1`, then the same
-residuals. -/
+/-- Delayed-clause (mvcgen-style) form: the `inv1`/`dec1` goals carry the
+loop variable `i` as a named context binder (`i : Int ⊢ Prop` resp.
+`⊢ Nat`) — closed with a bare proposition/measure, no lambda — then the
+same residuals. -/
 example : CallsTo vcgenM "cd" #[.int 3] (.int 0) := by
   py_vcgen [vcgenM, slFn, cdFn]
-  case inv1 => exact fun i => 0 ≤ i
-  case dec1 => exact fun i => i.toNat
+  case inv1 => exact 0 ≤ i
+  case dec1 => exact i.toNat
+  all_goals omega
+
+/-- The relational entry (round-3 regression): `∃ v, f(args) ==> v ∧ Φ v`
+with a marshalled (`PyInt`) binder — the surface elaboration puts
+`ToVal.toVal v` in the result slot — walks end-to-end, through a loop. -/
+example : ∃ v : PyInt, vcgenM.cd(5) ==> v ∧ 0 ≤ v := by
+  py_vcgen [vcgenM, slFn, cdFn] (inv := fun (i : Int) => 0 ≤ i)
+                    (dec := fun (i : Int) => i.toNat)
   all_goals omega
 
 end SmokeTest

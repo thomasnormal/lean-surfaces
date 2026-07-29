@@ -340,10 +340,19 @@ goal whose arguments or result mention a variable (free or metavariable),
 BEFORE attempting the run. Concrete non-vacuity is this tactic's single
 job; symbolic goals — `add(a, b) ==> a + b`, `my_abs(x) ==> |x|`, any
 `~~>`/`⇓` form, a loop bound to induct on — belong to `py_prove` and the
-loop machinery. Implementation note: the run attempt is all-tactic and
-`fail`-terminated — an `exact ⟨4096, by rfl⟩` alternative would *commit*
-inside `first` even when the nested `by` block fails (see the `py_prove`
-docstring). -/
+loop machinery.
+
+Failure shape: on a concrete goal whose run decides *differently* from what
+the goal claims (wrong value, wrong exception, or a 4096-fuel timeout), the
+error STATES THE COMPUTED VALUE — "the run (fuel 4096) produced `.ok (.int
+10)` / but the goal claims `.ok (.int 15)`" — by evaluating the run once
+more on the failure path; the symbolic-goal guard above keeps its own
+message. Implementation note (first-combinator commit-safety): the run
+attempt is all-tactic with an explicit state save/restore — an `exact
+⟨4096, by rfl⟩` alternative would *commit* inside a combinator even when
+the nested `by` block fails (see the `py_prove` docstring), and a
+`first | … | fail` shape could not compute the diagnostic, so the failure
+path is taken by hand. -/
 elab (name := pyCheckTactic) "py_check" : tactic => do
   let msg := "py_check: not a concrete run — the goal must be `f(args) ==> v` or `f(args) ==>! e` with literal arguments, and the run at fuel 4096 must produce exactly the stated value (resp. exception); symbolic goals want `py_prove` or a loop lemma instead"
   let g ← getMainGoal
@@ -352,14 +361,43 @@ elab (name := pyCheckTactic) "py_check" : tactic => do
     throwError msg
   -- The symbolic-goal guard: arguments and result must be variable-free
   -- (kernel reduction would otherwise "prove" symbolic branch-free goals).
+  -- Its message stays the curated pointer above — a symbolic goal has no
+  -- "computed value" to report.
   let symbolic (e : Lean.Expr) : Bool := e.hasFVar || e.hasExprMVar
   if symbolic (t.getArg! 2) || symbolic (t.getArg! 3) then
     throwError msg
-  let msgStx := Syntax.mkStrLit msg
-  evalTactic (← `(tactic| first
-      | (refine ⟨4096, ?_⟩
-         rfl)
-      | fail $msgStx))
+  let s ← saveState
+  try
+    evalTactic (← `(tactic| (refine ⟨4096, ?_⟩
+                             rfl)))
+    return
+  catch _ =>
+    s.restore
+  -- Concrete goal, run decided differently: evaluate the run once more and
+  -- say what it actually produced vs what the goal claims.
+  let runE := Lean.mkApp4 (Lean.mkConst ``callFunction) (t.getArg! 0)
+    (t.getArg! 1) (t.getArg! 2) (Lean.mkNatLit 4096)
+  let claimedE :=
+    if t.isAppOfArity ``CallsTo 4 then
+      Lean.mkApp2 (Lean.mkConst ``Res.ok) (Lean.mkConst ``Val) (t.getArg! 3)
+    else
+      Lean.mkApp2 (Lean.mkConst ``Res.exn) (Lean.mkConst ``Val) (t.getArg! 3)
+  -- `Meta.reduce` computes the value; the default-simp pass afterwards is
+  -- display-only (it renders `Int.ofNat 10` back as the literal `10`).
+  let present (e : Lean.Expr) : TacticM Lean.Expr := do
+    let e ← Meta.reduce e (explicitOnly := false)
+    try
+      let ctx ← Meta.Simp.mkContext {} #[← Meta.getSimpTheorems]
+        (← Meta.getSimpCongrTheorems)
+      let (r, _) ← Meta.simp e ctx
+      pure r.expr
+    catch _ => pure e
+  let produced? ← try some <$> present runE catch _ => pure none
+  let claimed ← try present claimedE catch _ => pure claimedE
+  match produced? with
+  | some produced =>
+    throwError "py_check: the run (fuel 4096) produced{indentExpr produced}\nbut the goal claims{indentExpr claimed}"
+  | none => throwError msg
 
 /-! ## `~~>` connectives
 
@@ -532,7 +570,13 @@ open Lean Lean.Parser.Tactic in
 supplies a fuel witness (32 — ample for loop-free bodies), symbolically
 executes the interpreter with `py_simp` (pass the loaded program literal,
 e.g. `py_prove [add]`), and discharges residual value equations with
-`rfl`/`omega`. A symbolic branch (`if x < 0:`) survives execution as an
+`rfl`/`omega`. The bracket list is a `py_simp` lemma list, so besides
+program literals it accepts local *hypotheses* the symbolic run needs as
+rewrite facts — the standard use is a divisor guard: on
+`theorem mod_pos (a b : PyInt) (hb : b ≠ 0) : arith.mod(a, b) ==> …`,
+`py_prove [arith, hb]` lets `hb` decide `%`'s `ZeroDivisionError` branch,
+which bare `py_prove [arith]` leaves stuck (same for `//`, and for any
+branch guard a precondition settles). A symbolic branch (`if x < 0:`) survives execution as an
 `ite` inside the existential nest; the branch-splitting attempt case-splits
 it with `split` (which reaches under the `∃` binders — `split_ifs` does not
 exist on this toolchain), re-executes each arm with `py_simp`, and finishes

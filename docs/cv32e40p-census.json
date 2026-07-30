@@ -1,0 +1,1497 @@
+{
+ "schema": "cv32e40p-census-2",
+ "extractor_schema": "sv-0.2",
+ "frontend": {
+  "name": "pyslang",
+  "version": "11.0.0"
+ },
+ "checkout_git_commit": "6033d2b1be3295ec774d17ac4cf226faacfdeb08",
+ "files": 27,
+ "skipped_files": [
+  "rtl/cv32e40p_fp_wrapper.sv"
+ ],
+ "clean_files": 0,
+ "error_files": 0,
+ "totals": {
+  "nodes": 11446,
+  "concrete": 10005,
+  "symbolic": 867,
+  "unsupported": 574,
+  "unsupported_semantic": 570,
+  "unsupported_excl_skipped": 565
+ },
+ "baseline_m0": {
+  "mode": "M0 single-file (pre-phase behavior, byte-preserved)",
+  "unsupported_total": 818,
+  "unsupported_by_kind": {
+   "ParameterSymbol:Parameter": 149,
+   "AssignmentExpression:target": 71,
+   "VariableSymbol:2state": 56,
+   "ElementSelectExpression": 55,
+   "InvalidStatement": 45,
+   "ContinuousAssignSymbol:InvalidExpression": 40,
+   "GenerateBlockSymbol:GenerateBlock": 39,
+   "VariableSymbol:range": 37,
+   "RangeSelectExpression": 36,
+   "PortSymbol:2state": 31,
+   "GenerateBlockArraySymbol:GenerateBlockArray": 27,
+   "GenvarSymbol:Genvar": 27,
+   "UninstantiatedDefSymbol:UninstantiatedDef": 26,
+   "PortSymbol:range": 23,
+   "WildcardImportSymbol:WildcardImport": 22,
+   "ReplicationExpression": 18,
+   "TimedStatement:EventListControl": 18,
+   "ConversionExpression:width": 14,
+   "TransparentMemberSymbol:TransparentMember": 14,
+   "UnaryExpression:BitwiseOr": 13,
+   "CaseStatement": 12,
+   "VariableSymbol:type": 11,
+   "CallExpression": 9,
+   "NamedValueExpression:Parameter": 8,
+   "ProceduralBlockSymbol:NoEventControl": 8,
+   "BinaryExpression:LogicalShiftLeft": 4,
+   "BinaryExpression:Multiply": 2,
+   "BinaryExpression:ArithmeticShiftRight": 1,
+   "ProceduralBlockSymbol:AlwaysLatch": 1,
+   "TypeAliasType:TypeAlias": 1
+  },
+  "per_file_unsupported": {
+   "rtl/cv32e40p_aligner.sv": 11,
+   "rtl/cv32e40p_alu.sv": 92,
+   "rtl/cv32e40p_alu_div.sv": 24,
+   "rtl/cv32e40p_apu_disp.sv": 15,
+   "rtl/cv32e40p_compressed_decoder.sv": 5,
+   "rtl/cv32e40p_controller.sv": 25,
+   "rtl/cv32e40p_core.sv": 56,
+   "rtl/cv32e40p_cs_registers.sv": 120,
+   "rtl/cv32e40p_decoder.sv": 32,
+   "rtl/cv32e40p_ex_stage.sv": 21,
+   "rtl/cv32e40p_ff_one.sv": 13,
+   "rtl/cv32e40p_fifo.sv": 16,
+   "rtl/cv32e40p_fp_wrapper.sv": 19,
+   "rtl/cv32e40p_hwloop_regs.sv": 18,
+   "rtl/cv32e40p_id_stage.sv": 114,
+   "rtl/cv32e40p_if_stage.sv": 13,
+   "rtl/cv32e40p_int_controller.sv": 9,
+   "rtl/cv32e40p_load_store_unit.sv": 19,
+   "rtl/cv32e40p_mult.sv": 70,
+   "rtl/cv32e40p_obi_interface.sv": 7,
+   "rtl/cv32e40p_popcnt.sv": 14,
+   "rtl/cv32e40p_prefetch_buffer.sv": 7,
+   "rtl/cv32e40p_prefetch_controller.sv": 16,
+   "rtl/cv32e40p_register_file_ff.sv": 26,
+   "rtl/cv32e40p_register_file_latch.sv": 35,
+   "rtl/cv32e40p_sleep_unit.sv": 6,
+   "rtl/cv32e40p_top.sv": 15
+  }
+ },
+ "unsupported_by_kind": {
+  "AssignmentExpression:target": 170,
+  "ElementSelectExpression": 112,
+  "CaseStatement": 65,
+  "RangeSelectExpression": 48,
+  "TimedStatement:EventListControl": 39,
+  "UninstantiatedDefSymbol:UninstantiatedDef": 32,
+  "ReplicationExpression": 25,
+  "ConversionExpression:width": 14,
+  "UnaryExpression:BitwiseOr": 13,
+  "CallExpression": 10,
+  "MemberAccessExpression": 9,
+  "VariableSymbol:2state": 9,
+  "VariableSymbol:type": 8,
+  "ConversionExpression:Explicit": 6,
+  "BinaryExpression:LogicalShiftLeft": 4,
+  "BinaryExpression:Multiply": 2,
+  "ContinuousAssignSymbol:InvalidExpression": 2,
+  "InvalidExpression": 2,
+  "ProceduralBlockSymbol:AlwaysLatch": 2,
+  "BinaryExpression:ArithmeticShiftRight": 1,
+  "TypeAliasType:TypeAlias": 1
+ },
+ "tier_of": {
+  "AssignmentExpression:target": "T-select",
+  "BinaryExpression:ArithmeticShiftRight": "T-ops",
+  "BinaryExpression:LogicalShiftLeft": "T-ops",
+  "BinaryExpression:Multiply": "T-ops",
+  "CallExpression": "T-ops",
+  "CaseStatement": "T-case",
+  "ContinuousAssignSymbol:InvalidExpression": "vendor",
+  "ConversionExpression:Explicit": "T-ops",
+  "ConversionExpression:width": "T-ops",
+  "ElementSelectExpression": "T-select",
+  "InvalidExpression": "vendor",
+  "MemberAccessExpression": "T-struct",
+  "ProceduralBlockSymbol:AlwaysLatch": "T-reset",
+  "RangeSelectExpression": "T-select",
+  "ReplicationExpression": "T-select",
+  "TimedStatement:EventListControl": "T-reset",
+  "TypeAliasType:TypeAlias": "T-struct",
+  "UnaryExpression:BitwiseOr": "T-ops",
+  "UninstantiatedDefSymbol:UninstantiatedDef": "T-hier",
+  "VariableSymbol:2state": "T-ops",
+  "VariableSymbol:type": "T-struct"
+ },
+ "tier_nodes": {
+  "T-case": 65,
+  "T-hier": 32,
+  "T-ops": 59,
+  "T-reset": 41,
+  "T-select": 355,
+  "T-struct": 18,
+  "vendor": 4
+ },
+ "tier_files": {
+  "T-case": 13,
+  "T-hier": 11,
+  "T-ops": 11,
+  "T-reset": 18,
+  "T-select": 21,
+  "T-struct": 2,
+  "vendor": 1
+ },
+ "ladder": [
+  {
+   "tier": "T-select",
+   "residual_nodes": 355,
+   "files_touched": 21,
+   "newly_cleared": [
+    "ff_one",
+    "popcnt"
+   ],
+   "cumulative_cleared": 2
+  },
+  {
+   "tier": "T-reset",
+   "residual_nodes": 41,
+   "files_touched": 18,
+   "newly_cleared": [
+    "fifo",
+    "register_file_ff"
+   ],
+   "cumulative_cleared": 4
+  },
+  {
+   "tier": "T-case",
+   "residual_nodes": 65,
+   "files_touched": 13,
+   "newly_cleared": [
+    "aligner",
+    "compressed_decoder",
+    "controller",
+    "decoder",
+    "obi_interface",
+    "prefetch_controller"
+   ],
+   "cumulative_cleared": 10
+  },
+  {
+   "tier": "T-ops",
+   "residual_nodes": 59,
+   "files_touched": 11,
+   "newly_cleared": [
+    "alu_div",
+    "apu_disp",
+    "hwloop_regs",
+    "int_controller",
+    "mult"
+   ],
+   "cumulative_cleared": 15
+  },
+  {
+   "tier": "T-hier",
+   "residual_nodes": 32,
+   "files_touched": 11,
+   "newly_cleared": [
+    "alu",
+    "core",
+    "ex_stage",
+    "id_stage",
+    "if_stage",
+    "load_store_unit",
+    "prefetch_buffer",
+    "sleep_unit",
+    "top"
+   ],
+   "cumulative_cleared": 24
+  },
+  {
+   "tier": "T-struct",
+   "residual_nodes": 18,
+   "files_touched": 2,
+   "newly_cleared": [
+    "cs_registers",
+    "register_file_latch"
+   ],
+   "cumulative_cleared": 26
+  }
+ ],
+ "symbolic_vocabulary_use": {
+  "EnumRef": 109,
+  "EnumType": 46,
+  "Fill": 68,
+  "GenerateFor": 33,
+  "GenerateIf": 37,
+  "GenvarRef": 85,
+  "Import": 22,
+  "Int": 2077,
+  "LocalParam": 50,
+  "PackedType": 1712,
+  "ParamRef": 332,
+  "ParameterDecl": 99,
+  "Resize": 37,
+  "SysCall": 7,
+  "TypeRef": 47
+ },
+ "records": [
+  {
+   "file": "rtl/cv32e40p_aligner.sv",
+   "top": "cv32e40p_aligner",
+   "error": null,
+   "source_sha256": "c78cd8c09fee10e45536dc5b8d1fb17c3a130e2270168279fcaa43a19580e4f3",
+   "nodes_total": 126,
+   "concrete_total": 118,
+   "symbolic_total": 5,
+   "unsupported_total": 3,
+   "unsupported": {
+    "CaseStatement": 1,
+    "ElementSelectExpression": 1,
+    "TimedStatement:EventListControl": 1
+   },
+   "tiers": [
+    "T-case",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 3,
+    "Binary": 2,
+    "Block": 2,
+    "BlockingAssign": 9,
+    "Design": 1,
+    "EnumRef": 2,
+    "EnumType": 1,
+    "Ident": 21,
+    "If": 1,
+    "Int": 26,
+    "Literal": 3,
+    "Module": 1,
+    "PackedType": 23,
+    "Port": 13,
+    "Ternary": 1,
+    "TypeRef": 2,
+    "Unsupported": 3,
+    "Var": 11
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_alu.sv",
+   "top": "cv32e40p_alu",
+   "error": null,
+   "source_sha256": "6eca8d4c2e299adcc498417220478360cc22898ba9037cdad6a1b81e80373c7b",
+   "nodes_total": 988,
+   "concrete_total": 813,
+   "symbolic_total": 75,
+   "unsupported_total": 100,
+   "unsupported": {
+    "AssignmentExpression:target": 50,
+    "BinaryExpression:LogicalShiftLeft": 2,
+    "CallExpression": 2,
+    "CaseStatement": 13,
+    "ConversionExpression:width": 2,
+    "ElementSelectExpression": 10,
+    "RangeSelectExpression": 10,
+    "ReplicationExpression": 8,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 3
+   },
+   "tiers": [
+    "T-case",
+    "T-hier",
+    "T-ops",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 14,
+    "Assign": 43,
+    "Binary": 108,
+    "Block": 22,
+    "BlockingAssign": 18,
+    "Concat": 7,
+    "Design": 1,
+    "Empty": 1,
+    "EnumRef": 48,
+    "EnumType": 2,
+    "Fill": 9,
+    "GenerateFor": 7,
+    "GenvarRef": 14,
+    "Ident": 179,
+    "If": 5,
+    "Import": 1,
+    "Int": 168,
+    "Literal": 9,
+    "Module": 1,
+    "PackedType": 97,
+    "ParamRef": 2,
+    "Port": 18,
+    "Resize": 3,
+    "Ternary": 21,
+    "TypeRef": 1,
+    "Unary": 11,
+    "Unsupported": 100,
+    "Var": 78
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_alu_div.sv",
+   "top": "cv32e40p_alu_div",
+   "error": null,
+   "source_sha256": "11035bcbb28447fa5a3e40d5cad4f257e763f75e49664ce8098ab6247a9a57cb",
+   "nodes_total": 334,
+   "concrete_total": 292,
+   "symbolic_total": 27,
+   "unsupported_total": 15,
+   "unsupported": {
+    "AssignmentExpression:target": 1,
+    "CallExpression": 2,
+    "CaseStatement": 1,
+    "ElementSelectExpression": 6,
+    "RangeSelectExpression": 2,
+    "TimedStatement:EventListControl": 1,
+    "UnaryExpression:BitwiseOr": 2
+   },
+   "tiers": [
+    "T-case",
+    "T-ops",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 16,
+    "Binary": 35,
+    "Block": 1,
+    "BlockingAssign": 6,
+    "Concat": 2,
+    "Design": 1,
+    "EnumType": 1,
+    "Fill": 1,
+    "GenerateFor": 1,
+    "GenvarRef": 2,
+    "Ident": 72,
+    "Int": 45,
+    "Literal": 5,
+    "Module": 1,
+    "PackedType": 40,
+    "ParamRef": 19,
+    "ParameterDecl": 2,
+    "Port": 12,
+    "Resize": 4,
+    "Ternary": 15,
+    "TypeRef": 2,
+    "Unary": 6,
+    "Unsupported": 15,
+    "Var": 29
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_apu_disp.sv",
+   "top": "cv32e40p_apu_disp",
+   "error": null,
+   "source_sha256": "27931c8004e4d266c6ea02c9d5c19968c67d7e6ab86e57da4088531b13c8c48f",
+   "nodes_total": 453,
+   "concrete_total": 430,
+   "symbolic_total": 6,
+   "unsupported_total": 17,
+   "unsupported": {
+    "AssignmentExpression:target": 6,
+    "TimedStatement:EventListControl": 2,
+    "UnaryExpression:BitwiseOr": 9
+   },
+   "tiers": [
+    "T-ops",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 2,
+    "Assign": 26,
+    "Binary": 53,
+    "Block": 7,
+    "BlockingAssign": 20,
+    "Design": 1,
+    "Fill": 7,
+    "GenerateFor": 2,
+    "GenvarRef": 4,
+    "Ident": 127,
+    "If": 8,
+    "Int": 46,
+    "Literal": 8,
+    "Module": 1,
+    "PackedType": 54,
+    "Port": 23,
+    "Unary": 16,
+    "Unsupported": 17,
+    "Var": 31
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_compressed_decoder.sv",
+   "top": "cv32e40p_compressed_decoder",
+   "error": null,
+   "source_sha256": "db90df2f8737aff29d73b3d242dd33aeb6750ae69ae7eb8e118b531180945d7f",
+   "nodes_total": 33,
+   "concrete_total": 28,
+   "symbolic_total": 3,
+   "unsupported_total": 2,
+   "unsupported": {
+    "CaseStatement": 1,
+    "RangeSelectExpression": 1
+   },
+   "tiers": [
+    "T-case",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 1,
+    "Binary": 1,
+    "Block": 1,
+    "BlockingAssign": 2,
+    "Design": 1,
+    "Fill": 1,
+    "Ident": 3,
+    "Import": 1,
+    "Int": 6,
+    "Literal": 2,
+    "Module": 1,
+    "PackedType": 4,
+    "ParameterDecl": 2,
+    "Port": 4,
+    "Unsupported": 2
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_controller.sv",
+   "top": "cv32e40p_controller",
+   "error": null,
+   "source_sha256": "858b172963e17529de0b40a5be6ddfdadfc60bdca967819e4fc558b0ed6d7b87",
+   "nodes_total": 926,
+   "concrete_total": 862,
+   "symbolic_total": 39,
+   "unsupported_total": 25,
+   "unsupported": {
+    "CaseStatement": 2,
+    "ElementSelectExpression": 19,
+    "TimedStatement:EventListControl": 4
+   },
+   "tiers": [
+    "T-case",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 4,
+    "Assign": 44,
+    "Binary": 93,
+    "Block": 11,
+    "BlockingAssign": 60,
+    "Design": 1,
+    "EnumRef": 2,
+    "EnumType": 4,
+    "Fill": 3,
+    "GenerateIf": 1,
+    "Ident": 190,
+    "If": 14,
+    "Import": 1,
+    "Int": 71,
+    "Literal": 71,
+    "Module": 1,
+    "PackedType": 145,
+    "ParamRef": 23,
+    "ParameterDecl": 3,
+    "Port": 108,
+    "Ternary": 2,
+    "TypeRef": 5,
+    "Unary": 6,
+    "Unsupported": 25,
+    "Var": 38
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_core.sv",
+   "top": "cv32e40p_core",
+   "error": null,
+   "source_sha256": "6a78a0d77d32e6795f63e5149f77b98320ce504c67c44a2e359c9aea70989224",
+   "nodes_total": 833,
+   "concrete_total": 771,
+   "symbolic_total": 52,
+   "unsupported_total": 10,
+   "unsupported": {
+    "ConversionExpression:Explicit": 1,
+    "ElementSelectExpression": 2,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 7
+   },
+   "tiers": [
+    "T-hier",
+    "T-ops",
+    "T-select"
+   ],
+   "kinds": {
+    "Assign": 18,
+    "Binary": 27,
+    "Design": 1,
+    "EnumType": 5,
+    "GenerateIf": 1,
+    "Ident": 35,
+    "Import": 2,
+    "Int": 235,
+    "Literal": 8,
+    "LocalParam": 8,
+    "Module": 1,
+    "PackedType": 220,
+    "ParamRef": 22,
+    "ParameterDecl": 7,
+    "Port": 40,
+    "Ternary": 4,
+    "TypeRef": 7,
+    "Unsupported": 10,
+    "Var": 182
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg",
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_cs_registers.sv",
+   "top": "cv32e40p_cs_registers",
+   "error": null,
+   "source_sha256": "e2cec8f3d273748783275c60b1ec89101336608638d7e7783b03dd6b9dbb0345",
+   "nodes_total": 1401,
+   "concrete_total": 1131,
+   "symbolic_total": 182,
+   "unsupported_total": 88,
+   "unsupported": {
+    "AssignmentExpression:target": 45,
+    "CaseStatement": 8,
+    "ConversionExpression:Explicit": 5,
+    "ElementSelectExpression": 2,
+    "MemberAccessExpression": 9,
+    "RangeSelectExpression": 4,
+    "TimedStatement:EventListControl": 8,
+    "TypeAliasType:TypeAlias": 1,
+    "VariableSymbol:type": 6
+   },
+   "tiers": [
+    "T-case",
+    "T-ops",
+    "T-reset",
+    "T-select",
+    "T-struct",
+    "T-array"
+   ],
+   "kinds": {
+    "AlwaysComb": 7,
+    "Assign": 39,
+    "Binary": 176,
+    "Block": 13,
+    "BlockingAssign": 52,
+    "Concat": 1,
+    "Design": 1,
+    "EnumRef": 39,
+    "EnumType": 8,
+    "Fill": 13,
+    "GenerateFor": 8,
+    "GenerateIf": 13,
+    "GenvarRef": 28,
+    "Ident": 204,
+    "If": 11,
+    "Import": 1,
+    "Int": 289,
+    "Literal": 29,
+    "LocalParam": 21,
+    "Module": 1,
+    "PackedType": 138,
+    "ParamRef": 45,
+    "ParameterDecl": 12,
+    "Port": 67,
+    "Ternary": 8,
+    "TypeRef": 7,
+    "Unary": 14,
+    "Unsupported": 88,
+    "Var": 68
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_decoder.sv",
+   "top": "cv32e40p_decoder",
+   "error": null,
+   "source_sha256": "6e12f673e05380e34a35c38d8ee8b6878935d96b6f2dfda72c67f8a6e92a6e4e",
+   "nodes_total": 666,
+   "concrete_total": 595,
+   "symbolic_total": 70,
+   "unsupported_total": 1,
+   "unsupported": {
+    "CaseStatement": 1
+   },
+   "tiers": [
+    "T-case"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 12,
+    "Binary": 15,
+    "Block": 2,
+    "BlockingAssign": 77,
+    "Design": 1,
+    "EnumRef": 9,
+    "EnumType": 11,
+    "Fill": 3,
+    "Ident": 112,
+    "If": 1,
+    "Import": 3,
+    "Int": 101,
+    "Literal": 60,
+    "Module": 1,
+    "PackedType": 102,
+    "ParamRef": 30,
+    "ParameterDecl": 11,
+    "Port": 81,
+    "Ternary": 10,
+    "TypeRef": 6,
+    "Unsupported": 1,
+    "Var": 16
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg",
+    "cv32e40p_fpu_pkg",
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_ex_stage.sv",
+   "top": "cv32e40p_ex_stage",
+   "error": null,
+   "source_sha256": "1510df315721b370c2d86b1c1d134a3ff6beefba2d072de7a4a611e3ecffb753",
+   "nodes_total": 715,
+   "concrete_total": 677,
+   "symbolic_total": 29,
+   "unsupported_total": 9,
+   "unsupported": {
+    "AssignmentExpression:target": 4,
+    "TimedStatement:EventListControl": 2,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 3
+   },
+   "tiers": [
+    "T-hier",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 2,
+    "Assign": 34,
+    "Binary": 58,
+    "Block": 8,
+    "BlockingAssign": 28,
+    "Design": 1,
+    "EnumRef": 1,
+    "EnumType": 3,
+    "Fill": 6,
+    "GenerateIf": 1,
+    "Ident": 146,
+    "If": 8,
+    "Import": 2,
+    "Int": 119,
+    "Literal": 31,
+    "Module": 1,
+    "PackedType": 109,
+    "ParamRef": 14,
+    "ParameterDecl": 6,
+    "Port": 86,
+    "Ternary": 5,
+    "TypeRef": 2,
+    "Unary": 13,
+    "Unsupported": 9,
+    "Var": 22
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg",
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_ff_one.sv",
+   "top": "cv32e40p_ff_one",
+   "error": null,
+   "source_sha256": "6b646e6aa931f8ab56b85ee27549a422450b456270a54d68a4130329823226b6",
+   "nodes_total": 137,
+   "concrete_total": 82,
+   "symbolic_total": 43,
+   "unsupported_total": 12,
+   "unsupported": {
+    "AssignmentExpression:target": 10,
+    "ElementSelectExpression": 2
+   },
+   "tiers": [
+    "T-select"
+   ],
+   "kinds": {
+    "Assign": 2,
+    "Binary": 28,
+    "Design": 1,
+    "GenerateFor": 4,
+    "GenerateIf": 5,
+    "GenvarRef": 15,
+    "Ident": 2,
+    "Int": 31,
+    "LocalParam": 1,
+    "Module": 1,
+    "PackedType": 6,
+    "ParamRef": 15,
+    "ParameterDecl": 1,
+    "Port": 3,
+    "SysCall": 2,
+    "Unary": 5,
+    "Unsupported": 12,
+    "Var": 3
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_fifo.sv",
+   "top": "cv32e40p_fifo",
+   "error": null,
+   "source_sha256": "d910cbd0751f38d349e8975de22b43d0a2937f9e905b0d9b82894fd83c53fe8a",
+   "nodes_total": 270,
+   "concrete_total": 236,
+   "symbolic_total": 28,
+   "unsupported_total": 6,
+   "unsupported": {
+    "AssignmentExpression:target": 2,
+    "ElementSelectExpression": 1,
+    "RangeSelectExpression": 1,
+    "TimedStatement:EventListControl": 2
+   },
+   "tiers": [
+    "T-reset",
+    "T-select",
+    "T-array"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 5,
+    "Binary": 34,
+    "Block": 5,
+    "BlockingAssign": 17,
+    "Design": 1,
+    "Fill": 2,
+    "GenerateIf": 1,
+    "Ident": 54,
+    "If": 7,
+    "Int": 39,
+    "Literal": 5,
+    "LocalParam": 1,
+    "Module": 1,
+    "PackedType": 21,
+    "ParamRef": 21,
+    "ParameterDecl": 4,
+    "Port": 12,
+    "Resize": 12,
+    "Squash2": 1,
+    "SysCall": 1,
+    "Ternary": 3,
+    "Unary": 7,
+    "Unsupported": 6,
+    "Var": 9
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_fp_wrapper.sv",
+   "top": "cv32e40p_fp_wrapper",
+   "error": null,
+   "source_sha256": "1579104bf82f2e18a13029a7e299d867415a660ccff24c20ca3bb4ee4e315e9d",
+   "nodes_total": 70,
+   "concrete_total": 49,
+   "symbolic_total": 12,
+   "unsupported_total": 9,
+   "unsupported": {
+    "ContinuousAssignSymbol:InvalidExpression": 2,
+    "InvalidExpression": 2,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 1,
+    "VariableSymbol:2state": 4
+   },
+   "tiers": [
+    "T-hier",
+    "T-ops",
+    "vendor"
+   ],
+   "kinds": {
+    "Binary": 5,
+    "Design": 1,
+    "Import": 3,
+    "Int": 16,
+    "LocalParam": 2,
+    "Module": 1,
+    "PackedType": 13,
+    "ParamRef": 5,
+    "ParameterDecl": 2,
+    "Port": 10,
+    "Unsupported": 9,
+    "Var": 3
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg",
+    "cv32e40p_pkg",
+    "fpnew_pkg"
+   ],
+   "skip_reason": "needs vendored fpnew tree (rtl/vendor/pulp_platform_fpnew): fpnew_pkg types/instances do not resolve; envelope still emitted, its Invalid* nodes are name-resolution artifacts, not vocabulary gaps"
+  },
+  {
+   "file": "rtl/cv32e40p_hwloop_regs.sv",
+   "top": "cv32e40p_hwloop_regs",
+   "error": null,
+   "source_sha256": "c2a0787c07bcd6c198b6338c4c6ee372b4bce96ec4a4def467ff0ae03da4e43a",
+   "nodes_total": 112,
+   "concrete_total": 87,
+   "symbolic_total": 17,
+   "unsupported_total": 8,
+   "unsupported": {
+    "AssignmentExpression:target": 4,
+    "TimedStatement:EventListControl": 3,
+    "VariableSymbol:2state": 1
+   },
+   "tiers": [
+    "T-ops",
+    "T-reset",
+    "T-select",
+    "T-array"
+   ],
+   "kinds": {
+    "Binary": 10,
+    "Design": 1,
+    "GenerateFor": 1,
+    "GenvarRef": 2,
+    "Int": 42,
+    "Module": 1,
+    "PackedType": 16,
+    "ParamRef": 11,
+    "ParameterDecl": 2,
+    "Port": 12,
+    "SysCall": 1,
+    "Unary": 1,
+    "Unsupported": 8,
+    "Var": 4
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_id_stage.sv",
+   "top": "cv32e40p_id_stage",
+   "error": null,
+   "source_sha256": "98b246d9ada45a7073d217d5c3bbc86941ee76bb00e7e0edda61d3bbec83728e",
+   "nodes_total": 1604,
+   "concrete_total": 1435,
+   "symbolic_total": 77,
+   "unsupported_total": 92,
+   "unsupported": {
+    "AssignmentExpression:target": 17,
+    "BinaryExpression:LogicalShiftLeft": 1,
+    "CaseStatement": 21,
+    "ElementSelectExpression": 11,
+    "RangeSelectExpression": 23,
+    "ReplicationExpression": 12,
+    "TimedStatement:EventListControl": 2,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 5
+   },
+   "tiers": [
+    "T-case",
+    "T-hier",
+    "T-ops",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 23,
+    "Assign": 62,
+    "Binary": 95,
+    "Block": 27,
+    "BlockingAssign": 6,
+    "Concat": 18,
+    "Design": 1,
+    "Empty": 5,
+    "EnumType": 4,
+    "Fill": 16,
+    "GenerateFor": 1,
+    "GenerateIf": 6,
+    "GenvarRef": 2,
+    "Ident": 158,
+    "If": 2,
+    "Import": 2,
+    "Int": 351,
+    "Literal": 33,
+    "LocalParam": 8,
+    "Module": 1,
+    "PackedType": 309,
+    "ParamRef": 29,
+    "ParameterDecl": 17,
+    "Port": 151,
+    "Resize": 1,
+    "SysCall": 1,
+    "Ternary": 5,
+    "TypeRef": 7,
+    "Unary": 10,
+    "Unsupported": 92,
+    "Var": 161
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg",
+    "cv32e40p_fpu_pkg",
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_if_stage.sv",
+   "top": "cv32e40p_if_stage",
+   "error": null,
+   "source_sha256": "e2d1cc9bc433a093938f2d4e4268c611f9a9bf199101e85114d417ff04597626",
+   "nodes_total": 260,
+   "concrete_total": 244,
+   "symbolic_total": 7,
+   "unsupported_total": 9,
+   "unsupported": {
+    "CaseStatement": 4,
+    "RangeSelectExpression": 1,
+    "TimedStatement:EventListControl": 1,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 3
+   },
+   "tiers": [
+    "T-case",
+    "T-hier",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 3,
+    "Assign": 6,
+    "Binary": 6,
+    "Block": 6,
+    "BlockingAssign": 5,
+    "Concat": 1,
+    "Design": 1,
+    "Ident": 25,
+    "If": 3,
+    "Import": 1,
+    "Int": 61,
+    "Literal": 5,
+    "Module": 1,
+    "PackedType": 59,
+    "ParamRef": 1,
+    "ParameterDecl": 5,
+    "Port": 41,
+    "Unary": 3,
+    "Unsupported": 9,
+    "Var": 18
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_int_controller.sv",
+   "top": "cv32e40p_int_controller",
+   "error": null,
+   "source_sha256": "24df51d9cb33f5c8760a8cfbc7931aafc94c2ab0523c7df55b2635e7778af16f",
+   "nodes_total": 268,
+   "concrete_total": 220,
+   "symbolic_total": 13,
+   "unsupported_total": 35,
+   "unsupported": {
+    "ElementSelectExpression": 32,
+    "TimedStatement:EventListControl": 1,
+    "UnaryExpression:BitwiseOr": 2
+   },
+   "tiers": [
+    "T-ops",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 1,
+    "Assign": 7,
+    "Binary": 8,
+    "Block": 1,
+    "BlockingAssign": 33,
+    "Design": 1,
+    "EnumRef": 2,
+    "EnumType": 2,
+    "GenerateIf": 1,
+    "Ident": 51,
+    "If": 32,
+    "Import": 1,
+    "Int": 17,
+    "Literal": 29,
+    "Module": 1,
+    "PackedType": 18,
+    "ParamRef": 5,
+    "ParameterDecl": 1,
+    "Port": 13,
+    "Resize": 4,
+    "TypeRef": 1,
+    "Unsupported": 35,
+    "Var": 4
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_load_store_unit.sv",
+   "top": "cv32e40p_load_store_unit",
+   "error": null,
+   "source_sha256": "857962513fc5bd3eb3d6b28c55fdfb15ef53f8ce8a59173a7d583efb8caee66f",
+   "nodes_total": 396,
+   "concrete_total": 374,
+   "symbolic_total": 7,
+   "unsupported_total": 15,
+   "unsupported": {
+    "CaseStatement": 8,
+    "RangeSelectExpression": 3,
+    "TimedStatement:EventListControl": 3,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 1
+   },
+   "tiers": [
+    "T-case",
+    "T-hier",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 8,
+    "Assign": 21,
+    "Binary": 33,
+    "Block": 9,
+    "BlockingAssign": 1,
+    "Concat": 1,
+    "Design": 1,
+    "Empty": 2,
+    "GenerateIf": 1,
+    "Ident": 75,
+    "If": 1,
+    "Int": 67,
+    "Literal": 13,
+    "LocalParam": 1,
+    "Module": 1,
+    "PackedType": 64,
+    "ParamRef": 4,
+    "ParameterDecl": 1,
+    "Port": 32,
+    "Resize": 3,
+    "Ternary": 8,
+    "Unary": 2,
+    "Unsupported": 15,
+    "Var": 32
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_mult.sv",
+   "top": "cv32e40p_mult",
+   "error": null,
+   "source_sha256": "6a0cf2f15c69886ad5497222aa203f6f5b1fdd004b32a4ab87b36a0960ba2254",
+   "nodes_total": 427,
+   "concrete_total": 357,
+   "symbolic_total": 11,
+   "unsupported_total": 59,
+   "unsupported": {
+    "AssignmentExpression:target": 22,
+    "BinaryExpression:ArithmeticShiftRight": 1,
+    "BinaryExpression:LogicalShiftLeft": 1,
+    "BinaryExpression:Multiply": 2,
+    "CallExpression": 6,
+    "CaseStatement": 2,
+    "ConversionExpression:width": 12,
+    "ElementSelectExpression": 6,
+    "RangeSelectExpression": 1,
+    "ReplicationExpression": 5,
+    "TimedStatement:EventListControl": 1
+   },
+   "tiers": [
+    "T-case",
+    "T-ops",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 2,
+    "Assign": 23,
+    "Binary": 18,
+    "Block": 2,
+    "BlockingAssign": 11,
+    "Concat": 1,
+    "Design": 1,
+    "EnumRef": 2,
+    "EnumType": 3,
+    "Fill": 2,
+    "Ident": 55,
+    "Import": 1,
+    "Int": 98,
+    "Literal": 10,
+    "Module": 1,
+    "PackedType": 62,
+    "ParamRef": 2,
+    "Port": 22,
+    "Ternary": 9,
+    "TypeRef": 3,
+    "Unsupported": 59,
+    "Var": 40
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_obi_interface.sv",
+   "top": "cv32e40p_obi_interface",
+   "error": null,
+   "source_sha256": "2b0a58e5c2f758dbe5f6e8f786c547da5508ce466007517434e2f7d817b758ed",
+   "nodes_total": 186,
+   "concrete_total": 174,
+   "symbolic_total": 10,
+   "unsupported_total": 2,
+   "unsupported": {
+    "CaseStatement": 1,
+    "TimedStatement:EventListControl": 1
+   },
+   "tiers": [
+    "T-case",
+    "T-reset"
+   ],
+   "kinds": {
+    "AlwaysComb": 2,
+    "Assign": 13,
+    "Binary": 2,
+    "Block": 4,
+    "BlockingAssign": 13,
+    "Design": 1,
+    "EnumRef": 4,
+    "EnumType": 1,
+    "GenerateIf": 1,
+    "Ident": 50,
+    "If": 1,
+    "Int": 29,
+    "Literal": 1,
+    "Module": 1,
+    "PackedType": 28,
+    "ParamRef": 1,
+    "ParameterDecl": 1,
+    "Port": 22,
+    "TypeRef": 2,
+    "Unsupported": 2,
+    "Var": 7
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_popcnt.sv",
+   "top": "cv32e40p_popcnt",
+   "error": null,
+   "source_sha256": "7a2dbeded21929832b40fc8d068b35b7281c75a63c426feed207127d4da08e4e",
+   "nodes_total": 75,
+   "concrete_total": 57,
+   "symbolic_total": 12,
+   "unsupported_total": 6,
+   "unsupported": {
+    "AssignmentExpression:target": 4,
+    "ElementSelectExpression": 2
+   },
+   "tiers": [
+    "T-select"
+   ],
+   "kinds": {
+    "Assign": 1,
+    "Binary": 5,
+    "Concat": 2,
+    "Design": 1,
+    "GenerateFor": 4,
+    "GenvarRef": 8,
+    "Ident": 1,
+    "Int": 28,
+    "Literal": 2,
+    "Module": 1,
+    "PackedType": 6,
+    "Port": 2,
+    "Unary": 4,
+    "Unsupported": 6,
+    "Var": 4
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_prefetch_buffer.sv",
+   "top": "cv32e40p_prefetch_buffer",
+   "error": null,
+   "source_sha256": "a2fcbe6b783659ebecaf25d105f30c68af9b68c2850b833af64a2cec3ec29262",
+   "nodes_total": 101,
+   "concrete_total": 91,
+   "symbolic_total": 7,
+   "unsupported_total": 3,
+   "unsupported": {
+    "UninstantiatedDefSymbol:UninstantiatedDef": 3
+   },
+   "tiers": [
+    "T-hier"
+   ],
+   "kinds": {
+    "Assign": 1,
+    "Design": 1,
+    "Ident": 4,
+    "Int": 20,
+    "LocalParam": 2,
+    "Module": 1,
+    "PackedType": 31,
+    "ParamRef": 2,
+    "ParameterDecl": 2,
+    "Port": 18,
+    "Squash2": 1,
+    "SysCall": 1,
+    "Ternary": 1,
+    "Unsupported": 3,
+    "Var": 13
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_prefetch_controller.sv",
+   "top": "cv32e40p_prefetch_controller",
+   "error": null,
+   "source_sha256": "66e6078ea3b3acd3ceea4b974c0488d25e02324935532de1f2d39cdc34c875a0",
+   "nodes_total": 358,
+   "concrete_total": 327,
+   "symbolic_total": 25,
+   "unsupported_total": 6,
+   "unsupported": {
+    "CaseStatement": 2,
+    "RangeSelectExpression": 2,
+    "TimedStatement:EventListControl": 2
+   },
+   "tiers": [
+    "T-case",
+    "T-reset",
+    "T-select"
+   ],
+   "kinds": {
+    "AlwaysComb": 3,
+    "Assign": 24,
+    "Binary": 45,
+    "Block": 7,
+    "BlockingAssign": 7,
+    "Concat": 2,
+    "Design": 1,
+    "EnumType": 1,
+    "Fill": 1,
+    "GenerateIf": 2,
+    "Ident": 92,
+    "If": 4,
+    "Import": 1,
+    "Int": 29,
+    "Literal": 13,
+    "Module": 1,
+    "PackedType": 37,
+    "ParamRef": 14,
+    "ParameterDecl": 4,
+    "Port": 20,
+    "Resize": 10,
+    "SysCall": 1,
+    "Ternary": 3,
+    "TypeRef": 2,
+    "Unary": 10,
+    "Unsupported": 6,
+    "Var": 18
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_register_file_ff.sv",
+   "top": "cv32e40p_register_file",
+   "error": null,
+   "source_sha256": "cd04d46afbf778ff3f1573bdd390784e5461a09b33fd670fa126ae7d3c433e89",
+   "nodes_total": 205,
+   "concrete_total": 142,
+   "symbolic_total": 48,
+   "unsupported_total": 15,
+   "unsupported": {
+    "AssignmentExpression:target": 3,
+    "ElementSelectExpression": 9,
+    "TimedStatement:EventListControl": 3
+   },
+   "tiers": [
+    "T-reset",
+    "T-select",
+    "T-array"
+   ],
+   "kinds": {
+    "Assign": 5,
+    "Binary": 29,
+    "Design": 1,
+    "GenerateFor": 3,
+    "GenerateIf": 1,
+    "GenvarRef": 6,
+    "Ident": 7,
+    "Int": 49,
+    "LocalParam": 3,
+    "Module": 1,
+    "PackedType": 21,
+    "ParamRef": 31,
+    "ParameterDecl": 4,
+    "Port": 15,
+    "Ternary": 5,
+    "Unary": 3,
+    "Unsupported": 15,
+    "Var": 6
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_register_file_latch.sv",
+   "top": "cv32e40p_register_file",
+   "error": null,
+   "source_sha256": "70acb0166bca598d138e8ab48fac4bb030e55b11c9e578dd0396423e89e841d4",
+   "nodes_total": 211,
+   "concrete_total": 145,
+   "symbolic_total": 44,
+   "unsupported_total": 22,
+   "unsupported": {
+    "AssignmentExpression:target": 2,
+    "ElementSelectExpression": 9,
+    "ProceduralBlockSymbol:AlwaysLatch": 2,
+    "TimedStatement:EventListControl": 1,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 2,
+    "VariableSymbol:2state": 4,
+    "VariableSymbol:type": 2
+   },
+   "tiers": [
+    "T-hier",
+    "T-ops",
+    "T-reset",
+    "T-select",
+    "T-struct",
+    "T-array"
+   ],
+   "kinds": {
+    "Assign": 5,
+    "Binary": 28,
+    "Design": 1,
+    "GenerateFor": 2,
+    "GenerateIf": 1,
+    "GenvarRef": 4,
+    "Ident": 7,
+    "Int": 48,
+    "LocalParam": 3,
+    "Module": 1,
+    "PackedType": 24,
+    "ParamRef": 30,
+    "ParameterDecl": 4,
+    "Port": 15,
+    "Ternary": 5,
+    "Unary": 2,
+    "Unsupported": 22,
+    "Var": 9
+   },
+   "packages": []
+  },
+  {
+   "file": "rtl/cv32e40p_sleep_unit.sv",
+   "top": "cv32e40p_sleep_unit",
+   "error": null,
+   "source_sha256": "1cf012a83b54472931ad9944e7774e311222641a0aa026229c19467f90bf5448",
+   "nodes_total": 122,
+   "concrete_total": 116,
+   "symbolic_total": 4,
+   "unsupported_total": 2,
+   "unsupported": {
+    "TimedStatement:EventListControl": 1,
+    "UninstantiatedDefSymbol:UninstantiatedDef": 1
+   },
+   "tiers": [
+    "T-hier",
+    "T-reset"
+   ],
+   "kinds": {
+    "Assign": 10,
+    "Binary": 11,
+    "Design": 1,
+    "GenerateIf": 1,
+    "Ident": 34,
+    "Import": 1,
+    "Int": 1,
+    "Literal": 5,
+    "Module": 1,
+    "PackedType": 23,
+    "ParamRef": 1,
+    "ParameterDecl": 1,
+    "Port": 16,
+    "Ternary": 4,
+    "Unary": 3,
+    "Unsupported": 2,
+    "Var": 7
+   },
+   "packages": [
+    "cv32e40p_pkg"
+   ]
+  },
+  {
+   "file": "rtl/cv32e40p_top.sv",
+   "top": "cv32e40p_top",
+   "error": null,
+   "source_sha256": "2467f6b3c2745e687edad1a0c88ab5267b4ba8642c91e1fc0f282cf4223e5dc3",
+   "nodes_total": 169,
+   "concrete_total": 152,
+   "symbolic_total": 14,
+   "unsupported_total": 3,
+   "unsupported": {
+    "UninstantiatedDefSymbol:UninstantiatedDef": 3
+   },
+   "tiers": [
+    "T-hier"
+   ],
+   "kinds": {
+    "Assign": 5,
+    "Binary": 5,
+    "Design": 1,
+    "Fill": 4,
+    "GenerateIf": 1,
+    "Ident": 7,
+    "Import": 1,
+    "Int": 45,
+    "Module": 1,
+    "PackedType": 42,
+    "ParamRef": 5,
+    "ParameterDecl": 7,
+    "Port": 31,
+    "Unsupported": 3,
+    "Var": 11
+   },
+   "packages": [
+    "cv32e40p_apu_core_pkg"
+   ]
+  }
+ ]
+}

@@ -377,3 +377,128 @@ with `Literal "00000001"`); `race_blk` / `swap_nba` = two `Var` decls with
 (`style: "always"`) processes each containing a single `BlockingAssign` /
 `NonblockingAssign`; `xsel` = one `AlwaysComb` whose body is an `If` with two
 `BlockingAssign`s.
+
+---
+
+# Symbolic mode — schema sv-0.2 (additive; `--top`)
+
+Phase 1 of the CV32E40P program adds a second extraction mode:
+
+```
+python3.12 extractors/sv/extract.py --top <module> <files...> [-I <incdir>] [-o out.json]
+```
+
+All sources are compiled as **one** slang compilation (multi-file is for
+**name resolution only**: package imports, typedefs, enum types) and exactly
+the named top module is emitted, as one envelope (default output path: next
+to the file that defines the top module, `<file>.sv.json`). Everything in
+this section is **additive**: single-file mode (`--top` absent) is untouched
+and remains byte-identical at schema `sv-0.1`.
+
+Two design laws govern this mode (they are the point of the program):
+
+1. **Parameters stay symbolic.** Parameter *values* are never folded into
+   the envelope's primary form. A parameter reference in any expression
+   position is a `ParamRef` node; declared widths are the source's symbolic
+   range expressions. On the Lean side (phase 2) a parameterized module
+   becomes a Design-valued *function* of its parameters, enabling ∀-width
+   theorems.
+2. **Generate stays structural.** A generate-for is ONE `GenerateFor` node
+   (genvar, symbolic header expressions, body template) — an indexed family
+   the prover handles by induction; a generate-if is ONE `GenerateIf` with a
+   symbolic condition. Nothing is unrolled.
+
+**Symbolic-primary / resolved-secondary convention.** Wherever slang only
+exposes post-elaboration integers, the envelope carries the recovered
+symbolic form as the primary field and the defaults-elaborated integer in a
+`resolved`-family field beside it, for phase-2 cross-checks only:
+`resolved` = elaborated *value* (on `ParameterDecl`/`LocalParam`/`SysCall`),
+or elaborated *bit width* (on `PackedType`/`TypeRef`); `resolved_width` =
+elaborated context width (on `Int`/`Fill`); `resolved_count` = number of
+elaborated instances (on `GenerateFor`). Ingesters MUST treat these as
+metadata, never as the contract.
+
+**Recovery method and honest limits.** (a) Bound expressions are used
+wherever slang retains them — parameter/localparam initializers
+(`ParameterSymbol.initializer`), generate-for headers
+(`initialExpression`/`stopExpression`/`iterExpression`), generate-if
+conditions (`conditionExpression`), and every process/assign expression;
+in these trees parameter references are still symbol references, emitted as
+`ParamRef`/`GenvarRef`/`EnumRef`. (b) The one place slang folds without
+keeping a bound expression is the packed **dimensions of declared types**
+(resolved to integer ranges); those are recovered from the declaration's
+*syntax tree* and identifiers in them are classified via `lookupName` on the
+top module's body scope. Limits: syntax-recovered nodes carry `"width":
+null` (they are not re-type-checked); a dimension identifier not visible
+from the top module's scope (e.g. a package-private name never imported)
+degrades to an `Unsupported` node with the `resolved` width still present
+(`"packed": null` when a whole dimension list is unrecoverable); genvar
+references are recognized *by name* against the enclosing generate stack;
+`width` fields on ordinary expression nodes inside processes are elaborated
+under **default** parameter values (cross-check only — the binding symbolic
+widths are on the declarations); the body template of a `GenerateFor` is
+bound from its first elaborated instance (a loop with zero instances under
+defaults keeps its body as one `Unsupported` node with the source text);
+untaken generate-if branches ARE emitted (slang binds them in
+uninstantiated mode).
+
+## Envelope (symbolic)
+
+Top-level key order: `schema_version` (`"sv-0.2"`), `language`, `frontend`,
+`mode` (`"symbolic"`), `top`, `source_files` (list of `{path, sha256}` in
+CLI order), `packages` (sorted names of packages the top module actually
+references), `design`, `lean_blocks`. `design.modules` holds exactly one
+`Module`; `design.others` is `[]` (packages are name-resolution inputs, not
+`$unit` noise).
+
+## Module (symbolic)
+
+Key order: `kind`, `span`, `name`, `imports`, `params`, `types`, `ports`,
+`decls`, `processes`, `generates`, `others`. New lists:
+
+| list | contents |
+|---|---|
+| `imports` | `{"kind": "Import", "span", "package", "name"}` — `name` is `"*"` for wildcard imports |
+| `params` | `ParameterDecl` / `LocalParam`, source order |
+| `types` | `EnumType`, first-reference order |
+| `generates` | `GenerateFor` / `GenerateIf`, source order |
+
+## New node kinds
+
+| kind | key order / fields |
+|---|---|
+| `ParameterDecl` | `kind`, `span`, `name`, `type` (`PackedType` \| `TypeRef` \| `null` for implicit), `default` (symbolic expr \| `null`), `resolved` |
+| `LocalParam` | `kind`, `span`, `name`, `type`, `expr` (symbolic), `resolved` |
+| `ParamRef` | `kind`, `span`, `name` (+ `from_package` only when package-scoped) — a parameter/localparam reference in ANY expression position |
+| `GenvarRef` | `kind`, `span`, `name` — reference to an enclosing generate-for's loop variable |
+| `GenerateFor` | `kind`, `span`, `label`, `genvar`, `init`, `bound`, `step` (symbolic exprs; `step` uses `Unary` op `"++"`/`"--"`), `resolved_count`, `body` (member list, source order) |
+| `GenerateIf` | `kind`, `span`, `label`, `else_label`, `cond` (symbolic), `then` (member list), `else` (member list \| `[GenerateIf]` for else-if chains \| `null`) |
+| `EnumType` | `kind`, `span`, `name` (typedef name, or slang's deterministic `e$N` for anonymous enums), `from_package` (`null` for local), `base_width` (`PackedType`), `members` (`[{name, value}]`, `value` an int or an x/z bits string — metadata) |
+| `EnumRef` | `kind`, `span`, `type`, `member`, `from_package` — an enum member used in an expression |
+| `TypeRef` | `kind`, `name`, `from_package`, `resolved` — a declaration's type given by (enum) type name |
+| `PackedType` | `kind`, `packed` (`[{msb, lsb}]` symbolic bounds per packed dimension, `[]` scalar, `null` unrecoverable), `resolved` (total bit width) |
+| `SysCall` (expression position) | `kind`, `span`, `name` (`"$clog2" \| "$bits" \| "$high" \| "$size"`), `args`, `resolved` — distinct from the statement-position `SysCall` (`$display`/..., which has `format`/`args`/`arg_signed`) |
+| `Int` | `kind`, `span`, `value` (int), `resolved_width` — an *unsized* integer literal (sized literals stay `Literal`) |
+| `Fill` | `kind`, `span`, `bit` (`"0" \| "1" \| "x" \| "z"`), `resolved_width` — an unbased-unsized literal (`'0`/`'1`/`'x`/`'z`); its width is context-propagated, i.e. potentially parameter-dependent, so it is never emitted as a folded `Literal` in this mode |
+| `Import` | see above |
+
+Symbolic-mode changes to existing nodes: `Port`/`Var`/`Net` carry their
+declared type object (`PackedType` or `TypeRef`) in the `width` field
+(instead of an integer); enum-typed ports/vars/idents are in-vocabulary;
+multi-dimensional packed vectors of 4-state unsigned scalars are
+in-vocabulary (`packed` lists one `{msb, lsb}` per dimension, outermost
+first). In **symbolic expression positions only** (parameter defaults,
+localparam exprs, generate headers and conditions, dimension bounds) the
+operator set additionally admits `* / % ** << >> <<< >>>`; in ordinary
+process/assign positions the M0/self-check operator set is unchanged and
+everything else remains `Unsupported` (selects, case, event lists,
+instantiations, 2-state types, ... — phase 2+ tiers). A width-changing
+implicit conversion whose operand contains symbolic references is emitted
+as `Resize` around the symbolic operand (unsigned operands; signed →
+`Unsupported`) instead of being constant-folded.
+
+New `Unsupported` tags of this mode: `Syntax:<SyntaxKind>` /
+`Syntax:Identifier:unresolved` / `Syntax:Identifier:<SymbolClass>`
+(dimension-syntax recovery), `GenerateBlockSymbol:unconditional` (bare
+`begin`/`end` generate block), `GenerateFor:no-template` (zero-instance
+loop body), `TransparentMemberSymbol:<Class>`.

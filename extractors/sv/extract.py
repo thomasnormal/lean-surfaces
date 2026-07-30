@@ -141,6 +141,11 @@ def sym_span(sm, sym):
 # offsets are byte offsets into the file content.
 _SOURCE_BYTES = None
 
+# Symbolic-mode context (SymCtx) — None in single-file M0/self-check mode.
+# Every symbolic-mode behavior change in the shared converters is guarded
+# by `_SYM is not None`, keeping single-file output byte-identical.
+_SYM = None
+
 
 def source_text(node):
     """Exact source text of a symbol/statement/expression (via its source
@@ -149,6 +154,19 @@ def source_text(node):
     syn = getattr(node, "syntax", None)
     holder = syn if syn is not None else node
     sr = getattr(holder, "sourceRange", None)
+    if sr is not None and _SYM is not None:
+        # Multi-file compilation: pick the right file's bytes.
+        try:
+            fname = os.path.normpath(_SYM.sm.getFileName(sr.start))
+            data = _SYM.source_map.get(fname)
+            if data is not None:
+                s, e = sr.start.offset, sr.end.offset
+                if 0 <= s <= e <= len(data):
+                    txt = data[s:e].decode("utf-8", errors="replace").strip()
+                    if txt:
+                        return txt[:UNSUPPORTED_TEXT_LIMIT]
+        except Exception:
+            pass
     if sr is not None and _SOURCE_BYTES is not None:
         try:
             s, e = sr.start.offset, sr.end.offset
@@ -333,6 +351,10 @@ def _convert_expr(sm, e):
                     }
                 return _convert_expr(sm, e.operand)
             # Width-changing implicit conversion (self-check tier §f):
+            if _SYM is not None:
+                d = _sym_conversion(sm, e, ow, tw, state_squash)
+                if d is not None:
+                    return d
             # 1. slang folded it to a constant -> emit the folded Literal
             #    (correct for signed operands too — slang applied the LRM).
             lit = const_literal(sm, e)
@@ -370,9 +392,17 @@ def _convert_expr(sm, e):
     if cname == "NamedValueExpression":
         sym = e.symbol
         skind = str(sym.kind).split(".")[-1]
+        if _SYM is not None:
+            d = _sym_named_value(sm, e, sym, skind)
+            if d is not None:
+                return d
         if skind not in ("Variable", "Net"):
             return unsupported(sm, e, "NamedValueExpression:" + skind)
         w, _two, reason = type_width_2s(e.type)
+        if w is None and _SYM is not None:
+            ew = _sym_enum_width(e.type)
+            if ew is not None:
+                w = ew
         if w is None:
             # Keep the historical tag for 2-state-but-otherwise-bad types.
             if reason == "type" and not getattr(e.type, "isFourState", True):
@@ -386,6 +416,10 @@ def _convert_expr(sm, e):
         }
 
     if cname in ("IntegerLiteral", "UnbasedUnsizedIntegerLiteral"):
+        if _SYM is not None:
+            d = _sym_literal(sm, e, cname)
+            if d is not None:
+                return d
         sv = e.value
         return {
             "kind": "Literal",
@@ -434,6 +468,19 @@ def _convert_expr(sm, e):
 
     if cname == "BinaryExpression":
         sym = BINARY_OPS.get(e.op)
+        if sym is None and _SYM is not None and _SYM.symctx:
+            # Symbolic expression positions (parameter defaults, generate
+            # bounds, ...) admit the elaboration-arithmetic operators.
+            xsym = SYM_BINARY_OPS.get(e.op)
+            if xsym is not None:
+                return {
+                    "kind": "Binary",
+                    "span": node_span(sm, e),
+                    "width": _safe_width(e),
+                    "op": xsym,
+                    "left": _convert_expr(sm, e.left),
+                    "right": _convert_expr(sm, e.right),
+                }
         if sym is None:
             return unsupported(
                 sm, e, "BinaryExpression:" + str(e.op).split(".")[-1]
@@ -500,6 +547,11 @@ def _convert_expr(sm, e):
             "width": myw,
             "parts": parts,
         }
+
+    if cname == "CallExpression" and _SYM is not None:
+        d = _sym_expr_syscall(sm, e)
+        if d is not None:
+            return d
 
     return unsupported(sm, e)
 
@@ -909,6 +961,1156 @@ def convert_design(sm, comp):
 
 
 # ---------------------------------------------------------------------------
+# Symbolic mode (schema sv-0.2, `--top`): multi-file compilation for name
+# resolution; parameters/generate/enums stay SYMBOLIC (never folded, never
+# unrolled). See docs/sv-envelope-schema.md "Symbolic mode".
+#
+# Symbolic-recovery method (and its limits):
+#   1. Wherever slang retains a *bound* expression, we convert the bound
+#      AST: parameter defaults (`ParameterSymbol.initializer`), generate-for
+#      headers (`GenerateBlockArraySymbol.initialExpression/stopExpression/
+#      iterExpression`), generate-if conditions
+#      (`GenerateBlockSymbol.conditionExpression`), and every RHS. In these
+#      trees a parameter reference is still a NamedValueExpression pointing
+#      at the ParameterSymbol — emitted as ParamRef, never its value.
+#   2. The one place slang folds without keeping a bound expression is the
+#      packed DIMENSIONS of declared types (DeclaredType resolves them to
+#      integer ConstantRange). Those are recovered from the declaration's
+#      *syntax tree* (`declaredType.typeSyntax` -> VariableDimension ->
+#      SimpleRangeSelect) with a SyntaxKind-driven converter; identifiers
+#      are classified by `Scope.lookupName` on the top module's body scope.
+#   3. `resolved` fields carry the defaults-elaborated integers alongside
+#      every symbolic form (phase-2 cross-checks; secondary by contract).
+# Known limits (documented in the schema): syntax-recovered expressions are
+# not re-type-checked (no width fields); dimension identifiers must be
+# visible from the top module's scope (true for wildcard-imported package
+# params; a package-private name would fall back to Unsupported + resolved);
+# genvar references are recognized by name against the enclosing generate
+# stack; expression-node `width` fields inside processes are elaborated
+# under DEFAULT parameter values (cross-check only — the binding widths are
+# the symbolic ones on declarations).
+# ---------------------------------------------------------------------------
+
+from pyslang.syntax import SyntaxKind
+
+SYM_SYSCALLS = ("$clog2", "$bits", "$high", "$size")
+
+# Extra operators admitted in symbolic expression positions only
+# (parameter defaults, localparam exprs, generate headers/conds, dims).
+SYM_BINARY_OPS = {
+    BinaryOperator.Multiply: "*",
+    BinaryOperator.Divide: "/",
+    BinaryOperator.Mod: "%",
+    BinaryOperator.Power: "**",
+    BinaryOperator.LogicalShiftLeft: "<<",
+    BinaryOperator.LogicalShiftRight: ">>",
+    BinaryOperator.ArithmeticShiftLeft: "<<<",
+    BinaryOperator.ArithmeticShiftRight: ">>>",
+}
+
+SYM_SYNTAX_BINOPS = {
+    SyntaxKind.AddExpression: "+",
+    SyntaxKind.SubtractExpression: "-",
+    SyntaxKind.MultiplyExpression: "*",
+    SyntaxKind.DivideExpression: "/",
+    SyntaxKind.ModExpression: "%",
+    SyntaxKind.PowerExpression: "**",
+    SyntaxKind.LogicalShiftLeftExpression: "<<",
+    SyntaxKind.LogicalShiftRightExpression: ">>",
+    SyntaxKind.ArithmeticShiftLeftExpression: "<<<",
+    SyntaxKind.ArithmeticShiftRightExpression: ">>>",
+    SyntaxKind.LessThanExpression: "<",
+    SyntaxKind.LessThanEqualExpression: "<=",
+    SyntaxKind.GreaterThanExpression: ">",
+    SyntaxKind.GreaterThanEqualExpression: ">=",
+    SyntaxKind.EqualityExpression: "==",
+    SyntaxKind.InequalityExpression: "!=",
+    SyntaxKind.BinaryAndExpression: "&",
+    SyntaxKind.BinaryOrExpression: "|",
+    SyntaxKind.BinaryXorExpression: "^",
+    SyntaxKind.LogicalAndExpression: "&&",
+    SyntaxKind.LogicalOrExpression: "||",
+}
+
+SYM_SYNTAX_UNOPS = {
+    SyntaxKind.UnaryMinusExpression: "-",
+    SyntaxKind.UnaryPlusExpression: "+",
+    SyntaxKind.UnaryBitwiseNotExpression: "~",
+    SyntaxKind.UnaryLogicalNotExpression: "!",
+}
+
+
+class SymCtx:
+    """State of one symbolic extraction (set as the module global _SYM)."""
+
+    def __init__(self, comp, sm, source_map):
+        self.comp = comp
+        self.sm = sm
+        self.source_map = source_map  # normpath -> bytes
+        self.scope = None             # top module body scope (lookupName)
+        self.genvars = []             # stack of enclosing genvar names
+        self.symctx = False           # inside a symbolic expression position
+        self.enum_nodes = []          # EnumType nodes, registration order
+        self.enum_by_key = {}         # (name, from_package) -> node
+        self.packages = set()         # package names actually referenced
+
+
+class _SymPos:
+    """with _SymPos(): mark a symbolic expression position."""
+
+    def __enter__(self):
+        self.saved = _SYM.symctx
+        _SYM.symctx = True
+
+    def __exit__(self, *exc):
+        _SYM.symctx = self.saved
+        return False
+
+
+def _safe_width(e):
+    try:
+        return e.type.bitWidth
+    except Exception:
+        return None
+
+
+def _cv_int(cv):
+    """ConstantValue -> int, MSB-first bits string (x/z), or None."""
+    try:
+        sv = cv.value
+        if type(sv).__name__ != "SVInt":
+            return None
+        try:
+            return int(sv)
+        except Exception:
+            return svint_bits(sv)
+    except Exception:
+        return None
+
+
+def _pkg_of(sym):
+    """Package name a symbol lives in (via 'pkg::name' hierarchicalPath),
+    else None. Records the package in the context."""
+    try:
+        hp = sym.hierarchicalPath
+        if "::" in hp:
+            pkg = hp.split("::", 1)[0]
+            _SYM.packages.add(pkg)
+            return pkg
+    except Exception:
+        pass
+    return None
+
+
+def _sym_enum_width(t):
+    """Resolved width when t is (an alias of) a 4-state enum, else None."""
+    try:
+        ct = t.canonicalType
+        if type(ct).__name__ == "EnumType" and ct.isFourState:
+            return ct.bitWidth
+    except Exception:
+        pass
+    return None
+
+
+def _enum_name_of(t):
+    """(name, from_package) for an enum type: the typedef alias name when
+    there is one; anonymous enums get slang's deterministic 'e$N' name."""
+    from_package = None
+    if type(t).__name__ == "TypeAliasType":
+        name = t.name
+        syn = getattr(t, "syntax", None)
+        # Provenance: a typedef inside a package prints pkg-scoped members.
+        ct = t.canonicalType
+        for ev in _enum_members(ct):
+            from_package = _pkg_of(ev)
+            break
+        return name, from_package
+    # Anonymous: str(t) ends with '<owner>.e$N' after the closing brace.
+    try:
+        tail = str(t).rsplit("}", 1)[1]
+        name = tail.rsplit(".", 1)[-1] or "$anon_enum"
+    except Exception:
+        name = "$anon_enum"
+    for ev in _enum_members(t.canonicalType):
+        from_package = _pkg_of(ev)
+        break
+    return name, from_package
+
+
+def _enum_members(ct):
+    try:
+        return [m for m in ct if type(m).__name__ == "EnumValueSymbol"]
+    except Exception:
+        return []
+
+
+def _enum_base_node(sm, ct):
+    """PackedType node for the enum's base type: symbolic packed dims
+    recovered from the EnumType syntax when possible, resolved width from
+    elaboration."""
+    resolved = None
+    try:
+        resolved = ct.bitWidth
+    except Exception:
+        pass
+    packed = None
+    try:
+        syn = ct.syntax
+        if syn is not None and syn.kind == SyntaxKind.EnumType:
+            for c in syn:
+                k = getattr(c, "kind", None)
+                if k in (SyntaxKind.LogicType, SyntaxKind.RegType,
+                         SyntaxKind.BitType):
+                    packed = _syntax_packed_dims(sm, c)
+                    break
+    except Exception:
+        packed = None
+    return {"kind": "PackedType", "packed": packed, "resolved": resolved}
+
+
+def register_enum(sm, t):
+    """Ensure the enum type behind t is in the module's `types` list;
+    returns (name, from_package)."""
+    name, from_package = _enum_name_of(t)
+    key = (name, from_package)
+    if key in _SYM.enum_by_key:
+        return key
+    ct = t.canonicalType
+    node = {
+        "kind": "EnumType",
+        "span": range_span(sm, getattr(ct.syntax, "sourceRange", None))
+        if getattr(ct, "syntax", None) is not None else None,
+        "name": name,
+        "from_package": from_package,
+        "base_width": _enum_base_node(sm, ct),
+        "members": [
+            {"name": ev.name, "value": _cv_int(ev.value)}
+            for ev in _enum_members(ct)
+        ],
+    }
+    _SYM.enum_by_key[key] = node
+    _SYM.enum_nodes.append(node)
+    return key
+
+
+def _sym_named_value(sm, e, sym, skind):
+    """Symbolic-mode NamedValueExpression handling: ParamRef / GenvarRef /
+    EnumRef. Returns None to fall through to the M0 Ident path."""
+    name = sym.name
+    if name in _SYM.genvars:
+        # Loop variable of an enclosing generate-for: both the module-level
+        # genvar symbol (headers) and the per-block local parameter slang
+        # materializes (bodies) resolve here, by name.
+        return {"kind": "GenvarRef", "span": node_span(sm, e), "name": name}
+    if skind == "Parameter":
+        d = {"kind": "ParamRef", "span": node_span(sm, e), "name": name}
+        pkg = _pkg_of(sym)
+        if pkg is not None:
+            d["from_package"] = pkg
+        return d
+    if skind == "EnumValue":
+        tname, pkg = register_enum(sm, sym.type)
+        return {
+            "kind": "EnumRef",
+            "span": node_span(sm, e),
+            "type": tname,
+            "member": name,
+            "from_package": pkg,
+        }
+    if skind == "Genvar":
+        return {"kind": "GenvarRef", "span": node_span(sm, e), "name": name}
+    return None
+
+
+def _sym_literal(sm, e, cname):
+    """Symbolic-mode literals: '0/'1/'x/'z -> Fill (their width is
+    context-propagated, i.e. potentially a parameter value); unsized
+    decimal literals -> Int. Sized literals fall through to M0 Literal."""
+    if cname == "UnbasedUnsizedIntegerLiteral":
+        sv = e.value
+        bits = svint_bits(sv)
+        return {
+            "kind": "Fill",
+            "span": node_span(sm, e),
+            "bit": bits[0] if bits else "0",
+            "resolved_width": sv.bitWidth,
+        }
+    try:
+        if e.syntax is not None and \
+                e.syntax.kind == SyntaxKind.IntegerLiteralExpression:
+            sv = e.value
+            return {
+                "kind": "Int",
+                "span": node_span(sm, e),
+                "value": int(sv),
+                "resolved_width": sv.bitWidth,
+            }
+    except Exception:
+        pass
+    return None
+
+
+def _has_sym_refs(d):
+    """True if a converted tree contains symbolic reference nodes whose
+    value must not be constant-folded."""
+    if isinstance(d, dict):
+        if d.get("kind") in ("ParamRef", "GenvarRef", "EnumRef", "SysCall",
+                             "Fill"):
+            return True
+        return any(_has_sym_refs(v) for v in d.values())
+    if isinstance(d, list):
+        return any(_has_sym_refs(v) for v in d)
+    return False
+
+
+def _sym_conversion(sm, e, ow, tw, state_squash):
+    """Symbolic-mode width-changing implicit conversion. Returns None to
+    fall through to the M0 fold/Resize path (safe when the operand holds
+    no symbolic references)."""
+    op = e.operand
+    ocname = type(op).__name__
+    if ocname == "UnbasedUnsizedIntegerLiteral":
+        sv = op.value
+        bits = svint_bits(sv)
+        return {
+            "kind": "Fill",
+            "span": node_span(sm, e),
+            "bit": bits[0] if bits else "0",
+            "resolved_width": tw,
+        }
+    if ocname == "IntegerLiteral":
+        try:
+            if op.syntax is not None and \
+                    op.syntax.kind == SyntaxKind.IntegerLiteralExpression:
+                return {
+                    "kind": "Int",
+                    "span": node_span(sm, e),
+                    "value": int(op.value),
+                    "resolved_width": tw,
+                }
+        except Exception:
+            pass
+        return None
+    inner = _convert_expr(sm, op)
+    if not _has_sym_refs(inner):
+        return None  # M0 path (constant folding is value-safe here)
+    try:
+        resizable = (
+            op.type.isIntegral and e.type.isIntegral and not op.type.isSigned
+        )
+    except Exception:
+        resizable = False
+    if not resizable:
+        return unsupported(sm, e, "ConversionExpression:width")
+    if state_squash:
+        inner = {"kind": "Squash2", "span": node_span(sm, e), "width": ow,
+                 "operand": inner}
+    return {
+        "kind": "Resize",
+        "span": node_span(sm, e),
+        "width": tw,
+        "operand": inner,
+    }
+
+
+def _sym_expr_syscall(sm, e):
+    """$clog2/$bits/$high/$size in expression position -> SysCall node
+    {kind, span, name, args, resolved}. Returns None for any other call."""
+    try:
+        name = e.subroutineName
+        if not e.isSystemCall or name not in SYM_SYSCALLS:
+            return None
+        args = [_convert_expr(sm, a) for a in e.arguments]
+    except Exception:
+        return None
+    resolved = None
+    try:
+        c = e.constant
+        if c is not None:
+            resolved = _cv_int(c)
+    except Exception:
+        pass
+    return {
+        "kind": "SysCall",
+        "span": node_span(sm, e),
+        "name": name,
+        "args": args,
+        "resolved": resolved,
+    }
+
+
+def convert_sym_expr(sm, e):
+    """Bound expression in a symbolic position (defaults, generate headers,
+    conditions): full symbolic vocabulary enabled."""
+    with _SymPos():
+        return convert_expr(sm, e)
+
+
+# --- syntactic recovery of packed dimensions -------------------------------
+
+def _syntax_children(sn):
+    out = []
+    try:
+        for c in sn:
+            if hasattr(c, "kind") and type(c.kind).__name__ == "SyntaxKind":
+                out.append(c)
+    except TypeError:
+        pass
+    return out
+
+
+def _syntax_span(sm, sn):
+    return range_span(sm, getattr(sn, "sourceRange", None))
+
+
+def _syntax_unsupported(sm, sn, tag=None):
+    txt = ""
+    try:
+        txt = str(sn).strip()[:UNSUPPORTED_TEXT_LIMIT]
+    except Exception:
+        pass
+    return {
+        "kind": "Unsupported",
+        "span": _syntax_span(sm, sn),
+        "sv_kind": tag if tag is not None
+        else "Syntax:" + str(getattr(sn, "kind", "?")).split(".")[-1],
+        "text": txt,
+    }
+
+
+def _syntax_expr(sm, sn):
+    """Syntax expression -> symbolic node. Used only where slang keeps no
+    bound expression (declared-type dimensions). Identifiers are resolved
+    with lookupName on the top module's body scope."""
+    try:
+        return _syntax_expr_inner(sm, sn)
+    except Exception as exc:
+        return internal_error(exc)
+
+
+def _syntax_expr_inner(sm, sn):
+    k = sn.kind
+    if k == SyntaxKind.ParenthesizedExpression:
+        kids = _syntax_children(sn)
+        return _syntax_expr(sm, kids[0]) if len(kids) == 1 \
+            else _syntax_unsupported(sm, sn)
+    if k == SyntaxKind.IntegerLiteralExpression:
+        try:
+            return {
+                "kind": "Int",
+                "span": _syntax_span(sm, sn),
+                "value": int(str(sn).strip().replace("_", "")),
+                "resolved_width": None,
+            }
+        except ValueError:
+            return _syntax_unsupported(sm, sn)
+    if k == SyntaxKind.IdentifierName:
+        name = str(sn).strip()
+        return _syntax_name(sm, sn, _SYM.scope, name, None)
+    if k == SyntaxKind.ScopedName:
+        kids = _syntax_children(sn)
+        if len(kids) == 2 and kids[0].kind == SyntaxKind.IdentifierName:
+            pkg_name = str(kids[0]).strip()
+            pkg = None
+            try:
+                pkg = _SYM.comp.getPackage(pkg_name)
+            except Exception:
+                pkg = None
+            if pkg is not None and kids[1].kind == SyntaxKind.IdentifierName:
+                return _syntax_name(sm, sn, pkg, str(kids[1]).strip(),
+                                    pkg_name)
+        return _syntax_unsupported(sm, sn)
+    if k in SYM_SYNTAX_BINOPS:
+        kids = _syntax_children(sn)
+        if len(kids) != 2:
+            return _syntax_unsupported(sm, sn)
+        return {
+            "kind": "Binary",
+            "span": _syntax_span(sm, sn),
+            "width": None,
+            "op": SYM_SYNTAX_BINOPS[k],
+            "left": _syntax_expr(sm, kids[0]),
+            "right": _syntax_expr(sm, kids[1]),
+        }
+    if k in SYM_SYNTAX_UNOPS:
+        kids = _syntax_children(sn)
+        if len(kids) != 1:
+            return _syntax_unsupported(sm, sn)
+        return {
+            "kind": "Unary",
+            "span": _syntax_span(sm, sn),
+            "width": None,
+            "op": SYM_SYNTAX_UNOPS[k],
+            "operand": _syntax_expr(sm, kids[0]),
+        }
+    if k == SyntaxKind.ConditionalExpression:
+        kids = _syntax_children(sn)
+        if len(kids) == 3:
+            cond = kids[0]
+            if cond.kind == SyntaxKind.ConditionalPredicate:
+                inner = _syntax_children(cond)
+                if len(inner) != 1:
+                    return _syntax_unsupported(sm, sn)
+                cond = inner[0]
+                if type(cond).__name__ == "ConditionalPatternSyntax" or \
+                        cond.kind == SyntaxKind.ConditionalPattern:
+                    sub = _syntax_children(cond)
+                    if len(sub) != 1:
+                        return _syntax_unsupported(sm, sn)
+                    cond = sub[0]
+            return {
+                "kind": "Ternary",
+                "span": _syntax_span(sm, sn),
+                "width": None,
+                "cond": _syntax_expr(sm, cond),
+                "then": _syntax_expr(sm, kids[1]),
+                "else": _syntax_expr(sm, kids[2]),
+            }
+        return _syntax_unsupported(sm, sn)
+    if k == SyntaxKind.InvocationExpression:
+        kids = _syntax_children(sn)
+        if len(kids) == 2 and kids[0].kind == SyntaxKind.SystemName:
+            name = str(kids[0]).strip()
+            if name in SYM_SYSCALLS:
+                args = []
+                for a in _syntax_children(kids[1]):
+                    if a.kind == SyntaxKind.OrderedArgument:
+                        sub = _syntax_children(a)
+                        # slang wraps call arguments in property-expr
+                        # nodes (assertion-capable call sites): unwrap.
+                        while len(sub) == 1 and sub[0].kind in (
+                                SyntaxKind.SimplePropertyExpr,
+                                SyntaxKind.SimpleSequenceExpr):
+                            sub = _syntax_children(sub[0])
+                        if len(sub) == 1:
+                            args.append(_syntax_expr(sm, sub[0]))
+                        else:
+                            args.append(_syntax_unsupported(sm, a))
+                    else:
+                        args.append(_syntax_unsupported(sm, a))
+                return {
+                    "kind": "SysCall",
+                    "span": _syntax_span(sm, sn),
+                    "name": name,
+                    "args": args,
+                    "resolved": None,
+                }
+        return _syntax_unsupported(sm, sn)
+    return _syntax_unsupported(sm, sn)
+
+
+def _syntax_name(sm, sn, scope, name, from_package):
+    sym = None
+    try:
+        sym = scope.lookupName(name)
+    except Exception:
+        sym = None
+    if sym is None:
+        return _syntax_unsupported(sm, sn, "Syntax:Identifier:unresolved")
+    cls = type(sym).__name__
+    if cls == "ParameterSymbol":
+        d = {"kind": "ParamRef", "span": _syntax_span(sm, sn), "name": name}
+        pkg = from_package if from_package is not None else _pkg_of(sym)
+        if pkg is not None:
+            d["from_package"] = pkg
+            _SYM.packages.add(pkg)
+        return d
+    if cls == "GenvarSymbol" or name in _SYM.genvars:
+        return {"kind": "GenvarRef", "span": _syntax_span(sm, sn),
+                "name": name}
+    if cls == "EnumValueSymbol":
+        tname, pkg = register_enum(sm, sym.type)
+        return {
+            "kind": "EnumRef",
+            "span": _syntax_span(sm, sn),
+            "type": tname,
+            "member": name,
+            "from_package": pkg,
+        }
+    return _syntax_unsupported(sm, sn, "Syntax:Identifier:" + cls)
+
+
+def _syntax_packed_dims(sm, type_syntax):
+    """[{msb, lsb}, ...] recovered from a LogicType/RegType/BitType syntax
+    node's VariableDimension children, or None when any is irregular."""
+    dims = []
+    for c in _syntax_children(type_syntax):
+        if c.kind != SyntaxKind.VariableDimension:
+            continue
+        spec = None
+        for s in _syntax_children(c):
+            if s.kind == SyntaxKind.RangeDimensionSpecifier:
+                spec = s
+                break
+        if spec is None:
+            return None
+        sel = _syntax_children(spec)
+        if len(sel) != 1 or sel[0].kind != SyntaxKind.SimpleRangeSelect:
+            return None
+        lr = _syntax_children(sel[0])
+        if len(lr) != 2:
+            return None
+        with _SymPos():
+            dims.append({
+                "msb": _syntax_expr(sm, lr[0]),
+                "lsb": _syntax_expr(sm, lr[1]),
+            })
+    return dims if dims else None
+
+
+# --- symbolic declarations -------------------------------------------------
+
+def _dtype_sym(sm, t, type_syntax):
+    """(dtype-node, None) or (None, reason-tag) for a declared type in
+    symbolic mode: TypeRef for enums, PackedType (symbolic dims primary,
+    resolved secondary) for unsigned 4-state scalars/packed vectors."""
+    try:
+        ct = t.canonicalType
+        if type(ct).__name__ == "EnumType":
+            if not ct.isFourState:
+                return None, "2state"
+            name, pkg = register_enum(sm, t)
+            return {
+                "kind": "TypeRef",
+                "name": name,
+                "from_package": pkg,
+                "resolved": ct.bitWidth,
+            }, None
+        if not t.isFourState:
+            return None, "2state"
+        if t.isSigned:
+            return None, "signed"
+        cname = type(ct).__name__
+        if cname == "ScalarType":
+            return {"kind": "PackedType", "packed": [], "resolved": 1}, None
+        if cname == "PackedArrayType":
+            ndims = 0
+            cur = ct
+            while type(cur).__name__ == "PackedArrayType":
+                ndims += 1
+                cur = cur.elementType.canonicalType
+            if type(cur).__name__ != "ScalarType":
+                return None, "type"
+            packed = None
+            if type_syntax is not None and type_syntax.kind in (
+                    SyntaxKind.LogicType, SyntaxKind.RegType):
+                packed = _syntax_packed_dims(sm, type_syntax)
+                if packed is not None and len(packed) != ndims:
+                    packed = None
+            return {
+                "kind": "PackedType",
+                "packed": packed,
+                "resolved": ct.bitWidth,
+            }, None
+        return None, "type"
+    except Exception:
+        return None, "type"
+
+
+def _decl_type_syntax(sym):
+    try:
+        return sym.declaredType.typeSyntax
+    except Exception:
+        return None
+
+
+def convert_port_sym(sm, m):
+    d = str(m.direction).split(".")[-1]
+    direction = DIRECTION_MAP.get(d)
+    if direction is None:
+        return unsupported(sm, m, "PortSymbol:" + d)
+    isym = getattr(m, "internalSymbol", None)
+    tsyn = _decl_type_syntax(isym) if isym is not None else None
+    dtype, reason = _dtype_sym(sm, m.type, tsyn)
+    if dtype is None:
+        return unsupported(sm, m, "PortSymbol:" + reason)
+    return {
+        "kind": "Port",
+        "span": sym_span(sm, m),
+        "name": m.name,
+        "dir": direction,
+        "width": dtype,
+    }
+
+
+def convert_var_sym(sm, m):
+    dtype, reason = _dtype_sym(sm, m.type, _decl_type_syntax(m))
+    if dtype is None:
+        return unsupported(sm, m, "VariableSymbol:" + reason)
+    init = m.initializer
+    return {
+        "kind": "Var",
+        "span": sym_span(sm, m),
+        "name": m.name,
+        "width": dtype,
+        "init": convert_expr(sm, init) if init is not None else None,
+    }
+
+
+def convert_net_sym(sm, m):
+    nk = str(m.netType.netKind).split(".")[-1]
+    if nk != "Wire":
+        return unsupported(sm, m, "NetSymbol:" + nk)
+    if getattr(m, "delay", None) is not None:
+        return unsupported(sm, m, "NetSymbol:delay")
+    dtype, reason = _dtype_sym(sm, m.type, _decl_type_syntax(m))
+    if dtype is None:
+        return unsupported(sm, m, "NetSymbol:" + reason)
+    init = m.initializer
+    return {
+        "kind": "Net",
+        "span": sym_span(sm, m),
+        "name": m.name,
+        "width": dtype,
+        "init": convert_expr(sm, init) if init is not None else None,
+    }
+
+
+def convert_param_sym(sm, m):
+    """ParameterSymbol -> ParameterDecl (module parameter) or LocalParam
+    (localparam). `default`/`expr` is the SYMBOLIC bound initializer;
+    `resolved` the defaults-elaborated value (secondary)."""
+    tsyn = _decl_type_syntax(m)
+    ptype = None
+    if tsyn is not None and tsyn.kind != SyntaxKind.ImplicitType:
+        ptype, _reason = _dtype_sym(sm, m.type, tsyn)
+    init = getattr(m, "initializer", None)
+    init_d = convert_sym_expr(sm, init) if init is not None else None
+    resolved = None
+    try:
+        resolved = _cv_int(m.value)
+    except Exception:
+        pass
+    if m.isLocalParam:
+        return {
+            "kind": "LocalParam",
+            "span": sym_span(sm, m),
+            "name": m.name,
+            "type": ptype,
+            "expr": init_d,
+            "resolved": resolved,
+        }
+    return {
+        "kind": "ParameterDecl",
+        "span": sym_span(sm, m),
+        "name": m.name,
+        "type": ptype,
+        "default": init_d,
+        "resolved": resolved,
+    }
+
+
+# --- generate constructs ---------------------------------------------------
+
+def _genstep(sm, e):
+    """Generate-for iteration expression; `i++`/`i--` become Unary nodes."""
+    if type(e).__name__ == "UnaryExpression":
+        opname = str(e.op).split(".")[-1]
+        if opname in ("Preincrement", "Postincrement"):
+            op = "++"
+        elif opname in ("Predecrement", "Postdecrement"):
+            op = "--"
+        else:
+            op = None
+        if op is not None:
+            return {
+                "kind": "Unary",
+                "span": node_span(sm, e),
+                "width": None,
+                "op": op,
+                "operand": convert_sym_expr(sm, e.operand),
+            }
+    return convert_sym_expr(sm, e)
+
+
+def convert_generate_for(sm, m):
+    """GenerateBlockArraySymbol -> ONE GenerateFor node: genvar + symbolic
+    header expressions + body template (never unrolled). The template is
+    entries[0]'s members — every entry is bound from the same syntax; the
+    genvar surfaces as GenvarRef wherever it is referenced."""
+    genvar = None
+    try:
+        genvar = m.loopVariable.name
+    except Exception:
+        pass
+    span = sym_span(sm, m)
+    if not genvar:
+        return unsupported(sm, m, "GenerateBlockArraySymbol:noloopvar")
+    _SYM.genvars.append(genvar)
+    try:
+        init = convert_sym_expr(sm, m.initialExpression)
+        bound = convert_sym_expr(sm, m.stopExpression)
+        step = _genstep(sm, m.iterExpression)
+        entries = []
+        try:
+            entries = list(m.entries)
+        except Exception:
+            pass
+        if entries:
+            body = convert_members_sym(sm, entries[0])
+        else:
+            # Zero instances under default parameters: no bound template
+            # exists; the body is kept as raw source (honest limit).
+            body = [_syntax_unsupported(sm, m.syntax,
+                                        "GenerateFor:no-template")]
+        return {
+            "kind": "GenerateFor",
+            "span": span,
+            "label": m.name if m.name else None,
+            "genvar": genvar,
+            "init": init,
+            "bound": bound,
+            "step": step,
+            "resolved_count": len(entries),
+            "body": body,
+        }
+    finally:
+        _SYM.genvars.pop()
+
+
+def _ifgen_of(block_syntax):
+    """The IfGenerate syntax owning a generate block, plus whether the
+    block is the else branch. (None, False) when not an if-generate."""
+    p = getattr(block_syntax, "parent", None)
+    if p is None:
+        return None, False
+    if p.kind == SyntaxKind.IfGenerate:
+        return p, False
+    if p.kind == SyntaxKind.ElseClause:
+        pp = getattr(p, "parent", None)
+        if pp is not None and pp.kind == SyntaxKind.IfGenerate:
+            return pp, True
+    return None, False
+
+
+def _ifgen_key(syn):
+    try:
+        return syn.sourceRange.start.offset
+    except Exception:
+        return id(syn)
+
+
+def convert_generate_ifs(sm, members):
+    """A run of GenerateBlockSymbols originating from one if-generate
+    (including else-if chains) -> ONE nested GenerateIf node. `members` is
+    the full consecutive run; branches pair up via their IfGenerate syntax."""
+    recs = {}
+    order = []
+    for m in members:
+        ifgen, is_else = _ifgen_of(m.syntax)
+        key = _ifgen_key(ifgen)
+        if key not in recs:
+            recs[key] = {"syntax": ifgen, "then": None, "else": None}
+            order.append(key)
+        recs[key]["else" if is_else else "then"] = m
+    # An if-generate nested in another's else clause forms an else-if chain.
+    chained = set()
+    for key in order:
+        syn = recs[key]["syntax"]
+        p = getattr(syn, "parent", None)
+        if p is not None and p.kind == SyntaxKind.ElseClause:
+            pp = getattr(p, "parent", None)
+            if pp is not None and pp.kind == SyntaxKind.IfGenerate:
+                pkey = _ifgen_key(pp)
+                if pkey in recs:
+                    recs[pkey]["chain"] = key
+                    chained.add(key)
+
+    def emit(key):
+        rec = recs[key]
+        tm, em = rec["then"], rec["else"]
+        holder = tm if tm is not None else em
+        cond = None
+        if holder is not None and holder.conditionExpression is not None:
+            cond = convert_sym_expr(sm, holder.conditionExpression)
+        then_body = convert_members_sym(sm, tm) if tm is not None else []
+        if "chain" in rec:
+            els = [emit(rec["chain"])]
+        elif em is not None:
+            els = convert_members_sym(sm, em)
+        else:
+            els = None
+        return {
+            "kind": "GenerateIf",
+            "span": range_span(sm, getattr(rec["syntax"], "sourceRange",
+                                           None)),
+            "label": (tm.name or None) if tm is not None else None,
+            "else_label": (em.name or None) if em is not None else None,
+            "cond": cond,
+            "then": then_body,
+            "else": els,
+        }
+
+    return [emit(k) for k in order if k not in chained]
+
+
+# --- symbolic member routing ----------------------------------------------
+
+def convert_members_sym(sm, scope):
+    """Members of a generate block (or nested scope) -> flat node list in
+    source order. Genvar-local parameter shadows are skipped."""
+    out = []
+    members = list(scope)
+    i = 0
+    while i < len(members):
+        m = members[i]
+        try:
+            k = str(m.kind).split(".")[-1]
+            if k == "Parameter" and m.name in _SYM.genvars:
+                i += 1
+                continue
+            if k == "GenerateBlock":
+                run = []
+                j = i
+                while j < len(members) and \
+                        str(members[j].kind).split(".")[-1] == \
+                        "GenerateBlock" and \
+                        _ifgen_of(members[j].syntax)[0] is not None:
+                    run.append(members[j])
+                    j += 1
+                if run:
+                    out.extend(convert_generate_ifs(sm, run))
+                    i = j
+                    continue
+                out.append(unsupported(sm, m,
+                                       "GenerateBlockSymbol:unconditional"))
+                i += 1
+                continue
+            out.append(_convert_member_sym(sm, m, k))
+            i += 1
+        except Exception as exc:
+            out.append(internal_error(exc))
+            i += 1
+    return [d for d in out if d is not None]
+
+
+def _convert_member_sym(sm, m, k):
+    """One non-if-generate member -> node or None (silently skipped)."""
+    if k == "Parameter":
+        return convert_param_sym(sm, m)
+    if k == "Genvar":
+        return None  # captured by the owning GenerateFor
+    if k == "StatementBlock":
+        return None
+    if k == "TransparentMember":
+        w = m.wrapped
+        if type(w).__name__ == "EnumValueSymbol":
+            register_enum(sm, w.type)
+            return None
+        return unsupported(sm, m, "TransparentMemberSymbol:"
+                           + type(w).__name__)
+    if k == "Variable":
+        return convert_var_sym(sm, m)
+    if k == "Net":
+        return convert_net_sym(sm, m)
+    if k == "ProceduralBlock":
+        return convert_procedural_block(sm, m)
+    if k == "ContinuousAssign":
+        return convert_continuous_assign(sm, m)
+    if k == "GenerateBlockArray":
+        return convert_generate_for(sm, m)
+    if k == "TypeAlias":
+        try:
+            if _sym_enum_width(m.declaredType.type) is not None:
+                register_enum(sm, m.declaredType.type)
+                return None
+        except Exception:
+            pass
+        return unsupported(sm, m, type(m).__name__ + ":" + k)
+    return unsupported(sm, m, type(m).__name__ + ":" + k)
+
+
+def convert_module_sym(sm, inst):
+    """Top module -> symbolic Module node (schema sv-0.2)."""
+    body = inst.body
+    _SYM.scope = body
+    span = sym_span(sm, body) or sym_span(sm, inst)
+
+    port_names = set()
+    for m in body:
+        if str(m.kind) == "SymbolKind.Port":
+            port_names.add(m.name)
+
+    imports = []
+    params = []
+    ports = []
+    decls = []
+    processes = []
+    generates = []
+    others = []
+
+    members = list(body)
+    i = 0
+    while i < len(members):
+        m = members[i]
+        try:
+            k = str(m.kind).split(".")[-1]
+            if k == "Port":
+                ports.append(convert_port_sym(sm, m))
+            elif k in ("Variable", "Net"):
+                if m.name in port_names:
+                    i += 1
+                    continue
+                decls.append(convert_var_sym(sm, m) if k == "Variable"
+                             else convert_net_sym(sm, m))
+            elif k == "Parameter":
+                params.append(convert_param_sym(sm, m))
+            elif k == "ProceduralBlock":
+                processes.append(convert_procedural_block(sm, m))
+            elif k == "ContinuousAssign":
+                processes.append(convert_continuous_assign(sm, m))
+            elif k == "GenerateBlockArray":
+                generates.append(convert_generate_for(sm, m))
+            elif k == "GenerateBlock":
+                run = []
+                j = i
+                while j < len(members) and \
+                        str(members[j].kind).split(".")[-1] == \
+                        "GenerateBlock" and \
+                        _ifgen_of(members[j].syntax)[0] is not None:
+                    run.append(members[j])
+                    j += 1
+                if run:
+                    generates.extend(convert_generate_ifs(sm, run))
+                    i = j
+                    continue
+                others.append(unsupported(sm, m,
+                                          "GenerateBlockSymbol:unconditional"))
+            elif k == "WildcardImport":
+                pkg = getattr(m, "packageName", None) or ""
+                _SYM.packages.add(pkg)
+                imports.append({
+                    "kind": "Import",
+                    "span": sym_span(sm, m),
+                    "package": pkg,
+                    "name": "*",
+                })
+            elif k == "ExplicitImport":
+                pkg = getattr(m, "packageName", None) or ""
+                _SYM.packages.add(pkg)
+                imports.append({
+                    "kind": "Import",
+                    "span": sym_span(sm, m),
+                    "package": pkg,
+                    "name": getattr(m, "importName", None) or m.name,
+                })
+            else:
+                d = _convert_member_sym(sm, m, k)
+                if d is not None:
+                    others.append(d)
+        except Exception as exc:
+            others.append(internal_error(exc))
+        i += 1
+
+    return {
+        "kind": "Module",
+        "span": span,
+        "name": inst.name,
+        "imports": imports,
+        "params": params,
+        "types": _SYM.enum_nodes,
+        "ports": ports,
+        "decls": decls,
+        "processes": processes,
+        "generates": generates,
+        "others": others,
+    }
+
+
+def process_symbolic(top, sources, incdirs, out_path):
+    """`--top` mode: compile all sources as ONE slang compilation (name
+    resolution across packages/files) and emit the top module in the
+    extended symbolic vocabulary as one sv-0.2 envelope."""
+    global _SYM
+    source_map = {}
+    file_entries = []
+    for p in sources:
+        try:
+            with open(p, "rb") as f:
+                data = f.read()
+        except OSError as e:
+            raise ExtractError("%s: cannot read: %s" % (p, e))
+        try:
+            data.decode("utf-8")
+        except UnicodeDecodeError as e:
+            raise ExtractError("%s: not valid UTF-8: %s" % (p, e))
+        source_map[os.path.normpath(p)] = data
+        file_entries.append({
+            "path": rel_posix(p),
+            "sha256": hashlib.sha256(data).hexdigest(),
+        })
+
+    if incdirs:
+        sm_obj = pyslang.SourceManager()
+        popt = pyslang.parsing.PreprocessorOptions()
+        popt.additionalIncludePaths = list(incdirs)
+        bag = pyslang.Bag([popt])
+        tree = SyntaxTree.fromFiles(list(sources), sm_obj, bag)
+    else:
+        tree = SyntaxTree.fromFiles(list(sources))
+    comp = Compilation()
+    comp.addSyntaxTree(tree)
+    sm = tree.sourceManager
+
+    inst = None
+    for cand in comp.getRoot().topInstances:
+        if cand.name == top:
+            inst = cand
+            break
+    if inst is None:
+        raise ExtractError(
+            "--top %s: no such module among top instances (%s)"
+            % (top, ", ".join(c.name for c in comp.getRoot().topInstances)))
+
+    nerr = sum(1 for d in comp.getAllDiagnostics() if d.isError())
+    if nerr:
+        print("warning: %d compilation error diagnostic(s); extracting "
+              "anyway (out-of-vocabulary nodes become Unsupported)" % nerr,
+              file=sys.stderr)
+
+    _SYM = SymCtx(comp, sm, source_map)
+    try:
+        try:
+            module = convert_module_sym(sm, inst)
+        except Exception as exc:
+            module = internal_error(exc)
+        envelope = {
+            "schema_version": SYM_SCHEMA_VERSION,
+            "language": "systemverilog",
+            "frontend": {"name": FRONTEND["name"],
+                         "version": FRONTEND["version"]},
+            "mode": "symbolic",
+            "top": top,
+            "source_files": file_entries,
+            "packages": sorted(_SYM.packages - {""}),
+            "design": {"kind": "Design", "modules": [module], "others": []},
+            "lean_blocks": [],
+        }
+    finally:
+        _SYM = None
+
+    if out_path is None:
+        # Default: next to the source file that defines the top module.
+        out_path = sources[-1] + ".json"
+        try:
+            deffile = os.path.normpath(sm.getFileName(inst.location))
+            for p in sources:
+                if os.path.normpath(p) == deffile:
+                    out_path = p + ".json"
+                    break
+        except Exception:
+            pass
+    with open(out_path, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(envelope, f, indent=2)
+        f.write("\n")
+    return out_path
+
+
+SYM_SCHEMA_VERSION = "sv-0.2"
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 
@@ -956,15 +2158,36 @@ def main(argv=None):
     sys.setrecursionlimit(10000)
     parser = argparse.ArgumentParser(
         prog="extract.py",
-        description="Extract SystemVerilog sources to sv-0.1 envelope JSON "
-        "(run from the repo root; writes <file>.sv.json next to each source).",
+        description="Extract SystemVerilog sources to envelope JSON. "
+        "Default (single-file M0 mode): each file.sv is compiled alone and "
+        "written as <file>.sv.json next to the source (schema sv-0.1). "
+        "With --top: ALL sources are compiled as ONE slang compilation "
+        "(cross-file name resolution) and the named top module is emitted "
+        "in the symbolic vocabulary (schema sv-0.2) — parameters and "
+        "generate constructs stay symbolic, never folded/unrolled.",
     )
     parser.add_argument("sources", nargs="+", metavar="file.sv")
+    parser.add_argument("--top", metavar="MODULE", default=None,
+                        help="symbolic mode: emit this top module from one "
+                        "multi-file compilation")
+    parser.add_argument("-I", dest="incdirs", action="append", default=[],
+                        metavar="DIR", help="`include search dir "
+                        "(symbolic mode only)")
+    parser.add_argument("-o", dest="out", default=None, metavar="OUT.json",
+                        help="symbolic mode: output path (default: next to "
+                        "the file defining the top module)")
     args = parser.parse_args(argv)
 
     try:
-        for src in args.sources:
-            process_file(src)
+        if args.top is not None:
+            out = process_symbolic(args.top, args.sources, args.incdirs,
+                                   args.out)
+            print(out)
+        else:
+            if args.incdirs or args.out:
+                raise ExtractError("-I/-o require --top (symbolic mode)")
+            for src in args.sources:
+                process_file(src)
     except ExtractError as e:
         print("error: %s" % e, file=sys.stderr)
         return 1

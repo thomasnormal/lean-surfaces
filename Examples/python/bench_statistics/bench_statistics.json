@@ -1,0 +1,1164 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/bench_statistics/bench_statistics.py",
+  "source_sha256": "285509e5348193604d7f22e6369c933aa2653513f84eae5861c84a9edeea6934",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 31,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "CPython statistics.median/median_low/median_high, vendored verbatim for\nthe Lean verification benchmark (Band C marker: sorted() and float division).\n\nProvenance:\n  package : CPython standard library, module `statistics`\n  version : Python 3.9.25 (system interpreter of this repo's toolchain)\n  file    : /usr/lib64/python3.9/statistics.py, sha256\n            8dd0406ee8988d42bcb41577e4e45c61bf78423d5158738ce765df96b99b3c23\n  license : PSF License Agreement for Python 3.9.25 (PSF-2.0);\n            Copyright (c) 2001-2026 Python Software Foundation.\n\nVendoring rules (python benchmark, Examples/python/bench_statistics):\n  * median, median_low and median_high are BYTE-VERBATIM copies of\n    statistics.py 3.9.25 lines 414-435, 438-457 and 460-476 (sha256 of\n    the three segments:\n    a080def79e00b8e0ebfc97c939f0de4da98ffc4e0f2175b3368d5f4a7e4626d5\n    015bade9957c587f7bb8ee5780130947ebe5e2763275c72e6da86c4cfb22f91a\n    a729908c0174de108336948f5a09c5284cace300e37eb0a64ace0c5b35d7dc69). Do NOT edit their bodies.\n  * StatisticsError is NOT vendored: it occurs only inside the\n    empty-input raise statements -- no nonempty-input run evaluates the\n    name (rsa_inverse rule). statistics.mean is NOT vendored at all\n    (census reference only): it drags in _sum/_convert/Fraction --\n    documented in docs/benchmark.md.\n  * `sorted` is the builtin, resolved at call time; nothing else of\n    statistics.py is referenced.\n\nAuthenticity (2026-07-29, Python 3.9.25): median([1,3,5]) = 3,\nmedian([1,3,5,7]) = 4.0 (a float), median_low([1,3,5,7]) = 3,\nmedian_high([1,3,5,7]) = 5 computed against this file AND against the\ninstalled `statistics` module -- both agree.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 33,
+          "col_offset": 0,
+          "end_lineno": 54,
+          "end_col_offset": 42
+        },
+        "name": "median",
+        "args": [
+          {
+            "arg": "data",
+            "span": {
+              "lineno": 33,
+              "col_offset": 11,
+              "end_lineno": 33,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 45,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 34,
+                "col_offset": 4,
+                "end_lineno": 45,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "Return the median (middle value) of numeric data.\n\n    When the number of data points is odd, return the middle data point.\n    When the number of data points is even, the median is interpolated by\n    taking the average of the two middle values:\n\n    >>> median([1, 3, 5])\n    3\n    >>> median([1, 3, 5, 7])\n    4.0\n\n    "
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 46,
+              "col_offset": 4,
+              "end_lineno": 46,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 46,
+                  "col_offset": 4,
+                  "end_lineno": 46,
+                  "end_col_offset": 8
+                },
+                "id": "data"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 46,
+                "col_offset": 11,
+                "end_lineno": 46,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 46,
+                  "col_offset": 11,
+                  "end_lineno": 46,
+                  "end_col_offset": 17
+                },
+                "id": "sorted"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 46,
+                    "col_offset": 18,
+                    "end_lineno": 46,
+                    "end_col_offset": 22
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 47,
+              "col_offset": 4,
+              "end_lineno": 47,
+              "end_col_offset": 17
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 47,
+                  "col_offset": 4,
+                  "end_lineno": 47,
+                  "end_col_offset": 5
+                },
+                "id": "n"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 47,
+                "col_offset": 8,
+                "end_lineno": 47,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 47,
+                  "col_offset": 8,
+                  "end_lineno": 47,
+                  "end_col_offset": 11
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 47,
+                    "col_offset": 12,
+                    "end_lineno": 47,
+                    "end_col_offset": 16
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 48,
+              "col_offset": 4,
+              "end_lineno": 49,
+              "end_col_offset": 57
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 48,
+                "col_offset": 7,
+                "end_lineno": 48,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 48,
+                  "col_offset": 7,
+                  "end_lineno": 48,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 48,
+                    "col_offset": 12,
+                    "end_lineno": 48,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "lineno": 49,
+                  "col_offset": 8,
+                  "end_lineno": 49,
+                  "end_col_offset": 57
+                },
+                "py_kind": "Raise",
+                "text": "raise StatisticsError('no median for empty data')"
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 50,
+              "col_offset": 4,
+              "end_lineno": 54,
+              "end_col_offset": 42
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 50,
+                "col_offset": 7,
+                "end_lineno": 50,
+                "end_col_offset": 17
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 50,
+                  "col_offset": 7,
+                  "end_lineno": 50,
+                  "end_col_offset": 12
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 50,
+                    "col_offset": 7,
+                    "end_lineno": 50,
+                    "end_col_offset": 8
+                  },
+                  "id": "n"
+                },
+                "op": "Mod",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 50,
+                    "col_offset": 11,
+                    "end_lineno": 50,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 50,
+                    "col_offset": 16,
+                    "end_lineno": 50,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 51,
+                  "col_offset": 8,
+                  "end_lineno": 51,
+                  "end_col_offset": 27
+                },
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 51,
+                    "col_offset": 15,
+                    "end_lineno": 51,
+                    "end_col_offset": 27
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 15,
+                      "end_lineno": 51,
+                      "end_col_offset": 19
+                    },
+                    "id": "data"
+                  },
+                  "index": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 20,
+                      "end_lineno": 51,
+                      "end_col_offset": 26
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 51,
+                        "col_offset": 20,
+                        "end_lineno": 51,
+                        "end_col_offset": 21
+                      },
+                      "id": "n"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 51,
+                        "col_offset": 25,
+                        "end_lineno": 51,
+                        "end_col_offset": 26
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 53,
+                  "col_offset": 8,
+                  "end_lineno": 53,
+                  "end_col_offset": 18
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 53,
+                      "col_offset": 8,
+                      "end_lineno": 53,
+                      "end_col_offset": 9
+                    },
+                    "id": "i"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 53,
+                    "col_offset": 12,
+                    "end_lineno": 53,
+                    "end_col_offset": 18
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 53,
+                      "col_offset": 12,
+                      "end_lineno": 53,
+                      "end_col_offset": 13
+                    },
+                    "id": "n"
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 53,
+                      "col_offset": 17,
+                      "end_lineno": 53,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 54,
+                  "col_offset": 8,
+                  "end_lineno": 54,
+                  "end_col_offset": 42
+                },
+                "value": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "lineno": 54,
+                    "col_offset": 15,
+                    "end_lineno": 54,
+                    "end_col_offset": 42
+                  },
+                  "py_kind": "BinOp:Div",
+                  "text": "(data[i - 1] + data[i]) / 2"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 56,
+          "col_offset": 0,
+          "end_lineno": 75,
+          "end_col_offset": 31
+        },
+        "name": "median_low",
+        "args": [
+          {
+            "arg": "data",
+            "span": {
+              "lineno": 56,
+              "col_offset": 15,
+              "end_lineno": 56,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 57,
+              "col_offset": 4,
+              "end_lineno": 67,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 57,
+                "col_offset": 4,
+                "end_lineno": 67,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "Return the low median of numeric data.\n\n    When the number of data points is odd, the middle value is returned.\n    When it is even, the smaller of the two middle values is returned.\n\n    >>> median_low([1, 3, 5])\n    3\n    >>> median_low([1, 3, 5, 7])\n    3\n\n    "
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 68,
+              "col_offset": 4,
+              "end_lineno": 68,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 68,
+                  "col_offset": 4,
+                  "end_lineno": 68,
+                  "end_col_offset": 8
+                },
+                "id": "data"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 68,
+                "col_offset": 11,
+                "end_lineno": 68,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 68,
+                  "col_offset": 11,
+                  "end_lineno": 68,
+                  "end_col_offset": 17
+                },
+                "id": "sorted"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 68,
+                    "col_offset": 18,
+                    "end_lineno": 68,
+                    "end_col_offset": 22
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 69,
+              "col_offset": 4,
+              "end_lineno": 69,
+              "end_col_offset": 17
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 69,
+                  "col_offset": 4,
+                  "end_lineno": 69,
+                  "end_col_offset": 5
+                },
+                "id": "n"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 69,
+                "col_offset": 8,
+                "end_lineno": 69,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 69,
+                  "col_offset": 8,
+                  "end_lineno": 69,
+                  "end_col_offset": 11
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 69,
+                    "col_offset": 12,
+                    "end_lineno": 69,
+                    "end_col_offset": 16
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 70,
+              "col_offset": 4,
+              "end_lineno": 71,
+              "end_col_offset": 57
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 70,
+                "col_offset": 7,
+                "end_lineno": 70,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 70,
+                  "col_offset": 7,
+                  "end_lineno": 70,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 70,
+                    "col_offset": 12,
+                    "end_lineno": 70,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "lineno": 71,
+                  "col_offset": 8,
+                  "end_lineno": 71,
+                  "end_col_offset": 57
+                },
+                "py_kind": "Raise",
+                "text": "raise StatisticsError('no median for empty data')"
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 72,
+              "col_offset": 4,
+              "end_lineno": 75,
+              "end_col_offset": 31
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 72,
+                "col_offset": 7,
+                "end_lineno": 72,
+                "end_col_offset": 17
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 72,
+                  "col_offset": 7,
+                  "end_lineno": 72,
+                  "end_col_offset": 12
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 72,
+                    "col_offset": 7,
+                    "end_lineno": 72,
+                    "end_col_offset": 8
+                  },
+                  "id": "n"
+                },
+                "op": "Mod",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 72,
+                    "col_offset": 11,
+                    "end_lineno": 72,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 72,
+                    "col_offset": 16,
+                    "end_lineno": 72,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 73,
+                  "col_offset": 8,
+                  "end_lineno": 73,
+                  "end_col_offset": 27
+                },
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 73,
+                    "col_offset": 15,
+                    "end_lineno": 73,
+                    "end_col_offset": 27
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 73,
+                      "col_offset": 15,
+                      "end_lineno": 73,
+                      "end_col_offset": 19
+                    },
+                    "id": "data"
+                  },
+                  "index": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 73,
+                      "col_offset": 20,
+                      "end_lineno": 73,
+                      "end_col_offset": 26
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 73,
+                        "col_offset": 20,
+                        "end_lineno": 73,
+                        "end_col_offset": 21
+                      },
+                      "id": "n"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 73,
+                        "col_offset": 25,
+                        "end_lineno": 73,
+                        "end_col_offset": 26
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 75,
+                  "col_offset": 8,
+                  "end_lineno": 75,
+                  "end_col_offset": 31
+                },
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 75,
+                    "col_offset": 15,
+                    "end_lineno": 75,
+                    "end_col_offset": 31
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 75,
+                      "col_offset": 15,
+                      "end_lineno": 75,
+                      "end_col_offset": 19
+                    },
+                    "id": "data"
+                  },
+                  "index": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 75,
+                      "col_offset": 20,
+                      "end_lineno": 75,
+                      "end_col_offset": 30
+                    },
+                    "left": {
+                      "kind": "BinOp",
+                      "span": {
+                        "lineno": 75,
+                        "col_offset": 20,
+                        "end_lineno": 75,
+                        "end_col_offset": 26
+                      },
+                      "left": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 75,
+                          "col_offset": 20,
+                          "end_lineno": 75,
+                          "end_col_offset": 21
+                        },
+                        "id": "n"
+                      },
+                      "op": "FloorDiv",
+                      "right": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 75,
+                          "col_offset": 25,
+                          "end_lineno": 75,
+                          "end_col_offset": 26
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      }
+                    },
+                    "op": "Sub",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 75,
+                        "col_offset": 29,
+                        "end_lineno": 75,
+                        "end_col_offset": 30
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 77,
+          "col_offset": 0,
+          "end_lineno": 93,
+          "end_col_offset": 23
+        },
+        "name": "median_high",
+        "args": [
+          {
+            "arg": "data",
+            "span": {
+              "lineno": 77,
+              "col_offset": 16,
+              "end_lineno": 77,
+              "end_col_offset": 20
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 78,
+              "col_offset": 4,
+              "end_lineno": 88,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 78,
+                "col_offset": 4,
+                "end_lineno": 88,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "Return the high median of data.\n\n    When the number of data points is odd, the middle value is returned.\n    When it is even, the larger of the two middle values is returned.\n\n    >>> median_high([1, 3, 5])\n    3\n    >>> median_high([1, 3, 5, 7])\n    5\n\n    "
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 89,
+              "col_offset": 4,
+              "end_lineno": 89,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 89,
+                  "col_offset": 4,
+                  "end_lineno": 89,
+                  "end_col_offset": 8
+                },
+                "id": "data"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 89,
+                "col_offset": 11,
+                "end_lineno": 89,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 89,
+                  "col_offset": 11,
+                  "end_lineno": 89,
+                  "end_col_offset": 17
+                },
+                "id": "sorted"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 89,
+                    "col_offset": 18,
+                    "end_lineno": 89,
+                    "end_col_offset": 22
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 90,
+              "col_offset": 4,
+              "end_lineno": 90,
+              "end_col_offset": 17
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 90,
+                  "col_offset": 4,
+                  "end_lineno": 90,
+                  "end_col_offset": 5
+                },
+                "id": "n"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 90,
+                "col_offset": 8,
+                "end_lineno": 90,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 90,
+                  "col_offset": 8,
+                  "end_lineno": 90,
+                  "end_col_offset": 11
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 90,
+                    "col_offset": 12,
+                    "end_lineno": 90,
+                    "end_col_offset": 16
+                  },
+                  "id": "data"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 91,
+              "col_offset": 4,
+              "end_lineno": 92,
+              "end_col_offset": 57
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 91,
+                "col_offset": 7,
+                "end_lineno": 91,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 91,
+                  "col_offset": 7,
+                  "end_lineno": 91,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 91,
+                    "col_offset": 12,
+                    "end_lineno": 91,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "lineno": 92,
+                  "col_offset": 8,
+                  "end_lineno": 92,
+                  "end_col_offset": 57
+                },
+                "py_kind": "Raise",
+                "text": "raise StatisticsError('no median for empty data')"
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 93,
+              "col_offset": 4,
+              "end_lineno": 93,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 93,
+                "col_offset": 11,
+                "end_lineno": 93,
+                "end_col_offset": 23
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 93,
+                  "col_offset": 11,
+                  "end_lineno": 93,
+                  "end_col_offset": 15
+                },
+                "id": "data"
+              },
+              "index": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 93,
+                  "col_offset": 16,
+                  "end_lineno": 93,
+                  "end_col_offset": 22
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 93,
+                    "col_offset": 16,
+                    "end_lineno": 93,
+                    "end_col_offset": 17
+                  },
+                  "id": "n"
+                },
+                "op": "FloorDiv",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 93,
+                    "col_offset": 21,
+                    "end_lineno": 93,
+                    "end_col_offset": 22
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

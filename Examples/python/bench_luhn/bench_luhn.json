@@ -1,0 +1,773 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/bench_luhn/bench_luhn.py",
+  "source_sha256": "b740662caa63850f4fedc9674adfba47b634e6a6addcda60ef4d4ba73cda3da7",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 30,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "Luhn check digits (PyPI package `luhn`), vendored verbatim for the Lean\nverification benchmark (Band C marker: negative-step slices + map/sum).\n\nProvenance:\n  package : luhn, https://pypi.org/project/luhn/\n            (https://github.com/mmcloughlin/luhn)\n  version : 0.2.0 (pip download --no-deps luhn, 2026-07-21; sdist\n            luhn-0.2.0.tar.gz, sha256\n            917174cecce8bcbbe56ac0d904dbedd06594b21b6f31d5a3ec161d455b0e59f7)\n  file    : luhn.py, sha256\n            c6e9aadd736116ff52b7e59c0f8e8d753278a85eafcd1ca2b423b2939498ad36\n  license : MIT; Copyright (c) 2014 Michael McLoughlin.\n\nVendoring rules (python benchmark, Examples/python/bench_luhn):\n  * checksum, verify, generate and append are BYTE-VERBATIM copies of\n    luhn.py 0.2.0 lines 3-11, 13-22, 24-34 and 36-43 (sha256 of the four\n    segments:\n    b1cfc3a0df8bcdb570f6c4aa719b4f155039f79b41f2fbbd702b7acef64218ec\n    170554f805d06e53b3dc8ece2fcce5433309c4b30fb28158cf0bac67c0bf285f\n    afcc82d54ef92ecb27aba30fb8671cad7bf10c2149662ce474e261d7e9373ab3\n    9690f8eba61630ffb09fb7432aa973ba71ba38efd1da7c8ca397834f09a86fc3). Do NOT edit their bodies.\n  * The module-level `__version__ = '0.2.0'` line is NOT vendored (this\n    docstring carries the version); the functions reference nothing else\n    at module level.\n\nAuthenticity (2026-07-29, Python 3.9.25): verify('356938035643809') =\nTrue, verify('534618613411236') = False, generate('35693803564380') = 9,\nappend('53461861341123') = '534618613411234' computed against this file\nAND against the unpacked luhn-0.2.0 sdist module -- both agree.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 32,
+          "col_offset": 0,
+          "end_lineno": 40,
+          "end_col_offset": 36
+        },
+        "name": "checksum",
+        "args": [
+          {
+            "arg": "string",
+            "span": {
+              "lineno": 32,
+              "col_offset": 13,
+              "end_lineno": 32,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 33,
+              "col_offset": 4,
+              "end_lineno": 36,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 33,
+                "col_offset": 4,
+                "end_lineno": 36,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "\n    Compute the Luhn checksum for the provided string of digits. Note this\n    assumes the check digit is in place.\n    "
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 37,
+              "col_offset": 4,
+              "end_lineno": 37,
+              "end_col_offset": 35
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 37,
+                  "col_offset": 4,
+                  "end_lineno": 37,
+                  "end_col_offset": 10
+                },
+                "id": "digits"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 37,
+                "col_offset": 13,
+                "end_lineno": 37,
+                "end_col_offset": 35
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 37,
+                  "col_offset": 13,
+                  "end_lineno": 37,
+                  "end_col_offset": 17
+                },
+                "id": "list"
+              },
+              "args": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 37,
+                    "col_offset": 18,
+                    "end_lineno": 37,
+                    "end_col_offset": 34
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 37,
+                      "col_offset": 18,
+                      "end_lineno": 37,
+                      "end_col_offset": 21
+                    },
+                    "id": "map"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 37,
+                        "col_offset": 22,
+                        "end_lineno": 37,
+                        "end_col_offset": 25
+                      },
+                      "id": "int"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 37,
+                        "col_offset": 27,
+                        "end_lineno": 37,
+                        "end_col_offset": 33
+                      },
+                      "id": "string"
+                    }
+                  ],
+                  "call_unsupported": null
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 38,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 33
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 4,
+                  "end_lineno": 38,
+                  "end_col_offset": 11
+                },
+                "id": "odd_sum"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 38,
+                "col_offset": 14,
+                "end_lineno": 38,
+                "end_col_offset": 33
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 14,
+                  "end_lineno": 38,
+                  "end_col_offset": 17
+                },
+                "id": "sum"
+              },
+              "args": [
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "lineno": 38,
+                    "col_offset": 18,
+                    "end_lineno": 38,
+                    "end_col_offset": 32
+                  },
+                  "py_kind": "Subscript:Slice",
+                  "text": "digits[-1::-2]"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 39,
+              "col_offset": 4,
+              "end_lineno": 39,
+              "end_col_offset": 68
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 39,
+                  "col_offset": 4,
+                  "end_lineno": 39,
+                  "end_col_offset": 12
+                },
+                "id": "even_sum"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 39,
+                "col_offset": 15,
+                "end_lineno": 39,
+                "end_col_offset": 68
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 39,
+                  "col_offset": 15,
+                  "end_lineno": 39,
+                  "end_col_offset": 18
+                },
+                "id": "sum"
+              },
+              "args": [
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "lineno": 39,
+                    "col_offset": 19,
+                    "end_lineno": 39,
+                    "end_col_offset": 67
+                  },
+                  "py_kind": "ListComp",
+                  "text": "[sum(divmod(2 * d, 10)) for d in digits[-2::-2]]"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 40,
+              "col_offset": 4,
+              "end_lineno": 40,
+              "end_col_offset": 36
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 40,
+                "col_offset": 11,
+                "end_lineno": 40,
+                "end_col_offset": 36
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 40,
+                  "col_offset": 12,
+                  "end_lineno": 40,
+                  "end_col_offset": 30
+                },
+                "left": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 40,
+                    "col_offset": 12,
+                    "end_lineno": 40,
+                    "end_col_offset": 19
+                  },
+                  "id": "odd_sum"
+                },
+                "op": "Add",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 40,
+                    "col_offset": 22,
+                    "end_lineno": 40,
+                    "end_col_offset": 30
+                  },
+                  "id": "even_sum"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 40,
+                  "col_offset": 34,
+                  "end_lineno": 40,
+                  "end_col_offset": 36
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 42,
+          "col_offset": 0,
+          "end_lineno": 51,
+          "end_col_offset": 34
+        },
+        "name": "verify",
+        "args": [
+          {
+            "arg": "string",
+            "span": {
+              "lineno": 42,
+              "col_offset": 11,
+              "end_lineno": 42,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 43,
+              "col_offset": 4,
+              "end_lineno": 50,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 43,
+                "col_offset": 4,
+                "end_lineno": 50,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "\n    Check if the provided string of digits satisfies the Luhn checksum.\n\n    >>> verify('356938035643809')\n    True\n    >>> verify('534618613411236')\n    False\n    "
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 51,
+              "col_offset": 4,
+              "end_lineno": 51,
+              "end_col_offset": 34
+            },
+            "value": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 51,
+                "col_offset": 12,
+                "end_lineno": 51,
+                "end_col_offset": 33
+              },
+              "left": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 51,
+                  "col_offset": 12,
+                  "end_lineno": 51,
+                  "end_col_offset": 28
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 51,
+                    "col_offset": 12,
+                    "end_lineno": 51,
+                    "end_col_offset": 20
+                  },
+                  "id": "checksum"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 21,
+                      "end_lineno": 51,
+                      "end_col_offset": 27
+                    },
+                    "id": "string"
+                  }
+                ],
+                "call_unsupported": null
+              },
+              "ops": [
+                "Eq"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 51,
+                    "col_offset": 32,
+                    "end_lineno": 51,
+                    "end_col_offset": 33
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 53,
+          "col_offset": 0,
+          "end_lineno": 63,
+          "end_col_offset": 28
+        },
+        "name": "generate",
+        "args": [
+          {
+            "arg": "string",
+            "span": {
+              "lineno": 53,
+              "col_offset": 13,
+              "end_lineno": 53,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 54,
+              "col_offset": 4,
+              "end_lineno": 61,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 54,
+                "col_offset": 4,
+                "end_lineno": 61,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "\n    Generate the Luhn check digit to append to the provided string.\n\n    >>> generate('35693803564380')\n    9\n    >>> generate('53461861341123')\n    4\n    "
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 62,
+              "col_offset": 4,
+              "end_lineno": 62,
+              "end_col_offset": 34
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 62,
+                  "col_offset": 4,
+                  "end_lineno": 62,
+                  "end_col_offset": 9
+                },
+                "id": "cksum"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 62,
+                "col_offset": 12,
+                "end_lineno": 62,
+                "end_col_offset": 34
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 62,
+                  "col_offset": 12,
+                  "end_lineno": 62,
+                  "end_col_offset": 20
+                },
+                "id": "checksum"
+              },
+              "args": [
+                {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 62,
+                    "col_offset": 21,
+                    "end_lineno": 62,
+                    "end_col_offset": 33
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 62,
+                      "col_offset": 21,
+                      "end_lineno": 62,
+                      "end_col_offset": 27
+                    },
+                    "id": "string"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 62,
+                      "col_offset": 30,
+                      "end_lineno": 62,
+                      "end_col_offset": 33
+                    },
+                    "value": {
+                      "type": "str",
+                      "value": "0"
+                    }
+                  }
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 63,
+              "col_offset": 4,
+              "end_lineno": 63,
+              "end_col_offset": 28
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 63,
+                "col_offset": 11,
+                "end_lineno": 63,
+                "end_col_offset": 28
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 63,
+                  "col_offset": 12,
+                  "end_lineno": 63,
+                  "end_col_offset": 22
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 63,
+                    "col_offset": 12,
+                    "end_lineno": 63,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "10"
+                  }
+                },
+                "op": "Sub",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 63,
+                    "col_offset": 17,
+                    "end_lineno": 63,
+                    "end_col_offset": 22
+                  },
+                  "id": "cksum"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 63,
+                  "col_offset": 26,
+                  "end_lineno": 63,
+                  "end_col_offset": 28
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 65,
+          "col_offset": 0,
+          "end_lineno": 72,
+          "end_col_offset": 41
+        },
+        "name": "append",
+        "args": [
+          {
+            "arg": "string",
+            "span": {
+              "lineno": 65,
+              "col_offset": 11,
+              "end_lineno": 65,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 66,
+              "col_offset": 4,
+              "end_lineno": 71,
+              "end_col_offset": 7
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 66,
+                "col_offset": 4,
+                "end_lineno": 71,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "str",
+                "value": "\n    Append Luhn check digit to the end of the provided string.\n\n    >>> append('53461861341123')\n    '534618613411234'\n    "
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 72,
+              "col_offset": 4,
+              "end_lineno": 72,
+              "end_col_offset": 41
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 72,
+                "col_offset": 11,
+                "end_lineno": 72,
+                "end_col_offset": 41
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 72,
+                  "col_offset": 11,
+                  "end_lineno": 72,
+                  "end_col_offset": 17
+                },
+                "id": "string"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 72,
+                  "col_offset": 20,
+                  "end_lineno": 72,
+                  "end_col_offset": 41
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 72,
+                    "col_offset": 20,
+                    "end_lineno": 72,
+                    "end_col_offset": 23
+                  },
+                  "id": "str"
+                },
+                "args": [
+                  {
+                    "kind": "Call",
+                    "span": {
+                      "lineno": 72,
+                      "col_offset": 24,
+                      "end_lineno": 72,
+                      "end_col_offset": 40
+                    },
+                    "func": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 72,
+                        "col_offset": 24,
+                        "end_lineno": 72,
+                        "end_col_offset": 32
+                      },
+                      "id": "generate"
+                    },
+                    "args": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 72,
+                          "col_offset": 33,
+                          "end_lineno": 72,
+                          "end_col_offset": 39
+                        },
+                        "id": "string"
+                      }
+                    ],
+                    "call_unsupported": null
+                  }
+                ],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

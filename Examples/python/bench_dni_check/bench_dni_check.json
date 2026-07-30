@@ -1,0 +1,182 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/bench_dni_check/bench_dni_check.py",
+  "source_sha256": "9c13792d39132274ce4f790e33b39398f18c071dcdf9b1aac0251bb003e3c6d8",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 29,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 29,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "Spanish DNI check letter (python-stdnum stdnum.es.dni.calc_check_digit),\nvendored verbatim for the Lean verification benchmark (Band B: one builtin\n`int` call away from the v0 tier).\n\nProvenance:\n  package : python-stdnum, https://pypi.org/project/python-stdnum/\n  version : 2.2 (pip download --no-deps python-stdnum, 2026-07-21; sdist\n            python_stdnum-2.2.tar.gz, sha256\n            e95fcfa858a703d4a40130cb3eaac133c60d8808a7f3c98efeedac968c2479b9)\n  file    : stdnum/es/dni.py, sha256\n            d1fc9a757a5467dad759cacb4dfadb7a9ee4d36af24b005ecb0b40c3f0bf9d97\n  license : LGPL-2.1-or-later. The functions below are Copyright (C)\n            2010-2021 Arthur de Jong, licensed under the GNU Lesser\n            General Public License version 2.1 or later.\n\nVendoring rules (python benchmark, Examples/python/bench_dni_check):\n  * calc_check_digit is a BYTE-VERBATIM copy of stdnum/es/dni.py 2.2\n    lines 53-56 (segment sha256:\n    c61b9da75aa3c37c3bcbbf968eca1251c6ec2161fbfed28625aacba3a1b54d5b). Do NOT edit its body.\n  * compact/validate/is_valid of dni.py are NOT vendored: they depend on\n    stdnum.util.clean/isdigits (regex machinery) -- census entries only.\n  * `from __future__ import annotations` IS retained from the original\n    module (annotations stay lazy, as in the original); the stdnum\n    imports are NOT needed by this function.\n\nAuthenticity (2026-07-29, Python 3.9.25): calc_check_digit('12345678')\n= 'Z', calc_check_digit('0') = 'T' computed against this file AND\nagainst the unpacked python_stdnum-2.2 sdist package -- both agree.\n"
+          }
+        }
+      },
+      {
+        "kind": "Unsupported",
+        "span": {
+          "lineno": 31,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 34
+        },
+        "py_kind": "ImportFrom",
+        "text": "from __future__ import annotations"
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 33,
+          "col_offset": 0,
+          "end_lineno": 36,
+          "end_col_offset": 54
+        },
+        "name": "calc_check_digit",
+        "args": [
+          {
+            "arg": "number",
+            "span": {
+              "lineno": 33,
+              "col_offset": 21,
+              "end_lineno": 33,
+              "end_col_offset": 32
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 28
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 34,
+                "col_offset": 4,
+                "end_lineno": 35,
+                "end_col_offset": 28
+              },
+              "value": {
+                "type": "str",
+                "value": "Calculate the check digit. The number passed should not have the\n    check digit included."
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 36,
+              "col_offset": 4,
+              "end_lineno": 36,
+              "end_col_offset": 54
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 36,
+                "col_offset": 11,
+                "end_lineno": 36,
+                "end_col_offset": 54
+              },
+              "value": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 11,
+                  "end_lineno": 36,
+                  "end_col_offset": 36
+                },
+                "value": {
+                  "type": "str",
+                  "value": "TRWAGMYFPDXBNJZSQVHLCKE"
+                }
+              },
+              "index": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 37,
+                  "end_lineno": 36,
+                  "end_col_offset": 53
+                },
+                "left": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 36,
+                    "col_offset": 37,
+                    "end_lineno": 36,
+                    "end_col_offset": 48
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 36,
+                      "col_offset": 37,
+                      "end_lineno": 36,
+                      "end_col_offset": 40
+                    },
+                    "id": "int"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 36,
+                        "col_offset": 41,
+                        "end_lineno": 36,
+                        "end_col_offset": 47
+                      },
+                      "id": "number"
+                    }
+                  ],
+                  "call_unsupported": null
+                },
+                "op": "Mod",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 36,
+                    "col_offset": 51,
+                    "end_lineno": 36,
+                    "end_col_offset": 53
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "23"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

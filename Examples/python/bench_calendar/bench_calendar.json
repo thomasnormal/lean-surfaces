@@ -1,0 +1,677 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/bench_calendar/bench_calendar.py",
+  "source_sha256": "12847aa23fbda838f1de186c2500c22ea9cacc9f9a52bd3fcb20c47458576749",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 24,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 24,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "CPython calendar.isleap/leapdays, vendored verbatim for the Lean\nverification benchmark (Band B, pure integer arithmetic -- in-tier today).\n\nProvenance:\n  package : CPython standard library, module `calendar`\n  version : Python 3.9.25 (system interpreter of this repo's toolchain)\n  file    : /usr/lib64/python3.9/calendar.py, sha256\n            3ef1adcb836f240e3ae9d00de4466735e6e92ec74620737bb51605a123510ec8\n  license : PSF License Agreement for Python 3.9.25 (PSF-2.0);\n            Copyright (c) 2001-2026 Python Software Foundation.\n\nVendoring rules (python benchmark, Examples/python/bench_calendar):\n  * isleap and leapdays are BYTE-VERBATIM copies of calendar.py 3.9.25\n    lines 100-102 and 105-110 (sha256 of the two segments:\n    fdb511accefe85bdddfe88197f58cc293725ad6ccd08c8e2e5f774603d3b12d6\n    ddb3b4ed6e55b331968a7def7ccb90abf66e15e44e389f8acca71d22404e0f79). Do NOT edit their bodies.\n  * Nothing else of calendar.py is vendored; neither function references\n    any module-level name.\n\nAuthenticity (2026-07-29, Python 3.9.25): isleap(2024) = True,\nisleap(1900) = False, isleap(2000) = True, leapdays(1900, 2000) = 24,\nleapdays(2000, 2026) = 7 computed against this file AND against the\ninstalled `calendar` module -- both agree.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 26,
+          "col_offset": 0,
+          "end_lineno": 28,
+          "end_col_offset": 65
+        },
+        "name": "isleap",
+        "args": [
+          {
+            "arg": "year",
+            "span": {
+              "lineno": 26,
+              "col_offset": 11,
+              "end_lineno": 26,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 27,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 63
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 27,
+                "col_offset": 4,
+                "end_lineno": 27,
+                "end_col_offset": 63
+              },
+              "value": {
+                "type": "str",
+                "value": "Return True for leap years, False for non-leap years."
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 28,
+              "col_offset": 4,
+              "end_lineno": 28,
+              "end_col_offset": 65
+            },
+            "value": {
+              "kind": "BoolOp",
+              "span": {
+                "lineno": 28,
+                "col_offset": 11,
+                "end_lineno": 28,
+                "end_col_offset": 65
+              },
+              "op": "And",
+              "values": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 28,
+                    "col_offset": 11,
+                    "end_lineno": 28,
+                    "end_col_offset": 24
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 28,
+                      "col_offset": 11,
+                      "end_lineno": 28,
+                      "end_col_offset": 19
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 28,
+                        "col_offset": 11,
+                        "end_lineno": 28,
+                        "end_col_offset": 15
+                      },
+                      "id": "year"
+                    },
+                    "op": "Mod",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 28,
+                        "col_offset": 18,
+                        "end_lineno": 28,
+                        "end_col_offset": 19
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "4"
+                      }
+                    }
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 28,
+                        "col_offset": 23,
+                        "end_lineno": 28,
+                        "end_col_offset": 24
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "BoolOp",
+                  "span": {
+                    "lineno": 28,
+                    "col_offset": 30,
+                    "end_lineno": 28,
+                    "end_col_offset": 64
+                  },
+                  "op": "Or",
+                  "values": [
+                    {
+                      "kind": "Compare",
+                      "span": {
+                        "lineno": 28,
+                        "col_offset": 30,
+                        "end_lineno": 28,
+                        "end_col_offset": 45
+                      },
+                      "left": {
+                        "kind": "BinOp",
+                        "span": {
+                          "lineno": 28,
+                          "col_offset": 30,
+                          "end_lineno": 28,
+                          "end_col_offset": 40
+                        },
+                        "left": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 30,
+                            "end_lineno": 28,
+                            "end_col_offset": 34
+                          },
+                          "id": "year"
+                        },
+                        "op": "Mod",
+                        "right": {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 37,
+                            "end_lineno": 28,
+                            "end_col_offset": 40
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "100"
+                          }
+                        }
+                      },
+                      "ops": [
+                        "NotEq"
+                      ],
+                      "comparators": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 44,
+                            "end_lineno": 28,
+                            "end_col_offset": 45
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "0"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "Compare",
+                      "span": {
+                        "lineno": 28,
+                        "col_offset": 49,
+                        "end_lineno": 28,
+                        "end_col_offset": 64
+                      },
+                      "left": {
+                        "kind": "BinOp",
+                        "span": {
+                          "lineno": 28,
+                          "col_offset": 49,
+                          "end_lineno": 28,
+                          "end_col_offset": 59
+                        },
+                        "left": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 49,
+                            "end_lineno": 28,
+                            "end_col_offset": 53
+                          },
+                          "id": "year"
+                        },
+                        "op": "Mod",
+                        "right": {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 56,
+                            "end_lineno": 28,
+                            "end_col_offset": 59
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "400"
+                          }
+                        }
+                      },
+                      "ops": [
+                        "Eq"
+                      ],
+                      "comparators": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 28,
+                            "col_offset": 63,
+                            "end_lineno": 28,
+                            "end_col_offset": 64
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "0"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 30,
+          "col_offset": 0,
+          "end_lineno": 35,
+          "end_col_offset": 70
+        },
+        "name": "leapdays",
+        "args": [
+          {
+            "arg": "y1",
+            "span": {
+              "lineno": 30,
+              "col_offset": 13,
+              "end_lineno": 30,
+              "end_col_offset": 15
+            }
+          },
+          {
+            "arg": "y2",
+            "span": {
+              "lineno": 30,
+              "col_offset": 17,
+              "end_lineno": 30,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 31,
+              "col_offset": 4,
+              "end_lineno": 32,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 31,
+                "col_offset": 4,
+                "end_lineno": 32,
+                "end_col_offset": 26
+              },
+              "value": {
+                "type": "str",
+                "value": "Return number of leap years in range [y1, y2).\n       Assume y1 <= y2."
+              }
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 33,
+              "col_offset": 4,
+              "end_lineno": 33,
+              "end_col_offset": 11
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 33,
+                "col_offset": 4,
+                "end_lineno": 33,
+                "end_col_offset": 6
+              },
+              "id": "y1"
+            },
+            "op": "Sub",
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 33,
+                "col_offset": 10,
+                "end_lineno": 33,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "AugAssign",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 11
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 34,
+                "col_offset": 4,
+                "end_lineno": 34,
+                "end_col_offset": 6
+              },
+              "id": "y2"
+            },
+            "op": "Sub",
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 34,
+                "col_offset": 10,
+                "end_lineno": 34,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 70
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 35,
+                "col_offset": 11,
+                "end_lineno": 35,
+                "end_col_offset": 70
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 35,
+                  "col_offset": 11,
+                  "end_lineno": 35,
+                  "end_col_offset": 48
+                },
+                "left": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 12,
+                    "end_lineno": 35,
+                    "end_col_offset": 25
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 12,
+                      "end_lineno": 35,
+                      "end_col_offset": 17
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 12,
+                        "end_lineno": 35,
+                        "end_col_offset": 14
+                      },
+                      "id": "y2"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 16,
+                        "end_lineno": 35,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "4"
+                      }
+                    }
+                  },
+                  "op": "Sub",
+                  "right": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 20,
+                      "end_lineno": 35,
+                      "end_col_offset": 25
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 20,
+                        "end_lineno": 35,
+                        "end_col_offset": 22
+                      },
+                      "id": "y1"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 24,
+                        "end_lineno": 35,
+                        "end_col_offset": 25
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "4"
+                      }
+                    }
+                  }
+                },
+                "op": "Sub",
+                "right": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 30,
+                    "end_lineno": 35,
+                    "end_col_offset": 47
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 30,
+                      "end_lineno": 35,
+                      "end_col_offset": 37
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 30,
+                        "end_lineno": 35,
+                        "end_col_offset": 32
+                      },
+                      "id": "y2"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 34,
+                        "end_lineno": 35,
+                        "end_col_offset": 37
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "100"
+                      }
+                    }
+                  },
+                  "op": "Sub",
+                  "right": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 40,
+                      "end_lineno": 35,
+                      "end_col_offset": 47
+                    },
+                    "left": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 40,
+                        "end_lineno": 35,
+                        "end_col_offset": 42
+                      },
+                      "id": "y1"
+                    },
+                    "op": "FloorDiv",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 35,
+                        "col_offset": 44,
+                        "end_lineno": 35,
+                        "end_col_offset": 47
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "100"
+                      }
+                    }
+                  }
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 35,
+                  "col_offset": 52,
+                  "end_lineno": 35,
+                  "end_col_offset": 69
+                },
+                "left": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 52,
+                    "end_lineno": 35,
+                    "end_col_offset": 59
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 52,
+                      "end_lineno": 35,
+                      "end_col_offset": 54
+                    },
+                    "id": "y2"
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 56,
+                      "end_lineno": 35,
+                      "end_col_offset": 59
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "400"
+                    }
+                  }
+                },
+                "op": "Sub",
+                "right": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 62,
+                    "end_lineno": 35,
+                    "end_col_offset": 69
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 62,
+                      "end_lineno": 35,
+                      "end_col_offset": 64
+                    },
+                    "id": "y1"
+                  },
+                  "op": "FloorDiv",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 35,
+                      "col_offset": 66,
+                      "end_lineno": 35,
+                      "end_col_offset": 69
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "400"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

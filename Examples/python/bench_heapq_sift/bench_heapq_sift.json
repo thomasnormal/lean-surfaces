@@ -1,0 +1,1258 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/bench_heapq_sift/bench_heapq_sift.py",
+  "source_sha256": "0ca9e5092dbe9518297351cffba189ba5959a4d148b1e6344017225ab642434a",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 31,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "CPython heapq._siftdown/_siftup, vendored verbatim for the Lean\nverification benchmark (Band C marker: in-place list mutation).\n\nProvenance:\n  package : CPython standard library, module `heapq`\n  version : Python 3.9.25 (system interpreter of this repo's toolchain)\n  file    : /usr/lib64/python3.9/heapq.py, sha256\n            0351667ed3afd3310ebd353526824d6f6f34d641ef0a785552c6893b7f95fdf3\n  license : PSF License Agreement for Python 3.9.25 (PSF-2.0);\n            Copyright (c) 2001-2026 Python Software Foundation.\n\nVendoring rules (python benchmark, Examples/python/bench_heapq_sift):\n  * _siftdown and _siftup are BYTE-VERBATIM copies of heapq.py 3.9.25\n    lines 205-217 and 258-276 (sha256 of the two segments:\n    5a3bd7628494fcb72968a0018cce3e3d94e6066fa611feb012520151cd11d876\n    136c35d6c8dfb2c475d08e84b8b5b0723024402a69b319875702c445eaab27b7). Do NOT edit their bodies. _siftup calls _siftdown (same file,\n    vendored below it exactly as in the original).\n  * These are the underscore-private pure-Python helpers; the C\n    accelerator (`from _heapq import *`) replaces the public functions\n    but NOT these two names, so `heapq._siftup` at runtime IS this code.\n  * Both functions mutate their `heap` argument in place through\n    subscript stores -- the mutation is observable by the caller through\n    aliasing. That is the point of this Band C marker: value-semantics\n    v0 cannot express it without a state-threading transform.\n\nAuthenticity (2026-07-29, Python 3.9.25):\n_siftup([5,1,2,7,4,3], 0) leaves the list as [1, 4, 2, 7, 5, 3];\n_siftdown([1,3,2,7,4,0], 0, 5) leaves it as [0, 3, 1, 7, 4, 2]\ncomputed against this file AND against the installed `heapq` module's\n_siftup/_siftdown -- both agree.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 33,
+          "col_offset": 0,
+          "end_lineno": 45,
+          "end_col_offset": 23
+        },
+        "name": "_siftdown",
+        "args": [
+          {
+            "arg": "heap",
+            "span": {
+              "lineno": 33,
+              "col_offset": 14,
+              "end_lineno": 33,
+              "end_col_offset": 18
+            }
+          },
+          {
+            "arg": "startpos",
+            "span": {
+              "lineno": 33,
+              "col_offset": 20,
+              "end_lineno": 33,
+              "end_col_offset": 28
+            }
+          },
+          {
+            "arg": "pos",
+            "span": {
+              "lineno": 33,
+              "col_offset": 30,
+              "end_lineno": 33,
+              "end_col_offset": 33
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 4,
+                  "end_lineno": 34,
+                  "end_col_offset": 11
+                },
+                "id": "newitem"
+              }
+            ],
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 34,
+                "col_offset": 14,
+                "end_lineno": 34,
+                "end_col_offset": 23
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 14,
+                  "end_lineno": 34,
+                  "end_col_offset": 18
+                },
+                "id": "heap"
+              },
+              "index": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 19,
+                  "end_lineno": 34,
+                  "end_col_offset": 22
+                },
+                "id": "pos"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 37,
+              "col_offset": 4,
+              "end_lineno": 44,
+              "end_col_offset": 13
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 37,
+                "col_offset": 10,
+                "end_lineno": 37,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 37,
+                  "col_offset": 10,
+                  "end_lineno": 37,
+                  "end_col_offset": 13
+                },
+                "id": "pos"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 37,
+                    "col_offset": 16,
+                    "end_lineno": 37,
+                    "end_col_offset": 24
+                  },
+                  "id": "startpos"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 8,
+                  "end_lineno": 38,
+                  "end_col_offset": 34
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 38,
+                      "col_offset": 8,
+                      "end_lineno": 38,
+                      "end_col_offset": 17
+                    },
+                    "id": "parentpos"
+                  }
+                ],
+                "value": {
+                  "kind": "Unsupported",
+                  "span": {
+                    "lineno": 38,
+                    "col_offset": 20,
+                    "end_lineno": 38,
+                    "end_col_offset": 34
+                  },
+                  "py_kind": "BinOp:RShift",
+                  "text": "pos - 1 >> 1"
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 39,
+                  "col_offset": 8,
+                  "end_lineno": 39,
+                  "end_col_offset": 32
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 39,
+                      "col_offset": 8,
+                      "end_lineno": 39,
+                      "end_col_offset": 14
+                    },
+                    "id": "parent"
+                  }
+                ],
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 39,
+                    "col_offset": 17,
+                    "end_lineno": 39,
+                    "end_col_offset": 32
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 39,
+                      "col_offset": 17,
+                      "end_lineno": 39,
+                      "end_col_offset": 21
+                    },
+                    "id": "heap"
+                  },
+                  "index": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 39,
+                      "col_offset": 22,
+                      "end_lineno": 39,
+                      "end_col_offset": 31
+                    },
+                    "id": "parentpos"
+                  }
+                }
+              },
+              {
+                "kind": "If",
+                "span": {
+                  "lineno": 40,
+                  "col_offset": 8,
+                  "end_lineno": 43,
+                  "end_col_offset": 20
+                },
+                "test": {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 40,
+                    "col_offset": 11,
+                    "end_lineno": 40,
+                    "end_col_offset": 27
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 40,
+                      "col_offset": 11,
+                      "end_lineno": 40,
+                      "end_col_offset": 18
+                    },
+                    "id": "newitem"
+                  },
+                  "ops": [
+                    "Lt"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 40,
+                        "col_offset": 21,
+                        "end_lineno": 40,
+                        "end_col_offset": 27
+                      },
+                      "id": "parent"
+                    }
+                  ]
+                },
+                "body": [
+                  {
+                    "kind": "Assign",
+                    "span": {
+                      "lineno": 41,
+                      "col_offset": 12,
+                      "end_lineno": 41,
+                      "end_col_offset": 30
+                    },
+                    "targets": [
+                      {
+                        "kind": "Subscript",
+                        "span": {
+                          "lineno": 41,
+                          "col_offset": 12,
+                          "end_lineno": 41,
+                          "end_col_offset": 21
+                        },
+                        "value": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 41,
+                            "col_offset": 12,
+                            "end_lineno": 41,
+                            "end_col_offset": 16
+                          },
+                          "id": "heap"
+                        },
+                        "index": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 41,
+                            "col_offset": 17,
+                            "end_lineno": 41,
+                            "end_col_offset": 20
+                          },
+                          "id": "pos"
+                        }
+                      }
+                    ],
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 41,
+                        "col_offset": 24,
+                        "end_lineno": 41,
+                        "end_col_offset": 30
+                      },
+                      "id": "parent"
+                    }
+                  },
+                  {
+                    "kind": "Assign",
+                    "span": {
+                      "lineno": 42,
+                      "col_offset": 12,
+                      "end_lineno": 42,
+                      "end_col_offset": 27
+                    },
+                    "targets": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 42,
+                          "col_offset": 12,
+                          "end_lineno": 42,
+                          "end_col_offset": 15
+                        },
+                        "id": "pos"
+                      }
+                    ],
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 42,
+                        "col_offset": 18,
+                        "end_lineno": 42,
+                        "end_col_offset": 27
+                      },
+                      "id": "parentpos"
+                    }
+                  },
+                  {
+                    "kind": "Continue",
+                    "span": {
+                      "lineno": 43,
+                      "col_offset": 12,
+                      "end_lineno": 43,
+                      "end_col_offset": 20
+                    }
+                  }
+                ],
+                "orelse": []
+              },
+              {
+                "kind": "Break",
+                "span": {
+                  "lineno": 44,
+                  "col_offset": 8,
+                  "end_lineno": 44,
+                  "end_col_offset": 13
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 45,
+              "col_offset": 4,
+              "end_lineno": 45,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Subscript",
+                "span": {
+                  "lineno": 45,
+                  "col_offset": 4,
+                  "end_lineno": 45,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 45,
+                    "col_offset": 4,
+                    "end_lineno": 45,
+                    "end_col_offset": 8
+                  },
+                  "id": "heap"
+                },
+                "index": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 45,
+                    "col_offset": 9,
+                    "end_lineno": 45,
+                    "end_col_offset": 12
+                  },
+                  "id": "pos"
+                }
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 45,
+                "col_offset": 16,
+                "end_lineno": 45,
+                "end_col_offset": 23
+              },
+              "id": "newitem"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 47,
+          "col_offset": 0,
+          "end_lineno": 65,
+          "end_col_offset": 34
+        },
+        "name": "_siftup",
+        "args": [
+          {
+            "arg": "heap",
+            "span": {
+              "lineno": 47,
+              "col_offset": 12,
+              "end_lineno": 47,
+              "end_col_offset": 16
+            }
+          },
+          {
+            "arg": "pos",
+            "span": {
+              "lineno": 47,
+              "col_offset": 18,
+              "end_lineno": 47,
+              "end_col_offset": 21
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 48,
+              "col_offset": 4,
+              "end_lineno": 48,
+              "end_col_offset": 22
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 48,
+                  "col_offset": 4,
+                  "end_lineno": 48,
+                  "end_col_offset": 10
+                },
+                "id": "endpos"
+              }
+            ],
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 48,
+                "col_offset": 13,
+                "end_lineno": 48,
+                "end_col_offset": 22
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 48,
+                  "col_offset": 13,
+                  "end_lineno": 48,
+                  "end_col_offset": 16
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 48,
+                    "col_offset": 17,
+                    "end_lineno": 48,
+                    "end_col_offset": 21
+                  },
+                  "id": "heap"
+                }
+              ],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 49,
+              "col_offset": 4,
+              "end_lineno": 49,
+              "end_col_offset": 18
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 49,
+                  "col_offset": 4,
+                  "end_lineno": 49,
+                  "end_col_offset": 12
+                },
+                "id": "startpos"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 49,
+                "col_offset": 15,
+                "end_lineno": 49,
+                "end_col_offset": 18
+              },
+              "id": "pos"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 50,
+              "col_offset": 4,
+              "end_lineno": 50,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 50,
+                  "col_offset": 4,
+                  "end_lineno": 50,
+                  "end_col_offset": 11
+                },
+                "id": "newitem"
+              }
+            ],
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 50,
+                "col_offset": 14,
+                "end_lineno": 50,
+                "end_col_offset": 23
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 50,
+                  "col_offset": 14,
+                  "end_lineno": 50,
+                  "end_col_offset": 18
+                },
+                "id": "heap"
+              },
+              "index": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 50,
+                  "col_offset": 19,
+                  "end_lineno": 50,
+                  "end_col_offset": 22
+                },
+                "id": "pos"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 52,
+              "col_offset": 4,
+              "end_lineno": 52,
+              "end_col_offset": 24
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 52,
+                  "col_offset": 4,
+                  "end_lineno": 52,
+                  "end_col_offset": 12
+                },
+                "id": "childpos"
+              }
+            ],
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 52,
+                "col_offset": 15,
+                "end_lineno": 52,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 52,
+                  "col_offset": 15,
+                  "end_lineno": 52,
+                  "end_col_offset": 20
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 52,
+                    "col_offset": 15,
+                    "end_lineno": 52,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                },
+                "op": "Mult",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 52,
+                    "col_offset": 17,
+                    "end_lineno": 52,
+                    "end_col_offset": 20
+                  },
+                  "id": "pos"
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 52,
+                  "col_offset": 23,
+                  "end_lineno": 52,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 53,
+              "col_offset": 4,
+              "end_lineno": 61,
+              "end_col_offset": 28
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 53,
+                "col_offset": 10,
+                "end_lineno": 53,
+                "end_col_offset": 27
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 53,
+                  "col_offset": 10,
+                  "end_lineno": 53,
+                  "end_col_offset": 18
+                },
+                "id": "childpos"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 53,
+                    "col_offset": 21,
+                    "end_lineno": 53,
+                    "end_col_offset": 27
+                  },
+                  "id": "endpos"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 55,
+                  "col_offset": 8,
+                  "end_lineno": 55,
+                  "end_col_offset": 31
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 55,
+                      "col_offset": 8,
+                      "end_lineno": 55,
+                      "end_col_offset": 16
+                    },
+                    "id": "rightpos"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 55,
+                    "col_offset": 19,
+                    "end_lineno": 55,
+                    "end_col_offset": 31
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 55,
+                      "col_offset": 19,
+                      "end_lineno": 55,
+                      "end_col_offset": 27
+                    },
+                    "id": "childpos"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 55,
+                      "col_offset": 30,
+                      "end_lineno": 55,
+                      "end_col_offset": 31
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "If",
+                "span": {
+                  "lineno": 56,
+                  "col_offset": 8,
+                  "end_lineno": 57,
+                  "end_col_offset": 31
+                },
+                "test": {
+                  "kind": "BoolOp",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 11,
+                    "end_lineno": 56,
+                    "end_col_offset": 68
+                  },
+                  "op": "And",
+                  "values": [
+                    {
+                      "kind": "Compare",
+                      "span": {
+                        "lineno": 56,
+                        "col_offset": 11,
+                        "end_lineno": 56,
+                        "end_col_offset": 28
+                      },
+                      "left": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 56,
+                          "col_offset": 11,
+                          "end_lineno": 56,
+                          "end_col_offset": 19
+                        },
+                        "id": "rightpos"
+                      },
+                      "ops": [
+                        "Lt"
+                      ],
+                      "comparators": [
+                        {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 56,
+                            "col_offset": 22,
+                            "end_lineno": 56,
+                            "end_col_offset": 28
+                          },
+                          "id": "endpos"
+                        }
+                      ]
+                    },
+                    {
+                      "kind": "UnaryOp",
+                      "span": {
+                        "lineno": 56,
+                        "col_offset": 33,
+                        "end_lineno": 56,
+                        "end_col_offset": 68
+                      },
+                      "op": "Not",
+                      "operand": {
+                        "kind": "Compare",
+                        "span": {
+                          "lineno": 56,
+                          "col_offset": 37,
+                          "end_lineno": 56,
+                          "end_col_offset": 68
+                        },
+                        "left": {
+                          "kind": "Subscript",
+                          "span": {
+                            "lineno": 56,
+                            "col_offset": 37,
+                            "end_lineno": 56,
+                            "end_col_offset": 51
+                          },
+                          "value": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 56,
+                              "col_offset": 37,
+                              "end_lineno": 56,
+                              "end_col_offset": 41
+                            },
+                            "id": "heap"
+                          },
+                          "index": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 56,
+                              "col_offset": 42,
+                              "end_lineno": 56,
+                              "end_col_offset": 50
+                            },
+                            "id": "childpos"
+                          }
+                        },
+                        "ops": [
+                          "Lt"
+                        ],
+                        "comparators": [
+                          {
+                            "kind": "Subscript",
+                            "span": {
+                              "lineno": 56,
+                              "col_offset": 54,
+                              "end_lineno": 56,
+                              "end_col_offset": 68
+                            },
+                            "value": {
+                              "kind": "Name",
+                              "span": {
+                                "lineno": 56,
+                                "col_offset": 54,
+                                "end_lineno": 56,
+                                "end_col_offset": 58
+                              },
+                              "id": "heap"
+                            },
+                            "index": {
+                              "kind": "Name",
+                              "span": {
+                                "lineno": 56,
+                                "col_offset": 59,
+                                "end_lineno": 56,
+                                "end_col_offset": 67
+                              },
+                              "id": "rightpos"
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                "body": [
+                  {
+                    "kind": "Assign",
+                    "span": {
+                      "lineno": 57,
+                      "col_offset": 12,
+                      "end_lineno": 57,
+                      "end_col_offset": 31
+                    },
+                    "targets": [
+                      {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 57,
+                          "col_offset": 12,
+                          "end_lineno": 57,
+                          "end_col_offset": 20
+                        },
+                        "id": "childpos"
+                      }
+                    ],
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 57,
+                        "col_offset": 23,
+                        "end_lineno": 57,
+                        "end_col_offset": 31
+                      },
+                      "id": "rightpos"
+                    }
+                  }
+                ],
+                "orelse": []
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 8,
+                  "end_lineno": 59,
+                  "end_col_offset": 34
+                },
+                "targets": [
+                  {
+                    "kind": "Subscript",
+                    "span": {
+                      "lineno": 59,
+                      "col_offset": 8,
+                      "end_lineno": 59,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 59,
+                        "col_offset": 8,
+                        "end_lineno": 59,
+                        "end_col_offset": 12
+                      },
+                      "id": "heap"
+                    },
+                    "index": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 59,
+                        "col_offset": 13,
+                        "end_lineno": 59,
+                        "end_col_offset": 16
+                      },
+                      "id": "pos"
+                    }
+                  }
+                ],
+                "value": {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 59,
+                    "col_offset": 20,
+                    "end_lineno": 59,
+                    "end_col_offset": 34
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 59,
+                      "col_offset": 20,
+                      "end_lineno": 59,
+                      "end_col_offset": 24
+                    },
+                    "id": "heap"
+                  },
+                  "index": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 59,
+                      "col_offset": 25,
+                      "end_lineno": 59,
+                      "end_col_offset": 33
+                    },
+                    "id": "childpos"
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 60,
+                  "col_offset": 8,
+                  "end_lineno": 60,
+                  "end_col_offset": 22
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 60,
+                      "col_offset": 8,
+                      "end_lineno": 60,
+                      "end_col_offset": 11
+                    },
+                    "id": "pos"
+                  }
+                ],
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 60,
+                    "col_offset": 14,
+                    "end_lineno": 60,
+                    "end_col_offset": 22
+                  },
+                  "id": "childpos"
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 61,
+                  "col_offset": 8,
+                  "end_lineno": 61,
+                  "end_col_offset": 28
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 61,
+                      "col_offset": 8,
+                      "end_lineno": 61,
+                      "end_col_offset": 16
+                    },
+                    "id": "childpos"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 61,
+                    "col_offset": 19,
+                    "end_lineno": 61,
+                    "end_col_offset": 28
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 61,
+                      "col_offset": 19,
+                      "end_lineno": 61,
+                      "end_col_offset": 24
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 61,
+                        "col_offset": 19,
+                        "end_lineno": 61,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    },
+                    "op": "Mult",
+                    "right": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 61,
+                        "col_offset": 21,
+                        "end_lineno": 61,
+                        "end_col_offset": 24
+                      },
+                      "id": "pos"
+                    }
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 61,
+                      "col_offset": 27,
+                      "end_lineno": 61,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 64,
+              "col_offset": 4,
+              "end_lineno": 64,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Subscript",
+                "span": {
+                  "lineno": 64,
+                  "col_offset": 4,
+                  "end_lineno": 64,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 64,
+                    "col_offset": 4,
+                    "end_lineno": 64,
+                    "end_col_offset": 8
+                  },
+                  "id": "heap"
+                },
+                "index": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 64,
+                    "col_offset": 9,
+                    "end_lineno": 64,
+                    "end_col_offset": 12
+                  },
+                  "id": "pos"
+                }
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 64,
+                "col_offset": 16,
+                "end_lineno": 64,
+                "end_col_offset": 23
+              },
+              "id": "newitem"
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 65,
+              "col_offset": 4,
+              "end_lineno": 65,
+              "end_col_offset": 34
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 65,
+                "col_offset": 4,
+                "end_lineno": 65,
+                "end_col_offset": 34
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 65,
+                  "col_offset": 4,
+                  "end_lineno": 65,
+                  "end_col_offset": 13
+                },
+                "id": "_siftdown"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 65,
+                    "col_offset": 14,
+                    "end_lineno": 65,
+                    "end_col_offset": 18
+                  },
+                  "id": "heap"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 65,
+                    "col_offset": 20,
+                    "end_lineno": 65,
+                    "end_col_offset": 28
+                  },
+                  "id": "startpos"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 65,
+                    "col_offset": 30,
+                    "end_lineno": 65,
+                    "end_col_offset": 33
+                  },
+                  "id": "pos"
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

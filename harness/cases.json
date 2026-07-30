@@ -36,7 +36,5 @@
   {"file": "Examples/python/opt_args/opt_args.py", "function": "probe", "args": [[0], [5], [-5]], "expect": "match"},
   {"file": "Examples/python/opt_args/opt_args.py", "function": "probe_not", "args": [[0], [7]], "expect": "match"},
   {"file": "Examples/python/opt_args/opt_args.py", "function": "latest", "args": [[3], [3, 5], [5, 3], [0, 0], [-2, -1]], "expect": "match"},
-  {"file": "Examples/python/opt_args/opt_args.py", "function": "none_is_none", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/bench_calendar/bench_calendar.py", "function": "isleap", "args": [[2024], [1900], [2000], [2023], [0], [4], [100], [400], [-4], [-100], [-400], [1583]], "expect": "match"},
-  {"file": "Examples/python/bench_calendar/bench_calendar.py", "function": "leapdays", "args": [[1900, 2000], [2000, 2026], [1, 1], [2000, 2000], [1583, 2026], [1900, 1901], [2024, 2025], [-400, 400], [0, 1], [1, 2025]], "expect": "match"}
+  {"file": "Examples/python/opt_args/opt_args.py", "function": "none_is_none", "args": [[]], "expect": "match"}
 ]

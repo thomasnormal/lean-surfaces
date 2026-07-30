@@ -50,25 +50,24 @@ serve (curation rule set 2026-07-31):
   medians are one tier feature away, see the flagship plan below).
 - **Census rows** are tier instrumentation: formula- and fold-shaped
   functions (checksums, calendar math, string munging, date formulas) whose
-  specs are nearly definitional. They are cheap, dense probes that price tier
-  features — the blocker histogram and unlock projections below are their
-  product — but they are *not* individual showcases, and redundant family
-  variants (the three ISO 7064 files) are counted as one idiom, not three
-  results. New vendoring follows the same rule: no more checksum-class
-  targets as headline items; candidates must have flagship-grade invariant
-  content (e.g. `fractions.limit_denominator` best-rational-approximation,
-  pure-Python `isqrt`, `date.toordinal`/`fromordinal` as a proved bijection).
+  specs are nearly definitional. **The vendored census suites were deleted
+  2026-07-31** (see "Removed suites" below) — the census function is now
+  served by the not-vendored references table and by the archived data at
+  the removal commit. New vendoring follows the flagship bar: no
+  checksum-class targets; candidates must have invariant content (e.g.
+  `fractions.limit_denominator` best-rational-approximation, pure-Python
+  `isqrt`, `date.toordinal`/`fromordinal` as a proved bijection).
 
 ## Bands
 
 - **Band A — flagship**: CPython `bisect`. Smallest tier step, biggest name.
 - **Band B — pure-int / near-tier**: checksum arithmetic and calendar math
-  whose cores are Presburger-flavored integer folds. Census rows.
-- **Band C — frontier markers**: one representative per hard feature class
-  (float results, in-place mutation, slices/comprehensions, str-method-heavy
-  code). These measure what v0 *honestly cannot* do; some are vendored,
-  heavy ones are census references only. Contains one flagship: the heapq
-  sift pair.
+  whose cores are Presburger-flavored integer folds. All Band-B suites were
+  census rows and were removed 2026-07-31.
+- **Band C — frontier markers**: representatives of hard feature classes
+  (float results, in-place mutation). The remaining vendored Band-C suites
+  are the two unproved flagships; heavy targets stay census references
+  only.
 
 ## Scoreboard
 
@@ -81,37 +80,11 @@ own body adds no new blocker but it calls blocked same-file function X.
 |---|---|---|---|---|---|---|
 | 1 | bench_bisect / `bisect_left` | CPython 3.9.25 bisect.py `6f213241b0d2` | A | **PROVED** (2026-07-30, cold-prover run; `Examples/python/bench_bisect/spec.lean`: `bisect_left_terminates` — unconditional, no sortedness — `bisect_left_sorted`, `bisect_left_insertion_point`, `bisect_left_partial`) | sorted int list `a`, `lo=0`: returns least `i ≤ len a` with `∀ j < i, a[j] < x` and `∀ j ≥ i, x ≤ a[j]` — proved as stated, plus the deterministic value `(a.takeWhile (· < x)).length` | 3.9 signature `(a,x,lo=0,hi=None)`: NO keyword-only `key` (3.10+), no slicing. Both defaults engaged; the unreachable `Raise` guard discharged by `lo = 0` (rsa_inverse precedent). |
 | 2 | bench_bisect / `bisect_right` | CPython 3.9.25 bisect.py `6f213241b0d2` | A | **PROVED** (as row 1; `bisect_right_terminates`, `bisect_right_total`, `bisect_right_sorted`, `bisect_right_insertion_point`, `bisect_right_partial`) | same with `a[j] ≤ x` / `x < a[j]` — proved, plus the deterministic value `(a.takeWhile (· ≤ x)).length` | Identical shape to bisect_left. |
-| 3 | bench_calendar / `isleap` | CPython 3.9.25 calendar.py `3ef1adcb836f` | B | **PROVED** (2026-07-30, cold-prover run; `Examples/python/bench_calendar/spec.lean`: `isleap_spec`) | `isleap y = (y%4=0 ∧ (y%100≠0 ∨ y%400=0))` — proved as stated (`Int.fmod`) | Zero blockers. First real-stdlib function proved. |
-| 4 | bench_calendar / `leapdays` | CPython 3.9.25 calendar.py `3ef1adcb836f` | B | **PROVED** (as row 3; `leapdays_arith` + `leapdays_count`) | for `y1 ≤ y2`: equals `#{y ∈ [y1,y2) | isleap y}` (closed-form-vs-count lemma is Lean-side arithmetic) — proved EXACTLY so: closed form AND the per-year reference count `leapCount` | Zero blockers. AugAssign Sub + FloorDiv only. |
-| 5 | bench_iso7064_mod_11_10 / `checksum` | python-stdnum 2.2 iso7064/mod_11_10.py `9b87a6c1b1a2` | B | blocked-by {For, call:int} | fold invariant `0 ≤ check ≤ 9`; number valid ⟺ checksum = 1 | For over a str param; `int(n)` on 1-char digit strs; `check or 10` already in-tier. |
-| 6 | bench_iso7064_mod_11_10 / `calc_check_digit` | same | B | blocked-by {call:str, callee `checksum`} | `checksum(number + calc_check_digit(number)) = 1` (roundtrip) | Body is one `str(...)` of in-tier arithmetic. |
-| 7 | bench_iso7064_mod_11_10 / `validate` | same | B | blocked-by {Try, Raise, callee `checksum`} | on valid input returns its argument unchanged | `raise` paths unreachable for valid inputs, but Try wraps the *normal* path — Try support required. |
-| 8 | bench_iso7064_mod_11_10 / `is_valid` | same | B | blocked-by {Try, call:bool, callee `validate`} | `is_valid n = (checksum n = 1)` for nonempty digit strs | The stdnum 4-function idiom, instance 1 of 3. |
-| 9 | bench_iso7064_mod_11_2 / `checksum` | python-stdnum 2.2 iso7064/mod_11_2.py `e23a4687a284` | B | blocked-by {For, IfExp, call:int} | fold `check = (2·check + digit) mod 11`; valid ⟺ 1; ISBN-10/ISNI algebra | `10 if n == 'X' else n` adds IfExp vs mod_11_10. |
-| 10 | bench_iso7064_mod_11_2 / `calc_check_digit` | same | B | blocked-by {IfExp, call:str, callee `checksum`} | `checksum(number + digit) = 1`, digit ∈ 0-9,X | `'X' if c == 10 else str(c)`. |
-| 11 | bench_iso7064_mod_11_2 / `validate` | same | B | blocked-by {Try, Raise, callee `checksum`} | as row 7 | Byte-identical segment to row 7 (same sha256 `f4b7e2300022…`). |
-| 12 | bench_iso7064_mod_11_2 / `is_valid` | same | B | blocked-by {Try, call:bool, callee `validate`} | as row 8 | Byte-identical segment to row 8. |
-| 13 | bench_iso7064_mod_97_10 / `_to_base10` | python-stdnum 2.2 iso7064/mod_97_10.py `ffd72642a9e1` | B | blocked-by {Attribute `''.join`, GeneratorExp; hidden inside genexp: call:str, **2-arg** `int(x, 36)`} | maps each base-36 char to its decimal digits, concatenated | The IBAN letter→digits step. 2-positional-arg builtin call is a distinct tier feature. |
-| 14 | bench_iso7064_mod_97_10 / `checksum` | same | B | blocked-by {call:int (str→int), callee `_to_base10`} | IBAN validity ⟺ `int(_to_base10 n) mod 97 = 1` | Body itself is one int() + `% 97`. |
-| 15 | bench_iso7064_mod_97_10 / `calc_check_digits` | same | B | blocked-by {**str-%-formatting** (`'%02d' % …`), callee `checksum`} | `validate(number + digits)` succeeds | **Census-invisible blocker**: `%` on a str parses as in-tier `BinOp:Mod`; the interpreter refuses it loudly at runtime (Semantics.lean "'%' string formatting"). Syntax-level censuses under-count this. |
-| 16 | bench_iso7064_mod_97_10 / `validate` | same | B | blocked-by {Try, Raise, callee `checksum`} | as row 7 | Byte-identical segment to row 7. |
-| 17 | bench_iso7064_mod_97_10 / `is_valid` | same | B | blocked-by {Try, call:bool, callee `validate`} | as row 8 | Byte-identical segment to row 8. |
-| 18 | bench_stdnum_luhn / `checksum` | python-stdnum 2.2 luhn.py `ac87edae3e77` | B | blocked-by {Subscript:Slice `[::2]`/`[1::2]`, GeneratorExp, call:sum/tuple; hidden in genexp: Attribute `.index`, call:reversed/str} — defaults cleared by F1 | Luhn-mod-N sum ≡ 0; classic credit-card check | Luhn mod N generalization: `alphabet: str = '0123456789'` (a literal str default, now in tier). |
-| 19 | bench_stdnum_luhn / `validate` | same | B | blocked-by {Try, Raise, call:bool, callee `checksum`} — defaults cleared by F1 | valid input returned unchanged | |
-| 20 | bench_stdnum_luhn / `is_valid` | same | B | blocked-by {Try, call:bool, callee `validate`} — defaults cleared by F1 | `is_valid n ⟺ checksum n = 0` | |
-| 21 | bench_stdnum_luhn / `calc_check_digit` | same | B | blocked-by {call:str, callee `checksum`; negative index in-tier} — defaults cleared by F1 | `checksum(n + digit) = 0` roundtrip | `alphabet[-ck]` negative indexing is already in-tier. |
-| 22 | bench_dni_check / `calc_check_digit` | python-stdnum 2.2 es/dni.py `d1fc9a757a54` | B | blocked-by {call:int (str→int)} — **single blocker** | returns `'TRWAGMYFPDXBNJZSQVHLCKE'[int(n) % 23]`; output is one of 23 letters | Nearest-to-tier real PyPI function found by the census. String subscript already in-tier. |
-| 23 | bench_easter / `easter` | python-dateutil 2.9.0.post0 easter.py `772062fa52af` | B (aspirational) | blocked-by {**non-literal** default (`method=EASTER_WESTERN`, a Name), Raise (reachable only for method∉1..3), Attribute `datetime.date`, call:int} | for 1583 ≤ y, method 3: returns Gregorian Easter; provable targets: month ∈ {3,4,5}, day ∈ 1..31 | The ~25-line Gauss computus core is 100% in-tier; blocked by its shell. Confirmed post-F1: still `args_unsupported: "defaults"` (Name defaults stay out, by the literals-only rule). |
-| 24 | bench_luhn / `checksum` | PyPI luhn 0.2.0 luhn.py `c6e9aadd7361` | C | blocked-by {Subscript:Slice **negative-step** `[-1::-2]`/`[-2::-2]`, ListComp, call:list/map/sum; hidden: `int` referenced as a *value* (map arg), call:divmod} | digit-sum-with-doubling ≡ 0 mod 10 | Slice/comprehension marker. Function-as-value (`map(int, …)`) is its own tier feature. |
-| 25 | bench_luhn / `verify` | same | C | blocked-by {callee `checksum`} — own body in-tier | `verify s ⟺ checksum s = 0` | |
-| 26 | bench_luhn / `generate` | same | C | blocked-by {callee `checksum`} — own body in-tier (str concat is in-tier) | `verify(s + str(generate s))` | |
-| 27 | bench_luhn / `append` | same | C | blocked-by {call:str, callee `generate`} | as row 26, packaged | |
-| 28 | bench_statistics / `median` | CPython 3.9.25 statistics.py `8dd0406ee898` | C | blocked-by {call:sorted, Raise (empty input), **BinOp:Div → float** on even length} | odd n: middle element of sorted data | **Float marker**: `(a+b)/2` is a float — out of `Val` entirely; even-length median is out of scope for v0, not "one feature away". |
-| 29 | bench_statistics / `median_low` | same | C | blocked-by {call:sorted, Raise} | `sorted(data)[(n-1)//2]` for nonempty data | Pure once sorted() exists (or on pre-sorted input). |
-| 30 | bench_statistics / `median_high` | same | C | blocked-by {call:sorted, Raise} | `sorted(data)[n//2]` for nonempty data | |
-| 31 | bench_heapq_sift / `_siftdown` | CPython 3.9.25 heapq.py `0351667ed3af` | C | blocked-by {Subscript-store, BinOp:RShift, **caller-visible mutation** (aliasing)} | restores heap invariant on `heap[startpos..pos]`, permutation of input | **Mutation marker**: value semantics cannot show the caller the in-place writes; needs a state-threading transform (return the list), which breaks byte-verbatim calling convention. |
-| 32 | bench_heapq_sift / `_siftup` | same | C | blocked-by {Subscript-store, caller-visible mutation, callee `_siftdown`} | as row 31 from a leaf push | These two are the real runtime code: the C accelerator does not replace underscore helpers. |
-| 33 | bench_capwords / `capwords` | CPython 3.9.25 string.py `bc57c407a839` | C | blocked-by {Attribute `.join`, GeneratorExp; hidden in genexp: `.capitalize`, `.split`} — defaults cleared by F1 | `capwords(s) = ' '.join(w.capitalize() for w in s.split())` | **String-heavy marker**: str methods are the gate (census: Attribute = 739/1591 real functions). |
+| 3 | bench_statistics / `median` | CPython 3.9.25 statistics.py `8dd0406ee898` | C | blocked-by {call:sorted, Raise (empty input), **BinOp:Div → float** on even length} | odd n: middle element of sorted data | **Float marker**: `(a+b)/2` is a float — out of `Val` entirely; even-length median is out of scope for v0, not "one feature away". |
+| 4 | bench_statistics / `median_low` | same | C | blocked-by {call:sorted, Raise} | `sorted(data)[(n-1)//2]` for nonempty data | Pure once sorted() exists (or on pre-sorted input). |
+| 5 | bench_statistics / `median_high` | same | C | blocked-by {call:sorted, Raise} | `sorted(data)[n//2]` for nonempty data | |
+| 6 | bench_heapq_sift / `_siftdown` | CPython 3.9.25 heapq.py `0351667ed3af` | C | blocked-by {Subscript-store, BinOp:RShift, **caller-visible mutation** (aliasing)} | restores heap invariant on `heap[startpos..pos]`, permutation of input | **Mutation marker**: value semantics cannot show the caller the in-place writes; needs a state-threading transform (return the list), which breaks byte-verbatim calling convention. |
+| 7 | bench_heapq_sift / `_siftup` | same | C | blocked-by {Subscript-store, caller-visible mutation, callee `_siftdown`} | as row 6 from a leaf push | These two are the real runtime code: the C accelerator does not replace underscore helpers. |
 
 ### Census references (NOT vendored — status tracked, bodies stay upstream)
 
@@ -122,28 +95,20 @@ own body adds no new blocker but it calls blocked same-file function X.
 | `stdnum.verhoeff.checksum` / `stdnum.damm.checksum` | python-stdnum 2.2 | reference **module-level table constants** — v0 `callFunction` has no globals, so vendoring them cannot run | module-globals (a blocker class no syntax census row shows), For, enumerate/reversed genexp, nested subscripts |
 | stdnum `compact`/`format` idiom (e.g. `es.dni.compact`) | python-stdnum 2.2 | 203 `compact` + 94 `format` functions gated on `stdnum.util.clean`/`isdigits` (regex) | Attribute str/re methods, import-call |
 
-## Scoreboard summary (HEAD, 2026-07-30 — post F1/F2 sprint + cold-prover landing)
+## Scoreboard summary (HEAD, 2026-07-31 — post census-suite removal)
 
-- Vendored: **33 functions / 12 suites**. **Proved: 4** (bisect_left,
-  bisect_right, isleap, leapdays — every function the tier classified
-  provable-now IS now proved, all four by cold prover agents working from
-  the repo docs alone; see "Cold-prover runs" below). Blocked: 29.
+- Vendored: **7 functions / 3 suites** (all flagships). **Proved: 2**
+  (bisect_left, bisect_right — both by cold prover agents working from the
+  repo docs alone; see "Cold-prover runs" below). Blocked: 5.
 - Flagship view: **2 of 4 flagships proved** (rsa_inverse — outside this
   suite's numbering — and bisect; heapq sift and statistics still blocked —
-  those two are the scoreboard's real frontier). isleap/leapdays are census
-  wins: they price tier features, they are not showcases.
+  those two are the scoreboard's real frontier).
 - Landed proof artifacts: `Examples/python/bench_bisect/{spec,proof}.lean`
-  (9 theorems), `Examples/python/bench_calendar/{spec,proof}.lean`
-  (3 program theorems + the counting lemma), and the checks-only census
-  spec `Examples/python/bench_iso7064_mod_11_10/spec.lean` (blocked
-  target — loud-refusal rows, kernel-checked). Axiom audit: every landed
-  theorem depends on exactly `[propext, Classical.choice, Quot.sound]`.
-  No `sorry`/`admit`/`native_decide` anywhere.
-- **Unlock delta of the F1/F2 sprint: 2 → 4 provable-now** (the two Band-A
-  flagships), exactly the pre-sprint projection. Five more functions shed a
-  blocker without flipping (rows 18–21 and 33 lost `defaults`); rows 1–2
-  lost both `defaults` and `is-None`; no other row carried F1/F2 blockers
-  (easter's is non-literal and correctly stays).
+  (9 theorems). Axiom audit: every landed theorem depends on exactly
+  `[propext, Classical.choice, Quot.sound]`. No
+  `sorry`/`admit`/`native_decide` anywhere. (The calendar proofs and the
+  iso7064 loud-refusal census spec were removed with their suites — see
+  "Removed suites".)
 - Flagship non-vacuity (interpreter-checked, not just census: surprise #2
   below says the envelope can lie): the vendored `bisect_left`/`bisect_right`
   run from their envelope agree with CPython 3.9.25 on sorted-list probes at
@@ -151,19 +116,29 @@ own body adds no new blocker but it calls blocked same-file function X.
   `lo < 0` is the sole path reaching the residual `Unsupported Raise`
   (CPython: `ValueError`, Lean: loud `unsupported`), confirming the
   proof-side `lo ≥ 0` classification.
-- Blocker histogram over the 33 (census with gateway re-entry; a function
-  counts once per blocker), post-F1/F2: Raise 10 · Try 8 · import-call 15
-  (int 5, bool 5, str 3, sorted 3, sum 2, tuple/list/map 1 each) ·
-  Attribute 3 · GeneratorExp 3 · For 2 · IfExp 2 ·
-  Subscript:Slice 2 · Subscript-store 2 · callee-only 3 ·
-  BinOp:{Div,RShift} 1+1 · ListComp 1 · str-%-format 1 (census-invisible) ·
-  non-literal default 1 (easter) · caller-visible mutation 2.
-  (Pre-sprint the histogram additionally had: defaults 8 · Compare:Is 2 —
-  both classes now empty; the literal-defaults 8 cleared by F1, the
-  non-literal 1 correctly stays.)
-- Projection (fixed-point, same census): tier + {For-over-str, call:int,
-  call:str, IfExp} → **9/33** (adds rows 5, 6, 9, 10, 22). Further
-  + {Try, Raise, call:bool} → **13/33** (adds rows 7, 8, 11, 12).
+- Blocker histogram over the 5 blocked functions (a function counts once
+  per blocker): call:sorted 3 · Raise 3 · Subscript-store 2 ·
+  caller-visible mutation 2 · BinOp:Div→float 1 · BinOp:RShift 1 ·
+  callee-only 1. (The wide-census histogram over the removed 26 census
+  functions is archived at the removal commit.)
+- Projection: tier + {call:sorted} → **4/7** (flips rows 4–5, the
+  statistics medians; their `Raise` is an unreached empty-input guard,
+  proof-side only). Further + reference-type/mutation tier → **6/7**
+  (rows 6–7, the heapq pair). Row 3 (`median`) honestly stays: its
+  even-length branch is float division, out of `Val` v0.
+
+## Removed suites (2026-07-31)
+
+Nine census suites (26 functions) were deleted per the flagship curation
+rule: bench_calendar (its isleap/leapdays proofs included), bench_capwords,
+bench_dni_check, bench_easter, bench_iso7064_mod_11_10 (its loud-refusal
+census spec included), bench_iso7064_mod_11_2, bench_iso7064_mod_97_10,
+bench_luhn, bench_stdnum_luhn. Their vendored sources, envelopes, proofs,
+scoreboard rows, wide-census blocker histogram, and unlock projections
+remain available at commit `87a783a` (last commit before removal). The
+historical sections below (cold-prover runs, F1/F2 as-built record,
+surprises) reference some of these suites; they are kept verbatim as the
+record of work that actually happened.
 
 ## Flagship plan: `bisect_left` / `bisect_right`
 
@@ -262,7 +237,7 @@ iteration (see "Cold-prover runs" below, framework fix F-2).
 
 The two unproved flagships, and what each one actually needs (2026-07-31):
 
-**heapq sift (rows 31–32, Band C)** — the real CPython runtime code (the C
+**heapq sift (rows 6–7, Band C)** — the real CPython runtime code (the C
 accelerator does not replace the underscore helpers). Spec shape: the
 returned/updated list is a permutation of the input that restores the heap
 invariant on the affected range — an inductive argument over the
@@ -273,14 +248,14 @@ designated driver for the reference-type/heap tier (the `~ref~` design
 banked in the heap-tier notes): the benchmark's next tier investment should
 be justified by this pair, not by more census rows.
 
-**statistics medians (rows 29–30, Band C)** — `median_low`/`median_high`
+**statistics medians (rows 4–5, Band C)** — `median_low`/`median_high`
 are *one tier feature away*: `call:sorted`. Their empty-input
 `raise StatisticsError` guard falls under the unreached-guard rule (theorems
 take `data ≠ []`, same as bisect's `lo ≥ 0`), so no Try/Raise tier growth is
 needed. Spec shape: order statistics — the result is an element of the data
 with the ⌊(n−1)/2⌋ / ⌈(n−1)/2⌉ rank characterization (at least k elements
 ≤ it, at least n−k ≥ it) — stated over symbolic data, not just "index into
-sorted()". `median` proper (row 28) stays a frontier marker: its
+sorted()". `median` proper (row 3) stays a frontier marker: its
 even-length branch is float division, honestly out of `Val` v0. `mean` via
 exact `_sum` (census reference) is the long-game statistics target once
 Fraction machinery is in reach.

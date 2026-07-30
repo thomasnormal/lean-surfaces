@@ -34,15 +34,41 @@ Ground rules (inherited from `docs/DESIGN.md` and the rsa_inverse precedent):
   `is None` now an in-tier `Compare`), and are byte-stable under double
   extraction.
 
+## Flagships vs. census rows
+
+The suite plays two different roles, and rows are labeled by which one they
+serve (curation rule set 2026-07-31):
+
+- **Flagships** are the functions whose *proofs are interesting* — the
+  correctness argument needs an invariant or induction that is not visible in
+  the code text (binary-search bounds, the heap property). These carry the
+  narrative and are what we showcase. Current flagships: **`rsa_inverse`**
+  (proved — `Examples/python/rsa_inverse`, the pre-benchmark precedent:
+  python-rsa's extended-Euclid modular inverse, Bézout invariant),
+  **`bisect`** (proved), **`heapq._siftdown`/`_siftup`** (next; drives the
+  mutation tier), and **`statistics`** (interesting, **proof missing** — the
+  medians are one tier feature away, see the flagship plan below).
+- **Census rows** are tier instrumentation: formula- and fold-shaped
+  functions (checksums, calendar math, string munging, date formulas) whose
+  specs are nearly definitional. They are cheap, dense probes that price tier
+  features — the blocker histogram and unlock projections below are their
+  product — but they are *not* individual showcases, and redundant family
+  variants (the three ISO 7064 files) are counted as one idiom, not three
+  results. New vendoring follows the same rule: no more checksum-class
+  targets as headline items; candidates must have flagship-grade invariant
+  content (e.g. `fractions.limit_denominator` best-rational-approximation,
+  pure-Python `isqrt`, `date.toordinal`/`fromordinal` as a proved bijection).
+
 ## Bands
 
 - **Band A — flagship**: CPython `bisect`. Smallest tier step, biggest name.
 - **Band B — pure-int / near-tier**: checksum arithmetic and calendar math
-  whose cores are Presburger-flavored integer folds.
+  whose cores are Presburger-flavored integer folds. Census rows.
 - **Band C — frontier markers**: one representative per hard feature class
   (float results, in-place mutation, slices/comprehensions, str-method-heavy
   code). These measure what v0 *honestly cannot* do; some are vendored,
-  heavy ones are census references only.
+  heavy ones are census references only. Contains one flagship: the heapq
+  sift pair.
 
 ## Scoreboard
 
@@ -102,6 +128,10 @@ own body adds no new blocker but it calls blocked same-file function X.
   bisect_right, isleap, leapdays — every function the tier classified
   provable-now IS now proved, all four by cold prover agents working from
   the repo docs alone; see "Cold-prover runs" below). Blocked: 29.
+- Flagship view: **2 of 4 flagships proved** (rsa_inverse — outside this
+  suite's numbering — and bisect; heapq sift and statistics still blocked —
+  those two are the scoreboard's real frontier). isleap/leapdays are census
+  wins: they price tier features, they are not showcases.
 - Landed proof artifacts: `Examples/python/bench_bisect/{spec,proof}.lean`
   (9 theorems), `Examples/python/bench_calendar/{spec,proof}.lean`
   (3 program theorems + the counting lemma), and the checks-only census
@@ -227,6 +257,33 @@ needed" held: the proofs use no Raise/Try/keyword/slice/Attribute/builtin
 support. What the plan did NOT predict: both loop proofs had to leave the
 `py_vcgen`/`py_loop` path because the body creates `mid` on its first
 iteration (see "Cold-prover runs" below, framework fix F-2).
+
+## Flagship plan: `heapq._siftdown`/`_siftup` and `statistics` medians
+
+The two unproved flagships, and what each one actually needs (2026-07-31):
+
+**heapq sift (rows 31–32, Band C)** — the real CPython runtime code (the C
+accelerator does not replace the underscore helpers). Spec shape: the
+returned/updated list is a permutation of the input that restores the heap
+invariant on the affected range — an inductive argument over the
+parent-chain walk, flagship-grade. Blockers: `Subscript-store`,
+`BinOp:RShift` (cheap), and the hard one, **caller-visible mutation** —
+value semantics cannot show the caller the in-place writes. This is the
+designated driver for the reference-type/heap tier (the `~ref~` design
+banked in the heap-tier notes): the benchmark's next tier investment should
+be justified by this pair, not by more census rows.
+
+**statistics medians (rows 29–30, Band C)** — `median_low`/`median_high`
+are *one tier feature away*: `call:sorted`. Their empty-input
+`raise StatisticsError` guard falls under the unreached-guard rule (theorems
+take `data ≠ []`, same as bisect's `lo ≥ 0`), so no Try/Raise tier growth is
+needed. Spec shape: order statistics — the result is an element of the data
+with the ⌊(n−1)/2⌋ / ⌈(n−1)/2⌉ rank characterization (at least k elements
+≤ it, at least n−k ≥ it) — stated over symbolic data, not just "index into
+sorted()". `median` proper (row 28) stays a frontier marker: its
+even-length branch is float division, honestly out of `Val` v0. `mean` via
+exact `_sum` (census reference) is the long-game statistics target once
+Fraction machinery is in reach.
 
 ## Cold-prover runs (2026-07-30)
 

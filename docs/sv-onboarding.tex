@@ -7,11 +7,13 @@
 \usepackage{amssymb,amsmath}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
 \usepackage{hyperref}
 \lstset{basicstyle=\ttfamily\small, breaklines=true, columns=fullflexible, keepspaces=true}
 \newcommand{\code}[1]{\texttt{#1}}
-\title{\vspace{-1.2em}Formalizing SystemVerilog in \textsf{lean-surfaces}\\[2pt]
-\large An onboarding brief: strategy, current state, and the road to a verified RISC-V core}
+\title{\vspace{-1.2em}Formalizing Hardware in \textsf{lean-surfaces}\\[2pt]
+\large An onboarding brief: digital RTL, analog circuits, and the road to a verified RISC-V core}
 \author{lean-surfaces project}
 \date{July 2026 \quad(\small repo: \code{github.com/thomasnormal/lean-surfaces})}
 \begin{document}
@@ -159,6 +161,79 @@ that makes circular rely-guarantee sound. Acceptance benchmarks are fixed in adv
 as the boss ($\forall$width \code{tx} div/rem with the RISC-V conventions), and the
 existing $\sim$300-line hand-built counter/toggle proofs must collapse to clause form with
 statements byte-preserved.
+
+
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  lvl/.style={draw, rounded corners=2pt, minimum width=11.6cm, minimum height=6.5mm, align=center, font=\small},
+  shipped/.style={lvl, fill=black!6},
+  flight/.style={lvl, very thick},
+  future/.style={lvl, dashed},
+  rel/.style={font=\scriptsize\itshape, midway, right=1pt},
+  orc/.style={font=\scriptsize, anchor=west, text=black!60},
+  node distance=3.2mm]
+\node[future]  (isa)  {\textbf{RISC-V ISA} --- prose spec + \code{sail-riscv} (the authority)};
+\node[flight, below=of isa] (model) {\textbf{Lean ISA model} \code{Rv.isaStep} --- one source of truth; projections: decode $\cdot$ aluSem $\cdot$ divRem $\cdot$ CSR};
+\node[future, below=of model] (core) {\textbf{Pipeline composition} \code{cv32e40p\_core} --- stage contracts $\vDash^{c}$, McMillan $\rhd$ at register cuts};
+\node[flight, below=of core] (mod)  {\textbf{Module theorems} --- \code{ff\_one} $\forall$LEN $\cdot$ divider $\vDash^{tx}$ $\cdot$ decoder $\cdot$ regfile $\cdot$ controller ledger};
+\node[shipped, below=of mod] (sem)  {\textbf{SV cycle semantics} --- 4-state \code{LVec}, schedule oracle $\sigma$, symbolic parameters};
+\node[shipped, below=of sem] (ana)  {\textbf{Analog blocks} --- CMOS gates, amplifier, DRAM cell/bank: rail \& margin contracts};
+\node[shipped, below=of ana] (phys) {\textbf{Device physics as definitions} --- MOS1 $\subset$ drift--diffusion $\subset$ Boltzmann (boundary explicit)};
+\draw[->] (model.north) -- (isa.south)  node[rel] {validated against (differential, Sail emulator)};
+\draw[->] (core.north)  -- (model.south) node[rel] {$\textit{core} \sqsubseteq \textit{isaStep}$ --- the summit};
+\draw[->] (mod.north)   -- (core.south)  node[rel] {contract composition (rely--guarantee)};
+\draw[->] (sem.north)   -- (mod.south)   node[rel] {interpreted by; proofs via \code{sv\_vcgen}};
+\draw[->] (ana.north)   -- (sem.south)   node[rel] {mixed-signal seam: DRAM refresh capstone (SV timing $\times$ analog retention)};
+\draw[->] (phys.north)  -- (ana.south)   node[rel] {soundness + realizability from device laws};
+\node[orc] at ([xshift=2mm]isa.east)  {};
+\node[orc, anchor=north west] at ([yshift=-1mm]phys.south west) {\textbf{Oracles per level:} Sail emulator (ISA) $\cdot$ Xcelium + Icarus (RTL) $\cdot$ ngspice + Spectre (analog). \quad \textbf{Key:} shaded = shipped, thick = in flight, dashed = future.};
+\end{tikzpicture}
+\caption{The refinement tower. Every level is a Lean artifact; every arrow is a theorem (or its differential validation); every level has an independent real-world oracle. The digital stack grounds in cycle semantics; the analog stack grounds in device physics with the assurance boundary stated, and the two meet at the DRAM refresh capstone.}
+\label{fig:tower}
+\end{figure}
+
+\section{The analog half, and where the lanes converge}
+Hardware in this project means \emph{both halves}: the digital lanes above
+(\code{LeanModels/Sv}, \code{LeanModels/Rv}) and an analog lane that is a first-class
+peer, not a satellite. (The \textbf{Python lane}, briefly, is the methodology pathfinder:
+\code{py\_vcgen} validated the walker/clause/telescope architecture \code{sv\_vcgen}
+transplants, and its real-program benchmark supplies the legibility evidence --- cold
+agents with no project context, working from repo docs alone, have proved CPython's
+\code{bisect\_left} and real PyPI checksum functions.) The \textbf{analog lane}
+(\code{LeanModels/Circuit}, \code{LeanModels/Spice}) parses SPICE decks natively and
+treats physics as \emph{definitions}, never axioms: KCL plus device laws \emph{define}
+the satisfaction relation, DC operating points are exact over $\mathbb{Q}$ (the harness
+prints our exact rational beside ngspice's float --- the simulator approximates
+\emph{us}), a restricted MOS transistor tier supports proved CMOS gates, an amplifier
+whose gain is a literal \code{deriv} matching ngspice and Spectre to nine digits, and an
+8{,}192-cell DRAM bank with kernel-checked deck projection and a cross-coupled sense
+amplifier whose metastable state is provably \emph{outside} the correctness theorems.
+Three patterns you will recognize crossed over from there: $\forall N$ structural
+induction over circuit families predates (and inspired) the SV symbolic-parameters law;
+contracts carry \emph{both} inclusions (projection and realization); and the
+realizability-pairing rule was born from an audit that found a plausible MOS theorem set
+kernel-provably vacuous. The \textbf{endgame} that joins your lane to theirs (Figure~\ref{fig:tower}) is the DRAM
+refresh capstone: the SV side proves \emph{``the controller refreshes every row within
+$T_{\mathit{ref}}$''} (cycle counting --- \code{sv\_vcgen} territory), the analog side
+proves \emph{``a cell retains its bit for at least $T_{\mathit{ref}}$ under a stated
+leakage envelope,''} and one composed theorem states \emph{no bit is ever lost} --- a
+sentence neither a simulator nor a single-domain tool can even form. Design your module
+contracts with that consumer in mind.
+
+\paragraph{Good first contributions.} (a)~Pick one T-select feature (a reduction
+operator, part-select) and land it diff-rows-first --- small, complete, teaches the whole
+workflow. (b)~Add a lemma to the symbolic-width \code{LVec} pack (append/slice/reduction
+algebra) with a \code{\#guard} battery. (c)~When \code{sv\_vcgen} lands, reprove
+\code{counter} in clause form --- the regression benchmark needs doing and is the best
+tactic tutorial we have. (d)~Draft the FIFO $\forall$\code{DEPTH} proof from gallery
+entry~3. (e)~Read the controller contract (gallery entry~10) \emph{skeptically} and file issues
+--- fresh eyes on rely clauses are worth more than code. (f)~On the analog side: the
+sense amplifier's offset-quantified margin theorem is the documented open residual
+(\code{DramDifferentialSenseInitialMargin} is defined but consumed by no theorem) ---
+closing it is the analog lane's highest-value open item, and a fine entry point if
+device-level work appeals to you.
 
 \section{Where things stand and how we work}
 \textbf{Running now}: Phase 2 (Lean ingestion of symbolic envelopes + the

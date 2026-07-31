@@ -1,0 +1,389 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "mode": "symbolic",
+  "top": "t2_ci",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/probes/t2_ci.sv",
+      "sha256": "e049e93b14642442ed42661a8949409c01cece01e239795ee338d0adb135a836"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 4,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "t2_ci",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 24,
+              "end_line": 5,
+              "end_col": 25
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 19,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 4,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 21,
+                      "end_line": 5,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 5
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 24,
+              "end_line": 6,
+              "end_col": 25
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "value": 2,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 21,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 8,
+              "col": 3,
+              "end_line": 16,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 9,
+                "col": 5,
+                "end_line": 15,
+                "end_col": 12
+              },
+              "stmts": [
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 9,
+                    "col": 5,
+                    "end_line": 15,
+                    "end_col": 12
+                  },
+                  "check": "unique",
+                  "match": "inside",
+                  "subject": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 9,
+                      "col": 18,
+                      "end_line": 9,
+                      "end_col": 19
+                    },
+                    "width": 5,
+                    "name": "a"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 7,
+                            "end_line": 10,
+                            "end_col": 15
+                          },
+                          "width": 5,
+                          "bits": "0001z"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 10,
+                          "col": 17,
+                          "end_line": 10,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 10,
+                            "col": 17,
+                            "end_line": 10,
+                            "end_col": 18
+                          },
+                          "width": 3,
+                          "name": "y"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 10,
+                            "col": 21,
+                            "end_line": 10,
+                            "end_col": 25
+                          },
+                          "width": 3,
+                          "bits": "001"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 7,
+                            "end_line": 11,
+                            "end_col": 15
+                          },
+                          "width": 5,
+                          "bits": "001zz"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 11,
+                          "col": 17,
+                          "end_line": 11,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 11,
+                            "col": 17,
+                            "end_line": 11,
+                            "end_col": 18
+                          },
+                          "width": 3,
+                          "name": "y"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 11,
+                            "col": 21,
+                            "end_line": 11,
+                            "end_col": 25
+                          },
+                          "width": 3,
+                          "bits": "010"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 12,
+                            "col": 7,
+                            "end_line": 12,
+                            "end_col": 15
+                          },
+                          "width": 5,
+                          "bits": "1zzzz"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 12,
+                          "col": 17,
+                          "end_line": 12,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 12,
+                            "col": 17,
+                            "end_line": 12,
+                            "end_col": 18
+                          },
+                          "width": 3,
+                          "name": "y"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 12,
+                            "col": 21,
+                            "end_line": 12,
+                            "end_col": 25
+                          },
+                          "width": 3,
+                          "bits": "011"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 7,
+                            "end_line": 13,
+                            "end_col": 15
+                          },
+                          "width": 5,
+                          "bits": "00001"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 13,
+                          "col": 17,
+                          "end_line": 13,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 13,
+                            "col": 17,
+                            "end_line": 13,
+                            "end_col": 18
+                          },
+                          "width": 3,
+                          "name": "y"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 13,
+                            "col": 21,
+                            "end_line": 13,
+                            "end_col": 25
+                          },
+                          "width": 3,
+                          "bits": "100"
+                        }
+                      }
+                    }
+                  ],
+                  "default": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 14,
+                      "col": 17,
+                      "end_line": 14,
+                      "end_col": 26
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 17,
+                        "end_line": 14,
+                        "end_col": 18
+                      },
+                      "width": 3,
+                      "name": "y"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 14,
+                        "col": 21,
+                        "end_line": 14,
+                        "end_col": 25
+                      },
+                      "width": 3,
+                      "bits": "000"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

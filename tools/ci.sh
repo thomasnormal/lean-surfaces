@@ -55,6 +55,14 @@ elif command -v xrun >/dev/null 2>&1; then
 else
   echo "=== [sv-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv-harness")
 fi
+# sv-0.2 semantic tier: per-feature probes + real-core transactions (ff_one,
+# popcnt, alu_div, fifo, register_file_ff). --sim auto uses every simulator
+# on PATH; the case-inside probe is Xcelium-only (Icarus cannot parse it).
+if command -v iverilog >/dev/null 2>&1 || command -v xrun >/dev/null 2>&1; then
+  maybe "sv2-harness" harness/sv/diff_test2.py python3 harness/sv/diff_test2.py --sim auto
+else
+  echo "=== [sv2-harness] SKIP (no simulator: neither xrun nor iverilog on PATH)"; skip+=("sv2-harness")
+fi
 
 # SPICE lane: ngspice is the floating-point differential oracle for the exact
 # rational DC solver and the analog validation oracle for switch-level gates.

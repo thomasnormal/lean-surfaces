@@ -86,6 +86,30 @@ UNARY_OPS = {
     UnaryOperator.LogicalNot: "!",
     UnaryOperator.Minus: "-",
 }
+# Reduction operators (semantic tier, symbolic mode only): slang enum ->
+# the envelope's `Reduce.op` spelling.
+REDUCE_OPS = {
+    UnaryOperator.BitwiseOr: "|",
+    UnaryOperator.BitwiseAnd: "&",
+    UnaryOperator.BitwiseXor: "^",
+    UnaryOperator.BitwiseNor: "~|",
+    UnaryOperator.BitwiseNand: "~&",
+    UnaryOperator.BitwiseXnor: "~^",
+}
+# `case` statement qualifiers (semantic tier): slang enum name -> envelope.
+CASE_CHECKS = {
+    "None_": "none",
+    "Unique": "unique",
+    "Unique0": "unique0",
+    "Priority": "priority",
+}
+CASE_CONDITIONS = {
+    "Normal": "normal",
+    "Inside": "inside",
+    # WildcardXOrZ (casex) / WildcardJustZ (casez): NOT in the CV32E40P
+    # semantic tier (the core has no casez/casex — see
+    # docs/cv32e40p-spec-surface.md "what the RTL corrected"); Unsupported.
+}
 
 
 class ExtractError(Exception):
@@ -311,6 +335,30 @@ def width_of(d):
     return d.get("width")
 
 
+def _multidim_width(t):
+    """Total bit width when t is a (possibly multi-dim) packed vector of a
+    4-state unsigned scalar with every dimension declared `[N-1:0]`
+    (descending, zero-based), else None. The semantic tier treats such a
+    vector as one LSB-first bit string; element i of the outermost dim is
+    the chunk at offset i*elemW — exactly the `[N-1:0]` layout."""
+    try:
+        if not t.isFourState or t.isSigned:
+            return None
+        ct = t.canonicalType
+        total = ct.bitWidth
+        while type(ct).__name__ == "PackedArrayType":
+            rng = ct.range
+            n = rng.left - rng.right + 1
+            if rng.right != 0 or n <= 0:
+                return None
+            ct = ct.elementType.canonicalType
+        if type(ct).__name__ != "ScalarType":
+            return None
+        return total
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Expressions
 # ---------------------------------------------------------------------------
@@ -403,6 +451,14 @@ def _convert_expr(sm, e):
             ew = _sym_enum_width(e.type)
             if ew is not None:
                 w = ew
+            elif reason == "range":
+                # Semantic tier: multi-dim packed vectors are in-vocabulary
+                # as ONE bit vector (element selects read/write chunks).
+                # Only descending zero-based dims qualify — the select
+                # semantics' `chunk i at offset i*elemW` law needs them.
+                mw = _multidim_width(e.type)
+                if mw is not None:
+                    w = mw
         if w is None:
             # Keep the historical tag for 2-state-but-otherwise-bad types.
             if reason == "type" and not getattr(e.type, "isFourState", True):
@@ -448,6 +504,17 @@ def _convert_expr(sm, e):
 
     if cname == "UnaryExpression":
         sym = UNARY_OPS.get(e.op)
+        if sym is None and _SYM is not None:
+            # Semantic tier: reduction operators (1-bit result).
+            rsym = REDUCE_OPS.get(e.op)
+            if rsym is not None:
+                return {
+                    "kind": "Reduce",
+                    "span": node_span(sm, e),
+                    "width": 1,
+                    "op": rsym,
+                    "operand": _convert_expr(sm, e.operand),
+                }
         if sym is None:
             return unsupported(
                 sm, e, "UnaryExpression:" + str(e.op).split(".")[-1]
@@ -552,8 +619,84 @@ def _convert_expr(sm, e):
         d = _sym_expr_syscall(sm, e)
         if d is not None:
             return d
+        d = _sym_cast_call(sm, e)
+        if d is not None:
+            return d
+
+    # ---- semantic-tier nodes (symbolic mode only; sv-0.1 unchanged) ----
+    if _SYM is not None:
+        if cname == "ElementSelectExpression":
+            # Bit select / packed element select. The index is a symbolic
+            # position (genvar arithmetic like `2**level-1+l` is legal
+            # there) — runtime indices parse identically, the extra
+            # operators are simply admitted.
+            with _SymPos():
+                sel = _convert_expr(sm, e.selector)
+            return {
+                "kind": "BitSel",
+                "span": node_span(sm, e),
+                "width": _safe_width(e),
+                "value": _convert_expr(sm, e.value),
+                "index": sel,
+            }
+        if cname == "RangeSelectExpression":
+            skind = str(e.selectionKind).split(".")[-1]
+            if skind != "Simple":
+                # +: / -: indexed part-selects: no CV32E40P rtl/*.sv file
+                # uses them (grep-verified); out of tier, loud.
+                return unsupported(sm, e, "RangeSelectExpression:" + skind)
+            with _SymPos():
+                msb = _convert_expr(sm, e.left)
+                lsb = _convert_expr(sm, e.right)
+            return {
+                "kind": "PartSel",
+                "span": node_span(sm, e),
+                "width": _safe_width(e),
+                "value": _convert_expr(sm, e.value),
+                "msb": msb,
+                "lsb": lsb,
+            }
+        if cname == "ReplicationExpression":
+            with _SymPos():
+                cnt = _convert_expr(sm, e.count)
+            return {
+                "kind": "Repl",
+                "span": node_span(sm, e),
+                "width": _safe_width(e),
+                "count": cnt,
+                "operand": _convert_expr(sm, e.concat),
+            }
 
     return unsupported(sm, e)
+
+
+def _sym_cast_call(sm, e):
+    """$signed/$unsigned in expression position (semantic tier): a Cast
+    node. Width-preserving (slang gives the call the operand's width), so
+    the cast itself changes no bits — signedness matters only through the
+    consuming operator (order comparisons are emitted `s<`-style when both
+    operands are signed, §11.8.1). Returns None for any other call."""
+    try:
+        name = e.subroutineName
+        if not e.isSystemCall or name not in ("$signed", "$unsigned"):
+            return None
+        args = list(e.arguments)
+    except Exception:
+        return None
+    if len(args) != 1:
+        return unsupported(sm, e, "CallExpression:arity")
+    operand = _convert_expr(sm, args[0])
+    ow = width_of(operand)
+    myw = _safe_width(e)
+    if ow is not None and myw is not None and ow != myw:
+        return unsupported(sm, e, "CallExpression:cast-width")
+    return {
+        "kind": "Cast",
+        "span": node_span(sm, e),
+        "width": myw,
+        "signed": name == "$signed",
+        "operand": operand,
+    }
 
 
 def ident_target(sm, lhs):
@@ -561,6 +704,30 @@ def ident_target(sm, lhs):
     assignment). Returns (target_dict, ok)."""
     t = convert_expr(sm, lhs)
     return t, (t is not None and t.get("kind") == "Ident")
+
+
+def _target_shape_ok(t):
+    """Semantic-tier LHS shapes: Ident, or a single BitSel/PartSel whose
+    base is an Ident (no nested selects, no concat LHS — the CV32E40P
+    provable files use none of those on the left)."""
+    if t is None:
+        return False
+    k = t.get("kind")
+    if k == "Ident":
+        return True
+    if k in ("BitSel", "PartSel"):
+        base = t.get("value")
+        return base is not None and base.get("kind") == "Ident"
+    return False
+
+
+def select_target(sm, lhs):
+    """Assignment LHS in symbolic mode: Ident / BitSel / PartSel over an
+    Ident. Falls back to the M0 Ident-only rule in single-file mode."""
+    if _SYM is None:
+        return ident_target(sm, lhs)
+    t = convert_expr(sm, lhs)
+    return t, _target_shape_ok(t)
 
 
 # ---------------------------------------------------------------------------
@@ -609,7 +776,7 @@ def _convert_stmt(sm, s):
             return unsupported(sm, s, "AssignmentExpression:compound")
         if e.timingControl is not None:  # intra-assignment delay/event
             return unsupported(sm, s, "AssignmentExpression:timing")
-        target, ok = ident_target(sm, e.left)
+        target, ok = select_target(sm, e.left)
         if not ok:
             return unsupported(sm, s, "AssignmentExpression:target")
         value = convert_expr(sm, e.right)
@@ -672,6 +839,37 @@ def _convert_stmt(sm, s):
         return unsupported(
             sm, s, "TimedStatement:" + type(s.timing).__name__
         )
+
+    if cname == "CaseStatement" and _SYM is not None:
+        check = CASE_CHECKS.get(str(s.check).split(".")[-1])
+        cond = CASE_CONDITIONS.get(str(s.condition).split(".")[-1])
+        if check is None:
+            return unsupported(sm, s, "CaseStatement:"
+                               + str(s.check).split(".")[-1])
+        if cond is None:
+            # casez/casex: not in the CV32E40P tier (the core uses
+            # `case … inside`, §12.5.4 — never casez).
+            return unsupported(sm, s, "CaseStatement:"
+                               + str(s.condition).split(".")[-1])
+        items = []
+        for it in s.items:
+            with _SymPos():
+                pats = [_convert_expr(sm, ex) for ex in it.expressions]
+            items.append({
+                "kind": "CaseItem",
+                "patterns": pats,
+                "body": convert_stmt(sm, it.stmt),
+            })
+        return {
+            "kind": "Case",
+            "span": node_span(sm, s),
+            "check": check,
+            "match": cond,
+            "subject": convert_expr(sm, s.expr),
+            "items": items,
+            "default": convert_stmt(sm, s.defaultCase)
+            if s.defaultCase is not None else None,
+        }
 
     return unsupported(sm, s)
 
@@ -770,11 +968,17 @@ def convert_procedural_block(sm, m):
         }
 
     # always_ff / always: body must be exactly @(posedge <1-bit identifier>)
+    # — or, in symbolic mode, @(posedge clk or negedge rst_n) (the async
+    # active-low reset event list every clocked CV32E40P module uses).
     style = "always_ff" if pk == ProceduralBlockKind.AlwaysFF else "always"
     body = m.body
     if type(body).__name__ != "TimedStatement":
         return unsupported(sm, m, "ProceduralBlockSymbol:NoEventControl")
     timing = body.timing
+    if type(timing).__name__ == "EventListControl" and _SYM is not None:
+        d = _sym_areset_process(sm, m, body, timing, style)
+        if d is not None:
+            return d
     if type(timing).__name__ != "SignalEventControl":
         return unsupported(sm, m, "TimedStatement:" + type(timing).__name__)
     if timing.edge != EdgeKind.PosEdge:
@@ -795,6 +999,45 @@ def convert_procedural_block(sm, m):
     }
 
 
+def _sym_areset_process(sm, m, body, timing, style):
+    """`@(posedge clk or negedge rst_n)` (or the comma form) with 1-bit
+    identifier events -> AlwaysPosedge node with an extra `areset_n` field
+    (semantic tier T-reset). Any other event list: None (falls through to
+    the M0 Unsupported path)."""
+    try:
+        events = list(timing.events)
+    except Exception:
+        return None
+    if len(events) != 2:
+        return None
+    clk_name = None
+    rst_name = None
+    for ev in events:
+        if type(ev).__name__ != "SignalEventControl":
+            return None
+        if getattr(ev, "iffCondition", None) is not None:
+            return None
+        sig = convert_expr(sm, ev.expr)
+        if sig.get("kind") != "Ident" or sig.get("width") != 1:
+            return None
+        if ev.edge == EdgeKind.PosEdge and clk_name is None:
+            clk_name = sig["name"]
+        elif ev.edge == EdgeKind.NegEdge and rst_name is None:
+            rst_name = sig["name"]
+        else:
+            return None
+    if clk_name is None or rst_name is None:
+        return None
+    return {
+        "kind": "AlwaysPosedge",
+        "span": sym_span(sm, m),
+        "style": style,
+        "clock": clk_name,
+        "areset_n": rst_name,
+        "body": convert_stmt(sm, body.stmt),
+    }
+
+
 def convert_continuous_assign(sm, m):
     if getattr(m, "delay", None) is not None:
         return unsupported(sm, m, "ContinuousAssignSymbol:delay")
@@ -803,7 +1046,7 @@ def convert_continuous_assign(sm, m):
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
     if e.op is not None or e.timingControl is not None or e.isNonBlocking:
         return unsupported(sm, m, "ContinuousAssignSymbol:form")
-    target, ok = ident_target(sm, e.left)
+    target, ok = select_target(sm, e.left)
     if not ok:
         return unsupported(sm, m, "AssignmentExpression:target")
     value = convert_expr(sm, e.right)
@@ -1293,16 +1536,24 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
             pass
         return None
     inner = _convert_expr(sm, op)
-    if not _has_sym_refs(inner):
-        return None  # M0 path (constant folding is value-safe here)
     try:
         resizable = (
             op.type.isIntegral and e.type.isIntegral and not op.type.isSigned
         )
     except Exception:
         resizable = False
+    if not resizable and not _has_sym_refs(inner):
+        # Signed/exotic constant operand without symbolic refs: slang's
+        # fold (M0 path) is the only representation we have. NOTE the
+        # recorded limitation: the folded width is defaults-elaborated.
+        return None
     if not resizable:
         return unsupported(sm, e, "ConversionExpression:width")
+    # Unsigned operands ALWAYS emit Resize in symbolic mode — the target
+    # width is context-propagated (parameter-dependent), so a folded
+    # literal would bake in the defaults-elaborated width and be silently
+    # wrong at other family points. `Resize.width` stays metadata; the
+    # Lean side resizes to the *instantiated* context width.
     if state_squash:
         inner = {"kind": "Squash2", "span": node_span(sm, e), "width": ow,
                  "operand": inner}
@@ -1667,14 +1918,60 @@ def convert_net_sym(sm, m):
     }
 
 
+def _param_width_type(sm, m):
+    """Width-only fallback type for a DECLARED (non-implicit) parameter
+    type that `_dtype_sym` cannot represent (2-state and/or signed keyword
+    types: `bit`, `int`, `int unsigned`, `integer`, ...). A parameter's
+    VALUE is a compile-time integer, so 4-state-ness cannot matter for the
+    value tier — but its declared WIDTH governs every expression containing
+    the ParamRef (`parameter bit FALL_THROUGH` makes `FALL_THROUGH &
+    push_i` a 1-bit `&`; dropping the type to `null` made the Lean side
+    assume 32 bits and x-poison cv32e40p_fifo's `empty_o` — the envelope
+    bug this fixes, found by the phase-2 differential harness). Concrete
+    bounds are emitted only when the type syntax carries NO dimensions
+    (keyword-typed: width fixed at every family point); a dimensioned
+    unrepresentable type emits `packed: null` (unrecoverable) so the Lean
+    side is LOUD where it would otherwise be silently wrong."""
+    try:
+        t = m.type
+        if not t.isIntegral:
+            return None
+        w = int(t.bitWidth)
+        dims = getattr(_decl_type_syntax(m), "dimensions", None)
+        ndims = sum(1 for _ in dims) if dims is not None else 0
+    except Exception:
+        return None
+    if ndims != 0:
+        return {"kind": "PackedType", "packed": None, "resolved": w}
+    if w == 1:
+        return {"kind": "PackedType", "packed": [], "resolved": 1}
+    span = sym_span(sm, m)
+    return {
+        "kind": "PackedType",
+        "packed": [{
+            "msb": {"kind": "Int", "span": span, "value": w - 1,
+                    "resolved_width": 32},
+            "lsb": {"kind": "Int", "span": span, "value": 0,
+                    "resolved_width": 32},
+        }],
+        "resolved": w,
+    }
+
+
 def convert_param_sym(sm, m):
     """ParameterSymbol -> ParameterDecl (module parameter) or LocalParam
     (localparam). `default`/`expr` is the SYMBOLIC bound initializer;
-    `resolved` the defaults-elaborated value (secondary)."""
+    `resolved` the defaults-elaborated value (secondary). `type` is the
+    declared type when representable, a width-only `PackedType` for
+    declared-but-2-state/signed keyword types (`_param_width_type` — the
+    width is semantics, never dropped), and `null` ONLY for a genuinely
+    implicit type."""
     tsyn = _decl_type_syntax(m)
     ptype = None
     if tsyn is not None and tsyn.kind != SyntaxKind.ImplicitType:
         ptype, _reason = _dtype_sym(sm, m.type, tsyn)
+        if ptype is None:
+            ptype = _param_width_type(sm, m)
     init = getattr(m, "initializer", None)
     init_d = convert_sym_expr(sm, init) if init is not None else None
     resolved = None

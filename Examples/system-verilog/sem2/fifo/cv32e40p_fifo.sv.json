@@ -1,0 +1,4100 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "mode": "symbolic",
+  "top": "cv32e40p_fifo",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/fifo/cv32e40p_fifo.sv",
+      "sha256": "d910cbd0751f38d349e8975de22b43d0a2937f9e905b0d9b82894fd83c53fe8a"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 15,
+          "col": 1,
+          "end_line": 168,
+          "end_col": 10
+        },
+        "name": "cv32e40p_fifo",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 16,
+              "col": 19,
+              "end_line": 16,
+              "end_col": 38
+            },
+            "name": "FALL_THROUGH",
+            "type": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "default": {
+              "kind": "Literal",
+              "span": {
+                "line": 16,
+                "col": 34,
+                "end_line": 16,
+                "end_col": 38
+              },
+              "width": 1,
+              "bits": "0"
+            },
+            "resolved": 0
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 17,
+              "col": 28,
+              "end_line": 17,
+              "end_col": 43
+            },
+            "name": "DATA_WIDTH",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 28,
+                      "end_line": 17,
+                      "end_col": 43
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 17,
+                      "col": 28,
+                      "end_line": 17,
+                      "end_col": 43
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 17,
+                "col": 41,
+                "end_line": 17,
+                "end_col": 43
+              },
+              "value": 32,
+              "resolved_width": 32
+            },
+            "resolved": 32
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 18,
+              "col": 28,
+              "end_line": 18,
+              "end_col": 37
+            },
+            "name": "DEPTH",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 28,
+                      "end_line": 18,
+                      "end_col": 37
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 18,
+                      "col": 28,
+                      "end_line": 18,
+                      "end_col": 37
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 18,
+                "col": 36,
+                "end_line": 18,
+                "end_col": 37
+              },
+              "value": 8,
+              "resolved_width": 32
+            },
+            "resolved": 8
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 20,
+              "col": 28,
+              "end_line": 20,
+              "end_col": 72
+            },
+            "name": "ADDR_DEPTH",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 28,
+                      "end_line": 20,
+                      "end_col": 72
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 28,
+                      "end_line": 20,
+                      "end_col": 72
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Squash2",
+              "span": {
+                "line": 20,
+                "col": 41,
+                "end_line": 20,
+                "end_col": 72
+              },
+              "width": 32,
+              "operand": {
+                "kind": "Ternary",
+                "span": {
+                  "line": 20,
+                  "col": 41,
+                  "end_line": 20,
+                  "end_col": 72
+                },
+                "width": 32,
+                "cond": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 20,
+                    "col": 42,
+                    "end_line": 20,
+                    "end_col": 51
+                  },
+                  "width": 1,
+                  "op": ">",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 20,
+                      "col": 42,
+                      "end_line": 20,
+                      "end_col": 47
+                    },
+                    "name": "DEPTH"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 20,
+                      "col": 50,
+                      "end_line": 20,
+                      "end_col": 51
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  }
+                },
+                "then": {
+                  "kind": "SysCall",
+                  "span": {
+                    "line": 20,
+                    "col": 55,
+                    "end_line": 20,
+                    "end_col": 68
+                  },
+                  "name": "$clog2",
+                  "args": [
+                    {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 20,
+                        "col": 62,
+                        "end_line": 20,
+                        "end_col": 67
+                      },
+                      "name": "DEPTH"
+                    }
+                  ],
+                  "resolved": 3
+                },
+                "else": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 20,
+                    "col": 71,
+                    "end_line": 20,
+                    "end_col": 72
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
+              }
+            },
+            "resolved": 3
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 40,
+              "col": 27,
+              "end_line": 40,
+              "end_col": 63
+            },
+            "name": "FIFO_DEPTH",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 40,
+                      "col": 27,
+                      "end_line": 40,
+                      "end_col": 63
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 40,
+                      "col": 27,
+                      "end_line": 40,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "expr": {
+              "kind": "Ternary",
+              "span": {
+                "line": 40,
+                "col": 40,
+                "end_line": 40,
+                "end_col": 63
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Binary",
+                "span": {
+                  "line": 40,
+                  "col": 41,
+                  "end_line": 40,
+                  "end_col": 50
+                },
+                "width": 1,
+                "op": ">",
+                "left": {
+                  "kind": "ParamRef",
+                  "span": {
+                    "line": 40,
+                    "col": 41,
+                    "end_line": 40,
+                    "end_col": 46
+                  },
+                  "name": "DEPTH"
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 40,
+                    "col": 49,
+                    "end_line": 40,
+                    "end_col": 50
+                  },
+                  "value": 0,
+                  "resolved_width": 32
+                }
+              },
+              "then": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 40,
+                  "col": 54,
+                  "end_line": 40,
+                  "end_col": 59
+                },
+                "name": "DEPTH"
+              },
+              "else": {
+                "kind": "Int",
+                "span": {
+                  "line": 40,
+                  "col": 62,
+                  "end_line": 40,
+                  "end_col": 63
+                },
+                "value": 1,
+                "resolved_width": 32
+              }
+            },
+            "resolved": 8
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 22,
+              "col": 17,
+              "end_line": 22,
+              "end_col": 22
+            },
+            "name": "clk_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 23,
+              "col": 17,
+              "end_line": 23,
+              "end_col": 23
+            },
+            "name": "rst_ni",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 24,
+              "col": 17,
+              "end_line": 24,
+              "end_col": 24
+            },
+            "name": "flush_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 25,
+              "col": 17,
+              "end_line": 25,
+              "end_col": 34
+            },
+            "name": "flush_but_first_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 26,
+              "col": 17,
+              "end_line": 26,
+              "end_col": 27
+            },
+            "name": "testmode_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 28,
+              "col": 18,
+              "end_line": 28,
+              "end_col": 24
+            },
+            "name": "full_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 29,
+              "col": 18,
+              "end_line": 29,
+              "end_col": 25
+            },
+            "name": "empty_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 30,
+              "col": 33,
+              "end_line": 30,
+              "end_col": 38
+            },
+            "name": "cnt_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 30,
+                      "col": 19,
+                      "end_line": 30,
+                      "end_col": 29
+                    },
+                    "name": "ADDR_DEPTH"
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 30,
+                      "col": 30,
+                      "end_line": 30,
+                      "end_col": 31
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 32,
+              "col": 34,
+              "end_line": 32,
+              "end_col": 40
+            },
+            "name": "data_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 32,
+                      "col": 18,
+                      "end_line": 32,
+                      "end_col": 30
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 32,
+                        "col": 18,
+                        "end_line": 32,
+                        "end_col": 28
+                      },
+                      "name": "DATA_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 32,
+                        "col": 29,
+                        "end_line": 32,
+                        "end_col": 30
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 32,
+                      "col": 31,
+                      "end_line": 32,
+                      "end_col": 32
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 33,
+              "col": 17,
+              "end_line": 33,
+              "end_col": 23
+            },
+            "name": "push_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 35,
+              "col": 35,
+              "end_line": 35,
+              "end_col": 41
+            },
+            "name": "data_o",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 35,
+                      "col": 19,
+                      "end_line": 35,
+                      "end_col": 31
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 35,
+                        "col": 19,
+                        "end_line": 35,
+                        "end_col": 29
+                      },
+                      "name": "DATA_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 35,
+                        "col": 30,
+                        "end_line": 35,
+                        "end_col": 31
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 35,
+                      "col": 32,
+                      "end_line": 35,
+                      "end_col": 33
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 36,
+              "col": 17,
+              "end_line": 36,
+              "end_col": 22
+            },
+            "name": "pop_i",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 42,
+              "col": 9,
+              "end_line": 42,
+              "end_col": 19
+            },
+            "name": "gate_clock",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 44,
+              "col": 28,
+              "end_line": 44,
+              "end_col": 42
+            },
+            "name": "read_pointer_n",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 44,
+                      "col": 10,
+                      "end_line": 44,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 44,
+                        "col": 10,
+                        "end_line": 44,
+                        "end_col": 20
+                      },
+                      "name": "ADDR_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 44,
+                        "col": 23,
+                        "end_line": 44,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 44,
+                      "col": 25,
+                      "end_line": 44,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 44,
+              "col": 44,
+              "end_line": 44,
+              "end_col": 58
+            },
+            "name": "read_pointer_q",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 44,
+                      "col": 10,
+                      "end_line": 44,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 44,
+                        "col": 10,
+                        "end_line": 44,
+                        "end_col": 20
+                      },
+                      "name": "ADDR_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 44,
+                        "col": 23,
+                        "end_line": 44,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 44,
+                      "col": 25,
+                      "end_line": 44,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 44,
+              "col": 60,
+              "end_line": 44,
+              "end_col": 75
+            },
+            "name": "write_pointer_n",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 44,
+                      "col": 10,
+                      "end_line": 44,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 44,
+                        "col": 10,
+                        "end_line": 44,
+                        "end_col": 20
+                      },
+                      "name": "ADDR_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 44,
+                        "col": 23,
+                        "end_line": 44,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 44,
+                      "col": 25,
+                      "end_line": 44,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 44,
+              "col": 77,
+              "end_line": 44,
+              "end_col": 92
+            },
+            "name": "write_pointer_q",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 44,
+                      "col": 10,
+                      "end_line": 44,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 44,
+                        "col": 10,
+                        "end_line": 44,
+                        "end_col": 20
+                      },
+                      "name": "ADDR_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 44,
+                        "col": 23,
+                        "end_line": 44,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 44,
+                      "col": 25,
+                      "end_line": 44,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 3
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 47,
+              "col": 7,
+              "end_line": 47,
+              "end_col": 19
+            },
+            "name": "status_cnt_n",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 46,
+                      "col": 10,
+                      "end_line": 46,
+                      "end_col": 20
+                    },
+                    "name": "ADDR_DEPTH"
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 46,
+                      "col": 21,
+                      "end_line": 46,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 47,
+              "col": 21,
+              "end_line": 47,
+              "end_col": 33
+            },
+            "name": "status_cnt_q",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 46,
+                      "col": 10,
+                      "end_line": 46,
+                      "end_col": 20
+                    },
+                    "name": "ADDR_DEPTH"
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 46,
+                      "col": 21,
+                      "end_line": 46,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 49,
+              "col": 44,
+              "end_line": 49,
+              "end_col": 49
+            },
+            "name": "mem_n",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 49,
+                      "col": 10,
+                      "end_line": 49,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 49,
+                        "col": 10,
+                        "end_line": 49,
+                        "end_col": 20
+                      },
+                      "name": "FIFO_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 49,
+                        "col": 23,
+                        "end_line": 49,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 49,
+                      "col": 25,
+                      "end_line": 49,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                },
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 49,
+                      "col": 28,
+                      "end_line": 49,
+                      "end_col": 40
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 49,
+                        "col": 28,
+                        "end_line": 49,
+                        "end_col": 38
+                      },
+                      "name": "DATA_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 49,
+                        "col": 39,
+                        "end_line": 49,
+                        "end_col": 40
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 49,
+                      "col": 41,
+                      "end_line": 49,
+                      "end_col": 42
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 256
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 49,
+              "col": 51,
+              "end_line": 49,
+              "end_col": 56
+            },
+            "name": "mem_q",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 49,
+                      "col": 10,
+                      "end_line": 49,
+                      "end_col": 24
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 49,
+                        "col": 10,
+                        "end_line": 49,
+                        "end_col": 20
+                      },
+                      "name": "FIFO_DEPTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 49,
+                        "col": 23,
+                        "end_line": 49,
+                        "end_col": 24
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 49,
+                      "col": 25,
+                      "end_line": 49,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                },
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 49,
+                      "col": 28,
+                      "end_line": 49,
+                      "end_col": 40
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 49,
+                        "col": 28,
+                        "end_line": 49,
+                        "end_col": 38
+                      },
+                      "name": "DATA_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 49,
+                        "col": 39,
+                        "end_line": 49,
+                        "end_col": 40
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 49,
+                      "col": 41,
+                      "end_line": 49,
+                      "end_col": 42
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 256
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 51,
+              "col": 10,
+              "end_line": 51,
+              "end_col": 30
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 51,
+                "col": 10,
+                "end_line": 51,
+                "end_col": 15
+              },
+              "width": 4,
+              "name": "cnt_o"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 51,
+                "col": 18,
+                "end_line": 51,
+                "end_col": 30
+              },
+              "width": 4,
+              "name": "status_cnt_q"
+            }
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 65,
+              "col": 3,
+              "end_line": 108,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 65,
+                "col": 15,
+                "end_line": 108,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 67,
+                    "col": 5,
+                    "end_line": 67,
+                    "end_col": 38
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 67,
+                      "col": 5,
+                      "end_line": 67,
+                      "end_col": 19
+                    },
+                    "width": 3,
+                    "name": "read_pointer_n"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 67,
+                      "col": 23,
+                      "end_line": 67,
+                      "end_col": 37
+                    },
+                    "width": 3,
+                    "name": "read_pointer_q"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 68,
+                    "col": 5,
+                    "end_line": 68,
+                    "end_col": 39
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 68,
+                      "col": 5,
+                      "end_line": 68,
+                      "end_col": 20
+                    },
+                    "width": 3,
+                    "name": "write_pointer_n"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 68,
+                      "col": 23,
+                      "end_line": 68,
+                      "end_col": 38
+                    },
+                    "width": 3,
+                    "name": "write_pointer_q"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 69,
+                    "col": 5,
+                    "end_line": 69,
+                    "end_col": 36
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 69,
+                      "col": 5,
+                      "end_line": 69,
+                      "end_col": 17
+                    },
+                    "width": 4,
+                    "name": "status_cnt_n"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 69,
+                      "col": 23,
+                      "end_line": 69,
+                      "end_col": 35
+                    },
+                    "width": 4,
+                    "name": "status_cnt_q"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 70,
+                    "col": 5,
+                    "end_line": 70,
+                    "end_col": 69
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 70,
+                      "col": 5,
+                      "end_line": 70,
+                      "end_col": 11
+                    },
+                    "width": 32,
+                    "name": "data_o"
+                  },
+                  "value": {
+                    "kind": "Ternary",
+                    "span": {
+                      "line": 70,
+                      "col": 23,
+                      "end_line": 70,
+                      "end_col": 68
+                    },
+                    "width": 32,
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 70,
+                        "col": 24,
+                        "end_line": 70,
+                        "end_col": 34
+                      },
+                      "width": 1,
+                      "op": "==",
+                      "left": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 70,
+                          "col": 24,
+                          "end_line": 70,
+                          "end_col": 29
+                        },
+                        "name": "DEPTH"
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 70,
+                          "col": 33,
+                          "end_line": 70,
+                          "end_col": 34
+                        },
+                        "value": 0,
+                        "resolved_width": 32
+                      }
+                    },
+                    "then": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 70,
+                        "col": 38,
+                        "end_line": 70,
+                        "end_col": 44
+                      },
+                      "width": 32,
+                      "name": "data_i"
+                    },
+                    "else": {
+                      "kind": "BitSel",
+                      "span": {
+                        "line": 70,
+                        "col": 47,
+                        "end_line": 70,
+                        "end_col": 68
+                      },
+                      "width": 32,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 70,
+                          "col": 47,
+                          "end_line": 70,
+                          "end_col": 52
+                        },
+                        "width": 256,
+                        "name": "mem_q"
+                      },
+                      "index": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 70,
+                          "col": 53,
+                          "end_line": 70,
+                          "end_col": 67
+                        },
+                        "width": 3,
+                        "name": "read_pointer_q"
+                      }
+                    }
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 71,
+                    "col": 5,
+                    "end_line": 71,
+                    "end_col": 29
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 71,
+                      "col": 5,
+                      "end_line": 71,
+                      "end_col": 10
+                    },
+                    "width": 256,
+                    "name": "mem_n"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 71,
+                      "col": 23,
+                      "end_line": 71,
+                      "end_col": 28
+                    },
+                    "width": 256,
+                    "name": "mem_q"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 72,
+                    "col": 5,
+                    "end_line": 72,
+                    "end_col": 28
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 72,
+                      "col": 5,
+                      "end_line": 72,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "gate_clock"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 72,
+                      "col": 23,
+                      "end_line": 72,
+                      "end_col": 27
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 75,
+                    "col": 5,
+                    "end_line": 85,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 75,
+                      "col": 9,
+                      "end_line": 75,
+                      "end_col": 26
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 75,
+                        "col": 9,
+                        "end_line": 75,
+                        "end_col": 15
+                      },
+                      "width": 1,
+                      "name": "push_i"
+                    },
+                    "right": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 75,
+                        "col": 19,
+                        "end_line": 75,
+                        "end_col": 26
+                      },
+                      "width": 1,
+                      "op": "~",
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 75,
+                          "col": 20,
+                          "end_line": 75,
+                          "end_col": 26
+                        },
+                        "width": 1,
+                        "name": "full_o"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 75,
+                      "col": 28,
+                      "end_line": 85,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 77,
+                          "col": 7,
+                          "end_line": 77,
+                          "end_col": 39
+                        },
+                        "target": {
+                          "kind": "BitSel",
+                          "span": {
+                            "line": 77,
+                            "col": 7,
+                            "end_line": 77,
+                            "end_col": 29
+                          },
+                          "width": 32,
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 77,
+                              "col": 7,
+                              "end_line": 77,
+                              "end_col": 12
+                            },
+                            "width": 256,
+                            "name": "mem_n"
+                          },
+                          "index": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 77,
+                              "col": 13,
+                              "end_line": 77,
+                              "end_col": 28
+                            },
+                            "width": 3,
+                            "name": "write_pointer_q"
+                          }
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 77,
+                            "col": 32,
+                            "end_line": 77,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "name": "data_i"
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 79,
+                          "col": 7,
+                          "end_line": 79,
+                          "end_col": 25
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 79,
+                            "col": 7,
+                            "end_line": 79,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "gate_clock"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 79,
+                            "col": 20,
+                            "end_line": 79,
+                            "end_col": 24
+                          },
+                          "width": 1,
+                          "bits": "0"
+                        }
+                      },
+                      {
+                        "kind": "If",
+                        "span": {
+                          "line": 81,
+                          "col": 7,
+                          "end_line": 82,
+                          "end_col": 50
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 81,
+                            "col": 11,
+                            "end_line": 81,
+                            "end_col": 60
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 81,
+                              "col": 11,
+                              "end_line": 81,
+                              "end_col": 26
+                            },
+                            "width": 32,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 81,
+                                "col": 11,
+                                "end_line": 81,
+                                "end_col": 26
+                              },
+                              "width": 3,
+                              "name": "write_pointer_q"
+                            }
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 81,
+                              "col": 30,
+                              "end_line": 81,
+                              "end_col": 60
+                            },
+                            "width": 32,
+                            "op": "-",
+                            "left": {
+                              "kind": "Resize",
+                              "span": {
+                                "line": 81,
+                                "col": 30,
+                                "end_line": 81,
+                                "end_col": 56
+                              },
+                              "width": 32,
+                              "operand": {
+                                "kind": "PartSel",
+                                "span": {
+                                  "line": 81,
+                                  "col": 30,
+                                  "end_line": 81,
+                                  "end_col": 56
+                                },
+                                "width": 3,
+                                "value": {
+                                  "kind": "ParamRef",
+                                  "span": {
+                                    "line": 81,
+                                    "col": 30,
+                                    "end_line": 81,
+                                    "end_col": 40
+                                  },
+                                  "name": "FIFO_DEPTH"
+                                },
+                                "msb": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 81,
+                                    "col": 41,
+                                    "end_line": 81,
+                                    "end_col": 53
+                                  },
+                                  "width": 32,
+                                  "op": "-",
+                                  "left": {
+                                    "kind": "ParamRef",
+                                    "span": {
+                                      "line": 81,
+                                      "col": 41,
+                                      "end_line": 81,
+                                      "end_col": 51
+                                    },
+                                    "name": "ADDR_DEPTH"
+                                  },
+                                  "right": {
+                                    "kind": "Int",
+                                    "span": {
+                                      "line": 81,
+                                      "col": 52,
+                                      "end_line": 81,
+                                      "end_col": 53
+                                    },
+                                    "value": 1,
+                                    "resolved_width": 32
+                                  }
+                                },
+                                "lsb": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 81,
+                                    "col": 54,
+                                    "end_line": 81,
+                                    "end_col": 55
+                                  },
+                                  "value": 0,
+                                  "resolved_width": 32
+                                }
+                              }
+                            },
+                            "right": {
+                              "kind": "Int",
+                              "span": {
+                                "line": 81,
+                                "col": 59,
+                                "end_line": 81,
+                                "end_col": 60
+                              },
+                              "value": 1,
+                              "resolved_width": 32
+                            }
+                          }
+                        },
+                        "then": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 81,
+                            "col": 62,
+                            "end_line": 81,
+                            "end_col": 83
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 81,
+                              "col": 62,
+                              "end_line": 81,
+                              "end_col": 77
+                            },
+                            "width": 3,
+                            "name": "write_pointer_n"
+                          },
+                          "value": {
+                            "kind": "Fill",
+                            "span": {
+                              "line": 81,
+                              "col": 80,
+                              "end_line": 81,
+                              "end_col": 82
+                            },
+                            "bit": "0",
+                            "resolved_width": 3
+                          }
+                        },
+                        "else": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 82,
+                            "col": 12,
+                            "end_line": 82,
+                            "end_col": 50
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 82,
+                              "col": 12,
+                              "end_line": 82,
+                              "end_col": 27
+                            },
+                            "width": 3,
+                            "name": "write_pointer_n"
+                          },
+                          "value": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 82,
+                              "col": 30,
+                              "end_line": 82,
+                              "end_col": 49
+                            },
+                            "width": 3,
+                            "operand": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 82,
+                                "col": 30,
+                                "end_line": 82,
+                                "end_col": 49
+                              },
+                              "width": 32,
+                              "op": "+",
+                              "left": {
+                                "kind": "Resize",
+                                "span": {
+                                  "line": 82,
+                                  "col": 30,
+                                  "end_line": 82,
+                                  "end_col": 45
+                                },
+                                "width": 32,
+                                "operand": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 82,
+                                    "col": 30,
+                                    "end_line": 82,
+                                    "end_col": 45
+                                  },
+                                  "width": 3,
+                                  "name": "write_pointer_q"
+                                }
+                              },
+                              "right": {
+                                "kind": "Int",
+                                "span": {
+                                  "line": 82,
+                                  "col": 48,
+                                  "end_line": 82,
+                                  "end_col": 49
+                                },
+                                "value": 1,
+                                "resolved_width": 32
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 84,
+                          "col": 7,
+                          "end_line": 84,
+                          "end_col": 39
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 84,
+                            "col": 7,
+                            "end_line": 84,
+                            "end_col": 19
+                          },
+                          "width": 4,
+                          "name": "status_cnt_n"
+                        },
+                        "value": {
+                          "kind": "Resize",
+                          "span": {
+                            "line": 84,
+                            "col": 22,
+                            "end_line": 84,
+                            "end_col": 38
+                          },
+                          "width": 4,
+                          "operand": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 84,
+                              "col": 22,
+                              "end_line": 84,
+                              "end_col": 38
+                            },
+                            "width": 32,
+                            "op": "+",
+                            "left": {
+                              "kind": "Resize",
+                              "span": {
+                                "line": 84,
+                                "col": 22,
+                                "end_line": 84,
+                                "end_col": 34
+                              },
+                              "width": 32,
+                              "operand": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 84,
+                                  "col": 22,
+                                  "end_line": 84,
+                                  "end_col": 34
+                                },
+                                "width": 4,
+                                "name": "status_cnt_q"
+                              }
+                            },
+                            "right": {
+                              "kind": "Int",
+                              "span": {
+                                "line": 84,
+                                "col": 37,
+                                "end_line": 84,
+                                "end_col": 38
+                              },
+                              "value": 1,
+                              "resolved_width": 32
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 87,
+                    "col": 5,
+                    "end_line": 94,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 87,
+                      "col": 9,
+                      "end_line": 87,
+                      "end_col": 26
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 87,
+                        "col": 9,
+                        "end_line": 87,
+                        "end_col": 14
+                      },
+                      "width": 1,
+                      "name": "pop_i"
+                    },
+                    "right": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 87,
+                        "col": 18,
+                        "end_line": 87,
+                        "end_col": 26
+                      },
+                      "width": 1,
+                      "op": "~",
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 87,
+                          "col": 19,
+                          "end_line": 87,
+                          "end_col": 26
+                        },
+                        "width": 1,
+                        "name": "empty_o"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 87,
+                      "col": 28,
+                      "end_line": 94,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "If",
+                        "span": {
+                          "line": 90,
+                          "col": 7,
+                          "end_line": 91,
+                          "end_col": 48
+                        },
+                        "cond": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 90,
+                            "col": 11,
+                            "end_line": 90,
+                            "end_col": 59
+                          },
+                          "width": 1,
+                          "op": "==",
+                          "left": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 90,
+                              "col": 11,
+                              "end_line": 90,
+                              "end_col": 25
+                            },
+                            "width": 32,
+                            "operand": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 90,
+                                "col": 11,
+                                "end_line": 90,
+                                "end_col": 25
+                              },
+                              "width": 3,
+                              "name": "read_pointer_n"
+                            }
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 90,
+                              "col": 29,
+                              "end_line": 90,
+                              "end_col": 59
+                            },
+                            "width": 32,
+                            "op": "-",
+                            "left": {
+                              "kind": "Resize",
+                              "span": {
+                                "line": 90,
+                                "col": 29,
+                                "end_line": 90,
+                                "end_col": 55
+                              },
+                              "width": 32,
+                              "operand": {
+                                "kind": "PartSel",
+                                "span": {
+                                  "line": 90,
+                                  "col": 29,
+                                  "end_line": 90,
+                                  "end_col": 55
+                                },
+                                "width": 3,
+                                "value": {
+                                  "kind": "ParamRef",
+                                  "span": {
+                                    "line": 90,
+                                    "col": 29,
+                                    "end_line": 90,
+                                    "end_col": 39
+                                  },
+                                  "name": "FIFO_DEPTH"
+                                },
+                                "msb": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 90,
+                                    "col": 40,
+                                    "end_line": 90,
+                                    "end_col": 52
+                                  },
+                                  "width": 32,
+                                  "op": "-",
+                                  "left": {
+                                    "kind": "ParamRef",
+                                    "span": {
+                                      "line": 90,
+                                      "col": 40,
+                                      "end_line": 90,
+                                      "end_col": 50
+                                    },
+                                    "name": "ADDR_DEPTH"
+                                  },
+                                  "right": {
+                                    "kind": "Int",
+                                    "span": {
+                                      "line": 90,
+                                      "col": 51,
+                                      "end_line": 90,
+                                      "end_col": 52
+                                    },
+                                    "value": 1,
+                                    "resolved_width": 32
+                                  }
+                                },
+                                "lsb": {
+                                  "kind": "Int",
+                                  "span": {
+                                    "line": 90,
+                                    "col": 53,
+                                    "end_line": 90,
+                                    "end_col": 54
+                                  },
+                                  "value": 0,
+                                  "resolved_width": 32
+                                }
+                              }
+                            },
+                            "right": {
+                              "kind": "Int",
+                              "span": {
+                                "line": 90,
+                                "col": 58,
+                                "end_line": 90,
+                                "end_col": 59
+                              },
+                              "value": 1,
+                              "resolved_width": 32
+                            }
+                          }
+                        },
+                        "then": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 90,
+                            "col": 61,
+                            "end_line": 90,
+                            "end_col": 81
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 90,
+                              "col": 61,
+                              "end_line": 90,
+                              "end_col": 75
+                            },
+                            "width": 3,
+                            "name": "read_pointer_n"
+                          },
+                          "value": {
+                            "kind": "Fill",
+                            "span": {
+                              "line": 90,
+                              "col": 78,
+                              "end_line": 90,
+                              "end_col": 80
+                            },
+                            "bit": "0",
+                            "resolved_width": 3
+                          }
+                        },
+                        "else": {
+                          "kind": "BlockingAssign",
+                          "span": {
+                            "line": 91,
+                            "col": 12,
+                            "end_line": 91,
+                            "end_col": 48
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 91,
+                              "col": 12,
+                              "end_line": 91,
+                              "end_col": 26
+                            },
+                            "width": 3,
+                            "name": "read_pointer_n"
+                          },
+                          "value": {
+                            "kind": "Resize",
+                            "span": {
+                              "line": 91,
+                              "col": 29,
+                              "end_line": 91,
+                              "end_col": 47
+                            },
+                            "width": 3,
+                            "operand": {
+                              "kind": "Binary",
+                              "span": {
+                                "line": 91,
+                                "col": 29,
+                                "end_line": 91,
+                                "end_col": 47
+                              },
+                              "width": 32,
+                              "op": "+",
+                              "left": {
+                                "kind": "Resize",
+                                "span": {
+                                  "line": 91,
+                                  "col": 29,
+                                  "end_line": 91,
+                                  "end_col": 43
+                                },
+                                "width": 32,
+                                "operand": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 91,
+                                    "col": 29,
+                                    "end_line": 91,
+                                    "end_col": 43
+                                  },
+                                  "width": 3,
+                                  "name": "read_pointer_q"
+                                }
+                              },
+                              "right": {
+                                "kind": "Int",
+                                "span": {
+                                  "line": 91,
+                                  "col": 46,
+                                  "end_line": 91,
+                                  "end_col": 47
+                                },
+                                "value": 1,
+                                "resolved_width": 32
+                              }
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 93,
+                          "col": 7,
+                          "end_line": 93,
+                          "end_col": 39
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 93,
+                            "col": 7,
+                            "end_line": 93,
+                            "end_col": 19
+                          },
+                          "width": 4,
+                          "name": "status_cnt_n"
+                        },
+                        "value": {
+                          "kind": "Resize",
+                          "span": {
+                            "line": 93,
+                            "col": 22,
+                            "end_line": 93,
+                            "end_col": 38
+                          },
+                          "width": 4,
+                          "operand": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 93,
+                              "col": 22,
+                              "end_line": 93,
+                              "end_col": 38
+                            },
+                            "width": 32,
+                            "op": "-",
+                            "left": {
+                              "kind": "Resize",
+                              "span": {
+                                "line": 93,
+                                "col": 22,
+                                "end_line": 93,
+                                "end_col": 34
+                              },
+                              "width": 32,
+                              "operand": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 93,
+                                  "col": 22,
+                                  "end_line": 93,
+                                  "end_col": 34
+                                },
+                                "width": 4,
+                                "name": "status_cnt_q"
+                              }
+                            },
+                            "right": {
+                              "kind": "Int",
+                              "span": {
+                                "line": 93,
+                                "col": 37,
+                                "end_line": 93,
+                                "end_col": 38
+                              },
+                              "value": 1,
+                              "resolved_width": 32
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 97,
+                    "col": 5,
+                    "end_line": 97,
+                    "end_col": 77
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 97,
+                      "col": 9,
+                      "end_line": 97,
+                      "end_col": 47
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 97,
+                        "col": 9,
+                        "end_line": 97,
+                        "end_col": 35
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 97,
+                          "col": 9,
+                          "end_line": 97,
+                          "end_col": 24
+                        },
+                        "width": 1,
+                        "op": "&&",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 97,
+                            "col": 9,
+                            "end_line": 97,
+                            "end_col": 15
+                          },
+                          "width": 1,
+                          "name": "push_i"
+                        },
+                        "right": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 97,
+                            "col": 19,
+                            "end_line": 97,
+                            "end_col": 24
+                          },
+                          "width": 1,
+                          "name": "pop_i"
+                        }
+                      },
+                      "right": {
+                        "kind": "Unary",
+                        "span": {
+                          "line": 97,
+                          "col": 28,
+                          "end_line": 97,
+                          "end_col": 35
+                        },
+                        "width": 1,
+                        "op": "~",
+                        "operand": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 97,
+                            "col": 29,
+                            "end_line": 97,
+                            "end_col": 35
+                          },
+                          "width": 1,
+                          "name": "full_o"
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 97,
+                        "col": 39,
+                        "end_line": 97,
+                        "end_col": 47
+                      },
+                      "width": 1,
+                      "op": "~",
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 97,
+                          "col": 40,
+                          "end_line": 97,
+                          "end_col": 47
+                        },
+                        "width": 1,
+                        "name": "empty_o"
+                      }
+                    }
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 97,
+                      "col": 49,
+                      "end_line": 97,
+                      "end_col": 77
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 97,
+                        "col": 49,
+                        "end_line": 97,
+                        "end_col": 61
+                      },
+                      "width": 4,
+                      "name": "status_cnt_n"
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 97,
+                        "col": 64,
+                        "end_line": 97,
+                        "end_col": 76
+                      },
+                      "width": 4,
+                      "name": "status_cnt_q"
+                    }
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 100,
+                    "col": 5,
+                    "end_line": 107,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 100,
+                      "col": 9,
+                      "end_line": 100,
+                      "end_col": 54
+                    },
+                    "width": 1,
+                    "op": "&&",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 100,
+                        "col": 9,
+                        "end_line": 100,
+                        "end_col": 44
+                      },
+                      "width": 1,
+                      "op": "&&",
+                      "left": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 100,
+                          "col": 9,
+                          "end_line": 100,
+                          "end_col": 21
+                        },
+                        "name": "FALL_THROUGH"
+                      },
+                      "right": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 100,
+                          "col": 26,
+                          "end_line": 100,
+                          "end_col": 43
+                        },
+                        "width": 1,
+                        "op": "==",
+                        "left": {
+                          "kind": "Resize",
+                          "span": {
+                            "line": 100,
+                            "col": 26,
+                            "end_line": 100,
+                            "end_col": 38
+                          },
+                          "width": 32,
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 100,
+                              "col": 26,
+                              "end_line": 100,
+                              "end_col": 38
+                            },
+                            "width": 4,
+                            "name": "status_cnt_q"
+                          }
+                        },
+                        "right": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 100,
+                            "col": 42,
+                            "end_line": 100,
+                            "end_col": 43
+                          },
+                          "value": 0,
+                          "resolved_width": 32
+                        }
+                      }
+                    },
+                    "right": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 100,
+                        "col": 48,
+                        "end_line": 100,
+                        "end_col": 54
+                      },
+                      "width": 1,
+                      "name": "push_i"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 100,
+                      "col": 56,
+                      "end_line": 107,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 101,
+                          "col": 7,
+                          "end_line": 101,
+                          "end_col": 23
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 101,
+                            "col": 7,
+                            "end_line": 101,
+                            "end_col": 13
+                          },
+                          "width": 32,
+                          "name": "data_o"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 101,
+                            "col": 16,
+                            "end_line": 101,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "name": "data_i"
+                        }
+                      },
+                      {
+                        "kind": "If",
+                        "span": {
+                          "line": 102,
+                          "col": 7,
+                          "end_line": 106,
+                          "end_col": 10
+                        },
+                        "cond": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 102,
+                            "col": 11,
+                            "end_line": 102,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "pop_i"
+                        },
+                        "then": {
+                          "kind": "Block",
+                          "span": {
+                            "line": 102,
+                            "col": 18,
+                            "end_line": 106,
+                            "end_col": 10
+                          },
+                          "stmts": [
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 103,
+                                "col": 9,
+                                "end_line": 103,
+                                "end_col": 37
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 103,
+                                  "col": 9,
+                                  "end_line": 103,
+                                  "end_col": 21
+                                },
+                                "width": 4,
+                                "name": "status_cnt_n"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 103,
+                                  "col": 24,
+                                  "end_line": 103,
+                                  "end_col": 36
+                                },
+                                "width": 4,
+                                "name": "status_cnt_q"
+                              }
+                            },
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 104,
+                                "col": 9,
+                                "end_line": 104,
+                                "end_col": 41
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 104,
+                                  "col": 9,
+                                  "end_line": 104,
+                                  "end_col": 23
+                                },
+                                "width": 3,
+                                "name": "read_pointer_n"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 104,
+                                  "col": 26,
+                                  "end_line": 104,
+                                  "end_col": 40
+                                },
+                                "width": 3,
+                                "name": "read_pointer_q"
+                              }
+                            },
+                            {
+                              "kind": "BlockingAssign",
+                              "span": {
+                                "line": 105,
+                                "col": 9,
+                                "end_line": 105,
+                                "end_col": 43
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 105,
+                                  "col": 9,
+                                  "end_line": 105,
+                                  "end_col": 24
+                                },
+                                "width": 3,
+                                "name": "write_pointer_n"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 105,
+                                  "col": 27,
+                                  "end_line": 105,
+                                  "end_col": 42
+                                },
+                                "width": 3,
+                                "name": "write_pointer_q"
+                              }
+                            }
+                          ]
+                        },
+                        "else": null
+                      }
+                    ]
+                  },
+                  "else": null
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 111,
+              "col": 3,
+              "end_line": 138,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk_i",
+            "areset_n": "rst_ni",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 112,
+                "col": 5,
+                "end_line": 137,
+                "end_col": 8
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 112,
+                    "col": 5,
+                    "end_line": 137,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 112,
+                      "col": 9,
+                      "end_line": 112,
+                      "end_col": 16
+                    },
+                    "width": 1,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 112,
+                        "col": 10,
+                        "end_line": 112,
+                        "end_col": 16
+                      },
+                      "width": 1,
+                      "name": "rst_ni"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 112,
+                      "col": 18,
+                      "end_line": 116,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 113,
+                          "col": 7,
+                          "end_line": 113,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 113,
+                            "col": 7,
+                            "end_line": 113,
+                            "end_col": 21
+                          },
+                          "width": 3,
+                          "name": "read_pointer_q"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 113,
+                            "col": 26,
+                            "end_line": 113,
+                            "end_col": 28
+                          },
+                          "bit": "0",
+                          "resolved_width": 3
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 114,
+                          "col": 7,
+                          "end_line": 114,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 114,
+                            "col": 7,
+                            "end_line": 114,
+                            "end_col": 22
+                          },
+                          "width": 3,
+                          "name": "write_pointer_q"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 114,
+                            "col": 26,
+                            "end_line": 114,
+                            "end_col": 28
+                          },
+                          "bit": "0",
+                          "resolved_width": 3
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 115,
+                          "col": 7,
+                          "end_line": 115,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 115,
+                            "col": 7,
+                            "end_line": 115,
+                            "end_col": 19
+                          },
+                          "width": 4,
+                          "name": "status_cnt_q"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 115,
+                            "col": 26,
+                            "end_line": 115,
+                            "end_col": 28
+                          },
+                          "bit": "0",
+                          "resolved_width": 4
+                        }
+                      }
+                    ]
+                  },
+                  "else": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 117,
+                      "col": 7,
+                      "end_line": 136,
+                      "end_col": 14
+                    },
+                    "stmts": [
+                      {
+                        "kind": "Case",
+                        "span": {
+                          "line": 117,
+                          "col": 7,
+                          "end_line": 136,
+                          "end_col": 14
+                        },
+                        "check": "unique",
+                        "match": "normal",
+                        "subject": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 117,
+                            "col": 20,
+                            "end_line": 117,
+                            "end_col": 24
+                          },
+                          "width": 1,
+                          "bits": "1"
+                        },
+                        "items": [
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 119,
+                                  "col": 9,
+                                  "end_line": 119,
+                                  "end_col": 16
+                                },
+                                "width": 1,
+                                "name": "flush_i"
+                              }
+                            ],
+                            "body": {
+                              "kind": "Block",
+                              "span": {
+                                "line": 119,
+                                "col": 18,
+                                "end_line": 123,
+                                "end_col": 12
+                              },
+                              "stmts": [
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 120,
+                                    "col": 11,
+                                    "end_line": 120,
+                                    "end_col": 33
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 120,
+                                      "col": 11,
+                                      "end_line": 120,
+                                      "end_col": 25
+                                    },
+                                    "width": 3,
+                                    "name": "read_pointer_q"
+                                  },
+                                  "value": {
+                                    "kind": "Fill",
+                                    "span": {
+                                      "line": 120,
+                                      "col": 30,
+                                      "end_line": 120,
+                                      "end_col": 32
+                                    },
+                                    "bit": "0",
+                                    "resolved_width": 3
+                                  }
+                                },
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 121,
+                                    "col": 11,
+                                    "end_line": 121,
+                                    "end_col": 33
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 121,
+                                      "col": 11,
+                                      "end_line": 121,
+                                      "end_col": 26
+                                    },
+                                    "width": 3,
+                                    "name": "write_pointer_q"
+                                  },
+                                  "value": {
+                                    "kind": "Fill",
+                                    "span": {
+                                      "line": 121,
+                                      "col": 30,
+                                      "end_line": 121,
+                                      "end_col": 32
+                                    },
+                                    "bit": "0",
+                                    "resolved_width": 3
+                                  }
+                                },
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 122,
+                                    "col": 11,
+                                    "end_line": 122,
+                                    "end_col": 33
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 122,
+                                      "col": 11,
+                                      "end_line": 122,
+                                      "end_col": 23
+                                    },
+                                    "width": 4,
+                                    "name": "status_cnt_q"
+                                  },
+                                  "value": {
+                                    "kind": "Fill",
+                                    "span": {
+                                      "line": 122,
+                                      "col": 30,
+                                      "end_line": 122,
+                                      "end_col": 32
+                                    },
+                                    "bit": "0",
+                                    "resolved_width": 4
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "kind": "CaseItem",
+                            "patterns": [
+                              {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 125,
+                                  "col": 9,
+                                  "end_line": 125,
+                                  "end_col": 26
+                                },
+                                "width": 1,
+                                "name": "flush_but_first_i"
+                              }
+                            ],
+                            "body": {
+                              "kind": "Block",
+                              "span": {
+                                "line": 125,
+                                "col": 28,
+                                "end_line": 129,
+                                "end_col": 12
+                              },
+                              "stmts": [
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 126,
+                                    "col": 11,
+                                    "end_line": 126,
+                                    "end_col": 71
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 126,
+                                      "col": 11,
+                                      "end_line": 126,
+                                      "end_col": 25
+                                    },
+                                    "width": 3,
+                                    "name": "read_pointer_q"
+                                  },
+                                  "value": {
+                                    "kind": "Ternary",
+                                    "span": {
+                                      "line": 126,
+                                      "col": 30,
+                                      "end_line": 126,
+                                      "end_col": 70
+                                    },
+                                    "width": 3,
+                                    "cond": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 126,
+                                        "col": 31,
+                                        "end_line": 126,
+                                        "end_col": 47
+                                      },
+                                      "width": 1,
+                                      "op": ">",
+                                      "left": {
+                                        "kind": "Resize",
+                                        "span": {
+                                          "line": 126,
+                                          "col": 31,
+                                          "end_line": 126,
+                                          "end_col": 43
+                                        },
+                                        "width": 32,
+                                        "operand": {
+                                          "kind": "Ident",
+                                          "span": {
+                                            "line": 126,
+                                            "col": 31,
+                                            "end_line": 126,
+                                            "end_col": 43
+                                          },
+                                          "width": 4,
+                                          "name": "status_cnt_q"
+                                        }
+                                      },
+                                      "right": {
+                                        "kind": "Int",
+                                        "span": {
+                                          "line": 126,
+                                          "col": 46,
+                                          "end_line": 126,
+                                          "end_col": 47
+                                        },
+                                        "value": 0,
+                                        "resolved_width": 32
+                                      }
+                                    },
+                                    "then": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 126,
+                                        "col": 51,
+                                        "end_line": 126,
+                                        "end_col": 65
+                                      },
+                                      "width": 3,
+                                      "name": "read_pointer_q"
+                                    },
+                                    "else": {
+                                      "kind": "Fill",
+                                      "span": {
+                                        "line": 126,
+                                        "col": 68,
+                                        "end_line": 126,
+                                        "end_col": 70
+                                      },
+                                      "bit": "0",
+                                      "resolved_width": 3
+                                    }
+                                  }
+                                },
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 127,
+                                    "col": 11,
+                                    "end_line": 127,
+                                    "end_col": 75
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 127,
+                                      "col": 11,
+                                      "end_line": 127,
+                                      "end_col": 26
+                                    },
+                                    "width": 3,
+                                    "name": "write_pointer_q"
+                                  },
+                                  "value": {
+                                    "kind": "Resize",
+                                    "span": {
+                                      "line": 127,
+                                      "col": 30,
+                                      "end_line": 127,
+                                      "end_col": 74
+                                    },
+                                    "width": 3,
+                                    "operand": {
+                                      "kind": "Ternary",
+                                      "span": {
+                                        "line": 127,
+                                        "col": 30,
+                                        "end_line": 127,
+                                        "end_col": 74
+                                      },
+                                      "width": 32,
+                                      "cond": {
+                                        "kind": "Binary",
+                                        "span": {
+                                          "line": 127,
+                                          "col": 31,
+                                          "end_line": 127,
+                                          "end_col": 47
+                                        },
+                                        "width": 1,
+                                        "op": ">",
+                                        "left": {
+                                          "kind": "Resize",
+                                          "span": {
+                                            "line": 127,
+                                            "col": 31,
+                                            "end_line": 127,
+                                            "end_col": 43
+                                          },
+                                          "width": 32,
+                                          "operand": {
+                                            "kind": "Ident",
+                                            "span": {
+                                              "line": 127,
+                                              "col": 31,
+                                              "end_line": 127,
+                                              "end_col": 43
+                                            },
+                                            "width": 4,
+                                            "name": "status_cnt_q"
+                                          }
+                                        },
+                                        "right": {
+                                          "kind": "Int",
+                                          "span": {
+                                            "line": 127,
+                                            "col": 46,
+                                            "end_line": 127,
+                                            "end_col": 47
+                                          },
+                                          "value": 0,
+                                          "resolved_width": 32
+                                        }
+                                      },
+                                      "then": {
+                                        "kind": "Binary",
+                                        "span": {
+                                          "line": 127,
+                                          "col": 51,
+                                          "end_line": 127,
+                                          "end_col": 69
+                                        },
+                                        "width": 32,
+                                        "op": "+",
+                                        "left": {
+                                          "kind": "Resize",
+                                          "span": {
+                                            "line": 127,
+                                            "col": 51,
+                                            "end_line": 127,
+                                            "end_col": 65
+                                          },
+                                          "width": 32,
+                                          "operand": {
+                                            "kind": "Ident",
+                                            "span": {
+                                              "line": 127,
+                                              "col": 51,
+                                              "end_line": 127,
+                                              "end_col": 65
+                                            },
+                                            "width": 3,
+                                            "name": "read_pointer_q"
+                                          }
+                                        },
+                                        "right": {
+                                          "kind": "Int",
+                                          "span": {
+                                            "line": 127,
+                                            "col": 68,
+                                            "end_line": 127,
+                                            "end_col": 69
+                                          },
+                                          "value": 1,
+                                          "resolved_width": 32
+                                        }
+                                      },
+                                      "else": {
+                                        "kind": "Fill",
+                                        "span": {
+                                          "line": 127,
+                                          "col": 72,
+                                          "end_line": 127,
+                                          "end_col": 74
+                                        },
+                                        "bit": "0",
+                                        "resolved_width": 32
+                                      }
+                                    }
+                                  }
+                                },
+                                {
+                                  "kind": "NonblockingAssign",
+                                  "span": {
+                                    "line": 128,
+                                    "col": 11,
+                                    "end_line": 128,
+                                    "end_col": 61
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 128,
+                                      "col": 11,
+                                      "end_line": 128,
+                                      "end_col": 23
+                                    },
+                                    "width": 4,
+                                    "name": "status_cnt_q"
+                                  },
+                                  "value": {
+                                    "kind": "Ternary",
+                                    "span": {
+                                      "line": 128,
+                                      "col": 30,
+                                      "end_line": 128,
+                                      "end_col": 60
+                                    },
+                                    "width": 4,
+                                    "cond": {
+                                      "kind": "Binary",
+                                      "span": {
+                                        "line": 128,
+                                        "col": 31,
+                                        "end_line": 128,
+                                        "end_col": 47
+                                      },
+                                      "width": 1,
+                                      "op": ">",
+                                      "left": {
+                                        "kind": "Resize",
+                                        "span": {
+                                          "line": 128,
+                                          "col": 31,
+                                          "end_line": 128,
+                                          "end_col": 43
+                                        },
+                                        "width": 32,
+                                        "operand": {
+                                          "kind": "Ident",
+                                          "span": {
+                                            "line": 128,
+                                            "col": 31,
+                                            "end_line": 128,
+                                            "end_col": 43
+                                          },
+                                          "width": 4,
+                                          "name": "status_cnt_q"
+                                        }
+                                      },
+                                      "right": {
+                                        "kind": "Int",
+                                        "span": {
+                                          "line": 128,
+                                          "col": 46,
+                                          "end_line": 128,
+                                          "end_col": 47
+                                        },
+                                        "value": 0,
+                                        "resolved_width": 32
+                                      }
+                                    },
+                                    "then": {
+                                      "kind": "Literal",
+                                      "span": {
+                                        "line": 128,
+                                        "col": 51,
+                                        "end_line": 128,
+                                        "end_col": 55
+                                      },
+                                      "width": 4,
+                                      "bits": "0001"
+                                    },
+                                    "else": {
+                                      "kind": "Fill",
+                                      "span": {
+                                        "line": 128,
+                                        "col": 58,
+                                        "end_line": 128,
+                                        "end_col": 60
+                                      },
+                                      "bit": "0",
+                                      "resolved_width": 4
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ],
+                        "default": {
+                          "kind": "Block",
+                          "span": {
+                            "line": 131,
+                            "col": 18,
+                            "end_line": 135,
+                            "end_col": 12
+                          },
+                          "stmts": [
+                            {
+                              "kind": "NonblockingAssign",
+                              "span": {
+                                "line": 132,
+                                "col": 11,
+                                "end_line": 132,
+                                "end_col": 45
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 132,
+                                  "col": 11,
+                                  "end_line": 132,
+                                  "end_col": 25
+                                },
+                                "width": 3,
+                                "name": "read_pointer_q"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 132,
+                                  "col": 30,
+                                  "end_line": 132,
+                                  "end_col": 44
+                                },
+                                "width": 3,
+                                "name": "read_pointer_n"
+                              }
+                            },
+                            {
+                              "kind": "NonblockingAssign",
+                              "span": {
+                                "line": 133,
+                                "col": 11,
+                                "end_line": 133,
+                                "end_col": 46
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 133,
+                                  "col": 11,
+                                  "end_line": 133,
+                                  "end_col": 26
+                                },
+                                "width": 3,
+                                "name": "write_pointer_q"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 133,
+                                  "col": 30,
+                                  "end_line": 133,
+                                  "end_col": 45
+                                },
+                                "width": 3,
+                                "name": "write_pointer_n"
+                              }
+                            },
+                            {
+                              "kind": "NonblockingAssign",
+                              "span": {
+                                "line": 134,
+                                "col": 11,
+                                "end_line": 134,
+                                "end_col": 43
+                              },
+                              "target": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 134,
+                                  "col": 11,
+                                  "end_line": 134,
+                                  "end_col": 23
+                                },
+                                "width": 4,
+                                "name": "status_cnt_q"
+                              },
+                              "value": {
+                                "kind": "Ident",
+                                "span": {
+                                  "line": 134,
+                                  "col": 30,
+                                  "end_line": 134,
+                                  "end_col": 42
+                                },
+                                "width": 4,
+                                "name": "status_cnt_n"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 140,
+              "col": 3,
+              "end_line": 146,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk_i",
+            "areset_n": "rst_ni",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 141,
+                "col": 5,
+                "end_line": 145,
+                "end_col": 8
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 141,
+                    "col": 5,
+                    "end_line": 145,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 141,
+                      "col": 9,
+                      "end_line": 141,
+                      "end_col": 16
+                    },
+                    "width": 1,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 141,
+                        "col": 10,
+                        "end_line": 141,
+                        "end_col": 16
+                      },
+                      "width": 1,
+                      "name": "rst_ni"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 142,
+                      "col": 7,
+                      "end_line": 142,
+                      "end_col": 19
+                    },
+                    "stmts": [
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 142,
+                          "col": 7,
+                          "end_line": 142,
+                          "end_col": 19
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 142,
+                            "col": 7,
+                            "end_line": 142,
+                            "end_col": 12
+                          },
+                          "width": 256,
+                          "name": "mem_q"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 142,
+                            "col": 16,
+                            "end_line": 142,
+                            "end_col": 18
+                          },
+                          "bit": "0",
+                          "resolved_width": 256
+                        }
+                      }
+                    ]
+                  },
+                  "else": {
+                    "kind": "If",
+                    "span": {
+                      "line": 143,
+                      "col": 14,
+                      "end_line": 145,
+                      "end_col": 8
+                    },
+                    "cond": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 143,
+                        "col": 18,
+                        "end_line": 143,
+                        "end_col": 29
+                      },
+                      "width": 1,
+                      "op": "!",
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 143,
+                          "col": 19,
+                          "end_line": 143,
+                          "end_col": 29
+                        },
+                        "width": 1,
+                        "name": "gate_clock"
+                      }
+                    },
+                    "then": {
+                      "kind": "Block",
+                      "span": {
+                        "line": 144,
+                        "col": 7,
+                        "end_line": 144,
+                        "end_col": 22
+                      },
+                      "stmts": [
+                        {
+                          "kind": "NonblockingAssign",
+                          "span": {
+                            "line": 144,
+                            "col": 7,
+                            "end_line": 144,
+                            "end_col": 22
+                          },
+                          "target": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 144,
+                              "col": 7,
+                              "end_line": 144,
+                              "end_col": 12
+                            },
+                            "width": 256,
+                            "name": "mem_q"
+                          },
+                          "value": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 144,
+                              "col": 16,
+                              "end_line": 144,
+                              "end_col": 21
+                            },
+                            "width": 256,
+                            "name": "mem_n"
+                          }
+                        }
+                      ]
+                    },
+                    "else": null
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [
+          {
+            "kind": "GenerateIf",
+            "span": {
+              "line": 55,
+              "col": 5,
+              "end_line": 61,
+              "end_col": 8
+            },
+            "label": "gen_zero_depth",
+            "else_label": "gen_non_zero_depth",
+            "cond": {
+              "kind": "Binary",
+              "span": {
+                "line": 55,
+                "col": 9,
+                "end_line": 55,
+                "end_col": 19
+              },
+              "width": 1,
+              "op": "==",
+              "left": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 55,
+                  "col": 9,
+                  "end_line": 55,
+                  "end_col": 14
+                },
+                "name": "DEPTH"
+              },
+              "right": {
+                "kind": "Int",
+                "span": {
+                  "line": 55,
+                  "col": 18,
+                  "end_line": 55,
+                  "end_col": 19
+                },
+                "value": 0,
+                "resolved_width": 32
+              }
+            },
+            "then": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 56,
+                  "col": 14,
+                  "end_line": 56,
+                  "end_col": 31
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 56,
+                    "col": 14,
+                    "end_line": 56,
+                    "end_col": 21
+                  },
+                  "width": 1,
+                  "name": "empty_o"
+                },
+                "value": {
+                  "kind": "Unary",
+                  "span": {
+                    "line": 56,
+                    "col": 24,
+                    "end_line": 56,
+                    "end_col": 31
+                  },
+                  "width": 1,
+                  "op": "~",
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 56,
+                      "col": 25,
+                      "end_line": 56,
+                      "end_col": 31
+                    },
+                    "width": 1,
+                    "name": "push_i"
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 57,
+                  "col": 14,
+                  "end_line": 57,
+                  "end_col": 30
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 57,
+                    "col": 14,
+                    "end_line": 57,
+                    "end_col": 20
+                  },
+                  "width": 1,
+                  "name": "full_o"
+                },
+                "value": {
+                  "kind": "Unary",
+                  "span": {
+                    "line": 57,
+                    "col": 24,
+                    "end_line": 57,
+                    "end_col": 30
+                  },
+                  "width": 1,
+                  "op": "~",
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 57,
+                      "col": 25,
+                      "end_line": 57,
+                      "end_col": 30
+                    },
+                    "width": 1,
+                    "name": "pop_i"
+                  }
+                }
+              }
+            ],
+            "else": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 59,
+                  "col": 14,
+                  "end_line": 59,
+                  "end_col": 66
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 59,
+                    "col": 14,
+                    "end_line": 59,
+                    "end_col": 20
+                  },
+                  "width": 1,
+                  "name": "full_o"
+                },
+                "value": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 59,
+                    "col": 25,
+                    "end_line": 59,
+                    "end_col": 65
+                  },
+                  "width": 1,
+                  "op": "==",
+                  "left": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 59,
+                      "col": 25,
+                      "end_line": 59,
+                      "end_col": 37
+                    },
+                    "width": 4,
+                    "name": "status_cnt_q"
+                  },
+                  "right": {
+                    "kind": "PartSel",
+                    "span": {
+                      "line": 59,
+                      "col": 41,
+                      "end_line": 59,
+                      "end_col": 65
+                    },
+                    "width": 4,
+                    "value": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 59,
+                        "col": 41,
+                        "end_line": 59,
+                        "end_col": 51
+                      },
+                      "name": "FIFO_DEPTH"
+                    },
+                    "msb": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 59,
+                        "col": 52,
+                        "end_line": 59,
+                        "end_col": 62
+                      },
+                      "name": "ADDR_DEPTH"
+                    },
+                    "lsb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 59,
+                        "col": 63,
+                        "end_line": 59,
+                        "end_col": 64
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 60,
+                  "col": 14,
+                  "end_line": 60,
+                  "end_col": 70
+                },
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 60,
+                    "col": 14,
+                    "end_line": 60,
+                    "end_col": 21
+                  },
+                  "width": 1,
+                  "name": "empty_o"
+                },
+                "value": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 60,
+                    "col": 24,
+                    "end_line": 60,
+                    "end_col": 70
+                  },
+                  "width": 1,
+                  "op": "&",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 60,
+                      "col": 25,
+                      "end_line": 60,
+                      "end_col": 42
+                    },
+                    "width": 1,
+                    "op": "==",
+                    "left": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 60,
+                        "col": 25,
+                        "end_line": 60,
+                        "end_col": 37
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 60,
+                          "col": 25,
+                          "end_line": 60,
+                          "end_col": 37
+                        },
+                        "width": 4,
+                        "name": "status_cnt_q"
+                      }
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 60,
+                        "col": 41,
+                        "end_line": 60,
+                        "end_col": 42
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  },
+                  "right": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 60,
+                      "col": 46,
+                      "end_line": 60,
+                      "end_col": 70
+                    },
+                    "width": 1,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 60,
+                        "col": 48,
+                        "end_line": 60,
+                        "end_col": 69
+                      },
+                      "width": 1,
+                      "op": "&",
+                      "left": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 60,
+                          "col": 48,
+                          "end_line": 60,
+                          "end_col": 60
+                        },
+                        "name": "FALL_THROUGH"
+                      },
+                      "right": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 60,
+                          "col": 63,
+                          "end_line": 60,
+                          "end_col": 69
+                        },
+                        "width": 1,
+                        "name": "push_i"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -7,6 +7,10 @@ import LeanModels.Python
 import LeanModels.Sv.Tests
 import LeanModels.Sv.SelfCheck
 import LeanModels.Sv.ToggleExample
+-- The parametric (sv-0.2) layer: symbolic design families + their ingestion
+-- (`load_design_sv2`) — the CV32E40P phase-2 pipeline.
+import LeanModels.Sv.Param
+import LeanModels.Sv.Ingest2
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

@@ -1,0 +1,4973 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "version": "11.0.0"
+  },
+  "mode": "symbolic",
+  "top": "cv32e40p_alu_div",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv",
+      "sha256": "11035bcbb28447fa5a3e40d5cad4f257e763f75e49664ce8098ab6247a9a57cb"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 26,
+          "col": 1,
+          "end_line": 226,
+          "end_col": 10
+        },
+        "name": "cv32e40p_alu_div",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 27,
+              "col": 15,
+              "end_line": 27,
+              "end_col": 31
+            },
+            "name": "C_WIDTH",
+            "type": null,
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 27,
+                "col": 29,
+                "end_line": 27,
+                "end_col": 31
+              },
+              "value": 32,
+              "resolved_width": 32
+            },
+            "resolved": 32
+          },
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 28,
+              "col": 15,
+              "end_line": 28,
+              "end_col": 30
+            },
+            "name": "C_LOG_WIDTH",
+            "type": null,
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 28,
+                "col": 29,
+                "end_line": 28,
+                "end_col": 30
+              },
+              "value": 6,
+              "resolved_width": 32
+            },
+            "resolved": 6
+          }
+        ],
+        "types": [
+          {
+            "kind": "EnumType",
+            "span": {
+              "line": 72,
+              "col": 3,
+              "end_line": 76,
+              "end_col": 4
+            },
+            "name": "e$1",
+            "from_package": null,
+            "base_width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 72,
+                      "col": 15,
+                      "end_line": 72,
+                      "end_col": 16
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 72,
+                      "col": 17,
+                      "end_line": 72,
+                      "end_col": 18
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "members": [
+              {
+                "name": "IDLE",
+                "value": 0
+              },
+              {
+                "name": "DIVIDE",
+                "value": 1
+              },
+              {
+                "name": "FINISH",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 30,
+              "col": 36,
+              "end_line": 30,
+              "end_col": 42
+            },
+            "name": "Clk_CI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 31,
+              "col": 36,
+              "end_line": 31,
+              "end_col": 43
+            },
+            "name": "Rst_RBI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 33,
+              "col": 36,
+              "end_line": 33,
+              "end_col": 42
+            },
+            "name": "OpA_DI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 33,
+                      "col": 23,
+                      "end_line": 33,
+                      "end_col": 32
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 33,
+                        "col": 23,
+                        "end_line": 33,
+                        "end_col": 30
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 33,
+                        "col": 31,
+                        "end_line": 33,
+                        "end_col": 32
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 33,
+                      "col": 33,
+                      "end_line": 33,
+                      "end_col": 34
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 34,
+              "col": 36,
+              "end_line": 34,
+              "end_col": 42
+            },
+            "name": "OpB_DI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 34,
+                      "col": 23,
+                      "end_line": 34,
+                      "end_col": 32
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 34,
+                        "col": 23,
+                        "end_line": 34,
+                        "end_col": 30
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 34,
+                        "col": 31,
+                        "end_line": 34,
+                        "end_col": 32
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 34,
+                      "col": 33,
+                      "end_line": 34,
+                      "end_col": 34
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 35,
+              "col": 36,
+              "end_line": 35,
+              "end_col": 47
+            },
+            "name": "OpBShift_DI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 35,
+                      "col": 19,
+                      "end_line": 35,
+                      "end_col": 32
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 35,
+                        "col": 19,
+                        "end_line": 35,
+                        "end_col": 30
+                      },
+                      "name": "C_LOG_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 35,
+                        "col": 31,
+                        "end_line": 35,
+                        "end_col": 32
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 35,
+                      "col": 33,
+                      "end_line": 35,
+                      "end_col": 34
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 36,
+              "col": 36,
+              "end_line": 36,
+              "end_col": 48
+            },
+            "name": "OpBIsZero_SI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 38,
+              "col": 36,
+              "end_line": 38,
+              "end_col": 46
+            },
+            "name": "OpBSign_SI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 39,
+              "col": 36,
+              "end_line": 39,
+              "end_col": 45
+            },
+            "name": "OpCode_SI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 39,
+                      "col": 31,
+                      "end_line": 39,
+                      "end_col": 32
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 39,
+                      "col": 33,
+                      "end_line": 39,
+                      "end_col": 34
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 41,
+              "col": 36,
+              "end_line": 41,
+              "end_col": 44
+            },
+            "name": "InVld_SI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 43,
+              "col": 36,
+              "end_line": 43,
+              "end_col": 45
+            },
+            "name": "OutRdy_SI",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 44,
+              "col": 36,
+              "end_line": 44,
+              "end_col": 45
+            },
+            "name": "OutVld_SO",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 45,
+              "col": 36,
+              "end_line": 45,
+              "end_col": 42
+            },
+            "name": "Res_DO",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 45,
+                      "col": 23,
+                      "end_line": 45,
+                      "end_col": 32
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 45,
+                        "col": 23,
+                        "end_line": 45,
+                        "end_col": 30
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 45,
+                        "col": 31,
+                        "end_line": 45,
+                        "end_col": 32
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 45,
+                      "col": 33,
+                      "end_line": 45,
+                      "end_col": 34
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 52,
+              "col": 23,
+              "end_line": 52,
+              "end_col": 32
+            },
+            "name": "ResReg_DP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 52,
+                      "col": 10,
+                      "end_line": 52,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 52,
+                        "col": 10,
+                        "end_line": 52,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 52,
+                        "col": 18,
+                        "end_line": 52,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 52,
+                      "col": 20,
+                      "end_line": 52,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 52,
+              "col": 34,
+              "end_line": 52,
+              "end_col": 43
+            },
+            "name": "ResReg_DN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 52,
+                      "col": 10,
+                      "end_line": 52,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 52,
+                        "col": 10,
+                        "end_line": 52,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 52,
+                        "col": 18,
+                        "end_line": 52,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 52,
+                      "col": 20,
+                      "end_line": 52,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 53,
+              "col": 23,
+              "end_line": 53,
+              "end_col": 36
+            },
+            "name": "ResReg_DP_rev",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 53,
+                      "col": 10,
+                      "end_line": 53,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 53,
+                        "col": 10,
+                        "end_line": 53,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 53,
+                        "col": 18,
+                        "end_line": 53,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 53,
+                      "col": 20,
+                      "end_line": 53,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 54,
+              "col": 23,
+              "end_line": 54,
+              "end_col": 30
+            },
+            "name": "AReg_DP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 54,
+                      "col": 10,
+                      "end_line": 54,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 54,
+                        "col": 10,
+                        "end_line": 54,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 54,
+                        "col": 18,
+                        "end_line": 54,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 54,
+                      "col": 20,
+                      "end_line": 54,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 54,
+              "col": 32,
+              "end_line": 54,
+              "end_col": 39
+            },
+            "name": "AReg_DN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 54,
+                      "col": 10,
+                      "end_line": 54,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 54,
+                        "col": 10,
+                        "end_line": 54,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 54,
+                        "col": 18,
+                        "end_line": 54,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 54,
+                      "col": 20,
+                      "end_line": 54,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 55,
+              "col": 23,
+              "end_line": 55,
+              "end_col": 30
+            },
+            "name": "BReg_DP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 55,
+                      "col": 10,
+                      "end_line": 55,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 55,
+                        "col": 10,
+                        "end_line": 55,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 55,
+                        "col": 18,
+                        "end_line": 55,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 55,
+                      "col": 20,
+                      "end_line": 55,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 55,
+              "col": 32,
+              "end_line": 55,
+              "end_col": 39
+            },
+            "name": "BReg_DN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 55,
+                      "col": 10,
+                      "end_line": 55,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 55,
+                        "col": 10,
+                        "end_line": 55,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 55,
+                        "col": 18,
+                        "end_line": 55,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 55,
+                      "col": 20,
+                      "end_line": 55,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 57,
+              "col": 9,
+              "end_line": 57,
+              "end_col": 18
+            },
+            "name": "RemSel_SN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 57,
+              "col": 20,
+              "end_line": 57,
+              "end_col": 29
+            },
+            "name": "RemSel_SP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 58,
+              "col": 9,
+              "end_line": 58,
+              "end_col": 19
+            },
+            "name": "CompInv_SN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 58,
+              "col": 21,
+              "end_line": 58,
+              "end_col": 31
+            },
+            "name": "CompInv_SP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 59,
+              "col": 9,
+              "end_line": 59,
+              "end_col": 18
+            },
+            "name": "ResInv_SN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 59,
+              "col": 20,
+              "end_line": 59,
+              "end_col": 29
+            },
+            "name": "ResInv_SP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 61,
+              "col": 23,
+              "end_line": 61,
+              "end_col": 31
+            },
+            "name": "AddMux_D",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 61,
+                      "col": 10,
+                      "end_line": 61,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 61,
+                        "col": 10,
+                        "end_line": 61,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 61,
+                        "col": 18,
+                        "end_line": 61,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 61,
+                      "col": 20,
+                      "end_line": 61,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 62,
+              "col": 23,
+              "end_line": 62,
+              "end_col": 31
+            },
+            "name": "AddOut_D",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 62,
+                      "col": 10,
+                      "end_line": 62,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 62,
+                        "col": 10,
+                        "end_line": 62,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 62,
+                        "col": 18,
+                        "end_line": 62,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 62,
+                      "col": 20,
+                      "end_line": 62,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 63,
+              "col": 23,
+              "end_line": 63,
+              "end_col": 31
+            },
+            "name": "AddTmp_D",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 63,
+                      "col": 10,
+                      "end_line": 63,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 63,
+                        "col": 10,
+                        "end_line": 63,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 63,
+                        "col": 18,
+                        "end_line": 63,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 63,
+                      "col": 20,
+                      "end_line": 63,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 64,
+              "col": 23,
+              "end_line": 64,
+              "end_col": 29
+            },
+            "name": "BMux_D",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 64,
+                      "col": 10,
+                      "end_line": 64,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 64,
+                        "col": 10,
+                        "end_line": 64,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 64,
+                        "col": 18,
+                        "end_line": 64,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 64,
+                      "col": 20,
+                      "end_line": 64,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 65,
+              "col": 23,
+              "end_line": 65,
+              "end_col": 31
+            },
+            "name": "OutMux_D",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 65,
+                      "col": 10,
+                      "end_line": 65,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 65,
+                        "col": 10,
+                        "end_line": 65,
+                        "end_col": 17
+                      },
+                      "name": "C_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 65,
+                        "col": 18,
+                        "end_line": 65,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 65,
+                      "col": 20,
+                      "end_line": 65,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 67,
+              "col": 27,
+              "end_line": 67,
+              "end_col": 33
+            },
+            "name": "Cnt_DP",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 67,
+                      "col": 10,
+                      "end_line": 67,
+                      "end_col": 23
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 67,
+                        "col": 10,
+                        "end_line": 67,
+                        "end_col": 21
+                      },
+                      "name": "C_LOG_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 67,
+                        "col": 22,
+                        "end_line": 67,
+                        "end_col": 23
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 67,
+                      "col": 24,
+                      "end_line": 67,
+                      "end_col": 25
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 67,
+              "col": 35,
+              "end_line": 67,
+              "end_col": 41
+            },
+            "name": "Cnt_DN",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 67,
+                      "col": 10,
+                      "end_line": 67,
+                      "end_col": 23
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 67,
+                        "col": 10,
+                        "end_line": 67,
+                        "end_col": 21
+                      },
+                      "name": "C_LOG_WIDTH"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 67,
+                        "col": 22,
+                        "end_line": 67,
+                        "end_col": 23
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 67,
+                      "col": 24,
+                      "end_line": 67,
+                      "end_col": 25
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 6
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 68,
+              "col": 9,
+              "end_line": 68,
+              "end_col": 18
+            },
+            "name": "CntZero_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 9,
+              "end_line": 70,
+              "end_col": 17
+            },
+            "name": "ARegEn_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 19,
+              "end_line": 70,
+              "end_col": 27
+            },
+            "name": "BRegEn_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 29,
+              "end_line": 70,
+              "end_col": 39
+            },
+            "name": "ResRegEn_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 41,
+              "end_line": 70,
+              "end_col": 49
+            },
+            "name": "ABComp_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 51,
+              "end_line": 70,
+              "end_col": 58
+            },
+            "name": "PmSel_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 70,
+              "col": 60,
+              "end_line": 70,
+              "end_col": 68
+            },
+            "name": "LoadEn_S",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 77,
+              "col": 7,
+              "end_line": 77,
+              "end_col": 15
+            },
+            "name": "State_SN",
+            "width": {
+              "kind": "TypeRef",
+              "name": "e$1",
+              "from_package": null,
+              "resolved": 2
+            },
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 77,
+              "col": 17,
+              "end_line": 77,
+              "end_col": 25
+            },
+            "name": "State_SP",
+            "width": {
+              "kind": "TypeRef",
+              "name": "e$1",
+              "from_package": null,
+              "resolved": 2
+            },
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 84,
+              "col": 10,
+              "end_line": 84,
+              "end_col": 86
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 84,
+                "col": 10,
+                "end_line": 84,
+                "end_col": 17
+              },
+              "width": 1,
+              "name": "PmSel_S"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 84,
+                "col": 21,
+                "end_line": 84,
+                "end_col": 86
+              },
+              "width": 1,
+              "op": "&",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 84,
+                  "col": 21,
+                  "end_line": 84,
+                  "end_col": 29
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "right": {
+                "kind": "Unary",
+                "span": {
+                  "line": 84,
+                  "col": 32,
+                  "end_line": 84,
+                  "end_col": 86
+                },
+                "width": 1,
+                "op": "~",
+                "operand": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 84,
+                    "col": 34,
+                    "end_line": 84,
+                    "end_col": 85
+                  },
+                  "width": 1,
+                  "op": "&",
+                  "left": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 84,
+                      "col": 34,
+                      "end_line": 84,
+                      "end_col": 46
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 84,
+                        "col": 34,
+                        "end_line": 84,
+                        "end_col": 43
+                      },
+                      "width": 2,
+                      "name": "OpCode_SI"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 84,
+                        "col": 44,
+                        "end_line": 84,
+                        "end_col": 45
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  },
+                  "right": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 84,
+                      "col": 50,
+                      "end_line": 84,
+                      "end_col": 84
+                    },
+                    "width": 1,
+                    "op": "^",
+                    "left": {
+                      "kind": "BitSel",
+                      "span": {
+                        "line": 84,
+                        "col": 50,
+                        "end_line": 84,
+                        "end_col": 71
+                      },
+                      "width": 1,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 84,
+                          "col": 50,
+                          "end_line": 84,
+                          "end_col": 56
+                        },
+                        "width": 32,
+                        "name": "OpA_DI"
+                      },
+                      "index": {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 84,
+                          "col": 57,
+                          "end_line": 84,
+                          "end_col": 70
+                        },
+                        "name": "$high",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 84,
+                              "col": 63,
+                              "end_line": 84,
+                              "end_col": 69
+                            },
+                            "width": 32,
+                            "name": "OpA_DI"
+                          }
+                        ],
+                        "resolved": 31
+                      }
+                    },
+                    "right": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 84,
+                        "col": 74,
+                        "end_line": 84,
+                        "end_col": 84
+                      },
+                      "width": 1,
+                      "name": "OpBSign_SI"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 87,
+              "col": 10,
+              "end_line": 87,
+              "end_col": 50
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 87,
+                "col": 10,
+                "end_line": 87,
+                "end_col": 18
+              },
+              "width": 32,
+              "name": "AddMux_D"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 87,
+                "col": 21,
+                "end_line": 87,
+                "end_col": 50
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 87,
+                  "col": 22,
+                  "end_line": 87,
+                  "end_col": 30
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 87,
+                  "col": 34,
+                  "end_line": 87,
+                  "end_col": 40
+                },
+                "width": 32,
+                "name": "OpA_DI"
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 87,
+                  "col": 43,
+                  "end_line": 87,
+                  "end_col": 50
+                },
+                "width": 32,
+                "name": "BReg_DP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 90,
+              "col": 10,
+              "end_line": 90,
+              "end_col": 84
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 90,
+                "col": 10,
+                "end_line": 90,
+                "end_col": 16
+              },
+              "width": 32,
+              "name": "BMux_D"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 90,
+                "col": 21,
+                "end_line": 90,
+                "end_col": 84
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 90,
+                  "col": 22,
+                  "end_line": 90,
+                  "end_col": 30
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 90,
+                  "col": 34,
+                  "end_line": 90,
+                  "end_col": 40
+                },
+                "width": 32,
+                "name": "OpB_DI"
+              },
+              "else": {
+                "kind": "Concat",
+                "span": {
+                  "line": 90,
+                  "col": 43,
+                  "end_line": 90,
+                  "end_col": 84
+                },
+                "width": 32,
+                "parts": [
+                  {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 90,
+                      "col": 44,
+                      "end_line": 90,
+                      "end_col": 54
+                    },
+                    "width": 1,
+                    "name": "CompInv_SP"
+                  },
+                  {
+                    "kind": "PartSel",
+                    "span": {
+                      "line": 90,
+                      "col": 57,
+                      "end_line": 90,
+                      "end_col": 82
+                    },
+                    "width": 31,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 90,
+                        "col": 57,
+                        "end_line": 90,
+                        "end_col": 64
+                      },
+                      "width": 32,
+                      "name": "BReg_DP"
+                    },
+                    "msb": {
+                      "kind": "SysCall",
+                      "span": {
+                        "line": 90,
+                        "col": 65,
+                        "end_line": 90,
+                        "end_col": 79
+                      },
+                      "name": "$high",
+                      "args": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 90,
+                            "col": 71,
+                            "end_line": 90,
+                            "end_col": 78
+                          },
+                          "width": 32,
+                          "name": "BReg_DP"
+                        }
+                      ],
+                      "resolved": 31
+                    },
+                    "lsb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 90,
+                        "col": 80,
+                        "end_line": 90,
+                        "end_col": 81
+                      },
+                      "value": 1,
+                      "resolved_width": 32
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 99,
+              "col": 10,
+              "end_line": 99,
+              "end_col": 58
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 99,
+                "col": 10,
+                "end_line": 99,
+                "end_col": 18
+              },
+              "width": 32,
+              "name": "OutMux_D"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 99,
+                "col": 21,
+                "end_line": 99,
+                "end_col": 58
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 99,
+                  "col": 22,
+                  "end_line": 99,
+                  "end_col": 31
+                },
+                "width": 1,
+                "name": "RemSel_SP"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 99,
+                  "col": 35,
+                  "end_line": 99,
+                  "end_col": 42
+                },
+                "width": 32,
+                "name": "AReg_DP"
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 99,
+                  "col": 45,
+                  "end_line": 99,
+                  "end_col": 58
+                },
+                "width": 32,
+                "name": "ResReg_DP_rev"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 102,
+              "col": 10,
+              "end_line": 102,
+              "end_col": 62
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 102,
+                "col": 10,
+                "end_line": 102,
+                "end_col": 16
+              },
+              "width": 32,
+              "name": "Res_DO"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 102,
+                "col": 19,
+                "end_line": 102,
+                "end_col": 62
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 102,
+                  "col": 20,
+                  "end_line": 102,
+                  "end_col": 29
+                },
+                "width": 1,
+                "name": "ResInv_SP"
+              },
+              "then": {
+                "kind": "Unary",
+                "span": {
+                  "line": 102,
+                  "col": 33,
+                  "end_line": 102,
+                  "end_col": 51
+                },
+                "width": 32,
+                "op": "-",
+                "operand": {
+                  "kind": "Cast",
+                  "span": {
+                    "line": 102,
+                    "col": 34,
+                    "end_line": 102,
+                    "end_col": 51
+                  },
+                  "width": 32,
+                  "signed": true,
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 102,
+                      "col": 42,
+                      "end_line": 102,
+                      "end_col": 50
+                    },
+                    "width": 32,
+                    "name": "OutMux_D"
+                  }
+                }
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 102,
+                  "col": 54,
+                  "end_line": 102,
+                  "end_col": 62
+                },
+                "width": 32,
+                "name": "OutMux_D"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 105,
+              "col": 10,
+              "end_line": 105,
+              "end_col": 113
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 105,
+                "col": 10,
+                "end_line": 105,
+                "end_col": 18
+              },
+              "width": 1,
+              "name": "ABComp_S"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 105,
+                "col": 24,
+                "end_line": 105,
+                "end_col": 113
+              },
+              "width": 1,
+              "op": "&",
+              "left": {
+                "kind": "Binary",
+                "span": {
+                  "line": 105,
+                  "col": 25,
+                  "end_line": 105,
+                  "end_col": 82
+                },
+                "width": 1,
+                "op": "|",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 105,
+                    "col": 26,
+                    "end_line": 105,
+                    "end_col": 44
+                  },
+                  "width": 1,
+                  "op": "==",
+                  "left": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 105,
+                      "col": 26,
+                      "end_line": 105,
+                      "end_col": 33
+                    },
+                    "width": 32,
+                    "name": "AReg_DP"
+                  },
+                  "right": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 105,
+                      "col": 37,
+                      "end_line": 105,
+                      "end_col": 44
+                    },
+                    "width": 32,
+                    "name": "BReg_DP"
+                  }
+                },
+                "right": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 105,
+                    "col": 49,
+                    "end_line": 105,
+                    "end_col": 81
+                  },
+                  "width": 1,
+                  "op": "^",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 105,
+                      "col": 50,
+                      "end_line": 105,
+                      "end_col": 67
+                    },
+                    "width": 1,
+                    "op": ">",
+                    "left": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 105,
+                        "col": 50,
+                        "end_line": 105,
+                        "end_col": 57
+                      },
+                      "width": 32,
+                      "name": "AReg_DP"
+                    },
+                    "right": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 105,
+                        "col": 60,
+                        "end_line": 105,
+                        "end_col": 67
+                      },
+                      "width": 32,
+                      "name": "BReg_DP"
+                    }
+                  },
+                  "right": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 105,
+                      "col": 71,
+                      "end_line": 105,
+                      "end_col": 81
+                    },
+                    "width": 1,
+                    "name": "CompInv_SP"
+                  }
+                }
+              },
+              "right": {
+                "kind": "Binary",
+                "span": {
+                  "line": 105,
+                  "col": 87,
+                  "end_line": 105,
+                  "end_col": 112
+                },
+                "width": 1,
+                "op": "|",
+                "left": {
+                  "kind": "Reduce",
+                  "span": {
+                    "line": 105,
+                    "col": 88,
+                    "end_line": 105,
+                    "end_col": 96
+                  },
+                  "width": 1,
+                  "op": "|",
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 105,
+                      "col": 89,
+                      "end_line": 105,
+                      "end_col": 96
+                    },
+                    "width": 32,
+                    "name": "AReg_DP"
+                  }
+                },
+                "right": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 105,
+                    "col": 100,
+                    "end_line": 105,
+                    "end_col": 112
+                  },
+                  "width": 1,
+                  "name": "OpBIsZero_SI"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 108,
+              "col": 10,
+              "end_line": 108,
+              "end_col": 45
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 108,
+                "col": 10,
+                "end_line": 108,
+                "end_col": 18
+              },
+              "width": 32,
+              "name": "AddTmp_D"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 108,
+                "col": 21,
+                "end_line": 108,
+                "end_col": 45
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 108,
+                  "col": 22,
+                  "end_line": 108,
+                  "end_col": 30
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Int",
+                "span": {
+                  "line": 108,
+                  "col": 34,
+                  "end_line": 108,
+                  "end_col": 35
+                },
+                "value": 0,
+                "resolved_width": 32
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 108,
+                  "col": 38,
+                  "end_line": 108,
+                  "end_col": 45
+                },
+                "width": 32,
+                "name": "AReg_DP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 109,
+              "col": 10,
+              "end_line": 109,
+              "end_col": 83
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 109,
+                "col": 10,
+                "end_line": 109,
+                "end_col": 18
+              },
+              "width": 32,
+              "name": "AddOut_D"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 109,
+                "col": 21,
+                "end_line": 109,
+                "end_col": 83
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 109,
+                  "col": 22,
+                  "end_line": 109,
+                  "end_col": 29
+                },
+                "width": 1,
+                "name": "PmSel_S"
+              },
+              "then": {
+                "kind": "Binary",
+                "span": {
+                  "line": 109,
+                  "col": 33,
+                  "end_line": 109,
+                  "end_col": 52
+                },
+                "width": 32,
+                "op": "+",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 109,
+                    "col": 33,
+                    "end_line": 109,
+                    "end_col": 41
+                  },
+                  "width": 32,
+                  "name": "AddTmp_D"
+                },
+                "right": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 109,
+                    "col": 44,
+                    "end_line": 109,
+                    "end_col": 52
+                  },
+                  "width": 32,
+                  "name": "AddMux_D"
+                }
+              },
+              "else": {
+                "kind": "Binary",
+                "span": {
+                  "line": 109,
+                  "col": 55,
+                  "end_line": 109,
+                  "end_col": 83
+                },
+                "width": 32,
+                "op": "-",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 109,
+                    "col": 55,
+                    "end_line": 109,
+                    "end_col": 63
+                  },
+                  "width": 32,
+                  "name": "AddTmp_D"
+                },
+                "right": {
+                  "kind": "Cast",
+                  "span": {
+                    "line": 109,
+                    "col": 66,
+                    "end_line": 109,
+                    "end_col": 83
+                  },
+                  "width": 32,
+                  "signed": true,
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 109,
+                      "col": 74,
+                      "end_line": 109,
+                      "end_col": 82
+                    },
+                    "width": 32,
+                    "name": "AddMux_D"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 115,
+              "col": 10,
+              "end_line": 115,
+              "end_col": 80
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 115,
+                "col": 10,
+                "end_line": 115,
+                "end_col": 16
+              },
+              "width": 6,
+              "name": "Cnt_DN"
+            },
+            "value": {
+              "kind": "Resize",
+              "span": {
+                "line": 115,
+                "col": 19,
+                "end_line": 115,
+                "end_col": 80
+              },
+              "width": 6,
+              "operand": {
+                "kind": "Ternary",
+                "span": {
+                  "line": 115,
+                  "col": 19,
+                  "end_line": 115,
+                  "end_col": 80
+                },
+                "width": 32,
+                "cond": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 115,
+                    "col": 20,
+                    "end_line": 115,
+                    "end_col": 28
+                  },
+                  "width": 1,
+                  "name": "LoadEn_S"
+                },
+                "then": {
+                  "kind": "Resize",
+                  "span": {
+                    "line": 115,
+                    "col": 32,
+                    "end_line": 115,
+                    "end_col": 43
+                  },
+                  "width": 32,
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 115,
+                      "col": 32,
+                      "end_line": 115,
+                      "end_col": 43
+                    },
+                    "width": 6,
+                    "name": "OpBShift_DI"
+                  }
+                },
+                "else": {
+                  "kind": "Ternary",
+                  "span": {
+                    "line": 115,
+                    "col": 46,
+                    "end_line": 115,
+                    "end_col": 80
+                  },
+                  "width": 32,
+                  "cond": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 115,
+                      "col": 47,
+                      "end_line": 115,
+                      "end_col": 57
+                    },
+                    "width": 1,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 115,
+                        "col": 48,
+                        "end_line": 115,
+                        "end_col": 57
+                      },
+                      "width": 1,
+                      "name": "CntZero_S"
+                    }
+                  },
+                  "then": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 115,
+                      "col": 61,
+                      "end_line": 115,
+                      "end_col": 71
+                    },
+                    "width": 32,
+                    "op": "-",
+                    "left": {
+                      "kind": "Resize",
+                      "span": {
+                        "line": 115,
+                        "col": 61,
+                        "end_line": 115,
+                        "end_col": 67
+                      },
+                      "width": 32,
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 115,
+                          "col": 61,
+                          "end_line": 115,
+                          "end_col": 67
+                        },
+                        "width": 6,
+                        "name": "Cnt_DP"
+                      }
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 115,
+                        "col": 70,
+                        "end_line": 115,
+                        "end_col": 71
+                      },
+                      "value": 1,
+                      "resolved_width": 32
+                    }
+                  },
+                  "else": {
+                    "kind": "Resize",
+                    "span": {
+                      "line": 115,
+                      "col": 74,
+                      "end_line": 115,
+                      "end_col": 80
+                    },
+                    "width": 32,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 115,
+                        "col": 74,
+                        "end_line": 115,
+                        "end_col": 80
+                      },
+                      "width": 6,
+                      "name": "Cnt_DP"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 117,
+              "col": 10,
+              "end_line": 117,
+              "end_col": 32
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 117,
+                "col": 10,
+                "end_line": 117,
+                "end_col": 19
+              },
+              "width": 1,
+              "name": "CntZero_S"
+            },
+            "value": {
+              "kind": "Unary",
+              "span": {
+                "line": 117,
+                "col": 22,
+                "end_line": 117,
+                "end_col": 32
+              },
+              "width": 1,
+              "op": "~",
+              "operand": {
+                "kind": "Reduce",
+                "span": {
+                  "line": 117,
+                  "col": 24,
+                  "end_line": 117,
+                  "end_col": 31
+                },
+                "width": 1,
+                "op": "|",
+                "operand": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 117,
+                    "col": 25,
+                    "end_line": 117,
+                    "end_col": 31
+                  },
+                  "width": 6,
+                  "name": "Cnt_DP"
+                }
+              }
+            }
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 123,
+              "col": 3,
+              "end_line": 173,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 123,
+                "col": 15,
+                "end_line": 173,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 125,
+                    "col": 5,
+                    "end_line": 125,
+                    "end_col": 27
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 125,
+                      "col": 5,
+                      "end_line": 125,
+                      "end_col": 13
+                    },
+                    "width": 2,
+                    "name": "State_SN"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 125,
+                      "col": 18,
+                      "end_line": 125,
+                      "end_col": 26
+                    },
+                    "width": 2,
+                    "name": "State_SP"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 127,
+                    "col": 5,
+                    "end_line": 127,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 127,
+                      "col": 5,
+                      "end_line": 127,
+                      "end_col": 14
+                    },
+                    "width": 1,
+                    "name": "OutVld_SO"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 127,
+                      "col": 18,
+                      "end_line": 127,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 129,
+                    "col": 5,
+                    "end_line": 129,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 129,
+                      "col": 5,
+                      "end_line": 129,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "name": "LoadEn_S"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 129,
+                      "col": 18,
+                      "end_line": 129,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 131,
+                    "col": 5,
+                    "end_line": 131,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 131,
+                      "col": 5,
+                      "end_line": 131,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "name": "ARegEn_S"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 131,
+                      "col": 18,
+                      "end_line": 131,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 132,
+                    "col": 5,
+                    "end_line": 132,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 132,
+                      "col": 5,
+                      "end_line": 132,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "name": "BRegEn_S"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 132,
+                      "col": 18,
+                      "end_line": 132,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 133,
+                    "col": 5,
+                    "end_line": 133,
+                    "end_col": 23
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 133,
+                      "col": 5,
+                      "end_line": 133,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "name": "ResRegEn_S"
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 133,
+                      "col": 18,
+                      "end_line": 133,
+                      "end_col": 22
+                    },
+                    "width": 1,
+                    "bits": "0"
+                  }
+                },
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 135,
+                    "col": 5,
+                    "end_line": 172,
+                    "end_col": 12
+                  },
+                  "check": "none",
+                  "match": "normal",
+                  "subject": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 135,
+                      "col": 11,
+                      "end_line": 135,
+                      "end_col": 19
+                    },
+                    "width": 2,
+                    "name": "State_SP"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "EnumRef",
+                          "span": {
+                            "line": 137,
+                            "col": 7,
+                            "end_line": 137,
+                            "end_col": 11
+                          },
+                          "type": "e$1",
+                          "member": "IDLE",
+                          "from_package": null
+                        }
+                      ],
+                      "body": {
+                        "kind": "Block",
+                        "span": {
+                          "line": 137,
+                          "col": 13,
+                          "end_line": 147,
+                          "end_col": 10
+                        },
+                        "stmts": [
+                          {
+                            "kind": "BlockingAssign",
+                            "span": {
+                              "line": 138,
+                              "col": 9,
+                              "end_line": 138,
+                              "end_col": 26
+                            },
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 138,
+                                "col": 9,
+                                "end_line": 138,
+                                "end_col": 18
+                              },
+                              "width": 1,
+                              "name": "OutVld_SO"
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 138,
+                                "col": 21,
+                                "end_line": 138,
+                                "end_col": 25
+                              },
+                              "width": 1,
+                              "bits": "1"
+                            }
+                          },
+                          {
+                            "kind": "If",
+                            "span": {
+                              "line": 140,
+                              "col": 9,
+                              "end_line": 146,
+                              "end_col": 12
+                            },
+                            "cond": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 140,
+                                "col": 13,
+                                "end_line": 140,
+                                "end_col": 21
+                              },
+                              "width": 1,
+                              "name": "InVld_SI"
+                            },
+                            "then": {
+                              "kind": "Block",
+                              "span": {
+                                "line": 140,
+                                "col": 23,
+                                "end_line": 146,
+                                "end_col": 12
+                              },
+                              "stmts": [
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 141,
+                                    "col": 11,
+                                    "end_line": 141,
+                                    "end_col": 28
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 141,
+                                      "col": 11,
+                                      "end_line": 141,
+                                      "end_col": 20
+                                    },
+                                    "width": 1,
+                                    "name": "OutVld_SO"
+                                  },
+                                  "value": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 141,
+                                      "col": 23,
+                                      "end_line": 141,
+                                      "end_col": 27
+                                    },
+                                    "width": 1,
+                                    "bits": "0"
+                                  }
+                                },
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 142,
+                                    "col": 11,
+                                    "end_line": 142,
+                                    "end_col": 28
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 142,
+                                      "col": 11,
+                                      "end_line": 142,
+                                      "end_col": 19
+                                    },
+                                    "width": 1,
+                                    "name": "ARegEn_S"
+                                  },
+                                  "value": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 142,
+                                      "col": 23,
+                                      "end_line": 142,
+                                      "end_col": 27
+                                    },
+                                    "width": 1,
+                                    "bits": "1"
+                                  }
+                                },
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 143,
+                                    "col": 11,
+                                    "end_line": 143,
+                                    "end_col": 28
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 143,
+                                      "col": 11,
+                                      "end_line": 143,
+                                      "end_col": 19
+                                    },
+                                    "width": 1,
+                                    "name": "BRegEn_S"
+                                  },
+                                  "value": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 143,
+                                      "col": 23,
+                                      "end_line": 143,
+                                      "end_col": 27
+                                    },
+                                    "width": 1,
+                                    "bits": "1"
+                                  }
+                                },
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 144,
+                                    "col": 11,
+                                    "end_line": 144,
+                                    "end_col": 28
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 144,
+                                      "col": 11,
+                                      "end_line": 144,
+                                      "end_col": 19
+                                    },
+                                    "width": 1,
+                                    "name": "LoadEn_S"
+                                  },
+                                  "value": {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 144,
+                                      "col": 23,
+                                      "end_line": 144,
+                                      "end_col": 27
+                                    },
+                                    "width": 1,
+                                    "bits": "1"
+                                  }
+                                },
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 145,
+                                    "col": 11,
+                                    "end_line": 145,
+                                    "end_col": 30
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 145,
+                                      "col": 11,
+                                      "end_line": 145,
+                                      "end_col": 19
+                                    },
+                                    "width": 2,
+                                    "name": "State_SN"
+                                  },
+                                  "value": {
+                                    "kind": "EnumRef",
+                                    "span": {
+                                      "line": 145,
+                                      "col": 23,
+                                      "end_line": 145,
+                                      "end_col": 29
+                                    },
+                                    "type": "e$1",
+                                    "member": "DIVIDE",
+                                    "from_package": null
+                                  }
+                                }
+                              ]
+                            },
+                            "else": null
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "EnumRef",
+                          "span": {
+                            "line": 149,
+                            "col": 7,
+                            "end_line": 149,
+                            "end_col": 13
+                          },
+                          "type": "e$1",
+                          "member": "DIVIDE",
+                          "from_package": null
+                        }
+                      ],
+                      "body": {
+                        "kind": "Block",
+                        "span": {
+                          "line": 149,
+                          "col": 15,
+                          "end_line": 160,
+                          "end_col": 10
+                        },
+                        "stmts": [
+                          {
+                            "kind": "BlockingAssign",
+                            "span": {
+                              "line": 151,
+                              "col": 9,
+                              "end_line": 151,
+                              "end_col": 31
+                            },
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 151,
+                                "col": 9,
+                                "end_line": 151,
+                                "end_col": 17
+                              },
+                              "width": 1,
+                              "name": "ARegEn_S"
+                            },
+                            "value": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 151,
+                                "col": 22,
+                                "end_line": 151,
+                                "end_col": 30
+                              },
+                              "width": 1,
+                              "name": "ABComp_S"
+                            }
+                          },
+                          {
+                            "kind": "BlockingAssign",
+                            "span": {
+                              "line": 152,
+                              "col": 9,
+                              "end_line": 152,
+                              "end_col": 27
+                            },
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 152,
+                                "col": 9,
+                                "end_line": 152,
+                                "end_col": 17
+                              },
+                              "width": 1,
+                              "name": "BRegEn_S"
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 152,
+                                "col": 22,
+                                "end_line": 152,
+                                "end_col": 26
+                              },
+                              "width": 1,
+                              "bits": "1"
+                            }
+                          },
+                          {
+                            "kind": "BlockingAssign",
+                            "span": {
+                              "line": 153,
+                              "col": 9,
+                              "end_line": 153,
+                              "end_col": 27
+                            },
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 153,
+                                "col": 9,
+                                "end_line": 153,
+                                "end_col": 19
+                              },
+                              "width": 1,
+                              "name": "ResRegEn_S"
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 153,
+                                "col": 22,
+                                "end_line": 153,
+                                "end_col": 26
+                              },
+                              "width": 1,
+                              "bits": "1"
+                            }
+                          },
+                          {
+                            "kind": "If",
+                            "span": {
+                              "line": 157,
+                              "col": 9,
+                              "end_line": 159,
+                              "end_col": 12
+                            },
+                            "cond": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 157,
+                                "col": 13,
+                                "end_line": 157,
+                                "end_col": 22
+                              },
+                              "width": 1,
+                              "name": "CntZero_S"
+                            },
+                            "then": {
+                              "kind": "Block",
+                              "span": {
+                                "line": 158,
+                                "col": 11,
+                                "end_line": 158,
+                                "end_col": 29
+                              },
+                              "stmts": [
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 158,
+                                    "col": 11,
+                                    "end_line": 158,
+                                    "end_col": 29
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 158,
+                                      "col": 11,
+                                      "end_line": 158,
+                                      "end_col": 19
+                                    },
+                                    "width": 2,
+                                    "name": "State_SN"
+                                  },
+                                  "value": {
+                                    "kind": "EnumRef",
+                                    "span": {
+                                      "line": 158,
+                                      "col": 22,
+                                      "end_line": 158,
+                                      "end_col": 28
+                                    },
+                                    "type": "e$1",
+                                    "member": "FINISH",
+                                    "from_package": null
+                                  }
+                                }
+                              ]
+                            },
+                            "else": null
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "EnumRef",
+                          "span": {
+                            "line": 162,
+                            "col": 7,
+                            "end_line": 162,
+                            "end_col": 13
+                          },
+                          "type": "e$1",
+                          "member": "FINISH",
+                          "from_package": null
+                        }
+                      ],
+                      "body": {
+                        "kind": "Block",
+                        "span": {
+                          "line": 162,
+                          "col": 15,
+                          "end_line": 168,
+                          "end_col": 10
+                        },
+                        "stmts": [
+                          {
+                            "kind": "BlockingAssign",
+                            "span": {
+                              "line": 163,
+                              "col": 9,
+                              "end_line": 163,
+                              "end_col": 26
+                            },
+                            "target": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 163,
+                                "col": 9,
+                                "end_line": 163,
+                                "end_col": 18
+                              },
+                              "width": 1,
+                              "name": "OutVld_SO"
+                            },
+                            "value": {
+                              "kind": "Literal",
+                              "span": {
+                                "line": 163,
+                                "col": 21,
+                                "end_line": 163,
+                                "end_col": 25
+                              },
+                              "width": 1,
+                              "bits": "1"
+                            }
+                          },
+                          {
+                            "kind": "If",
+                            "span": {
+                              "line": 165,
+                              "col": 9,
+                              "end_line": 167,
+                              "end_col": 12
+                            },
+                            "cond": {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 165,
+                                "col": 13,
+                                "end_line": 165,
+                                "end_col": 22
+                              },
+                              "width": 1,
+                              "name": "OutRdy_SI"
+                            },
+                            "then": {
+                              "kind": "Block",
+                              "span": {
+                                "line": 166,
+                                "col": 11,
+                                "end_line": 166,
+                                "end_col": 27
+                              },
+                              "stmts": [
+                                {
+                                  "kind": "BlockingAssign",
+                                  "span": {
+                                    "line": 166,
+                                    "col": 11,
+                                    "end_line": 166,
+                                    "end_col": 27
+                                  },
+                                  "target": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 166,
+                                      "col": 11,
+                                      "end_line": 166,
+                                      "end_col": 19
+                                    },
+                                    "width": 2,
+                                    "name": "State_SN"
+                                  },
+                                  "value": {
+                                    "kind": "EnumRef",
+                                    "span": {
+                                      "line": 166,
+                                      "col": 22,
+                                      "end_line": 166,
+                                      "end_col": 26
+                                    },
+                                    "type": "e$1",
+                                    "member": "IDLE",
+                                    "from_package": null
+                                  }
+                                }
+                              ]
+                            },
+                            "else": null
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "default": {
+                    "kind": "Empty",
+                    "span": {
+                      "line": 170,
+                      "col": 30,
+                      "end_line": 170,
+                      "end_col": 31
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 181,
+              "col": 10,
+              "end_line": 181,
+              "end_col": 59
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 181,
+                "col": 10,
+                "end_line": 181,
+                "end_col": 19
+              },
+              "width": 1,
+              "name": "RemSel_SN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 181,
+                "col": 22,
+                "end_line": 181,
+                "end_col": 59
+              },
+              "width": 1,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 181,
+                  "col": 23,
+                  "end_line": 181,
+                  "end_col": 31
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "BitSel",
+                "span": {
+                  "line": 181,
+                  "col": 35,
+                  "end_line": 181,
+                  "end_col": 47
+                },
+                "width": 1,
+                "value": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 181,
+                    "col": 35,
+                    "end_line": 181,
+                    "end_col": 44
+                  },
+                  "width": 2,
+                  "name": "OpCode_SI"
+                },
+                "index": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 181,
+                    "col": 45,
+                    "end_line": 181,
+                    "end_col": 46
+                  },
+                  "value": 1,
+                  "resolved_width": 32
+                }
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 181,
+                  "col": 50,
+                  "end_line": 181,
+                  "end_col": 59
+                },
+                "width": 1,
+                "name": "RemSel_SP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 182,
+              "col": 10,
+              "end_line": 182,
+              "end_col": 59
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 182,
+                "col": 10,
+                "end_line": 182,
+                "end_col": 20
+              },
+              "width": 1,
+              "name": "CompInv_SN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 182,
+                "col": 23,
+                "end_line": 182,
+                "end_col": 59
+              },
+              "width": 1,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 182,
+                  "col": 24,
+                  "end_line": 182,
+                  "end_col": 32
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 182,
+                  "col": 36,
+                  "end_line": 182,
+                  "end_col": 46
+                },
+                "width": 1,
+                "name": "OpBSign_SI"
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 182,
+                  "col": 49,
+                  "end_line": 182,
+                  "end_col": 59
+                },
+                "width": 1,
+                "name": "CompInv_SP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 183,
+              "col": 10,
+              "end_line": 185,
+              "end_col": 31
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 183,
+                "col": 10,
+                "end_line": 183,
+                "end_col": 19
+              },
+              "width": 1,
+              "name": "ResInv_SN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 183,
+                "col": 22,
+                "end_line": 185,
+                "end_col": 31
+              },
+              "width": 1,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 183,
+                  "col": 23,
+                  "end_line": 183,
+                  "end_col": 31
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Binary",
+                "span": {
+                  "line": 183,
+                  "col": 35,
+                  "end_line": 185,
+                  "end_col": 19
+                },
+                "width": 1,
+                "op": "&",
+                "left": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 183,
+                    "col": 35,
+                    "end_line": 183,
+                    "end_col": 80
+                  },
+                  "width": 1,
+                  "op": "&",
+                  "left": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 183,
+                      "col": 36,
+                      "end_line": 183,
+                      "end_col": 64
+                    },
+                    "width": 1,
+                    "op": "|",
+                    "left": {
+                      "kind": "Unary",
+                      "span": {
+                        "line": 183,
+                        "col": 36,
+                        "end_line": 183,
+                        "end_col": 49
+                      },
+                      "width": 1,
+                      "op": "~",
+                      "operand": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 183,
+                          "col": 37,
+                          "end_line": 183,
+                          "end_col": 49
+                        },
+                        "width": 1,
+                        "name": "OpBIsZero_SI"
+                      }
+                    },
+                    "right": {
+                      "kind": "BitSel",
+                      "span": {
+                        "line": 183,
+                        "col": 52,
+                        "end_line": 183,
+                        "end_col": 64
+                      },
+                      "width": 1,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 183,
+                          "col": 52,
+                          "end_line": 183,
+                          "end_col": 61
+                        },
+                        "width": 2,
+                        "name": "OpCode_SI"
+                      },
+                      "index": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 183,
+                          "col": 62,
+                          "end_line": 183,
+                          "end_col": 63
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 183,
+                      "col": 68,
+                      "end_line": 183,
+                      "end_col": 80
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 183,
+                        "col": 68,
+                        "end_line": 183,
+                        "end_col": 77
+                      },
+                      "width": 2,
+                      "name": "OpCode_SI"
+                    },
+                    "index": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 183,
+                        "col": 78,
+                        "end_line": 183,
+                        "end_col": 79
+                      },
+                      "value": 0,
+                      "resolved_width": 32
+                    }
+                  }
+                },
+                "right": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 183,
+                    "col": 84,
+                    "end_line": 185,
+                    "end_col": 18
+                  },
+                  "width": 1,
+                  "op": "^",
+                  "left": {
+                    "kind": "BitSel",
+                    "span": {
+                      "line": 183,
+                      "col": 84,
+                      "end_line": 185,
+                      "end_col": 5
+                    },
+                    "width": 1,
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 183,
+                        "col": 84,
+                        "end_line": 183,
+                        "end_col": 90
+                      },
+                      "width": 32,
+                      "name": "OpA_DI"
+                    },
+                    "index": {
+                      "kind": "SysCall",
+                      "span": {
+                        "line": 183,
+                        "col": 91,
+                        "end_line": 185,
+                        "end_col": 4
+                      },
+                      "name": "$high",
+                      "args": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 184,
+                            "col": 7,
+                            "end_line": 184,
+                            "end_col": 13
+                          },
+                          "width": 32,
+                          "name": "OpA_DI"
+                        }
+                      ],
+                      "resolved": 31
+                    }
+                  },
+                  "right": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 185,
+                      "col": 8,
+                      "end_line": 185,
+                      "end_col": 18
+                    },
+                    "width": 1,
+                    "name": "OpBSign_SI"
+                  }
+                }
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 185,
+                  "col": 22,
+                  "end_line": 185,
+                  "end_col": 31
+                },
+                "width": 1,
+                "name": "ResInv_SP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 187,
+              "col": 10,
+              "end_line": 187,
+              "end_col": 51
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 187,
+                "col": 10,
+                "end_line": 187,
+                "end_col": 17
+              },
+              "width": 32,
+              "name": "AReg_DN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 187,
+                "col": 20,
+                "end_line": 187,
+                "end_col": 51
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 187,
+                  "col": 21,
+                  "end_line": 187,
+                  "end_col": 29
+                },
+                "width": 1,
+                "name": "ARegEn_S"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 187,
+                  "col": 33,
+                  "end_line": 187,
+                  "end_col": 41
+                },
+                "width": 32,
+                "name": "AddOut_D"
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 187,
+                  "col": 44,
+                  "end_line": 187,
+                  "end_col": 51
+                },
+                "width": 32,
+                "name": "AReg_DP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 188,
+              "col": 10,
+              "end_line": 188,
+              "end_col": 49
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 188,
+                "col": 10,
+                "end_line": 188,
+                "end_col": 17
+              },
+              "width": 32,
+              "name": "BReg_DN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 188,
+                "col": 20,
+                "end_line": 188,
+                "end_col": 49
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 188,
+                  "col": 21,
+                  "end_line": 188,
+                  "end_col": 29
+                },
+                "width": 1,
+                "name": "BRegEn_S"
+              },
+              "then": {
+                "kind": "Ident",
+                "span": {
+                  "line": 188,
+                  "col": 33,
+                  "end_line": 188,
+                  "end_col": 39
+                },
+                "width": 32,
+                "name": "BMux_D"
+              },
+              "else": {
+                "kind": "Ident",
+                "span": {
+                  "line": 188,
+                  "col": 42,
+                  "end_line": 188,
+                  "end_col": 49
+                },
+                "width": 32,
+                "name": "BReg_DP"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 189,
+              "col": 10,
+              "end_line": 191,
+              "end_col": 16
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 189,
+                "col": 10,
+                "end_line": 189,
+                "end_col": 19
+              },
+              "width": 32,
+              "name": "ResReg_DN"
+            },
+            "value": {
+              "kind": "Ternary",
+              "span": {
+                "line": 189,
+                "col": 22,
+                "end_line": 191,
+                "end_col": 16
+              },
+              "width": 32,
+              "cond": {
+                "kind": "Ident",
+                "span": {
+                  "line": 189,
+                  "col": 23,
+                  "end_line": 189,
+                  "end_col": 31
+                },
+                "width": 1,
+                "name": "LoadEn_S"
+              },
+              "then": {
+                "kind": "Fill",
+                "span": {
+                  "line": 189,
+                  "col": 35,
+                  "end_line": 189,
+                  "end_col": 37
+                },
+                "bit": "0",
+                "resolved_width": 32
+              },
+              "else": {
+                "kind": "Ternary",
+                "span": {
+                  "line": 189,
+                  "col": 40,
+                  "end_line": 191,
+                  "end_col": 16
+                },
+                "width": 32,
+                "cond": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 189,
+                    "col": 41,
+                    "end_line": 189,
+                    "end_col": 51
+                  },
+                  "width": 1,
+                  "name": "ResRegEn_S"
+                },
+                "then": {
+                  "kind": "Concat",
+                  "span": {
+                    "line": 189,
+                    "col": 55,
+                    "end_line": 191,
+                    "end_col": 4
+                  },
+                  "width": 32,
+                  "parts": [
+                    {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 190,
+                        "col": 5,
+                        "end_line": 190,
+                        "end_col": 13
+                      },
+                      "width": 1,
+                      "name": "ABComp_S"
+                    },
+                    {
+                      "kind": "PartSel",
+                      "span": {
+                        "line": 190,
+                        "col": 15,
+                        "end_line": 190,
+                        "end_col": 44
+                      },
+                      "width": 31,
+                      "value": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 190,
+                          "col": 15,
+                          "end_line": 190,
+                          "end_col": 24
+                        },
+                        "width": 32,
+                        "name": "ResReg_DP"
+                      },
+                      "msb": {
+                        "kind": "SysCall",
+                        "span": {
+                          "line": 190,
+                          "col": 25,
+                          "end_line": 190,
+                          "end_col": 41
+                        },
+                        "name": "$high",
+                        "args": [
+                          {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 190,
+                              "col": 31,
+                              "end_line": 190,
+                              "end_col": 40
+                            },
+                            "width": 32,
+                            "name": "ResReg_DP"
+                          }
+                        ],
+                        "resolved": 31
+                      },
+                      "lsb": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 190,
+                          "col": 42,
+                          "end_line": 190,
+                          "end_col": 43
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      }
+                    }
+                  ]
+                },
+                "else": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 191,
+                    "col": 7,
+                    "end_line": 191,
+                    "end_col": 16
+                  },
+                  "width": 32,
+                  "name": "ResReg_DP"
+                }
+              }
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 193,
+              "col": 3,
+              "end_line": 213,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "Clk_CI",
+            "areset_n": "Rst_RBI",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 194,
+                "col": 5,
+                "end_line": 212,
+                "end_col": 8
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 194,
+                    "col": 5,
+                    "end_line": 212,
+                    "end_col": 8
+                  },
+                  "cond": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 194,
+                      "col": 9,
+                      "end_line": 194,
+                      "end_col": 17
+                    },
+                    "width": 1,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 194,
+                        "col": 10,
+                        "end_line": 194,
+                        "end_col": 17
+                      },
+                      "width": 1,
+                      "name": "Rst_RBI"
+                    }
+                  },
+                  "then": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 194,
+                      "col": 19,
+                      "end_line": 203,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 195,
+                          "col": 7,
+                          "end_line": 195,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 195,
+                            "col": 7,
+                            "end_line": 195,
+                            "end_col": 15
+                          },
+                          "width": 2,
+                          "name": "State_SP"
+                        },
+                        "value": {
+                          "kind": "EnumRef",
+                          "span": {
+                            "line": 195,
+                            "col": 21,
+                            "end_line": 195,
+                            "end_col": 25
+                          },
+                          "type": "e$1",
+                          "member": "IDLE",
+                          "from_package": null
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 196,
+                          "col": 7,
+                          "end_line": 196,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 196,
+                            "col": 7,
+                            "end_line": 196,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "AReg_DP"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 196,
+                            "col": 21,
+                            "end_line": 196,
+                            "end_col": 23
+                          },
+                          "bit": "0",
+                          "resolved_width": 32
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 197,
+                          "col": 7,
+                          "end_line": 197,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 197,
+                            "col": 7,
+                            "end_line": 197,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "BReg_DP"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 197,
+                            "col": 21,
+                            "end_line": 197,
+                            "end_col": 23
+                          },
+                          "bit": "0",
+                          "resolved_width": 32
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 198,
+                          "col": 7,
+                          "end_line": 198,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 198,
+                            "col": 7,
+                            "end_line": 198,
+                            "end_col": 16
+                          },
+                          "width": 32,
+                          "name": "ResReg_DP"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 198,
+                            "col": 21,
+                            "end_line": 198,
+                            "end_col": 23
+                          },
+                          "bit": "0",
+                          "resolved_width": 32
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 199,
+                          "col": 7,
+                          "end_line": 199,
+                          "end_col": 24
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 199,
+                            "col": 7,
+                            "end_line": 199,
+                            "end_col": 13
+                          },
+                          "width": 6,
+                          "name": "Cnt_DP"
+                        },
+                        "value": {
+                          "kind": "Fill",
+                          "span": {
+                            "line": 199,
+                            "col": 21,
+                            "end_line": 199,
+                            "end_col": 23
+                          },
+                          "bit": "0",
+                          "resolved_width": 6
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 200,
+                          "col": 7,
+                          "end_line": 200,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 200,
+                            "col": 7,
+                            "end_line": 200,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "RemSel_SP"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 200,
+                            "col": 21,
+                            "end_line": 200,
+                            "end_col": 25
+                          },
+                          "width": 1,
+                          "bits": "0"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 201,
+                          "col": 7,
+                          "end_line": 201,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 201,
+                            "col": 7,
+                            "end_line": 201,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "CompInv_SP"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 201,
+                            "col": 21,
+                            "end_line": 201,
+                            "end_col": 25
+                          },
+                          "width": 1,
+                          "bits": "0"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 202,
+                          "col": 7,
+                          "end_line": 202,
+                          "end_col": 26
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 202,
+                            "col": 7,
+                            "end_line": 202,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "ResInv_SP"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 202,
+                            "col": 21,
+                            "end_line": 202,
+                            "end_col": 25
+                          },
+                          "width": 1,
+                          "bits": "0"
+                        }
+                      }
+                    ]
+                  },
+                  "else": {
+                    "kind": "Block",
+                    "span": {
+                      "line": 203,
+                      "col": 14,
+                      "end_line": 212,
+                      "end_col": 8
+                    },
+                    "stmts": [
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 204,
+                          "col": 7,
+                          "end_line": 204,
+                          "end_col": 30
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 204,
+                            "col": 7,
+                            "end_line": 204,
+                            "end_col": 15
+                          },
+                          "width": 2,
+                          "name": "State_SP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 204,
+                            "col": 21,
+                            "end_line": 204,
+                            "end_col": 29
+                          },
+                          "width": 2,
+                          "name": "State_SN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 205,
+                          "col": 7,
+                          "end_line": 205,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 205,
+                            "col": 7,
+                            "end_line": 205,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "AReg_DP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 205,
+                            "col": 21,
+                            "end_line": 205,
+                            "end_col": 28
+                          },
+                          "width": 32,
+                          "name": "AReg_DN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 206,
+                          "col": 7,
+                          "end_line": 206,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 206,
+                            "col": 7,
+                            "end_line": 206,
+                            "end_col": 14
+                          },
+                          "width": 32,
+                          "name": "BReg_DP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 206,
+                            "col": 21,
+                            "end_line": 206,
+                            "end_col": 28
+                          },
+                          "width": 32,
+                          "name": "BReg_DN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 207,
+                          "col": 7,
+                          "end_line": 207,
+                          "end_col": 31
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 207,
+                            "col": 7,
+                            "end_line": 207,
+                            "end_col": 16
+                          },
+                          "width": 32,
+                          "name": "ResReg_DP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 207,
+                            "col": 21,
+                            "end_line": 207,
+                            "end_col": 30
+                          },
+                          "width": 32,
+                          "name": "ResReg_DN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 208,
+                          "col": 7,
+                          "end_line": 208,
+                          "end_col": 28
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 208,
+                            "col": 7,
+                            "end_line": 208,
+                            "end_col": 13
+                          },
+                          "width": 6,
+                          "name": "Cnt_DP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 208,
+                            "col": 21,
+                            "end_line": 208,
+                            "end_col": 27
+                          },
+                          "width": 6,
+                          "name": "Cnt_DN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 209,
+                          "col": 7,
+                          "end_line": 209,
+                          "end_col": 31
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 209,
+                            "col": 7,
+                            "end_line": 209,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "RemSel_SP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 209,
+                            "col": 21,
+                            "end_line": 209,
+                            "end_col": 30
+                          },
+                          "width": 1,
+                          "name": "RemSel_SN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 210,
+                          "col": 7,
+                          "end_line": 210,
+                          "end_col": 32
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 210,
+                            "col": 7,
+                            "end_line": 210,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "CompInv_SP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 210,
+                            "col": 21,
+                            "end_line": 210,
+                            "end_col": 31
+                          },
+                          "width": 1,
+                          "name": "CompInv_SN"
+                        }
+                      },
+                      {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 211,
+                          "col": 7,
+                          "end_line": 211,
+                          "end_col": 31
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 211,
+                            "col": 7,
+                            "end_line": 211,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "ResInv_SP"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 211,
+                            "col": 21,
+                            "end_line": 211,
+                            "end_col": 30
+                          },
+                          "width": 1,
+                          "name": "ResInv_SN"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [
+          {
+            "kind": "GenerateFor",
+            "span": {
+              "line": 94,
+              "col": 5,
+              "end_line": 96,
+              "end_col": 8
+            },
+            "label": "gen_bit_swapping",
+            "genvar": "index",
+            "init": {
+              "kind": "Int",
+              "span": {
+                "line": 94,
+                "col": 18,
+                "end_line": 94,
+                "end_col": 19
+              },
+              "value": 0,
+              "resolved_width": 32
+            },
+            "bound": {
+              "kind": "Binary",
+              "span": {
+                "line": 94,
+                "col": 21,
+                "end_line": 94,
+                "end_col": 36
+              },
+              "width": 1,
+              "op": "s<",
+              "left": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 94,
+                  "col": 21,
+                  "end_line": 94,
+                  "end_col": 26
+                },
+                "name": "index"
+              },
+              "right": {
+                "kind": "ParamRef",
+                "span": {
+                  "line": 94,
+                  "col": 29,
+                  "end_line": 94,
+                  "end_col": 36
+                },
+                "name": "C_WIDTH"
+              }
+            },
+            "step": {
+              "kind": "Unary",
+              "span": {
+                "line": 94,
+                "col": 38,
+                "end_line": 94,
+                "end_col": 45
+              },
+              "width": null,
+              "op": "++",
+              "operand": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 94,
+                  "col": 38,
+                  "end_line": 94,
+                  "end_col": 43
+                },
+                "name": "index"
+              }
+            },
+            "resolved_count": 32,
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "line": 95,
+                  "col": 14,
+                  "end_line": 95,
+                  "end_col": 63
+                },
+                "target": {
+                  "kind": "BitSel",
+                  "span": {
+                    "line": 95,
+                    "col": 14,
+                    "end_line": 95,
+                    "end_col": 34
+                  },
+                  "width": 1,
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 95,
+                      "col": 14,
+                      "end_line": 95,
+                      "end_col": 27
+                    },
+                    "width": 32,
+                    "name": "ResReg_DP_rev"
+                  },
+                  "index": {
+                    "kind": "GenvarRef",
+                    "span": {
+                      "line": 95,
+                      "col": 28,
+                      "end_line": 95,
+                      "end_col": 33
+                    },
+                    "name": "index"
+                  }
+                },
+                "value": {
+                  "kind": "BitSel",
+                  "span": {
+                    "line": 95,
+                    "col": 37,
+                    "end_line": 95,
+                    "end_col": 63
+                  },
+                  "width": 1,
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 95,
+                      "col": 37,
+                      "end_line": 95,
+                      "end_col": 46
+                    },
+                    "width": 32,
+                    "name": "ResReg_DP"
+                  },
+                  "index": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 95,
+                      "col": 47,
+                      "end_line": 95,
+                      "end_col": 62
+                    },
+                    "width": 32,
+                    "op": "-",
+                    "left": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 95,
+                        "col": 47,
+                        "end_line": 95,
+                        "end_col": 56
+                      },
+                      "width": 32,
+                      "op": "-",
+                      "left": {
+                        "kind": "ParamRef",
+                        "span": {
+                          "line": 95,
+                          "col": 47,
+                          "end_line": 95,
+                          "end_col": 54
+                        },
+                        "name": "C_WIDTH"
+                      },
+                      "right": {
+                        "kind": "Int",
+                        "span": {
+                          "line": 95,
+                          "col": 55,
+                          "end_line": 95,
+                          "end_col": 56
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      }
+                    },
+                    "right": {
+                      "kind": "GenvarRef",
+                      "span": {
+                        "line": 95,
+                        "col": 57,
+                        "end_line": 95,
+                        "end_col": 62
+                      },
+                      "name": "index"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -35,6 +35,17 @@ maybe "circuit-equation-provenance" harness/spice/equation_provenance_test.py \
 maybe "verilog-a-extractor-tests" extractors/veriloga/openvaf_ast/Cargo.toml python3 extractors/veriloga/test_extract.py
 maybe "docs-check"      tools/docs_check.py       python3 tools/docs_check.py
 maybe "notebooks"       tools/run_notebooks.py    python3 tools/run_notebooks.py
+# RV lane: differential validation of LeanModels/Rv against the pinned
+# sail-riscv reference emulator (prebuilt release binary under
+# tools/rv-oracle/, gitignored; absent on stock runners — the fetch URL is
+# in tools/rv-oracle/README.md and in harness/rv/diff_test.py's docstring).
+RV_SAIL="${RV_SAIL_SIM:-tools/rv-oracle/sail-riscv-Linux-x86_64/bin/sail_riscv_sim}"
+if [ -x "$RV_SAIL" ]; then
+  maybe "rv-harness" harness/rv/diff_test.py python3 harness/rv/diff_test.py --no-build
+else
+  echo "=== [rv-harness] SKIP (sail_riscv_sim not present at $RV_SAIL)"; skip+=("rv-harness")
+fi
+
 # SV lane: prefer Icarus when installed (generic CI and license-free local
 # runs); otherwise use Xcelium on lab hosts. A mismatch is a hard failure.
 if command -v iverilog >/dev/null 2>&1; then
@@ -78,31 +89,54 @@ else
 fi
 
 # Spectre is proprietary and unavailable on stock GitHub runners. Lab hosts
-# run it as an independent second oracle when the licensed binary is present.
+# run it as an independent second oracle when both the binary and a license are
+# available. An installed but unlicensed binary is infrastructure absence, not
+# evidence that a circuit disagrees with Spectre.
+spectre_steps=(
+  "spectre-harness"
+  "spice-ac-spectre"
+  "spice-amp-spectre"
+  "verilog-a-spectre"
+  "spice-loaded-inverter-spectre"
+  "spice-dram-1t1c-spectre"
+  "spice-dram-bank-spectre"
+  "spice-dram-bank-256x32-spectre"
+  "spice-dram-sense-spectre"
+)
+skip_spectre_steps() {
+  local reason="$1" name
+  for name in "${spectre_steps[@]}"; do
+    echo "=== [$name] SKIP ($reason)"
+    skip+=("$name")
+  done
+}
+
 if command -v spectre >/dev/null 2>&1 || \
     [ -x "${SPECTRE_BIN:-/opt/cadence/installs/SPECTRE231/bin/spectre}" ]; then
   if ! command -v spectre >/dev/null 2>&1; then
     export PATH="$(dirname "${SPECTRE_BIN:-/opt/cadence/installs/SPECTRE231/bin/spectre}"):$PATH"
   fi
-  maybe "spectre-harness" harness/spice/spectre_test.py python3 harness/spice/spectre_test.py
-  maybe "spice-ac-spectre" harness/spice/ac_test.py python3 harness/spice/ac_test.py --sim spectre
-  maybe "spice-amp-spectre" harness/spice/amp_test.py python3 harness/spice/amp_test.py --sim spectre
-  maybe "verilog-a-spectre" harness/veriloga/spectre_test.py python3 harness/veriloga/spectre_test.py
-  maybe "spice-loaded-inverter-spectre" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim spectre
-  maybe "spice-dram-1t1c-spectre" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim spectre
-  maybe "spice-dram-bank-spectre" harness/spice/dram_bank_2x2_transient_test.py python3 harness/spice/dram_bank_2x2_transient_test.py --sim spectre
-  maybe "spice-dram-bank-256x32-spectre" harness/spice/dram_bank_256x32_transient_test.py python3 harness/spice/dram_bank_256x32_transient_test.py --sim spectre
-  maybe "spice-dram-sense-spectre" harness/spice/dram_sense_amp_transient_test.py python3 harness/spice/dram_sense_amp_transient_test.py --sim spectre
+  python3 harness/spice/spectre_probe.py
+  spectre_probe_status=$?
+  if [ "$spectre_probe_status" -eq 0 ]; then
+    pass+=("spectre-probe")
+    maybe "spectre-harness" harness/spice/spectre_test.py python3 harness/spice/spectre_test.py
+    maybe "spice-ac-spectre" harness/spice/ac_test.py python3 harness/spice/ac_test.py --sim spectre
+    maybe "spice-amp-spectre" harness/spice/amp_test.py python3 harness/spice/amp_test.py --sim spectre
+    maybe "verilog-a-spectre" harness/veriloga/spectre_test.py python3 harness/veriloga/spectre_test.py
+    maybe "spice-loaded-inverter-spectre" harness/spice/loaded_inverter_transient_test.py python3 harness/spice/loaded_inverter_transient_test.py --sim spectre
+    maybe "spice-dram-1t1c-spectre" harness/spice/dram_1t1c_transient_test.py python3 harness/spice/dram_1t1c_transient_test.py --sim spectre
+    maybe "spice-dram-bank-spectre" harness/spice/dram_bank_2x2_transient_test.py python3 harness/spice/dram_bank_2x2_transient_test.py --sim spectre
+    maybe "spice-dram-bank-256x32-spectre" harness/spice/dram_bank_256x32_transient_test.py python3 harness/spice/dram_bank_256x32_transient_test.py --sim spectre --full
+    maybe "spice-dram-sense-spectre" harness/spice/dram_sense_amp_transient_test.py python3 harness/spice/dram_sense_amp_transient_test.py --sim spectre
+  elif [ "$spectre_probe_status" -eq 77 ]; then
+    skip_spectre_steps "Spectre license unavailable"
+  else
+    fail+=("spectre-probe")
+    skip_spectre_steps "Spectre readiness probe failed"
+  fi
 else
-  echo "=== [spectre-harness] SKIP (spectre not found)"; skip+=("spectre-harness")
-  echo "=== [spice-ac-spectre] SKIP (spectre not found)"; skip+=("spice-ac-spectre")
-  echo "=== [spice-amp-spectre] SKIP (spectre not found)"; skip+=("spice-amp-spectre")
-  echo "=== [verilog-a-spectre] SKIP (spectre not found)"; skip+=("verilog-a-spectre")
-  echo "=== [spice-loaded-inverter-spectre] SKIP (spectre not found)"; skip+=("spice-loaded-inverter-spectre")
-  echo "=== [spice-dram-1t1c-spectre] SKIP (spectre not found)"; skip+=("spice-dram-1t1c-spectre")
-  echo "=== [spice-dram-bank-spectre] SKIP (spectre not found)"; skip+=("spice-dram-bank-spectre")
-  echo "=== [spice-dram-bank-256x32-spectre] SKIP (spectre not found)"; skip+=("spice-dram-bank-256x32-spectre")
-  echo "=== [spice-dram-sense-spectre] SKIP (spectre not found)"; skip+=("spice-dram-sense-spectre")
+  skip_spectre_steps "spectre not found"
 fi
 
 echo

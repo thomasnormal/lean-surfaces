@@ -53,7 +53,10 @@ Everything Lean lives under namespace `LeanModels` (Python lane under
 
 Supported (interpreter must implement faithfully):
 
-- Statements: `FunctionDef` (simple positional params only), `Return` (bare `return`
+- Statements: `FunctionDef` (simple positional params; LITERAL defaults —
+  int/bool/str/None `Constant` — are in tier and fill omitted trailing
+  arguments at call time; any non-literal default keeps the whole function
+  call-`unsupported`), `Return` (bare `return`
   and fall-off-end yield `Val.none`), `Assign` (single target: `Name` or a
   `Tuple`/`List` of `Name`s — tuple unpacking; arity mismatch → `ValueError`),
   `AugAssign` (target `Name` only; a **list**-valued target is `unsupported` —
@@ -64,8 +67,10 @@ Supported (interpreter must implement faithfully):
   `Continue`.
 - Expressions: `Constant` (int/bool/str/None), `Name`, `BinOp`
   (`Add Sub Mult FloorDiv Mod Pow`), `UnaryOp` (`USub Not`), `BoolOp` (`And Or`),
-  `Compare` (chained), `Call` (module-level user functions, positional args only;
-  builtin `len`), `List`, `Tuple`, `Subscript` (index only, no slices).
+  `Compare` (chained; `is`/`is not` ONLY against the literal `None`), `Call`
+  (module-level user functions, positional args only — trailing defaulted
+  arguments may be omitted; builtins `len` and `sorted`), `List`, `Tuple`, `Subscript`
+  (index only, no slices).
 - Recursion between module functions: supported (fuel bounds it).
 
 Everything else is representable in the AST (as itself or as `Unsupported`) but the
@@ -86,12 +91,15 @@ than `def` are recorded in `Module.topLevel` and ignored by `callFunction`
 | `==`/`!=` | Never raise. Numeric (int/bool) compare by value; str/list/tuple structural (lists/tuples elementwise, recursion is fine); `None == None` is True; cross-type (after bool→int) is `False` (`1 == "1"` is False). |
 | `<` `<=` `>` `>=` | int/bool vs int/bool by value; str vs str lexicographic (Unicode code points, which is Lean `String` `<`); v0: comparing other types → `unsupported`. |
 | Chained compare | `a < b < c` evaluates each operand **once**, left to right, short-circuits on first False (result False without evaluating the rest). |
+| `is` / `is not` | In tier IFF one side of that comparison link is the literal `None` (either side): `None` is a singleton, so `x is None ⟺ x = Val.none` — value-determined. Identity between any other values (small-int caching, str interning) is CPython-implementation-defined → the extractor emits the whole `Compare` node as `Unsupported "Compare:Is[Not]"`; a hand-built AST reaching the interpreter with two non-`None` operands is refused loudly (`unsupported`). |
+| Parameter defaults | LITERAL defaults only (int/bool/str/None `Constant`; `lo=-1` parses as `UnaryOp` → non-literal). Call arity window: `nparams − ndefaults ≤ nargs ≤ nparams` (`arityOk`), violations → canonical arity `TypeError`; omitted trailing params are bound to their defaults in `mkCallEnv`. CPython evaluates defaults ONCE at `def` time in the defining scope — for literals, call-time filling is observationally identical (a literal cannot be mutated, rebound, or scope-dependent); the mutable-default footgun (`def f(x=[])`) is unrepresentable, `[]` being non-literal. Any non-literal default ⇒ whole function `argsOk = false`, calls `unsupported`. |
 | `and`/`or` | Short-circuit and **return the operand value**, not a bool: `0 or "x"` is `"x"`. |
 | Truthiness | `bool(x)`: None→False; bool→itself; int→`≠0`; str/list/tuple→nonempty. Used by `if`, `while`, `and`/`or`, `not`. |
-| Name resolution | local env → module function table (functions are first-class enough to call by name; referencing a function name as a *value* is `unsupported` in v0) → builtin `len` → `NameError`. CPython's static-locals rule (a name assigned anywhere in the body is local throughout; early reads raise `UnboundLocalError`) is NOT modeled dynamically: the extractor flags functions that *call* a name they also assign (`locals_unsupported` → `localsOk = false`) and the interpreter refuses them loudly; plain read-before-assign of a local yields `NameError` (harness canonicalizes CPython's `UnboundLocalError`, a `NameError` subclass, to `NameError`). Duplicate top-level `def`s: the LAST definition wins (each `def` rebinds, as in CPython). |
+| Name resolution | local env → module function table (functions are first-class enough to call by name; referencing a function name as a *value* is `unsupported` in v0) → builtins `len`/`sorted` (a module-level `def len`/`def sorted` shadows the builtin, as CPython module globals do; referencing a builtin as a value is `unsupported`) → `NameError`. CPython's static-locals rule (a name assigned anywhere in the body is local throughout; early reads raise `UnboundLocalError`) is NOT modeled dynamically: the extractor flags functions that *call* a name they also assign (`locals_unsupported` → `localsOk = false`) and the interpreter refuses them loudly; plain read-before-assign of a local yields `NameError` (harness canonicalizes CPython's `UnboundLocalError`, a `NameError` subclass, to `NameError`). Duplicate top-level `def`s: the LAST definition wins (each `def` rebinds, as in CPython). |
 | Assignment | `Env.set`: replace existing binding in place, else append. Env is `List (String × Val)`, first match wins on lookup. |
 | Indexing | `xs[i]` for list/tuple/str (str yields 1-char str). Negative indices Python-style (`len+i`). Out of range → `IndexError`. Index must be int/bool → else `TypeError`. |
 | `len` | list/tuple/str → int. Else `TypeError`. |
+| `sorted` | All-int list → a NEW list, ascending (`sortInts` — a structural insertion sort, kernel-reducible on purpose: core's `List.mergeSort` is well-founded recursion and does not kernel-reduce, which would break `#py_check`/`py_check`/`py_vcgen`; stability is vacuous — `Val.int`s have no identity in v0). Wrong arity → `TypeError` (`sorted expected 1 argument, got n`, exact CPython 3.9). Non-iterable (int/bool/None) → `TypeError` (`'X' object is not iterable`). LOUD `unsupported`, never a guess: `str`/`tuple` arguments and lists with any non-`.int` element (CPython succeeds on `sorted("cba")`/`sorted((3,1))`/all-str/bool lists and TypeErrors only on mixed — v0 mirrors none of those faithfully). `key=`/`reverse=` are keyword-only in 3.9 ⇒ arrive as `call_unsupported: "keywords"`, refused before argument evaluation. No extractor marking at all — `sorted(xs)` is a plain `Call` node, the builtin lives entirely in the name-resolution row above (exact `len` analogy). |
 | Exceptions | v0 has no try/raise, but runtime errors are real: `PyErr` ∷ `typeError`, `nameError (name)`, `zeroDivisionError`, `indexError`, `valueError` (+ payload msgs where useful). Canonical names for the harness: `TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`. |
 | Evaluation order | Left-to-right everywhere (operands, call args, comparators), evaluate once. |
 
@@ -123,8 +131,9 @@ abbrev Env := List (String × Val)
 ```
 
 Module shape (mirrors the envelope): `Module` holds `functions : Array FunctionDefn`
-(name, params, `paramsOk : Bool` — false when the source used defaults/varargs/kwargs,
-in which case calling it is `unsupported`), body statements, and `topLevel` statements.
+(name, params — each with an optional literal default — and `paramsOk : Bool`,
+false when the source used non-literal defaults/varargs/kwargs, in which case
+calling it is `unsupported`), body statements, and `topLevel` statements.
 
 ## Fuel discipline (normative)
 

@@ -160,13 +160,17 @@ theorem fuelMono (fuel : Nat) :
                 exact Res.le_bind (ihEs m env cargs.toList k hk) fun _ =>
                   Res.le_refl _
               | none =>
+                -- module function → builtin `len` → builtin `sorted` → NameError
                 exact Res.le_ite
                   (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
                     ihF m fname vs.toArray k hk)
                   (Res.le_ite
                     (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
                       Res.le_refl _)
-                    (Res.le_refl _))
+                    (Res.le_ite
+                      (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
+                        Res.le_refl _)
+                      (Res.le_refl _)))
         | list elts _ =>
           simp only [evalExpr]
           exact Res.le_bind (ihEs m env elts.toList k hk) fun vs => Res.le_refl _

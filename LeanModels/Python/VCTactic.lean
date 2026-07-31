@@ -92,14 +92,18 @@ conjuncts), the first keeps the bare tag and the rest are numbered
 silently take only the first. Anything the recipes cannot close is
 *appended* as a goal, never dropped.
 
-Entry forms: a `CallsTo` goal (`==>`/`⇓`; bridged via `PyTriple.callsTo`,
-so a body that can fall off the end leaves a `v = None` residual); a
-`PyTriple` goal whose precondition reduces to `fun env => env = <literal>`;
-or a relational existential `∃ v, f(args) ==> v ∧ Φ v` — with a raw
-`Val`-typed binder used literally (bridged via `PyTriple.exists_callsTo`)
-or a marshalled spec-typed binder (`∃ v : PyInt, f(args) ==> v ∧ Φ v`, the
-surface elaboration putting `ToVal.toVal v` in the result slot; bridged
-via `PyTriple.exists_callsTo_toVal`).
+Entry forms: a `CallsTo` goal (`==>`/`⇓`; bridged via
+`PyTriple.callsTo_arityOk`, so a body that can fall off the end leaves a
+`v = None` residual); a `PyTriple` goal whose precondition reduces to
+`fun env => env = <literal>`; or a relational existential
+`∃ v, f(args) ==> v ∧ Φ v` — with a raw `Val`-typed binder used literally
+(bridged via `PyTriple.exists_callsTo_arityOk`) or a marshalled spec-typed
+binder (`∃ v : PyInt, f(args) ==> v ∧ Φ v`, the surface elaboration
+putting `ToVal.toVal v` in the result slot; bridged via
+`PyTriple.exists_callsTo_toVal_arityOk`). The `_arityOk` bridges are the
+F1-defaults general forms: their arity-window side condition computes at
+literal modules and closes by `rfl` whether the call supplies every
+argument or omits trailing defaulted ones.
 
 v1 restrictions (deliberate): loop clause variables are `Int`-valued and
 must exist at loop entry; loop `orelse` is empty (the layer-2 rule's
@@ -283,14 +287,17 @@ relational specs (`extended_gcd`'s Bezout coefficients) only know it
 arbitrary predicate `Φ` on the returned value (a `PyTriple` goal `py_vcgen`
 walks directly), get `∃ v, CallsTo … v ∧ Φ v`. -/
 
-/-- Triple → arrow, relational form: a whole-body triple whose `ret` arm
-asserts `Φ` of the returned value (and whose `next` arm is `False` — the
-body always returns) yields an existential `CallsTo`. -/
-theorem PyTriple.exists_callsTo {m : Module} {fname : String}
+/-- Triple → arrow, relational form, general-arity (F1 defaults): the
+hypothesis is the arity window `arityOk f.params args.size` — trailing
+defaulted arguments may be omitted at the call site, `mkCallEnv` fills
+them. This is the bridge `py_vcgen` applies for a `∃ v, …` goal (the side
+condition computes to `true = true` at literal modules and closes by
+`rfl`). `PyTriple.exists_callsTo` is the exact-arity corollary. -/
+theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
-    (harity : args.size = f.params.size)
+    (harity : arityOk f.params args.size = true)
     (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
         { next := fun _ => False, ret := fun w _ => Φ w }) :
     ∃ v, CallsTo m fname args v ∧ Φ v := by
@@ -311,6 +318,20 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
   | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
   | unsupported msg => exact hr.elim
 
+/-- Triple → arrow, relational form: a whole-body triple whose `ret` arm
+asserts `Φ` of the returned value (and whose `next` arm is `False` — the
+body always returns) yields an existential `CallsTo`. -/
+theorem PyTriple.exists_callsTo {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        { next := fun _ => False, ret := fun w _ => Φ w }) :
+    ∃ v, CallsTo m fname args v ∧ Φ v :=
+  PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk
+    (by rw [harity]; exact arityOk_full f.params) h
+
 /-- The relational bridge, marshalled form: `exists_callsTo` with the
 existential ranging over a *spec type* `α` (`PyInt`, `PyBool`, …) rather
 than raw `Val`. This is the shape the surface notation actually produces —
@@ -321,6 +342,21 @@ triple's `ret` arm asserts the returned value is the marshalling of some
 `x : α` satisfying `Φ` (the walker discharges the `w = ToVal.toVal x`
 equation by unification at each captured return site, leaving `Φ x` as the
 `ret` residual). -/
+theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
+    {m : Module} {fname : String} {f : FunctionDefn} {args : Array Val}
+    {Φ : α → Prop}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : arityOk f.params args.size = true)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        { next := fun _ => False
+          ret := fun w _ => ∃ x : α, w = ToVal.toVal x ∧ Φ x }) :
+    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x := by
+  obtain ⟨v, hv, x, rfl, hΦ⟩ :=
+    PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk harity h
+  exact ⟨x, hv, hΦ⟩
+
+@[inherit_doc PyTriple.exists_callsTo_toVal_arityOk]
 theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     {fname : String} {f : FunctionDefn} {args : Array Val} {Φ : α → Prop}
     (hf : findFunction m fname = some f)
@@ -329,10 +365,9 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
         { next := fun _ => False
           ret := fun w _ => ∃ x : α, w = ToVal.toVal x ∧ Φ x }) :
-    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x := by
-  obtain ⟨v, hv, x, rfl, hΦ⟩ :=
-    PyTriple.exists_callsTo hf hargsOk hlocalsOk harity h
-  exact ⟨x, hv, hΦ⟩
+    ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x :=
+  PyTriple.exists_callsTo_toVal_arityOk hf hargsOk hlocalsOk
+    (by rw [harity]; exact arityOk_full f.params) h
 
 /-! ## The walker (meta level) -/
 
@@ -348,15 +383,22 @@ def fuelK : Nat := 64
 (the `py_simp` list plus `envInt`). -/
 def interpUnfolds : List Name :=
   [``execStmts, ``execStmt, ``evalExpr, ``evalExprs, ``evalBoolChain,
-   ``evalCompareChain, ``findFunction, ``mkCallEnv, ``Env.lookup, ``Env.set,
-   ``Const.toVal, ``truthy, ``asInt, ``valEq, ``valEqList, ``intCmp,
-   ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp, ``lenVal,
-   ``normIndex, ``indexVal, ``targetNames, ``bindAll, ``assignTo, ``envInt]
+   ``evalCompareChain, ``findFunction, ``mkCallEnv, ``arityOk,
+   ``defaultBindings, ``Env.lookup, ``Env.set,
+   ``Const.toVal, ``truthy, ``asInt, ``Val.isNone, ``valEq, ``valEqList,
+   ``intCmp, ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp,
+   ``lenVal, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
+   ``targetNames, ``bindAll, ``assignTo,
+   ``envInt]
 
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse
-of loop tests and the symbolic-tail environment lemmas. -/
+of loop tests, the symbolic-tail environment lemmas, and the `sorted`
+bridges (`sortInts`/`insertLe` stay frozen — symbolic goals keep the
+compact `sortInts data` handle; these two lemmas let the run step through a
+marshalled `sorted(data)` call and its downstream `len`/index bounds). -/
 def interpLemmas : List Name :=
-  [``ite_ok_bool, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set]
+  [``ite_ok_bool, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
+   ``asIntList_map_int, ``asIntList_map_toVal, ``sortInts_length]
 
 /-- The truthiness-normalization set: turns `truthy <captured value> = true`
 facts into the clean arithmetic propositions residual goals should show. -/
@@ -854,6 +896,24 @@ def classify (s : Lean.Expr) : MetaM StmtKind := do
     return .plain
   | _ => return .plain
 
+/-- Does a `.ctrlCall` statement's callee resolve in the MODULE function
+table? Only module functions go through the callee-spec rule
+(`handleCall`, which demands a `CallsTo` fact); a BUILTIN callee
+(`len`/`sorted` — `findFunction` misses, the interpreter's name-resolution
+order falls through to the builtin branch) rides ordinary symbolic
+execution instead: its helper (`lenVal`/`sortedVal`) is in `interpUnfolds`,
+so the captured run steps straight through it. Without this downgrade,
+`data = sorted(data)` would be intercepted and fail with a bogus
+"no `CallsTo` fact for callee `sorted`". An unknown name also downgrades —
+the captured run then raises the honest `NameError`. -/
+def calleeInModule (ctx : VCCtx) (m s : Lean.Expr) : MetaM Bool := do
+  let s ← whnfR s
+  let rhs ← whnfR (s.getArg! 1)
+  let fnE ← whnfR (rhs.getArg! 0)
+  let (rF, _) ← captureRun ctx.pack
+    (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
+  return !(← whnfR rF).isAppOfArity ``Option.none 1
+
 /-- The `Stmt` type constant. -/
 def stmtTy : Lean.Expr := Lean.mkConst ``Stmt
 /-- `List.nil` at `Stmt`. -/
@@ -1297,7 +1357,16 @@ partial def walk (ctx : VCCtx) (tags : PostTags) (g : MVarId) : TacticM Unit := 
   let tg ← parseTripleGoal ctx g
   tg.g.withContext do
     let mut kinds : Array StmtKind := #[]
-    for s in tg.stmts do kinds := kinds.push (← classify s)
+    for s in tg.stmts do
+      let k ← classify s
+      -- Builtin-callee downgrade: only MODULE-function call-assignments are
+      -- control points (`handleCall`); `x = len(…)` / `x = sorted(…)` are
+      -- straight-line (see `calleeInModule`).
+      let k ← if k == .ctrlCall then
+          (if ← calleeInModule ctx tg.m s then pure StmtKind.ctrlCall
+           else pure StmtKind.plain)
+        else pure k
+      kinds := kinds.push k
     let mut firstCtrl : Option Nat := none
     for i in [0:tg.stmts.size] do
       if kinds[i]! == .term then break
@@ -1840,7 +1909,10 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       unless rF'.isAppOfArity ``Option.some 2 do
         throwError "py_vcgen: could not resolve the callee in the module (`findFunction` reduced to{indentExpr rF})"
       let fLit := rF'.getArg! 1
-      let bridgeT ← appOpt ``PyTriple.callsTo
+      -- The general-arity bridge (F1): its `arityOk` side condition
+      -- computes at literal modules, so `closeRfl` closes it whether the
+      -- call supplies every argument or omits trailing defaulted ones.
+      let bridgeT ← appOpt ``PyTriple.callsTo_arityOk
         #[some m, some fnameE, some fLit, some args, some v,
           none, none, none, none, none]
       let gs ← g.apply bridgeT
@@ -1908,10 +1980,11 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let fLit := rF'.getArg! 1
       let bridgeT ←
         if marshalled then
-          appOpt ``PyTriple.exists_callsTo_toVal
+          appOpt ``PyTriple.exists_callsTo_toVal_arityOk
             #[none, none, some m, some fnameE, some fLit]
         else
-          appOpt ``PyTriple.exists_callsTo #[some m, some fnameE, some fLit]
+          appOpt ``PyTriple.exists_callsTo_arityOk
+            #[some m, some fnameE, some fLit]
       let gs ← g.apply bridgeT
       let mut h : Option MVarId := none
       for gg in gs do
@@ -2041,7 +2114,7 @@ private def vSp : Span := ⟨0, 0, 0, 0⟩
 /-- `def sl(x): y = x + 4 ⏎ return x * y` -/
 private def slFn : FunctionDefn where
   name := "sl"
-  params := #[⟨"x", vSp⟩]
+  params := #[⟨"x", vSp, Option.none⟩]
   argsOk := true
   body := #[
     .assign #[.name "y" vSp]
@@ -2052,7 +2125,7 @@ private def slFn : FunctionDefn where
 /-- `def cd(n): i = n ⏎ while 0 < i: i = i - 1 ⏎ return i` -/
 private def cdFn : FunctionDefn where
   name := "cd"
-  params := #[⟨"n", vSp⟩]
+  params := #[⟨"n", vSp, Option.none⟩]
   argsOk := true
   body := #[
     .assign #[.name "i" vSp] (.name "n" vSp) vSp,

@@ -59,6 +59,10 @@ COMMENT_PREFIX_RE = re.compile(r"^\s*#")
 ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow")
 ALLOWED_UNARYOPS = ("USub", "Not")
 ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE")
+# Is/IsNot are additionally allowed, but ONLY when one side of that link is
+# the literal None (see convert_expr): None is a singleton, so `x is None`
+# is value-determined; identity on ints/strs is CPython-implementation-
+# defined (small-int caching, interning) and stays Unsupported.
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
@@ -95,6 +99,31 @@ def unsupported(node, py_kind=None):
         "py_kind": py_kind if py_kind is not None else type(node).__name__,
         "text": unparse_truncated(node),
     }
+
+
+def _is_none_literal(node):
+    """Is this expression the literal ``None`` (an ``ast.Constant``)?"""
+    return isinstance(node, ast.Constant) and node.value is None
+
+
+def literal_const_payload(node):
+    """The envelope const payload of a LITERAL expression (an ``ast.Constant``
+    of int/bool/str/None — the same encoding as ``Constant`` nodes' ``value``
+    field), else None. Note a negative-number default (``lo=-1``) parses as
+    ``UnaryOp(USub, Constant)``, NOT a ``Constant`` — non-literal by this
+    rule, matching the Lean tier's literals-only defaults decision."""
+    if not isinstance(node, ast.Constant):
+        return None
+    v = node.value
+    if v is True or v is False:  # bool before int: bool is an int subtype
+        return {"type": "bool", "value": v}
+    if isinstance(v, int):
+        return {"type": "int", "repr": str(v)}
+    if isinstance(v, str):
+        return {"type": "str", "value": v}
+    if v is None:
+        return {"type": "none"}
+    return None  # float / bytes / complex / Ellipsis: not a tier literal
 
 
 def convert_expr(node):
@@ -148,8 +177,19 @@ def convert_expr(node):
 
     if isinstance(node, ast.Compare):
         ops = [type(o).__name__ for o in node.ops]
-        for op in ops:
-            if op not in ALLOWED_CMPOPS:
+        # operands[i] and operands[i+1] are the two sides of link ops[i].
+        operands = [node.left] + list(node.comparators)
+        for i, op in enumerate(ops):
+            if op in ("Is", "IsNot"):
+                # Identity is in-tier ONLY against the literal None (either
+                # side of that link): None is a singleton, so `x is None` is
+                # value-determined. Any other `is` (small-int caching, str
+                # interning) is implementation-defined => whole node
+                # Unsupported, exactly as before.
+                if not (_is_none_literal(operands[i])
+                        or _is_none_literal(operands[i + 1])):
+                    return unsupported(node, "Compare:" + op)
+            elif op not in ALLOWED_CMPOPS:
                 return unsupported(node, "Compare:" + op)
         return {
             "kind": "Compare",
@@ -197,8 +237,14 @@ def convert_expr(node):
     return unsupported(node)
 
 
-def convert_param(p):
-    return {"arg": p.arg, "span": span(p)}
+def convert_param(p, default=None):
+    """Schema ``param``. ``default`` (a const payload) is emitted only when
+    present, so envelopes of default-free sources are byte-identical to the
+    pre-defaults format."""
+    d = {"arg": p.arg, "span": span(p)}
+    if default is not None:
+        d["default"] = default
+    return d
 
 
 def _walk_scope(fn):
@@ -248,10 +294,25 @@ def _shadowed_calls(fn):
 def convert_stmt(node):
     if isinstance(node, ast.FunctionDef):
         a = node.args
-        params = [convert_param(p) for p in list(a.posonlyargs) + list(a.args)]
+        plain = list(a.posonlyargs) + list(a.args)
         reasons = []
-        if a.defaults:
+        # Positional defaults: LITERAL defaults (int/bool/str/None Constant)
+        # are in-tier — emitted as a "default" const payload on the trailing
+        # params (a.defaults aligns with the tail of posonly+args, per
+        # CPython). Any NON-literal default (a Name like easter's
+        # EASTER_WESTERN, a negative number, a call, a mutable [] / {}) keeps
+        # the whole function at args_unsupported: "defaults" with no
+        # "default" keys emitted — refused loudly at call time, as before.
+        payloads = [literal_const_payload(d) for d in a.defaults]
+        if a.defaults and not all(p is not None for p in payloads):
             reasons.append("defaults")
+            payloads = []
+        first_defaulted = len(plain) - len(payloads)
+        params = [
+            convert_param(p, payloads[i - first_defaulted]
+                          if i >= first_defaulted else None)
+            for i, p in enumerate(plain)
+        ]
         if a.vararg is not None:
             reasons.append("*args")
         if a.kwonlyargs:

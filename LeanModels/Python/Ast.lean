@@ -37,9 +37,15 @@ inductive BoolOp where
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Comparison operators. 1:1 with CPython: `eq` ↔ `Eq`, `notEq` ↔ `NotEq`,
-`lt` ↔ `Lt`, `ltE` ↔ `LtE`, `gt` ↔ `Gt`, `gtE` ↔ `GtE`. -/
+`lt` ↔ `Lt`, `ltE` ↔ `LtE`, `gt` ↔ `Gt`, `gtE` ↔ `GtE`, `is` ↔ `Is`,
+`isNot` ↔ `IsNot`. The extractor emits `Is`/`IsNot` ONLY when one side of
+that comparison link is the literal `None` (`x is None`, `None is x`,
+`x is not None`): `None` is a singleton, so identity against it is
+value-determined; identity between other values (small-int caching, str
+interning) is CPython-implementation-defined and arrives as a whole-node
+`Unsupported "Compare:Is[Not]"` instead. -/
 inductive CmpOp where
-  | eq | notEq | lt | ltE | gt | gtE
+  | eq | notEq | lt | ltE | gt | gtE | is | isNot
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Literal constants (schema `Constant` payload). Ints are arbitrary precision
@@ -52,10 +58,16 @@ inductive Const where
   | str (s : String)
 deriving Repr, Inhabited, BEq, DecidableEq
 
-/-- A function parameter: schema `param` = `{"arg": …, "span": …}`. -/
+/-- A function parameter: schema `param` = `{"arg": …, "span": …}`, plus an
+optional `"default"` const payload (F1). `default` is `some c` iff the
+source gave this parameter a LITERAL default (int/bool/str/None) — the only
+defaults in tier; a function with any non-literal default (a `Name`, a
+negative number, `[]`, a call, …) instead keeps `argsOk = false` with no
+per-param defaults, and calling it stays `unsupported`. -/
 structure Param where
   arg : String
   span : Span
+  default : Option Const := Option.none
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Expressions. Constructor ↔ schema `kind` mapping:
@@ -103,9 +115,10 @@ deriving Repr, Inhabited, BEq
 
 /-- A module-level function definition (schema `FunctionDef`).
 `argsOk` is DESIGN.md's `paramsOk`: `false` iff the schema's `args_unsupported`
-was non-null (defaults / `*args` / kw-only / `**kwargs` / decorators), in which
-case calling the function is `unsupported`. Plain positional params are always
-listed in `params`. -/
+was non-null (NON-literal defaults / `*args` / kw-only / `**kwargs` /
+decorators), in which case calling the function is `unsupported`. Plain
+positional params are always listed in `params`; literal defaults ride on
+the params themselves (`Param.default`) and do NOT set `argsOk = false`. -/
 structure FunctionDefn where
   name : String
   params : Array Param

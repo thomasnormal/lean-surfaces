@@ -157,6 +157,39 @@ and feed each to the induction hypothesis. -/
     x >>= f = .ok b ↔ ∃ a, x = .ok a ∧ f a = .ok b := by
   cases x <;> simp
 
+/-! ### `sorted` execution lemmas (Mathlib-free)
+
+`sortInts`/`insertLe` are deliberately NOT in the `py_simp`/`interpUnfolds`
+lists: symbolic goals keep the compact `sortInts data` handle (concrete runs
+reduce through the compiled evaluator anyway). The two rewrite lemmas below
+ARE in the lists — they are what lets symbolic execution step through
+`sortedVal` on a `ToVal`-marshalled int list and through the subsequent
+`len`/index bounds. The `Pairwise`/`Perm` harvest needs Mathlib and lives in
+`Examples/python/bench_statistics/proof.lean` (`sortInts_eq` bridge). -/
+
+/-- Marshalled int lists extract fully: the `asIntList` bridge for symbolic
+execution of `sorted(data)` at a `ToVal`-marshalled argument. -/
+theorem asIntList_map_int (l : List Int) :
+    asIntList (l.map Val.int) = some l := by
+  induction l with
+  | nil => rfl
+  | cons x xs ih => simp [asIntList, ih]
+
+/-- `insertLe` grows the list by one (helper of `sortInts_length`). -/
+theorem insertLe_length (x : Int) (l : List Int) :
+    (insertLe x l).length = l.length + 1 := by
+  induction l with
+  | nil => rfl
+  | cons y ys ih => simp only [insertLe]; split <;> simp [ih]
+
+/-- Sorting preserves length — Mathlib-free (symbolic execution needs it to
+decide `len`/index bounds after a `data = sorted(data)` assignment). -/
+theorem sortInts_length (l : List Int) :
+    (sortInts l).length = l.length := by
+  induction l with
+  | nil => rfl
+  | cons x xs ih => simp [sortInts, insertLe_length, ih]
+
 open Lean Lean.Parser.Tactic in
 /-- `py_simp [extra, lemmas] at h` — one stack frame's worth of symbolic
 execution of the Python interpreter: `simp` with every interpreter equation
@@ -175,10 +208,12 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
        `Lean.Parser.Tactic.simpLemma] "," := ⟨args.elemsAndSeps⟩
   `(tactic| set_option linter.unusedSimpArgs false in
       simp [execStmts, execStmt, evalExpr, evalExprs, evalBoolChain,
-            evalCompareChain, findFunction, mkCallEnv, Env.lookup, Env.set,
-            Const.toVal, truthy, asInt, valEq, valEqList, intCmp, strCmp,
-            evalCompareOp, evalBinOp, evalUnaryOp, lenVal, normIndex, indexVal,
-            targetNames, bindAll, assignTo, and_assoc, $extra,*] $(loc)?)
+            evalCompareChain, findFunction, mkCallEnv, arityOk,
+            defaultBindings, Env.lookup, Env.set,
+            Const.toVal, truthy, asInt, Val.isNone, valEq, valEqList, intCmp,
+            strCmp, evalCompareOp, evalBinOp, evalUnaryOp, lenVal, sortedVal,
+            asIntList, asIntList_map_int, sortInts_length, normIndex,
+            indexVal, targetNames, bindAll, assignTo, and_assoc, $extra,*] $(loc)?)
 
 @[inherit_doc pySimpTactic]
 macro "py_simp" loc:(Lean.Parser.Tactic.location)? : tactic =>

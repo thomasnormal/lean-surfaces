@@ -93,6 +93,8 @@ def parseCmpOpName : String → Except String CmpOp
   | "LtE" => .ok .ltE
   | "Gt" => .ok .gt
   | "GtE" => .ok .gtE
+  | "Is" => .ok .is
+  | "IsNot" => .ok .isNot
   | s => .error s!"unknown CmpOp name {s.quote}"
 
 /-- Parse a schema constant payload (the `value` of a `Constant` node). -/
@@ -203,8 +205,13 @@ partial def parseStmt (j : Json) : Except String Stmt := do
 
 def parseParam (j : Json) : Except String Param :=
   withCtx "param" do
+    let default ← match j.getObjVal? "default" with
+      | .error _ => pure (Option.none : Option Const)  -- absent: no default
+      | .ok .null => pure Option.none
+      | .ok v => do pure (some (← parseConst v))
     return { arg := ← (← getField j "arg").getStr?
-             span := ← parseSpan (← getField j "span") }
+             span := ← parseSpan (← getField j "span")
+             default }
 
 /-- Parse a module-level `FunctionDef` node into a `FunctionDefn`.
 `argsOk` is `true` iff `args_unsupported` is `null` (or absent); `localsOk`

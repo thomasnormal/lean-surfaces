@@ -82,6 +82,15 @@ instance {α} [ToVal α] : ToVal (List α) :=
 @[simp] theorem toVal_list {α} [ToVal α] (xs : List α) :
     (ToVal.toVal xs : Val) = .list (xs.map ToVal.toVal).toArray := rfl
 
+/-- `asIntList_map_int` (Logic.lean) restated at the marshalling boundary:
+captured/symbolic runs see a `ToVal`-marshalled list argument as
+`List.map ToVal.toVal xs` (simp does not rewrite the *unapplied*
+`ToVal.toVal` to `Val.int`), so `sorted(data)` needs the bridge in exactly
+this form. Wired into `py_vcgen`'s `interpLemmas`; manual `py_simp` proofs
+pass it explicitly. -/
+theorem asIntList_map_toVal (l : List Int) :
+    asIntList (l.map ToVal.toVal) = some l := asIntList_map_int l
+
 /-- Python `int` 3-tuples — the `extended_gcd` return shape (added for
 `Examples/python/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
 `×` is right-nested, so a generic `Prod` instance could not distinguish the

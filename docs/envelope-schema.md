@@ -44,9 +44,18 @@ Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
 | `Pass`, `Break`, `Continue` | — |
 | `Unsupported` | `py_kind`: str (CPython class name, e.g. `"For"`, `"Try"`), `text`: str (`ast.unparse`, truncated to ≤200 chars) |
 
-`param` = `{"arg": "n", "span": {…}}`. If the function uses defaults, `*args`,
-keyword-only args, `**kwargs`, or decorators, set `args_unsupported` to a short
-reason string (else `null`) and still list the plain positional params.
+`param` = `{"arg": "n", "span": {…}}`, plus an OPTIONAL `"default"`: const
+(the Constants encoding below) when the parameter has a LITERAL default —
+an `ast.Constant` of int/bool/str/None, e.g. `{"arg": "lo", "span": {…},
+"default": {"type": "int", "repr": "0"}}`. The key is emitted only when
+present (a default-free param keeps exactly the two historical keys, so
+default-free sources produce byte-identical envelopes). Note `lo=-1` is
+NOT a literal default (CPython parses it as `UnaryOp(USub, Constant)`),
+nor is a `Name` (`method=EASTER_WESTERN`), a call, or `[]`/`{}`. If the
+function uses any NON-literal default, `*args`, keyword-only args,
+`**kwargs`, or decorators, set `args_unsupported` to a short reason string
+(else `null`), emit NO `default` keys, and still list the plain positional
+params.
 
 Any statement kind not in this table is emitted as `Unsupported` (the extractor
 never fails on syntactically valid Python).
@@ -60,16 +69,16 @@ never fails on syntactically valid Python).
 | `BinOp` | `left`: expr, `op`: one of `Add Sub Mult FloorDiv Mod Pow`, `right`: expr |
 | `UnaryOp` | `op`: one of `USub Not`, `operand`: expr |
 | `BoolOp` | `op`: one of `And Or`, `values`: [expr…] (≥2) |
-| `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE`…], `comparators`: [expr…] (same length as ops) |
+| `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE Is IsNot`…], `comparators`: [expr…] (same length as ops). `Is`/`IsNot` appear ONLY when one side of that comparison link is the literal `None` (`x is None`, `None is x`, `x is not None`) — `None` is a singleton, so identity against it is value-determined; any other `is`/`is not` (small-int caching, str interning: implementation-defined) makes the whole node `Unsupported` with `py_kind` `"Compare:Is"`/`"Compare:IsNot"` |
 | `Call` | `func`: expr, `args`: [expr…], `call_unsupported`: str \| null (set when keywords/starargs present) |
 | `List` / `Tuple` | `elts`: [expr…] |
 | `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; `Slice`/`ExtSlice` nodes → whole Subscript becomes `Unsupported`) |
 | `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |
 
 Operator names are CPython's class names verbatim (`Mult` not `Mul`, `LtE` not `Le`).
-Unlisted operator (e.g. `Div`, `BitOr`, `Is`, `In`) ⇒ the *containing* node is
-emitted as `Unsupported` with that operator's name included in `py_kind`
-(e.g. `"BinOp:Div"`).
+Unlisted operator (e.g. `Div`, `BitOr`, `In`) — or `Is`/`IsNot` without a
+literal-`None` side — ⇒ the *containing* node is emitted as `Unsupported`
+with that operator's name included in `py_kind` (e.g. `"BinOp:Div"`).
 
 ## Constants
 

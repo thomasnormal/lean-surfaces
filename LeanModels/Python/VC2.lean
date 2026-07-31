@@ -345,14 +345,18 @@ for `Raises`). Side hypotheses (`findFunction`/`argsOk`/`localsOk`/arity)
 close by `rfl`/`py_simp` at concrete modules; the backward `CallsTo`
 direction *derives* the guards from the successful run instead. -/
 
-/-- Triple → arrow, value side: a whole-body triple whose `ret` arm pins
-`v` (and whose `next` arm forces `v = None`, Python's fall-off-the-end)
-yields `CallsTo m fname args v` — i.e. `fname(args) ==> v`. -/
-theorem PyTriple.callsTo {m : Module} {fname : String} {f : FunctionDefn}
-    {args : Array Val} {v : Val}
+/-- Triple → arrow, value side, general-arity form (F1 defaults): the call
+may omit trailing defaulted arguments, so the hypothesis is the arity
+*window* `arityOk f.params args.size` rather than exact arity; the entry
+environment `mkCallEnv f.params args` binds the omitted parameters to their
+literal defaults. At a literal module and literal `args` the window
+hypothesis closes by `rfl` (it computes), which is how `py_vcgen`
+discharges it. `PyTriple.callsTo` below is the exact-arity corollary. -/
+theorem PyTriple.callsTo_arityOk {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {v : Val}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
-    (harity : args.size = f.params.size)
+    (harity : arityOk f.params args.size = true)
     (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
         { next := fun _ => v = .none, ret := fun w _ => w = v }) :
     CallsTo m fname args v := by
@@ -378,6 +382,41 @@ theorem PyTriple.callsTo {m : Module} {fname : String} {f : FunctionDefn}
   | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
   | unsupported msg => exact hr.elim
 
+/-- Triple → arrow, value side: a whole-body triple whose `ret` arm pins
+`v` (and whose `next` arm forces `v = None`, Python's fall-off-the-end)
+yields `CallsTo m fname args v` — i.e. `fname(args) ==> v`. Exact-arity
+corollary of `PyTriple.callsTo_arityOk` (`arityOk_full`). -/
+theorem PyTriple.callsTo {m : Module} {fname : String} {f : FunctionDefn}
+    {args : Array Val} {v : Val}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        { next := fun _ => v = .none, ret := fun w _ => w = v }) :
+    CallsTo m fname args v :=
+  PyTriple.callsTo_arityOk hf hargsOk hlocalsOk
+    (by rw [harity]; exact arityOk_full f.params) h
+
+/-- Triple → arrow, `PyPost.ofRet` corollary of the general-arity form:
+for bodies that always `return` explicitly, the function-body shape
+`PyPost.ofRet` suffices — its `next := False` arm entails the general
+bridge's `next` arm vacuously. -/
+theorem PyTriple.callsTo_ofRet_arityOk {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {v : Val}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : arityOk f.params args.size = true)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        (.ofRet fun w _ => w = v)) :
+    CallsTo m fname args v :=
+  PyTriple.callsTo_arityOk hf hargsOk hlocalsOk harity
+    (h.consequence (fun _ hp => hp)
+      { next := fun _ hfalse => hfalse.elim
+        ret := fun _ _ hw => hw
+        brk := fun _ hfalse => hfalse.elim
+        cont := fun _ hfalse => hfalse.elim
+        err := fun _ hfalse => hfalse.elim })
+
 /-- Triple → arrow, `PyPost.ofRet` corollary: for bodies that always
 `return` explicitly (every gallery function), the function-body shape
 `PyPost.ofRet` suffices — its `next := False` arm entails the general
@@ -390,13 +429,8 @@ theorem PyTriple.callsTo_ofRet {m : Module} {fname : String}
     (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
         (.ofRet fun w _ => w = v)) :
     CallsTo m fname args v :=
-  PyTriple.callsTo hf hargsOk hlocalsOk harity
-    (h.consequence (fun _ hp => hp)
-      { next := fun _ hfalse => hfalse.elim
-        ret := fun _ _ hw => hw
-        brk := fun _ hfalse => hfalse.elim
-        cont := fun _ hfalse => hfalse.elim
-        err := fun _ hfalse => hfalse.elim })
+  PyTriple.callsTo_ofRet_arityOk hf hargsOk hlocalsOk
+    (by rw [harity]; exact arityOk_full f.params) h
 
 /-- Arrow → triple, value side: from `fname(args) ==> v` recover the
 whole-body triple (guards derived from the successful run — no
@@ -421,12 +455,16 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     | true =>
     rw [hao, hlo] at hc
     simp only [Bool.not_true, Bool.false_eq_true, if_false] at hc
-    by_cases har : args.size = f.params.size
-    case neg =>
-      rw [if_pos (show args.size ≠ f.params.size from har)] at hc
+    -- F1: the successful run rules out an arity-window violation (the
+    -- `.exn` TypeError branch); any in-window arity — exact or with
+    -- omitted defaulted trailing arguments — proceeds to the body.
+    cases har : arityOk f.params args.size with
+    | false =>
+      rw [har] at hc
       simp at hc
-    case pos =>
-      rw [if_neg (show ¬args.size ≠ f.params.size from fun hne => hne har)] at hc
+    | true =>
+      rw [har] at hc
+      simp only [Bool.not_true, Bool.false_eq_true, if_false] at hc
       rw [Res.bind_eq_ok] at hc
       obtain ⟨⟨env', flow⟩, hex, hflow⟩ := hc
       cases flow with
@@ -457,13 +495,15 @@ theorem callsTo_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
         { next := fun _ => v = .none, ret := fun w _ => w = v } :=
   ⟨fun h => h.toTriple hf, fun h => h.callsTo hf hargsOk hlocalsOk harity⟩
 
-/-- Triple → arrow, raise side: a whole-body triple landing in the `err`
-arm at `e` yields `fname(args) ==>! e` — the `err` arm cashing out. -/
-theorem PyTriple.raises {m : Module} {fname : String} {f : FunctionDefn}
-    {args : Array Val} {e : PyErr}
+/-- Triple → arrow, raise side, general-arity form (F1 defaults): as
+`PyTriple.callsTo_arityOk`, the hypothesis is the arity window
+`arityOk f.params args.size` — trailing defaulted arguments may be
+omitted at the call. `PyTriple.raises` below is the exact-arity corollary. -/
+theorem PyTriple.raises_arityOk {m : Module} {fname : String}
+    {f : FunctionDefn} {args : Array Val} {e : PyErr}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
-    (harity : args.size = f.params.size)
+    (harity : arityOk f.params args.size = true)
     (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
         { next := fun _ => False, err := fun e' => e' = e }) :
     Raises m fname args e := by
@@ -485,6 +525,19 @@ theorem PyTriple.raises {m : Module} {fname : String} {f : FunctionDefn}
   | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
   | unsupported msg => exact hr.elim
 
+/-- Triple → arrow, raise side: a whole-body triple landing in the `err`
+arm at `e` yields `fname(args) ==>! e` — the `err` arm cashing out. -/
+theorem PyTriple.raises {m : Module} {fname : String} {f : FunctionDefn}
+    {args : Array Val} {e : PyErr}
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : args.size = f.params.size)
+    (h : PyTriple m (fun env => env = mkCallEnv f.params args) f.body.toList
+        { next := fun _ => False, err := fun e' => e' = e }) :
+    Raises m fname args e :=
+  PyTriple.raises_arityOk hf hargsOk hlocalsOk
+    (by rw [harity]; exact arityOk_full f.params) h
+
 /-- Arrow → triple, raise side. Unlike `CallsTo.toTriple` the guard
 hypotheses are required: an `.exn` result could otherwise be the arity
 `TypeError` (or a name error) rather than a body raise. -/
@@ -503,7 +556,9 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     simp only [callFunction, hf] at hc
     rw [hargsOk, hlocalsOk] at hc
     simp only [Bool.not_true, Bool.false_eq_true, if_false] at hc
-    rw [if_neg (show ¬args.size ≠ f.params.size from fun hne => hne harity)] at hc
+    rw [show arityOk f.params args.size = true from
+          by rw [harity]; exact arityOk_full f.params] at hc
+    simp only [Bool.not_true, Bool.false_eq_true, if_false] at hc
     cases hex : execStmts m fu (mkCallEnv f.params args) f.body.toList with
     | ok p =>
       obtain ⟨env', flow⟩ := p

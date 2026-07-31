@@ -45,7 +45,7 @@ the minimal recursive function with the recursive call in `x = f(e)`
 position (what `PyStmtTriple.call` matches). -/
 private def factFn : FunctionDefn where
   name := "fact"
-  params := #[⟨"n", sp⟩]
+  params := #[⟨"n", sp, Option.none⟩]
   argsOk := true
   body := #[
     .ifStmt (.compare (.name "n" sp) #[.ltE] #[.constant (.int 0) sp] sp)
@@ -60,7 +60,7 @@ private def factFn : FunctionDefn where
 caller whose callee spec comes from the `@[py_spec]` registry. -/
 private def factPlusOneFn : FunctionDefn where
   name := "fact_plus_one"
-  params := #[⟨"n", sp⟩]
+  params := #[⟨"n", sp, Option.none⟩]
   argsOk := true
   body := #[
     .assign #[.name "y" sp]
@@ -162,5 +162,88 @@ example : ∃ v : PyInt, factM.fact(0) ==> v ∧ 0 < v := by
 (`PyTriple.exists_callsTo`), pinned against regression. -/
 example : ∃ v, CallsTo factM "fact" #[.int 0] v ∧ v = .int 1 := by
   py_vcgen [factM, factFn, factPlusOneFn]
+
+/-! ## F1/F2 smoke: literal parameter defaults through `py_vcgen`
+
+`def scale(x, k=3, b=None): if b is None: b = 1 ⏎ return x * k + b` — an
+int default, a None default consumed by an `is None` branch (F2), and
+call sites at every legal arity. The `CallsTo` entry bridges through
+`PyTriple.callsTo_arityOk`, whose arity-window side condition closes by
+`rfl` with the optional arguments omitted (the old exact-arity bridge
+would have failed right there); `mkCallEnv` fills `k`/`b` from their
+literal defaults during the captured symbolic run. -/
+
+private def scaleFn : FunctionDefn where
+  name := "scale"
+  params := #[⟨"x", sp, Option.none⟩, ⟨"k", sp, some (.int 3)⟩,
+              ⟨"b", sp, some .none⟩]
+  argsOk := true
+  body := #[
+    .ifStmt (.compare (.name "b" sp) #[.is] #[.constant .none sp] sp)
+      #[.assign #[.name "b" sp] (.constant (.int 1) sp) sp] #[] sp,
+    .ret (some (.binOp (.binOp (.name "x" sp) .mult (.name "k" sp) sp)
+      .add (.name "b" sp) sp)) sp]
+  span := sp
+
+private def scaleM : Module := { functions := #[scaleFn], topLevel := #[] }
+
+-- Concrete runs at all three arities (the `#py_check` surface accepts the
+-- omitted-optionals call because the interpreter itself fills defaults).
+#py_check scaleM.scale(5) = 16
+#py_check scaleM.scale(5, 2) = 11
+#py_check scaleM.scale(5, 2, 7) = 17
+
+/-- Both optionals omitted: arity 1 against 3 params walks end-to-end. -/
+example : CallsTo scaleM "scale" #[.int 5] (.int 16) := by
+  py_vcgen [scaleM, scaleFn]
+
+/-- Exact arity through the same general bridge (regression: full calls
+must keep working after the re-point to `_arityOk`). The third argument
+overrides the `None` default, so the `is None` branch is NOT taken. -/
+example : CallsTo scaleM "scale" #[.int 5, .int 2, .int 7] (.int 17) := by
+  py_vcgen [scaleM, scaleFn]
+
+/-- Relational entry with a marshalled binder and omitted optionals —
+`PyTriple.exists_callsTo_toVal_arityOk` end-to-end. -/
+example : ∃ v : PyInt, scaleM.scale(5) ==> v ∧ 0 < v := by
+  py_vcgen [scaleM, scaleFn]
+  all_goals omega
+
+/-! ## call:sorted smoke: a builtin call-assignment rides ordinary symbolic
+execution
+
+`def sorted_len(data): xs = sorted(data) ⏎ return len(xs)` — the
+`xs = sorted(data)` assignment is syntactically the `handleCall` shape
+(single `Name`-callee call as the whole right-hand side, no
+`call_unsupported`), but `sorted` has no module-table entry, so the walker
+must NOT intercept it and demand a `CallsTo` fact: `calleeInModule`
+downgrades it to a straight-line statement and the captured run steps
+through `sortedVal` (`interpUnfolds`), with `asIntList_map_toVal`
+extracting the marshalled int list and `sortInts_length` deciding the
+subsequent `len` (`interpLemmas`). The symbolic result keeps the compact
+`sortInts data` handle — `sortInts`/`insertLe` are deliberately not
+unfolded. -/
+
+private def sortedLenFn : FunctionDefn where
+  name := "sorted_len"
+  params := #[⟨"data", sp, Option.none⟩]
+  argsOk := true
+  body := #[
+    .assign #[.name "xs" sp]
+      (.call (.name "sorted" sp) #[.name "data" sp] Option.none sp) sp,
+    .ret (some (.call (.name "len" sp) #[.name "xs" sp] Option.none sp)) sp]
+  span := sp
+
+private def sortedLenM : Module := { functions := #[sortedLenFn], topLevel := #[] }
+
+#py_check sortedLenM.sorted_len([3, 1, 2]) = 3
+#py_check sortedLenM.sorted_len(([] : List Int)) = 0
+
+/-- Symbolic: for EVERY int list, `sorted_len(data)` returns `len(data)` —
+the builtin `sorted` call is walked through by ordinary symbolic execution
+(regression: before the `calleeInModule` downgrade this failed with a bogus
+"no `CallsTo` fact for callee `sorted`"). -/
+example (data : List PyInt) : sortedLenM.sorted_len(data) ==> data.length := by
+  py_vcgen [sortedLenM, sortedLenFn]
 
 end LeanModels.Python.VCTests

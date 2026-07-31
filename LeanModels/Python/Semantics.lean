@@ -17,7 +17,8 @@ normative). The interpreter is total and executable:
   runtime errors yield `Res.exn` with the corresponding `PyErr`.
 * **Provability**: the semantics is factored into small, pure, fuel-free
   helpers (`truthy`, `asInt`, `valEq`, `evalBinOp`, `evalUnaryOp`,
-  `evalCompareOp`, `Env.lookup`, `Env.set`, `indexVal`, `lenVal`, `assignTo`,
+  `evalCompareOp`, `Env.lookup`, `Env.set`, `indexVal`, `lenVal`,
+  `sortedVal`, `assignTo`,
   …) that proofs can `simp`-unfold, plus a mutual block of the four normative
   functions (`evalExpr`, `execStmt`, `execStmts`, `callFunction`) and four
   fueled chain helpers (`evalExprs`, `evalBoolChain`, `evalCompareChain`,
@@ -28,7 +29,16 @@ not — so they are `unsupported`, never a fake `TypeError`):
 sequence repetition (`"a" * 2`), `%` string formatting, `str` unpacking
 (`a, b = "xy"`), nested/starred unpacking targets, `break`/`continue`
 escaping a function body, negative `**` exponents (incl. `0 ** -1`),
-referencing a function (or `len`) as a value, calling a non-`Name` expression.
+referencing a function (or a builtin — `len`/`sorted`) as a value, calling a
+non-`Name` expression, `is`/`is not` without a `None` side (identity is not
+value-determined), non-literal parameter defaults, `sorted` on anything but
+an all-int list (see `sortedVal`).
+
+In tier since the F1/F2 sprint: LITERAL parameter defaults (missing trailing
+arguments filled in `mkCallEnv`; arity window `arityOk`) and `is`/`is not`
+against the literal `None` (`evalCompareOp`). In tier since the
+call:sorted sprint: the builtin `sorted` on all-int lists (`sortedVal`,
+`sortInts`).
 
 `Env` is an abbrev for `List (String × Val)`, so `Env.lookup` / `Env.set` must
 be called by their full names (dot notation on an `Env` value resolves into
@@ -53,6 +63,12 @@ def Val.isSeq : Val → Bool
   | .str _ | .list _ | .tuple _ => true
   | _ => false
 
+/-- Is this value Python's `None` singleton? (The value-level test behind
+`is None` / `is not None` — see `evalCompareOp`.) -/
+def Val.isNone : Val → Bool
+  | .none => true
+  | _ => false
+
 /-- Python surface syntax of a binary operator (error messages). -/
 def BinOp.symbol : BinOp → String
   | .add => "+"
@@ -70,6 +86,8 @@ def CmpOp.symbol : CmpOp → String
   | .ltE => "<="
   | .gt => ">"
   | .gtE => ">="
+  | .is => "is"
+  | .isNot => "is not"
 
 /-- Schema `kind` name of an expression node (error messages). For
 `unsupported` nodes this is the recorded CPython class name. -/
@@ -127,8 +145,10 @@ mutual
 end
 
 /-- Ordering comparison on `Int` (only called with `.lt/.ltE/.gt/.gtE`;
-the equality cases are handled by `valEq` and never reach here, but are
-given their by-value meaning for totality). -/
+the equality and identity cases are handled by `valEq`/`Val.isNone` in
+`evalCompareOp` and never reach here, but are given a by-value meaning
+(`is` on identical-valued ints would be `True` under CPython's small-int
+cache; the arms exist for totality only). -/
 def intCmp : CmpOp → Int → Int → Bool
   | .eq, x, y => x == y
   | .notEq, x, y => x != y
@@ -136,9 +156,11 @@ def intCmp : CmpOp → Int → Int → Bool
   | .ltE, x, y => x ≤ y
   | .gt, x, y => y < x
   | .gtE, x, y => y ≤ x
+  | .is, x, y => x == y
+  | .isNot, x, y => x != y
 
 /-- Ordering comparison on `String` (lexicographic by Unicode code points,
-which is Lean's `String` `<`). See `intCmp` for the equality cases. -/
+which is Lean's `String` `<`). See `intCmp` for the equality/identity cases. -/
 def strCmp : CmpOp → String → String → Bool
   | .eq, s, t => s == t
   | .notEq, s, t => s != t
@@ -146,14 +168,34 @@ def strCmp : CmpOp → String → String → Bool
   | .ltE, s, t => s < t || s == t
   | .gt, s, t => t < s
   | .gtE, s, t => t < s || s == t
+  | .is, s, t => s == t
+  | .isNot, s, t => s != t
 
-/-- One comparison step. `==`/`!=` never raise (`valEq`). Ordering: int/bool
-by value (bool→int coercion), str lexicographic; ordering any other type
-combination is outside the v0 tier. -/
+/-- One comparison step. `==`/`!=` never raise (`valEq`). `is`/`is not`
+(F2): the extractor admits these ONLY when one side of the link is the
+literal `None`, whose runtime value is always `Val.none` — so identity here
+is against the `None` singleton and IS value-determined:
+`x is None ⟺ x = Val.none`. When at least one operand is `.none` the result
+is `a.isNone && b.isNone` (if `b` is the `None` side this is `a.isNone`, and
+symmetrically); if NEITHER side is `.none` — unreachable through the
+extractor, but reachable by hand-built ASTs — identity between two non-None
+values is CPython-implementation-defined (small-int caching, str interning)
+and refused loudly. Ordering: int/bool by value (bool→int coercion), str
+lexicographic; ordering any other type combination is outside the v0 tier. -/
 def evalCompareOp (op : CmpOp) (a b : Val) : Res Bool :=
   match op with
   | .eq => .ok (valEq a b)
   | .notEq => .ok (!valEq a b)
+  | .is =>
+    if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
+    else
+      .unsupported
+        s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+  | .isNot =>
+    if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
+    else
+      .unsupported
+        s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
   | op =>
     match asInt a, asInt b with
     | some x, some y => .ok (intCmp op x y)
@@ -241,6 +283,59 @@ def lenVal : Val → Res Val
   | .tuple xs => .ok (.int xs.size)
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
 
+/-- Insert `x` into an (ascending) list — the step function of `sortInts`.
+Structural recursion on purpose: the kernel reduces it, which `#py_check` /
+`py_check` / `py_vcgen`'s captured runs need. (Core's `List.mergeSort` is
+well-founded recursion and does NOT kernel-reduce — verified on this
+toolchain; `by rfl` on a concrete `mergeSort` run fails.) -/
+def insertLe (x : Int) : List Int → List Int
+  | [] => [x]
+  | y :: ys => if x ≤ y then x :: y :: ys else y :: insertLe x ys
+
+/-- Ascending insertion sort on `Int` — the value-level meaning of the
+builtin `sorted` (v0 tier: all-int lists only, see `sortedVal`). Stability
+is vacuous at this type: `Val.int`s have no identity in v0, so equal
+elements are interchangeable. The proof layer bridges to Mathlib's
+`List.insertionSort` (`sortInts_eq` in
+`Examples/python/bench_statistics/proof.lean`) to harvest
+`Pairwise`/`Perm` lemmas; only the Mathlib-free `sortInts_length` lives
+in-tree (Logic.lean), because symbolic execution needs it. -/
+def sortInts : List Int → List Int
+  | [] => []
+  | x :: xs => insertLe x (sortInts xs)
+
+/-- All-int extraction: `some ns` iff every element is `.int`. `.bool`s
+deliberately do NOT coerce here — CPython sorts `[True, 0, 2]` keeping the
+`True` object in the result, which v0's identity-free `Val.int` cannot
+reproduce faithfully; such lists are refused loudly by `sortedVal`. -/
+def asIntList : List Val → Option (List Int)
+  | [] => some []
+  | .int n :: vs => (asIntList vs).map (n :: ·)
+  | _ => Option.none
+
+/-- `sorted(v)` (v0): a NEW ascending list from an all-int list argument.
+Honesty discipline (same as `lenVal`): fake exceptions never, `unsupported`
+for anything CPython would handle differently.
+* `.list` of `.int`s → `.ok`, freshly sorted (`sortInts`); the input value
+  is untouched (pure value semantics — freshness is definitional).
+* `.int`/`.bool`/`.none` → `TypeError` with CPython 3.9's exact class and
+  message shape (`'int' object is not iterable`).
+* `.str`/`.tuple`, and any list containing a non-`.int` element, refuse
+  loudly: CPython *succeeds* on `sorted("cba")` / `sorted((3,1))` /
+  all-str/bool lists (and TypeErrors only on mixed) — v0 does not guess.
+* `key=`/`reverse=` never reach here: keyword-only in 3.9, so the extractor
+  ships such calls with `call_unsupported: "keywords"` (refused in
+  `evalExpr` before argument evaluation). -/
+def sortedVal : Val → Res Val
+  | .list xs =>
+    match asIntList xs.toList with
+    | some ns => .ok (.list (((sortInts ns).map Val.int).toArray))
+    | Option.none =>
+        .unsupported "sorted() on a list with non-int elements is outside the v0 tier"
+  | .str _ => .unsupported "sorted() on a str is outside the v0 tier"
+  | .tuple _ => .unsupported "sorted() on a tuple is outside the v0 tier"
+  | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
 def normIndex (i : Int) (len : Nat) : Option Nat :=
@@ -321,10 +416,48 @@ with duplicate definitions the LAST one wins, exactly as in CPython. -/
 def findFunction (m : Module) (fname : String) : Option FunctionDefn :=
   m.functions.findRev? (fun f => f.name == fname)
 
+/-- Does a call supplying `n` positional arguments fit `params`? Python's
+rule with defaults (F1): at most one argument per parameter, and every
+parameter beyond the supplied ones carries a default —
+`nparams - ndefaults ≤ n ≤ nparams`. For a default-free function this is
+exactly the old `n = params.size`. Violations raise the canonical arity
+`TypeError` (`callFunction`); CPython's message wording differs per case
+(`missing … required` vs `takes … but … were given`) but the harness
+compares exception *class names*, so one canonical message serves both. -/
+def arityOk (params : Array Param) (n : Nat) : Bool :=
+  n ≤ params.size && (params.toList.drop n).all fun p => p.default.isSome
+
+/-- Exact arity always fits: with every parameter supplied there is nothing
+left to default — the old `n = params.size` rule embeds into `arityOk`
+(what lets the exact-arity bridge theorems keep their statements). -/
+theorem arityOk_full (params : Array Param) : arityOk params params.size = true := by
+  simp [arityOk, ← Array.length_toList, List.drop_length]
+
+/-- Bindings for parameters left unsupplied by a call: each takes its
+literal default. A defaultless parameter contributes no binding — dead code
+behind `arityOk`, which refuses such calls before any body runs. -/
+def defaultBindings : List Param → Env
+  | [] => []
+  | p :: ps =>
+    match p.default with
+    | some c => (p.arg, Const.toVal c) :: defaultBindings ps
+    | Option.none => defaultBindings ps
+
 /-- Fresh local environment of a call: parameters bound to arguments
-pairwise (arity already checked). -/
+pairwise, parameters beyond the supplied arguments bound to their literal
+defaults (F1; `arityOk` has already ensured those defaults exist).
+
+Def-time-vs-call-time (normative reasoning): Python evaluates default
+expressions ONCE, at `def` time, in the defining scope. The v0 tier admits
+only LITERAL defaults (int/bool/str/None — `Const`), for which filling at
+call time is observationally identical: a literal's value cannot be
+mutated, rebound, or depend on evaluation order or scope. The classic
+mutable-default footgun (`def f(x=[])` sharing one list across calls) is
+unrepresentable by construction — `[]` is not a literal `Const`, so the
+extractor keeps such functions at `argsOk = false`. -/
 def mkCallEnv (params : Array Param) (args : Array Val) : Env :=
   (params.toList.map Param.arg).zip args.toList
+    ++ defaultBindings (params.toList.drop args.size)
 
 /-! ## The interpreter (mutual block, normative signatures)
 
@@ -343,14 +476,15 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
     match e with
     | .constant c _ => .ok (Const.toVal c)
     | .name id _ =>
-      -- Resolution order: local env → module function table → builtin `len` → NameError.
+      -- Resolution order: local env → module function table → builtins
+      -- `len`/`sorted` → NameError.
       match Env.lookup env id with
       | some v => .ok v
       | Option.none =>
         if (findFunction m id).isSome then
           .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
-        else if id == "len" then
-          .unsupported "referencing builtin 'len' as a value is outside the v0 tier"
+        else if id == "len" || id == "sorted" then
+          .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
         else
           .exn (.nameError id)
     | .binOp l op r _ => do
@@ -390,6 +524,13 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
               match vs with
               | [v] => lenVal v
               | _ => .exn (.typeError s!"len() takes exactly one argument ({vs.length} given)")
+            else if fname == "sorted" then do
+              -- After `findFunction`, so a module-level `def sorted` shadows
+              -- the builtin, exactly as CPython's module globals do.
+              let vs ← evalExprs m fuel env args.toList
+              match vs with
+              | [v] => sortedVal v
+              | _ => .exn (.typeError s!"sorted expected 1 argument, got {vs.length}")
             else
               .exn (.nameError fname)
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
@@ -537,7 +678,11 @@ def execWhile (m : Module) (fuel : Nat) (env : Env) (test : Expr)
 arguments, in a fresh environment (v0: no globals, no closures; top-level
 non-`def` statements are ignored). Falling off the end (or bare `return`)
 yields `Val.none`. Unknown name → `NameError`; unsupported parameter features
-(`argsOk = false`) → unsupported; arity mismatch → `TypeError`. -/
+(`argsOk = false`: non-literal defaults/varargs/kwargs/decorators) →
+unsupported; arity outside `nparams - ndefaults ≤ nargs ≤ nparams`
+(`arityOk`) → `TypeError`. Missing trailing arguments are filled from
+literal parameter defaults inside `mkCallEnv` (see its docstring for why
+call-time filling of literals matches CPython's def-time evaluation). -/
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
   match fuel with
   | 0 => .timeout
@@ -547,11 +692,11 @@ def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) :
     | some f =>
       if !f.argsOk then
         .unsupported
-          s!"function '{fname}' uses unsupported parameter features (defaults/varargs/kwargs/decorators)"
+          s!"function '{fname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
       else if !f.localsOk then
         .unsupported
           s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier"
-      else if args.size ≠ f.params.size then
+      else if !arityOk f.params args.size then
         .exn (.typeError
           s!"{fname}() takes {f.params.size} positional arguments but {args.size} were given")
       else do

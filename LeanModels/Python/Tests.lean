@@ -33,7 +33,7 @@ private def boom : Expr := bo (iL 1) .floorDiv (iL 0)
 private def M0 : Module := { functions := #[], topLevel := #[] }
 
 private def fnIdent : FunctionDefn :=
-  { name := "ident", params := #[⟨"x", sp⟩], argsOk := true,
+  { name := "ident", params := #[⟨"x", sp, Option.none⟩], argsOk := true,
     body := #[.ret (some (nm "x")) sp], span := sp }
 private def fnLoopForever : FunctionDefn :=
   { name := "loopForever", params := #[], argsOk := true,
@@ -47,14 +47,35 @@ private def fnBareRet : FunctionDefn :=
     body := #[.ret Option.none sp], span := sp }
 /-- `def cd(n): if n <= 0: return 0 \n return cd(n - 1)` — recursion depth n. -/
 private def fnCountdown : FunctionDefn :=
-  { name := "cd", params := #[⟨"n", sp⟩], argsOk := true,
+  { name := "cd", params := #[⟨"n", sp, Option.none⟩], argsOk := true,
     body := #[.ifStmt (cmp1 (nm "n") .ltE (iL 0)) #[.ret (some (iL 0)) sp] #[] sp,
               .ret (some (.call (nm "cd") #[bo (nm "n") .sub (iL 1)] Option.none sp)) sp],
     span := sp }
+/-- `def opt(x, d=10, h=None): if h is None: h = 0 \n return x + d + h` —
+F1 (int and None literal defaults) + F2 (`is None`) in one body. -/
+private def fnOpt : FunctionDefn :=
+  { name := "opt",
+    params := #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩,
+                ⟨"h", sp, some .none⟩],
+    argsOk := true,
+    body := #[.ifStmt (cmp1 (nm "h") .is noneL)
+                #[.assign #[nm "h"] (iL 0) sp] #[] sp,
+              .ret (some (bo (bo (nm "x") .add (nm "d")) .add (nm "h"))) sp],
+    span := sp }
 
 private def M1 : Module :=
-  { functions := #[fnIdent, fnLoopForever, fnBadArgs, fnFallOff, fnBareRet, fnCountdown],
+  { functions := #[fnIdent, fnLoopForever, fnBadArgs, fnFallOff, fnBareRet,
+                   fnCountdown, fnOpt],
     topLevel := #[] }
+
+/-- `def sorted(xs): return 99` — a module-level definition that must SHADOW
+the builtin (`findFunction` is consulted before the builtin branch, exactly
+as CPython's module globals shadow builtins). -/
+private def fnSortedShadow : FunctionDefn :=
+  { name := "sorted", params := #[⟨"xs", sp, Option.none⟩], argsOk := true,
+    body := #[.ret (some (iL 99)) sp], span := sp }
+
+private def M2 : Module := { functions := #[fnSortedShadow], topLevel := #[] }
 
 private def ev (e : Expr) (env : Env := []) (fuel : Nat := 100) : Res Val :=
   evalExpr M0 fuel env e
@@ -143,6 +164,25 @@ private def isUnsupported : Res α → Bool
 #guard isUnsupported (ev (cmp1 (sL "a") .lt (iL 1)))
 #guard isUnsupported (ev (cmp1 (.list #[] sp) .lt (.list #[] sp)))
 
+/-! ## `is` / `is not` (F2): value-determined ONLY against `None`
+CPython-checked: `None is None` → True; `0 is None` / `False is None` /
+`"" is None` / `[] is None` → False (falsiness ≠ None-ness); identity
+between non-None values is implementation-defined → loud. -/
+
+#guard ev (cmp1 noneL .is noneL) == .ok (.bool true)
+#guard ev (cmp1 (iL 0) .is noneL) == .ok (.bool false)
+#guard ev (cmp1 noneL .is (iL 0)) == .ok (.bool false)     -- None on the left
+#guard ev (cmp1 (bL false) .is noneL) == .ok (.bool false)
+#guard ev (cmp1 (sL "") .is noneL) == .ok (.bool false)
+#guard ev (cmp1 (.list #[] sp) .is noneL) == .ok (.bool false)
+#guard ev (cmp1 (iL 0) .isNot noneL) == .ok (.bool true)
+#guard ev (cmp1 noneL .isNot noneL) == .ok (.bool false)
+#guard ev (cmp1 noneL .isNot (iL 3)) == .ok (.bool true)
+#guard isUnsupported (ev (cmp1 (iL 1) .is (iL 1)))          -- small-int identity
+#guard isUnsupported (ev (cmp1 (sL "a") .isNot (sL "a")))   -- str interning
+-- Left operand evaluation order still applies (errors before the identity):
+#guard ev (cmp1 boom .is noneL) == .exn .zeroDivisionError
+
 /-! ## Chained comparison: once each, left to right, short-circuit -/
 
 -- 1 < 5 > 0 < 99 → True (CPython-checked)
@@ -217,6 +257,59 @@ private def L123 : Expr := .list #[iL 10, iL 20, iL 30] sp
 #guard isTypeError (ev (.call (nm "len") #[iL 5] Option.none sp))
 #guard isTypeError (ev (.call (nm "len") #[sL "a", sL "b"] Option.none sp))
 
+/-! ## `sorted` (v0: NEW ascending list from an all-int list argument;
+CPython-3.9.25-checked ground truth — the same probe table is pinned as
+`#py_check` rows in `Examples/python/bench_statistics/spec.lean`). A new
+list is returned by construction (pure value semantics), so the CPython
+`sorted(xs) is not xs` probe has no v0 counterpart to test. -/
+
+private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Option.none sp
+
+#guard ev (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
+#guard ev (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
+#guard ev (sortedC #[.list #[iL 7, iL 1, iL 5, iL 3] sp])
+    == .ok (.list #[.int 1, .int 3, .int 5, .int 7])
+#guard ev (sortedC #[.list #[iL 2, iL 2, iL 1, iL 3] sp])
+    == .ok (.list #[.int 1, .int 2, .int 2, .int 3])                      -- duplicates stay
+#guard ev (sortedC #[.list #[iL (-5), iL 3, iL (-1), iL 0] sp])
+    == .ok (.list #[.int (-5), .int (-1), .int 0, .int 3])                -- negatives
+#guard ev (sortedC #[.list #[iL 42] sp]) == .ok (.list #[.int 42])        -- singleton
+#guard ev (sortedC #[.list #[] sp]) == .ok (.list #[])                    -- empty
+#guard ev (sortedC #[.list #[iL 0, iL 0, iL 0, iL 0] sp])
+    == .ok (.list #[.int 0, .int 0, .int 0, .int 0])                      -- all equal
+-- Arity (CPython 3.9: "sorted expected 1 argument, got 0/2") and not-iterable:
+#guard ev (sortedC #[]) == .exn (.typeError "sorted expected 1 argument, got 0")
+#guard ev (sortedC #[.list #[iL 1] sp, .list #[iL 2] sp])
+    == .exn (.typeError "sorted expected 1 argument, got 2")
+#guard ev (sortedC #[iL 5]) == .exn (.typeError "'int' object is not iterable")
+#guard ev (sortedC #[bL true]) == .exn (.typeError "'bool' object is not iterable")
+#guard ev (sortedC #[noneL]) == .exn (.typeError "'NoneType' object is not iterable")
+-- CPython SUCCEEDS on all four below — v0 refuses loudly, never guesses:
+#guard isUnsupported (ev (sortedC #[sL "cba"]))                    -- sorted('cba') = ['a','b','c']
+#guard isUnsupported (ev (sortedC #[.tuple #[iL 3, iL 1] sp]))     -- sorted((3,1)) = [1,3]
+#guard isUnsupported (ev (sortedC #[.list #[bL true, iL 0, iL 2] sp])) -- [0, True, 2]: bool identity
+#guard isUnsupported (ev (sortedC #[.list #[sL "b", sL "a"] sp]))  -- all-str list sorts in CPython
+-- Mixed int/str raises in CPython too, but the class match is a guess v0
+-- does not make — refuse loudly instead:
+#guard isUnsupported (ev (sortedC #[.list #[iL 1, sL "a"] sp]))
+-- Builtin as a value, and `key=`/`reverse=` (keyword-only ⇒ the extractor
+-- ships `call_unsupported: "keywords"`, refused before argument evaluation):
+#guard isUnsupported (ev (nm "sorted"))
+#guard isUnsupported (ev (.call (nm "sorted") #[.list #[] sp] (some "keywords") sp))
+-- Argument errors propagate before the sort happens (evaluation order):
+#guard ev (sortedC #[boom]) == .exn .zeroDivisionError
+-- A module-level `def sorted` SHADOWS the builtin (findFunction first):
+#guard evalExpr M2 100 [] (sortedC #[.list #[iL 3, iL 1] sp]) == .ok (.int 99)
+-- ... and a local binding shadows both (args still evaluated, then TypeError):
+#guard isTypeError (evalExpr M2 100 [("sorted", .int 3)] (sortedC #[.list #[] sp]))
+-- The pure helpers themselves:
+#guard sortInts [5, 1, 3] == [1, 3, 5]
+#guard sortInts [] == []
+#guard insertLe 2 [1, 3] == [1, 2, 3]
+#guard asIntList [.int 1, .int 2] == some [1, 2]
+#guard asIntList [.int 1, .bool true] == Option.none
+#guard sortedVal (.list #[.int 9, .int (-9)]) == .ok (.list #[.int (-9), .int 9])
+
 /-! ## Left-to-right, once-only evaluation (observable via error order) -/
 
 #guard ev (bo boom .add (nm "zzz")) == .exn .zeroDivisionError    -- left first
@@ -242,6 +335,22 @@ private def L123 : Expr := .list #[iL 10, iL 20, iL 30] sp
 #guard callFunction M1 "bareRet" #[] 100 == .ok .none              -- bare `return`
 #guard callFunction M1 "cd" #[.int 5] 200 == .ok (.int 0)          -- recursion
 #guard callFunction M1 "cd" #[.int 1000] 100 == .timeout           -- fuel bounds depth
+
+/-! ## Literal parameter defaults (F1): fill window, both defaults, arity -/
+
+#guard callFunction M1 "opt" #[.int 1] 100 == .ok (.int 11)         -- d=10, h=None→0
+#guard callFunction M1 "opt" #[.int 1, .int 2] 100 == .ok (.int 3)  -- h=None→0
+#guard callFunction M1 "opt" #[.int 1, .int 2, .int 4] 100 == .ok (.int 7)
+#guard isTypeError (callFunction M1 "opt" #[] 100)                  -- x has no default
+#guard isTypeError (callFunction M1 "opt" #[.int 1, .int 2, .int 3, .int 4] 100)
+-- The env-shape helpers themselves:
+#guard arityOk #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩] 1 == true
+#guard arityOk #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩] 0 == false
+#guard arityOk #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩] 3 == false
+#guard mkCallEnv #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩] #[.int 1]
+    == [("x", .int 1), ("d", .int 10)]
+#guard mkCallEnv #[⟨"x", sp, Option.none⟩, ⟨"d", sp, some (.int 10)⟩] #[.int 1, .int 2]
+    == [("x", .int 1), ("d", .int 2)]
 
 /-! ## Timeout / fuel discipline -/
 
@@ -377,6 +486,35 @@ private def checkCall (path : System.FilePath) (fn : String) (args : Array Val)
 #eval checkCall "Examples/python/add/add.json" "add" #[.str "ab", .int 1] 1000
         (.exn (.typeError "unsupported operand type(s) for +: 'str' and 'int'"))
 #eval checkCall "Examples/python/add/add.json" "nosuch" #[] 1000 (.exn (.nameError "nosuch"))
+-- F1/F2 end-to-end (extractor emits param defaults + Is/IsNot; parser and
+-- interpreter consume them):
+#eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[.int 5] 1000 (.ok (.int 5))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[.int 150] 1000 (.ok (.int 100))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[.int 5, .int 2, .int 3] 1000
+        (.ok (.int 3))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[] 1000
+        (.exn (.typeError "clamp() takes 3 positional arguments but 0 were given"))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "is_none" #[.none] 1000
+        (.ok (.bool true))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "latest" #[.int 3] 1000 (.ok (.int 3))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "latest" #[.int 3, .int 5] 1000
+        (.ok (.int 5))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "pad" #[.int 5, .int 3, .bool true] 1000
+        (.ok (.tuple #[.int 8, .str ""]))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "none_is_none" #[] 1000
+        (.ok (.bool true))
+-- call:sorted end-to-end (the vendored CPython statistics medians run from
+-- their envelope; expected values are CPython 3.9.25 ground truth):
+#eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_low"
+        #[.list #[.int 7, .int 1, .int 5, .int 3]] 1000 (.ok (.int 3))
+#eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_high"
+        #[.list #[.int 7, .int 1, .int 5, .int 3]] 1000 (.ok (.int 5))
+#eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_low"
+        #[.list #[.int 5, .int 1, .int 3]] 1000 (.ok (.int 3))
+#eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_high"
+        #[.list #[.int 5, .int 1, .int 3]] 1000 (.ok (.int 3))
+#eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_low"
+        #[.int 3] 1000 (.exn (.typeError "'int' object is not iterable"))
 
 /-! ## Spec layer end-to-end: `load_program` → literal `Module` → proofs
 

@@ -16,10 +16,17 @@ are not exercised by the Lean build:
   * a source with no ``# lean[`` blocks gets an envelope and NO companion
     (three-file per-example layout);
   * a hand-written .lean at the companion path is never overwritten — hard
-    ExtractError naming the file.
+    ExtractError naming the file;
+  * literal parameter defaults (int/bool/str/None) are emitted as per-param
+    ``default`` payloads and clear ``args_unsupported``; any non-literal
+    default keeps ``args_unsupported: "defaults"`` with NO ``default`` keys;
+  * ``is``/``is not`` survive as Compare ops IFF one side of that link is
+    the literal None; any other identity comparison stays a whole-node
+    ``Unsupported "Compare:Is[Not]"``.
 """
 
 import importlib.util
+import json
 import os
 import shutil
 import sys
@@ -180,6 +187,116 @@ class ExtractorTests(unittest.TestCase):
         first = read(os.path.join(self.tmp, "Double.lean"))
         extract.process_file(src, self.tmp)  # must not raise
         self.assertEqual(first, read(os.path.join(self.tmp, "Double.lean")))
+
+    # -- F1: literal parameter defaults --------------------------------------
+
+    def _envelope_of(self, source, stem="mod"):
+        src = os.path.join(self.tmp, stem + ".py")
+        write(src, source)
+        extract.process_file(src, self.tmp)
+        with open(os.path.join(self.tmp, stem + ".json"),
+                  "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def _first_fn(self, source):
+        return self._envelope_of(source)["module"]["body"][0]
+
+    def test_literal_defaults_emitted_and_in_tier(self):
+        fn = self._first_fn(
+            "def f(a, i=3, b=True, s='x', n=None):\n    return a\n")
+        self.assertIsNone(fn["args_unsupported"])
+        self.assertEqual(
+            [p.get("default") for p in fn["args"]],
+            [None,
+             {"type": "int", "repr": "3"},
+             {"type": "bool", "value": True},
+             {"type": "str", "value": "x"},
+             {"type": "none"}])
+
+    def test_non_literal_default_stays_unsupported(self):
+        # A Name default (the easter.py EASTER_WESTERN shape) and a negative
+        # number (UnaryOp, not Constant) are both non-literal: the function
+        # keeps args_unsupported="defaults" and emits NO default keys —
+        # mixed literal/non-literal included.
+        for src in ("def f(a, m=EASTER_WESTERN):\n    return a\n",
+                    "def f(a, lo=-1):\n    return a\n",
+                    "def f(a, b=1, c=NAMED):\n    return a\n",
+                    "def f(a, x=1.5):\n    return a\n"):
+            fn = self._first_fn(src)
+            self.assertEqual(fn["args_unsupported"], "defaults", src)
+            self.assertTrue(
+                all("default" not in p for p in fn["args"]), src)
+
+    def test_default_free_param_object_unchanged(self):
+        # Byte-level compatibility: a param without a default has exactly the
+        # historical two keys (no "default": null noise).
+        fn = self._first_fn("def f(a, b):\n    return a\n")
+        for p in fn["args"]:
+            self.assertEqual(sorted(p.keys()), ["arg", "span"])
+
+    # -- F2: is / is not gated on a literal-None side ------------------------
+
+    def _first_return_expr(self, source):
+        fn = self._first_fn(source)
+        return fn["body"][0]["value"]
+
+    def test_is_none_survives_either_side(self):
+        for src, ops in (
+                ("def f(x):\n    return x is None\n", ["Is"]),
+                ("def f(x):\n    return x is not None\n", ["IsNot"]),
+                ("def f(x):\n    return None is x\n", ["Is"])):
+            e = self._first_return_expr(src)
+            self.assertEqual(e["kind"], "Compare", src)
+            self.assertEqual(e["ops"], ops, src)
+
+    def test_is_without_none_is_unsupported(self):
+        for src in ("def f(x, y):\n    return x is y\n",
+                    "def f(x, y):\n    return x is not y\n"):
+            e = self._first_return_expr(src)
+            self.assertEqual(e["kind"], "Unsupported", src)
+            self.assertTrue(e["py_kind"].startswith("Compare:Is"), src)
+
+    def test_chained_is_gates_per_link(self):
+        # x is None is None: both links have a None side => in-tier.
+        e = self._first_return_expr("def f(x):\n    return x is None is None\n")
+        self.assertEqual(e["kind"], "Compare")
+        self.assertEqual(e["ops"], ["Is", "Is"])
+        # x is y is None: the FIRST link has no None side => whole node out.
+        e = self._first_return_expr(
+            "def f(x, y):\n    return x is y is None\n")
+        self.assertEqual(e["kind"], "Unsupported")
+
+    # -- call:sorted: NO extractor special-casing (exact `len` analogy) ------
+
+    def test_sorted_call_is_plain_in_tier_call(self):
+        # `sorted(xs)` is a plain Call node whose callee is Name "sorted" —
+        # the builtin lives entirely in the interpreter's name-resolution
+        # order; the extractor emits no builtin table and no marking.
+        e = self._first_return_expr("def f(xs):\n    return sorted(xs)\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertIsNone(e["call_unsupported"])
+        self.assertEqual(e["func"]["kind"], "Name")
+        self.assertEqual(e["func"]["id"], "sorted")
+        self.assertEqual(len(e["args"]), 1)
+
+    def test_sorted_keywords_stay_unsupported_loud(self):
+        # key=/reverse= are keyword-only in 3.9: such calls arrive with
+        # call_unsupported "keywords" and the interpreter refuses loudly
+        # BEFORE evaluating arguments.
+        for src in ("def f(xs, g):\n    return sorted(xs, key=g)\n",
+                    "def f(xs):\n    return sorted(xs, reverse=True)\n"):
+            e = self._first_return_expr(src)
+            self.assertEqual(e["kind"], "Call", src)
+            self.assertEqual(e["call_unsupported"], "keywords", src)
+
+    def test_sorted_shadowing_assignment_flags_locals(self):
+        # A body that assigns `sorted` and also calls it trips the CPython
+        # static-locals guard (`locals_unsupported`), same as any callee.
+        fn = self._first_fn(
+            "def f(xs):\n    sorted = 3\n    return sorted(xs)\n")
+        self.assertEqual(
+            fn["locals_unsupported"],
+            "calls locally-assigned name(s) (static-locals rule): sorted")
 
 
 if __name__ == "__main__":

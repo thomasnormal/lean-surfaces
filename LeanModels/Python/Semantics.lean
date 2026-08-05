@@ -336,6 +336,59 @@ def sortedVal : Val → Res Val
   | .tuple _ => .unsupported "sorted() on a tuple is outside the v0 tier"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
+/-- Left fold of `max`/`min` over ints (structural — kernel-reducible). -/
+def foldExtremum (isMax : Bool) (acc : Int) : List Int → Int
+  | [] => acc
+  | n :: rest => foldExtremum isMax (if isMax then max acc n else min acc n) rest
+
+/-- The `max`/`min` builtins (B1 tier): ≥ 2 int arguments, or one nonempty
+int list/tuple. `key=`/default=` are keyword arguments (refused upstream by
+`call_unsupported`). Mixed/bool/str orderings are out of tier — loud, since
+`asIntList` admits pure ints only; Python-invalid argument shapes raise the
+faithful CPython error class. -/
+def extremumVal (isMax : Bool) (vs : List Val) : Res Val :=
+  let name := if isMax then "max" else "min"
+  match vs with
+  | [] => .exn (.typeError s!"{name} expected at least 1 argument, got 0")
+  | [v] =>
+    match v with
+    | .list xs =>
+      match asIntList xs.toList with
+      | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+      | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
+      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
+    | .tuple xs =>
+      match asIntList xs.toList with
+      | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+      | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
+      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
+    | .str _ => .unsupported s!"{name}() over a str is outside the v0 tier"
+    | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+  | vs =>
+    match asIntList vs with
+    | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+    | _ => .unsupported s!"{name}() over non-int arguments is outside the v0 tier"
+
+/-- The `abs` builtin (B1): int/bool argument. -/
+def absVal : Val → Res Val
+  | .int n => .ok (.int (if n < 0 then -n else n))
+  | .bool b => .ok (.int (if b then 1 else 0))
+  | v => .exn (.typeError s!"bad operand type for abs(): '{v.typeName}'")
+
+/-- The `int` constructor builtin (B1): identity on ints, bool coercion.
+`int(str)` (parsing) and floats are out of tier. -/
+def intCastVal : Val → Res Val
+  | .int n => .ok (.int n)
+  | .bool b => .ok (.int (if b then 1 else 0))
+  | .str _ => .unsupported "int() of a str is outside the v0 tier"
+  | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
+
+/-- Builtin names the v0 interpreter implements (resolution: shadowable by
+locals, module globals, and module `def`s, exactly like CPython builtins). -/
+def isBuiltinName (id : String) : Bool :=
+  id == "len" || id == "sorted" || id == "max" || id == "min" ||
+  id == "abs" || id == "int"
+
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
 def normIndex (i : Int) (len : Nat) : Option Nat :=
@@ -416,6 +469,146 @@ with duplicate definitions the LAST one wins, exactly as in CPython. -/
 def findFunction (m : Module) (fname : String) : Option FunctionDefn :=
   m.functions.findRev? (fun f => f.name == fname)
 
+/-! ## Module-level constants (globals, G1)
+
+CPython executes a module's top-level statements once, at import time, in
+source order; function bodies then resolve non-local names against the
+resulting module globals. The G1 tier admits the *constant* fragment of
+that: top-level `NAME = <expr>` and `N1, N2, … = <expr>` bindings whose
+right-hand side evaluates **call-free** (constants, earlier globals,
+arithmetic, comparisons, list/tuple/subscript) — `MATE_UPPER = 69290`,
+`A1, H1, A8, H8 = 91, 98, 21, 28`.
+
+Honesty discipline (loud, never wrong):
+* a top-level binding whose RHS is out of tier binds its name to `none` —
+  function-body references to it are `Res.unsupported`, never a fake value
+  and never a fake `NameError`;
+* a top-level statement that could bind names invisibly (`import`,
+  `ClassDef`, `for`, `if`, chained/starred targets, …) marks the globals
+  **incomplete**: from then on a name miss is `Res.unsupported` instead of
+  `NameError`, because CPython might have bound it;
+* module init is evaluated at the fixed fuel `globalFuel` — independent of
+  the caller's fuel, so results never vary across call sites and fuel
+  monotonicity is untouched. A hypothetical constant needing deeper
+  evaluation times out into the `none` (out-of-tier) marking, loudly. -/
+
+/-- Fixed evaluation fuel for module-level right-hand sides. -/
+def globalFuel : Nat := 512
+
+mutual
+
+/-- Call-free expression evaluator for module-level right-hand sides.
+`gs` is the globals resolved so far (source order). Everything callable or
+effectful is out of tier here — including calls themselves, because
+globals are resolved from inside `callFunction` and module init must not
+re-enter it. -/
+def evalGlobalExpr (gs : Env) (fuel : Nat) (e : Expr) : Res Val :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match e with
+    | .constant c _ => .ok (Const.toVal c)
+    | .name id _ =>
+      match Env.lookup gs id with
+      | some v => .ok v
+      | Option.none => .unsupported s!"module-level reference '{id}' is outside the G1 tier"
+    | .binOp l op r _ => do
+        let a ← evalGlobalExpr gs fuel l
+        let b ← evalGlobalExpr gs fuel r
+        evalBinOp op a b
+    | .unaryOp op operand _ => do
+        let v ← evalGlobalExpr gs fuel operand
+        evalUnaryOp op v
+    | .list elts _ => do
+        let vs ← evalGlobalExprs gs fuel elts.toList
+        return .list vs.toArray
+    | .tuple elts _ => do
+        let vs ← evalGlobalExprs gs fuel elts.toList
+        return .tuple vs.toArray
+    | .subscript v idx _ => do
+        let c ← evalGlobalExpr gs fuel v
+        let i ← evalGlobalExpr gs fuel idx
+        indexVal c i
+    | e => .unsupported s!"module-level expression '{e.kindName}' is outside the G1 tier"
+
+/-- List version of `evalGlobalExpr` (left to right, each once). -/
+def evalGlobalExprs (gs : Env) (fuel : Nat) (es : List Expr) : Res (List Val) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match es with
+    | [] => .ok []
+    | e :: rest => do
+        let v ← evalGlobalExpr gs fuel e
+        let vs ← evalGlobalExprs gs fuel rest
+        return v :: vs
+
+end
+
+/-- The globals accumulator: bindings in reverse source order (`lookupG`
+takes the first match, so the LATEST binding wins, as in CPython) — `none`
+marks a name bound at module level to an out-of-tier value. -/
+abbrev GlobalsAcc := List (String × Option Val)
+
+/-- First-match lookup in the accumulator. -/
+def lookupG : GlobalsAcc → String → Option (Option Val)
+  | [], _ => Option.none
+  | (k, v) :: rest, id => if k == id then some v else lookupG rest id
+
+/-- The resolved (in-tier) globals, as an `Env` for `evalGlobalExpr`.
+Shadowed earlier bindings are harmless: `Env.lookup` also takes the first
+match. -/
+def resolvedG : GlobalsAcc → Env
+  | [] => []
+  | (k, some v) :: rest => (k, v) :: resolvedG rest
+  | (_, Option.none) :: rest => resolvedG rest
+
+/-- All-names view of a tuple target's elements. -/
+def targetNamesG : List Expr → Option (List String)
+  | [] => some []
+  | .name id _ :: rest => (targetNamesG rest).map (id :: ·)
+  | _ => Option.none
+
+/-- One module-level statement's effect on the globals. `(acc, complete)`:
+`complete = false` once any statement could have bound a name invisibly. -/
+def globalsStep (acc : GlobalsAcc) (complete : Bool) : Stmt → GlobalsAcc × Bool
+  | .assign tgts rhs _ =>
+    match tgts.toList with
+    | [.name id _] =>
+      match evalGlobalExpr (resolvedG acc) globalFuel rhs with
+      | .ok v => ((id, some v) :: acc, complete)
+      | _ => ((id, Option.none) :: acc, complete)
+    | [.tuple es _] =>
+      match targetNamesG es.toList with
+      | some ids =>
+        match evalGlobalExpr (resolvedG acc) globalFuel rhs with
+        | .ok (.tuple vs) =>
+          if ids.length == vs.size then
+            ((ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+          else (ids.map (·, Option.none) ++ acc, complete)
+        | .ok (.list vs) =>
+          if ids.length == vs.size then
+            ((ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+          else (ids.map (·, Option.none) ++ acc, complete)
+        | _ => (ids.map (·, Option.none) ++ acc, complete)
+      | Option.none => (acc, false)
+    | _ => (acc, false)
+  | .exprStmt _ _ => (acc, complete)
+  | .pass _ => (acc, complete)
+  | _ => (acc, false)
+
+/-- Fold `globalsStep` over the top-level statements (source order). -/
+def globalsFold (acc : GlobalsAcc) (complete : Bool) : List Stmt → GlobalsAcc × Bool
+  | [] => (acc, complete)
+  | s :: rest =>
+    match globalsStep acc complete s with
+    | (acc', complete') => globalsFold acc' complete' rest
+
+/-- The module's constant globals: `(bindings, complete)`. Computed at the
+fixed `globalFuel`, so the result is a pure function of the module. -/
+def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
+  globalsFold [] true m.topLevel.toList
+
 /-- Does a call supplying `n` positional arguments fit `params`? Python's
 rule with defaults (F1): at most one argument per parameter, and every
 parameter beyond the supplied ones carries a default —
@@ -476,17 +669,27 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
     match e with
     | .constant c _ => .ok (Const.toVal c)
     | .name id _ =>
-      -- Resolution order: local env → module function table → builtins
-      -- `len`/`sorted` → NameError.
+      -- Resolution order: local env → module globals (G1; a later
+      -- `X = …` rebinding a `def` name wins, as in CPython) → module
+      -- function table → builtins `len`/`sorted` → NameError — the last
+      -- only when the globals are COMPLETE (no invisible top-level
+      -- binder), else loudly unsupported.
       match Env.lookup env id with
       | some v => .ok v
       | Option.none =>
-        if (findFunction m id).isSome then
-          .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
-        else if id == "len" || id == "sorted" then
-          .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
-        else
-          .exn (.nameError id)
+        match lookupG (moduleGlobals m).1 id with
+        | some (some v) => .ok v
+        | some Option.none =>
+          .unsupported s!"module-level value of '{id}' is outside the G1 tier"
+        | Option.none =>
+          if (findFunction m id).isSome then
+            .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
+          else if isBuiltinName id then
+            .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
+          else if (moduleGlobals m).2 then
+            .exn (.nameError id)
+          else
+            .unsupported s!"name '{id}' may be bound by an out-of-tier module-level statement"
     | .binOp l op r _ => do
         let a ← evalExpr m fuel env l
         let b ← evalExpr m fuel env r
@@ -516,6 +719,13 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
               let _ ← evalExprs m fuel env args.toList
               .exn (.typeError s!"'{v.typeName}' object is not callable")
           | Option.none =>
+            match lookupG (moduleGlobals m).1 fname with
+            | some (some v) => do
+                let _ ← evalExprs m fuel env args.toList
+                .exn (.typeError s!"'{v.typeName}' object is not callable")
+            | some Option.none =>
+              .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the v0 tier"
+            | Option.none =>
             if (findFunction m fname).isSome then do
               let vs ← evalExprs m fuel env args.toList
               callFunction m fname vs.toArray fuel
@@ -531,8 +741,27 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
               match vs with
               | [v] => sortedVal v
               | _ => .exn (.typeError s!"sorted expected 1 argument, got {vs.length}")
-            else
+            else if fname == "max" then do
+              let vs ← evalExprs m fuel env args.toList
+              extremumVal true vs
+            else if fname == "min" then do
+              let vs ← evalExprs m fuel env args.toList
+              extremumVal false vs
+            else if fname == "abs" then do
+              let vs ← evalExprs m fuel env args.toList
+              match vs with
+              | [v] => absVal v
+              | _ => .exn (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
+            else if fname == "int" then do
+              let vs ← evalExprs m fuel env args.toList
+              match vs with
+              | [] => .ok (.int 0)
+              | [v] => intCastVal v
+              | _ => .unsupported "int() with a base argument is outside the v0 tier"
+            else if (moduleGlobals m).2 then
               .exn (.nameError fname)
+            else
+              .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
     | .list elts _ => do
         let vs ← evalExprs m fuel env elts.toList
@@ -630,6 +859,15 @@ def execStmt (m : Module) (fuel : Nat) (env : Env) (s : Stmt) : Res (Env × Flow
       | t => .unsupported s!"augmented assignment to '{t.kindName}' is outside the v0 tier"
     | .whileLoop test body orelse _ =>
       execWhile m fuel env test body.toList orelse.toList
+    | .forStmt target iter body orelse _ =>
+      if orelse.isEmpty then do
+        let it ← evalExpr m fuel env iter
+        match it with
+        | .list xs => execFor m fuel env target xs.toList body.toList
+        | .tuple xs => execFor m fuel env target xs.toList body.toList
+        | .str _ => .unsupported "'for' over a str is outside the v0 tier"
+        | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+      else .unsupported "'for … else' is outside the v0 tier"
     | .ifStmt test body orelse _ => do
         let t ← evalExpr m fuel env test
         if truthy t then execStmts m fuel env body.toList
@@ -654,6 +892,28 @@ def execStmts (m : Module) (fuel : Nat) (env : Env) (ss : List Stmt) : Res (Env 
         match flow with
         | .next => execStmts m fuel env' rest
         | flow => .ok (env', flow)
+
+/-- `for target in <evaluated list/tuple>: body` (no `orelse` — refused
+loudly upstream). One element per step: bind `target` to the element
+(`assignTo` — plain names and tuple-unpacking targets, same tier as
+assignment), run the body; `break` exits, `continue` steps, `return`
+propagates. The iterated values were captured BEFORE the loop began
+(`evalExpr` on the iterable), matching CPython's iterator over an
+immutable snapshot value in the v0 no-aliasing tier. -/
+def execFor (m : Module) (fuel : Nat) (env : Env) (target : Expr)
+    (xs : List Val) (body : List Stmt) : Res (Env × Flow) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match xs with
+    | [] => .ok (env, .next)
+    | x :: rest => do
+        let env₁ ← assignTo env target x
+        let (env₂, flow) ← execStmts m fuel env₁ body
+        match flow with
+        | .next | .cont => execFor m fuel env₂ target rest body
+        | .brk => .ok (env₂, .next)
+        | .ret v => .ok (env₂, .ret v)
 
 /-- `while test: body else: orelse`. `break` exits the loop skipping `orelse`;
 `continue` re-tests; `return` propagates; on normal exit (test falsy) the

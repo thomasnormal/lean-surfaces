@@ -213,7 +213,11 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             Const.toVal, truthy, asInt, Val.isNone, valEq, valEqList, intCmp,
             strCmp, evalCompareOp, evalBinOp, evalUnaryOp, lenVal, sortedVal,
             asIntList, asIntList_map_int, sortInts_length, normIndex,
-            indexVal, targetNames, bindAll, assignTo, and_assoc, $extra,*] $(loc)?)
+            indexVal, targetNames, bindAll, assignTo, execFor,
+            foldExtremum, extremumVal, absVal, intCastVal, isBuiltinName,
+            moduleGlobals, globalsFold, globalsStep, lookupG, resolvedG,
+            targetNamesG, evalGlobalExpr, evalGlobalExprs, globalFuel,
+            and_assoc, $extra,*] $(loc)?)
 
 @[inherit_doc pySimpTactic]
 macro "py_simp" loc:(Lean.Parser.Tactic.location)? : tactic =>

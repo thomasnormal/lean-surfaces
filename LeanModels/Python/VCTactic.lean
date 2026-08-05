@@ -388,7 +388,10 @@ def interpUnfolds : List Name :=
    ``Const.toVal, ``truthy, ``asInt, ``Val.isNone, ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp,
    ``lenVal, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
-   ``targetNames, ``bindAll, ``assignTo,
+   ``targetNames, ``bindAll, ``assignTo, ``execFor,
+   ``foldExtremum, ``extremumVal, ``absVal, ``intCastVal, ``isBuiltinName,
+   ``moduleGlobals, ``globalsFold, ``globalsStep, ``lookupG, ``resolvedG,
+   ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs, ``globalFuel,
    ``envInt]
 
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse
@@ -1453,6 +1456,10 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       (mkApp2 (Lean.mkConst ``Env.lookup) tg.E fnameE)
     unless (← whnfR rL).isAppOfArity ``Option.none 1 do
       throwError "py_vcgen: callee `{fname}` may be shadowed by a local binding"
+    let (rG, prfG) ← captureRun ctx.pack
+      (← mkAppM ``lookupG #[← mkAppM ``Prod.fst #[← mkAppM ``moduleGlobals #[tg.m]], fnameE])
+    unless (← whnfR rG).isAppOfArity ``Option.none 1 do
+      throwError "py_vcgen: callee `{fname}` is shadowed by a module-level (G1) binding"
     let (argEs, argTail) ← parseListLit (← arrToList argsArr)
     unless isNilTail argTail do
       throwError "py_vcgen: call-argument list is not literal"
@@ -1476,7 +1483,7 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let hargs ← mkAppM ``EvalsToList.of_eval #[prfA]
     let hcall ← appOpt ``EvalsTo.call
       #[some tg.m, some tg.E, some fnameE, some argsArr, some vsLit, some vNF,
-        some spf, some spc, some prfL, some hargs, some factE']
+        some spf, some spc, some prfL, some hargs, some factE', some prfG]
     let (rAs, prfAs) ← captureRun ctx.pack
       (mkApp3 (Lean.mkConst ``assignTo) tg.E tgtE vNF)
     let rAs' ← whnfR rAs

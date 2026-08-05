@@ -184,6 +184,11 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         return .whileLoop (← parseExpr (← getField j "test"))
           (← (← (← getField j "body").getArr?).mapM parseStmt)
           (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
+    | "For" =>
+        return .forStmt (← parseExpr (← getField j "target"))
+          (← parseExpr (← getField j "iter"))
+          (← (← (← getField j "body").getArr?).mapM parseStmt)
+          (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
     | "If" =>
         return .ifStmt (← parseExpr (← getField j "test"))
           (← (← (← getField j "body").getArr?).mapM parseStmt)

@@ -372,6 +372,18 @@ def convert_stmt(node):
             "orelse": [convert_stmt(s) for s in node.orelse],
         }
 
+    if isinstance(node, ast.For):
+        # Plain `for` only; `async for` is a different node class
+        # (ast.AsyncFor) and falls through to Unsupported.
+        return {
+            "kind": "For",
+            "span": span(node),
+            "target": convert_expr(node.target),
+            "iter": convert_expr(node.iter),
+            "body": [convert_stmt(s) for s in node.body],
+            "orelse": [convert_stmt(s) for s in node.orelse],
+        }
+
     if isinstance(node, ast.If):
         return {
             "kind": "If",

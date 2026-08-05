@@ -39,10 +39,11 @@ Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
 | `Assign` | `targets`: [expr…] (length 1 in the supported tier; chained `a=b=1` gives length > 1), `value`: expr |
 | `AugAssign` | `target`: expr, `op`: binop-name, `value`: expr |
 | `While` | `test`: expr, `body`: [stmt…], `orelse`: [stmt…] |
+| `For` | `target`: expr, `iter`: expr, `body`: [stmt…], `orelse`: [stmt…] (plain `for` only; `async for` is a different CPython node class and stays `Unsupported`) |
 | `If` | `test`: expr, `body`: [stmt…], `orelse`: [stmt…] (elif = nested If in orelse, as CPython does) |
 | `Expr` | `value`: expr |
 | `Pass`, `Break`, `Continue` | — |
-| `Unsupported` | `py_kind`: str (CPython class name, e.g. `"For"`, `"Try"`), `text`: str (`ast.unparse`, truncated to ≤200 chars) |
+| `Unsupported` | `py_kind`: str (CPython class name, e.g. `"Try"`, `"With"`), `text`: str (`ast.unparse`, truncated to ≤200 chars) |
 
 `param` = `{"arg": "n", "span": {…}}`, plus an OPTIONAL `"default"`: const
 (the Constants encoding below) when the parameter has a LITERAL default —

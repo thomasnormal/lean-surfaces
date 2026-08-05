@@ -92,7 +92,7 @@ deriving Repr, Inhabited, BEq
 
 /-- Statements. Constructor ↔ schema `kind` mapping (Lean-keyword-safe names):
 `ret` ↔ `Return`, `assign` ↔ `Assign`, `augAssign` ↔ `AugAssign`,
-`whileLoop` ↔ `While`, `ifStmt` ↔ `If`, `exprStmt` ↔ `Expr`,
+`whileLoop` ↔ `While`, `forStmt` ↔ `For`, `ifStmt` ↔ `If`, `exprStmt` ↔ `Expr`,
 `pass` ↔ `Pass`, `brk` ↔ `Break`, `cont` ↔ `Continue`,
 `unsupported` ↔ `Unsupported`.
 
@@ -104,6 +104,7 @@ inductive Stmt where
   | assign (targets : Array Expr) (value : Expr) (span : Span)
   | augAssign (target : Expr) (op : BinOp) (value : Expr) (span : Span)
   | whileLoop (test : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
+  | forStmt (target : Expr) (iter : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
   | ifStmt (test : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
   | exprStmt (value : Expr) (span : Span)
   | pass (span : Span)

@@ -276,7 +276,8 @@ theorem EvalsTo.call {m : Module} {env : Env} {fname : String}
     {args : Array Expr} {vs : List Val} {v : Val} {sp sp' : Span}
     (hlocal : Env.lookup env fname = Option.none)
     (hargs : EvalsToList m env args.toList vs)
-    (hspec : CallsTo m fname vs.toArray v) :
+    (hspec : CallsTo m fname vs.toArray v)
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
     EvalsTo m env (.call (.name fname sp) args Option.none sp') v := by
   obtain ⟨ta, ha⟩ := hargs.at_least
   obtain ⟨tc, hc⟩ := hspec.at_least
@@ -287,7 +288,8 @@ theorem EvalsTo.call {m : Module} {env : Env} {fname : String}
     | none => rw [hff] at h1; simp at h1
     | some f => simp
   refine ⟨ta + tc + 1, ?_⟩
-  simp [evalExpr, hlocal, hfn, ha (ta + tc) (by omega), hc (ta + tc) (by omega)]
+  simp [evalExpr, hlocal, hglob, hfn, ha (ta + tc) (by omega),
+        hc (ta + tc) (by omega)]
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-environment, the callee name unshadowed, argument values
@@ -299,13 +301,14 @@ theorem PyStmtTriple.call {m : Module} {P : Env → Prop} {Q : PyPost}
     {x fname : String} {args : Array Expr} {spx spf spc spa : Span}
     (h : ∀ env, P env → Env.lookup env fname = Option.none ∧
         ∃ vs v, EvalsToList m env args.toList vs ∧
-          CallsTo m fname vs.toArray v ∧ Q.next (Env.set env x v)) :
+          CallsTo m fname vs.toArray v ∧ Q.next (Env.set env x v))
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
     PyStmtTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) args Option.none spc) spa)
       Q :=
   PyStmtTriple.assignName fun env hP =>
     let ⟨hlocal, _vs, v, hvs, hc, hQ⟩ := h env hP
-    ⟨v, EvalsTo.call hlocal hvs hc, hQ⟩
+    ⟨v, EvalsTo.call hlocal hvs hc hglob, hQ⟩
 
 /-- List-level form of the call rule: `x = f(…)` followed by `rest`, with
 the callee's postcondition (result bound to `x`) as the midcondition `R`. -/
@@ -315,11 +318,12 @@ theorem PyTriple.call {m : Module} {P R : Env → Prop} {Q : PyPost}
     (h : ∀ env, P env → Env.lookup env fname = Option.none ∧
         ∃ vs v, EvalsToList m env args.toList vs ∧
           CallsTo m fname vs.toArray v ∧ R (Env.set env x v))
-    (hrest : PyTriple m R rest Q) :
+    (hrest : PyTriple m R rest Q)
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
     PyTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) args Option.none spc) spa
         :: rest) Q :=
-  PyTriple.seq (PyStmtTriple.call h) hrest
+  PyTriple.seq (PyStmtTriple.call h hglob) hrest
 
 /-! ## The `@[py_spec]` registry -/
 

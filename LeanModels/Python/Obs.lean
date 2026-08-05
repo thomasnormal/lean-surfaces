@@ -20,7 +20,7 @@ Structure:
   one interpreter step, glued by the congruence lemmas `Res.le_bind` /
   `Res.le_ite` (every fuel-free helper is `⊑`-reflexive, every recursive
   call is the induction hypothesis at the decremented fuel).
-* `evalExpr_mono` … `callFunction_mono` — the eight per-function corollaries
+* `evalExpr_mono` … `callFunction_mono`, `execFor_mono` — the per-function corollaries
   in implication form: `F fuel = r → r ≠ .timeout → ∀ fuel' ≥ fuel,
   F fuel' = r`.
 * `callFunction_det` — cross-fuel determinism; `CallsTo.functional` /
@@ -85,8 +85,9 @@ theorem Res.le_ite {α : Type} {c : Prop} [Decidable c] {x x' y y' : Res α}
 induction on fuel: for every interpreter function `F` and `fuel ≤ fuel'`,
 `F fuel ⊑ F fuel'` — a run that decided keeps its exact result at any higher
 fuel. Conjunct order: `evalExpr`, `evalExprs`, `evalBoolChain`,
-`evalCompareChain`, `execStmt`, `execStmts`, `execWhile`, `callFunction`
-(the order of `Semantics.lean`'s mutual block). Consume it through the
+`evalCompareChain`, `execStmt`, `execStmts`, `execWhile`, `callFunction`, `execFor`
+(the mutual block's order, `execFor` appended last to keep the projection
+paths of the earlier corollaries stable). Consume it through the
 per-function `_mono` corollaries below. -/
 theorem fuelMono (fuel : Nat) :
     (∀ (m : Module) (env : Env) (e : Expr) (fuel' : Nat), fuel ≤ fuel' →
@@ -107,11 +108,14 @@ theorem fuelMono (fuel : Nat) :
         (fuel' : Nat), fuel ≤ fuel' →
       execWhile m fuel env test body orelse ⊑ execWhile m fuel' env test body orelse) ∧
     (∀ (m : Module) (fname : String) (args : Array Val) (fuel' : Nat), fuel ≤ fuel' →
-      callFunction m fname args fuel ⊑ callFunction m fname args fuel') := by
+      callFunction m fname args fuel ⊑ callFunction m fname args fuel') ∧
+    (∀ (m : Module) (env : Env) (target : Expr) (xs : List Val) (body : List Stmt)
+        (fuel' : Nat), fuel ≤ fuel' →
+      execFor m fuel env target xs body ⊑ execFor m fuel' env target xs body) := by
   induction fuel with
   | zero =>
     -- Fuel 0 is `.timeout` everywhere, the bottom of `⊑`.
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · exact fun m env e fuel' _ => Or.inl (by simp [evalExpr])
     · exact fun m env es fuel' _ => Or.inl (by simp [evalExprs])
     · exact fun m env op e rest fuel' _ => Or.inl (by simp [evalBoolChain])
@@ -120,9 +124,10 @@ theorem fuelMono (fuel : Nat) :
     · exact fun m env ss fuel' _ => Or.inl (by simp [execStmts])
     · exact fun m env test body orelse fuel' _ => Or.inl (by simp [execWhile])
     · exact fun m fname args fuel' _ => Or.inl (by simp [callFunction])
+    · exact fun m env target xs body fuel' _ => Or.inl (by simp [execFor])
   | succ fuel ih =>
-    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihF⟩ := ih
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihF, ihFor⟩ := ih
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     -- evalExpr
     · intro m env e fuel' hf
       cases fuel' with
@@ -160,17 +165,31 @@ theorem fuelMono (fuel : Nat) :
                 exact Res.le_bind (ihEs m env cargs.toList k hk) fun _ =>
                   Res.le_refl _
               | none =>
-                -- module function → builtin `len` → builtin `sorted` → NameError
-                exact Res.le_ite
-                  (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
-                    ihF m fname vs.toArray k hk)
-                  (Res.le_ite
+                -- module globals (G1) → module function → builtin `len` →
+                -- builtin `sorted` → NameError/unsupported (the globals and
+                -- the final fork are fuel-independent, hence `le_refl`)
+                cases lookupG (moduleGlobals m).1 fname with
+                | some vv =>
+                  cases vv with
+                  | some v =>
+                    exact Res.le_bind (ihEs m env cargs.toList k hk) fun _ =>
+                      Res.le_refl _
+                  | none => exact Res.le_refl _
+                | none =>
+                  -- findFunction → len → sorted → max → min → abs → int →
+                  -- NameError/unsupported (each builtin: bind args, result
+                  -- fuel-independent)
+                  have hb : ∀ {β : Type} (g : List Val → Res β),
+                      (do let vs ← evalExprs m fuel env cargs.toList; g vs) ⊑
+                      (do let vs ← evalExprs m k env cargs.toList; g vs) :=
+                    fun g => Res.le_bind (ihEs m env cargs.toList k hk)
+                      fun vs => Res.le_refl _
+                  exact Res.le_ite
                     (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
-                      Res.le_refl _)
-                    (Res.le_ite
-                      (Res.le_bind (ihEs m env cargs.toList k hk) fun vs =>
-                        Res.le_refl _)
-                      (Res.le_refl _)))
+                      ihF m fname vs.toArray k hk)
+                    (Res.le_ite (hb _) (Res.le_ite (hb _) (Res.le_ite (hb _)
+                      (Res.le_ite (hb _) (Res.le_ite (hb _) (Res.le_ite (hb _)
+                        (Res.le_refl _)))))))
         | list elts _ =>
           simp only [evalExpr]
           exact Res.le_bind (ihEs m env elts.toList k hk) fun vs => Res.le_refl _
@@ -265,6 +284,13 @@ theorem fuelMono (fuel : Nat) :
         | whileLoop test body orelse _ =>
           simp only [execStmt]
           exact ihW m env test body.toList orelse.toList k hk
+        | forStmt target iter body orelse _ =>
+          simp only [execStmt]
+          refine Res.le_ite ?_ (Res.le_refl _)
+          refine Res.le_bind (ihE m env iter k hk) fun it => ?_
+          cases it <;> try exact Res.le_refl _
+          case list xs => exact ihFor m env target xs.toList body.toList k hk
+          case tuple xs => exact ihFor m env target xs.toList body.toList k hk
         | ifStmt test body orelse _ =>
           simp only [execStmt]
           exact Res.le_bind (ihE m env test k hk) fun t =>
@@ -325,6 +351,24 @@ theorem fuelMono (fuel : Nat) :
             fun p => ?_
           obtain ⟨env', flow⟩ := p
           cases flow <;> exact Res.le_refl _
+    -- execFor
+    · intro m env target xs body fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        cases xs with
+        | nil => simp only [execFor]; exact Res.le_refl _
+        | cons x rest =>
+          simp only [execFor]
+          refine Res.le_bind (Res.le_refl _) fun env₁ => ?_
+          refine Res.le_bind (ihSs m env₁ body k hk) fun p => ?_
+          obtain ⟨env₂, flow⟩ := p
+          cases flow with
+          | next => exact ihFor m env₂ target rest body k hk
+          | cont => exact ihFor m env₂ target rest body k hk
+          | brk => exact Res.le_refl _
+          | ret v => exact Res.le_refl _
 
 /-! ## Per-function corollaries (the `FuelMono` statement shape) -/
 
@@ -384,7 +428,14 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     {fuel : Nat} {r : Res Val} (h : callFunction m fname args fuel = r)
     (hr : r ≠ .timeout) :
     ∀ fuel' ≥ fuel, callFunction m fname args fuel' = r := fun fuel' hf =>
-  mono_of_le ((fuelMono fuel).2.2.2.2.2.2.2 m fname args fuel' hf) h hr
+  mono_of_le ((fuelMono fuel).2.2.2.2.2.2.2.1 m fname args fuel' hf) h hr
+
+/-- Fuel monotonicity for `execFor`. -/
+theorem execFor_mono {m : Module} {fuel : Nat} {env : Env} {target : Expr}
+    {xs : List Val} {body : List Stmt} {r : Res (Env × Flow)}
+    (h : execFor m fuel env target xs body = r) (hr : r ≠ .timeout) :
+    ∀ fuel' ≥ fuel, execFor m fuel' env target xs body = r := fun fuel' hf =>
+  mono_of_le ((fuelMono fuel).2.2.2.2.2.2.2.2 m env target xs body fuel' hf) h hr
 
 /-! ## Cross-fuel determinism -/
 

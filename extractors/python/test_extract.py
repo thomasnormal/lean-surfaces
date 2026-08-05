@@ -299,5 +299,44 @@ class ExtractorTests(unittest.TestCase):
             "calls locally-assigned name(s) (static-locals rule): sorted")
 
 
+    # -- For statements and module constants (sunfish ladder steps 1-2) ----
+
+    def test_for_over_name_is_structured(self):
+        env = self._envelope_of(
+            "def f(xs):\n    t = 0\n    for v in xs:\n"
+            "        t += v\n    return t\n")
+        st = env["module"]["body"][0]["body"][1]
+        self.assertEqual(st["kind"], "For")
+        self.assertEqual(st["target"]["kind"], "Name")
+        self.assertEqual(st["iter"]["kind"], "Name")
+        self.assertEqual(st["orelse"], [])
+        self.assertEqual(st["body"][0]["kind"], "AugAssign")
+
+    def test_for_tuple_target_is_structured(self):
+        env = self._envelope_of(
+            "def f(ps):\n    t = 0\n    for a, b in ps:\n"
+            "        t = a + b\n    return t\n")
+        st = env["module"]["body"][0]["body"][1]
+        self.assertEqual(st["kind"], "For")
+        self.assertEqual(st["target"]["kind"], "Tuple")
+
+    def test_for_else_keeps_orelse(self):
+        # `for … else` is representable (the interpreter refuses it loudly).
+        env = self._envelope_of(
+            "def f(xs):\n    for v in xs:\n        pass\n"
+            "    else:\n        pass\n    return 0\n")
+        st = env["module"]["body"][0]["body"][0]
+        self.assertEqual(st["kind"], "For")
+        self.assertEqual(len(st["orelse"]), 1)
+
+    def test_module_constants_are_plain_assigns(self):
+        # Top-level constant bindings (G1 globals) ride through as ordinary
+        # Assign statements in module body order — no special marking.
+        env = self._envelope_of(
+            "MATE = 69290\nA1, H1 = 91, 98\n\ndef f():\n    return MATE\n")
+        kinds = [st["kind"] for st in env["module"]["body"]]
+        self.assertEqual(kinds, ["Assign", "Assign", "FunctionDef"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

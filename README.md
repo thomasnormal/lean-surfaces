@@ -566,14 +566,22 @@ core `Rat`. Extractor/harness require only Python ≥ 3.9 stdlib.
 ## v0 limitations (honest list)
 
 - **Semantic tier is narrow.** Ints (arbitrary precision, exact), bools, strs,
-  lists, tuples, `None`; `while`/`if`/assignment/tuple-unpacking; calls to
-  module-level functions (positional args) and `len`; recursion. Anything else
-  is representable but evaluates to `Res.unsupported` — loudly, never wrongly.
+  lists, tuples, `None`; `while`/`if`/assignment/tuple-unpacking; `for` over
+  lists and tuples (`break`/`continue`/tuple targets included; `for … else`
+  and `for` over strs are out of tier); calls to module-level functions
+  (positional args) and the builtins `len`, `sorted`, `max`, `min`, `abs`,
+  `int`; recursion. Anything else is representable but evaluates to
+  `Res.unsupported` — loudly, never wrongly.
 - **No floats.** True division `/` and negative `**` exponents are
   `unsupported`.
-- **No globals, no closures, no module-init effects.** Top-level statements
-  other than `def` are recorded but ignored; functions run in fresh
-  environments.
+- **Constant globals only (G1); no closures, no module-init effects.**
+  Top-level `NAME = <call-free constant expr>` and tuple-unpack bindings
+  (`A1, H1, A8, H8 = 91, 98, 21, 28`) are evaluated in source order and
+  visible from function bodies; a binding whose RHS is out of tier resolves
+  loudly to `unsupported`, and after any top-level statement that could bind
+  names invisibly (`import`, `class`, `for`, …) an unresolved name is
+  `unsupported` instead of `NameError`. Functions still run in fresh
+  environments (no `global` writes).
 - **No try/raise** — but runtime errors are real and faithful
   (`TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`).
 - **Partial correctness via fuel.** Every interpreter function consumes fuel;

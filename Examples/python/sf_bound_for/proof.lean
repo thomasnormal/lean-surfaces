@@ -27,6 +27,9 @@ open LeanModels LeanModels.Python
 
 load_program sf_bound_for from "Examples/python/sf_bound_for/sf_bound_for.json"
 
+/-- The pinned world of the stage-1 geometry (`initWorld` unfolded). -/
+private def pw : World := ⟨#[], []⟩
+
 /-- The loop target of `bound_loop`'s `for` (the loaded literal's piece). -/
 private def loopTgt : Expr :=
   .name "score" { lineno := 20, colOffset := 8, endLineno := 20, endColOffset := 13 }
@@ -56,8 +59,8 @@ private def loopBody : List Stmt :=
 /-- The uniform loop environment: params, the running `best`, the loop
 variable `score` (present from the first iteration on). -/
 private def E (scores : List Int) (gamma b s : Int) : Env :=
-  [("scores", Val.list ((scores.map ToVal.toVal).toArray)),
-   ("gamma", Val.int gamma), ("best", Val.int b), ("score", Val.int s)]
+  [("scores", RVal.listV ((scores.map (RVal.thaw ∘ ToVal.toVal)).toArray)),
+   ("gamma", RVal.int gamma), ("best", RVal.int b), ("score", RVal.int s)]
 
 set_option maxHeartbeats 1600000 in
 set_option maxRecDepth 8192 in
@@ -67,17 +70,17 @@ final `score` slot. -/
 private theorem key (scores : List Int) (gamma : Int) :
     ∀ (xs : List Int) (b s : Int),
       ∃ f₀ s', ∀ F, f₀ ≤ F →
-        execFor sf_bound_for F (E scores gamma b s)
-            loopTgt (xs.map ToVal.toVal) loopBody
-          = .ok (E scores gamma (sfSearchMoves gamma xs b) s', .next) := by
+        execFor sf_bound_for F ⟨pw, E scores gamma b s⟩
+            loopTgt (xs.map (RVal.thaw ∘ ToVal.toVal)) loopBody
+          = .ok ⟨pw, E scores gamma (sfSearchMoves gamma xs b) s'⟩ .next := by
   intro xs
   induction xs with
   | nil =>
     intro b s
     refine ⟨1, s, fun F hF => ?_⟩
-    have hrun : execFor sf_bound_for 1 (E scores gamma b s)
-        loopTgt (([] : List Int).map ToVal.toVal) loopBody
-        = .ok (E scores gamma b s, .next) := by
+    have hrun : execFor sf_bound_for 1 ⟨pw, E scores gamma b s⟩
+        loopTgt (([] : List Int).map (RVal.thaw ∘ ToVal.toVal)) loopBody
+        = .ok ⟨pw, E scores gamma b s⟩ .next := by
       rw [List.map_nil, execFor.eq_2]
     have := execFor_mono hrun (by simp) F hF
     simpa [sfSearchMoves] using this
@@ -86,22 +89,22 @@ private theorem key (scores : List Int) (gamma : Int) :
     by_cases hc : gamma ≤ max b x
     · -- cutoff: the first tail iteration breaks
       refine ⟨32, x, fun F hF => ?_⟩
-      have hrun : execFor sf_bound_for 32 (E scores gamma b s)
-          loopTgt ((x :: rest).map ToVal.toVal) loopBody
-          = .ok (E scores gamma (max b x) x, .next) := by
+      have hrun : execFor sf_bound_for 32 ⟨pw, E scores gamma b s⟩
+          loopTgt ((x :: rest).map (RVal.thaw ∘ ToVal.toVal)) loopBody
+          = .ok ⟨pw, E scores gamma (max b x) x⟩ .next := by
         rw [List.map_cons, execFor.eq_3]
-        py_simp [sf_bound_for, loopTgt, loopBody, E, toVal_int, hc]
+        py_simp [pw, sf_bound_for, loopTgt, loopBody, E, toVal_int, hc]
       have := execFor_mono hrun (by simp) F hF
       simpa [sfSearchMoves, if_pos hc] using this
     · obtain ⟨f₁, s₁, h₁⟩ := ih (max b x) x
       refine ⟨f₁ + 32, s₁, fun F hF => ?_⟩
-      have hrun : execFor sf_bound_for (f₁ + 32) (E scores gamma b s)
-          loopTgt ((x :: rest).map ToVal.toVal) loopBody
-          = .ok (E scores gamma (sfSearchMoves gamma rest (max b x)) s₁,
-                 .next) := by
+      have hrun : execFor sf_bound_for (f₁ + 32) ⟨pw, E scores gamma b s⟩
+          loopTgt ((x :: rest).map (RVal.thaw ∘ ToVal.toVal)) loopBody
+          = .ok ⟨pw, E scores gamma (sfSearchMoves gamma rest (max b x)) s₁⟩
+                 .next := by
         rw [List.map_cons, execFor.eq_3]
-        simp only [sf_bound_for, E, loopTgt, loopBody] at h₁ ⊢
-        py_simp [sf_bound_for, toVal_int,
+        simp only [pw, sf_bound_for, E, loopTgt, loopBody] at h₁ ⊢
+        py_simp [pw, sf_bound_for, toVal_int,
                  (show ¬ gamma ≤ max b x from hc)]
         simp (disch := omega) only [h₁]
       have := execFor_mono hrun (by simp) F hF
@@ -117,7 +120,7 @@ theorem bound_loop_total (scores : List PyInt) (gamma : PyInt) :
   cases scores with
   | nil =>
     refine ⟨64, ?_⟩
-    rw [callFunction.eq_2]
+    unfold callFunction; rw [callIn.eq_2]
     py_simp [sf_bound_for]
     rw [execFor.eq_2]
     py_simp [sfSearchMoves]
@@ -125,16 +128,16 @@ theorem bound_loop_total (scores : List PyInt) (gamma : PyInt) :
     by_cases hc : gamma ≤ max (-69290 : Int) s0
     · -- the very first iteration breaks
       refine ⟨64, ?_⟩
-      rw [callFunction.eq_2]
+      unfold callFunction; rw [callIn.eq_2]
       py_simp [sf_bound_for, toVal_int]
       rw [execFor.eq_3]
       py_simp [toVal_int, hc]
       py_simp [sfSearchMoves, if_pos hc]
     · -- unroll the first iteration by hand (env grows), splice `key`
       obtain ⟨f₁, s₁, h₁⟩ := key (s0 :: rest) gamma rest (max (-69290) s0) s0
-      py_simp [sf_bound_for, E, loopTgt, loopBody, toVal_int] at h₁
+      py_simp [pw, sf_bound_for, E, loopTgt, loopBody, toVal_int] at h₁
       refine ⟨f₁ + 64, ?_⟩
-      rw [callFunction.eq_2]
+      unfold callFunction; rw [callIn.eq_2]
       py_simp [sf_bound_for, toVal_int]
       rw [execFor.eq_3]
       py_simp [toVal_int, (show ¬ gamma ≤ max (-69290 : Int) s0 from hc)]

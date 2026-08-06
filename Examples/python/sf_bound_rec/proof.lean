@@ -49,7 +49,8 @@ private theorem getD_eq_getElem (l : List Int) (n : Nat) (h : n < l.length) :
 `arrVal_getElem`, copied; here in `getElem` form — py_simp's set
 normalizes `getD` to `getElem` at an in-range index). -/
 private theorem arrVal_getElem (a : List Int) (n : Nat) (h : n < a.length) :
-    (Option.map ToVal.toVal a[n]?).getD Val.none = Val.int a[n] := by
+    (Option.map (RVal.thaw ∘ ToVal.toVal) a[n]?).getD RVal.none
+      = RVal.int a[n] := by
   rw [List.getElem?_eq_getElem h]
   rfl
 
@@ -58,7 +59,7 @@ private theorem bound_rec_exit (scores : List PyInt) (gamma i best : PyInt)
     (hge : (scores.length : Int) ≤ i) :
     sf_bound_rec.bound_rec(scores, gamma, i, best) ==> best := by
   refine ⟨64, ?_⟩
-  rw [callFunction.eq_2]
+  unfold callFunction; rw [callIn.eq_2]
   py_simp [sf_bound_rec, show ((scores.length : Int) ≤ i) from hge]
 
 set_option maxHeartbeats 1000000 in
@@ -97,7 +98,7 @@ theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
             Int.max_eq_right (Int.le_of_lt hs)
           by_cases hb : gamma ≤ scores[i.toNat]
           · refine ⟨64, ?_⟩
-            rw [callFunction.eq_2]
+            unfold callFunction; rw [callIn.eq_2]
             simp only [sfSearchMoves, hmax, if_pos hb]
             py_simp [sf_bound_rec, hnn, harr,
                      show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
@@ -109,7 +110,7 @@ theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
               with [sf_bound_rec]
             rw [ht1] at h₁
             refine ⟨f₁ + 64, ?_⟩
-            rw [callFunction.eq_2]
+            unfold callFunction; rw [callIn.eq_2]
             simp only [sfSearchMoves, hmax, if_neg hb]
             py_simp [sf_bound_rec, hnn, harr,
                      show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
@@ -122,7 +123,7 @@ theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
             Int.max_eq_left (Int.not_lt.mp hs)
           by_cases hb : gamma ≤ best
           · refine ⟨64, ?_⟩
-            rw [callFunction.eq_2]
+            unfold callFunction; rw [callIn.eq_2]
             simp only [sfSearchMoves, hmax, if_pos hb]
             py_simp [sf_bound_rec, hnn, harr,
                      show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
@@ -134,7 +135,7 @@ theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
               with [sf_bound_rec]
             rw [ht1] at h₁
             refine ⟨f₁ + 64, ?_⟩
-            rw [callFunction.eq_2]
+            unfold callFunction; rw [callIn.eq_2]
             simp only [sfSearchMoves, hmax, if_neg hb]
             py_simp [sf_bound_rec, hnn, harr,
                      show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,

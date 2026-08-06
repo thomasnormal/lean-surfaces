@@ -186,6 +186,7 @@ theorem extended_gcd_spec (a b : PyInt) (r : PyInt × PyInt × PyInt)
   exact ⟨i, j, CallsTo.typed_int3_eq h hrun, hrest⟩
 
 set_option linter.unusedVariables false in
+set_option maxRecDepth 4096 in
 /-- Boundary `b = 0`: the loop never runs and `extended_gcd(a, 0)`
 returns `(a, 1, 0)` — constant-fuel symbolic execution, no loop rule
 (cf. `tri_neg_total`). `ha` is not consumed by the proof (the run is the
@@ -194,7 +195,7 @@ same for `a < 0`); it is kept because it is what makes the *reading*
 hypotheses document the spec's domain, AGENTS.md). -/
 theorem extended_gcd_zero (a : PyInt) (ha : 0 ≤ a) :
     rsa_inverse.extended_gcd(a, 0) ==> ((a, 1, 0) : PyInt × PyInt × PyInt) :=
-  CallsTo.intro 32 (by py_simp [callFunction, execWhile, rsa_inverse])
+  CallsTo.intro 32 (by py_simp [callFunction, callIn, execWhile, rsa_inverse])
 
 /-- `Int`-typed core of `inverse_spec` — TOTAL correctness on coprime
 inputs. Coprimality rewrites the callee fact's gcd to 1, and the closing

@@ -516,6 +516,33 @@ def captureRun (pack : SimpPack) (e : Lean.Expr) :
     | none => mkEqRefl e
   return (r.expr, prf)
 
+/-- Prove a PINNED equation `run = .ok E v` where `E` is the walker's known
+mid-state: the captured normal form's out-state may have been rewritten by
+local hypotheses (state is data since H1 — a post-loop `hcont : b' = 0`
+rewrites the state's `RVal.int b'`), so instead of reusing the captured
+proof, the pinned equation is proved as a GOAL — the same fact set then
+normalizes BOTH sides to the drifted form and `rfl` closes. -/
+def provePinned (pack : SimpPack) (ty : Lean.Expr) : MetaM Lean.Expr := do
+  let g ← mkFreshExprMVar ty .syntheticOpaque
+  let ctx ← addFacts pack.exec (← currentFacts)
+  let r? ← try Prod.fst <$> Meta.simpGoal g.mvarId! ctx pack.procs
+    catch _ => pure (some (#[], g.mvarId!))
+  match r? with
+  | none => return g
+  | some (_, g') =>
+    let closed ← g'.withContext do
+      let t ← instantiateMVars (← g'.getType)
+      match t.eq? with
+      | some (_, lhs, _) =>
+        try
+          let gs ← g'.apply (← mkEqRefl lhs)
+          pure gs.isEmpty
+        catch _ => pure false
+      | none => pure false
+    unless closed do
+      throwError "py_vcgen: could not pin a captured run at the walker's mid-state:{indentExpr ty}"
+    return g
+
 /-- Apply a constant to optional arguments, filling `none` positions (and
 missing trailing hypotheses) with fresh metavariables — the `apply`-ready
 partial-application builder (`mkAppOptM` refuses unassigned mvars). -/
@@ -859,6 +886,24 @@ partial def solveShape (ctx : VCCtx) (ty : Lean.Expr) (strict : Bool) :
   else if ty.isAppOfArity ``Eq 3 then
     let lhs := ty.getArg! 1
     let rhs := ty.getArg! 2
+    -- Thaw inversion (H1): `X = RVal.thaw ?v` with `X` known and `?v` a
+    -- bare witness mvar (the raw-`Val` relational binder) is not
+    -- unifiable — `thaw ?v` is stuck — but FREEZING the captured runtime
+    -- value decides the witness: `?v := w` with `freeze X = .ok w`, and
+    -- `RVal.eq_thaw_of_freeze` supplies the equation.
+    if rhs.isAppOfArity ``RVal.thaw 1 then
+      let arg ← instantiateMVars (rhs.getArg! 0)
+      if arg.isMVar && !(← instantiateMVars lhs).hasExprMVar then
+        let (fr, prfF) ← captureRun ctx.pack (← mkAppM ``RVal.freeze #[lhs])
+        let fr' ← whnfR fr
+        if fr'.isAppOfArity ``Res.ok 2 then
+          let w := fr'.getArg! 1
+          if ← isDefEq arg w then
+            let prfF' ← mkExpectedTypeHint prfF
+              (← mkEq (← mkAppM ``RVal.freeze #[lhs])
+                (← mkAppM ``Res.ok #[w]))
+            let prf ← mkAppM ``RVal.eq_thaw_of_freeze #[lhs, prfF']
+            return some (prf, #[])
     let hasMVar := (← instantiateMVars ty).hasExprMVar
     let s ← saveState
     if ← withReducible (isDefEq lhs rhs) then
@@ -1556,7 +1601,7 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let exprTy := Lean.mkConst ``LeanModels.Python.Expr
     let argsListLit := mkListLit' exprTy argEs
       (mkApp (Lean.mkConst ``List.nil [Level.zero]) exprTy)
-    let (rA, prfA) ← captureRun ctx.pack
+    let (rA, _) ← captureRun ctx.pack
       (mkApp4 (Lean.mkConst ``evalExprs) tg.m (mkNatLit fuelK) tg.E argsListLit)
     let rA' ← whnfR rA
     unless rA'.isAppOfArity ``Run.ok 4 do
@@ -1580,7 +1625,7 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       (mkApp4 (Lean.mkConst ``evalExprs) tg.m (mkNatLit fuelK) tg.E argsListLit)
       (← mkAppM ``Run.ok #[tg.E, thawedList])
     let hargs ← mkAppM ``EvalsToList.of_eval
-      #[← mkExpectedTypeHint prfA hargsTy]
+      #[← provePinned ctx.pack hargsTy]
     let hworld ← mkExpectedTypeHint (← mkEqRefl tg.shape.world)
       (← mkEq (← mkAppM ``FrameState.world #[tg.E]) tg.shape.world)
     let hcall ← appOpt ``EvalsTo.call
@@ -1648,13 +1693,18 @@ partial def handleIf (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         match ← classify st with
         | .plain | .term => pure ()
         | _ => throwError "py_vcgen: `if` branches must be straight-line in v1 (no nested if/while/call)"
-    let (rT, prfT) ← captureRun ctx.pack
+    let (rT, _) ← captureRun ctx.pack
       (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E testE)
     let rT' ← whnfR rT
     unless rT'.isAppOfArity ``Run.ok 4 do
       closeStraight ctx tags tg   -- the test escaped (raise)
       return
     let V := rT'.getArg! 3
+    -- re-prove at the PINNED state (the captured out-state may have been
+    -- hypothesis-rewritten — see `provePinned`)
+    let prfT ← provePinned ctx.pack (← mkEq
+      (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E testE)
+      (← mkAppM ``Run.ok #[tg.E, V]))
     let (rTr, prfTr) ← captureRun ctx.pack
       (← mkAppM ``truthy #[V])
     let rTr' ← whnfR rTr

@@ -203,6 +203,7 @@ theorem CallsTo.callIn_at_least {m : Module} {fname : String}
         = .ok (initWorld m) (RVal.thaw v) := by
   obtain ⟨fuel, hf⟩ := h
   unfold callFunction at hf
+  simp only [RVal.thawArgs_eq_map] at hf
   revert hf
   cases hc : callIn m fuel (initWorld m) fname (args.map RVal.thaw) with
   | ok w' rv =>

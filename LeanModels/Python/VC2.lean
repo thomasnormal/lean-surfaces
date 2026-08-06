@@ -455,6 +455,7 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
       { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
+  simp only [RVal.thawArgs_eq_map] at hc
   cases fuel with
   | zero => rw [callIn] at hc; simp at hc
   | succ fu =>
@@ -566,6 +567,7 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
       { next := fun _ => False, err := fun e' _ => e' = e } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
+  simp only [RVal.thawArgs_eq_map] at hc
   cases fuel with
   | zero => rw [callIn] at hc; simp at hc
   | succ fu =>

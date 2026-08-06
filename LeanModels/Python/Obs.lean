@@ -529,7 +529,7 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
   intro fuel' hf
   unfold callFunction at h ⊢
   rcases (fuelMono fuel).2.2.2.2.2.2.2.1 m (initWorld m) fname
-      (args.map RVal.thaw) fuel' hf with hto | heq
+      (RVal.thawArgs args) fuel' hf with hto | heq
   · -- The inner run timed out at `fuel`: then the public result was
     -- `.timeout`, contradicting `hr`.
     rw [hto] at h

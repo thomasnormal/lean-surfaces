@@ -404,6 +404,21 @@ theorem RVal.thawList_eq_map : (l : List Val) → RVal.thawList l = l.map RVal.t
   | [] => rfl
   | v :: vs => by simp [RVal.thawList, RVal.thawList_eq_map vs]
 
+/-- Thaw a public argument vector — the wrapper's marshalling step.
+List-structural on purpose (the kernel reduces it): `Array.map` is a
+`USize` loop the kernel cannot reduce, and `py_check`'s closing step is
+kernel `rfl` on a whole `callFunction` run. -/
+def RVal.thawArgs (args : Array Val) : Array RVal :=
+  (RVal.thawList args.toList).toArray
+
+/-- The `Array.map` normal form of `thawArgs` (global simp: proof-layer
+statements quantify over `args.map RVal.thaw`; symbolic runs normalize the
+wrapper's list-structural form to it). -/
+@[simp] theorem RVal.thawArgs_eq_map (args : Array Val) :
+    RVal.thawArgs args = args.map RVal.thaw := by
+  apply Array.toList_inj.mp
+  simp [RVal.thawArgs, RVal.thawList_eq_map]
+
 /-! Constructor-application lemmas for `thaw` (global simp: residual goals
 and symbolic runs keep boundary values in runtime normal form). -/
 

@@ -76,8 +76,8 @@ theorem sortInts_of_pairwise {l : List Int} (h : l.Pairwise (· ≤ ·)) :
 /-- The `Val`-level bridge: `sortedVal` on a marshalled int list succeeds
 with the (freshly) sorted marshalled list. -/
 theorem sortedVal_int_list (l : List Int) :
-    sortedVal (.list ((l.map Val.int).toArray))
-      = .ok (.list (((sortInts l).map Val.int).toArray)) := by
+    sortedVal (.listV ((l.map RVal.int).toArray))
+      = .ok (.listV (((sortInts l).map RVal.int).toArray)) := by
   simp [sortedVal, asIntList_map_int]
 
 /-! ## Pure list lemmas (getD access, sortedness monotonicity, counting) -/
@@ -103,7 +103,7 @@ both `Array.getD` and `List.getD` to `·[·]?`; bisect's `arrVal_getElem`
 is the `ToVal.toVal`-mapped twin). Unbounded it would be FALSE — out of
 range the left side is `Val.none`, the right `Val.int 0`. -/
 theorem arrVal_getElem (xs : List Int) (n : Nat) (h : n < xs.length) :
-    (Option.map Val.int xs[n]?).getD Val.none = Val.int (xs[n]?.getD 0) := by
+    (Option.map RVal.int xs[n]?).getD RVal.none = RVal.int (xs[n]?.getD 0) := by
   rw [List.getElem?_eq_getElem h]; rfl
 
 /-- A list all of whose elements satisfy `p` counts them all. -/
@@ -214,7 +214,8 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
   have hq := arrVal_getElem (sortInts data) (data.length / 2)
     (by rw [sortInts_length]; omega)
   refine ⟨64, ?_⟩
-  py_simp [callFunction, bench_statistics, asIntList_map_toVal,
+  py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
+    asIntList_map_thaw_comp,
     hne, hfd, hnn, h0le, hlt, htn, hq]
 
 /-- **Main theorem (`median_low`).** For every nonempty int list,
@@ -241,7 +242,8 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have hlt : (data.length : Int) / 2 < (data.length : Int) := by omega
     have htn : (((data.length : Int)) / 2).toNat = (data.length - 1) / 2 := by
       omega
-    py_simp [callFunction, bench_statistics, asIntList_map_toVal,
+    py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
+    asIntList_map_thaw_comp,
       hne, hfd, hpar, hnn, h0le, hlt, htn, hq]
   · -- even length: return data[n // 2 - 1], and n//2 − 1 = (n-1)/2
     have hmod : (data.length : Int) % 2 = 0 := by
@@ -252,7 +254,8 @@ theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
     have hlt : (data.length : Int) / 2 - 1 < (data.length : Int) := by omega
     have htn : ((((data.length : Int)) / 2) - 1).toNat = (data.length - 1) / 2 := by
       omega
-    py_simp [callFunction, bench_statistics, asIntList_map_toVal,
+    py_simp [callFunction, callIn, bench_statistics, asIntList_map_toVal,
+    asIntList_map_thaw_comp,
       hne, hfd, hpar, hnn, h1le, hlt, htn, hq]
 
 /-! ## The public corollaries -/

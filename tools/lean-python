@@ -67,7 +67,8 @@ def main():
         return 0
 
     # 3. optional CPython differential (reuses the harness's canonicalizer)
-    from diff_test import run_python, from_typed  # noqa: E402
+    import importlib.util
+    from diff_test import run_cpython  # noqa: E402
     args = []
     for a in rest:
         if a == "--fuel":
@@ -76,8 +77,11 @@ def main():
             args.append(int(a))
         except ValueError:
             args.append(json.loads(a))
-    py = run_python(os.path.join(REPO_ROOT, src) if not os.path.isabs(src) else src,
-                    fn, [from_typed(a) for a in args])
+    srcabs = src if os.path.isabs(src) else os.path.join(REPO_ROOT, src)
+    spec = importlib.util.spec_from_file_location("leanpy_target", srcabs)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    py = run_cpython(mod, fn, args)
     lean = json.loads(line)
     if lean == py:
         print("MATCH cpython")

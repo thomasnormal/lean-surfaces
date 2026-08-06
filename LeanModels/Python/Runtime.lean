@@ -54,6 +54,12 @@ abbrev Heap := Array Obj
 /-- Runtime environments (locals, and the globals slice of a `World`). -/
 abbrev REnv := List (String × RVal)
 
+/-- `Env` is the canonical environment name across the interpreter and the
+proof layer; since the H1 core re-shape it IS the runtime environment
+(envs describe locals and loop invariants only — the public boundary is
+`CallsTo` over `Val`). -/
+abbrev Env := REnv
+
 /-- The mutable world of one public call: heap + module globals. -/
 structure World where
   heap : Heap
@@ -112,6 +118,25 @@ faithfully anyway. -/
   | .timeout => .timeout
   | .unsupported msg => .unsupported msg
 
+/-- Run a `World`-typed step (a nested call, `callIn`) inside a frame: the
+world is threaded, the frame's locals ride through unchanged — on `.ok`
+AND on `.exn` (the caller's locals survive a callee raise; state retention
+per docs/memory-model.md). -/
+@[inline] def withLocals (locals : REnv) : Run World α → Run FrameState α
+  | .ok w a => .ok ⟨w, locals⟩ a
+  | .exn w e => .exn ⟨w, locals⟩ e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+/-- Project a frame-typed run to its world (returning from a call: the
+frame's locals die with the frame; the shared world survives — on `.ok`
+AND on `.exn`). -/
+@[inline] def toWorld : Run FrameState α → Run World α
+  | .ok s a => .ok s.world a
+  | .exn s e => .exn s.world e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
 /-- Inversion of a successful bind (the `Res.bind_eq_ok` analog): the
 prefix decided with some intermediate state and value. -/
 @[simp] theorem bind_eq_ok {x : Run σ α} {f : σ → α → Run σ β} {s : σ} {b : β} :
@@ -126,6 +151,50 @@ prefix decided with some intermediate state and value. -/
     (Run.timeout : Run σ α).bind f = .timeout := rfl
 @[simp] theorem unsupported_bind {msg : String} {f : σ → α → Run σ β} :
     (Run.unsupported msg : Run σ α).bind f = .unsupported msg := rfl
+
+/-! Constructor-application lemmas for the state combinators (symbolic
+execution steps through them), plus `.ok`-inversion for each. -/
+
+@[simp] theorem liftRes_ok {s : σ} {a : α} :
+    liftRes s (Res.ok a) = Run.ok s a := rfl
+@[simp] theorem liftRes_exn {s : σ} {e : PyErr} :
+    liftRes s (Res.exn e : Res α) = Run.exn s e := rfl
+@[simp] theorem liftRes_timeout {s : σ} :
+    liftRes s (Res.timeout : Res α) = (Run.timeout : Run σ α) := rfl
+@[simp] theorem liftRes_unsupported {s : σ} {msg : String} :
+    liftRes s (Res.unsupported msg : Res α) = (Run.unsupported msg : Run σ α) := rfl
+
+@[simp] theorem liftRes_eq_ok {s s' : σ} {r : Res α} {a : α} :
+    liftRes s r = .ok s' a ↔ s' = s ∧ r = .ok a := by
+  cases r <;> simp [liftRes] <;> grind
+
+@[simp] theorem withLocals_ok {l : REnv} {w : World} {a : α} :
+    withLocals l (Run.ok w a) = Run.ok ⟨w, l⟩ a := rfl
+@[simp] theorem withLocals_exn {l : REnv} {w : World} {e : PyErr} :
+    withLocals l (Run.exn w e : Run World α) = Run.exn ⟨w, l⟩ e := rfl
+@[simp] theorem withLocals_timeout {l : REnv} :
+    withLocals l (Run.timeout : Run World α) = (Run.timeout : Run FrameState α) := rfl
+@[simp] theorem withLocals_unsupported {l : REnv} {msg : String} :
+    withLocals l (Run.unsupported msg : Run World α)
+      = (Run.unsupported msg : Run FrameState α) := rfl
+
+@[simp] theorem withLocals_eq_ok {l : REnv} {x : Run World α} {s : FrameState} {a : α} :
+    withLocals l x = .ok s a ↔ ∃ w, x = .ok w a ∧ s = ⟨w, l⟩ := by
+  cases x <;> simp [withLocals] <;> grind
+
+@[simp] theorem toWorld_ok {s : FrameState} {a : α} :
+    toWorld (Run.ok s a) = Run.ok s.world a := rfl
+@[simp] theorem toWorld_exn {s : FrameState} {e : PyErr} :
+    toWorld (Run.exn s e : Run FrameState α) = Run.exn s.world e := rfl
+@[simp] theorem toWorld_timeout :
+    toWorld (Run.timeout : Run FrameState α) = (Run.timeout : Run World α) := rfl
+@[simp] theorem toWorld_unsupported {msg : String} :
+    toWorld (Run.unsupported msg : Run FrameState α)
+      = (Run.unsupported msg : Run World α) := rfl
+
+@[simp] theorem toWorld_eq_ok {x : Run FrameState α} {w : World} {a : α} :
+    toWorld x = .ok w a ↔ ∃ s, x = .ok s a ∧ s.world = w := by
+  cases x <;> simp [toWorld] <;> grind
 
 end Run
 

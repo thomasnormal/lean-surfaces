@@ -198,6 +198,13 @@ execution steps through them), plus `.ok`-inversion for each. -/
 
 end Run
 
+/-! `Run.toPublic` lives after the freeze (below); forward declaration
+order: the wrapper's erasure step needs `RVal.freeze`. -/
+
+end LeanModels.Python
+
+namespace LeanModels.Python
+
 /-! ## Boundary marshalling (docs/memory-model.md v2, call layering)
 
 Stage H1-1: `Val` has no dict form and nothing allocates, so thawing is
@@ -445,5 +452,25 @@ statement). -/
 theorem RVal.freeze_eq_ok_iff {rv : RVal} {v : Val} :
     RVal.freeze rv = .ok v ↔ rv = RVal.thaw v :=
   ⟨RVal.eq_thaw_of_freeze rv, fun h => h ▸ RVal.freeze_thaw v⟩
+
+/-- Erase the world from a public outcome: `.ok` deep-freezes the value,
+`.exn` forgets its (retained, but boundary-invisible) state. A NAMED
+projection rather than an inline match so that symbolic goals keep it as
+an application — the `split`-based branch recipes must find a body's
+surviving `ite`, not the wrapper (`py_prove`'s branch alternative). -/
+def Run.toPublic : Run World RVal → Res Val
+  | .ok _ v => v.freeze
+  | .exn _ e => .exn e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+@[simp] theorem Run.toPublic_ok {w : World} {v : RVal} :
+    Run.toPublic (.ok w v) = v.freeze := rfl
+@[simp] theorem Run.toPublic_exn {w : World} {e : PyErr} :
+    Run.toPublic (.exn w e) = .exn e := rfl
+@[simp] theorem Run.toPublic_timeout :
+    Run.toPublic .timeout = .timeout := rfl
+@[simp] theorem Run.toPublic_unsupported {msg : String} :
+    Run.toPublic (.unsupported msg) = .unsupported msg := rfl
 
 end LeanModels.Python

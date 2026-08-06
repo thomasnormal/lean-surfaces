@@ -604,25 +604,28 @@ open Lean Lean.Parser.Tactic in
 /-- `py_lift ⟨f₀, h⟩ := e with [prog]` — the house-style opener for splicing
 a recursive run into a symbolic execution (`Examples/python/fib/fib.py`): `e` is
 any `CallsTo` fact (typically the induction hypothesis at a smaller
-argument); the macro takes its fuel-threshold form (`CallsTo.at_least`) and
-symbolically normalizes it, binding the threshold `f₀` and
-`h : ∀ F, f₀ ≤ F → callFunction ⟨…⟩ … F = .ok v` with the program literal
-`prog` unfolded. `h` is a *conditional rewrite rule*: after executing the
-enclosing body (`rw [callFunction.eq_2]; py_simp […]`), close the frozen
-recursive call sites with `simp (disch := omega) only [h]` — `omega`
-discharges the `f₀ ≤ F` side conditions at whatever fuel the execution
-produced, so no exact-offset fuel bookkeeping ever appears (pick any
-generous slack for the outer witness). Implementation note: the unfold and
-the normalization are one fused `py_simp [prog] at h` — the two-step
-`simp only [prog] at h; py_simp at h` form fails with "no progress" on
-hypotheses that need no cast normalization. -/
+argument); the macro takes its `callIn` fuel-threshold form
+(`CallsTo.callIn_at_least` — since H1 the nested call sites inside a
+public run are `callIn` at the pinned public world, so that is the splice
+shape) and symbolically normalizes it, binding the threshold `f₀` and
+`h : ∀ F, f₀ ≤ F → callIn ⟨…⟩ F (initWorld _) … = .ok (initWorld _) v`
+with the program literal `prog` unfolded. `h` is a *conditional rewrite
+rule*: after executing the enclosing body (`unfold callFunction;
+rw [callIn.eq_2]; py_simp […]`), close the frozen recursive call sites
+with `simp (disch := omega) only [h]` — `omega` discharges the `f₀ ≤ F`
+side conditions at whatever fuel the execution produced, so no
+exact-offset fuel bookkeeping ever appears (pick any generous slack for
+the outer witness). Implementation note: the unfold and the normalization
+are one fused `py_simp [prog] at h` — the two-step `simp only [prog] at h;
+py_simp at h` form fails with "no progress" on hypotheses that need no
+cast normalization. -/
 macro "py_lift" "⟨" fid:ident "," hid:ident "⟩" " := " e:term " with "
     "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic => do
   let extra : Syntax.TSepArray
       [`Lean.Parser.Tactic.simpStar, `Lean.Parser.Tactic.simpErase,
        `Lean.Parser.Tactic.simpLemma] "," := ⟨args.elemsAndSeps⟩
   `(tactic|
-    (obtain ⟨$fid, $hid⟩ := ($e).at_least
+    (obtain ⟨$fid, $hid⟩ := ($e).callIn_at_least
      py_simp [$extra,*] at $hid:ident))
 
 open Lean Elab Tactic in

@@ -1162,10 +1162,6 @@ argument graphs), run `callIn`, **deep-freeze** the returned value
 the world from the public result. NOT the recursion point — nested calls
 use `callIn`; proofs unfold this wrapper freely. -/
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
-  match callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
-  | .ok _ v => v.freeze
-  | .exn _ e => .exn e
-  | .timeout => .timeout
-  | .unsupported msg => .unsupported msg
+  Run.toPublic (callIn m fuel (initWorld m) fname (RVal.thawArgs args))
 
 end LeanModels.Python

@@ -1355,24 +1355,24 @@ def dischargeWhileTv (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
     let tgt := (← instantiateMVars (← g.getType)).headBeta
     unless tgt.isAppOfArity ``Exists 2 do
       throwError "py_vcgen: internal — htv goal:{indentExpr tgt}"
-    let bM ← mkFreshExprMVar (Lean.mkConst ``Bool)
-    let gs ← applyC ctx g (mkApp3 (Lean.mkConst ``Exists.intro [.succ .zero])
-        (Lean.mkConst ``Bool) (tgt.getArg! 1) bM)
-    -- the unassigned bool witness mvar rides back out of `apply`; the Prop
-    -- goal is the equation (its closing `rfl` assigns the witness)
-    let mut gmain : Option MVarId := none
-    for gg in gs do
-      if ← gg.withContext do isProp (← gg.getType) then gmain := some gg
-    let some g := gmain
-      | throwError "py_vcgen: internal — htv witness"
-    let ctx' ← g.withContext do addFacts ctx.pack.exec (← currentFacts)
-    let r? ← try Prod.fst <$> Meta.simpGoal g ctx' ctx.pack.procs
-      catch _ => pure (some (#[], g))
-    match r? with
-    | none => return
-    | some (_, g) =>
-      unless ← tryRflClose g do
-        throwError "py_vcgen: the loop test's truthiness did not decide (out-of-tier test value):{indentExpr (← g.withContext do instantiateMVars (← g.getType))}"
+    -- Read the equation's LEFT side out of the ∃-body and capture ITS
+    -- normal form — never simp the goal itself: the full set moves `!`
+    -- across the equation and destroys the witness pattern (the Miller
+    -- pitfall recorded in LoopTactic.lean).
+    let .lam _ _ body _ := tgt.getArg! 1
+      | throwError "py_vcgen: internal — htv body"
+    unless body.isAppOfArity ``Eq 3 && !(body.getArg! 1).hasLooseBVars do
+      throwError "py_vcgen: internal — htv equation:{indentExpr body}"
+    let lhs := body.getArg! 1
+    let (rT, prfT) ← captureRun ctx.pack lhs
+    let rT' ← whnfR rT
+    unless rT'.isAppOfArity ``Res.ok 2 do
+      throwError "py_vcgen: the loop test's truthiness did not decide (out-of-tier test value):{indentExpr rT}"
+    let bE := rT'.getArg! 1
+    let prf := mkApp4 (Lean.mkConst ``Exists.intro [.succ .zero])
+      (Lean.mkConst ``Bool) (tgt.getArg! 1) bE
+      (← mkExpectedTypeHint prfT ((tgt.getArg! 1).beta #[bE]))
+    g.assign prf
 
 /-- Discharge `hexit`: destructure the invariant, normalize the negated
 test, and re-establish the loop's exit condition by shape solving. -/

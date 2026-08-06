@@ -77,11 +77,29 @@ private def fnSortedShadow : FunctionDefn :=
 
 private def M2 : Module := { functions := #[fnSortedShadow], topLevel := #[] }
 
-private def ev (e : Expr) (env : Env := []) (fuel : Nat := 100) : Res Val :=
-  evalExpr M0 fuel env e
+private def w0 : World := ⟨#[], []⟩
+
+/-- Forget the (stage-1, always-`w0`) state of an expression run — the
+projection that keeps the value-level guards below verbatim. -/
+private def proj : Run FrameState RVal → Res RVal
+  | .ok _ v => .ok v
+  | .exn _ er => .exn er
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+private def evIn (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res RVal :=
+  proj (evalExpr m fuel ⟨w0, env⟩ e)
+
+private def ev (e : Expr) (env : Env := []) (fuel : Nat := 100) : Res RVal :=
+  evIn M0 fuel env e
+
 private def run (ss : List Stmt) (env : Env := []) (fuel : Nat := 1000) :
-    Res (Env × Flow) :=
-  execStmts M0 fuel env ss
+    Res (Env × RFlow) :=
+  match execStmts M0 fuel ⟨w0, env⟩ ss with
+  | .ok st f => .ok (st.locals, f)
+  | .exn _ er => .exn er
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
 
 private def isTypeError : Res α → Bool
   | .exn (.typeError _) => true | _ => false
@@ -127,7 +145,7 @@ private def isUnsupported : Res α → Bool
 /-! ## `+` type rules -/
 
 #guard ev (bo (sL "ab") .add (sL "cd")) == .ok (.str "abcd")
-#guard ev (bo (.list #[iL 1] sp) .add (.list #[iL 2] sp)) == .ok (.list #[.int 1, .int 2])
+#guard ev (bo (.list #[iL 1] sp) .add (.list #[iL 2] sp)) == .ok (.listV #[.int 1, .int 2])
 #guard ev (bo (.tuple #[iL 1] sp) .add (.tuple #[iL 2] sp)) == .ok (.tuple #[.int 1, .int 2])
 #guard isTypeError (ev (bo (sL "a") .add (iL 1)))
 #guard isTypeError (ev (bo (.list #[iL 1] sp) .add (.tuple #[iL 2] sp)))
@@ -147,10 +165,12 @@ private def isUnsupported : Res α → Bool
 #guard ev (cmp1 (iL 1) .notEq (sL "1")) == .ok (.bool true)
 #guard ev (cmp1 (.list #[bL true] sp) .eq (.list #[iL 1] sp)) == .ok (.bool true)
 #guard ev (cmp1 (.list #[iL 1] sp) .eq (.tuple #[iL 1] sp)) == .ok (.bool false)
-#guard valEq (.list #[.int 1, .list #[.int 2, .bool true]])
-             (.list #[.int 1, .list #[.int 2, .int 1]])
-#guard !valEq (.list #[.int 1]) (.list #[.int 1, .int 2])
-#guard !valEq (.str "1") (.int 1)
+#guard valEq (.listV #[.int 1, .listV #[.int 2, .bool true]])
+             (.listV #[.int 1, .listV #[.int 2, .int 1]]) == .ok true
+#guard valEq (.listV #[.int 1]) (.listV #[.int 1, .int 2]) == .ok false
+#guard valEq (.str "1") (.int 1) == .ok false
+-- since H1: '==' on a heap ref is loudly outside the stage-1 tier
+#guard match valEq (.ref 0) (.int 1) with | .unsupported _ => true | _ => false
 
 /-! ## Ordering comparisons -/
 
@@ -198,7 +218,7 @@ between non-None values is implementation-defined → loud. -/
 #guard ev (.boolOp .and #[iL 0, sL "x"] sp) == .ok (.int 0)
 #guard ev (.boolOp .and #[iL 1, sL "x"] sp) == .ok (.str "x")
 #guard ev (.boolOp .or #[sL "", iL 0] sp) == .ok (.int 0)     -- last value even if falsy
-#guard ev (.boolOp .or #[iL 0, sL "", .list #[] sp] sp) == .ok (.list #[])
+#guard ev (.boolOp .or #[iL 0, sL "", .list #[] sp] sp) == .ok (.listV #[])
 #guard ev (.boolOp .or #[iL 2, boom] sp) == .ok (.int 2)      -- short-circuit skips 1//0
 #guard ev (.boolOp .and #[iL 0, boom] sp) == .ok (.int 0)
 #guard ev (.boolOp .and #[iL 1, boom] sp) == .exn .zeroDivisionError
@@ -210,26 +230,28 @@ between non-None values is implementation-defined → loud. -/
 #guard ev (.unaryOp .not noneL sp) == .ok (.bool true)
 #guard ev (.unaryOp .not (.tuple #[iL 0] sp) sp) == .ok (.bool false)
 #guard isTypeError (ev (.unaryOp .usub (sL "a") sp))
-#guard truthy (.list #[]) == false
-#guard truthy (.str " ") == true
-#guard truthy (.int (-1)) == true
+#guard truthy (.listV #[]) == .ok false
+#guard truthy (.str " ") == .ok true
+#guard truthy (.int (-1)) == .ok true
+-- since H1: a heap ref's truthiness lives in the heap — loud
+#guard match truthy (.ref 0) with | .unsupported _ => true | _ => false
 
 /-! ## Name resolution: local env → function table → `len` → NameError -/
 
 #guard ev (nm "zzz") == .exn (.nameError "zzz")
 #guard ev (nm "x") (env := [("x", .int 5)]) == .ok (.int 5)
-#guard Env.lookup [("x", .int 1), ("x", .int 2)] "x" == some (.int 1)  -- first match wins
-#guard isUnsupported (evalExpr M1 100 [] (nm "ident"))       -- function as a value
+#guard Env.lookup ([("x", .int 1), ("x", .int 2)] : Env) "x" == some (.int 1)  -- first match wins
+#guard isUnsupported (evIn M1 100 [] (nm "ident"))       -- function as a value
 #guard isUnsupported (ev (nm "len"))                          -- builtin as a value
 -- Local binding shadows the function table (shadowed value is not callable):
-#guard evalExpr M1 100 [("ident", .int 3)] (nm "ident") == .ok (.int 3)
-#guard isTypeError (evalExpr M1 100 [("ident", .int 3)] (.call (nm "ident") #[] Option.none sp))
+#guard evIn M1 100 [("ident", .int 3)] (nm "ident") == .ok (.int 3)
+#guard isTypeError (evIn M1 100 [("ident", .int 3)] (.call (nm "ident") #[] Option.none sp))
 
 /-! ## `Env.set`: replace in place, else append -/
 
-#guard Env.set [] "x" (.int 1) == [("x", .int 1)]
-#guard Env.set [("x", .int 1), ("y", .int 2)] "x" (.int 3) == [("x", .int 3), ("y", .int 2)]
-#guard Env.set [("x", .int 1)] "y" (.int 2) == [("x", .int 1), ("y", .int 2)]
+#guard Env.set ([] : Env) "x" (.int 1) == [("x", .int 1)]
+#guard Env.set ([("x", .int 1), ("y", .int 2)] : Env) "x" (.int 3) == [("x", .int 3), ("y", .int 2)]
+#guard Env.set ([("x", .int 1)] : Env) "y" (.int 2) == [("x", .int 1), ("y", .int 2)]
 
 /-! ## Indexing: negative Python-style, bool index coerces, errors -/
 
@@ -265,18 +287,18 @@ list is returned by construction (pure value semantics), so the CPython
 
 private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Option.none sp
 
-#guard ev (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
-#guard ev (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
+#guard ev (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.listV #[.int 1, .int 3, .int 5])
+#guard ev (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.listV #[.int 1, .int 3, .int 5])
 #guard ev (sortedC #[.list #[iL 7, iL 1, iL 5, iL 3] sp])
-    == .ok (.list #[.int 1, .int 3, .int 5, .int 7])
+    == .ok (.listV #[.int 1, .int 3, .int 5, .int 7])
 #guard ev (sortedC #[.list #[iL 2, iL 2, iL 1, iL 3] sp])
-    == .ok (.list #[.int 1, .int 2, .int 2, .int 3])                      -- duplicates stay
+    == .ok (.listV #[.int 1, .int 2, .int 2, .int 3])                      -- duplicates stay
 #guard ev (sortedC #[.list #[iL (-5), iL 3, iL (-1), iL 0] sp])
-    == .ok (.list #[.int (-5), .int (-1), .int 0, .int 3])                -- negatives
-#guard ev (sortedC #[.list #[iL 42] sp]) == .ok (.list #[.int 42])        -- singleton
-#guard ev (sortedC #[.list #[] sp]) == .ok (.list #[])                    -- empty
+    == .ok (.listV #[.int (-5), .int (-1), .int 0, .int 3])                -- negatives
+#guard ev (sortedC #[.list #[iL 42] sp]) == .ok (.listV #[.int 42])        -- singleton
+#guard ev (sortedC #[.list #[] sp]) == .ok (.listV #[])                    -- empty
 #guard ev (sortedC #[.list #[iL 0, iL 0, iL 0, iL 0] sp])
-    == .ok (.list #[.int 0, .int 0, .int 0, .int 0])                      -- all equal
+    == .ok (.listV #[.int 0, .int 0, .int 0, .int 0])                      -- all equal
 -- Arity (CPython 3.9: "sorted expected 1 argument, got 0/2") and not-iterable:
 #guard ev (sortedC #[]) == .exn (.typeError "sorted expected 1 argument, got 0")
 #guard ev (sortedC #[.list #[iL 1] sp, .list #[iL 2] sp])
@@ -299,16 +321,16 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 -- Argument errors propagate before the sort happens (evaluation order):
 #guard ev (sortedC #[boom]) == .exn .zeroDivisionError
 -- A module-level `def sorted` SHADOWS the builtin (findFunction first):
-#guard evalExpr M2 100 [] (sortedC #[.list #[iL 3, iL 1] sp]) == .ok (.int 99)
+#guard evIn M2 100 [] (sortedC #[.list #[iL 3, iL 1] sp]) == .ok (.int 99)
 -- ... and a local binding shadows both (args still evaluated, then TypeError):
-#guard isTypeError (evalExpr M2 100 [("sorted", .int 3)] (sortedC #[.list #[] sp]))
+#guard isTypeError (evIn M2 100 [("sorted", .int 3)] (sortedC #[.list #[] sp]))
 -- The pure helpers themselves:
 #guard sortInts [5, 1, 3] == [1, 3, 5]
 #guard sortInts [] == []
 #guard insertLe 2 [1, 3] == [1, 2, 3]
 #guard asIntList [.int 1, .int 2] == some [1, 2]
 #guard asIntList [.int 1, .bool true] == Option.none
-#guard sortedVal (.list #[.int 9, .int (-9)]) == .ok (.list #[.int (-9), .int 9])
+#guard sortedVal (.listV #[.int 9, .int (-9)]) == .ok (.listV #[.int (-9), .int 9])
 
 /-! ## Left-to-right, once-only evaluation (observable via error order) -/
 
@@ -317,14 +339,14 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 -- Callee name resolves before arguments are evaluated (CPython order):
 #guard ev (.call (nm "zzz") #[boom] Option.none sp) == .exn (.nameError "zzz")
 -- Arguments are evaluated before the call happens:
-#guard evalExpr M1 100 [] (.call (nm "ident") #[boom] Option.none sp) == .exn .zeroDivisionError
+#guard evIn M1 100 [] (.call (nm "ident") #[boom] Option.none sp) == .exn .zeroDivisionError
 -- List/tuple literals evaluate elements left to right:
-#guard ev (.list #[iL 1, bo (iL 1) .add (iL 1)] sp) == .ok (.list #[.int 1, .int 2])
+#guard ev (.list #[iL 1, bo (iL 1) .add (iL 1)] sp) == .ok (.listV #[.int 1, .int 2])
 #guard ev (.tuple #[boom, nm "zzz"] sp) == .exn .zeroDivisionError
 
 /-! ## Calls: keywords/starargs flag, non-name callee, arity, argsOk -/
 
-#guard isUnsupported (evalExpr M1 100 [] (.call (nm "ident") #[iL 1] (some "keywords") sp))
+#guard isUnsupported (evIn M1 100 [] (.call (nm "ident") #[iL 1] (some "keywords") sp))
 #guard isUnsupported (ev (.call (iL 5) #[] Option.none sp))
 #guard callFunction M1 "ident" #[.int 7] 100 == .ok (.int 7)
 #guard isTypeError (callFunction M1 "ident" #[] 100)               -- arity mismatch
@@ -354,12 +376,12 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 
 /-! ## Timeout / fuel discipline -/
 
-#guard evalExpr M0 0 [] (iL 1) == (.timeout : Res Val)
-#guard execStmt M0 0 [] (.pass sp) == (.timeout : Res (Env × Flow))
-#guard execStmts M0 0 [] [] == (.timeout : Res (Env × Flow))
+#guard evIn M0 0 [] (iL 1) == (.timeout : Res RVal)
+#guard execStmt M0 0 ⟨w0, []⟩ (.pass sp) == (.timeout : Run FrameState RFlow)
+#guard execStmts M0 0 ⟨w0, []⟩ [] == (.timeout : Run FrameState RFlow)
 #guard callFunction M1 "ident" #[.int 1] 0 == (.timeout : Res Val)
 -- Fuel is a depth bound: fuel 2 cannot evaluate a depth-3 expression.
-#guard evalExpr M0 2 [] (bo (bo (iL 1) .add (iL 1)) .add (iL 1)) == .timeout
+#guard evIn M0 2 [] (bo (bo (iL 1) .add (iL 1)) .add (iL 1)) == .timeout
 -- Infinite loop times out with small fuel.
 #guard callFunction M1 "loopForever" #[] 50 == .timeout
 
@@ -382,10 +404,10 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 #guard isUnsupported (run [.assign #[.tuple #[nm "a", nm "b"] sp] (sL "xy") sp])
 #guard isUnsupported (run [.assign #[nm "a", nm "b"] (iL 1) sp])   -- chained a = b = 1
 #guard isUnsupported (run [.assign #[.subscript (nm "xs") (iL 0) sp] (iL 1) sp]
-        (env := [("xs", .list #[.int 0])]))
+        (env := [("xs", .listV #[.int 0])]))
 -- Value is evaluated before the (unsupported) store, CPython error order:
 #guard run [.assign #[.subscript (nm "xs") (iL 0) sp] boom sp]
-        (env := [("xs", .list #[.int 0])]) == .exn .zeroDivisionError
+        (env := [("xs", .listV #[.int 0])]) == .exn .zeroDivisionError
 -- Nested unpacking targets are out of tier:
 #guard isUnsupported (run [.assign #[.tuple #[nm "a", .tuple #[nm "b", nm "c"] sp] sp]
         (.tuple #[iL 1, .tuple #[iL 2, iL 3] sp] sp) sp])
@@ -400,7 +422,7 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 #guard run [.augAssign (nm "x") .add boom sp] (env := [("x", .int 5)])
     == .exn .zeroDivisionError
 #guard isUnsupported (run [.augAssign (.subscript (nm "xs") (iL 0) sp) .add (iL 1) sp]
-        (env := [("xs", .list #[.int 0])]))
+        (env := [("xs", .listV #[.int 0])]))
 
 /-! ## If / truthiness, Expr statements, Pass -/
 
@@ -445,9 +467,9 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 
 /-! ## Unsupported constructs are loud -/
 
-#guard execStmt M0 10 [] (.unsupported "For" "for i in range(3):\n    pass" sp)
+#guard execStmt M0 10 ⟨w0, []⟩ (.unsupported "For" "for i in range(3):\n    pass" sp)
     == .unsupported "unsupported statement 'For'"
-#guard execStmt M0 10 [] (.unsupported "Try" "try: ..." sp)
+#guard execStmt M0 10 ⟨w0, []⟩ (.unsupported "Try" "try: ..." sp)
     == .unsupported "unsupported statement 'Try'"
 #guard ev (.unsupported "Lambda" "lambda x: x" sp) == .unsupported "unsupported expression 'Lambda'"
 #guard ev (.unsupported "Constant:float" "1.5" sp) == .unsupported "unsupported expression 'Constant:float'"

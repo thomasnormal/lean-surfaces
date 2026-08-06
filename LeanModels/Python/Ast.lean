@@ -86,6 +86,8 @@ inductive Expr where
   | list (elts : Array Expr) (span : Span)
   | tuple (elts : Array Expr) (span : Span)
   | subscript (value : Expr) (index : Expr) (span : Span)
+  | dict (keys : Array Expr) (values : Array Expr) (span : Span)
+  | attribute (value : Expr) (attr : String) (span : Span)
   | unsupported (pyKind : String) (text : String) (span : Span)
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Expr`; derived BEq suffices.

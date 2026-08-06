@@ -220,6 +220,28 @@ def convert_expr(node):
             "elts": [convert_expr(e) for e in node.elts],
         }
 
+    if isinstance(node, ast.Dict):
+        # `{k: v, ...}` — structured (H0, docs/memory-model.md). A None key
+        # is `**expansion`; keep the whole node Unsupported then.
+        if any(k is None for k in node.keys):
+            return unsupported(node, "Dict:unpack")
+        return {
+            "kind": "Dict",
+            "span": span(node),
+            "keys": [convert_expr(k) for k in node.keys],
+            "values": [convert_expr(v) for v in node.values],
+        }
+
+    if isinstance(node, ast.Attribute):
+        # `obj.attr` — structured (H0). Store/Del contexts arrive through
+        # Assign/Delete targets; representation is context-free here.
+        return {
+            "kind": "Attribute",
+            "span": span(node),
+            "value": convert_expr(node.value),
+            "attr": node.attr,
+        }
+
     if isinstance(node, ast.Subscript):
         # CPython >= 3.9: `slice` is the index expr itself when it is a plain
         # expression; Slice (and pre-3.9 ExtSlice/Index) => whole node Unsupported.

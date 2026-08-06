@@ -153,6 +153,12 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .list (← (← (← getField j "elts").getArr?).mapM parseExpr) span
     | "Tuple" =>
         return .tuple (← (← (← getField j "elts").getArr?).mapM parseExpr) span
+    | "Dict" =>
+        return .dict (← (← (← getField j "keys").getArr?).mapM parseExpr)
+          (← (← (← getField j "values").getArr?).mapM parseExpr) span
+    | "Attribute" =>
+        return .attribute (← parseExpr (← getField j "value"))
+          (← (← getField j "attr").getStr?) span
     | "Subscript" =>
         let value ← parseExpr (← getField j "value")
         let index ← parseExpr (← getField j "index")

@@ -338,5 +338,37 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(kinds, ["Assign", "Assign", "FunctionDef"])
 
 
+    # -- Dict / Attribute representation (H0, docs/memory-model.md) --------
+
+    def test_dict_literal_is_structured(self):
+        e = self._first_return_expr(
+            "def f():\n    return {\"P\": 100, \"N\": 280}\n")
+        self.assertEqual(e["kind"], "Dict")
+        self.assertEqual(len(e["keys"]), 2)
+        self.assertEqual(len(e["values"]), 2)
+        self.assertEqual(e["keys"][0]["kind"], "Constant")
+
+    def test_dict_unpack_stays_unsupported(self):
+        e = self._first_return_expr(
+            "def f(d):\n    return {\"a\": 1, **d}\n")
+        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["py_kind"], "Dict:unpack")
+
+    def test_attribute_load_is_structured(self):
+        e = self._first_return_expr(
+            "def f(pos):\n    return pos.score\n")
+        self.assertEqual(e["kind"], "Attribute")
+        self.assertEqual(e["attr"], "score")
+        self.assertEqual(e["value"]["kind"], "Name")
+
+    def test_attribute_call_is_structured(self):
+        # `d.get(k)` — a Call whose callee is an Attribute node.
+        e = self._first_return_expr(
+            "def f(d, k):\n    return d.get(k)\n")
+        self.assertEqual(e["kind"], "Call")
+        self.assertEqual(e["func"]["kind"], "Attribute")
+        self.assertEqual(e["func"]["attr"], "get")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -200,6 +200,8 @@ theorem fuelMono (fuel : Nat) :
           simp only [evalExpr]
           exact Res.le_bind (ihE m env v k hk) fun c =>
             Res.le_bind (ihE m env idx k hk) fun i => Res.le_refl _
+        | dict keys values _ => simp only [evalExpr]; exact Res.le_refl _
+        | «attribute» value attr _ => simp only [evalExpr]; exact Res.le_refl _
         | unsupported pyKind text _ => simp only [evalExpr]; exact Res.le_refl _
     -- evalExprs
     · intro m env es fuel' hf

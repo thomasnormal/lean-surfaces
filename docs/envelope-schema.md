@@ -74,6 +74,8 @@ never fails on syntactically valid Python).
 | `Call` | `func`: expr, `args`: [expr…], `call_unsupported`: str \| null (set when keywords/starargs present) |
 | `List` / `Tuple` | `elts`: [expr…] |
 | `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; `Slice`/`ExtSlice` nodes → whole Subscript becomes `Unsupported`) |
+| `Dict` | `keys`: [expr…], `values`: [expr…] (same length; `{**d}` expansion keeps the whole node `Unsupported` with `py_kind` `"Dict:unpack"`). Structured for the heap layer (H0, docs/memory-model.md); the value-tier interpreter refuses it loudly until H1 |
+| `Attribute` | `value`: expr, `attr`: str. Structured (H0); refused loudly until the heap/class stages |
 | `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |
 
 Operator names are CPython's class names verbatim (`Mult` not `Mul`, `LtE` not `Le`).

@@ -102,6 +102,8 @@ def Expr.kindName : Expr → String
   | .list .. => "List"
   | .tuple .. => "Tuple"
   | .subscript .. => "Subscript"
+  | .dict .. => "Dict"
+  | .attribute .. => "Attribute"
   | .unsupported pyKind _ _ => pyKind
 
 /-- Python truthiness `bool(x)`: `None` → false; `bool` → itself;
@@ -773,6 +775,10 @@ def evalExpr (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res Val :=
         let c ← evalExpr m fuel env v
         let i ← evalExpr m fuel env idx
         indexVal c i
+    | .dict .. =>
+      .unsupported "dict literals are outside the value tier (heap layer H1, docs/memory-model.md)"
+    | .attribute .. =>
+      .unsupported "attribute access is outside the value tier (heap layer H1/H3, docs/memory-model.md)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/

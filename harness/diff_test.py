@@ -64,6 +64,36 @@ def to_canonical_value(v):
     raise Unmappable(type(v).__name__)
 
 
+def from_typed(a):
+    """A cases.json argument: a plain int, or a canonical typed value
+    ({"t": ..., "v": ...} — the runner's own encoding) for
+    list/tuple/str/bool/None arguments. Returns the Python value."""
+    if not isinstance(a, dict):
+        return a
+    t = a.get("t")
+    if t == "none":
+        return None
+    if t == "bool":
+        return bool(a["v"])
+    if t == "int":
+        return int(a["v"])
+    if t == "str":
+        return a["v"]
+    if t == "list":
+        return [from_typed(x) for x in a["v"]]
+    if t == "tuple":
+        return tuple(from_typed(x) for x in a["v"])
+    raise ValueError("bad typed argument: %r" % (a,))
+
+
+def lean_arg(a):
+    """CLI form of a cases.json argument: ints stay integer literals,
+    typed values ride as compact JSON."""
+    if isinstance(a, dict):
+        return json.dumps(a, separators=(",", ":"))
+    return str(a)
+
+
 def load_module(path):
     """Import a Python source file by path (fresh, not via sys.path)."""
     name = "diffcase_" + os.path.splitext(os.path.basename(path))[0]
@@ -81,7 +111,7 @@ def run_cpython(mod, fname, args):
     if fn is None:
         return {"status": "harness-error", "msg": "no function %r" % fname}
     try:
-        v = fn(*args)
+        v = fn(*[from_typed(a) for a in args])
     except Exception as e:  # runtime errors are data, not harness failures
         name = type(e).__name__
         # UnboundLocalError is a NameError subclass; the interpreter reports
@@ -97,7 +127,7 @@ def run_cpython(mod, fname, args):
 
 def run_lean(runner_cmd, json_path, fname, args, fuel):
     """Run the Lean runner; parse its single canonical stdout line."""
-    cmd = list(runner_cmd) + [json_path, fname] + [str(a) for a in args]
+    cmd = list(runner_cmd) + [json_path, fname] + [lean_arg(a) for a in args]
     if fuel is not None:
         cmd += ["--fuel", str(fuel)]
     proc = subprocess.run(
@@ -215,7 +245,8 @@ def main(argv=None):
                 else:
                     verdict = "MISMATCH"
                     failures += 1
-            call = "%s(%s)" % (fname, ", ".join(str(a) for a in args))
+            call = "%s(%s)" % (fname,
+                               ", ".join(repr(from_typed(a)) for a in args))
             rows.append((call, pretty(cpy), pretty(lean), verdict))
 
     widths = [

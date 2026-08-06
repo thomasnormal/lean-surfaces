@@ -75,6 +75,6 @@ automate); the two while-loop walker gaps reproduced in
 `Examples/python/sf_bound_loop/proof.lean.blocked-by-py_vcgen-gaps`
 (builtin lookup stuck behind the symbolic env tail; symbolic-subscript
 range guards needing arithmetic discharge); `arrVal_getElem`-family
-lemmas still example-local (F-6); `leanmodels-run` parses only int CLI
-args, so list/tree-argument functions have no differential rows — JSON
-args would close the gap.
+lemmas still example-local (F-6); (the former int-only CLI gap is CLOSED:
+`leanmodels-run` accepts canonical typed JSON arguments and the sf list
+and tree functions carry differential rows).

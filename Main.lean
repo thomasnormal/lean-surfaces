@@ -8,8 +8,12 @@ import LeanModels.Python.Semantics
 
 Loads the standardized envelope JSON at **runtime** (via the `Json.lean`
 parser), calls `callFunction` on the named module-level function with the
-given integer arguments (default fuel 10000), and prints exactly ONE line of
-canonical JSON to stdout (DESIGN.md "Runner + differential harness"):
+given arguments (default fuel 10000), and prints exactly ONE line of
+canonical JSON to stdout (DESIGN.md "Runner + differential harness").
+Each argument is either an (arbitrary-precision) integer literal or a
+canonical typed JSON value — the same `{"t":…,"v":…}` encoding the runner
+prints — so list/tuple/str/bool/None arguments (sunfish's score lists and
+game trees) get real differential rows:
 
 * `{"status":"ok","value":V}`
 * `{"status":"exn","exn":"ZeroDivisionError"}` (canonical `PyErr` names)
@@ -57,6 +61,32 @@ def resJson : Res Val → String
   | .timeout => "{\"status\":\"timeout\"}"
   | .unsupported msg => "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg ++ "}"
 
+/-- Decode a canonical typed JSON value — the inverse of `valJson`
+(same encoding, DESIGN.md). `partial` like `valJson`: runtime-only. -/
+partial def valOfJson (j : Lean.Json) : Except String Val := do
+  let t ← (j.getObjVal? "t").mapError (fun _ => s!"missing \"t\": {j.compress}")
+  let tstr ← t.getStr?.mapError (fun _ => s!"\"t\" must be a string: {j.compress}")
+  match tstr with
+  | "none" => return .none
+  | "bool" => return .bool (← (← j.getObjVal? "v").getBool?)
+  | "int" =>
+    let v ← j.getObjVal? "v"
+    match v.getStr? with
+    | .ok s =>
+      match s.toInt? with
+      | some n => return .int n
+      | Option.none => throw s!"\"int\" value is not a decimal string: {s}"
+    | .error _ =>  -- accept a plain JSON number too (harness convenience)
+      return .int (← v.getInt?)
+  | "str" => return .str (← (← j.getObjVal? "v").getStr?)
+  | "list" =>
+    let elts ← (← j.getObjVal? "v").getArr?
+    return .list (← elts.mapM valOfJson)
+  | "tuple" =>
+    let elts ← (← j.getObjVal? "v").getArr?
+    return .tuple (← elts.mapM valOfJson)
+  | other => throw s!"unknown value tag {other.quote}"
+
 /-- Parsed command line. -/
 structure Cli where
   path : String
@@ -66,7 +96,8 @@ structure Cli where
 
 def usage : String :=
   "usage: leanmodels-run <envelope.json> <function> [args...] [--fuel N]\n" ++
-  "  args are parsed as (arbitrary-precision) integers; default fuel 10000"
+  "  args: integer literals or canonical typed JSON values " ++
+  "({\"t\":\"list\",\"v\":[…]} — the encoding the runner prints); default fuel 10000"
 
 /-- Split `--fuel N` off the argument list (anywhere; last wins), keeping the
 positional arguments in order. -/
@@ -92,7 +123,11 @@ def parseCli (argv : List String) : Except String Cli := do
       let args ← argStrs.mapM fun a =>
         match a.toInt? with
         | some n => .ok (Val.int n)
-        | Option.none => .error s!"arguments must be integers, got '{a}'"
+        | Option.none =>
+          match Lean.Json.parse a with
+          | .ok j => valOfJson j
+          | .error _ =>
+            .error s!"arguments must be integers or canonical typed JSON values, got '{a}'"
       return { path, fname, args := args.toArray, fuel := fuel?.getD 10000 }
   | _ => .error "expected <envelope.json> <function>"
 

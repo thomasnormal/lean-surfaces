@@ -16,10 +16,10 @@ G1 module constant `-MATE_UPPER`, the `for` loop, and `max()` are all the
 real interpreter's semantics; the sole transliteration vs the shipped
 loop is the generator `moves()` precomputed as the children list.
 
-Non-vacuity gap (recorded per AGENTS.md): `harness/cases.json` rows are
-inexpressible — trees are nested tuples, `leanmodels-run` parses ints
-only. Fallback: the runs below were cross-checked against CPython by
-executing sf_bound_tree.py directly (2026-08-06).
+Differential rows: harness/cases.json carries typed-JSON argument
+rows for this function (leanmodels-run accepts the canonical
+{"t":…,"v":…} encoding for list/tuple arguments); the runs below
+are additionally checked at elaboration time.
 -/
 import Examples.python.sf_bound_tree.proof
 

@@ -17,10 +17,10 @@ The SOLE remaining transliteration between this and the shipped
 `Searcher.bound` loop is precomputing the generator `moves()` into the
 list `scores` (generators are the last ladder step).
 
-Non-vacuity gap (recorded per AGENTS.md): `harness/cases.json` rows are
-inexpressible — `leanmodels-run` parses CLI args as ints only and
-`scores` is a list. Fallback: the runs below were cross-checked against
-CPython by executing sf_bound_for.py directly (2026-08-06).
+Differential rows: harness/cases.json carries typed-JSON argument
+rows for this function (leanmodels-run accepts the canonical
+{"t":…,"v":…} encoding for list/tuple arguments); the runs below
+are additionally checked at elaboration time.
 -/
 import Examples.python.sf_bound_for.proof
 

@@ -39,7 +39,7 @@ theorem tri_total (n : PyInt) (hn : 0 ≤ n) : tri(n) ==> n * (n + 1) / 2 := by
 fuel. -/
 theorem tri_neg_total (n : PyInt) (hn : n < 0) : tri(n) ==> (0 : Int) := by
   have h0 : ¬ ((0 : Int) ≤ n) := by have hn' : (0 : Int) > n := hn; omega
-  exact CallsTo.intro 8 (by py_simp [callFunction, execWhile, tri, h0])
+  exact CallsTo.intro 8 (by py_simp [callFunction, callIn, execWhile, tri, h0])
 
 /-- Determinism corollary of `tri_total` — one `py_corollary`
 (Surface.lean). -/

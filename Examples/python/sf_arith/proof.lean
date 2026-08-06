@@ -31,6 +31,6 @@ theorem lmr_spec (d i v : PyInt) :
       (if 4 ≤ d ∧ 8 ≤ i ∧ v < 0 then (1 : Int) else 0) := by
   refine ⟨32, ?_⟩
   by_cases h1 : 4 ≤ d <;> by_cases h2 : 8 ≤ i <;> by_cases h3 : v < 0 <;>
-    py_simp [callFunction, sf_arith, h1, h2, h3] <;> grind
+    py_simp [callFunction, callIn, sf_arith, h1, h2, h3] <;> grind
 
 end Examples.python.sf_arith.proof

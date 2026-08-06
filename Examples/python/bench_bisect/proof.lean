@@ -28,6 +28,10 @@ open LeanModels LeanModels.Python
 
 load_program bench_bisect from "Examples/python/bench_bisect/bench_bisect.json"
 
+/-- The pinned world of the stage-1 geometry (`initWorld` unfolded — what
+`py_simp` presents at every state; docs/memory-model.md). -/
+def pw : World := ⟨#[], []⟩
+
 /-! # Part 1 — `bisect_left` (cold prover 0, adapted) -/
 
 namespace BL
@@ -42,17 +46,18 @@ abbrev SB := Int × Int × Option Int
 
 def midEnv : Option Int → Env
   | Option.none => []
-  | some mv => [("mid", Val.int mv)]
+  | some mv => [("mid", RVal.int mv)]
 
 def toEnvB (xs : List Int) (x : Int) : SB → Env
   | (lo, hi, om) =>
-    ("a", ToVal.toVal xs) :: ("x", Val.int x) :: ("lo", Val.int lo) ::
-      ("hi", Val.int hi) :: midEnv om
+    ("a", RVal.listV ((List.map (RVal.thaw ∘ ToVal.toVal) xs).toArray)) ::
+      ("x", RVal.int x) :: ("lo", RVal.int lo) ::
+      ("hi", RVal.int hi) :: midEnv om
 
 def ContB : SB → Bool
   | (lo, hi, _) => decide (lo < hi)
 
-def tvB (s : SB) : Val := .bool (ContB s)
+def tvB (s : SB) : RVal := .bool (ContB s)
 
 def stepB (xs : List Int) (x : Int) : SB → SB
   | (lo, hi, _) =>
@@ -148,17 +153,18 @@ theorem takeWhile_le_length_eq {x : Int} :
         exact h1 (by simpa using hcontra)
       simp [ha, hrec]
 
-/-- `Array.getD` on the marshalled list, at an in-range index. -/
+/-- `Array.getD` on the thawed marshalled list, at an in-range index. -/
 theorem arr_getD (xs : List Int) (n : Nat) (h : n < xs.length) :
-    (List.map (ToVal.toVal (α := Int)) xs).toArray.getD n Val.none
-      = Val.int (xs.getD n 0) := by
-  have hbound : n < (List.map (ToVal.toVal (α := Int)) xs).toArray.size := by
+    (List.map (RVal.thaw ∘ ToVal.toVal (α := Int)) xs).toArray.getD n RVal.none
+      = RVal.int (xs.getD n 0) := by
+  have hbound : n < (List.map (RVal.thaw ∘ ToVal.toVal (α := Int)) xs).toArray.size := by
     simpa using h
   rw [Array.getD, dif_pos hbound]
-  show ((List.map (ToVal.toVal (α := Int)) xs).toArray)[n]'hbound
-      = Val.int (xs.getD n 0)
-  rw [List.getElem_toArray, List.getElem_map, toVal_int,
-    List.getElem_eq_getD (fallback := (0 : Int))]
+  show ((List.map (RVal.thaw ∘ ToVal.toVal (α := Int)) xs).toArray)[n]'hbound
+      = RVal.int (xs.getD n 0)
+  rw [List.getElem_toArray, List.getElem_map]
+  show RVal.thaw (ToVal.toVal xs[n]) = _
+  rw [thaw_toVal_int, List.getElem_eq_getD (fallback := (0 : Int))]
 
 /-! ## The loop's AST (transcribed from the loaded envelope; the `#guard`
 below checks the transcription against the loaded module by kernel
@@ -195,22 +201,23 @@ this while loop. -/
 /-! ## The five obligations of `execWhile_total_of_invariant` -/
 
 theorem htvB (xs : List Int) (x : Int) :
-    ∀ s : SB, InvB xs x s → truthy (tvB s) = ContB s :=
+    ∀ s : SB, InvB xs x s → truthy (tvB s) = .ok (ContB s) :=
   fun _ _ => rfl
 
 theorem htestB (xs : List Int) (x : Int) :
     ∀ s : SB, InvB xs x s →
       ∃ f₀, ∀ F, f₀ ≤ F →
-        evalExpr bench_bisect F (toEnvB xs x s) blTest = .ok (tvB s) := by
+        evalExpr bench_bisect F ⟨pw, toEnvB xs x s⟩ blTest
+          = .ok ⟨pw, toEnvB xs x s⟩ (tvB s) := by
   rintro ⟨lo, hi, om⟩ -
   rcases om with _ | mv <;>
-    py_threshold 8 [blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
+    py_threshold 8 [pw, blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
 
 theorem hbodyB (xs : List Int) (x : Int) :
     ∀ s : SB, InvB xs x s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →
-        execStmts bench_bisect F (toEnvB xs x s) blBody
-          = .ok (toEnvB xs x (stepB xs x s), .next) := by
+        execStmts bench_bisect F ⟨pw, toEnvB xs x s⟩ blBody
+          = .ok ⟨pw, toEnvB xs x (stepB xs x s)⟩ .next := by
   rintro ⟨lo, hi, om⟩ hInv hc
   obtain ⟨h0, hlh, hhl, hlow, hhigh⟩ : MIB xs x lo hi := hInv
   have hlt : lo < hi := by simpa [ContB] using hc
@@ -223,8 +230,8 @@ theorem hbodyB (xs : List Int) (x : Int) :
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
   by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x <;>
     rcases om with _ | mv <;>
-      py_threshold 32 [blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
-      exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
+      (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
 
 theorem hinvB (xs : List Int) (x : Int) (hs : List.Pairwise (· ≤ ·) xs) :
     ∀ s : SB, InvB xs x s → ContB s = true → InvB xs x (stepB xs x s) := by
@@ -283,7 +290,7 @@ theorem bisect_left_core (xs : List Int) (x : Int)
       (∀ j : Nat, (j : Int) < i → xs.getD j 0 < x) ∧
       (∀ j : Nat, i ≤ (j : Int) → j < xs.length → x ≤ xs.getD j 0) := by
   obtain ⟨⟨lo', hi', om'⟩, hInv', hcont', hex⟩ :=
-    execWhile_total_of_invariant bench_bisect blTest blBody (toEnvB xs x)
+    execWhile_total_of_invariant bench_bisect blTest blBody pw (toEnvB xs x)
       (InvB xs x) ContB (stepB xs x) μB tvB (htestB xs x) (htvB xs x)
       (hbodyB xs x) (hinvB xs x hs) (hdecB xs x)
       ((0 : Int), (xs.length : Int), (Option.none : Option Int)) (hinitB xs x)
@@ -293,9 +300,9 @@ theorem bisect_left_core (xs : List Int) (x : Int)
     fun j hj hjl => hhigh' j (by omega) hjl⟩
   obtain ⟨f₀, hloopT⟩ := execWhile_at_least hex
   rcases om' with _ | mv <;>
-    (simp only [bench_bisect, blTest, blBody, toEnvB, midEnv, toVal_list] at hloopT
+    (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, bench_bisect]
+     py_simp [callFunction, callIn, bench_bisect]
      simp (disch := omega) only [hloopT]
      py_simp []
      all_goals omega)
@@ -309,22 +316,23 @@ def InvT (xs : List Int) : SB → Prop
   | (lo, hi, _) => MIT xs lo hi
 
 theorem htvT (xs : List Int) :
-    ∀ s : SB, InvT xs s → truthy (tvB s) = ContB s :=
+    ∀ s : SB, InvT xs s → truthy (tvB s) = .ok (ContB s) :=
   fun _ _ => rfl
 
 theorem htestT (xs : List Int) (x : Int) :
     ∀ s : SB, InvT xs s →
       ∃ f₀, ∀ F, f₀ ≤ F →
-        evalExpr bench_bisect F (toEnvB xs x s) blTest = .ok (tvB s) := by
+        evalExpr bench_bisect F ⟨pw, toEnvB xs x s⟩ blTest
+          = .ok ⟨pw, toEnvB xs x s⟩ (tvB s) := by
   rintro ⟨lo, hi, om⟩ -
   rcases om with _ | mv <;>
-    py_threshold 8 [blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
+    py_threshold 8 [pw, blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
 
 theorem hbodyT (xs : List Int) (x : Int) :
     ∀ s : SB, InvT xs s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →
-        execStmts bench_bisect F (toEnvB xs x s) blBody
-          = .ok (toEnvB xs x (stepB xs x s), .next) := by
+        execStmts bench_bisect F ⟨pw, toEnvB xs x s⟩ blBody
+          = .ok ⟨pw, toEnvB xs x (stepB xs x s)⟩ .next := by
   rintro ⟨lo, hi, om⟩ hInv hc
   obtain ⟨h0, hlh, hhl⟩ : MIT xs lo hi := hInv
   have hlt : lo < hi := by simpa [ContB] using hc
@@ -337,8 +345,8 @@ theorem hbodyT (xs : List Int) (x : Int) :
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
   by_cases hbr : xs.getD (Int.fdiv (lo + hi) 2).toNat 0 < x <;>
     rcases om with _ | mv <;>
-      py_threshold 32 [blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
-      exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩
+      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr] <;>
+      (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
 
 theorem hinvT (xs : List Int) (x : Int) :
     ∀ s : SB, InvT xs s → ContB s = true → InvT xs (stepB xs x s) := by
@@ -381,7 +389,7 @@ theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
     ∃ i : PyInt, bench_bisect.bisect_left(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) := by
   obtain ⟨⟨lo', hi', om'⟩, hInv', hcont', hex⟩ :=
-    execWhile_total_of_invariant bench_bisect blTest blBody (toEnvB xs x)
+    execWhile_total_of_invariant bench_bisect blTest blBody pw (toEnvB xs x)
       (InvT xs) ContB (stepB xs x) μB tvB (htestT xs x) (htvT xs)
       (hbodyT xs x) (hinvT xs x) (hdecT xs x)
       ((0 : Int), (xs.length : Int), (Option.none : Option Int)) (hinitT xs)
@@ -389,9 +397,9 @@ theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
   refine ⟨lo', ?_, h0', Int.le_trans hlh' hhl'⟩
   obtain ⟨f₀, hloopT⟩ := execWhile_at_least hex
   rcases om' with _ | mv <;>
-    (simp only [bench_bisect, blTest, blBody, toEnvB, midEnv, toVal_list] at hloopT
+    (simp only [pw, bench_bisect, blTest, blBody, toEnvB, midEnv] at hloopT
      refine ⟨f₀ + 64, ?_⟩
-     py_simp [callFunction, bench_bisect]
+     py_simp [callFunction, callIn, bench_bisect]
      simp (disch := omega) only [hloopT]
      py_simp []
      all_goals omega)
@@ -453,7 +461,8 @@ theorem getD_eq_getElem (a : List Int) (n : Nat) (h : n < a.length) : a.getD n 0
   rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]; rfl
 
 theorem arrVal_getElem (a : List Int) (n : Nat) (h : n < a.length) :
-    (Option.map ToVal.toVal a[n]?).getD Val.none = Val.int (a.getD n 0) := by
+    (Option.map (RVal.thaw ∘ ToVal.toVal) a[n]?).getD RVal.none
+      = RVal.int (a.getD n 0) := by
   rw [List.getElem?_eq_getElem h, getD_eq_getElem a n h]
   rfl
 
@@ -484,11 +493,13 @@ def InvT (p : State) : Prop :=
 
 def toEnv (p : State) : Env :=
   if p.2.2.2 then
-    [("a", Val.list (List.map ToVal.toVal a).toArray), ("x", Val.int x),
-     ("lo", Val.int p.1), ("hi", Val.int p.2.1), ("mid", Val.int p.2.2.1)]
+    [("a", RVal.listV (List.map (RVal.thaw ∘ ToVal.toVal) a).toArray),
+     ("x", RVal.int x),
+     ("lo", RVal.int p.1), ("hi", RVal.int p.2.1), ("mid", RVal.int p.2.2.1)]
   else
-    [("a", Val.list (List.map ToVal.toVal a).toArray), ("x", Val.int x),
-     ("lo", Val.int p.1), ("hi", Val.int p.2.1)]
+    [("a", RVal.listV (List.map (RVal.thaw ∘ ToVal.toVal) a).toArray),
+     ("x", RVal.int x),
+     ("lo", RVal.int p.1), ("hi", RVal.int p.2.1)]
 
 def Cont (p : State) : Bool := decide (p.1 < p.2.1)
 
@@ -499,7 +510,7 @@ def step (p : State) : State :=
 
 def mu (p : State) : Nat := (p.2.1 - p.1).toNat
 
-def tv (p : State) : Val := Val.bool (decide (p.1 < p.2.1))
+def tv (p : State) : RVal := RVal.bool (decide (p.1 < p.2.1))
 
 end BR
 
@@ -520,25 +531,29 @@ def BR.whileStmt : Stmt := (bench_bisect.functions[0]!).body[3]!
 /-- Specialization of the generic while rule to `bisect_right`'s loop state. -/
 theorem BR.loop_lemma (a : List Int) (x : Int) (test : Expr) (body : List Stmt)
     (htest : ∀ p, BR.Inv a x p → ∃ f0, ∀ F, f0 ≤ F →
-      evalExpr bench_bisect F (BR.toEnv a x p) test = .ok (BR.tv p))
-    (htv : ∀ p, BR.Inv a x p → truthy (BR.tv p) = BR.Cont p)
+      evalExpr bench_bisect F ⟨pw, BR.toEnv a x p⟩ test
+        = .ok ⟨pw, BR.toEnv a x p⟩ (BR.tv p))
+    (htv : ∀ p, BR.Inv a x p → truthy (BR.tv p) = .ok (BR.Cont p))
     (hbody : ∀ p, BR.Inv a x p → BR.Cont p = true → ∃ f0, ∀ F, f0 ≤ F →
-      execStmts bench_bisect F (BR.toEnv a x p) body = .ok (BR.toEnv a x (BR.step a x p), .next))
+      execStmts bench_bisect F ⟨pw, BR.toEnv a x p⟩ body
+        = .ok ⟨pw, BR.toEnv a x (BR.step a x p)⟩ .next)
     (hinv : ∀ p, BR.Inv a x p → BR.Cont p = true → BR.Inv a x (BR.step a x p))
     (hdec : ∀ p, BR.Inv a x p → BR.Cont p = true → BR.mu (BR.step a x p) < BR.mu p) :
     ∀ p, BR.Inv a x p → ∃ p', BR.Inv a x p' ∧ BR.Cont p' = false ∧
-      ∃ F, execWhile bench_bisect F (BR.toEnv a x p) test body [] = .ok (BR.toEnv a x p', .next) :=
-  execWhile_total_of_invariant bench_bisect test body (BR.toEnv a x) (BR.Inv a x) BR.Cont
+      ∃ F, execWhile bench_bisect F ⟨pw, BR.toEnv a x p⟩ test body []
+        = .ok ⟨pw, BR.toEnv a x p'⟩ .next :=
+  execWhile_total_of_invariant bench_bisect test body pw (BR.toEnv a x) (BR.Inv a x) BR.Cont
     (BR.step a x) BR.mu BR.tv htest htv hbody hinv hdec
 
 theorem BR.htv_pf (a : List Int) (x : Int) :
-    ∀ p, BR.Inv a x p → truthy (BR.tv p) = BR.Cont p := by
+    ∀ p, BR.Inv a x p → truthy (BR.tv p) = .ok (BR.Cont p) := by
   intro p _; simp [BR.tv, BR.Cont, truthy]
 
 set_option linter.unusedSimpArgs false in
 theorem BR.htest_pf (a : List Int) (x : Int) :
     ∀ p, BR.Inv a x p → ∃ f0, ∀ F, f0 ≤ F →
-      evalExpr bench_bisect F (BR.toEnv a x p) BR.testE = .ok (BR.tv p) := by
+      evalExpr bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.testE
+        = .ok ⟨pw, BR.toEnv a x p⟩ (BR.tv p) := by
   intro p _
   unfold BR.testE BR.whileStmt
   refine ⟨32, ?_⟩
@@ -547,7 +562,7 @@ theorem BR.htest_pf (a : List Int) (x : Int) :
   rw [Nat.add_comm]
   unfold BR.toEnv BR.tv
   by_cases hgrown : p.2.2.2 <;> simp only [hgrown, if_true, if_false] <;>
-    py_simp [bench_bisect, ite_ok_bool]
+    py_simp [pw, bench_bisect, ite_ok_bool]
 
 theorem BR.hdec_pf (a : List Int) (x : Int) :
     ∀ p, BR.Inv a x p → BR.Cont p = true → BR.mu (BR.step a x p) < BR.mu p := by
@@ -623,7 +638,8 @@ theorem BR.hinv_pf (a : List Int) (x : Int) (hsorted : a.Pairwise (· ≤ ·)) :
 set_option linter.unusedSimpArgs false in
 theorem BR.hbody_pf (a : List Int) (x : Int) :
     ∀ p : BR.State, BR.Inv a x p → BR.Cont p = true → ∃ f0, ∀ F, f0 ≤ F →
-      execStmts bench_bisect F (BR.toEnv a x p) BR.bodyE = .ok (BR.toEnv a x (BR.step a x p), .next) := by
+      execStmts bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.bodyE
+        = .ok ⟨pw, BR.toEnv a x (BR.step a x p)⟩ .next := by
   rintro ⟨lo, hi, _mid, grown⟩ hinv hcont
   obtain ⟨h1, h2, h3, h4, h5⟩ := hinv
   dsimp only at h1 h2 h3 h4 h5 ⊢
@@ -648,7 +664,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -657,7 +673,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
     · have hltE : x < a[((lo + hi) / 2).toNat] := by
@@ -667,7 +683,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -676,7 +692,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
 /-! ### Bounds-only obligations (termination without sortedness) -/
@@ -684,7 +700,8 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
 set_option linter.unusedSimpArgs false in
 theorem BR.htestT_pf (a : List Int) (x : Int) :
     ∀ p, BR.InvT a p → ∃ f0, ∀ F, f0 ≤ F →
-      evalExpr bench_bisect F (BR.toEnv a x p) BR.testE = .ok (BR.tv p) := by
+      evalExpr bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.testE
+        = .ok ⟨pw, BR.toEnv a x p⟩ (BR.tv p) := by
   intro p _
   unfold BR.testE BR.whileStmt
   refine ⟨32, ?_⟩
@@ -693,16 +710,17 @@ theorem BR.htestT_pf (a : List Int) (x : Int) :
   rw [Nat.add_comm]
   unfold BR.toEnv BR.tv
   by_cases hgrown : p.2.2.2 <;> simp only [hgrown, if_true, if_false] <;>
-    py_simp [bench_bisect, ite_ok_bool]
+    py_simp [pw, bench_bisect, ite_ok_bool]
 
 theorem BR.htvT_pf (a : List Int) :
-    ∀ p, BR.InvT a p → truthy (BR.tv p) = BR.Cont p := by
+    ∀ p, BR.InvT a p → truthy (BR.tv p) = .ok (BR.Cont p) := by
   intro p _; simp [BR.tv, BR.Cont, truthy]
 
 set_option linter.unusedSimpArgs false in
 theorem BR.hbodyT_pf (a : List Int) (x : Int) :
     ∀ p : BR.State, BR.InvT a p → BR.Cont p = true → ∃ f0, ∀ F, f0 ≤ F →
-      execStmts bench_bisect F (BR.toEnv a x p) BR.bodyE = .ok (BR.toEnv a x (BR.step a x p), .next) := by
+      execStmts bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.bodyE
+        = .ok ⟨pw, BR.toEnv a x (BR.step a x p)⟩ .next := by
   rintro ⟨lo, hi, _mid, grown⟩ hinv hcont
   obtain ⟨h1, h2, h3⟩ := hinv
   dsimp only at h1 h2 h3 ⊢
@@ -727,7 +745,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -736,7 +754,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
     · have hltE : x < a[((lo + hi) / 2).toNat] := by
@@ -746,7 +764,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
         rw [← getD_eq_getElem a _ hmidNat]; exact hlt
@@ -755,7 +773,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
 theorem BR.hinvT_pf (a : List Int) (x : Int) :
@@ -811,7 +829,7 @@ private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise
     simp only [BR.Cont, decide_eq_false_iff_not] at hCont'
     omega
   obtain ⟨fl, hthresh⟩ := execWhile_at_least ⟨Fl, hex⟩
-  unfold BR.testE BR.bodyE BR.whileStmt BR.toEnv bench_bisect at hthresh
+  unfold pw BR.testE BR.bodyE BR.whileStmt BR.toEnv bench_bisect at hthresh
   simp at hthresh
   refine ⟨p'.1, ?_, by omega, by omega, fun j hj0 hjlt => h4 j hj0 hjlt, fun j hj0 hjlt => ?_⟩
   · py_begin [bench_bisect]
@@ -827,14 +845,14 @@ private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise
 private theorem bisect_right_terminates_core (a : List Int) (x : Int) :
     ∃ i : Int, bench_bisect.bisect_right(a, x) ==> i ∧
       0 ≤ i ∧ i ≤ (a.length : Int) := by
-  have key := execWhile_total_of_invariant bench_bisect BR.testE BR.bodyE (BR.toEnv a x)
+  have key := execWhile_total_of_invariant bench_bisect BR.testE BR.bodyE pw (BR.toEnv a x)
     (BR.InvT a) BR.Cont (BR.step a x) BR.mu BR.tv
     (BR.htestT_pf a x) (BR.htvT_pf a) (BR.hbodyT_pf a x) (BR.hinvT_pf a x) (BR.hdecT_pf a x)
     (0, (a.length:Int), 0, false) (BR.hinitT_pf a)
   obtain ⟨p', hInv', _hCont', Fl, hex⟩ := key
   obtain ⟨h1, h2, h3⟩ := hInv'
   obtain ⟨fl, hthresh⟩ := execWhile_at_least ⟨Fl, hex⟩
-  unfold BR.testE BR.bodyE BR.whileStmt BR.toEnv bench_bisect at hthresh
+  unfold pw BR.testE BR.bodyE BR.whileStmt BR.toEnv bench_bisect at hthresh
   simp at hthresh
   refine ⟨p'.1, ?_, by omega, by omega⟩
   py_begin [bench_bisect]

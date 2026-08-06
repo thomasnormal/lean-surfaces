@@ -143,6 +143,18 @@ prefix decided with some intermediate state and value. -/
     x.bind f = .ok s b ↔ ∃ s' a, x = .ok s' a ∧ f s' a = .ok s b := by
   cases x <;> simp [bind] <;> grind
 
+/-- Collapse the two-binder witness nest `bind_eq_ok` + `Run.ok.injEq`
+leave behind: with ONE bound variable the core `exists_eq_left'` family
+collapses `∃ a, A = a ∧ p a`, but the paired shape's leading `S = s`
+conjunct blocks it under the inner binder — this is its two-variable
+twin. -/
+@[simp] theorem exists2_eq_left {σ' α' : Type} {P : σ' → α' → Prop}
+    {S : σ'} {A : α'} :
+    (∃ s a, (S = s ∧ A = a) ∧ P s a) ↔ P S A := by
+  constructor
+  · rintro ⟨s, a, ⟨rfl, rfl⟩, h⟩; exact h
+  · intro h; exact ⟨S, A, ⟨rfl, rfl⟩, h⟩
+
 @[simp] theorem ok_bind {s : σ} {a : α} {f : σ → α → Run σ β} :
     (Run.ok s a).bind f = f s a := rfl
 @[simp] theorem exn_bind {s : σ} {e : PyErr} {f : σ → α → Run σ β} :

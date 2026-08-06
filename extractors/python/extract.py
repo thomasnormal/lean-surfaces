@@ -58,11 +58,14 @@ COMMENT_PREFIX_RE = re.compile(r"^\s*#")
 
 ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow")
 ALLOWED_UNARYOPS = ("USub", "Not")
-ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE")
-# Is/IsNot are additionally allowed, but ONLY when one side of that link is
-# the literal None (see convert_expr): None is a singleton, so `x is None`
-# is value-determined; identity on ints/strs is CPython-implementation-
-# defined (small-int caching, interning) and stays Unsupported.
+ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
+                  "Is", "IsNot", "In", "NotIn")
+# Is/IsNot are emitted structurally for EVERY identity comparison since
+# H1-proper: identity is decided dynamically by the interpreter (refs by
+# address, None by the singleton test), which loudly refuses the remaining
+# out-of-tier operand forms (two non-None immediates — small-int caching,
+# str interning are implementation-defined). In/NotIn (membership) are
+# likewise structural; the interpreter owns the tier boundary.
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
@@ -99,11 +102,6 @@ def unsupported(node, py_kind=None):
         "py_kind": py_kind if py_kind is not None else type(node).__name__,
         "text": unparse_truncated(node),
     }
-
-
-def _is_none_literal(node):
-    """Is this expression the literal ``None`` (an ``ast.Constant``)?"""
-    return isinstance(node, ast.Constant) and node.value is None
 
 
 def literal_const_payload(node):
@@ -177,19 +175,8 @@ def convert_expr(node):
 
     if isinstance(node, ast.Compare):
         ops = [type(o).__name__ for o in node.ops]
-        # operands[i] and operands[i+1] are the two sides of link ops[i].
-        operands = [node.left] + list(node.comparators)
-        for i, op in enumerate(ops):
-            if op in ("Is", "IsNot"):
-                # Identity is in-tier ONLY against the literal None (either
-                # side of that link): None is a singleton, so `x is None` is
-                # value-determined. Any other `is` (small-int caching, str
-                # interning) is implementation-defined => whole node
-                # Unsupported, exactly as before.
-                if not (_is_none_literal(operands[i])
-                        or _is_none_literal(operands[i + 1])):
-                    return unsupported(node, "Compare:" + op)
-            elif op not in ALLOWED_CMPOPS:
+        for op in ops:
+            if op not in ALLOWED_CMPOPS:
                 return unsupported(node, "Compare:" + op)
         return {
             "kind": "Compare",

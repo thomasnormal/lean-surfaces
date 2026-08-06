@@ -38,14 +38,15 @@ deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Comparison operators. 1:1 with CPython: `eq` ↔ `Eq`, `notEq` ↔ `NotEq`,
 `lt` ↔ `Lt`, `ltE` ↔ `LtE`, `gt` ↔ `Gt`, `gtE` ↔ `GtE`, `is` ↔ `Is`,
-`isNot` ↔ `IsNot`. The extractor emits `Is`/`IsNot` ONLY when one side of
-that comparison link is the literal `None` (`x is None`, `None is x`,
-`x is not None`): `None` is a singleton, so identity against it is
-value-determined; identity between other values (small-int caching, str
-interning) is CPython-implementation-defined and arrives as a whole-node
-`Unsupported "Compare:Is[Not]"` instead. -/
+`isNot` ↔ `IsNot`, `inOp` ↔ `In`, `notIn` ↔ `NotIn` (Lean-keyword-safe
+spellings for the membership pair). Since H1-proper the extractor emits
+`Is`/`IsNot` for EVERY identity comparison (H1 decides identity
+dynamically: refs compare by address, `None` by the singleton test); the
+interpreter loudly refuses the remaining out-of-tier operand forms
+(identity between two non-`None` immediates — small-int caching, str
+interning — is CPython-implementation-defined). -/
 inductive CmpOp where
-  | eq | notEq | lt | ltE | gt | gtE | is | isNot
+  | eq | notEq | lt | ltE | gt | gtE | is | isNot | inOp | notIn
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Literal constants (schema `Constant` payload). Ints are arbitrary precision
@@ -161,14 +162,22 @@ deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Val`; derived BEq
 -- suffices (`#guard` checks use `==` on `Res Val`, per DESIGN.md).
 
-/-- Python runtime errors representable in v0. Canonical harness names:
-`TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`. -/
+/-- Python runtime errors representable in the tier. Canonical harness names:
+`TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`,
+and — since H1-proper (the dict tier) — `KeyError` (missing dict key),
+`RuntimeError` (dict changed size during iteration), and `RecursionError`
+(cyclic dict comparison). The harness compares exception *class names*
+only, so message-free constructors (`keyError` like `indexError`) carry no
+payload. -/
 inductive PyErr where
   | typeError (msg : String)
   | nameError (name : String)
   | zeroDivisionError
   | indexError
   | valueError (msg : String)
+  | keyError
+  | runtimeError (msg : String)
+  | recursionError
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/

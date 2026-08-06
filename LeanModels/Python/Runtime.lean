@@ -83,6 +83,58 @@ structure FrameState where
   locals : REnv
 deriving Repr, Inhabited, BEq
 
+/-! ### Heap access (bounds-checked — docs/memory-model.md §heap WF)
+
+Every semantic dereference goes through these: never `getD`, never an
+`Inhabited` fallback. A `none` here is an interpreter invariant violation
+(unreachable from well-formed worlds) and every caller reports it loudly. -/
+
+/-- Bounds-checked heap read. Full name only (`Heap` is an abbrev, so dot
+notation resolves into the `Array` namespace — same caveat as `Env.lookup`). -/
+def Heap.get? (h : Heap) (a : Addr) : Option Obj :=
+  if hlt : a < h.size then some (h[a]'hlt) else Option.none
+
+/-- Bounds-checked heap write (same address, new object; size preserved). -/
+def Heap.update (h : Heap) (a : Addr) (o : Obj) : Option Heap :=
+  if hlt : a < h.size then some (h.set a o hlt) else Option.none
+
+/-- Allocation: append; the fresh address is the old size. -/
+def Heap.alloc (h : Heap) (o : Obj) : Heap × Addr :=
+  (h.push o, h.size)
+
+/-! ### Heap well-formedness (docs/memory-model.md §heap WF)
+
+`RVal.WF h v`: every address in `v` is live in `h`. `Obj.WF`/`Heap.WF`
+close the loop through stored objects. Preservation lemmas live with the
+operations that need them (allocation/update below; the interpreter-wide
+preservation statement is the dict tier's regression case 18). -/
+
+mutual
+  /-- Every `.ref` inside the value points below `h.size`. -/
+  def RVal.WF (h : Heap) : RVal → Prop
+    | .none | .bool _ | .int _ | .str _ => True
+    | .tuple xs => RVal.WFList h xs.toList
+    | .listV xs => RVal.WFList h xs.toList
+    | .ref a => a < h.size
+
+  /-- Elementwise `RVal.WF`. -/
+  def RVal.WFList (h : Heap) : List RVal → Prop
+    | [] => True
+    | v :: vs => RVal.WF h v ∧ RVal.WFList h vs
+end
+
+/-- Every key and value stored in the object is WF w.r.t. `h`. -/
+def Obj.WF (h : Heap) : Obj → Prop
+  | .dict es _ => RVal.WFList h (es.toList.map Prod.fst)
+      ∧ RVal.WFList h (es.toList.map Prod.snd)
+
+/-- Every stored object is WF w.r.t. the heap itself. -/
+def Heap.WF (h : Heap) : Prop :=
+  ∀ a (hlt : a < h.size), Obj.WF h (h[a]'hlt)
+
+/-- The empty heap is WF (no addresses exist). -/
+theorem Heap.WF.empty : Heap.WF #[] := fun a hlt => by simp at hlt
+
 /-- Statement-level control flow over runtime values. -/
 inductive RFlow where
   | next

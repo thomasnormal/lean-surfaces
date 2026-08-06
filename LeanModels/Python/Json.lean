@@ -95,6 +95,8 @@ def parseCmpOpName : String → Except String CmpOp
   | "GtE" => .ok .gtE
   | "Is" => .ok .is
   | "IsNot" => .ok .isNot
+  | "In" => .ok .inOp
+  | "NotIn" => .ok .notIn
   | s => .error s!"unknown CmpOp name {s.quote}"
 
 /-- Parse a schema constant payload (the `value` of a `Constant` node). -/

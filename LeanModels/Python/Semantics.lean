@@ -132,6 +132,8 @@ def CmpOp.symbol : CmpOp → String
   | .gtE => ">="
   | .is => "is"
   | .isNot => "is not"
+  | .inOp => "in"
+  | .notIn => "not in"
 
 /-- Schema `kind` name of an expression node (error messages). For
 `unsupported` nodes this is the recorded CPython class name. -/
@@ -219,6 +221,8 @@ def intCmp : CmpOp → Int → Int → Bool
   | .gtE, x, y => y ≤ x
   | .is, x, y => x == y
   | .isNot, x, y => x != y
+  | .inOp, _, _ => false   -- unreachable: membership never reaches intCmp
+  | .notIn, _, _ => false  -- (evalCompareOp handles it first; totality arm)
 
 /-- Ordering comparison on `String` (lexicographic by Unicode code points,
 which is Lean's `String` `<`). See `intCmp` for the equality/identity cases. -/
@@ -231,6 +235,8 @@ def strCmp : CmpOp → String → String → Bool
   | .gtE, s, t => t < s || s == t
   | .is, s, t => s == t
   | .isNot, s, t => s != t
+  | .inOp, _, _ => false   -- unreachable: membership never reaches strCmp
+  | .notIn, _, _ => false  -- (evalCompareOp handles it first; totality arm)
 
 /-- One comparison step. `==`/`!=` are `valEq` (`Res`-valued since H1 — see
 there). `is`/`is not` (F2): the extractor admits these ONLY when one side of
@@ -258,6 +264,12 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
     else
       .unsupported
         s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the v0 tier"
+  | .inOp =>
+      .unsupported
+        s!"'in' on '{b.typeName}' is outside this tier (dict membership lands with H1-proper, docs/memory-model.md)"
+  | .notIn =>
+      .unsupported
+        s!"'not in' on '{b.typeName}' is outside this tier (dict membership lands with H1-proper, docs/memory-model.md)"
   | op =>
     match asInt a, asInt b with
     | some x, some y => .ok (intCmp op x y)
@@ -535,6 +547,292 @@ def indexVal (container index : RVal) : Res RVal :=
     | Option.none =>
       .exn (.typeError s!"string indices must be integers, not {index.typeName}")
   | v, _ => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
+
+/-! ## The dict tier (H1-proper, docs/memory-model.md)
+
+Fuel-free heap helpers over the bounds-checked access primitives
+(`Heap.get?`/`Heap.update`, Runtime.lean). A dangling address is an
+interpreter invariant violation — unreachable from well-formed worlds —
+and reports loudly (`danglingMsg`), never a silent fallback. -/
+
+/-- The loud report for a dangling address (unreachable from WF worlds). -/
+def danglingMsg : String :=
+  "internal: dangling heap address (heap well-formedness violation — report this)"
+
+mutual
+  /-- Is this runtime value usable as a dict key? Hashability, not
+  immutability (docs/memory-model.md §dict semantics): scalars are
+  hashable; a tuple iff its elements are; lists are unhashable; a ref's
+  hashability depends on its referent — every H1 heap object is a dict,
+  which is unhashable (H3 instances revisit this arm, heap parameter and
+  all). -/
+  def hashableKey : RVal → Bool
+    | .none | .bool _ | .int _ | .str _ => true
+    | .tuple xs => hashableKeyList xs.toList
+    | .listV _ => false
+    | .ref _ => false
+
+  /-- Elementwise `hashableKey`. -/
+  def hashableKeyList : List RVal → Bool
+    | [] => true
+    | v :: vs => hashableKey v && hashableKeyList vs
+end
+
+/-- CPython's type name in `unhashable type: '…'` messages. A `.ref` names
+its referent's type — every H1 heap object is a dict. -/
+def RVal.unhashName : RVal → String
+  | .ref _ => "dict"
+  | v => v.typeName
+
+mutual
+  /-- Key equality: Python `==` restricted to HASHABLE (hence ref-free)
+  values — bool/int coercion (`d[True]` is `d[1]`), tuples elementwise.
+  Pure (`Bool`, not `Res`): callers have checked `hashableKey` on the
+  probe, and stored keys were checked at insertion. -/
+  def keyEq : RVal → RVal → Bool
+    | .none, .none => true
+    | .bool a, .bool b => a == b
+    | .bool a, .int m => (if a then (1 : Int) else 0) == m
+    | .int n, .bool b => n == (if b then (1 : Int) else 0)
+    | .int n, .int m => n == m
+    | .str s, .str t => s == t
+    | .tuple xs, .tuple ys => keyEqList xs.toList ys.toList
+    | _, _ => false
+
+  /-- Elementwise `keyEq`; `false` on length mismatch. -/
+  def keyEqList : List RVal → List RVal → Bool
+    | [], [] => true
+    | a :: as, b :: bs => keyEq a b && keyEqList as bs
+    | _, _ => false
+end
+
+/-- First entry whose stored key equals `k` (insertion order). -/
+def dictFind : List (RVal × RVal) → RVal → Option RVal
+  | [], _ => Option.none
+  | (k', v') :: rest, k => if keyEq k' k then some v' else dictFind rest k
+
+/-- Store `k ↦ v`: an equal key present replaces ONLY THE VALUE (stored key
+and insertion position retained — `{True: _}` updated through `1` still
+lists `[True]`); an absent key appends. The `Bool` reports growth (the
+shape change `shapeVersion` counts — iterator invalidation). -/
+def dictStore : List (RVal × RVal) → RVal → RVal → List (RVal × RVal) × Bool
+  | [], k, v => ([(k, v)], true)
+  | (k', v') :: rest, k, v =>
+    if keyEq k' k then ((k', v) :: rest, false)
+    else
+      match dictStore rest k v with
+      | (rest', grew) => ((k', v') :: rest', grew)
+
+/-- Build a dict literal's entries: inserts left to right (duplicate equal
+keys: first key/position, last value), each key hashability-checked at its
+insertion — CPython's `BUILD_MAP` order (every element expression was
+already evaluated by the caller). -/
+def dictBuild (acc : List (RVal × RVal)) : List (RVal × RVal) → Res (List (RVal × RVal))
+  | [] => .ok acc
+  | (k, v) :: rest =>
+    if hashableKey k then dictBuild (dictStore acc k v).1 rest
+    else .exn (.typeError s!"unhashable type: '{k.unhashName}'")
+
+/-- `d[k]` on a heap dict: unhashable keys raise BEFORE any scan (even on
+an empty dict); a missing key is a faithful `KeyError`. -/
+def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
+  if hashableKey k then
+    match Heap.get? h a with
+    | some (.dict es _) =>
+      match dictFind es.toList k with
+      | some v => .ok v
+      | Option.none => .exn .keyError
+    | Option.none => .unsupported danglingMsg
+  else .exn (.typeError s!"unhashable type: '{k.unhashName}'")
+
+/-- `d[k] = v` on a heap dict: value replacement keeps the shape version;
+insertion increments it (`dictStore`'s growth bit). -/
+def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
+  if hashableKey k then
+    match Heap.get? h a with
+    | some (.dict es ver) =>
+      match dictStore es.toList k v with
+      | (es', grew) =>
+        match Heap.update h a (.dict es'.toArray (if grew then ver + 1 else ver)) with
+        | some h' => .ok h'
+        | Option.none => .unsupported danglingMsg
+    | Option.none => .unsupported danglingMsg
+  else .exn (.typeError s!"unhashable type: '{k.unhashName}'")
+
+/-- `len(d)` on a heap dict. -/
+def heapLen (h : Heap) (a : Addr) : Res RVal :=
+  match Heap.get? h a with
+  | some (.dict es _) => .ok (.int es.size)
+  | Option.none => .unsupported danglingMsg
+
+/-- `k in d` on a heap dict (unhashable probes raise, empty dict included). -/
+def heapContains (h : Heap) (a : Addr) (k : RVal) : Res Bool :=
+  if hashableKey k then
+    match Heap.get? h a with
+    | some (.dict es _) => .ok (dictFind es.toList k).isSome
+    | Option.none => .unsupported danglingMsg
+  else .exn (.typeError s!"unhashable type: '{k.unhashName}'")
+
+/-- `d.get(k)` / `d.get(k, default)` (the H1 method tier): absent keys
+yield the default, never `KeyError`; unhashable probes still raise. -/
+def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
+  if hashableKey k then
+    match Heap.get? h a with
+    | some (.dict es _) => .ok ((dictFind es.toList k).getD dflt)
+    | Option.none => .unsupported danglingMsg
+  else .exn (.typeError s!"unhashable type: '{k.unhashName}'")
+
+/-- Truthiness including heap objects: `bool(d)` is `len(d) != 0`. Non-ref
+values decide exactly as the pure `truthy` (the proof layer's vocabulary —
+`truthyH_of_truthy` lifts pure facts, so VC rule hypotheses never mention
+the heap). -/
+def truthyH (h : Heap) : RVal → Res Bool
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.dict es _) => .ok (es.size != 0)
+    | Option.none => .unsupported danglingMsg
+  | v => truthy v
+
+/-- A decided pure truthiness lifts to every heap (`truthy`'s only `.ref`
+arm is `unsupported`, which never decides). -/
+theorem truthyH_of_truthy {h : Heap} {v : RVal} {b : Bool}
+    (ht : truthy v = .ok b) : truthyH h v = .ok b := by
+  cases v <;> simp_all [truthy, truthyH]
+
+mutual
+  /-- Python `==` over the heap (docs/memory-model.md §identity) — the
+  H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
+  even for self-cyclic `d`); (2) re-entering an ACTIVE distinct pair is a
+  faithful `RecursionError` (two separate self-cyclic dicts do NOT compare
+  equal — Python does not equate bisimilar cycles); (3) size check;
+  (4) the LEFT dict traversed in insertion order, keys looked up in the
+  right dict, values compared recursively with the pair pushed onto the
+  active list (an early mismatch returns `False` before a later cyclic
+  value would raise). Ref vs non-ref is a faithful `False`. Tuples/lists
+  recurse HERE (refs may hide inside); scalar pairs decide as `valEq`.
+  Fueled: exhaustion is `.timeout`, never a semantic answer; cycle
+  detection is fuel-INDEPENDENT. -/
+  def heapEq (h : Heap) (fuel : Nat) (active : List (Addr × Addr))
+      (a b : RVal) : Res Bool :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match a, b with
+      | .ref x, .ref y =>
+        if x == y then .ok true
+        else if active.contains (x, y) then .exn .recursionError
+        else
+          match Heap.get? h x, Heap.get? h y with
+          | some (.dict es _), some (.dict fs _) =>
+            if es.size == fs.size then
+              heapEqEntries h fuel ((x, y) :: active) es.toList fs.toList
+            else .ok false
+          | _, _ => .unsupported danglingMsg
+      | .ref _, _ => .ok false
+      | _, .ref _ => .ok false
+      | .tuple xs, .tuple ys => heapEqList h fuel active xs.toList ys.toList
+      | .listV xs, .listV ys => heapEqList h fuel active xs.toList ys.toList
+      | a, b => valEq a b
+
+  /-- Elementwise `heapEq` (tuple/list contents may contain refs); `false`
+  on length mismatch. -/
+  def heapEqList (h : Heap) (fuel : Nat) (active : List (Addr × Addr))
+      (as bs : List RVal) : Res Bool :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match as, bs with
+      | [], [] => .ok true
+      | a :: as, b :: bs => do
+        let e ← heapEq h fuel active a b
+        if e then heapEqList h fuel active as bs else return false
+      | _, _ => .ok false
+
+  /-- Left-dict traversal of the ref/ref case: each stored key looked up in
+  the right entry list. -/
+  def heapEqEntries (h : Heap) (fuel : Nat) (active : List (Addr × Addr))
+      (left right : List (RVal × RVal)) : Res Bool :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match left with
+      | [] => .ok true
+      | (k, v) :: rest =>
+        match dictFind right k with
+        | Option.none => .ok false
+        | some w => do
+          let e ← heapEq h fuel active v w
+          if e then heapEqEntries h fuel active rest right else return false
+end
+
+/-- The heap-aware comparison step (`evalCompareChain` consumes this since
+H1-proper). `==`/`!=` go through `heapEq`; `is`/`is not` decide the `None`
+link (as before), ref/ref address identity, and ref-vs-immediate `False`
+faithfully — refusing only identity between two non-`None` immediates
+(implementation-defined); `in`/`not in` are dict membership (value
+containers stay loud — the H1 inventory is dicts only); ordering delegates
+to the pure `evalCompareOp`. -/
+def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool :=
+  match op with
+  | .eq => heapEq h fuel [] a b
+  | .notEq => do let e ← heapEq h fuel [] a b; return !e
+  | .is =>
+    if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
+    else
+      match a, b with
+      | .ref x, .ref y => .ok (x == y)
+      | .ref _, _ => .ok false
+      | _, .ref _ => .ok false
+      | a, b =>
+        .unsupported
+          s!"'is' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
+  | .isNot =>
+    if a.isNone || b.isNone then .ok (!(a.isNone && b.isNone))
+    else
+      match a, b with
+      | .ref x, .ref y => .ok (x != y)
+      | .ref _, _ => .ok true
+      | _, .ref _ => .ok true
+      | a, b =>
+        .unsupported
+          s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
+  | .inOp =>
+    match b with
+    | .ref d => heapContains h d a
+    | .listV _ | .tuple _ | .str _ =>
+      .unsupported s!"'in' on '{b.typeName}' is outside this tier (dict membership only at H1)"
+    | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
+  | .notIn =>
+    match b with
+    | .ref d => do let e ← heapContains h d a; return !e
+    | .listV _ | .tuple _ | .str _ =>
+      .unsupported s!"'not in' on '{b.typeName}' is outside this tier (dict membership only at H1)"
+    | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
+  | op => evalCompareOp op a b
+
+/-- Unary operators over the heap: `not d` is dict truthiness; `-` stays
+pure (a `.ref` operand is refused there). -/
+def evalUnaryOpH (h : Heap) (op : UnaryOp) (v : RVal) : Res RVal :=
+  match op with
+  | .not => do let b ← truthyH h v; return .bool (!b)
+  | .usub => evalUnaryOp .usub v
+
+/-- `len` over the heap: dicts count entries; non-refs decide as `lenVal`. -/
+def lenValH (h : Heap) : RVal → Res RVal
+  | .ref a => heapLen h a
+  | v => lenVal v
+
+/-- Subscript read over the heap: a `.ref` container is a dict read
+(`KeyError` faithful); a `.ref` INDEX into a value container is a faithful
+`TypeError` (every H1 heap object is a dict — `lst[d]`); everything else
+decides as the pure `indexVal`. -/
+def indexValH (h : Heap) (container index : RVal) : Res RVal :=
+  match container, index with
+  | .ref a, k => heapIndex h a k
+  | .listV _, .ref _ => .exn (.typeError "list indices must be integers, not dict")
+  | .tuple _, .ref _ => .exn (.typeError "tuple indices must be integers, not dict")
+  | .str _, .ref _ => .exn (.typeError "string indices must be integers, not dict")
+  | c, i => indexVal c i
 
 /-- The names of an unpacking target's elements; `none` if any element is not
 a plain `Name` (nested or starred patterns are outside the v0 tier). -/

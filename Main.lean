@@ -38,6 +38,9 @@ def errName : PyErr → String
   | .zeroDivisionError => "ZeroDivisionError"
   | .indexError => "IndexError"
   | .valueError _ => "ValueError"
+  | .keyError => "KeyError"
+  | .runtimeError _ => "RuntimeError"
+  | .recursionError => "RecursionError"
 
 /-- JSON string literal with proper escaping (delegates to `Lean.Json`). -/
 def jsonStr (s : String) : String :=

@@ -42,10 +42,16 @@ theorem fib_total (k : Nat) : fib(k) ==> fibSpec k := by
       py_lift ⟨f₁, h₁⟩ := ih (k + 1) (by omega) with [fib]
       py_lift ⟨f₂, h₂⟩ := ih k (by omega) with [fib]
       refine ⟨f₁ + f₂ + 32, ?_⟩   -- any generous slack works
-      rw [callFunction.eq_2]
+      unfold callFunction
+      rw [callIn.eq_2]
       py_simp [fib, show ¬((k : Int) + 2 < 2) by omega,
                show (k : Int) + 2 - 1 = ((k + 1 : Nat) : Int) by omega]
-      simp (disch := omega) only [h₁, h₂]
+      -- H1 finding: the state THREADS through the first nested call, so the
+      -- second call's name resolution is stuck under its continuation until
+      -- the first splice lands — splice, re-execute, splice, mop up.
+      simp (disch := omega) only [h₁]
+      py_simp []
+      simp (disch := omega) only [h₂]
       py_simp [fibSpec]
 
 set_option warning.simp.varHead false in

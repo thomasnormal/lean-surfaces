@@ -355,6 +355,49 @@ mutual
         simp [RVal.thawList, ← h1, ← h2]
 end
 
+mutual
+  /-- Freezing never raises: its only refusal is the loud `unsupported`
+  (a `.ref` in the result). What pins the public wrapper's `.exn` outcomes
+  to the interpreter run, never to the freeze. -/
+  theorem RVal.freeze_ne_exn : (rv : RVal) → ∀ e, RVal.freeze rv ≠ .exn e
+    | .none, e => by simp [RVal.freeze]
+    | .bool _, e => by simp [RVal.freeze]
+    | .int _, e => by simp [RVal.freeze]
+    | .str _, e => by simp [RVal.freeze]
+    | .listV xs, e => by
+        simp only [RVal.freeze]
+        cases hl : RVal.freezeList xs.toList with
+        | ok vs => simp
+        | exn e' => exact absurd hl (RVal.freezeList_ne_exn xs.toList e')
+        | timeout => simp
+        | unsupported msg => simp
+    | .tuple xs, e => by
+        simp only [RVal.freeze]
+        cases hl : RVal.freezeList xs.toList with
+        | ok vs => simp
+        | exn e' => exact absurd hl (RVal.freezeList_ne_exn xs.toList e')
+        | timeout => simp
+        | unsupported msg => simp
+    | .ref _, e => by simp [RVal.freeze]
+
+  /-- Elementwise `freeze_ne_exn`. -/
+  theorem RVal.freezeList_ne_exn : (l : List RVal) → ∀ e, RVal.freezeList l ≠ .exn e
+    | [], e => by simp [RVal.freezeList]
+    | rv :: l, e => by
+        simp only [RVal.freezeList]
+        cases hv : RVal.freeze rv with
+        | ok v' =>
+          simp only [Res.ok_bind]
+          cases hl : RVal.freezeList l with
+          | ok vs => simp
+          | exn e' => exact absurd hl (RVal.freezeList_ne_exn l e')
+          | timeout => simp
+          | unsupported msg => simp
+        | exn e' => exact absurd hv (RVal.freeze_ne_exn rv e')
+        | timeout => simp
+        | unsupported msg => simp
+end
+
 /-- `thawList` is elementwise `thaw` (the `List.map` normal form symbolic
 execution prefers). -/
 theorem RVal.thawList_eq_map : (l : List Val) → RVal.thawList l = l.map RVal.thaw

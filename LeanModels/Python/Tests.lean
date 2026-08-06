@@ -77,7 +77,7 @@ private def fnSortedShadow : FunctionDefn :=
 
 private def M2 : Module := { functions := #[fnSortedShadow], topLevel := #[] }
 
-private def w0 : World := ⟨#[], []⟩
+private def w0 : World := ⟨#[], [], []⟩
 
 /-- Forget the (stage-1, always-`w0`) state of an expression run — the
 projection that keeps the value-level guards below verbatim. -/

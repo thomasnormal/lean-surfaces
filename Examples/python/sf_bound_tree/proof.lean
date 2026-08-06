@@ -32,7 +32,7 @@ open LeanModels LeanModels.Python
 load_program sf_bound_tree from "Examples/python/sf_bound_tree/sf_bound_tree.json"
 
 /-- The pinned world of the stage-1 geometry (`initWorld` unfolded). -/
-private def pw : World := ⟨#[], []⟩
+private def pw : World := ⟨#[], [], []⟩
 
 /-- Explicit game trees: `(eval, children)`. -/
 inductive GTree where

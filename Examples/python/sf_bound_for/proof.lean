@@ -28,7 +28,7 @@ open LeanModels LeanModels.Python
 load_program sf_bound_for from "Examples/python/sf_bound_for/sf_bound_for.json"
 
 /-- The pinned world of the stage-1 geometry (`initWorld` unfolded). -/
-private def pw : World := ⟨#[], []⟩
+private def pw : World := ⟨#[], [], []⟩
 
 /-- The loop target of `bound_loop`'s `for` (the loaded literal's piece). -/
 private def loopTgt : Expr :=

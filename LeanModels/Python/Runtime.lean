@@ -60,10 +60,19 @@ proof layer; since the H1 core re-shape it IS the runtime environment
 `CallsTo` over `Val`). -/
 abbrev Env := REnv
 
-/-- The mutable world of one public call: heap + module globals. -/
+/-- The mutable world of one public call: heap + module globals + the
+program's output. -/
 structure World where
   heap : Heap
   globals : REnv
+  /-- Accumulated stdout, as DATA (Thomas-directed addition, 2026-08-06,
+  for the `leanpy` script runner): chunks in emission order, appended at
+  the tail. `print` becomes a tier builtin appending here when module
+  execution lands; stage H1-1 writes nothing. Exit status and `argv` are
+  RUNNER-boundary concerns (the exit code is the module run's outcome;
+  `argv` arrives as a marshalled global), NOT world fields —
+  docs/memory-model.md §effects. -/
+  stdout : List String := []
 deriving Repr, Inhabited, BEq
 
 /-- One frame's full interpreter state: the shared world + this frame's

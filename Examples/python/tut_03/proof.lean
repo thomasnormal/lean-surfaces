@@ -33,7 +33,7 @@ step's goal). -/
 theorem relu_of_nonneg' (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
   have hx' : (0 : Int) ≤ x := hx
   refine ⟨32, ?_⟩
-  py_simp [callFunction, tut_03]
+  py_simp [callFunction, callIn, tut_03]
   split <;> py_simp
   omega
 

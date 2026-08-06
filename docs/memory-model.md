@@ -40,6 +40,7 @@ abbrev Heap := Array Obj
 structure World where
   heap    : Heap
   globals : REnv
+  stdout  : List String := []   -- effects are data (§effects; owner-directed)
 
 structure FrameState where
   world  : World
@@ -198,6 +199,37 @@ Garbage: unreachability is unobservable **through `CallsTo`** (no
 observationally abstract; if an abstract stateful public surface is ever
 wanted, it must expose only named reachable roots and frozen
 observations, or quotient heaps modulo renaming and garbage.
+
+## Effects are data (owner-directed addition, 2026-08-06)
+
+The `leanpy` script-runner direction (run ARBITRARY Python files under
+the Lean semantics; differential-test whole programs — stdout + exit
+status — against the pinned CPython 3.9; make the completeness goal an
+empirical corpus metric with loudness as telemetry; capstone: sunfish.py
+playing identical chess under `leanpy`) fixes the effect representation
+NOW, so it is a field, not a refactor:
+
+* **stdout is `World` data**: `World.stdout : List String` — chunks in
+  emission order, appended at the tail. `print` becomes a tier builtin
+  appending to it when module execution lands (H1-1 writes nothing; the
+  arms stay loud). Observation: the runner prints the accumulated chunks
+  after the run; proofs may speak about it through the future stateful
+  surface (`CallsIn`-style), never through `CallsTo` (which erases the
+  world).
+* **exit status is the RUNNER boundary**, not a world field: the module
+  run's outcome maps to the process exit code (`ok` → 0, `exn` → the
+  CPython-conventional nonzero + traceback-class line, `unsupported` /
+  `timeout` → distinguished codes that the differential driver treats as
+  LOUD, never as agreement).
+* **argv is a marshalled global** (`sys.argv` shape) supplied at world
+  initialization when the `sys` tier lands — a stub note, not a field.
+
+`leanpy` v0 (post-H1-core): module-level execution of current-tier
+scripts, first-unsupported-construct reporting, stdout diff vs python3.9,
+wired into the harness as a script-corpus mode. `Module`'s
+functions/topLevel split loses `def`/assignment interleaving — v0 must
+detect and refuse interleaving-sensitive scripts loudly (the ordered
+`ModuleItem` representation stays the fix, §module initialization).
 
 ## Module initialization (decision)
 

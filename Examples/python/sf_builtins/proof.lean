@@ -21,7 +21,7 @@ theorem lmr_spec (depth i_m val : PyInt) :
   refine ⟨32, ?_⟩
   by_cases h1 : (4 : Int) ≤ depth <;> by_cases h2 : (8 : Int) ≤ i_m <;>
     by_cases h3 : (val : Int) < 0 <;>
-    py_simp [callFunction, sf_builtins, h1, h2, h3] <;> grind
+    py_simp [callFunction, callIn, sf_builtins, h1, h2, h3] <;> grind
 
 /-- The MTD-bi window clamp: `max(lo, min(hi, x))`, straight-line through
 both builtins. -/

@@ -115,47 +115,27 @@ is:
 1. `match fuel with` — split off the small fuels (each reduces to
    `.timeout = .ok r`, which `py_simp at h` closes) from `fuel + k`, where
    `k` bounds the straight-line depth of the function body.
-2. `py_simp [p, callFunction, …] at h` — unfold the program literal and
-   symbolically execute. Recursive-call boundaries (`callFunction`,
-   `execWhile`) are **not** in the default simp set, so they stay frozen at
-   symbolic fuel; unfold the outer one with `rw [callFunction.eq_2] at h`
+2. `py_simp [p, …] at h` — unfold the program literal and
+   symbolically execute. Recursive-call boundaries (`callIn`,
+   `execWhile`, `execFor`) are **not** in the default simp set, so they stay
+   frozen at symbolic fuel; unfold the outer one with `rw [callIn.eq_2] at h`
    (resp. `execWhile.eq_2`) and pass them explicitly only where full
-   unfolding is safe (non-recursive programs).
-3. `Res.bind_eq_ok` (a global simp lemma) turns `x >>= f = .ok r` into
-   `∃ a, x = .ok a ∧ f a = .ok r`, so after `py_simp` the hypothesis is a
-   nest of existentials whose atoms are the frozen recursive calls:
+   unfolding is safe (non-recursive programs). The public `callFunction`
+   wrapper is non-recursive and unfolds freely (it is in the default set).
+3. `Res.bind_eq_ok` / `Run.bind_eq_ok` (global simp lemmas) turn
+   `x >>= f = .ok r` (resp. `Run.bind x f = .ok s r`) into existential
+   nests, so after `py_simp` the hypothesis is a nest of existentials whose
+   atoms are the frozen recursive calls:
    `obtain` them, discharge each with the induction hypothesis (induction on
    fuel — structural for loops, `Nat.strongRecOn` for recursion), `subst`,
    and `py_simp` again until `h` closes the goal.
 -/
 
-/-- `pure` on `Res` is `Res.ok` (do-notation normalization). -/
-@[simp] theorem Res.pure_eq {α} (a : α) : (pure a : Res α) = .ok a := rfl
-
-/-- Bind on an `ok` result steps into the continuation (do-notation
-normalization; this is what advances symbolic execution). -/
-@[simp] theorem Res.ok_bind {α β} (a : α) (f : α → Res β) :
-    (Res.ok a >>= f) = f a := rfl
-
-/-- Exceptions short-circuit bind. -/
-@[simp] theorem Res.exn_bind {α β} (e : PyErr) (f : α → Res β) :
-    ((Res.exn e : Res α) >>= f) = .exn e := rfl
-
-/-- Timeouts short-circuit bind (this closes the small-fuel goals). -/
-@[simp] theorem Res.timeout_bind {α β} (f : α → Res β) :
-    ((Res.timeout : Res α) >>= f) = .timeout := rfl
-
-/-- `unsupported` short-circuits bind. -/
-@[simp] theorem Res.unsupported_bind {α β} (msg : String) (f : α → Res β) :
-    ((Res.unsupported msg : Res α) >>= f) = .unsupported msg := rfl
-
-/-- Inversion of a successful bind: the intermediate result must itself be
-`ok`. Under `simp` this turns a symbolically-executed hypothesis into a nest
-of existentials whose atoms are the frozen recursive calls — `obtain` them
-and feed each to the induction hypothesis. -/
-@[simp] theorem Res.bind_eq_ok {α β} {x : Res α} {f : α → Res β} {b : β} :
-    x >>= f = .ok b ↔ ∃ a, x = .ok a ∧ f a = .ok b := by
-  cases x <;> simp
+/-! (The `Res` bind-normalization simp lemmas — `Res.pure_eq`,
+`Res.ok_bind`, `Res.exn_bind`, `Res.timeout_bind`, `Res.unsupported_bind`,
+`Res.bind_eq_ok` — moved to Runtime.lean with the H1 re-shape: the
+thaw/freeze roundtrip proofs there need them, and Runtime is imported
+by everything that previously found them here.) -/
 
 /-! ### `sorted` execution lemmas (Mathlib-free)
 
@@ -168,9 +148,10 @@ ARE in the lists — they are what lets symbolic execution step through
 `Examples/python/bench_statistics/proof.lean` (`sortInts_eq` bridge). -/
 
 /-- Marshalled int lists extract fully: the `asIntList` bridge for symbolic
-execution of `sorted(data)` at a `ToVal`-marshalled argument. -/
+execution of `sorted(data)` at a `ToVal`-marshalled argument (runtime side
+since H1: the argument arrives thawed). -/
 theorem asIntList_map_int (l : List Int) :
-    asIntList (l.map Val.int) = some l := by
+    asIntList (l.map RVal.int) = some l := by
   induction l with
   | nil => rfl
   | cons x xs ih => simp [asIntList, ih]
@@ -193,12 +174,14 @@ theorem sortInts_length (l : List Int) :
 open Lean Lean.Parser.Tactic in
 /-- `py_simp [extra, lemmas] at h` — one stack frame's worth of symbolic
 execution of the Python interpreter: `simp` with every interpreter equation
-*except* the recursion points `callFunction`, `execWhile`, and `execFor`,
+*except* the recursion points `callIn`, `execWhile`, and `execFor`,
 which stay frozen at symbolic fuel so induction hypotheses can be applied to
-them. Pass them explicitly (`py_simp [callFunction, execWhile, tri] at h`)
+them. Pass them explicitly (`py_simp [callIn, execWhile, tri] at h`)
 when full unfolding is safe (no recursion, or concrete fuel), or unfold
-exactly one step with `rw [callFunction.eq_2] at h` / `rw [execWhile.eq_2]
-at h` / `rw [execFor.eq_2] at h`.
+exactly one step with `rw [callIn.eq_2] at h` / `rw [execWhile.eq_2]
+at h` / `rw [execFor.eq_2] at h`. The public `callFunction` is a
+non-recursive wrapper since H1 (thaw ∘ fresh-world ∘ `callIn` ∘ freeze)
+and IS in the default set — unfolding it exposes the frozen `callIn`.
 Program literals introduced by `load_program` must also be passed explicitly
 (e.g. `py_simp [tri] at h`). `and_assoc` is included so that fully-reduced
 existential nests collapse. -/
@@ -211,13 +194,16 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
       simp [execStmts, execStmt, evalExpr, evalExprs, evalBoolChain,
             evalCompareChain, findFunction, mkCallEnv, arityOk,
             defaultBindings, Env.lookup, Env.set,
-            Const.toVal, truthy, asInt, Val.isNone, valEq, valEqList, intCmp,
+            Const.toVal, Const.toRVal, truthy, asInt, RVal.isNone,
+            valEq, valEqList, intCmp,
             strCmp, evalCompareOp, evalBinOp, evalUnaryOp, lenVal, sortedVal,
             asIntList, asIntList_map_int, sortInts_length, normIndex,
             indexVal, targetNames, bindAll, assignTo,
             foldExtremum, extremumVal, absVal, intCastVal, isBuiltinName,
             moduleGlobals, globalsFold, globalsStep, lookupG, resolvedG,
             targetNamesG, evalGlobalExpr, evalGlobalExprs, globalFuel,
+            callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
+            RVal.freeze, RVal.freezeList,
             and_assoc, $extra,*] $(loc)?)
 
 @[inherit_doc pySimpTactic]

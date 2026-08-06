@@ -83,9 +83,9 @@ loop test (`if c then .ok (.bool true) else .ok (.bool false)`, the
 function off. Passed to `py_threshold` by `py_loop`'s `htest` discharge; if
 the `ite` survived, `py_threshold`'s `split <;> simp_all` mop-up would
 mis-assign the `tv` metavariable from one branch. -/
-theorem ite_ok_bool (c : Prop) [Decidable c] :
-    (if c then Res.ok (Val.bool true) else Res.ok (Val.bool false)) =
-      .ok (.bool (decide c)) := by
+theorem ite_ok_bool {σ : Type} (c : Prop) [Decidable c] (st : σ) :
+    (if c then Run.ok st (RVal.bool true) else Run.ok st (RVal.bool false)) =
+      .ok st (.bool (decide c)) := by
   by_cases h : c <;> simp [h]
 
 namespace PyLoopTactic
@@ -144,7 +144,7 @@ partial def rebuildEnv (repl : Array (String × Lean.Expr)) (e : Lean.Expr) :
     let entry' ←
       match repl.find? (·.1 == name) with
       | some (_, proj) => do
-          let newVal ← mkAppM ``Val.int #[proj]
+          let newVal ← mkAppM ``RVal.int #[proj]
           pure (mkAppN entry.getAppFn ((entry.getAppArgs).set! 3 newVal))
       | none => pure entry
     return mkAppN e.getAppFn ((e.getAppArgs).set! 1 entry' |>.set! 2 rest)
@@ -174,16 +174,19 @@ def mkProjs (p : Lean.Expr) (k : Nat) : MetaM (Array Lean.Expr) := do
       cur ← mkAppM ``Prod.snd #[cur]
   return out
 
-/-- The pieces of the frozen loop occurrence inside `hentry`. -/
+/-- The pieces of the frozen loop occurrence inside `hentry`. Since the H1
+re-shape the loop runs over a `FrameState`; `wE` is the pinned world of the
+loop (the walker's known mid-state — stage 1: the `initWorld` literal). -/
 structure LoopParts where
   mE : Lean.Expr
+  wE : Lean.Expr
   envE : Lean.Expr
   testE : Lean.Expr
   bodyE : Lean.Expr
   entries : Array (String × Lean.Expr)
 
-/-- Find the (first) `execWhile` application with a closed literal environment
-inside a possibly `∀ F`-quantified statement, and split out its parts. -/
+/-- Find the (first) `execWhile` application with a closed literal frame
+state inside a possibly `∀ F`-quantified statement, and split out its parts. -/
 def extractLoop (statement : Lean.Expr) : MetaM LoopParts := do
   forallTelescope statement fun _ concl => do
     let some ew := concl.find? fun e =>
@@ -194,9 +197,12 @@ def extractLoop (statement : Lean.Expr) : MetaM LoopParts := do
     for i in [3:5] do
       if (args[i]!).hasLooseBVars then
         throwError "py_loop: the loop test/body depend on the fuel binder — unsupported shape"
-    let entries ← parseEnvList args[2]!
-    return { mE := args[0]!, envE := args[2]!, testE := args[3]!,
-             bodyE := args[4]!, entries }
+    let stE ← whnfR args[2]!
+    unless stE.isAppOfArity ``FrameState.mk 2 do
+      throwError "py_loop: the loop's frame state is not a literal `⟨world, locals⟩`:{indentExpr stE}"
+    let entries ← parseEnvList (stE.getArg! 1)
+    return { mE := args[0]!, wE := stE.getArg! 0, envE := stE.getArg! 1,
+             testE := args[3]!, bodyE := args[4]!, entries }
 
 /-- Split a single-constructor two-field hypothesis (`∃`/`∧`/`×`) into two
 named parts. Returns the two field `FVarId`s and the new goal. -/
@@ -290,7 +296,7 @@ elab "py_begin" "[" prog:ident "]" : tactic => do
     setGoals [entryG.mvarId!]
     let progT : Term := ⟨prog.raw⟩
     evalTactic (← `(tactic|
-      (intro F; simp only [$progT:term]; py_simp [callFunction.eq_2])))
+      (intro F; simp only [$progT:term]; py_simp [callIn.eq_2])))
     let [g2] ← getGoals
       | throwError "py_begin: expected exactly one residual entry goal"
     g2.withContext do
@@ -332,8 +338,8 @@ def runPyLoop (stateNames? : Option (Array Name)) (inv dec : Term) : TacticM Uni
     for nm in stateNames do
       let some (_, valE) := parts.entries.find? (·.1 == nm.toString)
         | throwError "py_loop: loop variable `{nm}` is not in the loop environment {parts.entries.map (·.1)} — when the Python variable names are shadowed by ambient binders, name them with `(state := [...])`"
-      unless valE.isAppOfArity ``Val.int 1 do
-        throwError "py_loop: environment entry `{nm}` is not `Val.int`-valued:{indentExpr valE}"
+      unless valE.isAppOfArity ``RVal.int 1 do
+        throwError "py_loop: environment entry `{nm}` is not `RVal.int`-valued:{indentExpr valE}"
       initVals := initVals.push (valE.getArg! 0)
     -- (c) σ, toEnv, Inv, μ; tv/Cont/step as natural (assignable) mvars
     let intT := Lean.mkConst ``Int
@@ -348,7 +354,7 @@ def runPyLoop (stateNames? : Option (Array Name)) (inv dec : Term) : TacticM Uni
     let muFn ← withLocalDeclD `p σ fun p => do
       mkLambdaFVars #[p] (mkAppN decU (← mkProjs p k)).headBeta
     let contM ← mkFreshExprMVar (← mkArrow σ (Lean.mkConst ``Bool)) .natural `Cont
-    let tvM ← mkFreshExprMVar (← mkArrow σ (Lean.mkConst ``Val)) .natural `tv
+    let tvM ← mkFreshExprMVar (← mkArrow σ (Lean.mkConst ``RVal)) .natural `tv
     let mut stMs : Array Lean.Expr := #[]
     for j in [0:k] do
       stMs := stMs.push
@@ -357,7 +363,8 @@ def runPyLoop (stateNames? : Option (Array Name)) (inv dec : Term) : TacticM Uni
       mkLambdaFVars #[q] (← mkTupleE (stMs.map (mkApp · q)))
     -- (d) the generic while rule, obligations as natural mvars
     let rule ← mkAppM ``execWhile_total_of_invariant
-      #[parts.mE, parts.testE, parts.bodyE, toEnvFn, invFn, contM, stepFn, muFn, tvM]
+      #[parts.mE, parts.testE, parts.bodyE, parts.wE, toEnvFn, invFn, contM,
+        stepFn, muFn, tvM]
     let (hyps, _, _) ← forallMetaBoundedTelescope (← inferType rule) 5
     unless hyps.size == 5 do throwError "py_loop: internal — unexpected rule shape"
     let s0 ← mkTupleE initVals

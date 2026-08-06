@@ -31,6 +31,32 @@ The existing frontend-independent sampled analog/SV relation is useful
 infrastructure, but it is not a Verilog-AMS source frontend or execution
 semantics.
 
+## Python tier: `leanpy` — the script runner (owner-directed, 2026-08-06)
+
+A `leanpy file.py` binary that extracts, ingests, and interprets ARBITRARY
+Python files under the Lean semantics. Rationale (recorded verbatim from
+the direction): (1) it generalizes the differential harness from typed
+function calls to whole programs — stdout + exit code against the pinned
+CPython 3.9; (2) it turns the completeness goal into an empirical metric —
+run corpora (eventually CPython's own test suite), report the fraction
+completing and WHICH construct blocked each failure, so loudness becomes
+telemetry that prioritizes the ladder; (3) the end-state demo: sunfish.py
+playing identical chess under `leanpy` vs CPython — an executable fidelity
+check closing the hand-transcription gap for the whole sunfish effort.
+
+Design already fixed in the H1 core (docs/memory-model.md §effects):
+stdout is `World` data (`World.stdout`), exit status is a runner-boundary
+mapping, argv a marshalled global. Sequencing: v0 after the H1 stages —
+module-level execution of current-tier scripts (loudly refusing
+`def`/assignment interleaving until the ordered `ModuleItem`
+representation lands), first-unsupported-construct reporting, stdout diff
+vs python3.9, harness script-corpus mode; then the ladder continues (H2
+lists, H3 classes, H4 generators) with corpus telemetry as the
+prioritization signal beside the sunfish milestones; sunfish-under-leanpy
+is the capstone once the tier admits it (likely post-H4). A single-call
+convenience driver (`tools/lean-python`: extract → `leanmodels-run`, with
+an optional one-off CPython comparison) exists today.
+
 ## Python tier: the sunfish ladder (steps 3-6)
 
 Steps 1-2 are BUILT (G1 constant globals; `for` over lists/tuples;

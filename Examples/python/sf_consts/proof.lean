@@ -29,6 +29,6 @@ theorem is_back_rank_white_spec (i : PyInt) :
     sf_consts.is_back_rank_white(i) ==> decide (21 ≤ i ∧ i ≤ 28) := by
   refine ⟨32, ?_⟩
   by_cases h1 : (21 : Int) ≤ i <;> by_cases h2 : (i : Int) ≤ 28 <;>
-    py_simp [callFunction, sf_consts, h1, h2] <;> grind
+    py_simp [callFunction, callIn, sf_consts, h1, h2] <;> grind
 
 end Examples.python.sf_consts.proof

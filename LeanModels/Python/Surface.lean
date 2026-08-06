@@ -82,14 +82,52 @@ instance {α} [ToVal α] : ToVal (List α) :=
 @[simp] theorem toVal_list {α} [ToVal α] (xs : List α) :
     (ToVal.toVal xs : Val) = .list (xs.map ToVal.toVal).toArray := rfl
 
+/-! ### Thaw at the marshalling boundary
+
+Since H1 a public call thaws its arguments (`Val → RVal`), so
+captured/symbolic runs see a `ToVal`-marshalled argument through
+`RVal.thaw`. The collapse lemmas below keep goals in the runtime normal
+form (`RVal.int n`, `…listV (xs.map (thaw ∘ toVal))`), and the
+`asIntList` bridge is restated in exactly the shape those runs produce. -/
+
+@[simp] theorem thaw_toVal_int (n : Int) :
+    RVal.thaw (ToVal.toVal n) = .int n := rfl
+@[simp] theorem thaw_toVal_nat (n : Nat) :
+    RVal.thaw (ToVal.toVal n) = .int n := rfl
+@[simp] theorem thaw_toVal_bool (b : Bool) :
+    RVal.thaw (ToVal.toVal b) = .bool b := rfl
+@[simp] theorem thaw_toVal_str (s : String) :
+    RVal.thaw (ToVal.toVal s) = .str s := rfl
+
+/-- Thawing a marshalled list is the marshalled list of thaws (the
+`List.map`-normal form; `thawList` folded away). -/
+@[simp] theorem thaw_toVal_list {α} [ToVal α] (xs : List α) :
+    RVal.thaw (ToVal.toVal xs)
+      = .listV ((xs.map fun x => RVal.thaw (ToVal.toVal x)).toArray) := by
+  simp [RVal.thaw, RVal.thawList_eq_map]
+
 /-- `asIntList_map_int` (Logic.lean) restated at the marshalling boundary:
-captured/symbolic runs see a `ToVal`-marshalled list argument as
-`List.map ToVal.toVal xs` (simp does not rewrite the *unapplied*
-`ToVal.toVal` to `Val.int`), so `sorted(data)` needs the bridge in exactly
-this form. Wired into `py_vcgen`'s `interpLemmas`; manual `py_simp` proofs
-pass it explicitly. -/
+captured/symbolic runs see a `ToVal`-marshalled int-list argument as
+`List.map (fun x => RVal.thaw (ToVal.toVal x)) xs` (simp does not rewrite
+under the *unapplied* composite), so `sorted(data)` needs the bridge in
+exactly this form. Wired into `py_vcgen`'s `interpLemmas`; manual
+`py_simp` proofs pass it explicitly. -/
 theorem asIntList_map_toVal (l : List Int) :
-    asIntList (l.map ToVal.toVal) = some l := asIntList_map_int l
+    asIntList (l.map fun x => RVal.thaw (ToVal.toVal x)) = some l := by
+  have hfn : (fun x : Int => RVal.thaw (ToVal.toVal x)) = RVal.int := by
+    funext x; rfl
+  rw [hfn]
+  exact asIntList_map_int l
+
+/-- `asIntList_map_toVal` in the `Function.comp` normal form `List.map_map`
+leaves behind (captured runs meet the marshalled thaw as
+`RVal.thaw ∘ ToVal.toVal`). -/
+theorem asIntList_map_thaw_comp (l : List Int) :
+    asIntList (l.map (RVal.thaw ∘ ToVal.toVal)) = some l := by
+  have hfn : (RVal.thaw ∘ (ToVal.toVal : Int → Val)) = RVal.int := by
+    funext x; rfl
+  rw [hfn]
+  exact asIntList_map_int l
 
 /-- Python `int` 3-tuples — the `extended_gcd` return shape (added for
 `Examples/python/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
@@ -154,12 +192,37 @@ no exact-offset fuel bookkeeping. Caveat: when the loop lemma was applied at
 metavariable spans (module- and span-agnostic lemmas instantiated with `_`),
 `simp` cannot index `h`; splice it with the conditional `rw [h]` instead and
 discharge the `f₀ ≤ F` side goal by `omega` (see `tri_total`). -/
-theorem execWhile_at_least {m : Module} {env : Env} {test : Expr}
-    {body orelse : List Stmt} {p : Env × Flow}
-    (h : ∃ fuel, execWhile m fuel env test body orelse = .ok p) :
-    ∃ f₀, ∀ F, f₀ ≤ F → execWhile m F env test body orelse = .ok p := by
+theorem execWhile_at_least {m : Module} {st : FrameState} {test : Expr}
+    {body orelse : List Stmt} {st' : FrameState} {flow : RFlow}
+    (h : ∃ fuel, execWhile m fuel st test body orelse = .ok st' flow) :
+    ∃ f₀, ∀ F, f₀ ≤ F → execWhile m F st test body orelse = .ok st' flow := by
   obtain ⟨fuel, hf⟩ := h
   exact ⟨fuel, fun F hF => execWhile_mono hf (by simp) F hF⟩
+
+/-- The `callIn` threshold form of a public `CallsTo` fact — the splice a
+recursion proof (or a callee-spec rule) rewrites a nested call site with.
+Stage-1 geometry (docs/memory-model.md): a nested `callIn` site inside a
+public run sits at exactly the public fresh world (`initWorld m` — nothing
+allocates, `worldInv`), with thawed arguments; the callee returns the thaw
+of the spec's value (`RVal.eq_thaw_of_freeze`) and hands the world back
+unchanged, so the rewrite is fully determined. -/
+theorem CallsTo.callIn_at_least {m : Module} {fname : String}
+    {args : Array Val} {v : Val} (h : CallsTo m fname args v) :
+    ∃ f₀, ∀ F, f₀ ≤ F →
+      callIn m F (initWorld m) fname (RVal.thawArgs args)
+        = .ok (initWorld m) (RVal.thaw v) := by
+  obtain ⟨fuel, hf⟩ := h
+  unfold callFunction at hf
+  revert hf
+  cases hc : callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
+  | ok w' rv =>
+    intro hf
+    obtain rfl := RVal.eq_thaw_of_freeze rv hf
+    obtain rfl := callIn_world hc
+    exact ⟨fuel, fun F hF => callIn_mono hc (by simp) F hF⟩
+  | exn w' e => intro hf; cases hf
+  | timeout => intro hf; cases hf
+  | unsupported msg => intro hf; cases hf
 
 /-! ## The generic while rule -/
 
@@ -186,22 +249,30 @@ shape lets `py_simp` execute step by step while the tail fuel `c` stays
 symbolic. The `py_threshold` tactic below packages exactly this recipe.
 Instantiation caveat: pass `test`, `body` (and `σ` where inference needs
 it) explicitly — left as `_` they stay metavariables inside the obligation
-goals, and symbolic execution cannot run on an unknown AST. -/
+goals, and symbolic execution cannot run on an unknown AST.
+
+Pinned-world geometry (H1 stage 1): the rule runs the loop at ONE world
+`w`, pinned through test, body, and exit — the shape the walker needs (a
+known mid-state), justified by stage-1 world invariance (`worldInv`); the
+`htv` obligation is the `Res`-valued truthiness decision (a `.ref` test
+value would be loud, so the obligation also proves decidedness). -/
 theorem execWhile_total_of_invariant {σ : Type}
-    (m : Module) (test : Expr) (body : List Stmt)
+    (m : Module) (test : Expr) (body : List Stmt) (w : World)
     (toEnv : σ → Env) (Inv : σ → Prop) (Cont : σ → Bool)
-    (step : σ → σ) (μ : σ → Nat) (tv : σ → Val)
+    (step : σ → σ) (μ : σ → Nat) (tv : σ → RVal)
     (htest : ∀ s, Inv s →
-      ∃ f₀, ∀ F, f₀ ≤ F → evalExpr m F (toEnv s) test = .ok (tv s))
-    (htv : ∀ s, Inv s → truthy (tv s) = Cont s)
+      ∃ f₀, ∀ F, f₀ ≤ F →
+        evalExpr m F ⟨w, toEnv s⟩ test = .ok ⟨w, toEnv s⟩ (tv s))
+    (htv : ∀ s, Inv s → truthy (tv s) = .ok (Cont s))
     (hbody : ∀ s, Inv s → Cont s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →
-        execStmts m F (toEnv s) body = .ok (toEnv (step s), .next))
+        execStmts m F ⟨w, toEnv s⟩ body = .ok ⟨w, toEnv (step s)⟩ .next)
     (hinv : ∀ s, Inv s → Cont s = true → Inv (step s))
     (hdec : ∀ s, Inv s → Cont s = true → μ (step s) < μ s) :
     ∀ s, Inv s →
       ∃ s', Inv s' ∧ Cont s' = false ∧
-        ∃ F, execWhile m F (toEnv s) test body [] = .ok (toEnv s', .next) := by
+        ∃ F, execWhile m F ⟨w, toEnv s⟩ test body []
+              = .ok ⟨w, toEnv s'⟩ .next := by
   intro s hs
   generalize hμ : μ s = n
   induction n using Nat.strongRecOn generalizing s with
@@ -216,18 +287,20 @@ theorem execWhile_total_of_invariant {σ : Type}
       refine ⟨s', hs', hc', ft + fb + F + 1, ?_⟩
       rw [execWhile]
       rw [hft (ft + fb + F) (by omega)]
-      simp only [Res.ok_bind]
-      rw [htv s hs, hc]
+      simp only [Run.ok_bind]
+      rw [htv s hs]
+      simp only [Run.liftRes_ok, Run.ok_bind]
+      rw [hc]
       simp only [if_true]
       rw [hfb (ft + fb + F) (by omega)]
-      simp only [Res.ok_bind]
+      simp only [Run.ok_bind]
       exact hF' (ft + fb + F) (by omega)
     · -- test is false: exit immediately (orelse = [] finishes in one step)
       have hcf : Cont s = false := by revert hc; cases Cont s <;> simp
       refine ⟨s, hs, hcf, ft + 2, ?_⟩
       rw [execWhile]
       rw [hft (ft + 1) (by omega)]
-      simp only [Res.ok_bind]
+      simp only [Run.ok_bind]
       rw [htv s hs]
       simp [hcf, execStmts]
 
@@ -531,25 +604,28 @@ open Lean Lean.Parser.Tactic in
 /-- `py_lift ⟨f₀, h⟩ := e with [prog]` — the house-style opener for splicing
 a recursive run into a symbolic execution (`Examples/python/fib/fib.py`): `e` is
 any `CallsTo` fact (typically the induction hypothesis at a smaller
-argument); the macro takes its fuel-threshold form (`CallsTo.at_least`) and
-symbolically normalizes it, binding the threshold `f₀` and
-`h : ∀ F, f₀ ≤ F → callFunction ⟨…⟩ … F = .ok v` with the program literal
-`prog` unfolded. `h` is a *conditional rewrite rule*: after executing the
-enclosing body (`rw [callFunction.eq_2]; py_simp […]`), close the frozen
-recursive call sites with `simp (disch := omega) only [h]` — `omega`
-discharges the `f₀ ≤ F` side conditions at whatever fuel the execution
-produced, so no exact-offset fuel bookkeeping ever appears (pick any
-generous slack for the outer witness). Implementation note: the unfold and
-the normalization are one fused `py_simp [prog] at h` — the two-step
-`simp only [prog] at h; py_simp at h` form fails with "no progress" on
-hypotheses that need no cast normalization. -/
+argument); the macro takes its `callIn` fuel-threshold form
+(`CallsTo.callIn_at_least` — since H1 the nested call sites inside a
+public run are `callIn` at the pinned public world, so that is the splice
+shape) and symbolically normalizes it, binding the threshold `f₀` and
+`h : ∀ F, f₀ ≤ F → callIn ⟨…⟩ F (initWorld _) … = .ok (initWorld _) v`
+with the program literal `prog` unfolded. `h` is a *conditional rewrite
+rule*: after executing the enclosing body (`unfold callFunction;
+rw [callIn.eq_2]; py_simp […]`), close the frozen recursive call sites
+with `simp (disch := omega) only [h]` — `omega` discharges the `f₀ ≤ F`
+side conditions at whatever fuel the execution produced, so no
+exact-offset fuel bookkeeping ever appears (pick any generous slack for
+the outer witness). Implementation note: the unfold and the normalization
+are one fused `py_simp [prog] at h` — the two-step `simp only [prog] at h;
+py_simp at h` form fails with "no progress" on hypotheses that need no
+cast normalization. -/
 macro "py_lift" "⟨" fid:ident "," hid:ident "⟩" " := " e:term " with "
     "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic => do
   let extra : Syntax.TSepArray
       [`Lean.Parser.Tactic.simpStar, `Lean.Parser.Tactic.simpErase,
        `Lean.Parser.Tactic.simpLemma] "," := ⟨args.elemsAndSeps⟩
   `(tactic|
-    (obtain ⟨$fid, $hid⟩ := ($e).at_least
+    (obtain ⟨$fid, $hid⟩ := ($e).callIn_at_least
      py_simp [$extra,*] at $hid:ident))
 
 open Lean Elab Tactic in
@@ -562,8 +638,9 @@ manual routes instead. Residual goals that are clean arithmetic pass
 through untouched (they are useful; `py_prove` leaves them on purpose). -/
 elab "py_prove_residual_guard" : tactic => do
   let roots : List Name :=
-    [``callFunction, ``execWhile, ``execStmts, ``execStmt, ``evalExpr,
-     ``evalExprs, ``Res, ``Val, ``Flow]
+    [``callFunction, ``callIn, ``execWhile, ``execFor, ``execStmts,
+     ``execStmt, ``evalExpr, ``evalExprs, ``Res, ``Run, ``Val, ``RVal,
+     ``RFlow, ``FrameState, ``World]
   for g in (← getGoals) do
     let t ← instantiateMVars (← g.getType)
     let dirty := t.find? fun e =>
@@ -613,17 +690,17 @@ macro "py_prove" "[" args:(simpStar <|> simpErase <|> simpLemma),* "]" : tactic 
     (intros
      first
        | (refine ⟨32, ?_⟩
-          py_simp [callFunction, $extra,*]
+          py_simp [callFunction, callIn, $extra,*]
           first
             | done
             | split <;> py_simp <;> omega
             | omega
           done)
        | (refine CallsTo.intro 32 ?_
-          py_simp [callFunction, $extra,*]
+          py_simp [callFunction, callIn, $extra,*]
           done)
-       | refine ⟨32, ?_⟩ <;> py_simp [callFunction, $extra,*]
-       | (py_simp [callFunction, $extra,*]
+       | refine ⟨32, ?_⟩ <;> py_simp [callFunction, callIn, $extra,*]
+       | (py_simp [callFunction, callIn, $extra,*]
           all_goals try (first | rfl | omega))
      py_prove_residual_guard))
 

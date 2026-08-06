@@ -31,6 +31,9 @@ open LeanModels LeanModels.Python
 
 load_program sf_bound_tree from "Examples/python/sf_bound_tree/sf_bound_tree.json"
 
+/-- The pinned world of the stage-1 geometry (`initWorld` unfolded). -/
+private def pw : World := ⟨#[], [], []⟩
+
 /-- Explicit game trees: `(eval, children)`. -/
 inductive GTree where
   | node (eval : Int) (kids : List GTree)
@@ -65,6 +68,11 @@ instance : ToVal GTree := ⟨GTree.toVal⟩
 
 @[simp] private theorem toVal_eq_toVal (t : GTree) :
     (ToVal.toVal t : Val) = GTree.toVal t := rfl
+
+-- (No custom thaw-normal-form lemma for trees: `py_simp` unfolds
+-- `RVal.thaw`/`RVal.thawList` definitionally, so the canonical runtime
+-- form of a marshalled kid list is `RVal.thawList (GTree.toValList ks)`
+-- — the shapes below are stated in exactly that form.)
 
 /-- `formal/Sunfish/Bound.lean`'s `bound`, specialized to the tree game
 (root namespace: the twin statements must mention the same constant). -/
@@ -123,9 +131,9 @@ private def loopBody : List Stmt :=
 
 /-- The uniform loop environment: params, the running `best`, the loop
 variable `kid` and body local `s` (present from the first iteration on). -/
-private def E (tv : Val) (gamma depth b : Int) (kv : Val) (sv : Int) : Env :=
-  [("tree", tv), ("gamma", Val.int gamma), ("depth", Val.int depth),
-   ("best", Val.int b), ("kid", kv), ("s", Val.int sv)]
+private def E (tv : RVal) (gamma depth b : Int) (kv : RVal) (sv : Int) : Env :=
+  [("tree", tv), ("gamma", RVal.int gamma), ("depth", RVal.int depth),
+   ("best", RVal.int b), ("kid", kv), ("s", RVal.int sv)]
 
 set_option maxHeartbeats 3200000 in
 set_option maxRecDepth 8192 in
@@ -133,65 +141,67 @@ set_option maxRecDepth 8192 in
 tail over children `ks` folds `sfSearchMoves` over the negated recursive
 scores into `best`. The depth IH enters as `IH` (fuel-threshold per kid via
 `CallsTo.at_least`). -/
-private theorem keyT (tv : Val) (gamma depth : Int) (d : Nat)
+private theorem keyT (tv : RVal) (gamma depth : Int) (d : Nat)
     (hd : (depth - 1).toNat = d)
     (IH : ∀ (k : GTree) (gamma' depth' : Int), depth'.toNat = d →
       CallsTo sf_bound_tree "bound"
         #[ToVal.toVal k, Val.int gamma', Val.int depth']
         (Val.int (sfBoundModel gamma' d k))) :
-    ∀ (ks : List GTree) (b : Int) (kv : Val) (sv : Int),
+    ∀ (ks : List GTree) (b : Int) (kv : RVal) (sv : Int),
       ∃ f₀ kv' sv', ∀ F, f₀ ≤ F →
-        execFor sf_bound_tree F (E tv gamma depth b kv sv) loopTgt
-            (GTree.toValList ks) loopBody
-          = .ok (E tv gamma depth
+        execFor sf_bound_tree F ⟨pw, E tv gamma depth b kv sv⟩ loopTgt
+            (RVal.thawList (GTree.toValList ks)) loopBody
+          = .ok ⟨pw, E tv gamma depth
               (sfSearchMoves gamma
                 (ks.map fun k => -sfBoundModel (1 - gamma) d k) b)
-              kv' sv', .next) := by
+              kv' sv'⟩ .next := by
   intro ks
   induction ks with
   | nil =>
     intro b kv sv
     refine ⟨1, kv, sv, fun F hF => ?_⟩
-    have hrun : execFor sf_bound_tree 1 (E tv gamma depth b kv sv)
-        loopTgt (GTree.toValList []) loopBody
-        = .ok (E tv gamma depth b kv sv, .next) := by
-      rw [toValList_nil, execFor.eq_2]
+    have hrun : execFor sf_bound_tree 1 ⟨pw, E tv gamma depth b kv sv⟩
+        loopTgt (RVal.thawList (GTree.toValList [])) loopBody
+        = .ok ⟨pw, E tv gamma depth b kv sv⟩ .next := by
+      rw [toValList_nil, show RVal.thawList [] = [] from rfl, execFor.eq_2]
     have := execFor_mono hrun (by simp) F hF
     simpa [sfSearchMoves] using this
   | cons k rest ih =>
     intro b kv sv
-    obtain ⟨fk, hk⟩ := (IH k (1 - gamma) (depth - 1) (by omega)).at_least
-    have hk' : ∀ F, fk ≤ F → callFunction sf_bound_tree "bound"
-        #[ToVal.toVal k, Val.int (1 - gamma), Val.int (depth - 1)] F
-        = .ok (Val.int (sfBoundModel (1 - gamma) d k)) := fun F hF => hk F hF
-    simp only [sf_bound_tree, toVal_eq_toVal] at hk'
+    obtain ⟨fk, hk'⟩ := (IH k (1 - gamma) (depth - 1) (by omega)).callIn_at_least
+    py_simp [sf_bound_tree] at hk'
     by_cases hc : gamma ≤ max b (-sfBoundModel (1 - gamma) d k)
     · -- cutoff: this iteration breaks
-      refine ⟨fk + 64, ToVal.toVal k, -sfBoundModel (1 - gamma) d k,
-        fun F hF => ?_⟩
-      have hrun : execFor sf_bound_tree (fk + 64) (E tv gamma depth b kv sv)
-          loopTgt (GTree.toValList (k :: rest)) loopBody
-          = .ok (E tv gamma depth (max b (-sfBoundModel (1 - gamma) d k))
-              (ToVal.toVal k) (-sfBoundModel (1 - gamma) d k), .next) := by
-        rw [toValList_cons, execFor.eq_3]
-        py_simp [sf_bound_tree, loopTgt, loopBody, E, hc]
+      refine ⟨fk + 64, RVal.thaw (ToVal.toVal k),
+        -sfBoundModel (1 - gamma) d k, fun F hF => ?_⟩
+      have hrun : execFor sf_bound_tree (fk + 64) ⟨pw, E tv gamma depth b kv sv⟩
+          loopTgt (RVal.thawList (GTree.toValList (k :: rest))) loopBody
+          = .ok ⟨pw, E tv gamma depth (max b (-sfBoundModel (1 - gamma) d k))
+              (RVal.thaw (ToVal.toVal k)) (-sfBoundModel (1 - gamma) d k)⟩
+              .next := by
+        rw [toValList_cons, show ∀ (v : Val) l, RVal.thawList (v :: l)
+              = RVal.thaw v :: RVal.thawList l from fun _ _ => rfl,
+            execFor.eq_3]
+        py_simp [pw, sf_bound_tree, loopTgt, loopBody, E, hc]
         simp (disch := omega) only [hk']
         py_simp [hc]
       have := execFor_mono hrun (by simp) F hF
       simpa [sfSearchMoves, if_pos hc] using this
     · obtain ⟨f₁, kv₁, sv₁, h₁⟩ := ih (max b (-sfBoundModel (1 - gamma) d k))
-        (ToVal.toVal k) (-sfBoundModel (1 - gamma) d k)
+        (RVal.thaw (ToVal.toVal k)) (-sfBoundModel (1 - gamma) d k)
       refine ⟨fk + f₁ + 64, kv₁, sv₁, fun F hF => ?_⟩
       have hrun : execFor sf_bound_tree (fk + f₁ + 64)
-          (E tv gamma depth b kv sv)
-          loopTgt (GTree.toValList (k :: rest)) loopBody
-          = .ok (E tv gamma depth
+          ⟨pw, E tv gamma depth b kv sv⟩
+          loopTgt (RVal.thawList (GTree.toValList (k :: rest))) loopBody
+          = .ok ⟨pw, E tv gamma depth
               (sfSearchMoves gamma
                 (rest.map fun k => -sfBoundModel (1 - gamma) d k)
                 (max b (-sfBoundModel (1 - gamma) d k)))
-              kv₁ sv₁, .next) := by
-        rw [toValList_cons, execFor.eq_3]
-        simp only [sf_bound_tree, E, loopTgt, loopBody, toVal_eq_toVal] at h₁ ⊢
+              kv₁ sv₁⟩ .next := by
+        rw [toValList_cons, show ∀ (v : Val) l, RVal.thawList (v :: l)
+              = RVal.thaw v :: RVal.thawList l from fun _ _ => rfl,
+            execFor.eq_3]
+        simp only [pw, sf_bound_tree, E, loopTgt, loopBody, toVal_eq_toVal] at h₁ ⊢
         py_simp [sf_bound_tree, (show ¬ gamma ≤ max b
           (-sfBoundModel (1 - gamma) d k) from hc)]
         simp (disch := omega) only [hk']
@@ -215,7 +225,7 @@ private theorem bound_core (d : Nat) : ∀ (t : GTree) (gamma depth : Int),
     intro t gamma depth h0
     obtain ⟨e, kids⟩ := t
     refine ⟨32, ?_⟩
-    rw [callFunction.eq_2]
+    unfold callFunction; rw [callIn.eq_2]
     py_simp [sf_bound_tree, sfBoundModel, (show (depth : Int) ≤ 0 by omega)]
   | succ d ihd =>
     intro t gamma depth hd
@@ -224,20 +234,17 @@ private theorem bound_core (d : Nat) : ∀ (t : GTree) (gamma depth : Int),
     cases kids with
     | nil =>
       refine ⟨64, ?_⟩
-      rw [callFunction.eq_2]
+      unfold callFunction; rw [callIn.eq_2]
       py_simp [sf_bound_tree, hpos]
       rw [execFor.eq_2]
       py_simp [sfBoundModel, sfSearchMoves]
     | cons k0 krest =>
-      obtain ⟨fk, hk⟩ := (ihd k0 (1 - gamma) (depth - 1) (by omega)).at_least
-      have hk' : ∀ F, fk ≤ F → callFunction sf_bound_tree "bound"
-          #[ToVal.toVal k0, Val.int (1 - gamma), Val.int (depth - 1)] F
-          = .ok (Val.int (sfBoundModel (1 - gamma) d k0)) := fun F hF => hk F hF
-      simp only [sf_bound_tree, toVal_eq_toVal] at hk'
+      obtain ⟨fk, hk'⟩ := (ihd k0 (1 - gamma) (depth - 1) (by omega)).callIn_at_least
+      py_simp [sf_bound_tree] at hk'
       by_cases hc : gamma ≤ -min 69290 (sfBoundModel (1 - gamma) d k0)
       · -- the very first iteration breaks
         refine ⟨fk + 96, ?_⟩
-        rw [callFunction.eq_2]
+        unfold callFunction; rw [callIn.eq_2]
         py_simp [sf_bound_tree, hpos]
         rw [execFor.eq_3]
         py_simp [hc]
@@ -246,13 +253,14 @@ private theorem bound_core (d : Nat) : ∀ (t : GTree) (gamma depth : Int),
         py_simp [sfBoundModel, sfSearchMoves, hc]
       · -- unroll the first iteration by hand, splice `keyT` for the rest
         obtain ⟨f₁, kv₁, sv₁, h₁⟩ := keyT
-          (ToVal.toVal (GTree.node e (k0 :: krest))) gamma depth d (by omega)
+          (RVal.thaw (ToVal.toVal (GTree.node e (k0 :: krest)))) gamma depth d
+          (by omega)
           (fun k g' d' h' => ihd k g' d' h') krest
           (max (-69290) (-sfBoundModel (1 - gamma) d k0))
-          (ToVal.toVal k0) (-sfBoundModel (1 - gamma) d k0)
-        py_simp [sf_bound_tree, E, loopTgt, loopBody] at h₁
+          (RVal.thaw (ToVal.toVal k0)) (-sfBoundModel (1 - gamma) d k0)
+        py_simp [pw, sf_bound_tree, E, loopTgt, loopBody] at h₁
         refine ⟨fk + f₁ + 96, ?_⟩
-        rw [callFunction.eq_2]
+        unfold callFunction; rw [callIn.eq_2]
         py_simp [sf_bound_tree, hpos]
         rw [execFor.eq_3]
         py_simp [hc]

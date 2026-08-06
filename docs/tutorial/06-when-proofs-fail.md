@@ -390,7 +390,7 @@ brand-headed (mode 5). The working proof, verbatim:
 theorem clamp01_total (x : PyInt) : ag_clamp01.clamp01(x) ==> max 0 (min 1 x) := by
   refine ⟨32, ?_⟩
   by_cases h1 : x < 0 <;> by_cases h2 : 1 < x <;>
-    py_simp [callFunction, ag_clamp01, h1, h2] <;> grind
+    py_simp [callFunction, callIn, ag_clamp01, h1, h2] <;> grind
 ```
 
 ## Bonus quick hits

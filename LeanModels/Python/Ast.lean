@@ -197,8 +197,8 @@ inductive Flow where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Val` has none (nested arrays).
 
-/-- Local environments. First match wins on lookup; `Env.set` (later phase)
-replaces in place, else appends. -/
-abbrev Env := List (String × Val)
+-- `Env` (local environments) lives in `Runtime.lean` since the H1 core
+-- re-shape: environments bind names to *runtime* values (`RVal`), while
+-- `Val` here remains the frozen public boundary type.
 
 end LeanModels.Python

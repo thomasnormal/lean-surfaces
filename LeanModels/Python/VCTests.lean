@@ -83,28 +83,32 @@ would otherwise go. -/
     CallsTo factM "fact" #[.int n] (.int (factorial n)) := by
   induction n with
   | zero =>
-    exact ⟨8, by py_simp [callFunction, factM, factFn, factPlusOneFn, factorial]⟩
+    exact ⟨8, by py_simp [callFunction, callIn, factM, factFn, factPlusOneFn,
+                          factorial]⟩
   | succ k ih =>
     refine PyTriple.callsTo_ofRet (f := factFn) rfl rfl rfl rfl ?_
-    refine PyTriple.seq (R := fun env => env = [("n", .int (k + 1 : Nat))])
+    refine PyTriple.seq
+      (R := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
       (.ifStmt (Pt := fun _ => False)
-        (Pf := fun env => env = [("n", .int (k + 1 : Nat))])
+        (Pf := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
         ?_ (fun _ h => h.elim) (.nil fun _ h => h)) ?_
     · -- the test `n <= 0` is false at n = k + 1
-      rintro env rfl
-      refine ⟨.bool false, .of_eval (fuel := 4) ?_,
-        fun h => by simp [truthy] at h, fun _ => rfl⟩
-      py_simp [factM, factFn]
+      rintro st rfl
+      refine ⟨.bool false, false, .of_eval (fuel := 4) ?_, rfl, ?_, ?_⟩
+      · py_simp [factM, factFn]
+      · intro h; cases h
+      · intro _; rfl
     · -- r = fact(n - 1): the IH is the callee fact
       refine PyTriple.call
-        (R := fun env =>
-          env = [("n", .int (k + 1 : Nat)), ("r", .int (factorial k))])
+        (R := fun st => st = ⟨initWorld factM,
+          [("n", .int (k + 1 : Nat)), ("r", .int (factorial k))]⟩)
         ?_ (.single (.ret ?_))
-      · rintro env rfl
-        exact ⟨rfl, [.int (k : Nat)], .int (factorial k),
-          .cons (.of_eval (fuel := 3) (by py_simp [factM, factFn])) .nil, ih, rfl⟩
+      · rintro st rfl
+        refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
+          .cons (.of_eval (fuel := 3) ?_) .nil, ih, rfl⟩
+        py_simp [factM, factFn]
       · -- return n * r
-        rintro env rfl
+        rintro st rfl
         refine ⟨.int ((↑(k + 1) : Int) * ↑(factorial k)),
           .of_eval (fuel := 3) rfl, ?_⟩
         simp [PyPost.ofRet, factorial, Int.natCast_mul]
@@ -117,12 +121,14 @@ theorem fact_plus_one_spec (n : Nat) :
     CallsTo factM "fact_plus_one" #[.int n] (.int (factorial n + 1)) := by
   refine PyTriple.callsTo_ofRet (f := factPlusOneFn) rfl rfl rfl rfl ?_
   refine PyTriple.call
-    (R := fun env => env = [("n", .int n), ("y", .int (factorial n))])
+    (R := fun st => st = ⟨initWorld factM,
+      [("n", .int n), ("y", .int (factorial n))]⟩)
     ?_ (.single (.ret ?_))
-  · rintro env rfl
-    exact ⟨rfl, [.int (n : Nat)], .int (factorial n),
-      .cons (.of_eval (fuel := 2) rfl) .nil, fact_spec n, rfl⟩
-  · rintro env rfl
+  · rintro st rfl
+    refine ⟨rfl, rfl, #[.int (n : Nat)], .int (factorial n),
+      .cons (.of_eval (fuel := 2) ?_) .nil, fact_spec n, rfl⟩
+    rfl
+  · rintro st rfl
     refine ⟨.int ((↑(factorial n) : Int) + 1), .of_eval (fuel := 3) rfl, ?_⟩
     simp [PyPost.ofRet]
 
@@ -130,9 +136,11 @@ theorem fact_plus_one_spec (n : Nat) :
 whole-body triple (`CallsTo.toTriple`) — this is how a proof *assumes* a
 callee's arrow spec and keeps working in the triple vocabulary. -/
 example : PyTriple factM
-    (fun env => env = mkCallEnv factFn.params #[.int (3 : Nat)]) factFn.body.toList
+    (fun st => st = ⟨initWorld factM,
+      mkCallEnv factFn.params (RVal.thawArgs #[Val.int (3 : Nat)])⟩)
+    factFn.body.toList
     { next := fun _ => Val.int (factorial 3 : Nat) = .none,
-      ret := fun w _ => w = .int (factorial 3 : Nat) } :=
+      ret := fun rv _ => rv = RVal.thaw (.int (factorial 3 : Nat)) } :=
   (fact_spec 3).toTriple rfl
 
 -- The registry round-trip: `@[py_spec]`-marked lemmas are retrievable via

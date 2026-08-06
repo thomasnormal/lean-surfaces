@@ -193,11 +193,12 @@ theorem sortInts_length (l : List Int) :
 open Lean Lean.Parser.Tactic in
 /-- `py_simp [extra, lemmas] at h` — one stack frame's worth of symbolic
 execution of the Python interpreter: `simp` with every interpreter equation
-*except* the recursion points `callFunction` and `execWhile`, which stay
-frozen at symbolic fuel so induction hypotheses can be applied to them. Pass
-them explicitly (`py_simp [callFunction, execWhile, tri] at h`) when full
-unfolding is safe (no recursion, or concrete fuel), or unfold exactly one
-step with `rw [callFunction.eq_2] at h` / `rw [execWhile.eq_2] at h`.
+*except* the recursion points `callFunction`, `execWhile`, and `execFor`,
+which stay frozen at symbolic fuel so induction hypotheses can be applied to
+them. Pass them explicitly (`py_simp [callFunction, execWhile, tri] at h`)
+when full unfolding is safe (no recursion, or concrete fuel), or unfold
+exactly one step with `rw [callFunction.eq_2] at h` / `rw [execWhile.eq_2]
+at h` / `rw [execFor.eq_2] at h`.
 Program literals introduced by `load_program` must also be passed explicitly
 (e.g. `py_simp [tri] at h`). `and_assoc` is included so that fully-reduced
 existential nests collapse. -/
@@ -213,7 +214,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             Const.toVal, truthy, asInt, Val.isNone, valEq, valEqList, intCmp,
             strCmp, evalCompareOp, evalBinOp, evalUnaryOp, lenVal, sortedVal,
             asIntList, asIntList_map_int, sortInts_length, normIndex,
-            indexVal, targetNames, bindAll, assignTo, execFor,
+            indexVal, targetNames, bindAll, assignTo,
             foldExtremum, extremumVal, absVal, intCastVal, isBuiltinName,
             moduleGlobals, globalsFold, globalsStep, lookupG, resolvedG,
             targetNamesG, evalGlobalExpr, evalGlobalExprs, globalFuel,

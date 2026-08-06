@@ -286,11 +286,13 @@ theorem fuelMono (fuel : Nat) :
           exact ihW m env test body.toList orelse.toList k hk
         | forStmt target iter body orelse _ =>
           simp only [execStmt]
-          refine Res.le_ite ?_ (Res.le_refl _)
-          refine Res.le_bind (ihE m env iter k hk) fun it => ?_
-          cases it <;> try exact Res.le_refl _
-          case list xs => exact ihFor m env target xs.toList body.toList k hk
-          case tuple xs => exact ihFor m env target xs.toList body.toList k hk
+          cases horelse : orelse.toList with
+          | cons o os => exact Res.le_refl _
+          | nil =>
+            refine Res.le_bind (ihE m env iter k hk) fun it => ?_
+            cases it <;> try exact Res.le_refl _
+            case list xs => exact ihFor m env target xs.toList body.toList k hk
+            case tuple xs => exact ihFor m env target xs.toList body.toList k hk
         | ifStmt test body orelse _ =>
           simp only [execStmt]
           exact Res.le_bind (ihE m env test k hk) fun t =>

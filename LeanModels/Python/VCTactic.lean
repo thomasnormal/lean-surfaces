@@ -388,7 +388,7 @@ def interpUnfolds : List Name :=
    ``Const.toVal, ``truthy, ``asInt, ``Val.isNone, ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp,
    ``lenVal, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
-   ``targetNames, ``bindAll, ``assignTo, ``execFor,
+   ``targetNames, ``bindAll, ``assignTo,
    ``foldExtremum, ``extremumVal, ``absVal, ``intCastVal, ``isBuiltinName,
    ``moduleGlobals, ``globalsFold, ``globalsStep, ``lookupG, ``resolvedG,
    ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs, ``globalFuel,

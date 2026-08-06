@@ -860,14 +860,18 @@ def execStmt (m : Module) (fuel : Nat) (env : Env) (s : Stmt) : Res (Env × Flow
     | .whileLoop test body orelse _ =>
       execWhile m fuel env test body.toList orelse.toList
     | .forStmt target iter body orelse _ =>
-      if orelse.isEmpty then do
+      -- (`orelse` inspected via `toList` pattern-match, the interpreter's
+      -- standard idiom — a helper like `Array.isEmpty` would be outside the
+      -- symbolic-execution simp sets and wedge every `for` at the guard.)
+      match orelse.toList with
+      | [] => do
         let it ← evalExpr m fuel env iter
         match it with
         | .list xs => execFor m fuel env target xs.toList body.toList
         | .tuple xs => execFor m fuel env target xs.toList body.toList
         | .str _ => .unsupported "'for' over a str is outside the v0 tier"
         | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
-      else .unsupported "'for … else' is outside the v0 tier"
+      | _ :: _ => .unsupported "'for … else' is outside the v0 tier"
     | .ifStmt test body orelse _ => do
         let t ← evalExpr m fuel env test
         if truthy t then execStmts m fuel env body.toList

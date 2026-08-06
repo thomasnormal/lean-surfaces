@@ -1,0 +1,294 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/sf_bound_for/sf_bound_for.py",
+  "source_sha256": "77dbee6420a67e59e1bc91e5052b718b36665447be06a26f0d3ab35680fc8fb1",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 18
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 1,
+              "col_offset": 0,
+              "end_lineno": 1,
+              "end_col_offset": 10
+            },
+            "id": "MATE_UPPER"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 13,
+            "end_lineno": 1,
+            "end_col_offset": 18
+          },
+          "value": {
+            "type": "int",
+            "repr": "69290"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 24,
+          "end_col_offset": 15
+        },
+        "name": "bound_loop",
+        "args": [
+          {
+            "arg": "scores",
+            "span": {
+              "lineno": 4,
+              "col_offset": 15,
+              "end_lineno": 4,
+              "end_col_offset": 21
+            }
+          },
+          {
+            "arg": "gamma",
+            "span": {
+              "lineno": 4,
+              "col_offset": 23,
+              "end_lineno": 4,
+              "end_col_offset": 28
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 19,
+              "col_offset": 4,
+              "end_lineno": 19,
+              "end_col_offset": 22
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 4,
+                  "end_lineno": 19,
+                  "end_col_offset": 8
+                },
+                "id": "best"
+              }
+            ],
+            "value": {
+              "kind": "UnaryOp",
+              "span": {
+                "lineno": 19,
+                "col_offset": 11,
+                "end_lineno": 19,
+                "end_col_offset": 22
+              },
+              "op": "USub",
+              "operand": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 12,
+                  "end_lineno": 19,
+                  "end_col_offset": 22
+                },
+                "id": "MATE_UPPER"
+              }
+            }
+          },
+          {
+            "kind": "For",
+            "span": {
+              "lineno": 20,
+              "col_offset": 4,
+              "end_lineno": 23,
+              "end_col_offset": 17
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 20,
+                "col_offset": 8,
+                "end_lineno": 20,
+                "end_col_offset": 13
+              },
+              "id": "score"
+            },
+            "iter": {
+              "kind": "Name",
+              "span": {
+                "lineno": 20,
+                "col_offset": 17,
+                "end_lineno": 20,
+                "end_col_offset": 23
+              },
+              "id": "scores"
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 21,
+                  "col_offset": 8,
+                  "end_lineno": 21,
+                  "end_col_offset": 31
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 21,
+                      "col_offset": 8,
+                      "end_lineno": 21,
+                      "end_col_offset": 12
+                    },
+                    "id": "best"
+                  }
+                ],
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 21,
+                    "col_offset": 15,
+                    "end_lineno": 21,
+                    "end_col_offset": 31
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 21,
+                      "col_offset": 15,
+                      "end_lineno": 21,
+                      "end_col_offset": 18
+                    },
+                    "id": "max"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 21,
+                        "col_offset": 19,
+                        "end_lineno": 21,
+                        "end_col_offset": 23
+                      },
+                      "id": "best"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 21,
+                        "col_offset": 25,
+                        "end_lineno": 21,
+                        "end_col_offset": 30
+                      },
+                      "id": "score"
+                    }
+                  ],
+                  "call_unsupported": null
+                }
+              },
+              {
+                "kind": "If",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 8,
+                  "end_lineno": 23,
+                  "end_col_offset": 17
+                },
+                "test": {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 22,
+                    "col_offset": 11,
+                    "end_lineno": 22,
+                    "end_col_offset": 24
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 22,
+                      "col_offset": 11,
+                      "end_lineno": 22,
+                      "end_col_offset": 15
+                    },
+                    "id": "best"
+                  },
+                  "ops": [
+                    "GtE"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 22,
+                        "col_offset": 19,
+                        "end_lineno": 22,
+                        "end_col_offset": 24
+                      },
+                      "id": "gamma"
+                    }
+                  ]
+                },
+                "body": [
+                  {
+                    "kind": "Break",
+                    "span": {
+                      "lineno": 23,
+                      "col_offset": 12,
+                      "end_lineno": 23,
+                      "end_col_offset": 17
+                    }
+                  }
+                ],
+                "orelse": []
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 24,
+              "col_offset": 4,
+              "end_lineno": 24,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 24,
+                "col_offset": 11,
+                "end_lineno": 24,
+                "end_col_offset": 15
+              },
+              "id": "best"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

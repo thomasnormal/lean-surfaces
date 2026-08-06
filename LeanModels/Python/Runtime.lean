@@ -404,6 +404,20 @@ theorem RVal.thawList_eq_map : (l : List Val) → RVal.thawList l = l.map RVal.t
   | [] => rfl
   | v :: vs => by simp [RVal.thawList, RVal.thawList_eq_map vs]
 
+/-! Constructor-application lemmas for `thaw` (global simp: residual goals
+and symbolic runs keep boundary values in runtime normal form). -/
+
+@[simp] theorem RVal.thaw_none : RVal.thaw .none = .none := rfl
+@[simp] theorem RVal.thaw_bool (b : Bool) : RVal.thaw (.bool b) = .bool b := rfl
+@[simp] theorem RVal.thaw_int (n : Int) : RVal.thaw (.int n) = .int n := rfl
+@[simp] theorem RVal.thaw_str (s : String) : RVal.thaw (.str s) = .str s := rfl
+@[simp] theorem RVal.thaw_list (xs : Array Val) :
+    RVal.thaw (.list xs) = .listV ((xs.toList.map RVal.thaw).toArray) := by
+  simp [RVal.thaw, RVal.thawList_eq_map]
+@[simp] theorem RVal.thaw_tuple (xs : Array Val) :
+    RVal.thaw (.tuple xs) = .tuple ((xs.toList.map RVal.thaw).toArray) := by
+  simp [RVal.thaw, RVal.thawList_eq_map]
+
 /-- `freeze (thaw v) = ok v` in iff-form: freezing decides `.ok v` exactly
 on the thaw of `v` (both directions of the roundtrip in one simp-friendly
 statement). -/

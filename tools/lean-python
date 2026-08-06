@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""lean-python — run a Python function through the verified Lean interpreter.
+
+    tools/lean-python <file.py> <function> [args...] [--fuel N] [--compare]
+
+One-stop driver chaining the two existing pieces: the AST extractor
+(``extractors/python/extract.py`` → envelope JSON) and the Lean runner
+(``lake exe leanmodels-run``). Arguments are integer literals or the
+runner's canonical typed JSON values (``{"t":"list","v":[...]}``). Output
+is the runner's single canonical JSON line:
+
+    {"status":"ok","value":{"t":"int","v":"55"}}
+    {"status":"exn","exn":"ZeroDivisionError"}
+    {"status":"timeout"} | {"status":"unsupported","msg":"..."}
+
+``--compare`` additionally runs the SAME call under CPython and reports
+agreement — a one-off differential probe outside ``harness/cases.json``.
+
+Scope (deliberate, docs/memory-model.md): this calls ONE module-level
+function on marshalled arguments — the boundary the proofs speak about
+(`CallsTo`). It does NOT execute module top level (imports, prints,
+`__main__` blocks): module execution is a staged design decision, and
+everything outside the supported tier answers loudly with
+``unsupported``, never a silently wrong value. The extractor writes the
+envelope next to the source (unchanged file → unchanged envelope).
+"""
+
+import json
+import os
+import subprocess
+import sys
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(REPO_ROOT, "harness"))
+
+
+def main():
+    argv = sys.argv[1:]
+    compare = "--compare" in argv
+    argv = [a for a in argv if a != "--compare"]
+    if len(argv) < 2:
+        sys.stderr.write(__doc__)
+        return 2
+    src, fn = argv[0], argv[1]
+    rest = argv[2:]
+
+    # 1. extract (idempotent for unchanged sources)
+    r = subprocess.run(
+        [sys.executable, os.path.join(REPO_ROOT, "extractors/python/extract.py"), src],
+        cwd=REPO_ROOT, capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.stderr.write(r.stderr or r.stdout)
+        return 1
+    envelope = os.path.splitext(src)[0] + ".json"
+
+    # 2. run through the Lean interpreter
+    r = subprocess.run(
+        ["lake", "exe", "leanmodels-run", envelope, fn] + rest,
+        cwd=REPO_ROOT, capture_output=True, text=True)
+    line = (r.stdout or "").strip()
+    if r.returncode != 0 or not line:
+        sys.stderr.write(r.stderr or r.stdout)
+        return 1
+    print(line)
+
+    if not compare:
+        return 0
+
+    # 3. optional CPython differential (reuses the harness's canonicalizer)
+    from diff_test import run_python, from_typed  # noqa: E402
+    args = []
+    for a in rest:
+        if a == "--fuel":
+            break
+        try:
+            args.append(int(a))
+        except ValueError:
+            args.append(json.loads(a))
+    py = run_python(os.path.join(REPO_ROOT, src) if not os.path.isabs(src) else src,
+                    fn, [from_typed(a) for a in args])
+    lean = json.loads(line)
+    if lean == py:
+        print("MATCH cpython")
+        return 0
+    if lean.get("status") == "unsupported":
+        print("LOUD  cpython={}".format(json.dumps(py)))
+        return 0
+    print("MISMATCH cpython={}".format(json.dumps(py)))
+    return 3
+
+
+if __name__ == "__main__":
+    sys.exit(main())

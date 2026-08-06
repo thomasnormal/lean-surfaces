@@ -52,7 +52,7 @@ step's goal). -/
 theorem relu_of_nonneg' (x : PyInt) (hx : 0 ≤ x) : tut_03.relu(x) ==> x := by
   have hx' : (0 : Int) ≤ x := hx
   refine ⟨32, ?_⟩
-  py_simp [callFunction, tut_03]
+  py_simp [callFunction, callIn, tut_03]
   split <;> py_simp
   omega
 
@@ -141,7 +141,7 @@ hx' : 0 ≤ x
 ⊢ callFunction tut_03 "relu" #[ToVal.toVal x] 32 = Res.ok (ToVal.toVal x)
 ```
 
-**Step 2 — `py_simp [callFunction, tut_03]`.** Symbolically execute:
+**Step 2 — `py_simp [callFunction, callIn, tut_03]`.** Symbolically execute:
 `py_simp` is `simp` with the interpreter's equations
 ([`Logic.lean`](../../LeanModels/Python/Logic.lean)); passing `tut_03`
 unfolds the program literal, and passing `callFunction` is safe here because

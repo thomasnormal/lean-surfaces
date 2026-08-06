@@ -266,7 +266,7 @@ lookup is *derived* from the `CallsTo` fact, not assumed. -/
 theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     {argEs : Array Expr} {args : Array Val} {v : Val} {sp sp' : Span}
     (hlocal : Env.lookup st.locals fname = Option.none)
-    (hargs : EvalsToList m st argEs.toList (args.map RVal.thaw).toList)
+    (hargs : EvalsToList m st argEs.toList (RVal.thawList args.toList))
     (hworld : st.world = initWorld m)
     (hspec : CallsTo m fname args v)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
@@ -286,10 +286,9 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
   refine ⟨ta + tc + 1, ?_⟩
   have ha' := ha (ta + tc) (by omega)
   have hc' := hc (ta + tc) (by omega)
-  simp [evalExpr, hlocal, hglob, hfn, ha']
-  rw [show (List.map RVal.thaw args.toList).toArray = Array.map RVal.thaw args from
-        Array.toList_inj.mp (by simp)]
-  exact hc'
+  have hc'' : callIn m (ta + tc) (initWorld m) fname
+      (RVal.thawList args.toList).toArray = Run.ok (initWorld m) (RVal.thaw v) := hc'
+  simp [evalExpr, hlocal, hglob, hfn, ha', hc'']
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-state, the callee name unshadowed, the pinned public world, the
@@ -301,7 +300,7 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
     {x fname : String} {argEs : Array Expr} {spx spf spc spa : Span}
     (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
         st.world = initWorld m ∧
-        ∃ args v, EvalsToList m st argEs.toList (args.map RVal.thaw).toList ∧
+        ∃ args v, EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
           CallsTo m fname args v ∧
           Q.next ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
@@ -320,7 +319,7 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
     {rest : List Stmt}
     (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
         st.world = initWorld m ∧
-        ∃ args v, EvalsToList m st argEs.toList (args.map RVal.thaw).toList ∧
+        ∃ args v, EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
           CallsTo m fname args v ∧
           R ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hrest : PyTriple m R rest Q)
@@ -368,7 +367,7 @@ theorem PyTriple.callsTo_arityOk {m : Module} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v }) :
     CallsTo m fname args v := by
   obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
@@ -404,7 +403,7 @@ theorem PyTriple.callsTo {m : Module} {fname : String} {f : FunctionDefn}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v }) :
     CallsTo m fname args v :=
   PyTriple.callsTo_arityOk hf hargsOk hlocalsOk
@@ -419,7 +418,7 @@ theorem PyTriple.callsTo_ofRet_arityOk {m : Module} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         (.ofRet fun rv _ => rv = RVal.thaw v)) :
     CallsTo m fname args v :=
   PyTriple.callsTo_arityOk hf hargsOk hlocalsOk harity
@@ -436,7 +435,7 @@ theorem PyTriple.callsTo_ofRet {m : Module} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         (.ofRet fun rv _ => rv = RVal.thaw v)) :
     CallsTo m fname args v :=
   PyTriple.callsTo_ofRet_arityOk hf hargsOk hlocalsOk
@@ -451,11 +450,10 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     {args : Array Val} {v : Val}
     (hf : findFunction m fname = some f)
     (h : CallsTo m fname args v) :
-    PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
       { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
-  simp only [RVal.thawArgs_eq_map] at hc
   cases fuel with
   | zero => rw [callIn] at hc; simp at hc
   | succ fu =>
@@ -467,12 +465,12 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     cases hlo : f.localsOk with
     | false => simp [hao, hlo] at hc
     | true =>
-    simp only [Array.size_map] at hc
+    simp only [RVal.thawArgs_size] at hc
     cases har : arityOk f.params args.size with
     | false => simp [hao, hlo, har] at hc
     | true =>
     simp only [hao, hlo, har, Bool.not_true, Bool.false_eq_true, if_false] at hc
-    cases hex : execStmts m fu ((⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList with
+    cases hex : execStmts m fu ((⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList with
     | ok st1 flow =>
       rw [hex] at hc
       cases flow with
@@ -506,7 +504,7 @@ theorem callsTo_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size) :
     CallsTo m fname args v ↔
-      PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+      PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } :=
   ⟨fun h => h.toTriple hf, fun h => h.callsTo hf hargsOk hlocalsOk harity⟩
 
@@ -519,7 +517,7 @@ theorem PyTriple.raises_arityOk {m : Module} {fname : String}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e }) :
     Raises m fname args e := by
   obtain ⟨r, t, hr, hrun⟩ := h.exec rfl
@@ -547,7 +545,7 @@ theorem PyTriple.raises {m : Module} {fname : String} {f : FunctionDefn}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
-    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    (h : PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e }) :
     Raises m fname args e :=
   PyTriple.raises_arityOk hf hargsOk hlocalsOk
@@ -563,21 +561,20 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
     (h : Raises m fname args e) :
-    PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+    PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
       { next := fun _ => False, err := fun e' _ => e' = e } := by
   obtain ⟨fuel, hc⟩ := h
   unfold callFunction at hc
-  simp only [RVal.thawArgs_eq_map] at hc
   cases fuel with
   | zero => rw [callIn] at hc; simp at hc
   | succ fu =>
     rw [callIn] at hc
     have har : arityOk f.params args.size = true := by
       rw [harity]; exact arityOk_full f.params
-    simp only [Array.size_map] at hc
+    simp only [RVal.thawArgs_size] at hc
     simp only [hf, hargsOk, hlocalsOk, har, Bool.not_true,
                Bool.false_eq_true, if_false] at hc
-    cases hex : execStmts m fu ((⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList with
+    cases hex : execStmts m fu ((⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList with
     | ok st1 flow =>
       rw [hex] at hc
       cases flow with
@@ -609,7 +606,7 @@ theorem raises_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size) :
     Raises m fname args e ↔
-      PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩ : FrameState)) f.body.toList
+      PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => False, err := fun e' _ => e' = e } :=
   ⟨fun h => h.toTriple hf hargsOk hlocalsOk harity,
    fun h => h.raises hf hargsOk hlocalsOk harity⟩

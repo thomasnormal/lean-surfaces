@@ -202,7 +202,8 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             foldExtremum, extremumVal, absVal, intCastVal, isBuiltinName,
             moduleGlobals, globalsFold, globalsStep, lookupG, resolvedG,
             targetNamesG, evalGlobalExpr, evalGlobalExprs, globalFuel,
-            callFunction, initWorld, RVal.thaw, RVal.freeze,
+            callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
+            RVal.freeze, RVal.freezeList,
             and_assoc, $extra,*] $(loc)?)
 
 @[inherit_doc pySimpTactic]

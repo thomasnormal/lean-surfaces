@@ -119,6 +119,16 @@ theorem asIntList_map_toVal (l : List Int) :
   rw [hfn]
   exact asIntList_map_int l
 
+/-- `asIntList_map_toVal` in the `Function.comp` normal form `List.map_map`
+leaves behind (captured runs meet the marshalled thaw as
+`RVal.thaw ∘ ToVal.toVal`). -/
+theorem asIntList_map_thaw_comp (l : List Int) :
+    asIntList (l.map (RVal.thaw ∘ ToVal.toVal)) = some l := by
+  have hfn : (RVal.thaw ∘ (ToVal.toVal : Int → Val)) = RVal.int := by
+    funext x; rfl
+  rw [hfn]
+  exact asIntList_map_int l
+
 /-- Python `int` 3-tuples — the `extended_gcd` return shape (added for
 `Examples/python/rsa_inverse`, the real-world demo). Deliberately monomorphic: Lean's
 `×` is right-nested, so a generic `Prod` instance could not distinguish the
@@ -199,13 +209,12 @@ unchanged, so the rewrite is fully determined. -/
 theorem CallsTo.callIn_at_least {m : Module} {fname : String}
     {args : Array Val} {v : Val} (h : CallsTo m fname args v) :
     ∃ f₀, ∀ F, f₀ ≤ F →
-      callIn m F (initWorld m) fname (args.map RVal.thaw)
+      callIn m F (initWorld m) fname (RVal.thawArgs args)
         = .ok (initWorld m) (RVal.thaw v) := by
   obtain ⟨fuel, hf⟩ := h
   unfold callFunction at hf
-  simp only [RVal.thawArgs_eq_map] at hf
   revert hf
-  cases hc : callIn m fuel (initWorld m) fname (args.map RVal.thaw) with
+  cases hc : callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
   | ok w' rv =>
     intro hf
     obtain rfl := RVal.eq_thaw_of_freeze rv hf

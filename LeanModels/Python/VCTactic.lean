@@ -300,7 +300,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩)
+        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
@@ -332,7 +332,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩)
+        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
@@ -357,7 +357,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩)
+        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
@@ -381,7 +381,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : args.size = f.params.size)
     (h : PyTriple m
-        (fun st => st = ⟨initWorld m, mkCallEnv f.params (args.map RVal.thaw)⟩)
+        (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
         f.body.toList
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
@@ -406,7 +406,8 @@ def interpUnfolds : List Name :=
    ``evalCompareChain, ``findFunction, ``mkCallEnv, ``arityOk,
    ``defaultBindings, ``Env.lookup, ``Env.set,
    ``Const.toVal, ``Const.toRVal, ``truthy, ``asInt, ``RVal.isNone,
-   ``RVal.thaw, ``RVal.thawList, ``RVal.freeze, ``RVal.freezeList,
+   ``RVal.thaw, ``RVal.thawList, ``RVal.thawArgs, ``RVal.freeze,
+   ``RVal.freezeList,
    ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp,
    ``lenVal, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
@@ -423,7 +424,8 @@ compact `sortInts data` handle; these two lemmas let the run step through a
 marshalled `sorted(data)` call and its downstream `len`/index bounds). -/
 def interpLemmas : List Name :=
   [``ite_ok_bool, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
-   ``asIntList_map_int, ``asIntList_map_toVal, ``sortInts_length]
+   ``asIntList_map_int, ``asIntList_map_toVal, ``asIntList_map_thaw_comp,
+   ``sortInts_length]
 
 /-- The truthiness-normalization set: turns `truthy <captured value> = true`
 facts into the clean arithmetic propositions residual goals should show. -/
@@ -1172,8 +1174,8 @@ def findCalleeFact (ctx : VCCtx) (fname : String) (vsLit : Lean.Expr) :
     MetaM (Option (Lean.Expr × Lean.Expr × Lean.Expr × Array MVarId)) := do
   let checkArgs (argsE : Lean.Expr) : MetaM Bool := do
     -- the call site evaluated to the thaws of the spec's boundary args?
-    let thawed ← mkAppM ``Array.toList
-      #[← mkAppM ``Array.map #[Lean.mkConst ``RVal.thaw, argsE]]
+    -- (`thawList` form: whnf-reducible, unlike `Array.map`)
+    let thawed ← mkAppM ``RVal.thawList #[← mkAppM ``Array.toList #[argsE]]
     isDefEq thawed vsLit
   -- local hypotheses, most recent first
   for d in (← getLCtx).decls.toList.filterMap id |>.reverse do
@@ -1573,8 +1575,7 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let (rvr, _) ← Meta.simp rvRaw ctx.pack.present ctx.pack.procs
     let rvNF := rvr.expr
     -- pinned-state casts: the captured runs are defeq to the rule's shapes
-    let thawedList ← mkAppM ``Array.toList
-      #[← mkAppM ``Array.map #[Lean.mkConst ``RVal.thaw, argsValE]]
+    let thawedList ← mkAppM ``RVal.thawList #[← mkAppM ``Array.toList #[argsValE]]
     let hargsTy ← mkEq
       (mkApp4 (Lean.mkConst ``evalExprs) tg.m (mkNatLit fuelK) tg.E argsListLit)
       (← mkAppM ``Run.ok #[tg.E, thawedList])

@@ -411,12 +411,18 @@ kernel `rfl` on a whole `callFunction` run. -/
 def RVal.thawArgs (args : Array Val) : Array RVal :=
   (RVal.thawList args.toList).toArray
 
-/-- The `Array.map` normal form of `thawArgs` (global simp: proof-layer
-statements quantify over `args.map RVal.thaw`; symbolic runs normalize the
-wrapper's list-structural form to it). -/
-@[simp] theorem RVal.thawArgs_eq_map (args : Array Val) :
+/-- The `Array.map` reading of `thawArgs` (NOT simp: `Array.map` is
+defeq-opaque — a `USize` loop — so the proof layer keeps the reducible
+`thawArgs`/`thawList` forms as canonical and converts explicitly when a
+mathematical map view is wanted). -/
+theorem RVal.thawArgs_eq_map (args : Array Val) :
     RVal.thawArgs args = args.map RVal.thaw := by
   apply Array.toList_inj.mp
+  simp [RVal.thawArgs, RVal.thawList_eq_map]
+
+/-- Thawing preserves the argument count (the arity guards' normal form). -/
+@[simp] theorem RVal.thawArgs_size (args : Array Val) :
+    (RVal.thawArgs args).size = args.size := by
   simp [RVal.thawArgs, RVal.thawList_eq_map]
 
 /-! Constructor-application lemmas for `thaw` (global simp: residual goals

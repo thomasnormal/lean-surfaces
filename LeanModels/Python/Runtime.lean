@@ -206,32 +206,166 @@ structural (no fresh materialization to do yet — the doc's
 become heap-allocated: H1-proper for dicts arriving via globals, H2 for
 lists), and freezing refuses refs loudly (none can exist). -/
 
-/-- Thaw a frozen boundary value into the runtime (stage H1-1:
-structural; allocating containers arrive with their tiers). -/
-def RVal.thaw : Val → RVal
-  | .none => .none
-  | .bool b => .bool b
-  | .int n => .int n
-  | .str s => .str s
-  | .list xs => .listV (xs.attach.map fun ⟨v, _⟩ => RVal.thaw v)
-  | .tuple xs => .tuple (xs.attach.map fun ⟨v, _⟩ => RVal.thaw v)
+/-! ### `Res` bind normalization (global simp; the do-notation of the
+fuel-free helpers and the freeze below reduce through these) -/
 
-/-- Deep-freeze a runtime value into the boundary snapshot. Stage H1-1:
-refs are loudly unsupported (none can exist — nothing allocates); the
-H1-proper freeze walks the heap with active-path cycle detection
-(docs/memory-model.md v2 §call layering). -/
-def RVal.freeze : RVal → Res Val
-  | .none => .ok .none
-  | .bool b => .ok (.bool b)
-  | .int n => .ok (.int n)
-  | .str s => .ok (.str s)
-  | .listV xs => do
-      let vs ← xs.attach.toList.mapM fun ⟨v, _⟩ => RVal.freeze v
-      return .list vs.toArray
-  | .tuple xs => do
-      let vs ← xs.attach.toList.mapM fun ⟨v, _⟩ => RVal.freeze v
-      return .tuple vs.toArray
-  | .ref _ =>
-      .unsupported "returning a heap object through the call boundary is outside the tier (H1-proper freeze, docs/memory-model.md)"
+/-- `pure` on `Res` is `Res.ok` (do-notation normalization). -/
+@[simp] theorem Res.pure_eq {α} (a : α) : (pure a : Res α) = .ok a := rfl
+
+/-- Bind on an `ok` result steps into the continuation (do-notation
+normalization; this is what advances symbolic execution). -/
+@[simp] theorem Res.ok_bind {α β} (a : α) (f : α → Res β) :
+    (Res.ok a >>= f) = f a := rfl
+
+/-- Exceptions short-circuit bind. -/
+@[simp] theorem Res.exn_bind {α β} (e : PyErr) (f : α → Res β) :
+    ((Res.exn e : Res α) >>= f) = .exn e := rfl
+
+/-- Timeouts short-circuit bind (this closes the small-fuel goals). -/
+@[simp] theorem Res.timeout_bind {α β} (f : α → Res β) :
+    ((Res.timeout : Res α) >>= f) = .timeout := rfl
+
+/-- `unsupported` short-circuits bind. -/
+@[simp] theorem Res.unsupported_bind {α β} (msg : String) (f : α → Res β) :
+    ((Res.unsupported msg : Res α) >>= f) = .unsupported msg := rfl
+
+/-- Inversion of a successful bind: the intermediate result must itself be
+`ok`. Under `simp` this turns a symbolically-executed hypothesis into a nest
+of existentials whose atoms are the frozen recursive calls — `obtain` them
+and feed each to the induction hypothesis. -/
+@[simp] theorem Res.bind_eq_ok {α β} {x : Res α} {f : α → Res β} {b : β} :
+    x >>= f = .ok b ↔ ∃ a, x = .ok a ∧ f a = .ok b := by
+  cases x <;> simp
+
+mutual
+  /-- Thaw a frozen boundary value into the runtime (stage H1-1:
+  structural; allocating containers arrive with their tiers — H1-proper
+  materializes every mutable-container occurrence freshly on the heap). -/
+  def RVal.thaw : Val → RVal
+    | .none => .none
+    | .bool b => .bool b
+    | .int n => .int n
+    | .str s => .str s
+    | .list xs => .listV (RVal.thawList xs.toList).toArray
+    | .tuple xs => .tuple (RVal.thawList xs.toList).toArray
+
+  /-- Elementwise `thaw` (structural twin, kernel-reducible). -/
+  def RVal.thawList : List Val → List RVal
+    | [] => []
+    | v :: vs => RVal.thaw v :: RVal.thawList vs
+end
+
+mutual
+  /-- Deep-freeze a runtime value into the boundary snapshot. Stage H1-1:
+  refs are loudly unsupported (none can exist — nothing allocates); the
+  H1-proper freeze walks the heap with active-path cycle detection
+  (docs/memory-model.md v2 §call layering). -/
+  def RVal.freeze : RVal → Res Val
+    | .none => .ok .none
+    | .bool b => .ok (.bool b)
+    | .int n => .ok (.int n)
+    | .str s => .ok (.str s)
+    | .listV xs => do
+        let vs ← RVal.freezeList xs.toList
+        return .list vs.toArray
+    | .tuple xs => do
+        let vs ← RVal.freezeList xs.toList
+        return .tuple vs.toArray
+    | .ref _ =>
+        .unsupported "returning a heap object through the call boundary is outside the tier (H1-proper freeze, docs/memory-model.md)"
+
+  /-- Elementwise `freeze`, first refusal wins. -/
+  def RVal.freezeList : List RVal → Res (List Val)
+    | [] => .ok []
+    | v :: vs => do
+        let v' ← RVal.freeze v
+        let vs' ← RVal.freezeList vs
+        return v' :: vs'
+end
+
+/-! ### The stage-1 thaw/freeze roundtrip
+
+On ref-free values (the only runtime values stage H1-1 can produce) thaw
+and freeze are mutually inverse. These two lemma families are what let the
+public wrapper's proofs move between the boundary `Val` and the runtime
+`RVal` without ever inspecting the freeze computation. -/
+
+mutual
+  /-- `freeze ∘ thaw = ok` — thawing never manufactures a ref. -/
+  theorem RVal.freeze_thaw : (v : Val) → RVal.freeze (RVal.thaw v) = .ok v
+    | .none => rfl
+    | .bool _ => rfl
+    | .int _ => rfl
+    | .str _ => rfl
+    | .list xs => by
+        simp [RVal.thaw, RVal.freeze, RVal.freezeList_thawList xs.toList]
+    | .tuple xs => by
+        simp [RVal.thaw, RVal.freeze, RVal.freezeList_thawList xs.toList]
+
+  /-- Elementwise `freeze_thaw`. -/
+  theorem RVal.freezeList_thawList :
+      (l : List Val) → RVal.freezeList (RVal.thawList l) = .ok l
+    | [] => rfl
+    | v :: vs => by
+        simp [RVal.thawList, RVal.freezeList, RVal.freeze_thaw v,
+              RVal.freezeList_thawList vs]
+end
+
+mutual
+  /-- Freeze inversion: a value that froze is exactly the thaw of its
+  snapshot (freeze is injective on the ref-free fragment, with thaw as its
+  section). -/
+  theorem RVal.eq_thaw_of_freeze :
+      (rv : RVal) → {v : Val} → RVal.freeze rv = .ok v → rv = RVal.thaw v
+    | .none, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .bool _, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .int _, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .str _, v, h => by
+        cases (Res.ok.inj h); rfl
+    | .listV xs, v, h => by
+        simp only [RVal.freeze, Res.bind_eq_ok, Res.pure_eq] at h
+        obtain ⟨vs, hl, hv⟩ := h
+        cases (Res.ok.inj hv)
+        have := RVal.eqList_thawList_of_freezeList xs.toList hl
+        simp [RVal.thaw, ← this]
+    | .tuple xs, v, h => by
+        simp only [RVal.freeze, Res.bind_eq_ok, Res.pure_eq] at h
+        obtain ⟨vs, hl, hv⟩ := h
+        cases (Res.ok.inj hv)
+        have := RVal.eqList_thawList_of_freezeList xs.toList hl
+        simp [RVal.thaw, ← this]
+    | .ref _, v, h => by
+        cases h
+
+  /-- Elementwise freeze inversion. -/
+  theorem RVal.eqList_thawList_of_freezeList :
+      (l : List RVal) → {vs : List Val} →
+      RVal.freezeList l = .ok vs → l = RVal.thawList vs
+    | [], vs, h => by
+        cases (Res.ok.inj h); rfl
+    | rv :: l, vs, h => by
+        simp only [RVal.freezeList, Res.bind_eq_ok, Res.pure_eq] at h
+        obtain ⟨v', hv, vs', hl, hcons⟩ := h
+        cases (Res.ok.inj hcons)
+        have h1 := RVal.eq_thaw_of_freeze rv hv
+        have h2 := RVal.eqList_thawList_of_freezeList l hl
+        simp [RVal.thawList, ← h1, ← h2]
+end
+
+/-- `thawList` is elementwise `thaw` (the `List.map` normal form symbolic
+execution prefers). -/
+theorem RVal.thawList_eq_map : (l : List Val) → RVal.thawList l = l.map RVal.thaw
+  | [] => rfl
+  | v :: vs => by simp [RVal.thawList, RVal.thawList_eq_map vs]
+
+/-- `freeze (thaw v) = ok v` in iff-form: freezing decides `.ok v` exactly
+on the thaw of `v` (both directions of the roundtrip in one simp-friendly
+statement). -/
+theorem RVal.freeze_eq_ok_iff {rv : RVal} {v : Val} :
+    RVal.freeze rv = .ok v ↔ rv = RVal.thaw v :=
+  ⟨RVal.eq_thaw_of_freeze rv, fun h => h ▸ RVal.freeze_thaw v⟩
 
 end LeanModels.Python

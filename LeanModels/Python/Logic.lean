@@ -131,33 +131,11 @@ is:
    and `py_simp` again until `h` closes the goal.
 -/
 
-/-- `pure` on `Res` is `Res.ok` (do-notation normalization). -/
-@[simp] theorem Res.pure_eq {α} (a : α) : (pure a : Res α) = .ok a := rfl
-
-/-- Bind on an `ok` result steps into the continuation (do-notation
-normalization; this is what advances symbolic execution). -/
-@[simp] theorem Res.ok_bind {α β} (a : α) (f : α → Res β) :
-    (Res.ok a >>= f) = f a := rfl
-
-/-- Exceptions short-circuit bind. -/
-@[simp] theorem Res.exn_bind {α β} (e : PyErr) (f : α → Res β) :
-    ((Res.exn e : Res α) >>= f) = .exn e := rfl
-
-/-- Timeouts short-circuit bind (this closes the small-fuel goals). -/
-@[simp] theorem Res.timeout_bind {α β} (f : α → Res β) :
-    ((Res.timeout : Res α) >>= f) = .timeout := rfl
-
-/-- `unsupported` short-circuits bind. -/
-@[simp] theorem Res.unsupported_bind {α β} (msg : String) (f : α → Res β) :
-    ((Res.unsupported msg : Res α) >>= f) = .unsupported msg := rfl
-
-/-- Inversion of a successful bind: the intermediate result must itself be
-`ok`. Under `simp` this turns a symbolically-executed hypothesis into a nest
-of existentials whose atoms are the frozen recursive calls — `obtain` them
-and feed each to the induction hypothesis. -/
-@[simp] theorem Res.bind_eq_ok {α β} {x : Res α} {f : α → Res β} {b : β} :
-    x >>= f = .ok b ↔ ∃ a, x = .ok a ∧ f a = .ok b := by
-  cases x <;> simp
+/-! (The `Res` bind-normalization simp lemmas — `Res.pure_eq`,
+`Res.ok_bind`, `Res.exn_bind`, `Res.timeout_bind`, `Res.unsupported_bind`,
+`Res.bind_eq_ok` — moved to Runtime.lean with the H1 re-shape: the
+thaw/freeze roundtrip proofs there need them, and Runtime is imported
+by everything that previously found them here.) -/
 
 /-! ### `sorted` execution lemmas (Mathlib-free)
 

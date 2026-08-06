@@ -536,6 +536,423 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     exact absurd h.symm (by simpa using hr)
   · rw [← heq]; exact h
 
+/-! ## Stage-1 world invariance
+
+NOTHING allocates in stage H1-1: every reachable heap is `#[]` and
+`World.globals` is never written, so a decided `.ok` outcome carries
+exactly the input world. This is a STAGE-1 THEOREM, not a design
+invariant — it is what lets the pinned-state proof layer (VC.lean) keep
+pure-expression judgments (`EvalsTo` with out-state = in-state) and lets a
+public `CallsTo` spec splice into a nested `callIn` site; it is DELETED,
+along with the pure judgments it supports, when the dict tier makes worlds
+actually change (H1-proper; the stateful `CallsIn` machinery of
+docs/memory-model.md replaces it). -/
+
+/-- `Run.OkW p x`: every decided `.ok` outcome of `x` lands in a state
+satisfying `p` (nothing is claimed about `.exn`/`.timeout`/`.unsupported`
+— the ok-chain is all the world-invariance consumers need). -/
+def Run.OkW {σ α : Type} (p : σ → Prop) (x : Run σ α) : Prop :=
+  ∀ s a, x = .ok s a → p s
+
+namespace Run.OkW
+
+theorem ok {σ α : Type} {p : σ → Prop} {s : σ} (h : p s) (a : α) :
+    Run.OkW p (.ok s a) := fun _ _ he => by cases he; exact h
+
+/-- `ok` with the frame-world predicate pinned in the statement shape —
+the leaf the `worldInv` cases use (the generic `ok` at a `rfl` argument
+commits the elaborator to a wrong higher-order predicate). -/
+theorem okF {α : Type} {w : World} {st : FrameState} (h : st.world = w) (a : α) :
+    Run.OkW (fun s : FrameState => s.world = w) (.ok st a) :=
+  fun _ _ he => by cases he; exact h
+
+/-- `ok` with the world-equality predicate pinned (the `callIn` leaf). -/
+theorem okA {α : Type} {w w' : World} (h : w' = w) (a : α) :
+    Run.OkW (fun x : World => x = w) (.ok w' a) :=
+  fun _ _ he => by cases he; exact h
+
+theorem exn {σ α : Type} {p : σ → Prop} {s : σ} {e : PyErr} :
+    Run.OkW p (.exn s e : Run σ α) := fun _ _ he => by cases he
+
+theorem timeout {σ α : Type} {p : σ → Prop} :
+    Run.OkW p (.timeout : Run σ α) := fun _ _ he => by cases he
+
+theorem unsupported {σ α : Type} {p : σ → Prop} {msg : String} :
+    Run.OkW p (.unsupported msg : Run σ α) := fun _ _ he => by cases he
+
+theorem mono {σ α : Type} {p q : σ → Prop} {x : Run σ α}
+    (hpq : ∀ s, p s → q s) (h : Run.OkW p x) : Run.OkW q x :=
+  fun s a he => hpq s (h s a he)
+
+theorem bind {σ α β : Type} {p : σ → Prop} {x : Run σ α}
+    {f : σ → α → Run σ β} (hx : Run.OkW p x)
+    (hf : ∀ s a, p s → Run.OkW p (f s a)) : Run.OkW p (x.bind f) := by
+  intro s' b h
+  rw [Run.bind_eq_ok] at h
+  obtain ⟨s, a, hx', hf'⟩ := h
+  exact hf s a (hx s a hx') s' b hf'
+
+theorem ite {σ α : Type} {p : σ → Prop} {c : Prop} [Decidable c]
+    {x y : Run σ α} (hx : Run.OkW p x) (hy : Run.OkW p y) :
+    Run.OkW p (if c then x else y) := by
+  by_cases h : c
+  · simpa only [if_pos h] using hx
+  · simpa only [if_neg h] using hy
+
+theorem liftRes {σ α : Type} {p : σ → Prop} {s : σ} (h : p s) (r : Res α) :
+    Run.OkW p (Run.liftRes s r) := by
+  intro s' a he
+  rw [Run.liftRes_eq_ok] at he
+  exact he.1 ▸ h
+
+/-- `liftRes` with the frame-world predicate pinned (see `okF`). -/
+theorem liftResF {α : Type} {w : World} {st : FrameState} (h : st.world = w)
+    (r : Res α) :
+    Run.OkW (fun s : FrameState => s.world = w) (Run.liftRes st r) := by
+  intro s' a he
+  rw [Run.liftRes_eq_ok] at he
+  exact he.1 ▸ h
+
+/-- A nested call whose out-world is pinned rides `withLocals` into a
+frame whose world is pinned. -/
+theorem withLocals {α : Type} {w : World} {l : REnv} {x : Run World α}
+    (h : Run.OkW (· = w) x) :
+    Run.OkW (fun st : FrameState => st.world = w) (Run.withLocals l x) := by
+  intro st a he
+  rw [Run.withLocals_eq_ok] at he
+  obtain ⟨w', hx', rfl⟩ := he
+  exact h w' a hx'
+
+/-- A body run with pinned frame-world projects to a pinned out-world. -/
+theorem toWorld {α : Type} {w : World} {x : Run FrameState α}
+    (h : Run.OkW (fun st : FrameState => st.world = w) x) :
+    Run.OkW (· = w) (Run.toWorld x) := by
+  intro w' a he
+  rw [Run.toWorld_eq_ok] at he
+  obtain ⟨st, hx', rfl⟩ := he
+  exact h st a hx'
+
+end Run.OkW
+
+/-- **Stage-1 world invariance**, one conjunction over the mutual block
+(same order as `fuelMono`): every decided `.ok` outcome carries the input
+world unchanged — `callIn`'s conjunct says a nested call returns exactly
+the world it was given. See the section comment for scope and planned
+deletion. -/
+theorem worldInv (fuel : Nat) :
+    (∀ (m : Module) (st : FrameState) (e : Expr),
+      Run.OkW (·.world = st.world) (evalExpr m fuel st e)) ∧
+    (∀ (m : Module) (st : FrameState) (es : List Expr),
+      Run.OkW (·.world = st.world) (evalExprs m fuel st es)) ∧
+    (∀ (m : Module) (st : FrameState) (op : BoolOp) (e : Expr) (rest : List Expr),
+      Run.OkW (·.world = st.world) (evalBoolChain m fuel st op e rest)) ∧
+    (∀ (m : Module) (st : FrameState) (lhs : RVal) (ops : List CmpOp) (cs : List Expr),
+      Run.OkW (·.world = st.world) (evalCompareChain m fuel st lhs ops cs)) ∧
+    (∀ (m : Module) (st : FrameState) (s : Stmt),
+      Run.OkW (·.world = st.world) (execStmt m fuel st s)) ∧
+    (∀ (m : Module) (st : FrameState) (ss : List Stmt),
+      Run.OkW (·.world = st.world) (execStmts m fuel st ss)) ∧
+    (∀ (m : Module) (st : FrameState) (test : Expr) (body orelse : List Stmt),
+      Run.OkW (·.world = st.world) (execWhile m fuel st test body orelse)) ∧
+    (∀ (m : Module) (w : World) (fname : String) (args : Array RVal),
+      Run.OkW (· = w) (callIn m fuel w fname args)) ∧
+    (∀ (m : Module) (st : FrameState) (target : Expr) (xs : List RVal)
+        (body : List Stmt),
+      Run.OkW (·.world = st.world) (execFor m fuel st target xs body)) := by
+  induction fuel with
+  | zero =>
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    · intro m st e s a h; simp [evalExpr] at h
+    · intro m st es s a h; simp [evalExprs] at h
+    · intro m st op e rest s a h; simp [evalBoolChain] at h
+    · intro m st lhs ops cs s a h; simp [evalCompareChain] at h
+    · intro m st s s' a h; simp [execStmt] at h
+    · intro m st ss s a h; simp [execStmts] at h
+    · intro m st test body orelse s a h; simp [execWhile] at h
+    · intro m w fname args w' a h; simp [callIn] at h
+    · intro m st target xs body s a h; simp [execFor] at h
+  | succ fuel ih =>
+    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor⟩ := ih
+    have wtrans : ∀ (st st₁ : FrameState), st₁.world = st.world →
+        ∀ s : FrameState, s.world = st₁.world → s.world = st.world :=
+      fun _ _ h₁ _ h₂ => h₂.trans h₁
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    -- evalExpr
+    · intro m st e
+      cases e with
+      | constant c _ => simp only [evalExpr]; exact .okF rfl _
+      | name id _ =>
+        simp only [evalExpr]
+        cases Env.lookup st.locals id with
+        | some v => exact .okF rfl _
+        | none =>
+          cases lookupG (moduleGlobals m).1 id with
+          | some vv =>
+            cases vv with
+            | some v => exact .okF rfl _
+            | none => exact .unsupported
+          | none =>
+            exact .ite .unsupported (.ite .unsupported (.ite .exn .unsupported))
+      | binOp l op r _ =>
+        simp only [evalExpr]
+        exact .bind (ihE m st l) fun st₁ a h₁ =>
+          .bind ((ihE m st₁ r).mono (wtrans st st₁ h₁)) fun st₂ b h₂ =>
+            .liftResF h₂ _
+      | unaryOp op operand _ =>
+        simp only [evalExpr]
+        exact .bind (ihE m st operand) fun st₁ v h₁ => .liftResF h₁ _
+      | boolOp op values _ =>
+        simp only [evalExpr]
+        cases values.toList with
+        | nil => exact .unsupported
+        | cons e0 es => exact ihB m st op e0 es
+      | compare l ops comparators _ =>
+        simp only [evalExpr]
+        exact .bind (ihE m st l) fun st₁ a h₁ =>
+          (ihC m st₁ a ops.toList comparators.toList).mono (wtrans st st₁ h₁)
+      | call cf cargs cu _ =>
+        cases cu with
+        | some reason => simp only [evalExpr]; exact .unsupported
+        | none =>
+          cases cf <;> try (simp only [evalExpr]; exact .unsupported)
+          case name fname _ =>
+            simp only [evalExpr]
+            have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
+              ihEs m st cargs.toList
+            cases Env.lookup st.locals fname with
+            | some v =>
+              cases v <;>
+                first
+                | exact .unsupported
+                | exact .bind hargs fun st₁ _ h₁ => .exn
+            | none =>
+              cases lookupG (moduleGlobals m).1 fname with
+              | some vv =>
+                cases vv with
+                | some v => exact .bind hargs fun st₁ _ h₁ => .exn
+                | none => exact .unsupported
+              | none =>
+                refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                · exact ((ihCall m st₁.world fname vs.toArray).withLocals
+                    (l := st₁.locals)).mono
+                      (fun s hs => (show s.world = st₁.world from hs).trans h₁)
+                · refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                  · cases vs with
+                    | nil => exact .exn
+                    | cons v rest =>
+                      cases rest with
+                      | nil => exact .liftResF h₁ _
+                      | cons _ _ => exact .exn
+                  · refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                    · cases vs with
+                      | nil => exact .exn
+                      | cons v rest =>
+                        cases rest with
+                        | nil => exact .liftResF h₁ _
+                        | cons _ _ => exact .exn
+                    · refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                      refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                      refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                      · cases vs with
+                        | nil => exact .exn
+                        | cons v rest =>
+                          cases rest with
+                          | nil => exact .liftResF h₁ _
+                          | cons _ _ => exact .exn
+                      · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
+                          (.ite .exn .unsupported)
+                        cases vs with
+                        | nil => exact .okF h₁ _
+                        | cons v rest =>
+                          cases rest with
+                          | nil => exact .liftResF h₁ _
+                          | cons _ _ => exact .unsupported
+      | list elts _ =>
+        simp only [evalExpr]
+        exact .bind (ihEs m st elts.toList) fun st₁ vs h₁ => .okF h₁ _
+      | tuple elts _ =>
+        simp only [evalExpr]
+        exact .bind (ihEs m st elts.toList) fun st₁ vs h₁ => .okF h₁ _
+      | subscript v idx _ =>
+        simp only [evalExpr]
+        exact .bind (ihE m st v) fun st₁ c h₁ =>
+          .bind ((ihE m st₁ idx).mono (wtrans st st₁ h₁)) fun st₂ i h₂ =>
+            .liftResF h₂ _
+      | dict keys values _ => simp only [evalExpr]; exact .unsupported
+      | «attribute» value attr _ => simp only [evalExpr]; exact .unsupported
+      | unsupported pyKind text _ => simp only [evalExpr]; exact .unsupported
+    -- evalExprs
+    · intro m st es
+      cases es with
+      | nil => simp only [evalExprs]; exact .okF rfl _
+      | cons e rest =>
+        simp only [evalExprs]
+        exact .bind (ihE m st e) fun st₁ v h₁ =>
+          .bind ((ihEs m st₁ rest).mono (wtrans st st₁ h₁)) fun st₂ vs h₂ =>
+            .okF h₂ _
+    -- evalBoolChain
+    · intro m st op e rest
+      simp only [evalBoolChain]
+      refine .bind (ihE m st e) fun st₁ v h₁ => ?_
+      cases rest with
+      | nil => exact .okF h₁ _
+      | cons e' rest' =>
+        refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+        cases op with
+        | and =>
+          exact .ite ((ihB m st₂ .and e' rest').mono (wtrans st st₂ h₂)) (.okF h₂ _)
+        | or =>
+          exact .ite (.okF h₂ _) ((ihB m st₂ .or e' rest').mono (wtrans st st₂ h₂))
+    -- evalCompareChain
+    · intro m st lhs ops cs
+      cases ops with
+      | nil =>
+        cases cs with
+        | nil => simp only [evalCompareChain]; exact .okF rfl _
+        | cons c cs' => simp only [evalCompareChain]; exact .unsupported
+      | cons op ops' =>
+        cases cs with
+        | nil => simp only [evalCompareChain]; exact .unsupported
+        | cons e rest =>
+          simp only [evalCompareChain]
+          refine .bind (ihE m st e) fun st₁ rhs h₁ => ?_
+          refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+          exact .ite ((ihC m st₂ rhs ops' rest).mono (wtrans st st₂ h₂)) (.okF h₂ _)
+    -- execStmt
+    · intro m st s
+      cases s with
+      | ret value _ =>
+        cases value with
+        | none => simp only [execStmt]; exact .okF rfl _
+        | some e =>
+          simp only [execStmt]
+          exact .bind (ihE m st e) fun st₁ v h₁ => .okF h₁ _
+      | assign targets value _ =>
+        simp only [execStmt]
+        cases targets.toList with
+        | nil => exact .unsupported
+        | cons t rest =>
+          cases rest with
+          | nil =>
+            exact .bind (ihE m st value) fun st₁ v h₁ =>
+              .bind (.liftResF h₁ _) fun st₂ env' h₂ =>
+                fun _ _ he => by cases he; exact h₂
+          | cons t2 rest2 => exact .unsupported
+      | augAssign target op value _ =>
+        cases target <;> try (simp only [execStmt]; exact .unsupported)
+        case name id _ =>
+          simp only [execStmt]
+          cases Env.lookup st.locals id with
+          | none => exact .exn
+          | some old =>
+            cases old <;>
+              first
+              | exact .unsupported
+              | exact .bind (ihE m st value) fun st₁ v h₁ =>
+                  .bind (.liftResF h₁ _) fun st₂ r h₂ =>
+                    fun _ _ he => by cases he; exact h₂
+      | whileLoop test body orelse _ =>
+        simp only [execStmt]
+        exact ihW m st test body.toList orelse.toList
+      | forStmt target iter body orelse _ =>
+        simp only [execStmt]
+        cases orelse.toList with
+        | cons o os => exact .unsupported
+        | nil =>
+          refine .bind (ihE m st iter) fun st₁ it h₁ => ?_
+          cases it <;>
+            first
+            | exact .exn
+            | exact .unsupported
+            | exact (ihFor m st₁ target _ body.toList).mono (wtrans st st₁ h₁)
+      | ifStmt test body orelse _ =>
+        simp only [execStmt]
+        refine .bind (ihE m st test) fun st₁ t h₁ => ?_
+        refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+        exact .ite ((ihSs m st₂ body.toList).mono (wtrans st st₂ h₂))
+          ((ihSs m st₂ orelse.toList).mono (wtrans st st₂ h₂))
+      | exprStmt e _ =>
+        simp only [execStmt]
+        exact .bind (ihE m st e) fun st₁ v h₁ => .okF h₁ _
+      | pass _ => simp only [execStmt]; exact .okF rfl _
+      | brk _ => simp only [execStmt]; exact .okF rfl _
+      | cont _ => simp only [execStmt]; exact .okF rfl _
+      | unsupported pyKind text _ => simp only [execStmt]; exact .unsupported
+    -- execStmts
+    · intro m st ss
+      cases ss with
+      | nil => simp only [execStmts]; exact .okF rfl _
+      | cons s rest =>
+        simp only [execStmts]
+        refine .bind (ihS m st s) fun st₁ flow h₁ => ?_
+        cases flow with
+        | next => exact (ihSs m st₁ rest).mono (wtrans st st₁ h₁)
+        | ret v => exact .okF h₁ _
+        | brk => exact .okF h₁ _
+        | cont => exact .okF h₁ _
+    -- execWhile
+    · intro m st test body orelse
+      simp only [execWhile]
+      refine .bind (ihE m st test) fun st₁ t h₁ => ?_
+      refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+      refine .ite ?_ ((ihSs m st₂ orelse).mono (wtrans st st₂ h₂))
+      refine .bind ((ihSs m st₂ body).mono (wtrans st st₂ h₂)) fun st₃ flow h₃ => ?_
+      cases flow with
+      | next => exact (ihW m st₃ test body orelse).mono (wtrans st st₃ h₃)
+      | ret v => exact .okF h₃ _
+      | brk => exact .okF h₃ _
+      | cont => exact (ihW m st₃ test body orelse).mono (wtrans st st₃ h₃)
+    -- callIn
+    · intro m w fname args
+      simp only [callIn]
+      cases findFunction m fname with
+      | none => exact .exn
+      | some f =>
+        refine .ite .unsupported (.ite .unsupported (.ite .exn ?_))
+        refine Run.OkW.toWorld ?_
+        refine .bind (ihSs m ⟨w, mkCallEnv f.params args⟩ f.body.toList)
+          fun st₁ flow h₁ => ?_
+        cases flow with
+        | ret v => exact .okF h₁ _
+        | next => exact .okF h₁ _
+        | brk => exact .unsupported
+        | cont => exact .unsupported
+    -- execFor
+    · intro m st target xs body
+      cases xs with
+      | nil => simp only [execFor]; exact .okF rfl _
+      | cons x rest =>
+        simp only [execFor]
+        refine .bind (.liftResF rfl _) fun st₁ env₁ h₁ => ?_
+        refine .bind ((ihSs m { st₁ with locals := env₁ } body).mono
+          (fun s hs => hs.trans h₁)) fun st₂ flow h₂ => ?_
+        cases flow with
+        | next => exact (ihFor m st₂ target rest body).mono (wtrans st st₂ h₂)
+        | cont => exact (ihFor m st₂ target rest body).mono (wtrans st st₂ h₂)
+        | brk => exact .okF h₂ _
+        | ret v => exact .okF h₂ _
+
+/-- `evalExpr` world invariance, direct form. -/
+theorem evalExpr_world {m : Module} {fuel : Nat} {st st' : FrameState}
+    {e : Expr} {v : RVal} (h : evalExpr m fuel st e = .ok st' v) :
+    st'.world = st.world := (worldInv fuel).1 m st e st' v h
+
+/-- `evalExprs` world invariance, direct form. -/
+theorem evalExprs_world {m : Module} {fuel : Nat} {st st' : FrameState}
+    {es : List Expr} {vs : List RVal} (h : evalExprs m fuel st es = .ok st' vs) :
+    st'.world = st.world := (worldInv fuel).2.1 m st es st' vs h
+
+/-- `execStmts` world invariance, direct form. -/
+theorem execStmts_world {m : Module} {fuel : Nat} {st st' : FrameState}
+    {ss : List Stmt} {flow : RFlow} (h : execStmts m fuel st ss = .ok st' flow) :
+    st'.world = st.world := (worldInv fuel).2.2.2.2.2.1 m st ss st' flow h
+
+/-- `callIn` world invariance, direct form: a nested call hands back
+exactly the world it was given (stage 1 — nothing allocates). -/
+theorem callIn_world {m : Module} {fuel : Nat} {w w' : World} {fname : String}
+    {args : Array RVal} {v : RVal} (h : callIn m fuel w fname args = .ok w' v) :
+    w' = w := (worldInv fuel).2.2.2.2.2.2.2.1 m w fname args w' v h
+
 /-! ## Cross-fuel determinism -/
 
 /-- **Cross-fuel determinism**: two decided (non-`timeout`) results of the

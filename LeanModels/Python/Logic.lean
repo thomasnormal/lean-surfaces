@@ -205,8 +205,9 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             dictFind, dictStore, dictBuild, heapIndex, heapStore, heapLen,
             heapContains, heapGet, RVal.refFree, RVal.refFreeList,
             Heap.get?, Heap.update, danglingMsg,
-            moduleGlobals, globalsFold, globalsStep, lookupG, resolvedG,
-            targetNamesG, evalGlobalExpr, evalGlobalExprs, globalFuel,
+            moduleGlobals, moduleInit, globalsFold, globalsStep, lookupG,
+            resolvedG, targetNamesG, evalGlobalExpr, evalGlobalExprs,
+            evalGlobalDictItems, globalFuel,
             callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
             RVal.freeze, RVal.freezeList,
             and_assoc, $extra,*] $(loc)?)

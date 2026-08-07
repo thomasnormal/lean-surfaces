@@ -907,27 +907,40 @@ with duplicate definitions the LAST one wins, exactly as in CPython. -/
 def findFunction (m : Module) (fname : String) : Option FunctionDefn :=
   m.functions.findRev? (fun f => f.name == fname)
 
-/-! ## Module-level constants (globals, G1)
+/-! ## Module-level constants (globals, G1 — world-init since H1-proper)
 
 CPython executes a module's top-level statements once, at import time, in
 source order; function bodies then resolve non-local names against the
 resulting module globals. The G1 tier admits the *constant* fragment of
 that: top-level `NAME = <expr>` and `N1, N2, … = <expr>` bindings whose
 right-hand side evaluates **call-free** (constants, earlier globals,
-arithmetic, comparisons, list/tuple/subscript) — `MATE_UPPER = 69290`,
-`A1, H1, A8, H8 = 91, 98, 21, 28`.
+arithmetic, list/tuple/DICT literals, subscript reads) —
+`MATE_LOWER = piece["K"] - 10 * piece["Q"]`, sunfish's `piece`/`pst`
+tables, `A1, H1, A8, H8 = 91, 98, 21, 28`.
 
-Stage-1 deviation (flagged in docs/memory-model.md §module init): G1 stays
-**`Val`-side** — the accumulator stores frozen boundary values, computed by
-the `RVal` evaluator below and deep-frozen at each binding (no refs can
-arise: nothing allocates in G1 until the dict tier lands there, at which
-point globals move into the fresh `World` at `callFunction` init and
-`World.globals` stops being empty).
+Since H1-proper the pass is HEAP-THREADING: dict literals allocate into
+the module-init heap, the accumulator stores runtime values (`RVal`,
+possibly refs into that heap), and `initWorld` carries both into every
+public call's fresh world (docs/memory-model.md §module initialization).
+Name resolution stays on the STATIC table (`moduleGlobals`): bindings are
+immutable in tier (no `global` statement), so a static read of a
+module-global returns the same value — the same `.ref` — as a
+world-globals read would, while MUTATIONS of the referenced dict live in
+the threaded world's heap: shared across nested calls within one public
+call, fresh across two (regression case 15). `World.globals` is
+initialized for observation and for the future `global`-statement tier,
+which must switch reads to it; until then the interpreter never reads it
+(recorded invariant).
+
+Address stability: allocation appends and mutation preserves addresses,
+so the accumulator's refs (into the init heap) stay valid in every world
+that EXTENDS it — which every reachable world does.
 
 Honesty discipline (loud, never wrong):
 * a top-level binding whose RHS is out of tier binds its name to `none` —
   function-body references to it are `unsupported`, never a fake value
-  and never a fake `NameError`;
+  and never a fake `NameError`; a failed RHS also discards its partial
+  allocations (no refs escape a refusal);
 * a top-level statement that could bind names invisibly (`import`,
   `ClassDef`, `for`, `if`, chained/starred targets, …) marks the globals
   **incomplete**: from then on a name miss is `unsupported` instead of
@@ -942,72 +955,96 @@ def globalFuel : Nat := 512
 
 mutual
 
-/-- Call-free expression evaluator for module-level right-hand sides.
-`gs` is the (already thawed) globals resolved so far (source order).
-Everything callable or effectful is out of tier here — including calls
-themselves, because globals are resolved from inside the interpreter and
-module init must not re-enter it. Heap-free: nothing allocates in G1 at
-stage 1, so `Res RVal` (not `Run`) suffices. -/
-def evalGlobalExpr (gs : REnv) (fuel : Nat) (e : Expr) : Res RVal :=
+/-- Call-free expression evaluator for module-level right-hand sides,
+heap-threading (dict literals allocate). `gs` is the runtime globals
+resolved so far (source order). Everything callable or effectful is out
+of tier here — including calls themselves, because globals are resolved
+from inside the interpreter and module init must not re-enter it. -/
+def evalGlobalExpr (h : Heap) (gs : REnv) (fuel : Nat) (e : Expr) :
+    Res (Heap × RVal) :=
   match fuel with
   | 0 => .timeout
   | fuel + 1 =>
     match e with
-    | .constant c _ => .ok (Const.toRVal c)
+    | .constant c _ => .ok (h, Const.toRVal c)
     | .name id _ =>
       match Env.lookup gs id with
-      | some v => .ok v
+      | some v => .ok (h, v)
       | Option.none => .unsupported s!"module-level reference '{id}' is outside the G1 tier"
     | .binOp l op r _ => do
-        let a ← evalGlobalExpr gs fuel l
-        let b ← evalGlobalExpr gs fuel r
-        evalBinOp op a b
+        let (h, a) ← evalGlobalExpr h gs fuel l
+        let (h, b) ← evalGlobalExpr h gs fuel r
+        let v ← evalBinOp op a b
+        return (h, v)
     | .unaryOp op operand _ => do
-        let v ← evalGlobalExpr gs fuel operand
-        evalUnaryOp op v
+        let (h, v) ← evalGlobalExpr h gs fuel operand
+        let r ← evalUnaryOpH h op v
+        return (h, r)
     | .list elts _ => do
-        let vs ← evalGlobalExprs gs fuel elts.toList
-        return .listV vs.toArray
+        let (h, vs) ← evalGlobalExprs h gs fuel elts.toList
+        return (h, .listV vs.toArray)
     | .tuple elts _ => do
-        let vs ← evalGlobalExprs gs fuel elts.toList
-        return .tuple vs.toArray
+        let (h, vs) ← evalGlobalExprs h gs fuel elts.toList
+        return (h, .tuple vs.toArray)
     | .subscript v idx _ => do
-        let c ← evalGlobalExpr gs fuel v
-        let i ← evalGlobalExpr gs fuel idx
-        indexVal c i
+        let (h, c) ← evalGlobalExpr h gs fuel v
+        let (h, i) ← evalGlobalExpr h gs fuel idx
+        let r ← indexValH h c i
+        return (h, r)
+    | .dict keys values _ => do
+        let (h, items) ← evalGlobalDictItems h gs fuel keys.toList values.toList
+        let entries ← dictBuild [] items
+        return (h.push (.dict entries.toArray 0), .ref h.size)
     | e => .unsupported s!"module-level expression '{e.kindName}' is outside the G1 tier"
 
 /-- List version of `evalGlobalExpr` (left to right, each once). -/
-def evalGlobalExprs (gs : REnv) (fuel : Nat) (es : List Expr) : Res (List RVal) :=
+def evalGlobalExprs (h : Heap) (gs : REnv) (fuel : Nat) (es : List Expr) :
+    Res (Heap × List RVal) :=
   match fuel with
   | 0 => .timeout
   | fuel + 1 =>
     match es with
-    | [] => .ok []
+    | [] => .ok (h, [])
     | e :: rest => do
-        let v ← evalGlobalExpr gs fuel e
-        let vs ← evalGlobalExprs gs fuel rest
-        return v :: vs
+        let (h, v) ← evalGlobalExpr h gs fuel e
+        let (h, vs) ← evalGlobalExprs h gs fuel rest
+        return (h, v :: vs)
+
+/-- Dict-literal items at module level (`k₁, v₁, k₂, v₂, …` — the
+`evalDictItems` twin at the G1 signature). -/
+def evalGlobalDictItems (h : Heap) (gs : REnv) (fuel : Nat)
+    (keys values : List Expr) : Res (Heap × List (RVal × RVal)) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match keys, values with
+    | [], [] => .ok (h, [])
+    | k :: ks, v :: vs => do
+        let (h, kv) ← evalGlobalExpr h gs fuel k
+        let (h, vv) ← evalGlobalExpr h gs fuel v
+        let (h, rest) ← evalGlobalDictItems h gs fuel ks vs
+        return (h, (kv, vv) :: rest)
+    | _, _ => .unsupported "Dict with mismatched keys/values"
 
 end
 
 /-- The globals accumulator: bindings in reverse source order (`lookupG`
 takes the first match, so the LATEST binding wins, as in CPython) — `none`
-marks a name bound at module level to an out-of-tier value. Stores frozen
-`Val`s (the stage-1 G1 deviation — see the section comment). -/
-abbrev GlobalsAcc := List (String × Option Val)
+marks a name bound at module level to an out-of-tier value. Stores RUNTIME
+values since H1-proper (refs point into the module-init heap). -/
+abbrev GlobalsAcc := List (String × Option RVal)
 
 /-- First-match lookup in the accumulator. -/
-def lookupG : GlobalsAcc → String → Option (Option Val)
+def lookupG : GlobalsAcc → String → Option (Option RVal)
   | [], _ => Option.none
   | (k, v) :: rest, id => if k == id then some v else lookupG rest id
 
-/-- The resolved (in-tier) globals, thawed for `evalGlobalExpr`.
-Shadowed earlier bindings are harmless: `Env.lookup` also takes the first
-match. -/
+/-- The resolved (in-tier) globals as a runtime env (drops the out-of-tier
+markers). Shadowed earlier bindings are harmless: `Env.lookup` also takes
+the first match. -/
 def resolvedG : GlobalsAcc → REnv
   | [] => []
-  | (k, some v) :: rest => (k, RVal.thaw v) :: resolvedG rest
+  | (k, some v) :: rest => (k, v) :: resolvedG rest
   | (_, Option.none) :: rest => resolvedG rest
 
 /-- All-names view of a tuple target's elements. -/
@@ -1016,48 +1053,56 @@ def targetNamesG : List Expr → Option (List String)
   | .name id _ :: rest => (targetNamesG rest).map (id :: ·)
   | _ => Option.none
 
-/-- One module-level statement's effect on the globals. `(acc, complete)`:
-`complete = false` once any statement could have bound a name invisibly.
-Each in-tier binding is deep-frozen into the accumulator (`RVal.freeze`
-cannot hit a ref in G1 stage 1 — nothing allocates; a hypothetical freeze
-refusal marks the name out-of-tier, loudly). -/
-def globalsStep (acc : GlobalsAcc) (complete : Bool) : Stmt → GlobalsAcc × Bool
+/-- One module-level statement's effect on the init heap and the globals.
+`(h, acc, complete)`: `complete = false` once any statement could have
+bound a name invisibly. A failed RHS binds its names out-of-tier AND
+discards its partial allocations (the original heap rides through — no
+refs escape a refusal). -/
+def globalsStep (h : Heap) (acc : GlobalsAcc) (complete : Bool) :
+    Stmt → Heap × GlobalsAcc × Bool
   | .assign tgts rhs _ =>
     match tgts.toList with
     | [.name id _] =>
-      match evalGlobalExpr (resolvedG acc) globalFuel rhs >>= RVal.freeze with
-      | .ok v => ((id, some v) :: acc, complete)
-      | _ => ((id, Option.none) :: acc, complete)
+      match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+      | .ok (h', v) => (h', (id, some v) :: acc, complete)
+      | _ => (h, (id, Option.none) :: acc, complete)
     | [.tuple es _] =>
       match targetNamesG es.toList with
       | some ids =>
-        match evalGlobalExpr (resolvedG acc) globalFuel rhs >>= RVal.freeze with
-        | .ok (.tuple vs) =>
+        match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+        | .ok (h', .tuple vs) =>
           if ids.length == vs.size then
-            ((ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-          else (ids.map (·, Option.none) ++ acc, complete)
-        | .ok (.list vs) =>
+            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+          else (h, ids.map (·, Option.none) ++ acc, complete)
+        | .ok (h', .listV vs) =>
           if ids.length == vs.size then
-            ((ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-          else (ids.map (·, Option.none) ++ acc, complete)
-        | _ => (ids.map (·, Option.none) ++ acc, complete)
-      | Option.none => (acc, false)
-    | _ => (acc, false)
-  | .exprStmt _ _ => (acc, complete)
-  | .pass _ => (acc, complete)
-  | _ => (acc, false)
+            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+          else (h, ids.map (·, Option.none) ++ acc, complete)
+        | _ => (h, ids.map (·, Option.none) ++ acc, complete)
+      | Option.none => (h, acc, false)
+    | _ => (h, acc, false)
+  | .exprStmt _ _ => (h, acc, complete)
+  | .pass _ => (h, acc, complete)
+  | _ => (h, acc, false)
 
 /-- Fold `globalsStep` over the top-level statements (source order). -/
-def globalsFold (acc : GlobalsAcc) (complete : Bool) : List Stmt → GlobalsAcc × Bool
-  | [] => (acc, complete)
+def globalsFold (h : Heap) (acc : GlobalsAcc) (complete : Bool) :
+    List Stmt → Heap × GlobalsAcc × Bool
+  | [] => (h, acc, complete)
   | s :: rest =>
-    match globalsStep acc complete s with
-    | (acc', complete') => globalsFold acc' complete' rest
+    match globalsStep h acc complete s with
+    | (h', acc', complete') => globalsFold h' acc' complete' rest
 
-/-- The module's constant globals: `(bindings, complete)`. Computed at the
-fixed `globalFuel`, so the result is a pure function of the module. -/
+/-- The whole module-init result: the init heap, the accumulator, and the
+completeness flag — a pure function of the module (fixed `globalFuel`). -/
+def moduleInit (m : Module) : Heap × GlobalsAcc × Bool :=
+  globalsFold #[] [] true m.topLevel.toList
+
+/-- The module's constant globals: `(bindings, complete)` — the static
+name-resolution table (see the section comment for why static reads are
+faithful). -/
 def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
-  globalsFold [] true m.topLevel.toList
+  (moduleInit m).2
 
 /-- Does a call supplying `n` positional arguments fit `params`? Python's
 rule with defaults (F1): at most one argument per parameter, and every
@@ -1247,7 +1292,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
       | some v => .ok st v
       | Option.none =>
         match lookupG (moduleGlobals m).1 id with
-        | some (some v) => .ok st (RVal.thaw v)
+        | some (some v) => .ok st v
         | some Option.none =>
           .unsupported s!"module-level value of '{id}' is outside the G1 tier"
         | Option.none =>
@@ -1285,14 +1330,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           -- `x(1//0)` with `x = 5` raises ZeroDivisionError, not TypeError.
           match Env.lookup st.locals fname with
           | some (.ref _) =>
-              -- A heap object's callability lives in the heap (dicts are
-              -- not callable, instances may be) — loud until H1-proper.
-              .unsupported "calling a heap object is outside the stage-1 tier (docs/memory-model.md)"
+              -- every H1 heap object is a dict, and dicts are not
+              -- callable: the faithful TypeError (H3 instances revisit
+              -- this arm — instance callability lives in the heap)
+              evalExprs m fuel st args.toList ⤳ fun st _ =>
+              .exn st (.typeError "'dict' object is not callable")
           | some v =>
               evalExprs m fuel st args.toList ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
           | Option.none =>
             match lookupG (moduleGlobals m).1 fname with
+            | some (some (.ref _)) =>
+                evalExprs m fuel st args.toList ⤳ fun st _ =>
+                .exn st (.typeError "'dict' object is not callable")
             | some (some v) =>
                 evalExprs m fuel st args.toList ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -1633,14 +1683,16 @@ end
 
 /-! ## The public boundary (docs/memory-model.md v2, call layering) -/
 
-/-- The fresh `World` of one public call: empty heap, and — stage-1
-deviation, flagged — empty world-globals (G1 name resolution still reads
-the `Val`-side `moduleGlobals` inside `evalExpr`; H1-proper initializes
-`World.globals` here from the G1 constant pass extended with dict
-literals, and module-global dicts become shared across nested calls
-within one public call, fresh across two — regression case 15). -/
-def initWorld (_m : Module) : World :=
-  { heap := #[], globals := [] }
+/-- The fresh `World` of one public call: the module-init heap (G1 dict
+literals live here — sunfish's `piece`/`pst`) and the resolved constant
+globals. Built afresh per public call, so module-global dicts are shared
+across nested calls WITHIN one public call and fresh ACROSS two
+(regression case 15). Name resolution reads the static `moduleGlobals`
+table — equivalent while bindings are immutable in tier (§G1 section
+comment); `World.globals` is the observation-side field and the seam for
+the future `global`-statement tier. -/
+def initWorld (m : Module) : World :=
+  { heap := (moduleInit m).1, globals := resolvedG (moduleGlobals m).1 }
 
 /-- The isolated public observation (signature UNCHANGED — `CallsTo`,
 every `@[spec]` raw form, and every existing theorem statement are

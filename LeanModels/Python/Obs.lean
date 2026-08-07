@@ -358,8 +358,9 @@ theorem fuelMono (fuel : Nat) :
                 | some vv =>
                   cases vv with
                   | some v =>
-                    exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
-                      Run.le_refl _
+                    cases v <;>
+                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
+                        Run.le_refl _
                   | none => exact Run.le_refl _
                 | none =>
                   -- findFunction → len → sorted → max → min → abs → int →
@@ -917,7 +918,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases lookupG (moduleGlobals m).1 fname with
               | some vv =>
                 cases vv with
-                | some v => exact .bind hargs fun st₁ _ h₁ => .exn
+                | some v => cases v <;> exact .bind hargs fun st₁ _ h₁ => .exn
                 | none => exact .unsupported
               | none =>
                 refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_

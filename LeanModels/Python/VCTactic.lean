@@ -419,8 +419,9 @@ def interpUnfolds : List Name :=
    ``Heap.get?, ``Heap.update, ``danglingMsg,
    ``targetNames, ``bindAll, ``assignTo,
    ``foldExtremum, ``extremumVal, ``absVal, ``intCastVal, ``isBuiltinName,
-   ``moduleGlobals, ``globalsFold, ``globalsStep, ``lookupG, ``resolvedG,
-   ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs, ``globalFuel,
+   ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
+   ``resolvedG, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
+   ``evalGlobalDictItems, ``globalFuel,
    ``envInt]
 
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse

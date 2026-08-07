@@ -43,9 +43,12 @@ deriving Repr, Inhabited, BEq
 
 /-- Heap objects — identity-bearing, mutated in place. `shapeVersion`
 increments on key insertion/deletion (not value update): the live-iterator
-invalidation counter. -/
+invalidation counter. Lists (H2) need no version: list iteration is an
+index cursor against the LIVE object (CPython `listiterator`), so there is
+no invalidation to count. -/
 inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
+  | list (xs : Array RVal)
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
@@ -128,6 +131,7 @@ end
 def Obj.WF (h : Heap) : Obj → Prop
   | .dict es _ => RVal.WFList h (es.toList.map Prod.fst)
       ∧ RVal.WFList h (es.toList.map Prod.snd)
+  | .list xs => RVal.WFList h xs.toList
 
 /-- Every stored object is WF w.r.t. the heap itself. -/
 def Heap.WF (h : Heap) : Prop :=
@@ -529,6 +533,164 @@ statement). -/
 theorem RVal.freeze_eq_ok_iff {rv : RVal} {v : Val} :
     RVal.freeze rv = .ok v ↔ rv = RVal.thaw v :=
   ⟨RVal.eq_thaw_of_freeze rv, fun h => h ▸ RVal.freeze_thaw v⟩
+
+/-! ## H2: the heap-aware boundary (lists on the heap)
+
+At H2 `Val.list` marshals to a HEAP OBJECT (`Obj.list`): thawing a
+boundary argument allocates — every mutable-container occurrence in the
+marshalled tree is freshly materialized, so distinct occurrences are
+distinct objects (docs/memory-model.md §call layering) — and a returned
+list freezes to a `Val.list` SNAPSHOT (the observation deliberately
+forgets identity). The pure `RVal.thaw`/`RVal.freeze` pair above remains
+the PROOF-LAYER VOCABULARY for the list-free fragment (`Val.listFree`):
+on it the heap-threading thaw allocates nothing and agrees with the pure
+thaw (`thawH_of_listFree`), which is how every existing boundary lemma
+keeps its statement. The freeze side mirrors the `heapEq` doctrine: the
+public wrapper takes the PURE fast path on ref-free results, and only
+ref-carrying results enter the FUELED `freezeH` (a frozen recursion
+point — exhaustion is `.timeout`; cycle detection is by the active
+recursion path, fuel-independent). -/
+
+mutual
+  /-- No `Val.list` anywhere inside the boundary value (tuples searched
+  recursively). On this fragment thawing is pure — the bridge every
+  pre-H2 boundary statement rides. Kernel-computable (list-structural). -/
+  def Val.listFree : Val → Bool
+    | .none | .bool _ | .int _ | .str _ => true
+    | .list _ => false
+    | .tuple xs => Val.listFreeList xs.toList
+
+  /-- Elementwise `Val.listFree`. -/
+  def Val.listFreeList : List Val → Bool
+    | [] => true
+    | v :: vs => Val.listFree v && Val.listFreeList vs
+end
+
+/-- Every argument is list-free (the arity-style guard of the pure-thaw
+bridge at the argument vector). -/
+def Val.listFreeArgs (args : Array Val) : Bool :=
+  Val.listFreeList args.toList
+
+mutual
+  /-- Heap-threading thaw (H2): scalars pass through, tuples stay
+  immediate (elements threaded), a `Val.list` ALLOCATES a fresh
+  `Obj.list` — one fresh object per occurrence in the marshalled tree,
+  inner lists allocated before their container (CPython builds bottom-up;
+  identity-free observations cannot tell anyway). -/
+  def RVal.thawH (h : Heap) : Val → Heap × RVal
+    | .none => (h, .none)
+    | .bool b => (h, .bool b)
+    | .int n => (h, .int n)
+    | .str s => (h, .str s)
+    | .tuple xs =>
+      match RVal.thawListH h xs.toList with
+      | (h, vs) => (h, .tuple vs.toArray)
+    | .list xs =>
+      match RVal.thawListH h xs.toList with
+      | (h, vs) => (h.push (.list vs.toArray), .ref h.size)
+
+  /-- Elementwise `thawH`, threading the heap left to right. -/
+  def RVal.thawListH (h : Heap) : List Val → Heap × List RVal
+    | [] => (h, [])
+    | v :: vs =>
+      match RVal.thawH h v with
+      | (h, rv) =>
+        match RVal.thawListH h vs with
+        | (h, rvs) => (h, rv :: rvs)
+end
+
+/-- Thaw a public argument vector, threading the heap (the H2 wrapper's
+marshalling step; list-structural so the kernel reduces it). -/
+def RVal.thawArgsH (h : Heap) (args : Array Val) : Heap × Array RVal :=
+  match RVal.thawListH h args.toList with
+  | (h, rvs) => (h, rvs.toArray)
+
+mutual
+  /-- On list-free values the heap-threading thaw allocates nothing and
+  agrees with the pure thaw — the bridge that keeps every pre-H2 boundary
+  statement (which speaks `RVal.thaw`) true of the H2 wrapper. -/
+  theorem RVal.thawH_of_listFree : (v : Val) → Val.listFree v = true →
+      ∀ h, RVal.thawH h v = (h, RVal.thaw v)
+    | .none, _, h => rfl
+    | .bool _, _, h => rfl
+    | .int _, _, h => rfl
+    | .str _, _, h => rfl
+    | .tuple xs, hf, h => by
+        simp only [RVal.thawH, RVal.thaw,
+          RVal.thawListH_of_listFree xs.toList (by simpa [Val.listFree] using hf) h]
+    | .list xs, hf, h => by
+        simp [Val.listFree] at hf
+
+  /-- Elementwise `thawH_of_listFree`. -/
+  theorem RVal.thawListH_of_listFree : (l : List Val) → Val.listFreeList l = true →
+      ∀ h, RVal.thawListH h l = (h, RVal.thawList l)
+    | [], _, h => rfl
+    | v :: vs, hf, h => by
+        simp only [Val.listFreeList, Bool.and_eq_true] at hf
+        simp only [RVal.thawListH, RVal.thawList,
+          RVal.thawH_of_listFree v hf.1 h,
+          RVal.thawListH_of_listFree vs hf.2 h]
+end
+
+/-- Argument-vector form of the pure-thaw bridge. -/
+theorem RVal.thawArgsH_of_listFree {args : Array Val}
+    (hf : Val.listFreeArgs args = true) (h : Heap) :
+    RVal.thawArgsH h args = (h, RVal.thawArgs args) := by
+  simp only [RVal.thawArgsH, RVal.thawArgs,
+    RVal.thawListH_of_listFree args.toList hf h]
+
+mutual
+  /-- Deep-freeze over the heap (H2) — the FUELED boundary walk for
+  ref-carrying results (the public wrapper's `refFree` fast path keeps it
+  out of every list-free observation): a list object freezes to a
+  `Val.list` snapshot of its (recursively frozen) elements; a dict stays
+  loudly outside the boundary (no `Val` dict observation form); a
+  repeated address on the ACTIVE RECURSION PATH is a cycle — loudly
+  unsupported, decided by detection, never by exhaustion; a repeated
+  address NOT on the path is sharing, legitimately duplicated in the
+  snapshot. Fuel exhaustion is `.timeout` only (docs/memory-model.md
+  §fuel vs frontier). -/
+  def RVal.freezeH (h : Heap) (fuel : Nat) (path : List Addr) (v : RVal) : Res Val :=
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 =>
+        match v with
+        | .none => .ok .none
+        | .bool b => .ok (.bool b)
+        | .int n => .ok (.int n)
+        | .str s => .ok (.str s)
+        | .listV xs => do
+            let vs ← RVal.freezeListH h fuel path xs.toList
+            return .list vs.toArray
+        | .tuple xs => do
+            let vs ← RVal.freezeListH h fuel path xs.toList
+            return .tuple vs.toArray
+        | .ref a =>
+          if path.contains a then
+            .unsupported "returning a CYCLIC heap object through the call boundary is outside the tier (no cyclic observation form in `Val`; docs/memory-model.md §call layering)"
+          else
+            match Heap.get? h a with
+            | some (.list xs) => do
+                let vs ← RVal.freezeListH h fuel (a :: path) xs.toList
+                return .list vs.toArray
+            | some (.dict _ _) =>
+                .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
+            | Option.none => .unsupported
+                "internal: dangling heap address (heap well-formedness violation — report this)"
+
+  /-- Elementwise `freezeH`, first refusal wins. -/
+  def RVal.freezeListH (h : Heap) (fuel : Nat) (path : List Addr)
+      (l : List RVal) : Res (List Val) :=
+      match fuel with
+      | 0 => .timeout
+      | fuel + 1 =>
+        match l with
+        | [] => .ok []
+        | v :: vs => do
+            let v' ← RVal.freezeH h fuel path v
+            let vs' ← RVal.freezeListH h fuel path vs
+            return v' :: vs'
+end
 
 /-- Erase the world from a public outcome: `.ok` deep-freezes the value,
 `.exn` forgets its (retained, but boundary-invisible) state. A NAMED

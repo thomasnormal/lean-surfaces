@@ -73,6 +73,64 @@ post-H4). A single-call convenience driver (`tools/lean-python`: extract
 → `leanmodels-run`, with an optional one-off CPython comparison) also
 exists.
 
+### CPython's own test suite as the official bench (owner-directed, 2026-08-07)
+
+Adopt CPython's `Lib/test` as `leanpy`'s official correctness bench: there
+is no independent Python conformance suite — `Lib/test` IS the standard
+every alternative implementation (PyPy, RustPython, GraalPy) tests
+against, and RustPython's vendored-copy + expected-failure-manifest model
+is the closest precedent to our situation. Staged:
+
+1. **NOW (cheap):** vendor the CPython **3.9-branch** `Lib/test`
+   (matching the pinned reference version) — in-repo snapshot or
+   submodule, exact commit recorded. Mine it: extract small
+   self-contained assert sequences from `test_grammar`/`test_bool`/
+   `test_compare`/`test_dict`/`test_list`/`test_builtin` into leanpy
+   corpus scripts, each provenance-tagged
+   (`# from: Lib/test/test_dict.py:TestDict.test_getitem`) — official
+   test CONTENT without the unittest harness. A handful of dict/list
+   extractions is a natural H2 deliverable.
+2. **LATER:** a micro-extraction tool pulling assert-shaped statements
+   from test methods at scale.
+3. **H3+ MILESTONE:** run actual test files under `leanpy` with a
+   RustPython-style expected-failure manifest; "% of CPython's own test
+   files passing unmodified" becomes the headline completeness metric and
+   the manifest becomes the feature-ladder priority queue.
+
+Caveat (recorded): CPython tests probe implementation details beyond the
+language (GC timing, `sys` internals, exact messages) — PyPy's copy is
+modified for the same reason; our loudness invariant plus a documented-
+deviations list is the mechanism for the same problem.
+
+## A C surface (long-horizon direction; owner-scoped 2026-08-07)
+
+A structured-C subset tier (Clight-like: no `setjmp`, restricted control
+flow, UB loudly refused — the loudness invariant ports directly) as the
+project's SECOND language surface, reusing the whole architecture: extract
+via a C frontend → deep embed → definitional interpreter → differential
+harness with gcc as reference → VC walker. Sequenced after the Python
+ladder matures (post-H3/H4). No action during H2.
+
+Scope decisions (recorded from the owner discussion):
+
+* **No sunfish deliverable attached.** The sunfish formal program's scope
+  is CLASSIC sunfish only; `csunfish.c` is the NNUE C engine and we are
+  not proving the NNUE engines. The C tier stays a generic lean-surfaces
+  growth direction unless a classic C sunfish ever exists (none is
+  planned). Nuance kept on record: the search theorems are
+  eval-parametric (eval enters only via `Bounded`-style side conditions),
+  so a C NNUE engine's search skeleton COULD inherit the same specs
+  without proving anything about the network — an open option
+  deliberately not exercised, not a wall.
+* **DECLINED: executing CPython's C-implemented builtins under the C
+  tier.** CPython C modules are entangled with the PyObject runtime
+  (refcounting, type objects, error protocol) — faithfully running them
+  means modeling CPython's own runtime, a larger object than the Python
+  language itself. Every serious alternative implementation
+  (PyPy/RustPython/GraalPy) natively reimplements builtins instead;
+  `leanpy` does the same (Lean-native builtins + differential
+  validation).
+
 ## Python tier: the sunfish ladder (steps 3-6)
 
 Steps 1-2 are BUILT (G1 constant globals; `for` over lists/tuples;

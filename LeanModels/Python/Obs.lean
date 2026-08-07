@@ -203,6 +203,13 @@ theorem heapEqMono (fuel : Nat) :
                 | dict fs v2 =>
                   exact Res.le_ite (ihN h ((x, y) :: active) es.toList fs.toList k hk)
                     (Res.le_refl _)
+                | list ys => exact Res.le_refl _
+              | list xs =>
+                cases o2 with
+                | dict fs v2 => exact Res.le_refl _
+                | list ys =>
+                  exact Res.le_ite (ihL h ((x, y) :: active) xs.toList ys.toList k hk)
+                    (Res.le_refl _)
     · intro h active as bs fuel' hf
       cases fuel' with
       | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
@@ -233,6 +240,78 @@ theorem heapEqMono (fuel : Nat) :
             exact Res.le_bind (ihE h active vv w k hk) fun e =>
               Res.le_ite (ihN h active rest r k hk) (Res.le_refl _)
 
+/-- Fuel monotonicity of the H2 list-membership scan (elementwise
+`heapEq` splices). -/
+theorem heapContainsScan_mono {h : Heap} {fuel : Nat} {x : RVal}
+    {l : List RVal} {fuel' : Nat} (hf : fuel ≤ fuel') :
+    heapContainsScan h fuel x l ⊑ heapContainsScan h fuel' x l := by
+  induction l with
+  | nil => exact Res.le_refl _
+  | cons v vs ih =>
+    simp only [heapContainsScan]
+    exact Res.le_bind ((heapEqMono fuel).1 h [] v x fuel' hf)
+      fun e => Res.le_ite (Res.le_refl _) ih
+
+/-- Fuel monotonicity of heap-container membership. -/
+theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
+    {fuel' : Nat} (hf : fuel ≤ fuel') :
+    heapContains h fuel a k ⊑ heapContains h fuel' a k := by
+  simp only [heapContains]
+  cases Heap.get? h a with
+  | none => exact Res.le_refl _
+  | some o =>
+    cases o with
+    | dict es v => exact Res.le_refl _
+    | list xs => exact heapContainsScan_mono hf
+
+/-- Fuel monotonicity of the heap deep-freeze (`freezeH`/`freezeListH`),
+one conjunction by induction on fuel — the freeze leg of the public
+wrapper's monotonicity decomposition (docs/memory-model.md v2). -/
+theorem freezeHMono (fuel : Nat) :
+    (∀ (h : Heap) (path : List Addr) (v : RVal) (fuel' : Nat), fuel ≤ fuel' →
+      RVal.freezeH h fuel path v ⊑ RVal.freezeH h fuel' path v) ∧
+    (∀ (h : Heap) (path : List Addr) (l : List RVal) (fuel' : Nat), fuel ≤ fuel' →
+      RVal.freezeListH h fuel path l ⊑ RVal.freezeListH h fuel' path l) := by
+  induction fuel with
+  | zero =>
+    refine ⟨?_, ?_⟩
+    · exact fun h path v fuel' _ => Or.inl (by simp [RVal.freezeH])
+    · exact fun h path l fuel' _ => Or.inl (by simp [RVal.freezeListH])
+  | succ fuel ih =>
+    obtain ⟨ihV, ihL⟩ := ih
+    refine ⟨?_, ?_⟩
+    · intro h path v fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        cases v <;> simp only [RVal.freezeH] <;> try exact Res.le_refl _
+        case listV xs =>
+          exact Res.le_bind (ihL h path xs.toList k hk) fun vs => Res.le_refl _
+        case tuple xs =>
+          exact Res.le_bind (ihL h path xs.toList k hk) fun vs => Res.le_refl _
+        case ref a =>
+          refine Res.le_ite (Res.le_refl _) ?_
+          cases Heap.get? h a with
+          | none => exact Res.le_refl _
+          | some o =>
+            cases o with
+            | dict es v => exact Res.le_refl _
+            | list xs =>
+              exact Res.le_bind (ihL h (a :: path) xs.toList k hk)
+                fun vs => Res.le_refl _
+    · intro h path l fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        cases l with
+        | nil => simp only [RVal.freezeListH]; exact Res.le_refl _
+        | cons v vs =>
+          simp only [RVal.freezeListH]
+          exact Res.le_bind (ihV h path v k hk) fun v' =>
+            Res.le_bind (ihL h path vs k hk) fun vs' => Res.le_refl _
+
 /-- Fuel monotonicity of the heap-aware comparison step. -/
 theorem evalCompareOpH_mono {h : Heap} {fuel : Nat} {op : CmpOp} {a b : RVal}
     {fuel' : Nat} (hf : fuel ≤ fuel') :
@@ -244,6 +323,13 @@ theorem evalCompareOpH_mono {h : Heap} {fuel : Nat} {op : CmpOp} {a b : RVal}
     exact Res.le_ite (Res.le_refl _)
       (Res.le_bind ((heapEqMono fuel).1 h [] a b fuel' hf)
         fun e => Res.le_refl _)
+  case inOp =>
+    cases b <;> try exact Res.le_refl _
+    case ref d => exact heapContains_mono hf
+  case notIn =>
+    cases b <;> try exact Res.le_refl _
+    case ref d =>
+      exact Res.le_bind (heapContains_mono hf) fun e => Res.le_refl _
 
 /-! ## Fuel monotonicity — the enabling theorem -/
 

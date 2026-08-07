@@ -403,14 +403,20 @@ def fuelK : Nat := 64
 (the `py_simp` list plus `envInt`). -/
 def interpUnfolds : List Name :=
   [``execStmts, ``execStmt, ``evalExpr, ``evalExprs, ``evalBoolChain,
-   ``evalCompareChain, ``findFunction, ``mkCallEnv, ``arityOk,
+   ``evalCompareChain, ``evalDictItems, ``findFunction, ``mkCallEnv, ``arityOk,
    ``defaultBindings, ``Env.lookup, ``Env.set,
-   ``Const.toVal, ``Const.toRVal, ``truthy, ``asInt, ``RVal.isNone,
+   ``Const.toVal, ``Const.toRVal, ``truthy, ``truthyH, ``asInt, ``RVal.isNone,
    ``RVal.thaw, ``RVal.thawList, ``RVal.thawArgs, ``RVal.freeze,
    ``RVal.freezeList,
    ``valEq, ``valEqList,
-   ``intCmp, ``strCmp, ``evalCompareOp, ``evalBinOp, ``evalUnaryOp,
-   ``lenVal, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
+   ``intCmp, ``strCmp, ``evalCompareOp, ``evalCompareOpH, ``evalBinOp,
+   ``evalUnaryOp, ``evalUnaryOpH,
+   ``lenVal, ``lenValH, ``sortedVal, ``asIntList, ``normIndex, ``indexVal,
+   ``indexValH,
+   ``hashableKey, ``hashableKeyList, ``keyEq, ``keyEqList, ``RVal.unhashName,
+   ``dictFind, ``dictStore, ``dictBuild, ``heapIndex, ``heapStore, ``heapLen,
+   ``heapContains, ``heapGet, ``RVal.refFree, ``RVal.refFreeList,
+   ``Heap.get?, ``Heap.update, ``danglingMsg,
    ``targetNames, ``bindAll, ``assignTo,
    ``foldExtremum, ``extremumVal, ``absVal, ``intCastVal, ``isBuiltinName,
    ``moduleGlobals, ``globalsFold, ``globalsStep, ``lookupG, ``resolvedG,
@@ -1628,10 +1634,14 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       #[← provePinned ctx.pack hargsTy]
     let hworld ← mkExpectedTypeHint (← mkEqRefl tg.shape.world)
       (← mkEq (← mkAppM ``FrameState.world #[tg.E]) tg.shape.world)
+    -- the frame-theorem side condition: the module is heap-free (computes
+    -- by `rfl` on the literal module — H1-proper pinned geometry)
+    let hHeapFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
+      (← mkEq (← mkAppM ``Module.heapFree #[tg.m]) (toExpr true))
     let hcall ← appOpt ``EvalsTo.call
       #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
         some vNF, some spf, some spc, some prfL, some hargs, some hworld,
-        some factE', some prfG]
+        some factE', some prfG, some hHeapFree]
     let (rAs, prfAs) ← captureRun ctx.pack
       (← mkAppM ``assignTo #[localsE, tgtE, rvNF])
     let rAs' ← whnfR rAs

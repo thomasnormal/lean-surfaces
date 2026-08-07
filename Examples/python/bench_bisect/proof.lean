@@ -213,6 +213,9 @@ theorem htestB (xs : List Int) (x : Int) :
   rcases om with _ | mv <;>
     py_threshold 8 [pw, blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
 
+-- H1-proper: the heap-aware helper layers (indexValH/truthyH) deepen the
+-- symbolic terms; the body execution needs a larger heartbeat budget.
+set_option maxHeartbeats 800000 in
 theorem hbodyB (xs : List Int) (x : Int) :
     ∀ s : SB, InvB xs x s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →

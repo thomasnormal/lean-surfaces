@@ -425,7 +425,13 @@ theorem PyStmtTriple.assign {m : Module} {P : FrameState → Prop} {Q : PyPost}
   obtain ⟨t, ht⟩ := hv.at_least
   refine ⟨t + 1, fun F hF => ?_⟩
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
-  simpa [execStmt, ht F' hF', ha] using hQ
+  -- subscript targets never satisfy the pure `assignTo` hypothesis (loud
+  -- arm), so that case closes by contradiction; every other target
+  -- reduces as before
+  cases tgt <;>
+    first
+    | simpa [execStmt, ht F' hF', ha] using hQ
+    | simp [assignTo] at ha
 
 /-- `x = e` (the `Name`-target special case, `assignTo` pre-reduced): fall
 through at `Env.set st.locals x v`. -/
@@ -480,11 +486,11 @@ theorem PyStmtTriple.ifStmt {m : Module} {P Pt Pf : FrameState → Prop}
   · obtain ⟨r, tb, hr, hrun⟩ := horelse.exec (hfalse rfl)
     refine ⟨t + tb + 1, fun F hF => ?_⟩
     obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
-    simpa [execStmt, ht F' (by omega), htr, hrun F' (by omega)] using hr
+    simpa [execStmt, ht F' (by omega), truthyH_of_truthy htr, hrun F' (by omega)] using hr
   · obtain ⟨r, tb, hr, hrun⟩ := hbody.exec (htrue rfl)
     refine ⟨t + tb + 1, fun F hF => ?_⟩
     obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
-    simpa [execStmt, ht F' (by omega), htr, hrun F' (by omega)] using hr
+    simpa [execStmt, ht F' (by omega), truthyH_of_truthy htr, hrun F' (by omega)] using hr
 
 /-! ## Smoke test
 

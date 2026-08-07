@@ -199,18 +199,58 @@ theorem execWhile_at_least {m : Module} {st : FrameState} {test : Expr}
   obtain ⟨fuel, hf⟩ := h
   exact ⟨fuel, fun F hF => execWhile_mono hf (by simp) F hF⟩
 
-/-- The `callIn` threshold form of a public `CallsTo` fact — the splice a
-recursion proof (or a callee-spec rule) rewrites a nested call site with.
-Stage-1 geometry (docs/memory-model.md): a nested `callIn` site inside a
-public run sits at exactly the public fresh world (`initWorld m` — nothing
-allocates, `worldInv`), with thawed arguments; the callee returns the thaw
-of the spec's value (`RVal.eq_thaw_of_freeze`) and hands the world back
-unchanged, so the rewrite is fully determined. -/
-theorem CallsTo.callIn_at_least {m : Module} {fname : String}
-    {args : Array Val} {v : Val} (h : CallsTo m fname args v) :
-    ∃ f₀, ∀ F, f₀ ≤ F →
-      callIn m F (initWorld m) fname (RVal.thawArgs args)
-        = .ok (initWorld m) (RVal.thaw v) := by
+/-! ## The stateful call judgment (`CallsIn`) and the frame theorem
+
+`CallsIn` is the heap-aware call fact of docs/memory-model.md §CallsIn: a
+nested call transforms a KNOWN before-world into a KNOWN after-world. A
+fresh-world `CallsTo` fact is NOT a valid nested-call spec once heaps are
+shared; the splice rules below consume `CallsIn`, and pure (heap-free)
+callee specs lift into it via the explicit frame theorem
+`CallsTo.callsIn_frame` — the `worldInv`-powered bridge that keeps every
+existing pinned-state proof working. -/
+
+/-- The stateful call judgment: some fuel runs the nested call from
+`before` to `after`, returning `result` (docs/memory-model.md §CallsIn). -/
+def CallsIn (m : Module) (before : World) (fname : String)
+    (args : Array RVal) (after : World) (result : RVal) : Prop :=
+  ∃ fuel, callIn m fuel before fname args = .ok after result
+
+/-- Fuel-threshold form of a `CallsIn` fact (via `callIn_mono`). -/
+theorem CallsIn.at_least {m : Module} {before after : World} {fname : String}
+    {args : Array RVal} {result : RVal}
+    (h : CallsIn m before fname args after result) :
+    ∃ f₀, ∀ F, f₀ ≤ F → callIn m F before fname args = .ok after result := by
+  obtain ⟨fuel, hf⟩ := h
+  exact ⟨fuel, fun F hF => callIn_mono hf (by simp) F hF⟩
+
+/-- `CallsIn` is functional (after-world and result together), across all
+fuels — `fuelMono` at the `callIn` conjunct. -/
+theorem CallsIn.functional {m : Module} {before : World} {fname : String}
+    {args : Array RVal} {w₁ w₂ : World} {v₁ v₂ : RVal}
+    (h₁ : CallsIn m before fname args w₁ v₁)
+    (h₂ : CallsIn m before fname args w₂ v₂) : w₁ = w₂ ∧ v₁ = v₂ := by
+  obtain ⟨f₁, hf₁⟩ := h₁
+  obtain ⟨f₂, hf₂⟩ := h₂
+  rcases Nat.le_total f₁ f₂ with hle | hle
+  · have := (callIn_mono hf₁ (by simp) f₂ hle).symm.trans hf₂
+    exact ⟨(Run.ok.inj this).1, (Run.ok.inj this).2⟩
+  · have := (callIn_mono hf₂ (by simp) f₁ hle).symm.trans hf₁
+    exact ⟨(Run.ok.inj this).1.symm, (Run.ok.inj this).2.symm⟩
+
+/-- **The frame theorem**: in a heap-free module a pure `CallsTo` spec
+lifts to a `CallsIn` fact at the public geometry — the callee cannot touch
+the heap, so it hands the fresh world back unchanged (`worldInv` through
+`callIn_world`) and returns the thaw of the public value
+(`RVal.eq_thaw_of_freeze` inverts the boundary freeze). The heap-freedom
+hypothesis is an autoparam (`rfl` computes on concrete modules). Scope
+note: the world is pinned at `initWorld m` because a heap-free body may
+still READ the heap through ref-carrying arguments — a ∀-world frame needs
+ref-free arguments too, and no current consumer wants it. -/
+theorem CallsTo.callsIn_frame {m : Module} {fname : String}
+    {args : Array Val} {v : Val} (h : CallsTo m fname args v)
+    (hm : m.heapFree = true := by first | rfl | decide) :
+    CallsIn m (initWorld m) fname (RVal.thawArgs args)
+      (initWorld m) (RVal.thaw v) := by
   obtain ⟨fuel, hf⟩ := h
   unfold callFunction at hf
   revert hf
@@ -218,11 +258,28 @@ theorem CallsTo.callIn_at_least {m : Module} {fname : String}
   | ok w' rv =>
     intro hf
     obtain rfl := RVal.eq_thaw_of_freeze rv hf
-    obtain rfl := callIn_world hc
-    exact ⟨fuel, fun F hF => callIn_mono hc (by simp) F hF⟩
+    obtain rfl := callIn_world hm hc
+    exact ⟨fuel, hc⟩
   | exn w' e => intro hf; cases hf
   | timeout => intro hf; cases hf
   | unsupported msg => intro hf; cases hf
+
+/-- The `callIn` threshold form of a public `CallsTo` fact — the splice a
+recursion proof (or a callee-spec rule) rewrites a nested call site with.
+Pinned geometry (docs/memory-model.md): in a HEAP-FREE module (autoparam;
+`rfl` computes it on concrete modules) a nested `callIn` site inside a
+public run sits at exactly the public fresh world (`initWorld m` —
+`worldInv`), with thawed arguments; the callee returns the thaw of the
+spec's value (`RVal.eq_thaw_of_freeze`) and hands the world back
+unchanged, so the rewrite is fully determined. The composition
+`CallsTo.callsIn_frame` ∘ `CallsIn.at_least`. -/
+theorem CallsTo.callIn_at_least {m : Module} {fname : String}
+    {args : Array Val} {v : Val} (h : CallsTo m fname args v)
+    (hm : m.heapFree = true := by first | rfl | decide) :
+    ∃ f₀, ∀ F, f₀ ≤ F →
+      callIn m F (initWorld m) fname (RVal.thawArgs args)
+        = .ok (initWorld m) (RVal.thaw v) :=
+  (h.callsIn_frame hm).at_least
 
 /-! ## The generic while rule -/
 
@@ -288,7 +345,7 @@ theorem execWhile_total_of_invariant {σ : Type}
       rw [execWhile]
       rw [hft (ft + fb + F) (by omega)]
       simp only [Run.ok_bind]
-      rw [htv s hs]
+      rw [truthyH_of_truthy (htv s hs)]
       simp only [Run.liftRes_ok, Run.ok_bind]
       rw [hc]
       simp only [if_true]
@@ -301,7 +358,7 @@ theorem execWhile_total_of_invariant {σ : Type}
       rw [execWhile]
       rw [hft (ft + 1) (by omega)]
       simp only [Run.ok_bind]
-      rw [htv s hs]
+      rw [truthyH_of_truthy (htv s hs)]
       simp [hcf, execStmts]
 
 open Lean Lean.Parser.Tactic in

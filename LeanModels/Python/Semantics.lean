@@ -585,6 +585,24 @@ def RVal.unhashName : RVal → String
   | v => v.typeName
 
 mutual
+  /-- No `.ref` anywhere inside the value. The `==` fast path: ref-free
+  pairs decide by the PURE `valEq` (fuel-independent), so symbolic
+  execution never opens the fueled `heapEq` on ordinary values — `heapEq`
+  is a frozen recursion point (its fueled unfolding on symbolic operands
+  is unbounded, the `execWhile` situation exactly). -/
+  def RVal.refFree : RVal → Bool
+    | .none | .bool _ | .int _ | .str _ => true
+    | .tuple xs => RVal.refFreeList xs.toList
+    | .listV xs => RVal.refFreeList xs.toList
+    | .ref _ => false
+
+  /-- Elementwise `RVal.refFree`. -/
+  def RVal.refFreeList : List RVal → Bool
+    | [] => true
+    | v :: vs => RVal.refFree v && RVal.refFreeList vs
+end
+
+mutual
   /-- Key equality: Python `==` restricted to HASHABLE (hence ref-free)
   values — bool/int coercion (`d[True]` is `d[1]`), tuples elementwise.
   Pure (`Bool`, not `Res`): callers have checked `hashableKey` on the
@@ -774,8 +792,15 @@ containers stay loud — the H1 inventory is dicts only); ordering delegates
 to the pure `evalCompareOp`. -/
 def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool :=
   match op with
-  | .eq => heapEq h fuel [] a b
-  | .notEq => do let e ← heapEq h fuel [] a b; return !e
+  | .eq =>
+    -- ref-free pairs decide by the pure `valEq` (the fast path keeps
+    -- `heapEq` — a frozen recursion point — out of ordinary comparisons)
+    if RVal.refFree a && RVal.refFree b then valEq a b
+    else heapEq h fuel [] a b
+  | .notEq => do
+    let e ← if RVal.refFree a && RVal.refFree b then valEq a b
+            else heapEq h fuel [] a b
+    return !e
   | .is =>
     if a.isNone || b.isNone then .ok (a.isNone && b.isNone)
     else
@@ -1077,6 +1102,113 @@ def mkCallEnv (params : Array Param) (args : Array RVal) : Env :=
   (params.toList.map Param.arg).zip args.toList
     ++ defaultBindings (params.toList.drop args.size)
 
+/-! ## The heap-free fragment (conditional world invariance)
+
+Once dict literals allocate and subscript stores mutate, unconditional
+world invariance is FALSE. What survives is the heap-free fragment: an
+expression/statement whose every subterm neither allocates nor mutates
+returns its input world on `.ok` (`worldInv`, Obs.lean). The predicates
+are SYNTACTIC and kernel-computable (list-structural, like `valEq`), so
+concrete modules discharge them by `rfl` — which is how pure `CallsTo`
+specs lift into the stateful `CallsIn` world (`CallsTo.callsIn_frame`,
+Surface.lean).
+
+Soundness rule for every future tier: any construct whose `.ok` outcome
+can carry a CHANGED world must be `false` here. Today: dict literals
+(allocation) and subscript-target assignment (mutation). Reads (`d[k]`,
+`k in d`, `len(d)`, `d.get(k)`, `==`, truthiness) preserve the world; loud
+and raising arms are vacuous for `.ok`-invariance. -/
+
+mutual
+  /-- Does evaluating this expression provably preserve the world? -/
+  def Expr.heapFree : Expr → Bool
+    | .constant .. => true
+    | .name .. => true
+    | .binOp l _ r _ => l.heapFree && r.heapFree
+    | .unaryOp _ e _ => e.heapFree
+    | .boolOp _ vs _ => Expr.heapFreeList vs.toList
+    | .compare l _ cs _ => l.heapFree && Expr.heapFreeList cs.toList
+    | .call f args _ _ => f.heapFree && Expr.heapFreeList args.toList
+    | .list es _ => Expr.heapFreeList es.toList
+    | .tuple es _ => Expr.heapFreeList es.toList
+    | .subscript v i _ => v.heapFree && i.heapFree
+    | .dict .. => false                 -- ALLOCATES
+    | .attribute v _ _ => v.heapFree    -- tier: read-only (`.get`)
+    | .unsupported .. => true           -- loud, never decides `.ok`
+
+  /-- Elementwise `Expr.heapFree`. -/
+  def Expr.heapFreeList : List Expr → Bool
+    | [] => true
+    | e :: es => e.heapFree && Expr.heapFreeList es
+end
+
+mutual
+  /-- Does executing this statement provably preserve the world? -/
+  def Stmt.heapFree : Stmt → Bool
+    | .ret Option.none _ => true
+    | .ret (some e) _ => e.heapFree
+    | .assign tgts v _ =>
+      (match tgts.toList with
+       | [.subscript ..] => false       -- MUTATES (`d[k] = v`)
+       | _ => true) && v.heapFree
+    | .augAssign _ _ v _ => v.heapFree
+    | .whileLoop t body orelse _ =>
+      t.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
+    | .forStmt _ iter body orelse _ =>
+      iter.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
+    | .ifStmt t body orelse _ =>
+      t.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
+    | .exprStmt e _ => e.heapFree
+    | .pass _ => true
+    | .brk _ => true
+    | .cont _ => true
+    | .unsupported .. => true
+
+  /-- Elementwise `Stmt.heapFree`. -/
+  def Stmt.heapFreeList : List Stmt → Bool
+    | [] => true
+    | s :: ss => s.heapFree && Stmt.heapFreeList ss
+end
+
+/-- Function-level heap freedom: its body's. -/
+def FunctionDefn.heapFree (f : FunctionDefn) : Bool :=
+  Stmt.heapFreeList f.body.toList
+
+/-- Elementwise function heap freedom. -/
+def funsHeapFree : List FunctionDefn → Bool
+  | [] => true
+  | f :: fs => f.heapFree && funsHeapFree fs
+
+/-- Module-level heap freedom: every function body (nested calls then stay
+inside the fragment). Top-level statements are NOT constrained — they run
+only at module init, before any public run begins. -/
+def Module.heapFree (m : Module) : Bool :=
+  funsHeapFree m.functions.toList
+
+/-- A member of a heap-free function list is heap-free. -/
+theorem funsHeapFree_mem {fs : List FunctionDefn} (hm : funsHeapFree fs = true)
+    {f : FunctionDefn} (hf : f ∈ fs) : f.heapFree = true := by
+  induction fs with
+  | nil => cases hf
+  | cons g gs ih =>
+    simp only [funsHeapFree, Bool.and_eq_true] at hm
+    cases hf with
+    | head => exact hm.1
+    | tail _ h => exact ih hm.2 h
+
+/-- The function `findFunction` resolves in a heap-free module is heap-free
+(the extraction step of `worldInv`'s `callIn` case). -/
+theorem findFunction_heapFree {m : Module} {fname : String} {f : FunctionDefn}
+    (hm : m.heapFree = true) (hf : findFunction m fname = some f) :
+    Stmt.heapFreeList f.body.toList = true := by
+  have hmem : f ∈ m.functions.toList := by
+    unfold findFunction at hf
+    rw [Array.findRev?_eq_find?_reverse] at hf
+    have h1 : f ∈ m.functions.reverse := Array.mem_of_find?_eq_some hf
+    rw [Array.mem_reverse] at h1
+    exact Array.mem_def.mp h1
+  exact funsHeapFree_mem hm hmem
+
 /-! ## The interpreter (mutual block, normative signatures)
 
 Every function matches fuel first (`0 => .timeout`) and passes the
@@ -1133,7 +1265,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         Run.liftRes st (evalBinOp op a b)
     | .unaryOp op operand _ =>
         evalExpr m fuel st operand ⤳ fun st v =>
-        Run.liftRes st (evalUnaryOp op v)
+        Run.liftRes st (evalUnaryOpH st.world.heap op v)
     | .boolOp op values _ =>
       match values.toList with
       | [] => .unsupported "BoolOp with no operands"
@@ -1175,7 +1307,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             else if fname == "len" then
               evalExprs m fuel st args.toList ⤳ fun st vs =>
               match vs with
-              | [v] => Run.liftRes st (lenVal v)
+              | [v] => Run.liftRes st (lenValH st.world.heap v)
               | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
             else if fname == "sorted" then
               -- After `findFunction`, so a module-level `def sorted` shadows
@@ -1205,6 +1337,23 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               .exn st (.nameError fname)
             else
               .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
+        | .attribute recv attr _ =>
+          -- Method calls (H1 tier: exactly `d.get(k)`/`d.get(k, default)`).
+          -- CPython order: receiver (and its attribute lookup) BEFORE the
+          -- arguments; both arguments evaluate before `.get` decides.
+          if attr == "get" then
+            evalExpr m fuel st recv ⤳ fun st r =>
+            match r with
+            | .ref a =>
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              match vs with
+              | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
+              | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
+              | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+            | r =>
+              .unsupported s!"method call '.get' on '{r.typeName}' is outside the H1 tier (dict receivers only, docs/memory-model.md)"
+          else
+            .unsupported s!"method '.{attr}()' is outside the H1 tier (only dict '.get'; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
     | .list elts _ =>
         evalExprs m fuel st elts.toList ⤳ fun st vs =>
@@ -1215,11 +1364,20 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .subscript v idx _ =>
         evalExpr m fuel st v ⤳ fun st c =>
         evalExpr m fuel st idx ⤳ fun st i =>
-        Run.liftRes st (indexVal c i)
-    | .dict .. =>
-      .unsupported "dict literals are outside the stage-1 tier (heap allocation lands with H1-proper, docs/memory-model.md)"
+        Run.liftRes st (indexValH st.world.heap c i)
+    | .dict keys values _ =>
+        -- CPython `BUILD_MAP`: every key/value expression evaluates first
+        -- (k₁, v₁, k₂, v₂, … left to right), then entries insert in order
+        -- (hashability checked per insert; duplicate equal keys keep the
+        -- first key/position, take the last value), then the ALLOCATION —
+        -- the fresh address is the old heap size.
+        evalDictItems m fuel st keys.toList values.toList ⤳ fun st items =>
+        Run.liftRes st (dictBuild [] items) ⤳ fun st entries =>
+        .ok { st with world :=
+                { st.world with heap := st.world.heap.push (.dict entries.toArray 0) } }
+          (.ref st.world.heap.size)
     | .attribute .. =>
-      .unsupported "attribute access is outside the value tier (heap layer H1/H3, docs/memory-model.md)"
+      .unsupported "attribute access as a value is outside the H1 tier (only 'd.get(…)' method calls; heap layer H1/H3, docs/memory-model.md)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/
@@ -1235,6 +1393,24 @@ def evalExprs (m : Module) (fuel : Nat) (st : FrameState) (es : List Expr) :
         evalExprs m fuel st rest ⤳ fun st vs =>
         .ok st (v :: vs)
 
+/-- Evaluate a dict literal's key/value expressions in CPython order:
+`k₁, v₁, k₂, v₂, …`, left to right, each exactly once. Insertion (and its
+hashability checks) happens AFTERWARDS, in `dictBuild` — `BUILD_MAP`
+evaluates every element before constructing the map. -/
+def evalDictItems (m : Module) (fuel : Nat) (st : FrameState)
+    (keys values : List Expr) : Run FrameState (List (RVal × RVal)) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match keys, values with
+    | [], [] => .ok st []
+    | k :: ks, v :: vs =>
+        evalExpr m fuel st k ⤳ fun st kv =>
+        evalExpr m fuel st v ⤳ fun st vv =>
+        evalDictItems m fuel st ks vs ⤳ fun st rest =>
+        .ok st ((kv, vv) :: rest)
+    | _, _ => .unsupported "Dict with mismatched keys/values"
+
 /-- `and`/`or` chain: short-circuits and returns the deciding *operand value*
 (not a bool): `0 or "x"` is `"x"`; the last operand is returned as-is. -/
 def evalBoolChain (m : Module) (fuel : Nat) (st : FrameState) (op : BoolOp)
@@ -1246,7 +1422,7 @@ def evalBoolChain (m : Module) (fuel : Nat) (st : FrameState) (op : BoolOp)
     match rest with
     | [] => .ok st v
     | e' :: rest' =>
-      Run.liftRes st (truthy v) ⤳ fun st b =>
+      Run.liftRes st (truthyH st.world.heap v) ⤳ fun st b =>
       match op with
       | .and => if b then evalBoolChain m fuel st .and e' rest' else .ok st v
       | .or => if b then .ok st v else evalBoolChain m fuel st .or e' rest'
@@ -1264,7 +1440,7 @@ def evalCompareChain (m : Module) (fuel : Nat) (st : FrameState) (lhs : RVal)
     | [], [] => .ok st (.bool true)
     | op :: ops', e :: rest =>
         evalExpr m fuel st e ⤳ fun st rhs =>
-        Run.liftRes st (evalCompareOp op lhs rhs) ⤳ fun st b =>
+        Run.liftRes st (evalCompareOpH st.world.heap fuel op lhs rhs) ⤳ fun st b =>
         if b then evalCompareChain m fuel st rhs ops' rest
         else .ok st (.bool false)
     | _, _ => .unsupported "Compare with mismatched ops/comparators"
@@ -1284,6 +1460,22 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         .ok st (.ret v)
     | .assign targets value _ =>
       match targets.toList with
+      | [.subscript dE kE _] =>
+          -- Subscript STORE (H1: dict mutation, aliasing-visible). CPython
+          -- order (language reference; docs/memory-model.md): the RHS
+          -- first, then the target primary, then the subscript, then the
+          -- store. Value-list stores stay loud until H2; tuple/str stores
+          -- are the faithful TypeError.
+          evalExpr m fuel st value ⤳ fun st v =>
+          evalExpr m fuel st dE ⤳ fun st c =>
+          evalExpr m fuel st kE ⤳ fun st k =>
+          match c with
+          | .ref a =>
+            Run.liftRes st (heapStore st.world.heap a k v) ⤳ fun st h' =>
+            .ok { st with world := { st.world with heap := h' } } .next
+          | .listV _ =>
+            .unsupported "subscript assignment to a list ('xs[i] = v' mutates in place, visible through aliases) is outside the v0 tier (lists move to the heap at H2)"
+          | c => .exn st (.typeError s!"'{c.typeName}' object does not support item assignment")
       | [t] =>
           -- CPython order: the value is evaluated before the store.
           evalExpr m fuel st value ⤳ fun st v =>
@@ -1330,7 +1522,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       | _ :: _ => .unsupported "'for … else' is outside the v0 tier"
     | .ifStmt test body orelse _ =>
         evalExpr m fuel st test ⤳ fun st t =>
-        Run.liftRes st (truthy t) ⤳ fun st b =>
+        Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
         if b then execStmts m fuel st body.toList
         else execStmts m fuel st orelse.toList
     | .exprStmt e _ =>
@@ -1387,7 +1579,7 @@ def execWhile (m : Module) (fuel : Nat) (st : FrameState) (test : Expr)
   | 0 => .timeout
   | fuel + 1 =>
     evalExpr m fuel st test ⤳ fun st t =>
-    Run.liftRes st (truthy t) ⤳ fun st b =>
+    Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
     if b then
       execStmts m fuel st body ⤳ fun st flow =>
       match flow with

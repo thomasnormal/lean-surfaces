@@ -144,7 +144,7 @@ theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
       refine ⟨tt + 2, fun F hF => ?_⟩
       obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
       obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
-      simpa [execWhile, ht (F'' + 1) (by omega), hb, execStmts]
+      simpa [execWhile, ht (F'' + 1) (by omega), truthyH_of_truthy hb, execStmts]
         using hexit st hI hb
     · -- test true: run the body, dispatch on how it landed
       obtain ⟨r, tb, hr, hrun⟩ := (hbody n).exec ⟨hI, hb, hn⟩
@@ -159,7 +159,7 @@ theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
           refine ⟨tt + tb + tw + 1, fun F hF => ?_⟩
           obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
           rw [execWhile, ht F' (by omega)]
-          simp only [Run.ok_bind, hb, Run.liftRes_ok, if_true]
+          simp only [Run.ok_bind, truthyH_of_truthy hb, Run.liftRes_ok, if_true]
           rw [hrun F' (by omega)]
           simp only [Run.ok_bind]
           rw [hpin F' (by omega)]
@@ -173,7 +173,7 @@ theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
           refine ⟨tt + tb + tw + 1, fun F hF => ?_⟩
           obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
           rw [execWhile, ht F' (by omega)]
-          simp only [Run.ok_bind, hb, Run.liftRes_ok, if_true]
+          simp only [Run.ok_bind, truthyH_of_truthy hb, Run.liftRes_ok, if_true]
           rw [hrun F' (by omega)]
           simp only [Run.ok_bind]
           rw [hpin F' (by omega)]
@@ -183,7 +183,7 @@ theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
           refine ⟨tt + tb + 1, fun F hF => ?_⟩
           obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
           rw [execWhile, ht F' (by omega)]
-          simp only [Run.ok_bind, hb, Run.liftRes_ok, if_true]
+          simp only [Run.ok_bind, truthyH_of_truthy hb, Run.liftRes_ok, if_true]
           rw [hrun F' (by omega)]
           simpa using hr
         | ret v =>
@@ -191,14 +191,14 @@ theorem execWhile_of_invariant {m : Module} {test : Expr} {body : List Stmt}
           refine ⟨tt + tb + 1, fun F hF => ?_⟩
           obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
           rw [execWhile, ht F' (by omega)]
-          simp only [Run.ok_bind, hb, Run.liftRes_ok, if_true]
+          simp only [Run.ok_bind, truthyH_of_truthy hb, Run.liftRes_ok, if_true]
           rw [hrun F' (by omega)]
           simpa using hr
       | exn st' e =>
         refine ⟨tt + tb + 1, fun F hF => ?_⟩
         obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
         rw [execWhile, ht F' (by omega)]
-        simp only [Run.ok_bind, hb, Run.liftRes_ok, if_true]
+        simp only [Run.ok_bind, truthyH_of_truthy hb, Run.liftRes_ok, if_true]
         rw [hrun F' (by omega)]
         simpa using hr
       | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
@@ -269,13 +269,14 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     (hargs : EvalsToList m st argEs.toList (RVal.thawList args.toList))
     (hworld : st.world = initWorld m)
     (hspec : CallsTo m fname args v)
-    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl) :
     EvalsTo m st (.call (.name fname sp) argEs Option.none sp') (RVal.thaw v) := by
   obtain ⟨w, locals⟩ := st
   simp only at hworld hlocal hargs
   subst hworld
   obtain ⟨ta, ha⟩ := hargs.at_least
-  obtain ⟨tc, hc⟩ := hspec.callIn_at_least
+  obtain ⟨tc, hc⟩ := hspec.callIn_at_least hm
   have hfn : (findFunction m fname).isSome = true := by
     cases hff : findFunction m fname with
     | none =>
@@ -303,13 +304,14 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
         ∃ args v, EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
           CallsTo m fname args v ∧
           Q.next ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
-    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl) :
     PyStmtTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa)
       Q :=
   PyStmtTriple.assignName fun st hP =>
     let ⟨hlocal, hworld, _args, v, hvs, hc, hQ⟩ := h st hP
-    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob, hQ⟩
+    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob hm, hQ⟩
 
 /-- List-level form of the call rule: `x = f(…)` followed by `rest`, with
 the callee's postcondition (thawed result bound to `x`) as the
@@ -323,11 +325,12 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
           CallsTo m fname args v ∧
           R ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hrest : PyTriple m R rest Q)
-    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl) :
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hm : m.heapFree = true := by rfl) :
     PyTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa
         :: rest) Q :=
-  PyTriple.seq (PyStmtTriple.call h hglob) hrest
+  PyTriple.seq (PyStmtTriple.call h hglob hm) hrest
 
 /-! ## The `@[py_spec]` registry -/
 

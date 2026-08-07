@@ -1,12 +1,17 @@
 # The Python heap layer: memory model (v2 — review-corrected design)
 
-Status: DESIGN, revised per the owner review of 2026-08-06 (conditional
-veto of v1: heap representation approved; boundary types, call layering,
-exception outcome, and fuel behavior corrected). This version is the
-architecture the threading commit must implement. Nothing here is built;
-the value tier refuses all of it loudly. An exploratory `Res (Heap × α)`
-threading lives on branch `h1-threading` (DO NOT MERGE — superseded;
-kept for its mechanical rebase notes).
+Status: NORMATIVE; the H1 core (threading, 2026-08-06) and the H1-proper
+dict tier (2026-08-07) are BUILT to this document. Still pending from it:
+live dict iteration (`for k in d` is loudly out of the inventory — the
+no-snapshot rule below), value-container membership (`x in [..]`,
+`x in "s"` — loud), the full interpreter-wide `Heap.WF` preservation
+theorem (defs + allocation/update/empty lemmas exist; acceptance case 18
+is covered by concrete regressions), and the H2+ stages. Deviation record
+lives in AGENTS.md. Revised per the owner review of 2026-08-06
+(conditional veto of v1: heap representation approved; boundary types,
+call layering, exception outcome, and fuel behavior corrected). The old
+exploratory `Res (Heap × α)` threading on branch `h1-threading` is
+superseded (kept for its mechanical rebase notes).
 
 Oracle pin: **CPython 3.9.x** (the repo's extractor/tier baseline). Dict
 insertion order is a language guarantee since 3.7, but iterator details,

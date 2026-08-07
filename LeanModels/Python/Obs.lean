@@ -949,7 +949,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           | nil => exact .liftResF h₁ _
                           | cons _ _ => exact .exn
                       · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
-                          (.ite .exn .unsupported)
+                          (.ite .unsupported (.ite .exn .unsupported))
                         cases vs with
                         | nil => exact .okF h₁ _
                         | cons v rest =>

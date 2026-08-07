@@ -1,5 +1,6 @@
 import LeanModels.Python.Json
 import LeanModels.Python.Semantics
+import LeanModels.Python.Script
 
 /-!
 # `leanmodels-run` — CLI runner for the differential harness
@@ -134,7 +135,64 @@ def parseCli (argv : List String) : Except String Cli := do
       return { path, fname, args := args.toArray, fuel := fuel?.getD 10000 }
   | _ => .error "expected <envelope.json> <function>"
 
+/-- `leanpy` v0 script mode (`--script`): execute the module's top level
+(`runScript`, Script.lean), print the accumulated stdout chunks as lines,
+and map the outcome to the process exit status (docs/memory-model.md
+§effects — exit status is the RUNNER boundary):
+
+* `ok` → 0 (stdout printed);
+* `exn e` → 1, stdout-so-far printed, the exception CLASS LINE on stderr
+  (CPython convention's comparable slice);
+* `unsupported` → 3, the construct report on stderr — LOUD, the
+  differential driver must never read it as agreement;
+* `timeout` → 4 (loud likewise).
+-/
+def runScriptMode (m : Module) (fuel : Nat) : IO UInt32 := do
+  match runScript m fuel with
+  | .ok w () =>
+      for line in w.stdout do IO.println line
+      return 0
+  | .exn w e =>
+      for line in w.stdout do IO.println line
+      IO.eprintln (errName e)
+      return 1
+  | .unsupported msg =>
+      IO.eprintln s!"leanpy-unsupported: {msg}"
+      return 3
+  | .timeout =>
+      IO.eprintln "leanpy-timeout"
+      return 4
+
 def main (argv : List String) : IO UInt32 := do
+  match argv with
+  | "--script" :: rest =>
+    -- leanpy v0: `leanmodels-run --script <envelope.json> [--fuel N]`
+    -- (default fuel 1000000: fuel is a depth/iteration bound and concrete
+    -- runs cost time proportional to steps, so generosity is free)
+    match splitFuel rest with
+    | .error e =>
+        IO.eprintln s!"leanmodels-run --script: {e}"
+        return 2
+    | .ok (positional, fuel?) =>
+      let some path := (match positional with | [p] => some p | _ => Option.none)
+        | do
+            IO.eprintln "usage: leanmodels-run --script <envelope.json> [--fuel N]"
+            return 2
+      match ← (IO.FS.readFile ⟨path⟩).toBaseIO with
+      | .error e =>
+          IO.eprintln s!"leanmodels-run --script: cannot read '{path}': {toString e}"
+          return 1
+      | .ok contents =>
+        match parseEnvelopeString contents with
+        | .error e =>
+            IO.eprintln s!"leanmodels-run --script: '{path}' is not a valid envelope: {e}"
+            return 1
+        | .ok envl =>
+            unless envl.language == "python" do
+              IO.eprintln s!"leanmodels-run --script: '{path}' has language '{envl.language}', expected 'python'"
+              return 1
+            runScriptMode envl.module (fuel?.getD 1000000)
+  | _ =>
   match parseCli argv with
   | .error e =>
       IO.eprintln s!"leanmodels-run: {e}"

@@ -1,0 +1,282 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/hello.py",
+  "source_sha256": "500d2b6cdede6e209916de8c29cee2a62067c23da1baeb9a20b9d7a4df8b59eb",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 60
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 60
+          },
+          "value": {
+            "type": "str",
+            "value": "leanpy v0 corpus: scalar prints, top-level arithmetic."
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 9
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 2,
+              "col_offset": 0,
+              "end_lineno": 2,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "BinOp",
+          "span": {
+            "lineno": 2,
+            "col_offset": 4,
+            "end_lineno": 2,
+            "end_col_offset": 9
+          },
+          "left": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 5
+            },
+            "value": {
+              "type": "int",
+              "repr": "6"
+            }
+          },
+          "op": "Mult",
+          "right": {
+            "kind": "Constant",
+            "span": {
+              "lineno": 2,
+              "col_offset": 8,
+              "end_lineno": 2,
+              "end_col_offset": 9
+            },
+            "value": {
+              "type": "int",
+              "repr": "7"
+            }
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 25
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 3,
+            "col_offset": 0,
+            "end_lineno": 3,
+            "end_col_offset": 25
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 3,
+              "col_offset": 0,
+              "end_lineno": 3,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 3,
+                "col_offset": 6,
+                "end_lineno": 3,
+                "end_col_offset": 21
+              },
+              "value": {
+                "type": "str",
+                "value": "the answer is"
+              }
+            },
+            {
+              "kind": "Name",
+              "span": {
+                "lineno": 3,
+                "col_offset": 23,
+                "end_lineno": 3,
+                "end_col_offset": 24
+              },
+              "id": "x"
+            }
+          ],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 14
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 4,
+            "col_offset": 0,
+            "end_lineno": 4,
+            "end_col_offset": 14
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 4,
+              "col_offset": 0,
+              "end_lineno": 4,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 4,
+                "col_offset": 6,
+                "end_lineno": 4,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 6,
+                  "end_lineno": 4,
+                  "end_col_offset": 7
+                },
+                "id": "x"
+              },
+              "op": "Sub",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 4,
+                  "col_offset": 10,
+                  "end_lineno": 4,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "100"
+                }
+              }
+            }
+          ],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 5,
+          "end_col_offset": 25
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 5,
+            "col_offset": 0,
+            "end_lineno": 5,
+            "end_col_offset": 25
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 5,
+              "col_offset": 0,
+              "end_lineno": 5,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 5,
+                "col_offset": 6,
+                "end_lineno": 5,
+                "end_col_offset": 10
+              },
+              "value": {
+                "type": "bool",
+                "value": true
+              }
+            },
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 5,
+                "col_offset": 12,
+                "end_lineno": 5,
+                "end_col_offset": 16
+              },
+              "value": {
+                "type": "none"
+              }
+            },
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 5,
+                "col_offset": 18,
+                "end_lineno": 5,
+                "end_col_offset": 24
+              },
+              "value": {
+                "type": "str",
+                "value": "done"
+              }
+            }
+          ],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

@@ -507,7 +507,7 @@ def intCastVal : RVal → Res RVal
 locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
-  id == "abs" || id == "int"
+  id == "abs" || id == "int" || id == "print"
 
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
@@ -1070,22 +1070,31 @@ def globalsStep (h : Heap) (acc : GlobalsAcc) (complete : Bool) :
   | .assign tgts rhs _ =>
     match tgts.toList with
     | [.name id _] =>
-      match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
-      | .ok (h', v) => (h', (id, some v) :: acc, complete)
-      | _ => (h, (id, Option.none) :: acc, complete)
+      -- once the globals are INCOMPLETE, later bindings are POISONED, not
+      -- valued: their RHS could read state an unprocessed statement
+      -- changed (a post-`while` `M = x` with the loop rebinding `x` —
+      -- binding the stale value would be silently wrong; reads of a
+      -- poisoned name stay loud).
+      if complete then
+        match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+        | .ok (h', v) => (h', (id, some v) :: acc, complete)
+        | _ => (h, (id, Option.none) :: acc, complete)
+      else (h, (id, Option.none) :: acc, complete)
     | [.tuple es _] =>
       match targetNamesG es.toList with
       | some ids =>
-        match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
-        | .ok (h', .tuple vs) =>
-          if ids.length == vs.size then
-            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-          else (h, ids.map (·, Option.none) ++ acc, complete)
-        | .ok (h', .listV vs) =>
-          if ids.length == vs.size then
-            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-          else (h, ids.map (·, Option.none) ++ acc, complete)
-        | _ => (h, ids.map (·, Option.none) ++ acc, complete)
+        if complete then
+          match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+          | .ok (h', .tuple vs) =>
+            if ids.length == vs.size then
+              (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+            else (h, ids.map (·, Option.none) ++ acc, complete)
+          | .ok (h', .listV vs) =>
+            if ids.length == vs.size then
+              (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
+            else (h, ids.map (·, Option.none) ++ acc, complete)
+          | _ => (h, ids.map (·, Option.none) ++ acc, complete)
+        else (h, ids.map (·, Option.none) ++ acc, complete)
       | Option.none => (h, acc, false)
     | _ => (h, acc, false)
   | .exprStmt _ _ => (h, acc, complete)
@@ -1390,6 +1399,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               | [] => .ok st (.int 0)
               | [v] => Run.liftRes st (intCastVal v)
               | _ => .unsupported "int() with a base argument is outside the v0 tier"
+            else if fname == "print" then
+              -- the effect must thread World.stdout through this block;
+              -- until then a wrong NameError would be silently unfaithful
+              .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
             else if (moduleGlobals m).2 then
               .exn st (.nameError fname)
             else

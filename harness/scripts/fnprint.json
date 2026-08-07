@@ -1,0 +1,148 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/fnprint.py",
+  "source_sha256": "bb60159a0b903f0edaa02fe66985236592fe0e345d230406bd65b2e7745b8a8a",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 44
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 2,
+            "end_col_offset": 44
+          },
+          "value": {
+            "type": "str",
+            "value": "leanpy v0 corpus: print inside a function body \u2014 loud until the effect\nthreads the mutual block (telemetry row)."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 12
+        },
+        "name": "shout",
+        "args": [
+          {
+            "arg": "x",
+            "span": {
+              "lineno": 5,
+              "col_offset": 10,
+              "end_lineno": 5,
+              "end_col_offset": 11
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 6,
+                "col_offset": 4,
+                "end_lineno": 6,
+                "end_col_offset": 12
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 4,
+                  "end_lineno": 6,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 10,
+                    "end_lineno": 6,
+                    "end_col_offset": 11
+                  },
+                  "id": "x"
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 9,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 8
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 9,
+            "col_offset": 0,
+            "end_lineno": 9,
+            "end_col_offset": 8
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 9,
+              "col_offset": 0,
+              "end_lineno": 9,
+              "end_col_offset": 5
+            },
+            "id": "shout"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 9,
+                "col_offset": 6,
+                "end_lineno": 9,
+                "end_col_offset": 7
+              },
+              "value": {
+                "type": "int",
+                "repr": "3"
+              }
+            }
+          ],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

@@ -46,16 +46,32 @@ check closing the hand-transcription gap for the whole sunfish effort.
 
 Design already fixed in the H1 core (docs/memory-model.md §effects):
 stdout is `World` data (`World.stdout`), exit status is a runner-boundary
-mapping, argv a marshalled global. Sequencing: v0 after the H1 stages —
-module-level execution of current-tier scripts (loudly refusing
-`def`/assignment interleaving until the ordered `ModuleItem`
-representation lands), first-unsupported-construct reporting, stdout diff
-vs python3.9, harness script-corpus mode; then the ladder continues (H2
-lists, H3 classes, H4 generators) with corpus telemetry as the
-prioritization signal beside the sunfish milestones; sunfish-under-leanpy
-is the capstone once the tier admits it (likely post-H4). A single-call
-convenience driver (`tools/lean-python`: extract → `leanmodels-run`, with
-an optional one-off CPython comparison) exists today.
+mapping, argv a marshalled global.
+
+**v0 is BUILT (2026-08-07):** `leanmodels-run --script <envelope.json>`
+(LeanModels/Python/Script.lean) executes a module's top level in one
+world with `print` intercepted at statement position (scalar `str()`
+tier), exit codes ok→0 / exn→1(+class line on stderr) / unsupported→3 /
+timeout→4 — the loud codes are never agreement; the differential side is
+`harness/script_corpus.py` over `harness/scripts.json` (stdout + exit
+code vs the pinned CPython, first-unsupported-construct telemetry — 10
+scripts: 7 matched, 3 loud-blocked at corpus creation). Consistency
+architecture: the G1-FAITHFUL PREFIX (plain binds/docstrings) is skipped
+by the live run — its effects, dict identities included, are already in
+`initWorld` — and the live SUFFIX executes with control shells for
+`while`/`if` (prints inside loops work); loud refusals: a def after live
+code, a suffix rebinding of a table-bound name some function reads, and
+in-function `print` (the interpreter also gained two soundness fixes v0
+surfaced: post-boundary G1 bindings are POISONED, never stale, and
+in-function `print` is loud rather than a wrong `NameError` —
+`Examples/python/g1_lab` rows pin both). The ordered `ModuleItem`
+representation remains the recorded fix for everything the boundary
+refuses. Next per the direction: grow the corpus (eventually CPython's
+own test suite) with telemetry prioritizing the ladder (H2 lists, H3
+classes, H4 generators); sunfish-under-leanpy stays the capstone (likely
+post-H4). A single-call convenience driver (`tools/lean-python`: extract
+→ `leanmodels-run`, with an optional one-off CPython comparison) also
+exists.
 
 ## Python tier: the sunfish ladder (steps 3-6)
 

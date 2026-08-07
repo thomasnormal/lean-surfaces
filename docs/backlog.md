@@ -66,17 +66,18 @@ builtins `max`/`min`/`abs`/`int`) with proved sunfish acceptance examples
 sunfish.py as shipped, in dependency order, each with its blocking design
 decision:
 
-3. **Dicts (read tier first).** `Val.dict` as an insertion-ordered
-   assoc array (CPython 3.7+ order), dict literals, subscript READ,
-   `len`, `in`; unlocks sunfish's `pst`/`piece` tables and the real
-   defining expressions of `MATE_LOWER`/`MATE_UPPER`
-   (`piece["K"] + 10 * piece["Q"]` — the G1 evaluator's `indexVal`
-   handles it once dict values exist). DESIGN DECISION (owner): dict
-   WRITES are aliasing-visible mutation — the v0 value semantics cannot
-   express them faithfully (same reason `list +=` is refused). Options:
-   (a) read-only dicts, all writes loudly `unsupported` (enough for
-   pst/eval; the TT stays out); (b) a heap/reference layer — a major
-   architectural change that would ripple through every proof rule.
+3. **Dicts — BUILT (H1-proper, 2026-08-07),** via option (b): the heap
+   layer of docs/memory-model.md. Literals, read/write (aliasing-visible,
+   `KeyError` faithful), `len`, `in`, `.get`, `==` (`heapEq` with cycle
+   detection), truthiness, dynamic `is`; G1 module init allocates
+   top-level dicts into `initWorld` (`piece`/`pst` and the REAL
+   `MATE_LOWER`/`MATE_UPPER` defining expressions — proved in
+   `Examples/python/sf_pst`; the module-global TT shape — with the first
+   stateful `CallsIn` proofs — in `Examples/python/sf_tt`). Still out,
+   loudly: live dict iteration (`for k in d` — no snapshot shortcut),
+   `.keys/.values/.items/.update/.pop`, `del`, comprehensions, the pst
+   padding loop's constructs (`.items()`, lambdas, `sum` over a
+   generator).
 4. **Classes/namedtuple methods.** `Position` is a frozen namedtuple —
    value semantics are FAITHFUL for it; `Searcher` mutates `self` (TT,
    killer) and needs the heap decision from step 3(b). A namedtuple-only

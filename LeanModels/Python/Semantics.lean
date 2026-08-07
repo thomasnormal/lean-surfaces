@@ -20,11 +20,15 @@ decisions", normative), re-shaped over the H1 runtime core of
   (`Module → String → Array Val → Nat → Res Val`), so `CallsTo` and every
   public theorem statement are untouched.
 
-Threading stage (H1-1): the state is threaded but NOTHING allocates yet —
-every reachable heap is `#[]`, every `.ref` arm of every helper is loudly
-`unsupported`, and observable behavior through `callFunction` is unchanged
-(pinned by the differential harness). The dict tier lands on top of this
-in H1-proper.
+H1-proper (the dict tier, docs/memory-model.md §dict semantics) is LIVE:
+dict literals allocate on the heap (`.ref` values), subscript stores
+mutate it (aliasing-visible), reads/membership/`len`/`.get`/truthiness
+resolve through it, `==` walks it (`heapEq` — a frozen recursion point;
+ref-free pairs take the pure `valEq` fast path), identity is decided
+dynamically, and the G1 module-init pass allocates top-level dict
+literals into `initWorld`'s heap. The remaining `.ref` refusals below are
+the loud H1 frontier (live iteration, value-container membership,
+methods beyond `.get`, `del`, `.ref` operands of value-only helpers).
 
 The v0 discipline is unchanged:
 
@@ -41,13 +45,14 @@ The v0 discipline is unchanged:
 * **Provability**: the semantics is factored into small, pure, fuel-free
   helpers (`truthy`, `asInt`, `valEq`, `evalBinOp`, `evalUnaryOp`,
   `evalCompareOp`, `Env.lookup`, `Env.set`, `indexVal`, `lenVal`,
-  `sortedVal`, `assignTo`, …) that proofs can `simp`-unfold — since H1
-  those needing a semantic decision a stage-1 value cannot carry are
-  `Res`-valued (`truthy`, `valEq`, `evalCompareOp`: a `.ref`'s truthiness/
-  equality needs the heap) — plus a mutual block of the normative
-  functions (`evalExpr`, `execStmt`, `execStmts`, `callIn`) and the fueled
-  chain helpers (`evalExprs`, `evalBoolChain`, `evalCompareChain`,
-  `execWhile`, `execFor`).
+  `sortedVal`, `assignTo`, and the dict tier's heap readers) that proofs
+  can `simp`-unfold — the heap-aware steps (`truthyH`, `evalCompareOpH`,
+  `evalUnaryOpH`, `lenValH`, `indexValH`) delegate to the pure ones on
+  non-ref values, which is what keeps the proof-layer vocabulary pure —
+  plus a mutual block of the normative functions (`evalExpr`, `execStmt`,
+  `execStmts`, `callIn`) and the fueled chain helpers (`evalExprs`,
+  `evalBoolChain`, `evalCompareChain`, `evalDictItems`, `execWhile`,
+  `execFor`). The fueled `heapEq` block is a FROZEN recursion point.
 
 Tier-boundary decisions refining DESIGN.md (Python supports these, the
 tier does not — so they are `unsupported`, never a fake `TypeError`):
@@ -57,9 +62,9 @@ escaping a function body, negative `**` exponents (incl. `0 ** -1`),
 referencing a function (or a builtin — `len`/`sorted`) as a value, calling a
 non-`Name` expression, `is`/`is not` without a `None` side (identity is not
 value-determined), non-literal parameter defaults, `sorted` on anything but
-an all-int list (see `sortedVal`), and — stage H1-1 only — every operation
-on a heap `.ref` (none can exist yet; the arms are the loud frontier the
-dict tier replaces).
+an all-int list (see `sortedVal`), and the `.ref` arms noted above (the loud
+H1 frontier — every operation on a heap object that is not in the dict
+inventory).
 
 In tier since the F1/F2 sprint: LITERAL parameter defaults (missing trailing
 arguments filled in `mkCallEnv`; arity window `arityOk`) and `is`/`is not`
@@ -164,7 +169,7 @@ def truthy : RVal → Res Bool
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
   | .ref _ => .unsupported
-      "truthiness of a heap object is outside the stage-1 tier (dict truthiness lands with H1-proper, docs/memory-model.md)"
+      "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
 /-- bool→int coercion (Python's `bool` is an `int` subtype): `int` passes
 through, `True`/`False` become `1`/`0`, everything else is `none`. -/
@@ -192,9 +197,9 @@ mutual
     | .listV xs, .listV ys => valEqList xs.toList ys.toList
     | .tuple xs, .tuple ys => valEqList xs.toList ys.toList
     | .ref _, _ => .unsupported
-        "'==' on a heap object is outside the stage-1 tier (dict equality lands with H1-proper, docs/memory-model.md)"
+        "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
     | _, .ref _ => .unsupported
-        "'==' on a heap object is outside the stage-1 tier (dict equality lands with H1-proper, docs/memory-model.md)"
+        "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
     | _, _ => .ok false
 
   /-- Elementwise `valEq`, short-circuiting on the first mismatch;
@@ -278,10 +283,10 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
       | .str s, .str t => .ok (strCmp op s t)
       | .ref _, b =>
         .unsupported
-          s!"comparison '{op.symbol}' on a heap object is outside the stage-1 tier ({b.typeName} rhs; docs/memory-model.md)"
+          s!"ordering comparison '{op.symbol}' on a heap object is outside the H1 tier ({b.typeName} rhs; docs/memory-model.md)"
       | a, .ref _ =>
         .unsupported
-          s!"comparison '{op.symbol}' on a heap object is outside the stage-1 tier ({a.typeName} lhs; docs/memory-model.md)"
+          s!"ordering comparison '{op.symbol}' on a heap object is outside the H1 tier ({a.typeName} lhs; docs/memory-model.md)"
       | a, b =>
         .unsupported
           s!"comparison '{op.symbol}' between '{a.typeName}' and '{b.typeName}' is outside the v0 tier"
@@ -319,10 +324,10 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .add, .tuple xs, .tuple ys => .ok (.tuple (xs ++ ys))
     | op, .ref _, _ =>
         .unsupported
-          s!"binary '{op.symbol}' on a heap object is outside the stage-1 tier (docs/memory-model.md)"
+          s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
     | op, _, .ref _ =>
         .unsupported
-          s!"binary '{op.symbol}' on a heap object is outside the stage-1 tier (docs/memory-model.md)"
+          s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
     | .mult, a, b =>
         if (a.isSeq && (asInt b).isSome) || ((asInt a).isSome && b.isSeq) then
           .unsupported
@@ -344,7 +349,7 @@ def evalUnaryOp (op : UnaryOp) (v : RVal) : Res RVal :=
   | .usub =>
     match v with
     | .ref _ =>
-        .unsupported "unary '-' on a heap object is outside the stage-1 tier (docs/memory-model.md)"
+        .unsupported "unary '-' on a heap object is outside the H1 tier (docs/memory-model.md)"
     | v =>
       match asInt v with
       | some n => .ok (.int (-n))
@@ -385,7 +390,7 @@ def lenVal : RVal → Res RVal
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
   | .ref _ =>
-      .unsupported "len() of a heap object is outside the stage-1 tier (dict len lands with H1-proper, docs/memory-model.md)"
+      .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
 
 /-- Insert `x` into an (ascending) list — the step function of `sortInts`.
@@ -440,7 +445,7 @@ def sortedVal : RVal → Res RVal
   | .str _ => .unsupported "sorted() on a str is outside the v0 tier"
   | .tuple _ => .unsupported "sorted() on a tuple is outside the v0 tier"
   | .ref _ =>
-      .unsupported "sorted() on a heap object is outside the stage-1 tier (docs/memory-model.md)"
+      .unsupported "sorted() on a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
 /-- Left fold of `max`/`min` over ints (structural — kernel-reducible). -/
@@ -471,7 +476,7 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
     | .str _ => .unsupported s!"{name}() over a str is outside the v0 tier"
     | .ref _ =>
-        .unsupported s!"{name}() over a heap object is outside the stage-1 tier (docs/memory-model.md)"
+        .unsupported s!"{name}() over a heap object is outside the H1 tier (docs/memory-model.md)"
     | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
   | vs =>
     match asIntList vs with
@@ -484,7 +489,7 @@ def absVal : RVal → Res RVal
   | .int n => .ok (.int (if n < 0 then -n else n))
   | .bool b => .ok (.int (if b then 1 else 0))
   | .ref _ =>
-      .unsupported "abs() of a heap object is outside the stage-1 tier (docs/memory-model.md)"
+      .unsupported "abs() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"bad operand type for abs(): '{v.typeName}'")
 
 /-- The `int` constructor builtin (B1): identity on ints, bool coercion.
@@ -495,7 +500,7 @@ def intCastVal : RVal → Res RVal
   | .bool b => .ok (.int (if b then 1 else 0))
   | .str _ => .unsupported "int() of a str is outside the v0 tier"
   | .ref _ =>
-      .unsupported "int() of a heap object is outside the stage-1 tier (docs/memory-model.md)"
+      .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
 
 /-- Builtin names the interpreter implements (resolution: shadowable by
@@ -519,9 +524,9 @@ from the heap in the `TypeError` message. -/
 def indexVal (container index : RVal) : Res RVal :=
   match container, index with
   | _, .ref _ =>
-      .unsupported "a heap object as a subscript index is outside the stage-1 tier (docs/memory-model.md)"
+      .unsupported "a heap object as a subscript index is outside this pure helper (`indexValH` decides it faithfully)"
   | .ref _, _ =>
-      .unsupported "subscripting a heap object is outside the stage-1 tier (dict reads land with H1-proper, docs/memory-model.md)"
+      .unsupported "subscripting a heap object is outside this pure helper (`heapIndex` via `indexValH` decides it)"
   | .listV xs, index =>
     match asInt index with
     | some i =>
@@ -876,9 +881,11 @@ def bindAll (env : Env) : List String → List RVal → Env
 a `Name`, or a `Tuple`/`List` of `Name`s (tuple unpacking — the unpacked
 value must be a `listV`/`tuple`; arity mismatch → `ValueError`;
 non-iterable → `TypeError`; `str` unpacking is Python-valid but outside the
-tier; unpacking a `.ref` iterates the heap object — loud until H1-proper).
-Environment-only in stage H1-1: subscript stores (`d[k] = v`, a heap write)
-stay loud and make this state-aware at H1-proper. -/
+tier; unpacking a `.ref` iterates the heap object — loud until the live
+iterator lands). Environment-only BY DESIGN: subscript stores
+(`d[k] = v`, a heap write) are `execStmt`'s subscript-target arm since
+H1-proper — the `.subscript` arm here is the loud residue reachable only
+through `for`-loop targets and similar rarities. -/
 def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
   match target with
   | .name id _ => .ok (Env.set env id v)
@@ -897,7 +904,7 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
             s!"not enough values to unpack (expected {names.length}, got {xs.size})")
       | .str _ => .unsupported "unpacking a str is outside the v0 tier"
       | .ref _ =>
-          .unsupported "unpacking a heap object is outside the stage-1 tier (docs/memory-model.md)"
+          .unsupported "unpacking a heap object is outside the H1 tier (dict unpacking iterates keys — with the live iterator; docs/memory-model.md)"
       | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
   | .subscript .. => .unsupported "assignment to a subscript is outside the v0 tier"
   | t => .unsupported s!"assignment target '{t.kindName}' is outside the v0 tier"
@@ -1347,7 +1354,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 evalExprs m fuel st args.toList ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
             | some Option.none =>
-              .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the v0 tier"
+              .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
             | Option.none =>
             if (findFunction m fname).isSome then
               evalExprs m fuel st args.toList ⤳ fun st vs =>
@@ -1547,7 +1554,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
               "augmented assignment to a list ('+=' mutates in place, visible through aliases) is outside the v0 tier"
         | some (.ref _) =>
             .unsupported
-              "augmented assignment to a heap object is outside the stage-1 tier (docs/memory-model.md)"
+              "augmented assignment to a heap object is outside the H1 tier (docs/memory-model.md)"
         | some old =>
             evalExpr m fuel st value ⤳ fun st v =>
             Run.liftRes st (evalBinOp op old v) ⤳ fun st r =>
@@ -1567,7 +1574,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         | .tuple xs => execFor m fuel st target xs.toList body.toList
         | .str _ => .unsupported "'for' over a str is outside the v0 tier"
         | .ref _ =>
-            .unsupported "'for' over a heap object is outside the stage-1 tier (live dict iteration lands with H1-proper, docs/memory-model.md)"
+            .unsupported "'for' over a heap object is outside the H1 tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable")
       | _ :: _ => .unsupported "'for … else' is outside the v0 tier"
     | .ifStmt test body orelse _ =>

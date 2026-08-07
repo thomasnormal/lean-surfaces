@@ -18,8 +18,8 @@ frozen public boundary (`Val`, Ast.lean):
   lands, pinned by regression before that); `.timeout` is fuel
   exhaustion ONLY; `.unsupported` is the fuel-independent frontier.
 
-Threading stage (H1-1): the types exist and the interpreter runs over
-them, but NOTHING allocates yet — every reachable heap is `#[]`.
+H1-proper: the dict tier allocates (`Obj.dict`), mutates, and reads these
+for real; module init (G1) seeds `initWorld`'s heap and globals.
 -/
 
 namespace LeanModels.Python
@@ -68,7 +68,8 @@ structure World where
   /-- Accumulated stdout, as DATA (Thomas-directed addition, 2026-08-06,
   for the `leanpy` script runner): chunks in emission order, appended at
   the tail. `print` becomes a tier builtin appending here when module
-  execution lands; stage H1-1 writes nothing. Exit status and `argv` are
+  execution lands; nothing writes it yet (`print` arrives with `leanpy`
+  module execution). Exit status and `argv` are
   RUNNER-boundary concerns (the exit code is the module run's outcome;
   `argv` arrives as a marshalled global), NOT world fields —
   docs/memory-model.md §effects. -/
@@ -280,11 +281,11 @@ namespace LeanModels.Python
 
 /-! ## Boundary marshalling (docs/memory-model.md v2, call layering)
 
-Stage H1-1: `Val` has no dict form and nothing allocates, so thawing is
-structural (no fresh materialization to do yet — the doc's
-"fresh per occurrence" clause becomes operative when mutable containers
-become heap-allocated: H1-proper for dicts arriving via globals, H2 for
-lists), and freezing refuses refs loudly (none can exist). -/
+`Val` has no dict form, so thawing stays structural (the doc's
+"fresh per occurrence" clause becomes operative when a MARSHALLABLE
+mutable container exists — H2 lists), and freezing refuses refs loudly:
+a dict anywhere in a result is outside the public boundary until `Val`
+gains a dict observation form (docs/memory-model.md §call layering). -/
 
 /-! ### `Res` bind normalization (global simp; the do-notation of the
 fuel-free helpers and the freeze below reduce through these) -/
@@ -318,9 +319,9 @@ and feed each to the induction hypothesis. -/
   cases x <;> simp
 
 mutual
-  /-- Thaw a frozen boundary value into the runtime (stage H1-1:
-  structural; allocating containers arrive with their tiers — H1-proper
-  materializes every mutable-container occurrence freshly on the heap). -/
+  /-- Thaw a frozen boundary value into the runtime (structural: `Val`
+  carries no mutable containers yet; H2's list snapshots materialize
+  freshly on the heap per occurrence). -/
   def RVal.thaw : Val → RVal
     | .none => .none
     | .bool b => .bool b
@@ -336,10 +337,13 @@ mutual
 end
 
 mutual
-  /-- Deep-freeze a runtime value into the boundary snapshot. Stage H1-1:
-  refs are loudly unsupported (none can exist — nothing allocates); the
-  H1-proper freeze walks the heap with active-path cycle detection
-  (docs/memory-model.md v2 §call layering). -/
+  /-- Deep-freeze a runtime value into the boundary snapshot. Refs are
+  loudly unsupported — a dict anywhere in a result cannot cross the
+  boundary until `Val` has a dict observation form; the structural walk
+  reaches every ref (tuples/lists included), so the refusal is exact.
+  Active-path cycle detection arrives WITH that observation form
+  (docs/memory-model.md v2 §call layering) — today every cycle sits
+  behind a ref and is already refused. -/
   def RVal.freeze : RVal → Res Val
     | .none => .ok .none
     | .bool b => .ok (.bool b)
@@ -363,10 +367,10 @@ mutual
         return v' :: vs'
 end
 
-/-! ### The stage-1 thaw/freeze roundtrip
+/-! ### The thaw/freeze roundtrip
 
-On ref-free values (the only runtime values stage H1-1 can produce) thaw
-and freeze are mutually inverse. These two lemma families are what let the
+On ref-free values (the only ones that cross the boundary) thaw and
+freeze are mutually inverse. These two lemma families are what let the
 public wrapper's proofs move between the boundary `Val` and the runtime
 `RVal` without ever inspecting the freeze computation. -/
 

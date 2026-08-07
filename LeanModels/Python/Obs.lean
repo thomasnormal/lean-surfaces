@@ -368,11 +368,14 @@ theorem fuelMono (fuel : Nat) :
       execFor m fuel st target xs body ⊑ʳ execFor m fuel' st target xs body) ∧
     (∀ (m : Module) (st : FrameState) (keys values : List Expr) (fuel' : Nat),
         fuel ≤ fuel' →
-      evalDictItems m fuel st keys values ⊑ʳ evalDictItems m fuel' st keys values) := by
+      evalDictItems m fuel st keys values ⊑ʳ evalDictItems m fuel' st keys values) ∧
+    (∀ (m : Module) (st : FrameState) (target : Expr) (a : Addr) (i : Nat)
+        (body : List Stmt) (fuel' : Nat), fuel ≤ fuel' →
+      execForList m fuel st target a i body ⊑ʳ execForList m fuel' st target a i body) := by
   induction fuel with
   | zero =>
     -- Fuel 0 is `.timeout` everywhere, the bottom of `⊑ʳ`.
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · exact fun m st e fuel' _ => Or.inl (by simp [evalExpr])
     · exact fun m st es fuel' _ => Or.inl (by simp [evalExprs])
     · exact fun m st op e rest fuel' _ => Or.inl (by simp [evalBoolChain])
@@ -383,9 +386,10 @@ theorem fuelMono (fuel : Nat) :
     · exact fun m w fname args fuel' _ => Or.inl (by simp [callIn])
     · exact fun m st target xs body fuel' _ => Or.inl (by simp [execFor])
     · exact fun m st keys values fuel' _ => Or.inl (by simp [evalDictItems])
+    · exact fun m st target a i body fuel' _ => Or.inl (by simp [execForList])
   | succ fuel ih =>
-    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems⟩ := ih
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL⟩ := ih
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     -- evalExpr
     · intro m st e fuel' hf
       cases fuel' with
@@ -417,16 +421,17 @@ theorem fuelMono (fuel : Nat) :
           | none =>
             cases cf <;> try (simp only [evalExpr]; exact Run.le_refl _)
             case «attribute» recv attr spa =>
-              -- the `d.get(…)` method tier: receiver, then arguments; the
-              -- decision after them is fuel-independent
+              -- the method tier (`.get`/`.append`/`.pop`): receiver, then
+              -- arguments; every decision after them is fuel-independent —
+              -- one script serves all three branches
               simp only [evalExpr]
-              refine Run.le_ite ?_ (Run.le_refl _)
-              refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
-              cases r <;>
-                first
-                | exact Run.le_refl _
-                | exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
-                    Run.le_refl _
+              refine Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_refl _))) <;>
+                (refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
+                 cases r <;>
+                   first
+                   | exact Run.le_refl _
+                   | exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
+                       Run.le_refl _)
             case name fname _ =>
               simp only [evalExpr]
               cases Env.lookup st.locals fname with
@@ -583,6 +588,7 @@ theorem fuelMono (fuel : Nat) :
             cases it <;> try exact Run.le_refl _
             case listV xs => exact ihFor m st target xs.toList body.toList k hk
             case tuple xs => exact ihFor m st target xs.toList body.toList k hk
+            case ref a => exact ihForL m st target a 0 body.toList k hk
         | ifStmt test body orelse _ =>
           simp only [execStmt]
           exact Run.le_bind (ihE m st test k hk) fun st t =>
@@ -678,6 +684,28 @@ theorem fuelMono (fuel : Nat) :
               Run.le_bind (ihE m st vE k hk) fun st vv =>
                 Run.le_bind (ihItems m st ks vs k hk) fun st rest' =>
                   Run.le_refl _
+    -- execForList (H2: the live list cursor)
+    · intro m st target a i body fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        simp only [execForList]
+        cases Heap.get? st.world.heap a with
+        | none => exact Run.le_refl _
+        | some o =>
+          cases o with
+          | dict es ver => exact Run.le_refl _
+          | list xs =>
+            refine Run.le_ite ?_ (Run.le_refl _)
+            refine Run.le_bind (Run.le_refl _) fun st env₁ => ?_
+            refine Run.le_bind (ihSs m { st with locals := env₁ } body k hk)
+              fun st flow => ?_
+            cases flow with
+            | next => exact ihForL m st target a (i + 1) body k hk
+            | cont => exact ihForL m st target a (i + 1) body k hk
+            | brk => exact Run.le_refl _
+            | ret v => exact Run.le_refl _
 
 /-! ## Per-function corollaries (the `FuelMono` statement shape) -/
 
@@ -756,12 +784,64 @@ theorem evalDictItems_mono {m : Module} {fuel : Nat} {st : FrameState}
     {keys values : List Expr} {r : Run FrameState (List (RVal × RVal))}
     (h : evalDictItems m fuel st keys values = r) (hr : r ≠ .timeout) :
     ∀ fuel' ≥ fuel, evalDictItems m fuel' st keys values = r := fun fuel' hf =>
-  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2 m st keys values fuel' hf) h hr
+  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.1 m st keys values fuel' hf) h hr
+
+/-- Fuel monotonicity for `execForList` (H2: the live list cursor). -/
+theorem execForList_mono {m : Module} {fuel : Nat} {st : FrameState}
+    {target : Expr} {a : Addr} {i : Nat} {body : List Stmt}
+    {r : Run FrameState RFlow}
+    (h : execForList m fuel st target a i body = r) (hr : r ≠ .timeout) :
+    ∀ fuel' ≥ fuel, execForList m fuel' st target a i body = r := fun fuel' hf =>
+  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2 m st target a i body fuel' hf) h hr
+
+mutual
+  /-- Fuel monotonicity of the boundary freeze: the structural arms are
+  fuel-independent; the `.ref` arm is `freezeHMono`. -/
+  theorem RVal.freezeB_mono (h : Heap) :
+      (v : RVal) → ∀ {fuel fuel' : Nat}, fuel ≤ fuel' →
+        RVal.freezeB h fuel v ⊑ RVal.freezeB h fuel' v
+    | .none, _, _, _ => Res.le_refl _
+    | .bool b, _, _, _ => Res.le_refl _
+    | .int n, _, _, _ => Res.le_refl _
+    | .str s, _, _, _ => Res.le_refl _
+    | .listV xs, _, _, hf => by
+        simp only [RVal.freezeB]
+        exact Res.le_bind (RVal.freezeListB_mono h xs.toList hf)
+          fun vs => Res.le_refl _
+    | .tuple xs, _, _, hf => by
+        simp only [RVal.freezeB]
+        exact Res.le_bind (RVal.freezeListB_mono h xs.toList hf)
+          fun vs => Res.le_refl _
+    | .ref a, fuel, fuel', hf => (freezeHMono fuel).1 h [] (.ref a) fuel' hf
+
+  /-- Elementwise `freezeB_mono`. -/
+  theorem RVal.freezeListB_mono (h : Heap) :
+      (l : List RVal) → ∀ {fuel fuel' : Nat}, fuel ≤ fuel' →
+        RVal.freezeListB h fuel l ⊑ RVal.freezeListB h fuel' l
+    | [], _, _, _ => Res.le_refl _
+    | v :: vs, _, _, hf => by
+        simp only [RVal.freezeListB]
+        exact Res.le_bind (RVal.freezeB_mono h v hf) fun v' =>
+          Res.le_bind (RVal.freezeListB_mono h vs hf) fun vs' => Res.le_refl _
+end
+
+/-- Fuel monotonicity of the public erasure (H2): `freezeB_mono` at the
+`.ok` arm. -/
+theorem Run.toPublic_mono {x : Run World RVal} {fuel fuel' : Nat}
+    (hf : fuel ≤ fuel') : Run.toPublic fuel x ⊑ Run.toPublic fuel' x := by
+  cases x with
+  | ok w v =>
+    simp only [Run.toPublic_ok]
+    exact RVal.freezeB_mono w.heap v hf
+  | exn w e => exact Res.le_refl _
+  | timeout => exact Res.le_refl _
+  | unsupported msg => exact Res.le_refl _
 
 /-- **Public fuel monotonicity**, derived through the wrapper decomposition
-(docs/memory-model.md v2): `callFunction` = thaw ∘ fresh-world ∘ `callIn`
-∘ deep-freeze, and thaw/init/freeze are fuel-free — the only fuel is
-`callIn`'s, so `callIn_mono` transports the decided public result. -/
+(docs/memory-model.md v2): thaw and init are fuel-free, `callIn_mono`
+transports the decided run, and `Run.toPublic_mono` carries the freeze
+leg (fuel-free on the ref-free fast path; `freezeHMono` on returned heap
+lists). -/
 theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     {fuel : Nat} {r : Res Val} (h : callFunction m fname args fuel = r)
     (hr : r ≠ .timeout) :
@@ -774,7 +854,11 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     -- `.timeout`, contradicting `hr`.
     rw [hto] at h
     exact absurd h.symm (by simpa using hr)
-  · rw [← heq]; exact h
+  · rw [← heq]
+    have hle := Run.toPublic_mono
+      (x := callIn m fuel (initWorld m) fname (RVal.thawArgs args)) hf
+    rw [h] at hle
+    exact (Res.le_eq hle hr).symm
 
 /-! ## Conditional world invariance (the heap-free fragment)
 
@@ -906,10 +990,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       Run.OkW (· = w) (callIn m fuel w fname args)) ∧
     (∀ (st : FrameState) (target : Expr) (xs : List RVal) (body : List Stmt),
         Stmt.heapFreeList body = true →
-      Run.OkW (·.world = st.world) (execFor m fuel st target xs body)) := by
+      Run.OkW (·.world = st.world) (execFor m fuel st target xs body)) ∧
+    (∀ (st : FrameState) (target : Expr) (a : Addr) (i : Nat) (body : List Stmt),
+        Stmt.heapFreeList body = true →
+      Run.OkW (·.world = st.world) (execForList m fuel st target a i body)) := by
   induction fuel with
   | zero =>
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · intro st e _ s a h; simp [evalExpr] at h
     · intro st es _ s a h; simp [evalExprs] at h
     · intro st op e rest _ _ s a h; simp [evalBoolChain] at h
@@ -919,12 +1006,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     · intro st test body orelse _ _ _ s a h; simp [execWhile] at h
     · intro w fname args w' a h; simp [callIn] at h
     · intro st target xs body _ s a h; simp [execFor] at h
+    · intro st target a i body _ s' a' h; simp [execForList] at h
   | succ fuel ih =>
-    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor⟩ := ih
+    obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihForL⟩ := ih
     have wtrans : ∀ (st st₁ : FrameState), st₁.world = st.world →
         ∀ s : FrameState, s.world = st₁.world → s.world = st.world :=
       fun _ _ h₁ _ h₂ => h₂.trans h₁
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     -- evalExpr
     · intro st e hfree
       cases e with
@@ -966,16 +1054,19 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         exact .bind (ihE st l hfree.1) fun st₁ a h₁ =>
           (ihC st₁ a ops.toList comparators.toList hfree.2).mono (wtrans st st₁ h₁)
       | call cf cargs cu _ =>
-        simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         cases cu with
         | some reason => simp only [evalExpr]; exact .unsupported
         | none =>
           cases cf <;> try (simp only [evalExpr]; exact .unsupported)
           case «attribute» recv attr spa =>
-            -- the `d.get(…)` method tier: reads only
-            have hrecv : recv.heapFree = true := hfree.1
-            simp only [evalExpr]
-            refine .ite ?_ .unsupported
+            -- the method tier: the FRAGMENT admits exactly `.get` (a heap
+            -- read) — hfree pins the attribute, which kills the mutating
+            -- `.append`/`.pop` branches syntactically
+            simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+            have hattr : attr = "get" := by simpa [beq_iff_eq] using hfree.1.1
+            subst hattr
+            have hrecv : recv.heapFree = true := hfree.1.2
+            simp only [evalExpr, beq_self_eq_true, eq_self_iff_true, if_true]
             refine .bind (ihE st recv hrecv) fun st₁ r h₁ => ?_
             cases r <;> try exact .unsupported
             case ref a =>
@@ -991,6 +1082,15 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                   | nil => exact .liftResF h₂ _
                   | cons _ _ => exact .exn
           case name fname _ =>
+            -- H2: `sorted` ALLOCATES its result, so the fragment excludes
+            -- it (hfree carries `fname != "sorted"` — the branch is
+            -- rewritten away before the ite walk)
+            simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+            have hns : (fname != "sorted") = true := hfree.1
+            have hs : (fname == "sorted") = false := by
+              cases hbe : fname == "sorted"
+              · rfl
+              · rw [bne, hbe] at hns; simp at hns
             simp only [evalExpr]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hfree.2
@@ -1007,6 +1107,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 | some v => cases v <;> exact .bind hargs fun st₁ _ h₁ => .exn
                 | none => exact .unsupported
               | none =>
+                simp only [hs, Bool.false_eq_true, if_false]
                 refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
                     (l := st₁.locals)).mono
@@ -1018,34 +1119,26 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                       cases rest with
                       | nil => exact .liftResF h₁ _
                       | cons _ _ => exact .exn
-                  · refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                  · refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                    refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                    refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
                     · cases vs with
                       | nil => exact .exn
                       | cons v rest =>
                         cases rest with
                         | nil => exact .liftResF h₁ _
                         | cons _ _ => exact .exn
-                    · refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
-                      refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
-                      refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
-                      · cases vs with
-                        | nil => exact .exn
-                        | cons v rest =>
-                          cases rest with
-                          | nil => exact .liftResF h₁ _
-                          | cons _ _ => exact .exn
-                      · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
-                          (.ite .unsupported (.ite .exn .unsupported))
-                        cases vs with
-                        | nil => exact .okF h₁ _
-                        | cons v rest =>
-                          cases rest with
-                          | nil => exact .liftResF h₁ _
-                          | cons _ _ => exact .unsupported
+                    · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
+                        (.ite .unsupported (.ite .exn .unsupported))
+                      cases vs with
+                      | nil => exact .okF h₁ _
+                      | cons v rest =>
+                        cases rest with
+                        | nil => exact .liftResF h₁ _
+                        | cons _ _ => exact .unsupported
       | list elts _ =>
-        simp only [Expr.heapFree] at hfree
-        simp only [evalExpr]
-        exact .bind (ihEs st elts.toList hfree) fun st₁ vs h₁ => .okF h₁ _
+        -- H2: list displays ALLOCATE — outside the fragment
+        simp [Expr.heapFree] at hfree
       | tuple elts _ =>
         simp only [Expr.heapFree] at hfree
         simp only [evalExpr]
@@ -1156,12 +1249,22 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         | cons o os => exact .unsupported
         | nil =>
           refine .bind (ihE st iter hfree.1.1) fun st₁ it h₁ => ?_
-          cases it <;>
-            first
-            | exact .exn
-            | exact .unsupported
-            | exact (ihFor st₁ target _ body.toList hfree.1.2).mono
-                (wtrans st st₁ h₁)
+          cases it with
+          | none => exact .exn
+          | bool b => exact .exn
+          | int n => exact .exn
+          | str s => exact .unsupported
+          | listV xs =>
+            exact (ihFor st₁ target _ body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
+          | tuple xs =>
+            exact (ihFor st₁ target _ body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
+          | ref a =>
+            -- H2: the list cursor (referent dispatch inside) preserves
+            -- the world when the body does
+            exact (ihForL st₁ target a 0 body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
       | ifStmt test body orelse _ =>
         simp only [Stmt.heapFree, Bool.and_eq_true] at hfree
         simp only [execStmt]
@@ -1236,6 +1339,25 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         | cont => exact (ihFor st₂ target rest body hbody).mono (wtrans st st₂ h₂)
         | brk => exact .okF h₂ _
         | ret v => exact .okF h₂ _
+    -- execForList (H2: the live cursor READS the list; a heap-free body
+    -- keeps the world pinned through every step)
+    · intro st target a i body hbody
+      simp only [execForList]
+      cases Heap.get? st.world.heap a with
+      | none => exact .unsupported
+      | some o =>
+        cases o with
+        | dict es ver => exact .unsupported
+        | list xs =>
+          refine .ite ?_ (.okF rfl _)
+          refine .bind (.liftResF rfl _) fun st₁ env₁ h₁ => ?_
+          refine .bind ((ihSs { st₁ with locals := env₁ } body hbody).mono
+            (fun s hs => hs.trans h₁)) fun st₂ flow h₂ => ?_
+          cases flow with
+          | next => exact (ihForL st₂ target a (i + 1) body hbody).mono (wtrans st st₂ h₂)
+          | cont => exact (ihForL st₂ target a (i + 1) body hbody).mono (wtrans st st₂ h₂)
+          | brk => exact .okF h₂ _
+          | ret v => exact .okF h₂ _
 
 /-- `evalExpr` world invariance, direct form (heap-free module and
 expression). -/

@@ -640,6 +640,25 @@ theorem RVal.thawArgsH_of_listFree {args : Array Val}
     RVal.thawListH_of_listFree args.toList hf h]
 
 mutual
+  /-- No `.ref` anywhere inside the value. The `==` fast path (and, at H2,
+  the public wrapper's FREEZE fast path): ref-free pairs decide by the
+  PURE `valEq`/`RVal.freeze` (fuel-independent), so symbolic execution
+  never opens the fueled `heapEq`/`freezeH` on ordinary values — both are
+  frozen recursion points (their fueled unfolding on symbolic operands is
+  unbounded, the `execWhile` situation exactly). -/
+  def RVal.refFree : RVal → Bool
+    | .none | .bool _ | .int _ | .str _ => true
+    | .tuple xs => RVal.refFreeList xs.toList
+    | .listV xs => RVal.refFreeList xs.toList
+    | .ref _ => false
+
+  /-- Elementwise `RVal.refFree`. -/
+  def RVal.refFreeList : List RVal → Bool
+    | [] => true
+    | v :: vs => RVal.refFree v && RVal.refFreeList vs
+end
+
+mutual
   /-- Deep-freeze over the heap (H2) — the FUELED boundary walk for
   ref-carrying results (the public wrapper's `refFree` fast path keeps it
   out of every list-free observation): a list object freezes to a
@@ -692,24 +711,363 @@ mutual
             return v' :: vs'
 end
 
-/-- Erase the world from a public outcome: `.ok` deep-freezes the value,
-`.exn` forgets its (retained, but boundary-invisible) state. A NAMED
-projection rather than an inline match so that symbolic goals keep it as
-an application — the `split`-based branch recipes must find a body's
-surviving `ite`, not the wrapper (`py_prove`'s branch alternative). -/
-def Run.toPublic : Run World RVal → Res Val
-  | .ok _ v => v.freeze
+mutual
+  /-- The BOUNDARY freeze (H2): structural on the value — scalars, tuples,
+  and (transitional) value-lists reduce per constructor exactly like the
+  pure `RVal.freeze`, consuming NO fuel, so every list-free observation and
+  its proof machinery behaves as at H1 — and ONLY a `.ref` enters the
+  fueled heap walk (`freezeH`: list snapshots, cycle refusal, dict
+  refusal). The `heapEq` fast-path doctrine, realized structurally: no
+  `refFree` test, no conditional lemmas — simp reduces the constructor
+  arms and the heap argument is dropped on every ref-free path. -/
+  def RVal.freezeB (h : Heap) (fuel : Nat) : RVal → Res Val
+    | .none => .ok .none
+    | .bool b => .ok (.bool b)
+    | .int n => .ok (.int n)
+    | .str s => .ok (.str s)
+    | .listV xs => do
+        let vs ← RVal.freezeListB h fuel xs.toList
+        return .list vs.toArray
+    | .tuple xs => do
+        let vs ← RVal.freezeListB h fuel xs.toList
+        return .tuple vs.toArray
+    | .ref a => RVal.freezeH h fuel [] (.ref a)
+
+  /-- Elementwise `freezeB`, first refusal wins. -/
+  def RVal.freezeListB (h : Heap) (fuel : Nat) : List RVal → Res (List Val)
+    | [] => .ok []
+    | v :: vs => do
+        let v' ← RVal.freezeB h fuel v
+        let vs' ← RVal.freezeListB h fuel vs
+        return v' :: vs'
+end
+
+mutual
+  /-- `freezeB ∘ thaw = ok`, fuel-free — the pure `freeze_thaw` roundtrip
+  survives at the H2 boundary verbatim (thaw never manufactures a ref, so
+  the fueled ref arm is never entered). Cited by name in the value-side
+  bridges; NOT simp (the `thaw ?v` pattern is defeq-expensive against
+  captured runtime values). -/
+  theorem RVal.freezeB_thaw (h : Heap) (fuel : Nat) :
+      (v : Val) → RVal.freezeB h fuel (RVal.thaw v) = .ok v
+    | .none => rfl
+    | .bool _ => rfl
+    | .int _ => rfl
+    | .str _ => rfl
+    | .list xs => by
+        simp only [RVal.thaw, RVal.freezeB,
+          RVal.freezeListB_thawList h fuel xs.toList, Res.ok_bind, Res.pure_eq]
+    | .tuple xs => by
+        simp only [RVal.thaw, RVal.freezeB,
+          RVal.freezeListB_thawList h fuel xs.toList, Res.ok_bind, Res.pure_eq]
+
+  /-- Elementwise `freezeB_thaw`. -/
+  theorem RVal.freezeListB_thawList (h : Heap) (fuel : Nat) :
+      (l : List Val) → RVal.freezeListB h fuel (RVal.thawList l) = .ok l
+    | [] => rfl
+    | v :: vs => by
+        simp only [RVal.thawList, RVal.freezeListB,
+          RVal.freezeB_thaw h fuel v, RVal.freezeListB_thawList h fuel vs,
+          Res.ok_bind, Res.pure_eq]
+end
+
+/-- Erase the world from a public outcome: `.ok` deep-freezes the value
+through the boundary freeze (`freezeB` — structural; refs enter the
+fueled heap walk), `.exn` forgets its (retained, but boundary-invisible)
+state. A NAMED projection rather than an inline match so that symbolic
+goals keep it as an application — the `split`-based branch recipes must
+find a body's surviving `ite`, not the wrapper. -/
+def Run.toPublic (fuel : Nat) : Run World RVal → Res Val
+  | .ok w v => RVal.freezeB w.heap fuel v
   | .exn _ e => .exn e
   | .timeout => .timeout
   | .unsupported msg => .unsupported msg
 
-@[simp] theorem Run.toPublic_ok {w : World} {v : RVal} :
-    Run.toPublic (.ok w v) = v.freeze := rfl
-@[simp] theorem Run.toPublic_exn {w : World} {e : PyErr} :
-    Run.toPublic (.exn w e) = .exn e := rfl
-@[simp] theorem Run.toPublic_timeout :
-    Run.toPublic .timeout = .timeout := rfl
-@[simp] theorem Run.toPublic_unsupported {msg : String} :
-    Run.toPublic (.unsupported msg) = .unsupported msg := rfl
+@[simp] theorem Run.toPublic_ok {fuel : Nat} {w : World} {v : RVal} :
+    Run.toPublic fuel (.ok w v) = RVal.freezeB w.heap fuel v := rfl
+@[simp] theorem Run.toPublic_exn {fuel : Nat} {w : World} {e : PyErr} :
+    Run.toPublic fuel (.exn w e) = .exn e := rfl
+@[simp] theorem Run.toPublic_timeout {fuel : Nat} :
+    Run.toPublic fuel .timeout = .timeout := rfl
+@[simp] theorem Run.toPublic_unsupported {fuel : Nat} {msg : String} :
+    Run.toPublic fuel (.unsupported msg) = .unsupported msg := rfl
+
+/-- The wrapper's erasure on a THAWED value (`freezeB_thaw` at the
+`toPublic` shape; cited by name — not simp, see `freezeB_thaw`). -/
+theorem Run.toPublic_thaw {fuel : Nat} {w : World} {v : Val} :
+    Run.toPublic fuel (.ok w (RVal.thaw v)) = .ok v := by
+  rw [Run.toPublic_ok, RVal.freezeB_thaw]
+
+mutual
+  /-- The pure thaw never manufactures a ref — the fact that keeps thawed
+  results on the fuel-free structural paths of `freezeB`. -/
+  theorem RVal.refFree_thaw : (v : Val) → RVal.refFree (RVal.thaw v) = true
+    | .none => rfl
+    | .bool _ => rfl
+    | .int _ => rfl
+    | .str _ => rfl
+    | .list xs => by
+        simpa [RVal.thaw, RVal.refFree] using
+          RVal.refFreeList_thawList xs.toList
+    | .tuple xs => by
+        simpa [RVal.thaw, RVal.refFree] using
+          RVal.refFreeList_thawList xs.toList
+
+  /-- Elementwise `refFree_thaw`. -/
+  theorem RVal.refFreeList_thawList :
+      (l : List Val) → RVal.refFreeList (RVal.thawList l) = true
+    | [] => rfl
+    | v :: vs => by
+        simp [RVal.thawList, RVal.refFreeList, RVal.refFree_thaw v,
+              RVal.refFreeList_thawList vs]
+end
+
+/-- `freezeH` never raises (its refusals are loud, its exhaustion is
+`.timeout`) — paired with its elementwise form, by induction on fuel:
+the raise-side twin of `RVal.freeze_ne_exn`, so a public `.exn` outcome
+always names an interpreter raise, never the freeze. -/
+theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
+    (∀ (path : List Addr) (v : RVal) (e : PyErr),
+      RVal.freezeH h fuel path v ≠ .exn e) ∧
+    (∀ (path : List Addr) (l : List RVal) (e : PyErr),
+      RVal.freezeListH h fuel path l ≠ .exn e) := by
+  induction fuel with
+  | zero =>
+    refine ⟨?_, ?_⟩
+    · intro path v e hc; simp [RVal.freezeH] at hc
+    · intro path l e hc; simp [RVal.freezeListH] at hc
+  | succ fuel ih =>
+    obtain ⟨ihV, ihL⟩ := ih
+    refine ⟨?_, ?_⟩
+    · intro path v e hc
+      cases v with
+      | none => simp [RVal.freezeH] at hc
+      | bool b => simp [RVal.freezeH] at hc
+      | int n => simp [RVal.freezeH] at hc
+      | str s => simp [RVal.freezeH] at hc
+      | listV xs =>
+        simp only [RVal.freezeH] at hc
+        cases hl : RVal.freezeListH h fuel path xs.toList with
+        | ok vs => rw [hl] at hc; simp at hc
+        | exn e' => exact ihL path xs.toList e' hl
+        | timeout => rw [hl] at hc; simp at hc
+        | unsupported msg => rw [hl] at hc; simp at hc
+      | tuple xs =>
+        simp only [RVal.freezeH] at hc
+        cases hl : RVal.freezeListH h fuel path xs.toList with
+        | ok vs => rw [hl] at hc; simp at hc
+        | exn e' => exact ihL path xs.toList e' hl
+        | timeout => rw [hl] at hc; simp at hc
+        | unsupported msg => rw [hl] at hc; simp at hc
+      | ref a =>
+        simp only [RVal.freezeH] at hc
+        by_cases hp : path.contains a = true
+        · rw [if_pos hp] at hc; simp at hc
+        · rw [if_neg hp] at hc
+          cases hget : Heap.get? h a with
+          | none => rw [hget] at hc; simp at hc
+          | some o =>
+            rw [hget] at hc
+            cases o with
+            | dict es ver => simp at hc
+            | list xs =>
+              cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
+              | ok vs => simp [hl] at hc
+              | exn e' => exact ihL (a :: path) xs.toList e' hl
+              | timeout => simp [hl] at hc
+              | unsupported msg => simp [hl] at hc
+    · intro path l e hc
+      cases l with
+      | nil => simp [RVal.freezeListH] at hc
+      | cons v vs =>
+        simp only [RVal.freezeListH] at hc
+        cases hv : RVal.freezeH h fuel path v with
+        | ok v' =>
+          rw [hv] at hc
+          simp only [Res.ok_bind] at hc
+          cases hvs : RVal.freezeListH h fuel path vs with
+          | ok vs' => rw [hvs] at hc; simp at hc
+          | exn e' => exact ihL path vs e' hvs
+          | timeout => rw [hvs] at hc; simp at hc
+          | unsupported msg => rw [hvs] at hc; simp at hc
+        | exn e' => exact ihV path v e' hv
+        | timeout => rw [hv] at hc; simp at hc
+        | unsupported msg => rw [hv] at hc; simp at hc
+
+/-- Value-form corollary of `freezeH_ne_exn_pair`. -/
+theorem RVal.freezeH_ne_exn {h : Heap} {fuel : Nat} {path : List Addr}
+    {v : RVal} {e : PyErr} : RVal.freezeH h fuel path v ≠ .exn e :=
+  (RVal.freezeH_ne_exn_pair h fuel).1 path v e
+
+mutual
+  /-- `freezeB` never raises (both legs are raise-free) — a public `.exn`
+  outcome always names an interpreter raise, never the freeze. -/
+  theorem RVal.freezeB_ne_exn (h : Heap) (fuel : Nat) :
+      (v : RVal) → ∀ e, RVal.freezeB h fuel v ≠ .exn e
+    | .none, e => by simp [RVal.freezeB]
+    | .bool b, e => by simp [RVal.freezeB]
+    | .int n, e => by simp [RVal.freezeB]
+    | .str s, e => by simp [RVal.freezeB]
+    | .listV xs, e => by
+        simp only [RVal.freezeB]
+        cases hl : RVal.freezeListB h fuel xs.toList with
+        | ok vs => simp [hl]
+        | exn e' => exact absurd hl (RVal.freezeListB_ne_exn h fuel xs.toList e')
+        | timeout => simp [hl]
+        | unsupported msg => simp [hl]
+    | .tuple xs, e => by
+        simp only [RVal.freezeB]
+        cases hl : RVal.freezeListB h fuel xs.toList with
+        | ok vs => simp [hl]
+        | exn e' => exact absurd hl (RVal.freezeListB_ne_exn h fuel xs.toList e')
+        | timeout => simp [hl]
+        | unsupported msg => simp [hl]
+    | .ref a, e => RVal.freezeH_ne_exn
+
+  /-- Elementwise `freezeB_ne_exn`. -/
+  theorem RVal.freezeListB_ne_exn (h : Heap) (fuel : Nat) :
+      (l : List RVal) → ∀ e, RVal.freezeListB h fuel l ≠ .exn e
+    | [], e => by simp [RVal.freezeListB]
+    | v :: vs, e => by
+        simp only [RVal.freezeListB]
+        cases hv : RVal.freezeB h fuel v with
+        | ok v' =>
+          simp only [hv, Res.ok_bind]
+          cases hl : RVal.freezeListB h fuel vs with
+          | ok vs' => simp [hl]
+          | exn e' => exact absurd hl (RVal.freezeListB_ne_exn h fuel vs e')
+          | timeout => simp [hl]
+          | unsupported msg => simp [hl]
+        | exn e' => exact absurd hv (RVal.freezeB_ne_exn h fuel v e')
+        | timeout => simp [hv]
+        | unsupported msg => simp [hv]
+end
+
+/-- A decided `.ok` run never erases to `.exn` (`freezeB_ne_exn` at the
+`toPublic` shape) — what pins public `.exn` outcomes to the interpreter
+run, never to the freeze. -/
+theorem Run.toPublic_ok_ne_exn {fuel : Nat} {w : World} {rv : RVal}
+    {e : PyErr} : Run.toPublic fuel (.ok w rv) ≠ .exn e := by
+  rw [Run.toPublic_ok]
+  exact RVal.freezeB_ne_exn w.heap fuel rv e
+
+/-- Freeze inversion THROUGH the heap, on list-free snapshots: if the
+fueled freeze decided `.ok v` and `v` carries no list, then no ref was
+ever frozen (a ref freezes to a `.list` somewhere or refuses), so the
+runtime value is exactly the pure thaw of `v` — the H2 form of
+`RVal.eq_thaw_of_freeze`, and what keeps the frame theorem's statement
+at the pure-thaw vocabulary. Paired with its elementwise form, by
+induction on fuel. -/
+theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
+    (∀ (path : List Addr) (rv : RVal) (v : Val),
+      RVal.freezeH h fuel path rv = .ok v → Val.listFree v = true →
+      rv = RVal.thaw v) ∧
+    (∀ (path : List Addr) (l : List RVal) (vs : List Val),
+      RVal.freezeListH h fuel path l = .ok vs → Val.listFreeList vs = true →
+      l = RVal.thawList vs) := by
+  induction fuel with
+  | zero =>
+    refine ⟨?_, ?_⟩
+    · intro path rv v hc _; simp [RVal.freezeH] at hc
+    · intro path l vs hc _; simp [RVal.freezeListH] at hc
+  | succ fuel ih =>
+    obtain ⟨ihV, ihL⟩ := ih
+    refine ⟨?_, ?_⟩
+    · intro path rv v hc hlf
+      cases rv with
+      | none => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | bool b => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | int n => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | str s => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | listV xs =>
+        -- the snapshot is a `.list` — excluded by `hlf`
+        simp only [RVal.freezeH, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨vs, _, hv⟩ := hc
+        cases (Res.ok.inj hv)
+        simp [Val.listFree] at hlf
+      | tuple xs =>
+        simp only [RVal.freezeH, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨vs, hl, hv⟩ := hc
+        cases (Res.ok.inj hv)
+        have hlf' : Val.listFreeList vs = true := by
+          simpa [Val.listFree] using hlf
+        have := ihL path xs.toList vs hl hlf'
+        simp [RVal.thaw, ← this]
+      | ref a =>
+        simp only [RVal.freezeH] at hc
+        by_cases hp : path.contains a = true
+        · rw [if_pos hp] at hc; cases hc
+        · rw [if_neg hp] at hc
+          cases hget : Heap.get? h a with
+          | none => rw [hget] at hc; cases hc
+          | some o =>
+            rw [hget] at hc
+            cases o with
+            | dict es ver => cases hc
+            | list xs =>
+              -- freezes to a `.list` snapshot — excluded by `hlf`
+              simp only [Res.bind_eq_ok, Res.pure_eq] at hc
+              obtain ⟨vs, _, hv⟩ := hc
+              cases (Res.ok.inj hv)
+              simp [Val.listFree] at hlf
+    · intro path l vs hc hlf
+      cases l with
+      | nil =>
+        simp only [RVal.freezeListH] at hc
+        cases (Res.ok.inj hc); rfl
+      | cons rv l' =>
+        simp only [RVal.freezeListH, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨v', hv, vs', hl, hcons⟩ := hc
+        cases (Res.ok.inj hcons)
+        simp only [Val.listFreeList, Bool.and_eq_true] at hlf
+        have h1 := ihV path rv v' hv hlf.1
+        have h2 := ihL path l' vs' hl hlf.2
+        simp [RVal.thawList, ← h1, ← h2]
+
+mutual
+  /-- Freeze inversion at the BOUNDARY freeze, on list-free snapshots —
+  the `freezeB` form of `eq_thaw_of_freeze` (the H2 frame theorem's
+  engine): scalars invert directly, tuples elementwise, a `.listV`/`.ref`
+  outcome is a `.list` snapshot somewhere in `v` and is excluded by
+  `Val.listFree v`. -/
+  theorem RVal.eq_thaw_of_freezeB (h : Heap) (fuel : Nat) :
+      (rv : RVal) → {v : Val} → RVal.freezeB h fuel rv = .ok v →
+      Val.listFree v = true → rv = RVal.thaw v
+    | .none, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .bool _, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .int _, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .str _, v, hc, _ => by cases (Res.ok.inj hc); rfl
+    | .listV xs, v, hc, hlf => by
+        simp only [RVal.freezeB, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨vs, _, hv⟩ := hc
+        cases (Res.ok.inj hv)
+        simp [Val.listFree] at hlf
+    | .tuple xs, v, hc, hlf => by
+        simp only [RVal.freezeB, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨vs, hl, hv⟩ := hc
+        cases (Res.ok.inj hv)
+        have hlf' : Val.listFreeList vs = true := by
+          simpa [Val.listFree] using hlf
+        have := RVal.eqList_thawList_of_freezeListB h fuel xs.toList hl hlf'
+        simp [RVal.thaw, ← this]
+    | .ref a, v, hc, hlf =>
+        (RVal.eq_thaw_of_freezeH_pair h fuel).1 [] (.ref a) v hc hlf
+
+  /-- Elementwise `eq_thaw_of_freezeB`. -/
+  theorem RVal.eqList_thawList_of_freezeListB (h : Heap) (fuel : Nat) :
+      (l : List RVal) → {vs : List Val} →
+      RVal.freezeListB h fuel l = .ok vs → Val.listFreeList vs = true →
+      l = RVal.thawList vs
+    | [], vs, hc, _ => by cases (Res.ok.inj hc); rfl
+    | rv :: l', vs, hc, hlf => by
+        simp only [RVal.freezeListB, Res.bind_eq_ok, Res.pure_eq] at hc
+        obtain ⟨v', hv, vs', hl, hcons⟩ := hc
+        cases (Res.ok.inj hcons)
+        simp only [Val.listFreeList, Bool.and_eq_true] at hlf
+        have h1 := RVal.eq_thaw_of_freezeB h fuel rv hv hlf.1
+        have h2 := RVal.eqList_thawList_of_freezeListB h fuel l' hl hlf.2
+        simp [RVal.thawList, ← h1, ← h2]
+end
+
 
 end LeanModels.Python

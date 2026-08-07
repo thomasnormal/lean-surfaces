@@ -593,7 +593,16 @@ def RVal.unhashName : RVal → String
 
 /-- Heap-resolving type name (H2): a `.ref` names its referent's type.
 The `"object"` fallback is the dangling arm — unreachable from WF worlds,
-and never part of a decided outcome that isn't already loud. -/
+and never part of a decided outcome that isn't already loud.
+
+Deliberately OUT of `py_simp`/`interpUnfolds` (recorded H2 finding, the
+`sortInts`/`heapEq` freeze family): it occurs only inside error-message
+interpolations of undecided helper arms, so as a simp member it buys
+nothing — and with it in the set a plain symbolic run whnf-storms
+(≈740k `List.rec` / 1.5M `Array.toList` unfoldings on `sf_bound_rec`'s
+exit lemma before timing out; message-position `String.append` chains
+keep re-offering the pattern). A raise-theorem that needs a heap-named
+message passes it explicitly. -/
 def RVal.typeNameH (h : Heap) : RVal → String
   | .ref a =>
     match Heap.get? h a with
@@ -602,23 +611,8 @@ def RVal.typeNameH (h : Heap) : RVal → String
     | Option.none => "object"
   | v => v.typeName
 
-mutual
-  /-- No `.ref` anywhere inside the value. The `==` fast path: ref-free
-  pairs decide by the PURE `valEq` (fuel-independent), so symbolic
-  execution never opens the fueled `heapEq` on ordinary values — `heapEq`
-  is a frozen recursion point (its fueled unfolding on symbolic operands
-  is unbounded, the `execWhile` situation exactly). -/
-  def RVal.refFree : RVal → Bool
-    | .none | .bool _ | .int _ | .str _ => true
-    | .tuple xs => RVal.refFreeList xs.toList
-    | .listV xs => RVal.refFreeList xs.toList
-    | .ref _ => false
-
-  /-- Elementwise `RVal.refFree`. -/
-  def RVal.refFreeList : List RVal → Bool
-    | [] => true
-    | v :: vs => RVal.refFree v && RVal.refFreeList vs
-end
+/-! (`RVal.refFree`/`refFreeList` moved to Runtime.lean at H2: the public
+wrapper's freeze fast path — `Run.toPublic` — tests it.) -/
 
 mutual
   /-- Key equality: Python `==` restricted to HASHABLE (hence ref-free)
@@ -984,18 +978,21 @@ CPython — loud (live dict iteration). Everything else decides as the
 pure `extremumVal`. -/
 def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
   match vs with
-  | [.ref a] =>
-    match Heap.get? h a with
-    | some (.list xs) =>
-      match asIntList xs.toList with
-      | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
-      | some [] =>
-          .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
-      | Option.none =>
-          .unsupported s!"{if isMax then "max" else "min"}() over non-int elements is outside the v0 tier"
-    | some (.dict _ _) =>
-        .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
-    | Option.none => .unsupported danglingMsg
+  | [v] =>
+    (match v with
+     | .ref a =>
+       (match Heap.get? h a with
+        | some (.list xs) =>
+          (match asIntList xs.toList with
+           | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+           | some [] =>
+               .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
+           | Option.none =>
+               .unsupported s!"{if isMax then "max" else "min"}() over non-int elements is outside the v0 tier")
+        | some (.dict _ _) =>
+            .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+        | Option.none => .unsupported danglingMsg)
+     | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
 
 /-- The names of an unpacking target's elements; `none` if any element is not
@@ -1042,6 +1039,48 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
       | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
   | .subscript .. => .unsupported "assignment to a subscript is outside the v0 tier"
   | t => .unsupported s!"assignment target '{t.kindName}' is outside the v0 tier"
+
+/-- Heap-aware assignment dispatch (H2): unpacking FROM a heap list reads
+its elements (CPython unpacks eagerly — a snapshot read; the heap is
+untouched); dict unpacking iterates keys — loud (live dict iteration);
+every other case is the pure `assignTo` (name targets bind refs as
+values, faithfully). The `.listV` re-wrap reuses `assignTo`'s unpack
+logic verbatim — arity `ValueError`s included. -/
+def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
+  match target with
+  | .tuple _ _ | .list _ _ =>
+    (match v with
+     | .ref a =>
+       match Heap.get? h a with
+       | some (.list xs) => assignTo env target (.listV xs)
+       | some (.dict _ _) =>
+         .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+       | Option.none => .unsupported danglingMsg
+     | v => assignTo env target v)
+  | t => assignTo env t v
+
+/-- A decided pure assignment lifts to every heap: `assignToH` diverts
+only (tuple/list target, `.ref` value) pairs, on which the pure
+`assignTo` never decides `.ok` (its ref-unpack arm is loud). What keeps
+the VC assign rule's `assignTo` hypothesis sufficient at H2. -/
+theorem assignToH_of_assignTo {h : Heap} {env : Env} {target : Expr}
+    {v : RVal} {env' : Env} (ha : assignTo env target v = .ok env') :
+    assignToH h env target v = .ok env' := by
+  cases target <;> try (simpa [assignToH] using ha)
+  case tuple elts sp =>
+    cases v <;> try (simpa [assignToH] using ha)
+    case ref a =>
+      simp only [assignTo] at ha
+      cases htn : targetNames elts with
+      | none => simp [htn] at ha
+      | some names => simp [htn] at ha
+  case list elts sp =>
+    cases v <;> try (simpa [assignToH] using ha)
+    case ref a =>
+      simp only [assignTo] at ha
+      cases htn : targetNames elts with
+      | none => simp [htn] at ha
+      | some names => simp [htn] at ha
 
 /-- Module function table lookup. Each `def` rebinds the module-level name, so
 with duplicate definitions the LAST one wins, exactly as in CPython. -/
@@ -1122,8 +1161,11 @@ def evalGlobalExpr (h : Heap) (gs : REnv) (fuel : Nat) (e : Expr) :
         let r ← evalUnaryOpH h op v
         return (h, r)
     | .list elts _ => do
+        -- H2: module-level list displays allocate into the init heap
+        -- (module tables — shared across nested calls within one public
+        -- call, fresh across two; regression case 15's list analog).
         let (h, vs) ← evalGlobalExprs h gs fuel elts.toList
-        return (h, .listV vs.toArray)
+        return (h.push (.list vs.toArray), .ref h.size)
     | .tuple elts _ => do
         let (h, vs) ← evalGlobalExprs h gs fuel elts.toList
         return (h, .tuple vs.toArray)
@@ -1323,12 +1365,20 @@ mutual
     | .unaryOp _ e _ => e.heapFree
     | .boolOp _ vs _ => Expr.heapFreeList vs.toList
     | .compare l _ cs _ => l.heapFree && Expr.heapFreeList cs.toList
+    -- H2 soundness carve-outs: `sorted` ALLOCATES its result when the
+    -- argument is a heap list (syntax cannot tell, so every `sorted`
+    -- call leaves the fragment — even shadowed ones, conservatively);
+    -- method calls beyond `.get` MUTATE (`.append`/`.pop`).
+    | .call (.name id _) args _ _ =>
+      (id != "sorted") && Expr.heapFreeList args.toList
+    | .call (.attribute recv attr _) args _ _ =>
+      attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
     | .call f args _ _ => f.heapFree && Expr.heapFreeList args.toList
-    | .list es _ => Expr.heapFreeList es.toList
+    | .list .. => false                 -- ALLOCATES (H2)
     | .tuple es _ => Expr.heapFreeList es.toList
     | .subscript v i _ => v.heapFree && i.heapFree
     | .dict .. => false                 -- ALLOCATES
-    | .attribute v _ _ => v.heapFree    -- tier: read-only (`.get`)
+    | .attribute v _ _ => v.heapFree    -- as a bare value: loud, never `.ok`
     | .unsupported .. => true           -- loud, never decides `.ok`
 
   /-- Elementwise `Expr.heapFree`. -/
@@ -1511,17 +1561,22 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
             else if fname == "sorted" then
               -- After `findFunction`, so a module-level `def sorted` shadows
-              -- the builtin, exactly as CPython's module globals do.
+              -- the builtin, exactly as CPython's module globals do. H2:
+              -- `sorted` of a heap list ALLOCATES its fresh result
+              -- (`sortedValH`); value arguments stay on the pure path.
               evalExprs m fuel st args.toList ⤳ fun st vs =>
               match vs with
-              | [v] => Run.liftRes st (sortedVal v)
+              | [v] =>
+                Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
+                match hr with
+                | (h', r) => .ok { st with world := { st.world with heap := h' } } r
               | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
             else if fname == "max" then
               evalExprs m fuel st args.toList ⤳ fun st vs =>
-              Run.liftRes st (extremumVal true vs)
+              Run.liftRes st (extremumValH st.world.heap true vs)
             else if fname == "min" then
               evalExprs m fuel st args.toList ⤳ fun st vs =>
-              Run.liftRes st (extremumVal false vs)
+              Run.liftRes st (extremumValH st.world.heap false vs)
             else if fname == "abs" then
               evalExprs m fuel st args.toList ⤳ fun st vs =>
               match vs with
@@ -1542,9 +1597,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             else
               .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
         | .attribute recv attr _ =>
-          -- Method calls (H1 tier: exactly `d.get(k)`/`d.get(k, default)`).
+          -- Method calls (tier: dict `.get`, H2 list `.append`/`.pop`).
           -- CPython order: receiver (and its attribute lookup) BEFORE the
-          -- arguments; both arguments evaluate before `.get` decides.
+          -- arguments; the arguments evaluate before the method decides.
           if attr == "get" then
             evalExpr m fuel st recv ⤳ fun st r =>
             match r with
@@ -1556,12 +1611,49 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
             | r =>
               .unsupported s!"method call '.get' on '{r.typeName}' is outside the H1 tier (dict receivers only, docs/memory-model.md)"
+          else if attr == "append" then
+            evalExpr m fuel st recv ⤳ fun st r =>
+            match r with
+            | .ref a =>
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              match vs with
+              | [v] =>
+                Run.liftRes st (heapAppend st.world.heap a v) ⤳ fun st h' =>
+                .ok { st with world := { st.world with heap := h' } } .none
+              | vs => .exn st (.typeError s!"append() takes exactly one argument ({vs.length} given)")
+            | r =>
+              .unsupported s!"method call '.append' on '{r.typeName}' is outside the H2 tier (heap-list receivers only, docs/memory-model.md)"
+          else if attr == "pop" then
+            evalExpr m fuel st recv ⤳ fun st r =>
+            match r with
+            | .ref a =>
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              match vs with
+              | [] =>
+                Run.liftRes st (heapPop st.world.heap a Option.none) ⤳ fun st hr =>
+                match hr with
+                | (h', v) => .ok { st with world := { st.world with heap := h' } } v
+              | [i] =>
+                (match asInt i with
+                 | some n =>
+                   Run.liftRes st (heapPop st.world.heap a (some n)) ⤳ fun st hr =>
+                   match hr with
+                   | (h', v) => .ok { st with world := { st.world with heap := h' } } v
+                 | Option.none =>
+                   .exn st (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer"))
+              | vs => .exn st (.typeError s!"pop expected at most 1 argument, got {vs.length}")
+            | r =>
+              .unsupported s!"method call '.pop' on '{r.typeName}' is outside the H2 tier (heap-list receivers only, docs/memory-model.md)"
           else
-            .unsupported s!"method '.{attr}()' is outside the H1 tier (only dict '.get'; docs/memory-model.md)"
+            .unsupported s!"method '.{attr}()' is outside the tier (dict '.get', list '.append'/'.pop'; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
     | .list elts _ =>
+        -- H2: a list display ALLOCATES (`BUILD_LIST`) — the fresh address
+        -- is the old heap size; every literal is a distinct object.
         evalExprs m fuel st elts.toList ⤳ fun st vs =>
-        .ok st (.listV vs.toArray)
+        .ok { st with world :=
+                { st.world with heap := st.world.heap.push (.list vs.toArray) } }
+          (.ref st.world.heap.size)
     | .tuple elts _ =>
         evalExprs m fuel st elts.toList ⤳ fun st vs =>
         .ok st (.tuple vs.toArray)
@@ -1681,9 +1773,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             .unsupported "subscript assignment to a list ('xs[i] = v' mutates in place, visible through aliases) is outside the v0 tier (lists move to the heap at H2)"
           | c => .exn st (.typeError s!"'{c.typeName}' object does not support item assignment")
       | [t] =>
-          -- CPython order: the value is evaluated before the store.
+          -- CPython order: the value is evaluated before the store. H2:
+          -- `assignToH` — unpacking from a heap list reads the heap.
           evalExpr m fuel st value ⤳ fun st v =>
-          Run.liftRes st (assignTo st.locals t v) ⤳ fun st env' =>
+          Run.liftRes st (assignToH st.world.heap st.locals t v) ⤳ fun st env' =>
           .ok { st with locals := env' } .next
       | _ => .unsupported "chained assignment (multiple targets) is outside the v0 tier"
     | .augAssign target op value _ =>
@@ -1720,8 +1813,13 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         | .listV xs => execFor m fuel st target xs.toList body.toList
         | .tuple xs => execFor m fuel st target xs.toList body.toList
         | .str _ => .unsupported "'for' over a str is outside the v0 tier"
-        | .ref _ =>
-            .unsupported "'for' over a heap object is outside the H1 tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+        | .ref a =>
+          -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR against the
+          -- object (CPython's listiterator) — never a snapshot: mutation,
+          -- growth, and shrinkage during iteration are all observable.
+          -- The referent dispatch (dicts stay loudly out — live dict
+          -- iteration; no snapshot shortcut) lives INSIDE `execForList`.
+          execForList m fuel st target a 0 body.toList
         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable")
       | _ :: _ => .unsupported "'for … else' is outside the v0 tier"
     | .ifStmt test body orelse _ =>
@@ -1766,12 +1864,40 @@ def execFor (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
     match xs with
     | [] => .ok st .next
     | x :: rest =>
-        Run.liftRes st (assignTo st.locals target x) ⤳ fun st env₁ =>
+        Run.liftRes st (assignToH st.world.heap st.locals target x) ⤳ fun st env₁ =>
         execStmts m fuel { st with locals := env₁ } body ⤳ fun st flow =>
         match flow with
         | .next | .cont => execFor m fuel st target rest body
         | .brk => .ok st .next
         | .ret v => .ok st (.ret v)
+
+/-- `for target in <heap list>: body` (H2) — the LIVE INDEX CURSOR:
+each step re-reads the object at `a` (so in-place mutation, growth, and
+`pop`-shrinkage during iteration are observed exactly as CPython's
+listiterator observes them: `xs.pop()` in the body skips the tail;
+`append` extends the iteration); the cursor `i` advances by one per
+completed step; `i ≥ len` at re-read ends the loop. `break` exits,
+`continue` steps, `return` propagates. Owns the referent dispatch for
+`for`-over-`.ref` (a dict referent is the loud live-dict-iteration
+refusal). A frozen recursion point like `execFor`. -/
+def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
+    (a : Addr) (i : Nat) (body : List Stmt) : Run FrameState RFlow :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match Heap.get? st.world.heap a with
+    | some (.list xs) =>
+      if i < xs.size then
+        Run.liftRes st (assignToH st.world.heap st.locals target (xs.getD i .none)) ⤳ fun st env₁ =>
+        execStmts m fuel { st with locals := env₁ } body ⤳ fun st flow =>
+        match flow with
+        | .next | .cont => execForList m fuel st target a (i + 1) body
+        | .brk => .ok st .next
+        | .ret v => .ok st (.ret v)
+      else .ok st .next
+    | some (.dict _ _) =>
+        .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+    | Option.none => .unsupported danglingMsg
 
 /-- `while test: body else: orelse`. `break` exits the loop skipping `orelse`;
 `continue` re-tests; `return` propagates; on normal exit (test falsy) the
@@ -1858,6 +1984,6 @@ argument graphs), run `callIn`, **deep-freeze** the returned value
 the world from the public result. NOT the recursion point — nested calls
 use `callIn`; proofs unfold this wrapper freely. -/
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
-  Run.toPublic (callIn m fuel (initWorld m) fname (RVal.thawArgs args))
+  Run.toPublic fuel (callIn m fuel (initWorld m) fname (RVal.thawArgs args))
 
 end LeanModels.Python

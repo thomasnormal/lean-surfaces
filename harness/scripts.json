@@ -8,5 +8,7 @@
   {"file": "harness/scripts/mate_fns.py", "expect": "match"},
   {"file": "harness/scripts/tt_script.py", "expect": "match"},
   {"file": "harness/scripts/fnprint.py", "expect": "unsupported"},
-  {"file": "harness/scripts/call_before_def.py", "expect": "unsupported"}
+  {"file": "harness/scripts/call_before_def.py", "expect": "unsupported"},
+  {"file": "harness/scripts/list_script.py", "expect": "match"},
+  {"file": "harness/scripts/cpython_list_basics.py", "expect": "match"}
 ]

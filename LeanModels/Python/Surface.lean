@@ -248,7 +248,8 @@ still READ the heap through ref-carrying arguments — a ∀-world frame needs
 ref-free arguments too, and no current consumer wants it. -/
 theorem CallsTo.callsIn_frame {m : Module} {fname : String}
     {args : Array Val} {v : Val} (h : CallsTo m fname args v)
-    (hm : m.heapFree = true := by first | rfl | decide) :
+    (hm : m.heapFree = true := by first | rfl | decide)
+    (hv : Val.listFree v = true := by first | rfl | decide) :
     CallsIn m (initWorld m) fname (RVal.thawArgs args)
       (initWorld m) (RVal.thaw v) := by
   obtain ⟨fuel, hf⟩ := h
@@ -257,7 +258,10 @@ theorem CallsTo.callsIn_frame {m : Module} {fname : String}
   cases hc : callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
   | ok w' rv =>
     intro hf
-    obtain rfl := RVal.eq_thaw_of_freeze rv hf
+    rw [Run.toPublic_ok] at hf
+    have hrv : rv = RVal.thaw v :=
+      RVal.eq_thaw_of_freezeB w'.heap fuel rv hf hv
+    subst hrv
     obtain rfl := callIn_world hm hc
     exact ⟨fuel, hc⟩
   | exn w' e => intro hf; cases hf
@@ -275,11 +279,12 @@ unchanged, so the rewrite is fully determined. The composition
 `CallsTo.callsIn_frame` ∘ `CallsIn.at_least`. -/
 theorem CallsTo.callIn_at_least {m : Module} {fname : String}
     {args : Array Val} {v : Val} (h : CallsTo m fname args v)
-    (hm : m.heapFree = true := by first | rfl | decide) :
+    (hm : m.heapFree = true := by first | rfl | decide)
+    (hv : Val.listFree v = true := by first | rfl | decide) :
     ∃ f₀, ∀ F, f₀ ≤ F →
       callIn m F (initWorld m) fname (RVal.thawArgs args)
         = .ok (initWorld m) (RVal.thaw v) :=
-  (h.callsIn_frame hm).at_least
+  (h.callsIn_frame hm hv).at_least
 
 /-! ## The generic while rule -/
 

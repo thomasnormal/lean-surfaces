@@ -93,6 +93,16 @@ private def evIn (m : Module) (fuel : Nat) (env : Env) (e : Expr) : Res RVal :=
 private def ev (e : Expr) (env : Env := []) (fuel : Nat := 100) : Res RVal :=
   evIn M0 fuel env e
 
+/-- Value-level projection through the heap (H2): freeze the resulting
+runtime value against the run's final heap, so list-producing expression
+guards stay value-readable (`Val.list` snapshots). -/
+private def evF (e : Expr) (env : Env := []) (fuel : Nat := 100) : Res Val :=
+  match evalExpr M0 fuel ⟨w0, env⟩ e with
+  | .ok st v => RVal.freezeH st.world.heap fuel [] v
+  | .exn _ er => .exn er
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
 private def run (ss : List Stmt) (env : Env := []) (fuel : Nat := 1000) :
     Res (Env × RFlow) :=
   match execStmts M0 fuel ⟨w0, env⟩ ss with
@@ -145,10 +155,12 @@ private def isUnsupported : Res α → Bool
 /-! ## `+` type rules -/
 
 #guard ev (bo (sL "ab") .add (sL "cd")) == .ok (.str "abcd")
-#guard ev (bo (.list #[iL 1] sp) .add (.list #[iL 2] sp)) == .ok (.listV #[.int 1, .int 2])
+-- H2: `+` on heap lists (allocating concat) is deliberately deferred — it
+-- would evict every BinOp from the heap-free fragment; loud, never wrong.
+#guard isUnsupported (ev (bo (.list #[iL 1] sp) .add (.list #[iL 2] sp)))
 #guard ev (bo (.tuple #[iL 1] sp) .add (.tuple #[iL 2] sp)) == .ok (.tuple #[.int 1, .int 2])
 #guard isTypeError (ev (bo (sL "a") .add (iL 1)))
-#guard isTypeError (ev (bo (.list #[iL 1] sp) .add (.tuple #[iL 2] sp)))
+#guard isUnsupported (ev (bo (.list #[iL 1] sp) .add (.tuple #[iL 2] sp))) -- H2: with `+`-concat
 #guard isTypeError (ev (bo noneL .add (iL 1)))
 #guard isTypeError (ev (bo (sL "a") .sub (sL "a")))
 -- Python-valid but out of tier: sequence repetition, `%` formatting.
@@ -218,7 +230,7 @@ between non-None values is implementation-defined → loud. -/
 #guard ev (.boolOp .and #[iL 0, sL "x"] sp) == .ok (.int 0)
 #guard ev (.boolOp .and #[iL 1, sL "x"] sp) == .ok (.str "x")
 #guard ev (.boolOp .or #[sL "", iL 0] sp) == .ok (.int 0)     -- last value even if falsy
-#guard ev (.boolOp .or #[iL 0, sL "", .list #[] sp] sp) == .ok (.listV #[])
+#guard evF (.boolOp .or #[iL 0, sL "", .list #[] sp] sp) == .ok (.list #[])
 #guard ev (.boolOp .or #[iL 2, boom] sp) == .ok (.int 2)      -- short-circuit skips 1//0
 #guard ev (.boolOp .and #[iL 0, boom] sp) == .ok (.int 0)
 #guard ev (.boolOp .and #[iL 1, boom] sp) == .exn .zeroDivisionError
@@ -287,18 +299,23 @@ list is returned by construction (pure value semantics), so the CPython
 
 private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Option.none sp
 
-#guard ev (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.listV #[.int 1, .int 3, .int 5])
-#guard ev (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.listV #[.int 1, .int 3, .int 5])
-#guard ev (sortedC #[.list #[iL 7, iL 1, iL 5, iL 3] sp])
-    == .ok (.listV #[.int 1, .int 3, .int 5, .int 7])
-#guard ev (sortedC #[.list #[iL 2, iL 2, iL 1, iL 3] sp])
-    == .ok (.listV #[.int 1, .int 2, .int 2, .int 3])                      -- duplicates stay
-#guard ev (sortedC #[.list #[iL (-5), iL 3, iL (-1), iL 0] sp])
-    == .ok (.listV #[.int (-5), .int (-1), .int 0, .int 3])                -- negatives
-#guard ev (sortedC #[.list #[iL 42] sp]) == .ok (.listV #[.int 42])        -- singleton
-#guard ev (sortedC #[.list #[] sp]) == .ok (.listV #[])                    -- empty
-#guard ev (sortedC #[.list #[iL 0, iL 0, iL 0, iL 0] sp])
-    == .ok (.listV #[.int 0, .int 0, .int 0, .int 0])                      -- all equal
+#guard evF (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
+#guard evF (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
+#guard evF (sortedC #[.list #[iL 7, iL 1, iL 5, iL 3] sp])
+    == .ok (.list #[.int 1, .int 3, .int 5, .int 7])
+#guard evF (sortedC #[.list #[iL 2, iL 2, iL 1, iL 3] sp])
+    == .ok (.list #[.int 1, .int 2, .int 2, .int 3])                       -- duplicates stay
+#guard evF (sortedC #[.list #[iL (-5), iL 3, iL (-1), iL 0] sp])
+    == .ok (.list #[.int (-5), .int (-1), .int 0, .int 3])                 -- negatives
+#guard evF (sortedC #[.list #[iL 42] sp]) == .ok (.list #[.int 42])        -- singleton
+#guard evF (sortedC #[.list #[] sp]) == .ok (.list #[])                    -- empty
+#guard evF (sortedC #[.list #[iL 0, iL 0, iL 0, iL 0] sp])
+    == .ok (.list #[.int 0, .int 0, .int 0, .int 0])                       -- all equal
+-- H2: `sorted` returns a FRESH heap list — the CPython `sorted(xs) is not
+-- xs` probe is finally expressible (distinct addresses):
+#guard (match evalExpr M0 100 ⟨w0, []⟩ (sortedC #[.list #[iL 2, iL 1] sp]) with
+        | .ok st (.ref r) => r != 0 && st.world.heap.size == 2
+        | _ => false)
 -- Arity (CPython 3.9: "sorted expected 1 argument, got 0/2") and not-iterable:
 #guard ev (sortedC #[]) == .exn (.typeError "sorted expected 1 argument, got 0")
 #guard ev (sortedC #[.list #[iL 1] sp, .list #[iL 2] sp])
@@ -341,7 +358,7 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 -- Arguments are evaluated before the call happens:
 #guard evIn M1 100 [] (.call (nm "ident") #[boom] Option.none sp) == .exn .zeroDivisionError
 -- List/tuple literals evaluate elements left to right:
-#guard ev (.list #[iL 1, bo (iL 1) .add (iL 1)] sp) == .ok (.listV #[.int 1, .int 2])
+#guard evF (.list #[iL 1, bo (iL 1) .add (iL 1)] sp) == .ok (.list #[.int 1, .int 2])
 #guard ev (.tuple #[boom, nm "zzz"] sp) == .exn .zeroDivisionError
 
 /-! ## Calls: keywords/starargs flag, non-name callee, arity, argsOk -/

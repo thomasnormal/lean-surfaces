@@ -427,10 +427,11 @@ theorem PyStmtTriple.assign {m : Module} {P : FrameState → Prop} {Q : PyPost}
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   -- subscript targets never satisfy the pure `assignTo` hypothesis (loud
   -- arm), so that case closes by contradiction; every other target
-  -- reduces as before
+  -- reduces as before (H2: the interpreter runs `assignToH`, which agrees
+  -- with a decided pure `assignTo` — `assignToH_of_assignTo`)
   cases tgt <;>
     first
-    | simpa [execStmt, ht F' hF', ha] using hQ
+    | simpa [execStmt, ht F' hF', assignToH_of_assignTo ha] using hQ
     | simp [assignTo] at ha
 
 /-- `x = e` (the `Name`-target special case, `assignTo` pre-reduced): fall

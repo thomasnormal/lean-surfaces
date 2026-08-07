@@ -1,13 +1,23 @@
 # The Python heap layer: memory model (v2 — review-corrected design)
 
-Status: NORMATIVE; the H1 core (threading, 2026-08-06) and the H1-proper
-dict tier (2026-08-07) are BUILT to this document. Still pending from it:
-live dict iteration (`for k in d` is loudly out of the inventory — the
-no-snapshot rule below), value-container membership (`x in [..]`,
-`x in "s"` — loud), the full interpreter-wide `Heap.WF` preservation
-theorem (defs + allocation/update/empty lemmas exist; acceptance case 18
-is covered by concrete regressions), and the H2+ stages. Deviation record
-lives in AGENTS.md. Revised per the owner review of 2026-08-06
+Status: NORMATIVE; the H1 core (threading, 2026-08-06), the H1-proper
+dict tier (2026-08-07), and the H2 list tier's IN-WORLD half (2026-08-07:
+heap `Obj.list` everywhere the interpreter builds a list — literals, G1
+module tables, `sorted` results — with the §list-semantics inventory
+below) are BUILT to this document. Still pending from it: the H2
+**boundary flip** — `callFunction` still thaws `Val.list` ARGUMENTS to
+the transitional value form (`RVal.listV`, reads in tier, mutation
+loudly refused), while the heap-threading thaw (`RVal.thawH`, fresh
+object per occurrence) and the fueled snapshot freeze (`RVal.freezeH`)
+are built and the RETURN side already runs through them — flipping the
+argument side is the recorded next step (docs/backlog.md) and carries
+the list-example proof rebase; live dict iteration (`for k in d` is
+loudly out of the inventory — the no-snapshot rule below);
+value-container membership on `str`/`tuple`/`listV` (`x in "s"` — loud;
+heap-list membership IS in tier); the full interpreter-wide `Heap.WF`
+preservation theorem (defs + allocation/update/empty lemmas exist;
+acceptance case 18 is covered by concrete regressions); and the H3+
+stages. Deviation record lives in AGENTS.md. Revised per the owner review of 2026-08-06
 (conditional veto of v1: heap representation approved; boundary types,
 call layering, exception outcome, and fuel behavior corrected). The old
 exploratory `Res (Heap × α)` threading on branch `h1-threading` is
@@ -30,13 +40,13 @@ inductive RVal where
   | int   (n : Int)
   | str   (s : String)
   | tuple (xs : Array RVal)    -- may contain refs (aliasing through tuples)
-  | listV (xs : Array RVal)    -- transitional value-lists; removed at H2
+  | listV (xs : Array RVal)    -- transitional value-lists (see below)
   | ref   (a : Addr)
 
 /-- Heap objects — identity-bearing, mutated in place. -/
 inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
-  -- H2: | list (xs : Array RVal)
+  | list (xs : Array RVal)     -- H2 (built)
   -- H3: | instance (cls : ClassId) (attrs : Array (String × RVal))
   -- H4: | iterator (state : IterState)
 
@@ -187,6 +197,40 @@ cycle DETECTION, never by running out of fuel).
   .update/.pop/…`, `del d[k]`, comprehensions, `**kwargs`, `|`,
   returning a dict through the boundary.
 
+## List semantics (H2 inventory — the in-world half is BUILT)
+
+* Every list the interpreter BUILDS is a heap object: literals allocate
+  (`BUILD_LIST` — each display a fresh object), G1 module-level list
+  tables allocate into `initWorld`'s heap (shared across nested calls
+  within one public call, fresh across two — case 15's list analog), and
+  `sorted` allocates its fresh result. Aliasing is visible: two
+  references to one list see each other's writes; callee mutations reach
+  the caller through `callIn`'s shared world.
+* In tier: subscript read/write (bool/int indices coerce; negative
+  indices from the end; out-of-range a faithful `IndexError` — CPython
+  assignment never extends), `len`, truthiness, `in`/`not in` (the
+  `element == probe` scan, element on the left, through the fueled
+  `heapEq`), `==`/`!=` (identity shortcut, size check, elementwise,
+  active-pair `RecursionError` on corresponding cycles), dynamic
+  `is`/`is not`, `.append(x)`, `.pop()`/`.pop(i)` (empty/out-of-range pop
+  a faithful `IndexError`), unpacking `a, b = lst` (an eager snapshot
+  read, per CPython), and `for` — a LIVE INDEX CURSOR against the object
+  (`execForList`, a frozen recursion point): the body's writes, `append`
+  growth, and `pop` shrinkage are observed exactly as CPython's
+  listiterator observes them; never a snapshot.
+* Lists are unhashable keys (`TypeError: unhashable type: 'list'`, named
+  through the heap); a returned list freezes to a `Val.list` SNAPSHOT
+  (sharing legitimately duplicated, cycles loudly refused — §call
+  layering); the wrapper's freeze takes the PURE fast path on ref-free
+  results (`RVal.refFree` — the `heapEq` doctrine at the boundary) and
+  only ref-carrying results enter the fueled `freezeH`.
+* Loud, deliberately: list concatenation `+` and repetition (allocating
+  operators would evict every `BinOp` from the heap-free fragment — they
+  need an allocation-aware frame story first), `+=`/`.extend`,
+  `.insert/.remove/.index/.sort/...`, slices (H5-adjacent, with strings),
+  `del lst[i]`, comprehensions, `.get`-style method calls on lists
+  (a faithful `AttributeError` awaiting a `PyErr` form).
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,
@@ -267,7 +311,15 @@ two public calls (regression case 15).
   acceptance example (pst/piece reads, real MATE constants).
 * **H2: lists to the heap.** `RVal.listV` → `Obj.list`; public
   `Val.list` STAYS (snapshot form). In-place list ops enter the tier;
-  the stateful judgment is exposed (see above).
+  the stateful judgment is exposed (see above). STATUS 2026-08-07: the
+  in-world half is BUILT (§list semantics; `CallsIn` list proofs in
+  `Examples/python/sf_hist`); the BOUNDARY FLIP — arguments through the
+  heap-threading `RVal.thawH` instead of the transitional `listV` value
+  form — is built-but-not-wired, pending the list-example proof rebase
+  (docs/backlog.md). Until the flip, mutating a boundary-passed list is
+  loudly refused (never wrong), and `RVal.listV` survives as the
+  boundary-argument form and the pure proof-layer vocabulary
+  (`RVal.thaw`'s image of `Val.list`, bridged by `thawH_of_listFree`).
 * **H3: classes.** `Obj.instance (cls : ClassId)` — a unique id, NOT the
   class name (redefinition/nesting/shadowing); class objects eventually
   need heap identity and mutable class attributes themselves.

@@ -331,6 +331,7 @@ theorem htestT (xs : List Int) (x : Int) :
   rcases om with _ | mv <;>
     py_threshold 8 [pw, blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
 
+set_option maxHeartbeats 1000000 in
 theorem hbodyT (xs : List Int) (x : Int) :
     ∀ s : SB, InvT xs s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →

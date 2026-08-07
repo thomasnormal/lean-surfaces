@@ -270,13 +270,14 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     (hworld : st.world = initWorld m)
     (hspec : CallsTo m fname args v)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
-    (hm : m.heapFree = true := by rfl) :
+    (hm : m.heapFree = true := by rfl)
+    (hv : Val.listFree v = true := by rfl) :
     EvalsTo m st (.call (.name fname sp) argEs Option.none sp') (RVal.thaw v) := by
   obtain ⟨w, locals⟩ := st
   simp only at hworld hlocal hargs
   subst hworld
   obtain ⟨ta, ha⟩ := hargs.at_least
-  obtain ⟨tc, hc⟩ := hspec.callIn_at_least hm
+  obtain ⟨tc, hc⟩ := hspec.callIn_at_least hm hv
   have hfn : (findFunction m fname).isSome = true := by
     cases hff : findFunction m fname with
     | none =>
@@ -302,6 +303,7 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
     (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
         st.world = initWorld m ∧
         ∃ args v, EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
+          Val.listFree v = true ∧
           CallsTo m fname args v ∧
           Q.next ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
@@ -310,8 +312,8 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
       (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa)
       Q :=
   PyStmtTriple.assignName fun st hP =>
-    let ⟨hlocal, hworld, _args, v, hvs, hc, hQ⟩ := h st hP
-    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob hm, hQ⟩
+    let ⟨hlocal, hworld, _args, v, hvs, hlf, hc, hQ⟩ := h st hP
+    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob hm hlf, hQ⟩
 
 /-- List-level form of the call rule: `x = f(…)` followed by `rest`, with
 the callee's postcondition (thawed result bound to `x`) as the
@@ -322,6 +324,7 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
     (h : ∀ st, P st → Env.lookup st.locals fname = Option.none ∧
         st.world = initWorld m ∧
         ∃ args v, EvalsToList m st argEs.toList (RVal.thawList args.toList) ∧
+          Val.listFree v = true ∧
           CallsTo m fname args v ∧
           R ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hrest : PyTriple m R rest Q)
@@ -383,13 +386,13 @@ theorem PyTriple.callsTo_arityOk {m : Module} {fname : String}
       refine ⟨t + 1, ?_⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, harity, hrt, hv, RVal.freeze]
+      simp [hf, hargsOk, hlocalsOk, harity, hrt, hv, RVal.freezeB]
     | ret rv =>
       have hv : rv = RVal.thaw v := hr
       refine ⟨t + 1, ?_⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, harity, hrt, hv, RVal.freeze_thaw]
+      simp [hf, hargsOk, hlocalsOk, harity, hrt, hv, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
   | exn st' e => exact hr.elim
@@ -452,7 +455,8 @@ arrow spec and keep working in the triple vocabulary. -/
 theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
     {args : Array Val} {v : Val}
     (hf : findFunction m fname = some f)
-    (h : CallsTo m fname args v) :
+    (h : CallsTo m fname args v)
+    (hv : Val.listFree v = true := by first | rfl | decide) :
     PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
       { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } := by
   obtain ⟨fuel, hc⟩ := h
@@ -478,17 +482,21 @@ theorem CallsTo.toTriple {m : Module} {fname : String} {f : FunctionDefn}
       rw [hex] at hc
       cases flow with
       | next =>
-        simp only [Run.ok_bind, Run.toWorld_ok, RVal.freeze] at hc
-        have hv : v = .none := by
-          have := Res.ok.inj hc
-          exact this.symm
+        simp only [Run.ok_bind, Run.toWorld_ok] at hc
+        have hvn : v = .none := by
+          have hcn : Run.toPublic (fu + 1)
+              (Run.ok st1.world (RVal.thaw Val.none)) = .ok v := hc
+          rw [Run.toPublic_thaw] at hcn
+          exact (Res.ok.inj hcn).symm
         refine PyTriple.of_exec fun st hst => ⟨fu, ?_⟩
         subst hst
         rw [hex]
-        simpa using hv
+        simpa using hvn
       | ret rv =>
         simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        have hrv := RVal.eq_thaw_of_freeze rv hc
+        have hrv : rv = RVal.thaw v := by
+          rw [Run.toPublic_ok] at hc
+          exact RVal.eq_thaw_of_freezeB st1.world.heap (fu + 1) rv hc hv
         refine PyTriple.of_exec fun st hst => ⟨fu, ?_⟩
         subst hst
         rw [hex]
@@ -505,11 +513,12 @@ theorem callsTo_iff_triple {m : Module} {fname : String} {f : FunctionDefn}
     {args : Array Val} {v : Val}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
-    (harity : args.size = f.params.size) :
+    (harity : args.size = f.params.size)
+    (hv : Val.listFree v = true := by first | rfl | decide) :
     CallsTo m fname args v ↔
       PyTriple m (fun st => st = (⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩ : FrameState)) f.body.toList
         { next := fun _ => v = .none, ret := fun rv _ => rv = RVal.thaw v } :=
-  ⟨fun h => h.toTriple hf, fun h => h.callsTo hf hargsOk hlocalsOk harity⟩
+  ⟨fun h => h.toTriple hf hv, fun h => h.callsTo hf hargsOk hlocalsOk harity⟩
 
 /-- Triple → arrow, raise side, general-arity form (F1 defaults). The
 `err` arm is state-aware (the raise state survives INSIDE the run), but
@@ -582,11 +591,11 @@ theorem Raises.toTriple {m : Module} {fname : String} {f : FunctionDefn}
       rw [hex] at hc
       cases flow with
       | next =>
-        simp only [Run.ok_bind, Run.toWorld_ok, RVal.freeze] at hc
-        cases hc
+        simp only [Run.ok_bind, Run.toWorld_ok] at hc
+        exact absurd hc Run.toPublic_ok_ne_exn
       | ret rv =>
         simp only [Run.ok_bind, Run.toWorld_ok] at hc
-        exact absurd hc (RVal.freeze_ne_exn rv e)
+        exact absurd hc Run.toPublic_ok_ne_exn
       | brk => simp at hc
       | cont => simp at hc
     | exn st1 e' =>

@@ -105,7 +105,7 @@ would otherwise go. -/
         ?_ (.single (.ret ?_))
       · rintro st rfl
         refine ⟨rfl, rfl, #[.int (k : Nat)], .int (factorial k),
-          .cons (.of_eval (fuel := 3) ?_) .nil, ih, rfl⟩
+          .cons (.of_eval (fuel := 3) ?_) .nil, rfl, ih, rfl⟩
         py_simp [factM, factFn]
       · -- return n * r
         rintro st rfl
@@ -126,7 +126,7 @@ theorem fact_plus_one_spec (n : Nat) :
     ?_ (.single (.ret ?_))
   · rintro st rfl
     refine ⟨rfl, rfl, #[.int (n : Nat)], .int (factorial n),
-      .cons (.of_eval (fuel := 2) ?_) .nil, fact_spec n, rfl⟩
+      .cons (.of_eval (fuel := 2) ?_) .nil, rfl, fact_spec n, rfl⟩
     rfl
   · rintro st rfl
     refine ⟨.int ((↑(factorial n) : Int) + 1), .of_eval (fuel := 3) rfl, ?_⟩

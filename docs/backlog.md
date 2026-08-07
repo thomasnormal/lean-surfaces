@@ -152,6 +152,23 @@ decision:
    `.keys/.values/.items/.update/.pop`, `del`, comprehensions, the pst
    padding loop's constructs (`.items()`, lambdas, `sum` over a
    generator).
+3b. **Lists (H2) — the IN-WORLD half is BUILT (2026-08-07),** per
+   docs/memory-model.md §list semantics: heap `Obj.list` for every
+   interpreter-built list (literals, G1 tables, `sorted` results), the
+   full read/write/method/membership/equality inventory, the live
+   `for` cursor (`execForList`), snapshot freeze for returned lists
+   (`freezeB`/`freezeH`), and the `CallsIn` aliasing exemplars
+   (`sf_hist`, `list_lab`). REMAINING (the recorded next step): the
+   BOUNDARY FLIP — wire `RVal.thawArgsH` into `callFunction` so
+   `Val.list` arguments become heap objects (machinery built:
+   `thawH`/`listFree` bridges, `eq_thaw_of_freezeH`); it carries the
+   list-example proof rebase (`sf_bound_for`, `sf_bound_tree`,
+   `sf_bound_rec`, `bench_bisect`, `bench_statistics`) — the intended
+   rescue route is an `execForList` ≡ `execFor`-on-snapshot equivalence
+   lemma over pinned worlds, so the frozen-tail `for` induction pattern
+   survives; then the arg-mutation harness rows go live and `+= `/list
+   concat can revisit the heap-free-fragment question.
+
 4. **Classes/namedtuple methods.** `Position` is a frozen namedtuple —
    value semantics are FAITHFUL for it; `Searcher` mutates `self` (TT,
    killer) and needs the heap decision from step 3(b). A namedtuple-only

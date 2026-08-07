@@ -174,12 +174,13 @@ theorem sortInts_length (l : List Int) :
 open Lean Lean.Parser.Tactic in
 /-- `py_simp [extra, lemmas] at h` — one stack frame's worth of symbolic
 execution of the Python interpreter: `simp` with every interpreter equation
-*except* the recursion points `callIn`, `execWhile`, and `execFor`,
+*except* the recursion points `callIn`, `execWhile`, `execFor`, and
+(H2) `execForList` — and the fueled `heapEq`/`freezeH` walks —
 which stay frozen at symbolic fuel so induction hypotheses can be applied to
 them. Pass them explicitly (`py_simp [callIn, execWhile, tri] at h`)
 when full unfolding is safe (no recursion, or concrete fuel), or unfold
 exactly one step with `rw [callIn.eq_2] at h` / `rw [execWhile.eq_2]
-at h` / `rw [execFor.eq_2] at h`. The public `callFunction` is a
+at h` / `rw [execFor.eq_2] at h` / `rw [execForList.eq_2] at h`. The public `callFunction` is a
 non-recursive wrapper since H1 (thaw ∘ fresh-world ∘ `callIn` ∘ freeze)
 and IS in the default set — unfolding it exposes the frozen `callIn`.
 Program literals introduced by `load_program` must also be passed explicitly
@@ -199,17 +200,20 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             strCmp, evalCompareOp, evalCompareOpH, evalBinOp, evalUnaryOp,
             evalUnaryOpH, lenVal, lenValH, sortedVal,
             asIntList, asIntList_map_int, sortInts_length, normIndex,
-            indexVal, indexValH, targetNames, bindAll, assignTo,
-            foldExtremum, extremumVal, absVal, intCastVal, isBuiltinName,
+            indexVal, indexValH, targetNames, bindAll, assignTo, assignToH,
+            foldExtremum, extremumVal, extremumValH, absVal, intCastVal,
+            isBuiltinName, sortedValH,
             hashableKey, hashableKeyList, keyEq, keyEqList, RVal.unhashName,
             dictFind, dictStore, dictBuild, heapIndex, heapStore, heapLen,
-            heapContains, heapGet, RVal.refFree, RVal.refFreeList,
+            heapContains, heapContainsScan, heapGet, heapAppend, heapPop,
+            RVal.refFree, RVal.refFreeList,
+            Val.listFree, Val.listFreeList, Val.listFreeArgs,
             Heap.get?, Heap.update, danglingMsg,
             moduleGlobals, moduleInit, globalsFold, globalsStep, lookupG,
             resolvedG, targetNamesG, evalGlobalExpr, evalGlobalExprs,
             evalGlobalDictItems, globalFuel,
             callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
-            RVal.freeze, RVal.freezeList,
+            RVal.freeze, RVal.freezeList, RVal.freezeB, RVal.freezeListB,
             and_assoc, $extra,*] $(loc)?)
 
 @[inherit_doc pySimpTactic]

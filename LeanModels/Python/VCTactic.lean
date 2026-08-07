@@ -316,7 +316,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
       refine ⟨v, ⟨t + 1, ?_⟩, hΦ⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, harity, hrt, RVal.freeze_thaw]
+      simp [hf, hargsOk, hlocalsOk, harity, hrt, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
   | exn st' e => exact hr.elim
@@ -407,7 +407,7 @@ def interpUnfolds : List Name :=
    ``defaultBindings, ``Env.lookup, ``Env.set,
    ``Const.toVal, ``Const.toRVal, ``truthy, ``truthyH, ``asInt, ``RVal.isNone,
    ``RVal.thaw, ``RVal.thawList, ``RVal.thawArgs, ``RVal.freeze,
-   ``RVal.freezeList,
+   ``RVal.freezeList, ``RVal.freezeB, ``RVal.freezeListB,
    ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalCompareOpH, ``evalBinOp,
    ``evalUnaryOp, ``evalUnaryOpH,
@@ -415,10 +415,13 @@ def interpUnfolds : List Name :=
    ``indexValH,
    ``hashableKey, ``hashableKeyList, ``keyEq, ``keyEqList, ``RVal.unhashName,
    ``dictFind, ``dictStore, ``dictBuild, ``heapIndex, ``heapStore, ``heapLen,
-   ``heapContains, ``heapGet, ``RVal.refFree, ``RVal.refFreeList,
+   ``heapContains, ``heapContainsScan, ``heapGet, ``heapAppend, ``heapPop,
+   ``RVal.refFree, ``RVal.refFreeList,
+   ``Val.listFree, ``Val.listFreeList, ``Val.listFreeArgs,
    ``Heap.get?, ``Heap.update, ``danglingMsg,
-   ``targetNames, ``bindAll, ``assignTo,
-   ``foldExtremum, ``extremumVal, ``absVal, ``intCastVal, ``isBuiltinName,
+   ``targetNames, ``bindAll, ``assignTo, ``assignToH,
+   ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
+   ``absVal, ``intCastVal, ``isBuiltinName,
    ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
    ``resolvedG, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
    ``evalGlobalDictItems, ``globalFuel,
@@ -1635,14 +1638,17 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       #[← provePinned ctx.pack hargsTy]
     let hworld ← mkExpectedTypeHint (← mkEqRefl tg.shape.world)
       (← mkEq (← mkAppM ``FrameState.world #[tg.E]) tg.shape.world)
-    -- the frame-theorem side condition: the module is heap-free (computes
-    -- by `rfl` on the literal module — H1-proper pinned geometry)
+    -- the frame-theorem side conditions: the module is heap-free, and the
+    -- callee's result is list-free (both compute by `rfl` at literal
+    -- modules and marshalled spec values — H2 pinned geometry)
     let hHeapFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
       (← mkEq (← mkAppM ``Module.heapFree #[tg.m]) (toExpr true))
+    let hListFree ← mkExpectedTypeHint (← mkEqRefl (toExpr true))
+      (← mkEq (← mkAppM ``Val.listFree #[vNF]) (toExpr true))
     let hcall ← appOpt ``EvalsTo.call
       #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
         some vNF, some spf, some spc, some prfL, some hargs, some hworld,
-        some factE', some prfG, some hHeapFree]
+        some factE', some prfG, some hHeapFree, some hListFree]
     let (rAs, prfAs) ← captureRun ctx.pack
       (← mkAppM ``assignTo #[localsE, tgtE, rvNF])
     let rAs' ← whnfR rAs

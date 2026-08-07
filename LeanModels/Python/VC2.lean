@@ -290,7 +290,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
   have hc' := hc (ta + tc) (by omega)
   have hc'' : callIn m (ta + tc) (initWorld m) fname
       (RVal.thawList args.toList).toArray = Run.ok (initWorld m) (RVal.thaw v) := hc'
-  simp [evalExpr, hlocal, hglob, hfn, ha', hc'']
+  simp [evalExpr, hlocal, hglob, hfn, findClass_heapFree hm fname, ha', hc'']
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-state, the callee name unshadowed, the pinned public world, the
@@ -642,7 +642,7 @@ private abbrev wLoop : Stmt :=
         (.binOp (.name "x" wSp) .sub (.constant (.int 1) wSp) wSp) wSp]
     #[] wSp
 
-#guard execStmt ⟨#[], #[]⟩ 64 ⟨⟨#[], [], []⟩, [("x", .int 5)]⟩ wLoop
+#guard execStmt ⟨#[], #[], #[]⟩ 64 ⟨⟨#[], [], []⟩, [("x", .int 5)]⟩ wLoop
   == .ok ⟨⟨#[], [], []⟩, [("x", .int 0)]⟩ .next
 
 /-- The countdown terminates at `x = 0` — while rule only, any module,

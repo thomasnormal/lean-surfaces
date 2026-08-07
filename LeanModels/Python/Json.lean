@@ -214,6 +214,10 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         -- Representation coverage: keep ingestion total, mark it unsupported.
         let name := ((← getField j "name").getStr?).toOption.getD ""
         return .unsupported "FunctionDef" name span
+    | "ClassDef" =>
+        -- Nested `class` (module-level ones are split out by `parseModule`).
+        let name := ((← getField j "name").getStr?).toOption.getD ""
+        return .unsupported "ClassDef" name span
     | other => throw s!"unknown statement kind {other.quote}"
 
 def parseParam (j : Json) : Except String Param :=
@@ -240,9 +244,33 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     return { name, params, argsOk := argsUnsupported.isNone,
              localsOk := localsUnsupported.isNone, body, span }
 
+/-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
+the method `FunctionDefn`s FLATTENED under qualified names
+`"<class>.<method>"` (see `ClassDefn`'s docstring — method calls reuse
+`callIn` verbatim). `ok` is `true` iff `class_unsupported` is `null`
+(bases/keywords/decorators/class-level statements set it at extraction).
+Non-`FunctionDef` body statements are dropped here — they already set
+`class_unsupported`, so no instance of the class can ever be built. -/
+def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) :=
+  withCtx "ClassDef" do
+    let name ← (← getField j "name").getStr?
+    let span ← parseSpan (← getField j "span")
+    let classUnsupported ← getOptStrField j "class_unsupported"
+    let body ← (← getField j "body").getArr?
+    let mut methods : Array String := #[]
+    let mut fns : Array FunctionDefn := #[]
+    for stmtJson in body do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then
+        let f ← parseFunctionDefn stmtJson
+        methods := methods.push f.name
+        fns := fns.push { f with name := name ++ "." ++ f.name }
+    return ({ name, ok := classUnsupported.isNone, methods, span }, fns)
+
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
-`Module.functions` and everything else into `Module.topLevel` (source order
-preserved within each). -/
+`Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
+into `functions` under qualified names, in source order), and everything
+else into `Module.topLevel` (source order preserved within each). -/
 def parseModule (j : Json) : Except String Module :=
   withCtx "module" do
     let kind ← (← getField j "kind").getStr?
@@ -251,13 +279,18 @@ def parseModule (j : Json) : Except String Module :=
     let body ← (← getField j "body").getArr?
     let mut functions : Array FunctionDefn := #[]
     let mut topLevel : Array Stmt := #[]
+    let mut classes : Array ClassDefn := #[]
     for stmtJson in body do
       let k ← (← getField stmtJson "kind").getStr?
       if k == "FunctionDef" then
         functions := functions.push (← parseFunctionDefn stmtJson)
+      else if k == "ClassDef" then
+        let (c, fns) ← parseClassDefn stmtJson
+        classes := classes.push c
+        functions := functions ++ fns
       else
         topLevel := topLevel.push (← parseStmt stmtJson)
-    return { functions, topLevel }
+    return { functions, topLevel, classes }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=
   withCtx "lean_blocks" do

@@ -35,6 +35,7 @@ Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
 | kind | fields |
 |---|---|
 | `FunctionDef` | `name`: str, `args`: [param…], `args_unsupported`: str \| null, `locals_unsupported`: str \| null (set when the body *calls* a name it also assigns — CPython's static-locals rule makes that name an initially-unbound local, which the dynamic-env interpreter refuses loudly), `body`: [stmt…] |
+| `ClassDef` (H3) | `name`: str, `class_unsupported`: str \| null (set for bases — inheritance is loudly out of tier — class keywords/metaclass, decorators, or class-level statements other than defs/docstrings/`pass`; the class is still represented, instantiation refuses loudly), `body`: [stmt…] (methods arrive as `FunctionDef` nodes; ingestion flattens them into `Module.functions` under `"<class>.<method>"` qualified names and records the class in `Module.classes`) |
 | `Return` | `value`: expr \| null |
 | `Assign` | `targets`: [expr…] (length 1 in the supported tier; chained `a=b=1` gives length > 1), `value`: expr |
 | `AugAssign` | `target`: expr, `op`: binop-name, `value`: expr |

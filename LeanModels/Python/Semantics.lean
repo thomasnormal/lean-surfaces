@@ -608,6 +608,10 @@ def RVal.typeNameH (h : Heap) : RVal → String
     match Heap.get? h a with
     | some (.dict _ _) => "dict"
     | some (.list _) => "list"
+    -- H3: the class NAME lives in the module, not the heap — "object" is
+    -- the message-only placeholder (the harness compares exception CLASS
+    -- names, never messages).
+    | some (.instance _ _) => "object"
     | Option.none => "object"
   | v => v.typeName
 
@@ -636,6 +640,36 @@ mutual
     | _, _ => false
 end
 
+mutual
+  /-- Does the (hashability-failing) key contain a ref to a class
+  INSTANCE (tuples searched recursively)? Instances ARE hashable in
+  CPython (identity hash) — `keyRefusal` refuses them loudly instead of
+  raising a fake `TypeError`. -/
+  def keyHasInstanceRef (h : Heap) : RVal → Bool
+    | .ref a =>
+      match Heap.get? h a with
+      | some (.instance _ _) => true
+      | _ => false
+    | .tuple xs => keyHasInstanceRefList h xs.toList
+    | _ => false
+
+  /-- Elementwise `keyHasInstanceRef`. -/
+  def keyHasInstanceRefList (h : Heap) : List RVal → Bool
+    | [] => false
+    | v :: vs => keyHasInstanceRef h v || keyHasInstanceRefList h vs
+end
+
+/-- The outcome when a probe/key fails `hashableKey`: a dict/list
+referent (or a value-list) is CPython's faithful `TypeError`; a key
+containing an INSTANCE ref is hashable in CPython (identity hash +
+identity `__eq__`) but instance dict keys are outside the H3 tier —
+loud, never a fake `TypeError`. -/
+def keyRefusal (h : Heap) (k : RVal) : Res α :=
+  if keyHasInstanceRef h k then
+    .unsupported "a class instance as a dict key (identity hash) is outside the H3 tier (docs/memory-model.md)"
+  else
+    .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+
 /-- First entry whose stored key equals `k` (insertion order). -/
 def dictFind : List (RVal × RVal) → RVal → Option RVal
   | [], _ => Option.none
@@ -663,7 +697,7 @@ def dictBuild (h : Heap) (acc : List (RVal × RVal)) : List (RVal × RVal) → R
   | [] => .ok acc
   | (k, v) :: rest =>
     if hashableKey k then dictBuild h (dictStore acc k v).1 rest
-    else .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+    else keyRefusal h k
 
 /-- `o[k]` on a heap object. Dicts: unhashable keys raise BEFORE any scan
 (even on an empty dict); a missing key is a faithful `KeyError`. Lists
@@ -676,7 +710,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
       match dictFind es.toList k with
       | some v => .ok v
       | Option.none => .exn .keyError
-    else .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+    else keyRefusal h k
   | some (.list xs) =>
     match asInt k with
     | some i =>
@@ -685,6 +719,9 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
       | Option.none => .exn .indexError
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
+  -- H3: no `__getitem__` can exist (dunder guard), so the default
+  -- protocol's refusal is the faithful outcome.
+  | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape
@@ -701,7 +738,7 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
         match Heap.update h a (.dict es'.toArray (if grew then ver + 1 else ver)) with
         | some h' => .ok h'
         | Option.none => .unsupported danglingMsg
-    else .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+    else keyRefusal h k
   | some (.list xs) =>
     match asInt k with
     | some i =>
@@ -713,13 +750,18 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
       | Option.none => .exn .indexError
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
+  -- H3: no `__setitem__` can exist (dunder guard) — faithful refusal.
+  | some (.instance _ _) =>
+    .exn (.typeError "'object' object does not support item assignment")
   | Option.none => .unsupported danglingMsg
 
-/-- `len(o)` on a heap object: dict entry count / list length. -/
+/-- `len(o)` on a heap object: dict entry count / list length; an
+instance has no `__len__` (dunder guard) — the faithful `TypeError`. -/
 def heapLen (h : Heap) (a : Addr) : Res RVal :=
   match Heap.get? h a with
   | some (.dict es _) => .ok (.int es.size)
   | some (.list xs) => .ok (.int xs.size)
+  | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
   | Option.none => .unsupported danglingMsg
 
 /-- `d.get(k)` / `d.get(k, default)` (the H1 method tier): absent keys
@@ -730,9 +772,10 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
   match Heap.get? h a with
   | some (.dict es _) =>
     if hashableKey k then .ok ((dictFind es.toList k).getD dflt)
-    else .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
-  | some (.list _) =>
-    .unsupported "'.get' on a list is a faithful AttributeError ('list' object has no attribute 'get') — outside the tier (no AttributeError in PyErr yet)"
+    else keyRefusal h k
+  | some (.list _) => .exn .attributeError   -- 'list' object has no attribute 'get'
+  | some (.instance _ _) =>
+    .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.append(x)` (H2): push in place — the mutation is visible through
@@ -745,8 +788,9 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
     match Heap.update h a (.list (xs.push v)) with
     | some h' => .ok h'
     | Option.none => .unsupported danglingMsg
-  | some (.dict _ _) =>
-    .unsupported "'.append' on a dict is a faithful AttributeError ('dict' object has no attribute 'append') — outside the tier (no AttributeError in PyErr yet)"
+  | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'append'
+  | some (.instance _ _) =>
+    .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.pop()` / `lst.pop(i)` (H2): remove and return the element at `i`
@@ -764,17 +808,37 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
     | Option.none => .exn .indexError
   | some (.dict _ _) =>
     .unsupported "'.pop' on a dict is outside the tier (dict.pop lands with the dict-method tier)"
+  | some (.instance _ _) =>
+    .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
+  | Option.none => .unsupported danglingMsg
+
+/-- `o.attr = v` on a heap object (H3: mutable self — the attribute
+store). Instances update their attribute table in place (`Env.set`
+semantics: replace-in-place or append — CPython `__dict__` insertion
+order); a dict/list has no writable attributes — the faithful
+`AttributeError` (no `__slots__`/instance dict on builtins). -/
+def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
+  match Heap.get? h a with
+  | some (.instance ci attrs) =>
+    match Heap.update h a (.instance ci (Env.set attrs.toList attr v).toArray) with
+    | some h' => .ok h'
+    | Option.none => .unsupported danglingMsg
+  | some (.dict _ _) => .exn .attributeError
+  | some (.list _) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- Truthiness including heap objects: `bool(d)`/`bool(lst)` is
-`len != 0`. Non-ref values decide exactly as the pure `truthy` (the proof
-layer's vocabulary — `truthyH_of_truthy` lifts pure facts, so VC rule
-hypotheses never mention the heap). -/
+`len != 0`; an instance is `True` (default object protocol — no
+`__bool__`/`__len__` can exist, the dunder guard). Non-ref values decide
+exactly as the pure `truthy` (the proof layer's vocabulary —
+`truthyH_of_truthy` lifts pure facts, so VC rule hypotheses never mention
+the heap). -/
 def truthyH (h : Heap) : RVal → Res Bool
   | .ref a =>
     match Heap.get? h a with
     | some (.dict es _) => .ok (es.size != 0)
     | some (.list xs) => .ok (xs.size != 0)
+    | some (.instance _ _) => .ok true
     | Option.none => .unsupported danglingMsg
   | v => truthy v
 
@@ -872,8 +936,12 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
   match Heap.get? h a with
   | some (.dict es _) =>
     if hashableKey k then .ok (dictFind es.toList k).isSome
-    else .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+    else keyRefusal h k
   | some (.list xs) => heapContainsScan h fuel k xs.toList
+  -- H3: no `__contains__`/`__iter__`/`__getitem__` (dunder guard) —
+  -- the faithful `TypeError`.
+  | some (.instance _ _) =>
+    .exn (.typeError "argument of type 'object' is not iterable")
   | Option.none => .unsupported danglingMsg
 
 /-- The heap-aware comparison step (`evalCompareChain` consumes this since
@@ -969,6 +1037,8 @@ def sortedValH (h : Heap) : RVal → Res (Heap × RVal)
           .unsupported "sorted() on a list with non-int elements is outside the v0 tier"
     | some (.dict _ _) =>
         .unsupported "sorted() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+    | some (.instance _ _) =>
+        .exn (.typeError "'object' object is not iterable")
     | Option.none => .unsupported danglingMsg
   | v => do let r ← sortedVal v; return (h, r)
 
@@ -991,6 +1061,8 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
                .unsupported s!"{if isMax then "max" else "min"}() over non-int elements is outside the v0 tier")
         | some (.dict _ _) =>
             .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+        | some (.instance _ _) =>
+            .exn (.typeError "'object' object is not iterable")
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
@@ -1055,6 +1127,9 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
        | some (.list xs) => assignTo env target (.listV xs)
        | some (.dict _ _) =>
          .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+       | some (.instance _ _) =>
+         -- no `__iter__` can exist (dunder guard) — faithful
+         .exn (.typeError "cannot unpack non-iterable object object")
        | Option.none => .unsupported danglingMsg
      | v => assignTo env target v)
   | t => assignTo env t v
@@ -1083,9 +1158,166 @@ theorem assignToH_of_assignTo {h : Heap} {env : Env} {target : Expr}
       | some names => simp [htn] at ha
 
 /-- Module function table lookup. Each `def` rebinds the module-level name, so
-with duplicate definitions the LAST one wins, exactly as in CPython. -/
+with duplicate definitions the LAST one wins, exactly as in CPython. Class
+METHODS also live here, flattened under `"<class>.<method>"` qualified names
+(see `ClassDefn`): a plain identifier can never contain `.`, so plain-name
+resolution never sees them; `callIn` resolves them exactly like functions,
+which is what lets method calls reuse `callIn`/`CallsIn` verbatim. -/
 def findFunction (m : Module) (fname : String) : Option FunctionDefn :=
   m.functions.findRev? (fun f => f.name == fname)
+
+/-! ## The class table (H3, docs/memory-model.md §H3) -/
+
+/-- Scan for the LAST class with this name, tracking indices (the
+recursion prefers the tail match — CPython's last-binding-wins).
+List-structural: kernel-reducible. -/
+def findClassAux : List ClassDefn → String → Nat → Option (Nat × ClassDefn)
+  | [], _, _ => Option.none
+  | c :: rest, cname, i =>
+    match findClassAux rest cname (i + 1) with
+    | some r => some r
+    | Option.none => if c.name == cname then some (i, c) else Option.none
+
+/-- Resolve a class NAME to its canonical `ClassId` (the index into
+`Module.classes`) and its record. Last definition wins, so instances
+always carry the canonical id — an instance of a shadowed earlier
+same-named class is unconstructible (see `ClassDefn`). -/
+def findClass (m : Module) (cname : String) : Option (Nat × ClassDefn) :=
+  findClassAux m.classes.toList cname 0
+
+/-- Positional class-record lookup (instance method dispatch: the
+instance's `ClassId` is the index). List-structural, never `getD`. -/
+def classAt : List ClassDefn → Nat → Option ClassDefn
+  | [], _ => Option.none
+  | c :: _, 0 => some c
+  | _ :: rest, n + 1 => classAt rest n
+
+/-- The class record of a `ClassId`. A `none` is an interpreter invariant
+violation (ids are minted by `findClass`) and every caller reports it
+loudly (`danglingMsg` style). -/
+def getClass? (m : Module) (i : ClassId) : Option ClassDefn :=
+  classAt m.classes.toList i
+
+/-- Does the character list end in `__`? (helper of `dunderShaped`;
+list-structural). -/
+def endsWithUU : List Char → Bool
+  | [] => false
+  | ['_', '_'] => true
+  | [_] => false
+  | _ :: rest => endsWithUU rest
+
+/-- Is this a dunder name (`__…__`)? Structural on the string's character
+list (`String.startsWith`/`endsWith` are `USize` loops the kernel cannot
+reduce — the `sortInts` constraint). -/
+def dunderShaped (n : String) : Bool :=
+  match n.toList with
+  | '_' :: '_' :: rest => endsWithUU rest
+  | _ => false
+
+/-- Does the class define any dunder method besides `__init__`? Such a
+class is UNINSTANTIABLE in tier (loud at `ClassName(…)`): every
+implicit-protocol site the tier decides (equality, truthiness, attribute
+lookup, `is`, iteration refusals, …) assumes DEFAULT object semantics,
+which a user dunder would silently override. Because instantiation guards
+this, every instance that EXISTS has default protocol — which is what
+makes the instance arms of `heapEq` (identity), `truthyH` (`True`), and
+the faithful `TypeError`/`AttributeError` arms below correct. -/
+def hasExtraDunder (c : ClassDefn) : Bool :=
+  c.methods.toList.any fun n => dunderShaped n && n != "__init__"
+
+/-- The decision of an attribute READ (`x.attr` as a value) on a heap
+receiver, computed PURELY from the referent — the interpreter arm and its
+meta-theorems (`fuelMono`/`worldInv`) fork on this one scrutinee instead
+of a match nested under the receiver binder. -/
+inductive AttrReadPlan where
+  | value (v : RVal)      -- instance attribute (heap read)
+  | boundMethod           -- class method referenced as a value (loud)
+  | missing               -- faithful AttributeError (default protocol)
+  | refuse (msg : String) -- out-of-tier receiver (loud)
+  | dangling              -- invariant violation (loud)
+deriving Repr, Inhabited, BEq
+
+/-- Resolve `x.attr` (read position) against the heap: instance attrs
+first (CPython instance `__dict__` precedes the class for plain
+attributes), then the class's methods (a bound-method VALUE — loud),
+then the faithful `AttributeError` (no `__getattr__` can exist — the
+dunder guard). Dict/list attributes are their built-in methods — loud in
+read position. -/
+def attrReadPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
+    AttrReadPlan :=
+  match Heap.get? h a with
+  | some (.instance ci attrs) =>
+    (match Env.lookup attrs.toList attr with
+     | some v => .value v
+     | Option.none =>
+       match getClass? m ci with
+       | Option.none => .dangling
+       | some c =>
+         if c.methods.toList.contains attr then .boundMethod else .missing)
+  | some _ =>
+    .refuse "attribute access on a dict/list value is outside the tier (their methods are called, not referenced; docs/memory-model.md)"
+  | Option.none => .dangling
+
+/-- The attribute-READ outcome (fuel-free: reads decide immediately) —
+the `Run`-typed rendering of `attrReadPlan`, factored out so meta-proofs
+(`worldInv`) speak about one named application. -/
+def attrReadResult (m : Module) (st : FrameState) (a : Addr)
+    (attr : String) : Run FrameState RVal :=
+  match attrReadPlan m st.world.heap a attr with
+  | .value v => .ok st v
+  | .boundMethod =>
+    .unsupported s!"referencing bound method '.{attr}' as a value is outside the H3 tier (methods are called, not passed)"
+  | .missing => .exn st .attributeError
+  | .refuse msg => .unsupported msg
+  | .dangling => .unsupported danglingMsg
+
+/-- Every decided `.ok` of an attribute read carries the receiver's own
+frame state (reads never move the world). -/
+theorem attrReadResult_ok {m : Module} {st : FrameState} {a : Addr}
+    {attr : String} {s' : FrameState} {v : RVal}
+    (h : attrReadResult m st a attr = .ok s' v) : s' = st := by
+  unfold attrReadResult at h
+  split at h <;> cases h <;> rfl
+
+/-- The decision of an attribute CALL (`x.attr(…)`) on a heap receiver —
+same pure-scrutinee discipline as `attrReadPlan`. The plan is decided
+BEFORE argument evaluation (CPython: receiver and attribute lookup
+precede the arguments — a missing attribute raises before any argument
+runs). -/
+inductive AttrPlan where
+  | instMethod (qname : String) -- class method: `callIn` with self bound
+  | instAttrValue               -- data attribute in call position (loud)
+  | attrMissing                 -- faithful AttributeError (pre-args)
+  | dictGet | listAppend | listPop
+  | refuse (msg : String)
+  | dangling
+deriving Repr, Inhabited, BEq
+
+/-- Resolve `x.attr(…)` against the heap: instances dispatch through
+their CLASS (any attr — user methods; instance data attributes in call
+position are loud; missing is the faithful pre-args `AttributeError`);
+dicts admit `.get`, lists `.append`/`.pop` (the builtin method tier). -/
+def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
+    AttrPlan :=
+  match Heap.get? h a with
+  | some (.instance ci attrs) =>
+    (match Env.lookup attrs.toList attr with
+     | some _ => .instAttrValue
+     | Option.none =>
+       match getClass? m ci with
+       | Option.none => .dangling
+       | some c =>
+         if c.methods.toList.contains attr then
+           .instMethod (c.name ++ "." ++ attr)
+         else .attrMissing)
+  | some (.dict _ _) =>
+    if attr == "get" then .dictGet
+    else .refuse s!"method call '.{attr}' on a dict is outside the tier (dict '.get' only; docs/memory-model.md)"
+  | some (.list _) =>
+    if attr == "append" then .listAppend
+    else if attr == "pop" then .listPop
+    else .refuse s!"method call '.{attr}' on a list is outside the tier (list '.append'/'.pop' only; docs/memory-model.md)"
+  | Option.none => .dangling
 
 /-! ## Module-level constants (globals, G1 — world-init since H1-proper)
 
@@ -1395,6 +1627,7 @@ mutual
     | .assign tgts v _ =>
       (match tgts.toList with
        | [.subscript ..] => false       -- MUTATES (`d[k] = v`)
+       | [.attribute ..] => false       -- MUTATES (H3 `self.x = v`)
        | _ => true) && v.heapFree
     | .augAssign _ _ v _ => v.heapFree
     | .whileLoop t body orelse _ =>
@@ -1425,10 +1658,13 @@ def funsHeapFree : List FunctionDefn → Bool
   | f :: fs => f.heapFree && funsHeapFree fs
 
 /-- Module-level heap freedom: every function body (nested calls then stay
-inside the fragment). Top-level statements are NOT constrained — they run
-only at module init, before any public run begins. -/
+inside the fragment) AND no classes (H3: instantiation ALLOCATES and
+syntax cannot tell a class call from a function call, so any class evicts
+the whole module from the fragment — conservative, sound; class-using
+modules live on `CallsIn`). Top-level statements are NOT constrained —
+they run only at module init, before any public run begins. -/
 def Module.heapFree (m : Module) : Bool :=
-  funsHeapFree m.functions.toList
+  funsHeapFree m.functions.toList && m.classes.toList.isEmpty
 
 /-- A member of a heap-free function list is heap-free. -/
 theorem funsHeapFree_mem {fs : List FunctionDefn} (hm : funsHeapFree fs = true)
@@ -1452,7 +1688,58 @@ theorem findFunction_heapFree {m : Module} {fname : String} {f : FunctionDefn}
     have h1 : f ∈ m.functions.reverse := Array.mem_of_find?_eq_some hf
     rw [Array.mem_reverse] at h1
     exact Array.mem_def.mp h1
-  exact funsHeapFree_mem hm hmem
+  have hm1 : funsHeapFree m.functions.toList = true :=
+    (Bool.and_eq_true .. ▸ hm : _ ∧ _).1
+  exact funsHeapFree_mem hm1 hmem
+
+/-- A heap-free module has no classes at all (`Module.heapFree`'s second
+conjunct), so class-name resolution always misses — what keeps `worldInv`'s
+instantiation and method-dispatch branches vacuous. -/
+theorem findClass_heapFree {m : Module} (hm : m.heapFree = true)
+    (cname : String) : findClass m cname = Option.none := by
+  have h2 : m.classes.toList.isEmpty = true :=
+    (Bool.and_eq_true .. ▸ hm : _ ∧ _).2
+  unfold findClass
+  rw [List.isEmpty_iff.mp h2]
+  rfl
+
+/-- A heap-free module resolves no `ClassId` either (see
+`findClass_heapFree`). -/
+theorem getClass?_heapFree {m : Module} (hm : m.heapFree = true)
+    (i : ClassId) : getClass? m i = Option.none := by
+  have h2 : m.classes.toList.isEmpty = true :=
+    (Bool.and_eq_true .. ▸ hm : _ ∧ _).2
+  unfold getClass?
+  rw [List.isEmpty_iff.mp h2]
+  cases i <;> rfl
+
+/-- In a heap-free module, `.get`-attribute call dispatch never reaches a
+class method or a mutating list arm: the plan is `dictGet` (a heap READ)
+or a decided refusal — `worldInv`'s attribute-call case forks on this.
+(`attr = "get"` is what the heap-free fragment pins; the two list arms
+die on the literal comparisons, the instance method arm on `getClass?`.) -/
+theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
+    (h : Heap) (a : Addr) :
+    attrCallPlan m h a "get" = .dictGet ∨
+    attrCallPlan m h a "get" = .instAttrValue ∨
+    attrCallPlan m h a "get" = .dangling ∨
+    (∃ msg, attrCallPlan m h a "get" = .refuse msg) := by
+  unfold attrCallPlan
+  cases Heap.get? h a with
+  | none => right; right; left; rfl
+  | some o =>
+    cases o with
+    | dict es ver =>
+      rw [if_pos (by decide : ((("get" : String) == "get") = true))]
+      left; rfl
+    | list xs =>
+      rw [if_neg (by decide : ¬ ((("get" : String) == "append") = true)),
+          if_neg (by decide : ¬ ((("get" : String) == "pop") = true))]
+      right; right; right; exact ⟨_, rfl⟩
+    | «instance» ci attrs =>
+      cases hv : Env.lookup attrs.toList "get" with
+      | some v => simp [hv]
+      | none => simp [hv, getClass?_heapFree hm ci]
 
 /-! ## The interpreter (mutual block, normative signatures)
 
@@ -1498,6 +1785,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         | Option.none =>
           if (findFunction m id).isSome then
             .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
+          else if (findClass m id).isSome then
+            .unsupported s!"referencing class '{id}' as a value is outside the H3 tier (classes are called, not passed)"
           else if isBuiltinName id then
             .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
           else if (moduleGlobals m).2 then
@@ -1550,102 +1839,103 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
             | Option.none =>
             if (findFunction m fname).isSome then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              -- The frozen recursion point: the callee shares this frame's
-              -- world; the caller's locals ride around the call.
-              Run.withLocals st.locals (callIn m fuel st.world fname vs.toArray)
-            else if fname == "len" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [v] => Run.liftRes st (lenValH st.world.heap v)
-              | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
-            else if fname == "sorted" then
-              -- After `findFunction`, so a module-level `def sorted` shadows
-              -- the builtin, exactly as CPython's module globals do. H2:
-              -- `sorted` of a heap list ALLOCATES its fresh result
-              -- (`sortedValH`); value arguments stay on the pure path.
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [v] =>
-                Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
-                match hr with
-                | (h', r) => .ok { st with world := { st.world with heap := h' } } r
-              | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
-            else if fname == "max" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              Run.liftRes st (extremumValH st.world.heap true vs)
-            else if fname == "min" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              Run.liftRes st (extremumValH st.world.heap false vs)
-            else if fname == "abs" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [v] => Run.liftRes st (absVal v)
-              | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
-            else if fname == "int" then
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [] => .ok st (.int 0)
-              | [v] => Run.liftRes st (intCastVal v)
-              | _ => .unsupported "int() with a base argument is outside the v0 tier"
-            else if fname == "print" then
-              -- the effect must thread World.stdout through this block;
-              -- until then a wrong NameError would be silently unfaithful
-              .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
-            else if (moduleGlobals m).2 then
-              .exn st (.nameError fname)
+              if (findClass m fname).isSome then
+                -- `def X` and `class X` in one module: the functions/classes
+                -- split loses source order, so last-binding-wins is
+                -- undecidable here — loud, never a guess.
+                .unsupported s!"name '{fname}' is bound by both 'def' and 'class' at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
+              else
+                evalExprs m fuel st args.toList ⤳ fun st vs =>
+                -- The frozen recursion point: the callee shares this frame's
+                -- world; the caller's locals ride around the call.
+                Run.withLocals st.locals (callIn m fuel st.world fname vs.toArray)
             else
-              .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
+              match findClass m fname with
+              | some (ci, c) =>
+                -- INSTANTIATION (H3): allocate the instance in the shared
+                -- world, then run `__init__` (if any) through `callIn` with
+                -- `self` as the first argument — methods are functions.
+                if !c.ok then
+                  .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
+                else if hasExtraDunder c then
+                  .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
+                else
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  let a := st.world.heap.size
+                  let st' := { st with world :=
+                    { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+                  if (findFunction m (fname ++ ".__init__")).isSome then
+                    Run.withLocals st'.locals
+                      (callIn m fuel st'.world (fname ++ ".__init__")
+                        ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
+                    match r with
+                    | .none => .ok st'' (.ref a)
+                    | r =>
+                      -- CPython checks __init__'s result: non-None raises
+                      .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
+                  else
+                    match vs with
+                    | [] => .ok st' (.ref a)
+                    | _ => .exn st (.typeError s!"{fname}() takes no arguments")
+              | Option.none =>
+                if fname == "len" then
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  match vs with
+                  | [v] => Run.liftRes st (lenValH st.world.heap v)
+                  | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
+                else if fname == "sorted" then
+                  -- After `findFunction`, so a module-level `def sorted` shadows
+                  -- the builtin, exactly as CPython's module globals do. H2:
+                  -- `sorted` of a heap list ALLOCATES its fresh result
+                  -- (`sortedValH`); value arguments stay on the pure path.
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  match vs with
+                  | [v] =>
+                    Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
+                    match hr with
+                    | (h', r) => .ok { st with world := { st.world with heap := h' } } r
+                  | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
+                else if fname == "max" then
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  Run.liftRes st (extremumValH st.world.heap true vs)
+                else if fname == "min" then
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  Run.liftRes st (extremumValH st.world.heap false vs)
+                else if fname == "abs" then
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  match vs with
+                  | [v] => Run.liftRes st (absVal v)
+                  | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
+                else if fname == "int" then
+                  evalExprs m fuel st args.toList ⤳ fun st vs =>
+                  match vs with
+                  | [] => .ok st (.int 0)
+                  | [v] => Run.liftRes st (intCastVal v)
+                  | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                else if fname == "print" then
+                  -- the effect must thread World.stdout through this block;
+                  -- until then a wrong NameError would be silently unfaithful
+                  .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
+                else if (moduleGlobals m).2 then
+                  .exn st (.nameError fname)
+                else
+                  .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
         | .attribute recv attr _ =>
-          -- Method calls (tier: dict `.get`, H2 list `.append`/`.pop`).
-          -- CPython order: receiver (and its attribute lookup) BEFORE the
-          -- arguments; the arguments evaluate before the method decides.
-          if attr == "get" then
-            evalExpr m fuel st recv ⤳ fun st r =>
-            match r with
-            | .ref a =>
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
-              | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
-              | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
-            | r =>
-              .unsupported s!"method call '.get' on '{r.typeName}' is outside the H1 tier (dict receivers only, docs/memory-model.md)"
-          else if attr == "append" then
-            evalExpr m fuel st recv ⤳ fun st r =>
-            match r with
-            | .ref a =>
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [v] =>
-                Run.liftRes st (heapAppend st.world.heap a v) ⤳ fun st h' =>
-                .ok { st with world := { st.world with heap := h' } } .none
-              | vs => .exn st (.typeError s!"append() takes exactly one argument ({vs.length} given)")
-            | r =>
-              .unsupported s!"method call '.append' on '{r.typeName}' is outside the H2 tier (heap-list receivers only, docs/memory-model.md)"
-          else if attr == "pop" then
-            evalExpr m fuel st recv ⤳ fun st r =>
-            match r with
-            | .ref a =>
-              evalExprs m fuel st args.toList ⤳ fun st vs =>
-              match vs with
-              | [] =>
-                Run.liftRes st (heapPop st.world.heap a Option.none) ⤳ fun st hr =>
-                match hr with
-                | (h', v) => .ok { st with world := { st.world with heap := h' } } v
-              | [i] =>
-                (match asInt i with
-                 | some n =>
-                   Run.liftRes st (heapPop st.world.heap a (some n)) ⤳ fun st hr =>
-                   match hr with
-                   | (h', v) => .ok { st with world := { st.world with heap := h' } } v
-                 | Option.none =>
-                   .exn st (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer"))
-              | vs => .exn st (.typeError s!"pop expected at most 1 argument, got {vs.length}")
-            | r =>
-              .unsupported s!"method call '.pop' on '{r.typeName}' is outside the H2 tier (heap-list receivers only, docs/memory-model.md)"
-          else
-            .unsupported s!"method '.{attr}()' is outside the tier (dict '.get', list '.append'/'.pop'; docs/memory-model.md)"
+          -- Method calls (dict `.get`, H2 list `.append`/`.pop`, H3
+          -- instance methods). CPython order: the receiver (and its
+          -- attribute lookup) evaluates BEFORE the arguments — so the
+          -- dispatch is by RECEIVER first, attribute second: an instance
+          -- resolves `.get`/`.append`/… through its CLASS (user methods),
+          -- never through the builtin method tier. A missing instance
+          -- attribute raises `AttributeError` before any argument runs.
+          -- Dispatch is `execAttrCall` over the PURE `attrCallPlan`
+          -- (its own mutual function: the meta-theorems fork on the
+          -- plan's free scrutinee — see its docstring).
+          evalExpr m fuel st recv ⤳ fun st r =>
+          match r with
+          | .ref a => execAttrCall m fuel st a attr args.toList
+          | r =>
+            .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
     | .list elts _ =>
         -- H2: a list display ALLOCATES (`BUILD_LIST`) — the fresh address
@@ -1672,8 +1962,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         .ok { st with world :=
                 { st.world with heap := st.world.heap.push (.dict entries.toArray 0) } }
           (.ref st.world.heap.size)
-    | .attribute .. =>
-      .unsupported "attribute access as a value is outside the H1 tier (only 'd.get(…)' method calls; heap layer H1/H3, docs/memory-model.md)"
+    | .attribute recv attr _ =>
+      -- Attribute READ (H3): an instance resolves `attr` in its attribute
+      -- table (`self.tp_score` — a heap read, world-preserving); a missing
+      -- attribute that names a CLASS METHOD would be a bound-method value
+      -- (loud — methods are called, not passed); otherwise the faithful
+      -- `AttributeError` (no `__getattr__` can exist — the dunder guard).
+      -- Dispatch is `attrReadResult` over the PURE `attrReadPlan`
+      -- (meta-theorem discipline).
+      evalExpr m fuel st recv ⤳ fun st r =>
+      match r with
+      | .ref a => attrReadResult m st a attr
+      | r =>
+        .unsupported s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/
@@ -1706,6 +2007,61 @@ def evalDictItems (m : Module) (fuel : Nat) (st : FrameState)
         evalDictItems m fuel st ks vs ⤳ fun st rest =>
         .ok st ((kv, vv) :: rest)
     | _, _ => .unsupported "Dict with mismatched keys/values"
+
+/-- Attribute-CALL dispatch on a heap receiver (H3) — a separate mutual
+function so that `fuelMono`/`worldInv` fork on `attrCallPlan`'s FREE
+scrutinee instead of a match nested under the receiver binder. The plan
+is decided BEFORE argument evaluation (CPython: receiver and attribute
+lookup precede the arguments — a missing attribute raises
+`AttributeError` before any argument runs); an instance method runs
+through `callIn` with `self` bound as the first argument. -/
+def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
+    (attr : String) (args : List Expr) : Run FrameState RVal :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match attrCallPlan m st.world.heap a attr with
+    | .instMethod qname =>
+      -- the method IS a function (flattened under the qualified name):
+      -- `self` is the first argument and the call threads the shared
+      -- world through the frozen recursion point, exactly like any call
+      evalExprs m fuel st args ⤳ fun st vs =>
+      Run.withLocals st.locals
+        (callIn m fuel st.world qname ((RVal.ref a :: vs).toArray))
+    | .instAttrValue =>
+      .unsupported s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
+    | .attrMissing => .exn st .attributeError
+    | .dictGet =>
+      evalExprs m fuel st args ⤳ fun st vs =>
+      match vs with
+      | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
+      | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
+      | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+    | .listAppend =>
+      evalExprs m fuel st args ⤳ fun st vs =>
+      match vs with
+      | [v] =>
+        Run.liftRes st (heapAppend st.world.heap a v) ⤳ fun st h' =>
+        .ok { st with world := { st.world with heap := h' } } .none
+      | vs => .exn st (.typeError s!"append() takes exactly one argument ({vs.length} given)")
+    | .listPop =>
+      evalExprs m fuel st args ⤳ fun st vs =>
+      match vs with
+      | [] =>
+        Run.liftRes st (heapPop st.world.heap a Option.none) ⤳ fun st hr =>
+        match hr with
+        | (h', v) => .ok { st with world := { st.world with heap := h' } } v
+      | [i] =>
+        (match asInt i with
+         | some n =>
+           Run.liftRes st (heapPop st.world.heap a (some n)) ⤳ fun st hr =>
+           match hr with
+           | (h', v) => .ok { st with world := { st.world with heap := h' } } v
+         | Option.none =>
+           .exn st (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer"))
+      | vs => .exn st (.typeError s!"pop expected at most 1 argument, got {vs.length}")
+    | .refuse msg => .unsupported msg
+    | .dangling => .unsupported danglingMsg
 
 /-- `and`/`or` chain: short-circuits and returns the deciding *operand value*
 (not a bool): `0 or "x"` is `"x"`; the last operand is returned as-is. -/
@@ -1772,6 +2128,19 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
           | .listV _ =>
             .unsupported "subscript assignment to a list ('xs[i] = v' mutates in place, visible through aliases) is outside the v0 tier (lists move to the heap at H2)"
           | c => .exn st (.typeError s!"'{c.typeName}' object does not support item assignment")
+      | [.attribute recvE attr _] =>
+          -- Attribute STORE (H3: mutable self — `self.x = v`, aliasing-
+          -- visible). CPython order: the RHS first, then the target
+          -- primary, then the store. A non-instance target is the faithful
+          -- `AttributeError` (builtins take no new attributes; scalars
+          -- likewise — no `__setattr__` can interfere, the dunder guard).
+          evalExpr m fuel st value ⤳ fun st v =>
+          evalExpr m fuel st recvE ⤳ fun st r =>
+          match r with
+          | .ref a =>
+            Run.liftRes st (heapAttrStore st.world.heap a attr v) ⤳ fun st h' =>
+            .ok { st with world := { st.world with heap := h' } } .next
+          | _ => .exn st .attributeError
       | [t] =>
           -- CPython order: the value is evaluated before the store. H2:
           -- `assignToH` — unpacking from a heap list reads the heap.
@@ -1897,6 +2266,9 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
       else .ok st .next
     | some (.dict _ _) =>
         .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+    | some (.instance _ _) =>
+        -- H3: no `__iter__`/`__getitem__` can exist (dunder guard)
+        .exn st (.typeError "'object' object is not iterable")
     | Option.none => .unsupported danglingMsg
 
 /-- `while test: body else: orelse`. `break` exits the loop skipping `orelse`;

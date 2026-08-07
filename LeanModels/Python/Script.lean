@@ -164,8 +164,10 @@ builtins. Overapproximates reads — refusing more is sound. -/
 def funcGlobalReads (m : Module) (f : FunctionDefn) : List String :=
   let locals := f.params.toList.map Param.arg ++ Stmt.assignedNamesList f.body.toList
   let fnames := m.functions.toList.map FunctionDefn.name
+  let cnames := m.classes.toList.map ClassDefn.name
   (Stmt.allNamesList f.body.toList).filter fun n =>
-    !locals.contains n && !fnames.contains n && !isBuiltinName n
+    !locals.contains n && !fnames.contains n && !cnames.contains n
+      && !isBuiltinName n
 
 /-- All module-scope names any function reads. -/
 def moduleGlobalReads (m : Module) : List String :=
@@ -191,10 +193,16 @@ def liveSuffix : List Stmt → List Stmt
   | [] => []
   | s :: rest => if g1Shape s then liveSuffix rest else s :: rest
 
-/-- Every function definition precedes every live-suffix statement. -/
+/-- Every function AND class definition precedes every live-suffix
+statement (a live statement could otherwise call/instantiate it before
+CPython would have bound it). Flattened method spans sit inside their
+class span, so the function half already covers them — the class check
+adds the `class` line itself. -/
 def defsBeforeLive (m : Module) (suffix : List Stmt) : Bool :=
-  m.functions.toList.all fun f =>
-    suffix.all fun s => f.span.endLineno < (stmtSpan s).lineno
+  (m.functions.toList.all fun f =>
+    suffix.all fun s => f.span.endLineno < (stmtSpan s).lineno)
+  && (m.classes.toList.all fun c =>
+    suffix.all fun s => c.span.endLineno < (stmtSpan s).lineno)
 where
   /-- The span of a statement (every constructor carries one last). -/
   stmtSpan : Stmt → Span

@@ -139,12 +139,40 @@ structure FunctionDefn where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt` has none (nested arrays).
 
-/-- A Python module: `def`s split out into `functions` (in source order);
-all other top-level statements recorded in `topLevel` (in source order),
-which v0 `callFunction` ignores (no globals / module init effects). -/
+/-- A module-level class definition (schema `ClassDef`, H3). The class's
+METHOD BODIES are not stored here: ingestion FLATTENS them into
+`Module.functions` under qualified names `"<class>.<method>"` (a Python
+identifier can never contain `.`, so qualified names collide with nothing
+and plain-name resolution never sees them) — method calls then reuse
+`callIn`/`CallsIn` verbatim, with `self` as an ordinary first argument.
+`methods` records the plain method names (dispatch/guard checks);
+`ok = false` iff the class uses features outside the tier (bases —
+inheritance is loudly unsupported — keywords/metaclass, decorators,
+class-level statements other than defs/docstrings/`pass`): the class is
+still REPRESENTED, but instantiating it refuses loudly.
+
+Class identity (docs/memory-model.md H3): a `ClassId` is the INDEX into
+`Module.classes`, never the name. With duplicate class names the LAST
+definition wins everywhere consistently: instantiation resolves the name
+to the last index (`findClassIdx`, findRev), and the flattened qualified
+method names also resolve last-wins (`findFunction`, findRev) — an
+instance of an earlier same-named class is unconstructible. -/
+structure ClassDefn where
+  name : String
+  ok : Bool
+  methods : Array String
+  span : Span
+deriving Repr, Inhabited, BEq, DecidableEq
+
+/-- A Python module: `def`s split out into `functions` (in source order,
+including class methods flattened under `"<class>.<method>"` qualified
+names — see `ClassDefn`); `class`es split into `classes` (in source
+order); all other top-level statements recorded in `topLevel` (in source
+order). -/
 structure Module where
   functions : Array FunctionDefn
   topLevel : Array Stmt
+  classes : Array ClassDefn := #[]
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt`/`FunctionDefn` have none (nested arrays).
 
@@ -164,10 +192,12 @@ deriving Repr, Inhabited, BEq
 
 /-- Python runtime errors representable in the tier. Canonical harness names:
 `TypeError`, `NameError`, `ZeroDivisionError`, `IndexError`, `ValueError`,
-and — since H1-proper (the dict tier) — `KeyError` (missing dict key),
-`RuntimeError` (dict changed size during iteration), and `RecursionError`
-(cyclic dict comparison). The harness compares exception *class names*
-only, so message-free constructors (`keyError` like `indexError`) carry no
+since H1-proper (the dict tier) `KeyError` (missing dict key),
+`RuntimeError` (dict changed size during iteration), `RecursionError`
+(cyclic dict comparison), and since H3 (classes) `AttributeError` (missing
+instance attribute; attribute access on builtins outside their method
+tier). The harness compares exception *class names* only, so message-free
+constructors (`keyError`/`attributeError` like `indexError`) carry no
 payload. -/
 inductive PyErr where
   | typeError (msg : String)
@@ -178,6 +208,7 @@ inductive PyErr where
   | keyError
   | runtimeError (msg : String)
   | recursionError
+  | attributeError
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/

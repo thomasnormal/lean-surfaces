@@ -41,14 +41,26 @@ inductive RVal where
   | ref   (a : Addr)
 deriving Repr, Inhabited, BEq
 
+/-- A class identity (docs/memory-model.md H3): the INDEX into
+`Module.classes` — a unique id, never the class name (with duplicate
+names the last definition wins consistently; see `ClassDefn`). -/
+abbrev ClassId := Nat
+
 /-- Heap objects — identity-bearing, mutated in place. `shapeVersion`
 increments on key insertion/deletion (not value update): the live-iterator
 invalidation counter. Lists (H2) need no version: list iteration is an
 index cursor against the LIVE object (CPython `listiterator`), so there is
-no invalidation to count. -/
+no invalidation to count. Instances (H3) carry their `ClassId` and their
+attribute table (`__dict__` insertion order preserved, like dict entries);
+mutable self IS this object — `self.x = v` updates `attrs` in place.
+Instances exist only for DEFAULT-PROTOCOL classes (no bases, no dunder
+methods beyond `__init__` — instantiation guards this loudly), so default
+object semantics (identity `==`, truthy, unhashability-free attr access)
+are faithful wherever an instance can appear. -/
 inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
   | list (xs : Array RVal)
+  | instance (cls : ClassId) (attrs : Array (String × RVal))
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
@@ -132,6 +144,7 @@ def Obj.WF (h : Heap) : Obj → Prop
   | .dict es _ => RVal.WFList h (es.toList.map Prod.fst)
       ∧ RVal.WFList h (es.toList.map Prod.snd)
   | .list xs => RVal.WFList h xs.toList
+  | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
 
 /-- Every stored object is WF w.r.t. the heap itself. -/
 def Heap.WF (h : Heap) : Prop :=
@@ -694,6 +707,8 @@ mutual
                 return .list vs.toArray
             | some (.dict _ _) =>
                 .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
+            | some (.instance _ _) =>
+                .unsupported "returning a class instance through the call boundary is outside the tier (no instance observation form in `Val`; docs/memory-model.md H3)"
             | Option.none => .unsupported
                 "internal: dangling heap address (heap well-formedness violation — report this)"
 
@@ -870,6 +885,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             rw [hget] at hc
             cases o with
             | dict es ver => simp at hc
+            | «instance» cls attrs => simp at hc
             | list xs =>
               cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
               | ok vs => simp [hl] at hc
@@ -1004,6 +1020,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             rw [hget] at hc
             cases o with
             | dict es ver => cases hc
+            | «instance» cls attrs => cases hc
             | list xs =>
               -- freezes to a `.list` snapshot — excluded by `hlf`
               simp only [Res.bind_eq_ok, Res.pure_eq] at hc

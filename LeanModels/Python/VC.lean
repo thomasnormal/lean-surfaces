@@ -514,7 +514,7 @@ private abbrev vcS2 : Stmt :=
 private abbrev vcS3 : Stmt :=
   .ret (some (.binOp (.name "x" vcSp) .mult (.name "y" vcSp) vcSp)) vcSp
 
-#guard execStmts ⟨#[], #[]⟩ 32 ⟨vcW, []⟩ [vcS1, vcS2, vcS3]
+#guard execStmts ⟨#[], #[], #[]⟩ 32 ⟨vcW, []⟩ [vcS1, vcS2, vcS3]
   == .ok ⟨vcW, [("x", .int 3), ("y", .int 7)]⟩ (.ret (.int 21))
 
 /-- `x = 3; y = x + 4; return x * y` returns 21 — rules only, any module. -/

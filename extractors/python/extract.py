@@ -345,6 +345,36 @@ def convert_stmt(node):
             "body": [convert_stmt(s) for s in node.body],
         }
 
+    if isinstance(node, ast.ClassDef):
+        # Structured (H3, docs/memory-model.md). The interpreter owns the
+        # tier boundary, but features that change what a DEFINITION means
+        # (bases/metaclass/decorators, class-level statements binding class
+        # attributes) are flagged here, like args_unsupported: the class is
+        # represented, instantiation refuses loudly.
+        reasons = []
+        if node.bases:
+            reasons.append("bases (inheritance)")
+        if node.keywords:
+            reasons.append("class keywords (metaclass)")
+        if node.decorator_list:
+            reasons.append("decorators")
+        for s in node.body:
+            if isinstance(s, ast.FunctionDef):
+                continue
+            if isinstance(s, ast.Pass):
+                continue
+            if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
+                continue  # docstring / stray constant
+            reasons.append("class-level statements (class attributes)")
+            break
+        return {
+            "kind": "ClassDef",
+            "span": span(node),
+            "name": node.name,
+            "class_unsupported": ", ".join(reasons) if reasons else None,
+            "body": [convert_stmt(s) for s in node.body],
+        }
+
     if isinstance(node, ast.Return):
         return {
             "kind": "Return",

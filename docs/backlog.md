@@ -182,14 +182,18 @@ decision:
    with mutable self, faithful `AttributeError`, the dunder guard making
    default-object semantics sound, `Searcher`'s tables proved
    (`Examples/python/sf_searcher`: the cross-call write/read pair).
-   REMAINING from this step — **namedtuple, DECIDED value-like**
-   (immutable = immediate; field access desugars to tuple indexing —
-   which keeps sunfish's `tp_score` keys in the pure `keyEq` tier;
-   recorded in memory-model §class semantics): a value-record tier for
-   `Position`/`Entry`/`Move` — recognize `X = namedtuple(…)` at G1,
-   constructor calls, field reads, methods on an immutable self
-   (`class Position(namedtuple(…))` carries methods; its base today
-   keeps it loudly uninstantiable). Would unlock `Position.value()`
+   **namedtuple — BUILT (2026-08-08),** per the recorded VALUE-like
+   decision (memory-model §class semantics): `RVal.ntuple` immediate
+   values, ingestion-time recognition of `X = namedtuple(…)` under the
+   benign import (all-or-nothing binding census; the extractor-recorded
+   `has_global` makes the `global`-leak check exact), constructor calls,
+   field reads as tuple indexing, tuple-erased equality/hashing — the
+   `tp_score` key pattern proved symbolically
+   (`Examples/python/sf_position`; the real sunfish.py's `Move`/`Entry`
+   recognize as-is), loud boundary for namedtuple results.
+   REMAINING from this step — methods on an immutable self:
+   `class Position(namedtuple(…))` carries methods; its base today
+   keeps it loudly uninstantiable. Would unlock `Position.value()`
    (with step 5) and `bound()` over real positions.
 5. **String methods + slicing.** `board[:i] + p + board[i+1:]` (move
    application), `.isupper()`, `.swapcase()`, `.index()`. Value

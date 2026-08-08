@@ -269,6 +269,21 @@ def _walk_scope(fn):
         stack.extend(ast.iter_child_nodes(node))
 
 
+def _target_bound_names(t):
+    """Names an assignment TARGET binds, per CPython's scoping rules: bare
+    names bind; tuple/list/starred targets recurse; subscript/attribute
+    targets bind NOTHING (``tp[k(x)] = v`` makes neither ``tp`` nor ``k``
+    local — walking the whole target tree used to overapproximate here and
+    falsely shadowed callees appearing inside subscript keys)."""
+    if isinstance(t, ast.Name):
+        return [t.id]
+    if isinstance(t, (ast.Tuple, ast.List)):
+        return [n for e in t.elts for n in _target_bound_names(e)]
+    if isinstance(t, ast.Starred):
+        return _target_bound_names(t.value)
+    return []  # Subscript / Attribute: no binding
+
+
 def _assigned_names(fn):
     """Names the function body assigns (CPython's static-locals rule makes
     these local THROUGHOUT the body). Params excluded."""
@@ -281,9 +296,7 @@ def _assigned_names(fn):
         else:
             continue
         for t in targets:
-            for n in ast.walk(t):
-                if isinstance(n, ast.Name):
-                    names.add(n.id)
+            names.update(_target_bound_names(t))
     return names
 
 
@@ -298,6 +311,17 @@ def _shadowed_calls(fn):
             if node.func.id in assigned:
                 hits.add(node.func.id)
     return sorted(hits)
+
+
+def _has_global(node):
+    """Does the whole subtree (nested scopes INCLUDED — a nested def's
+    ``global`` also rebinds module names when called) contain a ``global``
+    statement? Emitted on FunctionDef/ClassDef as ``"has_global": true``
+    (key absent when false, keeping global-free envelopes byte-identical).
+    Consumed by ingestion's namedtuple binding census: with this exact
+    fact, opaque function-body statements (``try``/``with``/…) need no
+    conservative refusal."""
+    return any(isinstance(n, ast.Global) for n in ast.walk(node))
 
 
 def convert_stmt(node):
@@ -330,7 +354,7 @@ def convert_stmt(node):
             reasons.append("**kwargs")
         if node.decorator_list:
             reasons.append("decorators")
-        return {
+        out = {
             "kind": "FunctionDef",
             "span": span(node),
             "name": node.name,
@@ -344,6 +368,9 @@ def convert_stmt(node):
             ),
             "body": [convert_stmt(s) for s in node.body],
         }
+        if _has_global(node):
+            out["has_global"] = True
+        return out
 
     if isinstance(node, ast.ClassDef):
         # Structured (H3, docs/memory-model.md). The interpreter owns the
@@ -367,13 +394,16 @@ def convert_stmt(node):
                 continue  # docstring / stray constant
             reasons.append("class-level statements (class attributes)")
             break
-        return {
+        out = {
             "kind": "ClassDef",
             "span": span(node),
             "name": node.name,
             "class_unsupported": ", ".join(reasons) if reasons else None,
             "body": [convert_stmt(s) for s in node.body],
         }
+        if _has_global(node):
+            out["has_global"] = True
+        return out
 
     if isinstance(node, ast.Return):
         return {

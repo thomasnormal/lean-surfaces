@@ -2127,7 +2127,9 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
           closeRfl gg
       let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
       let fLit' ← whnfR fLit
-      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 4))
+      -- `FunctionDefn.mk` positional field 5 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal — keep in sync with Ast.lean)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 5))
       let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
       walk ctx topTags hGoal
     else if tgt.isAppOfArity ``PyTriple 4 then
@@ -2197,7 +2199,9 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
           closeRfl gg
       let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
       let fLit' ← whnfR fLit
-      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 4))
+      -- `FunctionDefn.mk` positional field 5 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal — keep in sync with Ast.lean)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 5))
       let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
       walk ctx topTags hGoal
     else

@@ -134,6 +134,12 @@ structure FunctionDefn where
   `unsupported` (loud) rather than silently resolving to the module table.
   Mirrors `argsOk`; set from the envelope's `locals_unsupported`. -/
   localsOk : Bool := true
+  /-- Does the function's subtree (nested scopes included) contain a
+  `global` statement? Set from the envelope's `has_global` (absent =
+  `false`). Consumed by the ingestion namedtuple census: a `global` can
+  rebind a module name when the function is called, which would make the
+  recognized table silently stale — the census refuses such modules. -/
+  hasGlobal : Bool := false
   body : Array Stmt
   span : Span
 deriving Repr, Inhabited, BEq
@@ -161,6 +167,10 @@ structure ClassDefn where
   name : String
   ok : Bool
   methods : Array String
+  /-- `has_global` of the whole class subtree (class-level statements
+  included — `class C: global x; x = 1` rebinds a module name at import
+  time). See `FunctionDefn.hasGlobal`. -/
+  hasGlobal : Bool := false
   span : Span
 deriving Repr, Inhabited, BEq, DecidableEq
 

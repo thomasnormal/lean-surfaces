@@ -4,10 +4,12 @@ Status: NORMATIVE; the H1 core (threading, 2026-08-06), the H1-proper
 dict tier (2026-08-07), the H2 list tier's IN-WORLD half (2026-08-07:
 heap `Obj.list` everywhere the interpreter builds a list — literals, G1
 module tables, `sorted` results — with the §list-semantics inventory
-below), and the H3 CLASS tier (2026-08-08: `Obj.instance`, ClassDef
+below), the H3 CLASS tier (2026-08-08: `Obj.instance`, ClassDef
 representation end to end, methods as flattened functions through
-`callIn`, mutable self — §class semantics below; namedtuple DECISION
-recorded there, implementation pending) are BUILT to this document.
+`callIn`, mutable self — §class semantics below), and the NAMEDTUPLE
+value tier (2026-08-08: `RVal.ntuple` immediate values, ingestion-time
+recognition, loud boundary — §class semantics, the recorded VALUE-like
+decision implemented) are BUILT to this document.
 Still pending from it: the H2
 **boundary flip** — `callFunction` still thaws `Val.list` ARGUMENTS to
 the transitional value form (`RVal.listV`, reads in tier, mutation
@@ -293,18 +295,42 @@ cycle DETECTION, never by running out of fuel).
   invisible to `cases`/`rw` in the meta proofs. `Module.heapFree` now
   also requires `classes = #[]`: instantiation allocates, and syntax
   cannot tell a class call from a function call.
-* **namedtuple (DECISION, recorded loudly)**: namedtuple instances are
-  **VALUE-like** — immutable record types are immediate values, per this
-  document's hybrid principle (immutable = immediate), NOT heap
-  objects: field access desugars to tuple indexing, equality/hashing
-  are the existing value-tuple semantics (which is exactly why
-  sunfish's `tp_score` keys containing `Position` stay in the pure
-  `keyEq` tier). Implementation is PENDING: today `X = namedtuple(…)`
-  is an out-of-G1-tier RHS (poisoned binding, loud) and
-  `class Position(namedtuple(…))` has a base (uninstantiable, loud) —
-  never wrong. The value-like tier (constructor calls, field reads,
-  methods on an immutable self) is the recorded next step of the
-  sunfish ladder (docs/backlog.md step 4).
+* **namedtuple (the VALUE-like decision — BUILT, 2026-08-08)**:
+  namedtuple instances are **VALUE-like** — immutable record types are
+  immediate values, per this document's hybrid principle (immutable =
+  immediate), NOT heap objects: `RVal.ntuple tname fields xs` carries
+  its own class and field names, so no module table is consulted at
+  access time. Field access desugars to tuple indexing (declaration
+  position); equality/hashing/`len`/subscript/iteration/unpacking/
+  `max`/`min`/`+`-concatenation (a PLAIN tuple results, as in CPython)
+  are the value-tuple semantics with the class ERASED — `Move(1,2,"")
+  == (1,2,"")`, and both address ONE dict slot, which is exactly why
+  sunfish's `tp_score` keys containing a `Position` stay in the pure
+  `keyEq` tier. **Recognition is at INGESTION** (all-or-nothing per
+  module, Json.lean): `X = namedtuple("T", <fields>)` under the exact
+  benign import `from collections import namedtuple`, CPython-validated
+  field specs, and a conservative binding census (every top-level
+  statement analyzable; `X` bound exactly once; `namedtuple` bound and
+  referenced nowhere else; no def/class subtree contains `global` — the
+  extractor-recorded `has_global`, exact even under opaque
+  `try`/`with`); the recognized statements become `pass` and the table
+  fills `Module.namedtuples` — anything else leaves the module
+  unchanged (poisoned binding, loud). Construction is exact-arity (the
+  faithful `TypeError` otherwise) and allocates NOTHING — heap-free
+  modules keep namedtuples. **The boundary refuses namedtuple results
+  LOUDLY** (recorded decision): no `Val` observation form exists, and a
+  `Val.tuple` snapshot would silently forget the class AND falsify
+  freeze inversion (`eq_thaw_of_freeze*`) — `CallsIn` is the surface
+  that sees the values (`Examples/python/sf_position`). Loud, never a
+  fake `AttributeError`: the CPython protocol names
+  (`_replace`/`_asdict`/`_make`/`_fields`/`count`/`index`), dunders,
+  method calls on a namedtuple receiver, and namedtuple construction at
+  G1 module level (constructor calls are out of the call-free G1 tier).
+  Still pending: methods on an immutable self —
+  `class Position(namedtuple(…))` has a base and stays loudly
+  uninstantiable (the shipped sunfish `Position`; its plain-namedtuple
+  field shape is `sf_position`'s artifact); the real sunfish.py's
+  `Move`/`Entry` recognize as-is.
 
 ## Heap well-formedness (explicit invariant)
 
@@ -402,8 +428,9 @@ two public calls (regression case 15).
   faithful; `Searcher`'s tables and the cross-call-state surface are
   proved (`Examples/python/sf_searcher`: write/read/chained/pinned).
   Class objects with heap identity and mutable class attributes remain
-  future work (class-as-value is loud); `namedtuple` is DECIDED
-  value-like (see §class semantics) and pending implementation.
+  future work (class-as-value is loud); `namedtuple` is BUILT
+  value-like (2026-08-08, see §class semantics — immediate
+  `RVal.ntuple` values, ingestion recognition, loud boundary).
 * **H4: generators.** `Obj.iterator` frames carry a DEFUNCTIONALIZED
   CONTINUATION (expression context, loop/block position, pending
   `try/finally`/`with` state, `send` destination, and status

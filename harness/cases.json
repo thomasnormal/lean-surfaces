@@ -146,5 +146,18 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "bound_twice", "args": [[5, 100], [0, 5], [-2, 1]], "expect": "match"},
   {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "bound_two_positions", "args": [[1, 2, 10], [4, 4, 9]], "expect": "match"},
-  {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "fresh_searchers", "args": [[3, 7], [0, 0]], "expect": "match"}
+  {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "fresh_searchers", "args": [[3, 7], [0, 0]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "move_fields", "args": [[3, 7], [0, -2], [-1, 0]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "move_eq", "args": [[3, 7], [5, 5], [0, 0]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "entry_window", "args": [[-10, 10], [69290, 69290], [3, -3]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "position_fields", "args": [[40, 95], [0, 0], [-69290, 119]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "tp_score_flow", "args": [[40, 2], [0, 0], [-500, 7]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "unpack_move", "args": [[3, 7], [-1, -2]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "iterate_entry", "args": [[3, 7], [-10, 10]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "move_index", "args": [[3, 7], [9, -9]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "bad_arity", "args": [[1], [0]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "missing_field", "args": [[1, 2]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "mk_move", "args": [[1, 2]], "expect": "unsupported"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "asdict_is_loud", "args": [[1, 2]], "expect": "unsupported"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "fields_are_loud", "args": [[1, 2]], "expect": "unsupported"}
 ]

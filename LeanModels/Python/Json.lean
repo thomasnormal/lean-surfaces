@@ -240,9 +240,12 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     let params ← (← (← getField j "args").getArr?).mapM parseParam
     let argsUnsupported ← getOptStrField j "args_unsupported"
     let localsUnsupported ← getOptStrField j "locals_unsupported"
+    let hasGlobal := match j.getObjVal? "has_global" with
+      | .ok (.bool b) => b
+      | _ => false
     let body ← (← (← getField j "body").getArr?).mapM parseStmt
     return { name, params, argsOk := argsUnsupported.isNone,
-             localsOk := localsUnsupported.isNone, body, span }
+             localsOk := localsUnsupported.isNone, hasGlobal, body, span }
 
 /-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
 the method `FunctionDefn`s FLATTENED under qualified names
@@ -256,6 +259,9 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
     let name ← (← getField j "name").getStr?
     let span ← parseSpan (← getField j "span")
     let classUnsupported ← getOptStrField j "class_unsupported"
+    let hasGlobal := match j.getObjVal? "has_global" with
+      | .ok (.bool b) => b
+      | _ => false
     let body ← (← getField j "body").getArr?
     let mut methods : Array String := #[]
     let mut fns : Array FunctionDefn := #[]
@@ -265,12 +271,247 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
         let f ← parseFunctionDefn stmtJson
         methods := methods.push f.name
         fns := fns.push { f with name := name ++ "." ++ f.name }
-    return ({ name, ok := classUnsupported.isNone, methods, span }, fns)
+    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, span }, fns)
+
+/-! ## namedtuple recognition (H3+, docs/memory-model.md §class semantics)
+
+The recorded VALUE-like decision needs `X = namedtuple("T", <fields>)` at
+module level to become a `NamedTupleDefn` — a DESUGARING done here, at
+ingestion, exactly like the ClassDef method flattening above. It fires
+only under conditions that make it provably faithful, ALL-OR-NOTHING per
+module; anything else leaves the module byte-identical (the assign stays
+an ordinary statement → poisoned G1 binding → loud, never wrong):
+
+1. the EXACT benign import `from collections import namedtuple` is
+   present (as the extractor's `Unsupported "ImportFrom"` text);
+2. every candidate `X = namedtuple("T", <fields>)` has a valid typename
+   and validated field names (CPython's identifier/keyword/underscore/
+   duplicate rules — an invalid spec fails the CPython import itself, so
+   refusing recognition keeps the loud path);
+3. a conservative BINDING CENSUS proves `X` is bound exactly once at top
+   level and `namedtuple` is bound only by the benign import: every
+   top-level statement must be census-analyzable (structured binds,
+   simple one-name imports), no def/class subtree may contain a `global`
+   statement (the extractor-recorded `has_global` — exact, nested scopes
+   included, so opaque `try`/`with` bodies need no conservative refusal),
+   and the name `namedtuple` must not be referenced outside the
+   recognized assigns.
+
+On success the benign import and the recognized assigns are replaced by
+`pass` (span-preserving): their entire semantics lives in the table —
+G1 neither binds nor poisons `X`, and the leanpy prefix/suffix split is
+undisturbed. -/
+
+/-- CPython 3.9 keywords (`keyword.kwlist`). -/
+private def pyKeywords : List String :=
+  ["False", "None", "True", "and", "as", "assert", "async", "await",
+   "break", "class", "continue", "def", "del", "elif", "else", "except",
+   "finally", "for", "from", "global", "if", "import", "in", "is",
+   "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+   "while", "with", "yield"]
+
+/-- ASCII identifier shape (the fragment namedtuple field specs use). -/
+private def isPyIdent (s : String) : Bool :=
+  match s.toList with
+  | [] => false
+  | c :: rest => (c.isAlpha || c == '_') && rest.all fun d => d.isAlphanum || d == '_'
+
+/-- A valid namedtuple FIELD name: identifier, not a keyword, no leading
+underscore (CPython rejects it without `rename=True` — keyword-only, so
+such calls never reach recognition anyway). -/
+private def validFieldName (s : String) : Bool :=
+  isPyIdent s && !pyKeywords.contains s && !s.startsWith "_"
+
+/-- Split on whitespace AND commas, dropping empties (CPython's
+`field_names.replace(',', ' ').split()`). Char-level, toolchain-stable. -/
+private def splitWsAux : List Char → List Char → List String
+  | [], acc => if acc.isEmpty then [] else [String.ofList acc.reverse]
+  | c :: rest, acc =>
+    if c.isWhitespace || c == ',' then
+      (if acc.isEmpty then [] else [String.ofList acc.reverse]) ++ splitWsAux rest []
+    else splitWsAux rest (c :: acc)
+
+@[inherit_doc splitWsAux]
+private def splitWs (s : String) : List String := splitWsAux s.toList []
+
+/-- Parse a namedtuple field spec: a string (commas become spaces, then
+whitespace-split — CPython's own rule) or a list/tuple of string
+literals. `none` = out of the recognized shape. -/
+private def parseFieldSpec : Expr → Option (List String)
+  | .constant (.str s) _ => some (splitWs s)
+  | .list es _ | .tuple es _ =>
+    es.toList.mapM fun e =>
+      match e with
+      | .constant (.str f) _ => some f
+      | _ => Option.none
+  | _ => Option.none
+
+/-- No duplicate field names (CPython rejects duplicates). -/
+private def nodupFields : List String → Bool
+  | [] => true
+  | f :: fs => !fs.contains f && nodupFields fs
+
+/-- A recognition candidate: `X = namedtuple("T", <fields>)` with a
+keyword-free call and a fully validated spec. -/
+private def ntCandidate : Stmt → Option NamedTupleDefn
+  | .assign tgts (.call (.name "namedtuple" _) args Option.none _) sp =>
+    match tgts.toList, args.toList with
+    | [.name x _], [.constant (.str tname) _, fldE] =>
+      match parseFieldSpec fldE with
+      | some fields =>
+        if isPyIdent tname && !pyKeywords.contains tname
+            && fields.all validFieldName && nodupFields fields then
+          some { name := x, tname, fields := fields.toArray, span := sp }
+        else Option.none
+      | Option.none => Option.none
+    | _, _ => Option.none
+  | _ => Option.none
+
+/-- The exact benign import whose only effect (binding `namedtuple`) the
+recognition absorbs. -/
+private def isBenignNtImport : Stmt → Bool
+  | .unsupported "ImportFrom" text _ => text == "from collections import namedtuple"
+  | _ => false
+
+/-- Names an assignment-like TARGET binds; `none` = unanalyzable shape.
+Subscript/attribute targets bind no name. -/
+private def targetBinds : Expr → Option (List String)
+  | .name id _ => some [id]
+  | .tuple es _ | .list es _ =>
+    es.toList.mapM fun e =>
+      match e with
+      | .name id _ => some id
+      | _ => Option.none
+  | .subscript .. => some []
+  | .attribute .. => some []
+  | _ => Option.none
+
+/-- Names a simple import statement's TEXT binds (`from A import B` binds
+`B`; `import A.B` binds `A`); `none` = not a simple single-name import. -/
+private def importBinds (text : String) : Option (List String) :=
+  if (text.splitOn ",").length != 1 || (text.splitOn " as ").length != 1 then
+    Option.none
+  else
+    match splitWs text with
+    | ["from", _, "import", n] => if isPyIdent n then some [n] else Option.none
+    | ["import", m] =>
+      match (m.splitOn ".").head? with
+      | some root => if isPyIdent root then some [root] else Option.none
+      | Option.none => Option.none
+    | _ => Option.none
+
+/-- Names a top-level statement (nested included) can bind; `none` =
+unanalyzable (refuses the whole recognition). -/
+private partial def stmtBinds : Stmt → Option (List String)
+  | .assign tgts _ _ => do
+    let bss ← tgts.toList.mapM targetBinds
+    return bss.flatten
+  | .augAssign t _ _ _ => targetBinds t
+  | .forStmt t _ body orelse _ => do
+    let tb ← targetBinds t
+    let bb ← body.toList.mapM stmtBinds
+    let ob ← orelse.toList.mapM stmtBinds
+    return tb ++ bb.flatten ++ ob.flatten
+  | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ => do
+    let bb ← body.toList.mapM stmtBinds
+    let ob ← orelse.toList.mapM stmtBinds
+    return bb.flatten ++ ob.flatten
+  | .ret .. | .exprStmt .. | .pass _ | .brk _ | .cont _ => some []
+  | .unsupported "ImportFrom" text _ => importBinds text
+  | .unsupported "Import" text _ => importBinds text
+  | .unsupported .. => Option.none
+
+mutual
+  /-- Every `Name` occurring in the expression (the reference scan). -/
+  private partial def exprRefs : Expr → List String
+    | .constant .. => []
+    | .name id _ => [id]
+    | .binOp l _ r _ => exprRefs l ++ exprRefs r
+    | .unaryOp _ e _ => exprRefs e
+    | .boolOp _ vs _ => (vs.toList.map exprRefs).flatten
+    | .compare l _ cs _ => exprRefs l ++ (cs.toList.map exprRefs).flatten
+    | .call f args _ _ => exprRefs f ++ (args.toList.map exprRefs).flatten
+    | .list es _ | .tuple es _ => (es.toList.map exprRefs).flatten
+    | .subscript v i _ => exprRefs v ++ exprRefs i
+    | .dict ks vs _ => (ks.toList.map exprRefs).flatten ++ (vs.toList.map exprRefs).flatten
+    | .attribute v _ _ => exprRefs v
+    | .unsupported .. => []
+
+  /-- Every `Name` occurring in the statement. -/
+  private partial def stmtRefs : Stmt → List String
+    | .ret Option.none _ => []
+    | .ret (some e) _ => exprRefs e
+    | .assign tgts v _ => (tgts.toList.map exprRefs).flatten ++ exprRefs v
+    | .augAssign t _ v _ => exprRefs t ++ exprRefs v
+    | .whileLoop t b o _ | .ifStmt t b o _ =>
+      exprRefs t ++ (b.toList.map stmtRefs).flatten ++ (o.toList.map stmtRefs).flatten
+    | .forStmt t it b o _ =>
+      exprRefs t ++ exprRefs it ++ (b.toList.map stmtRefs).flatten
+        ++ (o.toList.map stmtRefs).flatten
+    | .exprStmt e _ => exprRefs e
+    | .pass _ | .brk _ | .cont _ => []
+    | .unsupported .. => []
+end
+
+/-- The span of a statement (every constructor carries one last). -/
+private def stmtSpanOf : Stmt → Span
+  | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
+  | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
+  | .exprStmt _ sp | .pass sp | .brk sp | .cont sp
+  | .unsupported _ _ sp => sp
+
+/-- The recognition pass (see the section comment for the rules). Returns
+the module's top level with the benign import and every recognized assign
+replaced by `pass`, plus the namedtuple table — or the input unchanged
+(all-or-nothing: partial recognition could leave a stray `namedtuple`
+reference resolving to a wrong `NameError`). -/
+private def recognizeNamedtuples (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (topLevel : Array Stmt) :
+    Array Stmt × Array NamedTupleDefn :=
+  let unchanged := (topLevel, #[])
+  -- rule 1: the benign import is present
+  if !topLevel.any isBenignNtImport then unchanged else
+  -- candidates, in source order
+  let cands := topLevel.toList.filterMap ntCandidate
+  if cands.isEmpty then unchanged else
+  -- rule 3a: the census must analyze EVERY top-level statement
+  match (topLevel.toList.filter (!isBenignNtImport ·)).mapM stmtBinds with
+  | Option.none => unchanged
+  | some bindss =>
+    let bound := bindss.flatten
+    -- rule 3b: no def/class subtree may leak a module binding (`global` —
+    -- the EXACT extractor-recorded fact `has_global`, nested scopes and
+    -- opaque statements included, so `try`/`with` need no conservative
+    -- refusal)
+    if functions.any (·.hasGlobal) || classes.any (·.hasGlobal) then unchanged else
+    -- rule 3c: `namedtuple` is bound only by the benign import and
+    -- referenced only inside the candidate assigns
+    let fnames := functions.toList.map FunctionDefn.name
+    let cnames := classes.toList.map ClassDefn.name
+    if bound.contains "namedtuple" || fnames.contains "namedtuple"
+        || cnames.contains "namedtuple" then unchanged else
+    let tlRefs :=
+      ((topLevel.toList.filter (fun s => (ntCandidate s).isNone)).map stmtRefs).flatten
+    let fnRefs :=
+      (functions.toList.map (fun f => (f.body.toList.map stmtRefs).flatten)).flatten
+    if (tlRefs ++ fnRefs).contains "namedtuple" then unchanged else
+    -- per-candidate: X bound exactly once (its own assign), no def/class X.
+    -- ALL-OR-NOTHING: one rejected candidate refuses the whole pass.
+    let ok := cands.all fun nt =>
+      (bound.filter (· == nt.name)).length == 1
+        && !fnames.contains nt.name && !cnames.contains nt.name
+        && (cands.filter (fun nt' => nt'.name == nt.name)).length == 1
+    if !ok then unchanged else
+    let topLevel' := topLevel.map fun s =>
+      if isBenignNtImport s || (ntCandidate s).isSome then .pass (stmtSpanOf s)
+      else s
+    (topLevel', cands.toArray)
 
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
 into `functions` under qualified names, in source order), and everything
-else into `Module.topLevel` (source order preserved within each). -/
+else into `Module.topLevel` (source order preserved within each); then
+run the namedtuple recognition pass (above) to fill `Module.namedtuples`. -/
 def parseModule (j : Json) : Except String Module :=
   withCtx "module" do
     let kind ← (← getField j "kind").getStr?
@@ -290,7 +531,8 @@ def parseModule (j : Json) : Except String Module :=
         functions := functions ++ fns
       else
         topLevel := topLevel.push (← parseStmt stmtJson)
-    return { functions, topLevel, classes }
+    let (topLevel', namedtuples) := recognizeNamedtuples functions classes topLevel
+    return { functions, topLevel := topLevel', classes, namedtuples }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=
   withCtx "lean_blocks" do

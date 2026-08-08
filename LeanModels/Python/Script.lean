@@ -99,6 +99,7 @@ mutual
     | .dict ks vs _ => Expr.allNamesList ks.toList ++ Expr.allNamesList vs.toList
     | .attribute v _ _ => v.allNames
     | .ifExp t b o _ => t.allNames ++ b.allNames ++ o.allNames
+    | .slice v l u st _ => v.allNames ++ l.allNames ++ u.allNames ++ st.allNames
     | .unsupported .. => []
 
   /-- Elementwise `Expr.allNames`. -/

@@ -71,10 +71,12 @@ never fails on syntactically valid Python).
 | `BinOp` | `left`: expr, `op`: one of `Add Sub Mult FloorDiv Mod Pow`, `right`: expr |
 | `UnaryOp` | `op`: one of `USub Not`, `operand`: expr |
 | `BoolOp` | `op`: one of `And Or`, `values`: [expr…] (≥2) |
-| `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE Is IsNot`…], `comparators`: [expr…] (same length as ops). `Is`/`IsNot` appear ONLY when one side of that comparison link is the literal `None` (`x is None`, `None is x`, `x is not None`) — `None` is a singleton, so identity against it is value-determined; any other `is`/`is not` (small-int caching, str interning: implementation-defined) makes the whole node `Unsupported` with `py_kind` `"Compare:Is"`/`"Compare:IsNot"` |
+| `Compare` | `left`: expr, `ops`: [one of `Eq NotEq Lt LtE Gt GtE Is IsNot In NotIn`…], `comparators`: [expr…] (same length as ops). Since H1-proper every `is`/`is not` is emitted structurally (identity is decided dynamically: refs by address, `None` by the singleton test; the remaining out-of-tier operand forms are refused loudly by the interpreter, not the extractor) |
 | `Call` | `func`: expr, `args`: [expr…], `call_unsupported`: str \| null (set when keywords/starargs present) |
 | `List` / `Tuple` | `elts`: [expr…] |
-| `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; `Slice`/`ExtSlice` nodes → whole Subscript becomes `Unsupported`) |
+| `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; pre-3.9 `ExtSlice`/`Index` nodes → whole Subscript becomes `Unsupported`) |
+| `Slice` | `value`: expr, `lower`/`upper`/`step`: expr, each PRESENT only when the source wrote it (`s[::-1]` carries only `step`). A `Subscript` whose `slice` is an `ast.Slice` (H5 strings). Ingestion fills absent components with `Constant None` — CPython's own compilation (`BUILD_SLICE` pushes `None`), so `s[:i]` and `s[None:i:None]` ingest identically |
+| `IfExp` | `test`: expr, `body`: expr, `orelse`: expr (`body if test else orelse`, H5) |
 | `Dict` | `keys`: [expr…], `values`: [expr…] (same length; `{**d}` expansion keeps the whole node `Unsupported` with `py_kind` `"Dict:unpack"`). Structured for the heap layer (H0, docs/memory-model.md); the value-tier interpreter refuses it loudly until H1 |
 | `Attribute` | `value`: expr, `attr`: str. Structured (H0); refused loudly until the heap/class stages |
 | `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |

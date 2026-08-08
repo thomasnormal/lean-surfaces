@@ -204,12 +204,31 @@ decision:
    LIVE (`ntupleCallPlan` dispatch, `self` = the VALUE through `callIn`;
    identity via the census tname-clash refusal;
    `Examples/python/sf_position`: `position_mirror_callsIn` — the first
-   subclass-method theorem, symbolic in the score). This step is DONE;
-   `Position.rotate`/`value()`/`bound()` on the shipped file now gate
-   only on step 5 (strings + IfExp) and step 6 (generators).
-5. **String methods + slicing.** `board[:i] + p + board[i+1:]` (move
-   application), `.isupper()`, `.swapcase()`, `.index()`. Value
-   semantics faithful (str immutable); mostly interpreter surface.
+   subclass-method theorem, symbolic in the score). This step is DONE.
+5. **String methods + slicing — BUILT (H5 strings, 2026-08-09),** per
+   docs/memory-model.md §string semantics: structured `Slice` end to
+   end (absent bounds = `Constant None`, CPython's own compilation;
+   step-first validation order), CPython-exact str slices both
+   directions, `.swapcase()`/`.isupper()` (ASCII-exact, non-ASCII
+   loud), `.index()` (code-point-exact), the pure `strCallPlan`
+   dispatch, meta-proof arms (heapFree/fuelMono/worldInv/name
+   walkers), the `str_lab` differential battery and `str_script`
+   corpus. **THE MILESTONE LANDED WITH IT** (`Examples/python/sunfish`
+   — sunfish.py byte-identical): `rotate_callsIn` /
+   `rotate_null_callsIn` / `rotate_home_callsIn` — `Position.rotate`
+   score-negation on the shipped file, symbolic in the score AND the
+   world. Remaining, recorded: membership on strs (`q in " \nPNBRQK"`
+   — gen_moves), `for` over a str / `enumerate`, str unpacking,
+   `ord`/`chr` (parse/render), `sorted()` on strs; and the
+   attribute-call heapFree whitelist is still `.get`-only — extending
+   it to the pure str trio is sound (dict/list referents refuse those
+   names; a heap-free module has no classes) but needs the
+   `attrCallPlan_get_heapFree`-family lemmas generalized and the
+   `worldInv` attribute case reworked from its `attr = "get"` subst.
+   `Position.value()` on the shipped file now gates on `ord`-free
+   pieces only (pst dict reads are in tier — symbolic dict-read walker
+   support is the proof-side gap); `gen_moves`/`bound()` gate on
+   step 6.
 6. **Generators (hardest) + `sorted(key=)`.** `moves()` interleaves
    search effects with iteration and `bound` consumes it lazily —
    the beta cutoff means eager pre-expansion diverges on real trees.
@@ -257,7 +276,6 @@ decision:
      and mutation-between-`next`s; then sunfish's `moves()` consumed
      lazily by `bound`. `sorted(key=)` is orthogonal (paired here only
      because sunfish's move ordering needs both).
-
 Cross-cutting, found by the milestone proofs: `py_vcgen` cannot walk
 `for` loops (the frozen-`execFor` list-induction pattern in
 `Examples/python/sf_bound_for/proof.lean` is the manual route to

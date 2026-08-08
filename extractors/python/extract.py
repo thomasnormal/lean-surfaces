@@ -241,10 +241,28 @@ def convert_expr(node):
 
     if isinstance(node, ast.Subscript):
         # CPython >= 3.9: `slice` is the index expr itself when it is a plain
-        # expression; Slice (and pre-3.9 ExtSlice/Index) => whole node Unsupported.
+        # expression; a Slice node is structured (H5 strings — sunfish's
+        # `board[::-1]` / `board[:i]`); pre-3.9 ExtSlice/Index => whole node
+        # Unsupported.
         sl = node.slice
         sl_kind = type(sl).__name__
-        if sl_kind in ("Slice", "ExtSlice", "Index"):
+        if sl_kind == "Slice":
+            d = {
+                "kind": "Slice",
+                "span": span(node),
+                "value": convert_expr(node.value),
+            }
+            # Components are emitted only when present in the source —
+            # envelopes mirror CPython's ast (ingestion fills the absent
+            # ones with `Constant None`, CPython's own BUILD_SLICE value).
+            if sl.lower is not None:
+                d["lower"] = convert_expr(sl.lower)
+            if sl.upper is not None:
+                d["upper"] = convert_expr(sl.upper)
+            if sl.step is not None:
+                d["step"] = convert_expr(sl.step)
+            return d
+        if sl_kind in ("ExtSlice", "Index"):
             return unsupported(node, "Subscript:" + sl_kind)
         return {
             "kind": "Subscript",

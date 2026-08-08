@@ -169,6 +169,16 @@ partial def parseExpr (j : Json) : Except String Expr := do
         let value ← parseExpr (← getField j "value")
         let index ← parseExpr (← getField j "index")
         return .subscript value index span
+    | "Slice" =>
+        -- Absent components become `Constant None`: CPython compiles a
+        -- missing bound to exactly that (`BUILD_SLICE` pushes `None`), so
+        -- `s[:i]` and `s[None:i:None]` are the same program, faithfully.
+        let value ← parseExpr (← getField j "value")
+        let comp : String → Except String Expr := fun name =>
+          match j.getObjVal? name with
+          | .ok jc => parseExpr jc
+          | .error _ => pure (Expr.constant .none span)
+        return .slice value (← comp "lower") (← comp "upper") (← comp "step") span
     | "Unsupported" =>
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span
@@ -427,6 +437,7 @@ mutual
     | .dict ks vs _ => (ks.toList.map exprRefs).flatten ++ (vs.toList.map exprRefs).flatten
     | .attribute v _ _ => exprRefs v
     | .ifExp t b o _ => exprRefs t ++ exprRefs b ++ exprRefs o
+    | .slice v l u st _ => exprRefs v ++ exprRefs l ++ exprRefs u ++ exprRefs st
     | .unsupported .. => []
 
   /-- Every `Name` occurring in the statement. -/

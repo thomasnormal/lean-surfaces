@@ -161,6 +161,7 @@ def Expr.kindName : Expr → String
   | .dict .. => "Dict"
   | .attribute .. => "Attribute"
   | .ifExp .. => "IfExp"
+  | .slice .. => "Slice"
   | .unsupported pyKind _ _ => pyKind
 
 /-- Python truthiness `bool(x)`: `None` → false; `bool` → itself;
@@ -587,6 +588,176 @@ def indexVal (container index : RVal) : Res RVal :=
     | Option.none =>
       .exn (.typeError s!"string indices must be integers, not {index.typeName}")
   | v, _ => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
+
+/-! ## The string tier (H5 strings, docs/memory-model.md §string semantics)
+
+Pure, fuel-free helpers: strings are immutable values, so the whole tier
+has VALUE semantics — no heap, no aliasing, `worldInv`-trivial. The
+case-mapping methods (`swapcase`/`isupper`) are in tier for ASCII
+strings only: Lean core's `Char.isUpper`/`toLower`/… are exactly the
+ASCII maps, which agree with CPython there; a non-ASCII string is
+refused loudly (CPython consults the full Unicode tables — guessing
+would be silently wrong). `index` and slicing are code-point-exact for
+every string.
+
+Simp-set doctrine (the `sortInts`/`heapEq` freeze family): the DISPATCH
+layers (`sliceVal`, `strCallPlan`) are in `py_simp`/`interpUnfolds`, the
+VALUE workers (`strSlice`, `strSwapcase`, `strIsUpper`, `strIndex` and
+their helpers) are deliberately OUT — symbolic goals keep the compact
+`strSlice s l u st` handle, and concrete proofs rewrite through one
+kernel-checked `have … := by rfl` fact per worker application instead of
+thousands of character-level simp steps (concrete runs — `#py_check`,
+the differential harness — reduce through the kernel/evaluator and never
+consult simp sets). -/
+
+/-- ASCII-only guard for the case-mapping methods. -/
+def strAscii (s : String) : Bool :=
+  s.toList.all (fun c => c.toNat < 128)
+
+/-- `swapcase` on one ASCII char: `a-z` ↔ `A-Z`, everything else fixed
+(Lean core's `Char.toUpper`/`toLower` are the ASCII maps). -/
+def swapChar (c : Char) : Char :=
+  if c.isUpper then c.toLower else if c.isLower then c.toUpper else c
+
+/-- `s.swapcase()` (ASCII in tier — the section comment). -/
+def strSwapcase (s : String) : Res RVal :=
+  if strAscii s then .ok (.str (String.ofList (s.toList.map swapChar)))
+  else .unsupported
+    "swapcase() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+
+/-- `s.isupper()`: at least one cased character and no lowercase one
+(CPython's definition; ASCII cased = alphabetic). -/
+def strIsUpper (s : String) : Res RVal :=
+  if strAscii s then
+    .ok (.bool (s.toList.any (fun c => c.isAlpha) &&
+                s.toList.all (fun c => !c.isAlpha || c.isUpper)))
+  else .unsupported
+    "isupper() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+
+/-- First index where `needle` occurs in `hay` (code-point equality;
+`"".index("")` is 0, as in CPython). Structural (kernel-reducible). -/
+def strFindAux (hay needle : List Char) : Option Nat :=
+  if needle.isPrefixOf hay then some 0
+  else
+    match hay with
+    | [] => Option.none
+    | _ :: rest => (strFindAux rest needle).map (· + 1)
+
+/-- `s.index(sub)`: the lowest index where `sub` occurs, else the
+faithful `ValueError` (`start`/`end` arguments are out of tier —
+refused at dispatch). -/
+def strIndex (s sub : String) : Res RVal :=
+  match strFindAux s.toList sub.toList with
+  | some i => .ok (.int i)
+  | Option.none => .exn (.valueError "substring not found")
+
+/-- Adjust one PRESENT slice bound for a sequence of length `len`
+(CPython `PySlice_AdjustIndices`): negative indices count from the end;
+the result is clamped into `[0, len]` for a positive step, `[-1, len-1]`
+for a negative one (`-1` = "before the first element"). -/
+def sliceAdj (i : Int) (len : Int) (pos : Bool) : Int :=
+  let j := if i < 0 then i + len else i
+  if pos then max 0 (min j len)
+  else max (-1) (min j (len - 1))
+
+/-- The number of elements a slice yields (CPython's slice-length
+formula, both directions, never negative). The divisions are on
+nonnegative operands, where every Lean `Int` division convention
+agrees. -/
+def sliceCount (start stop step : Int) : Nat :=
+  if 0 < step then
+    if start < stop then ((stop - start - 1) / step).toNat + 1 else 0
+  else
+    if stop < start then ((start - stop - 1) / (-step)).toNat + 1 else 0
+
+/-- Collect `n` characters starting at index `i`, stepping by `step`.
+Every visited index is in range by construction (`sliceAdj`/`sliceCount`
+— see `strSlice`), so `getD`'s default is unreachable. Structural on
+`n` (kernel-reducible). -/
+def strSliceChars (cs : List Char) : Nat → Int → Int → List Char
+  | 0, _, _ => []
+  | n + 1, i, step => cs.getD i.toNat ' ' :: strSliceChars cs n (i + step) step
+
+/-- Classify one slice component VALUE: `some (some i)` an int index
+(bool coerces), `some none` omitted (`None` — ingestion normalizes
+absent bounds to the `None` constant, CPython's own compilation),
+`none` invalid — the faithful `TypeError` (CPython's message names no
+type, and no in-tier value or heap referent can carry `__index__` — the
+dunder guard included — so the arm is faithful for refs too). -/
+def asSliceIdx : RVal → Option (Option Int)
+  | .none => some Option.none
+  | v => (asInt v).map some
+
+/-- `s[lower:upper:step]` on a str — CPython slice semantics, value
+exact for EVERY string. The components validate in CPython's own order
+(`PySlice_Unpack`): `step` first (`TypeError` for a non-index,
+`ValueError` for 0), then `lower`, then `upper`. -/
+def strSlice (s : String) (lv uv sv : RVal) : Res RVal :=
+  match asSliceIdx sv with
+  | Option.none =>
+    .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+  | some st =>
+    let step := st.getD 1
+    if step == 0 then .exn (.valueError "slice step cannot be zero")
+    else
+      match asSliceIdx lv with
+      | Option.none =>
+        .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+      | some l =>
+        match asSliceIdx uv with
+        | Option.none =>
+          .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+        | some u =>
+          let len : Int := s.length
+          let pos := 0 < step
+          let start := match l with
+            | some i => sliceAdj i len pos
+            | Option.none => if pos then 0 else len - 1
+          let stop := match u with
+            | some i => sliceAdj i len pos
+            | Option.none => if pos then len else -1
+          .ok (.str (String.ofList
+            (strSliceChars s.toList (sliceCount start stop step) start step)))
+
+/-- `container[l:u:st]` — the slice RECEIVER dispatch (the components
+have already evaluated: CPython builds the slice object before
+`BINARY_SUBSCR` looks at the receiver). STRINGS are the tier (value
+semantics); slicing a heap list — or a value list/tuple/namedtuple —
+succeeds in CPython and ALLOCATES, so those stay loudly out (H5 keeps
+list slices with the allocation-aware story — docs/memory-model.md
+§list semantics); a non-subscriptable receiver is the faithful
+`TypeError`. -/
+def sliceVal (v lv uv sv : RVal) : Res RVal :=
+  match v with
+  | .str s => strSlice s lv uv sv
+  | .ref _ =>
+    .unsupported "slicing a heap object is outside the tier (str slices only — a list slice allocates; docs/memory-model.md §string semantics)"
+  | .listV _ =>
+    .unsupported "slicing a list is outside the tier (str slices only; docs/memory-model.md §string semantics)"
+  | .tuple _ =>
+    .unsupported "slicing a tuple is outside the tier (str slices only; docs/memory-model.md §string semantics)"
+  | .ntuple _ _ _ =>
+    .unsupported "slicing a namedtuple is outside the tier (str slices only; docs/memory-model.md §string semantics)"
+  | v => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
+
+/-- The decision of a method CALL on a str receiver (H5 strings) — the
+`ntupleCallPlan` discipline: a PURE plan decided from the attribute name
+alone, BEFORE argument evaluation. Everything outside the tier trio
+refuses loudly — never a fake `AttributeError`: CPython's str carries
+~45 real methods (`upper`/`split`/`join`/…) plus the dunder protocol,
+and guessing which names exist would be silently wrong. -/
+inductive StrPlan where
+  | swapcase | isupper | index
+  | refuse (msg : String)
+deriving Repr, Inhabited, BEq
+
+/-- Resolve `s.attr(…)` for a str receiver (see `StrPlan`). -/
+def strCallPlan (attr : String) : StrPlan :=
+  if attr == "swapcase" then .swapcase
+  else if attr == "isupper" then .isupper
+  else if attr == "index" then .index
+  else .refuse
+    s!"method call '.{attr}' on a str is outside the tier ('swapcase'/'isupper'/'index' only; docs/memory-model.md §string semantics)"
 
 /-! ## The dict tier (H1-proper, docs/memory-model.md)
 
@@ -1769,6 +1940,10 @@ mutual
     | .dict .. => false                 -- ALLOCATES
     | .attribute v _ _ => v.heapFree    -- as a bare value: loud, never `.ok`
     | .ifExp t b o _ => t.heapFree && b.heapFree && o.heapFree
+    -- H5 strings: slices decide only on strs (pure) — every allocating
+    -- receiver (heap lists) refuses loudly, so the node stays in the
+    -- fragment
+    | .slice v l u st _ => v.heapFree && l.heapFree && u.heapFree && st.heapFree
     | .unsupported .. => true           -- loud, never decides `.ok`
 
   /-- Elementwise `Expr.heapFree`. -/
@@ -2168,6 +2343,34 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
              | .attrMissing => .exn st .attributeError
              | .refuse msg => .unsupported msg
              | _ => .unsupported "internal: namedtuple call plan out of range (report this)")
+          | .str sv =>
+            -- str METHOD dispatch (H5 strings): the plan is decided from
+            -- the attribute name BEFORE the arguments (`strCallPlan` — a
+            -- pure free-scrutinee plan, the recorded meta-proof
+            -- discipline); the workers are pure (strings are immutable
+            -- values), so each in-tier arm is args + `liftRes`.
+            (match strCallPlan attr with
+             | .swapcase =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [] => Run.liftRes st (strSwapcase sv)
+               | vs => .exn st (.typeError s!"swapcase() takes no arguments ({vs.length} given)")
+             | .isupper =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [] => Run.liftRes st (strIsUpper sv)
+               | vs => .exn st (.typeError s!"isupper() takes no arguments ({vs.length} given)")
+             | .index =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [] => .exn st (.typeError "index expected at least 1 argument, got 0")
+               | [.str sub] => Run.liftRes st (strIndex sv sub)
+               | [v] => .exn st (.typeError s!"must be str, not {RVal.typeNameH st.world.heap v}")
+               | vs =>
+                 if vs.length ≤ 3 then
+                   .unsupported "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
+                 else .exn st (.typeError s!"index expected at most 3 arguments, got {vs.length}")
+             | .refuse msg => .unsupported msg)
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
@@ -2219,6 +2422,15 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         evalExpr m fuel st t ⤳ fun st tv =>
         Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st cond =>
         if cond then evalExpr m fuel st b else evalExpr m fuel st o
+    | .slice v l u stp _ =>
+        -- H5 strings: CPython order — the receiver, then the slice
+        -- components lower/upper/step (`BUILD_SLICE`), then the subscript
+        -- application (`sliceVal`, pure — the tier is str receivers)
+        evalExpr m fuel st v ⤳ fun st cv =>
+        evalExpr m fuel st l ⤳ fun st lv =>
+        evalExpr m fuel st u ⤳ fun st uv =>
+        evalExpr m fuel st stp ⤳ fun st sv =>
+        Run.liftRes st (sliceVal cv lv uv sv)
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/

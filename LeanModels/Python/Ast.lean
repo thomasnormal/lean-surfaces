@@ -75,7 +75,7 @@ deriving Repr, Inhabited, BEq, DecidableEq
 `constant` ↔ `Constant`, `name` ↔ `Name`, `binOp` ↔ `BinOp`,
 `unaryOp` ↔ `UnaryOp`, `boolOp` ↔ `BoolOp`, `compare` ↔ `Compare`,
 `call` ↔ `Call`, `list` ↔ `List`, `tuple` ↔ `Tuple`,
-`subscript` ↔ `Subscript`, `unsupported` ↔ `Unsupported`. -/
+`subscript` ↔ `Subscript`, `slice` ↔ `Slice`, `unsupported` ↔ `Unsupported`. -/
 inductive Expr where
   | constant (value : Const) (span : Span)
   | name (id : String) (span : Span)
@@ -92,6 +92,12 @@ inductive Expr where
   /-- Conditional expression `body if test else orelse` (schema `IfExp`,
   H5): lazy — exactly one branch evaluates, CPython order. -/
   | ifExp (test : Expr) (body : Expr) (orelse : Expr) (span : Span)
+  /-- Slice subscript `value[lower:upper:step]` (schema `Slice`, H5
+  strings — sunfish's `board[::-1]` / `board[:i]`). Components the source
+  omits are filled by INGESTION with `Constant None` — CPython's own
+  compilation (`BUILD_SLICE` pushes `None` for a missing bound), so
+  `s[:i]` and `s[None:i:None]` are the SAME node, faithfully. -/
+  | slice (value : Expr) (lower : Expr) (upper : Expr) (step : Expr) (span : Span)
   | unsupported (pyKind : String) (text : String) (span : Span)
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Expr`; derived BEq suffices.

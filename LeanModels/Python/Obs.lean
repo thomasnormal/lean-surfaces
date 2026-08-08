@@ -456,6 +456,15 @@ theorem fuelMono (fuel : Nat) :
                   exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
                     Run.le_withLocals
                       (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
+              case str sv =>
+                -- str METHOD dispatch (H5 strings): fork on the pure plan;
+                -- every in-tier arm is args + a fuel-independent worker
+                dsimp only
+                cases strCallPlan attr <;>
+                  first
+                  | exact Run.le_refl _
+                  | exact Run.le_bind (ihEs m st cargs.toList k hk)
+                      fun st vs => Run.le_refl _
             case name fname _ =>
               simp only [evalExpr]
               cases Env.lookup st.locals fname with
@@ -547,6 +556,14 @@ theorem fuelMono (fuel : Nat) :
           exact Run.le_bind (ihE m st t k hk) fun st tv =>
             Run.le_bind (Run.le_refl _) fun st cond =>
               Run.le_ite (ihE m st b k hk) (ihE m st o k hk)
+        | slice v l u stp _ =>
+          -- H5 strings: four sequential component binds, then the pure
+          -- (fuel-independent) `sliceVal`
+          simp only [evalExpr]
+          exact Run.le_bind (ihE m st v k hk) fun st cv =>
+            Run.le_bind (ihE m st l k hk) fun st lv =>
+              Run.le_bind (ihE m st u k hk) fun st uv =>
+                Run.le_bind (ihE m st stp k hk) fun st sv => Run.le_refl _
         | unsupported pyKind text _ => simp only [evalExpr]; exact Run.le_refl _
     -- evalExprs
     · intro m st es fuel' hf
@@ -1274,6 +1291,18 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         refine .bind (.liftResF h₁ _) fun st₂ cond h₂ => ?_
         exact .ite ((ihE st₂ b hfree.1.2).mono (wtrans st st₂ h₂))
           ((ihE st₂ o hfree.2).mono (wtrans st st₂ h₂))
+      | slice v l u stp _ =>
+        -- H5 strings: components bind, then the PURE `sliceVal` (str
+        -- slices are values; allocating receivers refuse loudly)
+        simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+        simp only [evalExpr]
+        refine .bind (ihE st v hfree.1.1.1) fun st₁ cv h₁ => ?_
+        refine .bind ((ihE st₁ l hfree.1.1.2).mono (wtrans st st₁ h₁))
+          fun st₂ lv h₂ => ?_
+        refine .bind ((ihE st₂ u hfree.1.2).mono (wtrans st st₂ h₂))
+          fun st₃ uv h₃ => ?_
+        exact .bind ((ihE st₃ stp hfree.2).mono (wtrans st st₃ h₃))
+          fun st₄ sv h₄ => .liftResF h₄ _
       | «attribute» recv attr _ =>
         -- attribute READ (H3): a pure heap read — world-preserving; the
         -- bound-method/AttributeError forks are all ok-free or pinned

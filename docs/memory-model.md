@@ -233,9 +233,11 @@ cycle DETECTION, never by running out of fuel).
 * Loud, deliberately: list concatenation `+` and repetition (allocating
   operators would evict every `BinOp` from the heap-free fragment — they
   need an allocation-aware frame story first), `+=`/`.extend`,
-  `.insert/.remove/.index/.sort/...`, slices (H5-adjacent, with strings),
-  `del lst[i]`, comprehensions, `.get`-style method calls on lists
-  (a faithful `AttributeError` awaiting a `PyErr` form).
+  `.insert/.remove/.index/.sort/...`, slices (STR slices are BUILT —
+  §string semantics; LIST slices allocate and stay loud pending the
+  allocation-aware frame story), `del lst[i]`, comprehensions,
+  `.get`-style method calls on lists (a faithful `AttributeError`
+  awaiting a `PyErr` form).
 
 ## Class semantics (H3 inventory — BUILT, 2026-08-08)
 
@@ -344,6 +346,60 @@ cycle DETECTION, never by running out of fuel).
   `AttributeError`). Dispatch identity: the census also refuses a plain
   candidate whose TYPENAME collides with an `ntBase` class name, so in a
   recognized module a value's `tname` names exactly its defining class.
+
+## String semantics (H5 strings — BUILT, 2026-08-09)
+
+Strings are immutable, so the tier is pure VALUE semantics — no heap,
+no aliasing, world-preserving by construction (Semantics.lean §string
+tier).
+
+* **Slices** `s[l:u:st]` are structured end to end (extractor `Slice`
+  node; absent components ingest as `Constant None` — CPython's own
+  `BUILD_SLICE` compilation, so `s[:i]` and `s[None:i:None]` are the
+  same program). Evaluation order is CPython's: receiver, lower,
+  upper, step; the receiver dispatch (`sliceVal`) fires only after all
+  components evaluate (`BINARY_SUBSCR`), and component validation is
+  `PySlice_Unpack`'s order — step first (`TypeError` for a non-index,
+  `ValueError` for zero), then lower, then upper
+  (`str_lab.order_probe` pins the order differentially). The value is
+  CPython-exact for EVERY string: negative indices, out-of-range
+  clamping, both step directions (`PySlice_AdjustIndices`). Slicing a
+  heap list — or a value list/tuple/namedtuple — succeeds in CPython
+  and ALLOCATES, so it stays loudly out (§list semantics); slicing a
+  non-subscriptable scalar is the faithful `TypeError`; a slice in
+  STORE position stays loud (`assignTo`'s catch-all).
+* **Methods** (`strCallPlan` — the `ntupleCallPlan` free-scrutinee
+  discipline, plan decided BEFORE arguments): `.swapcase()` and
+  `.isupper()` on ASCII strings (Lean core's `Char` case maps ARE the
+  ASCII maps, agreeing with CPython exactly there; a non-ASCII string
+  refuses loudly — the Unicode tables are not guessed), and
+  `.index(sub)` — code-point-exact substring search, the faithful
+  `ValueError` miss, a non-str argument the faithful `TypeError`
+  (`start`/`end` arguments loud). EVERY other attribute on a str
+  refuses loudly — never a fake `AttributeError` (CPython's str
+  carries ~45 real methods plus the dunder protocol). Arity errors
+  are faithful `TypeError`s, raised after the arguments evaluate
+  (CPython call order).
+* **Simp doctrine** (the `sortInts`/`heapEq` freeze family): the
+  dispatchers (`sliceVal`, `strCallPlan`) are in
+  `py_simp`/`interpUnfolds`; the value workers (`strSlice`,
+  `strSwapcase`, `strIsUpper`, `strIndex` and their helpers) stay
+  OUT — symbolic goals keep the compact handles, and concrete proofs
+  rewrite through kernel `rfl` facts
+  (`Examples/python/sunfish/proof.lean` runs the 120-char board
+  through each worker in ONE rewrite).
+* **heapFree**: the `Slice` node is in the fragment (every receiver
+  is pure or loud). Str METHOD calls conservatively LEAVE the
+  fragment — the attribute-call whitelist is still `.get`-only, like
+  every `sorted` call; extending it to the pure trio is sound and
+  recorded (docs/backlog.md).
+* Still loud, deliberately: membership on strs (`q in " \nPNBRQK"` —
+  gen_moves's shape, the recorded next step), `for` over a str, str
+  unpacking, `%`-formatting, `sorted()` on a str, `ord`/`chr`, and
+  non-ASCII case mapping.
+* Acceptance: `Examples/python/str_lab` (every function differential);
+  leanpy corpus `harness/scripts/str_script.py`; the shipped-file
+  theorems in `Examples/python/sunfish` (`Position.rotate`).
 
 ## Heap well-formedness (explicit invariant)
 

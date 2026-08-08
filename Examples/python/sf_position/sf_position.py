@@ -21,6 +21,15 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         return Position(self.board, -self.score, self.bc, self.wc,
                         self.ep, self.kp)
 
+    def rotate(self, nullmove=False):
+        """Rotates the board, preserving enpassant, unless nullmove
+        (VERBATIM from the shipped sunfish.py — the H5 string tier)"""
+        return Position(
+            self.board[::-1].swapcase(), -self.score, self.bc, self.wc,
+            119 - self.ep if self.ep and not nullmove else 0,
+            119 - self.kp if self.kp and not nullmove else 0,
+        )
+
 
 def move_fields(i, j):
     m = Move(i, j, "q")
@@ -115,3 +124,16 @@ def mirror_score(score):
 def ep_flip(ep, nullmove):
     # rotate's exact conditional subexpression shape (IfExp + and/not)
     return 119 - ep if ep and not nullmove else 0
+
+
+def rotate_fields(score, ep, kp):
+    # the ASSEMBLED rotate against CPython (boundary scalars/strs only)
+    pos = Position("aB cD.k", score, (True, True), (False, True), ep, kp)
+    r = pos.rotate()
+    return (r.board, r.score, r.wc[0], r.bc[0], r.ep, r.kp)
+
+
+def rotate_null_fields(score, ep, kp):
+    pos = Position("aB cD.k", score, (True, True), (False, True), ep, kp)
+    r = pos.rotate(True)
+    return (r.board, r.score, r.wc[0], r.bc[0], r.ep, r.kp)

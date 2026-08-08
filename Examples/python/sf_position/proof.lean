@@ -20,6 +20,10 @@ namespace Examples.python.sf_position.proof
 
 open LeanModels LeanModels.Python
 
+-- (envelope regenerated 2026-08-09: the verbatim shipped `rotate` method +
+-- the `rotate_fields`/`rotate_null_fields` differential wrappers — H5
+-- strings; `load_program` does not track the JSON as a build input, so this
+-- comment is also the content change that forces the rebuild)
 load_program sf_position from "Examples/python/sf_position/sf_position.json"
 
 /-- The fresh world of every public call: the whole top level is the

@@ -1,0 +1,1798 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/str_lab/str_lab.py",
+  "source_sha256": "568a636679cb67d8d17d88149ec80290e9bc06c64777140f9be733ab2e5b0d2e",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 60
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 6,
+            "end_col_offset": 60
+          },
+          "value": {
+            "type": "str",
+            "value": "The H5 string-tier acceptance set: slices (both step directions,\nomitted/negative/clamped bounds, CPython's step-first validation order)\nand the method trio swapcase/isupper/index \u2014 every function here runs\ndifferentially against CPython 3.9 (harness/cases.json). The loud\nfrontier (non-ASCII case mapping, out-of-tier str methods, list slices,\nindex start/end arguments) is pinned by whitelisted rows."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 9,
+          "col_offset": 0,
+          "end_lineno": 10,
+          "end_col_offset": 18
+        },
+        "name": "rev",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 9,
+              "col_offset": 8,
+              "end_lineno": 9,
+              "end_col_offset": 9
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 10,
+              "col_offset": 4,
+              "end_lineno": 10,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 10,
+                "col_offset": 11,
+                "end_lineno": 10,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 11,
+                  "end_lineno": 10,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "step": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 10,
+                  "col_offset": 15,
+                  "end_lineno": 10,
+                  "end_col_offset": 17
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 10,
+                    "col_offset": 16,
+                    "end_lineno": 10,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 14,
+          "end_col_offset": 17
+        },
+        "name": "mid",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 13,
+              "col_offset": 8,
+              "end_lineno": 13,
+              "end_col_offset": 9
+            }
+          },
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 13,
+              "col_offset": 11,
+              "end_lineno": 13,
+              "end_col_offset": 12
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 13,
+              "col_offset": 14,
+              "end_lineno": 13,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 14,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 14,
+                "col_offset": 11,
+                "end_lineno": 14,
+                "end_col_offset": 17
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 11,
+                  "end_lineno": 14,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "lower": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 13,
+                  "end_lineno": 14,
+                  "end_col_offset": 14
+                },
+                "id": "a"
+              },
+              "upper": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 14,
+                  "col_offset": 15,
+                  "end_lineno": 14,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 17,
+          "col_offset": 0,
+          "end_lineno": 18,
+          "end_col_offset": 16
+        },
+        "name": "head",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 17,
+              "col_offset": 9,
+              "end_lineno": 17,
+              "end_col_offset": 10
+            }
+          },
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 17,
+              "col_offset": 12,
+              "end_lineno": 17,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 18,
+              "col_offset": 4,
+              "end_lineno": 18,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 18,
+                "col_offset": 11,
+                "end_lineno": 18,
+                "end_col_offset": 16
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 11,
+                  "end_lineno": 18,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "upper": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 18,
+                  "col_offset": 14,
+                  "end_lineno": 18,
+                  "end_col_offset": 15
+                },
+                "id": "n"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 21,
+          "col_offset": 0,
+          "end_lineno": 22,
+          "end_col_offset": 16
+        },
+        "name": "tail",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 21,
+              "col_offset": 9,
+              "end_lineno": 21,
+              "end_col_offset": 10
+            }
+          },
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 21,
+              "col_offset": 12,
+              "end_lineno": 21,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 22,
+                "col_offset": 11,
+                "end_lineno": 22,
+                "end_col_offset": 16
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 11,
+                  "end_lineno": 22,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "lower": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 13,
+                  "end_lineno": 22,
+                  "end_col_offset": 14
+                },
+                "id": "n"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 26,
+          "end_col_offset": 17
+        },
+        "name": "every_second",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 25,
+              "col_offset": 17,
+              "end_lineno": 25,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 26,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 26,
+                "col_offset": 11,
+                "end_lineno": 26,
+                "end_col_offset": 17
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 11,
+                  "end_lineno": 26,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "step": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 15,
+                  "end_lineno": 26,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "2"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 29,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 20
+        },
+        "name": "back_step",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 29,
+              "col_offset": 14,
+              "end_lineno": 29,
+              "end_col_offset": 15
+            }
+          },
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 29,
+              "col_offset": 17,
+              "end_lineno": 29,
+              "end_col_offset": 18
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 29,
+              "col_offset": 20,
+              "end_lineno": 29,
+              "end_col_offset": 21
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 30,
+              "col_offset": 4,
+              "end_lineno": 30,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 30,
+                "col_offset": 11,
+                "end_lineno": 30,
+                "end_col_offset": 20
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 11,
+                  "end_lineno": 30,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "lower": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 13,
+                  "end_lineno": 30,
+                  "end_col_offset": 14
+                },
+                "id": "a"
+              },
+              "upper": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 15,
+                  "end_lineno": 30,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              },
+              "step": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 17,
+                  "end_lineno": 30,
+                  "end_col_offset": 19
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 30,
+                    "col_offset": 18,
+                    "end_lineno": 30,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 33,
+          "col_offset": 0,
+          "end_lineno": 34,
+          "end_col_offset": 15
+        },
+        "name": "copy_all",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 33,
+              "col_offset": 13,
+              "end_lineno": 33,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 34,
+                "col_offset": 11,
+                "end_lineno": 34,
+                "end_col_offset": 15
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 11,
+                  "end_lineno": 34,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 37,
+          "col_offset": 0,
+          "end_lineno": 38,
+          "end_col_offset": 23
+        },
+        "name": "swap",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 37,
+              "col_offset": 9,
+              "end_lineno": 37,
+              "end_col_offset": 10
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 38,
+              "col_offset": 4,
+              "end_lineno": 38,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 38,
+                "col_offset": 11,
+                "end_lineno": 38,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 38,
+                  "col_offset": 11,
+                  "end_lineno": 38,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 38,
+                    "col_offset": 11,
+                    "end_lineno": 38,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "swapcase"
+              },
+              "args": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 41,
+          "col_offset": 0,
+          "end_lineno": 42,
+          "end_col_offset": 22
+        },
+        "name": "isup",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 41,
+              "col_offset": 9,
+              "end_lineno": 41,
+              "end_col_offset": 10
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 42,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 42,
+                "col_offset": 11,
+                "end_lineno": 42,
+                "end_col_offset": 22
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 42,
+                  "col_offset": 11,
+                  "end_lineno": 42,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 42,
+                    "col_offset": 11,
+                    "end_lineno": 42,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "isupper"
+              },
+              "args": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 45,
+          "col_offset": 0,
+          "end_lineno": 46,
+          "end_col_offset": 21
+        },
+        "name": "idx",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 45,
+              "col_offset": 8,
+              "end_lineno": 45,
+              "end_col_offset": 9
+            }
+          },
+          {
+            "arg": "t",
+            "span": {
+              "lineno": 45,
+              "col_offset": 11,
+              "end_lineno": 45,
+              "end_col_offset": 12
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 46,
+              "col_offset": 4,
+              "end_lineno": 46,
+              "end_col_offset": 21
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 46,
+                "col_offset": 11,
+                "end_lineno": 46,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 46,
+                  "col_offset": 11,
+                  "end_lineno": 46,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 46,
+                    "col_offset": 11,
+                    "end_lineno": 46,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "index"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 46,
+                    "col_offset": 19,
+                    "end_lineno": 46,
+                    "end_col_offset": 20
+                  },
+                  "id": "t"
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 49,
+          "col_offset": 0,
+          "end_lineno": 51,
+          "end_col_offset": 29
+        },
+        "name": "board_flip",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 49,
+              "col_offset": 15,
+              "end_lineno": 49,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 51,
+              "col_offset": 4,
+              "end_lineno": 51,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 51,
+                "col_offset": 11,
+                "end_lineno": 51,
+                "end_col_offset": 29
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 51,
+                  "col_offset": 11,
+                  "end_lineno": 51,
+                  "end_col_offset": 27
+                },
+                "value": {
+                  "kind": "Slice",
+                  "span": {
+                    "lineno": 51,
+                    "col_offset": 11,
+                    "end_lineno": 51,
+                    "end_col_offset": 18
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 11,
+                      "end_lineno": 51,
+                      "end_col_offset": 12
+                    },
+                    "id": "s"
+                  },
+                  "step": {
+                    "kind": "UnaryOp",
+                    "span": {
+                      "lineno": 51,
+                      "col_offset": 15,
+                      "end_lineno": 51,
+                      "end_col_offset": 17
+                    },
+                    "op": "USub",
+                    "operand": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 51,
+                        "col_offset": 16,
+                        "end_lineno": 51,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  }
+                },
+                "attr": "swapcase"
+              },
+              "args": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 54,
+          "col_offset": 0,
+          "end_lineno": 56,
+          "end_col_offset": 41
+        },
+        "name": "put",
+        "args": [
+          {
+            "arg": "board",
+            "span": {
+              "lineno": 54,
+              "col_offset": 8,
+              "end_lineno": 54,
+              "end_col_offset": 13
+            }
+          },
+          {
+            "arg": "i",
+            "span": {
+              "lineno": 54,
+              "col_offset": 15,
+              "end_lineno": 54,
+              "end_col_offset": 16
+            }
+          },
+          {
+            "arg": "p",
+            "span": {
+              "lineno": 54,
+              "col_offset": 18,
+              "end_lineno": 54,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 56,
+              "col_offset": 4,
+              "end_lineno": 56,
+              "end_col_offset": 41
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 56,
+                "col_offset": 11,
+                "end_lineno": 56,
+                "end_col_offset": 41
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 56,
+                  "col_offset": 11,
+                  "end_lineno": 56,
+                  "end_col_offset": 24
+                },
+                "left": {
+                  "kind": "Slice",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 11,
+                    "end_lineno": 56,
+                    "end_col_offset": 20
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 56,
+                      "col_offset": 11,
+                      "end_lineno": 56,
+                      "end_col_offset": 16
+                    },
+                    "id": "board"
+                  },
+                  "upper": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 56,
+                      "col_offset": 18,
+                      "end_lineno": 56,
+                      "end_col_offset": 19
+                    },
+                    "id": "i"
+                  }
+                },
+                "op": "Add",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 23,
+                    "end_lineno": 56,
+                    "end_col_offset": 24
+                  },
+                  "id": "p"
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Slice",
+                "span": {
+                  "lineno": 56,
+                  "col_offset": 27,
+                  "end_lineno": 56,
+                  "end_col_offset": 41
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 27,
+                    "end_lineno": 56,
+                    "end_col_offset": 32
+                  },
+                  "id": "board"
+                },
+                "lower": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 33,
+                    "end_lineno": 56,
+                    "end_col_offset": 38
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 56,
+                      "col_offset": 33,
+                      "end_lineno": 56,
+                      "end_col_offset": 34
+                    },
+                    "id": "i"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 56,
+                      "col_offset": 37,
+                      "end_lineno": 56,
+                      "end_col_offset": 38
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 59,
+          "col_offset": 0,
+          "end_lineno": 60,
+          "end_col_offset": 17
+        },
+        "name": "slice_of_int",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 59,
+              "col_offset": 17,
+              "end_lineno": 59,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 60,
+              "col_offset": 4,
+              "end_lineno": 60,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 60,
+                "col_offset": 11,
+                "end_lineno": 60,
+                "end_col_offset": 17
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 60,
+                  "col_offset": 11,
+                  "end_lineno": 60,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "lower": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 60,
+                  "col_offset": 13,
+                  "end_lineno": 60,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              },
+              "upper": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 60,
+                  "col_offset": 15,
+                  "end_lineno": 60,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "2"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 63,
+          "col_offset": 0,
+          "end_lineno": 64,
+          "end_col_offset": 17
+        },
+        "name": "step_zero",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 63,
+              "col_offset": 14,
+              "end_lineno": 63,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 64,
+              "col_offset": 4,
+              "end_lineno": 64,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 64,
+                "col_offset": 11,
+                "end_lineno": 64,
+                "end_col_offset": 17
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 64,
+                  "col_offset": 11,
+                  "end_lineno": 64,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "step": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 64,
+                  "col_offset": 15,
+                  "end_lineno": 64,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 67,
+          "col_offset": 0,
+          "end_lineno": 68,
+          "end_col_offset": 16
+        },
+        "name": "bad_lower",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 67,
+              "col_offset": 14,
+              "end_lineno": 67,
+              "end_col_offset": 15
+            }
+          },
+          {
+            "arg": "t",
+            "span": {
+              "lineno": 67,
+              "col_offset": 17,
+              "end_lineno": 67,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 68,
+              "col_offset": 4,
+              "end_lineno": 68,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 68,
+                "col_offset": 11,
+                "end_lineno": 68,
+                "end_col_offset": 16
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 68,
+                  "col_offset": 11,
+                  "end_lineno": 68,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "lower": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 68,
+                  "col_offset": 13,
+                  "end_lineno": 68,
+                  "end_col_offset": 14
+                },
+                "id": "t"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 71,
+          "col_offset": 0,
+          "end_lineno": 74,
+          "end_col_offset": 18
+        },
+        "name": "order_probe",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 71,
+              "col_offset": 16,
+              "end_lineno": 71,
+              "end_col_offset": 17
+            }
+          },
+          {
+            "arg": "t",
+            "span": {
+              "lineno": 71,
+              "col_offset": 19,
+              "end_lineno": 71,
+              "end_col_offset": 20
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 74,
+              "col_offset": 4,
+              "end_lineno": 74,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 74,
+                "col_offset": 11,
+                "end_lineno": 74,
+                "end_col_offset": 18
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 74,
+                  "col_offset": 11,
+                  "end_lineno": 74,
+                  "end_col_offset": 12
+                },
+                "id": "s"
+              },
+              "lower": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 74,
+                  "col_offset": 13,
+                  "end_lineno": 74,
+                  "end_col_offset": 14
+                },
+                "id": "t"
+              },
+              "step": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 74,
+                  "col_offset": 16,
+                  "end_lineno": 74,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 77,
+          "col_offset": 0,
+          "end_lineno": 78,
+          "end_col_offset": 24
+        },
+        "name": "swap_arg_raises",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 77,
+              "col_offset": 20,
+              "end_lineno": 77,
+              "end_col_offset": 21
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 78,
+              "col_offset": 4,
+              "end_lineno": 78,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 78,
+                "col_offset": 11,
+                "end_lineno": 78,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 11,
+                  "end_lineno": 78,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 78,
+                    "col_offset": 11,
+                    "end_lineno": 78,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "swapcase"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 78,
+                    "col_offset": 22,
+                    "end_lineno": 78,
+                    "end_col_offset": 23
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 81,
+          "col_offset": 0,
+          "end_lineno": 82,
+          "end_col_offset": 21
+        },
+        "name": "idx_arg_raises",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 81,
+              "col_offset": 19,
+              "end_lineno": 81,
+              "end_col_offset": 20
+            }
+          },
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 81,
+              "col_offset": 22,
+              "end_lineno": 81,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 82,
+              "col_offset": 4,
+              "end_lineno": 82,
+              "end_col_offset": 21
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 82,
+                "col_offset": 11,
+                "end_lineno": 82,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 82,
+                  "col_offset": 11,
+                  "end_lineno": 82,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 82,
+                    "col_offset": 11,
+                    "end_lineno": 82,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "index"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 82,
+                    "col_offset": 19,
+                    "end_lineno": 82,
+                    "end_col_offset": 20
+                  },
+                  "id": "n"
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 85,
+          "col_offset": 0,
+          "end_lineno": 86,
+          "end_col_offset": 20
+        },
+        "name": "upper_is_loud",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 85,
+              "col_offset": 18,
+              "end_lineno": 85,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 86,
+              "col_offset": 4,
+              "end_lineno": 86,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 86,
+                "col_offset": 11,
+                "end_lineno": 86,
+                "end_col_offset": 20
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 86,
+                  "col_offset": 11,
+                  "end_lineno": 86,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 86,
+                    "col_offset": 11,
+                    "end_lineno": 86,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "upper"
+              },
+              "args": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 89,
+          "col_offset": 0,
+          "end_lineno": 90,
+          "end_col_offset": 26
+        },
+        "name": "list_slice_is_loud",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 90,
+              "col_offset": 4,
+              "end_lineno": 90,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "Slice",
+              "span": {
+                "lineno": 90,
+                "col_offset": 11,
+                "end_lineno": 90,
+                "end_col_offset": 26
+              },
+              "value": {
+                "kind": "List",
+                "span": {
+                  "lineno": 90,
+                  "col_offset": 11,
+                  "end_lineno": 90,
+                  "end_col_offset": 20
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 90,
+                      "col_offset": 12,
+                      "end_lineno": 90,
+                      "end_col_offset": 13
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 90,
+                      "col_offset": 15,
+                      "end_lineno": 90,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 90,
+                      "col_offset": 18,
+                      "end_lineno": 90,
+                      "end_col_offset": 19
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "3"
+                    }
+                  }
+                ]
+              },
+              "step": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 90,
+                  "col_offset": 23,
+                  "end_lineno": 90,
+                  "end_col_offset": 25
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 90,
+                    "col_offset": 24,
+                    "end_lineno": 90,
+                    "end_col_offset": 25
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 93,
+          "col_offset": 0,
+          "end_lineno": 94,
+          "end_col_offset": 24
+        },
+        "name": "idx_start_is_loud",
+        "args": [
+          {
+            "arg": "s",
+            "span": {
+              "lineno": 93,
+              "col_offset": 22,
+              "end_lineno": 93,
+              "end_col_offset": 23
+            }
+          },
+          {
+            "arg": "t",
+            "span": {
+              "lineno": 93,
+              "col_offset": 25,
+              "end_lineno": 93,
+              "end_col_offset": 26
+            }
+          },
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 93,
+              "col_offset": 28,
+              "end_lineno": 93,
+              "end_col_offset": 29
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 94,
+              "col_offset": 4,
+              "end_lineno": 94,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 94,
+                "col_offset": 11,
+                "end_lineno": 94,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 94,
+                  "col_offset": 11,
+                  "end_lineno": 94,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 94,
+                    "col_offset": 11,
+                    "end_lineno": 94,
+                    "end_col_offset": 12
+                  },
+                  "id": "s"
+                },
+                "attr": "index"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 94,
+                    "col_offset": 19,
+                    "end_lineno": 94,
+                    "end_col_offset": 20
+                  },
+                  "id": "t"
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 94,
+                    "col_offset": 22,
+                    "end_lineno": 94,
+                    "end_col_offset": 23
+                  },
+                  "id": "a"
+                }
+              ],
+              "call_unsupported": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

@@ -54,5 +54,9 @@
   {
     "file": "harness/scripts/namedtuple_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/str_script.py",
+    "expect": "match"
   }
 ]

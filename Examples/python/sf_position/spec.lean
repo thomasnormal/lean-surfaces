@@ -47,6 +47,12 @@ CPython (`harness/cases.json` rows). -/
 #py_check sf_position.bad_arity(1) raises
   (.typeError "Move() takes 3 positional arguments but 1 were given")
 #py_check sf_position.missing_field(1, 2) raises .attributeError
+#py_check sf_position.rotate_fields(5, 95, 22) =
+  (Val.tuple #[.str "K.dC bA", .int (-5), .bool false, .bool true, .int 24, .int 97])
+#py_check sf_position.rotate_fields(0, 0, 0) =
+  (Val.tuple #[.str "K.dC bA", .int 0, .bool false, .bool true, .int 0, .int 0])
+#py_check sf_position.rotate_null_fields(-7, 95, 22) =
+  (Val.tuple #[.str "K.dC bA", .int 7, .bool false, .bool true, .int 0, .int 0])
 
 /-! The loud frontier, pinned raw (no surface form for `unsupported` —
 deliberate): a namedtuple result refuses the public freeze; the

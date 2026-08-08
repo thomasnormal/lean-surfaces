@@ -164,15 +164,36 @@ structure ClassDefn where
   span : Span
 deriving Repr, Inhabited, BEq, DecidableEq
 
+/-- A module-level namedtuple class (H3+, docs/memory-model.md §class
+semantics — the recorded VALUE-like decision): recognized at INGESTION
+from a top-level `X = namedtuple("T", <fields>)` assignment under the
+exact benign import `from collections import namedtuple`, subject to the
+conservative binding census (see `Json.lean`); unrecognized shapes stay
+ordinary assignments (poisoned G1 bindings — loud, never wrong).
+`name` is the BOUND module-level name (constructor resolution); `tname`
+the typename argument (CPython error messages name it; the harness
+compares exception classes only); `fields` the validated field names in
+declaration order. Instances are immediate `RVal.ntuple` VALUES — no
+heap identity, tuple equality/hashing — so a `NamedTupleId` table index
+is unnecessary: the value carries its own `tname`/`fields`. -/
+structure NamedTupleDefn where
+  name : String
+  tname : String
+  fields : Array String
+  span : Span
+deriving Repr, Inhabited, BEq, DecidableEq
+
 /-- A Python module: `def`s split out into `functions` (in source order,
 including class methods flattened under `"<class>.<method>"` qualified
 names — see `ClassDefn`); `class`es split into `classes` (in source
-order); all other top-level statements recorded in `topLevel` (in source
-order). -/
+order); recognized namedtuple classes split into `namedtuples` (in source
+order — see `NamedTupleDefn`); all other top-level statements recorded in
+`topLevel` (in source order). -/
 structure Module where
   functions : Array FunctionDefn
   topLevel : Array Stmt
   classes : Array ClassDefn := #[]
+  namedtuples : Array NamedTupleDefn := #[]
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt`/`FunctionDefn` have none (nested arrays).
 

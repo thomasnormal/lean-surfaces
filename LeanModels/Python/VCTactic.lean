@@ -420,6 +420,8 @@ def interpUnfolds : List Name :=
    ``heapAttrStore, ``findClass, ``findClassAux, ``classAt, ``getClass?,
    ``attrReadPlan, ``attrReadResult, ``attrCallPlan, ``execAttrCall,
    ``endsWithUU, ``dunderShaped, ``hasExtraDunder,
+   ``findNamedTuple, ``findNamedTupleAux, ``fieldIndex, ``ntupleProtoName,
+   ``ntupleAttr,
    ``RVal.refFree, ``RVal.refFreeList,
    ``Val.listFree, ``Val.listFreeList, ``Val.listFreeArgs,
    ``Heap.get?, ``Heap.update, ``danglingMsg,
@@ -1609,6 +1611,10 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       (← mkAppM ``lookupG #[← mkAppM ``Prod.fst #[← mkAppM ``moduleGlobals #[tg.m]], fnameE])
     unless (← whnfR rG).isAppOfArity ``Option.none 1 do
       throwError "py_vcgen: callee `{fname}` is shadowed by a module-level (G1) binding"
+    let (rNt, prfNt) ← captureRun ctx.pack
+      (← mkAppM ``findNamedTuple #[tg.m, fnameE])
+    unless (← whnfR rNt).isAppOfArity ``Option.none 1 do
+      throwError "py_vcgen: callee `{fname}` is bound by a module-level namedtuple assignment"
     let (argEs, argTail) ← parseListLit (← arrToList argsArr)
     unless isNilTail argTail do
       throwError "py_vcgen: call-argument list is not literal"
@@ -1652,7 +1658,7 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let hcall ← appOpt ``EvalsTo.call
       #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
         some vNF, some spf, some spc, some prfL, some hargs, some hworld,
-        some factE', some prfG, some hHeapFree, some hListFree]
+        some factE', some prfG, some prfNt, some hHeapFree, some hListFree]
     let (rAs, prfAs) ← captureRun ctx.pack
       (← mkAppM ``assignTo #[localsE, tgtE, rvNF])
     let rAs' ← whnfR rAs

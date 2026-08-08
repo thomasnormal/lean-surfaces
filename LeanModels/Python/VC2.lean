@@ -270,6 +270,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     (hworld : st.world = initWorld m)
     (hspec : CallsTo m fname args v)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl)
     (hv : Val.listFree v = true := by rfl) :
     EvalsTo m st (.call (.name fname sp) argEs Option.none sp') (RVal.thaw v) := by
@@ -290,7 +291,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
   have hc' := hc (ta + tc) (by omega)
   have hc'' : callIn m (ta + tc) (initWorld m) fname
       (RVal.thawList args.toList).toArray = Run.ok (initWorld m) (RVal.thaw v) := hc'
-  simp [evalExpr, hlocal, hglob, hfn, findClass_heapFree hm fname, ha', hc'']
+  simp [evalExpr, hlocal, hglob, hfn, hnt, findClass_heapFree hm fname, ha', hc'']
 
 /-- **The call rule** — `x = f(e₁, …, eₖ)` consuming a callee spec: from
 each `P`-state, the callee name unshadowed, the pinned public world, the
@@ -307,13 +308,14 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
           CallsTo m fname args v ∧
           Q.next ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl) :
     PyStmtTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa)
       Q :=
   PyStmtTriple.assignName fun st hP =>
     let ⟨hlocal, hworld, _args, v, hvs, hlf, hc, hQ⟩ := h st hP
-    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob hm hlf, hQ⟩
+    ⟨RVal.thaw v, EvalsTo.call hlocal hvs hworld hc hglob hnt hm hlf, hQ⟩
 
 /-- List-level form of the call rule: `x = f(…)` followed by `rest`, with
 the callee's postcondition (thawed result bound to `x`) as the
@@ -329,11 +331,12 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
           R ⟨st.world, Env.set st.locals x (RVal.thaw v)⟩)
     (hrest : PyTriple m R rest Q)
     (hglob : lookupG (moduleGlobals m).1 fname = Option.none := by rfl)
+    (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl) :
     PyTriple m P
       (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa
         :: rest) Q :=
-  PyTriple.seq (PyStmtTriple.call h hglob hm) hrest
+  PyTriple.seq (PyStmtTriple.call h hglob hnt hm) hrest
 
 /-! ## The `@[py_spec]` registry -/
 
@@ -642,7 +645,7 @@ private abbrev wLoop : Stmt :=
         (.binOp (.name "x" wSp) .sub (.constant (.int 1) wSp) wSp) wSp]
     #[] wSp
 
-#guard execStmt ⟨#[], #[], #[]⟩ 64 ⟨⟨#[], [], []⟩, [("x", .int 5)]⟩ wLoop
+#guard execStmt ⟨#[], #[], #[], #[]⟩ 64 ⟨⟨#[], [], []⟩, [("x", .int 5)]⟩ wLoop
   == .ok ⟨⟨#[], [], []⟩, [("x", .int 0)]⟩ .next
 
 /-- The countdown terminates at `x = 0` — while rule only, any module,

@@ -185,9 +185,16 @@ theorem heapEqMono (fuel : Nat) :
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         cases a <;> cases b <;> simp only [heapEq] <;>
           try exact Res.le_refl _
-        -- remaining: tuple/tuple, listV/listV (elementwise), ref/ref (dicts)
+        -- remaining: tuple/tuple, listV/listV, the tuple/namedtuple square
+        -- (elementwise), ref/ref (dicts)
         case tuple.tuple xs ys => exact ihL h active xs.toList ys.toList k hk
         case listV.listV xs ys => exact ihL h active xs.toList ys.toList k hk
+        case ntuple.ntuple tn1 fs1 xs tn2 fs2 ys =>
+          exact ihL h active xs.toList ys.toList k hk
+        case ntuple.tuple tn1 fs1 xs ys =>
+          exact ihL h active xs.toList ys.toList k hk
+        case tuple.ntuple xs tn2 fs2 ys =>
+          exact ihL h active xs.toList ys.toList k hk
         case ref.ref x y =>
           refine Res.le_ite (Res.le_refl _) (Res.le_ite (Res.le_refl _) ?_)
           cases hx : Heap.get? h x with
@@ -478,7 +485,8 @@ theorem fuelMono (fuel : Nat) :
                   cases findClass m fname with
                   | some p =>
                     obtain ⟨ci, c⟩ := p
-                    refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                    refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                      (Run.le_ite (Run.le_refl _) ?_))
                     refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                     refine Run.le_ite ?_ (Run.le_refl _)
                     refine Run.le_bind (Run.le_withLocals
@@ -486,9 +494,15 @@ theorem fuelMono (fuel : Nat) :
                       fun st'' r => ?_
                     cases r <;> exact Run.le_refl _
                   | none =>
-                    exact Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                      (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                        (Run.le_refl _))))))
+                    -- namedtuple construction binds the arguments, then a
+                    -- fuel-independent value/arity fork; the builtin chain
+                    -- is as before
+                    cases findNamedTuple m fname with
+                    | some nt => exact hb _
+                    | none =>
+                      exact Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
+                        (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
+                          (Run.le_refl _))))))
         | list elts _ =>
           simp only [evalExpr]
           exact Run.le_bind (ihEs m st elts.toList k hk) fun st vs => Run.le_refl _
@@ -615,6 +629,7 @@ theorem fuelMono (fuel : Nat) :
             cases it <;> try exact Run.le_refl _
             case listV xs => exact ihFor m st target xs.toList body.toList k hk
             case tuple xs => exact ihFor m st target xs.toList body.toList k hk
+            case ntuple tn fs xs => exact ihFor m st target xs.toList body.toList k hk
             case ref a => exact ihForL m st target a 0 body.toList k hk
         | ifStmt test body orelse _ =>
           simp only [execStmt]
@@ -870,6 +885,7 @@ mutual
         simp only [RVal.freezeB]
         exact Res.le_bind (RVal.freezeListB_mono h xs.toList hf)
           fun vs => Res.le_refl _
+    | .ntuple _ _ _, _, _, _ => Res.le_refl _
     | .ref a, fuel, fuel', hf => (freezeHMono fuel).1 h [] (.ref a) fuel' hf
 
   /-- Elementwise `freezeB_mono`. -/
@@ -1091,7 +1107,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             | none => exact .unsupported
           | none =>
             exact .ite .unsupported (.ite .unsupported (.ite .unsupported
-              (.ite .exn .unsupported)))
+              (.ite .unsupported (.ite .exn .unsupported))))
       | binOp l op r _ =>
         simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         simp only [evalExpr]
@@ -1164,24 +1180,20 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 | some v => cases v <;> exact .bind hargs fun st₁ _ h₁ => .exn
                 | none => exact .unsupported
               | none =>
-                -- a heap-free module has no classes: the def/class
-                -- collision guard, the instantiation branch, and the
-                -- method tier all reduce away
+                -- a heap-free module has no classes: the instantiation
+                -- branch reduces away; the def/namedtuple collision guard
+                -- stays an undecided (walked) ite, and namedtuple
+                -- CONSTRUCTION is a pure value — world-preserving
                 simp only [hs, findClass_heapFree hm fname, Option.isSome_none,
-                  Bool.false_eq_true, if_false]
-                refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                  Bool.false_or, Bool.false_eq_true, if_false]
+                refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
                     (l := st₁.locals)).mono
                       (fun s hs => (show s.world = st₁.world from hs).trans h₁)
-                · refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
-                  · cases vs with
-                    | nil => exact .exn
-                    | cons v rest =>
-                      cases rest with
-                      | nil => exact .liftResF h₁ _
-                      | cons _ _ => exact .exn
-                  · refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
-                    refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                · cases hnt : findNamedTuple m fname with
+                  | some nt =>
+                    exact .bind hargs fun st₁ vs h₁ => .ite (.okF h₁ _) .exn
+                  | none =>
                     refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
                     · cases vs with
                       | nil => exact .exn
@@ -1189,14 +1201,23 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                         cases rest with
                         | nil => exact .liftResF h₁ _
                         | cons _ _ => exact .exn
-                    · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
-                        (.ite .unsupported (.ite .exn .unsupported))
-                      cases vs with
-                      | nil => exact .okF h₁ _
-                      | cons v rest =>
-                        cases rest with
-                        | nil => exact .liftResF h₁ _
-                        | cons _ _ => exact .unsupported
+                    · refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                      refine .ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _) ?_
+                      refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
+                      · cases vs with
+                        | nil => exact .exn
+                        | cons v rest =>
+                          cases rest with
+                          | nil => exact .liftResF h₁ _
+                          | cons _ _ => exact .exn
+                      · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
+                          (.ite .unsupported (.ite .exn .unsupported))
+                        cases vs with
+                        | nil => exact .okF h₁ _
+                        | cons v rest =>
+                          cases rest with
+                          | nil => exact .liftResF h₁ _
+                          | cons _ _ => exact .unsupported
       | list elts _ =>
         -- H2: list displays ALLOCATE — outside the fragment
         simp [Expr.heapFree] at hfree
@@ -1222,6 +1243,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         cases r <;>
           first
           | exact .unsupported
+          | exact .liftResF h₁ _
           | exact fun s₂ v₂ he => (attrReadResult_ok he) ▸ h₁
       | unsupported pyKind text _ => simp only [evalExpr]; exact .unsupported
     -- evalExprs
@@ -1329,6 +1351,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             exact (ihFor st₁ target _ body.toList hfree.1.2).mono
               (wtrans st st₁ h₁)
           | tuple xs =>
+            exact (ihFor st₁ target _ body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
+          | ntuple tn fs xs =>
             exact (ihFor st₁ target _ body.toList hfree.1.2).mono
               (wtrans st st₁ h₁)
           | ref a =>

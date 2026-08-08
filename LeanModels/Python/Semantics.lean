@@ -95,7 +95,8 @@ def Val.typeName : Val → String
 /-- Python type name of a runtime value. A `.ref`'s real type name lives in
 the heap (H1-proper resolves it there); the `"object"` placeholder is never
 part of a *decided* outcome — every helper refuses `.ref` operands loudly
-BEFORE building an error message from `typeName`. -/
+BEFORE building an error message from `typeName`. A namedtuple names its
+own class (`Move`), exactly as CPython error messages do. -/
 def RVal.typeName : RVal → String
   | .none => "NoneType"
   | .bool _ => "bool"
@@ -103,12 +104,16 @@ def RVal.typeName : RVal → String
   | .str _ => "str"
   | .listV _ => "list"
   | .tuple _ => "tuple"
+  | .ntuple tn _ _ => tn
   | .ref _ => "object"
 
 /-- Is this runtime value one of the value-sequence types
-(`str`/`listV`/`tuple`)? -/
+(`str`/`listV`/`tuple`/namedtuple)? Namedtuples ARE tuples in CPython
+(sequence protocol included), so they answer `true` — which routes
+repetition to the loud sequence-repetition arm, never a fake `TypeError`. -/
 def RVal.isSeq : RVal → Bool
   | .str _ | .listV _ | .tuple _ => true
+  | .ntuple _ _ _ => true
   | _ => false
 
 /-- Is this runtime value Python's `None` singleton? (The value-level test
@@ -168,6 +173,7 @@ def truthy : RVal → Res Bool
   | .str s => .ok (!s.isEmpty)
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
+  | .ntuple _ _ xs => .ok (xs.size != 0)
   | .ref _ => .unsupported
       "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
@@ -196,6 +202,11 @@ mutual
     | .str s, .str t => .ok (s == t)
     | .listV xs, .listV ys => valEqList xs.toList ys.toList
     | .tuple xs, .tuple ys => valEqList xs.toList ys.toList
+    -- namedtuples compare as plain tuples (CPython: tuple.__eq__ — the
+    -- class is IGNORED, even across two different namedtuple classes)
+    | .ntuple _ _ xs, .ntuple _ _ ys => valEqList xs.toList ys.toList
+    | .ntuple _ _ xs, .tuple ys => valEqList xs.toList ys.toList
+    | .tuple xs, .ntuple _ _ ys => valEqList xs.toList ys.toList
     | .ref _, _ => .unsupported
         "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
     | _, .ref _ => .unsupported
@@ -322,6 +333,11 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .add, .listV xs, .listV ys => .ok (.listV (xs ++ ys))
     | .add, .tuple xs, .tuple ys => .ok (.tuple (xs ++ ys))
+    -- namedtuple `+` concatenates as tuples and yields a PLAIN tuple
+    -- (CPython: tuple.__add__ — the class does not survive concatenation)
+    | .add, .ntuple _ _ xs, .tuple ys => .ok (.tuple (xs ++ ys))
+    | .add, .tuple xs, .ntuple _ _ ys => .ok (.tuple (xs ++ ys))
+    | .add, .ntuple _ _ xs, .ntuple _ _ ys => .ok (.tuple (xs ++ ys))
     | op, .ref _, _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
@@ -389,6 +405,7 @@ def lenVal : RVal → Res RVal
   | .str s => .ok (.int s.length)
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
+  | .ntuple _ _ xs => .ok (.int xs.size)
   | .ref _ =>
       .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
@@ -444,6 +461,7 @@ def sortedVal : RVal → Res RVal
         .unsupported "sorted() on a list with non-int elements is outside the v0 tier"
   | .str _ => .unsupported "sorted() on a str is outside the v0 tier"
   | .tuple _ => .unsupported "sorted() on a tuple is outside the v0 tier"
+  | .ntuple _ _ _ => .unsupported "sorted() on a namedtuple is outside the v0 tier"
   | .ref _ =>
       .unsupported "sorted() on a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -470,6 +488,12 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
       | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
     | .tuple xs =>
+      match asIntList xs.toList with
+      | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+      | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
+      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
+    | .ntuple _ _ xs =>
+      -- namedtuples iterate as tuples (CPython: `max(Entry(1,2))` is 2)
       match asIntList xs.toList with
       | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
@@ -543,6 +567,16 @@ def indexVal (container index : RVal) : Res RVal :=
       | Option.none => .exn .indexError
     | Option.none =>
       .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
+  | .ntuple _ _ xs, index =>
+    -- namedtuple subscripting IS tuple subscripting (tuple.__getitem__ —
+    -- the error message names 'tuple', exactly as CPython's does)
+    match asInt index with
+    | some i =>
+      match normIndex i xs.size with
+      | some n => .ok (xs.getD n .none)
+      | Option.none => .exn .indexError
+    | Option.none =>
+      .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
   | .str s, index =>
     match asInt index with
     | some i =>
@@ -574,6 +608,9 @@ mutual
   def hashableKey : RVal → Bool
     | .none | .bool _ | .int _ | .str _ => true
     | .tuple xs => hashableKeyList xs.toList
+    -- a namedtuple hashes as a tuple (tuple.__hash__): hashable iff its
+    -- elements are — sunfish's `(pos, depth, root)` keys stay in tier
+    | .ntuple _ _ xs => hashableKeyList xs.toList
     | .listV _ => false
     | .ref _ => false
 
@@ -631,6 +668,11 @@ mutual
     | .int n, .int m => n == m
     | .str s, .str t => s == t
     | .tuple xs, .tuple ys => keyEqList xs.toList ys.toList
+    -- namedtuple keys ARE tuple keys (hash and `==` erase the class):
+    -- `d[Move(1,2,"")]` and `d[(1,2,"")]` address one entry, as in CPython
+    | .ntuple _ _ xs, .ntuple _ _ ys => keyEqList xs.toList ys.toList
+    | .ntuple _ _ xs, .tuple ys => keyEqList xs.toList ys.toList
+    | .tuple xs, .ntuple _ _ ys => keyEqList xs.toList ys.toList
     | _, _ => false
 
   /-- Elementwise `keyEq`; `false` on length mismatch. -/
@@ -651,6 +693,7 @@ mutual
       | some (.instance _ _) => true
       | _ => false
     | .tuple xs => keyHasInstanceRefList h xs.toList
+    | .ntuple _ _ xs => keyHasInstanceRefList h xs.toList
     | _ => false
 
   /-- Elementwise `keyHasInstanceRef`. -/
@@ -886,6 +929,11 @@ mutual
       | _, .ref _ => .ok false
       | .tuple xs, .tuple ys => heapEqList h fuel active xs.toList ys.toList
       | .listV xs, .listV ys => heapEqList h fuel active xs.toList ys.toList
+      -- namedtuples compare as tuples through the heap too (elements may
+      -- carry refs — a namedtuple holding a list is comparable)
+      | .ntuple _ _ xs, .ntuple _ _ ys => heapEqList h fuel active xs.toList ys.toList
+      | .ntuple _ _ xs, .tuple ys => heapEqList h fuel active xs.toList ys.toList
+      | .tuple xs, .ntuple _ _ ys => heapEqList h fuel active xs.toList ys.toList
       | a, b => valEq a b
 
   /-- Elementwise `heapEq` (tuple/list contents may contain refs); `false`
@@ -985,13 +1033,13 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
   | .inOp =>
     match b with
     | .ref d => heapContains h fuel d a
-    | .listV _ | .tuple _ | .str _ =>
+    | .listV _ | .tuple _ | .str _ | .ntuple _ _ _ =>
       .unsupported s!"'in' on '{b.typeName}' is outside this tier (heap-container membership only)"
     | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
   | .notIn =>
     match b with
     | .ref d => do let e ← heapContains h fuel d a; return !e
-    | .listV _ | .tuple _ | .str _ =>
+    | .listV _ | .tuple _ | .str _ | .ntuple _ _ _ =>
       .unsupported s!"'not in' on '{b.typeName}' is outside this tier (heap-container membership only)"
     | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
   | op => evalCompareOp op a b
@@ -1017,6 +1065,7 @@ def indexValH (h : Heap) (container index : RVal) : Res RVal :=
   | .ref a, k => heapIndex h a k
   | .listV _, .ref b => .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | .tuple _, .ref b => .exn (.typeError s!"tuple indices must be integers, not {RVal.typeNameH h (.ref b)}")
+  | .ntuple _ _ _, .ref b => .exn (.typeError s!"tuple indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | .str _, .ref b => .exn (.typeError s!"string indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | c, i => indexVal c i
 
@@ -1099,6 +1148,14 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
     | some names =>
       match v with
       | .listV xs | .tuple xs =>
+        if xs.size = names.length then .ok (bindAll env names xs.toList)
+        else if names.length < xs.size then
+          .exn (.valueError s!"too many values to unpack (expected {names.length})")
+        else
+          .exn (.valueError
+            s!"not enough values to unpack (expected {names.length}, got {xs.size})")
+      | .ntuple _ _ xs =>
+        -- namedtuples unpack as tuples (`i, j, prom = move`)
         if xs.size = names.length then .ok (bindAll env names xs.toList)
         else if names.length < xs.size then
           .exn (.valueError s!"too many values to unpack (expected {names.length})")
@@ -1318,6 +1375,67 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     else if attr == "pop" then .listPop
     else .refuse s!"method call '.{attr}' on a list is outside the tier (list '.append'/'.pop' only; docs/memory-model.md)"
   | Option.none => .dangling
+
+/-! ## The namedtuple table (H3+, docs/memory-model.md §class semantics —
+the recorded VALUE-like decision, implemented)
+
+`X = namedtuple("T", "f1 f2")` under the benign import is recognized at
+ingestion into `Module.namedtuples` (the recognized assign leaves
+`topLevel` as `pass`, so G1 neither binds nor poisons `X`). A constructor
+call builds an IMMEDIATE `RVal.ntuple` value — no allocation, no heap
+identity; field access is tuple indexing by declared position; equality,
+hashing, iteration, unpacking, `len`, and subscripting are the value-tuple
+semantics (arms above). `_replace`/`_asdict`/`_make`/`_fields` and the
+tuple methods `count`/`index` EXIST in CPython — loud, never a fake
+`AttributeError`; an unknown non-protocol attribute IS the faithful
+`AttributeError`. -/
+
+/-- Scan for the LAST namedtuple with this bound name (the `findClassAux`
+discipline — last binding wins; ingestion refuses duplicate binds, so the
+arm matters only for hand-built modules). List-structural. -/
+def findNamedTupleAux : List NamedTupleDefn → String → Option NamedTupleDefn
+  | [], _ => Option.none
+  | nt :: rest, name =>
+    match findNamedTupleAux rest name with
+    | some r => some r
+    | Option.none => if nt.name == name then some nt else Option.none
+
+/-- Resolve a module-level name to its namedtuple class (constructor
+resolution; also the loud name-as-value and collision guards). -/
+def findNamedTuple (m : Module) (name : String) : Option NamedTupleDefn :=
+  findNamedTupleAux m.namedtuples.toList name
+
+/-- Position of a field name in the declaration order (list-structural,
+kernel-reducible — the `Array.idxOf` USize loop would break `#py_check`). -/
+def fieldIndex : List String → String → Option Nat
+  | [], _ => Option.none
+  | f :: fs, attr =>
+    if f == attr then some 0 else (fieldIndex fs attr).map (· + 1)
+
+/-- Non-field attributes that EXIST on every CPython namedtuple (the
+namedtuple protocol plus the tuple methods): referencing or calling them
+is out of tier — loud, never a fake `AttributeError`. -/
+def ntupleProtoName (attr : String) : Bool :=
+  attr == "_replace" || attr == "_asdict" || attr == "_make" ||
+  attr == "_fields" || attr == "_field_defaults" ||
+  attr == "count" || attr == "index"
+
+/-- Attribute READ on a namedtuple value: a declared field desugars to
+tuple indexing (the VALUE-like decision); the namedtuple/tuple protocol
+names and dunders exist in CPython — loud; anything else is the faithful
+`AttributeError`. The size guard is defensive (constructor calls always
+build `fields.size` elements; a hand-built mismatch reports loudly). -/
+def ntupleAttr (fields : Array String) (xs : Array RVal) (attr : String) :
+    Res RVal :=
+  match fieldIndex fields.toList attr with
+  | some i =>
+    if i < xs.size then .ok (xs.getD i .none)
+    else .unsupported
+      "internal: namedtuple field/value arity mismatch (unconstructible through the interpreter — report this)"
+  | Option.none =>
+    if ntupleProtoName attr || dunderShaped attr then
+      .unsupported s!"namedtuple attribute '.{attr}' is outside the tier (field access only; '_replace'/'_asdict'/'count'/… are loud — docs/memory-model.md §class semantics)"
+    else .exn .attributeError
 
 /-! ## Module-level constants (globals, G1 — world-init since H1-proper)
 
@@ -1787,6 +1905,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
           else if (findClass m id).isSome then
             .unsupported s!"referencing class '{id}' as a value is outside the H3 tier (classes are called, not passed)"
+          else if (findNamedTuple m id).isSome then
+            .unsupported s!"referencing namedtuple class '{id}' as a value is outside the tier (namedtuple classes are called, not passed)"
           else if isBuiltinName id then
             .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
           else if (moduleGlobals m).2 then
@@ -1839,11 +1959,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
             | Option.none =>
             if (findFunction m fname).isSome then
-              if (findClass m fname).isSome then
-                -- `def X` and `class X` in one module: the functions/classes
-                -- split loses source order, so last-binding-wins is
-                -- undecidable here — loud, never a guess.
-                .unsupported s!"name '{fname}' is bound by both 'def' and 'class' at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
+              if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
+                -- `def X` and `class X` (or a namedtuple bind `X = …`) in
+                -- one module: the split representation loses source order,
+                -- so last-binding-wins is undecidable here — loud, never a
+                -- guess. (Ingestion refuses recognizing such namedtuples;
+                -- the guard also covers hand-built modules.)
+                .unsupported s!"name '{fname}' is bound by both 'def' and 'class'/namedtuple at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
               else
                 evalExprs m fuel st args.toList ⤳ fun st vs =>
                 -- The frozen recursion point: the callee shares this frame's
@@ -1855,7 +1977,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 -- INSTANTIATION (H3): allocate the instance in the shared
                 -- world, then run `__init__` (if any) through `callIn` with
                 -- `self` as the first argument — methods are functions.
-                if !c.ok then
+                if (findNamedTuple m fname).isSome then
+                  -- `class X` and a namedtuple bind `X = …`: source order
+                  -- lost by the split — loud (unconstructible through
+                  -- ingestion; hand-built defense).
+                  .unsupported s!"name '{fname}' is bound by both 'class' and a namedtuple assignment at module level — source-order resolution is outside the tier"
+                else if !c.ok then
                   .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
                 else if hasExtraDunder c then
                   .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
@@ -1878,48 +2005,63 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st' (.ref a)
                     | _ => .exn st (.typeError s!"{fname}() takes no arguments")
               | Option.none =>
-                if fname == "len" then
+                match findNamedTuple m fname with
+                | some nt =>
+                  -- namedtuple CONSTRUCTION (the VALUE-like decision): an
+                  -- immediate value, no allocation — the world is exactly
+                  -- the arguments'. Wrong arity is the faithful TypeError
+                  -- (CPython raises through tuple.__new__; the harness
+                  -- compares exception classes). Keyword construction
+                  -- never reaches here (`call_unsupported: "keywords"`).
                   evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  match vs with
-                  | [v] => Run.liftRes st (lenValH st.world.heap v)
-                  | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
-                else if fname == "sorted" then
-                  -- After `findFunction`, so a module-level `def sorted` shadows
-                  -- the builtin, exactly as CPython's module globals do. H2:
-                  -- `sorted` of a heap list ALLOCATES its fresh result
-                  -- (`sortedValH`); value arguments stay on the pure path.
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  match vs with
-                  | [v] =>
-                    Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
-                    match hr with
-                    | (h', r) => .ok { st with world := { st.world with heap := h' } } r
-                  | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
-                else if fname == "max" then
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  Run.liftRes st (extremumValH st.world.heap true vs)
-                else if fname == "min" then
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  Run.liftRes st (extremumValH st.world.heap false vs)
-                else if fname == "abs" then
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  match vs with
-                  | [v] => Run.liftRes st (absVal v)
-                  | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
-                else if fname == "int" then
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  match vs with
-                  | [] => .ok st (.int 0)
-                  | [v] => Run.liftRes st (intCastVal v)
-                  | _ => .unsupported "int() with a base argument is outside the v0 tier"
-                else if fname == "print" then
-                  -- the effect must thread World.stdout through this block;
-                  -- until then a wrong NameError would be silently unfaithful
-                  .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
-                else if (moduleGlobals m).2 then
-                  .exn st (.nameError fname)
-                else
-                  .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
+                  if vs.length == nt.fields.size then
+                    .ok st (.ntuple nt.tname nt.fields vs.toArray)
+                  else
+                    .exn st (.typeError
+                      s!"{fname}() takes {nt.fields.size} positional arguments but {vs.length} were given")
+                | Option.none =>
+                  if fname == "len" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v] => Run.liftRes st (lenValH st.world.heap v)
+                    | _ => .exn st (.typeError s!"len() takes exactly one argument ({vs.length} given)")
+                  else if fname == "sorted" then
+                    -- After `findFunction`, so a module-level `def sorted` shadows
+                    -- the builtin, exactly as CPython's module globals do. H2:
+                    -- `sorted` of a heap list ALLOCATES its fresh result
+                    -- (`sortedValH`); value arguments stay on the pure path.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v] =>
+                      Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
+                      match hr with
+                      | (h', r) => .ok { st with world := { st.world with heap := h' } } r
+                    | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
+                  else if fname == "max" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (extremumValH st.world.heap true vs)
+                  else if fname == "min" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (extremumValH st.world.heap false vs)
+                  else if fname == "abs" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v] => Run.liftRes st (absVal v)
+                    | _ => .exn st (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
+                  else if fname == "int" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [] => .ok st (.int 0)
+                    | [v] => Run.liftRes st (intCastVal v)
+                    | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "print" then
+                    -- the effect must thread World.stdout through this block;
+                    -- until then a wrong NameError would be silently unfaithful
+                    .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
+                  else if (moduleGlobals m).2 then
+                    .exn st (.nameError fname)
+                  else
+                    .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
         | .attribute recv attr _ =>
           -- Method calls (dict `.get`, H2 list `.append`/`.pop`, H3
           -- instance methods). CPython order: the receiver (and its
@@ -1934,6 +2076,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           evalExpr m fuel st recv ⤳ fun st r =>
           match r with
           | .ref a => execAttrCall m fuel st a attr args.toList
+          | .ntuple _ _ _ =>
+            -- `move._replace(…)`, `move.count(…)`, and a FIELD in call
+            -- position all exist in CPython — loud, decided before the
+            -- arguments (receiver-first, like every attribute dispatch)
+            .unsupported s!"method call '.{attr}' on a namedtuple is outside the tier (field access only; '_replace' and friends are loud — docs/memory-model.md §class semantics)"
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
@@ -1973,6 +2120,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
       evalExpr m fuel st recv ⤳ fun st r =>
       match r with
       | .ref a => attrReadResult m st a attr
+      | .ntuple _ fields xs =>
+        -- namedtuple FIELD access (the VALUE-like decision): tuple
+        -- indexing by declared position — pure, world-preserving
+        Run.liftRes st (ntupleAttr fields xs attr)
       | r =>
         .unsupported s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
@@ -2181,6 +2332,7 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         match it with
         | .listV xs => execFor m fuel st target xs.toList body.toList
         | .tuple xs => execFor m fuel st target xs.toList body.toList
+        | .ntuple _ _ xs => execFor m fuel st target xs.toList body.toList
         | .str _ => .unsupported "'for' over a str is outside the v0 tier"
         | .ref a =>
           -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR against the

@@ -38,6 +38,17 @@ inductive RVal where
   /-- TRANSITIONAL value-semantics lists (the current tier); they move to
   the heap (`Obj.list`) at H2 and this constructor is removed. -/
   | listV (xs : Array RVal)
+  /-- A namedtuple instance (docs/memory-model.md §class semantics — the
+  recorded VALUE-like decision): an IMMEDIATE value, never a heap object.
+  It carries its own class name (`tname`, error messages) and field names
+  (attribute reads desugar to indexing), so no module table is consulted
+  at access time. Equality/hashing erase the class entirely — CPython
+  namedtuples compare as plain tuples (`Move(1,2,'') == (1,2,'')`), which
+  is exactly what keeps sunfish's `tp_score` keys in the pure `keyEq`
+  tier. No `Val` observation form exists: the boundary freeze refuses
+  namedtuple results LOUDLY (a `Val.tuple` snapshot would silently forget
+  the class AND falsify freeze inversion — recorded decision). -/
+  | ntuple (tname : String) (fields : Array String) (xs : Array RVal)
   | ref   (a : Addr)
 deriving Repr, Inhabited, BEq
 
@@ -131,6 +142,7 @@ mutual
     | .none | .bool _ | .int _ | .str _ => True
     | .tuple xs => RVal.WFList h xs.toList
     | .listV xs => RVal.WFList h xs.toList
+    | .ntuple _ _ xs => RVal.WFList h xs.toList
     | .ref a => a < h.size
 
   /-- Elementwise `RVal.WF`. -/
@@ -372,6 +384,8 @@ mutual
     | .tuple xs => do
         let vs ← RVal.freezeList xs.toList
         return .tuple vs.toArray
+    | .ntuple _ _ _ =>
+        .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
     | .ref _ =>
         .unsupported "returning a heap object through the call boundary is outside the tier (H1-proper freeze, docs/memory-model.md)"
 
@@ -438,6 +452,8 @@ mutual
         cases (Res.ok.inj hv)
         have := RVal.eqList_thawList_of_freezeList xs.toList hl
         simp [RVal.thaw, ← this]
+    | .ntuple _ _ _, v, h => by
+        cases h
     | .ref _, v, h => by
         cases h
 
@@ -479,6 +495,7 @@ mutual
         | exn e' => exact absurd hl (RVal.freezeList_ne_exn xs.toList e')
         | timeout => simp
         | unsupported msg => simp
+    | .ntuple _ _ _, e => by simp [RVal.freeze]
     | .ref _, e => by simp [RVal.freeze]
 
   /-- Elementwise `freeze_ne_exn`. -/
@@ -663,6 +680,7 @@ mutual
     | .none | .bool _ | .int _ | .str _ => true
     | .tuple xs => RVal.refFreeList xs.toList
     | .listV xs => RVal.refFreeList xs.toList
+    | .ntuple _ _ xs => RVal.refFreeList xs.toList
     | .ref _ => false
 
   /-- Elementwise `RVal.refFree`. -/
@@ -697,6 +715,8 @@ mutual
         | .tuple xs => do
             let vs ← RVal.freezeListH h fuel path xs.toList
             return .tuple vs.toArray
+        | .ntuple _ _ _ =>
+            .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
         | .ref a =>
           if path.contains a then
             .unsupported "returning a CYCLIC heap object through the call boundary is outside the tier (no cyclic observation form in `Val`; docs/memory-model.md §call layering)"
@@ -746,6 +766,8 @@ mutual
     | .tuple xs => do
         let vs ← RVal.freezeListB h fuel xs.toList
         return .tuple vs.toArray
+    | .ntuple _ _ _ =>
+        .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
     | .ref a => RVal.freezeH h fuel [] (.ref a)
 
   /-- Elementwise `freezeB`, first refusal wins. -/
@@ -874,6 +896,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
         | exn e' => exact ihL path xs.toList e' hl
         | timeout => rw [hl] at hc; simp at hc
         | unsupported msg => rw [hl] at hc; simp at hc
+      | ntuple tn fs xs => simp [RVal.freezeH] at hc
       | ref a =>
         simp only [RVal.freezeH] at hc
         by_cases hp : path.contains a = true
@@ -938,6 +961,7 @@ mutual
         | exn e' => exact absurd hl (RVal.freezeListB_ne_exn h fuel xs.toList e')
         | timeout => simp [hl]
         | unsupported msg => simp [hl]
+    | .ntuple _ _ _, e => by simp [RVal.freezeB]
     | .ref a, e => RVal.freezeH_ne_exn
 
   /-- Elementwise `freezeB_ne_exn`. -/
@@ -1009,6 +1033,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
           simpa [Val.listFree] using hlf
         have := ihL path xs.toList vs hl hlf'
         simp [RVal.thaw, ← this]
+      | ntuple tn fs xs => simp [RVal.freezeH] at hc
       | ref a =>
         simp only [RVal.freezeH] at hc
         by_cases hp : path.contains a = true
@@ -1067,6 +1092,7 @@ mutual
           simpa [Val.listFree] using hlf
         have := RVal.eqList_thawList_of_freezeListB h fuel xs.toList hl hlf'
         simp [RVal.thaw, ← this]
+    | .ntuple _ _ _, v, hc, _ => by cases hc
     | .ref a, v, hc, hlf =>
         (RVal.eq_thaw_of_freezeH_pair h fuel).1 [] (.ref a) v hc hlf
 

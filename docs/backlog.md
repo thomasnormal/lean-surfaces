@@ -169,11 +169,22 @@ decision:
    survives; then the arg-mutation harness rows go live and `+= `/list
    concat can revisit the heap-free-fragment question.
 
-4. **Classes/namedtuple methods.** `Position` is a frozen namedtuple —
-   value semantics are FAITHFUL for it; `Searcher` mutates `self` (TT,
-   killer) and needs the heap decision from step 3(b). A namedtuple-only
-   tier (attribute read + method call on immutable records) would unlock
-   `Position.value()` (with step 5) and a self-less `bound()`.
+4. **Classes — BUILT (H3, 2026-08-08),** per docs/memory-model.md
+   §class semantics: ClassDef end to end (the three sunfish ClassDef
+   bodies represented), methods flattened to qualified-name functions
+   through `callIn`/`CallsIn` (no new call judgment), `Obj.instance`
+   with mutable self, faithful `AttributeError`, the dunder guard making
+   default-object semantics sound, `Searcher`'s tables proved
+   (`Examples/python/sf_searcher`: the cross-call write/read pair).
+   REMAINING from this step — **namedtuple, DECIDED value-like**
+   (immutable = immediate; field access desugars to tuple indexing —
+   which keeps sunfish's `tp_score` keys in the pure `keyEq` tier;
+   recorded in memory-model §class semantics): a value-record tier for
+   `Position`/`Entry`/`Move` — recognize `X = namedtuple(…)` at G1,
+   constructor calls, field reads, methods on an immutable self
+   (`class Position(namedtuple(…))` carries methods; its base today
+   keeps it loudly uninstantiable). Would unlock `Position.value()`
+   (with step 5) and `bound()` over real positions.
 5. **String methods + slicing.** `board[:i] + p + board[i+1:]` (move
    application), `.isupper()`, `.swapcase()`, `.index()`. Value
    semantics faithful (str immutable); mostly interpreter surface.

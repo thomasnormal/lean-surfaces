@@ -1,10 +1,14 @@
 # The Python heap layer: memory model (v2 — review-corrected design)
 
 Status: NORMATIVE; the H1 core (threading, 2026-08-06), the H1-proper
-dict tier (2026-08-07), and the H2 list tier's IN-WORLD half (2026-08-07:
+dict tier (2026-08-07), the H2 list tier's IN-WORLD half (2026-08-07:
 heap `Obj.list` everywhere the interpreter builds a list — literals, G1
 module tables, `sorted` results — with the §list-semantics inventory
-below) are BUILT to this document. Still pending from it: the H2
+below), and the H3 CLASS tier (2026-08-08: `Obj.instance`, ClassDef
+representation end to end, methods as flattened functions through
+`callIn`, mutable self — §class semantics below; namedtuple DECISION
+recorded there, implementation pending) are BUILT to this document.
+Still pending from it: the H2
 **boundary flip** — `callFunction` still thaws `Val.list` ARGUMENTS to
 the transitional value form (`RVal.listV`, reads in tier, mutation
 loudly refused), while the heap-threading thaw (`RVal.thawH`, fresh
@@ -47,7 +51,7 @@ inductive RVal where
 inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
   | list (xs : Array RVal)     -- H2 (built)
-  -- H3: | instance (cls : ClassId) (attrs : Array (String × RVal))
+  | instance (cls : ClassId) (attrs : Array (String × RVal))  -- H3 (built)
   -- H4: | iterator (state : IterState)
 
 abbrev Heap := Array Obj
@@ -231,6 +235,77 @@ cycle DETECTION, never by running out of fuel).
   `del lst[i]`, comprehensions, `.get`-style method calls on lists
   (a faithful `AttributeError` awaiting a `PyErr` form).
 
+## Class semantics (H3 inventory — BUILT, 2026-08-08)
+
+* **Representation**: `ClassDef` is structured end to end (extractor →
+  envelope → ingestion; sunfish's three ClassDef bodies are represented).
+  Ingestion FLATTENS method bodies into `Module.functions` under
+  qualified names `"<class>.<method>"` — a Python identifier can never
+  contain `.`, so plain-name resolution never sees them — and records
+  the class in `Module.classes`. **Methods are functions**: a method
+  call resolves the qualified name and runs through `callIn` with `self`
+  as an ordinary `.ref` first argument, so `CallsIn` specifies methods
+  verbatim (no new call judgment — `Examples/python/sf_searcher`).
+* **ClassId** is the INDEX into `Module.classes`, never the name.
+  Duplicate class names resolve last-wins consistently on both tables
+  (instantiation and qualified-name lookup), so an instance of a
+  shadowed earlier class is unconstructible. A name bound by both `def`
+  and `class` is loud (the split representation loses source order).
+* **The dunder guard** (the tier's soundness principle): a class
+  defining any dunder beyond `__init__`, with bases (inheritance —
+  loudly unsupported), keywords/metaclass, decorators, or class-level
+  statements (class attributes) is REPRESENTED but UNINSTANTIABLE
+  (loud). Therefore every instance that exists has DEFAULT object
+  protocol, which makes the following faithful by construction:
+  instance `==` is identity (no shortcut subtleties — no user `__eq__`
+  can exist), truthiness is `True`, `is`/`is not` by address, and the
+  default-protocol refusals are real CPython errors — `len()`/
+  subscript/iteration/unpacking/membership/`sorted`/`max`/`min` on an
+  instance raise the faithful `TypeError`.
+* **Instantiation** `C(args)`: allocate `Obj.instance ci #[]` in the
+  shared world, then run `C.__init__` through `callIn` with
+  `self = .ref a`; a non-`None` `__init__` result is the faithful
+  `TypeError`; an `__init__`-less class called with arguments likewise
+  (`C() takes no arguments`). Allocation happens after argument
+  evaluation (identity-free observations cannot tell).
+* **Attributes** (mutable self): reads resolve the instance attribute
+  table first, then the class's methods (a bound-method VALUE is loud —
+  methods are called, not passed), then the faithful `AttributeError`
+  (`PyErr.attributeError`, message-free like `keyError`; no
+  `__getattr__` can exist). A missing attribute in CALL position raises
+  BEFORE arguments evaluate (CPython order: receiver and attribute
+  lookup precede arguments). Stores (`self.x = v`) update `attrs` in
+  place (`Env.set` semantics — replace-in-place or append, `__dict__`
+  insertion order), CPython evaluation order RHS → target primary →
+  store; attribute stores on dicts/lists/scalars are the faithful
+  `AttributeError`. Also faithful now: `.get` on a list, `.append` on a
+  dict (`AttributeError`, previously loud).
+* **Instances as dict keys** are LOUD (CPython hashes by identity —
+  in-tier keys stay value-hashable; `keyRefusal` never raises a fake
+  `unhashable` `TypeError` for them). An instance cannot cross the
+  public boundary (no `Val` observation form — the freeze refuses
+  loudly). Referencing a class as a value is loud.
+* **Meta-proof discipline** (recorded finding): dispatch that forks on
+  a heap referent must fork on a PURE plan computed from free variables
+  (`attrReadPlan`/`attrCallPlan`; `execAttrCall` joined the mutual
+  block, conjuncts appended LAST so `fuelMono`/`worldInv` projection
+  paths survive) — a match nested under the receiver's binder is
+  invisible to `cases`/`rw` in the meta proofs. `Module.heapFree` now
+  also requires `classes = #[]`: instantiation allocates, and syntax
+  cannot tell a class call from a function call.
+* **namedtuple (DECISION, recorded loudly)**: namedtuple instances are
+  **VALUE-like** — immutable record types are immediate values, per this
+  document's hybrid principle (immutable = immediate), NOT heap
+  objects: field access desugars to tuple indexing, equality/hashing
+  are the existing value-tuple semantics (which is exactly why
+  sunfish's `tp_score` keys containing `Position` stay in the pure
+  `keyEq` tier). Implementation is PENDING: today `X = namedtuple(…)`
+  is an out-of-G1-tier RHS (poisoned binding, loud) and
+  `class Position(namedtuple(…))` has a base (uninstantiable, loud) —
+  never wrong. The value-like tier (constructor calls, field reads,
+  methods on an immutable self) is the recorded next step of the
+  sunfish ladder (docs/backlog.md step 4).
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,
@@ -320,11 +395,15 @@ two public calls (regression case 15).
   loudly refused (never wrong), and `RVal.listV` survives as the
   boundary-argument form and the pure proof-layer vocabulary
   (`RVal.thaw`'s image of `Val.list`, bridged by `thawH_of_listFree`).
-* **H3: classes.** `Obj.instance (cls : ClassId)` — a unique id, NOT the
-  class name (redefinition/nesting/shadowing); class objects eventually
-  need heap identity and mutable class attributes themselves.
-  `namedtuple` as frozen instances; `Searcher`'s tables and the
-  cross-call-state surface land here on top of `CallsIn`.
+* **H3: classes — BUILT (2026-08-08, §class semantics).**
+  `Obj.instance (cls : ClassId)` with ClassId = the class-table index,
+  NOT the name; methods flattened to qualified-name functions through
+  `callIn`/`CallsIn`; the dunder guard makes default-object semantics
+  faithful; `Searcher`'s tables and the cross-call-state surface are
+  proved (`Examples/python/sf_searcher`: write/read/chained/pinned).
+  Class objects with heap identity and mutable class attributes remain
+  future work (class-as-value is loud); `namedtuple` is DECIDED
+  value-like (see §class semantics) and pending implementation.
 * **H4: generators.** `Obj.iterator` frames carry a DEFUNCTIONALIZED
   CONTINUATION (expression context, loop/block position, pending
   `try/finally`/`with` state, `send` destination, and status

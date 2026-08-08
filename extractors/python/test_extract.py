@@ -20,9 +20,11 @@ are not exercised by the Lean build:
   * literal parameter defaults (int/bool/str/None) are emitted as per-param
     ``default`` payloads and clear ``args_unsupported``; any non-literal
     default keeps ``args_unsupported: "defaults"`` with NO ``default`` keys;
-  * ``is``/``is not`` survive as Compare ops IFF one side of that link is
-    the literal None; any other identity comparison stays a whole-node
-    ``Unsupported "Compare:Is[Not]"``.
+  * ``is``/``is not`` ship structurally for EVERY identity comparison
+    (H1-proper: the interpreter decides identity dynamically and owns the
+    tier boundary);
+  * ``ClassDef`` (H3) is structured, with ``class_unsupported`` flagging
+    bases/metaclass/decorators/class-level statements.
 """
 
 import importlib.util
@@ -249,22 +251,29 @@ class ExtractorTests(unittest.TestCase):
             self.assertEqual(e["kind"], "Compare", src)
             self.assertEqual(e["ops"], ops, src)
 
-    def test_is_without_none_is_unsupported(self):
-        for src in ("def f(x, y):\n    return x is y\n",
-                    "def f(x, y):\n    return x is not y\n"):
+    def test_is_without_none_is_structural(self):
+        # Since H1-proper the extractor emits Is/IsNot for EVERY identity
+        # comparison: identity is decided DYNAMICALLY by the interpreter
+        # (refs by address, None by the singleton test), which loudly
+        # refuses the remaining out-of-tier operand forms. (These two
+        # tests previously pinned the pre-H1 gate-at-extraction behavior
+        # and had gone stale — repaired to the recorded decision.)
+        for src, ops in (("def f(x, y):\n    return x is y\n", ["Is"]),
+                         ("def f(x, y):\n    return x is not y\n", ["IsNot"])):
             e = self._first_return_expr(src)
-            self.assertEqual(e["kind"], "Unsupported", src)
-            self.assertTrue(e["py_kind"].startswith("Compare:Is"), src)
+            self.assertEqual(e["kind"], "Compare", src)
+            self.assertEqual(e["ops"], ops, src)
 
-    def test_chained_is_gates_per_link(self):
-        # x is None is None: both links have a None side => in-tier.
+    def test_chained_is_is_structural(self):
+        # chains too: every link ships structurally, the interpreter owns
+        # the per-link tier boundary.
         e = self._first_return_expr("def f(x):\n    return x is None is None\n")
         self.assertEqual(e["kind"], "Compare")
         self.assertEqual(e["ops"], ["Is", "Is"])
-        # x is y is None: the FIRST link has no None side => whole node out.
         e = self._first_return_expr(
             "def f(x, y):\n    return x is y is None\n")
-        self.assertEqual(e["kind"], "Unsupported")
+        self.assertEqual(e["kind"], "Compare")
+        self.assertEqual(e["ops"], ["Is", "Is"])
 
     # -- call:sorted: NO extractor special-casing (exact `len` analogy) ------
 
@@ -368,6 +377,47 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["kind"], "Call")
         self.assertEqual(e["func"]["kind"], "Attribute")
         self.assertEqual(e["func"]["attr"], "get")
+
+
+class ClassDefTests(unittest.TestCase):
+    # -- H3: ClassDef is structured; tier flags mirror args_unsupported ----
+
+    def _module_body(self, source):
+        import ast
+        return [extract.convert_stmt(st) for st in ast.parse(source).body]
+
+    def test_plain_class_is_structured(self):
+        body = self._module_body(
+            "class C:\n"
+            "    def __init__(self, x):\n"
+            "        self.x = x\n"
+            "    def get(self):\n"
+            "        return self.x\n")
+        c = body[0]
+        self.assertEqual(c["kind"], "ClassDef")
+        self.assertEqual(c["name"], "C")
+        self.assertIsNone(c["class_unsupported"])
+        self.assertEqual([m["kind"] for m in c["body"]],
+                         ["FunctionDef", "FunctionDef"])
+        self.assertEqual([m["name"] for m in c["body"]], ["__init__", "get"])
+
+    def test_docstring_and_pass_stay_in_tier(self):
+        body = self._module_body('class C:\n    "doc"\n    pass\n')
+        self.assertIsNone(body[0]["class_unsupported"])
+
+    def test_bases_flag_class_unsupported(self):
+        body = self._module_body("class C(D):\n    pass\n")
+        self.assertIn("bases", body[0]["class_unsupported"])
+
+    def test_metaclass_and_decorators_flag(self):
+        body = self._module_body("class C(metaclass=type):\n    pass\n")
+        self.assertIn("metaclass", body[0]["class_unsupported"])
+        body = self._module_body("@deco\nclass C:\n    pass\n")
+        self.assertIn("decorators", body[0]["class_unsupported"])
+
+    def test_class_attributes_flag(self):
+        body = self._module_body("class C:\n    x = 1\n")
+        self.assertIn("class-level statements", body[0]["class_unsupported"])
 
 
 if __name__ == "__main__":

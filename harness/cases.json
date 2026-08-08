@@ -143,5 +143,8 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "attr_on_int", "args": [[1]], "expect": "unsupported"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "weird_eq", "args": [[1]], "expect": "unsupported"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "sub_inherits", "args": [[1]], "expect": "unsupported"},
-  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "unsupported"}
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "class_as_value", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "bound_twice", "args": [[5, 100], [0, 5], [-2, 1]], "expect": "match"},
+  {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "bound_two_positions", "args": [[1, 2, 10], [4, 4, 9]], "expect": "match"},
+  {"file": "Examples/python/sf_searcher/sf_searcher.py", "function": "fresh_searchers", "args": [[3, 7], [0, 0]], "expect": "match"}
 ]

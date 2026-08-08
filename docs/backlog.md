@@ -292,6 +292,38 @@ decision:
      same simplicity bar. Nothing starts before this generator tier
      lands.
 
+## Session stop point (2026-08-09, after the H5 string milestone)
+
+Stopped CLEAN at master `f536d93` — nothing in flight, no WIP, no
+half-edited file; the triad was green at the preceding commit
+(`lake build` 3639; docs_check 67/67; diff_test 502 rows 0 failed, 26
+whitelisted; corpus 15 scripts 0 failed) and this section is the only
+change after it. The string half-stage and its milestone are DONE
+(step 5 above): `Position.rotate` is proved on the byte-identical
+shipped `sunfish.py` (`Examples/python/sunfish`), symbolic in the score
+AND the world.
+
+**The next step, in order:**
+
+1. Owner decision first — the H4 route (a)/(b)/(c) in step 6 above
+   gates everything left; the gen_moves STATEMENT is already decided
+   (reference enumeration, order pinned, obviousness-first reference).
+2. Optional half-stage that needs no new tier, if a warm-up is wanted:
+   `Position.value()` on the shipped file — its pst/piece dict reads
+   are already in tier, so the only gap is proof-side (a symbolic
+   dict-read walker; `Examples/python/sf_pst` has the concrete case).
+3. The str-tier leftovers `gen_moves` will need regardless of the H4
+   route, cheapest first: membership on strs (`q in " \nPNBRQK"`),
+   `for` over a str / `enumerate`, str unpacking, `ord`/`chr`
+   (parse/render). Each is interpreter surface plus meta arms — the
+   H5 commit `d64f329` is the shape to imitate.
+
+Housekeeping for whoever picks this up: this clone lives in a
+/private/tmp scratchpad that macOS purges, and local master is ~57
+commits AHEAD of `origin/master` — a full-history bundle sits in
+`~/repos/lean-surfaces-backup/`, but PUSHING (or relocating the clone)
+is an owner decision that is still open.
+
 Cross-cutting, found by the milestone proofs: `py_vcgen` cannot walk
 `for` loops (the frozen-`execFor` list-induction pattern in
 `Examples/python/sf_bound_for/proof.lean` is the manual route to

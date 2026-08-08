@@ -276,6 +276,22 @@ decision:
      and mutation-between-`next`s; then sunfish's `moves()` consumed
      lazily by `bound`. `sorted(key=)` is orthogonal (paired here only
      because sunfish's move ordering needs both).
+   * **gen_moves THEOREM STATEMENT — decided (owner, 2026-08-09).** Of
+     the three drafted statement shapes — (1) rule-predicate
+     set-equality, (2) equality against a reference enumeration,
+     (3) a property bundle — Thomas picked **(2), reference-enumeration
+     equality with ORDER pinned** (`bound`'s cutoffs depend on move
+     order, so order stays part of the claim). His design note,
+     recorded: "we can make the reference implementation very simple,
+     because it doesn't need to be fast" — the Lean reference must
+     optimize for OBVIOUSNESS over efficiency: the most
+     naively-readable enumeration of sunfish's pseudo-legal moves
+     (plain nested scans, no cleverness), because its whole job is to
+     be trustworthy by inspection. A semantic layer on top (the rule
+     predicate or a bundle) stays open for later and must meet the
+     same simplicity bar. Nothing starts before this generator tier
+     lands.
+
 Cross-cutting, found by the milestone proofs: `py_vcgen` cannot walk
 `for` loops (the frozen-`execFor` list-induction pattern in
 `Examples/python/sf_bound_for/proof.lean` is the manual route to

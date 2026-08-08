@@ -8,12 +8,15 @@ names (`"Searcher.bound"`), so the class tier needed no new call
 judgment — `self` is an ordinary `.ref` argument, exactly the
 `sf_hist`/`sf_tt` machinery.
 
-The cross-call-state acceptance behavior, as theorems: one `bound` call
-WRITES the transposition table (`bound_writes_callsIn`), and a second
-call from the resulting world READS that entry back — same score, one
-more node, no new table entry (`bound_reads_callsIn`; chained form
-`bound_twice_chained`). `pos`/`gamma` are ints — `Position` is a
-namedtuple, recorded as VALUE-like and not yet in tier
+The cross-call-state acceptance behavior, as theorems — SYMBOLIC in the
+position and bound: one `bound` call WRITES the transposition table
+(`bound_writes_symbolic`, for every `pos ≠ 0` and every `gamma`), and a
+second identical call from the resulting world READS that entry back —
+same score, one more node, no insertion — with NO hypotheses at all
+(`bound_reads_symbolic`: the table hit short-circuits before the mate
+branch could ask about `pos`). Concrete kernel-witnessed instances and
+the chained/pinned corollaries follow. `pos`/`gamma` are ints —
+`Position` is a namedtuple, recorded as VALUE-like and not yet in tier
 (docs/memory-model.md §H3).
 -/
 import Examples.python.sf_searcher.proof
@@ -50,22 +53,22 @@ private def wB : World :=
      .dict #[] 0, .dict #[] 0],
    [("MATE_UPPER", .int 69290)], []⟩
 
-/-- After the first `bound(pos := 3, gamma := 10)`: one node visited,
-the score `gamma - 1 = 9` stored under the TUPLE key `(3, 10)` in
-`tp_score`, the move table keyed by the position — both shape versions
-bumped by the insertions. -/
-private def wC : World :=
+/-- After the first `bound(pos, gamma)` — PARAMETRIC in the symbolic
+arguments: one node visited, the score `gamma - 1` stored under the
+TUPLE key `(pos, gamma)` in `tp_score`, the move table keyed by the
+position — both shape versions bumped by the insertions. -/
+private def wC (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 1)],
-     .dict #[(.tuple #[.int 3, .int 10], .int 9)] 1,
-     .dict #[(.int 3, .int 10)] 1],
+     .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
+     .dict #[(.int p, .int g)] 1],
    [("MATE_UPPER", .int 69290)], []⟩
 
 /-- After the second identical `bound`: ONLY `nodes` moved — the call
 was a table hit (no insertion, no shape change). -/
-private def wD : World :=
+private def wD (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 2)],
-     .dict #[(.tuple #[.int 3, .int 10], .int 9)] 1,
-     .dict #[(.int 3, .int 10)] 1],
+     .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
+     .dict #[(.int p, .int g)] 1],
    [("MATE_UPPER", .int 69290)], []⟩
 
 #guard initWorld sf_searcher == ⟨#[], [("MATE_UPPER", .int 69290)], []⟩
@@ -78,44 +81,54 @@ theorem searcher_init_callsIn :
     CallsIn sf_searcher wA "Searcher.__init__" #[.ref 0] wB .none := by
   proofs
 
-/-- **Stateful spec (write)**: the first `bound` call scores the node
-AND leaves the score in `self.tp_score` — the mutation is IN the world
-it hands back. -/
-theorem bound_writes_callsIn :
-    CallsIn sf_searcher wB "Searcher.bound" #[.ref 0, .int 3, .int 10]
-      wC (.int 9) := by
+/-- **Stateful spec (write), SYMBOLIC**: for every non-mate position and
+every bound, the first `bound` call scores the node AND leaves
+`gamma - 1` in `self.tp_score` under the tuple key — the mutation is IN
+the world it hands back. -/
+theorem bound_writes_symbolic (p g : Int) (hp : ¬ (p = 0)) :
+    CallsIn sf_searcher wB "Searcher.bound" #[.ref 0, .int p, .int g]
+      (wC p g) (.int (g - 1)) := by
   proofs
 
-/-- **The cross-call state theorem (read)**: a second identical `bound`
-from the post-write world SEES the first call's table entry — the same
-score comes back from the table (no recomputation path exists for it:
-only `nodes` moves, no insertion happens). -/
-theorem bound_reads_callsIn :
-    CallsIn sf_searcher wC "Searcher.bound" #[.ref 0, .int 3, .int 10]
-      wD (.int 9) := by
+/-- **The cross-call state theorem (read), SYMBOLIC and
+hypothesis-free**: a second identical `bound` from the post-write world
+SEES the first call's table entry for EVERY `pos`/`gamma` — the same
+score comes back from the table before the mate branch could even ask
+about `pos`; only `nodes` moves, nothing is inserted. -/
+theorem bound_reads_symbolic (p g : Int) :
+    CallsIn sf_searcher (wC p g) "Searcher.bound" #[.ref 0, .int p, .int g]
+      (wD p g) (.int (g - 1)) := by
   proofs
 
 /-- Chained form: from the initialized Searcher, calling `bound` twice
-threads through the intermediate world — the acceptance behavior
-"second call sees the first call's write" as one statement. -/
-theorem bound_twice_chained :
-    ∃ w₁, CallsIn sf_searcher wB "Searcher.bound" #[.ref 0, .int 3, .int 10]
-            w₁ (.int 9)
-        ∧ CallsIn sf_searcher w₁ "Searcher.bound" #[.ref 0, .int 3, .int 10]
-            wD (.int 9) := by
+threads through the intermediate world — "the second call sees the
+first call's write" as one symbolic statement. -/
+theorem bound_twice_chained (p g : Int) (hp : ¬ (p = 0)) :
+    ∃ w₁, CallsIn sf_searcher wB "Searcher.bound" #[.ref 0, .int p, .int g]
+            w₁ (.int (g - 1))
+        ∧ CallsIn sf_searcher w₁ "Searcher.bound" #[.ref 0, .int p, .int g]
+            (wD p g) (.int (g - 1)) := by
+  proofs
+
+/-- Concrete kernel-witnessed instance of the write half (the
+`#py_check` analog at the stateful judgment). -/
+theorem bound_writes_callsIn :
+    CallsIn sf_searcher wB "Searcher.bound" #[.ref 0, .int 3, .int 10]
+      (wC 3 10) (.int 9) := by
   proofs
 
 /-- Any decided second call is PINNED to the table hit (`CallsIn` is
-functional across fuels): result 9, world `wD` — nothing else can
-happen. -/
-theorem bound_second_call_pinned {w' : World} {v : RVal}
-    (h : CallsIn sf_searcher wC "Searcher.bound" #[.ref 0, .int 3, .int 10]
+functional across fuels): result `gamma - 1`, world `wD p g` — nothing
+else can happen. -/
+theorem bound_second_call_pinned (p g : Int) {w' : World} {v : RVal}
+    (h : CallsIn sf_searcher (wC p g) "Searcher.bound" #[.ref 0, .int p, .int g]
           w' v) :
-    v = .int 9 ∧ w' = wD := by
+    v = .int (g - 1) ∧ w' = wD p g := by
   proofs
 
 /-- Argument-less method through the same machinery: `visited` reads
 `self.nodes` and returns the world untouched. -/
-theorem visited_callsIn :
-    CallsIn sf_searcher wD "Searcher.visited" #[.ref 0] wD (.int 2) := by
+theorem visited_callsIn (p g : Int) :
+    CallsIn sf_searcher (wD p g) "Searcher.visited" #[.ref 0]
+      (wD p g) (.int 2) := by
   proofs

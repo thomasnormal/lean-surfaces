@@ -89,7 +89,13 @@ is the closest precedent to our situation. Staged:
    corpus scripts, each provenance-tagged
    (`# from: Lib/test/test_dict.py:TestDict.test_getitem`) — official
    test CONTENT without the unittest harness. A handful of dict/list
-   extractions is a natural H2 deliverable.
+   extractions is a natural H2 deliverable. H3 note (2026-08-08): no
+   suitable small CLASS extraction exists in the vendored set —
+   CPython's class-flavored tests (`test_grammar.test_classdef`,
+   `test_compare`) are dunder/inheritance-protocol tests, exactly the
+   loud frontier; the class corpus script is hand-written
+   (`harness/scripts/class_script.py`) until `Lib/test/test_class.py`
+   territory enters the tier.
 2. **LATER:** a micro-extraction tool pulling assert-shaped statements
    from test methods at scale.
 3. **H3+ MILESTONE:** run actual test files under `leanpy` with a

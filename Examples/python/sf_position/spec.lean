@@ -9,9 +9,11 @@ the SAME slot. Construction is an IMMEDIATE value: the `CallsIn`
 theorems hand back the input world unchanged and show the `RVal.ntuple`
 value itself; a namedtuple RESULT refuses the public boundary loudly
 (no `Val` observation form — a tuple snapshot would forget the class).
-The shipped sunfish `Position` is a namedtuple SUBCLASS with methods —
-still loudly uninstantiable; this file carries its field shape as the
-plain namedtuple (docs/memory-model.md §class semantics).
+`Position` is the SHIPPED sunfish shape — `class Position(namedtuple(…))`
+with a method: instantiation constructs the value THROUGH the subclass
+(H5); method calls and bound-method reads on the immutable self stay
+loudly out until the dispatch tier (docs/memory-model.md §class
+semantics).
 -/
 import Examples.python.sf_position.proof
 
@@ -24,10 +26,11 @@ the benign import structured into the table; nothing bound, nothing
 allocated at module init), then concrete runs cross-checked against
 CPython (`harness/cases.json` rows). -/
 
-#guard sf_position.namedtuples.map NamedTupleDefn.name == #["Move", "Entry", "Position"]
+#guard sf_position.namedtuples.map NamedTupleDefn.name == #["Move", "Entry"]
 #guard sf_position.namedtuples.map NamedTupleDefn.fields ==
-  #[#["i", "j", "prom"], #["lower", "upper"],
-    #["board", "score", "wc", "bc", "ep", "kp"]]
+  #[#["i", "j", "prom"], #["lower", "upper"]]
+#guard sf_position.classes.map (fun c => (c.name, c.ok, c.ntBase.map NamedTupleDefn.fields))
+  == #[("Position", true, some #["board", "score", "wc", "bc", "ep", "kp"])]
 #guard initWorld sf_position == ⟨#[], [], []⟩
 
 #py_check sf_position.move_fields(3, 7) = (Val.tuple #[.int 3, .int 7, .str "q"])
@@ -53,6 +56,8 @@ out of tier — loud, never a fake `AttributeError`. -/
 #guard callFunction sf_position "mk_move" #[.int 1, .int 2] 4096 matches .unsupported _
 #guard callFunction sf_position "asdict_is_loud" #[.int 1, .int 2] 4096 matches .unsupported _
 #guard callFunction sf_position "fields_are_loud" #[.int 1, .int 2] 4096 matches .unsupported _
+#guard callFunction sf_position "mirror_is_loud" #[.int 5] 4096 matches .unsupported _
+#guard callFunction sf_position "bound_method_is_loud" #[.int 5] 4096 matches .unsupported _
 
 /-- The fresh world of every public call (see the `#guard` above). -/
 private def w0 : World := ⟨#[], [], []⟩

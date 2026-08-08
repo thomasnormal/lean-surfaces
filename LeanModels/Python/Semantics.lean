@@ -1420,20 +1420,37 @@ def ntupleProtoName (attr : String) : Bool :=
   attr == "_fields" || attr == "_field_defaults" ||
   attr == "count" || attr == "index"
 
+/-- Is `attr` a METHOD of the namedtuple SUBCLASS the value's `tname`
+names (`class Position(namedtuple(…))`, H5)? The value carries the
+SUBCLASS name (construction uses the class name, not the typename), so
+`findClass`-by-`tname` with the `ntBase` guard is the dispatch: a PLAIN
+namedtuple whose TYPENAME merely coincides with an unrelated `ntBase`
+class also answers `true` — the consumers are LOUD refusals, never
+decided values, so a coincidence over-refuses and is sound (recorded;
+the method-CALL tier must resolve identity properly). -/
+def ntupleMethodName (m : Module) (tname attr : String) : Bool :=
+  match findClass m tname with
+  | some (_, c) => c.ntBase.isSome && c.methods.toList.contains attr
+  | Option.none => false
+
 /-- Attribute READ on a namedtuple value: a declared field desugars to
-tuple indexing (the VALUE-like decision); the namedtuple/tuple protocol
-names and dunders exist in CPython — loud; anything else is the faithful
-`AttributeError`. The size guard is defensive (constructor calls always
-build `fields.size` elements; a hand-built mismatch reports loudly). -/
-def ntupleAttr (fields : Array String) (xs : Array RVal) (attr : String) :
-    Res RVal :=
+tuple indexing (the VALUE-like decision); a SUBCLASS method name is a
+bound-method value — loud (methods are called, not passed; H5); the
+namedtuple/tuple protocol names and dunders exist in CPython — loud;
+anything else is the faithful `AttributeError`. The size guard is
+defensive (constructor calls always build `fields.size` elements; a
+hand-built mismatch reports loudly). -/
+def ntupleAttr (m : Module) (tname : String) (fields : Array String)
+    (xs : Array RVal) (attr : String) : Res RVal :=
   match fieldIndex fields.toList attr with
   | some i =>
     if i < xs.size then .ok (xs.getD i .none)
     else .unsupported
       "internal: namedtuple field/value arity mismatch (unconstructible through the interpreter — report this)"
   | Option.none =>
-    if ntupleProtoName attr || dunderShaped attr then
+    if ntupleMethodName m tname attr then
+      .unsupported s!"referencing bound method '.{attr}' of a namedtuple subclass as a value is outside the tier (methods are called, not passed)"
+    else if ntupleProtoName attr || dunderShaped attr then
       .unsupported s!"namedtuple attribute '.{attr}' is outside the tier (field access only; '_replace'/'_asdict'/'count'/… are loud — docs/memory-model.md §class semantics)"
     else .exn .attributeError
 
@@ -1982,28 +1999,49 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- lost by the split — loud (unconstructible through
                   -- ingestion; hand-built defense).
                   .unsupported s!"name '{fname}' is bound by both 'class' and a namedtuple assignment at module level — source-order resolution is outside the tier"
-                else if !c.ok then
-                  .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
-                else if hasExtraDunder c then
-                  .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
-                else
-                  evalExprs m fuel st args.toList ⤳ fun st vs =>
-                  let a := st.world.heap.size
-                  let st' := { st with world :=
-                    { st.world with heap := st.world.heap.push (.instance ci #[]) } }
-                  if (findFunction m (fname ++ ".__init__")).isSome then
-                    Run.withLocals st'.locals
-                      (callIn m fuel st'.world (fname ++ ".__init__")
-                        ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
-                    match r with
-                    | .none => .ok st'' (.ref a)
-                    | r =>
-                      -- CPython checks __init__'s result: non-None raises
-                      .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
+                else match c.ntBase with
+                | some nt =>
+                  -- VALUE-LIKE SUBCLASS instantiation (H5, sunfish's
+                  -- `class Position(namedtuple(…))`): construction IS
+                  -- namedtuple construction — an IMMEDIATE value carrying
+                  -- the SUBCLASS name, no allocation, no `__init__` run
+                  -- (one on the immutable self is loud, never wrong).
+                  if !c.ok then
+                    .unsupported s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
+                  else if hasExtraDunder c then
+                    .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
+                  else if (findFunction m (fname ++ ".__init__")).isSome then
+                    .unsupported s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
                   else
-                    match vs with
-                    | [] => .ok st' (.ref a)
-                    | _ => .exn st (.typeError s!"{fname}() takes no arguments")
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    if vs.length == nt.fields.size then
+                      .ok st (.ntuple nt.name nt.fields vs.toArray)
+                    else
+                      .exn st (.typeError
+                        s!"{fname}() takes {nt.fields.size} positional arguments but {vs.length} were given")
+                | Option.none =>
+                  if !c.ok then
+                    .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
+                  else if hasExtraDunder c then
+                    .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
+                  else
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    let a := st.world.heap.size
+                    let st' := { st with world :=
+                      { st.world with heap := st.world.heap.push (.instance ci #[]) } }
+                    if (findFunction m (fname ++ ".__init__")).isSome then
+                      Run.withLocals st'.locals
+                        (callIn m fuel st'.world (fname ++ ".__init__")
+                          ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
+                      match r with
+                      | .none => .ok st'' (.ref a)
+                      | r =>
+                        -- CPython checks __init__'s result: non-None raises
+                        .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
+                    else
+                      match vs with
+                      | [] => .ok st' (.ref a)
+                      | _ => .exn st (.typeError s!"{fname}() takes no arguments")
               | Option.none =>
                 match findNamedTuple m fname with
                 | some nt =>
@@ -2120,10 +2158,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
       evalExpr m fuel st recv ⤳ fun st r =>
       match r with
       | .ref a => attrReadResult m st a attr
-      | .ntuple _ fields xs =>
+      | .ntuple tn fields xs =>
         -- namedtuple FIELD access (the VALUE-like decision): tuple
-        -- indexing by declared position — pure, world-preserving
-        Run.liftRes st (ntupleAttr fields xs attr)
+        -- indexing by declared position — pure, world-preserving; a
+        -- SUBCLASS method name is the loud bound-method refusal (H5)
+        Run.liftRes st (ntupleAttr m tn fields xs attr)
       | r =>
         .unsupported s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"

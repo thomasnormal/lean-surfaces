@@ -326,11 +326,19 @@ cycle DETECTION, never by running out of fuel).
   (`_replace`/`_asdict`/`_make`/`_fields`/`count`/`index`), dunders,
   method calls on a namedtuple receiver, and namedtuple construction at
   G1 module level (constructor calls are out of the call-free G1 tier).
-  Still pending: methods on an immutable self —
-  `class Position(namedtuple(…))` has a base and stays loudly
-  uninstantiable (the shipped sunfish `Position`; its plain-namedtuple
-  field shape is `sf_position`'s artifact); the real sunfish.py's
-  `Move`/`Entry` recognize as-is.
+  **Value-like SUBCLASSES (H5 slice 1, 2026-08-08)**: a class whose
+  SINGLE base is a plain `namedtuple(…)` call (`class
+  Position(namedtuple(…))` — the shipped sunfish shape) is recognized
+  structurally (extractor `namedtuple_base` → `ClassDefn.ntBase`,
+  promoted/demoted by the SAME module census); instantiation constructs
+  the IMMEDIATE value carrying the SUBCLASS name (no allocation, no
+  `__init__` — one on the immutable self is loud), and a method name in
+  READ position is the loud bound-method refusal, never a fake
+  `AttributeError`. The real sunfish.py's `Move`/`Entry`/`Position` all
+  recognize as-is (`Position.ok = true` with its six-field base). Still
+  pending: METHOD CALLS on the immutable self (`pos.rotate()` — the
+  dispatch tier; `self` would bind the ntuple VALUE through `callIn`,
+  no new judgment).
 
 ## Heap well-formedness (explicit invariant)
 

@@ -196,10 +196,16 @@ decision:
    `tp_score` key pattern proved symbolically
    (`Examples/python/sf_position`; the real sunfish.py's `Move`/`Entry`
    recognize as-is), loud boundary for namedtuple results.
-   REMAINING from this step — methods on an immutable self:
-   `class Position(namedtuple(…))` carries methods; its base today
-   keeps it loudly uninstantiable. Would unlock `Position.value()`
-   (with step 5) and `bound()` over real positions.
+   H5 slice 1 (2026-08-08): the value-like SUBCLASS shape is
+   recognized (`ClassDefn.ntBase`, same census) and INSTANTIATION
+   builds the immediate value through the subclass — the real
+   sunfish.py's `Position` now constructs (`ok = true`).
+   REMAINING from this step — METHOD CALLS on the immutable self
+   (`pos.rotate()`: dispatch by the value's class name through the
+   flattened qualified functions, `self` bound to the ntuple VALUE via
+   `callIn` — no new judgment; the plan-discipline arm plus
+   `fuelMono`/`worldInv` cases). Would unlock `Position.value()` (with
+   step 5) and `bound()` over real positions.
 5. **String methods + slicing.** `board[:i] + p + board[i+1:]` (move
    application), `.isupper()`, `.swapcase()`, `.index()`. Value
    semantics faithful (str immutable); mostly interpreter surface.

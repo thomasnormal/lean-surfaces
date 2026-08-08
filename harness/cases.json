@@ -159,5 +159,7 @@
   {"file": "Examples/python/sf_position/sf_position.py", "function": "missing_field", "args": [[1, 2]], "expect": "match"},
   {"file": "Examples/python/sf_position/sf_position.py", "function": "mk_move", "args": [[1, 2]], "expect": "unsupported"},
   {"file": "Examples/python/sf_position/sf_position.py", "function": "asdict_is_loud", "args": [[1, 2]], "expect": "unsupported"},
-  {"file": "Examples/python/sf_position/sf_position.py", "function": "fields_are_loud", "args": [[1, 2]], "expect": "unsupported"}
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "fields_are_loud", "args": [[1, 2]], "expect": "unsupported"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "mirror_is_loud", "args": [[5]], "expect": "unsupported"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "bound_method_is_loud", "args": [[5]], "expect": "unsupported"}
 ]

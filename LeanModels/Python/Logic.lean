@@ -40,8 +40,8 @@ deriving instance Lean.ToExpr for Param
 deriving instance Lean.ToExpr for Expr
 deriving instance Lean.ToExpr for Stmt
 deriving instance Lean.ToExpr for FunctionDefn
-deriving instance Lean.ToExpr for ClassDefn
 deriving instance Lean.ToExpr for NamedTupleDefn
+deriving instance Lean.ToExpr for ClassDefn
 deriving instance Lean.ToExpr for Module
 
 /-! ## `load_program` -/
@@ -213,7 +213,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             attrReadPlan, attrReadResult, attrCallPlan, execAttrCall,
             endsWithUU, dunderShaped, hasExtraDunder,
             findNamedTuple, findNamedTupleAux, fieldIndex, ntupleProtoName,
-            ntupleAttr,
+            ntupleMethodName, ntupleAttr,
             RVal.refFree, RVal.refFreeList,
             Val.listFree, Val.listFreeList, Val.listFreeArgs,
             Heap.get?, Heap.update, danglingMsg,

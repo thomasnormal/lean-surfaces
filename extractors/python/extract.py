@@ -379,8 +379,21 @@ def convert_stmt(node):
         # attributes) are flagged here, like args_unsupported: the class is
         # represented, instantiation refuses loudly.
         reasons = []
+        namedtuple_base = None
         if node.bases:
-            reasons.append("bases (inheritance)")
+            # A SINGLE base that is a plain `namedtuple(...)` call is the
+            # recorded value-like subclass shape (sunfish's Position):
+            # emitted structurally as `namedtuple_base` (ingestion
+            # validates the spec and the module census; on any failure the
+            # class demotes to the ordinary uninstantiable-loudly state).
+            # Any other base keeps the loud inheritance reason.
+            b = node.bases[0]
+            if (len(node.bases) == 1 and isinstance(b, ast.Call)
+                    and isinstance(b.func, ast.Name)
+                    and b.func.id == "namedtuple" and not b.keywords):
+                namedtuple_base = convert_expr(b)
+            else:
+                reasons.append("bases (inheritance)")
         if node.keywords:
             reasons.append("class keywords (metaclass)")
         if node.decorator_list:
@@ -401,6 +414,8 @@ def convert_stmt(node):
             "class_unsupported": ", ".join(reasons) if reasons else None,
             "body": [convert_stmt(s) for s in node.body],
         }
+        if namedtuple_base is not None:
+            out["namedtuple_base"] = namedtuple_base
         if _has_global(node):
             out["has_global"] = True
         return out

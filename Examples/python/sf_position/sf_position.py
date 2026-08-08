@@ -1,18 +1,25 @@
 """The namedtuple sunfish artifact: the REAL Position/Move/Entry SHAPES
-(sunfish.py lines 172/303 — Move and Entry are plain namedtuples; the
-shipped Position is `class Position(namedtuple(...))`, a namedtuple
-SUBCLASS carrying methods, which stays loudly uninstantiable until that
-tier lands; this file models its field shape as the plain namedtuple)
-flowing through construction, field access, equality, iteration,
-unpacking, and — the transposition-table pattern — dict-keying by tuples
-CONTAINING a Position. Every in-tier function returns boundary
-scalars/tuples (namedtuple results themselves refuse the public freeze
-loudly — the recorded boundary decision)."""
+(sunfish.py lines 172/303 — Move and Entry are plain namedtuples;
+Position is the shipped shape, `class Position(namedtuple(...))` with a
+method: instantiation builds the IMMEDIATE value through the subclass —
+H5 — while METHOD CALLS on the immutable self stay loudly out until the
+dispatch tier lands) flowing through construction, field access,
+equality, iteration, unpacking, and — the transposition-table pattern —
+dict-keying by tuples CONTAINING a Position. Every in-tier function
+returns boundary scalars/tuples (namedtuple results themselves refuse
+the public freeze loudly — the recorded boundary decision)."""
 from collections import namedtuple
 
 Move = namedtuple("Move", "i j prom")
 Entry = namedtuple("Entry", "lower upper")
-Position = namedtuple("Position", "board score wc bc ep kp")
+
+
+class Position(namedtuple("Position", "board score wc bc ep kp")):
+    """The real sunfish shape: a namedtuple SUBCLASS carrying methods."""
+
+    def mirror(self):
+        return Position(self.board, -self.score, self.bc, self.wc,
+                        self.ep, self.kp)
 
 
 def move_fields(i, j):
@@ -86,3 +93,13 @@ def asdict_is_loud(i, j):
 def fields_are_loud(i, j):
     m = Move(i, j, "")
     return m._fields
+
+
+def mirror_is_loud(score):
+    pos = Position("brd", score, (True, True), (False, False), 0, 0)
+    return pos.mirror()
+
+
+def bound_method_is_loud(score):
+    pos = Position("brd", score, (True, True), (False, False), 0, 0)
+    return pos.mirror

@@ -247,32 +247,6 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     return { name, params, argsOk := argsUnsupported.isNone,
              localsOk := localsUnsupported.isNone, hasGlobal, body, span }
 
-/-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
-the method `FunctionDefn`s FLATTENED under qualified names
-`"<class>.<method>"` (see `ClassDefn`'s docstring — method calls reuse
-`callIn` verbatim). `ok` is `true` iff `class_unsupported` is `null`
-(bases/keywords/decorators/class-level statements set it at extraction).
-Non-`FunctionDef` body statements are dropped here — they already set
-`class_unsupported`, so no instance of the class can ever be built. -/
-def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) :=
-  withCtx "ClassDef" do
-    let name ← (← getField j "name").getStr?
-    let span ← parseSpan (← getField j "span")
-    let classUnsupported ← getOptStrField j "class_unsupported"
-    let hasGlobal := match j.getObjVal? "has_global" with
-      | .ok (.bool b) => b
-      | _ => false
-    let body ← (← getField j "body").getArr?
-    let mut methods : Array String := #[]
-    let mut fns : Array FunctionDefn := #[]
-    for stmtJson in body do
-      let k ← (← getField stmtJson "kind").getStr?
-      if k == "FunctionDef" then
-        let f ← parseFunctionDefn stmtJson
-        methods := methods.push f.name
-        fns := fns.push { f with name := name ++ "." ++ f.name }
-    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, span }, fns)
-
 /-! ## namedtuple recognition (H3+, docs/memory-model.md §class semantics)
 
 The recorded VALUE-like decision needs `X = namedtuple("T", <fields>)` at
@@ -351,20 +325,33 @@ private def nodupFields : List String → Bool
   | [] => true
   | f :: fs => !fs.contains f && nodupFields fs
 
-/-- A recognition candidate: `X = namedtuple("T", <fields>)` with a
-keyword-free call and a fully validated spec. -/
-private def ntCandidate : Stmt → Option NamedTupleDefn
-  | .assign tgts (.call (.name "namedtuple" _) args Option.none _) sp =>
-    match tgts.toList, args.toList with
-    | [.name x _], [.constant (.str tname) _, fldE] =>
+/-- The validated call shape `namedtuple("T", <fields>)` — shared by the
+top-level assign candidates and the class-base candidates
+(`class Position(namedtuple(…))`). `bindName` is the name constructor
+callers resolve (the assigned name, resp. the CLASS name — CPython
+instances of the subclass carry the SUBCLASS type). -/
+private def ntupleCallSpec (bindName : String) (sp : Span) :
+    Expr → Option NamedTupleDefn
+  | .call (.name "namedtuple" _) args Option.none _ =>
+    match args.toList with
+    | [.constant (.str tname) _, fldE] =>
       match parseFieldSpec fldE with
       | some fields =>
         if isPyIdent tname && !pyKeywords.contains tname
             && fields.all validFieldName && nodupFields fields then
-          some { name := x, tname, fields := fields.toArray, span := sp }
+          some { name := bindName, tname, fields := fields.toArray, span := sp }
         else Option.none
       | Option.none => Option.none
-    | _, _ => Option.none
+    | _ => Option.none
+  | _ => Option.none
+
+/-- A recognition candidate: `X = namedtuple("T", <fields>)` with a
+keyword-free call and a fully validated spec. -/
+private def ntCandidate : Stmt → Option NamedTupleDefn
+  | .assign tgts rhs sp =>
+    (match tgts.toList with
+     | [.name x _] => ntupleCallSpec x sp rhs
+     | _ => Option.none)
   | _ => Option.none
 
 /-- The exact benign import whose only effect (binding `namedtuple`) the
@@ -467,13 +454,18 @@ replaced by `pass`, plus the namedtuple table — or the input unchanged
 reference resolving to a wrong `NameError`). -/
 private def recognizeNamedtuples (functions : Array FunctionDefn)
     (classes : Array ClassDefn) (topLevel : Array Stmt) :
-    Array Stmt × Array NamedTupleDefn :=
-  let unchanged := (topLevel, #[])
+    Array Stmt × Array NamedTupleDefn × Array ClassDefn :=
+  -- demotion restores the loud inheritance state for every class-base
+  -- CANDIDATE (parseClassDefn stores them unconditionally)
+  let demoted := classes.map fun c =>
+    if c.ntBase.isSome then { c with ntBase := Option.none, ok := false } else c
+  let unchanged := (topLevel, #[], demoted)
   -- rule 1: the benign import is present
   if !topLevel.any isBenignNtImport then unchanged else
-  -- candidates, in source order
+  -- candidates, in source order (assign binds and class bases share the
+  -- census — a failed census demotes BOTH, all-or-nothing)
   let cands := topLevel.toList.filterMap ntCandidate
-  if cands.isEmpty then unchanged else
+  if cands.isEmpty && !classes.any (·.ntBase.isSome) then unchanged else
   -- rule 3a: the census must analyze EVERY top-level statement
   match (topLevel.toList.filter (!isBenignNtImport ·)).mapM stmtBinds with
   | Option.none => unchanged
@@ -502,10 +494,55 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
         && !fnames.contains nt.name && !cnames.contains nt.name
         && (cands.filter (fun nt' => nt'.name == nt.name)).length == 1
     if !ok then unchanged else
+    -- class-base candidates: the class name must not collide with an
+    -- assign candidate, a top-level bind, or another same-named class
+    -- (the def/class collision guard already covers `def`s loudly)
+    let cok := classes.all fun c =>
+      c.ntBase.isNone ||
+        (!bound.contains c.name
+          && (cands.all fun nt => nt.name != c.name)
+          && (classes.toList.filter (fun c' => c'.name == c.name)).length == 1)
+    if !cok then unchanged else
     let topLevel' := topLevel.map fun s =>
       if isBenignNtImport s || (ntCandidate s).isSome then .pass (stmtSpanOf s)
       else s
-    (topLevel', cands.toArray)
+    (topLevel', cands.toArray, classes)
+
+/-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
+the method `FunctionDefn`s FLATTENED under qualified names
+`"<class>.<method>"` (see `ClassDefn`'s docstring — method calls reuse
+`callIn` verbatim). `ok` is `true` iff `class_unsupported` is `null`
+(bases/keywords/decorators/class-level statements set it at extraction).
+Non-`FunctionDef` body statements are dropped here — they already set
+`class_unsupported`, so no instance of the class can ever be built. -/
+def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) :=
+  withCtx "ClassDef" do
+    let name ← (← getField j "name").getStr?
+    let span ← parseSpan (← getField j "span")
+    let classUnsupported ← getOptStrField j "class_unsupported"
+    let hasGlobal := match j.getObjVal? "has_global" with
+      | .ok (.bool b) => b
+      | _ => false
+    -- the structured namedtuple BASE (extractor: a single plain
+    -- `namedtuple(…)` base) — a CANDIDATE here; `recognizeNamedtuples`
+    -- promotes it (module census) or demotes the class to the ordinary
+    -- uninstantiable-loudly state. The inner `name` is the CLASS name:
+    -- CPython instances carry the SUBCLASS type.
+    let ntBase ← match j.getObjVal? "namedtuple_base" with
+      | .error _ => pure (Option.none : Option NamedTupleDefn)
+      | .ok .null => pure Option.none
+      | .ok baseJson => do
+        pure (ntupleCallSpec name span (← parseExpr baseJson))
+    let body ← (← getField j "body").getArr?
+    let mut methods : Array String := #[]
+    let mut fns : Array FunctionDefn := #[]
+    for stmtJson in body do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then
+        let f ← parseFunctionDefn stmtJson
+        methods := methods.push f.name
+        fns := fns.push { f with name := name ++ "." ++ f.name }
+    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase, span }, fns)
 
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
@@ -531,8 +568,9 @@ def parseModule (j : Json) : Except String Module :=
         functions := functions ++ fns
       else
         topLevel := topLevel.push (← parseStmt stmtJson)
-    let (topLevel', namedtuples) := recognizeNamedtuples functions classes topLevel
-    return { functions, topLevel := topLevel', classes, namedtuples }
+    let (topLevel', namedtuples, classes') :=
+      recognizeNamedtuples functions classes topLevel
+    return { functions, topLevel := topLevel', classes := classes', namedtuples }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=
   withCtx "lean_blocks" do

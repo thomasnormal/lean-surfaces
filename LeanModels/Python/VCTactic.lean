@@ -421,7 +421,7 @@ def interpUnfolds : List Name :=
    ``attrReadPlan, ``attrReadResult, ``attrCallPlan, ``execAttrCall,
    ``endsWithUU, ``dunderShaped, ``hasExtraDunder,
    ``findNamedTuple, ``findNamedTupleAux, ``fieldIndex, ``ntupleProtoName,
-   ``ntupleAttr,
+   ``ntupleMethodName, ``ntupleAttr,
    ``RVal.refFree, ``RVal.refFreeList,
    ``Val.listFree, ``Val.listFreeList, ``Val.listFreeArgs,
    ``Heap.get?, ``Heap.update, ``danglingMsg,

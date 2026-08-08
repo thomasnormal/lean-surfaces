@@ -145,6 +145,25 @@ structure FunctionDefn where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt` has none (nested arrays).
 
+/-- A module-level namedtuple class (H3+, docs/memory-model.md §class
+semantics — the recorded VALUE-like decision): recognized at INGESTION
+from a top-level `X = namedtuple("T", <fields>)` assignment under the
+exact benign import `from collections import namedtuple`, subject to the
+conservative binding census (see `Json.lean`); unrecognized shapes stay
+ordinary assignments (poisoned G1 bindings — loud, never wrong).
+`name` is the BOUND module-level name (constructor resolution); `tname`
+the typename argument (CPython error messages name it; the harness
+compares exception classes only); `fields` the validated field names in
+declaration order. Instances are immediate `RVal.ntuple` VALUES — no
+heap identity, tuple equality/hashing — so a `NamedTupleId` table index
+is unnecessary: the value carries its own `tname`/`fields`. -/
+structure NamedTupleDefn where
+  name : String
+  tname : String
+  fields : Array String
+  span : Span
+deriving Repr, Inhabited, BEq, DecidableEq
+
 /-- A module-level class definition (schema `ClassDef`, H3). The class's
 METHOD BODIES are not stored here: ingestion FLATTENS them into
 `Module.functions` under qualified names `"<class>.<method>"` (a Python
@@ -171,25 +190,17 @@ structure ClassDefn where
   included — `class C: global x; x = 1` rebinds a module name at import
   time). See `FunctionDefn.hasGlobal`. -/
   hasGlobal : Bool := false
-  span : Span
-deriving Repr, Inhabited, BEq, DecidableEq
-
-/-- A module-level namedtuple class (H3+, docs/memory-model.md §class
-semantics — the recorded VALUE-like decision): recognized at INGESTION
-from a top-level `X = namedtuple("T", <fields>)` assignment under the
-exact benign import `from collections import namedtuple`, subject to the
-conservative binding census (see `Json.lean`); unrecognized shapes stay
-ordinary assignments (poisoned G1 bindings — loud, never wrong).
-`name` is the BOUND module-level name (constructor resolution); `tname`
-the typename argument (CPython error messages name it; the harness
-compares exception classes only); `fields` the validated field names in
-declaration order. Instances are immediate `RVal.ntuple` VALUES — no
-heap identity, tuple equality/hashing — so a `NamedTupleId` table index
-is unnecessary: the value carries its own `tname`/`fields`. -/
-structure NamedTupleDefn where
-  name : String
-  tname : String
-  fields : Array String
+  /-- The recognized namedtuple BASE of a value-like subclass
+  (`class Position(namedtuple("Position", "…"))` — sunfish's shape):
+  instantiation then builds an IMMEDIATE `RVal.ntuple` value, exactly
+  like a plain recognized namedtuple (methods on the immutable self are
+  the recorded next tier). Set by ingestion ONLY when the extractor's
+  structured `namedtuple_base` validates AND the module-level namedtuple
+  census passes (benign import, `namedtuple` unshadowed — Json.lean);
+  otherwise the class demotes to the ordinary uninstantiable-loudly
+  state (`ok = false`). The inner `NamedTupleDefn.name` is the CLASS
+  name (the constructor callers resolve). -/
+  ntBase : Option NamedTupleDefn := Option.none
   span : Span
 deriving Repr, Inhabited, BEq, DecidableEq
 

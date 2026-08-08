@@ -335,10 +335,15 @@ cycle DETECTION, never by running out of fuel).
   `__init__` — one on the immutable self is loud), and a method name in
   READ position is the loud bound-method refusal, never a fake
   `AttributeError`. The real sunfish.py's `Move`/`Entry`/`Position` all
-  recognize as-is (`Position.ok = true` with its six-field base). Still
-  pending: METHOD CALLS on the immutable self (`pos.rotate()` — the
-  dispatch tier; `self` would bind the ntuple VALUE through `callIn`,
-  no new judgment).
+  recognize as-is (`Position.ok = true` with its six-field base). **Method
+  dispatch (H5 slice 2, 2026-08-08)**: `pos.mirror()` runs the flattened
+  qualified function through `callIn` with `self` bound to the immutable
+  VALUE (no new judgment; subclass methods shadow the base's field
+  properties, CPython MRO; a field in call position, the protocol names,
+  and dunders are loud; a missing attribute is the faithful pre-args
+  `AttributeError`). Dispatch identity: the census also refuses a plain
+  candidate whose TYPENAME collides with an `ntBase` class name, so in a
+  recognized module a value's `tname` names exactly its defining class.
 
 ## Heap well-formedness (explicit invariant)
 

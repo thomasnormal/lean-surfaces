@@ -213,7 +213,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             attrReadPlan, attrReadResult, attrCallPlan, execAttrCall,
             endsWithUU, dunderShaped, hasExtraDunder,
             findNamedTuple, findNamedTupleAux, fieldIndex, ntupleProtoName,
-            ntupleMethodName, ntupleAttr,
+            ntupleMethodName, ntupleAttr, ntupleCallPlan,
             RVal.refFree, RVal.refFreeList,
             Val.listFree, Val.listFreeList, Val.listFreeArgs,
             Heap.get?, Heap.update, danglingMsg,

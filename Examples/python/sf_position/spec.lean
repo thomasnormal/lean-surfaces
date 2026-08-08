@@ -133,3 +133,34 @@ theorem tp_score_flow_callsIn (s d : Int) :
       (.tuple #[.int (s - 1), .int (s + 1), .int (-10), .int 10, .int (s + 1),
                 .bool true, .int 1]) := by
   proofs
+
+/-- The self-value the mirror theorems bind (real wc/bc/ep/kp shapes). -/
+private def posB (s : Int) : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "brd", .int s, .tuple #[.bool true, .bool true],
+      .tuple #[.bool false, .bool false], .int 3, .int 4]
+
+/-- `posB`'s mirror: score negated, castling rights swapped. -/
+private def posM (s : Int) : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "brd", .int (-s), .tuple #[.bool false, .bool false],
+      .tuple #[.bool true, .bool true], .int 3, .int 4]
+
+/-- **The first METHOD theorem on a namedtuple subclass (H5)**: the
+method IS a function — `Position.mirror` called with `self` bound to the
+immutable VALUE negates the score and swaps the castling rights,
+symbolically in the score, with the world untouched (values allocate
+nothing). The `rotate` score-negation on the shipped sunfish.py is this
+theorem's shape, gated on the string tier (slice/swapcase/IfExp). -/
+theorem position_mirror_callsIn (s : Int) :
+    CallsIn sf_position w0 "Position.mirror" #[posB s] w0 (posM s) := by
+  proofs
+
+/-- Method dispatch through the surface syntax: `pos.mirror()` inside a
+function body — construction, dispatch, and field reads on the mirrored
+result, symbolically in the score. -/
+theorem mirror_score_callsIn (s : Int) :
+    CallsIn sf_position w0 "mirror_score" #[.int s] w0
+      (.tuple #[.int (-s), .str "brd", .bool false, .bool true,
+                .int 3, .int 4]) := by
+  proofs

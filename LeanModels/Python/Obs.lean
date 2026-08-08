@@ -438,13 +438,24 @@ theorem fuelMono (fuel : Nat) :
             cases cf <;> try (simp only [evalExpr]; exact Run.le_refl _)
             case «attribute» recv attr spa =>
               -- receiver-first dispatch (H3): the receiver evaluates, then
-              -- `execAttrCall` forks on the pure plan (its own conjunct)
+              -- `execAttrCall` forks on the pure plan (its own conjunct);
+              -- an ntuple VALUE receiver (H5) forks on `ntupleCallPlan` —
+              -- only the method arm recurses (args + `callIn`)
               simp only [evalExpr]
               refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
               cases r <;>
                 first
                 | exact Run.le_refl _
                 | exact ihAttrC m st _ attr cargs.toList k hk
+                | skip
+              case ntuple tn fs xs =>
+                -- iota-reduce the receiver matcher, then fork on the plan
+                dsimp only
+                cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _
+                case instMethod qname =>
+                  exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
+                    Run.le_withLocals
+                      (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
             case name fname _ =>
               simp only [evalExpr]
               cases Env.lookup st.locals fname with
@@ -1163,6 +1174,14 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               | exact .unsupported
               | exact ((ihAttrC st₁ _ cargs.toList hfree.2).mono
                   (wtrans st st₁ h₁))
+              | skip
+            case ntuple tn fs xs =>
+              -- heap-free: no classes ⇒ the plan never dispatches
+              dsimp only
+              rcases ntupleCallPlan_heapFree hm tn fs "get" with hp | ⟨msg, hp⟩ <;>
+                rw [hp]
+              · exact .exn
+              · exact .unsupported
           case name fname _ =>
             -- H2: `sorted` ALLOCATES its result, so the fragment excludes
             -- it (hfree carries `fname != "sorted"` — the branch is

@@ -1442,17 +1442,38 @@ defensive (constructor calls always build `fields.size` elements; a
 hand-built mismatch reports loudly). -/
 def ntupleAttr (m : Module) (tname : String) (fields : Array String)
     (xs : Array RVal) (attr : String) : Res RVal :=
-  match fieldIndex fields.toList attr with
-  | some i =>
-    if i < xs.size then .ok (xs.getD i .none)
-    else .unsupported
-      "internal: namedtuple field/value arity mismatch (unconstructible through the interpreter — report this)"
-  | Option.none =>
-    if ntupleMethodName m tname attr then
-      .unsupported s!"referencing bound method '.{attr}' of a namedtuple subclass as a value is outside the tier (methods are called, not passed)"
-    else if ntupleProtoName attr || dunderShaped attr then
-      .unsupported s!"namedtuple attribute '.{attr}' is outside the tier (field access only; '_replace'/'_asdict'/'count'/… are loud — docs/memory-model.md §class semantics)"
-    else .exn .attributeError
+  -- CPython MRO: SUBCLASS methods shadow the anonymous base's field
+  -- properties — the method check comes FIRST
+  if ntupleMethodName m tname attr then
+    .unsupported s!"referencing bound method '.{attr}' of a namedtuple subclass as a value is outside the tier (methods are called, not passed)"
+  else
+    match fieldIndex fields.toList attr with
+    | some i =>
+      if i < xs.size then .ok (xs.getD i .none)
+      else .unsupported
+        "internal: namedtuple field/value arity mismatch (unconstructible through the interpreter — report this)"
+    | Option.none =>
+      if ntupleProtoName attr || dunderShaped attr then
+        .unsupported s!"namedtuple attribute '.{attr}' is outside the tier (field access only; '_replace'/'_asdict'/'count'/… are loud — docs/memory-model.md §class semantics)"
+      else .exn .attributeError
+
+/-- The decision of a method CALL on a namedtuple VALUE (H5): the
+subclass methods first (identity — the ingestion census refuses
+plain-candidate typenames colliding with `ntBase` class names, so in a
+recognized module the value's `tname` names exactly its defining class;
+hand-built modules keep the loud-only `ntupleMethodName` caveat), then a
+FIELD in call position (CPython calls the field value — loud), then the
+protocol/dunders (exist — loud), then the faithful pre-args
+`AttributeError`. Reuses `AttrPlan` (the heap dispatch's vocabulary);
+decided BEFORE argument evaluation, CPython order. -/
+def ntupleCallPlan (m : Module) (tname : String) (fields : Array String)
+    (attr : String) : AttrPlan :=
+  if ntupleMethodName m tname attr then .instMethod (tname ++ "." ++ attr)
+  else if (fieldIndex fields.toList attr).isSome then
+    .refuse s!"calling field '.{attr}' of a namedtuple (the field value in call position) is outside the tier"
+  else if ntupleProtoName attr || dunderShaped attr then
+    .refuse s!"namedtuple method '.{attr}' is outside the tier ('_replace'/'_asdict'/'count'/… are loud — docs/memory-model.md §class semantics)"
+  else .attrMissing
 
 /-! ## Module-level constants (globals, G1 — world-init since H1-proper)
 
@@ -1876,6 +1897,22 @@ theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
       | some v => simp [hv]
       | none => simp [hv, getClass?_heapFree hm ci]
 
+/-- In a heap-free module the namedtuple call plan never dispatches (no
+classes ⇒ no methods): it is a decided refusal or the faithful
+`AttributeError` — `worldInv`'s value-receiver branch forks on this. -/
+theorem ntupleCallPlan_heapFree {m : Module} (hm : m.heapFree = true)
+    (tname : String) (fields : Array String) (attr : String) :
+    ntupleCallPlan m tname fields attr = .attrMissing ∨
+    (∃ msg, ntupleCallPlan m tname fields attr = .refuse msg) := by
+  unfold ntupleCallPlan ntupleMethodName
+  rw [findClass_heapFree hm]
+  by_cases hf : (fieldIndex fields.toList attr).isSome
+  · rw [if_neg (by simp), if_pos hf]; right; exact ⟨_, rfl⟩
+  · rw [if_neg (by simp), if_neg hf]
+    by_cases hp : (ntupleProtoName attr || dunderShaped attr) = true
+    · rw [if_pos hp]; right; exact ⟨_, rfl⟩
+    · rw [if_neg hp]; left; rfl
+
 /-! ## The interpreter (mutual block, normative signatures)
 
 Every function matches fuel first (`0 => .timeout`) and passes the
@@ -2114,11 +2151,21 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           evalExpr m fuel st recv ⤳ fun st r =>
           match r with
           | .ref a => execAttrCall m fuel st a attr args.toList
-          | .ntuple _ _ _ =>
-            -- `move._replace(…)`, `move.count(…)`, and a FIELD in call
-            -- position all exist in CPython — loud, decided before the
-            -- arguments (receiver-first, like every attribute dispatch)
-            .unsupported s!"method call '.{attr}' on a namedtuple is outside the tier (field access only; '_replace' and friends are loud — docs/memory-model.md §class semantics)"
+          | .ntuple tn fs xs =>
+            -- namedtuple SUBCLASS method dispatch (H5): methods ARE
+            -- functions — `self` is the ntuple VALUE, bound as the first
+            -- argument through `callIn` (no new judgment; the immutable
+            -- self is a value, so callee "mutations" are impossible by
+            -- construction). The plan is decided BEFORE the arguments.
+            (match ntupleCallPlan m tn fs attr with
+             | .instMethod qname =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               Run.withLocals st.locals
+                 (callIn m fuel st.world qname
+                   ((RVal.ntuple tn fs xs :: vs).toArray))
+             | .attrMissing => .exn st .attributeError
+             | .refuse msg => .unsupported msg
+             | _ => .unsupported "internal: namedtuple call plan out of range (report this)")
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"

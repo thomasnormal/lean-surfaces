@@ -200,12 +200,13 @@ decision:
    recognized (`ClassDefn.ntBase`, same census) and INSTANTIATION
    builds the immediate value through the subclass — the real
    sunfish.py's `Position` now constructs (`ok = true`).
-   REMAINING from this step — METHOD CALLS on the immutable self
-   (`pos.rotate()`: dispatch by the value's class name through the
-   flattened qualified functions, `self` bound to the ntuple VALUE via
-   `callIn` — no new judgment; the plan-discipline arm plus
-   `fuelMono`/`worldInv` cases). Would unlock `Position.value()` (with
-   step 5) and `bound()` over real positions.
+   H5 slice 2 (2026-08-08): METHOD CALLS on the immutable self are
+   LIVE (`ntupleCallPlan` dispatch, `self` = the VALUE through `callIn`;
+   identity via the census tname-clash refusal;
+   `Examples/python/sf_position`: `position_mirror_callsIn` — the first
+   subclass-method theorem, symbolic in the score). This step is DONE;
+   `Position.rotate`/`value()`/`bound()` on the shipped file now gate
+   only on step 5 (strings + IfExp) and step 6 (generators).
 5. **String methods + slicing.** `board[:i] + p + board[i+1:]` (move
    application), `.isupper()`, `.swapcase()`, `.index()`. Value
    semantics faithful (str immutable); mostly interpreter surface.

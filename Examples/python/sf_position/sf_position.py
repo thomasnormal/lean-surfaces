@@ -2,8 +2,8 @@
 (sunfish.py lines 172/303 — Move and Entry are plain namedtuples;
 Position is the shipped shape, `class Position(namedtuple(...))` with a
 method: instantiation builds the IMMEDIATE value through the subclass —
-H5 — while METHOD CALLS on the immutable self stay loudly out until the
-dispatch tier lands) flowing through construction, field access,
+H5 — and METHOD CALLS dispatch through the flattened qualified functions
+with self bound to the immutable VALUE) flowing through construction, field access,
 equality, iteration, unpacking, and — the transposition-table pattern —
 dict-keying by tuples CONTAINING a Position. Every in-tier function
 returns boundary scalars/tuples (namedtuple results themselves refuse
@@ -96,6 +96,7 @@ def fields_are_loud(i, j):
 
 
 def mirror_is_loud(score):
+    # the METHOD works; returning its Position RESULT refuses the boundary
     pos = Position("brd", score, (True, True), (False, False), 0, 0)
     return pos.mirror()
 
@@ -103,3 +104,9 @@ def mirror_is_loud(score):
 def bound_method_is_loud(score):
     pos = Position("brd", score, (True, True), (False, False), 0, 0)
     return pos.mirror
+
+
+def mirror_score(score):
+    pos = Position("brd", score, (True, True), (False, False), 3, 4)
+    m = pos.mirror()
+    return (m.score, m.board, m.wc[0], m.bc[0], m.ep, m.kp)

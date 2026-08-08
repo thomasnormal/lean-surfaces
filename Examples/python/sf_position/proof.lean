@@ -109,4 +109,35 @@ theorem tp_score_flow_callsIn (s d : Int) :
   rw [callIn.eq_2]
   py_simp [sf_position, w0, wTp, posV]
 
+private def posB (s : Int) : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "brd", .int s, .tuple #[.bool true, .bool true],
+      .tuple #[.bool false, .bool false], .int 3, .int 4]
+
+private def posM (s : Int) : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "brd", .int (-s), .tuple #[.bool false, .bool false],
+      .tuple #[.bool true, .bool true], .int 3, .int 4]
+
+set_option maxRecDepth 8192 in
+theorem position_mirror_callsIn (s : Int) :
+    CallsIn sf_position w0 "Position.mirror" #[posB s] w0 (posM s) := by
+  refine ⟨64, ?_⟩
+  rw [callIn.eq_2]
+  py_simp [sf_position, w0, posB, posM]
+
+set_option maxRecDepth 8192 in
+theorem mirror_score_callsIn (s : Int) :
+    CallsIn sf_position w0 "mirror_score" #[.int s] w0
+      (.tuple #[.int (-s), .str "brd", .bool false, .bool true,
+                .int 3, .int 4]) := by
+  -- the recorded per-call geometry (sf_searcher): one `callIn.eq_2` step
+  -- per call — the outer frame first, then the nested `Position.mirror`
+  -- the run is stuck on (whole-driver unfolding storms)
+  refine ⟨64, ?_⟩
+  rw [callIn.eq_2]
+  py_simp [sf_position, w0]
+  rw [callIn.eq_2]
+  py_simp [sf_position]
+
 end Examples.python.sf_position.proof

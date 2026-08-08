@@ -503,6 +503,13 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
           && (cands.all fun nt => nt.name != c.name)
           && (classes.toList.filter (fun c' => c'.name == c.name)).length == 1)
     if !cok then unchanged else
+    -- IDENTITY of method dispatch: a plain candidate's TYPENAME may not
+    -- collide with an `ntBase` class's NAME — otherwise a plain value
+    -- would carry a tname that names the subclass and dispatch its
+    -- methods (CPython: unrelated classes, AttributeError)
+    let tnameClash := cands.any fun nt =>
+      classes.any fun c => c.ntBase.isSome && c.name == nt.tname
+    if tnameClash then unchanged else
     let topLevel' := topLevel.map fun s =>
       if isBenignNtImport s || (ntCandidate s).isSome then .pass (stmtSpanOf s)
       else s

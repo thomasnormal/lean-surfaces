@@ -212,6 +212,45 @@ decision:
    generators out and certify a generator-free `sunfish_core.py` that
    sunfish imports (the transliteration then ships as the engine).
 
+   H4 DESIGN NOTES (2026-08-08, design only — elaborating memory-model
+   §staging's defunctionalized-continuation decision; nothing here
+   pre-empts the (a)/(b)/(c) owner decision, and the extractor items are
+   shared by all three routes):
+
+   * **Representation.** `Obj.iterator` carries the suspended frame as
+     DATA: the generator's qualified function name, its locals env, a
+     status (created/running/suspended/closed — `running` makes
+     re-entrant `next` the faithful `ValueError`), and the continuation
+     as a STRUCTURAL PATH into the body — v0 tier admits `yield e` only
+     in STATEMENT position inside `for`/`while`/`if` nests (exactly
+     sunfish's `gen_moves`/`moves` shape), so the path is a list of
+     statement indices + enclosing loop cursor states, never an
+     arbitrary expression context; `yield` in expression position
+     (consumed `send` values) stays loudly out.
+   * **Stepping.** A new FROZEN mutual-block member
+     `stepIter m fuel w a : Run World (Option RVal)` — `some v` = next
+     yield, `none` = exhaustion (status → closed). `for x in gen`
+     consumes through the live-iterator arm of the `for` dispatch;
+     `break` leaves the iterator SUSPENDED (CPython semantics — the beta
+     cutoff depends on it). Resumption re-enters the body via a
+     path-driven executor (`execStmtsFrom`), a mutual-block addition
+     following the recorded conjunct-appended-LAST discipline for
+     `fuelMono`/`worldInv`.
+   * **heapFree.** Generator creation ALLOCATES and syntax cannot tell a
+     generator call from a function call — `Module.heapFree` must also
+     require "no generator defs", mirroring the H3 `classes = #[]`
+     carve-out; generator-using modules live on `CallsIn`.
+   * **Extractor.** A def containing `yield` (own scope only — unlike
+     `has_global`, nested defs are their own generators) is a generator
+     regardless of reachability (CPython rule): envelope flag
+     `is_generator`, plus structuring today's `Unsupported "Yield"` into
+     a statement-position node for the tier above.
+   * **Acceptance.** Staged: a lab generator (counter/interleaved-effect
+     shapes) with differential rows pinning suspension-across-`break`
+     and mutation-between-`next`s; then sunfish's `moves()` consumed
+     lazily by `bound`. `sorted(key=)` is orthogonal (paired here only
+     because sunfish's move ordering needs both).
+
 Cross-cutting, found by the milestone proofs: `py_vcgen` cannot walk
 `for` loops (the frozen-`execFor` list-induction pattern in
 `Examples/python/sf_bound_for/proof.lean` is the manual route to

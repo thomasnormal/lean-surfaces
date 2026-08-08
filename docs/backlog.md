@@ -169,11 +169,16 @@ decision:
    `Val.list` arguments become heap objects (machinery built:
    `thawH`/`listFree` bridges, `eq_thaw_of_freezeH`); it carries the
    list-example proof rebase (`sf_bound_for`, `sf_bound_tree`,
-   `sf_bound_rec`, `bench_bisect`, `bench_statistics`) — the intended
-   rescue route is an `execForList` ≡ `execFor`-on-snapshot equivalence
-   lemma over pinned worlds, so the frozen-tail `for` induction pattern
-   survives; then the arg-mutation harness rows go live and `+= `/list
-   concat can revisit the heap-free-fragment question.
+   `sf_bound_rec`, `bench_bisect`, `bench_statistics`) — the rescue
+   route's ENGINE is now BUILT (2026-08-08):
+   `execForList_eq_execFor_snapshot` (Obs.lean) proves the live cursor
+   IS `execFor` over the object's snapshot for heap-free bodies in
+   heap-free modules (worlds pinned by `worldInv`, induction on fuel),
+   so the frozen-tail `for` induction pattern survives the flip by one
+   rewrite per loop. Remaining: wire `thawArgsH` into `callFunction`,
+   rebase the five example proofs through the lemma, then the
+   arg-mutation harness rows go live and `+= `/list concat can revisit
+   the heap-free-fragment question.
 
 4. **Classes — BUILT (H3, 2026-08-08),** per docs/memory-model.md
    §class semantics: ClassDef end to end (the three sunfish ClassDef

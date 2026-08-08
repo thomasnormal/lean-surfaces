@@ -1504,6 +1504,86 @@ theorem callIn_world {m : Module} {fuel : Nat} {w w' : World} {fname : String}
     (h : callIn m fuel w fname args = .ok w' v) :
     w' = w := (worldInv m hm fuel).2.2.2.2.2.2.2.1 w fname args w' v h
 
+/-! ## The boundary-flip rescue lemma (docs/backlog.md, H2 step 3b)
+
+Once `callFunction` thaws `Val.list` ARGUMENTS onto the heap
+(`RVal.thawArgsH`), a `for` over a boundary-passed list runs the LIVE
+cursor (`execForList`) instead of `execFor` over the transitional value
+list — and the frozen-tail `for` induction pattern
+(`Examples/python/sf_bound_for/proof.lean`) speaks `execFor`. The rescue:
+over a heap-free module and a heap-free body, every iteration's world is
+PINNED (`worldInv`), so the cursor's per-step re-read always sees the same
+object — the live cursor IS `execFor` over the snapshot. -/
+
+/-- The list element `execForList` reads at cursor `i` is the snapshot's
+`i`-th element (bounds given). -/
+private theorem getD_toList_getElem (xs : Array RVal) (i : Nat)
+    (h : i < xs.size) : xs.getD i .none = xs.toList[i]'(by simpa using h) := by
+  simp [Array.getD, h]
+
+/-- **The live cursor is `execFor` on the snapshot** (pinned worlds): in a
+heap-free module, iterating a heap list at `a` with a heap-free body from
+cursor `i` is exactly `execFor` over the object's element snapshot from
+`i` — same fuel, same outcome, states included. By induction on fuel: the
+body cannot move the world (`execStmts_world`), so the next re-read sees
+`xs` again. The H2 boundary flip's proof-rebase route rewrites
+`execForList` to `execFor` through this and reuses the frozen-tail
+induction pattern verbatim. -/
+theorem execForList_eq_execFor_snapshot {m : Module} (hm : m.heapFree = true) :
+    ∀ (fuel : Nat) (st : FrameState) (target : Expr) (a : Addr) (i : Nat)
+      (body : List Stmt) (xs : Array RVal),
+      Stmt.heapFreeList body = true →
+      Heap.get? st.world.heap a = some (.list xs) →
+      execForList m fuel st target a i body
+        = execFor m fuel st target (xs.toList.drop i) body
+  | 0, st, target, a, i, body, xs, _, _ => by
+    simp [execForList, execFor]
+  | fuel + 1, st, target, a, i, body, xs, hfree, hget => by
+    rw [execForList, execFor.eq_def]
+    rw [hget]
+    dsimp only
+    by_cases hi : i < xs.size
+    · have hlen : i < xs.toList.length := by simpa using hi
+      rw [if_pos hi, List.drop_eq_getElem_cons hlen]
+      simp only [← getD_toList_getElem xs i hi]
+      -- equal prefixes (the element bind and the body bind); the
+      -- continuations agree on every reachable outcome. Case on the PURE
+      -- helper results (never on the `Run` terms — `cases` on them
+      -- generalizes `st` out of the context).
+      cases hA : assignToH st.world.heap st.locals target (xs.getD i .none) with
+      | ok env₁ =>
+        rw [Run.liftRes_ok, Run.ok_bind, Run.ok_bind]
+        cases hB : execStmts m fuel { st with locals := env₁ } body with
+        | ok st₂ flow =>
+          rw [Run.ok_bind, Run.ok_bind]
+          -- `execStmts_world`'s RHS carries the record-literal state; its
+          -- `.world` projection is DEFEQ to `st.world` (exact closes it)
+          have hw₂ := execStmts_world hm hfree hB
+          cases flow with
+          | next =>
+            have hget₂ : Heap.get? st₂.world.heap a = some (.list xs) := by
+              rw [hw₂]; exact hget
+            simpa using execForList_eq_execFor_snapshot hm
+              fuel st₂ target a (i + 1) body xs hfree hget₂
+          | cont =>
+            have hget₂ : Heap.get? st₂.world.heap a = some (.list xs) := by
+              rw [hw₂]; exact hget
+            simpa using execForList_eq_execFor_snapshot hm
+              fuel st₂ target a (i + 1) body xs hfree hget₂
+          | brk => rfl
+          | ret v => rfl
+        | exn st₂ e => rw [Run.exn_bind, Run.exn_bind]
+        | timeout => rw [Run.timeout_bind, Run.timeout_bind]
+        | unsupported msg => rw [Run.unsupported_bind, Run.unsupported_bind]
+      | exn e => rw [Run.liftRes_exn, Run.exn_bind, Run.exn_bind]
+      | timeout => rw [Run.liftRes_timeout, Run.timeout_bind, Run.timeout_bind]
+      | unsupported msg =>
+        rw [Run.liftRes_unsupported, Run.unsupported_bind, Run.unsupported_bind]
+    · rw [if_neg hi]
+      have hdrop : xs.toList.drop i = [] :=
+        List.drop_eq_nil_of_le (by simpa using Nat.le_of_not_lt hi)
+      rw [hdrop]
+
 /-! ## Cross-fuel determinism -/
 
 /-- **Cross-fuel determinism**: two decided (non-`timeout`) results of the

@@ -160,6 +160,7 @@ def Expr.kindName : Expr → String
   | .subscript .. => "Subscript"
   | .dict .. => "Dict"
   | .attribute .. => "Attribute"
+  | .ifExp .. => "IfExp"
   | .unsupported pyKind _ _ => pyKind
 
 /-- Python truthiness `bool(x)`: `None` → false; `bool` → itself;
@@ -1767,6 +1768,7 @@ mutual
     | .subscript v i _ => v.heapFree && i.heapFree
     | .dict .. => false                 -- ALLOCATES
     | .attribute v _ _ => v.heapFree    -- as a bare value: loud, never `.ok`
+    | .ifExp t b o _ => t.heapFree && b.heapFree && o.heapFree
     | .unsupported .. => true           -- loud, never decides `.ok`
 
   /-- Elementwise `Expr.heapFree`. -/
@@ -2212,6 +2214,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         Run.liftRes st (ntupleAttr m tn fields xs attr)
       | r =>
         .unsupported s!"attribute access on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
+    | .ifExp t b o _ =>
+        -- CPython: the test first, then EXACTLY ONE branch (lazy)
+        evalExpr m fuel st t ⤳ fun st tv =>
+        Run.liftRes st (truthyH st.world.heap tv) ⤳ fun st cond =>
+        if cond then evalExpr m fuel st b else evalExpr m fuel st o
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/

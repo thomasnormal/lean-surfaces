@@ -162,5 +162,6 @@
   {"file": "Examples/python/sf_position/sf_position.py", "function": "fields_are_loud", "args": [[1, 2]], "expect": "unsupported"},
   {"file": "Examples/python/sf_position/sf_position.py", "function": "mirror_is_loud", "args": [[5]], "expect": "unsupported"},
   {"file": "Examples/python/sf_position/sf_position.py", "function": "bound_method_is_loud", "args": [[5]], "expect": "unsupported"},
-  {"file": "Examples/python/sf_position/sf_position.py", "function": "mirror_score", "args": [[5], [0], [-69290]], "expect": "match"}
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "mirror_score", "args": [[5], [0], [-69290]], "expect": "match"},
+  {"file": "Examples/python/sf_position/sf_position.py", "function": "ep_flip", "args": [[95, 0], [0, 0], [95, 1], [24, 0]], "expect": "match"}
 ]

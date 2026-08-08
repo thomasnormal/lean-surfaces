@@ -110,3 +110,8 @@ def mirror_score(score):
     pos = Position("brd", score, (True, True), (False, False), 3, 4)
     m = pos.mirror()
     return (m.score, m.board, m.wc[0], m.bc[0], m.ep, m.kp)
+
+
+def ep_flip(ep, nullmove):
+    # rotate's exact conditional subexpression shape (IfExp + and/not)
+    return 119 - ep if ep and not nullmove else 0

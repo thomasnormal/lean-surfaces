@@ -98,6 +98,7 @@ mutual
     | .subscript v i _ => v.allNames ++ i.allNames
     | .dict ks vs _ => Expr.allNamesList ks.toList ++ Expr.allNamesList vs.toList
     | .attribute v _ _ => v.allNames
+    | .ifExp t b o _ => t.allNames ++ b.allNames ++ o.allNames
     | .unsupported .. => []
 
   /-- Elementwise `Expr.allNames`. -/

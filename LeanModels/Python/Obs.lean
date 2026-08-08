@@ -542,6 +542,11 @@ theorem fuelMono (fuel : Nat) :
           -- attribute READ (H3): receiver, then a fuel-free heap fork
           simp only [evalExpr]
           exact Run.le_bind (ihE m st recv k hk) fun st r => Run.le_refl _
+        | ifExp t b o _ =>
+          simp only [evalExpr]
+          exact Run.le_bind (ihE m st t k hk) fun st tv =>
+            Run.le_bind (Run.le_refl _) fun st cond =>
+              Run.le_ite (ihE m st b k hk) (ihE m st o k hk)
         | unsupported pyKind text _ => simp only [evalExpr]; exact Run.le_refl _
     -- evalExprs
     · intro m st es fuel' hf
@@ -1262,6 +1267,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | dict keys values _ =>
         -- outside the fragment: `heapFree = false` refutes the hypothesis
         simp [Expr.heapFree] at hfree
+      | ifExp t b o _ =>
+        simp only [Expr.heapFree, Bool.and_eq_true] at hfree
+        simp only [evalExpr]
+        refine .bind (ihE st t hfree.1.1) fun st₁ tv h₁ => ?_
+        refine .bind (.liftResF h₁ _) fun st₂ cond h₂ => ?_
+        exact .ite ((ihE st₂ b hfree.1.2).mono (wtrans st st₂ h₂))
+          ((ihE st₂ o hfree.2).mono (wtrans st st₂ h₂))
       | «attribute» recv attr _ =>
         -- attribute READ (H3): a pure heap read — world-preserving; the
         -- bound-method/AttributeError forks are all ok-free or pinned

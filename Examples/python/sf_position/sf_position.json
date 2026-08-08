@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "Examples/python/sf_position/sf_position.py",
-  "source_sha256": "a0363533bc2f4e9364fd9584e72981250176aa82134841506e4d8951251f1f80",
+  "source_sha256": "c24309801fd90520fd557c4523deb4264933d8408714c25006594c54907bb803",
   "module": {
     "kind": "Module",
     "body": [
@@ -4948,6 +4948,146 @@
                   "attr": "kp"
                 }
               ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 115,
+          "col_offset": 0,
+          "end_lineno": 117,
+          "end_col_offset": 49
+        },
+        "name": "ep_flip",
+        "args": [
+          {
+            "arg": "ep",
+            "span": {
+              "lineno": 115,
+              "col_offset": 12,
+              "end_lineno": 115,
+              "end_col_offset": 14
+            }
+          },
+          {
+            "arg": "nullmove",
+            "span": {
+              "lineno": 115,
+              "col_offset": 16,
+              "end_lineno": 115,
+              "end_col_offset": 24
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 117,
+              "col_offset": 4,
+              "end_lineno": 117,
+              "end_col_offset": 49
+            },
+            "value": {
+              "kind": "IfExp",
+              "span": {
+                "lineno": 117,
+                "col_offset": 11,
+                "end_lineno": 117,
+                "end_col_offset": 49
+              },
+              "test": {
+                "kind": "BoolOp",
+                "span": {
+                  "lineno": 117,
+                  "col_offset": 23,
+                  "end_lineno": 117,
+                  "end_col_offset": 42
+                },
+                "op": "And",
+                "values": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 117,
+                      "col_offset": 23,
+                      "end_lineno": 117,
+                      "end_col_offset": 25
+                    },
+                    "id": "ep"
+                  },
+                  {
+                    "kind": "UnaryOp",
+                    "span": {
+                      "lineno": 117,
+                      "col_offset": 30,
+                      "end_lineno": 117,
+                      "end_col_offset": 42
+                    },
+                    "op": "Not",
+                    "operand": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 117,
+                        "col_offset": 34,
+                        "end_lineno": 117,
+                        "end_col_offset": 42
+                      },
+                      "id": "nullmove"
+                    }
+                  }
+                ]
+              },
+              "body": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 117,
+                  "col_offset": 11,
+                  "end_lineno": 117,
+                  "end_col_offset": 19
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 117,
+                    "col_offset": 11,
+                    "end_lineno": 117,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "119"
+                  }
+                },
+                "op": "Sub",
+                "right": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 117,
+                    "col_offset": 17,
+                    "end_lineno": 117,
+                    "end_col_offset": 19
+                  },
+                  "id": "ep"
+                }
+              },
+              "orelse": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 117,
+                  "col_offset": 48,
+                  "end_lineno": 117,
+                  "end_col_offset": 49
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
             }
           }
         ]

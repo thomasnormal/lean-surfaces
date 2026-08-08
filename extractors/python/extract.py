@@ -219,6 +219,16 @@ def convert_expr(node):
             "values": [convert_expr(v) for v in node.values],
         }
 
+    if isinstance(node, ast.IfExp):
+        # `b if t else o` — structured (H5, sunfish's rotate/value use it)
+        return {
+            "kind": "IfExp",
+            "span": span(node),
+            "test": convert_expr(node.test),
+            "body": convert_expr(node.body),
+            "orelse": convert_expr(node.orelse),
+        }
+
     if isinstance(node, ast.Attribute):
         # `obj.attr` — structured (H0). Store/Del contexts arrive through
         # Assign/Delete targets; representation is context-free here.

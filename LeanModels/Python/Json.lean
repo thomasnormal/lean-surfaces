@@ -161,6 +161,10 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "Attribute" =>
         return .attribute (← parseExpr (← getField j "value"))
           (← (← getField j "attr").getStr?) span
+    | "IfExp" =>
+        return .ifExp (← parseExpr (← getField j "test"))
+          (← parseExpr (← getField j "body"))
+          (← parseExpr (← getField j "orelse")) span
     | "Subscript" =>
         let value ← parseExpr (← getField j "value")
         let index ← parseExpr (← getField j "index")
@@ -422,6 +426,7 @@ mutual
     | .subscript v i _ => exprRefs v ++ exprRefs i
     | .dict ks vs _ => (ks.toList.map exprRefs).flatten ++ (vs.toList.map exprRefs).flatten
     | .attribute v _ _ => exprRefs v
+    | .ifExp t b o _ => exprRefs t ++ exprRefs b ++ exprRefs o
     | .unsupported .. => []
 
   /-- Every `Name` occurring in the statement. -/

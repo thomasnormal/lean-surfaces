@@ -417,44 +417,44 @@ structural inference silently fall back to well-founded recursion, which
 broke every kernel `rfl` — the mergeSort trap, caught by `Tests.lean`
 rather than by anything that names it.
 
-## Session stop point (2026-08-09, after the H4 generator tier)
+## Session stop point (2026-08-09, after the genexp/iterator pass)
 
-Stopped CLEAN at master `14a4b2c` — nothing in flight, no WIP; the triad
-was green at that commit (`lake build` 3641; docs_check 67/67; diff_test
-599 rows 0 failed, 34 whitelisted; corpus 17 scripts 0 failed) and this
-section is the only change after it. Two commits this session:
-`d8710b1` (H5 iteration — container membership, `for` over a str,
-`ord`/`chr`) and `14a4b2c` (H4 generator functions).
+Stopped CLEAN at master `a56b446`; the triad was green at that commit
+(`lake build` 3641; docs_check 67/67; diff_test 615 rows 0 failed, 30
+whitelisted; corpus 17 scripts 0 failed) and this section is the only
+change after it. Four commits this session: `d8710b1` (H5 iteration),
+`14a4b2c` (H4 generator functions), `ab75551` (stop point), `a56b446`
+(genexp lowering + `enumerate`/`count`).
 
-**The next step, in order** — the four numbered items in the H4 section
-above, cheapest first:
+**The next step is ONE thing: the G1 dirty-name pass** (designed in the
+H4 section above). It is the only blocker between here and the named
+target — `Position.gen_moves` already executes on the shipped file and
+stops exactly at `directions[p]`, on module-init poisoning rather than
+on anything generator-shaped. Two judgment calls need an owner before it
+is built, both recorded there: whether a simple import may count as
+benign, and whether `complete` should then stay TRUE (which converts
+today's loud refusal for an unknown module-level name into a faithful
+`NameError`).
 
-1. Generator EXPRESSIONS: structured, lowering DESIGNED (including the
-   capture rule), not written.
-2. `enumerate` / `count` as iterator objects — the last interpreter
-   surface `gen_moves` needs.
-3. The nested-def/closure question `moves()` raises — an owner-level
-   scoping decision, not a mechanical next step.
-4. `sorted(key=)`, and `sorted`/`max`/`all` OVER a generator (all drain
-   it, so they need the stepper rather than the pure helpers).
-
-Then the gen_moves theorem, whose statement is already decided
-(reference-enumeration equality, order pinned, the reference written for
-obviousness — f536d93). Nothing about that statement changed.
+After it, in order: the gen_moves theorem (statement decided at
+f536d93 — reference-enumeration equality, order pinned, the reference
+written for obviousness; a first draft of the reference and the two
+encoding judgment calls it forces are in the session report), then the
+draining consumers (`sorted`/`max`/`all` over a generator, plus keyword
+arguments, which `sorted(…, reverse=True)` needs), then the nested-def /
+closure tier that `bound`'s `moves()` requires.
 
 Housekeeping unchanged: this clone lives in a /private/tmp scratchpad
-that macOS purges, local master is ~59 commits AHEAD of `origin/master`,
-and the full-history bundle in `~/repos/lean-surfaces-backup/` is
-refreshed through `14a4b2c`. PUSHING (or relocating the clone) is still
-an open owner decision.
+that macOS purges, local master is ~60 commits AHEAD of `origin/master`,
+and the bundle in `~/repos/lean-surfaces-backup/` is refreshed through
+`a56b446`. PUSHING (or relocating the clone) is still an open owner
+decision.
 
-Cross-cutting, unchanged from the previous stop point: `py_vcgen` cannot
-walk `for` loops (the frozen-`execFor` list-induction pattern in
-`Examples/python/sf_bound_for/proof.lean` is the manual route to
-automate); the two while-loop walker gaps in
+Cross-cutting, carried forward: `py_vcgen` cannot walk `for` loops; the
+two while-loop walker gaps in
 `Examples/python/sf_bound_loop/proof.lean.blocked-by-py_vcgen-gaps`;
-`arrVal_getElem`-family lemmas still example-local (F-6). New: leanpy's
-live-suffix shell has a `while` case only, so a `print` inside a
-top-level `for` is loud; and the `Position.value()` warm-up on the
-shipped file (a symbolic dict-read walker, no new tier) is still
-unclaimed.
+`arrVal_getElem`-family lemmas still example-local (F-6); leanpy v0
+cannot run a module containing an import at all, and its live-suffix
+shell has a `while` case only (so a `print` inside a top-level `for` is
+loud); and the `Position.value()` warm-up on the shipped file is still
+unclaimed — note it now needs the same G1 fix, since `pst` is poisoned.

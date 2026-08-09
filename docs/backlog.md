@@ -316,9 +316,47 @@ continuations, statement-position yields, `for`-consumption, `break`
 abandonment, loud refusal for send/throw/yield-from/finalization — is
 implemented exactly as written.
 
+**BUILT since (2026-08-09, second pass):** generator EXPRESSIONS are
+LOWERED at ingestion (`lowerGenExps`, Json.lean) per CPython's own
+compilation, with the by-value CAPTURE rule below; and `enumerate` /
+`itertools.count` are lazy iterator objects sharing the generator
+stepper (`enumSeq`/`enumList`/`countFrom` frames). Four genexps lower on
+the shipped file.
+
+**THE BLOCKER for the named target, found by running `gen_moves` on the
+shipped file — and it is not generators.** `Position.gen_moves` executes
+correctly right up to `directions[p]`, then refuses: EVERY module-level
+global of sunfish.py is POISONED. `globalsStep` carries one boolean,
+`complete`, and sets it false at the first top-level statement it cannot
+analyse — which is `import time`, the very first — after which every
+later binding is poisoned, `directions`/`A1`/`H1`/`A8`/`H8`/`N`/`E`/`S`/
+`W` included. The blunt rule is sound but far too coarse; its own
+docstring gives the precise reason ("their RHS could read state an
+unprocessed statement changed"), and that reason is a DEPENDENCY, not a
+position.
+
+The designed fix — an owner-visible change, because it moves the
+NameError/loud frontier: replace the single `complete` flag with a
+DIRTY-NAME set. An out-of-tier top-level statement contributes to it
+(a) the names it binds (`stmtBinds`) and (b) the primary of every
+subscript/attribute store inside it (`pst[k] = …` dirties `pst`); an
+UNANALYSABLE statement dirties everything, exactly today's behaviour. A
+later binding then evaluates normally unless its RHS reads a dirty name.
+On sunfish that resolves precisely the right set: the three imports
+dirty only `time`/`count`/`namedtuple`; the `for k, table in pst.items()`
+loop dirties `k`/`table`/`pst`, so `K_MID = pst["K"]` stays poisoned
+(correct — `pst` really is mutated) while `A1, H1, A8, H8 = …`,
+`N, E, S, W = …` and `directions = {…}` all resolve. `MATE_LOWER` reads
+`piece`, which nothing dirties, so it resolves too. Two judgment calls
+to confirm before building it: whether a simple import may be treated as
+benign at all (a circular import could in principle mutate this module —
+the namedtuple census already assumes this for one exact import), and
+whether `complete` should then stay TRUE, which would turn today's loud
+refusal for an unknown module-level name into a faithful `NameError`.
+
 **Open, in order:**
 
-1. **Generator EXPRESSIONS.** Structured end to end (`Expr.genExp`,
+1. **Generator EXPRESSIONS.** ~~Structured end to end (`Expr.genExp`,
    extractor `GeneratorExp`, the single-clause non-`async` shape — every
    genexp in the real sunfish.py fits it) but NOT lowered: evaluating
    one refuses loudly. The lowering is decided and should ride the same
@@ -334,11 +372,17 @@ implemented exactly as written.
    anything else refuses loudly. That admits `king_capture`'s genexp
    (free: `self`) and refuses `bound`'s (free: `val_lower`, a local);
    relaxing it wants a rebinding analysis, recorded here rather than
-   guessed.
-2. **`sorted(key=)`** — orthogonal but needed for `moves()`'s ordering,
+   guessed.~~ **DONE** — implemented exactly as designed; the rule
+   admits `king_capture`'s genexp and refuses `bound`'s, as predicted.
+2. **The G1 dirty-name pass** above — the actual blocker for the named
+   target. Nothing else on this list gates `gen_moves`.
+3. **`sorted(key=)`** — orthogonal but needed for `moves()`'s ordering,
    as is `sorted`/`max`/`all` over a generator (all three DRAIN it, so
    they need the stateful stepper, not the pure helpers they use today).
-3. **`moves()` is a NESTED def — the capstone needs closures too.**
+   Note `sorted(…, reverse=True)` is a KEYWORD call, which the extractor
+   already flags `call_unsupported` — so `bound`'s consumer needs
+   keyword arguments too, not just the draining forms.
+4. **`moves()` is a NESTED def — the capstone needs closures too.**
    Found while running the H4 census on the shipped file: sunfish's
    lazily-consumed `moves()` is not a module-level generator at all, it
    is a `def` INSIDE `Searcher.bound`, closing over
@@ -350,14 +394,16 @@ implemented exactly as written.
    method-level generator and is in reach today; `Position.gen_moves`
    likewise. The census guard in `Examples/python/sunfish/spec.lean`
    pins all of it.
-4. **`gen_moves` itself.** Its remaining tier gaps are closed (H5
+5. **`gen_moves` itself.** Its remaining tier gaps are closed (H5
    iteration: `q in " \nPNBRQK"`, `for` over a str, membership on the
    value tuples in `directions[p]`), EXCEPT `enumerate(self.board)` and
    `count(i + d, d)` from itertools — both are ITERATOR objects and now
    have a home: another `Obj.generator`-shaped builtin (or a builtin
-   frame kind), lazy by construction, with `count` infinite. That is the
-   last interpreter surface before the theorem.
-5. Then the recorded gen_moves THEOREM (statement decided at f536d93 —
+   frame kind), lazy by construction, with `count` infinite. ~~That is
+   the last interpreter surface before the theorem.~~ **DONE** — both
+   are generator frames now; `gen_moves` runs to `directions[p]` and
+   stops only on the G1 blocker above.
+6. Then the recorded gen_moves THEOREM (statement decided at f536d93 —
    reference-enumeration equality, order pinned, the reference written
    for obviousness).
 

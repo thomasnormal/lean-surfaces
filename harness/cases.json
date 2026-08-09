@@ -225,8 +225,15 @@
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "upto", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_at_boundary", "args": [[2]], "expect": "unsupported"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "send_is_loud", "args": [[3]], "expect": "unsupported"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "squares_upto", "args": [[5]], "expect": "unsupported"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "first_big", "args": [[10, 4]], "expect": "unsupported"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "any_over", "args": [[7]], "expect": "unsupported"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "genexp_sum", "args": [[4]], "expect": "unsupported"}
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "squares_upto", "args": [[5]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "first_big", "args": [[10, 4]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "any_over", "args": [[7]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "genexp_sum", "args": [[4]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_str", "args": [[{"t": "str", "v": "abc"}], [{"t": "str", "v": ""}], [{"t": "str", "v": "PNBRQK"}]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_start", "args": [[{"t": "str", "v": "abc"}, 5], [{"t": "str", "v": ""}, 5], [{"t": "str", "v": "ab"}, -3]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_list", "args": [[{"t": "list", "v": [{"t": "int", "v": 3}, {"t": "int", "v": 1}, {"t": "int", "v": 2}]}], [{"t": "list", "v": []}]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_lazy", "args": [[{"t": "str", "v": "abcdef"}, {"t": "str", "v": "c"}], [{"t": "str", "v": "abcdef"}, {"t": "str", "v": "z"}], [{"t": "str", "v": ""}, {"t": "str", "v": "a"}]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_ray", "args": [[2, 3, 10], [0, 1, 4], [5, -2, 4]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_default", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_of_int", "args": [[3]], "expect": "match"}
 ]

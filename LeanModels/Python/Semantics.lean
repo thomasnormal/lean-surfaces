@@ -585,7 +585,8 @@ locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
   id == "abs" || id == "int" || id == "print" ||
-  id == "ord" || id == "chr" || id == "next"
+  id == "ord" || id == "chr" || id == "next" ||
+  id == "enumerate" || id == "count"
 
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
@@ -2011,6 +2012,44 @@ def mkCallEnv (params : Array Param) (args : Array RVal) : Env :=
   (params.toList.map Param.arg).zip args.toList
     ++ defaultBindings (params.toList.drop args.size)
 
+/-- `enumerate`'s optional `start` argument: `none` = the argument list
+is not an in-tier `enumerate(x)` / `enumerate(x, i)` shape. -/
+def enumStart : List RVal → Option Int
+  | [] => some 0
+  | [v] => asInt v
+  | _ => Option.none
+
+/-- The initial frame of `enumerate(v, i)`: value sequences snapshot
+(all immutable in tier), a heap LIST gets the live cursor, and every
+other receiver is the faithful `TypeError` — except a generator, whose
+enumeration would need a second stepper inside this one (recorded gap,
+docs/backlog.md). -/
+def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
+  | .str s => .ok (.enumSeq i (strCharVals s))
+  | .tuple xs => .ok (.enumSeq i xs.toList)
+  | .listV xs => .ok (.enumSeq i xs.toList)
+  | .ntuple _ _ xs => .ok (.enumSeq i xs.toList)
+  | .ref a =>
+    (match Heap.get? h a with
+     | some (.list _) => .ok (.enumList i a 0)
+     | some (.dict _ _) =>
+         .unsupported "enumerate() over a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+     | some (.generator ..) =>
+         .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
+     | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
+     | Option.none => .unsupported danglingMsg)
+  | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
+
+/-- `itertools.count()` / `count(start)` / `count(start, step)`. -/
+def countArgs : List RVal → Option (Int × Int)
+  | [] => some (0, 1)
+  | [s] => (asInt s).map (fun a => (a, 1))
+  | [s, d] =>
+    (match asInt s, asInt d with
+     | some a, some b => some (a, b)
+     | _, _ => Option.none)
+  | _ => Option.none
+
 /-! ## Generator continuations (H4, docs/memory-model.md §generator
 semantics)
 
@@ -2032,6 +2071,11 @@ def genBreak : GenCont → Option GenCont
   | .forList .. :: k => some k
   | .forGen .. :: k => some k
   | .whileLoop .. :: k => some k
+  -- a builtin-iterator frame is never a LOOP frame: it is the body of a
+  -- generator object, so `break`/`continue` can never reach one (they
+  -- unwind inside a body, and these frames have no body). Loud, not a
+  -- silent pop.
+  | .enumSeq .. :: _ | .enumList .. :: _ | .countFrom .. :: _ => Option.none
 
 /-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
 (re-entering it takes the next element / re-tests). -/
@@ -2042,6 +2086,7 @@ def genContinue : GenCont → Option GenCont
   | k@(.forList .. :: _) => some k
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
+  | .enumSeq .. :: _ | .enumList .. :: _ | .countFrom .. :: _ => Option.none
 
 mutual
   /-- Does this statement contain a `yield` in its own scope? The
@@ -2133,7 +2178,8 @@ mutual
     -- H4 adds `next`: it STEPS a generator (arbitrary body effects), and
     -- syntax cannot tell `next(g)` from a shadowing user `def next`
     | .call (.name id _) args _ _ =>
-      (id != "sorted") && (id != "next") && Expr.heapFreeList args.toList
+      (id != "sorted") && (id != "next") && (id != "enumerate")
+        && (id != "count") && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args _ _ =>
       attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
     | .call f args _ _ => f.heapFree && Expr.heapFreeList args.toList
@@ -2574,6 +2620,43 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "enumerate" then
+                    -- H4: a LAZY iterator object, not a materialized
+                    -- list — `enumerate(self.board)` is stepped one pair
+                    -- at a time, exactly as CPython's does.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] => .exn st (.typeError "enumerate expected at least 1 argument, got 0")
+                     | v :: rest =>
+                       (match enumStart rest with
+                        | Option.none =>
+                          if rest.length ≤ 1 then
+                            .exn st (.typeError "'str' object cannot be interpreted as an integer")
+                          else .exn st (.typeError s!"enumerate expected at most 2 arguments, got {vs.length}")
+                        | some i0 =>
+                          (match enumFrame st.world.heap i0 v with
+                           | .ok fr =>
+                             let g : Obj := .generator "<enumerate>" [] [fr] .suspended
+                             .ok { st with world :=
+                                     { st.world with heap := st.world.heap.push g } }
+                               (.ref st.world.heap.size)
+                           | .exn e => .exn st e
+                           | .timeout => .timeout
+                           | .unsupported msg => .unsupported msg)))
+                  else if fname == "count" then
+                    -- itertools.count — INFINITE by construction; a
+                    -- consumer's `break` is what ends it (sunfish's ray
+                    -- loop `for j in count(i + d, d)`)
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match countArgs vs with
+                     | Option.none =>
+                       .exn st (.typeError "a number is required")
+                     | some (start, step) =>
+                       let g : Obj :=
+                         .generator "<count>" [] [.countFrom start step] .suspended
+                       .ok { st with world :=
+                               { st.world with heap := st.world.heap.push g } }
+                         (.ref st.world.heap.size))
                   else if fname == "next" then
                     -- H4: STEP an iterator. `next(g)` on an exhausted
                     -- generator is the faithful `StopIteration`;
@@ -3283,6 +3366,24 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
          Run.liftRes st (assignToH st.world.heap st.locals target v) ⤳ fun st env₁ =>
          execGen m fuel { st with locals := env₁ }
            (.block body :: .forGen target ad body :: k'))
+    | .enumSeq i xs :: k' =>
+      (match xs with
+       | [] => execGen m fuel st k'
+       | x :: rest =>
+         .ok st (some (.tuple #[.int i, x], .enumSeq (i + 1) rest :: k')))
+    | .enumList i ad cur :: k' =>
+      (match Heap.get? st.world.heap ad with
+       | some (.list xs) =>
+         if cur < xs.size then
+           .ok st (some (.tuple #[.int i, xs.getD cur .none],
+                         .enumList (i + 1) ad (cur + 1) :: k'))
+         else execGen m fuel st k'
+       | some _ => .unsupported "internal: an enumerate cursor over a non-list object (report this)"
+       | Option.none => .unsupported danglingMsg)
+    | .countFrom cur step :: k' =>
+      -- never exhausts: `count` is the infinite ray of sunfish's move
+      -- generator, and a consumer's `break` is what ends it
+      .ok st (some (.int cur, .countFrom (cur + step) step :: k'))
     | .whileLoop test body orelse :: k' =>
       evalExpr m fuel st test ⤳ fun st t =>
       Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>

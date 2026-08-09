@@ -25,6 +25,9 @@ namespace Examples.python.sunfish.proof
 
 open LeanModels LeanModels.Python
 
+-- the 955KB literal ingests through a deep recursion (H4 added four
+-- lowered genexp functions to it)
+set_option maxRecDepth 100000 in
 load_program sunfish from "Examples/python/sunfish/sunfish.json"
 
 private def board0 : String :=

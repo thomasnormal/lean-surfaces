@@ -23,6 +23,9 @@ import Examples.python.sunfish.proof
 
 open LeanModels LeanModels.Python
 
+-- the 955KB literal ingests through a deep recursion (H4 added four
+-- lowered genexp functions to it)
+set_option maxRecDepth 100000 in
 load_program sunfish from "Examples/python/sunfish/sunfish.json"
 
 /-! ### The census, pinned: the shipped file's namedtuples recognize
@@ -41,7 +44,17 @@ parameters (`Position.move` is the one static-locals refusal — its
     ("Position.move", true, false), ("Position.value", true, true),
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
-    ("parse", true, true), ("render", true, true), ("main", true, true)]
+    ("parse", true, true), ("render", true, true), ("main", true, true),
+    -- H4: ingestion LOWERED five generator expressions into implicit
+    -- generator functions, CPython's own compilation (`<genexpr>` with
+    -- the evaluated outer iterator as its first argument). The genexps
+    -- inside `bound`'s nested `moves()` are not among them — that whole
+    -- def is `Stmt.unsupported "FunctionDef"` — and neither are the two
+    -- module-level ones whose captures are another genexp's target
+    -- (`K_END`'s nest), which refuse rather than guess.
+    ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
+    ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
+    ("<genexpr@4>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -60,7 +73,9 @@ already was, having classes. -/
     ("Position.move", false), ("Position.value", false),
     ("Position.king_capture", false), ("Searcher.__init__", false),
     ("Searcher.bound", false), ("Searcher.search", true),
-    ("parse", false), ("render", false), ("main", false)]
+    ("parse", false), ("render", false), ("main", false),
+    ("<genexpr@0>", true), ("<genexpr@1>", true),
+    ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded

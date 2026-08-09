@@ -509,17 +509,39 @@ carve-out, again. `next(...)` calls leave the fragment syntactically
 can exist, so that arm is unreachable and says so loudly. That guard is
 what keeps `worldInv` free of a heap-side invariant.
 
+**Generator EXPRESSIONS** are LOWERED at ingestion (`lowerGenExps`,
+Json.lean), exactly as CPython compiles them: each genexp becomes a call
+`<genexpr@n>(<iter>, <captures…>)` to a synthesized generator function
+`for <target> in .0: if <ifs…>: yield <elt>` — first parameter `.0`,
+CPython's own name, and the outer iterable evaluated at CREATION. The
+one real design point is CAPTURE: CPython closes over the frame BY
+REFERENCE, the lowering passes free names BY VALUE, and the two disagree
+exactly when a captured name is REBOUND between creation and
+consumption. v0 admits a free name only where they provably agree — a
+PARAMETER the enclosing body never assigns, or a name resolved outside
+the frame anyway (a module-level binding, a builtin). Anything else
+leaves the `Expr.genExp` node, and evaluating it refuses loudly. On the
+shipped file four genexps lower (`king_capture`'s among them); the ones
+inside `bound`'s nested `moves()` are invisible, that whole def being
+`Stmt.unsupported "FunctionDef"`.
+
+**Builtin iterators.** `enumerate` and `itertools.count` are generator
+FRAMES (`enumSeq`/`enumList`/`countFrom`), not a second object kind, so
+`for`/`next`/`stepIter` consume them through one mechanism:
+`enumerate(s)` is as lazy as a `def` with a `yield` (value sequences
+snapshot — all immutable in tier; a heap list gets the live cursor), and
+`count` never exhausts, which is exactly sunfish's ray
+(`for j in count(i + d, d)`, ended by the consumer's `break`).
+
 **Loud, deliberately** — never a fake answer: `send`/`throw`/`close` and
 every other generator method; a `yield` in EXPRESSION position (the
 `send` receiver); finalization/`close`-on-GC semantics; `x in gen`,
 `sorted(gen)`, `max`/`min(gen)` and generator UNPACKING (all of them
 CONSUME the generator — a stateful read these pure helpers cannot
-express); a generator as a dict key (identity hash); a generator
+express); `enumerate` over a generator (it would need a stepper inside
+the stepper); a generator as a dict key (identity hash); and a generator
 crossing the call boundary (a snapshot of its yields would run the body
-eagerly, which is exactly what laziness forbids); and generator
-EXPRESSIONS, which are structured (`Expr.genExp`, single-clause
-non-`async`) but not yet LOWERED — see docs/backlog.md for the decided
-lowering and its capture rule.
+eagerly, which is exactly what laziness forbids).
 
 **Acceptance**: `Examples/python/gen_lab` (every function differential,
 including two INFINITE generators that terminate only under real

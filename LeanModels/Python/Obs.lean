@@ -555,12 +555,14 @@ theorem fuelMono (fuel : Nat) :
                     cases findNamedTuple m fname with
                     | some nt => exact hb _
                     | none =>
-                      -- len, sorted, max, min, abs, int, NEXT (H4: binds
-                      -- the args, then steps the generator), ord, chr
+                      -- len, sorted, max, min, abs, int, enumerate, count
+                      -- (both ALLOCATE an iterator object), NEXT (binds the
+                      -- args, then steps the generator), ord, chr
                       refine Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
                         (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                          (Run.le_ite ?_ (Run.le_ite (hb _) (Run.le_ite (hb _)
-                            (Run.le_refl _)))))))))
+                          (Run.le_ite (hb _) (Run.le_ite (hb _)
+                            (Run.le_ite ?_ (Run.le_ite (hb _) (Run.le_ite (hb _)
+                              (Run.le_refl _)))))))))))
                       refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                       cases vs with
                       | nil => exact Run.le_refl _
@@ -1013,6 +1015,20 @@ theorem fuelMono (fuel : Nat) :
             | some v =>
               refine Run.le_bind (Run.le_refl _) fun st env₁ => ?_
               exact ihGen m { st with locals := env₁ } _ kf hk
+          | enumSeq i xs =>
+            simp only [execGen]
+            cases xs <;> first | exact ihGen m st rest kf hk | exact Run.le_refl _
+          | enumList i ad cur =>
+            simp only [execGen]
+            cases Heap.get? st.world.heap ad with
+            | none => exact Run.le_refl _
+            | some o =>
+              cases o with
+              | list xs => exact Run.le_ite (Run.le_refl _) (ihGen m st rest kf hk)
+              | dict es ver => exact Run.le_refl _
+              | «instance» ci attrs => exact Run.le_refl _
+              | generator qn lo kk stt => exact Run.le_refl _
+          | countFrom cur step => simp only [execGen]; exact Run.le_refl _
           | whileLoop test body orelse =>
             simp only [execGen]
             refine Run.le_bind (ihE m st test kf hk) fun st t => ?_
@@ -1456,18 +1472,29 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            have hns : (fname != "sorted") = true := hfree.1.1
+            have hns : (fname != "sorted") = true := hfree.1.1.1.1
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
               · rw [bne, hbe] at hns; simp at hns
-            -- H4: `next` STEPS a generator (arbitrary body effects), so
-            -- the fragment excludes it too — same syntactic carve-out
-            have hnn : (fname != "next") = true := hfree.1.2
+            -- H4: `next` STEPS a generator and `enumerate`/`count`
+            -- ALLOCATE an iterator object — the fragment excludes all
+            -- three, the same syntactic carve-out as `sorted`
+            have hnn : (fname != "next") = true := hfree.1.1.1.2
             have hnx : (fname == "next") = false := by
               cases hbe : fname == "next"
               · rfl
               · rw [bne, hbe] at hnn; simp at hnn
+            have hne : (fname != "enumerate") = true := hfree.1.1.2
+            have hex : (fname == "enumerate") = false := by
+              cases hbe : fname == "enumerate"
+              · rfl
+              · rw [bne, hbe] at hne; simp at hne
+            have hnc : (fname != "count") = true := hfree.1.2
+            have hcx : (fname == "count") = false := by
+              cases hbe : fname == "count"
+              · rfl
+              · rw [bne, hbe] at hnc; simp at hnc
             simp only [evalExpr]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hfree.2
@@ -1488,8 +1515,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, findClass_heapFree hm fname, Option.isSome_none,
-                  Bool.false_or, Bool.false_eq_true, if_false]
+                simp only [hs, hnx, hex, hcx, findClass_heapFree hm fname,
+                  Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
                     (l := st₁.locals)).mono

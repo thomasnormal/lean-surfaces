@@ -434,6 +434,7 @@ def interpUnfolds : List Name :=
    ``targetNames, ``bindAll, ``assignTo, ``assignToH,
    ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
    ``absVal, ``intCastVal, ``ordVal, ``chrVal, ``isBuiltinName,
+   ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,
    ``moduleGlobals, ``moduleInit, ``globalsFold, ``globalsStep, ``lookupG,
    ``resolvedG, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
    ``evalGlobalDictItems, ``globalFuel,

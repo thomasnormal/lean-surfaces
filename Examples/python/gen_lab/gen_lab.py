@@ -15,6 +15,8 @@ Every function here runs differentially against CPython 3.9
 whitelisted rows.
 """
 
+from itertools import count
+
 
 def upto(n):
     i = 0
@@ -193,3 +195,56 @@ def _sender(n):
 
 def send_is_loud(n):
     return next(_sender(n), -1)
+
+
+def enum_str(s):
+    out = 0
+    for i, c in enumerate(s):
+        out += i * ord(c)
+    return out
+
+
+def enum_start(s, k):
+    first = -1
+    for i, c in enumerate(s, k):
+        first = i
+        break
+    return first
+
+
+def enum_list(xs):
+    t = 0
+    for i, v in enumerate(xs):
+        t += i * v
+    return t
+
+
+def enum_lazy(s, stop):
+    # laziness through `enumerate`: stops without walking the tail
+    n = 0
+    for i, c in enumerate(s):
+        n += 1
+        if c == stop:
+            break
+    return n
+
+
+def count_ray(start, step, k):
+    # sunfish's ray shape: an INFINITE count, ended by `break`
+    last = -1
+    for j in count(start, step):
+        if j > k:
+            break
+        last = j
+    return last
+
+
+def count_default():
+    for j in count():
+        if j > 3:
+            return j
+    return -1
+
+
+def enum_of_int(n):
+    return next(enumerate(n), -1)

@@ -589,6 +589,190 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
         fns := fns.push { f with name := name ++ "." ++ f.name }
     return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase, span }, fns)
 
+/-! ## Generator-expression lowering (H4, docs/memory-model.md
+§generator semantics)
+
+CPython compiles `(elt for t in it if c)` into an implicit generator
+FUNCTION whose FIRST argument is the already-evaluated outer iterator
+(`MAKE_FUNCTION <genexpr>; …; GET_ITER; CALL_FUNCTION 1`), and this pass
+performs exactly that lowering, at ingestion, so genexps ride the same
+machinery as every other generator — no second evaluation story.
+
+The one real design point is CAPTURE. CPython closes over the enclosing
+frame BY REFERENCE; a lowering that passes free names as extra arguments
+captures them BY VALUE, and the two disagree exactly when a captured
+name is REBOUND between the genexp's creation and its consumption. v0
+therefore admits a free name only when the two provably agree:
+
+* it is a PARAMETER of the enclosing function that the body never
+  assigns (bound once, at the call — by-value is by-reference), or
+* it is resolved outside the frame anyway: a module-level binding
+  (`piece`, `MATE_UPPER`, a `def`/`class`/namedtuple name) or a builtin,
+  neither of which is captured at all.
+
+Anything else — a local the body assigns, an unanalyzable target —
+leaves the `Expr.genExp` node in place, and EVALUATING it refuses
+loudly (Semantics.lean). Never a silent by-value guess. -/
+
+/-- Builtin names the lowering must not treat as captures. Deliberately
+a LOCAL list rather than an import of `isBuiltinName` (Semantics.lean
+imports nothing from here and this file imports only the AST): a name
+missing from it costs a loud refusal, never a wrong capture, so the two
+lists may drift safely in the only direction that matters. -/
+private def lowerBuiltins : List String :=
+  ["len", "sorted", "max", "min", "abs", "int", "print", "ord", "chr",
+   "next", "range", "enumerate", "count", "all", "any", "sum", "tuple",
+   "list", "dict", "str", "bool", "set", "reversed", "zip", "map",
+   "filter", "True", "False", "None"]
+
+/-- The synthesized name of a lowered generator expression. CPython calls
+the implicit function `<genexpr>`; the index keeps several genexps in one
+module apart, and the angle brackets make collision with a real Python
+identifier impossible. -/
+def genExpName (n : Nat) : String := s!"<genexpr@{n}>"
+
+/-- CPython's own name for the implicit first parameter (the
+already-evaluated outer iterator). No Python identifier contains `.`. -/
+def genExpArg : String := ".0"
+
+/-- Wrap a statement in the genexp's filters, innermost last:
+`if c₁: if c₂: <stmt>`. -/
+private def guardWith (sp : Span) : List Expr → Stmt → Stmt
+  | [], body => body
+  | c :: cs, body => .ifStmt c #[guardWith sp cs body] #[] sp
+
+/-- Deduplicate, keeping first occurrence. -/
+private def dedup (l : List String) : List String :=
+  l.foldl (init := []) (fun acc n => if acc.contains n then acc else acc ++ [n])
+
+/-- What a lowering pass may capture and what it must refuse. -/
+private structure LowerCtx where
+  /-- Names resolved outside the frame (module bindings + builtins). -/
+  outer : List String
+  /-- The enclosing function's parameters. -/
+  params : List String
+  /-- Names the enclosing body assigns anywhere (CPython's static-locals
+  rule makes these local throughout, so a parameter listed here is
+  REBINDABLE and cannot be captured by value). -/
+  assigned : List String
+
+mutual
+  /-- Rewrite every lowerable genexp in the expression, bottom up. The
+  state is the fresh-name counter and the synthesized functions. -/
+  private partial def lowerExpr (ctx : LowerCtx) (e : Expr) :
+      StateM (Nat × Array FunctionDefn) Expr := do
+    match e with
+    | .constant .. | .name .. | .unsupported .. => return e
+    | .binOp l op r sp => return .binOp (← lowerExpr ctx l) op (← lowerExpr ctx r) sp
+    | .unaryOp op v sp => return .unaryOp op (← lowerExpr ctx v) sp
+    | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
+    | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
+    | .call f args cu sp => return .call (← lowerExpr ctx f) (← lowerExprs ctx args) cu sp
+    | .list es sp => return .list (← lowerExprs ctx es) sp
+    | .tuple es sp => return .tuple (← lowerExprs ctx es) sp
+    | .subscript v i sp => return .subscript (← lowerExpr ctx v) (← lowerExpr ctx i) sp
+    | .dict ks vs sp => return .dict (← lowerExprs ctx ks) (← lowerExprs ctx vs) sp
+    | .attribute v a sp => return .attribute (← lowerExpr ctx v) a sp
+    | .ifExp t b o sp =>
+        return .ifExp (← lowerExpr ctx t) (← lowerExpr ctx b) (← lowerExpr ctx o) sp
+    | .slice v l u st sp =>
+        return .slice (← lowerExpr ctx v) (← lowerExpr ctx l) (← lowerExpr ctx u)
+          (← lowerExpr ctx st) sp
+    | .genExp elt target iter ifs sp => do
+      let elt ← lowerExpr ctx elt
+      let iter ← lowerExpr ctx iter
+      let ifs ← lowerExprs ctx ifs
+      match targetBinds target with
+      | Option.none => return .genExp elt target iter ifs sp
+      | some tb =>
+        let refs := dedup (exprRefs elt ++ (ifs.toList.map exprRefs).flatten)
+        let caps := refs.filter fun n =>
+          !tb.contains n && !ctx.outer.contains n && !lowerBuiltins.contains n
+            && n != genExpArg
+        if caps.all (fun n => ctx.params.contains n && !ctx.assigned.contains n) then
+          let (n, fns) ← get
+          let fname := genExpName n
+          let body : Array Stmt :=
+            #[.forStmt target (.name genExpArg sp)
+                #[guardWith sp ifs.toList (.yieldStmt elt sp)] #[] sp]
+          let params : Array Param :=
+            (#[genExpArg] ++ caps.toArray).map fun a => { arg := a, span := sp }
+          set (n + 1,
+            fns.push { name := fname, params, argsOk := true, localsOk := true,
+                       hasGlobal := false, isGenerator := true, body, span := sp })
+          return .call (.name fname sp)
+            (#[iter] ++ (caps.map (fun c => Expr.name c sp)).toArray) Option.none sp
+        else
+          return .genExp elt target iter ifs sp
+
+  /-- Elementwise `lowerExpr`. -/
+  private partial def lowerExprs (ctx : LowerCtx) (es : Array Expr) :
+      StateM (Nat × Array FunctionDefn) (Array Expr) :=
+    es.mapM (lowerExpr ctx)
+end
+
+mutual
+  /-- Rewrite every lowerable genexp in the statement. -/
+  private partial def lowerStmt (ctx : LowerCtx) (s : Stmt) :
+      StateM (Nat × Array FunctionDefn) Stmt := do
+    match s with
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => return s
+    | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
+    | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp
+    | .augAssign t op v sp => return .augAssign (← lowerExpr ctx t) op (← lowerExpr ctx v) sp
+    | .whileLoop t b o sp =>
+        return .whileLoop (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .forStmt t it b o sp =>
+        return .forStmt (← lowerExpr ctx t) (← lowerExpr ctx it)
+          (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .ifStmt t b o sp =>
+        return .ifStmt (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
+    | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
+    | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
+
+  /-- Elementwise `lowerStmt`. -/
+  private partial def lowerStmts (ctx : LowerCtx) (ss : Array Stmt) :
+      StateM (Nat × Array FunctionDefn) (Array Stmt) :=
+    ss.mapM (lowerStmt ctx)
+end
+
+/-- Names a function body assigns anywhere (CPython's static-locals
+rule), over-approximated: an unanalyzable target contributes nothing but
+also cannot hide a name that `targetBinds` would have found, so the
+capture test stays conservative in the safe direction — an unnoticed
+rebinding is impossible for the shapes `targetBinds` analyses, and every
+other shape binds nothing. -/
+private partial def bodyAssigns : Stmt → List String
+  | .assign ts _ _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
+  | .augAssign t _ _ _ => (targetBinds t).getD []
+  | .forStmt t _ b o _ =>
+      (targetBinds t).getD [] ++ (b.toList.map bodyAssigns).flatten
+        ++ (o.toList.map bodyAssigns).flatten
+  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map bodyAssigns).flatten ++ (o.toList.map bodyAssigns).flatten
+  | _ => []
+
+/-- Lower every genexp in the module: function bodies first, then the
+TOP LEVEL. A module-scope genexp needs no capture list at all — every
+free name it has is a module global, which the synthesized function
+resolves through the same static table (module bindings are immutable in
+tier, the standing G1 assumption, so by-value and by-reference agree
+there by construction). Returns the rewritten functions and top level
+PLUS the synthesized generator functions, in creation order. -/
+private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
+    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt :=
+  let step := functions.foldl (init := (#[], (0, (#[] : Array FunctionDefn))))
+    fun (acc, st) f =>
+      let ctx : LowerCtx :=
+        { outer
+          params := f.params.toList.map Param.arg
+          assigned := (f.body.toList.map bodyAssigns).flatten }
+      let (body', st') := (lowerStmts ctx f.body).run st
+      (acc.push { f with body := body' }, st')
+  let topCtx : LowerCtx := { outer, params := [], assigned := [] }
+  let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
+  (step.1 ++ st''.2, topLevel')
+
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
 into `functions` under qualified names, in source order), and everything
@@ -615,7 +799,18 @@ def parseModule (j : Json) : Except String Module :=
         topLevel := topLevel.push (← parseStmt stmtJson)
     let (topLevel', namedtuples, classes') :=
       recognizeNamedtuples functions classes topLevel
-    return { functions, topLevel := topLevel', classes := classes', namedtuples }
+    -- H4: lower generator EXPRESSIONS last, so the capture test sees the
+    -- final module-level binding set (the namedtuple pass turns
+    -- recognized assigns into `pass`, but their bound names stay outer
+    -- names — `Move`/`Entry` resolve as constructors).
+    let outer :=
+      functions.toList.map FunctionDefn.name
+        ++ classes'.toList.map ClassDefn.name
+        ++ namedtuples.toList.map NamedTupleDefn.name
+        ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
+    let (functions', topLevel'') := lowerGenExps outer functions topLevel'
+    return { functions := functions', topLevel := topLevel'',
+             classes := classes', namedtuples }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=
   withCtx "lean_blocks" do

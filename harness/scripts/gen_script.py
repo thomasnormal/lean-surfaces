@@ -58,3 +58,16 @@ while n < 2:
     n = n + 1
 print(next(g, 99))
 print(next(g, 99))
+
+# H4: genexps and the builtin iterators
+print(next((x * x for x in upto(4) if x > 1), -1))
+
+tot = 0
+for i, c in enumerate("PNBRQK"):
+    tot += i * ord(c)
+print(tot)
+
+# (`itertools.count` is exercised by the gen_lab differential rows and
+# `#py_check`s instead: leanpy v0 cannot run a module containing an
+# import at all, so a corpus script cannot import it -- recorded,
+# docs/backlog.md.)

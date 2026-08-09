@@ -27,9 +27,12 @@ design that would otherwise look adequate:
   `drain_then_more` pins the exhausted case. Without suspension the
   cutoff would re-search from the first move.
 
-The loud frontier — a `yield` in expression position (the `send`
-channel), and a generator crossing the call boundary — is pinned by the
-raw `#guard`s below and by whitelisted differential rows. No
+Generator EXPRESSIONS are lowered at ingestion to generator functions
+(CPython's own compilation), and `enumerate`/`itertools.count` are
+lazy iterator objects riding the same stepper — `count` genuinely
+infinite. The loud frontier — a `yield` in expression position (the
+`send` channel), and a generator crossing the call boundary — is pinned
+by the raw `#guard`s below and by whitelisted differential rows. No
 `proof.lean`: checks-only, like `iter_lab`/`str_lab`/`cls_lab`.
 -/
 
@@ -75,19 +78,42 @@ load_program gen_lab from "Examples/python/gen_lab/gen_lab.json"
 #py_check gen_lab.next_of_int(3) raises
   (.typeError "'int' object is not an iterator")
 
+/-! ### generator EXPRESSIONS — lowered at ingestion to generator
+functions, exactly as CPython compiles them (`<genexpr@n>` with the
+already-evaluated outer iterator as its first parameter and the captured
+names after it). `any_over` runs a genexp over an INFINITE generator. -/
+
+#py_check gen_lab.squares_upto(5) = 0
+#py_check gen_lab.first_big(10, 4) = 5
+#py_check gen_lab.any_over(7) = 8
+#py_check gen_lab.genexp_sum(4) = 10
+
+#guard (findFunction gen_lab (genExpName 0)).isSome
+#guard (findFunction gen_lab (genExpName 0)).any (·.isGenerator)
+
+/-! ### the builtin ITERATORS: `enumerate` over a str / a heap list, and
+the infinite `itertools.count` (sunfish's ray shape) -/
+
+#py_check gen_lab.enum_str("abc") = 296
+#py_check gen_lab.enum_start("abc", 5) = 5
+#py_check gen_lab.enum_lazy("abcdef", "c") = 3
+#py_check gen_lab.count_ray(2, 3, 10) = 8
+#py_check gen_lab.count_default() = 4
+#py_check gen_lab.enum_of_int(3) raises
+  (.typeError "'int' object is not iterable")
+
+#guard callFunction gen_lab "enum_list" #[.list #[.int 3, .int 1, .int 2]] 4096
+  == .ok (.int 5)
+
 /-! ### the loud frontier (raw `#guard`: `unsupported` has no surface
 form — deliberate). A generator cannot cross the boundary (a snapshot of
 its yields would run the body eagerly); a `yield` in EXPRESSION position
 is the `send` channel and refuses when the frame is stepped (creating
-the generator is fine — calling one runs no code); generator
-EXPRESSIONS are structured but not yet lowered (docs/backlog.md). -/
+the generator is fine — calling one runs no code). -/
 
 #guard callFunction gen_lab "upto" #[.int 3] 4096 matches .unsupported _
 #guard callFunction gen_lab "gen_at_boundary" #[.int 2] 4096 matches .unsupported _
 #guard callFunction gen_lab "send_is_loud" #[.int 3] 4096 matches .unsupported _
-#guard callFunction gen_lab "squares_upto" #[.int 5] 4096 matches .unsupported _
-#guard callFunction gen_lab "first_big" #[.int 10, .int 4] 4096 matches .unsupported _
-#guard callFunction gen_lab "genexp_sum" #[.int 4] 4096 matches .unsupported _
 
 /-! ### the ingestion census: `is_generator` is CPython's syntactic,
 scope-local rule — a def whose OWN scope contains a `yield`, reachable

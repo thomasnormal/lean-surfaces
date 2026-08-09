@@ -202,10 +202,18 @@ def liveSuffix : List Stmt → List Stmt
 statement (a live statement could otherwise call/instantiate it before
 CPython would have bound it). Flattened method spans sit inside their
 class span, so the function half already covers them — the class check
-adds the `class` line itself. -/
+adds the `class` line itself.
+
+H4 exemption: a SYNTHESIZED genexp function (`<genexpr@n>` — ingestion's
+lowering, Json.lean) is exempt. The hazard this guards against is a live
+statement calling a name before CPython binds it, and such a name is
+UNNAMEABLE in Python: its only call site is the expression it replaced,
+where CPython builds the same implicit function at exactly that moment.
+Recognized by the leading `<`, which no Python identifier can carry. -/
 def defsBeforeLive (m : Module) (suffix : List Stmt) : Bool :=
   (m.functions.toList.all fun f =>
-    suffix.all fun s => f.span.endLineno < (stmtSpan s).lineno)
+    f.name.startsWith "<" ||
+      suffix.all fun s => f.span.endLineno < (stmtSpan s).lineno)
   && (m.classes.toList.all fun c =>
     suffix.all fun s => c.span.endLineno < (stmtSpan s).lineno)
 where

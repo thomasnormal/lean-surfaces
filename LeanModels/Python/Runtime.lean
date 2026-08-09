@@ -109,6 +109,19 @@ inductive GenFrame where
   | forGen (target : Expr) (a : Addr) (body : List Stmt)
   /-- `while test: body else: orelse` — re-entering re-tests. -/
   | whileLoop (test : Expr) (body : List Stmt) (orelse : List Stmt)
+  -- The BUILTIN iterators (H4). They are generator frames rather than a
+  -- separate object kind, so `stepIter`/`for`/`next` consume them through
+  -- exactly one mechanism — `enumerate(s)` is as lazy as a `def` with a
+  -- `yield`, and `count` is genuinely infinite.
+  /-- `enumerate(<value sequence>, start)` at index `i`: a str/tuple/
+  namedtuple/boundary-list snapshot IS the live semantics (all immutable
+  in tier), like `forSeq`. -/
+  | enumSeq (i : Int) (remaining : List RVal)
+  /-- `enumerate(<heap list>, start)` at index `i`, cursor `cur`: the
+  object is re-read every step, like `forList`. -/
+  | enumList (i : Int) (a : Addr) (cur : Nat)
+  /-- `itertools.count(start, step)` — never exhausts. -/
+  | countFrom (cur : Int) (step : Int)
 deriving Repr, Inhabited, BEq
 
 /-- A suspended generator's continuation: the frame stack, innermost
@@ -216,8 +229,11 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .forSeq _ xs _ => RVal.WFList h xs
   | .forList _ a _ _ => a < h.size
   | .forGen _ a _ => a < h.size
+  | .enumSeq _ xs => RVal.WFList h xs
+  | .enumList _ a _ => a < h.size
   | .block _ => True
   | .whileLoop .. => True
+  | .countFrom .. => True
 
 /-- Elementwise `GenFrame.WF`. -/
 def GenCont.WF (h : Heap) : GenCont → Prop

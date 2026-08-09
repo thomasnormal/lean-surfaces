@@ -371,45 +371,44 @@ structural inference silently fall back to well-founded recursion, which
 broke every kernel `rfl` — the mergeSort trap, caught by `Tests.lean`
 rather than by anything that names it.
 
-## Session stop point (2026-08-09, after the H5 string milestone)
+## Session stop point (2026-08-09, after the H4 generator tier)
 
-Stopped CLEAN at master `f536d93` — nothing in flight, no WIP, no
-half-edited file; the triad was green at the preceding commit
-(`lake build` 3639; docs_check 67/67; diff_test 502 rows 0 failed, 26
-whitelisted; corpus 15 scripts 0 failed) and this section is the only
-change after it. The string half-stage and its milestone are DONE
-(step 5 above): `Position.rotate` is proved on the byte-identical
-shipped `sunfish.py` (`Examples/python/sunfish`), symbolic in the score
-AND the world.
+Stopped CLEAN at master `14a4b2c` — nothing in flight, no WIP; the triad
+was green at that commit (`lake build` 3641; docs_check 67/67; diff_test
+599 rows 0 failed, 34 whitelisted; corpus 17 scripts 0 failed) and this
+section is the only change after it. Two commits this session:
+`d8710b1` (H5 iteration — container membership, `for` over a str,
+`ord`/`chr`) and `14a4b2c` (H4 generator functions).
 
-**The next step, in order:**
+**The next step, in order** — the four numbered items in the H4 section
+above, cheapest first:
 
-1. Owner decision first — the H4 route (a)/(b)/(c) in step 6 above
-   gates everything left; the gen_moves STATEMENT is already decided
-   (reference enumeration, order pinned, obviousness-first reference).
-2. Optional half-stage that needs no new tier, if a warm-up is wanted:
-   `Position.value()` on the shipped file — its pst/piece dict reads
-   are already in tier, so the only gap is proof-side (a symbolic
-   dict-read walker; `Examples/python/sf_pst` has the concrete case).
-3. The str-tier leftovers `gen_moves` will need regardless of the H4
-   route, cheapest first: membership on strs (`q in " \nPNBRQK"`),
-   `for` over a str / `enumerate`, str unpacking, `ord`/`chr`
-   (parse/render). Each is interpreter surface plus meta arms — the
-   H5 commit `d64f329` is the shape to imitate.
+1. Generator EXPRESSIONS: structured, lowering DESIGNED (including the
+   capture rule), not written.
+2. `enumerate` / `count` as iterator objects — the last interpreter
+   surface `gen_moves` needs.
+3. The nested-def/closure question `moves()` raises — an owner-level
+   scoping decision, not a mechanical next step.
+4. `sorted(key=)`, and `sorted`/`max`/`all` OVER a generator (all drain
+   it, so they need the stepper rather than the pure helpers).
 
-Housekeeping for whoever picks this up: this clone lives in a
-/private/tmp scratchpad that macOS purges, and local master is ~57
-commits AHEAD of `origin/master` — a full-history bundle sits in
-`~/repos/lean-surfaces-backup/`, but PUSHING (or relocating the clone)
-is an owner decision that is still open.
+Then the gen_moves theorem, whose statement is already decided
+(reference-enumeration equality, order pinned, the reference written for
+obviousness — f536d93). Nothing about that statement changed.
 
-Cross-cutting, found by the milestone proofs: `py_vcgen` cannot walk
-`for` loops (the frozen-`execFor` list-induction pattern in
+Housekeeping unchanged: this clone lives in a /private/tmp scratchpad
+that macOS purges, local master is ~59 commits AHEAD of `origin/master`,
+and the full-history bundle in `~/repos/lean-surfaces-backup/` is
+refreshed through `14a4b2c`. PUSHING (or relocating the clone) is still
+an open owner decision.
+
+Cross-cutting, unchanged from the previous stop point: `py_vcgen` cannot
+walk `for` loops (the frozen-`execFor` list-induction pattern in
 `Examples/python/sf_bound_for/proof.lean` is the manual route to
-automate); the two while-loop walker gaps reproduced in
-`Examples/python/sf_bound_loop/proof.lean.blocked-by-py_vcgen-gaps`
-(builtin lookup stuck behind the symbolic env tail; symbolic-subscript
-range guards needing arithmetic discharge); `arrVal_getElem`-family
-lemmas still example-local (F-6); (the former int-only CLI gap is CLOSED:
-`leanmodels-run` accepts canonical typed JSON arguments and the sf list
-and tree functions carry differential rows).
+automate); the two while-loop walker gaps in
+`Examples/python/sf_bound_loop/proof.lean.blocked-by-py_vcgen-gaps`;
+`arrVal_getElem`-family lemmas still example-local (F-6). New: leanpy's
+live-suffix shell has a `while` case only, so a `print` inside a
+top-level `for` is loud; and the `Position.value()` warm-up on the
+shipped file (a symbolic dict-read walker, no new tier) is still
+unclaimed.

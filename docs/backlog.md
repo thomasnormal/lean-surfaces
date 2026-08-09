@@ -292,6 +292,85 @@ decision:
      same simplicity bar. Nothing starts before this generator tier
      lands.
 
+## H4 generators — BUILT (2026-08-09)
+
+Step 6's route is taken and the generator-FUNCTION tier is live
+(docs/memory-model.md §generator semantics). Of the recorded (a)/(b)/(c)
+owner options this is (a) done properly: step-indexed iterator objects
+with a defunctionalized continuation. (b) was never viable —
+`gen_moves` has ~six yield sites at different control-flow depths, so
+plain desugaring collapses into the same state machine anyway — and (c)
+is ruled out by laziness being semantically load-bearing: an unconsumed
+yield must not run its TT-writing search, and consumers break early.
+
+**Owner-level note, surfaced not decided.** The stage brief said
+"generators as IMMEDIATE VALUES (no heap)". That is not sound, and the
+recorded design (commit 7d23f17, memory-model §staging) already said
+heap: a generator is IDENTITY. `gen_lab.aliased` binds one generator to
+two names and steps through each — CPython advances the single shared
+frame and answers `1`; an immediate value restarts and answers `0`.
+`gen_lab.two_phase` is the same point for `break`. Both are CPython-
+checked differential rows, so the choice is settled empirically, not by
+taste. The rest of the brief — defunctionalized STRUCTURAL-PATH
+continuations, statement-position yields, `for`-consumption, `break`
+abandonment, loud refusal for send/throw/yield-from/finalization — is
+implemented exactly as written.
+
+**Open, in order:**
+
+1. **Generator EXPRESSIONS.** Structured end to end (`Expr.genExp`,
+   extractor `GeneratorExp`, the single-clause non-`async` shape — every
+   genexp in the real sunfish.py fits it) but NOT lowered: evaluating
+   one refuses loudly. The lowering is decided and should ride the same
+   machinery, per CPython: `parseModule` replaces each genexp with a
+   call `<genexpr@n>(<iter>, <captures…>)` and synthesizes the generator
+   function `for <target> in .0: if <ifs>: yield <elt>`, first parameter
+   `.0` (CPython's own name — no Python identifier collides). The one
+   real design point is CAPTURE: CPython closes over free names BY
+   REFERENCE, the lowering passes them BY VALUE, and the two differ iff
+   a captured name is rebound between creation and consumption. v0 rule:
+   admit a free name only if it is a PARAMETER of the enclosing function
+   (never rebound) or a module global (resolved dynamically anyway) —
+   anything else refuses loudly. That admits `king_capture`'s genexp
+   (free: `self`) and refuses `bound`'s (free: `val_lower`, a local);
+   relaxing it wants a rebinding analysis, recorded here rather than
+   guessed.
+2. **`sorted(key=)`** — orthogonal but needed for `moves()`'s ordering,
+   as is `sorted`/`max`/`all` over a generator (all three DRAIN it, so
+   they need the stateful stepper, not the pure helpers they use today).
+3. **`moves()` is a NESTED def — the capstone needs closures too.**
+   Found while running the H4 census on the shipped file: sunfish's
+   lazily-consumed `moves()` is not a module-level generator at all, it
+   is a `def` INSIDE `Searcher.bound`, closing over
+   `pos`/`gamma`/`depth`/`root`/`self`/`val_lower`/`killer`. It ingests
+   as `Stmt.unsupported "FunctionDef"` (v0 has no nested defs and no
+   closures), so "moves() consumed lazily by bound" needs a nested-def
+   tier ON TOP of the generator tier — an owner-level scoping fact that
+   the H4 staging note did not anticipate. `Searcher.search` IS a
+   method-level generator and is in reach today; `Position.gen_moves`
+   likewise. The census guard in `Examples/python/sunfish/spec.lean`
+   pins all of it.
+4. **`gen_moves` itself.** Its remaining tier gaps are closed (H5
+   iteration: `q in " \nPNBRQK"`, `for` over a str, membership on the
+   value tuples in `directions[p]`), EXCEPT `enumerate(self.board)` and
+   `count(i + d, d)` from itertools — both are ITERATOR objects and now
+   have a home: another `Obj.generator`-shaped builtin (or a builtin
+   frame kind), lazy by construction, with `count` infinite. That is the
+   last interpreter surface before the theorem.
+5. Then the recorded gen_moves THEOREM (statement decided at f536d93 —
+   reference-enumeration equality, order pinned, the reference written
+   for obviousness).
+
+Smaller, found on the way: leanpy's live-suffix shell has a `while` case
+only, so a `print` inside a top-level `for` (or a `for` over a
+generator) is loud — `harness/scripts/iter_script.py` and
+`gen_script.py` work around it; extending the shell is cheap. And the
+whole interpreter mutual block now carries explicit
+`termination_by structural fuel`: adding the generator members made
+structural inference silently fall back to well-founded recursion, which
+broke every kernel `rfl` — the mergeSort trap, caught by `Tests.lean`
+rather than by anything that names it.
+
 ## Session stop point (2026-08-09, after the H5 string milestone)
 
 Stopped CLEAN at master `f536d93` — nothing in flight, no WIP, no

@@ -86,7 +86,7 @@ would otherwise go. -/
     exact ⟨8, by py_simp [callFunction, callIn, factM, factFn, factPlusOneFn,
                           factorial]⟩
   | succ k ih =>
-    refine PyTriple.callsTo_ofRet (f := factFn) rfl rfl rfl rfl ?_
+    refine PyTriple.callsTo_ofRet (f := factFn) rfl rfl rfl rfl rfl ?_
     refine PyTriple.seq
       (R := fun st => st = ⟨initWorld factM, [("n", .int (k + 1 : Nat))]⟩)
       (.ifStmt (Pt := fun _ => False)
@@ -119,7 +119,7 @@ would otherwise go. -/
 registry lookup. -/
 theorem fact_plus_one_spec (n : Nat) :
     CallsTo factM "fact_plus_one" #[.int n] (.int (factorial n + 1)) := by
-  refine PyTriple.callsTo_ofRet (f := factPlusOneFn) rfl rfl rfl rfl ?_
+  refine PyTriple.callsTo_ofRet (f := factPlusOneFn) rfl rfl rfl rfl rfl ?_
   refine PyTriple.call
     (R := fun st => st = ⟨initWorld factM,
       [("n", .int n), ("y", .int (factorial n))]⟩)

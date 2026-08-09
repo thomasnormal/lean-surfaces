@@ -436,6 +436,95 @@ in-tier container rather than one container at a time.
 * Acceptance: `Examples/python/iter_lab` (every function
   differential); leanpy corpus `harness/scripts/iter_script.py`.
 
+## Generator semantics (H4 — BUILT, 2026-08-09)
+
+A generator is the one construct in sunfish whose LAZINESS is
+semantically load-bearing: `bound` consumes `moves()` under a beta
+cutoff, and every yield the consumer never reaches must leave its
+TT-writing search unrun. A generator-free rewrite is therefore not an
+alternative, and neither is pre-expansion; nor is plain desugaring,
+because `gen_moves` has ~six yield sites at different control-flow
+depths and desugaring collapses into the same state machine anyway. So
+the tier takes the principled construction.
+
+**Representation — a heap object, not a value.** `Obj.generator qname
+locals cont status` is the suspended frame AS DATA. It is heap-allocated
+because a generator is IDENTITY: `h = g; next(g); next(h)` advances one
+shared frame, and a `for` loop that abandons a generator by `break` must
+leave the very object the next consumer resumes. Both are pinned
+differentially (`gen_lab.aliased`, `gen_lab.two_phase`); an
+immediate-value representation answers them wrong, silently. `status`
+(`created`/`suspended`/`running`/`closed`) exists so a generator that
+re-enters itself is CPython's faithful `ValueError`, never a silent
+nested resumption.
+
+**Continuation — defunctionalized, structural.** `cont : GenCont` is a
+STACK of `GenFrame`s, innermost first: `block rest` ("finish these
+statements"), and one frame per suspendable loop carrying exactly the
+residual state CPython's frame carries (`forSeq` remaining elements,
+`forList` a live heap cursor, `forGen` a sub-generator address,
+`whileLoop` test/body/orelse). Every statement list in a frame is a
+structural SUFFIX of the function body, so a frame is a structural PATH
+into it — never an arbitrary expression context, which is why `yield` is
+admitted in STATEMENT position only. Loop frames carry no "rest of the
+enclosing block": the frames BELOW already are it, which makes the three
+exits uniform — normal exhaustion and `break` both POP the loop frame,
+`continue` re-enters it (advancing the cursor), and a `while`'s `orelse`
+is pushed on normal exit and skipped on `break` (`genBreak`/
+`genContinue`, two pure unwinders).
+
+**Stepping.** `stepIter m fuel w a : Run World (Option RVal)` — `some v`
+is the next yield, `none` exhaustion — and `execGen m fuel st k :
+Run FrameState (Option (RVal × GenCont))` runs the body from a
+continuation to the next yield. Both are FROZEN recursion points, like
+`callIn`/`execWhile`/`execFor`. `execGen` delegates every yield-FREE
+statement to the ordinary `execStmt`, so those statements keep exactly
+one definition; only the constructs that can suspend are opened. Which
+ones those are is decided by a PURE plan, `genPlan : Stmt → GenPlan`,
+following the H3 free-scrutinee discipline — and here it is not a
+convenience but a requirement: with the statement match written inline,
+Lean's equation compiler splits `execGen`'s block arm per `Stmt`
+constructor and its equations never fire at a symbolic statement, so
+`fuelMono`/`worldInv` cannot step the walker at all.
+
+**Creation and consumption.** `callIn` on a function with
+`isGenerator = true` runs NO code: it allocates the frame with the
+arguments bound and the whole body as the initial continuation, and
+returns the ref. `for x in <generator>` is `execForGen`, a frozen
+recursion point that calls `stepIter` once per iteration — so generator
+effects interleave with the body's — and `break` simply stops stepping,
+leaving the object SUSPENDED. `next(g)` raises the faithful
+`StopIteration` at exhaustion; `next(g, d)` consumes exhaustion
+(sunfish's `king_capture` shape). `return` inside a generator is
+exhaustion; `return <value>` sets `StopIteration.value` in CPython, a
+channel the tier does not model, and refuses LOUDLY rather than dropping
+the value.
+
+**heapFree.** Generator creation ALLOCATES and syntax cannot tell a
+generator call from an ordinary one, so `Module.heapFree` gains a third
+conjunct: no generator defs (`moduleGenFree`) — the H3 `classes = #[]`
+carve-out, again. `next(...)` calls leave the fragment syntactically
+(like every `sorted` call), and the `for`-over-`.ref` dispatch GUARDS on
+`moduleGenFree`: in a module with no generator defs no generator object
+can exist, so that arm is unreachable and says so loudly. That guard is
+what keeps `worldInv` free of a heap-side invariant.
+
+**Loud, deliberately** — never a fake answer: `send`/`throw`/`close` and
+every other generator method; a `yield` in EXPRESSION position (the
+`send` receiver); finalization/`close`-on-GC semantics; `x in gen`,
+`sorted(gen)`, `max`/`min(gen)` and generator UNPACKING (all of them
+CONSUME the generator — a stateful read these pure helpers cannot
+express); a generator as a dict key (identity hash); a generator
+crossing the call boundary (a snapshot of its yields would run the body
+eagerly, which is exactly what laziness forbids); and generator
+EXPRESSIONS, which are structured (`Expr.genExp`, single-clause
+non-`async`) but not yet LOWERED — see docs/backlog.md for the decided
+lowering and its capture rule.
+
+**Acceptance**: `Examples/python/gen_lab` (every function differential,
+including two INFINITE generators that terminate only under real
+laziness); leanpy corpus `harness/scripts/gen_script.py`.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,
@@ -535,12 +624,15 @@ two public calls (regression case 15).
   future work (class-as-value is loud); `namedtuple` is BUILT
   value-like (2026-08-08, see §class semantics — immediate
   `RVal.ntuple` values, ingestion recognition, loud boundary).
-* **H4: generators.** `Obj.iterator` frames carry a DEFUNCTIONALIZED
-  CONTINUATION (expression context, loop/block position, pending
-  `try/finally`/`with` state, `send` destination, and status
-  created/running/suspended/closed) — not just "paused position +
-  locals". sunfish's `moves()` consumed lazily by `bound` is the
-  acceptance test.
+* **H4: generators — BUILT (2026-08-09, §generator semantics).**
+  `Obj.generator` frames carry a DEFUNCTIONALIZED CONTINUATION (a stack
+  of `GenFrame`s — structural suffixes of the body plus each loop's
+  residual state) and a status (created/suspended/running/closed).
+  Generator functions, `for`-consumption, `break`-suspension, `next`
+  with and without a default are live (`Examples/python/gen_lab`);
+  generator EXPRESSIONS are structured but not yet lowered, and
+  `sorted(key=)` remains orthogonal. sunfish's `moves()` consumed
+  lazily by `bound` stays the capstone.
 * **H5: sets** (explicitly staged; iteration order raises the
   language-vs-CPython question — decide against the 3.9 oracle then).
 

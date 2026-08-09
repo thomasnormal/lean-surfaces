@@ -98,6 +98,19 @@ inductive Expr where
   compilation (`BUILD_SLICE` pushes `None` for a missing bound), so
   `s[:i]` and `s[None:i:None]` are the SAME node, faithfully. -/
   | slice (value : Expr) (lower : Expr) (upper : Expr) (step : Expr) (span : Span)
+  /-- Generator EXPRESSION `(elt for target in iter if ifs…)` (schema
+  `GeneratorExp`, H4 — the single-clause, non-`async` shape; anything
+  else stays `Unsupported`). The node is STRUCTURED here but never
+  survives ingestion: `parseModule` LOWERS every occurrence to a call of
+  a freshly synthesized generator function taking the already-evaluated
+  outer iterable as its first argument — exactly how CPython compiles a
+  genexp (`MAKE_FUNCTION <genexpr>; GET_ITER; CALL_FUNCTION 1`). The
+  constructor exists so the lowering is a total function on a typed AST
+  rather than a JSON rewrite, and so a genexp that ingestion REFUSES to
+  lower (a free variable the enclosing body rebinds — capture by value
+  would differ from CPython's capture by reference) is still
+  representable and refuses loudly at evaluation. -/
+  | genExp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr) (span : Span)
   | unsupported (pyKind : String) (text : String) (span : Span)
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Expr`; derived BEq suffices.
@@ -119,6 +132,12 @@ inductive Stmt where
   | forStmt (target : Expr) (iter : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
   | ifStmt (test : Expr) (body : Array Stmt) (orelse : Array Stmt) (span : Span)
   | exprStmt (value : Expr) (span : Span)
+  /-- `yield e` in STATEMENT position (schema `Yield`, H4 generators) —
+  the ONLY yield the tier admits. A yield in EXPRESSION position is a
+  `send` receiver (`x = yield v`) and stays `Expr.unsupported`, so no
+  statement here can silently drop a sent value. A bare `yield` ingests
+  as `yield None`, CPython's own compilation. -/
+  | yieldStmt (value : Expr) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)
@@ -149,6 +168,18 @@ structure FunctionDefn where
   rebind a module name when the function is called, which would make the
   recognized table silently stale — the census refuses such modules. -/
   hasGlobal : Bool := false
+  /-- Is this a GENERATOR function (H4)? Set from the envelope's
+  `is_generator` (absent = `false`), which the extractor computes by
+  CPython's rule: the def's OWN scope contains a `yield`/`yield from`,
+  reachable or not. Calling such a function never runs its body — it
+  ALLOCATES a suspended frame (`Obj.generator`) and returns it — so this
+  flag changes what a CALL means, exactly like `argsOk`/`localsOk`
+  change whether one is allowed at all.
+
+  Field position note (recorded finding, `py_vcgen`): `VCTactic.lean`
+  reads `FunctionDefn.mk`'s BODY positionally — keep it in sync when
+  these fields change. -/
+  isGenerator : Bool := false
   body : Array Stmt
   span : Span
 deriving Repr, Inhabited, BEq
@@ -247,7 +278,7 @@ since H1-proper (the dict tier) `KeyError` (missing dict key),
 `RuntimeError` (dict changed size during iteration), `RecursionError`
 (cyclic dict comparison), and since H3 (classes) `AttributeError` (missing
 instance attribute; attribute access on builtins outside their method
-tier). The harness compares exception *class names* only, so message-free
+tier), and since H4 (generators) `StopIteration`. The harness compares exception *class names* only, so message-free
 constructors (`keyError`/`attributeError` like `indexError`) carry no
 payload. -/
 inductive PyErr where
@@ -260,6 +291,11 @@ inductive PyErr where
   | runtimeError (msg : String)
   | recursionError
   | attributeError
+  /-- H4: `next(g)` on an exhausted generator. CPython's `StopIteration`
+  is an ordinary exception (it is what ends a `for` loop internally); the
+  tier raises it only from an explicit `next` without a default — the
+  `for`-loop and `next(g, d)` paths CONSUME exhaustion instead. -/
+  | stopIteration
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/

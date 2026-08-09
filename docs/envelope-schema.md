@@ -34,7 +34,7 @@ Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
 
 | kind | fields |
 |---|---|
-| `FunctionDef` | `name`: str, `args`: [param…], `args_unsupported`: str \| null, `locals_unsupported`: str \| null (set when the body *calls* a name it also assigns — CPython's static-locals rule makes that name an initially-unbound local, which the dynamic-env interpreter refuses loudly; "assigns" counts only REAL binding targets — bare names and tuple/list/starred nests of them; subscript/attribute targets bind nothing), `has_global`: true (emitted ONLY when the def's whole subtree, nested scopes included, contains a `global` statement — consumed by ingestion's namedtuple binding census), `body`: [stmt…] |
+| `FunctionDef` | `name`: str, `args`: [param…], `args_unsupported`: str \| null, `locals_unsupported`: str \| null (set when the body *calls* a name it also assigns — CPython's static-locals rule makes that name an initially-unbound local, which the dynamic-env interpreter refuses loudly; "assigns" counts only REAL binding targets — bare names and tuple/list/starred nests of them; subscript/attribute targets bind nothing), `has_global`: true (emitted ONLY when the def's whole subtree, nested scopes included, contains a `global` statement — consumed by ingestion's namedtuple binding census), `is_generator`: true (H4; emitted ONLY when the def's OWN scope contains a `yield`/`yield from` — CPython's purely syntactic, scope-local rule, reachability irrelevant; unlike `has_global` this does NOT descend into nested scopes, since a nested def's yield makes the NESTED function the generator), `body`: [stmt…] |
 | `ClassDef` (H3) | `name`: str, `class_unsupported`: str \| null (set for bases — inheritance is loudly out of tier — class keywords/metaclass, decorators, or class-level statements other than defs/docstrings/`pass`; the class is still represented, instantiation refuses loudly), `namedtuple_base`: expr (emitted ONLY when the single base is a plain `namedtuple(…)` call — the value-like subclass shape; ingestion validates and the module census promotes or demotes it), `has_global`: true (emitted ONLY when present — see `FunctionDef`), `body`: [stmt…] (methods arrive as `FunctionDef` nodes; ingestion flattens them into `Module.functions` under `"<class>.<method>"` qualified names and records the class in `Module.classes`) |
 | `Return` | `value`: expr \| null |
 | `Assign` | `targets`: [expr…] (length 1 in the supported tier; chained `a=b=1` gives length > 1), `value`: expr |
@@ -43,6 +43,7 @@ Every stmt/expr node carries `"span": {"lineno": L, "col_offset": C,
 | `For` | `target`: expr, `iter`: expr, `body`: [stmt…], `orelse`: [stmt…] (plain `for` only; `async for` is a different CPython node class and stays `Unsupported`) |
 | `If` | `test`: expr, `body`: [stmt…], `orelse`: [stmt…] (elif = nested If in orelse, as CPython does) |
 | `Expr` | `value`: expr |
+| `Yield` (H4) | `value`: expr, PRESENT only when the source wrote one (a bare `yield` carries none — ingestion fills `Constant None`, CPython's own compilation, exactly like `Slice`). Emitted only for a `yield` in STATEMENT position (`ast.Expr` wrapping `ast.Yield`); a `yield` in EXPRESSION position receives a `send` value and stays `Unsupported` |
 | `Pass`, `Break`, `Continue` | — |
 | `Unsupported` | `py_kind`: str (CPython class name, e.g. `"Try"`, `"With"`), `text`: str (`ast.unparse`, truncated to ≤200 chars) |
 
@@ -77,6 +78,7 @@ never fails on syntactically valid Python).
 | `Subscript` | `value`: expr, `index`: expr (CPython ≥3.9 `slice` field when it is a plain expr; pre-3.9 `ExtSlice`/`Index` nodes → whole Subscript becomes `Unsupported`) |
 | `Slice` | `value`: expr, `lower`/`upper`/`step`: expr, each PRESENT only when the source wrote it (`s[::-1]` carries only `step`). A `Subscript` whose `slice` is an `ast.Slice` (H5 strings). Ingestion fills absent components with `Constant None` — CPython's own compilation (`BUILD_SLICE` pushes `None`), so `s[:i]` and `s[None:i:None]` ingest identically |
 | `IfExp` | `test`: expr, `body`: expr, `orelse`: expr (`body if test else orelse`, H5) |
+| `GeneratorExp` (H4) | `elt`: expr, `target`: expr, `iter`: expr, `ifs`: [expr…] — the SINGLE-clause, non-`async` shape only; a multi-clause or `async` genexp stays `Unsupported`. CPython compiles every genexp into an implicit generator FUNCTION whose first argument is the already-evaluated outer iterator, and ingestion performs exactly that lowering |
 | `Dict` | `keys`: [expr…], `values`: [expr…] (same length; `{**d}` expansion keeps the whole node `Unsupported` with `py_kind` `"Dict:unpack"`). Structured for the heap layer (H0, docs/memory-model.md); the value-tier interpreter refuses it loudly until H1 |
 | `Attribute` | `value`: expr, `attr`: str. Structured (H0); refused loudly until the heap/class stages |
 | `Unsupported` | `py_kind`: str, `text`: str (≤200 chars) |

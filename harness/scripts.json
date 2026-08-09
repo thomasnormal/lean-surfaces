@@ -62,5 +62,9 @@
   {
     "file": "harness/scripts/iter_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/gen_script.py",
+    "expect": "match"
   }
 ]

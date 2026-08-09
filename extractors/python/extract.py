@@ -271,6 +271,27 @@ def convert_expr(node):
             "index": convert_expr(sl),
         }
 
+    if isinstance(node, ast.GeneratorExp):
+        # H4: a generator EXPRESSION is structured only in the v0 shape --
+        # ONE `for` clause, not `async`. CPython compiles every genexp into
+        # an implicit generator FUNCTION whose first argument is the
+        # already-evaluated outer iterator, and ingestion performs exactly
+        # that lowering; a multi-clause genexp is that lowering applied
+        # twice, which v0 does not do, so it stays Unsupported (loud) rather
+        # than half-structured. `ifs` are the clause's filters, in order.
+        gens = node.generators
+        if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
+            g = gens[0]
+            return {
+                "kind": "GeneratorExp",
+                "span": span(node),
+                "elt": convert_expr(node.elt),
+                "target": convert_expr(g.target),
+                "iter": convert_expr(g.iter),
+                "ifs": [convert_expr(i) for i in g.ifs],
+            }
+        return unsupported(node, "GeneratorExp")
+
     return unsupported(node)
 
 
@@ -352,6 +373,17 @@ def _has_global(node):
     return any(isinstance(n, ast.Global) for n in ast.walk(node))
 
 
+def _is_generator(fn):
+    """Is this ``def`` a GENERATOR function? CPython's rule is purely
+    syntactic and scope-local: a ``def`` whose OWN scope contains a ``yield``
+    or ``yield from`` compiles to a generator, whether or not that yield is
+    reachable -- calling it never runs the body, it builds a generator
+    object. Unlike ``_has_global`` this must NOT descend into nested scopes:
+    a nested ``def``'s yield makes the NESTED function a generator, not this
+    one (``_walk_scope`` already stops at def/lambda/class boundaries)."""
+    return any(isinstance(n, (ast.Yield, ast.YieldFrom)) for n in _walk_scope(fn))
+
+
 def convert_stmt(node):
     if isinstance(node, ast.FunctionDef):
         a = node.args
@@ -398,6 +430,8 @@ def convert_stmt(node):
         }
         if _has_global(node):
             out["has_global"] = True
+        if _is_generator(node):
+            out["is_generator"] = True
         return out
 
     if isinstance(node, ast.ClassDef):
@@ -504,6 +538,17 @@ def convert_stmt(node):
             "body": [convert_stmt(s) for s in node.body],
             "orelse": [convert_stmt(s) for s in node.orelse],
         }
+
+    if isinstance(node, ast.Expr) and isinstance(node.value, ast.Yield):
+        # H4: `yield e` in STATEMENT position -- the only yield the tier
+        # admits (a yield in EXPRESSION position receives a `send` value and
+        # stays loudly out, so it keeps falling through to Unsupported).
+        # A bare `yield` emits no "value" key; ingestion fills `Constant
+        # None`, CPython's own compilation -- the `Slice` convention.
+        d = {"kind": "Yield", "span": span(node)}
+        if node.value.value is not None:
+            d["value"] = convert_expr(node.value.value)
+        return d
 
     if isinstance(node, ast.Expr):
         return {"kind": "Expr", "span": span(node), "value": convert_expr(node.value)}

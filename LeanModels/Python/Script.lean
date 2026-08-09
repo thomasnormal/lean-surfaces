@@ -100,6 +100,8 @@ mutual
     | .attribute v _ _ => v.allNames
     | .ifExp t b o _ => t.allNames ++ b.allNames ++ o.allNames
     | .slice v l u st _ => v.allNames ++ l.allNames ++ u.allNames ++ st.allNames
+    | .genExp e t it ifs _ =>
+      e.allNames ++ t.allNames ++ it.allNames ++ Expr.allNamesList ifs.toList
     | .unsupported .. => []
 
   /-- Elementwise `Expr.allNames`. -/
@@ -123,6 +125,7 @@ mutual
     | .ifStmt t b o _ =>
       t.allNames ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList o.toList
     | .exprStmt e _ => e.allNames
+    | .yieldStmt e _ => e.allNames
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 
@@ -210,7 +213,7 @@ where
   stmtSpan : Stmt → Span
     | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
     | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
-    | .exprStmt _ sp | .pass sp | .brk sp | .cont sp
+    | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
     | .unsupported _ _ sp => sp
 
 /-- The stale-table guard: no suffix (nested-)assignment to a TABLE-BOUND

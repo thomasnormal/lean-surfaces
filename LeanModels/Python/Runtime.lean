@@ -52,10 +52,68 @@ inductive RVal where
   | ref   (a : Addr)
 deriving Repr, Inhabited, BEq
 
+/-- Runtime environments (locals, and the globals slice of a `World`). -/
+abbrev REnv := List (String × RVal)
+
+/-- `Env` is the canonical environment name across the interpreter and the
+proof layer; since the H1 core re-shape it IS the runtime environment
+(envs describe locals and loop invariants only — the public boundary is
+`CallsTo` over `Val`). -/
+abbrev Env := REnv
+
 /-- A class identity (docs/memory-model.md H3): the INDEX into
 `Module.classes` — a unique id, never the class name (with duplicate
 names the last definition wins consistently; see `ClassDefn`). -/
 abbrev ClassId := Nat
+
+/-- A generator's execution status (CPython's `gi_frame_state`).
+`running` is what makes re-entering a generator that is currently
+executing the faithful `ValueError` instead of a silent re-entry;
+`closed` is exhaustion (every further `next` is `StopIteration`). -/
+inductive GenStatus where
+  | created | suspended | running | closed
+deriving Repr, Inhabited, BEq, DecidableEq
+
+/-- One frame of a generator's **defunctionalized continuation** (H4,
+docs/memory-model.md §generator semantics — the recorded decision).
+
+A suspended generator must remember "where in the body it is", and the
+tier represents that as DATA rather than as a Lean closure: the
+continuation is a STACK of frames, innermost first, each a first-order
+representative of one pending control construct. `block rest` is "finish
+these statements"; a loop frame is "re-enter this loop", carrying exactly
+the residual state that CPython's frame carries (a value iterator's
+remaining elements, a list iterator's cursor, a sub-generator's address,
+a `while`'s test/body/orelse). The statements are structural SUFFIXES of
+the function body, so a frame is a structural PATH into it — never an
+arbitrary expression context, which is why `yield` is admitted in
+statement position only.
+
+Loop frames carry no "rest of the enclosing block": the frames BELOW
+already are it. That single choice makes the three exits uniform —
+normal exhaustion and `break` both POP the loop frame, `continue`
+re-enters it (which advances the cursor), and `while`'s `orelse` is
+simply pushed on normal exit and skipped on `break`. -/
+inductive GenFrame where
+  /-- Finish these statements, then continue with the frames below. -/
+  | block (rest : List Stmt)
+  /-- `for target in <value sequence>`: `remaining` are the elements not
+  yet taken (a str/tuple/namedtuple/boundary-list snapshot — immutable,
+  so a snapshot IS the live semantics). -/
+  | forSeq (target : Expr) (remaining : List RVal) (body : List Stmt)
+  /-- `for target in <heap list at `a`>` with the LIVE cursor `i` — the
+  object is re-read every step, exactly as `execForList` does. -/
+  | forList (target : Expr) (a : Addr) (i : Nat) (body : List Stmt)
+  /-- `for target in <generator at `a`>` — a generator consuming a
+  generator; re-entering the frame steps the inner one. -/
+  | forGen (target : Expr) (a : Addr) (body : List Stmt)
+  /-- `while test: body else: orelse` — re-entering re-tests. -/
+  | whileLoop (test : Expr) (body : List Stmt) (orelse : List Stmt)
+deriving Repr, Inhabited, BEq
+
+/-- A suspended generator's continuation: the frame stack, innermost
+first. `[]` means the body has run off its end (exhaustion). -/
+abbrev GenCont := List GenFrame
 
 /-- Heap objects — identity-bearing, mutated in place. `shapeVersion`
 increments on key insertion/deletion (not value update): the live-iterator
@@ -72,19 +130,20 @@ inductive Obj where
   | dict (entries : Array (RVal × RVal)) (shapeVersion : Nat)
   | list (xs : Array RVal)
   | instance (cls : ClassId) (attrs : Array (String × RVal))
+  /-- A GENERATOR object (H4): the suspended frame AS DATA — the
+  generator function's (possibly qualified) name, its locals at the
+  suspension point, the defunctionalized continuation, and the status.
+  It lives on the HEAP because a generator is IDENTITY, not a value:
+  `h = g; next(g); next(h)` advances one shared frame (`gen_lab.aliased`
+  pins it differentially), and a `for` loop that abandons a generator by
+  `break` must leave the very object the next consumer resumes
+  (`gen_lab.two_phase`) — an immediate value would silently restart. -/
+  | generator (qname : String) (locals : REnv) (cont : GenCont)
+      (status : GenStatus)
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
 abbrev Heap := Array Obj
-
-/-- Runtime environments (locals, and the globals slice of a `World`). -/
-abbrev REnv := List (String × RVal)
-
-/-- `Env` is the canonical environment name across the interpreter and the
-proof layer; since the H1 core re-shape it IS the runtime environment
-(envs describe locals and loop invariants only — the public boundary is
-`CallsTo` over `Val`). -/
-abbrev Env := REnv
 
 /-- The mutable world of one public call: heap + module globals + the
 program's output. -/
@@ -151,12 +210,29 @@ mutual
     | v :: vs => RVal.WF h v ∧ RVal.WFList h vs
 end
 
+/-- Every value a suspended frame holds is WF (the pending elements of a
+value-iterator frame; loop-frame addresses are checked at the read). -/
+def GenFrame.WF (h : Heap) : GenFrame → Prop
+  | .forSeq _ xs _ => RVal.WFList h xs
+  | .forList _ a _ _ => a < h.size
+  | .forGen _ a _ => a < h.size
+  | .block _ => True
+  | .whileLoop .. => True
+
+/-- Elementwise `GenFrame.WF`. -/
+def GenCont.WF (h : Heap) : GenCont → Prop
+  | [] => True
+  | f :: k => GenFrame.WF h f ∧ GenCont.WF h k
+
 /-- Every key and value stored in the object is WF w.r.t. `h`. -/
 def Obj.WF (h : Heap) : Obj → Prop
   | .dict es _ => RVal.WFList h (es.toList.map Prod.fst)
       ∧ RVal.WFList h (es.toList.map Prod.snd)
   | .list xs => RVal.WFList h xs.toList
   | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
+  | .generator _ lo k _ =>
+      RVal.WFList h (lo.map Prod.snd) ∧ GenCont.WF h k
+
 
 /-- Every stored object is WF w.r.t. the heap itself. -/
 def Heap.WF (h : Heap) : Prop :=
@@ -729,6 +805,8 @@ mutual
                 .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
             | some (.instance _ _) =>
                 .unsupported "returning a class instance through the call boundary is outside the tier (no instance observation form in `Val`; docs/memory-model.md H3)"
+            | some (.generator ..) =>
+                .unsupported "returning a GENERATOR through the call boundary is outside the tier (no generator observation form in `Val`; a snapshot of its yields would run the body eagerly, which is exactly what laziness forbids — docs/memory-model.md §generator semantics)"
             | Option.none => .unsupported
                 "internal: dangling heap address (heap well-formedness violation — report this)"
 
@@ -909,6 +987,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             cases o with
             | dict es ver => simp at hc
             | «instance» cls attrs => simp at hc
+            | generator qn lo k st => simp at hc
             | list xs =>
               cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
               | ok vs => simp [hl] at hc
@@ -1046,6 +1125,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             cases o with
             | dict es ver => cases hc
             | «instance» cls attrs => cases hc
+            | generator qn lo k st => cases hc
             | list xs =>
               -- freezes to a `.list` snapshot — excluded by `hlf`
               simp only [Res.bind_eq_ok, Res.pure_eq] at hc

@@ -179,6 +179,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
           | .ok jc => parseExpr jc
           | .error _ => pure (Expr.constant .none span)
         return .slice value (← comp "lower") (← comp "upper") (← comp "step") span
+    | "GeneratorExp" =>
+        -- Structured only (H4); `parseModule` LOWERS every surviving
+        -- occurrence into a synthesized generator function.
+        let elt ← parseExpr (← getField j "elt")
+        let target ← parseExpr (← getField j "target")
+        let iter ← parseExpr (← getField j "iter")
+        let ifs ← (← (← getField j "ifs").getArr?).mapM parseExpr
+        return .genExp elt target iter ifs span
     | "Unsupported" =>
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span
@@ -217,6 +225,13 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           (← (← (← getField j "orelse").getArr?).mapM parseStmt) span
     | "Expr" =>
         return .exprStmt (← parseExpr (← getField j "value")) span
+    | "Yield" =>
+        -- A bare `yield` carries no "value": ingestion fills `Constant
+        -- None`, CPython's own compilation (the `Slice` convention).
+        let value ← match j.getObjVal? "value" with
+          | .ok jv => parseExpr jv
+          | .error _ => pure (Expr.constant .none span)
+        return .yieldStmt value span
     | "Pass" => return .pass span
     | "Break" => return .brk span
     | "Continue" => return .cont span
@@ -257,9 +272,13 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     let hasGlobal := match j.getObjVal? "has_global" with
       | .ok (.bool b) => b
       | _ => false
+    let isGenerator := match j.getObjVal? "is_generator" with
+      | .ok (.bool b) => b
+      | _ => false
     let body ← (← (← getField j "body").getArr?).mapM parseStmt
     return { name, params, argsOk := argsUnsupported.isNone,
-             localsOk := localsUnsupported.isNone, hasGlobal, body, span }
+             localsOk := localsUnsupported.isNone, hasGlobal, isGenerator,
+             body, span }
 
 /-! ## namedtuple recognition (H3+, docs/memory-model.md §class semantics)
 
@@ -417,7 +436,7 @@ private partial def stmtBinds : Stmt → Option (List String)
     let bb ← body.toList.mapM stmtBinds
     let ob ← orelse.toList.mapM stmtBinds
     return bb.flatten ++ ob.flatten
-  | .ret .. | .exprStmt .. | .pass _ | .brk _ | .cont _ => some []
+  | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
@@ -438,6 +457,8 @@ mutual
     | .attribute v _ _ => exprRefs v
     | .ifExp t b o _ => exprRefs t ++ exprRefs b ++ exprRefs o
     | .slice v l u st _ => exprRefs v ++ exprRefs l ++ exprRefs u ++ exprRefs st
+    | .genExp e t it ifs _ =>
+      exprRefs e ++ exprRefs t ++ exprRefs it ++ (ifs.toList.map exprRefs).flatten
     | .unsupported .. => []
 
   /-- Every `Name` occurring in the statement. -/
@@ -452,6 +473,7 @@ mutual
       exprRefs t ++ exprRefs it ++ (b.toList.map stmtRefs).flatten
         ++ (o.toList.map stmtRefs).flatten
     | .exprStmt e _ => exprRefs e
+    | .yieldStmt e _ => exprRefs e
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -460,7 +482,7 @@ end
 private def stmtSpanOf : Stmt → Span
   | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
-  | .exprStmt _ sp | .pass sp | .brk sp | .cont sp
+  | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns

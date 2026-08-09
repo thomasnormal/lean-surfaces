@@ -1,0 +1,103 @@
+import LeanModels
+
+/-!
+# gen_lab — the H4 generator acceptance set (checks-only example)
+
+Concrete regressions for generator functions (docs/memory-model.md
+§generator semantics), pinned two ways: differential rows in
+`harness/cases.json` (every function runs against CPython 3.9) and the
+`#py_check`/`#guard` non-vacuity checks here (kernel-evaluated).
+
+The three claims worth naming, because each one falsifies a cheaper
+design that would otherwise look adequate:
+
+* **Laziness is real.** `first_over_inf` and `any_over` consume
+  INFINITE generators and terminate. Any design that pre-expands a
+  generator into a list diverges here — and that is exactly the
+  property sunfish's beta cutoff depends on, which is why a
+  generator-free rewrite of `moves()` is not an option: an unconsumed
+  yield must not run its TT-writing search.
+* **A generator is IDENTITY, not a value.** `aliased` binds one
+  generator to two names and steps through each; CPython advances the
+  single shared frame (`0` then `1`, hence `1`). An immediate-value
+  representation would restart and answer `0` — this row is the reason
+  `Obj.generator` lives on the heap.
+* **`break` SUSPENDS.** `two_phase` abandons a generator mid-loop and
+  hands it to a second loop, which resumes where the first stopped;
+  `drain_then_more` pins the exhausted case. Without suspension the
+  cutoff would re-search from the first move.
+
+The loud frontier — a `yield` in expression position (the `send`
+channel), and a generator crossing the call boundary — is pinned by the
+raw `#guard`s below and by whitelisted differential rows. No
+`proof.lean`: checks-only, like `iter_lab`/`str_lab`/`cls_lab`.
+-/
+
+open LeanModels LeanModels.Python
+
+load_program gen_lab from "Examples/python/gen_lab/gen_lab.json"
+
+/-! ### consumption by a `for` loop -/
+
+#py_check gen_lab.total(5) = 10
+#py_check gen_lab.total(0) = 0
+#py_check gen_lab.total(1) = 0
+#py_check gen_lab.total_ret(5) = 10
+#py_check gen_lab.sum_nested(7) = 412
+#py_check gen_lab.first_over(10, 3) = 4
+#py_check gen_lab.first_over(3, 99) = -1
+
+/-! ### laziness: an INFINITE generator, consumed and abandoned -/
+
+#py_check gen_lab.first_over_inf(4) = 5
+#py_check gen_lab.first_over_inf(0) = 1
+
+/-! ### suspension across `break`, and exhaustion -/
+
+#py_check gen_lab.two_phase(5) = 1
+#py_check gen_lab.two_phase(1) = -1
+#py_check gen_lab.drain_then_more(4) = 6
+
+/-! ### `next`, with and without a default -/
+
+#py_check gen_lab.next_of(3) = 0
+#py_check gen_lab.next_twice(3) = 1
+#py_check gen_lab.next_default(0) = -1
+#py_check gen_lab.next_exhausted(3) = -7
+
+/-! ### heap IDENTITY: two names, one frame -/
+
+#py_check gen_lab.aliased(4) = 1
+
+/-! ### the faithful exceptions -/
+
+#py_check gen_lab.next_stops(0) raises .stopIteration
+#py_check gen_lab.next_of_int(3) raises
+  (.typeError "'int' object is not an iterator")
+
+/-! ### the loud frontier (raw `#guard`: `unsupported` has no surface
+form — deliberate). A generator cannot cross the boundary (a snapshot of
+its yields would run the body eagerly); a `yield` in EXPRESSION position
+is the `send` channel and refuses when the frame is stepped (creating
+the generator is fine — calling one runs no code); generator
+EXPRESSIONS are structured but not yet lowered (docs/backlog.md). -/
+
+#guard callFunction gen_lab "upto" #[.int 3] 4096 matches .unsupported _
+#guard callFunction gen_lab "gen_at_boundary" #[.int 2] 4096 matches .unsupported _
+#guard callFunction gen_lab "send_is_loud" #[.int 3] 4096 matches .unsupported _
+#guard callFunction gen_lab "squares_upto" #[.int 5] 4096 matches .unsupported _
+#guard callFunction gen_lab "first_big" #[.int 10, .int 4] 4096 matches .unsupported _
+#guard callFunction gen_lab "genexp_sum" #[.int 4] 4096 matches .unsupported _
+
+/-! ### the ingestion census: `is_generator` is CPython's syntactic,
+scope-local rule — a def whose OWN scope contains a `yield`, reachable
+or not. A generator def evicts the whole module from the heap-free
+fragment (calling one ALLOCATES, and syntax cannot tell). -/
+
+#guard (findFunction gen_lab "upto").any (·.isGenerator)
+#guard (findFunction gen_lab "naturals").any (·.isGenerator)
+#guard (findFunction gen_lab "evens").any (·.isGenerator)
+#guard (findFunction gen_lab "total").any (fun f => !f.isGenerator)
+#guard (findFunction gen_lab "next_of").any (fun f => !f.isGenerator)
+#guard !moduleGenFree gen_lab
+#guard !gen_lab.heapFree

@@ -43,6 +43,7 @@ def errName : PyErr → String
   | .runtimeError _ => "RuntimeError"
   | .recursionError => "RecursionError"
   | .attributeError => "AttributeError"
+  | .stopIteration => "StopIteration"
 
 /-- JSON string literal with proper escaping (delegates to `Lean.Json`). -/
 def jsonStr (s : String) : String :=

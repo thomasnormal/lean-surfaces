@@ -298,6 +298,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
         (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
@@ -316,7 +317,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
       refine ⟨v, ⟨t + 1, ?_⟩, hΦ⟩
       unfold callFunction
       rw [callIn]
-      simp [hf, hargsOk, hlocalsOk, harity, hrt, RVal.freezeB_thaw]
+      simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
   | exn st' e => exact hr.elim
@@ -330,6 +331,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
     {f : FunctionDefn} {args : Array Val} {Φ : Val → Prop}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
         (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
@@ -337,7 +339,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
         { next := fun _ => False
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
     ∃ v, CallsTo m fname args v ∧ Φ v :=
-  PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk
+  PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk hgen
     (by rw [harity]; exact arityOk_full f.params) h
 
 /-- The relational bridge, marshalled form: `exists_callsTo` with the
@@ -355,6 +357,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     {Φ : α → Prop}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
     (h : PyTriple m
         (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
@@ -364,7 +367,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x := by
   obtain ⟨v, hv, x, rfl, hΦ⟩ :=
     PyTriple.exists_callsTo_arityOk (Φ := fun v => ∃ x : α, v = ToVal.toVal x ∧ Φ x)
-      hf hargsOk hlocalsOk harity
+      hf hargsOk hlocalsOk hgen harity
       (h.consequence (fun _ hp => hp)
         { next := fun _ hfalse => hfalse.elim
           ret := fun rv st hrv =>
@@ -379,6 +382,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     {fname : String} {f : FunctionDefn} {args : Array Val} {Φ : α → Prop}
     (hf : findFunction m fname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
     (h : PyTriple m
         (fun st => st = ⟨initWorld m, mkCallEnv f.params (RVal.thawArgs args)⟩)
@@ -386,7 +390,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
         { next := fun _ => False
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
     ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x :=
-  PyTriple.exists_callsTo_toVal_arityOk hf hargsOk hlocalsOk
+  PyTriple.exists_callsTo_toVal_arityOk hf hargsOk hlocalsOk hgen
     (by rw [harity]; exact arityOk_full f.params) h
 
 /-! ## The walker (meta level) -/
@@ -2116,7 +2120,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       -- call supplies every argument or omits trailing defaulted ones.
       let bridgeT ← appOpt ``PyTriple.callsTo_arityOk
         #[some m, some fnameE, some fLit, some args, some v,
-          none, none, none, none, none]
+          none, none, none, none, none, none]
       let gs ← g.apply bridgeT
       let mut h : Option MVarId := none
       for gg in gs do
@@ -2129,9 +2133,10 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
           closeRfl gg
       let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
       let fLit' ← whnfR fLit
-      -- `FunctionDefn.mk` positional field 5 = `body` (after
-      -- name/params/argsOk/localsOk/hasGlobal — keep in sync with Ast.lean)
-      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 5))
+      -- `FunctionDefn.mk` positional field 6 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal/isGenerator — keep in sync
+      -- with Ast.lean; H4 inserted `isGenerator` before `body`)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 6))
       let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
       walk ctx topTags hGoal
     else if tgt.isAppOfArity ``PyTriple 4 then
@@ -2201,9 +2206,10 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
           closeRfl gg
       let some hGoal := h | throwError "py_vcgen: internal — bridge goals"
       let fLit' ← whnfR fLit
-      -- `FunctionDefn.mk` positional field 5 = `body` (after
-      -- name/params/argsOk/localsOk/hasGlobal — keep in sync with Ast.lean)
-      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 5))
+      -- `FunctionDefn.mk` positional field 6 = `body` (after
+      -- name/params/argsOk/localsOk/hasGlobal/isGenerator — keep in sync
+      -- with Ast.lean; H4 inserted `isGenerator` before `body`)
+      let (bodyStmts, _) ← parseListLit (← arrToList (fLit'.getArg! 6))
       let ctx : VCCtx := { ctx0 with loops := ← collectLoops bodyStmts }
       walk ctx topTags hGoal
     else

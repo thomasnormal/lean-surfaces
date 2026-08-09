@@ -43,6 +43,26 @@ parameters (`Position.move` is the one static-locals refusal — its
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true)]
 
+/-! ### The H4 generator census on the shipped file
+
+CPython's rule is scope-local and syntactic, and it lands here exactly:
+`Position.gen_moves` and `Searcher.search` are GENERATORS, everything
+else is an ordinary def. Note what is NOT in this list: `bound`'s
+`moves()` is a NESTED `def` (a closure over `pos`/`gamma`/`depth`/…), so
+it ingests as `Stmt.unsupported "FunctionDef"` and the lazy-`moves()`
+capstone needs a nested-def/closure tier ON TOP of H4 — recorded,
+docs/backlog.md. A generator def evicts the module from the heap-free
+fragment (creation ALLOCATES and syntax cannot tell), which sunfish
+already was, having classes. -/
+
+#guard sunfish.functions.map (fun f => (f.name, f.isGenerator)) ==
+  #[("Position.gen_moves", true), ("Position.rotate", false),
+    ("Position.move", false), ("Position.value", false),
+    ("Position.king_capture", false), ("Searcher.__init__", false),
+    ("Searcher.bound", false), ("Searcher.search", true),
+    ("parse", false), ("render", false), ("main", false)]
+#guard !moduleGenFree sunfish
+
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded
 ranks, newline separators. -/
 private def board0 : String :=

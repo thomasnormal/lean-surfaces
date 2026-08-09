@@ -162,6 +162,23 @@ def Expr.kindName : Expr → String
   | .attribute .. => "Attribute"
   | .ifExp .. => "IfExp"
   | .slice .. => "Slice"
+  | .genExp .. => "GeneratorExp"
+  | .unsupported pyKind _ _ => pyKind
+
+/-- Schema `kind` name of a statement node (error messages) — the
+`Expr.kindName` counterpart. -/
+def Stmt.kindName : Stmt → String
+  | .ret .. => "Return"
+  | .assign .. => "Assign"
+  | .augAssign .. => "AugAssign"
+  | .whileLoop .. => "While"
+  | .forStmt .. => "For"
+  | .ifStmt .. => "If"
+  | .exprStmt .. => "Expr"
+  | .yieldStmt .. => "Yield"
+  | .pass _ => "Pass"
+  | .brk _ => "Break"
+  | .cont _ => "Continue"
   | .unsupported pyKind _ _ => pyKind
 
 /-- Python truthiness `bool(x)`: `None` → false; `bool` → itself;
@@ -568,7 +585,7 @@ locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
   id == "abs" || id == "int" || id == "print" ||
-  id == "ord" || id == "chr"
+  id == "ord" || id == "chr" || id == "next"
 
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
@@ -873,6 +890,7 @@ def RVal.typeNameH (h : Heap) : RVal → String
     -- the message-only placeholder (the harness compares exception CLASS
     -- names, never messages).
     | some (.instance _ _) => "object"
+    | some (.generator ..) => "generator"
     | Option.none => "object"
   | v => v.typeName
 
@@ -915,6 +933,7 @@ mutual
     | .ref a =>
       match Heap.get? h a with
       | some (.instance _ _) => true
+      | some (.generator ..) => true
       | _ => false
     | .tuple xs => keyHasInstanceRefList h xs.toList
     | .ntuple _ _ xs => keyHasInstanceRefList h xs.toList
@@ -933,7 +952,7 @@ identity `__eq__`) but instance dict keys are outside the H3 tier —
 loud, never a fake `TypeError`. -/
 def keyRefusal (h : Heap) (k : RVal) : Res α :=
   if keyHasInstanceRef h k then
-    .unsupported "a class instance as a dict key (identity hash) is outside the H3 tier (docs/memory-model.md)"
+    .unsupported "a class instance or generator as a dict key (identity hash) is outside the tier (docs/memory-model.md)"
   else
     .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
 
@@ -989,6 +1008,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   -- H3: no `__getitem__` can exist (dunder guard), so the default
   -- protocol's refusal is the faithful outcome.
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
+  | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape
@@ -1020,6 +1040,8 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
   -- H3: no `__setitem__` can exist (dunder guard) — faithful refusal.
   | some (.instance _ _) =>
     .exn (.typeError "'object' object does not support item assignment")
+  | some (.generator ..) =>
+    .exn (.typeError "'generator' object does not support item assignment")
   | Option.none => .unsupported danglingMsg
 
 /-- `len(o)` on a heap object: dict entry count / list length; an
@@ -1029,6 +1051,7 @@ def heapLen (h : Heap) (a : Addr) : Res RVal :=
   | some (.dict es _) => .ok (.int es.size)
   | some (.list xs) => .ok (.int xs.size)
   | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
+  | some (.generator ..) => .exn (.typeError "object of type 'generator' has no len()")
   | Option.none => .unsupported danglingMsg
 
 /-- `d.get(k)` / `d.get(k, default)` (the H1 method tier): absent keys
@@ -1043,6 +1066,7 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
   | some (.list _) => .exn .attributeError   -- 'list' object has no attribute 'get'
   | some (.instance _ _) =>
     .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
+  | some (.generator ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.append(x)` (H2): push in place — the mutation is visible through
@@ -1058,6 +1082,7 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
   | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'append'
   | some (.instance _ _) =>
     .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
+  | some (.generator ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.pop()` / `lst.pop(i)` (H2): remove and return the element at `i`
@@ -1077,6 +1102,7 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
     .unsupported "'.pop' on a dict is outside the tier (dict.pop lands with the dict-method tier)"
   | some (.instance _ _) =>
     .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
+  | some (.generator ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
@@ -1092,6 +1118,8 @@ def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
     | Option.none => .unsupported danglingMsg
   | some (.dict _ _) => .exn .attributeError
   | some (.list _) => .exn .attributeError
+  -- a generator's attributes (`gi_frame`, …) are all read-only
+  | some (.generator ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- Truthiness including heap objects: `bool(d)`/`bool(lst)` is
@@ -1106,6 +1134,8 @@ def truthyH (h : Heap) : RVal → Res Bool
     | some (.dict es _) => .ok (es.size != 0)
     | some (.list xs) => .ok (xs.size != 0)
     | some (.instance _ _) => .ok true
+    -- a generator object is always truthy (no `__bool__`/`__len__`)
+    | some (.generator ..) => .ok true
     | Option.none => .unsupported danglingMsg
   | v => truthy v
 
@@ -1214,6 +1244,11 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
   -- the faithful `TypeError`.
   | some (.instance _ _) =>
     .exn (.typeError "argument of type 'object' is not iterable")
+  | some (.generator ..) =>
+    -- `x in gen` CONSUMES the generator in CPython: a membership test
+    -- with a side effect, which this pure helper cannot express — loud,
+    -- never a wrong answer (docs/memory-model.md §generator semantics)
+    .unsupported "'in' on a generator CONSUMES it (a stateful membership test) — outside the tier"
   | Option.none => .unsupported danglingMsg
 
 /-- `x in c` for EVERY in-tier container (H5 iteration): a heap referent
@@ -1325,6 +1360,8 @@ def sortedValH (h : Heap) : RVal → Res (Heap × RVal)
         .unsupported "sorted() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
     | some (.instance _ _) =>
         .exn (.typeError "'object' object is not iterable")
+    | some (.generator ..) =>
+        .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
     | Option.none => .unsupported danglingMsg
   | v => do let r ← sortedVal v; return (h, r)
 
@@ -1349,6 +1386,8 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
             .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
         | some (.instance _ _) =>
             .exn (.typeError "'object' object is not iterable")
+        | some (.generator ..) =>
+            .unsupported s!"{if isMax then "max" else "min"}() over a generator DRAINS it (a stateful read) — outside the tier"
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
@@ -1424,6 +1463,8 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
        | some (.instance _ _) =>
          -- no `__iter__` can exist (dunder guard) — faithful
          .exn (.typeError "cannot unpack non-iterable object object")
+       | some (.generator ..) =>
+         .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
        | Option.none => .unsupported danglingMsg
      | v => assignTo env target v)
   | t => assignTo env t v
@@ -1549,7 +1590,7 @@ def attrReadPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
        | some c =>
          if c.methods.toList.contains attr then .boundMethod else .missing)
   | some _ =>
-    .refuse "attribute access on a dict/list value is outside the tier (their methods are called, not referenced; docs/memory-model.md)"
+    .refuse "attribute access on a dict/list/generator value is outside the tier (their methods are called, not referenced; docs/memory-model.md)"
   | Option.none => .dangling
 
 /-- The attribute-READ outcome (fuel-free: reads decide immediately) —
@@ -1611,6 +1652,12 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     if attr == "append" then .listAppend
     else if attr == "pop" then .listPop
     else .refuse s!"method call '.{attr}' on a list is outside the tier (list '.append'/'.pop' only; docs/memory-model.md)"
+  | some (.generator ..) =>
+    -- `send`/`throw`/`close` are REAL generator methods with
+    -- resumption/finalization semantics the tier does not model, and
+    -- guessing which other names exist would be silently wrong: loud,
+    -- never a fake `AttributeError`
+    .refuse s!"method call '.{attr}' on a generator is outside the tier (send/throw/close and finalization are deliberately out; docs/memory-model.md §generator semantics)"
   | Option.none => .dangling
 
 /-! ## The namedtuple table (H3+, docs/memory-model.md §class semantics —
@@ -1964,6 +2011,95 @@ def mkCallEnv (params : Array Param) (args : Array RVal) : Env :=
   (params.toList.map Param.arg).zip args.toList
     ++ defaultBindings (params.toList.drop args.size)
 
+/-! ## Generator continuations (H4, docs/memory-model.md §generator
+semantics)
+
+Two PURE unwinders over the defunctionalized continuation. They are what
+makes `break`/`continue` inside a suspended generator ordinary data
+manipulation instead of a second control-flow mechanism: `break` pops
+frames up to AND INCLUDING the nearest loop frame (the frames below are
+exactly "after the loop"), `continue` pops up to BUT NOT including it (so
+re-entering the loop frame advances the cursor — the loop frames carry no
+"rest of block" precisely so these two agree). `none` means the flow
+escaped every loop, which `callIn` reports as `'break' outside loop` —
+unreachable through a well-formed body, loud if ever reached. -/
+
+/-- `break`: drop the pending blocks and the enclosing loop frame. -/
+def genBreak : GenCont → Option GenCont
+  | [] => Option.none
+  | .block _ :: k => genBreak k
+  | .forSeq .. :: k => some k
+  | .forList .. :: k => some k
+  | .forGen .. :: k => some k
+  | .whileLoop .. :: k => some k
+
+/-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
+(re-entering it takes the next element / re-tests). -/
+def genContinue : GenCont → Option GenCont
+  | [] => Option.none
+  | .block _ :: k => genContinue k
+  | k@(.forSeq ..  :: _) => some k
+  | k@(.forList .. :: _) => some k
+  | k@(.forGen ..  :: _) => some k
+  | k@(.whileLoop .. :: _) => some k
+
+mutual
+  /-- Does this statement contain a `yield` in its own scope? The
+  continuation walker delegates every yield-FREE statement to the
+  ordinary `execStmt` (one source of truth for their semantics) and only
+  opens the control constructs that can suspend. Structural, kernel
+  computable. -/
+  def Stmt.hasYield : Stmt → Bool
+    | .yieldStmt .. => true
+    | .whileLoop _ body orelse _ =>
+        Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
+    | .forStmt _ _ body orelse _ =>
+        Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
+    | .ifStmt _ body orelse _ =>
+        Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
+    | _ => false
+
+  /-- Elementwise `Stmt.hasYield`. -/
+  def Stmt.hasYieldList : List Stmt → Bool
+    | [] => false
+    | s :: ss => s.hasYield || Stmt.hasYieldList ss
+end
+
+/-- What the continuation walker does with the next statement of a
+generator body — the H3 free-scrutinee discipline (`attrCallPlan`,
+`strCallPlan`), and here it is not merely convenient but REQUIRED: with
+the statement match written inline, Lean's equation compiler splits
+`execGen`'s block arm per `Stmt` constructor, so its equations never fire
+at a symbolic statement and `fuelMono`/`worldInv` cannot step the walker
+at all. Forking on this pure plan restores one equation. -/
+inductive GenPlan where
+  /-- Yield-free: run it through the ordinary `execStmt` (one source of
+  truth for its semantics) and route the resulting flow. -/
+  | delegate
+  | yieldHere (value : Expr)
+  | branch (test : Expr) (body orelse : List Stmt)
+  | whileHere (test : Expr) (body orelse : List Stmt)
+  | forHere (target : Expr) (iter : Expr) (body : List Stmt)
+  | refuse (msg : String)
+deriving Repr, Inhabited, BEq
+
+/-- Classify the next statement of a generator body (see `GenPlan`). A
+`yield` anywhere but statement position is the `send` channel and stays
+loud. -/
+def genPlan (s : Stmt) : GenPlan :=
+  if !s.hasYield then .delegate
+  else
+    match s with
+    | .yieldStmt e _ => .yieldHere e
+    | .ifStmt t b o _ => .branch t b.toList o.toList
+    | .whileLoop t b o _ => .whileHere t b.toList o.toList
+    | .forStmt tg it b o _ =>
+      (match o.toList with
+       | [] => .forHere tg it b.toList
+       | _ :: _ => .refuse "'for … else' is outside the v0 tier")
+    | s =>
+      .refuse s!"'yield' inside a '{s.kindName}' statement (yield in expression position) is outside the tier"
+
 /-! ## The heap-free fragment (conditional world invariance)
 
 Once dict literals allocate and subscript stores mutate, unconditional
@@ -1994,8 +2130,10 @@ mutual
     -- argument is a heap list (syntax cannot tell, so every `sorted`
     -- call leaves the fragment — even shadowed ones, conservatively);
     -- method calls beyond `.get` MUTATE (`.append`/`.pop`).
+    -- H4 adds `next`: it STEPS a generator (arbitrary body effects), and
+    -- syntax cannot tell `next(g)` from a shadowing user `def next`
     | .call (.name id _) args _ _ =>
-      (id != "sorted") && Expr.heapFreeList args.toList
+      (id != "sorted") && (id != "next") && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args _ _ =>
       attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
     | .call f args _ _ => f.heapFree && Expr.heapFreeList args.toList
@@ -2009,6 +2147,7 @@ mutual
     -- receiver (heap lists) refuses loudly, so the node stays in the
     -- fragment
     | .slice v l u st _ => v.heapFree && l.heapFree && u.heapFree && st.heapFree
+    | .genExp .. => false               -- ALLOCATES a generator (H4)
     | .unsupported .. => true           -- loud, never decides `.ok`
 
   /-- Elementwise `Expr.heapFree`. -/
@@ -2035,6 +2174,9 @@ mutual
     | .ifStmt t body orelse _ =>
       t.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
     | .exprStmt e _ => e.heapFree
+    -- `yield` outside a generator body is loud, and inside one it never
+    -- runs through `execStmt` at all (the continuation walker owns it)
+    | .yieldStmt _ _ => true
     | .pass _ => true
     | .brk _ => true
     | .cont _ => true
@@ -2055,14 +2197,49 @@ def funsHeapFree : List FunctionDefn → Bool
   | [] => true
   | f :: fs => f.heapFree && funsHeapFree fs
 
+/-- Does the function list contain a GENERATOR def? (H4: calling one
+ALLOCATES a suspended frame, and syntax cannot tell a generator call from
+an ordinary call — the H3 `classes = #[]` carve-out, again.) -/
+def funsAnyGen : List FunctionDefn → Bool
+  | [] => false
+  | f :: fs => f.isGenerator || funsAnyGen fs
+
+/-- Has this module NO generator definitions? Then no `Obj.generator` can
+exist in any world of any run of it: `callIn` is the only allocator, the
+boundary thaw cannot build one, and G1 module init evaluates constants
+only. The generator entry points test this and refuse LOUDLY when it
+holds, which is what keeps `worldInv` free of a heap-side invariant —
+the arm is unreachable, and reaching it would be an interpreter bug, not
+a silent wrong answer. -/
+def moduleGenFree (m : Module) : Bool :=
+  !funsAnyGen m.functions.toList
+
 /-- Module-level heap freedom: every function body (nested calls then stay
-inside the fragment) AND no classes (H3: instantiation ALLOCATES and
+inside the fragment), no classes (H3: instantiation ALLOCATES and
 syntax cannot tell a class call from a function call, so any class evicts
 the whole module from the fragment — conservative, sound; class-using
-modules live on `CallsIn`). Top-level statements are NOT constrained —
-they run only at module init, before any public run begins. -/
+modules live on `CallsIn`), and no GENERATOR defs (H4: the same argument —
+`gen_moves()` allocates a suspended frame). Top-level statements are NOT
+constrained — they run only at module init, before any public run begins. -/
 def Module.heapFree (m : Module) : Bool :=
-  funsHeapFree m.functions.toList && m.classes.toList.isEmpty
+  funsHeapFree m.functions.toList && m.classes.toList.isEmpty && moduleGenFree m
+
+/-- The three conjuncts of `Module.heapFree`, projected (H4 made it a
+three-way `&&`, so the `Bool.and_eq_true ▸` idiom no longer lines up
+positionally — these are the names to cite instead). -/
+theorem Module.heapFree_funs {m : Module} (hm : m.heapFree = true) :
+    funsHeapFree m.functions.toList = true := by
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.1
+
+@[inherit_doc Module.heapFree_funs]
+theorem Module.heapFree_classes {m : Module} (hm : m.heapFree = true) :
+    m.classes.toList.isEmpty = true := by
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.2
+
+@[inherit_doc Module.heapFree_funs]
+theorem Module.heapFree_genFree {m : Module} (hm : m.heapFree = true) :
+    moduleGenFree m = true := by
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.2
 
 /-- A member of a heap-free function list is heap-free. -/
 theorem funsHeapFree_mem {fs : List FunctionDefn} (hm : funsHeapFree fs = true)
@@ -2086,17 +2263,43 @@ theorem findFunction_heapFree {m : Module} {fname : String} {f : FunctionDefn}
     have h1 : f ∈ m.functions.reverse := Array.mem_of_find?_eq_some hf
     rw [Array.mem_reverse] at h1
     exact Array.mem_def.mp h1
-  have hm1 : funsHeapFree m.functions.toList = true :=
-    (Bool.and_eq_true .. ▸ hm : _ ∧ _).1
+  have hm1 : funsHeapFree m.functions.toList = true := Module.heapFree_funs hm
   exact funsHeapFree_mem hm1 hmem
+
+/-- A member of a generator-free function list is not a generator. -/
+theorem funsAnyGen_mem {fs : List FunctionDefn} (hg : funsAnyGen fs = false)
+    {f : FunctionDefn} (hf : f ∈ fs) : f.isGenerator = false := by
+  induction fs with
+  | nil => cases hf
+  | cons g gs ih =>
+    simp only [funsAnyGen, Bool.or_eq_false_iff] at hg
+    cases hf with
+    | head => exact hg.1
+    | tail _ h => exact ih hg.2 h
+
+/-- The function `findFunction` resolves in a heap-free module is NOT a
+generator (`Module.heapFree`'s third conjunct) — what keeps `worldInv`'s
+generator-CREATION branch (which allocates) vacuous. -/
+theorem findFunction_notGen {m : Module} {fname : String} {f : FunctionDefn}
+    (hm : m.heapFree = true) (hf : findFunction m fname = some f) :
+    f.isGenerator = false := by
+  have hmem : f ∈ m.functions.toList := by
+    unfold findFunction at hf
+    rw [Array.findRev?_eq_find?_reverse] at hf
+    have h1 : f ∈ m.functions.reverse := Array.mem_of_find?_eq_some hf
+    rw [Array.mem_reverse] at h1
+    exact Array.mem_def.mp h1
+  have hg : funsAnyGen m.functions.toList = false := by
+    have := Module.heapFree_genFree hm
+    simpa [moduleGenFree] using this
+  exact funsAnyGen_mem hg hmem
 
 /-- A heap-free module has no classes at all (`Module.heapFree`'s second
 conjunct), so class-name resolution always misses — what keeps `worldInv`'s
 instantiation and method-dispatch branches vacuous. -/
 theorem findClass_heapFree {m : Module} (hm : m.heapFree = true)
     (cname : String) : findClass m cname = Option.none := by
-  have h2 : m.classes.toList.isEmpty = true :=
-    (Bool.and_eq_true .. ▸ hm : _ ∧ _).2
+  have h2 : m.classes.toList.isEmpty = true := Module.heapFree_classes hm
   unfold findClass
   rw [List.isEmpty_iff.mp h2]
   rfl
@@ -2105,8 +2308,7 @@ theorem findClass_heapFree {m : Module} (hm : m.heapFree = true)
 `findClass_heapFree`). -/
 theorem getClass?_heapFree {m : Module} (hm : m.heapFree = true)
     (i : ClassId) : getClass? m i = Option.none := by
-  have h2 : m.classes.toList.isEmpty = true :=
-    (Bool.and_eq_true .. ▸ hm : _ ∧ _).2
+  have h2 : m.classes.toList.isEmpty = true := Module.heapFree_classes hm
   unfold getClass?
   rw [List.isEmpty_iff.mp h2]
   cases i <;> rfl
@@ -2134,6 +2336,7 @@ theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
       rw [if_neg (by decide : ¬ ((("get" : String) == "append") = true)),
           if_neg (by decide : ¬ ((("get" : String) == "pop") = true))]
       right; right; right; exact ⟨_, rfl⟩
+    | generator qn lo k st => right; right; right; exact ⟨_, rfl⟩
     | «instance» ci attrs =>
       cases hv : Env.lookup attrs.toList "get" with
       | some v => simp [hv]
@@ -2371,6 +2574,28 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "next" then
+                    -- H4: STEP an iterator. `next(g)` on an exhausted
+                    -- generator is the faithful `StopIteration`;
+                    -- `next(g, d)` consumes exhaustion and yields `d`
+                    -- (sunfish's `king_capture` shape). A non-iterator
+                    -- argument is the faithful `TypeError` (inside
+                    -- `stepIter`, which owns the referent dispatch).
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [.ref a] =>
+                       Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
+                       (match r with
+                        | some v => .ok st v
+                        | Option.none => .exn st .stopIteration)
+                     | [.ref a, d] =>
+                       Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
+                       (match r with
+                        | some v => .ok st v
+                        | Option.none => .ok st d)
+                     | [] => .exn st (.typeError "next expected at least 1 argument, got 0")
+                     | v :: _ =>
+                       .exn st (.typeError s!"'{RVal.typeNameH st.world.heap v}' object is not an iterator"))
                   else if fname == "ord" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
@@ -2506,7 +2731,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         evalExpr m fuel st u ⤳ fun st uv =>
         evalExpr m fuel st stp ⤳ fun st sv =>
         Run.liftRes st (sliceVal cv lv uv sv)
+    | .genExp .. =>
+        -- Ingestion LOWERS every genexp it can into a generator function
+        -- (`lowerGenExps`, Json.lean); one that survives to evaluation is
+        -- a shape the lowering refused — loud, never a guess.
+        .unsupported "this generator expression is outside the tier (ingestion could not lower it to a generator function; docs/memory-model.md §generator semantics)"
     | .unsupported pyKind _ _ => .unsupported s!"unsupported expression '{pyKind}'"
+  termination_by structural fuel
 
 /-- Evaluate a list of expressions left to right, each exactly once. -/
 def evalExprs (m : Module) (fuel : Nat) (st : FrameState) (es : List Expr) :
@@ -2520,6 +2751,7 @@ def evalExprs (m : Module) (fuel : Nat) (st : FrameState) (es : List Expr) :
         evalExpr m fuel st e ⤳ fun st v =>
         evalExprs m fuel st rest ⤳ fun st vs =>
         .ok st (v :: vs)
+  termination_by structural fuel
 
 /-- Evaluate a dict literal's key/value expressions in CPython order:
 `k₁, v₁, k₂, v₂, …`, left to right, each exactly once. Insertion (and its
@@ -2538,6 +2770,7 @@ def evalDictItems (m : Module) (fuel : Nat) (st : FrameState)
         evalDictItems m fuel st ks vs ⤳ fun st rest =>
         .ok st ((kv, vv) :: rest)
     | _, _ => .unsupported "Dict with mismatched keys/values"
+  termination_by structural fuel
 
 /-- Attribute-CALL dispatch on a heap receiver (H3) — a separate mutual
 function so that `fuelMono`/`worldInv` fork on `attrCallPlan`'s FREE
@@ -2593,6 +2826,7 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
       | vs => .exn st (.typeError s!"pop expected at most 1 argument, got {vs.length}")
     | .refuse msg => .unsupported msg
     | .dangling => .unsupported danglingMsg
+  termination_by structural fuel
 
 /-- `and`/`or` chain: short-circuits and returns the deciding *operand value*
 (not a bool): `0 or "x"` is `"x"`; the last operand is returned as-is. -/
@@ -2609,6 +2843,7 @@ def evalBoolChain (m : Module) (fuel : Nat) (st : FrameState) (op : BoolOp)
       match op with
       | .and => if b then evalBoolChain m fuel st .and e' rest' else .ok st v
       | .or => if b then .ok st v else evalBoolChain m fuel st .or e' rest'
+  termination_by structural fuel
 
 /-- Chained comparison `a < b < c …`: each operand is evaluated exactly once,
 left to right; short-circuits to `False` on the first failing link (the
@@ -2627,6 +2862,7 @@ def evalCompareChain (m : Module) (fuel : Nat) (st : FrameState) (lhs : RVal)
         if b then evalCompareChain m fuel st rhs ops' rest
         else .ok st (.bool false)
     | _, _ => .unsupported "Compare with mismatched ops/comparators"
+  termination_by structural fuel
 
 /-- Execute one statement. The updated frame state lives in the `Run`
 outcome (retained on `.ok` AND `.exn`); the value is how control continues
@@ -2734,10 +2970,18 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
     | .exprStmt e _ =>
         evalExpr m fuel st e ⤳ fun st _ =>
         .ok st .next
+    | .yieldStmt _ _ =>
+        -- Reaching `yield` through the ORDINARY statement executor means
+        -- the enclosing def was not recognized as a generator (a
+        -- hand-built module, or a `yield` at module level) — loud, never
+        -- a silent no-op. Inside a generator the continuation walker
+        -- (`execGen`) owns this node and `execStmt` never sees it.
+        .unsupported "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont
     | .unsupported pyKind _ _ => .unsupported s!"unsupported statement '{pyKind}'"
+  termination_by structural fuel
 
 /-- Execute statements in order; stop at the first non-`next` flow (or error). -/
 def execStmts (m : Module) (fuel : Nat) (st : FrameState) (ss : List Stmt) :
@@ -2752,6 +2996,7 @@ def execStmts (m : Module) (fuel : Nat) (st : FrameState) (ss : List Stmt) :
         match flow with
         | .next => execStmts m fuel st rest
         | flow => .ok st flow
+  termination_by structural fuel
 
 /-- `for target in <evaluated list/tuple>: body` (no `orelse` — refused
 loudly upstream). One element per step: bind `target` to the element
@@ -2774,6 +3019,7 @@ def execFor (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
         | .next | .cont => execFor m fuel st target rest body
         | .brk => .ok st .next
         | .ret v => .ok st (.ret v)
+  termination_by structural fuel
 
 /-- `for target in <heap list>: body` (H2) — the LIVE INDEX CURSOR:
 each step re-reads the object at `a` (so in-place mutation, growth, and
@@ -2804,7 +3050,18 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
     | some (.instance _ _) =>
         -- H3: no `__iter__`/`__getitem__` can exist (dunder guard)
         .exn st (.typeError "'object' object is not iterable")
+    | some (.generator ..) =>
+        -- H4: `for x in <generator>` — the LAZY cursor. The guard is the
+        -- one place the generator machinery meets the heap-free fragment:
+        -- a module with no generator defs can hold no generator object, so
+        -- this arm is unreachable there and says so LOUDLY instead of
+        -- silently stepping (which is what keeps `worldInv` free of a
+        -- heap-side invariant — see `moduleGenFree`).
+        if moduleGenFree m then
+          .unsupported "internal: a generator object in a module with no generator defs (heap well-formedness violation — report this)"
+        else execForGen m fuel st target a body
     | Option.none => .unsupported danglingMsg
+  termination_by structural fuel
 
 /-- `while test: body else: orelse`. `break` exits the loop skipping `orelse`;
 `continue` re-tests; `return` propagates; on normal exit (test falsy) the
@@ -2825,6 +3082,7 @@ def execWhile (m : Module) (fuel : Nat) (st : FrameState) (test : Expr)
       | .ret v => .ok st (.ret v)
     else
       execStmts m fuel st orelse
+  termination_by structural fuel
 
 /-- Call a module-level function by name with already-evaluated runtime
 arguments, INSIDE a world: the callee's frame shares the caller's `World`
@@ -2857,6 +3115,16 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
       else if !arityOk f.params args.size then
         .exn w (.typeError
           s!"{fname}() takes {f.params.size} positional arguments but {args.size} were given")
+      else if f.isGenerator then
+        -- H4 CREATION: calling a generator function runs NO code. It
+        -- allocates the suspended frame — arguments bound into its
+        -- locals, the whole body as the initial continuation — and
+        -- returns the object. Every effect in the body (sunfish's
+        -- TT writes) therefore happens only as a consumer steps it,
+        -- which is exactly the laziness the search depends on.
+        let g : Obj :=
+          .generator fname (mkCallEnv f.params args) [.block f.body.toList] .created
+        .ok { w with heap := w.heap.push g } (.ref w.heap.size)
       else
         Run.toWorld <|
           execStmts m fuel ⟨w, mkCallEnv f.params args⟩ f.body.toList ⤳ fun st flow =>
@@ -2865,6 +3133,186 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
           | .next => .ok st .none
           | .brk => .unsupported "'break' outside loop"
           | .cont => .unsupported "'continue' outside loop"
+  termination_by structural fuel
+
+/-- **The generator stepper** (H4, docs/memory-model.md §generator
+semantics) — resume the generator at `a` until its next `yield`.
+`some v` is that yield; `none` is exhaustion (the object becomes
+`closed`, and every later step is `none` again).
+
+The status is set to `running` for the duration, so a generator that
+re-enters itself gets CPython's faithful `ValueError` rather than a
+silent nested resumption. Resumption re-enters the body through the
+stored continuation with the stored locals; suspension stores the
+locals BACK, so the frame's variables survive between yields exactly as
+CPython's do. A frozen recursion point, like `callIn`. -/
+def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
+    Run World (Option RVal) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match Heap.get? w.heap a with
+    | some (.generator qname locals cont status) =>
+      match status with
+      | .closed => .ok w Option.none
+      | .running =>
+        .exn w (.valueError "generator already executing")
+      | _ =>
+        match Heap.update w.heap a (.generator qname locals cont .running) with
+        | Option.none => .unsupported danglingMsg
+        | some h₁ =>
+          Run.toWorld <|
+            execGen m fuel ⟨{ w with heap := h₁ }, locals⟩ cont ⤳ fun st r =>
+            match r with
+            | some (v, cont') =>
+              (match Heap.update st.world.heap a
+                  (.generator qname st.locals cont' .suspended) with
+               | Option.none => .unsupported danglingMsg
+               | some h₂ =>
+                 .ok { st with world := { st.world with heap := h₂ } } (some v))
+            | Option.none =>
+              (match Heap.update st.world.heap a
+                  (.generator qname st.locals [] .closed) with
+               | Option.none => .unsupported danglingMsg
+               | some h₂ =>
+                 .ok { st with world := { st.world with heap := h₂ } } Option.none)
+    | some _ =>
+      .exn w (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
+    | Option.none => .unsupported danglingMsg
+  termination_by structural fuel
+
+/-- **The continuation walker** (H4) — run a generator body from a
+defunctionalized continuation until the next `yield` (`some (v, k')`) or
+until the body ends (`none`: a bare `return`, or falling off the end).
+
+Yield-FREE statements go through the ordinary `execStmt`, so their
+semantics has exactly one definition; only the constructs that can
+SUSPEND are opened here, and the frame stack replaces the Lean call
+stack that `execStmts` would otherwise own. `break`/`continue` returned
+by a delegated statement unwind the frame stack (`genBreak`/
+`genContinue`); a `return` ends the generator. `return <value>` sets
+`StopIteration.value` in CPython — a channel this tier does not model,
+so it refuses LOUDLY rather than dropping the value. A frozen recursion
+point. -/
+def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
+    Run FrameState (Option (RVal × GenCont)) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match k with
+    | [] => .ok st Option.none
+    | .block [] :: k' => execGen m fuel st k'
+    | .block (s :: ss) :: k' =>
+      (match genPlan s with
+       | .delegate =>
+         execStmt m fuel st s ⤳ fun st flow =>
+         (match flow with
+          | .next => execGen m fuel st (.block ss :: k')
+          | .ret .none => .ok st Option.none
+          | .ret _ =>
+            .unsupported "'return <value>' inside a generator (StopIteration.value) is outside the tier"
+          | .brk =>
+            (match genBreak k' with
+             | some k'' => execGen m fuel st k''
+             | Option.none => .unsupported "'break' outside loop")
+          | .cont =>
+            (match genContinue k' with
+             | some k'' => execGen m fuel st k''
+             | Option.none => .unsupported "'continue' outside loop"))
+       | .yieldHere e =>
+           evalExpr m fuel st e ⤳ fun st v =>
+           .ok st (some (v, .block ss :: k'))
+       | .branch test body orelse =>
+           evalExpr m fuel st test ⤳ fun st t =>
+           Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
+           execGen m fuel st
+             ((if b then GenFrame.block body else GenFrame.block orelse)
+               :: .block ss :: k')
+       | .whileHere test body orelse =>
+           execGen m fuel st (.whileLoop test body orelse :: .block ss :: k')
+       | .forHere target iter body =>
+           evalExpr m fuel st iter ⤳ fun st it =>
+           (match it with
+            | .listV xs =>
+                execGen m fuel st (.forSeq target xs.toList body :: .block ss :: k')
+            | .tuple xs =>
+                execGen m fuel st (.forSeq target xs.toList body :: .block ss :: k')
+            | .ntuple _ _ xs =>
+                execGen m fuel st (.forSeq target xs.toList body :: .block ss :: k')
+            | .str sv =>
+                execGen m fuel st (.forSeq target (strCharVals sv) body :: .block ss :: k')
+            | .ref ad =>
+              (match Heap.get? st.world.heap ad with
+               | some (.list _) =>
+                   execGen m fuel st (.forList target ad 0 body :: .block ss :: k')
+               | some (.generator ..) =>
+                   execGen m fuel st (.forGen target ad body :: .block ss :: k')
+               | some (.dict _ _) =>
+                   .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
+               | some (.instance _ _) =>
+                   .exn st (.typeError "'object' object is not iterable")
+               | Option.none => .unsupported danglingMsg)
+            | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+       | .refuse msg => .unsupported msg)
+    | .forSeq target xs body :: k' =>
+      (match xs with
+       | [] => execGen m fuel st k'
+       | x :: rest =>
+         Run.liftRes st (assignToH st.world.heap st.locals target x) ⤳ fun st env₁ =>
+         execGen m fuel { st with locals := env₁ }
+           (.block body :: .forSeq target rest body :: k'))
+    | .forList target ad i body :: k' =>
+      (match Heap.get? st.world.heap ad with
+       | some (.list xs) =>
+         if i < xs.size then
+           Run.liftRes st (assignToH st.world.heap st.locals target (xs.getD i .none)) ⤳ fun st env₁ =>
+           execGen m fuel { st with locals := env₁ }
+             (.block body :: .forList target ad (i + 1) body :: k')
+         else execGen m fuel st k'
+       | some (.dict _ _) =>
+           .unsupported "'for' over a dict is outside the tier (live dict iteration; docs/memory-model.md)"
+       | some (.instance _ _) => .exn st (.typeError "'object' object is not iterable")
+       | some (.generator ..) =>
+           .unsupported "internal: a list cursor over a generator object (report this)"
+       | Option.none => .unsupported danglingMsg)
+    | .forGen target ad body :: k' =>
+      Run.withLocals st.locals (stepIter m fuel st.world ad) ⤳ fun st r =>
+      (match r with
+       | Option.none => execGen m fuel st k'
+       | some v =>
+         Run.liftRes st (assignToH st.world.heap st.locals target v) ⤳ fun st env₁ =>
+         execGen m fuel { st with locals := env₁ }
+           (.block body :: .forGen target ad body :: k'))
+    | .whileLoop test body orelse :: k' =>
+      evalExpr m fuel st test ⤳ fun st t =>
+      Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
+      if b then
+        execGen m fuel st (.block body :: .whileLoop test body orelse :: k')
+      else execGen m fuel st (.block orelse :: k')
+  termination_by structural fuel
+
+/-- `for target in <generator at `a`>: body` (H4) — the LAZY cursor:
+one `stepIter` per iteration, so the generator's effects interleave with
+the body's, and `break` simply stops stepping, leaving the generator
+SUSPENDED for the next consumer (`gen_lab.two_phase`). Exhaustion ends
+the loop. `continue` steps, `return` propagates. A frozen recursion
+point, like `execForList`. -/
+def execForGen (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
+    (a : Addr) (body : List Stmt) : Run FrameState RFlow :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
+    match r with
+    | Option.none => .ok st .next
+    | some v =>
+      Run.liftRes st (assignToH st.world.heap st.locals target v) ⤳ fun st env₁ =>
+      execStmts m fuel { st with locals := env₁ } body ⤳ fun st flow =>
+      match flow with
+      | .next | .cont => execForGen m fuel st target a body
+      | .brk => .ok st .next
+      | .ret v => .ok st (.ret v)
+  termination_by structural fuel
 
 end
 

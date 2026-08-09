@@ -529,11 +529,46 @@ def intCastVal : RVal → Res RVal
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
 
+/-- The `ord` builtin: the CODE POINT of a one-character str. CPython
+measures the length in code points and names the found length in its
+message; a non-str argument is the faithful `TypeError` (a `.ref` is
+refused loudly first, the `absVal`/`intCastVal` house shape — the
+message would have to name the referent's type). -/
+def ordVal : RVal → Res RVal
+  | .str s =>
+    match s.toList with
+    | [c] => .ok (.int c.toNat)
+    | cs => .exn (.typeError s!"ord() expected a character, but string of length {cs.length} found")
+  | .ref _ =>
+      .unsupported "ord() of a heap object is outside the tier (docs/memory-model.md §string semantics)"
+  | v => .exn (.typeError s!"ord() expected string of length 1, but {v.typeName} found")
+
+/-- The `chr` builtin: the one-character str of a code point (`bool`
+coerces — Python's `bool` is an `int`). Out of `range(0x110000)` is the
+faithful `ValueError`. SURROGATES (`0xD800…0xDFFF`) are refused LOUDLY:
+CPython's `chr` builds a lone-surrogate str, which Lean's `Char` (and
+hence every string in this model) cannot represent — a silent
+substitution would be wrong. -/
+def chrVal : RVal → Res RVal
+  | .ref _ =>
+      .unsupported "chr() of a heap object is outside the tier (docs/memory-model.md §string semantics)"
+  | v =>
+    match asInt v with
+    | some n =>
+      if n < 0 || 0x10FFFF < n then .exn (.valueError "chr() arg not in range(0x110000)")
+      else if 0xD800 ≤ n && n ≤ 0xDFFF then
+        .unsupported
+          "chr() of a surrogate code point is outside the tier (Lean's Char excludes surrogates; docs/memory-model.md §string semantics)"
+      else .ok (.str (String.ofList [Char.ofNat n.toNat]))
+    | Option.none =>
+      .exn (.typeError s!"an integer is required (got type {v.typeName})")
+
 /-- Builtin names the interpreter implements (resolution: shadowable by
 locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
-  id == "abs" || id == "int" || id == "print"
+  id == "abs" || id == "int" || id == "print" ||
+  id == "ord" || id == "chr"
 
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
@@ -650,6 +685,23 @@ def strIndex (s sub : String) : Res RVal :=
   match strFindAux s.toList sub.toList with
   | some i => .ok (.int i)
   | Option.none => .exn (.valueError "substring not found")
+
+/-- `sub in s` on strings: SUBSTRING containment (never element
+membership — CPython's `str.__contains__`), code-point-exact, with
+`"" in s` true for every `s` (`strFindAux` returns 0 there). One of the
+frozen VALUE workers (the section comment): concrete proofs rewrite it
+through a single kernel-checked `rfl` fact. -/
+def strContains (s sub : String) : Bool :=
+  (strFindAux s.toList sub.toList).isSome
+
+/-- The elements a `for` loop sees when iterating a str: one 1-character
+str per CODE POINT, in order. CPython's `str_iterator` is an index cursor
+over an IMMUTABLE object, so this snapshot IS the live semantics — no
+mutation, growth, or shrinkage is expressible (unlike `execForList`'s
+live list cursor, which is why that one re-reads the heap per step).
+A frozen VALUE worker like `strSlice`. -/
+def strCharVals (s : String) : List RVal :=
+  s.toList.map (fun c => .str (String.ofList [c]))
 
 /-- Adjust one PRESENT slice bound for a sequence of length `len`
 (CPython `PySlice_AdjustIndices`): negative indices count from the end;
@@ -1164,13 +1216,36 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
     .exn (.typeError "argument of type 'object' is not iterable")
   | Option.none => .unsupported danglingMsg
 
+/-- `x in c` for EVERY in-tier container (H5 iteration): a heap referent
+delegates to `heapContains` (dict keys / the H2 list scan); a str is
+CPython's SUBSTRING test with the faithful left-operand `TypeError`
+(`'in <string>' requires string as left operand, not …` — the only
+container whose `in` is not element membership); value tuples, boundary
+value-lists and namedtuples scan their elements with the same
+`element == probe` convention as lists (`heapContainsScan`: elements may
+be refs, so each step is the fueled `heapEq`). Namedtuples scan
+class-erased, like every other tuple observation. Anything else is the
+faithful "not iterable" `TypeError`. -/
+def valContains (h : Heap) (fuel : Nat) (a b : RVal) : Res Bool :=
+  match b with
+  | .ref d => heapContains h fuel d a
+  | .str s =>
+    match a with
+    | .str sub => .ok (strContains s sub)
+    | a => .exn (.typeError
+        s!"'in <string>' requires string as left operand, not {RVal.typeNameH h a}")
+  | .listV xs => heapContainsScan h fuel a xs.toList
+  | .tuple xs => heapContainsScan h fuel a xs.toList
+  | .ntuple _ _ xs => heapContainsScan h fuel a xs.toList
+  | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
+
 /-- The heap-aware comparison step (`evalCompareChain` consumes this since
 H1-proper). `==`/`!=` go through `heapEq`; `is`/`is not` decide the `None`
 link (as before), ref/ref address identity, and ref-vs-immediate `False`
 faithfully — refusing only identity between two non-`None` immediates
-(implementation-defined); `in`/`not in` are heap-container membership
-(dict keys / the H2 list scan; value containers stay loud); ordering
-delegates to the pure `evalCompareOp`. -/
+(implementation-defined); `in`/`not in` are `valContains` (H5 iteration: dict keys, the H2 list
+scan, str substrings, and value tuple/namedtuple element scans);
+ordering delegates to the pure `evalCompareOp`. -/
 def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool :=
   match op with
   | .eq =>
@@ -1202,18 +1277,8 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
       | a, b =>
         .unsupported
           s!"'is not' between '{a.typeName}' and '{b.typeName}' (identity is not value-determined) is outside the tier"
-  | .inOp =>
-    match b with
-    | .ref d => heapContains h fuel d a
-    | .listV _ | .tuple _ | .str _ | .ntuple _ _ _ =>
-      .unsupported s!"'in' on '{b.typeName}' is outside this tier (heap-container membership only)"
-    | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
-  | .notIn =>
-    match b with
-    | .ref d => do let e ← heapContains h fuel d a; return !e
-    | .listV _ | .tuple _ | .str _ | .ntuple _ _ _ =>
-      .unsupported s!"'not in' on '{b.typeName}' is outside this tier (heap-container membership only)"
-    | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
+  | .inOp => valContains h fuel a b
+  | .notIn => do let e ← valContains h fuel a b; return !e
   | op => evalCompareOp op a b
 
 /-- Unary operators over the heap: `not d` is dict truthiness; `-` stays
@@ -2306,6 +2371,16 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "ord" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v] => Run.liftRes st (ordVal v)
+                    | vs => .exn st (.typeError s!"ord() takes exactly one argument ({vs.length} given)")
+                  else if fname == "chr" then
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    match vs with
+                    | [v] => Run.liftRes st (chrVal v)
+                    | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
                   else if fname == "print" then
                     -- the effect must thread World.stdout through this block;
                     -- until then a wrong NameError would be silently unfaithful
@@ -2638,7 +2713,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         | .listV xs => execFor m fuel st target xs.toList body.toList
         | .tuple xs => execFor m fuel st target xs.toList body.toList
         | .ntuple _ _ xs => execFor m fuel st target xs.toList body.toList
-        | .str _ => .unsupported "'for' over a str is outside the v0 tier"
+        -- H5 iteration: a str iterates its CODE POINTS. The snapshot is
+        -- the live semantics here — strs are immutable, so unlike a heap
+        -- list there is nothing for a cursor to observe (`strCharVals`).
+        | .str s => execFor m fuel st target (strCharVals s) body.toList
         | .ref a =>
           -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR against the
           -- object (CPython's listiterator) — never a snapshot: mutation,

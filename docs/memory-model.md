@@ -393,13 +393,48 @@ tier).
   fragment — the attribute-call whitelist is still `.get`-only, like
   every `sorted` call; extending it to the pure trio is sound and
   recorded (docs/backlog.md).
-* Still loud, deliberately: membership on strs (`q in " \nPNBRQK"` —
-  gen_moves's shape, the recorded next step), `for` over a str, str
-  unpacking, `%`-formatting, `sorted()` on a str, `ord`/`chr`, and
-  non-ASCII case mapping.
+* Still loud, deliberately: str unpacking, `%`-formatting, `sorted()`
+  on a str, and non-ASCII case mapping.
 * Acceptance: `Examples/python/str_lab` (every function differential);
   leanpy corpus `harness/scripts/str_script.py`; the shipped-file
   theorems in `Examples/python/sunfish` (`Position.rotate`).
+
+## Iteration semantics (H5 iteration — BUILT, 2026-08-09)
+
+The membership/iteration surface `gen_moves` needs, decided for EVERY
+in-tier container rather than one container at a time.
+
+* **`in` / `not in`** are one dispatcher, `valContains`: a heap
+  referent delegates to `heapContains` (dict keys, the H2 list scan);
+  a str is CPython's SUBSTRING test (`strContains`; `"" in s` is true,
+  and a non-str LEFT operand is the faithful
+  `'in <string>' requires string as left operand, not …` `TypeError` —
+  str is the one container whose `in` is not element membership);
+  value tuples, boundary value-lists and namedtuples scan their
+  elements with the same `element == probe` convention as lists
+  (`heapContainsScan`, so elements may be refs and each step is the
+  fueled `heapEq`), namedtuples class-erased like every other tuple
+  observation. Anything else is the faithful "not iterable"
+  `TypeError`.
+* **`for` over a str** walks its CODE POINTS through `execFor` on
+  `strCharVals s`. The snapshot IS the live semantics here: a str is
+  immutable, so unlike `execForList`'s heap cursor there is nothing
+  for an iterator to observe mid-loop.
+* **`ord`/`chr`** are code-point exact. `ord` names the found length
+  in its `TypeError`, as CPython does; `chr` outside
+  `range(0x110000)` is the faithful `ValueError`, and a SURROGATE code
+  point is refused LOUDLY — CPython builds a lone-surrogate str, which
+  Lean's `Char` cannot represent, and substituting anything else would
+  be silently wrong.
+* **Simp doctrine**: the dispatchers (`valContains`, `ordVal`,
+  `chrVal`) are in `py_simp`/`interpUnfolds`; the value workers
+  (`strContains`, `strCharVals`) stay OUT, like `strSlice` — a
+  concrete proof rewrites through one kernel `rfl` fact per
+  application.
+* **heapFree**: all three are pure reads, so every node stays in the
+  fragment.
+* Acceptance: `Examples/python/iter_lab` (every function
+  differential); leanpy corpus `harness/scripts/iter_script.py`.
 
 ## Heap well-formedness (explicit invariant)
 

@@ -324,6 +324,17 @@ theorem freezeHMono (fuel : Nat) :
           exact Res.le_bind (ihV h path v k hk) fun v' =>
             Res.le_bind (ihL h path vs k hk) fun vs' => Res.le_refl _
 
+/-- Fuel monotonicity of container membership (H5 iteration): a str
+receiver is pure, every element-scanning receiver splices the H2 scan. -/
+theorem valContains_mono {h : Heap} {fuel : Nat} {a b : RVal}
+    {fuel' : Nat} (hf : fuel ≤ fuel') :
+    valContains h fuel a b ⊑ valContains h fuel' a b := by
+  cases b <;> simp only [valContains] <;> try exact Res.le_refl _
+  case ref d => exact heapContains_mono hf
+  case listV xs => exact heapContainsScan_mono hf
+  case tuple xs => exact heapContainsScan_mono hf
+  case ntuple tn fs xs => exact heapContainsScan_mono hf
+
 /-- Fuel monotonicity of the heap-aware comparison step. -/
 theorem evalCompareOpH_mono {h : Heap} {fuel : Nat} {op : CmpOp} {a b : RVal}
     {fuel' : Nat} (hf : fuel ≤ fuel') :
@@ -335,13 +346,9 @@ theorem evalCompareOpH_mono {h : Heap} {fuel : Nat} {op : CmpOp} {a b : RVal}
     exact Res.le_ite (Res.le_refl _)
       (Res.le_bind ((heapEqMono fuel).1 h [] a b fuel' hf)
         fun e => Res.le_refl _)
-  case inOp =>
-    cases b <;> try exact Res.le_refl _
-    case ref d => exact heapContains_mono hf
+  case inOp => exact valContains_mono hf
   case notIn =>
-    cases b <;> try exact Res.le_refl _
-    case ref d =>
-      exact Res.le_bind (heapContains_mono hf) fun e => Res.le_refl _
+    exact Res.le_bind (valContains_mono hf) fun e => Res.le_refl _
 
 /-! ## Fuel monotonicity — the enabling theorem -/
 
@@ -531,7 +538,8 @@ theorem fuelMono (fuel : Nat) :
                     | none =>
                       exact Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
                         (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                          (Run.le_refl _))))))
+                          (Run.le_ite (hb _) (Run.le_ite (hb _)
+                            (Run.le_refl _))))))))
         | list elts _ =>
           simp only [evalExpr]
           exact Run.le_bind (ihEs m st elts.toList k hk) fun st vs => Run.le_refl _
@@ -669,6 +677,8 @@ theorem fuelMono (fuel : Nat) :
           | nil =>
             refine Run.le_bind (ihE m st iter k hk) fun st it => ?_
             cases it <;> try exact Run.le_refl _
+            case str s =>
+              exact ihFor m st target (strCharVals s) body.toList k hk
             case listV xs => exact ihFor m st target xs.toList body.toList k hk
             case tuple xs => exact ihFor m st target xs.toList body.toList k hk
             case ntuple tn fs xs => exact ihFor m st target xs.toList body.toList k hk
@@ -1260,14 +1270,30 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           cases rest with
                           | nil => exact .liftResF h₁ _
                           | cons _ _ => exact .exn
-                      · refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
-                          (.ite .unsupported (.ite .exn .unsupported))
-                        cases vs with
-                        | nil => exact .okF h₁ _
-                        | cons v rest =>
-                          cases rest with
-                          | nil => exact .liftResF h₁ _
-                          | cons _ _ => exact .unsupported
+                      · -- `int`, then the H5 pair `ord`/`chr` (pure value
+                        -- builtins), then print / NameError / loud
+                        refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
+                          (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                            (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                              (.ite .unsupported (.ite .exn .unsupported))))
+                        · cases vs with
+                          | nil => exact .okF h₁ _
+                          | cons v rest =>
+                            cases rest with
+                            | nil => exact .liftResF h₁ _
+                            | cons _ _ => exact .unsupported
+                        · cases vs with
+                          | nil => exact .exn
+                          | cons v rest =>
+                            cases rest with
+                            | nil => exact .liftResF h₁ _
+                            | cons _ _ => exact .exn
+                        · cases vs with
+                          | nil => exact .exn
+                          | cons v rest =>
+                            cases rest with
+                            | nil => exact .liftResF h₁ _
+                            | cons _ _ => exact .exn
       | list elts _ =>
         -- H2: list displays ALLOCATE — outside the fragment
         simp [Expr.heapFree] at hfree
@@ -1415,7 +1441,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | none => exact .exn
           | bool b => exact .exn
           | int n => exact .exn
-          | str s => exact .unsupported
+          | str s =>
+            -- H5 iteration: a str's code points are a pure snapshot —
+            -- the loop preserves the world exactly when the body does
+            exact (ihFor st₁ target _ body.toList hfree.1.2).mono
+              (wtrans st st₁ h₁)
           | listV xs =>
             exact (ihFor st₁ target _ body.toList hfree.1.2).mono
               (wtrans st st₁ h₁)

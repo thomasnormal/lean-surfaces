@@ -76,3 +76,9 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   | .unsupported _ => true | _ => false)
 #guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
   .ok (.list #[.int 5, .int 3, .int 1])
+
+/-! ### H7+: instance-method keywords (the self.bound(root=True) shape) -/
+
+#py_check kw_lab.method_kw_instance(5) = 7
+#py_check kw_lab.method_kw_instance_err(1) raises
+  (.typeError "Counter.bump() got multiple values for argument 'by'")

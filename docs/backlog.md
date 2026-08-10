@@ -601,9 +601,8 @@ Open, recorded (none started):
 1. **`sorted(key=)`** — gates on FIRST-CLASS CALLABLE values (a bound
    method as a value is loud under H3), not on draining. The shipped
    file never uses it.
-2. **Instance-receiver method keywords** — `self.bound(…, root=True)`
-   (sunfish.py 401/568) wants the kwarg merge on the `execAttrCall`
-   path; closure-gated anyway (see 3).
+2. **Instance-receiver method keywords** — DONE (bound() arc pass 1,
+   below): the same merge, `.ref` receiver prepended.
 3. **`moves()` is a nested def** (the standing capstone gap): closures
    over `pos`/`gamma`/`depth`/`root`/`self`, plus `Searcher.bound`
    itself. The ordering surface now waits ONLY on this.
@@ -625,8 +624,8 @@ cutoff abandoning it mid-drain — differentially against CPython.
 
 What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 
-1. **Instance-method keyword arguments** — `self.bound(…, root=True)`
-   (the kwarg merge on the `execAttrCall` path; recorded since H6).
+1. **Instance-method keyword arguments** — DONE (bound() arc pass 1,
+   below).
 2. **`self.tp_move.get(pos)`** — dict `.get` through an instance
    attribute READ with an ntuple key: likely in tier already; needs a
    differential row before it is claimed.
@@ -644,6 +643,15 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 The enumerated blockers above, taken mechanically — each construct
 designed in docs/memory-model.md, refused loudly outside its tier,
 pinned by happy AND refusal battery rows.
+
+**Instance-method keywords — BUILT** (§call-site keyword arguments,
+coverage list): `self.bound(…, root=True)` binds by the same pure
+merge with the `.ref` receiver prepended (`attrCallPlan .instMethod` →
+`mergeKwArgs`), `argsOk`-gated; builtin heap-receiver methods
+(`.get`/`.append`/`.pop`) with keywords stay loud (positional-only in
+CPython). `kw_lab.method_kw_instance` (default + keyword override
+across two calls mutating self) and `method_kw_instance_err` (the
+multiple-values `TypeError`) pin it differentially.
 
 **Lambdas — BUILT** (§nested defs and closures, lambda addendum): a
 single-target `name = lambda …: expr` assign directly in a function

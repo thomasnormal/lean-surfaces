@@ -578,16 +578,25 @@ understand, the refusal is the LOUD unsupported, never a binding
 * module-level `def`s called by name;
 * namedtuple-subclass method calls (the ntuple receiver prepends `self`,
   then the same merge on the flattened defn's params);
+* instance-method calls (bound() arc pass 1 — BUILT 2026-08-10):
+  `self.bound(…, root=True)`, the shipped shape — an attribute call on
+  a `.ref` receiver whose `attrCallPlan` is `.instMethod` evaluates
+  positional arguments then keyword values (source order, CPython's),
+  prepends the receiver, and binds through the SAME merge against the
+  flattened defn's params, gated on `argsOk` like every merge;
+  `fuelMono` carries the mirrored walk;
 * the builtin `sorted`: `reverse=<expr>` is accepted (truthiness
   decides the direction, as CPython's does); `key=` is REFUSED loudly —
   it gates on first-class callable values (a bound method as a value is
   loud under H3), not on draining, and is recorded in the backlog; any
   other keyword name on `sorted` is CPython's faithful `TypeError`.
 
-Loud by choice: heap-receiver method calls with keywords (`.get`,
-instance methods), class instantiation and namedtuple CONSTRUCTION with
-keywords (CPython allows the latter; a wrong guess about field order
-would be silent corruption), str methods, and every other builtin.
+Loud by choice: BUILTIN heap-receiver methods with keywords
+(`.get`/`.append`/`.pop` — positional-only in CPython, and we decline
+to fake the exact `TypeError`), calling an instance ATTRIBUTE value,
+class instantiation and namedtuple CONSTRUCTION with keywords (CPython
+allows the latter; a wrong guess about field order would be silent
+corruption), str methods, and every other builtin.
 
 **Fragments**: a call carrying keywords leaves `heapFree` (conservative;
 sunfish's keyword sites live inside method bodies that are already out

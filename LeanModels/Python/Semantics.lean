@@ -3404,6 +3404,36 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
            | .attribute recv attr _ =>
              evalExpr m fuel st recv ⤳ fun st r =>
              (match r with
+              | .ref a =>
+                -- H7+: INSTANCE-method keywords (`self.bound(…, root=True)`)
+                -- — the same merge, `self` prepended; builtin methods with
+                -- keywords stay loud
+                (match attrCallPlan m st.world.heap a attr with
+                 | .instMethod qname =>
+                   (match findFunction m qname with
+                    | some fdefn =>
+                      if !fdefn.argsOk then
+                        .unsupported s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                      else
+                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                        Run.liftRes st
+                          (mergeKwArgs qname fdefn.params (RVal.ref a :: vs)
+                            ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
+                        Run.withLocals st.locals (callIn m fuel st.world qname full)
+                    | Option.none =>
+                      .unsupported "internal: instance method plan without a definition (report this)")
+                 | .instAttrValue =>
+                   .unsupported s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
+                 | .attrMissing => .exn st .attributeError
+                 | .dictGet =>
+                   .unsupported "dict.get() with keyword arguments is outside the tier (get is positional-only in CPython)"
+                 | .listAppend =>
+                   .unsupported "list.append() with keyword arguments is outside the tier (append is positional-only in CPython)"
+                 | .listPop =>
+                   .unsupported "list.pop() with keyword arguments is outside the tier (pop is positional-only in CPython)"
+                 | .refuse msg => .unsupported msg
+                 | .dangling => .unsupported danglingMsg)
               | .ntuple tn fs xs =>
                 (match ntupleCallPlan m tn fs attr with
                  | .instMethod qname =>

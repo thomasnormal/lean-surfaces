@@ -570,6 +570,22 @@ theorem fuelMono (fuel : Nat) :
                 dsimp only
                 refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
                 cases r <;> try exact Run.le_refl _
+                case ref a =>
+                  -- H7+: instance-method keywords — plan fork, then the
+                  -- merge and the call through `callIn`'s conjunct
+                  dsimp only
+                  cases attrCallPlan m st.world.heap a attr <;> try exact Run.le_refl _
+                  case instMethod qname =>
+                    dsimp only
+                    cases findFunction m qname with
+                    | some fdefn =>
+                      try dsimp only
+                      refine Run.le_ite (Run.le_refl _) ?_
+                      refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                      refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
+                      refine Run.le_bind (Run.le_refl _) fun st full => ?_
+                      exact Run.le_withLocals (ihCall m st.world qname full k hk)
+                    | none => exact Run.le_refl _
                 case ntuple tn fs xs =>
                   dsimp only
                   cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _

@@ -105,3 +105,26 @@ def builtin_kw():
 def sorted_kw(a):
     # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)
+
+
+class Counter:
+    def __init__(self):
+        self.n = 0
+
+    def bump(self, by=1, twice=False):
+        self.n = self.n + by + (by if twice else 0)
+        return self.n
+
+
+def method_kw_instance(a):
+    # H7+: INSTANCE-method keywords — the `self.bound(…, root=True)`
+    # shape: the same merge, self prepended
+    c = Counter()
+    c.bump(by=a)
+    c.bump(twice=True)
+    return c.n
+
+
+def method_kw_instance_err(a):
+    c = Counter()
+    return c.bump(a, by=2)

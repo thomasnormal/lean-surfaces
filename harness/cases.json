@@ -294,5 +294,7 @@
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "early_call", "args": [[1]], "expect": "unsupported"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_basic", "args": [[{"t": "str", "v": "abcde"}, 2, {"t": "str", "v": "Z"}], [{"t": "str", "v": "xy"}, 0, {"t": "str", "v": "q"}]], "expect": "match"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_capture", "args": [[3], [0]], "expect": "match"},
-  {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_rebound", "args": [[5]], "expect": "unsupported"}
+  {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_rebound", "args": [[5]], "expect": "unsupported"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_instance", "args": [[5], [0], [-2]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_instance_err", "args": [[1]], "expect": "match"}
 ]

@@ -667,6 +667,11 @@ private def lowerBuiltins : List String :=
    "list", "dict", "str", "bool", "set", "reversed", "zip", "map",
    "filter", "True", "False", "None"]
 
+/-- Builtins that DRAIN a directly-passed genexp within the enclosing
+elt evaluation (the `genTargets` admission's gate — pass 3). -/
+private def drainingBuiltins : List String :=
+  ["tuple", "sum", "sorted", "max", "min", "any", "all", "list", "set"]
+
 /-- The synthesized name of a lowered generator expression. CPython calls
 the implicit function `<genexpr>`; the index keeps several genexps in one
 module apart, and the angle brackets make collision with a real Python
@@ -716,11 +721,18 @@ private structure LowerCtx where
   rule makes these local throughout, so a parameter listed here is
   REBINDABLE and cannot be captured by value). -/
   assigned : List String
+  /-- Targets of ENCLOSING genexps whose elt we are lowering (pass 3 —
+  sunfish's K_END nests a genexp inside a genexp's elt). Admissible as
+  by-value captures ONLY in immediately-drained position (`drainOk`):
+  the drain completes within one elt evaluation, before the enclosing
+  target can advance, so by-value equals CPython's by-reference. -/
+  genTargets : List String := []
 
 mutual
   /-- Rewrite every lowerable genexp in the expression, bottom up. The
   state is the fresh-name counter and the synthesized functions. -/
-  private partial def lowerExpr (ctx : LowerCtx) (e : Expr) :
+  private partial def lowerExpr (ctx : LowerCtx) (e : Expr)
+      (drainOk : Bool := false) :
       StateM (Nat × Array FunctionDefn) Expr := do
     match e with
     | .constant .. | .name .. | .unsupported .. => return e
@@ -729,7 +741,16 @@ mutual
     | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
     | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
     | .call f args kwargs cu sp =>
-        return .call (← lowerExpr ctx f) (← lowerExprs ctx args)
+        -- pass 3: a genexp passed DIRECTLY to a draining builtin may
+        -- capture enclosing-genexp targets (`drainOk` — see LowerCtx)
+        let drainOk := match f with
+          | .name d _ => drainingBuiltins.contains d
+          | _ => false
+        let args' ← args.mapM fun a => do
+          match a with
+          | .genExp .. => lowerExpr ctx a (drainOk := drainOk)
+          | a => lowerExpr ctx a
+        return .call (← lowerExpr ctx f) args'
           (← kwargs.mapM fun kv => do pure (kv.1, ← lowerExpr ctx kv.2)) cu sp
     | .list es sp => return .list (← lowerExprs ctx es) sp
     | .tuple es sp => return .tuple (← lowerExprs ctx es) sp
@@ -742,7 +763,10 @@ mutual
         return .slice (← lowerExpr ctx v) (← lowerExpr ctx l) (← lowerExpr ctx u)
           (← lowerExpr ctx st) sp
     | .genExp elt target iter ifs sp => do
-      let elt ← lowerExpr ctx elt
+      let tb0 := (targetBinds target).getD []
+      -- the elt lowers under the grown genTargets (an inner genexp in
+      -- immediately-drained position may capture THIS genexp's target)
+      let elt ← lowerExpr { ctx with genTargets := ctx.genTargets ++ tb0 } elt
       let iter ← lowerExpr ctx iter
       let ifs ← lowerExprs ctx ifs
       match targetBinds target with
@@ -752,7 +776,14 @@ mutual
         let caps := refs.filter fun n =>
           !tb.contains n && !ctx.outer.contains n && !lowerBuiltins.contains n
             && n != genExpArg
-        if caps.all (fun n => ctx.params.contains n && !ctx.assigned.contains n) then
+            -- a synthesized `<genexpr@m>` call inside THIS elt (pass 3:
+            -- K_END nests one) resolves through Module.functions — the
+            -- leading `<` is unnameable in Python (the defsBeforeLive
+            -- precedent), never a capturable frame name
+            && !(n.startsWith "<")
+        if caps.all (fun n =>
+            (ctx.params.contains n && !ctx.assigned.contains n)
+              || (drainOk && ctx.genTargets.contains n)) then
           let (n, fns) ← get
           let fname := genExpName n
           let body : Array Stmt :=

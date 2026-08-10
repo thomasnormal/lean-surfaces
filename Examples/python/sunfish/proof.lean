@@ -83,7 +83,10 @@ private theorem hswap :
       .ok (.str "\n         \n         \nrnbkqbnr \npppppppp \n........ \n........ \n........ \n........ \nPPPPPPPP \nRNBKQBNR \n         \n         ") := by
   rfl
 
-/- pass 3: the resolution arms and the G1 fold grew (the diverged
+/- pass 3 (note: the envelope was RE-EXTRACTED for the module-scope
+lambda — this comment is the required real edit, since `load_program`
+does not track its JSON as a build input): the resolution arms and the
+G1 fold grew (the diverged
 discipline, the live-view consults), so one frame of the 955KB module
 needs bigger simp budgets — `py_simp` itself now carries
 `maxSteps := 1000000` (Logic.lean), and these three proofs the matching

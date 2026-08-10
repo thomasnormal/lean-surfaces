@@ -49,16 +49,21 @@ left in this table. -/
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- H4/H7: ingestion LOWERED seven generator expressions into implicit
-    -- generator functions, CPython's own compilation (`<genexpr>` with
-    -- the evaluated outer iterator as its first argument) — the two
-    -- inside `bound`'s nested `moves()` (the null-move `any` probe and
-    -- THE ORDERING LINE) now among them, since `moves` is a structured
-    -- `Stmt.defStmt` whose captures the lowering admits by value.
+    -- H4/H7/pass 3: ingestion LOWERED TEN generator expressions into
+    -- implicit generator functions, CPython's own compilation
+    -- (`<genexpr>` with the evaluated outer iterator as its first
+    -- argument) — the two inside `bound`'s nested `moves()` (the
+    -- null-move `any` probe and THE ORDERING LINE), and since pass 3
+    -- the module-init ones too: the padding loop's pair (the lambda's
+    -- inner genexp and the sum-over-slices genexp) and K_END's NESTED
+    -- pair (the inner captures the OUTER genexp's target `rank` — the
+    -- drain-gated admission, docs/memory-model.md §module-init
+    -- execution).
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
     ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
     ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
-    ("<genexpr@6>", true, true)]
+    ("<genexpr@6>", true, true), ("<genexpr@7>", true, true),
+    ("<genexpr@8>", true, true), ("<genexpr@9>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -80,7 +85,8 @@ and syntax cannot tell), which sunfish already was, having classes. -/
     ("parse", false), ("render", false), ("main", false),
     ("<genexpr@0>", true), ("<genexpr@1>", true),
     ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true),
-    ("<genexpr@5>", true), ("<genexpr@6>", true)]
+    ("<genexpr@5>", true), ("<genexpr@6>", true), ("<genexpr@7>", true),
+    ("<genexpr@8>", true), ("<genexpr@9>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded
@@ -247,6 +253,73 @@ private def drainMoves (w : World) (a : Addr) : Nat → Option (List (Int × Int
         (85, 75, ""), (85, 65, ""), (86, 76, ""), (86, 66, ""),
         (87, 77, ""), (87, 67, ""), (88, 78, ""), (88, 68, ""),
         (92, 73, ""), (92, 71, ""), (97, 78, ""), (97, 76, "")]
+
+/-! ### PASS 3 CAPSTONE: the module-init padding loop RUNS
+
+`for k, table in pst.items(): padrow = lambda …; pst[k] = sum(…); …`
+executes in the live pipeline — the dict-items shell, the module-level
+zero-capture lambda rebound per iteration (its body reads `piece` and
+the CURRENT `k` through the live globals at call time), the lowered
+genexp of computed tuple slices, `sum(…, ())`, and `(0,)*20` padding —
+so the SHIPPED `pst` materializes in the model. The values below are
+CPython's own (the shipped module imported and probed; A1 = 91, H8 = 28
+are real squares, 0 and 119 the padding ring). `K_MID`/`K_END` land
+with it, and `Position.value()` — refused before this pass because
+`pst` was poisoned — now runs on the shipped file. -/
+
+private def pstAt (p : String) (sq : Nat) : Option RVal :=
+  match Env.lookup (initWorld sunfish).globals "pst" with
+  | some (.ref a) =>
+    (match Heap.get? (initWorld sunfish).heap a with
+     | some (.dict es _) =>
+       (match dictFind es.toList (.str p) with
+        | some (.tuple xs) => some (xs.getD sq .none)
+        | _ => Option.none)
+     | _ => Option.none)
+  | _ => Option.none
+
+#guard pstAt "P" 91 == some (.int 100)
+#guard pstAt "N" 91 == some (.int 206)
+#guard pstAt "N" 54 == some (.int 317)
+#guard pstAt "B" 28 == some (.int 270)
+#guard pstAt "R" 54 == some (.int 492)
+#guard pstAt "Q" 28 == some (.int 955)
+#guard pstAt "K" 91 == some (.int 60017)
+#guard ["P", "N", "B", "R", "Q", "K"].all fun p =>
+  pstAt p 0 == some (.int 0) && pstAt p 119 == some (.int 0)
+
+/-! `K_MID` is the padded shipped K table; `K_END` the mop-up
+centralization gradient — both 120 wide, both live-view bindings. -/
+
+#guard (match Env.lookup (initWorld sunfish).globals "K_MID" with
+        | some (.tuple xs) => xs.size == 120 && xs.getD 95 .none == .int 60006
+        | _ => false)
+#guard (match Env.lookup (initWorld sunfish).globals "K_END" with
+        | some (.tuple xs) =>
+          xs.size == 120 && xs.getD 95 .none == .int 59990
+            && xs.getD 54 .none == .int 60050
+        | _ => false)
+
+/-! ### `Position.value()` on the shipped file — UNBLOCKED
+
+The move-ordering heuristic over the REAL padded tables (the values are
+CPython's: 46 for the double push e2e4-shaped Move(84, 64), 42 for
+Move(85, 65), 5 for the knight Move(92, 71) — the same probes
+`sf_order` pinned against its oracle-generated table, now answered by
+the SHIPPED file's own init). -/
+
+private def mv (i j : Int) (prom : String) : RVal :=
+  .ntuple "Move" #["i", "j", "prom"] #[.int i, .int j, .str prom]
+
+#guard (match callIn sunfish 8192 (initWorld sunfish) "Position.value"
+          #[posH 0, mv 84 64 ""] with
+        | .ok _ v => v == .int 46 | _ => false)
+#guard (match callIn sunfish 8192 (initWorld sunfish) "Position.value"
+          #[posH 0, mv 85 65 ""] with
+        | .ok _ v => v == .int 42 | _ => false)
+#guard (match callIn sunfish 8192 (initWorld sunfish) "Position.value"
+          #[posH 0, mv 92 71 ""] with
+        | .ok _ v => v == .int 5 | _ => false)
 
 /-! ### The reference enumeration (the decided theorem's right-hand side)
 

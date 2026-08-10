@@ -7346,36 +7346,210 @@
         },
         "body": [
           {
-            "kind": "Assign",
+            "kind": "NestedDef",
             "span": {
               "lineno": 80,
               "col_offset": 4,
               "end_lineno": 80,
               "end_col_offset": 71
             },
-            "targets": [
+            "name": "padrow",
+            "args": [
               {
-                "kind": "Name",
+                "arg": "row",
                 "span": {
                   "lineno": 80,
-                  "col_offset": 4,
+                  "col_offset": 20,
                   "end_lineno": 80,
-                  "end_col_offset": 10
-                },
-                "id": "padrow"
+                  "end_col_offset": 23
+                }
               }
             ],
-            "value": {
-              "kind": "Unsupported",
-              "span": {
-                "lineno": 80,
-                "col_offset": 13,
-                "end_lineno": 80,
-                "end_col_offset": 71
-              },
-              "py_kind": "Lambda",
-              "text": "lambda row: (0,) + tuple((x + piece[k] for x in row)) + (0,)"
-            }
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 80,
+                  "col_offset": 25,
+                  "end_lineno": 80,
+                  "end_col_offset": 71
+                },
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 80,
+                    "col_offset": 25,
+                    "end_lineno": 80,
+                    "end_col_offset": 71
+                  },
+                  "left": {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 80,
+                      "col_offset": 25,
+                      "end_lineno": 80,
+                      "end_col_offset": 64
+                    },
+                    "left": {
+                      "kind": "Tuple",
+                      "span": {
+                        "lineno": 80,
+                        "col_offset": 25,
+                        "end_lineno": 80,
+                        "end_col_offset": 29
+                      },
+                      "elts": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 80,
+                            "col_offset": 26,
+                            "end_lineno": 80,
+                            "end_col_offset": 27
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "0"
+                          }
+                        }
+                      ]
+                    },
+                    "op": "Add",
+                    "right": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 80,
+                        "col_offset": 32,
+                        "end_lineno": 80,
+                        "end_col_offset": 64
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 80,
+                          "col_offset": 32,
+                          "end_lineno": 80,
+                          "end_col_offset": 37
+                        },
+                        "id": "tuple"
+                      },
+                      "args": [
+                        {
+                          "kind": "GeneratorExp",
+                          "span": {
+                            "lineno": 80,
+                            "col_offset": 37,
+                            "end_lineno": 80,
+                            "end_col_offset": 64
+                          },
+                          "elt": {
+                            "kind": "BinOp",
+                            "span": {
+                              "lineno": 80,
+                              "col_offset": 38,
+                              "end_lineno": 80,
+                              "end_col_offset": 50
+                            },
+                            "left": {
+                              "kind": "Name",
+                              "span": {
+                                "lineno": 80,
+                                "col_offset": 38,
+                                "end_lineno": 80,
+                                "end_col_offset": 39
+                              },
+                              "id": "x"
+                            },
+                            "op": "Add",
+                            "right": {
+                              "kind": "Subscript",
+                              "span": {
+                                "lineno": 80,
+                                "col_offset": 42,
+                                "end_lineno": 80,
+                                "end_col_offset": 50
+                              },
+                              "value": {
+                                "kind": "Name",
+                                "span": {
+                                  "lineno": 80,
+                                  "col_offset": 42,
+                                  "end_lineno": 80,
+                                  "end_col_offset": 47
+                                },
+                                "id": "piece"
+                              },
+                              "index": {
+                                "kind": "Name",
+                                "span": {
+                                  "lineno": 80,
+                                  "col_offset": 48,
+                                  "end_lineno": 80,
+                                  "end_col_offset": 49
+                                },
+                                "id": "k"
+                              }
+                            }
+                          },
+                          "target": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 80,
+                              "col_offset": 55,
+                              "end_lineno": 80,
+                              "end_col_offset": 56
+                            },
+                            "id": "x"
+                          },
+                          "iter": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 80,
+                              "col_offset": 60,
+                              "end_lineno": 80,
+                              "end_col_offset": 63
+                            },
+                            "id": "row"
+                          },
+                          "ifs": []
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Tuple",
+                    "span": {
+                      "lineno": 80,
+                      "col_offset": 67,
+                      "end_lineno": 80,
+                      "end_col_offset": 71
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 80,
+                          "col_offset": 68,
+                          "end_lineno": 80,
+                          "end_col_offset": 69
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "0"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ],
+            "captures": [],
+            "closure_unsupported": null
           },
           {
             "kind": "Assign",

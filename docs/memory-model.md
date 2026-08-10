@@ -1355,6 +1355,18 @@ exactly right until the recorded import-semantics decision.
   shell's `RuntimeError` on insertion IS faithful and pinned
   (`init_lab`'s hand-built `insLoop`), with rollback leaving the table
   poisoned, never half-mutated.
+* **The genexp lowering gained the DRAIN-GATED nested-target
+  admission** (K_END nests a genexp inside a genexp's elt): a free name
+  that is the TARGET of an ENCLOSING genexp is admissible as a by-value
+  capture ONLY when the inner genexp is passed DIRECTLY to a draining
+  builtin (`tuple`/`sum`/`sorted`/`max`/`min`/`any`/`all`/`list`/`set`
+  — `LowerCtx.genTargets` + the call-arm `drainOk` gate): the drain
+  completes within one elt evaluation, before the enclosing target can
+  advance, so by-value equals CPython's by-reference. And a synthesized
+  `<genexpr@m>` call inside the elt is EXCLUDED from the capture census
+  (the leading `<` is unnameable in Python — the `defsBeforeLive`
+  precedent); without the exclusion the outer genexp refused its own
+  lowered inner.
 
 ## Staging (amended)
 

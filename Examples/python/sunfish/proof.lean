@@ -83,9 +83,12 @@ private theorem hswap :
       .ok (.str "\n         \n         \nrnbkqbnr \npppppppp \n........ \n........ \n........ \n........ \nPPPPPPPP \nRNBKQBNR \n         \n         ") := by
   rfl
 
-/- pass 3 (note: the envelope was RE-EXTRACTED for the module-scope
-lambda — this comment is the required real edit, since `load_program`
-does not track its JSON as a build input): the resolution arms and the
+/- pass 4 (note: the envelope was RE-EXTRACTED again for the exceptions
+tier — `raise Stop`/`main()`'s try now structure and `Stop` carries
+`exception_base`; this comment is the required real edit, since
+`load_program` does not track its JSON as a build input).
+pass 3 (the envelope was re-extracted for the module-scope
+lambda): the resolution arms and the
 G1 fold grew (the diverged
 discipline, the live-view consults), so one frame of the 955KB module
 needs bigger simp budgets — `py_simp` itself now carries

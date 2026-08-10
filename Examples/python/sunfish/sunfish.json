@@ -17764,7 +17764,7 @@
           "end_col_offset": 27
         },
         "name": "Stop",
-        "class_unsupported": "bases (inheritance)",
+        "class_unsupported": null,
         "body": [
           {
             "kind": "Pass",
@@ -17775,7 +17775,8 @@
               "end_col_offset": 27
             }
           }
-        ]
+        ],
+        "exception_base": true
       },
       {
         "kind": "Assign",
@@ -18450,15 +18451,23 @@
                 },
                 "body": [
                   {
-                    "kind": "Unsupported",
+                    "kind": "Raise",
                     "span": {
                       "lineno": 332,
                       "col_offset": 12,
                       "end_lineno": 332,
                       "end_col_offset": 22
                     },
-                    "py_kind": "Raise",
-                    "text": "raise Stop"
+                    "exc": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 332,
+                        "col_offset": 18,
+                        "end_lineno": 332,
+                        "end_col_offset": 22
+                      },
+                      "id": "Stop"
+                    }
                   }
                 ],
                 "orelse": []
@@ -25890,15 +25899,172 @@
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Unsupported",
+            "kind": "Try",
             "span": {
               "lineno": 594,
               "col_offset": 4,
               "end_lineno": 598,
               "end_col_offset": 12
             },
-            "py_kind": "Try",
-            "text": "try:\n    import sys, tools.uci\n    return tools.uci.run(sys.modules[__name__], hist[-1])\nexcept ImportError:\n    pass"
+            "body": [
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "lineno": 595,
+                  "col_offset": 8,
+                  "end_lineno": 595,
+                  "end_col_offset": 29
+                },
+                "py_kind": "Import",
+                "text": "import sys, tools.uci"
+              },
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 596,
+                  "col_offset": 8,
+                  "end_lineno": 596,
+                  "end_col_offset": 61
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 596,
+                    "col_offset": 15,
+                    "end_lineno": 596,
+                    "end_col_offset": 61
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 596,
+                      "col_offset": 15,
+                      "end_lineno": 596,
+                      "end_col_offset": 28
+                    },
+                    "value": {
+                      "kind": "Attribute",
+                      "span": {
+                        "lineno": 596,
+                        "col_offset": 15,
+                        "end_lineno": 596,
+                        "end_col_offset": 24
+                      },
+                      "value": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 596,
+                          "col_offset": 15,
+                          "end_lineno": 596,
+                          "end_col_offset": 20
+                        },
+                        "id": "tools"
+                      },
+                      "attr": "uci"
+                    },
+                    "attr": "run"
+                  },
+                  "args": [
+                    {
+                      "kind": "Subscript",
+                      "span": {
+                        "lineno": 596,
+                        "col_offset": 29,
+                        "end_lineno": 596,
+                        "end_col_offset": 50
+                      },
+                      "value": {
+                        "kind": "Attribute",
+                        "span": {
+                          "lineno": 596,
+                          "col_offset": 29,
+                          "end_lineno": 596,
+                          "end_col_offset": 40
+                        },
+                        "value": {
+                          "kind": "Name",
+                          "span": {
+                            "lineno": 596,
+                            "col_offset": 29,
+                            "end_lineno": 596,
+                            "end_col_offset": 32
+                          },
+                          "id": "sys"
+                        },
+                        "attr": "modules"
+                      },
+                      "index": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 596,
+                          "col_offset": 41,
+                          "end_lineno": 596,
+                          "end_col_offset": 49
+                        },
+                        "id": "__name__"
+                      }
+                    },
+                    {
+                      "kind": "Subscript",
+                      "span": {
+                        "lineno": 596,
+                        "col_offset": 52,
+                        "end_lineno": 596,
+                        "end_col_offset": 60
+                      },
+                      "value": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 596,
+                          "col_offset": 52,
+                          "end_lineno": 596,
+                          "end_col_offset": 56
+                        },
+                        "id": "hist"
+                      },
+                      "index": {
+                        "kind": "UnaryOp",
+                        "span": {
+                          "lineno": 596,
+                          "col_offset": 57,
+                          "end_lineno": 596,
+                          "end_col_offset": 59
+                        },
+                        "op": "USub",
+                        "operand": {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 596,
+                            "col_offset": 58,
+                            "end_lineno": 596,
+                            "end_col_offset": 59
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_name": "ImportError",
+            "handler": [
+              {
+                "kind": "Pass",
+                "span": {
+                  "lineno": 598,
+                  "col_offset": 8,
+                  "end_lineno": 598,
+                  "end_col_offset": 12
+                }
+              }
+            ],
+            "try_unsupported": null
           },
           {
             "kind": "Assign",

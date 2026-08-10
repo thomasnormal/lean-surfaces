@@ -251,6 +251,24 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .ok jv => parseExpr jv
           | .error _ => pure (Expr.constant .none span)
         return .yieldStmt value span
+    | "Raise" =>
+        -- exceptions tier: structured in full generality (absent fields
+        -- = the bare forms); evaluation owns the tier boundary.
+        let exc ← match j.getObjVal? "exc" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        let cause ← match j.getObjVal? "cause" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        return .raiseStmt exc cause span
+    | "Try" =>
+        -- exceptions tier: the v0 single-handler fields plus the
+        -- `callUnsupported`-style reason (structured-but-loud).
+        let body ← (← (← getField j "body").getArr?).mapM parseStmt
+        let excName := ((← getField j "exc_name").getStr?).toOption.getD ""
+        let handler ← (← (← getField j "handler").getArr?).mapM parseStmt
+        let tu ← getOptStrField j "try_unsupported"
+        return .tryStmt body excName handler tu span
     | "Pass" => return .pass span
     | "Break" => return .brk span
     | "Continue" => return .cont span
@@ -475,6 +493,13 @@ private partial def stmtBinds : Stmt → Option (List String)
   | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
   -- H7: a nested def binds its NAME; the body is its own scope
   | .defStmt name _ _ _ _ _ _ _ _ => some [name]
+  -- exceptions tier: `raise` binds nothing; a try can bind whatever its
+  -- body and handler can (over-approximation, the safe direction)
+  | .raiseStmt .. => some []
+  | .tryStmt b _ hnd _ _ => do
+    let bb ← b.toList.mapM stmtBinds
+    let hb ← hnd.toList.mapM stmtBinds
+    return bb.flatten ++ hb.flatten
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
@@ -515,6 +540,11 @@ mutual
     | .exprStmt e _ => exprRefs e
     | .yieldStmt e _ => exprRefs e
     | .defStmt _ _ _ _ _ _ body _ _ => (body.toList.map stmtRefs).flatten
+    -- exceptions tier: the handler CLASS NAME is a reference too
+    | .raiseStmt exc cause _ =>
+      (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+    | .tryStmt b excName hnd _ _ =>
+      excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -525,6 +555,7 @@ private def stmtSpanOf : Stmt → Span
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
+  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -620,6 +651,14 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       | .ok .null => pure Option.none
       | .ok baseJson => do
         pure (ntupleCallSpec name span (← parseExpr baseJson))
+    -- the exceptions tier's THIRD class kind (docs/memory-model.md
+    -- §exceptions): the extractor marks the exact `class N(Exception):
+    -- pass` shape; a CANDIDATE here — `parseModule`'s census demotes it
+    -- (isExc := false, ok := false) unless `Exception` is provably
+    -- unshadowed at module level (the ntBase demotion discipline).
+    let isExc := match j.getObjVal? "exception_base" with
+      | .ok (.bool b) => b
+      | _ => false
     let body ← (← getField j "body").getArr?
     let mut methods : Array String := #[]
     let mut fns : Array FunctionDefn := #[]
@@ -629,7 +668,8 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
         let f ← parseFunctionDefn stmtJson
         methods := methods.push f.name
         fns := fns.push { f with name := name ++ "." ++ f.name }
-    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase, span }, fns)
+    return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase,
+              isExc, span }, fns)
 
 /-! ## Generator-expression lowering (H4, docs/memory-model.md
 §generator semantics)
@@ -709,6 +749,9 @@ private partial def bodyAssigns : Stmt → List String
   -- H7: the def NAME becomes a local of the enclosing body; the nested
   -- BODY is its own scope and contributes nothing here
   | .defStmt name _ _ _ _ _ _ _ _ => [name]
+  -- exceptions tier: body and handler assigns both count
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map bodyAssigns).flatten ++ (hnd.toList.map bodyAssigns).flatten
   | _ => []
 
 /-- What a lowering pass may capture and what it must refuse. -/
@@ -823,6 +866,10 @@ mutual
         return .ifStmt (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
     | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
     | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
+    | .raiseStmt exc cause sp =>
+        return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
+    | .tryStmt b en hnd tu sp =>
+        return .tryStmt (← lowerStmts ctx b) en (← lowerStmts ctx hnd) tu sp
     | .defStmt name params ao lo hg ig body captures sp =>
         -- H7: the nested body lowers under its OWN ctx. Closure captures
         -- are never-rebound by admission, so a genexp inside the nested
@@ -887,6 +934,24 @@ def parseModule (j : Json) : Except String Module :=
         topLevel := topLevel.push (← parseStmt stmtJson)
     let (topLevel', namedtuples, classes') :=
       recognizeNamedtuples functions classes topLevel
+    -- the exceptions-tier census (docs/memory-model.md §exceptions,
+    -- as-built): an `exception_base` candidate keeps `isExc` only when
+    -- `Exception` is provably the builtin — every top-level statement
+    -- bind-analyzable, `Exception` bound nowhere (no top-level bind, no
+    -- def/class/namedtuple of that name), and no `global` anywhere that
+    -- could rebind it at call time. ANY failure demotes every candidate
+    -- to the ordinary loud state (isExc := false, ok := false).
+    let excOk :=
+      (match topLevel'.toList.mapM stmtBinds with
+       | some bindss => !(bindss.flatten.contains "Exception")
+       | Option.none => false)
+      && functions.toList.all (fun f => f.name != "Exception" && !f.hasGlobal)
+      && classes'.toList.all (fun c => c.name != "Exception" && !c.hasGlobal)
+      && namedtuples.toList.all (fun nt => nt.name != "Exception")
+    let classes' :=
+      if excOk then classes'
+      else classes'.map fun c =>
+        if c.isExc then { c with isExc := false, ok := false } else c
     -- H4: lower generator EXPRESSIONS last, so the capture test sees the
     -- final module-level binding set (the namedtuple pass turns
     -- recognized assigns into `pass`, but their bound names stay outer

@@ -211,6 +211,8 @@ def Stmt.kindName : Stmt → String
   | .exprStmt .. => "Expr"
   | .yieldStmt .. => "Yield"
   | .defStmt .. => "NestedDef"
+  | .raiseStmt .. => "Raise"
+  | .tryStmt .. => "Try"
   | .pass _ => "Pass"
   | .brk _ => "Break"
   | .cont _ => "Continue"
@@ -2419,6 +2421,10 @@ mutual
       Stmt.g1StoresList b.toList ++ Stmt.g1StoresList o.toList
     | .forStmt t _ b o _ =>
       t.g1TargetStores ++ Stmt.g1StoresList b.toList ++ Stmt.g1StoresList o.toList
+    -- exceptions tier: body AND handler can both store (the handler runs
+    -- from the body's retained state)
+    | .tryStmt b _ hnd _ _ =>
+      Stmt.g1StoresList b.toList ++ Stmt.g1StoresList hnd.toList
     | _ => []
 
   /-- Elementwise `Stmt.g1Stores`. -/
@@ -2447,6 +2453,14 @@ mutual
       | _, _ => Option.none
     | .ret .. | .exprStmt .. | .yieldStmt .. => some []
     | .pass _ | .brk _ | .cont _ => some []
+    -- exceptions tier: `raise` binds nothing; a try binds what its body
+    -- and handler can bind (an over-approximation, the poisoning
+    -- direction — either may have run partially)
+    | .raiseStmt .. => some []
+    | .tryStmt b _ hnd _ _ =>
+      match Stmt.g1BindsList b.toList, Stmt.g1BindsList hnd.toList with
+      | some c, some d => some (c ++ d)
+      | _, _ => Option.none
     | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
       match benignImportBinds text with
       -- a MODELLED name (`count` is `itertools.count`) must stay
@@ -2482,6 +2496,10 @@ def g1ExecCandidate : Stmt → Bool
   | .augAssign .. => true
   | .exprStmt (.constant ..) _ => false
   | .exprStmt .. => true
+  -- exceptions tier: top-level raise/try are attempted (a raise `.exn`
+  -- rolls back and poisons — the fold's recorded `.exn` imprecision)
+  | .raiseStmt .. => true
+  | .tryStmt .. => true
   | _ => false
 
 mutual
@@ -2804,6 +2822,10 @@ mutual
         Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
     | .ifStmt _ body orelse _ =>
         Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
+    -- exceptions tier: a yield under `try` (either arm) makes the try
+    -- SUSPENDABLE — seen here so `genPlan` can refuse it precisely
+    | .tryStmt body _ handler _ _ =>
+        Stmt.hasYieldList body.toList || Stmt.hasYieldList handler.toList
     | _ => false
 
   /-- Elementwise `Stmt.hasYield`. -/
@@ -2844,6 +2866,13 @@ def genPlan (s : Stmt) : GenPlan :=
       (match o.toList with
        | [] => .forHere tg it b.toList
        | _ :: _ => .refuse "'for … else' is outside the v0 tier")
+    -- exceptions tier (docs/memory-model.md §exceptions): a `yield`
+    -- under `try` would make the try a SUSPENDABLE construct needing
+    -- its own GenFrame — refused in v0. A yield-free try never reaches
+    -- this arm (`hasYield` is false, so it DELEGATES whole: its
+    -- internal raise/catch is invisible to the frame stack).
+    | .tryStmt .. =>
+      .refuse "a 'yield' under 'try' would make the try suspendable (it would need its own generator frame) — outside the tier (docs/memory-model.md §exceptions)"
     | s =>
       .refuse s!"'yield' inside a '{s.kindName}' statement (yield in expression position) is outside the tier"
 
@@ -2930,6 +2959,13 @@ mutual
     -- `yield` outside a generator body is loud, and inside one it never
     -- runs through `execStmt` at all (the continuation walker owns it)
     | .yieldStmt _ _ => true
+    -- exceptions tier: `raise` never decides `.ok` (its outcomes are
+    -- `.exn`/`.unsupported`), so its `.ok`-invariance is vacuous — IN.
+    -- `try` is OUT (as-built delta, docs/memory-model.md §exceptions):
+    -- the handler resumes from the body's retained `.exn` STATE, about
+    -- which the ok-only `worldInv` induction knows nothing.
+    | .raiseStmt .. => true
+    | .tryStmt .. => false
     | .pass _ => true
     | .brk _ => true
     | .cont _ => true
@@ -2958,6 +2994,8 @@ def Stmt.hasGenDef : Stmt → Bool
   | .defStmt _ _ _ _ _ ig body _ _ => ig || Stmt.hasGenDefList body.toList
   | .whileLoop _ b o _ | .ifStmt _ b o _ | .forStmt _ _ b o _ =>
       Stmt.hasGenDefList b.toList || Stmt.hasGenDefList o.toList
+  | .tryStmt b _ hnd _ _ =>
+      Stmt.hasGenDefList b.toList || Stmt.hasGenDefList hnd.toList
   | _ => false
 
 /-- Elementwise `Stmt.hasGenDef`. -/
@@ -2995,6 +3033,8 @@ mutual
       Stmt.defFreeList b.toList && Stmt.defFreeList o.toList
     | .forStmt _ _ b o _ =>
       Stmt.defFreeList b.toList && Stmt.defFreeList o.toList
+    | .tryStmt b _ hnd _ _ =>
+      Stmt.defFreeList b.toList && Stmt.defFreeList hnd.toList
     | _ => true
 
   /-- Elementwise `Stmt.defFree`. -/
@@ -3339,6 +3379,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- lost by the split — loud (unconstructible through
                   -- ingestion; hand-built defense).
                   .unsupported s!"name '{fname}' is bound by both 'class' and a namedtuple assignment at module level — source-order resolution is outside the tier"
+                else if c.isExc then
+                  -- exceptions tier: an exception class is a NAME to raise
+                  -- and match, never an instantiable object — building the
+                  -- instance as a VALUE would need inspectable payload
+                  -- state the class-identity representation forgoes
+                  .unsupported s!"calling exception class '{fname}' (an exception INSTANCE as a value) is outside the tier — exception classes are raised and matched by name (docs/memory-model.md §exceptions)"
                 else match c.ntBase with
                 | some nt =>
                   -- VALUE-LIKE SUBCLASS instantiation (H5, sunfish's
@@ -4334,6 +4380,71 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
          .ok { st with
                world := { st.world with heap := st.world.heap.push obj },
                locals := Env.set st.locals name (.ref a) } .next)
+    | .raiseStmt exc cause _ =>
+      -- exceptions tier (docs/memory-model.md §exceptions): the admitted
+      -- shape is `raise N` of an admitted exception class, resolved to
+      -- its class IDENTITY — everything else refuses loudly. The name
+      -- must resolve UNAMBIGUOUSLY to the class: any local/global/def
+      -- shadow refuses (CPython would raise the shadow's value).
+      (match cause with
+       | some _ =>
+         .unsupported "'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
+       | Option.none =>
+         match exc with
+         | Option.none =>
+           .unsupported "bare 'raise' (re-raise of the active exception) is outside the tier (docs/memory-model.md §exceptions)"
+         | some (.name id _) =>
+           if (Env.lookup st.locals id).isSome
+               || (lookupG (moduleGlobals m).1 id).isSome
+               || (Env.lookup st.world.globals id).isSome
+               || (findFunction m id).isSome then
+             .unsupported s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+           else
+             (match findClass m id with
+              | some (ci, c) =>
+                if c.isExc then .exn st (.user ci c.name)
+                else
+                  .unsupported s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+              | Option.none =>
+                .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
+         | some _ =>
+           .unsupported "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)")
+    | .tryStmt body excName handler tryUnsupported _ =>
+      -- exceptions tier: the v0 single-handler shape on the retained-state
+      -- covenant — run the body; `.ok` skips the handler; a MATCHING
+      -- `.user` exn runs the handler FROM THE RETAINED STATE (no
+      -- rollback — CPython's unwinding keeps every mutation up to the
+      -- raise); any other exn propagates. The handler class resolves
+      -- STATICALLY-FIRST (recorded as-built delta): a handler naming
+      -- anything but an admitted exception class refuses before the body
+      -- runs — loud, never wrong.
+      (match tryUnsupported with
+       | some reason =>
+         .unsupported s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
+       | Option.none =>
+         if (Env.lookup st.locals excName).isSome
+             || (lookupG (moduleGlobals m).1 excName).isSome
+             || (Env.lookup st.world.globals excName).isSome
+             || (findFunction m excName).isSome then
+           .unsupported s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+         else
+           match findClass m excName with
+           | Option.none =>
+             .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) can be matched — builtin-name matching is the recorded first extension, not v0 (docs/memory-model.md §exceptions)"
+           | some (ci, c) =>
+             if !c.isExc then
+               .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+             else
+               match execStmts m fuel st body.toList with
+               | .ok st' flow => .ok st' flow
+               | .exn st' e =>
+                 (match e with
+                  | .user cid _ =>
+                    if cid == ci then execStmts m fuel st' handler.toList
+                    else .exn st' e
+                  | e => .exn st' e)
+               | .timeout => .timeout
+               | .unsupported msg => .unsupported msg)
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont
@@ -4523,20 +4634,34 @@ def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
         | Option.none => .unsupported danglingMsg
         | some h₁ =>
           Run.toWorld <|
-            execGen m fuel ⟨{ w with heap := h₁ }, locals⟩ cont ⤳ fun st r =>
-            match r with
-            | some (v, cont') =>
-              (match Heap.update st.world.heap a
-                  (.generator qname st.locals cont' .suspended) with
-               | Option.none => .unsupported danglingMsg
-               | some h₂ =>
-                 .ok { st with world := { st.world with heap := h₂ } } (some v))
-            | Option.none =>
-              (match Heap.update st.world.heap a
-                  (.generator qname st.locals [] .closed) with
-               | Option.none => .unsupported danglingMsg
-               | some h₂ =>
-                 .ok { st with world := { st.world with heap := h₂ } } Option.none)
+            Run.bindE (execGen m fuel ⟨{ w with heap := h₁ }, locals⟩ cont)
+              (fun st r =>
+                match r with
+                | some (v, cont') =>
+                  (match Heap.update st.world.heap a
+                      (.generator qname st.locals cont' .suspended) with
+                   | Option.none => .unsupported danglingMsg
+                   | some h₂ =>
+                     .ok { st with world := { st.world with heap := h₂ } } (some v))
+                | Option.none =>
+                  (match Heap.update st.world.heap a
+                      (.generator qname st.locals [] .closed) with
+                   | Option.none => .unsupported danglingMsg
+                   | some h₂ =>
+                     .ok { st with world := { st.world with heap := h₂ } } Option.none))
+              (fun st e =>
+                -- exceptions tier (docs/memory-model.md §exceptions): an
+                -- exception propagating out of a resume CLOSES the
+                -- generator — CPython marks the frame finished, every
+                -- later `next()` is exhaustion — never `suspended` (a
+                -- resumable post-exception frame is unfaithful) and never
+                -- stuck `running` (a permanent fake ValueError; the
+                -- gen_lab status pin, flipped by this arm).
+                match Heap.update st.world.heap a
+                    (.generator qname st.locals [] .closed) with
+                | Option.none => .unsupported danglingMsg
+                | some h₂ =>
+                  .exn { st with world := { st.world with heap := h₂ } } e)
     | some _ =>
       .exn w (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
     | Option.none => .unsupported danglingMsg

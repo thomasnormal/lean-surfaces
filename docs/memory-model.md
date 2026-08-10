@@ -911,11 +911,12 @@ membership both ways, `len`/truthiness on empty and nonempty,
 unhashable element AND probe `TypeError`s, and the loud frontier
 (`iter_is_loud`, `sorted_is_loud`) pinned as refusals.
 
-## Exceptions (bound() arc pass 2 — DESIGN ONLY, nothing built)
+## Exceptions (designed in bound() arc pass 2 — BUILT 2026-08-11, pass 4)
 
 The deferred non-mechanical blocker, designed before any line of
-implementation, per the standing discipline. NOTHING in this section is
-implemented; no tier claim changes until a build commit says so.
+implementation, per the standing discipline. BUILT in pass 4 exactly as
+recorded below, with the as-built deltas at the end of this section
+(each one a narrowing or a mechanical necessity, never a widening).
 
 **Scope facts from the shipped file, established first.** (1) The whole
 in-file exception surface is three constructs: `class Stop(Exception):
@@ -1035,6 +1036,115 @@ is: deferred, awaiting its own recorded abstraction decision.
 **Explicitly NOT decided here:** the `time.time()` abstraction,
 `except Exception`, builtin-name matching, `finally`, exception
 payloads/`as` bindings. Each needs its own recorded decision.
+
+**As built (2026-08-11, pass 4) — the deltas the implementation
+forced, each recorded with its reason:**
+
+* **`PyErr.user cid name`** — the constructor also CARRIES the class
+  name. Identity (handler matching, `BEq`) is decided by the `cid`
+  alone within any one module (the name is determined by it); the name
+  exists so the boundary (`errName`, Main.lean; the leanpy class line)
+  can render CPython's `type(e).__name__` without threading the module
+  through `PyErr`.
+* **Recognition rides `exception_base`** (extractor marker, the
+  `namedtuple_base` pattern): the exact shape `class N(Exception):
+  pass` (single base literally named `Exception`, no keywords/
+  decorators, body only `pass`/docstring, no methods) suppresses the
+  "bases (inheritance)" refusal and marks the class; ingestion then
+  runs a module CENSUS — every top-level statement bind-analyzable
+  (`stmtBinds`, the namedtuple census's walker) and `Exception` bound
+  NOWHERE (no top-level bind, no def/class/namedtuple of that name, no
+  `has_global` anywhere that could rebind it) — and on ANY failure
+  demotes the class to the ordinary loud state (`isExc := false`,
+  `ok := false`, exactly the `ntBase` demotion discipline): a shadowed
+  `Exception` must not recognize as the builtin one.
+* **`Stmt.raiseStmt (exc cause : Option Expr)`** is structured in FULL
+  generality (bare `raise`, `raise <expr>`, `raise … from …` all parse);
+  EVALUATION admits exactly `raise N` where `N` names an admitted
+  exception class, everything else the loud refusals of the design.
+* **`Stmt.tryStmt body excName handler tryUnsupported`** carries the
+  v0 single-handler shape plus the `callUnsupported`-style reason
+  field: the extractor fills `try_unsupported` for every out-of-v0
+  feature (multiple/bare handlers, tuple pattern, `as`, `else`,
+  `finally`, a non-name handler class expression) and execution refuses
+  with that reason — structured-but-loud, one channel.
+* **The handler class resolves STATICALLY-FIRST**: `except N:` refuses
+  loudly (never runs the body) unless `N` is an admitted exception
+  class of the module. CPython evaluates the handler expression only
+  when an exception arrives, so a module whose body never raises could
+  run under a bogus handler name — the tier refuses it up front. Loud,
+  never wrong; the faithful late-`NameError` story is deferred with
+  builtin-name matching.
+* **`tryStmt` is OUT of `Stmt.heapFree`** (the design said both new
+  statements could stay in; the PROOF disagrees for `try`): `worldInv`
+  is an `.ok`-only invariant, and the handler resumes from the BODY'S
+  RETAINED `.exn` STATE, about which `Run.OkW` says nothing — so the
+  handler's decided world cannot be tied to the input world through the
+  existing induction. Conservative `false`, zero loss today (every
+  try-bearing target module has classes and is already outside the
+  fragment). `raiseStmt` stays IN: it never decides `.ok`, so its
+  invariance is vacuous, as designed.
+* **`stepIter` closes on exn through `Run.bindE`** — a new bind
+  combinator with an explicit exn continuation (`ok`/`exn` both carry
+  state; `timeout`/`unsupported` pass through), so the close-on-
+  exn-through-resume update composes without restructuring the stepper,
+  and `fuelMono` glues it with one new congruence lemma
+  (`Run.le_bindE`). The `gen_lab` status pin flipped exactly as the
+  discharge note predicted: third step after the exn is now exhaustion
+  (`closed`), and `exc_lab.gen_closes` is the try-driven differential
+  row.
+* **`genPlan` gained the explicit `tryStmt` fork**: a try WITHOUT yield
+  delegates to `execStmt` whole (its internal raise/catch is invisible
+  to the frame stack); a try WITH a yield anywhere inside is the
+  refused suspendable-`try` case, with the precise reason. The census
+  walkers (`hasYield`/`hasGenDef`/`defFree`/`g1Binds`/`g1Stores`/
+  `allNames`/`assignedNames`, and Json's `stmtBinds`/`bodyAssigns`/
+  `stmtRefs`) all see through `tryStmt` body AND handler — wildcard
+  arms would have silently mis-censused hand-built modules.
+* **Top-level `raise`/`try` are exec candidates** (`g1ExecCandidate`):
+  the init pipeline attempts them; a top-level raise `.exn` rolls back
+  and poisons (the fold's recorded `.exn` imprecision, unchanged).
+
+## Wall-clock time (`time.time()`) — the recorded abstraction decision (pass 4, 2026-08-11)
+
+The deferred second non-mechanical blocker, decided and recorded BEFORE
+its battery rows landed. The decision: **the wall clock has NO value in
+the model — `time.time()` is an impure builtin whose EVALUATION refuses
+loudly, so it may APPEAR in code and is sound exactly when dynamically
+dead.** No stub, no frozen clock, no "returns 0": any numeric answer
+would be silently wrong somewhere, and the model never guesses.
+
+The MECHANISM is the one already in place, now claimed as the
+abstraction rather than an accident: `import time` sits on the exact
+benign-import whitelist (`benignImportBinds`, Ast.lean) with
+`modelled = false`, so G1 binds `time` POISONED — CPython did bind the
+name, so a read must never be a fake `NameError` — and any evaluation
+that reaches the name (in particular the receiver of `time.time()`)
+refuses loudly with the poisoned-name message naming `time`
+("module-level value of 'time' is outside the G1 tier"): the wall
+clock outside the tier, refused at the exact moment code would consult
+it. (A bespoke `time.time`-shaped call arm with a prettier message was
+considered and rejected: it would special-case the largest match in
+`evalExpr` for zero semantic content — the refusal is already
+evaluation-time, already loud, already names the clock.)
+
+Soundness on the shipped file is the SHORT-CIRCUIT: the only reach is
+`bound()`'s guard `self.deadline is not None and self.nodes % 2048 == 0
+and time.time() > self.deadline`, and the in-file driver never sets
+`deadline` (`__init__` binds `None`), so the `and`-chain dies at its
+first conjunct and the wall clock is never evaluated. The battery pins
+BOTH directions in `exc_lab` (the deadline story's home):
+`time_dead` — the guard shape with `deadline = None` runs to completion
+(differential MATCH: the short-circuit keeps the clock dead);
+`time_live` — `deadline` set, evaluation reaches `time.time()` and
+refuses loudly (whitelisted row + the message pinned by `#guard`).
+
+The same doctrine covers every impure stdlib call the file can reach:
+there are no others in tier range today (`main()`'s `input()`/
+`sys`/`tools.uci` are driver-side and out of scope; NOTE the recorded
+gap that `input` is absent from `isBuiltinName`, so a hand-driven
+`main()` run would answer a fake `NameError` before reaching any of
+this — pre-existing, backlog).
 
 ## Heap well-formedness (explicit invariant)
 

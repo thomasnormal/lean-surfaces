@@ -115,20 +115,19 @@ the generator is fine — calling one runs no code). -/
 #guard callFunction gen_lab "gen_at_boundary" #[.int 2] 4096 matches .unsupported _
 #guard callFunction gen_lab "send_is_loud" #[.int 3] 4096 matches .unsupported _
 
-/-! ### the §exceptions obligation, DISCHARGED (docs/memory-model.md
-§exceptions): what happens to a generator when a BUILTIN exception fires
-inside a step. The raise itself propagates faithfully (`bad_first`/
-`bad_second` are differential rows — the whole call raises CPython's
-`ZeroDivisionError`), but the STATUS the object is left with diverges
-from CPython today, and the raw `#guard` below pins the divergence
-honestly: the stepper set `running` on entry and the exn path never
-cleared it, so a THIRD step answers the fake "generator already
-executing" `ValueError`, where CPython marks the frame finished and
-`next()` raises `StopIteration`. Unreachable through the differential
-harness until `try`/`except` exists (nothing in tier can survive the
-second step to observe the third), which is exactly why the exceptions
-design records "fix WITH the tier": the build flips this pin to the
-CLOSED status and adds the `try`-driven differential row (`exc_lab`). -/
+/-! ### the §exceptions obligation, discharged AND FIXED
+(docs/memory-model.md §exceptions): what happens to a generator when a
+BUILTIN exception fires inside a step. The raise itself propagates
+faithfully (`bad_first`/`bad_second` are differential rows — the whole
+call raises CPython's `ZeroDivisionError`). The STATUS was pinned
+divergent BEFORE the exceptions build (commit "The stepper's exn
+obligation, discharged": stuck `running`, a third step the fake
+"generator already executing" ValueError) and the build's
+close-on-exn-through-resume arm FLIPPED this `#guard` exactly as the
+design required: the object is CLOSED, a third step is exhaustion —
+CPython's `next()` → `StopIteration`, pinned differentially by the
+try-driven `exc_lab.gen_closes_hard` row now that a handler can survive
+the raise. -/
 
 #py_check gen_lab.bad_second(2) = 0
 #py_check gen_lab.bad_second(0) raises .zeroDivisionError
@@ -139,10 +138,10 @@ CLOSED status and adds the `try`-driven differential row (`exc_lab`). -/
            | .ok w₁ (some (.int 1)) =>
              (match stepIter gen_lab 4096 w₁ a with
               | .exn w₂ .zeroDivisionError =>
-                -- the divergence, pinned: stuck `running`, fake ValueError
-                -- (CPython: closed, StopIteration). Flipped by the build.
+                -- CLOSED: the third step is exhaustion, never a fake
+                -- ValueError and never a resumable frame
                 (match stepIter gen_lab 4096 w₂ a with
-                 | .exn _ (.valueError msg) => msg == "generator already executing"
+                 | .ok _ Option.none => true
                  | _ => false)
               | _ => false)
            | _ => false)

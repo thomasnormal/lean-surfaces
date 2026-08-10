@@ -123,6 +123,22 @@ theorem Run.le_bind {σ α β : Type} {x x' : Run σ α} {f f' : σ → α → R
     | timeout => exact Or.inl rfl
     | unsupported msg => exact Or.inr rfl
 
+/-- Congruence of `⊑ʳ` under `Run.bindE` (the exceptions tier: the
+stepper's close-on-exn-through-resume continuation — `fuelMono`'s glue
+for the one `bindE` consumer). -/
+theorem Run.le_bindE {σ α β : Type} {x x' : Run σ α} {f f' : σ → α → Run σ β}
+    {g g' : σ → PyErr → Run σ β} (hx : x ⊑ʳ x')
+    (hf : ∀ s a, f s a ⊑ʳ f' s a) (hg : ∀ s e, g s e ⊑ʳ g' s e) :
+    x.bindE f g ⊑ʳ x'.bindE f' g' := by
+  rcases hx with h | h
+  · subst h; exact Or.inl rfl
+  · subst h
+    cases x with
+    | ok s a => exact hf s a
+    | exn s e => exact hg s e
+    | timeout => exact Or.inl rfl
+    | unsupported msg => exact Or.inr rfl
+
 /-- Congruence of `⊑ʳ` under `if`. -/
 theorem Run.le_ite {σ α : Type} {c : Prop} [Decidable c] {x x' y y' : Run σ α}
     (hx : x ⊑ʳ x') (hy : y ⊑ʳ y') :
@@ -723,7 +739,9 @@ theorem fuelMono (fuel : Nat) :
                     cases findClass m fname with
                     | some p =>
                       obtain ⟨ci, c⟩ := p
-                      refine Run.le_ite (Run.le_refl _) ?_
+                      -- namedtuple-collision guard, then the exceptions
+                      -- tier's isExc guard (both fuel-independent)
+                      refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
                       cases c.ntBase with
                       | some nt =>
                         -- value-like subclass construction (H5): guards,
@@ -1074,6 +1092,35 @@ theorem fuelMono (fuel : Nat) :
         cases s with
         | defStmt name params ao lo hg ig body caps _ =>
           simp only [execStmt]; exact Run.le_refl _
+        | raiseStmt exc cause _ =>
+          -- fuel-free: the raise arm only does pure lookups
+          simp only [execStmt]; exact Run.le_refl _
+        | tryStmt body excName handler tu _ =>
+          simp only [execStmt]
+          cases tu with
+          | some reason => exact Run.le_refl _
+          | none =>
+            -- shadow guard, handler-class resolution, isExc — all
+            -- fuel-independent; then the body run (IH), the match on its
+            -- retained outcome, and the handler run (IH again)
+            refine Run.le_ite (Run.le_refl _) ?_
+            cases findClass m excName with
+            | none => exact Run.le_refl _
+            | some p =>
+              obtain ⟨ci, c⟩ := p
+              refine Run.le_ite (Run.le_refl _) ?_
+              rcases ihSs m st body.toList k hk with h | h
+              · rw [h]; exact Or.inl rfl
+              · rw [h]
+                cases execStmts m k st body.toList with
+                | ok st' flow => exact Run.le_refl _
+                | exn st' e =>
+                  cases e <;> try exact Run.le_refl _
+                  case user cid nm =>
+                    exact Run.le_ite (ihSs m st' handler.toList k hk)
+                      (Run.le_refl _)
+                | timeout => exact Run.le_refl _
+                | unsupported msg => exact Run.le_refl _
         | ret value _ =>
           cases value with
           | none => simp only [execStmt]; exact Run.le_refl _
@@ -1306,35 +1353,45 @@ theorem fuelMono (fuel : Nat) :
               cases Heap.update w.heap a (.generator qn lo kk .running) with
               | none => exact Run.le_refl _
               | some h₁ =>
-                refine Run.le_toWorld (Run.le_bind
-                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk) fun st r => ?_)
-                cases r with
-                | none =>
-                  dsimp only
+                refine Run.le_toWorld (Run.le_bindE
+                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk)
+                  (fun st r => ?_)
+                  (fun st e => ?_))
+                · cases r with
+                  | none =>
+                    dsimp only
+                    cases Heap.update st.world.heap a
+                        (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
+                  | some p =>
+                    obtain ⟨v, cont'⟩ := p
+                    dsimp only
+                    cases Heap.update st.world.heap a
+                        (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
+                · -- the exceptions tier's close-on-exn arm: fuel-free
                   cases Heap.update st.world.heap a
                       (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
-                | some p =>
-                  obtain ⟨v, cont'⟩ := p
-                  dsimp only
-                  cases Heap.update st.world.heap a
-                      (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
             | suspended =>
               dsimp only
               cases Heap.update w.heap a (.generator qn lo kk .running) with
               | none => exact Run.le_refl _
               | some h₁ =>
-                refine Run.le_toWorld (Run.le_bind
-                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk) fun st r => ?_)
-                cases r with
-                | none =>
-                  dsimp only
+                refine Run.le_toWorld (Run.le_bindE
+                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk)
+                  (fun st r => ?_)
+                  (fun st e => ?_))
+                · cases r with
+                  | none =>
+                    dsimp only
+                    cases Heap.update st.world.heap a
+                        (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
+                  | some p =>
+                    obtain ⟨v, cont'⟩ := p
+                    dsimp only
+                    cases Heap.update st.world.heap a
+                        (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
+                · -- the exceptions tier's close-on-exn arm: fuel-free
                   cases Heap.update st.world.heap a
                       (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
-                | some p =>
-                  obtain ⟨v, cont'⟩ := p
-                  dsimp only
-                  cases Heap.update st.world.heap a
-                      (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
     -- execGen (H4: the continuation walker)
     · intro m st k fuel' hf
       cases fuel' with
@@ -2313,6 +2370,28 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       cases s with
       | defStmt name params ao lo hg ig body caps _ =>
         simp [Stmt.heapFree] at hfree
+      | tryStmt body excName handler tu _ =>
+        -- OUT of the fragment (as-built delta, docs/memory-model.md
+        -- §exceptions): the handler resumes from the body's retained
+        -- `.exn` state, invisible to the ok-only invariant
+        simp [Stmt.heapFree] at hfree
+      | raiseStmt exc cause _ =>
+        -- IN the fragment, vacuously: the raise arm never decides `.ok`
+        simp only [execStmt]
+        cases cause with
+        | some c => exact .unsupported
+        | none =>
+          cases exc with
+          | none => exact .unsupported
+          | some e =>
+            cases e <;> try exact .unsupported
+            case name id _ =>
+              refine .ite .unsupported ?_
+              cases findClass m id with
+              | none => exact .unsupported
+              | some p =>
+                obtain ⟨ci, c⟩ := p
+                exact .ite .exn .unsupported
       | yieldStmt e _ => simp only [execStmt]; exact .unsupported
       | ret value _ =>
         cases value with

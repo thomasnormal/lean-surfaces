@@ -38,7 +38,17 @@ left in this table. -/
   #[("Move", #["i", "j", "prom"]), ("Entry", #["lower", "upper"])]
 #guard sunfish.classes.map (fun c => (c.name, c.ok, c.ntBase.map NamedTupleDefn.fields)) ==
   #[("Position", true, some #["board", "score", "wc", "bc", "ep", "kp"]),
-    ("Stop", false, Option.none), ("Searcher", true, Option.none)]
+    -- the exceptions tier: `class Stop(Exception): pass` is the THIRD
+    -- recognized class kind — no longer an unsupported-bases class
+    ("Stop", true, Option.none), ("Searcher", true, Option.none)]
+
+/-! The exceptions census (docs/memory-model.md §exceptions): `Stop` is
+an ADMITTED exception class on the shipped file — `raise Stop` (line
+332, dynamically dead under `deadline = None`) structures and would
+raise its class identity; the census proved `Exception` unshadowed. -/
+
+#guard sunfish.classes.map (fun c => (c.name, c.isExc)) ==
+  #[("Position", false), ("Stop", true), ("Searcher", false)]
 #guard sunfish.functions.map (fun f => (f.name, f.argsOk, f.localsOk)) ==
   #[("Position.gen_moves", true, true), ("Position.rotate", true, true),
     -- bound() arc pass 1: `Position.move`'s `put = lambda board, i, p: …`

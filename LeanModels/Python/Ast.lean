@@ -156,6 +156,26 @@ inductive Stmt where
   | defStmt (name : String) (params : Array Param) (argsOk localsOk : Bool)
       (hasGlobal : Bool) (isGenerator : Bool) (body : Array Stmt)
       (captures : Array String) (span : Span)
+  /-- `raise` (schema `Raise`, the exceptions tier — docs/memory-model.md
+  §exceptions). Structured in FULL generality (`exc`/`cause` both
+  optional, any expressions); EVALUATION admits exactly `raise N` where
+  `N` names an admitted exception class (`class N(Exception): pass`,
+  `ClassDefn.isExc`) — bare `raise`, `raise <expr>`, `raise N(args…)`
+  and `raise … from …` all refuse loudly there, never here. -/
+  | raiseStmt (exc : Option Expr) (cause : Option Expr) (span : Span)
+  /-- `try`/`except` (schema `Try`, the exceptions tier): the v0 shape —
+  ONE handler naming ONE class, no `as` binding, no `else`, no
+  `finally` — carried structurally (`excName` the handler's class name,
+  `handler` its body). Everything outside the shape rides the
+  `callUnsupported` pattern: the extractor fills `tryUnsupported` with
+  the reason and EXECUTION refuses with it (structured-but-loud; the
+  body/handler carried best-effort so censuses stay exact). Matching is
+  class IDENTITY on the admitted exception kind; a handler naming
+  anything else (builtin exception names, `Exception` itself) refuses
+  loudly at execution, before the body runs (statically-first — the
+  recorded as-built delta). -/
+  | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
+      (tryUnsupported : Option String) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)
@@ -259,6 +279,16 @@ structure ClassDefn where
   state (`ok = false`). The inner `NamedTupleDefn.name` is the CLASS
   name (the constructor callers resolve). -/
   ntBase : Option NamedTupleDefn := Option.none
+  /-- The THIRD recognized class kind (docs/memory-model.md §exceptions):
+  an EXCEPTION class, the exact shape `class N(Exception): pass`.
+  Recognized at ingestion (extractor marker `exception_base` + the
+  module census proving `Exception` unshadowed — Json.lean); demoted to
+  the ordinary loud state (`isExc := false`, `ok := false`) by any
+  deviation. Such a class is an exception NAME, not an instantiable
+  object: `raise N` maps to `.exn (.user cid name)`; calling `N(…)`
+  refuses loudly (the value-position refusals are what keep the
+  payload-free representation exact). -/
+  isExc : Bool := false
   span : Span
 deriving Repr, Inhabited, BEq, DecidableEq
 
@@ -339,6 +369,17 @@ inductive PyErr where
   tier raises it only from an explicit `next` without a default — the
   `for`-loop and `next(g, d)` paths CONSUME exhaustion instead. -/
   | stopIteration
+  /-- A USER exception (the exceptions tier, docs/memory-model.md
+  §exceptions): class-identity, no payload — `raise N` of an admitted
+  `class N(Exception): pass` IS its class. `cid` is the `ClassId` (the
+  `Module.classes` index — identity for handler matching and `==`);
+  `name` is the class name, carried so the boundary can render
+  CPython's `type(e).__name__` without the module in hand (within one
+  module the cid determines it, so equality on both is equality on the
+  cid). The instance CPython implicitly builds can never be inspected
+  (args/attrs/`as`-bindings all refuse loudly), which is what makes the
+  class-identity representation observationally exact. -/
+  | user (cid : Nat) (name : String)
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Interpreter results. `unsupported` = outside the v0 tier (loud), NOT a Python error. -/

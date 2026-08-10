@@ -662,18 +662,32 @@ def convert_stmt(node, enclosing=None, module_scope=False):
         # represented, instantiation refuses loudly.
         reasons = []
         namedtuple_base = None
+        exception_base = False
         if node.bases:
             # A SINGLE base that is a plain `namedtuple(...)` call is the
             # recorded value-like subclass shape (sunfish's Position):
             # emitted structurally as `namedtuple_base` (ingestion
             # validates the spec and the module census; on any failure the
             # class demotes to the ordinary uninstantiable-loudly state).
+            # A SINGLE base literally named `Exception` over a body of
+            # only pass/docstring (no methods), with no keywords and no
+            # decorators, is the exceptions tier's exact recognized shape
+            # (`class Stop(Exception): pass`) -- emitted as
+            # `exception_base`; ingestion's census may still demote it.
             # Any other base keeps the loud inheritance reason.
             b = node.bases[0]
             if (len(node.bases) == 1 and isinstance(b, ast.Call)
                     and isinstance(b.func, ast.Name)
                     and b.func.id == "namedtuple" and not b.keywords):
                 namedtuple_base = convert_expr(b)
+            elif (len(node.bases) == 1 and isinstance(b, ast.Name)
+                    and b.id == "Exception"
+                    and not node.keywords and not node.decorator_list
+                    and all(isinstance(s, ast.Pass)
+                            or (isinstance(s, ast.Expr)
+                                and isinstance(s.value, ast.Constant))
+                            for s in node.body)):
+                exception_base = True
             else:
                 reasons.append("bases (inheritance)")
         if node.keywords:
@@ -698,6 +712,8 @@ def convert_stmt(node, enclosing=None, module_scope=False):
         }
         if namedtuple_base is not None:
             out["namedtuple_base"] = namedtuple_base
+        if exception_base:
+            out["exception_base"] = True
         if _has_global(node):
             out["has_global"] = True
         return out
@@ -759,6 +775,58 @@ def convert_stmt(node, enclosing=None, module_scope=False):
             "test": convert_expr(node.test),
             "body": [convert_stmt(s, module_scope=module_scope) for s in node.body],
             "orelse": [convert_stmt(s, module_scope=module_scope) for s in node.orelse],
+        }
+
+    if isinstance(node, ast.Raise):
+        # Exceptions tier (docs/memory-model.md paragraph "exceptions"):
+        # structured in FULL generality -- bare raise, raise <expr>,
+        # raise ... from ... all parse; evaluation owns the tier boundary
+        # (only `raise N` of an admitted exception class is admitted).
+        d = {"kind": "Raise", "span": span(node)}
+        if node.exc is not None:
+            d["exc"] = convert_expr(node.exc)
+        if node.cause is not None:
+            d["cause"] = convert_expr(node.cause)
+        return d
+
+    if isinstance(node, ast.Try):
+        # Exceptions tier: the v0 single-handler shape is carried
+        # structurally (exc_name + handler body); every out-of-v0 feature
+        # fills try_unsupported (the call_unsupported pattern), and
+        # execution refuses with the reason -- structured-but-loud. The
+        # body/handler are carried best-effort either way so the Lean-side
+        # censuses (binds/refs/yield/def walkers) stay exact.
+        reasons = []
+        exc_name = ""
+        handler_body = []
+        if len(node.handlers) != 1:
+            reasons.append("multiple handlers" if node.handlers
+                           else "no handler")
+        else:
+            h = node.handlers[0]
+            if h.type is None:
+                reasons.append("bare 'except:'")
+            elif isinstance(h.type, ast.Name):
+                exc_name = h.type.id
+            else:
+                reasons.append("non-name handler class "
+                               "(tuple pattern / attribute)")
+            if h.name is not None:
+                reasons.append("'as' binding")
+            handler_body = [convert_stmt(s, module_scope=module_scope)
+                            for s in h.body]
+        if node.orelse:
+            reasons.append("'else' clause")
+        if node.finalbody:
+            reasons.append("'finally' clause")
+        return {
+            "kind": "Try",
+            "span": span(node),
+            "body": [convert_stmt(s, module_scope=module_scope)
+                     for s in node.body],
+            "exc_name": exc_name,
+            "handler": handler_body,
+            "try_unsupported": ", ".join(reasons) if reasons else None,
         }
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.Yield):

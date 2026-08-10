@@ -372,6 +372,31 @@ twin. -/
   · rintro ⟨s, a, ⟨rfl, rfl⟩, h⟩; exact h
   · intro h; exact ⟨S, A, ⟨rfl, rfl⟩, h⟩
 
+/-- `bind` with an explicit EXN continuation (the exceptions tier,
+docs/memory-model.md §exceptions as-built): `ok` and `exn` both carry
+their state into their continuation; `timeout`/`unsupported` pass
+through. The one consumer is `stepIter` — an exception propagating out
+of a generator resume must CLOSE the object (CPython marks the frame
+finished), and this combinator lets that heap update compose without
+restructuring the stepper (`Run.le_bindE` is its `fuelMono` glue). -/
+@[inline] def bindE : Run σ α → (σ → α → Run σ β) → (σ → PyErr → Run σ β) →
+    Run σ β
+  | .ok s a, f, _ => f s a
+  | .exn s e, _, g => g s e
+  | .timeout, _, _ => .timeout
+  | .unsupported msg, _, _ => .unsupported msg
+
+@[simp] theorem ok_bindE {s : σ} {a : α} {f : σ → α → Run σ β}
+    {g : σ → PyErr → Run σ β} : (Run.ok s a).bindE f g = f s a := rfl
+@[simp] theorem exn_bindE {s : σ} {e : PyErr} {f : σ → α → Run σ β}
+    {g : σ → PyErr → Run σ β} : (Run.exn s e).bindE f g = g s e := rfl
+@[simp] theorem timeout_bindE {f : σ → α → Run σ β}
+    {g : σ → PyErr → Run σ β} :
+    (Run.timeout : Run σ α).bindE f g = .timeout := rfl
+@[simp] theorem unsupported_bindE {msg : String} {f : σ → α → Run σ β}
+    {g : σ → PyErr → Run σ β} :
+    (Run.unsupported msg : Run σ α).bindE f g = .unsupported msg := rfl
+
 @[simp] theorem ok_bind {s : σ} {a : α} {f : σ → α → Run σ β} :
     (Run.ok s a).bind f = f s a := rfl
 @[simp] theorem exn_bind {s : σ} {e : PyErr} {f : σ → α → Run σ β} :

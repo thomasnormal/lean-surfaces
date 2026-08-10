@@ -61,6 +61,8 @@ def errName : PyErr → String
   | .recursionError => "RecursionError"
   | .attributeError => "AttributeError"
   | .stopIteration => "StopIteration"
+  -- exceptions tier: CPython's `type(e).__name__` — the carried class name
+  | .user _ name => name
 
 /-- JSON string literal with proper escaping (delegates to `Lean.Json`). -/
 def jsonStr (s : String) : String :=

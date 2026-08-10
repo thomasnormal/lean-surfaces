@@ -153,6 +153,11 @@ mutual
       t.allNames ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList o.toList
     | .exprStmt e _ => e.allNames
     | .yieldStmt e _ => e.allNames
+    -- exceptions tier: the handler class name is a read too
+    | .raiseStmt exc cause _ =>
+      (exc.map Expr.allNames).getD [] ++ (cause.map Expr.allNames).getD []
+    | .tryStmt b excName hnd _ _ =>
+      excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 
@@ -182,6 +187,8 @@ mutual
         ++ Stmt.assignedNamesList o.toList
     | .ifStmt _ b o _ =>
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
+    | .tryStmt b _ hnd _ _ =>
+      Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList hnd.toList
     | _ => []
 
   /-- Elementwise `Stmt.assignedNames`. -/
@@ -259,6 +266,7 @@ where
     | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
     | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
     | .defStmt _ _ _ _ _ _ _ _ sp
+    | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
     | .unsupported _ _ sp => sp
 
 /-- The stale-table guard: no suffix (nested-)assignment to ANY name some

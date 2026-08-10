@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/my_abs/my_abs.py",
   "source_sha256": "4c28600a3048c9d73214ed16db3480b1dc97f6ced012ea711439f5016679d317",

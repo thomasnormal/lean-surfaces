@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/bench_bisect/bench_bisect.py",
   "source_sha256": "235595f73f627e8cc2c8add57c86e2361e3e2be6a1f4260573706153a6023ed3",
@@ -266,6 +266,7 @@
                       "id": "a"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -798,6 +799,7 @@
                       "id": "a"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }

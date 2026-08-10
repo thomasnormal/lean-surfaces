@@ -202,6 +202,7 @@
                   ]
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -325,9 +326,11 @@
                       "id": "x"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -423,6 +426,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }

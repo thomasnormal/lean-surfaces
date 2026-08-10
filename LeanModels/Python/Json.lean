@@ -149,8 +149,17 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "Call" =>
         let func ← parseExpr (← getField j "func")
         let args ← (← (← getField j "args").getArr?).mapM parseExpr
+        -- H6: structured plain named keywords. Absent field = empty
+        -- (envelopes extracted before the tier stay valid).
+        let kwargs ← match j.getObjVal? "keywords" with
+          | .error _ => pure #[]
+          | .ok kj => do
+            (← kj.getArr?).mapM fun kw => do
+              let name ← (← getField kw "arg").getStr?
+              let value ← parseExpr (← getField kw "value")
+              return (name, value)
         let cu ← getOptStrField j "call_unsupported"
-        return .call func args cu span
+        return .call func args kwargs cu span
     | "List" =>
         return .list (← (← (← getField j "elts").getArr?).mapM parseExpr) span
     | "Tuple" =>
@@ -365,7 +374,7 @@ callers resolve (the assigned name, resp. the CLASS name — CPython
 instances of the subclass carry the SUBCLASS type). -/
 private def ntupleCallSpec (bindName : String) (sp : Span) :
     Expr → Option NamedTupleDefn
-  | .call (.name "namedtuple" _) args Option.none _ =>
+  | .call (.name "namedtuple" _) args #[] Option.none _ =>
     match args.toList with
     | [.constant (.str tname) _, fldE] =>
       match parseFieldSpec fldE with
@@ -452,7 +461,9 @@ mutual
     | .unaryOp _ e _ => exprRefs e
     | .boolOp _ vs _ => (vs.toList.map exprRefs).flatten
     | .compare l _ cs _ => exprRefs l ++ (cs.toList.map exprRefs).flatten
-    | .call f args _ _ => exprRefs f ++ (args.toList.map exprRefs).flatten
+    | .call f args kwargs _ _ =>
+      exprRefs f ++ (args.toList.map exprRefs).flatten
+        ++ (kwargs.toList.map (fun kv => exprRefs kv.2)).flatten
     | .list es _ | .tuple es _ => (es.toList.map exprRefs).flatten
     | .subscript v i _ => exprRefs v ++ exprRefs i
     | .dict ks vs _ => (ks.toList.map exprRefs).flatten ++ (vs.toList.map exprRefs).flatten
@@ -669,7 +680,9 @@ mutual
     | .unaryOp op v sp => return .unaryOp op (← lowerExpr ctx v) sp
     | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
     | .compare l ops cs sp => return .compare (← lowerExpr ctx l) ops (← lowerExprs ctx cs) sp
-    | .call f args cu sp => return .call (← lowerExpr ctx f) (← lowerExprs ctx args) cu sp
+    | .call f args kwargs cu sp =>
+        return .call (← lowerExpr ctx f) (← lowerExprs ctx args)
+          (← kwargs.mapM fun kv => do pure (kv.1, ← lowerExpr ctx kv.2)) cu sp
     | .list es sp => return .list (← lowerExprs ctx es) sp
     | .tuple es sp => return .tuple (← lowerExprs ctx es) sp
     | .subscript v i sp => return .subscript (← lowerExpr ctx v) (← lowerExpr ctx i) sp
@@ -703,7 +716,7 @@ mutual
             fns.push { name := fname, params, argsOk := true, localsOk := true,
                        hasGlobal := false, isGenerator := true, body, span := sp })
           return .call (.name fname sp)
-            (#[iter] ++ (caps.map (fun c => Expr.name c sp)).toArray) Option.none sp
+            (#[iter] ++ (caps.map (fun c => Expr.name c sp)).toArray) #[] Option.none sp
         else
           return .genExp elt target iter ifs sp
 

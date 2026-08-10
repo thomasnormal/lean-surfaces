@@ -366,6 +366,7 @@
                       "id": "kids"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -515,6 +516,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   }
                 }

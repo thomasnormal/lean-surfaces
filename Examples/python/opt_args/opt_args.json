@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/opt_args/opt_args.py",
   "source_sha256": "89009079d4b7b7e96b8e6e5c0fff02edce875150aa1f948a098a2855430c9619",
@@ -717,6 +717,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -761,6 +762,7 @@
                   "id": "x"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -875,6 +877,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -919,6 +922,7 @@
                   "id": "x"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }

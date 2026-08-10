@@ -392,6 +392,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   }
                 }
@@ -456,6 +457,7 @@
                       "id": "s"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },

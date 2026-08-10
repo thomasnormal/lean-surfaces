@@ -547,6 +547,96 @@ eagerly, which is exactly what laziness forbids).
 including two INFINITE generators that terminate only under real
 laziness); leanpy corpus `harness/scripts/gen_script.py`.
 
+## Call-site keyword arguments (H6 — BUILT 2026-08-10)
+
+The surface is `f(x, k=v)` — sunfish's `pos.rotate(nullmove=True)` and
+`sorted(…, reverse=True)`. The extractor STRUCTURES plain named keywords
+(`"keywords": [{"arg": name, "value": expr}]`) instead of flagging the
+whole call; `**` unpacking stays `call_unsupported`. The AST call node
+gains `kwargs : Array (String × Expr)`.
+
+**Evaluation order** is CPython's: positional argument expressions, then
+keyword VALUE expressions, left to right — which is source order,
+because Python syntax forbids a positional after a keyword (starred
+arguments, the exception, are refused at extraction).
+
+**Binding never touches `callIn`.** Its signature is covenant
+(§proof-layer covenants); keywords are resolved to a COMPLETE positional
+array at the CALL SITE by a pure merge against the callee's `params`:
+name → slot; faithful `TypeError`s for an unexpected keyword, multiple
+values for one parameter, and a missing required parameter; holes and
+trailing gaps fill from literal `Param.default` via `Const.toRVal` — the
+same def-time-literal argument `mkCallEnv` already records. The merge
+requires `argsOk`: on a function whose parameter list we do not fully
+understand, the refusal is the LOUD unsupported, never a binding
+`TypeError` computed from an untrusted table.
+
+**Callee coverage** (everything else with keywords is loud):
+
+* module-level `def`s called by name;
+* namedtuple-subclass method calls (the ntuple receiver prepends `self`,
+  then the same merge on the flattened defn's params);
+* the builtin `sorted` (lands WITH the draining tier; refused loudly
+  until then): `reverse=<expr>` is accepted (truthiness decides the
+  direction, as CPython's does); `key=` is REFUSED loudly — it gates on
+  first-class callable values (a bound method as a value is loud under
+  H3), not on draining, and is recorded in the backlog; any other
+  keyword name on `sorted` is CPython's faithful `TypeError`.
+
+Loud by choice: heap-receiver method calls with keywords (`.get`,
+instance methods), class instantiation and namedtuple CONSTRUCTION with
+keywords (CPython allows the latter; a wrong guess about field order
+would be silent corruption), str methods, and every other builtin.
+
+**Fragments**: a call carrying keywords leaves `heapFree` (conservative;
+sunfish's keyword sites live inside method bodies that are already out
+of the fragment). The G1 scans see keyword values as ordinary subtree
+expressions; a keyword name binds nothing in the caller.
+
+## Draining consumers (H6 — design 2026-08-10, normative; implementation in flight)
+
+sunfish's ordering line is
+`sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True)`
+(NO `key=` anywhere in the shipped file), guarded by `any(…genexp…)` /
+`all(…genexp…)`. Three consumer families over the H4 stepper:
+
+* **Full drain** — `sorted`/`max`/`min` of a generator ref: a frozen
+  mutual member `drainIter` loops `stepIter` to exhaustion (the object
+  ends `closed`; body effects interleave into the shared world exactly
+  as stepping does; fuel bounds the drain, so an infinite generator is a
+  loud timeout). The drained values then take the SAME pure path as a
+  value-list argument.
+* **Short-circuit drain** — `any`/`all` (NEW builtins): step until the
+  first truthy (`any`) / falsy (`all`) element and STOP — the generator
+  stays SUSPENDED and resumable, CPython's partial drain, pinned
+  differentially by an effect-observing generator plus a post-call
+  `next`. Non-generator receivers scan without draining: strs by code
+  point, value tuples/lists and heap lists by snapshot (no user code can
+  run mid-scan in tier, so the snapshot IS the live semantics); dicts
+  stay loud (live iteration).
+* **Ordering comparison, one relation** — `sorted` beyond all-int lists
+  needs `<` on tuples, and the OPERATOR and the sort must share it:
+  `rvalLt` (worker, `valEq`/`valEqList` recursion geometry) — int/bool
+  numeric, str code-point lexicographic, tuple/namedtuple lexicographic
+  and CLASS-ERASED (first `valEq`-differing element decides via
+  `rvalLt`; exhaustion → shorter is smaller). `evalCompareOp`'s ordering
+  arm gains the tuple case derived from the same worker (`a <= b` as
+  `¬(b < a)` is exact within this tier). Refs and mixed value kinds
+  refuse loudly, as the operator does today — never a guessed
+  `TypeError`.
+
+**Sort algorithm**: stable insertion by `rvalLt` only (CPython sorts
+call only `__lt__`); within the tier every total order agrees with
+timsort, and comparison refusals surface as the drained list's loud
+refusal, position-independent. `reverse=True` is descending STABLE
+insertion (insert before the first strictly-smaller element) — NOT
+sort-then-reverse: `sorted([1, True], reverse=True)` keeps `[1, True]`,
+a reversal would forge `[True, 1]`. `sorted` still allocates its result
+(H2); `max`/`min` of an empty drain is the faithful `ValueError`.
+
+Simp doctrine unchanged: dispatchers in the sets, the new workers
+(`rvalLt`, the merge, the drain) OUT (the `sortInts` freeze family).
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

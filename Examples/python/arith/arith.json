@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/arith/arith.py",
   "source_sha256": "73562d42abae3f928143c883a0c3f4c8f75d21b3278462b075e249c99e90fd46",

@@ -83,7 +83,13 @@ inductive Expr where
   | unaryOp (op : UnaryOp) (operand : Expr) (span : Span)
   | boolOp (op : BoolOp) (values : Array Expr) (span : Span)
   | compare (left : Expr) (ops : Array CmpOp) (comparators : Array Expr) (span : Span)
-  | call (func : Expr) (args : Array Expr) (callUnsupported : Option String) (span : Span)
+  /-- Call. `kwargs` are the structured plain named keywords (H6,
+  docs/memory-model.md §call-site keyword arguments), evaluated AFTER
+  the positionals, left to right — source order, since Python forbids a
+  positional after a keyword. `**` unpacking and starred args ride in
+  `callUnsupported` (loud). -/
+  | call (func : Expr) (args : Array Expr) (kwargs : Array (String × Expr))
+      (callUnsupported : Option String) (span : Span)
   | list (elts : Array Expr) (span : Span)
   | tuple (elts : Array Expr) (span : Span)
   | subscript (value : Expr) (index : Expr) (span : Span)

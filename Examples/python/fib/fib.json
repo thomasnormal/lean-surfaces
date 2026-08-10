@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/fib/fib.py",
   "source_sha256": "b147fe0d5ea1771ddae49a07f0fc9448a43f1d26e3c9b88ee5330c1ab362d04e",
@@ -170,6 +170,7 @@
                     }
                   }
                 ],
+                "keywords": [],
                 "call_unsupported": null
               },
               "op": "Add",
@@ -226,6 +227,7 @@
                     }
                   }
                 ],
+                "keywords": [],
                 "call_unsupported": null
               }
             }

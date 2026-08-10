@@ -2178,6 +2178,60 @@ def mkCallEnv (params : Array Param) (args : Array RVal) : Env :=
   (params.toList.map Param.arg).zip args.toList
     ++ defaultBindings (params.toList.drop args.size)
 
+/-- First keyword name bound twice, if any. CPython rejects a repeated
+literal keyword (`f(a=1, a=2)`) at COMPILE time, so ingestion never ships
+one — the guard keeps hand-built modules loud, never guessing an error
+class CPython would not have reached. -/
+def kwFindDup : List (String × RVal) → Option String
+  | [] => Option.none
+  | (k, _) :: rest => if rest.any (·.1 == k) then some k else kwFindDup rest
+
+/-- Fill the parameter slots AFTER the positional prefix (H6 keyword
+merge): the keyword's value if given, else the literal default — a slot
+with neither is CPython's faithful missing-argument `TypeError`.
+Structural recursion (kernel-reducible, the `sortInts` discipline). -/
+def fillKwSlots (fname : String) (kws : List (String × RVal)) :
+    List Param → Res (List RVal)
+  | [] => .ok []
+  | p :: ps =>
+    match kws.find? (·.1 == p.arg) with
+    | some (_, v) => do return v :: (← fillKwSlots fname kws ps)
+    | Option.none =>
+      match p.default with
+      | some c => do return Const.toRVal c :: (← fillKwSlots fname kws ps)
+      | Option.none =>
+        .exn (.typeError
+          s!"{fname}() missing 1 required positional argument: '{p.arg}'")
+
+/-- H6 keyword merge (docs/memory-model.md §call-site keyword arguments):
+resolve already-evaluated positional + keyword arguments against `params`
+into ONE complete positional array, so `callIn`'s covenant signature never
+changes. Faithful `TypeError`s: too many positionals, an unexpected
+keyword, multiple values for one parameter, a missing required parameter
+(CPython's message WORDING differs per case; the harness compares error
+classes). Callers must have checked `argsOk` first — on a parameter list
+the model does not fully understand, the loud refusal wins, never a
+binding `TypeError` computed from an untrusted table. -/
+def mergeKwArgs (fname : String) (params : Array Param)
+    (pos : List RVal) (kws : List (String × RVal)) : Res (Array RVal) :=
+  let names := params.toList.map Param.arg
+  match kwFindDup kws with
+  | some k =>
+    .unsupported s!"duplicate keyword argument '{k}' (unreachable through ingestion — CPython rejects it at compile time)"
+  | Option.none =>
+  if pos.length > params.size then
+    .exn (.typeError
+      s!"{fname}() takes {params.size} positional arguments but {pos.length} were given")
+  else match kws.find? (fun kv => !names.contains kv.1) with
+  | some (k, _) =>
+    .exn (.typeError s!"{fname}() got an unexpected keyword argument '{k}'")
+  | Option.none =>
+  match kws.find? (fun kv => (names.take pos.length).contains kv.1) with
+  | some (k, _) =>
+    .exn (.typeError s!"{fname}() got multiple values for argument '{k}'")
+  | Option.none => do
+    return (pos ++ (← fillKwSlots fname kws (params.toList.drop pos.length))).toArray
+
 /-- `enumerate`'s optional `start` argument: `none` = the argument list
 is not an in-tier `enumerate(x)` / `enumerate(x, i)` shape. -/
 def enumStart : List RVal → Option Int
@@ -2342,13 +2396,16 @@ mutual
     -- call leaves the fragment — even shadowed ones, conservatively);
     -- method calls beyond `.get` MUTATE (`.append`/`.pop`).
     -- H4 adds `next`: it STEPS a generator (arbitrary body effects), and
-    -- syntax cannot tell `next(g)` from a shadowing user `def next`
-    | .call (.name id _) args _ _ =>
-      (id != "sorted") && (id != "next") && (id != "enumerate")
+    -- syntax cannot tell `next(g)` from a shadowing user `def next`.
+    -- H6: a call carrying KEYWORDS leaves the fragment conservatively
+    -- (docs/memory-model.md §call-site keyword arguments).
+    | .call (.name id _) args kwargs _ _ =>
+      kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && Expr.heapFreeList args.toList
-    | .call (.attribute recv attr _) args _ _ =>
-      attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
-    | .call f args _ _ => f.heapFree && Expr.heapFreeList args.toList
+    | .call (.attribute recv attr _) args kwargs _ _ =>
+      kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
+    | .call f args kwargs _ _ =>
+      kwargs.isEmpty && f.heapFree && Expr.heapFreeList args.toList
     | .list .. => false                 -- ALLOCATES (H2)
     | .tuple es _ => Expr.heapFreeList es.toList
     | .subscript v i _ => v.heapFree && i.heapFree
@@ -2640,10 +2697,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
     | .compare l ops comparators _ =>
         evalExpr m fuel st l ⤳ fun st a =>
         evalCompareChain m fuel st a ops.toList comparators.toList
-    | .call f args callUnsupported _ =>
+    | .call f args kwargs callUnsupported _ =>
       match callUnsupported with
       | some reason => .unsupported s!"call uses unsupported features: {reason}"
       | Option.none =>
+        if kwargs.isEmpty then
         match f with
         | .name fname _ =>
           -- The callee NAME is resolved before the arguments (an unbound name
@@ -2927,6 +2985,95 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           | r =>
             .unsupported s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
         | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
+        else
+          -- ===== H6 KEYWORD TIER (docs/memory-model.md §call-site
+          -- keyword arguments). Keywords resolve to a COMPLETE positional
+          -- array at the call site (`mergeKwArgs`) — `callIn`'s covenant
+          -- signature never changes. Positionals evaluate first, then
+          -- keyword VALUES, left to right (source order: Python forbids a
+          -- positional after a keyword). Coverage: module `def`s by name
+          -- and namedtuple-subclass methods; `sorted`'s keywords land
+          -- with the draining tier; everything else is LOUD. =====
+          (match f with
+           | .name fname _ =>
+             (match Env.lookup st.locals fname with
+              | some (.ref _) =>
+                  evalExprs m fuel st args.toList ⤳ fun st _ =>
+                  evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                  .exn st (.typeError "'dict' object is not callable")
+              | some v =>
+                  evalExprs m fuel st args.toList ⤳ fun st _ =>
+                  evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                  .exn st (.typeError s!"'{v.typeName}' object is not callable")
+              | Option.none =>
+                match lookupG (moduleGlobals m).1 fname with
+                | some (some (.ref _)) =>
+                    evalExprs m fuel st args.toList ⤳ fun st _ =>
+                    evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                    .exn st (.typeError "'dict' object is not callable")
+                | some (some v) =>
+                    evalExprs m fuel st args.toList ⤳ fun st _ =>
+                    evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                    .exn st (.typeError s!"'{v.typeName}' object is not callable")
+                | some Option.none =>
+                  .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
+                | Option.none =>
+                  match findFunction m fname with
+                  | some fdefn =>
+                    if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
+                      .unsupported s!"name '{fname}' is bound by both 'def' and 'class'/namedtuple at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
+                    else if !fdefn.argsOk then
+                      -- the merge would read an UNTRUSTED parameter table:
+                      -- the loud refusal must win over any binding TypeError
+                      .unsupported s!"function '{fname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                    else
+                      evalExprs m fuel st args.toList ⤳ fun st vs =>
+                      evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                      Run.liftRes st
+                        (mergeKwArgs fname fdefn.params vs
+                          ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
+                      Run.withLocals st.locals (callIn m fuel st.world fname full)
+                  | Option.none =>
+                    if (findClass m fname).isSome then
+                      .unsupported s!"instantiating class '{fname}' with keyword arguments is outside the H6 tier"
+                    else if (findNamedTuple m fname).isSome then
+                      .unsupported s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
+                    else if fname == "sorted" then
+                      .unsupported "sorted() keyword arguments (key=/reverse=) land with the H6 draining-consumer tier (docs/memory-model.md)"
+                    else if isBuiltinName fname then
+                      .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
+                    else if isModuleDunder fname then
+                      .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
+                    else if (moduleGlobals m).2 then
+                      .exn st (.nameError fname)
+                    else
+                      .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement")
+           | .attribute recv attr _ =>
+             evalExpr m fuel st recv ⤳ fun st r =>
+             (match r with
+              | .ntuple tn fs xs =>
+                (match ntupleCallPlan m tn fs attr with
+                 | .instMethod qname =>
+                   (match findFunction m qname with
+                    | some fdefn =>
+                      if !fdefn.argsOk then
+                        .unsupported s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                      else
+                        evalExprs m fuel st args.toList ⤳ fun st vs =>
+                        evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                        Run.liftRes st
+                          (mergeKwArgs qname fdefn.params
+                            (RVal.ntuple tn fs xs :: vs)
+                            ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
+                        Run.withLocals st.locals (callIn m fuel st.world qname full)
+                    | Option.none =>
+                      .unsupported "internal: namedtuple method plan without a definition (report this)")
+                 | .attrMissing => .exn st .attributeError
+                 | .refuse msg => .unsupported msg
+                 | _ => .unsupported "internal: namedtuple call plan out of range (report this)")
+              | r =>
+                .unsupported s!"method call '.{attr}' with keyword arguments on '{RVal.typeNameH st.world.heap r}' is outside the H6 tier")
+           | f => .unsupported s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier")
     | .list elts _ =>
         -- H2: a list display ALLOCATES (`BUILD_LIST`) — the fresh address
         -- is the old heap size; every literal is a distinct object.

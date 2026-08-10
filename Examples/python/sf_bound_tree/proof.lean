@@ -107,6 +107,7 @@ private def loopBody : List Stmt :=
               .sub
               (.constant (.int 1) { lineno := 18, colOffset := 43, endLineno := 18, endColOffset := 44 })
               { lineno := 18, colOffset := 35, endLineno := 18, endColOffset := 44 }]
+          #[]
           Option.none
           { lineno := 18, colOffset := 13, endLineno := 18, endColOffset := 45 })
         { lineno := 18, colOffset := 12, endLineno := 18, endColOffset := 45 })
@@ -117,6 +118,7 @@ private def loopBody : List Stmt :=
         (.name "max" { lineno := 19, colOffset := 15, endLineno := 19, endColOffset := 18 })
         #[.name "best" { lineno := 19, colOffset := 19, endLineno := 19, endColOffset := 23 },
           .name "s" { lineno := 19, colOffset := 25, endLineno := 19, endColOffset := 26 }]
+        #[]
         Option.none
         { lineno := 19, colOffset := 15, endLineno := 19, endColOffset := 27 })
       { lineno := 19, colOffset := 8, endLineno := 19, endColOffset := 27 },

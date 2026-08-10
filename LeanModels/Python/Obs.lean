@@ -457,132 +457,196 @@ theorem fuelMono (fuel : Nat) :
           simp only [evalExpr]
           exact Run.le_bind (ihE m st l k hk) fun st a =>
             ihC m st a ops.toList comparators.toList k hk
-        | call cf cargs cu _ =>
+        | call cf cargs ckw cu _ =>
           cases cu with
           | some reason => simp only [evalExpr]; exact Run.le_refl _
           | none =>
-            cases cf <;> try (simp only [evalExpr]; exact Run.le_refl _)
-            case «attribute» recv attr spa =>
-              -- receiver-first dispatch (H3): the receiver evaluates, then
-              -- `execAttrCall` forks on the pure plan (its own conjunct);
-              -- an ntuple VALUE receiver (H5) forks on `ntupleCallPlan` —
-              -- only the method arm recurses (args + `callIn`)
-              simp only [evalExpr]
-              refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
-              cases r <;>
-                first
-                | exact Run.le_refl _
-                | exact ihAttrC m st _ attr cargs.toList k hk
-                | skip
-              case ntuple tn fs xs =>
-                -- iota-reduce the receiver matcher, then fork on the plan
+            -- H6: unfold once, split on the keyword gate (the `cases`
+            -- substitutes the scrutinee in the goal), reduce the ite,
+            -- THEN fork on the callee shape
+            simp only [evalExpr]
+            cases hkw : ckw.isEmpty with
+            | false =>
+              -- ===== H6 keyword tier: positionals bind, keyword VALUES
+              -- bind, the pure merge lifts, the call recurses through
+              -- `callIn` (its own conjunct) =====
+              simp only [Bool.false_eq_true, if_false]
+              cases cf <;> try (dsimp only; exact Run.le_refl _)
+              case name fname _ =>
                 dsimp only
-                cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _
-                case instMethod qname =>
-                  exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
-                    Run.le_withLocals
-                      (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
-              case str sv =>
-                -- str METHOD dispatch (H5 strings): fork on the pure plan;
-                -- every in-tier arm is args + a fuel-independent worker
-                dsimp only
-                cases strCallPlan attr <;>
-                  first
-                  | exact Run.le_refl _
-                  | exact Run.le_bind (ihEs m st cargs.toList k hk)
-                      fun st vs => Run.le_refl _
-            case name fname _ =>
-              simp only [evalExpr]
-              cases Env.lookup st.locals fname with
-              | some v =>
-                cases v <;>
-                  first
-                  | exact Run.le_refl _
-                  | exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
-                      Run.le_refl _
-              | none =>
-                -- module globals (G1) → module function → builtins →
-                -- NameError/unsupported (the globals and the final fork are
-                -- fuel-independent, hence `le_refl`)
-                cases lookupG (moduleGlobals m).1 fname with
-                | some vv =>
-                  cases vv with
-                  | some v =>
-                    cases v <;>
-                      exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
+                cases Env.lookup st.locals fname with
+                | some v =>
+                  cases v <;>
+                    exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                      Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
                         Run.le_refl _
-                  | none => exact Run.le_refl _
                 | none =>
-                  -- findFunction (def/class collision → call) → class
-                  -- instantiation (guards, args, `__init__` through
-                  -- `callIn`) → len → sorted → max → min → abs → int →
-                  -- NameError/unsupported (each builtin: bind args, result
-                  -- fuel-independent)
-                  have hb : ∀ {β : Type} (g : FrameState → List RVal → Run FrameState β),
-                      (evalExprs m fuel st cargs.toList).bind g ⊑ʳ
-                      (evalExprs m k st cargs.toList).bind g :=
-                    fun g => Run.le_bind (ihEs m st cargs.toList k hk)
-                      fun st vs => Run.le_refl _
-                  refine Run.le_ite
-                    (Run.le_ite (Run.le_refl _)
-                      (Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
-                        Run.le_withLocals (ihCall m st.world fname vs.toArray k hk)))
-                    ?_
-                  cases findClass m fname with
-                  | some p =>
-                    obtain ⟨ci, c⟩ := p
-                    refine Run.le_ite (Run.le_refl _) ?_
-                    cases c.ntBase with
-                    | some nt =>
-                      -- value-like subclass construction (H5): guards,
-                      -- then args, then a fuel-independent value/arity fork
-                      refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-                        (Run.le_ite (Run.le_refl _) ?_))
-                      exact Run.le_bind (ihEs m st cargs.toList k hk)
-                        fun st vs => Run.le_refl _
-                    | none =>
+                  cases lookupG (moduleGlobals m).1 fname with
+                  | some vv =>
+                    cases vv with
+                    | some v =>
+                      cases v <;>
+                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun st _ =>
+                          Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
+                            Run.le_refl _
+                    | none => exact Run.le_refl _
+                  | none =>
+                    cases findFunction m fname with
+                    | some fdefn =>
+                      try dsimp only
                       refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
                       refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                      refine Run.le_ite ?_ (Run.le_refl _)
-                      refine Run.le_bind (Run.le_withLocals
-                        (ihCall m _ (fname ++ ".__init__") ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
-                        fun st'' r => ?_
-                      cases r <;> exact Run.le_refl _
-                  | none =>
-                    -- namedtuple construction binds the arguments, then a
-                    -- fuel-independent value/arity fork; the builtin chain
-                    -- is as before
-                    cases findNamedTuple m fname with
-                    | some nt => exact hb _
+                      refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
+                      refine Run.le_bind (Run.le_refl _) fun st full => ?_
+                      exact Run.le_withLocals (ihCall m st.world fname full k hk)
                     | none =>
-                      -- len, sorted, max, min, abs, int, enumerate, count
-                      -- (both ALLOCATE an iterator object), NEXT (binds the
-                      -- args, then steps the generator), ord, chr
-                      refine Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                        (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                          (Run.le_ite (hb _) (Run.le_ite (hb _)
-                            (Run.le_ite ?_ (Run.le_ite (hb _) (Run.le_ite (hb _)
-                              (Run.le_refl _)))))))))))
+                      try dsimp only
+                      exact Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                        (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                          (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                            (Run.le_refl _))))))
+              case «attribute» recv attr spa =>
+                dsimp only
+                refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
+                cases r <;> try exact Run.le_refl _
+                case ntuple tn fs xs =>
+                  dsimp only
+                  cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _
+                  case instMethod qname =>
+                    dsimp only
+                    cases findFunction m qname with
+                    | some fdefn =>
+                      try dsimp only
+                      refine Run.le_ite (Run.le_refl _) ?_
                       refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
-                      cases vs with
-                      | nil => exact Run.le_refl _
-                      | cons v rest =>
-                        cases v <;> try exact Run.le_refl _
-                        case ref ad =>
-                          cases rest with
-                          | nil =>
-                            refine Run.le_bind
-                              (Run.le_withLocals (ihStep m st.world ad k hk))
-                              fun st r => ?_
-                            cases r <;> exact Run.le_refl _
-                          | cons d rest' =>
-                            cases rest' with
+                      refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
+                      refine Run.le_bind (Run.le_refl _) fun st full => ?_
+                      exact Run.le_withLocals (ihCall m st.world qname full k hk)
+                    | none => exact Run.le_refl _
+            | true =>
+              simp only [eq_self_iff_true, if_true]
+              cases cf <;> try (dsimp only; exact Run.le_refl _)
+              case «attribute» recv attr spa =>
+                -- receiver-first dispatch (H3): the receiver evaluates, then
+                -- `execAttrCall` forks on the pure plan (its own conjunct);
+                -- an ntuple VALUE receiver (H5) forks on `ntupleCallPlan` —
+                -- only the method arm recurses (args + `callIn`)
+                dsimp only
+                refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
+                cases r <;>
+                  first
+                  | exact Run.le_refl _
+                  | exact ihAttrC m st _ attr cargs.toList k hk
+                  | skip
+                case ntuple tn fs xs =>
+                  -- iota-reduce the receiver matcher, then fork on the plan
+                  dsimp only
+                  cases ntupleCallPlan m tn fs attr <;> try exact Run.le_refl _
+                  case instMethod qname =>
+                    exact Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
+                      Run.le_withLocals
+                        (ihCall m st.world qname ((RVal.ntuple tn fs xs :: vs).toArray) k hk)
+                case str sv =>
+                  -- str METHOD dispatch (H5 strings): fork on the pure plan;
+                  -- every in-tier arm is args + a fuel-independent worker
+                  dsimp only
+                  cases strCallPlan attr <;>
+                    first
+                    | exact Run.le_refl _
+                    | exact Run.le_bind (ihEs m st cargs.toList k hk)
+                        fun st vs => Run.le_refl _
+              case name fname _ =>
+                dsimp only
+                cases Env.lookup st.locals fname with
+                | some v =>
+                  cases v <;>
+                    first
+                    | exact Run.le_refl _
+                    | exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
+                        Run.le_refl _
+                | none =>
+                  -- module globals (G1) → module function → builtins →
+                  -- NameError/unsupported (the globals and the final fork are
+                  -- fuel-independent, hence `le_refl`)
+                  cases lookupG (moduleGlobals m).1 fname with
+                  | some vv =>
+                    cases vv with
+                    | some v =>
+                      cases v <;>
+                        exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
+                          Run.le_refl _
+                    | none => exact Run.le_refl _
+                  | none =>
+                    -- findFunction (def/class collision → call) → class
+                    -- instantiation (guards, args, `__init__` through
+                    -- `callIn`) → len → sorted → max → min → abs → int →
+                    -- NameError/unsupported (each builtin: bind args, result
+                    -- fuel-independent)
+                    have hb : ∀ {β : Type} (g : FrameState → List RVal → Run FrameState β),
+                        (evalExprs m fuel st cargs.toList).bind g ⊑ʳ
+                        (evalExprs m k st cargs.toList).bind g :=
+                      fun g => Run.le_bind (ihEs m st cargs.toList k hk)
+                        fun st vs => Run.le_refl _
+                    refine Run.le_ite
+                      (Run.le_ite (Run.le_refl _)
+                        (Run.le_bind (ihEs m st cargs.toList k hk) fun st vs =>
+                          Run.le_withLocals (ihCall m st.world fname vs.toArray k hk)))
+                      ?_
+                    cases findClass m fname with
+                    | some p =>
+                      obtain ⟨ci, c⟩ := p
+                      refine Run.le_ite (Run.le_refl _) ?_
+                      cases c.ntBase with
+                      | some nt =>
+                        -- value-like subclass construction (H5): guards,
+                        -- then args, then a fuel-independent value/arity fork
+                        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+                          (Run.le_ite (Run.le_refl _) ?_))
+                        exact Run.le_bind (ihEs m st cargs.toList k hk)
+                          fun st vs => Run.le_refl _
+                      | none =>
+                        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                        refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                        refine Run.le_ite ?_ (Run.le_refl _)
+                        refine Run.le_bind (Run.le_withLocals
+                          (ihCall m _ (fname ++ ".__init__") ((RVal.ref st.world.heap.size :: vs).toArray) k hk))
+                          fun st'' r => ?_
+                        cases r <;> exact Run.le_refl _
+                    | none =>
+                      -- namedtuple construction binds the arguments, then a
+                      -- fuel-independent value/arity fork; the builtin chain
+                      -- is as before
+                      cases findNamedTuple m fname with
+                      | some nt => exact hb _
+                      | none =>
+                        -- len, sorted, max, min, abs, int, enumerate, count
+                        -- (both ALLOCATE an iterator object), NEXT (binds the
+                        -- args, then steps the generator), ord, chr
+                        refine Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
+                          (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
+                            (Run.le_ite (hb _) (Run.le_ite (hb _)
+                              (Run.le_ite ?_ (Run.le_ite (hb _) (Run.le_ite (hb _)
+                                (Run.le_refl _)))))))))))
+                        refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                        cases vs with
+                        | nil => exact Run.le_refl _
+                        | cons v rest =>
+                          cases v <;> try exact Run.le_refl _
+                          case ref ad =>
+                            cases rest with
                             | nil =>
                               refine Run.le_bind
                                 (Run.le_withLocals (ihStep m st.world ad k hk))
                                 fun st r => ?_
                               cases r <;> exact Run.le_refl _
-                            | cons _ _ => exact Run.le_refl _
+                            | cons d rest' =>
+                              cases rest' with
+                              | nil =>
+                                refine Run.le_bind
+                                  (Run.le_withLocals (ihStep m st.world ad k hk))
+                                  fun st r => ?_
+                                cases r <;> exact Run.le_refl _
+                              | cons _ _ => exact Run.le_refl _
         | genExp elt tgt it ifs _ =>
           simp only [evalExpr]; exact Run.le_refl _
         | list elts _ =>
@@ -1439,11 +1503,14 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [evalExpr]
         exact .bind (ihE st l hfree.1) fun st₁ a h₁ =>
           (ihC st₁ a ops.toList comparators.toList hfree.2).mono (wtrans st st₁ h₁)
-      | call cf cargs cu _ =>
+      | call cf cargs ckw cu _ =>
         cases cu with
         | some reason => simp only [evalExpr]; exact .unsupported
         | none =>
-          cases cf <;> try (simp only [evalExpr]; exact .unsupported)
+          -- H6: every `heapFree` call arm's FIRST conjunct pins
+          -- `ckw.isEmpty`, so the keyword gate reduces to the positional
+          -- path; in the catch-all arms both branches are loud
+          cases cf <;> try (simp only [evalExpr]; exact .ite .unsupported .unsupported)
           case «attribute» recv attr spa =>
             -- the method tier: the FRAGMENT admits exactly `.get` (a heap
             -- read) — hfree pins the attribute, which kills the mutating
@@ -1451,15 +1518,15 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- classes, and a heap-free module HAS no classes (hm), so the
             -- method branch is vacuous
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            have hattr : attr = "get" := by simpa [beq_iff_eq] using hfree.1.1
+            obtain ⟨⟨⟨hkw, hattr'⟩, hrecv⟩, hargsF⟩ := hfree
+            have hattr : attr = "get" := by simpa [beq_iff_eq] using hattr'
             subst hattr
-            have hrecv : recv.heapFree = true := hfree.1.2
-            simp only [evalExpr]
+            simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             refine .bind (ihE st recv hrecv) fun st₁ r h₁ => ?_
             cases r <;>
               first
               | exact .unsupported
-              | exact ((ihAttrC st₁ _ cargs.toList hfree.2).mono
+              | exact ((ihAttrC st₁ _ cargs.toList hargsF).mono
                   (wtrans st st₁ h₁))
               | skip
             case ntuple tn fs xs =>
@@ -1474,7 +1541,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            have hns : (fname != "sorted") = true := hfree.1.1.1.1
+            obtain ⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -1482,24 +1549,21 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- H4: `next` STEPS a generator and `enumerate`/`count`
             -- ALLOCATE an iterator object — the fragment excludes all
             -- three, the same syntactic carve-out as `sorted`
-            have hnn : (fname != "next") = true := hfree.1.1.1.2
             have hnx : (fname == "next") = false := by
               cases hbe : fname == "next"
               · rfl
               · rw [bne, hbe] at hnn; simp at hnn
-            have hne : (fname != "enumerate") = true := hfree.1.1.2
             have hex : (fname == "enumerate") = false := by
               cases hbe : fname == "enumerate"
               · rfl
               · rw [bne, hbe] at hne; simp at hne
-            have hnc : (fname != "count") = true := hfree.1.2
             have hcx : (fname == "count") = false := by
               cases hbe : fname == "count"
               · rfl
               · rw [bne, hbe] at hnc; simp at hnc
-            simp only [evalExpr]
+            simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
-              ihEs st cargs.toList hfree.2
+              ihEs st cargs.toList hflE
             cases Env.lookup st.locals fname with
             | some v =>
               cases v <;>

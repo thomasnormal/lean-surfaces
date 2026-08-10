@@ -1008,9 +1008,9 @@ def classify (s : Lean.Expr) : MetaM StmtKind := do
   | ``Stmt.ret | ``Stmt.brk | ``Stmt.cont => return .term
   | ``Stmt.assign => do
     let rhs ← whnfR (s.getArg! 1)
-    if rhs.isAppOfArity ``Expr.call 4 then
+    if rhs.isAppOfArity ``Expr.call 5 then
       let fn ← whnfR (rhs.getArg! 0)
-      let unsup ← whnfR (rhs.getArg! 2)
+      let unsup ← whnfR (rhs.getArg! 3)
       if fn.isAppOfArity ``Expr.name 2 && unsup.isAppOfArity ``Option.none 1 then
         return .ctrlCall
     return .plain
@@ -1609,7 +1609,11 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       | throwError "py_vcgen: callee name is not a literal"
     let spf := fnE.getArg! 1
     let argsArr := rhs.getArg! 1
-    let spc := rhs.getArg! 3
+    -- H6: keyword-argument calls are outside the py_vcgen tier — LOUD.
+    let (kwEs, _) ← parseListLit (← arrToList (rhs.getArg! 2))
+    unless kwEs.isEmpty do
+      throwError "py_vcgen: a call with keyword arguments is outside the v1 tier"
+    let spc := rhs.getArg! 4
     let (tgts, _) ← parseListLit (← arrToList tgtArr)
     let #[tgtE] := tgts
       | throwError "py_vcgen: chained assignment is outside the v0 tier"

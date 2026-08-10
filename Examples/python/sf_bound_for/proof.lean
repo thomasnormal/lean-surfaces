@@ -44,6 +44,7 @@ private def loopBody : List Stmt :=
         (.name "max" { lineno := 21, colOffset := 15, endLineno := 21, endColOffset := 18 })
         #[.name "best" { lineno := 21, colOffset := 19, endLineno := 21, endColOffset := 23 },
           .name "score" { lineno := 21, colOffset := 25, endLineno := 21, endColOffset := 30 }]
+        #[]
         Option.none
         { lineno := 21, colOffset := 15, endLineno := 21, endColOffset := 31 })
       { lineno := 21, colOffset := 8, endLineno := 21, endColOffset := 31 },

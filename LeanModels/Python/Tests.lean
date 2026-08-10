@@ -49,7 +49,7 @@ private def fnBareRet : FunctionDefn :=
 private def fnCountdown : FunctionDefn :=
   { name := "cd", params := #[⟨"n", sp, Option.none⟩], argsOk := true,
     body := #[.ifStmt (cmp1 (nm "n") .ltE (iL 0)) #[.ret (some (iL 0)) sp] #[] sp,
-              .ret (some (.call (nm "cd") #[bo (nm "n") .sub (iL 1)] Option.none sp)) sp],
+              .ret (some (.call (nm "cd") #[bo (nm "n") .sub (iL 1)] #[] Option.none sp)) sp],
     span := sp }
 /-- `def opt(x, d=10, h=None): if h is None: h = 0 \n return x + d + h` —
 F1 (int and None literal defaults) + F2 (`is None`) in one body. -/
@@ -257,7 +257,7 @@ between non-None values is implementation-defined → loud. -/
 #guard isUnsupported (ev (nm "len"))                          -- builtin as a value
 -- Local binding shadows the function table (shadowed value is not callable):
 #guard evIn M1 100 [("ident", .int 3)] (nm "ident") == .ok (.int 3)
-#guard isTypeError (evIn M1 100 [("ident", .int 3)] (.call (nm "ident") #[] Option.none sp))
+#guard isTypeError (evIn M1 100 [("ident", .int 3)] (.call (nm "ident") #[] #[] Option.none sp))
 
 /-! ## `Env.set`: replace in place, else append -/
 
@@ -284,12 +284,12 @@ private def L123 : Expr := .list #[iL 10, iL 20, iL 30] sp
 
 /-! ## `len` -/
 
-#guard ev (.call (nm "len") #[sL "abc"] Option.none sp) == .ok (.int 3)
-#guard ev (.call (nm "len") #[.list #[] sp] Option.none sp) == .ok (.int 0)
-#guard ev (.call (nm "len") #[.tuple #[iL 1, iL 2] sp] Option.none sp) == .ok (.int 2)
-#guard ev (.call (nm "len") #[sL "hé"] Option.none sp) == .ok (.int 2)
-#guard isTypeError (ev (.call (nm "len") #[iL 5] Option.none sp))
-#guard isTypeError (ev (.call (nm "len") #[sL "a", sL "b"] Option.none sp))
+#guard ev (.call (nm "len") #[sL "abc"] #[] Option.none sp) == .ok (.int 3)
+#guard ev (.call (nm "len") #[.list #[] sp] #[] Option.none sp) == .ok (.int 0)
+#guard ev (.call (nm "len") #[.tuple #[iL 1, iL 2] sp] #[] Option.none sp) == .ok (.int 2)
+#guard ev (.call (nm "len") #[sL "hé"] #[] Option.none sp) == .ok (.int 2)
+#guard isTypeError (ev (.call (nm "len") #[iL 5] #[] Option.none sp))
+#guard isTypeError (ev (.call (nm "len") #[sL "a", sL "b"] #[] Option.none sp))
 
 /-! ## `sorted` (v0: NEW ascending list from an all-int list argument;
 CPython-3.9.25-checked ground truth — the same probe table is pinned as
@@ -297,7 +297,7 @@ CPython-3.9.25-checked ground truth — the same probe table is pinned as
 list is returned by construction (pure value semantics), so the CPython
 `sorted(xs) is not xs` probe has no v0 counterpart to test. -/
 
-private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Option.none sp
+private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args #[] Option.none sp
 
 #guard evF (sortedC #[.list #[iL 5, iL 1, iL 3] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
 #guard evF (sortedC #[.list #[iL 1, iL 3, iL 5] sp]) == .ok (.list #[.int 1, .int 3, .int 5])
@@ -334,7 +334,7 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 -- Builtin as a value, and `key=`/`reverse=` (keyword-only ⇒ the extractor
 -- ships `call_unsupported: "keywords"`, refused before argument evaluation):
 #guard isUnsupported (ev (nm "sorted"))
-#guard isUnsupported (ev (.call (nm "sorted") #[.list #[] sp] (some "keywords") sp))
+#guard isUnsupported (ev (.call (nm "sorted") #[.list #[] sp] #[] (some "keywords") sp))
 -- Argument errors propagate before the sort happens (evaluation order):
 #guard ev (sortedC #[boom]) == .exn .zeroDivisionError
 -- A module-level `def sorted` SHADOWS the builtin (findFunction first):
@@ -354,17 +354,17 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args Optio
 #guard ev (bo boom .add (nm "zzz")) == .exn .zeroDivisionError    -- left first
 #guard ev (bo (nm "zzz") .add boom) == .exn (.nameError "zzz")
 -- Callee name resolves before arguments are evaluated (CPython order):
-#guard ev (.call (nm "zzz") #[boom] Option.none sp) == .exn (.nameError "zzz")
+#guard ev (.call (nm "zzz") #[boom] #[] Option.none sp) == .exn (.nameError "zzz")
 -- Arguments are evaluated before the call happens:
-#guard evIn M1 100 [] (.call (nm "ident") #[boom] Option.none sp) == .exn .zeroDivisionError
+#guard evIn M1 100 [] (.call (nm "ident") #[boom] #[] Option.none sp) == .exn .zeroDivisionError
 -- List/tuple literals evaluate elements left to right:
 #guard evF (.list #[iL 1, bo (iL 1) .add (iL 1)] sp) == .ok (.list #[.int 1, .int 2])
 #guard ev (.tuple #[boom, nm "zzz"] sp) == .exn .zeroDivisionError
 
 /-! ## Calls: keywords/starargs flag, non-name callee, arity, argsOk -/
 
-#guard isUnsupported (evIn M1 100 [] (.call (nm "ident") #[iL 1] (some "keywords") sp))
-#guard isUnsupported (ev (.call (iL 5) #[] Option.none sp))
+#guard isUnsupported (evIn M1 100 [] (.call (nm "ident") #[iL 1] #[] (some "keywords") sp))
+#guard isUnsupported (ev (.call (iL 5) #[] #[] Option.none sp))
 #guard callFunction M1 "ident" #[.int 7] 100 == .ok (.int 7)
 #guard isTypeError (callFunction M1 "ident" #[] 100)               -- arity mismatch
 #guard isTypeError (callFunction M1 "ident" #[.int 1, .int 2] 100)

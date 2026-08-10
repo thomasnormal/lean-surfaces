@@ -52,7 +52,7 @@ private def factFn : FunctionDefn where
       #[.ret (some (.constant (.int 1) sp)) sp] #[] sp,
     .assign #[.name "r" sp]
       (.call (.name "fact" sp)
-        #[.binOp (.name "n" sp) .sub (.constant (.int 1) sp) sp] Option.none sp) sp,
+        #[.binOp (.name "n" sp) .sub (.constant (.int 1) sp) sp] #[] Option.none sp) sp,
     .ret (some (.binOp (.name "n" sp) .mult (.name "r" sp) sp)) sp]
   span := sp
 
@@ -64,7 +64,7 @@ private def factPlusOneFn : FunctionDefn where
   argsOk := true
   body := #[
     .assign #[.name "y" sp]
-      (.call (.name "fact" sp) #[.name "n" sp] Option.none sp) sp,
+      (.call (.name "fact" sp) #[.name "n" sp] #[] Option.none sp) sp,
     .ret (some (.binOp (.name "y" sp) .add (.constant (.int 1) sp) sp)) sp]
   span := sp
 
@@ -238,8 +238,8 @@ private def sortedLenFn : FunctionDefn where
   argsOk := true
   body := #[
     .assign #[.name "xs" sp]
-      (.call (.name "sorted" sp) #[.name "data" sp] Option.none sp) sp,
-    .ret (some (.call (.name "len" sp) #[.name "xs" sp] Option.none sp)) sp]
+      (.call (.name "sorted" sp) #[.name "data" sp] #[] Option.none sp) sp,
+    .ret (some (.call (.name "len" sp) #[.name "xs" sp] #[] Option.none sp)) sp]
   span := sp
 
 private def sortedLenM : Module := { functions := #[sortedLenFn], topLevel := #[] }

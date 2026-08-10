@@ -92,7 +92,9 @@ mutual
     | .unaryOp _ e _ => e.allNames
     | .boolOp _ vs _ => Expr.allNamesList vs.toList
     | .compare l _ cs _ => l.allNames ++ Expr.allNamesList cs.toList
-    | .call f args _ _ => f.allNames ++ Expr.allNamesList args.toList
+    | .call f args kwargs _ _ =>
+      f.allNames ++ Expr.allNamesList args.toList
+        ++ Expr.allNamesKw kwargs.toList
     | .list es _ => Expr.allNamesList es.toList
     | .tuple es _ => Expr.allNamesList es.toList
     | .subscript v i _ => v.allNames ++ i.allNames
@@ -108,6 +110,12 @@ mutual
   def Expr.allNamesList : List Expr → List String
     | [] => []
     | e :: es => e.allNames ++ Expr.allNamesList es
+
+  /-- `Expr.allNames` over keyword-argument values (H6). -/
+  def Expr.allNamesKw : List (String × Expr) → List String
+    | [] => []
+    | (_, e) :: rest => e.allNames ++ Expr.allNamesKw rest
+
 end
 
 mutual
@@ -249,7 +257,7 @@ mutual
       | fuel + 1 =>
         match ss with
         | [] => .ok st .next
-        | .exprStmt (.call (.name "print" _) args Option.none _) _ :: rest =>
+        | .exprStmt (.call (.name "print" _) args #[] Option.none _) _ :: rest =>
           if printUnshadowed m then
             Run.bind (evalExprs m fuel st args.toList) fun st vs =>
             match strOfArgs vs with

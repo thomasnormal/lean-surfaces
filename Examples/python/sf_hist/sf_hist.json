@@ -112,6 +112,7 @@
                   "id": "score"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -153,6 +154,7 @@
                   "id": "hist"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -370,6 +372,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -444,6 +447,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -494,6 +498,7 @@
                       "id": "hist"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 {
@@ -526,6 +531,7 @@
                       "id": "hist"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -781,6 +787,7 @@
                       "id": "hist"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]

@@ -273,7 +273,7 @@ theorem EvalsTo.call {m : Module} {st : FrameState} {fname : String}
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl)
     (hv : Val.listFree v = true := by rfl) :
-    EvalsTo m st (.call (.name fname sp) argEs Option.none sp') (RVal.thaw v) := by
+    EvalsTo m st (.call (.name fname sp) argEs #[] Option.none sp') (RVal.thaw v) := by
   obtain ⟨w, locals⟩ := st
   simp only at hworld hlocal hargs
   subst hworld
@@ -311,7 +311,7 @@ theorem PyStmtTriple.call {m : Module} {P : FrameState → Prop} {Q : PyPost}
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl) :
     PyStmtTriple m P
-      (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa)
+      (.assign #[.name x spx] (.call (.name fname spf) argEs #[] Option.none spc) spa)
       Q :=
   PyStmtTriple.assignName fun st hP =>
     let ⟨hlocal, hworld, _args, v, hvs, hlf, hc, hQ⟩ := h st hP
@@ -334,7 +334,7 @@ theorem PyTriple.call {m : Module} {P R : FrameState → Prop} {Q : PyPost}
     (hnt : findNamedTuple m fname = Option.none := by rfl)
     (hm : m.heapFree = true := by rfl) :
     PyTriple m P
-      (.assign #[.name x spx] (.call (.name fname spf) argEs Option.none spc) spa
+      (.assign #[.name x spx] (.call (.name fname spf) argEs #[] Option.none spc) spa
         :: rest) Q :=
   PyTriple.seq (PyStmtTriple.call h hglob hnt hm) hrest
 

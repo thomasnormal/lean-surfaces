@@ -360,6 +360,7 @@
                 "id": "bump_table"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -390,6 +391,7 @@
                 "id": "bump_table"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -783,6 +785,7 @@
                   "id": "n"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -857,6 +860,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -898,6 +902,7 @@
                   "id": "xs"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -1140,6 +1145,7 @@
                   "id": "v"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2042,6 +2048,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2116,6 +2123,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2168,6 +2176,7 @@
                 "attr": "pop"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2234,6 +2243,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2304,6 +2314,7 @@
                       "id": "xs"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -2392,6 +2403,7 @@
                 "attr": "pop"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -3729,6 +3741,7 @@
                           }
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   }
@@ -3893,6 +3906,7 @@
                   "id": "xs"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4147,6 +4161,7 @@
                       "id": "xs"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 {
@@ -4179,6 +4194,7 @@
                       "id": "xs"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -4719,6 +4735,7 @@
                   "id": "xs"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5102,6 +5119,7 @@
                   "id": "xs"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5256,6 +5274,7 @@
                   "id": "xs"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5352,6 +5371,7 @@
                   "id": "ys"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5597,6 +5617,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5669,6 +5690,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 {
@@ -6067,6 +6089,7 @@
                     "attr": "pop"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }

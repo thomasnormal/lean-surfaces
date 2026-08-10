@@ -109,6 +109,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -178,6 +179,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -395,6 +397,7 @@
                       "attr": "kp"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -556,6 +559,7 @@
                         "attr": "swapcase"
                       },
                       "args": [],
+                      "keywords": [],
                       "call_unsupported": null
                     },
                     {
@@ -863,6 +867,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -915,6 +920,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -1023,6 +1029,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1213,6 +1220,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1444,6 +1452,7 @@
                           }
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ]
@@ -1523,6 +1532,7 @@
                           }
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ]
@@ -1624,6 +1634,7 @@
                   "id": "hi"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1781,6 +1792,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -1978,6 +1990,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2172,6 +2185,7 @@
                       "id": "pos"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -2374,6 +2388,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2568,6 +2583,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2720,9 +2736,11 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -2875,9 +2893,11 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -3071,6 +3091,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   {
@@ -3315,6 +3336,7 @@
                       "id": "tp"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -3427,6 +3449,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -3668,6 +3691,7 @@
                   "id": "hi"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             },
             "body": [
@@ -3851,6 +3875,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4004,9 +4029,11 @@
                           "id": "j"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -4087,6 +4114,7 @@
                   "id": "i"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4219,6 +4247,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4358,6 +4387,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4398,6 +4428,7 @@
                 "attr": "_asdict"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -4508,6 +4539,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4728,6 +4760,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -4768,6 +4801,7 @@
                 "attr": "mirror"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -4959,6 +4993,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5179,6 +5214,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5231,6 +5267,7 @@
                 "attr": "mirror"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5758,6 +5795,7 @@
                   "id": "kp"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -5810,6 +5848,7 @@
                 "attr": "rotate"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -6197,6 +6236,7 @@
                   "id": "kp"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -6263,6 +6303,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },

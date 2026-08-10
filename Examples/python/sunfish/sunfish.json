@@ -7341,6 +7341,7 @@
             "attr": "items"
           },
           "args": [],
+          "keywords": [],
           "call_unsupported": null
         },
         "body": [
@@ -7570,6 +7571,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "target": {
@@ -7615,6 +7617,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "ifs": []
@@ -7630,6 +7633,7 @@
                   "elts": []
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -8221,6 +8225,7 @@
                                         }
                                       }
                                     ],
+                                    "keywords": [],
                                     "call_unsupported": null
                                   },
                                   "op": "Add",
@@ -8300,6 +8305,7 @@
                                         }
                                       }
                                     ],
+                                    "keywords": [],
                                     "call_unsupported": null
                                   }
                                 }
@@ -8348,11 +8354,13 @@
                                   }
                                 }
                               ],
+                              "keywords": [],
                               "call_unsupported": null
                             },
                             "ifs": []
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       }
                     },
@@ -8425,6 +8433,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "ifs": []
@@ -8440,6 +8449,7 @@
                   "elts": []
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -10389,7 +10399,215 @@
             "id": "dict"
           },
           "args": [],
-          "call_unsupported": "keywords"
+          "keywords": [
+            {
+              "arg": "QS",
+              "value": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 159,
+                  "col_offset": 9,
+                  "end_lineno": 159,
+                  "end_col_offset": 17
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 159,
+                      "col_offset": 10,
+                      "end_lineno": 159,
+                      "end_col_offset": 11
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 159,
+                      "col_offset": 13,
+                      "end_lineno": 159,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "300"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "arg": "QS_A",
+              "value": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 160,
+                  "col_offset": 11,
+                  "end_lineno": 160,
+                  "end_col_offset": 19
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 160,
+                      "col_offset": 12,
+                      "end_lineno": 160,
+                      "end_col_offset": 13
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 160,
+                      "col_offset": 15,
+                      "end_lineno": 160,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "300"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "arg": "EVAL_ROUGHNESS",
+              "value": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 161,
+                  "col_offset": 21,
+                  "end_lineno": 161,
+                  "end_col_offset": 28
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 161,
+                      "col_offset": 22,
+                      "end_lineno": 161,
+                      "end_col_offset": 23
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "0"
+                    }
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 161,
+                      "col_offset": 25,
+                      "end_lineno": 161,
+                      "end_col_offset": 27
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "50"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "arg": "TABLE_SIZE",
+              "value": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 162,
+                  "col_offset": 17,
+                  "end_lineno": 162,
+                  "end_col_offset": 31
+                },
+                "elts": [
+                  {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 162,
+                      "col_offset": 18,
+                      "end_lineno": 162,
+                      "end_col_offset": 23
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 162,
+                        "col_offset": 18,
+                        "end_lineno": 162,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "10"
+                      }
+                    },
+                    "op": "Pow",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 162,
+                        "col_offset": 22,
+                        "end_lineno": 162,
+                        "end_col_offset": 23
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "4"
+                      }
+                    }
+                  },
+                  {
+                    "kind": "BinOp",
+                    "span": {
+                      "lineno": 162,
+                      "col_offset": 25,
+                      "end_lineno": 162,
+                      "end_col_offset": 30
+                    },
+                    "left": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 162,
+                        "col_offset": 25,
+                        "end_lineno": 162,
+                        "end_col_offset": 27
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "10"
+                      }
+                    },
+                    "op": "Pow",
+                    "right": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 162,
+                        "col_offset": 29,
+                        "end_lineno": 162,
+                        "end_col_offset": 30
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "8"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "call_unsupported": null
         }
       },
       {
@@ -10458,6 +10676,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -10596,6 +10815,7 @@
                       "attr": "board"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 "body": [
@@ -10783,6 +11003,7 @@
                               "id": "d"
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         },
                         "body": [
@@ -11804,6 +12025,7 @@
                                               "id": "prom"
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       }
@@ -11886,6 +12108,7 @@
                                   }
                                 }
                               ],
+                              "keywords": [],
                               "call_unsupported": null
                             }
                           },
@@ -12280,6 +12503,7 @@
                                       }
                                     }
                                   ],
+                                  "keywords": [],
                                   "call_unsupported": null
                                 }
                               }
@@ -12570,6 +12794,7 @@
                                       }
                                     }
                                   ],
+                                  "keywords": [],
                                   "call_unsupported": null
                                 }
                               }
@@ -12744,6 +12969,7 @@
                         "attr": "swapcase"
                       },
                       "args": [],
+                      "keywords": [],
                       "call_unsupported": null
                     },
                     {
@@ -13051,6 +13277,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -13582,6 +13809,7 @@
                         "id": "move"
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   }
                 }
@@ -13675,6 +13903,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -13751,6 +13980,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -14416,6 +14646,7 @@
                             }
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ops": [
@@ -14638,6 +14869,7 @@
                               }
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       },
@@ -14714,6 +14946,7 @@
                               }
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       }
@@ -14893,6 +15126,7 @@
                               "id": "prom"
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       }
@@ -15185,6 +15419,7 @@
                               }
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       }
@@ -15298,11 +15533,13 @@
                           "id": "kp"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     },
                     "attr": "rotate"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -15697,6 +15934,7 @@
                     "attr": "islower"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 "body": [
@@ -15774,6 +16012,7 @@
                             "attr": "upper"
                           },
                           "args": [],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       },
@@ -15891,6 +16130,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "ops": [
@@ -16123,6 +16363,7 @@
                             }
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ops": [
@@ -16943,6 +17184,7 @@
                           "attr": "gen_moves"
                         },
                         "args": [],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ifs": [
@@ -17110,6 +17352,7 @@
                                     }
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               },
                               "ops": [
@@ -17148,6 +17391,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               }
@@ -17200,6 +17444,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -17291,6 +17536,7 @@
               }
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -17459,6 +17705,7 @@
                         "id": "set"
                       },
                       "args": [],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ]
@@ -17863,6 +18110,7 @@
                           "attr": "time"
                         },
                         "args": [],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ops": [
@@ -17971,6 +18219,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -18238,9 +18487,11 @@
                               "id": "MATE_UPPER"
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   },
@@ -18718,6 +18969,7 @@
                           "id": "pos"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   },
@@ -18844,6 +19096,7 @@
                                 "attr": "score"
                               }
                             ],
+                            "keywords": [],
                             "call_unsupported": null
                           },
                           "ops": [
@@ -18962,6 +19215,7 @@
                               "ifs": []
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       ]
@@ -19063,7 +19317,25 @@
                                       "attr": "rotate"
                                     },
                                     "args": [],
-                                    "call_unsupported": "keywords"
+                                    "keywords": [
+                                      {
+                                        "arg": "nullmove",
+                                        "value": {
+                                          "kind": "Constant",
+                                          "span": {
+                                            "lineno": 388,
+                                            "col_offset": 60,
+                                            "end_lineno": 388,
+                                            "end_col_offset": 64
+                                          },
+                                          "value": {
+                                            "type": "bool",
+                                            "value": true
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "call_unsupported": null
                                   },
                                   {
                                     "kind": "BinOp",
@@ -19132,6 +19404,7 @@
                                     }
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               }
                             }
@@ -19411,7 +19684,25 @@
                               }
                             }
                           ],
-                          "call_unsupported": "keywords"
+                          "keywords": [
+                            {
+                              "arg": "root",
+                              "value": {
+                                "kind": "Constant",
+                                "span": {
+                                  "lineno": 401,
+                                  "col_offset": 55,
+                                  "end_lineno": 401,
+                                  "end_col_offset": 59
+                                },
+                                "value": {
+                                  "type": "bool",
+                                  "value": true
+                                }
+                              }
+                            }
+                          ],
+                          "call_unsupported": null
                         }
                       },
                       {
@@ -19484,6 +19775,7 @@
                               "id": "pos"
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       }
@@ -19566,6 +19858,7 @@
                                 "id": "killer"
                               }
                             ],
+                            "keywords": [],
                             "call_unsupported": null
                           },
                           "ops": [
@@ -19692,6 +19985,7 @@
                                         "id": "killer"
                                       }
                                     ],
+                                    "keywords": [],
                                     "call_unsupported": null
                                   },
                                   {
@@ -19761,6 +20055,7 @@
                                     }
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               }
                             }
@@ -19885,6 +20180,7 @@
                                     "id": "m"
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               },
                               {
@@ -19938,12 +20234,31 @@
                               "attr": "gen_moves"
                             },
                             "args": [],
+                            "keywords": [],
                             "call_unsupported": null
                           },
                           "ifs": []
                         }
                       ],
-                      "call_unsupported": "keywords"
+                      "keywords": [
+                        {
+                          "arg": "reverse",
+                          "value": {
+                            "kind": "Constant",
+                            "span": {
+                              "lineno": 412,
+                              "col_offset": 90,
+                              "end_lineno": 412,
+                              "end_col_offset": 94
+                            },
+                            "value": {
+                              "type": "bool",
+                              "value": true
+                            }
+                          }
+                        }
+                      ],
+                      "call_unsupported": null
                     },
                     "body": [
                       {
@@ -20386,6 +20701,7 @@
                                         "id": "move"
                                       }
                                     ],
+                                    "keywords": [],
                                     "call_unsupported": null
                                   },
                                   {
@@ -20455,6 +20771,7 @@
                                     }
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               }
                             }
@@ -20611,6 +20928,7 @@
                     "id": "moves"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 "body": [
@@ -20785,6 +21103,7 @@
                                   "id": "pos"
                                 }
                               ],
+                              "keywords": [],
                               "call_unsupported": null
                             },
                             {
@@ -20816,6 +21135,7 @@
                                 "attr": "king_capture"
                               },
                               "args": [],
+                              "keywords": [],
                               "call_unsupported": null
                             }
                           ]
@@ -20897,6 +21217,7 @@
                                     "id": "king"
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               },
                               "ops": [
@@ -21236,6 +21557,7 @@
                                                           "id": "m"
                                                         }
                                                       ],
+                                                      "keywords": [],
                                                       "call_unsupported": null
                                                     },
                                                     {
@@ -21262,6 +21584,7 @@
                                                       }
                                                     }
                                                   ],
+                                                  "keywords": [],
                                                   "call_unsupported": null
                                                 },
                                                 "ops": [
@@ -21319,11 +21642,13 @@
                                                   "attr": "gen_moves"
                                                 },
                                                 "args": [],
+                                                "keywords": [],
                                                 "call_unsupported": null
                                               },
                                               "ifs": []
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       ]
@@ -21497,7 +21822,25 @@
                                               "attr": "rotate"
                                             },
                                             "args": [],
-                                            "call_unsupported": "keywords"
+                                            "keywords": [
+                                              {
+                                                "arg": "nullmove",
+                                                "value": {
+                                                  "kind": "Constant",
+                                                  "span": {
+                                                    "lineno": 486,
+                                                    "col_offset": 66,
+                                                    "end_lineno": 486,
+                                                    "end_col_offset": 70
+                                                  },
+                                                  "value": {
+                                                    "type": "bool",
+                                                    "value": true
+                                                  }
+                                                }
+                                              }
+                                            ],
+                                            "call_unsupported": null
                                           },
                                           {
                                             "kind": "BinOp",
@@ -21566,6 +21909,7 @@
                                             }
                                           }
                                         ],
+                                        "keywords": [],
                                         "call_unsupported": null
                                       },
                                       "ops": [
@@ -21721,6 +22065,7 @@
                           "id": "score"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   },
@@ -22063,6 +22408,7 @@
                                     "attr": "tp_move"
                                   }
                                 ],
+                                "keywords": [],
                                 "call_unsupported": null
                               },
                               "ops": [
@@ -22328,6 +22674,7 @@
                                           "id": "m"
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     },
                                     "ops": [
@@ -22425,6 +22772,7 @@
                                           "id": "m"
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     },
                                     {
@@ -22451,6 +22799,7 @@
                                       }
                                     }
                                   ],
+                                  "keywords": [],
                                   "call_unsupported": null
                                 },
                                 "ops": [
@@ -22510,11 +22859,13 @@
                               "attr": "gen_moves"
                             },
                             "args": [],
+                            "keywords": [],
                             "call_unsupported": null
                           },
                           "ifs": []
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ]
@@ -22593,11 +22944,30 @@
                               "attr": "rotate"
                             },
                             "args": [],
-                            "call_unsupported": "keywords"
+                            "keywords": [
+                              {
+                                "arg": "nullmove",
+                                "value": {
+                                  "kind": "Constant",
+                                  "span": {
+                                    "lineno": 524,
+                                    "col_offset": 54,
+                                    "end_lineno": 524,
+                                    "end_col_offset": 58
+                                  },
+                                  "value": {
+                                    "type": "bool",
+                                    "value": true
+                                  }
+                                }
+                              }
+                            ],
+                            "call_unsupported": null
                           },
                           "attr": "king_capture"
                         },
                         "args": [],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "body": {
@@ -22829,6 +23199,7 @@
                             "attr": "upper"
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "orelse": {
@@ -22881,6 +23252,7 @@
                             "id": "best"
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       }
                     }
@@ -22944,6 +23316,7 @@
                         "attr": "tp_score"
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "ops": [
@@ -23165,6 +23538,7 @@
                           "id": "history"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   ]
@@ -23217,6 +23591,7 @@
                     "attr": "clear"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -23377,6 +23752,7 @@
                                 "attr": "isupper"
                               },
                               "args": [],
+                              "keywords": [],
                               "call_unsupported": null
                             },
                             "target": {
@@ -23412,6 +23788,7 @@
                             "ifs": []
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ops": [
@@ -23497,6 +23874,7 @@
                                 "attr": "islower"
                               },
                               "args": [],
+                              "keywords": [],
                               "call_unsupported": null
                             },
                             "target": {
@@ -23532,6 +23910,7 @@
                             "ifs": []
                           }
                         ],
+                        "keywords": [],
                         "call_unsupported": null
                       },
                       "ops": [
@@ -23736,6 +24115,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 "body": [
@@ -23841,6 +24221,7 @@
                               }
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         },
                         {
@@ -23854,6 +24235,7 @@
                           "id": "MATE_LOWER"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   },
@@ -24083,7 +24465,25 @@
                               "id": "depth"
                             }
                           ],
-                          "call_unsupported": "keywords"
+                          "keywords": [
+                            {
+                              "arg": "root",
+                              "value": {
+                                "kind": "Constant",
+                                "span": {
+                                  "lineno": 568,
+                                  "col_offset": 59,
+                                  "end_lineno": 568,
+                                  "end_col_offset": 63
+                                },
+                                "value": {
+                                  "type": "bool",
+                                  "value": true
+                                }
+                              }
+                            }
+                          ],
+                          "call_unsupported": null
                         }
                       },
                       {
@@ -24337,6 +24737,7 @@
                                   "id": "pos"
                                 }
                               ],
+                              "keywords": [],
                               "call_unsupported": null
                             }
                           ]
@@ -24568,6 +24969,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   }
                 },
@@ -24605,6 +25007,7 @@
                       }
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -24691,6 +25094,7 @@
                         }
                       }
                     ],
+                    "keywords": [],
                     "call_unsupported": null
                   },
                   "op": "Sub",
@@ -24866,10 +25270,12 @@
                           }
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   }
                 ],
+                "keywords": [],
                 "call_unsupported": null
               },
               "op": "Add",
@@ -24969,6 +25375,7 @@
                     }
                   }
                 ],
+                "keywords": [],
                 "call_unsupported": null
               }
             }
@@ -25147,6 +25554,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           ]
@@ -25215,6 +25623,7 @@
                 "id": "Searcher"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -25295,11 +25704,13 @@
                         "id": "input"
                       },
                       "args": [],
+                      "keywords": [],
                       "call_unsupported": null
                     },
                     "attr": "split"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -25422,6 +25833,7 @@
                           "id": "version"
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   },
@@ -25466,6 +25878,7 @@
                           }
                         }
                       ],
+                      "keywords": [],
                       "call_unsupported": null
                     }
                   }
@@ -25580,6 +25993,7 @@
                               }
                             }
                           ],
+                          "keywords": [],
                           "call_unsupported": null
                         }
                       }
@@ -25858,6 +26272,7 @@
                                       }
                                     }
                                   ],
+                                  "keywords": [],
                                   "call_unsupported": null
                                 },
                                 "body": [
@@ -25973,6 +26388,7 @@
                                               }
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         },
                                         {
@@ -26040,6 +26456,7 @@
                                               }
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         },
                                         {
@@ -26093,6 +26510,7 @@
                                             "attr": "upper"
                                           },
                                           "args": [],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       ]
@@ -26437,12 +26855,15 @@
                                                   "id": "prom"
                                                 }
                                               ],
+                                              "keywords": [],
                                               "call_unsupported": null
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     }
                                   }
@@ -26697,12 +27118,15 @@
                                                   }
                                                 }
                                               ],
+                                              "keywords": [],
                                               "call_unsupported": null
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     }
                                   },
@@ -26793,6 +27217,7 @@
                                                 "id": "hist"
                                               }
                                             ],
+                                            "keywords": [],
                                             "call_unsupported": null
                                           },
                                           "op": "Mod",
@@ -26957,6 +27382,7 @@
                                               }
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         },
                                         {
@@ -27035,6 +27461,7 @@
                                               }
                                             }
                                           ],
+                                          "keywords": [],
                                           "call_unsupported": null
                                         }
                                       ]
@@ -27145,6 +27572,7 @@
                                           }
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     }
                                   },
@@ -27229,6 +27657,7 @@
                                         "attr": "time"
                                       },
                                       "args": [],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     }
                                   },
@@ -27364,6 +27793,7 @@
                                           "id": "hist"
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     },
                                     "body": [
@@ -27557,6 +27987,7 @@
                                                       "id": "hist"
                                                     }
                                                   ],
+                                                  "keywords": [],
                                                   "call_unsupported": null
                                                 },
                                                 "op": "Mod",
@@ -27782,6 +28213,7 @@
                                                       "id": "i"
                                                     }
                                                   ],
+                                                  "keywords": [],
                                                   "call_unsupported": null
                                                 },
                                                 "op": "Add",
@@ -27815,6 +28247,7 @@
                                                       "id": "j"
                                                     }
                                                   ],
+                                                  "keywords": [],
                                                   "call_unsupported": null
                                                 }
                                               },
@@ -27858,6 +28291,7 @@
                                                   "attr": "lower"
                                                 },
                                                 "args": [],
+                                                "keywords": [],
                                                 "call_unsupported": null
                                               }
                                             }
@@ -27959,6 +28393,7 @@
                                                   "id": "move_str"
                                                 }
                                               ],
+                                              "keywords": [],
                                               "call_unsupported": null
                                             }
                                           }
@@ -28038,6 +28473,7 @@
                                                     "attr": "time"
                                                   },
                                                   "args": [],
+                                                  "keywords": [],
                                                   "call_unsupported": null
                                                 },
                                                 "op": "Sub",
@@ -28183,6 +28619,7 @@
                                           ]
                                         }
                                       ],
+                                      "keywords": [],
                                       "call_unsupported": null
                                     }
                                   }
@@ -28275,6 +28712,7 @@
                 "id": "main"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           }

@@ -235,5 +235,21 @@
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_lazy", "args": [[{"t": "str", "v": "abcdef"}, {"t": "str", "v": "c"}], [{"t": "str", "v": "abcdef"}, {"t": "str", "v": "z"}], [{"t": "str", "v": ""}, {"t": "str", "v": "a"}]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_ray", "args": [[2, 3, 10], [0, 1, 4], [5, -2, 4]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_default", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_of_int", "args": [[3]], "expect": "match"}
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_of_int", "args": [[3]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_plain", "args": [[1], [7], [0]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_all", "args": [[3], [-2]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_swap", "args": [[4], [0]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "base", "args": [[5], [5, 1], [5, 1, 0]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_order", "args": [[0], [1]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_pos_order", "args": [[0], [2]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_unexpected", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_multiple", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_missing", "args": [[5]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw", "args": [[2], [-1]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_default", "args": [[2], [0]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "tag_kw", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "shadow_kw", "args": [[7]], "expect": "match"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "ntuple_kw", "args": [[4]], "expect": "unsupported"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "builtin_kw", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "sorted_kw", "args": [[5]], "expect": "unsupported"}
 ]

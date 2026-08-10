@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/bench_heapq_sift/bench_heapq_sift.py",
   "source_sha256": "0ca9e5092dbe9518297351cffba189ba5959a4d148b1e6344017225ab642434a",
@@ -530,6 +530,7 @@
                   "id": "heap"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1247,6 +1248,7 @@
                   "id": "pos"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }

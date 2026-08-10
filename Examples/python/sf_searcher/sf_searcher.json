@@ -436,6 +436,7 @@
                       ]
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               },
@@ -940,6 +941,7 @@
                 "id": "Searcher"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1013,6 +1015,7 @@
                   "id": "gamma"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1086,6 +1089,7 @@
                   "id": "gamma"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1155,6 +1159,7 @@
                     "attr": "visited"
                   },
                   "args": [],
+                  "keywords": [],
                   "call_unsupported": null
                 },
                 {
@@ -1197,6 +1202,7 @@
                       "attr": "tp_score"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -1284,6 +1290,7 @@
                 "id": "Searcher"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1357,6 +1364,7 @@
                   "id": "gamma"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1430,6 +1438,7 @@
                   "id": "gamma"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1530,6 +1539,7 @@
                       "attr": "tp_score"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]
@@ -1608,6 +1618,7 @@
                 "id": "Searcher"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1650,6 +1661,7 @@
                 "id": "Searcher"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1723,6 +1735,7 @@
                   "id": "gamma"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1833,6 +1846,7 @@
                       "attr": "tp_score"
                     }
                   ],
+                  "keywords": [],
                   "call_unsupported": null
                 }
               ]

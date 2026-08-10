@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/bench_statistics/bench_statistics.py",
   "source_sha256": "285509e5348193604d7f22e6369c933aa2653513f84eae5861c84a9edeea6934",
@@ -127,6 +127,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -180,6 +181,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -548,6 +550,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -601,6 +604,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -979,6 +983,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },
@@ -1032,6 +1037,7 @@
                   "id": "data"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },

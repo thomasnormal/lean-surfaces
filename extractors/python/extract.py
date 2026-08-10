@@ -188,8 +188,10 @@ def convert_expr(node):
 
     if isinstance(node, ast.Call):
         reasons = []
-        if node.keywords:
-            reasons.append("keywords")
+        # Plain named keywords are STRUCTURED (H6); `f(**d)` unpacking
+        # (a keyword node with arg=None) stays a loud call_unsupported.
+        if any(kw.arg is None for kw in node.keywords):
+            reasons.append("** unpacking in call")
         if any(isinstance(a, ast.Starred) for a in node.args):
             reasons.append("starred args")
         return {
@@ -197,6 +199,11 @@ def convert_expr(node):
             "span": span(node),
             "func": convert_expr(node.func),
             "args": [convert_expr(a) for a in node.args],
+            "keywords": [
+                {"arg": kw.arg, "value": convert_expr(kw.value)}
+                for kw in node.keywords
+                if kw.arg is not None
+            ],
             "call_unsupported": ", ".join(reasons) if reasons else None,
         }
 

@@ -288,15 +288,29 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["func"]["id"], "sorted")
         self.assertEqual(len(e["args"]), 1)
 
-    def test_sorted_keywords_stay_unsupported_loud(self):
-        # key=/reverse= are keyword-only in 3.9: such calls arrive with
-        # call_unsupported "keywords" and the interpreter refuses loudly
-        # BEFORE evaluating arguments.
-        for src in ("def f(xs, g):\n    return sorted(xs, key=g)\n",
-                    "def f(xs):\n    return sorted(xs, reverse=True)\n"):
+    def test_call_keywords_are_structured(self):
+        # H6: plain named keywords are STRUCTURED (name + value), no
+        # call_unsupported flag — binding happens in the interpreter
+        # (docs/memory-model.md §call-site keyword arguments).
+        for src, kwnames in (
+                ("def f(xs, g):\n    return sorted(xs, key=g)\n", ["key"]),
+                ("def f(xs):\n    return sorted(xs, reverse=True)\n", ["reverse"]),
+                ("def f(p):\n    return p.rotate(nullmove=True)\n", ["nullmove"])):
             e = self._first_return_expr(src)
             self.assertEqual(e["kind"], "Call", src)
-            self.assertEqual(e["call_unsupported"], "keywords", src)
+            self.assertIsNone(e["call_unsupported"], src)
+            self.assertEqual([kw["arg"] for kw in e["keywords"]], kwnames, src)
+            for kw in e["keywords"]:
+                self.assertIn("kind", kw["value"], src)
+
+    def test_call_kwargs_unpacking_stays_unsupported_loud(self):
+        # `f(**d)` (a keyword node with arg=None) has no per-name binding
+        # story — it stays a LOUD call_unsupported, and the structured
+        # keywords list carries only the named ones.
+        e = self._first_return_expr("def f(g, d):\n    return g(1, **d)\n")
+        self.assertEqual(e["kind"], "Call", src := "g(1, **d)")
+        self.assertEqual(e["call_unsupported"], "** unpacking in call", src)
+        self.assertEqual(e["keywords"], [], src)
 
     def test_sorted_shadowing_assignment_flags_locals(self):
         # A body that assigns `sorted` and also calls it trips the CPython

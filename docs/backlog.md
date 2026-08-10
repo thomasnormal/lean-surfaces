@@ -558,3 +558,23 @@ Next milestone unchanged (item 3 above, recorded only — not started):
 the draining consumers — `sorted(key=)` and `sorted`/`max`/`all` OVER a
 generator (they drain it, so they need the stateful stepper), the
 `moves()` ordering surface — plus keyword arguments at call sites.
+
+## H6 keyword arguments — BUILT (2026-08-10)
+
+Call-site keywords are live (docs/memory-model.md §call-site keyword
+arguments): the extractor STRUCTURES plain named keywords (`**` unpacking
+stays `call_unsupported`), `Expr.call` carries `kwargs`, and binding is a
+pure call-site merge onto a COMPLETE positional array (`mergeKwArgs`) —
+`callIn`'s covenant signature untouched. Coverage: module `def`s by name
+and namedtuple-subclass methods (`pos.rotate(nullmove=True)`, the shipped
+shape); faithful binding `TypeError`s gated on `argsOk`; loud everywhere
+else (heap-receiver methods — note sunfish's `self.bound(…, root=True)`
+will want that arm one day, it is closure-gated anyway — class/namedtuple
+keyword construction, builtins). `sorted(key=/reverse=)` refuses loudly
+until the draining tier lands; `key=` is ADDITIONALLY gated on
+first-class callable values (a bound method as a value is loud under H3)
+— sunfish's shipped ordering line needs only `reverse=True` over a genexp
+of `(value, move)` tuples, NO `key=`. Acceptance:
+`Examples/python/kw_lab` (26 differential rows incl. the evaluation-order
+exception probes; 3 loud-frontier rows). Fragments: keyword-bearing calls
+leave `heapFree` conservatively.

@@ -732,11 +732,26 @@ theorem fuelMono (fuel : Nat) :
                         -- drain), abs, int, enumerate, count (both
                         -- ALLOCATE an iterator object), NEXT (binds the
                         -- args, then steps the generator), ord, chr
-                        refine Run.le_ite (hb _) (Run.le_ite ?_ (Run.le_ite ?_
-                          (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_
-                            (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
-                              (Run.le_ite (hb _) (Run.le_ite ?_ (Run.le_ite (hb _)
-                                (Run.le_ite (hb _) (Run.le_refl _)))))))))))))
+                        -- len → sorted → max → min → any/all → set → abs →
+                        -- int → sum → tuple → range → enumerate → count →
+                        -- next → ord → chr → tail
+                        refine Run.le_ite (hb _)                             -- len
+                            (Run.le_ite ?_                                     -- sorted
+                             (Run.le_ite ?_                                    -- max
+                              (Run.le_ite ?_                                   -- min
+                               (Run.le_ite ?_                                  -- any/all
+                                (Run.le_ite ?_                                 -- set
+                                 (Run.le_ite (hb _)                            -- abs
+                                  (Run.le_ite (hb _)                           -- int
+                                   (Run.le_ite ?_                              -- sum
+                                    (Run.le_ite ?_                             -- tuple
+                                     (Run.le_ite (hb _)                        -- range
+                                      (Run.le_ite (hb _)                       -- enumerate
+                                       (Run.le_ite (hb _)                      -- count
+                                        (Run.le_ite ?_                         -- next
+                                         (Run.le_ite (hb _)                    -- ord
+                                          (Run.le_ite (hb _)                   -- chr
+                                           (Run.le_refl _))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -838,6 +853,10 @@ theorem fuelMono (fuel : Nat) :
                                 | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
                                     fun st es => Run.le_refl _
                                 | skip
+                              case rangeV lo hi step =>
+                                exact Run.le_bind (Run.le_refl _) fun st xs =>
+                                  Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                    fun st es => Run.le_refl _
                               case ref a =>
                                 dsimp only
                                 cases Heap.get? st.world.heap a with
@@ -855,6 +874,53 @@ theorem fuelMono (fuel : Nat) :
                                       fun st vals => ?_
                                     exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
                                       fun st es => Run.le_refl _
+                        -- sum (pass 3): arity fork, the str-start fork,
+                        -- then the receiver — every value arm is the pure
+                        -- fold; the single-generator arm drains behind the
+                        -- `moduleGenFree` guard, like max/min
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases sumArgs vs with
+                          | none => exact Run.le_refl _
+                          | some pr =>
+                            obtain ⟨v, start⟩ := pr
+                            dsimp only
+                            cases start <;> try exact Run.le_refl _
+                            all_goals
+                              cases v <;> try exact Run.le_refl _
+                            all_goals
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st.world.heap a with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;> try exact Run.le_refl _
+                                  case generator q l c stat =>
+                                    refine Run.le_ite (Run.le_refl _) ?_
+                                    exact Run.le_bind
+                                      (Run.le_withLocals (ihDrain m st.world a k hk))
+                                      fun st vals => Run.le_refl _
+                        -- tuple (pass 3): snapshot constructors are
+                        -- fuel-free; the generator arm drains, guarded
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons v vtail =>
+                            cases vtail with
+                            | cons _ _ => exact Run.le_refl _
+                            | nil =>
+                              dsimp only
+                              cases v <;> try exact Run.le_refl _
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st.world.heap a with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;> try exact Run.le_refl _
+                                  case generator q l c stat =>
+                                    refine Run.le_ite (Run.le_refl _) ?_
+                                    exact Run.le_bind
+                                      (Run.le_withLocals (ihDrain m st.world a k hk))
+                                      fun st vals => Run.le_refl _
                         -- next
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -1022,6 +1088,9 @@ theorem fuelMono (fuel : Nat) :
             case listV xs => exact ihFor m st target xs.toList body.toList k hk
             case tuple xs => exact ihFor m st target xs.toList body.toList k hk
             case ntuple tn fs xs => exact ihFor m st target xs.toList body.toList k hk
+            case rangeV lo hi step =>
+              exact Run.le_bind (Run.le_refl _) fun st xs =>
+                ihFor m st target xs body.toList k hk
             case ref a => exact ihForL m st target a 0 body.toList k hk
         | ifStmt test body orelse _ =>
           simp only [execStmt]
@@ -1274,6 +1343,8 @@ theorem fuelMono (fuel : Nat) :
                 | listV xs => exact ihGen m st _ kf hk
                 | tuple xs => exact ihGen m st _ kf hk
                 | ntuple tn fs xs => exact ihGen m st _ kf hk
+                | rangeV lo hi step =>
+                  exact Run.le_bind (Run.le_refl _) fun st xs => ihGen m st _ kf hk
                 | ref ad =>
                   dsimp only
                   cases Heap.get? st.world.heap ad with
@@ -1563,6 +1634,7 @@ mutual
         exact Res.le_bind (RVal.freezeListB_mono h xs.toList hf)
           fun vs => Res.le_refl _
     | .ntuple _ _ _, _, _, _ => Res.le_refl _
+    | .rangeV .., _, _, _ => Res.le_refl _
     | .ref a, fuel, fuel', hf => (freezeHMono fuel).1 h [] (.ref a) fuel' hf
 
   /-- Elementwise `freezeB_mono`. -/
@@ -1973,21 +2045,82 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           cases rest with
                           | nil => exact .liftResF h₁ _
                           | cons _ _ => exact .exn
-                      · -- `int`, then `next` (rewritten away by `hnx` —
-                        -- outside the fragment), then the H5 pair
-                        -- `ord`/`chr`, then print / module dunder /
+                      · -- `int`, then the pass-3 trio `sum`/`tuple`/
+                        -- `range` (value folds; the generator drains sit
+                        -- behind the `moduleGenFree` guard, discharged by
+                        -- `heapFree_genFree`), then `next` (rewritten
+                        -- away by `hnx` — outside the fragment), the H5
+                        -- pair `ord`/`chr`, then print / module dunder /
                         -- NameError / loud
                         refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
                           (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                             (.ite (.bind hargs fun st₁ vs h₁ => ?_)
-                              (.ite .unsupported
-                                (.ite .unsupported (.ite .exn .unsupported)))))
+                              (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
+                                (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                  (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                    (.ite .unsupported
+                                      (.ite .unsupported (.ite .exn .unsupported))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>
                             cases rest with
                             | nil => exact .liftResF h₁ _
                             | cons _ _ => exact .unsupported
+                        · -- sum
+                          cases sumArgs vs with
+                          | none => exact .exn
+                          | some pr =>
+                            obtain ⟨v, start⟩ := pr
+                            dsimp only
+                            cases start <;> try exact .exn
+                            all_goals
+                              cases v <;> try exact .liftResF h₁ _
+                            all_goals try exact .exn
+                            all_goals
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st₁.world.heap a with
+                                | none => exact .unsupported
+                                | some obj =>
+                                  cases obj <;>
+                                    first
+                                      | exact .liftResF h₁ _
+                                      | exact .unsupported
+                                      | exact .exn
+                                      | skip
+                                  case generator q l c stat =>
+                                    simp only [Module.heapFree_genFree hm,
+                                      eq_self_iff_true, if_true]
+                                    exact .unsupported
+                        · -- tuple
+                          cases vs with
+                          | nil => exact .okF h₁ _
+                          | cons v vtail =>
+                            cases vtail with
+                            | cons _ _ => exact .exn
+                            | nil =>
+                              dsimp only
+                              cases v <;>
+                                first
+                                  | exact .okF h₁ _
+                                  | exact .liftResF h₁ _
+                                  | exact .exn
+                                  | skip
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st₁.world.heap a with
+                                | none => exact .unsupported
+                                | some obj =>
+                                  cases obj <;>
+                                    first
+                                      | exact .okF h₁ _
+                                      | exact .unsupported
+                                      | exact .exn
+                                      | skip
+                                  case generator q l c stat =>
+                                    simp only [Module.heapFree_genFree hm,
+                                      eq_self_iff_true, if_true]
+                                    exact .unsupported
                         · cases vs with
                           | nil => exact .exn
                           | cons v rest =>
@@ -2167,6 +2300,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | ntuple tn fs xs =>
             exact (ihFor st₁ target _ body.toList hfree.1.2).mono
               (wtrans st st₁ h₁)
+          | rangeV lo hi step =>
+            -- pass 3: materialization is a pure liftRes; the loop is the
+            -- ordinary value-sequence `for`
+            refine .bind (.liftResF h₁ _) fun st₂ xs h₂ => ?_
+            exact (ihFor st₂ target _ body.toList hfree.1.2).mono
+              (wtrans st st₂ h₂)
           | ref a =>
             -- H2: the list cursor (referent dispatch inside) preserves
             -- the world when the body does

@@ -105,6 +105,7 @@ def RVal.typeName : RVal → String
   | .listV _ => "list"
   | .tuple _ => "tuple"
   | .ntuple tn _ _ => tn
+  | .rangeV .. => "range"
   | .ref _ => "object"
 
 /-- Is this runtime value one of the value-sequence types
@@ -115,6 +116,39 @@ def RVal.isSeq : RVal → Bool
   | .str _ | .listV _ | .tuple _ => true
   | .ntuple _ _ _ => true
   | _ => false
+
+/-! ### Ranges (pass 3, docs/memory-model.md §module-init execution)
+
+A range is an IMMUTABLE, re-iterable sequence, carried as the immediate
+`RVal.rangeV` and MATERIALIZED per use — exact because nothing can
+mutate it between uses. The materialization budget is a FIXED constant
+(never the fuel), so refusing an over-budget range is `unsupported` —
+fuel-independent, per the loudness doctrine — and the helpers stay
+fuel-free (`Run.le_refl` in every meta-proof arm). -/
+
+/-- Elements a range yields (CPython's exact length formula — the
+`sliceCount` shape; `step ≠ 0` by construction of `rangeV`). -/
+def rangeLen (lo hi step : Int) : Nat :=
+  if 0 < step then
+    if lo < hi then ((hi - lo - 1) / step).toNat + 1 else 0
+  else
+    if hi < lo then ((lo - hi - 1) / (-step)).toNat + 1 else 0
+
+/-- Collect `n` ints from `cur`, stepping. Structural (kernel-reducible). -/
+def rangeValsAux : Nat → Int → Int → List RVal
+  | 0, _, _ => []
+  | n + 1, cur, step => .int cur :: rangeValsAux n (cur + step) step
+
+/-- The fixed materialization budget (a million elements). A constant on
+purpose: budget-refusals must be fuel-INDEPENDENT (`unsupported`, never
+a fuel-varying outcome). -/
+def seqBudget : Nat := 1048576
+
+/-- Materialize a range value, budget-guarded (see the section comment). -/
+def rangeVals (lo hi step : Int) : Res (List RVal) :=
+  let n := rangeLen lo hi step
+  if n ≤ seqBudget then .ok (rangeValsAux n lo step)
+  else .unsupported "materializing a range beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
 
 /-- Is this runtime value Python's `None` singleton? (The value-level test
 behind `is None` / `is not None` — see `evalCompareOp`.) A heap object is
@@ -194,6 +228,7 @@ def truthy : RVal → Res Bool
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
   | .ntuple _ _ xs => .ok (xs.size != 0)
+  | .rangeV lo hi step => .ok (rangeLen lo hi step != 0)
   | .ref _ => .unsupported
       "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
@@ -203,6 +238,34 @@ def asInt : RVal → Option Int
   | .int n => some n
   | .bool b => some (if b then 1 else 0)
   | _ => Option.none
+
+/-- `range(…)` construction from evaluated arguments: 1–3 int args
+(bool coerces, CPython's `__index__` on bool), `step = 0` the faithful
+`ValueError`, wrong arity/types the faithful `TypeError`s. -/
+def rangeMake (vs : List RVal) : Res RVal :=
+  match vs with
+  | [] => .exn (.typeError "range expected at least 1 argument, got 0")
+  | [v] =>
+    (match asInt v with
+     | some n => .ok (.rangeV 0 n 1)
+     | Option.none =>
+       .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer"))
+  | [a, b] =>
+    (match asInt a, asInt b with
+     | some x, some y => .ok (.rangeV x y 1)
+     | some _, Option.none =>
+       .exn (.typeError s!"'{b.typeName}' object cannot be interpreted as an integer")
+     | Option.none, _ =>
+       .exn (.typeError s!"'{a.typeName}' object cannot be interpreted as an integer"))
+  | [a, b, c] =>
+    (match asInt a, asInt b, asInt c with
+     | some x, some y, some z =>
+       if z == 0 then .exn (.valueError "range() arg 3 must not be zero")
+       else .ok (.rangeV x y z)
+     | _, _, _ =>
+       .exn (.typeError "range() arguments must be integers"))
+  | vs => .exn (.typeError s!"range expected at most 3 arguments, got {vs.length}")
+
 
 mutual
   /-- Python `==` on runtime values. Numeric (`int`/`bool`) compare by
@@ -231,6 +294,13 @@ mutual
         "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
     | _, .ref _ => .unsupported
         "'==' on a heap object lives in the heap (`heapEq` decides it; this pure helper is the proof-layer vocabulary)"
+    -- pass 3: `==` with a range operand stays LOUD — CPython compares
+    -- ranges as SEQUENCES (`range(0) == range(2, 2)` is `True`), and the
+    -- cross-type `False` would invite guessing half the protocol
+    | .rangeV .., _ => .unsupported
+        "'==' on a range is outside the tier (CPython compares ranges as sequences; docs/memory-model.md §module-init execution)"
+    | _, .rangeV .. => .unsupported
+        "'==' on a range is outside the tier (CPython compares ranges as sequences; docs/memory-model.md §module-init execution)"
     | _, _ => .ok false
 
   /-- Elementwise `valEq`, short-circuiting on the first mismatch;
@@ -380,6 +450,14 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
         .unsupported
           s!"comparison '{op.symbol}' between '{a.typeName}' and '{b.typeName}' is outside the v0 tier"
 
+/-- Tuple repetition `xs * n` (pass 3): `n ≤ 0` is empty (CPython), the
+result budget-guarded like `rangeVals` (fuel-independent refusal). -/
+def tupleRepeat (xs : Array RVal) (n : Int) : Res RVal :=
+  if xs.size * n.toNat ≤ seqBudget then
+    .ok (.tuple ((List.replicate n.toNat xs.toList).flatten.toArray))
+  else
+    .unsupported "tuple repetition beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
+
 /-- Binary operator on already-evaluated operands. int/bool operands are
 coerced to `Int`; arithmetic results are always `int`, never `bool`.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
@@ -422,6 +500,31 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | op, _, .ref _ =>
         .unsupported
           s!"binary '{op.symbol}' on a heap object is outside the H1 tier (dict operators beyond the inventory; docs/memory-model.md)"
+    -- pass 3: TUPLE repetition (`(0,) * 20`) — in-model allocation-free
+    -- (immediate values); a namedtuple repeats as a PLAIN tuple
+    -- (tuple.__mul__); non-int right/left operands keep CPython's
+    -- `can't multiply sequence by non-int` class through the arm below.
+    -- List/str repetition stays loud (a list result allocates; recorded).
+    | .mult, .tuple xs, v =>
+        (match asInt v with
+         | some n => tupleRepeat xs n
+         | Option.none =>
+           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
+    | .mult, .ntuple _ _ xs, v =>
+        (match asInt v with
+         | some n => tupleRepeat xs n
+         | Option.none =>
+           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
+    | .mult, v, .tuple xs =>
+        (match asInt v with
+         | some n => tupleRepeat xs n
+         | Option.none =>
+           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
+    | .mult, v, .ntuple _ _ xs =>
+        (match asInt v with
+         | some n => tupleRepeat xs n
+         | Option.none =>
+           .exn (.typeError s!"can't multiply sequence by non-int of type '{v.typeName}'"))
     | .mult, a, b =>
         if (a.isSeq && (asInt b).isSome) || ((asInt a).isSome && b.isSeq) then
           .unsupported
@@ -484,6 +587,7 @@ def lenVal : RVal → Res RVal
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
   | .ntuple _ _ xs => .ok (.int xs.size)
+  | .rangeV lo hi step => .ok (.int (rangeLen lo hi step))
   | .ref _ =>
       .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
@@ -576,6 +680,8 @@ def sortedVal (v : RVal) (desc : Bool := false) : Res RVal :=
   | .str s => do return .listV (← sortByLt desc (strCharVals s)).toArray
   | .tuple xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .ntuple _ _ xs => do return .listV (← sortByLt desc xs.toList).toArray
+  | .rangeV lo hi step => do
+      return .listV (← sortByLt desc (← rangeVals lo hi step)).toArray
   | .ref _ =>
       .unsupported "sorted() on a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -633,6 +739,7 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
       | Option.none => extremumOf isMax name xs.toList
     | .str t => extremumOf isMax name (strCharVals t)
+    | .rangeV lo hi step => do extremumOf isMax name (← rangeVals lo hi step)
     | .ref _ =>
         .unsupported s!"{name}() over a heap object is outside the H1 tier (docs/memory-model.md)"
     | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -695,6 +802,19 @@ def chrVal : RVal → Res RVal
     | Option.none =>
       .exn (.typeError s!"an integer is required (got type {v.typeName})")
 
+/-- `sum(x)` / `sum(x, start)` argument split; `none` = wrong arity. -/
+def sumArgs : List RVal → Option (RVal × RVal)
+  | [v] => some (v, .int 0)
+  | [v, start] => some (v, start)
+  | _ => Option.none
+
+/-- The element fold of `sum` IS `evalBinOp .add` (pass 3): int and
+tuple sums are exactly Python's `+`, and a mixed-type step raises its
+faithful `TypeError`. Structural on the list (kernel-reducible). -/
+def sumFold (acc : RVal) : List RVal → Res RVal
+  | [] => .ok acc
+  | v :: vs => do sumFold (← evalBinOp .add acc v) vs
+
 /-- Builtin names the interpreter implements (resolution: shadowable by
 locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
@@ -702,7 +822,8 @@ def isBuiltinName (id : String) : Bool :=
   id == "abs" || id == "int" || id == "print" ||
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count" ||
-  id == "any" || id == "all" || id == "set"
+  id == "any" || id == "all" || id == "set" ||
+  id == "sum" || id == "tuple" || id == "range"
 
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
@@ -731,6 +852,8 @@ def indexVal (container index : RVal) : Res RVal :=
       .unsupported "a heap object as a subscript index is outside this pure helper (`indexValH` decides it faithfully)"
   | .ref _, _ =>
       .unsupported "subscripting a heap object is outside this pure helper (`heapIndex` via `indexValH` decides it)"
+  | .rangeV .., _ =>
+      .unsupported "indexing a range is outside the tier (CPython computes the element; docs/memory-model.md §module-init execution)"
   | .listV xs, index =>
     match asInt index with
     | some i =>
@@ -922,6 +1045,44 @@ def strSlice (s : String) (lv uv sv : RVal) : Res RVal :=
           .ok (.str (String.ofList
             (strSliceChars s.toList (sliceCount start stop step) start step)))
 
+/-- Collect `n` elements starting at index `i`, stepping by `step` — the
+`strSliceChars` shape over runtime values (every visited index in range
+by construction; `getD`'s default unreachable). -/
+def seqSliceElems (xs : Array RVal) : Nat → Int → Int → List RVal
+  | 0, _, _ => []
+  | n + 1, i, step => xs.getD i.toNat .none :: seqSliceElems xs n (i + step) step
+
+/-- `xs[lower:upper:step]` on a value tuple (pass 3): CPython slice
+semantics, the `strSlice` validation VERBATIM (step first — `TypeError`
+for a non-index, `ValueError` for 0 — then lower, then upper; the
+duplication is deliberate: `strSlice` is a frozen proof-layer worker and
+must stay byte-identical). Result: a PLAIN tuple. -/
+def seqSlice (xs : Array RVal) (lv uv sv : RVal) : Res RVal :=
+  match asSliceIdx sv with
+  | Option.none =>
+    .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+  | some st =>
+    let step := st.getD 1
+    if step == 0 then .exn (.valueError "slice step cannot be zero")
+    else
+      match asSliceIdx lv with
+      | Option.none =>
+        .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+      | some l =>
+        match asSliceIdx uv with
+        | Option.none =>
+          .exn (.typeError "slice indices must be integers or None or have an __index__ method")
+        | some u =>
+          let len : Int := xs.size
+          let pos := 0 < step
+          let start := match l with
+            | some i => sliceAdj i len pos
+            | Option.none => if pos then 0 else len - 1
+          let stop := match u with
+            | some i => sliceAdj i len pos
+            | Option.none => if pos then len else -1
+          .ok (.tuple (seqSliceElems xs (sliceCount start stop step) start step).toArray)
+
 /-- `container[l:u:st]` — the slice RECEIVER dispatch (the components
 have already evaluated: CPython builds the slice object before
 `BINARY_SUBSCR` looks at the receiver). STRINGS are the tier (value
@@ -934,13 +1095,18 @@ def sliceVal (v lv uv sv : RVal) : Res RVal :=
   match v with
   | .str s => strSlice s lv uv sv
   | .ref _ =>
-    .unsupported "slicing a heap object is outside the tier (str slices only — a list slice allocates; docs/memory-model.md §string semantics)"
+    .unsupported "slicing a heap object is outside the tier (a list slice allocates; docs/memory-model.md §string semantics)"
   | .listV _ =>
-    .unsupported "slicing a list is outside the tier (str slices only; docs/memory-model.md §string semantics)"
-  | .tuple _ =>
-    .unsupported "slicing a tuple is outside the tier (str slices only; docs/memory-model.md §string semantics)"
-  | .ntuple _ _ _ =>
-    .unsupported "slicing a namedtuple is outside the tier (str slices only; docs/memory-model.md §string semantics)"
+    .unsupported "slicing a list is outside the tier (the result is a fresh heap object; docs/memory-model.md §string semantics)"
+  -- pass 3 (docs/memory-model.md §module-init execution): tuple slices
+  -- are IN-MODEL allocation-free (tuples are immediate values), so the
+  -- H5 refusal reason never applied to them; CPython's tuple.__getitem__
+  -- exactly, and a namedtuple slice is a PLAIN tuple (the class does not
+  -- survive slicing).
+  | .tuple xs => seqSlice xs lv uv sv
+  | .ntuple _ _ xs => seqSlice xs lv uv sv
+  | .rangeV .. =>
+    .unsupported "slicing a range is outside the tier (CPython yields a range; docs/memory-model.md §module-init execution)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
 
 /-- The decision of a method CALL on a str receiver (H5 strings) — the
@@ -989,6 +1155,10 @@ mutual
     -- elements are — sunfish's `(pos, depth, root)` keys stay in tier
     | .ntuple _ _ xs => hashableKeyList xs.toList
     | .listV _ => false
+    -- ranges ARE hashable in CPython — `false` routes to `keyRefusal`,
+    -- whose range predicate keeps the refusal LOUD (never a fake
+    -- unhashable `TypeError`)
+    | .rangeV .. => false
     | .ref _ => false
 
   /-- Elementwise `hashableKey`. -/
@@ -1077,6 +1247,9 @@ mutual
       | _ => false
     | .tuple xs => keyHasInstanceRefList h xs.toList
     | .ntuple _ _ xs => keyHasInstanceRefList h xs.toList
+    -- hashable in CPython (start/stop/step hash) — loud, never a fake
+    -- unhashable TypeError (pass 3)
+    | .rangeV .. => true
     | _ => false
 
   /-- Elementwise `keyHasInstanceRef`. -/
@@ -1440,6 +1613,8 @@ def valContains (h : Heap) (fuel : Nat) (a b : RVal) : Res Bool :=
   | .listV xs => heapContainsScan h fuel a xs.toList
   | .tuple xs => heapContainsScan h fuel a xs.toList
   | .ntuple _ _ xs => heapContainsScan h fuel a xs.toList
+  | .rangeV .. =>
+      .unsupported "membership in a range is outside the tier (CPython decides it arithmetically; docs/memory-model.md §module-init execution)"
   | b => .exn (.typeError s!"argument of type '{b.typeName}' is not iterable")
 
 /-- The heap-aware comparison step (`evalCompareChain` consumes this since
@@ -1667,6 +1842,8 @@ def assignTo (env : Env) (target : Expr) (v : RVal) : Res Env :=
           .exn (.valueError
             s!"not enough values to unpack (expected {names.length}, got {xs.size})")
       | .str _ => .unsupported "unpacking a str is outside the v0 tier"
+      | .rangeV .. =>
+          .unsupported "unpacking a range is outside the tier (docs/memory-model.md §module-init execution)"
       | .ref _ =>
           .unsupported "unpacking a heap object is outside the H1 tier (dict unpacking iterates keys — with the live iterator; docs/memory-model.md)"
       | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
@@ -2475,6 +2652,7 @@ docs/backlog.md). -/
 def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | .str s => .ok (.enumSeq i (strCharVals s))
   | .tuple xs => .ok (.enumSeq i xs.toList)
+  | .rangeV lo hi step => do return .enumSeq i (← rangeVals lo hi step)
   | .listV xs => .ok (.enumSeq i xs.toList)
   | .ntuple _ _ xs => .ok (.enumSeq i xs.toList)
   | .ref a =>
@@ -3166,6 +3344,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         | .listV xs =>
                           Run.liftRes st
                             (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
+                        | .rangeV lo hi step =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (← rangeVals lo hi step)))
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
                            | some (.list xs) =>
@@ -3219,6 +3400,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                           .ok { st with world :=
                                   { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                             (.ref st.world.heap.size)
+                        | .rangeV lo hi step =>
+                          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] xs) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
                         | .ref a =>
                           (match Heap.get? st.world.heap a with
                            | some (.list xs) =>
@@ -3257,6 +3444,91 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [] => .ok st (.int 0)
                     | [v] => Run.liftRes st (intCastVal v)
                     | _ => .unsupported "int() with a base argument is outside the v0 tier"
+                  else if fname == "sum" then
+                    -- pass 3 (docs/memory-model.md §module-init
+                    -- execution): the element fold IS `evalBinOp .add`;
+                    -- a str START is CPython's special-cased refusal; a
+                    -- GENERATOR argument DRAINS — guarded on
+                    -- `moduleGenFree` (the `max`/`min` discipline), so
+                    -- `sum` stays in the heap-free fragment
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match sumArgs vs with
+                     | Option.none =>
+                       .exn st (.typeError s!"sum() takes at most 2 arguments ({vs.length} given)")
+                     | some (v, start) =>
+                       (match start with
+                        | .str _ =>
+                          .exn st (.typeError "sum() can't sum strings [use ''.join(seq) instead]")
+                        | start =>
+                          (match v with
+                           | .tuple xs => Run.liftRes st (sumFold start xs.toList)
+                           | .ntuple _ _ xs => Run.liftRes st (sumFold start xs.toList)
+                           | .listV xs => Run.liftRes st (sumFold start xs.toList)
+                           | .str t => Run.liftRes st (sumFold start (strCharVals t))
+                           | .rangeV lo hi step =>
+                             Run.liftRes st (do sumFold start (← rangeVals lo hi step))
+                           | .ref a =>
+                             (match Heap.get? st.world.heap a with
+                              | some (.list xs) => Run.liftRes st (sumFold start xs.toList)
+                              | some (.generator ..) =>
+                                if moduleGenFree m then
+                                  .unsupported "sum() over a generator DRAINS it (a stateful read) — outside the tier"
+                                else
+                                  Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                                  Run.liftRes st (sumFold start vals)
+                              | some (.dict _ _) =>
+                                .unsupported "sum() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                              | some (.pyset _) =>
+                                .unsupported "sum() over a set is outside the tier (hash order; docs/memory-model.md)"
+                              | some (.instance _ _) =>
+                                .exn st (.typeError "'object' object is not iterable")
+                              | some (.closure ..) =>
+                                .exn st (.typeError "'function' object is not iterable")
+                              | Option.none => .unsupported danglingMsg)
+                           | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))))
+                  else if fname == "tuple" then
+                    -- pass 3: the tuple CONSTRUCTOR — an immediate value
+                    -- (no allocation): str/tuple/namedtuple(class-erased,
+                    -- CPython)/boundary list/heap list(snapshot — CPython
+                    -- copies)/range/generator(+`moduleGenFree` guard);
+                    -- dict/set receivers stay loud (order doctrine)
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] => .ok st (.tuple #[])
+                     | [v] =>
+                       (match v with
+                        | .str t => .ok st (.tuple (strCharVals t).toArray)
+                        | .tuple xs => .ok st (.tuple xs)
+                        | .ntuple _ _ xs => .ok st (.tuple xs)
+                        | .listV xs => .ok st (.tuple xs)
+                        | .rangeV lo hi step =>
+                          Run.liftRes st (do return RVal.tuple (← rangeVals lo hi step).toArray)
+                        | .ref a =>
+                          (match Heap.get? st.world.heap a with
+                           | some (.list xs) => .ok st (.tuple xs)
+                           | some (.generator ..) =>
+                             if moduleGenFree m then
+                               .unsupported "tuple() over a generator DRAINS it (a stateful read) — outside the tier"
+                             else
+                               Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                               .ok st (.tuple vals.toArray)
+                           | some (.dict _ _) =>
+                             .unsupported "tuple() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           | some (.pyset _) =>
+                             .unsupported "tuple() over a set is outside the tier (hash order; docs/memory-model.md)"
+                           | some (.instance _ _) =>
+                             .exn st (.typeError "'object' object is not iterable")
+                           | some (.closure ..) =>
+                             .exn st (.typeError "'function' object is not iterable")
+                           | Option.none => .unsupported danglingMsg)
+                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                     | vs => .exn st (.typeError s!"tuple expected at most 1 argument, got {vs.length}"))
+                  else if fname == "range" then
+                    -- pass 3: an IMMEDIATE `rangeV` value (pure — no
+                    -- allocation); arity/type/step-zero faithfulness in
+                    -- `rangeMake`
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    Run.liftRes st (rangeMake vs)
                   else if fname == "enumerate" then
                     -- H4: a LAZY iterator object, not a materialized
                     -- list — `enumerate(self.board)` is stepped one pair
@@ -3845,6 +4117,12 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         -- the live semantics here — strs are immutable, so unlike a heap
         -- list there is nothing for a cursor to observe (`strCharVals`).
         | .str s => execFor m fuel st target (strCharVals s) body.toList
+        -- pass 3: `for` over a range MATERIALIZES (immutable — the
+        -- snapshot IS the live semantics, and re-iteration is exact
+        -- because each `for` materializes afresh)
+        | .rangeV lo hi step =>
+          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+          execFor m fuel st target xs body.toList
         | .ref a =>
           -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR against the
           -- object (CPython's listiterator) — never a snapshot: mutation,
@@ -4152,6 +4430,9 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                 execGen m fuel st (.forSeq target xs.toList body :: .block ss :: k')
             | .str sv =>
                 execGen m fuel st (.forSeq target (strCharVals sv) body :: .block ss :: k')
+            | .rangeV lo hi step =>
+                Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                execGen m fuel st (.forSeq target xs body :: .block ss :: k')
             | .ref ad =>
               (match Heap.get? st.world.heap ad with
                | some (.list _) =>

@@ -49,6 +49,16 @@ inductive RVal where
   namedtuple results LOUDLY (a `Val.tuple` snapshot would silently forget
   the class AND falsify freeze inversion — recorded decision). -/
   | ntuple (tname : String) (fields : Array String) (xs : Array RVal)
+  /-- A `range(lo, hi, step)` object as an IMMEDIATE value (pass 3,
+  docs/memory-model.md §module-init execution): a range is IMMUTABLE and
+  re-iterable, so materialization-per-use is exact and the value form
+  avoids heap identity and boundary churn entirely. Iteration and the
+  draining consumers materialize FUEL-BOUNDED (`rangeVals`); `len` and
+  truthiness are exact; `==`, dict-key/set-element (ranges ARE hashable
+  in CPython — `keyRefusal`, never a fake unhashable `TypeError`), and
+  the public boundary stay LOUD. `step ≠ 0` by construction (the builtin
+  raises the faithful `ValueError` first). -/
+  | rangeV (lo hi step : Int)
   | ref   (a : Addr)
 deriving Repr, Inhabited, BEq
 
@@ -233,7 +243,7 @@ preservation statement is the dict tier's regression case 18). -/
 mutual
   /-- Every `.ref` inside the value points below `h.size`. -/
   def RVal.WF (h : Heap) : RVal → Prop
-    | .none | .bool _ | .int _ | .str _ => True
+    | .none | .bool _ | .int _ | .str _ | .rangeV .. => True
     | .tuple xs => RVal.WFList h xs.toList
     | .listV xs => RVal.WFList h xs.toList
     | .ntuple _ _ xs => RVal.WFList h xs.toList
@@ -502,6 +512,8 @@ mutual
         return .tuple vs.toArray
     | .ntuple _ _ _ =>
         .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
+    | .rangeV .. =>
+        .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
     | .ref _ =>
         .unsupported "returning a heap object through the call boundary is outside the tier (H1-proper freeze, docs/memory-model.md)"
 
@@ -593,6 +605,7 @@ mutual
   (a `.ref` in the result). What pins the public wrapper's `.exn` outcomes
   to the interpreter run, never to the freeze. -/
   theorem RVal.freeze_ne_exn : (rv : RVal) → ∀ e, RVal.freeze rv ≠ .exn e
+    | .rangeV .., e => by simp [RVal.freeze]
     | .none, e => by simp [RVal.freeze]
     | .bool _, e => by simp [RVal.freeze]
     | .int _, e => by simp [RVal.freeze]
@@ -793,7 +806,7 @@ mutual
   frozen recursion points (their fueled unfolding on symbolic operands is
   unbounded, the `execWhile` situation exactly). -/
   def RVal.refFree : RVal → Bool
-    | .none | .bool _ | .int _ | .str _ => true
+    | .none | .bool _ | .int _ | .str _ | .rangeV .. => true
     | .tuple xs => RVal.refFreeList xs.toList
     | .listV xs => RVal.refFreeList xs.toList
     | .ntuple _ _ xs => RVal.refFreeList xs.toList
@@ -833,6 +846,8 @@ mutual
             return .tuple vs.toArray
         | .ntuple _ _ _ =>
             .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
+        | .rangeV .. =>
+            .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
         | .ref a =>
           if path.contains a then
             .unsupported "returning a CYCLIC heap object through the call boundary is outside the tier (no cyclic observation form in `Val`; docs/memory-model.md §call layering)"
@@ -890,6 +905,8 @@ mutual
         return .tuple vs.toArray
     | .ntuple _ _ _ =>
         .unsupported "returning a namedtuple through the call boundary is outside the tier (no namedtuple observation form in `Val`; a tuple snapshot would silently forget the class — docs/memory-model.md §class semantics)"
+    | .rangeV .. =>
+        .unsupported "returning a range through the call boundary is outside the tier (no range observation form in `Val`; docs/memory-model.md §module-init execution)"
     | .ref a => RVal.freezeH h fuel [] (.ref a)
 
   /-- Elementwise `freezeB`, first refusal wins. -/
@@ -1004,6 +1021,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
       | bool b => simp [RVal.freezeH] at hc
       | int n => simp [RVal.freezeH] at hc
       | str s => simp [RVal.freezeH] at hc
+      | rangeV lo hi step => simp [RVal.freezeH] at hc
       | listV xs =>
         simp only [RVal.freezeH] at hc
         cases hl : RVal.freezeListH h fuel path xs.toList with
@@ -1068,6 +1086,7 @@ mutual
   outcome always names an interpreter raise, never the freeze. -/
   theorem RVal.freezeB_ne_exn (h : Heap) (fuel : Nat) :
       (v : RVal) → ∀ e, RVal.freezeB h fuel v ≠ .exn e
+    | .rangeV .., e => by simp [RVal.freezeB]
     | .none, e => by simp [RVal.freezeB]
     | .bool b, e => by simp [RVal.freezeB]
     | .int n, e => by simp [RVal.freezeB]
@@ -1144,6 +1163,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
       | bool b => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | int n => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
       | str s => simp only [RVal.freezeH] at hc; cases (Res.ok.inj hc); rfl
+      | rangeV lo hi step => simp [RVal.freezeH] at hc
       | listV xs =>
         -- the snapshot is a `.list` — excluded by `hlf`
         simp only [RVal.freezeH, Res.bind_eq_ok, Res.pure_eq] at hc

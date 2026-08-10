@@ -167,6 +167,14 @@ inductive Obj where
   | closure (name : String) (params : Array Param) (argsOk localsOk : Bool)
       (hasGlobal : Bool) (isGenerator : Bool) (body : Array Stmt)
       (captured : REnv)
+  /-- A SET object (H7+, the honest subset for `self.history`):
+  construction from an iterable (deduplicated by value equality, first
+  occurrence kept) and `in` MEMBERSHIP, `len`, truthiness — nothing
+  else. Iteration, `add`/`remove`/`pop`, `==`, `sorted(set)` are all
+  LOUD: a set's iteration order is hash-order in CPython and is never
+  guessed. Membership and len are order-independent, which is exactly
+  why they are the admitted surface. -/
+  | pyset (xs : Array RVal)
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
@@ -261,6 +269,7 @@ def Obj.WF (h : Heap) : Obj → Prop
   | .list xs => RVal.WFList h xs.toList
   | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
   | .closure _ _ _ _ _ _ _ captured => RVal.WFList h (captured.map Prod.snd)
+  | .pyset xs => RVal.WFList h xs.toList
   | .generator _ lo k _ =>
       RVal.WFList h (lo.map Prod.snd) ∧ GenCont.WF h k
 
@@ -836,6 +845,8 @@ mutual
                 .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
             | some (.closure ..) =>
                 .unsupported "returning a closure through the call boundary is outside the tier (a snapshot would forget function identity; docs/memory-model.md §nested defs and closures)"
+            | some (.pyset _) =>
+                .unsupported "returning a set through the call boundary is outside the tier (no set observation form in `Val`; a list snapshot would invent an iteration order)"
             | some (.instance _ _) =>
                 .unsupported "returning a class instance through the call boundary is outside the tier (no instance observation form in `Val`; docs/memory-model.md H3)"
             | some (.generator ..) =>
@@ -1022,6 +1033,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             | «instance» cls attrs => simp at hc
             | generator qn lo k st => simp at hc
             | closure nm ps ao lo' hg ig bd cap => simp at hc
+            | pyset xs => simp at hc
             | list xs =>
               cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
               | ok vs => simp [hl] at hc
@@ -1161,6 +1173,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             | «instance» cls attrs => cases hc
             | generator qn lo k st => cases hc
             | closure nm ps ao lo' hg ig bd cap => cases hc
+            | pyset xs => cases hc
             | list xs =>
               -- freezes to a `.list` snapshot — excluded by `hlf`
               simp only [Res.bind_eq_ok, Res.pure_eq] at hc

@@ -773,6 +773,68 @@ as shipped — the census has no refusals left — and
 `sf_order.move_probe` pins the verbatim `move` + `rotate` chain
 differentially.
 
+## Set semantics (bound() arc pass 1 — BUILT 2026-08-10, the honest subset)
+
+The target is `self.history = set(history)` + `pos in self.history` —
+`bound()`'s repetition-draw gate, a set that is FROZEN after
+construction. A CPython set's iteration order is hash order, and the
+tier never guesses it; what is admitted is exactly the ORDER-BLIND
+surface, and everything order-revealing is loud.
+
+**Representation.** `Obj.pyset (xs : Array RVal)` — a heap object
+(sets have identity), holding the deduplicated elements in first-seen
+order. That retained order is UNOBSERVABLE through the admitted
+readers, which is the design invariant that makes the subset honest.
+
+**Construction** — `set()` and `set(iterable)`, the only builders.
+Iterable coverage: a str (its code points), a value tuple, a
+namedtuple (class-erased elements), a boundary list, a heap list,
+another set (a fresh already-deduplicated copy), and a GENERATOR —
+which DRAINS, like `sorted` (so `set` leaves `heapFree`
+syntactically). A dict argument is refused loudly (`set(d)` walks the
+keys — live dict iteration is out of tier); non-iterables are the
+faithful `TypeError`. Dedup is `setDedup`: the fueled
+`heapContainsScan` decides duplicates by VALUE equality through
+`heapEq` (the `==` doctrine — bool/int identified, so
+`set([1, True])` has ONE element, first occurrence kept), and
+elements ride the dict-KEY doctrine: `hashableKey` gates, an
+unhashable element gets `keyRefusal`'s answer (the faithful
+`unhashable type: '…'` `TypeError` for lists/dicts, LOUD for
+identity-hashed instances/closures).
+
+**Admitted readers** — membership (`in`/`not in`, the same
+value-equality scan; CPython HASHES the probe before any comparison,
+so an unhashable probe raises the same faithful `TypeError`, empty
+set included — `set_lab.unhashable_probe` pins it), `len`, and
+truthiness. All three are order-blind by construction.
+
+**Loud, never guessed** — iteration (`for v in s`), `sorted(set)` /
+`max`/`min` over a set (refused although a sorted RESULT would be
+order-independent — deliberately deferred, recorded), every mutator
+(`add`/`remove`/`discard`/`pop` — `pop` removes an ARBITRARY element,
+the message says so), set operators and `==` between sets, a set
+crossing the public boundary (a list snapshot would invent an order),
+and `.get`/`.append`-style foreign methods (faithful
+`AttributeError`s). A set used as a dict key or set element is
+CPython's faithful `unhashable type: 'set'` `TypeError`
+(`keyHasInstanceRef` answers false — never the loud identity-hash
+channel, because CPython really does refuse).
+
+**Fragments.** `set(…)` calls leave `Expr.heapFree` (allocation, and
+a generator argument drains); the membership/len/truthiness readers
+were already heap-side. `worldInv`'s builtin walk rewrites the `set`
+branch away via the fragment's `fname != "set"` conjunct, mirroring
+`sorted`.
+
+Acceptance: `Examples/python/set_lab` (checks-only): construction
+from every admitted iterable including an infinite-free generator
+drain, bool/int dedup, tuple elements (the Position shape),
+membership both ways, `len`/truthiness on empty and nonempty,
+unhashable element AND probe `TypeError`s, and the loud frontier
+(`iter_is_loud`, `sorted_is_loud`) pinned as refusals.
+
+## Heap well-formedness (explicit invariant)
+
 Every semantic dereference establishes `a < heap.size` — never `getD`,
 never an `Inhabited Obj` fallback, never a silent arbitrary object.
 Define `Heap.WF`, `RVal.WF : Heap → RVal → Prop`, `Obj.WF`, and prove:
@@ -942,8 +1004,10 @@ call could soundly poison every ref-carrying name.
   generator EXPRESSIONS are structured but not yet lowered, and
   `sorted(key=)` remains orthogonal. sunfish's `moves()` consumed
   lazily by `bound` stays the capstone.
-* **H5: sets** (explicitly staged; iteration order raises the
-  language-vs-CPython question — decide against the 3.9 oracle then).
+* **H5: sets — BUILT (bound() arc pass 1, §set semantics).** The
+  order-blind honest subset (construction/dedup, membership, len,
+  truthiness); iteration order stayed OUT (refused loudly), so the
+  language-vs-CPython hash-order question never needed deciding.
 
 ## H1 acceptance: minimum differential + proof regression set
 

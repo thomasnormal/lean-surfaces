@@ -296,5 +296,17 @@
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_capture", "args": [[3], [0]], "expect": "match"},
   {"file": "Examples/python/closure_lab/closure_lab.py", "function": "lam_rebound", "args": [[5]], "expect": "unsupported"},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_instance", "args": [[5], [0], [-2]], "expect": "match"},
-  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_instance_err", "args": [[1]], "expect": "match"}
+  {"file": "Examples/python/kw_lab/kw_lab.py", "function": "method_kw_instance_err", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "member_int", "args": [[2], [9], [0]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "member_tuple", "args": [[1, 2], [5, 5]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "dedup_bool", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "from_str", "args": [[{"t": "str", "v": "l"}], [{"t": "str", "v": "z"}]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "from_tuple", "args": [[4]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "empty_set", "args": [[1]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "from_gen", "args": [[7], [0]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "not_in", "args": [[5]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "unhashable_elem", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "unhashable_probe", "args": [[3]], "expect": "match"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "iter_is_loud", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/set_lab/set_lab.py", "function": "sorted_is_loud", "args": [[2]], "expect": "unsupported"}
 ]

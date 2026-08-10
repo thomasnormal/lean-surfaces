@@ -214,6 +214,7 @@ theorem heapEqMono (fuel : Nat) :
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
                 | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+                | pyset zs => exact Res.le_refl _
               | list xs =>
                 cases o2 with
                 | dict fs v2 => exact Res.le_refl _
@@ -223,10 +224,12 @@ theorem heapEqMono (fuel : Nat) :
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
                 | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+                | pyset zs => exact Res.le_refl _
               | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
               | generator qn lo kk stt => cases o2 <;> exact Res.le_refl _
               | closure nm ps ao lo' hg ig bd cap =>
                 cases o2 <;> exact Res.le_refl _
+              | pyset zs => cases o2 <;> exact Res.le_refl _
     · intro h active as bs fuel' hf
       cases fuel' with
       | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
@@ -269,6 +272,20 @@ theorem heapContainsScan_mono {h : Heap} {fuel : Nat} {x : RVal}
     exact Res.le_bind ((heapEqMono fuel).1 h [] v x fuel' hf)
       fun e => Res.le_ite (Res.le_refl _) ih
 
+/-- Fuel monotonicity for `setDedup` (H7+ set construction): the
+element-equality scans thread the fuel; the accumulator generalizes. -/
+theorem setDedup_mono {h : Heap} {fuel fuel' : Nat} {xs : List RVal}
+    (hf : fuel ≤ fuel') :
+    ∀ acc, setDedup h fuel acc xs ⊑ setDedup h fuel' acc xs := by
+  induction xs with
+  | nil => intro acc; exact Res.le_refl _
+  | cons v vs ih =>
+    intro acc
+    simp only [setDedup]
+    refine Res.le_ite ?_ (Res.le_refl _)
+    exact Res.le_bind (heapContainsScan_mono hf) fun dup =>
+      Res.le_ite (ih _) (ih _)
+
 /-- Fuel monotonicity of heap-container membership. -/
 theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
     {fuel' : Nat} (hf : fuel ≤ fuel') :
@@ -283,6 +300,7 @@ theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
     | «instance» ci attrs => exact Res.le_refl _
     | generator qn lo kk stt => exact Res.le_refl _
     | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+    | pyset zs => exact Res.le_ite (heapContainsScan_mono hf) (Res.le_refl _)
 
 /-- Fuel monotonicity of the heap deep-freeze (`freezeH`/`freezeListH`),
 one conjunction by induction on fuel — the freeze leg of the public
@@ -320,6 +338,7 @@ theorem freezeHMono (fuel : Nat) :
             | «instance» ci attrs => exact Res.le_refl _
             | generator qn lo kk stt => exact Res.le_refl _
             | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
+            | pyset zs => exact Res.le_refl _
             | list xs =>
               exact Res.le_bind (ihL h (a :: path) xs.toList k hk)
                 fun vs => Res.le_refl _
@@ -714,10 +733,10 @@ theorem fuelMono (fuel : Nat) :
                         -- ALLOCATE an iterator object), NEXT (binds the
                         -- args, then steps the generator), ord, chr
                         refine Run.le_ite (hb _) (Run.le_ite ?_ (Run.le_ite ?_
-                          (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite (hb _)
-                            (Run.le_ite (hb _) (Run.le_ite (hb _)
+                          (Run.le_ite ?_ (Run.le_ite ?_ (Run.le_ite ?_
+                            (Run.le_ite (hb _) (Run.le_ite (hb _) (Run.le_ite (hb _)
                               (Run.le_ite (hb _) (Run.le_ite ?_ (Run.le_ite (hb _)
-                                (Run.le_ite (hb _) (Run.le_refl _))))))))))))
+                                (Run.le_ite (hb _) (Run.le_refl _)))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -803,6 +822,39 @@ theorem fuelMono (fuel : Nat) :
                                         (ihAnyAll m st.world a (fname == "all") k hk))
                                       fun st b => ?_
                                     exact Run.le_refl _
+                        -- set (H7+): binds, then per-receiver dedup
+                        -- (fuel-threaded scans) or the generator drain
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons v vtail =>
+                            cases vtail with
+                            | cons _ _ => exact Run.le_refl _
+                            | nil =>
+                              dsimp only
+                              cases v <;>
+                                first
+                                | exact Run.le_refl _
+                                | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                    fun st es => Run.le_refl _
+                                | skip
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st.world.heap a with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;>
+                                    first
+                                    | exact Run.le_refl _
+                                    | exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                        fun st es => Run.le_refl _
+                                    | skip
+                                  case generator q l c stat =>
+                                    refine Run.le_bind
+                                      (Run.le_withLocals (ihDrain m st.world a k hk))
+                                      fun st vals => ?_
+                                    exact Run.le_bind (Run.le_liftRes (setDedup_mono hk _))
+                                      fun st es => Run.le_refl _
                         -- next
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -1083,6 +1135,7 @@ theorem fuelMono (fuel : Nat) :
           | dict es ver => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
+          | pyset zs => exact Run.le_refl _
           | generator qn lo kk stt =>
             exact Run.le_ite (Run.le_refl _) (ihForG m st target a body k hk)
           | list xs =>
@@ -1132,6 +1185,7 @@ theorem fuelMono (fuel : Nat) :
           | list xs => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
+          | pyset zs => exact Run.le_refl _
           | generator qn lo kk stt =>
             cases stt with
             | closed => exact Run.le_refl _
@@ -1229,6 +1283,7 @@ theorem fuelMono (fuel : Nat) :
                     | dict es ver => exact Run.le_refl _
                     | «instance» ci attrs => exact Run.le_refl _
                     | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
+                    | pyset zs => exact Run.le_refl _
                     | list xs => exact ihGen m st _ kf hk
                     | generator qn lo kk stt => exact ihGen m st _ kf hk
               | refuse msg => exact Run.le_refl _
@@ -1249,6 +1304,7 @@ theorem fuelMono (fuel : Nat) :
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
+              | pyset zs => exact Run.le_refl _
               | list xs =>
                 refine Run.le_ite ?_ (ihGen m st rest kf hk)
                 refine Run.le_bind (Run.le_refl _) fun st env₁ => ?_
@@ -1276,6 +1332,7 @@ theorem fuelMono (fuel : Nat) :
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
+              | pyset zs => exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _
           | whileLoop test body orelse =>
             simp only [execGen]
@@ -1792,7 +1849,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hflE⟩ := hfree
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -1821,6 +1878,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "all"
               · rfl
               · rw [bne, hbe] at hnl; simp at hnl
+            have hsetx : (fname == "set") = false := by
+              cases hbe : fname == "set"
+              · rfl
+              · rw [bne, hbe] at hnset; simp at hnset
             simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
@@ -1848,7 +1909,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, hex, hcx, hay, hal, findClass_heapFree hm fname,
+                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
@@ -2200,6 +2261,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         | dict es ver => exact .unsupported
         | «instance» ci attrs => exact .exn
         | closure nm ps ao lo' hg ig bd cap => exact .unsupported
+        | pyset zs => exact .unsupported
         | generator qn lo kk stt =>
           -- H4: a generator object cannot exist in a generator-free
           -- module, and the guard says so LOUDLY — which is exactly what

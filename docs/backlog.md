@@ -631,9 +631,13 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
    differential row before it is claimed.
 3. **`Position.move`** — DONE (bound() arc pass 1, below): `put =
    lambda …` is the H7 nested-def shape; `move` runs as shipped.
-4. **`bound()`'s own gates** — sets (`self.history`), `raise Stop` /
-   exception classes, `time.time()`, the `%` deadline check, and
-   `pos in self.history` set membership.
+4. **`bound()`'s own gates** — sets DONE (bound() arc pass 1, below:
+   `set(history)` construction + `pos in self.history` membership, the
+   order-blind honest subset). REMAINING AND EXPLICITLY DEFERRED (by
+   direction — flagged, not started): `raise Stop` / exception classes
+   and the driver's `try`/`except` (needs its own design pass), and
+   `time.time()` impurity + the `%` deadline check (needs a RECORDED
+   abstraction decision — never a silent stub).
 5. **Recursion through a captured `self`** — `-self.bound(...)` inside
    the nested generator body: H3 instance-method dispatch from a
    generator frame; untested, needs a lab row when 1 lands.
@@ -643,6 +647,23 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 The enumerated blockers above, taken mechanically — each construct
 designed in docs/memory-model.md, refused loudly outside its tier,
 pinned by happy AND refusal battery rows.
+
+**Sets — BUILT, the honest subset** (§set semantics): `Obj.pyset`,
+heap identity, first-seen order UNOBSERVABLE; `set()`/`set(iterable)`
+construction (str/tuple/ntuple/list/set/generator — the generator
+DRAINS, `set` leaves `heapFree`) deduplicated by value equality under
+the dict-KEY doctrine; membership (probe hashed first — the faithful
+unhashable `TypeError`, empty set included), `len`, truthiness
+admitted; EVERYTHING order-revealing loud (iteration, `sorted`/`max`/
+`min`, mutators, `==`, boundary). `Examples/python/set_lab` is the
+checks-only acceptance battery. `sorted(set)` is refused although its
+RESULT would be order-independent — deliberately deferred, recorded
+here.
+
+**DEFERRED, flagged, deliberately not started** (the non-mechanical
+blockers): exceptions (`raise Stop`, the `try`/`except` driver) and
+`time.time()` impurity — the former needs a design pass of its own,
+the latter a recorded abstraction decision (never a silent stub).
 
 **Instance-method keywords — BUILT** (§call-site keyword arguments,
 coverage list): `self.bound(…, root=True)` binds by the same pure

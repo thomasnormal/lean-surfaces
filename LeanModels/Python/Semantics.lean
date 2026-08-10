@@ -702,7 +702,7 @@ def isBuiltinName (id : String) : Bool :=
   id == "abs" || id == "int" || id == "print" ||
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count" ||
-  id == "any" || id == "all"
+  id == "any" || id == "all" || id == "set"
 
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
@@ -1028,6 +1028,7 @@ def RVal.typeNameH (h : Heap) : RVal → String
     | some (.instance _ _) => "object"
     | some (.generator ..) => "generator"
     | some (.closure ..) => "function"
+    | some (.pyset _) => "set"
     | Option.none => "object"
   | v => v.typeName
 
@@ -1072,6 +1073,7 @@ mutual
       | some (.instance _ _) => true
       | some (.generator ..) => true
       | some (.closure ..) => true  -- identity hash, like instances: refuse
+      | some (.pyset _) => false    -- sets are UNHASHABLE: the faithful TypeError path
       | _ => false
     | .tuple xs => keyHasInstanceRefList h xs.toList
     | .ntuple _ _ xs => keyHasInstanceRefList h xs.toList
@@ -1148,6 +1150,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
   | some (.closure ..) => .exn (.typeError "'function' object is not subscriptable")
+  | some (.pyset _) => .exn (.typeError "'set' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape
@@ -1183,6 +1186,8 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
     .exn (.typeError "'generator' object does not support item assignment")
   | some (.closure ..) =>
     .exn (.typeError "'function' object does not support item assignment")
+  | some (.pyset _) =>
+    .exn (.typeError "'set' object does not support item assignment")
   | Option.none => .unsupported danglingMsg
 
 /-- `len(o)` on a heap object: dict entry count / list length; an
@@ -1194,6 +1199,7 @@ def heapLen (h : Heap) (a : Addr) : Res RVal :=
   | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
   | some (.generator ..) => .exn (.typeError "object of type 'generator' has no len()")
   | some (.closure ..) => .exn (.typeError "object of type 'function' has no len()")
+  | some (.pyset xs) => .ok (.int xs.size)
   | Option.none => .unsupported danglingMsg
 
 /-- `d.get(k)` / `d.get(k, default)` (the H1 method tier): absent keys
@@ -1210,6 +1216,7 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
     .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
   | some (.closure ..) => .exn .attributeError  -- functions have no .get
+  | some (.pyset _) => .exn .attributeError     -- sets have no .get
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.append(x)` (H2): push in place — the mutation is visible through
@@ -1227,6 +1234,7 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
     .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
   | some (.closure ..) => .exn .attributeError
+  | some (.pyset _) => .exn .attributeError    -- sets have no .append
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.pop()` / `lst.pop(i)` (H2): remove and return the element at `i`
@@ -1248,6 +1256,8 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
     .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
   | some (.closure ..) => .exn .attributeError
+  | some (.pyset _) =>
+      .unsupported "set.pop() is outside the tier (it removes an ARBITRARY element — hash order; docs/memory-model.md)"
   | Option.none => .unsupported danglingMsg
 
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
@@ -1267,6 +1277,7 @@ def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
   | some (.generator ..) => .exn .attributeError
   | some (.closure ..) =>
       .unsupported "attribute stores on a function object are outside the tier (CPython allows them; a fake AttributeError would be wrong)"
+  | some (.pyset _) => .exn .attributeError  -- sets have no writable attributes
   | Option.none => .unsupported danglingMsg
 
 /-- Truthiness including heap objects: `bool(d)`/`bool(lst)` is
@@ -1284,6 +1295,7 @@ def truthyH (h : Heap) : RVal → Res Bool
     -- a generator object is always truthy (no `__bool__`/`__len__`)
     | some (.generator ..) => .ok true
     | some (.closure ..) => .ok true
+    | some (.pyset xs) => .ok (xs.size != 0)
     | Option.none => .unsupported danglingMsg
   | v => truthy v
 
@@ -1399,6 +1411,12 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
     .unsupported "'in' on a generator CONSUMES it (a stateful membership test) — outside the tier"
   | some (.closure ..) =>
     .exn (.typeError "argument of type 'function' is not iterable")
+  | some (.pyset xs) =>
+    -- H7+ sets: MEMBERSHIP is the admitted surface (order-independent);
+    -- the probe rides the KEY doctrine — CPython HASHES it before any
+    -- comparison, so an unhashable probe raises, empty set included
+    if hashableKey k then heapContainsScan h fuel k xs.toList
+    else keyRefusal h k
   | Option.none => .unsupported danglingMsg
 
 /-- `x in c` for EVERY in-tier container (H5 iteration): a heap referent
@@ -1516,6 +1534,8 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
     | some (.generator ..) =>
         .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+    | some (.pyset _) =>
+        .unsupported "sorted() over a set is outside the tier (CPython sorts it; the drain order is hash order — recorded, docs/memory-model.md)"
     | Option.none => .unsupported danglingMsg
   | v => do let r ← sortedVal v desc; return (h, r)
 
@@ -1544,6 +1564,8 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
             .unsupported s!"{if isMax then "max" else "min"}() over a generator DRAINS it (a stateful read) — outside the tier"
         | some (.closure ..) =>
             .exn (.typeError "'function' object is not iterable")
+        | some (.pyset _) =>
+            .unsupported s!"{if isMax then "max" else "min"}() over a set is outside the tier (hash-order drain; docs/memory-model.md)"
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
@@ -1580,6 +1602,23 @@ def anyAllScan (h : Heap) (isAll : Bool) : List RVal → Res Bool
   | v :: vs => do
     let b ← truthyH h v
     if b != isAll then .ok b else anyAllScan h isAll vs
+
+/-- Deduplicate by VALUE equality, first occurrence kept (H7+ set
+construction, docs/memory-model.md): membership and `len` are
+order-blind, so the retained order is unobservable through the admitted
+surface. Elements ride the dict-KEY doctrine — `hashableKey` gates, an
+unhashable element is `keyRefusal`'s answer (faithful `TypeError` for
+lists/dicts/sets, loud for identity-hashed instances); equality is the
+fueled heap scan. -/
+def setDedup (h : Heap) (fuel : Nat) (acc : List RVal) :
+    List RVal → Res (List RVal)
+  | [] => .ok acc
+  | v :: vs => do
+    if hashableKey v then
+      let dup ← heapContainsScan h fuel v acc
+      if dup then setDedup h fuel acc vs
+      else setDedup h fuel (acc ++ [v]) vs
+    else keyRefusal h v
 
 /-- The names of an unpacking target's elements; `none` if any element is not
 a plain `Name` (nested or starred patterns are outside the v0 tier). -/
@@ -1656,6 +1695,8 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
          .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
        | some (.closure ..) =>
          .exn (.typeError "cannot unpack non-iterable function object")
+       | some (.pyset _) =>
+         .unsupported "unpacking a set is outside the tier (hash order; docs/memory-model.md)"
        | Option.none => .unsupported danglingMsg
      | v => assignTo env target v)
   | t => assignTo env t v
@@ -1851,6 +1892,8 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     .refuse s!"method call '.{attr}' on a generator is outside the tier (send/throw/close and finalization are deliberately out; docs/memory-model.md §generator semantics)"
   | some (.closure ..) =>
     .refuse s!"method call '.{attr}' on a function object is outside the tier (docs/memory-model.md §nested defs and closures)"
+  | some (.pyset _) =>
+    .refuse s!"method call '.{attr}' on a set is outside the tier (add/remove/pop/… mutate or drain in hash order; docs/memory-model.md)"
   | Option.none => .dangling
 
 /-! ## The namedtuple table (H3+, docs/memory-model.md §class semantics —
@@ -2443,6 +2486,8 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
+     | some (.pyset _) =>
+        .unsupported "enumerate() over a set is outside the tier (hash order; docs/memory-model.md)"
      | Option.none => .unsupported danglingMsg)
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
@@ -2587,7 +2632,7 @@ mutual
     -- (docs/memory-model.md §call-site keyword arguments).
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
-        && (id != "count") && (id != "any") && (id != "all")
+        && (id != "count") && (id != "any") && (id != "all") && (id != "set")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
@@ -2812,6 +2857,7 @@ theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
       right; right; right; exact ⟨_, rfl⟩
     | generator qn lo k st => right; right; right; exact ⟨_, rfl⟩
     | closure nm ps ao lo' hg ig bd cap => right; right; right; exact ⟨_, rfl⟩
+    | pyset xs => right; right; right; exact ⟨_, rfl⟩
     | «instance» ci attrs =>
       cases hv : Env.lookup attrs.toList "get" with
       | some v => simp [hv]
@@ -3134,9 +3180,72 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok st (.bool b)
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
+                           | some (.pyset _) =>
+                             .unsupported s!"{fname}() over a set is outside the tier (recorded; docs/memory-model.md)"
                            | Option.none => .unsupported danglingMsg)
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)"))
+                  else if fname == "set" then
+                    -- H7+ sets (the honest subset): construction from an
+                    -- iterable, DEDUPLICATED by value equality (the
+                    -- dict-key doctrine gates elements); a generator
+                    -- argument DRAINS (`set` is outside `heapFree`).
+                    -- Membership/len/truthiness are the only readers.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] =>
+                       .ok { st with world :=
+                               { st.world with heap := st.world.heap.push (.pyset #[]) } }
+                         (.ref st.world.heap.size)
+                     | [v] =>
+                       (match v with
+                        | .str t =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] (strCharVals t)) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
+                        | .tuple xs =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] xs.toList) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
+                        | .ntuple _ _ xs =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] xs.toList) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
+                        | .listV xs =>
+                          Run.liftRes st (setDedup st.world.heap fuel [] xs.toList) ⤳ fun st es =>
+                          .ok { st with world :=
+                                  { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                            (.ref st.world.heap.size)
+                        | .ref a =>
+                          (match Heap.get? st.world.heap a with
+                           | some (.list xs) =>
+                             Run.liftRes st (setDedup st.world.heap fuel [] xs.toList) ⤳ fun st es =>
+                             .ok { st with world :=
+                                     { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                               (.ref st.world.heap.size)
+                           | some (.pyset xs) =>
+                             -- set(s): a fresh copy (already deduplicated)
+                             .ok { st with world :=
+                                     { st.world with heap := st.world.heap.push (.pyset xs) } }
+                               (.ref st.world.heap.size)
+                           | some (.generator ..) =>
+                             Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                             Run.liftRes st (setDedup st.world.heap fuel [] vals) ⤳ fun st es =>
+                             .ok { st with world :=
+                                     { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
+                               (.ref st.world.heap.size)
+                           | some (.dict _ _) =>
+                             .unsupported "set() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           | some (.instance _ _) =>
+                             .exn st (.typeError "'object' object is not iterable")
+                           | some (.closure ..) =>
+                             .exn st (.typeError "'function' object is not iterable")
+                           | Option.none => .unsupported danglingMsg)
+                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                     | vs => .exn st (.typeError s!"set expected at most 1 argument, got {vs.length}"))
                   else if fname == "abs" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
@@ -3860,6 +3969,8 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
         else execForGen m fuel st target a body
     | some (.closure ..) =>
         .unsupported "internal: a list cursor over a function object (report this)"
+    | some (.pyset _) =>
+        .unsupported "internal: a list cursor over a set (report this)"
     | Option.none => .unsupported danglingMsg
   termination_by structural fuel
 
@@ -4053,6 +4164,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                    .exn st (.typeError "'object' object is not iterable")
                | some (.closure ..) =>
                    .exn st (.typeError "'function' object is not iterable")
+               | some (.pyset _) =>
+                   .unsupported "'for' over a set is outside the tier (iteration is hash order — never guessed; docs/memory-model.md)"
                | Option.none => .unsupported danglingMsg)
             | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
        | .refuse msg => .unsupported msg)
@@ -4078,6 +4191,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
            .unsupported "internal: a list cursor over a generator object (report this)"
        | some (.closure ..) =>
            .unsupported "internal: a list cursor over a function object (report this)"
+       | some (.pyset _) =>
+           .unsupported "internal: a list cursor over a set (report this)"
        | Option.none => .unsupported danglingMsg)
     | .forGen target ad body :: k' =>
       Run.withLocals st.locals (stepIter m fuel st.world ad) ⤳ fun st r =>

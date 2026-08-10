@@ -15,10 +15,17 @@ this:
      of DESIGN.md "Runner + differential harness" (ints/bools/str/None/
      list/tuple only; anything else is recorded as unmappable and can never
      match);
-  2. runs ``lake exe leanmodels-run <file.json> <function> <args...>`` on the
-     envelope JSON sitting next to the source and parses its single stdout
-     line;
+  2. runs the Lean side of ALL rows through ONE
+     ``lake exe leanmodels-run --batch <jobs.jsonl>`` process (one job line
+     per row; the runner prints one canonical JSON line per row, in order,
+     flushed as produced) and pairs the stream back up with the rows;
   3. compares the two canonical forms.
+
+The batch shape is load-bearing: one runner process per ROW paid the
+`lake` startup (a full replay of the build graph) 615 times over —
+hours of redundant work. One process pays it once. Progress is printed
+to stderr per row as runner lines arrive, so there is never a silent
+multi-minute stretch.
 
 ``"expect": "match"`` requires equality; ``"expect": "unsupported"``
 whitelists a documented v0 semantic-tier gap — the case passes iff the Lean
@@ -86,12 +93,14 @@ def from_typed(a):
     raise ValueError("bad typed argument: %r" % (a,))
 
 
-def lean_arg(a):
-    """CLI form of a cases.json argument: ints stay integer literals,
-    typed values ride as compact JSON."""
-    if isinstance(a, dict):
-        return json.dumps(a, separators=(",", ":"))
-    return str(a)
+def batch_job(json_path, fname, args, fuel):
+    """One jobs-file line for `leanmodels-run --batch` (compact JSON).
+    cases.json argument encoding is already the runner's own: plain ints
+    stay JSON numbers, typed values ride unchanged."""
+    job = {"path": json_path, "function": fname, "args": args}
+    if fuel is not None:
+        job["fuel"] = fuel
+    return json.dumps(job, separators=(",", ":"))
 
 
 def load_module(path):
@@ -125,26 +134,53 @@ def run_cpython(mod, fname, args):
         return {"status": "unmappable", "type": str(u)}
 
 
-def run_lean(runner_cmd, json_path, fname, args, fuel):
-    """Run the Lean runner; parse its single canonical stdout line."""
-    cmd = list(runner_cmd) + [json_path, fname] + [lean_arg(a) for a in args]
-    if fuel is not None:
-        cmd += ["--fuel", str(fuel)]
-    proc = subprocess.run(
-        cmd, cwd=REPO_ROOT, capture_output=True, text=True
-    )
-    if proc.returncode != 0:
-        return {
-            "status": "runner-error",
-            "msg": "exit %d: %s" % (proc.returncode, proc.stderr.strip()),
-        }
-    lines = [ln for ln in proc.stdout.splitlines() if ln.strip()]
-    if not lines:
-        return {"status": "runner-error", "msg": "no output"}
+def run_lean_batch(runner_cmd, jobs, on_result):
+    """Run ALL jobs through one `--batch` runner process.
+
+    ``jobs`` is a list of jobs-file lines (`batch_job`; fuel rides on the
+    job). Streams the runner's stdout: only lines starting with ``{`` are
+    results (anything else — e.g. `lake` replay chatter — is echoed to
+    stderr); calls ``on_result(i, result)`` as result ``i`` lands so the
+    caller can record it and print progress. A runner that dies early
+    yields explicit ``runner-error`` entries for the missing tail, never
+    a silently shortened table."""
+    jobs_path = os.path.join(REPO_ROOT, "harness", ".batch_jobs.jsonl")
+    with open(jobs_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(jobs) + "\n")
+    cmd = list(runner_cmd) + ["--batch", jobs_path]
+    n = 0
     try:
-        return json.loads(lines[-1])
-    except ValueError as e:
-        return {"status": "runner-error", "msg": "bad JSON: %s (%r)" % (e, lines[-1])}
+        proc = subprocess.Popen(
+            cmd, cwd=REPO_ROOT, stdout=subprocess.PIPE, text=True
+        )
+        for line in proc.stdout:
+            line = line.strip()
+            if not line:
+                continue
+            if not line.startswith("{"):
+                print("runner: %s" % line, file=sys.stderr)
+                continue
+            try:
+                result = json.loads(line)
+            except ValueError as e:
+                result = {"status": "runner-error",
+                          "msg": "bad JSON: %s (%r)" % (e, line)}
+            if n >= len(jobs):
+                raise RuntimeError(
+                    "runner printed more results than the %d jobs — the "
+                    "pairing is broken, refusing to guess" % len(jobs))
+            on_result(n, result)
+            n += 1
+        proc.wait()
+        while n < len(jobs):
+            on_result(n, {
+                "status": "runner-error",
+                "msg": "runner exited (code %d) after %d/%d results"
+                       % (proc.returncode, n, len(jobs)),
+            })
+            n += 1
+    finally:
+        os.unlink(jobs_path)
 
 
 def pretty_value(v):
@@ -212,9 +248,9 @@ def main(argv=None):
     with open(opts.cases, "r", encoding="utf-8") as f:
         cases = json.load(f)
 
-    rows = []
-    failures = 0
-    whitelisted = 0
+    # Pass 1: CPython side of every row, plus its batch job line.
+    calls = []    # (call_repr, expect, cpy_result)
+    jobs = []
     for case in cases:
         src = case["file"]
         fname = case["function"]
@@ -226,28 +262,42 @@ def main(argv=None):
             print("error: cannot import %s: %s" % (src, e), file=sys.stderr)
             return 2
         for args in case["args"]:
-            cpy = run_cpython(mod, fname, args)
-            lean = run_lean(runner_cmd, json_path, fname, args, opts.fuel)
-            if expect == "unsupported":
-                if lean.get("status") == "unsupported":
-                    verdict = "WHITELISTED"
-                    whitelisted += 1
-                else:
-                    verdict = "MISMATCH (expected unsupported)"
-                    failures += 1
-            else:
-                if cpy.get("status") in ("harness-error",) or \
-                   lean.get("status") in ("runner-error",):
-                    verdict = "ERROR"
-                    failures += 1
-                elif cpy == lean:
-                    verdict = "MATCH"
-                else:
-                    verdict = "MISMATCH"
-                    failures += 1
             call = "%s(%s)" % (fname,
                                ", ".join(repr(from_typed(a)) for a in args))
-            rows.append((call, pretty(cpy), pretty(lean), verdict))
+            calls.append((call, expect, run_cpython(mod, fname, args)))
+            jobs.append(batch_job(json_path, fname, args, opts.fuel))
+
+    # Pass 2: the Lean side — ONE runner process for all rows, verdicts
+    # streamed to stderr as they land.
+    rows = []
+    failures = 0
+    whitelisted = 0
+
+    def on_result(i, lean):
+        nonlocal failures, whitelisted
+        call, expect, cpy = calls[i]
+        if expect == "unsupported":
+            if lean.get("status") == "unsupported":
+                verdict = "WHITELISTED"
+                whitelisted += 1
+            else:
+                verdict = "MISMATCH (expected unsupported)"
+                failures += 1
+        else:
+            if cpy.get("status") in ("harness-error",) or \
+               lean.get("status") in ("runner-error",):
+                verdict = "ERROR"
+                failures += 1
+            elif cpy == lean:
+                verdict = "MATCH"
+            else:
+                verdict = "MISMATCH"
+                failures += 1
+        rows.append((call, pretty(cpy), pretty(lean), verdict))
+        print("[%d/%d] %-10s %s" % (i + 1, len(jobs), verdict, call),
+              file=sys.stderr)
+
+    run_lean_batch(runner_cmd, jobs, on_result)
 
     widths = [
         max(len(r[i]) for r in rows + [("case", "cpython", "lean", "verdict")])

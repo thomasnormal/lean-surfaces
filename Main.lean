@@ -28,6 +28,23 @@ where `V` is `{"t":"none"}` | `{"t":"bool","v":true}` | `{"t":"int","v":"55"}`
 Exit code: 0 whenever a canonical line was printed (semantic errors such as
 `exn`/`timeout`/`unsupported` are *results*, not failures); nonzero on
 usage errors (2) and envelope load/parse errors (1).
+
+**Batch mode** (`--batch <jobs.jsonl> [--fuel N]`): one process, many
+calls — the differential harness's shape, so 615 rows cost one `lake`
+startup instead of 615. Each non-empty line of the jobs file is one job:
+
+* `{"path":"….json","function":"f","args":[…],"fuel":N?}`
+
+with `args` elements either plain JSON integers or canonical typed
+values (the same encoding as the CLI), and `fuel` optional (default: the
+command line's `--fuel`, else 10000). Envelopes are parsed once per
+distinct `path` and cached. Exactly ONE line is printed per job, in job
+order, flushed as it is produced (a stalled consumer sees progress, not
+silence). A job the runner itself cannot execute — unparsable line,
+unreadable or invalid envelope — emits `{"status":"runner-error",
+"msg":…}` on stdout (so the row count stays honest), mirrors the message
+to stderr, and forces a nonzero exit: LOUD, never absorbed into the
+stream as agreement.
 -/
 
 open LeanModels.Python
@@ -165,8 +182,93 @@ def runScriptMode (m : Module) (fuel : Nat) : IO UInt32 := do
       IO.eprintln "leanpy-timeout"
       return 4
 
+/-- One parsed job line of `--batch` mode. -/
+structure BatchJob where
+  path : String
+  fname : String
+  args : Array Val
+  fuel : Option Nat
+
+/-- Parse one jobs-file line. Every failure message carries the line, so
+a bad row in a 615-row file is findable without counting. -/
+def parseJob (line : String) : Except String BatchJob := do
+  let j ← (Lean.Json.parse line).mapError
+    (fun e => s!"not JSON ({e}): {line}")
+  let path ← ((j.getObjVal? "path").bind (·.getStr?)).mapError
+    (fun _ => s!"job needs a string \"path\": {line}")
+  let fname ← ((j.getObjVal? "function").bind (·.getStr?)).mapError
+    (fun _ => s!"job needs a string \"function\": {line}")
+  let argsJ ← ((j.getObjVal? "args").bind (·.getArr?)).mapError
+    (fun _ => s!"job needs an \"args\" array: {line}")
+  let args ← argsJ.mapM fun a =>
+    match a.getInt? with
+    | .ok n => .ok (Val.int n)
+    | .error _ => valOfJson a
+  let fuel? ← match j.getObjVal? "fuel" with
+    | .error _ => pure Option.none
+    | .ok f =>
+      match f.getNat? with
+      | .ok n => pure (some n)
+      | .error _ => throw s!"\"fuel\" must be a natural number: {line}"
+  return { path, fname, args, fuel := fuel? }
+
+/-- `--batch` driver: one canonical line per job, in order, flushed per
+line; envelopes cached by path; runner-level failures are per-row
+`runner-error` lines PLUS a nonzero exit. -/
+def runBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
+  match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
+  | .error e =>
+      IO.eprintln s!"leanmodels-run --batch: cannot read '{jobsPath}': {toString e}"
+      return 1
+  | .ok contents =>
+      let stdout ← IO.getStdout
+      let mut cache : List (String × Module) := []
+      let mut hadError := false
+      for line in contents.splitOn "\n" do
+        if line.trim.isEmpty then
+          continue
+        -- Resolve the job to either a module+call or a runner error.
+        let outcome : Except String (Module × BatchJob) ← do
+          match parseJob line with
+          | .error e => pure (.error e)
+          | .ok job =>
+            match cache.find? (·.1 == job.path) with
+            | some (_, m) => pure (.ok (m, job))
+            | Option.none =>
+              match ← (IO.FS.readFile ⟨job.path⟩).toBaseIO with
+              | .error e => pure (.error s!"cannot read '{job.path}': {toString e}")
+              | .ok raw =>
+                match parseEnvelopeString raw with
+                | .error e => pure (.error s!"'{job.path}' is not a valid envelope: {e}")
+                | .ok envl =>
+                  if envl.language == "python" then do
+                    cache := (job.path, envl.module) :: cache
+                    pure (.ok (envl.module, job))
+                  else
+                    pure (.error s!"'{job.path}' has language '{envl.language}', expected 'python'")
+        match outcome with
+        | .error e =>
+            hadError := true
+            IO.eprintln s!"leanmodels-run --batch: {e}"
+            stdout.putStrLn ("{\"status\":\"runner-error\",\"msg\":" ++ jsonStr e ++ "}")
+        | .ok (m, job) =>
+            stdout.putStrLn (resJson (callFunction m job.fname job.args (job.fuel.getD defaultFuel)))
+        stdout.flush
+      return (if hadError then 1 else 0)
+
 def main (argv : List String) : IO UInt32 := do
   match argv with
+  | "--batch" :: rest =>
+    match splitFuel rest with
+    | .error e =>
+        IO.eprintln s!"leanmodels-run --batch: {e}"
+        return 2
+    | .ok (positional, fuel?) =>
+      let some jobsPath := (match positional with | [p] => some p | _ => Option.none)
+        | do
+            IO.eprintln "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N]"
+            return 2
+      runBatchMode jobsPath (fuel?.getD 10000)
   | "--script" :: rest =>
     -- leanpy v0: `leanmodels-run --script <envelope.json> [--fuel N]`
     -- (default fuel 1000000: fuel is a depth/iteration bound and concrete

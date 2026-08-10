@@ -15,8 +15,13 @@ From anywhere (the script re-roots itself at the repo root):
 python3 harness/diff_test.py
 ```
 
-It runs `lake build` once up front, then prints a table
-(`case | cpython | lean | verdict`) and a summary line like:
+It runs `lake build` once up front, evaluates the CPython side of every
+row, then runs ALL Lean rows through **one** `leanmodels-run --batch`
+process — one `lake` startup total, not one per row (the per-row shape
+cost hours over 615 rows; the batch shape costs seconds). Per-row
+verdicts stream to stderr as runner results arrive (`[17/615] MATCH …`),
+so there is never a silent multi-minute stretch; at the end it prints a
+table (`case | cpython | lean | verdict`) and a summary line like:
 
 ```
 130 cases: 0 failed, 3 whitelisted-unsupported, 127 matched
@@ -55,11 +60,11 @@ list of argument tuples. Real rows:
   path and expects the extractor-generated envelope `<file>.json` next to it
   (run `python3 extractors/python/extract.py <file>` first).
 - `function` — module-level function name.
-- `args` — a list of argument lists (integers only; the runner parses args
-  as arbitrary-precision ints). Functions taking non-int arguments (lists,
-  strings) therefore have no expressible rows in v0: cover their concrete
-  behavior with `#py_check` lines in the spec file — the surface command
-  takes full terms — and record the gap in the file's non-vacuity block.
+- `args` — a list of argument lists. Each argument is a plain (arbitrary-
+  precision) integer or a canonical typed JSON value — the runner's own
+  `{"t":…,"v":…}` encoding — so list/tuple/str/bool/None arguments get real
+  differential rows. Also state the concrete runs as `#py_check` lines in
+  the spec file.
 - `expect` — `"match"` (default): CPython and Lean canonical outcomes must
   be equal, exceptions included (compared by canonical class name —
   [reference, error classes](../reference.md#error-classes)).
@@ -104,17 +109,18 @@ Three distinct situations hide in there:
 **`{"status":"timeout"}`.** Fuel ran out (e.g. `--fuel 3` on `tri 10`).
 Raise `--fuel`; if it persists, the function may not terminate on that input.
 
-**Non-integer arguments.**
+**Malformed arguments.**
 
 ```
-leanmodels-run: arguments must be integers, got 'x'
+leanmodels-run: arguments must be integers or canonical typed JSON values, got 'x'
 usage: leanmodels-run <envelope.json> <function> [args...] [--fuel N]
-  args are parsed as (arbitrary-precision) integers; default fuel 10000
+  args: integer literals or canonical typed JSON values ({"t":"list","v":[…]} — the encoding the runner prints); default fuel 10000
 ```
 
-The runner (and therefore the harness `args`) only takes ints in v0. Note a
-misspelled function is *not* a runner error — it is a faithful semantic
-result: `{"status":"exn","exn":"NameError"}`.
+An argument that is neither an integer literal nor canonical typed JSON is
+a usage error (exit 2). Note a misspelled function is *not* a runner
+error — it is a faithful semantic result:
+`{"status":"exn","exn":"NameError"}`.
 
 **Relative `--cases` path not found.** The script `chdir`s to the repo root
 before reading the case file, so a `--cases` path relative to *your* cwd

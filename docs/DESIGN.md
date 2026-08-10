@@ -241,8 +241,10 @@ correctness theorem can never be vacuously true because the interpreter got stuc
 
 ## Runner + differential harness (normative I/O format)
 
-`lake exe leanmodels-run <envelope.json> <function> [args…] [--fuel N]` (args parsed
-as ints; default fuel 10000). Prints ONE line of JSON to stdout:
+`lake exe leanmodels-run <envelope.json> <function> [args…] [--fuel N]` (args:
+integer literals or canonical typed JSON values — the same `{"t":…,"v":…}`
+encoding the runner prints; default fuel 10000). Prints ONE line of JSON to
+stdout:
 
 - `{"status":"ok","value":V}` | `{"status":"exn","exn":"ZeroDivisionError"}`
 - `{"status":"timeout"}` | `{"status":"unsupported","msg":"…"}`
@@ -251,12 +253,24 @@ where `V` is: `{"t":"none"}` | `{"t":"bool","v":true}` | `{"t":"int","v":"55"}`
 (decimal string) | `{"t":"str","v":"…"}` | `{"t":"list","v":[V…]}` |
 `{"t":"tuple","v":[V…]}`.
 
+`lake exe leanmodels-run --batch <jobs.jsonl> [--fuel N]` is the harness's
+shape: one process, one job per line
+(`{"path":"….json","function":"f","args":[…],"fuel":N?}`), envelopes parsed
+once per distinct path, exactly one canonical result line per job in job
+order, flushed as produced. A job the runner cannot execute emits a
+`{"status":"runner-error","msg":…}` line (the row count stays honest),
+mirrors to stderr, and forces a nonzero exit — loud, never absorbed as
+agreement. The batch shape is load-bearing: one process per ROW paid the
+`lake` startup replay per row (hours over 615 rows); one process pays it once
+(seconds).
+
 `harness/diff_test.py` reads `harness/cases.json`
 (`[{"file": "Examples/python/tri/tri.py", "function": "tri", "args": [[10],[0],[-3],…],
 "expect": "match"}]`; `"expect":"unsupported"` whitelists documented v0 gaps), runs
 CPython on the source (import by path, call, map result/exception to the same
-canonical JSON) and the Lean runner, compares, prints a table, exits non-zero on any
-non-whitelisted mismatch.
+canonical JSON) and ALL Lean rows through one `--batch` runner process
+(per-row progress on stderr as results stream), compares, prints a table,
+exits non-zero on any non-whitelisted mismatch.
 
 ## Definition of done (v0)
 

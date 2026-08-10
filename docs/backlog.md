@@ -538,3 +538,23 @@ built:
    which `Searcher.bound` will want) and nothing else — `directions`
    survives, because every statement after it is either in tier or a
    whitelisted call.
+
+## Harness batch mode — BUILT (2026-08-10)
+
+The differential battery no longer pays the `lake` startup per row.
+`leanmodels-run --batch <jobs.jsonl>` (Main.lean) takes one job per line
+(`{"path":…,"function":…,"args":[…],"fuel":N?}`), parses each envelope
+once per distinct path, and prints exactly one canonical result line per
+job, in order, flushed per line; a job the runner cannot execute emits a
+`runner-error` line (the row count stays honest), mirrors to stderr, and
+forces a nonzero exit — loud, never absorbed as agreement.
+`harness/diff_test.py` now runs ALL rows through one such process and
+streams per-row verdicts to stderr. Measured on the full battery: 615
+rows in ~11 s wall including the up-front `lake build` replay — the
+per-row shape (one `lake exe` per row, each replaying the build graph)
+took HOURS on the same rows. Never reintroduce the per-row shape.
+
+Next milestone unchanged (item 3 above, recorded only — not started):
+the draining consumers — `sorted(key=)` and `sorted`/`max`/`all` OVER a
+generator (they drain it, so they need the stateful stepper), the
+`moves()` ordering surface — plus keyword arguments at call sites.

@@ -911,6 +911,121 @@ membership both ways, `len`/truthiness on empty and nonempty,
 unhashable element AND probe `TypeError`s, and the loud frontier
 (`iter_is_loud`, `sorted_is_loud`) pinned as refusals.
 
+## Exceptions (bound() arc pass 2 — DESIGN ONLY, nothing built)
+
+The deferred non-mechanical blocker, designed before any line of
+implementation, per the standing discipline. NOTHING in this section is
+implemented; no tier claim changes until a build commit says so.
+
+**Scope facts from the shipped file, established first.** (1) The whole
+in-file exception surface is three constructs: `class Stop(Exception):
+pass` (line 310), `raise Stop` inside `bound()` (line 332), and
+`main()`'s `try: import sys, tools.uci … except ImportError: pass`.
+(2) The `raise Stop` is GUARDED: `if self.deadline is not None and
+self.nodes % 2048 == 0 and time.time() > self.deadline` — and the
+in-file driver NEVER sets `deadline` (`__init__` sets `None`; only the
+external `tools/uci.py` assigns it). Under `deadline = None` the
+`and`-chain short-circuits at its first conjunct, so the raise AND the
+`time.time()` call are dynamically dead: a deadline-less `bound()`
+needs neither exceptions nor time to run faithfully. (3) The one
+in-file `try`/`except` wraps an IN-FUNCTION import, which is loud for
+independent reasons (imports execute only under the G1 whitelist at
+module top level), and `main()` is interactive-I/O driver code, not a
+proof target. (4) The catcher for `Stop` lives OUTSIDE the file
+(`tools/uci.py stop_softly`: `try: yield from gen; except Stop: pass`).
+CONSEQUENCE, recorded honestly: exceptions gate the DEADLINE story and
+corpus completeness, not the deadline-less `bound()` theorem — the
+module-init padding loop (`pst` poisoned, so `pos.value` refuses on the
+shipped file) blocks that theorem harder than exceptions do.
+
+**What already exists and was built for this.** The `Run`/`Res` channel
+carries `.exn (e : PyErr)` with the frame state RETAINED — the H1 core
+decision "state retained on `.ok` AND `.exn`" is exactly CPython's
+unwinding semantics (mutations up to the raise persist; callee locals
+are discarded with the callee frame; the caller's threaded state at a
+propagated `.exn` is the state at the raise). Builtin raises are
+faithful throughout the tier, `==>!`/`Raises` is a stated judgment, and
+the leanpy boundary already renders a class line per `PyErr` kind. What
+does NOT exist: user exception classes, `raise`, `try`/`except`, and
+exception INSTANCES as values.
+
+**Representation: class-identity exceptions, no payload.**
+`PyErr.user (cid : ClassId)` — a raised user exception IS its class
+identity. The admitted class shape is recognized at ingestion, like
+namedtuples: `class N(Exception): pass` EXACTLY (single base literally
+named `Exception`, body `pass`/docstring only, no methods) — the
+`Stop` shape. Such a class is an exception NAME, not an instantiable
+object: `N()` as a value, attributes, `raise N(args…)` with arguments,
+`raise <expr>` of anything but an admitted class name, `raise … from`,
+and the bare re-raise `raise` all refuse loudly. `raise N` maps to
+`.exn (.user cid)` — CPython's implicit no-arg instantiation of an
+empty subclass is observationally the class identity as long as the
+instance can never be INSPECTED, which the refusals above guarantee.
+The H3 dunder guard is untouched: an exception class is a THIRD
+recognized class kind (plain / ntBase / exc), demoted to today's loud
+representation by any deviation from the exact shape.
+
+**`try`/`except`: structure and semantics.** `Stmt.tryStmt body
+handlers orelse finalbody` structured by the extractor; the v0 tier
+admits EXACTLY one handler, naming one admitted exception class, with
+NO `as` binding, empty `orelse`, empty `finalbody` — everything else
+(multiple/bare handlers, tuple patterns, `as e`, `else`, `finally`)
+stays structured-but-loud. Evaluation composes on the existing `Run`:
+run the body; `.ok` skips the handler; `.exn (.user cid)` with cid
+matching the handler's class runs the handler FROM THE RETAINED STATE
+(no rollback — CPython); any other `.exn` propagates. Matching is
+IDENTITY on `ClassId`: with bases beyond `Exception` refused there is
+no hierarchy to walk. `except Exception:` is REFUSED in v0 (it would
+catch builtin `PyErr`s and change every faithfulness story); matching
+a BUILTIN exception name (`except ImportError:` — the `PyErr` kind ↔
+name table the leanpy boundary already owns) is the recorded first
+extension, not v0. Handler flow is ordinary flow (`break`/`return`
+inside a handler route as anywhere); nested `try` needs no design —
+structural recursion composes, and an exception raised INSIDE a
+handler propagates (CPython, chaining refused with `from` above). No
+new mutual-block member: `tryStmt` is an `execStmt` arm.
+
+**The generator decision (the one real semantic point).** An exception
+propagating out of a resume must CLOSE the generator: CPython marks the
+frame finished, and every later `next()` raises `StopIteration`.
+`stepIter` therefore routes a body `.exn` outward AND sets
+`status := closed` — never `suspended` (a resumable post-exception
+frame is unfaithful) and never stuck `running` (a permanent fake
+`ValueError`). OBLIGATION RECORDED: today builtin `PyErr`s can already
+fire inside a step — pin the CURRENT status-after-exn behavior with a
+differential row BEFORE building, and fix it WITH the tier if it
+diverges. `execForGen` needs nothing: `Run.bind` already propagates the
+step's `.exn` out of the loop. A `yield` INSIDE a `try` body would make
+`tryStmt` a suspendable construct needing its own `GenFrame` — REFUSED
+in v0 (`genPlan` has no try frame; the extractor flags a generator
+whose `yield` sits under `try`), and nothing in the shipped file does
+it (`moves()`/`gen_moves`/`search` all yield outside `try`).
+
+**Fragments and proof layer.** `raise` of an admitted class and
+`tryStmt` over heap-free subtrees allocate nothing — both can stay IN
+`heapFree` (the exception value is an immediate). `==>!` already
+states raising runs; no new judgment. `fuelMono`/`worldInv` gain
+ordinary `execStmt`-arm cases, no appended conjuncts.
+
+**Acceptance staging (design).** A lab example (`exc_lab`):
+raise-catch roundtrip; mutations-before-raise visible in the handler
+(the state-retention covenant observable); non-matching class
+propagates; an exception crossing a generator resume closes the
+generator (the `next()`-after-exn row); the refusal battery (`as`,
+`finally`, `else`, args on raise, `raise` bare, `except Exception`,
+value raise, yield-under-try). Corpus script with a top-level
+try/except once the shell learns the statement. THEN the sunfish
+shapes: `Stop` recognized on the shipped file's census, and a
+lab-scale deadline capstone — a MiniSearcher raising on a NODE-COUNT
+budget (`if self.nodes > limit: raise Stop`) consumed through a
+driver `try`/`except Stop`, which exercises the full raise-through-
+resume-into-handler path while leaving `time.time()` exactly where it
+is: deferred, awaiting its own recorded abstraction decision.
+
+**Explicitly NOT decided here:** the `time.time()` abstraction,
+`except Exception`, builtin-name matching, `finally`, exception
+payloads/`as` bindings. Each needs its own recorded decision.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

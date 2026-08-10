@@ -750,7 +750,15 @@ sf_order envelope outgrew the elaborator default —
 `set_option maxRecDepth 100000 in load_program` (the sunfish
 example's pattern).
 
-REMAINING on the bound() arc after this pass (both flagged, neither
-started): exceptions (`raise Stop`, the driver `try`/`except` — its
-own design pass) and `time.time()` (a recorded abstraction decision,
-never a silent stub).
+REMAINING on the bound() arc after this pass: exceptions now have
+their RECORDED DESIGN (docs/memory-model.md §exceptions — DESIGN
+ONLY, nothing built: class-identity `PyErr.user`, the exact
+`class N(Exception): pass` recognition, single-handler `try`/`except`
+on the retained-state covenant, the generator-closing decision with
+its pin-current-behavior obligation, and the node-budget deadline
+capstone shape). The design surfaced a SCOPING FACT worth repeating:
+the in-file driver never sets `deadline`, so `raise Stop` and
+`time.time()` are dynamically dead under `deadline = None` — the
+shipped deadline-less `bound()` is blocked by the module-init padding
+loop (`pst` poisoned), NOT by exceptions. `time.time()` remains
+deferred awaiting its own abstraction decision.

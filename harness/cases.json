@@ -238,6 +238,8 @@
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_ray", "args": [[2, 3, 10], [0, 1, 4], [5, -2, 4]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "count_default", "args": [[]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "enum_of_int", "args": [[3]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "bad_first", "args": [[0], [2]], "expect": "match"},
+  {"file": "Examples/python/gen_lab/gen_lab.py", "function": "bad_second", "args": [[0], [2], [-1]], "expect": "match"},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_plain", "args": [[1], [7], [0]], "expect": "match"},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_all", "args": [[3], [-2]], "expect": "match"},
   {"file": "Examples/python/kw_lab/kw_lab.py", "function": "kw_swap", "args": [[4], [0]], "expect": "match"},

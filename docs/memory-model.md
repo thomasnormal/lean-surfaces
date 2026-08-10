@@ -994,7 +994,17 @@ frame is unfaithful) and never stuck `running` (a permanent fake
 `ValueError`). OBLIGATION RECORDED: today builtin `PyErr`s can already
 fire inside a step — pin the CURRENT status-after-exn behavior with a
 differential row BEFORE building, and fix it WITH the tier if it
-diverges. `execForGen` needs nothing: `Run.bind` already propagates the
+diverges. OBLIGATION DISCHARGED (2026-08-11, pass 4, pre-build):
+`gen_lab.bad_first`/`bad_second` pin the faithful RAISE (the whole call
+propagates CPython's `ZeroDivisionError` — differential rows), and the
+raw `#guard` in `gen_lab/spec.lean` pins the STATUS divergence exactly
+as this section predicted: the stepper sets `running` on entry and the
+`.exn` path never clears it, so a third step is the fake "generator
+already executing" `ValueError` where CPython closes the frame
+(`next()` → `StopIteration`). No differential row can observe the
+divergence yet — nothing in tier survives the second step — so the pin
+is Lean-side, and the fix lands WITH the tier (the build flips the pin
+to `closed` and adds the `try`-driven differential row in `exc_lab`). `execForGen` needs nothing: `Run.bind` already propagates the
 step's `.exn` out of the loop. A `yield` INSIDE a `try` body would make
 `tryStmt` a suspendable construct needing its own `GenFrame` — REFUSED
 in v0 (`genPlan` has no try frame; the extractor flags a generator

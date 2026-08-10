@@ -248,3 +248,26 @@ def count_default():
 
 def enum_of_int(n):
     return next(enumerate(n), -1)
+
+
+def bad(n):
+    # a builtin exception firing INSIDE a step: the second resume divides
+    # by n (the docs/memory-model.md paragraph "exceptions" obligation --
+    # pin the status-after-exn behaviour BEFORE the exception tier builds
+    # on the stepper)
+    yield 1
+    yield 1 // n
+    yield 3
+
+
+def bad_first(n):
+    # the exception is NOT raised at creation, nor by the first step
+    return next(bad(n))
+
+
+def bad_second(n):
+    # the second step raises out of the resume (n = 0), and the whole
+    # call propagates CPython's ZeroDivisionError
+    g = bad(n)
+    next(g)
+    return next(g)

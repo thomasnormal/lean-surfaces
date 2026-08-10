@@ -115,6 +115,39 @@ the generator is fine — calling one runs no code). -/
 #guard callFunction gen_lab "gen_at_boundary" #[.int 2] 4096 matches .unsupported _
 #guard callFunction gen_lab "send_is_loud" #[.int 3] 4096 matches .unsupported _
 
+/-! ### the §exceptions obligation, DISCHARGED (docs/memory-model.md
+§exceptions): what happens to a generator when a BUILTIN exception fires
+inside a step. The raise itself propagates faithfully (`bad_first`/
+`bad_second` are differential rows — the whole call raises CPython's
+`ZeroDivisionError`), but the STATUS the object is left with diverges
+from CPython today, and the raw `#guard` below pins the divergence
+honestly: the stepper set `running` on entry and the exn path never
+cleared it, so a THIRD step answers the fake "generator already
+executing" `ValueError`, where CPython marks the frame finished and
+`next()` raises `StopIteration`. Unreachable through the differential
+harness until `try`/`except` exists (nothing in tier can survive the
+second step to observe the third), which is exactly why the exceptions
+design records "fix WITH the tier": the build flips this pin to the
+CLOSED status and adds the `try`-driven differential row (`exc_lab`). -/
+
+#py_check gen_lab.bad_second(2) = 0
+#py_check gen_lab.bad_second(0) raises .zeroDivisionError
+
+#guard (match callIn gen_lab 4096 ⟨#[], [], []⟩ "bad" #[.int 0] with
+        | .ok w (.ref a) =>
+          (match stepIter gen_lab 4096 w a with
+           | .ok w₁ (some (.int 1)) =>
+             (match stepIter gen_lab 4096 w₁ a with
+              | .exn w₂ .zeroDivisionError =>
+                -- the divergence, pinned: stuck `running`, fake ValueError
+                -- (CPython: closed, StopIteration). Flipped by the build.
+                (match stepIter gen_lab 4096 w₂ a with
+                 | .exn _ (.valueError msg) => msg == "generator already executing"
+                 | _ => false)
+              | _ => false)
+           | _ => false)
+        | _ => false)
+
 /-! ### the ingestion census: `is_generator` is CPython's syntactic,
 scope-local rule — a def whose OWN scope contains a `yield`, reachable
 or not. A generator def evicts the whole module from the heap-free

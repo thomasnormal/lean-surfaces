@@ -169,6 +169,48 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
                     if i == H1 and self.board[j + W] == "K" and self.wc[1]:
                         yield Move(j + W, j + E, "")
 
+    def rotate(self, nullmove=False):
+        """Rotates the board, preserving enpassant, unless nullmove"""
+        return Position(
+            self.board[::-1].swapcase(), -self.score, self.bc, self.wc,
+            119 - self.ep if self.ep and not nullmove else 0,
+            119 - self.kp if self.kp and not nullmove else 0,
+        )
+
+    def move(self, move):
+        i, j, prom = move
+        p, q = self.board[i], self.board[j]
+        put = lambda board, i, p: board[:i] + p + board[i + 1 :]
+        # Copy variables and reset ep and kp
+        board = self.board
+        wc, bc, ep, kp = self.wc, self.bc, 0, 0
+        score = self.score + self.value(move)
+        # Actual move
+        board = put(board, j, board[i])
+        board = put(board, i, ".")
+        # Castling rights, we move the rook or capture the opponent's
+        if i == A1: wc = (False, wc[1])
+        if i == H1: wc = (wc[0], False)
+        if j == A8: bc = (bc[0], False)
+        if j == H8: bc = (False, bc[1])
+        # Castling
+        if p == "K":
+            wc = (False, False)
+            if abs(j - i) == 2:
+                kp = (i + j) // 2
+                board = put(board, A1 if j < i else H1, ".")
+                board = put(board, kp, "R")
+        # Pawn promotion, double move and en passant capture
+        if p == "P":
+            if A8 <= j <= H8:
+                board = put(board, j, prom)
+            if j - i == 2 * N:
+                ep = i + N
+            if j == self.ep:
+                board = put(board, j + S, ".")
+        # We rotate the returned position, so it's ready for the next player
+        return Position(board, score, wc, bc, ep, kp).rotate()
+
     def value(self, move):
         i, j, prom = move
         p, q = self.board[i], self.board[j]
@@ -259,3 +301,53 @@ def bound_probe(board, gamma, depth, ep, kp):
         if best >= gamma:
             break
     return (best, searched)
+
+
+def move_probe(board, i, j, prom, ep, kp):
+    """The verbatim Position.move (H7: its `put` lambda is the
+    nested-def shape) followed by the verbatim rotate — the board a
+    search child sees. Returns (board, score, ep, kp) of the child."""
+    pos = Position(board, 0, (True, True), (True, True), ep, kp)
+    child = pos.move(Move(i, j, prom))
+    return (child.board, child.score, child.ep, child.kp)
+
+
+class Cache:
+    """The tp_move shape: a dict keyed BY Position, read with .get."""
+
+    def __init__(self):
+        self.tp_move = {}
+
+
+def killer_probe(board, gamma, depth, ep, kp, ki, kj):
+    """bound()'s moves() PROLOGUE (the H7+ capstone): killer =
+    self.tp_move.get(pos) — dict .get through an instance attribute,
+    keyed by the Position itself, None on a miss without mutating —
+    feeding the `if killer and pos.value(killer) >= val_lower:` gate,
+    then the ordered tail. The first real yields of the shipped moves()
+    minus the recursive self.bound calls. ki < 0 means no stored killer:
+    the gate must fall through on the .get miss."""
+    cache = Cache()
+    pos = Position(board, 0, (True, True), (True, True), ep, kp)
+    if ki >= 0:
+        cache.tp_move[pos] = Move(ki, kj, "")
+    val_lower = QS - depth * QS_A
+
+    def moves():
+        killer = cache.tp_move.get(pos)
+        if killer and pos.value(killer) >= val_lower:
+            yield (pos.value(killer), killer.i, killer.j)
+        for val, move in sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True):
+            if val < val_lower:
+                break
+            yield (val, move.i, move.j)
+
+    out = []
+    searched = 0
+    for val, i, j in moves():
+        searched = searched + 1
+        if searched <= 2:
+            out.append((val, i, j))
+        if val >= gamma:
+            break
+    return (searched, out)

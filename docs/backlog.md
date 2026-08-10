@@ -626,9 +626,9 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 
 1. **Instance-method keyword arguments** — DONE (bound() arc pass 1,
    below).
-2. **`self.tp_move.get(pos)`** — dict `.get` through an instance
-   attribute READ with an ntuple key: likely in tier already; needs a
-   differential row before it is claimed.
+2. **`self.tp_move.get(pos)`** — CLAIMED (bound() arc pass 1, below):
+   in tier as suspected, no semantics change; `sf_order.killer_probe`
+   is the differential row.
 3. **`Position.move`** — DONE (bound() arc pass 1, below): `put =
    lambda …` is the H7 nested-def shape; `move` runs as shipped.
 4. **`bound()`'s own gates** — sets DONE (bound() arc pass 1, below:
@@ -647,6 +647,18 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 The enumerated blockers above, taken mechanically — each construct
 designed in docs/memory-model.md, refused loudly outside its tier,
 pinned by happy AND refusal battery rows.
+
+**Capstone probes — LANDED** (`Examples/python/sf_order`):
+`move_probe` — the VERBATIM `Position.move` (its `put` lambda as the
+H7 nested def) + verbatim rotate, the board a search child sees;
+`killer_probe` — bound()'s moves() PROLOGUE: `killer =
+cache.tp_move.get(pos)` through an instance attribute keyed by the
+Position itself (hit / miss-to-None without mutating), the shipped
+`if killer and pos.value(killer) >= val_lower:` gate, then the
+ordered tail with the beta cutoff. `self.tp_move.get(pos)` is thereby
+CLAIMED as in tier (no semantics change was needed). What pass 2
+needs is exactly the non-mechanical list: recursion through the
+captured `self` (item 5 above), exceptions, `time.time()`.
 
 **Sets — BUILT, the honest subset** (§set semantics): `Obj.pyset`,
 heap identity, first-seen order UNOBSERVABLE; `set()`/`set(iterable)`

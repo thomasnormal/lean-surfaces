@@ -93,3 +93,17 @@ cannot reproduce. -/
 #py_check sf_order.bound_probe(
     "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
     1000, 0, 0, 0) = (Val.tuple #[.int 46, .int 3])
+
+/-! ### H7+ capstone: move_probe (verbatim move+rotate, the put lambda)
+and killer_probe (tp_move.get through an instance attribute, keyed by
+the Position, the killer gate, the ordered tail) -/
+
+#py_check sf_order.killer_probe(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    40, 1, 0, 0, 85, 65) = (Val.tuple #[.int 1,
+      .list #[.tuple #[.int 42, .int 85, .int 65]]])
+#py_check sf_order.killer_probe(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    1000, 1, 0, 0, -1, 0) = (Val.tuple #[.int 20,
+      .list #[.tuple #[.int 46, .int 84, .int 64],
+              .tuple #[.int 42, .int 85, .int 65]]])

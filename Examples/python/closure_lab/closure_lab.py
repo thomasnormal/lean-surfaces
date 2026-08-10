@@ -167,3 +167,54 @@ def lam_rebound(a):
     f = lambda: a
     a = a + 1
     return f()
+
+
+class TreeCounter:
+    """bound() arc pass 2 (docs/memory-model.md §nested defs and
+    closures, recursion addendum): the bound() SHAPE — a nested
+    generator yielding recursive results THROUGH the captured self,
+    folded below with a cutoff that abandons the drain. Each depth
+    executes its own `def kids():` (a fresh closure, a fresh generator);
+    `nodes` is the laziness observable — subtrees behind an abandoned
+    yield never run."""
+
+    def __init__(self):
+        self.nodes = 0
+
+    def tree(self, n, cut):
+        self.nodes = self.nodes + 1
+        if n == 0:
+            return 1
+
+        def kids():
+            k = 0
+            while k < 3:
+                yield self.tree(n - 1, cut)
+                k = k + 1
+
+        t = 0
+        for v in kids():
+            t = t + v
+            if t >= cut:
+                break
+        return t
+
+
+def gen_rec(n, cut):
+    c = TreeCounter()
+    t = c.tree(n, cut)
+    return (t, c.nodes)
+
+
+def rec_nested_name(n):
+    # REFUSAL: a nested def calling ITSELF by its own name — `f` is an
+    # enclosing local bound BY the def, not textually before it, so the
+    # capture census refuses ("no binding before the def"); CPython's
+    # cell resolves the recursion and answers n. sunfish never does
+    # this: bound() recurses through the METHOD name on self, which is
+    # Module.functions dispatch, not a captured cell.
+    def f(k):
+        if k == 0:
+            return 0
+        return 1 + f(k - 1)
+    return f(n)

@@ -118,3 +118,13 @@ example : Heap.WF #[.list #[.int 2], .instance 0 #[("items", .ref 0)]] := by
   have h2 : a < 2 := by simpa using hlt
   have ha : a = 0 ∨ a = 1 := by omega
   rcases ha with rfl | rfl <;> simp [Obj.WF, RVal.WFList, RVal.WF]
+
+/-! ### bound() arc pass 2: recursion through the receiver — direct
+(`self.down`) and mutual (`self.odd`/`self.even`) method recursion,
+the same `.ref` re-entering `callIn` at every depth, one shared
+`nodes` counter mutating across the nest -/
+
+#py_check cls_lab.method_rec(4) = (Val.tuple #[.int 4, .int 5])
+#py_check cls_lab.method_rec(0) = (Val.tuple #[.int 0, .int 1])
+#py_check cls_lab.method_mutual(5) = (Val.tuple #[.bool true, .bool false])
+#py_check cls_lab.method_mutual(2) = (Val.tuple #[.bool false, .bool true])

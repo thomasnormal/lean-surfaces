@@ -73,3 +73,20 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
 #py_check closure_lab.lam_capture(3) = 11
 #guard (match callFunction closure_lab "lam_rebound" #[.int 5] 10000 with
   | .unsupported _ => true | _ => false)
+
+/-! ### bound() arc pass 2: recursion FROM a generator frame through the
+captured self (the bound() shape). Each depth executes its own
+`def kids():` — a fresh closure, a fresh generator — and the cutoff
+abandons the drain mid-yield: `nodes` proves the pruned subtrees never
+ran ((2, 4) under cut=2 vs (9, 13) under cut=100 at the same depth). -/
+
+#py_check closure_lab.gen_rec(1, 2) = (Val.tuple #[.int 2, .int 3])
+#py_check closure_lab.gen_rec(2, 2) = (Val.tuple #[.int 2, .int 4])
+#py_check closure_lab.gen_rec(2, 100) = (Val.tuple #[.int 9, .int 13])
+
+/-! the refusal the admission excludes: a nested def calling ITSELF by
+its own name — the name is an enclosing local bound BY the def, so the
+census refuses (CPython's cell resolves the recursion and answers 3) -/
+
+#guard (match callFunction closure_lab "rec_nested_name" #[.int 3] 10000 with
+  | .unsupported _ => true | _ => false)

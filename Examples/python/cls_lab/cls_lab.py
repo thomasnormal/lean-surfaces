@@ -167,3 +167,42 @@ def sub_inherits(a):
 def class_as_value():
     f = Cell
     return 0
+
+
+class Rec:
+    """bound() arc pass 2 (docs/memory-model.md §nested defs and
+    closures, recursion addendum): recursion through the RECEIVER —
+    every depth re-enters callIn with the same `self` ref, and the
+    `nodes` attribute mutates one shared instance across the nest."""
+
+    def __init__(self):
+        self.nodes = 0
+
+    def down(self, n):
+        # direct method self-recursion
+        self.nodes = self.nodes + 1
+        if n == 0:
+            return 0
+        return 1 + self.down(n - 1)
+
+    def odd(self, n):
+        # mutual method recursion, odd half
+        if n == 0:
+            return False
+        return self.even(n - 1)
+
+    def even(self, n):
+        # mutual method recursion, even half
+        if n == 0:
+            return True
+        return self.odd(n - 1)
+
+
+def method_rec(n):
+    r = Rec()
+    return (r.down(n), r.nodes)
+
+
+def method_mutual(n):
+    r = Rec()
+    return (r.odd(n), r.even(n))

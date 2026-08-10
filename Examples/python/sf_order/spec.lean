@@ -30,6 +30,7 @@ next proof-layer step; these are its concrete anchors.
 
 open LeanModels LeanModels.Python
 
+set_option maxRecDepth 100000 in
 load_program sf_order from "Examples/python/sf_order/sf_order.json"
 
 private def openingB : String :=
@@ -107,3 +108,26 @@ the Position, the killer gate, the ordered tail) -/
     1000, 1, 0, 0, -1, 0) = (Val.tuple #[.int 20,
       .list #[.tuple #[.int 46, .int 84, .int 64],
               .tuple #[.int 42, .int 85, .int 65]]])
+
+/-! ### bound() arc pass 2 capstone: rec_probe — the RECURSION shape of
+the shipped bound(). `-self.bound(pos.move(move), 1 - gamma, depth - 1)`
+yielded from the nested generator through the captured self (captures
+depth/gamma/pos/self/val_lower — the shipped moves() set), folded below
+with the beta cutoff. `nodes` counts bound() entries: at the same depth
+the cutting window prunes the recursion TREE ((113, 7) vs (113, 15) at
+depth 2), not just the top drain — an eager design searches every
+subtree and cannot reproduce the pair. -/
+
+private def pawnB : String :=
+  "         \n         \n ....k...\n ........\n ........\n ........\n ...p....\n ....P...\n ........\n ....K...\n         \n         \n"
+
+#guard callFunction sf_order "rec_probe" #[.str pawnB, .int 0, .int 1, .int 0, .int 0] 200000 ==
+  .ok (.tuple #[.int 133, .int 2])
+#guard callFunction sf_order "rec_probe" #[.str pawnB, .int 1000, .int 1, .int 0, .int 0] 200000 ==
+  .ok (.tuple #[.int 133, .int 8])
+#guard callFunction sf_order "rec_probe" #[.str pawnB, .int 0, .int 2, .int 0, .int 0] 200000 ==
+  .ok (.tuple #[.int 113, .int 7])
+#guard callFunction sf_order "rec_probe" #[.str pawnB, .int 1000, .int 2, .int 0, .int 0] 200000 ==
+  .ok (.tuple #[.int 113, .int 15])
+#guard callFunction sf_order "rec_probe" #[.str openingB, .int 0, .int 1, .int 0, .int 0] 200000 ==
+  .ok (.tuple #[.int 46, .int 2])

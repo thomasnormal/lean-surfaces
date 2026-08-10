@@ -351,3 +351,43 @@ def killer_probe(board, gamma, depth, ep, kp, ki, kj):
         if val >= gamma:
             break
     return (searched, out)
+
+
+class MiniSearcher:
+    """bound() arc pass 2 capstone: the RECURSION shape of the shipped
+    bound() — `-self.bound(pos.move(move), 1 - gamma, depth - 1)`
+    yielded from the nested generator through the captured self,
+    consumed below with the beta cutoff. TT/null-move/Stop/time are
+    deliberately absent: this probe isolates re-entrant search through
+    a suspended frame. `nodes` counts bound() entries — the cutoff
+    prunes the recursion TREE, not just the top drain."""
+
+    def __init__(self):
+        self.nodes = 0
+
+    def bound(self, pos, gamma, depth):
+        self.nodes = self.nodes + 1
+        if depth == 0:
+            return pos.score
+        val_lower = QS - depth * QS_A
+
+        def moves():
+            for val, move in sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True):
+                if val < val_lower:
+                    break
+                yield -self.bound(pos.move(move), 1 - gamma, depth - 1)
+
+        best = -100000
+        for score in moves():
+            if score > best:
+                best = score
+            if best >= gamma:
+                break
+        return best
+
+
+def rec_probe(board, gamma, depth, ep, kp):
+    s = MiniSearcher()
+    pos = Position(board, 0, (True, True), (True, True), ep, kp)
+    best = s.bound(pos, gamma, depth)
+    return (best, s.nodes)

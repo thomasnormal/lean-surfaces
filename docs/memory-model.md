@@ -773,6 +773,84 @@ as shipped — the census has no refusals left — and
 `sf_order.move_probe` pins the verbatim `move` + `rotate` chain
 differentially.
 
+**Recursion through a captured receiver (bound() arc pass 2 —
+designed and BUILT 2026-08-10; as-built notes at the end).** The last
+structural construct of `bound()`'s move loop:
+`yield move, -self.bound(pos.move(move), 1 - gamma, depth - 1)`,
+evaluated INSIDE the suspended-then-resumed `moves()` frame, where
+`self` is a snapshot-captured `.ref` to the Searcher instance. The
+claim this design records: the construct needs NO new representation
+and NO new mutual-block member — it is the COMPOSITION of pieces
+already built, and what it needs is the demonstration that they
+compose, pinned differentially:
+
+* **Dispatch is frame-agnostic.** A resumed generator body evaluates
+  its yield expression through the same `evalExpr` as any frame, with
+  the snapshot in the stored locals — so `self` resolves to the `.ref`,
+  `execAttrCall`/`attrCallPlan .instMethod` dispatches the flattened
+  `"Searcher.bound"` through `callIn`, and the callee runs NESTED
+  inside `execGen`/`stepIter`. The mutual block already nests
+  arbitrarily under fuel; `running` status on the OUTER generator is
+  untouched (the callee resumes only generators IT creates — resuming
+  the outer one from inside itself would be the faithful `ValueError`,
+  and nothing in the shape does).
+* **Effects thread through the running frame.** The recursive callee
+  mutates the shared world (`self.nodes`, the TT dicts) mid-step; the
+  H4 stepper is `Run`-typed over the world exactly so that a yield's
+  evaluation can carry effects. Nothing is snapshotted but NAMES: the
+  captured `self` is a `.ref`, so state is one heap object at every
+  depth.
+* **Identity is per invocation.** Each recursive `bound` executes its
+  own `def moves():` — a FRESH `Obj.closure` per call frame — and each
+  `moves()` call allocates a FRESH `Obj.generator`; locals never
+  shadow across depths because every frame carries its own env. The
+  H7 admission is TEXTUAL (never-rebound within the enclosing body),
+  so it is depth-oblivious: the same analysis admits every recursive
+  instance or none.
+* **Fuel is the resume's fuel.** H4 stores NO fuel in the object;
+  each resume spends the caller's remaining fuel, so recursive drains
+  are bounded by the ordinary structural decrement and the
+  `fuelMono`/`worldInv` conjuncts quantify over the whole nest with
+  no new argument. Deep probes simply need generous fuel (a depth
+  bound, so generosity is free on concrete runs).
+
+What the admission EXCLUDES, stated so the refusal rows can pin it: a
+nested def calling ITSELF by its own name (`f` inside `f` — the name
+is an enclosing local bound BY the def, not textually before it, so
+the census refuses; CPython's cell would resolve it) — sunfish never
+does this, `bound` recurses through the METHOD name on `self`, which
+is `Module.functions` dispatch, not a captured cell; first-class
+method values (`g = self.bound`) stay loud under H3; and every
+existing H7 refusal (rebound captures, loops, depth > 1) is unchanged
+by recursion.
+
+Acceptance (design): battery rows for direct method self-recursion
+(`self.down(n - 1)`), MUTUAL method recursion (`self.odd`/
+`self.even`), and recursion FROM a generator frame with the consumer
+breaking mid-drain — the per-depth node counter observable proves the
+abandoned yields never searched. Refusal row: the self-calling nested
+def. Capstone: `sf_order.rec_probe` — a MiniSearcher whose `bound`
+folds `moves()` yielding `-self.bound(child, 1 - gamma, depth - 1)`
+with the beta cutoff, on small fixed Positions, `(best, nodes)`
+against CPython — the cutting/non-cutting gamma pair showing the
+recursion tree itself pruned.
+
+*As built (2026-08-10):* the composition claim held EXACTLY — zero
+interpreter changes; the pass is battery + capstone only.
+`cls_lab.method_rec`/`method_mutual` (direct and mutual dispatch,
+one shared `nodes` across the nest), `closure_lab.gen_rec` (the
+tree shape: `(2, 4)` under cut=2 vs `(9, 13)` under cut=100 at the
+same depth — pruned subtrees never ran), and
+`closure_lab.rec_nested_name` refused by the census with the
+predicted reason (`'f' has no binding before the def`).
+`sf_order.rec_probe`'s moves() captures are the shipped set minus
+`root` (`depth`/`gamma`/`pos`/`self`/`val_lower`); the depth-2
+cutting/non-cutting pair `(113, 7)` vs `(113, 15)` and the opening
+board's `(46, 2)` are kernel-checked and differential. One
+mechanical note: the sf_order envelope outgrew the default
+elaborator budget — `set_option maxRecDepth 100000 in load_program`,
+the `sunfish` example's own pattern.
+
 ## Set semantics (bound() arc pass 1 — BUILT 2026-08-10, the honest subset)
 
 The target is `self.history = set(history)` + `pos in self.history` —

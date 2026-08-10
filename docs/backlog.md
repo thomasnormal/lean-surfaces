@@ -638,9 +638,10 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
    and the driver's `try`/`except` (needs its own design pass), and
    `time.time()` impurity + the `%` deadline check (needs a RECORDED
    abstraction decision — never a silent stub).
-5. **Recursion through a captured `self`** — `-self.bound(...)` inside
-   the nested generator body: H3 instance-method dispatch from a
-   generator frame; untested, needs a lab row when 1 lands.
+5. **Recursion through a captured `self`** — DONE (bound() arc pass 2,
+   below): `-self.bound(...)` from the resumed generator frame is the
+   COMPOSITION of built pieces — no interpreter change; battery +
+   `sf_order.rec_probe` pin it differentially.
 
 ## bound() arc, pass 1 — mechanical blockers (2026-08-10)
 
@@ -713,3 +714,43 @@ view); the print arm gained a live-locals shadow probe. Regression
 rows: the three scripts back to MATCH plus two refusal rows
 (`suffix_rebind_read`, `suffix_fresh_global_read`). Corpus: 19
 scripts, 0 failed / 14 matched / 5 loud-blocked.
+
+## bound() arc, pass 2 — recursion through the captured receiver (2026-08-10)
+
+Item 5 of the H7 enumeration, taken design-first
+(docs/memory-model.md §nested defs and closures, recursion addendum):
+`-self.bound(pos.move(move), 1 - gamma, depth - 1)` yielded from the
+resumed `moves()` frame. The recorded claim — the construct is the
+COMPOSITION of built pieces (frame-agnostic `evalExpr` dispatch, world
+threading through the running frame, per-invocation closure/generator
+identity, resume-carried fuel) — held exactly: ZERO interpreter
+changes; the pass is design + battery + capstone.
+
+* `cls_lab.method_rec` / `method_mutual` — direct and mutual method
+  recursion, one shared `nodes` attribute mutating across the nest.
+* `closure_lab.gen_rec` — the bound() shape at lab scale: a nested
+  generator yielding `self.tree(n - 1, cut)` through the captured
+  self, folded with a cutoff; `(2, 4)` under cut=2 vs `(9, 13)` under
+  cut=100 at the same depth — subtrees behind abandoned yields never
+  ran.
+* `closure_lab.rec_nested_name` — the refusal the admission excludes:
+  a nested def calling ITSELF by its own name, refused by the census
+  with the predicted reason (no binding before the def); sunfish never
+  does this — bound() recurses through the METHOD name on `self`.
+* `sf_order.rec_probe` — the CAPSTONE: MiniSearcher.bound with the
+  verbatim ordering line inside `moves()`, recursive yields, beta
+  cutoff. moves() captures = the shipped set minus `root`
+  (`depth`/`gamma`/`pos`/`self`/`val_lower`). Depth-2
+  cutting/non-cutting pair `(113, 7)` vs `(113, 15)` — the cutoff
+  prunes the recursion TREE, not just the top drain — plus the
+  opening board `(46, 2)`; kernel-checked and differential.
+
+Battery: 766 rows, 0 failed, 40 whitelisted. Mechanical note: the
+sf_order envelope outgrew the elaborator default —
+`set_option maxRecDepth 100000 in load_program` (the sunfish
+example's pattern).
+
+REMAINING on the bound() arc after this pass (both flagged, neither
+started): exceptions (`raise Stop`, the driver `try`/`except` — its
+own design pass) and `time.time()` (a recorded abstraction decision,
+never a silent stub).

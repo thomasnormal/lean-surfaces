@@ -1168,6 +1168,149 @@ executor; the widened `suffixConsistent` guard (any suffix assignment to
 a function-read name is loud) keeps the prefix view sound — see
 Script.lean's header for the argument.
 
+### Module-init EXECUTION (2026-08-10, pass 3 — the padding loop)
+
+The named target: the shipped file's
+
+```python
+for k, table in pst.items():
+    padrow = lambda row: (0,) + tuple(x + piece[k] for x in row) + (0,)
+    pst[k] = sum((padrow(table[i * 8 : i * 8 + 8]) for i in range(8)), ())
+    pst[k] = (0,) * 20 + pst[k] + (0,) * 20
+```
+
+plus `K_MID = pst["K"]` and the `K_END` comprehension — module-level
+statements that MUTATE prefix globals, which the fold can only poison.
+Two standing facts shape the design:
+
+1. **Function-frame name resolution stays on the static table.** The
+   covenant that keeps world-symbolic theorems provable (`rotate_callsIn`
+   holds for EVERY `w` because a static read reduces at a symbolic
+   world). And the static table CANNOT contain execution results: 
+   `moduleGlobals → execStmt → evalExpr → moduleGlobals` is not even
+   definable (the interpreter reads the table, so the table cannot be
+   defined through the interpreter).
+2. **`World.globals` is the recorded seam** ("the future
+   `global`-statement tier must switch reads to it"). Init execution is
+   exactly the fragment that needs the switch: CPython executes a
+   module's top level in a frame whose locals ARE its globals, live.
+
+**The resolution chain gains ONE arm.** `locals → static table → …` is
+unchanged except at the STATICALLY-POISONED marker (`some none`), which
+now consults `st.world.globals` — the LIVE view — before refusing:
+hit → the value (a `.ref` in call position dispatches as a closure call,
+mirroring the locals arm, `funsHeapFree`-guarded); miss → the same loud
+refusal as today. Soundness of static-first: the dirty-name pass poisons
+every name an out-of-tier statement BINDS or STORES-into, and the exec
+tier attempts exactly (a subset of) the fold-refused statements — so a
+name the static table VALUES was provably never touched by an executed
+statement, and a name execution DID touch is provably poisoned, i.e. the
+static table is never stale and the live view is consulted exactly where
+it is the only truth. Backward compatibility is exact: a pre-pass
+world's `globals` (`resolvedG` — markers dropped) cannot contain a
+poisoned name, so the new lookup MISSES and the arm decides the refusal
+it always decided.
+
+**The pipeline** (`initWorld`, one ordered walk; the pure fold
+`moduleInit`/`moduleGlobals` is UNCHANGED and stays the static table):
+
+* each statement first takes the PURE FOLD STEP on the LIVE state — the
+  same `globalsStep` code, so a statically-valued binding is live-equal
+  by construction (one evaluator, not two that must agree);
+* a fold-REFUSED statement gets the EXEC ATTEMPT: `execStmt` at the
+  fixed `initExecFuel` in a frame `⟨liveWorld, []⟩`, new locals FLUSHED
+  into `world.globals` after each statement (CPython: top-level
+  bindings are globals). The one construct `execStmt` cannot express —
+  `for k, v in d.items():` — gets a control SHELL (the Script.lean
+  discipline): index iteration over the dict's LIVE entries with the
+  per-step SIZE check — value updates visible mid-iteration, insertion/
+  deletion the faithful `RuntimeError` (H1 acceptance row 10, finally
+  live). The shell handles `.items()` ONLY here; everywhere else the
+  attribute call keeps its loud refusal (recorded gap);
+* an attempt that refuses, raises, or times out ROLLS BACK to the
+  pre-statement state and the walk continues — the static poisoning
+  already recorded the loss, so every later read of what it would have
+  bound is loud. (An `.exn` here is imprecise the same way the fold's
+  existing `.exn` arm is: CPython would abort the import; the model
+  poisons and continues, loudly downstream. Pre-existing wart, now
+  recorded.)
+
+**The DIVERGED discipline (static fold).** From the first exec-attempted
+statement on, the two heaps may differ (execution commits allocations
+the pure fold never sees), so a later STATIC binding would carry
+addresses into the wrong heap — and a static scalar computed by READING
+the (stale) fold heap could contradict the live world. The fold
+therefore marks divergence at the first statement the executor would
+attempt, and after it values a binding only when the RHS is HEAP-PURE
+(constants, statically-clean names whose values are ref-free, operators
+over those — no subscript, attribute, call, display) and the result is
+ref-free; everything else takes the poison marker and resolves through
+the live view. On the shipped file that keeps `A1/H1/A8/H8`, `initial`,
+`N/E/S/W` and the search constants STATIC (symbolic-world-friendly)
+while `pst` (mutated), `K_MID`, `K_END`, `directions`, `MATE_LOWER/
+UPPER` move to the live view — same values, one heap.
+
+**Module-level lambdas: the H7 fork DISSOLVES.** The pass brief flagged
+`padrow = lambda …` rebound per iteration as a collision with the H7
+never-rebound admission. The honest answer is that no capture exists to
+admit: CPython's symtable gives a module-level lambda ZERO freevars —
+every free name in its body is a GLOBAL, read dynamically at call time
+(`piece`, `k` compile to `LOAD_GLOBAL`). So the extractor structures a
+module-scope single-target `name = lambda …` assign (top level, or
+directly in a top-level `for` body) as the H7 `NestedDef` with
+`captures = []`; execution allocates the ordinary `Obj.closure` (fresh
+identity per iteration, exactly CPython); and the body's global reads go
+through the poisoned-arm live view AT CALL TIME — by-reference through
+the world, no snapshot anywhere, so there is nothing for a rebinding to
+diverge from. The H7 admission census is untouched (it governs
+function-scope captures, which are cells).
+
+**Genexp lowering: unchanged, justification strengthened.** A
+module-level genexp's free names stay GLOBAL READS in the synthesized
+body (never by-value captures), and under the live view those reads are
+by-reference through the world at RESUME time — CPython's cell-free
+module-scope semantics exactly. The padding genexp reads `padrow`/
+`table` (poisoned → live view) per drain step; the lambda-internal
+genexp reads `piece`/`k` the same way.
+
+**New value tiers riding the pass** (general — function bodies too;
+each construct differential, refusals loud):
+
+* **tuple/namedtuple SLICES** (`table[i*8 : i*8+8]`): CPython's
+  `tuple.__getitem__` — a namedtuple slice is a PLAIN tuple. In-model
+  tuples are immediate values, so the slice allocates nothing; LIST
+  slices stay loud (they allocate a heap object).
+* **sequence repetition** `tuple * int` / `int * tuple` (bool coerces;
+  `n ≤ 0` → empty). List/str repetition stays loud, recorded.
+* **`sum(iterable[, start])`**: the element fold IS `evalBinOp .add`
+  (so int and tuple sums are exactly Python's `+`, mixed types its
+  faithful `TypeError`); a str `start` is CPython's special
+  `sum() can't sum strings` `TypeError`; a generator argument DRAINS
+  (guarded on `moduleGenFree` like `max`/`min`, keeping `sum` in the
+  heap-free fragment).
+* **`tuple(iterable)`**: str/tuple/namedtuple(class-erased)/boundary
+  list/heap list(snapshot — CPython copies)/range/generator(+guard);
+  dict and set receivers stay loud (order).
+* **`range` as the IMMEDIATE `RVal.rangeV lo hi step`** (construction:
+  1–3 int args, `step = 0` the faithful `ValueError`). A range is
+  IMMUTABLE and re-iterable, so materialization-per-use is exact and
+  the value form avoids heap/boundary churn: `for`-iteration and the
+  draining consumers materialize FUEL-BOUNDED (a huge range times out,
+  never hangs); `len`/truthiness exact. Everything else is loud or
+  faithful: `==` loud (CPython compares ranges as sequences — not
+  guessed), dict-key/set-element loud via `keyRefusal` (ranges ARE
+  hashable in CPython — never a fake unhashable `TypeError`), the
+  boundary loud, `next()` the faithful `not an iterator` `TypeError`.
+
+**What stays out, loudly:** top-level `if`/`while` in the exec tier
+(the `__main__` guard must stay unexecuted until the recorded
+import-semantics decision — `__name__` is loud, so the attempt refuses
+and rolls back, which is exactly right); `.items()` outside the init
+shell; `dict.keys/.values`; the call-mutation gap where an attempt was
+REFUSED (rollback restores the un-mutated heap — the old syntactic gap,
+unchanged); executed calls CLOSE the gap for their own effects (the
+mutation is real in the live heap).
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

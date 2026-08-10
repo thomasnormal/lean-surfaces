@@ -213,6 +213,7 @@ theorem heapEqMono (fuel : Nat) :
                 | list ys => exact Res.le_refl _
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
+                | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
               | list xs =>
                 cases o2 with
                 | dict fs v2 => exact Res.le_refl _
@@ -221,8 +222,11 @@ theorem heapEqMono (fuel : Nat) :
                     (Res.le_refl _)
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
+                | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
               | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
               | generator qn lo kk stt => cases o2 <;> exact Res.le_refl _
+              | closure nm ps ao lo' hg ig bd cap =>
+                cases o2 <;> exact Res.le_refl _
     · intro h active as bs fuel' hf
       cases fuel' with
       | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
@@ -278,6 +282,7 @@ theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
     | list xs => exact heapContainsScan_mono hf
     | «instance» ci attrs => exact Res.le_refl _
     | generator qn lo kk stt => exact Res.le_refl _
+    | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
 
 /-- Fuel monotonicity of the heap deep-freeze (`freezeH`/`freezeListH`),
 one conjunction by induction on fuel — the freeze leg of the public
@@ -314,6 +319,7 @@ theorem freezeHMono (fuel : Nat) :
             | dict es v => exact Res.le_refl _
             | «instance» ci attrs => exact Res.le_refl _
             | generator qn lo kk stt => exact Res.le_refl _
+            | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
             | list xs =>
               exact Res.le_bind (ihL h (a :: path) xs.toList k hk)
                 fun vs => Res.le_refl _
@@ -414,11 +420,17 @@ theorem fuelMono (fuel : Nat) :
     (∀ (m : Module) (w : World) (a : Addr) (fuel' : Nat), fuel ≤ fuel' →
       drainIter m fuel w a ⊑ʳ drainIter m fuel' w a) ∧
     (∀ (m : Module) (w : World) (a : Addr) (isAll : Bool) (fuel' : Nat), fuel ≤ fuel' →
-      anyAllIter m fuel w a isAll ⊑ʳ anyAllIter m fuel' w a isAll) := by
+      anyAllIter m fuel w a isAll ⊑ʳ anyAllIter m fuel' w a isAll) ∧
+    -- H7 (appended LAST): the closure invocation
+    (∀ (m : Module) (w : World) (name : String) (params : Array Param)
+        (ao lo ig : Bool) (body : Array Stmt) (cap : REnv) (args : Array RVal)
+        (fuel' : Nat), fuel ≤ fuel' →
+      callClosure m fuel w name params ao lo ig body cap args ⊑ʳ
+        callClosure m fuel' w name params ao lo ig body cap args) := by
   induction fuel with
   | zero =>
     -- Fuel 0 is `.timeout` everywhere, the bottom of `⊑ʳ`.
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     · exact fun m st e fuel' _ => Or.inl (by simp [evalExpr])
     · exact fun m st es fuel' _ => Or.inl (by simp [evalExprs])
     · exact fun m st op e rest fuel' _ => Or.inl (by simp [evalBoolChain])
@@ -436,10 +448,12 @@ theorem fuelMono (fuel : Nat) :
     · exact fun m st target a body fuel' _ => Or.inl (by simp [execForGen])
     · exact fun m w a fuel' _ => Or.inl (by simp [drainIter])
     · exact fun m w a isAll fuel' _ => Or.inl (by simp [anyAllIter])
+    · exact fun m w name params ao lo ig body cap args fuel' _ =>
+        Or.inl (by simp [callClosure])
   | succ fuel ih =>
     obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
-      ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll⟩ := ih
-    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
+      ihAttrC, ihStep, ihGen, ihForG, ihDrain, ihAnyAll, ihClosure⟩ := ih
+    refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
     -- evalExpr
     · intro m st e fuel' hf
       cases fuel' with
@@ -611,6 +625,18 @@ theorem fuelMono (fuel : Nat) :
                     | exact Run.le_refl _
                     | exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
                         Run.le_refl _
+                    | skip
+                  case ref a =>
+                    -- H7: the guarded closure call
+                    refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                    refine Run.le_ite (Run.le_refl _) ?_
+                    cases Heap.get? st.world.heap a with
+                    | none => exact Run.le_refl _
+                    | some o =>
+                      cases o <;> try exact Run.le_refl _
+                      case closure nm ps ao lo hg ig bd cap =>
+                        exact Run.le_withLocals
+                          (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
                 | none =>
                   -- module globals (G1) → module function → builtins →
                   -- NameError/unsupported (the globals and the final fork are
@@ -870,6 +896,8 @@ theorem fuelMono (fuel : Nat) :
       | succ k =>
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         cases s with
+        | defStmt name params ao lo hg ig body caps _ =>
+          simp only [execStmt]; exact Run.le_refl _
         | ret value _ =>
           cases value with
           | none => simp only [execStmt]; exact Run.le_refl _
@@ -1038,6 +1066,7 @@ theorem fuelMono (fuel : Nat) :
           cases o with
           | dict es ver => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
+          | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
           | generator qn lo kk stt =>
             exact Run.le_ite (Run.le_refl _) (ihForG m st target a body k hk)
           | list xs =>
@@ -1086,6 +1115,7 @@ theorem fuelMono (fuel : Nat) :
           | dict es ver => exact Run.le_refl _
           | list xs => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
+          | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
           | generator qn lo kk stt =>
             cases stt with
             | closed => exact Run.le_refl _
@@ -1182,6 +1212,7 @@ theorem fuelMono (fuel : Nat) :
                     cases o with
                     | dict es ver => exact Run.le_refl _
                     | «instance» ci attrs => exact Run.le_refl _
+                    | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
                     | list xs => exact ihGen m st _ kf hk
                     | generator qn lo kk stt => exact ihGen m st _ kf hk
               | refuse msg => exact Run.le_refl _
@@ -1201,6 +1232,7 @@ theorem fuelMono (fuel : Nat) :
               | dict es ver => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
+              | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
               | list xs =>
                 refine Run.le_ite ?_ (ihGen m st rest kf hk)
                 refine Run.le_bind (Run.le_refl _) fun st env₁ => ?_
@@ -1227,6 +1259,7 @@ theorem fuelMono (fuel : Nat) :
               | dict es ver => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
+              | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _
           | whileLoop test body orelse =>
             simp only [execGen]
@@ -1280,6 +1313,20 @@ theorem fuelMono (fuel : Nat) :
           split
           · exact Run.le_refl _
           · exact ihAnyAll m w a isAll k hk
+    -- callClosure (H7: the closure invocation)
+    · intro m w name params ao lo ig body cap args fuel' hf
+      cases fuel' with
+      | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
+      | succ k =>
+        have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
+        simp only [callClosure]
+        refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
+          (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)))
+        refine Run.le_toWorld ?_
+        refine Run.le_bind
+          (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
+          fun st flow => ?_
+        cases flow <;> exact Run.le_refl _
 
 /-! ## Per-function corollaries (the `FuelMono` statement shape) -/
 
@@ -1412,7 +1459,17 @@ theorem anyAllIter_mono {m : Module} {fuel : Nat} {w : World} {a : Addr}
     (h : anyAllIter m fuel w a isAll = r) (hr : r ≠ .timeout)
     (fuel' : Nat) (hf : fuel ≤ fuel') :
     anyAllIter m fuel' w a isAll = r :=
-  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2 m w a isAll fuel' hf) h hr
+  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1 m w a isAll fuel' hf) h hr
+
+/-- Fuel monotonicity for `callClosure` (H7: the closure invocation). -/
+theorem callClosure_mono {m : Module} {fuel : Nat} {w : World} {name : String}
+    {params : Array Param} {ao lo ig : Bool} {body : Array Stmt} {cap : REnv}
+    {args : Array RVal} {r : Run World RVal}
+    (h : callClosure m fuel w name params ao lo ig body cap args = r)
+    (hr : r ≠ .timeout) (fuel' : Nat) (hf : fuel ≤ fuel') :
+    callClosure m fuel' w name params ao lo ig body cap args = r :=
+  mono_of_leR ((fuelMono fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
+    m w name params ao lo ig body cap args fuel' hf) h hr
 
 mutual
   /-- Fuel monotonicity of the boundary freeze: the structural arms are
@@ -1757,6 +1814,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 first
                 | exact .unsupported
                 | exact .bind hargs fun st₁ _ h₁ => .exn
+                | skip
+              case ref a =>
+                -- H7: hm's own function-body walk discharges the guard —
+                -- the closure call is unreachable in a heap-free module
+                refine .bind hargs fun st₁ vs h₁ => ?_
+                simp only [Module.heapFree_funs hm, eq_self_iff_true, if_true]
+                exact .exn
             | none =>
               cases lookupG (moduleGlobals m).1 fname with
               | some vv =>
@@ -1955,6 +2019,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     -- execStmt
     · intro st s hfree
       cases s with
+      | defStmt name params ao lo hg ig body caps _ =>
+        simp [Stmt.heapFree] at hfree
       | yieldStmt e _ => simp only [execStmt]; exact .unsupported
       | ret value _ =>
         cases value with
@@ -2117,6 +2183,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         cases o with
         | dict es ver => exact .unsupported
         | «instance» ci attrs => exact .exn
+        | closure nm ps ao lo' hg ig bd cap => exact .unsupported
         | generator qn lo kk stt =>
           -- H4: a generator object cannot exist in a generator-free
           -- module, and the guard says so LOUDLY — which is exactly what

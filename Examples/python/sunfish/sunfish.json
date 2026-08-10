@@ -13313,7 +13313,7 @@
               }
             ],
             "args_unsupported": null,
-            "locals_unsupported": "calls locally-assigned name(s) (static-locals rule): put",
+            "locals_unsupported": null,
             "body": [
               {
                 "kind": "Assign",
@@ -18887,7 +18887,7 @@
                 }
               },
               {
-                "kind": "FunctionDef",
+                "kind": "NestedDef",
                 "span": {
                   "lineno": 372,
                   "col_offset": 8,
@@ -20782,7 +20782,16 @@
                     "orelse": []
                   }
                 ],
-                "is_generator": true
+                "is_generator": true,
+                "captures": [
+                  "depth",
+                  "gamma",
+                  "pos",
+                  "root",
+                  "self",
+                  "val_lower"
+                ],
+                "closure_unsupported": null
               },
               {
                 "kind": "Assign",

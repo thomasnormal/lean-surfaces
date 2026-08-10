@@ -41,32 +41,37 @@ parameters (`Position.move` is the one static-locals refusal — its
     ("Stop", false, Option.none), ("Searcher", true, Option.none)]
 #guard sunfish.functions.map (fun f => (f.name, f.argsOk, f.localsOk)) ==
   #[("Position.gen_moves", true, true), ("Position.rotate", true, true),
-    ("Position.move", true, false), ("Position.value", true, true),
+    -- H7: `Position.move`'s `put = lambda …; put(…)` pattern no longer
+    -- trips the static-locals census (single direct assignment, every
+    -- call after it — no UnboundLocalError window); the LAMBDA itself
+    -- still refuses loudly at evaluation, so `move` stays out of reach
+    -- exactly one gate later
+    ("Position.move", true, true), ("Position.value", true, true),
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- H4: ingestion LOWERED five generator expressions into implicit
+    -- H4/H7: ingestion LOWERED seven generator expressions into implicit
     -- generator functions, CPython's own compilation (`<genexpr>` with
-    -- the evaluated outer iterator as its first argument). The genexps
-    -- inside `bound`'s nested `moves()` are not among them — that whole
-    -- def is `Stmt.unsupported "FunctionDef"` — and neither are the two
-    -- module-level ones whose captures are another genexp's target
-    -- (`K_END`'s nest), which refuse rather than guess.
+    -- the evaluated outer iterator as its first argument) — the two
+    -- inside `bound`'s nested `moves()` (the null-move `any` probe and
+    -- THE ORDERING LINE) now among them, since `moves` is a structured
+    -- `Stmt.defStmt` whose captures the lowering admits by value.
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
     ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
-    ("<genexpr@4>", true, true)]
+    ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
+    ("<genexpr@6>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
 CPython's rule is scope-local and syntactic, and it lands here exactly:
 `Position.gen_moves` and `Searcher.search` are GENERATORS, everything
-else is an ordinary def. Note what is NOT in this list: `bound`'s
-`moves()` is a NESTED `def` (a closure over `pos`/`gamma`/`depth`/…), so
-it ingests as `Stmt.unsupported "FunctionDef"` and the lazy-`moves()`
-capstone needs a nested-def/closure tier ON TOP of H4 — recorded,
-docs/backlog.md. A generator def evicts the module from the heap-free
-fragment (creation ALLOCATES and syntax cannot tell), which sunfish
-already was, having classes. -/
+else is an ordinary def. `bound`'s `moves()` is still not in THIS list —
+it is a NESTED def, structured since H7 as `Stmt.defStmt` INSIDE
+`bound`'s body (captures `depth`/`gamma`/`pos`/`root`/`self`/
+`val_lower`, admitted by the never-rebound analysis, generator flag
+set) — the closure tier carries it inline, no flattening. A generator
+def evicts the module from the heap-free fragment (creation ALLOCATES
+and syntax cannot tell), which sunfish already was, having classes. -/
 
 #guard sunfish.functions.map (fun f => (f.name, f.isGenerator)) ==
   #[("Position.gen_moves", true), ("Position.rotate", false),
@@ -75,7 +80,8 @@ already was, having classes. -/
     ("Searcher.bound", false), ("Searcher.search", true),
     ("parse", false), ("render", false), ("main", false),
     ("<genexpr@0>", true), ("<genexpr@1>", true),
-    ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true)]
+    ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true),
+    ("<genexpr@5>", true), ("<genexpr@6>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded

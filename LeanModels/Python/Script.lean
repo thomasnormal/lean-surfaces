@@ -130,6 +130,7 @@ mutual
     | .forStmt t it b o _ =>
       t.allNames ++ it.allNames ++ Stmt.allNamesList b.toList
         ++ Stmt.allNamesList o.toList
+    | .defStmt _ _ _ _ _ _ body _ _ => Stmt.allNamesList body.toList
     | .ifStmt t b o _ =>
       t.allNames ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList o.toList
     | .exprStmt e _ => e.allNames
@@ -230,6 +231,7 @@ where
     | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
     | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
     | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
+    | .defStmt _ _ _ _ _ _ _ _ sp
     | .unsupported _ _ sp => sp
 
 /-- The stale-table guard: no suffix (nested-)assignment to a TABLE-BOUND

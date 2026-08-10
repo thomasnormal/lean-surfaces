@@ -144,6 +144,18 @@ inductive Stmt where
   statement here can silently drop a sent value. A bare `yield` ingests
   as `yield None`, CPython's own compilation. -/
   | yieldStmt (value : Expr) (span : Span)
+  /-- A nested `def` DIRECTLY inside a function body (schema `NestedDef`,
+  H7 — docs/memory-model.md §nested defs and closures), carried INLINE:
+  no `Module.functions` flattening, no qname scheme. Executing it
+  SNAPSHOTS `captures` from the current frame and allocates
+  `Obj.closure`; the snapshot tier's admission (never-rebound-after-def,
+  no `nonlocal`, one level deep, direct child of the body) is decided at
+  EXTRACTION — anything outside it ships as `Stmt.unsupported` with the
+  precise reason. `argsOk`/`localsOk`/`hasGlobal`/`isGenerator` are the
+  nested body's own censuses, exactly `FunctionDefn`'s. -/
+  | defStmt (name : String) (params : Array Param) (argsOk localsOk : Bool)
+      (hasGlobal : Bool) (isGenerator : Bool) (body : Array Stmt)
+      (captures : Array String) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)

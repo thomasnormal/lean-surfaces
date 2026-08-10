@@ -658,6 +658,88 @@ shipped ordering line VERBATIM over the verbatim `gen_moves`/`value`
 (padded `pst` = CPython's own output of the shipped padding loop),
 differential on whole ordered move lists, opening board included.
 
+## Nested defs and closures (H7 — BUILT 2026-08-10)
+
+The target is `bound()`'s inner `def moves():` — a nested def that is
+ALSO a generator, closing over `self`/`pos`/`gamma`/`depth`/`root`/
+`val_lower`, consumed lazily by the fold below it. Python closes over
+VARIABLES (cells), not values; the tier implements a SNAPSHOT taken when
+the `def` statement executes, and admits exactly the fragment where the
+two are observationally equal:
+
+**The never-rebound restriction (extraction-time, loud).** A nested def
+is STRUCTURED (envelope kind `NestedDef`, one level deep) only when
+every captured name — a free name of the nested body that is a local or
+parameter of the enclosing function, CPython's symtable rule — is:
+
+* a parameter of the enclosing function, or bound by at least one
+  statement textually BEFORE the def (else the snapshot could miss —
+  CPython would raise the free-variable `NameError`; we refuse);
+* bound NOWHERE textually after the def (assignment, augmented
+  assignment, `for`-target, unpacking, `del`, import — any binding
+  occurrence); and the def itself sits in NO loop body of the enclosing
+  function (a loop makes "textually after" and "executes after"
+  diverge, and re-creating the closure per iteration is exactly where
+  cell-vs-snapshot becomes observable).
+
+`nonlocal` in the nested body, a def nested deeper than one level, and
+any violation above keep today's loud `Stmt.unsupported` — the
+extractor records the precise reason, and a differential row pins the
+refusal (never a snapshot translation that CPython's cells would
+falsify). Under the restriction, snapshot and cell agree even for a
+GENERATOR nested def, whose body reads captures at RESUME time: the
+cell's content can no longer change after creation, so read-at-resume
+equals read-at-def. The shipped `moves()` satisfies the restriction as
+written (`depth = max(depth, 0)` and `val_lower = …` both precede the
+def; nothing rebinds after).
+
+**Representation.** `Stmt.defStmt` carries the nested function INLINE
+(name, params, the argsOk/localsOk/hasGlobal censuses scoped to the
+nested body, `isGenerator`, body, captures). Executing it snapshots the
+captured names from the CURRENT frame and ALLOCATES `Obj.closure`
+(functions are heap objects with identity in CPython): parameters +
+snapshot become the callee env at call time (parameters shadow
+captures), so no `Module.functions` flattening and no qname scheme —
+`callIn`'s covenant signature is untouched, and a new frozen mutual
+member `callClosure` mirrors its call shape. Calling a GENERATOR
+closure allocates the H4 `Obj.generator` with the snapshot already in
+its stored locals — resume-time capture reads fall out of the existing
+stepper for free.
+
+**Closure objects elsewhere, faithful or loud:** truthy; `==` by
+identity (two distinct function objects are unequal in CPython — the
+distinct-address answer `False` is EXACT); not iterable / no `len` /
+not subscriptable (faithful `TypeError`s); a dict key (identity hash)
+loud; crossing the public boundary loud (a snapshot would forget
+identity); attributes loud; keyword arguments on a closure call loud
+(recorded — the merge needs only wiring, nothing in the shipped file
+calls a closure with keywords).
+
+**Fragments.** `Stmt.defStmt` ALLOCATES → out of `Stmt.heapFree`. The
+closure-CALL arm (a local name resolving to a `.ref`) is guarded on
+`funsHeapFree` — the fragment's own function-body walk, which is false
+the moment any body contains a nested def — so heap-free modules keep
+the existing faithful `TypeError` for called refs, and `worldInv` never
+meets a closure call (the `moduleGenFree` guard discipline).
+
+**As built (2026-08-10):** `callClosure` is a frozen mutual member
+(conjunct appended LAST); the extractor emits `NestedDef` for DIRECT
+children of a function body with the capture set and the refusal
+reasons; two admission edges hardened beyond the design: a call of a
+nested-def NAME before its def is CPython's `UnboundLocalError` under
+the static-locals rule, so it rides the loud `locals_unsupported`
+channel (a module fallthrough would silently call the wrong function),
+and direct nested-def names count as enclosing LOCALS for the capture
+analysis, so a closure may capture an EARLIER closure (`chain`) under
+the same never-rebound rule. The shipped `moves()` is ADMITTED as
+analyzed: captures `depth`/`gamma`/`pos`/`root`/`self`/`val_lower`,
+no refusal, generator. Acceptance: `Examples/python/closure_lab`
+(the `rebound_after` row is CPython's cell semantics OBSERVABLE — 6
+where a snapshot would forge 5 — refused at extraction, never
+translated) and `sf_order.bound_probe`, the `moves()`-shaped nested
+generator with the verbatim ordering line inside and the beta cutoff
+abandoning it mid-drain: `(46, 1)` cutting vs `(46, 20)` not.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

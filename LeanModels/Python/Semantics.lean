@@ -176,6 +176,7 @@ def Stmt.kindName : Stmt → String
   | .ifStmt .. => "If"
   | .exprStmt .. => "Expr"
   | .yieldStmt .. => "Yield"
+  | .defStmt .. => "NestedDef"
   | .pass _ => "Pass"
   | .brk _ => "Break"
   | .cont _ => "Continue"
@@ -1026,6 +1027,7 @@ def RVal.typeNameH (h : Heap) : RVal → String
     -- names, never messages).
     | some (.instance _ _) => "object"
     | some (.generator ..) => "generator"
+    | some (.closure ..) => "function"
     | Option.none => "object"
   | v => v.typeName
 
@@ -1069,6 +1071,7 @@ mutual
       match Heap.get? h a with
       | some (.instance _ _) => true
       | some (.generator ..) => true
+      | some (.closure ..) => true  -- identity hash, like instances: refuse
       | _ => false
     | .tuple xs => keyHasInstanceRefList h xs.toList
     | .ntuple _ _ xs => keyHasInstanceRefList h xs.toList
@@ -1144,6 +1147,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   -- protocol's refusal is the faithful outcome.
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
+  | some (.closure ..) => .exn (.typeError "'function' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
 
 /-- `o[k] = v` on a heap object. Dicts: value replacement keeps the shape
@@ -1177,6 +1181,8 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
     .exn (.typeError "'object' object does not support item assignment")
   | some (.generator ..) =>
     .exn (.typeError "'generator' object does not support item assignment")
+  | some (.closure ..) =>
+    .exn (.typeError "'function' object does not support item assignment")
   | Option.none => .unsupported danglingMsg
 
 /-- `len(o)` on a heap object: dict entry count / list length; an
@@ -1187,6 +1193,7 @@ def heapLen (h : Heap) (a : Addr) : Res RVal :=
   | some (.list xs) => .ok (.int xs.size)
   | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
   | some (.generator ..) => .exn (.typeError "object of type 'generator' has no len()")
+  | some (.closure ..) => .exn (.typeError "object of type 'function' has no len()")
   | Option.none => .unsupported danglingMsg
 
 /-- `d.get(k)` / `d.get(k, default)` (the H1 method tier): absent keys
@@ -1202,6 +1209,7 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
   | some (.instance _ _) =>
     .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.closure ..) => .exn .attributeError  -- functions have no .get
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.append(x)` (H2): push in place — the mutation is visible through
@@ -1218,6 +1226,7 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
   | some (.instance _ _) =>
     .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.closure ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- `lst.pop()` / `lst.pop(i)` (H2): remove and return the element at `i`
@@ -1238,6 +1247,7 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
   | some (.instance _ _) =>
     .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.closure ..) => .exn .attributeError
   | Option.none => .unsupported danglingMsg
 
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
@@ -1255,6 +1265,8 @@ def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
   | some (.list _) => .exn .attributeError
   -- a generator's attributes (`gi_frame`, …) are all read-only
   | some (.generator ..) => .exn .attributeError
+  | some (.closure ..) =>
+      .unsupported "attribute stores on a function object are outside the tier (CPython allows them; a fake AttributeError would be wrong)"
   | Option.none => .unsupported danglingMsg
 
 /-- Truthiness including heap objects: `bool(d)`/`bool(lst)` is
@@ -1271,6 +1283,7 @@ def truthyH (h : Heap) : RVal → Res Bool
     | some (.instance _ _) => .ok true
     -- a generator object is always truthy (no `__bool__`/`__len__`)
     | some (.generator ..) => .ok true
+    | some (.closure ..) => .ok true
     | Option.none => .unsupported danglingMsg
   | v => truthy v
 
@@ -1384,6 +1397,8 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
     -- with a side effect, which this pure helper cannot express — loud,
     -- never a wrong answer (docs/memory-model.md §generator semantics)
     .unsupported "'in' on a generator CONSUMES it (a stateful membership test) — outside the tier"
+  | some (.closure ..) =>
+    .exn (.typeError "argument of type 'function' is not iterable")
   | Option.none => .unsupported danglingMsg
 
 /-- `x in c` for EVERY in-tier container (H5 iteration): a heap referent
@@ -1500,6 +1515,7 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
         .exn (.typeError "'object' object is not iterable")
     | some (.generator ..) =>
         .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+    | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
     | Option.none => .unsupported danglingMsg
   | v => do let r ← sortedVal v desc; return (h, r)
 
@@ -1526,9 +1542,22 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
             .exn (.typeError "'object' object is not iterable")
         | some (.generator ..) =>
             .unsupported s!"{if isMax then "max" else "min"}() over a generator DRAINS it (a stateful read) — outside the tier"
+        | some (.closure ..) =>
+            .exn (.typeError "'function' object is not iterable")
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
+
+/-- Snapshot the captured names from a frame (H7 nested defs,
+docs/memory-model.md §nested defs and closures): `none` iff any name is
+unbound — unreachable through the extractor's admission (every capture
+is pre-def-bound), kept loud for hand-built modules. -/
+def capturesSnapshot (env : Env) : List String → Option REnv
+  | [] => some []
+  | c :: cs => do
+    let v ← Env.lookup env c
+    let rest ← capturesSnapshot env cs
+    return (c, v) :: rest
 
 /-- Is the value a ref to a live generator object? (H6 draining
 consumers — the dispatch arms fork on this BEFORE the pure heap
@@ -1625,6 +1654,8 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
          .exn (.typeError "cannot unpack non-iterable object object")
        | some (.generator ..) =>
          .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+       | some (.closure ..) =>
+         .exn (.typeError "cannot unpack non-iterable function object")
        | Option.none => .unsupported danglingMsg
      | v => assignTo env target v)
   | t => assignTo env t v
@@ -1818,6 +1849,8 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     -- guessing which other names exist would be silently wrong: loud,
     -- never a fake `AttributeError`
     .refuse s!"method call '.{attr}' on a generator is outside the tier (send/throw/close and finalization are deliberately out; docs/memory-model.md §generator semantics)"
+  | some (.closure ..) =>
+    .refuse s!"method call '.{attr}' on a function object is outside the tier (docs/memory-model.md §nested defs and closures)"
   | Option.none => .dangling
 
 /-! ## The namedtuple table (H3+, docs/memory-model.md §class semantics —
@@ -2182,6 +2215,8 @@ mutual
   def Stmt.g1Binds : Stmt → Option (List String)
     | .assign tgts _ _ => targetBindsListG tgts.toList
     | .augAssign t _ _ _ => targetBindsG t
+    -- H7: a nested def binds its NAME (its body is its own scope)
+    | .defStmt name _ _ _ _ _ _ _ _ => some [name]
     | .forStmt t _ b o _ =>
       match targetBindsG t, Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
       | some a, some c, some d => some (a ++ c ++ d)
@@ -2407,6 +2442,7 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
      | some (.generator ..) =>
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
+     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
      | Option.none => .unsupported danglingMsg)
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
 
@@ -2579,6 +2615,7 @@ end
 mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
+    | .defStmt .. => false              -- ALLOCATES a closure (H7)
     | .ret Option.none _ => true
     | .ret (some e) _ => e.heapFree
     | .assign tgts v _ =>
@@ -2617,12 +2654,29 @@ def funsHeapFree : List FunctionDefn → Bool
   | [] => true
   | f :: fs => f.heapFree && funsHeapFree fs
 
-/-- Does the function list contain a GENERATOR def? (H4: calling one
-ALLOCATES a suspended frame, and syntax cannot tell a generator call from
-an ordinary call — the H3 `classes = #[]` carve-out, again.) -/
+mutual
+/-- Does the statement subtree contain a GENERATOR nested def? (H7: a
+closure's `isGenerator` def allocates the H4 object when called, so the
+generator-freedom census must see through function bodies.) -/
+def Stmt.hasGenDef : Stmt → Bool
+  | .defStmt _ _ _ _ _ ig body _ _ => ig || Stmt.hasGenDefList body.toList
+  | .whileLoop _ b o _ | .ifStmt _ b o _ | .forStmt _ _ b o _ =>
+      Stmt.hasGenDefList b.toList || Stmt.hasGenDefList o.toList
+  | _ => false
+
+/-- Elementwise `Stmt.hasGenDef`. -/
+def Stmt.hasGenDefList : List Stmt → Bool
+  | [] => false
+  | s :: ss => s.hasGenDef || Stmt.hasGenDefList ss
+end
+
+/-- Does the function list contain a GENERATOR def — direct, or a nested
+generator def in some body (H7)? (H4: calling one ALLOCATES a suspended
+frame, and syntax cannot tell a generator call from an ordinary call —
+the H3 `classes = #[]` carve-out, again.) -/
 def funsAnyGen : List FunctionDefn → Bool
   | [] => false
-  | f :: fs => f.isGenerator || funsAnyGen fs
+  | f :: fs => f.isGenerator || Stmt.hasGenDefList f.body.toList || funsAnyGen fs
 
 /-- Has this module NO generator definitions? Then no `Obj.generator` can
 exist in any world of any run of it: `callIn` is the only allocator, the
@@ -2694,7 +2748,7 @@ theorem funsAnyGen_mem {fs : List FunctionDefn} (hg : funsAnyGen fs = false)
   | cons g gs ih =>
     simp only [funsAnyGen, Bool.or_eq_false_iff] at hg
     cases hf with
-    | head => exact hg.1
+    | head => exact hg.1.1
     | tail _ h => exact ih hg.2 h
 
 /-- The function `findFunction` resolves in a heap-free module is NOT a
@@ -2757,6 +2811,7 @@ theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
           if_neg (by decide : ¬ ((("get" : String) == "pop") = true))]
       right; right; right; exact ⟨_, rfl⟩
     | generator qn lo k st => right; right; right; exact ⟨_, rfl⟩
+    | closure nm ps ao lo' hg ig bd cap => right; right; right; exact ⟨_, rfl⟩
     | «instance» ci attrs =>
       cases hv : Env.lookup attrs.toList "get" with
       | some v => simp [hv]
@@ -2860,12 +2915,26 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           -- callable CHECK happens at call time, AFTER argument evaluation:
           -- `x(1//0)` with `x = 5` raises ZeroDivisionError, not TypeError.
           match Env.lookup st.locals fname with
-          | some (.ref _) =>
-              -- every H1 heap object is a dict, and dicts are not
-              -- callable: the faithful TypeError (H3 instances revisit
-              -- this arm — instance callability lives in the heap)
-              evalExprs m fuel st args.toList ⤳ fun st _ =>
-              .exn st (.typeError "'dict' object is not callable")
+          | some (.ref a) =>
+              -- H7: a local name may hold a CLOSURE. The call is guarded
+              -- on the fragment's own function-body walk (`funsHeapFree`
+              -- is false the moment any body contains a nested def), so
+              -- heap-free modules keep the faithful TypeError below and
+              -- worldInv never meets a closure call. Arguments evaluate
+              -- BEFORE the callable check, CPython's order.
+              evalExprs m fuel st args.toList ⤳ fun st vs =>
+              if funsHeapFree m.functions.toList then
+                .exn st (.typeError "'dict' object is not callable")
+              else
+                match Heap.get? st.world.heap a with
+                | some (.closure nm ps ao lo _ ig bd cap) =>
+                  Run.withLocals st.locals
+                    (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                | _ =>
+                  -- constant message on purpose: `typeNameH` here whnf-storms
+                  -- symbolic proofs (the recorded H2 finding); the CLASS is
+                  -- what the harness compares
+                  .exn st (.typeError "'dict' object is not callable")
           | some v =>
               evalExprs m fuel st args.toList ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -3063,6 +3132,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.generator ..) =>
                              Run.withLocals st.locals (anyAllIter m fuel st.world a (fname == "all")) ⤳ fun st b =>
                              .ok st (.bool b)
+                           | some (.closure ..) =>
+                             .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)"))
@@ -3238,10 +3309,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
           (match f with
            | .name fname _ =>
              (match Env.lookup st.locals fname with
-              | some (.ref _) =>
+              | some (.ref a) =>
                   evalExprs m fuel st args.toList ⤳ fun st _ =>
                   evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
-                  .exn st (.typeError "'dict' object is not callable")
+                  match Heap.get? st.world.heap a with
+                  | some (.closure ..) =>
+                    .unsupported "keyword arguments on a closure call are outside the tier (docs/memory-model.md §nested defs and closures)"
+                  | _ => .exn st (.typeError "'dict' object is not callable")
               | some v =>
                   evalExprs m fuel st args.toList ⤳ fun st _ =>
                   evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
@@ -3656,6 +3730,21 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         -- a silent no-op. Inside a generator the continuation walker
         -- (`execGen`) owns this node and `execStmt` never sees it.
         .unsupported "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"
+    | .defStmt name params argsOk localsOk hasGlobal isGenerator body captures _ =>
+      -- H7 (docs/memory-model.md §nested defs and closures): SNAPSHOT
+      -- the captures from the current frame, ALLOCATE the closure
+      -- object, bind the name. Under the extractor's never-rebound
+      -- admission the snapshot IS CPython's cell.
+      (match capturesSnapshot st.locals captures.toList with
+       | Option.none =>
+         .unsupported s!"nested def '{name}': a captured name is unbound at def time (unreachable through ingestion — report this)"
+       | some cap =>
+         let a := st.world.heap.size
+         let obj : Obj :=
+           .closure name params argsOk localsOk hasGlobal isGenerator body cap
+         .ok { st with
+               world := { st.world with heap := st.world.heap.push obj },
+               locals := Env.set st.locals name (.ref a) } .next)
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont
@@ -3739,6 +3828,8 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
         if moduleGenFree m then
           .unsupported "internal: a generator object in a module with no generator defs (heap well-formedness violation — report this)"
         else execForGen m fuel st target a body
+    | some (.closure ..) =>
+        .unsupported "internal: a list cursor over a function object (report this)"
     | Option.none => .unsupported danglingMsg
   termination_by structural fuel
 
@@ -3930,6 +4021,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                    .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
                | some (.instance _ _) =>
                    .exn st (.typeError "'object' object is not iterable")
+               | some (.closure ..) =>
+                   .exn st (.typeError "'function' object is not iterable")
                | Option.none => .unsupported danglingMsg)
             | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
        | .refuse msg => .unsupported msg)
@@ -3953,6 +4046,8 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
        | some (.instance _ _) => .exn st (.typeError "'object' object is not iterable")
        | some (.generator ..) =>
            .unsupported "internal: a list cursor over a generator object (report this)"
+       | some (.closure ..) =>
+           .unsupported "internal: a list cursor over a function object (report this)"
        | Option.none => .unsupported danglingMsg)
     | .forGen target ad body :: k' =>
       Run.withLocals st.locals (stepIter m fuel st.world ad) ⤳ fun st r =>
@@ -4047,6 +4142,42 @@ def anyAllIter (m : Module) (fuel : Nat) (w : World) (a : Addr)
     | some v =>
       Run.liftRes w (truthyH w.heap v) ⤳ fun w b =>
       if b != isAll then .ok w b else anyAllIter m fuel w a isAll
+  termination_by structural fuel
+
+/-- Invoke a CLOSURE object (H7, docs/memory-model.md §nested defs and
+closures): the callee env is parameters bound to arguments, THEN the
+snapshot (parameters shadow captures). Mirrors `callIn`'s refusals and
+call shape — `callIn`'s covenant signature stays untouched; a GENERATOR
+closure allocates the H4 object with the snapshot inside its stored
+locals, so resume-time capture reads ride the stepper unchanged. A
+frozen recursion point, like `callIn`. -/
+def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
+    (params : Array Param) (argsOk localsOk isGenerator : Bool)
+    (body : Array Stmt) (captured : REnv) (args : Array RVal) :
+    Run World RVal :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    if !argsOk then
+      .unsupported s!"nested function '{name}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+    else if !localsOk then
+      .unsupported s!"nested function '{name}' calls a name it also assigns (CPython static-locals rule) — outside the tier"
+    else if !arityOk params args.size then
+      .exn w (.typeError
+        s!"{name}() takes {params.size} positional arguments but {args.size} were given")
+    else if isGenerator then
+      let g : Obj :=
+        .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
+          [.block body.toList] .created
+      .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+    else
+      Run.toWorld <|
+        execStmts m fuel ⟨w, mkCallEnv params args ++ captured⟩ body.toList ⤳ fun st flow =>
+        match flow with
+        | .ret v => .ok st v
+        | .next => .ok st .none
+        | .brk => .unsupported "'break' outside loop"
+        | .cont => .unsupported "'continue' outside loop"
   termination_by structural fuel
 
 end

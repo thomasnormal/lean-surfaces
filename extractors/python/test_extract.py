@@ -303,6 +303,65 @@ class ExtractorTests(unittest.TestCase):
             for kw in e["keywords"]:
                 self.assertIn("kind", kw["value"], src)
 
+    def test_nested_def_is_structured(self):
+        # H7: a def DIRECTLY inside a function body, captures never
+        # rebound after — structured with the capture set.
+        fn = self._first_fn(
+            "def outer(a):\n    b = a + 1\n    def inner(x):\n"
+            "        return x * b + a\n    return inner(3)\n")
+        nd = fn["body"][1]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertEqual(nd["captures"], ["a", "b"])
+        self.assertIsNone(nd["closure_unsupported"])
+
+    def test_nested_generator_def_keeps_flag(self):
+        fn = self._first_fn(
+            "def outer(n):\n    lim = n * 2\n    def g():\n"
+            "        i = 0\n        while i < lim:\n"
+            "            yield i\n            i = i + 1\n"
+            "    return g\n")
+        nd = fn["body"][1]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertTrue(nd.get("is_generator"))
+        self.assertEqual(nd["captures"], ["lim"])
+        self.assertIsNone(nd["closure_unsupported"])
+
+    def test_nested_def_rebound_after_refuses(self):
+        # snapshot-at-def would diverge from CPython's cell: LOUD.
+        fn = self._first_fn(
+            "def outer(a):\n    def f():\n        return a\n"
+            "    a = a + 1\n    return f()\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("rebound after the def", nd["closure_unsupported"])
+
+    def test_nested_def_nonlocal_refuses(self):
+        fn = self._first_fn(
+            "def outer(a):\n    c = 0\n    def f():\n"
+            "        nonlocal c\n        c = c + 1\n    f()\n    return c\n")
+        nd = fn["body"][1]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("nonlocal", nd["closure_unsupported"])
+
+    def test_nested_def_inside_loop_stays_plain_functiondef(self):
+        # not a DIRECT child of the body: plain FunctionDef, which
+        # ingestion refuses loudly (the loop is where snapshot-vs-cell
+        # becomes observable)
+        fn = self._first_fn(
+            "def outer(a):\n    t = 0\n    while a > 0:\n"
+            "        def f():\n            return a\n"
+            "        t = t + f()\n        a = a - 1\n    return t\n")
+        loop = fn["body"][1]
+        self.assertEqual(loop["body"][0]["kind"], "FunctionDef")
+
+    def test_early_call_of_nested_name_flags_locals(self):
+        # CPython: UnboundLocalError (static-locals rule) — a module
+        # fallthrough would silently call the wrong function: LOUD.
+        fn = self._first_fn(
+            "def outer(a):\n    r = f()\n    def f():\n"
+            "        return a\n    return r\n")
+        self.assertIn("nested-def name", fn["locals_unsupported"])
+
     def test_call_kwargs_unpacking_stays_unsupported_loud(self):
         # `f(**d)` (a keyword node with arg=None) has no per-name binding
         # story — it stays a LOUD call_unsupported, and the structured
@@ -312,11 +371,18 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(e["call_unsupported"], "** unpacking in call", src)
         self.assertEqual(e["keywords"], [], src)
 
-    def test_sorted_shadowing_assignment_flags_locals(self):
-        # A body that assigns `sorted` and also calls it trips the CPython
-        # static-locals guard (`locals_unsupported`), same as any callee.
+    def test_sorted_shadowing_assignment_after_is_admitted(self):
+        # H7 refinement: a single direct assignment with every call AFTER
+        # it has no UnboundLocalError window — the dynamic env is faithful
+        # (here: the REAL TypeError, `sorted` shadowed by an int).
         fn = self._first_fn(
             "def f(xs):\n    sorted = 3\n    return sorted(xs)\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
+    def test_call_before_assignment_still_flags_locals(self):
+        # the UnboundLocalError window is real here: still LOUD.
+        fn = self._first_fn(
+            "def f(xs):\n    r = sorted(xs)\n    sorted = 3\n    return r\n")
         self.assertEqual(
             fn["locals_unsupported"],
             "calls locally-assigned name(s) (static-locals rule): sorted")

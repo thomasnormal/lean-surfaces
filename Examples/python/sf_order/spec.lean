@@ -74,3 +74,22 @@ private def epB : String :=
 #py_check sf_order.value_of(
     "         \n         \n ........\n ........\n ........\n pP......\n ........\n ........\n ........\n K.......\n         \n         \n",
     52, 42, "", 42, 0) = 113
+
+/-! ### H7 capstone: the moves()-shaped nested GENERATOR (bound_probe)
+
+The nested `def moves():` closes over `pos`/`depth`/`val_lower` (never
+rebound after the def — the shipped file's own shape), carries the
+verbatim ordering line, and is consumed LAZILY with the beta cutoff:
+`(46, 1)` under a cutting window vs `(46, 20)` without — the generator
+is abandoned mid-drain after ONE consumed yield, which an eager design
+cannot reproduce. -/
+
+#py_check sf_order.bound_probe(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    40, 1, 0, 0) = (Val.tuple #[.int 46, .int 1])
+#py_check sf_order.bound_probe(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    1000, 1, 0, 0) = (Val.tuple #[.int 46, .int 20])
+#py_check sf_order.bound_probe(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    1000, 0, 0, 0) = (Val.tuple #[.int 46, .int 3])

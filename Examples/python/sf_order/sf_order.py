@@ -226,3 +226,36 @@ def best_move(board, ep, kp):
     pos = Position(board, 0, (True, True), (True, True), ep, kp)
     val, move = order_from(pos)[0]
     return (val, move.i, move.j, move.prom)
+
+QS = 40
+QS_A = 140
+
+
+def bound_probe(board, gamma, depth, ep, kp):
+    """A cut-down bound() (H7 capstone): the OUTER shape of sunfish's
+    search node — the val_lower gate, the NESTED GENERATOR `def moves():`
+    closing over pos/depth/val_lower (never rebound after the def,
+    exactly the shipped file's shape), the verbatim ordering line inside
+    it, and the lazy consume below with the beta CUTOFF, which abandons
+    `moves()` mid-drain. `searched` counts consumed yields: an eager
+    design would search every move and answer wrongly."""
+    pos = Position(board, 0, (True, True), (True, True), ep, kp)
+    val_lower = QS - depth * QS_A
+
+    def moves():
+        if depth == 0:
+            yield (0, 0, pos.score)
+        for val, move in sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True):
+            if val < val_lower:
+                break
+            yield (val, move.i, move.j)
+
+    best = -100000
+    searched = 0
+    for val, i, j in moves():
+        searched = searched + 1
+        if val > best:
+            best = val
+        if best >= gamma:
+            break
+    return (best, searched)

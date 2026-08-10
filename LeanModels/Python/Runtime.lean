@@ -153,6 +153,20 @@ inductive Obj where
   (`gen_lab.two_phase`) — an immediate value would silently restart. -/
   | generator (qname : String) (locals : REnv) (cont : GenCont)
       (status : GenStatus)
+  /-- A CLOSURE object (H7, docs/memory-model.md §nested defs and
+  closures): the nested function carried INLINE (params, own-scope
+  censuses, generator flag, body) plus the SNAPSHOT of its captured
+  names, taken when the `def` statement executed. On the HEAP because
+  functions are identity in CPython (`==` between distinct closures is
+  `False` however equal their parts); under the never-rebound admission
+  the snapshot is observationally CPython's cell. Calling it builds the
+  callee env as parameters-then-snapshot (parameters shadow); a
+  generator closure allocates the H4 generator with the snapshot inside
+  its stored locals, so resume-time capture reads ride the stepper
+  unchanged. -/
+  | closure (name : String) (params : Array Param) (argsOk localsOk : Bool)
+      (hasGlobal : Bool) (isGenerator : Bool) (body : Array Stmt)
+      (captured : REnv)
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
@@ -246,6 +260,7 @@ def Obj.WF (h : Heap) : Obj → Prop
       ∧ RVal.WFList h (es.toList.map Prod.snd)
   | .list xs => RVal.WFList h xs.toList
   | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
+  | .closure _ _ _ _ _ _ _ captured => RVal.WFList h (captured.map Prod.snd)
   | .generator _ lo k _ =>
       RVal.WFList h (lo.map Prod.snd) ∧ GenCont.WF h k
 
@@ -819,6 +834,8 @@ mutual
                 return .list vs.toArray
             | some (.dict _ _) =>
                 .unsupported "returning a dict through the call boundary is outside the tier (no dict observation form in `Val`; docs/memory-model.md)"
+            | some (.closure ..) =>
+                .unsupported "returning a closure through the call boundary is outside the tier (a snapshot would forget function identity; docs/memory-model.md §nested defs and closures)"
             | some (.instance _ _) =>
                 .unsupported "returning a class instance through the call boundary is outside the tier (no instance observation form in `Val`; docs/memory-model.md H3)"
             | some (.generator ..) =>
@@ -1004,6 +1021,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             | dict es ver => simp at hc
             | «instance» cls attrs => simp at hc
             | generator qn lo k st => simp at hc
+            | closure nm ps ao lo' hg ig bd cap => simp at hc
             | list xs =>
               cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
               | ok vs => simp [hl] at hc
@@ -1142,6 +1160,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             | dict es ver => cases hc
             | «instance» cls attrs => cases hc
             | generator qn lo k st => cases hc
+            | closure nm ps ao lo' hg ig bd cap => cases hc
             | list xs =>
               -- freezes to a `.list` snapshot — excluded by `hlf`
               simp only [Res.bind_eq_ok, Res.pure_eq] at hc

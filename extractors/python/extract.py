@@ -359,14 +359,37 @@ def _assigned_names(fn):
 def _shadowed_calls(fn):
     """Called names that the body also assigns: CPython would treat the callee
     as an (initially unbound) local, so a dynamic-env interpreter cannot be
-    faithful. Emitted as `locals_unsupported` so the interpreter refuses loudly."""
+    faithful. Emitted as `locals_unsupported` so the interpreter refuses
+    loudly.
+
+    H7 refinement (the closure-escape pattern `g = _mk(a); g()`): a name
+    bound EXACTLY ONCE, by a single-target plain assignment DIRECTLY in the
+    body (so never inside a loop), with every call textually AFTER it, has
+    no UnboundLocalError window — the dynamic env is faithful there, so it
+    is not flagged."""
     assigned = _assigned_names(fn)
     hits = set()
     for node in _walk_scope(fn):
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             if node.func.id in assigned:
                 hits.add(node.func.id)
-    return sorted(hits)
+    safe = set()
+    for name in hits:
+        linenos = _binding_linenos(fn, name)
+        direct_assigns = [
+            st for st in fn.body
+            if isinstance(st, ast.Assign) and len(st.targets) == 1
+            and isinstance(st.targets[0], ast.Name)
+            and st.targets[0].id == name
+        ]
+        if len(linenos) == 1 and len(direct_assigns) == 1:
+            ln = direct_assigns[0].lineno
+            calls = [n.lineno for n in _walk_scope(fn)
+                     if isinstance(n, ast.Call)
+                     and isinstance(n.func, ast.Name) and n.func.id == name]
+            if all(c > ln for c in calls):
+                safe.add(name)
+    return sorted(hits - safe)
 
 
 def _has_global(node):
@@ -391,7 +414,102 @@ def _is_generator(fn):
     return any(isinstance(n, (ast.Yield, ast.YieldFrom)) for n in _walk_scope(fn))
 
 
-def convert_stmt(node):
+def _binding_linenos(fn, name):
+    """Line numbers of every statement in fn's OWN scope that BINDS `name`
+    (assignment, augmented assignment, annotated assignment, `for` target,
+    `del`, imports, `with … as`). Used by the H7 never-rebound-after-def
+    analysis — `del` and imports count as bindings on purpose."""
+    out = []
+    for n in _walk_scope(fn):
+        bound = []
+        if isinstance(n, ast.Assign):
+            for t in n.targets:
+                bound += _target_bound_names(t)
+        elif isinstance(n, (ast.AugAssign, ast.AnnAssign, ast.For)):
+            bound += _target_bound_names(n.target)
+        elif isinstance(n, ast.Delete):
+            for t in n.targets:
+                bound += _target_bound_names(t)
+        elif isinstance(n, (ast.Import, ast.ImportFrom)):
+            for al in n.names:
+                bound.append((al.asname or al.name).split(".")[0])
+        elif isinstance(n, ast.With):
+            for item in n.items:
+                if item.optional_vars is not None:
+                    bound += _target_bound_names(item.optional_vars)
+        if name in bound:
+            out.append(n.lineno)
+    return out
+
+
+def _closure_analysis(nd, enclosing):
+    """H7 nested defs (docs/memory-model.md §nested defs and closures):
+    the capture set and the LOUD refusals of the snapshot tier.
+
+    Captures = free names of the nested body (own scope) that are locals
+    or parameters of the enclosing function — CPython's symtable rule.
+    Snapshot-at-def equals CPython's cells exactly when no captured name
+    is bound after the def executes; the analysis refuses (with the
+    precise reason) everything outside that fragment. Returns
+    ``(captures, reason_or_None)``."""
+    reasons = []
+    for n in ast.walk(nd):
+        if n is not nd and isinstance(
+                n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda,
+                    ast.ClassDef)):
+            reasons.append("a scope nested inside the nested def")
+            break
+    if any(isinstance(n, ast.Nonlocal) for n in ast.walk(nd)):
+        reasons.append("nonlocal (cell writes)")
+    nested_locals = ({p.arg for p in list(nd.args.posonlyargs) + list(nd.args.args)}
+                     | _assigned_names(nd))
+    enclosing_params = {p.arg for p in list(enclosing.args.posonlyargs)
+                        + list(enclosing.args.args)}
+    # direct nested-def names are enclosing locals too (a closure may
+    # capture an earlier closure — sunfish-adjacent `chain` shapes)
+    def_bindings = {st.name: st.lineno for st in enclosing.body
+                    if isinstance(st, ast.FunctionDef)}
+    enclosing_locals = (enclosing_params | _assigned_names(enclosing)
+                        | set(def_bindings))
+    free = set()
+    for n in _walk_scope(nd):
+        if isinstance(n, ast.Name) and n.id not in nested_locals:
+            free.add(n.id)
+    captures = sorted(free & enclosing_locals)
+    for c in captures:
+        linenos = _binding_linenos(enclosing, c)
+        if c in def_bindings:
+            linenos = linenos + [def_bindings[c]]
+        after = [ln for ln in linenos if ln > nd.lineno]
+        if after:
+            reasons.append(
+                "captured name %r is rebound after the def (line %d) — "
+                "snapshot-at-def would diverge from CPython's cell"
+                % (c, min(after)))
+        elif c not in enclosing_params and not [ln for ln in linenos
+                                                if ln < nd.lineno]:
+            reasons.append(
+                "captured name %r has no binding before the def — the "
+                "snapshot could miss CPython's late cell fill" % c)
+    return captures, ("; ".join(reasons) if reasons else None)
+
+
+def _early_nested_calls(fn):
+    """Calls of a DIRECT nested-def name at a line before its def: CPython's
+    static-locals rule makes the name local throughout, so such a call
+    raises UnboundLocalError — a dynamic-env fallthrough to a module name
+    would be silently wrong. Loud, via `locals_unsupported`."""
+    defs = {st.name: st.lineno for st in fn.body
+            if isinstance(st, ast.FunctionDef)}
+    hits = set()
+    for n in _walk_scope(fn):
+        if (isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                and n.func.id in defs and n.lineno < defs[n.func.id]):
+            hits.add(n.func.id)
+    return sorted(hits)
+
+
+def convert_stmt(node, enclosing=None):
     if isinstance(node, ast.FunctionDef):
         a = node.args
         plain = list(a.posonlyargs) + list(a.args)
@@ -431,14 +549,30 @@ def convert_stmt(node):
                 "calls locally-assigned name(s) (static-locals rule): "
                 + ", ".join(shadowed)
                 if (shadowed := _shadowed_calls(node))
-                else None
+                else (
+                    "calls nested-def name(s) before the def (static-locals "
+                    "rule): " + ", ".join(early)
+                    if (early := _early_nested_calls(node))
+                    else None
+                )
             ),
-            "body": [convert_stmt(s) for s in node.body],
+            # a nested def DIRECTLY in this body is the H7 closure shape;
+            # one nested deeper (inside an if/loop) stays a plain
+            # FunctionDef node, which ingestion refuses loudly
+            "body": [convert_stmt(s, enclosing=node) for s in node.body],
         }
         if _has_global(node):
             out["has_global"] = True
         if _is_generator(node):
             out["is_generator"] = True
+        if enclosing is not None:
+            # H7 (docs/memory-model.md §nested defs and closures): a def
+            # DIRECTLY inside a function body is structured as NestedDef,
+            # with the capture set and the snapshot tier's refusals
+            captures, refusal = _closure_analysis(node, enclosing)
+            out["kind"] = "NestedDef"
+            out["captures"] = captures
+            out["closure_unsupported"] = refusal
         return out
 
     if isinstance(node, ast.ClassDef):

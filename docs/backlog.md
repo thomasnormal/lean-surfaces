@@ -613,3 +613,28 @@ Open, recorded (none started):
 5. **The ordering theorem** — extend the decided reference-enumeration
    equality from `gen_moves` to the ordered `(value, move)` list
    (`sf_order.order_from` is its concrete anchor).
+
+## H7 nested defs and closures — BUILT (2026-08-10)
+
+The snapshot tier is live (docs/memory-model.md §nested defs and
+closures, as-built notes there). The shipped `moves()` ADMITS under the
+never-rebound analysis (captures `depth`/`gamma`/`pos`/`root`/`self`/
+`val_lower`, generator), and `sf_order.bound_probe` runs the
+moves()-shaped nested generator — verbatim ordering line inside, beta
+cutoff abandoning it mid-drain — differentially against CPython.
+
+What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
+
+1. **Instance-method keyword arguments** — `self.bound(…, root=True)`
+   (the kwarg merge on the `execAttrCall` path; recorded since H6).
+2. **`self.tp_move.get(pos)`** — dict `.get` through an instance
+   attribute READ with an ntuple key: likely in tier already; needs a
+   differential row before it is claimed.
+3. **`Position.move`** — `localsOk = false` (the `put` lambda): lambdas,
+   or a rewrite-free lambda tier, gate `pos.move(killer)`.
+4. **`bound()`'s own gates** — sets (`self.history`), `raise Stop` /
+   exception classes, `time.time()`, the `%` deadline check, and
+   `pos in self.history` set membership.
+5. **Recursion through a captured `self`** — `-self.bound(...)` inside
+   the nested generator body: H3 instance-method dispatch from a
+   generator frame; untested, needs a lab row when 1 lands.

@@ -23,6 +23,11 @@ def _root_.fibSpec : Nat → Int
   | 1 => 1
   | n + 2 => fibSpec (n + 1) + fibSpec n
 
+-- H7 note: the `.call` arm's equation now carries the keyword tier and
+-- the guarded closure dispatch; fib's whole-body symbolic step crosses
+-- it twice, which pushed this proof past the default heartbeat budget
+-- (a constant-factor cost, not a loop).
+set_option maxHeartbeats 800000 in
 set_option warning.simp.varHead false in
 /-- **Total correctness**, by strong induction on the mathematical argument
 (never on fuel). The base cases are straight-line runs (`py_prove`); in the

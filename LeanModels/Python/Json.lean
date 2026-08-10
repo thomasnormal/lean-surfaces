@@ -202,6 +202,16 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | other => throw s!"unknown expression kind {other.quote}"
 
 /-- Parse a statement node (see `parseExpr` for why `partial`). -/
+def parseParam (j : Json) : Except String Param :=
+  withCtx "param" do
+    let default ← match j.getObjVal? "default" with
+      | .error _ => pure (Option.none : Option Const)  -- absent: no default
+      | .ok .null => pure Option.none
+      | .ok v => do pure (some (← parseConst v))
+    return { arg := ← (← getField j "arg").getStr?
+             span := ← parseSpan (← getField j "span")
+             default }
+
 partial def parseStmt (j : Json) : Except String Stmt := do
   let kind ← (← getField j "kind").getStr?
   withCtx kind do
@@ -248,25 +258,40 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span
     | "FunctionDef" =>
-        -- Nested `def` (module-level ones are split out by `parseModule`).
-        -- Representation coverage: keep ingestion total, mark it unsupported.
+        -- A def NOT directly in a function body (module-level ones are
+        -- split out by `parseModule`; direct children of a function body
+        -- arrive as "NestedDef"). Representation coverage: keep
+        -- ingestion total, mark it unsupported.
         let name := ((← getField j "name").getStr?).toOption.getD ""
         return .unsupported "FunctionDef" name span
+    | "NestedDef" =>
+        -- H7 (docs/memory-model.md §nested defs and closures): a def
+        -- DIRECTLY inside a function body. The snapshot tier's admission
+        -- was decided at EXTRACTION — a non-null `closure_unsupported`
+        -- keeps the loud refusal, reason attached.
+        let name := ((← getField j "name").getStr?).toOption.getD ""
+        match ← getOptStrField j "closure_unsupported" with
+        | some reason =>
+            return .unsupported "NestedDef" s!"{name}: {reason}" span
+        | Option.none =>
+          let params ← (← (← getField j "args").getArr?).mapM parseParam
+          let argsUnsupported ← getOptStrField j "args_unsupported"
+          let localsUnsupported ← getOptStrField j "locals_unsupported"
+          let hasGlobal := match j.getObjVal? "has_global" with
+            | .ok (.bool b) => b
+            | _ => false
+          let isGenerator := match j.getObjVal? "is_generator" with
+            | .ok (.bool b) => b
+            | _ => false
+          let body ← (← (← getField j "body").getArr?).mapM parseStmt
+          let captures ← (← (← getField j "captures").getArr?).mapM (·.getStr?)
+          return .defStmt name params argsUnsupported.isNone
+            localsUnsupported.isNone hasGlobal isGenerator body captures span
     | "ClassDef" =>
         -- Nested `class` (module-level ones are split out by `parseModule`).
         let name := ((← getField j "name").getStr?).toOption.getD ""
         return .unsupported "ClassDef" name span
     | other => throw s!"unknown statement kind {other.quote}"
-
-def parseParam (j : Json) : Except String Param :=
-  withCtx "param" do
-    let default ← match j.getObjVal? "default" with
-      | .error _ => pure (Option.none : Option Const)  -- absent: no default
-      | .ok .null => pure Option.none
-      | .ok v => do pure (some (← parseConst v))
-    return { arg := ← (← getField j "arg").getStr?
-             span := ← parseSpan (← getField j "span")
-             default }
 
 /-- Parse a module-level `FunctionDef` node into a `FunctionDefn`.
 `argsOk` is `true` iff `args_unsupported` is `null` (or absent); `localsOk`
@@ -448,6 +473,8 @@ private partial def stmtBinds : Stmt → Option (List String)
     let ob ← orelse.toList.mapM stmtBinds
     return bb.flatten ++ ob.flatten
   | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
+  -- H7: a nested def binds its NAME; the body is its own scope
+  | .defStmt name _ _ _ _ _ _ _ _ => some [name]
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
@@ -487,6 +514,7 @@ mutual
         ++ (o.toList.map stmtRefs).flatten
     | .exprStmt e _ => exprRefs e
     | .yieldStmt e _ => exprRefs e
+    | .defStmt _ _ _ _ _ _ body _ _ => (body.toList.map stmtRefs).flatten
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -496,6 +524,7 @@ private def stmtSpanOf : Stmt → Span
   | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
   | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
+  | .defStmt _ _ _ _ _ _ _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -658,6 +687,25 @@ private def guardWith (sp : Span) : List Expr → Stmt → Stmt
 private def dedup (l : List String) : List String :=
   l.foldl (init := []) (fun acc n => if acc.contains n then acc else acc ++ [n])
 
+/-- Names a function body assigns anywhere (CPython's static-locals
+rule), over-approximated: an unanalyzable target contributes nothing but
+also cannot hide a name that `targetBinds` would have found, so the
+capture test stays conservative in the safe direction — an unnoticed
+rebinding is impossible for the shapes `targetBinds` analyses, and every
+other shape binds nothing. -/
+private partial def bodyAssigns : Stmt → List String
+  | .assign ts _ _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
+  | .augAssign t _ _ _ => (targetBinds t).getD []
+  | .forStmt t _ b o _ =>
+      (targetBinds t).getD [] ++ (b.toList.map bodyAssigns).flatten
+        ++ (o.toList.map bodyAssigns).flatten
+  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map bodyAssigns).flatten ++ (o.toList.map bodyAssigns).flatten
+  -- H7: the def NAME becomes a local of the enclosing body; the nested
+  -- BODY is its own scope and contributes nothing here
+  | .defStmt name _ _ _ _ _ _ _ _ => [name]
+  | _ => []
+
 /-- What a lowering pass may capture and what it must refuse. -/
 private structure LowerCtx where
   /-- Names resolved outside the frame (module bindings + builtins). -/
@@ -744,28 +792,22 @@ mutual
         return .ifStmt (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
     | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
     | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
+    | .defStmt name params ao lo hg ig body captures sp =>
+        -- H7: the nested body lowers under its OWN ctx. Closure captures
+        -- are never-rebound by admission, so a genexp inside the nested
+        -- body may capture them BY VALUE exactly like never-assigned
+        -- parameters — sunfish's ordering line inside `moves()`.
+        let ctx' : LowerCtx :=
+          { ctx with
+            params := params.toList.map Param.arg ++ captures.toList
+            assigned := (body.toList.map bodyAssigns).flatten }
+        return .defStmt name params ao lo hg ig (← lowerStmts ctx' body) captures sp
 
   /-- Elementwise `lowerStmt`. -/
   private partial def lowerStmts (ctx : LowerCtx) (ss : Array Stmt) :
       StateM (Nat × Array FunctionDefn) (Array Stmt) :=
     ss.mapM (lowerStmt ctx)
 end
-
-/-- Names a function body assigns anywhere (CPython's static-locals
-rule), over-approximated: an unanalyzable target contributes nothing but
-also cannot hide a name that `targetBinds` would have found, so the
-capture test stays conservative in the safe direction — an unnoticed
-rebinding is impossible for the shapes `targetBinds` analyses, and every
-other shape binds nothing. -/
-private partial def bodyAssigns : Stmt → List String
-  | .assign ts _ _ => (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
-  | .augAssign t _ _ _ => (targetBinds t).getD []
-  | .forStmt t _ b o _ =>
-      (targetBinds t).getD [] ++ (b.toList.map bodyAssigns).flatten
-        ++ (o.toList.map bodyAssigns).flatten
-  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
-      (b.toList.map bodyAssigns).flatten ++ (o.toList.map bodyAssigns).flatten
-  | _ => []
 
 /-- Lower every genexp in the module: function bodies first, then the
 TOP LEVEL. A module-scope genexp needs no capture list at all — every

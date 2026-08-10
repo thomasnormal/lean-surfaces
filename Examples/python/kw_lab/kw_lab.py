@@ -103,5 +103,5 @@ def builtin_kw():
 
 
 def sorted_kw(a):
-    # sorted(reverse=True) lands with the H6 draining tier: loud for now
+    # sorted(reverse=True): descending stable (the H6 draining tier)
     return sorted([3, 1, a], reverse=True)

@@ -82,8 +82,14 @@ def idx_arg_raises(s, n):
     return s.index(n)
 
 
-def upper_is_loud(s):
+def upper_of(s):
+    # LIVE since H6 (`value()`'s capture lookup needs it); non-ASCII
+    # stays loud
     return s.upper()
+
+
+def lower_flag(s):
+    return s.islower()
 
 
 def list_slice_is_loud():

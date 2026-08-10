@@ -369,10 +369,12 @@ tier).
   non-subscriptable scalar is the faithful `TypeError`; a slice in
   STORE position stays loud (`assignTo`'s catch-all).
 * **Methods** (`strCallPlan` — the `ntupleCallPlan` free-scrutinee
-  discipline, plan decided BEFORE arguments): `.swapcase()` and
-  `.isupper()` on ASCII strings (Lean core's `Char` case maps ARE the
-  ASCII maps, agreeing with CPython exactly there; a non-ASCII string
-  refuses loudly — the Unicode tables are not guessed), and
+  discipline, plan decided BEFORE arguments): `.swapcase()`,
+  `.isupper()`, `.islower()`, and `.upper()` on ASCII strings (the H6
+  pair `islower`/`upper` serves the shipped `value()`'s capture arm;
+  Lean core's `Char` case maps ARE the ASCII maps, agreeing with
+  CPython exactly there; a non-ASCII string refuses loudly — the
+  Unicode tables are not guessed), and
   `.index(sub)` — code-point-exact substring search, the faithful
   `ValueError` miss, a non-str argument the faithful `TypeError`
   (`start`/`end` arguments loud). EVERY other attribute on a str
@@ -576,12 +578,11 @@ understand, the refusal is the LOUD unsupported, never a binding
 * module-level `def`s called by name;
 * namedtuple-subclass method calls (the ntuple receiver prepends `self`,
   then the same merge on the flattened defn's params);
-* the builtin `sorted` (lands WITH the draining tier; refused loudly
-  until then): `reverse=<expr>` is accepted (truthiness decides the
-  direction, as CPython's does); `key=` is REFUSED loudly — it gates on
-  first-class callable values (a bound method as a value is loud under
-  H3), not on draining, and is recorded in the backlog; any other
-  keyword name on `sorted` is CPython's faithful `TypeError`.
+* the builtin `sorted`: `reverse=<expr>` is accepted (truthiness
+  decides the direction, as CPython's does); `key=` is REFUSED loudly —
+  it gates on first-class callable values (a bound method as a value is
+  loud under H3), not on draining, and is recorded in the backlog; any
+  other keyword name on `sorted` is CPython's faithful `TypeError`.
 
 Loud by choice: heap-receiver method calls with keywords (`.get`,
 instance methods), class instantiation and namedtuple CONSTRUCTION with
@@ -593,7 +594,7 @@ sunfish's keyword sites live inside method bodies that are already out
 of the fragment). The G1 scans see keyword values as ordinary subtree
 expressions; a keyword name binds nothing in the caller.
 
-## Draining consumers (H6 — design 2026-08-10, normative; implementation in flight)
+## Draining consumers (H6 — BUILT 2026-08-10)
 
 sunfish's ordering line is
 `sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True)`
@@ -636,6 +637,26 @@ a reversal would forge `[True, 1]`. `sorted` still allocates its result
 
 Simp doctrine unchanged: dispatchers in the sets, the new workers
 (`rvalLt`, the merge, the drain) OUT (the `sortInts` freeze family).
+
+**As built (2026-08-10):** `drainIter` (full drain) and `anyAllIter`
+(short-circuit) are frozen mutual members, conjuncts appended LAST;
+all-int ascending `sorted` and all-int `max`/`min` keep their ORIGINAL
+`sortInts`/`foldExtremum` computation paths byte-for-byte (the
+proof-layer bridges and captured runs depend on those terms); `sorted`
+gained str/tuple/namedtuple receivers (CPython sorts them); `max`/`min`
+gained the general `rvalLt` fold plus str receivers. Fragment
+bookkeeping: `any`/`all` are excluded from `heapFree` syntactically
+(their generator arm drains unguarded); `max`/`min` STAY in the fragment
+— their drain arm is guarded on `moduleGenFree`, which a heap-free
+module discharges (`Module.heapFree_genFree`), so a generator-free
+module keeps today's loud refusal and `worldInv` never meets the drain.
+The `value()` prerequisites `.islower()`/`.upper()` landed in the str
+tier (§string semantics). Acceptance: `Examples/python/drain_lab`
+(observable partial drains, the bool-identity stability pins, the
+infinite-`any` laziness pin) and `Examples/python/sf_order` — the
+shipped ordering line VERBATIM over the verbatim `gen_moves`/`value`
+(padded `pst` = CPython's own output of the shipped padding loop),
+differential on whole ordered move lists, opening board included.
 
 ## Heap well-formedness (explicit invariant)
 

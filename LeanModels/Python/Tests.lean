@@ -323,11 +323,14 @@ private def sortedC (args : Array Expr) : Expr := .call (nm "sorted") args #[] O
 #guard ev (sortedC #[iL 5]) == .exn (.typeError "'int' object is not iterable")
 #guard ev (sortedC #[bL true]) == .exn (.typeError "'bool' object is not iterable")
 #guard ev (sortedC #[noneL]) == .exn (.typeError "'NoneType' object is not iterable")
--- CPython SUCCEEDS on all four below — v0 refuses loudly, never guesses:
-#guard isUnsupported (ev (sortedC #[sL "cba"]))                    -- sorted('cba') = ['a','b','c']
-#guard isUnsupported (ev (sortedC #[.tuple #[iL 3, iL 1] sp]))     -- sorted((3,1)) = [1,3]
-#guard isUnsupported (ev (sortedC #[.list #[bL true, iL 0, iL 2] sp])) -- [0, True, 2]: bool identity
-#guard isUnsupported (ev (sortedC #[.list #[sL "b", sL "a"] sp]))  -- all-str list sorts in CPython
+-- H6 general-order tier: all four sort exactly as CPython (bool IDENTITY
+-- preserved — `sorted([True, 0, 2])` keeps the `True` object):
+#guard ev (sortedC #[sL "cba"]) == .ok (.listV #[.str "a", .str "b", .str "c"])
+#guard ev (sortedC #[.tuple #[iL 3, iL 1] sp]) == .ok (.listV #[.int 1, .int 3])
+#guard evF (sortedC #[.list #[bL true, iL 0, iL 2] sp])
+    == .ok (.list #[.int 0, .bool true, .int 2])
+#guard evF (sortedC #[.list #[sL "b", sL "a"] sp])
+    == .ok (.list #[.str "a", .str "b"])
 -- Mixed int/str raises in CPython too, but the class match is a guess v0
 -- does not make — refuse loudly instead:
 #guard isUnsupported (ev (sortedC #[.list #[iL 1, sL "a"] sp]))

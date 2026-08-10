@@ -578,3 +578,38 @@ of `(value, move)` tuples, NO `key=`. Acceptance:
 `Examples/python/kw_lab` (26 differential rows incl. the evaluation-order
 exception probes; 3 loud-frontier rows). Fragments: keyword-bearing calls
 leave `heapFree` conservatively.
+
+## H6 draining consumers — BUILT (2026-08-10)
+
+The `moves()` ordering surface is live end to end
+(docs/memory-model.md §draining consumers, as-built notes there):
+`sorted`/`max`/`min` DRAIN generators (`drainIter`, frozen), `any`/`all`
+short-circuit and leave the generator SUSPENDED (`anyAllIter`, frozen —
+the partial drain is pinned by rows that iterate the remainder);
+general-order `sorted` shares ONE relation with `<` (`rvalLt`: tuples
+class-erased lexicographic, strs, bool identity preserved), with
+`reverse=True` as descending STABLE insertion; the str tier gained
+`.islower()`/`.upper()` for the shipped `value()`. The capstone example
+`Examples/python/sf_order` runs the shipped ordering line VERBATIM —
+`sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True)` —
+over verbatim `gen_moves`/`value` with the PADDED `pst` (CPython's own
+output of the shipped padding loop), whole ordered move lists
+differential against CPython, opening board included.
+
+Open, recorded (none started):
+
+1. **`sorted(key=)`** — gates on FIRST-CLASS CALLABLE values (a bound
+   method as a value is loud under H3), not on draining. The shipped
+   file never uses it.
+2. **Instance-receiver method keywords** — `self.bound(…, root=True)`
+   (sunfish.py 401/568) wants the kwarg merge on the `execAttrCall`
+   path; closure-gated anyway (see 3).
+3. **`moves()` is a nested def** (the standing capstone gap): closures
+   over `pos`/`gamma`/`depth`/`root`/`self`, plus `Searcher.bound`
+   itself. The ordering surface now waits ONLY on this.
+4. **The module-init padding loop** (`pst.items()` + lambda + `sum`
+   over a genexp): would let the SHIPPED file's `value()` resolve `pst`
+   instead of the oracle-generated table in `sf_order`.
+5. **The ordering theorem** — extend the decided reference-enumeration
+   equality from `gen_moves` to the ordered `(value, move)` list
+   (`sf_order.order_from` is its concrete anchor).

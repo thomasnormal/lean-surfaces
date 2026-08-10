@@ -8,7 +8,8 @@ Usage (any cwd; the script re-roots itself at the repo root):
 
 For every case in harness/cases.json (DESIGN.md format:
 ``[{"file": ..., "function": ..., "args": [[...], ...], "expect": ...}]``)
-this:
+this (a case may carry ``"fuel": N`` to raise the runner's default for
+its rows — deep drains like `sf_order.move_order` need it):
 
   1. imports the ``.py`` source by path (importlib) and calls the function,
      mapping the return value / raised exception to the canonical JSON form
@@ -261,11 +262,12 @@ def main(argv=None):
         except Exception as e:
             print("error: cannot import %s: %s" % (src, e), file=sys.stderr)
             return 2
+        fuel = case.get("fuel", opts.fuel)
         for args in case["args"]:
             call = "%s(%s)" % (fname,
                                ", ".join(repr(from_typed(a)) for a in args))
             calls.append((call, expect, run_cpython(mod, fname, args)))
-            jobs.append(batch_job(json_path, fname, args, opts.fuel))
+            jobs.append(batch_job(json_path, fname, args, fuel))
 
     # Pass 2: the Lean side — ONE runner process for all rows, verdicts
     # streamed to stderr as they land.

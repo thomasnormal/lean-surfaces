@@ -273,6 +273,58 @@ def strCmp : CmpOp → String → String → Bool
   | .inOp, _, _ => false   -- unreachable: membership never reaches strCmp
   | .notIn, _, _ => false  -- (evalCompareOp handles it first; totality arm)
 
+mutual
+  /-- CPython strict `<` on immediate values (H6 draining consumers,
+  docs/memory-model.md §draining consumers): int/bool numeric, str
+  code-point lexicographic, tuple/namedtuple/value-list lexicographic and
+  CLASS-ERASED (`valEq` walks elementwise ties, `rvalLt` decides the
+  first difference; exhaustion → the shorter is smaller — CPython's
+  `tuple.__lt__`). Refs and mixed value kinds refuse LOUDLY, mirroring
+  `evalCompareOp`'s ordering arm — never a guessed `TypeError`. This is
+  THE ordering relation: the `<` operator and `sorted`/`max`/`min` all
+  decide through it. A worker of the `sortInts` freeze family — OUT of
+  the simp sets. -/
+  def rvalLt : RVal → RVal → Res Bool
+    | .bool a, .bool b => .ok ((if a then (1 : Int) else 0) < (if b then (1 : Int) else 0))
+    | .bool a, .int m => .ok ((if a then (1 : Int) else 0) < m)
+    | .int n, .bool b => .ok (n < (if b then (1 : Int) else 0))
+    | .int n, .int m => .ok (n < m)
+    | .str s, .str t => .ok (strCmp .lt s t)
+    | .tuple xs, .tuple ys => rvalLtList xs.toList ys.toList
+    | .tuple xs, .ntuple _ _ ys => rvalLtList xs.toList ys.toList
+    | .ntuple _ _ xs, .tuple ys => rvalLtList xs.toList ys.toList
+    | .ntuple _ _ xs, .ntuple _ _ ys => rvalLtList xs.toList ys.toList
+    | .listV xs, .listV ys => rvalLtList xs.toList ys.toList
+    | .ref _, b =>
+        .unsupported s!"ordering comparison '<' on a heap object is outside the tier ({b.typeName} rhs; docs/memory-model.md)"
+    | a, .ref _ =>
+        .unsupported s!"ordering comparison '<' on a heap object is outside the tier ({a.typeName} lhs; docs/memory-model.md)"
+    | a, b =>
+        .unsupported s!"comparison '<' between '{a.typeName}' and '{b.typeName}' is outside the tier"
+
+  /-- Elementwise lexicographic `<`: `valEq` walks the common prefix,
+  `rvalLt` decides the first difference, length breaks ties. -/
+  def rvalLtList : List RVal → List RVal → Res Bool
+    | [], [] => .ok false
+    | [], _ :: _ => .ok true
+    | _ :: _, [] => .ok false
+    | a :: as, b :: bs => do
+        let e ← valEq a b
+        if e then rvalLtList as bs else rvalLt a b
+end
+
+/-- The four ordering operators derived from strict `<` — exact within
+the tier: on comparable pairs the order is total, so `a <= b` is
+`¬(b < a)`; incomparable pairs refuse inside `rvalLt` before the
+negation can lie. -/
+def ordFromLt (op : CmpOp) (a b : RVal) : Res Bool :=
+  match op with
+  | .lt => rvalLt a b
+  | .gt => rvalLt b a
+  | .ltE => do let g ← rvalLt b a; return !g
+  | .gtE => do let l ← rvalLt a b; return !l
+  | _ => .unsupported "ordFromLt: non-ordering operator (report this)"
+
 /-- One comparison step. `==`/`!=` are `valEq` (`Res`-valued since H1 — see
 there). `is`/`is not` (F2): the extractor admits these ONLY when one side of
 the link is the literal `None`, whose runtime value is always `RVal.none` —
@@ -311,6 +363,12 @@ def evalCompareOp (op : CmpOp) (a b : RVal) : Res Bool :=
     | _, _ =>
       match a, b with
       | .str s, .str t => .ok (strCmp op s t)
+      -- H6: tuple/namedtuple ordering, class-erased and lexicographic —
+      -- ONE relation with `sorted` (`rvalLt`, via `ordFromLt`)
+      | .tuple _, .tuple _ => ordFromLt op a b
+      | .tuple _, .ntuple _ _ _ => ordFromLt op a b
+      | .ntuple _ _ _, .tuple _ => ordFromLt op a b
+      | .ntuple _ _ _, .ntuple _ _ _ => ordFromLt op a b
       | .ref _, b =>
         .unsupported
           s!"ordering comparison '{op.symbol}' on a heap object is outside the H1 tier ({b.typeName} rhs; docs/memory-model.md)"
@@ -449,38 +507,74 @@ def sortInts : List Int → List Int
   | [] => []
   | x :: xs => insertLe x (sortInts xs)
 
+/-- The elements a `for` loop sees when iterating a str: one 1-character
+str per CODE POINT, in order. CPython's `str_iterator` is an index cursor
+over an IMMUTABLE object, so this snapshot IS the live semantics — no
+mutation, growth, or shrinkage is expressible (unlike `execForList`'s
+live list cursor, which is why that one re-reads the heap per step).
+A frozen VALUE worker like `strSlice`. -/
+def strCharVals (s : String) : List RVal :=
+  s.toList.map (fun c => .str (String.ofList [c]))
+
+/-- Stable insertion under `rvalLt` (H6 general-order `sorted`):
+ascending sinks `x` below every strictly-smaller prefix element
+(insert-before iff `¬(y < x)` — equals keep first-encountered order);
+descending mirrors (insert-before iff `¬(x < y)`). Structural recursion
+(kernel-reducible, the `insertLe` discipline). -/
+def insertByLt (desc : Bool) (x : RVal) : List RVal → Res (List RVal)
+  | [] => .ok [x]
+  | y :: ys => do
+    let after ← if desc then rvalLt x y else rvalLt y x
+    if after then do return y :: (← insertByLt desc x ys)
+    else .ok (x :: y :: ys)
+
+/-- Insertion sort by `rvalLt`, STABLE in both directions. `reverse=True`
+is descending stable insertion, NOT sort-then-reverse:
+`sorted([1, True], reverse=True)` must keep `[1, True]` — a reversal
+would forge `[True, 1]` (docs/memory-model.md §draining consumers).
+Within the tier every total order agrees with CPython's timsort, and a
+comparison refusal is the whole sort's loud refusal. -/
+def sortByLt (desc : Bool) : List RVal → Res (List RVal)
+  | [] => .ok []
+  | x :: xs => do insertByLt desc x (← sortByLt desc xs)
+
 /-- All-int extraction: `some ns` iff every element is `.int`. `.bool`s
 deliberately do NOT coerce here — CPython sorts `[True, 0, 2]` keeping the
 `True` object in the result, which the identity-free `.int` cannot
-reproduce faithfully; such lists are refused loudly by `sortedVal`. -/
+reproduce faithfully; such lists take `sortedVal`'s general `rvalLt`
+path (which keeps the values themselves). -/
 def asIntList : List RVal → Option (List Int)
   | [] => some []
   | .int n :: vs => (asIntList vs).map (n :: ·)
   | _ => Option.none
 
-/-- `sorted(v)`: a NEW ascending list from an all-int list argument.
+/-- `sorted(v)`: a NEW sorted value-list (H6 general-order tier).
 Honesty discipline (same as `lenVal`): fake exceptions never, `unsupported`
 for anything CPython would handle differently.
-* `.listV` of `.int`s → `.ok`, freshly sorted (`sortInts`); the input value
-  is untouched.
+* `.listV` of `.int`s, ascending → the ORIGINAL `sortInts` computation
+  (kept byte-for-byte: the proof layer's `sortInts_eq` bridge and every
+  captured run depend on that term); every other element mix, and
+  `desc = true`, take the general stable `rvalLt` path (`sortByLt`) —
+  strs, tuples of `(value, move)` pairs, bools kept AS bools.
+* `.str` → its code points, sorted (CPython: a list of 1-char strs);
+  `.tuple`/`.ntuple` → their elements (class-erased).
 * `.int`/`.bool`/`.none` → `TypeError` with CPython 3.9's exact class and
   message shape (`'int' object is not iterable`).
-* `.str`/`.tuple`, and any list containing a non-`.int` element, refuse
-  loudly: CPython *succeeds* on `sorted("cba")` / `sorted((3,1))` /
-  all-str/bool lists (and TypeErrors only on mixed) — the tier does not
-  guess. A `.ref` argument (sorted over dict keys) is a heap read — loud.
-* `key=`/`reverse=` never reach here: keyword-only in 3.9, so the extractor
-  ships such calls with `call_unsupported: "keywords"` (refused in
-  `evalExpr` before argument evaluation). -/
-def sortedVal : RVal → Res RVal
+* A `.ref` argument decides in `sortedValH` (heap lists sort, dicts stay
+  loud, GENERATORS drain in the dispatch arm — never here).
+* `key=` never reaches here (loud in the H6 keyword tier — it gates on
+  first-class callable values); `reverse=` arrives as `desc`. -/
+def sortedVal (v : RVal) (desc : Bool := false) : Res RVal :=
+  match v with
   | .listV xs =>
-    match asIntList xs.toList with
-    | some ns => .ok (.listV (((sortInts ns).map RVal.int).toArray))
-    | Option.none =>
-        .unsupported "sorted() on a list with non-int elements is outside the v0 tier"
-  | .str _ => .unsupported "sorted() on a str is outside the v0 tier"
-  | .tuple _ => .unsupported "sorted() on a tuple is outside the v0 tier"
-  | .ntuple _ _ _ => .unsupported "sorted() on a namedtuple is outside the v0 tier"
+    if desc then do return .listV (← sortByLt true xs.toList).toArray
+    else
+      match asIntList xs.toList with
+      | some ns => .ok (.listV (((sortInts ns).map RVal.int).toArray))
+      | Option.none => do return .listV (← sortByLt false xs.toList).toArray
+  | .str s => do return .listV (← sortByLt desc (strCharVals s)).toArray
+  | .tuple xs => do return .listV (← sortByLt desc xs.toList).toArray
+  | .ntuple _ _ xs => do return .listV (← sortByLt desc xs.toList).toArray
   | .ref _ =>
       .unsupported "sorted() on a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
@@ -490,11 +584,31 @@ def foldExtremum (isMax : Bool) (acc : Int) : List Int → Int
   | [] => acc
   | n :: rest => foldExtremum isMax (if isMax then max acc n else min acc n) rest
 
-/-- The `max`/`min` builtins (B1 tier): ≥ 2 int arguments, or one nonempty
-int list/tuple. `key=`/`default=` are keyword arguments (refused upstream by
-`call_unsupported`). Mixed/bool/str orderings are out of tier — loud, since
-`asIntList` admits pure ints only; Python-invalid argument shapes raise the
-faithful CPython error class; a `.ref` argument is a heap read — loud. -/
+/-- Left fold of `max`/`min` under `rvalLt` (H6 general-order tier):
+CPython keeps the FIRST maximal/minimal element (replacement only on a
+STRICT win), so ties preserve the earliest value — observable when bools
+and ints mix (`max(True, 1)` is `True`). -/
+def foldExtremumLt (isMax : Bool) (acc : RVal) : List RVal → Res RVal
+  | [] => .ok acc
+  | v :: rest => do
+    let repl ← if isMax then rvalLt acc v else rvalLt v acc
+    foldExtremumLt isMax (if repl then v else acc) rest
+
+/-- General-path extremum over a nonempty element snapshot (`rvalLt`;
+empty → the faithful `ValueError`). -/
+def extremumOf (isMax : Bool) (name : String) : List RVal → Res RVal
+  | [] => .exn (.valueError s!"{name}() arg is an empty sequence")
+  | v :: rest => foldExtremumLt isMax v rest
+
+/-- The `max`/`min` builtins (H6 general-order tier): ≥ 2 arguments, or
+one nonempty sequence. All-int inputs keep the ORIGINAL `foldExtremum`
+computation (proof-layer captured runs depend on the term); every other
+in-tier element mix folds through `rvalLt` (`extremumOf`) — strs by code
+point, tuples/namedtuples lexicographic, first-win ties. `key=`/
+`default=` stay loud (H6 keyword tier). Python-invalid argument shapes
+raise the faithful CPython error class; a `.ref` argument decides in
+`extremumValH` (heap lists fold, dicts loud, generators drain in the
+dispatch arm). -/
 def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
   let name := if isMax then "max" else "min"
   match vs with
@@ -505,26 +619,26 @@ def extremumVal (isMax : Bool) (vs : List RVal) : Res RVal :=
       match asIntList xs.toList with
       | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
-      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
+      | Option.none => extremumOf isMax name xs.toList
     | .tuple xs =>
       match asIntList xs.toList with
       | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
-      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
+      | Option.none => extremumOf isMax name xs.toList
     | .ntuple _ _ xs =>
       -- namedtuples iterate as tuples (CPython: `max(Entry(1,2))` is 2)
       match asIntList xs.toList with
       | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
       | some [] => .exn (.valueError s!"{name}() arg is an empty sequence")
-      | Option.none => .unsupported s!"{name}() over non-int elements is outside the v0 tier"
-    | .str _ => .unsupported s!"{name}() over a str is outside the v0 tier"
+      | Option.none => extremumOf isMax name xs.toList
+    | .str t => extremumOf isMax name (strCharVals t)
     | .ref _ =>
         .unsupported s!"{name}() over a heap object is outside the H1 tier (docs/memory-model.md)"
     | v => .exn (.typeError s!"'{v.typeName}' object is not iterable")
   | vs =>
     match asIntList vs with
     | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
-    | _ => .unsupported s!"{name}() over non-int arguments is outside the v0 tier"
+    | _ => extremumOf isMax name vs
 
 /-- The `abs` builtin (B1): int/bool argument; a `.ref` is refused loudly
 before the `TypeError` fallback. -/
@@ -586,7 +700,8 @@ def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
   id == "abs" || id == "int" || id == "print" ||
   id == "ord" || id == "chr" || id == "next" ||
-  id == "enumerate" || id == "count"
+  id == "enumerate" || id == "count" ||
+  id == "any" || id == "all"
 
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
@@ -696,6 +811,23 @@ def strIsUpper (s : String) : Res RVal :=
   else .unsupported
     "isupper() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
 
+/-- `s.islower()` (ASCII in tier, `strIsUpper`'s mirror — H6: sunfish's
+`value()` capture check `q.islower()`). -/
+def strIsLower (s : String) : Res RVal :=
+  if strAscii s then
+    .ok (.bool (s.toList.any (fun c => c.isAlpha) &&
+                s.toList.all (fun c => !c.isAlpha || c.isLower)))
+  else .unsupported
+    "islower() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+
+/-- `s.upper()` (ASCII in tier — H6: sunfish's `value()` capture lookup
+`pst[q.upper()]`; Lean core's `Char.toUpper` is the ASCII map). -/
+def strUpper (s : String) : Res RVal :=
+  if strAscii s then
+    .ok (.str (String.ofList (s.toList.map Char.toUpper)))
+  else .unsupported
+    "upper() on a non-ASCII string is outside the tier (Unicode case tables; docs/memory-model.md §string semantics)"
+
 /-- First index where `needle` occurs in `hay` (code-point equality;
 `"".index("")` is 0, as in CPython). Structural (kernel-reducible). -/
 def strFindAux (hay needle : List Char) : Option Nat :=
@@ -720,15 +852,6 @@ frozen VALUE workers (the section comment): concrete proofs rewrite it
 through a single kernel-checked `rfl` fact. -/
 def strContains (s sub : String) : Bool :=
   (strFindAux s.toList sub.toList).isSome
-
-/-- The elements a `for` loop sees when iterating a str: one 1-character
-str per CODE POINT, in order. CPython's `str_iterator` is an index cursor
-over an IMMUTABLE object, so this snapshot IS the live semantics — no
-mutation, growth, or shrinkage is expressible (unlike `execForList`'s
-live list cursor, which is why that one re-reads the heap per step).
-A frozen VALUE worker like `strSlice`. -/
-def strCharVals (s : String) : List RVal :=
-  s.toList.map (fun c => .str (String.ofList [c]))
 
 /-- Adjust one PRESENT slice bound for a sequence of length `len`
 (CPython `PySlice_AdjustIndices`): negative indices count from the end;
@@ -826,7 +949,7 @@ refuses loudly — never a fake `AttributeError`: CPython's str carries
 ~45 real methods (`upper`/`split`/`join`/…) plus the dunder protocol,
 and guessing which names exist would be silently wrong. -/
 inductive StrPlan where
-  | swapcase | isupper | index
+  | swapcase | isupper | islower | upper | index
   | refuse (msg : String)
 deriving Repr, Inhabited, BEq
 
@@ -834,9 +957,11 @@ deriving Repr, Inhabited, BEq
 def strCallPlan (attr : String) : StrPlan :=
   if attr == "swapcase" then .swapcase
   else if attr == "isupper" then .isupper
+  else if attr == "islower" then .islower
+  else if attr == "upper" then .upper
   else if attr == "index" then .index
   else .refuse
-    s!"method call '.{attr}' on a str is outside the tier ('swapcase'/'isupper'/'index' only; docs/memory-model.md §string semantics)"
+    s!"method call '.{attr}' on a str is outside the tier ('swapcase'/'isupper'/'islower'/'upper'/'index' only; docs/memory-model.md §string semantics)"
 
 /-! ## The dict tier (H1-proper, docs/memory-model.md)
 
@@ -1351,21 +1476,24 @@ def indexValH (h : Heap) (container index : RVal) : Res RVal :=
   | .str _, .ref b => .exn (.typeError s!"string indices must be integers, not {RVal.typeNameH h (.ref b)}")
   | c, i => indexVal c i
 
-/-- `sorted(v)` over the heap (H2): a heap-list argument reads its
-elements (all-int tier, exactly as the pure `sortedVal`) and ALLOCATES
-the fresh result list — `sorted` always returns a NEW list. Non-ref
-values decide as the pure `sortedVal` (heap unchanged). `sorted` over a
-dict iterates its KEYS in CPython — loud (live dict iteration is out of
-the inventory). -/
-def sortedValH (h : Heap) : RVal → Res (Heap × RVal)
+/-- `sorted(v)` over the heap (H2/H6): a heap-list argument reads its
+elements and ALLOCATES the fresh result list — `sorted` always returns a
+NEW list; all-int ascending keeps the original `sortInts` term, the rest
+sorts stably by `rvalLt` (`sortByLt`). Non-ref values decide as the pure
+`sortedVal` (heap unchanged). `sorted` over a dict iterates its KEYS in
+CPython — loud (live dict iteration). A GENERATOR argument never reaches
+here: the dispatch arm drains it through `drainIter` first (the guard
+below is the loud hand-built-module defense). -/
+def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
+ := match v with
   | .ref a =>
     match Heap.get? h a with
     | some (.list xs) =>
-      match asIntList xs.toList with
-      | some ns =>
+      (match (if desc then Option.none else asIntList xs.toList) with
+       | some ns =>
           .ok (h.push (.list (((sortInts ns).map RVal.int).toArray)), .ref h.size)
-      | Option.none =>
-          .unsupported "sorted() on a list with non-int elements is outside the v0 tier"
+       | Option.none => do
+          return (h.push (.list (← sortByLt desc xs.toList).toArray), .ref h.size))
     | some (.dict _ _) =>
         .unsupported "sorted() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
     | some (.instance _ _) =>
@@ -1373,7 +1501,7 @@ def sortedValH (h : Heap) : RVal → Res (Heap × RVal)
     | some (.generator ..) =>
         .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
     | Option.none => .unsupported danglingMsg
-  | v => do let r ← sortedVal v; return (h, r)
+  | v => do let r ← sortedVal v desc; return (h, r)
 
 /-- `max`/`min` over the heap (H2): a single heap-list argument reads its
 elements (all-int tier); `max`/`min` over a dict ranges over its KEYS in
@@ -1391,7 +1519,7 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
            | some [] =>
                .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
            | Option.none =>
-               .unsupported s!"{if isMax then "max" else "min"}() over non-int elements is outside the v0 tier")
+               extremumOf isMax (if isMax then "max" else "min") xs.toList)
         | some (.dict _ _) =>
             .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
         | some (.instance _ _) =>
@@ -1401,6 +1529,28 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
+
+/-- Is the value a ref to a live generator object? (H6 draining
+consumers — the dispatch arms fork on this BEFORE the pure heap
+workers, because draining needs the stepper.) -/
+def isGeneratorRef (h : Heap) : RVal → Bool
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.generator ..) => true
+    | _ => false
+  | _ => false
+
+/-- Short-circuit truthiness scan for `any`/`all` over a SNAPSHOT (value
+sequences and heap lists): stop at the first truthy (`any`,
+`isAll = false`) or falsy (`all`) element. No user code can run
+mid-scan in tier, so the snapshot IS the live semantics; generators
+never come here — they step through `anyAllIter`, which is what makes
+the partial drain observable. -/
+def anyAllScan (h : Heap) (isAll : Bool) : List RVal → Res Bool
+  | [] => .ok isAll
+  | v :: vs => do
+    let b ← truthyH h v
+    if b != isAll then .ok b else anyAllScan h isAll vs
 
 /-- The names of an unpacking target's elements; `none` if any element is not
 a plain `Name` (nested or starred patterns are outside the v0 tier). -/
@@ -2401,7 +2551,8 @@ mutual
     -- (docs/memory-model.md §call-site keyword arguments).
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
-        && (id != "count") && Expr.heapFreeList args.toList
+        && (id != "count") && (id != "any") && (id != "all")
+        && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
     | .call f args kwargs _ _ =>
@@ -2822,19 +2973,99 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- the builtin, exactly as CPython's module globals do. H2:
                     -- `sorted` of a heap list ALLOCATES its fresh result
                     -- (`sortedValH`); value arguments stay on the pure path.
+                    -- H6: a GENERATOR argument drains through `drainIter`
+                    -- (`sorted` is outside `heapFree`, so worldInv never
+                    -- sees this arm).
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
                     | [v] =>
-                      Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
-                      match hr with
-                      | (h', r) => .ok { st with world := { st.world with heap := h' } } r
+                      (match v with
+                       | .ref a =>
+                         (match Heap.get? st.world.heap a with
+                          | some (.generator ..) =>
+                            Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                            Run.liftRes st (sortByLt false vals) ⤳ fun st sorted_ =>
+                            .ok { st with world :=
+                                    { st.world with heap := st.world.heap.push (.list sorted_.toArray) } }
+                              (.ref st.world.heap.size)
+                          | _ =>
+                            Run.liftRes st (sortedValH st.world.heap (.ref a)) ⤳ fun st hr =>
+                            match hr with
+                            | (h', r) => .ok { st with world := { st.world with heap := h' } } r)
+                       | v =>
+                         Run.liftRes st (sortedValH st.world.heap v) ⤳ fun st hr =>
+                         match hr with
+                         | (h', r) => .ok { st with world := { st.world with heap := h' } } r)
                     | _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")
                   else if fname == "max" then
+                    -- H6: a single GENERATOR argument drains — GUARDED on
+                    -- the module owning generator defs (`moduleGenFree`
+                    -- modules keep the loud refusal: `max` stays in the
+                    -- `heapFree` fragment, and worldInv's argument kills
+                    -- this branch through the guard)
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    Run.liftRes st (extremumValH st.world.heap true vs)
+                    (match vs with
+                     | [.ref a] =>
+                       (match Heap.get? st.world.heap a with
+                        | some (.generator ..) =>
+                          if moduleGenFree m then
+                            .unsupported "max() over a generator DRAINS it (a stateful read) — outside the tier"
+                          else
+                            Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                            Run.liftRes st (extremumVal true [.listV vals.toArray])
+                        | _ => Run.liftRes st (extremumValH st.world.heap true [.ref a]))
+                     | vs => Run.liftRes st (extremumValH st.world.heap true vs))
                   else if fname == "min" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    Run.liftRes st (extremumValH st.world.heap false vs)
+                    (match vs with
+                     | [.ref a] =>
+                       (match Heap.get? st.world.heap a with
+                        | some (.generator ..) =>
+                          if moduleGenFree m then
+                            .unsupported "min() over a generator DRAINS it (a stateful read) — outside the tier"
+                          else
+                            Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                            Run.liftRes st (extremumVal false [.listV vals.toArray])
+                        | _ => Run.liftRes st (extremumValH st.world.heap false [.ref a]))
+                     | vs => Run.liftRes st (extremumValH st.world.heap false vs))
+                  else if fname == "any" || fname == "all" then
+                    -- H6 draining consumers: value sequences and heap
+                    -- lists scan a snapshot (`anyAllScan`); a generator
+                    -- steps only until the answer DECIDES and stays
+                    -- suspended (`anyAllIter` — the partial drain is
+                    -- observable through a later `next`). Outside
+                    -- `heapFree` (an unguarded drain mutates the world).
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [v] =>
+                       (match v with
+                        | .str t =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (strCharVals t)))
+                        | .tuple xs =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
+                        | .ntuple _ _ xs =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
+                        | .listV xs =>
+                          Run.liftRes st
+                            (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
+                        | .ref a =>
+                          (match Heap.get? st.world.heap a with
+                           | some (.list xs) =>
+                             Run.liftRes st
+                               (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
+                           | some (.dict _ _) =>
+                             .unsupported s!"{fname}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           | some (.instance _ _) =>
+                             .exn st (.typeError "'object' object is not iterable")
+                           | some (.generator ..) =>
+                             Run.withLocals st.locals (anyAllIter m fuel st.world a (fname == "all")) ⤳ fun st b =>
+                             .ok st (.bool b)
+                           | Option.none => .unsupported danglingMsg)
+                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                     | vs => .exn st (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)"))
                   else if fname == "abs" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     match vs with
@@ -2971,6 +3202,16 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                match vs with
                | [] => Run.liftRes st (strIsUpper sv)
                | vs => .exn st (.typeError s!"isupper() takes no arguments ({vs.length} given)")
+             | .islower =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [] => Run.liftRes st (strIsLower sv)
+               | vs => .exn st (.typeError s!"islower() takes no arguments ({vs.length} given)")
+             | .upper =>
+               evalExprs m fuel st args.toList ⤳ fun st vs =>
+               match vs with
+               | [] => Run.liftRes st (strUpper sv)
+               | vs => .exn st (.typeError s!"upper() takes no arguments ({vs.length} given)")
              | .index =>
                evalExprs m fuel st args.toList ⤳ fun st vs =>
                match vs with
@@ -3039,7 +3280,45 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     else if (findNamedTuple m fname).isSome then
                       .unsupported s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
                     else if fname == "sorted" then
-                      .unsupported "sorted() keyword arguments (key=/reverse=) land with the H6 draining-consumer tier (docs/memory-model.md)"
+                      -- reverse= accepted (truthiness decides the
+                      -- direction); key= gates on FIRST-CLASS CALLABLE
+                      -- values — loud; any other keyword is CPython's
+                      -- faithful TypeError, raised AFTER the arguments
+                      -- evaluate (CPython's order)
+                      if kwargs.toList.any (·.1 == "key") then
+                        .unsupported "sorted(key=…) is outside the tier — the key callable is a first-class function value (bound methods are loud under H3; docs/backlog.md)"
+                      else
+                        (match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
+                         | some (k, _) =>
+                           evalExprs m fuel st args.toList ⤳ fun st _ =>
+                           evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
+                           .exn st (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
+                         | Option.none =>
+                           evalExprs m fuel st args.toList ⤳ fun st vs =>
+                           evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                           (match vs, kvs with
+                            | [v], [rv] =>
+                              Run.liftRes st (truthyH st.world.heap rv) ⤳ fun st desc =>
+                              (match v with
+                               | .ref a =>
+                                 (match Heap.get? st.world.heap a with
+                                  | some (.generator ..) =>
+                                    Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                                    Run.liftRes st (sortByLt desc vals) ⤳ fun st sorted_ =>
+                                    .ok { st with world :=
+                                            { st.world with heap := st.world.heap.push (.list sorted_.toArray) } }
+                                      (.ref st.world.heap.size)
+                                  | _ =>
+                                    Run.liftRes st (sortedValH st.world.heap (.ref a) desc) ⤳ fun st hr =>
+                                    match hr with
+                                    | (h', r) => .ok { st with world := { st.world with heap := h' } } r)
+                               | v =>
+                                 Run.liftRes st (sortedValH st.world.heap v desc) ⤳ fun st hr =>
+                                 match hr with
+                                 | (h', r) => .ok { st with world := { st.world with heap := h' } } r)
+                            | [_], _ =>
+                              .unsupported "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
+                            | vs, _ => .exn st (.typeError s!"sorted expected 1 argument, got {vs.length}")))
                     else if isBuiltinName fname then
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then
@@ -3730,6 +4009,44 @@ def execForGen (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
       | .next | .cont => execForGen m fuel st target a body
       | .brk => .ok st .next
       | .ret v => .ok st (.ret v)
+  termination_by structural fuel
+
+/-- Drain a generator to EXHAUSTION (H6 draining consumers,
+docs/memory-model.md §draining consumers): the yields, in order, for a
+full-drain consumer (`sorted`/`max`/`min`). One `stepIter` per element,
+so the body's effects interleave into the shared world exactly as lazy
+stepping does; the object ends `closed`. Fuel bounds the drain — an
+infinite generator is a loud timeout, exactly the divergence CPython
+would have. A frozen recursion point, like `stepIter`. -/
+def drainIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
+    Run World (List RVal) :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    stepIter m fuel w a ⤳ fun w r =>
+    match r with
+    | Option.none => .ok w []
+    | some v =>
+      drainIter m fuel w a ⤳ fun w vs => .ok w (v :: vs)
+  termination_by structural fuel
+
+/-- Short-circuit drain for `any`/`all` over a generator (H6): step until
+the first truthy (`any`) / falsy (`all`) element and STOP — the
+generator stays SUSPENDED and resumable, CPython's partial drain
+(pinned differentially by an effect-observing generator plus a
+post-call `next`). Exhaustion answers the identity (`all` → `true`,
+`any` → `false`). A frozen recursion point, like `stepIter`. -/
+def anyAllIter (m : Module) (fuel : Nat) (w : World) (a : Addr)
+    (isAll : Bool) : Run World Bool :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    stepIter m fuel w a ⤳ fun w r =>
+    match r with
+    | Option.none => .ok w isAll
+    | some v =>
+      Run.liftRes w (truthyH w.heap v) ⤳ fun w b =>
+      if b != isAll then .ok w b else anyAllIter m fuel w a isAll
   termination_by structural fuel
 
 end

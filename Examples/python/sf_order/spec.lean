@@ -1,0 +1,76 @@
+import LeanModels
+
+/-!
+# sf_order — sunfish's move-ordering surface, END TO END (H6)
+
+`Position.gen_moves` and `Position.value` are VERBATIM from the shipped
+sunfish.py; `pst` is the padded table (CPython's own output of the
+shipped padding loop — the module-init tier gap, worked around with the
+oracle's data, never with guessed semantics). `order_from` carries the
+shipped ordering line verbatim (sunfish.py line 412):
+
+    sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True)
+
+so this example is the H6 milestone's capstone: a generator expression
+lowered at ingestion, DRAINED by `sorted` through the H4 stepper,
+ordered by the shared `rvalLt` relation on `(value, Move)` pairs —
+namedtuple ties class-erased — descending and stable, exactly CPython's
+move ordering for `Searcher.bound`'s loop.
+
+Pinned here: the FULL ordered move list on a promotion-blocked board and
+an en-passant board, and the opening board's count/head/tail (the
+20-move list itself rides the differential battery). `value` facts pin
+the capture arm (`q.islower()`/`q.upper()`, the H6 str additions) and
+the en-passant bonus.
+
+No `proof.lean` yet: the reference-enumeration equality theorem for the
+ordering (the decided gen_moves statement, extended by `value`) is the
+next proof-layer step; these are its concrete anchors.
+-/
+
+open LeanModels LeanModels.Python
+
+load_program sf_order from "Examples/python/sf_order/sf_order.json"
+
+private def openingB : String :=
+  "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n"
+
+private def promoB : String :=
+  "         \n         \n .r.r....\n .P......\n ........\n ........\n ........\n ........\n ........\n K.......\n         \n         \n"
+
+private def epB : String :=
+  "         \n         \n ........\n ........\n ........\n pP......\n ........\n ........\n ........\n K.......\n         \n         \n"
+
+/-! ### the ordering, whole lists (CPython's answers, order included) -/
+
+#guard callFunction sf_order "move_order" #[.str promoB, .int 0, .int 0] 60000 ==
+  .ok (.list #[.tuple #[.int 13, .int 91, .int 92, .str ""],
+               .tuple #[.int (-14), .int 91, .int 82, .str ""],
+               .tuple #[.int (-21), .int 91, .int 81, .str ""]])
+#guard callFunction sf_order "move_order" #[.str epB, .int 42, .int 0] 60000 ==
+  .ok (.list #[.tuple #[.int 113, .int 52, .int 42, .str ""],
+               .tuple #[.int 13, .int 91, .int 92, .str ""],
+               .tuple #[.int (-14), .int 91, .int 82, .str ""],
+               .tuple #[.int (-21), .int 91, .int 81, .str ""]])
+
+/-! ### the opening board: 20 moves, d2d4 first, CPython's order -/
+
+#guard (match callFunction sf_order "move_order" #[.str openingB, .int 0, .int 0] 60000 with
+  | .ok (.list ms) =>
+      ms.size == 20 &&
+      ms[0]! == .tuple #[.int 46, .int 84, .int 64, .str ""] &&
+      ms[1]! == .tuple #[.int 42, .int 85, .int 65, .str ""] &&
+      ms[19]! == .tuple #[.int (-5), .int 82, .int 62, .str ""]
+  | _ => false)
+#py_check sf_order.best_move(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    0, 0) = (Val.tuple #[.int 46, .int 84, .int 64, .str ""])
+
+/-! ### value: the verbatim scorer (islower/upper capture arm, ep bonus) -/
+
+#py_check sf_order.value_of(
+    "         \n         \n rnbqkbnr\n pppppppp\n ........\n ........\n ........\n ........\n PPPPPPPP\n RNBQKBNR\n         \n         \n",
+    84, 64, "", 0, 0) = 46
+#py_check sf_order.value_of(
+    "         \n         \n ........\n ........\n ........\n pP......\n ........\n ........\n ........\n K.......\n         \n         \n",
+    52, 42, "", 42, 0) = 113

@@ -65,6 +65,9 @@ list of argument tuples. Real rows:
   `{"t":…,"v":…}` encoding — so list/tuple/str/bool/None arguments get real
   differential rows. Also state the concrete runs as `#py_check` lines in
   the spec file.
+- `fuel` (optional, per case) — raises the runner's default fuel (10000)
+  for that case's rows; deep drains (`sf_order.move_order` walks every
+  ray, scores every move, then sorts) need it.
 - `expect` — `"match"` (default): CPython and Lean canonical outcomes must
   be equal, exceptions included (compared by canonical class name —
   [reference, error classes](../reference.md#error-classes)).

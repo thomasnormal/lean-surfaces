@@ -22,9 +22,9 @@ The claims worth naming:
 * **The `rotate(nullmove=True)` shape works** — a keyword call on a
   namedtuple-subclass method (`method_kw`), `self` prepended before the
   merge.
-* **The loud frontier is pinned** — namedtuple keyword CONSTRUCTION,
-  builtin keywords, and `sorted(reverse=)` (which lands with the
-  draining tier) refuse loudly, never guess.
+* **The loud frontier is pinned** — namedtuple keyword CONSTRUCTION
+  and builtin keywords refuse loudly, never guess; `sorted(reverse=)`
+  is LIVE (the H6 draining tier).
 
 No `proof.lean`: checks-only, like `gen_lab`/`iter_lab`/`cls_lab`.
 -/
@@ -74,5 +74,5 @@ load_program kw_lab from "Examples/python/kw_lab/kw_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction kw_lab "builtin_kw" #[] 10000 with
   | .unsupported _ => true | _ => false)
-#guard (match callFunction kw_lab "sorted_kw" #[.int 5] 10000 with
-  | .unsupported _ => true | _ => false)
+#guard callFunction kw_lab "sorted_kw" #[.int 5] 10000 ==
+  .ok (.list #[.int 5, .int 3, .int 1])

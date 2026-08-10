@@ -79,7 +79,11 @@ load_program str_lab from "Examples/python/str_lab/str_lab.json"
 `unsupported` — deliberate): out-of-tier str methods are never a fake
 `AttributeError`; allocating slices and `index` bounds refuse. -/
 
-#guard callFunction str_lab "upper_is_loud" #[.str "abc"] 4096
+#py_check str_lab.upper_of("abc") = "ABC"
+#py_check str_lab.upper_of("nN1.") = "NN1."
+#py_check str_lab.lower_flag("pq") = true
+#py_check str_lab.lower_flag("pQ") = false
+#guard callFunction str_lab "upper_of" #[.str "é"] 4096
   matches .unsupported _
 #guard callFunction str_lab "list_slice_is_loud" #[] 4096
   matches .unsupported _

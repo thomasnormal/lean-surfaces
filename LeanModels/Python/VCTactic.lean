@@ -442,6 +442,12 @@ def interpUnfolds : List Name :=
    ``targetBindsG, ``targetBindsListG, ``benignImportBinds, ``isModuleDunder,
    ``resolvedG, ``resolvedGAux, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
    ``evalGlobalDictItems, ``globalFuel,
+   ``sumArgs, ``sumFold, ``rangeLen, ``rangeValsAux, ``rangeVals, ``rangeMake,
+   ``seqBudget, ``tupleRepeat, ``seqSlice, ``seqSliceElems,
+   ``g1DivGate, ``g1ExecCandidate, ``g1HeapPure, ``g1HeapPureList,
+   ``Stmt.defFree, ``Stmt.defFreeList, ``topLevelDefFree,
+   ``initFoldLive, ``initFoldStep, ``initExecStmt, ``initItemsLoop,
+   ``initBodyStmts, ``flushInitLocals, ``initBindable, ``initExecFuel,
    ``envInt]
 
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse

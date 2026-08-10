@@ -762,3 +762,48 @@ the in-file driver never sets `deadline`, so `raise Stop` and
 shipped deadline-less `bound()` is blocked by the module-init padding
 loop (`pst` poisoned), NOT by exceptions. `time.time()` remains
 deferred awaiting its own abstraction decision.
+
+## Pass 3 — module-init execution: the padding loop (2026-08-10/11)
+
+The blocker above is GONE. Design first
+(docs/memory-model.md §module-init execution, with as-built deltas),
+then three landings:
+
+1. **The mechanical value tiers** (function-level too, 828 differential
+   rows): tuple/namedtuple slices, tuple repetition, `sum(it[, start])`
+   (the fold IS `evalBinOp .add`), `tuple(it)`, and `range` as the
+   immediate `RVal.rangeV` — materialize-per-use under a FIXED budget
+   (fuel-independent refusals), which makes re-iteration exact.
+   `Examples/python/seq_lab` is the battery.
+2. **The live pipeline** (`initWorld` = `initFoldLive`): fold step on
+   the live state; fold-refused statements EXECUTE through the
+   interpreter under per-statement PREFIX VIEWS (sequential name
+   resolution — a future-binding read would be silently wrong; the
+   faithful import-time `NameError` falls out); the dict-items `for`
+   shell with CPython's size check (`RuntimeError` pinned by
+   `init_lab`'s hand-built `insLoop`, rollback leaving the table
+   poisoned); failed attempts roll back AND poison the live
+   accumulator. Resolution consults the live view from the
+   statically-POISONED and statically-ABSENT arms only — world-symbolic
+   theorems keep their static-first geometry, and pre-pass worlds are
+   bit-identical (a `resolvedG` globals cannot contain a marker). The
+   static fold gained the DIVERGED discipline (post-divergence bindings
+   survive only heap-pure + ref-free; the two heaps may differ);
+   `Module.heapFree` gained the `topLevelDefFree` conjunct and every
+   closure-call guard its second half. `g1_lab.read_m` FLIPPED from
+   refusal to CPython's value (the top-level `while` now executes).
+   `Examples/python/init_lab` is the acceptance battery.
+3. **The capstone on the shipped file**: the extractor structures
+   MODULE-scope single-target lambdas as zero-capture `NestedDef`s
+   (CPython symtable: a module lambda has NO freevars — the flagged H7
+   admission fork dissolved; its body reads `piece`/`k` through the
+   live globals at call time), the padding loop RUNS, the shipped `pst`
+   materializes (pinned against CPython's own padded values),
+   `K_MID`/`K_END` land, and `Position.value()` — refused since H5
+   because `pst` was poisoned — runs on the shipped file with CPython's
+   answers.
+
+Deliberately still out (recorded): `.items()` outside the init shell;
+top-level `if` bodies still gated by loud `__name__` (the
+import-semantics decision stands open); the fold's `.exn` arm still
+poisons-and-continues where CPython aborts the import.

@@ -544,8 +544,7 @@ theorem fuelMono (fuel : Nat) :
                       try dsimp only
                       refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
                         (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
-                          (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-                            (Run.le_refl _))))))
+                          (Run.le_ite (Run.le_refl _) (Run.le_refl _)))))
                       -- sorted with keywords (H6 draining tier): key= is
                       -- a fuel-free refusal; a stray keyword binds then
                       -- raises; reverse= binds, truthiness, then the
@@ -683,7 +682,28 @@ theorem fuelMono (fuel : Nat) :
                       cases v <;>
                         exact Run.le_bind (ihEs m st cargs.toList k hk) fun _ _ =>
                           Run.le_refl _
-                    | none => exact Run.le_refl _
+                    | none =>
+                      -- pass 3: the poisoned-arm live view — value/exn
+                      -- arms bind then decide; a closure ref recurses
+                      -- through `callClosure` (its own conjunct)
+                      cases Env.lookup st.world.globals fname with
+                      | none => exact Run.le_refl _
+                      | some v =>
+                        cases v <;>
+                          first
+                            | exact Run.le_bind (ihEs m st cargs.toList k hk)
+                                fun st _ => Run.le_refl _
+                            | skip
+                        case ref a =>
+                          refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          refine Run.le_ite (Run.le_refl _) ?_
+                          cases Heap.get? st.world.heap a with
+                          | none => exact Run.le_refl _
+                          | some obj =>
+                            cases obj <;> try exact Run.le_refl _
+                            case closure nm ps ao lo hg ig bd cap =>
+                              exact Run.le_withLocals
+                                (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
                   | none =>
                     -- findFunction (def/class collision → call) → class
                     -- instantiation (guards, args, `__init__` through
@@ -751,7 +771,7 @@ theorem fuelMono (fuel : Nat) :
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
                                           (Run.le_ite (hb _)                   -- chr
-                                           (Run.le_refl _))))))))))))))))
+                                           ?_)))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -942,6 +962,28 @@ theorem fuelMono (fuel : Nat) :
                                     fun st r => ?_
                                   cases r <;> exact Run.le_refl _
                                 | cons _ _ => exact Run.le_refl _
+                        -- the tail: print / module dunder (fuel-free),
+                        -- then the pass-3 absent-arm live view — the
+                        -- closure dispatch recurses through callClosure
+                        · refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                          cases Env.lookup st.world.globals fname with
+                          | none => exact Run.le_refl _
+                          | some v =>
+                            cases v <;>
+                              first
+                                | exact Run.le_bind (ihEs m st cargs.toList k hk)
+                                    fun st _ => Run.le_refl _
+                                | skip
+                            case ref a =>
+                              refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                              refine Run.le_ite (Run.le_refl _) ?_
+                              cases Heap.get? st.world.heap a with
+                              | none => exact Run.le_refl _
+                              | some obj =>
+                                cases obj <;> try exact Run.le_refl _
+                                case closure nm ps ao lo hg ig bd cap =>
+                                  exact Run.le_withLocals
+                                    (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
         | genExp elt tgt it ifs _ =>
           simp only [evalExpr]; exact Run.le_refl _
         | list elts _ =>
@@ -1853,12 +1895,20 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | some vv =>
             cases vv with
             | some v => exact .okF rfl _
-            | none => exact .unsupported
+            | none =>
+              -- pass 3: the poisoned-arm live view — a hit is a pure
+              -- world read, a miss the old refusal
+              cases Env.lookup st.world.globals id with
+              | some v => exact .okF rfl _
+              | none => exact .unsupported
           | none =>
             -- findFunction / findClass / findNamedTuple / isBuiltinName /
-            -- isModuleDunder / analysable → NameError
-            exact .ite .unsupported (.ite .unsupported (.ite .unsupported
-              (.ite .unsupported (.ite .unsupported (.ite .exn .unsupported)))))
+            -- isModuleDunder / the pass-3 live view / analysable → NameError
+            refine .ite .unsupported (.ite .unsupported (.ite .unsupported
+              (.ite .unsupported (.ite .unsupported ?_))))
+            cases Env.lookup st.world.globals id with
+            | some v => exact .okF rfl _
+            | none => exact .ite .exn .unsupported
       | binOp l op r _ =>
         simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         simp only [evalExpr]
@@ -1965,17 +2015,33 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 | exact .bind hargs fun st₁ _ h₁ => .exn
                 | skip
               case ref a =>
-                -- H7: hm's own function-body walk discharges the guard —
-                -- the closure call is unreachable in a heap-free module
+                -- H7 (+pass 3): hm's function-body walk AND top-level
+                -- def-freedom discharge the guard — the closure call is
+                -- unreachable in a heap-free module
                 refine .bind hargs fun st₁ vs h₁ => ?_
-                simp only [Module.heapFree_funs hm, eq_self_iff_true, if_true]
+                simp only [Module.heapFree_funs hm, Module.heapFree_topDefFree hm,
+                  Bool.and_self, eq_self_iff_true, if_true]
                 exact .exn
             | none =>
               cases lookupG (moduleGlobals m).1 fname with
               | some vv =>
                 cases vv with
                 | some v => cases v <;> exact .bind hargs fun st₁ _ h₁ => .exn
-                | none => exact .unsupported
+                | none =>
+                  -- pass 3: the poisoned-arm live view — the guard kills
+                  -- the closure dispatch in a heap-free module
+                  cases Env.lookup st.world.globals fname with
+                  | none => exact .unsupported
+                  | some v =>
+                    cases v <;>
+                      first
+                        | exact .bind hargs fun st₁ _ h₁ => .exn
+                        | skip
+                    case ref a =>
+                      refine .bind hargs fun st₁ vs h₁ => ?_
+                      simp only [Module.heapFree_funs hm, Module.heapFree_topDefFree hm,
+                        Bool.and_self, eq_self_iff_true, if_true]
+                      exact .exn
               | none =>
                 -- a heap-free module has no classes: the instantiation
                 -- branch reduces away; the def/namedtuple collision guard
@@ -2059,7 +2125,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite .unsupported
-                                      (.ite .unsupported (.ite .exn .unsupported))))))))
+                                      (.ite .unsupported ?_)))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>
@@ -2133,6 +2199,22 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             cases rest with
                             | nil => exact .liftResF h₁ _
                             | cons _ _ => exact .exn
+                        · -- the pass-3 absent-arm live view: the guard
+                          -- (funs + top-level def-freedom, both from hm)
+                          -- kills the closure dispatch
+                          cases Env.lookup st.world.globals fname with
+                          | none => exact .ite .exn .unsupported
+                          | some v =>
+                            cases v <;>
+                              first
+                                | exact .bind hargs fun st₁ _ h₁ => .exn
+                                | skip
+                            case ref a =>
+                              refine .bind hargs fun st₁ vs h₁ => ?_
+                              simp only [Module.heapFree_funs hm,
+                                Module.heapFree_topDefFree hm,
+                                Bool.and_self, eq_self_iff_true, if_true]
+                              exact .exn
       | genExp elt tgt it ifs _ =>
         -- H4: a genexp ALLOCATES a generator — outside the fragment
         simp [Expr.heapFree] at hfree

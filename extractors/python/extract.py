@@ -517,7 +517,16 @@ def _lambda_nested_def(node, enclosing):
     `return <expr>` as the single statement. Anything fancier (defaults
     beyond literals, *args, a nested scope inside the lambda) refuses
     through the same channels. Returns the NestedDef dict, or None when
-    the assign is not this shape."""
+    the assign is not this shape.
+
+    MODULE-scope flavor (pass 3, ``enclosing=None`` — the padding loop's
+    ``padrow = lambda row: …``): CPython's symtable gives a module-level
+    lambda ZERO freevars — every free name in its body is a GLOBAL, read
+    dynamically at call time — so the capture set is EMPTY by
+    construction and the never-rebound admission is vacuous (the body's
+    reads go through the live module globals at call time; docs/
+    memory-model.md §module-init execution). Only a genuinely nested
+    scope inside the lambda still refuses."""
     if not (isinstance(node, ast.Assign) and len(node.targets) == 1
             and isinstance(node.targets[0], ast.Name)
             and isinstance(node.value, ast.Lambda)):
@@ -543,7 +552,18 @@ def _lambda_nested_def(node, enclosing):
         reasons.append("keyword-only args")
     if a.kwarg is not None:
         reasons.append("**kwargs")
-    captures, refusal = _closure_analysis(lam, enclosing)
+    if enclosing is None:
+        scope_reasons = []
+        for n in ast.walk(lam):
+            if n is not lam and isinstance(
+                    n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda,
+                        ast.ClassDef)):
+                scope_reasons.append("a scope nested inside the nested def")
+                break
+        captures, refusal = [], ("; ".join(scope_reasons)
+                                 if scope_reasons else None)
+    else:
+        captures, refusal = _closure_analysis(lam, enclosing)
     out = {
         "kind": "NestedDef",
         "span": span(node),
@@ -559,7 +579,14 @@ def _lambda_nested_def(node, enclosing):
     return out
 
 
-def convert_stmt(node, enclosing=None):
+def convert_stmt(node, enclosing=None, module_scope=False):
+    # pass 3: a module-scope single-target `name = lambda …` assign (top
+    # level, or directly in a top-level for/while/if body) is the
+    # NestedDef shape with ZERO captures (module-scope flavor above)
+    if module_scope:
+        nd = _lambda_nested_def(node, None)
+        if nd is not None:
+            return nd
     if isinstance(node, ast.FunctionDef):
         a = node.args
         plain = list(a.posonlyargs) + list(a.args)
@@ -707,8 +734,8 @@ def convert_stmt(node, enclosing=None):
             "kind": "While",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": [convert_stmt(s) for s in node.body],
-            "orelse": [convert_stmt(s) for s in node.orelse],
+            "body": [convert_stmt(s, module_scope=module_scope) for s in node.body],
+            "orelse": [convert_stmt(s, module_scope=module_scope) for s in node.orelse],
         }
 
     if isinstance(node, ast.For):
@@ -719,8 +746,10 @@ def convert_stmt(node, enclosing=None):
             "span": span(node),
             "target": convert_expr(node.target),
             "iter": convert_expr(node.iter),
-            "body": [convert_stmt(s) for s in node.body],
-            "orelse": [convert_stmt(s) for s in node.orelse],
+            "body": [convert_stmt(s, module_scope=module_scope)
+                     for s in node.body],
+            "orelse": [convert_stmt(s, module_scope=module_scope)
+                       for s in node.orelse],
         }
 
     if isinstance(node, ast.If):
@@ -728,8 +757,8 @@ def convert_stmt(node, enclosing=None):
             "kind": "If",
             "span": span(node),
             "test": convert_expr(node.test),
-            "body": [convert_stmt(s) for s in node.body],
-            "orelse": [convert_stmt(s) for s in node.orelse],
+            "body": [convert_stmt(s, module_scope=module_scope) for s in node.body],
+            "orelse": [convert_stmt(s, module_scope=module_scope) for s in node.orelse],
         }
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.Yield):
@@ -939,7 +968,9 @@ def process_file(source_path, companion_dir):
         "frontend": {"name": FRONTEND["name"], "version": FRONTEND["version"]},
         "source_file": source_rel,
         "source_sha256": source_sha256,
-        "module": {"kind": "Module", "body": [convert_stmt(s) for s in tree.body]},
+        "module": {"kind": "Module",
+                   "body": [convert_stmt(s, module_scope=True)
+                            for s in tree.body]},
         "lean_blocks": blocks,
     }
 

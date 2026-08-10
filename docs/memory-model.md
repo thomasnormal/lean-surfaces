@@ -1302,14 +1302,59 @@ each construct differential, refusals loud):
   hashable in CPython — never a fake unhashable `TypeError`), the
   boundary loud, `next()` the faithful `not an iterator` `TypeError`.
 
-**What stays out, loudly:** top-level `if`/`while` in the exec tier
-(the `__main__` guard must stay unexecuted until the recorded
-import-semantics decision — `__name__` is loud, so the attempt refuses
-and rolls back, which is exactly right); `.items()` outside the init
-shell; `dict.keys/.values`; the call-mutation gap where an attempt was
-REFUSED (rollback restores the un-mutated heap — the old syntactic gap,
+**What stays out, loudly:** `.items()` outside the init shell;
+`dict.keys/.values`; the call-mutation gap where an attempt was REFUSED
+(rollback restores the un-mutated heap — the old syntactic gap,
 unchanged); executed calls CLOSE the gap for their own effects (the
-mutation is real in the live heap).
+mutation is real in the live heap). Top-level `if`/`while` ARE
+attempted (a `while` executes — `g1_lab.read_m` flipped from refusal to
+CPython's value); the `__main__` guard still never runs its body:
+`__name__` is loud, so the attempt refuses and rolls back, which is
+exactly right until the recorded import-semantics decision.
+
+**As built (2026-08-10/11), the deltas the implementation forced:**
+
+* **Per-statement PREFIX VIEWS.** The executor cannot thread `m` itself:
+  `evalExpr` resolves globals against the FULL static table, so an
+  executed statement could read a binding made by a LATER statement — a
+  FUTURE value, silently wrong (`X = Y + 1` before `Y = 5` must be
+  CPython's import-time `NameError`). `initFoldLive` therefore threads
+  `{ m with topLevel := done }` — the statements already processed — so
+  static resolution is sequential-correct, and the ABSENT arm (not just
+  the poisoned one) consults the live view before the `NameError`
+  decision: the running suffix's own bindings are statically absent
+  under a prefix view. Post-init both arms are equally correct (the
+  live view carries every binding, valued identically).
+* **Failed attempts poison the LIVE accumulator too** (`globalsDirty`
+  on the live side): rollback alone would let the poisoned-arm consult
+  resurface the PRE-statement value of a name the failed statement
+  rebinds — the marker keeps stale reads impossible on both views.
+* **The dirty-name pass gained the DIVERGED flag** (4th component of
+  `moduleInit`): set at the first exec-attempted statement
+  (`g1ExecCandidate` — def/for/if/while/augAssign/bare-call statements
+  and fold-REFUSED assigns; `.unsupported` statements are NOT
+  candidates, `execStmt` refuses them, so imports never diverge).
+* **`Module.heapFree` gained a FOURTH conjunct, `topLevelDefFree`**,
+  and every closure-call arm's guard is now
+  `funsHeapFree … && topLevelDefFree m`: module init can bind closures
+  into the live view, so a call of a statically-poisoned/absent name
+  can dispatch `callClosure` — the fragment must exclude modules whose
+  TOP LEVEL creates closures, or `worldInv` would meet arbitrary code.
+  (Also the guard fix that makes `init_lab.call_pad` — a module lambda
+  called from a function body, post-init — dispatch rather than
+  misfire into the not-callable `TypeError`.)
+* **Executed statements may not rebind builtins or def/class/namedtuple
+  names** (`initBindable`, checked at flush): those resolution arms
+  fire BEFORE the live view, so a live shadow would be silently
+  ignored. Loud, attempt rolls back.
+* **A keyword call of a live binding is loud** (the kwargs tail
+  consults the live view only to REFUSE): closure keywords were already
+  out of tier, and the alternative was a fake `NameError`.
+* **The fold's `.exn` arm stays imprecise as before** (poison and
+  continue, where CPython aborts the import) — now recorded; the items
+  shell's `RuntimeError` on insertion IS faithful and pinned
+  (`init_lab`'s hand-built `insLoop`), with rollback leaving the table
+  poisoned, never half-mutated.
 
 ## Staging (amended)
 

@@ -194,7 +194,12 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
       [`Lean.Parser.Tactic.simpStar, `Lean.Parser.Tactic.simpErase,
        `Lean.Parser.Tactic.simpLemma] "," := ⟨args.elemsAndSeps⟩
   `(tactic| set_option linter.unusedSimpArgs false in
-      simp [execStmts, execStmt, evalExpr, evalExprs, evalBoolChain,
+      -- pass 3: the call-arm equations grew (the builtin trio + the
+      -- live-view consults), so one frame of the 955KB shipped module
+      -- needs more than simp's default 100k steps — budget only, no
+      -- semantic change
+      simp (config := { maxSteps := 1000000 })
+           [execStmts, execStmt, evalExpr, evalExprs, evalBoolChain,
             evalCompareChain, evalDictItems, findFunction, mkCallEnv, arityOk,
             defaultBindings, Env.lookup, Env.set,
             Const.toVal, Const.toRVal, truthy, truthyH, asInt, RVal.isNone,
@@ -228,6 +233,12 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             targetBindsG, targetBindsListG, benignImportBinds, isModuleDunder,
             resolvedG, resolvedGAux, targetNamesG, evalGlobalExpr, evalGlobalExprs,
             evalGlobalDictItems, globalFuel,
+            sumArgs, sumFold, rangeLen, rangeValsAux, rangeVals, rangeMake,
+            seqBudget, tupleRepeat, seqSlice, seqSliceElems,
+            g1DivGate, g1ExecCandidate, g1HeapPure, g1HeapPureList,
+            Stmt.defFree, Stmt.defFreeList, topLevelDefFree,
+            initFoldLive, initFoldStep, initExecStmt, initItemsLoop,
+            initBodyStmts, flushInitLocals, initBindable, initExecFuel,
             callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
             RVal.freeze, RVal.freezeList, RVal.freezeB, RVal.freezeListB,
             and_assoc, $extra,*] $(loc)?)

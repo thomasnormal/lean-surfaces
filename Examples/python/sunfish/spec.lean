@@ -183,10 +183,15 @@ never a fake `NameError`); `count` absent, resolving to the model's
 `itertools.count`; `piece`/`pst` valued, then the
 `for k, table in pst.items()` loop poisoning `pst` (twice — one per
 subscript store), `padrow`, `table`, `k`, so `K_MID = pst["K"]` stays
-correctly poisoned; and `A1/H1/A8/H8`, `initial`, `N/E/S/W`,
-`directions`, `MATE_LOWER/MATE_UPPER` and the search constants all
-resolving. `opt_ranges` (a keyword call) and `hist` (a constructor call)
-are out-of-tier right-hand sides. Reverse order = source order. -/
+statically poisoned; `A1/H1/A8/H8`, `initial`, `N/E/S/W` and the search
+constants resolve STATICALLY (heap-pure literals survive the pass-3
+DIVERGED discipline); `directions` (a dict display — a ref) and
+`MATE_LOWER/MATE_UPPER` (heap reads of `piece`) sit AFTER the first
+exec-attempted statement (the padding loop, line 79), so pass 3 moves
+them to the LIVE VIEW — statically poisoned here, valued in
+`initWorld`'s globals below, same values, one heap. `opt_ranges` (a
+keyword call) and `hist` (a constructor call) are out-of-tier right-hand
+sides. Reverse order = source order. -/
 
 #guard ((moduleGlobals sunfish).1.map (fun p => (p.1, p.2.isSome))).reverse ==
   [("time", false), ("__version__", true), ("version", true),
@@ -195,9 +200,19 @@ are out-of-tier right-hand sides. Reverse order = source order. -/
    ("K_MID", false), ("K_END", false),
    ("A1", true), ("H1", true), ("A8", true), ("H8", true),
    ("initial", true), ("N", true), ("E", true), ("S", true), ("W", true),
-   ("directions", true), ("MATE_LOWER", true), ("MATE_UPPER", true),
+   ("directions", false), ("MATE_LOWER", false), ("MATE_UPPER", false),
    ("QS", true), ("QS_A", true), ("EVAL_ROUGHNESS", true),
    ("TABLE_SIZE", true), ("opt_ranges", false), ("hist", false)]
+
+/-! The live view serves what the static table ceded (same values — the
+fold step runs on the live state, so `directions` is the same dict shape
+at a live address and the MATE window the same ints). -/
+
+#guard (Env.lookup (initWorld sunfish).globals "MATE_LOWER") ==
+  some (RVal.int 47923)
+#guard (Env.lookup (initWorld sunfish).globals "MATE_UPPER") ==
+  some (RVal.int 69290)
+#guard (Env.lookup (initWorld sunfish).globals "directions").isSome
 
 /-! Every top-level statement's binding set was determined, so a missing
 module name is the faithful `NameError` — the second, independent half of

@@ -2465,6 +2465,53 @@ mutual
       | _, _ => Option.none
 end
 
+/-- Statements the init pipeline will ATTEMPT to EXECUTE when the pure
+fold refuses them (pass 3, docs/memory-model.md §module-init execution).
+The static fold marks DIVERGENCE at the first such statement: a
+successful attempt commits allocations the pure fold never sees, so
+later static ref bindings would carry addresses into the wrong heap.
+`.unsupported` statements (imports …) are NOT candidates — `execStmt`
+refuses them and the attempt rolls back, so no divergence is possible.
+A refused ASSIGN is also a candidate; its trigger is dynamic (the fold's
+own refusal), handled in `globalsStep`'s assign arm. -/
+def g1ExecCandidate : Stmt → Bool
+  | .defStmt .. => true
+  | .forStmt .. => true
+  | .ifStmt .. => true
+  | .whileLoop .. => true
+  | .augAssign .. => true
+  | .exprStmt (.constant ..) _ => false
+  | .exprStmt .. => true
+  | _ => false
+
+mutual
+  /-- Is this RHS HEAP-PURE against the accumulator: constants,
+  statically-clean names whose values are REF-FREE, and operators over
+  those — no subscript, attribute, call, display, slice. Post-divergence
+  the static fold values a binding only under this predicate: a ref
+  result would carry a fold-heap address into the (different) live heap,
+  and a heap-READING scalar could contradict a live mutation the
+  syntactic store scan missed. -/
+  def g1HeapPure (acc : GlobalsAcc) : Expr → Bool
+    | .constant .. => true
+    | .name id _ =>
+      (match lookupG acc id with
+       | some (some v) => RVal.refFree v
+       | _ => false)
+    | .binOp l _ r _ => g1HeapPure acc l && g1HeapPure acc r
+    | .unaryOp _ e _ => g1HeapPure acc e
+    | .boolOp _ vs _ => g1HeapPureList acc vs.toList
+    | .compare l _ cs _ => g1HeapPure acc l && g1HeapPureList acc cs.toList
+    | .ifExp t b o _ => g1HeapPure acc t && g1HeapPure acc b && g1HeapPure acc o
+    | .tuple es _ => g1HeapPureList acc es.toList
+    | _ => false
+
+  /-- Elementwise `g1HeapPure`. -/
+  def g1HeapPureList (acc : GlobalsAcc) : List Expr → Bool
+    | [] => true
+    | e :: es => g1HeapPure acc e && g1HeapPureList acc es
+end
+
 /-- Everything an out-of-tier top-level statement may have changed;
 `none` = unknown (it poisons the whole accumulator). -/
 def Stmt.g1Dirty (s : Stmt) : Option (List String) :=
@@ -2486,59 +2533,85 @@ def globalsDirty (h : Heap) (acc : GlobalsAcc) (analysable : Bool)
   | some ns => (h, ns.map (fun n => (n, (Option.none : Option RVal))) ++ acc, analysable)
   | Option.none => (h, acc.map (fun p => (p.1, (Option.none : Option RVal))), false)
 
+/-- Post-divergence binding gate (pass 3): value the binding only when
+the RHS was heap-pure AND every bound value is ref-free — else poison
+(the live view serves the read). Pre-divergence this is the identity. -/
+def g1DivGate (diverged : Bool) (acc : GlobalsAcc) (rhs : Expr)
+    (bs : List (String × Option RVal)) : List (String × Option RVal) :=
+  if !diverged then bs
+  else if g1HeapPure acc rhs
+      && bs.all (fun b => (b.2.map RVal.refFree).getD true) then bs
+  else bs.map (fun b => (b.1, (Option.none : Option RVal)))
+
 /-- One module-level statement's effect on the init heap and the globals.
 `(h, acc, analysable)`: `analysable = false` once a statement's binding
 set could not be determined. A failed RHS binds its names out-of-tier AND
 discards its partial allocations (the original heap rides through — no
 refs escape a refusal); everything out of tier goes to `globalsDirty`. -/
-def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable : Bool)
-    (s : Stmt) : Heap × GlobalsAcc × Bool :=
+def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable diverged : Bool)
+    (s : Stmt) : Heap × GlobalsAcc × Bool × Bool :=
   match s with
   | .assign tgts rhs _ =>
     match tgts.toList with
     | [.name id _] =>
       match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
-      | .ok (h', v) => (h', (id, some v) :: acc, analysable)
-      | _ => (h, (id, Option.none) :: acc, analysable)
+      | .ok (h', v) =>
+        (h', g1DivGate diverged acc rhs [(id, some v)] ++ acc, analysable, diverged)
+      | .exn _ => (h, (id, Option.none) :: acc, analysable, diverged)
+      | _ =>
+        -- fold refusal: the init pipeline will ATTEMPT this assign, so
+        -- the heaps may diverge from here on
+        (h, (id, Option.none) :: acc, analysable, true)
     | [.tuple es _] =>
       match targetNamesG es.toList with
       | some ids =>
         match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
         | .ok (h', .tuple vs) =>
           if ids.length == vs.size then
-            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, analysable)
-          else (h, ids.map (·, Option.none) ++ acc, analysable)
+            (h', g1DivGate diverged acc rhs
+              ((ids.zip (vs.toList.map some)).reverse) ++ acc, analysable, diverged)
+          else (h, ids.map (·, Option.none) ++ acc, analysable, diverged)
         | .ok (h', .listV vs) =>
           if ids.length == vs.size then
-            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, analysable)
-          else (h, ids.map (·, Option.none) ++ acc, analysable)
-        | _ => (h, ids.map (·, Option.none) ++ acc, analysable)
-      | Option.none => globalsDirty h acc analysable s
-    | _ => globalsDirty h acc analysable s
-  | .pass _ => (h, acc, analysable)
+            (h', g1DivGate diverged acc rhs
+              ((ids.zip (vs.toList.map some)).reverse) ++ acc, analysable, diverged)
+          else (h, ids.map (·, Option.none) ++ acc, analysable, diverged)
+        | .exn _ => (h, ids.map (·, Option.none) ++ acc, analysable, diverged)
+        | _ => (h, ids.map (·, Option.none) ++ acc, analysable, true)
+      | Option.none =>
+        match globalsDirty h acc analysable s with
+        | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
+    | _ =>
+      match globalsDirty h acc analysable s with
+      | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
+  | .pass _ => (h, acc, analysable, diverged)
   -- a bare expression binds nothing; `globalsDirty` records that it can
   -- still STORE (and the recorded call-mutation gap in the section
   -- comment above)
-  | s => globalsDirty h acc analysable s
+  | s =>
+    match globalsDirty h acc analysable s with
+    | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
 
 /-- Fold `globalsStep` over the top-level statements (source order). -/
-def globalsFold (h : Heap) (acc : GlobalsAcc) (analysable : Bool) :
-    List Stmt → Heap × GlobalsAcc × Bool
-  | [] => (h, acc, analysable)
+def globalsFold (h : Heap) (acc : GlobalsAcc) (analysable diverged : Bool) :
+    List Stmt → Heap × GlobalsAcc × Bool × Bool
+  | [] => (h, acc, analysable, diverged)
   | s :: rest =>
-    match globalsStep h acc analysable s with
-    | (h', acc', analysable') => globalsFold h' acc' analysable' rest
+    match globalsStep h acc analysable diverged s with
+    | (h', acc', analysable', diverged') =>
+      globalsFold h' acc' analysable' diverged' rest
 
-/-- The whole module-init result: the init heap, the accumulator, and the
-ANALYSABLE flag — a pure function of the module (fixed `globalFuel`). -/
-def moduleInit (m : Module) : Heap × GlobalsAcc × Bool :=
-  globalsFold #[] [] true m.topLevel.toList
+/-- The whole module-init result: the init heap, the accumulator, the
+ANALYSABLE flag and the DIVERGED flag — a pure function of the module
+(fixed `globalFuel`). -/
+def moduleInit (m : Module) : Heap × GlobalsAcc × Bool × Bool :=
+  globalsFold #[] [] true false m.topLevel.toList
 
 /-- The module's constant globals: `(bindings, analysable)` — the static
 name-resolution table (see the section comment for why static reads are
 faithful, and for what the two independent facts mean). -/
 def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
-  (moduleInit m).2
+  ((moduleInit m).2.1, (moduleInit m).2.2.1)
 
 /-- Does a call supplying `n` positional arguments fit `params`? Python's
 rule with defaults (F1): at most one argument per parameter, and every
@@ -2911,31 +2984,65 @@ a silent wrong answer. -/
 def moduleGenFree (m : Module) : Bool :=
   !funsAnyGen m.functions.toList
 
+mutual
+  /-- No nested `def` (closure creation) anywhere in the statement —
+  pass 3: the live-view call guard's second conjunct (a module whose TOP
+  LEVEL creates closures can dispatch them through `World.globals`, so
+  the heap-free fragment must exclude it). -/
+  def Stmt.defFree : Stmt → Bool
+    | .defStmt .. => false
+    | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      Stmt.defFreeList b.toList && Stmt.defFreeList o.toList
+    | .forStmt _ _ b o _ =>
+      Stmt.defFreeList b.toList && Stmt.defFreeList o.toList
+    | _ => true
+
+  /-- Elementwise `Stmt.defFree`. -/
+  def Stmt.defFreeList : List Stmt → Bool
+    | [] => true
+    | s :: ss => Stmt.defFree s && Stmt.defFreeList ss
+end
+
+/-- No module-level closure can ever be created (pass 3): the top level
+contains no nested def. With `funsHeapFree` this guards every closure
+CALL arm — worldInv's argument kills the dispatch through the fragment. -/
+def topLevelDefFree (m : Module) : Bool :=
+  Stmt.defFreeList m.topLevel.toList
+
 /-- Module-level heap freedom: every function body (nested calls then stay
 inside the fragment), no classes (H3: instantiation ALLOCATES and
 syntax cannot tell a class call from a function call, so any class evicts
 the whole module from the fragment — conservative, sound; class-using
-modules live on `CallsIn`), and no GENERATOR defs (H4: the same argument —
-`gen_moves()` allocates a suspended frame). Top-level statements are NOT
-constrained — they run only at module init, before any public run begins. -/
+modules live on `CallsIn`), no GENERATOR defs (H4: the same argument —
+`gen_moves()` allocates a suspended frame), and — pass 3 — a top level
+with no nested defs (module init would otherwise create closures the
+live-view call arms can dispatch). Other top-level statements stay
+unconstrained — they run only at module init, before any public run
+begins. -/
 def Module.heapFree (m : Module) : Bool :=
   funsHeapFree m.functions.toList && m.classes.toList.isEmpty && moduleGenFree m
+    && topLevelDefFree m
 
 /-- The three conjuncts of `Module.heapFree`, projected (H4 made it a
 three-way `&&`, so the `Bool.and_eq_true ▸` idiom no longer lines up
 positionally — these are the names to cite instead). -/
 theorem Module.heapFree_funs {m : Module} (hm : m.heapFree = true) :
     funsHeapFree m.functions.toList = true := by
-  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.1
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.1.1
 
 @[inherit_doc Module.heapFree_funs]
 theorem Module.heapFree_classes {m : Module} (hm : m.heapFree = true) :
     m.classes.toList.isEmpty = true := by
-  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.2
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.1.2
 
 @[inherit_doc Module.heapFree_funs]
 theorem Module.heapFree_genFree {m : Module} (hm : m.heapFree = true) :
     moduleGenFree m = true := by
+  simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.2
+
+@[inherit_doc Module.heapFree_funs]
+theorem Module.heapFree_topDefFree {m : Module} (hm : m.heapFree = true) :
+    topLevelDefFree m = true := by
   simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.2
 
 /-- A member of a heap-free function list is heap-free. -/
@@ -3097,7 +3204,15 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         match lookupG (moduleGlobals m).1 id with
         | some (some v) => .ok st v
         | some Option.none =>
-          .unsupported s!"module-level value of '{id}' is outside the G1 tier"
+          -- pass 3: a statically-POISONED name consults the LIVE view
+          -- (World.globals) before refusing — sound because the dirty
+          -- pass poisons exactly what init execution touches, and
+          -- bit-identical on pre-pass worlds (a `resolvedG` globals
+          -- cannot contain a poisoned name, so the lookup misses)
+          (match Env.lookup st.world.globals id with
+           | some v => .ok st v
+           | Option.none =>
+             .unsupported s!"module-level value of '{id}' is outside the G1 tier")
         | Option.none =>
           if (findFunction m id).isSome then
             .unsupported s!"referencing function '{id}' as a value is outside the v0 tier"
@@ -3109,10 +3224,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
           else if isModuleDunder id then
             .unsupported s!"module attribute '{id}' is bound by the import machinery, not by a statement — outside the G1 tier"
-          else if (moduleGlobals m).2 then
-            .exn st (.nameError id)
           else
-            .unsupported s!"name '{id}' may be bound by an out-of-tier module-level statement"
+            -- pass 3: during init execution the threaded module is the
+            -- per-statement PREFIX VIEW, so names the running suffix has
+            -- bound are statically ABSENT — the live view is consulted
+            -- before the NameError decision (post-init it carries every
+            -- binding, so the arm stays faithful there too)
+            (match Env.lookup st.world.globals id with
+             | some v => .ok st v
+             | Option.none =>
+               if (moduleGlobals m).2 then
+                 .exn st (.nameError id)
+               else
+                 .unsupported s!"name '{id}' may be bound by an out-of-tier module-level statement")
     | .binOp l op r _ =>
         evalExpr m fuel st l ⤳ fun st a =>
         evalExpr m fuel st r ⤳ fun st b =>
@@ -3147,7 +3271,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
               -- worldInv never meets a closure call. Arguments evaluate
               -- BEFORE the callable check, CPython's order.
               evalExprs m fuel st args.toList ⤳ fun st vs =>
-              if funsHeapFree m.functions.toList then
+              if funsHeapFree m.functions.toList && topLevelDefFree m then
                 .exn st (.typeError "'dict' object is not callable")
               else
                 match Heap.get? st.world.heap a with
@@ -3171,7 +3295,25 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 evalExprs m fuel st args.toList ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
             | some Option.none =>
-              .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
+              -- pass 3: the poisoned-arm LIVE view — a module-level
+              -- lambda (an exec-bound closure) is callable through it,
+              -- the locals-arm dispatch verbatim (`funsHeapFree`-guarded)
+              (match Env.lookup st.world.globals fname with
+               | some (.ref a) =>
+                   evalExprs m fuel st args.toList ⤳ fun st vs =>
+                   if funsHeapFree m.functions.toList && topLevelDefFree m then
+                     .exn st (.typeError "'dict' object is not callable")
+                   else
+                     (match Heap.get? st.world.heap a with
+                      | some (.closure nm ps ao lo _ ig bd cap) =>
+                        Run.withLocals st.locals
+                          (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                      | _ => .exn st (.typeError "'dict' object is not callable"))
+               | some v =>
+                   evalExprs m fuel st args.toList ⤳ fun st _ =>
+                   .exn st (.typeError s!"'{v.typeName}' object is not callable")
+               | Option.none =>
+                 .unsupported s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier")
             | Option.none =>
             if (findFunction m fname).isSome then
               if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
@@ -3604,10 +3746,32 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
                   else if isModuleDunder fname then
                     .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
-                  else if (moduleGlobals m).2 then
-                    .exn st (.nameError fname)
                   else
-                    .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"
+                    -- pass 3: the absent-arm LIVE view (prefix views
+                    -- during init; the full table post-init) — a live
+                    -- closure dispatches (the locals-arm shape,
+                    -- `funsHeapFree`-guarded), anything else is the
+                    -- faithful not-callable TypeError; only a genuine
+                    -- miss may be the NameError
+                    (match Env.lookup st.world.globals fname with
+                     | some (.ref a) =>
+                         evalExprs m fuel st args.toList ⤳ fun st vs =>
+                         if funsHeapFree m.functions.toList && topLevelDefFree m then
+                           .exn st (.typeError "'dict' object is not callable")
+                         else
+                           (match Heap.get? st.world.heap a with
+                            | some (.closure nm ps ao lo _ ig bd cap) =>
+                              Run.withLocals st.locals
+                                (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                            | _ => .exn st (.typeError "'dict' object is not callable"))
+                     | some v =>
+                         evalExprs m fuel st args.toList ⤳ fun st _ =>
+                         .exn st (.typeError s!"'{v.typeName}' object is not callable")
+                     | Option.none =>
+                       if (moduleGlobals m).2 then
+                         .exn st (.nameError fname)
+                       else
+                         .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement")
         | .attribute recv attr _ =>
           -- Method calls (dict `.get`, H2 list `.append`/`.pop`, H3
           -- instance methods). CPython order: the receiver (and its
@@ -3778,10 +3942,18 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       .unsupported s!"builtin '{fname}' with keyword arguments is outside the H6 tier"
                     else if isModuleDunder fname then
                       .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
-                    else if (moduleGlobals m).2 then
-                      .exn st (.nameError fname)
                     else
-                      .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement")
+                      -- pass 3: a keyword call of a LIVE module binding
+                      -- (init execution's view) stays loud — never a
+                      -- fake NameError for a name CPython bound
+                      (match Env.lookup st.world.globals fname with
+                       | some _ =>
+                         .unsupported s!"calling the live module binding '{fname}' with keyword arguments is outside the tier (docs/memory-model.md §module-init execution)"
+                       | Option.none =>
+                         if (moduleGlobals m).2 then
+                           .exn st (.nameError fname)
+                         else
+                           .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"))
            | .attribute recv attr _ =>
              evalExpr m fuel st recv ⤳ fun st r =>
              (match r with
@@ -4610,16 +4782,211 @@ end
 
 /-! ## The public boundary (docs/memory-model.md v2, call layering) -/
 
-/-- The fresh `World` of one public call: the module-init heap (G1 dict
-literals live here — sunfish's `piece`/`pst`) and the resolved constant
-globals. Built afresh per public call, so module-global dicts are shared
-across nested calls WITHIN one public call and fresh ACROSS two
-(regression case 15). Name resolution reads the static `moduleGlobals`
-table — equivalent while bindings are immutable in tier (§G1 section
-comment); `World.globals` is the observation-side field and the seam for
-the future `global`-statement tier. -/
+/-! ## Module-init EXECUTION (pass 3, docs/memory-model.md §module-init
+execution)
+
+The live pipeline behind `initWorld`: one ordered walk over the top
+level. Each statement first takes the PURE FOLD STEP on the live state
+(`initFoldStep` — the `globalsStep` in-tier arms, so a statically-valued
+binding is live-equal by construction); a fold-refused statement gets
+the EXEC ATTEMPT through the interpreter under the per-statement PREFIX
+VIEW (`topLevel := done` — name resolution must be SEQUENTIAL: the full
+static table would let an executed statement read a FUTURE binding);
+a failed attempt ROLLS BACK to the pre-statement state and POISONS the
+statement's dirty names in the live accumulator too (`globalsDirty` —
+without the live marker, the poisoned-arm consult would resurface a
+STALE pre-statement value). The dict-items `for` gets the one control
+shell `execStmt` cannot express, with CPython's per-step SIZE check.
+Executed statements run at the fixed `initExecFuel` — like
+`globalFuel`, independent of every caller's fuel. -/
+
+/-- Fixed fuel for executed init statements. -/
+def initExecFuel : Nat := 65536
+
+/-- Names an executed init statement may NOT bind: builtins and
+def/class/namedtuple names — a live rebinding would silently shadow the
+resolution arms that fire before the live view. LOUD (the attempt rolls
+back), never a wrong dispatch. -/
+def initBindable (m : Module) (n : String) : Bool :=
+  !(isBuiltinName n) && (findFunction m n).isNone
+    && (findClass m n).isNone && (findNamedTuple m n).isNone
+
+/-- Flush an executed statement's locals into the live accumulator
+(CPython: top-level bindings are globals). `none` = a name failed
+`initBindable`. -/
+def flushInitLocals (m : Module) (acc : GlobalsAcc) : REnv → Option GlobalsAcc
+  | [] => some acc
+  | (n, v) :: rest =>
+    if initBindable m n then flushInitLocals m ((n, some v) :: acc) rest
+    else Option.none
+
+/-- The live fold step: `globalsStep`'s in-tier arms with an explicit
+refusal signal (`none` = the pipeline attempts execution). Kept in
+lockstep with `globalsStep` — a statically-VALUED binding must be
+live-equal, which is what makes static-first resolution sound. -/
+def initFoldStep (h : Heap) (acc : GlobalsAcc) (s : Stmt) :
+    Option (Heap × GlobalsAcc) :=
+  match s with
+  | .assign tgts rhs _ =>
+    (match tgts.toList with
+     | [.name id _] =>
+       (match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+        | .ok (h', v) => some (h', (id, some v) :: acc)
+        | _ => Option.none)
+     | [.tuple es _] =>
+       (match targetNamesG es.toList with
+        | some ids =>
+          (match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+           | .ok (h', .tuple vs) =>
+             if ids.length == vs.size then
+               some (h', (ids.zip (vs.toList.map some)).reverse ++ acc)
+             else Option.none
+           | .ok (h', .listV vs) =>
+             if ids.length == vs.size then
+               some (h', (ids.zip (vs.toList.map some)).reverse ++ acc)
+             else Option.none
+           | _ => Option.none)
+        | Option.none => Option.none)
+     | _ => Option.none)
+  | .pass _ => some (h, acc)
+  | .exprStmt (.constant ..) _ => some (h, acc)
+  | _ => Option.none
+
+/-- Execute the body statements of the items shell ONE AT A TIME, each
+in a fresh empty-locals frame over the current live globals, FLUSHING
+after each — inner frames (genexp bodies, lambda calls) resolve the
+loop's own bindings through the live view, which a whole-body locals
+frame would hide from them. -/
+def initBodyStmts (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc) :
+    List Stmt → Run (Heap × GlobalsAcc) RFlow
+  | [] => .ok (h, acc) .next
+  | s :: rest =>
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ s with
+      | .ok st flow =>
+        (match flushInitLocals mV acc st.locals with
+         | some acc' =>
+           (match flow with
+            | .next => initBodyStmts mV fuel st.world.heap acc' rest
+            | flow => .ok (st.world.heap, acc') flow)
+         | Option.none =>
+           .unsupported "an executed init statement rebinds a builtin/def/class/namedtuple name — outside the tier (docs/memory-model.md §module-init execution)")
+      | .exn st e => .exn (st.world.heap, acc) e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+
+/-- The init `for target in d.items():` shell — CPython's dict_items
+iterator: the LIVE entries re-read per step, a SIZE change the faithful
+`RuntimeError` (value updates visible mid-iteration; H1 acceptance
+row 10). `n` is the size at iterator creation. -/
+def initItemsLoop (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
+    (a : Addr) (n : Nat) (i : Nat) (target : Expr) (body : List Stmt) :
+    Run (Heap × GlobalsAcc) Unit :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match Heap.get? h a with
+    | some (.dict entries _) =>
+      if entries.size ≠ n then
+        .exn (h, acc) (.runtimeError "dictionary changed size during iteration")
+      else if hlt : i < entries.size then
+        match assignToH h [] target (.tuple #[entries[i].1, entries[i].2]) with
+        | .ok env0 =>
+          (match flushInitLocals mV acc env0 with
+           | some acc1 =>
+             (match initBodyStmts mV fuel h acc1 body with
+              | .ok (h', acc2) flow =>
+                (match flow with
+                 | .next | .cont => initItemsLoop mV fuel h' acc2 a n (i + 1) target body
+                 | .brk => .ok (h', acc2) ()
+                 | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)")
+              | .exn st e => .exn st e
+              | .timeout => .timeout
+              | .unsupported msg => .unsupported msg)
+           | Option.none =>
+             .unsupported "an executed init statement rebinds a builtin/def/class/namedtuple name — outside the tier (docs/memory-model.md §module-init execution)")
+        | .exn e => .exn (h, acc) e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
+      else .ok (h, acc) ()
+    | _ => .unsupported "internal: items-loop receiver is not a dict (report this)"
+
+/-- Execute ONE fold-refused top-level statement (see the section
+comment): the items shell, or `execStmt` delegation with the flush. -/
+def initExecStmt (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
+    (s : Stmt) : Run (Heap × GlobalsAcc) Unit :=
+  match fuel with
+  | 0 => .timeout
+  | fuel + 1 =>
+    match s with
+    | .forStmt target (.call (.attribute d "items" _) #[] #[] Option.none _) body orelse _ =>
+      (match orelse.toList with
+       | [] =>
+         (match evalExpr mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ d with
+          | .ok st dv =>
+            (match dv with
+             | .ref a =>
+               (match Heap.get? st.world.heap a with
+                | some (.dict entries _) =>
+                  initItemsLoop mV fuel st.world.heap acc a entries.size 0 target body.toList
+                | _ =>
+                  .unsupported "'.items()' on a non-dict receiver is outside the init shell (docs/memory-model.md §module-init execution)")
+             | _ =>
+               .unsupported "'.items()' on a non-dict receiver is outside the init shell (docs/memory-model.md §module-init execution)")
+          | .exn st e => .exn (st.world.heap, acc) e
+          | .timeout => .timeout
+          | .unsupported msg => .unsupported msg)
+       | _ :: _ => .unsupported "'for … else' at module init is outside the tier")
+    | s =>
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ s with
+      | .ok st flow =>
+        (match flushInitLocals mV acc st.locals with
+         | some acc' =>
+           (match flow with
+            | .next => .ok (st.world.heap, acc') ()
+            | _ => .unsupported "loop flow at module top level (CPython: SyntaxError at compile time)")
+         | Option.none =>
+           .unsupported "an executed init statement rebinds a builtin/def/class/namedtuple name — outside the tier (docs/memory-model.md §module-init execution)")
+      | .exn st e => .exn (st.world.heap, acc) e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+
+/-- The live pipeline (see the section comment). `done` carries the
+statements already processed — the per-statement prefix view. -/
+def initFoldLive (m : Module) (fuel : Nat) :
+    Heap → GlobalsAcc → Array Stmt → List Stmt → Heap × GlobalsAcc
+  | h, acc, _, [] => (h, acc)
+  | h, acc, done, s :: rest =>
+    match initFoldStep h acc s with
+    | some (h', acc') => initFoldLive m fuel h' acc' (done.push s) rest
+    | Option.none =>
+      -- the view INCLUDES the executing statement: its dirty names are
+      -- then statically POISONED (not absent), so its own in-progress
+      -- bindings resolve through the poisoned-arm live view, whose
+      -- closure guard SEES the statement's nested defs (an s-less view
+      -- would misfire the not-callable TypeError on the loop's lambda)
+      match initExecStmt { m with topLevel := done.push s } fuel h acc s with
+      | .ok (h', acc') _ => initFoldLive m fuel h' acc' (done.push s) rest
+      | _ =>
+        -- the attempt failed: ROLL BACK and POISON the statement's dirty
+        -- names in the LIVE accumulator too — without the live marker
+        -- the poisoned-arm consult would resurface a STALE value
+        match globalsDirty h acc true s with
+        | (h', acc', _) => initFoldLive m fuel h' acc' (done.push s) rest
+
+/-- The fresh `World` of one public call: the LIVE-pipeline heap and
+globals (pass 3 — for a module with no exec-attempted statements this is
+exactly the pure fold's heap and `resolvedG` table, arm for arm). Built
+afresh per public call, so module-global dicts are shared across nested
+calls WITHIN one public call and fresh ACROSS two (regression case 15).
+Name resolution reads the static `moduleGlobals` table FIRST; the
+statically-poisoned and statically-absent arms consult `World.globals` —
+the live view (docs/memory-model.md §module-init execution). -/
 def initWorld (m : Module) : World :=
-  { heap := (moduleInit m).1, globals := resolvedG (moduleGlobals m).1 }
+  match initFoldLive m initExecFuel #[] [] #[] m.topLevel.toList with
+  | (h, acc) => { heap := h, globals := resolvedG acc }
 
 /-- The isolated public observation (signature UNCHANGED — `CallsTo`,
 every `@[spec]` raw form, and every existing theorem statement are

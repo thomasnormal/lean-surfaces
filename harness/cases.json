@@ -86,7 +86,7 @@
   {"file": "Examples/python/sf_tt/sf_tt.py", "function": "put_get", "args": [[5, 100]], "expect": "match"},
   {"file": "Examples/python/sf_tt/sf_tt.py", "function": "fresh_probe", "args": [[999]], "expect": "match"},
   {"file": "Examples/python/sf_tt/sf_tt.py", "function": "tt_get", "args": [[1, -1]], "expect": "match"},
-  {"file": "Examples/python/g1_lab/g1_lab.py", "function": "read_m", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/g1_lab/g1_lab.py", "function": "read_m", "args": [[]], "expect": "match"},
   {"file": "Examples/python/g1_lab/g1_lab.py", "function": "try_print", "args": [[5]], "expect": "unsupported"},
   {"file": "Examples/python/sf_bound_tree/sf_bound_tree.py", "function": "bound", "args": [[{"t": "tuple", "v": [{"t": "int", "v": 7}, {"t": "list", "v": []}]}, 0, 0], [{"t": "tuple", "v": [{"t": "int", "v": 7}, {"t": "list", "v": []}]}, 0, 3], [{"t": "tuple", "v": [{"t": "int", "v": 5}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 3}, {"t": "list", "v": []}]}, {"t": "tuple", "v": [{"t": "int", "v": -2}, {"t": "list", "v": []}]}]}]}, 10, 1], [{"t": "tuple", "v": [{"t": "int", "v": 5}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 3}, {"t": "list", "v": []}]}, {"t": "tuple", "v": [{"t": "int", "v": -2}, {"t": "list", "v": []}]}]}]}, -10, 1], [{"t": "tuple", "v": [{"t": "int", "v": 0}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 4}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 1}, {"t": "list", "v": []}]}, {"t": "tuple", "v": [{"t": "int", "v": -7}, {"t": "list", "v": []}]}]}]}, {"t": "tuple", "v": [{"t": "int", "v": 2}, {"t": "list", "v": []}]}]}]}, 5, 2], [{"t": "tuple", "v": [{"t": "int", "v": 0}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 4}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 1}, {"t": "list", "v": []}]}, {"t": "tuple", "v": [{"t": "int", "v": -7}, {"t": "list", "v": []}]}]}]}, {"t": "tuple", "v": [{"t": "int", "v": 2}, {"t": "list", "v": []}]}]}]}, 8, 2], [{"t": "tuple", "v": [{"t": "int", "v": 5}, {"t": "list", "v": [{"t": "tuple", "v": [{"t": "int", "v": 3}, {"t": "list", "v": []}]}, {"t": "tuple", "v": [{"t": "int", "v": -2}, {"t": "list", "v": []}]}]}]}, 10, -2]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "read_table", "args": [[0], [-1], [2], [5], [-4]], "expect": "match"},
@@ -350,5 +350,11 @@
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_boundary", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "range_unpack", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/seq_lab/seq_lab.py", "function": "list_slice_loud", "args": [[2]], "expect": "unsupported"},
-  {"file": "Examples/python/seq_lab/seq_lab.py", "function": "str_repeat_loud", "args": [[2]], "expect": "unsupported"}
+  {"file": "Examples/python/seq_lab/seq_lab.py", "function": "str_repeat_loud", "args": [[2]], "expect": "unsupported"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "get_a", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "get_b", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "get_total", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "get_m", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "get_k", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "call_pad", "args": [[5], [0]], "expect": "match"}
 ]

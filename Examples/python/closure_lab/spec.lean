@@ -66,3 +66,10 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "early_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
+
+/-! ### H7 lambdas: the Position.move `put` shape -/
+
+#py_check closure_lab.lam_basic("abcde", 2, "Z") = "XbZde"
+#py_check closure_lab.lam_capture(3) = 11
+#guard (match callFunction closure_lab "lam_rebound" #[.int 5] 10000 with
+  | .unsupported _ => true | _ => false)

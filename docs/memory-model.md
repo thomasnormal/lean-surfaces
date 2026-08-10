@@ -740,7 +740,29 @@ translated) and `sf_order.bound_probe`, the `moves()`-shaped nested
 generator with the verbatim ordering line inside and the beta cutoff
 abandoning it mid-drain: `(46, 1)` cutting vs `(46, 20)` not.
 
-## Heap well-formedness (explicit invariant)
+**Lambdas (bound() arc pass 1 — BUILT 2026-08-10).** A single-target
+`name = lambda params: expr` assignment DIRECTLY in a function body is
+the nested-def shape with a one-statement body — sunfish's
+`put = lambda board, i, p: board[:i] + p + board[i + 1:]` in
+`Position.move`. The extractor rewrites exactly that assign into
+`NestedDef` with body `[Return expr]` (CPython compiles a lambda body
+as its own function scope; the rewrite is the same compilation). The
+capture census is the same `_closure_analysis` with one scope fact
+made explicit: a lambda's locals are its PARAMETERS ONLY (a lambda
+body cannot contain assignments), so `_assigned_names` applies to
+`FunctionDef` nodes only. The same never-rebound admission decides —
+`closure_lab.lam_rebound` is the refused exposing row, lambda flavor
+(CPython's cell would see the rebinding; a snapshot would not) — and
+everything fancier keeps the loud channels it already had: non-literal
+defaults, `*args`/keyword-only/`**kwargs` via `args_unsupported`, and a
+lambda anywhere OTHER than a single-target direct assign (call
+argument, conditional expression, in a loop, multiple targets) stays
+the un-rewritten `Lambda` expression node, refused loudly at
+evaluation. NO new runtime: the lambda IS `Obj.closure` with a
+`Return` body. Consequence on the shipped file: `Position.move` runs
+as shipped — the census has no refusals left — and
+`sf_order.move_probe` pins the verbatim `move` + `rotate` chain
+differentially.
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,
 never an `Inhabited Obj` fallback, never a silent arbitrary object.

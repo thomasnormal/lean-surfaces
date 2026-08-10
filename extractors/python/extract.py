@@ -461,8 +461,9 @@ def _closure_analysis(nd, enclosing):
             break
     if any(isinstance(n, ast.Nonlocal) for n in ast.walk(nd)):
         reasons.append("nonlocal (cell writes)")
-    nested_locals = ({p.arg for p in list(nd.args.posonlyargs) + list(nd.args.args)}
-                     | _assigned_names(nd))
+    nested_locals = {p.arg for p in list(nd.args.posonlyargs) + list(nd.args.args)}
+    if isinstance(nd, ast.FunctionDef):
+        nested_locals |= _assigned_names(nd)
     enclosing_params = {p.arg for p in list(enclosing.args.posonlyargs)
                         + list(enclosing.args.args)}
     # direct nested-def names are enclosing locals too (a closure may
@@ -507,6 +508,55 @@ def _early_nested_calls(fn):
                 and n.func.id in defs and n.lineno < defs[n.func.id]):
             hits.add(n.func.id)
     return sorted(hits)
+
+
+def _lambda_nested_def(node, enclosing):
+    """H7 lambdas: `put = lambda board, i, p: …` DIRECTLY in a function
+    body is the nested-def shape with an expression body — same snapshot
+    admission, same capture analysis (a lambda body is its own scope),
+    `return <expr>` as the single statement. Anything fancier (defaults
+    beyond literals, *args, a nested scope inside the lambda) refuses
+    through the same channels. Returns the NestedDef dict, or None when
+    the assign is not this shape."""
+    if not (isinstance(node, ast.Assign) and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, ast.Lambda)):
+        return None
+    lam = node.value
+    name = node.targets[0].id
+    a = lam.args
+    plain = list(a.posonlyargs) + list(a.args)
+    reasons = []
+    payloads = [literal_const_payload(d) for d in a.defaults]
+    if a.defaults and not all(pl is not None for pl in payloads):
+        reasons.append("defaults")
+        payloads = []
+    first_defaulted = len(plain) - len(payloads)
+    params = [
+        convert_param(p, payloads[i - first_defaulted]
+                      if i >= first_defaulted else None)
+        for i, p in enumerate(plain)
+    ]
+    if a.vararg is not None:
+        reasons.append("*args")
+    if a.kwonlyargs:
+        reasons.append("keyword-only args")
+    if a.kwarg is not None:
+        reasons.append("**kwargs")
+    captures, refusal = _closure_analysis(lam, enclosing)
+    out = {
+        "kind": "NestedDef",
+        "span": span(node),
+        "name": name,
+        "args": params,
+        "args_unsupported": ", ".join(reasons) if reasons else None,
+        "locals_unsupported": None,
+        "body": [{"kind": "Return", "span": span(lam.body),
+                  "value": convert_expr(lam.body)}],
+        "captures": captures,
+        "closure_unsupported": refusal,
+    }
+    return out
 
 
 def convert_stmt(node, enclosing=None):
@@ -556,10 +606,12 @@ def convert_stmt(node, enclosing=None):
                     else None
                 )
             ),
-            # a nested def DIRECTLY in this body is the H7 closure shape;
-            # one nested deeper (inside an if/loop) stays a plain
-            # FunctionDef node, which ingestion refuses loudly
-            "body": [convert_stmt(s, enclosing=node) for s in node.body],
+            # a nested def DIRECTLY in this body is the H7 closure shape
+            # (a single-target `name = lambda …` assign likewise); one
+            # nested deeper (inside an if/loop) stays a plain
+            # FunctionDef/Lambda node, which ingestion refuses loudly
+            "body": [_lambda_nested_def(s, node) or convert_stmt(s, enclosing=node)
+                     for s in node.body],
         }
         if _has_global(node):
             out["has_global"] = True

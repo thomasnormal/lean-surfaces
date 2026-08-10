@@ -362,6 +362,27 @@ class ExtractorTests(unittest.TestCase):
             "        return a\n    return r\n")
         self.assertIn("nested-def name", fn["locals_unsupported"])
 
+    def test_lambda_assign_is_nested_def(self):
+        # H7 lambdas: `put = lambda …` directly in a body is the
+        # nested-def shape with a Return-expression body.
+        fn = self._first_fn(
+            "def f(s, i, p):\n"
+            "    put = lambda board, i, p: board[:i] + p + board[i + 1:]\n"
+            "    return put(s, i, p)\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertEqual(nd["name"], "put")
+        self.assertEqual(nd["captures"], [])
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["body"][0]["kind"], "Return")
+
+    def test_lambda_capture_rebound_refuses(self):
+        fn = self._first_fn(
+            "def f(a):\n    g = lambda: a\n    a = a + 1\n    return g()\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("rebound after the def", nd["closure_unsupported"])
+
     def test_call_kwargs_unpacking_stays_unsupported_loud(self):
         # `f(**d)` (a keyword node with arg=None) has no per-name binding
         # story — it stays a LOUD call_unsupported, and the structured

@@ -31,8 +31,8 @@ load_program sunfish from "Examples/python/sunfish/sunfish.json"
 /-! ### The census, pinned: the shipped file's namedtuples recognize
 as-is; `Position` is an instantiable value-like subclass carrying its
 six-field base; every def/method extracts with plain positional
-parameters (`Position.move` is the one static-locals refusal — its
-`put` lambda binding). -/
+parameters — since the bound() arc's lambda tier, with NO refusals
+left in this table. -/
 
 #guard sunfish.namedtuples.map (fun nt => (nt.name, nt.fields)) ==
   #[("Move", #["i", "j", "prom"]), ("Entry", #["lower", "upper"])]
@@ -41,11 +41,10 @@ parameters (`Position.move` is the one static-locals refusal — its
     ("Stop", false, Option.none), ("Searcher", true, Option.none)]
 #guard sunfish.functions.map (fun f => (f.name, f.argsOk, f.localsOk)) ==
   #[("Position.gen_moves", true, true), ("Position.rotate", true, true),
-    -- H7: `Position.move`'s `put = lambda …; put(…)` pattern no longer
-    -- trips the static-locals census (single direct assignment, every
-    -- call after it — no UnboundLocalError window); the LAMBDA itself
-    -- still refuses loudly at evaluation, so `move` stays out of reach
-    -- exactly one gate later
+    -- bound() arc pass 1: `Position.move`'s `put = lambda board, i, p: …`
+    -- now extracts as the H7 NestedDef shape (capture-free, assigned
+    -- once — the lambda tier), so `move` RUNS; exercised differentially
+    -- by `sf_order.move_probe` (verbatim move + rotate)
     ("Position.move", true, true), ("Position.value", true, true),
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),

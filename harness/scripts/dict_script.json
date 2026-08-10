@@ -519,6 +519,7 @@
               "id": "MATE_UPPER"
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -713,6 +714,7 @@
                 }
               }
             ],
+            "keywords": [],
             "call_unsupported": null
           },
           "op": "Sub",
@@ -820,6 +822,7 @@
                   "id": "tt"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             },
             {
@@ -860,6 +863,7 @@
               ]
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       }

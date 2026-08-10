@@ -124,6 +124,7 @@
                 "attr": "swapcase"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -372,6 +373,7 @@
                   "id": "t"
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -437,9 +439,11 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -529,9 +533,11 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -608,9 +614,11 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },
@@ -685,6 +693,7 @@
             "attr": "isupper"
           },
           "args": [],
+          "keywords": [],
           "call_unsupported": null
         },
         "body": [
@@ -729,6 +738,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -807,6 +817,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           }
@@ -965,6 +976,7 @@
                   }
                 }
               ],
+              "keywords": [],
               "call_unsupported": null
             }
           },

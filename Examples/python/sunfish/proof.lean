@@ -18,6 +18,12 @@ Two provisions keep the 955KB module literal out of the simp run:
   doctrine, docs/memory-model.md §string semantics), so the goal keeps
   the compact handles and each collapses in ONE rewrite instead of
   thousands of character-level simp steps.
+
+Envelope note (bound() arc pass 1): `Position.move`'s `put` lambda now
+ingests as a structured `NestedDef`, so the module literal changed —
+this comment is the content edit that forces re-elaboration
+(`load_program` does not track its JSON as a build input). The rotate
+theorems are untouched by that statement's shape.
 -/
 import LeanModels
 

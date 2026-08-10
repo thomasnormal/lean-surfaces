@@ -78,9 +78,11 @@
                 "id": "f"
               },
               "args": [],
+              "keywords": [],
               "call_unsupported": null
             }
           ],
+          "keywords": [],
           "call_unsupported": null
         }
       },

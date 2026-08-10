@@ -630,11 +630,37 @@ What the FULL `moves()` (and `bound()` around it) still needs, enumerated:
 2. **`self.tp_move.get(pos)`** — dict `.get` through an instance
    attribute READ with an ntuple key: likely in tier already; needs a
    differential row before it is claimed.
-3. **`Position.move`** — `localsOk = false` (the `put` lambda): lambdas,
-   or a rewrite-free lambda tier, gate `pos.move(killer)`.
+3. **`Position.move`** — DONE (bound() arc pass 1, below): `put =
+   lambda …` is the H7 nested-def shape; `move` runs as shipped.
 4. **`bound()`'s own gates** — sets (`self.history`), `raise Stop` /
    exception classes, `time.time()`, the `%` deadline check, and
    `pos in self.history` set membership.
 5. **Recursion through a captured `self`** — `-self.bound(...)` inside
    the nested generator body: H3 instance-method dispatch from a
    generator frame; untested, needs a lab row when 1 lands.
+
+## bound() arc, pass 1 — mechanical blockers (2026-08-10)
+
+The enumerated blockers above, taken mechanically — each construct
+designed in docs/memory-model.md, refused loudly outside its tier,
+pinned by happy AND refusal battery rows.
+
+**Lambdas — BUILT** (§nested defs and closures, lambda addendum): a
+single-target `name = lambda …: expr` assign directly in a function
+body extracts as the H7 `NestedDef` (body = one `Return`; same capture
+census — a lambda's locals are its parameters only; same never-rebound
+admission, `closure_lab.lam_rebound` the refused exposing row). No new
+runtime. `Position.move` runs as shipped; `sf_order.move_probe` is the
+verbatim move+rotate differential.
+
+**Recorded regression (pre-existing, found during this pass, NOT
+caused by it):** `script_corpus` fails 3 rows — `fib_loop`,
+`tt_script`, `list_script`, each refusing with "module-level value of
+'X' is outside the G1 tier" where the live top-level suffix
+rebinds/mutates a prefix-bound global (`n = n + 2`, `tt[1] = 11`,
+`xs`-mutation). Verified bit-identical at 288bf33 with a HEAD-built
+runner; `tt_script` was the v0 shared-heap EXEMPLAR ("11 12 -1 2"),
+so some tier between v0 (2026-08-07) and H7 regressed the leanpy
+live-suffix / G1-prefix split. Needs a bisect and its own fix commit —
+the corpus counts (3 failed / 11 matched / 3 loud-blocked) are honest
+telemetry until then.

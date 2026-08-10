@@ -145,3 +145,25 @@ def early_call(a):
     def f():
         return a
     return r
+
+
+def lam_basic(s, i, p):
+    # the shipped Position.move shape: a capture-free lambda assigned
+    # once, called after — H7's lambda-as-nested-def
+    put = lambda board, i, p: board[:i] + p + board[i + 1:]
+    board = put(s, i, p)
+    return put(board, 0, "X")
+
+
+def lam_capture(a):
+    k = a * 2
+    f = lambda x: x + k
+    return f(5)
+
+
+def lam_rebound(a):
+    # the exposing row again, lambda flavor: CPython's cell sees the
+    # rebound a — refused at extraction
+    f = lambda: a
+    a = a + 1
+    return f()

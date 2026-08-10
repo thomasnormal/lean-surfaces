@@ -961,6 +961,20 @@ and need not be analysed; and with a purity whitelist for the calls that
 remain (`dict`/`sum`/`tuple`/`range`, namedtuple construction) any other
 call could soundly poison every ref-carrying name.
 
+**The `leanpy` script runner folds the PREFIX VIEW only (2026-08-10
+fix).** Poisoning is RETROACTIVE (the marker shadows the earlier value),
+which is exactly right for the closed-function surface — every top-level
+statement "already happened" before the call — and exactly wrong for the
+statements `runScript` is about to EXECUTE: folding the live suffix too
+poisoned prefix-bound names the suffix rebinds or stores into
+(`n = n + 2` in a top-level loop, `tt[1] = 11`), breaking the v0
+shared-heap exemplars (fib_loop/tt_script/list_script, bisected to the
+dirty-name commit 6a79764). `runScript` therefore builds its world from
+`mPre` (`topLevel := g1Prefix …`) and threads `mPre` through the
+executor; the widened `suffixConsistent` guard (any suffix assignment to
+a function-read name is loud) keeps the prefix view sound — see
+Script.lean's header for the argument.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

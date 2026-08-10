@@ -19,7 +19,7 @@ scope. v0 keeps them provably coherent by splitting the top level at the
 **G1-faithful prefix boundary**:
 
 * the PREFIX — the leading run of plain `NAME = …` / tuple binds,
-  docstrings, and `pass` — is exactly what the G1 fold executed
+  docstrings, and `pass` — is exactly what the G1 fold executes
   faithfully into `initWorld` (values, heaps, dict identities). The live
   run SKIPS it: top-level reads fall through locals to the very objects
   function bodies resolve, so identity and mutation stay shared.
@@ -27,17 +27,35 @@ scope. v0 keeps them provably coherent by splitting the top level at the
   (`execStmt`, plus the control shells below), binding into the script's
   locals. Suffix heap mutations (`tt[k] = v`) act on the shared world and
   are visible to calls; suffix NAME bindings are visible only at top
-  level, and the G1 fold now POISONS post-boundary bindings
-  (Semantics.lean), so a function-body read of one is loud, never stale.
+  level, and `suffixConsistent` refuses the script whenever a function
+  body reads a suffix-assigned name, so a call never sees one stale.
+
+THE MODULE THE LIVE RUN THREADS IS THE PREFIX VIEW (`runScript`'s
+`mPre`, `topLevel := g1Prefix …`): the G1 fold — dirty-name poisoning
+included — must see ONLY the statements whose effects are claimed by
+`initWorld`, because the suffix is EXECUTED, not folded. Folding the
+whole top level poisoned prefix-bound names the suffix rebinds or
+stores into (`n = n + 2` in a loop, `tt[1] = 11`) although the live run
+replays exactly those statements — the 2026-08-10 corpus regression
+(fib_loop/tt_script/list_script, broken by the dirty-name pass
+6a79764, bisected and fixed the same day). The prefix view is all
+`g1Shape`, so its fold is always `analysable`; a top-level name miss is
+then a FAITHFUL `NameError`, which is sound because suffix bindings are
+visible in the script's locals and every suffix statement whose binding
+set the executor cannot honour refuses loudly before any later read.
 
 Refusals — every one LOUD, never wrong:
 
 * a function definition whose span does not precede every SUFFIX
   statement (a live statement could call it before CPython would have
   bound it);
-* a suffix (nested-)assignment to a TABLE-BOUND name some function body
-  reads (`funcGlobalReads`): the static table would go stale for calls
-  (the ordered `ModuleItem` representation is the recorded fix);
+* a suffix (nested-)assignment to ANY name some function body reads
+  (`funcGlobalReads`): a prefix-bound name would go stale for calls, and
+  a fresh suffix global would resolve to a fake `NameError` under the
+  prefix view (the ordered `ModuleItem` representation is the recorded
+  fix);
+* a `print` under a live LOCAL binding of `print` (a suffix `print = …`
+  already executed — CPython would call the shadow);
 * `print` of containers/heap values (repr subtleties), a shadowed
   `print`, `print` in expression position or inside a function body (the
   effect must thread the mutual block to land there — this v0 keeps the
@@ -207,6 +225,15 @@ def liveSuffix : List Stmt → List Stmt
   | [] => []
   | s :: rest => if g1Shape s then liveSuffix rest else s :: rest
 
+/-- The G1-faithful PREFIX: the leading run of `g1Shape` statements —
+`liveSuffix`'s complement (`g1Prefix ss ++ liveSuffix ss = ss`). The live
+run folds `initWorld` over THIS list only (`runScript`'s `mPre`): the
+suffix is executed, so folding it too would poison prefix-bound names the
+suffix rebinds or stores into — effects the replay is about to perform. -/
+def g1Prefix : List Stmt → List Stmt
+  | [] => []
+  | s :: rest => if g1Shape s then s :: g1Prefix rest else []
+
 /-- Every function AND class definition precedes every live-suffix
 statement (a live statement could otherwise call/instantiate it before
 CPython would have bound it). Flattened method spans sit inside their
@@ -234,15 +261,17 @@ where
     | .defStmt _ _ _ _ _ _ _ _ sp
     | .unsupported _ _ sp => sp
 
-/-- The stale-table guard: no suffix (nested-)assignment to a TABLE-BOUND
-name some function reads. -/
+/-- The stale-table guard: no suffix (nested-)assignment to ANY name some
+function reads. Under the prefix view (`runScript`'s `mPre`) BOTH halves
+of the old table-bound condition are hazards, so the condition is gone:
+a prefix-bound name rebound by the suffix would read STALE from the
+table inside a call (the suffix binding lands in the script's locals,
+invisible to function frames), and a FRESH suffix global would resolve
+to a fake `NameError` (the prefix view is always analysable). CPython
+makes both module globals; leanpy refuses the script loudly. -/
 def suffixConsistent (m : Module) (suffix : List Stmt) : Bool :=
   let reads := moduleGlobalReads m
-  (Stmt.assignedNamesList suffix).all fun n =>
-    !(reads.contains n
-        && (match lookupG (moduleGlobals m).1 n with
-            | some (some _) => true
-            | _ => false))
+  (Stmt.assignedNamesList suffix).all fun n => !reads.contains n
 
 /-! ### The executor -/
 
@@ -260,7 +289,11 @@ mutual
         match ss with
         | [] => .ok st .next
         | .exprStmt (.call (.name "print" _) args #[] Option.none _) _ :: rest =>
-          if printUnshadowed m then
+          -- Module-level shadows via `printUnshadowed`; a LIVE local
+          -- shadow (a suffix `print = …` already executed — invisible to
+          -- the prefix view's globals) via the locals probe, dynamically
+          -- exact: CPython calls the shadow only once its binding ran.
+          if printUnshadowed m && (Env.lookup st.locals "print").isNone then
             Run.bind (evalExprs m fuel st args.toList) fun st vs =>
             match strOfArgs vs with
             | some line =>
@@ -328,17 +361,23 @@ mutual
 end
 
 /-- Run a whole script: boundary checks, then the live suffix from the
-G1-initialized world with empty locals. The decided outcome's world
-carries the accumulated stdout. -/
+world G1-initialized over the PREFIX VIEW `mPre` — the fold must see
+only the statements the live run skips, never the suffix it is about to
+execute (the poisoning pass is retroactive, so a whole-module fold
+clobbers prefix names the suffix rebinds/stores into: the fib_loop/
+tt_script/list_script regression). `mPre` also threads through the
+executor, so function frames resolve the same prefix globals. The
+decided outcome's world carries the accumulated stdout. -/
 def runScript (m : Module) (fuel : Nat) : Run World Unit :=
   let suffix := liveSuffix m.topLevel.toList
   if !defsBeforeLive m suffix then
     .unsupported "a function defined after live top-level code is outside leanpy v0 (a live statement could call it before CPython binds it; the ordered ModuleItem representation is the recorded fix)"
   else if !suffixConsistent m suffix then
-    .unsupported "live top-level code rebinds a module global some function reads — outside leanpy v0 (the closed-function G1 table would go stale for calls; ordered ModuleItem representation is the recorded fix)"
+    .unsupported "live top-level code rebinds a module global some function reads — outside leanpy v0 (the closed-function G1 table would go stale for calls, and a fresh live global would fake a NameError; ordered ModuleItem representation is the recorded fix)"
   else
+    let mPre : Module := { m with topLevel := (g1Prefix m.topLevel.toList).toArray }
     Run.toWorld <|
-      Run.bind (execScriptStmts m fuel ⟨initWorld m, []⟩ suffix) fun st flow =>
+      Run.bind (execScriptStmts mPre fuel ⟨initWorld mPre, []⟩ suffix) fun st flow =>
       match flow with
       | .next => .ok st ()
       | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"

@@ -695,13 +695,21 @@ runtime. `Position.move` runs as shipped; `sf_order.move_probe` is the
 verbatim move+rotate differential.
 
 **Recorded regression (pre-existing, found during this pass, NOT
-caused by it):** `script_corpus` fails 3 rows — `fib_loop`,
-`tt_script`, `list_script`, each refusing with "module-level value of
-'X' is outside the G1 tier" where the live top-level suffix
-rebinds/mutates a prefix-bound global (`n = n + 2`, `tt[1] = 11`,
-`xs`-mutation). Verified bit-identical at 288bf33 with a HEAD-built
-runner; `tt_script` was the v0 shared-heap EXEMPLAR ("11 12 -1 2"),
-so some tier between v0 (2026-08-07) and H7 regressed the leanpy
-live-suffix / G1-prefix split. Needs a bisect and its own fix commit —
-the corpus counts (3 failed / 11 matched / 3 loud-blocked) are honest
-telemetry until then.
+caused by it) — FIXED (2026-08-10, pass 2):** `script_corpus` failed 3
+rows — `fib_loop`, `tt_script`, `list_script`, each refusing with
+"module-level value of 'X' is outside the G1 tier" where the live
+top-level suffix rebinds/mutates a prefix-bound global (`n = n + 2`,
+`tt[1] = 11`, `xs`-mutation). BISECTED: 5bb634b passes, 6a79764 (the
+G1 dirty-name pass) fails — retroactive per-name poisoning is right
+for the closed-function surface and wrong for statements `runScript`
+is about to EXECUTE; the whole-module fold poisoned prefix names the
+suffix rebinds/stores into. Fix (docs/memory-model.md §dirty-name
+pass, Script.lean header): `runScript` folds `initWorld` over the
+PREFIX VIEW `mPre` (`topLevel := g1Prefix …`) and threads `mPre`
+through the executor; `suffixConsistent` widened (ANY suffix
+assignment to a function-read name is loud — the fresh-global case
+would otherwise fake a `NameError` under the always-analysable prefix
+view); the print arm gained a live-locals shadow probe. Regression
+rows: the three scripts back to MATCH plus two refusal rows
+(`suffix_rebind_read`, `suffix_fresh_global_read`). Corpus: 19
+scripts, 0 failed / 14 matched / 5 loud-blocked.

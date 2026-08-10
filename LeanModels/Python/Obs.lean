@@ -1411,8 +1411,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             | some v => exact .okF rfl _
             | none => exact .unsupported
           | none =>
+            -- findFunction / findClass / findNamedTuple / isBuiltinName /
+            -- isModuleDunder / analysable → NameError
             exact .ite .unsupported (.ite .unsupported (.ite .unsupported
-              (.ite .unsupported (.ite .exn .unsupported))))
+              (.ite .unsupported (.ite .unsupported (.ite .exn .unsupported)))))
       | binOp l op r _ =>
         simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         simp only [evalExpr]
@@ -1543,11 +1545,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           | cons _ _ => exact .exn
                       · -- `int`, then `next` (rewritten away by `hnx` —
                         -- outside the fragment), then the H5 pair
-                        -- `ord`/`chr`, then print / NameError / loud
+                        -- `ord`/`chr`, then print / module dunder /
+                        -- NameError / loud
                         refine .ite (.bind hargs fun st₁ vs h₁ => ?_)
                           (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                             (.ite (.bind hargs fun st₁ vs h₁ => ?_)
-                              (.ite .unsupported (.ite .exn .unsupported))))
+                              (.ite .unsupported
+                                (.ite .unsupported (.ite .exn .unsupported)))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>

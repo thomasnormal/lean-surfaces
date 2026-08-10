@@ -258,6 +258,31 @@ structure Module where
 deriving Repr, Inhabited, BEq
 -- No DecidableEq: `Stmt`/`FunctionDefn` have none (nested arrays).
 
+/-- The EXACT import statements the tier treats as BENIGN, with the name
+each of them binds and whether the interpreter MODELS that name.
+
+An import is not benign in general: executing one runs the imported
+module's top level, and a circular import can rebind or mutate names in
+*this* module before it finishes. So this is a whitelist of exact
+statement TEXTS, never a shape rule — `import time` is admitted, `import
+sitecustomize` is not, and anything not listed keeps the blunt behaviour
+(the whole module's binding set becomes unknown).
+
+`true` in the second component means the model already gives the bound
+name a meaning (`count` IS `itertools.count` in `isBuiltinName`), so G1
+binds nothing and resolution falls through to it; `false` means the value
+is outside the tier, and G1 binds the name POISONED, so a read refuses
+loudly instead of faking a `NameError` for a name CPython did bind.
+
+The namedtuple ingestion census (`isBenignNtImport`, Json.lean)
+established this whitelist for its single member and reads it from here —
+one table, so a new row is reviewed once. -/
+def benignImportBinds : String → Option (String × Bool)
+  | "import time" => some ("time", false)
+  | "from itertools import count" => some ("count", true)
+  | "from collections import namedtuple" => some ("namedtuple", false)
+  | _ => Option.none
+
 /-! ## Core value / result types (DESIGN.md, normative) -/
 
 /-- Runtime values. -/

@@ -388,9 +388,11 @@ private def ntCandidate : Stmt → Option NamedTupleDefn
   | _ => Option.none
 
 /-- The exact benign import whose only effect (binding `namedtuple`) the
-recognition absorbs. -/
+recognition absorbs — the `namedtuple` row of the shared exact-import
+whitelist (`benignImportBinds`, Ast.lean; G1 reads the same table). -/
 private def isBenignNtImport : Stmt → Bool
-  | .unsupported "ImportFrom" text _ => text == "from collections import namedtuple"
+  | .unsupported "ImportFrom" text _ =>
+    (benignImportBinds text).map Prod.fst == some "namedtuple"
   | _ => false
 
 /-- Names an assignment-like TARGET binds; `none` = unanalyzable shape.

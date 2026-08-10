@@ -588,6 +588,15 @@ def isBuiltinName (id : String) : Bool :=
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count"
 
+/-- Names the IMPORT MACHINERY binds in every module's globals, without
+any statement doing it. They are absent from the G1 table but present in
+CPython, so a miss on one is `unsupported`, NEVER a `NameError` — the G1
+`analysable` flag reasons about statements and cannot see them. -/
+def isModuleDunder (id : String) : Bool :=
+  id == "__name__" || id == "__doc__" || id == "__file__" ||
+  id == "__package__" || id == "__loader__" || id == "__spec__" ||
+  id == "__builtins__" || id == "__debug__"
+
 /-- Normalize a Python index into `[0, len)`: negative indices count from the
 end (`len + i`). `none` = out of range. -/
 def normIndex (i : Int) (len : Nat) : Option Nat :=
@@ -1794,14 +1803,42 @@ Honesty discipline (loud, never wrong):
   function-body references to it are `unsupported`, never a fake value
   and never a fake `NameError`; a failed RHS also discards its partial
   allocations (no refs escape a refusal);
-* a top-level statement that could bind names invisibly (`import`,
-  `ClassDef`, `for`, `if`, chained/starred targets, …) marks the globals
-  **incomplete**: from then on a name miss is `unsupported` instead of
-  `NameError`, because CPython might have bound it;
+* an out-of-tier top-level statement (`for`, `if`, an unwhitelisted
+  `import`, a subscript-target assignment, …) POISONS the names it may
+  have changed rather than everything after it: the names it BINDS
+  (`Stmt.g1Binds`, nested scopes included) and the primaries it STORES
+  into (`Stmt.g1Stores` — `pst[k] = …` poisons `pst`). Poisoning is
+  ordinary rebinding to `none` in the accumulator, so a read refuses
+  loudly and a later RHS that reads the name fails with it. A statement
+  whose binding set is UNKNOWN (`g1Binds = none`) poisons every name
+  bound so far and marks the module UNANALYSABLE;
+* the two facts are INDEPENDENT and both are needed. *Poisoned* is
+  per-name and answers "is this value trustworthy"; *analysable* is
+  per-module and answers "could CPython have bound a name we never
+  saw". Only a module in which every top-level statement's binding set
+  was determined may report a missing name as a faithful `NameError` —
+  everywhere else the miss is `unsupported`. (`isModuleDunder` is the
+  standing exception: `__name__`/`__doc__`/… are bound by the import
+  machinery, not by a statement, so a miss on one is never a
+  `NameError`.)
 * module init is evaluated at the fixed fuel `globalFuel` — independent of
   the caller's fuel, so results never vary across call sites and fuel
   monotonicity is untouched. A hypothetical constant needing deeper
-  evaluation times out into the `none` (out-of-tier) marking, loudly. -/
+  evaluation times out into the `none` (out-of-tier) marking, loudly.
+
+RECORDED GAP (owner-visible, PRE-EXISTING and now more exposed — see
+docs/backlog.md): the poisoning above is syntactic, so it does not see a
+mutation performed by CODE THE STATEMENT CALLS. A top-level `foo()` whose
+body runs `tbl["k"] = 1` mutates a module table that stays clean here,
+and an alias (`y = tbl` in a callee, then `y["k"] = 1`) escapes the store
+scan the same way. This hazard is not introduced by the dirty-name pass —
+the old single `complete` flag never guarded mutation either, only later
+BINDINGS — but the pass resolves more names, so more of them ride on it.
+Closing it wants two named pieces, both designed and neither built: G1 is
+IMPORT semantics, so an `if __name__ == "__main__":` guard is statically
+dead and need not be analysed at all; and a purity whitelist for the
+calls that remain (`dict`/`sum`/`tuple`/`range`, namedtuple construction)
+would let any other call poison every ref-carrying name soundly. -/
 
 /-- Fixed evaluation fuel for module-level right-hand sides. -/
 def globalFuel : Nat := 512
@@ -1895,13 +1932,24 @@ def lookupG : GlobalsAcc → String → Option (Option RVal)
   | [], _ => Option.none
   | (k, v) :: rest, id => if k == id then some v else lookupG rest id
 
-/-- The resolved (in-tier) globals as a runtime env (drops the out-of-tier
-markers). Shadowed earlier bindings are harmless: `Env.lookup` also takes
-the first match. -/
-def resolvedG : GlobalsAcc → REnv
+/-- The resolved (in-tier) globals as a runtime env, keeping only the
+LATEST binding of each name (`seen` accumulates the names already
+decided). Dropping the out-of-tier markers alone would be WRONG: a
+poisoned rebinding (`pst = {…}` then the loop that mutates `pst`) sits in
+FRONT of the value it invalidates, so a filter that removed only the
+marker would resurface the stale value — `lookupG`'s first-match rule
+already shadows it, and this must agree. -/
+def resolvedGAux (seen : List String) : GlobalsAcc → REnv
   | [] => []
-  | (k, some v) :: rest => (k, v) :: resolvedG rest
-  | (_, Option.none) :: rest => resolvedG rest
+  | (k, v) :: rest =>
+    if seen.contains k then resolvedGAux seen rest
+    else
+      match v with
+      | some x => (k, x) :: resolvedGAux (k :: seen) rest
+      | Option.none => resolvedGAux (k :: seen) rest
+
+/-- The resolved (in-tier) globals as a runtime env — see `resolvedGAux`. -/
+def resolvedG (acc : GlobalsAcc) : REnv := resolvedGAux [] acc
 
 /-- All-names view of a tuple target's elements. -/
 def targetNamesG : List Expr → Option (List String)
@@ -1909,63 +1957,181 @@ def targetNamesG : List Expr → Option (List String)
   | .name id _ :: rest => (targetNamesG rest).map (id :: ·)
   | _ => Option.none
 
+/-! ### What an out-of-tier top-level statement may have changed
+
+Two syntactic scans over the statement's whole subtree. `g1Binds` is the
+set of names it can REBIND (`none` = the shape is unanalysable, so the set
+is unknown); `g1Stores` is the set of module-level primaries it can MUTATE
+through a subscript/attribute target. Their union is what `globalsStep`
+poisons. Both are overapproximations of CPython — poisoning a name that
+was never touched only costs a loud refusal. -/
+
+/-- Names an assignment-like TARGET binds; `none` = unanalysable shape.
+A subscript/attribute target binds no name (it MUTATES — `g1Stores`). -/
+def targetBindsG : Expr → Option (List String)
+  | .name id _ => some [id]
+  | .tuple es _ | .list es _ => targetNamesG es.toList
+  | .subscript .. => some []
+  | .attribute .. => some []
+  | _ => Option.none
+
+/-- Elementwise `targetBindsG` over an assignment's target list. -/
+def targetBindsListG : List Expr → Option (List String)
+  | [] => some []
+  | t :: rest =>
+    match targetBindsG t, targetBindsListG rest with
+    | some a, some b => some (a ++ b)
+    | _, _ => Option.none
+
+/-- The PRIMARY name a store target reaches through (`a.b[k]` → `a`);
+`[]` when the chain does not bottom out in a name. -/
+def Expr.g1Primary : Expr → List String
+  | .name id _ => [id]
+  | .subscript v _ _ => v.g1Primary
+  | .attribute v _ _ => v.g1Primary
+  | _ => []
+
+mutual
+  /-- Primaries a single assignment TARGET stores into (a plain-name target
+  rebinds instead — `targetBindsG` covers that). -/
+  def Expr.g1TargetStores : Expr → List String
+    | .name _ _ => []
+    | .subscript v _ _ => v.g1Primary
+    | .attribute v _ _ => v.g1Primary
+    | .tuple es _ | .list es _ => Expr.g1TargetStoresList es.toList
+    | _ => []
+
+  /-- Elementwise `Expr.g1TargetStores`. -/
+  def Expr.g1TargetStoresList : List Expr → List String
+    | [] => []
+    | e :: es => e.g1TargetStores ++ Expr.g1TargetStoresList es
+end
+
+mutual
+  /-- Module-level primaries the statement's subtree STORES into. -/
+  def Stmt.g1Stores : Stmt → List String
+    | .assign tgts _ _ => Expr.g1TargetStoresList tgts.toList
+    | .augAssign t _ _ _ => t.g1TargetStores
+    | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      Stmt.g1StoresList b.toList ++ Stmt.g1StoresList o.toList
+    | .forStmt t _ b o _ =>
+      t.g1TargetStores ++ Stmt.g1StoresList b.toList ++ Stmt.g1StoresList o.toList
+    | _ => []
+
+  /-- Elementwise `Stmt.g1Stores`. -/
+  def Stmt.g1StoresList : List Stmt → List String
+    | [] => []
+    | s :: ss => s.g1Stores ++ Stmt.g1StoresList ss
+end
+
+mutual
+  /-- Names the statement's subtree can REBIND at module level; `none` =
+  the shape is unanalysable, so the set is unknown. Imports are decided by
+  the exact-text whitelist (`benignImportBinds`, Ast.lean) — anything else
+  is unknown, because an import runs arbitrary code. -/
+  def Stmt.g1Binds : Stmt → Option (List String)
+    | .assign tgts _ _ => targetBindsListG tgts.toList
+    | .augAssign t _ _ _ => targetBindsG t
+    | .forStmt t _ b o _ =>
+      match targetBindsG t, Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
+      | some a, some c, some d => some (a ++ c ++ d)
+      | _, _, _ => Option.none
+    | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      match Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
+      | some c, some d => some (c ++ d)
+      | _, _ => Option.none
+    | .ret .. | .exprStmt .. | .yieldStmt .. => some []
+    | .pass _ | .brk _ | .cont _ => some []
+    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
+      match benignImportBinds text with
+      -- a MODELLED name (`count` is `itertools.count`) must stay
+      -- unbound here, so resolution falls through to the model's
+      -- builtin; an unmodelled one is bound POISONED below
+      | some (n, modelled) => some (if modelled then [] else [n])
+      | Option.none => Option.none
+    | .unsupported .. => Option.none
+
+  /-- Elementwise `Stmt.g1Binds`. -/
+  def Stmt.g1BindsList : List Stmt → Option (List String)
+    | [] => some []
+    | s :: ss =>
+      match s.g1Binds, Stmt.g1BindsList ss with
+      | some a, some b => some (a ++ b)
+      | _, _ => Option.none
+end
+
+/-- Everything an out-of-tier top-level statement may have changed;
+`none` = unknown (it poisons the whole accumulator). -/
+def Stmt.g1Dirty (s : Stmt) : Option (List String) :=
+  (s.g1Binds).map (· ++ s.g1Stores)
+
+/-- An out-of-tier top-level statement's effect on the globals: POISON
+every name it may have changed (`Stmt.g1Dirty` — binds ∪ store
+primaries), which is an ordinary rebinding to `none`, so `lookupG` refuses
+the read and `resolvedG` shadows the stale value it replaces.
+
+`g1Dirty = none` — the statement's binding set is UNKNOWN — poisons every
+name bound so far and clears `analysable`, today's blunt behaviour, which
+is the only state where a missing name may not be reported as a
+`NameError`. Later bindings still evaluate: a constant RHS reads nothing,
+so nothing an earlier statement did can make it stale. -/
+def globalsDirty (h : Heap) (acc : GlobalsAcc) (analysable : Bool)
+    (s : Stmt) : Heap × GlobalsAcc × Bool :=
+  match s.g1Dirty with
+  | some ns => (h, ns.map (fun n => (n, (Option.none : Option RVal))) ++ acc, analysable)
+  | Option.none => (h, acc.map (fun p => (p.1, (Option.none : Option RVal))), false)
+
 /-- One module-level statement's effect on the init heap and the globals.
-`(h, acc, complete)`: `complete = false` once any statement could have
-bound a name invisibly. A failed RHS binds its names out-of-tier AND
+`(h, acc, analysable)`: `analysable = false` once a statement's binding
+set could not be determined. A failed RHS binds its names out-of-tier AND
 discards its partial allocations (the original heap rides through — no
-refs escape a refusal). -/
-def globalsStep (h : Heap) (acc : GlobalsAcc) (complete : Bool) :
-    Stmt → Heap × GlobalsAcc × Bool
+refs escape a refusal); everything out of tier goes to `globalsDirty`. -/
+def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable : Bool)
+    (s : Stmt) : Heap × GlobalsAcc × Bool :=
+  match s with
   | .assign tgts rhs _ =>
     match tgts.toList with
     | [.name id _] =>
-      -- once the globals are INCOMPLETE, later bindings are POISONED, not
-      -- valued: their RHS could read state an unprocessed statement
-      -- changed (a post-`while` `M = x` with the loop rebinding `x` —
-      -- binding the stale value would be silently wrong; reads of a
-      -- poisoned name stay loud).
-      if complete then
-        match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
-        | .ok (h', v) => (h', (id, some v) :: acc, complete)
-        | _ => (h, (id, Option.none) :: acc, complete)
-      else (h, (id, Option.none) :: acc, complete)
+      match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+      | .ok (h', v) => (h', (id, some v) :: acc, analysable)
+      | _ => (h, (id, Option.none) :: acc, analysable)
     | [.tuple es _] =>
       match targetNamesG es.toList with
       | some ids =>
-        if complete then
-          match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
-          | .ok (h', .tuple vs) =>
-            if ids.length == vs.size then
-              (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-            else (h, ids.map (·, Option.none) ++ acc, complete)
-          | .ok (h', .listV vs) =>
-            if ids.length == vs.size then
-              (h', (ids.zip (vs.toList.map some)).reverse ++ acc, complete)
-            else (h, ids.map (·, Option.none) ++ acc, complete)
-          | _ => (h, ids.map (·, Option.none) ++ acc, complete)
-        else (h, ids.map (·, Option.none) ++ acc, complete)
-      | Option.none => (h, acc, false)
-    | _ => (h, acc, false)
-  | .exprStmt _ _ => (h, acc, complete)
-  | .pass _ => (h, acc, complete)
-  | _ => (h, acc, false)
+        match evalGlobalExpr h (resolvedG acc) globalFuel rhs with
+        | .ok (h', .tuple vs) =>
+          if ids.length == vs.size then
+            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, analysable)
+          else (h, ids.map (·, Option.none) ++ acc, analysable)
+        | .ok (h', .listV vs) =>
+          if ids.length == vs.size then
+            (h', (ids.zip (vs.toList.map some)).reverse ++ acc, analysable)
+          else (h, ids.map (·, Option.none) ++ acc, analysable)
+        | _ => (h, ids.map (·, Option.none) ++ acc, analysable)
+      | Option.none => globalsDirty h acc analysable s
+    | _ => globalsDirty h acc analysable s
+  | .pass _ => (h, acc, analysable)
+  -- a bare expression binds nothing; `globalsDirty` records that it can
+  -- still STORE (and the recorded call-mutation gap in the section
+  -- comment above)
+  | s => globalsDirty h acc analysable s
 
 /-- Fold `globalsStep` over the top-level statements (source order). -/
-def globalsFold (h : Heap) (acc : GlobalsAcc) (complete : Bool) :
+def globalsFold (h : Heap) (acc : GlobalsAcc) (analysable : Bool) :
     List Stmt → Heap × GlobalsAcc × Bool
-  | [] => (h, acc, complete)
+  | [] => (h, acc, analysable)
   | s :: rest =>
-    match globalsStep h acc complete s with
-    | (h', acc', complete') => globalsFold h' acc' complete' rest
+    match globalsStep h acc analysable s with
+    | (h', acc', analysable') => globalsFold h' acc' analysable' rest
 
 /-- The whole module-init result: the init heap, the accumulator, and the
-completeness flag — a pure function of the module (fixed `globalFuel`). -/
+ANALYSABLE flag — a pure function of the module (fixed `globalFuel`). -/
 def moduleInit (m : Module) : Heap × GlobalsAcc × Bool :=
   globalsFold #[] [] true m.topLevel.toList
 
-/-- The module's constant globals: `(bindings, complete)` — the static
+/-- The module's constant globals: `(bindings, analysable)` — the static
 name-resolution table (see the section comment for why static reads are
-faithful). -/
+faithful, and for what the two independent facts mean). -/
 def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
   (moduleInit m).2
 
@@ -2454,6 +2620,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             .unsupported s!"referencing namedtuple class '{id}' as a value is outside the tier (namedtuple classes are called, not passed)"
           else if isBuiltinName id then
             .unsupported s!"referencing builtin '{id}' as a value is outside the v0 tier"
+          else if isModuleDunder id then
+            .unsupported s!"module attribute '{id}' is bound by the import machinery, not by a statement — outside the G1 tier"
           else if (moduleGlobals m).2 then
             .exn st (.nameError id)
           else
@@ -2693,6 +2861,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- the effect must thread World.stdout through this block;
                     -- until then a wrong NameError would be silently unfaithful
                     .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
+                  else if isModuleDunder fname then
+                    .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
                   else if (moduleGlobals m).2 then
                     .exn st (.nameError fname)
                   else

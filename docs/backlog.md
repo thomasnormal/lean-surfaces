@@ -374,8 +374,11 @@ refusal for an unknown module-level name into a faithful `NameError`.
    relaxing it wants a rebinding analysis, recorded here rather than
    guessed.~~ **DONE** — implemented exactly as designed; the rule
    admits `king_capture`'s genexp and refuses `bound`'s, as predicted.
-2. **The G1 dirty-name pass** above — the actual blocker for the named
-   target. Nothing else on this list gates `gen_moves`.
+2. ~~**The G1 dirty-name pass** above — the actual blocker for the named
+   target. Nothing else on this list gates `gen_moves`.~~ **DONE**
+   (2026-08-09) — built as designed, with both owner calls answered as
+   recorded below; `Position.gen_moves` now runs on the shipped file and
+   yields CPython's 20 opening moves in CPython's order.
 3. **`sorted(key=)`** — orthogonal but needed for `moves()`'s ordering,
    as is `sorted`/`max`/`all` over a generator (all three DRAIN it, so
    they need the stateful stepper, not the pure helpers they use today).
@@ -458,3 +461,80 @@ cannot run a module containing an import at all, and its live-suffix
 shell has a `while` case only (so a `print` inside a top-level `for` is
 loud); and the `Position.value()` warm-up on the shipped file is still
 unclaimed — note it now needs the same G1 fix, since `pst` is poisoned.
+
+## The G1 dirty-name pass — BUILT (2026-08-09)
+
+The blocker recorded above is gone. `globalsStep`'s single `complete`
+boolean is replaced by TWO independent facts (docs/memory-model.md
+§the dirty-name pass is normative):
+
+* **poisoned, per NAME** — an out-of-tier top-level statement poisons the
+  names it BINDS anywhere in its subtree (`Stmt.g1Binds`) plus the
+  primaries it STORES into (`Stmt.g1Stores`). Poisoning needed no new
+  state: it is an ordinary rebinding to `none` in the accumulator. That
+  exposed a latent bug worth naming — `resolvedG` dropped the `none`
+  markers, so the poisoning entry (which sits in FRONT of the value it
+  invalidates) would have RESURFACED the stale value; it now keeps only
+  the latest binding per name (`resolvedGAux`), agreeing with `lookupG`.
+* **analysable, per MODULE** — cleared only when a statement's binding
+  set could not be determined, which also poisons the whole accumulator.
+  This is the sole gate on the faithful `NameError`.
+
+**The two owner calls, as answered.** (1) A simple import counts as
+benign only through an EXACT-TEXT whitelist, `benignImportBinds`
+(Ast.lean) — the table the namedtuple census already had for its single
+member, now shared by both and extended to the three stdlib imports the
+shipped file uses. Each row records whether the model already gives the
+bound name a meaning: `count` IS `itertools.count` in `isBuiltinName`,
+so G1 binds nothing and resolution falls through; `time` is unmodelled
+and is bound POISONED (loud — never a fake `NameError` for a name
+CPython did bind). (2) `analysable` is a SEPARATE per-module flag, so
+the `NameError` is never invented for a file we did not fully
+understand. One thing the design did not anticipate: making sunfish
+analysable would have turned `__name__` into a fake `NameError`, since
+the import machinery binds it and no statement does — `isModuleDunder`
+now keeps `__name__`/`__doc__`/… loud in every module.
+
+**Result on the shipped file** (pinned by `#guard` in
+`Examples/python/sunfish/spec.lean`, not merely described): `time`
+poisoned; `piece`/`pst` valued, then the `for k, table in pst.items()`
+loop poisoning `pst`/`padrow`/`table`/`k`, so `K_MID = pst["K"]` stays
+correctly poisoned; `A1/H1/A8/H8`, `initial`, `N/E/S/W`, `directions`,
+`MATE_LOWER`/`MATE_UPPER` and the search constants all resolve; the
+module is analysable. `Position.gen_moves` then RUNS: 20 moves on the
+real opening board, CPython's answer in CPython's order.
+
+Validation beyond the pinned run: the model's `gen_moves` on the shipped
+file was checked against CPython on 53 positions / ~1195 moves — 40
+reached by random play from the opening plus 13 adversarial boards
+(promotion push and promotion captures, en passant, king-passant
+squares, castling in all four rights combinations, sliders, edge
+knights, and both pawn double-move boundaries). All agree, order
+included.
+
+**OPEN, owner-level — the module-init mutation gap.** The poisoning scan
+is syntactic, so it does not see a mutation performed by code the
+statement CALLS: a top-level `foo()` whose body runs `tbl["k"] = 1`, or
+an alias taken inside a callee, mutates a table that stays clean. This
+is PRE-EXISTING — the old `complete` flag guarded later BINDINGS, never
+mutation — but more names resolve now, so more rides on it, and on
+sunfish it is load-bearing: the last top-level statement is
+`if __name__ == "__main__": main()`, and the model resolves `directions`
+without accounting for it. Two named pieces close it and neither is
+built:
+
+1. **G1 is IMPORT semantics** — its own section comment says so ("CPython
+   executes a module's top-level statements once, at import time"). Under
+   import, `__name__` is the module name, so an `if __name__ ==
+   "__main__":` guard with an empty `orelse` is statically DEAD and need
+   not be analysed at all. This is exact, not an approximation, but it
+   changes what the model claims about a file run as a script, so it is
+   the owner's call.
+2. **A purity whitelist for the calls that remain.** With `dict`/`sum`/
+   `tuple`/`range` and namedtuple construction certified store-free, ANY
+   other call in an out-of-tier top-level statement could soundly poison
+   every ref-carrying name. On sunfish that leaves the `pst` loop's
+   opaque `padrow` lambda poisoning `piece`/`pst` (costing `MATE_LOWER`,
+   which `Searcher.bound` will want) and nothing else — `directions`
+   survives, because every statement after it is either in tier or a
+   whitelisted call.

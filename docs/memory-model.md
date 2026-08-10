@@ -612,6 +612,69 @@ sufficient only for the closed-function tier. Module-global dicts are
 shared across nested calls within one public call and recreated across
 two public calls (regression case 15).
 
+### The dirty-name pass (2026-08-09, BUILT — replaces the `complete` flag)
+
+The G1 fold used to carry one boolean, `complete`, and clear it at the
+first top-level statement it could not analyse; every LATER binding was
+then poisoned. On the shipped `sunfish.py` that first statement is
+`import time`, line 12, so *every* module global was poisoned and
+`Position.gen_moves` refused at `directions[p]`. The flag conflated two
+independent questions, and the fold now answers them separately.
+
+**Poisoned is per NAME.** An out-of-tier top-level statement poisons only
+what it may have changed: the names it BINDS anywhere in its subtree
+(`Stmt.g1Binds`) and the primaries it STORES into (`Stmt.g1Stores` —
+`pst[k] = …` poisons `pst`). Poisoning is an ordinary rebinding to `none`
+in the accumulator, so it needs no new state: `lookupG` refuses the read,
+a later right-hand side that mentions the name fails with it, and
+`resolvedG` shadows the stale value the poisoning replaces. That last
+point is load-bearing and was a latent bug: a poisoning entry sits in
+FRONT of the value it invalidates, so `resolvedG` must keep only the
+latest binding per name (`resolvedGAux`), not merely drop the markers.
+
+**Analysable is per MODULE.** A statement whose binding set cannot be
+determined (`g1Binds = none` — an unwhitelisted `import`, a starred or
+chained target, an opaque construct) poisons the whole accumulator AND
+clears `analysable`. Resolution then reads: bound and clean → the value;
+poisoned → loud refusal; absent and the module analysable → the faithful
+`NameError`; absent otherwise → loud refusal. The `NameError` is never
+invented for a file we did not fully understand. `isModuleDunder` is the
+standing exception — `__name__`/`__doc__`/… are bound by the import
+machinery, not by any statement, so a miss on one is loud even in an
+analysable module.
+
+**Imports are decided by an EXACT-TEXT whitelist**, `benignImportBinds`
+(Ast.lean) — the table the namedtuple census already established for its
+single member, now shared and extended to the three stdlib imports the
+shipped file uses. A blanket "imports are benign" would be a genuinely
+wider claim (an import runs code, and a circular one can mutate the
+importer). A whitelisted row records whether the model already gives the
+bound name a meaning: `count` IS `itertools.count` in `isBuiltinName`, so
+G1 binds nothing and resolution falls through to it; `time` is
+unmodelled, so it is bound POISONED — loud, never a fake `NameError` for
+a name CPython did bind.
+
+On the shipped file this resolves exactly the intended set, kernel-
+checked: `time` poisoned; `piece`/`pst` valued, then the
+`for k, table in pst.items()` loop poisons `pst`/`k`/`table`/`padrow`, so
+`K_MID = pst["K"]` stays correctly poisoned; and `A1/H1/A8/H8`,
+`initial`, `N/E/S/W`, `directions`, `MATE_LOWER`/`MATE_UPPER`, the search
+constants all resolve. The module is `analysable`. `Position.gen_moves`
+then runs on the shipped file and yields CPython's 20 opening moves in
+CPython's order.
+
+**RECORDED GAP, owner-visible.** The scan is syntactic, so it does not
+see a mutation performed by code the statement CALLS: a top-level
+`foo()` whose body runs `tbl["k"] = 1`, or an alias taken inside a
+callee, mutates a table that stays clean here. The hazard is NOT
+introduced by this pass — the old `complete` flag never guarded mutation
+either, only later bindings — but more names now resolve, so more rides
+on it. Two named pieces close it and neither is built: G1 is IMPORT
+semantics, so an `if __name__ == "__main__":` guard is statically dead
+and need not be analysed; and with a purity whitelist for the calls that
+remain (`dict`/`sum`/`tuple`/`range`, namedtuple construction) any other
+call could soundly poison every ref-carrying name.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

@@ -935,3 +935,30 @@ example was re-pinned to the new bytes.
    sunfish spec elaboration from ~900–1800 s to 4782 s (~80 min) —
    the capstone file is now BY FAR the build's long pole; batch
    battery 939 rows / 0 failed / 70 whitelisted; corpus 20 / 0.
+
+**Pass 5 is COMPLETE. The search() frontier after it, surveyed on the
+shipped file** (what stepping FURTHER would hit, in order):
+
+* **The 2048-node wall is the ONLY blocker to deeper stepping.**
+  search()'s own body is now fully in tier (the post-#158 rewrite
+  removed the `isupper` genexp — pass 4's "verify with a row" item is
+  MOOT, `isupper` survives only in a comment; the K-swap, the split
+  chain, `.clear()`, the MTD frames and the yield tuple all landed).
+  Depth-3+ stepping crosses `self.nodes % 2048 == 0` where
+  `time.time()` is dynamically LIVE (deadline = `1 << 63`, no None
+  test) and refuses loudly — pinned by the `nodes = 2047` searcher
+  row. Passing it is the standing OWNER-GATED abstraction decision
+  (memory-model §wall-clock time): a recorded deadline abstraction
+  (e.g. the poisoned binding admitting a symbolic
+  "never-expiring clock" whose reads are pinned dead-by-value), never
+  a silent stub.
+* **The eviction `del`s** (bound(): `del self.tp_move[next(…)]`,
+  `del self.tp_score[next(iter(…))]`) ingest as
+  `Stmt.unsupported "Delete"` and are dynamically DEAD below
+  TABLE_SIZE — no search-stepping depth reachable under the node wall
+  ever executes them. They gate nothing until the wall falls.
+* **main()/UCI** stays the leanpy-shell surface (far beyond one
+  milestone); `input` is still absent from `isBuiltinName` (recorded
+  pass-4 gap — add loud with the next builtin sweep, it rides any
+  future Semantics.lean rebuild rather than paying the 80-min pole
+  alone).

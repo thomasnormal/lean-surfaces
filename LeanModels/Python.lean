@@ -7,6 +7,7 @@ import LeanModels.Python.Surface
 import LeanModels.Python.Semantics
 import LeanModels.Python.Logic
 import LeanModels.Python.Obs
+import LeanModels.Python.ClockErase
 import LeanModels.Python.VC
 import LeanModels.Python.VC2
 import LeanModels.Python.VCTests

@@ -1005,3 +1005,45 @@ block (Obs.lean); its payoff is transporting every existing concrete
 empty-trace pin — the whole pass-5 stepped-search battery — to `∀ tr`
 statements at zero marginal kernel cost, the honest route to
 "safety is trace-independent" at search scale.
+
+## Pass 7 — CLOCK ERASURE lands (2026-08-11)
+
+The meta-theorem above is BUILT (`LeanModels/Python/ClockErase.lean`;
+docs/memory-model.md §clock erasure carries the design AND the as-built
+record): `clockErase` — the 18-conjunct fuel induction mirroring
+`fuelMono` arm for arm — plus the boundary corollaries
+(`callFunctionClock_ok`/`_exn`/`_timeout`, `CallsIn.clock_erased`,
+`CallsTo.clock_erased`, `initWorld_clock`). Every decided empty-trace
+fact in the repo now transports to a `∀ tr` statement at the cost of
+one kernel run; `clock_lab.pure_sum_all_traces_transported` is the
+exemplar (fuel 4096, `by rfl` + transport — compare the pass-6
+symbolic route, fuel 64 and ~20 s of `py_simp`).
+
+**Open, in order (the pass-7 remainder):**
+
+1. **Split the spec pole.** `Examples/python/sunfish/spec.lean`
+   elaborates ~17–80 min as ONE file and every re-pin pays all of it.
+   Split into per-capstone files (pst/value pins; gen_moves; ordering;
+   bound() battery; stepped search; clock pins) so no single file
+   exceeds ~15 min and partial re-verification is possible; keep the
+   `load_program` JSON-trap note in every new envelope-loading module.
+   The sunfish stepped-search `∀ tr` corollaries (the erasure payoff at
+   search scale) land WITH the split, in the clock-pins file, riding
+   `DecidableEq` instances for `Val`/`PyErr`/`Res Val` + `decide
+   +kernel` for their empty-trace hypotheses (the measured
+   elaborator/kernel gap, memory-model §clock erasure as-built:
+   `by rfl` costs minutes of elaborator whnf even on trivial concrete
+   runs), plus the promotion of `clock_lab`'s local
+   `callFunctionClock_nil` bridge into ClockErase.lean — all on the one
+   Runtime/ClockErase rebuild the split already pays.
+2. **Re-pin to current engine master** (the pinned file is stale
+   again): the QS-loop filter-before-sort optimization (matches the
+   model's movesAbove form directly), explicit castling gen, branchless
+   castling rights, the literal-membership capture test, the style pass
+   (inlined single-statement bodies), the score-cap restore in the null
+   gate, and the killer depth gate (the `tp_move` store gains
+   `and depth`). All in-tier constructs. Fresh CPython-derived
+   expectations for EVERY pin — never reuse old numbers.
+3. Then, per the standing order: deeper stepping (depth 2–3 bracket
+   convergence under the trace clock), the `.exn` covenant extension
+   for `tryStmt` heapFree, the UCI/`main()` surface survey.

@@ -1584,8 +1584,69 @@ member, the appended-LAST ordering preserved):
 Payoff target, in order: the sunfish stepped-search `∀ tr` theorem
 (the shape pass 6 promised) as a corollary of the existing concrete
 pins plus this lemma; later, `Monotone`-conditioned deadline theorems
-on the same transport. As-built deltas will be recorded here when the
-induction lands.
+on the same transport.
+
+**BUILT (pass 7, `LeanModels/Python/ClockErase.lean`) — as designed,
+with the as-built record:**
+
+* The induction is assembled from PER-MEMBER ARM LEMMAS (`ce<F>_succ`,
+  each taking the whole 18-conjunct `CE fuel` as its induction
+  hypothesis) rather than one monolithic `induction … with` block —
+  every arm is independently compilable during development and the
+  final `clockErase` is a two-line induction. Conjunct order is
+  `fuelMono`'s exactly.
+* **The workhorse replacing `fuelMono`'s `Run.le_refl`:**
+  `ClockErasedF.of_seed` (and the `W` twin) — any fuel-free tail whose
+  seeded family is literally `Run.seedF` of its base run is erased;
+  the equation is provable by the withClock simp NORMAL FORM
+  (projection lemmas; `withClock_mk` constructor-unfoldings — seeded
+  updates and base leaves meet at `World.mk … tr`; `liftRes`/
+  `withLocals`/`toWorld` seed-naturality), and the `h0` side pins the
+  base's decided clock through `FrameState.withClock_self` at the
+  site's emptiness hypothesis. Congruences for the combinator spine:
+  `bind`, `bindE`, `liftRes`, `ite`, `ClockErasedW.withLocals`,
+  `ClockErasedF.toWorld`. The clock admission is withClock-invariant
+  (`isClockCall_withClock`/`clockRecvOk_withClock`, in the `ce_norm`
+  normal-form simp set); the pop arm itself closes by the vacuous
+  `unsupported` leaf, exactly as designed.
+* **Mechanical traps, measured on this file:** (1) `exact … (by …)`
+  COMMITS inside `try`/`first` even when the nested block fails (the
+  recorded py_prove trap, live again here) — a `cases X <;> try
+  (…of_seed…)` script that PARTIALLY applies poisons the remaining
+  goals; every such site is written as explicit per-constructor arms.
+  (2) The relation's seeded clauses carry a BETA-REDEX (`y tr` with `y`
+  a lambda): consume them with `simp only [hy]`, never `rw [hy tr]`.
+  (3) `cases h : <scrutinee>` finds no occurrence under an UNREDUCED
+  nested matcher — force it with `dsimp only` first (`stepIter`'s
+  status arms, the kw plan arms, `next`/`enumerate`'s list matchers).
+  (4) Continuation goals regenerate `(s.withClock tr)` projections —
+  `ce_norm` before any relational step whose head mentions the state's
+  fields.
+* **The boundary corollaries:** `initWorld_clock` (`(initWorld m).clock
+  = []` — the base regime is definitional); `callFunctionClock_ok`/
+  `_exn`/`_timeout` (a decided/timed-out `callFunction` equals
+  `callFunctionClock` at EVERY trace); `CallsIn.clock_erased` (stateful
+  transport, after-world seeded `w'.withClock tr`);
+  `CallsTo.clock_erased` (every `==>` fact holds under every trace).
+* **The exemplar** (`clock_lab.pure_sum_all_traces_transported`): the
+  `∀ tr` statement as `callFunctionClock_ok` applied to the SINGLE
+  empty-trace instance of the pass-6 theorem (through the local
+  `[]`-boundary bridge `callFunctionClock_nil` — promotion to
+  ClockErase.lean rides the next core rebuild). The `∀ tr` costs
+  nothing beyond the one empty-trace proof.
+* **MEASURED: the elaborator/kernel gap on concrete hypotheses.** The
+  first exemplar draft discharged the hypothesis by `by rfl` on the
+  concrete run — that costs ~2 minutes of elaborator `whnf` (>1.6M
+  heartbeats) EVEN AT FUEL 64 on a ten-iteration loop, fuel-
+  independent: elaborator reduction is ~1000× slower than the kernel
+  evaluation `#guard` uses on this interpreter. Consequence: transport
+  hypotheses are discharged from EXISTING theorems (the exemplar's
+  route) or — at search scale, where no symbolic theorem exists — by
+  KERNEL-side decision: derive `DecidableEq` for the result types
+  (`Val`/`PyErr`/`Res Val`) and close with `decide +kernel`, never
+  `by rfl`. The instances ride the next Runtime.lean rebuild (the
+  spec-pole split commit), and the sunfish stepped-search `∀ tr`
+  corollaries land there with them.
 
 ## Heap well-formedness (explicit invariant)
 

@@ -106,3 +106,15 @@ the measured route note there records why not `rfl`). -/
 theorem pure_sum_all_traces (tr : ClockTrace) :
     callFunctionClock clock_lab "pure_sum" #[.int 10] tr 64 =
       .ok (.int 55) := by proofs
+
+/-- The SAME statement by the pass-7 CLOCK-ERASURE transport
+(`callFunctionClock_ok`, docs/memory-model.md §clock erasure): the
+meta-theorem transports the SINGLE empty-trace instance of the theorem
+above to every trace — the `∀ tr` costs nothing beyond the one
+empty-trace proof. This is the route the search-sized `∀ tr`
+statements take (their empty-trace instances are kernel-discharged —
+the as-built section records the measured elaborator/kernel gap and
+the `decide +kernel` plan). -/
+theorem pure_sum_all_traces_transported (tr : ClockTrace) :
+    callFunctionClock clock_lab "pure_sum" #[.int 10] tr 64 =
+      .ok (.int 55) := by proofs

@@ -1100,9 +1100,28 @@ reduction is ~1000× native per interpreter step (a 2-node bound() run
 interpreter is re-engineered for kernel reduction (recorded, not
 scheduled).
 
-**Open after milestone 1:** the tryStmt-heapFree `.exn` covenant
-extension (the last recorded proof-layer candidate); the leanpy/UCI
-shell surface (running sunfish_ui.uci would be a NEW file's surface,
-not sunfish.py's — an owner-scoped direction); deeper stepping beyond
-depth 4 (more readings, same machinery — cost-gated, not
-construct-gated).
+**Milestone 2 — the UCI surface SURVEYED (same day, the honest
+verdict):** `sunfish_ui/uci.py` (551 lines) was extracted and censused.
+The blocking construct is not a tier rung — it is CONCURRENCY: the go
+loop runs searches on a `concurrent.futures.ThreadPoolExecutor` with a
+`threading.Event` for stop/ponderhit, under a `functools.partial`-
+rebound `print` and float time budgets. A definitional single-frame
+interpreter has NO thread semantics, and inventing them silently is
+everything this project refuses. Construct census beyond threads (all
+loud today): `import re/random/functools`, f-strings (8), float
+division (3), a ListComp, a `with`, a `global`, `input()`/`print`
+effects, `%`-format specs. VERDICT, recorded owner-visibly: the model's
+"whole-file" claim for sunfish.py honestly TERMINATES at `main()`'s
+pinned external-import boundary; running the real UCI interface under
+the model is out of scope BY KIND (concurrency), not by distance. If a
+UCI-under-model story is ever wanted, the honest routes are (a) a
+THREAD-FREE synchronous UCI driver as a new engine-side artifact
+(owner-scoped), or (b) leanpy-level line-I/O with every threaded
+construct refused loudly — both new named targets, neither started.
+
+**Open after milestone 2:** the tryStmt-heapFree `.exn` covenant
+extension (the last recorded proof-layer candidate — a worldInv
+exn-clause rework, fuelMono-scale; NO sunfish payoff since class-
+bearing modules never enter the fragment); the leanpy script-mode
+trace flag (pass-6 deferral — small); deeper stepping beyond depth 4
+(more readings, same machinery — cost-gated, not construct-gated).

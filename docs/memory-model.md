@@ -1161,6 +1161,15 @@ model refuses loudly at that exact evaluation, one node in (never a
 `time_dead`/`time_live` rows are unchanged and still pin both
 directions at lab scale.
 
+AMENDED (pass 6, owner-approved): the refusal wall for the exact call
+`time.time()` is replaced by the TRACE CLOCK — time as an input, a
+clock trace threaded through `World`, popped per call, empty trace a
+loud underrun refusal (docs/memory-model.md §the trace clock below).
+Everything else in this section stands: the poisoned binding remains
+the abstraction for every OTHER impure surface (`time` as a value,
+`time.sleep`, any other module attribute), and no reading is ever
+invented — readings come from the trace or the evaluation refuses.
+
 ## bound() end-to-end (pass 4 capstone — the last mechanical constructs)
 
 Everything `Searcher().bound(pos, gamma, depth)` needs beyond the
@@ -1350,6 +1359,138 @@ closed:
    consult in name resolution: the primary `pst` resolves through
    `World.globals` to the live ref and `heapStore` proceeds. Claimed by
    differential rows (init_lab `swap_a`), not new code.
+
+## The trace clock (pass 6 — time as an INPUT, the owner-approved design)
+
+The pass-4 §wall-clock time decision said the wall clock has NO value in
+the model. That stands — refined, not reversed: the wall clock still has
+no value the model INVENTS. What changes is where readings come from:
+**time is an input, not an effect.** `World` gains a CLOCK TRACE — a
+finite list of readings, consumed in order — and evaluating the exact
+call `time.time()` POPS the next reading. The old poisoned-binding
+refusal remains the abstraction for every OTHER impure surface: `time`
+as a bare value, `time.sleep(…)`, any other attribute of the module, and
+every other unmodelled import keep refusing loudly at evaluation. This
+replaces the "impure builtin refuses on evaluation" wall for exactly one
+call shape, and unblocks deep `search()` stepping past the 2048-node
+frontier.
+
+**Representation: the trace is `List Int`, readings are OPAQUE integers.**
+The decision and its soundness argument, recorded honestly:
+
+* CPython's `time.time()` returns an IEEE-754 double. The model has no
+  float tier anywhere, and a float reading would immediately meet
+  arithmetic whose rounding the model refuses to guess. The shipped
+  file's only in-tier clock consumer is `bound()`'s
+  `time.time() > self.deadline` (line 328) — a single comparison against
+  an int-valued attribute (`1 << 63`, or whatever the driver stored).
+* The trace domain is therefore ℤ, and the RECORD-REPLAY boundary keeps
+  the differential claim exact: the harness's recording clock
+  (CPython side) returns `time.time_ns() // 1000` — an **int** in
+  integer microseconds — and records exactly what it returned. The
+  oracle run itself consumes those integer readings, and the model
+  replays the same list. Both sides see literally the same values, so
+  exact equality is preserved end to end; nothing is quantized AFTER
+  the fact.
+* The claim is scoped, loudly: the model says NOTHING about runs under
+  float readings. `model(tr) = CPython(tr)` for integer traces `tr` —
+  and the shipped comparison site factors through an exact int/int
+  comparison under any integer trace, while CPython's own float-int
+  comparison at that site is also mathematically exact, so the integer
+  restriction loses no behavior OF THAT SITE (both branch outcomes are
+  reachable by integer traces). Extending readings to exact dyadic
+  rationals (every double is one) is sound but pointless until floats
+  exist elsewhere in the tier; that extension is a future recorded
+  decision, not a widening of this one.
+* Microsecond scaling is a HARNESS CONVENTION of record mode (real-clock
+  magnitude, still an int, still under `1 << 63` — the dead-clock regime
+  survives recording); the model semantics is unit-agnostic. Synthetic
+  traces choose their own units, consistently with the deadlines they
+  are compared against.
+
+**Pop semantics.** `World.clock : List Int := []`. Evaluating the
+admitted call shape pops the head: result `.int t`, world's clock := the
+tail. An EMPTY trace is the LOUD refusal "clock trace underrun" —
+fuel-independent, per the loudness doctrine: a trace underrun is a spec
+error in the run's INPUT, never a silent 0, never a timeout. `initWorld`
+seeds `[]` (the pinned file's regime: any reachable `time.time()` under
+an empty trace refuses at the exact consultation point, the pass-5
+frontier pin's behavior with a sharper message). The public boundary
+gains `callFunctionClock m f args clock fuel` — `callFunction` with the
+world's trace seeded; `CallsIn` carries traces through its explicit
+world, as for every world-dependent claim.
+
+**Admission — exactly `time.time()`, decided by the pure `isClockCall`.**
+The arm fires in the call-with-attribute-receiver dispatch BEFORE the
+receiver evaluates (the receiver's own evaluation is the poisoned
+refusal), if and only if ALL of:
+
+1. the call is literally `<name>.time()` with `<name> = "time"`, the
+   attribute `"time"`, NO arguments and NO keywords (the attr test is
+   the FIRST conjunct, outside the receiver match, so the heap-free
+   fragment's `.get` arm reduces `isClockCall` to `false` by `rfl` and
+   world-symbolic proofs never consult the world here);
+2. the name is UNSHADOWED at the consultation point: not in frame
+   locals, statically POISONED in the G1 table (the benign-import
+   binding's state), and absent from the live view (a rebound-during-
+   init `time` falls through to the ordinary arms);
+3. the module CENSUS `moduleClockOk` passes: some top-level statement is
+   the exact benign import `import time`, NO other analysable top-level
+   statement binds or stores `time` (an unanalysable statement fails the
+   census — it might), and no function or class subtree carries `global`
+   (the extractor-recorded `has_global`, the namedtuple census's
+   discipline) — so the poisoned binding provably IS the import's, not
+   some out-of-tier rebinding's.
+
+Everything failing the admission takes today's path (poisoned refusal /
+faithful errors), verbatim. `time.time(x)` refuses loudly (CPython would
+evaluate args then raise `TypeError`; the model never fakes it).
+`time.time()` under kwargs syntax rides the H6 loud arm unchanged.
+
+**Fragments and meta-theorems.** The clock call is an attribute call
+with attr ≠ `"get"`, so it is ALREADY outside `Expr.heapFree` — the
+fragment is undisturbed and `worldInv` stays true as stated (its
+attribute arm picks up the `isClockCall = false`-by-`rfl` reduction).
+`fuelMono`: the new arm is fuel-free on both sides of the pop. No new
+mutual member, no appended conjuncts.
+
+**Record-replay in the harness.** A `cases.json` case may carry
+`"clock"`: either a literal trace (list of ints — BOTH sides replay it:
+CPython through a per-module stub object bound to the module's `time`
+name, the model through the job's `"clock"` field) or `"record"` (the
+CPython side's stub reads the real clock as integer microseconds,
+records, and returns; the recorded list becomes the model's trace). A
+CPython-side underrun raises a distinctively-named exception that can
+never match anything. Rows without `"clock"` run exactly as before
+(empty trace). Batch jobs gain the optional `"clock"` field
+(`callFunctionClock`); script mode has NO trace flag yet — a top-level
+`time.time()` underruns loudly — recorded as deferred, not designed.
+
+**Axiom classes over traces (groundwork).** Trace classes are named
+predicates on `List Int` (Logic.lean): `ClockTrace.WallClock` — the
+unconstrained class, `True`, so a `∀ tr` theorem IS a WallClock theorem
+(no axioms consumed); `ClockTrace.Monotone` — nondecreasing readings
+(`List.Pairwise (· ≤ ·)`), the class future deadline-abstraction
+theorems will consume ("once expired, always expired" needs it; nothing
+consumes it yet — stated, not spent). The FIRST trace-quantified theorem
+shape: **safety is trace-independent when the run never consults the
+clock** — concretely, the pass-5 stepped-search results hold FOR ALL
+traces (`∀ tr`, the four pinned `(depth, gamma, score, move)` tuples and
+node counts are unchanged with `clock := tr`), provable by `rfl` because
+the sub-2048-node runs never scrutinize the trace, so kernel reduction
+never blocks on the free variable. The recorded CPython trace for those
+steps is EMPTY — CPython never called `time.time()` below the node wall
+— and the `∀ tr` statement is strictly stronger than replaying it.
+
+**As-built deltas** are recorded at the end of this section when the
+implementation lands, per the standing discipline. Predicted flips the
+build will make, named up front so they are review points, not
+surprises: exc_lab's `time_live` message pin (poisoned-binding message →
+underrun message — still loud, one message sharper) and the sunfish
+2047-searcher frontier pin's REASON (same `.unsupported` shape,
+underrun instead of poisoned binding), which also gains the armed pair —
+a trace that lets the 2048th node continue to CPython's exact
+`(bound, nodes)`, and one that raises `Stop` at that node.
 
 ## Heap well-formedness (explicit invariant)
 

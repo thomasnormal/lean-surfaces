@@ -962,3 +962,28 @@ shipped file** (what stepping FURTHER would hit, in order):
   pass-4 gap — add loud with the next builtin sweep, it rides any
   future Semantics.lean rebuild rather than paying the 80-min pole
   alone).
+
+## Pass 6 — THE TRACE CLOCK (2026-08-11, owner-approved design; in flight)
+
+The 2048-node wall's owner-gated decision is DECIDED: time as an
+INPUT, not an effect (docs/memory-model.md §the trace clock is
+normative — designed there FIRST, per the standing discipline).
+`World` gains a clock trace (`List Int`, opaque integer readings);
+evaluating exactly `time.time()` (unshadowed, benign-import census)
+pops the next reading; empty trace = LOUD underrun refusal (a spec
+error in the input, never a silent 0). The old poisoned-binding
+refusal stays for every other impure surface. Record-replay in the
+harness: the CPython oracle's monkeypatched clock returns integer
+microseconds (`time.time_ns() // 1000`) and records them; the model
+replays the same integers — exact equality end to end, no
+post-quantization. Trace classes (`WallClock` = unconstrained,
+`Monotone` = nondecreasing) land as named predicates; the first
+trace-quantified theorem is the pass-5 stepped-search pins FOR ALL
+traces (`rfl`: sub-2048-node runs never scrutinize the trace).
+
+Deliberately deferred with it, recorded: a script-mode trace flag
+(top-level `time.time()` underruns loudly until then); dyadic-rational
+readings (sound — every double is one — but pointless without a float
+tier; a future recorded decision); `Monotone`-consuming deadline
+theorems ("once expired, always expired") — stated class, nothing
+spends it yet.

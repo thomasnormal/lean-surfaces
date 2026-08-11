@@ -5,7 +5,18 @@ import LeanModels
 
 Concrete regressions for the string tier (docs/memory-model.md §string
 semantics), pinned two ways: differential rows in `harness/cases.json`
-(every function runs against CPython 3.9) and the `#py_check`/`#guard`
+(every function runs against CPython 3.9) and the `/- pass 8 (§the cast tier): int(<str>) / str(…) — the envelope was
+RE-EXTRACTED for the cast-lab rows; this comment is the required real
+edit (`load_program` does not track its JSON). -/
+#py_check str_lab.cast_int(" 42 ") = 42
+#py_check str_lab.cast_int("-0") = 0
+#py_check str_lab.cast_str(-3) = "-3"
+#guard callFunction str_lab "cast_int" #[.str "1_2"] 4096 matches .unsupported _
+#guard callFunction str_lab "cast_int" #[.str "12x3"] 4096 matches .unsupported _
+#guard callFunction str_lab "cast_int" #[.str ""] 4096 matches .exn (.valueError _)
+#guard callFunction str_lab "cast_str" #[.bool true] 4096 == .ok (.str "True")
+
+#py_check`/`#guard`
 non-vacuity checks here (kernel-evaluated).
 
 The headline behaviors: slices are CPython-exact for every string —

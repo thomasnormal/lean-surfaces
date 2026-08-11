@@ -1076,3 +1076,33 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
 4. Then, per the standing order: the `.exn` covenant extension for
    `tryStmt` heapFree; the UCI/`main()` surface survey; and the
    kernel-affordable concrete-run route (1b's open item).
+
+## Pass 8 — the module surface completes; the kernel verdict (2026-08-11)
+
+Opened on Thomas's keep-going directive. Milestone 1 (the CAST TIER,
+memory-model §the cast tier — design first): `int(<str>)`'s honest
+ASCII subset + value-only `str(…)` + the `input`/`str` fake-NameError
+fix (both loud builtins now). `parse`/`render` RUN on the shipped file
+(CPython-exact, mutually inverse); `hist` confirmed live-view; and
+`main()`'s refusal at `import sys, sunfish_ui.uci` is pinned as the
+FILE'S OWN boundary: the real UCI loop is an external module shipped
+in the wheel, so sunfish.py's in-file surface is now COMPLETE — every
+def either runs under the model (rotate, move, value, king_capture,
+gen_moves, bound, search-stepped, parse, render) or refuses at a
+pinned designed boundary (main's external-module delegation; the
+eviction `del`s dead below TABLE_SIZE).
+
+Milestone 1 also closes the KERNEL-AFFORDABILITY item DEFINITIVELY
+(memory-model §the cast tier as-built carries the numbers): kernel
+reduction is ~1000× native per interpreter step (a 2-node bound() run
+> 22 min at fuel 4096; fuel-literal size ruled out); search-scale
+`∀ tr` theorems stay transport + native-#guard paired unless the
+interpreter is re-engineered for kernel reduction (recorded, not
+scheduled).
+
+**Open after milestone 1:** the tryStmt-heapFree `.exn` covenant
+extension (the last recorded proof-layer candidate); the leanpy/UCI
+shell surface (running sunfish_ui.uci would be a NEW file's surface,
+not sunfish.py's — an owner-scoped direction); deeper stepping beyond
+depth 4 (more readings, same machinery — cost-gated, not
+construct-gated).

@@ -779,13 +779,60 @@ def absVal : RVal → Res RVal
       .unsupported "abs() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"bad operand type for abs(): '{v.typeName}'")
 
-/-- The `int` constructor builtin (B1): identity on ints, bool coercion.
-`int(str)` (parsing) and floats are out of tier; a `.ref` is refused loudly
-before the `TypeError` fallback. -/
+/-- pass 8 (docs/memory-model.md §the cast tier): is `c` one of the
+ASCII whitespace characters `int(<str>)` strips? -/
+def intWs (c : Char) : Bool :=
+  c == ' ' || c == '\t' || c == '\n' || c == '\r'
+
+/-- ASCII digits to a `Nat`; `none` on empty or any non-digit (a sign
+or space INSIDE the run — CPython's `ValueError` shapes). -/
+def digitsToNat : List Char → Option Nat
+  | [] => Option.none
+  | cs => cs.foldl (init := some 0) fun acc c =>
+      match acc with
+      | some n => if c.isDigit then some (n * 10 + (c.toNat - 48)) else Option.none
+      | Option.none => Option.none
+
+/-- `int(<str>)` — the honest three-way subset (docs/memory-model.md
+§the cast tier): within the SAFE ALPHABET (ASCII whitespace, one sign,
+digits) the parse is exact and the failure is CPython's faithful
+`ValueError`; ANY character outside it refuses loudly (underscore
+grouping, Unicode digits — CPython's exotic acceptances, never
+guessed). -/
+def intOfStr (s : String) : Res RVal :=
+  let cs := s.toList
+  if !cs.all (fun c => intWs c || c == '+' || c == '-' || c.isDigit) then
+    .unsupported "int() of this str is outside the tier (only ASCII digits/sign/whitespace are decided — CPython's exotic acceptances are never guessed; docs/memory-model.md §the cast tier)"
+  else
+    let core := ((cs.dropWhile intWs).reverse.dropWhile intWs).reverse
+    let parsed : Option Int :=
+      match core with
+      | '+' :: ds => (digitsToNat ds).map Int.ofNat
+      | '-' :: ds => (digitsToNat ds).map (fun n => -(n : Int))
+      | ds => (digitsToNat ds).map Int.ofNat
+    match parsed with
+    | some n => .ok (.int n)
+    | Option.none =>
+      .exn (.valueError s!"invalid literal for int() with base 10: '{s}'")
+
+/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): the
+exact decimal for ints, `True`/`False`, identity on strs, `None`;
+containers and refs refuse loudly (repr recursion is not guessed). -/
+def strOfVal : RVal → Res RVal
+  | .int n => .ok (.str (toString n))
+  | .bool b => .ok (.str (if b then "True" else "False"))
+  | .str s => .ok (.str s)
+  | .none => .ok (.str "None")
+  | v => .unsupported s!"str() of '{v.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
+
+/-- The `int` constructor builtin: identity on ints, bool coercion,
+`int(<str>)` through the pass-8 honest subset (`intOfStr`); floats stay
+out of tier; a `.ref` is refused loudly before the `TypeError`
+fallback. -/
 def intCastVal : RVal → Res RVal
   | .int n => .ok (.int n)
   | .bool b => .ok (.int (if b then 1 else 0))
-  | .str _ => .unsupported "int() of a str is outside the v0 tier"
+  | .str s => intOfStr s
   | .ref _ =>
       .unsupported "int() of a heap object is outside the H1 tier (docs/memory-model.md)"
   | v => .exn (.typeError s!"int() argument must be a string, a bytes-like object or a real number, not '{v.typeName}'")
@@ -842,6 +889,7 @@ locals, module globals, and module `def`s, exactly like CPython builtins). -/
 def isBuiltinName (id : String) : Bool :=
   id == "len" || id == "sorted" || id == "max" || id == "min" ||
   id == "abs" || id == "int" || id == "print" ||
+  id == "str" || id == "input" ||
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count" ||
   id == "any" || id == "all" || id == "set" ||
@@ -3946,6 +3994,18 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     match vs with
                     | [v] => Run.liftRes st (chrVal v)
                     | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
+                  else if fname == "str" then
+                    -- pass 8 (§the cast tier): value-only, loud on
+                    -- containers/refs and on the 2+-argument decoding form
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] => .ok st (.str "")
+                     | [v] => Run.liftRes st (strOfVal v)
+                     | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
+                  else if fname == "input" then
+                    -- stdin is a RUNNER-boundary effect (§effects) — loud,
+                    -- never a fake NameError (the recorded pass-4 gap)
+                    .unsupported "input() is outside the tier (stdin is a runner-boundary effect; docs/memory-model.md §effects)"
                   else if fname == "print" then
                     -- the effect must thread World.stdout through this block;
                     -- until then a wrong NameError would be silently unfaithful

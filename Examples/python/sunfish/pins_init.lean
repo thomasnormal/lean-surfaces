@@ -143,4 +143,37 @@ private def mv (i j : Int) (prom : String) : RVal :=
           #[posH 0, mv 92 71 ""] with
         | .ok _ v => v == .int 5 | _ => false)
 
+/-! ### The module surface beyond the engine core (pass 8,
+docs/memory-model.md §the cast tier)
+
+`parse`/`render` — the coordinate one-liners — RUN on the shipped file
+(the cast tier: `int(<str>)`'s honest ASCII subset and value-only
+`str(…)`), CPython-exact and mutually inverse on real squares. `hist`
+is a LIVE-VIEW binding (the module-init pipeline executed
+`hist = [Position(initial, …)]`: a heap list holding the opening
+Position value). `main()` refuses LOUDLY at its first statement — the
+`import sys, sunfish_ui.uci` delegation is the file's designed boundary
+(the real UCI interface lives in an EXTERNAL module; modeling it is not
+this file's surface) — pinned so the refusal point never silently
+moves. -/
+
+#guard (match callIn sunfish 4096 (initWorld sunfish) "parse" #[.str "a1"] with
+        | .ok _ v => v == .int 91 | _ => false)
+#guard (match callIn sunfish 4096 (initWorld sunfish) "parse" #[.str "e2"] with
+        | .ok _ v => v == .int 85 | _ => false)
+#guard (match callIn sunfish 4096 (initWorld sunfish) "render" #[.int 91] with
+        | .ok _ v => v == .str "a1" | _ => false)
+#guard (match callIn sunfish 4096 (initWorld sunfish) "render" #[.int 64] with
+        | .ok _ v => v == .str "d4" | _ => false)
+
+#guard (match Env.lookup (initWorld sunfish).globals "hist" with
+        | some (.ref a) =>
+          (match Heap.get? (initWorld sunfish).heap a with
+           | some (.list xs) => xs.size == 1
+           | _ => false)
+        | _ => false)
+
+#guard callIn sunfish 4096 (initWorld sunfish) "main" #[] matches .unsupported _
+
+
 end Examples.python.sunfish.pins_init

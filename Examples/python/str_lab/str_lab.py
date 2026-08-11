@@ -98,3 +98,16 @@ def list_slice_is_loud():
 
 def idx_start_is_loud(s, t, a):
     return s.index(t, a)
+
+
+def cast_int(s):
+    # pass 8 (docs/memory-model.md §the cast tier): int(<str>) -- the
+    # honest ASCII subset; exotic acceptances (underscores, Unicode
+    # digits) refuse loudly, malformed safe-alphabet strings raise the
+    # faithful ValueError
+    return int(s)
+
+
+def cast_str(n):
+    # str(...) value-only: exact decimals, True/False, identity, None
+    return str(n)

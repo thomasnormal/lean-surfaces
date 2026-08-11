@@ -985,10 +985,16 @@ theorem fuelMono (fuel : Nat) :
                                     fun st r => ?_
                                   cases r <;> exact Run.le_refl _
                                 | cons _ _ => exact Run.le_refl _
-                        -- the tail: print / module dunder (fuel-free),
-                        -- then the pass-3 absent-arm live view — the
-                        -- closure dispatch recurses through callClosure
-                        · refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
+                        -- the tail: str (pass 8 — args bind, pure
+                        -- worker) / input / print / module dunder, then
+                        -- the pass-3 absent-arm live view — the closure
+                        -- dispatch recurses through callClosure
+                        · refine Run.le_ite
+                            (Run.le_bind (ihEs m st cargs.toList k hk)
+                              fun st _ => Run.le_refl _)
+                            (Run.le_ite (Run.le_refl _)
+                              (Run.le_ite (Run.le_refl _)
+                                (Run.le_ite (Run.le_refl _) ?_)))
                           cases Env.lookup st.world.globals fname with
                           | none => exact Run.le_refl _
                           | some v =>
@@ -2217,8 +2223,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                               (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                 (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
-                                    (.ite .unsupported
-                                      (.ite .unsupported ?_)))))))
+                                    (.ite (.bind hargs fun st₁ vs h₁ => ?_)
+                                      (.ite .unsupported
+                                        (.ite .unsupported
+                                          (.ite .unsupported ?_)))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>
@@ -2292,6 +2300,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             cases rest with
                             | nil => exact .liftResF h₁ _
                             | cons _ _ => exact .exn
+                        · -- str (pass 8, §the cast tier): pure worker
+                          cases vs with
+                          | nil => exact .okF h₁ _
+                          | cons v rest =>
+                            cases rest with
+                            | nil => exact .liftResF h₁ _
+                            | cons _ _ => exact .unsupported
                         · -- the pass-3 absent-arm live view: the guard
                           -- (funs + top-level def-freedom, both from hm)
                           -- kills the closure dispatch

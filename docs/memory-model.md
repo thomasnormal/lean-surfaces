@@ -1593,6 +1593,75 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
   the concrete armed pair + underrun pins above; the lab-scale
   `pure_sum_all_traces` is the first trace-quantified theorem.
 
+## The cast tier: `int(str)` and `str(…)` (pass 8 — parse/render; BUILT)
+
+The whole-file goal leaves two one-line module functions un-runnable:
+`parse(c)` needs `int(c[1])` (a str) and `render(i)` needs `str(1 - …)`
+(an int). Two gaps, one of them a LOUDNESS BUG:
+
+* `int(<str>)` refuses loudly today (the v0 arm) — honest, just narrow.
+* `str` (and `input`, the recorded pass-4 gap) are absent from the
+  builtin surface entirely: `str(x)` resolves through locals → G1 →
+  functions → the ladder → the live view → **a fake `NameError`** for
+  a name CPython binds. The doctrine violation, not the tier gap, is
+  what forces the change.
+
+**Design:**
+
+* `int(<str>)` — the honest subset, three-way: (1) every char of the
+  argument is in the SAFE ALPHABET `" \t\n\r+-0123456789"` and the
+  string parses as `[ws] [one sign] digit+ [ws]` → the exact integer;
+  (2) safe alphabet but malformed (`""`, `"+"`, `"1 2"`, `"--3"`,
+  trailing junk from the alphabet) → the faithful
+  `ValueError: invalid literal for int() with base 10: '…'` — within
+  the safe alphabet CPython accepts NOTHING we reject (underscore
+  grouping and Unicode digits are outside it by construction); (3) any
+  char outside the alphabet → LOUD refusal (it could be one of
+  CPython's exotic acceptances — `"1_2"`, `"٣"` — never guessed).
+* `str(…)` — a new ladder builtin, value-only: `str()` = `""`,
+  `str(<int>)` the exact decimal (Lean's `toString : Int → String` is
+  CPython's format, `-` sign included), `str(<bool>)` = `"True"/"False"`,
+  `str(<str>)` identity, `str(None)` = `"None"`; every container/ref
+  argument and every 2+-argument form (`str(bytes, enc)`) is LOUD
+  (repr recursion and decoding are not guessed).
+* `input(…)` — a ladder arm that refuses LOUDLY unconditionally (stdin
+  is a runner-boundary effect, docs/memory-model.md §effects), placed
+  like `print`'s; plus `isBuiltinName` membership for both names so a
+  bare `str`/`input` value reference is the loud builtin-as-value
+  refusal, never a fake `NameError`.
+* Meta-theorems: two new ladder `ite`s thread through `fuelMono`/
+  `worldInv`/`clockErase`'s name-call arms; `str`/`int` calls stay
+  inside `Expr.heapFree` (pure workers, refs refused loudly).
+
+**AS-BUILT (same day):** exactly as designed — `intWs`/`digitsToNat`/
+`intOfStr` (workers, OUT of the simp sets per the freeze doctrine),
+`strOfVal` (dispatcher, IN `py_simp`/`interpUnfolds`), the two ladder
+arms before `print`'s, the `isBuiltinName` additions. Labs:
+`str_lab.cast_int` (8 match + 2 loud rows — `"1_2"` and a Unicode
+digit refuse, empty/`"+"`/`"12x3"`/`"- 3"` raise the faithful
+`ValueError`) and `cast_str` (6 rows). ON THE SHIPPED FILE:
+`parse`/`render` run, CPython-exact and mutually inverse
+(pins_init §the module surface); `hist` is confirmed a live-view heap
+list; `main()`'s loud refusal at `import sys, sunfish_ui.uci` is
+PINNED as the file's designed boundary — the real UCI interface is an
+EXTERNAL module (shipped in the wheel), so whole-file coverage of
+sunfish.py ends there BY THE FILE'S OWN STRUCTURE, not by a tier gap.
+
+**THE KERNEL-AFFORDABILITY VERDICT (pass 8, definitive — closes the
+pass-7 open item unless the interpreter's compilation is redesigned):**
+bisected with `decide +kernel`: `initWorld` alone ≈ 10–20 s; the
+`Searcher()` construction ≈ +10 s; ONE 2-node `bound()` run EXCEEDS
+22 minutes at fuel 4096 and 16+ minutes at fuel 1000000 (fuel-literal
+size ruled out by the comparison) versus milliseconds natively — the
+kernel is ~3 orders of magnitude slower per interpreter step at search
+shapes (suspected: `brecOn` spine re-reduction over the mutual block's
+match trees). Search-scale concrete runs are NOT kernel-checkable in
+practical time; the `∀ tr` search statements remain the transport
+theorem + native `#guard` pairing. Reopening requires an
+interpreter-representation change designed for kernel reduction (a
+fuel-indexed step function) — a major direction, recorded, not
+scheduled.
+
 ## Clock erasure (pass 7 — the trace-independence meta-theorem; DESIGN)
 
 Opened by pass 6's measured finding: free-variable normalization does

@@ -209,7 +209,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             asIntList, asIntList_map_int, sortInts_length, normIndex,
             indexVal, indexValH, targetNames, bindAll, assignTo, assignToH,
             unpackSeq, unpackStoreH,
-            foldExtremum, extremumVal, extremumValH, absVal, intCastVal,
+            foldExtremum, extremumVal, extremumValH, absVal, intCastVal, strOfVal,
             ordVal, chrVal, enumStart, enumFrame, countArgs,
             isBuiltinName, sortedValH,
             hashableKey, hashableKeyList, keyEq, keyEqList, RVal.unhashName,

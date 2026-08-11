@@ -1465,7 +1465,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bint
                       (.ite ?bsum (.ite ?btuple (.ite ?brange (.ite ?benum
                       (.ite ?bcount (.ite ?bnext (.ite ?bord (.ite ?bchr
-                      (.ite .unsupported (.ite .unsupported ?blive)))))))))))))))))
+                      (.ite ?bstr (.ite .unsupported (.ite .unsupported
+                        (.ite .unsupported ?blive)))))))))))))))))))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -1967,6 +1968,14 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         cases t with
                         | nil => exact .liftRes hs2 _
                         | cons d t2 => exact .exn hs2 _
+                    case bstr =>
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .ok hs2 _
+                      | cons v t =>
+                        cases t with
+                        | nil => exact .liftRes hs2 _
+                        | cons d t2 => exact .unsupported
                     case blive =>
                       cases hlive : Env.lookup st.world.globals fname with
                       | none => exact .ite (.exn h _) .unsupported

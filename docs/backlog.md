@@ -1060,6 +1060,19 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
    pairs changed (the score-cap null gate, the removed band-edge probe
    arm, the killer depth gate); the Ref castling mirror follows the
    two explicit ifs (same moves, same order).
-3. Then, per the standing order: deeper stepping (depth 2–3 bracket
-   convergence under the trace clock), the `.exn` covenant extension
-   for `tryStmt` heapFree, the UCI/`main()` surface survey.
+3. ~~Deeper stepping under the trace clock~~ **DONE (same day,
+   pins_clock.lean §deeper stepping):** `search()` stepped to TWELVE
+   yields — the depth-1/2/3 MTD-bi brackets to convergence and depth
+   4's first yield THROUGH the 2048-node wall — under the seeded
+   one-reading trace `[0]`; every `(depth, gamma, score, move)` tuple
+   and cumulative `self.nodes` CPython-exact (the counting-clock
+   oracle: steps 1–11 consume nothing, step 12 consumes exactly one
+   reading at node 2048 against `deadline = 1 << 63`). ONE-PASS pin
+   discipline: the walker returns rows AND the final world, so trace
+   consumption (`[0]` at step 11, empty at step 12) rides the same
+   walk — never a from-scratch re-walk per pin (the first draft's four
+   walks cost 2917 s; the loud empty-trace direction stays pinned at
+   bound() level by pins_bound's nodes-2047 frontier probe).
+4. Then, per the standing order: the `.exn` covenant extension for
+   `tryStmt` heapFree; the UCI/`main()` surface survey; and the
+   kernel-affordable concrete-run route (1b's open item).

@@ -1146,6 +1146,21 @@ gap that `input` is absent from `isBuiltinName`, so a hand-driven
 `main()` run would answer a fake `NameError` before reaching any of
 this — pre-existing, backlog).
 
+AS-BUILT DELTA (pass 5, the post-#158 re-pin): the shipped guard is
+now `if self.nodes % 2048 == 0 and time.time() > self.deadline: raise
+Stop` with `deadline = 1 << 63` — the None test is GONE, so
+`time.time()` is dynamically LIVE at every 2048th node and the
+soundness story changes from "short-circuit dead" to "refuses at the
+frontier": every pinned bound() probe stays under 2048 nodes (max 587
+— re-derived from CPython on the new engine), and the frontier itself
+is pinned CHEAPLY in the sunfish spec by a searcher whose `nodes` is
+pre-set to 2047 through `Heap.update`, so the very next entry is the
+2048th — CPython consults the real clock there and continues; the
+model refuses loudly at that exact evaluation, one node in (never a
+2048-node fresh-searcher run per build). The `exc_lab`
+`time_dead`/`time_live` rows are unchanged and still pin both
+directions at lab scale.
+
 ## bound() end-to-end (pass 4 capstone — the last mechanical constructs)
 
 Everything `Searcher().bound(pos, gamma, depth)` needs beyond the

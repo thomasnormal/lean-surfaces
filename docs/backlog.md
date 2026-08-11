@@ -889,3 +889,21 @@ example was re-pinned to the new bytes.
    mid-delegation; admission: target occurs nowhere else, `yfNames`).
    Labs: seq_lab (type-pinning bool-vs-int rows), gen_lab (live
    rebound captures, filters, non-genexp + target-leak refusals).
+
+2. **THE RE-PIN** (`Examples/python/sunfish` = post-#158 master,
+   byte-identical): census re-pinned (7 lowered genexprs — the
+   promotion genexp CONSUMED by the yield-from inlining, the eviction
+   genexp dead inside an extraction-unsupported `del`; `moves()`
+   captures lost `val_lower`; `__version__` gone; the K_MID/K_END
+   tuple-target census rows), the shipped `pst`/`K_MID`/`K_END`
+   materialize through the live pipeline (K_END's #158 formula covers
+   all 120 squares — corner 59870 pinned), `Position.value` unchanged
+   (46/42/5), `gen_moves` pinned on opening + PROMOTION (the inlined
+   yield-from on the shipped file) + CASTLING (the two-tuple `for`)
+   boards, the Ref enumeration re-mirrored to the new lines (same
+   break sets, thirteen CPython pins unchanged), and the bound()
+   battery re-derived from CPython (23 pairs, seven changed with the
+   rewrite; max 587 nodes). The wall clock is dynamically LIVE at
+   every 2048th node post-#158 (memory-model §wall-clock time as-built
+   delta): the frontier is pinned by a `nodes = 2047` searcher — one
+   node to the loud refusal, not 2048 per build.

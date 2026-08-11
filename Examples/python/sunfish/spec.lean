@@ -1,13 +1,18 @@
 /-
 Examples/python/sunfish — THE SHIPPED FILE. `sunfish.py` here is
 byte-identical to the sunfish repository's engine (no wrappers, no
-edits); the envelope is its real AST. This example carries the first
-theorems proved against that file as shipped: `Position.rotate`
-score-negation — symbolic in the score AND in the world — on the real
-120-char opening board, through the real string tier
-(`board[::-1].swapcase()`), the real `IfExp`/`and`/`not` en-passant
-flip, the real literal default (`nullmove=False`), and the real
-value-like namedtuple subclass construction.
+edits); the envelope is its real AST. PASS 5 re-pinned it to the
+post-#158 master (the review rewrite: null validation inside `moves()`
+with the band-edge probe, the `not live` correction gate, the
+`K_MID, K_END` one-liner, the two-way per-search `pst["K"]` swap, the
+root-skipping eviction genexp, `deadline = 1 << 63` with NO None
+test). This example carries the first theorems proved against that
+file as shipped: `Position.rotate` score-negation — symbolic in the
+score AND in the world — on the real 120-char opening board, through
+the real string tier (`board[::-1].swapcase()`), the real
+`IfExp`/`and`/`not` en-passant flip, the real literal default
+(`nullmove=False`), and the real value-like namedtuple subclass
+construction.
 
 No `#py_check` block CAN exist here (recorded): every function in the
 shipped file is outside the public-boundary tier — `parse`/`render`
@@ -23,8 +28,8 @@ import Examples.python.sunfish.proof
 
 open LeanModels LeanModels.Python
 
--- the 955KB literal ingests through a deep recursion (H4 added four
--- lowered genexp functions to it)
+-- the 1MB post-#158 literal ingests through a deep recursion (seven
+-- lowered genexp functions ride along)
 set_option maxRecDepth 100000 in
 load_program sunfish from "Examples/python/sunfish/sunfish.json"
 
@@ -44,8 +49,12 @@ left in this table. -/
 
 /-! The exceptions census (docs/memory-model.md §exceptions): `Stop` is
 an ADMITTED exception class on the shipped file — `raise Stop` (line
-332, dynamically dead under `deadline = None`) structures and would
-raise its class identity; the census proved `Exception` unshadowed. -/
+328) structures and would raise its class identity; the census proved
+`Exception` unshadowed. Post-#158 the guard is
+`if self.nodes % 2048 == 0 and time.time() > self.deadline: raise Stop`
+with `deadline = 1 << 63` — no None test, so `time.time()` is
+dynamically LIVE at every 2048th node (the wall-clock refusal is
+pinned below; every battery row stays under 2048 nodes). -/
 
 #guard sunfish.classes.map (fun c => (c.name, c.isExc)) ==
   #[("Position", false), ("Stop", true), ("Searcher", false)]
@@ -59,25 +68,27 @@ raise its class identity; the census proved `Exception` unshadowed. -/
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- H4/H7/pass 3/pass 4: ingestion LOWERED ELEVEN generator
-    -- expressions into implicit generator functions, CPython's own
-    -- compilation (`<genexpr>` with the evaluated outer iterator as its
-    -- first argument) — the two inside `bound`'s nested `moves()` (the
-    -- null-move `any` probe and THE ORDERING LINE), the fold's
-    -- legality scan, and since pass 4 the mate/stalemate CORRECTION's
-    -- scan too (its captures `depth`/`val_lower` are body-assigned —
-    -- the immediate-drain boundBefore admission, docs/memory-model.md
-    -- §bound() end-to-end); plus the module-init ones: the padding
-    -- loop's pair (the lambda's inner genexp and the sum-over-slices
-    -- genexp) and K_END's NESTED pair (the inner captures the OUTER
-    -- genexp's target `rank` — the drain-gated admission, §module-init
-    -- execution).
+    -- pass 5 (post-#158): ingestion lowers SEVEN generator expressions,
+    -- CPython's own compilation (`<genexpr>` with the evaluated outer
+    -- iterator as its first argument) — `king_capture`'s filtered probe
+    -- (@0), the two inside `bound`'s nested `moves()` (the null-move
+    -- `any` probe @1 and THE ORDERING LINE @2), the mate/stalemate
+    -- CORRECTION's scan (@3 — `pos.move(m).king_capture()` under the
+    -- immediate `all(…)` drain), and the module-init trio: the padding
+    -- loop's pair (@4 the lambda's inner genexp, @5 the
+    -- sum-over-slices genexp) and K_END's single formula genexp (@6 —
+    -- the #158 rewrite dissolved the old nested pair). gen_moves's
+    -- promotion genexp is NOT in this table: the `yield from` INLINING
+    -- consumed it (docs/memory-model.md §yield from — no synthesized
+    -- function, the delegation reads the frame by reference). The
+    -- eviction genexp (`next(k for k in self.tp_move if k !=
+    -- self.root)`) sits inside an extraction-unsupported `del`
+    -- statement, dead under the TABLE_SIZE guard, so it never reaches
+    -- the lowering.
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
     ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
     ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
-    ("<genexpr@6>", true, true), ("<genexpr@7>", true, true),
-    ("<genexpr@8>", true, true), ("<genexpr@9>", true, true),
-    ("<genexpr@10>", true, true)]
+    ("<genexpr@6>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -85,9 +96,10 @@ CPython's rule is scope-local and syntactic, and it lands here exactly:
 `Position.gen_moves` and `Searcher.search` are GENERATORS, everything
 else is an ordinary def. `bound`'s `moves()` is still not in THIS list —
 it is a NESTED def, structured since H7 as `Stmt.defStmt` INSIDE
-`bound`'s body (captures `depth`/`gamma`/`pos`/`root`/`self`/
-`val_lower`, admitted by the never-rebound analysis, generator flag
-set) — the closure tier carries it inline, no flattening. A generator
+`bound`'s body (captures `depth`/`gamma`/`pos`/`root`/`self` — #158
+moved `val_lower` INSIDE `moves()`, so it is a plain local now —
+admitted by the never-rebound analysis, generator flag set) — the
+closure tier carries it inline, no flattening. A generator
 def evicts the module from the heap-free fragment (creation ALLOCATES
 and syntax cannot tell), which sunfish already was, having classes. -/
 
@@ -99,8 +111,7 @@ and syntax cannot tell), which sunfish already was, having classes. -/
     ("parse", false), ("render", false), ("main", false),
     ("<genexpr@0>", true), ("<genexpr@1>", true),
     ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true),
-    ("<genexpr@5>", true), ("<genexpr@6>", true), ("<genexpr@7>", true),
-    ("<genexpr@8>", true), ("<genexpr@9>", true), ("<genexpr@10>", true)]
+    ("<genexpr@5>", true), ("<genexpr@6>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded
@@ -202,22 +213,26 @@ here rather than described: `time` poisoned (bound by CPython, so loud —
 never a fake `NameError`); `count` absent, resolving to the model's
 `itertools.count`; `piece`/`pst` valued, then the
 `for k, table in pst.items()` loop poisoning `pst` (twice — one per
-subscript store), `padrow`, `table`, `k`, so `K_MID = pst["K"]` stays
-statically poisoned; `A1/H1/A8/H8`, `initial`, `N/E/S/W` and the search
-constants resolve STATICALLY (heap-pure literals survive the pass-3
-DIVERGED discipline); `directions` (a dict display — a ref) and
-`MATE_LOWER/MATE_UPPER` (heap reads of `piece`) sit AFTER the first
-exec-attempted statement (the padding loop, line 79), so pass 3 moves
-them to the LIVE VIEW — statically poisoned here, valued in
-`initWorld`'s globals below, same values, one heap. `opt_ranges` (a
-keyword call) and `hist` (a constructor call) are out-of-tier right-hand
-sides. Reverse order = source order. -/
+subscript store), `padrow`, `table`, `k`, so the #158 one-liner
+`K_MID, K_END = pst["K"], tuple(…)` — ONE tuple-target assign now —
+stays statically poisoned (both names; the tuple-target census lists
+`K_END` before `K_MID` in the fold's push order); `A1/H1/A8/H8`,
+`initial`, `N/E/S/W` and the search constants resolve STATICALLY
+(heap-pure literals survive the pass-3 DIVERGED discipline);
+`directions` (a dict display — a ref) and `MATE_LOWER/MATE_UPPER`
+(heap reads of `piece`) sit AFTER the first exec-attempted statement
+(the padding loop, line 78), so pass 3 moves them to the LIVE VIEW —
+statically poisoned here, valued in `initWorld`'s globals below, same
+values, one heap. `opt_ranges` (a keyword call) and `hist` (a
+constructor call) are out-of-tier right-hand sides. (`__version__` is
+gone — #158 folded it into the `version` literal.) Reverse order =
+source order. -/
 
 #guard ((moduleGlobals sunfish).1.map (fun p => (p.1, p.2.isSome))).reverse ==
-  [("time", false), ("__version__", true), ("version", true),
+  [("time", false), ("version", true),
    ("piece", true), ("pst", true), ("pst", false), ("pst", false),
    ("padrow", false), ("table", false), ("k", false),
-   ("K_MID", false), ("K_END", false),
+   ("K_END", false), ("K_MID", false),
    ("A1", true), ("H1", true), ("A8", true), ("H8", true),
    ("initial", true), ("N", true), ("E", true), ("S", true), ("W", true),
    ("directions", false), ("MATE_LOWER", false), ("MATE_UPPER", false),
@@ -268,6 +283,41 @@ private def drainMoves (w : World) (a : Addr) : Nat → Option (List (Int × Int
         (87, 77, ""), (87, 67, ""), (88, 78, ""), (88, 68, ""),
         (92, 73, ""), (92, 71, ""), (97, 78, ""), (97, 76, "")]
 
+/-! Pass 5, the two #158 constructs inside `gen_moves`, exercised on
+the SHIPPED file (CPython's answers, CPython's order):
+
+* the PROMOTION board reaches the inlined `yield from (Move(i, j,
+  prom) for prom in "NBRQ")` — four promotions in "NBRQ" order, read
+  from the enclosing frame's live `i`/`j` (docs/memory-model.md §yield
+  from);
+* the CASTLING board walks `for (sq, dr, c) in ((A1, E, self.wc[0]),
+  (H1, W, self.wc[1]))` — the tuple-target `forSeq` frame inside the
+  generator — after every rook slide, both rights live. -/
+
+private def posOn (b : String) (wc0 wc1 : Bool) : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str b, .int 0, .tuple #[.bool wc0, .bool wc1],
+      .tuple #[.bool wc0, .bool wc1], .int 0, .int 0]
+
+#guard (match callIn sunfish 8192 (initWorld sunfish) "Position.gen_moves"
+          #[posOn "         \n         \n ........\n P.......\n ........\n ........\n ........\n ........\n ........\n K.......\n         \n         \n" false false] with
+        | .ok w (.ref a) => drainMoves w a 64
+        | _ => Option.none) ==
+  some [(31, 21, "N"), (31, 21, "B"), (31, 21, "R"), (31, 21, "Q"),
+        (91, 81, ""), (91, 92, ""), (91, 82, "")]
+
+#guard (match callIn sunfish 8192 (initWorld sunfish) "Position.gen_moves"
+          #[posOn "         \n         \n ........\n ........\n ........\n ........\n ........\n ........\n ........\n R...K..R\n         \n         \n" true true] with
+        | .ok w (.ref a) => drainMoves w a 64
+        | _ => Option.none) ==
+  some [(91, 81, ""), (91, 71, ""), (91, 61, ""), (91, 51, ""),
+        (91, 41, ""), (91, 31, ""), (91, 21, ""), (91, 92, ""),
+        (91, 93, ""), (91, 94, ""), (95, 93, ""), (95, 85, ""),
+        (95, 96, ""), (95, 94, ""), (95, 86, ""), (95, 84, ""),
+        (98, 88, ""), (98, 78, ""), (98, 68, ""), (98, 58, ""),
+        (98, 48, ""), (98, 38, ""), (98, 28, ""), (98, 97, ""),
+        (98, 96, ""), (95, 97, "")]
+
 /-! ### PASS 3 CAPSTONE: the module-init padding loop RUNS
 
 `for k, table in pst.items(): padrow = lambda …; pst[k] = sum(…); …`
@@ -302,8 +352,14 @@ private def pstAt (p : String) (sq : Nat) : Option RVal :=
 #guard ["P", "N", "B", "R", "Q", "K"].all fun p =>
   pstAt p 0 == some (.int 0) && pstAt p 119 == some (.int 0)
 
-/-! `K_MID` is the padded shipped K table; `K_END` the mop-up
-centralization gradient — both 120 wide, both live-view bindings. -/
+/-! `K_MID` is the padded shipped K table; `K_END` the endgame
+centralization gradient — both 120 wide, both live-view bindings from
+the ONE #158 tuple-target assign, whose right-hand side runs through
+the live pipeline: a subscript read of the live `pst` AND
+`tuple(<genexpr@6>(range(120)))` — the drained module-scope genexp.
+The #158 formula covers all 120 squares (no zero padding ring
+anymore): the corner value 59870 = 60000 + 70 − 10·(11 + 9) is
+CPython's own answer at 0 and 119. -/
 
 #guard (match Env.lookup (initWorld sunfish).globals "K_MID" with
         | some (.tuple xs) => xs.size == 120 && xs.getD 95 .none == .int 60006
@@ -312,6 +368,8 @@ centralization gradient — both 120 wide, both live-view bindings. -/
         | some (.tuple xs) =>
           xs.size == 120 && xs.getD 95 .none == .int 59990
             && xs.getD 54 .none == .int 60050
+            && xs.getD 0 .none == .int 59870
+            && xs.getD 119 .none == .int 59870
         | _ => false)
 
 /-! ### `Position.value()` on the shipped file — UNBLOCKED
@@ -341,11 +399,16 @@ The owner picked equality against a REFERENCE ENUMERATION with ORDER
 pinned (`bound`'s cutoffs depend on move order), and the design note is
 that the reference must optimise for OBVIOUSNESS over efficiency — plain
 nested scans — because its whole job is to be trustworthy by INSPECTION
-against sunfish.py lines 185-226. It is written to be read side by side
+against sunfish.py lines 172-203. It is written to be read side by side
 with the shipped Python, one Lean line per Python line, and it declines
 (`Except.error`) rather than guessing: a real CPython `IndexError` and
 an exhausted ray budget are both errors, so neither can be mistaken for
-a short move list.
+a short move list. (Pass 5: the #158 rewrite CHANGED gen_moves's
+surface — one-line `break`s, `j != self.ep and abs(j - self.kp) > 1`
+for the old kp-tuple membership, `yield from` for the promotion loop,
+and the castling pair as a two-tuple `for` — the reference mirrors the
+NEW lines; every set of moves it defines is provably the same as
+before, and the thirteen CPython pins below are unchanged.)
 
 The theorem itself is NOT stated yet — it lands with its proof. What
 lands here is the reference and the evidence that it is the right
@@ -361,7 +424,7 @@ structure RefMove where
   prom : String
 deriving DecidableEq, Repr, Inhabited, BEq
 
-/-! ### The shipped constants, copied verbatim (sunfish.py 104, 121) -/
+/-! ### The shipped constants, copied verbatim (sunfish.py 99, 116) -/
 
 def N : Int := -10
 def E : Int := 1
@@ -372,7 +435,7 @@ def H1 : Int := 98
 def A8 : Int := 21
 def H8 : Int := 28
 
-/-- `directions` (sunfish.py 122-129), one arm per key, verbatim. -/
+/-- `directions` (sunfish.py 117-124), one arm per key, verbatim. -/
 def directions (p : Char) : List Int :=
   if p == 'P' then [N, N+N, N+W, N+E]
   else if p == 'N' then [N+N+E, E+N+E, E+S+E, S+S+E, S+S+W, W+S+W, W+N+W, N+N+W]
@@ -405,7 +468,7 @@ def inStr (c : Char) (s : String) : Bool := s.toList.contains c
 
 /-! ### The body, statement for statement -/
 
-/-- sunfish.py 199-216, the `if p == "P":` block. `none` = the block fell
+/-- sunfish.py 188-195, the `if p == "P":` block. `none` = the block fell
 through to the ordinary yield below it; `some ms` = the block BROKE out
 of the ray, having yielded `ms` first (`[]` for a bare `break`, the four
 promotions for the last-row case).
@@ -422,15 +485,17 @@ def pawnBreak (b : List Char) (ep kp : Int) (i : Int) (p q : Char) (d j : Int) :
   if d == N + N then
     if i < A1 + N then return some []
     if (← at? b (i + N)) != '.' then return some []
-  -- if d in (N + W, N + E) and q == "." and j not in (ep, kp, kp-1, kp+1): break
+  -- if d in (N + W, N + E) and q == "." and j != self.ep and abs(j - self.kp) > 1: break
+  -- (#158's spelling of the old kp-tuple membership: j ∉ {ep} and
+  --  j ∉ {kp-1, kp, kp+1} — the same break set)
   if (d == N + W || d == N + E) && q == '.'
-      && !(j == ep || j == kp || j == kp - 1 || j == kp + 1) then return some []
-  -- if A8 <= j <= H8: for prom in "NBRQ": yield Move(i, j, prom); break
+      && j != ep && (j - kp).natAbs > 1 then return some []
+  -- if A8 <= j <= H8: yield from (Move(i, j, prom) for prom in "NBRQ"); break
   if A8 ≤ j && j ≤ H8 then
     return some ("NBRQ".toList.map fun pr => ⟨i, j, pr.toString⟩)
   return none
 
-/-- sunfish.py 194-226, one RAY: `for j in count(i + d, d)`. `fuel`
+/-- sunfish.py 183-203, one RAY: `for j in count(i + d, d)`. `fuel`
 bounds CPython's unbounded `count`; running out is an error, never a
 truncated answer. -/
 def ray (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (i : Int) (p : Char) (d : Int) :
@@ -447,25 +512,31 @@ def ray (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (i : Int) (p : Char) (d :
       let here : RefMove := ⟨i, j, ""⟩
       -- if p in "PNK" or q in "pnbrqk": break
       if inStr p "PNK" || inStr q "pnbrqk" then return [here]
-      -- the two castling slides, each guarded by its own `if`
+      -- for (sq, dr, c) in ((A1, E, self.wc[0]), (H1, W, self.wc[1])):
+      --     if i == sq and self.board[j + dr] == "K" and c:
+      --         yield Move(j + dr, j - dr, "")
+      -- (#158 folded the two castling slides into one two-tuple loop;
+      --  the iterations are spelled out, A1-then-H1 — the tuple's own
+      --  order — and the board read happens before the rights check,
+      --  as in the shipped `and` chain)
       let castle1 ← if i == A1 then
           (do if (← at? b (j + E)) == 'K' && wc0 then
-                return [(⟨j + E, j + W, ""⟩ : RefMove)] else return [])
+                return [(⟨j + E, j - E, ""⟩ : RefMove)] else return [])
         else pure []
       let castle2 ← if i == H1 then
           (do if (← at? b (j + W)) == 'K' && wc1 then
-                return [(⟨j + W, j + E, ""⟩ : RefMove)] else return [])
+                return [(⟨j + W, j - W, ""⟩ : RefMove)] else return [])
         else pure []
       let rest ← ray b wc0 wc1 ep kp i p d fuel (j + d)
       return here :: castle1 ++ castle2 ++ rest
 
-/-- sunfish.py 193, one PIECE: every ray, in `directions[p]` order. -/
+/-- sunfish.py 182, one PIECE: every ray, in `directions[p]` order. -/
 def piece (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (fuel : Nat)
     (i : Int) (p : Char) : Except String (List RefMove) :=
   List.flatten <$> (directions p).mapM fun d =>
     ray b wc0 wc1 ep kp i p d fuel (i + d)
 
-/-- sunfish.py 192-194, the whole enumeration:
+/-- sunfish.py 179-181, the whole enumeration:
 `for i, p in enumerate(self.board)`, skipping every square that does not
 hold one of OUR pieces. -/
 def refMoves (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (fuel : Nat) :
@@ -555,8 +626,10 @@ the shipped file
 Every probe instantiates a fresh `Searcher()` — the hand-built call
 below, CPython's own driver shape: `__init__`'s two tuple-ATTRIBUTE
 unpacks bind the empty tables, the empty history set, `nodes = 0` and
-`deadline = None` (so the structured `raise Stop` guard short-circuits
-dead and the wall clock is never consulted) — in the module's REAL
+`deadline = 1 << 63` (the pass-5 shift tier; post-#158 there is NO
+None test — `time.time()` evaluates at every 2048th node, so every
+row below stays under 2048 nodes and the first crossing is pinned as
+the LOUD refusal at the end of this battery) — in the module's REAL
 `initWorld`, calls the shipped `Searcher.bound` through `callIn` with
 `root` filled from its literal default, and reads back the RETURNED
 BOUND and `self.nodes` from the instance: the pair CPython answers.
@@ -569,15 +642,21 @@ CPython's didn't — breaks the pair. Live in these runs: the tp_score
 probe under the dict-key doctrine (`(pos, depth)` tuple keys carrying
 the Position value), the history-set membership, the nested `moves()`
 generator with recursion through the captured `self`, the killer/
-null-move/IID prologue, the verbatim ordering line, the fold with the
-virtual-cutoff validation and the mate/stalemate correction (the
-pass-4 genexp admission: `depth`/`val_lower` under the immediate
-`all(…)` drain), the attribute `+=`, and the table store.
+null-move/IID prologue — post-#158 the null verification lives HERE,
+in `moves()`: the substituted king capture (`proof`, an `and`/`or`
+value chain through `king_capture()`), the band-edge probe at the
+yield site, veto by omission — the verbatim ordering line, the fold
+with `live |=` (the pass-5 bitwise-or tier) and the widened `not
+live` correction gate (`pos.move(m).king_capture()` — a method call
+chained onto a method RESULT — under the immediate `all(…)` drain),
+the attribute `+=`, and the table store.
 
-Every expected pair below is CPython's own answer (the shipped module
-imported and probed). The tactical rows end at MATE_LOWER = 47923 —
-the king-capture sentinel path; the endgame rows walk the correction
-(depth 3 at gamma 0 answers the repetition/stalemate-corrected 0). -/
+Every expected pair below is CPython's own answer (the post-#158
+module imported and probed — re-derived, never reused: seven of the
+23 pairs changed with the rewrite). The tactical rows end at
+MATE_LOWER = 47923 — the king-capture sentinel path; the endgame rows
+walk the correction (depth 3 at gamma 0 answers the
+repetition/stalemate-corrected 0). -/
 
 private def sp0 : Span := ⟨0, 0, 0, 0⟩
 
@@ -641,10 +720,10 @@ private def posPend : RVal :=
 #guard boundProbe (posH 0) 0 1 == some (0, 2)
 #guard boundProbe (posH 0) 40 1 == some (37, 35)
 #guard boundProbe (posH 0) (-100) 1 == some (0, 2)
-#guard boundProbe (posH 0) 0 2 == some (0, 3)
+#guard boundProbe (posH 0) 0 2 == some (0, 2)
 #guard boundProbe (posH 0) 40 2 == some (36, 139)
 #guard boundProbe (posH 0) 0 3 == some (0, 39)
-#guard boundProbe (posH 0) 40 3 == some (39, 226)
+#guard boundProbe (posH 0) 40 3 == some (39, 209)
 #guard boundProbe (posH 0) (-100) 3 == some ((-46), 3)
 
 -- midgame
@@ -652,18 +731,50 @@ private def posPend : RVal :=
 #guard boundProbe posMid 60 1 == some (35, 5)
 #guard boundProbe posMid 0 2 == some ((-1), 587)
 #guard boundProbe posMid 60 2 == some (59, 241)
-#guard boundProbe posMid 0 3 == some (2, 430)
-#guard boundProbe posMid 60 3 == some (59, 268)
+#guard boundProbe posMid 0 3 == some (2, 428)
+#guard boundProbe posMid 60 3 == some (59, 247)
 
 -- tactical: the mate band (MATE_LOWER exactly — the sentinel discipline)
-#guard boundProbe posTac 0 2 == some (47923, 34)
+#guard boundProbe posTac 0 2 == some (47923, 4)
 #guard boundProbe posTac 0 3 == some (47923, 67)
 
 -- endgames: the correction arms
 #guard boundProbe posEnd 0 1 == some (111, 8)
-#guard boundProbe posEnd 0 2 == some (91, 10)
+#guard boundProbe posEnd 0 2 == some (91, 8)
 #guard boundProbe posEnd 0 3 == some (0, 3)
 #guard boundProbe posEnd 60 3 == some (137, 21)
-#guard boundProbe posPend 0 2 == some (19, 3)
+#guard boundProbe posPend 0 2 == some (19, 2)
 #guard boundProbe posPend 60 2 == some (50, 13)
 #guard boundProbe posPend 0 3 == some (50, 15)
+
+/-! ### The wall-clock frontier, pinned on the shipped file
+
+Post-#158 `time.time()` is dynamically LIVE: `bound()` evaluates it
+whenever `self.nodes % 2048 == 0`. The abstraction is unchanged
+(memory-model §wall-clock time): the poisoned benign-import binding
+refuses loudly at EVALUATION — sound exactly where the call never
+runs, which every battery row above satisfies (max 587 nodes). The
+frontier itself is pinned CHEAPLY: a searcher whose `nodes` is
+pre-set to 2047, so the very NEXT entry is the 2048th — CPython
+consults the real clock there (and continues, `deadline = 1 << 63`);
+the model refuses loudly at that exact point, one node in. -/
+
+private def searcherAt2047 : Option (World × Addr) :=
+  match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance cid attrs) =>
+       (match Heap.update w.heap a (.instance cid (attrs.map
+            (fun p => if p.1 == "nodes" then (p.1, RVal.int 2047) else p))) with
+        | some h' => some ({ w with heap := h' }, a)
+        | Option.none => Option.none)
+     | _ => Option.none)
+  | Option.none => Option.none
+
+#guard (match searcherAt2047 with
+        | some (w, a) =>
+          (match callIn sunfish 1000000 w "Searcher.bound"
+              #[.ref a, posH 0, .int 0, .int 1] with
+           | .unsupported _ => true
+           | _ => false)
+        | Option.none => false)

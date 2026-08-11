@@ -19,11 +19,14 @@ Two provisions keep the 955KB module literal out of the simp run:
   the compact handles and each collapses in ONE rewrite instead of
   thousands of character-level simp steps.
 
-Envelope note (bound() arc pass 1): `Position.move`'s `put` lambda now
-ingests as a structured `NestedDef`, so the module literal changed —
-this comment is the content edit that forces re-elaboration
-(`load_program` does not track its JSON as a build input). The rotate
-theorems are untouched by that statement's shape.
+Envelope note (pass 5): the example was RE-PINNED to the post-#158
+shipped file — the module literal changed wholesale (new gen_moves
+surface with the inlined `yield from`, the moves()-internal null
+verification, the `not live` correction gate, `deadline = 1 << 63`).
+`Position.rotate` itself is byte-identical in the new file, so the
+theorems and their proofs are untouched; this comment is the content
+edit that forces re-elaboration (`load_program` does not track its
+JSON as a build input).
 -/
 import LeanModels
 
@@ -31,8 +34,8 @@ namespace Examples.python.sunfish.proof
 
 open LeanModels LeanModels.Python
 
--- the 955KB literal ingests through a deep recursion (H4 added four
--- lowered genexp functions to it)
+-- the 1MB post-#158 literal ingests through a deep recursion (seven
+-- lowered genexp functions ride along)
 set_option maxRecDepth 100000 in
 load_program sunfish from "Examples/python/sunfish/sunfish.json"
 

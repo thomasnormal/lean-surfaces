@@ -23,12 +23,14 @@ multiple handlers, tuple patterns, `except Exception`, builtin-name
 matching, raise with arguments, bare raise, value raise, raise-from,
 shadowed names, exception classes as values, and yield-under-try.
 
-The WALL-CLOCK battery (docs/memory-model.md "Wall-clock time"):
-`time.time()` is an impure builtin whose evaluation refuses loudly, so
-it may appear in code and is sound exactly when dynamically dead --
-`time_dead` proves the shipped guard's short-circuit keeps it dead
-(deadline None, differential MATCH), `time_live` proves evaluation
-refuses loudly the moment a deadline makes the clock live.
+The WALL-CLOCK battery (docs/memory-model.md "Wall-clock time", as
+AMENDED by pass 6's trace clock): `time_dead` proves the shipped
+guard's short-circuit keeps the clock dead (deadline None,
+differential MATCH -- nothing is popped), `time_live` proves the
+moment a deadline makes the clock live, evaluation under this
+harness's EMPTY trace refuses loudly (the underrun -- pass 6 moved
+the refusal from the poisoned binding to the trace pop; the full
+live-clock battery is `clock_lab`).
 """
 
 import time
@@ -214,8 +216,9 @@ def time_dead(n):
 
 
 def time_live(n):
-    # deadline SET: evaluation reaches time.time() and refuses loudly
-    # (the wall clock has no value in the model) -- whitelisted row
+    # deadline SET: evaluation reaches time.time() -- under this row's
+    # EMPTY trace that is the loud underrun refusal (pass 6: the pop
+    # replaced the poisoned-binding wall) -- whitelisted row
     deadline = 5
     nodes = 0
     while nodes < n:

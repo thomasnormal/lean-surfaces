@@ -204,6 +204,18 @@ structure World where
   `argv` arrives as a marshalled global), NOT world fields —
   docs/memory-model.md §effects. -/
   stdout : List String := []
+  /-- THE CLOCK TRACE (pass 6, docs/memory-model.md §the trace clock):
+  time as an INPUT, not an effect. Opaque integer readings, consumed in
+  order — evaluating exactly `time.time()` (unshadowed, benign-import
+  census — `isClockCall`, Semantics.lean) pops the head; an empty trace
+  is the LOUD underrun refusal, fuel-independent (a spec error in the
+  run's input, never a silent 0). The default `[]` is the pinned file's
+  regime: nothing is read until a boundary (`callFunctionClock`, a
+  batch job's `"clock"`, a spec's `{ w with clock := … }`) seeds it.
+  Readings are unit-agnostic ℤ; the record-replay harness convention is
+  integer microseconds (`time.time_ns() // 1000` on the CPython side,
+  which CONSUMES what it records — both sides see the same integers). -/
+  clock : List Int := []
 deriving Repr, Inhabited, BEq
 
 /-- One frame's full interpreter state: the shared world + this frame's

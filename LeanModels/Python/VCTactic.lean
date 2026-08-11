@@ -449,6 +449,7 @@ def interpUnfolds : List Name :=
    ``Stmt.defFree, ``Stmt.defFreeList, ``topLevelDefFree,
    ``initFoldLive, ``initFoldStep, ``initExecStmt, ``initItemsLoop,
    ``initBodyStmts, ``flushInitLocals, ``initBindable, ``initExecFuel,
+   ``stmtIsClockImport, ``moduleClockOk, ``clockRecvOk, ``isClockCall,
    ``envInt]
 
 /-- Rewrite lemmas added to captured symbolic execution: the branch-collapse

@@ -16,14 +16,14 @@ open LeanModels LeanModels.Python
 
 load_program sf_hist from "Examples/python/sf_hist/sf_hist.json"
 
-private def wA : World := ⟨#[.list #[.int 5]], [], []⟩
-private def wB : World := ⟨#[.list #[.int 5, .int 6]], [], []⟩
-private def wOne : World := ⟨#[.list #[.int 1, .int 2]], [], []⟩
-private def wOne' : World := ⟨#[.list #[.int 99, .int 2]], [], []⟩
+private def wA : World := ⟨#[.list #[.int 5]], [], [], []⟩
+private def wB : World := ⟨#[.list #[.int 5, .int 6]], [], [], []⟩
+private def wOne : World := ⟨#[.list #[.int 1, .int 2]], [], [], []⟩
+private def wOne' : World := ⟨#[.list #[.int 99, .int 2]], [], [], []⟩
 private def wTwo : World :=
-  ⟨#[.list #[.int 1, .int 2], .list #[.int 1, .int 2]], [], []⟩
+  ⟨#[.list #[.int 1, .int 2], .list #[.int 1, .int 2]], [], [], []⟩
 private def wTwo' : World :=
-  ⟨#[.list #[.int 99, .int 2], .list #[.int 1, .int 2]], [], []⟩
+  ⟨#[.list #[.int 99, .int 2], .list #[.int 1, .int 2]], [], [], []⟩
 
 theorem push_callsIn :
     CallsIn sf_hist wA "push" #[.ref 0, .int 6] wB (.int 2) :=
@@ -42,22 +42,22 @@ theorem poke_first_distinct :
   ⟨4096, by rfl⟩
 
 theorem poke_first_aliased_symbolic (n : Int) :
-    CallsIn sf_hist ⟨#[.list #[.int n, .int 0]], [], []⟩ "poke_first"
-      #[.ref 0, .ref 0] ⟨#[.list #[.int 99, .int 0]], [], []⟩ (.int 99) := by
+    CallsIn sf_hist ⟨#[.list #[.int n, .int 0]], [], [], []⟩ "poke_first"
+      #[.ref 0, .ref 0] ⟨#[.list #[.int 99, .int 0]], [], [], []⟩ (.int 99) := by
   refine ⟨32, ?_⟩
   rw [callIn]
   py_simp [sf_hist]
 
 theorem rotate_scores_callsIn :
-    CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], []⟩
+    CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], [], []⟩
       "rotate_scores" #[.ref 0]
-      ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], []⟩ .none :=
+      ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], [], []⟩ .none :=
   ⟨4096, by rfl⟩
 
 theorem rotate_scores_functional {w' : World} {v : RVal}
-    (h : CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], []⟩
+    (h : CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], [], []⟩
       "rotate_scores" #[.ref 0] w' v) :
-    v = .none ∧ w' = ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], []⟩ := by
+    v = .none ∧ w' = ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], [], []⟩ := by
   have hf := CallsIn.functional h rotate_scores_callsIn
   exact ⟨hf.2, hf.1⟩
 

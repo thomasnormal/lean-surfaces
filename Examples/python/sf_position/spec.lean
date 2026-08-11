@@ -31,7 +31,7 @@ CPython (`harness/cases.json` rows). -/
   #[#["i", "j", "prom"], #["lower", "upper"]]
 #guard sf_position.classes.map (fun c => (c.name, c.ok, c.ntBase.map NamedTupleDefn.fields))
   == #[("Position", true, some #["board", "score", "wc", "bc", "ep", "kp"])]
-#guard initWorld sf_position == ⟨#[], [], []⟩
+#guard initWorld sf_position == ⟨#[], [], [], []⟩
 
 #py_check sf_position.move_fields(3, 7) = (Val.tuple #[.int 3, .int 7, .str "q"])
 #py_check sf_position.move_eq(3, 7) =
@@ -66,7 +66,7 @@ out of tier — loud, never a fake `AttributeError`. -/
 #guard callFunction sf_position "bound_method_is_loud" #[.int 5] 4096 matches .unsupported _
 
 /-- The fresh world of every public call (see the `#guard` above). -/
-private def w0 : World := ⟨#[], [], []⟩
+private def w0 : World := ⟨#[], [], [], []⟩
 
 /-- The Position VALUE `tp_score_flow` builds — the real six-field shape,
 as an immediate `RVal.ntuple` (the recorded VALUE-like decision). -/
@@ -81,7 +81,7 @@ private def posV (s : Int) : RVal :=
 private def wTp (s d : Int) : World :=
   ⟨#[.dict #[(.tuple #[posV s, .int d, .bool true],
               .ntuple "Entry" #["lower", "upper"] #[.int (s - 1), .int (s + 1)])] 1],
-   [], []⟩
+   [], [], []⟩
 
 /-- Field access is tuple indexing: `Entry(lo, hi).upper - Entry(lo, hi).lower`
 is total, symbolically. -/

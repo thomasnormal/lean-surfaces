@@ -80,17 +80,19 @@ is unsupported); `MiniSearcher` is an ordinary class. -/
 #py_check exc_lab.deadline_capstone(4, 100) = 6004
 #py_check exc_lab.deadline_capstone(10, 0) = 1
 
-/-! ### the wall clock (docs/memory-model.md §wall-clock time — the
-recorded abstraction): `time.time()` may appear in code; the
+/-! ### the wall clock (docs/memory-model.md §wall-clock time, AMENDED
+by pass 6's §the trace clock): `time.time()` may appear in code; the
 short-circuit keeps it DEAD under `deadline = None` (the shipped
-guard's shape, a differential MATCH), and the moment a deadline makes
-it live, EVALUATION refuses loudly with the poisoned-import message
-naming the clock. -/
+guard's shape, a differential MATCH — nothing pops), and the moment a
+deadline makes it live, evaluation under the EMPTY trace refuses
+loudly with the UNDERRUN message (pass 6 flipped this pin from the
+poisoned-binding message, exactly as the design predicted; the
+live-clock battery is `clock_lab`). -/
 
 #py_check exc_lab.time_dead(5) = 10
 #py_check exc_lab.time_dead(0) = 0
 #guard callFunction exc_lab "time_live" #[.int 5] 4096
-  matches .unsupported "module-level value of 'time' is outside the G1 tier"
+  matches .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
 
 /-! ### the refusal battery (raw `#guard`: `unsupported` has no surface
 form — deliberate). Every deviation from the v0 shape is loud. -/

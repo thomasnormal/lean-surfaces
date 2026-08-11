@@ -40,9 +40,9 @@ still thaws to the transitional VALUE form, so mutating it refuses
 /-! ### The stateful specs (`CallsIn` — before-world, after-world) -/
 
 /-- One history entry (`[5]` at address 0). -/
-private def wA : World := ⟨#[.list #[.int 5]], [], []⟩
+private def wA : World := ⟨#[.list #[.int 5]], [], [], []⟩
 /-- After `push(hist, 6)`. -/
-private def wB : World := ⟨#[.list #[.int 5, .int 6]], [], []⟩
+private def wB : World := ⟨#[.list #[.int 5, .int 6]], [], [], []⟩
 
 /-- The driving loop's append: `push(hist, 6)` grows the CALLER's list in
 place — the length is returned, the mutation is in the world. -/
@@ -56,13 +56,13 @@ theorem current_callsIn :
   proofs
 
 /-- One list, aliased arguments. -/
-private def wOne : World := ⟨#[.list #[.int 1, .int 2]], [], []⟩
-private def wOne' : World := ⟨#[.list #[.int 99, .int 2]], [], []⟩
+private def wOne : World := ⟨#[.list #[.int 1, .int 2]], [], [], []⟩
+private def wOne' : World := ⟨#[.list #[.int 99, .int 2]], [], [], []⟩
 /-- Two structurally-equal but DISTINCT lists. -/
 private def wTwo : World :=
-  ⟨#[.list #[.int 1, .int 2], .list #[.int 1, .int 2]], [], []⟩
+  ⟨#[.list #[.int 1, .int 2], .list #[.int 1, .int 2]], [], [], []⟩
 private def wTwo' : World :=
-  ⟨#[.list #[.int 99, .int 2], .list #[.int 1, .int 2]], [], []⟩
+  ⟨#[.list #[.int 99, .int 2], .list #[.int 1, .int 2]], [], [], []⟩
 
 /-- **Aliasing, positive half**: `a` and `b` are the SAME list — the
 write through `a` is read back through `b` (result 99). -/
@@ -82,23 +82,23 @@ theorem poke_first_distinct :
 write erases it — the result is 99 for EVERY initial value (symbolic
 heap contents through the walker-independent `callIn` route). -/
 theorem poke_first_aliased_symbolic (n : Int) :
-    CallsIn sf_hist ⟨#[.list #[.int n, .int 0]], [], []⟩ "poke_first"
-      #[.ref 0, .ref 0] ⟨#[.list #[.int 99, .int 0]], [], []⟩ (.int 99) := by
+    CallsIn sf_hist ⟨#[.list #[.int n, .int 0]], [], [], []⟩ "poke_first"
+      #[.ref 0, .ref 0] ⟨#[.list #[.int 99, .int 0]], [], [], []⟩ (.int 99) := by
   proofs
 
 /-- In-place mutator returning `None` (acceptance case 17 at lists):
 `rotate_scores` negates every entry of the caller's list; its entire
 meaning is the world pair. -/
 theorem rotate_scores_callsIn :
-    CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], []⟩
+    CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], [], []⟩
       "rotate_scores" #[.ref 0]
-      ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], []⟩ .none := by
+      ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], [], []⟩ .none := by
   proofs
 
 /-- Any decided `rotate_scores` outcome IS that world pair
 (`CallsIn.functional` — fuel monotonicity at the `callIn` conjunct). -/
 theorem rotate_scores_functional {w' : World} {v : RVal}
-    (h : CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], []⟩
+    (h : CallsIn sf_hist ⟨#[.list #[.int 1, .int (-2), .int 3]], [], [], []⟩
       "rotate_scores" #[.ref 0] w' v) :
-    v = .none ∧ w' = ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], []⟩ := by
+    v = .none ∧ w' = ⟨#[.list #[.int (-1), .int 2, .int (-3)]], [], [], []⟩ := by
   proofs

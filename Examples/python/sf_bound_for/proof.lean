@@ -29,7 +29,7 @@ load_program sf_bound_for from "Examples/python/sf_bound_for/sf_bound_for.json"
 
 /-- The pinned world of the heap-free geometry (`initWorld` unfolded —
 since the G1 world-init the module's constant global rides in it). -/
-private def pw : World := ⟨#[], [("MATE_UPPER", .int 69290)], []⟩
+private def pw : World := ⟨#[], [("MATE_UPPER", .int 69290)], [], []⟩
 
 /-- The loop target of `bound_loop`'s `for` (the loaded literal's piece). -/
 private def loopTgt : Expr :=

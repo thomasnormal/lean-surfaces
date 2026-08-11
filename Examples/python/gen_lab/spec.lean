@@ -132,7 +132,7 @@ the raise. -/
 #py_check gen_lab.bad_second(2) = 0
 #py_check gen_lab.bad_second(0) raises .zeroDivisionError
 
-#guard (match callIn gen_lab 4096 ⟨#[], [], []⟩ "bad" #[.int 0] with
+#guard (match callIn gen_lab 4096 ⟨#[], [], [], []⟩ "bad" #[.int 0] with
         | .ok w (.ref a) =>
           (match stepIter gen_lab 4096 w a with
            | .ok w₁ (some (.int 1)) =>

@@ -29,7 +29,7 @@ load_program sf_position from "Examples/python/sf_position/sf_position.json"
 /-- The fresh world of every public call: the whole top level is the
 docstring plus the RECOGNIZED namedtuple binds (ingested as `pass`), so
 nothing is allocated and nothing is bound. -/
-private def w0 : World := ⟨#[], [], []⟩
+private def w0 : World := ⟨#[], [], [], []⟩
 
 /-- The Position VALUE `tp_score_flow` builds — the real six-field shape,
 as an immediate `RVal.ntuple` (the recorded VALUE-like decision). -/
@@ -44,7 +44,7 @@ private def posV (s : Int) : RVal :=
 private def wTp (s d : Int) : World :=
   ⟨#[.dict #[(.tuple #[posV s, .int d, .bool true],
               .ntuple "Entry" #["lower", "upper"] #[.int (s - 1), .int (s + 1)])] 1],
-   [], []⟩
+   [], [], []⟩
 
 theorem entry_window_total (lo hi : PyInt) :
     sf_position.entry_window(lo, hi) ==> hi - lo := by

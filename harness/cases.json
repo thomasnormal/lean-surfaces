@@ -418,5 +418,17 @@
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_m", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_k", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "call_pad", "args": [[5], [0]], "expect": "match"},
-  {"file": "Examples/python/init_lab/init_lab.py", "function": "swap_a", "args": [[1], [0]], "expect": "match"}
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "swap_a", "args": [[1], [0]], "expect": "match"},
+
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": [123], "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": "record", "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_twice", "args": [[]], "clock": [5, 9], "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "dead_clock", "args": [[10]], "clock": [1, 2], "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "dead_clock", "args": [[10]], "clock": "record", "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "armed", "args": [[7, 100]], "clock": [5, 6, 8], "expect": "match"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "armed", "args": [[7, 100]], "clock": [5], "expect": "unsupported"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": [], "expect": "unsupported"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "shadowed", "args": [[]], "clock": [123], "expect": "unsupported"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "call_with_arg", "args": [[]], "clock": [123], "expect": "unsupported"},
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "pure_sum", "args": [[10], [0]], "expect": "match"}
 ]

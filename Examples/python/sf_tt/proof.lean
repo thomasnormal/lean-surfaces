@@ -14,10 +14,10 @@ open LeanModels LeanModels.Python
 load_program sf_tt from "Examples/python/sf_tt/sf_tt.json"
 
 private def w0 : World :=
-  ⟨#[.dict #[] 0], [("BIG", .int 60000), ("tt", .ref 0)], []⟩
+  ⟨#[.dict #[] 0], [("BIG", .int 60000), ("tt", .ref 0)], [], []⟩
 
 private def w1 : World :=
-  ⟨#[.dict #[(.int 1, .int 2)] 1], [("BIG", .int 60000), ("tt", .ref 0)], []⟩
+  ⟨#[.dict #[(.int 1, .int 2)] 1], [("BIG", .int 60000), ("tt", .ref 0)], [], []⟩
 
 theorem tt_put_callsIn :
     CallsIn sf_tt (initWorld sf_tt) "tt_put" #[.int 1, .int 2] w1 .none :=

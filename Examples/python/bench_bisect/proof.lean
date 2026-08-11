@@ -30,7 +30,7 @@ load_program bench_bisect from "Examples/python/bench_bisect/bench_bisect.json"
 
 /-- The pinned world of the stage-1 geometry (`initWorld` unfolded — what
 `py_simp` presents at every state; docs/memory-model.md). -/
-def pw : World := ⟨#[], [], []⟩
+def pw : World := ⟨#[], [], [], []⟩
 
 /-! # Part 1 — `bisect_left` (cold prover 0, adapted) -/
 

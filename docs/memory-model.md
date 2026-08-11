@@ -1492,6 +1492,42 @@ underrun instead of poisoned binding), which also gains the armed pair —
 a trace that lets the 2048th node continue to CPython's exact
 `(bound, nodes)`, and one that raises `Stop` at that node.
 
+AS-BUILT (2026-08-11, pass 6). Implemented as designed; the deltas,
+each a narrowing, a mechanical necessity, or a MEASURED correction:
+
+* `isClockCall m st recv attr = (attr == "time") && clockRecvOk m st
+  recv` — the receiver fork is the separate worker `clockRecvOk`, the
+  attr conjunct outside it as designed; the worldInv patch is exactly
+  the predicted `rfl` (`isClockCall m st recv "get" = false`), the
+  fuelMono patch one `split`. The census walks `m.topLevel` with
+  `stmtIsClockImport` and requires `hasGlobal = false` on BOTH
+  `m.functions` and `m.classes` (methods are flattened, but a class
+  BODY carries its own flag).
+* Both predicted pin flips happened verbatim (exc_lab `time_live` →
+  the underrun message; the sunfish frontier pin now PINS that message
+  and gained the armed pair — `clock := [999]` continues to CPython's
+  exact `(0, 2049)`, `clock := [1001]` raises `Stop` at node 2048 with
+  the world retained and the reading consumed, both CPython-derived).
+* **The `rfl` prediction for trace-quantified theorems is FALSIFIED by
+  measurement** — recorded so nobody retries it: the elaborator's
+  free-variable `whnf` does not share work the way closed kernel
+  evaluation does. On clock_lab's TEN-ITERATION `pure_sum(10)`, `rfl`
+  died beyond 4,000,000 heartbeats (and `py_simp` at fuel 512 blew
+  1,000,000 on `isDefEq`). What WORKS is SYMBOLIC EXECUTION at small
+  concrete fuel: `py_simp [clock_lab, callIn, execWhile]` proves
+  `pure_sum_all_traces` (fuel 64) in ~20 s — the world is
+  concrete-except-clock and nothing scrutinizes the free trace.
+  CONSEQUENCE for the capstone shape this section promised: the
+  sunfish stepped-search `∀ tr` statement does NOT land by per-run
+  normalization (a search-sized py_simp storms — the standing pass-4/5
+  finding); it waits for the **CLOCK-ERASURE meta-theorem** — "a run
+  decided `.ok`/`.exn` from the EMPTY trace never consulted the clock,
+  hence runs identically under EVERY trace, preserving it" — the
+  fuelMono-shaped mutual induction, recorded in the backlog as the
+  next milestone. The shipped-file trace claims that DO land now are
+  the concrete armed pair + underrun pins above; the lab-scale
+  `pure_sum_all_traces` is the first trace-quantified theorem.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

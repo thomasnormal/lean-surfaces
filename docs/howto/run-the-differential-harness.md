@@ -68,6 +68,14 @@ list of argument tuples. Real rows:
 - `fuel` (optional, per case) — raises the runner's default fuel (10000)
   for that case's rows; deep drains (`sf_order.move_order` walks every
   ray, scores every move, then sorts) need it.
+- `clock` (optional, per case — docs/memory-model.md §the trace clock) —
+  either a list of ints (BOTH sides replay it: CPython through a stub
+  bound to the module's `time` name for the row, the model through the
+  batch job's `"clock"` field) or `"record"` (the CPython stub reads the
+  real clock as integer microseconds, records, and the model replays the
+  recorded list). A CPython-side underrun raises `ClockTraceUnderrun`
+  (never a match); the model side's underrun is the loud `unsupported`
+  refusal. Rows without `clock` run with the empty trace.
 - `expect` — `"match"` (default): CPython and Lean canonical outcomes must
   be equal, exceptions included (compared by canonical class name —
   [reference, error classes](../reference.md#error-classes)).

@@ -33,11 +33,11 @@ load_program sf_tt from "Examples/python/sf_tt/sf_tt.json"
 the constant `BIG`, and the resolved globals env. Pinned by `#guard`
 below (kernel-computed), stated once here so the theorems can name it. -/
 private def w0 : World :=
-  ⟨#[.dict #[] 0], [("BIG", .int 60000), ("tt", .ref 0)], []⟩
+  ⟨#[.dict #[] 0], [("BIG", .int 60000), ("tt", .ref 0)], [], []⟩
 
 /-- The world after `tt[1] = 2`: the store bumped the shape version. -/
 private def w1 : World :=
-  ⟨#[.dict #[(.int 1, .int 2)] 1], [("BIG", .int 60000), ("tt", .ref 0)], []⟩
+  ⟨#[.dict #[(.int 1, .int 2)] 1], [("BIG", .int 60000), ("tt", .ref 0)], [], []⟩
 
 #guard initWorld sf_tt == w0
 

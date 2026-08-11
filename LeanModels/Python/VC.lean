@@ -513,7 +513,7 @@ threading is definitional in stage 1: nothing moves the world). The
 section SmokeTest
 
 private abbrev vcSp : Span := ⟨0, 0, 0, 0⟩
-private abbrev vcW : World := ⟨#[], [], []⟩
+private abbrev vcW : World := ⟨#[], [], [], []⟩
 /-- `x = 3` -/
 private abbrev vcS1 : Stmt := .assign #[.name "x" vcSp] (.constant (.int 3) vcSp) vcSp
 /-- `y = x + 4` -/

@@ -987,3 +987,21 @@ readings (sound — every double is one — but pointless without a float
 tier; a future recorded decision); `Monotone`-consuming deadline
 theorems ("once expired, always expired") — stated class, nothing
 spends it yet.
+
+BUILT (same day) — as designed, with ONE measured correction (memory-
+model §the trace clock, as-built): trace-quantified theorems do NOT go
+through free-variable `rfl` (elaborator whnf shares no work; 4M
+heartbeats died on a ten-iteration run) — the lab theorem
+(`clock_lab.pure_sum_all_traces`) lands by SYMBOLIC EXECUTION at small
+concrete fuel instead, and the sunfish armed pair + underrun are
+concrete kernel pins ([999] continues to CPython's (0, 2049); [1001]
+raises Stop at node 2048, world retained). **NEXT MILESTONE, opened by
+this measurement — the CLOCK-ERASURE meta-theorem**: for every
+interpreter function, a run decided `.ok`/`.exn` from a world with
+`clock = []` never consulted the clock, hence runs identically under
+EVERY seeded trace (result world's clock = the seeded trace,
+unchanged). The fuelMono-shaped mutual induction over the 18-member
+block (Obs.lean); its payoff is transporting every existing concrete
+empty-trace pin — the whole pass-5 stepped-search battery — to `∀ tr`
+statements at zero marginal kernel cost, the honest route to
+"safety is trace-independent" at search scale.

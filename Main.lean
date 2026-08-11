@@ -33,11 +33,14 @@ usage errors (2) and envelope load/parse errors (1).
 calls — the differential harness's shape, so 615 rows cost one `lake`
 startup instead of 615. Each non-empty line of the jobs file is one job:
 
-* `{"path":"….json","function":"f","args":[…],"fuel":N?}`
+* `{"path":"….json","function":"f","args":[…],"fuel":N?,"clock":[…]?}`
 
 with `args` elements either plain JSON integers or canonical typed
-values (the same encoding as the CLI), and `fuel` optional (default: the
-command line's `--fuel`, else 10000). Envelopes are parsed once per
+values (the same encoding as the CLI), `fuel` optional (default: the
+command line's `--fuel`, else 10000), and `clock` an optional array of
+integer readings seeding the world's CLOCK TRACE
+(`callFunctionClock` — docs/memory-model.md §the trace clock; absent =
+empty trace). Envelopes are parsed once per
 distinct `path` and cached. Exactly ONE line is printed per job, in job
 order, flushed as it is produced (a stalled consumer sees progress, not
 silence). A job the runner itself cannot execute — unparsable line,
@@ -184,12 +187,17 @@ def runScriptMode (m : Module) (fuel : Nat) : IO UInt32 := do
       IO.eprintln "leanpy-timeout"
       return 4
 
-/-- One parsed job line of `--batch` mode. -/
+/-- One parsed job line of `--batch` mode. `clock` is the optional
+CLOCK TRACE (pass 6, docs/memory-model.md §the trace clock): integer
+readings `time.time()` consumes in order — the model side of the
+harness's record-replay protocol. Absent = empty trace (any reachable
+`time.time()` refuses with the loud underrun). -/
 structure BatchJob where
   path : String
   fname : String
   args : Array Val
   fuel : Option Nat
+  clock : Option (List Int)
 
 /-- Parse one jobs-file line. Every failure message carries the line, so
 a bad row in a 615-row file is findable without counting. -/
@@ -212,7 +220,18 @@ def parseJob (line : String) : Except String BatchJob := do
       match f.getNat? with
       | .ok n => pure (some n)
       | .error _ => throw s!"\"fuel\" must be a natural number: {line}"
-  return { path, fname, args, fuel := fuel? }
+  let clock? ← match j.getObjVal? "clock" with
+    | .error _ => pure Option.none
+    | .ok c =>
+      match c.getArr? with
+      | .ok arr => do
+        let readings ← arr.mapM fun r =>
+          match r.getInt? with
+          | .ok n => .ok n
+          | .error _ => throw s!"\"clock\" entries must be integers: {line}"
+        pure (some readings.toList)
+      | .error _ => throw s!"\"clock\" must be an array of integers: {line}"
+  return { path, fname, args, fuel := fuel?, clock := clock? }
 
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
@@ -254,7 +273,12 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
             IO.eprintln s!"leanmodels-run --batch: {e}"
             stdout.putStrLn ("{\"status\":\"runner-error\",\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
-            stdout.putStrLn (resJson (callFunction m job.fname job.args (job.fuel.getD defaultFuel)))
+            stdout.putStrLn (resJson (match job.clock with
+              | some clock =>
+                  callFunctionClock m job.fname job.args clock
+                    (job.fuel.getD defaultFuel)
+              | Option.none =>
+                  callFunction m job.fname job.args (job.fuel.getD defaultFuel)))
         stdout.flush
       return (if hadError then 1 else 0)
 

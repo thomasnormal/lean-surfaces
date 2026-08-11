@@ -240,6 +240,8 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             Stmt.defFree, Stmt.defFreeList, topLevelDefFree,
             initFoldLive, initFoldStep, initExecStmt, initItemsLoop,
             initBodyStmts, flushInitLocals, initBindable, initExecFuel,
+            stmtIsClockImport, moduleClockOk, clockRecvOk, isClockCall,
+            callFunctionClock,
             callFunction, initWorld, RVal.thaw, RVal.thawList, RVal.thawArgs,
             RVal.freeze, RVal.freezeList, RVal.freezeB, RVal.freezeListB,
             and_assoc, $extra,*] $(loc)?)
@@ -279,5 +281,45 @@ Consequences for later phases:
 * `native_decide` remains forbidden in `@[spec]` theorems (`#print axioms`
   must show only standard axioms).
 -/
+
+/-! ### Trace classes (pass 6, docs/memory-model.md §the trace clock)
+
+Named predicates over clock traces — the AXIOM CLASSES trace-quantified
+theorems are conditioned on. `WallClock` is the unconstrained class
+(`True` — a `∀ tr` theorem with no side condition IS a WallClock theorem
+and consumes no axioms): the first trace-quantified theorem, "safety is
+trace-independent when the run never consults the clock", is stated over
+it (the sunfish stepped-search pins for ALL traces —
+`Examples/python/sunfish/spec.lean`). `Monotone` (nondecreasing
+readings) is the class future deadline-abstraction theorems will consume
+("once expired, always expired" needs it); it is STATED, nothing spends
+it yet — recorded groundwork, not a claim. -/
+
+/-- A clock trace: the finite list of readings `World.clock` serves to
+`time.time()` in order (opaque integers — docs/memory-model.md §the
+trace clock records the ℤ decision and its soundness argument). -/
+abbrev ClockTrace := List Int
+
+/-- The unconstrained trace class: EVERY reading sequence is a possible
+wall clock (readings may jump backwards — NTP steps, VM migrations; the
+model assumes nothing). `∀ tr` theorems are exactly WallClock theorems. -/
+def ClockTrace.WallClock (_ : ClockTrace) : Prop := True
+
+/-- The nondecreasing trace class: each reading is ≤ every later one.
+The class deadline-abstraction theorems will consume — once
+`t > deadline` holds for a reading, it holds for every later reading of
+a Monotone trace. Stated groundwork; no theorem consumes it yet. -/
+def ClockTrace.Monotone (tr : ClockTrace) : Prop :=
+  tr.Pairwise (· ≤ ·)
+
+/-- Every trace is a wall clock — the class really is unconstrained. -/
+theorem ClockTrace.wallClock (tr : ClockTrace) : tr.WallClock := trivial
+
+/-- A Monotone trace's tail is Monotone (the shape pop-stepping
+consumes: after `time.time()` pops the head, the residual trace is
+still in class). -/
+theorem ClockTrace.Monotone.tail {t : Int} {tr : ClockTrace}
+    (h : ClockTrace.Monotone (t :: tr)) : ClockTrace.Monotone tr :=
+  (List.pairwise_cons.mp h).2
 
 end LeanModels.Python

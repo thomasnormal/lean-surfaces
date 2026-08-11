@@ -33,6 +33,14 @@ whitelists a documented v0 semantic-tier gap — the case passes iff the Lean
 side reports ``{"status": "unsupported"}`` (CPython's answer is shown for
 information only).
 
+A case may carry ``"clock"`` (docs/memory-model.md §the trace clock):
+either a list of ints — BOTH sides replay it — or ``"record"`` — the
+CPython side's stub reads the real clock as integer microseconds,
+records, and the model replays the recorded list. The stub is bound to
+the module's ``time`` name per row and restored; a CPython-side underrun
+raises ``ClockTraceUnderrun`` (distinctively named — never a match).
+Rows without ``"clock"`` run with the empty trace, exactly as before.
+
 Prints a result table and exits non-zero on any non-whitelisted mismatch
 (and on harness-level errors such as a failing build). ``lake build`` is run
 once up front so ``lake exe`` does not rebuild per case.
@@ -52,6 +60,42 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class Unmappable(Exception):
     """A CPython value outside the canonical set (e.g. float)."""
+
+
+class ClockTraceUnderrun(Exception):
+    """The CPython side's replayed clock trace ran out (record-replay,
+    docs/memory-model.md §the trace clock). Distinctively named so the
+    canonicalized exception can never accidentally match a model row."""
+
+
+class _ReplayClock(object):
+    """A stub bound to the module's `time` name: `.time()` pops the next
+    reading of a fixed trace. Underrun raises ClockTraceUnderrun — loud,
+    never a silent 0 (the model side refuses with `unsupported`)."""
+
+    def __init__(self, readings):
+        self._readings = list(readings)
+
+    def time(self):
+        if not self._readings:
+            raise ClockTraceUnderrun()
+        return self._readings.pop(0)
+
+
+class _RecordingClock(object):
+    """A stub bound to the module's `time` name: `.time()` reads the REAL
+    clock as INTEGER MICROSECONDS (`time.time_ns() // 1000` — an int, the
+    recorded representation decision: the oracle run CONSUMES exactly what
+    it records, so the model's replay sees literally the same integers)."""
+
+    def __init__(self):
+        self.readings = []
+
+    def time(self):
+        import time as _time
+        r = _time.time_ns() // 1000
+        self.readings.append(r)
+        return r
 
 
 def to_canonical_value(v):
@@ -94,13 +138,17 @@ def from_typed(a):
     raise ValueError("bad typed argument: %r" % (a,))
 
 
-def batch_job(json_path, fname, args, fuel):
+def batch_job(json_path, fname, args, fuel, clock=None):
     """One jobs-file line for `leanmodels-run --batch` (compact JSON).
     cases.json argument encoding is already the runner's own: plain ints
-    stay JSON numbers, typed values ride unchanged."""
+    stay JSON numbers, typed values ride unchanged. `clock` (a list of
+    ints) seeds the model world's clock trace — the replay half of the
+    record-replay protocol (docs/memory-model.md §the trace clock)."""
     job = {"path": json_path, "function": fname, "args": args}
     if fuel is not None:
         job["fuel"] = fuel
+    if clock is not None:
+        job["clock"] = list(clock)
     return json.dumps(job, separators=(",", ":"))
 
 
@@ -113,6 +161,35 @@ def load_module(path):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
+
+
+def run_cpython_clock(mod, fname, args, clock_spec):
+    """The CPython half of record-replay (docs/memory-model.md §the trace
+    clock): bind the module's `time` name to a stub for the duration of
+    ONE row, run, and return (result, trace) where `trace` is the exact
+    integer trace the MODEL must replay. `clock_spec` is either a list of
+    ints (both sides replay it) or "record" (the stub reads the real
+    clock as integer microseconds and records — the oracle CONSUMES what
+    it records, so both sides see the same integers)."""
+    if clock_spec == "record":
+        stub = _RecordingClock()
+    elif isinstance(clock_spec, list):
+        stub = _ReplayClock(clock_spec)
+    else:
+        raise ValueError('"clock" must be "record" or a list of ints: %r'
+                         % (clock_spec,))
+    had = hasattr(mod, "time")
+    saved = getattr(mod, "time", None)
+    mod.time = stub
+    try:
+        result = run_cpython(mod, fname, args)
+    finally:
+        if had:
+            mod.time = saved
+        else:
+            delattr(mod, "time")
+    trace = stub.readings if clock_spec == "record" else list(clock_spec)
+    return result, trace
 
 
 def run_cpython(mod, fname, args):
@@ -263,11 +340,16 @@ def main(argv=None):
             print("error: cannot import %s: %s" % (src, e), file=sys.stderr)
             return 2
         fuel = case.get("fuel", opts.fuel)
+        clock_spec = case.get("clock")
         for args in case["args"]:
             call = "%s(%s)" % (fname,
                                ", ".join(repr(from_typed(a)) for a in args))
-            calls.append((call, expect, run_cpython(mod, fname, args)))
-            jobs.append(batch_job(json_path, fname, args, fuel))
+            if clock_spec is None:
+                cpy, trace = run_cpython(mod, fname, args), None
+            else:
+                cpy, trace = run_cpython_clock(mod, fname, args, clock_spec)
+            calls.append((call, expect, cpy))
+            jobs.append(batch_job(json_path, fname, args, fuel, trace))
 
     # Pass 2: the Lean side — ONE runner process for all rows, verdicts
     # streamed to stderr as they land.

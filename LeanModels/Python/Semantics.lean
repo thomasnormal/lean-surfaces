@@ -2714,6 +2714,66 @@ faithful, and for what the two independent facts mean). -/
 def moduleGlobals (m : Module) : GlobalsAcc × Bool :=
   ((moduleInit m).2.1, (moduleInit m).2.2.1)
 
+/-! ### The trace clock (pass 6 — docs/memory-model.md §the trace clock)
+
+Time as an INPUT: `World.clock` is a finite trace of opaque integer
+readings, and evaluating exactly `time.time()` pops the next one. The
+admission is decided by the pure `isClockCall` below; everything failing
+it — `time` as a bare value, `time.sleep`, any other attribute, args,
+kwargs, a shadowed or rebound `time` — takes the pre-existing paths
+(poisoned-binding refusal / faithful errors) verbatim. -/
+
+/-- Is this top-level statement the exact benign clock import? -/
+def stmtIsClockImport : Stmt → Bool
+  | .unsupported "Import" "import time" _ => true
+  | _ => false
+
+/-- The clock CENSUS: the module's poisoned `time` binding provably IS
+the benign import's. Requires (1) some top-level `import time`; (2)
+every OTHER top-level statement bind-analysable and binding/storing
+anything but `time` (an unanalysable statement fails the census — it
+might bind it); (3) no function or class subtree carrying `global` (the
+extractor-recorded `has_global`, the namedtuple census's discipline — a
+`global time` rebinding at call time would make the trace silently
+shadowable). -/
+def moduleClockOk (m : Module) : Bool :=
+  m.topLevel.any stmtIsClockImport
+    && m.topLevel.all (fun s =>
+         stmtIsClockImport s ||
+           (match s.g1Binds with
+            | some bs => !(bs.contains "time") && !(s.g1Stores.contains "time")
+            | Option.none => false))
+    && m.functions.all (fun f => !f.hasGlobal)
+    && m.classes.all (fun c => !c.hasGlobal)
+
+/-- The receiver-side fork of the clock admission: the receiver is
+literally the NAME `time`, UNSHADOWED at the consultation point — not in
+frame locals, statically POISONED (the benign-import binding's state in
+the G1 table), absent from the live view — in a module whose census
+passes. Kept SEPARATE from the `attr == "time"` test (see `isClockCall`)
+so the fragment proofs never need to open this match at a symbolic
+receiver. -/
+def clockRecvOk (m : Module) (st : FrameState) : Expr → Bool
+  | .name tn _ =>
+      tn == "time"
+        && (Env.lookup st.locals tn).isNone
+        && (match lookupG (moduleGlobals m).1 tn with
+            | some Option.none => true
+            | _ => false)
+        && (Env.lookup st.world.globals tn).isNone
+        && moduleClockOk m
+  | _ => false
+
+/-- The trace-clock admission (docs/memory-model.md §the trace clock),
+decided BEFORE the receiver evaluates. The `attr == "time"` conjunct is
+FIRST and OUTSIDE the receiver match: `isClockCall m st recv "get"`
+reduces to `false` by `rfl` even at a symbolic receiver and world, which
+is exactly what the heap-free fragment's meta-theorems (`worldInv`,
+`fuelMono`) consume. -/
+def isClockCall (m : Module) (st : FrameState) (recv : Expr)
+    (attr : String) : Bool :=
+  attr == "time" && clockRecvOk m st recv
+
 /-- Does a call supplying `n` positional arguments fit `params`? Python's
 rule with defaults (F1): at most one argument per parameter, and every
 parameter beyond the supplied ones carries a default —
@@ -3919,6 +3979,28 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        else
                          .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement")
         | .attribute recv attr _ =>
+          -- ===== THE TRACE CLOCK (pass 6, docs/memory-model.md §the
+          -- trace clock): the EXACT call shape `time.time()` on the
+          -- unshadowed benign-import clock name consumes the next
+          -- reading of the world's trace; an empty trace is the LOUD
+          -- underrun refusal (fuel-independent — a spec error in the
+          -- run's INPUT, never a silent 0). Decided BEFORE the receiver
+          -- evaluates (receiver evaluation is the poisoned refusal);
+          -- everything failing `isClockCall` takes the paths below
+          -- verbatim. `time.time(args…)` refuses loudly: CPython would
+          -- evaluate the args then raise `TypeError`, and the model
+          -- never fakes what it can refuse. =====
+          if isClockCall m st recv attr then
+            match args.toList with
+            | [] =>
+              match st.world.clock with
+              | [] =>
+                .unsupported "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+              | t :: ts =>
+                .ok { st with world := { st.world with clock := ts } } (.int t)
+            | _ :: _ =>
+              .unsupported "time.time() with arguments is outside the trace-clock tier (docs/memory-model.md §the trace clock)"
+          else
           -- Method calls (dict `.get`, H2 list `.append`/`.pop`, H3
           -- instance methods). CPython order: the receiver (and its
           -- attribute lookup) evaluates BEFORE the arguments — so the
@@ -5149,7 +5231,7 @@ def initBodyStmts (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc) :
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
-      match execStmt mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ s with
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ s with
       | .ok st flow =>
         (match flushInitLocals mV acc st.locals with
          | some acc' =>
@@ -5209,7 +5291,7 @@ def initExecStmt (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
     | .forStmt target (.call (.attribute d "items" _) #[] #[] Option.none _) body orelse _ =>
       (match orelse.toList with
        | [] =>
-         (match evalExpr mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ d with
+         (match evalExpr mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ d with
           | .ok st dv =>
             (match dv with
              | .ref a =>
@@ -5225,7 +5307,7 @@ def initExecStmt (mV : Module) (fuel : Nat) (h : Heap) (acc : GlobalsAcc)
           | .unsupported msg => .unsupported msg)
        | _ :: _ => .unsupported "'for … else' at module init is outside the tier")
     | s =>
-      match execStmt mV fuel ⟨⟨h, resolvedG acc, []⟩, []⟩ s with
+      match execStmt mV fuel ⟨⟨h, resolvedG acc, [], []⟩, []⟩ s with
       | .ok st flow =>
         (match flushInitLocals mV acc st.locals with
          | some acc' =>
@@ -5284,5 +5366,16 @@ the world from the public result. NOT the recursion point — nested calls
 use `callIn`; proofs unfold this wrapper freely. -/
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
   Run.toPublic fuel (callIn m fuel (initWorld m) fname (RVal.thawArgs args))
+
+/-- `callFunction` with the world's CLOCK TRACE seeded (pass 6,
+docs/memory-model.md §the trace clock): the only difference from
+`callFunction` is `World.clock := clock` — the batch harness's surface
+for `"clock"`-carrying rows. `callFunction m f args fuel` IS
+`callFunctionClock m f args [] fuel` definitionally (a structure-literal
+`clock := []` is the field's default). -/
+def callFunctionClock (m : Module) (fname : String) (args : Array Val)
+    (clock : List Int) (fuel : Nat) : Res Val :=
+  Run.toPublic fuel
+    (callIn m fuel { initWorld m with clock := clock } fname (RVal.thawArgs args))
 
 end LeanModels.Python

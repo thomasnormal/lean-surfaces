@@ -641,8 +641,13 @@ theorem fuelMono (fuel : Nat) :
                 -- receiver-first dispatch (H3): the receiver evaluates, then
                 -- `execAttrCall` forks on the pure plan (its own conjunct);
                 -- an ntuple VALUE receiver (H5) forks on `ntupleCallPlan` —
-                -- only the method arm recurses (args + `callIn`)
+                -- only the method arm recurses (args + `callIn`).
+                -- Pass 6: the TRACE-CLOCK fork comes first (`isClockCall`
+                -- is fuel-free, so both sides split identically; the pop
+                -- and its refusals are fuel-free too).
                 dsimp only
+                split
+                · exact Run.le_refl _
                 refine Run.le_bind (ihE m st recv k hk) fun st r => ?_
                 cases r <;>
                   first
@@ -2034,7 +2039,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             obtain ⟨⟨⟨hkw, hattr'⟩, hrecv⟩, hargsF⟩ := hfree
             have hattr : attr = "get" := by simpa [beq_iff_eq] using hattr'
             subst hattr
-            simp only [evalExpr, hkw, eq_self_iff_true, if_true]
+            -- pass 6: the trace-clock fork dies at its FIRST conjunct
+            -- (`"get" == "time"` — the attr test sits outside the
+            -- receiver match precisely so this is `rfl` here)
+            have hclk : isClockCall m st recv "get" = false := rfl
+            simp only [evalExpr, hkw, eq_self_iff_true, if_true, hclk,
+              Bool.false_eq_true, if_false]
             refine .bind (ihE st recv hrecv) fun st₁ r h₁ => ?_
             cases r <;>
               first

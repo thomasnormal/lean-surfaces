@@ -33,7 +33,7 @@ load_program sf_bound_tree from "Examples/python/sf_bound_tree/sf_bound_tree.jso
 
 /-- The pinned world of the heap-free geometry (`initWorld` unfolded —
 since the G1 world-init the module's constant global rides in it). -/
-private def pw : World := ⟨#[], [("MATE_UPPER", .int 69290)], []⟩
+private def pw : World := ⟨#[], [("MATE_UPPER", .int 69290)], [], []⟩
 
 /-- Explicit game trees: `(eval, children)`. -/
 inductive GTree where

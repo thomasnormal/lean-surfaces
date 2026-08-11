@@ -42,7 +42,7 @@ instance at address 0 — what instantiation builds just before running
 `__init__`. The G1 globals carry `MATE_UPPER`; the init heap is empty
 (`#guard` below), so the instance is the first object. -/
 private def wA : World :=
-  ⟨#[.instance 0 #[]], [("MATE_UPPER", .int 69290)], []⟩
+  ⟨#[.instance 0 #[]], [("MATE_UPPER", .int 69290)], [], []⟩
 
 /-- After `Searcher.__init__`: `self.tp_score`/`self.tp_move` are fresh
 heap dicts (addresses 1 and 2 — allocated by the RHS `{}` displays
@@ -51,7 +51,7 @@ heap: the attribute table IS the instance object. -/
 private def wB : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 0)],
      .dict #[] 0, .dict #[] 0],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
 /-- After the first `bound(pos, gamma)` — PARAMETRIC in the symbolic
 arguments: one node visited, the score `gamma - 1` stored under the
@@ -61,7 +61,7 @@ private def wC (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 1)],
      .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
      .dict #[(.int p, .int g)] 1],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
 /-- After the second identical `bound`: ONLY `nodes` moved — the call
 was a table hit (no insertion, no shape change). -/
@@ -69,9 +69,9 @@ private def wD (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 2)],
      .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
      .dict #[(.int p, .int g)] 1],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
-#guard initWorld sf_searcher == ⟨#[], [("MATE_UPPER", .int 69290)], []⟩
+#guard initWorld sf_searcher == ⟨#[], [("MATE_UPPER", .int 69290)], [], []⟩
 #guard (initWorld sf_searcher).heap.push (.instance 0 #[]) == wA.heap
 
 /-- **Stateful spec**: `__init__` transforms the bare instance into the

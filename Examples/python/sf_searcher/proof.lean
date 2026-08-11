@@ -22,24 +22,24 @@ open LeanModels LeanModels.Python
 load_program sf_searcher from "Examples/python/sf_searcher/sf_searcher.json"
 
 private def wA : World :=
-  ⟨#[.instance 0 #[]], [("MATE_UPPER", .int 69290)], []⟩
+  ⟨#[.instance 0 #[]], [("MATE_UPPER", .int 69290)], [], []⟩
 
 private def wB : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 0)],
      .dict #[] 0, .dict #[] 0],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
 private def wC (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 1)],
      .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
      .dict #[(.int p, .int g)] 1],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
 private def wD (p g : Int) : World :=
   ⟨#[.instance 0 #[("tp_score", .ref 1), ("tp_move", .ref 2), ("nodes", .int 2)],
      .dict #[(.tuple #[.int p, .int g], .int (g - 1))] 1,
      .dict #[(.int p, .int g)] 1],
-   [("MATE_UPPER", .int 69290)], []⟩
+   [("MATE_UPPER", .int 69290)], [], []⟩
 
 theorem searcher_init_callsIn :
     CallsIn sf_searcher wA "Searcher.__init__" #[.ref 0] wB .none :=

@@ -1146,6 +1146,73 @@ gap that `input` is absent from `isBuiltinName`, so a hand-driven
 `main()` run would answer a fake `NameError` before reaching any of
 this — pre-existing, backlog).
 
+## bound() end-to-end (pass 4 capstone — the last mechanical constructs)
+
+Everything `Searcher().bound(pos, gamma, depth)` needs beyond the
+exceptions/time landings, designed here before code. Census of the
+remaining gaps against the shipped file: THREE constructs.
+
+1. **Attribute augmented assignment** (`self.nodes += 1`). CPython
+   order: receiver, attribute LOAD (an `AttributeError` fires before
+   the value evaluates), value, binop, attribute STORE. In tier for
+   IMMEDIATE old values only — a heap-valued attribute's `+=` is
+   in-place mutation through an alias and a boundary-list value would
+   silently rebind: both refuse loudly (the name-target discipline,
+   verbatim). The read rides `attrReadResult`, the store
+   `heapAttrStore`. `Stmt.heapFree` goes `false` for attribute targets
+   (the store mutates); subscript/other targets keep their loud arms.
+
+2. **Tuple targets with ATTRIBUTE elements**
+   (`self.tp_score, self.tp_move, self.history = {}, {}, set()`).
+   CPython: RHS evaluates, unpacks, then the element stores run LEFT TO
+   RIGHT, each mutating the heap. All-NAME tuples keep the pure
+   `assignToH` path bit-for-bit; a tuple containing anything else takes
+   the new heap-threading pair `unpackSeq` (the `assignTo` arity/type
+   discipline factored out; heap lists unpack as an eager snapshot) +
+   `unpackStoreH` (names bind; attribute elements store through a
+   LOCAL-name receiver holding a `.ref` — sunfish's `self.x`; any other
+   element or receiver shape refuses loudly). Both are WORKERS and join
+   `py_simp`/`interpUnfolds` (the recorded simp-set trap).
+   `Stmt.heapFree`: a tuple target stays in the fragment iff it is
+   all-names (`targetNames.isSome`).
+
+3. **Genexp admission: body-assigned free names under an immediate
+   drain.** The correction's
+   `all(depth > 1 and pos.value(m) >= val_lower or … for m in
+   pos.gen_moves())` captures `depth` (a parameter the body REBINDS:
+   `depth = max(depth, 0)`) and `val_lower` (a plain local) — both
+   outside the H4 by-value admission. The drain-gate argument
+   (pass 3's `genTargets` precedent) extends: a genexp passed DIRECTLY
+   to a draining builtin is created and consumed within ONE expression
+   evaluation, and no statement of the enclosing frame can run in
+   between, so by-value-at-creation equals CPython's by-reference — for
+   ANY frame name, provided it is BOUND at creation. Boundness is the
+   real condition (an unbound capture would fake a NameError CPython
+   never raises when the iterable is empty), decided conservatively:
+   the name is a PARAMETER (always bound), or it has a single-target
+   assign / nested-def bind as a DIRECT CHILD of the enclosing body at
+   a strictly smaller line (`LowerCtx.boundBefore` — direct children
+   execute in order, so a smaller-line direct bind provably ran before
+   any statement containing the genexp). Names failing the test leave
+   the node un-lowered and loud, as always. (Rebinding between
+   iterations of an enclosing loop is harmless under the gate: each
+   drain re-captures at its own creation.)
+
+The CAPSTONE this unblocks: `Searcher()` instantiates on the shipped
+file (`__init__`'s two tuple-attribute unpacks), and `bound()` runs
+END TO END — the table probe (`tp_score.get` under the dict-key
+doctrine with `(pos, depth)` keys), the history-set membership, the
+nested `moves()` generator with recursion through the captured `self`,
+the killer/null/IID prologue, the verbatim ordering line, the fold with
+the beta cutoff and the virtual-cutoff validation, the mate/stalemate
+correction, and the table store — differentially against CPython at
+depths 1-3 from the opening board and midgame/tactical/endgame boards,
+comparing the RETURNED BOUND and `self.nodes` (node-count equality is
+the lockstep signal: one extra or missing node anywhere in the tree
+breaks it). Pinned as `#guard`s in `Examples/python/sunfish/spec.lean`
+(the boundary cannot carry a Searcher, so `CallsIn`-style kernel runs
+are the surface, as for every shipped-file claim).
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

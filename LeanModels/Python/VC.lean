@@ -428,8 +428,17 @@ theorem PyStmtTriple.assign {m : Module} {P : FrameState → Prop} {Q : PyPost}
   -- subscript targets never satisfy the pure `assignTo` hypothesis (loud
   -- arm), so that case closes by contradiction; every other target
   -- reduces as before (H2: the interpreter runs `assignToH`, which agrees
-  -- with a decided pure `assignTo` — `assignToH_of_assignTo`)
-  cases tgt <;>
+  -- with a decided pure `assignTo` — `assignToH_of_assignTo`). Pass 4:
+  -- a TUPLE target forks on `targetNames.isSome` — the pure hypothesis
+  -- forces the all-names branch (the attribute-elements branch never
+  -- satisfies it), so the fork collapses through `htn`.
+  cases tgt
+  case tuple elts spt =>
+    cases htn : targetNames elts with
+    | none => simp [assignTo, htn] at ha
+    | some names =>
+      simpa [execStmt, ht F' hF', htn, assignToH_of_assignTo ha] using hQ
+  all_goals
     first
     | simpa [execStmt, ht F' hF', assignToH_of_assignTo ha] using hQ
     | simp [assignTo] at ha

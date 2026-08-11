@@ -1144,6 +1144,12 @@ theorem fuelMono (fuel : Nat) :
               case «attribute» recvE attr sp =>
                 exact Run.le_bind (ihE m st value k hk) fun st v =>
                   Run.le_bind (ihE m st recvE k hk) fun st r => Run.le_refl _
+              case tuple elts sp =>
+                -- pass 4: the all-names/attribute-elements fork — both
+                -- branches bind the value, then a fuel-free tail
+                exact Run.le_ite
+                  (Run.le_bind (ihE m st value k hk) fun st v => Run.le_refl _)
+                  (Run.le_bind (ihE m st value k hk) fun st v => Run.le_refl _)
               all_goals
                 exact Run.le_bind (ihE m st value k hk) fun st v =>
                   Run.le_bind (Run.le_refl _) fun st env' => Run.le_refl _
@@ -1162,6 +1168,20 @@ theorem fuelMono (fuel : Nat) :
                 | exact Run.le_refl _
                 | exact Run.le_bind (ihE m st value k hk) fun st v =>
                     Run.le_bind (Run.le_refl _) fun st r => Run.le_refl _
+          case «attribute» recvE attr _ =>
+            -- pass 4: receiver, the fuel-free attribute load, then (for
+            -- immediate old values) the value and the fuel-free store
+            simp only [execStmt]
+            refine Run.le_bind (ihE m st recvE k hk) fun st r => ?_
+            cases r <;> try exact Run.le_refl _
+            case ref a =>
+              refine Run.le_bind (Run.le_refl _) fun st old => ?_
+              cases old <;>
+                first
+                | exact Run.le_refl _
+                | exact Run.le_bind (ihE m st value k hk) fun st v =>
+                    Run.le_bind (Run.le_refl _) fun st res =>
+                      Run.le_bind (Run.le_refl _) fun st h' => Run.le_refl _
         | whileLoop test body orelse _ =>
           simp only [execStmt]
           exact ihW m st test body.toList orelse.toList k hk
@@ -2412,6 +2432,16 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             cases t
             case subscript dE kE sp => exact absurd hfree.1 (by simp)
             case «attribute» recvE attr sp => exact absurd hfree.1 (by simp)
+            case tuple elts sp =>
+              -- pass 4: the fragment admits only the all-names fork
+              -- (`targetNames.isSome` — hfree's first conjunct), which is
+              -- the unchanged pure path
+              have h1 : (targetNames elts).isSome = true := hfree.1
+              dsimp only
+              rw [if_pos h1]
+              exact .bind (ihE st value hfree.2) fun st₁ v h₁ =>
+                .bind (.liftResF h₁ _) fun st₂ env' h₂ =>
+                  fun _ _ he => by cases he; exact h₂
             all_goals
               exact .bind (ihE st value hfree.2) fun st₁ v h₁ =>
                 .bind (.liftResF h₁ _) fun st₂ env' h₂ =>
@@ -2419,9 +2449,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | cons t2 rest2 =>
             cases t <;> exact .unsupported
       | augAssign target op value _ =>
-        simp only [Stmt.heapFree] at hfree
-        cases target <;> try (simp only [execStmt]; exact .unsupported)
+        cases target
+        case «attribute» recvE attr _ =>
+          -- pass 4: an attribute-target `+=` STORES — out of the fragment
+          simp [Stmt.heapFree] at hfree
         case name id _ =>
+          simp only [Stmt.heapFree, Bool.and_eq_true] at hfree
           simp only [execStmt]
           cases Env.lookup st.locals id with
           | none => exact .exn
@@ -2429,9 +2462,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             cases old <;>
               first
               | exact .unsupported
-              | exact .bind (ihE st value hfree) fun st₁ v h₁ =>
+              | exact .bind (ihE st value hfree.2) fun st₁ v h₁ =>
                   .bind (.liftResF h₁ _) fun st₂ r h₂ =>
                     fun _ _ he => by cases he; exact h₂
+        all_goals simp only [execStmt]; exact .unsupported
       | whileLoop test body orelse _ =>
         simp only [Stmt.heapFree, Bool.and_eq_true] at hfree
         simp only [execStmt]

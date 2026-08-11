@@ -271,3 +271,37 @@ def bad_second(n):
     g = bad(n)
     next(g)
     return next(g)
+
+
+def drain_assigned(n):
+    # pass 4 (docs/memory-model.md "bound() end-to-end"): a body-ASSIGNED
+    # local captured by an IMMEDIATELY-DRAINED genexp -- the correction's
+    # `all(... >= val_lower ...)` shape
+    lim = n - 2
+    if all(x < lim for x in range(n)):
+        return 1
+    return sum(1 for x in range(n) if x >= lim)
+
+
+def drain_assigned_param(n):
+    # a PARAMETER the body rebinds, captured under an immediate drain --
+    # bound()'s `depth = max(depth, 0)` then `all(depth > 1 ...)`
+    n = n + 1
+    return sum(x * n for x in range(3))
+
+
+def gen_assigned_lazy(n):
+    # NOT directly drained (the genexp binds to a name first): the
+    # by-value snapshot could go stale before consumption -- REFUSED
+    lim = n
+    g = (x < lim for x in range(n))
+    return all(g)
+
+
+def drain_unbound(n):
+    # no direct-child binding BEFORE the genexp line (the assign hides
+    # inside an if) -- boundness is unprovable, REFUSED (CPython would
+    # answer 0 for n = 0 but NameError for n > 0)
+    if n > 100:
+        late = 1
+    return sum(late for x in range(n))

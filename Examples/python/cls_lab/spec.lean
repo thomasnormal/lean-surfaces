@@ -128,3 +128,23 @@ the same `.ref` re-entering `callIn` at every depth, one shared
 #py_check cls_lab.method_rec(0) = (Val.tuple #[.int 0, .int 1])
 #py_check cls_lab.method_mutual(5) = (Val.tuple #[.bool true, .bool false])
 #py_check cls_lab.method_mutual(2) = (Val.tuple #[.bool false, .bool true])
+
+/-! ### pass 4 (docs/memory-model.md §bound() end-to-end): attribute
+`+=` (sunfish's `self.nodes += 1` — the load fires BEFORE the value
+evaluates, so `aug_attr_missing`'s division by zero never runs) and
+tuple targets with ATTRIBUTE elements (`Searcher.__init__`'s
+`self.a, self.b = …`; the RHS reads before any store). The loud
+frontier: a list-valued attribute's `+=` (in-place mutation) and a
+subscript element inside a tuple target. -/
+
+#py_check cls_lab.aug_attr(3) = 6
+#py_check cls_lab.aug_attr(0) = 0
+#py_check cls_lab.aug_attr_missing(1) raises .attributeError
+#py_check cls_lab.unpack_attrs(7) = 708
+#py_check cls_lab.unpack_attrs_mixed(4) = 904
+#py_check cls_lab.unpack_attrs_swap(9) = 209
+#py_check cls_lab.unpack_arity(1) raises
+  (.valueError "not enough values to unpack (expected 2, got 1)")
+
+#guard callFunction cls_lab "aug_attr_list" #[.int 1] 4096 matches .unsupported _
+#guard callFunction cls_lab "unpack_subscript_elem" #[.int 1] 4096 matches .unsupported _

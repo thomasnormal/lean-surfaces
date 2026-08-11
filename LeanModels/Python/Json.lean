@@ -754,6 +754,21 @@ private partial def bodyAssigns : Stmt → List String
       (b.toList.map bodyAssigns).flatten ++ (hnd.toList.map bodyAssigns).flatten
   | _ => []
 
+/-- Direct-child bindings of a function body with their line numbers
+(`LowerCtx.boundBefore` — see its docstring for the admission this
+feeds). Only shapes whose binding provably executes when reached:
+single-target name/tuple assigns and nested defs, DIRECTLY in the body
+(never inside a nested `if`/loop, whose execution is conditional). -/
+private def directBinds (body : List Stmt) : List (String × Nat) :=
+  body.foldl (init := []) fun acc s =>
+    match s with
+    | .assign tgts _ sp =>
+      (match tgts.toList with
+       | [t] => acc ++ ((targetBinds t).getD []).map (fun x => (x, sp.lineno))
+       | _ => acc)
+    | .defStmt name _ _ _ _ _ _ _ sp => acc ++ [(name, sp.lineno)]
+    | _ => acc
+
 /-- What a lowering pass may capture and what it must refuse. -/
 private structure LowerCtx where
   /-- Names resolved outside the frame (module bindings + builtins). -/
@@ -770,6 +785,16 @@ private structure LowerCtx where
   the drain completes within one elt evaluation, before the enclosing
   target can advance, so by-value equals CPython's by-reference. -/
   genTargets : List String := []
+  /-- Names bound by a DIRECT CHILD of the enclosing body (single-target
+  assigns, nested defs) with their line numbers (pass 4,
+  docs/memory-model.md §bound() end-to-end): under `drainOk` a
+  body-ASSIGNED free name is admissible when provably BOUND at the
+  genexp's creation — it is a parameter, or a direct-child bind at a
+  strictly smaller line (direct children execute in order, so the bind
+  ran before any statement containing the genexp). The drain-gate makes
+  by-value-at-creation equal CPython's by-reference; boundness is what
+  rules out a fake `NameError` on an empty iterable. -/
+  boundBefore : List (String × Nat) := []
 
 mutual
   /-- Rewrite every lowerable genexp in the expression, bottom up. The
@@ -826,7 +851,11 @@ mutual
             && !(n.startsWith "<")
         if caps.all (fun n =>
             (ctx.params.contains n && !ctx.assigned.contains n)
-              || (drainOk && ctx.genTargets.contains n)) then
+              || (drainOk && ctx.genTargets.contains n)
+              -- pass 4: body-assigned names under an immediate drain,
+              -- provided boundness at creation (see LowerCtx.boundBefore)
+              || (drainOk && (ctx.params.contains n
+                    || ctx.boundBefore.any (fun p => p.1 == n && p.2 < sp.lineno)))) then
           let (n, fns) ← get
           let fname := genExpName n
           let body : Array Stmt :=
@@ -878,7 +907,8 @@ mutual
         let ctx' : LowerCtx :=
           { ctx with
             params := params.toList.map Param.arg ++ captures.toList
-            assigned := (body.toList.map bodyAssigns).flatten }
+            assigned := (body.toList.map bodyAssigns).flatten
+            boundBefore := directBinds body.toList }
         return .defStmt name params ao lo hg ig (← lowerStmts ctx' body) captures sp
 
   /-- Elementwise `lowerStmt`. -/
@@ -901,7 +931,8 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
       let ctx : LowerCtx :=
         { outer
           params := f.params.toList.map Param.arg
-          assigned := (f.body.toList.map bodyAssigns).flatten }
+          assigned := (f.body.toList.map bodyAssigns).flatten
+          boundBefore := directBinds f.body.toList }
       let (body', st') := (lowerStmts ctx f.body).run st
       (acc.push { f with body := body' }, st')
   let topCtx : LowerCtx := { outer, params := [], assigned := [] }

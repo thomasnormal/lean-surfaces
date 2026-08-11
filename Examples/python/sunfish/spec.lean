@@ -59,21 +59,25 @@ raise its class identity; the census proved `Exception` unshadowed. -/
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- H4/H7/pass 3: ingestion LOWERED TEN generator expressions into
-    -- implicit generator functions, CPython's own compilation
-    -- (`<genexpr>` with the evaluated outer iterator as its first
-    -- argument) — the two inside `bound`'s nested `moves()` (the
-    -- null-move `any` probe and THE ORDERING LINE), and since pass 3
-    -- the module-init ones too: the padding loop's pair (the lambda's
-    -- inner genexp and the sum-over-slices genexp) and K_END's NESTED
-    -- pair (the inner captures the OUTER genexp's target `rank` — the
-    -- drain-gated admission, docs/memory-model.md §module-init
+    -- H4/H7/pass 3/pass 4: ingestion LOWERED ELEVEN generator
+    -- expressions into implicit generator functions, CPython's own
+    -- compilation (`<genexpr>` with the evaluated outer iterator as its
+    -- first argument) — the two inside `bound`'s nested `moves()` (the
+    -- null-move `any` probe and THE ORDERING LINE), the fold's
+    -- legality scan, and since pass 4 the mate/stalemate CORRECTION's
+    -- scan too (its captures `depth`/`val_lower` are body-assigned —
+    -- the immediate-drain boundBefore admission, docs/memory-model.md
+    -- §bound() end-to-end); plus the module-init ones: the padding
+    -- loop's pair (the lambda's inner genexp and the sum-over-slices
+    -- genexp) and K_END's NESTED pair (the inner captures the OUTER
+    -- genexp's target `rank` — the drain-gated admission, §module-init
     -- execution).
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
     ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
     ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
     ("<genexpr@6>", true, true), ("<genexpr@7>", true, true),
-    ("<genexpr@8>", true, true), ("<genexpr@9>", true, true)]
+    ("<genexpr@8>", true, true), ("<genexpr@9>", true, true),
+    ("<genexpr@10>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -96,7 +100,7 @@ and syntax cannot tell), which sunfish already was, having classes. -/
     ("<genexpr@0>", true), ("<genexpr@1>", true),
     ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true),
     ("<genexpr@5>", true), ("<genexpr@6>", true), ("<genexpr@7>", true),
-    ("<genexpr@8>", true), ("<genexpr@9>", true)]
+    ("<genexpr@8>", true), ("<genexpr@9>", true), ("<genexpr@10>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded
@@ -544,3 +548,122 @@ reference was written.) -/
 #guard (match Ref.refMoves "         \n         \n ........\n ........\n ........\n ........\n ........\n ..p.....\n ..P.....\n K.......\n         \n         \n".toList false false 0 0 64 with
         | .ok ms => ms == [⟨91, 81, ""⟩, ⟨91, 92, ""⟩, ⟨91, 82, ""⟩]
         | .error _ => false)
+
+/-! ### THE PASS-4 CAPSTONE: `Searcher().bound()` runs END TO END on
+the shipped file
+
+Every probe instantiates a fresh `Searcher()` — the hand-built call
+below, CPython's own driver shape: `__init__`'s two tuple-ATTRIBUTE
+unpacks bind the empty tables, the empty history set, `nodes = 0` and
+`deadline = None` (so the structured `raise Stop` guard short-circuits
+dead and the wall clock is never consulted) — in the module's REAL
+`initWorld`, calls the shipped `Searcher.bound` through `callIn` with
+`root` filled from its literal default, and reads back the RETURNED
+BOUND and `self.nodes` from the instance: the pair CPython answers.
+
+NODE-COUNT EQUALITY IS THE LOCKSTEP SIGNAL: `self.nodes += 1` runs
+once per entry, so one extra or missing node anywhere in the tree — a
+mis-ordered move list, a wrong futility/beta cutoff, a table probe
+that hit where CPython missed, a correction scan that ran where
+CPython's didn't — breaks the pair. Live in these runs: the tp_score
+probe under the dict-key doctrine (`(pos, depth)` tuple keys carrying
+the Position value), the history-set membership, the nested `moves()`
+generator with recursion through the captured `self`, the killer/
+null-move/IID prologue, the verbatim ordering line, the fold with the
+virtual-cutoff validation and the mate/stalemate correction (the
+pass-4 genexp admission: `depth`/`val_lower` under the immediate
+`all(…)` drain), the attribute `+=`, and the table store.
+
+Every expected pair below is CPython's own answer (the shipped module
+imported and probed). The tactical rows end at MATE_LOWER = 47923 —
+the king-capture sentinel path; the endgame rows walk the correction
+(depth 3 at gamma 0 answers the repetition/stalemate-corrected 0). -/
+
+private def sp0 : Span := ⟨0, 0, 0, 0⟩
+
+/-- A fresh shipped `Searcher()` over the real `initWorld`: the world
+after `__init__` and the instance address. -/
+private def searcherW : Option (World × Addr) :=
+  match evalExpr sunfish 4096 ⟨initWorld sunfish, []⟩
+      (.call (.name "Searcher" sp0) #[] #[] Option.none sp0) with
+  | .ok st (.ref a) => some (st.world, a)
+  | _ => Option.none
+
+/-- `(bound, nodes)` of one probe `Searcher().bound(pos, gamma, depth)`
+— fresh searcher per probe, exactly the CPython driver. -/
+private def boundProbe (pos : RVal) (gamma depth : Int) :
+    Option (Int × Int) :=
+  match searcherW with
+  | some (w, a) =>
+    (match callIn sunfish 1000000 w "Searcher.bound"
+        #[.ref a, pos, .int gamma, .int depth] with
+     | .ok w' (.int r) =>
+       (match Heap.get? w'.heap a with
+        | some (.instance _ attrs) =>
+          (match Env.lookup attrs.toList "nodes" with
+           | some (.int n) => some (r, n)
+           | _ => Option.none)
+        | _ => Option.none)
+     | _ => Option.none)
+  | Option.none => Option.none
+
+/-- Midgame (Italian-shaped, after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nf6 4.d3
+Bc5 — the position the side to move sees). -/
+private def posMid : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "         \n         \n r.bqk..r\n pppp.ppp\n ..n..n..\n ..b.p...\n ..B.P...\n ...P.N..\n PPP..PPP\n RNBQK..R\n         \n         \n",
+      .int (-13), .tuple #[.bool true, .bool true],
+      .tuple #[.bool true, .bool true], .int 0, .int 0]
+
+/-- Tactical (a Scholar's-mate-shaped attack: the side to move has a
+mate-band line — the king-capture sentinel path). -/
+private def posTac : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "         \n         \n r.bqkb.r\n pppp.ppp\n ..n..n..\n ....p..Q\n ..B.P...\n ........\n PPPP.PPP\n RNB.K.NR\n         \n         \n",
+      .int (-38), .tuple #[.bool true, .bool true],
+      .tuple #[.bool true, .bool true], .int 0, .int 0]
+
+/-- Rook endgame (KRK-shaped — the mop-up/correction territory). -/
+private def posEnd : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "         \n         \n ....k...\n ........\n ....K...\n ........\n .R......\n ........\n ........\n ........\n         \n         \n",
+      .int 0, .tuple #[.bool false, .bool false],
+      .tuple #[.bool false, .bool false], .int 0, .int 0]
+
+/-- Quiet pawn endgame (kings and one pawn each). -/
+private def posPend : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str "         \n         \n ....k...\n .....p..\n ........\n ........\n .....P..\n ........\n ....K...\n         \n         \n         \n",
+      .int 0, .tuple #[.bool false, .bool false],
+      .tuple #[.bool false, .bool false], .int 0, .int 0]
+
+-- the opening board, depths 1-3 across failing-low and failing-high windows
+#guard boundProbe (posH 0) 0 1 == some (0, 2)
+#guard boundProbe (posH 0) 40 1 == some (37, 35)
+#guard boundProbe (posH 0) (-100) 1 == some (0, 2)
+#guard boundProbe (posH 0) 0 2 == some (0, 3)
+#guard boundProbe (posH 0) 40 2 == some (36, 139)
+#guard boundProbe (posH 0) 0 3 == some (0, 39)
+#guard boundProbe (posH 0) 40 3 == some (39, 226)
+#guard boundProbe (posH 0) (-100) 3 == some ((-46), 3)
+
+-- midgame
+#guard boundProbe posMid 0 1 == some (2, 66)
+#guard boundProbe posMid 60 1 == some (35, 5)
+#guard boundProbe posMid 0 2 == some ((-1), 587)
+#guard boundProbe posMid 60 2 == some (59, 241)
+#guard boundProbe posMid 0 3 == some (2, 430)
+#guard boundProbe posMid 60 3 == some (59, 268)
+
+-- tactical: the mate band (MATE_LOWER exactly — the sentinel discipline)
+#guard boundProbe posTac 0 2 == some (47923, 34)
+#guard boundProbe posTac 0 3 == some (47923, 67)
+
+-- endgames: the correction arms
+#guard boundProbe posEnd 0 1 == some (111, 8)
+#guard boundProbe posEnd 0 2 == some (91, 10)
+#guard boundProbe posEnd 0 3 == some (0, 3)
+#guard boundProbe posEnd 60 3 == some (137, 21)
+#guard boundProbe posPend 0 2 == some (19, 3)
+#guard boundProbe posPend 60 2 == some (50, 13)
+#guard boundProbe posPend 0 3 == some (50, 15)

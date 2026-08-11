@@ -432,6 +432,7 @@ def interpUnfolds : List Name :=
    ``Val.listFree, ``Val.listFreeList, ``Val.listFreeArgs,
    ``Heap.get?, ``Heap.update, ``danglingMsg,
    ``targetNames, ``bindAll, ``assignTo, ``assignToH,
+   ``unpackSeq, ``unpackStoreH,
    ``foldExtremum, ``extremumVal, ``extremumValH, ``sortedValH,
    ``absVal, ``intCastVal, ``ordVal, ``chrVal, ``isBuiltinName,
    ``enumStart, ``enumFrame, ``countArgs, ``genPlan, ``genBreak, ``genContinue,

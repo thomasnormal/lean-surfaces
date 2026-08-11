@@ -807,3 +807,64 @@ Deliberately still out (recorded): `.items()` outside the init shell;
 top-level `if` bodies still gated by loud `__name__` (the
 import-semantics decision stands open); the fold's `.exn` arm still
 poisons-and-continues where CPython aborts the import.
+
+## Pass 4 — exceptions, the wall clock, and bound() END TO END (2026-08-11)
+
+Four landings, each triad-green and committed separately:
+
+1. **The stepper's exn obligation discharged** (the §exceptions
+   recorded obligation, BEFORE building): `gen_lab.bad*` pin the
+   faithful raise differentially, and the raw `#guard` pinned the
+   status divergence (stuck `running`) the build then flipped.
+2. **Exceptions BUILT** (docs/memory-model.md §exceptions, as-built
+   deltas recorded there): `PyErr.user cid name`; the third class kind
+   (`exception_base` + the `Exception`-unshadowed census);
+   `Stmt.raiseStmt`/`Stmt.tryStmt` (v0 single-handler on the
+   retained-state covenant, structured-but-loud everywhere else);
+   `stepIter` closes on exn-through-resume (`Run.bindE`/`le_bindE`);
+   yield-under-try refused in `genPlan`; `Stop` ADMITTED on the
+   shipped census. Battery: `exc_lab` (happy + 15 refusal rows), the
+   `try`-driven gen-close differential rows, corpus `exc_script`.
+3. **The wall clock decided and recorded** (memory-model §wall-clock
+   time): `time.time()` refuses loudly at EVALUATION through the
+   poisoned benign-import binding — no stub, sound exactly when
+   dynamically dead; `exc_lab.time_dead`/`time_live` are the two
+   directions.
+4. **THE CAPSTONE — `Searcher().bound()` runs END TO END on the
+   shipped file** (memory-model §bound() end-to-end): the last three
+   mechanical constructs (attribute `+=`; tuple targets with attribute
+   elements — `unpackSeq`/`unpackStoreH`; genexp admission for
+   body-assigned names under an immediate drain with provable
+   boundness — `LowerCtx.boundBefore`), then 23 differential probes in
+   `Examples/python/sunfish/spec.lean`: depths 1–3 from the opening
+   board and midgame/tactical/endgame positions, comparing the
+   RETURNED BOUND **and `self.nodes`** against CPython — node-count
+   equality as the lockstep signal. Labs: `cls_lab` (attr `+=` /
+   unpack + refusals), `gen_lab` (drain admission + refusals).
+
+**What full `search()` / UCI-loop coverage still needs** (the honest
+next-milestone list, in rough dependency order):
+
+* `self.tp_score.clear()` — dict `.clear()` (a mutator: entries := ∅,
+  shape-version bump); the FIRST blocker of `search()`, hit on its
+  second line.
+* `sum(c.isupper() for c in pos.board)` — str method calls inside a
+  drained genexp (`isupper` is in tier; the genexp shape is) — likely
+  free already; verify with a row.
+* `pst["K"] = K_END if bare else K_MID` — a FUNCTION-BODY store into a
+  MODULE-LEVEL dict global (`pst` resolves through the live view; the
+  subscript-store arm must accept a live-view `.ref` primary — today
+  only locals/static reach it). Also makes `pst` mutation ordering
+  visible across search() calls.
+* `search()` is a GENERATOR consumed by the driver — stepping it is in
+  tier (H4); the MTD loop's `while lower < upper - EVAL_ROUGHNESS` and
+  the `yield depth, gamma, score, self.tp_move.get(pos)` are in tier.
+  One stepped iteration is the natural next capstone once `.clear()`
+  and the `pst["K"]` store land.
+* The UCI loop (`main()`) needs `input()`/`print` with f-args,
+  `str.split`, list `del hist[1:]` slicing-delete, `dict(zip(…))`,
+  `map(int, …)`, float division `/` — driver-side; the leanpy shell is
+  the surface for it, far beyond one milestone.
+* RECORDED GAP (pre-existing, found in pass 4): `input` is absent from
+  `isBuiltinName`, so a hand-driven `main()` run would answer a fake
+  `NameError` — add it (loud) with the next builtin sweep.

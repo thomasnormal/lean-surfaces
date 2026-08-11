@@ -206,3 +206,73 @@ def method_rec(n):
 def method_mutual(n):
     r = Rec()
     return (r.odd(n), r.even(n))
+
+
+class Counter:
+    # pass 4 (docs/memory-model.md, "bound() end-to-end"): the attribute
+    # += and the tuple-attribute-unpack acceptance surface
+    def __init__(self):
+        self.n = 0
+        self.xs = []
+
+
+def aug_attr(k):
+    # attribute augmented assignment, sunfish's `self.nodes += 1`
+    c = Counter()
+    i = 0
+    while i < k:
+        c.n += 2
+        i = i + 1
+    return c.n
+
+
+def aug_attr_missing(k):
+    # the LOAD fires before the value evaluates: AttributeError, and the
+    # value expression (which would divide by zero) never runs
+    c = Counter()
+    c.m += 1 // 0
+    return 0
+
+
+def aug_attr_list(k):
+    # a list-valued attribute's += mutates in place -- loud, never wrong
+    c = Counter()
+    c.xs += [k]
+    return 0
+
+
+def unpack_attrs(k):
+    # the tuple target with ATTRIBUTE elements, Searcher.__init__'s shape
+    c = Counter()
+    c.a, c.b = k, k + 1
+    return c.a * 100 + c.b
+
+
+def unpack_attrs_mixed(k):
+    # names and attributes mixed in one target
+    c = Counter()
+    x, c.b = k + 5, k
+    return x * 100 + c.b
+
+
+def unpack_attrs_swap(k):
+    # the RHS reads BEFORE any store runs
+    c = Counter()
+    c.a, c.b = k, 2
+    c.a, c.b = c.b, c.a
+    return c.a * 100 + c.b
+
+
+def unpack_arity(k):
+    # the faithful unpack ValueError through the attribute path
+    c = Counter()
+    c.a, c.b = (k,)
+    return 0
+
+
+def unpack_subscript_elem(k):
+    # a subscript ELEMENT inside a tuple target stays loud
+    c = Counter()
+    d = {}
+    d[0], c.a = 1, k
+    return 0

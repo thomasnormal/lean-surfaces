@@ -147,6 +147,22 @@ the raise. -/
            | _ => false)
         | _ => false)
 
+/-! ### pass 4 (docs/memory-model.md §bound() end-to-end): genexp
+admission for BODY-ASSIGNED free names under an IMMEDIATE drain — the
+correction's `all(depth > 1 … >= val_lower …)` shape. Admitted only
+when boundness at creation is provable (a parameter, or a direct-child
+bind at a smaller line); a genexp bound to a NAME first (`g = (…)`)
+or a conditionally-bound capture stays refused. -/
+
+#py_check gen_lab.drain_assigned(5) = 2
+#py_check gen_lab.drain_assigned(2) = 2
+#py_check gen_lab.drain_assigned(0) = 1
+#py_check gen_lab.drain_assigned_param(4) = 15
+#py_check gen_lab.drain_assigned_param(0) = 3
+
+#guard callFunction gen_lab "gen_assigned_lazy" #[.int 3] 4096 matches .unsupported _
+#guard callFunction gen_lab "drain_unbound" #[.int 1] 4096 matches .unsupported _
+
 /-! ### the ingestion census: `is_generator` is CPython's syntactic,
 scope-local rule — a def whose OWN scope contains a `yield`, reachable
 or not. A generator def evicts the whole module from the heap-free

@@ -1903,6 +1903,63 @@ theorem assignToH_of_assignTo {h : Heap} {env : Env} {target : Expr}
       | none => simp [htn] at ha
       | some names => simp [htn] at ha
 
+/-- Unpack an already-evaluated RHS into exactly `n` element values —
+`assignTo`'s tuple-target arity/type discipline factored out so the
+HEAP-THREADING store path (pass 4: tuple targets with attribute
+elements) shares one set of faithful errors. A heap LIST unpacks as an
+eager snapshot (CPython), everything else exactly as `assignToH`. -/
+def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
+  | .listV xs | .tuple xs | .ntuple _ _ xs =>
+    if xs.size = n then .ok xs.toList
+    else if n < xs.size then
+      .exn (.valueError s!"too many values to unpack (expected {n})")
+    else
+      .exn (.valueError
+        s!"not enough values to unpack (expected {n}, got {xs.size})")
+  | .ref a =>
+    (match Heap.get? h a with
+     | some (.list xs) =>
+       if xs.size = n then .ok xs.toList
+       else if n < xs.size then
+         .exn (.valueError s!"too many values to unpack (expected {n})")
+       else
+         .exn (.valueError
+           s!"not enough values to unpack (expected {n}, got {xs.size})")
+     | some (.dict _ _) =>
+       .unsupported "unpacking a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+     | some (.instance _ _) => .exn (.typeError "cannot unpack non-iterable object object")
+     | some (.generator ..) =>
+       .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+     | some (.closure ..) => .exn (.typeError "cannot unpack non-iterable function object")
+     | some (.pyset _) =>
+       .unsupported "unpacking a set is outside the tier (hash order; docs/memory-model.md)"
+     | Option.none => .unsupported danglingMsg)
+  | .str _ => .unsupported "unpacking a str is outside the v0 tier"
+  | .rangeV .. =>
+    .unsupported "unpacking a range is outside the tier (docs/memory-model.md §module-init execution)"
+  | v => .exn (.typeError s!"cannot unpack non-iterable {v.typeName} object")
+
+/-- Store unpacked values into tuple-target ELEMENTS left to right,
+threading the HEAP (pass 4, docs/memory-model.md §bound() end-to-end:
+`self.tp_score, self.tp_move, self.history = …`). Element tier: plain
+names bind; an attribute element stores through a LOCAL-name receiver
+holding a `.ref` (sunfish's `self.x`); anything else refuses loudly
+(a general receiver would need expression evaluation mid-store). -/
+def unpackStoreH (h : Heap) (env : Env) :
+    List Expr → List RVal → Res (Heap × Env)
+  | [], [] => .ok (h, env)
+  | .name id _ :: es, v :: vs => unpackStoreH h (Env.set env id v) es vs
+  | .attribute (.name rid _) attr _ :: es, v :: vs =>
+    (match Env.lookup env rid with
+     | some (.ref a) =>
+       (heapAttrStore h a attr v) >>= fun h' => unpackStoreH h' env es vs
+     | some _ => .exn .attributeError
+     | Option.none =>
+       .unsupported s!"tuple-target attribute store through non-local receiver '{rid}' is outside the tier")
+  | e :: _, _ :: _ =>
+    .unsupported s!"tuple-unpack target element '{e.kindName}' (beyond plain names and local-receiver attributes) is outside the tier"
+  | _, _ => .unsupported "internal: unpack arity mismatch after unpackSeq (report this)"
+
 /-- Module function table lookup. Each `def` rebinds the module-level name, so
 with duplicate definitions the LAST one wins, exactly as in CPython. Class
 METHODS also live here, flattened under `"<class>.<method>"` qualified names
@@ -2947,8 +3004,13 @@ mutual
       (match tgts.toList with
        | [.subscript ..] => false       -- MUTATES (`d[k] = v`)
        | [.attribute ..] => false       -- MUTATES (H3 `self.x = v`)
+       -- pass 4: a tuple target stays in the fragment iff all-names
+       -- (attribute elements store through the heap)
+       | [.tuple elts _] => (targetNames elts).isSome
        | _ => true) && v.heapFree
-    | .augAssign _ _ v _ => v.heapFree
+    -- pass 4: an attribute-target `+=` STORES through the heap
+    | .augAssign t _ v _ =>
+      (match t with | .attribute .. => false | _ => true) && v.heapFree
     | .whileLoop t body orelse _ =>
       t.heapFree && Stmt.heapFreeList body.toList && Stmt.heapFreeList orelse.toList
     | .forStmt _ iter body orelse _ =>
@@ -4290,6 +4352,23 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             Run.liftRes st (heapAttrStore st.world.heap a attr v) ⤳ fun st h' =>
             .ok { st with world := { st.world with heap := h' } } .next
           | _ => .exn st .attributeError
+      | [.tuple elts sp] =>
+          -- pass 4 (docs/memory-model.md §bound() end-to-end): a tuple
+          -- target with ATTRIBUTE elements threads the heap store by
+          -- store, CPython's left-to-right order (`self.a, self.b = …`);
+          -- an all-NAME tuple keeps the pure `assignToH` path verbatim.
+          if (targetNames elts).isSome then
+            evalExpr m fuel st value ⤳ fun st v =>
+            Run.liftRes st (assignToH st.world.heap st.locals (.tuple elts sp) v) ⤳ fun st env' =>
+            .ok { st with locals := env' } .next
+          else
+            evalExpr m fuel st value ⤳ fun st v =>
+            Run.liftRes st (unpackSeq st.world.heap elts.size v) ⤳ fun st xs =>
+            Run.liftRes st (unpackStoreH st.world.heap st.locals elts.toList xs) ⤳ fun st he =>
+            match he with
+            | (h', env') =>
+              .ok { st with world := { st.world with heap := h' },
+                            locals := env' } .next
       | [t] =>
           -- CPython order: the value is evaluated before the store. H2:
           -- `assignToH` — unpacking from a heap list reads the heap.
@@ -4317,6 +4396,28 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
             evalExpr m fuel st value ⤳ fun st v =>
             Run.liftRes st (evalBinOp op old v) ⤳ fun st r =>
             .ok { st with locals := Env.set st.locals id r } .next
+      | .attribute recvE attr _ =>
+        -- pass 4 (docs/memory-model.md §bound() end-to-end):
+        -- `self.nodes += 1`. CPython order: receiver, attribute LOAD
+        -- (an AttributeError fires before the value evaluates), value,
+        -- binop, attribute STORE. Only IMMEDIATE old values are in tier
+        -- — a heap-valued attribute's `+=` mutates in place through an
+        -- alias and a boundary-list value would silently rebind: loud.
+        evalExpr m fuel st recvE ⤳ fun st r =>
+        (match r with
+         | .ref a =>
+           attrReadResult m st a attr ⤳ fun st old =>
+           (match old with
+            | .listV _ =>
+                .unsupported "augmented assignment to a list-valued attribute ('+=' mutates in place, visible through aliases) is outside the tier"
+            | .ref _ =>
+                .unsupported "augmented assignment to a heap-valued attribute is outside the tier (docs/memory-model.md §bound() end-to-end)"
+            | old =>
+                evalExpr m fuel st value ⤳ fun st v =>
+                Run.liftRes st (evalBinOp op old v) ⤳ fun st res =>
+                Run.liftRes st (heapAttrStore st.world.heap a attr res) ⤳ fun st h' =>
+                .ok { st with world := { st.world with heap := h' } } .next)
+         | _ => .exn st .attributeError)
       | t => .unsupported s!"augmented assignment to '{t.kindName}' is outside the v0 tier"
     | .whileLoop test body orelse _ =>
       execWhile m fuel st test body.toList orelse.toList

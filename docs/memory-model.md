@@ -1528,6 +1528,65 @@ each a narrowing, a mechanical necessity, or a MEASURED correction:
   the concrete armed pair + underrun pins above; the lab-scale
   `pure_sum_all_traces` is the first trace-quantified theorem.
 
+## Clock erasure (pass 7 — the trace-independence meta-theorem; DESIGN)
+
+Opened by pass 6's measured finding: free-variable normalization does
+not scale, so search-sized `∀ tr` claims need a TRANSPORT theorem, not
+per-run reduction. The claim:
+
+**A run decided `.ok` or `.exn` from a world with `clock = []` never
+consulted the clock; it therefore runs identically under EVERY seeded
+trace, and returns it untouched.**
+
+Why the empty trace is the right base: the pop arm on `[]` is the
+underrun `.unsupported`, and `.unsupported` propagates unconditionally
+(the loudness invariant — nothing converts it to `.ok`, and the
+exceptions tier catches only `.exn`), so a decided `.ok`/`.exn` from
+`[]` provably never reached the pop. `.timeout` from `[]` also
+transports (a run that popped would have refused, not timed out).
+`.unsupported` does NOT transport — the underrun itself is the
+counterexample — and the relation simply claims nothing there.
+
+Shape (Obs.lean, the fuelMono discipline — one conjunct per mutual
+member, the appended-LAST ordering preserved):
+
+* `World.withClock w tr := { w with clock := tr }`;
+  `FrameState.withClock st tr :=
+  { st with world := st.world.withClock tr }`.
+* `ClockErasedW (x : Run World α) (y : List Int → Run World α)` — the
+  three clauses: ok (`x = .ok w v → w.clock = [] ∧ ∀ tr, y tr =
+  .ok (w.withClock tr) v`), exn (same shape), timeout
+  (`x = .timeout → ∀ tr, y tr = .timeout`). `ClockErasedF` the
+  `FrameState` twin. No unsupported clause, by design.
+* Theorem `clockErase (fuel)`: for every mutual-block member `F` and
+  every input whose world has `clock = []`,
+  `ClockErased (F … st …) (fun tr => F … (st.withClock tr) …)`.
+  Induction on fuel, mirroring `fuelMono` arm for arm.
+* Congruence spine: `ClockErased.bind` (the continuation instantiated
+  at the DECIDED intermediate state, whose emptiness the ok-clause of
+  the head supplies — that emptiness is exactly why the clause carries
+  it), `.bindE` (the exceptions-tier bind), `.liftRes`, `.withLocals`,
+  `.ite`; plus the projection lemmas (`(w.withClock tr).heap = w.heap`
+  and friends — `rfl`) and the update-commutations (`withClock`
+  commutes with `with heap :=`/`with globals :=`/`with stdout :=` —
+  `rfl` by structure eta).
+* The clock arm's own case: the base side is the underrun
+  `.unsupported` — vacuous under the relation; the pure admission
+  (`isClockCall`/`clockRecvOk`) is withClock-invariant (it never reads
+  `clock`) — `rfl` lemmas.
+* `initWorld m` has `clock = []` definitionally, so the public
+  corollary is: whenever `callFunction m f args fuel` is `.ok`/`.exn`,
+  `callFunctionClock m f args tr fuel` equals it for EVERY `tr` — and
+  `CallsIn`-level corollaries transport every existing concrete
+  empty-trace pin (the whole pass-5 stepped-search battery included)
+  to `∀ tr` statements at zero marginal kernel cost.
+
+Payoff target, in order: the sunfish stepped-search `∀ tr` theorem
+(the shape pass 6 promised) as a corollary of the existing concrete
+pins plus this lemma; later, `Monotone`-conditioned deadline theorems
+on the same transport. As-built deltas will be recorded here when the
+induction lands.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

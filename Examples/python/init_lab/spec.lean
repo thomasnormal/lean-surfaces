@@ -78,3 +78,14 @@ private def insLoop : Module :=
         | _ => false)
 
 #guard (Env.lookup (initWorld insLoop).globals "d").isNone
+
+/-! ### pass 5: a function-body store into a LIVE-VIEW module dict
+(docs/memory-model.md §search()'s first blockers) — search()'s
+`pst["K"]` swap shape. The primary `tbl` resolves through
+`World.globals` (the loop diverged the static fold) and `heapStore`
+proceeds: the pass-4 gap note was already closed by pass 3's live-view
+consult; these rows CLAIM it. -/
+
+#py_check init_lab.swap_a(1) = 8
+#py_check init_lab.swap_a(0) = 11
+#py_check init_lab.read_a() = 9

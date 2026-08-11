@@ -907,3 +907,31 @@ example was re-pinned to the new bytes.
    every 2048th node post-#158 (memory-model §wall-clock time as-built
    delta): the frontier is pinned by a `nodes = 2047` searcher — one
    node to the loud refusal, not 2048 per build.
+
+3. **search()'s first blockers** (memory-model §search()'s first
+   blockers): dict `.clear()` BUILT (`AttrPlan.dictClear` — entries
+   emptied, shape version bumped, `None` returned, faithful arity
+   TypeError; kwargs loud; dict_lab battery incl. the alias row);
+   CHAINED assignment built as the INGESTION SPLIT `splitChains`
+   (first-target-name admission, `t1 = t2 = v` ⇢ `t1 = v; t2 = t1` —
+   zero interpreter changes; cls_lab: the shipped shape, the
+   receiver-reads-NEW-x AttributeError order pin, and
+   `chain_attr_first` the refusal); the live-view `pst["K"]` store was
+   ALREADY CLOSED by pass 3's live-view consult (init_lab `swap_a`
+   claims it).
+
+4. **THE PASS-5 CAPSTONE — `search()` STEPPED on the shipped file**:
+   `Searcher().search([posH])` created (H4: no code runs), then FOUR
+   steps pinned — the FULL depth-1 MTD-bi bracket to convergence
+   (gammas 0 / 34645 / 23, scores 0 / 46 / 37) plus depth 2's first
+   yield — every `(depth, gamma, score, move)` tuple AND cumulative
+   `self.nodes` (2/4/47/93) CPython-exact; after one step the
+   prologue's effects are pinned in the world (`pst["K"]` IS the live
+   `K_MID` binding via the queens-on swap; `self.root` IS the root —
+   the split chain). The driver surface of the shipped engine now runs
+   under the model end to end at depth-1 granularity.
+
+   Cost fact (budget for it): the stepped-search guards raised the
+   sunfish spec elaboration from ~900–1800 s to 4782 s (~80 min) —
+   the capstone file is now BY FAR the build's long pole; batch
+   battery 939 rows / 0 failed / 70 whitelisted; corpus 20 / 0.

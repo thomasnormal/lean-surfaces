@@ -1019,6 +1019,47 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
   let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
   (step.1 ++ st''.2, topLevel')
 
+mutual
+  /-- pass 5 (docs/memory-model.md §search()'s first blockers): CHAINED
+  assignment splits at ingestion when the FIRST target is a plain name —
+  `t1 = t2 = … = v` ⇢ `t1 = v; t2 = t1; …` — CPython's DUP_TOP
+  compilation with the duplicated top read back from `t1` (a frame-local
+  name store followed by a name read returns exactly the stored value,
+  pure and unobservable — `x = x.y = v` reads the NEW `x` for the
+  receiver, as CPython does — and each later target's subexpressions
+  still evaluate after the earlier stores, CPython's order). Runs FIRST
+  among the lowering passes, so every later census sees plain
+  single-target assigns riding the existing discipline. A chain whose
+  first target is NOT a name cannot be split without re-evaluating or
+  naming the RHS: it stays un-split and hits the standing loud
+  multi-target refusal in `execStmt`. -/
+  private partial def splitChainStmt : Stmt → List Stmt
+    | .assign tgts v sp =>
+      (match tgts.toList with
+       | t1 :: t2 :: rest =>
+         (match t1 with
+          | .name id nsp =>
+            .assign #[t1] v sp ::
+              (t2 :: rest).map (fun t => .assign #[t] (.name id nsp) sp)
+          | _ => [.assign tgts v sp])
+       | _ => [.assign tgts v sp])
+    | .whileLoop t b o sp =>
+        [.whileLoop t (splitChainStmts b) (splitChainStmts o) sp]
+    | .forStmt t it b o sp =>
+        [.forStmt t it (splitChainStmts b) (splitChainStmts o) sp]
+    | .ifStmt t b o sp =>
+        [.ifStmt t (splitChainStmts b) (splitChainStmts o) sp]
+    | .tryStmt b en h tu sp =>
+        [.tryStmt (splitChainStmts b) en (splitChainStmts h) tu sp]
+    | .defStmt n p ao lo hg ig body cap sp =>
+        [.defStmt n p ao lo hg ig (splitChainStmts body) cap sp]
+    | s => [s]
+
+  /-- Elementwise `splitChainStmt`, splicing the splits in place. -/
+  private partial def splitChainStmts (ss : Array Stmt) : Array Stmt :=
+    ((ss.toList.map splitChainStmt).flatten).toArray
+end
+
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
 into `functions` under qualified names, in source order), and everything
@@ -1043,6 +1084,12 @@ def parseModule (j : Json) : Except String Module :=
         functions := functions ++ fns
       else
         topLevel := topLevel.push (← parseStmt stmtJson)
+    -- pass 5: split chained assignments FIRST, so the namedtuple
+    -- recognition, the exception census, and the genexp lowering all
+    -- see plain single-target assigns (docs/memory-model.md §search()'s
+    -- first blockers).
+    functions := functions.map fun f => { f with body := splitChainStmts f.body }
+    topLevel := splitChainStmts topLevel
     let (topLevel', namedtuples, classes') :=
       recognizeNamedtuples functions classes topLevel
     -- the exceptions-tier census (docs/memory-model.md §exceptions,

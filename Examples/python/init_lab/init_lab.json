@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "Examples/python/init_lab/init_lab.py",
-  "source_sha256": "27f3b1a233b2189ff245351ac05d5a757b11769cee6fb67a746db83170721239",
+  "source_sha256": "43502d82749c105c1969a14f5132e1d0f708f08508969cb7b198c2b85e5af86f",
   "module": {
     "kind": "Module",
     "body": [
@@ -1468,6 +1468,276 @@
               ],
               "keywords": [],
               "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 57,
+          "col_offset": 0,
+          "end_lineno": 59,
+          "end_col_offset": 22
+        },
+        "name": "swap_a",
+        "args": [
+          {
+            "arg": "flag",
+            "span": {
+              "lineno": 57,
+              "col_offset": 11,
+              "end_lineno": 57,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 58,
+              "col_offset": 4,
+              "end_lineno": 58,
+              "end_col_offset": 41
+            },
+            "targets": [
+              {
+                "kind": "Subscript",
+                "span": {
+                  "lineno": 58,
+                  "col_offset": 4,
+                  "end_lineno": 58,
+                  "end_col_offset": 12
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 58,
+                    "col_offset": 4,
+                    "end_lineno": 58,
+                    "end_col_offset": 7
+                  },
+                  "id": "tbl"
+                },
+                "index": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 58,
+                    "col_offset": 8,
+                    "end_lineno": 58,
+                    "end_col_offset": 11
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "a"
+                  }
+                }
+              }
+            ],
+            "value": {
+              "kind": "IfExp",
+              "span": {
+                "lineno": 58,
+                "col_offset": 15,
+                "end_lineno": 58,
+                "end_col_offset": 41
+              },
+              "test": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 58,
+                  "col_offset": 23,
+                  "end_lineno": 58,
+                  "end_col_offset": 27
+                },
+                "id": "flag"
+              },
+              "body": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 58,
+                  "col_offset": 15,
+                  "end_lineno": 58,
+                  "end_col_offset": 19
+                },
+                "elts": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 58,
+                      "col_offset": 16,
+                      "end_lineno": 58,
+                      "end_col_offset": 17
+                    },
+                    "id": "M"
+                  }
+                ]
+              },
+              "orelse": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 58,
+                  "col_offset": 33,
+                  "end_lineno": 58,
+                  "end_col_offset": 41
+                },
+                "elts": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 58,
+                      "col_offset": 34,
+                      "end_lineno": 58,
+                      "end_col_offset": 39
+                    },
+                    "id": "TOTAL"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 59,
+              "col_offset": 4,
+              "end_lineno": 59,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 59,
+                "col_offset": 11,
+                "end_lineno": 59,
+                "end_col_offset": 22
+              },
+              "value": {
+                "kind": "Subscript",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 11,
+                  "end_lineno": 59,
+                  "end_col_offset": 19
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 59,
+                    "col_offset": 11,
+                    "end_lineno": 59,
+                    "end_col_offset": 14
+                  },
+                  "id": "tbl"
+                },
+                "index": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 59,
+                    "col_offset": 15,
+                    "end_lineno": 59,
+                    "end_col_offset": 18
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "a"
+                  }
+                }
+              },
+              "index": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 20,
+                  "end_lineno": 59,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 62,
+          "col_offset": 0,
+          "end_lineno": 63,
+          "end_col_offset": 22
+        },
+        "name": "read_a",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 63,
+              "col_offset": 4,
+              "end_lineno": 63,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 63,
+                "col_offset": 11,
+                "end_lineno": 63,
+                "end_col_offset": 22
+              },
+              "value": {
+                "kind": "Subscript",
+                "span": {
+                  "lineno": 63,
+                  "col_offset": 11,
+                  "end_lineno": 63,
+                  "end_col_offset": 19
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 63,
+                    "col_offset": 11,
+                    "end_lineno": 63,
+                    "end_col_offset": 14
+                  },
+                  "id": "tbl"
+                },
+                "index": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 63,
+                    "col_offset": 15,
+                    "end_lineno": 63,
+                    "end_col_offset": 18
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "a"
+                  }
+                }
+              },
+              "index": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 63,
+                  "col_offset": 20,
+                  "end_lineno": 63,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "0"
+                }
+              }
             }
           }
         ]

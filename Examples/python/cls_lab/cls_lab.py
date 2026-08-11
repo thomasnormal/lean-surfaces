@@ -276,3 +276,36 @@ def unpack_subscript_elem(k):
     d = {}
     d[0], c.a = 1, k
     return 0
+
+
+# pass 5 (docs/memory-model.md "search()'s first blockers"): CHAINED
+# assignment, split at ingestion when the first target is a plain name
+# (t1 = t2 = v  ~>  t1 = v; t2 = t1).
+
+def chain_names(n):
+    a = b = c = n + 1
+    return a + b + c
+
+
+def chain_attr(n):
+    # the shipped shape: pos = self.root = history[-1]
+    cell = Cell(0)
+    p = cell.x = n + 5
+    return (p, cell.get())
+
+
+def chain_rebind_receiver(n):
+    # x = x.x = v -- the receiver of the SECOND store reads the NEW x
+    # (an int), so CPython raises AttributeError AFTER x was rebound:
+    # the split preserves exactly that order
+    x = Cell(n)
+    x = x.x = 7
+    return x
+
+
+def chain_attr_first(n):
+    # REFUSED: the first target is an attribute -- the chain cannot be
+    # split without re-evaluating or naming the RHS
+    cell = Cell(0)
+    cell.x = m = n + 1
+    return m

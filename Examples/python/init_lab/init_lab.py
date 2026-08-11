@@ -46,3 +46,18 @@ def call_pad(n):
     # closure dispatches through the live view; its body reads base and
     # the final k the same way
     return pad((n,))
+
+
+# pass 5 (docs/memory-model.md "search()'s first blockers"): a FUNCTION
+# BODY storing into a live-view module dict -- search()'s
+# pst["K"] = K_MID if ... else K_END swap. tbl is live (the loop above
+# diverged the static fold), so the store resolves the primary through
+# World.globals.
+
+def swap_a(flag):
+    tbl["a"] = (M,) if flag else (TOTAL,)
+    return tbl["a"][0]
+
+
+def read_a():
+    return tbl["a"][0]

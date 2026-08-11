@@ -148,3 +148,18 @@ subscript element inside a tuple target. -/
 
 #guard callFunction cls_lab "aug_attr_list" #[.int 1] 4096 matches .unsupported _
 #guard callFunction cls_lab "unpack_subscript_elem" #[.int 1] 4096 matches .unsupported _
+
+/-! ### pass 5: CHAINED assignment, split at ingestion
+(docs/memory-model.md §search()'s first blockers): `t1 = t2 = v` ⇢
+`t1 = v; t2 = t1` when `t1` is a plain name — CPython's DUP_TOP with
+the dup read back from the name. `chain_rebind_receiver` pins the
+ORDER claim: the second store's receiver reads the NEW `x` (an int),
+so the faithful AttributeError fires after the rebind, exactly as
+CPython. `chain_attr_first` is the refusal frontier (an attribute
+first target cannot be split without naming the RHS). -/
+
+#py_check cls_lab.chain_names(5) = 18
+#py_check cls_lab.chain_attr(5) = (Val.tuple #[.int 10, .int 10])
+#py_check cls_lab.chain_rebind_receiver(4) raises .attributeError
+
+#guard callFunction cls_lab "chain_attr_first" #[.int 5] 4096 matches .unsupported _

@@ -2112,6 +2112,9 @@ inductive AttrPlan where
   | instAttrValue               -- data attribute in call position (loud)
   | attrMissing                 -- faithful AttributeError (pre-args)
   | dictGet | listAppend | listPop
+  -- pass 5 (docs/memory-model.md §search()'s first blockers): the dict
+  -- MUTATOR `.clear()` — entries emptied, shape version bumped
+  | dictClear
   | refuse (msg : String)
   | dangling
 deriving Repr, Inhabited, BEq
@@ -2135,7 +2138,8 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
          else .attrMissing)
   | some (.dict _ _) =>
     if attr == "get" then .dictGet
-    else .refuse s!"method call '.{attr}' on a dict is outside the tier (dict '.get' only; docs/memory-model.md)"
+    else if attr == "clear" then .dictClear
+    else .refuse s!"method call '.{attr}' on a dict is outside the tier (dict '.get'/'.clear' only; docs/memory-model.md)"
   | some (.list _) =>
     if attr == "append" then .listAppend
     else if attr == "pop" then .listPop
@@ -4123,6 +4127,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                  | .attrMissing => .exn st .attributeError
                  | .dictGet =>
                    .unsupported "dict.get() with keyword arguments is outside the tier (get is positional-only in CPython)"
+                 | .dictClear =>
+                   .unsupported "dict.clear() with keyword arguments is outside the tier (clear takes no keyword arguments in CPython)"
                  | .listAppend =>
                    .unsupported "list.append() with keyword arguments is outside the tier (append is positional-only in CPython)"
                  | .listPop =>
@@ -4279,6 +4285,20 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
       | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
       | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
       | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+    | .dictClear =>
+      -- pass 5: the dict MUTATOR — entries := #[], shape version
+      -- bumped (a live items()-iteration must see the change), `None`
+      -- returned; wrong arity the faithful TypeError.
+      evalExprs m fuel st args ⤳ fun st vs =>
+      match vs with
+      | [] =>
+        (match Heap.get? st.world.heap a with
+         | some (.dict _ ver) =>
+           (match Heap.update st.world.heap a (.dict #[] (ver + 1)) with
+            | some h' => .ok { st with world := { st.world with heap := h' } } .none
+            | Option.none => .unsupported danglingMsg)
+         | _ => .unsupported danglingMsg)
+      | vs => .exn st (.typeError s!"clear() takes no arguments ({vs.length} given)")
     | .listAppend =>
       evalExprs m fuel st args ⤳ fun st vs =>
       match vs with

@@ -78,6 +78,12 @@
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "int_is", "args": [[1, 1], [1, 2]], "expect": "unsupported"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "iter_dict", "args": [[]], "expect": "unsupported"},
   {"file": "Examples/python/dict_lab/dict_lab.py", "function": "mate_style", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_len", "args": [[5], [0]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_alias", "args": [[5]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_get", "args": [[5]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_refill", "args": [[5], [-2]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_none", "args": [[3]], "expect": "match"},
+  {"file": "Examples/python/dict_lab/dict_lab.py", "function": "clear_arity", "args": [[1]], "expect": "match"},
   {"file": "Examples/python/sf_pst/sf_pst.py", "function": "mate_bounds", "args": [[]], "expect": "match"},
   {"file": "Examples/python/sf_pst/sf_pst.py", "function": "piece_val", "args": [[{"t": "str", "v": "K"}], [{"t": "str", "v": "Q"}], [{"t": "str", "v": "P"}], [{"t": "str", "v": "p"}]], "expect": "match"},
   {"file": "Examples/python/sf_pst/sf_pst.py", "function": "pst_entry", "args": [[{"t": "str", "v": "K"}, 0], [{"t": "str", "v": "P"}, 9], [{"t": "str", "v": "Q"}, 3], [{"t": "str", "v": "N"}, -1], [{"t": "str", "v": "B"}, 64]], "expect": "match"},
@@ -248,6 +254,10 @@
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_attrs_swap", "args": [[9]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_arity", "args": [[1]], "expect": "match"},
   {"file": "Examples/python/cls_lab/cls_lab.py", "function": "unpack_subscript_elem", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_names", "args": [[5], [0], [-2]], "expect": "match"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr", "args": [[5], [0]], "expect": "match"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_rebind_receiver", "args": [[4]], "expect": "match"},
+  {"file": "Examples/python/cls_lab/cls_lab.py", "function": "chain_attr_first", "args": [[5]], "expect": "unsupported"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned", "args": [[5], [2], [0]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "drain_assigned_param", "args": [[4], [0]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "gen_assigned_lazy", "args": [[3]], "expect": "unsupported"},
@@ -407,5 +417,6 @@
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_total", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_m", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_k", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/init_lab/init_lab.py", "function": "call_pad", "args": [[5], [0]], "expect": "match"}
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "call_pad", "args": [[5], [0]], "expect": "match"},
+  {"file": "Examples/python/init_lab/init_lab.py", "function": "swap_a", "args": [[1], [0]], "expect": "match"}
 ]

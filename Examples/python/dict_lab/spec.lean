@@ -115,3 +115,15 @@ example : Heap.WF #[.dict #[(.int 1, .int 3)] 1] := by
     simpa [Nat.lt_one_iff] using hlt
   subst ha
   simp [Obj.WF, RVal.WFList, RVal.WF]
+
+/-! ### pass 5: `.clear()` — the dict mutator (docs/memory-model.md
+§search()'s first blockers). Aliasing-visible, `None`-returning,
+faithful arity TypeError; keyword arguments stay loud like `.get`. -/
+
+#py_check dict_lab.clear_len(5) = 0
+#py_check dict_lab.clear_alias(5) = 0
+#py_check dict_lab.clear_get(5) = -7
+#py_check dict_lab.clear_refill(5) = (Val.tuple #[.int 1, .int 8])
+#py_check dict_lab.clear_none(3) = true
+#py_check dict_lab.clear_arity(1) raises
+  (.typeError "clear() takes no arguments (1 given)")

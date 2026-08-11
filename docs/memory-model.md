@@ -1302,6 +1302,55 @@ expression-position yield. `Stmt.heapFree` excludes `yieldFromStmt`
 (it only occurs in generator bodies, which already evict the module
 from the fragment; conservative and simple).
 
+## search()'s first blockers (pass 5 — dict.clear(), chained assignment, the live-view store)
+
+`Searcher.search()`'s prologue is four statements; the census against
+the tier found two constructs missing and one recorded gap already
+closed:
+
+1. **`self.tp_score.clear()`** — the dict MUTATOR, `AttrPlan.dictClear`
+   (the `attrCallPlan` dict arm grows `"clear"` beside `"get"`; every
+   other dict method stays the loud refusal): entries := `#[]`, shape
+   version BUMPED (a live `pst.items()`-style iteration must see the
+   change as CPython's "dict changed size during iteration" would),
+   returns `None`; wrong arity is the faithful
+   `TypeError: clear() takes no arguments (n given)`; keyword arguments
+   ride the positional-only-loud pattern of `.get`. Aliasing-visible
+   through the heap, exactly like the subscript store. `.clear` is NOT
+   added to `Expr.heapFree`'s attribute whitelist (`.get`-only), so the
+   fragment is undisturbed.
+
+2. **Chained assignment** (`pos = self.root = history[-1]`; main()'s
+   `best, cand, d0 = …` is a single tuple target, not this) — CPython:
+   the RHS evaluates ONCE (DUP_TOP), then the targets are stored LEFT
+   TO RIGHT, each target's subexpressions evaluated at ITS store time.
+   Built as an INGESTION SPLIT (`splitChains`, Json.lean — the
+   yield-from/genexp lowering family, running FIRST so every later
+   census sees plain assigns), admitted when the FIRST target is a
+   plain NAME:
+
+       t1 = t2 = … = v   ⇢   t1 = v; t2 = t1; …
+
+   This is exact: the duplicated top is read back from `t1` — a
+   frame-local name store followed by a name read returns exactly the
+   stored value (pure, unobservable — `x = x.y = v` reads the NEW `x`
+   for the receiver, as CPython does), each later target's
+   subexpressions still evaluate after the earlier stores, and every
+   target rides the EXISTING single-target discipline (including its
+   per-statement `Stmt.heapFree` classification — no fragment edits at
+   all, no interpreter edits at all, no new mutual member). A chain
+   whose first target is NOT a name cannot be split without
+   re-evaluating or naming the RHS; it stays un-split and hits the
+   standing loud multi-target refusal (`chain_attr_first` the exposing
+   row).
+
+3. **`pst["K"] = K_MID if … else K_END` from a function body** — the
+   pass-4 gap note ("the subscript-store arm must accept a live-view
+   `.ref` primary") turned out ALREADY CLOSED by pass 3's live-view
+   consult in name resolution: the primary `pst` resolves through
+   `World.globals` to the live ref and `heapStore` proceeds. Claimed by
+   differential rows (init_lab `swap_a`), not new code.
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

@@ -1345,6 +1345,9 @@ theorem fuelMono (fuel : Nat) :
         | attrMissing => exact Run.le_refl _
         | dictGet =>
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
+        | dictClear =>
+          -- pass 5: arg-eval then a fuel-free heap update
+          exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
         | listAppend =>
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
         | listPop =>

@@ -175,3 +175,44 @@ def mate_style():
     # sunfish-flavored: the piece table and the MATE bound expression shape.
     piece = {"P": 100, "N": 280, "B": 320, "R": 479, "Q": 929, "K": 60000}
     return piece["K"] + 10 * piece["Q"]
+
+
+# pass 5 (docs/memory-model.md "search()'s first blockers"): the dict
+# MUTATOR .clear() -- search()'s tp_score.clear() shape.
+
+def clear_len(n):
+    d = {1: n, 2: n + 1}
+    d.clear()
+    return len(d)
+
+
+def clear_alias(n):
+    # aliasing-visible, like every heap mutation
+    d = {1: n}
+    e = d
+    e.clear()
+    return len(d)
+
+
+def clear_get(n):
+    d = {1: n}
+    d.clear()
+    return d.get(1, -7)
+
+
+def clear_refill(n):
+    # clear then store: the search() lifecycle in miniature
+    d = {1: n}
+    d.clear()
+    d[2] = n + 3
+    return (len(d), d[2])
+
+
+def clear_none(n):
+    d = {1: n}
+    return d.clear() is None
+
+
+def clear_arity(n):
+    d = {1: n}
+    return d.clear(2)

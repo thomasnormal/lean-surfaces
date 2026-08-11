@@ -38,19 +38,23 @@ that hit where CPython missed, a correction scan that ran where
 CPython's didn't — breaks the pair. Live in these runs: the tp_score
 probe under the dict-key doctrine (`(pos, depth)` tuple keys carrying
 the Position value), the history-set membership, the nested `moves()`
-generator with recursion through the captured `self`, the killer/
-null-move/IID prologue — post-#158 the null verification lives HERE,
-in `moves()`: the substituted king capture (`proof`, an `and`/`or`
-value chain through `king_capture()`), the band-edge probe at the
-yield site, veto by omission — the verbatim ordering line, the fold
-with `live |=` (the pass-5 bitwise-or tier) and the widened `not
-live` correction gate (`pos.move(m).king_capture()` — a method call
-chained onto a method RESULT — under the immediate `all(…)` drain),
-the attribute `+=`, and the table store.
+generator with recursion through the captured `self`, the killer
+prologue (the depth-gated store `if move is not None and depth:` — the
+pass-7 re-pin), the null-move gate with the SCORE CAP
+(`score = min(pos.score + EVAL_ROUGHNESS, -self.bound(…))` — the cap
+keeps the pass's value below the mate band, so the old band-edge probe
+arm is GONE and the yield is one conditional expression:
+`yield (proof, MATE_UPPER) if proof and pos.value(proof) >= MATE_LOWER
+else (None, score)`), the QS ordering line with the WALRUS FILTER
+(`if (v:=pos.value(m)) >= val_lower` — filter-before-sort, the pass-7
+§the walrus filter lowering; the sub-threshold tail is never sorted),
+the fold with `live |=` and the `not live` correction gate
+(`pos.move(m).king_capture()` under the immediate `all(…)` drain), the
+attribute `+=`, and the table store.
 
-Every expected pair below is CPython's own answer (the post-#158
-module imported and probed — re-derived, never reused: seven of the
-23 pairs changed with the rewrite). The tactical rows end at
+Every expected pair below is CPython's own answer (the current engine
+master imported and probed — re-derived, never reused: six of the 23
+pairs changed with this re-pin). The tactical rows end at
 MATE_LOWER = 47923 — the king-capture sentinel path; the endgame rows
 walk the correction (depth 3 at gamma 0 answers the
 repetition/stalemate-corrected 0). -/
@@ -111,16 +115,16 @@ private def posPend : RVal :=
 #guard boundProbe (posH 0) (-100) 1 == some (0, 2)
 #guard boundProbe (posH 0) 0 2 == some (0, 2)
 #guard boundProbe (posH 0) 40 2 == some (36, 139)
-#guard boundProbe (posH 0) 0 3 == some (0, 39)
-#guard boundProbe (posH 0) 40 3 == some (39, 209)
-#guard boundProbe (posH 0) (-100) 3 == some ((-46), 3)
+#guard boundProbe (posH 0) 0 3 == some (0, 38)
+#guard boundProbe (posH 0) 40 3 == some (39, 208)
+#guard boundProbe (posH 0) (-100) 3 == some ((-46), 2)
 
 -- midgame
 #guard boundProbe posMid 0 1 == some (2, 66)
 #guard boundProbe posMid 60 1 == some (35, 5)
 #guard boundProbe posMid 0 2 == some ((-1), 587)
 #guard boundProbe posMid 60 2 == some (59, 241)
-#guard boundProbe posMid 0 3 == some (2, 428)
+#guard boundProbe posMid 0 3 == some (2, 427)
 #guard boundProbe posMid 60 3 == some (59, 247)
 
 -- tactical: the mate band (MATE_LOWER exactly — the sentinel discipline)
@@ -130,8 +134,8 @@ private def posPend : RVal :=
 -- endgames: the correction arms
 #guard boundProbe posEnd 0 1 == some (111, 8)
 #guard boundProbe posEnd 0 2 == some (91, 8)
-#guard boundProbe posEnd 0 3 == some (0, 3)
-#guard boundProbe posEnd 60 3 == some (137, 21)
+#guard boundProbe posEnd 0 3 == some (0, 2)
+#guard boundProbe posEnd 60 3 == some (137, 27)
 #guard boundProbe posPend 0 2 == some (19, 2)
 #guard boundProbe posPend 60 2 == some (50, 13)
 #guard boundProbe posPend 0 3 == some (50, 15)

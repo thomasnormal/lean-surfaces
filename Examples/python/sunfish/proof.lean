@@ -19,6 +19,13 @@ Two provisions keep the 955KB module literal out of the simp run:
   the compact handles and each collapses in ONE rewrite instead of
   thousands of character-level simp steps.
 
+Envelope note (pass 7): RE-PINNED to current engine master (the QS
+walrus filter, explicit castling gen, branchless rights, the
+literal-membership capture test, inlined bodies, the null-gate score
+cap, the killer depth gate — docs/backlog.md §Pass 7). `Position.rotate`
+is byte-identical again, so the theorems and proofs are untouched; this
+comment is the required real edit for the re-extracted envelope.
+
 Envelope note (pass 5): the example was RE-PINNED to the post-#158
 shipped file — the module literal changed wholesale (new gen_moves
 surface with the inlined `yield from`, the moves()-internal null

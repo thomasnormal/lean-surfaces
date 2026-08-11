@@ -48,8 +48,8 @@ left in this table. -/
     ("Stop", true, Option.none), ("Searcher", true, Option.none)]
 
 /-! The exceptions census (docs/memory-model.md §exceptions): `Stop` is
-an ADMITTED exception class on the shipped file — `raise Stop` (line
-328) structures and would raise its class identity; the census proved
+an ADMITTED exception class on the shipped file — `raise Stop`
+structures and would raise its class identity; the census proved
 `Exception` unshadowed. Post-#158 the guard is
 `if self.nodes % 2048 == 0 and time.time() > self.deadline: raise Stop`
 with `deadline = 1 << 63` — no None test, so `time.time()` is
@@ -68,16 +68,18 @@ pinned below; every battery row stays under 2048 nodes). -/
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- pass 5 (post-#158): ingestion lowers SEVEN generator expressions,
-    -- CPython's own compilation (`<genexpr>` with the evaluated outer
-    -- iterator as its first argument) — `king_capture`'s filtered probe
-    -- (@0), the two inside `bound`'s nested `moves()` (the null-move
-    -- `any` probe @1 and THE ORDERING LINE @2), the mate/stalemate
-    -- CORRECTION's scan (@3 — `pos.move(m).king_capture()` under the
-    -- immediate `all(…)` drain), and the module-init trio: the padding
-    -- loop's pair (@4 the lambda's inner genexp, @5 the
-    -- sum-over-slices genexp) and K_END's single formula genexp (@6 —
-    -- the #158 rewrite dissolved the old nested pair). gen_moves's
+    -- pass 7 (the re-pin): ingestion lowers SEVEN generator
+    -- expressions, CPython's own compilation (`<genexpr>` with the
+    -- evaluated outer iterator as its first argument) —
+    -- `king_capture`'s filtered probe (@0), the two inside `bound`'s
+    -- nested `moves()` (the null-move `any` probe @1 and THE ORDERING
+    -- LINE @2 — now WALRUS-FILTERED, `if (v:=pos.value(m)) >=
+    -- val_lower`, the pass-7 §the-walrus-filter lowering: `v` becomes
+    -- a local of the synthesized frame, admitted because the enclosing
+    -- body never mentions it), the mate/stalemate CORRECTION's scan
+    -- (@3 — `pos.move(m).king_capture()` under the immediate `all(…)`
+    -- drain), and the module-init trio: the padding loop's pair (@4,
+    -- @5) and K_END's single formula genexp (@6). gen_moves's
     -- promotion genexp is NOT in this table: the `yield from` INLINING
     -- consumed it (docs/memory-model.md §yield from — no synthesized
     -- function, the delegation reads the frame by reference). The

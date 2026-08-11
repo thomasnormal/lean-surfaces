@@ -1,7 +1,7 @@
 #!/bin/sh
 """:"
 # Polyglot header: run with pypy3 when available, else python3 (issue #102).
-# No -u needed: all UCI output is flushed explicitly (sunfish_tools/uci.py).
+# No -u needed: all UCI output is flushed explicitly (sunfish_ui/uci.py).
 for cmd in pypy3 python3; do
    command -v "$cmd" > /dev/null && exec "$cmd" "$0" "$@"
 done
@@ -198,9 +198,8 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
                     # Stop crawlers from sliding, and sliding after captures
                     if p in "PNK" or q in "pnbrqk": break
                     # Castling, by sliding the rook next to the king
-                    for (sq, dr, c) in ((A1, E, self.wc[0]), (H1, W, self.wc[1])):
-                        if i == sq and self.board[j + dr] == "K" and c:
-                            yield Move(j + dr, j - dr, "")
+                    if i == A1 and self.board[j + E] == "K" and self.wc[0]: yield Move(j + E, j + W, "")
+                    if i == H1 and self.board[j + W] == "K" and self.wc[1]: yield Move(j + W, j + E, "")
 
     def rotate(self, nullmove=False):
         """Rotates the board, preserving enpassant, unless nullmove"""
@@ -222,10 +221,8 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         board = put(board, j, board[i])
         board = put(board, i, ".")
         # Castling rights, we move the rook or capture the opponent's
-        if i == A1: wc = (False, wc[1])
-        if i == H1: wc = (wc[0], False)
-        if j == A8: bc = (bc[0], False)
-        if j == H8: bc = (False, bc[1])
+        wc = (wc[0] and i != A1, wc[1] and i != H1)
+        bc = (bc[0] and j != H8, bc[1] and j != A8)
         # Castling
         if p == "K":
             wc = (False, False)
@@ -235,12 +232,9 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
                 board = put(board, kp, "R")
         # Pawn promotion, double move and en passant capture
         if p == "P":
-            if A8 <= j <= H8:
-                board = put(board, j, prom)
-            if j - i == 2 * N:
-                ep = i + N
-            if j == self.ep:
-                board = put(board, j + S, ".")
+            if A8 <= j <= H8:  board = put(board, j, prom)
+            if j - i == 2 * N: ep = i + N
+            if j == self.ep:   board = put(board, j + S, ".")
         # We rotate the returned position, so it's ready for the next player
         return Position(board, score, wc, bc, ep, kp).rotate()
 
@@ -250,21 +244,17 @@ class Position(namedtuple("Position", "board score wc bc ep kp")):
         # Actual move
         score = pst[p][j] - pst[p][i]
         # Capture
-        if q.islower():
-            score += pst[q.upper()][119 - j]
+        if q in "pnbrqk": score += pst[q.upper()][119 - j]
         # Castling check detection
-        if abs(j - self.kp) < 2:
-            score += pst["K"][119 - j]
+        if abs(j - self.kp) < 2: score += pst["K"][119 - j]
         # Castling
         if p == "K" and abs(i - j) == 2:
             score += pst["R"][(i + j) // 2]
             score -= pst["R"][A1 if j < i else H1]
         # Special pawn stuff
         if p == "P":
-            if A8 <= j <= H8:
-                score += pst[prom][j] - pst["P"][j]
-            if j == self.ep:
-                score += pst["P"][119 - (j + S)]
+            if A8 <= j <= H8: score += pst[prom][j] - pst["P"][j]
+            if j == self.ep: score += pst["P"][119 - (j + S)]
         return score
 
     def king_capture(self):
@@ -319,7 +309,11 @@ class Searcher:
                 - if the opponent king capturable: r = MATE_UPPER
                   (note this is stronger than just gamma <= r <= s*.)
                 - if mate/stalemate returns the exact -MATE_LOWER / 0.
-            - if gamma <= r, tp_move[pos] will hold a legal move achieving r.
+            - every move in tp_move is legal. When a searched real move causes
+              a fail-high at depth >= 1, it is written as the score witness;
+              a virtual cutoff need not have one.
+            - a nonterminal root fail-high leaves its real score witness in
+              tp_move[root].
             """
 
         self.nodes += 1
@@ -356,8 +350,7 @@ class Searcher:
             # Let's not repeat positions. We don't chat
             # - at the root (a driver probe) since it is in history, but not a draw.
             # - at depth=0, since it would be expensive and break "futility pruning".
-            if depth > 0 and pos in self.history:
-                return 0
+            if depth > 0 and pos in self.history: return 0
 
         # Generator of moves to search in order.
         # This allows us to define the moves, but only calculate them if needed.
@@ -371,30 +364,19 @@ class Searcher:
             # First try not moving at all, i.e. the null move.
             # See https://chessprogramming.org/Null_Move for details.
             # The idea is that "doing nothing" is a lower bound on the score
-            # of the position, but we have to be be careful with zugzwang positions,
-            # where passing is better than any move. Hence we only use it in
-            # balanced positions. We also don't use it at root, so we can always
-            # return a move.
-            if not root and depth > 2 \
-                    and abs(pos.score) < 500 and any(c in pos.board for c in "RBNQ"):
-                score = -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3)
-                # A fail high is a virtual claim, and needs verification
-                # before it may cut: if the king is capturable the capture is
-                # substituted (the node must report the exact MATE_UPPER)
+            # of the position, but we have to be careful with zugzwang, where
+            # passing is better than any move - the piece test guards that
+            # (K+P endings). Capping the pass at static evaluation plus one
+            # score bucket also keeps its value monotone and below the positive
+            # mate band, so one child report is enough to bound it. No null at
+            # root, so we can always return a move.
+            if not root and depth > 2 and abs(pos.score) < 500 and any(c in pos.board for c in "RBNQ"):
+                score = min(pos.score + EVAL_ROUGHNESS,
+                    -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3))
+                # A king capture substitutes the exact MATE_UPPER for a
+                # virtual fail-high; the cached move is a capture certificate.
                 proof = score >= gamma and (self.tp_move.get(pos) or pos.king_capture())
-                if proof and pos.value(proof) >= MATE_LOWER:
-                    yield proof, MATE_UPPER
-                # a remaining mate-band claim is vacuous (if passing wins the
-                # king, capturing it is a real move too). Otherwise one probe
-                # at the band boundary is decisive both ways
-                # (boundary_window_decisive): fail-low means the pass really
-                # wins in the band - vetoed by omission - and fail-high
-                # certifies the value sub-band, letting the cutoff stand
-                # with no chess assumption (the premise it replaced is false
-                # in real chess: 8/6p1/6R1/k7/2K5/8/8/8 w).
-                elif score < gamma or self.bound(pos.rotate(nullmove=True),
-                        1 - MATE_LOWER, depth - 3) >= 1 - MATE_LOWER:
-                    yield None, score
+                yield (proof, MATE_UPPER) if proof and pos.value(proof) >= MATE_LOWER else (None, score)
 
             # For QSearch we have a different kind of null-move, namely we can just stop
             # and not capture anything else. (Note depth at root is always > 0.)
@@ -425,11 +407,11 @@ class Searcher:
                 yield killer, -self.bound(pos.move(killer), 1 - gamma, depth - 1)
 
             # Then all the other moves
-            for val, move in sorted(((pos.value(m), m) for m in pos.gen_moves()), reverse=True):
-                # Quiescent search
-                if val < val_lower:
-                    break
-
+            # Quiescent search: only moves above the val-limit are admitted -
+            # filtering BEFORE the sort skips sorting the sub-threshold tail
+            # (most of the list at QS nodes), and is literally the model's
+            # movesAbove form (formal/Sunfish/Stalemate.lean).
+            for val, move in sorted(((v, m) for m in pos.gen_moves() if (v:=pos.value(m)) >= val_lower), reverse=True):
                 # If the new score is less than gamma, the opponent will for sure just
                 # stand pat, since ""pos.score + val < gamma === -(pos.score + val) >= 1-gamma""
                 # This is known as futility pruning.
@@ -456,7 +438,7 @@ class Searcher:
             live |= move is not None and score > -MATE_UPPER
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
-                if move is not None:
+                if move is not None and depth:
                     self.tp_move[pos] = move
                     # Never evict the current search root: its killer is the
                     # answer go_loop plays, and once the table churns more
@@ -469,10 +451,7 @@ class Searcher:
                         del self.tp_move[next(k for k in self.tp_move if k != self.root)]
                 break
 
-        # If we didn't see any legal moves, it might just be that we failed
-        # high on a null move and stopped searching, but it could also be that
-        # we genuinely re in checkmate or stalemate. There's no way to know but
-        # to check.
+        # If only virtual evidence was seen, classify terminality exactly.
         if depth and not live and all(
                 pos.move(m).king_capture() for m in pos.gen_moves()):
             # We can't move, but is it a checkmate or stalemate?
@@ -527,7 +506,7 @@ class Searcher:
 # UCI User interface
 ###############################################################################
 
-# parse/render/hist live at module level: sunfish_tools/uci.py (and the tests)
+# parse/render/hist live at module level: sunfish_ui/uci.py (and the tests)
 # reach them as engine-module attributes, and main() uses hist before its
 # own body would define it.
 def parse(c): return A1 + ord(c[0]) - ord("a") - 10 * (int(c[1]) - 1)
@@ -547,8 +526,8 @@ def main():
     # Only the packed build runs the loop below, and it never reaches this
     # line: pack.sh deletes everything between the minifier-hide markers,
     # taking the import and this return with it.
-    import sys, sunfish_tools.uci
-    return sunfish_tools.uci.run(sys.modules[__name__], hist[-1])
+    import sys, sunfish_ui.uci
+    return sunfish_ui.uci.run(sys.modules[__name__], hist[-1])
     # minifier-hide end
 
     searcher = Searcher()
@@ -589,6 +568,7 @@ def main():
                 if depth > d0:
                     best, d0 = cand or best, depth
                 if score >= gamma:
+                    if move is None: print("info depth", depth, "score cp", score); break
                     i, j = move.i, move.j
                     if len(hist) % 2 == 0:
                         i, j = 119 - i, 119 - j

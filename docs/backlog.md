@@ -1042,14 +1042,20 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
    Runtime.lean field changes), or the corollaries are stated at
    projected `Option`-typed probes whose core-type `BEq` is already
    lawful.
-2. **Re-pin to current engine master** (the pinned file is stale
-   again): the QS-loop filter-before-sort optimization (matches the
-   model's movesAbove form directly), explicit castling gen, branchless
-   castling rights, the literal-membership capture test, the style pass
-   (inlined single-statement bodies), the score-cap restore in the null
-   gate, and the killer depth gate (the `tp_move` store gains
-   `and depth`). All in-tier constructs. Fresh CPython-derived
-   expectations for EVERY pin — never reuse old numbers.
+2. ~~**Re-pin to current engine master**~~ **DONE (same day):** the
+   pinned file is current master again. The brief's "all in-tier
+   constructs" was FALSE by one: the QS filter-before-sort line carries
+   a WALRUS in the genexp filter (`if (v:=pos.value(m)) >= val_lower`)
+   — ingestion left it un-lowered and `bound()` refused loudly. Closed
+   by the §the-walrus-filter tier (memory-model — design first, then
+   ingestion-only build: extractor NamedExpr-in-filter structuring +
+   `lowerGenExps` walrus locals + the `walrusForbidden` census; ZERO
+   interpreter changes, zero new meta-theorem arms). Fresh
+   CPython-derived expectations throughout: gen_moves/pst/K tables/
+   value()/search-steps/armed-pair IDENTICAL; SIX of the 23 bound()
+   pairs changed (the score-cap null gate, the removed band-edge probe
+   arm, the killer depth gate); the Ref castling mirror follows the
+   two explicit ifs (same moves, same order).
 3. Then, per the standing order: deeper stepping (depth 2–3 bracket
    convergence under the trace clock), the `.exn` covenant extension
    for `tryStmt` heapFree, the UCI/`main()` surface survey.

@@ -120,8 +120,9 @@ mutual
     | .attribute v _ _ => v.allNames
     | .ifExp t b o _ => t.allNames ++ b.allNames ++ o.allNames
     | .slice v l u st _ => v.allNames ++ l.allNames ++ u.allNames ++ st.allNames
-    | .genExp e t it ifs _ =>
+    | .genExp e t it ifs wb _ =>
       e.allNames ++ t.allNames ++ it.allNames ++ Expr.allNamesList ifs.toList
+        ++ Expr.allNamesKw wb.toList
     | .unsupported .. => []
 
   /-- Elementwise `Expr.allNames`. -/

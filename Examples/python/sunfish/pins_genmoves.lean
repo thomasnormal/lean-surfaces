@@ -51,9 +51,9 @@ the SHIPPED file (CPython's answers, CPython's order):
   prom) for prom in "NBRQ")` — four promotions in "NBRQ" order, read
   from the enclosing frame's live `i`/`j` (docs/memory-model.md §yield
   from);
-* the CASTLING board walks `for (sq, dr, c) in ((A1, E, self.wc[0]),
-  (H1, W, self.wc[1]))` — the tuple-target `forSeq` frame inside the
-  generator — after every rook slide, both rights live. -/
+* the CASTLING board walks the two explicit castling ifs (the pass-7
+  re-pin unfolded the old two-tuple `for` — same moves, same order) —
+  after every rook slide, both rights live. -/
 
 private def posOn (b : String) (wc0 wc1 : Bool) : RVal :=
   .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
@@ -92,7 +92,7 @@ an exhausted ray budget are both errors, so neither can be mistaken for
 a short move list. (Pass 5: the #158 rewrite CHANGED gen_moves's
 surface — one-line `break`s, `j != self.ep and abs(j - self.kp) > 1`
 for the old kp-tuple membership, `yield from` for the promotion loop,
-and the castling pair as a two-tuple `for` — the reference mirrors the
+and the castling slides as two explicit ifs — the reference mirrors the
 NEW lines; every set of moves it defines is provably the same as
 before, and the thirteen CPython pins below are unchanged.)
 
@@ -198,13 +198,12 @@ def ray (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (i : Int) (p : Char) (d :
       let here : RefMove := ⟨i, j, ""⟩
       -- if p in "PNK" or q in "pnbrqk": break
       if inStr p "PNK" || inStr q "pnbrqk" then return [here]
-      -- for (sq, dr, c) in ((A1, E, self.wc[0]), (H1, W, self.wc[1])):
-      --     if i == sq and self.board[j + dr] == "K" and c:
-      --         yield Move(j + dr, j - dr, "")
-      -- (#158 folded the two castling slides into one two-tuple loop;
-      --  the iterations are spelled out, A1-then-H1 — the tuple's own
-      --  order — and the board read happens before the rights check,
-      --  as in the shipped `and` chain)
+      -- if i == A1 and self.board[j + E] == "K" and self.wc[0]: yield Move(j + E, j + W, "")
+      -- if i == H1 and self.board[j + W] == "K" and self.wc[1]: yield Move(j + W, j + E, "")
+      -- (the pass-7 re-pin: the castling slides are TWO explicit
+      --  one-line ifs again, A1-then-H1 — same moves, same order as
+      --  the old two-tuple loop; the board read happens before the
+      --  rights check, as in the shipped `and` chain)
       let castle1 ← if i == A1 then
           (do if (← at? b (j + E)) == 'K' && wc0 then
                 return [(⟨j + E, j - E, ""⟩ : RefMove)] else return [])

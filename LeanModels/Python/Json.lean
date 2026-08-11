@@ -197,7 +197,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
         let target ← parseExpr (← getField j "target")
         let iter ← parseExpr (← getField j "iter")
         let ifs ← (← (← getField j "ifs").getArr?).mapM parseExpr
-        return .genExp elt target iter ifs span
+        -- pass 7 (§the walrus filter): optional filter-bound names, each
+        -- `v = <value>` a statement of the synthesized body
+        let walrus ← match j.getObjVal? "walrus" with
+          | .ok wj => do
+            (← wj.getArr?).mapM fun w => do
+              pure ((← (← getField w "name").getStr?), ← parseExpr (← getField w "value"))
+          | .error _ => pure #[]
+        return .genExp elt target iter ifs walrus span
     | "Unsupported" =>
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span
@@ -532,8 +539,9 @@ mutual
     | .attribute v _ _ => exprRefs v
     | .ifExp t b o _ => exprRefs t ++ exprRefs b ++ exprRefs o
     | .slice v l u st _ => exprRefs v ++ exprRefs l ++ exprRefs u ++ exprRefs st
-    | .genExp e t it ifs _ =>
+    | .genExp e t it ifs wb _ =>
       exprRefs e ++ exprRefs t ++ exprRefs it ++ (ifs.toList.map exprRefs).flatten
+        ++ (wb.toList.map (fun p => exprRefs p.2)).flatten
     | .unsupported .. => []
 
   /-- Every `Name` occurring in the statement. -/
@@ -848,6 +856,68 @@ private structure LowerCtx where
   own subtrees (`yfNames`) — the inlining admission's forbidden set for
   the genexp's target. -/
   yfForbidden : List String := []
+  /-- pass 7 (docs/memory-model.md §the walrus filter): every name
+  occurring in the enclosing body OUTSIDE walrus-bearing-genexp
+  subtrees. PEP 572 leaks a comprehension walrus into the enclosing
+  frame; the frame-LOCAL lowering is observationally equal only when
+  the enclosing body never looks — a walrus name in this set refuses
+  the lowering (the genexp stays un-lowered, loud at evaluation). -/
+  walrusForbidden : List String := []
+
+/-- pass 7 (docs/memory-model.md §the walrus filter): every name
+occurring in the expression OUTSIDE walrus-bearing-genexp subtrees —
+reads and binds alike. The skip is what lets the shipped QS line's `v`
+live only inside its own genexp; any other occurrence lands in
+`walrusForbidden` and refuses the lowering. -/
+private partial def exprNamesXW : Expr → List String
+  | .constant .. => []
+  | .name id _ => [id]
+  | .binOp l _ r _ => exprNamesXW l ++ exprNamesXW r
+  | .unaryOp _ e _ => exprNamesXW e
+  | .boolOp _ vs _ => (vs.toList.map exprNamesXW).flatten
+  | .compare l _ cs _ => exprNamesXW l ++ (cs.toList.map exprNamesXW).flatten
+  | .call f args kwargs _ _ =>
+      exprNamesXW f ++ (args.toList.map exprNamesXW).flatten
+        ++ (kwargs.toList.map (fun kv => exprNamesXW kv.2)).flatten
+  | .list es _ | .tuple es _ => (es.toList.map exprNamesXW).flatten
+  | .subscript v i _ => exprNamesXW v ++ exprNamesXW i
+  | .dict ks vs _ =>
+      (ks.toList.map exprNamesXW).flatten ++ (vs.toList.map exprNamesXW).flatten
+  | .attribute v _ _ => exprNamesXW v
+  | .ifExp t b o _ => exprNamesXW t ++ exprNamesXW b ++ exprNamesXW o
+  | .slice v l u st _ =>
+      exprNamesXW v ++ exprNamesXW l ++ exprNamesXW u ++ exprNamesXW st
+  | .genExp e t it ifs wb _ =>
+      if wb.isEmpty then
+        exprNamesXW e ++ exprNamesXW t ++ exprNamesXW it
+          ++ (ifs.toList.map exprNamesXW).flatten
+      else []
+  | .unsupported .. => []
+
+/-- The statement-level walk for `exprNamesXW` (binds included via the
+target expressions themselves — a target `Name` IS a name). -/
+private partial def stmtNamesXW : Stmt → List String
+  | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
+  | .ret (some e) _ => exprNamesXW e
+  | .assign ts v _ => (ts.toList.map exprNamesXW).flatten ++ exprNamesXW v
+  | .augAssign t _ v _ => exprNamesXW t ++ exprNamesXW v
+  | .whileLoop t b o _ | .ifStmt t b o _ =>
+      exprNamesXW t ++ (b.toList.map stmtNamesXW).flatten
+        ++ (o.toList.map stmtNamesXW).flatten
+  | .forStmt t it b o _ =>
+      exprNamesXW t ++ exprNamesXW it ++ (b.toList.map stmtNamesXW).flatten
+        ++ (o.toList.map stmtNamesXW).flatten
+  | .exprStmt e _ | .yieldStmt e _ | .yieldFromStmt e _ => exprNamesXW e
+  | .raiseStmt exc cause _ =>
+      (exc.map exprNamesXW).getD [] ++ (cause.map exprNamesXW).getD []
+  | .tryStmt b en hnd _ _ =>
+      [en] ++ (b.toList.map stmtNamesXW).flatten
+        ++ (hnd.toList.map stmtNamesXW).flatten
+  | .defStmt name params _ _ _ _ body captures _ =>
+      -- a NESTED scope: its walrus rules are its own; conservatively,
+      -- every name it mentions counts as an enclosing occurrence
+      [name] ++ params.toList.map Param.arg ++ captures.toList
+        ++ (body.toList.map stmtNamesXW).flatten
 
 mutual
   /-- Rewrite every lowerable genexp in the expression, bottom up. The
@@ -883,17 +953,26 @@ mutual
     | .slice v l u st sp =>
         return .slice (← lowerExpr ctx v) (← lowerExpr ctx l) (← lowerExpr ctx u)
           (← lowerExpr ctx st) sp
-    | .genExp elt target iter ifs sp => do
+    | .genExp elt target iter ifs wb sp => do
       let tb0 := (targetBinds target).getD []
       -- the elt lowers under the grown genTargets (an inner genexp in
       -- immediately-drained position may capture THIS genexp's target)
       let elt ← lowerExpr { ctx with genTargets := ctx.genTargets ++ tb0 } elt
       let iter ← lowerExpr ctx iter
       let ifs ← lowerExprs ctx ifs
+      let wb ← wb.mapM fun p => do pure (p.1, ← lowerExpr ctx p.2)
       match targetBinds target with
-      | Option.none => return .genExp elt target iter ifs sp
+      | Option.none => return .genExp elt target iter ifs wb sp
       | some tb =>
-        let refs := dedup (exprRefs elt ++ (ifs.toList.map exprRefs).flatten)
+        -- pass 7 (§the walrus filter): walrus names are LOCALS of the
+        -- synthesized frame — they join the bound set for the capture
+        -- census, and the admission refuses any walrus name the
+        -- enclosing body mentions (`walrusForbidden` — PEP 572 leaks
+        -- the binding there, and a frame-local must be unobservable)
+        let wbNames := wb.toList.map Prod.fst
+        let tb := tb ++ wbNames
+        let refs := dedup (exprRefs elt ++ (ifs.toList.map exprRefs).flatten
+          ++ (wb.toList.map (fun p => exprRefs p.2)).flatten)
         let caps := refs.filter fun n =>
           !tb.contains n && !ctx.outer.contains n && !lowerBuiltins.contains n
             && n != genExpArg
@@ -908,12 +987,14 @@ mutual
               -- pass 4: body-assigned names under an immediate drain,
               -- provided boundness at creation (see LowerCtx.boundBefore)
               || (drainOk && (ctx.params.contains n
-                    || ctx.boundBefore.any (fun p => p.1 == n && p.2 < sp.lineno)))) then
+                    || ctx.boundBefore.any (fun p => p.1 == n && p.2 < sp.lineno))))
+            && wbNames.all (fun n => !ctx.walrusForbidden.contains n) then
           let (n, fns) ← get
           let fname := genExpName n
           let body : Array Stmt :=
             #[.forStmt target (.name genExpArg sp)
-                #[guardWith sp ifs.toList (.yieldStmt elt sp)] #[] sp]
+                ((wb.map fun p => Stmt.assign #[.name p.1 sp] p.2 sp)
+                  ++ #[guardWith sp ifs.toList (.yieldStmt elt sp)]) #[] sp]
           let params : Array Param :=
             (#[genExpArg] ++ caps.toArray).map fun a => { arg := a, span := sp }
           set (n + 1,
@@ -922,7 +1003,7 @@ mutual
           return .call (.name fname sp)
             (#[iter] ++ (caps.map (fun c => Expr.name c sp)).toArray) #[] Option.none sp
         else
-          return .genExp elt target iter ifs sp
+          return .genExp elt target iter ifs wb sp
 
   /-- Elementwise `lowerExpr`. -/
   private partial def lowerExprs (ctx : LowerCtx) (es : Array Expr) :
@@ -950,7 +1031,7 @@ mutual
     | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
     | .yieldFromStmt v sp =>
       (match v with
-       | .genExp elt target iter ifs gsp => do
+       | .genExp elt target iter ifs wb gsp => do
         -- pass 5 (docs/memory-model.md §yield from): INLINE the
         -- delegation — `for target in iter: [ifs:] yield elt` — when
         -- the target binds analyzably and its names occur nowhere else
@@ -965,13 +1046,16 @@ mutual
         let ifs ← lowerExprs ctx ifs
         match targetBinds target with
         | some tb =>
-          if tb.all (fun n => !ctx.yfForbidden.contains n) then
+          -- pass 7: a walrus-bearing delegation is NOT inlined (its
+          -- binding would land in the enclosing frame — representable,
+          -- unneeded, refused loudly at evaluation)
+          if tb.all (fun n => !ctx.yfForbidden.contains n) && wb.isEmpty then
             return .forStmt target iter
               #[guardWith gsp ifs.toList (.yieldStmt elt gsp)] #[] sp
           else
-            return .yieldFromStmt (.genExp elt target iter ifs gsp) sp
+            return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
         | Option.none =>
-            return .yieldFromStmt (.genExp elt target iter ifs gsp) sp
+            return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
        | v => do return .yieldFromStmt (← lowerExpr ctx v) sp)
     | .raiseStmt exc cause sp =>
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
@@ -987,7 +1071,9 @@ mutual
             params := params.toList.map Param.arg ++ captures.toList
             assigned := (body.toList.map bodyAssigns).flatten
             boundBefore := directBinds body.toList
-            yfForbidden := (body.toList.map yfNames).flatten }
+            yfForbidden := (body.toList.map yfNames).flatten
+            walrusForbidden := params.toList.map Param.arg ++ captures.toList
+              ++ (body.toList.map stmtNamesXW).flatten }
         return .defStmt name params ao lo hg ig (← lowerStmts ctx' body) captures sp
 
   /-- Elementwise `lowerStmt`. -/
@@ -1012,10 +1098,14 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
           params := f.params.toList.map Param.arg
           assigned := (f.body.toList.map bodyAssigns).flatten
           boundBefore := directBinds f.body.toList
-          yfForbidden := (f.body.toList.map yfNames).flatten }
+          yfForbidden := (f.body.toList.map yfNames).flatten
+          walrusForbidden := f.params.toList.map Param.arg
+            ++ (f.body.toList.map stmtNamesXW).flatten }
       let (body', st') := (lowerStmts ctx f.body).run st
       (acc.push { f with body := body' }, st')
-  let topCtx : LowerCtx := { outer, params := [], assigned := [] }
+  let topCtx : LowerCtx :=
+    { outer, params := [], assigned := []
+      walrusForbidden := (topLevel.toList.map stmtNamesXW).flatten }
   let (topLevel', st'') := (lowerStmts topCtx topLevel).run step.2
   (step.1 ++ st''.2, topLevel')
 

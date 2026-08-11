@@ -1363,7 +1363,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
       .bind (ihE m s1 l hs1) fun s2 lv hs2 =>
       .bind (ihE m s2 u hs2) fun s3 uv hs3 =>
       .bind (ihE m s3 stp hs3) fun s4 sv hs4 => .liftRes hs4 _
-  | genExp elt target iter ifs sp => simp only [evalExpr]; exact .unsupported
+  | genExp elt target iter ifs wb sp => simp only [evalExpr]; exact .unsupported
   | unsupported pyKind txt sp => simp only [evalExpr]; exact .unsupported
   | call f args kwargs cu sp =>
     cases cu with

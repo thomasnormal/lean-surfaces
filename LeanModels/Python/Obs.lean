@@ -1007,7 +1007,7 @@ theorem fuelMono (fuel : Nat) :
                                 case closure nm ps ao lo hg ig bd cap =>
                                   exact Run.le_withLocals
                                     (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
-        | genExp elt tgt it ifs _ =>
+        | genExp elt tgt it ifs wb _ =>
           simp only [evalExpr]; exact Run.le_refl _
         | list elts _ =>
           simp only [evalExpr]
@@ -2308,7 +2308,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 Module.heapFree_topDefFree hm,
                                 Bool.and_self, eq_self_iff_true, if_true]
                               exact .exn
-      | genExp elt tgt it ifs _ =>
+      | genExp elt tgt it ifs wb _ =>
         -- H4: a genexp ALLOCATES a generator — outside the fragment
         simp [Expr.heapFree] at hfree
       | list elts _ =>

@@ -117,7 +117,8 @@ inductive Expr where
   lower (a free variable the enclosing body rebinds — capture by value
   would differ from CPython's capture by reference) is still
   representable and refuses loudly at evaluation. -/
-  | genExp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr) (span : Span)
+  | genExp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr)
+      (walrus : Array (String × Expr)) (span : Span)
   | unsupported (pyKind : String) (text : String) (span : Span)
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Expr`; derived BEq suffices.

@@ -294,13 +294,49 @@ def convert_expr(node):
         gens = node.generators
         if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
             g = gens[0]
+            # pass 7 (docs/memory-model.md §the walrus filter): a filter of
+            # the EXACT shape `(v := <value>) <op> <rhs>` is emitted as the
+            # rewritten filter `v <op> <rhs>` plus a `walrus` binding record
+            # -- CPython's own compilation makes `v = <value>` a statement of
+            # the synthesized generator body. A NamedExpr anywhere else stays
+            # the generic unsupported expression (loud, never half-structured).
+            walrus = []
+            ifs_out = []
+            for i in g.ifs:
+                if (
+                    isinstance(i, ast.Compare)
+                    and isinstance(i.left, ast.NamedExpr)
+                    and isinstance(i.left.target, ast.Name)
+                    and not any(w["name"] == i.left.target.id for w in walrus)
+                    and all(
+                        type(o).__name__ in ALLOWED_CMPOPS for o in i.ops
+                    )
+                ):
+                    walrus.append({
+                        "name": i.left.target.id,
+                        "value": convert_expr(i.left.value),
+                    })
+                    ifs_out.append({
+                        "kind": "Compare",
+                        "span": span(i),
+                        "left": {
+                            "kind": "Name",
+                            "span": span(i.left.target),
+                            "id": i.left.target.id,
+                        },
+                        "ops": [type(o).__name__ for o in i.ops],
+                        "comparators": [convert_expr(c) for c in i.comparators],
+                    })
+                else:
+                    ifs_out.append(convert_expr(i))
             return {
                 "kind": "GeneratorExp",
                 "span": span(node),
                 "elt": convert_expr(node.elt),
                 "target": convert_expr(g.target),
                 "iter": convert_expr(g.iter),
-                "ifs": [convert_expr(i) for i in g.ifs],
+                "ifs": ifs_out,
+                "walrus": walrus,
             }
         return unsupported(node, "GeneratorExp")
 

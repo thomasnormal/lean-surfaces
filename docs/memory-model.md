@@ -1311,6 +1311,71 @@ expression-position yield. `Stmt.heapFree` excludes `yieldFromStmt`
 (it only occurs in generator bodies, which already evict the module
 from the fragment; conservative and simple).
 
+## The walrus filter (pass 7 — the QS ordering line; BUILT)
+
+The re-pin to current engine master hits ONE out-of-tier construct: the
+quiescent-search ordering line became
+
+```python
+for val, move in sorted(((v, m) for m in pos.gen_moves() if (v:=pos.value(m)) >= val_lower), reverse=True):
+```
+
+— a genexp whose FILTER binds `(v := …)` and whose ELEMENT reads `v`
+(filter-before-sort: the sub-threshold tail is never sorted, and the
+shape is literally the formal model's movesAbove form). Ingestion left
+the genexp un-lowered and `bound()` refused loudly at evaluation — the
+correct loudness behavior for a missing tier, now closed BY INGESTION
+ALONE (zero interpreter changes, zero new AST constructors, zero
+meta-theorem arms):
+
+* **Extractor** (`extract.py`): inside a structured genexp's `ifs`, a
+  filter of the exact shape `Compare(NamedExpr(Name v, value), [op],
+  [rhs])` is emitted as the rewritten filter `Compare(Name v, [op],
+  [rhs])` plus a `walrus` binding record `{name: v, value}` on the
+  genexp node. A `NamedExpr` ANYWHERE else stays the generic
+  unsupported expression — loud, never half-structured.
+* **Lowering** (`lowerGenExps`): a walrus-bearing genexp synthesizes
+
+  ```
+  def <genexpr@n>(.0, captures…):
+      for target in .0:
+          v = <value>
+          if v <op> <rhs>: yield <elt>
+  ```
+
+  — CPython's own compilation of the filter, with `v` an ordinary
+  local of the synthesized frame (it joins the target-bound set for
+  the capture analysis; the walrus VALUE's free names go through the
+  standing capture admission unchanged).
+* **The admission — why a frame-local is honest.** PEP 572 scopes a
+  comprehension walrus to the CONTAINING function: CPython's `v` leaks
+  into the enclosing frame as the drain runs. The frame-LOCAL lowering
+  is observationally equal exactly when the enclosing body never looks:
+  admitted only if `v` occurs NOWHERE in the enclosing function outside
+  walrus-bearing-genexp subtrees (not a parameter, not assigned, not
+  read — `walrusForbidden`, collected like `yfNames`), and module-scope
+  genexps check the top level the same way. Anything else leaves the
+  genexp un-lowered — the loud refusal at evaluation, never a
+  wrong-scope guess. On the shipped line `v` lives only inside the
+  genexp, so the admission passes; the census-refusal lab row pins the
+  exposing direction.
+
+**AS-BUILT (same day):** exactly as designed. `Expr.genExp` gained the
+`walrus : Array (String × Expr)` field (parsed with a `#[]` default, so
+pre-existing envelopes ingest unchanged; every meta-theorem arm matches
+the node with `..` or one extra binder — no new induction cases);
+`LowerCtx.walrusForbidden` is collected by `stmtNamesXW`/`exprNamesXW`
+(the `yfNames` discipline: skip walrus-bearing-genexp subtrees; a
+NESTED def's names all count, conservatively); a walrus-bearing
+delegation is NOT `yield from`-inlined (its binding would land in the
+enclosing frame — refused loudly instead). Labs:
+`gen_lab.walrus_filter` (the shipped shape, three differential rows)
++ `walrus_leak` (the PEP 572 leak read back — refused) +
+`walrus_stmt` (a walrus outside a genexp filter — the generic loud
+unsupported). On the shipped file the QS ordering line lowers
+(`<genexpr@2>` returns to the census) and the full bound() battery
+matches CPython.
+
 ## search()'s first blockers (pass 5 — dict.clear(), chained assignment, the live-view store)
 
 `Searcher.search()`'s prologue is four statements; the census against

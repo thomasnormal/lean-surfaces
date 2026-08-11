@@ -19,6 +19,12 @@ JSON as a build input and lake hashes CONTENT — after re-extracting
 `sunfish.json`, make a real edit HERE (this comment is the place); the
 import chain then rebuilds every pin file. The pin files themselves
 need no touch.
+
+Re-extraction log: pass 7 — the RE-PIN to current engine master (the
+QS walrus filter now lowers, §the walrus filter; explicit castling
+gen; branchless castling rights; the literal-membership capture test;
+inlined single-statement bodies; the null-gate score cap replacing the
+band-edge probe arm; the killer depth gate).
 -/
 import LeanModels
 

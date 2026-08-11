@@ -42,6 +42,17 @@ load_program gen_lab from "Examples/python/gen_lab/gen_lab.json"
 
 /-! ### consumption by a `for` loop -/
 
+/- pass 7 (§the walrus filter): the QS ordering-line shape lowers —
+the filter's `(v := m * m)` becomes a local of the synthesized frame;
+the leak/statement shapes stay loudly out (the envelope was
+RE-EXTRACTED for the walrus tier — this comment is the required real
+edit, `load_program` does not track its JSON). -/
+#py_check gen_lab.walrus_filter(4) = 30201206
+#py_check gen_lab.walrus_filter(0) = 3020120602
+#py_check gen_lab.walrus_filter(26) = 0
+#guard callFunction gen_lab "walrus_leak" #[.int 2] 4096 matches .unsupported _
+#guard callFunction gen_lab "walrus_stmt" #[.int 5] 4096 matches .unsupported _
+
 #py_check gen_lab.total(5) = 10
 #py_check gen_lab.total(0) = 0
 #py_check gen_lab.total(1) = 0

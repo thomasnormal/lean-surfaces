@@ -371,3 +371,29 @@ def yf_leak(n):
 
 def yf_leak_drive(n):
     return sum(yf_leak(n))
+
+
+def walrus_filter(k):
+    # pass 7 (docs/memory-model.md §the walrus filter): the shipped QS
+    # ordering-line shape -- the filter binds (v := ...), the element
+    # reads it, filter-before-sort skips sorting the sub-threshold tail
+    out = 0
+    for val, m in sorted(((v, m) for m in (1, 2, 3, 4, 5) if (v := m * m) >= k), reverse=True):
+        out = out * 100 + val + m
+    return out
+
+
+def walrus_leak(k):
+    # REFUSED: the walrus name is read OUTSIDE the genexp -- PEP 572
+    # leaks the binding into this frame, so the frame-local lowering
+    # would be observably wrong; the genexp stays un-lowered (loud)
+    t = sum((v for m in (1, 2, 3) if (v := m) >= k), 0)
+    return t + v
+
+
+def walrus_stmt(n):
+    # REFUSED: a walrus outside a genexp filter stays the generic
+    # unsupported expression (loud, never half-structured)
+    if (v := n + 1) > 2:
+        return v
+    return 0

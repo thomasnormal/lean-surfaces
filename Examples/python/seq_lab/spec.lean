@@ -93,3 +93,26 @@ load_program seq_lab from "Examples/python/seq_lab/seq_lab.json"
   | .unsupported _ => true | _ => false)
 #guard (match callFunction seq_lab "str_repeat_loud" #[.int 2] 4096 with
   | .unsupported _ => true | _ => false)
+
+/-! ### pass 5: left shift and bitwise or (docs/memory-model.md §left
+shift and bitwise or) — the post-#158 shipped file's `1 << 63` and
+`live |= …`. `<<` is exact multiplication on all ints (negative count
+the faithful ValueError); `|` decides boolness first (`True | False`
+IS a bool — the differential rows pin the type through the harness's
+typed JSON), nonneg ints are the binary or, a negative operand is
+loudly out. -/
+
+#py_check seq_lab.shl(1, 63) = 9223372036854775808
+#py_check seq_lab.shl(-3, 4) = -48
+#py_check seq_lab.shl_deadline() = 9223372036854775808
+#py_check seq_lab.shl(5, -1) raises (.valueError "negative shift count")
+#py_check seq_lab.bor(6, 3) = 7
+#py_check seq_lab.bor(0, 0) = 0
+#py_check seq_lab.bor_aug(5) = true
+#py_check seq_lab.bor_aug(2) = false
+
+#guard callFunction seq_lab "bor" #[.bool true, .bool false] 4096 == .ok (.bool true)
+#guard callFunction seq_lab "bor" #[.bool true, .int 2] 4096 == .ok (.int 3)
+#guard callFunction seq_lab "shl" #[.str "a", .int 1] 4096 ==
+  .exn (.typeError "unsupported operand type(s) for <<: 'str' and 'int'")
+#guard callFunction seq_lab "bor_neg" #[.int (-1)] 4096 matches .unsupported _

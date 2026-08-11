@@ -868,3 +868,24 @@ next-milestone list, in rough dependency order):
 * RECORDED GAP (pre-existing, found in pass 4): `input` is absent from
   `isBuiltinName`, so a hand-driven `main()` run would answer a fake
   `NameError` — add it (loud) with the next builtin sweep.
+
+## Pass 5 — the post-#158 re-pin and the search() arc (2026-08-11, in flight)
+
+The engine repo merged its #158 review: the shipped sunfish.py changed
+substantially (142 clean lines; null validation moved INTO moves();
+the correction gate widened to `not live`; K_MID/K_END a one-liner;
+`pst["K"]` swapped BOTH directions per search; eviction skips
+`self.root` via a conditional genexp; chained `pos = self.root =
+history[-1]`; deadline inits to `1 << 63` with NO None test —
+`time.time()` is dynamically LIVE at every 2048th node). The pinned
+example was re-pinned to the new bytes.
+
+1. **Shift/bitwise-or and `yield from` landed FIRST** (the new file's
+   census gaps — memory-model §left shift and bitwise or, §yield
+   from): `<<`/`|` value tiers (bool-aware `|`; negative `|` operands
+   loudly out; `Nat.lor` kernel-reducibility verified before use), and
+   statement-position `yield from <genexp>` INLINED at ingestion
+   (by-reference exact — the enclosing frame cannot run
+   mid-delegation; admission: target occurs nowhere else, `yfNames`).
+   Labs: seq_lab (type-pinning bool-vs-int rows), gen_lab (live
+   rebound captures, filters, non-genexp + target-leak refusals).

@@ -175,3 +175,26 @@ fragment (calling one ALLOCATES, and syntax cannot tell). -/
 #guard (findFunction gen_lab "next_of").any (fun f => !f.isGenerator)
 #guard !moduleGenFree gen_lab
 #guard !gen_lab.heapFree
+
+/-! ### pass 5: `yield from <genexp>` — INLINED at ingestion
+(docs/memory-model.md §yield from). The inlined loop reads the
+enclosing frame by reference — exactly what a delegated genexp does,
+since the enclosing frame cannot run mid-delegation (`yf_live`: the
+rebound loop variable `i` is read live). The admission requires the
+genexp's target to occur nowhere else in the body; `yf_leak` (target
+read after the loop) and `yf_list` (not a genexp) survive un-lowered
+and refuse loudly. -/
+
+#py_check gen_lab.yf_promote_drive(1, 2) = "NBRQ"
+#py_check gen_lab.yf_live_drive(3) = 11223
+#py_check gen_lab.yf_live_drive(0) = 0
+#py_check gen_lab.yf_filter_drive(5) = 19
+#py_check gen_lab.yf_filter_drive(0) = -1
+
+#guard callFunction gen_lab "yf_list_drive" #[.int 3] 4096 matches .unsupported _
+#guard callFunction gen_lab "yf_leak_drive" #[.int 3] 4096 matches .unsupported _
+
+-- the census: yield-from defs are generators (CPython's scope-local
+-- syntactic rule sees YieldFrom), lowered or not
+#guard (findFunction gen_lab "yf_promote").any (·.isGenerator)
+#guard (findFunction gen_lab "yf_list").any (·.isGenerator)

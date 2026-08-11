@@ -21,9 +21,10 @@ namespace LeanModels.Python
 
 /-- Binary operators. 1:1 with CPython `ast` operator class names:
 `add` ↔ `Add`, `sub` ↔ `Sub`, `mult` ↔ `Mult`, `floorDiv` ↔ `FloorDiv`,
-`mod` ↔ `Mod`, `pow` ↔ `Pow`. -/
+`mod` ↔ `Mod`, `pow` ↔ `Pow`, `lshift` ↔ `LShift`, `bitOr` ↔ `BitOr`
+(pass 5 — docs/memory-model.md §left shift and bitwise or). -/
 inductive BinOp where
-  | add | sub | mult | floorDiv | mod | pow
+  | add | sub | mult | floorDiv | mod | pow | lshift | bitOr
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`. -/
@@ -144,6 +145,16 @@ inductive Stmt where
   statement here can silently drop a sent value. A bare `yield` ingests
   as `yield None`, CPython's own compilation. -/
   | yieldStmt (value : Expr) (span : Span)
+  /-- `yield from e` in STATEMENT position (schema `YieldFrom`, pass 5 —
+  docs/memory-model.md §yield from). The admitted `<genexp>` iterable is
+  INLINED at ingestion into `for target in iter: yield elt` (CPython-
+  exact in tier: during a delegation the enclosing frame provably cannot
+  run, so the inlined loop reads the same frame at the same points —
+  by-reference, no capture analysis), so this constructor survives
+  ingestion only UN-lowered — a non-genexp iterable, a target used
+  elsewhere in the body, an unanalyzable target — and both executors
+  (`execStmt`, `genPlan`) refuse it loudly with the reason. -/
+  | yieldFromStmt (value : Expr) (span : Span)
   /-- A nested `def` DIRECTLY inside a function body (schema `NestedDef`,
   H7 — docs/memory-model.md §nested defs and closures), carried INLINE:
   no `Module.functions` flattening, no qname scheme. Executing it

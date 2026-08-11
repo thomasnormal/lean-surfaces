@@ -74,6 +74,8 @@ def parseBinOpName : String → Except String BinOp
   | "FloorDiv" => .ok .floorDiv
   | "Mod" => .ok .mod
   | "Pow" => .ok .pow
+  | "LShift" => .ok .lshift
+  | "BitOr" => .ok .bitOr
   | s => .error s!"unknown BinOp name {s.quote}"
 
 def parseUnaryOpName : String → Except String UnaryOp
@@ -251,6 +253,11 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .ok jv => parseExpr jv
           | .error _ => pure (Expr.constant .none span)
         return .yieldStmt value span
+    | "YieldFrom" =>
+        -- pass 5: structured always; `lowerGenExps` inlines the admitted
+        -- genexp shape (docs/memory-model.md §yield from), and whatever
+        -- survives un-lowered refuses loudly at execution.
+        return .yieldFromStmt (← parseExpr (← getField j "value")) span
     | "Raise" =>
         -- exceptions tier: structured in full generality (absent fields
         -- = the bare forms); evaluation owns the tier boundary.
@@ -491,6 +498,9 @@ private partial def stmtBinds : Stmt → Option (List String)
     let ob ← orelse.toList.mapM stmtBinds
     return bb.flatten ++ ob.flatten
   | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
+  -- pass 5: impossible at module top level (CPython parse error) —
+  -- unanalyzable, conservative
+  | .yieldFromStmt .. => Option.none
   -- H7: a nested def binds its NAME; the body is its own scope
   | .defStmt name _ _ _ _ _ _ _ _ => some [name]
   -- exceptions tier: `raise` binds nothing; a try can bind whatever its
@@ -539,6 +549,7 @@ mutual
         ++ (o.toList.map stmtRefs).flatten
     | .exprStmt e _ => exprRefs e
     | .yieldStmt e _ => exprRefs e
+    | .yieldFromStmt v _ => exprRefs v
     | .defStmt _ _ _ _ _ _ body _ _ => (body.toList.map stmtRefs).flatten
     -- exceptions tier: the handler CLASS NAME is a reference too
     | .raiseStmt exc cause _ =>
@@ -553,7 +564,8 @@ end
 private def stmtSpanOf : Stmt → Span
   | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
   | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
-  | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
+  | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
+  | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
   | .unsupported _ _ sp => sp
@@ -754,6 +766,42 @@ private partial def bodyAssigns : Stmt → List String
       (b.toList.map bodyAssigns).flatten ++ (hnd.toList.map bodyAssigns).flatten
   | _ => []
 
+/-- Every name a statement can OBSERVE or BIND — reads (`exprRefs` of
+each embedded expression, targets included: conservative), binding
+targets, nested-def names and captures (a capture is the one window a
+nested body has into the enclosing frame) — EXCEPT the subtrees of
+statement-position `yield from <genexp>` statements, which contribute
+NOTHING: the inlining admission (pass 5, docs/memory-model.md §yield
+from) asks whether the genexp's target occurs anywhere OUTSIDE
+yield-from subtrees, and skipping them ALL lets two yield-froms share
+a target soundly (the second loop's rebinding is as unobservable as
+the first's binding). -/
+private partial def yfNames : Stmt → List String
+  | .yieldFromStmt (.genExp ..) _ => []
+  | .yieldFromStmt v _ => exprRefs v
+  | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => []
+  | .ret (some e) _ => exprRefs e
+  | .assign ts v _ =>
+      (ts.toList.map exprRefs).flatten
+        ++ (ts.toList.map (fun t => (targetBinds t).getD [])).flatten
+        ++ exprRefs v
+  | .augAssign t _ v _ => exprRefs t ++ (targetBinds t).getD [] ++ exprRefs v
+  | .whileLoop t b o _ =>
+      exprRefs t ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .forStmt t it b o _ =>
+      exprRefs t ++ (targetBinds t).getD [] ++ exprRefs it
+        ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .ifStmt t b o _ =>
+      exprRefs t ++ (b.toList.map yfNames).flatten ++ (o.toList.map yfNames).flatten
+  | .exprStmt e _ => exprRefs e
+  | .yieldStmt e _ => exprRefs e
+  | .raiseStmt exc cause _ =>
+      (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map yfNames).flatten ++ (hnd.toList.map yfNames).flatten
+  | .defStmt name _ _ _ _ _ body captures _ =>
+      [name] ++ captures.toList ++ (body.toList.map yfNames).flatten
+
 /-- Direct-child bindings of a function body with their line numbers
 (`LowerCtx.boundBefore` — see its docstring for the admission this
 feeds). Only shapes whose binding provably executes when reached:
@@ -795,6 +843,11 @@ private structure LowerCtx where
   by-value-at-creation equal CPython's by-reference; boundness is what
   rules out a fake `NameError` on an empty iterable. -/
   boundBefore : List (String × Nat) := []
+  /-- pass 5 (docs/memory-model.md §yield from): every name the
+  enclosing body reads or binds OUTSIDE yield-from-genexp statements'
+  own subtrees (`yfNames`) — the inlining admission's forbidden set for
+  the genexp's target. -/
+  yfForbidden : List String := []
 
 mutual
   /-- Rewrite every lowerable genexp in the expression, bottom up. The
@@ -895,6 +948,31 @@ mutual
         return .ifStmt (← lowerExpr ctx t) (← lowerStmts ctx b) (← lowerStmts ctx o) sp
     | .exprStmt e sp => return .exprStmt (← lowerExpr ctx e) sp
     | .yieldStmt e sp => return .yieldStmt (← lowerExpr ctx e) sp
+    | .yieldFromStmt v sp =>
+      (match v with
+       | .genExp elt target iter ifs gsp => do
+        -- pass 5 (docs/memory-model.md §yield from): INLINE the
+        -- delegation — `for target in iter: [ifs:] yield elt` — when
+        -- the target binds analyzably and its names occur nowhere else
+        -- in the enclosing body. The FREE names need no admission at
+        -- all: the inlined loop reads the enclosing frame by reference,
+        -- which is exactly what a delegated genexp does (the enclosing
+        -- frame cannot run mid-delegation). Subexpressions lower first,
+        -- as everywhere; an inadmissible shape survives un-lowered and
+        -- refuses loudly at execution.
+        let elt ← lowerExpr ctx elt
+        let iter ← lowerExpr ctx iter
+        let ifs ← lowerExprs ctx ifs
+        match targetBinds target with
+        | some tb =>
+          if tb.all (fun n => !ctx.yfForbidden.contains n) then
+            return .forStmt target iter
+              #[guardWith gsp ifs.toList (.yieldStmt elt gsp)] #[] sp
+          else
+            return .yieldFromStmt (.genExp elt target iter ifs gsp) sp
+        | Option.none =>
+            return .yieldFromStmt (.genExp elt target iter ifs gsp) sp
+       | v => do return .yieldFromStmt (← lowerExpr ctx v) sp)
     | .raiseStmt exc cause sp =>
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
     | .tryStmt b en hnd tu sp =>
@@ -908,7 +986,8 @@ mutual
           { ctx with
             params := params.toList.map Param.arg ++ captures.toList
             assigned := (body.toList.map bodyAssigns).flatten
-            boundBefore := directBinds body.toList }
+            boundBefore := directBinds body.toList
+            yfForbidden := (body.toList.map yfNames).flatten }
         return .defStmt name params ao lo hg ig (← lowerStmts ctx' body) captures sp
 
   /-- Elementwise `lowerStmt`. -/
@@ -932,7 +1011,8 @@ private def lowerGenExps (outer : List String) (functions : Array FunctionDefn)
         { outer
           params := f.params.toList.map Param.arg
           assigned := (f.body.toList.map bodyAssigns).flatten
-          boundBefore := directBinds f.body.toList }
+          boundBefore := directBinds f.body.toList
+          yfForbidden := (f.body.toList.map yfNames).flatten }
       let (body', st') := (lowerStmts ctx f.body).run st
       (acc.push { f with body := body' }, st')
   let topCtx : LowerCtx := { outer, params := [], assigned := [] }

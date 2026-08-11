@@ -165,6 +165,8 @@ def BinOp.symbol : BinOp → String
   | .floorDiv => "//"
   | .mod => "%"
   | .pow => "**"
+  | .lshift => "<<"
+  | .bitOr => "|"
 
 /-- Python surface syntax of a comparison operator (error messages). -/
 def CmpOp.symbol : CmpOp → String
@@ -210,6 +212,7 @@ def Stmt.kindName : Stmt → String
   | .ifStmt .. => "If"
   | .exprStmt .. => "Expr"
   | .yieldStmt .. => "Yield"
+  | .yieldFromStmt .. => "YieldFrom"
   | .defStmt .. => "NestedDef"
   | .raiseStmt .. => "Raise"
   | .tryStmt .. => "Try"
@@ -486,6 +489,23 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
           if x = 0 then .exn .zeroDivisionError
           else .unsupported "'**' with a negative exponent (float result) is outside the v0 tier"
         else .ok (.int (x ^ y.toNat))
+    -- pass 5 (docs/memory-model.md §left shift and bitwise or):
+    -- `x << n` is EXACT on all ints as `x * 2^n` (unbounded ints, sign
+    -- carries through); the negative count is the faithful ValueError.
+    | .lshift =>
+        if y < 0 then .exn (.valueError "negative shift count")
+        else .ok (.int (x * (2 : Int) ^ y.toNat))
+    -- `|` decides BOOLNESS first (`bool.__or__(bool)` returns a BOOL,
+    -- any int operand makes it an int); nonneg ints are `Nat.lor`;
+    -- a negative operand refuses loudly (infinite two's complement is
+    -- not guessed).
+    | .bitOr =>
+        (match a, b with
+         | .bool p, .bool q => .ok (.bool (p || q))
+         | _, _ =>
+           if x < 0 || y < 0 then
+             .unsupported "bitwise '|' on a negative int is outside the tier (infinite two's complement is not guessed; docs/memory-model.md §left shift and bitwise or)"
+           else .ok (.int (Int.ofNat (Nat.lor x.toNat y.toNat))))
   | _, _ =>
     match op, a, b with
     | .add, .str s, .str t => .ok (.str (s ++ t))
@@ -2508,7 +2528,9 @@ mutual
       match Stmt.g1BindsList b.toList, Stmt.g1BindsList o.toList with
       | some c, some d => some (c ++ d)
       | _, _ => Option.none
-    | .ret .. | .exprStmt .. | .yieldStmt .. => some []
+    -- pass 5: an un-lowered `yield from` binds nothing (the genexp's
+    -- target is its own scope; the lowered form is an ordinary `for`)
+    | .ret .. | .exprStmt .. | .yieldStmt .. | .yieldFromStmt .. => some []
     | .pass _ | .brk _ | .cont _ => some []
     -- exceptions tier: `raise` binds nothing; a try binds what its body
     -- and handler can bind (an over-approximation, the poisoning
@@ -2873,6 +2895,10 @@ mutual
   computable. -/
   def Stmt.hasYield : Stmt → Bool
     | .yieldStmt .. => true
+    -- pass 5: an UN-lowered `yield from` (the admitted shape was inlined
+    -- at ingestion) is still a yield point syntactically — seen here so
+    -- `genPlan` refuses it precisely instead of delegating
+    | .yieldFromStmt .. => true
     | .whileLoop _ body orelse _ =>
         Stmt.hasYieldList body.toList || Stmt.hasYieldList orelse.toList
     | .forStmt _ _ body orelse _ =>
@@ -2930,6 +2956,10 @@ def genPlan (s : Stmt) : GenPlan :=
     -- internal raise/catch is invisible to the frame stack).
     | .tryStmt .. =>
       .refuse "a 'yield' under 'try' would make the try suspendable (it would need its own generator frame) — outside the tier (docs/memory-model.md §exceptions)"
+    -- pass 5: the admitted `yield from <genexp>` shape was INLINED at
+    -- ingestion; whatever survives is outside the inlining admission
+    | .yieldFromStmt .. =>
+      .refuse "un-lowered 'yield from' (the iterable is not an admitted genexp, or the genexp's target occurs elsewhere in the body) — outside the tier (docs/memory-model.md §yield from)"
     | s =>
       .refuse s!"'yield' inside a '{s.kindName}' statement (yield in expression position) is outside the tier"
 
@@ -3021,6 +3051,10 @@ mutual
     -- `yield` outside a generator body is loud, and inside one it never
     -- runs through `execStmt` at all (the continuation walker owns it)
     | .yieldStmt _ _ => true
+    -- pass 5: an un-lowered `yield from` only ever refuses (both
+    -- executors), but it only occurs in generator bodies, which already
+    -- evict the module — OUT, conservative and simple (§yield from)
+    | .yieldFromStmt _ _ => false
     -- exceptions tier: `raise` never decides `.ok` (its outcomes are
     -- `.exn`/`.unsupported`), so its `.ok`-invariance is vacuous — IN.
     -- `try` is OUT (as-built delta, docs/memory-model.md §exceptions):
@@ -4466,6 +4500,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
         -- a silent no-op. Inside a generator the continuation walker
         -- (`execGen`) owns this node and `execStmt` never sees it.
         .unsupported "'yield' outside a generator body (the def is not marked `is_generator`) — outside the tier"
+    | .yieldFromStmt .. =>
+        -- pass 5: the admitted shape was inlined at ingestion; an
+        -- un-lowered `yield from` refuses with its reason, never a
+        -- silent skip (docs/memory-model.md §yield from).
+        .unsupported "un-lowered 'yield from' (the iterable is not an admitted genexp, or the genexp's target occurs elsewhere in the body) — outside the tier (docs/memory-model.md §yield from)"
     | .defStmt name params argsOk localsOk hasGlobal isGenerator body captures _ =>
       -- H7 (docs/memory-model.md §nested defs and closures): SNAPSHOT
       -- the captures from the current frame, ALLOCATE the closure

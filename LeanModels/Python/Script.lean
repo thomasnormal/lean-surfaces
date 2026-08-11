@@ -153,6 +153,7 @@ mutual
       t.allNames ++ Stmt.allNamesList b.toList ++ Stmt.allNamesList o.toList
     | .exprStmt e _ => e.allNames
     | .yieldStmt e _ => e.allNames
+    | .yieldFromStmt v _ => v.allNames
     -- exceptions tier: the handler class name is a read too
     | .raiseStmt exc cause _ =>
       (exc.map Expr.allNames).getD [] ++ (cause.map Expr.allNames).getD []
@@ -264,7 +265,8 @@ where
   stmtSpan : Stmt → Span
     | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
     | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
-    | .exprStmt _ sp | .yieldStmt _ sp | .pass sp | .brk sp | .cont sp
+    | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
+    | .pass sp | .brk sp | .cont sp
     | .defStmt _ _ _ _ _ _ _ _ sp
     | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
     | .unsupported _ _ sp => sp

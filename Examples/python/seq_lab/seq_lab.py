@@ -176,3 +176,36 @@ def list_slice_loud(n):
 
 def str_repeat_loud(n):
     return "ab" * n
+
+
+# pass 5 (docs/memory-model.md "Left shift and bitwise or"): the
+# post-#158 shipped file's integer ops -- `1 << 63` (the deadline
+# sentinel) and `live |= ...` (bound()'s fold).
+
+def shl(a, b):
+    return a << b
+
+
+def shl_deadline():
+    # the shipped __init__ line's shape
+    nodes, deadline = 0, 1 << 63
+    return deadline - nodes
+
+
+def bor(a, b):
+    # bool|bool returns a BOOL, any int operand an int -- the harness's
+    # typed JSON pins the type, not just the value
+    return a | b
+
+
+def bor_aug(n):
+    # bound()'s fold shape: `live |= <bool>` stays a bool throughout
+    live = False
+    for i in range(n):
+        live |= i == 2
+    return live
+
+
+def bor_neg(a):
+    # a negative operand: loudly out (infinite two's complement)
+    return a | 4

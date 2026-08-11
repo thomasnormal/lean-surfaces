@@ -1092,6 +1092,9 @@ theorem fuelMono (fuel : Nat) :
         cases s with
         | defStmt name params ao lo hg ig body caps _ =>
           simp only [execStmt]; exact Run.le_refl _
+        | yieldFromStmt v _ =>
+          -- pass 5: an un-lowered `yield from` refuses, fuel-free
+          simp only [execStmt]; exact Run.le_refl _
         | raiseStmt exc cause _ =>
           -- fuel-free: the raise arm only does pure lookups
           simp only [execStmt]; exact Run.le_refl _
@@ -2389,6 +2392,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     · intro st s hfree
       cases s with
       | defStmt name params ao lo hg ig body caps _ =>
+        simp [Stmt.heapFree] at hfree
+      | yieldFromStmt v _ =>
+        -- pass 5: OUT of the fragment (docs/memory-model.md §yield from)
         simp [Stmt.heapFree] at hfree
       | tryStmt body excName handler tu _ =>
         -- OUT of the fragment (as-built delta, docs/memory-model.md

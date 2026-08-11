@@ -56,7 +56,12 @@ LEAN_OPEN_RE = re.compile(r"^\s*#\s*lean\[\s*$")
 LEAN_CLOSE_RE = re.compile(r"^\s*#\s*\]\s*$")
 COMMENT_PREFIX_RE = re.compile(r"^\s*#")
 
-ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow")
+ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow",
+                  # pass 5 (docs/memory-model.md "Left shift and bitwise
+                  # or"): `1 << 63` and `live |= ...` in the post-#158
+                  # shipped file; the interpreter owns the value tier
+                  # (negative `|` operands refuse loudly there).
+                  "LShift", "BitOr")
 ALLOWED_UNARYOPS = ("USub", "Not")
 ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
                   "Is", "IsNot", "In", "NotIn")
@@ -828,6 +833,16 @@ def convert_stmt(node, enclosing=None, module_scope=False):
             "handler": handler_body,
             "try_unsupported": ", ".join(reasons) if reasons else None,
         }
+
+    if isinstance(node, ast.Expr) and isinstance(node.value, ast.YieldFrom):
+        # pass 5: `yield from e` in STATEMENT position -- structured
+        # (schema `YieldFrom`); ingestion INLINES the admitted genexp
+        # shape into `for target in it: yield elt` (docs/memory-model.md
+        # section "yield from") and everything un-lowered refuses loudly
+        # at execution. Expression-position `yield from` (a delegation
+        # RESULT consumer) keeps falling through to Unsupported below.
+        return {"kind": "YieldFrom", "span": span(node),
+                "value": convert_expr(node.value.value)}
 
     if isinstance(node, ast.Expr) and isinstance(node.value, ast.Yield):
         # H4: `yield e` in STATEMENT position -- the only yield the tier

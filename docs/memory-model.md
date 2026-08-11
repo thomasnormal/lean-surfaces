@@ -1213,6 +1213,80 @@ breaks it). Pinned as `#guard`s in `Examples/python/sunfish/spec.lean`
 (the boundary cannot carry a Searcher, so `CallsIn`-style kernel runs
 are the surface, as for every shipped-file claim).
 
+## Left shift and bitwise or (pass 5 — the post-#158 file's census gaps)
+
+The engine repo's #158 review rewrote the shipped file (142 clean
+lines), and the re-pin census found two integer-op gaps: `1 << 63`
+(the deadline sentinel in `Searcher.__init__` — there is no `None`
+test anywhere anymore) and `live |= move is not None and score >
+-MATE_UPPER` (bound()'s fold). Both are `BinOp` extensions (extractor
+`ALLOWED_BINOPS`, `parseBinOpName`, `BinOp.symbol`, `evalBinOp`);
+`|=` rides the existing augAssign name path unchanged.
+
+- `<<` is EXACT on all ints as multiplication: `x << n = x * 2^n` for
+  `n >= 0` (CPython ints are unbounded; the sign carries through), and
+  a negative count is the faithful `ValueError: negative shift count`
+  — raised BEFORE any magnitude concern, as CPython does. Bools coerce
+  through `asInt` (`True << 2 == 4`, an int) — CPython's bool-is-int.
+  Non-int operands keep the faithful TypeError arm.
+- `|` must decide BOOLNESS before the int path: `bool.__or__(bool)`
+  returns a BOOL (`True | False is True`), while any int operand makes
+  it an int (`True | 2 == 3`). So: two bools → boolean or; otherwise
+  int/bool operands BOTH `>= 0` → `Nat.lor` (nonneg territory, where
+  CPython's unbounded bitwise-or IS the binary or of magnitudes); a
+  NEGATIVE operand refuses loudly (infinite two's complement is not
+  guessed); non-int operands the faithful TypeError. `live |= <bool>`
+  therefore stays a bool through the whole fold, and the battery pins
+  the TYPE, not just the value (the harness's typed JSON distinguishes
+  bool from int).
+
+AS-BUILT note: `Nat.lor`/`Nat.shiftLeft` kernel reducibility was
+verified on the toolchain before the tier landed (a `#guard` probe) —
+`<<` is nevertheless computed as `x * 2^n`, keeping the mathematical
+reading primary.
+
+## `yield from` (pass 5 — the promotion arm returns to gen_moves)
+
+#158 rewrote gen_moves's promotion loop as
+`yield from (Move(i, j, prom) for prom in "NBRQ")`. The tier admits
+exactly the statement-position `yield from <genexp>` shape, by
+INLINING at ingestion — no delegation machinery:
+
+    yield from (E for x in IT if C₁ if C₂)     -- statement position
+      ⇢  for x in IT: if C₁: if C₂: yield E
+
+The rewrite is CPython-exact in tier because (1) a genexp's free names
+are read from the enclosing frame at each resume, and during a
+delegation the enclosing frame provably cannot run — the inlined loop
+reads the same frame at the same points, so even REBOUND enclosing
+locals (gen_moves's `i`, `j`) are read identically, with NO capture
+analysis at all (strictly better than the by-value admissions: this is
+by-reference, verbatim); (2) `IT` evaluates once, at the same program
+point (genexp creation = loop start, both at the statement); (3)
+exceptions and exhaustion surface at the same points; (4) everything
+delegation COULD distinguish — `send`/`throw` through the outer
+generator, the inner generator's identity, `.close()` finalization —
+is already loudly out of tier.
+
+What inlining DOES change is the frame: the genexp's target binds in
+the ENCLOSING frame, where CPython gives it its own scope. Admission
+therefore requires the target names to occur NOWHERE else in the
+enclosing function body — not read, not bound, not a nested def's name
+or capture (`yfNames`, a whole-body census that skips yield-from-
+genexp statements' own subtrees). gen_moves's `prom` passes (its only
+occurrences are the genexp's own). Two yield-froms may share a target
+name: each admission ignores ALL yield-from subtrees, and the second
+loop's rebinding is as unobservable as the first's binding. Everything
+else stays structured-but-loud: `Stmt.yieldFromStmt` survives
+ingestion un-lowered for a non-genexp iterable (`yield from [1, 2]`),
+a used-elsewhere target, or an unanalyzable target, and BOTH executors
+refuse it with the reason (`execStmt` and `genPlan` — never a silent
+skip). A yield-from in EXPRESSION position (its value is the
+delegation's return value) keeps falling to `Expr.unsupported`, like
+expression-position yield. `Stmt.heapFree` excludes `yieldFromStmt`
+(it only occurs in generator bodies, which already evict the module
+from the fragment; conservative and simple).
+
 ## Heap well-formedness (explicit invariant)
 
 Every semantic dereference establishes `a < heap.size` — never `getD`,

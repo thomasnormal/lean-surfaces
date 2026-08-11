@@ -305,3 +305,69 @@ def drain_unbound(n):
     if n > 100:
         late = 1
     return sum(late for x in range(n))
+
+
+# pass 5 (docs/memory-model.md "yield from"): statement-position
+# `yield from <genexp>` is INLINED at ingestion -- gen_moves's
+# promotion arm. The drivers consume in-module (generators never cross
+# the boundary).
+
+def yf_promote(i, j):
+    # the gen_moves shape: genexp over a str literal, elt reading
+    # enclosing locals
+    yield from ((i, j, prom) for prom in "NBRQ")
+
+
+def yf_promote_drive(i, j):
+    out = ""
+    for t in yf_promote(i, j):
+        out = out + t[2]
+    return out
+
+
+def yf_live(n):
+    # the inlined loop reads the ENCLOSING frame live: `i` is a loop
+    # variable of the enclosing generator, rebound between delegations
+    for i in range(n):
+        yield from ((i, k) for k in range(2))
+
+
+def yf_live_drive(n):
+    s = 0
+    for t in yf_live(n):
+        s = 10 * s + t[0] + t[1]
+    return s
+
+
+def yf_filter(n):
+    # filters ride the same guardWith lowering as every genexp
+    yield from (x * x for x in range(n) if x % 2 == 0)
+    yield -1
+
+
+def yf_filter_drive(n):
+    s = 0
+    for v in yf_filter(n):
+        s += v
+    return s
+
+
+def yf_list(n):
+    # REFUSED: the iterable is not a genexp (delegation to a list)
+    yield from [1, 2, n]
+
+
+def yf_list_drive(n):
+    return sum(yf_list(n))
+
+
+def yf_leak(n):
+    # REFUSED: the genexp target `x` occurs elsewhere in the body --
+    # inlining would leak the binding into the enclosing frame
+    x = n
+    yield from (x for x in range(n))
+    yield x
+
+
+def yf_leak_drive(n):
+    return sum(yf_leak(n))

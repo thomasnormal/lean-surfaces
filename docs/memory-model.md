@@ -1701,19 +1701,29 @@ with the as-built record:**
   projections (`evalExpr_clockErased` … `callClosure_clockErased`, the
   fuelMono `_mono` discipline) expose every conjunct for the
   search-scale corollaries.
-* **MEASURED: the elaborator/kernel gap on concrete hypotheses.** The
-  first exemplar draft discharged the hypothesis by `by rfl` on the
-  concrete run — that costs ~2 minutes of elaborator `whnf` (>1.6M
-  heartbeats) EVEN AT FUEL 64 on a ten-iteration loop, fuel-
-  independent: elaborator reduction is ~1000× slower than the kernel
-  evaluation `#guard` uses on this interpreter. Consequence: transport
-  hypotheses are discharged from EXISTING theorems (the exemplar's
-  route) or — at search scale, where no symbolic theorem exists — by
-  KERNEL-side decision: derive `DecidableEq` for the result types
-  (`Val`/`PyErr`/`Res Val`) and close with `decide +kernel`, never
-  `by rfl`. The instances ride the next Runtime.lean rebuild (the
-  spec-pole split commit), and the sunfish stepped-search `∀ tr`
-  corollaries land there with them.
+* **MEASURED: the THREE-TIER evaluation hierarchy on concrete runs**
+  (amended after building `pins_clock.lean` — the earlier
+  DecidableEq/`decide +kernel` plan was tried and its premise
+  FALSIFIED). Core `#guard` evaluates by the UNTRUSTED COMPILED
+  evaluator — its own docstring says passing "is *not* a proof" — so
+  the repo's concrete pin batteries (`#py_check` included) are
+  native-evaluated REGRESSION checks, not kernel facts. Measured on
+  the re-pinned file: native — the whole 23-pair bound battery ≈ 937 s
+  (the split's pole); KERNEL (`decide +kernel`, core `DecidableEq` on
+  the `Option (Int × Int)` probe — no new instances needed) — ONE
+  2-node bound probe exceeded 16 minutes, dominated by `initWorld`
+  re-evaluated per fact; elaborator (`by rfl`) — ~2 minutes even for a
+  ten-iteration loop at fuel 64, fuel-independent. Consequence: an
+  UNCONDITIONAL search-scale `∀ tr` theorem is not affordable today —
+  `Examples/python/sunfish/pins_clock.lean` lands the transport
+  theorem `boundProbeT_all_traces` (seconds to check: `evalExpr`/
+  `callIn` erasure composed through the probe's projections — it
+  upgrades ANY proved empty-trace probe to every trace) plus native
+  `#guard` pins of the seeded surface (empty AND sample traces, the
+  batteries' standing trust level). A kernel-affordable concrete-run
+  route (e.g. a kernel-reducibility pass over `initWorld`'s hot path)
+  is the recorded open item; transport hypotheses AT SYMBOLIC SCALE
+  keep the exemplar's route (`pure_sum_all_traces_transported`).
 
 ## Heap well-formedness (explicit invariant)
 

@@ -1032,16 +1032,20 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
    battery alone, and every other re-pin is now seconds. Rode the same
    rebuild: `callFunctionClock_nil` promoted into ClockErase.lean and
    the 18 per-member projections (`evalExpr_clockErased` …) exposed.
-1b. **The sunfish `∀ tr` corollaries** (the erasure payoff at search
-   scale): a new `pins_clock.lean` — needs NO core edits now. Their
-   empty-trace hypotheses go through `DecidableEq` instances for
-   `Val`/`PyErr`/`Res Val` + `decide +kernel` (the measured
-   elaborator/kernel gap, memory-model §clock erasure as-built:
-   `by rfl` costs minutes of elaborator whnf even on trivial concrete
-   runs) — the instances land in a proof-layer module (never
-   Runtime.lean field changes), or the corollaries are stated at
-   projected `Option`-typed probes whose core-type `BEq` is already
-   lawful.
+1b. ~~**The sunfish `∀ tr` corollaries**~~ **LANDED AS THE TRANSPORT
+   (same day), with the honest measured boundary**
+   (`Examples/python/sunfish/pins_clock.lean`; memory-model §clock
+   erasure as-built): `boundProbeT_all_traces` — any decided
+   empty-trace bound probe holds under EVERY seeded trace — compiles
+   in seconds; but the `decide +kernel` route for the empty-trace
+   HYPOTHESES was tried and is UNAFFORDABLE (one 2-node probe > 16 min
+   of kernel reduction, `initWorld`-dominated; core `#guard` is the
+   untrusted compiled evaluator, so the batteries were never kernel
+   facts). The seeded surface is `#guard`-pinned at empty AND sample
+   traces (the batteries' trust level). OPEN: a kernel-affordable
+   concrete-run route (kernel-reducibility work on `initWorld`'s hot
+   path is the natural candidate) would upgrade the headline rows to
+   unconditional `∀ tr` theorems by one application each.
 2. ~~**Re-pin to current engine master**~~ **DONE (same day):** the
    pinned file is current master again. The brief's "all in-tier
    constructs" was FALSE by one: the QS filter-before-sort line carries

@@ -2295,9 +2295,62 @@ theorem clockErase : ∀ fuel, CE fuel := by
       ceStepIter_succ ih, ceExecGen_succ ih, ceExecForGen_succ ih,
       ceDrainIter_succ ih, ceAnyAllIter_succ ih, ceCallClosure_succ ih⟩
 
-/-- `callIn`'s clock-erasure conjunct (the boundary consumer). -/
+/-! ### Per-member projections (the fuelMono `_mono` discipline):
+consume the induction through these, never by hand-counting `.2`s. -/
+
+theorem evalExpr_clockErased (fuel : Nat) : CEEvalExpr fuel :=
+  (clockErase fuel).1
+
+theorem evalExprs_clockErased (fuel : Nat) : CEEvalExprs fuel :=
+  (clockErase fuel).2.1
+
+theorem evalBoolChain_clockErased (fuel : Nat) : CEEvalBoolChain fuel :=
+  (clockErase fuel).2.2.1
+
+theorem evalCompareChain_clockErased (fuel : Nat) : CEEvalCompareChain fuel :=
+  (clockErase fuel).2.2.2.1
+
+theorem execStmt_clockErased (fuel : Nat) : CEExecStmt fuel :=
+  (clockErase fuel).2.2.2.2.1
+
+theorem execStmts_clockErased (fuel : Nat) : CEExecStmts fuel :=
+  (clockErase fuel).2.2.2.2.2.1
+
+theorem execWhile_clockErased (fuel : Nat) : CEExecWhile fuel :=
+  (clockErase fuel).2.2.2.2.2.2.1
+
 theorem callIn_clockErased (fuel : Nat) : CECallIn fuel :=
   (clockErase fuel).2.2.2.2.2.2.2.1
+
+theorem execFor_clockErased (fuel : Nat) : CEExecFor fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.1
+
+theorem evalDictItems_clockErased (fuel : Nat) : CEEvalDictItems fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.1
+
+theorem execForList_clockErased (fuel : Nat) : CEExecForList fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.1
+
+theorem execAttrCall_clockErased (fuel : Nat) : CEExecAttrCall fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem stepIter_clockErased (fuel : Nat) : CEStepIter fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem execGen_clockErased (fuel : Nat) : CEExecGen fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem execForGen_clockErased (fuel : Nat) : CEExecForGen fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem drainIter_clockErased (fuel : Nat) : CEDrainIter fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem anyAllIter_clockErased (fuel : Nat) : CEAnyAllIter fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.1
+
+theorem callClosure_clockErased (fuel : Nat) : CECallClosure fuel :=
+  (clockErase fuel).2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2.2
 
 /-! ## The public boundary corollaries -/
 
@@ -2307,6 +2360,17 @@ theorem initWorld_clock (m : Module) : (initWorld m).clock = [] := by
   unfold initWorld
   cases initFoldLive m initExecFuel #[] [] #[] m.topLevel.toList
   rfl
+
+/-- The `[]`-boundary identity, propositionally: `callFunctionClock` at
+the EMPTY trace is `callFunction` — `initWorld` carries `clock = []`,
+so re-seeding `[]` is the identity (`World.withClock_self`). -/
+theorem callFunctionClock_nil {m : Module} {f : String} {args : Array Val}
+    {fuel : Nat} :
+    callFunctionClock m f args [] fuel = callFunction m f args fuel := by
+  unfold callFunctionClock callFunction
+  rw [show ({ initWorld m with clock := [] } : World) =
+        (initWorld m).withClock [] from rfl,
+      World.withClock_self (initWorld_clock m)]
 
 /-- Transport a decided-`.ok` public call to EVERY seeded trace:
 `callFunction` is `callFunctionClock` at `[]`, and a run decided from the

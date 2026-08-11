@@ -1630,10 +1630,12 @@ with the as-built record:**
   `CallsTo.clock_erased` (every `==>` fact holds under every trace).
 * **The exemplar** (`clock_lab.pure_sum_all_traces_transported`): the
   `∀ tr` statement as `callFunctionClock_ok` applied to the SINGLE
-  empty-trace instance of the pass-6 theorem (through the local
-  `[]`-boundary bridge `callFunctionClock_nil` — promotion to
-  ClockErase.lean rides the next core rebuild). The `∀ tr` costs
-  nothing beyond the one empty-trace proof.
+  empty-trace instance of the pass-6 theorem (through the
+  `[]`-boundary bridge `callFunctionClock_nil`, ClockErase.lean). The
+  `∀ tr` costs nothing beyond the one empty-trace proof. Per-member
+  projections (`evalExpr_clockErased` … `callClosure_clockErased`, the
+  fuelMono `_mono` discipline) expose every conjunct for the
+  search-scale corollaries.
 * **MEASURED: the elaborator/kernel gap on concrete hypotheses.** The
   first exemplar draft discharged the hypothesis by `by rfl` on the
   concrete run — that costs ~2 minutes of elaborator `whnf` (>1.6M

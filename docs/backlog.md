@@ -1021,21 +1021,27 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
 
 **Open, in order (the pass-7 remainder):**
 
-1. **Split the spec pole.** `Examples/python/sunfish/spec.lean`
-   elaborates ~17–80 min as ONE file and every re-pin pays all of it.
-   Split into per-capstone files (pst/value pins; gen_moves; ordering;
-   bound() battery; stepped search; clock pins) so no single file
-   exceeds ~15 min and partial re-verification is possible; keep the
-   `load_program` JSON-trap note in every new envelope-loading module.
-   The sunfish stepped-search `∀ tr` corollaries (the erasure payoff at
-   search scale) land WITH the split, in the clock-pins file, riding
-   `DecidableEq` instances for `Val`/`PyErr`/`Res Val` + `decide
-   +kernel` for their empty-trace hypotheses (the measured
+1. ~~**Split the spec pole.**~~ **DONE (same day):** the 927-line
+   monolith is now `pins_common.lean` (the ingested program + shared
+   probe defs + THE JSON-trap note — after re-extraction edit only
+   that file) with per-capstone check files `pins_init` /
+   `pins_genmoves` / `pins_bound` / `pins_search`; `spec.lean` keeps
+   the census + the rotate theorems (three-file layout unchanged).
+   MEASURED per-file elaboration: common 5 s, spec 6 s, genmoves 4 s,
+   init 10 s, search 40 s, bound ~14.5 min — the pole is the bound()
+   battery alone, and every other re-pin is now seconds. Rode the same
+   rebuild: `callFunctionClock_nil` promoted into ClockErase.lean and
+   the 18 per-member projections (`evalExpr_clockErased` …) exposed.
+1b. **The sunfish `∀ tr` corollaries** (the erasure payoff at search
+   scale): a new `pins_clock.lean` — needs NO core edits now. Their
+   empty-trace hypotheses go through `DecidableEq` instances for
+   `Val`/`PyErr`/`Res Val` + `decide +kernel` (the measured
    elaborator/kernel gap, memory-model §clock erasure as-built:
    `by rfl` costs minutes of elaborator whnf even on trivial concrete
-   runs), plus the promotion of `clock_lab`'s local
-   `callFunctionClock_nil` bridge into ClockErase.lean — all on the one
-   Runtime/ClockErase rebuild the split already pays.
+   runs) — the instances land in a proof-layer module (never
+   Runtime.lean field changes), or the corollaries are stated at
+   projected `Option`-typed probes whose core-type `BEq` is already
+   lawful.
 2. **Re-pin to current engine master** (the pinned file is stale
    again): the QS-loop filter-before-sort optimization (matches the
    model's movesAbove form directly), explicit castling gen, branchless

@@ -98,5 +98,13 @@
   {
     "file": "harness/scripts/main_guard_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/init_effect_script.py",
+    "expect": "unsupported"
+  },
+  {
+    "file": "harness/scripts/init_raise_script.py",
+    "expect": "unsupported"
   }
 ]

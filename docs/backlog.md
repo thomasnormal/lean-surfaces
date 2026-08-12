@@ -195,6 +195,34 @@ files: 59 MATCH (70.2%), 25 REFUSE, 0 DIVERGE, 18 executing live top
 level. The stdlib sweep is unchanged at 8 MATCH: those files' blockers
 come earlier.
 
+**TWO MORE SILENT DIVERGENCES, FOUND AND GUARDED (2026-08-12)**: module
+initialization rolls back a top-level statement it cannot execute, and for
+a whole program that statement's own effect is observable — `x = talk()`
+with a printing `talk` lost the output, and `x = 1 // 0` lost the
+exception AND the exit code. Both were WRONG ANSWERS, not refusals.
+`initNothingSkipped` (docs/memory-model.md §module-init execution) now
+refuses such a program, with the residue (a failed binding masked by a
+later successful rebinding of the same name) recorded rather than
+accepted. Cost, honestly: the stdlib sweep fell from 8 MATCH to 5 — three
+of those files had a rolled-back init statement and were only matching
+because the guard did not exist. In-repo corpus unchanged at 59/84.
+
+THE STANDING SHAPE OF THIS BUG CLASS: leanpy runs a program through TWO
+pipelines — the G1 fold for the prefix, the script executor for the live
+suffix — and every hole found so far is a place where the fold's
+approximation (skip, poison, never print) meets the program surface's
+demand (every effect observable, in order). The recorded end state is ONE
+pipeline: execute every top-level statement through the executor, with
+module-level bindings written to the live globals and read back through
+the poisoned arm. That subsumes `initNothingSkipped`, the residue above,
+and the `suffixConsistent` wall (27 stdlib files, and sunfish.py itself —
+measured: sunfish's live suffix opens at the pst padding loop on line 78,
+so all 22 constants defined after it are "assigned by live code and read
+by functions"). It is the next leanpy milestone and it is a DESIGN, not a
+patch: function frames resolve module names statically-first, so the
+unification has to answer how a live binding becomes visible to a call
+without breaking the world-symbolic covenant that keeps theorems provable.
+
 The stdlib sweep is deliberately NOT in the default corpus file: running
 arbitrary stdlib top level under the oracle has side effects (a browser,
 a window, a server), so it stays an explicitly invoked measurement with a

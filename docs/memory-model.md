@@ -1999,6 +1999,34 @@ Script.lean's header for the argument.
 
 ### Module-init EXECUTION (2026-08-10, pass 3 — the padding loop)
 
+**THE ROLLBACK IS SOUND FOR CALLS AND UNSOUND FOR PROGRAMS (2026-08-12,
+found by `tools/leanpy`, guarded — normative).** `initFoldLive`'s last arm
+rolls a failed top-level statement back and poisons the names it may have
+bound. On the closed FUNCTION surface that is exactly right: nothing was
+observed, and every later read of a poisoned name refuses loudly. On the
+whole-PROGRAM surface it is wrong, because the statement's OWN effect is
+observable. Two reproductions, both silently wrong before the guard:
+
+* `x = talk()` where `talk` prints — the in-function `print` refusal
+  aborted the attempt, the output vanished, and leanpy answered `done`
+  where CPython printed `side effect` first;
+* `x = 1 // 0` — the attempt raised, the rollback swallowed it, and leanpy
+  answered `done` with exit 0 where CPython exits 1 having printed
+  nothing.
+
+`runScript` now refuses a program whose module initialization skipped a
+statement (`initNothingSkipped`, Script.lean). The signal needs no fold
+change: a rolled-back statement's dirty names are poisoned in the static
+table AND absent from the live view (`resolvedG` drops poisoned entries),
+while a statement the live pipeline EXECUTED leaves its value there.
+Benign imports are exempt — the whitelist poisons `time` by decision, not
+by failure, and running one observes nothing. RESIDUE, recorded rather
+than silently accepted: a failed statement whose name a later top-level
+statement successfully rebinds hides behind that later value; closing it
+exactly needs a status signal from `initFoldLive` itself, which is the
+recorded next step. `harness/scripts/init_effect_script.py` and
+`init_raise_script.py` pin both reproductions.
+
 The named target: the shipped file's
 
 ```python

@@ -1,0 +1,208 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/init_effect_script.py",
+  "source_sha256": "29c641d416ab436a2585d9046af7fcd289274a21c7a2d929caeba3e53ce7ed39",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 12,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "leanpy corpus: MODULE INIT MUST NOT SILENTLY SKIP A STATEMENT.\n\n`x = talk()` is a plain bind, so module initialization folds it; the fold\ndelegates to the interpreter, the in-function `print` is out of tier, the\nattempt fails, and `initFoldLive` ROLLS IT BACK and poisons `x`. For the\nclosed FUNCTION surface that is right \u2014 nothing was observed, and a later\nread of `x` refuses. For a whole PROGRAM it is not: CPython prints\n\"side effect\" here, and leanpy used to answer \"done\" alone. Now the run\nrefuses loudly (`initNothingSkipped`, docs/memory-model.md \u00a7module-init\nexecution). `harness/scripts/init_raise_script.py` is the same hole with\nan exception instead of output.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 15,
+          "col_offset": 0,
+          "end_lineno": 17,
+          "end_col_offset": 12
+        },
+        "name": "talk",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 16,
+              "col_offset": 4,
+              "end_lineno": 16,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 16,
+                "col_offset": 4,
+                "end_lineno": 16,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 16,
+                  "col_offset": 4,
+                  "end_lineno": 16,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 16,
+                    "col_offset": 10,
+                    "end_lineno": 16,
+                    "end_col_offset": 23
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "side effect"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 17,
+              "col_offset": 4,
+              "end_lineno": 17,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 17,
+                "col_offset": 11,
+                "end_lineno": 17,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 20,
+          "col_offset": 0,
+          "end_lineno": 20,
+          "end_col_offset": 10
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 20,
+              "col_offset": 0,
+              "end_lineno": 20,
+              "end_col_offset": 1
+            },
+            "id": "x"
+          }
+        ],
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 20,
+            "col_offset": 4,
+            "end_lineno": 20,
+            "end_col_offset": 10
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 20,
+              "col_offset": 4,
+              "end_lineno": 20,
+              "end_col_offset": 8
+            },
+            "id": "talk"
+          },
+          "args": [],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 22,
+          "col_offset": 0,
+          "end_lineno": 22,
+          "end_col_offset": 13
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 22,
+            "col_offset": 0,
+            "end_lineno": 22,
+            "end_col_offset": 13
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 22,
+              "col_offset": 0,
+              "end_lineno": 22,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 22,
+                "col_offset": 6,
+                "end_lineno": 22,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "str",
+                "value": "done"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

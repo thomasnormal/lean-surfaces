@@ -321,6 +321,53 @@ def scriptNameBinding : Stmt :=
   let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
   .assign #[.name "__name__" sp] (.constant (.str "__main__") sp) sp
 
+/-- Names the BENIGN-IMPORT whitelist binds. The fold binds these POISONED
+by design — the model has no value for `time` — which is a decision, not a
+failed execution, and an import in the whitelist runs nothing observable. -/
+def benignImportNames (m : Module) : List String :=
+  m.topLevel.toList.filterMap fun s =>
+    match s with
+    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
+        (benignImportBinds text).map (·.1)
+    | _ => Option.none
+
+/-- MODULE INIT MUST NOT SILENTLY SKIP A STATEMENT (2026-08-12, found by
+`tools/leanpy`, docs/memory-model.md §module-init execution).
+
+`initFoldLive`'s last arm ROLLS BACK a top-level statement it could not
+execute and POISONS the names it may have bound. For the closed FUNCTION
+surface that is exactly right: nothing was observed, and any later READ of
+a poisoned name refuses loudly. For a whole PROGRAM it is not, because the
+statement's own effect is observable — leanpy answered `done` for
+
+    def talk():
+        print("side effect")
+        return 1
+    x = talk()
+    print("done")
+
+where CPython prints `side effect` first (the in-function `print` refusal
+aborted the attempt and the output vanished), and answered `done`/exit 0
+for `x = 1 // 0`, where CPython exits 1 having printed nothing.
+
+A rolled-back statement is detectable without re-running the fold: its
+dirty names are poisoned in the STATIC table AND, because the rollback
+poisons the live accumulator too, absent from the live view
+(`resolvedG` drops poisoned entries). A statement the live pipeline
+EXECUTED leaves its value there instead. So: every statically-poisoned
+name must either carry a live value or be a benign import.
+
+KNOWN RESIDUE (recorded, not silently accepted): a failed statement whose
+name a LATER top-level statement successfully rebinds hides behind that
+later value. Closing it exactly needs a fold-status signal from
+`initFoldLive` itself — the recorded next step; this guard catches the
+shape leanpy actually found and never claims more. -/
+def initNothingSkipped (m : Module) : Bool :=
+  let benign := benignImportNames m
+  let live := (initWorld m).globals
+  (moduleGlobals m).1.all fun nv =>
+    nv.2.isSome || benign.contains nv.1 || (Env.lookup live nv.1).isSome
+
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`
 statement; the model builds `ClassDefn` at ingestion and executes nothing.
@@ -463,6 +510,9 @@ def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit
   else
     let mPre : Module :=
       { m with topLevel := (scriptNameBinding :: g1Prefix m.topLevel.toList).toArray }
+    if !initNothingSkipped mPre then
+      .unsupported "module initialization could not execute a top-level statement and rolled it back: whatever that statement would have printed or raised is unobservable to the model, so leanpy refuses the whole program rather than answer as if the statement had done nothing"
+    else
     Run.toWorld <|
       Run.bind (execScriptStmts mPre fuel ⟨{ initWorld mPre with clock := clock }, []⟩ suffix)
         fun st flow =>

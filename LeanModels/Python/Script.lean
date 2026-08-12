@@ -300,6 +300,27 @@ def defsBoundBefore (m : Module) (stmts : List Stmt) : Bool :=
         | some e => decide (e < ln)
         | Option.none => true
 
+/-- `__name__ = "__main__"` — the RUNNER-SUPPLIED global (docs/memory-model.md
+§effects: the same family as `argv`, marshalled in at world initialization).
+
+CPython's import machinery binds `__name__` before the first statement
+runs, and for a file executed AS A PROGRAM — which is exactly what leanpy
+does — its value is `"__main__"`. The model has no import machinery, so a
+read used to refuse loudly ("bound by the import machinery, not by a
+statement"), which walled off every `if __name__ == "__main__":` block in
+real Python. Script mode therefore PREPENDS this binding to the prefix
+view the G1 fold sees: static resolution finds it before the dunder arm,
+and a file that rebinds `__name__` itself still wins, since its own
+statement comes later in the fold.
+
+Span line 0 is below every real statement, so the binding cannot disturb
+the ordering admission (which reads `m.topLevel`, not the prefix view).
+The other module dunders (`__file__`, `__doc__`, `__spec__`, …) keep the
+loud refusal: only `__name__` has a value the runner boundary fixes. -/
+def scriptNameBinding : Stmt :=
+  let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
+  .assign #[.name "__name__" sp] (.constant (.str "__main__") sp) sp
+
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`
 statement; the model builds `ClassDefn` at ingestion and executes nothing.
@@ -440,7 +461,8 @@ def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit
   else if !suffixConsistent m suffix then
     .unsupported "live top-level code rebinds a module global some function reads — outside leanpy v0 (the closed-function G1 table would go stale for calls, and a fresh live global would fake a NameError; ordered ModuleItem representation is the recorded fix)"
   else
-    let mPre : Module := { m with topLevel := (g1Prefix m.topLevel.toList).toArray }
+    let mPre : Module :=
+      { m with topLevel := (scriptNameBinding :: g1Prefix m.topLevel.toList).toArray }
     Run.toWorld <|
       Run.bind (execScriptStmts mPre fuel ⟨{ initWorld mPre with clock := clock }, []⟩ suffix)
         fun st flow =>

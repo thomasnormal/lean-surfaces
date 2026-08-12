@@ -63,8 +63,11 @@ at a live address and the MATE window the same ints). -/
 
 /-! Every top-level statement's binding set was determined, so a missing
 module name is the faithful `NameError` — the second, independent half of
-the pass. (`isModuleDunder` keeps `__name__`/`__doc__`/… loud regardless:
-the import machinery binds them, no statement does.) -/
+the pass. (`isModuleDunder` keeps `__name__`/`__doc__`/… loud on THIS
+surface: the import machinery binds them, no statement does. leanpy's
+script mode is the one place with an answer — a file run as a program
+has `__name__ = "__main__"`, which `runScript` supplies as a
+runner-boundary global; `initWorld` itself, below, never sees it.) -/
 
 #guard (moduleGlobals sunfish).2
 

@@ -1865,6 +1865,23 @@ NOW, so it is a field, not a refactor:
   LOUD, never as agreement).
 * **argv is a marshalled global** (`sys.argv` shape) supplied at world
   initialization when the `sys` tier lands — a stub note, not a field.
+* **`__name__` is the FIRST marshalled global, and it is BUILT**
+  (2026-08-12). CPython's import machinery binds it before the first
+  statement; for a file executed as a program it is `"__main__"`, and
+  running a file as a program is exactly what leanpy does. Reading it used
+  to refuse loudly ("bound by the import machinery, not by a statement"),
+  which walled off every `if __name__ == "__main__":` block in real Python
+  — a boundary of the model's own making, not of the language. `runScript`
+  now supplies it by PREPENDING the binding (`scriptNameBinding`, span
+  line 0) to the prefix view the G1 fold sees, so static resolution finds
+  it before the dunder arm and a file that rebinds `__name__` itself still
+  wins on source order. The scope is exactly the script surface: the
+  closed FUNCTION surface (`initWorld`, `callFunction`) never sees the
+  binding, because an imported module's `__name__` is its module name and
+  the runner has no such claim to make. The other dunders (`__file__`,
+  `__doc__`, `__spec__`, …) keep the loud refusal — only `__name__` has a
+  value the runner boundary fixes. Pinned by
+  `harness/scripts/main_guard_script.py` (both arms of the guard).
 
 `leanpy` v0 (post-H1-core): module-level execution of current-tier
 scripts, first-unsupported-construct reporting, stdout diff vs python3.9,

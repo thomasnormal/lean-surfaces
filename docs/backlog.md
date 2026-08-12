@@ -186,6 +186,15 @@ creation and the ordering check, and stops at `suffixConsistent` — the
 module-init `pst` store into a name its functions read — which is a named
 condition about THIS program, not a boundary artifact.
 
+**`__name__` SUPPLIED (2026-08-12, third leanpy change of the day)**: the
+`if __name__ == "__main__":` guard — the shape essentially every runnable
+Python file is wrapped in — was unreachable because reading `__name__`
+refused. It is now the first MARSHALLED GLOBAL of the runner boundary
+(docs/memory-model.md §effects), script-mode only. In-repo corpus 84
+files: 59 MATCH (70.2%), 25 REFUSE, 0 DIVERGE, 18 executing live top
+level. The stdlib sweep is unchanged at 8 MATCH: those files' blockers
+come earlier.
+
 The stdlib sweep is deliberately NOT in the default corpus file: running
 arbitrary stdlib top level under the oracle has side effects (a browser,
 a window, a server), so it stays an explicitly invoked measurement with a

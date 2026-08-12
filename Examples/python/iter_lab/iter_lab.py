@@ -110,3 +110,20 @@ def chr_surrogate():
 
 def chr_out_of_range(n):
     return chr(n)
+
+
+def enum_sum(s):
+    # `enumerate` in a module with NO generator def: it allocates a
+    # generator FRAME, which `moduleGenFree` used to claim impossible —
+    # the arm refused ordinary Python as an interpreter bug (2026-08-13)
+    tot = 0
+    for i, c in enumerate(s):
+        tot += i * ord(c)
+    return tot
+
+
+def enum_first(s):
+    # the frame is LAZY: `break` on the first step leaves the rest unread
+    for i, c in enumerate(s):
+        return i * 1000 + ord(c)
+    return -1

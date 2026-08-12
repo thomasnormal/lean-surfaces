@@ -2367,19 +2367,45 @@ refusal naming the construct. `isBuiltinName` (what the model implements)
 stays the resolution arm that fires earlier; the difference between the
 two lists is precisely the set of names for which a `NameError` is a lie.
 
-**2. `moduleGenFree` claims more than it can (RECORDED, not yet fixed).**
-Its docstring says no `Obj.generator` can exist in a module with no
-generator defs, because "`callIn` is the only allocator". `enumerate(…)`
-and `itertools.count(…)` allocate generator FRAMES with no generator def
-in sight, so `for i, c in enumerate("PNB"):` in such a module hits the
-guard and refuses with `internal: … heap well-formedness violation —
-report this` — ordinary Python reported as an interpreter bug. It is a
-LOUDNESS defect, not a soundness one: `Expr.heapFree` already excludes
-`enumerate`/`count`/`next` calls, so `worldInv` never meets the arm and
-the proof layer is unaffected. The fix is to strengthen `moduleGenFree`
-with a syntactic "no `enumerate`/`count` call anywhere" conjunct, which
-also enters `Module.heapFree` (it must imply the guard) — a Semantics
-change with a full rebuild, tracked in docs/backlog.md.
+**2. `moduleGenFree` claimed more than it can — FIXED the same day.** Its
+docstring said no `Obj.generator` can exist in a module with no generator
+defs, because "`callIn` is the only allocator". `enumerate(…)` and
+`itertools.count(…)` allocate generator FRAMES with no generator def in
+sight, so `for i, c in enumerate("PNB"):` in such a module hit the guard
+and refused with `internal: … heap well-formedness violation — report
+this` — ordinary Python reported as an interpreter bug, and reachable
+from a plain function body, not just script mode. It was a LOUDNESS
+defect, not a soundness one: `Expr.heapFree` already excludes
+`enumerate`/`count`/`next` calls, so `worldInv` never met the arm.
+
+`moduleGenFree` now has three conjuncts: no generator `def`
+(`funsAnyGen`, as before) and no generator-FRAME ALLOCATOR in the
+function bodies or the top level (`funsGenAllocFree` /
+`Stmt.genAllocFreeList`, over the new `Expr.genAllocFree` — a call of
+`enumerate` or `count`, or a surviving generator expression; `next(…)`
+STEPS a generator and never builds one, and an `unsupported` node refuses
+before allocating). The walkers are LIST-recursive on purpose:
+`Module.heapFree` is discharged by `rfl` at concrete modules and
+`Array.all` does not reduce in the kernel (`VCTests`' `factM` caught
+that immediately). `Module.heapFree` inherits the strengthening, which
+can only make it FALSE for more modules — the safe direction, and
+measured: no example lost it, since a function body containing such a
+call already left `Expr.heapFree`.
+
+The SCRIPT VIEW needed one more thing for it: carrying no program
+statement, it also hides the program's own `enumerate`/`count` calls, so
+`moduleGenFree (scriptView m)` would read true again. `scriptViewMarker`
+— already the unnameable top-level `def` that turns `topLevelDefFree`
+off — got an `enumerate()` call in its body, so BOTH shortcuts are off in
+script mode, which is exactly right there: each is a claim that some arm
+is unreachable, kept only to make `worldInv` provable, and turning them
+off takes the faithful dynamic path.
+
+Acceptance: `Examples/python/iter_lab` gains `enum_sum`/`enum_first`
+(differential rows plus `#guard !moduleGenFree iter_lab` — a module with
+no generator definition of its own, which is what makes it the right
+witness) and `harness/scripts/enum_script.py` pins the top-level shape.
+`gen_lab` never caught it because that module defines generators.
 
 ## Staging (amended)
 

@@ -219,6 +219,8 @@
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "in_int", "args": [[3]], "expect": "match"},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "chr_out_of_range", "args": [[1114112], [-1]], "expect": "match"},
   {"file": "Examples/python/iter_lab/iter_lab.py", "function": "chr_surrogate", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "enum_sum", "args": [[{"t": "str", "v": "PNBRQK"}], [{"t": "str", "v": ""}], [{"t": "str", "v": "a"}]], "expect": "match"},
+  {"file": "Examples/python/iter_lab/iter_lab.py", "function": "enum_first", "args": [[{"t": "str", "v": "PNB"}], [{"t": "str", "v": ""}]], "expect": "match"},
   {"file": "Examples/python/sunfish/sunfish.py", "function": "parse", "args": [[{"t": "str", "v": "a1"}], [{"t": "str", "v": "e2"}], [{"t": "str", "v": "h8"}], [{"t": "str", "v": "d4"}]], "expect": "match"},
   {"file": "Examples/python/sunfish/sunfish.py", "function": "render", "args": [[91], [84], [28], [64]], "expect": "match"},
   {"file": "Examples/python/gen_lab/gen_lab.py", "function": "walrus_filter", "args": [[4], [0], [26]], "expect": "match"},

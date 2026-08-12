@@ -100,6 +100,23 @@ load_program iter_lab from "Examples/python/iter_lab/iter_lab.json"
 #guard callFunction iter_lab "in_list" #[.list #[.int 1, .int 2], .int 3] 4096
   == .ok (.bool false)
 
+/-! ### `enumerate` in a module with NO generator def (2026-08-13)
+
+`enumerate(…)` allocates a generator FRAME (`enumSeq`), which
+`moduleGenFree` used to claim impossible without a generator `def` — so
+the `for`-over-generator arm refused ordinary Python with
+`internal: … heap well-formedness violation — report this`. Found by
+`tools/leanpy`; the predicate now also walks for `enumerate`/`count`
+calls (`Expr.genAllocFree`), and iter_lab is the module that pins it,
+having no generator definition of its own. -/
+
+#guard !moduleGenFree iter_lab
+#py_check iter_lab.enum_sum("PNBRQK") = 1155
+#py_check iter_lab.enum_sum("") = 0
+#py_check iter_lab.enum_sum("a") = 0
+#py_check iter_lab.enum_first("PNB") = 80
+#py_check iter_lab.enum_first("") = -1
+
 /-! ### the membership/`for`/`ord`/`chr` nodes stay in the heap-free
 fragment (they neither allocate nor mutate) — pinned per function, since
 the module itself is not heap-free (`Pt` is a class-free namedtuple, but

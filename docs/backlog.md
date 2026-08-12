@@ -290,20 +290,22 @@ closed-function surface:
   `dir(builtins)` of the pinned CPython 3.9, consulted by every arm that
   may DECIDE a `NameError`, and an unmodelled builtin is a loud refusal
   naming the construct.
-* **`moduleGenFree` claims more than it can (RECORDED, OPEN).** Its
-  docstring says no `Obj.generator` can exist in a module with no
+* **`moduleGenFree` claimed more than it can — FIXED (2026-08-13).** Its
+  docstring said no `Obj.generator` can exist in a module with no
   generator defs because "`callIn` is the only allocator" — but
   `enumerate(…)` and `itertools.count(…)` allocate generator frames with
   no generator def in sight, so `for i, c in enumerate("PNB"):` in such a
-  module refuses with `internal: … heap well-formedness violation —
-  report this`: ordinary Python reported as an interpreter bug. LOUDNESS
-  defect, not soundness — `Expr.heapFree` already excludes
-  `enumerate`/`count`/`next` calls, so `worldInv` never meets the arm.
-  THE FIX: strengthen `moduleGenFree` with a syntactic "no
-  `enumerate`/`count` call anywhere in the module" conjunct; it must also
-  enter `Module.heapFree` (which has to imply the guard), so it is a
-  Semantics change with a full rebuild and a check that no example loses
-  `heapFree`. Next leanpy item.
+  module refused with `internal: … heap well-formedness violation —
+  report this`: ordinary Python reported as an interpreter bug, reachable
+  from a plain function body too. Loudness defect, not soundness —
+  `Expr.heapFree` already excludes `enumerate`/`count`/`next` calls, so
+  `worldInv` never met the arm. `moduleGenFree` now also requires
+  `genAllocFree` over the function bodies AND the top level; the walkers
+  are LIST-recursive because `Module.heapFree` is discharged by `rfl` and
+  `Array.all` does not reduce in the kernel. No example lost `heapFree`.
+  Acceptance: `iter_lab.enum_sum`/`enum_first` (a module with no
+  generator def of its own, plus `#guard !moduleGenFree iter_lab`) and
+  `harness/scripts/enum_script.py`.
 
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two

@@ -106,5 +106,9 @@
   {
     "file": "harness/scripts/init_raise_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/enum_script.py",
+    "expect": "match"
   }
 ]

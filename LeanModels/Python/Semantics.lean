@@ -3273,15 +3273,114 @@ def funsAnyGen : List FunctionDefn → Bool
   | [] => false
   | f :: fs => f.isGenerator || Stmt.hasGenDefList f.body.toList || funsAnyGen fs
 
-/-- Has this module NO generator definitions? Then no `Obj.generator` can
-exist in any world of any run of it: `callIn` is the only allocator, the
-boundary thaw cannot build one, and G1 module init evaluates constants
-only. The generator entry points test this and refuse LOUDLY when it
-holds, which is what keeps `worldInv` free of a heap-side invariant —
-the arm is unreachable, and reaching it would be an interpreter bug, not
-a silent wrong answer. -/
+mutual
+  /-- Can this expression ALLOCATE an `Obj.generator`? Only two shapes
+  can, and neither needs a generator `def`: a call of `enumerate` or
+  `count` (the H4 generator FRAMES `enumSeq`/`countFrom`), and a
+  generator EXPRESSION that survived lowering (an admitted one becomes a
+  synthesized generator function, which `funsAnyGen` sees). `next(…)`
+  STEPS a generator and never builds one; an `unsupported` node refuses
+  at evaluation, so it allocates nothing.
+
+  FOUND 2026-08-13 by `tools/leanpy`: `moduleGenFree` used to claim that
+  a module with no generator def can hold no generator object, on the
+  argument that "`callIn` is the only allocator". It is not, so
+  `for i, c in enumerate("PNB"):` in such a module hit the generator
+  guard and reported ORDINARY PYTHON as `internal: … heap
+  well-formedness violation — report this`. -/
+  def Expr.genAllocFree : Expr → Bool
+    | .constant .. => true
+    | .name .. => true
+    | .binOp l _ r _ => l.genAllocFree && r.genAllocFree
+    | .unaryOp _ e _ => e.genAllocFree
+    | .boolOp _ vs _ => Expr.genAllocFreeList vs.toList
+    | .compare l _ cs _ => l.genAllocFree && Expr.genAllocFreeList cs.toList
+    | .call (.name id _) args kwargs _ _ =>
+      (id != "enumerate") && (id != "count")
+        && Expr.genAllocFreeList args.toList && Expr.genAllocFreeKw kwargs.toList
+    | .call f args kwargs _ _ =>
+      f.genAllocFree && Expr.genAllocFreeList args.toList
+        && Expr.genAllocFreeKw kwargs.toList
+    | .list es _ => Expr.genAllocFreeList es.toList
+    | .tuple es _ => Expr.genAllocFreeList es.toList
+    | .subscript v i _ => v.genAllocFree && i.genAllocFree
+    | .dict ks vs _ => Expr.genAllocFreeList ks.toList && Expr.genAllocFreeList vs.toList
+    | .attribute v _ _ => v.genAllocFree
+    | .ifExp t b o _ => t.genAllocFree && b.genAllocFree && o.genAllocFree
+    | .slice v l u st _ =>
+      v.genAllocFree && l.genAllocFree && u.genAllocFree && st.genAllocFree
+    | .genExp .. => false
+    | .unsupported .. => true
+
+  /-- Elementwise `Expr.genAllocFree`. -/
+  def Expr.genAllocFreeList : List Expr → Bool
+    | [] => true
+    | e :: es => e.genAllocFree && Expr.genAllocFreeList es
+
+  /-- `Expr.genAllocFree` over keyword-argument values (H6). -/
+  def Expr.genAllocFreeKw : List (String × Expr) → Bool
+    | [] => true
+    | (_, e) :: rest => e.genAllocFree && Expr.genAllocFreeKw rest
+end
+
+mutual
+  /-- `Expr.genAllocFree` over a statement's whole subtree; a nested
+  generator `def` allocates when it is CALLED, so it counts too. -/
+  def Stmt.genAllocFree : Stmt → Bool
+    | .ret Option.none _ => true
+    | .ret (some e) _ => e.genAllocFree
+    | .assign tgts v _ => Expr.genAllocFreeList tgts.toList && v.genAllocFree
+    | .augAssign t _ v _ => t.genAllocFree && v.genAllocFree
+    | .whileLoop t b o _ =>
+      t.genAllocFree && Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList o.toList
+    | .forStmt t it b o _ =>
+      t.genAllocFree && it.genAllocFree
+        && Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList o.toList
+    | .ifStmt t b o _ =>
+      t.genAllocFree && Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList o.toList
+    | .exprStmt e _ => e.genAllocFree
+    | .yieldStmt e _ => e.genAllocFree
+    | .yieldFromStmt v _ => v.genAllocFree
+    | .defStmt _ _ _ _ _ isGen body _ _ =>
+      !isGen && Stmt.genAllocFreeList body.toList
+    | .raiseStmt exc cause _ =>
+      (exc.map Expr.genAllocFree).getD true && (cause.map Expr.genAllocFree).getD true
+    | .tryStmt b _ hnd _ _ =>
+      Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList hnd.toList
+    | .pass _ | .brk _ | .cont _ => true
+    | .unsupported .. => true
+
+  /-- Elementwise `Stmt.genAllocFree`. -/
+  def Stmt.genAllocFreeList : List Stmt → Bool
+    | [] => true
+    | s :: ss => Stmt.genAllocFree s && Stmt.genAllocFreeList ss
+end
+
+/-- Elementwise `Stmt.genAllocFreeList` over function bodies. LIST
+recursion on purpose (`funsHeapFree`'s shape): `Array.all` does not
+reduce in the kernel, and `Module.heapFree` is discharged by `rfl` at
+concrete modules. -/
+def funsGenAllocFree : List FunctionDefn → Bool
+  | [] => true
+  | f :: fs => Stmt.genAllocFreeList f.body.toList && funsGenAllocFree fs
+
+/-- Can NO `Obj.generator` exist in any world of any run of this module?
+Two independent ways one can appear, and both are excluded here: a
+generator `def` (`funsAnyGen` — `callIn` allocates the suspended frame)
+and a generator-FRAME builtin or a surviving generator expression
+(`genAllocFree`, over the function bodies AND the top level, since
+module init executes). The boundary thaw cannot build one.
+
+The generator entry points test this and refuse LOUDLY when it holds,
+which is what keeps `worldInv` free of a heap-side invariant — the arm is
+unreachable, and reaching it would be an interpreter bug, not a silent
+wrong answer. The `genAllocFree` conjuncts are the 2026-08-13 repair: the
+old definition asserted the same unreachability from `funsAnyGen` alone,
+which `enumerate`/`count` falsify (see `Expr.genAllocFree`). -/
 def moduleGenFree (m : Module) : Bool :=
   !funsAnyGen m.functions.toList
+    && funsGenAllocFree m.functions.toList
+    && Stmt.genAllocFreeList m.topLevel.toList
 
 mutual
   /-- No nested `def` (closure creation) anywhere in the statement —
@@ -3396,7 +3495,11 @@ theorem findFunction_notGen {m : Module} {fname : String} {f : FunctionDefn}
     exact Array.mem_def.mp h1
   have hg : funsAnyGen m.functions.toList = false := by
     have := Module.heapFree_genFree hm
-    simpa [moduleGenFree] using this
+    -- `moduleGenFree` gained the `genAllocFree` conjuncts (2026-08-13),
+    -- so the projection needs the leading component by name
+    simp only [moduleGenFree, Bool.and_eq_true, Bool.not_eq_eq_eq_not,
+      Bool.not_true] at this
+    exact this.1.1
   exact funsAnyGen_mem hg hmem
 
 /-- A heap-free module has no classes at all (`Module.heapFree`'s second

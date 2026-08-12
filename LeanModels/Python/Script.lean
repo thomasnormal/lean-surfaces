@@ -42,11 +42,13 @@ statements:
 * `scriptNameBinding` — `__name__ = "__main__"`, the runner-boundary
   global (`isModuleDunder` fires BEFORE the live-view consult, so this one
   has to be static);
-* `scriptDefMarker` — an unnameable top-level `def`. `topLevelDefFree` is
-  then false, which is what makes the closure-call arms take their
-  DYNAMIC path: a module-level `lambda` bound by executed code is a live
-  `Obj.closure`, and the heap-free shortcut would answer a fake
-  `'dict' object is not callable` instead of calling it;
+* `scriptViewMarker` — an unnameable top-level `def` whose body calls
+  `enumerate`, which turns OFF both module-level shortcuts
+  (`topLevelDefFree`, `moduleGenFree`) so every arm guarded by them takes
+  its DYNAMIC, faithful path: a module-level `lambda` bound by executed
+  code is a live `Obj.closure` the heap-free shortcut would refuse to
+  call, and a program's own `enumerate`/`count` calls are invisible to a
+  view carrying no program statement;
 * the module's IMPORT statements verbatim — the benign-import whitelist
   binds `time` POISONED there, which is both the loud refusal for a bare
   `time` and the precondition of the trace clock's census
@@ -339,21 +341,30 @@ def scriptNameBinding : Stmt :=
 
 /-! ### The script view (THE ONE PIPELINE — see the header) -/
 
-/-- The unnameable top-level `def` the script view carries so that
-`topLevelDefFree` is FALSE. That flag is the heap-free shortcut in every
-closure-call arm: with it true, a `.ref` reached through the live view
-answers the fake `'dict' object is not callable` instead of dispatching.
-Module-level `lambda`s are exactly such live closures under the one
-pipeline (`padrow = lambda …` in sunfish's padding loop), so the script
-view must always take the DYNAMIC path — which is the faithful one, and
-the guard's purpose (keeping `worldInv` free of arbitrary code) is a
-closed-function concern that script mode does not share.
+/-- The unnameable top-level `def` the script view carries so that the two
+module-level SHORTCUTS both read FALSE. Each is a claim that some arm is
+unreachable in a well-behaved module, and each exists to keep `worldInv`
+free of a heap-side invariant — a closed-function concern script mode does
+not share. Turning both off makes every such arm take its DYNAMIC path,
+which is the FAITHFUL one:
+
+* `topLevelDefFree` (this is a `def`) — with it true, a `.ref` reached
+  through the live globals answers a fake `'dict' object is not callable`
+  instead of dispatching the closure. Module-level `lambda`s are exactly
+  such live closures under the one pipeline (`padrow = lambda …` in
+  sunfish's padding loop).
+* `moduleGenFree` (the body calls `enumerate`) — the script view carries
+  no program statement, so the module's own `enumerate`/`count` calls are
+  invisible to it, and the generator arms would refuse a real `for i, c in
+  enumerate(s):` with `internal: … report this`.
 
 The leading `<` makes the name unnameable in Python (the synthesized
-genexp precedent), so poisoning it in the fold cannot shadow anything. -/
-def scriptDefMarker : Stmt :=
+genexp precedent), so poisoning it in the fold cannot shadow anything, and
+the body is never executed — only walked by the two predicates. -/
+def scriptViewMarker : Stmt :=
   let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
-  .defStmt "<script>" #[] true true false false #[.pass sp] #[] sp
+  .defStmt "<script>" #[] true true false false
+    #[.exprStmt (.call (.name "enumerate" sp) #[] #[] Option.none sp) sp] #[] sp
 
 /-- The module's `import` statements, verbatim. The script view keeps
 them so the BENIGN-IMPORT whitelist still binds `time` POISONED (the
@@ -380,7 +391,7 @@ position-independent tables and `defsBoundBefore` is what makes that
 agree with CPython's sequential binding. -/
 def scriptView (m : Module) : Module :=
   { m with topLevel :=
-      (scriptNameBinding :: scriptDefMarker :: scriptImports m).toArray }
+      (scriptNameBinding :: scriptViewMarker :: scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`

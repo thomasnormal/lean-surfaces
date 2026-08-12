@@ -1,5 +1,11 @@
-"""leanpy v0 corpus: print inside a function body — loud until the effect
-threads the mutual block (telemetry row)."""
+"""leanpy corpus: PRINT INSIDE A FUNCTION BODY — a payoff row.
+
+Loud until 2026-08-13 ("the effect cannot thread the mutual block"), which
+walled off essentially every real program: functions are where Python
+prints. `print` is now an ordinary builtin inside the interpreter, so the
+call prints and returns `None`, the chunk lands in `World.stdout`, and the
+runner boundary maps it to a line — CPython's own output.
+"""
 
 
 def shout(x):

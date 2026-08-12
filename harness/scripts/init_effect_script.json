@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "harness/scripts/init_effect_script.py",
-  "source_sha256": "facef0848d011e5f9a6d8901a5af83b0f9d1a1aa86ff31bd63cad76724713964",
+  "source_sha256": "755366e2b075e9fb1e7b7a96bb2947d5cea61adb56aff95e253860009fd26f9d",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,7 +15,7 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 15,
+          "end_lineno": 12,
           "end_col_offset": 3
         },
         "value": {
@@ -23,21 +23,21 @@
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 15,
+            "end_lineno": 12,
             "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: A TOP-LEVEL CALL WITH AN OBSERVABLE EFFECT.\n\nCPython prints \"side effect\" then \"done\". Two pipelines ago `x = talk()`\nwas a plain bind, so module initialization FOLDED it, the fold delegated\nto the interpreter, the in-function `print` was out of tier, the attempt\nfailed, and `initFoldLive` ROLLED IT BACK \u2014 leanpy answered \"done\" alone,\na wrong answer rather than a refusal; `initNothingSkipped` then refused\nthe program.\n\nWith THE ONE PIPELINE the statement simply executes, and the refusal is\nthe honest one: `print` inside a function body is outside the tier\n(`fnprint.py` is the same wall reached directly). No fold, no rollback,\nnothing skipped \u2014 the row now pins that the blocker is a construct rather\nthan an architecture.\n"
+            "value": "leanpy corpus: A TOP-LEVEL CALL WITH AN OBSERVABLE EFFECT.\n\nCPython prints \"side effect\" then \"done\". Two pipelines ago `x = talk()`\nwas a plain bind, so module initialization FOLDED it, the fold delegated\nto the interpreter, the in-function `print` was out of tier, the attempt\nfailed, and `initFoldLive` ROLLED IT BACK \u2014 leanpy answered \"done\" alone,\na wrong answer rather than a refusal; `initNothingSkipped` then refused\nthe program, and THE ONE PIPELINE removed the fold that made the hole.\n\nThe last thing standing between this file and CPython's output was\n`print` inside a function body, live since 2026-08-13. It now runs.\n"
           }
         }
       },
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 18,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 20,
+          "end_lineno": 17,
           "end_col_offset": 12
         },
         "name": "talk",
@@ -48,25 +48,25 @@
           {
             "kind": "Expr",
             "span": {
-              "lineno": 19,
+              "lineno": 16,
               "col_offset": 4,
-              "end_lineno": 19,
+              "end_lineno": 16,
               "end_col_offset": 24
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 19,
+                "lineno": 16,
                 "col_offset": 4,
-                "end_lineno": 19,
+                "end_lineno": 16,
                 "end_col_offset": 24
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 19,
+                  "lineno": 16,
                   "col_offset": 4,
-                  "end_lineno": 19,
+                  "end_lineno": 16,
                   "end_col_offset": 9
                 },
                 "id": "print"
@@ -75,9 +75,9 @@
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 19,
+                    "lineno": 16,
                     "col_offset": 10,
-                    "end_lineno": 19,
+                    "end_lineno": 16,
                     "end_col_offset": 23
                   },
                   "value": {
@@ -93,17 +93,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 20,
+              "lineno": 17,
               "col_offset": 4,
-              "end_lineno": 20,
+              "end_lineno": 17,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 20,
+                "lineno": 17,
                 "col_offset": 11,
-                "end_lineno": 20,
+                "end_lineno": 17,
                 "end_col_offset": 12
               },
               "value": {
@@ -117,18 +117,18 @@
       {
         "kind": "Assign",
         "span": {
-          "lineno": 23,
+          "lineno": 20,
           "col_offset": 0,
-          "end_lineno": 23,
+          "end_lineno": 20,
           "end_col_offset": 10
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 23,
+              "lineno": 20,
               "col_offset": 0,
-              "end_lineno": 23,
+              "end_lineno": 20,
               "end_col_offset": 1
             },
             "id": "x"
@@ -137,17 +137,17 @@
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 23,
+            "lineno": 20,
             "col_offset": 4,
-            "end_lineno": 23,
+            "end_lineno": 20,
             "end_col_offset": 10
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 23,
+              "lineno": 20,
               "col_offset": 4,
-              "end_lineno": 23,
+              "end_lineno": 20,
               "end_col_offset": 8
             },
             "id": "talk"
@@ -160,25 +160,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 25,
+          "lineno": 22,
           "col_offset": 0,
-          "end_lineno": 25,
+          "end_lineno": 22,
           "end_col_offset": 13
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 25,
+            "lineno": 22,
             "col_offset": 0,
-            "end_lineno": 25,
+            "end_lineno": 22,
             "end_col_offset": 13
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 25,
+              "lineno": 22,
               "col_offset": 0,
-              "end_lineno": 25,
+              "end_lineno": 22,
               "end_col_offset": 5
             },
             "id": "print"
@@ -187,9 +187,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 25,
+                "lineno": 22,
                 "col_offset": 6,
-                "end_lineno": 25,
+                "end_lineno": 22,
                 "end_col_offset": 12
               },
               "value": {

@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "Examples/python/g1_lab/g1_lab.py",
-  "source_sha256": "8f21d2cf3d83baea3c5c718ef4862b804cd0b05e07e6615419aafbc1f5dce0d4",
+  "source_sha256": "fe9ffd98fd0095bc9c8c34651fde8ac6b3ff2b2298da43ad6b328bdf7744df5f",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,29 +15,29 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 8,
-          "end_col_offset": 65
+          "end_lineno": 12,
+          "end_col_offset": 51
         },
         "value": {
           "kind": "Constant",
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 8,
-            "end_col_offset": 65
+            "end_lineno": 12,
+            "end_col_offset": 51
           },
           "value": {
             "type": "str",
-            "value": "G1 boundary regressions (H1-proper hardening, found by leanpy v0):\n\n* `read_m`: `M` is bound AFTER a top-level `while` \u2014 the G1 fold cannot\n  know what the loop did, so the binding is POISONED (a stale value would\n  be silently wrong); reads are loudly unsupported.\n* `try_print`: `print` inside a function body \u2014 the effect cannot thread\n  the interpreter yet; a NameError here would be a WRONG exception\n  (CPython prints), so the call is loudly unsupported instead."
+            "value": "G1 boundary regressions (H1-proper hardening, found by leanpy v0):\n\n* `read_m`: `M` is bound AFTER a top-level `while` \u2014 the G1 fold cannot\n  know what the loop did, so the binding is POISONED (a stale value would\n  be silently wrong); reads are loudly unsupported.\n* `try_print`: `print` inside a function body. Loud until 2026-08-13\n  (\"the effect cannot thread the interpreter yet\"); `print` is now an\n  ordinary builtin appending to `World.stdout`, so the call returns `x`\n  like CPython's. NOTE the boundary: `callFunction` returns a value and\n  DROPS the world, so this row compares the return value only \u2014 stdout is\n  observable through `CallsIn` and through leanpy's script surface, which\n  is where `harness/scripts/fnprint.py` pins it."
           }
         }
       },
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 11,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 12,
+          "end_lineno": 16,
           "end_col_offset": 12
         },
         "name": "read_m",
@@ -48,17 +48,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 12,
+              "lineno": 16,
               "col_offset": 4,
-              "end_lineno": 12,
+              "end_lineno": 16,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 12,
+                "lineno": 16,
                 "col_offset": 11,
-                "end_lineno": 12,
+                "end_lineno": 16,
                 "end_col_offset": 12
               },
               "id": "M"
@@ -69,9 +69,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 15,
+          "lineno": 19,
           "col_offset": 0,
-          "end_lineno": 17,
+          "end_lineno": 21,
           "end_col_offset": 12
         },
         "name": "try_print",
@@ -79,9 +79,9 @@
           {
             "arg": "x",
             "span": {
-              "lineno": 15,
+              "lineno": 19,
               "col_offset": 14,
-              "end_lineno": 15,
+              "end_lineno": 19,
               "end_col_offset": 15
             }
           }
@@ -92,25 +92,25 @@
           {
             "kind": "Expr",
             "span": {
-              "lineno": 16,
+              "lineno": 20,
               "col_offset": 4,
-              "end_lineno": 16,
+              "end_lineno": 20,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 16,
+                "lineno": 20,
                 "col_offset": 4,
-                "end_lineno": 16,
+                "end_lineno": 20,
                 "end_col_offset": 12
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 16,
+                  "lineno": 20,
                   "col_offset": 4,
-                  "end_lineno": 16,
+                  "end_lineno": 20,
                   "end_col_offset": 9
                 },
                 "id": "print"
@@ -119,9 +119,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 16,
+                    "lineno": 20,
                     "col_offset": 10,
-                    "end_lineno": 16,
+                    "end_lineno": 20,
                     "end_col_offset": 11
                   },
                   "id": "x"
@@ -134,17 +134,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 17,
+              "lineno": 21,
               "col_offset": 4,
-              "end_lineno": 17,
+              "end_lineno": 21,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 17,
+                "lineno": 21,
                 "col_offset": 11,
-                "end_lineno": 17,
+                "end_lineno": 21,
                 "end_col_offset": 12
               },
               "id": "x"
@@ -155,18 +155,18 @@
       {
         "kind": "Assign",
         "span": {
-          "lineno": 20,
+          "lineno": 24,
           "col_offset": 0,
-          "end_lineno": 20,
+          "end_lineno": 24,
           "end_col_offset": 5
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 20,
+              "lineno": 24,
               "col_offset": 0,
-              "end_lineno": 20,
+              "end_lineno": 24,
               "end_col_offset": 1
             },
             "id": "x"
@@ -175,9 +175,9 @@
         "value": {
           "kind": "Constant",
           "span": {
-            "lineno": 20,
+            "lineno": 24,
             "col_offset": 4,
-            "end_lineno": 20,
+            "end_lineno": 24,
             "end_col_offset": 5
           },
           "value": {
@@ -189,25 +189,25 @@
       {
         "kind": "While",
         "span": {
-          "lineno": 21,
+          "lineno": 25,
           "col_offset": 0,
-          "end_lineno": 22,
+          "end_lineno": 26,
           "end_col_offset": 13
         },
         "test": {
           "kind": "Compare",
           "span": {
-            "lineno": 21,
+            "lineno": 25,
             "col_offset": 6,
-            "end_lineno": 21,
+            "end_lineno": 25,
             "end_col_offset": 11
           },
           "left": {
             "kind": "Name",
             "span": {
-              "lineno": 21,
+              "lineno": 25,
               "col_offset": 6,
-              "end_lineno": 21,
+              "end_lineno": 25,
               "end_col_offset": 7
             },
             "id": "x"
@@ -219,9 +219,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 21,
+                "lineno": 25,
                 "col_offset": 10,
-                "end_lineno": 21,
+                "end_lineno": 25,
                 "end_col_offset": 11
               },
               "value": {
@@ -235,18 +235,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 22,
+              "lineno": 26,
               "col_offset": 4,
-              "end_lineno": 22,
+              "end_lineno": 26,
               "end_col_offset": 13
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 22,
+                  "lineno": 26,
                   "col_offset": 4,
-                  "end_lineno": 22,
+                  "end_lineno": 26,
                   "end_col_offset": 5
                 },
                 "id": "x"
@@ -255,17 +255,17 @@
             "value": {
               "kind": "BinOp",
               "span": {
-                "lineno": 22,
+                "lineno": 26,
                 "col_offset": 8,
-                "end_lineno": 22,
+                "end_lineno": 26,
                 "end_col_offset": 13
               },
               "left": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 22,
+                  "lineno": 26,
                   "col_offset": 8,
-                  "end_lineno": 22,
+                  "end_lineno": 26,
                   "end_col_offset": 9
                 },
                 "id": "x"
@@ -274,9 +274,9 @@
               "right": {
                 "kind": "Constant",
                 "span": {
-                  "lineno": 22,
+                  "lineno": 26,
                   "col_offset": 12,
-                  "end_lineno": 22,
+                  "end_lineno": 26,
                   "end_col_offset": 13
                 },
                 "value": {
@@ -292,18 +292,18 @@
       {
         "kind": "Assign",
         "span": {
-          "lineno": 23,
+          "lineno": 27,
           "col_offset": 0,
-          "end_lineno": 23,
+          "end_lineno": 27,
           "end_col_offset": 5
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 23,
+              "lineno": 27,
               "col_offset": 0,
-              "end_lineno": 23,
+              "end_lineno": 27,
               "end_col_offset": 1
             },
             "id": "M"
@@ -312,9 +312,9 @@
         "value": {
           "kind": "Name",
           "span": {
-            "lineno": 23,
+            "lineno": 27,
             "col_offset": 4,
-            "end_lineno": 23,
+            "end_lineno": 27,
             "end_col_offset": 5
           },
           "id": "x"

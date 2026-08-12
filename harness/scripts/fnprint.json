@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "harness/scripts/fnprint.py",
-  "source_sha256": "bb60159a0b903f0edaa02fe66985236592fe0e345d230406bd65b2e7745b8a8a",
+  "source_sha256": "d431c0700dfed86ad7c1d5ffc28b8e72a8cdfe5a09b393642031fc4de960952d",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,29 +15,29 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 2,
-          "end_col_offset": 44
+          "end_lineno": 8,
+          "end_col_offset": 3
         },
         "value": {
           "kind": "Constant",
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 2,
-            "end_col_offset": 44
+            "end_lineno": 8,
+            "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "leanpy v0 corpus: print inside a function body \u2014 loud until the effect\nthreads the mutual block (telemetry row)."
+            "value": "leanpy corpus: PRINT INSIDE A FUNCTION BODY \u2014 a payoff row.\n\nLoud until 2026-08-13 (\"the effect cannot thread the mutual block\"), which\nwalled off essentially every real program: functions are where Python\nprints. `print` is now an ordinary builtin inside the interpreter, so the\ncall prints and returns `None`, the chunk lands in `World.stdout`, and the\nrunner boundary maps it to a line \u2014 CPython's own output.\n"
           }
         }
       },
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 5,
+          "lineno": 11,
           "col_offset": 0,
-          "end_lineno": 6,
+          "end_lineno": 12,
           "end_col_offset": 12
         },
         "name": "shout",
@@ -45,9 +45,9 @@
           {
             "arg": "x",
             "span": {
-              "lineno": 5,
+              "lineno": 11,
               "col_offset": 10,
-              "end_lineno": 5,
+              "end_lineno": 11,
               "end_col_offset": 11
             }
           }
@@ -58,25 +58,25 @@
           {
             "kind": "Expr",
             "span": {
-              "lineno": 6,
+              "lineno": 12,
               "col_offset": 4,
-              "end_lineno": 6,
+              "end_lineno": 12,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 6,
+                "lineno": 12,
                 "col_offset": 4,
-                "end_lineno": 6,
+                "end_lineno": 12,
                 "end_col_offset": 12
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 6,
+                  "lineno": 12,
                   "col_offset": 4,
-                  "end_lineno": 6,
+                  "end_lineno": 12,
                   "end_col_offset": 9
                 },
                 "id": "print"
@@ -85,9 +85,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 6,
+                    "lineno": 12,
                     "col_offset": 10,
-                    "end_lineno": 6,
+                    "end_lineno": 12,
                     "end_col_offset": 11
                   },
                   "id": "x"
@@ -102,25 +102,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 9,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 9,
+          "end_lineno": 15,
           "end_col_offset": 8
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 9,
+            "lineno": 15,
             "col_offset": 0,
-            "end_lineno": 9,
+            "end_lineno": 15,
             "end_col_offset": 8
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 9,
+              "lineno": 15,
               "col_offset": 0,
-              "end_lineno": 9,
+              "end_lineno": 15,
               "end_col_offset": 5
             },
             "id": "shout"
@@ -129,9 +129,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 9,
+                "lineno": 15,
                 "col_offset": 6,
-                "end_lineno": 9,
+                "end_lineno": 15,
                 "end_col_offset": 7
               },
               "value": {

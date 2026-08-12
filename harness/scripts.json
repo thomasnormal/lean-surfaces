@@ -33,7 +33,7 @@
   },
   {
     "file": "harness/scripts/fnprint.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/call_before_def.py",
@@ -101,7 +101,7 @@
   },
   {
     "file": "harness/scripts/init_effect_script.py",
-    "expect": "unsupported"
+    "expect": "match"
   },
   {
     "file": "harness/scripts/init_raise_script.py",

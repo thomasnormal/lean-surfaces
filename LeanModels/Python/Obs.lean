@@ -993,7 +993,9 @@ theorem fuelMono (fuel : Nat) :
                             (Run.le_bind (ihEs m st cargs.toList k hk)
                               fun st _ => Run.le_refl _)
                             (Run.le_ite (Run.le_refl _)
-                              (Run.le_ite (Run.le_refl _)
+                              (Run.le_ite
+                                (Run.le_bind (ihEs m st cargs.toList k hk)
+                                  fun st _ => Run.le_refl _)
                                 (Run.le_ite (Run.le_refl _) ?_)))
                           cases Env.lookup st.world.globals fname with
                           | none => exact Run.le_refl _
@@ -2072,7 +2074,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hflE⟩ := hfree
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -2105,6 +2107,13 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "set"
               · rfl
               · rw [bne, hbe] at hnset; simp at hnset
+            -- 2026-08-13: `print` MUTATES `World.stdout` (the one effect
+            -- the interpreter performs), so the fragment excludes it the
+            -- same syntactic way, and its branch is rewritten away below
+            have hprx : (fname == "print") = false := by
+              cases hbe : fname == "print"
+              · rfl
+              · rw [bne, hbe] at hnpr; simp at hnpr
             simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
@@ -2148,7 +2157,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, findClass_heapFree hm fname,
+                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals
@@ -2227,8 +2236,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                   (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                     (.ite (.bind hargs fun st₁ vs h₁ => ?_)
                                       (.ite .unsupported
-                                        (.ite .unsupported
-                                          (.ite .unsupported ?_)))))))))
+                                        (.ite .unsupported ?_))))))))
                         · cases vs with
                           | nil => exact .okF h₁ _
                           | cons v rest =>

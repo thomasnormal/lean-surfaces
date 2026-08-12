@@ -2407,6 +2407,53 @@ no generator definition of its own, which is what makes it the right
 witness) and `harness/scripts/enum_script.py` pins the top-level shape.
 `gen_lab` never caught it because that module defines generators.
 
+## `print` is an ordinary builtin (2026-08-13)
+
+Stdout has been `World` data since the H1 core (§effects); what was
+missing was the arm that writes it from inside the interpreter. Until
+this pass `print` in a function body refused loudly ("the effect must
+thread the mutual block"), and leanpy intercepted `print` STATEMENTS in
+its own top-level executor instead. That wall ran through essentially
+every real program — functions are where Python prints — and it also made
+the executor's shells load-bearing for a second reason (a `print` inside
+a delegated top-level `for` was loud).
+
+`evalExpr`'s call arm now implements it: after locals, the module
+globals, `findFunction`/`findClass`/namedtuples — so every shadow still
+wins — `print(args…)` evaluates its arguments left to right, appends ONE
+chunk to `World.stdout` (the runner boundary prints chunks as lines) and
+returns `None`. `strOfRVal`/`strOfArgs` moved from Script.lean into
+Semantics.lean with it; the printable tier is unchanged (int, bool,
+`None`, str; a container or heap value refuses loudly rather than guess a
+`repr`), and `print(x, end="")` stays loud through the keyword-call arm.
+leanpy's executor no longer intercepts `print` at all — its shells exist
+only for the per-statement publish, and prints work anywhere.
+
+TWO CONSEQUENCES, both recorded rather than discovered later:
+
+* **`print` leaves `Expr.heapFree`.** It is the first expression that
+  mutates the world without allocating, and `worldInv` says a decided
+  run of a heap-free statement returns its input world. The exclusion is
+  the same syntactic carve-out `sorted`/`set`/`enumerate` already take,
+  and the three proof obligations moved with it: `worldInv`'s call arm
+  gains `hprx` and loses one walked `ite`, `fuelMono`'s print branch
+  becomes a `bind`, and `clockErase` gains a `bprint` case closed by
+  `of_seed` (printing reads no clock, so the seeded family IS the seeded
+  base run).
+* **The VALUE boundary does not observe stdout.** `callFunction` returns
+  `Res Val` and drops the world, so `CallsTo m "f" args v` is silent
+  about what `f` printed — true, but not the whole story. `CallsIn` is
+  the surface that sees it (`World.stdout` is a field of the world it
+  relates), and leanpy's script surface is where the differential harness
+  compares output. `Examples/python/g1_lab`'s `try_print` row says so in
+  its own docstring, since it is the row that compares a return value
+  through a printing call.
+
+Measured: in-repo corpus **72/87 MATCH (82.8%)**, 0 DIVERGE, 23 files
+printing; `harness/script_corpus.py` 24 matched / 4 loud, with
+`fnprint.py` and `init_effect_script.py` flipping from refusal to
+CPython-identical output.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

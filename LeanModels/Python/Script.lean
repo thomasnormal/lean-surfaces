@@ -99,50 +99,24 @@ Refusals — every one LOUD, never wrong:
   (`classesCreationPure`);
 * a mid-statement binding a function reads (`scriptFlushCoherent`);
 * a top-level rebinding of a builtin/`def`/`class`/namedtuple name;
-* `print` of containers/heap values (repr subtleties), a shadowed
-  `print`, `print` in expression position or inside a function body (the
-  effect must thread the mutual block to land there — this keeps the
-  proof-relevant interpreter untouched);
+* `print` of a container or heap value (its `repr` is not guessed);
 * top-level `return`/`break`/`continue` (CPython compile-time
   SyntaxErrors the extractor happily ships).
 
-The executor is FUELED like the mutual block and lives OUTSIDE it. The
-`while`/`if` arms below are CONTROL SHELLS mirroring `execWhile`/
-`execStmt` exactly (test, `truthyH`, flow routing) so `print` works
-inside top-level loops, and `for k, v in d.items():` gets the shell
+The executor is FUELED like the mutual block and lives OUTSIDE it. It no
+longer intercepts `print` at all: since 2026-08-13 `print` is an ordinary
+builtin inside the interpreter (docs/memory-model.md §effects), so it
+works in a function body, in a nested call, and inside any statement the
+executor delegates — the shells exist only for the per-statement PUBLISH.
+The `while`/`if` arms below mirror `execWhile`/`execStmt` exactly (test,
+`truthyH`, flow routing), and `for k, v in d.items():` gets the shell
 `execStmt` cannot express (the live entries re-read per step, a size
 change the faithful `RuntimeError`) — the one that module-init execution
 used to own. Every other statement runs through `execStmt`, so the tier
-is the interpreter's; a general top-level `for` is still delegated
-(prints inside one are loud — extend the shell when the corpus wants it).
+is the interpreter's.
 -/
 
 namespace LeanModels.Python
-
-/-- CPython `str()` of the printable scalar tier (`print` v0): ints in
-decimal, `True`/`False`, `None`, strings raw. `none` = not printable in
-v0 (containers, refs — loud at the call site). -/
-def strOfRVal : RVal → Option String
-  | .int n => some (toString n)
-  | .bool b => some (if b then "True" else "False")
-  | .none => some "None"
-  | .str s => some s
-  | _ => Option.none
-
-/-- Space-join `print` arguments (default `sep`); first unprintable wins. -/
-def strOfArgs : List RVal → Option String
-  | [] => some ""
-  | [v] => strOfRVal v
-  | v :: vs => do
-    let s ← strOfRVal v
-    let rest ← strOfArgs vs
-    return s ++ " " ++ rest
-
-/-- Is `print` unshadowed at module level? A module `def print` or a
-top-level `print` binding (valued or poisoned) refuses loudly — CPython
-would call the shadow. -/
-def printUnshadowed (m : Module) : Bool :=
-  (findFunction m "print").isNone && (lookupG (moduleGlobals m).1 "print").isNone
 
 /-! ### Name walkers (the function-global consistency guard) -/
 
@@ -512,40 +486,22 @@ mutual
         | Option.none =>
           .unsupported "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored"
 
-  /-- Execute ONE top-level statement. `print` is intercepted; `if`,
-  `while` (without `else`) and the `for … in d.items():` loop run through
-  CONTROL SHELLS mirroring `execStmt`/`execWhile` exactly, so prints and
-  the per-statement flush work inside them; a whitelisted `import` is
-  skipped (it binds through the static view, and running one observes
-  nothing); everything else is delegated to `execStmt`, so the tier is
-  the interpreter's. -/
+  /-- Execute ONE top-level statement. `if`, `while` (without `else`) and
+  the `for … in d.items():` loop run through CONTROL SHELLS mirroring
+  `execStmt`/`execWhile` exactly, so the per-statement PUBLISH happens
+  inside them; a whitelisted `import` is skipped (it binds through the
+  static view, and running one observes nothing); everything else is
+  delegated to `execStmt`, so the tier is the interpreter's. -/
   def execScriptOne (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       Run FrameState RFlow :=
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
       match s with
-      | .exprStmt (.call (.name "print" _) args #[] Option.none _) _ =>
-        -- Module-level shadows via `printUnshadowed`; a LIVE shadow (a
-        -- top-level `print = …` already executed) via the frame probes,
-        -- dynamically exact: CPython calls the shadow only once its
-        -- binding ran. (`initBindable` refuses that binding at the
-        -- flush, so the probes are belt and braces.)
-        if printUnshadowed m && (Env.lookup st.locals "print").isNone
-            && (Env.lookup st.world.globals "print").isNone then
-          Run.bind (evalExprs m fuel st args.toList) fun st vs =>
-          match strOfArgs vs with
-          | some line =>
-            .ok { st with world :=
-                    { st.world with stdout := st.world.stdout ++ [line] } } .next
-          | Option.none =>
-            .unsupported "print() of a container or heap value is outside leanpy (scalar str() only)"
-        else
-          .unsupported "a shadowed 'print' is outside leanpy"
       | .whileLoop test body orelse sp =>
         if orelse.isEmpty then execScriptWhile m fuel st test body.toList
         else
-          -- no shell for while-else; delegate (prints inside stay loud)
+          -- no shell for while-else; delegate wholesale
           execStmt m fuel st (.whileLoop test body orelse sp)
       | .ifStmt test body orelse _ =>
         Run.bind (evalExpr m fuel st test) fun st t =>
@@ -610,8 +566,8 @@ mutual
       | _ => .unsupported "internal: items-loop receiver is not a dict (report this)"
 
   /-- The `execWhile` control shell over script statements (same test,
-  same truthiness, same flow routing — body prints intercepted, body
-  bindings flushed per statement). -/
+  same truthiness, same flow routing — body bindings published per
+  statement). -/
   def execScriptWhile (m : Module) (fuel : Nat) (st : FrameState)
       (test : Expr) (body : List Stmt) : Run FrameState RFlow :=
     match fuel with

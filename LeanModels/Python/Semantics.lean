@@ -948,6 +948,30 @@ fabricated `NameError`. -/
 def unmodelledBuiltinMsg (id : String) : String :=
   s!"builtin '{id}' exists in CPython but is not modelled — outside the tier (a NameError here would be a wrong answer for a name CPython binds)"
 
+/-! ### `print` — the one effect the interpreter performs
+(docs/memory-model.md §effects: stdout is DATA, `World.stdout`). -/
+
+/-- CPython `str()` of the printable scalar tier: ints in decimal,
+`True`/`False`, `None`, strings raw. `none` = not printable in tier
+(containers and heap values, whose `repr` subtleties are not guessed) —
+the call site refuses loudly. -/
+def strOfRVal : RVal → Option String
+  | .int n => some (toString n)
+  | .bool b => some (if b then "True" else "False")
+  | .none => some "None"
+  | .str s => some s
+  | _ => Option.none
+
+/-- Space-join `print` arguments (CPython's default `sep`); the first
+unprintable one wins. `print()` is the empty line. -/
+def strOfArgs : List RVal → Option String
+  | [] => some ""
+  | [v] => strOfRVal v
+  | v :: vs => do
+    let s ← strOfRVal v
+    let rest ← strOfArgs vs
+    return s ++ " " ++ rest
+
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
 CPython, so a miss on one is `unsupported`, NEVER a `NameError` — the G1
@@ -3162,9 +3186,13 @@ mutual
     -- syntax cannot tell `next(g)` from a shadowing user `def next`.
     -- H6: a call carrying KEYWORDS leaves the fragment conservatively
     -- (docs/memory-model.md §call-site keyword arguments).
+    -- 2026-08-13 adds `print`: it MUTATES `World.stdout`, the one effect
+    -- the interpreter performs, so the world-preservation fragment must
+    -- exclude it exactly as it excludes the allocating calls.
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
+        && (id != "print")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
@@ -4165,9 +4193,21 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- never a fake NameError (the recorded pass-4 gap)
                     .unsupported "input() is outside the tier (stdin is a runner-boundary effect; docs/memory-model.md §effects)"
                   else if fname == "print" then
-                    -- the effect must thread World.stdout through this block;
-                    -- until then a wrong NameError would be silently unfaithful
-                    .unsupported "print() inside a function body is outside the tier (leanpy v0 intercepts top-level print only; docs/memory-model.md §effects)"
+                    -- THE ONE EFFECT (2026-08-13): stdout is `World` data
+                    -- (docs/memory-model.md §effects), so `print` is an
+                    -- ordinary builtin here — reached only after locals,
+                    -- the module globals, `findFunction`/`findClass`/
+                    -- namedtuples, so every shadow still wins. It RETURNS
+                    -- `None`, appends one chunk (the runner boundary
+                    -- prints chunks as lines), and refuses loudly on a
+                    -- value whose `repr` the tier does not model.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match strOfArgs vs with
+                     | some line =>
+                       .ok { st with world :=
+                               { st.world with stdout := st.world.stdout ++ [line] } } .none
+                     | Option.none =>
+                       .unsupported "print() of a container or heap value is outside the tier (scalar str() only — docs/memory-model.md §effects)")
                   else if isModuleDunder fname then
                     .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
                   else

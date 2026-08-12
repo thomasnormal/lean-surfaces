@@ -307,6 +307,23 @@ closed-function surface:
   generator def of its own, plus `#guard !moduleGenFree iter_lab`) and
   `harness/scripts/enum_script.py`.
 
+**`print` IS AN ORDINARY BUILTIN (2026-08-13)** — docs/memory-model.md
+§`print` is an ordinary builtin. The oldest leanpy deferral ("the effect
+must thread the mutual block") is closed: `evalExpr`'s call arm appends
+to `World.stdout` and returns `None`, after every shadow-resolving arm,
+so `print` works in a function body, in a nested call, and inside any
+statement leanpy delegates — the executor stopped intercepting `print`
+entirely, which also removed the "prints inside a top-level `for` are
+loud" gap. `print` leaves `Expr.heapFree` (the first world-mutating
+non-allocating expression), and the three proof obligations moved with
+it: `worldInv` gains `hprx`, `fuelMono`'s branch becomes a `bind`,
+`clockErase` gains a `bprint` case closed by `of_seed`. RECORDED: the
+VALUE boundary does not observe stdout — `callFunction` drops the world,
+so `CallsTo` is silent about output and `CallsIn` (or the script surface)
+is where it is seen. In-repo corpus **72/87 MATCH (82.8%)**, 0 DIVERGE;
+script corpus 24 matched / 4 loud, `fnprint.py` and
+`init_effect_script.py` flipping to CPython-identical output.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

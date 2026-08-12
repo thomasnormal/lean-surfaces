@@ -48,6 +48,30 @@ unreadable or invalid envelope — emits `{"status":"runner-error",
 "msg":…}` on stdout (so the row count stays honest), mirrors the message
 to stderr, and forces a nonzero exit: LOUD, never absorbed into the
 stream as agreement.
+
+**Script mode** (`--script <envelope.json> [--fuel N] [--clock i,j,k]`):
+leanpy — execute the module's whole top level, print its stdout, exit
+0 (ok) / 1 (exn) / 3 (unsupported) / 4 (timeout). `--clock` seeds the
+CLOCK TRACE `time.time()` consumes (absent = the empty trace, so any
+reading refuses with the loud underrun).
+
+**Script batch mode** (`--script-batch <jobs.jsonl> [--fuel N]`): many
+whole PROGRAMS, one process — the survey shape behind
+`harness/leanpy_survey.py`, so a 200-file sweep costs one startup instead
+of 200. Each non-empty line is `{"path":"….json","fuel":N?,"clock":[…]?}`
+(a bare JSON string is shorthand for the path alone), and each produces
+exactly one line
+
+* `{"path":…,"status":"ok","exit":0,"live":N,"stdout":[…]}`
+* `{"path":…,"status":"exn","exit":1,"exn":"NameError","live":N,"stdout":[…]}`
+* `{"path":…,"status":"unsupported","exit":3,"live":N,"msg":…}`
+* `{"path":…,"status":"timeout","exit":4,"live":N}`
+
+carrying the SAME exit status the one-shot mode would have produced, plus
+`live` — the number of live-suffix statements the executor was given, so a
+definitions-only agreement (`live: 0`) is never counted as a real run.
+Runner-level failures are `{"status":"runner-error",…}` rows plus a
+nonzero exit, exactly as in `--batch`.
 -/
 
 open LeanModels.Python
@@ -127,6 +151,28 @@ def usage : String :=
   "  args: integer literals or canonical typed JSON values " ++
   "({\"t\":\"list\",\"v\":[…]} — the encoding the runner prints); default fuel 10000"
 
+/-- Split `--clock i,j,k` off the argument list (anywhere; last wins) —
+the CLOCK TRACE `time.time()` consumes in order, script mode's counterpart
+of a batch job's `"clock"` field. `--clock ''` is the explicit empty trace
+(the default; every reading then refuses with the loud underrun). -/
+private def splitClock : List String → Except String (List String × Option (List Int))
+  | [] => .ok ([], Option.none)
+  | "--clock" :: rest =>
+    match rest with
+    | [] => .error "--clock expects a comma-separated list of integers"
+    | spec :: rest' => do
+      let readings ←
+        if spec.trim.isEmpty then .ok ([] : List Int)
+        else (spec.splitOn ",").mapM fun r =>
+          match r.trim.toInt? with
+          | some n => .ok n
+          | Option.none => .error s!"--clock readings must be integers, got '{r}'"
+      let (pos, later) ← splitClock rest'
+      return (pos, some (later.getD readings))
+  | a :: rest => do
+      let (pos, clock) ← splitClock rest
+      return (a :: pos, clock)
+
 /-- Split `--fuel N` off the argument list (anywhere; last wins), keeping the
 positional arguments in order. -/
 private def splitFuel : List String → Except String (List String × Option Nat)
@@ -171,8 +217,8 @@ and map the outcome to the process exit status (docs/memory-model.md
   differential driver must never read it as agreement;
 * `timeout` → 4 (loud likewise).
 -/
-def runScriptMode (m : Module) (fuel : Nat) : IO UInt32 := do
-  match runScript m fuel with
+def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) : IO UInt32 := do
+  match runScriptClock m clock fuel with
   | .ok w () =>
       for line in w.stdout do IO.println line
       return 0
@@ -186,6 +232,38 @@ def runScriptMode (m : Module) (fuel : Nat) : IO UInt32 := do
   | .timeout =>
       IO.eprintln "leanpy-timeout"
       return 4
+
+/-- JSON array of strings (script stdout lines). -/
+def jsonStrArray (xs : List String) : String :=
+  "[" ++ ",".intercalate (xs.map jsonStr) ++ "]"
+
+/-- Canonical one-line JSON form of a SCRIPT outcome, carrying the exit
+status the one-shot `--script` mode would have produced — so the batch
+stream and the process boundary can never disagree about what counts as
+agreement (`exit` 0/1 are outcomes, 3/4 are LOUD). `stdout` is the
+accumulated line list, present exactly when the run reached a world.
+
+`live` is HOW MUCH TOP LEVEL THE LIVE RUN EXECUTED: the length of
+`liveSuffix`, the statements the executor steps through (the G1-faithful
+prefix is folded into `initWorld` instead). A definitions-only module has
+`live = 0` — it ingests, initializes, and finishes silently, which agrees
+with CPython on stdout and exit code but exercises no executor step; a
+survey that did not report this could not tell a real run from a vacuous
+one. -/
+def scriptJson (path : String) (live : Nat) : Run World Unit → String
+  | .ok w () =>
+      "{\"path\":" ++ jsonStr path ++ ",\"status\":\"ok\",\"exit\":0,\"live\":"
+        ++ toString live ++ ",\"stdout\":" ++ jsonStrArray w.stdout ++ "}"
+  | .exn w e =>
+      "{\"path\":" ++ jsonStr path ++ ",\"status\":\"exn\",\"exit\":1,\"exn\":"
+        ++ jsonStr (errName e) ++ ",\"live\":" ++ toString live
+        ++ ",\"stdout\":" ++ jsonStrArray w.stdout ++ "}"
+  | .unsupported msg =>
+      "{\"path\":" ++ jsonStr path ++ ",\"status\":\"unsupported\",\"exit\":3,\"live\":"
+        ++ toString live ++ ",\"msg\":" ++ jsonStr msg ++ "}"
+  | .timeout =>
+      "{\"path\":" ++ jsonStr path ++ ",\"status\":\"timeout\",\"exit\":4,\"live\":"
+        ++ toString live ++ "}"
 
 /-- One parsed job line of `--batch` mode. `clock` is the optional
 CLOCK TRACE (pass 6, docs/memory-model.md §the trace clock): integer
@@ -282,6 +360,86 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
         stdout.flush
       return (if hadError then 1 else 0)
 
+/-- One parsed job line of `--script-batch` mode: a whole PROGRAM to run,
+so there is no function name and no arguments — only the envelope, its
+fuel, and its clock trace. -/
+structure ScriptJob where
+  path : String
+  fuel : Option Nat
+  clock : Option (List Int)
+
+/-- Parse one `--script-batch` jobs-file line. A bare JSON string is
+accepted as shorthand for `{"path": …}` — a survey over a directory is a
+list of paths and nothing else. -/
+def parseScriptJob (line : String) : Except String ScriptJob := do
+  let j ← (Lean.Json.parse line).mapError
+    (fun e => s!"not JSON ({e}): {line}")
+  match j.getStr? with
+  | .ok path => return { path, fuel := Option.none, clock := Option.none }
+  | .error _ =>
+    let path ← ((j.getObjVal? "path").bind (·.getStr?)).mapError
+      (fun _ => s!"script job needs a string \"path\": {line}")
+    let fuel? ← match j.getObjVal? "fuel" with
+      | .error _ => pure Option.none
+      | .ok f =>
+        match f.getNat? with
+        | .ok n => pure (some n)
+        | .error _ => throw s!"\"fuel\" must be a natural number: {line}"
+    let clock? ← match j.getObjVal? "clock" with
+      | .error _ => pure Option.none
+      | .ok c =>
+        match c.getArr? with
+        | .ok arr => do
+          let readings ← arr.mapM fun r =>
+            match r.getInt? with
+            | .ok n => .ok n
+            | .error _ => throw s!"\"clock\" entries must be integers: {line}"
+          pure (some readings.toList)
+        | .error _ => throw s!"\"clock\" must be an array of integers: {line}"
+    return { path, fuel := fuel?, clock := clock? }
+
+/-- `--script-batch` driver: leanpy's SURVEY shape — many whole programs,
+one process, one canonical `scriptJson` line each in job order, flushed as
+it is produced. Envelopes are deliberately NOT cached (each program runs
+once; a corpus sweep must not accumulate every module it has seen).
+Runner-level failures are per-row `runner-error` lines PLUS a nonzero exit
+— LOUD, never absorbed into the stream as agreement. -/
+def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
+  match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
+  | .error e =>
+      IO.eprintln s!"leanmodels-run --script-batch: cannot read '{jobsPath}': {toString e}"
+      return 1
+  | .ok contents =>
+      let stdout ← IO.getStdout
+      let mut hadError := false
+      for line in contents.splitOn "\n" do
+        if line.trim.isEmpty then
+          continue
+        let outcome : Except String (Module × ScriptJob) ← do
+          match parseScriptJob line with
+          | .error e => pure (.error e)
+          | .ok job =>
+            match ← (IO.FS.readFile ⟨job.path⟩).toBaseIO with
+            | .error e => pure (.error s!"cannot read '{job.path}': {toString e}")
+            | .ok raw =>
+              match parseEnvelopeString raw with
+              | .error e => pure (.error s!"'{job.path}' is not a valid envelope: {e}")
+              | .ok envl =>
+                if envl.language == "python" then
+                  pure (.ok (envl.module, job))
+                else
+                  pure (.error s!"'{job.path}' has language '{envl.language}', expected 'python'")
+        match outcome with
+        | .error e =>
+            hadError := true
+            IO.eprintln s!"leanmodels-run --script-batch: {e}"
+            stdout.putStrLn ("{\"status\":\"runner-error\",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
+        | .ok (m, job) =>
+            stdout.putStrLn (scriptJson job.path (liveSuffix m.topLevel.toList).length
+              (runScriptClock m (job.clock.getD []) (job.fuel.getD defaultFuel)))
+        stdout.flush
+      return (if hadError then 1 else 0)
+
 def main (argv : List String) : IO UInt32 := do
   match argv with
   | "--batch" :: rest =>
@@ -295,18 +453,30 @@ def main (argv : List String) : IO UInt32 := do
             IO.eprintln "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N]"
             return 2
       runBatchMode jobsPath (fuel?.getD 10000)
+  | "--script-batch" :: rest =>
+    match splitFuel rest with
+    | .error e =>
+        IO.eprintln s!"leanmodels-run --script-batch: {e}"
+        return 2
+    | .ok (positional, fuel?) =>
+      match positional with
+      | [jobsPath] => runScriptBatchMode jobsPath (fuel?.getD 1000000)
+      | _ =>
+          IO.eprintln "usage: leanmodels-run --script-batch <jobs.jsonl> [--fuel N]"
+          return 2
   | "--script" :: rest =>
-    -- leanpy v0: `leanmodels-run --script <envelope.json> [--fuel N]`
+    -- leanpy: `leanmodels-run --script <envelope.json> [--fuel N] [--clock i,j]`
     -- (default fuel 1000000: fuel is a depth/iteration bound and concrete
     -- runs cost time proportional to steps, so generosity is free)
-    match splitFuel rest with
+    match splitClock rest >>= fun (rest', clock?) =>
+          (splitFuel rest').map (fun (pos, fuel?) => (pos, fuel?, clock?)) with
     | .error e =>
         IO.eprintln s!"leanmodels-run --script: {e}"
         return 2
-    | .ok (positional, fuel?) =>
+    | .ok (positional, fuel?, clock?) =>
       let some path := (match positional with | [p] => some p | _ => Option.none)
         | do
-            IO.eprintln "usage: leanmodels-run --script <envelope.json> [--fuel N]"
+            IO.eprintln "usage: leanmodels-run --script <envelope.json> [--fuel N] [--clock i,j,k]"
             return 2
       match ← (IO.FS.readFile ⟨path⟩).toBaseIO with
       | .error e =>
@@ -321,7 +491,7 @@ def main (argv : List String) : IO UInt32 := do
             unless envl.language == "python" do
               IO.eprintln s!"leanmodels-run --script: '{path}' has language '{envl.language}', expected 'python'"
               return 1
-            runScriptMode envl.module (fuel?.getD 1000000)
+            runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000)
   | _ =>
   match parseCli argv with
   | .error e =>

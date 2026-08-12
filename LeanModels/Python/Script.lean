@@ -371,15 +371,23 @@ mutual
       else .ok st .next
 end
 
-/-- Run a whole script: boundary checks, then the live suffix from the
-world G1-initialized over the PREFIX VIEW `mPre` — the fold must see
-only the statements the live run skips, never the suffix it is about to
-execute (the poisoning pass is retroactive, so a whole-module fold
-clobbers prefix names the suffix rebinds/stores into: the fib_loop/
-tt_script/list_script regression). `mPre` also threads through the
-executor, so function frames resolve the same prefix globals. The
-decided outcome's world carries the accumulated stdout. -/
-def runScript (m : Module) (fuel : Nat) : Run World Unit :=
+/-- Run a whole script under a SEEDED CLOCK TRACE: boundary checks, then
+the live suffix from the world G1-initialized over the PREFIX VIEW `mPre`
+— the fold must see only the statements the live run skips, never the
+suffix it is about to execute (the poisoning pass is retroactive, so a
+whole-module fold clobbers prefix names the suffix rebinds/stores into:
+the fib_loop/tt_script/list_script regression). `mPre` also threads
+through the executor, so function frames resolve the same prefix globals.
+The decided outcome's world carries the accumulated stdout.
+
+`clock` is the trace `time.time()` consumes in order (pass 6,
+docs/memory-model.md §the trace clock) — the script-mode counterpart of
+`callFunctionClock`. It seeds the world AFTER `initWorld`, exactly as the
+call boundary does: the G1 fold never reads the clock (a module-init
+`time.time()` poisons its binding), so seeding before or after the fold
+is the same world, and seeding after keeps the `runScript = runScriptClock
+m []` equation definitional. -/
+def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
   let suffix := liveSuffix m.topLevel.toList
   if !defsBeforeLive m suffix then
     .unsupported "a function defined after live top-level code is outside leanpy v0 (a live statement could call it before CPython binds it; the ordered ModuleItem representation is the recorded fix)"
@@ -388,11 +396,18 @@ def runScript (m : Module) (fuel : Nat) : Run World Unit :=
   else
     let mPre : Module := { m with topLevel := (g1Prefix m.topLevel.toList).toArray }
     Run.toWorld <|
-      Run.bind (execScriptStmts mPre fuel ⟨initWorld mPre, []⟩ suffix) fun st flow =>
+      Run.bind (execScriptStmts mPre fuel ⟨{ initWorld mPre with clock := clock }, []⟩ suffix)
+        fun st flow =>
       match flow with
       | .next => .ok st ()
       | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
       | .brk => .unsupported "'break' at module top level (CPython: SyntaxError at compile time)"
       | .cont => .unsupported "'continue' at module top level (CPython: SyntaxError at compile time)"
+
+/-- Run a whole script on the EMPTY trace (`runScriptClock` at `[]`): any
+reachable `time.time()` refuses with the loud fuel-independent underrun,
+never a fabricated reading. -/
+def runScript (m : Module) (fuel : Nat) : Run World Unit :=
+  runScriptClock m [] fuel
 
 end LeanModels.Python

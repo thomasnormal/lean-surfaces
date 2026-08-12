@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""leanpy — run a whole Python FILE under the Lean semantics.
+
+    tools/leanpy <file.py> [--fuel N] [--clock i,j,k] [--compare]
+                 [--cache DIR] [--build] [--keep-envelope]
+
+The script runner the whole Python tier exists to be pointed at: it
+extracts an ARBITRARY file to an envelope (extractors/python/extract.py
+--out, so nothing is written next to the source), then executes the
+module's top level under the verified interpreter
+(``leanmodels-run --script``, LeanModels/Python/Script.lean) with stdout
+and exit status forwarded verbatim. Used bare it is a drop-in for
+``python3 file.py`` on the supported fragment:
+
+    $ tools/leanpy harness/scripts/hello.py
+    the answer is 42
+
+EXIT STATUS (the runner boundary, docs/memory-model.md §effects):
+
+    0  the program ran to completion              (stdout on stdout)
+    1  it raised                                  (class name on stderr)
+    3  LOUD REFUSAL: a construct outside the tier (reason on stderr)
+    4  LOUD: fuel exhausted
+    5  --compare only: the model completed and DISAGREED with CPython
+    2  usage error / extraction failure (syntax error, unreadable file)
+
+3 and 4 are never agreement — leanpy answers loudly or not at all; it
+never guesses a value for a construct it does not model.
+
+``--compare`` additionally runs the same file under CPython
+(``$LEANPY_CPYTHON`` or ``python3``) and reports MATCH / LOUD / MISMATCH
+on stderr, comparing stdout AND exit code. This is the whole-program
+differential — the typed-call version is ``tools/lean-python --compare``.
+
+``--clock i,j,k`` seeds the CLOCK TRACE ``time.time()`` consumes in order
+(docs/memory-model.md §the trace clock). Without it the trace is empty
+and the first reading refuses loudly, never fabricates a time.
+
+Envelopes are cached by source sha256 under ``--cache`` (default
+``$TMPDIR/leanpy-cache``), so re-running an unchanged file skips
+extraction. The runner is the built binary
+``.lake/build/bin/leanmodels-run`` (a ``lake`` invocation costs ~9 s of
+olean replay per run); if any Lean source is newer than that binary,
+leanpy says so LOUDLY on stderr rather than reporting a stale answer —
+pass ``--build`` to rebuild first.
+
+Python 3.9 compatible.
+"""
+
+import argparse
+import hashlib
+import os
+import subprocess
+import sys
+import tempfile
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BIN = os.path.join(REPO_ROOT, ".lake", "build", "bin", "leanmodels-run")
+
+
+def default_cache():
+    return os.path.join(tempfile.gettempdir(), "leanpy-cache")
+
+
+def newest_lean_source():
+    """(mtime, path) of the newest Lean source the runner is built from."""
+    newest = (0.0, None)
+    roots = [os.path.join(REPO_ROOT, "LeanModels"), os.path.join(REPO_ROOT, "Main.lean")]
+    for root in roots:
+        if os.path.isfile(root):
+            cands = [root]
+        else:
+            cands = [os.path.join(d, f) for d, _, fs in os.walk(root)
+                     for f in fs if f.endswith(".lean")]
+        for path in cands:
+            try:
+                m = os.path.getmtime(path)
+            except OSError:
+                continue
+            if m > newest[0]:
+                newest = (m, path)
+    return newest
+
+
+def runner_command(build, quiet=False):
+    """The runner argv, plus a loud staleness warning when the built binary
+    is older than a Lean source (never a silently stale answer)."""
+    if build:
+        rc = subprocess.run(["lake", "build", "leanmodels-run"], cwd=REPO_ROOT).returncode
+        if rc != 0:
+            sys.stderr.write("leanpy: `lake build leanmodels-run` failed\n")
+            return None
+    if not os.path.exists(BIN):
+        return ["lake", "exe", "leanmodels-run"]
+    mtime, path = newest_lean_source()
+    if path is not None and mtime > os.path.getmtime(BIN) and not quiet:
+        sys.stderr.write(
+            "leanpy: WARNING the runner binary is older than %s — "
+            "rerun with --build for an answer from the current semantics\n"
+            % os.path.relpath(path, REPO_ROOT))
+    return [BIN]
+
+
+def envelope_for(src, cache_dir, keep=False):
+    """Extract ``src`` to a cached envelope; return its path, or None after
+    reporting the extractor's own loud error (syntax error, non-UTF-8)."""
+    try:
+        with open(src, "rb") as f:
+            data = f.read()
+    except OSError as e:
+        sys.stderr.write("leanpy: cannot read %s: %s\n" % (src, e))
+        return None
+    digest = hashlib.sha256(data).hexdigest()[:16]
+    stem = os.path.splitext(os.path.basename(src))[0]
+    out = os.path.join(cache_dir, "%s-%s.json" % (stem, digest))
+    if os.path.exists(out) and not keep:
+        return out
+    ext = subprocess.run(
+        [sys.executable, os.path.join(REPO_ROOT, "extractors/python/extract.py"),
+         src, "--out", out],
+        cwd=REPO_ROOT, capture_output=True, text=True)
+    if ext.returncode != 0:
+        sys.stderr.write(ext.stderr or ext.stdout)
+        return None
+    return out
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="leanpy", add_help=True,
+                                     description="run a Python file under the Lean semantics")
+    parser.add_argument("file", metavar="file.py")
+    parser.add_argument("--fuel", type=int, default=None)
+    parser.add_argument("--clock", default=None,
+                        help="comma-separated integer time.time() readings")
+    parser.add_argument("--compare", action="store_true",
+                        help="also run under CPython and report agreement")
+    parser.add_argument("--cache", default=None, help="envelope cache dir")
+    parser.add_argument("--build", action="store_true", help="lake build the runner first")
+    parser.add_argument("--keep-envelope", action="store_true",
+                        help="re-extract even when the cached envelope is current")
+    opts = parser.parse_args(argv)
+
+    cache_dir = opts.cache or default_cache()
+    os.makedirs(cache_dir, exist_ok=True)
+
+    envelope = envelope_for(opts.file, cache_dir, opts.keep_envelope)
+    if envelope is None:
+        return 2
+    runner = runner_command(opts.build)
+    if runner is None:
+        return 2
+
+    cmd = runner + ["--script", envelope]
+    if opts.fuel is not None:
+        cmd += ["--fuel", str(opts.fuel)]
+    if opts.clock is not None:
+        cmd += ["--clock", opts.clock]
+
+    if not opts.compare:
+        return subprocess.run(cmd, cwd=REPO_ROOT).returncode
+
+    lean = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
+    sys.stdout.write(lean.stdout)
+    sys.stderr.write(lean.stderr)
+    cpython = os.environ.get("LEANPY_CPYTHON", "python3")
+    ref = subprocess.run([cpython, os.path.abspath(opts.file)],
+                         cwd=REPO_ROOT, capture_output=True, text=True)
+    if lean.returncode in (3, 4):
+        sys.stderr.write("leanpy: LOUD (cpython: exit %d, %d stdout bytes)\n"
+                         % (ref.returncode, len(ref.stdout)))
+        return lean.returncode
+    if lean.stdout == ref.stdout and lean.returncode == ref.returncode:
+        sys.stderr.write("leanpy: MATCH cpython (exit %d)\n" % ref.returncode)
+        return lean.returncode
+    sys.stderr.write("leanpy: MISMATCH\n  lean:    exit %d, stdout %r\n"
+                     "  cpython: exit %d, stdout %r\n"
+                     % (lean.returncode, lean.stdout, ref.returncode, ref.stdout))
+    return 5
+
+
+if __name__ == "__main__":
+    sys.exit(main())

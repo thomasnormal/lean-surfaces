@@ -1,0 +1,14 @@
+[
+  {
+    "name": "repo-scripts",
+    "paths": ["harness/scripts/*.py"]
+  },
+  {
+    "name": "examples",
+    "paths": ["Examples/python/*/*.py"]
+  },
+  {
+    "name": "cpython-lib-test",
+    "paths": ["vendor/cpython-3.9-lib-test/*.py"]
+  }
+]

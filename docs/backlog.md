@@ -73,6 +73,71 @@ post-H4). A single-call convenience driver (`tools/lean-python`: extract
 → `leanmodels-run`, with an optional one-off CPython comparison) also
 exists.
 
+**v1 — THE BINARY AND THE METRIC — BUILT (2026-08-12).** The two things
+the direction actually asked for, both landed:
+
+* `tools/leanpy <file.py>` is the binary. It extracts an ARBITRARY file
+  (`extract.py --out`, envelope cached by source sha256 under
+  `$TMPDIR/leanpy-cache`, nothing written next to the source — so a
+  read-only tree or someone else's project can be run), then executes the
+  module's whole top level under the interpreter with stdout and exit
+  status forwarded verbatim: a drop-in for `python3 file.py` on the
+  supported fragment. Exit codes 0/1/3/4 as v0, plus 5 for a `--compare`
+  disagreement and 2 for a usage/extraction failure; `--clock i,j,k`
+  seeds the trace clock (this CLOSES the pass-6 script-mode trace-flag
+  deferral — `runScript` is now `runScriptClock m []`). It uses the built
+  `.lake/build/bin/leanmodels-run` (a `lake` invocation costs ~9 s of
+  olean replay) and says so LOUDLY when that binary is older than a Lean
+  source, rather than reporting a stale answer.
+* `harness/leanpy_survey.py` is the metric. Point it at a corpus file of
+  named groups (`harness/leanpy_corpus.json`) or at paths/globs, and
+  every file lands in exactly one of MATCH / DIVERGE / REFUSE / TIMEOUT /
+  ORACLE / EXTRACT / HUNG. The model side is ONE
+  `leanmodels-run --script-batch` process for the whole corpus (the
+  standing batch rule: 167 files cost 1.5 s of model time, not 167 lake
+  startups); the oracle side defaults to the PINNED `python3.9` when
+  installed, and its version is printed with every report, because
+  surveying against a newer python3 would report version drift as model
+  divergence. Two telemetry layers, answering different questions: the
+  DYNAMIC refusal message (what stopped real programs first) and the
+  STATIC `Unsupported`-node census by `py_kind` (what the files contain
+  — the ladder's priority queue). Every run also reports `live`, the
+  number of live-suffix statements the executor was given, so a
+  definitions-only agreement is never dressed up as a real run.
+
+MEASURED, 2026-08-12, oracle CPython 3.9.19:
+
+* in-repo corpus (`harness/leanpy_corpus.json` — 20 corpus scripts, 51
+  Examples sources, the 8 vendored `Lib/test` files): **79 files, 57
+  MATCH (72.2%), 22 REFUSE, 0 DIVERGE**. Of the 57, **15 executed live
+  top-level statements and printed CPython-identical output**; the other
+  42 are definitions-only modules (`live = 0`) that ingest, module-
+  initialize and finish silently.
+* THE WILD SWEEP — 167 real CPython 3.9 stdlib modules
+  (`lib/python3.9/*.py`, minus a seven-name safety list whose top level
+  opens a browser or a window): **9 MATCH (5.4%), 158 REFUSE, 0
+  DIVERGE** — and all 9 are `live = 0`, so the honest statement is that
+  ZERO stdlib files execute live top-level code under the model today,
+  nine ingest and initialize, and nothing lies. Static census over the
+  same 167: 275058/279327 = 98.5% of extracted AST nodes are in tier (an
+  UPPER BOUND — an `Unsupported` node is a leaf and hides its subtree).
+
+WHAT THE TELEMETRY DECIDES (the point of building it): the top dynamic
+blocker is not a language construct at all — it is leanpy's OWN
+`defsBeforeLive` boundary, **146 of the 158 stdlib refusals and 17 of the
+22 in-repo refusals**. The recorded fix, the ordered `ModuleItem`
+representation, is therefore no longer one deferred idea among many: it
+gates 92% / 77% of everything that refuses, and it is the next leanpy
+milestone. Behind it the static ranking gives the ladder: `Import` (886
+nodes / 142 files), `Constant:bytes`, `ImportFrom`, `With`,
+`BinOp:BitAnd`, `ListComp`, `Constant:float`, `JoinedStr`, `Assert`,
+`Starred`, `Delete`, `Lambda`.
+
+The stdlib sweep is deliberately NOT in the default corpus file: running
+arbitrary stdlib top level under the oracle has side effects (a browser,
+a window, a server), so it stays an explicitly invoked measurement with a
+`--exclude` safety list, not something a routine harness run triggers.
+
 ### CPython's own test suite as the official bench (owner-directed, 2026-08-07)
 
 Adopt CPython's `Lib/test` as `leanpy`'s official correctness bench: there

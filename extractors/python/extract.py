@@ -5,6 +5,7 @@ Lean companion-file generator for the lean_models project.
 Usage (run from the repo root):
 
     python3 extractors/python/extract.py <file.py> [more.py ...] [--companion-dir DIR]
+    python3 extractors/python/extract.py <file.py> --out DIR_OR_FILE.json
 
 For each source file ``foo.py`` this writes:
 
@@ -19,6 +20,15 @@ For each source file ``foo.py`` this writes:
     least one ``# lean[`` block. A pure source (no blocks — the three-file
     per-example layout, where spec.lean and proof.lean are hand-written)
     gets an envelope and nothing else.
+
+``--out`` redirects the envelope (a directory, or an explicit ``.json``
+path) instead of writing it next to the source — how ``tools/leanpy``
+ingests ARBITRARY files it must not write into (a read-only tree, someone
+else's project, the vendored CPython corpus). ``source_file`` still records
+the real source path. A stem that is not a Python identifier is then
+allowed too (the identifier rule exists for the generated companion's
+name); a source with ``# lean[`` blocks still needs a valid stem, since a
+companion is still generated.
 
 Guarantees:
   * Never fails on syntactically valid Python — unknown constructs become
@@ -1051,9 +1061,12 @@ def rel_posix(path):
     return os.path.normpath(path).replace(os.sep, "/")
 
 
-def process_file(source_path, companion_dir):
+def process_file(source_path, companion_dir, out=None):
+    """Extract one source. ``out`` (leanpy's arbitrary-file mode) redirects
+    the envelope to a directory or an explicit ``.json`` path; without it the
+    envelope lands next to the source, as every in-tree example expects."""
     stem = os.path.splitext(os.path.basename(source_path))[0]
-    if not STEM_RE.match(stem):
+    if out is None and not STEM_RE.match(stem):
         raise ExtractError(
             "%s: stem %r is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$)"
             % (source_path, stem)
@@ -1093,7 +1106,15 @@ def process_file(source_path, companion_dir):
         "lean_blocks": blocks,
     }
 
-    json_path = os.path.splitext(source_path)[0] + ".json"
+    if out is None:
+        json_path = os.path.splitext(source_path)[0] + ".json"
+    elif out.endswith(".json"):
+        json_path = out
+    else:
+        json_path = os.path.join(out, stem + ".json")
+    parent = os.path.dirname(json_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(json_path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(envelope, f, indent=2)
         f.write("\n")
@@ -1103,6 +1124,11 @@ def process_file(source_path, companion_dir):
         # spec/proof .lean files are hand-written siblings, never generated.
         return
 
+    if not STEM_RE.match(stem):
+        raise ExtractError(
+            "%s: stem %r is not a valid identifier (must match ^[A-Za-z_][A-Za-z0-9_]*$), "
+            "so the '# lean[' blocks have no companion name" % (source_path, stem)
+        )
     if companion_dir is None:
         # Default: the companion lives next to its source (per-example
         # directory layout — Examples/python/sum_to/sum_to.py → Examples/python/sum_to/).
@@ -1129,11 +1155,24 @@ def main(argv=None):
         help="directory for generated companion .lean files "
         "(default: the source file's own directory)",
     )
+    parser.add_argument(
+        "--out",
+        default=None,
+        metavar="DIR_OR_FILE.json",
+        help="write the envelope here instead of next to the source "
+        "(leanpy's arbitrary-file mode); an explicit .json path is allowed "
+        "only with a single source",
+    )
     args = parser.parse_args(argv)
+
+    if args.out is not None and args.out.endswith(".json") and len(args.sources) > 1:
+        print("error: --out <file.json> takes a single source (got %d)" % len(args.sources),
+              file=sys.stderr)
+        return 1
 
     try:
         for src in args.sources:
-            process_file(src, args.companion_dir)
+            process_file(src, args.companion_dir, args.out)
     except ExtractError as e:
         print("error: %s" % e, file=sys.stderr)
         return 1

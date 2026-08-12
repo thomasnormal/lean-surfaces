@@ -20,6 +20,10 @@ maybe() { # maybe <name> <required-file> <command...>
 
 step  "lake-build"      lake build
 step  "py-harness"      python3 harness/diff_test.py --no-build
+# leanpy: whole PROGRAMS against CPython. Fails only on a DIVERGENCE (the
+# model ran a file and disagreed) — a loud refusal is a result, and the
+# completeness percentage it prints is telemetry, not a gate.
+maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.py
 step  "extractor-tests" python3 extractors/python/test_extract.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \

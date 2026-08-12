@@ -5,8 +5,8 @@
     "name": "cpython-ast",
     "version": "3.14.5"
   },
-  "source_file": "harness/scripts/suffix_rebind_read.py",
-  "source_sha256": "bd1cbc2f617688c5a42c6ae00512cefdadc507d68b5bce93314b7da2f5d84b17",
+  "source_file": "harness/scripts/live_rebind_read.py",
+  "source_sha256": "785451560dcfe879cc1bb58d663cb89d14e2055569cf60ebd94b554b5169dafa",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,38 +15,38 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 5,
-          "end_col_offset": 75
+          "end_lineno": 11,
+          "end_col_offset": 3
         },
         "value": {
           "kind": "Constant",
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 5,
-            "end_col_offset": 75
+            "end_lineno": 11,
+            "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "Refusal row (the stale-table hazard): the live suffix REBINDS a\nprefix-bound module global a function body reads. CPython makes `z = z + 41`\na module global, so readz() answers 42; leanpy's suffix bindings land in\nthe script's locals, invisible to function frames, so running this would\nanswer a stale 1 \u2014 `suffixConsistent` refuses the whole script loudly."
+            "value": "leanpy corpus: LIVE TOP-LEVEL CODE REBINDS A GLOBAL A FUNCTION READS \u2014\na payoff row of THE ONE PIPELINE (docs/memory-model.md \u00a7the one pipeline).\n\n`z = z + 41` makes `z` a module global in CPython, so `readz()` answers 42\nthe second time. Under the old prefix/suffix split the fold owned `z` and\nthe live run bound it in the script's LOCALS, invisible to function\nframes, so the model would have answered a stale 1 \u2014 `suffixConsistent`\nrefused the whole file rather than say it. One pipeline, one store: the\ntop-level frame's locals ARE the module globals, so the call reads what\nthe statement wrote.\n"
           }
         }
       },
       {
         "kind": "Assign",
         "span": {
-          "lineno": 7,
+          "lineno": 13,
           "col_offset": 0,
-          "end_lineno": 7,
+          "end_lineno": 13,
           "end_col_offset": 5
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 7,
+              "lineno": 13,
               "col_offset": 0,
-              "end_lineno": 7,
+              "end_lineno": 13,
               "end_col_offset": 1
             },
             "id": "z"
@@ -55,9 +55,9 @@
         "value": {
           "kind": "Constant",
           "span": {
-            "lineno": 7,
+            "lineno": 13,
             "col_offset": 4,
-            "end_lineno": 7,
+            "end_lineno": 13,
             "end_col_offset": 5
           },
           "value": {
@@ -69,9 +69,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 10,
+          "lineno": 16,
           "col_offset": 0,
-          "end_lineno": 11,
+          "end_lineno": 17,
           "end_col_offset": 12
         },
         "name": "readz",
@@ -82,17 +82,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 11,
+              "lineno": 17,
               "col_offset": 4,
-              "end_lineno": 11,
+              "end_lineno": 17,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 11,
+                "lineno": 17,
                 "col_offset": 11,
-                "end_lineno": 11,
+                "end_lineno": 17,
                 "end_col_offset": 12
               },
               "id": "z"
@@ -103,25 +103,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 14,
+          "lineno": 20,
           "col_offset": 0,
-          "end_lineno": 14,
+          "end_lineno": 20,
           "end_col_offset": 14
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 14,
+            "lineno": 20,
             "col_offset": 0,
-            "end_lineno": 14,
+            "end_lineno": 20,
             "end_col_offset": 14
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 14,
+              "lineno": 20,
               "col_offset": 0,
-              "end_lineno": 14,
+              "end_lineno": 20,
               "end_col_offset": 5
             },
             "id": "print"
@@ -130,17 +130,17 @@
             {
               "kind": "Call",
               "span": {
-                "lineno": 14,
+                "lineno": 20,
                 "col_offset": 6,
-                "end_lineno": 14,
+                "end_lineno": 20,
                 "end_col_offset": 13
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 14,
+                  "lineno": 20,
                   "col_offset": 6,
-                  "end_lineno": 14,
+                  "end_lineno": 20,
                   "end_col_offset": 11
                 },
                 "id": "readz"
@@ -157,18 +157,18 @@
       {
         "kind": "Assign",
         "span": {
-          "lineno": 15,
+          "lineno": 21,
           "col_offset": 0,
-          "end_lineno": 15,
+          "end_lineno": 21,
           "end_col_offset": 10
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 15,
+              "lineno": 21,
               "col_offset": 0,
-              "end_lineno": 15,
+              "end_lineno": 21,
               "end_col_offset": 1
             },
             "id": "z"
@@ -177,17 +177,17 @@
         "value": {
           "kind": "BinOp",
           "span": {
-            "lineno": 15,
+            "lineno": 21,
             "col_offset": 4,
-            "end_lineno": 15,
+            "end_lineno": 21,
             "end_col_offset": 10
           },
           "left": {
             "kind": "Name",
             "span": {
-              "lineno": 15,
+              "lineno": 21,
               "col_offset": 4,
-              "end_lineno": 15,
+              "end_lineno": 21,
               "end_col_offset": 5
             },
             "id": "z"
@@ -196,9 +196,9 @@
           "right": {
             "kind": "Constant",
             "span": {
-              "lineno": 15,
+              "lineno": 21,
               "col_offset": 8,
-              "end_lineno": 15,
+              "end_lineno": 21,
               "end_col_offset": 10
             },
             "value": {
@@ -211,25 +211,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 16,
+          "lineno": 22,
           "col_offset": 0,
-          "end_lineno": 16,
+          "end_lineno": 22,
           "end_col_offset": 14
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 16,
+            "lineno": 22,
             "col_offset": 0,
-            "end_lineno": 16,
+            "end_lineno": 22,
             "end_col_offset": 14
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 16,
+              "lineno": 22,
               "col_offset": 0,
-              "end_lineno": 16,
+              "end_lineno": 22,
               "end_col_offset": 5
             },
             "id": "print"
@@ -238,17 +238,17 @@
             {
               "kind": "Call",
               "span": {
-                "lineno": 16,
+                "lineno": 22,
                 "col_offset": 6,
-                "end_lineno": 16,
+                "end_lineno": 22,
                 "end_col_offset": 13
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 16,
+                  "lineno": 22,
                   "col_offset": 6,
-                  "end_lineno": 16,
+                  "end_lineno": 22,
                   "end_col_offset": 11
                 },
                 "id": "readz"

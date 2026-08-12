@@ -2002,7 +2002,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               (.ite .unsupported (.ite .unsupported ?_))))
             cases Env.lookup st.world.globals id with
             | some v => exact .okF rfl _
-            | none => exact .ite .exn .unsupported
+            -- the unmodelled-CPython-builtin refusal (2026-08-13) sits in
+            -- front of the analysable/NameError fork
+            | none => exact .ite .unsupported (.ite .exn .unsupported)
       | binOp l op r _ =>
         simp only [Expr.heapFree, Bool.and_eq_true] at hfree
         simp only [evalExpr]
@@ -2311,7 +2313,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                           -- (funs + top-level def-freedom, both from hm)
                           -- kills the closure dispatch
                           cases Env.lookup st.world.globals fname with
-                          | none => exact .ite .exn .unsupported
+                          | none => exact .ite .unsupported (.ite .exn .unsupported)
                           | some v =>
                             cases v <;>
                               first

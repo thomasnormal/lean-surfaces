@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "harness/scripts/init_raise_script.py",
-  "source_sha256": "d2ee30dee3dfd40e500201ccacc73afea29c0ace9471785e5c3b92ba5bed46b8",
+  "source_sha256": "02b10146ebf4548782e30bb200ca9c38e0697363edc827d13a3419c0bb66aa99",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,7 +15,7 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 7,
+          "end_lineno": 12,
           "end_col_offset": 3
         },
         "value": {
@@ -23,30 +23,30 @@
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 7,
+            "end_lineno": 12,
             "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: the module-init rollback with an EXCEPTION.\n\nCPython dies at `x = 1 // 0` with ZeroDivisionError and exits 1, having\nprinted nothing. The fold attempted the statement, the attempt raised, and\nthe rollback poisoned `x` \u2014 so leanpy used to print \"done\" and exit 0, the\nworst kind of answer. `initNothingSkipped` refuses the program instead.\n"
+            "value": "leanpy corpus: A TOP-LEVEL STATEMENT THAT RAISES \u2014 a payoff row of THE\nONE PIPELINE (docs/memory-model.md \u00a7the one pipeline).\n\nCPython dies at `x = 1 // 0` with ZeroDivisionError and exits 1, having\nprinted nothing. Two pipelines ago the G1 fold ATTEMPTED this statement,\nthe attempt raised, and the rollback swallowed it \u2014 leanpy printed \"done\"\nand exited 0, the worst kind of answer; `initNothingSkipped` then refused\nthe program instead. With one pipeline there is no fold and no rollback:\nthe statement executes, the exception propagates out of the top level, and\nthe runner boundary maps it to exit 1 with the class name \u2014 CPython's own\nanswer.\n"
           }
         }
       },
       {
         "kind": "Assign",
         "span": {
-          "lineno": 8,
+          "lineno": 13,
           "col_offset": 0,
-          "end_lineno": 8,
+          "end_lineno": 13,
           "end_col_offset": 10
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 8,
+              "lineno": 13,
               "col_offset": 0,
-              "end_lineno": 8,
+              "end_lineno": 13,
               "end_col_offset": 1
             },
             "id": "x"
@@ -55,17 +55,17 @@
         "value": {
           "kind": "BinOp",
           "span": {
-            "lineno": 8,
+            "lineno": 13,
             "col_offset": 4,
-            "end_lineno": 8,
+            "end_lineno": 13,
             "end_col_offset": 10
           },
           "left": {
             "kind": "Constant",
             "span": {
-              "lineno": 8,
+              "lineno": 13,
               "col_offset": 4,
-              "end_lineno": 8,
+              "end_lineno": 13,
               "end_col_offset": 5
             },
             "value": {
@@ -77,9 +77,9 @@
           "right": {
             "kind": "Constant",
             "span": {
-              "lineno": 8,
+              "lineno": 13,
               "col_offset": 9,
-              "end_lineno": 8,
+              "end_lineno": 13,
               "end_col_offset": 10
             },
             "value": {
@@ -92,25 +92,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 10,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 10,
+          "end_lineno": 15,
           "end_col_offset": 13
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 10,
+            "lineno": 15,
             "col_offset": 0,
-            "end_lineno": 10,
+            "end_lineno": 15,
             "end_col_offset": 13
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 10,
+              "lineno": 15,
               "col_offset": 0,
-              "end_lineno": 10,
+              "end_lineno": 15,
               "end_col_offset": 5
             },
             "id": "print"
@@ -119,9 +119,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 10,
+                "lineno": 15,
                 "col_offset": 6,
-                "end_lineno": 10,
+                "end_lineno": 15,
                 "end_col_offset": 12
               },
               "value": {

@@ -177,11 +177,33 @@ def run_cpython(cpython, path, timeout):
             proc = subprocess.run([cpython, os.path.abspath(path)], cwd=REPO_ROOT,
                                   stdin=devnull, capture_output=True, text=True,
                                   timeout=timeout)
-        return proc.stdout, proc.returncode, None
+        return proc.stdout, proc.returncode, proc.stderr, None
     except subprocess.TimeoutExpired:
-        return None, None, "oracle timeout after %gs" % timeout
+        return None, None, None, "oracle timeout after %gs" % timeout
     except (OSError, UnicodeDecodeError) as e:
-        return None, None, "oracle failed: %s" % e
+        return None, None, None, "oracle failed: %s" % e
+
+
+TRACEBACK_CLASS = re.compile(r"^(?:[A-Za-z_][\w.]*\.)?([A-Za-z_]\w*)(?::.*)?$")
+
+
+def cpython_exc_class(stderr):
+    """The exception CLASS of an oracle run that died, read off the last
+    traceback line (`ModuleNotFoundError: No module named 'x'` -> the name;
+    a class defined in the script prints qualified, `__main__.Stop`, and the
+    last dotted component is the name the model reports).
+
+    Without this the comparison is stdout + exit code only, and CPython maps
+    EVERY uncaught exception to exit 1 — so two different exceptions look
+    identical. `None` = unreadable, which the caller must report, never pass.
+    """
+    for line in reversed((stderr or "").splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        m = TRACEBACK_CLASS.match(line)
+        return m.group(1) if m else None
+    return None
 
 
 def default_oracle():
@@ -299,11 +321,23 @@ def main(argv=None):
             rec["detail"] = "exit %d, %d stdout lines (no oracle)" % (
                 row["exit"], len(row.get("stdout", [])))
             continue
-        out, code, err = run_cpython(opts.cpython, rec["file"], opts.cpython_timeout)
+        out, code, cerr, err = run_cpython(opts.cpython, rec["file"], opts.cpython_timeout)
         if err is not None:
             rec["verdict"] = "ORACLE"
             rec["detail"] = err
             continue
+        # An `exn` outcome must agree on the exception CLASS as well: CPython
+        # exits 1 for every uncaught exception, so stdout + exit code alone
+        # cannot tell a ZeroDivisionError from a NameError.
+        if row["status"] == "exn":
+            oracle_exc = cpython_exc_class(cerr)
+            if oracle_exc != row.get("exn"):
+                rec["verdict"] = "DIVERGE"
+                rec["detail"] = ("lean raised %s | cpython raised %s"
+                                 % (row.get("exn"),
+                                    oracle_exc if oracle_exc else
+                                    "an exception whose class could not be read"))
+                continue
         if out == lean_stdout(row) and code == row["exit"]:
             rec["verdict"] = "MATCH"
             rec["stdout_bytes"] = len(out)

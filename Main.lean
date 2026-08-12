@@ -68,7 +68,7 @@ exactly one line
 * `{"path":…,"status":"timeout","exit":4,"live":N}`
 
 carrying the SAME exit status the one-shot mode would have produced, plus
-`live` — the number of live-suffix statements the executor was given, so a
+`live` — the number of top-level statements the executor was given, so a
 definitions-only agreement (`live: 0`) is never counted as a real run.
 Runner-level failures are `{"status":"runner-error",…}` rows plus a
 nonzero exit, exactly as in `--batch`.
@@ -243,13 +243,14 @@ stream and the process boundary can never disagree about what counts as
 agreement (`exit` 0/1 are outcomes, 3/4 are LOUD). `stdout` is the
 accumulated line list, present exactly when the run reached a world.
 
-`live` is HOW MUCH TOP LEVEL THE LIVE RUN EXECUTED: the length of
-`liveSuffix`, the statements the executor steps through (the G1-faithful
-prefix is folded into `initWorld` instead). A definitions-only module has
-`live = 0` — it ingests, initializes, and finishes silently, which agrees
-with CPython on stdout and exit code but exercises no executor step; a
-survey that did not report this could not tell a real run from a vacuous
-one. -/
+`live` is HOW MUCH TOP LEVEL THE LIVE RUN EXECUTED: since THE ONE
+PIPELINE (docs/memory-model.md §the one pipeline) that is the whole top
+level — every statement goes through the script executor, nothing is
+folded into an `initWorld` the run then skips. A definitions-only module
+has `live = 0` — its `def`s and `class`es are ingestion tables, so it
+ingests and finishes silently, which agrees with CPython on stdout and
+exit code but exercises no executor step; a survey that did not report
+this could not tell a real run from a vacuous one. -/
 def scriptJson (path : String) (live : Nat) : Run World Unit → String
   | .ok w () =>
       "{\"path\":" ++ jsonStr path ++ ",\"status\":\"ok\",\"exit\":0,\"live\":"
@@ -442,7 +443,7 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
                 | Option.none => "{\"status\":\"runner-error\"")
               ++ ",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
-            stdout.putStrLn (scriptJson job.path (liveSuffix m.topLevel.toList).length
+            stdout.putStrLn (scriptJson job.path m.topLevel.size
               (runScriptClock m (job.clock.getD []) (job.fuel.getD defaultFuel)))
         stdout.flush
       return (if hadError then 1 else 0)

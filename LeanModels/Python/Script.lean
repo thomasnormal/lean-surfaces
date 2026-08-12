@@ -1,7 +1,7 @@
 import LeanModels.Python.Semantics
 
 /-!
-# `leanpy` v0 — module-level script execution (docs/backlog.md, owner-directed)
+# `leanpy` — module-level script execution (docs/backlog.md, owner-directed)
 
 Run a whole current-tier Python FILE under the Lean semantics: execute the
 module's top level in one world, collecting `print` output into
@@ -11,54 +11,95 @@ exit status; the differential side is `harness/script_corpus.py` (stdout +
 exit code against the pinned CPython 3.9, first-unsupported-construct
 telemetry).
 
-## The consistency architecture (v0)
+## THE ONE PIPELINE (2026-08-12 — docs/memory-model.md §the one pipeline)
 
-`Module` splits functions from `topLevel` and G1 folds the whole top
-level at import time, while a script also EXECUTES it — two views of one
-scope. v0 keeps them provably coherent by splitting the top level at the
-**G1-faithful prefix boundary**:
+Until this pass leanpy ran a program through TWO pipelines: the G1 fold
+built `initWorld` from a *prefix* of the top level, and the script
+executor ran the *suffix*. Every soundness hole the completeness survey
+found was the same shape — the fold's approximation (skip, poison, never
+print) meeting the program surface's demand that every effect be
+observable, in order. Three of them were WRONG ANSWERS rather than
+refusals (a skipped class body, a rolled-back `x = talk()`, a swallowed
+`x = 1 // 0`), each closed by one more guard on top of the split.
 
-* the PREFIX — the leading run of plain `NAME = …` / tuple binds,
-  docstrings, and `pass` — is exactly what the G1 fold executes
-  faithfully into `initWorld` (values, heaps, dict identities). The live
-  run SKIPS it: top-level reads fall through locals to the very objects
-  function bodies resolve, so identity and mutation stay shared.
-* the SUFFIX — everything from the first other statement — runs LIVE
-  (`execStmt`, plus the control shells below), binding into the script's
-  locals. Suffix heap mutations (`tt[k] = v`) act on the shared world and
-  are visible to calls; suffix NAME bindings are visible only at top
-  level, and `suffixConsistent` refuses the script whenever a function
-  body reads a suffix-assigned name, so a call never sees one stale.
+The split is now gone. **A program's top level is executed, statement by
+statement, by this file's executor — all of it — and its bindings are
+written to `World.globals`, the live view that function frames read
+through the poisoned/absent arms.** `initWorld` is never called in script
+mode: nothing is folded, so nothing can be skipped, rolled back, or go
+stale, and `initNothingSkipped`/`suffixConsistent` (and the whole
+prefix/suffix boundary) are deleted rather than tightened.
 
-THE MODULE THE LIVE RUN THREADS IS THE PREFIX VIEW (`runScript`'s
-`mPre`, `topLevel := g1Prefix …`): the G1 fold — dirty-name poisoning
-included — must see ONLY the statements whose effects are claimed by
-`initWorld`, because the suffix is EXECUTED, not folded. Folding the
-whole top level poisoned prefix-bound names the suffix rebinds or
-stores into (`n = n + 2` in a loop, `tt[1] = 11`) although the live run
-replays exactly those statements — the 2026-08-10 corpus regression
-(fib_loop/tt_script/list_script, broken by the dirty-name pass
-6a79764, bisected and fixed the same day). The prefix view is all
-`g1Shape`, so its fold is always `analysable`; a top-level name miss is
-then a FAITHFUL `NameError`, which is sound because suffix bindings are
-visible in the script's locals and every suffix statement whose binding
-set the executor cannot honour refuses loudly before any later read.
+### How a live binding becomes visible to a call
+
+The covenant that keeps world-symbolic theorems provable is that function
+frames resolve module names STATICALLY FIRST (`moduleGlobals`), and that
+table cannot contain execution results. The unification therefore does not
+touch resolution at all — it removes the static table from the picture by
+threading a module VIEW (`scriptView`) whose top level carries no program
+statements:
+
+* `scriptNameBinding` — `__name__ = "__main__"`, the runner-boundary
+  global (`isModuleDunder` fires BEFORE the live-view consult, so this one
+  has to be static);
+* `scriptDefMarker` — an unnameable top-level `def`. `topLevelDefFree` is
+  then false, which is what makes the closure-call arms take their
+  DYNAMIC path: a module-level `lambda` bound by executed code is a live
+  `Obj.closure`, and the heap-free shortcut would answer a fake
+  `'dict' object is not callable` instead of calling it;
+* the module's IMPORT statements verbatim — the benign-import whitelist
+  binds `time` POISONED there, which is both the loud refusal for a bare
+  `time` and the precondition of the trace clock's census
+  (`moduleClockOk`). Nothing else about them is executed.
+
+Every other module global is then statically ABSENT, and that arm already
+consults `World.globals` before deciding: hit → the live value, miss →
+the faithful `NameError` (the view is trivially `analysable`). So
+resolution is SEQUENTIALLY EXACT for free — a name is visible exactly once
+the statement that binds it has run, which is what CPython does and what
+the per-statement prefix views of module-init execution had to be built by
+hand to imitate.
+
+### The publish
+
+`execStmt` binds into frame LOCALS, and CPython runs a module's top level
+in a frame whose locals ARE its globals. After every statement the
+executor re-establishes exactly that identification
+(`publishScriptGlobals`: `World.globals := st.locals`, one shared list,
+no copy). Top-level reads hit the frame, function frames hit the globals,
+and both are the same binding. A name failing `initBindable` (a builtin,
+or a `def`/`class`/namedtuple name — arms that fire BEFORE the live view)
+refuses loudly, never a silently ignored shadow.
+
+Keeping the frame's locals rather than draining them is load-bearing:
+`x += 1` at module level must read the module global, while inside a
+FUNCTION the same statement is a local by CPython's compile-time rule
+(`+=` is a binding, so an unbound one is `UnboundLocalError`, never a
+global read) — which is why `execStmt`'s augmented-assignment arm reads
+locals only. The identification makes module scope come out right through
+that very arm.
+
+The publish is per STATEMENT, so a compound statement the executor
+DELEGATES wholesale to `execStmt` (a `for`, a `try`, a `while … else`)
+holds its inner bindings in the frame until it finishes — invisible to a
+function called from inside it. `scriptFlushCoherent` refuses exactly
+that: no name assigned inside a delegated compound may be a name some
+function body reads. It is the narrow residue of the old
+`suffixConsistent`, which refused this for the WHOLE suffix.
 
 Refusals — every one LOUD, never wrong:
 
-* a function definition whose span does not precede every SUFFIX
-  statement (a live statement could call it before CPython would have
-  bound it);
-* a suffix (nested-)assignment to ANY name some function body reads
-  (`funcGlobalReads`): a prefix-bound name would go stale for calls, and
-  a fresh suffix global would resolve to a fake `NameError` under the
-  prefix view (the ordered `ModuleItem` representation is the recorded
-  fix);
-* a `print` under a live LOCAL binding of `print` (a suffix `print = …`
-  already executed — CPython would call the shadow);
+* a top-level statement mentioning a name the module binds by
+  `def`/`class`/namedtuple LATER (`defsBoundBefore`): CPython raises
+  `NameError` there and the model's definition tables are
+  position-independent;
+* a class whose CREATION does something observable
+  (`classesCreationPure`);
+* a mid-statement binding a function reads (`scriptFlushCoherent`);
+* a top-level rebinding of a builtin/`def`/`class`/namedtuple name;
 * `print` of containers/heap values (repr subtleties), a shadowed
   `print`, `print` in expression position or inside a function body (the
-  effect must thread the mutual block to land there — this v0 keeps the
+  effect must thread the mutual block to land there — this keeps the
   proof-relevant interpreter untouched);
 * top-level `return`/`break`/`continue` (CPython compile-time
   SyntaxErrors the extractor happily ships).
@@ -66,10 +107,12 @@ Refusals — every one LOUD, never wrong:
 The executor is FUELED like the mutual block and lives OUTSIDE it. The
 `while`/`if` arms below are CONTROL SHELLS mirroring `execWhile`/
 `execStmt` exactly (test, `truthyH`, flow routing) so `print` works
-inside top-level loops; leaf statements still run through `execStmt`, so
-the tier is the interpreter's. `for` bodies are delegated wholesale
-(prints inside a top-level `for` are loud — extend the shell when the
-corpus wants it).
+inside top-level loops, and `for k, v in d.items():` gets the shell
+`execStmt` cannot express (the live entries re-read per step, a size
+change the faithful `RuntimeError`) — the one that module-init execution
+used to own. Every other statement runs through `execStmt`, so the tier
+is the interpreter's; a general top-level `for` is still delegated
+(prints inside one are loud — extend the shell when the corpus wants it).
 -/
 
 namespace LeanModels.Python
@@ -214,34 +257,7 @@ def funcGlobalReads (m : Module) (f : FunctionDefn) : List String :=
 def moduleGlobalReads (m : Module) : List String :=
   (m.functions.toList.map (funcGlobalReads m)).flatten
 
-/-! ### The prefix boundary -/
-
-/-- Statement shapes the G1 fold executes FAITHFULLY (while complete):
-plain name/tuple binds, constant expression statements (docstrings), and
-`pass`. -/
-def g1Shape : Stmt → Bool
-  | .assign tgts _ _ =>
-    match tgts.toList with
-    | [.name _ _] => true
-    | [.tuple es _] => (targetNamesG es.toList).isSome
-    | _ => false
-  | .exprStmt (.constant ..) _ => true
-  | .pass _ => true
-  | _ => false
-
-/-- The live SUFFIX: everything from the first non-G1-shape statement. -/
-def liveSuffix : List Stmt → List Stmt
-  | [] => []
-  | s :: rest => if g1Shape s then liveSuffix rest else s :: rest
-
-/-- The G1-faithful PREFIX: the leading run of `g1Shape` statements —
-`liveSuffix`'s complement (`g1Prefix ss ++ liveSuffix ss = ss`). The live
-run folds `initWorld` over THIS list only (`runScript`'s `mPre`): the
-suffix is executed, so folding it too would poison prefix-bound names the
-suffix rebinds or stores into — effects the replay is about to perform. -/
-def g1Prefix : List Stmt → List Stmt
-  | [] => []
-  | s :: rest => if g1Shape s then s :: g1Prefix rest else []
+/-! ### The ordering admission -/
 
 /-- The span of a statement (every constructor carries one last). -/
 def scriptStmtSpan : Stmt → Span
@@ -314,59 +330,57 @@ and a file that rebinds `__name__` itself still wins, since its own
 statement comes later in the fold.
 
 Span line 0 is below every real statement, so the binding cannot disturb
-the ordering admission (which reads `m.topLevel`, not the prefix view).
+the ordering admission (which reads `m.topLevel`, not the script view).
 The other module dunders (`__file__`, `__doc__`, `__spec__`, …) keep the
 loud refusal: only `__name__` has a value the runner boundary fixes. -/
 def scriptNameBinding : Stmt :=
   let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
   .assign #[.name "__name__" sp] (.constant (.str "__main__") sp) sp
 
-/-- Names the BENIGN-IMPORT whitelist binds. The fold binds these POISONED
-by design — the model has no value for `time` — which is a decision, not a
-failed execution, and an import in the whitelist runs nothing observable. -/
-def benignImportNames (m : Module) : List String :=
-  m.topLevel.toList.filterMap fun s =>
+/-! ### The script view (THE ONE PIPELINE — see the header) -/
+
+/-- The unnameable top-level `def` the script view carries so that
+`topLevelDefFree` is FALSE. That flag is the heap-free shortcut in every
+closure-call arm: with it true, a `.ref` reached through the live view
+answers the fake `'dict' object is not callable` instead of dispatching.
+Module-level `lambda`s are exactly such live closures under the one
+pipeline (`padrow = lambda …` in sunfish's padding loop), so the script
+view must always take the DYNAMIC path — which is the faithful one, and
+the guard's purpose (keeping `worldInv` free of arbitrary code) is a
+closed-function concern that script mode does not share.
+
+The leading `<` makes the name unnameable in Python (the synthesized
+genexp precedent), so poisoning it in the fold cannot shadow anything. -/
+def scriptDefMarker : Stmt :=
+  let sp : Span := { lineno := 0, colOffset := 0, endLineno := 0, endColOffset := 0 }
+  .defStmt "<script>" #[] true true false false #[.pass sp] #[] sp
+
+/-- The module's `import` statements, verbatim. The script view keeps
+them so the BENIGN-IMPORT whitelist still binds `time` POISONED (the
+loud refusal for a bare `time`, and the precondition of the trace
+clock's `moduleClockOk` census); the executor skips a whitelisted import
+and refuses any other one loudly. -/
+def scriptImports (m : Module) : List Stmt :=
+  m.topLevel.toList.filter fun s =>
     match s with
-    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
-        (benignImportBinds text).map (·.1)
-    | _ => Option.none
+    | .unsupported "Import" _ _ | .unsupported "ImportFrom" _ _ => true
+    | _ => false
 
-/-- MODULE INIT MUST NOT SILENTLY SKIP A STATEMENT (2026-08-12, found by
-`tools/leanpy`, docs/memory-model.md §module-init execution).
+/-- THE SCRIPT VIEW: the module frames resolve names against while a
+PROGRAM runs. Its top level carries no program statement, so
+`moduleGlobals` values only `__name__` and every module global is
+statically ABSENT — and that arm consults `World.globals`, the live view
+the executor writes, before deciding the faithful `NameError`. Sequential
+visibility is then exact by construction (a name resolves once its
+statement has run), which is what the module-init pipeline's
+per-statement prefix views had to imitate by hand.
 
-`initFoldLive`'s last arm ROLLS BACK a top-level statement it could not
-execute and POISONS the names it may have bound. For the closed FUNCTION
-surface that is exactly right: nothing was observed, and any later READ of
-a poisoned name refuses loudly. For a whole PROGRAM it is not, because the
-statement's own effect is observable — leanpy answered `done` for
-
-    def talk():
-        print("side effect")
-        return 1
-    x = talk()
-    print("done")
-
-where CPython prints `side effect` first (the in-function `print` refusal
-aborted the attempt and the output vanished), and answered `done`/exit 0
-for `x = 1 // 0`, where CPython exits 1 having printed nothing.
-
-A rolled-back statement is detectable without re-running the fold: its
-dirty names are poisoned in the STATIC table AND, because the rollback
-poisons the live accumulator too, absent from the live view
-(`resolvedG` drops poisoned entries). A statement the live pipeline
-EXECUTED leaves its value there instead. So: every statically-poisoned
-name must either carry a live value or be a benign import.
-
-KNOWN RESIDUE (recorded, not silently accepted): a failed statement whose
-name a LATER top-level statement successfully rebinds hides behind that
-later value. Closing it exactly needs a fold-status signal from
-`initFoldLive` itself — the recorded next step; this guard catches the
-shape leanpy actually found and never claims more. -/
-def initNothingSkipped (m : Module) : Bool :=
-  let benign := benignImportNames m
-  let live := (initWorld m).globals
-  (moduleGlobals m).1.all fun nv =>
-    nv.2.isSome || benign.contains nv.1 || (Env.lookup live nv.1).isSome
+`m.functions`/`m.classes`/`m.namedtuples` are UNTOUCHED: definitions stay
+position-independent tables and `defsBoundBefore` is what makes that
+agree with CPython's sequential binding. -/
+def scriptView (m : Module) : Module :=
+  { m with topLevel :=
+      (scriptNameBinding :: scriptDefMarker :: scriptImports m).toArray }
 
 /-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
 CPython evaluates a class's bases and runs its body AT the `class`
@@ -384,89 +398,209 @@ class-level `global`, is already tracked by `ClassDefn.hasGlobal`. -/
 def classesCreationPure (m : Module) : Bool :=
   m.classes.all (·.creationPure)
 
-/-- The stale-table guard: no suffix (nested-)assignment to ANY name some
-function reads. Under the prefix view (`runScript`'s `mPre`) BOTH halves
-of the old table-bound condition are hazards, so the condition is gone:
-a prefix-bound name rebound by the suffix would read STALE from the
-table inside a call (the suffix binding lands in the script's locals,
-invisible to function frames), and a FRESH suffix global would resolve
-to a fake `NameError` (the prefix view is always analysable). CPython
-makes both module globals; leanpy refuses the script loudly. -/
-def suffixConsistent (m : Module) (suffix : List Stmt) : Bool :=
+/-! ### The publish (a module frame's locals ARE its globals) -/
+
+/-- PUBLISH the script frame's locals as the module's globals. CPython
+runs a module's top level in a frame whose locals *are* its globals; the
+model keeps two fields, so the identification is re-established after
+every statement — one list, shared, no copy.
+
+Keeping the frame's own locals (rather than draining them into globals)
+is load-bearing beyond tidiness: `x += 1` at module level must read the
+module global, while INSIDE a function the same statement is always a
+local by CPython's compile-time rule (`+=` is a binding, so an unbound
+one is `UnboundLocalError`, never a global read) — which is why
+`execStmt`'s augmented-assignment arm reads locals only. Identifying the
+two envs makes the module-scope reading come out right through the very
+same arm.
+
+`none` = a name failing `initBindable` (a builtin, or a
+`def`/`class`/namedtuple name): those resolution arms fire BEFORE the
+live globals, so such a shadow would be silently ignored — loud
+instead. -/
+def publishScriptGlobals (m : Module) (st : FrameState) : Option FrameState :=
+  if st.locals.all (fun p => initBindable m p.1) then
+    some { st with world := { st.world with globals := st.locals } }
+  else Option.none
+
+/-! ### The mid-statement coherence guard -/
+
+/-- Is this the `for k, v in d.items():` shape the executor runs through
+its own shell (so its body statements flush per statement)? -/
+def isItemsFor : Stmt → Bool
+  | .forStmt _ (.call (.attribute _ "items" _) #[] #[] Option.none _) _ orelse _ =>
+      orelse.isEmpty
+  | _ => false
+
+mutual
+  /-- Names a top-level statement binds MID-STATEMENT: inside a compound
+  statement the executor DELEGATES wholesale to `execStmt`, whose
+  bindings sit in frame locals until the statement finishes. Shell-run
+  statements (`if`, `while` without `else`, the items `for`) recurse —
+  their bodies flush per statement — and a LEAF statement contributes
+  nothing, because its own binding lands before anything can read it. -/
+  def Stmt.scriptMidAssigns : Stmt → List String
+    | .ifStmt _ b o _ =>
+      Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList o.toList
+    | .whileLoop _ b o _ =>
+      if o.isEmpty then Stmt.scriptMidAssignsList b.toList
+      else Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
+    -- the items shell publishes its TARGET before the body runs, so the
+    -- loop variables are globals from the first body statement on
+    | .forStmt t (.call (.attribute _ "items" _) #[] #[] Option.none _) b o _ =>
+      if o.isEmpty then Stmt.scriptMidAssignsList b.toList
+      else
+        targetBoundNames t ++ Stmt.assignedNamesList b.toList
+          ++ Stmt.assignedNamesList o.toList
+    | .forStmt t _ b o _ =>
+      targetBoundNames t ++ Stmt.assignedNamesList b.toList
+        ++ Stmt.assignedNamesList o.toList
+    | .tryStmt b _ h _ _ =>
+      Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList h.toList
+    | _ => []
+
+  /-- Elementwise `Stmt.scriptMidAssigns`. -/
+  def Stmt.scriptMidAssignsList : List Stmt → List String
+    | [] => []
+    | s :: ss => s.scriptMidAssigns ++ Stmt.scriptMidAssignsList ss
+end
+
+/-- The narrow residue of the old `suffixConsistent`: the flush is per
+STATEMENT, so a name bound INSIDE a delegated compound statement is
+invisible to a function called from inside that same statement (locals
+are not globals until the statement ends). Refuse exactly that overlap —
+never the whole live top level, which is what the prefix/suffix split had
+to refuse. -/
+def scriptFlushCoherent (m : Module) : Bool :=
   let reads := moduleGlobalReads m
-  (Stmt.assignedNamesList suffix).all fun n => !reads.contains n
+  (Stmt.scriptMidAssignsList m.topLevel.toList).all fun n => !reads.contains n
 
 /-! ### The executor -/
 
 mutual
-  /-- Execute live-suffix statements: `print` statements intercepted,
-  `while`/`if` run through control shells (mirroring `execWhile`/
-  `execStmt` exactly) so prints work inside them, everything else
-  delegated to `execStmt`. -/
+  /-- Execute top-level statements, FLUSHING the frame's locals into the
+  world's globals after each one (the header's §the flush: a top-level
+  binding IS a global, so a call made by a later statement reads exactly
+  what this one bound). Flow routing: `next` continues, `break`/
+  `continue` escape to an enclosing shell, `return` is the top-level
+  refusal. -/
   def execScriptStmts (m : Module) (fuel : Nat) (st : FrameState) :
       List Stmt → Run FrameState RFlow
-    | ss =>
+    | [] => .ok st .next
+    | s :: rest =>
       match fuel with
       | 0 => .timeout
       | fuel + 1 =>
-        match ss with
-        | [] => .ok st .next
-        | .exprStmt (.call (.name "print" _) args #[] Option.none _) _ :: rest =>
-          -- Module-level shadows via `printUnshadowed`; a LIVE local
-          -- shadow (a suffix `print = …` already executed — invisible to
-          -- the prefix view's globals) via the locals probe, dynamically
-          -- exact: CPython calls the shadow only once its binding ran.
-          if printUnshadowed m && (Env.lookup st.locals "print").isNone then
-            Run.bind (evalExprs m fuel st args.toList) fun st vs =>
-            match strOfArgs vs with
-            | some line =>
-              execScriptStmts m fuel
-                { st with world :=
-                    { st.world with stdout := st.world.stdout ++ [line] } }
-                rest
-            | Option.none =>
-              .unsupported "print() of a container or heap value is outside leanpy v0 (scalar str() only)"
-          else
-            .unsupported "a shadowed 'print' is outside leanpy v0"
-        | .whileLoop test body orelse sp :: rest =>
-          match orelse.toList with
-          | [] =>
-            Run.bind (execScriptWhile m fuel st test body.toList) fun st flow =>
-            match flow with
-            | .next => execScriptStmts m fuel st rest
-            | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
-            | _ => .unsupported "loop flow escaped a top-level while"
-          | _ :: _ =>
-            -- no shell for while-else; delegate (prints inside stay loud)
-            Run.bind (execStmt m fuel st (.whileLoop test body orelse sp))
-              fun st flow => contFlow m fuel st flow rest
-        | .ifStmt test body orelse _ :: rest =>
-          Run.bind (evalExpr m fuel st test) fun st t =>
-          Run.bind (Run.liftRes st (truthyH st.world.heap t)) fun st b =>
-          Run.bind
-            (if b then execScriptStmts m fuel st body.toList
-             else execScriptStmts m fuel st orelse.toList) fun st flow =>
-          match flow with
-          | .next => execScriptStmts m fuel st rest
-          | flow => .ok st flow   -- brk/cont escape to an enclosing shell
-        | s :: rest =>
-          Run.bind (execStmt m fuel st s) fun st flow =>
-          contFlow m fuel st flow rest
+        Run.bind (execScriptOne m fuel st s) fun st flow =>
+        match publishScriptGlobals m st with
+        | some st =>
+          (match flow with
+           | .next => execScriptStmts m fuel st rest
+           | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
+           | flow => .ok st flow)
+        | Option.none =>
+          .unsupported "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored"
 
-  /-- Route a delegated statement's flow: `next` continues, loop flow
-  escapes to an enclosing shell, `return` is the top-level refusal. -/
-  def contFlow (m : Module) (fuel : Nat) (st : FrameState) (flow : RFlow)
-      (rest : List Stmt) : Run FrameState RFlow :=
+  /-- Execute ONE top-level statement. `print` is intercepted; `if`,
+  `while` (without `else`) and the `for … in d.items():` loop run through
+  CONTROL SHELLS mirroring `execStmt`/`execWhile` exactly, so prints and
+  the per-statement flush work inside them; a whitelisted `import` is
+  skipped (it binds through the static view, and running one observes
+  nothing); everything else is delegated to `execStmt`, so the tier is
+  the interpreter's. -/
+  def execScriptOne (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
+      Run FrameState RFlow :=
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
-      match flow with
-      | .next => execScriptStmts m fuel st rest
-      | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
-      | flow => .ok st flow
+      match s with
+      | .exprStmt (.call (.name "print" _) args #[] Option.none _) _ =>
+        -- Module-level shadows via `printUnshadowed`; a LIVE shadow (a
+        -- top-level `print = …` already executed) via the frame probes,
+        -- dynamically exact: CPython calls the shadow only once its
+        -- binding ran. (`initBindable` refuses that binding at the
+        -- flush, so the probes are belt and braces.)
+        if printUnshadowed m && (Env.lookup st.locals "print").isNone
+            && (Env.lookup st.world.globals "print").isNone then
+          Run.bind (evalExprs m fuel st args.toList) fun st vs =>
+          match strOfArgs vs with
+          | some line =>
+            .ok { st with world :=
+                    { st.world with stdout := st.world.stdout ++ [line] } } .next
+          | Option.none =>
+            .unsupported "print() of a container or heap value is outside leanpy (scalar str() only)"
+        else
+          .unsupported "a shadowed 'print' is outside leanpy"
+      | .whileLoop test body orelse sp =>
+        if orelse.isEmpty then execScriptWhile m fuel st test body.toList
+        else
+          -- no shell for while-else; delegate (prints inside stay loud)
+          execStmt m fuel st (.whileLoop test body orelse sp)
+      | .ifStmt test body orelse _ =>
+        Run.bind (evalExpr m fuel st test) fun st t =>
+        Run.bind (Run.liftRes st (truthyH st.world.heap t)) fun st b =>
+        if b then execScriptStmts m fuel st body.toList
+        else execScriptStmts m fuel st orelse.toList
+      | .forStmt target (.call (.attribute d "items" _) #[] #[] Option.none _)
+          body orelse _ =>
+        if orelse.isEmpty then
+          Run.bind (evalExpr m fuel st d) fun st dv =>
+          match dv with
+          | .ref a =>
+            (match Heap.get? st.world.heap a with
+             | some (.dict entries _) =>
+               execScriptItems m fuel st a entries.size 0 target body.toList
+             | _ =>
+               .unsupported "'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §the one pipeline)")
+          | _ =>
+            .unsupported "'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §the one pipeline)"
+        else .unsupported "'for … else' at module top level is outside the tier"
+      | .unsupported "Import" text sp =>
+        if (benignImportBinds text).isSome then .ok st .next
+        else execStmt m fuel st (.unsupported "Import" text sp)
+      | .unsupported "ImportFrom" text sp =>
+        if (benignImportBinds text).isSome then .ok st .next
+        else execStmt m fuel st (.unsupported "ImportFrom" text sp)
+      | s => execStmt m fuel st s
+
+  /-- The `for target in d.items():` control shell — CPython's dict_items
+  iterator: the LIVE entries re-read per step, a SIZE change the faithful
+  `RuntimeError` (value updates visible mid-iteration; H1 acceptance
+  row 10). `n` is the size at iterator creation. This is the one `for`
+  `execStmt` cannot express; module-init execution owned it before the
+  one pipeline, and the shipped sunfish padding loop is its target. -/
+  def execScriptItems (m : Module) (fuel : Nat) (st : FrameState)
+      (a : Addr) (n : Nat) (i : Nat) (target : Expr) (body : List Stmt) :
+      Run FrameState RFlow :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match Heap.get? st.world.heap a with
+      | some (.dict entries _) =>
+        if entries.size ≠ n then
+          .exn st (.runtimeError "dictionary changed size during iteration")
+        else if hlt : i < entries.size then
+          match assignToH st.world.heap st.locals target
+              (.tuple #[entries[i].1, entries[i].2]) with
+          | .ok env0 =>
+            (match publishScriptGlobals m ⟨st.world, env0⟩ with
+             | some st =>
+               Run.bind (execScriptStmts m fuel st body) fun st flow =>
+               (match flow with
+                | .next | .cont => execScriptItems m fuel st a n (i + 1) target body
+                | .brk => .ok st .next
+                | .ret v => .ok st (.ret v))
+             | Option.none =>
+               .unsupported "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored")
+          | .exn e => .exn st e
+          | .timeout => .timeout
+          | .unsupported msg => .unsupported msg
+        else .ok st .next
+      | _ => .unsupported "internal: items-loop receiver is not a dict (report this)"
 
   /-- The `execWhile` control shell over script statements (same test,
-  same truthiness, same flow routing — body prints intercepted). -/
+  same truthiness, same flow routing — body prints intercepted, body
+  bindings flushed per statement). -/
   def execScriptWhile (m : Module) (fuel : Nat) (st : FrameState)
       (test : Expr) (body : List Stmt) : Run FrameState RFlow :=
     match fuel with
@@ -483,38 +617,30 @@ mutual
       else .ok st .next
 end
 
-/-- Run a whole script under a SEEDED CLOCK TRACE: boundary checks, then
-the live suffix from the world G1-initialized over the PREFIX VIEW `mPre`
-— the fold must see only the statements the live run skips, never the
-suffix it is about to execute (the poisoning pass is retroactive, so a
-whole-module fold clobbers prefix names the suffix rebinds/stores into:
-the fib_loop/tt_script/list_script regression). `mPre` also threads
-through the executor, so function frames resolve the same prefix globals.
-The decided outcome's world carries the accumulated stdout.
+/-- Run a whole script under a SEEDED CLOCK TRACE: the three boundary
+admissions, then THE ONE PIPELINE — every top-level statement executed,
+in order, from an EMPTY world, against the `scriptView` (see the header).
+`initWorld` is not called: nothing is folded, so nothing can be skipped,
+rolled back, or read stale. The decided outcome's world carries the
+accumulated stdout.
 
 `clock` is the trace `time.time()` consumes in order (pass 6,
 docs/memory-model.md §the trace clock) — the script-mode counterpart of
-`callFunctionClock`. It seeds the world AFTER `initWorld`, exactly as the
-call boundary does: the G1 fold never reads the clock (a module-init
-`time.time()` poisons its binding), so seeding before or after the fold
-is the same world, and seeding after keeps the `runScript = runScriptClock
-m []` equation definitional. -/
+`callFunctionClock`, seeded into the starting world, which keeps the
+`runScript = runScriptClock m []` equation definitional. -/
 def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
-  let suffix := liveSuffix m.topLevel.toList
   if !classesCreationPure m then
     .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator, or a class-level statement beyond methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
   else if !defsBoundBefore m m.topLevel.toList then
     .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
-  else if !suffixConsistent m suffix then
-    .unsupported "live top-level code rebinds a module global some function reads — outside leanpy v0 (the closed-function G1 table would go stale for calls, and a fresh live global would fake a NameError; ordered ModuleItem representation is the recorded fix)"
+  else if !scriptFlushCoherent m then
+    .unsupported "a compound top-level statement the executor delegates wholesale (a 'for', a 'try', a 'while … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix"
   else
-    let mPre : Module :=
-      { m with topLevel := (scriptNameBinding :: g1Prefix m.topLevel.toList).toArray }
-    if !initNothingSkipped mPre then
-      .unsupported "module initialization could not execute a top-level statement and rolled it back: whatever that statement would have printed or raised is unobservable to the model, so leanpy refuses the whole program rather than answer as if the statement had done nothing"
-    else
     Run.toWorld <|
-      Run.bind (execScriptStmts mPre fuel ⟨{ initWorld mPre with clock := clock }, []⟩ suffix)
+      Run.bind
+        (execScriptStmts (scriptView m) fuel
+          ⟨{ heap := #[], globals := [], stdout := [], clock := clock }, []⟩
+          m.topLevel.toList)
         fun st flow =>
       match flow with
       | .next => .ok st ()

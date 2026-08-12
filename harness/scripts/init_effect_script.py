@@ -1,14 +1,17 @@
-"""leanpy corpus: MODULE INIT MUST NOT SILENTLY SKIP A STATEMENT.
+"""leanpy corpus: A TOP-LEVEL CALL WITH AN OBSERVABLE EFFECT.
 
-`x = talk()` is a plain bind, so module initialization folds it; the fold
-delegates to the interpreter, the in-function `print` is out of tier, the
-attempt fails, and `initFoldLive` ROLLS IT BACK and poisons `x`. For the
-closed FUNCTION surface that is right — nothing was observed, and a later
-read of `x` refuses. For a whole PROGRAM it is not: CPython prints
-"side effect" here, and leanpy used to answer "done" alone. Now the run
-refuses loudly (`initNothingSkipped`, docs/memory-model.md §module-init
-execution). `harness/scripts/init_raise_script.py` is the same hole with
-an exception instead of output.
+CPython prints "side effect" then "done". Two pipelines ago `x = talk()`
+was a plain bind, so module initialization FOLDED it, the fold delegated
+to the interpreter, the in-function `print` was out of tier, the attempt
+failed, and `initFoldLive` ROLLED IT BACK — leanpy answered "done" alone,
+a wrong answer rather than a refusal; `initNothingSkipped` then refused
+the program.
+
+With THE ONE PIPELINE the statement simply executes, and the refusal is
+the honest one: `print` inside a function body is outside the tier
+(`fnprint.py` is the same wall reached directly). No fold, no rollback,
+nothing skipped — the row now pins that the blocker is a construct rather
+than an architecture.
 """
 
 

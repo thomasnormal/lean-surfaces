@@ -27,17 +27,35 @@ Python 3.9 compatible.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+TRACEBACK_CLASS = re.compile(r"^(?:[A-Za-z_][\w.]*\.)?([A-Za-z_]\w*)(?::.*)?$")
+
+
+def exc_class(stderr):
+    """The exception CLASS a died run reports, read off the last traceback
+    line (CPython) or off the runner's own stderr (the Lean side prints the
+    class name alone). CPython maps EVERY uncaught exception to exit 1, so
+    without this the comparison could not tell two exceptions apart."""
+    for line in reversed((stderr or "").splitlines()):
+        line = line.strip()
+        if not line:
+            continue
+        m = TRACEBACK_CLASS.match(line)
+        return m.group(1) if m else None
+    return None
+
+
 def run_cpython(path):
     proc = subprocess.run(
         [sys.executable, path], cwd=REPO_ROOT, capture_output=True, text=True
     )
-    return proc.stdout, proc.returncode
+    return proc.stdout, proc.returncode, proc.stderr
 
 
 def run_lean(runner_cmd, json_path, fuel):
@@ -82,7 +100,7 @@ def main(argv=None):
             failures += 1
             continue
         json_path = os.path.splitext(src)[0] + ".json"
-        cout, ccode = run_cpython(src)
+        cout, ccode, cerr = run_cpython(src)
         lout, lcode, lerr = run_lean(runner_cmd, json_path, opts.fuel)
         if expect == "unsupported":
             if lcode == 3:
@@ -93,14 +111,18 @@ def main(argv=None):
                       % (src, lcode, lerr or lout.strip()))
                 failures += 1
         else:
-            if cout == lout and ccode == lcode:
+            exc_ok = (ccode == 0 or lcode != 1
+                      or exc_class(cerr) == exc_class(lerr))
+            if cout == lout and ccode == lcode and exc_ok:
                 print("%-42s MATCH   (exit %d, %d stdout bytes)"
                       % (src, ccode, len(cout)))
                 completed += 1
             else:
                 print("%-42s MISMATCH" % src)
                 print("  cpython: exit %d, stdout %r" % (ccode, cout))
-                print("  lean:    exit %d, stdout %r, stderr %r" % (lcode, lout, lerr))
+                print("  lean:    exit %d, stdout %r, exc %r" % (lcode, lout, exc_class(lerr)))
+                if ccode:
+                    print("  cpython exc: %r" % (exc_class(cerr),))
                 failures += 1
 
     total = len(rows)

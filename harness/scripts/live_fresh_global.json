@@ -5,8 +5,8 @@
     "name": "cpython-ast",
     "version": "3.14.5"
   },
-  "source_file": "harness/scripts/suffix_fresh_global_read.py",
-  "source_sha256": "80ecd611452dcd9fdbdebe454af8f6081a5fb2f513beb90707f5e62340b85dcd",
+  "source_file": "harness/scripts/live_fresh_global.py",
+  "source_sha256": "acac2ac6a376c4565078c886de48d8d3c70cac2d07db8f5123354150c1578e33",
   "module": {
     "kind": "Module",
     "body": [
@@ -15,29 +15,29 @@
         "span": {
           "lineno": 1,
           "col_offset": 0,
-          "end_lineno": 6,
-          "end_col_offset": 54
+          "end_lineno": 12,
+          "end_col_offset": 3
         },
         "value": {
           "kind": "Constant",
           "span": {
             "lineno": 1,
             "col_offset": 0,
-            "end_lineno": 6,
-            "end_col_offset": 54
+            "end_lineno": 12,
+            "end_col_offset": 3
           },
           "value": {
             "type": "str",
-            "value": "Refusal row (the fake-NameError hazard, pinned by the 2026-08-10\nprefix-view fix): the live suffix binds a FRESH module global a function\nbody reads. CPython makes `w = 7` a module global, so readw() answers 7;\nunder the prefix view the name is absent from an always-analysable G1\ntable, so running this would raise a fake NameError inside the call \u2014\n`suffixConsistent` refuses the whole script loudly."
+            "value": "leanpy corpus: LIVE TOP-LEVEL CODE BINDS A FRESH GLOBAL A FUNCTION\nREADS \u2014 the second payoff row of THE ONE PIPELINE.\n\n`w = 7` creates a module global after `readw` is defined but before it is\ncalled, so CPython answers 7. Under the prefix/suffix split the name was\nabsent from an always-analysable static table, so a call would have raised\na FAKE `NameError`, and `suffixConsistent` refused the file to avoid it.\nNow the name is statically absent by construction and the absent arm\nconsults the live globals: it resolves exactly once the statement binding\nit has run \u2014 and a call made BEFORE that still raises the genuine\n`NameError` (`call_before_def.py` is the ordering row).\n"
           }
         }
       },
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 9,
+          "lineno": 15,
           "col_offset": 0,
-          "end_lineno": 10,
+          "end_lineno": 16,
           "end_col_offset": 12
         },
         "name": "readw",
@@ -48,17 +48,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 10,
+              "lineno": 16,
               "col_offset": 4,
-              "end_lineno": 10,
+              "end_lineno": 16,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Name",
               "span": {
-                "lineno": 10,
+                "lineno": 16,
                 "col_offset": 11,
-                "end_lineno": 10,
+                "end_lineno": 16,
                 "end_col_offset": 12
               },
               "id": "w"
@@ -69,25 +69,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 13,
+          "lineno": 19,
           "col_offset": 0,
-          "end_lineno": 13,
+          "end_lineno": 19,
           "end_col_offset": 8
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 13,
+            "lineno": 19,
             "col_offset": 0,
-            "end_lineno": 13,
+            "end_lineno": 19,
             "end_col_offset": 8
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 13,
+              "lineno": 19,
               "col_offset": 0,
-              "end_lineno": 13,
+              "end_lineno": 19,
               "end_col_offset": 5
             },
             "id": "print"
@@ -96,9 +96,9 @@
             {
               "kind": "Constant",
               "span": {
-                "lineno": 13,
+                "lineno": 19,
                 "col_offset": 6,
-                "end_lineno": 13,
+                "end_lineno": 19,
                 "end_col_offset": 7
               },
               "value": {
@@ -114,18 +114,18 @@
       {
         "kind": "Assign",
         "span": {
-          "lineno": 14,
+          "lineno": 20,
           "col_offset": 0,
-          "end_lineno": 14,
+          "end_lineno": 20,
           "end_col_offset": 5
         },
         "targets": [
           {
             "kind": "Name",
             "span": {
-              "lineno": 14,
+              "lineno": 20,
               "col_offset": 0,
-              "end_lineno": 14,
+              "end_lineno": 20,
               "end_col_offset": 1
             },
             "id": "w"
@@ -134,9 +134,9 @@
         "value": {
           "kind": "Constant",
           "span": {
-            "lineno": 14,
+            "lineno": 20,
             "col_offset": 4,
-            "end_lineno": 14,
+            "end_lineno": 20,
             "end_col_offset": 5
           },
           "value": {
@@ -148,25 +148,25 @@
       {
         "kind": "Expr",
         "span": {
-          "lineno": 15,
+          "lineno": 21,
           "col_offset": 0,
-          "end_lineno": 15,
+          "end_lineno": 21,
           "end_col_offset": 14
         },
         "value": {
           "kind": "Call",
           "span": {
-            "lineno": 15,
+            "lineno": 21,
             "col_offset": 0,
-            "end_lineno": 15,
+            "end_lineno": 21,
             "end_col_offset": 14
           },
           "func": {
             "kind": "Name",
             "span": {
-              "lineno": 15,
+              "lineno": 21,
               "col_offset": 0,
-              "end_lineno": 15,
+              "end_lineno": 21,
               "end_col_offset": 5
             },
             "id": "print"
@@ -175,17 +175,17 @@
             {
               "kind": "Call",
               "span": {
-                "lineno": 15,
+                "lineno": 21,
                 "col_offset": 6,
-                "end_lineno": 15,
+                "end_lineno": 21,
                 "end_col_offset": 13
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 15,
+                  "lineno": 21,
                   "col_offset": 6,
-                  "end_lineno": 15,
+                  "end_lineno": 21,
                   "end_col_offset": 11
                 },
                 "id": "readw"

@@ -223,6 +223,96 @@ patch: function frames resolve module names statically-first, so the
 unification has to answer how a live binding becomes visible to a call
 without breaking the world-symbolic covenant that keeps theorems provable.
 
+**THE ONE PIPELINE — BUILT (2026-08-13), docs/memory-model.md §the one
+pipeline.** The split is gone. `runScript` executes EVERY top-level
+statement through the script executor, from an empty world, publishing
+the frame's locals as `World.globals` after each statement (CPython's
+module frame, whose locals ARE its globals); `initWorld` is never called
+in script mode. The covenant is kept by not touching resolution at all —
+the threaded module VIEW (`scriptView`) carries no program statement, so
+every module global is statically ABSENT and the absent arm's live-view
+consult decides, which makes sequential visibility exact for free. The
+view keeps exactly three things: `__name__` (the dunder arm fires before
+the live consult), an unnameable top-level `def` (so `topLevelDefFree` is
+false and closure calls take their dynamic path), and the module's import
+statements (so the benign whitelist still poisons `time` and
+`moduleClockOk` still holds). DELETED, not tightened:
+`initNothingSkipped` (and its recorded residue), `suffixConsistent`,
+`g1Shape`/`g1Prefix`/`liveSuffix`. The one narrow residue left is
+`scriptFlushCoherent`: a compound statement DELEGATED wholesale to
+`execStmt` (`for`, `try`, `while … else`) holds its bindings until it
+ends, so a name it assigns may not be one a function body reads — the fix
+is a control shell per statement kind, and the executor already has `if`,
+`while`, and the `for … in d.items():` shell that module-init execution
+used to own.
+
+MEASURED (same corpora, oracle CPython 3.9.19): in-repo **69/86 MATCH
+(80.2%), 0 DIVERGE**, up from 59/86 (68.6%) — and the honest half of that
+number, files that actually EXECUTED live top-level statements, went
+**18 → 47**. `harness/script_corpus.py` went 18 matched / 9 loud →
+**21 matched / 6 loud**, with three refusal rows flipping to
+CPython-identical answers (`live_rebind_read.py` and
+`live_fresh_global.py`, renamed from `suffix_*` because they are payoff
+rows now, and `init_raise_script.py`, where the top-level `1 // 0` now
+propagates to exit 1 instead of being rolled back). `sf_order.py` — the
+sunfish ordering arc — went REFUSE → MATCH with 11 live statements.
+
+THE WILD SWEEP, same 167 stdlib modules, same 3.9.19 oracle: **5 MATCH,
+162 REFUSE, 0 DIVERGE** — the count is unchanged, and the qualitative
+statement behind it is not: **4 of the 5 now EXECUTE live top-level
+statements**, where before the pass all of them were `live = 0` and the
+honest statement was that ZERO stdlib files executed live top-level code
+under the model. The refusal ladder lost its structural entry entirely —
+the 27 `suffixConsistent` files are gone — and is now made of constructs:
+
+| files | what stopped the run |
+|---|---|
+| 108 | class CREATION effects (inheritance, computed class attributes, decorators) |
+| 36 | `import` / `from … import` |
+| 5 | `except ImportError:` (an unadmitted exception class) |
+| 4 | a delegated compound binds a function-read name (`scriptFlushCoherent`) |
+| 2 | `try/else` |
+| 1 each | `dict + dict`, `BinOp:Div`, `Set`, `DictComp`, `frozenset`, a forward reference, a namedtuple class as a value |
+
+And sunfish.py's own refusal moved from an architectural wall to ONE
+NAMED CONSTRUCT — `opt_ranges = dict(QS=(0, 300), …)`, the unmodelled
+`dict` builtin. Everything before it now RUNS: ingestion, class creation,
+the ordering admission, and the pst padding loop through the items shell.
+
+TWO BUGS THE UNIFICATION EXPOSED, both reachable BEFORE it on the
+closed-function surface:
+
+* **An unmodelled CPython builtin answered `NameError` — a WRONG ANSWER
+  (FIXED).** sunfish.py's `opt_ranges = dict(QS=(0, 300), …)` resolved
+  `dict` through every arm and fell out as a faithful-looking `NameError`;
+  `def f(): return len(dict())` did the same from an ordinary function
+  body. `isPyBuiltinName` (Semantics.lean) is now the full
+  `dir(builtins)` of the pinned CPython 3.9, consulted by every arm that
+  may DECIDE a `NameError`, and an unmodelled builtin is a loud refusal
+  naming the construct.
+* **`moduleGenFree` claims more than it can (RECORDED, OPEN).** Its
+  docstring says no `Obj.generator` can exist in a module with no
+  generator defs because "`callIn` is the only allocator" — but
+  `enumerate(…)` and `itertools.count(…)` allocate generator frames with
+  no generator def in sight, so `for i, c in enumerate("PNB"):` in such a
+  module refuses with `internal: … heap well-formedness violation —
+  report this`: ordinary Python reported as an interpreter bug. LOUDNESS
+  defect, not soundness — `Expr.heapFree` already excludes
+  `enumerate`/`count`/`next` calls, so `worldInv` never meets the arm.
+  THE FIX: strengthen `moduleGenFree` with a syntactic "no
+  `enumerate`/`count` call anywhere in the module" conjunct; it must also
+  enter `Module.heapFree` (which has to imply the guard), so it is a
+  Semantics change with a full rebuild and a check that no example loses
+  `heapFree`. Next leanpy item.
+
+THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
+code only, and CPython maps EVERY uncaught exception to exit 1 — so two
+different exceptions looked identical. `harness/leanpy_survey.py` and
+`harness/script_corpus.py` now also compare the exception CLASS, read off
+the last traceback line. It caught its first false agreement immediately:
+sunfish.py exiting 1 with the model's `NameError` against CPython's
+`ModuleNotFoundError` would have been counted a MATCH.
+
 The stdlib sweep is deliberately NOT in the default corpus file: running
 arbitrary stdlib top level under the oracle has side effects (a browser,
 a window, a server), so it stays an explicitly invoked measurement with a

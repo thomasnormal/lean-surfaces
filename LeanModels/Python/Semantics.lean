@@ -895,6 +895,59 @@ def isBuiltinName (id : String) : Bool :=
   id == "any" || id == "all" || id == "set" ||
   id == "sum" || id == "tuple" || id == "range"
 
+/-- Every name CPython 3.9's `builtins` module binds (`dir(builtins)`,
+minus the dunders — generated from the PINNED reference interpreter).
+
+`isBuiltinName` above is the subset the model IMPLEMENTS. This is the
+subset CPython BINDS, and the difference is exactly the set of names for
+which a `NameError` would be a WRONG ANSWER: the name resolves in
+CPython, so the honest outcome is a loud refusal.
+
+FOUND BY `tools/leanpy` (2026-08-13) on the shipped sunfish.py:
+`opt_ranges = dict(QS=(0, 300), …)` answered `NameError` where CPython
+builds a dict — and the same hole was reachable from an ordinary function
+body (`def f(): return len(dict()))`, so it was never a script-mode
+artifact. Every name-resolution arm that may DECIDE a `NameError` now
+consults this list first. -/
+def isPyBuiltinName (id : String) : Bool :=
+  [
+   "ArithmeticError", "AssertionError", "AttributeError", "BaseException",
+   "BlockingIOError", "BrokenPipeError", "BufferError", "BytesWarning",
+   "ChildProcessError", "ConnectionAbortedError", "ConnectionError",
+   "ConnectionRefusedError", "ConnectionResetError", "DeprecationWarning",
+   "EOFError", "Ellipsis", "EnvironmentError", "Exception", "False",
+   "FileExistsError", "FileNotFoundError", "FloatingPointError",
+   "FutureWarning", "GeneratorExit", "IOError", "ImportError",
+   "ImportWarning", "IndentationError", "IndexError", "InterruptedError",
+   "IsADirectoryError", "KeyError", "KeyboardInterrupt", "LookupError",
+   "MemoryError", "ModuleNotFoundError", "NameError", "None",
+   "NotADirectoryError", "NotImplemented", "NotImplementedError", "OSError",
+   "OverflowError", "PendingDeprecationWarning", "PermissionError",
+   "ProcessLookupError", "RecursionError", "ReferenceError",
+   "ResourceWarning", "RuntimeError", "RuntimeWarning", "StopAsyncIteration",
+   "StopIteration", "SyntaxError", "SyntaxWarning", "SystemError",
+   "SystemExit", "TabError", "TimeoutError", "True", "TypeError",
+   "UnboundLocalError", "UnicodeDecodeError", "UnicodeEncodeError",
+   "UnicodeError", "UnicodeTranslateError", "UnicodeWarning", "UserWarning",
+   "ValueError", "Warning", "ZeroDivisionError", "abs", "all", "any",
+   "ascii", "bin", "bool", "breakpoint", "bytearray", "bytes", "callable",
+   "chr", "classmethod", "compile", "complex", "copyright", "credits",
+   "delattr", "dict", "dir", "divmod", "enumerate", "eval", "exec", "exit",
+   "filter", "float", "format", "frozenset", "getattr", "globals", "hasattr",
+   "hash", "help", "hex", "id", "input", "int", "isinstance", "issubclass",
+   "iter", "len", "license", "list", "locals", "map", "max", "memoryview",
+   "min", "next", "object", "oct", "open", "ord", "pow", "print", "property",
+   "quit", "range", "repr", "reversed", "round", "set", "setattr", "slice",
+   "sorted", "staticmethod", "str", "sum", "super", "tuple", "type", "vars",
+   "zip"
+  ].contains id
+
+/-- The refusal a name-resolution arm owes an UNMODELLED CPython builtin
+(see `isPyBuiltinName`) — the message names the construct, never a
+fabricated `NameError`. -/
+def unmodelledBuiltinMsg (id : String) : String :=
+  s!"builtin '{id}' exists in CPython but is not modelled — outside the tier (a NameError here would be a wrong answer for a name CPython binds)"
+
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
 CPython, so a miss on one is `unsupported`, NEVER a `NameError` — the G1
@@ -3481,7 +3534,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             (match Env.lookup st.world.globals id with
              | some v => .ok st v
              | Option.none =>
-               if (moduleGlobals m).2 then
+               if isPyBuiltinName id then
+                 .unsupported (unmodelledBuiltinMsg id)
+               else if (moduleGlobals m).2 then
                  .exn st (.nameError id)
                else
                  .unsupported s!"name '{id}' may be bound by an out-of-tier module-level statement")
@@ -4034,7 +4089,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                          evalExprs m fuel st args.toList ⤳ fun st _ =>
                          .exn st (.typeError s!"'{v.typeName}' object is not callable")
                      | Option.none =>
-                       if (moduleGlobals m).2 then
+                       if isPyBuiltinName fname then
+                         .unsupported (unmodelledBuiltinMsg fname)
+                       else if (moduleGlobals m).2 then
                          .exn st (.nameError fname)
                        else
                          .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement")
@@ -4238,7 +4295,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        | some _ =>
                          .unsupported s!"calling the live module binding '{fname}' with keyword arguments is outside the tier (docs/memory-model.md §module-init execution)"
                        | Option.none =>
-                         if (moduleGlobals m).2 then
+                         if isPyBuiltinName fname then
+                           .unsupported (unmodelledBuiltinMsg fname)
+                         else if (moduleGlobals m).2 then
                            .exn st (.nameError fname)
                          else
                            .unsupported s!"name '{fname}' may be bound by an out-of-tier module-level statement"))

@@ -1984,7 +1984,10 @@ remain (`dict`/`sum`/`tuple`/`range`, namedtuple construction) any other
 call could soundly poison every ref-carrying name.
 
 **The `leanpy` script runner folds the PREFIX VIEW only (2026-08-10
-fix).** Poisoning is RETROACTIVE (the marker shadows the earlier value),
+fix; SUPERSEDED 2026-08-13 by §the one pipeline — script mode no longer
+folds anything, and `g1Prefix`/`suffixConsistent` are deleted. The
+paragraph is kept because it is the argument the closed-function fold's
+retroactivity still rests on.)** Poisoning is RETROACTIVE (the marker shadows the earlier value),
 which is exactly right for the closed-function surface — every top-level
 statement "already happened" before the call — and exactly wrong for the
 statements `runScript` is about to EXECUTE: folding the live suffix too
@@ -2014,9 +2017,13 @@ observable. Two reproductions, both silently wrong before the guard:
   answered `done` with exit 0 where CPython exits 1 having printed
   nothing.
 
-`runScript` now refuses a program whose module initialization skipped a
-statement (`initNothingSkipped`, Script.lean). The signal needs no fold
-change: a rolled-back statement's dirty names are poisoned in the static
+`runScript` refused such a program (`initNothingSkipped`, Script.lean)
+until §the one pipeline (2026-08-13) removed the fold from script mode
+altogether: with every top-level statement EXECUTED there is no rollback
+to detect, and the residue recorded at the end of this paragraph is
+closed by construction. The rest of this paragraph documents the guard as
+it stood, and the reproductions it was found by, both still pinned in the
+corpus. The signal needed no fold change: a rolled-back statement's dirty names are poisoned in the static
 table AND absent from the live view (`resolvedG` drops poisoned entries),
 while a statement the live pipeline EXECUTED leaves its value there.
 Benign imports are exempt — the whitelist poisons `time` by decision, not
@@ -2224,6 +2231,155 @@ exactly right until the recorded import-semantics decision.
   (the leading `<` is unnameable in Python — the `defsBeforeLive`
   precedent); without the exclusion the outer genexp refused its own
   lowered inner.
+
+## The one pipeline (2026-08-13 — leanpy's script surface unified)
+
+**Normative for SCRIPT mode only.** The closed-function surface
+(`callFunction`/`CallsIn`, `initWorld`, `moduleGlobals`, every theorem) is
+untouched by this section: `initWorld` still folds-and-executes a module's
+top level exactly as §module-init execution describes, and every
+world-symbolic proof keeps its geometry. What changed is how `runScript`
+runs a whole PROGRAM.
+
+### The bug class this closes
+
+leanpy ran a program through TWO pipelines: the G1 fold built `initWorld`
+from the G1-faithful PREFIX of the top level, and `execScriptStmts` ran
+the live SUFFIX. Every hole the completeness survey found was the same
+shape — the fold's approximation (skip, poison, never print) meeting the
+program surface's demand that every effect be observable, in order:
+
+| found | what the model answered | the guard bolted on |
+|---|---|---|
+| `class C: print("x")` | the print vanished | `ClassDefn.creationPure` |
+| `x = talk()`, `talk` prints | the print vanished | `initNothingSkipped` |
+| `x = 1 // 0` | `done`, exit 0 | `initNothingSkipped` |
+| a suffix rebinding a function-read global | (refused) | `suffixConsistent` |
+
+Three were WRONG ANSWERS. Each guard was correct and each made the
+boundary a little more baroque; `initNothingSkipped` carried a recorded
+RESIDUE it could not close (a failed binding masked by a later successful
+rebinding of the same name), and `suffixConsistent` was the single biggest
+wall in the wild — 27 stdlib files and sunfish.py itself.
+
+### The design
+
+**Execute every top-level statement through the script executor, write its
+bindings to the live globals, and read them back through the poisoned/
+absent arms.** `initWorld` is not called in script mode at all. Nothing is
+folded, so nothing can be skipped, rolled back, or go stale;
+`initNothingSkipped`, `suffixConsistent`, `g1Shape`/`g1Prefix`/
+`liveSuffix` are DELETED rather than tightened, and the residue above is
+closed by construction.
+
+The hard question was the covenant: function frames resolve module names
+STATICALLY FIRST (`moduleGlobals`), and the static table cannot contain
+execution results (`moduleGlobals → execStmt → evalExpr → moduleGlobals`
+is not definable). The answer is not to change resolution — it is to
+remove the static table from the picture. `runScript` threads a module
+VIEW (`scriptView m`, Script.lean) whose top level carries no program
+statement:
+
+* `scriptNameBinding` (`__name__ = "__main__"`), because `isModuleDunder`
+  fires BEFORE the live-view consult;
+* `scriptDefMarker`, an unnameable top-level `def`, which makes
+  `topLevelDefFree` FALSE so every closure-call arm takes its DYNAMIC
+  path — a module-level `lambda` bound by executed code is a live
+  `Obj.closure`, and the heap-free shortcut would answer a fake
+  `'dict' object is not callable`;
+* the module's IMPORT statements verbatim, so the benign whitelist still
+  binds `time` POISONED (the loud refusal for a bare `time`, and the
+  precondition of `moduleClockOk`).
+
+Every other module global is then statically ABSENT, and the absent arm
+already consults `World.globals` before deciding — hit gives the live
+value, miss the faithful `NameError` (the view is trivially
+`analysable`). **Sequential visibility is therefore exact for free**: a
+name resolves exactly once the statement binding it has run, which is what
+the module-init pipeline's per-statement prefix views had to imitate by
+hand. The view is built ONCE, so a name lookup costs the fold over three
+statements, not over the program.
+
+### The publish
+
+CPython runs a module's top level in a frame whose locals ARE its globals.
+The model keeps two fields, so `execScriptStmts` re-establishes the
+identification after EVERY statement (`publishScriptGlobals`:
+`World.globals := st.locals`, one shared list, no copy). Keeping the
+frame's locals rather than draining them is load-bearing: `x += 1` at
+module level must read the module global, while inside a FUNCTION the same
+statement is a local by CPython's compile-time rule (`+=` is a binding, so
+an unbound one is `UnboundLocalError`, never a global read) — which is
+exactly why `execStmt`'s augmented-assignment arm reads locals only. The
+identification makes module scope come out right through that very arm;
+draining the locals produced a `NameError` on `tot += 1` at top level, and
+that is how the delta was found.
+
+`initBindable` rides the publish: a top-level rebinding of a builtin or of
+a `def`/`class`/namedtuple name refuses loudly (those resolution arms fire
+before the live globals, so the shadow would be silently ignored).
+
+### What is still refused, and why it is narrow
+
+The publish is per STATEMENT, so a compound statement the executor
+DELEGATES wholesale to `execStmt` (a `for`, a `try`, a `while … else`)
+holds its inner bindings in the frame until it finishes — invisible to a
+function called from inside it. `scriptFlushCoherent` refuses exactly that
+overlap: no name assigned inside a delegated compound may be a name some
+function body reads. That is the narrow residue of `suffixConsistent`,
+which refused it for the WHOLE live top level. The recorded fix is a
+control shell per statement kind; the executor already has `if`, `while`,
+and the `for … in d.items():` shell that module-init execution used to
+own (live entries re-read per step, a size change the faithful
+`RuntimeError`).
+
+Whitelisted `import` statements are SKIPPED by the executor (they bind
+through the static view and running one observes nothing); every other
+import refuses loudly through `execStmt`, as before.
+
+### Measured (2026-08-13, oracle CPython 3.9.19)
+
+* in-repo corpus 86 files: **69 MATCH (80.2%)**, up from 59 (68.6%), with
+  **47 files executing live top-level statements**, up from 18.
+* `harness/script_corpus.py`: 27 scripts, **21 matched / 6 loud**, up from
+  18/9 — `live_rebind_read.py`, `live_fresh_global.py` (the old
+  `suffix_*` refusal rows, renamed because they are payoff rows now) and
+  `init_raise_script.py` all flipped from refusal to CPython-identical
+  answers.
+* `Examples/python/sf_order/sf_order.py` — the sunfish ordering-arc
+  example — went from REFUSE to MATCH with 11 live top-level statements.
+
+## Two bugs the unification exposed (2026-08-13)
+
+Both were reachable BEFORE it, on the closed-function surface; the one
+pipeline is what pointed a real program at them.
+
+**1. An unmodelled CPython builtin answered `NameError` — a WRONG
+ANSWER.** The shipped sunfish.py's `opt_ranges = dict(QS=(0, 300), …)`
+resolved `dict` through locals → static table → live globals → all
+missing → and the arm decided the faithful-looking `NameError`. CPython
+binds `dict`. The same hole was reachable from an ordinary function body
+(`def f(): return len(dict())` answers `NameError`), so it was never a
+script-mode artifact. FIXED: `isPyBuiltinName` (Semantics.lean) is the
+full `dir(builtins)` of the PINNED CPython 3.9, and every arm that may
+DECIDE a `NameError` consults it first — an unmodelled builtin is a loud
+refusal naming the construct. `isBuiltinName` (what the model implements)
+stays the resolution arm that fires earlier; the difference between the
+two lists is precisely the set of names for which a `NameError` is a lie.
+
+**2. `moduleGenFree` claims more than it can (RECORDED, not yet fixed).**
+Its docstring says no `Obj.generator` can exist in a module with no
+generator defs, because "`callIn` is the only allocator". `enumerate(…)`
+and `itertools.count(…)` allocate generator FRAMES with no generator def
+in sight, so `for i, c in enumerate("PNB"):` in such a module hits the
+guard and refuses with `internal: … heap well-formedness violation —
+report this` — ordinary Python reported as an interpreter bug. It is a
+LOUDNESS defect, not a soundness one: `Expr.heapFree` already excludes
+`enumerate`/`count`/`next` calls, so `worldInv` never meets the arm and
+the proof layer is unaffected. The fix is to strengthen `moduleGenFree`
+with a syntactic "no `enumerate`/`count` call anywhere" conjunct, which
+also enters `Module.heapFree` (it must imply the guard) — a Semantics
+change with a full rebuild, tracked in docs/backlog.md.
 
 ## Staging (amended)
 

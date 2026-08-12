@@ -1307,7 +1307,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
           (.ite .unsupported (.ite .unsupported ?_))))
         cases hlive : Env.lookup st.world.globals id with
         | some v => exact .ok h _
-        | none => exact .ite (.exn h _) .unsupported
+        | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
   | binOp l op r sp =>
     simp only [evalExpr]
     exact .bind (ihE m st l h) fun s1 a hs1 =>
@@ -1978,7 +1978,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | cons d t2 => exact .unsupported
                     case blive =>
                       cases hlive : Env.lookup st.world.globals fname with
-                      | none => exact .ite (.exn h _) .unsupported
+                      | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
                       | some lv =>
                         cases lv <;> try
                           exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
@@ -2211,7 +2211,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                 case livekw =>
                   cases hlive : Env.lookup st.world.globals fname with
                   | some lv => exact .unsupported
-                  | none => exact .ite (.exn h _) .unsupported
+                  | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)
         case «attribute» recv attr sp2 =>
           refine .bind (ihE m st recv h) fun s2 r hs2 => ?_
           cases r <;> try (ce_norm; exact .unsupported)

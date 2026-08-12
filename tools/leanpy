@@ -36,9 +36,10 @@ differential — the typed-call version is ``tools/lean-python --compare``.
 (docs/memory-model.md §the trace clock). Without it the trace is empty
 and the first reading refuses loudly, never fabricates a time.
 
-Envelopes are cached by source sha256 under ``--cache`` (default
-``$TMPDIR/leanpy-cache``), so re-running an unchanged file skips
-extraction. The runner is the built binary
+Envelopes are cached under ``--cache`` (default ``$TMPDIR/leanpy-cache``)
+by the sha256 of the SOURCE **and** of the extractor, so re-running an
+unchanged file skips extraction while a changed extractor never serves a
+stale envelope. The runner is the built binary
 ``.lake/build/bin/leanmodels-run`` (a ``lake`` invocation costs ~9 s of
 olean replay per run); if any Lean source is newer than that binary,
 leanpy says so LOUDLY on stderr rather than reporting a stale answer —
@@ -101,6 +102,20 @@ def runner_command(build, quiet=False):
     return [BIN]
 
 
+EXTRACTOR = os.path.join(REPO_ROOT, "extractors/python/extract.py")
+
+
+def extractor_digest():
+    """Hash of the extractor itself — part of every cache key. An envelope
+    is a FUNCTION of (source, extractor); keying on the source alone serves
+    an envelope built by an older extractor after the tier moves, which is
+    the same stale-answer failure the binary staleness check exists to
+    prevent (it happened: the class-creation field landed and the cache
+    kept answering from envelopes that predated it)."""
+    with open(EXTRACTOR, "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()[:8]
+
+
 def envelope_for(src, cache_dir, keep=False):
     """Extract ``src`` to a cached envelope; return its path, or None after
     reporting the extractor's own loud error (syntax error, non-UTF-8)."""
@@ -110,7 +125,7 @@ def envelope_for(src, cache_dir, keep=False):
     except OSError as e:
         sys.stderr.write("leanpy: cannot read %s: %s\n" % (src, e))
         return None
-    digest = hashlib.sha256(data).hexdigest()[:16]
+    digest = hashlib.sha256(data).hexdigest()[:16] + "-" + extractor_digest()
     stem = os.path.splitext(os.path.basename(src))[0]
     out = os.path.join(cache_dir, "%s-%s.json" % (stem, digest))
     if os.path.exists(out) and not keep:

@@ -123,6 +123,7 @@
         },
         "name": "Vec",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",
@@ -2199,6 +2200,7 @@
         },
         "name": "Counter",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",

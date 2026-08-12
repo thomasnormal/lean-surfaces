@@ -158,15 +158,49 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 43,
                   "col_offset": 8,
                   "end_lineno": 43,
                   "end_col_offset": 51
                 },
-                "py_kind": "Raise",
-                "text": "raise ValueError('lo must be non-negative')"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 43,
+                    "col_offset": 14,
+                    "end_lineno": 43,
+                    "end_col_offset": 51
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 43,
+                      "col_offset": 14,
+                      "end_lineno": 43,
+                      "end_col_offset": 24
+                    },
+                    "id": "ValueError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 43,
+                        "col_offset": 25,
+                        "end_lineno": 43,
+                        "end_col_offset": 50
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "lo must be non-negative"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []
@@ -691,15 +725,49 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 65,
                   "col_offset": 8,
                   "end_lineno": 65,
                   "end_col_offset": 51
                 },
-                "py_kind": "Raise",
-                "text": "raise ValueError('lo must be non-negative')"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 65,
+                    "col_offset": 14,
+                    "end_lineno": 65,
+                    "end_col_offset": 51
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 65,
+                      "col_offset": 14,
+                      "end_lineno": 65,
+                      "end_col_offset": 24
+                    },
+                    "id": "ValueError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 65,
+                        "col_offset": 25,
+                        "end_lineno": 65,
+                        "end_col_offset": 50
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "lo must be non-negative"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []

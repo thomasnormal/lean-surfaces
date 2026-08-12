@@ -589,7 +589,8 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
   -- demotion restores the loud inheritance state for every class-base
   -- CANDIDATE (parseClassDefn stores them unconditionally)
   let demoted := classes.map fun c =>
-    if c.ntBase.isSome then { c with ntBase := Option.none, ok := false } else c
+    if c.ntBase.isSome then
+      { c with ntBase := Option.none, ok := false, creationPure := false } else c
   let unchanged := (topLevel, #[], demoted)
   -- rule 1: the benign import is present
   if !topLevel.any isBenignNtImport then unchanged else
@@ -646,6 +647,22 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
       else s
     (topLevel', cands.toArray, classes)
 
+/-- Can this class-body statement change anything observable when CPython
+executes the class body? `pass`, a docstring (or stray constant), a method,
+and an attribute bound to a LITERAL are all invisible: the model skips
+class creation entirely, and skipping these skips nothing. Anything that
+calls, reads a name, subscripts, or loops can print or raise at exactly the
+`class` statement, where the model does nothing at all — so it is NOT pure
+and `runScript` refuses the module (`ClassDefn.creationPure`). -/
+def classBodyStmtPure (s : Stmt) : Bool :=
+  match s with
+  | .pass _ => true
+  | .exprStmt (.constant _ _) _ => true
+  | .assign targets (.constant _ _) _ =>
+      targets.all fun t => match t with | .name _ _ => true | _ => false
+  | .defStmt .. => true
+  | _ => false
+
 /-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
 the method `FunctionDefn`s FLATTENED under qualified names
 `"<class>.<method>"` (see `ClassDefn`'s docstring — method calls reuse
@@ -688,8 +705,19 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
         let f ← parseFunctionDefn stmtJson
         methods := methods.push f.name
         fns := fns.push { f with name := name ++ "." ++ f.name }
+    -- CREATION PURITY (docs/memory-model.md §class creation): the
+    -- extractor's structured verdict, re-checked here over the parsed body
+    -- so ingestion never trusts a field it can verify. An envelope from
+    -- before the field existed has no verdict, and the safe answer is the
+    -- LOUD one.
+    let noCreationEffects := match j.getObjVal? "creation_effects" with
+      | .ok (.bool b) => !b
+      | _ => false
+    let bodyPure ← body.allM fun stmtJson => do
+      let k ← (← getField stmtJson "kind").getStr?
+      if k == "FunctionDef" then pure true else pure (classBodyStmtPure (← parseStmt stmtJson))
     return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase,
-              isExc, span }, fns)
+              isExc, creationPure := noCreationEffects && bodyPure, span }, fns)
 
 /-! ## Generator-expression lowering (H4, docs/memory-model.md
 §generator semantics)
@@ -1199,7 +1227,8 @@ def parseModule (j : Json) : Except String Module :=
     let classes' :=
       if excOk then classes'
       else classes'.map fun c =>
-        if c.isExc then { c with isExc := false, ok := false } else c
+        if c.isExc then
+          { c with isExc := false, ok := false, creationPure := false } else c
     -- H4: lower generator EXPRESSIONS last, so the capture test sees the
     -- final module-level binding set (the namedtuple pass turns
     -- recognized assigns into `pass`, but their bound names stay outer

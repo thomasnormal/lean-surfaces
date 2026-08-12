@@ -1873,7 +1873,8 @@
                     "keywords": [],
                     "call_unsupported": null
                   },
-                  "ifs": []
+                  "ifs": [],
+                  "walrus": []
                 }
               ],
               "keywords": [],
@@ -2503,7 +2504,8 @@
                     "keywords": [],
                     "call_unsupported": null
                   },
-                  "ifs": []
+                  "ifs": [],
+                  "walrus": []
                 }
               ],
               "keywords": [],

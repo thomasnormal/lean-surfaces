@@ -3875,6 +3875,7 @@
         },
         "name": "TreeCounter",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",

@@ -415,25 +415,32 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
       for line in contents.splitOn "\n" do
         if line.trim.isEmpty then
           continue
-        let outcome : Except String (Module × ScriptJob) ← do
+        -- a runner error keeps the job's PATH whenever the line parsed, so a
+        -- survey attributes the failure to the file instead of losing it
+        let outcome : Except (Option String × String) (Module × ScriptJob) ← do
           match parseScriptJob line with
-          | .error e => pure (.error e)
+          | .error e => pure (.error (Option.none, e))
           | .ok job =>
             match ← (IO.FS.readFile ⟨job.path⟩).toBaseIO with
-            | .error e => pure (.error s!"cannot read '{job.path}': {toString e}")
+            | .error e => pure (.error (some job.path, s!"cannot read '{job.path}': {toString e}"))
             | .ok raw =>
               match parseEnvelopeString raw with
-              | .error e => pure (.error s!"'{job.path}' is not a valid envelope: {e}")
+              | .error e =>
+                  pure (.error (some job.path, s!"'{job.path}' is not a valid envelope: {e}"))
               | .ok envl =>
                 if envl.language == "python" then
                   pure (.ok (envl.module, job))
                 else
-                  pure (.error s!"'{job.path}' has language '{envl.language}', expected 'python'")
+                  pure (.error (some job.path,
+                    s!"'{job.path}' has language '{envl.language}', expected 'python'"))
         match outcome with
-        | .error e =>
+        | .error (path?, e) =>
             hadError := true
             IO.eprintln s!"leanmodels-run --script-batch: {e}"
-            stdout.putStrLn ("{\"status\":\"runner-error\",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
+            stdout.putStrLn ((match path? with
+                | some p => "{\"path\":" ++ jsonStr p ++ ",\"status\":\"runner-error\""
+                | Option.none => "{\"status\":\"runner-error\"")
+              ++ ",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
             stdout.putStrLn (scriptJson job.path (liveSuffix m.topLevel.toList).length
               (runScriptClock m (job.clock.getD []) (job.fuel.getD defaultFuel)))

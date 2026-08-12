@@ -42,6 +42,7 @@
         },
         "name": "Boom",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Pass",

@@ -553,7 +553,9 @@ Verilog-AMS support.
 | `Examples/system-verilog/<name>/` | SystemVerilog examples: pure `.sv` source + generated envelope + hand-written `spec.lean` and `proof.lean` |
 | `Examples/spice/<name>/` | SPICE examples: pure `.cir` component + hand-written `spec.lean` and `proof.lean` |
 | `Examples/python/sum_to/` | The one inline-mode example: `# lean[` blocks in `sum_to.py` + generated companion `SumTo.lean` |
-| `Main.lean` | `leanmodels-run` CLI |
+| `Main.lean` | `leanmodels-run` CLI (typed calls, `--batch`, leanpy's `--script` / `--script-batch`) |
+| `tools/leanpy` | Run an arbitrary Python FILE under the Lean semantics: extract → interpret → stdout + exit status (`--compare` against CPython) |
+| `harness/leanpy_survey.py` | Completeness as a measured number: MATCH/DIVERGE/REFUSE/TIMEOUT over a corpus, with refusal telemetry |
 | `harness/` | Differential tests: Python vs CPython, SV vs Xcelium/Icarus, and circuit semantics vs ngspice/Spectre |
 | `tools/docs_check.py` | Docs drift checker: path-marked doc code blocks must match the tree |
 

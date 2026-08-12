@@ -284,6 +284,36 @@ cycle DETECTION, never by running out of fuel).
   store; attribute stores on dicts/lists/scalars are the faithful
   `AttributeError`. Also faithful now: `.get` on a list, `.append` on a
   dict (`AttributeError`, previously loud).
+* **Class CREATION is an effect** (2026-08-12, found by `tools/leanpy`,
+  BUILT — normative). The tier answers "can an instance exist?"
+  (`ClassDefn.ok`, the dunder guard above) and, since leanpy runs whole
+  programs, it must separately answer **"does executing the `class`
+  statement do anything observable?"** CPython evaluates the bases and
+  runs the class body THERE; the model builds `ClassDefn` at ingestion
+  and executes no class body ever. For most classes that is invisible,
+  but `class C: print("x")` printed under CPython and not under the
+  model — a WRONG ANSWER, not a refusal, and the only silent divergence
+  the first completeness survey turned up (`class C(base())`, where the
+  base expression prints, is the same hole through the other door).
+  **`ClassDefn.creationPure`** is therefore a SECOND, independent flag:
+  the extractor emits the structured verdict `creation_effects`
+  (unrecognized base / metaclass keyword / decorator / any class-level
+  statement beyond a method, `pass`, a docstring, or an attribute bound
+  to a LITERAL), ingestion re-checks the body it already parses
+  (`classBodyStmtPure` — never trust a field you can verify), and a
+  demoted namedtuple/`Exception` base clears the flag too, because the
+  base expression the census rejected is no longer one the model
+  reproduces. `runScript` refuses a module containing any non-pure
+  class (`classesCreationPure`, the FIRST admission check): a script
+  never silently skips a class-creation effect. The two flags are
+  deliberately independent — `class Tag: kind = "tag"` is creation-pure
+  (a literal binding prints nothing) yet stays UNINSTANTIABLE, so a
+  program that defines it runs and `Tag()` still refuses
+  (`harness/scripts/cls_data_script.py` pins both halves;
+  `cls_effect_script.py` pins the refusal). The closed FUNCTION surface
+  is untouched: it makes no claim about module stdout, and the one
+  class-body effect that could reach a call's result — a class-level
+  `global` — is already tracked by `ClassDefn.hasGlobal`.
 * **Instances as dict keys** are LOUD (CPython hashes by identity —
   in-tier keys stay value-hashable; `keyRefusal` never raises a fake
   `unhashable` `TypeError` for them). An instance cannot cross the
@@ -1840,8 +1870,22 @@ NOW, so it is a field, not a refactor:
 scripts, first-unsupported-construct reporting, stdout diff vs python3.9,
 wired into the harness as a script-corpus mode. `Module`'s
 functions/topLevel split loses `def`/assignment interleaving — v0 must
-detect and refuse interleaving-sensitive scripts loudly (the ordered
-`ModuleItem` representation stays the fix, §module initialization).
+detect and refuse interleaving-sensitive scripts loudly.
+
+**RESOLVED 2026-08-12 without changing the representation** (`Script.lean`
+`defsBoundBefore`): the split loses ORDER, but order is only observable
+through a REFERENCE, so the admission is per statement and per name — a
+top-level statement may mention a name the module binds by
+`def`/`class`/namedtuple only if that definition ends before the statement
+begins. Under that condition the position-independent tables and CPython's
+sequential binding agree on every reference made, and a genuine forward
+reference (CPython: `NameError`) refuses loudly. The check covers the G1
+prefix too, where the old blanket rule never looked: `x = f()` above
+`def f` was executed by module init and answered `1` where CPython exits 1.
+The ordered `ModuleItem` representation remains the fix for what this does
+NOT buy — running a `def` as a statement, rebinding a name between two
+definitions — but it is no longer what stands between leanpy and real
+files (docs/backlog.md, the measured ladder).
 
 ## Module initialization (decision)
 

@@ -133,6 +133,59 @@ nodes / 142 files), `Constant:bytes`, `ImportFrom`, `With`,
 `BinOp:BitAnd`, `ListComp`, `Constant:float`, `JoinedStr`, `Assert`,
 `Starred`, `Delete`, `Lambda`.
 
+FIRST BUG FOUND BY THE INSTRUMENT (2026-08-12, same day, fixed): pointing
+leanpy at `class C: print("x")` produced a MISMATCH, not a refusal —
+CPython runs a class body at the `class` statement, the model builds
+`ClassDefn` at ingestion and executes no class body, so the print
+vanished. `class C(base())` is the same hole through the other door.
+Closed loudly: `ClassDefn.creationPure` + `runScript`'s
+`classesCreationPure` admission (docs/memory-model.md §class semantics,
+"Class CREATION is an effect"), pinned by
+`harness/scripts/cls_effect_script.py` (the refusal) and
+`cls_data_script.py` (a creation-pure class still runs, and stays
+uninstantiable — the two flags are independent).
+
+**THE ORDERED ADMISSION — BUILT the same day (2026-08-12), and the
+telemetry it produces is a different ladder.** The blanket rule "every
+definition precedes all live code" was the top blocker; it is replaced by
+`defsBoundBefore` (Script.lean): a top-level statement may mention a name
+the module binds by `def`/`class`/namedtuple only if that definition ENDS
+before the statement begins. The model's position-independent tables and
+CPython's sequential binding then agree on every reference actually made,
+and a genuine forward reference — where CPython raises `NameError` — still
+refuses loudly. The check covers ALL of `topLevel`, not just the live
+suffix, which closes a SECOND silent hole: `x = f()` above `def f` sits in
+the G1 prefix, the old rule never looked there, and the model answered `1`
+where CPython exits 1 with `NameError`
+(`harness/scripts/prefix_forward.py` pins it; `interleave_script.py` is
+the payoff row, `call_before_def.py` the unchanged refusal).
+
+RE-MEASURED after both changes (same corpora, same 3.9.19 oracle):
+
+* in-repo corpus, now 83 files (four new rows): **58 MATCH (69.9%), 25
+  REFUSE, 0 DIVERGE**, 17 of the matches executing live top level. The
+  percentage moved DOWN from 72.2% and that is the honest direction: 20
+  files used to "match" only because the model silently skipped their
+  class bodies.
+* stdlib sweep, same 167 files: **8 MATCH, 159 REFUSE, 0 DIVERGE**.
+
+And the refusal ladder is now made of real constructs instead of one
+structural artifact — the def-ordering refusal collapsed from 146 files to
+1:
+
+| files | what actually stopped the run |
+|---|---|
+| 108 | class CREATION effects (inheritance, computed class attributes, decorators) |
+| 27 | live top-level code rebinds a module global some function reads (`suffixConsistent`) |
+| 12 | `import` |
+| 5 | `except ImportError:` (an unadmitted exception class) |
+| 1 each | forward reference, `.join`, `.extend`, namedtuple class as a value, `try/else` |
+
+sunfish.py's own refusal moved with it: it now clears ingestion, class
+creation and the ordering check, and stops at `suffixConsistent` — the
+module-init `pst` store into a name its functions read — which is a named
+condition about THIS program, not a boundary artifact.
+
 The stdlib sweep is deliberately NOT in the default corpus file: running
 arbitrary stdlib top level under the oracle has side effects (a browser,
 a window, a server), so it stays an explicitly invoked measurement with a

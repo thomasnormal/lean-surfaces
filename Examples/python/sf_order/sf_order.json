@@ -11290,6 +11290,7 @@
         },
         "name": "Position",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",
@@ -18109,7 +18110,8 @@
                             }
                           ]
                         }
-                      ]
+                      ],
+                      "walrus": []
                     },
                     {
                       "kind": "Constant",
@@ -18345,7 +18347,8 @@
                     "keywords": [],
                     "call_unsupported": null
                   },
-                  "ifs": []
+                  "ifs": [],
+                  "walrus": []
                 }
               ],
               "keywords": [
@@ -20222,7 +20225,8 @@
                         "keywords": [],
                         "call_unsupported": null
                       },
-                      "ifs": []
+                      "ifs": [],
+                      "walrus": []
                     }
                   ],
                   "keywords": [
@@ -21234,6 +21238,7 @@
         },
         "name": "Cache",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",
@@ -22318,7 +22323,8 @@
                         "keywords": [],
                         "call_unsupported": null
                       },
-                      "ifs": []
+                      "ifs": [],
+                      "walrus": []
                     }
                   ],
                   "keywords": [
@@ -22912,6 +22918,7 @@
         },
         "name": "MiniSearcher",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",
@@ -23462,7 +23469,8 @@
                             "keywords": [],
                             "call_unsupported": null
                           },
-                          "ifs": []
+                          "ifs": [],
+                          "walrus": []
                         }
                       ],
                       "keywords": [

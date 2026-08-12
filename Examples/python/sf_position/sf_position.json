@@ -193,6 +193,7 @@
         },
         "name": "Position",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",

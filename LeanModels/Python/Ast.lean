@@ -301,6 +301,19 @@ structure ClassDefn where
   refuses loudly (the value-position refusals are what keep the
   payload-free representation exact). -/
   isExc : Bool := false
+  /-- Is CREATING this class observationally free? CPython executes a
+  class body — and evaluates its bases — at the `class` statement, while
+  the model builds `ClassDefn` at ingestion and executes nothing. That is
+  invisible only when the body can neither print, raise, nor call: methods,
+  `pass`, docstrings and LITERAL attribute assignments qualify; a call, a
+  name read, an unrecognized base or a decorator does not (leanpy found the
+  hole with `class C: print(…)` — CPython printed, the model did not, a
+  WRONG ANSWER rather than a refusal). Set by ingestion from the class
+  body (Json.lean); `runScript` refuses a module that contains a
+  non-`creationPure` class, so a script never silently skips an effect.
+  Default `false`: a hand-built `ClassDefn` has no body to inspect, and
+  the safe answer is the loud one. -/
+  creationPure : Bool := false
   span : Span
 deriving Repr, Inhabited, BEq, DecidableEq
 

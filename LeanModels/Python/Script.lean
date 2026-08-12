@@ -243,34 +243,78 @@ def g1Prefix : List Stmt → List Stmt
   | [] => []
   | s :: rest => if g1Shape s then s :: g1Prefix rest else []
 
-/-- Every function AND class definition precedes every live-suffix
-statement (a live statement could otherwise call/instantiate it before
-CPython would have bound it). Flattened method spans sit inside their
-class span, so the function half already covers them — the class check
-adds the `class` line itself.
+/-- The span of a statement (every constructor carries one last). -/
+def scriptStmtSpan : Stmt → Span
+  | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
+  | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
+  | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
+  | .pass sp | .brk sp | .cont sp
+  | .defStmt _ _ _ _ _ _ _ _ sp
+  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
+  | .unsupported _ _ sp => sp
 
-H4 exemption: a SYNTHESIZED genexp function (`<genexpr@n>` — ingestion's
-lowering, Json.lean) is exempt. The hazard this guards against is a live
-statement calling a name before CPython binds it, and such a name is
-UNNAMEABLE in Python: its only call site is the expression it replaced,
-where CPython builds the same implicit function at exactly that moment.
-Recognized by the leading `<`, which no Python identifier can carry. -/
-def defsBeforeLive (m : Module) (suffix : List Stmt) : Bool :=
-  (m.functions.toList.all fun f =>
-    f.name.startsWith "<" ||
-      suffix.all fun s => f.span.endLineno < (stmtSpan s).lineno)
-  && (m.classes.toList.all fun c =>
-    suffix.all fun s => c.span.endLineno < (stmtSpan s).lineno)
-where
-  /-- The span of a statement (every constructor carries one last). -/
-  stmtSpan : Stmt → Span
-    | .ret _ sp | .assign _ _ sp | .augAssign _ _ _ sp
-    | .whileLoop _ _ _ sp | .forStmt _ _ _ _ sp | .ifStmt _ _ _ sp
-    | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
-    | .pass sp | .brk sp | .cont sp
-    | .defStmt _ _ _ _ _ _ _ _ sp
-    | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
-    | .unsupported _ _ sp => sp
+/-- The last line at which the module's `def` / `class` / recognized
+namedtuple statements BIND the plain name `n`, if any. Duplicate
+definitions resolve last-wins everywhere in the model, so the LAST one is
+the binding a reference must come after. Flattened method names carry a
+`.` and synthesized genexp functions a leading `<` — neither is a Python
+identifier, so neither can be the `n` of a source reference. -/
+def defBindEnd (m : Module) (n : String) : Option Nat :=
+  let ends :=
+    (m.functions.toList.filterMap fun f =>
+        if f.name == n then some f.span.endLineno else Option.none)
+      ++ (m.classes.toList.filterMap fun c =>
+        if c.name == n then some c.span.endLineno else Option.none)
+      ++ (m.namedtuples.toList.filterMap fun nt =>
+        if nt.name == n then some nt.span.endLineno else Option.none)
+  ends.foldl (fun acc e => some (max (acc.getD 0) e)) Option.none
+
+/-- ORDERED ADMISSION (2026-08-12 — replaces the blanket "every definition
+precedes all live code"). `Module` splits definitions out of `topLevel`
+into position-independent tables, so the model can reach a function CPython
+has not bound yet; the blanket rule bought soundness by refusing every
+interleaved file, which the first completeness survey measured as the top
+blocker of real Python (146 of 158 stdlib refusals).
+
+The precise condition is per statement and per NAME: a top-level statement
+may mention a name the module binds by `def`/`class`/namedtuple only if
+that definition ENDS before the statement begins. Then the model's
+position-independent table and CPython's sequential binding agree on every
+reference actually made — and a reference to a not-yet-bound name, where
+CPython raises `NameError` and the model would happily call, refuses
+loudly instead.
+
+The check covers ALL of `topLevel`, not just the live suffix: the G1
+prefix is folded (and, when the fold refuses, EXECUTED) at its own
+position, so `x = f()` above `def f` is the same hazard there.
+`Stmt.allNames` overapproximates reads, so the answer errs toward
+refusing. A SYNTHESIZED genexp function (`<genexpr@n>`) is exempt for the
+old reason: its name is unnameable in Python, and CPython builds the same
+implicit function at exactly the expression it replaced. -/
+def defsBoundBefore (m : Module) (stmts : List Stmt) : Bool :=
+  stmts.all fun s =>
+    let ln := (scriptStmtSpan s).lineno
+    (Stmt.allNames s).all fun n =>
+      n.startsWith "<" ||
+        match defBindEnd m n with
+        | some e => decide (e < ln)
+        | Option.none => true
+
+/-- CLASS CREATION IS AN EFFECT (docs/memory-model.md §class creation).
+CPython evaluates a class's bases and runs its body AT the `class`
+statement; the model builds `ClassDefn` at ingestion and executes nothing.
+For a `creationPure` class that is invisible — methods, `pass`, docstrings
+and literal attribute bindings can neither print nor raise. For any other
+class it is a silently skipped effect, which is the one thing this project
+never does, so the whole script refuses.
+
+Found by pointing `tools/leanpy` at `class C: print("x")`: CPython printed
+and the model did not, a WRONG ANSWER rather than a refusal. The closed
+FUNCTION surface is unaffected — it makes no claim about module stdout,
+and the one class-body effect that could reach a call's result, a
+class-level `global`, is already tracked by `ClassDefn.hasGlobal`. -/
+def classesCreationPure (m : Module) : Bool :=
+  m.classes.all (·.creationPure)
 
 /-- The stale-table guard: no suffix (nested-)assignment to ANY name some
 function reads. Under the prefix view (`runScript`'s `mPre`) BOTH halves
@@ -389,8 +433,10 @@ is the same world, and seeding after keeps the `runScript = runScriptClock
 m []` equation definitional. -/
 def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
   let suffix := liveSuffix m.topLevel.toList
-  if !defsBeforeLive m suffix then
-    .unsupported "a function defined after live top-level code is outside leanpy v0 (a live statement could call it before CPython binds it; the ordered ModuleItem representation is the recorded fix)"
+  if !classesCreationPure m then
+    .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator, or a class-level statement beyond methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
+  else if !defsBoundBefore m m.topLevel.toList then
+    .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
   else if !suffixConsistent m suffix then
     .unsupported "live top-level code rebinds a module global some function reads — outside leanpy v0 (the closed-function G1 table would go stale for calls, and a fresh live global would fake a NameError; ordered ModuleItem representation is the recorded fix)"
   else

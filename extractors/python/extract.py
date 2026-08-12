@@ -754,11 +754,33 @@ def convert_stmt(node, enclosing=None, module_scope=False):
                 continue  # docstring / stray constant
             reasons.append("class-level statements (class attributes)")
             break
+        # CREATION EFFECTS, structured separately from the tier reasons
+        # above: does executing the `class` statement itself do anything
+        # OBSERVABLE (print, raise, call)? CPython evaluates the bases and
+        # runs the body there; the model builds its ClassDefn at ingestion
+        # and executes nothing, so anything effectful here would be
+        # silently skipped. Methods, `pass`, docstrings and LITERAL
+        # attribute bindings are invisible; a call, a name read, an
+        # unrecognized base, a metaclass keyword or a decorator is not.
+        creation_effects = bool(node.keywords) or bool(node.decorator_list)
+        if node.bases and namedtuple_base is None and not exception_base:
+            creation_effects = True
+        for s in node.body:
+            if isinstance(s, (ast.FunctionDef, ast.Pass)):
+                continue
+            if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
+                continue
+            if (isinstance(s, ast.Assign) and isinstance(s.value, ast.Constant)
+                    and all(isinstance(t, ast.Name) for t in s.targets)):
+                continue
+            creation_effects = True
+            break
         out = {
             "kind": "ClassDef",
             "span": span(node),
             "name": node.name,
             "class_unsupported": ", ".join(reasons) if reasons else None,
+            "creation_effects": creation_effects,
             "body": [convert_stmt(s) for s in node.body],
         }
         if namedtuple_base is not None:

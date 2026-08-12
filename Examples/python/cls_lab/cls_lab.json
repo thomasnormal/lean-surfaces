@@ -42,6 +42,7 @@
         },
         "name": "Cell",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",
@@ -483,6 +484,7 @@
         },
         "name": "Bag",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",
@@ -845,6 +847,7 @@
         },
         "name": "NoInit",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",
@@ -905,6 +908,7 @@
         },
         "name": "Weird",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",
@@ -1043,6 +1047,7 @@
         },
         "name": "Sub",
         "class_unsupported": "bases (inheritance)",
+        "creation_effects": true,
         "body": [
           {
             "kind": "Pass",
@@ -4227,6 +4232,7 @@
         },
         "name": "Rec",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",
@@ -5293,6 +5299,7 @@
         },
         "name": "Counter",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",

@@ -232,15 +232,49 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 49,
                   "col_offset": 8,
                   "end_lineno": 49,
                   "end_col_offset": 57
                 },
-                "py_kind": "Raise",
-                "text": "raise StatisticsError('no median for empty data')"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 49,
+                    "col_offset": 14,
+                    "end_lineno": 49,
+                    "end_col_offset": 57
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 49,
+                      "col_offset": 14,
+                      "end_lineno": 49,
+                      "end_col_offset": 29
+                    },
+                    "id": "StatisticsError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 49,
+                        "col_offset": 30,
+                        "end_lineno": 49,
+                        "end_col_offset": 56
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "no median for empty data"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []
@@ -655,15 +689,49 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 71,
                   "col_offset": 8,
                   "end_lineno": 71,
                   "end_col_offset": 57
                 },
-                "py_kind": "Raise",
-                "text": "raise StatisticsError('no median for empty data')"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 71,
+                    "col_offset": 14,
+                    "end_lineno": 71,
+                    "end_col_offset": 57
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 71,
+                      "col_offset": 14,
+                      "end_lineno": 71,
+                      "end_col_offset": 29
+                    },
+                    "id": "StatisticsError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 71,
+                        "col_offset": 30,
+                        "end_lineno": 71,
+                        "end_col_offset": 56
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "no median for empty data"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []
@@ -1088,15 +1156,49 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 92,
                   "col_offset": 8,
                   "end_lineno": 92,
                   "end_col_offset": 57
                 },
-                "py_kind": "Raise",
-                "text": "raise StatisticsError('no median for empty data')"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 92,
+                    "col_offset": 14,
+                    "end_lineno": 92,
+                    "end_col_offset": 57
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 92,
+                      "col_offset": 14,
+                      "end_lineno": 92,
+                      "end_col_offset": 29
+                    },
+                    "id": "StatisticsError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 92,
+                        "col_offset": 30,
+                        "end_lineno": 92,
+                        "end_col_offset": 56
+                      },
+                      "value": {
+                        "type": "str",
+                        "value": "no median for empty data"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []

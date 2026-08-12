@@ -1120,15 +1120,66 @@
             },
             "body": [
               {
-                "kind": "Unsupported",
+                "kind": "Raise",
                 "span": {
                   "lineno": 71,
                   "col_offset": 8,
                   "end_lineno": 71,
                   "end_col_offset": 50
                 },
-                "py_kind": "Raise",
-                "text": "raise NotRelativePrimeError(x, n, divider)"
+                "exc": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 71,
+                    "col_offset": 14,
+                    "end_lineno": 71,
+                    "end_col_offset": 50
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 71,
+                      "col_offset": 14,
+                      "end_lineno": 71,
+                      "end_col_offset": 35
+                    },
+                    "id": "NotRelativePrimeError"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 71,
+                        "col_offset": 36,
+                        "end_lineno": 71,
+                        "end_col_offset": 37
+                      },
+                      "id": "x"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 71,
+                        "col_offset": 39,
+                        "end_lineno": 71,
+                        "end_col_offset": 40
+                      },
+                      "id": "n"
+                    },
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 71,
+                        "col_offset": 42,
+                        "end_lineno": 71,
+                        "end_col_offset": 49
+                      },
+                      "id": "divider"
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
               }
             ],
             "orelse": []

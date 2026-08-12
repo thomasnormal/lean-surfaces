@@ -10599,6 +10599,7 @@
         },
         "name": "Position",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Expr",
@@ -17362,6 +17363,7 @@
         },
         "name": "Stop",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "Pass",
@@ -17455,6 +17457,7 @@
         },
         "name": "Searcher",
         "class_unsupported": null,
+        "creation_effects": false,
         "body": [
           {
             "kind": "FunctionDef",

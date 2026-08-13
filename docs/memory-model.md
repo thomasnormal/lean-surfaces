@@ -2687,6 +2687,89 @@ truthy in the ordinary tier, so the model agrees with CPython by
 computing the same truthiness. `assert_lab.tuple_test` is the row that
 would catch a well-meaning special case.
 
+## f-strings (`JoinedStr`, the tail batch, construct 2 — DESIGN)
+
+Chosen over `Delete`, `Constant:bytes`, `Starred` and `With` by the
+SEQUENCING PRINCIPLE (docs/backlog.md), which ranks by proof-layer shape
+with the count only as a tiebreak. The measured shapes:
+
+* `Delete` MUTATES. `del x` removes a binding and **no `Env` removal
+  primitive exists**; `del d[k]` mutates the heap. Both mean `worldInv`
+  must be re-established — a fragment change.
+* `Constant:bytes` adds a new `RVal` CONSTRUCTOR, which touches every
+  value-level match in the interpreter and adds a case to both 18-conjunct
+  mutual inductions. The most expensive shape in the batch.
+* `Starred` ALLOCATES (unpacking builds a sequence) and reaches into the
+  call machinery. `With` retains state across a raise — the dearest.
+* `JoinedStr` allocates nothing and mutates nothing: `.str` is an
+  IMMEDIATE `RVal` (`| str (s : String)`), not a heap object.
+
+### It is LOWERED, not interpreted — the design's whole point
+
+`f"a{x}b"` is extracted as `"a" + str(x) + "b"`: literal text becomes
+`Expr.constant (.str …)`, each field becomes a `str(…)` call, and the
+pieces are joined with `binOp Add`. Consequences, all checked against the
+existing definitions rather than hoped for:
+
+* **ZERO new AST constructors, ZERO new `evalExpr` arms, ZERO new walkers,
+  and ZERO new proof-layer arms.** `fuelMono`, `worldInv` and
+  `ceExecStmt_succ` are untouched — there is nothing to prove, because no
+  new semantic construct exists. `assert` needed three proof sites; this
+  needs none.
+* **It stays inside the heap-free fragment.** `Expr.heapFree`'s call arm
+  excludes `sorted`/`next`/`enumerate`/`count`/`any`/`all`/`set`/`print`/
+  `list`/`dict` — `str` is not among them — and `binOp` recurses
+  structurally. So a lowered f-string is heap-free exactly when its fields
+  are, which is the same condition a native arm would have given.
+* **The rendering is REUSED, not re-decided** — the same property that
+  made `assert` cheap, one construct later. `{x}` is `str(x)` is
+  `printOne`, so f-strings, `print` and `assert` messages cannot drift,
+  and the pinned refusals (a set's hash order, an instance's identity)
+  come along unchanged.
+
+### Where the lowering is VALID, and why that fixes the tier boundary
+
+CPython's `{x}` is `format(x, '')`, not literally `str(x)`. The lowering
+is therefore sound exactly where `format(v, '') == str(v)`, which holds
+for every value in this tier. **That is precisely why the format
+mini-language is REFUSED rather than approximated:** the moment a spec is
+non-empty the two operations diverge, and a lowering that ignored it would
+be a silent lie. The tier line falls out of the reuse criterion instead of
+being drawn by taste — conversions are an EXISTING function applied, the
+format mini-language is a PARALLEL TABLE, and this development refuses
+parallel tables.
+
+### Measured against CPython 3.9.19 before building (`fstring_lab.py`)
+
+IN TIER — literal text, `{expr}`, several fields, expressions and calls
+inside a field, `{{`/`}}` brace escapes, the empty f-string, and nesting
+(`f"{f'{n}'}"` → `'3'`, which composes for free because an f-string is an
+ordinary expression once lowered). The two-level rule is pinned by a PAIR:
+`str_field` → `'[hi]'` (a `str` field uses `str()`, so no quotes) against
+`list_field` → `"['a', 'b']"` (elements inside a container get `repr()`).
+
+NON-ASCII IS IN TIER, AND WAS MEASURED RATHER THAN PREDICTED.
+`nonascii_text` → `'héllo 3'` and `nonascii_field` → `'[héllo]'`. This is
+the same fact the `assert` battery got wrong by predicting a refusal
+(§the assert statement, MEASURED CORRECTION): a bare `str` renders as
+itself, so there is no printability decision to guess. The refusal is real
+only INSIDE a container, where `reprVal` must escape.
+
+REFUSED LOUDLY, each for a stated reason, not for convenience:
+
+* `{x:>5}` / `{x:03d}` — the format mini-language (see above). CPython
+  gives `'    3'` / `'003'`.
+* `{x!r}` — asks for `repr()`, and `repr` is only a name in
+  `isPyBuiltinName`, not a tier callable. CPython gives `"'hi'"`.
+* `{x=}` — the 3.8 debug specifier needs the field's SOURCE TEXT, which
+  the extracted AST does not carry. CPython gives `'n=3'`.
+* `{ {1, 2} }` — inherits `printOne`'s set refusal (hash order is never
+  guessed). CPython gives `'{1, 2}'`; the model must be LOUD.
+
+`{x!s}` is the one conversion that is IN tier: it measured `'hi'`,
+identical to `str()`, so it is `printOne` under another spelling and costs
+nothing to admit.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

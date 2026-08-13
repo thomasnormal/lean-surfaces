@@ -106,25 +106,56 @@ def load_corpus(path, extra_paths):
 # static census
 # ---------------------------------------------------------------------------
 
+# The exact-text import whitelist the model treats as benign
+# (`benignImportBinds`, Ast.lean). Keep in sync — a whitelisted import is
+# not a wall.
+BENIGN_IMPORTS = frozenset((
+    "import time",
+    "from itertools import count",
+    "from collections import namedtuple",
+))
+
+
 def census(envelope_path):
-    """(total nodes, [py_kind ...]) of one envelope — every dict carrying a
-    ``kind`` is a node; ``Unsupported`` ones contribute their ``py_kind``."""
+    """(total nodes, [py_kind ...], {wall ...}) of one envelope.
+
+    Every dict carrying a ``kind`` is a node; ``Unsupported`` ones
+    contribute their ``py_kind``. The WALL SET is the third result and it
+    is what makes the ranking honest: `runScript`'s admissions are
+    ORDERED, so the dynamic telemetry only ever names the FIRST thing that
+    stopped a file, and a wall that always sits behind another one looks
+    like the frontier when it is not. Measured 2026-08-13: 112 stdlib
+    files refuse on class creation and 111 of them also contain an import,
+    so the class tier — however worthwhile as a language surface — would
+    move the sweep by ONE file. A count that cannot say that is not
+    telling you where to work.
+    """
     with open(envelope_path, "r", encoding="utf-8") as f:
         env = json.load(f)
     total = 0
     kinds = []
+    walls = set()
     stack = [env["module"]]
     while stack:
         node = stack.pop()
         if isinstance(node, dict):
             if "kind" in node:
                 total += 1
-                if node["kind"] == "Unsupported":
-                    kinds.append(node.get("py_kind", "?"))
+                k = node["kind"]
+                if k == "Unsupported":
+                    py = node.get("py_kind", "?")
+                    kinds.append(py)
+                    if py in ("Import", "ImportFrom"):
+                        if node.get("text", "") not in BENIGN_IMPORTS:
+                            walls.add("import")
+                    else:
+                        walls.add("node:" + py)
+                elif k == "ClassDef" and node.get("creation_effects"):
+                    walls.add("class-creation")
             stack.extend(node.values())
         elif isinstance(node, list):
             stack.extend(node)
-    return total, kinds
+    return total, kinds, walls
 
 
 # ---------------------------------------------------------------------------
@@ -305,9 +336,10 @@ def main(argv=None):
                 rec["detail"] = "extractor refused (see stderr above)"
             else:
                 rec["envelope"] = envelope
-                total, kinds = census(envelope)
+                total, kinds, walls = census(envelope)
                 rec["nodes"] = total
                 rec["unsupported_kinds"] = kinds
+                rec["walls"] = walls
                 jobs.append(envelope)
                 by_envelope[envelope] = rec
             results.append(rec)
@@ -441,6 +473,29 @@ def main(argv=None):
         print("DYNAMIC telemetry — what actually stopped the run, ranked:")
         for msg, n in sorted(dyn.items(), key=lambda kv: -kv[1])[:opts.top]:
             print("  %4d  %s" % (n, msg[:100]))
+
+    # SOLE-BLOCKER telemetry (2026-08-13): what removing one wall would
+    # ACTUALLY buy. `present` counts refusing files containing the wall at
+    # all — the number the ordered dynamic ranking flatters — and `sole`
+    # counts those where it is the ONLY wall, which is the number of files
+    # a tier closing it would move.
+    refusing = [rec for rec in results
+                if rec["verdict"] == "REFUSE" and "walls" in rec]
+    if refusing:
+        present, sole = {}, {}
+        for rec in refusing:
+            ws = rec["walls"] or {"(none detected statically)"}
+            for w in ws:
+                present[w] = present.get(w, 0) + 1
+            if len(ws) == 1:
+                w = next(iter(ws))
+                sole[w] = sole.get(w, 0) + 1
+        print("-" * 78)
+        print("SOLE-BLOCKER telemetry — %d refusing files; `sole` is what a tier "
+              "would actually buy:" % len(refusing))
+        order = sorted(present, key=lambda w: (-sole.get(w, 0), -present[w]))
+        for w in order[:opts.top]:
+            print("  sole %4d   present %4d   %s" % (sole.get(w, 0), present[w], w))
 
     # static telemetry
     stat = {}

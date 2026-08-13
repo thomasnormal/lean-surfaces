@@ -392,6 +392,52 @@ than a verdict. It found three things immediately:
   reports them as ABSENT and NOTHING is invented. `StopIteration` was
   exact already (CPython raises it bare) and now says so.
 
+**THE CLASS TIER IS NOT THE STDLIB FRONTIER — the ranking was an
+ordered-check artifact (2026-08-13, MEASURED).** The dynamic telemetry
+names the FIRST admission that stopped a file, and `runScript`'s
+admissions are ordered, so a wall that always sits behind another one
+reads as the frontier when it is not. `classesCreationPure` is checked
+before execution ever reaches an import statement, which is why "108
+files: class CREATION effects" topped the ladder for a week.
+
+Re-measured with a per-file WALL SET instead of a first-blocker count:
+
+* stdlib sweep, 162 refusing files — `import` is **present in 155** and
+  **sole blocker in 7**; `class-creation` is present in 105 and **sole
+  blocker in ZERO**. Of the 112 files that refuse on class creation, 111
+  also contain an import; the one exception is `graphlib.py`.
+* the vendored `Lib/test` corpus is the same story: all 8 files import
+  (`test_builtin.py` 33 times).
+* in-repo, `class-creation` is sole blocker for 2 files (`cls_lab.py`,
+  `cls_effect_script.py`).
+
+So an inheritance/class-body tier — worth building as a LANGUAGE SURFACE,
+and still the biggest single hole in the class model — would move the
+stdlib sweep by ONE file. The frontier for whole-program completeness is
+`import`, which is currently out of scope BY KIND, and behind it a broad
+tail (Assert present in 47, Delete 74, With 69, Starred 68,
+`Constant:bytes` 51, JoinedStr 46, BitAnd 43, Set 27, Lambda 26, Global
+23, DictComp 18) — no single one of which is sole blocker for more than
+one file either. Closing `import` alone unblocks 7; whole-program stdlib
+completeness needs `import` PLUS most of that tail.
+
+THE INSTRUMENT THAT SAYS SO is now part of the survey: `census` returns a
+WALL SET per file and the report ranks by `sole` (files where the wall is
+the ONLY one) alongside `present` (the number the ordered ranking
+flatters). Ranking tiers by `present` is what produced the wrong
+priority; `sole` is the number a tier would actually buy. Note the
+recorded caveat: the wall set is STATIC and only covers walls it knows,
+so files refusing for a dynamic reason land in
+`(none detected statically)`.
+
+RECORDED CONSEQUENCE FOR THE LADDER: `import` deserves its scope decision
+revisited rather than restated. THE ONE PIPELINE makes a Python-only
+module system conceivable for the first time — importing a pure-Python
+module is running its top level in its own namespace, which is now
+exactly what `runScript` does — though most stdlib imports reach C
+modules (`sys`, `_collections_abc`) that no such system can execute, so
+the honest ceiling needs measuring before the work is committed to.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

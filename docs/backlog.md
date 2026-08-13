@@ -1656,17 +1656,48 @@ before anything is built (`import_closure.py --tier` now prints it):
   `Assert`) free **18**; plus `class-creation` **53**; plus
   `Constant:bytes` and `BinOp:BitAnd` **82**.
 
-So the unit of work is the tail as a batch, and no member of it should
-be justified by its own `sole` number — which is the trap that would
-have made each one look not worth doing, one at a time, forever.
+### THE SEQUENCING PRINCIPLE (normative — read this before pricing any
+### tail construct on its own)
 
-**AND THE SOUNDER JUSTIFICATION IS NOT THE STDLIB PERCENTAGE AT ALL.**
-`Starred`, `With`, `JoinedStr`, `Assert` and `Delete` are ordinary
-Python that any real program uses; the goal is "verify arbitrary
-Python", not "maximise a stdlib number". They are worth having whether
-or not they move the sweep, which is a different and better argument
-than the one that carried `import` — and it is the argument to build
-them on. The library counts sequence the work; they do not justify it.
+The three findings above are a measurement. This is the RULE they imply,
+written out because the next person to look at `Starred` in isolation
+will otherwise reach the wrong conclusion exactly as the ordered-
+admission ranking did twice before.
+
+**1. No member of the tail may be justified by its own `sole` number.**
+Judged that way every one of them is worth 2-5 modules, no single one
+survives a cost-benefit test, and the conclusion is "build none of them"
+— forever, no matter how many are left. That verdict is an artifact of
+the unit of measurement, not a fact about the work. The unit is the
+BATCH: 8 constructs free 69 of 188, 11 free 108, 14 free 140.
+
+**2. The justification is LANGUAGE SURFACE, not the stdlib percentage.**
+`Starred`, `With`, `JoinedStr`, `Assert` and `Delete` are ordinary Python
+that real programs use. The standing goal is to verify ARBITRARY Python,
+not to maximise a number over one corpus, so these are worth having
+whether or not they move the sweep. That is a different and sounder
+argument than the one that carried `import`, and it is the argument to
+build them on. **The library counts SEQUENCE the work; they do not
+justify it.**
+
+**3. When the counts are all small and similar, sequence by PROOF-LAYER
+SHAPE, with the count only as a tiebreak.** `assert` goes first not
+because it is worth 3 modules but because it is the cheapest arm in the
+interpreter: it evaluates two expressions and either does nothing or
+raises, so it stays inside `Stmt.heapFree`, `worldInv` is undisturbed,
+and only `fuelMono` and `clockErase` gain one arm each. A construct that
+allocates, mutates, or retains state across a raise costs a fragment
+change and should be sequenced later, whatever its count says.
+
+**4. Prefer a construct whose semantics can REUSE an existing function
+over one that needs a parallel table.** `assert`'s message renders
+through `printOne`, the same function `print` applies to one argument —
+because `str(x)` for an `AssertionError` argument and `str(x)` for a
+`print` argument are the SAME CPython operation. Two tables that must
+agree will drift; one function applied twice cannot. It also inherits
+the pinned refusals (set, instance, non-ASCII) for free, which is the
+same property on the negative cases. Look for that shape in every
+remaining construct before writing a new renderer or a new walker.
 
 ### Two instrument fixes it required
 

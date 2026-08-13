@@ -2078,7 +2078,11 @@ a module-global name, `del` of a never-bound name, double `del`. Refused
 by shape: `del d[k]`, `del o.attr`, module-scope `del`. Plus a script
 whose stdout is compared byte-for-byte.
 
-## The tail, construct 4: ranked, not yet designed (2026-08-13)
+## The tail, construct 4: ranked (2026-08-13)
+
+**STATUS: `BinOp:BitAnd` is DESIGNED — see §the bitwise family below.**
+The ranking here is the record that produced that choice and is left
+unedited.
 
 By §THE SEQUENCING PRINCIPLE — proof-layer shape first, counts only as a
 tiebreak. Measured positions in the source, not recalled:
@@ -2105,3 +2109,291 @@ tiebreak. Measured positions in the source, not recalled:
    programs for it today. Nothing is learned by moving it earlier.
 
 Recommended order: `del` (designed above), then `BitAnd`, then `Starred`.
+
+## The tail, construct 4: `BinOp:BitAnd` DESIGNED — and the measurement RETIRES `|`'s negative refusal (2026-08-13)
+
+### The design, stated before the argument for it
+
+`&` is admitted with its FULL int semantics, negative operands included,
+because negative operands turn out to be EXACT in core Lean and the
+pass-5 refusal that said otherwise was a design-time prediction, not a
+measurement. The value tier is one new function, `intBitwise`-shaped,
+applied to `&`, `|` and `^` alike — one function three times, never
+three tables (§THE SEQUENCING PRINCIPLE, rule 4).
+
+### Zero new proof arms — VERIFIED at the arms, not inferred from the ranking
+
+The ranking above ASSERTED this. It is now checked at every site, by
+grep over the source rather than by recall:
+
+* `evalBinOp` is at Semantics.lean:475. The `mutual` blocks around it
+  close at 391 and open at 1031, so it is outside every one of them.
+* Every walker binds the operator and drops it: `Expr.heapFree`
+  (Semantics.lean:3348), `genAllocFree` (3498), `g1HeapPure` (2898) and
+  `Script.allNames` (Script.lean:128) all spell the arm
+  `| .binOp l _ r _ => …`; `nodeKind` (189) is `| .binOp .. =>`.
+* **All three expensive proof sites treat `evalBinOp` as OPAQUE.**
+  `fuelMono` (Obs.lean:501), `worldInv` (Obs.lean:2053) and
+  `ceExecStmt_succ` (ClockErase.lean:1350) each `.bind` the two operand
+  IHs and then discharge the operator with `.liftRes`/`.liftResF`,
+  which is generic over the whole `Res` — `.ok`, `.exn` AND
+  `.unsupported`. None of them cases on `op`; none of them unfolds
+  `evalBinOp`. A new arm with a new refusal cannot reach them.
+* `Obs.lean` and `ClockErase.lean` contain **no `.binOp` occurrence at
+  all** — only the three bound-variable arms above. There is no operator
+  table anywhere in the proof layer to keep in sync.
+* The three `.binOp`s in VCTactic.lean (2350, 2351, 2363) are TEST
+  FIXTURES that construct terms, not a dispatch table.
+
+So the f-strings outcome is reached by a second, independent route: the
+proof layer does not move.
+
+### The measurement (CPython 3.9.19, run before any of this was written)
+
+`/opt/homebrew/bin/python3.9`, `Python 3.9.19`. Rows, verbatim:
+
+* **Plain ints.** `12 & 10 → 8`, `0b1011 & 0b1101 → 9`, `255 & 0 → 0`,
+  `((1<<100)-1) & 0xff → 255`.
+* **Boolness, all four cells.** `True & True → True`,
+  `True & False → False`, `False & True → False`,
+  `False & False → False`, every one a `bool`. One int operand makes it
+  an int: `True & 1 → 1`, `1 & True → 1`, `True & 3 → 1`,
+  `3 & True → 1`, `True & 0 → 0`, and `type(0 & True)` is `int`.
+  Identical to `|`'s pinned table.
+* **Negative operands do NOT raise — they have values.** `-1 & 3 → 3`,
+  `3 & -1 → 3`, `-2 & 3 → 2`, `-1 & -1 → -1`, `-4 & -3 → -4`,
+  `-1 & 0 → 0`, `-5 & 12 → 8`, `12 & -5 → 8`, `-3 & -5 → -7`,
+  `-16 & 15 → 0`, `-100 & 7 → 4`.
+* **Type errors, verbatim** — and they are exactly the string the
+  existing fallback arm already builds from `op.symbol` and
+  `typeName`: `unsupported operand type(s) for &: 'int' and 'str'`,
+  and the same with `'str'`/`'int'`, `'NoneType'`, `'list'`,
+  `'tuple'`, `'dict'`, `'bool'`/`'str'`, `'range'`/`'int'`, and
+  `'Move'`/`'int'` for a namedtuple — which is the CLASS name, matching
+  `RVal.typeName`'s `| .ntuple tn _ _ => tn`.
+* **`{1} & {2}` is `set()`, NOT a TypeError.** Set intersection. This is
+  the one trap in the row set, and the model ALREADY survives it: sets
+  are `Obj.pyset` on the heap (Runtime.lean:187), so a set operand is a
+  `.ref`, and `evalBinOp`'s `.ref` arm fires BEFORE the `TypeError`
+  fallback and refuses loudly. No new arm, no fake `TypeError`. (The
+  refusal message's prose says "dict operators"; that is a wording nit
+  on a correct refusal, not a defect.)
+* **No short-circuit.** Both operands are evaluated, left first, and a
+  raising right operand still raises after the left has run — which is
+  precisely the `.bind l (.bind r)` shape `evalExpr` already has.
+* Floats are unreachable: `Constant:float` is refused by the extractor,
+  so `1 & 1.0` never reaches the interpreter.
+
+### THE DECISION: negatives COMPUTE. They do not refuse.
+
+Pass 5 refused a negative `|` operand on the stated ground that
+"infinite two's complement is not guessed". Nothing needs to be guessed.
+Lean's `Int` is ALREADY in the complement representation: `Int.negSucc n`
+IS `-(n+1)`, so for a negative `x` the number `-x-1` — whose bits are the
+complement of `x`'s — is the constructor's own argument, available by
+matching and requiring no arithmetic whatsoever. Each operator becomes a
+four-way match on the two constructors over core `Nat.land`/`Nat.lor`/
+`Nat.xor` (`@[extern]`, Init/Data/Nat/Bitwise/Basic.lean:99-101):
+
+```lean
+/-- `a &&& ~m` over `Nat`. `Nat.ldiff` does not exist in v4.33.0-rc1, and
+none is needed: every bit of `a` either is or is not in `m`, so removing
+the ones that are IS the difference. Never underflows. -/
+def ndiff (a m : Nat) : Nat := a - (a &&& m)
+
+def intAnd : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a &&& b)
+  | .negSucc a, .ofNat b   => .ofNat (ndiff b a)
+  | .ofNat a,   .negSucc b => .ofNat (ndiff a b)
+  | .negSucc a, .negSucc b => .negSucc (a ||| b)
+
+def intOr : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a ||| b)
+  | .negSucc a, .ofNat b   => .negSucc (ndiff a b)
+  | .ofNat a,   .negSucc b => .negSucc (ndiff b a)
+  | .negSucc a, .negSucc b => .negSucc (a &&& b)
+
+def intXor : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a ^^^ b)
+  | .negSucc a, .ofNat b   => .negSucc (a ^^^ b)
+  | .ofNat a,   .negSucc b => .negSucc (a ^^^ b)
+  | .negSucc a, .negSucc b => .ofNat (a ^^^ b)
+```
+
+Mathlib-free, which the Python model requires (`LeanModels/Python`
+imports `LeanModels.Core.Basic` and nothing from Mathlib; the only
+Mathlib contact in the tier is the `sorted` proof harvest).
+
+The `evalBinOp` arm is then the `bitOr` arm's shape with the refusal
+deleted — boolness decided FIRST, because `bool op bool` returns a
+`bool` and any int operand makes it an int:
+
+```lean
+| .bitAnd =>
+    (match a, b with
+     | .bool p, .bool q => .ok (.bool (p && q))
+     | _, _ => .ok (.int (intAnd x y)))
+```
+
+**Why this is not gratuitous.** The honesty discipline is "fake
+exceptions never, `unsupported` for anything CPython would handle
+differently". `.unsupported` earns its place where CPython WOULD differ.
+Here it does not differ: the value is exact and now derived. Keeping the
+refusal would be manufacturing a refusal for a case known to be right —
+the mirror image of manufacturing a green triad.
+
+### The instrument that checked the formula, and its falsification test
+
+The formula was NOT verified by reading eleven rows. Both the general
+form and the `negSucc`-shaped form above were executed against CPython
+3.9.19 over a grid (`-64..64` plus 255/256/1023/4096, `10**12`,
+`10**18+7`, `1<<63`, `1<<100`, `(1<<100)-1`, `(1<<64)+12345` and every
+negation) for all three operators:
+
+    pairs=22201  ops=66603  FAILS=0
+    ndiff underflows = 0            (must be 0 — Nat subtraction truncates)
+    self-test (one arm broken) mismatches = 5402   (must be > 0)
+
+The self-test is the point: an instrument that cannot fail is worth
+nothing, so one arm was deliberately given the wrong Nat operator and
+the grid caught it 5402 times. An earlier, differently-written candidate
+(sign tests plus `abs`, no constructor match) was checked against the
+same grid independently and also passed at 27075 checks, so the result
+does not ride on one encoding.
+
+**`#guard` reducibility — MEASURED, and it was the one real risk.**
+`Nat.land` is well-founded recursion over `Nat.bitwise`, which the
+KERNEL does not reduce with GMP the way it does `+`/`*`/`decEq`, so
+`decide`-style evaluation was the thing that could have sunk this. It
+does not apply: `#guard` is elaborated by `evalGuardCmd`
+(Lean/Elab/Tactic/Guard.lean:154-166), which calls `unsafe evalExpr Bool`
+— the COMPILER, where `@[extern "lean_nat_land"]` is the GMP builtin. The
+Tests.lean battery evaluates natively. The residual risk is narrow and
+named: a `@[py_spec]` user who discharges `evalBinOp .bitAnd a b = .ok r`
+by `decide` in the KERNEL may find it does not reduce. No such spec
+exists today, and `rfl`-by-native-decide or an explicit
+`intAnd`-value lemma is the escape if one is written.
+
+### What this does to `|` — a MEASURED CORRECTION, with one registered row
+
+Landing `&` with computed negatives while `|` still refuses them would
+install the exact drift rule 4 warns about, inside a single family, in a
+single change. So `intOr` replaces `bitOr`'s refusal in the same
+landing. Consequences, stated:
+
+* Semantics.lean:503-510's `.unsupported` for a negative `|` operand
+  goes away. Its message ("infinite two's complement is not guessed")
+  is retired as measured-wrong in the same sense as `msg_nonascii`.
+* **`harness/cases.json` `seq_lab.bor_neg` is registered
+  `"expect": "unsupported"`** (line 429 at HEAD). It becomes
+  `"expect": "match"` — one fewer unsupported row, which TIGHTENS the
+  suite exactly as the assert correction did. `Examples/python/
+  seq_lab/seq_lab.py:207-211`'s comment ("a negative operand: loudly
+  out") is corrected with it, and the function is kept, now as a
+  positive row.
+* Nothing else moves: `shl`'s row already carries `[-3, 4]`, so the
+  SHIFT family has always computed negative operands exactly
+  (`x * 2^n`). The asymmetry being removed here is one that pass 5
+  introduced between two halves of its own landing.
+
+This is a behaviour change to landed, reviewed semantics. It only ever
+turns a refusal into a measured-correct value — it can never turn a
+right answer into a wrong one — but it is called out here rather than
+buried, and it is the one part of this design an owner might reasonably
+split off. If it is split off, `&` must take the REFUSAL branch and
+match `|`; the two must not disagree.
+
+### `^` rides free. `>>` does NOT, and `<<` has a pre-existing hole.
+
+**`BitXor` is a rider, and separable.** With `intXor` written, `^` costs
+one `Ast.lean` constructor, one `Json.lean` string, one `BinOp.symbol`
+arm, one `ALLOWED_BINOPS` entry and one `evalBinOp` arm — no new design
+surface at all. Measured and in tier: `12 ^ 10 → 6`, `True ^ True →
+False` and `False ^ False → False` (both `bool`), `True ^ 1 → 0` (int),
+`-1 ^ 3 → -4`, `-2 ^ -3 → 3`, `5 ^ -1 → -6`; `{1} ^ {2} → {1, 3}` is set
+symmetric difference and is caught by the same `.ref` arm as `&`.
+Recommended in, but droppable without touching anything else.
+
+**`RShift` is NOT in this landing.** It belongs to the shift family, not
+the bitwise family, and it has its own unresolved decision. Measured:
+`12 >> 2 → 3`, `-7 >> 1 → -4`, `-8 >> 1 → -4`, `-1 >> 100 → -1`,
+`1 >> -1 → ValueError: negative shift count`. Every value row is exactly
+`Int.fdiv x (2^n)` (checked over the same grid, 2565 shift rows, 0
+failures), so the VALUE tier is trivial — but `type(True >> True)` is
+**`int`, not `bool`**, which is the opposite of `&`/`|`/`^` and matches
+`<<` (`type(True << True)` is `int` too). Predicting boolness from the
+bitwise family would have been wrong; the shift family never returns a
+bool.
+
+The blocker is size, and it is shared with a **pre-existing hole in
+`<<`**: `evalBinOp`'s `.lshift` arm computes `x * 2^y.toNat` with NO
+bound on `y`. CPython raises `OverflowError: too many digits in integer`
+for `1 << (10**30)` (measured; `1 << (10**9)` succeeds, bit_length
+1000000001), whereas the model would sit down and try to build the
+number — a hang, not a refusal, which is the one failure mode the
+project does not tolerate. `>>` needs the same guard for the mirror
+reason: `1 >> (10**30)` is `0` in CPython (and `-7 >> (10**30)` is `-1`),
+but `Int.fdiv x (2^(10**30))` must never construct that divisor. The
+exact saturation is available — once `2^y > |x|` the answer is `-1` for
+negative `x` and `0` otherwise — so a bounded arm is writeable; it just
+needs its own budget decision alongside `seqBudget`, and it should be
+taken with `>>`, not smuggled in with `&`. **Recorded as a live defect
+in shipped `<<`, not as a new one.**
+
+### Surface added
+
+One `BinOp` constructor (`bitAnd`, plus `bitXor` if the rider lands) on
+an inductive that already carries `lshift | bitOr` (Ast.lean:26-28) and
+its doc comment; three small `Int` functions (`ndiff`, `intAnd`,
+`intOr`, `intXor`) beside `evalBinOp`; one `evalBinOp` arm per operator
+plus the `bitOr` arm rewritten; one `BinOp.symbol` arm per operator
+(Semantics.lean:161-169) — which is what makes every `TypeError` message
+come out verbatim for free; one `parseBinOpName` string per operator
+(Json.lean:70-79); one `ALLOWED_BINOPS` entry per operator
+(extract.py:69-74). **Zero walker arms and zero proof arms.**
+
+One entry buys BOTH forms: `ALLOWED_BINOPS` is consulted by the
+`ast.BinOp` clause (extract.py:256-266) AND the `ast.AugAssign` clause
+(extract.py:913-923), and CPython routes `a &= b` through the same
+operator — measured: `a = 6; a &= 3` gives `2` (int), `b = True;
+b &= True` gives `True` (bool), `d = 12; d ^= 10` gives `6`. So `&=`
+and `^=` arrive with no extra work, the way `|=` did for `bound()`.
+
+Open at implementation time, to be MEASURED not assumed: whether
+`Tests.lean`'s `#guard`s over `intAnd` on `1 <<< 100`-scale literals stay
+fast (they should — GMP — but time them rather than assume).
+
+### Battery to build (rows measured above; registered WITH the code)
+
+Extend `Examples/python/seq_lab` rather than opening a lab: pass 5's
+`shl`/`bor`/`bor_aug`/`bor_neg` already live there and this completes
+their set, which is the whole argument for the construct.
+
+**And that lab CANNOT be pre-committed the way `fstring_lab.py` was.**
+`fstring_lab` was a NEW directory with no registered rows, so its
+measured battery could land ahead of the implementation harmlessly.
+`seq_lab` is not: it carries a checked-in extraction
+(`seq_lab/seq_lab.json`) and a `seq_lab/spec.lean`. Writing `&` into
+`seq_lab.py` before `ALLOWED_BINOPS` admits it desynchronises that JSON
+and puts an unsupported node inside a lab whose OTHER rows are green —
+breaking a triad on a file nobody asked to touch. The battery is
+therefore specified here and written WITH the code, in one change, with
+the extraction regenerated in the same commit.
+
+In tier: `band(a, b)` over `(12, 10)`, `(255, 0)`, `(0b1011, 0b1101)`,
+typed-bool pairs for all four boolness cells, `(True, 3)` and `(3, True)`
+for the int-coercion cells, and the negative cells `(-1, 3)`, `(-5, 12)`,
+`(12, -5)`, `(-4, -3)`, `(-3, -5)`, `(-100, 7)`, `(-1, -1)`;
+`band_aug(n)` for the `&=` fold; `band_big()` for `((1<<100)-1) & 0xff`.
+Faithful `TypeError`: `(1, "a")`, `("a", 1)`, `(1, None)`, `(1, [2])`,
+`(1, (2,))` — the harness compares exception CLASS, and the message is
+the existing fallback's, unchanged. Loud refusal: `&` with a set
+operand, through the existing `.ref` arm. Same shape for `^` if the
+rider lands. Plus `bor_neg` FLIPPED from `unsupported` to `match`, with
+`(-1, 4)`, `(-1, -2)` and `(3, -1)` added, which is the visible proof
+that the correction landed.
+
+Not registered, deliberately: any `<<`/`>>` overflow row. Those belong
+to the shift-budget work above, and registering one now as
+`expect: unsupported` before the guard exists would be manufacturing a
+green triad for a case that currently HANGS.

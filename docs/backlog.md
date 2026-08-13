@@ -324,6 +324,20 @@ is where it is seen. In-repo corpus **72/87 MATCH (82.8%)**, 0 DIVERGE;
 script corpus 24 matched / 4 loud, `fnprint.py` and
 `init_effect_script.py` flipping to CPython-identical output.
 
+**LIST COMPREHENSIONS ARE LIVE (2026-08-13)** — docs/memory-model.md
+§list comprehensions. `ListComp` was the top in-repo construct on the
+static ladder. The extractor emits it as the SAME node as a generator
+expression under a different `kind`, INGESTION desugars it into
+`list(<the genexp>)` (CPython's own compilation — the `yield from`
+inlining precedent), and the whole genexp lowering carries over: capture
+census, walrus filter, drain gate. The only new interpreter piece is the
+`list(iterable)` CONSTRUCTOR — `tuple`'s inventory with an allocation, so
+it leaves `Expr.heapFree` and its generator arm drains without the
+`moduleGenFree` guard. In-repo corpus **73/88 MATCH (83.0%)**, 0 DIVERGE;
+998 differential cases, 0 failed. RECORDED as the next visible wall in
+its place: `print` of a CONTAINER (a list's `repr` is not guessed —
+`harness/scripts/print_container.py`).
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

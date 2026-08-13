@@ -893,7 +893,7 @@ def isBuiltinName (id : String) : Bool :=
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count" ||
   id == "any" || id == "all" || id == "set" ||
-  id == "sum" || id == "tuple" || id == "range"
+  id == "sum" || id == "tuple" || id == "range" || id == "list"
 
 /-- Every name CPython 3.9's `builtins` module binds (`dir(builtins)`,
 minus the dunders — generated from the PINNED reference interpreter).
@@ -961,6 +961,14 @@ def strOfRVal : RVal → Option String
   | .none => some "None"
   | .str s => some s
   | _ => Option.none
+
+/-- Allocate a fresh heap list holding `xs` and return its `.ref` — the
+list-display idiom (`BUILD_LIST`: the fresh address is the old heap
+size), shared with the `list(…)` constructor, which CPython also
+guarantees to be a NEW object, never an alias. -/
+def allocListRun (st : FrameState) (xs : Array RVal) : Run FrameState RVal :=
+  .ok { st with world := { st.world with heap := st.world.heap.push (.list xs) } }
+    (.ref st.world.heap.size)
 
 /-- Space-join `print` arguments (CPython's default `sep`); the first
 unprintable one wins. `print()` is the empty line. -/
@@ -3192,7 +3200,7 @@ mutual
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
-        && (id != "print")
+        && (id != "print") && (id != "list")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
@@ -4105,6 +4113,45 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | Option.none => .unsupported danglingMsg)
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"tuple expected at most 1 argument, got {vs.length}"))
+                  else if fname == "list" then
+                    -- 2026-08-13 (list comprehensions): the list
+                    -- CONSTRUCTOR — `tuple`'s inventory of iterables,
+                    -- but it ALLOCATES a fresh heap object, because
+                    -- CPython's `list(x)` is always a NEW list and never
+                    -- an alias. The call therefore leaves
+                    -- `Expr.heapFree`, which is also what lets the
+                    -- generator arm drain without the `moduleGenFree`
+                    -- guard `tuple` needs. dict/set receivers stay loud
+                    -- (order doctrine).
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] => allocListRun st #[]
+                     | [v] =>
+                       (match v with
+                        | .str t => allocListRun st (strCharVals t).toArray
+                        | .tuple xs => allocListRun st xs
+                        | .ntuple _ _ xs => allocListRun st xs
+                        | .listV xs => allocListRun st xs
+                        | .rangeV lo hi step =>
+                          Run.liftRes st (rangeVals lo hi step) ⤳ fun st xs =>
+                          allocListRun st xs.toArray
+                        | .ref a =>
+                          (match Heap.get? st.world.heap a with
+                           | some (.list xs) => allocListRun st xs
+                           | some (.generator ..) =>
+                             Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
+                             allocListRun st vals.toArray
+                           | some (.dict _ _) =>
+                             .unsupported "list() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           | some (.pyset _) =>
+                             .unsupported "list() over a set is outside the tier (hash order; docs/memory-model.md)"
+                           | some (.instance _ _) =>
+                             .exn st (.typeError "'object' object is not iterable")
+                           | some (.closure ..) =>
+                             .exn st (.typeError "'function' object is not iterable")
+                           | Option.none => .unsupported danglingMsg)
+                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                     | vs => .exn st (.typeError s!"list expected at most 1 argument, got {vs.length}"))
                   else if fname == "range" then
                     -- pass 3: an IMMEDIATE `rangeV` value (pure — no
                     -- allocation); arity/type/step-zero faithfulness in

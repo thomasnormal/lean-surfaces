@@ -16,8 +16,8 @@
     "expect": "match"
   },
   {
-    "file": "harness/scripts/blocked_comprehension.py",
-    "expect": "unsupported"
+    "file": "harness/scripts/listcomp_script.py",
+    "expect": "match"
   },
   {
     "file": "harness/scripts/interleaved.py",
@@ -110,5 +110,9 @@
   {
     "file": "harness/scripts/enum_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/print_container.py",
+    "expect": "unsupported"
   }
 ]

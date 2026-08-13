@@ -293,7 +293,15 @@ def convert_expr(node):
             "index": convert_expr(sl),
         }
 
-    if isinstance(node, ast.GeneratorExp):
+    if isinstance(node, (ast.GeneratorExp, ast.ListComp)):
+        # A LIST COMPREHENSION rides the same node (2026-08-13): CPython
+        # compiles both into an implicit function taking the already-
+        # evaluated outer iterator, differing only in what the function
+        # does with each element (yield vs append) -- so the envelope
+        # carries the same fields under a different `kind`, and INGESTION
+        # (Json.lean) desugars `[e for x in it if c]` into
+        # `list(e for x in it if c)`, which is CPython-exact and reuses
+        # the genexp lowering and its capture census verbatim.
         # H4: a generator EXPRESSION is structured only in the v0 shape --
         # ONE `for` clause, not `async`. CPython compiles every genexp into
         # an implicit generator FUNCTION whose first argument is the
@@ -340,7 +348,8 @@ def convert_expr(node):
                 else:
                     ifs_out.append(convert_expr(i))
             return {
-                "kind": "GeneratorExp",
+                "kind": ("ListComp" if isinstance(node, ast.ListComp)
+                         else "GeneratorExp"),
                 "span": span(node),
                 "elt": convert_expr(node.elt),
                 "target": convert_expr(g.target),
@@ -348,7 +357,7 @@ def convert_expr(node):
                 "ifs": ifs_out,
                 "walrus": walrus,
             }
-        return unsupported(node, "GeneratorExp")
+        return unsupported(node, type(node).__name__)
 
     return unsupported(node)
 

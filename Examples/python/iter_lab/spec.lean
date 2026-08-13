@@ -117,6 +117,33 @@ having no generator definition of its own. -/
 #py_check iter_lab.enum_first("PNB") = 80
 #py_check iter_lab.enum_first("") = -1
 
+/-! ### LIST COMPREHENSIONS (2026-08-13)
+
+`ListComp` was the top in-repo construct on the static ladder and shipped
+as a loud `Unsupported` leaf. It is the SAME extractor node as a
+generator expression under a different `kind`, and INGESTION desugars
+`[e for x in it if c]` into `list(e for x in it if c)` — CPython's own
+compilation — so the capture census, the walrus filter and the drain gate
+carry over verbatim and the only new interpreter piece is the
+`list(iterable)` CONSTRUCTOR, which ALLOCATES (a fresh heap list, never
+an alias) and therefore leaves `Expr.heapFree`. -/
+
+#guard callFunction iter_lab "lc_squares" #[.int 5] 4096
+  == .ok (.list #[.int 0, .int 1, .int 4, .int 9, .int 16])
+#guard callFunction iter_lab "lc_squares" #[.int 0] 4096 == .ok (.list #[])
+#guard callFunction iter_lab "lc_filter" #[.str "abcb"] 4096
+  == .ok (.list #[.str "a", .str "c"])
+#guard callFunction iter_lab "lc_capture" #[.str "abc", .int 1] 4096
+  == .ok (.list #[.int 98, .int 99, .int 100])
+#guard callFunction iter_lab "list_of" #[.str "xy"] 4096
+  == .ok (.list #[.str "x", .str "y"])
+#guard callFunction iter_lab "list_empty" #[] 4096 == .ok (.list #[])
+
+/-! A comprehension leaves the heap-free fragment (it allocates), which
+is what keeps `worldInv` honest about the new arm. -/
+
+#guard !((findFunction iter_lab "lc_squares").any FunctionDefn.heapFree)
+
 /-! ### the membership/`for`/`ord`/`chr` nodes stay in the heap-free
 fragment (they neither allocate nor mutate) — pinned per function, since
 the module itself is not heap-free (`Pt` is a class-free namedtuple, but

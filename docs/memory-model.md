@@ -2454,6 +2454,53 @@ printing; `harness/script_corpus.py` 24 matched / 4 loud, with
 `fnprint.py` and `init_effect_script.py` flipping from refusal to
 CPython-identical output.
 
+## List comprehensions (2026-08-13)
+
+`ListComp` was the top in-repo construct on the static ladder and shipped
+as a loud `Unsupported` leaf. It is now live, and almost none of it is
+new machinery.
+
+**The extractor emits the SAME node as a generator expression, under a
+different `kind`.** CPython compiles both into an implicit function over
+the already-evaluated outer iterator, differing only in what that
+function does with each element (yield vs append), so the envelope
+carries the identical fields (`elt`/`target`/`iter`/`ifs`/`walrus`) and
+the identical v0 restriction (ONE `for` clause, not `async`).
+
+**INGESTION desugars `[e for x in it if c]` into `list(e for x in it if
+c)`** (Json.lean, the `yield from` inlining precedent — the envelope
+stays a faithful dump of the real AST and the rewrite is a semantics
+decision recorded here). That is CPython-exact: building the list eagerly
+from the lazy one observes the same effects in the same order, because
+the drain completes before the enclosing frame can run again. It also
+inherits the genexp lowering WHOLE — the capture census, the walrus
+filter, and the `drainOk` gate, which already counted `list` among the
+draining builtins.
+
+**The one new interpreter piece is `list(iterable)`**: `tuple`'s exact
+inventory of iterables (str code points, tuple, namedtuple class-erased,
+boundary list, heap list snapshot, range, generator drain; dict and set
+receivers stay loud on the order doctrine) but it ALLOCATES — CPython's
+`list(x)` is always a NEW object, never an alias. So the call leaves
+`Expr.heapFree` (the `sorted` carve-out again, with the three proof
+obligations moving with it: `worldInv` gains `hlstx`, `fuelMono` gains a
+`bind` arm, `clockErase` gains `case blist` over a new `allocList` leaf
+lemma), and the generator arm can drain WITHOUT the `moduleGenFree` guard
+`tuple` needs, precisely because the call is outside the fragment.
+
+Acceptance: `iter_lab.lc_squares`/`lc_filter`/`lc_capture`/`list_of`/
+`list_empty` (13 differential rows, plus `#guard`s including
+`!(findFunction iter_lab "lc_squares").any FunctionDefn.heapFree`) and
+`harness/scripts/listcomp_script.py`. The old `blocked_comprehension.py`
+telemetry row became that payoff row; what it used to blame the
+comprehension for is now the honest blocker it always had underneath —
+`print` of a LIST, whose `repr` the tier does not guess (CPython quotes
+strings inside containers and not outside them), pinned separately by
+`harness/scripts/print_container.py`.
+
+Measured: in-repo corpus **73/88 MATCH (83.0%)**, 0 DIVERGE; script
+corpus 25 matched / 4 loud; 998 differential cases, 0 failed.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

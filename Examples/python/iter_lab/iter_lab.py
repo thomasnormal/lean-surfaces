@@ -127,3 +127,27 @@ def enum_first(s):
     for i, c in enumerate(s):
         return i * 1000 + ord(c)
     return -1
+
+
+def lc_squares(n):
+    # a list COMPREHENSION: ingestion desugars it to `list(<genexpr>)`,
+    # CPython's own compilation (2026-08-13)
+    return [i * i for i in range(n)]
+
+
+def lc_filter(s):
+    return [c for c in s if c != "b"]
+
+
+def lc_capture(s, k):
+    # `k` is a parameter the body never rebinds — the genexp capture
+    # census admits it by value
+    return [ord(c) + k for c in s]
+
+
+def list_of(s):
+    return list(s)
+
+
+def list_empty():
+    return list()

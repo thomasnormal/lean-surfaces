@@ -218,6 +218,18 @@ theorem of_seed {x : Run FrameState α} {y : List Int → Run FrameState α}
     exact ⟨hc, fun tr => by rw [hy tr]; rfl⟩
   · subst ht; rw [hy tr]; rfl
 
+/-- ALLOCATION leaf (2026-08-13, the `list(…)` constructor): pushing an
+object onto the heap reads no clock, so the seeded family IS the seeded
+base run — `of_seed` with the `withClock` projections carrying the pushed
+heap through. -/
+theorem allocList {st : FrameState} (h : st.world.clock = []) (xs : Array RVal) :
+    ClockErasedF (allocListRun st xs)
+      (fun tr => allocListRun (st.withClock tr) xs) := by
+  refine of_seed (fun tr => ?_) ?_
+  · cases st with
+    | mk w l => cases w with | mk hp g so c => rfl
+  · rw [FrameState.withClock_self h]
+
 /-- `liftRes` congruence: a pure result attached to the threaded state. -/
 theorem liftRes {st : FrameState} (h : st.world.clock = []) (r : Res α) :
     ClockErasedF (Run.liftRes st r) (fun tr => Run.liftRes (st.withClock tr) r) := by
@@ -1463,10 +1475,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   | none =>
                     refine .ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bint
-                      (.ite ?bsum (.ite ?btuple (.ite ?brange (.ite ?benum
-                      (.ite ?bcount (.ite ?bnext (.ite ?bord (.ite ?bchr
-                      (.ite ?bstr (.ite .unsupported (.ite ?bprint
-                        (.ite .unsupported ?blive)))))))))))))))))))
+                      (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?brange
+                      (.ite ?benum (.ite ?bcount (.ite ?bnext (.ite ?bord
+                      (.ite ?bchr (.ite ?bstr (.ite .unsupported (.ite ?bprint
+                        (.ite .unsupported ?blive))))))))))))))))))))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -1895,6 +1907,38 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                   (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
                                   fun s3 vals hs3 => ?_
                                 exact .ok hs3 _
+                    case blist =>
+                      -- 2026-08-13: `tuple`'s inventory with an
+                      -- ALLOCATION. Nothing here reads the clock, so every
+                      -- constructed leaf is `allocList`, and the generator
+                      -- arm drains UNGUARDED — the call is outside
+                      -- heapFree, so there is no `moduleGenFree` ite.
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .allocList hs2 _
+                      | cons v t =>
+                        cases t with
+                        | cons d t2 => exact .exn hs2 _
+                        | nil =>
+                          cases v <;> try exact .allocList hs2 _
+                          case none => exact .exn hs2 _
+                          case bool b => exact .exn hs2 _
+                          case int n => exact .exn hs2 _
+                          case rangeV lo hi step =>
+                            exact .bind (.liftRes hs2 _) fun s3 xs hs3 => .allocList hs3 _
+                          case ref a =>
+                            ce_norm
+                            cases hh : Heap.get? s2.world.heap a with
+                            | none => exact .unsupported
+                            | some obj =>
+                              cases obj <;> try exact .unsupported
+                              case list xs => exact .allocList hs2 _
+                              case «instance» cid attrs => exact .exn hs2 _
+                              case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
+                              case generator qn l k stat =>
+                                exact .bind
+                                  (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
+                                  fun s3 vals hs3 => .allocList hs3 _
                     case brange =>
                       exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
                         .liftRes hs2 _

@@ -776,8 +776,8 @@ theorem fuelMono (fuel : Nat) :
                         -- ALLOCATE an iterator object), NEXT (binds the
                         -- args, then steps the generator), ord, chr
                         -- len → sorted → max → min → any/all → set → abs →
-                        -- int → sum → tuple → range → enumerate → count →
-                        -- next → ord → chr → tail
+                        -- int → sum → tuple → list → range → enumerate →
+                        -- count → next → ord → chr → tail
                         refine Run.le_ite (hb _)                             -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
@@ -788,13 +788,14 @@ theorem fuelMono (fuel : Nat) :
                                   (Run.le_ite (hb _)                           -- int
                                    (Run.le_ite ?_                              -- sum
                                     (Run.le_ite ?_                             -- tuple
-                                     (Run.le_ite (hb _)                        -- range
+                                     (Run.le_ite ?_                            -- list
+                                      (Run.le_ite (hb _)                       -- range
                                       (Run.le_ite (hb _)                       -- enumerate
                                        (Run.le_ite (hb _)                      -- count
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
-                                          (Run.le_ite (hb _)                   -- chr
-                                           ?_)))))))))))))))
+                                           (Run.le_ite (hb _)                  -- chr
+                                            ?_))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -961,6 +962,29 @@ theorem fuelMono (fuel : Nat) :
                                   cases obj <;> try exact Run.le_refl _
                                   case generator q l c stat =>
                                     refine Run.le_ite (Run.le_refl _) ?_
+                                    exact Run.le_bind
+                                      (Run.le_withLocals (ihDrain m st.world a k hk))
+                                      fun st vals => Run.le_refl _
+                        -- list (2026-08-13): `tuple`'s inventory with an
+                        -- allocation, and the generator arm drains
+                        -- UNGUARDED (the call is outside heapFree, so no
+                        -- `moduleGenFree` ite to walk)
+                        · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
+                          cases vs with
+                          | nil => exact Run.le_refl _
+                          | cons v vtail =>
+                            cases vtail with
+                            | cons _ _ => exact Run.le_refl _
+                            | nil =>
+                              dsimp only
+                              cases v <;> try exact Run.le_refl _
+                              case ref a =>
+                                dsimp only
+                                cases Heap.get? st.world.heap a with
+                                | none => exact Run.le_refl _
+                                | some obj =>
+                                  cases obj <;> try exact Run.le_refl _
+                                  case generator q l c stat =>
                                     exact Run.le_bind
                                       (Run.le_withLocals (ihDrain m st.world a k hk))
                                       fun st vals => Run.le_refl _
@@ -2074,7 +2098,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hflE⟩ := hfree
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -2114,6 +2138,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "print"
               · rfl
               · rw [bne, hbe] at hnpr; simp at hnpr
+            -- `list(…)` ALLOCATES a fresh heap object (2026-08-13,
+            -- list comprehensions) — the `sorted` carve-out again
+            have hlstx : (fname == "list") = false := by
+              cases hbe : fname == "list"
+              · rfl
+              · rw [bne, hbe] at hnlst; simp at hnlst
             simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
@@ -2157,7 +2187,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, findClass_heapFree hm fname,
+                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx,
+                  findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_
                 · exact ((ihCall st₁.world fname vs.toArray).withLocals

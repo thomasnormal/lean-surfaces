@@ -190,9 +190,20 @@ partial def parseExpr (j : Json) : Except String Expr := do
           | .ok jc => parseExpr jc
           | .error _ => pure (Expr.constant .none span)
         return .slice value (← comp "lower") (← comp "upper") (← comp "step") span
-    | "GeneratorExp" =>
+    | "GeneratorExp" | "ListComp" =>
         -- Structured only (H4); `parseModule` LOWERS every surviving
         -- occurrence into a synthesized generator function.
+        --
+        -- A LIST COMPREHENSION (2026-08-13) is the SAME node under a
+        -- different `kind`, desugared here into `list(<the genexp>)`.
+        -- That is CPython-exact — both compile to an implicit function
+        -- over the already-evaluated outer iterator, and building the
+        -- list eagerly from the lazy one observes the same effects in
+        -- the same order, because the drain completes before the
+        -- enclosing frame can run again. It also inherits the genexp
+        -- lowering whole: the capture census, the walrus filter, and
+        -- the `drainOk` gate, which already counts `list` as a draining
+        -- builtin.
         let elt ← parseExpr (← getField j "elt")
         let target ← parseExpr (← getField j "target")
         let iter ← parseExpr (← getField j "iter")
@@ -204,7 +215,11 @@ partial def parseExpr (j : Json) : Except String Expr := do
             (← wj.getArr?).mapM fun w => do
               pure ((← (← getField w "name").getStr?), ← parseExpr (← getField w "value"))
           | .error _ => pure #[]
-        return .genExp elt target iter ifs walrus span
+        let g := Expr.genExp elt target iter ifs walrus span
+        if kind == "ListComp" then
+          return .call (.name "list" span) #[g] #[] Option.none span
+        else
+          return g
     | "Unsupported" =>
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span

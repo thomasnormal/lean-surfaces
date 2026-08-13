@@ -290,6 +290,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .ok jv => do pure (some (← parseExpr jv))
           | .error _ => pure Option.none
         return .raiseStmt exc cause span
+    | "Assert" =>
+        -- the tail batch: `msg` absent is the bare `assert test`
+        let msg ← match j.getObjVal? "msg" with
+          | .ok jv => do pure (some (← parseExpr jv))
+          | .error _ => pure Option.none
+        return .assertStmt (← parseExpr (← j.getObjVal? "test")) msg span
     | "Try" =>
         -- exceptions tier: the v0 single-handler fields plus the
         -- `callUnsupported`-style reason (structured-but-loud).
@@ -528,6 +534,7 @@ private partial def stmtBinds : Stmt → Option (List String)
   -- exceptions tier: `raise` binds nothing; a try can bind whatever its
   -- body and handler can (over-approximation, the safe direction)
   | .raiseStmt .. => some []
+  | .assertStmt .. => some []
   | .tryStmt b _ hnd _ _ => do
     let bb ← b.toList.mapM stmtBinds
     let hb ← hnd.toList.mapM stmtBinds
@@ -577,6 +584,8 @@ mutual
     -- exceptions tier: the handler CLASS NAME is a reference too
     | .raiseStmt exc cause _ =>
       (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+    | .assertStmt t m _ =>
+      exprRefs t ++ (m.map exprRefs).getD []
     | .tryStmt b excName hnd _ _ =>
       excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
     | .pass _ | .brk _ | .cont _ => []
@@ -590,7 +599,7 @@ private def stmtSpanOf : Stmt → Span
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
-  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
+  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -848,6 +857,8 @@ private partial def yfNames : Stmt → List String
   | .yieldStmt e _ => exprRefs e
   | .raiseStmt exc cause _ =>
       (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
+  | .assertStmt t m _ =>
+      exprRefs t ++ (m.map exprRefs).getD []
   | .tryStmt b _ hnd _ _ =>
       (b.toList.map yfNames).flatten ++ (hnd.toList.map yfNames).flatten
   | .defStmt name _ _ _ _ _ body captures _ =>
@@ -953,6 +964,8 @@ private partial def stmtNamesXW : Stmt → List String
   | .exprStmt e _ | .yieldStmt e _ | .yieldFromStmt e _ => exprNamesXW e
   | .raiseStmt exc cause _ =>
       (exc.map exprNamesXW).getD [] ++ (cause.map exprNamesXW).getD []
+  | .assertStmt t m _ =>
+      exprNamesXW t ++ (m.map exprNamesXW).getD []
   | .tryStmt b en hnd _ _ =>
       [en] ++ (b.toList.map stmtNamesXW).flatten
         ++ (hnd.toList.map stmtNamesXW).flatten
@@ -1102,6 +1115,8 @@ mutual
        | v => do return .yieldFromStmt (← lowerExpr ctx v) sp)
     | .raiseStmt exc cause sp =>
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
+    | .assertStmt t m sp =>
+        return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp
     | .tryStmt b en hnd tu sp =>
         return .tryStmt (← lowerStmts ctx b) en (← lowerStmts ctx hnd) tu sp
     | .defStmt name params ao lo hg ig body captures sp =>

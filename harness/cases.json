@@ -445,5 +445,20 @@
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": [], "expect": "unsupported"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "shadowed", "args": [[]], "clock": [123], "expect": "unsupported"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "call_with_arg", "args": [[]], "clock": [123], "expect": "unsupported"},
-  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "pure_sum", "args": [[10], [0]], "expect": "match"}
+  {"file": "Examples/python/clock_lab/clock_lab.py", "function": "pure_sum", "args": [[10], [0]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "guard_pass", "args": [[3], [1]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "guard_fail", "args": [[-1], [0]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "msg_str", "args": [[-1], [2]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "msg_int", "args": [[-3], [4]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "msg_expr", "args": [[-3], [4]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "lazy_pass", "args": [[2]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "lazy_fail", "args": [[2]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "falsy_list", "args": [[0], [5]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "tuple_test", "args": [[-1], [1]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "in_loop", "args": [[3], [5], [0]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "after_effect", "args": [[-1], [1]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "nested_call", "args": [[-2], [2]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "msg_set", "args": [[-1]], "expect": "unsupported"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "msg_nonascii", "args": [[-1]], "expect": "match"},
+  {"file": "Examples/python/assert_lab/assert_lab.py", "function": "catch_assert", "args": [[-1]], "expect": "unsupported"}
 ]

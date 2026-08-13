@@ -134,5 +134,9 @@
   {
     "file": "harness/scripts/loop_publish_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/assert_script.py",
+    "expect": "match"
   }
 ]

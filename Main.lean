@@ -88,6 +88,7 @@ def errName : PyErr → String
   | .runtimeError _ => "RuntimeError"
   | .recursionError => "RecursionError"
   | .attributeError => "AttributeError"
+  | .assertionError _ => "AssertionError"
   | .stopIteration => "StopIteration"
   -- exceptions tier: CPython's `type(e).__name__` — the carried class name
   | .user _ name => name
@@ -111,6 +112,10 @@ def errMessage : PyErr → Option String
   -- `StopIteration` is raised BARE by CPython (`str(e)` is empty), so the
   -- class IS the whole line and this one is exact
   | .stopIteration => some ""
+  -- the tail batch: `assert` renders its message through `printOne`, and
+  -- a bare `assert` prints the class alone — both EXACT, so this
+  -- constructor answers rather than reporting a gap
+  | .assertionError msg => some (msg.getD "")
   -- payload-free constructors whose CPython text the class does NOT
   -- determine — a real gap, reported as `ABSENT` by the survey's
   -- message telemetry and recorded in docs/backlog.md, never invented:

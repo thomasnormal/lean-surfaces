@@ -175,6 +175,14 @@ inductive Stmt where
   `ClassDefn.isExc`) — bare `raise`, `raise <expr>`, `raise N(args…)`
   and `raise … from …` all refuse loudly there, never here. -/
   | raiseStmt (exc : Option Expr) (cause : Option Expr) (span : Span)
+  /-- `assert test` / `assert test, msg` (schema `Assert`, the tail batch
+  — docs/memory-model.md §the assert statement). CPython compiles this to
+  `if not test: raise AssertionError(msg)` guarded by `__debug__`; the
+  model runs the way CPython runs by DEFAULT (no `-O`), so the test is
+  always evaluated and the statement is never compiled away. `msg` is
+  evaluated ONLY on the failing path — CPython's laziness, which is
+  observable whenever the message expression has an effect. -/
+  | assertStmt (test : Expr) (msg : Option Expr) (span : Span)
   /-- `try`/`except` (schema `Try`, the exceptions tier): the v0 shape —
   ONE handler naming ONE class, no `as` binding, no `else`, no
   `finally` — carried structurally (`excName` the handler's class name,
@@ -389,6 +397,14 @@ inductive PyErr where
   | runtimeError (msg : String)
   | recursionError
   | attributeError
+  /-- A failed `assert` (the tail batch — docs/memory-model.md §the
+  assert statement). The payload is `str()` of the message expression,
+  rendered by `printOne` — `print`'s own one-argument rendering, shared
+  rather than duplicated because it is the SAME CPython operation.
+  `none` is the bare `assert test`, for which CPython prints the class
+  alone: unlike `IndexError`/`KeyError` this constructor is EXACT, so
+  `errMessage` answers it rather than reporting a gap. -/
+  | assertionError (msg : Option String)
   /-- H4: `next(g)` on an exhausted generator. CPython's `StopIteration`
   is an ordinary exception (it is what ends a `for` loop internally); the
   tier raises it only from an explicit `next` without a default — the

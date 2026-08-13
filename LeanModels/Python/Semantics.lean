@@ -215,6 +215,7 @@ def Stmt.kindName : Stmt → String
   | .yieldFromStmt .. => "YieldFrom"
   | .defStmt .. => "NestedDef"
   | .raiseStmt .. => "Raise"
+  | .assertStmt .. => "Assert"
   | .tryStmt .. => "Try"
   | .pass _ => "Pass"
   | .brk _ => "Break"
@@ -2815,6 +2816,8 @@ mutual
     -- and handler can bind (an over-approximation, the poisoning
     -- direction — either may have run partially)
     | .raiseStmt .. => some []
+    -- the tail batch: `assert` binds nothing (it tests and may raise)
+    | .assertStmt .. => some []
     | .tryStmt b _ hnd _ _ =>
       match Stmt.g1BindsList b.toList, Stmt.g1BindsList hnd.toList with
       | some c, some d => some (c ++ d)
@@ -2857,6 +2860,9 @@ def g1ExecCandidate : Stmt → Bool
   -- exceptions tier: top-level raise/try are attempted (a raise `.exn`
   -- rolls back and poisons — the fold's recorded `.exn` imprecision)
   | .raiseStmt .. => true
+  -- the tail batch: an `assert` can RAISE, so the fold must attempt it
+  -- rather than skip it — the same reason `raise` is a candidate.
+  | .assertStmt .. => true
   | .tryStmt .. => true
   | _ => false
 
@@ -3404,6 +3410,11 @@ mutual
     -- the handler resumes from the body's retained `.exn` STATE, about
     -- which the ok-only `worldInv` induction knows nothing.
     | .raiseStmt .. => true
+    -- the tail batch: `assert` evaluates its subexpressions and either
+    -- returns the input state untouched or raises — it allocates
+    -- nothing and mutates nothing, so it is IN the fragment exactly
+    -- when both subexpressions are.
+    | .assertStmt t m _ => t.heapFree && (m.map Expr.heapFree).getD true
     | .tryStmt .. => false
     | .pass _ => true
     | .brk _ => true
@@ -3523,6 +3534,8 @@ mutual
       !isGen && Stmt.genAllocFreeList body.toList
     | .raiseStmt exc cause _ =>
       (exc.map Expr.genAllocFree).getD true && (cause.map Expr.genAllocFree).getD true
+    | .assertStmt t m _ =>
+      t.genAllocFree && (m.map Expr.genAllocFree).getD true
     | .tryStmt b _ hnd _ _ =>
       Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList hnd.toList
     | .pass _ | .brk _ | .cont _ => true
@@ -5147,6 +5160,27 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                 .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
          | some _ =>
            .unsupported "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)")
+    | .assertStmt test msg _ =>
+      -- the tail batch (docs/memory-model.md §the assert statement):
+      -- CPython's `if not test: raise AssertionError(msg)`. The model
+      -- runs without `-O`, so the test always evaluates; the MESSAGE is
+      -- evaluated only on the failing path, which is CPython's laziness
+      -- and is observable whenever it has an effect. The rendering is
+      -- `printOne` — `print`'s own one-argument `str()` — so the two
+      -- agree by construction and the unrenderable cases (a set, an
+      -- instance, a non-ASCII string) refuse LOUDLY here too.
+      (evalExpr m fuel st test ⤳ fun st t =>
+       Run.liftRes st (truthyH st.world.heap t) ⤳ fun st b =>
+       if b then .ok st .next
+       else
+         match msg with
+         | Option.none => .exn st (.assertionError Option.none)
+         | some e =>
+           evalExpr m fuel st e ⤳ fun st v =>
+           match printOne st.world.heap v with
+           | some rendered => .exn st (.assertionError (some rendered))
+           | Option.none =>
+             .unsupported "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement")
     | .tryStmt body excName handler tryUnsupported _ =>
       -- exceptions tier: the v0 single-handler shape on the retained-state
       -- covenant — run the body; `.ok` skips the handler; a MATCHING

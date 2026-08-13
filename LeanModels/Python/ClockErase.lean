@@ -1175,6 +1175,22 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
     | none => exact .unsupported
     | some cap =>
       exact .of_seed (fun tr => by simp) (by simp [h])
+  | assertStmt test msg sp =>
+    -- the tail batch: the ifStmt shape, with the message evaluated only
+    -- on the failing branch and the render decided purely
+    simp only [execStmt]
+    refine .bind (ihE m st test h) fun s2 t hs2 => ?_
+    ce_norm
+    refine .bind (.liftRes hs2 _) fun s3 b hs3 => ?_
+    refine .ite (.ok hs3 _) ?_
+    cases msg with
+    | none => exact .exn hs3 _
+    | some e =>
+      refine .bind (ihE m s3 e hs3) fun s4 v hs4 => ?_
+      ce_norm
+      cases printOne s4.world.heap v with
+      | none => exact .unsupported
+      | some r => exact .exn hs4 _
   | raiseStmt exc cause sp =>
     simp only [execStmt]
     ce_norm

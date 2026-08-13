@@ -2601,7 +2601,7 @@ Measured: in-repo survey **75/91 MATCH (82.4%)**, 0 DIVERGE; script
 corpus 27 matched / 5 loud; stdlib sweep unchanged at 5 MATCH / 0
 DIVERGE.
 
-## The `assert` statement (the tail batch, construct 1 — DESIGN)
+## The `assert` statement (the tail batch, construct 1 — BUILT 2026-08-13)
 
 The first member of the ordinary-Python tail (docs/backlog.md §the tail,
 ranked the same way). Its justification is NOT the stdlib count — `assert`
@@ -2645,9 +2645,21 @@ the argument and `repr()` inside a container). That is not a convenience:
 argument are the SAME CPython operation, so sharing the function is what
 makes them agree by construction rather than by two parallel tables that
 can drift. The refusals come along unchanged and are the right ones — a
-set (hash order), an instance or closure or generator (identity), a
-non-ASCII string (Unicode printability is never guessed) make the
-statement LOUD instead of guessing a rendering.
+set (hash order), an instance or closure or generator (identity), or a
+structure deeper than the repr budget make the statement LOUD instead of
+guessing a rendering.
+
+MEASURED CORRECTION (2026-08-13, found by the acceptance battery before
+landing): a non-ASCII STRING message does NOT refuse, and the design
+sketch that predicted it would was wrong. `printOne` is
+`| .str t => some t` — a `str` argument renders as ITSELF, with no
+`repr` applied and therefore no printability decision to guess. So
+`str("héllo")` is `héllo`, and the model emits `AssertionError: héllo`
+byte-identically to CPython 3.9.19 (verified both ways, exit 1). The
+non-ASCII refusal is real only INSIDE a container, where `reprVal` must
+decide escaping. `assert_lab.msg_nonascii` is therefore a `match` row,
+not an `unsupported` one. The two-level rule was reused correctly; the
+sketch had simply mis-stated WHICH level a bare message argument hits.
 
 ### Proof-layer position: inside the fragment
 

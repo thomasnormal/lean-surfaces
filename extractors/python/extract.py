@@ -859,6 +859,16 @@ def convert_stmt(node, enclosing=None, module_scope=False):
             "orelse": [convert_stmt(s, module_scope=module_scope) for s in node.orelse],
         }
 
+    if isinstance(node, ast.Assert):
+        # The tail batch (docs/memory-model.md paragraph "the assert
+        # statement"): structured as test + optional message. CPython
+        # compiles this to `if not test: raise AssertionError(msg)` under
+        # `__debug__`; evaluation owns the tier boundary (the message must
+        # be renderable, and it is evaluated ONLY on the failing path).
+        d = {"kind": "Assert", "span": span(node), "test": convert_expr(node.test)}
+        if node.msg is not None:
+            d["msg"] = convert_expr(node.msg)
+        return d
     if isinstance(node, ast.Raise):
         # Exceptions tier (docs/memory-model.md paragraph "exceptions"):
         # structured in FULL generality -- bare raise, raise <expr>,

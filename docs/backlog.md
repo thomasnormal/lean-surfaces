@@ -1642,6 +1642,14 @@ two numbers again.
 Having killed two milestones on `sole`, the tail gets the same treatment
 before anything is built (`import_closure.py --tier` now prints it):
 
+**STATUS: construct 1 (`Assert`) is BUILT (2026-08-13, docs/memory-model.md
+§the assert statement).** The counts in this section are the measurement
+as taken BEFORE it landed and are deliberately left unedited — they are
+the record that produced the sequencing rule below, not a live to-do
+list. Read `Assert` here as historical, and the remaining tail as
+`Starred`, `Delete`, `With`, `JoinedStr` plus `class-creation`,
+`Constant:bytes` and `BinOp:BitAnd`.
+
 * **No single construct in the tail is worth more than 5 modules on its
   own.** `sole` over the 188 blocked library modules: `class-creation`
   5, `JoinedStr` 4, `Starred`/`Delete`/`Constant:bytes`/`Assert` 3 each,

@@ -1143,6 +1143,17 @@ theorem fuelMono (fuel : Nat) :
         | raiseStmt exc cause _ =>
           -- fuel-free: the raise arm only does pure lookups
           simp only [execStmt]; exact Run.le_refl _
+        | assertStmt test msg _ =>
+          -- the tail batch: two evalExpr calls, the message's only on
+          -- the FAILING branch — an ordinary bind-shaped arm
+          simp only [execStmt]
+          refine Run.le_bind (ihE m st test k hk) fun st t => ?_
+          refine Run.le_bind (Run.le_refl _) fun st b => ?_
+          refine Run.le_ite (Run.le_refl _) ?_
+          cases msg with
+          | none => exact Run.le_refl _
+          | some e =>
+            exact Run.le_bind (ihE m st e k hk) fun st v => Run.le_refl _
         | tryStmt body excName handler tu _ =>
           simp only [execStmt]
           cases tu with
@@ -2500,6 +2511,25 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               | some p =>
                 obtain ⟨ci, c⟩ := p
                 exact .ite .exn .unsupported
+      | assertStmt test msg _ =>
+        -- the tail batch: IN the fragment and NOT vacuously — the
+        -- passing path decides `.ok` with the input state untouched
+        -- (nothing is allocated or mutated), the failing path raises.
+        simp only [Stmt.heapFree, Bool.and_eq_true] at hfree
+        simp only [execStmt]
+        refine .bind (ihE st test hfree.1) fun st₁ t h₁ => ?_
+        refine .bind (.liftResF h₁ _) fun st₂ b h₂ => ?_
+        refine .ite (.okF h₂ _) ?_
+        cases msg with
+        | none => exact .exn
+        | some e =>
+          -- `(Option.map Expr.heapFree (some e)).getD true` reduces
+          -- definitionally, so hfree.2 IS `e.heapFree = true`
+          refine .bind ((ihE st₂ e hfree.2).mono (wtrans st st₂ h₂))
+            fun st₃ v h₃ => ?_
+          cases printOne st₃.world.heap v with
+          | none => exact .unsupported
+          | some r => exact .exn
       | yieldStmt e _ => simp only [execStmt]; exact .unsupported
       | ret value _ =>
         cases value with

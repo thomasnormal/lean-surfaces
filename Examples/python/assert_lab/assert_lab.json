@@ -1,0 +1,2217 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/assert_lab/assert_lab.py",
+  "source_sha256": "d03afc0498b42cb55e5caeefbd19c89a1ee4a7958557941af083eeb72fffa041",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 30,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "assert_lab -- the `assert` acceptance set (docs/memory-model.md\nparagraph \"the assert statement\", the tail batch construct 1).\n\n`assert test` and `assert test, msg` are what CPython compiles to\n`if not test: raise AssertionError(msg)` under `__debug__`. The model\nruns without `-O`, so the test is ALWAYS evaluated and the statement is\nnever compiled away; `__debug__` itself stays a loud module dunder.\n\nTwo things this battery exists to pin, because both are observable and\nneither is guessable:\n\n* THE MESSAGE IS LAZY. CPython evaluates it only when the test is falsy,\n  so a message with an effect must not fire on the passing path\n  (`lazy_pass` vs `lazy_fail` -- the same function, the two paths).\n* THE MESSAGE IS `str()` OF THE VALUE, which is exactly the rendering\n  `print` already applies to one argument (CPython's two-level rule:\n  `str()` on the argument, `repr()` inside a container). So\n  `assert 0, 5` says `AssertionError: 5` and `assert 0, [1, 2]` says\n  `AssertionError: [1, 2]`, and the refusals come along for free -- a\n  set (hash order), an instance (identity), a non-ASCII string (Unicode\n  printability is never guessed) are LOUD, never a guessed repr.\n\nRECORDED GAP, pinned by `catch_assert`: an `AssertionError` can be\nRAISED but not CAUGHT. The v0 `try`/`except` tier matches on the class\nidentity of an admitted `class N(Exception): pass` only, so a handler\nnaming `AssertionError` refuses loudly exactly as one naming\n`ZeroDivisionError` does. That is the existing except-tier boundary, not\na new one, and it is asymmetric on purpose: a loud refusal beats a\nhandler that silently matches nothing.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 33,
+          "col_offset": 0,
+          "end_lineno": 36,
+          "end_col_offset": 17
+        },
+        "name": "guard_pass",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 33,
+              "col_offset": 15,
+              "end_lineno": 33,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 35,
+                "col_offset": 11,
+                "end_lineno": 35,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 35,
+                  "col_offset": 11,
+                  "end_lineno": 35,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 15,
+                    "end_lineno": 35,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 36,
+              "col_offset": 4,
+              "end_lineno": 36,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 36,
+                "col_offset": 11,
+                "end_lineno": 36,
+                "end_col_offset": 17
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 11,
+                  "end_lineno": 36,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 15,
+                  "end_lineno": 36,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 39,
+          "col_offset": 0,
+          "end_lineno": 43,
+          "end_col_offset": 17
+        },
+        "name": "guard_fail",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 39,
+              "col_offset": 15,
+              "end_lineno": 39,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 42,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 42,
+                "col_offset": 11,
+                "end_lineno": 42,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 42,
+                  "col_offset": 11,
+                  "end_lineno": 42,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 42,
+                    "col_offset": 15,
+                    "end_lineno": 42,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 43,
+              "col_offset": 4,
+              "end_lineno": 43,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 43,
+                "col_offset": 11,
+                "end_lineno": 43,
+                "end_col_offset": 17
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 43,
+                  "col_offset": 11,
+                  "end_lineno": 43,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 43,
+                  "col_offset": 15,
+                  "end_lineno": 43,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "10"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 46,
+          "col_offset": 0,
+          "end_lineno": 48,
+          "end_col_offset": 12
+        },
+        "name": "msg_str",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 46,
+              "col_offset": 12,
+              "end_lineno": 46,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 47,
+              "col_offset": 4,
+              "end_lineno": 47,
+              "end_col_offset": 36
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 47,
+                "col_offset": 11,
+                "end_lineno": 47,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 47,
+                  "col_offset": 11,
+                  "end_lineno": 47,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 47,
+                    "col_offset": 15,
+                    "end_lineno": 47,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 47,
+                "col_offset": 18,
+                "end_lineno": 47,
+                "end_col_offset": 36
+              },
+              "value": {
+                "type": "str",
+                "value": "must be positive"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 48,
+              "col_offset": 4,
+              "end_lineno": 48,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 48,
+                "col_offset": 11,
+                "end_lineno": 48,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 51,
+          "col_offset": 0,
+          "end_lineno": 54,
+          "end_col_offset": 12
+        },
+        "name": "msg_int",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 51,
+              "col_offset": 12,
+              "end_lineno": 51,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 53,
+              "col_offset": 4,
+              "end_lineno": 53,
+              "end_col_offset": 19
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 53,
+                "col_offset": 11,
+                "end_lineno": 53,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 53,
+                  "col_offset": 11,
+                  "end_lineno": 53,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 53,
+                    "col_offset": 15,
+                    "end_lineno": 53,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Name",
+              "span": {
+                "lineno": 53,
+                "col_offset": 18,
+                "end_lineno": 53,
+                "end_col_offset": 19
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 54,
+              "col_offset": 4,
+              "end_lineno": 54,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 54,
+                "col_offset": 11,
+                "end_lineno": 54,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 57,
+          "col_offset": 0,
+          "end_lineno": 60,
+          "end_col_offset": 12
+        },
+        "name": "msg_expr",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 57,
+              "col_offset": 13,
+              "end_lineno": 57,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 59,
+              "col_offset": 4,
+              "end_lineno": 59,
+              "end_col_offset": 33
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 59,
+                "col_offset": 11,
+                "end_lineno": 59,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 11,
+                  "end_lineno": 59,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 59,
+                    "col_offset": 15,
+                    "end_lineno": 59,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 59,
+                "col_offset": 18,
+                "end_lineno": 59,
+                "end_col_offset": 33
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 18,
+                  "end_lineno": 59,
+                  "end_col_offset": 24
+                },
+                "value": {
+                  "type": "str",
+                  "value": "got "
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 59,
+                  "col_offset": 27,
+                  "end_lineno": 59,
+                  "end_col_offset": 33
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 59,
+                    "col_offset": 27,
+                    "end_lineno": 59,
+                    "end_col_offset": 30
+                  },
+                  "id": "str"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 59,
+                      "col_offset": 31,
+                      "end_lineno": 59,
+                      "end_col_offset": 32
+                    },
+                    "id": "n"
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 60,
+              "col_offset": 4,
+              "end_lineno": 60,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 60,
+                "col_offset": 11,
+                "end_lineno": 60,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 63,
+          "col_offset": 0,
+          "end_lineno": 65,
+          "end_col_offset": 17
+        },
+        "name": "talk",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 64,
+              "col_offset": 4,
+              "end_lineno": 64,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 64,
+                "col_offset": 4,
+                "end_lineno": 64,
+                "end_col_offset": 22
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 64,
+                  "col_offset": 4,
+                  "end_lineno": 64,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 64,
+                    "col_offset": 10,
+                    "end_lineno": 64,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "evaluated"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 65,
+              "col_offset": 4,
+              "end_lineno": 65,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 65,
+                "col_offset": 11,
+                "end_lineno": 65,
+                "end_col_offset": 17
+              },
+              "value": {
+                "type": "str",
+                "value": "boom"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 68,
+          "col_offset": 0,
+          "end_lineno": 72,
+          "end_col_offset": 12
+        },
+        "name": "lazy_pass",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 68,
+              "col_offset": 14,
+              "end_lineno": 68,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 71,
+              "col_offset": 4,
+              "end_lineno": 71,
+              "end_col_offset": 24
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 71,
+                "col_offset": 11,
+                "end_lineno": 71,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 71,
+                  "col_offset": 11,
+                  "end_lineno": 71,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 71,
+                    "col_offset": 15,
+                    "end_lineno": 71,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Call",
+              "span": {
+                "lineno": 71,
+                "col_offset": 18,
+                "end_lineno": 71,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 71,
+                  "col_offset": 18,
+                  "end_lineno": 71,
+                  "end_col_offset": 22
+                },
+                "id": "talk"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 72,
+              "col_offset": 4,
+              "end_lineno": 72,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 72,
+                "col_offset": 11,
+                "end_lineno": 72,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 75,
+          "col_offset": 0,
+          "end_lineno": 79,
+          "end_col_offset": 12
+        },
+        "name": "lazy_fail",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 75,
+              "col_offset": 14,
+              "end_lineno": 75,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 78,
+              "col_offset": 4,
+              "end_lineno": 78,
+              "end_col_offset": 24
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 78,
+                "col_offset": 11,
+                "end_lineno": 78,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 11,
+                  "end_lineno": 78,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 78,
+                    "col_offset": 15,
+                    "end_lineno": 78,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Call",
+              "span": {
+                "lineno": 78,
+                "col_offset": 18,
+                "end_lineno": 78,
+                "end_col_offset": 24
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 78,
+                  "col_offset": 18,
+                  "end_lineno": 78,
+                  "end_col_offset": 22
+                },
+                "id": "talk"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 79,
+              "col_offset": 4,
+              "end_lineno": 79,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 79,
+                "col_offset": 11,
+                "end_lineno": 79,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 82,
+          "col_offset": 0,
+          "end_lineno": 88,
+          "end_col_offset": 18
+        },
+        "name": "falsy_list",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 82,
+              "col_offset": 15,
+              "end_lineno": 82,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 84,
+              "col_offset": 4,
+              "end_lineno": 84,
+              "end_col_offset": 11
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 84,
+                  "col_offset": 4,
+                  "end_lineno": 84,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 84,
+                "col_offset": 9,
+                "end_lineno": 84,
+                "end_col_offset": 11
+              },
+              "elts": []
+            }
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 85,
+              "col_offset": 4,
+              "end_lineno": 86,
+              "end_col_offset": 20
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 85,
+                "col_offset": 7,
+                "end_lineno": 85,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 85,
+                  "col_offset": 7,
+                  "end_lineno": 85,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 85,
+                    "col_offset": 11,
+                    "end_lineno": 85,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Expr",
+                "span": {
+                  "lineno": 86,
+                  "col_offset": 8,
+                  "end_lineno": 86,
+                  "end_col_offset": 20
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 86,
+                    "col_offset": 8,
+                    "end_lineno": 86,
+                    "end_col_offset": 20
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 86,
+                      "col_offset": 8,
+                      "end_lineno": 86,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 86,
+                        "col_offset": 8,
+                        "end_lineno": 86,
+                        "end_col_offset": 10
+                      },
+                      "id": "xs"
+                    },
+                    "attr": "append"
+                  },
+                  "args": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 86,
+                        "col_offset": 18,
+                        "end_lineno": 86,
+                        "end_col_offset": 19
+                      },
+                      "id": "n"
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 87,
+              "col_offset": 4,
+              "end_lineno": 87,
+              "end_col_offset": 13
+            },
+            "test": {
+              "kind": "Name",
+              "span": {
+                "lineno": 87,
+                "col_offset": 11,
+                "end_lineno": 87,
+                "end_col_offset": 13
+              },
+              "id": "xs"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 88,
+              "col_offset": 4,
+              "end_lineno": 88,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 88,
+                "col_offset": 11,
+                "end_lineno": 88,
+                "end_col_offset": 18
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 88,
+                  "col_offset": 11,
+                  "end_lineno": 88,
+                  "end_col_offset": 14
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 88,
+                    "col_offset": 15,
+                    "end_lineno": 88,
+                    "end_col_offset": 17
+                  },
+                  "id": "xs"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 91,
+          "col_offset": 0,
+          "end_lineno": 96,
+          "end_col_offset": 12
+        },
+        "name": "tuple_test",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 91,
+              "col_offset": 15,
+              "end_lineno": 91,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 95,
+              "col_offset": 4,
+              "end_lineno": 95,
+              "end_col_offset": 35
+            },
+            "test": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 95,
+                "col_offset": 11,
+                "end_lineno": 95,
+                "end_col_offset": 35
+              },
+              "elts": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 95,
+                    "col_offset": 12,
+                    "end_lineno": 95,
+                    "end_col_offset": 17
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 95,
+                      "col_offset": 12,
+                      "end_lineno": 95,
+                      "end_col_offset": 13
+                    },
+                    "id": "n"
+                  },
+                  "ops": [
+                    "Gt"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 95,
+                        "col_offset": 16,
+                        "end_lineno": 95,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 95,
+                    "col_offset": 19,
+                    "end_lineno": 95,
+                    "end_col_offset": 34
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "never checked"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 96,
+              "col_offset": 4,
+              "end_lineno": 96,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 96,
+                "col_offset": 11,
+                "end_lineno": 96,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 99,
+          "col_offset": 0,
+          "end_lineno": 106,
+          "end_col_offset": 16
+        },
+        "name": "in_loop",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 99,
+              "col_offset": 12,
+              "end_lineno": 99,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 100,
+              "col_offset": 4,
+              "end_lineno": 100,
+              "end_col_offset": 13
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 100,
+                  "col_offset": 4,
+                  "end_lineno": 100,
+                  "end_col_offset": 9
+                },
+                "id": "total"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 100,
+                "col_offset": 12,
+                "end_lineno": 100,
+                "end_col_offset": 13
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 101,
+              "col_offset": 4,
+              "end_lineno": 101,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 101,
+                  "col_offset": 4,
+                  "end_lineno": 101,
+                  "end_col_offset": 5
+                },
+                "id": "i"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 101,
+                "col_offset": 8,
+                "end_lineno": 101,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "While",
+            "span": {
+              "lineno": 102,
+              "col_offset": 4,
+              "end_lineno": 105,
+              "end_col_offset": 17
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 102,
+                "col_offset": 10,
+                "end_lineno": 102,
+                "end_col_offset": 15
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 102,
+                  "col_offset": 10,
+                  "end_lineno": 102,
+                  "end_col_offset": 11
+                },
+                "id": "i"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 102,
+                    "col_offset": 14,
+                    "end_lineno": 102,
+                    "end_col_offset": 15
+                  },
+                  "id": "n"
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Assert",
+                "span": {
+                  "lineno": 103,
+                  "col_offset": 8,
+                  "end_lineno": 103,
+                  "end_col_offset": 34
+                },
+                "test": {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 103,
+                    "col_offset": 15,
+                    "end_lineno": 103,
+                    "end_col_offset": 20
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 103,
+                      "col_offset": 15,
+                      "end_lineno": 103,
+                      "end_col_offset": 16
+                    },
+                    "id": "i"
+                  },
+                  "ops": [
+                    "Lt"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 103,
+                        "col_offset": 19,
+                        "end_lineno": 103,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "3"
+                      }
+                    }
+                  ]
+                },
+                "msg": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 103,
+                    "col_offset": 22,
+                    "end_lineno": 103,
+                    "end_col_offset": 34
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "loop guard"
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 104,
+                  "col_offset": 8,
+                  "end_lineno": 104,
+                  "end_col_offset": 25
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 104,
+                      "col_offset": 8,
+                      "end_lineno": 104,
+                      "end_col_offset": 13
+                    },
+                    "id": "total"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 104,
+                    "col_offset": 16,
+                    "end_lineno": 104,
+                    "end_col_offset": 25
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 104,
+                      "col_offset": 16,
+                      "end_lineno": 104,
+                      "end_col_offset": 21
+                    },
+                    "id": "total"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 104,
+                      "col_offset": 24,
+                      "end_lineno": 104,
+                      "end_col_offset": 25
+                    },
+                    "id": "i"
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 105,
+                  "col_offset": 8,
+                  "end_lineno": 105,
+                  "end_col_offset": 17
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 105,
+                      "col_offset": 8,
+                      "end_lineno": 105,
+                      "end_col_offset": 9
+                    },
+                    "id": "i"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 105,
+                    "col_offset": 12,
+                    "end_lineno": 105,
+                    "end_col_offset": 17
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 105,
+                      "col_offset": 12,
+                      "end_lineno": 105,
+                      "end_col_offset": 13
+                    },
+                    "id": "i"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 105,
+                      "col_offset": 16,
+                      "end_lineno": 105,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 106,
+              "col_offset": 4,
+              "end_lineno": 106,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 106,
+                "col_offset": 11,
+                "end_lineno": 106,
+                "end_col_offset": 16
+              },
+              "id": "total"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 109,
+          "col_offset": 0,
+          "end_lineno": 115,
+          "end_col_offset": 18
+        },
+        "name": "after_effect",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 109,
+              "col_offset": 17,
+              "end_lineno": 109,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 112,
+              "col_offset": 4,
+              "end_lineno": 112,
+              "end_col_offset": 12
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 112,
+                  "col_offset": 4,
+                  "end_lineno": 112,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 112,
+                "col_offset": 9,
+                "end_lineno": 112,
+                "end_col_offset": 12
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 112,
+                    "col_offset": 10,
+                    "end_lineno": 112,
+                    "end_col_offset": 11
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 113,
+              "col_offset": 4,
+              "end_lineno": 113,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 113,
+                "col_offset": 4,
+                "end_lineno": 113,
+                "end_col_offset": 16
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 113,
+                  "col_offset": 4,
+                  "end_lineno": 113,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 113,
+                    "col_offset": 4,
+                    "end_lineno": 113,
+                    "end_col_offset": 6
+                  },
+                  "id": "xs"
+                },
+                "attr": "append"
+              },
+              "args": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 113,
+                    "col_offset": 14,
+                    "end_lineno": 113,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 114,
+              "col_offset": 4,
+              "end_lineno": 114,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 114,
+                "col_offset": 11,
+                "end_lineno": 114,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 114,
+                  "col_offset": 11,
+                  "end_lineno": 114,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 114,
+                    "col_offset": 15,
+                    "end_lineno": 114,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 115,
+              "col_offset": 4,
+              "end_lineno": 115,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 115,
+                "col_offset": 11,
+                "end_lineno": 115,
+                "end_col_offset": 18
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 115,
+                  "col_offset": 11,
+                  "end_lineno": 115,
+                  "end_col_offset": 14
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 115,
+                    "col_offset": 15,
+                    "end_lineno": 115,
+                    "end_col_offset": 17
+                  },
+                  "id": "xs"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 118,
+          "col_offset": 0,
+          "end_lineno": 120,
+          "end_col_offset": 28
+        },
+        "name": "nested_call",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 118,
+              "col_offset": 16,
+              "end_lineno": 118,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 120,
+              "col_offset": 4,
+              "end_lineno": 120,
+              "end_col_offset": 28
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 120,
+                "col_offset": 11,
+                "end_lineno": 120,
+                "end_col_offset": 28
+              },
+              "left": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 120,
+                  "col_offset": 11,
+                  "end_lineno": 120,
+                  "end_col_offset": 24
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 120,
+                    "col_offset": 11,
+                    "end_lineno": 120,
+                    "end_col_offset": 21
+                  },
+                  "id": "guard_pass"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 120,
+                      "col_offset": 22,
+                      "end_lineno": 120,
+                      "end_col_offset": 23
+                    },
+                    "id": "n"
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 120,
+                  "col_offset": 27,
+                  "end_lineno": 120,
+                  "end_col_offset": 28
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 126,
+          "col_offset": 0,
+          "end_lineno": 130,
+          "end_col_offset": 12
+        },
+        "name": "msg_set",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 126,
+              "col_offset": 12,
+              "end_lineno": 126,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 129,
+              "col_offset": 4,
+              "end_lineno": 129,
+              "end_col_offset": 24
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 129,
+                "col_offset": 11,
+                "end_lineno": 129,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 129,
+                  "col_offset": 11,
+                  "end_lineno": 129,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 129,
+                    "col_offset": 15,
+                    "end_lineno": 129,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 129,
+                "col_offset": 18,
+                "end_lineno": 129,
+                "end_col_offset": 24
+              },
+              "py_kind": "Set",
+              "text": "{1, 2}"
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 130,
+              "col_offset": 4,
+              "end_lineno": 130,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 130,
+                "col_offset": 11,
+                "end_lineno": 130,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 133,
+          "col_offset": 0,
+          "end_lineno": 135,
+          "end_col_offset": 12
+        },
+        "name": "msg_nonascii",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 133,
+              "col_offset": 17,
+              "end_lineno": 133,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assert",
+            "span": {
+              "lineno": 134,
+              "col_offset": 4,
+              "end_lineno": 134,
+              "end_col_offset": 26
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 134,
+                "col_offset": 11,
+                "end_lineno": 134,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 134,
+                  "col_offset": 11,
+                  "end_lineno": 134,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 134,
+                    "col_offset": 15,
+                    "end_lineno": 134,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "msg": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 134,
+                "col_offset": 18,
+                "end_lineno": 134,
+                "end_col_offset": 26
+              },
+              "value": {
+                "type": "str",
+                "value": "h\u00e9llo"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 135,
+              "col_offset": 4,
+              "end_lineno": 135,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 135,
+                "col_offset": 11,
+                "end_lineno": 135,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 138,
+          "col_offset": 0,
+          "end_lineno": 144,
+          "end_col_offset": 12
+        },
+        "name": "catch_assert",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 138,
+              "col_offset": 17,
+              "end_lineno": 138,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 140,
+              "col_offset": 4,
+              "end_lineno": 143,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "Assert",
+                "span": {
+                  "lineno": 141,
+                  "col_offset": 8,
+                  "end_lineno": 141,
+                  "end_col_offset": 20
+                },
+                "test": {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 141,
+                    "col_offset": 15,
+                    "end_lineno": 141,
+                    "end_col_offset": 20
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 141,
+                      "col_offset": 15,
+                      "end_lineno": 141,
+                      "end_col_offset": 16
+                    },
+                    "id": "n"
+                  },
+                  "ops": [
+                    "Gt"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 141,
+                        "col_offset": 19,
+                        "end_lineno": 141,
+                        "end_col_offset": 20
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "exc_name": "AssertionError",
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 143,
+                  "col_offset": 8,
+                  "end_lineno": 143,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "UnaryOp",
+                  "span": {
+                    "lineno": 143,
+                    "col_offset": 15,
+                    "end_lineno": 143,
+                    "end_col_offset": 17
+                  },
+                  "op": "USub",
+                  "operand": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 143,
+                      "col_offset": 16,
+                      "end_lineno": 143,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 144,
+              "col_offset": 4,
+              "end_lineno": 144,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 144,
+                "col_offset": 11,
+                "end_lineno": 144,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

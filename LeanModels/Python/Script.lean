@@ -177,6 +177,8 @@ mutual
     -- exceptions tier: the handler class name is a read too
     | .raiseStmt exc cause _ =>
       (exc.map Expr.allNames).getD [] ++ (cause.map Expr.allNames).getD []
+    | .assertStmt t m _ =>
+      t.allNames ++ (m.map Expr.allNames).getD []
     | .tryStmt b excName hnd _ _ =>
       excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
     | .pass _ | .brk _ | .cont _ => []
@@ -242,7 +244,7 @@ def scriptStmtSpan : Stmt → Span
   | .exprStmt _ sp | .yieldStmt _ sp | .yieldFromStmt _ sp
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
-  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp
+  | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The last line at which the module's `def` / `class` / recognized

@@ -2601,6 +2601,80 @@ Measured: in-repo survey **75/91 MATCH (82.4%)**, 0 DIVERGE; script
 corpus 27 matched / 5 loud; stdlib sweep unchanged at 5 MATCH / 0
 DIVERGE.
 
+## The `assert` statement (the tail batch, construct 1 — DESIGN)
+
+The first member of the ordinary-Python tail (docs/backlog.md §the tail,
+ranked the same way). Its justification is NOT the stdlib count — `assert`
+is `sole` blocker for 3 library modules and no more — it is that `assert`
+is ordinary Python that real programs use, and the goal is to verify
+arbitrary Python.
+
+### What CPython does
+
+`assert test, msg` compiles to `if not test: raise AssertionError(msg)`,
+guarded by `__debug__`. The model runs the way CPython runs by default
+(no `-O`), so the statement is never compiled away and the test is always
+evaluated. `__debug__` itself is NOT modelled: it stays a loud module
+dunder, so no program can observe the model disagreeing about it.
+
+Two behaviours are observable and neither is guessable, so both are
+pinned by paired rows rather than reasoned about:
+
+* **The message is LAZY.** It is evaluated only when the test is falsy.
+  `assert_lab.lazy_pass`/`lazy_fail` are the same source on the two
+  paths, and the message is a call that PRINTS — so a strict model shows
+  up immediately as an extra line of stdout on the passing path.
+* **The message is `str()` of the value**, not a fixed string:
+  `assert 0, 5` is `AssertionError: 5`.
+
+### Representation
+
+`Stmt.assertStmt (test : Expr) (msg : Option Expr) (span : Span)` and
+`PyErr.assertionError (msg : Option String)`. The `Option String` mirrors
+the payload-carrying `PyErr.valueError`/`runtimeError` constructors, and
+`none` is the bare `assert test` — CPython prints the class name alone,
+so a payload-free constructor is EXACT here rather than a recorded gap
+(contrast `IndexError`, which is three different CPython texts).
+
+### The message rendering is REUSED, not re-decided
+
+The rendered message is `printOne h v` — the function `print` already
+uses for one argument (§rendering: CPython's two-level rule, `str()` on
+the argument and `repr()` inside a container). That is not a convenience:
+`str(x)` for an `AssertionError` argument and `str(x)` for a `print`
+argument are the SAME CPython operation, so sharing the function is what
+makes them agree by construction rather than by two parallel tables that
+can drift. The refusals come along unchanged and are the right ones — a
+set (hash order), an instance or closure or generator (identity), a
+non-ASCII string (Unicode printability is never guessed) make the
+statement LOUD instead of guessing a rendering.
+
+### Proof-layer position: inside the fragment
+
+`assert` evaluates two expressions and either does nothing or raises. It
+allocates nothing and mutates nothing, so `Stmt.heapFree` holds for
+`assertStmt test msg` exactly when both subexpressions are heap-free, and
+`worldInv` is undisturbed — no new hypothesis, no weakening. This is the
+cheapest possible shape for a tail construct and is why it goes first:
+`fuelMono` gains a `bind`-shaped arm and `clockErase` a case that is
+closed by the existing `of_seed`, and nothing else in the proof layer
+moves.
+
+### What stays loud, and one asymmetry recorded
+
+An `AssertionError` can be RAISED but not CAUGHT. The v0 `try`/`except`
+tier matches the class identity of an admitted `class N(Exception): pass`
+only, so `except AssertionError:` refuses exactly as `except
+ZeroDivisionError:` already does — the existing except-tier boundary, not
+a new one. It is asymmetric on purpose: a loud refusal beats a handler
+that silently matches nothing. `assert_lab.catch_assert` pins it.
+
+`assert (a, b)` — the classic always-true parenthesised assert CPython
+warns about at compile time — is NOT special-cased: a non-empty tuple is
+truthy in the ordinary tier, so the model agrees with CPython by
+computing the same truthiness. `assert_lab.tuple_test` is the row that
+would catch a well-meaning special case.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

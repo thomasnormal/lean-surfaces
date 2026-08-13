@@ -1,0 +1,359 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/star_shadow/star_shadow.py",
+  "source_sha256": "41772f6fdde126ff5cf2870488c237089f4fdd89e23ef325419d2365642125c0",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 17,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 17,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "The starred-display lowering's ONE new boundary: a module that BINDS\n`list` or `tuple` (docs/memory-model.md \u00a7starred displays, the shadow\ncensus).\n\n`[*a, 3]` is lowered to `list(tuple(a) + (3,))`, which spells the display\nas calls of the NAMES `list` and `tuple` \u2014 lookups the source never\nwrote. CPython's display performs no such lookup: BUILD_LIST_UNPACK is a\nbytecode, so a shadowed `list` cannot affect it. The interpreter, though,\nreaches its builtins only AFTER every shadow-resolving arm, so the\nlowered calls would run through the shadow and be SILENTLY WRONG.\n\nSo the extractor censuses the whole module for a binding of either name\n(any scope, any binding form) and refuses every starred display in it,\nloudly. This file is the row that would catch the census being dropped:\nwithout it `shadowed(3)` answers \"SHADOW\" instead of refusing, and\nnothing else fails.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 20,
+          "col_offset": 0,
+          "end_lineno": 27,
+          "end_col_offset": 18
+        },
+        "name": "shadowed",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 20,
+              "col_offset": 13,
+              "end_lineno": 20,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 25,
+              "col_offset": 4,
+              "end_lineno": 25,
+              "end_col_offset": 19
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 25,
+                  "col_offset": 4,
+                  "end_lineno": 25,
+                  "end_col_offset": 8
+                },
+                "id": "list"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 25,
+                "col_offset": 11,
+                "end_lineno": 25,
+                "end_col_offset": 19
+              },
+              "value": {
+                "type": "str",
+                "value": "SHADOW"
+              }
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 26,
+              "end_col_offset": 14
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 4,
+                  "end_lineno": 26,
+                  "end_col_offset": 5
+                },
+                "id": "a"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 26,
+                "col_offset": 8,
+                "end_lineno": 26,
+                "end_col_offset": 14
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 9,
+                    "end_lineno": 26,
+                    "end_col_offset": 10
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 12,
+                    "end_lineno": 26,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 27,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 27,
+                "col_offset": 11,
+                "end_lineno": 27,
+                "end_col_offset": 18
+              },
+              "py_kind": "Starred:display_shadowed",
+              "text": "[*a, n]"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 30,
+          "col_offset": 0,
+          "end_lineno": 36,
+          "end_col_offset": 18
+        },
+        "name": "elsewhere",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 30,
+              "col_offset": 14,
+              "end_lineno": 30,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 14
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 35,
+                  "col_offset": 4,
+                  "end_lineno": 35,
+                  "end_col_offset": 5
+                },
+                "id": "a"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 35,
+                "col_offset": 8,
+                "end_lineno": 35,
+                "end_col_offset": 14
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 9,
+                    "end_lineno": 35,
+                    "end_col_offset": 10
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 35,
+                    "col_offset": 12,
+                    "end_lineno": 35,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 36,
+              "col_offset": 4,
+              "end_lineno": 36,
+              "end_col_offset": 18
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 36,
+                "col_offset": 11,
+                "end_lineno": 36,
+                "end_col_offset": 18
+              },
+              "py_kind": "Starred:display_shadowed",
+              "text": "[*a, n]"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 39,
+          "col_offset": 0,
+          "end_lineno": 42,
+          "end_col_offset": 20
+        },
+        "name": "plain_display",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 39,
+              "col_offset": 18,
+              "end_lineno": 39,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 42,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 42,
+                "col_offset": 11,
+                "end_lineno": 42,
+                "end_col_offset": 20
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 42,
+                    "col_offset": 12,
+                    "end_lineno": 42,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 42,
+                    "col_offset": 15,
+                    "end_lineno": 42,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                },
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 42,
+                    "col_offset": 18,
+                    "end_lineno": 42,
+                    "end_col_offset": 19
+                  },
+                  "id": "n"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

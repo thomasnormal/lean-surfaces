@@ -223,6 +223,19 @@ def convert_expr(node):
         }
 
     if isinstance(node, (ast.List, ast.Tuple)):
+        if any(isinstance(e, ast.Starred) for e in node.elts):
+            # A LOAD position is a display unpacking and LOWERS.
+            if isinstance(node.ctx, ast.Load):
+                return lower_starred_display(node)
+            # Store/Del is an assignment or `for` TARGET — position 2 of the
+            # design, deliberately NOT landed. It must be refused as a WHOLE
+            # node. Keeping the structural tuple (whose starred element
+            # converts to `Unsupported "Starred"`) does NOT refuse: `unpackSeq`
+            # checks ARITY first, so `x, *y = [1, 2, 3]` answered a FAKE
+            # `ValueError: too many values to unpack (expected 2)` where
+            # CPython binds `x = 1, y = [2, 3]` — MEASURED, a wrong answer
+            # rather than a loud one, and fixed here.
+            return unsupported(node, "Starred:target")
         return {
             "kind": type(node).__name__,
             "span": span(node),
@@ -360,6 +373,115 @@ def convert_expr(node):
         return unsupported(node, type(node).__name__)
 
     return unsupported(node)
+
+
+# The starred-display lowering spells `[*a, 3]` as calls of the NAMES
+# `list` and `tuple`. The interpreter reaches its builtins only AFTER every
+# shadow-resolving arm, so a module that binds either name would silently
+# run the display through the shadow, while CPython's display never consults
+# a name at all. This flag is the module-wide census that keeps that case
+# LOUD; it is set per file in `process_file` and read by
+# `lower_starred_display`.
+_MODULE_SHADOWS_DISPLAY = False
+
+DISPLAY_LOWERING_NAMES = ("list", "tuple")
+
+
+def binds_any_name(tree, names):
+    """Does the module bind any of ``names`` ANYWHERE — any scope, any
+    binding form? Conservative and whole-module by design (the f-string
+    lowering's `str` census is the same shape and the same argument): the
+    alternative to over-refusing here is being silently wrong."""
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+            if n.id in names:
+                return True
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if n.name in names:
+                return True
+        elif isinstance(n, ast.arg):
+            if n.arg in names:
+                return True
+        elif isinstance(n, ast.alias):
+            if (n.asname or n.name.split(".")[0]) in names:
+                return True
+        elif isinstance(n, ast.ExceptHandler):
+            if n.name in names:
+                return True
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            if any(x in names for x in n.names):
+                return True
+    return False
+
+
+def lower_starred_display(node):
+    """Lower a starred DISPLAY (docs/memory-model.md §starred displays):
+
+        (e1, *a, e2)  ->  (e1,) + tuple(a) + (e2,)
+        [e1, *a, e2]  ->  list((e1,) + tuple(a) + (e2,))
+        [*a]          ->  list(tuple(a))
+
+    Zero new node kinds, so nothing downstream moves. The obvious lowering
+    `list(a) + [3]` is WRONG: `list(...)` allocates a heap object, and
+    concatenation of heap objects refuses loudly — so `list(...)` appears
+    only on the OUTSIDE, where a fresh list is exactly what CPython
+    produces, and `tuple(...)`, the immediate-value constructor, is what
+    the concatenation ever sees. Evaluation order survives: `+` associates
+    left and the binOp arm binds left before right, so the pieces run in
+    source order, CPython's own.
+
+    Consecutive non-starred elements are grouped into ONE tuple display, so
+    `[1, *a, 9, *a]` costs three `+`, not five.
+
+    Inherited refusals are the reuse dividend and are deliberate: a dict or
+    set receiver refuses through `tuple()`'s order doctrine, a generator
+    receiver drains under the existing `moduleGenFree` guard. One honest
+    mismatch, recorded rather than glossed: `[*5]` is CPython's
+    `Value after * must be an iterable, not int` and the lowering raises
+    `'int' object is not iterable` from `tuple()` — same exception CLASS,
+    different message."""
+    if _MODULE_SHADOWS_DISPLAY:
+        return unsupported(node, "Starred:display_shadowed")
+    parts = []
+    group = []  # consecutive non-starred elements, flushed as one tuple
+
+    def flush():
+        if group:
+            parts.append({
+                "kind": "Tuple",
+                "span": span(node),
+                "elts": [convert_expr(e) for e in group],
+            })
+            del group[:]
+
+    for e in node.elts:
+        if isinstance(e, ast.Starred):
+            flush()
+            parts.append({
+                "kind": "Call",
+                "span": span(e),
+                "func": {"kind": "Name", "span": span(e), "id": "tuple"},
+                "args": [convert_expr(e.value)],
+                "keywords": [],
+                "call_unsupported": None,
+            })
+        else:
+            group.append(e)
+    flush()
+    out = parts[0]  # non-empty: the caller found a starred element
+    for p in parts[1:]:
+        out = {"kind": "BinOp", "span": span(node),
+               "left": out, "op": "Add", "right": p}
+    if isinstance(node, ast.List):
+        out = {
+            "kind": "Call",
+            "span": span(node),
+            "func": {"kind": "Name", "span": span(node), "id": "list"},
+            "args": [out],
+            "keywords": [],
+            "call_unsupported": None,
+        }
+    return out
 
 
 def convert_param(p, default=None):
@@ -1134,6 +1256,12 @@ def process_file(source_path, companion_dir, out=None):
 
     source_rel = rel_posix(source_path)
     json_rel = os.path.splitext(source_rel)[0] + ".json"
+
+    # The starred-display lowering's shadow census (see `binds_any_name`):
+    # whole-module, so it is decided once, here, before any expression is
+    # converted.
+    global _MODULE_SHADOWS_DISPLAY
+    _MODULE_SHADOWS_DISPLAY = binds_any_name(tree, DISPLAY_LOWERING_NAMES)
 
     envelope = {
         "schema_version": SCHEMA_VERSION,

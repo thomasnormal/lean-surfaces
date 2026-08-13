@@ -2687,6 +2687,98 @@ truthy in the ordinary tier, so the model agrees with CPython by
 computing the same truthiness. `assert_lab.tuple_test` is the row that
 would catch a well-meaning special case.
 
+## Starred displays (`Starred` position 1, the tail batch — BUILT 2026-08-13)
+
+`ast.Starred` is three constructs, not one (docs/backlog.md §the tail,
+construct 5). Only the DISPLAY position is landed here, because it is the
+one that costs nothing: it is a LOWERING in the extractor, so there are
+ZERO new AST constructors, ZERO `evalExpr` arms, ZERO walkers and ZERO
+proof arms — `fuelMono`, `worldInv` and `ceExecStmt_succ` do not move.
+Assignment targets (position 2) and call sites (position 3) stay refused,
+loudly.
+
+### The lowering, and why the obvious one is WRONG
+
+    (e1, *a, e2)  ⟶  (e1,) + tuple(a) + (e2,)
+    [e1, *a, e2]  ⟶  list((e1,) + tuple(a) + (e2,))
+    [*a]          ⟶  list(tuple(a))
+
+`[*a, 3]` looks like `list(a) + [3]`. It is not. `list(x)` ALLOCATES a
+fresh heap object, so it returns a `.ref`, and `evalBinOp`'s `.ref` arm
+refuses concatenation of heap objects LOUDLY — the obvious lowering
+compiles to a refusal. `tuple(…)` is the vehicle instead: it is the
+IMMEDIATE-value constructor (str / tuple / namedtuple / `listV` / heap
+list snapshot / range / generator all yield a plain `.tuple`), and `+` on
+two immediate tuples is an existing `evalBinOp` arm. So `list(…)` appears
+ONLY on the outside, where a fresh heap list is exactly what CPython
+builds, and never as a concatenation operand.
+
+Consecutive non-starred elements are grouped into ONE tuple display, so
+`[1, *a, 9, *a]` costs three `+`, not five.
+
+**Evaluation order survives**, which is what a lowering most easily
+breaks: `+` associates left and `evalExpr`'s `binOp` arm binds left then
+right, so the operands run in source order — CPython's own.
+`harness/scripts/star_script.py` pins it through stdout
+(`[p(0), *a, p(9)]` prints `eval 0` before `eval 9`), and the same script
+pins that the display is a COPY (`b = [*a]; b.append(7)` leaves `a`
+alone).
+
+**What it does to the fragment**, measured at the definition and not
+inferred: `Expr.heapFree`'s call arm already excludes `list` (it
+allocates) and does NOT exclude `tuple` (it does not), so a lowered LIST
+display leaves the fragment exactly as a comprehension does, and a
+lowered TUPLE display stays inside it exactly as the plain `.tuple` node
+did. Both are pinned in `Examples/python/star_lab/spec.lean`.
+
+### Inherited refusals — the reuse dividend
+
+A dict receiver (`[*d]`, CPython's key iteration) and a set receiver
+refuse through `tuple()`'s existing order doctrine; a generator receiver
+drains under the existing `moduleGenFree` guard. Nothing new decides
+anything.
+
+**One honest MISMATCH, recorded rather than glossed.** `[*5]` is
+`TypeError: Value after * must be an iterable, not int` in CPython, while
+the lowering raises `'int' object is not iterable` from `tuple()`. Same
+exception CLASS, different message. Both harnesses compare the class, so
+the row passes; the message divergence is real and is written down here.
+
+### The shadow census — the ONE new boundary
+
+The lowering spells the display as calls of the NAMES `list` and `tuple`,
+lookups the source never wrote. CPython's display never performs one
+(`BUILD_LIST_UNPACK` is a bytecode), but the interpreter reaches its
+builtins only AFTER every shadow-resolving arm, so a module BINDING
+either name would run the display through the shadow and be SILENTLY
+WRONG. The extractor therefore censuses the whole module (any scope, any
+binding form) and refuses every starred display in it —
+`Examples/python/star_shadow/star_shadow.py` is the row that catches the
+census being dropped. Whole-module and conservative by design: deciding
+it per scope would mean re-deciding CPython's scoping rules inside the
+extractor, and the f-string lowering's `str` census is the same shape for
+the same reason.
+
+### The target refusal is a MEASURED CORRECTION, not a restatement
+
+Position 2 was expected to be refused already, on the ground that
+`targetNames` admits plain names only. IT WAS NOT. `unpackSeq` checks
+ARITY BEFORE element kinds, so `x, *y = [1, 2, 3]` — whose target ingested
+as a structural tuple with an `Unsupported "Starred"` element — answered
+
+    ValueError: too many values to unpack (expected 2)
+
+where CPython binds `x = 1, y = [2, 3]`. A FAKE exception, i.e. a wrong
+answer, not a refusal. The whole target now ingests as
+`Unsupported "Starred:target"` and the assignment refuses loudly
+(`star_lab.star_target`/`star_for`). This was a pre-existing defect the
+landing found, and it is the reason position 2's refusal is pinned by row
+rather than assumed.
+
+Call sites (position 3) need nothing: `Expr.call`'s `callUnsupported`
+already carries `starred args`, measured at implementation time rather
+than assumed.
+
 ## f-strings (`JoinedStr`, the tail batch, construct 2 — DESIGN)
 
 Chosen over `Delete`, `Constant:bytes`, `Starred` and `With` by the

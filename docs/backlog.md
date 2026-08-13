@@ -2648,3 +2648,32 @@ Not registered, deliberately: the uncompilable positions (`*a`,
 `x = *a`, `x, *y, *z = w`, `for *a in b`). CPython cannot RUN them, so
 there is no oracle output to compare against; they belong in an
 extractor totality test, not in `cases.json`.
+
+### STATUS: position 1 is BUILT (2026-08-13, docs/memory-model.md §starred displays)
+
+The DISPLAY lowering landed exactly as designed above — extractor-only,
+so `lake build` was a pure replay plus the two new example specs (3660
+jobs, from 3658). Positions 2 and 3 stay refused and are now pinned by
+row, not assumed.
+
+TWO CORRECTIONS the implementation MEASURED, both of which the design
+predicted the other way:
+
+* **Position 2 did not refuse — it answered a FAKE `ValueError`.** The
+  design said the existing all-names restriction in `targetNames` already
+  refuses a starred target. It does not: `unpackSeq` checks ARITY BEFORE
+  element kinds, so `x, *y = [1, 2, 3]` answered
+  `too many values to unpack (expected 2)` where CPython binds
+  `y = [2, 3]`. A wrong answer, not a loud one. The whole target now
+  ingests as `Unsupported "Starred:target"`. This is a pre-existing
+  defect, found only because the position was pinned by a row.
+* **The lowering needs a SHADOW CENSUS the design did not name.** It
+  spells the display as calls of the names `list` and `tuple`; a module
+  binding either would run the display through the shadow while CPython's
+  display looks nothing up. `Examples/python/star_shadow` is the row that
+  catches the census being dropped — the same shape the f-string
+  lowering's `str` census has, and it should be read as a rule for
+  lowerings generally: a lowering that synthesizes a NAME owes a census.
+
+Position 3 needed nothing: `callUnsupported` already carried
+`starred args`, measured rather than assumed, as the design asked.

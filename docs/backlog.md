@@ -361,6 +361,37 @@ scope BY KIND and which CPython does not survive either
 `Examples/python/sunfish/pins_init.lean`. In-repo survey 75/91 MATCH
 (82.4%), 0 DIVERGE.
 
+**THE MESSAGE STEP, AND TWO MORE INSTRUMENT BUGS (2026-08-13).** The
+class comparison below was one resolution step; the MESSAGE is the next.
+The runner now emits `ClassName: message` (`errMessage`, Main.lean) and
+carries it in the batch JSON as `exnmsg`; `harness/script_corpus.py`
+compares the whole line whenever the model carries a message, and
+`harness/leanpy_survey.py` reports SAME/DRIFT/ABSENT as telemetry rather
+than a verdict. It found three things immediately:
+
+* **`script_corpus.py` oracled against `sys.executable`** — CPython
+  **3.14** on this machine — while the model's tier is specified against
+  3.9 and `leanpy_survey.py` has always pinned it. Every "MATCH" the
+  pinned regression corpus reported was measured against the wrong
+  reference. Visible only because 3.13+ appends `Did you mean: …?` to a
+  `NameError`. FIXED: `default_oracle()` pins `python3.9`, and the oracle
+  version is printed with every run.
+* **`diff_test.py` had the same bug, in-process** — it imports each `.py`
+  by path and calls the function, so its oracle is the interpreter that
+  launched it. All 998 cases, the harness that gates every commit. FIXED
+  by re-execing into the pin (`LEANPY_CPYTHON` overrides,
+  `LEANPY_NO_REEXEC` disables), with a LOUD warning if the pin is not
+  installed, and the version printed in the summary.
+* **The model's payload-free `PyErr` constructors conflate distinct
+  CPython messages** (recorded, open): `ZeroDivisionError` is "integer
+  division or modulo by zero" from `//`/`%` but "0.0 cannot be raised to
+  a negative power" from `0 ** -1`; `IndexError` is list/string/tuple
+  "index out of range"; `KeyError` prints the missing key's `repr` (now
+  renderable — `reprVal` exists); `AttributeError` names the type and the
+  attribute. Giving them payloads is the next step; until then the survey
+  reports them as ABSENT and NOTHING is invented. `StopIteration` was
+  exact already (CPython raises it bare) and now says so.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

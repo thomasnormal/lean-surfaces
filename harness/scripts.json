@@ -126,5 +126,9 @@
   {
     "file": "harness/scripts/dict_ctor_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/exc_message_script.py",
+    "expect": "match"
   }
 ]

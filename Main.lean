@@ -63,7 +63,8 @@ of 200. Each non-empty line is `{"path":"….json","fuel":N?,"clock":[…]?}`
 exactly one line
 
 * `{"path":…,"status":"ok","exit":0,"live":N,"stdout":[…]}`
-* `{"path":…,"status":"exn","exit":1,"exn":"NameError","live":N,"stdout":[…]}`
+* `{"path":…,"status":"exn","exit":1,"exn":"NameError","exnmsg":…,"live":N,"stdout":[…]}`
+  (`exnmsg` present exactly when the model's `PyErr` carries a message)
 * `{"path":…,"status":"unsupported","exit":3,"live":N,"msg":…}`
 * `{"path":…,"status":"timeout","exit":4,"live":N}`
 
@@ -90,6 +91,38 @@ def errName : PyErr → String
   | .stopIteration => "StopIteration"
   -- exceptions tier: CPython's `type(e).__name__` — the carried class name
   | .user _ name => name
+
+/-- The MESSAGE a `PyErr` carries, when it carries one (2026-08-13).
+
+CPython's uncaught-exception line is `ClassName: message`, and mapping
+every exception to exit 1 means stdout + exit code cannot tell two apart —
+the class comparison the harnesses gained closes that, and this is the
+next resolution step down. `none` = the model's representation carries NO
+message for this class, which is a real gap and is reported as its own
+telemetry bucket rather than silently compared against CPython's text:
+`IndexError` alone is "list index out of range" / "string index out of
+range" / "tuple index out of range" in CPython, and the payload-free
+constructor cannot say which. Never invent one here. -/
+def errMessage : PyErr → Option String
+  | .typeError msg => some msg
+  | .nameError n => some s!"name '{n}' is not defined"
+  | .valueError msg => some msg
+  | .runtimeError msg => some msg
+  -- `StopIteration` is raised BARE by CPython (`str(e)` is empty), so the
+  -- class IS the whole line and this one is exact
+  | .stopIteration => some ""
+  -- payload-free constructors whose CPython text the class does NOT
+  -- determine — a real gap, reported as `ABSENT` by the survey's
+  -- message telemetry and recorded in docs/backlog.md, never invented:
+  -- `ZeroDivisionError` is "integer division or modulo by zero" from
+  -- `//`/`%` but "0.0 cannot be raised to a negative power" from
+  -- `0 ** -1`; `IndexError` is list/string/tuple "index out of range";
+  -- `KeyError` prints the missing key's `repr`; `AttributeError` names
+  -- the type and the attribute
+  | .zeroDivisionError | .indexError | .keyError | .recursionError
+  | .attributeError => Option.none
+  -- a user exception raised bare (`raise Stop`) prints its class alone
+  | .user _ _ => some ""
 
 /-- JSON string literal with proper escaping (delegates to `Lean.Json`). -/
 def jsonStr (s : String) : String :=
@@ -224,7 +257,10 @@ def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) : IO UInt32 := do
       return 0
   | .exn w e =>
       for line in w.stdout do IO.println line
-      IO.eprintln (errName e)
+      IO.eprintln (match errMessage e with
+        | some "" => errName e
+        | some msg => s!"{errName e}: {msg}"
+        | Option.none => errName e)
       return 1
   | .unsupported msg =>
       IO.eprintln s!"leanpy-unsupported: {msg}"
@@ -257,7 +293,11 @@ def scriptJson (path : String) (live : Nat) : Run World Unit → String
         ++ toString live ++ ",\"stdout\":" ++ jsonStrArray w.stdout ++ "}"
   | .exn w e =>
       "{\"path\":" ++ jsonStr path ++ ",\"status\":\"exn\",\"exit\":1,\"exn\":"
-        ++ jsonStr (errName e) ++ ",\"live\":" ++ toString live
+        ++ jsonStr (errName e)
+        ++ (match errMessage e with
+            | some msg => ",\"exnmsg\":" ++ jsonStr msg
+            | Option.none => "")
+        ++ ",\"live\":" ++ toString live
         ++ ",\"stdout\":" ++ jsonStrArray w.stdout ++ "}"
   | .unsupported msg =>
       "{\"path\":" ++ jsonStr path ++ ",\"status\":\"unsupported\",\"exit\":3,\"live\":"

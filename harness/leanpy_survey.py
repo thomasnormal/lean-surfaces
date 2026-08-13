@@ -187,6 +187,33 @@ def run_cpython(cpython, path, timeout):
 TRACEBACK_CLASS = re.compile(r"^(?:[A-Za-z_][\w.]*\.)?([A-Za-z_]\w*)(?::.*)?$")
 
 
+def cpython_exc_line(stderr):
+    """The last traceback line, `ClassName: message` or a bare class."""
+    for line in reversed((stderr or "").splitlines()):
+        line = line.strip()
+        if line:
+            return line
+    return None
+
+
+def message_verdict(row, oracle_line):
+    """How close the model's exception TEXT is to CPython's, given the
+    classes already agree. Three honest buckets:
+
+      SAME     the model carries a message and it matches CPython's line;
+      DRIFT    it carries one and the text differs — a real (small) gap;
+      ABSENT   the model's constructor carries no message at all, so there
+               is nothing to compare and inventing one would be a claim
+               the semantics does not make.
+    """
+    cls = row.get("exn")
+    if "exnmsg" not in row:
+        return ("ABSENT", cls, oracle_line)
+    msg = row["exnmsg"]
+    ours = cls if msg == "" else "%s: %s" % (cls, msg)
+    return ("SAME" if ours == oracle_line else "DRIFT", ours, oracle_line)
+
+
 def cpython_exc_class(stderr):
     """The exception CLASS of an oracle run that died, read off the last
     traceback line (`ModuleNotFoundError: No module named 'x'` -> the name;
@@ -338,6 +365,12 @@ def main(argv=None):
                                     oracle_exc if oracle_exc else
                                     "an exception whose class could not be read"))
                 continue
+            # One resolution step below the class: the MESSAGE. Reported,
+            # not enforced — the model's payload-free constructors carry no
+            # message at all (`IndexError` is three different CPython texts),
+            # and a bucket that says which is the useful instrument. The
+            # class comparison above is what fails a run.
+            rec["msg_verdict"] = message_verdict(row, cpython_exc_line(cerr))
         if out == lean_stdout(row) and code == row["exit"]:
             rec["verdict"] = "MATCH"
             rec["stdout_bytes"] = len(out)
@@ -381,6 +414,22 @@ def main(argv=None):
               "and module-initialized, agreeing on an empty stdout)"
               % (counts["MATCH"], stepping, speaking, counts["MATCH"] - stepping))
     print("  DIVERGENCES: %d (any nonzero is a bug in the model)" % counts["DIVERGE"])
+
+    # exception-MESSAGE telemetry (2026-08-13): the classes already agree
+    # wherever a run raised, so this is the next resolution step down —
+    # reported, never a verdict (see `message_verdict`).
+    mv = [rec["msg_verdict"] for rec in results if rec.get("msg_verdict")]
+    if mv:
+        print("-" * 78)
+        buckets = {}
+        for kind, _, _ in mv:
+            buckets[kind] = buckets.get(kind, 0) + 1
+        print("EXCEPTION-MESSAGE telemetry (classes already agree; text is the next step down):")
+        print("    " + "  ".join("%s=%d" % (k, buckets[k]) for k in sorted(buckets)))
+        for kind, ours, theirs in mv:
+            if kind != "SAME":
+                print("    %-6s model %-40s cpython %s"
+                      % (kind, (ours or "-")[:40], (theirs or "-")[:60]))
 
     # dynamic telemetry
     dyn = {}

@@ -51,9 +51,42 @@ def exc_class(stderr):
     return None
 
 
+def exc_line(stderr):
+    """The last non-empty stderr line: CPython's `ClassName: message`, or
+    the runner's own class(+message) line."""
+    for line in reversed((stderr or "").splitlines()):
+        line = line.strip()
+        if line:
+            return line
+    return None
+
+
+def default_oracle():
+    """The PINNED reference interpreter (2026-08-13 fix). This corpus ran
+    against `sys.executable` — whatever Python happened to launch the
+    harness, which on this machine is 3.14 — while the model's tier is
+    specified against CPython 3.9 (docs/backlog.md) and
+    `harness/leanpy_survey.py` has always pinned it. Every "MATCH" was
+    therefore measured against the wrong reference, and a real 3.9
+    divergence or a fake 3.14 one could have appeared at any time; the
+    exception-MESSAGE comparison added the same day is what made it
+    visible (3.13+ appends `Did you mean: …?` to a NameError). The oracle
+    is printed with every run for the same reason the survey prints it."""
+    for cand in ("python3.9", "python3"):
+        try:
+            if subprocess.run([cand, "-c", ""], capture_output=True).returncode == 0:
+                return cand
+        except OSError:
+            continue
+    return sys.executable
+
+
+ORACLE = os.environ.get("LEANPY_CPYTHON") or default_oracle()
+
+
 def run_cpython(path):
     proc = subprocess.run(
-        [sys.executable, path], cwd=REPO_ROOT, capture_output=True, text=True
+        [ORACLE, path], cwd=REPO_ROOT, capture_output=True, text=True
     )
     return proc.stdout, proc.returncode, proc.stderr
 
@@ -111,8 +144,16 @@ def main(argv=None):
                       % (src, lcode, lerr or lout.strip()))
                 failures += 1
         else:
+            # The exception CLASS must always agree; the full
+            # `Class: message` LINE must agree too whenever the model
+            # carries a message at all (2026-08-13). A model line with no
+            # colon means the `PyErr` constructor is payload-free — a
+            # recorded gap, not a mismatch, so it is not compared.
+            lline = exc_line(lerr)
             exc_ok = (ccode == 0 or lcode != 1
-                      or exc_class(cerr) == exc_class(lerr))
+                      or (exc_class(cerr) == exc_class(lerr)
+                          and (": " not in (lline or "")
+                               or lline == exc_line(cerr))))
             if cout == lout and ccode == lcode and exc_ok:
                 print("%-42s MATCH   (exit %d, %d stdout bytes)"
                       % (src, ccode, len(cout)))
@@ -120,13 +161,15 @@ def main(argv=None):
             else:
                 print("%-42s MISMATCH" % src)
                 print("  cpython: exit %d, stdout %r" % (ccode, cout))
-                print("  lean:    exit %d, stdout %r, exc %r" % (lcode, lout, exc_class(lerr)))
+                print("  lean:    exit %d, stdout %r, exc %r" % (lcode, lout, exc_line(lerr)))
                 if ccode:
-                    print("  cpython exc: %r" % (exc_class(cerr),))
+                    print("  cpython exc: %r" % (exc_line(cerr),))
                 failures += 1
 
     total = len(rows)
     print("-" * 72)
+    ver = subprocess.run([ORACLE, "-V"], capture_output=True, text=True)
+    print("oracle: %s" % ((ver.stdout or ver.stderr).strip(),))
     print("%d scripts: %d failed, %d completed-and-matched, %d loud-blocked"
           % (total, failures, completed, len(blocked)))
     for src, msg in blocked:

@@ -58,6 +58,42 @@ import sys
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+def _reexec_under_pinned_cpython():
+    """RUN THE ORACLE ON THE PINNED INTERPRETER (2026-08-13 fix).
+
+    This harness imports each `.py` IN-PROCESS and calls the function, so
+    its oracle is whatever Python launched it — on this machine 3.14,
+    while the model's tier is specified against CPython 3.9
+    (docs/backlog.md). Every one of the 998 cases was therefore compared
+    against the wrong reference: a genuine 3.9 divergence could hide and a
+    3.14-only behaviour could be reported as a model bug. Re-exec into the
+    pin instead of silently measuring the wrong thing; if the pin is not
+    installed, say so LOUDLY and keep going, never quietly.
+
+    `LEANPY_CPYTHON=…` overrides; `LEANPY_NO_REEXEC=1` disables (the
+    re-exec sets it, so this runs at most once).
+    """
+    if os.environ.get("LEANPY_NO_REEXEC"):
+        return
+    want = os.environ.get("LEANPY_CPYTHON") or "python3.9"
+    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_CPYTHON"):
+        return
+    from shutil import which
+    exe = which(want)
+    if exe is None:
+        print("harness/diff_test.py: WARNING the pinned oracle %r is not installed; "
+              "comparing against %s instead — version drift will read as model divergence"
+              % (want, sys.version.split()[0]), file=sys.stderr)
+        return
+    if os.path.realpath(exe) == os.path.realpath(sys.executable):
+        return
+    os.environ["LEANPY_NO_REEXEC"] = "1"
+    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+
+
+_reexec_under_pinned_cpython()
+
+
 class Unmappable(Exception):
     """A CPython value outside the canonical set (e.g. float)."""
 
@@ -394,6 +430,8 @@ def main(argv=None):
     for r in rows:
         print(fmt % r)
     print("-" * len(header))
+    print("oracle: Python %s (the model's tier is specified against 3.9)"
+          % (sys.version.split()[0],))
     print("%d cases: %d failed, %d whitelisted-unsupported, %d matched"
           % (len(rows), failures, whitelisted,
              len(rows) - failures - whitelisted))

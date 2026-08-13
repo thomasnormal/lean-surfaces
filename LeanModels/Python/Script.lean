@@ -385,6 +385,13 @@ def classesCreationPure (m : Module) : Bool :=
 
 /-! ### The publish (a module frame's locals ARE its globals) -/
 
+/-- The refusal a top-level rebinding of a builtin or a
+`def`/`class`/namedtuple name earns: those resolution arms fire BEFORE
+the live module globals, so the shadow would be silently ignored. -/
+def scriptRebindMsg : String :=
+  "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored"
+
+
 /-- PUBLISH the script frame's locals as the module's globals. CPython
 runs a module's top level in a frame whose locals *are* its globals; the
 model keeps two fields, so the identification is re-established after
@@ -437,11 +444,17 @@ mutual
       else
         targetBoundNames t ++ Stmt.assignedNamesList b.toList
           ++ Stmt.assignedNamesList o.toList
+    -- 2026-08-13: the general `for` got its own shell too, so only a
+    -- `for … else` (which has none) is still delegated wholesale
     | .forStmt t _ b o _ =>
-      targetBoundNames t ++ Stmt.assignedNamesList b.toList
-        ++ Stmt.assignedNamesList o.toList
+      if o.isEmpty then Stmt.scriptMidAssignsList b.toList
+      else
+        targetBoundNames t ++ Stmt.assignedNamesList b.toList
+          ++ Stmt.assignedNamesList o.toList
+    -- 2026-08-13: `try` got a shell too; a `while … else` is now the only
+    -- compound the executor still delegates wholesale
     | .tryStmt b _ h _ _ =>
-      Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList h.toList
+      Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList h.toList
     | _ => []
 
   /-- Elementwise `Stmt.scriptMidAssigns`. -/
@@ -484,7 +497,8 @@ mutual
            | .ret _ => .unsupported "'return' at module top level (CPython: SyntaxError at compile time)"
            | flow => .ok st flow)
         | Option.none =>
-          .unsupported "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored"
+          .unsupported scriptRebindMsg
+  termination_by structural fuel
 
   /-- Execute ONE top-level statement. `if`, `while` (without `else`) and
   the `for … in d.items():` loop run through CONTROL SHELLS mirroring
@@ -522,6 +536,62 @@ mutual
           | _ =>
             .unsupported "'.items()' on a non-dict receiver is outside the tier (docs/memory-model.md §the one pipeline)"
         else .unsupported "'for … else' at module top level is outside the tier"
+      | .forStmt target iter body orelse _ =>
+        -- The GENERAL `for` shell (2026-08-13), mirroring `execStmt`'s
+        -- dispatch arm for arm so the TIER is unchanged and only the
+        -- PUBLISH granularity differs: body statements run through
+        -- `execScriptStmts`, so a function called from inside the loop
+        -- sees the loop's own bindings. Delegating the whole statement
+        -- was the last seam in the unified pipeline
+        -- (`scriptFlushCoherent`).
+        if orelse.isEmpty then
+          Run.bind (evalExpr m fuel st iter) fun st it =>
+          match it with
+          | .listV xs => execScriptFor m fuel st target xs.toList body.toList
+          | .tuple xs => execScriptFor m fuel st target xs.toList body.toList
+          | .ntuple _ _ xs => execScriptFor m fuel st target xs.toList body.toList
+          | .str t => execScriptFor m fuel st target (strCharVals t) body.toList
+          | .rangeV lo hi step =>
+            Run.bind (Run.liftRes st (rangeVals lo hi step)) fun st xs =>
+            execScriptFor m fuel st target xs body.toList
+          | .ref a => execScriptForList m fuel st target a 0 body.toList
+          | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable")
+        else .unsupported "'for … else' is outside the v0 tier"
+      | .tryStmt body excName handler tryUnsupported sp =>
+        -- The `try`/`except` shell (2026-08-13): the admission is
+        -- `execStmt`'s verbatim — the same `tryUnsupported` reason, the
+        -- same shadowing refusal, the same statically-first handler-class
+        -- resolution, the same RETAINED-STATE covenant (a matching `.user`
+        -- exn runs the handler from the state the raise left, no
+        -- rollback) — and only the body and handler statements move to
+        -- `execScriptStmts`, so their bindings publish per statement.
+        (match tryUnsupported with
+         | some reason =>
+           .unsupported s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
+         | Option.none =>
+           if (Env.lookup st.locals excName).isSome
+               || (lookupG (moduleGlobals m).1 excName).isSome
+               || (Env.lookup st.world.globals excName).isSome
+               || (findFunction m excName).isSome then
+             .unsupported s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+           else
+             match findClass m excName with
+             | Option.none =>
+               .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) can be matched — builtin-name matching is the recorded first extension, not v0 (docs/memory-model.md §exceptions)"
+             | some (ci, c) =>
+               if !c.isExc then
+                 .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+               else
+                 match execScriptStmts m fuel st body.toList with
+                 | .ok st' flow => .ok st' flow
+                 | .exn st' e =>
+                   (match e with
+                    | .user cid _ =>
+                      if cid == ci then execScriptStmts m fuel st' handler.toList
+                      else .exn st' e
+                    | e => .exn st' e)
+                 | .timeout => .timeout
+                 | .unsupported msg => .unsupported msg)
       | .unsupported "Import" text sp =>
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "Import" text sp)
@@ -529,6 +599,7 @@ mutual
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "ImportFrom" text sp)
       | s => execStmt m fuel st s
+  termination_by structural fuel
 
   /-- The `for target in d.items():` control shell — CPython's dict_items
   iterator: the LIVE entries re-read per step, a SIZE change the faithful
@@ -558,12 +629,99 @@ mutual
                 | .brk => .ok st .next
                 | .ret v => .ok st (.ret v))
              | Option.none =>
-               .unsupported "a top-level statement rebinds a builtin or a name this module defines by 'def'/'class'/namedtuple: those resolution arms fire BEFORE the live module globals, so the shadow would be silently ignored")
+               .unsupported scriptRebindMsg)
           | .exn e => .exn st e
           | .timeout => .timeout
           | .unsupported msg => .unsupported msg
         else .ok st .next
       | _ => .unsupported "internal: items-loop receiver is not a dict (report this)"
+  termination_by structural fuel
+
+  /-- `execFor`'s VALUE-sequence cursor as a shell (immutable sources:
+  tuples, namedtuples, boundary lists, str code points, materialized
+  ranges — the snapshot IS the live semantics for all of them). -/
+  def execScriptFor (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
+      (xs : List RVal) (body : List Stmt) : Run FrameState RFlow :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match xs with
+      | [] => .ok st .next
+      | x :: rest =>
+        Run.bind (Run.liftRes st (assignToH st.world.heap st.locals target x))
+          fun st env1 =>
+        match publishScriptGlobals m ⟨st.world, env1⟩ with
+        | Option.none => .unsupported scriptRebindMsg
+        | some st =>
+          Run.bind (execScriptStmts m fuel st body) fun st flow =>
+          match flow with
+          | .next | .cont => execScriptFor m fuel st target rest body
+          | .brk => .ok st .next
+          | .ret v => .ok st (.ret v)
+  termination_by structural fuel
+
+  /-- `execForList`'s LIVE INDEX CURSOR as a shell — the object is re-read
+  each step, so in-place mutation, growth and `pop`-shrinkage during
+  iteration are observed exactly as CPython's listiterator observes them.
+  The referent dispatch, and every one of its refusals, is
+  `execForList`'s verbatim. -/
+  def execScriptForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
+      (a : Addr) (i : Nat) (body : List Stmt) : Run FrameState RFlow :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      match Heap.get? st.world.heap a with
+      | some (.list xs) =>
+        if i < xs.size then
+          Run.bind (Run.liftRes st (assignToH st.world.heap st.locals target (xs.getD i .none)))
+            fun st env1 =>
+          match publishScriptGlobals m ⟨st.world, env1⟩ with
+          | Option.none => .unsupported scriptRebindMsg
+          | some st =>
+            Run.bind (execScriptStmts m fuel st body) fun st flow =>
+            match flow with
+            | .next | .cont => execScriptForList m fuel st target a (i + 1) body
+            | .brk => .ok st .next
+            | .ret v => .ok st (.ret v)
+        else .ok st .next
+      | some (.dict _ _) =>
+        .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory — no snapshot shortcut; docs/memory-model.md)"
+      | some (.instance _ _) =>
+        .exn st (.typeError "'object' object is not iterable")
+      | some (.generator ..) =>
+        if moduleGenFree m then
+          .unsupported "internal: a generator object in a module with no generator defs (heap well-formedness violation — report this)"
+        else execScriptForGen m fuel st target a body
+      | some (.closure ..) =>
+        .unsupported "internal: a list cursor over a function object (report this)"
+      | some (.pyset _) =>
+        .unsupported "internal: a list cursor over a set (report this)"
+      | Option.none => .unsupported "internal: a dangling heap address (report this)"
+  termination_by structural fuel
+
+  /-- `execForGen`'s LAZY cursor as a shell: one `stepIter` per element, so
+  the generator's own body effects interleave exactly as they do under the
+  interpreter's loop. -/
+  def execScriptForGen (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
+      (a : Addr) (body : List Stmt) : Run FrameState RFlow :=
+    match fuel with
+    | 0 => .timeout
+    | fuel + 1 =>
+      Run.bind (Run.withLocals st.locals (stepIter m fuel st.world a)) fun st r =>
+      match r with
+      | Option.none => .ok st .next
+      | some v =>
+        Run.bind (Run.liftRes st (assignToH st.world.heap st.locals target v))
+          fun st env1 =>
+        match publishScriptGlobals m ⟨st.world, env1⟩ with
+        | Option.none => .unsupported scriptRebindMsg
+        | some st =>
+          Run.bind (execScriptStmts m fuel st body) fun st flow =>
+          match flow with
+          | .next | .cont => execScriptForGen m fuel st target a body
+          | .brk => .ok st .next
+          | .ret v => .ok st (.ret v)
+  termination_by structural fuel
 
   /-- The `execWhile` control shell over script statements (same test,
   same truthiness, same flow routing — body bindings published per
@@ -582,6 +740,7 @@ mutual
         | .brk => .ok st .next
         | .ret v => .ok st (.ret v)
       else .ok st .next
+  termination_by structural fuel
 end
 
 /-- Run a whole script under a SEEDED CLOCK TRACE: the three boundary

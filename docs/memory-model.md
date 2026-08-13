@@ -2327,11 +2327,39 @@ holds its inner bindings in the frame until it finishes — invisible to a
 function called from inside it. `scriptFlushCoherent` refuses exactly that
 overlap: no name assigned inside a delegated compound may be a name some
 function body reads. That is the narrow residue of `suffixConsistent`,
-which refused it for the WHOLE live top level. The recorded fix is a
-control shell per statement kind; the executor already has `if`, `while`,
-and the `for … in d.items():` shell that module-init execution used to
-own (live entries re-read per step, a size change the faithful
-`RuntimeError`).
+which refused it for the WHOLE live top level.
+
+**THE SEAM IS CLOSED for everything but `while … else` (2026-08-13.)**
+The recorded fix was a control shell per statement kind — the executor
+already had `if`, `while`, and the `for … in d.items():` shell that
+module-init execution used to own (live entries re-read per step, a size
+change the faithful `RuntimeError`) — and the general `for` and `try` now
+have theirs:
+
+* `execScriptFor`/`execScriptForList`/`execScriptForGen` mirror
+  `execStmt`'s `for` dispatch ARM FOR ARM — value sequences (tuple,
+  namedtuple, boundary list, str code points, materialized range), the
+  LIVE heap-list index cursor whose per-step re-read makes mutation,
+  growth and `pop`-shrinkage observable exactly as CPython's listiterator
+  makes them, and the lazy generator cursor stepping one `stepIter` at a
+  time — including every refusal message verbatim. The TIER is unchanged;
+  only the publish granularity differs, and the loop target publishes
+  BEFORE the body runs.
+* the `try` shell keeps `execStmt`'s admission verbatim (the same
+  `tryUnsupported` reason, the same shadowing refusal, the same
+  statically-first handler-class resolution) and the same RETAINED-STATE
+  covenant — a matching `.user` exn runs the handler from the state the
+  raise left, no rollback — moving only the body and handler statements
+  onto `execScriptStmts`.
+
+`for … else` is refused by the shell itself (out of tier, as in the
+interpreter), so `while … else` is the ONLY compound still delegated
+wholesale and the only shape `scriptFlushCoherent` can still fire on. The
+guard stays: it costs nothing and it is what would catch the next shell
+that goes missing. Measured: the refusal disappeared from both sweeps (it
+was 4 stdlib files), and `harness/scripts/loop_publish_script.py` — a
+function called from inside a top-level `for`, reading a name that loop
+assigns — flipped from refusal to CPython-identical output.
 
 Whitelisted `import` statements are SKIPPED by the executor (they bind
 through the static view and running one observes nothing); every other

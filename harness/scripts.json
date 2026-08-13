@@ -130,5 +130,9 @@
   {
     "file": "harness/scripts/exc_message_script.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/loop_publish_script.py",
+    "expect": "match"
   }
 ]

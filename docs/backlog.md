@@ -438,6 +438,16 @@ exactly what `runScript` does — though most stdlib imports reach C
 modules (`sys`, `_collections_abc`) that no such system can execute, so
 the honest ceiling needs measuring before the work is committed to.
 
+**THE LAST SEAM CLOSED (2026-08-13)** — docs/memory-model.md §the one
+pipeline. The general `for` and `try` got control shells mirroring
+`execStmt` arm for arm (value sequences, the live heap-list index cursor,
+the lazy generator cursor, the retained-state `try` covenant, every
+refusal verbatim), so their body bindings publish per statement and a
+function called from inside a top-level loop reads what the loop wrote.
+`while … else` is the only compound still delegated wholesale;
+`scriptFlushCoherent` stays as the guard that would catch the next
+missing shell. The refusal left both sweeps.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

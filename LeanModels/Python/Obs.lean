@@ -558,9 +558,16 @@ theorem fuelMono (fuel : Nat) :
                       exact Run.le_withLocals (ihCall m st.world fname full k hk)
                     | none =>
                       try dsimp only
+                      -- 2026-08-13: `dict(k=v, …)` sits before `sorted`
+                      -- — a positional-argument refusal, else the kwarg
+                      -- values bind and the allocation is fuel-free
                       refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-                        (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
-                          (Run.le_ite (Run.le_refl _) (Run.le_refl _)))))
+                        (Run.le_ite
+                          (Run.le_ite (Run.le_refl _)
+                            (Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk)
+                              fun st _ => Run.le_refl _))
+                          (Run.le_ite ?_ (Run.le_ite (Run.le_refl _)
+                            (Run.le_ite (Run.le_refl _) (Run.le_refl _))))))
                       -- sorted with keywords (H6 draining tier): key= is
                       -- a fuel-free refusal; a stray keyword binds then
                       -- raises; reverse= binds, truthiness, then the
@@ -776,8 +783,8 @@ theorem fuelMono (fuel : Nat) :
                         -- ALLOCATE an iterator object), NEXT (binds the
                         -- args, then steps the generator), ord, chr
                         -- len → sorted → max → min → any/all → set → abs →
-                        -- int → sum → tuple → list → range → enumerate →
-                        -- count → next → ord → chr → tail
+                        -- int → sum → tuple → list → dict → range →
+                        -- enumerate → count → next → ord → chr → tail
                         refine Run.le_ite (hb _)                             -- len
                             (Run.le_ite ?_                                     -- sorted
                              (Run.le_ite ?_                                    -- max
@@ -789,13 +796,14 @@ theorem fuelMono (fuel : Nat) :
                                    (Run.le_ite ?_                              -- sum
                                     (Run.le_ite ?_                             -- tuple
                                      (Run.le_ite ?_                            -- list
-                                      (Run.le_ite (hb _)                       -- range
+                                      (Run.le_ite (hb _)                       -- dict
+                                       (Run.le_ite (hb _)                      -- range
                                       (Run.le_ite (hb _)                       -- enumerate
                                        (Run.le_ite (hb _)                      -- count
                                         (Run.le_ite ?_                         -- next
                                          (Run.le_ite (hb _)                    -- ord
-                                           (Run.le_ite (hb _)                  -- chr
-                                            ?_))))))))))))))))
+                                            (Run.le_ite (hb _)                 -- chr
+                                             ?_)))))))))))))))))
                         -- sorted
                         · refine Run.le_bind (ihEs m st cargs.toList k hk) fun st vs => ?_
                           cases vs with
@@ -2098,7 +2106,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hflE⟩ := hfree
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl
@@ -2144,6 +2152,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
               cases hbe : fname == "list"
               · rfl
               · rw [bne, hbe] at hnlst; simp at hnlst
+            -- `dict(…)` ALLOCATES too (2026-08-13)
+            have hdctx : (fname == "dict") = false := by
+              cases hbe : fname == "dict"
+              · rfl
+              · rw [bne, hbe] at hndct; simp at hndct
             simp only [evalExpr, hkw, eq_self_iff_true, if_true]
             have hargs : Run.OkW (·.world = st.world) (evalExprs m fuel st cargs.toList) :=
               ihEs st cargs.toList hflE
@@ -2187,7 +2200,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                 -- branch reduces away; the def/namedtuple collision guard
                 -- stays an undecided (walked) ite, and namedtuple
                 -- CONSTRUCTION is a pure value — world-preserving
-                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx,
+                simp only [hs, hnx, hex, hcx, hay, hal, hsetx, hprx, hlstx, hdctx,
                   findClass_heapFree hm fname,
                   Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_false]
                 refine .ite (.ite .unsupported (.bind hargs fun st₁ vs h₁ => ?_)) ?_

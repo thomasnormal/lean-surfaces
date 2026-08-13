@@ -9,6 +9,10 @@ envelope re-extraction, edit THAT file (the JSON trap note there); this
 file rebuilds through the import.
 -/
 import LeanModels
+-- `runScript` (the leanpy script surface) is not in the `LeanModels`
+-- umbrella — only Main.lean pulls it — so the script-mode pin at the
+-- bottom of this file imports it directly.
+import LeanModels.Python.Script
 import Examples.python.sunfish.pins_common
 
 namespace Examples.python.sunfish.pins_init
@@ -177,6 +181,28 @@ moves. -/
         | _ => false)
 
 #guard callIn sunfish 4096 (initWorld sunfish) "main" #[] matches .unsupported _
+
+/-! ### THE SHIPPED FILE UNDER `leanpy` (2026-08-13, THE ONE PIPELINE)
+
+`runScript` executes the WHOLE top level of the real engine file — the
+imports, the piece/pst tables, the padding loop through the items shell,
+`K_MID`/`K_END`, the `Move`/`Entry` namedtuples, the `Position`/`Stop`/
+`Searcher` class creations, `opt_ranges = dict(QS=(0, 300), …)`, `hist`,
+and the `if __name__ == "__main__":` guard, which is TRUE under leanpy —
+and stops at exactly one construct: `main()`'s own
+`import sys, sunfish_ui.uci`. A module system is out of scope BY KIND
+(docs/backlog.md), and CPython does not get past that line either
+(`ModuleNotFoundError`, since `sunfish_ui` is a separate package), so the
+refusal is the honest end of the program rather than a tier gap in the
+middle of it.
+
+The pin is the MESSAGE, not just the shape: an `unsupported` outcome for
+any other reason would be a regression in the module initialization this
+whole arc built. -/
+
+#guard (match runScript sunfish 1000000 with
+        | .unsupported msg => "unsupported statement 'Import'".isPrefixOf msg
+        | _ => false)
 
 
 end Examples.python.sunfish.pins_init

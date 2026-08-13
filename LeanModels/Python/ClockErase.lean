@@ -230,6 +230,17 @@ theorem allocList {st : FrameState} (h : st.world.clock = []) (xs : Array RVal) 
     | mk w l => cases w with | mk hp g so c => rfl
   · rw [FrameState.withClock_self h]
 
+/-- The dict-shaped twin of `allocList` (2026-08-13, the `dict(…)`
+constructor). -/
+theorem allocDict {st : FrameState} (h : st.world.clock = [])
+    (es : Array (RVal × RVal)) :
+    ClockErasedF (allocDictRun st es)
+      (fun tr => allocDictRun (st.withClock tr) es) := by
+  refine of_seed (fun tr => ?_) ?_
+  · cases st with
+    | mk w l => cases w with | mk hp g so c => rfl
+  · rw [FrameState.withClock_self h]
+
 /-- `liftRes` congruence: a pure result attached to the threaded state. -/
 theorem liftRes {st : FrameState} (h : st.world.clock = []) (r : Res α) :
     ClockErasedF (Run.liftRes st r) (fun tr => Run.liftRes (st.withClock tr) r) := by
@@ -1475,10 +1486,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   | none =>
                     refine .ite ?blen (.ite ?bsorted (.ite ?bmax (.ite ?bmin
                       (.ite ?banyall (.ite ?bset (.ite ?babs (.ite ?bint
-                      (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?brange
-                      (.ite ?benum (.ite ?bcount (.ite ?bnext (.ite ?bord
-                      (.ite ?bchr (.ite ?bstr (.ite .unsupported (.ite ?bprint
-                        (.ite .unsupported ?blive))))))))))))))))))))
+                      (.ite ?bsum (.ite ?btuple (.ite ?blist (.ite ?bdict
+                      (.ite ?brange (.ite ?benum (.ite ?bcount (.ite ?bnext
+                      (.ite ?bord (.ite ?bchr (.ite ?bstr (.ite .unsupported
+                      (.ite ?bprint
+                        (.ite .unsupported ?blive)))))))))))))))))))))
                     case blen =>
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
                       cases vs with
@@ -1939,6 +1951,28 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 exact .bind
                                   (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
                                   fun s3 vals hs3 => .allocList hs3 _
+                    case bdict =>
+                      -- the dict CONSTRUCTOR: an allocation on every
+                      -- decided leaf, and the copy arm reads only the heap
+                      refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
+                      cases vs with
+                      | nil => exact .allocDict hs2 _
+                      | cons v t =>
+                        cases t with
+                        | cons d t2 => exact .exn hs2 _
+                        | nil =>
+                          cases v <;> try exact .exn hs2 _
+                          case listV xs => exact .unsupported
+                          case ref a =>
+                            ce_norm
+                            cases hh : Heap.get? s2.world.heap a with
+                            | none => exact .unsupported
+                            | some obj =>
+                              cases obj <;> try exact .unsupported
+                              case dict es sv => exact .allocDict hs2 _
+                              case pyset xs => exact .exn hs2 _
+                              case «instance» cid attrs => exact .exn hs2 _
+                              case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                     case brange =>
                       exact .bind (ihEs m st args.toList h) fun s2 vs hs2 =>
                         .liftRes hs2 _
@@ -2154,8 +2188,16 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                   ce_norm
                   exact ClockErasedW.withLocals (ihCall m s4.world fname full hs4)
               | none =>
+                -- 2026-08-13: `dict(k=v, …)` sits before `sorted` — the
+                -- positional-argument refusal, else the kwarg values bind
+                -- and the ALLOCATION reads no clock
                 refine .ite .unsupported (.ite .unsupported
-                  (.ite ?bsortedkw (.ite .unsupported (.ite .unsupported ?livekw))))
+                  (.ite ?bdictkw
+                    (.ite ?bsortedkw (.ite .unsupported (.ite .unsupported ?livekw)))))
+                case bdictkw =>
+                  refine .ite .unsupported ?_
+                  exact .bind (ihEs m st (kwargs.toList.map (·.2)) h)
+                    fun s2 kvs hs2 => .allocDict hs2 _
                 case bsortedkw =>
                   refine .ite .unsupported ?_
                   cases hfk : kwargs.toList.find? (fun kv => kv.1 != "reverse") with

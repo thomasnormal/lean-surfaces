@@ -893,7 +893,8 @@ def isBuiltinName (id : String) : Bool :=
   id == "ord" || id == "chr" || id == "next" ||
   id == "enumerate" || id == "count" ||
   id == "any" || id == "all" || id == "set" ||
-  id == "sum" || id == "tuple" || id == "range" || id == "list"
+  id == "sum" || id == "tuple" || id == "range" || id == "list" ||
+  id == "dict"
 
 /-- Every name CPython 3.9's `builtins` module binds (`dir(builtins)`,
 minus the dunders — generated from the PINNED reference interpreter).
@@ -962,6 +963,13 @@ def zipNames : List String → List String → List String
   | [], _ => []
   | _, [] => []
   | n :: ns, v :: vs => (n ++ "=" ++ v) :: zipNames ns vs
+
+/-- Allocate a fresh heap dict holding `entries` and return its `.ref` —
+the dict-display idiom (`BUILD_MAP`), shared with the `dict(…)`
+constructor, which CPython also guarantees to be a NEW mapping. -/
+def allocDictRun (st : FrameState) (entries : Array (RVal × RVal)) : Run FrameState RVal :=
+  .ok { st with world := { st.world with heap := st.world.heap.push (.dict entries 0) } }
+    (.ref st.world.heap.size)
 
 /-! `print` renders through CPython's own two-level rule: the ARGUMENTS
 go through `str()`, and every value INSIDE a container goes through
@@ -3334,7 +3342,7 @@ mutual
     | .call (.name id _) args kwargs _ _ =>
       kwargs.isEmpty && (id != "sorted") && (id != "next") && (id != "enumerate")
         && (id != "count") && (id != "any") && (id != "all") && (id != "set")
-        && (id != "print") && (id != "list")
+        && (id != "print") && (id != "list") && (id != "dict")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
       kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
@@ -4286,6 +4294,38 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | Option.none => .unsupported danglingMsg)
                         | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
                      | vs => .exn st (.typeError s!"list expected at most 1 argument, got {vs.length}"))
+                  else if fname == "dict" then
+                    -- 2026-08-13: the dict CONSTRUCTOR, positional forms.
+                    -- `dict()` is the empty mapping and `dict(d)` is
+                    -- CPython's shallow COPY (a fresh object, never an
+                    -- alias — the whole point of writing it). A pairs
+                    -- ITERABLE stays loud: rebuilding it needs the
+                    -- per-insert hashability and duplicate-key rules, and
+                    -- guessing them would be silent corruption. The
+                    -- keyword form `dict(k=v, …)` is in the kwargs arm.
+                    evalExprs m fuel st args.toList ⤳ fun st vs =>
+                    (match vs with
+                     | [] => allocDictRun st #[]
+                     | [v] =>
+                       (match v with
+                        | .ref a =>
+                          (match Heap.get? st.world.heap a with
+                           | some (.dict entries _) => allocDictRun st entries
+                           | some (.list _) =>
+                             .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+                           | some (.generator ..) =>
+                             .unsupported "dict() over a generator of pairs is outside the tier (docs/memory-model.md)"
+                           | some (.pyset _) =>
+                             .exn st (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
+                           | some (.instance _ _) =>
+                             .exn st (.typeError "'object' object is not iterable")
+                           | some (.closure ..) =>
+                             .exn st (.typeError "'function' object is not iterable")
+                           | Option.none => .unsupported danglingMsg)
+                        | .listV _ =>
+                          .unsupported "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+                        | v => .exn st (.typeError s!"'{v.typeName}' object is not iterable"))
+                     | vs => .exn st (.typeError s!"dict expected at most 1 argument, got {vs.length}"))
                   else if fname == "range" then
                     -- pass 3: an IMMEDIATE `rangeV` value (pure — no
                     -- allocation); arity/type/step-zero faithfulness in
@@ -4567,6 +4607,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       .unsupported s!"instantiating class '{fname}' with keyword arguments is outside the H6 tier"
                     else if (findNamedTuple m fname).isSome then
                       .unsupported s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
+                    else if fname == "dict" then
+                      -- 2026-08-13: `dict(k=v, …)` — the keyword form is
+                      -- the ONLY way to build a mapping whose keys are
+                      -- identifiers, and CPython keeps the call's own
+                      -- order (duplicate keywords are a SyntaxError, so
+                      -- no insert can collide). Positional arguments
+                      -- alongside keywords stay loud.
+                      if !args.isEmpty then
+                        .unsupported "dict(<iterable>, k=v, …) mixing a positional argument with keywords is outside the tier"
+                      else
+                        evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                        allocDictRun st
+                          ((kwargs.toList.map (fun kv => RVal.str kv.1)).zip kvs).toArray
                     else if fname == "sorted" then
                       -- reverse= accepted (truthiness decides the
                       -- direction); key= gates on FIRST-CLASS CALLABLE

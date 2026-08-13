@@ -348,6 +348,19 @@ decided by an active-path list rather than fuel. LOUD and pinned: a set
 string (Unicode printability is never guessed). `repr_script.py` is the
 differential row; `print_set.py`/`print_nonascii.py` the refusals.
 
+**`dict(…)` — AND THE SHIPPED FILE'S WHOLE TOP LEVEL (2026-08-13)** —
+docs/memory-model.md §the `dict(…)` constructor. `dict()`, `dict(k=v, …)`
+in call order, and `dict(d)` as CPython's shallow copy; a pairs iterable
+stays loud (the per-insert hashability and duplicate-key rules are not
+guessed). It was sunfish.py's last named blocker, so `runScript` now
+executes the REAL engine file's entire top level — imports, tables,
+padding loop, namedtuples, class creations, the `__main__` guard — and
+stops only at `main()`'s `import sys, sunfish_ui.uci`, which is out of
+scope BY KIND and which CPython does not survive either
+(`ModuleNotFoundError`). Pinned by message in
+`Examples/python/sunfish/pins_init.lean`. In-repo survey 75/91 MATCH
+(82.4%), 0 DIVERGE.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

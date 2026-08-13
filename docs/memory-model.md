@@ -2539,6 +2539,40 @@ only re-scrutinizes the renderer's result.
 Measured: script corpus 26 matched / 5 loud; in-repo survey **74/90
 MATCH (82.2%)**, 0 DIVERGE.
 
+## The `dict(…)` constructor, and the shipped file's whole top level
+(2026-08-13)
+
+`dict()` is the empty mapping; `dict(k=v, …)` builds one in the CALL's own
+order (duplicate keywords are a SyntaxError, so no insert can collide);
+`dict(d)` is CPython's shallow COPY — a fresh object, never an alias,
+which is the whole point of writing it. A pairs ITERABLE stays LOUD:
+rebuilding one needs the per-insert hashability and duplicate-key rules,
+and guessing them would be silent corruption. Like every allocating call,
+`dict` leaves `Expr.heapFree` (`worldInv` gains `hdctx`, `fuelMono` two
+arms — the positional and the keyword form — and `clockErase` a `bdict`
+and a `bdictkw` case over a new `allocDict` leaf lemma).
+
+**THE PAYOFF: the shipped sunfish.py's WHOLE top level now executes under
+leanpy.** `opt_ranges = dict(QS=(0, 300), …)` was the file's last named
+blocker; with it in tier, `runScript` runs the imports, the piece/pst
+tables, the padding loop through the items shell, `K_MID`/`K_END`, the
+`Move`/`Entry` namedtuples, the three class creations, `hist`, and the
+`if __name__ == "__main__":` guard — which is TRUE under leanpy — and
+stops at exactly one construct: `main()`'s own
+`import sys, sunfish_ui.uci`. A module system is out of scope BY KIND,
+and CPython does not get past that line either (`ModuleNotFoundError`,
+`sunfish_ui` being a separate package), so the refusal is the honest end
+of the program rather than a tier gap in the middle of it. Pinned as the
+MESSAGE, not just the shape, in `Examples/python/sunfish/pins_init.lean`
+— an `unsupported` for any other reason would be a regression in the
+module initialization this whole arc built. (That pin is why `pins_init`
+now imports `LeanModels.Python.Script` directly: `runScript` is not in
+the `LeanModels` umbrella.)
+
+Measured: in-repo survey **75/91 MATCH (82.4%)**, 0 DIVERGE; script
+corpus 27 matched / 5 loud; stdlib sweep unchanged at 5 MATCH / 0
+DIVERGE.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

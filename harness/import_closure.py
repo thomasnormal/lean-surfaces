@@ -744,12 +744,30 @@ def main(argv=None):
         print("  %d of them (%.1f%%) have NO static wall besides `import`, so "
               "a module system could run their top level as it stands"
               % (len(clean), 100.0 * len(clean) / max(len(pure), 1)))
-        wf = {}
-        for m, w in walls.items():
+        # RANK THE LIBRARY TAIL THE SAME WAY THE SEED TIER IS RANKED. The
+        # lesson of the last two milestones is that a `present` count can hide
+        # behind another wall, so the tail gets `sole` beside it — and, because
+        # these walls co-occur heavily where `import` did not, a BATCH curve
+        # too: what N constructs closed TOGETHER would buy, which is the unit
+        # of work the co-occurrence makes real.
+        blocked_mods = {m: w for m, w in walls.items() if w}
+        wf, sole = {}, {}
+        for m, w in blocked_mods.items():
             for x in w:
                 wf[x] = wf.get(x, 0) + 1
-        for x, n in sorted(wf.items(), key=lambda kv: -kv[1])[:opts.top]:
-            print("    %4d modules blocked by %s" % (n, x))
+            if len(w) == 1:
+                sole[w[0]] = sole.get(w[0], 0) + 1
+        print("  %d of the %d are blocked by something; ranked `sole` beside "
+              "`present`, as the seed tiers are:"
+              % (len(blocked_mods), len(pure)))
+        for x in sorted(wf, key=lambda x: (-sole.get(x, 0), -wf[x]))[:opts.top]:
+            print("    sole %4d   present %4d   %s" % (sole.get(x, 0), wf[x], x))
+        print("  BATCH CURVE — modules freed when these walls fall TOGETHER "
+              "(a module needs ALL of its walls gone):")
+        batch = greedy_cover([{"c": w} for w in blocked_mods.values()], opts.top)
+        for x, gained, freed in batch:
+            print("    + %-22s frees %3d more   (%d/%d blocked modules)"
+                  % (x, gained, freed, len(blocked_mods)))
         # The compound ceiling: BOTH gates open. Counted with the C gate
         # assumed away entirely — a strictly generous hypothesis, so the
         # number below is an upper bound on what any module system can reach.

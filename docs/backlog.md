@@ -1615,13 +1615,58 @@ promoted `import`; measuring `import` now demotes it in turn. Neither of
 the two biggest walls in the wild is worth building next, and knowing
 that cost two instruments and no interpreter changes.
 
-**AND IT PARTIALLY REHABILITATES THE CLASS TIER.** Among the 208
+**AND IT PARTIALLY REHABILITATES THE CLASS TIER — with an ORDERING that
+the naive reading of the two numbers gets backwards.** Among the 208
 pure-Python modules a module system would have to run, `class-creation`
 is the TOP blocker at 127, ahead of `Starred` (86), `Delete` (83), `With`
-(76), `JoinedStr` (56), `Constant:bytes` (56), `Assert` (55). The class
-tier is worth ~1 file as a SEED tier and ~127 modules as a LIBRARY tier;
-it is not the frontier, but its value is real and it sits BEHIND the
-module system, not in front of it.
+(76), `JoinedStr` (56), `Constant:bytes` (56), `Assert` (55). So the
+class tier is worth ~1 file as a SEED tier and a great deal as a LIBRARY
+tier. The ordering, stated so it cannot be misread:
+
+1. its library value is REAL and it is the biggest single lever in the
+   tail (below — adding it to the five named constructs takes the batch
+   from 18 modules to 53);
+2. but every bit of that value is BEHIND a module system, because these
+   are modules nothing imports today;
+3. and the module system is itself worth single digits (above).
+
+The naive reading — 127 is the biggest number on the page, so build the
+class tier — is the ordered-admission artifact wearing a new hat. `sole`
+over the SEEDS says 0; `present` over the LIBRARY says 127; both are
+true, and the second is only collectable after work that the first
+section just priced out. Written down because someone will read those
+two numbers again.
+
+### The tail, ranked the same way — and it is a BATCH, not a ladder
+
+Having killed two milestones on `sole`, the tail gets the same treatment
+before anything is built (`import_closure.py --tier` now prints it):
+
+* **No single construct in the tail is worth more than 5 modules on its
+  own.** `sole` over the 188 blocked library modules: `class-creation`
+  5, `JoinedStr` 4, `Starred`/`Delete`/`Constant:bytes`/`Assert` 3 each,
+  `With` 2, `Set`/`DictComp`/`BinOp:RShift` 1, and `Global`/`Lambda`/
+  `Constant:float`/`BinOp:Div` ZERO. Same shape as every ranking before
+  it: `Starred` looks like 86 and is worth 3.
+* **But the BATCH curve covers, and that is the difference from
+  `import`.** These walls co-occur, and behind them there is no by-kind
+  boundary — it is all ordinary Python. Greedy: 8 constructs free
+  69/188, 11 free 108, 14 free 140 (74%). Named batches: the five
+  language constructs (`Starred`, `Delete`, `With`, `JoinedStr`,
+  `Assert`) free **18**; plus `class-creation` **53**; plus
+  `Constant:bytes` and `BinOp:BitAnd` **82**.
+
+So the unit of work is the tail as a batch, and no member of it should
+be justified by its own `sole` number — which is the trap that would
+have made each one look not worth doing, one at a time, forever.
+
+**AND THE SOUNDER JUSTIFICATION IS NOT THE STDLIB PERCENTAGE AT ALL.**
+`Starred`, `With`, `JoinedStr`, `Assert` and `Delete` are ordinary
+Python that any real program uses; the goal is "verify arbitrary
+Python", not "maximise a stdlib number". They are worth having whether
+or not they move the sweep, which is a different and better argument
+than the one that carried `import` — and it is the argument to build
+them on. The library counts sequence the work; they do not justify it.
 
 ### Two instrument fixes it required
 

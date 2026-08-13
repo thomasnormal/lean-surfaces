@@ -2397,3 +2397,254 @@ Not registered, deliberately: any `<<`/`>>` overflow row. Those belong
 to the shift-budget work above, and registering one now as
 `expect: unsupported` before the guard exists would be manufacturing a
 green triad for a case that currently HANGS.
+
+## The tail, construct 5: `Starred` DESIGNED — as THREE constructs, because the positions do not share a cost (2026-08-13)
+
+### The design, stated before the argument for it
+
+`Starred` is not one thing. `ast.Starred` appears in three positions with
+three different prices, and the cheap one is free:
+
+1. **Displays** (`[*a, 3]`, `(1, *a)`) — a LOWERING through `tuple(…)`.
+   Zero AST constructors, zero walkers, **zero proof arms**.
+2. **Assignment targets** (`x, *y = z`) — one `Stmt` constructor carrying
+   NAMES, not a starred `Expr`. Three proof arms, the same three
+   `assert` paid.
+3. **Call sites** (`f(*a)`) — REFUSED, through a channel that already
+   exists. Variadic arity dispatch is the real cost and it is unrelated
+   to the other two.
+
+Land 1 and 2. Refuse 3. `{**d}` and `f(**d)` are NOT in scope and not
+`Starred` at all — measured: `{**d}` is `Dict(keys=[None], …)` and
+`f(**d)` is `keyword(arg=None)`. Neither produces a `Starred` node.
+
+### Where `Starred` actually occurs — measured, and the parse/compile line matters
+
+The extractor runs `ast.parse`, and **`ast.parse` accepts starred
+expressions that CPython refuses to COMPILE**. An instrument that checked
+only `ast.parse` reported five of these as legal; re-run against
+`compile(…, "exec")` they split (3.9.19, verbatim `msg`):
+
+| source | `ast.parse` | `compile` |
+| --- | --- | --- |
+| `f(*a)`, `[*a]`, `x, *y = z`, `*y, = z`, `for *a, b in c: pass` | OK | OK |
+| `*a` | OK | `can't use starred expression here` |
+| `x = *a` | OK | `can't use starred expression here` |
+| `x = *a,` | OK | **OK** (it is a tuple display) |
+| `for *a in b: pass` | OK | `starred assignment target must be in a list or tuple` |
+| `x, *y, *z = w` | OK | `multiple starred expressions in assignment` |
+| `del *a` | `cannot delete starred` | (same) |
+
+So the extractor MUST stay total over starred nodes in positions no
+runnable program can contain. It already has the right vehicle:
+`Expr.unsupported (pyKind) (text) (span)` — an EXISTING constructor. A
+starred node in an uncompilable position ingests as
+`Expr.unsupported "Starred" …` and costs nothing. This is the row that
+would have been got wrong by checking parseability alone; it was, and it
+is corrected here.
+
+### Position 1 — displays LOWER, and the OBVIOUS lowering is the wrong one
+
+`[*a, 3]` looks like `list(a) + [3]`. **It is not.** Measured in the
+source, not assumed: `list(x)` **ALLOCATES A FRESH HEAP OBJECT**
+(Semantics.lean:4286-4298, `allocListRun`), so it returns a `.ref`, and
+`evalBinOp`'s `.ref` arm (Semantics.lean:521-527) refuses concatenation
+of heap objects LOUDLY. The obvious lowering compiles to a refusal.
+
+`tuple(…)` is the vehicle instead. It is the IMMEDIATE-value constructor
+(Semantics.lean:4249-4285): `str`/`tuple`/namedtuple/`listV`/heap
+list(snapshot)/`range`/generator(+`moduleGenFree` guard) all yield a
+plain `.tuple`, and `+` on two immediate tuples is
+`evalBinOp .add, .tuple, .tuple` (Semantics.lean:513). So:
+
+* `(e1, *a, e2)`  ⟶  `(e1,) + tuple(a) + (e2,)`
+* `[e1, *a, e2]`  ⟶  `list((e1,) + tuple(a) + (e2,))`
+* `[*a]`          ⟶  `list(tuple(a))`
+
+`list(…)` appears ONLY on the outside, where a fresh heap list is
+exactly what CPython produces, and never as a concatenation operand.
+
+**Evaluation order survives the lowering**, which is the thing a lowering
+most easily breaks. `+` associates left, and `evalExpr`'s `binOp` arm
+binds left then right, so `(e1,) + tuple(a) + (e2,)` evaluates `e1`,
+then `a`, then `e2` — CPython's own left-to-right order. Measured
+values: `[*[1,2], 3] → [1,2,3]`, `[*'ab'] → ['a','b']`,
+`[*range(3)] → [0,1,2]`, `(*[1,2],) → (1,2)`, `[*[1,2], *[3]] →
+[1,2,3]`, `[*[]] → []`. Each is what the lowering computes.
+
+Inherited refusals, which is the reuse dividend: `[*d]` for a dict is
+CPython's key iteration (`[*{'a':1}] → ['a']`) and `tuple()` over a dict
+is already `.unsupported` on the order doctrine — loud, not wrong. Same
+for a set receiver. A generator receiver already drains under the
+existing `moduleGenFree` guard, which is exactly CPython's behaviour.
+
+One honest mismatch, stated: `[*1]` is
+`TypeError: Value after * must be an iterable, not int` in CPython,
+while the lowering raises `'int' object is not iterable` from `tuple()`.
+**Same exception CLASS, different message.** The harness compares
+exception class names and never messages (the practice recorded at
+Semantics.lean:1509-1510), so this passes — but it is a real divergence
+and is written down rather than glossed.
+
+**Set displays (`{*a}`) are OUT.** `{*[1,2]}` is `{1,2}`, and a set
+result is loud in this tier on the order doctrine anyway; lowering it
+would buy a value that almost every subsequent operation refuses.
+
+### Position 2 — assignment targets, and the encoding question I got WRONG
+
+The ranking said `Starred` "ALLOCATES … and reaches into the call
+machinery; `worldInv` moves". Half right, and the half that is wrong
+matters.
+
+I assumed a `Stmt` encoding would be cheaper than an `Expr` encoding
+because `Expr` is what the three mutual inductions induct over. **That
+is false, and counting says so.** Taking the two most recent
+constructors as the price list — `ifExp` (an `Expr`) and `assertStmt`
+(a `Stmt`) — the arm sites are:
+
+|  | Ast | Json | Semantics | Script | **Obs** | **ClockErase** | total |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `ifExp` (Expr) | 1 | 3 | 5 | 1 | **2** | **1** | 13 |
+| `assertStmt` (Stmt) | 1 | 6 | 6 | 2 | **2** | **1** | 18 |
+
+**Both cost exactly three proof arms** — `fuelMono` (Obs.lean:1071 for
+`ifExp`), `worldInv` (Obs.lean:2410), `ceExecStmt_succ`
+(ClockErase.lean:1393). The proof layer does not care whether the new
+constructor is an expression or a statement; it cares only that there is
+one. So the encoding must be chosen on OTHER grounds.
+
+Chosen: **a `Stmt` constructor carrying names, no starred `Expr` at
+all.**
+
+```lean
+| unpackAssign (before : Array String) (star : String)
+    (after : Array String) (value : Expr) (span : Span)
+```
+
+The grounds are the ones the count cannot show. An `Expr.starred` would
+have to be accepted by every expression walker and then REJECTED
+everywhere except inside a target tuple — a constructor that is invalid
+in almost all of its own positions, which is how the census holes get
+made. `unpackAssign` is valid exactly where it can occur. It also keeps
+the existing all-names restriction that `targetNames`
+(Semantics.lean:2113-2117) already imposes on tuple targets, rather than
+widening it: an attribute or subscript element beside a star is refused
+by the extractor, as it effectively is today.
+
+**The arity check reuses `unpackSeq`** (Semantics.lean:2222-2251), which
+— like `evalBinOp` — sits OUTSIDE every `mutual` block (the neighbours
+close at 1868 and open at 2623), so the proof layer meets it only
+through `liftRes`. Its messages are ALREADY the measured CPython
+strings: `too many values to unpack (expected {n})`,
+`not enough values to unpack (expected {n}, got {size})`,
+`cannot unpack non-iterable {typeName} object` — all three confirmed
+verbatim against 3.9.19. The starred variant needs one sibling,
+`unpackSeqStar`, differing in exactly two measured ways:
+
+* the message is `not enough values to unpack (expected at least {k},
+  got {m})` where `k = before.size + after.size` — measured:
+  `a, *b = []` → `expected at least 1, got 0`;
+  `a, *b, c = [1]` → `expected at least 2, got 1`;
+  `*a, b, c = [1]` → `expected at least 2, got 1`.
+* **there is no "too many values" case at all** — the star absorbs the
+  surplus. `a, *b = [1,2,3]` binds `b = [2,3]`.
+
+**The starred slice is ALWAYS a list**, whatever the source was —
+measured: from a tuple `[2,3]`, from `'abc'` `['b','c']`, from
+`range(4)` `[1,2,3]`, and `[]` when nothing is left. It is therefore an
+ALLOCATION, and it should be a HEAP list, not a `.listV`, for
+consistency with `list()` and with `[…]` displays (both allocate) and
+because `y.append(…)` must work on it.
+
+**What that does to the fragment — and it is NOT "worldInv moves".**
+Because the statement allocates, `Stmt.heapFree` returns `false` for it,
+exactly as it already does for `| .subscript ..` and `| .attribute ..`
+targets (Semantics.lean:3397-3403). A statement outside the fragment
+makes `worldInv`'s obligation VACUOUS. So the allocation costs COVERAGE,
+not proof: `worldInv` gains an arm that is discharged the way the other
+non-fragment arms are, and no fragment reasoning has to be redone. The
+ranking's instinct ("it allocates") was right; its conclusion ("worldInv
+moves") overstated the consequence.
+
+**Order, and the all-or-nothing property.** The iterable is fully
+drained BEFORE any target binds — measured with a generator that yields
+twice and then raises: both yields ran, the exception propagated, and
+`a` was NOT bound. So there is no partial-binding state to model, which
+is what keeps this a single `liftRes` over a pure function rather than a
+threaded store.
+
+`for a, *b in …` and `[(a,b) for a, *b in …]` both work in CPython
+(measured) and are OUT of this design: they need the same slice logic at
+a different binding site, and adding them later is additive.
+
+### Position 3 — call sites are REFUSED, and the channel already exists
+
+`Expr.call` already carries `callUnsupported : Option String`, whose own
+doc comment says "`**` unpacking and starred args ride in
+`callUnsupported` (loud)" (Ast.lean:87-93). Admitting `f(*a)` means
+variadic arity dispatch against a callee whose parameter list is only
+known at runtime, and the measured error surface is worse than that:
+
+    foo(*1)  →  TypeError: __main__.foo() argument after * must be an
+                iterable, not int
+
+The message embeds the callee's MODULE-QUALIFIED name (`__main__.foo`,
+and `__main__.show.<locals>.<lambda>` for a lambda) — a qualname the
+model does not track. Contrast the display form, `[*1] → Value after *
+must be an iterable, not int`, which carries no name at all. That
+asymmetry is a second, independent reason the displays land and the call
+sites do not.
+
+Arity errors are the callee's own and already faithful when the call is
+spelled out: measured `two(*[1])` →
+`missing 1 required positional argument: 'y'`, `two(*[1,2,3])` →
+`takes 2 positional arguments but 3 were given`.
+
+### Surface added
+
+**Position 1: extractor only.** The lowering lives beside the f-strings
+lowering in `extractors/python/extract.py`, in the `ast.List`/`ast.Tuple`
+clauses. Zero Lean surface, zero walkers, zero proof arms.
+
+**Position 2:** one `Stmt` constructor (`unpackAssign`) and its doc
+comment; one `unpackSeqStar` beside `unpackSeq`; one `execStmt` arm; one
+`Json.lean` ingestion arm; the same walker set `assert` touched, plus
+the two G1 target walkers that already special-case tuple targets
+(`Expr.g1TargetStoresList` at Semantics.lean:2790, `targetBindsListG` at
+2814 — `g1Binds` is `before ++ [star] ++ after`, which is EXACTLY known
+here, unlike `del`'s conservative `true`); three proof arms
+(Obs.lean x2, ClockErase.lean x1), each in the non-fragment shape.
+
+**Position 3:** one extractor clause populating `callUnsupported`. It
+may already be populated — to be MEASURED at implementation time, not
+assumed, since `ALLOWED_BINOPS`-style gates have been found missing
+before.
+
+Open at implementation time, to be MEASURED not assumed: whether
+`Stmt.g1Dirty` can be `false` for `unpackAssign` (its binds are known
+exactly, so it should be, but the walkers must be total first).
+
+### Battery to build (rows measured above; registered WITH the code)
+
+A NEW `Examples/python/star_lab`, not an extension of an existing lab —
+the `seq_lab` hazard recorded under construct 4 applies here too, and a
+new directory with no registered rows is the only shape that can be
+measured ahead of the implementation.
+
+In tier, displays: `[*a, 3]`, `[1, *a]`, `[*a, *b]`, `[*a]`, `(*a,)`,
+`(1, *a)`, over a list, a tuple, a `str` and a `range` receiver, plus
+the empty receiver `[*[]] → []`. In tier, targets: `x, *y = [1,2,3]`,
+`x, *y = [1]` (slice `[]`), `*y, x = [1,2,3]`, `a, *b, c = [1,2,3]`,
+`a, *b, c = [1,2]` (slice `[]`), `x, *y = (1,2)`, `x, *y = 'abc'`,
+`x, *y = range(3)`, and `*y, = [1,2]`.
+
+Faithful exceptions: `x, *y = []` → `ValueError`, `a, *b, c = [1]` →
+`ValueError`, `x, *y = 5` and `a, *b = None` → `TypeError`. Loud
+refusals: `f(*a)` at a call site, `{*a}` as a set display, `[*d]` for a
+dict receiver, and a starred `for`-target. Plus a script whose stdout is
+compared byte-for-byte.
+
+Not registered, deliberately: the uncompilable positions (`*a`,
+`x = *a`, `x, *y, *z = w`, `for *a in b`). CPython cannot RUN them, so
+there is no oracle output to compare against; they belong in an
+extractor totality test, not in `cases.json`.

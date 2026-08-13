@@ -117,7 +117,12 @@ BENIGN_IMPORTS = frozenset((
 
 
 def census(envelope_path):
-    """(total nodes, [py_kind ...], {wall ...}) of one envelope.
+    """(total nodes, [py_kind ...], [wall ...]) of one envelope.
+
+    The wall list is SORTED, not a set: it goes into the row that ``--json``
+    writes, and a set makes ``json.dump`` raise — which it did, on every
+    corpus, from the moment the wall census landed. An instrument whose
+    machine-readable output cannot be produced is not an instrument.
 
     Every dict carrying a ``kind`` is a node; ``Unsupported`` ones
     contribute their ``py_kind``. The WALL SET is the third result and it
@@ -155,7 +160,7 @@ def census(envelope_path):
             stack.extend(node.values())
         elif isinstance(node, list):
             stack.extend(node)
-    return total, kinds, walls
+    return total, kinds, sorted(walls)
 
 
 # ---------------------------------------------------------------------------
@@ -287,6 +292,13 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog="leanpy_survey.py")
     parser.add_argument("paths", nargs="*", metavar="PATH_OR_GLOB")
     parser.add_argument("--corpus", default=None)
+    parser.add_argument("--stdlib", action="store_true",
+                        help="add the WILD SWEEP group: the pinned oracle's "
+                        "top-level stdlib modules minus the safety list "
+                        "(harness/import_closure.py SAFETY). Deliberately NOT "
+                        "in the default corpus — running arbitrary stdlib top "
+                        "level under the oracle has side effects — but pinned "
+                        "in code so the measurement is reproducible.")
     parser.add_argument("--fuel", type=int, default=200000)
     parser.add_argument("--no-cpython", action="store_true")
     parser.add_argument("--cpython", default=os.environ.get("LEANPY_CPYTHON") or default_oracle())
@@ -305,9 +317,14 @@ def main(argv=None):
     os.chdir(REPO_ROOT)
     if not opts.corpus:
         opts.corpus = None
-    if opts.corpus is None and not opts.paths:
+    if opts.corpus is None and not opts.paths and not opts.stdlib:
         opts.corpus = os.path.join("harness", "leanpy_corpus.json")
     groups = load_corpus(opts.corpus, opts.paths)
+    if opts.stdlib:
+        import import_closure
+        table = import_closure.ModuleTable.of(opts.cpython)
+        groups.append(("cpython-%s-stdlib" % table.version,
+                       import_closure.stdlib_seeds(table)))
     if opts.exclude:
         drop = re.compile(opts.exclude)
         groups = [(n, [f for f in fs if not drop.search(f)]) for n, fs in groups]
@@ -484,7 +501,7 @@ def main(argv=None):
     if refusing:
         present, sole = {}, {}
         for rec in refusing:
-            ws = rec["walls"] or {"(none detected statically)"}
+            ws = rec["walls"] or ["(none detected statically)"]
             for w in ws:
                 present[w] = present.get(w, 0) + 1
             if len(ws) == 1:

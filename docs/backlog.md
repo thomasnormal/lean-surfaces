@@ -1513,3 +1513,172 @@ exn-clause rework, fuelMono-scale; NO sunfish payoff since class-
 bearing modules never enter the fragment); the leanpy script-mode
 trace flag (pass-6 deferral — small); deeper stepping beyond depth 4
 (more readings, same machinery — cost-gated, not construct-gated).
+
+## The IMPORT CEILING — measured, and the module system is priced out (2026-08-13)
+
+`import` became the frontier the moment the ranking was fixed to `sole`
+(above): present in 154 of the 162 refusing stdlib files, sole blocker in
+7, with `class-creation` sole blocker in ZERO. And THE ONE PIPELINE made
+a Python-only module system conceivable for the first time — importing a
+pure-Python module IS running its top level in its own namespace, which
+is exactly what `runScript` now does from an empty world.
+
+The recorded next step was to measure the ceiling before committing to
+the work. It is measured. **The answer is that the Python-only version
+of the idea buys nothing at all**, and the instrument that says so is
+`harness/import_closure.py` (`--stdlib --tier --why MODULE`).
+
+### The numbers (CPython 3.9.19, the 167-file stdlib sweep)
+
+* **THE MILESTONE QUESTION, with the survey's own denominator: of the
+  154 files that refuse ON `import`, 154 are C-REACHING and 0 are pure.**
+  Not one of them. That is the two instruments joined row by row — the
+  survey's `REFUSE` verdicts and wall sets against the closure walk — and
+  it needed the survey's `--json` to be fixed first, because it had never
+  once produced output (below).
+* **PURE-PYTHON CLOSURE: 0 of 155.** Same answer from the closure side
+  alone, over the slightly wider denominator of every seed with any
+  import at all (the extra file imports only from the benign whitelist,
+  so leanpy does not count it as a wall). 132 of them reach a C module in
+  ONE hop, the other 23 in two. 12 of the 167 import nothing whatever
+  (`graphlib`, `this`, `token`, `keyword`, `colorsys`, `copyreg`,
+  `__future__`, …) — for those `import` was never the wall.
+* The verdict does not depend on how generously the closure is drawn.
+  All three scopes agree: IMPORT-TIME (imports in the module body — the
+  one with the semantics) 0/155, UNCONDITIONAL (direct children of the
+  module body, so certain to execute) 1/147, WHOLE-PROGRAM (function
+  bodies included) 0/157. The single UNCONDITIONAL pure file is
+  `numbers`, and it is pure only because `abc`'s `from _abc import …`
+  sits inside a `try`.
+* **THE C SURFACE: 62 distinct C modules.** A seed needs a median of 14
+  of them and at most 38; the cheapest need exactly one (`enum` → `sys`,
+  `bisect` → `_bisect`, `sre_compile` → `_sre`). Ranked by set COVER —
+  a file is freed only when EVERY C module in its closure is native, so
+  frequency is the wrong ranking — the price list runs: 8 native
+  modules buy 8 files, 12 buy 17, 20 buy 69, 27 buy 90. `sys` alone is
+  in 141 of the 155 closures, `_weakref` 128, `_abc` 126, `posix` 88.
+* **THE SECOND CEILING: pure-Python is not the same as in-tier.** A
+  module system still has to EXECUTE the imported module's top level.
+  Of the 208 distinct pure-Python modules appearing in those closures,
+  **20 (9.6%)** have no static wall besides `import`. And the compound
+  number, computed while GRANTING every C module natively — a
+  deliberately generous hypothesis — is that only **19 of 155** seeds
+  have a closure whose every pure-Python module is in tier.
+
+### The scepticism the finding itself deserves
+
+"Reaches C" would be a scary word for a solvable problem if the C
+modules were things like `itertools` — which IS a C module, and whose
+`count` leanpy already models. Stopping at the pure/C split would have
+repeated the mistake of ranking tiers by `present`. So the C set is
+split by KIND, an argued call written out as `BY_KIND` in the instrument
+so it can be disagreed with line by line: a C module that is pure
+COMPUTATION is a Lean definition someone can write, while one that IS
+the operating system, the IO layer, the thread scheduler or the
+interpreter's reflection of itself cannot be modelled without inventing
+the thing it reflects.
+
+**8 reach only computational C modules; 147 hit the by-kind
+boundary** — `sys` in 141 of them, `_weakref` 128, `builtins` 109,
+`_thread` 103, `posix` 88, `_locale` 85. The 8 are individually cheap,
+one native module each: `bisect`→`_bisect`, `stat`→`_stat`,
+`struct`→`_struct`, `quopri`→`binascii`, `stringprep`→`unicodedata`,
+and `sre_compile`/`sre_constants`/`sre_parse`→`_sre`. Three of the eight
+want CPython's regex engine and one wants Unicode tables this project
+refuses to guess on principle (`str.swapcase` is ASCII-only for exactly
+that reason). The genuinely cheap end is three files for three small
+native modules.
+
+### What it decides
+
+A Python-only module system is not a smaller version of a module
+system; on this corpus it is the empty one. The option only exists
+paired with a NATIVE C surface, and that surface is not a tail of
+exotica: `sys`, `posix`, `_io`, `_thread`, `marshal`, `_imp` — the OS,
+the IO layer, concurrency, and the interpreter's own reflection. That is
+the same boundary the UCI survey hit (pass 8 milestone 2): out of scope
+BY KIND, not by distance. Modelling `posix` to make `os` importable is
+inventing an operating system, and this project's whole discipline is
+that a construct it cannot model refuses loudly rather than guesses.
+
+**The whole idea is worth single digits, and that is the number to put
+beside its cost.** Closing `import` alone unblocks 7 files (`sole`,
+above); a module system PLUS a computational-C surface reaches at most 8
+more, three of them behind a Lean regex engine. That is a multi-session
+build for ~15 of 167 files — while the tail that blocks the 208 LIBRARY
+modules (`class-creation` 127, `Starred` 86, `Delete` 83, `With` 76)
+moves modules by the dozen and is ordinary tier work.
+
+**RECORDED CONSEQUENCE: `import` is not the next milestone either.** The
+sole-blocker ranking correctly demoted the class tier and correctly
+promoted `import`; measuring `import` now demotes it in turn. Neither of
+the two biggest walls in the wild is worth building next, and knowing
+that cost two instruments and no interpreter changes.
+
+**AND IT PARTIALLY REHABILITATES THE CLASS TIER.** Among the 208
+pure-Python modules a module system would have to run, `class-creation`
+is the TOP blocker at 127, ahead of `Starred` (86), `Delete` (83), `With`
+(76), `JoinedStr` (56), `Constant:bytes` (56), `Assert` (55). The class
+tier is worth ~1 file as a SEED tier and ~127 modules as a LIBRARY tier;
+it is not the frontier, but its value is real and it sits BEHIND the
+module system, not in front of it.
+
+### Two instrument fixes it required
+
+* **`leanpy_survey.py --json` could not run at all.** `census` returned
+  the wall set as a Python `set`, which `json.dump` refuses, so the
+  survey's machine-readable output has raised `TypeError` on every
+  corpus since the wall census landed (c90e662) — the ranking instrument
+  built one commit earlier could not export the ranking. Walls are a
+  sorted list now. Eight instrument failures of this shape across the
+  lanes in two days: the measurement is the least-tested code we run.
+* **The stdlib sweep's safety list was an unrecorded `--exclude`
+  regex.** 167 = the 174 top-level `.py` files minus seven, and which
+  seven was not written down anywhere, so the headline number was not
+  reproducible. Pinned as `import_closure.SAFETY` (`antigravity`,
+  `webbrowser`, `turtle`, `nntplib`, `smtpd`, `telnetlib`, `imaplib` —
+  browser, window, network) and reachable as `leanpy_survey.py
+  --stdlib`, which is still NOT in the default corpus: the decision that
+  a routine harness run must never execute arbitrary stdlib top level
+  stands, only the guesswork is gone. The reconstruction reproduces the
+  recorded sweep exactly on every headline — 167 files, **5 MATCH, 162
+  REFUSE, 0 DIVERGE**, `import` sole 7, `class-creation` sole 0 — with
+  one number one off: `import` present is **154** here against the
+  recorded 155. One file's wall set, on a list rebuilt from its
+  description; it moves nothing, and it is written down rather than
+  rounded to the number that was already on the page.
+
+### Where the instrument can be wrong, stated
+
+The closure is STATIC. 78 of the seeds reach `__import__` or
+`importlib.import_module`, which no static walk can follow, so the true
+closures are supersets of these — the C verdict can only get worse.
+`if __name__ == "__main__":` blocks are counted for the SEED (leanpy
+supplies `__name__`, so a file run as a program does execute them) and
+NOT for anything below it (CPython skips them on import); getting that
+wrong is what first gave `heapq` a dependency on `doctest`, `pdb`,
+`unittest` and `signal`, and it inflated the C surface by three modules
+before it was caught. `from p import x` is followed only when `p.x`
+resolves to a module — otherwise `x` is an attribute of `p`, and
+counting it would fake a hole.
+
+The SECOND ceiling rides the extractor, which every harness runs under
+`sys.executable` (3.14 here) and not under the pinned 3.9 — the exact
+shape of the oracle bug found one commit earlier. CHECKED, not assumed:
+the envelope census is identical under both interpreters on twelve
+sample files spanning f-strings, class bodies, `Starred`, `Delete` and
+walrus-free comprehensions — same node totals, same wall sets. The
+extractor is a parser, not an oracle, and it is version-stable here.
+
+AND THE TOOL IS TESTED AGAINST THE CASE IT IS SUPPOSED TO FAIL:
+`--self-test` builds a synthetic module tree designed to make it answer
+PURE and checks 13 rows — the pure two-hop chain, C at one hop and at
+two, the `__main__` guard live for the seed and dead for its importer,
+`from p import <attribute>` versus `from p import <submodule>`, a
+function-body import that is whole-program only, a `try:` import that is
+import-time but not unconditional, and the BFS depth (a depth-first walk
+reports the wrong distance to C, which is what the frontier queue is
+for). A tool that answered C-REACHING unconditionally would print this
+section's headline unchanged and be worth nothing. Every verdict is also
+auditable one at a time: `--why
+MODULE` prints the import chain from a seed to each C module it reaches.

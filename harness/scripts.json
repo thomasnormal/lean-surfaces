@@ -112,7 +112,15 @@
     "expect": "match"
   },
   {
-    "file": "harness/scripts/print_container.py",
+    "file": "harness/scripts/repr_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/print_set.py",
+    "expect": "unsupported"
+  },
+  {
+    "file": "harness/scripts/print_nonascii.py",
     "expect": "unsupported"
   }
 ]

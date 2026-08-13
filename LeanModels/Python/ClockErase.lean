@@ -2026,11 +2026,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       -- family IS the seeded base run — `of_seed` closes it, the
                       -- `withClock` projections carrying the modified world.
                       refine .bind (ihEs m st args.toList h) fun s2 vs hs2 => ?_
-                      cases strOfArgs vs with
-                      | none => exact .unsupported
+                      cases hsa : strOfArgs s2.world.heap vs with
+                      | none => simp only [hsa]; exact .unsupported
                       | some line =>
-                        exact .of_seed (fun tr => by first | rfl | simp)
-                          (by first | rfl | simp [FrameState.withClock_self hs2, hs2])
+                        refine .of_seed (fun tr => ?_) ?_
+                        · simp [hsa, Run.seedF]
+                        · simp [hsa, FrameState.withClock_self hs2, hs2]
                     case blive =>
                       cases hlive : Env.lookup st.world.globals fname with
                       | none => exact .ite .unsupported (.ite (.exn h _) .unsupported)

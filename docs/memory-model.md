@@ -2501,6 +2501,44 @@ strings inside containers and not outside them), pinned separately by
 Measured: in-repo corpus **73/88 MATCH (83.0%)**, 0 DIVERGE; script
 corpus 25 matched / 4 loud; 998 differential cases, 0 failed.
 
+## Rendering: `print` of containers (2026-08-13)
+
+CPython's `print` applies `str()` to its ARGUMENTS and `repr()` to
+everything INSIDE a container — the two differ on exactly one shape
+(`str("a")` is `a`, `repr("a")` is `'a'`), which is why `print("a")` has
+no quotes and `print(["a"])` does. The model implements both levels
+(`printOne`/`reprVal`, Semantics.lean), replacing the scalar-only
+`strOfRVal` that shipped with leanpy v0.
+
+In tier, each pinned differentially in `harness/scripts/repr_script.py`:
+int/bool/`None`, str (the quote CPython picks — `'` unless the string
+holds one and no `"` — with `\\`/quote/`\n`/`\r`/`\t` escapes and
+`\xNN` for the other C0 controls and DEL), tuple (including the
+one-element trailing comma), namedtuple (`Move(i=1, j=2, prom='')`),
+list (boundary and heap), dict (`{k: v}` in insertion order, which the
+model preserves and CPython guarantees), and range
+(`range(0, 10, 2)`, the step omitted when it is 1). A container that
+contains ITSELF prints `[...]` / `{...}`, CPython's own answer, decided
+by an ACTIVE-PATH list rather than by fuel; depth beyond the fixed
+`reprFuel` refuses (a budget refusal must not depend on the caller's
+fuel).
+
+LOUD, never a plausible-looking line: a SET (its `repr` is hash order,
+which the order doctrine forbids guessing), an instance/closure/generator
+(identity lives in the address), and a NON-ASCII string, whose escaping
+depends on Unicode PRINTABILITY — the same table `.swapcase()` refuses to
+guess. `print("héllo")` is fine (that is `str()`); `print(["héllo"])` is
+not (that is `repr()`). Pinned by `print_set.py` and
+`print_nonascii.py`.
+
+Nothing in the proof layer moved: `print` already left `Expr.heapFree`
+when it became a builtin, and `reprVal` is a pure function of the heap,
+so `worldInv`/`fuelMono` are untouched and `clockErase`'s `bprint` case
+only re-scrutinizes the renderer's result.
+
+Measured: script corpus 26 matched / 5 loud; in-repo survey **74/90
+MATCH (82.2%)**, 0 DIVERGE.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

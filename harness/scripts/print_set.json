@@ -5,8 +5,8 @@
     "name": "cpython-ast",
     "version": "3.14.5"
   },
-  "source_file": "harness/scripts/print_container.py",
-  "source_sha256": "2b4e35296a50ca332863601e3cd2d63fde366323b6edc2822a9aab1d532846c2",
+  "source_file": "harness/scripts/print_set.py",
+  "source_sha256": "ce14985be8d6180da0bfdf2618338e5d0278376c15e708e01dd205cf144c961b",
   "module": {
     "kind": "Module",
     "body": [
@@ -28,7 +28,7 @@
           },
           "value": {
             "type": "str",
-            "value": "leanpy corpus: PRINTING A CONTAINER is loud (telemetry row).\n\n`print` reaches the interpreter now, but its printable tier is the scalar\none: int, bool, `None`, str. A list's `repr` is not guessed \u2014 CPython\nquotes strings inside containers and not outside them, and the model\nnever invents an output it has not specified. Loud, never a wrong line.\n"
+            "value": "leanpy corpus: PRINTING A SET is loud (telemetry row).\n\nContainers render exactly since 2026-08-13, but a set's `repr` is its\nHASH ORDER, which the model deliberately never guesses (the order\ndoctrine: first-seen order is unobservable, so nothing may depend on it).\nLoud, never a plausible-looking wrong line.\n"
           }
         }
       },
@@ -38,7 +38,7 @@
           "lineno": 9,
           "col_offset": 0,
           "end_lineno": 9,
-          "end_col_offset": 14
+          "end_col_offset": 18
         },
         "targets": [
           {
@@ -47,60 +47,83 @@
               "lineno": 9,
               "col_offset": 0,
               "end_lineno": 9,
-              "end_col_offset": 2
+              "end_col_offset": 1
             },
-            "id": "xs"
+            "id": "s"
           }
         ],
         "value": {
-          "kind": "List",
+          "kind": "Call",
           "span": {
             "lineno": 9,
-            "col_offset": 5,
+            "col_offset": 4,
             "end_lineno": 9,
-            "end_col_offset": 14
+            "end_col_offset": 18
           },
-          "elts": [
-            {
-              "kind": "Constant",
-              "span": {
-                "lineno": 9,
-                "col_offset": 6,
-                "end_lineno": 9,
-                "end_col_offset": 7
-              },
-              "value": {
-                "type": "int",
-                "repr": "1"
-              }
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 7
             },
+            "id": "set"
+          },
+          "args": [
             {
-              "kind": "Constant",
+              "kind": "List",
               "span": {
                 "lineno": 9,
-                "col_offset": 9,
+                "col_offset": 8,
                 "end_lineno": 9,
-                "end_col_offset": 10
+                "end_col_offset": 17
               },
-              "value": {
-                "type": "int",
-                "repr": "2"
-              }
-            },
-            {
-              "kind": "Constant",
-              "span": {
-                "lineno": 9,
-                "col_offset": 12,
-                "end_lineno": 9,
-                "end_col_offset": 13
-              },
-              "value": {
-                "type": "int",
-                "repr": "3"
-              }
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 9,
+                    "end_lineno": 9,
+                    "end_col_offset": 10
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 12,
+                    "end_lineno": 9,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 15,
+                    "end_lineno": 9,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "3"
+                  }
+                }
+              ]
             }
-          ]
+          ],
+          "keywords": [],
+          "call_unsupported": null
         }
       },
       {
@@ -109,7 +132,7 @@
           "lineno": 10,
           "col_offset": 0,
           "end_lineno": 10,
-          "end_col_offset": 14
+          "end_col_offset": 13
         },
         "value": {
           "kind": "Call",
@@ -117,7 +140,7 @@
             "lineno": 10,
             "col_offset": 0,
             "end_lineno": 10,
-            "end_col_offset": 14
+            "end_col_offset": 13
           },
           "func": {
             "kind": "Name",
@@ -136,7 +159,7 @@
                 "lineno": 10,
                 "col_offset": 6,
                 "end_lineno": 10,
-                "end_col_offset": 13
+                "end_col_offset": 12
               },
               "func": {
                 "kind": "Name",
@@ -155,9 +178,9 @@
                     "lineno": 10,
                     "col_offset": 10,
                     "end_lineno": 10,
-                    "end_col_offset": 12
+                    "end_col_offset": 11
                   },
-                  "id": "xs"
+                  "id": "s"
                 }
               ],
               "keywords": [],
@@ -174,7 +197,7 @@
           "lineno": 11,
           "col_offset": 0,
           "end_lineno": 11,
-          "end_col_offset": 9
+          "end_col_offset": 8
         },
         "value": {
           "kind": "Call",
@@ -182,7 +205,7 @@
             "lineno": 11,
             "col_offset": 0,
             "end_lineno": 11,
-            "end_col_offset": 9
+            "end_col_offset": 8
           },
           "func": {
             "kind": "Name",
@@ -201,9 +224,9 @@
                 "lineno": 11,
                 "col_offset": 6,
                 "end_lineno": 11,
-                "end_col_offset": 8
+                "end_col_offset": 7
               },
-              "id": "xs"
+              "id": "s"
             }
           ],
           "keywords": [],

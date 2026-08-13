@@ -1,0 +1,139 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/print_nonascii.py",
+  "source_sha256": "61c5b44be85bf267a4920a39eaf1bb2013b0e755f0df79209a0ead42f573ae80",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 7,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "leanpy corpus: a NON-ASCII string inside a container is loud.\n\n`print(\"h\u00e9llo\")` is fine \u2014 `str()` of a str is the string itself. Inside\na container CPython applies `repr()`, which escapes by Unicode\nPRINTABILITY, a table this model never guesses (the same doctrine that\nkeeps `.swapcase()` ASCII-only). Loud rather than plausible.\n"
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 9,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 15
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 9,
+            "col_offset": 0,
+            "end_lineno": 9,
+            "end_col_offset": 15
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 9,
+              "col_offset": 0,
+              "end_lineno": 9,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 9,
+                "col_offset": 6,
+                "end_lineno": 9,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "str",
+                "value": "h\u00e9llo"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 10,
+          "col_offset": 0,
+          "end_lineno": 10,
+          "end_col_offset": 17
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 10,
+            "col_offset": 0,
+            "end_lineno": 10,
+            "end_col_offset": 17
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 10,
+              "col_offset": 0,
+              "end_lineno": 10,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "List",
+              "span": {
+                "lineno": 10,
+                "col_offset": 6,
+                "end_lineno": 10,
+                "end_col_offset": 16
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 10,
+                    "col_offset": 7,
+                    "end_lineno": 10,
+                    "end_col_offset": 15
+                  },
+                  "value": {
+                    "type": "str",
+                    "value": "h\u00e9llo"
+                  }
+                }
+              ]
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

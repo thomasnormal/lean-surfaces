@@ -951,16 +951,160 @@ def unmodelledBuiltinMsg (id : String) : String :=
 /-! ### `print` — the one effect the interpreter performs
 (docs/memory-model.md §effects: stdout is DATA, `World.stdout`). -/
 
-/-- CPython `str()` of the printable scalar tier: ints in decimal,
-`True`/`False`, `None`, strings raw. `none` = not printable in tier
-(containers and heap values, whose `repr` subtleties are not guessed) —
-the call site refuses loudly. -/
-def strOfRVal : RVal → Option String
-  | .int n => some (toString n)
-  | .bool b => some (if b then "True" else "False")
-  | .none => some "None"
-  | .str s => some s
-  | _ => Option.none
+/-- `", "`-join. -/
+def commaJoin : List String → String
+  | [] => ""
+  | [x] => x
+  | x :: xs => x ++ ", " ++ commaJoin xs
+
+/-- `name=value` pairs for a namedtuple's `repr`. -/
+def zipNames : List String → List String → List String
+  | [], _ => []
+  | _, [] => []
+  | n :: ns, v :: vs => (n ++ "=" ++ v) :: zipNames ns vs
+
+/-! `print` renders through CPython's own two-level rule: the ARGUMENTS
+go through `str()`, and every value INSIDE a container goes through
+`repr()`. The two differ on exactly one shape — `str("a")` is `a` while
+`repr("a")` is `'a'` — which is why `print(["a"])` shows quotes and
+`print("a")` does not. Everything the tier cannot render EXACTLY refuses
+loudly: a set (hash order), an instance/closure/generator (identity in
+the address), a non-ASCII string (Unicode printability is never guessed —
+the `.swapcase` doctrine), and a structure deeper than `reprFuel`. -/
+
+/-- Lowercase hex digit. -/
+def hexDigit (n : Nat) : Char :=
+  if n < 10 then Char.ofNat (48 + n) else Char.ofNat (87 + n)
+
+/-- Two-digit lowercase hex (`\xNN` escapes). -/
+def hex2 (n : Nat) : String :=
+  String.mk [hexDigit (n / 16 % 16), hexDigit (n % 16)]
+
+/-- The quote CPython picks for a string's `repr`: `'` unless the string
+contains one and no `"`. -/
+def reprQuote (s : String) : Char :=
+  if s.contains '\'' && !s.contains '"' then '"' else '\''
+
+/-- `repr` of one character inside a string literal; `none` = non-ASCII
+(printability is a Unicode table this model does not guess). -/
+def reprChar (q : Char) : Char → Option String
+  | '\\' => some "\\\\"
+  | '\n' => some "\\n"
+  | '\r' => some "\\r"
+  | '\t' => some "\\t"
+  | c =>
+    if c == q then some (String.mk ['\\', c])
+    else if c.val < 0x20 || c.val == 0x7f then some ("\\x" ++ hex2 c.val.toNat)
+    else if c.val < 0x7f then some (String.mk [c])
+    else Option.none
+
+/-- `reprChar` over a character list. -/
+def reprChars (q : Char) : List Char → Option String
+  | [] => some ""
+  | c :: cs => do
+    let a ← reprChar q c
+    let rest ← reprChars q cs
+    return a ++ rest
+
+/-- CPython `repr` of a str: the quote choice above, backslash/quote/
+`\n`/`\r`/`\t` escapes, `\xNN` for the other C0 controls and DEL, and a
+LOUD refusal on anything non-ASCII. -/
+def reprStr (s : String) : Option String := do
+  let q := reprQuote s
+  let body ← reprChars q s.data
+  return String.mk [q] ++ body ++ String.mk [q]
+
+/-- Depth budget for `repr` — FIXED (the loudness doctrine: a budget
+refusal must not depend on the caller's fuel). Cycles are caught by the
+active-path list instead, faithfully. -/
+def reprFuel : Nat := 64
+
+mutual
+  /-- CPython `repr` of an in-tier value. `active` is the chain of heap
+  addresses currently being rendered: CPython prints `[...]` / `{...}`
+  for a container that contains itself, and so does this. -/
+  def reprVal (h : Heap) (fuel : Nat) (active : List Addr) : RVal → Option String
+    | .int n => some (toString n)
+    | .bool b => some (if b then "True" else "False")
+    | .none => some "None"
+    | .str t => reprStr t
+    | .tuple xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← reprVals h fuel active xs.toList
+        if parts.length == 1 then
+          return "(" ++ parts.foldl (· ++ ·) "" ++ ",)"
+        else return "(" ++ commaJoin parts ++ ")"
+    | .ntuple tname fields xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← reprVals h fuel active xs.toList
+        return tname ++ "(" ++ commaJoin (zipNames fields.toList parts) ++ ")"
+    | .listV xs => do
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        let parts ← reprVals h fuel active xs.toList
+        return "[" ++ commaJoin parts ++ "]"
+    | .rangeV lo hi step =>
+      if step == 1 then some ("range(" ++ toString lo ++ ", " ++ toString hi ++ ")")
+      else some ("range(" ++ toString lo ++ ", " ++ toString hi ++ ", " ++ toString step ++ ")")
+    | .ref a =>
+      match fuel with
+      | 0 => Option.none
+      | fuel + 1 =>
+        match Heap.get? h a with
+        | some (.list xs) =>
+          if active.contains a then some "[...]"
+          else do
+            let parts ← reprVals h fuel (a :: active) xs.toList
+            return "[" ++ commaJoin parts ++ "]"
+        | some (.dict entries _) =>
+          if active.contains a then some "{...}"
+          else do
+            let parts ← reprEntries h fuel (a :: active) entries.toList
+            return "{" ++ commaJoin parts ++ "}"
+        | _ => Option.none
+
+  /-- Elementwise `reprVal`. -/
+  def reprVals (h : Heap) (fuel : Nat) (active : List Addr) :
+      List RVal → Option (List String)
+    | [] => some []
+    | v :: vs => do
+      let a ← reprVal h fuel active v
+      let rest ← reprVals h fuel active vs
+      return a :: rest
+
+  /-- `key: value` pairs of a dict, in INSERTION order (which the model
+  preserves, so it is CPython's own order). -/
+  def reprEntries (h : Heap) (fuel : Nat) (active : List Addr) :
+      List (RVal × RVal) → Option (List String)
+    | [] => some []
+    | (k, v) :: rest => do
+      let ks ← reprVal h fuel active k
+      let vs ← reprVal h fuel active v
+      let more ← reprEntries h fuel active rest
+      return (ks ++ ": " ++ vs) :: more
+end
+
+/-- CPython `str()` of a value as `print` sees it: a str prints RAW,
+everything else through `repr`. -/
+def printOne (h : Heap) (v : RVal) : Option String :=
+  match v with
+  | .str t => some t
+  | v => reprVal h reprFuel [] v
+
+/-- Space-join `print` arguments (CPython's default `sep`); the first
+unrenderable one wins. `print()` is the empty line. -/
+def strOfArgs (h : Heap) : List RVal → Option String
+  | [] => some ""
+  | [v] => printOne h v
+  | v :: vs => do
+    let s ← printOne h v
+    let rest ← strOfArgs h vs
+    return s ++ " " ++ rest
 
 /-- Allocate a fresh heap list holding `xs` and return its `.ref` — the
 list-display idiom (`BUILD_LIST`: the fresh address is the old heap
@@ -969,16 +1113,6 @@ guarantees to be a NEW object, never an alias. -/
 def allocListRun (st : FrameState) (xs : Array RVal) : Run FrameState RVal :=
   .ok { st with world := { st.world with heap := st.world.heap.push (.list xs) } }
     (.ref st.world.heap.size)
-
-/-- Space-join `print` arguments (CPython's default `sep`); the first
-unprintable one wins. `print()` is the empty line. -/
-def strOfArgs : List RVal → Option String
-  | [] => some ""
-  | [v] => strOfRVal v
-  | v :: vs => do
-    let s ← strOfRVal v
-    let rest ← strOfArgs vs
-    return s ++ " " ++ rest
 
 /-- Names the IMPORT MACHINERY binds in every module's globals, without
 any statement doing it. They are absent from the G1 table but present in
@@ -4249,12 +4383,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- prints chunks as lines), and refuses loudly on a
                     -- value whose `repr` the tier does not model.
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    (match strOfArgs vs with
+                    (match strOfArgs st.world.heap vs with
                      | some line =>
                        .ok { st with world :=
                                { st.world with stdout := st.world.stdout ++ [line] } } .none
                      | Option.none =>
-                       .unsupported "print() of a container or heap value is outside the tier (scalar str() only — docs/memory-model.md §effects)")
+                       .unsupported "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects")
                   else if isModuleDunder fname then
                     .unsupported s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
                   else

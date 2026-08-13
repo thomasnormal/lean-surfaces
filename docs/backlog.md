@@ -338,6 +338,16 @@ it leaves `Expr.heapFree` and its generator arm drains without the
 its place: `print` of a CONTAINER (a list's `repr` is not guessed —
 `harness/scripts/print_container.py`).
 
+**CONTAINERS RENDER (2026-08-13)** — docs/memory-model.md §rendering.
+`print` now applies CPython's two-level rule (`str()` on the arguments,
+`repr()` inside a container): str quoting and escapes, the one-element
+tuple's comma, namedtuple `field=value`, dicts in insertion order, range
+with its step elided at 1, and `[...]` for a self-referential container,
+decided by an active-path list rather than fuel. LOUD and pinned: a set
+(hash order), an instance/closure/generator (identity), a non-ASCII
+string (Unicode printability is never guessed). `repr_script.py` is the
+differential row; `print_set.py`/`print_nonascii.py` the refusals.
+
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two
 different exceptions looked identical. `harness/leanpy_survey.py` and

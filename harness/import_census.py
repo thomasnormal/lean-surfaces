@@ -322,8 +322,8 @@ FIXTURE = {
 SELF_TEST = [
     ("purely",    "PURE",       [], []),
     ("leaf",      "NO-IMPORT",  [], []),
-    ("direct_c",  "C-BLOCKED",  ["_speedups"], []),
-    ("deep_c",    "C-BLOCKED",  ["_speedups"], []),
+    ("direct_c",  "C-BLOCKED",  ["_speedups"], ["_speedups"]),
+    ("deep_c",    "C-BLOCKED",  ["_speedups"], ["_speedups"]),
     ("accel",     "PURE-ACCEL", [], ["_speedups"]),
     ("accel_fb",  "PURE-ACCEL", [], ["_speedups"]),
     ("via_accel", "PURE-ACCEL", [], ["_speedups"]),

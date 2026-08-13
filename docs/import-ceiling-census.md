@@ -75,11 +75,84 @@ real-table controls: `import keyword` must be PURE (`keyword.py` in
 `import math` and `import _socket` must be C-BLOCKED, and
 `import zzz_no_such_module` must be UNRESOLVED.
 
-## Results
+## Results (2026-08-14; machine-readable rows in `import-ceiling-census.json`)
 
-(To be filled by the census run; empty at pre-registration.)
+Sweep: 167 stdlib seeds, 162 REFUSE, of which **154 refuse with `import`
+in the wall set** — 8 import-only, 146 import+other. Both control suites
+green before the census ran. All four decisive verdicts below were
+re-checked by hand against the 3.9.19 source.
+
+| bucket | files | PURE | PURE-ACCEL | C-BLOCKED | UNRESOLVED |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| import-only | 8 | 0 | 1 | 7 | 0 |
+| import+other | 146 | 0 | 3 | 143 | 0 |
+| **total** | **154** | **0** | **4** | **150** | **0** |
+
+**THE CEILING IS 4/154.** No stdlib file refusing on `import` has a pure
+closure outright; four (`bisect`, `opcode`, `quopri`, `stat`) are pure
+behind an optional C accelerator — `try: from _bisect import * except
+ImportError:` with a pure fallback — and the other 150 execute C on every
+branch. The number the backlog wanted before committing to a module
+system: closing `import` for pure-Python closures buys ONE sweep file
+(`bisect`, the only PURE-ACCEL in the import-only bucket) plus three more
+behind their other walls (`opcode` needs `del`, `stat` needs `&`,
+`quopri` needs bytes literals — all tail constructs already designed).
+
+**The shortlist is flat.** All four admissible closures have size 2 (the
+seed plus its guarded accelerator); none imports another pure module, so
+every closure in-degree is 0 and there is no unlock cascade to rank. The
+import FORMS they need are correspondingly narrow: absolute
+`from X import names` and `from X import *` inside `try`/`except
+ImportError` — a missing module must raise a catchable `ImportError` —
+and NOTHING else: no plain `import X` binding, no relative imports, no
+dotted packages. That is the whole implementation surface the admissible
+set pays for.
+
+**Per-seed caveat, recorded not buried:** `quopri` is admissible as an
+importable module, but the sweep runs seeds as programs, and its
+`__main__` guard calls `main()`, whose body does `import sys, getopt` at
+runtime — so the sweep's `quopri` row still refuses (or reaches C) after
+import support lands. The program-mode flip set is `bisect` alone among
+import-only files.
+
+**Why the wall is this high:** the strict-closure C blockers are the
+interpreter and the OS, not computation — `sys` (140 of 150 C-blocked
+seeds), `_weakref` (127), `builtins` (106), `itertools` (104), `_thread`
+(100), `posix` (88), `_sre` (84), `_io` (76). Nine seeds are one C module
+from pure (`enum`, `codeop`, `formatter`, `_sitebuiltins` need only
+`sys`; `sre_compile`/`sre_constants` only `_sre`; `operator` only
+`builtins`; `contextvars` only `_contextvars`; `struct` only `_struct`) —
+the modellable-by-kind split and the greedy native-core cover for that
+follow-up decision live in `harness/import_closure.py`.
+
+Instrument notes. (1) The runner binary predates this session's
+uncommitted `.lean` edits (fstring lane); refusal-on-import is not among
+the changed behaviors, and the model batch ran 167 files in 1.3 s.
+(2) This sweep says import present-in-154 / sole-in-8 where the
+backlog's 2026-08-13 row said 155/7: the working tree's extractor edits
+are part of the envelope cache key, so the wall census moved one file
+between buckets (`import` remains the frontier either way).
 
 ## What this census cannot see
 
-(To be filled with the run; the static-blindness statement is part of the
-deliverable, not a disclaimer added if convenient.)
+The closure is static, so it is blind to dynamic imports —
+`__import__(name)`, `importlib.import_module(...)` — which resolve a
+module from a runtime string no `ast` walk can evaluate; 14 modules in
+the walked closures contain one (`encodings`, `pickle`, `pkgutil`,
+`warnings`, `doctest`, `inspect`, `runpy`, `sysconfig`, …), so a verdict
+whose closure passes through them could under-count C reachability. It
+also does not follow function-body imports (pre-registered import-time
+scope; the `quopri` caveat above shows the pattern), takes both sides of
+version/platform `if`s at module level, and treats a
+`from p import x` that does not resolve as an attribute access rather
+than a missing module. None of these blind spots can flip a C-BLOCKED
+verdict to pure: 145 of the 150 reach C through imports that are direct
+children of the module body (statically certain to execute; measured
+with `import_closure.py`'s UNCONDITIONAL scope), and the remaining five
+(`abc`, `decimal`, `hashlib`, `heapq`, `numbers`) are blocked on the
+branch a Python-only system actually runs — the pure fallback itself
+reaches C (`abc` falls back to `_py_abc`, which needs `_weakref`;
+`decimal` to `_pydecimal`, which needs `_contextvars`) or the seed's own
+live `__main__` guard does (`heapq` imports `doctest`). The blind spots
+could only make a PURE(-ACCEL) verdict generous, which is why the four
+winners were audited by hand.

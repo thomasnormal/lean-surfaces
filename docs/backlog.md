@@ -1766,3 +1766,81 @@ for). A tool that answered C-REACHING unconditionally would print this
 section's headline unchanged and be worth nothing. Every verdict is also
 auditable one at a time: `--why
 MODULE` prints the import chain from a seed to each C module it reaches.
+
+## `mvcgen` — SPIKED AND DECLINED, on shape, not on taste (2026-08-13)
+
+Owner-asked: does leanpy use something like `mvcgen` to keep the proof
+layer streamlined? Honest answer BEFORE the spike: partially — `@[spec]`
+is applied in 34 places (15 in `LeanModels`, chiefly `Logic` and
+`Surface`; 19 more across the `Examples/*/spec.lean` files), and
+`VC.lean`'s `PyPost` explicitly mirrors `Std.Do`'s `PostCond`-with-shapes
+idea — but VC GENERATION is hand-rolled. Scoped as a spike with one
+falsifiable question: can `mvcgen` be driven against `PyTriple` at all,
+on ONE small construct?
+
+**AVAILABILITY IS NOT THE OBSTACLE.** `mvcgen` ships in the pinned
+toolchain (v4.33.0-rc1): `Std/Tactic/Do/Syntax.lean` declares the tactic,
+`Lean/Elab/Tactic/Do/VCGen.lean` implements it, `Std/Do/{Triple,PostCond,
+WP}.lean` are all present. It was tried, not guessed at.
+
+**THE SPIKE, RUN AGAINST THE SMALLEST RULE IN THE LAYER.**
+`PyStmtTriple.pass` — real proof 4 lines — restated as a goal and handed
+to `mvcgen`:
+
+    error: failed to synthesize
+      Std.Do.SPred.Tactic.PropAsSPredTautology (PyStmtTriple m P (Stmt.pass sp) Q)
+
+**And the second probe is the one that decides it.** The same goal with
+the threshold written out by hand — `∀ st, P st → ∃ t, ∀ F ≥ t, Q.holds
+(execStmt m F st (.pass sp))` — fails IDENTICALLY. So the obstacle is not
+that `PyTriple` is an opaque abbreviation the tactic could be taught to
+unfold. **It is the SHAPE.** `Std.Do.Triple` is `P ⊢ₛ wp⟦x⟧ Q` and the
+only instance supplying `PropAsSPredTautology` is the one for that
+triple, over `x : m α` with a `WP m ps` instance. Three things are
+missing at once, and each is load-bearing:
+
+1. **`Run` is not a monad.** It is a plain `inductive Run (σ α)` with a
+   hand-rolled bind (`⤳`), no `Monad` instance and no `WP` instance. The
+   repo never imports `Std.Do`; it cites it in a comment as inspiration.
+2. **The verification object is DATA, not a program.** `mvcgen`
+   symbolically executes a monadic term `x`. leanpy verifies
+   `execStmts m F st ss` where `ss : List Stmt` is a Python AST. That is
+   the definitional-interpreter design, on purpose — the thing being
+   verified is arbitrary Python, which cannot be a Lean monadic term.
+3. **The fuel threshold has nowhere to live.** `∃ t, ∀ F ≥ t` is chosen
+   so triples compose through `fuelMono` (`PyTriple.exec` extracts one
+   decided outcome valid at every larger fuel). `wp⟦x⟧ Q` has no
+   counterpart, and quantifying outside the wp is exactly what the failed
+   second probe shows the tactic cannot see.
+
+**Obstacle 2 was never reached, and that is reported rather than
+claimed.** `PyPost.holds` sends `.timeout => False` and `.unsupported _
+=> False`, which is what makes the triple TOTAL correctness and an
+out-of-tier program's triple unprovable. Whether an integration would
+preserve it is untested, because obstacle 1 blocks first. No conclusion
+is offered on a test that did not run.
+
+**WHAT WOULD IT SAVE — the part that actually decides it.** Nothing that
+matters. The only reason to take on this risk is `Obs.lean` (3024 lines)
+and `ClockErase.lean` (2587 lines), whose bulk is hand-rolled 18-conjunct
+MUTUAL INDUCTIONS over the `Stmt`/`Expr` AST proving meta-theorems
+(`fuelMono`, `worldInv`, clock erasure) for ALL Python programs at once.
+`mvcgen` is a per-program VC generator: it discharges one program's
+verification conditions. It has categorically nothing to offer an
+induction over the interpreter's own definition. Even a fully successful
+integration would leave those 5611 lines untouched and could at best
+reshape the 1252 lines of `VC.lean`/`VC2.lean` — the layer that is
+already the cheap one.
+
+**And the tool says so itself:** every invocation emits `The mvcgen
+tactic is experimental and still under development. Avoid using it in
+production projects.` A development whose entire value is that it is
+sound does not put an experimental VC generator under its proof layer to
+save nothing.
+
+**DECLINED** — the third well-argued no, after the inheritance tier and
+`import`. Recorded with the probe that produced it so the next person
+re-runs the measurement instead of re-deriving the argument. Revisit only
+if `Run` acquires a genuine `WP` instance AND the threshold form is
+expressible inside it — and even then, only for the `VC` layer, never as
+a migration of anything that currently compiles.

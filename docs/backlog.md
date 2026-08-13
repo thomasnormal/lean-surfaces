@@ -1774,9 +1774,10 @@ layer streamlined? Honest answer BEFORE the spike: partially — `@[spec]`
 is applied in 34 places (15 in `LeanModels`, chiefly `Logic` and
 `Surface`; 19 more across the `Examples/*/spec.lean` files), and
 `VC.lean`'s `PyPost` explicitly mirrors `Std.Do`'s `PostCond`-with-shapes
-idea — but VC GENERATION is hand-rolled. Scoped as a spike with one
-falsifiable question: can `mvcgen` be driven against `PyTriple` at all,
-on ONE small construct?
+idea — but VC generation is OUR OWN, not `Std.Do`'s (see THE GENERATOR
+ALREADY EXISTS below; "hand-rolled" means purpose-built and maintained,
+NOT missing). Scoped as a spike with one falsifiable question: can
+`mvcgen` be driven against `PyTriple` at all, on ONE small construct?
 
 **AVAILABILITY IS NOT THE OBSTACLE.** `mvcgen` ships in the pinned
 toolchain (v4.33.0-rc1): `Std/Tactic/Do/Syntax.lean` declares the tactic,
@@ -1820,17 +1821,36 @@ out-of-tier program's triple unprovable. Whether an integration would
 preserve it is untested, because obstacle 1 blocks first. No conclusion
 is offered on a test that did not run.
 
+**THE GENERATOR ALREADY EXISTS — read this before concluding anything
+from the paragraph below.** `py_vcgen` is a BUILT, TESTED, THREE-LAYER
+stack, not an aspiration: `VC.lean` (layer 1, the triples, 546 lines),
+`VC2.lean` (layer 2, the loop rule and the `@[py_spec]` interprocedural
+registry, 706), and **`LeanModels/Python/VCTactic.lean` (layer 3 — the
+walker tactic itself, 2403 lines)**, whose entry point is a real tactic,
+`elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic`
+(VCTactic.lean:2311). It does the mvcgen-shaped things: delayed goals for
+loop invariants, measures and exit clauses over named Python-variable
+telescopes, and symbolic-execution discharge of the interpreter
+obligations. It is regression-tested through recursive factorial
+(`VCTests.lean`, with `#guard factorial 5 = 120` and a `@[py_spec]`
+callee spec consumed by a caller), and has been maintained through pass 8.
+So the honest headline is NOT "there is no VC automation here". It is:
+**stock `mvcgen` adds nothing because this project already built its own
+generator, and that one fits the architecture — a deep embedding over AST
+data with a fuel-threshold triple — which is exactly what the stock one
+cannot reach.**
+
 **WHAT WOULD IT SAVE — the part that actually decides it.** Nothing that
-matters. The only reason to take on this risk is `Obs.lean` (3024 lines)
-and `ClockErase.lean` (2587 lines), whose bulk is hand-rolled 18-conjunct
-MUTUAL INDUCTIONS over the `Stmt`/`Expr` AST proving meta-theorems
-(`fuelMono`, `worldInv`, clock erasure) for ALL Python programs at once.
-`mvcgen` is a per-program VC generator: it discharges one program's
-verification conditions. It has categorically nothing to offer an
-induction over the interpreter's own definition. Even a fully successful
-integration would leave those 5611 lines untouched and could at best
-reshape the 1252 lines of `VC.lean`/`VC2.lean` — the layer that is
-already the cheap one.
+matters, for two independent reasons. The per-program layer is ALREADY
+AUTOMATED by `py_vcgen` above, so there is no gap there to fill. And the
+only remaining bulk is `Obs.lean` (3024 lines) and `ClockErase.lean`
+(2587), whose content is hand-rolled 18-conjunct MUTUAL INDUCTIONS over
+the `Stmt`/`Expr` AST proving meta-theorems (`fuelMono`, `worldInv`,
+clock erasure) for ALL Python programs at once. `mvcgen` is a per-program
+VC generator: it discharges one program's verification conditions. It has
+categorically nothing to offer an induction over the interpreter's own
+definition. A fully successful integration would therefore leave those
+5611 lines untouched and duplicate 3655 lines that already work.
 
 **And the tool says so itself:** every invocation emits `The mvcgen
 tactic is experimental and still under development. Avoid using it in
@@ -1838,9 +1858,21 @@ production projects.` A development whose entire value is that it is
 sound does not put an experimental VC generator under its proof layer to
 save nothing.
 
+**THE SV SIDE, ASKED AT THE SAME TIME AND ANSWERED SEPARATELY.** The two
+surfaces are NOT at the same maturity and should not be described as if
+they were. On the Python side there is a walker tactic (`py_vcgen`,
+above). On the SV side there is **`#sv_check`** — a COMMAND, declared in
+`LeanModels/Sv/Surface.lean`, giving concrete-run guards in surface
+syntax (`#sv_check counterD [[clk := 1, rst := 1], [rst := 0]] shows
+count = [0, 1]`), i.e. `%b`-column checks of completed runs. **There is no
+SV walker tactic**: `LeanModels/Sv/` contains no tactic declaration at
+all. So SV today has a concrete-run guard surface, not a VC generator.
+That is a statement of current scope, not a promise to build one.
+
 **DECLINED** — the third well-argued no, after the inheritance tier and
 `import`. Recorded with the probe that produced it so the next person
-re-runs the measurement instead of re-deriving the argument. Revisit only
-if `Run` acquires a genuine `WP` instance AND the threshold form is
-expressible inside it — and even then, only for the `VC` layer, never as
-a migration of anything that currently compiles.
+re-runs the measurement instead of re-deriving the argument. **This entry
+is not a licence to build a VC generator: one exists (`VCTactic.lean`).**
+Revisit `Std.Do` only if `Run` acquires a genuine `WP` instance AND the
+threshold form is expressible inside it — and even then, only where it
+would BEAT `py_vcgen`, never as a migration of anything that compiles.

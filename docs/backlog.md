@@ -1876,3 +1876,232 @@ is not a licence to build a VC generator: one exists (`VCTactic.lean`).**
 Revisit `Std.Do` only if `Run` acquires a genuine `WP` instance AND the
 threshold form is expressible inside it — and even then, only where it
 would BEAT `py_vcgen`, never as a migration of anything that compiles.
+
+## The tail, construct 3: `del <name>` DESIGNED as a SLICE (2026-08-13)
+
+Design only. Nothing here is built, and nothing here registers a harness
+row — registrations land WITH the implementation (b921f32). The construct
+2 (f-strings) landing is HELD upstream of this and is not chained to it.
+
+### The slice, stated before the argument for it
+
+**`del <name>`, locals-only, function scope only.** `del d[k]`,
+`del o.attr`, `del xs[0]` and MODULE-scope `del` stay LOUD. That is not
+a convenience boundary; each excluded form is a measured second table,
+and §the measurement below names which.
+
+### The earlier ranking was WRONG about `Delete`, and the definitions say so
+
+§THE SEQUENCING PRINCIPLE priced `Delete` out with: "`del x` removes a
+binding and no `Env` removal primitive exists; `del d[k]` mutates the
+heap. Both mean `worldInv` must be re-established — a fragment change."
+The second clause is true. **The first is false**, and the file that
+settles it is `LeanModels/Python/Runtime.lean`:
+
+```
+structure World where          -- Runtime.lean:195
+  heap : Heap
+  globals : REnv
+  stdout : …
+structure FrameState where     -- Runtime.lean:224
+  world : World
+  locals : REnv
+```
+
+`locals` is NOT a `World` field. `worldInv` is `Run.OkW (·.world = st.world)`,
+so a statement that only rewrites `st.locals` preserves it **by
+construction** — the identical situation as `assign` to a bare name,
+which is already in the fragment. The ranking conflated `del x` with
+`del d[k]`; separating them is the whole content of the slice. The
+missing `Env.remove` is real but it is three lines of structural
+recursion on `List (String × α)` next to `Env.lookup`/`Env.set`
+(Semantics.lean:580-588), not a fragment change.
+
+Priced against the definitions, not predicted:
+
+* `Stmt.heapFree` — the `del` arm is unconditionally `true`. `del <name>`
+  evaluates NO sub-expression (measured: `r9`), so there is nothing to
+  recurse into and no new exclusion.
+* `worldInv` (Obs.lean) — the `.okF h _` shape, per the structures above.
+* `ceExecStmt_succ` (ClockErase.lean) — `Env.remove` reads neither heap
+  nor clock, so the arm is `.ok hs _` with **no `ce_norm`**. (That is a
+  live distinction, not a formality: `ce_norm` is exactly what a
+  heap-READING arm needs, and its absence is what makes `case bstr` a
+  defect after the `str` widening — see the f-strings review.)
+* `fuelMono` — no recursion, no fuel: `Run.le_refl`.
+
+Three proof sites, all trivial arms. **Cheaper than `assert`**, which
+needed a `bind`, an `ite` and a `printOne` case-split on every one of
+them. This is the definition of a slice.
+
+### The measurement (CPython 3.9.19, run before this was written)
+
+| shape | source | CPython 3.9.19 |
+|---|---|---|
+| read after del | `x = n; del x; return x` | `UnboundLocalError: local variable 'x' referenced before assignment` |
+| rebind after del | `x = n; del x; x = 99; return x` | `99` |
+| del a module-global NAME | `del g; return 0` | `UnboundLocalError` — `del` LOCALISES `g` |
+| read BEFORE that del | `y = g; del g; return y` | `UnboundLocalError` at the READ — localisation is whole-body |
+| `del x, y` | `x = n; del x, nosuch` | left-to-right, and **PARTIAL**: `x` really is gone when `nosuch` raises |
+| del of unbound / double del | `del nope` / `del x; del x` | `UnboundLocalError` |
+| del a parameter | `del n; return 0` | `0` |
+| del a parameter, then read | `del n; return n` | `UnboundLocalError` |
+| conditional del | `if n > 0: del x` then read | raises only on the taken path |
+| loop del + rebind | `for i: x = i; del x; x = i*2` | `6` for `n = 3` |
+| MODULE scope | `b = 5; del b; print(b)` | **`NameError: name 'b' is not defined`** |
+| MODULE scope, unbound | `del never` | `NameError` |
+| the class | `UnboundLocalError.__mro__` | `(UnboundLocalError, NameError, Exception)` |
+
+Two rows decide boundaries on their own. **Module scope answers a
+DIFFERENT exception class than function scope** — `NameError`, because
+module locals ARE the globals (§the publish) — so admitting it means
+carrying a second table for the same keyword; it is refused. And
+**`del x, y` is partial**, so the runtime arm must thread state through
+the targets left-to-right and may not decide the whole statement up
+front.
+
+### THE FIRST DECISION: the read-after-del fallthrough, closed by CENSUS
+
+The hazard: `Env` is `List (String × RVal)` with `lookup`/`set` only. Take
+the entry out and the name is simply GONE — indistinguishable from a name
+that was never local. The next read of it falls through to
+`moduleGlobals` and then `World.globals`, so `del x; return x` would
+answer a GLOBAL where CPython raises. Silently wrong, which this
+development does not ship.
+
+**Option A — a new `PyErr.unboundLocalError` — is REJECTED, and not for
+the reason the option was framed with.** The exhaustive-match ripple was
+priced and it is SMALL: `PyErr` is matched exhaustively in exactly two
+places, `errName` and `errMessage`, both in `Main.lean`, both runtime
+code with no theorem about them. If that were the cost, the option would
+be cheap.
+
+The real cost is that **the constructor does not solve the problem.** To
+RAISE `UnboundLocalError` the interpreter must know the name is a local
+of this frame that currently holds no value — and after a removal from a
+`List (String × RVal)` that fact is not represented anywhere. Recovering
+it needs one of:
+
+* a tombstone value — an `Option RVal` env or a new `RVal` constructor,
+  which touches every value-level match and adds a case to both
+  18-conjunct mutual inductions. That is the `Constant:bytes` shape, the
+  most expensive in the batch, which the sequencing principle already
+  ranks last;
+* or a new `FrameState` field (the deleted names, or the static local
+  set), which changes the frame's SHAPE and therefore ripples into
+  `worldInv`, `ClockErasedF`, `withClock`, `withLocals` and every
+  `.okF`/`.liftResF` congruence — strictly worse.
+
+So Option A is a frame-representation change wearing a constructor's
+clothes. Rejecting it is what KEEPS this a slice; taking it would make
+`Delete` the dearest construct in the tail rather than the cheapest.
+
+**Option B — the extractor census — is CHOSEN**, and the deciding point
+is that it is not a new mechanism. `locals_unsupported` already exists
+and already carries exactly this hazard, twice, in the extractor's own
+words: `_shadowed_calls` ("CPython would treat the callee as an
+(initially unbound) local, so a dynamic-env interpreter cannot be
+faithful") and `_early_nested_calls` ("such a call raises
+UnboundLocalError — a dynamic-env fallthrough to a module name would be
+silently wrong"). **`del` is the THIRD instance of the hazard the channel
+was built for.** Reuse over a parallel table, one construct later — the
+same criterion that made `assert` and f-strings cheap.
+
+There is even an existing INCONSISTENCY the census repairs rather than
+extends: `_binding_linenos` (extract.py:586) ALREADY counts `ast.Delete`
+targets as bindings; `_assigned_names`, which routes through
+`_target_bound_names`, does not. The two functions disagree today. The
+census makes them agree.
+
+### The census, exactly (all syntactic — no dataflow, which is the point)
+
+1. **`del` targets bind.** `_assigned_names` gains `ast.Delete`, so a
+   `del`'d name is local THROUGHOUT the body — CPython's own whole-body
+   rule, measured above, reused rather than re-derived. This also makes
+   `_shadowed_calls` and `_early_nested_calls` see `del`'d callee names
+   for free.
+2. **A new `locals_unsupported` clause:** if any `del` target name is
+   READ anywhere in the body (an `ast.Name` in `Load` context), refuse
+   the function. Loud.
+3. Module-scope `Delete` → `Unsupported` (row 11 of the measurement).
+4. Any target that is not a bare `ast.Name` → `Unsupported`.
+
+Clause 2 is deliberately a NAME-SET intersection and deliberately not a
+liveness analysis. Deciding "is this read reachable from that `del`
+without an intervening bind" is CPython's definite-assignment rule
+re-implemented in the extractor: a parallel table, refused on the same
+grounds the f-string format mini-language was refused. **The stated
+price** is that `x = n; del x; x = 99; return x` and the loop
+del-then-rebind row REFUSE although CPython accepts them. That is an
+over-refusal, it is honest, and it is written down here so the next
+reader does not rediscover it as a bug.
+
+### The runtime arm, and why it needs no new error
+
+`execStmt`'s `delStmt` arm folds the names LEFT TO RIGHT (row 5 of the
+measurement — the effect is partial, so the fold must thread the state):
+`Env.lookup st.locals n` gives `some _` ⇒ `Env.remove`; `none` ⇒
+`.unsupported`, LOUD, with the earlier removals already applied, which is
+CPython's order.
+
+The `none` case is where CPython raises `UnboundLocalError`, and the
+model **refuses instead of inventing a class**, the same call `errMessage`
+already documents for the payload-free constructors ("Never invent one
+here"). This is what retires the new `PyErr` entirely: with clause 2 in
+force, no admitted body ever reads a deleted name, so the only way to
+reach the `none` case is `del` of a name that was never bound — the
+`del g` / `del nope` / double-`del` rows.
+
+Note the layering, which is the design's shape in one sentence: **the
+READ hazard is closed statically because the runtime cannot see it, and
+the DELETE hazard is closed dynamically because the runtime sees it
+EXACTLY.** Neither layer approximates what the other decides, so neither
+needs a table of its own.
+
+### Surface added
+
+One `Stmt` constructor (`delStmt (names : Array String) (sp : Span)`),
+`Env.remove`, one `execStmt` arm, the same five walkers `assert` touched,
+one `Json.lean` ingestion arm, and the four extractor clauses above.
+Open at implementation time, to be MEASURED not assumed: `Stmt.g1Binds`
+is `[]` and `Stmt.g1Dirty` should be `true` conservatively — module-scope
+`del` is refused by clause 3, so the constructor cannot appear at top
+level, but the walkers must still be total.
+
+### Battery to build (rows measured above; registered WITH the code)
+
+`Examples/python/del_lab` — in tier: `del` of a local never read after,
+`del` of a parameter, `del x, y` of two unread locals. Refused by census:
+read-after-del, rebind-after-del (the stated over-refusal, pinned so the
+cost stays visible), loop del-then-rebind. Refused at runtime: `del g` of
+a module-global name, `del` of a never-bound name, double `del`. Refused
+by shape: `del d[k]`, `del o.attr`, module-scope `del`. Plus a script
+whose stdout is compared byte-for-byte.
+
+## The tail, construct 4: ranked, not yet designed (2026-08-13)
+
+By §THE SEQUENCING PRINCIPLE — proof-layer shape first, counts only as a
+tiebreak. Measured positions in the source, not recalled:
+
+1. **`BinOp:BitAnd` — the cheapest thing left, and it beats `Starred`.**
+   `evalBinOp` is at Semantics.lean:475, **outside every `mutual` block**
+   (the neighbouring blocks close at 391 and open at 1031). So the whole
+   construct is one constructor on an inductive that already carries
+   `lshift | bitOr` (Ast.lean:26-28), one `evalBinOp` arm, one
+   `ALLOWED_BINOPS` entry, one `Json.lean` string. The `binOp` arm of
+   every walker and every proof ALREADY recurses structurally and is
+   indifferent to which operator it holds: **zero new proof arms**, the
+   f-string result reached by a different route. Pass 5 already admitted
+   `<<` and `|` for the shipped sunfish file, so this completes a set
+   rather than opening one.
+2. **`Starred`** — ALLOCATES (unpacking builds a sequence) and reaches
+   into the call machinery; `worldInv` moves.
+3. **`class-creation`** — a tier, not a construct.
+4. **`Constant:bytes`** — a new `RVal` constructor: every value-level
+   match plus a case in both 18-conjunct mutual inductions. Dearest of
+   the value-level work.
+5. **`With` — LAST, and it is not close.** It retains state across a
+   raise, it sits behind the class tier, and there are ZERO runnable
+   programs for it today. Nothing is learned by moving it earlier.
+
+Recommended order: `del` (designed above), then `BitAnd`, then `Starred`.

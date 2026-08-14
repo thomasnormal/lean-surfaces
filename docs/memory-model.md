@@ -3079,6 +3079,26 @@ envelope-structured ⇔ admitted, so the survey's wall census is correct
 with ZERO code change — walls key on `Unsupported` nodes, and a
 structured from-import is rightly no longer an `import` wall.
 
+**As-built (Pass 0 implementation, 2026-08-14).** (1) The admission
+disjunction as written above (absent OR guarded) never fires for the
+two benign whitelist ImportFrom rows — `itertools`/`collections` are
+platform-PRESENT and sunfish's imports are unguarded — yet the
+envelope-change and canonicalization paragraphs below require them
+structured. As built, the extractor's admission carries the exact
+benign texts as a third disjunct (`BENIGN_IMPORT_FROM`, extract.py — a
+two-row mirror of `benignImportBinds`'s ImportFrom rows with a sync
+comment, the `BENIGN_IMPORTS` survey precedent), which is what makes
+"structured in the ENVELOPE and canonicalized back at ingestion" true
+and keeps envelope-structured ⇔ admitted exact. (2) The pinned
+inventory is `extractors/python/platform_inventory.json` (309 modules,
+3.9.19), captured by `extractors/python/capture_inventory.py` —
+subprocess-asked, never imported; the extractor loads it lazily and a
+missing file is a hard `ExtractError`, never a silent empty set.
+(3) Guard position is decided on the handler name alone (single
+handler, literally `except ImportError:`); a try that is otherwise out
+of v0 still carries `try_unsupported` and refuses whole at execution
+before any guarded import inside could run — loud, never wrong.
+
 New statement: `Stmt.importFrom (module : String) (names : Array
 String) (star : Bool) (sp : Span)` (Ast.lean — a full-rebuild edit).
 Ingestion (Json.lean) CANONICALIZES the whitelist collision: a

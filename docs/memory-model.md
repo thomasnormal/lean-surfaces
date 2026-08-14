@@ -3228,6 +3228,150 @@ before building; the absent-module machinery and the `except
 ImportError:` extension still land, `bisect` does not flip, and the
 ceiling stands as measured.
 
+## Module-level def aliasing (the narrow first-class slice — DESIGN, 2026-08-14)
+
+The Pass 0 landing measured bisect's next wall exactly: behind the
+guarded from-import sit `bisect = bisect_right` / `insort =
+insort_right` — a top-level `def` referenced as a VALUE, refused by the
+first-class-callables gate (`referencing function '…' as a value is
+outside the v0 tier`). The refusal is right in general: the tier holds
+NO function values — a module `def` is a static `Module.functions`
+entry, not an object, so a function-as-value would need representation,
+heap identity, a boundary story, and rendering, none of which exist.
+This design lands the one shape where none of that is needed: a
+MODULE-LEVEL ALIAS OF A TOP-LEVEL DEF, never rebound.
+
+### The mechanism: resolution-level aliasing, pure ingestion
+
+**The alias never becomes a value.** At ingestion (`Json.lean`, the
+namedtuple-recognition/`splitChains` precedent — zero interpreter
+change), a recognized `alias = name` at module top level (a) pushes a
+SECOND `Module.functions` entry — the target's `FunctionDefn` with
+`name := alias`, `span := ` the alias STATEMENT's span — and (b)
+rewrites the assign to `pass`. Calls through the alias then resolve by
+the existing `findFunction` dispatch to a byte-identical defn
+(params, `argsOk`/`localsOk`/`hasGlobal`/`isGenerator`, post-lowering
+body all copied verbatim), so an alias call runs exactly the direct
+call's code under exactly the same `callIn`. Nothing else about the
+alias is observable in tier: reading it as a value, `print`ing it,
+`is`, rebinding it, crossing the boundary all keep today's loud
+refusals. The pass runs LAST in `parseModule` (after the namedtuple
+and exception censuses, which must see the original assigns, and after
+`lowerGenExps`, so the copy shares the already-synthesized
+`<genexpr@n>` helpers instead of duplicating them).
+
+Why not a runtime value in `World.globals`: that IS the first-class
+callable gate — the value would need an `Obj`/`RVal` kind, identity
+(CPython function objects have addresses), a freeze decision, and every
+observation arm — and the closure-dispatch path (`funsHeapFree`/
+`topLevelDefFree` guarded) exists for HEAP closures, not static defs.
+The static device is observationally equal to CPython's global binding
+exactly under the census below: when the binding is single, final, and
+ordered, every admissible observation of the alias is a CALL, and the
+copy makes calls literally identical. (CPython note, recorded: after
+`from _bisect import *` succeeds, CPython's alias points at the C
+accelerator where the model's copy is the pure fallback — that is the
+standing §2.5 accelerator-equivalence obligation of the guarded import
+arm, differentially tested by the `import_lab` fallback rows; the alias
+adds no new instance of it.)
+
+**No theorem moves.** The interpreter, the mutual block, and every
+induction (`fuelMono`/`worldInv`/`clockErase`) are untouched — there is
+no new statement kind, no new arm. The module-level walks are invariant
+by construction: `funsHeapFree`/`moduleGenFree` quantify over function
+bodies and the copy IS an existing body; the assign→`pass` rewrite
+stays inside `Stmt.heapFree`; `topLevelDefFree` never sees the alias
+(the assign was not a `defStmt`). Two existing guards EXTEND to the
+alias automatically because both key on `Module.functions`:
+`defsBoundBefore` (the alias entry's span is the alias statement, so
+any top-level mention before it refuses the script — the ordered
+admission covers alias names with zero new code) and `initBindable`
+(a live rebinding of an alias name is a functions-table name rebinding,
+already refused loudly at the publish/flush). One RELOCATION, not a
+change: `isBuiltinName`/`isPyBuiltinName` move verbatim from
+`Semantics.lean` to `Ast.lean` (same namespace, no consumer changes) so
+the ingestion census can consult them — `Json.lean` and
+`Semantics.lean` are siblings above `Ast`/`Runtime`.
+
+### The census (all conditions loud-on-failure: a rejected candidate
+stays a plain assign, whose RHS keeps today's function-as-value refusal)
+
+Module-wide preconditions (any failure rejects every candidate):
+
+* every top-level statement bind-analyzable under the alias binds walk
+  — `stmtBinds` with ONE amendment: a structured `.importFrom` (star
+  included) contributes NO binds, because in Pass 0 it RAISES before
+  binding (the model's own semantics; the guarded-present-module
+  divergence is §2.5's, see above). An `.unsupported` statement (`del`,
+  a non-benign import, …) keeps `none` and rejects everything —
+  conservative, the namedtuple census's rule;
+* no `def`/`class` subtree has `has_global` (the extractor-recorded
+  fact; a `global` could rebind the alias or the target at call time).
+
+Per candidate `alias = name`, a DIRECT top-level single-target assign
+(post-`splitChains`, so `a = b = f` works via `a = f; b = a`):
+
+* `name` resolves to a top-level def or an EARLIER-ADMITTED alias
+  (source-order fold; alias-of-alias is transitive by construction),
+  last-wins like `findFunction`; its span's `endLineno` is strictly
+  before the alias statement's `lineno` — the ordering check the
+  `pass` rewrite would otherwise erase from `defsBoundBefore`'s view;
+* `name` is bound by NO top-level statement (defs are not `topLevel`
+  statements, so any hit is a rebinding — before the alias it would
+  make the copy stale, CPython aliasing the newer value; after it,
+  refused anyway) and is not a class/namedtuple name;
+* `alias` is a plain non-dunder identifier, not a keyword, not in
+  `isBuiltinName`/`isPyBuiltinName` (builtin-shadowing through a
+  position-independent table is not claimed; the genexp lowering also
+  keys draining builtins by name), not a def/class/namedtuple name
+  (rebinding a definition — `initBindable`'s ground), and bound by
+  EXACTLY ONE top-level statement (this assign): a later re-alias or
+  plain rebinding rejects the candidate.
+
+**Rebind-after-alias is REFUSED, not executed through** — decided
+honestly: a static table entry cannot be rebound at runtime, and
+execute-through would require exactly the runtime function value this
+design declines to build. The refusal is two-layered: admission (the
+bound-exactly-once census) and, for hand-built modules, `initBindable`
+at the publish/flush. Out of scope, stated: aliases of NESTED defs
+(never in `Module.functions`), aliases in class bodies (not top level),
+`del alias` (the `del` statement is unsupported, so its file rejects
+wholesale until del lands), `__all__` (no import system — it is an
+ordinary list binding with no interaction), aliases of classes/
+namedtuples/builtins (each keeps its own as-value refusal).
+
+### What flips — measured prediction
+
+From the landed rebuild's stdlib survey (166 seeds, box, python3.9.25):
+**exactly one file has this pattern as its CURRENT first wall —
+`bisect.py`** (`referencing function 'bisect_right' as a value`). Ten
+seeds CONTAIN the pattern at top level (asyncore, bisect, cgi, dis,
+gettext, locale, operator, ssl, threading, warnings — operator.py alone
+has 47 alias statements), but the other nine sit behind earlier walls
+(class-creation effects, mostly), so they cannot flip on this design.
+Predicted: wild sweep 6→7 MATCH / 160→159 REFUSE, flip set exactly
+{`bisect`}; in-repo corpus no flips (plus the new lab rows); anything
+else is a finding. The honest chain for bisect: the FILE flips to MATCH
+(its post-alias top level is empty — nothing calls `insort` at import
+time), while `insort` CONSUMERS still refuse at `a.insert(lo, x)` —
+`list.insert` is not in tier, the recorded §2.5 residue
+(`import_insort_fallback` stays UNSUPPORTED until it lands).
+
+### Battery
+
+New `Examples/python/alias_lab` (differential, the star_lab
+discipline): the ALIAS CALL ≡ DIRECT CALL pair (same args through both
+names, including a keyword-argument row — the kwargs merge reads the
+copied params — and a generator-def alias drained by `list`),
+alias-of-alias, and the two-step chain via a split chained assignment.
+Scripts (scripts.json, oracled against the pinned family):
+`alias_script.py` (happy path, MATCH), `alias_before_def.py` (REFUSE —
+the ordered admission), `alias_rebound.py` (REFUSE — the decided
+semantics; CPython runs it, the model refuses loudly, never wrongly),
+`alias_bisect_shape.py` (the bisect shape verbatim: defs, guarded
+`from _zzz_nomod import *` fallback, aliases, alias calls printing —
+MATCH). Acceptance: the sweep's `bisect` row REFUSE→MATCH.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

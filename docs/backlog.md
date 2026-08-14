@@ -2769,3 +2769,34 @@ Measured claim: `bisect` flips on this alone; `quopri`/`stat`/`opcode`
 wait for `del`/`BitAnd`/bytes; nothing else moves. Rides the SAME full
 rebuild as the HELD f-strings tail (extractor first, envelopes
 re-extracted, `pins_common.lean` only, both batteries in one triad).
+
+## Module-level def aliasing — DESIGNED (2026-08-14)
+
+Design recorded: docs/memory-model.md §module-level def aliasing.
+bisect's mapped next wall (`bisect = bisect_right`, a def referenced
+as a VALUE) narrows to the one admissible shape: a module-level alias
+of a top-level def, never rebound. Mechanism is PURE INGESTION — a
+second `Module.functions` entry (the target defn copied under the
+alias name, span := the alias statement), the assign rewritten to
+`pass`; the alias never exists as a runtime value, so no theorem
+moves and the interpreter is untouched. `defsBoundBefore` (ordering)
+and `initBindable` (rebind refusal) extend to alias names for free
+because both key on `Module.functions`. One relocation:
+`isBuiltinName`/`isPyBuiltinName` move verbatim Semantics.lean →
+Ast.lean so the ingestion census can consult them. Census: analyzable
+top level (structured `importFrom` binds nothing — Pass 0 raises
+before binding; §2.5 carries the guarded-accelerator divergence), no
+`has_global` anywhere, target = earlier top-level def or admitted
+alias (transitive, source-ordered, end-before-line), target and alias
+bound by no other top-level statement, alias a plain non-dunder
+non-builtin non-definition identifier. Rebind-after-alias REFUSED
+(admission + `initBindable` backstop), never executed through.
+Measured prediction (box survey, 3504397): flip set exactly {bisect}
+— 6→7 MATCH / 160→159 REFUSE; ten seeds contain the pattern, nine
+behind earlier walls (operator.py alone holds 47 alias statements —
+value parked behind its class-creation wall). `insort` consumers
+still wait on `list.insert` (§2.5 residue). Battery: alias_lab
+(alias≡direct incl. kwargs + generator rows, alias-of-alias, chain)
+plus four scripts (happy / before-def REFUSE / rebound REFUSE /
+bisect-shape MATCH). Lean-only change ⇒ no envelope re-extraction;
+rides a box rebuild with the standard triad + both surveys.

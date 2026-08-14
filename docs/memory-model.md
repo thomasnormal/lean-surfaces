@@ -3732,6 +3732,16 @@ ingestion rewrite).
 
 ### Battery
 
+**AS BUILT (master, 2026-08-14).** Every semantic claim above held on
+the box (3659 jobs, 0 errors, oracle 3.9.25): `opcode.py` MATCHES,
+stdlib 8/158 with flip set exactly {opcode}, in-repo 98 MATCH / 23
+REFUSE of 121, script corpus 57/45/12, diff_test 1213 cases / 0 failed,
+and ZERO proof arms moved. The pre-registered in-repo COUNT above
+(99/22) is WRONG and is left standing as the record: the arithmetic put
+the deliberately-loud new script in the MATCH column. The build's only
+failure was `Tests.lean`'s own `%`-refusal regression guard — the
+acceptance signal firing exactly where it should.
+
 `Examples/python/str_lab` (differential rows + `#py_check`): the opcode
 form `'<%r>' % (op,)` verbatim; `%r` over int/bool/None/str/quote-choice/
 escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over

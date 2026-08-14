@@ -3115,3 +3115,63 @@ EXISTING files EMPTY (no in-repo file walls on `%`), 97 → 99 MATCH of
 matched, 11 → 12 loud; diff_test 0 failed with the new str_lab/seq_lab
 rows matching. Anything else — a second stdlib flip, an in-repo flip, or
 opcode refusing on something other than `%` — is a finding.
+
+### LANDED (master, 2026-08-14, the box cycle) — the semantic prediction EXACT, one arithmetic MISS
+
+**`opcode.py` FLIPS.** `tools/leanpy /usr/lib64/python3.9/opcode.py`
+exits 0 and `--compare` answers MATCH — the file the whole tail batch
+(Pass 0 imports → def aliasing → `list.insert` → `del` → `%`) was
+walking toward now runs end to end under the verified interpreter.
+
+Build 3659 jobs, ZERO errors, with exactly ONE battery-caught fix, and
+it was the acceptance signal itself: the build's only failure was
+`Tests.lean`'s interpreter-level regression guard
+`#guard isUnsupported (ev (bo (sL "%d") .mod (iL 3)))` — the line that
+pinned `%` as out of tier. It now decides, so the guard records the
+decided values (bare argument and the opcode 1-tuple shape) and keeps a
+still-loud `%5d` row in its place. Nothing else in 3659 jobs moved:
+**ZERO proof arms, as designed** — `fuelMono`/`worldInv`/`clockErase`
+never case on the operator.
+
+Verification (box, oracle CPython 3.9.25 stamped on every instrument):
+extractor units 65/65; docs_check 67/67; diff_test **1213 cases, 0
+failed** (1109 matched, 104 whitelisted — the 54 new rows land as
+registered, the seven loud-frontier rows pinned); script_corpus
+**57 scripts, 0 failed, 45 matched, 12 loud-blocked** (`fmt_script` the
+opcode shape MATCH, `fmt_width_script` LOUD); in-repo survey
+**121 files — MATCH=98, REFUSE=23, 0 DIVERGE**; stdlib sweep
+**166 files — MATCH=8, REFUSE=158, 0 DIVERGE, flip set exactly
+{opcode}** (bisect, stat, sunau, chunk, nturl2path, `__phello__.foo`,
+`_sysconfigdata…`, **opcode**).
+
+**Pre-registered vs measured.** The semantic claim held exactly:
+opcode flips outright, the flip set is exactly {opcode}, the in-repo
+flip set among existing files is empty, 0 DIVERGE everywhere, script
+corpus 57/45/12 to the row. ONE MISS, recorded rather than quietly
+corrected: the in-repo COUNT was pre-registered as 99 MATCH / 22 REFUSE
+and measured 98 / 23 — an arithmetic slip in a derived number (the
+deliberately-loud new script was added to the MATCH column). The claim
+it was derived from — no existing in-repo file walls on `%` — is what
+the measurement confirms.
+
+**The frontier after the flip** (stdlib dynamic telemetry, first wall
+per file): class-creation 106, `Import` 33, `ImportFrom` 9,
+`try/except … else` 2, then singletons. Unchanged in shape from the
+`del` landing — and both leaders were already PRICED and demoted
+(§the import ceiling: 0 of 154 import-blocked files have a pure-Python
+closure, and the class tier sits behind a module system). The cheap
+single-construct tail is now spent; the next real move is a priced
+tier, not another construct.
+
+Tripwire: the two live matches ran 483 → 600 and 59 → 178 games during
+the cycle with 0 forfeits, 0 illegal.
+
+INSTRUMENT FINDING (recorded, not fixed here): an envelope's
+`frontend.version` stamps the EXTRACTING interpreter, so re-extraction
+on another host dirties the tree even when the AST payload is
+byte-identical — three tracked envelopes currently carry a **3.14.5**
+stamp from a laptop extraction, although the tier is specified against
+3.9. Harmless today (the payloads agree), but it means `git status`
+after a routine `script_corpus` run is not a reliable
+extraction-determinism signal. The honest fix is a 3.9-family check in
+the extractor; it is not this lane's scope.

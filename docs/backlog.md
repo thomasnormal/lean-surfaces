@@ -3175,3 +3175,237 @@ stamp from a laptop extraction, although the tier is specified against
 after a routine `script_corpus` run is not a reliable
 extraction-determinism signal. The honest fix is a 3.9-family check in
 the extractor; it is not this lane's scope.
+
+## THE CLASS-CREATION WALL — CENSUSED, DESIGNED, AND PRICED AT ZERO FLIPS (2026-08-14)
+
+Design recorded: docs/memory-model.md §the class tier. Instrument:
+`harness/class_census.py`; machine-readable output
+`docs/class-tier-census.json`. **Design pass only — no interpreter change
+landed here.** The implementation runs on a GO from the coordinator, and
+the recommendation below says what that GO is buying.
+
+### Why this lane exists
+
+After the `%` landing the dynamic first-wall telemetry reads
+`class-creation` 106 of 166 stdlib files — the largest number on the
+page, and the `%` lane's own verdict was "the cheap single-construct tail
+is spent; the next move is a priced tier, not another construct." So the
+class tier got priced. Per §THE SEQUENCING PRINCIPLE the pricing came
+BEFORE the building, and per §RANK BY `sole` the headline number was
+treated as a suspect until an instrument re-derived it.
+
+### The instrument, and its gate
+
+`harness/class_census.py` reads the BRICKS of the wall: per top-level
+class the base form, the class-body statement kinds, the
+metaclass/decorator flags; per file the minimal admissible TIER that
+clears its class wall and whether clearing it would FLIP the file or
+merely uncover the next wall.
+
+Ground truth is never re-implemented: the wall predicate is the
+extractor's own `creation_effects`, obtained by importing
+`extractors/python/extract.py` and converting each top-level statement —
+the same field `leanpy_survey.census` reads and `Json.lean`'s
+`parseClassDefn` re-checks. Only the census DIMENSIONS are the tool's own
+analysis, and they are cross-checked against that ground truth on every
+real file.
+
+The gate (`--controls`, run before every census, aborting on failure): 19
+synthetic fixtures with hand-computed verdicts — plain methods, a literal
+attribute, a computed attribute, `__slots__`, an `object` base, a
+same-module base, `Exception` vs `ValueError`, two bases, a metaclass, a
+class decorator, a dotted base, a `namedtuple` base, a decorated method,
+control flow in the body, a nested class, a bare call — plus three real
+files (`graphlib` walled with 3 classes, `opcode` and `bisect` clean).
+And the cross-check itself, over the whole corpus: **unexplained demands
+≠ ∅ ⟺ `creation_effects`, 0 violations over 679 top-level stdlib
+classes.**
+
+### THE FINDING THAT IS NOT A NUMBER: the third door is open
+
+`creation_effects` closed `class C: print("x")` and `class C(base())`.
+It does not close **a decorated METHOD**: both the extractor and
+`classBodyStmtPure` skip a `FunctionDef` unconditionally, decorator list
+and all, so a decorator with an observable effect runs under CPython and
+never under the model — a wrong answer, not a refusal, in the one place
+the flag exists to prevent it.
+
+Measured: 15 creation-pure classes in 14 seed files carry a decorated
+method, 2 of them (`shlex`, `sre_parse`) in files the class admission
+admits today. All 15 decorate with `property`/`setter`/`classmethod`/
+`staticmethod`, which have no creation-time effect — the model is LUCKY,
+not sound.
+
+**RECOMMENDED SEPARATELY AND IMMEDIATELY, tier or no tier:** count a
+decorated method as a creation effect (one clause in the extractor's body
+loop, one in `classBodyStmtPure`). Cost: those 2 files lose their class
+admission. Flips: none — neither is a MATCH. It closes the door.
+
+### The census (pinned 3.9 Lib; this laptop 167 seeds at 3.9.19, the box 166 at 3.9.25)
+
+**SEEDS — the stdlib sweep.** 125 of 167 files define a top-level class;
+**103 are CLASS-WALLED**; 635 top-level classes in them, **527
+creation-impure (83%)**. Class-creation is the file's ONLY wall in **0**.
+74 of the walled files instantiate one of their own classes at module
+level; 13 never name them at all; 19 also nest a class inside a function
+or class body (which `classesCreationPure` cannot see — it reads
+`Module.classes`, i.e. top level only).
+
+Base forms over the 527: no base 100, ONE base 392, two 32, three-plus 3.
+The single-base breakdown is the design's whole justification —
+**same-module class 285**, dotted 38, `object` 38, exception 36, imported
+name 26, builtin type 20, other name 12, subscript 5, call 3, namedtuple
+2. Single inheritance from a class defined in the same file is more than
+half of everything.
+
+Class-body statement kinds over the same 527 classes: `def` 403,
+docstring 367, **decorated def 129**, **`__slots__` 107**, literal assign
+81, name assign 62, call assign 54, display assign 35, `pass` 28,
+attribute assign 17, operator assign 13, complex target 6, async def 5,
+`if` 8, nested class 4, comprehension assign 3, annassign 1, `del` 1,
+bare expression 1. Decorator inventory: `property` 71, `classmethod` 48,
+`abstractmethod` 33, `setter` 9, `staticmethod` 8, `_tp_cache` 7,
+`cached_property` 4.
+
+**LIBRARY — the 141 pure-Python modules in the seeds' import-time
+closures.** 87 class-walled, 541 top-level classes, 450 impure (83% —
+the same ratio), same base ordering (same-module class 236, `object` 52,
+dotted 43).
+
+### THE LADDER, and the column that decides it
+
+Cumulative tiers, pre-registered in the instrument before the run.
+"cleared" = the file's class wall goes away; "FLIPS" = it also has no
+other wall (library column discounts `import`, the wall the layer below
+answers).
+
+| step | seeds cleared | seeds FLIPS | library cleared | library FLIPS* |
+| --- | --- | --- | --- | --- |
+| T0 today | 0 | 0 | 0 | 0 |
+| T1 body executes, no base | 3 | 0 | 2 | 1 |
+| T2 + `object` base | 4 | 0 | 5 | 2 |
+| T3 + same-module base | 9 | 0 | 11 | 3 |
+| **T4 + builtin exception base = v0** | **24** | **0** | **16** | **3** |
+| T5 + `__slots__` | 28 | 0 | 18 | 3 |
+| T6 + decorated methods | 31 | 0 | 23 | 3 |
+| T7 + imported/dotted base | 42 | 0 | 32 | 5 |
+| T8 + builtin-type base | 47 | 0 | 38 | 5 |
+| T9 + multiple inheritance | 50 | 0 | 42 | 5 |
+| T10 + metaclass/decorators/dunder bindings | 78 | 0 | 65 | 8 |
+| T11 + EVERYTHING | **103** | **0** | 87 | 8 |
+
+Greedy set cover over the 103 (the honest curve, not a frequency list):
+`base:exception` 6, then same-module base +5, call assign +5, name assign
++4, dotted base +6, decorated def +6, `__slots__` +7, `object` base +5,
+display assign +6, builtin-type base +6 — 56 of 103 after ten features,
+69 after fourteen. Same shape as every tail ranking: it COVERS, slowly,
+and no single feature is worth more than 7.
+
+**READ THE FLIPS COLUMN.** A class tier admitting every form Python has
+clears all 103 class-walled seeds and flips **zero**. The six nearest
+misses — `abc`, `code`, `getopt`, `io`, `py_compile`, `string`, whose
+only walls are `class-creation` and `import` — are all C-REACHING, so a
+Python-only module system underneath frees none of them either. The one
+class-walled seed that imports nothing, `graphlib`, has four more
+constructs behind its class wall (`del d[k]`, an f-string `!r`, a walrus,
+a `Starred`).
+
+**So the 106 is a cliff of ADMISSION ORDER, not of reach** —
+`classesCreationPure` is `runScript`'s FIRST check, so 106 files stop
+there and would stop somewhere else tomorrow. This is the import-ceiling
+verdict a second time, reached by a second instrument, and it is the
+third milestone `sole` has demoted.
+
+### The v0 tier, in one paragraph
+
+Class creation becomes an EXECUTION: the `class` statement returns to
+`Module.topLevel` as a marker (the last SKIP the one pipeline left
+standing), its body runs its non-`def` statements through the existing
+`execStmts` in a fresh frame, and the frame's locals are merged into the
+enclosing frame under `"<class>.<attr>"` — the method-flattening trick
+reused, so there is no new `World` component, no new heap object kind and
+no new `RVal`. Bases: single only, resolved statically at ingestion, and
+only `object` / a same-module class / a builtin exception name;
+everything else loud. Body: `pass`, docstring, undecorated `def`, a
+plain non-dunder NAME assignment, a bare expression statement. Loud, each
+for a stated reason: decorated methods, `__slots__`, any dunder binding,
+comprehensions/lambdas/nested classes (a class body is not a closure
+scope), control flow, `metaclass=`, class decorators, multiple bases,
+`super()`. Lookup walks the single-inheritance chain;
+`classesCreationPure` becomes `classesAdmissible` = `creationPure ∨
+creationExecutable`.
+
+### The price — and the induction question, answered at the statements
+
+**ZERO new conjuncts in all three 18-conjunct inductions.** Verified by
+reading the theorem statements, not inferred: `fuelMono` (Obs.lean, 18),
+`worldInv` (11) and `clockErase` (18) quantify over the SEMANTICS mutual
+block only, and Script.lean's executor is its OWN mutual block appearing
+in none of them. Class-body execution lives there.
+
+* `Stmt` gains one constructor → **17** match sites naming `Stmt.pass`
+  explicitly, the proxy for a constructor-enumerating match (7
+  Semantics.lean, 8 Json.lean, 2 Script.lean), most still with
+  catch-alls; one-liners.
+* `execStmt` REFUSES it (a class in a function body is out of tier), so
+  each induction gains ONE case inside an existing conjunct —
+  `Run.le_refl`, `simp at h` on `Stmt.heapFree = false`, a `clockErase`
+  leaf pair. The `del` landing's pricing, one notch cheaper.
+* `worldInv` is VACUOUS on the tier: `Module.heapFree` already demands
+  `classes = #[]`.
+* Script.lean gains one mutual member (`execScriptClass`); no
+  meta-theorem quantifies over that block.
+* The real proof work: `attrReadPlan`/`attrCallPlan`'s chain walk and the
+  frame theorems' side conditions restated over it — small, because in
+  the heapFree fragment every chain is empty.
+* The NEW loudness: class attributes are `CallsIn`-visible and
+  `CallsTo`-invisible (a fresh world has no namespaces), so an attribute
+  miss on an instance whose class has a static attribute set must refuse
+  on the value boundary rather than fabricate an `AttributeError`. The
+  namedtuple boundary refusal is the precedent.
+
+Size, by analogy to landed tiers — bigger than `del` (one constructor,
+two censuses, zero conjuncts) and smaller than the exceptions tier (a new
+`PyErr` constructor, two statements, a whole judgment): Ast.lean 1
+constructor + 3 `ClassDefn` fields; Json.lean the biggest edit (base
+resolution, chain + cycle check, `creationExecutable`,
+`classBodyMethodClean`, and `parseModule` putting the marker back);
+Semantics.lean one refusal arm, the chain walk in two plans, the chain
+`__init__`, ~7 walker one-liners; Script.lean one mutual member and the
+admission rename; Obs.lean/ClockErase.lean three one-line cases. Estimate
+**700–1000 lines of Lean over five files**, ~150 of extractor, ~40
+battery rows. Build-cost poles, in order: (1) the `attrCallPlan` chain
+lemmas the frame theorems consume; (2) `parseModule`'s restructure, which
+every ingestion census reads; (3) the 17 match sites.
+
+### PRE-REGISTERED flip prediction (written before building)
+
+* **stdlib sweep 8 MATCH / 158 REFUSE → 8 / 158, flip set EMPTY.** What
+  moves is the wall census: `class-creation`'s first-wall count falls by
+  the 24 v0 clears and rises by the 2 the third-door fix newly walls —
+  **106 → 84 ± 1** — with `Import` up by 24. ANY match flip is a finding.
+* **in-repo +2 MATCH**, and they are exactly the two class-walled in-repo
+  files (measured: v0 clears 2 of 2, neither has another wall):
+  `cls_lab.py` and `cls_effect_script.py` — the file that PINS the
+  class-creation refusal. Its class-body `print` stops being refused and
+  starts being REPRODUCED. That is the arc closing; the refusal pin moves
+  to the new boundary. 98/23 → 100/21 among existing files.
+* script corpus +6 rows (3 matched, 3 loud); diff_test 0 failed with the
+  new `cls_lab` rows.
+* library reach unchanged at v0 clears 16 of 87.
+
+### RECOMMENDATION
+
+1. **Ship the third-door fix now**, independently of any GO. It is a live
+   silent-divergence hole, the fix is two clauses, and it flips nothing.
+2. **The v0 tier does not pay for itself on the sweep** — zero flips, and
+   that stays true at T11. If it is built, it is built for the library
+   batch (87 of 141 pure-Python modules are class-walled, behind a module
+   system priced at single digits) and for the LANGUAGE surface:
+   inheritance is the biggest remaining hole in the class model and
+   `CallsIn` over an inheriting class is a theorem shape this project
+   does not have. Both are legitimate reasons; neither is a sweep number.
+3. If the answer is coverage, the census says the class tier is a BATCH
+   member exactly like `Starred`/`With`/`Constant:bytes` — §THE
+   SEQUENCING PRINCIPLE applies, and the batch is what should be priced,
+   not this tier alone.

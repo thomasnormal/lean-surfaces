@@ -3757,6 +3757,342 @@ at module scope — a `['<%r>' % (i,)]` comprehension, a `def_op`-style
 mutator, printed) and `fmt_width_script.py` (expect `unsupported` — the
 minilanguage at script level).
 
+## The class tier: creation is an EXECUTION (v0 — DESIGN, 2026-08-14)
+
+The sweep's dominant admission wall, priced BEFORE building it. Since the
+`%` landing the dynamic first-wall telemetry reads `class-creation` 106 of
+166 stdlib files — the largest single number on the page and, read naively,
+the obvious next milestone. It is not, and the honest reason is in §what
+this buys below. What follows is the tier this document would build if the
+answer were yes, the soundness hole that is worth closing whatever the
+answer is, and the measured price.
+
+The instrument is `harness/class_census.py` (`--controls` is the gate: 19
+synthetic fixtures with hand-computed verdicts, three real files, and on
+every real file a cross-check that the census's feature demands are
+non-empty EXACTLY when the extractor's own `creation_effects` is true —
+0 violations over 679 top-level stdlib classes). Every number below is
+that instrument's, over the pinned 3.9 Lib.
+
+### THE THIRD DOOR — the hole the census found, worth closing alone
+
+`creation_effects` closed two doors: `class C: print("x")` (a class-body
+statement) and `class C(base())` (a base expression). There is a THIRD,
+and it is open on master: **a decorated METHOD.** Both the extractor
+(`extract.py`, `for s in node.body: if isinstance(s, ast.FunctionDef):
+continue`) and ingestion (`classBodyStmtPure`, `if k == "FunctionDef" then
+pure true`) skip a `FunctionDef` UNCONDITIONALLY, decorator list and all.
+So
+
+    def log(f):
+        print("registered"); return f
+
+    class C:
+        @log
+        def m(self): pass
+
+is `creationPure`, `classesCreationPure` admits the module, `parseModule`
+drops the `class` statement from `topLevel` entirely, and the decorator
+never runs: CPython prints and the model does not. A WRONG ANSWER, not a
+refusal — the exact failure mode the creation-effects flag exists to
+prevent, through the one door it did not check.
+
+Measured over the stdlib seeds: 15 creation-pure classes in 14 files
+carry a decorated method, and in 2 of those files (`shlex`, `sre_parse`)
+the class admission passes today. Every one of the 15 decorates with
+`property`/`setter`/`classmethod`/`staticmethod` only, so no stdlib seed
+actually diverges — the model is lucky, not sound.
+
+**The cheap fix is separable from the tier and should ship whether or not
+the tier does**: count a decorated method as a creation effect
+(`bool(s.decorator_list)` in the extractor's body loop, one clause in
+`classBodyStmtPure`). It costs those 2 files their class admission, flips
+nothing (neither is a MATCH today), and closes the door.
+
+### What "executing a class statement" MEANS here
+
+CPython's `class C(B): <suite>` evaluates the bases, executes the suite in
+a fresh frame, and hands that frame's locals to the metaclass as the class
+dict. The model reproduces the middle step and STATICALLY resolves the
+other two:
+
+* **The class statement returns to `Module.topLevel`.** Today `parseModule`
+  removes it, which is the last SKIP left after the one pipeline — and a
+  skip is exactly what the one pipeline was built to abolish. It comes
+  back as a marker `Stmt.classDefStmt (ci : ClassId) (span : Span)`, in
+  position, so a class body that reads a module global reads the bindings
+  that exist AT the class statement and not the ones that exist later.
+* **The body is a suite in its OWN frame.** `execScriptClass` runs the
+  body's non-`def` statements through the existing `execStmts` from a
+  FRESH `FrameState` (empty locals, the SHARED world), which is CPython's
+  class frame: local-then-global resolution, no enclosing-scope lookup —
+  identical to the script frame's rule at module level, so the one
+  pipeline's live-view resolution serves it unchanged.
+* **The namespace is qualified names, not a new value.** On `.next`, the
+  class frame's locals are prefixed `"<class>."` and merged into the
+  enclosing frame's locals, which the one pipeline publishes as
+  `World.globals`. This is the METHOD FLATTENING'S OWN TRICK reused
+  verbatim (`"<class>.<method>"` in `Module.functions`; a Python
+  identifier can never contain `.`, so plain-name resolution never sees
+  them). Zero new `World` component, zero new heap object kind, zero new
+  `RVal` constructor, and a class stays UNAVAILABLE as a value — exactly
+  as today.
+* **`def`s in the body execute to nothing.** They are already represented:
+  ingestion flattens them into `Module.functions` under the qualified
+  name, and that is the surface `CallsIn m w "Searcher.bound" …`
+  specifies. So `execScriptClass` runs the body with its `def`s REMOVED —
+  precisely the statements ingestion drops today, in their original order.
+  Two admission checks pay for that removal (`classBodyMethodClean`): a
+  class-body statement may neither READ nor BIND a name that is one of the
+  same class's method names. Both are loud. Measured cost: 2 occurrences
+  across the 24 files v0 clears.
+
+### The v0 boundary
+
+**Bases — SINGLE, resolved STATICALLY at ingestion, three forms:**
+
+| form | admitted | `ClassDefn.base` |
+| --- | --- | --- |
+| no base | yes (implicit `object`) | `none` |
+| `class C(object)` | yes | `none` |
+| `class C(B)` where `B` is a same-module class | yes | `some ci` |
+| `class E(ValueError)` — a builtin exception name | yes, as the exceptions tier's kind | (see below) |
+| two or more bases | **LOUD** — no MRO in v0 | — |
+| `pkg.mod.Class`, an imported name, `dict`/`list`/`str`, a call, a subscript | **LOUD** | — |
+
+Base resolution is by NAME against `Module.classes` at ingestion, so the
+world-symbolic covenant is untouched: `findClass` stays static-first and
+`ClassId` stays the index. The chain `classChain ci : List ClassId` is a
+pure, kernel-computable fold, CYCLE-CHECKED at ingestion (a chain that
+revisits a `ClassId` demotes the class loudly — it cannot happen in a
+source-ordered module, and it is checked rather than assumed).
+
+**Class-body statements — the executed grammar:**
+
+admitted: `pass`, a docstring, an undecorated `def` (removed, see above),
+a plain-NAME assignment whose target is not a dunder, and a bare
+expression statement. The right-hand side is any ordinary in-tier
+expression, evaluated in the class frame — a literal, a name, a display, a
+call, an operator, a subscript, an f-string.
+
+LOUD, each for a stated reason:
+
+* **a decorated method** — the decorator is a call whose result replaces
+  the name, and `property`/`classmethod`/`staticmethod` are the DESCRIPTOR
+  protocol, which the model does not have. This is the third door, now
+  refused instead of skipped.
+* **`__slots__`** — binding the name without the STORAGE rule would let
+  `self.x = 1` succeed where CPython raises `AttributeError`. Modelling it
+  is cheap and it is the first priced extension (§extensions), but a
+  half-model is a wrong answer.
+* **any other dunder binding** (`__hash__ = None`, `__eq__ = _eq`) —
+  a protocol change, and the dunder guard's whole argument is that no
+  instance can have one.
+* **a comprehension or a lambda on the right-hand side, and a nested
+  class** — a class body is not a closure scope in CPython (a
+  comprehension inside one cannot see class-level names except its
+  first iterable), and a model that ran them in the class frame would
+  quietly get that backwards.
+* **control flow** (`if`/`for`/`while`/`try`/`with`), `import`, `del`,
+  `global`, `raise`, `assert`, `async def`, an annotated assignment, an
+  augmented assignment, a non-name target.
+* **`metaclass=` and class DECORATORS** — unchanged from today.
+
+**Attributes, methods, instantiation, along the chain.** Lookup order is
+CPython's, flattened for single inheritance: instance attrs → this class's
+namespace and methods → the base's namespace and methods → … →
+`AttributeError`. `attrReadPlan`/`attrCallPlan` gain the chain walk and
+stay PURE free-scrutinee plans (the H3 meta-proof discipline is
+load-bearing and unchanged). `C(args)` allocates `Obj.instance ci #[]` and
+runs the first `__init__` found ALONG THE CHAIN; no `__init__` anywhere on
+the chain plus arguments is the faithful `TypeError`. `super()` is LOUD
+(it needs the `__class__` cell v0 does not model) — measured cost: 3 of
+the 24 v0-cleared seed files call it.
+
+**The dunder guard survives, widened at exactly one clause.** `ok` still
+requires no dunder beyond `__init__`, no metaclass, no class decorator, no
+multiple bases — and now demands that of every class ON THE CHAIN, which
+is what keeps "every live instance has default protocol" true. The clause
+that GOES is "class-level statements", because those now execute. So
+`class Tag: kind = "tag"` becomes instantiable and `Tag().kind` reads
+`"tag"`, where today the class is represented and refuses.
+
+**The two recognized class kinds are untouched.** A `class N(Exception):
+pass` stays `PyErr.user` and a `namedtuple(…)` base stays value-like; the
+ordinary-class path is the THIRD kind. Their demotion rule extends
+verbatim: a demoted candidate gets `creationPure := false` AND
+`creationExecutable := false`, i.e. stays loud.
+
+### Admission: `creationPure` narrows, `creationExecutable` is new
+
+`classesCreationPure` stops being a purity gate and becomes
+`classesAdmissible`: every class is `creationPure` (nothing observable, so
+skipping is sound) OR `creationExecutable` (the effect is one this tier
+reproduces). The two flags remain independent and both are recomputed at
+ingestion over the parsed body — never trusted from the envelope.
+
+The move is MONOTONE except at one place, and the census proves it:
+`unexplained demands ≠ ∅ ⟺ creation_effects` holds with 0 violations over
+679 stdlib classes once three forms are excused (a recognized `Exception`
+base, a recognized `namedtuple` base, and a decorated method). Which means
+**the decorated method is the ONLY shape that is creation-pure today and
+not executable under v0** — the single narrowing, and it is the third
+door's fix, not a regression.
+
+### What breaks — and the induction question, answered honestly
+
+**It does NOT restructure the 18-conjunct inductions.** The load-bearing
+fact, verified at the statements rather than inferred: `fuelMono`
+(Obs.lean, 18 conjuncts), `worldInv` (11) and `clockErase` (18) quantify
+over the SEMANTICS mutual block only. Script.lean's executor
+(`execScriptStmts`/`execScriptOne`/`execScriptFor`/…) is its own mutual
+block and appears in NONE of them. Class-body execution lives there, so
+its recursion is outside all three.
+
+What each theorem actually sees:
+
+* `Stmt` gains ONE constructor. Sites that name `Stmt.pass` explicitly —
+  the proxy for a match that enumerates constructors rather than
+  defaulting — number **17** (7 Semantics.lean, 8 Json.lean, 2
+  Script.lean), most of them still carrying a catch-all; the arm is a
+  one-liner at each. `Stmt.heapFree`,
+  `Stmt.genAllocFree`, `Stmt.defFree`, `Stmt.allNames`,
+  `Stmt.assignedNames`, `Stmt.g1Binds`, `Stmt.g1Stores`, `Stmt.hasYield`
+  are the walkers that need a considered answer rather than a default.
+* `execStmt` refuses the new constructor (a class inside a FUNCTION body
+  is out of tier), so the three inductions gain **one CASE each inside an
+  existing conjunct and ZERO new conjuncts** — `fuelMono` a `Run.le_refl`,
+  `worldInv` a `simp at h` on `Stmt.heapFree = false`, `clockErase` a leaf
+  pair. This is the `del` landing's recorded pricing, one notch cheaper
+  because the arm refuses instead of deciding.
+* `worldInv` is **vacuous on the whole tier**: `Module.heapFree` already
+  requires `classes = #[]`, so no class-bearing module is in the fragment.
+  Nothing about class namespaces can disturb it.
+* Script.lean gains one mutual member (`execScriptClass`). Its block
+  carries no meta-theorems, so the cost is the definition.
+* The REAL proof work is `attrCallPlan`/`attrReadPlan`'s chain walk and
+  the frame theorems' side conditions (`attrCallPlan_get_heapFree`,
+  `findClass_heapFree`, `getClass?_heapFree`) restated over it — small,
+  because in the heapFree fragment `classes = #[]` makes every chain
+  empty.
+
+**The value BOUNDARY is where the new loudness lives.** `callFunction`
+builds a fresh world, so class namespaces (which are module globals) are
+EMPTY there: the closed-function surface cannot see a class attribute. An
+attribute miss on an instance whose class has a non-empty static attribute
+set must therefore REFUSE on that surface rather than raise
+`AttributeError` — a fabricated error would be a wrong answer. Recorded
+precedent: the namedtuple boundary refusal. **Class attributes are
+`CallsIn`-visible and `CallsTo`-invisible.**
+
+**Censuses that move**: `classesCreationPure` → `classesAdmissible`;
+`classBodyStmtPure` gains the decorated-method clause; new
+`classBodyMethodClean`, `classBaseResolved`, `classChainAcyclic`;
+`defsBoundBefore` is UNCHANGED (it already orders class names, and now the
+statement it orders really runs). `leanpy_survey.census`'s `class-creation`
+wall predicate must follow the extractor, or the ranking instrument starts
+lying about its own frontier.
+
+### What this buys — MEASURED, and the answer is not what the 106 suggests
+
+`harness/class_census.py` over the pinned 3.9 Lib (this laptop: 167 seeds
+at 3.9.19; the box's sweep is 166 at 3.9.25 — expect ±1 on every count).
+
+| ladder step | seeds: class wall CLEARED | seeds: FLIPS | library: cleared | library: FLIPS* |
+| --- | --- | --- | --- | --- |
+| T0 today | 0 | 0 | 0 | 0 |
+| T1 body executes, no base | 3 | 0 | 2 | 1 |
+| T2 + `object` base | 4 | 0 | 5 | 2 |
+| **T3 + same-module base** | 9 | **0** | 11 | 3 |
+| **T4 + builtin exception base = v0** | **24** | **0** | **16** | **3** |
+| T5 + `__slots__` | 28 | 0 | 18 | 3 |
+| T6 + decorated methods | 31 | 0 | 23 | 3 |
+| T7 + imported/dotted base | 42 | 0 | 32 | 5 |
+| T8 + builtin-type base | 47 | 0 | 38 | 5 |
+| T9 + multiple inheritance | 50 | 0 | 42 | 5 |
+| T10 + metaclass/decorators/dunder bindings | 78 | 0 | 65 | 8 |
+| T11 + everything else | **103** | **0** | 87 | 8 |
+
+\* the library column discounts `import`, the wall the layer below answers.
+
+**Read the FLIPS column.** A class tier that admits EVERY form Python has
+clears all 103 class-walled stdlib seeds and flips ZERO of them, because
+the class wall is the sole wall of exactly none. Six seeds come closest —
+`abc`, `code`, `getopt`, `io`, `py_compile`, `string`, whose only walls are
+`class-creation` and `import` — and all six are C-REACHING, so even a
+Python-only module system underneath does not free them. `graphlib` is the
+one class-walled seed that imports nothing at all, and behind its class
+wall sit four more constructs (`del d[k]`, an f-string `!r`, a walrus, a
+`Starred`).
+
+This is the import-ceiling verdict a second time, and the sole-blocker
+rule saying the same thing it said in August: the 106 is a cliff of
+ADMISSION ORDER, not of reach. `classesCreationPure` is `runScript`'s
+FIRST check, so 106 files stop there and 106 would stop somewhere else
+tomorrow.
+
+What the tier IS worth, ranked and honest:
+
+1. **The third door** — a live silent-divergence hole, closable
+   independently and cheaply (above). This is correctness, not coverage,
+   and it does not need the tier.
+2. **The library batch** — 87 of the 141 pure-Python modules in the
+   seeds' import-time closures are class-walled, and `class-creation` is
+   their top blocker. The full tier clears all 87 and flips 8 with imports
+   discounted; v0 clears 16 and flips 3. Real, and still behind a module
+   system that is itself priced at single digits (§the import ceiling).
+3. **The language surface** — inheritance is the biggest hole left in the
+   class model, and `CallsIn` over an inheriting class is a theorem shape
+   the project does not have. Worth building for its own sake; not
+   justifiable by the sweep.
+
+### Pre-registered flip prediction (written before building)
+
+* **stdlib sweep: 8 MATCH / 158 REFUSE → 8 / 158. The flip set is EMPTY.**
+  What moves is the wall census, not the score: `class-creation`'s dynamic
+  first-wall count falls by the 24 files v0 clears and rises by the 2 the
+  third-door fix newly walls — **106 → 84 ± 1** — with `Import` rising by
+  the same 24. Any MATCH flip at all is a finding.
+* **in-repo survey: +2 MATCH**, and they are the two class-walled in-repo
+  files, both cleared by v0 with no other wall: `cls_lab.py` and —
+  pointedly — `cls_effect_script.py`, the file that PINS the
+  class-creation refusal. Its `print` in a class body stops being refused
+  and starts being reproduced, which is the arc closing rather than a
+  regression; the refusal pin MOVES to the new boundary (a decorated
+  method, a metaclass, a second base). 98/23 → 100/21 among existing
+  files, plus the new scripts.
+* **script corpus**: +6 rows (3 matched, 3 deliberately loud).
+* **diff_test**: the new `cls_lab` rows land; 0 failed stays.
+* **library reach**: v0 clears 16 of 87; unchanged by anything the seeds do.
+
+### Battery
+
+`Examples/python/cls_lab` gains the differential rows: a computed class
+attribute (`x = f()`), an attribute read off the class through an
+instance, single inheritance with a method resolved on the BASE, a
+subclass method SHADOWING the base's, `__init__` inherited from the base,
+`__init__` overridden, an attribute shadowed by an instance attribute, the
+faithful `AttributeError` at the end of the chain, and the loud frontier —
+`__slots__`, a decorated method, a metaclass, two bases, a dotted base, a
+`super()` call, a comprehension in the body, a class-body statement
+reading a method name. Scripts: `cls_attr_script.py` (computed attributes
+at module scope, printed), `cls_inherit_script.py` (the chain, printed),
+`cls_effect_script.py` FLIPPED to MATCH, plus `cls_deco_script.py` /
+`cls_meta_script.py` / `cls_slots_script.py` as the new loud pins.
+`cls_deco_script.py` carries the third door explicitly: a decorator that
+PRINTS must refuse, and must never print nothing.
+
+### Priced extensions, in the order the census ranks them
+
+Of the 79 seed files v0 does not clear: decorated methods 42, dunder
+bindings 34, `__slots__` 28, dotted base 24, multiple inheritance 15,
+imported base 15, builtin-type base 14, body control flow 10, metaclass 9.
+`__slots__` is the cheapest real one — `ClassDefn.slots : Option (Array
+String)`, an attribute STORE outside the set becoming the faithful
+`AttributeError: 'C' object has no attribute 'x'` — and it is worth 4
+seed files and 2 library modules on top of v0. Decorated methods are the
+descriptor protocol and are not a slice.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

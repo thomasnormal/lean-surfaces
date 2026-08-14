@@ -172,5 +172,22 @@
     "file": "harness/scripts/import_insort_fallback.py",
     "expect": "unsupported",
     "note": "REBUILD-WINDOW (Pass 0, memo 2.5 OPEN): pure insort needs list.insert, outside the tier -- flip to match when it lands"
+  },
+  {
+    "file": "harness/scripts/alias_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/alias_before_def.py",
+    "expect": "unsupported"
+  },
+  {
+    "file": "harness/scripts/alias_rebound.py",
+    "expect": "unsupported",
+    "note": "CPython prints 7; the alias census REFUSES rebind-after-alias (decided semantics, docs/memory-model.md def aliasing)"
+  },
+  {
+    "file": "harness/scripts/alias_bisect_shape.py",
+    "expect": "match"
   }
 ]

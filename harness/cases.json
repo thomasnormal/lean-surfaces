@@ -495,5 +495,14 @@
   {"file": "Examples/python/fstring_lab/fstring_lab.py", "function": "set_field", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_shadow/fstring_shadow.py", "function": "shadowed", "args": [[3]], "expect": "unsupported"},
   {"file": "Examples/python/fstring_shadow/fstring_shadow.py", "function": "elsewhere", "args": [[3]], "expect": "unsupported"},
-  {"file": "Examples/python/fstring_shadow/fstring_shadow.py", "function": "plain_concat", "args": [[3], [-2]], "expect": "match"}
+  {"file": "Examples/python/fstring_shadow/fstring_shadow.py", "function": "plain_concat", "args": [[3], [-2]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "scale", "args": [[21], [0], [-3], [5]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "scale2", "args": [[21], [0], [-3], [5]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "double", "args": [[5], [-3]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "chain1", "args": [[7]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "chain2", "args": [[9]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_alias", "args": [[4], [0]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_kw", "args": [[5], [-2]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_gen_alias", "args": [[3], [10]], "expect": "match"},
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "read_alias", "args": [[]], "expect": "unsupported"}
 ]

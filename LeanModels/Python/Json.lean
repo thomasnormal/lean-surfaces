@@ -535,20 +535,29 @@ private def importBinds (text : String) : Option (List String) :=
     | _ => Option.none
 
 /-- Names a top-level statement (nested included) can bind; `none` =
-unanalyzable (refuses the whole recognition). -/
-private partial def stmtBinds : Stmt → Option (List String)
+unanalyzable (refuses the whole recognition). The `imp0` flag selects the
+`importFrom` reading: `false` = the Pass 0 census answer (the names form
+OVER-reports — Pass 0 binds nothing, the raise fires first; the future
+modeled-module arm will bind, and over-reporting refuses more, the safe
+direction — while star's bind set is unknowable without a module,
+unanalysable by fiat); `true` = the ALIAS census answer (docs/
+memory-model.md §module-level def aliasing): a structured `importFrom`,
+star included, contributes NO binds, because in Pass 0 it RAISES before
+binding anything — the model's own semantics; the guarded present-module
+divergence is the standing §2.5 accelerator-equivalence obligation. -/
+private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   | .assign tgts _ _ => do
     let bss ← tgts.toList.mapM targetBinds
     return bss.flatten
   | .augAssign t _ _ _ => targetBinds t
   | .forStmt t _ body orelse _ => do
     let tb ← targetBinds t
-    let bb ← body.toList.mapM stmtBinds
-    let ob ← orelse.toList.mapM stmtBinds
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    let ob ← orelse.toList.mapM (stmtBindsWith imp0)
     return tb ++ bb.flatten ++ ob.flatten
   | .whileLoop _ body orelse _ | .ifStmt _ body orelse _ => do
-    let bb ← body.toList.mapM stmtBinds
-    let ob ← orelse.toList.mapM stmtBinds
+    let bb ← body.toList.mapM (stmtBindsWith imp0)
+    let ob ← orelse.toList.mapM (stmtBindsWith imp0)
     return bb.flatten ++ ob.flatten
   | .ret .. | .exprStmt .. | .yieldStmt .. | .pass _ | .brk _ | .cont _ => some []
   -- pass 5: impossible at module top level (CPython parse error) —
@@ -561,19 +570,21 @@ private partial def stmtBinds : Stmt → Option (List String)
   | .raiseStmt .. => some []
   | .assertStmt .. => some []
   | .tryStmt b _ hnd _ _ => do
-    let bb ← b.toList.mapM stmtBinds
-    let hb ← hnd.toList.mapM stmtBinds
+    let bb ← b.toList.mapM (stmtBindsWith imp0)
+    let hb ← hnd.toList.mapM (stmtBindsWith imp0)
     return bb.flatten ++ hb.flatten
-  -- Pass 0 (§import forms): no import form is ever bind-invisible.
-  -- The names form OVER-reports (Pass 0 binds nothing — the raise fires
-  -- first; the future modeled-module arm will bind, and over-reporting
-  -- refuses more, the safe direction); star's bind set is unknowable
-  -- without a module — unanalysable by fiat.
   | .importFrom _ names star _ =>
-    if star then Option.none else some names.toList
+    if imp0 then some []
+    else if star then Option.none else some names.toList
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
+
+@[inherit_doc stmtBindsWith]
+private def stmtBinds : Stmt → Option (List String) := stmtBindsWith false
+
+@[inherit_doc stmtBindsWith]
+private def aliasStmtBinds : Stmt → Option (List String) := stmtBindsWith true
 
 mutual
   /-- Every `Name` occurring in the expression (the reference scan). -/
@@ -1253,6 +1264,89 @@ mutual
     ((ss.toList.map splitChainStmt).flatten).toArray
 end
 
+/-- MODULE-LEVEL DEF ALIASING (docs/memory-model.md §module-level def
+aliasing): recognize a direct top-level `alias = name` where `name` is a
+top-level def (or an earlier-admitted alias of one, transitively — the
+source-order fold below resolves later candidates against the extended
+table). The alias becomes a SECOND `Module.functions` entry — the target
+defn copied verbatim under the alias name, `span :=` the alias
+STATEMENT's span, so `defsBoundBefore`'s ordered admission covers alias
+mentions with zero new code — and the assign becomes `pass`. The alias
+never exists as a runtime value: calls dispatch through `findFunction`
+to a byte-identical defn, and every other observation keeps its loud
+refusal (`initBindable` refuses live rebinding of functions-table names,
+the backstop for hand-built modules).
+
+Runs LAST in `parseModule`: the namedtuple and exception censuses see
+the original assigns, and the copy shares the already-lowered
+`<genexpr@n>` helpers instead of re-synthesizing them.
+
+A REJECTED candidate stays a plain assign whose RHS keeps the
+function-as-value refusal at evaluation — loud, never wrong — so
+rejection is per candidate; the module-wide preconditions (every
+top-level statement bind-analyzable under `aliasStmtBinds`, no
+`has_global` in any def/class subtree) reject ALL candidates.
+
+Per candidate: the target's last binding entry must END strictly before
+the alias statement's line (the ordering check the `pass` rewrite would
+otherwise erase from `defsBoundBefore`'s view); the target may be bound
+by NO top-level statement except, for an admitted-alias target, its own
+admitted assign (a def target rebound anywhere would make the copy
+stale — CPython aliases the newer value); the alias name must be a
+plain non-dunder non-keyword identifier, no builtin (either table — the
+call arms and the genexp lowering key builtins by name), no
+def/class/namedtuple name, and bound by exactly its own statement. -/
+private def recognizeDefAliases (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
+    (topLevel : Array Stmt) : Array FunctionDefn × Array Stmt :=
+  let isCand : Stmt → Bool := fun s =>
+    match s with
+    | .assign tgts (.name _ _) _ =>
+      (match tgts.toList with | [.name _ _] => true | _ => false)
+    | _ => false
+  if !topLevel.any isCand then (functions, topLevel) else
+  match topLevel.toList.mapM aliasStmtBinds with
+  | Option.none => (functions, topLevel)
+  | some bindss =>
+    if functions.any (·.hasGlobal) || classes.any (·.hasGlobal) then
+      (functions, topLevel)
+    else
+      let bound := bindss.flatten
+      let defNames := functions.toList.map FunctionDefn.name
+      let cNames := classes.toList.map ClassDefn.name
+      let ntNames := namedtuples.toList.map NamedTupleDefn.name
+      let step := fun (acc : Array FunctionDefn × List String × Array Stmt) (s : Stmt) =>
+        let (funcs, admitted, out) := acc
+        match s with
+        | .assign tgts (.name t _) sp =>
+          (match tgts.toList with
+           | [.name a _] =>
+             let ok :=
+               (match funcs.findRev? (fun f => f.name == t) with
+                | some f => decide (f.span.endLineno < sp.lineno)
+                | Option.none => false)
+               && !cNames.contains t && !ntNames.contains t
+               && !isBuiltinName t && !isPyBuiltinName t
+               && (bound.filter (· == t)).length
+                    == (if admitted.contains t then 1 else 0)
+               && isPyIdent a && !pyKeywords.contains a
+               && !(a.startsWith "__" && a.endsWith "__")
+               && !isBuiltinName a && !isPyBuiltinName a
+               && !defNames.contains a && !cNames.contains a
+               && !ntNames.contains a
+               && (bound.filter (· == a)).length == 1
+             if ok then
+               match funcs.findRev? (fun f => f.name == t) with
+               | some f =>
+                 (funcs.push { f with name := a, span := sp },
+                  a :: admitted, out.push (.pass sp))
+               | Option.none => (funcs, admitted, out.push s)
+             else (funcs, admitted, out.push s)
+           | _ => (funcs, admitted, out.push s))
+        | _ => (funcs, admitted, out.push s)
+      let (funcs, _, out) := topLevel.foldl step (functions, [], #[])
+      (funcs, out)
+
 /-- Parse the `module` payload, splitting top-level `FunctionDef`s into
 `Module.functions`, `ClassDef`s into `Module.classes` (methods flattened
 into `functions` under qualified names, in source order), and everything
@@ -1314,7 +1408,12 @@ def parseModule (j : Json) : Except String Module :=
         ++ namedtuples.toList.map NamedTupleDefn.name
         ++ (topLevel.toList.map (fun st => (stmtBinds st).getD [])).flatten
     let (functions', topLevel'') := lowerGenExps outer functions topLevel'
-    return { functions := functions', topLevel := topLevel'',
+    -- module-level def aliasing, LAST (docs/memory-model.md §module-level
+    -- def aliasing): the censuses above see the original assigns, and the
+    -- alias copies share the just-synthesized `<genexpr@n>` helpers.
+    let (functions'', topLevel''') :=
+      recognizeDefAliases functions' classes' namedtuples topLevel''
+    return { functions := functions'', topLevel := topLevel''',
              classes := classes', namedtuples }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=

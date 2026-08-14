@@ -3316,10 +3316,12 @@ Per candidate `alias = name`, a DIRECT top-level single-target assign
   last-wins like `findFunction`; its span's `endLineno` is strictly
   before the alias statement's `lineno` — the ordering check the
   `pass` rewrite would otherwise erase from `defsBoundBefore`'s view;
-* `name` is bound by NO top-level statement (defs are not `topLevel`
-  statements, so any hit is a rebinding — before the alias it would
-  make the copy stale, CPython aliasing the newer value; after it,
-  refused anyway) and is not a class/namedtuple name;
+* `name` is bound by NO top-level statement — except, when `name` is
+  itself an admitted alias, its own admitted assign (defs are not
+  `topLevel` statements, so any other hit is a rebinding: before the
+  alias it would make the copy stale, CPython aliasing the newer
+  value; after it, refused anyway) — and is not a class/namedtuple
+  name;
 * `alias` is a plain non-dunder identifier, not a keyword, not in
   `isBuiltinName`/`isPyBuiltinName` (builtin-shadowing through a
   position-independent table is not claimed; the genexp lowering also

@@ -190,10 +190,12 @@ inductive Stmt where
   `callUnsupported` pattern: the extractor fills `tryUnsupported` with
   the reason and EXECUTION refuses with it (structured-but-loud; the
   body/handler carried best-effort so censuses stay exact). Matching is
-  class IDENTITY on the admitted exception kind; a handler naming
-  anything else (builtin exception names, `Exception` itself) refuses
-  loudly at execution, before the body runs (statically-first — the
-  recorded as-built delta). -/
+  class IDENTITY on the admitted exception kind, PLUS (Pass 0, §import
+  forms) the pinned two-name import-error table
+  (`importErrorHandlerMatch`) when `findClass` misses; a handler naming
+  anything else (other builtin exception names, `Exception` itself)
+  refuses loudly at execution, before the body runs (statically-first —
+  the recorded as-built delta). -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
   /-- `from module import names` / `from module import *` (schema
@@ -428,6 +430,17 @@ inductive PyErr where
   tier raises it only from an explicit `next` without a default — the
   `for`-loop and `next(g, d)` paths CONSUME exhaustion instead. -/
   | stopIteration
+  /-- Pass 0 (docs/memory-model.md §import forms (Pass 0)): a
+  from-import of a module the model does not provide — in Pass 0 the
+  importable universe is empty, so every executed `Stmt.importFrom`
+  raises this. CPython 3.9 raises the SUBCLASS `ModuleNotFoundError`
+  with message `No module named '{modName}'`; the boundary renders both
+  exactly (`errName`/`errMessage`, Main.lean), so the uncaught case is
+  `status exn`, exit 1, class line identical to the oracle. Handler
+  matching is the PINNED two-name table (`importErrorHandlerMatch`,
+  Semantics.lean): handler names `ImportError` and `ModuleNotFoundError`
+  both match this kind — never a hierarchy walk. -/
+  | importError (modName : String)
   /-- A USER exception (the exceptions tier, docs/memory-model.md
   §exceptions): class-identity, no payload — `raise N` of an admitted
   `class N(Exception): pass` IS its class. `cid` is the `ClassId` (the

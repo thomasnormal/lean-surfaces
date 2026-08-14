@@ -217,6 +217,7 @@ def Stmt.kindName : Stmt → String
   | .raiseStmt .. => "Raise"
   | .assertStmt .. => "Assert"
   | .tryStmt .. => "Try"
+  | .importFrom .. => "ImportFrom"
   | .pass _ => "Pass"
   | .brk _ => "Break"
   | .cont _ => "Continue"
@@ -2782,6 +2783,8 @@ mutual
     -- from the body's retained state)
     | .tryStmt b _ hnd _ _ =>
       Stmt.g1StoresList b.toList ++ Stmt.g1StoresList hnd.toList
+    -- Pass 0 (§import forms): an import stores through no target
+    | .importFrom .. => []
     | _ => []
 
   /-- Elementwise `Stmt.g1Stores`. -/
@@ -2822,6 +2825,17 @@ mutual
       match Stmt.g1BindsList b.toList, Stmt.g1BindsList hnd.toList with
       | some c, some d => some (c ++ d)
       | _, _ => Option.none
+    -- Pass 0 (§import forms): no import form is ever bind-invisible.
+    -- The names form OVER-reports its names — Pass 0 binds nothing (the
+    -- raise fires before any binding), the future modeled-module arm
+    -- will bind, and over-reporting is the poisoning-safe direction: it
+    -- is what makes `moduleClockOk`'s clause (2) fail on
+    -- `from x import time`. Star is unanalysable by fiat (its bind set
+    -- is unknowable without a module), so a top-level star import fails
+    -- the clock census too — a from-import can NOT open a path around
+    -- the trace-clock discipline.
+    | .importFrom _ names star _ =>
+      if star then Option.none else some names.toList
     | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
       match benignImportBinds text with
       -- a MODELLED name (`count` is `itertools.count`) must stay
@@ -2864,6 +2878,13 @@ def g1ExecCandidate : Stmt → Bool
   -- rather than skip it — the same reason `raise` is a candidate.
   | .assertStmt .. => true
   | .tryStmt .. => true
+  -- Pass 0 (§import forms): a top-level `importFrom` IS a candidate.
+  -- The "imports are not candidates" note above is about `.unsupported`
+  -- statements, which execStmt REFUSES (no divergence possible); this
+  -- one RAISES, and a raising candidate takes the fold's recorded
+  -- `.exn` rollback-and-poison path. (The guarded try was already a
+  -- candidate.)
+  | .importFrom .. => true
   | _ => false
 
 mutual
@@ -3416,6 +3437,12 @@ mutual
     -- when both subexpressions are.
     | .assertStmt t m _ => t.heapFree && (m.map Expr.heapFree).getD true
     | .tryStmt .. => false
+    -- Pass 0 (§import forms): IN by the `raiseStmt` argument — the arm
+    -- allocates nothing and never decides `.ok` (worldInv is `.ok`-only,
+    -- so invariance is vacuous). REVIEW POINT for the future
+    -- modeled-module arm: a binding import must flip this to `false` or
+    -- re-prove — recorded so it is a review point, not a surprise.
+    | .importFrom .. => true
     | .pass _ => true
     | .brk _ => true
     | .cont _ => true
@@ -3538,6 +3565,8 @@ mutual
       t.genAllocFree && (m.map Expr.genAllocFree).getD true
     | .tryStmt b _ hnd _ _ =>
       Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList hnd.toList
+    -- Pass 0: no subexpression, allocates nothing (it raises)
+    | .importFrom .. => true
     | .pass _ | .brk _ | .cont _ => true
     | .unsupported .. => true
 
@@ -3758,6 +3787,25 @@ theorem ntupleCallPlan_heapFree {m : Module} (hm : m.heapFree = true)
     by_cases hp : (ntupleProtoName attr || dunderShaped attr) = true
     · rw [if_pos hp]; right; exact ⟨_, rfl⟩
     · rw [if_neg hp]; left; rfl
+
+/-- Pass 0 (docs/memory-model.md §import forms (Pass 0)): the PINNED
+two-row handler-name match table — the recorded first extension of
+handler resolution beyond admitted user classes, landed AT MINIMUM
+WIDTH. Handler names `ImportError` and `ModuleNotFoundError` both match
+the kind `.importError` (CPython's one relevant subclass edge, carried
+as a table, never a hierarchy walk). Consulted at BOTH resolution sites
+(execStmt's tryStmt arm; Script.lean's try shell), and only AFTER
+`findClass` misses: a USER class named `ImportError` resolves first
+(statically-first, the existing order) and matches only `.user cid`, so
+`.importError` propagates through it — CPython's behavior too (an
+admitted `class ImportError(Exception): pass` is a different class and
+catches nothing builtin). Every other builtin exception name,
+`except Exception:`, tuple patterns and `as` bindings keep today's
+refusals verbatim; `raise ImportError` stays refused (`raise` admits
+only admitted user classes, unchanged). -/
+def importErrorHandlerMatch : String → Bool
+  | "ImportError" | "ModuleNotFoundError" => true
+  | _ => false
 
 /-! ## The interpreter (mutual block, normative signatures)
 
@@ -5202,7 +5250,25 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
          else
            match findClass m excName with
            | Option.none =>
-             .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) can be matched — builtin-name matching is the recorded first extension, not v0 (docs/memory-model.md §exceptions)"
+             -- Pass 0 (docs/memory-model.md §import forms): the pinned
+             -- two-name table — the recorded first extension of
+             -- builtin-name matching, at minimum width. The body runs;
+             -- a `.importError` is caught (both pinned names, no class
+             -- identity — every import error matches), anything else
+             -- propagates; the same retained-state covenant as the
+             -- user-class arm below. Consulted only after `findClass`
+             -- missed, so a user class named `ImportError` still wins.
+             if importErrorHandlerMatch excName then
+               match execStmts m fuel st body.toList with
+               | .ok st' flow => .ok st' flow
+               | .exn st' e =>
+                 (match e with
+                  | .importError _ => execStmts m fuel st' handler.toList
+                  | e => .exn st' e)
+               | .timeout => .timeout
+               | .unsupported msg => .unsupported msg
+             else
+               .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) or the pinned import-error names (`ImportError`/`ModuleNotFoundError` — docs/memory-model.md §import forms) can be matched — wider builtin-name matching is outside the tier (docs/memory-model.md §exceptions)"
            | some (ci, c) =>
              if !c.isExc then
                .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
@@ -5217,6 +5283,19 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                   | e => .exn st' e)
                | .timeout => .timeout
                | .unsupported msg => .unsupported msg)
+    | .importFrom mod _ _ _ =>
+      -- Pass 0 (docs/memory-model.md §import forms): the importable
+      -- universe is EMPTY — every admitted from-import RAISES,
+      -- fuel-free, state unchanged, never `.ok`. The EXTRACTOR's
+      -- admission is what makes the raise faithful: either the module
+      -- is absent from the pinned platform inventory (the raise is
+      -- CPython's own behavior, `ModuleNotFoundError` at the boundary),
+      -- or the statement sits in import-guard position and the raise is
+      -- caught by construction — the fallback branch then runs from the
+      -- retained state under the accelerator-equivalence obligation
+      -- (docs/c-intrinsics-proposal.md §2.5, differentially tested).
+      -- Star changes nothing here: the raise fires before any binding.
+      .exn st (.importError mod)
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont

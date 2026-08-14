@@ -25,6 +25,13 @@ QS walrus filter now lowers, §the walrus filter; explicit castling
 gen; branchless castling rights; the literal-membership capture test;
 inlined single-statement bodies; the null-gate score cap replacing the
 band-edge probe arm; the killer depth gate).
+
+Re-extraction log: rebuild-20260814 -- f-strings LOWERED in the
+envelope (str-call spelling) and the two benign from-imports now
+STRUCTURED (Pass 0 import forms); frontend stamp moves to CPython
+3.9.25, the pinned-oracle family (body-identical to the 3.14 stamps
+everywhere the extractor did not change -- measured, 84/96 envelopes
+version-line-only).
 -/
 import LeanModels
 

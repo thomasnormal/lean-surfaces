@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/import_star_missing.py",
   "source_sha256": "358c15568764abc851ad52fabd51803d9bbbf8cc0b35933d086c7e0ede03e8a6",

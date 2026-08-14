@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/iter_lab/iter_lab.py",
   "source_sha256": "bbc90dafe49727ecd8ed980d7a71ef61ee7b78d4e12c4450a0fd7252d1573bfb",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 12,
           "col_offset": 0,
           "end_lineno": 12,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

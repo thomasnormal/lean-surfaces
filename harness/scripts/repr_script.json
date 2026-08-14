@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/repr_script.py",
   "source_sha256": "639c515299bc4f3b1e09376ee99a6d8b211348e5ff6951328ce1412abcb61590",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 17,
           "col_offset": 0,
           "end_lineno": 17,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

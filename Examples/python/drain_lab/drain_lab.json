@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/drain_lab/drain_lab.py",
   "source_sha256": "0c46e4c8b65ffa079904c38d5f08b198cbdbcda2668a6c8cfc8f502e749dfb81",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 12,
           "col_offset": 0,
           "end_lineno": 12,
           "end_col_offset": 27
         },
-        "py_kind": "ImportFrom",
-        "text": "from itertools import count"
+        "module": "itertools",
+        "names": [
+          "count"
+        ]
       },
       {
         "kind": "FunctionDef",

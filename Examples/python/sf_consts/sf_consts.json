@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/sf_consts/sf_consts.py",
   "source_sha256": "36ae7d0235787e67c37c1b7ea646841c0d905142b386f4fb213a4e8435e94c8b",

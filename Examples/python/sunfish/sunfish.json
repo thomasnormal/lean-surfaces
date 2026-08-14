@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/sunfish/sunfish.py",
   "source_sha256": "2142d9c25435e6b55ef31fcd18142f0117f033382d1bc9eb2bfe9e3de48316ca",
@@ -44,26 +44,30 @@
         "text": "import time"
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 13,
           "col_offset": 0,
           "end_lineno": 13,
           "end_col_offset": 27
         },
-        "py_kind": "ImportFrom",
-        "text": "from itertools import count"
+        "module": "itertools",
+        "names": [
+          "count"
+        ]
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 14,
           "col_offset": 0,
           "end_lineno": 14,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

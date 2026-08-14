@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/kw_lab/kw_lab.py",
   "source_sha256": "7f244568e0a4eba8b510be1f5877eda14c534bab3388a85c76a922a084f7652f",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 14,
           "col_offset": 0,
           "end_lineno": 14,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

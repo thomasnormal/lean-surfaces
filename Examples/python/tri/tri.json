@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/tri/tri.py",
   "source_sha256": "293da5a33fcf1c8a28e6a60ecc2881f9e17661e674db78c9a26d38ba0eb790c3",

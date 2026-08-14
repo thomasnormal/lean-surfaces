@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/live_rebind_read.py",
   "source_sha256": "785451560dcfe879cc1bb58d663cb89d14e2055569cf60ebd94b554b5169dafa",

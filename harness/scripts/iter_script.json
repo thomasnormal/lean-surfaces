@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/iter_script.py",
   "source_sha256": "05c8e5bbe14eaa732a9c0d6b813c5a84f2d35e073dcfb2f3139721e7f61031f4",

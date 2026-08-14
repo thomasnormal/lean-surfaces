@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/import_insort_fallback.py",
   "source_sha256": "9f9ab6a431b206016cebcaaa23e8e847f850bf0a5ac287452527c06a81954ff3",

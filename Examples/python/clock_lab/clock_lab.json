@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/clock_lab/clock_lab.py",
   "source_sha256": "bfd41d44a49bb80113657a1a9e4645dcae3322addb18b38f5182989372caa3d6",

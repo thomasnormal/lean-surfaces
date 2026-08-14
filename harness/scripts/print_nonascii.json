@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/print_nonascii.py",
   "source_sha256": "61c5b44be85bf267a4920a39eaf1bb2013b0e755f0df79209a0ead42f573ae80",

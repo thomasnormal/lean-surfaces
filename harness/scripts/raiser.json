@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/raiser.py",
   "source_sha256": "8eb1a2ac588116532b6105d25ad9d68c6474aaa5a86de1cca12815e8fd390408",

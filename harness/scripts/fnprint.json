@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/fnprint.py",
   "source_sha256": "d431c0700dfed86ad7c1d5ffc28b8e72a8cdfe5a09b393642031fc4de960952d",

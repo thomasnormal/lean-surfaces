@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/hello.py",
   "source_sha256": "500d2b6cdede6e209916de8c29cee2a62067c23da1baeb9a20b9d7a4df8b59eb",

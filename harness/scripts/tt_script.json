@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/tt_script.py",
   "source_sha256": "5dcc08ca925a2895cc0150f0f4ef1efffc35ec02645144cd10682af7811efd22",

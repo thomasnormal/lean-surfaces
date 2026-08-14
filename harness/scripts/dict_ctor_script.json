@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/dict_ctor_script.py",
   "source_sha256": "f9c022dc8d156de53f4131dadb5a2bc6b988418b0315f11421d12ac99aa4faca",

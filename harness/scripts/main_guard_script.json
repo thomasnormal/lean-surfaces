@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/main_guard_script.py",
   "source_sha256": "6eccda79f4083b26e346233df616db9a006ae6eef226ec33cf7cb120697a6079",

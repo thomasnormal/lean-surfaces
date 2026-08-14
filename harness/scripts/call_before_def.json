@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/call_before_def.py",
   "source_sha256": "b8fc09d822378e30c3076456cfbfb3998bc1eeb584777bd272864bd084272620",

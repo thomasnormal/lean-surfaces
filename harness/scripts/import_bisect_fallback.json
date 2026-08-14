@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/import_bisect_fallback.py",
   "source_sha256": "5ee3101dc7ae385507293b5957e8971664b6b296bff710e152caa2d2bec69a67",

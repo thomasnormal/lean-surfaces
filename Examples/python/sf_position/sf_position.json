@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/sf_position/sf_position.py",
   "source_sha256": "9c6a2d1daf0e6a0c6da06c764e65c0c65d45d9c847ab919137e9f89ef5e1c5ce",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 11,
           "col_offset": 0,
           "end_lineno": 11,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

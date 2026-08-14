@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/namedtuple_script.py",
   "source_sha256": "1b50663cc5a79aaa53dd57a8e7557f1efaff8ea36f32f5ff14bcebf4d9425b8c",
@@ -11,15 +11,17 @@
     "kind": "Module",
     "body": [
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 7,
           "col_offset": 0,
           "end_lineno": 7,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
         "kind": "Assign",

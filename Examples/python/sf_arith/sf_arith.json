@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/sf_arith/sf_arith.py",
   "source_sha256": "dac6adf1ed668c70492a2162decf42b8ce736aeee96acf2389786b8915ffc449",

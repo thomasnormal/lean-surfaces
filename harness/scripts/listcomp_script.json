@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/listcomp_script.py",
   "source_sha256": "7c5e71341f95457c8465c6ace459ebcdca75c08b2ba2a5ec21c440daec295fba",

@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/sf_order/sf_order.py",
   "source_sha256": "98fcee8185251ca3b46b290f0d8aa6949ee77dc3b9f8fbf289b2a60dd753708b",
@@ -33,26 +33,30 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 21,
           "col_offset": 0,
           "end_lineno": 21,
           "end_col_offset": 34
         },
-        "py_kind": "ImportFrom",
-        "text": "from collections import namedtuple"
+        "module": "collections",
+        "names": [
+          "namedtuple"
+        ]
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 22,
           "col_offset": 0,
           "end_lineno": 22,
           "end_col_offset": 27
         },
-        "py_kind": "ImportFrom",
-        "text": "from itertools import count"
+        "module": "itertools",
+        "names": [
+          "count"
+        ]
       },
       {
         "kind": "Assign",

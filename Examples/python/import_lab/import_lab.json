@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/import_lab/import_lab.py",
   "source_sha256": "6de362dcdc481633bd40802e530f7a769b514e9b1d19d6e6dc6ba2b246bda061",

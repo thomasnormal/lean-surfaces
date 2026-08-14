@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/closure_lab/closure_lab.py",
   "source_sha256": "842279b081c5ff12670fd47e4e2feba1cd90778fd433b6280981d3a849246b77",

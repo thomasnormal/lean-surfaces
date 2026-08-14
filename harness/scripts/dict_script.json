@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/dict_script.py",
   "source_sha256": "b9a98b0152fb9ea4e41ca9873c7e1d070c87aaf559c3a1be4326851943098917",

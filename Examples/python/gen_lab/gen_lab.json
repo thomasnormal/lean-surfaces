@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/gen_lab/gen_lab.py",
   "source_sha256": "ea1dadfc1d1b4c5ace38b8f332ed5fd39d066b1810a8632ff06c4803650a8b45",
@@ -33,15 +33,17 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "ImportFrom",
         "span": {
           "lineno": 18,
           "col_offset": 0,
           "end_lineno": 18,
           "end_col_offset": 27
         },
-        "py_kind": "ImportFrom",
-        "text": "from itertools import count"
+        "module": "itertools",
+        "names": [
+          "count"
+        ]
       },
       {
         "kind": "FunctionDef",

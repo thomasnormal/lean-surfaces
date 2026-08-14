@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/cls_data_script.py",
   "source_sha256": "fafbaea399456acb0148e918b1abe4d3673d4556fda3a1f7e45997458cb99758",

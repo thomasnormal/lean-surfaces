@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/interleave_script.py",
   "source_sha256": "f7057ab9fce5b8e274d0fe0ba06ab4301bba7ca8015d1ea53c93a3d26771255e",

@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.25"
   },
   "source_file": "harness/scripts/fib_loop.py",
   "source_sha256": "a0806770639d369516e963b08482807455d76b90658681b94b4db6e943823cfc",

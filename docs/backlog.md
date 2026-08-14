@@ -2800,3 +2800,27 @@ still wait on `list.insert` (§2.5 residue). Battery: alias_lab
 plus four scripts (happy / before-def REFUSE / rebound REFUSE /
 bisect-shape MATCH). Lean-only change ⇒ no envelope re-extraction;
 rides a box rebuild with the standard triad + both surveys.
+
+**LANDED (master, 2026-08-14, box-verified) — the design above,
+MEASURED.** Box build green (3659 jobs, EXIT=0) after ONE fix the
+battery itself caught on the first box run: `splitChains` gives every
+piece of `chain1 = chain2 = f` the SAME span, so the strict
+end-before-line ordering test wrongly rejected `chain2 = chain1` — the
+`#py_check chain2(9) = 18` was the only red target of 3659; an
+admitted-alias target is now ordered by the FOLD (CPython's
+left-to-right chain order), a def target keeps the span test.
+Verification (box, oracle CPython 3.9.25, pinned family, stamped):
+extractor units 55/55; diff_test 1121 cases / 0 failed / 89
+whitelisted (the 19 new alias rows all match — alias≡direct oracled by
+name); script_corpus 46 scripts / 0 failed / 37 matched / 9
+loud-blocked (+2 matched: alias_script, alias_bisect_shape; +2 loud as
+designed: alias_before_def, alias_rebound); in-repo survey 89 MATCH /
+20 REFUSE / 0 DIVERGE (from 86/18 — the three new positive files
+match, the two refusal scripts refuse); **stdlib sweep 7 MATCH / 159
+REFUSE / 0 DIVERGE — bisect.py REFUSE→MATCH (exit 0, 4 live
+statements), the pre-registered flip set exactly {bisect}, nothing
+else moved.** Tripwire: cotenant gauntlet 0 forfeits across all three
+builds and every harness run. The honest chain stands as designed:
+`insort` CONSUMERS still refuse on `list.insert`
+(`import_insort_fallback` stays UNSUPPORTED — the §2.5 residue, next
+tier when it lands).

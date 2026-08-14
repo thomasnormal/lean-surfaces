@@ -2648,3 +2648,25 @@ Not registered, deliberately: the uncompilable positions (`*a`,
 `x = *a`, `x, *y, *z = w`, `for *a in b`). CPython cannot RUN them, so
 there is no oracle output to compare against; they belong in an
 extractor totality test, not in `cases.json`.
+
+## C intrinsics — proposal written, OWNER-GATED (2026-08-14)
+
+The import-ceiling census's follow-up decision — whether to model C
+extension modules as Lean intrinsics — now has its design memo:
+[docs/c-intrinsics-proposal.md](c-intrinsics-proposal.md). Ranked
+targets recomputed from the census JSON's strict closures (greedy
+cover: `sys` 7, `+_weakref` 12, `+posix` 22 import-clean — but the
+SWEEP movers are `_contextvars` and `_struct`, one flip each, name-only
+opaque intrinsics with zero modeled semantics); the intrinsic contract
+(pinned inventory, per-NAME member tiers CONSTANT/FUNCTION/STATEFUL/
+OPAQUE, the loudness rule, the accelerator-equivalence obligation);
+cost shape per candidate from consumer usage, not module API; and the
+recommendation (pass 0 = the guarded import forms alone, buying
+`bisect`; pass 1 = `_contextvars` + `_struct`; pass 2 = a `sys`
+constant slice), with the honest total of **+3 to +4 files of 154**
+and the three separable owner questions stated at the end.
+
+**GATED: nothing in it may be built until the owner answers.** The
+proposal is a memo, not a plan of record; a "no" on any of its three
+questions drops the corresponding pass and the ceiling stands at
+4/154 as measured.

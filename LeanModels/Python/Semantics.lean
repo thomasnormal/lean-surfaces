@@ -219,6 +219,7 @@ def Stmt.kindName : Stmt → String
   | .assertStmt .. => "Assert"
   | .tryStmt .. => "Try"
   | .importFrom .. => "ImportFrom"
+  | .delStmt .. => "Delete"
   | .pass _ => "Pass"
   | .brk _ => "Break"
   | .cont _ => "Continue"
@@ -617,6 +618,27 @@ def Env.set : List (String × α) → String → α → List (String × α)
   | [], name, v => [(name, v)]
   | (k, w) :: rest, name, v =>
     if k == name then (name, v) :: rest else (k, w) :: Env.set rest name v
+
+/-- Remove the first binding of `name` (the one `Env.lookup` sees) — the
+`del` statement's primitive (docs/memory-model.md §the del statement).
+Structural recursion beside `lookup`/`set`; a missing name removes
+nothing (the CALLERS decide the miss — the two arms decide it
+differently, and neither reaches here on a miss). -/
+def Env.remove : List (String × α) → String → List (String × α)
+  | [], _ => []
+  | (k, w) :: rest, name =>
+    if k == name then rest else (k, w) :: Env.remove rest name
+
+/-- Fold `del`'s targets LEFT TO RIGHT over an env — the PARTIAL effect
+(CPython really removes `x` before raising on `nosuch` in
+`del x, nosuch`): the env after every successful removal, plus the first
+missing name if any. Pure; both runtime arms dispatch on the pair. -/
+def delNames : List (String × α) → List String → List (String × α) × Option String
+  | env, [] => (env, Option.none)
+  | env, n :: rest =>
+    match Env.lookup env n with
+    | some _ => delNames (Env.remove env n) rest
+    | Option.none => (env, some n)
 
 /-- Constant literal → boundary value (G1 freeze side). -/
 def Const.toVal : Const → Val
@@ -2841,6 +2863,13 @@ mutual
     | .raiseStmt .. => some []
     -- the tail batch: `assert` binds nothing (it tests and may raise)
     | .assertStmt .. => some []
+    -- the tail batch, MEASURED (docs/backlog.md §del RECONCILED): `del`
+    -- CHANGES its targets, and this census feeds `globalsDirty`'s poison
+    -- set — with `[]` the rollback after the init-exec refusal (empty
+    -- init locals, so the arm always misses there) would resurface the
+    -- deleted name's STALE static binding. The recorded "`[]`" note is
+    -- superseded by this measurement.
+    | .delStmt ns _ => some ns.toList
     | .tryStmt b _ hnd _ _ =>
       match Stmt.g1BindsList b.toList, Stmt.g1BindsList hnd.toList with
       | some c, some d => some (c ++ d)
@@ -2897,6 +2926,10 @@ def g1ExecCandidate : Stmt → Bool
   -- the tail batch: an `assert` can RAISE, so the fold must attempt it
   -- rather than skip it — the same reason `raise` is a candidate.
   | .assertStmt .. => true
+  -- del RECONCILED: the exec attempt always refuses at init (empty init
+  -- locals), so candidacy routes it to the rollback that POISONS the
+  -- targets (`g1Binds` above) — skipping it would keep them stale.
+  | .delStmt .. => true
   | .tryStmt .. => true
   -- Pass 0 (§import forms): a top-level `importFrom` IS a candidate.
   -- The "imports are not candidates" note above is about `.unsupported`
@@ -3456,6 +3489,11 @@ mutual
     -- nothing and mutates nothing, so it is IN the fragment exactly
     -- when both subexpressions are.
     | .assertStmt t m _ => t.heapFree && (m.map Expr.heapFree).getD true
+    -- the tail batch (docs/memory-model.md §the del statement):
+    -- unconditionally IN — `del <name>` evaluates NO sub-expression,
+    -- allocates nothing, and rewrites only `st.locals`, which is not a
+    -- `World` field (the recorded design's pricing, verbatim).
+    | .delStmt .. => true
     | .tryStmt .. => false
     -- Pass 0 (§import forms): IN by the `raiseStmt` argument — the arm
     -- allocates nothing and never decides `.ok` (worldInv is `.ok`-only,
@@ -3583,6 +3621,8 @@ mutual
       (exc.map Expr.genAllocFree).getD true && (cause.map Expr.genAllocFree).getD true
     | .assertStmt t m _ =>
       t.genAllocFree && (m.map Expr.genAllocFree).getD true
+    -- the tail batch: `del` has no subexpression and allocates nothing
+    | .delStmt .. => true
     | .tryStmt b _ hnd _ _ =>
       Stmt.genAllocFreeList b.toList && Stmt.genAllocFreeList hnd.toList
     -- Pass 0: no subexpression, allocates nothing (it raises)
@@ -5268,6 +5308,25 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
            | some rendered => .exn st (.assertionError (some rendered))
            | Option.none =>
              .unsupported "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement")
+    | .delStmt names _ =>
+      -- the tail batch (docs/memory-model.md §the del statement): the
+      -- FUNCTION-scope arm. `delNames` threads the locals left to right
+      -- (the partial effect: earlier removals are already applied when a
+      -- later target misses); a hit only rewrites `st.locals`, which is
+      -- not a `World` field, so `worldInv` holds by construction. The
+      -- miss case is where CPython raises `UnboundLocalError` — with the
+      -- extractor census in force (clauses 1–2) no admitted body ever
+      -- READS a deleted name, so a miss is only ever `del` of a
+      -- never-bound name (`del g`, `del nope`, double `del`) and the
+      -- model refuses LOUDLY rather than invent an error class it does
+      -- not carry. (Module scope never reaches this arm from the script
+      -- surface — `execScriptOne` owns it — except through a delegated
+      -- `while … else`, where locals ARE the module globals and the same
+      -- hit/miss split is exact/loud.)
+      (match delNames st.locals names.toList with
+       | (env, Option.none) => .ok { st with locals := env } .next
+       | (_, some n) =>
+         .unsupported s!"'del {n}': the name is not a bound local — CPython raises UnboundLocalError here and the model never invents one (docs/memory-model.md §the del statement)")
     | .tryStmt body excName handler tryUnsupported _ =>
       -- exceptions tier: the v0 single-handler shape on the retained-state
       -- covenant — run the body; `.ok` skips the handler; a MATCHING

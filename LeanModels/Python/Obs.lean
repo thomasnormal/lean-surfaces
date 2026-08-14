@@ -1143,6 +1143,9 @@ theorem fuelMono (fuel : Nat) :
         | raiseStmt exc cause _ =>
           -- fuel-free: the raise arm only does pure lookups
           simp only [execStmt]; exact Run.le_refl _
+        | delStmt names _ =>
+          -- del RECONCILED: fuel-free — a pure fold over the locals
+          simp only [execStmt]; exact Run.le_refl _
         | assertStmt test msg _ =>
           -- the tail batch: two evalExpr calls, the message's only on
           -- the FAILING branch — an ordinary bind-shaped arm
@@ -2560,6 +2563,16 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           cases printOne st₃.world.heap v with
           | none => exact .unsupported
           | some r => exact .exn
+      | delStmt names _ =>
+        -- del RECONCILED: IN the fragment and NOT vacuously — the ok
+        -- path rewrites only `st.locals`, which is not a `World` field
+        -- (the recorded design's `.okF` pricing); the miss path refuses.
+        simp only [execStmt]
+        cases delNames st.locals names.toList with
+        | mk env miss =>
+          cases miss with
+          | none => exact .okF rfl _
+          | some n => exact .unsupported
       | yieldStmt e _ => simp only [execStmt]; exact .unsupported
       | ret value _ =>
         cases value with

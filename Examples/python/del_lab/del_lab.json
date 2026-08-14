@@ -1,0 +1,1377 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/del_lab/del_lab.py",
+  "source_sha256": "78f1a926edb29bf077cf18a33a9a5ca57f4d8c8da1fb28c7cdcf0331b3373d7b",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 27,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 27,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "del_lab -- the `del <name>` acceptance set (docs/memory-model.md\nparagraph \"the del statement\"; docs/backlog.md paragraph \"del RECONCILED\nwith the one pipeline\").\n\nFUNCTION scope is the recorded slice: `del` of a bound local is a pure\nlocals rewrite (`Env.remove` -- no World field moves), the effect is\nPARTIAL left to right, and the read-after-del hazard is closed by the\nextractor CENSUS (clause 2: any Load of a del'd name refuses the whole\nfunction), never by a fabricated UnboundLocalError. The stated\nover-refusals are pinned here so their cost stays visible:\n`rebind_after` and `loop_del` are programs CPython ACCEPTS that the\ncensus refuses (name-set intersection, deliberately not a liveness\nanalysis).\n\nRuntime refusals (the census cannot see boundness): `del` of a\nmodule-global NAME (CPython localises it and raises UnboundLocalError),\n`del` of a never-bound name, double `del` -- all LOUD, never a guessed\nexception class. Shape refusals (clause 4): `del d[k]` and `del o.attr`\nare measured second tables and stay Unsupported at extraction.\n\nMODULE-scope `del` is the script surface's arm and is pinned by the\nscript corpus rows (del_global_script / del_never_script /\ndel_trailing_script / del_partial_script and the loud trio), not here:\non the closed-function surface a top-level `del` refuses at module init\n(empty init locals) and poisons its targets -- `gnum` below exists so\n`del_global` has a real module global to fail on.\n"
+          }
+        }
+      },
+      {
+        "kind": "Assign",
+        "span": {
+          "lineno": 29,
+          "col_offset": 0,
+          "end_lineno": 29,
+          "end_col_offset": 8
+        },
+        "targets": [
+          {
+            "kind": "Name",
+            "span": {
+              "lineno": 29,
+              "col_offset": 0,
+              "end_lineno": 29,
+              "end_col_offset": 4
+            },
+            "id": "gnum"
+          }
+        ],
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 29,
+            "col_offset": 7,
+            "end_lineno": 29,
+            "end_col_offset": 8
+          },
+          "value": {
+            "type": "int",
+            "repr": "7"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 32,
+          "col_offset": 0,
+          "end_lineno": 36,
+          "end_col_offset": 16
+        },
+        "name": "keep",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 32,
+              "col_offset": 9,
+              "end_lineno": 32,
+              "end_col_offset": 10
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 34,
+              "col_offset": 4,
+              "end_lineno": 34,
+              "end_col_offset": 13
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 4,
+                  "end_lineno": 34,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 34,
+                "col_offset": 8,
+                "end_lineno": 34,
+                "end_col_offset": 13
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 8,
+                  "end_lineno": 34,
+                  "end_col_offset": 9
+                },
+                "id": "n"
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 34,
+                  "col_offset": 12,
+                  "end_lineno": 34,
+                  "end_col_offset": 13
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              }
+            }
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 35,
+              "col_offset": 4,
+              "end_lineno": 35,
+              "end_col_offset": 9
+            },
+            "names": [
+              "x"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 36,
+              "col_offset": 4,
+              "end_lineno": 36,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 36,
+                "col_offset": 11,
+                "end_lineno": 36,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 11,
+                  "end_lineno": 36,
+                  "end_col_offset": 12
+                },
+                "id": "n"
+              },
+              "op": "Mult",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 36,
+                  "col_offset": 15,
+                  "end_lineno": 36,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "2"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 39,
+          "col_offset": 0,
+          "end_lineno": 42,
+          "end_col_offset": 12
+        },
+        "name": "del_param",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 39,
+              "col_offset": 14,
+              "end_lineno": 39,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 41,
+              "col_offset": 4,
+              "end_lineno": 41,
+              "end_col_offset": 9
+            },
+            "names": [
+              "n"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 42,
+              "col_offset": 4,
+              "end_lineno": 42,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 42,
+                "col_offset": 11,
+                "end_lineno": 42,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 45,
+          "col_offset": 0,
+          "end_lineno": 50,
+          "end_col_offset": 12
+        },
+        "name": "del_two",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 45,
+              "col_offset": 12,
+              "end_lineno": 45,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 47,
+              "col_offset": 4,
+              "end_lineno": 47,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 47,
+                  "col_offset": 4,
+                  "end_lineno": 47,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 47,
+                "col_offset": 8,
+                "end_lineno": 47,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 48,
+              "col_offset": 4,
+              "end_lineno": 48,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 48,
+                  "col_offset": 4,
+                  "end_lineno": 48,
+                  "end_col_offset": 5
+                },
+                "id": "y"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 48,
+                "col_offset": 8,
+                "end_lineno": 48,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 49,
+              "col_offset": 4,
+              "end_lineno": 49,
+              "end_col_offset": 12
+            },
+            "names": [
+              "x",
+              "y"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 50,
+              "col_offset": 4,
+              "end_lineno": 50,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 50,
+                "col_offset": 11,
+                "end_lineno": 50,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "7"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 53,
+          "col_offset": 0,
+          "end_lineno": 58,
+          "end_col_offset": 12
+        },
+        "name": "cond_del",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 53,
+              "col_offset": 13,
+              "end_lineno": 53,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 55,
+              "col_offset": 4,
+              "end_lineno": 55,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 55,
+                  "col_offset": 4,
+                  "end_lineno": 55,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 55,
+                "col_offset": 8,
+                "end_lineno": 55,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 56,
+              "col_offset": 4,
+              "end_lineno": 57,
+              "end_col_offset": 13
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 56,
+                "col_offset": 7,
+                "end_lineno": 56,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 56,
+                  "col_offset": 7,
+                  "end_lineno": 56,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Gt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 56,
+                    "col_offset": 11,
+                    "end_lineno": 56,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Delete",
+                "span": {
+                  "lineno": 57,
+                  "col_offset": 8,
+                  "end_lineno": 57,
+                  "end_col_offset": 13
+                },
+                "names": [
+                  "x"
+                ]
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 58,
+              "col_offset": 4,
+              "end_lineno": 58,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 58,
+                "col_offset": 11,
+                "end_lineno": 58,
+                "end_col_offset": 12
+              },
+              "id": "n"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 61,
+          "col_offset": 0,
+          "end_lineno": 66,
+          "end_col_offset": 12
+        },
+        "name": "read_after",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 61,
+              "col_offset": 15,
+              "end_lineno": 61,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": "reads del'd name(s) (a dynamic-env fallthrough to a module name would be silently wrong): x",
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 64,
+              "col_offset": 4,
+              "end_lineno": 64,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 64,
+                  "col_offset": 4,
+                  "end_lineno": 64,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 64,
+                "col_offset": 8,
+                "end_lineno": 64,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 65,
+              "col_offset": 4,
+              "end_lineno": 65,
+              "end_col_offset": 9
+            },
+            "names": [
+              "x"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 66,
+              "col_offset": 4,
+              "end_lineno": 66,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 66,
+                "col_offset": 11,
+                "end_lineno": 66,
+                "end_col_offset": 12
+              },
+              "id": "x"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 69,
+          "col_offset": 0,
+          "end_lineno": 75,
+          "end_col_offset": 12
+        },
+        "name": "rebind_after",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 69,
+              "col_offset": 17,
+              "end_lineno": 69,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": "reads del'd name(s) (a dynamic-env fallthrough to a module name would be silently wrong): x",
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 72,
+              "col_offset": 4,
+              "end_lineno": 72,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 72,
+                  "col_offset": 4,
+                  "end_lineno": 72,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 72,
+                "col_offset": 8,
+                "end_lineno": 72,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 73,
+              "col_offset": 4,
+              "end_lineno": 73,
+              "end_col_offset": 9
+            },
+            "names": [
+              "x"
+            ]
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 74,
+              "col_offset": 4,
+              "end_lineno": 74,
+              "end_col_offset": 10
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 74,
+                  "col_offset": 4,
+                  "end_lineno": 74,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 74,
+                "col_offset": 8,
+                "end_lineno": 74,
+                "end_col_offset": 10
+              },
+              "value": {
+                "type": "int",
+                "repr": "99"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 75,
+              "col_offset": 4,
+              "end_lineno": 75,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 75,
+                "col_offset": 11,
+                "end_lineno": 75,
+                "end_col_offset": 12
+              },
+              "id": "x"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 78,
+          "col_offset": 0,
+          "end_lineno": 87,
+          "end_col_offset": 12
+        },
+        "name": "loop_del",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 78,
+              "col_offset": 13,
+              "end_lineno": 78,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": "reads del'd name(s) (a dynamic-env fallthrough to a module name would be silently wrong): x",
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 81,
+              "col_offset": 4,
+              "end_lineno": 81,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 81,
+                  "col_offset": 4,
+                  "end_lineno": 81,
+                  "end_col_offset": 5
+                },
+                "id": "t"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 81,
+                "col_offset": 8,
+                "end_lineno": 81,
+                "end_col_offset": 9
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          },
+          {
+            "kind": "For",
+            "span": {
+              "lineno": 82,
+              "col_offset": 4,
+              "end_lineno": 86,
+              "end_col_offset": 17
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 82,
+                "col_offset": 8,
+                "end_lineno": 82,
+                "end_col_offset": 9
+              },
+              "id": "i"
+            },
+            "iter": {
+              "kind": "Call",
+              "span": {
+                "lineno": 82,
+                "col_offset": 13,
+                "end_lineno": 82,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 82,
+                  "col_offset": 13,
+                  "end_lineno": 82,
+                  "end_col_offset": 18
+                },
+                "id": "range"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 82,
+                    "col_offset": 19,
+                    "end_lineno": 82,
+                    "end_col_offset": 20
+                  },
+                  "id": "n"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            },
+            "body": [
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 83,
+                  "col_offset": 8,
+                  "end_lineno": 83,
+                  "end_col_offset": 13
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 83,
+                      "col_offset": 8,
+                      "end_lineno": 83,
+                      "end_col_offset": 9
+                    },
+                    "id": "x"
+                  }
+                ],
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 83,
+                    "col_offset": 12,
+                    "end_lineno": 83,
+                    "end_col_offset": 13
+                  },
+                  "id": "i"
+                }
+              },
+              {
+                "kind": "Delete",
+                "span": {
+                  "lineno": 84,
+                  "col_offset": 8,
+                  "end_lineno": 84,
+                  "end_col_offset": 13
+                },
+                "names": [
+                  "x"
+                ]
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 85,
+                  "col_offset": 8,
+                  "end_lineno": 85,
+                  "end_col_offset": 17
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 85,
+                      "col_offset": 8,
+                      "end_lineno": 85,
+                      "end_col_offset": 9
+                    },
+                    "id": "x"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 85,
+                    "col_offset": 12,
+                    "end_lineno": 85,
+                    "end_col_offset": 17
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 85,
+                      "col_offset": 12,
+                      "end_lineno": 85,
+                      "end_col_offset": 13
+                    },
+                    "id": "i"
+                  },
+                  "op": "Mult",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 85,
+                      "col_offset": 16,
+                      "end_lineno": 85,
+                      "end_col_offset": 17
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  }
+                }
+              },
+              {
+                "kind": "Assign",
+                "span": {
+                  "lineno": 86,
+                  "col_offset": 8,
+                  "end_lineno": 86,
+                  "end_col_offset": 17
+                },
+                "targets": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 86,
+                      "col_offset": 8,
+                      "end_lineno": 86,
+                      "end_col_offset": 9
+                    },
+                    "id": "t"
+                  }
+                ],
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 86,
+                    "col_offset": 12,
+                    "end_lineno": 86,
+                    "end_col_offset": 17
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 86,
+                      "col_offset": 12,
+                      "end_lineno": 86,
+                      "end_col_offset": 13
+                    },
+                    "id": "t"
+                  },
+                  "op": "Add",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 86,
+                      "col_offset": 16,
+                      "end_lineno": 86,
+                      "end_col_offset": 17
+                    },
+                    "id": "x"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 87,
+              "col_offset": 4,
+              "end_lineno": 87,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 87,
+                "col_offset": 11,
+                "end_lineno": 87,
+                "end_col_offset": 12
+              },
+              "id": "t"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 90,
+          "col_offset": 0,
+          "end_lineno": 95,
+          "end_col_offset": 12
+        },
+        "name": "del_global",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 94,
+              "col_offset": 4,
+              "end_lineno": 94,
+              "end_col_offset": 12
+            },
+            "names": [
+              "gnum"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 95,
+              "col_offset": 4,
+              "end_lineno": 95,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 95,
+                "col_offset": 11,
+                "end_lineno": 95,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 98,
+          "col_offset": 0,
+          "end_lineno": 101,
+          "end_col_offset": 12
+        },
+        "name": "del_never",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 100,
+              "col_offset": 4,
+              "end_lineno": 100,
+              "end_col_offset": 12
+            },
+            "names": [
+              "nope"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 101,
+              "col_offset": 4,
+              "end_lineno": 101,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 101,
+                "col_offset": 11,
+                "end_lineno": 101,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 104,
+          "col_offset": 0,
+          "end_lineno": 110,
+          "end_col_offset": 12
+        },
+        "name": "double_del",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 104,
+              "col_offset": 15,
+              "end_lineno": 104,
+              "end_col_offset": 16
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 107,
+              "col_offset": 4,
+              "end_lineno": 107,
+              "end_col_offset": 9
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 107,
+                  "col_offset": 4,
+                  "end_lineno": 107,
+                  "end_col_offset": 5
+                },
+                "id": "x"
+              }
+            ],
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 107,
+                "col_offset": 8,
+                "end_lineno": 107,
+                "end_col_offset": 9
+              },
+              "id": "n"
+            }
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 108,
+              "col_offset": 4,
+              "end_lineno": 108,
+              "end_col_offset": 9
+            },
+            "names": [
+              "x"
+            ]
+          },
+          {
+            "kind": "Delete",
+            "span": {
+              "lineno": 109,
+              "col_offset": 4,
+              "end_lineno": 109,
+              "end_col_offset": 9
+            },
+            "names": [
+              "x"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 110,
+              "col_offset": 4,
+              "end_lineno": 110,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 110,
+                "col_offset": 11,
+                "end_lineno": 110,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 113,
+          "col_offset": 0,
+          "end_lineno": 117,
+          "end_col_offset": 12
+        },
+        "name": "del_sub",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 115,
+              "col_offset": 4,
+              "end_lineno": 115,
+              "end_col_offset": 14
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 115,
+                  "col_offset": 4,
+                  "end_lineno": 115,
+                  "end_col_offset": 5
+                },
+                "id": "d"
+              }
+            ],
+            "value": {
+              "kind": "Dict",
+              "span": {
+                "lineno": 115,
+                "col_offset": 8,
+                "end_lineno": 115,
+                "end_col_offset": 14
+              },
+              "keys": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 115,
+                    "col_offset": 9,
+                    "end_lineno": 115,
+                    "end_col_offset": 10
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              ],
+              "values": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 115,
+                    "col_offset": 12,
+                    "end_lineno": 115,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 116,
+              "col_offset": 4,
+              "end_lineno": 116,
+              "end_col_offset": 12
+            },
+            "py_kind": "Delete",
+            "text": "del d[1]"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 117,
+              "col_offset": 4,
+              "end_lineno": 117,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 117,
+                "col_offset": 11,
+                "end_lineno": 117,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 120,
+          "col_offset": 0,
+          "end_lineno": 123,
+          "end_col_offset": 12
+        },
+        "name": "del_attr",
+        "args": [
+          {
+            "arg": "o",
+            "span": {
+              "lineno": 120,
+              "col_offset": 13,
+              "end_lineno": 120,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 122,
+              "col_offset": 4,
+              "end_lineno": 122,
+              "end_col_offset": 14
+            },
+            "py_kind": "Delete",
+            "text": "del o.attr"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 123,
+              "col_offset": 4,
+              "end_lineno": 123,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 123,
+                "col_offset": 11,
+                "end_lineno": 123,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "0"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

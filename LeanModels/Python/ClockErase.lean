@@ -1191,6 +1191,22 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
       cases printOne s4.world.heap v with
       | none => exact .unsupported
       | some r => exact .exn hs4 _
+  | delStmt names sp =>
+    -- del RECONCILED (docs/memory-model.md §the del statement): a pure
+    -- locals rewrite — reads neither heap nor clock, so NO `ce_norm`
+    -- (the recorded design's pricing: the live distinction from the
+    -- heap-READING arms). `withClock_locals` aligns the seeded side's
+    -- scrutinee; both branches are leaves.
+    simp only [execStmt, FrameState.withClock_locals]
+    cases delNames st.locals names.toList with
+    | mk env miss =>
+      cases miss with
+      | none =>
+        -- the {st} implicit must be given EXPLICITLY: passing `h` first
+        -- pins it to the un-updated frame (defeq at .world.clock but not
+        -- syntactically the ok-state), the H3 eager-unification trap
+        exact ClockErasedF.ok (st := { st with locals := env }) h RFlow.next
+      | some n => exact .unsupported
   | raiseStmt exc cause sp =>
     simp only [execStmt]
     ce_norm

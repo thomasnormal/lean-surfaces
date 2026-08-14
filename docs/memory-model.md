@@ -3230,6 +3230,90 @@ before building; the absent-module machinery and the `except
 ImportError:` extension still land, `bisect` does not flip, and the
 ceiling stands as measured.
 
+## The `del` statement (the tail batch, construct 3 — BUILT 2026-08-14)
+
+The recorded design (docs/backlog.md §the tail, construct 3) is built as
+written for FUNCTION scope, plus the reconciled MODULE-scope arm
+(docs/backlog.md §`del` RECONCILED with the one pipeline — written and
+committed BEFORE this implementation, with the flip prediction
+pre-registered). The construct is `del name, …` over BARE NAMES only:
+`del d[k]`, `del o.attr`, `del xs[i]` are measured second tables and
+stay `Unsupported` at extraction (clause 4).
+
+**Surface.** One constructor `Stmt.delStmt (names : Array String) sp`;
+`Env.remove` (structural recursion beside `lookup`/`set`) and the pure
+fold `delNames : env → List String → env × Option String` threading the
+PARTIAL left-to-right effect (CPython really removes `x` before raising
+on `nosuch` in `del x, nosuch` — measured row 5); one `execStmt` arm;
+the `execScriptOne` arm; the ingestion arm; the trailing rewrite; the
+extractor clauses. Proof sites, exactly the recorded pricing:
+`Stmt.heapFree` unconditionally `true` (no sub-expression, locals are
+not a `World` field), `fuelMono` `Run.le_refl` (fuel-free), `worldInv`
+the non-vacuous `.okF rfl` on the ok path, `clockErase` a leaf pair
+with NO `ce_norm` (nothing reads heap or clock — `withClock_locals`
+aligns the seeded scrutinee). The script arm is OUTSIDE the mutual
+block and outside all three inductions.
+
+**Function scope (the recorded census).** Clause 1: `del` targets BIND
+(`_assigned_names` gains `ast.Delete`, repairing its recorded
+disagreement with `_binding_linenos` — which also makes a deleted
+capture a REBIND for the H7 snapshot admission, and a deleted callee a
+`_shadowed_calls` hit, both for free). Clause 2: any Load of a del'd
+name anywhere in the body refuses the function through
+`locals_unsupported` — the channel's third instance; the stated
+over-refusals (`rebind_after`, `loop_del` — programs CPython accepts)
+are pinned in `del_lab`. The runtime arm's miss case is therefore only
+ever `del` of a never-bound name (`del g`/`del nope`/double-del): loud,
+never a fabricated `UnboundLocalError`.
+
+**Module scope (the reconciled arm, script surface only).** By §the
+publish the frame's locals ARE the module globals and the one pipeline
+keeps them complete, so in `execScriptOne`: a locals HIT removes and
+publishes; a MISS is decided in measured order — dunder targets loud
+(CPython's `del __name__; print(__name__)` prints `builtins`: the
+removal uncovers the builtins module's own binding), benign-import
+names loud (`benignImportNames` — they bind statically, `import time;
+del time` succeeds silently in CPython and a NameError would be
+WRONG), definition names loud (static table entries), and anything
+else the faithful `.exn (.nameError n)` with the partial effect
+retained. Deletion never consults builtins — CPython's `del len` is
+the same `NameError` (measured), so no `isPyBuiltinName` gate.
+
+**The trailing rewrite (ingestion, the aliasing precedent).** In the
+maximal all-`Delete`/`Pass` SUFFIX of the top level, a del target that
+is a `def`/`class`/namedtuple/alias name occurring as a del target
+exactly ONCE module-wide is dropped at ingestion (`delTargets` census,
+nested compounds included; a statement left empty becomes `pass`).
+Sound because the name is certainly bound there and nothing observable
+follows; `del f; del f` keeps both and refuses on the second. This is
+what runs opcode.py's `del def_op, name_op, jrel_op, jabs_op`
+(`del_trailing_script.py` is the opcode-shaped pin).
+
+**Closed-function surface.** A top-level `del` is an exec candidate
+whose attempt always refuses (`initExecStmt` runs with EMPTY locals),
+taking the rollback that POISONS the targets — `Stmt.g1Binds` is
+`some targets`, NOT the recorded "`[]`": `globalsDirty` poisons exactly
+`g1Binds ++ g1Stores`, and an empty set would resurface the deleted
+name's stale static binding (measured against the definitions; the
+recorded open note is superseded). Mention censuses (`stmtRefs`,
+`stmtNamesXW`, `yfNames`, `Stmt.allNames`, `Stmt.assignedNames`) all
+carry the targets — the conservative direction everywhere
+(`defsBoundBefore` ordering, namedtuple/alias recognition,
+`scriptFlushCoherent`).
+
+**Battery.** `Examples/python/del_lab` (13 functions, all differential
+— 4 in-tier, 3 census-refused incl. the two stated over-refusals, 3
+runtime-refused, 2 shape-refused, the module global for `del_global`);
+scripts `del_trailing_script` / `del_global_script` /
+`del_never_script` / `del_partial_script` / `del_shell_script` (match)
+and `del_def_mid_script` / `del_dunder_script` / `del_import_script`
+(loud, notes record CPython's side). Pre-registered prediction:
+**opcode.py does NOT flip** — its next wall is the DYNAMIC
+`%`-formatting refusal at `opname = ['<%r>' % (op,) for op in
+range(256)]`, invisible to the static wall census; the acceptance
+signal for this landing is opcode's refusal MESSAGE moving from
+`unsupported statement 'Delete'` to the `%` arm's.
+
 ## Module-level def aliasing (the narrow first-class slice — DESIGN, 2026-08-14)
 
 The Pass 0 landing measured bisect's next wall exactly: behind the

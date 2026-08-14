@@ -438,7 +438,6 @@
   {"file": "Examples/python/init_lab/init_lab.py", "function": "get_k", "args": [[]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "call_pad", "args": [[5], [0]], "expect": "match"},
   {"file": "Examples/python/init_lab/init_lab.py", "function": "swap_a", "args": [[1], [0]], "expect": "match"},
-
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": [123], "expect": "match"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_clock", "args": [[]], "clock": "record", "expect": "match"},
   {"file": "Examples/python/clock_lab/clock_lab.py", "function": "read_twice", "args": [[]], "clock": [5, 9], "expect": "match"},
@@ -511,5 +510,17 @@
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_ret", "args": [[]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_badidx", "args": [[]], "expect": "match"},
   {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_arity", "args": [[]], "expect": "match"},
-  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_insort", "args": [[4], [0], [9], [5]], "expect": "match"}
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_insort", "args": [[4], [0], [9], [5]], "expect": "match"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "keep", "args": [[3], [0], [-2]], "expect": "match"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_param", "args": [[5], [0]], "expect": "match"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_two", "args": [[4], [-1]], "expect": "match"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "cond_del", "args": [[3], [0], [-3]], "expect": "match"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "read_after", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "rebind_after", "args": [[1]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "loop_del", "args": [[3]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_global", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_never", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "double_del", "args": [[2]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_sub", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/del_lab/del_lab.py", "function": "del_attr", "args": [[0]], "expect": "unsupported"}
 ]

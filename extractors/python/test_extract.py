@@ -689,5 +689,93 @@ class ImportFromTests(unittest.TestCase):
         self.assertNotIn("zzz_no_such_module", inv)
 
 
+class DeleteTests(unittest.TestCase):
+    """The del statement (docs/memory-model.md paragraph "the del
+    statement" + docs/backlog.md paragraph "del RECONCILED"): bare-name
+    targets structure at BOTH scopes; census clause 2 refuses any read
+    of a del'd name; non-name targets keep the Unsupported fallthrough;
+    a del counts as a binding for the closure rebound-after-def rule."""
+
+    def _module_body(self, source):
+        import ast
+        return [extract.convert_stmt(st, module_scope=True)
+                for st in ast.parse(source).body]
+
+    def _first_fn(self, source):
+        import ast
+        return extract.convert_stmt(ast.parse(source).body[0])
+
+    def test_function_scope_del_is_structured(self):
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    del x\n    return 0\n")
+        self.assertIsNone(fn["locals_unsupported"])
+        st = fn["body"][1]
+        self.assertEqual(st["kind"], "Delete")
+        self.assertEqual(st["names"], ["x"])
+
+    def test_multi_target_del_keeps_order(self):
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    y = n\n    del x, y\n    return 0\n")
+        self.assertEqual(fn["body"][2]["names"], ["x", "y"])
+
+    def test_del_of_parameter_is_in_tier(self):
+        fn = self._first_fn("def f(n):\n    del n\n    return 0\n")
+        self.assertIsNone(fn["locals_unsupported"])
+        self.assertEqual(fn["body"][0]["kind"], "Delete")
+
+    def test_read_after_del_refuses(self):
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    del x\n    return x\n")
+        self.assertIn("del'd", fn["locals_unsupported"])
+        self.assertIn("x", fn["locals_unsupported"])
+
+    def test_rebind_after_del_refuses_the_stated_overrefusal(self):
+        # CPython accepts this; the census refuses it (recorded price:
+        # the read at `return x` intersects the del'd name set).
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    del x\n    x = 99\n    return x\n")
+        self.assertIn("del'd", fn["locals_unsupported"])
+
+    def test_conditional_del_without_read_is_in_tier(self):
+        fn = self._first_fn(
+            "def f(n):\n    x = n\n    if n > 0:\n        del x\n"
+            "    return 0\n")
+        self.assertIsNone(fn["locals_unsupported"])
+
+    def test_subscript_and_attribute_del_stay_unsupported(self):
+        fn = self._first_fn(
+            "def f(d, o):\n    del d['k']\n    return 0\n")
+        self.assertEqual(fn["body"][0]["kind"], "Unsupported")
+        self.assertEqual(fn["body"][0]["py_kind"], "Delete")
+        fn = self._first_fn(
+            "def f(o):\n    del o.attr\n    return 0\n")
+        self.assertEqual(fn["body"][0]["kind"], "Unsupported")
+
+    def test_module_scope_del_is_structured(self):
+        # the REVISED clause 3: module scope structures; the runtime
+        # admission is the script executor's (docs/backlog.md paragraph
+        # "del RECONCILED with the one pipeline")
+        body = self._module_body("b = 5\ndel b\n")
+        self.assertEqual(body[1]["kind"], "Delete")
+        self.assertEqual(body[1]["names"], ["b"])
+
+    def test_del_counts_as_binding_for_closures(self):
+        # a capture DELETED after the def is a rebind for the snapshot
+        # tier (`_binding_linenos` and `_assigned_names` now agree)
+        fn = self._first_fn(
+            "def outer(a):\n    def f():\n        return a\n"
+            "    del a\n    return 0\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("rebound after the def", nd["closure_unsupported"])
+
+    def test_del_shadowed_call_refuses(self):
+        # clause 1 makes the del'd name local, so calling it takes the
+        # static-locals refusal channel (the hazard's third instance)
+        fn = self._first_fn(
+            "def f():\n    del g\n    return g()\n")
+        self.assertIsNotNone(fn["locals_unsupported"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

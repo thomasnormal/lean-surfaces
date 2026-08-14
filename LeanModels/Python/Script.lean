@@ -179,6 +179,9 @@ mutual
       (exc.map Expr.allNames).getD [] ++ (cause.map Expr.allNames).getD []
     | .assertStmt t m _ =>
       t.allNames ++ (m.map Expr.allNames).getD []
+    -- del RECONCILED: a target is a mention (so `defsBoundBefore` orders
+    -- a surviving `del f` after `def f` ends — refusal above it is loud)
+    | .delStmt ns _ => ns.toList
     | .tryStmt b excName hnd _ _ =>
       excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
     -- Pass 0 (§import forms): an import reads no in-module names (its
@@ -215,6 +218,10 @@ mutual
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
     | .tryStmt b _ hnd _ _ =>
       Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList hnd.toList
+    -- del RECONCILED: a removal is a binding CHANGE — inside a delegated
+    -- compound it is exactly as invisible to called functions as a
+    -- mid-compound bind, so `scriptFlushCoherent` must see it
+    | .delStmt ns _ => ns.toList
     | _ => []
 
   /-- Elementwise `Stmt.assignedNames`. -/
@@ -248,7 +255,7 @@ def scriptStmtSpan : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
-  | .importFrom _ _ _ sp
+  | .importFrom _ _ _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The last line at which the module's `def` / `class` / recognized
@@ -369,6 +376,19 @@ def scriptImports (m : Module) : List Stmt :=
     match s with
     | .unsupported "Import" _ _ | .unsupported "ImportFrom" _ _ => true
     | _ => false
+
+/-- Names the module's BENIGN-whitelisted imports bind (`time`, `count`,
+`namedtuple`). They bind STATICALLY — never in the script frame's locals
+— so the module-scope `del` arm has nothing to remove and refuses
+LOUDLY: CPython's `import time; del time` succeeds silently, and a
+faithful `NameError` here would be a wrong answer
+(docs/backlog.md §`del` RECONCILED, measured row 3). -/
+def benignImportNames (m : Module) : List String :=
+  m.topLevel.toList.filterMap fun s =>
+    match s with
+    | .unsupported "Import" text _ | .unsupported "ImportFrom" text _ =>
+      (benignImportBinds text).map Prod.fst
+    | _ => Option.none
 
 /-- THE SCRIPT VIEW: the module frames resolve names against while a
 PROGRAM runs. Its top level carries no program statement, so
@@ -633,6 +653,36 @@ mutual
       | .unsupported "ImportFrom" text sp =>
         if (benignImportBinds text).isSome then .ok st .next
         else execStmt m fuel st (.unsupported "ImportFrom" text sp)
+      | .delStmt names _ =>
+        -- The MODULE-scope `del` arm (docs/backlog.md §`del` RECONCILED
+        -- with the one pipeline; docs/memory-model.md §the del
+        -- statement). By §the publish the frame's locals ARE the module
+        -- globals and the one pipeline keeps them COMPLETE, so a locals
+        -- HIT removes exactly CPython's module global (published after
+        -- the statement like any bind) and a MISS is decided in CPython's
+        -- order of authority: a dunder target is loud (the model resolves
+        -- dunder reads statically — and CPython's `del __name__` UNCOVERS
+        -- builtins' own `__name__`, measured); a benign-import name is
+        -- loud (it binds statically, so the removal has nothing to act
+        -- on); a `def`/`class`/namedtuple/alias name is loud (a static
+        -- table entry — the TRAILING position is rewritten away at
+        -- ingestion, so reaching here means a non-trailing del of a
+        -- definition); anything else is the faithful `NameError`, with
+        -- the PARTIAL left-to-right effect retained on the raise
+        -- (`del x, nosuch` really removes `x` — the recorded row 5).
+        -- Deletion never consults builtins: CPython's `del len` is the
+        -- same `NameError` (measured), so no `isPyBuiltinName` gate.
+        (match delNames st.locals names.toList with
+         | (env, Option.none) => .ok { st with locals := env } .next
+         | (env, some n) =>
+           if dunderShaped n then
+             .unsupported s!"'del {n}': deleting a module dunder is outside the tier (the model resolves dunder reads statically; CPython's removal uncovers the BUILTINS module's binding — docs/backlog.md §del RECONCILED)"
+           else if (benignImportNames m).contains n then
+             .unsupported s!"'del {n}': the name is bound by a whitelisted import, which the model binds statically — outside the tier (docs/backlog.md §del RECONCILED)"
+           else if (findFunction m n).isSome || (findClass m n).isSome
+               || m.namedtuples.any (·.name == n) then
+             .unsupported s!"'del {n}': a module 'def'/'class'/namedtuple name is a static table entry; only a TRAILING del of it is admitted (rewritten at ingestion — docs/backlog.md §del RECONCILED)"
+           else .exn { st with locals := env } (.nameError n))
       | s => execStmt m fuel st s
   termination_by structural fuel
 

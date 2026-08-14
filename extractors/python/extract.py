@@ -549,11 +549,42 @@ def _assigned_names(fn):
             targets = node.targets
         elif isinstance(node, (ast.AugAssign, ast.AnnAssign, ast.For)):
             targets = [node.target]
+        elif isinstance(node, ast.Delete):
+            # del RECONCILED (docs/memory-model.md paragraph "the del
+            # statement", census clause 1): a `del` target is a BINDING
+            # (CPython's whole-body rule localises it), which also repairs
+            # the recorded disagreement with `_binding_linenos`, which
+            # already counted Delete targets.
+            targets = node.targets
         else:
             continue
         for t in targets:
             names.update(_target_bound_names(t))
     return names
+
+
+def _del_read_names(fn):
+    """`del`'d names the body also READS (docs/memory-model.md paragraph
+    "the del statement", census clause 2): deliberately a NAME-SET
+    intersection, never a liveness analysis -- after the removal a read
+    would fall through to module globals where CPython raises
+    UnboundLocalError, silently wrong, so any read of a deleted name
+    refuses the whole function. The stated over-refusal
+    (``x = n; del x; x = 99; return x`` refuses although CPython accepts)
+    is recorded in the design. Reads in nested scopes count too -- the
+    conservative direction (their capture snapshots are separately
+    guarded by `_binding_linenos`, which sees the del as a binding)."""
+    deleted = set()
+    for node in _walk_scope(fn):
+        if isinstance(node, ast.Delete):
+            for t in node.targets:
+                if isinstance(t, ast.Name):
+                    deleted.add(t.id)
+    if not deleted:
+        return []
+    reads = {n.id for n in ast.walk(fn)
+             if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load)}
+    return sorted(deleted & reads)
 
 
 def _shadowed_calls(fn):
@@ -838,7 +869,15 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                     "calls nested-def name(s) before the def (static-locals "
                     "rule): " + ", ".join(early)
                     if (early := _early_nested_calls(node))
-                    else None
+                    else (
+                        # del census clause 2 (docs/memory-model.md
+                        # paragraph "the del statement")
+                        "reads del'd name(s) (a dynamic-env fallthrough "
+                        "to a module name would be silently wrong): "
+                        + ", ".join(delread)
+                        if (delread := _del_read_names(node))
+                        else None
+                    )
                 )
             ),
             # a nested def DIRECTLY in this body is the H7 closure shape
@@ -1017,6 +1056,20 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         if node.msg is not None:
             d["msg"] = convert_expr(node.msg)
         return d
+    if isinstance(node, ast.Delete):
+        # The tail batch (docs/memory-model.md paragraph "the del
+        # statement"): BARE NAMES only -- `del d[k]`, `del o.attr`,
+        # `del xs[i]` are measured second tables and keep the Unsupported
+        # fallthrough (census clause 4). Both scopes are structured: the
+        # function-scope tier is the recorded census (clauses 1-2 above),
+        # the module-scope tier is the script executor's arm plus the
+        # trailing-del-of-defs ingestion rewrite (docs/backlog.md
+        # paragraph "del RECONCILED with the one pipeline" -- the revised
+        # clause 3).
+        if all(isinstance(t, ast.Name) for t in node.targets):
+            return {"kind": "Delete", "span": span(node),
+                    "names": [t.id for t in node.targets]}
+        return unsupported(node)
     if isinstance(node, ast.Raise):
         # Exceptions tier (docs/memory-model.md paragraph "exceptions"):
         # structured in FULL generality -- bare raise, raise <expr>,

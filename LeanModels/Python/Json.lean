@@ -297,6 +297,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
           | .ok jv => do pure (some (← parseExpr jv))
           | .error _ => pure Option.none
         return .assertStmt (← parseExpr (← j.getObjVal? "test")) msg span
+    | "Delete" =>
+        -- the tail batch (docs/memory-model.md §the del statement): the
+        -- extractor admits BARE NAMES only (clause 4 ships everything
+        -- else as `Unsupported`), so the field is a plain string array.
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        return .delStmt names span
     | "Try" =>
         -- exceptions tier: the v0 single-handler fields plus the
         -- `callUnsupported`-style reason (structured-but-loud).
@@ -569,6 +575,11 @@ private partial def stmtBindsWith (imp0 : Bool) : Stmt → Option (List String)
   -- body and handler can (over-approximation, the safe direction)
   | .raiseStmt .. => some []
   | .assertStmt .. => some []
+  -- del RECONCILED: a `del` target counts as a BINDING here — the
+  -- direction `_binding_linenos` already took in the extractor, and the
+  -- conservative one for every census this feeds (a namedtuple or alias
+  -- name that is deleted anywhere must not be recognized).
+  | .delStmt ns _ => some ns.toList
   | .tryStmt b _ hnd _ _ => do
     let bb ← b.toList.mapM (stmtBindsWith imp0)
     let hb ← hnd.toList.mapM (stmtBindsWith imp0)
@@ -629,6 +640,8 @@ mutual
       (exc.map exprRefs).getD [] ++ (cause.map exprRefs).getD []
     | .assertStmt t m _ =>
       exprRefs t ++ (m.map exprRefs).getD []
+    -- del RECONCILED: a target is a MENTION of the name (conservative)
+    | .delStmt ns _ => ns.toList
     | .tryStmt b excName hnd _ _ =>
       excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
     -- Pass 0: an import references no in-module names
@@ -645,7 +658,7 @@ private def stmtSpanOf : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
-  | .importFrom _ _ _ sp
+  | .importFrom _ _ _ sp | .delStmt _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -910,6 +923,9 @@ private partial def yfNames : Stmt → List String
   -- Pass 0: statement-position only at module top level; observes and
   -- (in Pass 0) binds nothing a yield-from target could collide with
   | .importFrom .. => []
+  -- del RECONCILED: targets are mentions (a colliding yield-from target
+  -- must refuse — over-reporting is the safe direction)
+  | .delStmt ns _ => ns.toList
   | .defStmt name _ _ _ _ _ body captures _ =>
       [name] ++ captures.toList ++ (body.toList.map yfNames).flatten
 
@@ -1023,6 +1039,9 @@ private partial def stmtNamesXW : Stmt → List String
   -- colliding walrus, the safe direction); star enumerates nothing and
   -- in Pass 0 binds nothing (the raise fires first)
   | .importFrom _ names _ _ => names.toList
+  -- del RECONCILED: targets count as enclosing occurrences (safe
+  -- direction — a walrus name colliding with a del target refuses)
+  | .delStmt ns _ => ns.toList
   | .defStmt name params _ _ _ _ body captures _ =>
       -- a NESTED scope: its walrus rules are its own; conservatively,
       -- every name it mentions counts as an enclosing occurrence
@@ -1173,6 +1192,7 @@ mutual
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
     | .assertStmt t m sp =>
         return .assertStmt (← lowerExpr ctx t) (← m.mapM (lowerExpr ctx)) sp
+    | .delStmt ns sp => return .delStmt ns sp
     | .tryStmt b en hnd tu sp =>
         return .tryStmt (← lowerStmts ctx b) en (← lowerStmts ctx hnd) tu sp
     | .defStmt name params ao lo hg ig body captures sp =>
@@ -1263,6 +1283,64 @@ mutual
   private partial def splitChainStmts (ss : Array Stmt) : Array Stmt :=
     ((ss.toList.map splitChainStmt).flatten).toArray
 end
+
+/-- Every `del` target in the statement's subtree, with multiplicity —
+the uniqueness census of the trailing-del rewrite below. Nested
+compounds are walked; `defStmt` bodies are DELIBERATELY not (extractor
+clause 1 makes a function-scope `del` target a LOCAL of that function,
+so it never touches the module binding this census protects). -/
+private partial def delTargets : Stmt → List String
+  | .delStmt ns _ => ns.toList
+  | .whileLoop _ b o _ | .ifStmt _ b o _ =>
+      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
+  | .forStmt _ _ b o _ =>
+      (b.toList.map delTargets).flatten ++ (o.toList.map delTargets).flatten
+  | .tryStmt b _ hnd _ _ =>
+      (b.toList.map delTargets).flatten ++ (hnd.toList.map delTargets).flatten
+  | _ => []
+
+/-- del RECONCILED (docs/backlog.md §`del` RECONCILED with the one
+pipeline): rewrite TRAILING `del`s of definition names away. A
+`def`/`class`/namedtuple/alias binding is a STATIC table entry no
+runtime arm can remove (the tombstone alternatives are the recorded
+design's rejected Option A), but in the module's TRAILING RUN — the
+maximal suffix of top-level statements that are all `Delete` or `Pass` —
+the removal is UNOBSERVABLE: the name is certainly bound there
+(`defsBoundBefore` orders the mention, `initBindable` forbids rebinding,
+the uniqueness census below forbids an earlier admitted del), so the
+deletion cannot raise, and nothing after the trailing run can read it.
+Per TARGET: a definition name occurring as a del target EXACTLY ONCE in
+the whole top level (nested compounds included — `del f; del f` must
+stay loud on the second) is dropped from its statement; a statement left
+with no targets becomes `pass`. Dropping preserves CPython's partial
+left-to-right order because a dropped target's deletion is the one step
+that cannot raise. Everything not dropped is the runtime arms' business
+(module scope: `execScriptOne`; the opcode.py payer:
+`del def_op, name_op, jrel_op, jabs_op` as the module's last statement). -/
+private def rewriteTrailingDefDels (functions : Array FunctionDefn)
+    (classes : Array ClassDefn) (namedtuples : Array NamedTupleDefn)
+    (topLevel : Array Stmt) : Array Stmt :=
+  let isTail : Stmt → Bool := fun s =>
+    match s with
+    | .delStmt .. | .pass _ => true
+    | _ => false
+  let stmts := topLevel.toList
+  let tailLen := (stmts.reverse.takeWhile isTail).length
+  if tailLen == 0 then topLevel else
+  let tailStart := stmts.length - tailLen
+  let isDefName : String → Bool := fun n =>
+    functions.any (·.name == n) || classes.any (·.name == n)
+      || namedtuples.any (·.name == n)
+  let allDelTargets := (stmts.map delTargets).flatten
+  let uniqueOnce : String → Bool := fun n =>
+    (allDelTargets.filter (· == n)).length == 1
+  let rewriteOne : Stmt → Stmt := fun s =>
+    match s with
+    | .delStmt ns sp =>
+      let keep := ns.filter fun n => !(isDefName n && uniqueOnce n)
+      if keep.isEmpty then .pass sp else .delStmt keep sp
+    | s => s
+  (stmts.take tailStart ++ (stmts.drop tailStart).map rewriteOne).toArray
 
 /-- MODULE-LEVEL DEF ALIASING (docs/memory-model.md §module-level def
 aliasing): recognize a direct top-level `alias = name` where `name` is a
@@ -1420,7 +1498,12 @@ def parseModule (j : Json) : Except String Module :=
     -- alias copies share the just-synthesized `<genexpr@n>` helpers.
     let (functions'', topLevel''') :=
       recognizeDefAliases functions' classes' namedtuples topLevel''
-    return { functions := functions'', topLevel := topLevel''',
+    -- del RECONCILED, after the alias pass (alias entries ARE functions
+    -- entries, so `del bisect` of an admitted alias is covered by the
+    -- same definition-name test).
+    let topLevel'''' :=
+      rewriteTrailingDefDels functions'' classes' namedtuples topLevel'''
+    return { functions := functions'', topLevel := topLevel'''',
              classes := classes', namedtuples }
 
 def parseLeanBlock (j : Json) : Except String LeanBlock :=

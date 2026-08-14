@@ -521,5 +521,173 @@ class ClassDefTests(unittest.TestCase):
         self.assertIn("class-level statements", body[0]["class_unsupported"])
 
 
+class ImportFromTests(unittest.TestCase):
+    # -- Pass 0 (docs/memory-model.md paragraph "Import forms (Pass 0)"):
+    # the extractor structures EXACTLY the admitted shape; everything
+    # else keeps the Unsupported fallthrough verbatim, because five
+    # text-keyed consumers depend on that shape for still-refused
+    # imports. `zzz_no_such_module` is the inventory-absent probe;
+    # `binascii` / `_bisect` are platform-present (in the committed
+    # inventory), so their unguarded forms must stay Unsupported.
+
+    def _module_body(self, source):
+        import ast
+        return [extract.convert_stmt(st, module_scope=True)
+                for st in ast.parse(source).body]
+
+    def _try_body(self, source):
+        """The converted DIRECT body of a module-level try statement."""
+        return self._module_body(source)[0]["body"]
+
+    def test_guarded_star_of_present_module_is_structured(self):
+        # bisect.py 73-76, the census's one program-mode flip
+        s = self._try_body(
+            "try:\n"
+            "    from _bisect import *\n"
+            "except ImportError:\n"
+            "    pass\n")[0]
+        self.assertEqual(s["kind"], "ImportFrom")
+        self.assertEqual(s["module"], "_bisect")
+        self.assertEqual(s["names"], [])
+        self.assertIs(s["star"], True)
+
+    def test_guarded_names_of_present_module_are_structured(self):
+        # quopri.py 14-18: the handler binds both names to None
+        s = self._try_body(
+            "try:\n"
+            "    from binascii import a2b_qp, b2a_qp\n"
+            "except ImportError:\n"
+            "    a2b_qp = None\n"
+            "    b2a_qp = None\n")[0]
+        self.assertEqual(s["kind"], "ImportFrom")
+        self.assertEqual(s["module"], "binascii")
+        self.assertEqual(s["names"], ["a2b_qp", "b2a_qp"])
+        self.assertNotIn("star", s)  # absent = False, default-tolerant
+
+    def test_second_try_body_statement_is_also_guarded(self):
+        # opcode.py 18-21: the try BODY has a second statement, so guard
+        # position is "direct body statement", never "sole statement"
+        body = self._try_body(
+            "try:\n"
+            "    from _opcode import stack_effect\n"
+            "    x = 1\n"
+            "except ImportError:\n"
+            "    pass\n")
+        self.assertEqual(body[0]["kind"], "ImportFrom")
+        self.assertEqual(body[1]["kind"], "Assign")
+
+    def test_unguarded_absent_module_is_structured(self):
+        # CPython's own ModuleNotFoundError -- admitted anywhere at top
+        # level, guarded or not
+        s = self._module_body("from zzz_no_such_module import x\n")[0]
+        self.assertEqual(s["kind"], "ImportFrom")
+        self.assertEqual(s["module"], "zzz_no_such_module")
+        self.assertEqual(s["names"], ["x"])
+
+    def test_unguarded_absent_star_is_structured(self):
+        s = self._module_body("from zzz_no_such_module import *\n")[0]
+        self.assertEqual(s["kind"], "ImportFrom")
+        self.assertIs(s["star"], True)
+
+    def test_unguarded_present_module_stays_unsupported(self):
+        # CPython SUCCEEDS here; a surfaced ImportError would be a
+        # wrong answer, so outside the guard it refuses loudly
+        s = self._module_body("from binascii import a2b_qp\n")[0]
+        self.assertEqual(s["kind"], "Unsupported")
+        self.assertEqual(s["py_kind"], "ImportFrom")
+        self.assertEqual(s["text"], "from binascii import a2b_qp")
+
+    def test_nested_in_try_body_if_is_not_guard_position(self):
+        # only DIRECT body statements are caught by construction
+        body = self._try_body(
+            "try:\n"
+            "    if 1:\n"
+            "        from binascii import a2b_qp\n"
+            "except ImportError:\n"
+            "    pass\n")
+        inner = body[0]["body"][0]
+        self.assertEqual(inner["kind"], "Unsupported")
+        self.assertEqual(inner["py_kind"], "ImportFrom")
+
+    def test_wrong_handler_class_is_not_a_guard(self):
+        body = self._try_body(
+            "try:\n"
+            "    from binascii import a2b_qp\n"
+            "except OSError:\n"
+            "    pass\n")
+        self.assertEqual(body[0]["kind"], "Unsupported")
+
+    def test_relative_imports_stay_unsupported(self):
+        for src in ("from . import x\n", "from .foo import x\n"):
+            s = self._module_body(src)[0]
+            self.assertEqual(s["kind"], "Unsupported")
+            self.assertEqual(s["py_kind"], "ImportFrom")
+
+    def test_dotted_module_stays_unsupported_even_guarded(self):
+        body = self._try_body(
+            "try:\n"
+            "    from os.path import join\n"
+            "except ImportError:\n"
+            "    pass\n")
+        self.assertEqual(body[0]["kind"], "Unsupported")
+
+    def test_alias_stays_unsupported_even_when_absent(self):
+        s = self._module_body("from zzz_no_such_module import x as y\n")[0]
+        self.assertEqual(s["kind"], "Unsupported")
+
+    def test_function_body_import_stays_unsupported(self):
+        # non-top-level: module_scope is False inside a def, guarded or
+        # not -- the not_top_level battery row's static half
+        import ast
+        fn = ast.parse(
+            "def f():\n"
+            "    try:\n"
+            "        from zzz_no_such_module import x\n"
+            "    except ImportError:\n"
+            "        pass\n").body[0]
+        out = extract.convert_stmt(fn)
+        inner = out["body"][0]["body"][0]
+        self.assertEqual(inner["kind"], "Unsupported")
+        self.assertEqual(inner["py_kind"], "ImportFrom")
+
+    def test_plain_import_stays_unsupported(self):
+        for src in ("import zzz_no_such_module\n", "import time\n"):
+            s = self._module_body(src)[0]
+            self.assertEqual(s["kind"], "Unsupported")
+            self.assertEqual(s["py_kind"], "Import")
+
+    def test_benign_whitelist_rows_are_structured(self):
+        # canonicalized BACK to the legacy node at ingestion (Json.lean);
+        # structured here so envelope-structured <=> admitted holds and
+        # the survey's wall census needs zero code change
+        for src, mod, name in (
+                ("from itertools import count\n", "itertools", "count"),
+                ("from collections import namedtuple\n", "collections",
+                 "namedtuple")):
+            s = self._module_body(src)[0]
+            self.assertEqual(s["kind"], "ImportFrom")
+            self.assertEqual(s["module"], mod)
+            self.assertEqual(s["names"], [name])
+
+    def test_top_level_if_body_is_module_scope(self):
+        # module_scope threads through top-level if/for/while bodies
+        # (the lambda-NestedDef precedent), so a guarded try inside a
+        # top-level `if` still guards
+        s = self._module_body(
+            "if 1:\n"
+            "    try:\n"
+            "        from _bisect import *\n"
+            "    except ImportError:\n"
+            "        pass\n")[0]["body"][0]["body"][0]
+        self.assertEqual(s["kind"], "ImportFrom")
+
+    def test_inventory_probes(self):
+        inv = extract.platform_inventory()
+        for present in ("bisect", "_bisect", "binascii", "_stat",
+                        "_opcode", "itertools", "collections"):
+            self.assertIn(present, inv)
+        self.assertNotIn("zzz_no_such_module", inv)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

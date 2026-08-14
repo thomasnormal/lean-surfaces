@@ -84,6 +84,48 @@ ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
+# Pass 0 import forms (docs/memory-model.md paragraph "Import forms
+# (Pass 0)"): the two ImportFrom rows of the exact-text benign-import
+# whitelist (`benignImportBinds`, Ast.lean; `BENIGN_IMPORTS`,
+# harness/leanpy_survey.py -- keep all three in sync). These rows are
+# STRUCTURED here like every other admitted from-import and rewritten
+# back to the legacy Unsupported node at ingestion (Json.lean, the one
+# rewrite site), so the five text-keyed whitelist consumers see today's
+# shape unchanged. `import time` is a plain Import and never reaches
+# the ImportFrom arm.
+BENIGN_IMPORT_FROM = frozenset((
+    "from itertools import count",
+    "from collections import namedtuple",
+))
+
+_PLATFORM_INVENTORY = None
+
+
+def platform_inventory():
+    """The PINNED PLATFORM INVENTORY: top-level module names the pinned
+    interpreter ships (committed data, captured by subprocess -- see
+    capture_inventory.py; the census C-table / `isPyBuiltinName`
+    discipline: no absence is ever guessed). Loaded lazily -- only an
+    unguarded, non-benign from-import of admissible shape needs it --
+    and a missing/corrupt file is a hard ExtractError, never a silent
+    empty set (an empty set would admit EVERY module as absent and
+    surface wrong ImportErrors)."""
+    global _PLATFORM_INVENTORY
+    if _PLATFORM_INVENTORY is None:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "platform_inventory.json")
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                modules = json.load(f)["modules"]
+        except (OSError, ValueError, KeyError) as e:
+            raise ExtractError(
+                "platform_inventory.json is missing or unreadable (%s); "
+                "the absent-module import admission cannot be decided "
+                "without it -- regenerate with capture_inventory.py "
+                "against the pinned CPython 3.9.19" % (e,))
+        _PLATFORM_INVENTORY = frozenset(modules)
+    return _PLATFORM_INVENTORY
+
 
 class ExtractError(Exception):
     """Fatal extractor error (message is printed to stderr, exit code 1)."""
@@ -639,7 +681,15 @@ def _lambda_nested_def(node, enclosing):
     return out
 
 
-def convert_stmt(node, enclosing=None, module_scope=False):
+def convert_stmt(node, enclosing=None, module_scope=False,
+                 import_guard=False):
+    # `import_guard` (Pass 0, docs/memory-model.md paragraph "Import
+    # forms (Pass 0)"): True exactly when `node` is a DIRECT body
+    # statement of a `try` whose single handler is `except ImportError:`
+    # (set by the Try arm below and deliberately NOT threaded into
+    # nested if/loop bodies -- a nested statement is not in guard
+    # position, because the guard argument is "the raise is caught by
+    # construction", which only the direct body gives).
     # pass 3: a module-scope single-target `name = lambda …` assign (top
     # level, or directly in a top-level for/while/if body) is the
     # NestedDef shape with ZERO captures (module-scope flavor above)
@@ -911,10 +961,23 @@ def convert_stmt(node, enclosing=None, module_scope=False):
             reasons.append("'else' clause")
         if node.finalbody:
             reasons.append("'finally' clause")
+        # Pass 0 (docs/memory-model.md paragraph "Import forms
+        # (Pass 0)"): a top-level try whose single handler is literally
+        # `except ImportError:` puts its DIRECT body statements in
+        # import-guard position -- the fifth admission conjunct of the
+        # ImportFrom arm below. The guard is decided on the handler
+        # NAME alone; a try that is otherwise out of v0 (an `as`
+        # binding, `finally`, ...) still carries `try_unsupported` and
+        # refuses WHOLE at execution, before any guarded import inside
+        # it could run -- loud, never wrong.
+        guard = (module_scope and len(node.handlers) == 1
+                 and isinstance(node.handlers[0].type, ast.Name)
+                 and node.handlers[0].type.id == "ImportError")
         return {
             "kind": "Try",
             "span": span(node),
-            "body": [convert_stmt(s, module_scope=module_scope)
+            "body": [convert_stmt(s, module_scope=module_scope,
+                                  import_guard=guard)
                      for s in node.body],
             "exc_name": exc_name,
             "handler": handler_body,
@@ -951,6 +1014,49 @@ def convert_stmt(node, enclosing=None, module_scope=False):
         return {"kind": "Break", "span": span(node)}
     if isinstance(node, ast.Continue):
         return {"kind": "Continue", "span": span(node)}
+
+    if isinstance(node, ast.ImportFrom):
+        # Pass 0 (docs/memory-model.md paragraph "Import forms
+        # (Pass 0)"): STRUCTURE exactly the paying shape -- module top
+        # level, absolute (level == 0), single unqualified module name,
+        # plain names or star, no `as` aliases -- AND one of:
+        #   * import-guard position (a direct body statement of a
+        #     top-level `try` with a single `except ImportError:`
+        #     handler -- the raise is caught by construction, the
+        #     fallback branch runs under the memo's differential
+        #     obligation, docs/c-intrinsics-proposal.md 2.5);
+        #   * the module is ABSENT from the pinned platform inventory
+        #     (the Pass 0 raise is then CPython's own behavior,
+        #     guarded or not);
+        #   * the exact benign-whitelist texts (BENIGN_IMPORT_FROM
+        #     above), structured here and canonicalized back to the
+        #     legacy Unsupported node at ingestion.
+        # EVERYTHING else -- relative, dotted, aliased, non-top-level,
+        # and the unguarded from-import of a platform-present module --
+        # keeps the Unsupported fallthrough below VERBATIM. The
+        # extractor is the envelope's trust boundary (the `py_kind`/
+        # `exception_base`/`has_global` precedents), so the Lean side
+        # needs no inventory: its Pass 0 semantics raises
+        # unconditionally, and this admission is what makes that raise
+        # faithful.
+        star = len(node.names) == 1 and node.names[0].name == "*"
+        if (module_scope and node.level == 0 and node.module is not None
+                and "." not in node.module
+                and all(a.asname is None for a in node.names)
+                and (star or all(STEM_RE.match(a.name) is not None
+                                 for a in node.names))):
+            if (import_guard
+                    or unparse_truncated(node) in BENIGN_IMPORT_FROM
+                    or node.module not in platform_inventory()):
+                out = {
+                    "kind": "ImportFrom",
+                    "span": span(node),
+                    "module": node.module,
+                    "names": [] if star else [a.name for a in node.names],
+                }
+                if star:
+                    out["star"] = True
+                return out
 
     return unsupported(node)
 

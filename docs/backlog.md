@@ -2078,6 +2078,136 @@ a module-global name, `del` of a never-bound name, double `del`. Refused
 by shape: `del d[k]`, `del o.attr`, module-scope `del`. Plus a script
 whose stdout is compared byte-for-byte.
 
+## `del` RECONCILED with the one pipeline: the module-scope arm (2026-08-14)
+
+The recorded design above is implemented as written for FUNCTION scope —
+census clauses 1, 2 and 4, `Env.remove`, the left-to-right partial
+runtime arm, the three trivial proof sites. This section records the ONE
+revision (clause 3), why the post-one-pipeline world changes its price,
+and two open notes the recorded design asked to have MEASURED. Written
+BEFORE implementing; the flip prediction below is pre-registered.
+
+### The conflict, named
+
+The paying consumer is `opcode.py` — the stdlib sweep's only reachable
+`del` payer (measured 2026-08-14: `quopri.py` contains ZERO `del`
+statements, so "quopri/opcode stand on del/bytes" distributes as quopri →
+bytes, opcode → del; `types.py`'s `del sys, _f, …` sits behind many other
+walls; `copyreg.py`'s dels are subscript form, excluded by clause 4
+unrevised). Its one `del` is `del def_op, name_op, jrel_op, jabs_op` —
+MODULE scope, targets all top-level `def` names, the module's LAST
+statement. The recorded clause 3 refuses exactly this.
+
+### Why the refusal's price changed
+
+The recorded reason was "module scope answers a DIFFERENT exception class
+(`NameError`) — a second table for the same keyword." Post-one-pipeline
+that table already EXISTS: Script.lean is the established second-table
+site (the import-handler table, the `NameError` exit-1 surface), and by
+§the publish a module frame's locals ARE its globals — so the module-scope
+arm is one `execScriptOne` arm over `st.locals`, OUTSIDE the mutual block
+and outside all three 18-conjunct inductions. The recorded design's
+STOP-condition (frame-shape or value-level machinery) is not triggered:
+the interpreter change is still exactly the recorded `execStmt` arm plus
+`Env.remove`.
+
+### Measured rows the arm is built on (CPython 3.9.19, 2026-08-14)
+
+| shape | CPython | model decision |
+|---|---|---|
+| `del len` (a builtin, module scope) | `NameError: name 'len' is not defined` | deciding `NameError` on a locals miss is FAITHFUL even for builtin names — deletion never consults builtins, so this arm does NOT need the `isPyBuiltinName` consult the READ arms need |
+| `del __name__` then `print(__name__)` | prints `builtins` (the deleted module global UNCOVERS the builtins module's own `__name__`) | dunder targets refuse LOUDLY — the model's dunder arm resolves reads statically, so a removal would be silently ignored |
+| `import time` then `del time` | exit 0, silently | benign-import names bind STATICALLY in the model (never in locals), so the removal has nothing to act on — refuse LOUDLY |
+| `def f: …; print(f(1)); del f` (trailing) | exit 0 | the ingestion rewrite below |
+| `del f; del f` (def name, twice) | `NameError` on the second | uniqueness census below — neither is rewritten, runtime refuses loudly |
+| `del f, x, nosuch` (trailing; f a def) | f and x gone, then `NameError: name 'nosuch' is not defined` | per-target filter + partial left-to-right runtime |
+
+### The module-scope arm, exactly (Script.lean, `execScriptOne`)
+
+Per target, left to right, threading `st.locals` (the partial-effect rule
+of the recorded measurement, now with retained state on the raise):
+locals HIT → `Env.remove`, continue; MISS → dunder-shaped → loud;
+benign-import-bound → loud; `def`/`class`/namedtuple name → loud (the
+trailing rewrite below is the only admission); otherwise the faithful
+`.exn (.nameError n)` — module locals are COMPLETE under the one pipeline
+(nothing is skipped or stale), so the miss IS CPython's NameError, the
+same authority the exit-1 surface already claims. Inside a delegated
+`while … else` a module-scope `del` falls to `execStmt`'s function-scope
+arm: a hit removes (locals are the frame's), a miss refuses loudly —
+sound, and `Stmt.assignedNames` gains the del targets so
+`scriptFlushCoherent` sees mid-compound removals like mid-compound binds.
+
+### Trailing `del` of definition names: an INGESTION rewrite (the aliasing precedent)
+
+A `def`/`class`/namedtuple binding is a STATIC table entry, not a runtime
+value; no runtime arm can remove it without tombstone machinery (the
+recorded Option A, still rejected). But the paying shape needs no runtime:
+in the module's TRAILING RUN (the maximal suffix of top-level statements
+that are all `Delete` or `Pass`), a del target that is a definition name
+is dropped from its statement at ingestion (a statement left with no
+targets becomes `pass`), provided that name occurs as a del target
+EXACTLY ONCE in the whole top level (nested compounds included — the
+uniqueness census that keeps `del f; del f` loud). Soundness: a
+definition name is CERTAINLY bound there (`defsBoundBefore` orders the
+mention, `initBindable` forbids rebinding, uniqueness forbids an earlier
+admitted del), so its deletion cannot raise and — being in the trailing
+run — cannot be observed: every statement after it is a del or pass, and
+an exception from a REMAINING target aborts both sides identically.
+Dropping def-name targets therefore preserves CPython's partial
+left-to-right order exactly. Non-trailing del-of-def stays loud at
+runtime. Placement: after `recognizeDefAliases` (alias entries are
+functions entries, so `del bisect` of an alias is covered by the same
+test).
+
+### The recorded design's two open notes, MEASURED
+
+* **`Stmt.g1Binds` must be `some targets`, NOT `some []`.** The closed
+  -function surface executes fold-refused top-level statements through
+  `initExecStmt` with EMPTY locals, so a top-level `del` always refuses
+  there and takes the rollback-and-poison path — and `globalsDirty`
+  poisons exactly `g1Binds ++ g1Stores`. With `[]` the deleted name's
+  STATIC binding would survive the rollback and a later read would answer
+  a stale value where CPython raises: silently wrong. With the targets in
+  `g1Binds` the name is poisoned and every later read refuses loudly.
+  (This also keeps the extractor agreement the design demanded:
+  `_binding_linenos` already counts `Delete` targets; `_assigned_names`
+  now does too.) `g1ExecCandidate` is `true` — the `raise`/`assert`
+  argument verbatim.
+* **Mention censuses see del targets as names.** `stmtRefs`,
+  `stmtNamesXW`, `yfNames`, `Stmt.allNames` all gain the target list —
+  the conservative direction everywhere it feeds (`defsBoundBefore`
+  ordering, namedtuple/alias censuses, capture censuses).
+
+### PRE-REGISTERED flip prediction (written before building)
+
+**opcode.py does NOT flip on this landing.** Its static wall set is
+`{Delete}` (sole), but the static census cannot see DYNAMIC refusals —
+the `sole` ranking's known instrument limit, met again. Reading the
+source in execution order: the guarded `from _opcode import stack_effect`
+is landed Pass 0 surface (the try body's `__all__.append` is dead under
+the model's except path — the recorded §2.5 divergence); `__all__ = […]`
+is a plain in-tier bind; then line 36, `opname = ['<%r>' % (op,) for op
+in range(256)]`, hits `evalBinOp`'s `.mod, .str` arm — `"'%' string
+formatting is outside the v0 tier"`, a LOUD dynamic refusal confirmed by
+probe against the laptop binary (stale-binary caveat noted; the arm is
+unchanged on master). Predicted survey outcome: wild sweep stays
+7 MATCH / 159 REFUSE, flip set EMPTY, 0 DIVERGE; opcode's refusal
+MESSAGE moves from `unsupported statement 'Delete'` to the `%`-formatting
+refusal (that message movement is the acceptance signal that `del`
+itself cleared). The honest chain to the opcode flip is therefore
+del (this landing) + a `%`-formatting slice (`str % (int,)` under
+`%r`/`%d` is buildable on the shipped `reprVal`; not designed here, not
+this lane's scope). If opcode DIVERGES or refuses on anything OTHER than
+the `%` arm, that is a finding.
+
+### Battery beyond the recorded rows (module scope, script surface)
+
+`del`-bound-then-read → `NameError` exit 1; `del never` → `NameError`;
+trailing del-of-def (the opcode-shaped fallback script: defs, mutating
+calls, prints, trailing `del`) → MATCH; non-trailing del-of-def → REFUSE;
+`del __name__` → REFUSE; `del time` after the benign import → REFUSE;
+mixed trailing `del f, x, nosuch` → `NameError` with f and x really gone.
+
 ## The tail, construct 4: ranked (2026-08-13)
 
 **STATUS: `BinOp:BitAnd` is DESIGNED — see §the bitwise family below.**

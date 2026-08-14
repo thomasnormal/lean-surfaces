@@ -307,6 +307,30 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "Pass" => return .pass span
     | "Break" => return .brk span
     | "Continue" => return .cont span
+    | "ImportFrom" =>
+        -- Pass 0 (docs/memory-model.md §import forms (Pass 0)): the
+        -- admitted from-import, structured by the EXTRACTOR (which owns
+        -- the admission against the pinned platform inventory). `star`
+        -- is default-tolerant (the walrus `..` precedent): absent =
+        -- `false`, so nothing breaks when the field is omitted.
+        let module ← (← getField j "module").getStr?
+        let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
+        let star := match j.getObjVal? "star" with
+          | .ok (.bool b) => b
+          | _ => false
+        -- The whitelist collision CANONICALIZED (one table — Ast.lean —
+        -- one rewrite site): a structured row whose reconstructed text
+        -- hits `benignImportBinds` is rewritten back to the legacy
+        -- Unsupported node, so all five text-keyed consumers (the
+        -- namedtuple census's `isBenignNtImport`/`importBinds`,
+        -- `scriptImports`, `Stmt.g1Binds`, the survey's benign rows)
+        -- see today's shape unchanged.
+        let text := s!"from {module} import "
+          ++ (if star then "*" else String.intercalate ", " names.toList)
+        if (benignImportBinds text).isSome then
+          return .unsupported "ImportFrom" text span
+        else
+          return .importFrom module names star span
     | "Unsupported" =>
         return .unsupported (← (← getField j "py_kind").getStr?)
           (← (← getField j "text").getStr?) span
@@ -539,6 +563,13 @@ private partial def stmtBinds : Stmt → Option (List String)
     let bb ← b.toList.mapM stmtBinds
     let hb ← hnd.toList.mapM stmtBinds
     return bb.flatten ++ hb.flatten
+  -- Pass 0 (§import forms): no import form is ever bind-invisible.
+  -- The names form OVER-reports (Pass 0 binds nothing — the raise fires
+  -- first; the future modeled-module arm will bind, and over-reporting
+  -- refuses more, the safe direction); star's bind set is unknowable
+  -- without a module — unanalysable by fiat.
+  | .importFrom _ names star _ =>
+    if star then Option.none else some names.toList
   | .unsupported "ImportFrom" text _ => importBinds text
   | .unsupported "Import" text _ => importBinds text
   | .unsupported .. => Option.none
@@ -588,6 +619,8 @@ mutual
       exprRefs t ++ (m.map exprRefs).getD []
     | .tryStmt b excName hnd _ _ =>
       excName :: (b.toList.map stmtRefs).flatten ++ (hnd.toList.map stmtRefs).flatten
+    -- Pass 0: an import references no in-module names
+    | .importFrom .. => []
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 end
@@ -600,6 +633,7 @@ private def stmtSpanOf : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
+  | .importFrom _ _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The recognition pass (see the section comment for the rules). Returns
@@ -861,6 +895,9 @@ private partial def yfNames : Stmt → List String
       exprRefs t ++ (m.map exprRefs).getD []
   | .tryStmt b _ hnd _ _ =>
       (b.toList.map yfNames).flatten ++ (hnd.toList.map yfNames).flatten
+  -- Pass 0: statement-position only at module top level; observes and
+  -- (in Pass 0) binds nothing a yield-from target could collide with
+  | .importFrom .. => []
   | .defStmt name _ _ _ _ _ body captures _ =>
       [name] ++ captures.toList ++ (body.toList.map yfNames).flatten
 
@@ -969,6 +1006,11 @@ private partial def stmtNamesXW : Stmt → List String
   | .tryStmt b en hnd _ _ =>
       [en] ++ (b.toList.map stmtNamesXW).flatten
         ++ (hnd.toList.map stmtNamesXW).flatten
+  -- Pass 0: the names form's names count as enclosing occurrences (a
+  -- future binding arm would look at them — over-reporting refuses a
+  -- colliding walrus, the safe direction); star enumerates nothing and
+  -- in Pass 0 binds nothing (the raise fires first)
+  | .importFrom _ names _ _ => names.toList
   | .defStmt name params _ _ _ _ body captures _ =>
       -- a NESTED scope: its walrus rules are its own; conservatively,
       -- every name it mentions counts as an enclosing occurrence
@@ -1072,7 +1114,9 @@ mutual
   private partial def lowerStmt (ctx : LowerCtx) (s : Stmt) :
       StateM (Nat × Array FunctionDefn) Stmt := do
     match s with
-    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .unsupported .. => return s
+    -- Pass 0: `importFrom` carries no expression, nothing to lower
+    | .ret Option.none _ | .pass _ | .brk _ | .cont _ | .importFrom ..
+    | .unsupported .. => return s
     | .ret (some e) sp => return .ret (some (← lowerExpr ctx e)) sp
     | .assign ts v sp => return .assign (← lowerExprs ctx ts) (← lowerExpr ctx v) sp
     | .augAssign t op v sp => return .augAssign (← lowerExpr ctx t) op (← lowerExpr ctx v) sp

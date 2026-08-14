@@ -2670,3 +2670,30 @@ and the three separable owner questions stated at the end.
 proposal is a memo, not a plan of record; a "no" on any of its three
 questions drops the corresponding pass and the ceiling stands at
 4/154 as measured.
+
+## Import forms (Pass 0) — DESIGNED, rides the next rebuild (2026-08-14)
+
+Design recorded: docs/memory-model.md §import forms (Pass 0).
+Implementation NOT started; nothing registers a harness row until it
+lands. The paying surface is the census's own: absolute `from X import
+names`/`*` at module top level, a missing module raising a CATCHABLE
+`ImportError` — new `PyErr.importError`, boundary-rendered as CPython
+3.9's `ModuleNotFoundError: No module named '…'`, and the exceptions
+tier's recorded first extension (builtin-name handler matching) landing
+at minimum width: a pinned two-name table for that one kind. The
+importable universe stays EMPTY: platform-absent modules raise
+faithfully anywhere; platform-present unmodeled ones (`_bisect`,
+`binascii`, `_stat`, `_opcode`) are admitted by the EXTRACTOR only in
+guarded `try`/`except ImportError:` position, under the memo's §2.5
+accelerator-equivalence obligation — that arm alone consumes owner
+question 2 and is dropped, not widened, on a "no". Today's refusal site
+is no site at all — imports fall through `convert_stmt` to the generic
+`Unsupported` channel; the narrowing structures only the paying shape,
+so the survey's wall census is correct unchanged. Stated invariant: no
+import form is bind-invisible (star is unanalysable by fiat), so
+`moduleClockOk` and the namedtuple census refuse conservatively and a
+from-import can never route around the trace-clock discipline.
+Measured claim: `bisect` flips on this alone; `quopri`/`stat`/`opcode`
+wait for `del`/`BitAnd`/bytes; nothing else moves. Rides the SAME full
+rebuild as the HELD f-strings tail (extractor first, envelopes
+re-extracted, `pins_common.lean` only, both batteries in one triad).

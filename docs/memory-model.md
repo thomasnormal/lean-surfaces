@@ -2770,6 +2770,296 @@ REFUSED LOUDLY, each for a stated reason, not for convenience:
 identical to `str()`, so it is `printOne` under another spelling and costs
 nothing to admit.
 
+## Import forms (Pass 0) — the guarded from-import tier (DESIGN)
+
+Normative design, nothing as-built: the implementation is NOT started,
+and it rides the next full rebuild (see the landing plan at the end).
+This is the c-intrinsics memo's Pass 0 (docs/c-intrinsics-proposal.md
+§4, commit f9ac737): NO intrinsics, no modeled module, only the import
+FORMS the import-ceiling census measured as paying. One honest split up
+front: the missing-module machinery below consumes none of the memo's
+owner questions, but the guarded PRESENT-module arm — the one `bisect`
+needs — stands or falls with memo question 2 (accelerator-fallback
+equivalence, §2.5). A "no" there drops that arm, the rest still lands,
+and the ceiling stands at 4/154 as measured.
+
+### The census fixed the surface
+
+docs/import-ceiling-census.md: of 154 stdlib files refusing with
+`import` in the wall set, 0 have pure closures, 4 (`bisect`, `quopri`,
+`stat`, `opcode`) are pure behind an optional C accelerator, and the
+import forms those four need are EXACTLY: absolute
+`from X import name, …` and `from X import *`, at module top level,
+inside `try:`/`except ImportError:`, with a missing module raising a
+CATCHABLE `ImportError`. Verified in the pinned 3.9.19 source: bisect.py
+73–76 (`from _bisect import *` / `pass`), quopri.py 14–18 (`from
+binascii import a2b_qp, b2a_qp` / handler binds both to `None`), stat.py
+192–195 (`from _stat import *` / `pass`), opcode.py 18–21 (`from _opcode
+import stack_effect`, then `__all__.append('stack_effect')` — the try
+BODY has a second statement, so the guard position below is "direct body
+statement", never "sole statement"). No plain `import X` binding, no
+relative imports, no dotted packages, no aliases: the corpus never pays
+for them, so they stay refused.
+
+### What a from-import MEANS in Pass 0: the importable universe is EMPTY
+
+There is no module system. The benign whitelist rows keep their exact
+current treatment (below), and every other admitted from-import RAISES:
+`PyErr.importError (modName : String)`, a NEW constructor. The boundary
+renders CPython 3.9's exact surface: `errName` = `ModuleNotFoundError`
+(3.9 raises the subclass), `errMessage` = `No module named '{modName}'`
+— so the uncaught case is `status exn`, exit 1, class line identical to
+the oracle. Nothing binds on the success path because there IS no
+success path in Pass 0; the fallback path binds by ordinary handler
+statements (`a2b_qp = None`), which the try shells already run from the
+retained state.
+
+The raise is faithful on two different grounds, split by the PINNED
+PLATFORM INVENTORY — a committed data file captured by subprocess from
+the pinned interpreter (`sys.builtin_module_names` + `lib-dynload` stems
++ top-level stdlib modules/packages; the census C-table discipline, the
+`isPyBuiltinName` precedent — no absence is ever guessed, and the claim
+is scoped to the pinned interpreter as shipped, not to arbitrary
+site-packages):
+
+* **Module ABSENT from the inventory** (`zzz_no_such_module`): the raise
+  is CPython's own behavior. Admitted anywhere at module top level,
+  guarded or not; uncaught it exits 1 with CPython's exact class line.
+* **Module PRESENT but unmodeled** (`_bisect`, `binascii`, `_stat`,
+  `_opcode`): CPython SUCCEEDS here, so a surfaced `ImportError` would
+  be a WRONG ANSWER. Admitted ONLY in guarded position — a direct body
+  statement of a `try` whose single v0 handler names `ImportError` — so
+  the raise is caught by construction and the run continues on the
+  fallback branch. Faithfulness of that continuation is the memo's §2.5
+  accelerator-equivalence obligation: the model runs the pure fallback
+  where CPython runs the C accelerator, and the assertion that nothing
+  observable differs is DIFFERENTIALLY TESTED (battery below), never
+  taken from the docs. Outside the guard position it refuses loudly,
+  message naming the module and the branch problem ("module 'X' exists
+  on the pinned platform but is not modelled — outside a
+  `try`/`except ImportError:` guard the fallback branch is not
+  asserted").
+
+### `except ImportError:` — the recorded first extension lands, narrowly
+
+The exceptions tier (§exceptions) has NO import machinery today:
+`PyErr` carries no import kind, and the statically-first handler
+resolution refuses every non-admitted class name — both refusal sites
+(`Semantics.lean` execStmt's tryStmt arm, ~5222; `Script.lean` try
+shell, ~582) say in their own message that "builtin-name matching is
+the recorded first extension, not v0". This design lands that extension
+AT MINIMUM WIDTH: a PINNED two-row match table — handler names
+`ImportError` and `ModuleNotFoundError` both match the kind
+`.importError` (CPython's one relevant subclass edge, carried as a
+table, never a hierarchy walk). Everything else is untouched: every
+other builtin exception name, `except Exception:`, tuple patterns,
+`as` bindings all keep today's refusals verbatim. A USER class named
+`ImportError` resolves first (`findClass`, the existing
+statically-first order) and then matches only `.user cid` — so
+`.importError` propagates through it, which is CPython's behavior too
+(an admitted `class ImportError(Exception): pass` is a different class
+and catches nothing builtin). `raise ImportError` stays refused: `raise`
+admits only admitted user classes, unchanged. No battery row pins the
+old static-refusal message (checked: no row, no `#guard` names it), so
+nothing flips in exc_lab.
+
+### `from X import *`
+
+Missing X (either inventory arm): the raise fires before any binding,
+so star changes NOTHING in Pass 0 — same `.importError`, same guard
+discipline, same uncaught surface. What star does change is the STATIC
+side: its bind set is unknowable without a module, so it is unanalysable
+by fiat (next subsection). FUTURE arm, modeled modules only: star = the
+pinned export table (`__all__` if the module defines one, else the
+underscore-free inventory — CPython's own rule, memo §2.4); anything
+beyond the pinned table is loud. Nothing of that arm lands in Pass 0.
+
+### The FUTURE modeled-module arm (owner-gated; sketch, not Pass 0)
+
+When an intrinsics pass lands a modeled module, a from-import of it
+binds per the memo's member tiers (§2.2): CONSTANT/FUNCTION/STATEFUL
+names bind their in-tier values; everything else binds an OPAQUE
+MODULE-MEMBER value. The value kind is an IMMEDIATE `RVal` (sketch:
+`RVal.opaqueMember (mod name : String)`) — allocation-free, NO heap
+identity, because CPython's value has identity the model must never
+claim. Loudness rules: every observation refuses, naming `mod.name` —
+call, attribute read, any operator, `==`, `is`, truthiness, rendering
+(`print`/f-string/`str`). Binding it is observationally safe for
+exactly the §2.2 reason: the tier already holds values it refuses to
+observe. This arm is OWNER-GATED with the rest of the memo and is
+recorded here only so the Pass 0 constructor is not built in a shape
+that forecloses it.
+
+### The admission change — where the refusal lives today, and what narrows
+
+Today there is no bespoke import refusal site AT ALL. `convert_stmt`
+(extractors/python/extract.py) has no arm for
+`ast.Import`/`ast.ImportFrom`; both fall through to the terminal
+`return unsupported(node)`, arriving as `Stmt.unsupported
+"Import"/"ImportFrom" text span` with the source text TRUNCATED at
+`UNSUPPORTED_TEXT_LIMIT = 200` — a limit the exact-text whitelist
+(`benignImportBinds`, Ast.lean) silently depends on (harmless for its
+three short rows; recorded, and retired for from-imports by the
+structured node). The refusal is then decided at EXECUTION — execStmt's
+`.unsupported` arm, `unsupported statement 'ImportFrom'`
+(Semantics.lean:5240); script mode skips whitelisted texts and
+delegates the rest (Script.lean:598–602) — and the WALL census mirrors
+the whitelist by text (`BENIGN_IMPORTS`,
+harness/leanpy_survey.py `census()`: `py_kind` Import/ImportFrom, text
+not whitelisted → wall `import`). Text-keying on the Unsupported shape
+spans five consumers: `benignImportBinds` (Ast.lean:361), `importBinds`
++ `isBenignNtImport` (Json.lean), `scriptImports` (Script.lean:346),
+`Stmt.g1Binds` (Semantics.lean:2840), and the survey.
+
+**The narrowing.** The extractor gains an `ast.ImportFrom` arm that
+STRUCTURES exactly the paying shape: module top level (`module_scope`,
+the flag `convert_stmt` already threads), absolute (`node.level == 0`),
+single unqualified module name (no dots), plain names or star, no
+`as` aliases — AND (module absent from the pinned inventory OR the node
+is a direct body statement of a `try` guarded by `except ImportError:`).
+The extractor reads the committed inventory data file; it is already
+the envelope's trust boundary (`py_kind`, `text`, `exception_base`,
+`has_global` precedents), so the Lean side needs NO inventory in Pass 0
+— its semantics raises unconditionally, and the wrong-answer hazard for
+present modules is discharged by the admission, plus §2.5's rows.
+EVERYTHING ELSE keeps the Unsupported fallthrough VERBATIM, so the
+still-refused forms are: plain `import X` (non-whitelisted), relative
+imports, dotted/package modules, `as` aliases, non-top-level (function-
+and class-body) imports, and the unguarded from-import of a
+platform-present module. Consequence, paid for by the narrowness:
+envelope-structured ⇔ admitted, so the survey's wall census is correct
+with ZERO code change — walls key on `Unsupported` nodes, and a
+structured from-import is rightly no longer an `import` wall.
+
+New statement: `Stmt.importFrom (module : String) (names : Array
+String) (star : Bool) (sp : Span)` (Ast.lean — a full-rebuild edit).
+Ingestion (Json.lean) CANONICALIZES the whitelist collision: a
+structured row whose reconstructed text `from {module} import {names}`
+hits `benignImportBinds` is rewritten back to the legacy `.unsupported
+"ImportFrom" text` node, so all five text-keyed consumers — the
+namedtuple census, `scriptImports`, G1, the survey's benign rows — see
+today's shape unchanged, one table (Ast.lean), one rewrite site.
+Semantics: ONE new execStmt arm, `.importFrom mod _ _ _ => .exn
+(.importError mod)` — fuel-free, state unchanged, never `.ok` in
+Pass 0. Script mode needs nothing: `execScriptStmts`' generic
+`| s => execStmt m fuel st s` fallthrough routes it, and both try
+shells match through the new pinned table. `Main.lean` gains the
+`errName`/`errMessage` rows. Top-level `importFrom` IS a
+`g1ExecCandidate` (the "imports are not candidates" note was about
+`.unsupported` statements, which execStmt REFUSES; this one RAISES, and
+a raising candidate takes the fold's recorded `.exn` rollback-and-
+poison path; the guarded try was already a candidate).
+
+### Walkers, censuses, and the trace-clock invariant
+
+Every binding census gains the arm, and the INVARIANT is: **no import
+form is ever bind-invisible.** `Stmt.g1Binds`/`stmtBinds` for
+`importFrom` answer the names form with `some names` — an
+over-approximation on purpose (Pass 0 binds nothing, the future arm
+will, and over-reporting is the poisoning-safe direction) — and the
+star form with `Option.none`, unanalysable by fiat. Consequences,
+which are the point:
+
+* `moduleClockOk` clause (2) requires every non-clock-import top-level
+  statement bind-analysable and not touching `time`. `from x import
+  time` reports a `time` bind and FAILS the census; any top-level star
+  import is unanalysable and FAILS it. A from-import therefore can NOT
+  create a path around the trace-clock discipline: the clock call's
+  admission survives only where the poisoned `time` binding provably
+  remains the benign import's — exactly the existing statement, now
+  quantified over one more statement form. `stmtIsClockImport` and the
+  benign `import time` row are untouched (plain Import, legacy shape).
+* The namedtuple census (`stmtBinds`) and `initBindable` inherit the
+  same conservatism for free, same mechanism.
+* `g1Stores`: `some []` (an import stores through no target);
+  `binds_str` (the f-string shadow census) is unaffected in mechanism —
+  it walks the raw `ast` in the extractor and already counts import
+  aliases, so `from x import str` still refuses every f-string in the
+  module.
+
+Fragments and proof layer: `importFrom` allocates nothing and never
+decides `.ok` in Pass 0, so it stays IN `Stmt.heapFree` by the
+`raiseStmt` argument (worldInv is `.ok`-only, invariance vacuous); the
+FUTURE binding arm must re-decide that (flip to `false` or re-prove) —
+recorded so it is a review point, not a surprise. One new execStmt arm
+⇒ one arm each in `fuelMono`/`worldInv` (Obs.lean) and `clockErase`
+(ClockErase.lean), all in the fuel-free non-fragment shape; no new
+judgment, no appended conjuncts. `PyErr` gains a constructor — derived
+`BEq` extends; no `Run` match opens `PyErr` payloads, so no other proof
+site moves.
+
+### What breaks (named now, re-measured at landing)
+
+* Survey headline: 167 seeds / 162 REFUSE → `bisect` flips
+  REFUSE→MATCH; the census's program-mode flip set is exactly
+  {`bisect`}, so 161 is the predicted count and anything else is a
+  finding. The `import`-wall population (154) DROPS by the files whose
+  admitted-shape from-imports were their only import walls — to be
+  MEASURED, not predicted; the file-flip claim is the measured one.
+* Envelopes: every re-extracted envelope containing an admitted-shape
+  from-import changes — including sunfish's benign `from itertools
+  import count` / `from collections import namedtuple`, structured in
+  the ENVELOPE and canonicalized back at ingestion. That is the
+  JSON-content trap: after re-extraction, edit `pins_common.lean` ONLY
+  (the pass-7 split's rule; the per-capstone `pins_*`/`spec.lean` are
+  never hand-edited for content).
+* exc_lab: nothing flips (no row pins the old `except ImportError:`
+  refusal); the `except Exception:` refusal row stands.
+* Corpus/script sweeps (86-file in-repo, 27-script corpus): counts
+  re-measured in the same triad; no specific flip predicted.
+* `leanpy_survey.BENIGN_IMPORTS`: its two ImportFrom rows become
+  unreachable in envelopes (structured before the census sees them) —
+  harmless, keep the sync comment pointing at the one table.
+
+### What it buys — the measured claim
+
+`bisect` flips on this alone (the census's one program-mode flip).
+`quopri`/`stat`/`opcode` become import-clean but still refuse on their
+other walls — `del`, `BitAnd`, bytes literals, all tail constructs
+already designed/staged — and land only as that tail lands. NOTHING
+else moves; no import+other file flips on this design. Honest total:
++1 sweep file now, +3 more with the designed tail.
+
+Battery — a NEW `Examples/python/import_lab` plus one script (the
+star_lab discipline: a fresh directory whose rows are registered WITH
+the implementation, measured against the pinned CPython first):
+
+* `happy_fallback` — guarded from-import of a missing module, handler
+  runs, module completes (differential MATCH).
+* `missing_uncaught` — unguarded from-import of an inventory-absent
+  module: exit 1, `ModuleNotFoundError: No module named 'zzz'`,
+  CPython-identical.
+* `star_missing` — `from zzz import *`, guarded and unguarded arms:
+  the raise fires before any binding.
+* `not_top_level` — a function-body from-import: refused loudly
+  (unchanged Unsupported channel), never a fake ImportError.
+* `rebind_after_fallback` — the quopri shape: handler binds the names
+  to `None`, later code tests them (differential MATCH).
+* the §2.5 rows — `bisect`'s pure fallback (`bisect`, `insort`,
+  edge cases) differentially against CPython running the real
+  `_bisect` accelerator: the equivalence obligation that ADMITS the
+  guarded arm, a divergence a blocker, not a footnote.
+* acceptance: the sweep's `bisect` row REFUSE→MATCH.
+
+### Landing plan — ONE rebuild, shared with the staged f-strings tail
+
+The f-strings landing is HELD on a `Semantics.lean` rebuild (the
+`strOfValH` widening; §f-strings, the uncommitted-tree marker). Pass 0
+touches `extract.py`, `Ast.lean`, `Json.lean`, `Semantics.lean`,
+`Script.lean`, `Main.lean`, `Obs.lean`, `ClockErase.lean` — the same
+FULL rebuild (~60 min; sunfish spec poles ~15 min each, `bound()`
+~14.5 min). Composition note: one rebuild carries BOTH batches, in this
+order — (1) extractor edits first, then re-extract every envelope;
+(2) `pins_common.lean` only, per the JSON-content trap above;
+(3) the Lean edits, one build; (4) both batteries (`fstring_lab`'s held
+rows and `import_lab`) registered and measured in the SAME triad, and
+the f-strings section's uncommitted-tree marker paragraph deleted in
+that same landing. If the owner answers NO on memo question 2, the
+present-module guarded arm is dropped from the extractor admission
+before building; the absent-module machinery and the `except
+ImportError:` extension still land, `bisect` does not flip, and the
+ceiling stands as measured.
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

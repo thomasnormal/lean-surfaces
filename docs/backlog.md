@@ -3327,7 +3327,13 @@ reused, so there is no new `World` component, no new heap object kind and
 no new `RVal`. Bases: single only, resolved statically at ingestion, and
 only `object` / a same-module class / a builtin exception name;
 everything else loud. Body: `pass`, docstring, undecorated `def`, a
-plain non-dunder NAME assignment, a bare expression statement. Loud, each
+plain non-dunder NAME assignment, a bare expression statement. The
+exception-base row — the ladder's biggest single step, +15 seed files —
+admits CREATION only and leaves the class UNINSTANTIABLE (`E("msg")`
+loud: CPython's `BaseException.__init__` sets `args`, and a plain
+`Obj.instance` would fabricate an object that is neither); `raise E` and
+`except E` stay as loud as today, and `class N(Exception): pass` keeps
+the exceptions tier's own path. Loud, each
 for a stated reason: decorated methods, `__slots__`, any dunder binding,
 comprehensions/lambdas/nested classes (a class body is not a closure
 scope), control flow, `metaclass=`, class decorators, multiple bases,

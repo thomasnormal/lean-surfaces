@@ -3856,8 +3856,23 @@ other two:
 | no base | yes (implicit `object`) | `none` |
 | `class C(object)` | yes | `none` |
 | `class C(B)` where `B` is a same-module class | yes | `some ci` |
-| `class E(ValueError)` — a builtin exception name | yes, as the exceptions tier's kind | (see below) |
+| `class E(ValueError)` — a builtin exception name | CREATION only, `ok := false` | — |
 | two or more bases | **LOUD** — no MRO in v0 | — |
+
+The exception-base row is the two flags doing exactly the job they were
+separated for, and it is the single biggest step on the ladder (+15 seed
+files), so it is stated rather than implied: a class whose one base is a
+builtin exception name has a FAITHFUL creation — the base is a builtin
+name lookup with no effect, the body executes, the name binds — and is
+**UNINSTANTIABLE**. `E("msg")` is LOUD, because CPython's
+`BaseException.__init__` sets `args` and gives the instance exception
+protocol, and a plain `Obj.instance` with no `__init__` would fabricate
+an object that behaves like neither. `raise E` and `except E` stay
+exactly as loud as they are today. The one recognized shape keeps its
+own path: `class N(Exception): pass` remains the exceptions tier's
+`PyErr.user`. This is the `class Tag: kind = "tag"` precedent —
+creation-admissible, not instantiable — and it is why the script runs
+while the class refuses.
 | `pkg.mod.Class`, an imported name, `dict`/`list`/`str`, a call, a subscript | **LOUD** | — |
 
 Base resolution is by NAME against `Module.classes` at ingestion, so the

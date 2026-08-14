@@ -194,5 +194,40 @@
   {
     "file": "harness/scripts/alias_bisect_shape.py",
     "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_trailing_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_global_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_never_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_partial_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_shell_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/del_def_mid_script.py",
+    "expect": "unsupported",
+    "note": "CPython prints 1; a NON-trailing del of a def name is a static table entry the runtime cannot remove (docs/backlog.md del RECONCILED)"
+  },
+  {
+    "file": "harness/scripts/del_dunder_script.py",
+    "expect": "unsupported",
+    "note": "CPython prints 'builtins' (the deleted module global uncovers builtins' __name__); dunder reads resolve statically, so the del refuses LOUDLY"
+  },
+  {
+    "file": "harness/scripts/del_import_script.py",
+    "expect": "unsupported",
+    "note": "CPython exits 0; the benign import binds statically (never in locals), so the del has nothing to act on -- LOUD"
   }
 ]

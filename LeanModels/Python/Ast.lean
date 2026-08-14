@@ -199,6 +199,23 @@ inductive Stmt where
   the recorded as-built delta). -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
+  /-- `del name, …` (schema `Delete`, the tail batch — docs/memory-model.md
+  §the del statement). BARE NAMES only: `del d[k]`, `del o.attr`,
+  `del xs[i]` are measured second tables and ship as `Stmt.unsupported`
+  (extractor clause 4). No target is ever a subexpression, so the
+  constructor carries plain strings and every expression walker is
+  indifferent to it. The effect is PARTIAL, left to right (CPython:
+  `del x, nosuch` really removes `x` before raising on `nosuch`), so
+  both runtime arms thread state per target. Function scope: the census
+  (extractor clauses 1–2) guarantees no admitted body reads a deleted
+  name, so the arm's miss case is only ever `del` of a never-bound name —
+  refused loudly, never a fabricated `UnboundLocalError`. Module scope
+  (script surface only): locals ARE the globals under the one pipeline,
+  so a hit removes and publishes, and a miss is CPython's faithful
+  `NameError` — except dunder, benign-import and definition names, which
+  refuse loudly (docs/backlog.md §del RECONCILED); a TRAILING `del` of
+  definition names is rewritten away at ingestion. -/
+  | delStmt (names : Array String) (span : Span)
   /-- `from module import names` / `from module import *` (schema
   `ImportFrom`, Pass 0 — docs/memory-model.md §import forms (Pass 0)).
   Structured by the EXTRACTOR for exactly the admitted shape (top-level,

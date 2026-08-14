@@ -3484,3 +3484,71 @@ what goes red if the flag ever regresses to reading the message. Five new
 extractor unit tests (undecorated pure, decorated impure, `@property`
 impure, odd signatures pure, no flag on an undecorated def) and three
 `Tests.lean` `#guard`s on `methodCreationPure` itself.
+
+### LANDED (2026-08-14) — the semantic prediction EXACT, and ONE MISS recorded
+
+Full cycle on the laptop (oracle CPython **3.9.19**, stamped by every
+instrument; the box runs 3.9.25 and 166 seeds where this machine has 167,
+so absolute seed counts differ by one and are not compared across hosts —
+every claim below is PRE vs POST **on the same machine, same binary**).
+
+* `lake build` **3659 jobs, EXIT=0**, first try. The three `Tests.lean`
+  `#guard`s on `methodCreationPure` compile and hold (a failing `#guard`
+  is a build error).
+* `docs_check` 67/67. Extractor units **70/70** (five new).
+* `diff_test` **1213 cases, 0 failed**, 1109 matched, 104 whitelisted —
+  unchanged, as predicted: the closed FUNCTION surface makes no claim
+  about module stdout.
+* script corpus **59 scripts, 0 failed, 46 matched, 13 loud** — predicted
+  59 / 46 / 13 to the row. `cls_deco_script` LOUD, `cls_deco_args_script`
+  MATCH.
+* in-repo survey **123 files, MATCH=99, REFUSE=24, 0 DIVERGE** —
+  predicted 99 / 24 exactly. No EXISTING in-repo file changed verdict.
+* stdlib sweep, run TWICE on this machine with only the extractor
+  reverted between them: **PRE-fix MATCH=8 / REFUSE=159, POST-fix
+  MATCH=8 / REFUSE=159, 0 DIVERGE both.** The flip set is EMPTY in both
+  directions — the headline claim, measured rather than argued.
+* the static class-admission count moved by exactly the predicted **−2**:
+  `class-creation` present **103 → 105**, the two files `shlex` and
+  `sre_parse`, both still REFUSE.
+* the class census confirms the door: **THE THIRD DOOR 15 classes / 14
+  files → 0**, creation-impure classes 527 → 542 (+15, the same 15), and
+  the ground-truth cross-check is now STRONGER — it passes with 0
+  violations over 679 classes *without* the decorated-method exemption it
+  used to need.
+
+**THE MISS, recorded rather than quietly corrected.** The pre-registered
+DYNAMIC first-wall movement was **+2**; measured **+1** (105 → 106 on this
+machine). The static movement was +2 as predicted, and the difference is a
+mechanism this lane had already written down and then failed to carry into
+the prediction: `sre_parse` was ALREADY refusing on class creation before
+the fix, through the ingestion DEMOTION path (a recognized
+`Exception`/`namedtuple` candidate that the module census demotes gets
+`creationPure := false`), so it was dynamically class-walled while
+statically class-pure. Only `shlex` — which refused on
+`unsupported statement 'Import'` before — is new to the bucket. The
+census's own RECONCILIATION line prints exactly this set and its count
+dropped 7 → 6 across the fix; the prediction should have been read off it.
+Restated for the box: expect its dynamic `class-creation` row to move by
+**+1**, not +2, and its MATCH count not at all.
+
+**A SECOND MISS, in the instrument rather than the semantics.** The
+pre-registration said "0 envelopes re-extracted", meaning no envelope's
+AST payload changes — true, and no tracked envelope gained
+`has_decorators` (none contains a decorated function). But running
+`script_corpus.py` REWRITES the tracked envelopes beside their sources,
+and on this host that flips `frontend.version` 3.9.25 → 3.9.19 in 53
+files with byte-identical payloads. That is the INSTRUMENT FINDING
+recorded at the `%` landing, hitting for the second time. The churn was
+reverted, not committed; the honest fix is still a 3.9-family check in the
+extractor, and it is still not this lane's scope.
+
+**Acceptance signal.** The census's own control fixture was the thing that
+went red: `decorated method — THE HOLE` asserted `creation_effects=False`
+and the fix made it `True`, aborting the census exactly where it should.
+It is now the guard `decorated method — THE THIRD DOOR`, asserting `True`,
+plus a new `undecorated method with odd signature stays pure` row beside
+it, and the report line prints `(CLOSED 2026-08-14 — anything but 0 is a
+REGRESSION)`.
+
+The v0 class tier remains DESIGN-ONLY, pending the batch decision.

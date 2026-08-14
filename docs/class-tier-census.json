@@ -6135,7 +6135,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -6221,7 +6221,7 @@
     }
    ],
    "nclasses": 15,
-   "nimpure": 13,
+   "nimpure": 14,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -6512,7 +6512,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -6550,7 +6550,7 @@
     }
    ],
    "nclasses": 7,
-   "nimpure": 3,
+   "nimpure": 4,
    "nested_classes": 1,
    "walls": [
     "class-creation",
@@ -7246,12 +7246,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 2,
-   "nimpure": 1,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -8546,7 +8546,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -8573,7 +8573,7 @@
     }
    ],
    "nclasses": 5,
-   "nimpure": 4,
+   "nimpure": 5,
    "nested_classes": 1,
    "walls": [
     "class-creation",
@@ -12952,7 +12952,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -12987,7 +12987,7 @@
     }
    ],
    "nclasses": 2,
-   "nimpure": 1,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -14613,12 +14613,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 2,
-   "nimpure": 1,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -14971,18 +14971,19 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 1,
-   "nimpure": 0,
+   "nimpure": 1,
    "nested_classes": 0,
    "walls": [
+    "class-creation",
     "import",
     "node:With"
    ],
-   "class_walled": false,
+   "class_walled": true,
    "demands": [
     "body:decorated-def"
    ],
@@ -16132,7 +16133,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -16174,19 +16175,20 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 4,
-   "nimpure": 0,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
+    "class-creation",
     "import",
     "node:Delete",
     "node:Set"
    ],
-   "class_walled": false,
+   "class_walled": true,
    "demands": [
     "base:exception",
     "body:decorated-def"
@@ -16401,7 +16403,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -16433,7 +16435,7 @@
     }
    ],
    "nclasses": 9,
-   "nimpure": 8,
+   "nimpure": 9,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -17819,7 +17821,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -17925,7 +17927,7 @@
     }
    ],
    "nclasses": 5,
-   "nimpure": 3,
+   "nimpure": 4,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -18170,7 +18172,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -18283,7 +18285,7 @@
     }
    ],
    "nclasses": 11,
-   "nimpure": 10,
+   "nimpure": 11,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -18666,12 +18668,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 3,
-   "nimpure": 2,
+   "nimpure": 3,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -18953,12 +18955,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 10,
-   "nimpure": 8,
+   "nimpure": 9,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -21027,7 +21029,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -21126,7 +21128,7 @@
     }
    ],
    "nclasses": 14,
-   "nimpure": 7,
+   "nimpure": 8,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -26046,7 +26048,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -26132,7 +26134,7 @@
     }
    ],
    "nclasses": 15,
-   "nimpure": 13,
+   "nimpure": 14,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -26922,12 +26924,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 2,
-   "nimpure": 1,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -29326,7 +29328,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -29353,7 +29355,7 @@
     }
    ],
    "nclasses": 5,
-   "nimpure": 4,
+   "nimpure": 5,
    "nested_classes": 1,
    "walls": [
     "class-creation",
@@ -29790,7 +29792,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -29838,7 +29840,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -29863,7 +29865,7 @@
     }
    ],
    "nclasses": 8,
-   "nimpure": 2,
+   "nimpure": 4,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -29929,7 +29931,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -29990,7 +29992,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -30110,7 +30112,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -30130,7 +30132,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -30160,7 +30162,7 @@
     }
    ],
    "nclasses": 11,
-   "nimpure": 5,
+   "nimpure": 9,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -32980,7 +32982,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -33015,7 +33017,7 @@
     }
    ],
    "nclasses": 2,
-   "nimpure": 1,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -33989,18 +33991,19 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 1,
-   "nimpure": 0,
+   "nimpure": 1,
    "nested_classes": 0,
    "walls": [
+    "class-creation",
     "import",
     "node:With"
    ],
-   "class_walled": false,
+   "class_walled": true,
    "demands": [
     "body:decorated-def"
    ],
@@ -34528,7 +34531,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -34570,19 +34573,20 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 4,
-   "nimpure": 0,
+   "nimpure": 2,
    "nested_classes": 0,
    "walls": [
+    "class-creation",
     "import",
     "node:Delete",
     "node:Set"
    ],
-   "class_walled": false,
+   "class_walled": true,
    "demands": [
     "base:exception",
     "body:decorated-def"
@@ -34797,7 +34801,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -34829,7 +34833,7 @@
     }
    ],
    "nclasses": 9,
-   "nimpure": 8,
+   "nimpure": 9,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -35210,7 +35214,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -35316,7 +35320,7 @@
     }
    ],
    "nclasses": 5,
-   "nimpure": 3,
+   "nimpure": 4,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -35546,7 +35550,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -35659,7 +35663,7 @@
     }
    ],
    "nclasses": 11,
-   "nimpure": 10,
+   "nimpure": 11,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -35915,12 +35919,12 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     }
    ],
    "nclasses": 3,
-   "nimpure": 2,
+   "nimpure": 3,
    "nested_classes": 0,
    "walls": [
     "class-creation",
@@ -38852,7 +38856,7 @@
      "demands": [
       "body:decorated-def"
      ],
-     "creation_effects": false,
+     "creation_effects": true,
      "recognized": null
     },
     {
@@ -38951,7 +38955,7 @@
     }
    ],
    "nclasses": 14,
-   "nimpure": 7,
+   "nimpure": 8,
    "nested_classes": 0,
    "walls": [
     "class-creation",

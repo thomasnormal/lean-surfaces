@@ -4057,6 +4057,13 @@ at 3.9.19; the box's sweep is 166 at 3.9.25 — expect ±1 on every count).
 
 \* the library column discounts `import`, the wall the layer below answers.
 
+The table is the census as taken BEFORE the third-door fix, and is left
+that way because it is the measurement that produced the verdict. The fix
+moves it exactly as much as it should and no more: the two files it newly
+walls demand `body:decorated-def` and nothing else, so the denominator
+goes 103 → **105**, T0–T5 are unchanged, T6 onward gain 2 (T6 33, T11
+105), **v0 still clears 24**, and every FLIPS entry is still 0.
+
 **Read the FLIPS column.** A class tier that admits EVERY form Python has
 clears all 103 class-walled stdlib seeds and flips ZERO of them, because
 the class wall is the sole wall of exactly none. Six seeds come closest —

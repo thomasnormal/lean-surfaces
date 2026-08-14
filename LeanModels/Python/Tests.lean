@@ -163,10 +163,15 @@ private def isUnsupported : Res α → Bool
 #guard isUnsupported (ev (bo (.list #[iL 1] sp) .add (.tuple #[iL 2] sp))) -- H2: with `+`-concat
 #guard isTypeError (ev (bo noneL .add (iL 1)))
 #guard isTypeError (ev (bo (sL "a") .sub (sL "a")))
--- Python-valid but out of tier: sequence repetition, `%` formatting.
+-- Python-valid but out of tier: sequence repetition.
 #guard isUnsupported (ev (bo (sL "ab") .mult (iL 3)))
 #guard isUnsupported (ev (bo (iL 3) .mult (.list #[iL 1] sp)))
-#guard isUnsupported (ev (bo (sL "%d") .mod (iL 3)))
+-- `%` on a str is the FORMAT operator (§`%`-formatting on strings): the
+-- bare conversions decide (a non-tuple right operand is ONE argument),
+-- the minilanguage stays out of tier.
+#guard ev (bo (sL "%d") .mod (iL 3)) == .ok (.str "3")
+#guard ev (bo (sL "<%r>") .mod (.tuple #[iL 7] sp)) == .ok (.str "<7>")
+#guard isUnsupported (ev (bo (sL "%5d") .mod (iL 3)))
 
 /-! ## `==` / `!=` never raise; bool→int; structural; cross-type is False -/
 

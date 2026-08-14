@@ -238,5 +238,15 @@
     "file": "harness/scripts/fmt_width_script.py",
     "expect": "unsupported",
     "note": "CPython prints [    3]; the %-format MINILANGUAGE (flags/width/precision/mapping keys) is a second tier -- only bare %s/%r/%d/%% are modelled"
+  },
+  {
+    "file": "harness/scripts/cls_deco_script.py",
+    "expect": "unsupported",
+    "note": "THE THIRD DOOR: CPython prints 'registered m' then 'after' because @log is CALLED at the class statement; the model executes no class body, so a DECORATED method is now a creation effect and the script refuses instead of printing only 'after'"
+  },
+  {
+    "file": "harness/scripts/cls_deco_args_script.py",
+    "expect": "match",
+    "note": "the precision pin beside it: *args/**kwargs/defaults are refused at CALL time and are NOT creation effects, so ingestion reads the structured has_decorators flag and never matches on args_unsupported's message"
   }
 ]

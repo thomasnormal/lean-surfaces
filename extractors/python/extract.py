@@ -891,6 +891,16 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             out["has_global"] = True
         if _is_generator(node):
             out["is_generator"] = True
+        if node.decorator_list:
+            # THE THIRD DOOR (docs/memory-model.md §class semantics, "Class
+            # CREATION is an effect"): `args_unsupported` already carries
+            # "decorators", but it is a comma-joined MESSAGE that also
+            # carries "*args"/"defaults"/"**kwargs" -- none of which is a
+            # creation effect. Ingestion needs the decorator fact ALONE, as
+            # a structured flag in the has_global/is_generator family, to
+            # re-check a class body's creation purity without matching on
+            # prose.
+            out["has_decorators"] = True
         if enclosing is not None:
             # H7 (docs/memory-model.md §nested defs and closures): a def
             # DIRECTLY inside a function body is structured as NestedDef,
@@ -955,14 +965,30 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # OBSERVABLE (print, raise, call)? CPython evaluates the bases and
         # runs the body there; the model builds its ClassDefn at ingestion
         # and executes nothing, so anything effectful here would be
-        # silently skipped. Methods, `pass`, docstrings and LITERAL
-        # attribute bindings are invisible; a call, a name read, an
+        # silently skipped. An UNDECORATED method, `pass`, docstrings and
+        # LITERAL attribute bindings are invisible; a call, a name read, an
         # unrecognized base, a metaclass keyword or a decorator is not.
+        #
+        # THE THIRD DOOR (2026-08-14, found by harness/class_census.py):
+        # a DECORATED method is an effect too, and this loop used to skip
+        # every `FunctionDef` unconditionally. `@log def m(self)` calls
+        # `log` AT the `class` statement -- CPython prints, the model
+        # executed no class body and printed nothing: a wrong answer, not
+        # a refusal, through the one door the flag did not check. Measured
+        # over the pinned 3.9 Lib: 15 such classes in 14 files, 2 of them
+        # in files this admission passed. Every one decorates with
+        # property/setter/classmethod/staticmethod, which happen to have
+        # no creation-time effect -- lucky, not sound.
         creation_effects = bool(node.keywords) or bool(node.decorator_list)
         if node.bases and namedtuple_base is None and not exception_base:
             creation_effects = True
         for s in node.body:
-            if isinstance(s, (ast.FunctionDef, ast.Pass)):
+            if isinstance(s, ast.FunctionDef):
+                if s.decorator_list:
+                    creation_effects = True
+                    break
+                continue
+            if isinstance(s, ast.Pass):
                 continue
             if isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant):
                 continue

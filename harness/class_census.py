@@ -75,13 +75,18 @@ EXC_NAMES = frozenset(n for n in dir(builtins)
 BUILTIN_TYPES = frozenset(n for n in dir(builtins)
                           if isinstance(getattr(builtins, n), type))
 
-# The three RECORDED exemptions — forms this census counts as a demand
-# although the extractor's `creation_effects` calls the class pure — are
-# applied per class by `unexplained()` below, using the extractor's OWN
-# structural recognition rather than the feature name: a recognized
-# `Exception` base, a recognized `namedtuple` base, and a decorated method
-# (THE THIRD DOOR — docs/memory-model.md §the class tier). Everything else
-# must line up with the ground truth or the census aborts.
+# The RECORDED exemptions — forms this census counts as a demand although
+# the extractor's `creation_effects` calls the class pure — are applied per
+# class by `unexplained()` below, using the extractor's OWN structural
+# recognition rather than the feature name: a recognized `Exception` base
+# and a recognized `namedtuple` base. Everything else must line up with the
+# ground truth or the census aborts.
+#
+# There was a THIRD, a decorated METHOD, and it was not an exemption but a
+# HOLE: CPython calls the decorator at the `class` statement and the model
+# executed no class body. Closed 2026-08-14 (docs/memory-model.md §class
+# semantics, "THE THIRD DOOR"); the cross-check now covers it, so it would
+# go red if it reopened, and the report below must print zero.
 
 
 # ---------------------------------------------------------------------------
@@ -290,7 +295,9 @@ def unexplained(c):
         ex.add("base:exception")
     if c.get("recognized") == "nt":
         ex.add("base:namedtuple-call")
-    ex.add("body:decorated-def")          # THE HOLE — a demand that is no effect
+    # `body:decorated-def` USED to be exempt here — it was THE THIRD DOOR,
+    # a demand the extractor did not call an effect. Closed 2026-08-14, so
+    # the cross-check now covers it and would go red if it reopened.
     return [d for d in c["demands"] if d not in ex]
 
 
@@ -522,9 +529,15 @@ FIXTURES = [
     ("namedtuple base",
      "from collections import namedtuple\n"
      "class P(namedtuple('P', 'x y')):\n    pass\n", ["base:namedtuple-call"], False),
-    ("decorated method — THE HOLE",
+    # THE THIRD DOOR, closed 2026-08-14: this row said `False` until the
+    # extractor learned that a decorator RUNS at the `class` statement. It
+    # was the census's own finding and it is now the census's own guard —
+    # the only fixture whose verdict this fix changed.
+    ("decorated method — THE THIRD DOOR",
      "class C:\n    @property\n    def x(self): return 1\n",
-     ["body:decorated-def"], False),
+     ["body:decorated-def"], True),
+    ("undecorated method with odd signature stays pure",
+     "class C:\n    def m(self, *rest, **kw): return 1\n", [], False),
     ("control flow in body",
      "class C:\n    if x:\n        y = 1\n", ["body:control"], True),
     ("nested class",
@@ -735,12 +748,19 @@ def main(argv=None):
             if not c["creation_effects"] and "body:decorated-def" in c["demands"]]
     holef = sorted(set(m for m, _ in hole))
     print("THE THIRD DOOR — creation-PURE classes running a decorator at the "
-          "`class` statement: %d classes in %d files" % (len(hole), len(holef)))
+          "`class` statement: %d classes in %d files%s"
+          % (len(hole), len(holef),
+             "   (CLOSED 2026-08-14 — anything but 0 is a REGRESSION)"
+             if not hole else ""))
     admitted = [m for m in holef
                 if not [r for r in seed_rows if r["module"] == m][0]["class_walled"]]
-    print("  of which in files the class admission ADMITS today (a live "
-          "silent-divergence risk): %d — %s"
-          % (len(admitted), ", ".join(admitted) or "none"))
+    if hole:
+        print("  of which in files the class admission ADMITS today (a live "
+              "silent-divergence risk): %d — %s"
+              % (len(admitted), ", ".join(admitted) or "none"))
+    deco = [r["module"] for r in seed_rows
+            if any("body:decorated-def" in c["demands"] for c in r["classes"])]
+    print("  decorated-method files now class-WALLED by the fix: %d" % len(deco))
     # reconciliation with the DYNAMIC first-wall count: ingestion DEMOTES a
     # recognized Exception/namedtuple candidate on a module census failure and
     # sets creationPure := false, so a statically-pure file can still wall.

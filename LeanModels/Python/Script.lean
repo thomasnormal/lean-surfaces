@@ -181,6 +181,9 @@ mutual
       t.allNames ++ (m.map Expr.allNames).getD []
     | .tryStmt b excName hnd _ _ =>
       excName :: Stmt.allNamesList b.toList ++ Stmt.allNamesList hnd.toList
+    -- Pass 0 (§import forms): an import reads no in-module names (its
+    -- bound names are the binding censuses' business, `Stmt.g1Binds`)
+    | .importFrom .. => []
     | .pass _ | .brk _ | .cont _ => []
     | .unsupported .. => []
 
@@ -245,6 +248,7 @@ def scriptStmtSpan : Stmt → Span
   | .pass sp | .brk sp | .cont sp
   | .defStmt _ _ _ _ _ _ _ _ sp
   | .raiseStmt _ _ sp | .tryStmt _ _ _ _ sp | .assertStmt _ _ sp
+  | .importFrom _ _ _ sp
   | .unsupported _ _ sp => sp
 
 /-- The last line at which the module's `def` / `class` / recognized
@@ -346,7 +350,20 @@ def scriptViewMarker : Stmt :=
 them so the BENIGN-IMPORT whitelist still binds `time` POISONED (the
 loud refusal for a bare `time`, and the precondition of the trace
 clock's `moduleClockOk` census); the executor skips a whitelisted import
-and refuses any other one loudly. -/
+and refuses any other one loudly.
+
+Pass 0 (docs/memory-model.md §import forms): a STRUCTURED
+`Stmt.importFrom` is deliberately NOT kept in the view. Keeping it
+would poison its names in the static table (`Stmt.g1Binds`
+over-reports), and a poisoned entry REFUSES the read instead of
+consulting the live view — which would break the guarded fallback's
+whole point (quopri's handler binds `a2b_qp = None` as a live global,
+and later top-level reads must resolve through `World.globals`). This
+opens no clock hole: in Pass 0 an `importFrom` NEVER binds (it raises
+before any binding; the handler's rebinds land in the live view, which
+`clockRecvOk` already consults), and program mode's `moduleClockOk`
+census runs over the REAL top level, where the new `g1Binds` arms make
+`from x import time` and any top-level star import fail it. -/
 def scriptImports (m : Module) : List Stmt :=
   m.topLevel.toList.filter fun s =>
     match s with
@@ -579,7 +596,23 @@ mutual
            else
              match findClass m excName with
              | Option.none =>
-               .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) can be matched — builtin-name matching is the recorded first extension, not v0 (docs/memory-model.md §exceptions)"
+               -- Pass 0 (docs/memory-model.md §import forms): the SECOND
+               -- resolution site of the pinned two-name table — execStmt's
+               -- arm verbatim, only the body/handler statements moving
+               -- through `execScriptStmts` so their bindings publish per
+               -- statement (the quopri shape: the handler's `a2b_qp =
+               -- None` must be a live global for later top-level reads).
+               if importErrorHandlerMatch excName then
+                 match execScriptStmts m fuel st body.toList with
+                 | .ok st' flow => .ok st' flow
+                 | .exn st' e =>
+                   (match e with
+                    | .importError _ => execScriptStmts m fuel st' handler.toList
+                    | e => .exn st' e)
+                 | .timeout => .timeout
+                 | .unsupported msg => .unsupported msg
+               else
+                 .unsupported s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) or the pinned import-error names (`ImportError`/`ModuleNotFoundError` — docs/memory-model.md §import forms) can be matched — wider builtin-name matching is outside the tier (docs/memory-model.md §exceptions)"
              | some (ci, c) =>
                if !c.isExc then
                  .unsupported s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"

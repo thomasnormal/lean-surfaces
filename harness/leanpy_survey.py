@@ -108,7 +108,11 @@ def load_corpus(path, extra_paths):
 
 # The exact-text import whitelist the model treats as benign
 # (`benignImportBinds`, Ast.lean). Keep in sync — a whitelisted import is
-# not a wall.
+# not a wall. Pass 0 (docs/memory-model.md "Import forms (Pass 0)"): the
+# two ImportFrom rows are now UNREACHABLE in envelopes — the extractor
+# structures them (kind "ImportFrom", no py_kind) before this census can
+# see them, and ingestion canonicalizes them back to the legacy node.
+# Harmless; the rows stay so the sync with the one table is visible.
 BENIGN_IMPORTS = frozenset((
     "import time",
     "from itertools import count",

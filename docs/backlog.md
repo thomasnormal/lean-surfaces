@@ -2717,6 +2717,36 @@ re-counted in the same triad. If the owner answers NO on memo question
 building — the absent-module machinery and the handler table still
 land, bisect does not flip.
 
+**LANDED (master, 2026-08-14, the shared rebuild) — the list above,
+MEASURED.** One rebuild carried f-strings + BitAnd + Pass 0, in the
+composed order (extractor first, every envelope re-extracted,
+`pins_common.lean` only per the JSON-content trap, one build, both
+batteries in the same triad). `lake build` green twice — the full
+pass 3658 jobs with ZERO errors (the never-compiled series built
+first try) and the incremental pass against the re-extracted
+envelopes. Triad: docs_check 67/67; extractor units 55/55;
+diff_test 1102 cases 0 failed — after the differential CAUGHT the
+BitAnd battery's two mal-encoded container-arg rows (nested
+list/tuple elements must be canonical typed values; the bare-number
+convenience is top-level-only) — script_corpus 42 scripts, 35
+matched, 7 loud-blocked, all expected. Surveys (oracle CPython
+3.9.25, pinned family; seed census 166 — the laptop pin's 167th
+seed `sitecustomize.py` is a Homebrew artifact, not stdlib): in-repo
+86 MATCH / 18 REFUSE / 0 DIVERGE; wild sweep 6 MATCH / 160 REFUSE /
+0 DIVERGE — the census-adjusted predicted count exactly, but the
+flip IDENTITY is the finding the pre-registration existed to catch:
+**bisect did NOT flip** — behind its import wall sits
+`bisect = bisect_right` / `insort = insort_right`, a function
+referenced as a VALUE, outside the tier; that is bisect's mapped
+next wall (the §2.5 fallback-equivalence rows themselves pass, so
+the guarded-arm admission stands). **stat DID flip** REFUSE→MATCH:
+its last wall was BitAnd, landed in the same rebuild — the tail's
+"+1 now" delivered by a different file than predicted.
+quopri/opcode stand on `del`/bytes as designed. PENDING: the laptop
+working tree's uncommitted f-strings edits are fully contained in
+this landing (verified line-for-line) — reconciling that tree is a
+separate reviewed step, not this record.
+
 Original design summary follows. The paying surface is the census's own: absolute `from X import
 names`/`*` at module top level, a missing module raising a CATCHABLE
 `ImportError` — new `PyErr.importError`, boundary-rendered as CPython

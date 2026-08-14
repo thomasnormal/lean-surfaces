@@ -1,0 +1,141 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/import_missing_uncaught.py",
+  "source_sha256": "c81a31349c13426df9df49a90f706b7b02239d61fc4523826e0ff9e224841243",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 24
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 8,
+            "end_col_offset": 24
+          },
+          "value": {
+            "type": "str",
+            "value": "Pass 0 (docs/memory-model.md paragraph \"Import forms (Pass 0)\"),\nmissing_uncaught row: an UNGUARDED from-import of an inventory-absent\nmodule. The raise is CPython's own behavior, so both sides print\n\"before\", exit 1, and report the same class line --\n`ModuleNotFoundError: No module named 'zzz_no_such_module'` (the model\ncarries the exact message: errName/errMessage, Main.lean).\nREBUILD-WINDOW: registered with the implementation, measured when the\nshared rebuild lands."
+          }
+        }
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 10,
+          "col_offset": 0,
+          "end_lineno": 10,
+          "end_col_offset": 15
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 10,
+            "col_offset": 0,
+            "end_lineno": 10,
+            "end_col_offset": 15
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 10,
+              "col_offset": 0,
+              "end_lineno": 10,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 10,
+                "col_offset": 6,
+                "end_lineno": 10,
+                "end_col_offset": 14
+              },
+              "value": {
+                "type": "str",
+                "value": "before"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      },
+      {
+        "kind": "ImportFrom",
+        "span": {
+          "lineno": 11,
+          "col_offset": 0,
+          "end_lineno": 11,
+          "end_col_offset": 32
+        },
+        "module": "zzz_no_such_module",
+        "names": [
+          "x"
+        ]
+      },
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 18
+        },
+        "value": {
+          "kind": "Call",
+          "span": {
+            "lineno": 12,
+            "col_offset": 0,
+            "end_lineno": 12,
+            "end_col_offset": 18
+          },
+          "func": {
+            "kind": "Name",
+            "span": {
+              "lineno": 12,
+              "col_offset": 0,
+              "end_lineno": 12,
+              "end_col_offset": 5
+            },
+            "id": "print"
+          },
+          "args": [
+            {
+              "kind": "Constant",
+              "span": {
+                "lineno": 12,
+                "col_offset": 6,
+                "end_lineno": 12,
+                "end_col_offset": 17
+              },
+              "value": {
+                "type": "str",
+                "value": "unreached"
+              }
+            }
+          ],
+          "keywords": [],
+          "call_unsupported": null
+        }
+      }
+    ]
+  },
+  "lean_blocks": []
+}

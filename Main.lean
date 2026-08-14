@@ -90,6 +90,9 @@ def errName : PyErr → String
   | .attributeError => "AttributeError"
   | .assertionError _ => "AssertionError"
   | .stopIteration => "StopIteration"
+  -- Pass 0 (docs/memory-model.md §import forms): CPython 3.9 raises the
+  -- SUBCLASS for a missing module, so the class line is exact
+  | .importError _ => "ModuleNotFoundError"
   -- exceptions tier: CPython's `type(e).__name__` — the carried class name
   | .user _ name => name
 
@@ -116,6 +119,10 @@ def errMessage : PyErr → Option String
   -- a bare `assert` prints the class alone — both EXACT, so this
   -- constructor answers rather than reporting a gap
   | .assertionError msg => some (msg.getD "")
+  -- Pass 0 (§import forms): CPython 3.9's exact text, module name in
+  -- single quotes — EXACT, so this constructor answers rather than
+  -- reporting a gap
+  | .importError m => some s!"No module named '{m}'"
   -- payload-free constructors whose CPython text the class does NOT
   -- determine — a real gap, reported as `ABSENT` by the survey's
   -- message telemetry and recorded in docs/backlog.md, never invented:

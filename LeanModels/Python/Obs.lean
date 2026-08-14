@@ -1164,7 +1164,22 @@ theorem fuelMono (fuel : Nat) :
             -- retained outcome, and the handler run (IH again)
             refine Run.le_ite (Run.le_refl _) ?_
             cases findClass m excName with
-            | none => exact Run.le_refl _
+            | none =>
+              -- Pass 0 (§import forms): the pinned import-error table
+              -- branch — the class branch's body/handler IH shape, with
+              -- no cid ite (every `.importError` matches either name)
+              refine Run.le_ite ?_ (Run.le_refl _)
+              rcases ihSs m st body.toList k hk with h | h
+              · rw [h]; exact Or.inl rfl
+              · rw [h]
+                cases execStmts m k st body.toList with
+                | ok st' flow => exact Run.le_refl _
+                | exn st' e =>
+                  cases e <;> try exact Run.le_refl _
+                  case importError mod =>
+                    exact ihSs m st' handler.toList k hk
+                | timeout => exact Run.le_refl _
+                | unsupported msg => exact Run.le_refl _
             | some p =>
               obtain ⟨ci, c⟩ := p
               refine Run.le_ite (Run.le_refl _) ?_
@@ -1180,6 +1195,10 @@ theorem fuelMono (fuel : Nat) :
                       (Run.le_refl _)
                 | timeout => exact Run.le_refl _
                 | unsupported msg => exact Run.le_refl _
+        | importFrom mod names star _ =>
+          -- Pass 0 (§import forms): fuel-free — the arm raises
+          -- immediately, state unchanged (the raiseStmt shape)
+          simp only [execStmt]; exact Run.le_refl _
         | ret value _ =>
           cases value with
           | none => simp only [execStmt]; exact Run.le_refl _
@@ -2494,6 +2513,14 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         -- §exceptions): the handler resumes from the body's retained
         -- `.exn` state, invisible to the ok-only invariant
         simp [Stmt.heapFree] at hfree
+      | importFrom mod names star _ =>
+        -- Pass 0 (§import forms): IN the fragment, vacuously — the arm
+        -- never decides `.ok` (it raises, fuel-free); the `raiseStmt`
+        -- argument. The future modeled-module BINDING arm must flip
+        -- `Stmt.heapFree` to `false` or re-prove this — the recorded
+        -- review point.
+        simp only [execStmt]
+        exact .exn
       | raiseStmt exc cause _ =>
         -- IN the fragment, vacuously: the raise arm never decides `.ok`
         simp only [execStmt]

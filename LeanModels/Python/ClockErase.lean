@@ -1216,7 +1216,27 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
     | none =>
       refine .ite .unsupported ?_
       cases hfc : findClass m excName with
-      | none => exact .unsupported
+      | none =>
+        -- Pass 0 (§import forms): the pinned import-error table branch —
+        -- the class branch's shape below, with no cid ite (every
+        -- `.importError` matches either pinned name)
+        refine .ite ?_ .unsupported
+        obtain ⟨hok, hexn, hto⟩ := ihSs m st body.toList h
+        cases hrun : execStmts m fuel st body.toList with
+        | ok s2 fl =>
+          obtain ⟨h2, hy⟩ := hok s2 fl hrun
+          simp only [hy]
+          exact .ok h2 _
+        | exn s2 e =>
+          obtain ⟨h2, hy⟩ := hexn s2 e hrun
+          simp only [hy]
+          cases e <;> try exact .exn h2 _
+          case importError mod =>
+            exact ihSs m s2 handler.toList h2
+        | timeout =>
+          simp only [hto hrun]
+          exact .timeout
+        | unsupported msg => exact .unsupported
       | some pr =>
         cases pr with
         | mk ci cdef =>
@@ -1238,6 +1258,11 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
             simp only [hto hrun]
             exact .timeout
           | unsupported msg => exact .unsupported
+  | importFrom mod names star sp =>
+    -- Pass 0 (§import forms): fuel-free raise, state unchanged — the
+    -- raiseStmt/exn leaf shape
+    simp only [execStmt]
+    exact .exn h _
   | pass sp => simp only [execStmt]; exact .ok h _
   | brk sp => simp only [execStmt]; exact .ok h _
   | cont sp => simp only [execStmt]; exact .ok h _

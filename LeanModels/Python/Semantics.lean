@@ -1722,6 +1722,31 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
       .unsupported "set.pop() is outside the tier (it removes an ARBITRARY element — hash order; docs/memory-model.md)"
   | Option.none => .unsupported danglingMsg
 
+/-- `lst.insert(i, x)` (the §2.5 residue — docs/memory-model.md
+§`list.insert`): insert `x` before position `i`, CPython's `ins1`
+CLAMPING rule — a negative `i` counts from the end and floors at 0
+(`Int.toNat` of a negative), `i` beyond the end appends (`take`/`drop`
+saturate at `size`; core `List.insertIdx` is NOT used — it silently
+DROPS an out-of-range insert, the opposite of the clamp). Never an
+`IndexError`. The call's value is `None`; the mutation is visible
+through every alias. Growth is ONE element per fuel-costing call —
+append's discipline, no `seqBudget` interaction (the budget guards
+single-step materialization). -/
+def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
+  match Heap.get? h a with
+  | some (.list xs) =>
+    let n : Nat := (if i < 0 then i + xs.size else i).toNat
+    match Heap.update h a (.list ((xs.toList.take n ++ v :: xs.toList.drop n).toArray)) with
+    | some h' => .ok h'
+    | Option.none => .unsupported danglingMsg
+  | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'insert'
+  | some (.instance _ _) =>
+    .unsupported "internal: '.insert' dispatch reached an instance receiver (method dispatch owns instances — report this)"
+  | some (.generator ..) => .exn .attributeError
+  | some (.closure ..) => .exn .attributeError
+  | some (.pyset _) => .exn .attributeError    -- sets have .add, not .insert
+  | Option.none => .unsupported danglingMsg
+
 /-- `o.attr = v` on a heap object (H3: mutable self — the attribute
 store). Instances update their attribute table in place (`Env.set`
 semantics: replace-in-place or append — CPython `__dict__` insertion
@@ -2379,6 +2404,9 @@ inductive AttrPlan where
   | instAttrValue               -- data attribute in call position (loud)
   | attrMissing                 -- faithful AttributeError (pre-args)
   | dictGet | listAppend | listPop
+  -- the §2.5 residue (docs/memory-model.md §`list.insert`): the
+  -- clamping-index list MUTATOR
+  | listInsert
   -- pass 5 (docs/memory-model.md §search()'s first blockers): the dict
   -- MUTATOR `.clear()` — entries emptied, shape version bumped
   | dictClear
@@ -2389,7 +2417,8 @@ deriving Repr, Inhabited, BEq
 /-- Resolve `x.attr(…)` against the heap: instances dispatch through
 their CLASS (any attr — user methods; instance data attributes in call
 position are loud; missing is the faithful pre-args `AttributeError`);
-dicts admit `.get`, lists `.append`/`.pop` (the builtin method tier). -/
+dicts admit `.get`/`.clear`, lists `.append`/`.pop`/`.insert` (the
+builtin method tier). -/
 def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     AttrPlan :=
   match Heap.get? h a with
@@ -2410,7 +2439,8 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
   | some (.list _) =>
     if attr == "append" then .listAppend
     else if attr == "pop" then .listPop
-    else .refuse s!"method call '.{attr}' on a list is outside the tier (list '.append'/'.pop' only; docs/memory-model.md)"
+    else if attr == "insert" then .listInsert
+    else .refuse s!"method call '.{attr}' on a list is outside the tier (list '.append'/'.pop'/'.insert' only; docs/memory-model.md)"
   | some (.generator ..) =>
     -- `send`/`throw`/`close` are REAL generator methods with
     -- resumption/finalization semantics the tier does not model, and
@@ -3752,7 +3782,8 @@ theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
       left; rfl
     | list xs =>
       rw [if_neg (by decide : ¬ ((("get" : String) == "append") = true)),
-          if_neg (by decide : ¬ ((("get" : String) == "pop") = true))]
+          if_neg (by decide : ¬ ((("get" : String) == "pop") = true)),
+          if_neg (by decide : ¬ ((("get" : String) == "insert") = true))]
       right; right; right; exact ⟨_, rfl⟩
     | generator qn lo k st => right; right; right; exact ⟨_, rfl⟩
     | closure nm ps ao lo' hg ig bd cap => right; right; right; exact ⟨_, rfl⟩
@@ -4764,6 +4795,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                    .unsupported "list.append() with keyword arguments is outside the tier (append is positional-only in CPython)"
                  | .listPop =>
                    .unsupported "list.pop() with keyword arguments is outside the tier (pop is positional-only in CPython)"
+                 | .listInsert =>
+                   .unsupported "list.insert() with keyword arguments is outside the tier (insert is positional-only in CPython)"
                  | .refuse msg => .unsupported msg
                  | .dangling => .unsupported danglingMsg)
               | .ntuple tn fs xs =>
@@ -4953,6 +4986,20 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
          | Option.none =>
            .exn st (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer"))
       | vs => .exn st (.typeError s!"pop expected at most 1 argument, got {vs.length}")
+    | .listInsert =>
+      -- the §2.5 residue: clamping index (never IndexError), `None`
+      -- returned; the coercion TypeError decided AFTER the arguments
+      -- evaluate (pop's rule), the arity TypeError verbatim
+      evalExprs m fuel st args ⤳ fun st vs =>
+      match vs with
+      | [i, v] =>
+        (match asInt i with
+         | some n =>
+           Run.liftRes st (heapInsert st.world.heap a n v) ⤳ fun st h' =>
+           .ok { st with world := { st.world with heap := h' } } .none
+         | Option.none =>
+           .exn st (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer"))
+      | vs => .exn st (.typeError s!"insert expected 2 arguments, got {vs.length}")
     | .refuse msg => .unsupported msg
     | .dangling => .unsupported danglingMsg
   termination_by structural fuel

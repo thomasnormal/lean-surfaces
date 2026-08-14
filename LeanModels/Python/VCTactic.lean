@@ -421,7 +421,7 @@ def interpUnfolds : List Name :=
    ``keyHasInstanceRef, ``keyHasInstanceRefList, ``keyRefusal,
    ``dictFind, ``dictStore, ``dictBuild, ``heapIndex, ``heapStore, ``heapLen,
    ``heapContains, ``heapContainsScan, ``valContains, ``heapGet, ``heapAppend,
-   ``heapPop,
+   ``heapPop, ``heapInsert,
    ``heapAttrStore, ``findClass, ``findClassAux, ``classAt, ``getClass?,
    ``attrReadPlan, ``attrReadResult, ``attrCallPlan, ``execAttrCall,
    ``endsWithUU, ``dunderShaped, ``hasExtraDunder,

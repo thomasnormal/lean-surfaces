@@ -219,7 +219,9 @@ cycle DETECTION, never by running out of fuel).
   `heapEq`), `==`/`!=` (identity shortcut, size check, elementwise,
   active-pair `RecursionError` on corresponding cycles), dynamic
   `is`/`is not`, `.append(x)`, `.pop()`/`.pop(i)` (empty/out-of-range pop
-  a faithful `IndexError`), unpacking `a, b = lst` (an eager snapshot
+  a faithful `IndexError`), `.insert(i, x)` (CPython's CLAMPING index —
+  never an `IndexError`; §`list.insert`), unpacking `a, b = lst` (an
+  eager snapshot
   read, per CPython), and `for` — a LIVE INDEX CURSOR against the object
   (`execForList`, a frozen recursion point): the body's writes, `append`
   growth, and `pop` shrinkage are observed exactly as CPython's
@@ -233,7 +235,7 @@ cycle DETECTION, never by running out of fuel).
 * Loud, deliberately: list concatenation `+` and repetition (allocating
   operators would evict every `BinOp` from the heap-free fragment — they
   need an allocation-aware frame story first), `+=`/`.extend`,
-  `.insert/.remove/.index/.sort/...`, slices (STR slices are BUILT —
+  `.remove/.index/.sort/...`, slices (STR slices are BUILT —
   §string semantics; LIST slices allocate and stay loud pending the
   allocation-aware frame story), `del lst[i]`, comprehensions,
   `.get`-style method calls on lists (a faithful `AttributeError`

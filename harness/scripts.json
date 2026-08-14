@@ -170,8 +170,13 @@
   },
   {
     "file": "harness/scripts/import_insort_fallback.py",
-    "expect": "unsupported",
-    "note": "REBUILD-WINDOW (Pass 0, memo 2.5 OPEN): pure insort needs list.insert, outside the tier -- flip to match when it lands"
+    "expect": "match",
+    "note": "memo 2.5 DISCHARGED: pure insort through the list.insert tier vs CPython's C accelerator -- a divergence is a blocker"
+  },
+  {
+    "file": "harness/scripts/insort_alias_script.py",
+    "expect": "match",
+    "note": "alias tier composed with list.insert: the bisect consumer shape end to end"
   },
   {
     "file": "harness/scripts/alias_script.py",

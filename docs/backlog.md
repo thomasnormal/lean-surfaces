@@ -3552,3 +3552,162 @@ it, and the report line prints `(CLOSED 2026-08-14 — anything but 0 is a
 REGRESSION)`.
 
 The v0 class tier remains DESIGN-ONLY, pending the batch decision.
+
+## The C tier: architecture DESIGNED, implementation OWNER-GATED (2026-08-15)
+
+C as the project's THIRD modeled language — after Python and
+SystemVerilog — scoped against the full C23 standard (ISO/IEC 9899:2024)
+per the owner's directive, so the architecture holds as the tier
+expands. The memo is
+[docs/c-tier-architecture.md](c-tier-architecture.md). **Nothing is
+built and no Lean exists**; the memo's job is to fix the choices that
+cannot be retrofitted and leave the rest to the ladder.
+
+**This is NOT the question the two parked C memos ask, and the memo says
+so first.** `docs/c-extension-bridge-census.md` priced
+C-AS-A-PYTHON-BRIDGE (model C plus CPython's C API to execute
+`_struct.c`); `docs/c-intrinsics-proposal.md` priced the name-only
+alternative. Both stay gated and nothing here unblocks either. This is
+C-AS-A-FIRST-CLASS-LANGUAGE: its own corpus, its own oracle, its own
+differential claim, answering to the standard rather than to CPython's
+interior.
+
+**The 2026-08-07 entry's precondition has been MET.** §"A C surface"
+recorded *"No sunfish deliverable attached … unless a classic C sunfish
+ever exists (none is planned)."* One now does: `tools/ctwin/sunfish.c`
+in the sunfish-packed checkout (1310 lines, sha256 `66c569c1…`), a
+node-identical TRANSCRIPTION of classic `sunfish.py` whose fidelity is a
+continuously-enforced gate, not a claim. The memo argues that makes it a
+semantics corpus rather than a second engine and proposes the flagship
+role; **amending that scope decision is the owner's call**, stated as
+open question 2. The same entry guessed the tier would be *"Clight-like:
+no `setjmp`"* — the census OVERRIDES that guess (the corpus uses it) and
+the memo resolves it instead of pretending otherwise.
+
+**The census, measured** (`clang -std=c23 -D_FORTIFY_SOURCE=0 -Xclang
+-ast-dump=json`, Apple clang 17.0.0, filtered to the corpus by clang's
+sticky `loc.file`): 1236 non-blank lines; 54 functions with bodies (53
+`static` + `main`); 50 file-scope objects; 13 structs, 7 typedefs, 3
+anonymous enums; **45 distinct AST node kinds** — the whole v0
+vocabulary; 2732 implicit conversions in 8 `castKind`s; 19 indirect
+calls through the `movecb` callback; 7 `goto`, 3 labels, and **zero
+`switch`**; 27 libc names over 124 call sites. The census is stated
+under the PINNED PROFILE and the reason is itself a measurement: under
+this host's DEFAULT headers the same file censuses as 48 kinds and 2764
+conversions, because `_FORTIFY_SOURCE` rewrites four libc calls and
+injects `__builtin_object_size`. Seven findings move the design. **NO
+type punning and no unions** (the 78 explicit casts are 40 `NULL` and 38
+arithmetic; the 46 implicit `BitCast`s are `void*` conversions) — so the
+effective-type wall never fires on the corpus, which is exactly when it
+is cheap to install right. **No `__int128`** (the accumulator is
+`uint64_t`), no `_Atomic`, no `volatile`, no VLA, no `_Generic`.
+**`malloc` is v0, NOT rung 2** — the directive asked the census to check
+and the answer is no: all five allocation sites and all five frees are
+on the search path, and `realloc` MOVES the transposition table, so the
+corpus exercises provenance transfer in its hottest structure.
+**`setjmp`/`longjmp` is used, and the v0 slice never takes the
+transfer** (`go_depth` zeroes both caps at L894 before the `setjmp` at
+L895; both `longjmp` guards are false). **The float need is exactly the
+clock, and it is guarded** — the fixed-depth path evaluates ONE float
+operation, `deadline != 0.0`, with no rounding anywhere. **The C twin
+and the Python twin hit the same wall at the same node and the C side is
+strictly easier**: `sunfish.py:322` calls `time.time()` at node 2048
+(the pass-5/6 frontier), while `sunfish.c:683-685` short-circuits on
+`deadline != 0.0` and never reads the clock, so Lean-C should reach
+arbitrary fixed depth on an EMPTY trace where Lean-Python needs the
+armed pair.
+
+**The five architecture decisions.** (1) **Memory model**:
+provenance-carrying objects — pointer = `(object, offset)` with no
+integer address to lose provenance to — over byte-representable objects
+with a three-way byte lattice (`conc`/`ptr`/`indet`) and per-byte
+effective types; the CompCert/CH2O/Cerberus family. The v0 object-kind
+set is five kinds while the TYPE already fits C23. (2) **Semantic
+latitude**: UB → loud refusal, eleven classes armed at v0; unspecified →
+**canonical left-to-right EXECUTION plus a commutativity CENSUS**, not
+Cerberus-style exploration, because every downstream artifact
+(`fuelMono`, `#py_check`, the one-line-per-job batch protocol) needs a
+FUNCTION and because the census makes the canonical order EXACT rather
+than lucky — measured, 64 of 828 full expressions are candidates, 32 of
+them `x = f(…)` with one effect position, leaving 32 for the may-alias
+check; implementation-defined → a **pinned PROFILE** versioned like the
+CPython pin. (3) **Front end**: translation phases
+1-6 outside Lean via `clang -Xclang -ast-dump=json` (the house
+third-party-frontend rule, plus: using the oracle's own parser makes
+front-end agreement structural, and clang MATERIALIZES all 2732 implicit
+conversions so the ingester never re-derives one); Lean owns phase 7.
+(4) **Oracle + harness**: pinned clang at `-O0` with
+`-fsanitize=undefined,address -fno-sanitize-recover=all` as the raise
+channel, the `jobs.jsonl` batch protocol in two dialects, and **THE
+SQUARE** — Lean-C ≡ compiled-C ≡ CPython ≡ Lean-Python on node identity.
+(5) **Effect walls**: `setjmp` admitted in its four legal syntactic
+contexts returning 0 with `longjmp` LOUD (sound because the transfer can
+never be taken, so the 0 return is never wrong — the poisoned-binding
+shape); stdout modeled as world data; stdin/`getenv`/clock as INPUT
+TRACES (the trace-clock precedent); floats an **EXACT-ONLY tier** in v0
+with IEC 60559 as a named rung; threads/`volatile`/signals/VLA out by
+kind.
+
+**Two measurements that the design turns on, both recorded because they
+are counter-intuitive.** First, **`-fno-sanitize-recover=all` is
+REQUIRED**: by default UBSan prints its diagnostic and CONTINUES with
+the wrapped value (measured — the `INT_MAX + 1` probe printed
+`-2147483648` after its diagnostic), so an oracle that runs past UB
+produces a value the model refuses and the row reads as a DIVERGENCE
+when it should read as a REFUSE. Second, **no sanitizer detects strict
+aliasing or uninitialized reads on this host** — measured across
+`-fsanitize=undefined`, `-fsanitize=address`, and both — which is
+exactly why effective types and the `indet` byte have to live in the
+MODEL rather than in the raise channel. Honest environment note: **ASan
+binaries do not run in this sandbox** (a trivial `main` built with
+`-fsanitize=address` times out), so that channel is DESIGNED and must be
+verified on the build box, not assumed.
+
+**The `frontend.version` lesson applied, and the C case is worse.**
+Recorded twice in this file already (3.9.25 ↔ 3.9.19 churn, byte-identical
+payloads, 53 files the second time). Correction one: stamp the compiler
+FAMILY, never the point release. Correction two, C-specific: **the system
+headers change the PAYLOAD.** Measured — with Apple's default headers,
+`_FORTIFY_SOURCE` rewrites `memcpy`/`strcpy`/`sprintf`/`snprintf` into
+`__builtin___*_chk` and injects **10 `__builtin_object_size` nodes that
+are in nobody's source**; with `-D_FORTIFY_SOURCE=0`, zero of each. So
+the profile is an INPUT to the AST, `profile_id` is a first-class
+envelope field, the ingester refuses a profile mismatch loudly, and the
+cache key gains the profile alongside the existing `extractor_digest()`.
+
+**v0 price, by analogy to the measured lanes** (Python 23,306 Lean lines
+— 10,554 interpreter core, 11,550 proof layer; SV 8,166; extractors 1512
+and 2495): **~7,000-11,000 Lean + ~2,000-3,000 Python**, bracketing
+between the two lanes — correct, because C's semantics is larger than SV
+M0's and **v0 builds NO proof layer at all** (no VC walker, no tactics,
+no theorem surface; that is 11,550 of the Python lane's lines v0 does
+not write). Five build poles: extractor+schema+profile (no Lean) → Ast
+and ingester (no semantics) → memory model and WF (no interpreter) →
+interpreter and batch arms → the battery.
+
+**The three first battery milestones. M0 costs zero Lean**: `difftest.py`
+currently drives `sunfish.py` under **pypy3** via `pyref.py`, not the
+pinned CPython 3.9.19, so the square's existing edge is
+A ≡ pypy3(sunfish.py) and not A ≡ C — re-run it under the pinned oracle
+and the square either closes or finds something today. **M1**: the ten
+scalar leaves under `--c-batch` with the raise channel armed, which is
+also the square's first cross-language datum, because `pyfloordiv`/`pymod`
+are the exact site the ctwin README names as the #1 silent-divergence
+class. **M2**: `gen_moves` order — one call exercising the callback, the
+struct, the board, the macros, the static tables and the `indet` rule,
+with the comparison format already defined by `difftest.py`.
+
+**Ladder**: v0 (the fixed-depth corpus) → R1 statement completion
+(`switch`) → R2 layout (unions, punning, bit-fields) → R3 nonlocal
+transfer (`longjmp`) → R4 floats (gated on a toolchain that DEFINES
+`__STDC_IEC_60559_BFP__`; the candidate oracle does NOT) → R5
+variably-modified types → R6 concurrency, deliberately LAST because it
+is the one rung that replaces the state function with a memory-order
+relation → R7 the rest of C23.
+
+**GATED: nothing in the memo may be built until the owner answers its
+three open questions** — whether the lane gets `LeanModels/C/` and a
+`leanmodels-c-run` exe (touching the two files AGENTS.md fences off),
+whether the 2026-08-07 "no sunfish deliverable" scope decision is
+amended, and which host is the pinned oracle (the profile must be pinned
+BEFORE the extractor is written, since it is an input to the AST).

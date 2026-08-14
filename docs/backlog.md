@@ -3055,3 +3055,63 @@ build, 0 forfeits, 0 illegal. One process note: the first
 verification pass launched harness jobs without `~/.elan/bin` on the
 non-interactive PATH, so diff_test/script_corpus died on `lake` —
 rerun with the PATH exported; the numbers above are the rerun's.
+
+## `%`-formatting — opcode.py's sole wall — DESIGNED (2026-08-14)
+
+Design recorded: docs/memory-model.md §`%`-formatting on strings. The
+`del` landing named the chain and this is its last link.
+
+**The price, measured first.** Master's stdlib sweep dynamic telemetry
+ranks `'%' string formatting is outside the v0 tier` as the sole wall of
+exactly ONE file of 166 (`opcode.py`), whose STATIC wall set is now
+EMPTY. So the slice is worth **+1 stdlib file, and no more** — priced
+before building, per §RANK BY `sole`, THEN PRICE THE WINNER. It is
+bought anyway because that one file is the one the whole tail batch has
+been walking toward, and because the construct's proof cost is ZERO (see
+below): the cheapest remaining thing that moves the sweep at all.
+
+**Scope.** `str % (tuple|namedtuple|value)` with BARE `%s`/`%r`/`%d`/`%%`
+conversions over the SCALAR inventory (int/bool/str/None); CPython's
+single left-to-right pass; both arity `TypeError`s and the `%d`
+type `TypeError` faithful and verbatim; the format minilanguage
+(flags/width/precision/mapping keys) and every other conversion
+character LOUD. Recorded restriction: `%q` and a trailing `%` — which
+CPython answers with `ValueError` — are refused loudly rather than
+raised, because deciding them means pinning CPython's whole
+valid-character set and index arithmetic. A namedtuple RHS SPREADS
+(`PyTuple_Check` on the subclass, measured); treating it as one argument
+would fabricate an arity error for a program CPython runs, so that arm
+is required, not optional.
+
+**Cost.** One `evalBinOp` arm + four workers; ZERO theorem arms
+(`fuelMono`/`worldInv`/`clockErase` handle `binOp` generically and never
+case on the operator — the `BinOp:BitAnd` precedent, §the tail construct
+4); no extractor edit, no envelope re-extraction for the operator; no
+mutual-block member. The ONE structural edit is a verbatim MOVE of the
+scalar rendering primitives (`hexDigit`/`hex2`/`reprQuote`/`reprChar`/
+`reprChars`/`reprStr`/`strOfVal`) above the operator block, because
+`evalBinOp` precedes §rendering: the alternative was refusing `%r` of a
+str, a boundary manufactured by file order rather than semantics.
+
+### PRE-REGISTERED flip prediction (written before building)
+
+**opcode.py DOES flip, outright — there is no wall behind `%`.** This is
+measured, not predicted from reading: `/usr/lib64/python3.9/opcode.py`
+with line 36's `%` replaced by an in-tier constant runs END TO END under
+master's binary and MATCHES CPython 3.9.25, values included (a probe
+inserted before the trailing `del` prints
+`256 POP_TOP <op> 9 119 12 90 [100] 144 90 ('<', '<=', '==', '!=', '>',
+'>=')` on both sides). The whole chain behind the wall — the guarded
+`from _opcode import stack_effect` (Pass 0, except path, the §2.5
+divergence that stays invisible because `__all__` is never printed),
+`__all__ = [...]`, the `range(256)` comprehension, 119 `def_op`-family
+calls mutating module globals through function bodies, and the trailing
+`del` of the four defs — is already in tier.
+
+Predicted numbers: stdlib sweep **7 → 8 MATCH / 159 → 158 REFUSE,
+0 DIVERGE, flip set exactly {opcode}**; in-repo survey flip set among
+EXISTING files EMPTY (no in-repo file walls on `%`), 97 → 99 MATCH of
+121 with the two new scripts; script corpus 55 → 57 rows, 44 → 45
+matched, 11 → 12 loud; diff_test 0 failed with the new str_lab/seq_lab
+rows matching. Anything else — a second stdlib flip, an in-repo flip, or
+opcode refusing on something other than `%` — is a finding.

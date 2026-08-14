@@ -3581,6 +3581,172 @@ Scripts: `import_insort_fallback` flipped to `match`, plus NEW
 alias tier, calls through the alias, list printed (MATCH). No
 budget-exceeded row (N/A by design, above).
 
+## `%`-formatting on strings (DESIGN, 2026-08-14)
+
+`opcode.py`'s SOLE remaining wall, and the honest chain the `del`
+landing named. Master's stdlib sweep says so in one number:
+`'%' string formatting is outside the v0 tier` is the dynamic wall of
+exactly ONE of 166 files, and that file's STATIC wall set is now EMPTY —
+the `del` landing cleared its last `Unsupported` node, so nothing but
+this operator stands between the sweep and `opcode.py`. It reaches
+line 36, `opname = ['<%r>' % (op,) for op in range(256)]`.
+
+### Semantics (measured against the pinned 3.9, before building)
+
+`str % args` is CPython's `unicode_mod`: ONE left-to-right pass over the
+format. Literals copy; `%%` emits one `%` and consumes NOTHING; each
+conversion consumes the next argument. The argument LIST is the RHS
+spread when it is a tuple, and the one-element list `[rhs]` otherwise.
+Measured rows, all differential:
+
+* `'<%r>' % (0,)` → `'<0>'`; `'%r' % 5` ≡ `'%r' % (5,)` → `'5'` (the
+  bare-argument rule).
+* `'%r' % 'x'` → `"'x'"`, `"%r" % "it's"` → `'"it\'s"'` (the quote
+  choice), `'%r' % '\n'` → `"'\\n'"`; `'%s' % 'x'` → `'x'`.
+* `'%d' % True` → `'1'` while `'%s' % True` → `'True'` (bool is an int
+  for `%d` and a bool for `str`); `'%d' % -7` → `'-7'`.
+* `'%d%%' % (5,)` → `'5%'`; `'%%' % (1,)` is the leftover TypeError —
+  `%%` consumes nothing.
+* Arity, both directions, verbatim: `'%d %d' % (1,)` →
+  `TypeError: not enough arguments for format string`; `'%d' % (1,2)`,
+  `'abc' % (1,)`, `'abc' % 1` → `TypeError: not all arguments converted
+  during string formatting`; `'abc' % ()` → `'abc'`.
+* Type: `'%d' % 'x'` → `TypeError: %d format: a number is required, not
+  str` — the type name UNQUOTED, unlike this model's other messages.
+* Order is the single pass: `'%d %d' % ('x', 1)` raises the `%d`
+  TypeError, not the arity one.
+* **A namedtuple SPREADS.** `'%s %s' % Move(1,2)` → `'1 2'` and
+  `'%s' % Move(1,2)` → the leftover TypeError: `PyTuple_Check` succeeds
+  on the subclass. This is not a nicety — a namedtuple treated as ONE
+  argument would fabricate `not enough arguments` for a program CPython
+  runs, so the arm is REQUIRED, not optional.
+
+### The tier: bare conversions on the SCALAR inventory
+
+Admitted conversions are `%s`, `%r`, `%d`, `%%` and nothing else — no
+flag, width, precision, length modifier, or mapping key. Per conversion:
+
+* `%s` is `strOfVal` VERBATIM (str raw; int/bool/None their
+  digits/`True`/`False`/`None`).
+* `%r` is the same, except a str goes through the shipped `reprStr`
+  (quote choice, `\\`/quote/`\n`/`\r`/`\t`/`\xNN` escapes, non-ASCII
+  refused) — because `repr` and `str` COINCIDE on int/bool/None. So a
+  non-ASCII string refuses under `%r` exactly as it refuses inside
+  `print([…])`, and prints raw under `%s` exactly as `print` does: one
+  rendering boundary, not two.
+* `%d` is `asInt` (bool coerces), else the faithful `TypeError` above.
+* A CONTAINER argument (tuple/namedtuple/list/range) under `%s`/`%r` is
+  LOUD: its `repr` is `reprVal`'s heap-recursive walk and this operator
+  is a pure function of two values that cannot see the heap. A `.ref`
+  nested inside a tuple argument is LOUD for the same reason and NEVER
+  a `TypeError` built from `RVal.typeName`'s `"object"` placeholder (the
+  recorded rule: the placeholder is never part of a decided outcome). A
+  `.ref` in operand position never reaches the arm at all —
+  `evalBinOp`'s heap-operand refusal already fires, which is why the
+  `%(key)s` mapping protocol over a dict RHS is loud today and stays so.
+
+The minilanguage stays refused, and so does every conversion character
+outside the four: `%5d`, `%-s`, `%.2f`, `%(k)s`, `%x`, `%i`, `%c`, `%a`.
+RECORDED RESTRICTION: the two forms CPython itself REJECTS — `%q`
+(`ValueError: unsupported format character 'q' (0x71) at index 1`) and a
+trailing `%` (`ValueError: incomplete format`) — are refused LOUDLY here
+rather than raised. Deciding them faithfully means pinning CPython's
+complete valid-character set and its index arithmetic; a loud refusal is
+never a wrong answer, an invented `ValueError` would be. The refusal
+message names the character, so the census can still see the demand.
+
+### Mechanism: one operator arm, and a verbatim MOVE
+
+`evalBinOp`'s `.mod, .str` refusal becomes `strFormat fmt b`. Workers:
+`strFormatWalk` (the single pass, `List Char → List RVal → String →
+Res String`, structural), `strFormatConv` (one conversion on one
+argument), `strFormatStr`/`strFormatRepr` (the scalar renderers, defined
+THROUGH `strOfVal`/`reprStr` so there is one source of truth for
+rendering). Simp doctrine as always: the dispatcher `strFormat` joins
+`py_simp`/`interpUnfolds`, the workers stay OUT (the `strSlice`/
+`sortInts` freeze family).
+
+The one structural edit: the scalar rendering primitives — `hexDigit`,
+`hex2`, `reprQuote`, `reprChar`, `reprChars`, `reprStr`, `strOfVal` —
+MOVE VERBATIM up the file, above the operator block, because
+`evalBinOp` precedes §rendering and Lean has no forward references. The
+alternative was refusing `%r` of a str, which would be a tier boundary
+manufactured by FILE ORDER rather than by semantics — the model has the
+exact answer and the `print` tier already ships it. No definition
+changes, no signature changes; §rendering keeps `reprVal`/`printOne`/
+`strOfValH` and now cites the moved block.
+
+### Theorem walks: ZERO arms — the BitAnd precedent, exactly
+
+`fuelMono`, `worldInv` and `clockErase` all handle `binOp` GENERICALLY
+(`Run.le_refl` / `.liftResF` / `.liftRes` over the pure `evalBinOp`
+result); not one of them cases on the operator. `Expr.heapFree`'s binOp
+arm is unchanged: `%` on a str allocates nothing (a str is an
+immediate). `evalBinOp` sits outside every `mutual` block, so no
+recursion point moves and no conjunct is appended. The `%` arm is
+reached identically from the expression arm and from `%=` (augAssign
+evaluates through the same pure `evalBinOp`, which is what VC.lean's
+recorded augAssign rule states) — one implementation, no second path.
+
+### Extractor and envelopes: untouched
+
+`BinOp:Mod` is the SAME node as integer `%` and has always extracted;
+the refusal is DYNAMIC. That is exactly why the static census cannot see
+it — `opcode.py`'s wall set is empty on master while the file still
+refuses — and the still-refused forms keep the identical shape: a `%5d`
+program extracts as a structured `BinOp` and refuses at execution. The
+census's blindness to the minilanguage is deliberate and unchanged, and
+no envelope is re-extracted for the operator (the battery files are
+re-extracted because their SOURCES gain functions).
+
+### What flips — pre-registered prediction
+
+**`opcode.py` flips OUTRIGHT: there is no wall behind `%`.** Measured
+before building, not guessed: the same file with line 36's `%` replaced
+by an in-tier constant runs END TO END under master's binary and matches
+CPython, values included — a probe printing `len(opname)`, `opname[1]`,
+`opname[0]`, `opmap["NOP"]`, `len(opmap)`, `len(hasname)`, `hasname[0]`,
+`hasconst`, `EXTENDED_ARG`, `HAVE_ARGUMENT`, `cmp_op` just before the
+trailing `del` agrees exactly (`256 POP_TOP <op> 9 119 12 90 [100] 144
+90 ('<', '<=', '==', '!=', '>', '>=')`). Everything behind the wall is
+already in tier: the guarded `from _opcode import stack_effect` (Pass 0;
+the model takes the except path — the recorded §2.5 divergence, unseen
+because `__all__` is never printed), `__all__ = [...]`, the list
+comprehension over `range(256)` (well under `seqBudget`), 119
+`def_op`/`name_op`/`jrel_op`/`jabs_op` calls mutating module-global list
+and dict through function bodies (the one-pipeline live-view
+resolution), the module-level `hasconst.append(100)` lines, and the
+trailing `del def_op, name_op, jrel_op, jabs_op` (the `del` landing's
+ingestion rewrite).
+
+* **stdlib sweep: 7 → 8 MATCH / 159 → 158 REFUSE, 0 DIVERGE, flip set
+  exactly {`opcode`}.** That is the FULL measured price of this slice:
+  `%` is the sole wall of exactly one file of 166 today. More flips, or
+  fewer, is a finding.
+* in-repo survey: flip set among EXISTING files EMPTY — no in-repo file
+  has `%` as its wall (sunfish.py's five `%` are integer modulo, and so
+  is `listcomp_script.py`'s). The new battery scripts add MATCH rows:
+  97 → 99 MATCH of 121, REFUSE 22 → 22 (one new loud script).
+* script corpus: 55 → 57 rows, 44 → 45 matched, 11 → 12 loud.
+* diff_test: the new str_lab/seq_lab rows all match; 0 failed stays.
+
+### Battery
+
+`Examples/python/str_lab` (differential rows + `#py_check`): the opcode
+form `'<%r>' % (op,)` verbatim; `%r` over int/bool/None/str/quote-choice/
+escape; the BARE argument (`'%r' % v`) against the 1-tuple; `%s` over
+the inventory; `%d` over int/bool/negative; two conversions in one
+string; the `%%` no-consume rule; the three faithful TypeErrors (short,
+leftover, `%d` on a str) and the left-to-right ORDER row; and the loud
+frontier — `%5d` (minilanguage), `%x` (unmodelled character), `%q`
+(CPython's own ValueError, refused), a trailing `%`, a container
+argument, `%r` of a non-ASCII str (with `%s` of it MATCHING beside it),
+and a dict RHS (the pre-existing heap-operand refusal). `seq_lab` gains
+the namedtuple SPREAD pair. Scripts: `fmt_script.py` (the opcode shape
+at module scope — a `['<%r>' % (i,)]` comprehension, a `def_op`-style
+mutator, printed) and `fmt_width_script.py` (expect `unsupported` — the
+minilanguage at script level).
+
 ## Staging (amended)
 
 * **H0 (landed): representation.** Structured `Dict`/`Attribute`.

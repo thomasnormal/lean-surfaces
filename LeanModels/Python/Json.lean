@@ -1321,8 +1321,15 @@ private def recognizeDefAliases (functions : Array FunctionDefn)
         | .assign tgts (.name t _) sp =>
           (match tgts.toList with
            | [.name a _] =>
+             -- ordering: a DEF target must END before the alias line; an
+             -- admitted-ALIAS target is ordered by the FOLD itself (its
+             -- assign already executed, and `splitChains` preserves
+             -- CPython's left-to-right order INSIDE a chained statement,
+             -- whose split pieces all carry the same span — the span test
+             -- would wrongly reject `chain2 = chain1` there)
              let ok :=
-               (match funcs.findRev? (fun f => f.name == t) with
+               (if admitted.contains t then true
+                else match funcs.findRev? (fun f => f.name == t) with
                 | some f => decide (f.span.endLineno < sp.lineno)
                 | Option.none => false)
                && !cNames.contains t && !ntNames.contains t

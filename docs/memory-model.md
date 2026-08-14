@@ -3313,9 +3313,15 @@ Per candidate `alias = name`, a DIRECT top-level single-target assign
 
 * `name` resolves to a top-level def or an EARLIER-ADMITTED alias
   (source-order fold; alias-of-alias is transitive by construction),
-  last-wins like `findFunction`; its span's `endLineno` is strictly
-  before the alias statement's `lineno` — the ordering check the
-  `pass` rewrite would otherwise erase from `defsBoundBefore`'s view;
+  last-wins like `findFunction`. Ordering: a DEF target's span must END
+  strictly before the alias statement's line — the check the `pass`
+  rewrite would otherwise erase from `defsBoundBefore`'s view; an
+  admitted-ALIAS target is ordered by the fold itself (its assign
+  already executed — and `splitChains` gives every piece of a chained
+  assignment the SAME span while preserving CPython's left-to-right
+  execution order, so the span test would wrongly reject
+  `chain2 = chain1` inside `chain1 = chain2 = f`; found by the box
+  build's `#py_check` on the first battery run);
 * `name` is bound by NO top-level statement — except, when `name` is
   itself an admitted alias, its own admitted assign (defs are not
   `topLevel` statements, so any other hit is a rebinding: before the

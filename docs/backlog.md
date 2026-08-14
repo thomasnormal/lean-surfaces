@@ -2208,6 +2208,52 @@ calls, prints, trailing `del`) → MATCH; non-trailing del-of-def → REFUSE;
 `del __name__` → REFUSE; `del time` after the benign import → REFUSE;
 mixed trailing `del f, x, nosuch` → `NameError` with f and x really gone.
 
+### LANDED (master, 2026-08-14, the box cycle) — measured vs pre-registered: EXACT
+
+Build 3659 jobs, ZERO errors, after two proof-arm corrections the
+never-compiled series needed: (1) a doc comment must be IMMEDIATELY
+followed by its declaration — the new ingestion defs had been inserted
+between `recognizeDefAliases`'s docstring and its `def` (parse error at
+the next `/--`); (2) `ClockErasedF.ok`'s implicit `{st}` must be given
+EXPLICITLY (`(st := { st with locals := env })`, `RFlow.next` spelled
+out — `v` is polymorphic): passing `h` first pins the state to the
+UN-updated frame, defeq at `.world.clock` but not at the ok-state — the
+H3 eager-unification trap in a new costume. Obs.lean's two arms and the
+function-scope arm compiled first try at the recorded pricing.
+
+Verification (box, oracle CPython 3.9.25 stamped on every instrument):
+diff_test **1159 cases, 0 failed** (1062 matched, 97 whitelisted — the
+twelve del_lab rows land as registered, the three census over-refusals
+pinned); script_corpus **55 scripts, 0 failed, 44 matched, 11
+loud-blocked** (the 8 del scripts: 5 MATCH including the opcode-shaped
+trailing pin, the mid-statement `if`-shell removal, and the partial
+`del f, x, nosuch` NameError; 3 loud: non-trailing def-del, dunder,
+import-name); extractor units 65/65; docs_check 67/67; in-repo survey
+**119 files — MATCH=97, REFUSE=22, 0 DIVERGE** (from 89 MATCH at the
+insert landing; the del battery files all count); stdlib sweep
+**166 files — MATCH=7, REFUSE=159, 0 DIVERGE, flip set EMPTY** (the
+same seven: bisect, stat, sunau, chunk, nturl2path, `__phello__.foo`,
+`_sysconfigdata…`).
+
+**The pre-registered prediction held exactly**: opcode.py did NOT flip,
+and its refusal message MOVED off `unsupported statement 'Delete'` onto
+`'%' string formatting is outside the v0 tier` (measured directly:
+`tools/leanpy /usr/lib64/python3.9/opcode.py` on the box) — the
+acceptance signal that `del` itself cleared. opcode's honest chain is
+now del (LANDED) + a `%`-formatting slice (`str % (int,)` under
+`%r`/`%d`, buildable on the shipped `reprVal`) — the measured
+next-construct candidate, deliberately not built here. The stdlib's
+static Delete census drops to the non-bare forms (142 nodes in 56
+files, all subscript/attribute/starred — clause 4's boundary, intact).
+
+Tripwire: the live gauntlet (`elo-null-r4-d7-em100-20260814`) ran
+208 → 358 games during the cycle with 0 forfeits; every other arena
+unchanged, 0 forfeits everywhere. Instrument note: leanpy's
+binary-freshness WARNING is an mtime heuristic and fires falsely after
+a `git reset` (lake replays by content hash — 16/16 replayed, nothing
+rebuilt); the del rows themselves are the witness that the binary
+carries the semantics.
+
 ## The tail, construct 4: ranked (2026-08-13)
 
 **STATUS: `BinOp:BitAnd` is DESIGNED — see §the bitwise family below.**

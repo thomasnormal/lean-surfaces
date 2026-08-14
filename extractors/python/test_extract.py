@@ -520,6 +520,54 @@ class ClassDefTests(unittest.TestCase):
         body = self._module_body("class C:\n    x = 1\n")
         self.assertIn("class-level statements", body[0]["class_unsupported"])
 
+    # -- THE THIRD DOOR (docs/memory-model.md §class semantics): a
+    # DECORATED method is a creation EFFECT. CPython calls the decorator
+    # at the `class` statement; the model executes no class body, so
+    # skipping it would print nothing where CPython prints.
+
+    def test_undecorated_methods_keep_creation_pure(self):
+        body = self._module_body(
+            "class C:\n"
+            "    'doc'\n"
+            "    def __init__(self): pass\n"
+            "    def get(self): return 1\n")
+        self.assertFalse(body[0]["creation_effects"])
+
+    def test_decorated_method_is_a_creation_effect(self):
+        body = self._module_body(
+            "class C:\n"
+            "    @log\n"
+            "    def m(self): pass\n")
+        self.assertTrue(body[0]["creation_effects"])
+        self.assertTrue(body[0]["body"][0]["has_decorators"])
+
+    def test_property_is_a_creation_effect_too(self):
+        # every one of the 15 stdlib classes the census found decorates
+        # with property/setter/classmethod/staticmethod, which happen to
+        # have no observable effect -- lucky, not sound, so they refuse.
+        body = self._module_body(
+            "class C:\n"
+            "    @property\n"
+            "    def x(self): return 1\n")
+        self.assertTrue(body[0]["creation_effects"])
+
+    def test_argument_shapes_are_NOT_creation_effects(self):
+        # PRECISION: `args_unsupported` mixes "decorators" with
+        # "*args"/"**kwargs"/"defaults". Only the decorator is an effect,
+        # which is why ingestion reads the structured `has_decorators`
+        # flag and never matches on that message.
+        body = self._module_body(
+            "class C:\n"
+            "    def m(self, *rest, **kw): pass\n")
+        self.assertFalse(body[0]["creation_effects"])
+        m = body[0]["body"][0]
+        self.assertIn("*args", m["args_unsupported"])
+        self.assertNotIn("has_decorators", m)
+
+    def test_undecorated_function_has_no_decorator_flag(self):
+        body = self._module_body("def f(x): return x\n")
+        self.assertNotIn("has_decorators", body[0])
+
 
 class ImportFromTests(unittest.TestCase):
     # -- Pass 0 (docs/memory-model.md paragraph "Import forms (Pass 0)"):

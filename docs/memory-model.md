@@ -300,9 +300,9 @@ cycle DETECTION, never by running out of fuel).
   **`ClassDefn.creationPure`** is therefore a SECOND, independent flag:
   the extractor emits the structured verdict `creation_effects`
   (unrecognized base / metaclass keyword / decorator / any class-level
-  statement beyond a method, `pass`, a docstring, or an attribute bound
-  to a LITERAL), ingestion re-checks the body it already parses
-  (`classBodyStmtPure` — never trust a field you can verify), and a
+  statement beyond an UNDECORATED method, `pass`, a docstring, or an
+  attribute bound to a LITERAL), ingestion re-checks the body it already
+  parses (`classBodyStmtPure` — never trust a field you can verify), and a
   demoted namedtuple/`Exception` base clears the flag too, because the
   base expression the census rejected is no longer one the model
   reproduces. `runScript` refuses a module containing any non-pure
@@ -316,6 +316,33 @@ cycle DETECTION, never by running out of fuel).
   is untouched: it makes no claim about module stdout, and the one
   class-body effect that could reach a call's result — a class-level
   `global` — is already tracked by `ClassDefn.hasGlobal`.
+* **THE THIRD DOOR — a DECORATED METHOD (2026-08-14, found by
+  `harness/class_census.py`, BUILT — normative).** The flag above shut two
+  doors, a class-body statement and a base expression. It left a third
+  open for two years of tier work: the extractor's body loop
+  (`if isinstance(s, ast.FunctionDef): continue`) and ingestion's
+  (`if k == "FunctionDef" then pure true`) each skipped a method
+  UNCONDITIONALLY, decorator list and all. `@log def m(self)` CALLS `log`
+  at the `class` statement — CPython prints, the model executed no class
+  body and printed nothing. A wrong answer, not a refusal, through exactly
+  the door this flag exists to guard. Measured over the pinned 3.9 Lib
+  before the fix: **15 such classes in 14 files, 2 of them (`shlex`,
+  `sre_parse`) in files the admission was passing**; every one decorates
+  with `property`/`setter`/`classmethod`/`staticmethod`, which happen to
+  have no creation-time effect — the model was LUCKY, not sound. A
+  decorated method is now a creation effect on both sides. The check is
+  the structured extractor flag `has_decorators` (`methodCreationPure`,
+  Json.lean), in the `has_global`/`is_generator` family, and deliberately
+  NOT the method's `args_unsupported`: that is a comma-joined message
+  mixing "decorators" with `*args`/`**kwargs`/defaults, and an unusual
+  SIGNATURE is refused at CALL time while doing nothing whatever at the
+  `class` statement (`cls_deco_args_script.py` is the precision pin,
+  `cls_deco_script.py` the refusal with CPython's own output in its
+  docstring). This narrowing is the ONLY one the class-tier census found:
+  `unexplained demands ≠ ∅ ⟺ creation_effects` holds with 0 violations
+  over 679 top-level stdlib classes once the decorated method and the two
+  recognized bases are excused, so a decorated method is the single shape
+  that was pure-but-not-reproducible.
 * **Instances as dict keys** are LOUD (CPython hashes by identity —
   in-tier keys stay value-hashable; `keyRefusal` never raises a fake
   `unhashable` `TypeError` for them). An instance cannot cross the

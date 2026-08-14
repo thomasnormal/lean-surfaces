@@ -563,6 +563,24 @@ private def checkCall (path : System.FilePath) (fn : String) (args : Array Val)
 #eval checkCall "Examples/python/bench_statistics/bench_statistics.json" "median_low"
         #[.int 3] 1000 (.exn (.typeError "'int' object is not iterable"))
 
+/-! ## THE THIRD DOOR: a DECORATED method is a creation effect
+
+The regression guard for the 2026-08-14 narrowing (docs/memory-model.md
+§class semantics, "Class CREATION is an effect"). `parseClassDefn` used to
+answer `pure true` for every `FunctionDef` in a class body, decorator list
+and all, so `@log def m(self)` — which CPython CALLS at the `class`
+statement — was creation-PURE and its effect was silently skipped.
+
+The third row is the precision half: an unusual SIGNATURE is refused at
+call time and is not a creation effect, so purity is decided by the
+structured flag and never by matching on `args_unsupported`'s prose. -/
+
+#guard methodCreationPure (Lean.Json.mkObj [("kind", "FunctionDef")]) == true
+#guard methodCreationPure (Lean.Json.mkObj
+  [("kind", "FunctionDef"), ("has_decorators", Lean.Json.bool true)]) == false
+#guard methodCreationPure (Lean.Json.mkObj
+  [("kind", "FunctionDef"), ("args_unsupported", Lean.Json.str "*args")]) == true
+
 /-! ## Spec layer end-to-end: `load_program` → literal `Module` → proofs
 
 `load_program` runs at *elaboration* time: it reads the extractor-generated

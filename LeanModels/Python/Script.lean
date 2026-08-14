@@ -841,7 +841,7 @@ docs/memory-model.md §the trace clock) — the script-mode counterpart of
 `runScript = runScriptClock m []` equation definitional. -/
 def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit :=
   if !classesCreationPure m then
-    .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator, or a class-level statement beyond methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
+    .unsupported "a class whose CREATION does something observable (an unrecognized base, a metaclass keyword, a decorator on the class OR on one of its methods, or a class-level statement beyond undecorated methods/pass/docstring/literal attributes): CPython runs that at the `class` statement and the model executes no class body, so leanpy refuses rather than silently skip the effect"
   else if !defsBoundBefore m m.topLevel.toList then
     .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
   else if !scriptFlushCoherent m then

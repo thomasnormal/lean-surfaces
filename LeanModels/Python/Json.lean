@@ -731,12 +731,18 @@ private def recognizeNamedtuples (functions : Array FunctionDefn)
     (topLevel', cands.toArray, classes)
 
 /-- Can this class-body statement change anything observable when CPython
-executes the class body? `pass`, a docstring (or stray constant), a method,
-and an attribute bound to a LITERAL are all invisible: the model skips
-class creation entirely, and skipping these skips nothing. Anything that
-calls, reads a name, subscripts, or loops can print or raise at exactly the
-`class` statement, where the model does nothing at all — so it is NOT pure
-and `runScript` refuses the module (`ClassDefn.creationPure`). -/
+executes the class body? `pass`, a docstring (or stray constant), an
+UNDECORATED method, and an attribute bound to a LITERAL are all invisible:
+the model skips class creation entirely, and skipping these skips nothing.
+Anything that calls, reads a name, subscripts, or loops can print or raise
+at exactly the `class` statement, where the model does nothing at all — so
+it is NOT pure and `runScript` refuses the module
+(`ClassDefn.creationPure`).
+
+A DECORATED method is NOT invisible — see `methodCreationPure`; a
+`.defStmt` reaching this function is a NESTED def, which cannot appear in
+a class body ingestion parses (`parseClassDefn` handles `FunctionDef`
+nodes itself and never routes them here). -/
 def classBodyStmtPure (s : Stmt) : Bool :=
   match s with
   | .pass _ => true
@@ -745,6 +751,28 @@ def classBodyStmtPure (s : Stmt) : Bool :=
       targets.all fun t => match t with | .name _ _ => true | _ => false
   | .defStmt .. => true
   | _ => false
+
+/-- THE THIRD DOOR (2026-08-14, docs/memory-model.md §class semantics):
+is this class-body `FunctionDef` node invisible at the `class` statement?
+
+Only if it is UNDECORATED. `@log def m(self)` calls `log` while CPython
+builds the class, and the model — which executes no class body at all —
+would print nothing where CPython prints: a WRONG ANSWER, not a refusal,
+and the third way into the hole `creationPure` exists to close (the first
+two were a class-body statement and a base expression).
+
+The extractor's `has_decorators` is the structured flag, in the
+`has_global`/`is_generator` family: `args_unsupported` also carries
+"decorators", but it is a comma-joined MESSAGE that mixes in
+`*args`/`**kwargs`/defaults — none of which is a creation effect — and
+purity is not decided by matching on prose. A node without the field is
+read as undecorated, which is what an envelope from any extractor that
+could produce one means; the envelope cache keys on the extractor's own
+hash, so a re-extraction cannot serve a stale verdict. -/
+def methodCreationPure (j : Json) : Bool :=
+  match j.getObjVal? "has_decorators" with
+  | .ok (.bool b) => !b
+  | _ => true
 
 /-- Parse a module-level `ClassDef` node (H3): the `ClassDefn` record plus
 the method `FunctionDefn`s FLATTENED under qualified names
@@ -798,7 +826,8 @@ def parseClassDefn (j : Json) : Except String (ClassDefn × Array FunctionDefn) 
       | _ => false
     let bodyPure ← body.allM fun stmtJson => do
       let k ← (← getField stmtJson "kind").getStr?
-      if k == "FunctionDef" then pure true else pure (classBodyStmtPure (← parseStmt stmtJson))
+      if k == "FunctionDef" then pure (methodCreationPure stmtJson)
+      else pure (classBodyStmtPure (← parseStmt stmtJson))
     return ({ name, ok := classUnsupported.isNone, methods, hasGlobal, ntBase,
               isExc, creationPure := noCreationEffects && bodyPure, span }, fns)
 

@@ -142,5 +142,35 @@
   {
     "file": "harness/scripts/fstring_script.py",
     "expect": "match"
+  },
+  {
+    "file": "Examples/python/import_lab/import_lab.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0 import forms): happy_fallback + rebind_after_fallback + guarded star, all inventory-absent"
+  },
+  {
+    "file": "harness/scripts/import_missing_uncaught.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0): unguarded absent module, exit 1, ModuleNotFoundError line CPython-identical"
+  },
+  {
+    "file": "harness/scripts/import_star_missing.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0): unguarded star of an absent module raises before any binding"
+  },
+  {
+    "file": "harness/scripts/import_not_top_level.py",
+    "expect": "unsupported",
+    "note": "REBUILD-WINDOW (Pass 0): function-body from-import refuses loudly, never a fake ImportError"
+  },
+  {
+    "file": "harness/scripts/import_bisect_fallback.py",
+    "expect": "match",
+    "note": "REBUILD-WINDOW (Pass 0, memo 2.5): accelerator-fallback equivalence for bisect_left/right -- a divergence is a blocker"
+  },
+  {
+    "file": "harness/scripts/import_insort_fallback.py",
+    "expect": "unsupported",
+    "note": "REBUILD-WINDOW (Pass 0, memo 2.5 OPEN): pure insort needs list.insert, outside the tier -- flip to match when it lands"
   }
 ]

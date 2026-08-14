@@ -56,9 +56,9 @@ it. So the census comes first, and every decision below cites it.
 -ast-dump=json -fsyntax-only` on Apple clang 17.0.0
 (arm64-apple-darwin25.6.0), walked by a scratch script that tracks
 clang's STICKY `loc.file` in document order and counts only nodes whose
-file is `sunfish.c` — the 785 top-level declarations include every
-system-header declaration the includes drag in, and filtering by file is
-the difference between censusing the corpus and censusing libc's
+file is `sunfish.c` — the 776 top-level declarations include every
+system-header declaration the six `#include`s drag in, and filtering by
+file is the difference between censusing the corpus and censusing libc's
 headers.
 
 **The census is stated under the PINNED PROFILE, and the reason is

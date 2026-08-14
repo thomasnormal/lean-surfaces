@@ -84,6 +84,15 @@ ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
 
 UNSUPPORTED_TEXT_LIMIT = 200
 
+# f-strings are LOWERED to `"a" + str(x) + "b"` (docs/memory-model.md
+# §f-strings), which spells the rendering as a call of the NAME `str`. The
+# interpreter reaches its `str` builtin only after every shadow-resolving
+# arm, so a module that binds `str` would silently render through the
+# shadow while CPython's f-string never consults the name at all. This flag
+# is the module-wide census that keeps that case LOUD; it is set per file
+# in `process_file` and read by `convert_expr`'s `JoinedStr` arm.
+_MODULE_BINDS_STR = False
+
 
 class ExtractError(Exception):
     """Fatal extractor error (message is printed to stderr, exit code 1)."""
@@ -139,7 +148,94 @@ def literal_const_payload(node):
     return None  # float / bytes / complex / Ellipsis: not a tier literal
 
 
+def binds_str(tree):
+    """Does the module bind the name ``str`` ANYWHERE — any scope, any
+    binding form? The f-string lowering spells `{x}` as a call of the name
+    `str`, so a bound `str` (a py2 compat shim's ``str = unicode``, a
+    parameter, a local) would make the lowering render through the shadow
+    while CPython's f-string never looks the name up. Conservative and
+    whole-module by design: the alternative to over-refusing here is being
+    silently wrong."""
+    for n in ast.walk(tree):
+        if isinstance(n, ast.Name) and isinstance(n.ctx, (ast.Store, ast.Del)):
+            if n.id == "str":
+                return True
+        elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            if n.name == "str":
+                return True
+        elif isinstance(n, ast.arg):
+            if n.arg == "str":
+                return True
+        elif isinstance(n, ast.alias):
+            if (n.asname or n.name.split(".")[0]) == "str":
+                return True
+        elif isinstance(n, ast.ExceptHandler):
+            if n.name == "str":
+                return True
+        elif isinstance(n, (ast.Global, ast.Nonlocal)):
+            if "str" in n.names:
+                return True
+    return False
+
+
+def convert_fstring(node):
+    """Lower an f-string to `"a" + str(x) + "b"` (docs/memory-model.md
+    §f-strings): literal text becomes a str `Constant`, each field becomes a
+    `str(…)` `Call`, and the pieces join left-associatively with `BinOp Add`
+    — CPython's `{x}` IS `format(x, '')`, which equals `str(x)` for every
+    value in this tier. Zero new node kinds, so nothing downstream moves.
+
+    The tier line falls out of that equality: a non-empty FORMAT SPEC is
+    where `format(v, spec)` and `str(v)` diverge (a whole mini-language —
+    a parallel table this development refuses), and `!r`/`!a` name
+    operations that are not tier callables. Each is refused LOUDLY on the
+    whole node, never half-lowered. `{x=}` needs no arm of its own: CPython
+    3.8+ compiles it to the text `x=` plus a `!r` field, which is itself
+    the evidence that the AST does not carry the source text."""
+    if _MODULE_BINDS_STR:
+        return unsupported(node, "JoinedStr:str_shadowed")
+    parts = []
+    for part in node.values:
+        if isinstance(part, ast.FormattedValue):
+            if part.format_spec is not None:
+                return unsupported(node, "JoinedStr:format_spec")
+            if part.conversion == 114:
+                return unsupported(node, "JoinedStr:conversion_r")
+            if part.conversion == 97:
+                return unsupported(node, "JoinedStr:conversion_a")
+            # -1 = no conversion, 115 = `!s`, which IS `str()` spelled out.
+            if part.conversion not in (-1, 115):
+                return unsupported(node, "JoinedStr:conversion")
+            parts.append({
+                "kind": "Call",
+                "span": span(part),
+                "func": {"kind": "Name", "span": span(part), "id": "str"},
+                "args": [convert_expr(part.value)],
+                "keywords": [],
+                "call_unsupported": None,
+            })
+        elif isinstance(part, ast.Constant) and isinstance(part.value, str):
+            parts.append({
+                "kind": "Constant",
+                "span": span(part),
+                "value": {"type": "str", "value": part.value},
+            })
+        else:  # not reachable from CPython's parser; loud rather than guessed
+            return unsupported(node, "JoinedStr:part:" + type(part).__name__)
+    if not parts:  # `f""` — no fields and no text
+        return {"kind": "Constant", "span": span(node),
+                "value": {"type": "str", "value": ""}}
+    out = parts[0]
+    for p in parts[1:]:
+        out = {"kind": "BinOp", "span": span(node),
+               "left": out, "op": "Add", "right": p}
+    return out
+
+
 def convert_expr(node):
+    if isinstance(node, ast.JoinedStr):
+        return convert_fstring(node)
+
     if isinstance(node, ast.Constant):
         v = node.value
         if v is True or v is False:  # bool before int: bool is an int subtype
@@ -1131,6 +1227,11 @@ def process_file(source_path, companion_dir, out=None):
         raise ExtractError("%s: syntax error: %s" % (source_path, e))
 
     blocks = scan_lean_blocks(text.splitlines(), source_path)
+
+    # The f-string lowering's shadow census (see `binds_str`): whole-module,
+    # so it is decided once, here, before any expression is converted.
+    global _MODULE_BINDS_STR
+    _MODULE_BINDS_STR = binds_str(tree)
 
     source_rel = rel_posix(source_path)
     json_rel = os.path.splitext(source_rel)[0] + ".json"

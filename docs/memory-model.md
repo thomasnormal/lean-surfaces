@@ -2770,6 +2770,93 @@ REFUSED LOUDLY, each for a stated reason, not for convenience:
 identical to `str()`, so it is `printOne` under another spelling and costs
 nothing to admit.
 
+### AS-BUILT — and the design was WRONG about one thing
+
+**UNCOMMITTED-TREE MARKER — DELETE THIS PARAGRAPH WHEN THE TRIAD IS
+GREEN.** The section heading above still says DESIGN and this subsection
+still says AS-BUILT because the landing is HELD: the widening below is a
+`Semantics.lean` edit, and the rebuild it forces was sequenced away from a
+timed match running on this box. Measured in this tree with the OLD `str`:
+1068 differential cases, 2 failed — `list_field` and `tuple_field`, the
+exact two the widening fixes — and 36 scripts, 1 failed, `fstring_script`,
+likewise. Nothing here is a claim about a build that has happened.
+
+The lowering is `convert_fstring` in `extractors/python/extract.py`, and
+it is the whole implementation: no Lean node kind, no `evalExpr` arm, no
+walker, and — as designed — not one line of `fuelMono`, `worldInv` or
+`ceExecStmt_succ` moved. Everything below was MEASURED at implementation
+time against CPython 3.9.19, and two of the measurements contradict the
+design.
+
+**CORRECTION 1 — `{x}` was NOT `printOne`, and the fix is to delete a
+stale restriction.** The design's load-bearing claim was "`{x}` is
+`str(x)` is `printOne`". The first equality holds; the second did not.
+The `str` BUILTIN was pass 8's cast tier (`strOfVal`): value-only, LOUD on
+every container and ref, while `printOne` renders containers exactly. So
+the lowering as designed refused `list_field` and `tuple_field` — two rows
+the design had measured IN TIER — and killed `fstring_script.py` outright
+at `f"list={xs} …"`, stdout empty, exit 3.
+
+The narrowness was stale, not principled. `strOfVal`'s own stated reason
+was "repr recursion is not guessed", and that reason EXPIRED the same day
+it was written, when §rendering landed `reprVal`/`printOne` and taught the
+model CPython's two-level rule exactly. `str` had simply been frozen
+before the renderer existed. So the fix is `strOfValH` — CPython's `str()`
+is `printOne`, delegating to `strOfVal` on the immediates so the scalar
+normal form every existing goal has is untouched and the two cannot drift.
+It adds no capability: the surviving refusals are `printOne`'s own. It
+also fixes the standalone builtin, where `str([1, 2])` had been refusing
+for no remaining reason. FOUR references, none in a proof (the def, the
+call arm, and the two simp-set lists); the arm keeps its shape
+(`Run.liftRes st (…)`, same state in and out), so the meta-theorems see
+nothing and `str` stays inside `Expr.heapFree`. **Do not re-freeze it:**
+the reason it was narrow is gone, and the next reader should know that
+before reading `strOfVal`'s docstring as current.
+
+**CORRECTION 2 — `{x=}` is refused by its CONVERSION, not by missing
+source text.** The design said the debug specifier needs source text "the
+extracted AST does not carry". It does carry it: CPython bakes `n=` in as
+a literal `Constant` at parse time, so `f"{n=}"` and `f"n={n!r}"` have the
+SAME AST. What refuses is the specifier's DEFAULT conversion, `!r`. The
+proof is `debug_spec_str`: `f"{n=!s}"` — same specifier, conversion made
+explicit and in-tier — MATCHES at `'n=3'`. The refusal is real, its
+recorded reason was not.
+
+`!a` joins the refusals (the design named `!r` and forgot it): it is
+`repr` THEN non-ASCII escaping, two out-of-tier operations, and an
+unnamed conversion must never fall through to the in-tier path by
+accident — `conversion_ascii` is the row that says so.
+
+### The lowering's ONE new boundary: the `str` shadow census
+
+The lowering spells rendering as a call of the NAME `str`, which is a
+lookup the SOURCE NEVER WROTE. CPython's f-string performs no such
+lookup — it calls the type's `__format__` — but the interpreter reaches
+its `str` builtin only AFTER every shadow-resolving arm, so a module
+binding `str` (a py2 shim's `str = unicode`, a parameter, a local) would
+have rendered through the shadow and been SILENTLY WRONG. This is the
+price of a lowering, and it is paid the way this development pays: the
+extractor censuses the whole module for a binding of `str` in any scope
+and any form (`binds_str` — `Store`/`Del` names, `def`/`class` names,
+parameters, import aliases, `except as`, `global`/`nonlocal`) and refuses
+every f-string in such a module LOUDLY. Whole-module on purpose: deciding
+it per scope means re-deciding CPython's scoping rules inside the
+extractor, a second table, to buy a file nobody writes.
+`Examples/python/fstring_shadow` is the pin — `shadowed` and `elsewhere`
+refuse (the census is module-wide), while `plain_concat` still runs an
+EXPLICIT `str(n)`, which is subject to CPython's real scoping and agrees.
+
+### Measured, as landed
+
+`Examples/python/fstring_lab` is 28 rows — 22 match, 6 refusals
+(`!r`, `!a`, two format specs, `{x=}`, a set field) — plus
+`fstring_shadow`'s 3, and `harness/scripts/fstring_script.py` is stdout-
+identical to CPython 3.9.19 through the top-level `for` shell. Nesting
+composes for free (`f"{f'{n}'}"` → `'3'`) because a lowered f-string is an
+ordinary expression, and the two-level rule is pinned by the PAIR the
+design asked for: `str_field` → `'[hi]'` against `list_field` →
+`"['a', 'b']"`.
+
 ## Import forms (Pass 0) — the guarded from-import tier (DESIGN)
 
 Normative design, nothing as-built: the implementation is NOT started,

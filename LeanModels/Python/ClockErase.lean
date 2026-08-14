@@ -2068,7 +2068,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       | nil => exact .ok hs2 _
                       | cons v t =>
                         cases t with
-                        | nil => exact .liftRes hs2 _
+                        -- strOfValH reads the heap (§rendering widening), so the
+                        -- seeded family needs the withClock normal form first —
+                        -- the same ce_norm every heap-reading arm carries.
+                        | nil => ce_norm; exact .liftRes hs2 _
                         | cons d t2 => exact .unsupported
                     case bprint =>
                       -- 2026-08-13: `print` is an ordinary builtin here. It reads

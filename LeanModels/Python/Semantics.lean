@@ -1105,6 +1105,21 @@ def printOne (h : Heap) (v : RVal) : Option String :=
   | .str t => some t
   | v => reprVal h reprFuel [] v
 
+/-- `str(…)` over the heap: immediates keep `strOfVal`'s exact normal
+form; containers and refs render through `printOne` (CPython's two-level
+`str` rule, §rendering). The cast tier's original refusal reason —
+"repr recursion is not guessed" — expired the day §rendering landed,
+so this widening deletes a stale restriction rather than adding a
+capability. An unrenderable value (set/instance/non-ASCII inside a
+container) refuses with the rendering boundary's own reason. -/
+def strOfValH (h : Heap) (v : RVal) : Res RVal :=
+  match v with
+  | .int _ | .bool _ | .str _ | .none => strOfVal v
+  | v =>
+    match printOne h v with
+    | some s => .ok (.str s)
+    | Option.none => .unsupported s!"str() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
+
 /-- Space-join `print` arguments (CPython's default `sep`); the first
 unrenderable one wins. `print()` is the empty line. -/
 def strOfArgs (h : Heap) : List RVal → Option String
@@ -4415,12 +4430,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | [v] => Run.liftRes st (chrVal v)
                     | vs => .exn st (.typeError s!"chr() takes exactly one argument ({vs.length} given)")
                   else if fname == "str" then
-                    -- pass 8 (§the cast tier): value-only, loud on
-                    -- containers/refs and on the 2+-argument decoding form
+                    -- pass 8 widened at §rendering: immediates as before,
+                    -- containers/refs through printOne (CPython's two-level
+                    -- str rule); loud on unrenderables and the 2+-argument
+                    -- decoding form
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
                     (match vs with
                      | [] => .ok st (.str "")
-                     | [v] => Run.liftRes st (strOfVal v)
+                     | [v] => Run.liftRes st (strOfValH st.world.heap v)
                      | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
                   else if fname == "input" then
                     -- stdin is a RUNNER-boundary effect (§effects) — loud,

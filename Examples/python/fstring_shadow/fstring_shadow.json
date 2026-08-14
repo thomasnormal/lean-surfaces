@@ -1,0 +1,252 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "Examples/python/fstring_shadow/fstring_shadow.py",
+  "source_sha256": "87f7aac445f2c910aa47fcfb861adbdd71691589b0d113f2f4e4197c4e39ea7a",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 15,
+          "end_col_offset": 3
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 15,
+            "end_col_offset": 3
+          },
+          "value": {
+            "type": "str",
+            "value": "The f-string lowering's ONE new boundary: a module that BINDS the name\n`str` (docs/memory-model.md \u00a7f-strings, the shadow census).\n\n`f\"{x}\"` is lowered to `str(x)`, which spells the rendering as a call of\nthe NAME `str` -- a lookup the source never wrote. CPython's f-string\nperforms no such lookup: it calls the type's `__format__` directly, so a\nshadowed `str` cannot affect it. The interpreter, however, reaches its\n`str` builtin only AFTER every shadow-resolving arm, so the lowered call\nwould render through the shadow and be SILENTLY WRONG.\n\nSo the extractor censuses the whole module for a binding of `str` (any\nscope, any binding form) and refuses every f-string in it, loudly. This\nfile is the row that would catch the census being dropped: without it\n`shadowed(3)` answers '3' by accident and nothing fails.\n"
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 18,
+          "col_offset": 0,
+          "end_lineno": 23,
+          "end_col_offset": 17
+        },
+        "name": "shadowed",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 18,
+              "col_offset": 13,
+              "end_lineno": 18,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 18
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 22,
+                  "col_offset": 4,
+                  "end_lineno": 22,
+                  "end_col_offset": 7
+                },
+                "id": "str"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 22,
+                "col_offset": 10,
+                "end_lineno": 22,
+                "end_col_offset": 18
+              },
+              "value": {
+                "type": "str",
+                "value": "SHADOW"
+              }
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 23,
+              "col_offset": 4,
+              "end_lineno": 23,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 23,
+                "col_offset": 11,
+                "end_lineno": 23,
+                "end_col_offset": 17
+              },
+              "py_kind": "JoinedStr:str_shadowed",
+              "text": "f'{n}'"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 26,
+          "col_offset": 0,
+          "end_lineno": 31,
+          "end_col_offset": 17
+        },
+        "name": "elsewhere",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 26,
+              "col_offset": 14,
+              "end_lineno": 26,
+              "end_col_offset": 15
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 31,
+              "col_offset": 4,
+              "end_lineno": 31,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Unsupported",
+              "span": {
+                "lineno": 31,
+                "col_offset": 11,
+                "end_lineno": 31,
+                "end_col_offset": 17
+              },
+              "py_kind": "JoinedStr:str_shadowed",
+              "text": "f'{n}'"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 34,
+          "col_offset": 0,
+          "end_lineno": 39,
+          "end_col_offset": 24
+        },
+        "name": "plain_concat",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 34,
+              "col_offset": 17,
+              "end_lineno": 34,
+              "end_col_offset": 18
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 39,
+              "col_offset": 4,
+              "end_lineno": 39,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 39,
+                "col_offset": 11,
+                "end_lineno": 39,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 39,
+                  "col_offset": 11,
+                  "end_lineno": 39,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "str",
+                  "value": "n="
+                }
+              },
+              "op": "Add",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 39,
+                  "col_offset": 18,
+                  "end_lineno": 39,
+                  "end_col_offset": 24
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 39,
+                    "col_offset": 18,
+                    "end_lineno": 39,
+                    "end_col_offset": 21
+                  },
+                  "id": "str"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 39,
+                      "col_offset": 22,
+                      "end_lineno": 39,
+                      "end_col_offset": 23
+                    },
+                    "id": "n"
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

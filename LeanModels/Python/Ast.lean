@@ -128,7 +128,7 @@ deriving Repr, Inhabited, BEq
 `ret` ↔ `Return`, `assign` ↔ `Assign`, `augAssign` ↔ `AugAssign`,
 `whileLoop` ↔ `While`, `forStmt` ↔ `For`, `ifStmt` ↔ `If`, `exprStmt` ↔ `Expr`,
 `pass` ↔ `Pass`, `brk` ↔ `Break`, `cont` ↔ `Continue`,
-`unsupported` ↔ `Unsupported`.
+`importFrom` ↔ `ImportFrom` (structured, Pass 0), `unsupported` ↔ `Unsupported`.
 
 `FunctionDef` has no `Stmt` constructor: at module top level it becomes a
 `FunctionDefn` in `Module.functions`; a *nested* `def` is ingested as
@@ -197,6 +197,24 @@ inductive Stmt where
   recorded as-built delta). -/
   | tryStmt (body : Array Stmt) (excName : String) (handler : Array Stmt)
       (tryUnsupported : Option String) (span : Span)
+  /-- `from module import names` / `from module import *` (schema
+  `ImportFrom`, Pass 0 — docs/memory-model.md §import forms (Pass 0)).
+  Structured by the EXTRACTOR for exactly the admitted shape (top-level,
+  absolute, undotted, no aliases, names-or-star, and absent-module or
+  guarded position — the extractor owns that admission against the
+  pinned platform inventory; the Lean side carries no inventory).
+  Pass 0 semantics: the importable universe is EMPTY — executing this
+  RAISES `.importError module` unconditionally, never `.ok`; the
+  guarded fallback path then runs through the ordinary exceptions
+  machinery via the pinned two-name handler table
+  (`importErrorHandlerMatch`). `star = true` is `import *` (`names`
+  empty; its bind set is unknowable without a module, so every binding
+  census answers `none` for it — unanalysable by fiat). The FUTURE
+  modeled-module arm binds through this same constructor (recorded so
+  Pass 0 does not foreclose it); today it binds nothing. Ingestion
+  canonicalizes the benign-whitelist collision back to the legacy
+  `.unsupported "ImportFrom" text` node (Json.lean, one rewrite site). -/
+  | importFrom (module : String) (names : Array String) (star : Bool) (span : Span)
   | pass (span : Span)
   | brk (span : Span)
   | cont (span : Span)

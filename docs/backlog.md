@@ -2674,8 +2674,50 @@ questions drops the corresponding pass and the ceiling stands at
 ## Import forms (Pass 0) — DESIGNED, rides the next rebuild (2026-08-14)
 
 Design recorded: docs/memory-model.md §import forms (Pass 0).
-Implementation NOT started; nothing registers a harness row until it
-lands. The paying surface is the census's own: absolute `from X import
+
+**IMPLEMENTATION AUTHORED (branch `pass0-impl`, 2026-08-14) — compiles
+at the shared rebuild window.** The five-commit series lands the whole
+design: (1) the extractor arm + the pinned platform inventory
+(`extractors/python/platform_inventory.json`, 309 modules, 3.9.19,
+captured by `capture_inventory.py`) + 16 unit rows — the ONLY runnable
+verification today, 55/55 green under python3; (2) `Stmt.importFrom` +
+ingestion with the default-tolerant `star` and the benign-whitelist
+canonicalization (one rewrite site, five text-keyed consumers see
+unchanged shapes — as-built note in the design section records the
+extractor's benign-text third disjunct that makes the envelope claim
+true); (3) `PyErr.importError`, `errName`/`errMessage`'s exact
+`ModuleNotFoundError` surface, `importErrorHandlerMatch` (the pinned
+two-name table) at execStmt's tryStmt arm, the census arms
+(g1Binds/g1Stores/g1ExecCandidate/heapFree/genAllocFree/kindName), and
+the three inductions threaded arm-for-arm on their neighbours
+(fuelMono/worldInv/clockErase — importFrom is a fuel-free raise leaf;
+the tryStmt findClass-none branch gains the table's ite with the class
+branch's body/handler IH shape, no cid ite); (4) the Script.lean try
+shell (second table site, per-statement publish) + the recorded
+scriptImports view decision + the survey verified unchanged by
+construction on a fresh probe envelope; (5) the battery — import_lab
+(happy_fallback / rebind_after_fallback / guarded star) and five
+scripts, oracle side measured against the pinned 3.9.19 NOW, six
+scripts.json rows note-tagged REBUILD-WINDOW.
+
+**Rebuild-window verification list** (nothing below is claimable
+today): `lake build` (~60 min full cycle); the six scripts.json rows
+(`import_not_top_level` and `import_insort_fallback` expect
+UNSUPPORTED — insort's memo-2.5 obligation stands OPEN on
+`list.insert`, flip to match when it lands; a `import_bisect_fallback`
+divergence is a BLOCKER); survey headline re-measured (predicted 161
+REFUSE, flip set exactly {bisect} — anything else is a finding);
+`import`-wall population re-measured (predicted to DROP from 154, not
+predicted by how much); envelope re-extraction + `pins_common.lean`
+only (the JSON-content trap — sunfish's two benign from-imports
+structure in the envelope and canonicalize back at ingestion); exc_lab
+unchanged (no row pinned the old refusal text); corpus/script sweeps
+re-counted in the same triad. If the owner answers NO on memo question
+2, drop the guard disjunct in extract.py's ImportFrom arm before
+building — the absent-module machinery and the handler table still
+land, bisect does not flip.
+
+Original design summary follows. The paying surface is the census's own: absolute `from X import
 names`/`*` at module top level, a missing module raising a CATCHABLE
 `ImportError` — new `PyErr.importError`, boundary-rendered as CPython
 3.9's `ModuleNotFoundError: No module named '…'`, and the exceptions

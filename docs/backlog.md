@@ -2854,3 +2854,28 @@ NO change (7/159) — consumer-level only**; anything else is a finding.
 Battery: list_lab clamping grid / empty / alias / returns-None /
 verbatim insort_right / two TypeError rows, plus NEW
 `insort_alias_script.py` (alias tier composed with insert).
+
+**LANDED (master, 2026-08-14, box-verified) — the design above,
+MEASURED, every pre-registered number exact.** Box build green FIRST
+TRY (3659 jobs, EXIT=0 — no battery-caught fix needed this time; the
+sunfish poles pins_bound/pins_clock ~23 min each). Verification (box,
+oracle CPython 3.9.25, pinned family, stamped): extractor units 55/55;
+docs_check 67/67; diff_test 1141 cases / 0 failed / 89 whitelisted
+(the 20 new insert rows all match — clamping grid, empty, alias,
+None, both TypeErrors by message, insort_right verbatim);
+script_corpus 47 scripts / 0 failed / 39 matched / 8 loud —
+**`import_insort_fallback` UNSUPPORTED→MATCH, the memo-2.5 insort
+obligation DISCHARGED** (pure fallback vs the C accelerator, same
+list, exception class compared), plus `insort_alias_script` MATCH
+(alias tier composed with insert); in-repo survey 91 MATCH / 19
+REFUSE / 0 DIVERGE (predicted 91/19: the one flip + the one new
+script); **stdlib sweep 7 MATCH / 159 REFUSE / 0 DIVERGE — UNCHANGED,
+as pre-registered: consumer-level only, no stdlib file had `.insert`
+as its sole wall.** Theorem cost as designed: fuelMono one arm,
+worldInv zero arms (one `if_neg` in `attrCallPlan_get_heapFree`),
+clockErase one real arm + three enumerated refusals; no new mutual
+member. Tripwire: the live queue match ran 231→335 games during the
+build, 0 forfeits, 0 illegal. One process note: the first
+verification pass launched harness jobs without `~/.elan/bin` on the
+non-interactive PATH, so diff_test/script_corpus died on `lake` —
+rerun with the PATH exported; the numbers above are the rerun's.

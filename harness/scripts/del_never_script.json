@@ -1,0 +1,28 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.14.5"
+  },
+  "source_file": "harness/scripts/del_never_script.py",
+  "source_sha256": "7c9a129bfd4649b4805a7aa6ef29e70265a6da39df5c4b91a24a23d2ca357377",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Delete",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 2,
+          "end_col_offset": 9
+        },
+        "names": [
+          "never"
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

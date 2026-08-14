@@ -494,12 +494,164 @@ def intOr : Int → Int → Int
   | .ofNat a,   .negSucc b => .negSucc (ndiff b a)
   | .negSucc a, .negSucc b => .negSucc (a &&& b)
 
+/-! ### Scalar rendering (`str()` and a str's `repr`)
+
+These sit HERE, above the operator block, because both users need them
+and one of the users is the `%` operator below: `evalBinOp` precedes
+§rendering in this file and Lean has no forward references. Moved
+verbatim from §rendering, which keeps the heap-recursive `reprVal`/
+`printOne`/`strOfValH` built on top of them. -/
+
+/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): the
+exact decimal for ints, `True`/`False`, identity on strs, `None`;
+containers and refs refuse loudly (repr recursion is not guessed). -/
+def strOfVal : RVal → Res RVal
+  | .int n => .ok (.str (toString n))
+  | .bool b => .ok (.str (if b then "True" else "False"))
+  | .str s => .ok (.str s)
+  | .none => .ok (.str "None")
+  | v => .unsupported s!"str() of '{v.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
+
+/-- Lowercase hex digit. -/
+def hexDigit (n : Nat) : Char :=
+  if n < 10 then Char.ofNat (48 + n) else Char.ofNat (87 + n)
+
+/-- Two-digit lowercase hex (`\xNN` escapes). -/
+def hex2 (n : Nat) : String :=
+  String.mk [hexDigit (n / 16 % 16), hexDigit (n % 16)]
+
+/-- The quote CPython picks for a string's `repr`: `'` unless the string
+contains one and no `"`. -/
+def reprQuote (s : String) : Char :=
+  if s.contains '\'' && !s.contains '"' then '"' else '\''
+
+/-- `repr` of one character inside a string literal; `none` = non-ASCII
+(printability is a Unicode table this model does not guess). -/
+def reprChar (q : Char) : Char → Option String
+  | '\\' => some "\\\\"
+  | '\n' => some "\\n"
+  | '\r' => some "\\r"
+  | '\t' => some "\\t"
+  | c =>
+    if c == q then some (String.mk ['\\', c])
+    else if c.val < 0x20 || c.val == 0x7f then some ("\\x" ++ hex2 c.val.toNat)
+    else if c.val < 0x7f then some (String.mk [c])
+    else Option.none
+
+/-- `reprChar` over a character list. -/
+def reprChars (q : Char) : List Char → Option String
+  | [] => some ""
+  | c :: cs => do
+    let a ← reprChar q c
+    let rest ← reprChars q cs
+    return a ++ rest
+
+/-- CPython `repr` of a str: the quote choice above, backslash/quote/
+`\n`/`\r`/`\t` escapes, `\xNN` for the other C0 controls and DEL, and a
+LOUD refusal on anything non-ASCII. -/
+def reprStr (s : String) : Option String := do
+  let q := reprQuote s
+  let body ← reprChars q s.data
+  return String.mk [q] ++ body ++ String.mk [q]
+
+/-! ### `%`-formatting (docs/memory-model.md §`%`-formatting on strings)
+
+`str % args` is CPython's `unicode_mod`: ONE left-to-right pass over the
+format string. This operator is a pure function of two VALUES and cannot
+see the heap, so the admitted arguments are exactly the scalars whose
+rendering is heap-independent — everything else refuses loudly rather
+than guessing a `repr` the heap holds. -/
+
+/-- `%s` of an argument: `strOfVal` verbatim (a str raw; int/bool/None
+their digits/`True`/`False`/`None`). `none` = outside the inventory. -/
+def strFormatStr (v : RVal) : Option String :=
+  match strOfVal v with
+  | .ok (.str s) => some s
+  | _ => Option.none
+
+/-- `%r` of an argument. Only a str differs from `%s` — CPython's `repr`
+and `str` COINCIDE on int/bool/None — and its quoting/escaping IS the
+shipped `reprStr`, so a non-ASCII string refuses here exactly as it
+refuses inside `print([…])`. -/
+def strFormatRepr (v : RVal) : Option String :=
+  match v with
+  | .str s => reprStr s
+  | v => strFormatStr v
+
+/-- One admitted conversion applied to one argument. A `.ref` argument
+(reachable only nested inside a tuple, since an operand-position `.ref`
+is refused before this arm) is LOUD, never a `TypeError` built from
+`RVal.typeName`'s `"object"` placeholder. -/
+def strFormatConv (c : Char) (v : RVal) : Res String :=
+  match v with
+  | .ref _ =>
+      .unsupported "a heap object as a '%'-format argument is outside the tier (its repr lives in the heap, which the operator cannot see; docs/memory-model.md §`%`-formatting on strings)"
+  | v =>
+    if c == 'd' then
+      match asInt v with
+      | some n => .ok (toString n)
+      -- CPython leaves this type name UNQUOTED (measured against 3.9)
+      | Option.none => .exn (.typeError s!"%d format: a number is required, not {v.typeName}")
+    else
+      match (if c == 'r' then strFormatRepr v else strFormatStr v) with
+      | some s => .ok s
+      | Option.none =>
+        .unsupported s!"'%{c}' of a '{v.typeName}' is outside the tier (only int/bool/str/None render here; docs/memory-model.md §`%`-formatting on strings)"
+
+/-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
+consumes NOTHING; `%s`/`%r`/`%d` consume the next argument. Leftover
+arguments at the end and running out mid-walk are CPython's two arity
+`TypeError`s, verbatim. Anything else after a `%` — a flag, a width, a
+precision, a mapping key, another conversion character, or the end of
+the string — is LOUD: the format minilanguage is a second tier, and the
+forms CPython itself rejects (`%q`, a trailing `%`) get a refusal rather
+than a fabricated `ValueError` (recorded restriction). -/
+def strFormatWalk : List Char → List RVal → String → Res String
+  | [], args, acc =>
+      if args.isEmpty then .ok acc
+      else .exn (.typeError "not all arguments converted during string formatting")
+  | '%' :: '%' :: cs, args, acc => strFormatWalk cs args (acc ++ "%")
+  | '%' :: c :: cs, args, acc =>
+      if c == 's' || c == 'r' || c == 'd' then
+        match args with
+        | [] => .exn (.typeError "not enough arguments for format string")
+        -- the conversion is matched OPEN, not bound through `Res`'s
+        -- `bind`: a recursive call under the bind's lambda is invisible
+        -- to structural recursion, and this walker must stay
+        -- kernel-reducible (the mergeSort trap, AGENTS.md)
+        | a :: rest =>
+            match strFormatConv c a with
+            | .ok piece => strFormatWalk cs rest (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+      else
+        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
+  | ['%'], _, _ =>
+      .unsupported "a format string ending in '%' is outside the tier (CPython's `incomplete format` ValueError is not modelled; docs/memory-model.md §`%`-formatting on strings)"
+  | c :: cs, args, acc => strFormatWalk cs args (acc ++ String.mk [c])
+
+/-- `str % args`. The argument LIST is the RHS spread when it is a tuple
+— and a NAMEDTUPLE spreads too, because `PyTuple_Check` succeeds on the
+subclass (`'%s %s' % Move(1,2)` is `'1 2'`, measured): treating it as one
+argument would fabricate an arity error for a program CPython runs.
+Everything else is the one-element list. -/
+def strFormat (fmt : String) (rhs : RVal) : Res RVal := do
+  let args : List RVal :=
+    match rhs with
+    | .tuple xs => xs.toList
+    | .ntuple _ _ xs => xs.toList
+    | v => [v]
+  let s ← strFormatWalk fmt.data args ""
+  return .str s
+
 /-- Binary operator on already-evaluated operands. int/bool operands are
 coerced to `Int`; arithmetic results are always `int`, never `bool`.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
 `**` requires a nonnegative exponent (float result otherwise → unsupported).
 `+` concatenates matching sequence types. Python-valid combinations outside
-the tier (sequence repetition, `%` formatting) → unsupported; Python-invalid
+the tier (sequence repetition) → unsupported; `%` on a str is the format
+operator (`strFormat`, §`%`-formatting above); Python-invalid
 combinations → `TypeError`. A `.ref` operand is refused loudly BEFORE the
 `TypeError` fallback (its type name lives in the heap). -/
 def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
@@ -586,8 +738,7 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
             s!"sequence repetition ('{a.typeName}' * '{b.typeName}') is outside the v0 tier"
         else
           .exn (.typeError s!"unsupported operand type(s) for *: '{a.typeName}' and '{b.typeName}'")
-    | .mod, .str _, _ =>
-        .unsupported "'%' string formatting is outside the v0 tier"
+    | .mod, .str fmt, rhs => strFormat fmt rhs
     | op, a, b =>
         .exn (.typeError
           s!"unsupported operand type(s) for {op.symbol}: '{a.typeName}' and '{b.typeName}'")
@@ -869,16 +1020,6 @@ def intOfStr (s : String) : Res RVal :=
     | Option.none =>
       .exn (.valueError s!"invalid literal for int() with base 10: '{s}'")
 
-/-- `str(…)` — value-only (docs/memory-model.md §the cast tier): the
-exact decimal for ints, `True`/`False`, identity on strs, `None`;
-containers and refs refuse loudly (repr recursion is not guessed). -/
-def strOfVal : RVal → Res RVal
-  | .int n => .ok (.str (toString n))
-  | .bool b => .ok (.str (if b then "True" else "False"))
-  | .str s => .ok (.str s)
-  | .none => .ok (.str "None")
-  | v => .unsupported s!"str() of '{v.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
-
 /-- The `int` constructor builtin: identity on ints, bool coercion,
 `int(<str>)` through the pass-8 honest subset (`intOfStr`); floats stay
 out of tier; a `.ref` is refused loudly before the `TypeError`
@@ -977,49 +1118,11 @@ go through `str()`, and every value INSIDE a container goes through
 `print("a")` does not. Everything the tier cannot render EXACTLY refuses
 loudly: a set (hash order), an instance/closure/generator (identity in
 the address), a non-ASCII string (Unicode printability is never guessed —
-the `.swapcase` doctrine), and a structure deeper than `reprFuel`. -/
-
-/-- Lowercase hex digit. -/
-def hexDigit (n : Nat) : Char :=
-  if n < 10 then Char.ofNat (48 + n) else Char.ofNat (87 + n)
-
-/-- Two-digit lowercase hex (`\xNN` escapes). -/
-def hex2 (n : Nat) : String :=
-  String.mk [hexDigit (n / 16 % 16), hexDigit (n % 16)]
-
-/-- The quote CPython picks for a string's `repr`: `'` unless the string
-contains one and no `"`. -/
-def reprQuote (s : String) : Char :=
-  if s.contains '\'' && !s.contains '"' then '"' else '\''
-
-/-- `repr` of one character inside a string literal; `none` = non-ASCII
-(printability is a Unicode table this model does not guess). -/
-def reprChar (q : Char) : Char → Option String
-  | '\\' => some "\\\\"
-  | '\n' => some "\\n"
-  | '\r' => some "\\r"
-  | '\t' => some "\\t"
-  | c =>
-    if c == q then some (String.mk ['\\', c])
-    else if c.val < 0x20 || c.val == 0x7f then some ("\\x" ++ hex2 c.val.toNat)
-    else if c.val < 0x7f then some (String.mk [c])
-    else Option.none
-
-/-- `reprChar` over a character list. -/
-def reprChars (q : Char) : List Char → Option String
-  | [] => some ""
-  | c :: cs => do
-    let a ← reprChar q c
-    let rest ← reprChars q cs
-    return a ++ rest
-
-/-- CPython `repr` of a str: the quote choice above, backslash/quote/
-`\n`/`\r`/`\t` escapes, `\xNN` for the other C0 controls and DEL, and a
-LOUD refusal on anything non-ASCII. -/
-def reprStr (s : String) : Option String := do
-  let q := reprQuote s
-  let body ← reprChars q s.data
-  return String.mk [q] ++ body ++ String.mk [q]
+the `.swapcase` doctrine), and a structure deeper than `reprFuel`. The
+SCALAR half of the rule — `strOfVal` and a str's `reprStr` — lives above
+the operator block (§scalar rendering), because the `%` operator needs
+it and `evalBinOp` comes first in this file; what follows is the
+heap-recursive half built on top of it. -/
 
 /-- Depth budget for `repr` — FIXED (the loudness doctrine: a budget
 refusal must not depend on the caller's fuel). Cycles are caught by the

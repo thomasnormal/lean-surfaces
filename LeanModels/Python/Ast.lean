@@ -22,9 +22,10 @@ namespace LeanModels.Python
 /-- Binary operators. 1:1 with CPython `ast` operator class names:
 `add` ↔ `Add`, `sub` ↔ `Sub`, `mult` ↔ `Mult`, `floorDiv` ↔ `FloorDiv`,
 `mod` ↔ `Mod`, `pow` ↔ `Pow`, `lshift` ↔ `LShift`, `bitOr` ↔ `BitOr`
-(pass 5 — docs/memory-model.md §left shift and bitwise or). -/
+(pass 5 — docs/memory-model.md §left shift and bitwise or), `bitAnd` ↔
+`BitAnd` (the tail batch — docs/memory-model.md §bitwise `&`). -/
 inductive BinOp where
-  | add | sub | mult | floorDiv | mod | pow | lshift | bitOr
+  | add | sub | mult | floorDiv | mod | pow | lshift | bitOr | bitAnd
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`. -/

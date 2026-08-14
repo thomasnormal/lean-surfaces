@@ -1299,6 +1299,67 @@ verified on the toolchain before the tier landed (a `#guard` probe) —
 `<<` is nevertheless computed as `x * 2^n`, keeping the mathematical
 reading primary.
 
+**MEASURED CORRECTION (the tail batch, §bitwise `&`): the negative-`|`
+refusal above is RETIRED.** "Infinite two's complement is not guessed"
+was a design-time prediction, not a measurement. Nothing needs to be
+guessed — see the next section. The bullet is left standing as the
+record of what was believed at pass 5.
+
+## Bitwise `&` (the tail batch, construct 4 — and it retires `|`'s refusal)
+
+**STAGED-PATCH MARKER — DELETE THIS PARAGRAPH WHEN THE TRIAD IS GREEN.**
+This section describes a `Semantics.lean` edit that has NOT been built:
+it was staged as a patch so that it could land inside one rebuild cycle
+together with the other held Lean work. Nothing here is a claim about a
+build that has happened. What HAS been measured, before a line of it was
+written: the CPython 3.9.19 rows below, and the `intAnd`/`intOr`
+formulas, executed against CPython over a 77284-pair grid (154568
+operations, 0 mismatches, 0 `ndiff` underflows) with a falsification
+self-test — one arm deliberately broken, caught 18778 times.
+
+`&` is admitted with its FULL int semantics, negative operands included,
+and `|` is corrected to match in the same landing — landing one with
+computed negatives while the other refused them would install exactly the
+drift a single operator family must not have.
+
+Lean's `Int` is ALREADY in the complement representation: `Int.negSucc n`
+IS `-(n+1)`, so for a negative `x` the number `-x-1` — whose bits are the
+complement of `x`'s — is the constructor's own argument, available by
+matching and requiring no arithmetic whatsoever. Each operator is a
+four-way match on the two constructors over core `Nat.land`/`Nat.lor`,
+with one helper `ndiff a m = a - (a &&& m)` (`Nat.ldiff` does not exist on
+this toolchain, and none is needed: removing the bits of `a` that are in
+`m` IS the difference, and it never underflows).
+
+* **Boolness is decided FIRST**, as it already was for `|`: two bools give
+  a BOOL (`True & False is False`), any int operand makes it an int
+  (`True & 3 == 1`).
+* **The value tier is one function applied three times**, never three
+  tables — `intAnd` and `intOr` are the same construction, and `intXor`
+  is a rider that can be added the same way if `^` is ever wanted.
+* **`{1} & {2}` is set INTERSECTION, not a `TypeError`** — the one trap in
+  the row set, and the model already survives it: a set is a heap object,
+  so `evalBinOp`'s `.ref` arm fires BEFORE the `TypeError` fallback and
+  refuses loudly. No new arm, no invented exception.
+* **`&=` arrives free**: one `ALLOWED_BINOPS` entry is consulted by the
+  `BinOp` clause AND the `AugAssign` clause, exactly as `|=` was.
+* Non-int operands keep the existing fallback, whose message is built from
+  `BinOp.symbol` — so `unsupported operand type(s) for &: 'int' and 'str'`
+  comes out verbatim for free.
+
+ZERO proof arms, verified at the sites rather than assumed: `evalBinOp`
+sits outside every `mutual` block, every walker binds the operator and
+drops it, and `fuelMono`/`worldInv`/`ceExecStmt_succ` each `.bind` the
+operand IHs and discharge the operator through `.liftRes`, which is
+generic over the whole `Res`. There is no operator table in the proof
+layer to keep in sync.
+
+NOT in this landing, and deliberately: `>>` (it belongs to the SHIFT
+family — `type(True >> True)` is `int`, not `bool` — and it needs a
+budget decision it shares with a pre-existing hole in `<<`, whose
+unbounded `x * 2^y` would HANG where CPython raises `OverflowError`).
+That hole is recorded as a live defect in shipped `<<`, not created here.
+
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 
 #158 rewrote gen_moves's promotion loop as

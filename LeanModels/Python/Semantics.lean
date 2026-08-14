@@ -167,6 +167,7 @@ def BinOp.symbol : BinOp → String
   | .pow => "**"
   | .lshift => "<<"
   | .bitOr => "|"
+  | .bitAnd => "&"
 
 /-- Python surface syntax of a comparison operator (error messages). -/
 def CmpOp.symbol : CmpOp → String
@@ -464,6 +465,33 @@ def tupleRepeat (xs : Array RVal) (n : Int) : Res RVal :=
   else
     .unsupported "tuple repetition beyond seqBudget is outside the tier (docs/memory-model.md §module-init execution)"
 
+/-- `a &&& ~m` over `Nat`. `Nat.ldiff` does not exist in v4.33.0-rc1, and
+none is needed: every bit of `a` either is or is not in `m`, so removing
+the ones that are IS the difference. Never underflows (the grid instrument
+in docs/backlog.md §construct 4 checked 0 underflows over 22201 pairs). -/
+def ndiff (a m : Nat) : Nat := a - (a &&& m)
+
+/-- `&` over `Int`, EXACT on negative operands. Nothing is guessed:
+Lean's `Int.negSucc n` IS `-(n+1)`, so for a negative `x` the number
+`-x-1` — whose bits are the complement of `x`'s — is the constructor's own
+argument, available by matching and requiring no arithmetic at all
+(docs/memory-model.md §bitwise `&`). -/
+def intAnd : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a &&& b)
+  | .negSucc a, .ofNat b   => .ofNat (ndiff b a)
+  | .ofNat a,   .negSucc b => .ofNat (ndiff a b)
+  | .negSucc a, .negSucc b => .negSucc (a ||| b)
+
+/-- `|` over `Int`, the same construction. This REPLACES pass 5's negative
+refusal, which was a design-time prediction rather than a measurement:
+`-1 | 4` has a value (`-1`), it is exact here, and keeping the refusal
+would be manufacturing one for a case known to be right. -/
+def intOr : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a ||| b)
+  | .negSucc a, .ofNat b   => .negSucc (ndiff a b)
+  | .ofNat a,   .negSucc b => .negSucc (ndiff b a)
+  | .negSucc a, .negSucc b => .negSucc (a &&& b)
+
 /-- Binary operator on already-evaluated operands. int/bool operands are
 coerced to `Int`; arithmetic results are always `int`, never `bool`.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
@@ -496,17 +524,19 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .lshift =>
         if y < 0 then .exn (.valueError "negative shift count")
         else .ok (.int (x * (2 : Int) ^ y.toNat))
-    -- `|` decides BOOLNESS first (`bool.__or__(bool)` returns a BOOL,
-    -- any int operand makes it an int); nonneg ints are `Nat.lor`;
-    -- a negative operand refuses loudly (infinite two's complement is
-    -- not guessed).
+    -- `|` and `&` decide BOOLNESS first (`bool.__or__(bool)` returns a
+    -- BOOL, any int operand makes it an int), then compute over `Int` —
+    -- negative operands INCLUDED (docs/memory-model.md §bitwise `&`; the
+    -- pass-5 refusal was measured wrong and is retired here, in the same
+    -- landing that admits `&`, so the family cannot drift apart).
     | .bitOr =>
         (match a, b with
          | .bool p, .bool q => .ok (.bool (p || q))
-         | _, _ =>
-           if x < 0 || y < 0 then
-             .unsupported "bitwise '|' on a negative int is outside the tier (infinite two's complement is not guessed; docs/memory-model.md §left shift and bitwise or)"
-           else .ok (.int (Int.ofNat (Nat.lor x.toNat y.toNat))))
+         | _, _ => .ok (.int (intOr x y)))
+    | .bitAnd =>
+        (match a, b with
+         | .bool p, .bool q => .ok (.bool (p && q))
+         | _, _ => .ok (.int (intAnd x y)))
   | _, _ =>
     match op, a, b with
     | .add, .str s, .str t => .ok (.str (s ++ t))

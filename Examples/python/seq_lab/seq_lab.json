@@ -6,7 +6,7 @@
     "version": "3.14.5"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
-  "source_sha256": "a42de9402edce47e3f320546235983eb0de109746f1efd1ba094c9ee4f5a96cd",
+  "source_sha256": "4261e9477109dd2f1c6dca68971576a5706d632a13397ae19142d30a826413c9",
   "module": {
     "kind": "Module",
     "body": [
@@ -5348,7 +5348,7 @@
         "span": {
           "lineno": 209,
           "col_offset": 0,
-          "end_lineno": 211,
+          "end_lineno": 214,
           "end_col_offset": 16
         },
         "name": "bor_neg",
@@ -5369,25 +5369,25 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 211,
+              "lineno": 214,
               "col_offset": 4,
-              "end_lineno": 211,
+              "end_lineno": 214,
               "end_col_offset": 16
             },
             "value": {
               "kind": "BinOp",
               "span": {
-                "lineno": 211,
+                "lineno": 214,
                 "col_offset": 11,
-                "end_lineno": 211,
+                "end_lineno": 214,
                 "end_col_offset": 16
               },
               "left": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 211,
+                  "lineno": 214,
                   "col_offset": 11,
-                  "end_lineno": 211,
+                  "end_lineno": 214,
                   "end_col_offset": 12
                 },
                 "id": "a"
@@ -5396,15 +5396,534 @@
               "right": {
                 "kind": "Constant",
                 "span": {
-                  "lineno": 211,
+                  "lineno": 214,
                   "col_offset": 15,
-                  "end_lineno": 211,
+                  "end_lineno": 214,
                   "end_col_offset": 16
                 },
                 "value": {
                   "type": "int",
                   "repr": "4"
                 }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 217,
+          "col_offset": 0,
+          "end_lineno": 221,
+          "end_col_offset": 16
+        },
+        "name": "band",
+        "args": [
+          {
+            "arg": "a",
+            "span": {
+              "lineno": 217,
+              "col_offset": 9,
+              "end_lineno": 217,
+              "end_col_offset": 10
+            }
+          },
+          {
+            "arg": "b",
+            "span": {
+              "lineno": 217,
+              "col_offset": 12,
+              "end_lineno": 217,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 221,
+              "col_offset": 4,
+              "end_lineno": 221,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 221,
+                "col_offset": 11,
+                "end_lineno": 221,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 221,
+                  "col_offset": 11,
+                  "end_lineno": 221,
+                  "end_col_offset": 12
+                },
+                "id": "a"
+              },
+              "op": "BitAnd",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 221,
+                  "col_offset": 15,
+                  "end_lineno": 221,
+                  "end_col_offset": 16
+                },
+                "id": "b"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 224,
+          "col_offset": 0,
+          "end_lineno": 230,
+          "end_col_offset": 15
+        },
+        "name": "band_aug",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 224,
+              "col_offset": 13,
+              "end_lineno": 224,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 227,
+              "col_offset": 4,
+              "end_lineno": 227,
+              "end_col_offset": 17
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 227,
+                  "col_offset": 4,
+                  "end_lineno": 227,
+                  "end_col_offset": 8
+                },
+                "id": "mask"
+              }
+            ],
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 227,
+                "col_offset": 11,
+                "end_lineno": 227,
+                "end_col_offset": 17
+              },
+              "value": {
+                "type": "int",
+                "repr": "15"
+              }
+            }
+          },
+          {
+            "kind": "For",
+            "span": {
+              "lineno": 228,
+              "col_offset": 4,
+              "end_lineno": 229,
+              "end_col_offset": 27
+            },
+            "target": {
+              "kind": "Name",
+              "span": {
+                "lineno": 228,
+                "col_offset": 8,
+                "end_lineno": 228,
+                "end_col_offset": 9
+              },
+              "id": "i"
+            },
+            "iter": {
+              "kind": "Call",
+              "span": {
+                "lineno": 228,
+                "col_offset": 13,
+                "end_lineno": 228,
+                "end_col_offset": 21
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 228,
+                  "col_offset": 13,
+                  "end_lineno": 228,
+                  "end_col_offset": 18
+                },
+                "id": "range"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 228,
+                    "col_offset": 19,
+                    "end_lineno": 228,
+                    "end_col_offset": 20
+                  },
+                  "id": "n"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            },
+            "body": [
+              {
+                "kind": "AugAssign",
+                "span": {
+                  "lineno": 229,
+                  "col_offset": 8,
+                  "end_lineno": 229,
+                  "end_col_offset": 27
+                },
+                "target": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 229,
+                    "col_offset": 8,
+                    "end_lineno": 229,
+                    "end_col_offset": 12
+                  },
+                  "id": "mask"
+                },
+                "op": "BitAnd",
+                "value": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 229,
+                    "col_offset": 16,
+                    "end_lineno": 229,
+                    "end_col_offset": 27
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 229,
+                      "col_offset": 16,
+                      "end_lineno": 229,
+                      "end_col_offset": 22
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "7"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 229,
+                      "col_offset": 26,
+                      "end_lineno": 229,
+                      "end_col_offset": 27
+                    },
+                    "id": "i"
+                  }
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 230,
+              "col_offset": 4,
+              "end_lineno": 230,
+              "end_col_offset": 15
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 230,
+                "col_offset": 11,
+                "end_lineno": 230,
+                "end_col_offset": 15
+              },
+              "id": "mask"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 233,
+          "col_offset": 0,
+          "end_lineno": 235,
+          "end_col_offset": 34
+        },
+        "name": "band_big",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 235,
+              "col_offset": 4,
+              "end_lineno": 235,
+              "end_col_offset": 34
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 235,
+                "col_offset": 11,
+                "end_lineno": 235,
+                "end_col_offset": 34
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 235,
+                  "col_offset": 12,
+                  "end_lineno": 235,
+                  "end_col_offset": 26
+                },
+                "left": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 235,
+                    "col_offset": 13,
+                    "end_lineno": 235,
+                    "end_col_offset": 21
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 235,
+                      "col_offset": 13,
+                      "end_lineno": 235,
+                      "end_col_offset": 14
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 235,
+                      "col_offset": 18,
+                      "end_lineno": 235,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "100"
+                    }
+                  }
+                },
+                "op": "Sub",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 235,
+                    "col_offset": 25,
+                    "end_lineno": 235,
+                    "end_col_offset": 26
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                }
+              },
+              "op": "BitAnd",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 235,
+                  "col_offset": 30,
+                  "end_lineno": 235,
+                  "end_col_offset": 34
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "255"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 238,
+          "col_offset": 0,
+          "end_lineno": 242,
+          "end_col_offset": 36
+        },
+        "name": "band_set",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 242,
+              "col_offset": 4,
+              "end_lineno": 242,
+              "end_col_offset": 36
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 242,
+                "col_offset": 11,
+                "end_lineno": 242,
+                "end_col_offset": 36
+              },
+              "left": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 242,
+                  "col_offset": 11,
+                  "end_lineno": 242,
+                  "end_col_offset": 22
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 242,
+                    "col_offset": 11,
+                    "end_lineno": 242,
+                    "end_col_offset": 14
+                  },
+                  "id": "set"
+                },
+                "args": [
+                  {
+                    "kind": "List",
+                    "span": {
+                      "lineno": 242,
+                      "col_offset": 15,
+                      "end_lineno": 242,
+                      "end_col_offset": 21
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 242,
+                          "col_offset": 16,
+                          "end_lineno": 242,
+                          "end_col_offset": 17
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "1"
+                        }
+                      },
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 242,
+                          "col_offset": 19,
+                          "end_lineno": 242,
+                          "end_col_offset": 20
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              },
+              "op": "BitAnd",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 242,
+                  "col_offset": 25,
+                  "end_lineno": 242,
+                  "end_col_offset": 36
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 242,
+                    "col_offset": 25,
+                    "end_lineno": 242,
+                    "end_col_offset": 28
+                  },
+                  "id": "set"
+                },
+                "args": [
+                  {
+                    "kind": "List",
+                    "span": {
+                      "lineno": 242,
+                      "col_offset": 29,
+                      "end_lineno": 242,
+                      "end_col_offset": 35
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 242,
+                          "col_offset": 30,
+                          "end_lineno": 242,
+                          "end_col_offset": 31
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      },
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 242,
+                          "col_offset": 33,
+                          "end_lineno": 242,
+                          "end_col_offset": 34
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "3"
+                        }
+                      }
+                    ]
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
               }
             }
           }

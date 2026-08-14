@@ -207,5 +207,36 @@ def bor_aug(n):
 
 
 def bor_neg(a):
-    # a negative operand: loudly out (infinite two's complement)
+    # a negative operand COMPUTES -- pass 5's refusal ("infinite two's
+    # complement is not guessed") was a design-time prediction, and the
+    # measurement retired it: Lean's `Int.negSucc n` IS the complement
+    # representation, so `-1 | 4` is exact, not guessed
     return a | 4
+
+
+def band(a, b):
+    # `&` with the full int semantics, negatives included; bool&bool is a
+    # BOOL and any int operand makes it an int (the typed JSON pins the
+    # type, not just the value)
+    return a & b
+
+
+def band_aug(n):
+    # `&=` rides the SAME operator entry as `&` (one ALLOWED_BINOPS row
+    # buys both forms), and folds a shrinking mask
+    mask = 0b1111
+    for i in range(n):
+        mask &= 0b0111 << i
+    return mask
+
+
+def band_big():
+    # unbounded ints: no word size anywhere in the construction
+    return ((1 << 100) - 1) & 0xFF
+
+
+def band_set():
+    # `{1} & {2}` is set INTERSECTION, not a TypeError -- and the model
+    # already survives it: a set operand is a heap ref, so evalBinOp's
+    # `.ref` arm refuses LOUDLY before the TypeError fallback
+    return set([1, 2]) & set([2, 3])

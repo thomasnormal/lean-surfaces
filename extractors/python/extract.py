@@ -70,8 +70,10 @@ ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow",
                   # pass 5 (docs/memory-model.md "Left shift and bitwise
                   # or"): `1 << 63` and `live |= ...` in the post-#158
                   # shipped file; the interpreter owns the value tier
-                  # (negative `|` operands refuse loudly there).
-                  "LShift", "BitOr")
+                  # (negative `|` operands compute exactly there since
+                  # the tail batch admitted `&` — docs/memory-model.md
+                  # §bitwise `&`).
+                  "LShift", "BitOr", "BitAnd")
 ALLOWED_UNARYOPS = ("USub", "Not")
 ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
                   "Is", "IsNot", "In", "NotIn")

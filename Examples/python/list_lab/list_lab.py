@@ -203,3 +203,57 @@ def store_exc_state(v):
     xs = [0]
     xs[0] = v
     return xs[0] // 0
+
+
+def ins_at(i, v):
+    xs = [1, 2, 3]
+    xs.insert(i, v)
+    return xs
+
+
+def ins_empty(v):
+    xs = []
+    xs.insert(5, v)
+    return xs
+
+
+def ins_alias(v):
+    xs = [1, 2]
+    ys = xs
+    ys.insert(0, v)
+    return xs[0]
+
+
+def ins_ret():
+    xs = [1]
+    return xs.insert(0, 0)
+
+
+def ins_badidx():
+    xs = [1]
+    xs.insert("a", 1)
+    return xs
+
+
+def ins_arity():
+    xs = [1]
+    xs.insert(1)
+    return xs
+
+
+def insort_right(a, x, lo=0, hi=None):
+    if hi is None:
+        hi = len(a)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if x < a[mid]:
+            hi = mid
+        else:
+            lo = mid + 1
+    a.insert(lo, x)
+
+
+def ins_insort(x):
+    a = [1, 3, 5, 7]
+    insort_right(a, x)
+    return a

@@ -219,7 +219,9 @@ cycle DETECTION, never by running out of fuel).
   `heapEq`), `==`/`!=` (identity shortcut, size check, elementwise,
   active-pair `RecursionError` on corresponding cycles), dynamic
   `is`/`is not`, `.append(x)`, `.pop()`/`.pop(i)` (empty/out-of-range pop
-  a faithful `IndexError`), unpacking `a, b = lst` (an eager snapshot
+  a faithful `IndexError`), `.insert(i, x)` (CPython's CLAMPING index —
+  never an `IndexError`; §`list.insert`), unpacking `a, b = lst` (an
+  eager snapshot
   read, per CPython), and `for` — a LIVE INDEX CURSOR against the object
   (`execForList`, a frozen recursion point): the body's writes, `append`
   growth, and `pop` shrinkage are observed exactly as CPython's
@@ -233,7 +235,7 @@ cycle DETECTION, never by running out of fuel).
 * Loud, deliberately: list concatenation `+` and repetition (allocating
   operators would evict every `BinOp` from the heap-free fragment — they
   need an allocation-aware frame story first), `+=`/`.extend`,
-  `.insert/.remove/.index/.sort/...`, slices (STR slices are BUILT —
+  `.remove/.index/.sort/...`, slices (STR slices are BUILT —
   §string semantics; LIST slices allocate and stay loud pending the
   allocation-aware frame story), `del lst[i]`, comprehensions,
   `.get`-style method calls on lists (a faithful `AttributeError`
@@ -3379,6 +3381,121 @@ semantics; CPython runs it, the model refuses loudly, never wrongly),
 `alias_bisect_shape.py` (the bisect shape verbatim: defs, guarded
 `from _zzz_nomod import *` fallback, aliases, alias calls printing —
 MATCH). Acceptance: the sweep's `bisect` row REFUSE→MATCH.
+
+## `list.insert` — the §2.5 residue (DESIGN, 2026-08-14)
+
+The recorded residue of the Pass 0 / def-aliasing arc: `bisect.py`'s pure
+`insort_right`/`insort_left` fallbacks end in `a.insert(lo, x)`, and
+`attrCallPlan` knows `append`/`pop` only — so the FILE matches (its
+post-alias top level calls nothing) while every insort CONSUMER refuses
+(`import_insort_fallback` registered UNSUPPORTED, the honest verdict).
+This design lands `list.insert(i, x)` with CPython 3.9 semantics and
+closes the open memo-2.5 insort obligation: the row's flip to MATCH —
+the pure fallback against CPython's C accelerator, results compared —
+IS the discharge.
+
+### Semantics (measured against the pinned 3.9)
+
+CPython's `ins1` (listobject.c) never raises on the index — it CLAMPS:
+a negative `i` counts from the end and floors at 0; `i` beyond the end
+appends. Measured rows: `[1,2,3].insert(-1, m)` → `[1,2,m,3]`;
+`insert(-100, lo)` prepends; `insert(100, hi)` appends;
+`[].insert(5, v)` → `[v]`; `insert(True, x)` inserts at 1 (bool is
+`__index__`-coerced, `asInt` — pop's rule). The call returns `None` and
+mutates in place, visible through every alias. Faithful `TypeError`s,
+messages verbatim: a non-int index
+(`'str' object cannot be interpreted as an integer` — decided AFTER
+argument evaluation, like pop's) and arity
+(`insert expected 2 arguments, got {n}` for every n ≠ 2). No float tier
+exists, so the int/bool coercion is total on in-tier values.
+
+### The mechanism — append's frame exactly
+
+* **Dispatch**: `AttrPlan` gains `| listInsert`; `attrCallPlan`'s list
+  receiver gains the third literal comparison (and its refusal message
+  now names `append`/`pop`/`insert`). `execAttrCall` gains the arm:
+  evaluate arguments (plan decided BEFORE them, CPython order), then
+  `[i, x]` → `asInt`-coerce → the worker; wrong arity/type the faithful
+  `TypeError`s above. The KEYWORD call site gains the loud
+  positional-only arm (`list.insert() with keyword arguments…`, the
+  append/pop wording). No new mutual-block member, no new judgment.
+* **Worker**: `heapInsert` beside `heapAppend`/`heapPop` — one
+  `Heap.update` writing `(xs.toList.take n ++ v :: xs.toList.drop n)`
+  with `n := (if i < 0 then i + xs.size else i).toNat`. The clamp is
+  those two lines: `Int.toNat` floors the negative side at 0, and
+  `take`/`drop` saturate the high side at `size` (core `List.insertIdx`
+  is NOT used — it silently DROPS an out-of-range insert, the opposite
+  of CPython's clamp). List-structural, kernel-reducible; joins
+  `py_simp`/`interpUnfolds` beside append/pop (Logic.lean, VCTactic.lean).
+* **`seqBudget`: no interaction, stated as a rule.** The budget guards
+  SINGLE-STEP materialization — one expression that can build an
+  unbounded sequence (`range` → list, `tuple * n`). Growth by ONE
+  element per fuel-costing call is append's discipline: an insert loop
+  is bounded by fuel (`.timeout`), never by budget, and `heapAppend`
+  has never consulted the budget. So there is NO budget-exceeded
+  battery row — recorded as N/A by design, not an omission.
+* **Fragments**: nothing moves. Attribute CALLS are in `Expr.heapFree`
+  only at `attr == "get"` (Semantics.lean, the `.get`-only whitelist),
+  so an `.insert` call already leaves the fragment syntactically —
+  `worldInv` never meets the arm.
+
+### Theorem walks — one arm each at the plan fork, no new conjunct
+
+The arm rides the existing `execAttrCall` frame like append:
+
+* `fuelMono` (Obs.lean): one new plan arm, listAppend's shape
+  (`Run.le_bind` over the argument walk, then `Run.le_refl` — the
+  worker is fuel-free). The kwargs site's
+  `cases attrCallPlan … <;> try exact Run.le_refl _` catch-all absorbs
+  the new constructor (its kwargs arm is a plain refusal).
+* `worldInv` (Obs.lean): ZERO new arms — its `execAttrCall` conjunct is
+  pinned at `attr = "get"` and forks through
+  `attrCallPlan_get_heapFree`, whose list-receiver proof gains one
+  `if_neg` for the new literal comparison. That lemma edit is the
+  whole worldInv cost.
+* `clockErase` (ClockErase.lean): one real arm in `ceExecAttrCall` —
+  listPop's `asInt` geometry at two arguments (`.bind` the args, cases
+  on the list, `.exn` off-arity, `.liftRes` + `of_seed` on `[i, x]`) —
+  plus `| listInsert => exact .unsupported` at the three enumerated
+  kwargs/ntuple plan sites.
+
+### Extractor and envelopes: untouched
+
+Attribute calls are already structured generically — the
+`import_insort_fallback` envelope carries `a.insert(lo, x)` today and
+refuses DYNAMICALLY at the plan. Pure method-tier addition: no
+extractor edit, NO envelope re-extraction.
+
+### What flips — pre-registered prediction
+
+* `harness/scripts.json`: `import_insort_fallback` UNSUPPORTED → MATCH
+  outright — the model runs the pure `insort_right` where CPython runs
+  the C accelerator, list printed once at the end; the flip IS the
+  memo-2.5 insort discharge. Script corpus 37→38 matched / 9→8 loud
+  (plus the new alias-composition script below → 39 matched of 47).
+* in-repo survey: flip set among EXISTING files exactly
+  {`import_insort_fallback`} — 89→90 MATCH / 20→19 REFUSE, 0 DIVERGE;
+  the new script adds one more MATCH row (91/19 at landing).
+* **stdlib sweep: NO change — 7 MATCH / 159 REFUSE.** This landing is
+  consumer-level only: bisect.py (the one file whose wall chain ends
+  here) already MATCHES because its post-alias top level executes
+  nothing; no other seed has `list.insert` as its sole wall. Anything
+  else is a finding.
+* diff_test: the new list_lab rows all match; 0 failed stays.
+
+### Battery
+
+`Examples/python/list_lab` extensions (differential rows +
+`#py_check`): the clamping grid through one `ins_at(i, v)` function
+(0 / mid / end / beyond-end / −1 / −len / beyond-negative / bool
+index), `ins_empty` (insert-into-empty at a beyond-end index),
+`ins_alias` (aliasing-visible growth), `ins_ret` (returns `None`),
+`ins_insort` (the §2.5 `insort_right` body verbatim, called direct),
+and the two faithful `TypeError` rows (non-int index; wrong arity).
+Scripts: `import_insort_fallback` flipped to `match`, plus NEW
+`insort_alias_script.py` — `insort = insort_right` composed with the
+alias tier, calls through the alias, list printed (MATCH). No
+budget-exceeded row (N/A by design, above).
 
 ## Staging (amended)
 

@@ -71,6 +71,38 @@ load_program list_lab from "Examples/python/list_lab/list_lab.json"
 #py_check list_lab.loop_append_grows() = 3
 #py_check list_lab.loop_pop_skips() = 2
 
+/-! ### `.insert` (the §2.5 residue — docs/memory-model.md
+§`list.insert`): CPython's clamping index rule (negative from the end,
+floored at 0; beyond-end appends — never IndexError), `None` returned,
+aliasing-visible growth, the two faithful `TypeError`s, and the pure
+`insort_right` fallback verbatim (the memo-2.5 discharge shape) -/
+
+#py_check list_lab.ins_at(0, 9) = (Val.list #[.int 9, .int 1, .int 2, .int 3])
+#py_check list_lab.ins_at(1, 9) = (Val.list #[.int 1, .int 9, .int 2, .int 3])
+#py_check list_lab.ins_at(3, 9) = (Val.list #[.int 1, .int 2, .int 3, .int 9])
+#py_check list_lab.ins_at(100, 9) =
+  (Val.list #[.int 1, .int 2, .int 3, .int 9])
+#py_check list_lab.ins_at(-1, 9) = (Val.list #[.int 1, .int 2, .int 9, .int 3])
+#py_check list_lab.ins_at(-3, 9) = (Val.list #[.int 9, .int 1, .int 2, .int 3])
+#py_check list_lab.ins_at(-100, 9) =
+  (Val.list #[.int 9, .int 1, .int 2, .int 3])
+-- the bool index is `__index__`-coerced (True inserts at 1)
+#guard callFunction list_lab "ins_at" #[.bool true, .int 9] 4096
+  == .ok (.list #[.int 1, .int 9, .int 2, .int 3])
+#py_check list_lab.ins_empty(7) = (Val.list #[.int 7])
+#py_check list_lab.ins_alias(5) = 5
+#py_check list_lab.ins_ret() = (Val.none)
+#py_check list_lab.ins_badidx() raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check list_lab.ins_arity() raises
+  (.typeError "insert expected 2 arguments, got 1")
+#py_check list_lab.ins_insort(4) =
+  (Val.list #[.int 1, .int 3, .int 4, .int 5, .int 7])
+#py_check list_lab.ins_insort(0) =
+  (Val.list #[.int 0, .int 1, .int 3, .int 5, .int 7])
+#py_check list_lab.ins_insort(9) =
+  (Val.list #[.int 1, .int 3, .int 5, .int 7, .int 9])
+
 /-! ### builtins over heap lists: `sorted` allocates fresh, `max`/`min` -/
 
 #py_check list_lab.sorted_fresh() = (Val.tuple #[.int 1, .int 3, .bool false])

@@ -217,7 +217,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             dictFind, dictStore, dictBuild, heapIndex, heapStore, heapLen,
             heapContains, heapContainsScan, valContains, genPlan, genBreak,
             genContinue, heapGet, heapAppend,
-            heapPop,
+            heapPop, heapInsert,
             heapAttrStore, findClass, findClassAux, classAt, getClass?,
             attrReadPlan, attrReadResult, attrCallPlan, execAttrCall,
             endsWithUU, dunderShaped, hasExtraDunder,

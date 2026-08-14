@@ -2824,3 +2824,33 @@ builds and every harness run. The honest chain stands as designed:
 `insort` CONSUMERS still refuse on `list.insert`
 (`import_insort_fallback` stays UNSUPPORTED — the §2.5 residue, next
 tier when it lands).
+
+## `list.insert` — the §2.5 residue — DESIGNED (2026-08-14)
+
+Design recorded: docs/memory-model.md §`list.insert` (the §2.5
+residue). The one method blocking the insort-fallback CONSUMERS.
+CPython 3.9 semantics measured: the index CLAMPS (negative from the
+end, floored at 0; beyond-end appends — never IndexError), `None`
+returned, in-place through every alias; faithful `TypeError`s verbatim
+(non-int index after argument evaluation; `insert expected 2
+arguments, got {n}`). Mechanism is append's frame exactly:
+`AttrPlan.listInsert` + the `attrCallPlan` list arm + one
+`execAttrCall` arm + the loud kwargs arm; worker `heapInsert` beside
+`heapAppend`/`heapPop` (take/drop form — core `List.insertIdx` DROPS
+out-of-range, the opposite of the clamp), joining the append/pop simp
+sets. seqBudget: NO interaction, stated as a rule — the budget guards
+single-step materialization, per-call growth-by-one is fuel-bounded
+(append's discipline), so no budget-exceeded battery row exists (N/A
+by design). Theorems: no new mutual member; fuelMono one arm
+(listAppend's shape), worldInv ZERO arms (`attr = "get"` pin; one
+`if_neg` in `attrCallPlan_get_heapFree`'s list case), clockErase one
+real arm (listPop's asInt geometry at two args) + three enumerated
+`.unsupported` lines. Extractor/envelopes UNTOUCHED (dynamic refusal
+today) — no re-extraction. Pre-registered flips:
+`import_insort_fallback` UNSUPPORTED→MATCH outright (the memo-2.5
+insort discharge); in-repo existing-file flip set exactly that row
+(89→90 MATCH / 20→19 REFUSE + 1 new script → 91/19); **stdlib sweep
+NO change (7/159) — consumer-level only**; anything else is a finding.
+Battery: list_lab clamping grid / empty / alias / returns-None /
+verbatim insort_right / two TypeError rows, plus NEW
+`insort_alias_script.py` (alias tier composed with insert).

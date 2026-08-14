@@ -1427,6 +1427,9 @@ theorem fuelMono (fuel : Nat) :
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
         | listPop =>
           exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
+        | listInsert =>
+          -- the §2.5 residue: arg-eval then a fuel-free clamped update
+          exact Run.le_bind (ihEs m st args k hk) fun st vs => Run.le_refl _
         | refuse msg => exact Run.le_refl _
         | dangling => exact Run.le_refl _
     -- stepIter (H4: the generator stepper)

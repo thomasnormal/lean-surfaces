@@ -504,5 +504,12 @@
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_alias", "args": [[4], [0]], "expect": "match"},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_kw", "args": [[5], [-2]], "expect": "match"},
   {"file": "Examples/python/alias_lab/alias_lab.py", "function": "use_gen_alias", "args": [[3], [10]], "expect": "match"},
-  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "read_alias", "args": [[]], "expect": "unsupported"}
+  {"file": "Examples/python/alias_lab/alias_lab.py", "function": "read_alias", "args": [[]], "expect": "unsupported"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_at", "args": [[0, 9], [1, 9], [3, 9], [100, 9], [-1, 9], [-3, 9], [-100, 9], [{"t": "bool", "v": true}, 9], [2, {"t": "str", "v": "m"}]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_empty", "args": [[7], [{"t": "str", "v": "only"}]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_alias", "args": [[5], [0]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_ret", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_badidx", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_arity", "args": [[]], "expect": "match"},
+  {"file": "Examples/python/list_lab/list_lab.py", "function": "ins_insort", "args": [[4], [0], [9], [5]], "expect": "match"}
 ]

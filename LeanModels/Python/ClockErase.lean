@@ -1341,6 +1341,26 @@ theorem ceExecAttrCall_succ (ih : CE fuel) : CEExecAttrCall (fuel + 1) := by
           obtain ⟨h2, v2⟩ := hr
           exact .of_seed (fun tr => by simp)
             (by simp only [FrameState.withClock_self hs3])
+  | listInsert =>
+    -- the §2.5 residue: listPop's asInt geometry at two arguments
+    refine .bind (ihEs m st args h) fun s2 vs hs2 => ?_
+    cases vs with
+    | nil => exact .exn hs2 _
+    | cons i t =>
+      cases t with
+      | nil => exact .exn hs2 _
+      | cons v t2 =>
+        cases t2 with
+        | cons w t3 => exact .exn hs2 _
+        | nil =>
+          dsimp only
+          cases hai : asInt i with
+          | none => exact .exn hs2 _
+          | some n =>
+            ce_norm
+            refine .bind (.liftRes hs2 _) fun s3 h2 hs3 => ?_
+            exact .of_seed (fun tr => by simp)
+              (by simp only [FrameState.withClock_self hs3])
   | refuse msg => exact .unsupported
   | dangling => exact .unsupported
 
@@ -2156,6 +2176,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | dictClear => exact .unsupported
               | listAppend => exact .unsupported
               | listPop => exact .unsupported
+              | listInsert => exact .unsupported
               | dangling => exact .unsupported
             case str sv =>
               try dsimp only
@@ -2378,6 +2399,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
             | dictClear => exact .unsupported
             | listAppend => exact .unsupported
             | listPop => exact .unsupported
+            | listInsert => exact .unsupported
             | refuse msg => exact .unsupported
             | dangling => exact .unsupported
           case ntuple tn fs xs =>
@@ -2402,6 +2424,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
             | dictClear => exact .unsupported
             | listAppend => exact .unsupported
             | listPop => exact .unsupported
+            | listInsert => exact .unsupported
             | dangling => exact .unsupported
 
 

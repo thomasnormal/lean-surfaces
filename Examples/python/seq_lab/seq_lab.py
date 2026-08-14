@@ -240,3 +240,15 @@ def band_set():
     # already survives it: a set operand is a heap ref, so evalBinOp's
     # `.ref` arm refuses LOUDLY before the TypeError fallback
     return set([1, 2]) & set([2, 3])
+
+
+def fmt_spread(i, j):
+    # a namedtuple IS a tuple (PyTuple_Check succeeds on the subclass),
+    # so `%` SPREADS it -- treating it as one argument would fabricate
+    # an arity error for a program CPython runs
+    return "%s/%s/%r" % Move(i, j, "")
+
+
+def fmt_spread_arity(i, j):
+    # the spread's other half: three arguments, one conversion
+    return "%s" % Move(i, j, "")

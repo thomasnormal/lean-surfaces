@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/seq_lab/seq_lab.py",
-  "source_sha256": "4261e9477109dd2f1c6dca68971576a5706d632a13397ae19142d30a826413c9",
+  "source_sha256": "21bce5d10ab642d3c6814a01859067517de08b5baea3189bf5ada90f6ae24f6d",
   "module": {
     "kind": "Module",
     "body": [
@@ -5922,6 +5922,250 @@
                         }
                       }
                     ]
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 245,
+          "col_offset": 0,
+          "end_lineno": 249,
+          "end_col_offset": 38
+        },
+        "name": "fmt_spread",
+        "args": [
+          {
+            "arg": "i",
+            "span": {
+              "lineno": 245,
+              "col_offset": 15,
+              "end_lineno": 245,
+              "end_col_offset": 16
+            }
+          },
+          {
+            "arg": "j",
+            "span": {
+              "lineno": 245,
+              "col_offset": 18,
+              "end_lineno": 245,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 249,
+              "col_offset": 4,
+              "end_lineno": 249,
+              "end_col_offset": 38
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 249,
+                "col_offset": 11,
+                "end_lineno": 249,
+                "end_col_offset": 38
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 249,
+                  "col_offset": 11,
+                  "end_lineno": 249,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%s/%s/%r"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 249,
+                  "col_offset": 24,
+                  "end_lineno": 249,
+                  "end_col_offset": 38
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 249,
+                    "col_offset": 24,
+                    "end_lineno": 249,
+                    "end_col_offset": 28
+                  },
+                  "id": "Move"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 249,
+                      "col_offset": 29,
+                      "end_lineno": 249,
+                      "end_col_offset": 30
+                    },
+                    "id": "i"
+                  },
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 249,
+                      "col_offset": 32,
+                      "end_lineno": 249,
+                      "end_col_offset": 33
+                    },
+                    "id": "j"
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 249,
+                      "col_offset": 35,
+                      "end_lineno": 249,
+                      "end_col_offset": 37
+                    },
+                    "value": {
+                      "type": "str",
+                      "value": ""
+                    }
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 252,
+          "col_offset": 0,
+          "end_lineno": 254,
+          "end_col_offset": 32
+        },
+        "name": "fmt_spread_arity",
+        "args": [
+          {
+            "arg": "i",
+            "span": {
+              "lineno": 252,
+              "col_offset": 21,
+              "end_lineno": 252,
+              "end_col_offset": 22
+            }
+          },
+          {
+            "arg": "j",
+            "span": {
+              "lineno": 252,
+              "col_offset": 24,
+              "end_lineno": 252,
+              "end_col_offset": 25
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 254,
+              "col_offset": 4,
+              "end_lineno": 254,
+              "end_col_offset": 32
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 254,
+                "col_offset": 11,
+                "end_lineno": 254,
+                "end_col_offset": 32
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 254,
+                  "col_offset": 11,
+                  "end_lineno": 254,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%s"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 254,
+                  "col_offset": 18,
+                  "end_lineno": 254,
+                  "end_col_offset": 32
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 254,
+                    "col_offset": 18,
+                    "end_lineno": 254,
+                    "end_col_offset": 22
+                  },
+                  "id": "Move"
+                },
+                "args": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 254,
+                      "col_offset": 23,
+                      "end_lineno": 254,
+                      "end_col_offset": 24
+                    },
+                    "id": "i"
+                  },
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 254,
+                      "col_offset": 26,
+                      "end_lineno": 254,
+                      "end_col_offset": 27
+                    },
+                    "id": "j"
+                  },
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 254,
+                      "col_offset": 29,
+                      "end_lineno": 254,
+                      "end_col_offset": 31
+                    },
+                    "value": {
+                      "type": "str",
+                      "value": ""
+                    }
                   }
                 ],
                 "keywords": [],

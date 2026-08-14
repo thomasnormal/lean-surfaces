@@ -113,3 +113,55 @@ still `.get`-only — recorded gap, docs/backlog.md), so `swap`/
 
 #guard (findFunction str_lab "rev").any FunctionDefn.heapFree
 #guard (findFunction str_lab "put").any FunctionDefn.heapFree
+
+/-! ### `%`-formatting (docs/memory-model.md §`%`-formatting on strings)
+
+The envelope was RE-EXTRACTED for these rows. `opcode.py` line 36 is
+`fmt_opcode` verbatim — a `%r` of an int inside a one-element tuple —
+and it was that file's SOLE wall. Every row here is differential
+(harness/cases.json); the messages are pinned by `raises` because
+`diff_test` compares exception CLASSES only. -/
+
+#py_check str_lab.fmt_opcode(0) = "<0>"
+#py_check str_lab.fmt_opcode(255) = "<255>"
+#py_check str_lab.fmt_opcode(-1) = "<-1>"
+#py_check str_lab.fmt_repr("it's") = "\"it's\""
+#py_check str_lab.fmt_repr("a\nb") = "'a\\nb'"
+#py_check str_lab.fmt_repr(true) = "True"
+#py_check str_lab.fmt_bare(5) = "5"
+#py_check str_lab.fmt_str("x") = "x"
+#py_check str_lab.fmt_str(true) = "True"
+#py_check str_lab.fmt_dec(true) = "1"
+#py_check str_lab.fmt_pair("depth", 7) = "depth=7"
+#py_check str_lab.fmt_pct(42) = "42% done"
+#py_check str_lab.fmt_noargs() = "abc"
+#py_check str_lab.fmt_nonascii_s() = "héllo"
+
+/-! The two arity `TypeError`s and the `%d` type error, verbatim (the
+type name is UNQUOTED here — CPython's own wording, measured), plus the
+left-to-right ORDER: the first conversion's error beats the arity of
+what follows. -/
+
+#py_check str_lab.fmt_short(1) raises
+  (.typeError "not enough arguments for format string")
+#py_check str_lab.fmt_leftover(1) raises
+  (.typeError "not all arguments converted during string formatting")
+#py_check str_lab.fmt_dec("x") raises
+  (.typeError "%d format: a number is required, not str")
+#py_check str_lab.fmt_dec(Val.none) raises
+  (.typeError "%d format: a number is required, not NoneType")
+#py_check str_lab.fmt_order("x", 1) raises
+  (.typeError "%d format: a number is required, not str")
+
+/-! The loud frontier: the minilanguage, every conversion character
+outside the four, the two forms CPython itself rejects (refused rather
+than given a fabricated `ValueError` — recorded restriction), a
+container argument, a non-ASCII `%r`, and a mapping RHS. -/
+
+#guard callFunction str_lab "fmt_width" #[.int 3] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_hex" #[.int 255] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_bad" #[.int 3] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_trailing" #[.int 3] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_container" #[] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_nonascii_r" #[] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_mapping" #[] 4096 matches .unsupported _

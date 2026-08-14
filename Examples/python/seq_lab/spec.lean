@@ -158,3 +158,15 @@ new arm is needed and no fake exception is invented: a set is a heap
 object, so `evalBinOp`'s `.ref` arm fires FIRST and refuses loudly. -/
 
 #guard callFunction seq_lab "band_set" #[] 4096 matches .unsupported _
+
+/-! ### a namedtuple SPREADS under `%` (§`%`-formatting on strings)
+
+`PyTuple_Check` succeeds on the subclass, so `str % Move(…)` takes the
+namedtuple's FIELDS as the argument list — measured, and required: one
+argument instead of three would fabricate `not enough arguments` for a
+program CPython runs. The envelope was RE-EXTRACTED for these rows. -/
+
+#py_check seq_lab.fmt_spread(1, 2) = "1/2/''"
+#py_check seq_lab.fmt_spread(0, -3) = "0/-3/''"
+#py_check seq_lab.fmt_spread_arity(1, 2) raises
+  (.typeError "not all arguments converted during string formatting")

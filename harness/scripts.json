@@ -229,5 +229,14 @@
     "file": "harness/scripts/del_import_script.py",
     "expect": "unsupported",
     "note": "CPython exits 0; the benign import binds statically (never in locals), so the del has nothing to act on -- LOUD"
+  },
+  {
+    "file": "harness/scripts/fmt_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/fmt_width_script.py",
+    "expect": "unsupported",
+    "note": "CPython prints [    3]; the %-format MINILANGUAGE (flags/width/precision/mapping keys) is a second tier -- only bare %s/%r/%d/%% are modelled"
   }
 ]

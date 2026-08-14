@@ -111,3 +111,103 @@ def cast_int(s):
 def cast_str(n):
     # str(...) value-only: exact decimals, True/False, identity, None
     return str(n)
+
+
+# `%`-formatting (docs/memory-model.md §`%`-formatting on strings): the
+# admitted tier is BARE %s/%r/%d/%% over the scalar inventory, CPython's
+# single left-to-right pass, both arity TypeErrors faithful. The
+# minilanguage and every other conversion character stay loud.
+
+
+def fmt_opcode(op):
+    # opcode.py line 36 verbatim: a %r of an int inside a 1-tuple
+    return "<%r>" % (op,)
+
+
+def fmt_repr(v):
+    return "%r" % (v,)
+
+
+def fmt_bare(v):
+    # a NON-tuple right operand is one argument -- same answer as (v,)
+    return "%r" % v
+
+
+def fmt_str(v):
+    return "%s" % (v,)
+
+
+def fmt_dec(v):
+    # bool coerces (%d of True is '1' where %s of it is 'True'); a
+    # non-number is the faithful TypeError
+    return "%d" % (v,)
+
+
+def fmt_pair(a, b):
+    return "%s=%d" % (a, b)
+
+
+def fmt_pct(n):
+    # %% emits one '%' and consumes NO argument
+    return "%d%% done" % (n,)
+
+
+def fmt_noargs():
+    return "abc" % ()
+
+
+def fmt_leftover(v):
+    # no conversion at all: the argument is left over -> TypeError
+    return "abc" % (v,)
+
+
+def fmt_short(a):
+    # two conversions, one argument -> TypeError
+    return "%d %d" % (a,)
+
+
+def fmt_order(a, b):
+    # ONE left-to-right pass: the first conversion's TypeError is raised
+    # before the arity of the rest is ever considered
+    return "%d %d" % (a, b)
+
+
+def fmt_nonascii_s():
+    return "%s" % ("héllo",)
+
+
+def fmt_nonascii_r():
+    # repr escapes by Unicode PRINTABILITY -- never guessed, so loud
+    return "%r" % ("héllo",)
+
+
+def fmt_width(n):
+    # the format minilanguage is a second tier: loud
+    return "%5d" % (n,)
+
+
+def fmt_hex(n):
+    # a conversion character CPython supports and this tier does not
+    return "%x" % (n,)
+
+
+def fmt_bad(n):
+    # CPython raises ValueError: unsupported format character 'q'; the
+    # model refuses LOUDLY rather than inventing the ValueError
+    return "%q" % (n,)
+
+
+def fmt_trailing(n):
+    # CPython raises ValueError: incomplete format -- loud here too
+    return "%d%" % (n,)
+
+
+def fmt_container():
+    # a container argument's repr is the heap-recursive walk; this
+    # operator cannot see the heap, so it refuses instead of guessing
+    return "%s" % ((1, 2),)
+
+
+def fmt_mapping():
+    # the %(key)s mapping protocol: the heap-operand refusal fires first
+    return "%(k)s" % {"k": 1}

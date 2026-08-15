@@ -445,7 +445,7 @@ def interpUnfolds : List Name :=
    ``resolvedG, ``resolvedGAux, ``targetNamesG, ``evalGlobalExpr, ``evalGlobalExprs,
    ``evalGlobalDictItems, ``globalFuel,
    ``sumArgs, ``sumFold, ``rangeLen, ``rangeValsAux, ``rangeVals, ``rangeMake,
-   ``seqBudget, ``tupleRepeat, ``seqSlice, ``seqSliceElems,
+   ``seqBudget, ``shiftBudget, ``tupleRepeat, ``seqSlice, ``seqSliceElems,
    ``g1DivGate, ``g1ExecCandidate, ``g1HeapPure, ``g1HeapPureList,
    ``Stmt.defFree, ``Stmt.defFreeList, ``topLevelDefFree,
    ``initFoldLive, ``initFoldStep, ``initExecStmt, ``initItemsLoop,

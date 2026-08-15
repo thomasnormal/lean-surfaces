@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.19"
   },
   "source_file": "harness/scripts/del_shell_script.py",
   "source_sha256": "5214068a72e5d1f9abb897267e76933321b1db44f3e712170ac4eb7b42deedcd",

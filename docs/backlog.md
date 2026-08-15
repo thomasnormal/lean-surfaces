@@ -2529,8 +2529,13 @@ but `Int.fdiv x (2^(10**30))` must never construct that divisor. The
 exact saturation is available — once `2^y > |x|` the answer is `-1` for
 negative `x` and `0` otherwise — so a bounded arm is writeable; it just
 needs its own budget decision alongside `seqBudget`, and it should be
-taken with `>>`, not smuggled in with `&`. **Recorded as a live defect
-in shipped `<<`, not as a new one.**
+taken with `>>`, not smuggled in with `&`. ~~**Recorded as a live defect
+in shipped `<<`, not as a new one.**~~ **CLOSED for `<<` (2026-08-15,
+§the `<<` budget below)** — `shiftBudget` landed, and the measured
+failure was an `INTERNAL PANIC`, not the hang predicted here. `>>` is
+unaffected because it was never admitted: `RShift` is in neither
+`ALLOWED_BINOPS` nor the `BinOp` inductive, so it still refuses at
+extraction and inherits the budget free if it is ever added.
 
 ### Surface added
 
@@ -3946,3 +3951,98 @@ new ones. Reverted by hand. It is not in `tools/ci.sh`, so CI never sees
 it. The fix is the one already applied to the survey — pin the frontend,
 and extract to the cache rather than beside the source — but it is a
 fourth item and is left open here rather than smuggled in.
+
+## The `<<` budget, and the frontend residue closes (2026-08-15)
+
+### `<<` had no bound — and the recorded prediction was wrong about how it failed
+
+`evalBinOp`'s `.lshift` arm computed `x * 2^y` with nothing bounding `y`.
+§`^` rides free recorded this as a live defect and predicted the model
+"would sit down and try to build the number — a hang". **Measured first,
+and it is not a hang.** On this toolchain `1 << (10^30)` dies
+`INTERNAL PANIC: Nat.pow exponent is too big` — Lean's own `Nat.pow`
+guard fires, and the runner ABORTS. So the defect is real but its shape
+is a runner abort, not unbounded silence; recorded that way rather than
+repeating the prediction.
+
+What is genuinely surprising, and why the bound had to be DECLARED rather
+than fitted: everything below that panics nothing and is exactly right.
+Measured, model vs CPython 3.9.19, `print((1 << n) % 1000)`:
+
+| `n` | CPython | model, before |
+| --- | --- | --- |
+| `10`, `1000`, `100000` | agree | agree |
+| `10^7`, `10^8` | agree, ~40-60 ms | agree, ~150-180 ms |
+| `10^9` | 251 ms (a real 125 MB integer) | 407 ms, correct |
+| `10^30` | `OverflowError` | **`INTERNAL PANIC`** |
+
+**The fix is the pattern that already exists.** `seqBudget = 1048576`
+guards `rangeVals`/`tupleRepeat` with a fixed, therefore fuel-INDEPENDENT
+`unsupported`. `shiftBudget = 1048576` is its sibling — its own constant,
+as this file recorded it should be ("its own budget decision alongside
+`seqBudget`"), bounding the shift COUNT so the widest result is about a
+million bits. Below it nothing changes; above it the arm refuses loudly.
+It joins `py_simp`'s unfold set beside `seqBudget`.
+
+**Stated plainly: this refuses shifts CPython performs.** `1 << (10^9)`
+is a real integer in CPython and is now `unsupported` here — a declared
+tier gap, never a claim that CPython raises. That is the same trade
+`seqBudget` already makes, and everything the corpus actually shifts
+(`1 << 63`) is five orders of magnitude inside the bound.
+
+`>>` needs nothing: `RShift` is in neither `ALLOWED_BINOPS` nor the
+`BinOp` inductive, so it refuses at extraction and would inherit the
+budget free if ever admitted.
+
+**Pinned on both sides of the edge** (`Examples/python/seq_lab/spec.lean`,
+checks-only so no theorem depends on the arm): `shl(1, 4096) = 2^4096`
+exactly; `.ok` at exactly `1048576`; `.unsupported` at `1048577`;
+`.unsupported` at `10^30`. Differentially (`harness/cases.json`):
+`[1, 4096]` joins the `expect: match` group, and `[1, 10^30]` is a new
+`expect: unsupported` row whose note records that CPython raises
+`OverflowError` there — a documented tier gap, which is the only thing a
+whitelist row may ever be.
+
+**Gates.** The previously-panicking shape now exits **3** (LOUD REFUSAL)
+in **293 ms** warm. `diff_test` **1215 cases, 0 failed** (was 1213: +1
+matched, +1 whitelisted — exactly the two new rows). Script corpus
+**60 / 0 failed / 46 matched / 14 loud**, unchanged. **Both sweeps moved
+ZERO files**: in-repo 124 files 99 MATCH / 25 REFUSE / 0 DIVERGE and
+stdlib 167 files 8 / 159 / 0, with 0 differences on all seven axes.
+`lake build` 3659 jobs EXIT=0 (a full proof-layer rebuild — `evalBinOp`
+is below everything), `docs_check` 67/67, extractor units 70/70.
+
+### `script_corpus.py` pinned — and the 3.14.5 stamp residue is GONE
+
+The item recorded above as "found, not fixed" is fixed. Two changes, the
+same two the survey took: `_reexec_under_pinned_frontend()` (`LEANPY_FRONTEND`
+overrides, `LEANPY_NO_REEXEC=1` disables, missing pin warns LOUDLY), and
+extraction routed through `tools/leanpy`'s cache-keyed `envelope_for`
+instead of a bare `extract.py` call with no `--out`.
+
+**Both halves gated independently, because they fix different things:**
+
+* driver `python3` (3.14.5) → re-execs to the pin → `git status` shows
+  only the intended edits, **zero envelope churn**.
+* `LEANPY_NO_REEXEC=1 python3 …`, frontend genuinely 3.14.5 → the tree is
+  **still clean**, which is the `--out` half doing its job independently
+  of the pin.
+* Both report the identical `60 / 0 / 46 / 14`, one more datum for
+  frontend verdict-invariance.
+
+**The 13 tracked envelopes stamped `3.14.5` were re-extracted under the
+pin, after verifying every one.** Each was classified before touching it;
+all 13 came back STAMP-ONLY (payload byte-identical, no span change, no
+structural change), and the resulting diff is exactly 13 lines of
+`"version": "3.14.5"` → `"3.9.19"` and nothing else. Tracked
+`cpython-ast` stamps are now **92 at 3.9.25 + 15 at 3.9.19, zero 3.14.5**
+— the WRONG-FAMILY residue is closed. The remaining 3.9.19/3.9.25 split
+is the known cosmetic point-release churn between this laptop and the
+box, the same family, and this file has twice said not to chase it.
+`lake build` green after the re-extraction and both sweeps unmoved.
+
+Noted while there, not acted on: those `harness/scripts/*.json` envelopes
+are referenced by **no code in the repo** — `script_corpus.py` was their
+only writer and nothing ever read them. They are tracked build artifacts,
+and now that extraction goes to the cache nothing writes them either.
+Deleting them is a separate call.

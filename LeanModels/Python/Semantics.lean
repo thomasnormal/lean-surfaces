@@ -144,6 +144,23 @@ purpose: budget-refusals must be fuel-INDEPENDENT (`unsupported`, never
 a fuel-varying outcome). -/
 def seqBudget : Nat := 1048576
 
+/-- The left-shift budget: the largest shift COUNT `<<` will build, so the
+widest result is about a million bits (128 KB). Its own constant rather
+than a reuse of `seqBudget` — they bound different resources and the
+backlog recorded this as its own budget decision — but the same
+discipline: fixed, therefore fuel-INDEPENDENT.
+
+Why any bound at all (docs/memory-model.md §left shift and bitwise or):
+`x << n` is `x * 2^n` with nothing limiting `n`, and the arm was reachable
+with an arbitrary `n`. Measured 2026-08-15 on this toolchain,
+`1 << (10^30)` did not compute and did not refuse — it died
+`INTERNAL PANIC: Nat.pow exponent is too big`, a runner abort rather than
+an answer. Below the budget nothing changes and CPython is matched
+exactly; above it the model says so LOUDLY. Note this refuses some shifts
+CPython performs happily (`1 << 10^9` is a real 125 MB integer there): a
+declared tier gap, never a claim that CPython raises. -/
+def shiftBudget : Nat := 1048576
+
 /-- Materialize a range value, budget-guarded (see the section comment). -/
 def rangeVals (lo hi step : Int) : Res (List RVal) :=
   let n := rangeLen lo hi step
@@ -677,6 +694,8 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     -- carries through); the negative count is the faithful ValueError.
     | .lshift =>
         if y < 0 then .exn (.valueError "negative shift count")
+        else if y.toNat > shiftBudget then
+          .unsupported "a left shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
         else .ok (.int (x * (2 : Int) ^ y.toNat))
     -- `|` and `&` decide BOOLNESS first (`bool.__or__(bool)` returns a
     -- BOOL, any int operand makes it an int), then compute over `Int` —

@@ -117,6 +117,22 @@ and pass 5's refusal is retired here (docs/memory-model.md §bitwise
 #guard callFunction seq_lab "bor" #[.bool true, .int 2] 4096 == .ok (.int 3)
 #guard callFunction seq_lab "shl" #[.str "a", .int 1] 4096 ==
   .exn (.typeError "unsupported operand type(s) for <<: 'str' and 'int'")
+
+/-! The shift BUDGET, pinned on both sides of its edge (docs/memory-model.md
+§left shift and bitwise or). Below it `<<` is untouched and exact; one past
+it the arm refuses LOUDLY instead of aborting the runner — before this
+guard, `1 << (10^30)` died `INTERNAL PANIC: Nat.pow exponent is too big`,
+which is neither an answer nor a refusal. -/
+
+#guard callFunction seq_lab "shl" #[.int 1, .int 4096] 4096 == .ok (.int (2 ^ 4096))
+
+#guard (match callFunction seq_lab "shl" #[.int 1, .int 1048576] 4096 with
+        | .ok _ => true | _ => false)
+#guard (match callFunction seq_lab "shl" #[.int 1, .int 1048577] 4096 with
+        | .unsupported _ => true | _ => false)
+#guard (match callFunction seq_lab "shl"
+          #[.int 1, .int 1000000000000000000000000000000] 4096 with
+        | .unsupported _ => true | _ => false)
 #py_check seq_lab.bor_neg(-1) = -1
 #py_check seq_lab.bor_neg(-5) = -1
 #py_check seq_lab.bor_neg(3) = 7

@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.19"
   },
   "source_file": "harness/scripts/insort_alias_script.py",
   "source_sha256": "a7fb51bd55570dbc51f68880c97831943fc0aab6e9340f84d6f89f5d43015cd7",

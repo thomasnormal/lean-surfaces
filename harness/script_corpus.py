@@ -8,9 +8,11 @@ Usage (any cwd; the script re-roots itself at the repo root):
 
 For every row ``{"file": ..., "expect": "match"|"unsupported"}``:
 
-  1. re-extracts the envelope (deterministic; extractors/python/extract.py);
-  2. runs the file under CPython (``sys.executable`` — the repo's pinned
-     3.9 oracle) capturing stdout + exit code;
+  1. re-extracts the envelope (deterministic; extractors/python/extract.py)
+     into the shared leanpy CACHE — never beside the source, which used to
+     rewrite tracked envelopes on every run;
+  2. runs the file under CPython (the pinned 3.9 oracle, ``default_oracle``)
+     capturing stdout + exit code;
   3. runs ``lake exe leanmodels-run --script <envelope>`` capturing
      stdout + exit code;
   4. ``match``  — passes iff stdout AND exit code agree exactly;
@@ -25,6 +27,8 @@ Python 3.9 compatible.
 """
 
 import argparse
+import importlib.machinery
+import importlib.util
 import json
 import os
 import re
@@ -32,6 +36,52 @@ import subprocess
 import sys
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _reexec_under_pinned_frontend():
+    """RUN THE FRONTEND ON THE PINNED INTERPRETER (2026-08-15 fix).
+
+    The ORACLE here has been pinned since 2026-08-13 (`default_oracle`
+    below). The FRONTEND was not: extraction ran under `sys.executable`,
+    so `python3 harness/script_corpus.py` parsed the corpus with whatever
+    python3 the box has — 3.14 on this laptop — while comparing against a
+    3.9 oracle. Same fix, same knobs, as `harness/leanpy_survey.py`:
+    `LEANPY_FRONTEND` overrides, `LEANPY_NO_REEXEC=1` disables, and a
+    missing pin WARNS LOUDLY and keeps going.
+    """
+    if os.environ.get("LEANPY_NO_REEXEC"):
+        return
+    want = os.environ.get("LEANPY_FRONTEND") or "python3.9"
+    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_FRONTEND"):
+        return
+    from shutil import which
+    exe = which(want)
+    if exe is None:
+        print("harness/script_corpus.py: WARNING the pinned frontend %r is not "
+              "installed; extracting with %s instead — the model may be shown a "
+              "different program than the oracle runs"
+              % (want, sys.version.split()[0]), file=sys.stderr)
+        return
+    if os.path.realpath(exe) == os.path.realpath(sys.executable):
+        return
+    os.environ["LEANPY_NO_REEXEC"] = "1"
+    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+
+
+_reexec_under_pinned_frontend()
+
+# tools/leanpy owns the ONE extraction path (cache-keyed by source,
+# extractor and frontend family). Using it here is not a tidy-up: this
+# harness used to run the extractor WITHOUT `--out`, which writes the
+# envelope next to the source — so a routine corpus run rewrote 44 tracked
+# `harness/scripts/*.json` files in place, under whatever interpreter
+# launched it. Measured 2026-08-15: a full run left them all modified with
+# nothing changed but `"version": "3.9.25"` -> `"3.14.5"`.
+_path = os.path.join(REPO_ROOT, "tools", "leanpy")
+_spec = importlib.util.spec_from_loader(
+    "leanpy", importlib.machinery.SourceFileLoader("leanpy", _path))
+leanpy = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(leanpy)
 
 
 TRACEBACK_CLASS = re.compile(r"^(?:[A-Za-z_][\w.]*\.)?([A-Za-z_]\w*)(?::.*)?$")
@@ -115,6 +165,9 @@ def main(argv=None):
             print("error: `lake build` failed", file=sys.stderr)
             return 2
 
+    cache = leanpy.default_cache()
+    os.makedirs(cache, exist_ok=True)
+
     with open(opts.scripts, "r", encoding="utf-8") as f:
         rows = json.load(f)
 
@@ -124,15 +177,11 @@ def main(argv=None):
     for row in rows:
         src = row["file"]
         expect = row.get("expect", "match")
-        ext = subprocess.run(
-            [sys.executable, "extractors/python/extract.py", src],
-            cwd=REPO_ROOT, capture_output=True, text=True,
-        )
-        if ext.returncode != 0:
-            print("%-42s ERROR (extractor: %s)" % (src, ext.stderr.strip()))
+        json_path = leanpy.envelope_for(src, cache)
+        if json_path is None:
+            print("%-42s ERROR (extractor refused; see stderr above)" % src)
             failures += 1
             continue
-        json_path = os.path.splitext(src)[0] + ".json"
         cout, ccode, cerr = run_cpython(src)
         lout, lcode, lerr = run_lean(runner_cmd, json_path, opts.fuel)
         if expect == "unsupported":

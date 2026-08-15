@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.19"
   },
   "source_file": "harness/scripts/del_trailing_script.py",
   "source_sha256": "c621524ea53fb35133413beea026520434a3b8fcc7dd54a937fdb1d929789caa",

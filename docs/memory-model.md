@@ -1307,11 +1307,25 @@ test anywhere anymore) and `live |= move is not None and score >
 `|=` rides the existing augAssign name path unchanged.
 
 - `<<` is EXACT on all ints as multiplication: `x << n = x * 2^n` for
-  `n >= 0` (CPython ints are unbounded; the sign carries through), and
-  a negative count is the faithful `ValueError: negative shift count`
-  — raised BEFORE any magnitude concern, as CPython does. Bools coerce
-  through `asInt` (`True << 2 == 4`, an int) — CPython's bool-is-int.
-  Non-int operands keep the faithful TypeError arm.
+  `0 <= n <= shiftBudget` (CPython ints are unbounded; the sign carries
+  through), and a negative count is the faithful
+  `ValueError: negative shift count` — raised BEFORE any magnitude
+  concern, as CPython does. Bools coerce through `asInt`
+  (`True << 2 == 4`, an int) — CPython's bool-is-int. Non-int operands
+  keep the faithful TypeError arm.
+- **The count is BUDGETED (2026-08-15).** `shiftBudget = 1048576`, so
+  the widest result is about a million bits; beyond it the arm refuses
+  loudly (`unsupported`), fixed and therefore fuel-independent, exactly
+  as `seqBudget` guards `rangeVals`/`tupleRepeat`. It is its own
+  constant because it bounds a different resource. This closes a
+  recorded live defect in shipped `<<`: the arm was `x * 2^n` with no
+  bound on `n`, and measured on this toolchain `1 << (10^30)` neither
+  computed nor refused — it died `INTERNAL PANIC: Nat.pow exponent is
+  too big`, a runner abort rather than an answer. The bound is DECLARED
+  rather than fitted to CPython: `1 << (10^9)` builds a real 125 MB
+  integer there and is refused here, which is a tier gap and never a
+  claim that CPython raises. Everything the corpus actually shifts
+  (`1 << 63`) is orders of magnitude inside it.
 - `|` must decide BOOLNESS before the int path: `bool.__or__(bool)`
   returns a BOOL (`True | False is True`), while any int operand makes
   it an int (`True | 2 == 3`). So: two bools → boolean or; otherwise

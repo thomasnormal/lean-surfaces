@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.19"
   },
   "source_file": "harness/scripts/del_dunder_script.py",
   "source_sha256": "45d8533ad0c3a388e5bb4164e35d871c80daf68a33389d2a8ab2a8add21efea9",

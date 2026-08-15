@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.14.5"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/del_lab/del_lab.py",
   "source_sha256": "78f1a926edb29bf077cf18a33a9a5ca57f4d8c8da1fb28c7cdcf0331b3373d7b",

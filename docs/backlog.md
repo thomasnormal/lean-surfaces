@@ -4176,3 +4176,81 @@ byte-identical**. **Zero existing files changed verdict on any of the
 seven axes.** `diff_test` **1215 cases, 0 failed** — unchanged, exactly
 as predicted, because it still compares the CLASS only. Triad: `lake
 build` 3659 jobs EXIT=0, `docs_check` 67/67, extractor units 70/70.
+
+## `IndexError` — STOPPED at the census (2026-08-15)
+
+A stop, taken in the order the standard requires: census first, then look
+at what it costs, then decide. **Nothing was implemented and no code
+changed** — this entry is the durable record of a priced, ready, and
+deliberately unstarted piece of work. (`RecursionError`'s retirement is
+its own entry, because it carries a `harness/cases.json` change and lands
+with it.)
+
+### `IndexError`: the earlier count of FOUR texts was WRONG. There are SIX
+
+§the payload-free constructors priced `IndexError` at "four texts, three
+sibling constructors, ~1-2 hours" from the `harness/cases.json` census.
+Re-measured against CPython 3.9.19 at each of the model's SEVEN raise
+sites — rather than at the cases that happen to exist — and the earlier
+number was an artifact of the corpus, not a fact about `IndexError`.
+**Two texts were invisible because no case exercised them**: no case
+indexes a string out of range, and no case pops a non-empty list out of
+range.
+
+| model raise site | condition | CPython 3.9.19 text |
+| --- | --- | --- |
+| `indexVal` `.listV` (1298), `heapIndex` `.list` (1754) | list read | `list index out of range` |
+| `indexVal` `.tuple` (1306), `.ntuple` (1316) | tuple read | `tuple index out of range` |
+| `indexVal` `.str` (1324) | string read | **`string index out of range`** |
+| `heapStore` `.list` (1788) | list ASSIGN | `list assignment index out of range` |
+| `heapPop` (1861), list EMPTY | pop | `pop from empty list` |
+| `heapPop` (1861), list non-empty | pop | **`pop index out of range`** |
+
+All six are still CONDITION-determined — no runtime data — so the
+nullary-sibling trick still applies and no payload is needed. But it is
+**five siblings, not three**, and site 1861 needs an internal split on
+`xs.isEmpty` because one raise site carries two texts.
+
+**STOPPED, per the standing instruction, because public theorem
+statements move.** Of the five public statements mentioning
+`.indexError`, three are list reads and survive untouched — but **two do
+not**:
+
+* `Examples/python/list_lab/spec.lean:49` —
+  `#py_check list_lab.store_error() raises .indexError`. `store_error`
+  is `xs[3] = 0`, the ASSIGNMENT site, so it must become
+  `.indexErrorAssign`.
+* `Examples/python/list_lab/spec.lean:55` —
+  `#py_check list_lab.pop_empty() raises .indexError`. `pop_empty` is
+  `[].pop()`, so it must become `.indexErrorPopEmpty`.
+
+Unchanged for the record: `arith/spec.lean:39` (`[10,20,30][i]`),
+`list_lab/spec.lean:47-48` (`xs=[1,2]; xs[i]`), and both `Tests.lean`
+rows — all list reads.
+
+So `IndexError` is NOT free of spec-surface churn the way
+`ZeroDivisionError` was, and that is the whole reason `ZeroDivisionError`
+was taken alone. **Nothing was implemented.** The work is otherwise ready:
+six texts measured, seven sites mapped, five siblings named, two
+statements identified by line. It needs a decision about changing two
+public statements, and that decision is not this lane's.
+
+### THE OWNER'S FORK, stated crisply
+
+Three things now gate the message step, and they are separate decisions:
+
+1. **`IndexError`** — no payload, five sibling constructors, six measured
+   texts, ~1-2 hours of mechanical work. Cost: **2 public theorem
+   statements change shape** (`list_lab` `store_error`, `pop_empty`).
+   This is the cheap one and it is blocked only on accepting that churn.
+2. **`KeyError`** — needs a real `String` payload (the key's `repr`;
+   `reprVal` exists). Cost: **4 public theorem statements**, 1
+   `Semantics.lean` site.
+3. **`AttributeError`** — needs a real payload (type name + attribute;
+   `typeName` exists). Cost: **8 public theorem statements**, 27
+   `Semantics.lean` sites.
+
+2 and 3 change the documented spec surface (docs/spec-surface.md is
+normative for statement shapes), which is why they are owner-gated rather
+than merely large. All three are independent: taking 1 does not commit to
+2 or 3, and 2 and 3 are the same kind of change at different scale.

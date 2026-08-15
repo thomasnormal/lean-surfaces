@@ -599,8 +599,20 @@ decision:
      `sf_bound_for`'s pinned world `pw := ⟨#[], …⟩` is EMPTY-heaped and
      its loop environment binds `("scores", RVal.listV …)`; both are
      restatements, not rewrites, and the same is true of
-     `bench_bisect`'s three loop environments and its `arr_getD` /
-     `arrVal_getElem` subscript helpers.
+     `bench_bisect`'s three loop environments and the `arrVal_getElem` /
+     `arrVal_getD` subscript helpers.
+
+     CORRECTION (2026-08-15, after `d19b0e2` landed the same day): that
+     last family is no longer example-local — the promotion moved
+     `arrVal_getElem`/`arrVal_getD` (and `map_getElem?_getD`, the
+     `getD`/`getElem` bridge) into VCTactic.lean §marshalled-list
+     indexing, with only `bench_statistics` keeping a one-line local
+     instance over the shared proof. That makes stage 1 CHEAPER than
+     priced: the marshalled-list indexing shape now needs ONE heap-side
+     twin in the shared file rather than three example-local ones. The
+     rest of the census is unaffected — the promoted lemmas are stated
+     over the immediate `RVal.listV` marshalling, so they still describe
+     the pre-flip boundary and still need that twin.
 
    PRICED, in landable stages (each its own build; stage 1 is the only
    one with no user-visible change):

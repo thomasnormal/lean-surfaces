@@ -1,0 +1,2942 @@
+{
+ "cpython": "3.9.19",
+ "generated_by": "harness/library_survey.py --build-manifest",
+ "metric": "library mode: import this module, then verify its public functions behave identically to CPython's (owner, 2026-08-15)",
+ "modules": [
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/__future__.py",
+   "module": "__future__",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes",
+    "node:JoinedStr:conversion_r",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_bootsubprocess.py",
+   "module": "_bootsubprocess",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 26,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AsyncFunctionDef",
+    "node:AugAssign:BitXor",
+    "node:Constant:bytes",
+    "node:Constant:ellipsis",
+    "node:Delete",
+    "node:GeneratorExp",
+    "node:Lambda"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_collections_abc.py",
+   "module": "_collections_abc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_compat_pickle.py",
+   "module": "_compat_pickle",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_compression.py",
+   "module": "_compression",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:JoinedStr:conversion_r",
+    "node:SetComp"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_py_abc.py",
+   "module": "_py_abc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 19,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:RShift",
+    "node:BinOp:BitXor",
+    "node:BinOp:RShift",
+    "node:Constant:float",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_pydecimal.py",
+   "module": "_pydecimal",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:ListComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_sitebuiltins.py",
+   "module": "_sitebuiltins",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_threading_local.py",
+   "module": "_threading_local",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:GeneratorExp",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_weakrefset.py",
+   "module": "_weakrefset",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/abc.py",
+   "module": "abc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 27,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:float",
+    "node:Delete",
+    "node:ListComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/argparse.py",
+   "module": "argparse",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 17,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:ellipsis",
+    "node:DictComp",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:NamedExpr",
+    "node:Nonlocal",
+    "node:Starred",
+    "node:UnaryOp:UAdd",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ast.py",
+   "module": "ast",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Set",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/asyncore.py",
+   "module": "asyncore",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:BinOp:RShift",
+    "node:Constant:bytes",
+    "node:DictComp",
+    "node:Global",
+    "node:ListComp",
+    "node:Set",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/base64.py",
+   "module": "base64",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:Delete",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bdb.py",
+   "module": "bdb",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bisect.py",
+   "module": "bisect",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bz2.py",
+   "module": "bz2",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 10,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Lambda",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/calendar.py",
+   "module": "calendar",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/chunk.py",
+   "module": "chunk",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/cmd.py",
+   "module": "cmd",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/code.py",
+   "module": "code",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 10,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:DictComp"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/codecs.py",
+   "module": "codecs",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 2,
+   "census_walls": [
+    "import",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/codeop.py",
+   "module": "codeop",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 10,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:JoinedStr:conversion_r",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/collections/__init__.py",
+   "module": "collections",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/collections/abc.py",
+   "module": "collections.abc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 15,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AsyncFunctionDef",
+    "node:Delete",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/contextlib.py",
+   "module": "contextlib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/contextvars.py",
+   "module": "contextvars",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/copy.py",
+   "module": "copy",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "node:Delete",
+    "node:JoinedStr:conversion_r",
+    "node:Starred"
+   ],
+   "expected_wall": "node:Delete",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/copyreg.py",
+   "module": "copyreg",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 7,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:DictComp",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/dataclasses.py",
+   "module": "dataclasses",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 7,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:BinOp:RShift",
+    "node:Constant:float",
+    "node:Delete",
+    "node:JoinedStr:conversion_r",
+    "node:JoinedStr:format_spec",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/datetime.py",
+   "module": "datetime",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/decimal.py",
+   "module": "decimal",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:Constant:float",
+    "node:Delete",
+    "node:Set",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/difflib.py",
+   "module": "difflib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:BitXor",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/dis.py",
+   "module": "dis",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 16,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Global",
+    "node:Starred",
+    "node:UnaryOp:Invert",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/doctest.py",
+   "module": "doctest",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/__init__.py",
+   "module": "email",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Lambda"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_encoded_words.py",
+   "module": "email._encoded_words",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_parseaddr.py",
+   "module": "email._parseaddr",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:GeneratorExp"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_policybase.py",
+   "module": "email._policybase",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/base64mime.py",
+   "module": "email.base64mime",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/charset.py",
+   "module": "email.charset",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/encoders.py",
+   "module": "email.encoders",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 25,
+   "census_walls": [
+    "class-creation",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/errors.py",
+   "module": "email.errors",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/feedparser.py",
+   "module": "email.feedparser",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/generator.py",
+   "module": "email.generator",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/header.py",
+   "module": "email.header",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Set",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/message.py",
+   "module": "email.message",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/parser.py",
+   "module": "email.parser",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/quoprimime.py",
+   "module": "email.quoprimime",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/utils.py",
+   "module": "email.utils",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/encodings/__init__.py",
+   "module": "encodings",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/encodings/aliases.py",
+   "module": "encodings.aliases",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 7,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:BitXor",
+    "node:BinOp:BitXor",
+    "node:Delete",
+    "node:DictComp",
+    "node:Lambda",
+    "node:ListComp",
+    "node:Set",
+    "node:SetComp",
+    "node:Starred",
+    "node:UnaryOp:Invert"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/enum.py",
+   "module": "enum",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/filecmp.py",
+   "module": "filecmp",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/fnmatch.py",
+   "module": "fnmatch",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:Constant:float",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/fractions.py",
+   "module": "fractions",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Dict:unpack",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Nonlocal",
+    "node:SetComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/functools.py",
+   "module": "functools",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:JoinedStr:conversion_r"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/genericpath.py",
+   "module": "genericpath",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:RShift",
+    "node:Constant:bytes",
+    "node:DictComp",
+    "node:Global",
+    "node:Lambda",
+    "node:Set",
+    "node:UnaryOp:Invert",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/gettext.py",
+   "module": "gettext",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/glob.py",
+   "module": "glob",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:AugAssign:BitXor",
+    "node:BinOp:BitXor",
+    "node:Constant:bytes",
+    "node:Set"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/hashlib.py",
+   "module": "hashlib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:BinOp:RShift"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/heapq.py",
+   "module": "heapq",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:BitXor",
+    "node:Constant:bytes",
+    "node:Lambda"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/hmac.py",
+   "module": "hmac",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Set"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/html/__init__.py",
+   "module": "html",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/html/entities.py",
+   "module": "html.entities",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:JoinedStr:conversion_r"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/__init__.py",
+   "module": "importlib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 8,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/_bootstrap.py",
+   "module": "importlib._bootstrap",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 11,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:BitXor",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Set",
+    "node:SetComp",
+    "node:Starred",
+    "node:UnaryOp:Invert",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/_bootstrap_external.py",
+   "module": "importlib._bootstrap_external",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 12,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/abc.py",
+   "module": "importlib.abc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/machinery.py",
+   "module": "importlib.machinery",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/util.py",
+   "module": "importlib.util",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 10,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:DictComp",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/inspect.py",
+   "module": "inspect",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/io.py",
+   "module": "io",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/keyword.py",
+   "module": "keyword",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/linecache.py",
+   "module": "linecache",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:float",
+    "node:Delete",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/locale.py",
+   "module": "locale",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 18,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Global",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/logging/__init__.py",
+   "module": "logging",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/lzma.py",
+   "module": "lzma",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ntpath.py",
+   "module": "ntpath",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:UnaryOp:UAdd"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/numbers.py",
+   "module": "numbers",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/opcode.py",
+   "module": "opcode",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:BitXor",
+    "node:AugAssign:Div",
+    "node:AugAssign:MatMult",
+    "node:AugAssign:RShift",
+    "node:BinOp:BitXor",
+    "node:BinOp:Div",
+    "node:BinOp:MatMult",
+    "node:BinOp:RShift",
+    "node:Delete",
+    "node:Starred",
+    "node:UnaryOp:Invert",
+    "node:UnaryOp:UAdd"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/operator.py",
+   "module": "operator",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/os.py",
+   "module": "os",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 17,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Set",
+    "node:SetComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pathlib.py",
+   "module": "pathlib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Dict:unpack",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pdb.py",
+   "module": "pdb",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 8,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:RShift",
+    "node:Constant:bytes",
+    "node:Constant:ellipsis",
+    "node:Delete",
+    "node:DictComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pickle.py",
+   "module": "pickle",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 2,
+   "census_walls": [
+    "import",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pkgutil.py",
+   "module": "pkgutil",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Global",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/platform.py",
+   "module": "platform",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes",
+    "node:Global",
+    "node:Starred"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/posixpath.py",
+   "module": "posixpath",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Set",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pprint.py",
+   "module": "pprint",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:Div",
+    "node:Constant:float",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/profile.py",
+   "module": "profile",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/py_compile.py",
+   "module": "py_compile",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 9,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:float",
+    "node:Delete",
+    "node:DictComp",
+    "node:Global",
+    "node:Lambda",
+    "node:ListComp",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pydoc.py",
+   "module": "pydoc",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/quopri.py",
+   "module": "quopri",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:BitXor",
+    "node:BinOp:BitXor",
+    "node:BinOp:Div",
+    "node:BinOp:RShift",
+    "node:Constant:float",
+    "node:JoinedStr:conversion_r",
+    "node:JoinedStr:format_spec",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/random.py",
+   "module": "random",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:DictComp",
+    "node:UnaryOp:Invert"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/re.py",
+   "module": "re",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/reprlib.py",
+   "module": "reprlib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:float",
+    "node:JoinedStr:conversion_r",
+    "node:UnaryOp:Invert"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/selectors.py",
+   "module": "selectors",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/shlex.py",
+   "module": "shlex",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 7,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Global",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/shutil.py",
+   "module": "shutil",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Lambda",
+    "node:SetComp"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/signal.py",
+   "module": "signal",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Global",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site.py",
+   "module": "site",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Set",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/socket.py",
+   "module": "socket",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes",
+    "node:DictComp",
+    "node:Nonlocal",
+    "node:Set",
+    "node:Starred",
+    "node:UnaryOp:Invert"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_compile.py",
+   "module": "sre_compile",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:DictComp",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_constants.py",
+   "module": "sre_constants",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Set"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_parse.py",
+   "module": "sre_parse",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 9,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Constant:float",
+    "node:DictComp",
+    "node:Lambda",
+    "node:Starred",
+    "node:UnaryOp:Invert",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ssl.py",
+   "module": "ssl",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/stat.py",
+   "module": "stat",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/string.py",
+   "module": "string",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/struct.py",
+   "module": "struct",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Constant:float",
+    "node:JoinedStr:conversion_r",
+    "node:SetComp",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/subprocess.py",
+   "module": "subprocess",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Global",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sysconfig.py",
+   "module": "sysconfig",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Global",
+    "node:Starred",
+    "node:UnaryOp:Invert",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tempfile.py",
+   "module": "tempfile",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/textwrap.py",
+   "module": "textwrap",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 11,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Global",
+    "node:Lambda",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/threading.py",
+   "module": "threading",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "node:DictComp"
+   ],
+   "expected_wall": "node:DictComp",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/token.py",
+   "module": "token",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tokenize.py",
+   "module": "tokenize",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:DictComp",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/traceback.py",
+   "module": "traceback",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:UnaryOp:Invert"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tty.py",
+   "module": "tty",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AsyncFunctionDef",
+    "node:Lambda",
+    "node:Nonlocal",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/types.py",
+   "module": "types",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 35,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:ellipsis",
+    "node:DictComp",
+    "node:JoinedStr:conversion_r",
+    "node:JoinedStr:format_spec",
+    "node:Lambda",
+    "node:Set",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/typing.py",
+   "module": "typing",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Set"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/__init__.py",
+   "module": "unittest",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 12,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/case.py",
+   "module": "unittest.case",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 2,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/loader.py",
+   "module": "unittest.loader",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/main.py",
+   "module": "unittest.main",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/result.py",
+   "module": "unittest.result",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/runner.py",
+   "module": "unittest.runner",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 1,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Global",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/signals.py",
+   "module": "unittest.signals",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 4,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Lambda",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/suite.py",
+   "module": "unittest.suite",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/util.py",
+   "module": "unittest.util",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/urllib/__init__.py",
+   "module": "urllib",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": true,
+   "census_classes": 12,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:DictComp",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Starred"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/urllib/parse.py",
+   "module": "urllib.parse",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": false,
+   "census_classes": 1,
+   "census_walls": [
+    "import",
+    "node:Constant:bytes"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/uu.py",
+   "module": "uu",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Global"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/warnings.py",
+   "module": "warnings",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 5,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Delete",
+    "node:Lambda",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/weakref.py",
+   "module": "weakref",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/__init__.py",
+   "module": "xml",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/parsers/__init__.py",
+   "module": "xml.parsers",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": null,
+   "census_class_walled": false,
+   "census_classes": 0,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/parsers/expat.py",
+   "module": "xml.parsers.expat",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 14,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:AugAssign:BitXor",
+    "node:AugAssign:RShift",
+    "node:BinOp:BitXor",
+    "node:BinOp:Div",
+    "node:BinOp:RShift",
+    "node:Constant:bytes",
+    "node:Constant:float",
+    "node:Delete",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Lambda",
+    "node:Nonlocal",
+    "node:Set",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/zipfile.py",
+   "module": "zipfile",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": true,
+   "census_class_walled": true,
+   "census_classes": 3,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:BinOp:RShift",
+    "node:Constant:bytes",
+    "node:Delete",
+    "node:Global",
+    "node:JoinedStr:conversion_r",
+    "node:Starred",
+    "node:With"
+   ],
+   "expected_wall": "class-creation",
+   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/zipimport.py",
+   "module": "zipimport",
+   "provenance": "census:library",
+   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/add/add.py",
+   "module": "add",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/ag_clamp01/ag_clamp01.py",
+   "module": "ag_clamp01",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/alias_lab/alias_lab.py",
+   "module": "alias_lab",
+   "provenance": "in-repo:examples",
+   "source": "6 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/arith/arith.py",
+   "module": "arith",
+   "provenance": "in-repo:examples",
+   "source": "6 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:Set"
+   ],
+   "expected_wall": "node:Set",
+   "file": "Examples/python/assert_lab/assert_lab.py",
+   "module": "assert_lab",
+   "provenance": "in-repo:examples",
+   "source": "16 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/bench_bisect/bench_bisect.py",
+   "module": "bench_bisect",
+   "provenance": "in-repo:examples",
+   "source": "2 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:BinOp:Div"
+   ],
+   "expected_wall": "node:BinOp:Div",
+   "file": "Examples/python/bench_statistics/bench_statistics.py",
+   "module": "bench_statistics",
+   "provenance": "in-repo:examples",
+   "source": "3 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/clock_lab/clock_lab.py",
+   "module": "clock_lab",
+   "provenance": "in-repo:examples",
+   "source": "7 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:Nonlocal"
+   ],
+   "expected_wall": "node:Nonlocal",
+   "file": "Examples/python/closure_lab/closure_lab.py",
+   "module": "closure_lab",
+   "provenance": "in-repo:examples",
+   "source": "20 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": true,
+   "census_classes": null,
+   "census_walls": [
+    "class-creation"
+   ],
+   "expected_wall": "class-creation",
+   "file": "Examples/python/cls_lab/cls_lab.py",
+   "module": "cls_lab",
+   "provenance": "in-repo:examples",
+   "source": "35 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:Delete"
+   ],
+   "expected_wall": "node:Delete",
+   "file": "Examples/python/del_lab/del_lab.py",
+   "module": "del_lab",
+   "provenance": "in-repo:examples",
+   "source": "12 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/dict_lab/dict_lab.py",
+   "module": "dict_lab",
+   "provenance": "in-repo:examples",
+   "source": "33 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/drain_lab/drain_lab.py",
+   "module": "drain_lab",
+   "provenance": "in-repo:examples",
+   "source": "23 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/exc_lab/exc_lab.py",
+   "module": "exc_lab",
+   "provenance": "in-repo:examples",
+   "source": "30 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/fib/fib.py",
+   "module": "fib",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:JoinedStr:conversion_a",
+    "node:JoinedStr:conversion_r",
+    "node:JoinedStr:format_spec",
+    "node:Set"
+   ],
+   "expected_wall": "node:JoinedStr:conversion_a",
+   "file": "Examples/python/fstring_lab/fstring_lab.py",
+   "module": "fstring_lab",
+   "provenance": "in-repo:examples",
+   "source": "28 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:JoinedStr:str_shadowed"
+   ],
+   "expected_wall": "node:JoinedStr:str_shadowed",
+   "file": "Examples/python/fstring_shadow/fstring_shadow.py",
+   "module": "fstring_shadow",
+   "provenance": "in-repo:examples",
+   "source": "3 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/g1_lab/g1_lab.py",
+   "module": "g1_lab",
+   "provenance": "in-repo:examples",
+   "source": "2 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/gcd/gcd.py",
+   "module": "gcd",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:NamedExpr",
+    "node:Yield"
+   ],
+   "expected_wall": "node:NamedExpr",
+   "file": "Examples/python/gen_lab/gen_lab.py",
+   "module": "gen_lab",
+   "provenance": "in-repo:examples",
+   "source": "52 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/init_lab/init_lab.py",
+   "module": "init_lab",
+   "provenance": "in-repo:examples",
+   "source": "8 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/iter_lab/iter_lab.py",
+   "module": "iter_lab",
+   "provenance": "in-repo:examples",
+   "source": "26 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/kw_lab/kw_lab.py",
+   "module": "kw_lab",
+   "provenance": "in-repo:examples",
+   "source": "20 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/list_lab/list_lab.py",
+   "module": "list_lab",
+   "provenance": "in-repo:examples",
+   "source": "40 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/midpoint/midpoint.py",
+   "module": "midpoint",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/my_abs/my_abs.py",
+   "module": "my_abs",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/nested_flow/nested_flow.py",
+   "module": "nested_flow",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/opt_args/opt_args.py",
+   "module": "opt_args",
+   "provenance": "in-repo:examples",
+   "source": "8 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "import"
+   ],
+   "expected_wall": "import",
+   "file": "Examples/python/rsa_inverse/rsa_inverse.py",
+   "module": "rsa_inverse",
+   "provenance": "in-repo:examples",
+   "source": "2 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/seq_lab/seq_lab.py",
+   "module": "seq_lab",
+   "provenance": "in-repo:examples",
+   "source": "46 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/set_lab/set_lab.py",
+   "module": "set_lab",
+   "provenance": "in-repo:examples",
+   "source": "12 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_arith/sf_arith.py",
+   "module": "sf_arith",
+   "provenance": "in-repo:examples",
+   "source": "3 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_bound/sf_bound.py",
+   "module": "sf_bound",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_bound_for/sf_bound_for.py",
+   "module": "sf_bound_for",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_bound_loop/sf_bound_loop.py",
+   "module": "sf_bound_loop",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_bound_rec/sf_bound_rec.py",
+   "module": "sf_bound_rec",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_bound_tree/sf_bound_tree.py",
+   "module": "sf_bound_tree",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_builtins/sf_builtins.py",
+   "module": "sf_builtins",
+   "provenance": "in-repo:examples",
+   "source": "3 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_consts/sf_consts.py",
+   "module": "sf_consts",
+   "provenance": "in-repo:examples",
+   "source": "4 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_hist/sf_hist.py",
+   "module": "sf_hist",
+   "provenance": "in-repo:examples",
+   "source": "5 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_order/sf_order.py",
+   "module": "sf_order",
+   "provenance": "in-repo:examples",
+   "source": "8 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_position/sf_position.py",
+   "module": "sf_position",
+   "provenance": "in-repo:examples",
+   "source": "19 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_pst/sf_pst.py",
+   "module": "sf_pst",
+   "provenance": "in-repo:examples",
+   "source": "5 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_searcher/sf_searcher.py",
+   "module": "sf_searcher",
+   "provenance": "in-repo:examples",
+   "source": "3 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sf_tt/sf_tt.py",
+   "module": "sf_tt",
+   "provenance": "in-repo:examples",
+   "source": "4 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/str_lab/str_lab.py",
+   "module": "str_lab",
+   "provenance": "in-repo:examples",
+   "source": "43 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/sum_to/sum_to.py",
+   "module": "sum_to",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tri/tri.py",
+   "module": "tri",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tut_01/tut_01.py",
+   "module": "tut_01",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tut_02/tut_02.py",
+   "module": "tut_02",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tut_03/tut_03.py",
+   "module": "tut_03",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tut_04/tut_04.py",
+   "module": "tut_04",
+   "provenance": "in-repo:examples",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "Examples/python/tut_05/tut_05.py",
+   "module": "tut_05",
+   "provenance": "in-repo:examples",
+   "source": "2 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [
+    "node:BinOp:Div"
+   ],
+   "expected_wall": "node:BinOp:Div",
+   "file": "Examples/python/tut_06/tut_06.py",
+   "module": "tut_06",
+   "provenance": "in-repo:examples",
+   "source": "2 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": false,
+   "census_classes": null,
+   "census_walls": [],
+   "expected_wall": "none",
+   "file": "harness/scripts/fnprint.py",
+   "module": "fnprint",
+   "provenance": "in-repo:repo-scripts",
+   "source": "1 public function(s), no observable program behaviour"
+  },
+  {
+   "c_reaching": false,
+   "census_class_walled": true,
+   "census_classes": null,
+   "census_walls": [
+    "class-creation",
+    "import",
+    "node:Constant:float",
+    "node:Lambda"
+   ],
+   "expected_wall": "class-creation",
+   "file": "vendor/cpython-3.9-lib-test/seq_tests.py",
+   "module": "seq_tests",
+   "provenance": "in-repo:cpython-lib-test",
+   "source": "2 public function(s), no observable program behaviour"
+  }
+ ]
+}

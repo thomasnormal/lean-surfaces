@@ -4254,3 +4254,165 @@ Three things now gate the message step, and they are separate decisions:
 normative for statement shapes), which is why they are owner-gated rather
 than merely large. All three are independent: taking 1 does not commit to
 2 or 3, and 2 and 3 are the same kind of change at different scale.
+
+## LIBRARY MODE — the metric, the harness, the corpus (L1, 2026-08-15)
+
+The owner changed the completeness metric today, verbatim: library mode is
+**"import this module, then verify its public functions behave identically
+to CPython's"** — **"We should be able to verify modules that we just
+import, but don't have a way to run."**
+
+Program mode answers a different question. `harness/leanpy_survey.py` runs
+a FILE and compares stdout and exit code, so a library — which prints
+nothing — scores a MATCH for empty stdout against empty stdout. That is a
+verdict about nothing, and the corpus that matters is mostly libraries:
+the import-ceiling census's own denominator is 141 pure-Python modules
+that exist to be imported. Library mode is the instrument for them.
+
+### What landed (L1 — instrument only, no model change)
+
+* `harness/library_survey.py` — the driver. TWO PHASES. **BODY**: the
+  module's top level under CPython as an IMPORT (a fresh module object
+  whose `__name__` is the module name) against the model
+  (`--script-batch`), comparing stdout, the exception CLASS, and — where
+  the model carries one — the exception MESSAGE (the message tier of the
+  program-mode survey: SAME/DRIFT/ABSENT). **CALLS**: for a module whose
+  body agreed, every public function THE FILE DEFINES is driven on a
+  deterministic battery through `--batch` and each return value or
+  exception is compared. Verdicts: VERIFIED (body + all calls, with the
+  call count), BODY-ONLY (body agreed, battery empty — reported apart from
+  VERIFIED, never folded into it), PARTIAL (N of M), REFUSED (the named
+  construct), DIVERGED (the headline; any row fails the run).
+* `harness/library_oracle.py` — the CPython half, one subprocess per
+  module: import, enumerate, build the battery, run it. A subprocess and
+  not an in-process import because this corpus is the real stdlib — one
+  module that hangs costs one row, not the survey.
+* `harness/library_corpus.json` — the manifest (below).
+
+### Five decisions the design turns on
+
+1. **THE IMPORT-SEMANTICS GATE.** The model has no import machinery:
+   `Script.lean`'s `scriptNameBinding` binds `__name__ = "__main__"`,
+   which is PROGRAM semantics. A module that never reads `__name__` at
+   import time cannot tell the two apart, and only for those is a
+   program-mode body run also a library-mode answer. For the rest the
+   survey REFUSES with the named construct `import-semantics:__name__`
+   rather than compare a program-mode run against an import-mode oracle
+   and call the difference a divergence. The gate fires ONLY where the
+   model would otherwise have claimed a body match, so it can never hide a
+   refusal the model itself produced. This is the open import-semantics
+   decision (§the module-init mutation gap, item 1) showing up as a
+   measured refusal class instead of a footnote.
+2. **The public surface is read from the FILE's AST, driven through the
+   RUNTIME object.** `bisect.py` is the case that decides it: its guarded
+   `from _bisect import *` REBINDS all four pure functions to C ones, so a
+   runtime-only walk finds no in-file function in bisect at all. The model
+   calls what the file defines; CPython answers with what the import left
+   bound. Comparing those two IS the standing §2.5
+   accelerator-equivalence obligation (docs/memory-model.md §import
+   forms — "the model runs the pure fallback where CPython runs the C
+   accelerator, and the assertion that nothing observable differs is
+   DIFFERENTIALLY TESTED, never taken from the docs"). Library mode is the
+   instrument that obligation was waiting for, and every agreeing bisect
+   row is a row of its discharge against the real `_bisect`.
+3. **The battery is BALANCED and SEEDED.** Doctests first (the module
+   author's own claims), then type-driven inputs from a fixed pool, with
+   the per-function seed `crc32("module.function")` — never `hash()`,
+   which is salted per process. Candidates are probed and then selected
+   alternating between calls that RETURN and calls that RAISE: an
+   unannotated signature makes most generated tuples type-incoherent, and
+   an unbalanced battery is eight TypeErrors and no evidence about the
+   value path. `--determinism` runs the survey twice and compares the
+   battery BYTES.
+4. **UNCOMPARABLE is a first-class answer, never agreement.** The
+   typed-call protocol carries a VALUE and an exception CLASS and nothing
+   else, so three things it cannot adjudicate are counted apart: a CPython
+   answer outside the canonical value set, a call that PRINTED, and a call
+   that MUTATED its arguments (deep-compared against a copy taken before
+   it). Counting those as matches is exactly the silent agreement this
+   project exists not to produce.
+5. **Skipped is counted.** A function whose name matches the unsafe-verb
+   list, or whose signature is `*args`/`**kw`/keyword-only (not drivable
+   through a positional protocol), is reported as skipped and its module
+   can never read as VERIFIED on a battery that quietly omitted it.
+
+### The corpus manifest — 197 modules, both provenances
+
+`harness/library_corpus.json`, generated by `--build-manifest` from the
+committed censuses. Every row carries file, provenance, the census's wall
+SET and its first-wall PREDICTION, so the scoreboard reconciles row by row.
+
+* **141 from the census** (`docs/class-tier-census.json` `library`, the
+  pure-Python modules in the seeds' import-time closures). Predicted
+  first wall: `class-creation` 89, `import` 39, `none` 11, `node:*` 2.
+  93 of them are C-reaching by the import-ceiling census's own rows; 48
+  are not seeds there, so their closure is unrecorded.
+* **56 in-repo** — the "import but no way to run" set, decided
+  statically: at least one public top-level `def`, no top-level `print`,
+  and no `__main__` guard, so running the file as a program compares
+  empty stdout against empty stdout. 54 `Examples/python`, 1
+  `harness/scripts`, 1 `vendor/cpython-3.9-lib-test`. That only 2 of 118
+  in-repo non-Examples files qualify is itself the finding: the repo's
+  scripts corpus is a PROGRAM corpus, and `Examples/python` is the
+  library corpus that program mode has been scoring vacuously.
+
+**RECONCILIATION NOTE, recorded before anyone re-derives it.** The census
+JSON says **89** class-walled of 141; §THE CLASS-CREATION WALL says 87.
+Both are right: 87 was measured BEFORE the third door closed, and §THE
+THIRD DOOR CLOSED pre-registered exactly this move (`shlex` and
+`sre_parse` from class-admitted to class-walled). The JSON was regenerated
+after that landing. The manifest uses the JSON, so its prediction column is
+the post-third-door one.
+
+### The baseline scoreboard — NOT YET MEASURED (venue, not scope)
+
+The instrument is built and exercised; the full run is **held**. The
+laptop venue rule has no survey-scale exception (§the +400 meter's
+contamination), so the 197-row sweep waits for the lock to clear. What is
+measured, on the one module the pilot ran:
+
+| module | verdict | detail |
+| --- | --- | --- |
+| `bisect` | PARTIAL | body MATCH; 15 of 32 battery calls agree over 4 public functions |
+
+Its 17 non-agreeing calls are all loud REFUSALs with named constructs, in
+two families: `<` between mixed types (`'str'`/`'int'`/`'list'`) and
+`.insert` on a list or a str — the second of which is the DESIGNED and
+unbuilt §`list.insert` — the §2.5 residue. The 15 agreements are pure
+fallback against C `_bisect`, the accelerator-equivalence rows.
+
+PRE-REGISTERED shape for the full baseline, so the measurement can
+contradict it: the function-only modules VERIFY or go PARTIAL, the 89
+class-walled REFUSE at `class-creation`, the import-walled REFUSE at
+`import`, and the new `import-semantics:__name__` bucket takes whatever
+modules would otherwise have claimed a body match. Any module whose
+observed wall is not in the census's wall SET at all is a finding; the
+report separates EXACT / ORDER (a different wall in the same set —
+admission order, not a census error) / UNPREDICTED for exactly that.
+
+### Recorded hook requests (owned files this lane did not touch)
+
+`Main.lean`'s typed-call protocol (`--batch`) carries neither the
+exception MESSAGE (`--script-batch` does, as `exnmsg`), nor stdout, nor
+the post-call world. Those three are the whole content of the
+UNCOMPARABLE bucket: with `exnmsg` the call phase would compare messages
+at the same tier the body phase already does, and with a post-call heap
+the mutating half of the stdlib (`insort`, every in-place sort) would
+become comparable instead of merely counted. Not this lane's file, and
+each is a one-line addition to an existing JSON writer.
+
+### Phase plan
+
+* **L2 — the module system.** Import semantics proper: `__name__` bound
+  to the module name, so the gate above stops firing and the
+  `if __name__ == "__main__":` block is statically dead (§the module-init
+  mutation gap already argues this is EXACT, not an approximation).
+  Priced at single digits as a SEED tier (§the import ceiling) — but the
+  library metric is where its value was always claimed to be, and this
+  harness is what will show it as a number.
+* **L3 — the class tier v0**, priced in §THE CLASS-CREATION WALL at
+  700–1000 lines over five files and zero sweep flips. Its library value
+  (87/89 of 141 class-walled) is the reason it exists, and library mode is
+  the first instrument that can collect it.
+* Both phase BEHIND the H2 landing: each edits `Semantics.lean`, and two
+  depth lanes hold that surface today.

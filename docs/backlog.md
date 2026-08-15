@@ -4511,3 +4511,46 @@ statement is its own, the PROOF is the shared lemma.
 
 This feeds the gen_moves work: the reference enumeration indexes a board
 list at computed offsets, so every ray step meets exactly this shape.
+
+## The gen_moves theorem — STATEMENT landed, proof not (2026-08-15)
+
+`Examples/python/sunfish/genmoves_theorem.lean` states the decided
+theorem. Both halves of the equality already existed and are already
+CPython-checked (pins_genmoves.lean: the model's `Position.gen_moves` runs
+on the opening, promotion and castling boards; `Ref.refMoves` is pinned on
+the opening board plus thirteen adversarial ones), so what was missing was
+the claim that ties them — and it is now written down exactly:
+
+    GenMovesEqRef : Prop :=
+      ∀ b score wc0 wc1 bc0 bc1 ep kp rf ms,
+        Ref.refMoves b.toList wc0 wc1 ep kp rf = .ok ms →
+        ∃ t, ∀ F ≥ t, genMovesOf F (posOf …) = some (refTriples ms)
+
+Two things are load-bearing in that shape. The reference's answer is a
+HYPOTHESIS, not a conclusion: the reference declines (`Except.error`) on a
+board it cannot read and on an exhausted ray budget, so board
+well-formedness lives there and nowhere else, and no `.error` can be
+mistaken for a short move list. And the fuel is a THRESHOLD, the
+total-correctness shape of every other judgment in the repo.
+
+It is a `Prop`-valued DEFINITION, not a `sorry`ed theorem: this repo does
+not land `sorry`, and a definition records the claim exactly while leaving
+"proved" unclaimed. `theorem gen_moves_eq_ref : GenMovesEqRef` is the one
+line to add when the proof lands; the statement does not move.
+
+Proved alongside it: the presentation lemmas the decomposition will use
+(`refTriples` distributes over `++` and `flatten`, since the reference is
+built by flattening per-square and per-ray lists while the model arrives
+one yielded move at a time).
+
+NOT proved, and named precisely in the file: (1) ray agreement — the
+model's generator resumed inside one `for j in count(i + d, d)` yields
+exactly `Ref.ray`'s list, which is where the work is (six yield sites at
+three control-flow depths, `yield from` for the promotions) and which
+wants `Ref.ray`'s fuel monotonicity as a companion; (2) square agreement
+by `directions[p]` order, including the kernel-computable six-key
+agreement between the shipped dict and `Ref.directions`; (3) board
+agreement for the outer `enumerate` scan with its `continue` arm. The
+ray-monotonicity lemma was attempted and abandoned rather than landed
+half-done — its `do`-block over `Except` wants `Except.bind_eq_ok`-style
+decomposition, not a `cases` chain, and the file says so.

@@ -444,9 +444,14 @@ pipeline. The general `for` and `try` got control shells mirroring
 the lazy generator cursor, the retained-state `try` covenant, every
 refusal verbatim), so their body bindings publish per statement and a
 function called from inside a top-level loop reads what the loop wrote.
-`while … else` is the only compound still delegated wholesale;
-`scriptFlushCoherent` stays as the guard that would catch the next
-missing shell. The refusal left both sweeps.
+`while … else` was the only compound still delegated wholesale; it got
+its shell on 2026-08-15 (`execScriptWhile` gained the `orelse` block —
+taken on exhaustion, skipped by `break`, `execWhile`'s covenant verbatim;
+all three exits pinned in `harness/scripts/while_else_script.py`), so no
+compound the executor RUNS is delegated now. `scriptFlushCoherent` stays
+as the standing tripwire that would catch the next missing shell — its
+only remaining contributors are the `for … else` shapes the executor
+refuses outright. The refusal left both sweeps.
 
 THE INSTRUMENT GOT SHARPER WITH IT: both harnesses compared stdout + exit
 code only, and CPython maps EVERY uncaught exception to exit 1 — so two

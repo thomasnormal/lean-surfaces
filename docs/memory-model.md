@@ -2426,14 +2426,15 @@ before the live globals, so the shadow would be silently ignored).
 ### What is still refused, and why it is narrow
 
 The publish is per STATEMENT, so a compound statement the executor
-DELEGATES wholesale to `execStmt` (a `for`, a `try`, a `while … else`)
-holds its inner bindings in the frame until it finishes — invisible to a
-function called from inside it. `scriptFlushCoherent` refuses exactly that
-overlap: no name assigned inside a delegated compound may be a name some
-function body reads. That is the narrow residue of `suffixConsistent`,
-which refused it for the WHOLE live top level.
+DELEGATES wholesale to `execStmt` holds its inner bindings in the frame
+until it finishes — invisible to a function called from inside it.
+`scriptFlushCoherent` refuses exactly that overlap: no name assigned
+inside a delegated compound may be a name some function body reads. That
+is the narrow residue of `suffixConsistent`, which refused it for the
+WHOLE live top level.
 
-**THE SEAM IS CLOSED for everything but `while … else` (2026-08-13.)**
+**THE SEAM IS CLOSED (2026-08-13 for `for`/`try`; 2026-08-15 for
+`while … else`.)**
 The recorded fix was a control shell per statement kind — the executor
 already had `if`, `while`, and the `for … in d.items():` shell that
 module-init execution used to own (live entries re-read per step, a size
@@ -2456,14 +2457,31 @@ have theirs:
   raise left, no rollback — moving only the body and handler statements
   onto `execScriptStmts`.
 
+* **`while … else` (2026-08-15) — the last one.** `execScriptWhile`
+  gained the `orelse` block and now mirrors `execWhile` whole: the
+  `else` runs on EXHAUSTION (the test goes falsy) and is SKIPPED by
+  `break`, and a `break` inside the `else` belongs to an ENCLOSING loop
+  and propagates. Both blocks run through `execScriptStmts`, so both
+  publish per statement. The TIER is unchanged — `execStmt`'s `while`
+  arm always carried the `orelse`, which is precisely why wholesale
+  delegation was ANSWERING correctly and only publishing late.
+
 `for … else` is refused by the shell itself (out of tier, as in the
-interpreter), so `while … else` is the ONLY compound still delegated
-wholesale and the only shape `scriptFlushCoherent` can still fire on. The
-guard stays: it costs nothing and it is what would catch the next shell
-that goes missing. Measured: the refusal disappeared from both sweeps (it
-was 4 stdlib files), and `harness/scripts/loop_publish_script.py` — a
-function called from inside a top-level `for`, reading a name that loop
-assigns — flipped from refusal to CPython-identical output.
+interpreter), so with `while … else` shelled there is no compound the
+executor RUNS without one, and `scriptFlushCoherent`'s only remaining
+contributors are the `for … else` shapes it refuses anyway. The guard
+stays: it costs nothing and it is the standing tripwire that would catch
+the next shell that goes missing. Measured: the `for`/`try` landing
+removed the refusal from both sweeps (it was 4 stdlib files) and flipped
+`harness/scripts/loop_publish_script.py` — a function called from inside
+a top-level `for`, reading a name that loop assigns — from refusal to
+CPython-identical output; the `while … else` landing pins all three
+exits in `harness/scripts/while_else_script.py` (else-taken by
+exhaustion, else-skipped by `break`, and the degenerate false-on-entry
+exhaustion), with `readn()`/`readtag()` called from inside each loop so
+the file is one the guard used to refuse. It is the corpus's ONLY
+`while … else` (and there is no `for … else`), so no pre-existing row
+moved.
 
 Whitelisted `import` statements are SKIPPED by the executor (they bind
 through the static view and running one observes nothing); every other

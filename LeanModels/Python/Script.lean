@@ -82,12 +82,19 @@ locals only. The identification makes module scope come out right through
 that very arm.
 
 The publish is per STATEMENT, so a compound statement the executor
-DELEGATES wholesale to `execStmt` (a `for`, a `try`, a `while … else`)
-holds its inner bindings in the frame until it finishes — invisible to a
-function called from inside it. `scriptFlushCoherent` refuses exactly
-that: no name assigned inside a delegated compound may be a name some
-function body reads. It is the narrow residue of the old
-`suffixConsistent`, which refused this for the WHOLE suffix.
+DELEGATES wholesale to `execStmt` holds its inner bindings in the frame
+until it finishes — invisible to a function called from inside it.
+`scriptFlushCoherent` refuses exactly that: no name assigned inside a
+delegated compound may be a name some function body reads. It is the
+narrow residue of the old `suffixConsistent`, which refused this for the
+WHOLE suffix.
+
+As of 2026-08-15 EVERY compound the executor RUNS has a shell —
+`while … else` was the last one delegated, and its arm below mirrors
+`execWhile` including the `orelse`. The guard's only remaining
+contributors are the `for … else` shapes, which the executor refuses
+outright; it is kept as the standing tripwire that would catch the next
+shell-less compound, not as a live refusal reason.
 
 Refusals — every one LOUD, never wrong:
 
@@ -109,11 +116,13 @@ builtin inside the interpreter (docs/memory-model.md §effects), so it
 works in a function body, in a nested call, and inside any statement the
 executor delegates — the shells exist only for the per-statement PUBLISH.
 The `while`/`if` arms below mirror `execWhile`/`execStmt` exactly (test,
-`truthyH`, flow routing), and `for k, v in d.items():` gets the shell
-`execStmt` cannot express (the live entries re-read per step, a size
-change the faithful `RuntimeError`) — the one that module-init execution
-used to own. Every other statement runs through `execStmt`, so the tier
-is the interpreter's.
+`truthyH`, flow routing, and — since 2026-08-15 — the `while`'s `else`
+block: taken on exhaustion, skipped by `break`), and
+`for k, v in d.items():` gets the shell `execStmt` cannot express (the
+live entries re-read per step, a size change the faithful
+`RuntimeError`) — the one that module-init execution used to own. Every
+LEAF statement runs through `execStmt`, so the tier is the
+interpreter's.
 -/
 
 namespace LeanModels.Python
@@ -467,15 +476,17 @@ mutual
   /-- Names a top-level statement binds MID-STATEMENT: inside a compound
   statement the executor DELEGATES wholesale to `execStmt`, whose
   bindings sit in frame locals until the statement finishes. Shell-run
-  statements (`if`, `while` without `else`, the items `for`) recurse —
-  their bodies flush per statement — and a LEAF statement contributes
-  nothing, because its own binding lands before anything can read it. -/
+  statements (`if`, `while` — `else` block included since 2026-08-15 —
+  the items `for`, the general `for`, `try`) recurse — their bodies flush
+  per statement — and a LEAF statement contributes nothing, because its
+  own binding lands before anything can read it. Only the `for … else`
+  shapes still contribute, and the executor refuses those outright. -/
   def Stmt.scriptMidAssigns : Stmt → List String
     | .ifStmt _ b o _ =>
       Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList o.toList
+    -- 2026-08-15: `while … else` got its shell, so BOTH blocks recurse
     | .whileLoop _ b o _ =>
-      if o.isEmpty then Stmt.scriptMidAssignsList b.toList
-      else Stmt.assignedNamesList b.toList ++ Stmt.assignedNamesList o.toList
+      Stmt.scriptMidAssignsList b.toList ++ Stmt.scriptMidAssignsList o.toList
     -- the items shell publishes its TARGET before the body runs, so the
     -- loop variables are globals from the first body statement on
     | .forStmt t (.call (.attribute _ "items" _) #[] #[] Option.none _) b o _ =>
@@ -507,7 +518,12 @@ STATEMENT, so a name bound INSIDE a delegated compound statement is
 invisible to a function called from inside that same statement (locals
 are not globals until the statement ends). Refuse exactly that overlap —
 never the whole live top level, which is what the prefix/suffix split had
-to refuse. -/
+to refuse.
+
+Since 2026-08-15 every compound the executor RUNS has a shell, so the
+only statements that can contribute are the `for … else` shapes the
+executor refuses anyway. The guard STAYS: it is the standing tripwire
+that catches the next compound admitted without one. -/
 def scriptFlushCoherent (m : Module) : Bool :=
   let reads := moduleGlobalReads m
   (Stmt.scriptMidAssignsList m.topLevel.toList).all fun n => !reads.contains n
@@ -539,23 +555,21 @@ mutual
           .unsupported scriptRebindMsg
   termination_by structural fuel
 
-  /-- Execute ONE top-level statement. `if`, `while` (without `else`) and
-  the `for … in d.items():` loop run through CONTROL SHELLS mirroring
-  `execStmt`/`execWhile` exactly, so the per-statement PUBLISH happens
-  inside them; a whitelisted `import` is skipped (it binds through the
-  static view, and running one observes nothing); everything else is
-  delegated to `execStmt`, so the tier is the interpreter's. -/
+  /-- Execute ONE top-level statement. `if`, `while` (`else` block
+  included), `try`, and every `for` the tier admits run through CONTROL
+  SHELLS mirroring `execStmt`/`execWhile` exactly, so the per-statement
+  PUBLISH happens inside them; a whitelisted `import` is skipped (it
+  binds through the static view, and running one observes nothing);
+  every LEAF statement is delegated to `execStmt`, so the tier is the
+  interpreter's. -/
   def execScriptOne (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       Run FrameState RFlow :=
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
       match s with
-      | .whileLoop test body orelse sp =>
-        if orelse.isEmpty then execScriptWhile m fuel st test body.toList
-        else
-          -- no shell for while-else; delegate wholesale
-          execStmt m fuel st (.whileLoop test body orelse sp)
+      | .whileLoop test body orelse _ =>
+        execScriptWhile m fuel st test body.toList orelse.toList
       | .ifStmt test body orelse _ =>
         Run.bind (evalExpr m fuel st test) fun st t =>
         Run.bind (Run.liftRes st (truthyH st.world.heap t)) fun st b =>
@@ -808,11 +822,20 @@ mutual
           | .ret v => .ok st (.ret v)
   termination_by structural fuel
 
-  /-- The `execWhile` control shell over script statements (same test,
-  same truthiness, same flow routing — body bindings published per
-  statement). -/
+  /-- The `execWhile` control shell over script statements — `execWhile`
+  arm for arm (same test, same `truthyH`, same flow routing), with the
+  body and the `orelse` running through `execScriptStmts` so their
+  bindings publish per statement.
+
+  `while … else` (2026-08-15): the `else` block runs on EXHAUSTION (the
+  test goes falsy) and is SKIPPED by `break` — `execWhile`'s covenant
+  verbatim, including that a `break` inside the `orelse` belongs to an
+  ENCLOSING loop and propagates. This was the last compound the executor
+  handed to `execStmt` wholesale; the TIER is unchanged (`execStmt`'s
+  `while` arm always carried the `orelse`), only the publish granularity
+  differs. -/
   def execScriptWhile (m : Module) (fuel : Nat) (st : FrameState)
-      (test : Expr) (body : List Stmt) : Run FrameState RFlow :=
+      (test : Expr) (body orelse : List Stmt) : Run FrameState RFlow :=
     match fuel with
     | 0 => .timeout
     | fuel + 1 =>
@@ -821,10 +844,10 @@ mutual
       if b then
         Run.bind (execScriptStmts m fuel st body) fun st flow =>
         match flow with
-        | .next | .cont => execScriptWhile m fuel st test body
+        | .next | .cont => execScriptWhile m fuel st test body orelse
         | .brk => .ok st .next
         | .ret v => .ok st (.ret v)
-      else .ok st .next
+      else execScriptStmts m fuel st orelse
   termination_by structural fuel
 end
 
@@ -845,7 +868,7 @@ def runScriptClock (m : Module) (clock : List Int) (fuel : Nat) : Run World Unit
   else if !defsBoundBefore m m.topLevel.toList then
     .unsupported "a top-level statement mentions a name this module defines LATER (`def`/`class`/namedtuple): CPython would raise NameError there, and the model's definition tables are position-independent, so leanpy refuses rather than run a definition that does not exist yet"
   else if !scriptFlushCoherent m then
-    .unsupported "a compound top-level statement the executor delegates wholesale (a 'for', a 'try', a 'while … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix"
+    .unsupported "a compound top-level statement the executor does not run through a control shell (a 'for … else') binds a name some function body reads: top-level bindings become module globals only when the statement ENDS, so a call made from inside it would read that name stale — a control shell for the statement is the recorded fix, as `if`/`while`/`while … else`/`try`/`for` each got"
   else
     Run.toWorld <|
       Run.bind

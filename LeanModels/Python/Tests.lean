@@ -143,7 +143,9 @@ private def isUnsupported : Res α → Bool
 #guard ev (bo (iL 0) .pow (iL 0)) == .ok (.int 1)
 #guard ev (bo (.unaryOp .usub (iL 2) sp) .pow (iL 3)) == .ok (.int (-8))
 #guard isUnsupported (ev (bo (iL 2) .pow (.unaryOp .usub (iL 1) sp)))
-#guard ev (bo (iL 0) .pow (iL (-1))) == .exn .zeroDivisionError  -- CPython: raises, no float involved
+-- CPython raises, no float involved -- and with its OWN text, so its own
+-- constructor: `0.0 cannot be raised to a negative power`
+#guard ev (bo (iL 0) .pow (iL (-1))) == .exn .zeroDivisionPow
 -- bool is an int subtype: True + 1 = 2, True * 3 = 3, -True = -1; results are int.
 #guard ev (bo (bL true) .add (iL 1)) == .ok (.int 2)
 #guard ev (bo (bL true) .mult (iL 3)) == .ok (.int 3)

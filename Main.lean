@@ -82,6 +82,8 @@ def errName : PyErr → String
   | .typeError _ => "TypeError"
   | .nameError _ => "NameError"
   | .zeroDivisionError => "ZeroDivisionError"
+  -- the same CLASS as the above; only the message differs
+  | .zeroDivisionPow => "ZeroDivisionError"
   | .indexError => "IndexError"
   | .valueError _ => "ValueError"
   | .keyError => "KeyError"
@@ -123,15 +125,25 @@ def errMessage : PyErr → Option String
   -- single quotes — EXACT, so this constructor answers rather than
   -- reporting a gap
   | .importError m => some s!"No module named '{m}'"
-  -- payload-free constructors whose CPython text the class does NOT
-  -- determine — a real gap, reported as `ABSENT` by the survey's
-  -- message telemetry and recorded in docs/backlog.md, never invented:
-  -- `ZeroDivisionError` is "integer division or modulo by zero" from
-  -- `//`/`%` but "0.0 cannot be raised to a negative power" from
-  -- `0 ** -1`; `IndexError` is list/string/tuple "index out of range";
-  -- `KeyError` prints the missing key's `repr`; `AttributeError` names
-  -- the type and the attribute
-  | .zeroDivisionError | .indexError | .keyError | .recursionError
+  -- ZeroDivisionError's two texts, split at the CONSTRUCTOR (2026-08-15,
+  -- docs/backlog.md §the payload-free constructors): the class does not
+  -- determine the message, but the RAISE CONDITION does, and both are
+  -- statically distinguishable in `evalBinOp`. Measured verbatim against
+  -- CPython 3.9.19 — 13 of the 14 raising cases in `harness/cases.json`
+  -- take the first, `0 ** -1` the second.
+  | .zeroDivisionError => some "integer division or modulo by zero"
+  | .zeroDivisionPow => some "0.0 cannot be raised to a negative power"
+  -- STILL payload-free, and deliberately so: these texts carry RUNTIME
+  -- DATA the constructor does not hold, so no split can supply them —
+  -- `IndexError` distinguishes list/tuple/assignment/pop (4 measured
+  -- texts), `KeyError` prints the missing key's `repr`, `AttributeError`
+  -- names the type AND the attribute. Reported as `ABSENT` by the
+  -- survey's message telemetry, never invented; the priced plan for
+  -- giving them payloads is in docs/backlog.md. `RecursionError` is the
+  -- one that must STAY absent: CPython names the C site it hit
+  -- ("maximum recursion depth exceeded in comparison"), which no model
+  -- state determines.
+  | .indexError | .keyError | .recursionError
   | .attributeError => Option.none
   -- a user exception raised bare (`raise Stop`) prints its class alone
   | .user _ _ => some ""

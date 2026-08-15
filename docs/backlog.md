@@ -4046,3 +4046,133 @@ are referenced by **no code in the repo** — `script_corpus.py` was their
 only writer and nothing ever read them. They are tracked build artifacts,
 and now that extraction goes to the cache nothing writes them either.
 Deleting them is a separate call.
+
+## The payload-free `PyErr` constructors — CENSUSED, and the fix SPLITS in two (2026-08-15)
+
+§`leanpy` v1 recorded five constructors whose CPython text the class does
+not determine, as "open, the next step". Measured before touching
+anything, and the census changes the shape of the work: **the five are
+not one problem.** Two of them carry no runtime data at all — their text
+is chosen by WHICH raise condition fired — and those are fixable at zero
+cost to the spec surface. Two carry runtime data and need real payloads.
+One can never be answered and should stop being counted as debt.
+
+### The census (CPython 3.9.19, all 1215 `harness/cases.json` cases)
+
+Raising cases by class, with the distinct texts the oracle produced:
+
+| class | cases | distinct texts | text determined by |
+| --- | --- | --- | --- |
+| TypeError | 65 | 51 | already carried (`msg`) |
+| ValueError | 16 | 13 | already carried |
+| **ZeroDivisionError** | **14** | **2** | **the raise CONDITION** |
+| AssertionError | 12 | 8 | already carried |
+| **IndexError** | **11** | **4** | **the raise CONDITION** |
+| NameError | 10 | 8 | already carried (the name) |
+| **AttributeError** | **9** | **8** | **RUNTIME DATA** (type + attr) |
+| user (`Stop`) | 4 | 2 | class alone, exact |
+| **RecursionError** | **2** | **1** | **CPython's C SITE** |
+| **KeyError** | **2** | **2** | **RUNTIME DATA** (key `repr`) |
+| StopIteration | 2 | 1 | bare, exact |
+
+And on the script corpus, where the survey already reports message
+telemetry: **7 SAME, 0 DRIFT, 2 ABSENT** — and both ABSENT rows
+(`raiser.py`, `init_raise_script.py`) are the SAME missing text,
+`ZeroDivisionError: integer division or modulo by zero`.
+
+### The finding: two of the five need no payload at all
+
+`ZeroDivisionError`'s two texts are `integer division or modulo by zero`
+(13 of 14 cases, from `//` and `%`) and
+`0.0 cannot be raised to a negative power` (1 case, from `0 ** -1`).
+That is not runtime data — it is a two-way static split inside
+`evalBinOp`. So the fix is a sibling NULLARY constructor, not a `String`
+payload, and the difference is the entire cost of the item:
+
+| approach | sites touched | PUBLIC theorem statements changed |
+| --- | --- | --- |
+| `String` payload on `zeroDivisionError` | 40 | **4** (`arith`'s `floordiv_zero`/`mod_zero` + their `#py_check`s) |
+| sibling `zeroDivisionPow` | **4** | **0** |
+
+`except ZeroDivisionError:` cannot tell them apart, because builtin
+exception names are not matchable in the tier at all — only admitted user
+classes and the pinned import-error names — so the split is
+unobservable to any program the model runs.
+
+**LANDED (2026-08-15):** `Ast.lean` gains `zeroDivisionPow`, `errName`
+maps both to `ZeroDivisionError`, `errMessage` answers both with their
+measured text, `evalBinOp`'s `.pow` arm raises the new one, and exactly
+ONE existing row moved (`Tests.lean:146`). No spec, no proof, no
+delaborator, no handler table.
+
+### What is left, priced
+
+* **`IndexError` — the same trick, not yet taken.** Four texts
+  (`list index out of range` ×8, `tuple index out of range`,
+  `list assignment index out of range`, `pop from empty list`), all
+  condition-determined. Three sibling constructors; 7 `Semantics.lean`
+  raise sites to triage; keeping `.indexError` as the dominant
+  list-index case leaves most of its 5 public statements untouched.
+  **~1-2 hours**, and it is the next one to take.
+* **`KeyError` and `AttributeError` — genuinely structural.** The texts
+  interpolate runtime values (the missing key's `repr`; the type name
+  AND the attribute), so no split can supply them and the constructors
+  must take payloads. `reprVal` and `typeName` already exist, so the
+  data is in hand at every raise site — the cost is not the semantics,
+  it is the **4 and 8 public theorem statements** that would change
+  shape, plus 1 and 27 `Semantics.lean` sites. **~half a day each, and
+  it changes the documented spec surface, so it wants the owner's eye.**
+* **`RecursionError` — retire it as debt.** CPython's text names the C
+  site it hit (`maximum recursion depth exceeded in comparison`), which
+  no model state determines and no payload can honestly supply. It
+  should stay ABSENT permanently and be recorded as such rather than
+  carried as an open gap.
+
+### The enforcement question, answered — and NOT flipped
+
+The tier the harness enforces is **the full `Class: message` line, exact,
+and only where the model carries a message.** That is already
+`script_corpus.py`'s rule and it is the right one; prefix or family
+matching would hide precisely the drift the step exists to catch. So
+`ZeroDivisionError` graduates to enforced TODAY, automatically, by
+starting to carry a message.
+
+**`diff_test.py` is NOT graduated, and that is a measurement, not
+caution.** It compares the exception CLASS only. Tightening it to compare
+messages right now would flip **24 of its 1215 cases** to failures —
+every case whose class is one of the four still-payload-free ones
+(IndexError 11, AttributeError 9, KeyError 2, RecursionError 2), because
+the model renders the bare class where CPython renders `Class: text`.
+That flip is the CONSEQUENCE of the remaining work, not a decision to be
+taken ahead of it: `diff_test` should graduate when `IndexError`,
+`KeyError` and `AttributeError` land, with `RecursionError` whitelisted
+as permanently absent. Stated here so nobody tightens it early and reads
+24 red rows as a regression.
+
+One honest limit on this census: the classes that DO carry messages are
+designed to be verbatim (`BinOp.symbol` exists so every `TypeError` comes
+out exactly), and the script corpus is 7/7 SAME with 0 DRIFT — but the
+typed-call layer has never had its messages compared at all. Measuring
+those 100-odd carried texts against the oracle is part of graduating
+`diff_test`, and this entry does not claim it has been done.
+
+### Measured after the split
+
+Message telemetry over the in-repo corpus, **7 SAME / 0 DRIFT / 2 ABSENT
+→ 10 SAME / 0 DRIFT / 1 ABSENT**. Both former ABSENT rows (`raiser.py`,
+`init_raise_script.py`) now read
+`ZeroDivisionError: integer division or modulo by zero` exactly, and the
+new `zerodiv_pow_script.py` reads
+`ZeroDivisionError: 0.0 cannot be raised to a negative power` exactly —
+so BOTH texts are pinned end to end and the split is confirmed at the
+boundary, not just in the constructor. **The one remaining ABSENT row in
+the whole corpus is `index_message_gap_script.py`, which exists to be
+that gap.** `script_corpus.py` now ENFORCES all three lines (it compares
+the whole line whenever the model carries a message): 0 failed.
+
+Sweep delta: in-repo 124 → **126 files** (the two new pins), MATCH 99 →
+**101**, REFUSE **25** unchanged, 0 DIVERGE; stdlib **167 / 8 / 159 / 0
+byte-identical**. **Zero existing files changed verdict on any of the
+seven axes.** `diff_test` **1215 cases, 0 failed** — unchanged, exactly
+as predicted, because it still compares the CLASS only. Triad: `lake
+build` 3659 jobs EXIT=0, `docs_check` 67/67, extractor units 70/70.

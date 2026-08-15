@@ -252,5 +252,13 @@
   {
     "file": "harness/scripts/star_target_script.py",
     "expect": "unsupported"
+  },
+  {
+    "file": "harness/scripts/zerodiv_pow_script.py",
+    "expect": "match"
+  },
+  {
+    "file": "harness/scripts/index_message_gap_script.py",
+    "expect": "match"
   }
 ]

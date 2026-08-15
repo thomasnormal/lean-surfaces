@@ -428,7 +428,26 @@ payload. -/
 inductive PyErr where
   | typeError (msg : String)
   | nameError (name : String)
+  /-- `x // 0` and `x % 0` — CPython's
+  `integer division or modulo by zero`. -/
   | zeroDivisionError
+  /-- `0 ** <negative>` — the SAME CPython class with a DIFFERENT text,
+  `0.0 cannot be raised to a negative power` (2026-08-15).
+
+  A sibling NULLARY constructor rather than a `String` payload on
+  `zeroDivisionError`, and the reason is the whole design: the message is
+  not runtime data, it is determined by WHICH of two raise conditions
+  fired, and both are statically distinguishable in `evalBinOp`. Splitting
+  keeps every existing `.zeroDivisionError` site — 40 of them, including
+  `arith`'s four public theorem statements and their proofs — spelled
+  exactly as it is today, so a message gap closes at ZERO cost to the
+  spec surface. A payload would have changed all of them.
+
+  `except ZeroDivisionError:` needs no update: builtin exception names are
+  not matchable at all (only admitted user classes and the pinned
+  import-error names), so the two cannot be told apart by any program in
+  the tier. -/
+  | zeroDivisionPow
   | indexError
   | valueError (msg : String)
   | keyError

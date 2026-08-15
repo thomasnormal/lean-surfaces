@@ -686,7 +686,10 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         if y < 0 then
           -- CPython: 0 ** -1 raises (no float involved); other negative
           -- exponents produce floats, which are outside the v0 tier.
-          if x = 0 then .exn .zeroDivisionError
+          -- Same CLASS as `//`/`%` but a different TEXT, so it carries its
+          -- own constructor (Ast.lean `zeroDivisionPow`) — measured
+          -- `0.0 cannot be raised to a negative power`.
+          if x = 0 then .exn .zeroDivisionPow
           else .unsupported "'**' with a negative exponent (float result) is outside the v0 tier"
         else .ok (.int (x ^ y.toNat))
     -- pass 5 (docs/memory-model.md §left shift and bitwise or):

@@ -26,6 +26,10 @@ full differential matrix against CPython lives in harness/cases.json. -/
 #py_check arith.powi(2, 0) = 1
 #py_check arith.powi(-2, 3) = -8
 #guard (callFunction arith "powi" #[.int 2, .int (-1)] 20 matches .unsupported _)
+-- `0 ** -1` raises the SAME CLASS as `//`/`%` with a DIFFERENT text, so it
+-- carries its own constructor (docs/backlog.md §the payload-free
+-- constructors): `0.0 cannot be raised to a negative power`
+#py_check arith.powi(0, -1) raises .zeroDivisionPow
 #py_check arith.choose(0, 5) = 5
 #py_check arith.choose(3, 7) = 3
 #py_check arith.chain(1, 2, 3) = true

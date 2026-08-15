@@ -64,29 +64,68 @@ def default_cache():
     return os.path.join(tempfile.gettempdir(), "leanpy-cache")
 
 
-def newest_lean_source():
-    """(mtime, path) of the newest Lean source the runner is built from."""
-    newest = (0.0, None)
+def lean_sources():
+    """Every Lean source the runner is built from, sorted by path."""
+    out = []
     roots = [os.path.join(REPO_ROOT, "LeanModels"), os.path.join(REPO_ROOT, "Main.lean")]
     for root in roots:
         if os.path.isfile(root):
-            cands = [root]
+            out.append(root)
         else:
-            cands = [os.path.join(d, f) for d, _, fs in os.walk(root)
-                     for f in fs if f.endswith(".lean")]
-        for path in cands:
-            try:
-                m = os.path.getmtime(path)
-            except OSError:
-                continue
-            if m > newest[0]:
-                newest = (m, path)
+            out.extend(os.path.join(d, f) for d, _, fs in os.walk(root)
+                       for f in fs if f.endswith(".lean"))
+    return sorted(out)
+
+
+def newest_lean_source():
+    """(mtime, path) of the newest Lean source the runner is built from."""
+    newest = (0.0, None)
+    for path in lean_sources():
+        try:
+            m = os.path.getmtime(path)
+        except OSError:
+            continue
+        if m > newest[0]:
+            newest = (m, path)
     return newest
+
+
+def lean_source_digest():
+    """sha256 over the CONTENT of every Lean source (path included, so a
+    rename counts). ~4 ms over the 108 files / 2.7 MB of LeanModels."""
+    h = hashlib.sha256()
+    for path in lean_sources():
+        h.update(os.path.relpath(path, REPO_ROOT).encode())
+        try:
+            with open(path, "rb") as f:
+                h.update(f.read())
+        except OSError:
+            return None
+    return h.hexdigest()
+
+
+STAMP = BIN + ".srcdigest"
 
 
 def runner_command(build, quiet=False):
     """The runner argv, plus a loud staleness warning when the built binary
-    is older than a Lean source (never a silently stale answer)."""
+    does not carry the current semantics (never a silently stale answer).
+
+    STALENESS IS A CONTENT QUESTION, not an mtime one (2026-08-15). The
+    check used to be `newest source mtime > binary mtime`, which is true
+    after any `git checkout`/`git stash` that rewrites a file to the bytes
+    it already had — so the warning fired on every run of a perfectly
+    current binary, and a warning that is usually wrong stops being read.
+    That is the failure mode it exists to prevent, inverted.
+
+    Mtime is still the bootstrap, because in ONE direction it is sound: a
+    binary newer than every source IS current, so that observation is
+    recorded as a stamp of the source digest beside the binary. Afterwards
+    the digest answers: unchanged content means current, whatever the
+    mtimes say. Every uncertain case — no stamp, unreadable source,
+    unwritable stamp — falls through to the WARNING, so the conservative
+    direction is preserved.
+    """
     if build:
         rc = subprocess.run(["lake", "build", "leanmodels-run"], cwd=REPO_ROOT).returncode
         if rc != 0:
@@ -94,12 +133,39 @@ def runner_command(build, quiet=False):
             return None
     if not os.path.exists(BIN):
         return ["lake", "exe", "leanmodels-run"]
+
     mtime, path = newest_lean_source()
-    if path is not None and mtime > os.path.getmtime(BIN) and not quiet:
+    digest = lean_source_digest()
+    # The two SOUND observations that the binary carries these sources: lake
+    # just said so, or nothing is newer than it. (Lake does not touch its own
+    # `.trace`/`.hash` on a no-op verify — measured — so there is no cheaper
+    # signal to read.) Either one licenses recording the digest.
+    if build or path is None or mtime <= os.path.getmtime(BIN):
+        if digest is not None:
+            try:
+                with open(STAMP, "w") as f:
+                    f.write(digest)
+            except OSError:
+                pass  # a cache, not an answer; the next run just re-warns
+        return [BIN]
+
+    try:
+        with open(STAMP) as f:
+            stamped = f.read().strip()
+    except OSError:
+        stamped = None
+    if digest is not None and stamped == digest:
+        return [BIN]  # touched, not changed
+
+    if not quiet:
+        rel = os.path.relpath(path, REPO_ROOT)
+        if stamped is not None:
+            why = "the Lean sources have CHANGED since it was built"
+        else:
+            why = "no build stamp exists to say whether the content changed"
         sys.stderr.write(
-            "leanpy: WARNING the runner binary is older than %s — "
-            "rerun with --build for an answer from the current semantics\n"
-            % os.path.relpath(path, REPO_ROOT))
+            "leanpy: WARNING the runner binary is older than %s and %s — rerun "
+            "with --build for an answer from the current semantics\n" % (rel, why))
     return [BIN]
 
 

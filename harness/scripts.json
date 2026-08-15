@@ -248,5 +248,9 @@
     "file": "harness/scripts/cls_deco_args_script.py",
     "expect": "match",
     "note": "the precision pin beside it: *args/**kwargs/defaults are refused at CALL time and are NOT creation effects, so ingestion reads the structured has_decorators flag and never matches on args_unsupported's message"
+  },
+  {
+    "file": "harness/scripts/star_target_script.py",
+    "expect": "unsupported"
   }
 ]

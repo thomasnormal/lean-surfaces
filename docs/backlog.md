@@ -1335,21 +1335,27 @@ shipped file** (what stepping FURTHER would hit, in order):
   Depth-3+ stepping crosses `self.nodes % 2048 == 0` where
   `time.time()` is dynamically LIVE (deadline = `1 << 63`, no None
   test) and refuses loudly — pinned by the `nodes = 2047` searcher
-  row. Passing it is the standing OWNER-GATED abstraction decision
-  (memory-model §wall-clock time): a recorded deadline abstraction
-  (e.g. the poisoned binding admitting a symbolic
-  "never-expiring clock" whose reads are pinned dead-by-value), never
-  a silent stub.
+  row. ~~Passing it is the standing OWNER-GATED abstraction decision
+  (memory-model §wall-clock time)~~ **CORRECTED (2026-08-15) — NOT
+  gated, and not since the day after this was written.** §Pass 6
+  immediately below opens "The 2048-node wall's owner-gated decision is
+  DECIDED: time as an INPUT, not an effect", the trace clock was BUILT
+  the same day, and §Pass 7 landed CLOCK ERASURE on top of it. This
+  line survived as the only place still advertising a gate that no
+  longer exists — read §Pass 6 and §Pass 7 for the decision as taken.
 * **The eviction `del`s** (bound(): `del self.tp_move[next(…)]`,
   `del self.tp_score[next(iter(…))]`) ingest as
   `Stmt.unsupported "Delete"` and are dynamically DEAD below
   TABLE_SIZE — no search-stepping depth reachable under the node wall
   ever executes them. They gate nothing until the wall falls.
 * **main()/UCI** stays the leanpy-shell surface (far beyond one
-  milestone); `input` is still absent from `isBuiltinName` (recorded
+  milestone); ~~`input` is still absent from `isBuiltinName` (recorded
   pass-4 gap — add loud with the next builtin sweep, it rides any
   future Semantics.lean rebuild rather than paying the 80-min pole
-  alone).
+  alone)~~ **CORRECTED (2026-08-15): `input` IS in `isBuiltinName`** —
+  `Ast.lean:517`, where the pair moved verbatim from Semantics.lean on
+  2026-08-14 (§module-level def aliasing). The pass-4 gap closed on some
+  later builtin sweep exactly as predicted and nobody struck the line.
 
 ## Pass 6 — THE TRACE CLOCK (2026-08-11, owner-approved design; in flight)
 
@@ -1430,10 +1436,16 @@ symbolic route, fuel 64 and ~20 s of `py_simp`).
    of kernel reduction, `initWorld`-dominated; core `#guard` is the
    untrusted compiled evaluator, so the batteries were never kernel
    facts). The seeded surface is `#guard`-pinned at empty AND sample
-   traces (the batteries' trust level). OPEN: a kernel-affordable
+   traces (the batteries' trust level). ~~OPEN: a kernel-affordable
    concrete-run route (kernel-reducibility work on `initWorld`'s hot
    path is the natural candidate) would upgrade the headline rows to
-   unconditional `∀ tr` theorems by one application each.
+   unconditional `∀ tr` theorems by one application each.~~ **CLOSED
+   (2026-08-15, by §Pass 8 milestone 1 below):** "Milestone 1 also
+   closes the KERNEL-AFFORDABILITY item DEFINITIVELY" — kernel
+   reduction measured at ~1000× native per interpreter step, so
+   search-scale `∀ tr` theorems stay transport + native-`#guard`
+   paired unless the interpreter is re-engineered for kernel
+   reduction. Recorded there, not scheduled; not an open item.
 2. ~~**Re-pin to current engine master**~~ **DONE (same day):** the
    pinned file is current master again. The brief's "all in-tier
    constructs" was FALSE by one: the QS filter-before-sort line carries
@@ -1510,9 +1522,13 @@ construct refused loudly — both new named targets, neither started.
 **Open after milestone 2:** the tryStmt-heapFree `.exn` covenant
 extension (the last recorded proof-layer candidate — a worldInv
 exn-clause rework, fuelMono-scale; NO sunfish payoff since class-
-bearing modules never enter the fragment); the leanpy script-mode
-trace flag (pass-6 deferral — small); deeper stepping beyond depth 4
-(more readings, same machinery — cost-gated, not construct-gated).
+bearing modules never enter the fragment); ~~the leanpy script-mode
+trace flag (pass-6 deferral — small)~~ **CLOSED (2026-08-15): it
+shipped** — `tools/leanpy --clock i,j,k`, recorded at the top of this
+file ("this CLOSES the pass-6 script-mode trace-flag deferral —
+`runScript` is now `runScriptClock m []`"); deeper stepping beyond
+depth 4 (more readings, same machinery — cost-gated, not
+construct-gated).
 
 ## The IMPORT CEILING — measured, and the module system is priced out (2026-08-13)
 
@@ -3824,3 +3840,109 @@ the SUNFISH repo (`tools/ctwin/` is not on sunfish master; it is carried
 on the sunfish-packed / -eval / -tm / -eventual-trichotomy checkouts), a
 cross-repo job this lane had no write scope for. Nothing above substitutes
 for it: over there the edge is still A ≡ pypy3(sunfish.py).
+
+## A silent wrong answer, closed — plus two instrument repairs (2026-08-15)
+
+Three items off the free-standing list, smallest honest versions. The
+first is the only one that was a CORRECTNESS bug, and it had been sitting
+in the open as a design note rather than a defect.
+
+### The starred assignment target answered instead of refusing
+
+`x, *y = [1, 2, 3]` — CPython 3.9.19 binds `x = 1`, `y = [2, 3]` and
+exits 0. leanpy answered **`ValueError: too many values to unpack
+(expected 2)`, exit 1.** Not a refusal (exit 3): an ANSWER, and a wrong
+one, in the tool whose contract is "answers loudly or not at all".
+
+**Why it escaped.** The element check was already there and already
+correct — `unpackSeq` refuses a target element that is not a plain name —
+but it runs AFTER the arity check. So the refusal fired only when the
+arity happened to coincide, which is exactly the case where nothing was
+at stake. Measured across the shapes, before the fix:
+
+| source | CPython 3.9.19 | model, before |
+| --- | --- | --- |
+| `x, *y = [1,2]` | `1` / `[2]` | REFUSE (exit 3) — correct |
+| `x, *y = [1,2,3]` | `1` / `[2,3]` | **`ValueError: too many values to unpack (expected 2)`** |
+| `*x, y = [1,2,3]` | `[1,2]` / `3` | **`ValueError: too many values to unpack (expected 2)`** |
+| `x, *y = [1]` | `1` / `[]` | **`ValueError: not enough values to unpack (expected 2, got 1)`** |
+
+The other three binding sites were already loud and are unchanged:
+`for a, *b in …` refuses ("unpacking targets other than plain names"),
+and the comprehension form refuses at lowering. **`Assign` was the only
+site**, which is what keeps the fix one clause.
+
+**The fix is the DOCTRINE, not the feature.** `extract.py` refuses the
+whole statement — `_target_has_starred` over the target tree (nested
+`a, (b, *c)` included) → `unsupported(node, "Starred:target")` — because
+refusing the inner element alone cannot work: the model reaches the
+arity check first. It costs ZERO coverage, since every starred target
+already ended in a refusal or a wrong answer and never in agreement.
+Real support stays a listed backlog item: designed at §Position 2 (a
+`Stmt.unpackAssign` constructor carrying names) and built on the
+`starred-displays` branch (eb6a882), which this deliberately does NOT
+merge.
+
+Guard: `harness/scripts/star_target_script.py`, registered
+`expect: unsupported`, carrying the wrong-answer shape itself.
+
+**Sweep delta, stated in full — the guard and nothing else moved.**
+
+* in-repo survey 123 → **124 files**, MATCH 99 → **99**, REFUSE 24 →
+  **25**. The one new row is the guard; **0 existing files changed
+  verdict, on any of the seven axes.**
+* stdlib sweep **167 / 8 MATCH / 159 REFUSE / 0 DIVERGE — byte-identical
+  to the pre-fix run**, 0 differences.
+* script corpus 59 → **60 scripts, 0 failed, 46 matched** (unchanged),
+  13 → **14 loud-blocked**.
+* No tracked envelope is affected: an AST scan of every tracked `.py`
+  finds **zero** starred assignment targets, so the new clause cannot
+  fire on anything with a committed envelope.
+
+Triad: `lake build` 3659 jobs EXIT=0, `docs_check` 67/67, extractor units
+70/70, `diff_test` 1213 cases 0 failed.
+
+### The staleness warning cried wolf, and now reads content
+
+`runner_command` warned whenever a Lean source's MTIME beat the binary's.
+Any `git checkout` that rewrites a file to the bytes it already had trips
+that, so the warning fired on every single run of a perfectly current
+binary — and a warning that is usually wrong is not read, which is the
+failure it exists to prevent, inverted.
+
+Staleness is a CONTENT question. `lean_source_digest()` (sha256 over all
+108 Lean sources, measured **3.8 ms**) is compared against a stamp beside
+the binary. The stamp is written on either of the two SOUND observations
+that the binary carries those sources: `lake build` just succeeded, or
+nothing is newer than the binary by mtime. (Lake does not touch its own
+`.trace`/`.hash` on a no-op verify — measured — so there is no cheaper
+signal to read.) Every uncertain case still WARNS, and the message now
+distinguishes them: "the Lean sources have CHANGED since it was built"
+vs "no build stamp exists to say whether the content changed".
+
+Verified in all three directions: `touch` on a source → silent; a real
+one-line edit → warns; reverting that edit → silent again.
+
+### Four stale status lines corrected
+
+Each struck in place with where it was actually decided, because a
+backlog that advertises dead gates is worse than one that is merely
+incomplete. `§Pass 5`'s "standing OWNER-GATED abstraction decision" —
+decided in `§Pass 6`, the very next section, and built the same day.
+`§Pass 5`'s "`input` is still absent from `isBuiltinName`" — it is at
+`Ast.lean:517`. `§Pass 7`'s "OPEN: a kernel-affordable concrete-run
+route" — closed DEFINITIVELY by `§Pass 8` milestone 1. `§Pass 8`'s
+"leanpy script-mode trace flag (pass-6 deferral)" — shipped as
+`tools/leanpy --clock`, recorded at the top of this file.
+
+### Recorded, NOT fixed: `script_corpus.py` dirties the tree
+
+Found while validating the guard above. `harness/script_corpus.py`
+extracts with `sys.executable` and **without `--out`**, so it rewrites the
+tracked `harness/scripts/*.json` envelopes in place, under whatever
+`python3` is on the box: one run left 44 tracked envelopes modified with
+nothing changed but `"version": "3.9.25"` → `"3.14.5"`, plus 8 untracked
+new ones. Reverted by hand. It is not in `tools/ci.sh`, so CI never sees
+it. The fix is the one already applied to the survey — pin the frontend,
+and extract to the cache rather than beside the source — but it is a
+fourth item and is left open here rather than smuggled in.

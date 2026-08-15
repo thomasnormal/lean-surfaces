@@ -540,6 +540,33 @@ def _target_bound_names(t):
     return []  # Subscript / Attribute: no binding
 
 
+def _target_has_starred(t):
+    """Does this assignment TARGET contain a star anywhere? (`a, *b`, and
+    nested: `a, (b, *c)`.)
+
+    The tier does not model starred unpacking, and `unpackSeq` already
+    refuses a non-name target element — but it checks ARITY FIRST, so a
+    starred target was only refused when the arity happened to coincide.
+    Measured 2026-08-15 against CPython 3.9.19: `x, *y = [1,2]` refused
+    loudly (correct), while `x, *y = [1,2,3]` and `*x, y = [1,2,3]`
+    answered `ValueError: too many values to unpack (expected 2)` and
+    `x, *y = [1]` answered `not enough values to unpack (expected 2, got 1)`
+    — all three SILENT WRONG ANSWERS, where CPython binds happily. Refusing
+    the whole statement at extraction restores "answers loudly or not at
+    all"; it costs no coverage, because every starred target already ended
+    in a refusal or a wrong answer, never in agreement.
+
+    This is the DOCTRINE fix, not the feature: real support is designed in
+    docs/backlog.md §Position 2 (a `Stmt.unpackAssign` constructor) and
+    built on the `starred-displays` branch (eb6a882).
+    """
+    if isinstance(t, ast.Starred):
+        return True
+    if isinstance(t, (ast.Tuple, ast.List)):
+        return any(_target_has_starred(e) for e in t.elts)
+    return False
+
+
 def _assigned_names(fn):
     """Names the function body assigns (CPython's static-locals rule makes
     these local THROUGHOUT the body). Params excluded."""
@@ -1021,6 +1048,12 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         }
 
     if isinstance(node, ast.Assign):
+        if any(_target_has_starred(t) for t in node.targets):
+            # Refuse the STATEMENT, not just the starred element: the model
+            # arity-checks a tuple target before it inspects the elements,
+            # so an inner `Unsupported` leaf was reached too late and a
+            # wrong ValueError escaped. See `_target_has_starred`.
+            return unsupported(node, "Starred:target")
         return {
             "kind": "Assign",
             "span": span(node),

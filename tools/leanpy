@@ -37,9 +37,10 @@ differential — the typed-call version is ``tools/lean-python --compare``.
 and the first reading refuses loudly, never fabricates a time.
 
 Envelopes are cached under ``--cache`` (default ``$TMPDIR/leanpy-cache``)
-by the sha256 of the SOURCE **and** of the extractor, so re-running an
-unchanged file skips extraction while a changed extractor never serves a
-stale envelope. The runner is the built binary
+by the sha256 of the SOURCE, of the extractor, **and** the frontend family
+(``py3.9``) that ran it, so re-running an unchanged file skips extraction
+while a changed extractor — or a different CPython parsing the source —
+never serves a stale envelope. The runner is the built binary
 ``.lake/build/bin/leanmodels-run`` (a ``lake`` invocation costs ~9 s of
 olean replay per run); if any Lean source is newer than that binary,
 leanpy says so LOUDLY on stderr rather than reporting a stale answer —
@@ -105,15 +106,34 @@ def runner_command(build, quiet=False):
 EXTRACTOR = os.path.join(REPO_ROOT, "extractors/python/extract.py")
 
 
+def frontend_family():
+    """The FRONTEND's identity for cache purposes: `3.9`, not `3.9.19`.
+
+    The envelope is produced by running the extractor under `sys.executable`,
+    so the CPython `ast` module that parses the source is a third input
+    alongside the source and the extractor — and it is the one input no
+    cache key mentioned (measured 2026-08-15: 5 of the 123 in-repo files
+    extract to different payloads under 3.9 vs 3.14, and `frontend.version`
+    differs on all 123). The FAMILY and not the point release, because that
+    lesson is already recorded twice in docs/backlog.md: 3.9.19 ↔ 3.9.25
+    churn re-keys every envelope for byte-identical payloads.
+    """
+    return "%d.%d" % sys.version_info[:2]
+
+
 def extractor_digest():
     """Hash of the extractor itself — part of every cache key. An envelope
-    is a FUNCTION of (source, extractor); keying on the source alone serves
-    an envelope built by an older extractor after the tier moves, which is
-    the same stale-answer failure the binary staleness check exists to
-    prevent (it happened: the class-creation field landed and the cache
-    kept answering from envelopes that predated it)."""
+    is a FUNCTION of (source, extractor, frontend); keying on the source
+    alone serves an envelope built by an older extractor after the tier
+    moves, which is the same stale-answer failure the binary staleness
+    check exists to prevent (it happened: the class-creation field landed
+    and the cache kept answering from envelopes that predated it). The
+    frontend family joins the key for the same reason — see
+    `frontend_family`; without it a 3.14-driven CI run and a 3.9-driven
+    local run share `$TMPDIR/leanpy-cache` and serve each other's
+    envelopes."""
     with open(EXTRACTOR, "rb") as f:
-        return hashlib.sha256(f.read()).hexdigest()[:8]
+        return hashlib.sha256(f.read()).hexdigest()[:8] + "-py" + frontend_family()
 
 
 def envelope_for(src, cache_dir, keep=False):

@@ -39,6 +39,15 @@ the whole corpus (one startup, not one per file); rows stream out as they
 are produced, so a stalled file is identified by name rather than
 swallowed.
 
+BOTH ENDS OF THE COMPARISON ARE PINNED, and they are pinned separately.
+The ORACLE is ``--cpython`` (default ``python3.9`` via ``default_oracle``,
+``LEANPY_CPYTHON`` in the environment) — point it at another interpreter
+to survey against one, e.g. ``--cpython pypy3``. The FRONTEND — the
+CPython whose ``ast`` module parses the corpus into envelopes — is pinned
+by re-exec (``_reexec_under_pinned_frontend``, ``LEANPY_FRONTEND`` to
+override), because it is an input to the program the model is shown and
+was previously whatever ``python3`` happened to be.
+
 Python 3.9 compatible.
 """
 
@@ -55,6 +64,47 @@ import threading
 import time
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _reexec_under_pinned_frontend():
+    """RUN THE FRONTEND ON THE PINNED INTERPRETER (2026-08-15 fix).
+
+    `harness/diff_test.py` already pins its ORACLE this way. The survey's
+    oracle was pinned too (`default_oracle`), but its FRONTEND was not: the
+    envelope is built by running `extractors/python/extract.py` under
+    `sys.executable` (tools/leanpy `envelope_for`), so `tools/ci.sh`'s
+    `python3 harness/leanpy_survey.py` parsed the corpus with whatever
+    python3 the box has — 3.14 on this laptop — while comparing against a
+    3.9 oracle. Measured (2026-08-15, docs/backlog.md §the frontend edge):
+    the VERDICTS do not move, but 5 of 123 envelopes differ in payload, so
+    the model was not always being shown the same program the oracle ran.
+
+    This pins the frontend, not the oracle: the oracle stays selectable
+    with `--cpython` / `LEANPY_CPYTHON` (that is how pypy3 is surveyed).
+    `LEANPY_FRONTEND=…` overrides the pin; `LEANPY_NO_REEXEC=1` disables
+    it (the re-exec sets it, so this runs at most once). If the pin is not
+    installed, say so LOUDLY and keep going, never quietly.
+    """
+    if os.environ.get("LEANPY_NO_REEXEC"):
+        return
+    want = os.environ.get("LEANPY_FRONTEND") or "python3.9"
+    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_FRONTEND"):
+        return
+    from shutil import which
+    exe = which(want)
+    if exe is None:
+        print("harness/leanpy_survey.py: WARNING the pinned frontend %r is not "
+              "installed; extracting with %s instead — the model may be shown a "
+              "different program than the oracle runs"
+              % (want, sys.version.split()[0]), file=sys.stderr)
+        return
+    if os.path.realpath(exe) == os.path.realpath(sys.executable):
+        return
+    os.environ["LEANPY_NO_REEXEC"] = "1"
+    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+
+
+_reexec_under_pinned_frontend()
 
 # tools/leanpy is the extension-less binary; load it as a module so the
 # survey and the one-file runner share ONE extraction/runner path.

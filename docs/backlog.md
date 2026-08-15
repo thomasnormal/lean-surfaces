@@ -3711,3 +3711,116 @@ three open questions** — whether the lane gets `LeanModels/C/` and a
 whether the 2026-08-07 "no sunfish deliverable" scope decision is
 amended, and which host is the pinned oracle (the profile must be pinned
 BEFORE the extractor is written, since it is an input to the AST).
+
+## The square's FRONTEND edge — measured, and it was the unpinned one (2026-08-15)
+
+Opened as this repo's half of the C-tier memo's **M0** (§The C tier,
+"M0 costs zero Lean"). The memo's M0 names `tools/ctwin/difftest.py`,
+which lives in the SUNFISH repo and drives `sunfish.py` under pypy3 via
+`pyref.py`; **that re-run is still owed and is not what this entry
+records** (see the last paragraph). What this entry records is the same
+question asked of THIS repo's own instruments — and the answer is not the
+one the memo's phrasing predicts.
+
+**The premise, corrected first.** lean-surfaces' Python harness does not
+drive pypy3, and did not when the recorded sweeps were taken.
+`harness/diff_test.py` re-execs into the pin (`_reexec_under_pinned_cpython`,
+`want = "python3.9"`, landed 2026-08-13) and `harness/leanpy_survey.py`'s
+`default_oracle()` returns `python3.9` whenever it is installed. Both
+instruments stamp the oracle they used and every recorded run stamps
+3.9.19. **The ORACLE edge was already honest.**
+
+**The oracle edge, measured anyway** (this laptop, `leanmodels-run` at
+b525023, corpus held FIXED and only the oracle binary varied — CPython
+3.9.19 vs PyPy 7.3.23 / 3.11.15):
+
+* in-repo survey, 123 files: MATCH=99, REFUSE=24, 0 DIVERGE under BOTH.
+* stdlib sweep, the 167 pinned 3.9 seeds passed as explicit paths so the
+  corpus could not move: MATCH=8, REFUSE=159, 0 DIVERGE under BOTH.
+* Diffed file by file on seven axes (verdict, status, exit, msg, detail,
+  live, nodes): **0 differences over all 290 files.** The difftest
+  interpreter is VERDICT-INVARIANT across pypy3 and the pinned CPython on
+  the current corpora.
+
+**What that claim does NOT cover, stated because the harness makes it
+easy to overstate.** REFUSE is decided *before* the oracle runs — in
+`leanpy_survey.py` a `status == "unsupported"` row takes its verdict and
+`continue`s above the `run_cpython` call. So of the 290 files only **107**
+(99 + 8) ever invoke an oracle binary; the interpreter choice can move the
+MATCH/DIVERGE partition and nothing else. The invariance measured is
+exactly: on the 107 files that reach an oracle, the two interpreters
+produce the same stdout and the same exit code.
+
+**`--stdlib --cpython pypy3` is a DIFFERENT EXPERIMENT, not the same one.**
+`stdlib_seeds` derives from `ModuleTable.of(opts.cpython)`, so the sweep's
+CORPUS is a function of the interpreter: under pypy3 it becomes PyPy's own
+`lib-pypy3.11` — 228 files, 5 MATCH / 9 DIVERGE / 210 REFUSE / 4 EXTRACT.
+The 9 DIVERGE are all PyPy's private cffi build scripts (`_curses_build`,
+`_lzma_build`, `_syslog_build`, `marshal`, …) where the model raises
+`ModuleNotFoundError` and the oracle raises a cffi build error. They are an
+artifact of a corpus nobody pinned, not a model bug — recorded here so the
+number is not mistaken for one later. It also exposed a **side-effect class
+`import_closure.SAFETY` does not cover**: those same `_*_build.py` scripts
+invoke the C compiler, so the run left 19 `_*_cffi.{c,o,so}` files in the
+repo root (removed by hand). SAFETY is a list of modules that open a
+browser, a window, or the network; nothing there anticipates a top level
+that writes build products into the cwd. Harmless on the pinned 3.9 path,
+which contains no such module — but the safety list is a denylist of names,
+not a sandbox, and that is worth knowing before anyone points `--stdlib` at
+a third interpreter.
+
+**THE FINDING: the FRONTEND was never pinned, and no cache key named it.**
+An envelope is a function of (source, extractor, **the CPython whose `ast`
+module parsed the source**) — `envelope_for` in `tools/leanpy` runs
+`extract.py` under `sys.executable` — but the cache key was
+`sha256(source) + extractor_digest()`, naming only the first two. And
+`tools/ci.sh` runs the survey as `python3 harness/leanpy_survey.py`, where
+`python3` on this laptop is 3.14.5 while the oracle is 3.9.19. Measured
+over the 123-file in-repo corpus, extracting every file under both:
+
+* **123/123 envelopes differ.** `frontend.version` is
+  `platform.python_version()` — the POINT release, the exact anti-pattern
+  the C-tier memo says was learned twice.
+* **5/123 payloads still differ with that stamp excluded.** Three are
+  span-only, from PEP 701: 3.12+ gives each f-string part its own
+  sub-span where 3.9 gives every part the whole `JoinedStr` span
+  (`fstring_script.py`, `fstring_lab.py`, `test_builtin.py`). Two are
+  STRUCTURAL — `test_compare.py` and `test_grammar.py` — where
+  `ast.unparse` reformats the `Unsupported.text` of an already-refused
+  node (`lambda : True` → `lambda: True`, `for (other, _) in ops` →
+  `for other, _ in ops`).
+* **VERDICTS DO NOT MOVE.** The whole survey re-run under a 3.14 driver
+  with a private cache is identical to the 3.9 run on all seven axes
+  across all 123 files.
+
+So it is benign today, and it was benign by luck rather than by
+construction. `LeanModels/Python/Json.lean` accepts `frontend` and does
+not retain it, so nothing downstream could ever have refused a
+wrong-frontend envelope; the cache key was the only possible defence and
+it did not mention the frontend. Two drivers sharing
+`$TMPDIR/leanpy-cache` served each other's envelopes.
+
+**LANDED (master, 2026-08-15) — code and record together.**
+
+* `tools/leanpy`: `frontend_family()` joins `extractor_digest()`, whose
+  value now ends `-py3.9`. The FAMILY and not the point release —
+  re-keying every envelope for a byte-identical payload is precisely the
+  3.9.19 ↔ 3.9.25 churn this file already records twice.
+* `harness/leanpy_survey.py`: `_reexec_under_pinned_frontend()`, a
+  deliberate mirror of `diff_test.py`'s oracle re-exec — pin `python3.9`,
+  `LEANPY_FRONTEND` overrides, `LEANPY_NO_REEXEC=1` disables, and a
+  missing pin WARNS LOUDLY and keeps going (CI has no 3.9). The two knobs
+  stay separate on purpose: `--cpython` / `LEANPY_CPYTHON` still selects
+  the ORACLE, which is how pypy3 was surveyed above.
+
+Triad after: `lake build` **3659 jobs EXIT=0**, `docs_check` **67/67**,
+`diff_test` **1213 cases, 0 failed** (1109 matched, 104 whitelisted).
+Both sweeps re-run through the new key: 123 / 99 / 24 / 0 and
+167 / 8 / 159 / 0 — unchanged, as the driver comparison predicted.
+
+**STILL OWED, and not done here.** The memo's M0 proper — running
+`tools/ctwin/difftest.py` under CPython 3.9.19 instead of pypy3 — is in
+the SUNFISH repo (`tools/ctwin/` is not on sunfish master; it is carried
+on the sunfish-packed / -eval / -tm / -eventual-trichotomy checkouts), a
+cross-repo job this lane had no write scope for. Nothing above substitutes
+for it: over there the edge is still A ≡ pypy3(sunfish.py).

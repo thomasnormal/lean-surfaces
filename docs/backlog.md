@@ -4416,3 +4416,76 @@ each is a one-line addition to an existing JSON writer.
   the first instrument that can collect it.
 * Both phase BEHIND the H2 landing: each edits `Semantics.lean`, and two
   depth lanes hold that surface today.
+## `py_vcgen` walks `for` — BUILT (2026-08-15)
+
+The cross-cutting gap carried since the 2026-08-09 stop point ("`py_vcgen`
+cannot walk `for` loops") is closed, in both layers.
+
+**Layer 2 (VC2.lean) — the rule.** `for` is the while rule MINUS the
+measure: `execFor` captures the iterated values BEFORE the loop begins, so
+the invariant is indexed by the REMAINING elements and termination is
+structural. `execFor_of_invariant` is the engine (induction on the element
+list, the body's `brk`/`ret`/`err` escapes routed to `Q`'s arms exactly as
+the while engine routes them), `PyStmtTriple.forLoop`/`PyTriple.forLoop`
+the triple forms, `IterVals` the iterable's value-sequence dispatch
+(`.listV`/`.tuple`/`.ntuple`/`str` — the immutable sources, where a
+snapshot IS the live semantics). The elements are SPEC-side behind a
+marshalling `elt : α → RVal`, which is what lets an invariant over a
+boundary int list be written over `List Int` instead of `List RVal` with an
+injectivity side condition at every step; `elt := id` recovers the raw
+form, and `forLoopInt` is the int instance the walker drives. The `.ref`
+arm (H2's live index cursor) and the generator arm are deliberately absent:
+different recursion points, different observational story, and a rule that
+quietly covered them would claim a snapshot semantics the interpreter does
+not have.
+
+**Layer 3 (VCTactic.lean) — the walker.** `handleFor` reads the element
+list off the iterable's captured value at the entry state, builds the
+remainder-indexed invariant, applies the rule through `consequence`,
+discharges `hv`/`hiter`/`hexit`, walks the body once per element and
+continues from the primed exit state. Three surface consequences, all
+loud:
+
+* a `for` consumes an `inv` clause but NO `dec` — `dec` clauses are now
+  indexed by `while` rank (`VCCtx.decIndex`), so a `for`-free function
+  keeps its exact positional pairing and the `invs.size == decs.size`
+  check is relaxed to `decs.size ≤ invs.size`;
+* the `inv`'s FIRST binder is the remaining-element list
+  (`fun (rest : List Int) (best : Int) => …`; delayed form `case inv1`
+  with `rest` in the context), the rest are Python names as before;
+* a `break`-carrying `for` REQUIRES its `exit` clause. The while rule
+  silently weakens to the bare invariant there; that is not repeated,
+  because "the invariant at the empty remainder" is not the exit fact
+  after a break.
+
+The loop TARGET is bound by the loop itself and lives behind the symbolic
+environment tail like any body-created variable — no hand-unrolled first
+iteration. `for … else` has no rule at all (the interpreter refuses it).
+The walker's v1 reads the iterable as a boundary/value LIST whose elements
+are marshalled (`xs.map elt`) or int literals; heap lists, generators,
+`str` and `range` refuse loudly and want the layer-2 rule by hand.
+
+Acceptance: the walker's own smoke tests gained four `for` cases, all
+SYMBOLIC (every int list, not one) — a whole-list fold, the same fold in
+`break`-carrying fail-soft form (sunfish's `bound` loop in miniature), and
+that one again in delayed-clause form, plus six `#py_check` runs. Every
+existing `py_vcgen` proof (`tri`, `gcd`, `nested_flow`, `rsa_inverse`,
+`bench_bisect`) is unchanged and green.
+
+**What did NOT collapse, and why — the next gap, measured.**
+`Examples/python/sf_bound_for`'s hand proof (130 lines: a `pw`/`E`
+geometry, AST literals, a `key` list induction, a hand-unrolled first
+iteration) was rewritten as a five-line `py_vcgen` call and it FAILS —
+not on anything `for`-shaped, but on `best = max(best, score)`: a BUILTIN
+call inside a loop body makes the interpreter check whether a local
+shadows the name, and `Env.lookup tl "max"` against the invariant's
+symbolic tail is stuck. That is the same gap `sf_bound_loop.py` already
+records for `len` in a while test ("the builtin lookup consults the loop's
+symbolic env tail and the test gets stuck"), now confirmed to block the
+`for` path identically, so the hand proof stays. The fix has a shape: the
+invariant shape must carry, per builtin the body calls, the fact
+`Env.lookup tl "<name>" = none` — true at entry (`tl := []`, closes by
+`rfl`) and preserved across iterations (the tail only ever grows by
+`Env.set tl "<target>" v`, and `Env.lookup_set_ne` steps past it). Doing
+that turns sf_bound_for, sf_bound_loop and sf_bound_rec into walker
+one-liners, and it is the single highest-value next step for this tactic.

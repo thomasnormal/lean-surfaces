@@ -76,6 +76,23 @@ execution):
   function `tv` is derived by symbolic evaluation of the test at the shape
   (no Miller unification needed). Without an `exit` clause a body `break`
   weakens the loop's exit fact to the bare invariant (no negated test);
+* **`for`** — `PyStmtTriple.forLoop` (VC2.lean): the while recipe MINUS the
+  measure. The iterated values are captured before the loop begins, so the
+  invariant is indexed by the REMAINING elements and termination is
+  structural. Surface consequences: a `for` consumes an `inv` clause but NO
+  `dec`, and its `inv` binds the remaining-element list FIRST, then its Int
+  slots by name — `(inv := fun (rest : List Int) (best : Int) => …)`, or
+  delayed as `case inv1 => …` with `rest` in the context. The loop TARGET
+  is bound by the loop itself, once per element, and lives behind the
+  symbolic tail like any body-created variable. A `break`-carrying `for`
+  REQUIRES its `exit` clause: the invariant at the empty remainder is not
+  the exit fact after a `break`, and the while rule's silent weakening is
+  deliberately not repeated. The walker reads the iterable's captured value
+  as a boundary/value LIST whose elements are marshalled (`xs.map elt`) or
+  int literals; `for` over a heap list (H2's live index cursor), over a
+  generator (H4), over a `str` or a `range` refuse loudly and want the
+  layer-2 rule by hand. `for … else` has no rule at all — the interpreter
+  refuses it;
 * **calls** (`x = f(…)` or `(a, b, c) = f(…)`, the call the whole right-hand
   side) — `PyStmtTriple.assign` ∘ `EvalsTo.call`, the callee fact found
   among local `CallsTo` hypotheses (recursion IHs, destructured relational
@@ -111,7 +128,8 @@ restriction); `if`-branches are straight-line (terminators allowed; no
 nested `if`/`while`/call); calls appear only as the whole right-hand side
 of an assignment, with a fully literal environment (not under an enclosing
 loop's symbolic tail); a loop test may not read a variable first assigned
-inside the loop body; `Raises` (`==>!`) goals are not walked.
+inside the loop body, and a `for`'s ITERABLE may not either (its value is
+captured once, at loop entry); `Raises` (`==>!`) goals are not walked.
 -/
 
 namespace LeanModels.Python
@@ -675,7 +693,9 @@ def parseEnvShape (e : Lean.Expr) : MetaM EnvShape := do
   let e ← whnfR e
   unless e.isAppOfArity ``FrameState.mk 2 do
     throwError "py_vcgen: state is not a literal `⟨world, locals⟩`:{indentExpr e}"
-  let world := e.getArg! 0
+  -- reducible whnf: a `{ st with locals := … }` update (the `for` rule's
+  -- body precondition) leaves the world as a projection of a constructor
+  let world ← whnfR (e.getArg! 0)
   let (elems, tail) ← parseListLit (e.getArg! 1)
   let mut entries := #[]
   for el in elems do
@@ -747,6 +767,13 @@ partial def stmtAssignedNames (s : Lean.Expr) : MetaM (Array String) := do
     let mut out := #[]
     for t in b1 ++ b2 do out := out ++ (← stmtAssignedNames t)
     return out
+  | ``Stmt.forStmt => do
+    -- the loop TARGET is assigned by the loop itself, once per element
+    let (b1, _) ← parseListLit (← arrToList (s.getArg! 2))
+    let (b2, _) ← parseListLit (← arrToList (s.getArg! 3))
+    let mut out ← fromTarget (s.getArg! 0)
+    for t in b1 ++ b2 do out := out ++ (← stmtAssignedNames t)
+    return out
   | _ => return #[]
 
 /-- Does the statement contain a `break` at its own loop level (recursing
@@ -762,9 +789,12 @@ partial def stmtHasBreak (s : Lean.Expr) : MetaM Bool := do
     (b1 ++ b2).anyM stmtHasBreak
   | _ => return false
 
-/-- All `while` statements in a statement list, in source order (recursing
-through `if` branches and loop bodies) — the loop⇄clause index, robust
-across `if`-forks re-walking the same loop. -/
+/-- All loop statements (`while` and `for`) in a statement list, in source
+order (recursing through `if` branches and loop bodies) — the loop⇄clause
+index, robust across `if`-forks re-walking the same loop. `inv` clauses are
+consumed by every loop here; `dec` clauses by the `while`s only (a `for`'s
+element list is structurally decreasing, so it has no measure) — see
+`VCCtx.decIndex`. -/
 partial def collectLoops (ss : Array Lean.Expr) : MetaM (Array Lean.Expr) := do
   let mut out := #[]
   for s in ss do
@@ -774,6 +804,10 @@ partial def collectLoops (ss : Array Lean.Expr) : MetaM (Array Lean.Expr) := do
     | ``Stmt.whileLoop =>
       out := out.push s
       let (b, _) ← parseListLit (← arrToList (s.getArg! 1))
+      out := out ++ (← collectLoops b)
+    | ``Stmt.forStmt =>
+      out := out.push s
+      let (b, _) ← parseListLit (← arrToList (s.getArg! 2))
       out := out ++ (← collectLoops b)
     | ``Stmt.ifStmt =>
       let (b1, _) ← parseListLit (← arrToList (s.getArg! 1))
@@ -820,7 +854,11 @@ structure PostTags where
 structure VCCtx where
   pack : SimpPack
   mE : Lean.Expr
-  clauses : Array (Term × Term)
+  /-- `inv` clauses in source order — one per LOOP (`while` and `for`). -/
+  invs : Array Term
+  /-- `dec` clauses in source order — one per `while` loop (a `for` needs no
+  measure). -/
+  decs : Array Term
   /-- Optional per-loop exit clauses, keyed by 0-based loop index. -/
   exits : Array (Nat × Term)
   loops : Array Lean.Expr
@@ -831,6 +869,16 @@ structure VCCtx where
   a `break`-carrying loop gets its exit clause requested as a goal
   (`exit<i>`), mirroring `inv<i>`/`dec<i>`. -/
   delayedExits : IO.Ref (Array (Nat × Lean.Expr))
+
+/-- The `dec`-clause index of the `li`-th loop: the i-th `while` takes the
+i-th `dec`, because `for` loops consume no `dec` at all. (With no `for` in
+the function this is the identity, so every pre-`for` proof keeps its
+positional pairing.) -/
+def VCCtx.decIndex (ctx : VCCtx) (li : Nat) : MetaM Nat := do
+  let mut k := 0
+  for i in [0:li] do
+    if (← whnfR ctx.loops[i]!).isAppOf ``Stmt.whileLoop then k := k + 1
+  return k
 
 /-- `MVarId.apply`, dropping the delayed inv/dec clause metavariables from
 the returned goals (they are tracked separately and would otherwise leak
@@ -1003,16 +1051,17 @@ def closeArm (ctx : VCCtx) (g : MVarId) (at_ : ArmTag) : MetaM Unit := do
 
 /-- Statement classification for the walk. -/
 inductive StmtKind where
-  | plain | term | ctrlWhile | ctrlIf | ctrlCall
+  | plain | term | ctrlWhile | ctrlFor | ctrlIf | ctrlCall
 deriving BEq, Inhabited
 
-/-- Classify one statement: control (`while`/`if`/call-assignment),
+/-- Classify one statement: control (`while`/`for`/`if`/call-assignment),
 terminator (`return`/`break`/`continue`), or plain straight-line. -/
 def classify (s : Lean.Expr) : MetaM StmtKind := do
   let s ← whnfR s
   let .const c _ := s.getAppFn | return .plain
   match c with
   | ``Stmt.whileLoop => return .ctrlWhile
+  | ``Stmt.forStmt => return .ctrlFor
   | ``Stmt.ifStmt => return .ctrlIf
   | ``Stmt.ret | ``Stmt.brk | ``Stmt.cont => return .term
   | ``Stmt.assign => do
@@ -1470,6 +1519,43 @@ def dischargeWhileExit (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
   | none => return
   | some (_, g) => closeByShape ctx g `exit
 
+/-! ### The `for` obligation dischargers -/
+
+/-- Discharge the for rule's `hiter`: destructure the invariant, then verify
+by symbolic execution that the iterable evaluates — at the INVARIANT shape,
+not merely at the entry state — to the value list the walker read off it.
+An iterable that reads a variable the loop body assigns fails here (its
+value at the shape is symbolic), which is the intended refusal: the sequence
+is captured once, before the loop. -/
+def dischargeForIter (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  let [g] ← applyC ctx g
+      (← g.withContext (appOpt ``EvalsTo.of_eval #[none, some (mkNatLit fuelK), none, none, none, none]))
+    | throwError "py_vcgen: internal — of_eval"
+  let ctx' ← g.withContext do addFacts ctx.pack.exec (← currentFacts)
+  let r? ← try Prod.fst <$> Meta.simpGoal g ctx' ctx.pack.procs
+    catch _ => pure (some (#[], g))
+  match r? with
+  | none => return
+  | some (_, g) =>
+    unless ← tryRflClose g do
+      throwError "py_vcgen: the iterable did not evaluate to the same list at the loop invariant (does it read a variable the body assigns?):{indentExpr (← g.withContext do instantiateMVars (← g.getType))}"
+
+/-- Discharge the for rule's `hexit` (`∀ st, Inv [] st → Q.next st`):
+destructure the invariant at the EMPTY remainder and re-establish the
+loop's exit condition by shape solving. Unlike the while rule's `hexit`
+there is no negated test to normalize — a `for` exits because the elements
+ran out, which is already `Inv []`. -/
+def dischargeForExit (ctx : VCCtx) (g : MVarId) (slotNames : Array String) :
+    MetaM Unit := do
+  let (_, g) ← g.intro `env
+  let (hFv, g) ← g.intro `hI
+  let g ← destructInvHyp g hFv ((slotNames.map Name.mkSimple).push `tl)
+  closeByShape ctx g `exit
+
 /-- Discharge the `if` rule's test hypothesis from the captured evaluation,
 the captured (`Res`-valued) truthiness decision, and the two normalized
 truthiness facts. -/
@@ -1551,6 +1637,7 @@ partial def walk (ctx : VCCtx) (tags : PostTags) (g : MVarId) : TacticM Unit := 
     | some 0 =>
       match kinds[0]! with
       | .ctrlWhile => handleWhile ctx tags tg
+      | .ctrlFor => handleFor ctx tags tg
       | .ctrlIf => handleIf ctx tags tg
       | .ctrlCall => handleCall ctx tags tg
       | _ => throwError "py_vcgen: internal — classification"
@@ -1876,8 +1963,14 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
     let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
     let intTy := Lean.mkConst ``Int
+    let clause? : Option (Term × Term) ← do
+      match ctx.invs[li]?, ctx.decs[← ctx.decIndex li]? with
+      | some i, some d => pure (some (i, d))
+      | none, _ => pure none
+      | some _, none =>
+        throwError "py_vcgen: `while` loop {li+1} has an `inv` clause but no `dec` (a `while` needs its measure; only a `for` goes without)"
     let (invU, decU, binders) ← do
-      match ctx.clauses[li]? with
+      match clause? with
       | some (invT, decT) => do
         let invU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm invT none))
         let decU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm decT none))
@@ -1936,7 +2029,7 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         -- the same binders instead of silently weakening the exit fact to
         -- the bare invariant. Clause mode (an `inv`/`dec` pair given for
         -- this loop, `exit` omitted) is unchanged.
-        if ctx.clauses[li]?.isSome || !hasBrk then
+        if clause?.isSome || !hasBrk then
           pure none
         else
           match (← ctx.delayedExits.get).find? (·.1 == li) with
@@ -2099,12 +2192,296 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         splitAndHyp g2 hAllFv2 "hinv"
     walk ctx tags g2
 
+/-- Handle a `for` statement (`PyStmtTriple.forLoop`, VC2.lean): capture the
+iterable's value at the entry state and read its ELEMENT LIST off it, build
+the remainder-indexed invariant from the `inv` clause (whose FIRST binder is
+the remaining-element list — a `for` takes no `dec`, its list is
+structurally decreasing), apply the rule through `consequence`, discharge
+`hv`/`hiter`/`hexit`, walk the body once per element, and continue after the
+loop from the primed exit state.
+
+The iterable must evaluate to a boundary/value LIST at the entry state:
+`for` over a heap list (H2's live index cursor), over a generator (H4), over
+a `str` or a `range` are all outside this recipe and refuse loudly — the
+underlying rule covers the value-sequence arms, but the walker's v1 reads
+only the `.listV` one, whose elements are a `List.map` (a marshalled
+boundary list) or int literals. -/
+partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    let s ← whnfR tg.stmts[0]!
+    let tgtE := s.getArg! 0
+    let iterE := s.getArg! 1
+    let bArr := s.getArg! 2
+    let oArr := s.getArg! 3
+    let spE := s.getArg! 4
+    let (oStmts, _) ← parseListLit (← arrToList oArr)
+    unless oStmts.isEmpty do
+      throwError "py_vcgen: `for … else:` is outside the tier (the interpreter refuses it loudly — there is no rule to apply)"
+    let (bStmts, _) ← parseListLit (← arrToList bArr)
+    let some li := ctx.loops.findIdx? (· == s)
+      | throwError "py_vcgen: internal — loop not in pre-scan"
+    -- The ELEMENT LIST, read off the iterable at the entry state. Doing this
+    -- first fixes the element type, which the invariant's leading binder
+    -- needs before the invariant shape can be built.
+    let (vE, _) ← captureRun ctx.pack
+      (mkApp4 (Lean.mkConst ``evalExpr) tg.m (mkNatLit fuelK) tg.E iterE)
+    let vE' ← whnfR vE
+    unless vE'.isAppOfArity ``Run.ok 4 do
+      throwError "py_vcgen: the iterable did not evaluate at the loop's entry state:{indentExpr vE}"
+    let itV ← whnfR (vE'.getArg! 3)
+    unless itV.isAppOfArity ``RVal.listV 1 do
+      throwError "py_vcgen: `for` over{indentExpr itV}\nis outside the v1 recipe — the walker reads a boundary/value LIST (`RVal.listV`); a heap list (H2's live cursor), a generator (H4), a `str` or a `range` need `PyStmtTriple.forLoop` by hand"
+    let arrE ← whnfR (itV.getArg! 0)
+    let innerL ←
+      if arrE.isAppOfArity ``List.toArray 2 then pure (← whnfR (arrE.getArg! 1))
+      else if arrE.isAppOfArity ``Array.mk 2 then pure (← whnfR (arrE.getArg! 1))
+      else throwError "py_vcgen: internal — iterable array shape:{indentExpr arrE}"
+    let intTy := Lean.mkConst ``Int
+    let (αE, eltE, asE) ←
+      if innerL.isAppOfArity ``List.map 4 then
+        -- a MARSHALLED boundary list (`scores.map (RVal.thaw ∘ ToVal.toVal)`):
+        -- the spec-side elements and their marshalling, exactly the rule's
+        -- `elt`/`as`
+        pure (innerL.getArg! 0, innerL.getArg! 2, innerL.getArg! 3)
+      else do
+        -- a literal element list: admit it when every element is an int
+        let (elems, tl) ← parseListLit innerL
+        unless isNilTail tl do
+          throwError "py_vcgen: the iterable's element list is neither a marshalled boundary list nor a literal:{indentExpr innerL}"
+        let mut ints := #[]
+        for e in elems do
+          let e ← whnfR e
+          unless e.isAppOfArity ``RVal.int 1 do
+            throwError "py_vcgen: the iterable's literal elements must be ints (the v1 recipe):{indentExpr e}"
+          ints := ints.push (e.getArg! 0)
+        pure (intTy, Lean.mkConst ``RVal.int,
+          mkListLit' intTy ints (mkApp (Lean.mkConst ``List.nil [Level.zero]) intTy))
+    let asTy := mkApp (Lean.mkConst ``List [Level.zero]) αE
+    -- assigned slots: the body's assignments plus the loop TARGET (bound
+    -- once per element). A target that does not exist at loop entry lives
+    -- behind the symbolic tail, like any body-created variable.
+    -- (`stmtAssignedNames` on the `for` itself covers both: target + body)
+    let assigned ← stmtAssignedNames s
+    let allVars := tg.shape.entries ++ tg.shape.sets
+    let slotEntries := allVars.filter (fun p => assigned.contains p.1)
+    let slotNames := slotEntries.map (·.1)
+    let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
+    let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
+    -- the `inv` clause: leading remainder binder, then the loop's Int slots
+    let (invU, binders) ← do
+      match ctx.invs[li]? with
+      | some invT => do
+        let invU ← instantiateMVars (← Term.withSynthesize (Term.elabTerm invT none))
+        let bs := (lamBinderNames invU).map (·.toString)
+        if bs.isEmpty then
+          throwError "py_vcgen: a `for` loop's `inv` must be an explicit lambda whose FIRST binder is the remaining elements (`fun (rest : {asTy}) … => …`)"
+        for b in bs.toList.drop 1 do
+          match slotEntries.find? (·.1 == b) with
+          | none =>
+            throwError "py_vcgen: invariant variable `{b}` is not an entry-environment variable assigned in this loop (assigned at entry: {slotNames}; the FIRST binder is the remaining elements)"
+          | some (_, v) =>
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: loop variable `{b}` is not `RVal.int`-valued at loop entry"
+        pure (invU, bs.toList.drop 1 |>.toArray)
+      | none => do
+        match (← ctx.delayed.get).find? (·.1 == li) with
+        | some (_, i, _) => pure (i, slotNames)
+        | none => do
+          for (n, v) in slotEntries do
+            unless (← whnfR v).isAppOfArity ``RVal.int 1 do
+              throwError "py_vcgen: delayed clauses need Int-valued loop variables; `{n}` is not — give an explicit `inv` clause"
+          -- Same named-telescope shape as `handleWhile`'s delayed clause,
+          -- with the remaining-element list in FRONT (`rest`): the goal
+          -- reads `rest : List Int, best : Int ⊢ Prop`.
+          let mut invTy : Lean.Expr := mkSort .zero
+          for n in slotNames.reverse do
+            invTy := .forallE (Name.mkSimple n) intTy invTy .default
+          invTy := .forallE `rest asTy invTy .default
+          let invM ← mkFreshExprMVar invTy .syntheticOpaque
+          invM.mvarId!.setTag (Name.mkSimple s!"inv{li+1}")
+          ctx.clauseGoals.modify (·.push invM.mvarId!)
+          -- the `dec` slot is unused for a `for`; the pair keeps the ref shape
+          ctx.delayed.modify (·.push (li, invM, invM))
+          pure (invM, slotNames)
+    let exitInfo? : Option (Lean.Expr × Array String) ← do
+      match exitT? with
+      | some t => do
+        let u ← instantiateMVars (← Term.withSynthesize (Term.elabTerm t none))
+        let ebs := (lamBinderNames u).map (·.toString)
+        for b in ebs do
+          unless binders.contains b do
+            throwError "py_vcgen: `exit` variable `{b}` must be one of the loop's `inv` binders ({binders})"
+        pure (some (u, ebs))
+      | none =>
+        if !hasBrk then pure none
+        else if ctx.invs[li]?.isSome then
+          throwError "py_vcgen: `for` loop {li+1} carries a `break`, so it needs an `(exit{li+1} := …)` clause — the exit fact after a `break` is not the invariant at the empty remainder"
+        else
+          match (← ctx.delayedExits.get).find? (·.1 == li) with
+          | some (_, e) => pure (some (e, binders))
+          | none => do
+            let mut exTy : Lean.Expr := mkSort .zero
+            for n in binders.reverse do
+              exTy := .forallE (Name.mkSimple n) intTy exTy .default
+            let exM ← mkFreshExprMVar exTy .syntheticOpaque
+            exM.mvarId!.setTag (Name.mkSimple s!"exit{li+1}")
+            ctx.clauseGoals.modify (·.push exM.mvarId!)
+            ctx.delayedExits.modify (·.push (li, exM))
+            pure (some (exM, binders))
+    let decls : Array (Name × (Array Lean.Expr → TacticM Lean.Expr)) :=
+      (slotEntries.map (fun p =>
+        (Name.mkSimple p.1,
+         fun (_ : Array Lean.Expr) => pure (α := Lean.Expr)
+           (if binders.contains p.1 then intTy else Lean.mkConst ``RVal))))
+      |>.push (`tl, fun _ => pure envTy)
+    let (invE, rE) ← withLocalDeclsD decls fun fvs => do
+      let slotVars := fvs.extract 0 (fvs.size - 1)
+      let tailFv := fvs[fvs.size - 1]!
+      let slotVarOf (n : String) : Option Lean.Expr := do
+        let i ← slotNames.findIdx? (· == n)
+        slotVars[i]?
+      let slotVal (n : String) (v : Lean.Expr) : Lean.Expr :=
+        match slotVarOf n with
+        | some x =>
+          if binders.contains n then mkApp (Lean.mkConst ``RVal.int) x else x
+        | none => v
+      let entries' := tg.shape.entries.map (fun (n, v) => (n, slotVal n v))
+      let sets' := tg.shape.sets.map (fun (n, v) => (n, slotVal n v))
+      let shapeE := mkEnvExpr { world := tg.shape.world, entries := entries',
+                                sets := sets', tail := tailFv }
+      let clauseVars ← binders.mapM (fun b => do
+        let some x := slotVarOf b
+          | throwError "py_vcgen: internal — clause var `{b}`"
+        pure x)
+      let mkEnvEq (env : Lean.Expr) : Lean.Expr :=
+        mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env shapeE
+      let invE ← withLocalDeclD `ys asTy fun ys => do
+        withLocalDeclD `env stateTy fun env => do
+          let invApp := (mkAppN invU (#[ys] ++ clauseVars)).headBeta
+          mkLambdaFVars #[ys, env]
+            (← mkExistsNest fvs (mkAnd (mkEnvEq env) invApp))
+      let exitApp? ← exitInfo?.mapM fun (u, ebs) => do
+        let vars ← ebs.mapM fun b => do
+          let some x := slotVarOf b
+            | throwError "py_vcgen: internal — exit var `{b}`"
+          pure x
+        pure (mkAppN u vars).headBeta
+      let nilE := mkApp (Lean.mkConst ``List.nil [Level.zero]) αE
+      let rE ← withLocalDeclD `env stateTy fun env => do
+        let core := match exitApp? with
+          | some ea => ea
+          | none => (mkAppN invU (#[nilE] ++ clauseVars)).headBeta
+        mkLambdaFVars #[env] (← mkExistsNest fvs (mkAnd (mkEnvEq env) core))
+      pure (invE, rE)
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some rE, some tg.Q, some tg.stmts[0]!, some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let Q1 ← g1.withContext do
+      pure ((← instantiateMVars (← g1.getType)).getArg! 3)
+    let preE := (mkApp invE asE).headBeta
+    let consT ← appOpt ``PyStmtTriple.consequence
+      #[some tg.m, some preE, none, none, some Q1, some Q1, none, none, none]
+    let gsC ← applyC ctx g1 consT
+    let (h, hpre, hpost) ← splitConsGoals gsC
+    let gsE ← applyC ctx hpost (← mkAppM ``PyPost.Entails.rfl #[Q1])
+    unless gsE.isEmpty do throwError "py_vcgen: internal — Entails.rfl"
+    let (_, gp) ← hpre.intro `env
+    let (heqFv, gp) ← gp.intro `henv
+    let gp ← Meta.subst gp heqFv
+    closeByShape ctx gp `init
+    let fT ← appOpt ``PyStmtTriple.forLoop
+      #[some tg.m, some αE, some tgtE, some iterE, some bArr, some spE, some Q1,
+        some eltE, some invE, some (itV), some asE, none, none, none, none]
+    let gsF ← applyC ctx h fT
+    let mut hv : Option MVarId := none
+    let mut hiter : Option MVarId := none
+    let mut hexit : Option MVarId := none
+    let mut hstep : Option MVarId := none
+    for gg in gsF do
+      let cls ← gg.withContext do
+        forallTelescope (← instantiateMVars (← gg.getType)) fun _ b => do
+          let b ← instantiateMVars b
+          if b.isAppOf ``IterVals then pure 0
+          else if b.isAppOf ``EvalsTo then pure 1
+          else if b.isAppOf ``Exists then pure 3
+          else pure 2
+      if cls == 0 then hv := some gg
+      else if cls == 1 then hiter := some gg
+      else if cls == 3 then hstep := some gg
+      else hexit := some gg
+    let (some gv, some gi, some gx, some gs') := (hv, hiter, hexit, hstep)
+      | throwError "py_vcgen: internal — forLoop goals"
+    -- `hv`: the iterable's value IS a value list (`IterVals.listV`), modulo
+    -- the `toArray`/`toList` round trip
+    unless ← tryTacClose gv (← `(tactic|
+        first
+          | exact LeanModels.Python.IterVals.listV _
+          | simpa using LeanModels.Python.IterVals.listV _)) do
+      throwError "py_vcgen: internal — could not identify the iterable's element list"
+    dischargeForIter ctx gi slotNames
+    dischargeForExit ctx gx slotNames
+    -- the body, once per element
+    let bodyTags : PostTags :=
+      { next := ⟨`preserve, false⟩, ret := tags.ret, brk := ⟨`exit, false⟩,
+        cont := ⟨`preserve, false⟩, err := tags.err }
+    -- `hstep` is `∀ a rest st, Inv (a :: rest) st → ∃ env₁, …` — an ordinary
+    -- implication, not a triple: destructure the invariant hypothesis the
+    -- same way the obligation dischargers do (the triple only appears
+    -- INSIDE the existential, and is walked from there).
+    let (_, gb) ← gs'.intro `a
+    let (_, gb) ← gb.intro `rest
+    let (_, gb) ← gb.intro `st
+    let (hFv, gb) ← gb.intro `hI
+    let gb ← destructInvHyp gb hFv ((slotNames.map Name.mkSimple).push `tl)
+    -- present the invariant under the `hinv`/`hinv1`/`hinv2` names the while
+    -- path uses (residual goals are read side by side)
+    let gb ← gb.rename (← findHyp gb `hcore) `hinv
+    let gb ← splitAndHyp gb (← findHyp gb `hinv) "hinv"
+    -- bind the loop target: solve `∃ env₁, assignToH … = .ok env₁ ∧ …`
+    let gb ← gb.withContext do
+      let tgtTy ← Core.betaReduce (← instantiateMVars (← gb.getType))
+      unless tgtTy.isAppOfArity ``Exists 2 do
+        throwError "py_vcgen: internal — for body goal:{indentExpr tgtTy}"
+      let p := tgtTy.getArg! 1
+      let w ← mkFreshExprMVar envTy
+      let bodyTy ← Core.betaReduce (p.beta #[w])
+      unless bodyTy.isAppOfArity ``And 2 do
+        throwError "py_vcgen: internal — for body conjunction:{indentExpr bodyTy}"
+      let eqTy := bodyTy.getArg! 0
+      unless eqTy.isAppOfArity ``Eq 3 do
+        throwError "py_vcgen: internal — for target equation:{indentExpr eqTy}"
+      let (nf, prf) ← captureRun ctx.pack (eqTy.getArg! 1)
+      let nf' ← whnfR nf
+      unless nf'.isAppOfArity ``Res.ok 2 do
+        throwError "py_vcgen: the loop target did not bind (out-of-tier `for` target):{indentExpr nf}"
+      let e1 := nf'.getArg! 1
+      unless ← isDefEq w e1 do
+        throwError "py_vcgen: internal — for target witness"
+      let eqTy' ← instantiateMVars eqTy
+      let tripleTy ← instantiateMVars (bodyTy.getArg! 1)
+      let prf' ← mkExpectedTypeHint prf eqTy'
+      let gBody ← mkFreshExprMVar tripleTy .syntheticOpaque
+      gb.assign (← mkAppOptM ``Exists.intro
+        #[some envTy, some p, some e1,
+          some (mkApp4 (Lean.mkConst ``And.intro) eqTy' tripleTy prf' gBody)])
+      pure gBody.mvarId!
+    walk ctx bodyTags gb
+    -- after the loop, from the primed exit state
+    let primed := (slotNames.map (fun n => Name.mkSimple (n ++ "'"))).push `tl'
+    let g2 ← normalizePre ctx primed `hinv g2
+    let hInvFv2 ← findHyp g2 `hinv
+    let g2 ← splitAndHyp g2 hInvFv2 "hinv"
+    walk ctx tags g2
+
 end
 
 /-! ### The elaborator -/
 
 /-- Run the walker on the main goal (see the module docstring). -/
-def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
+def runPyVcgen (progs : Array Ident) (invs decs : Array Term)
     (exits : Array (Nat × Term)) : TacticM Unit := do
   withMainContext do
     let g ← getMainGoal
@@ -2125,7 +2502,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let args := tgt.getArg! 2
       let v := tgt.getArg! 3
       let ctx0 : VCCtx :=
-        { pack, mE := m, clauses, exits, loops := #[], residuals, clauseGoals,
+        { pack, mE := m, invs, decs, exits, loops := #[], residuals, clauseGoals,
           delayed, delayedExits }
       let (rF, prfF) ← captureRun pack
         (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
@@ -2161,7 +2538,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let m := tgt.getArg! 0
       let (ss, _) ← parseListLit (tgt.getArg! 2)
       let ctx : VCCtx :=
-        { pack, mE := m, clauses, exits, loops := ← collectLoops ss, residuals,
+        { pack, mE := m, invs, decs, exits, loops := ← collectLoops ss, residuals,
           clauseGoals, delayed, delayedExits }
       walk ctx topTags g
     else if tgt.isAppOfArity ``Exists 2 then
@@ -2197,7 +2574,7 @@ def runPyVcgen (progs : Array Ident) (clauses : Array (Term × Term))
       let m := c.getArg! 0
       let fnameE := c.getArg! 1
       let ctx0 : VCCtx :=
-        { pack, mE := m, clauses, exits, loops := #[], residuals, clauseGoals,
+        { pack, mE := m, invs, decs, exits, loops := #[], residuals, clauseGoals,
           delayed, delayedExits }
       let (rF, prfF) ← captureRun pack
         (mkApp2 (Lean.mkConst ``findFunction) m fnameE)
@@ -2326,16 +2703,21 @@ elab "py_vcgen" "[" progs:ident,+ "]" cls:pyVcgenClause* : tactic => do
       else if s.startsWith "dec" then decs := decs.push t
       else throwErrorAt id "py_vcgen: clause labels must start with `inv`, `dec` or `exit`"
     | _ => throwUnsupportedSyntax
-  unless invs.size == decs.size do
-    throwError "py_vcgen: {invs.size} `inv` clause(s) but {decs.size} `dec` clause(s)"
-  runPyVcgen progs.getElems (invs.zip decs) exits
+  -- `inv` is per LOOP, `dec` per `while` (a `for` is structurally
+  -- decreasing), so the two counts agree only in a `for`-free function;
+  -- a surplus of `dec`s is always a mistake.
+  unless decs.size ≤ invs.size do
+    throwError "py_vcgen: {invs.size} `inv` clause(s) but {decs.size} `dec` clause(s) (every `dec` belongs to a `while`, which also takes an `inv`)"
+  runPyVcgen progs.getElems invs decs exits
 
 /-! ## Smoke tests
 
 A straight-line function (walker closes outright), a countdown loop in
-clause form, and the same loop in delayed-clause form. `#py_check` pins the
-concrete runs (non-vacuity). Heavier shapes (nested loops with break, env
-growth, calls) are exercised by the validation gallery. -/
+clause form, and the same loop in delayed-clause form; then the two `for`
+shapes — a whole-list fold and a `break`-carrying cutoff loop, both SYMBOLIC
+(every int list, not one). `#py_check` pins the concrete runs (non-vacuity).
+Heavier shapes (nested loops with break, env growth, calls) are exercised by
+the validation gallery. -/
 
 section SmokeTest
 
@@ -2366,18 +2748,64 @@ private def cdFn : FunctionDefn where
     .ret (some (.name "i" vSp)) vSp]
   span := vSp
 
-private def vcgenM : Module := { functions := #[slFn, cdFn], topLevel := #[] }
+/-- `def sm(xs): t = 0 ⏎ for x in xs: t = t + x ⏎ return t` -/
+private def smFn : FunctionDefn where
+  name := "sm"
+  params := #[⟨"xs", vSp, Option.none⟩]
+  argsOk := true
+  body := #[
+    .assign #[.name "t" vSp] (.constant (.int 0) vSp) vSp,
+    .forStmt (.name "x" vSp) (.name "xs" vSp)
+      #[.assign #[.name "t" vSp]
+          (.binOp (.name "t" vSp) .add (.name "x" vSp) vSp) vSp]
+      #[] vSp,
+    .ret (some (.name "t" vSp)) vSp]
+  span := vSp
+
+/-- `def ct(xs, g): b = 0 ⏎ for x in xs: b = b + x ⏎ if g <= b: break ⏎ return b` -/
+private def ctFn : FunctionDefn where
+  name := "ct"
+  params := #[⟨"xs", vSp, Option.none⟩, ⟨"g", vSp, Option.none⟩]
+  argsOk := true
+  body := #[
+    .assign #[.name "b" vSp] (.constant (.int 0) vSp) vSp,
+    .forStmt (.name "x" vSp) (.name "xs" vSp)
+      #[.assign #[.name "b" vSp]
+          (.binOp (.name "b" vSp) .add (.name "x" vSp) vSp) vSp,
+        .ifStmt (.compare (.name "g" vSp) #[.ltE] #[.name "b" vSp] vSp)
+          #[.brk vSp] #[] vSp]
+      #[] vSp,
+    .ret (some (.name "b" vSp)) vSp]
+  span := vSp
+
+private def vcgenM : Module :=
+  { functions := #[slFn, cdFn, smFn, ctFn], topLevel := #[] }
+
+/-- Spec-side fold, in the loop's own argument order (the `for` analogue of
+`cd`'s countdown: the model the theorem is proved AGAINST). -/
+private def sumFrom : List Int → Int → Int
+  | [], t => t
+  | x :: rest, t => sumFrom rest (t + x)
+
+/-- Spec-side fold with a fail-soft cutoff — the `break` shape. -/
+private def cutFrom (g : Int) : List Int → Int → Int
+  | [], b => b
+  | x :: rest, b => if g ≤ b + x then b + x else cutFrom g rest (b + x)
 
 #py_check vcgenM.sl(3) = 21
 #py_check vcgenM.cd(5) = 0
+#py_check vcgenM.sm(([1, 2, 3] : List PyInt)) = 6
+#py_check vcgenM.ct(([1, 2, 3] : List PyInt), 4) = 6
+#py_check vcgenM.ct(([5, 1] : List PyInt), 4) = 5
+#py_check vcgenM.ct(([1, 2] : List PyInt), 99) = 3
 
 /-- Straight-line: the walker closes the goal with no residuals. -/
 example : CallsTo vcgenM "sl" #[.int 3] (.int 21) := by
-  py_vcgen [vcgenM, slFn, cdFn]
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
 
 /-- Clause form: only arithmetic residuals remain. -/
 example : CallsTo vcgenM "cd" #[.int 5] (.int 0) := by
-  py_vcgen [vcgenM, slFn, cdFn] (inv := fun (i : Int) => 0 ≤ i)
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn] (inv := fun (i : Int) => 0 ≤ i)
                     (dec := fun (i : Int) => i.toNat)
   all_goals omega
 
@@ -2386,7 +2814,7 @@ loop variable `i` as a named context binder (`i : Int ⊢ Prop` resp.
 `⊢ Nat`) — closed with a bare proposition/measure, no lambda — then the
 same residuals. -/
 example : CallsTo vcgenM "cd" #[.int 3] (.int 0) := by
-  py_vcgen [vcgenM, slFn, cdFn]
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
   case inv1 => exact 0 ≤ i
   case dec1 => exact i.toNat
   all_goals omega
@@ -2395,9 +2823,37 @@ example : CallsTo vcgenM "cd" #[.int 3] (.int 0) := by
 with a marshalled (`PyInt`) binder — the surface elaboration puts
 `ToVal.toVal v` in the result slot — walks end-to-end, through a loop. -/
 example : ∃ v : PyInt, vcgenM.cd(5) ==> v ∧ 0 ≤ v := by
-  py_vcgen [vcgenM, slFn, cdFn] (inv := fun (i : Int) => 0 ≤ i)
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn] (inv := fun (i : Int) => 0 ≤ i)
                     (dec := fun (i : Int) => i.toNat)
   all_goals omega
+
+/-- **`for`, symbolic**: for EVERY int list, `sm(xs)` folds it. The clause is
+an `inv` ALONE — no `dec`: a `for`'s element list is structurally
+decreasing, so there is no measure to invent. Its first binder is the
+REMAINING elements. -/
+example (xs : List PyInt) : vcgenM.sm(xs) ==> sumFrom xs 0 := by
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
+    (inv := fun (rest : List Int) (t : Int) => sumFrom xs 0 = sumFrom rest t)
+  all_goals grind [sumFrom]
+
+/-- **`for` with `break`**, symbolic: the fail-soft cutoff shape (sunfish's
+`bound` loop in miniature). A `break` makes the exit fact more than "the
+invariant at the empty remainder", so an `exit` clause is REQUIRED — the
+break site must establish it with its branch fact in scope. -/
+example (xs : List PyInt) (g : PyInt) : vcgenM.ct(xs, g) ==> cutFrom g xs 0 := by
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
+    (inv := fun (rest : List Int) (b : Int) => cutFrom g xs 0 = cutFrom g rest b)
+    (exit := fun (b : Int) => cutFrom g xs 0 = b)
+  all_goals grind [cutFrom]
+
+/-- Delayed-clause form for a `for`: only `inv1` is requested (no `dec1`),
+with the remaining-element list as the leading named binder `rest`; the
+`break` adds `exit1`. -/
+example (xs : List PyInt) (g : PyInt) : vcgenM.ct(xs, g) ==> cutFrom g xs 0 := by
+  py_vcgen [vcgenM, slFn, cdFn, smFn, ctFn]
+  case inv1 => exact cutFrom g xs 0 = cutFrom g rest b
+  case exit1 => exact cutFrom g xs 0 = b
+  all_goals grind [cutFrom]
 
 end SmokeTest
 

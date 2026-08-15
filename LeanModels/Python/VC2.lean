@@ -250,6 +250,215 @@ theorem PyTriple.whileLoop {m : Module} {test : Expr} {body : Array Stmt}
     PyTriple m Inv [.whileLoop test body #[] sp] Q :=
   PyTriple.single (PyStmtTriple.whileLoop Inv μ tv htest htv hexit hbody)
 
+/-! ## The for rule
+
+`for` is the while rule MINUS the measure. The iterated values are captured
+before the loop begins (`execFor` — one `evalExpr` on the iterable, then a
+list that only ever shrinks), so the invariant is INDEXED BY THE REMAINING
+ELEMENTS and termination is structural: no `dec` clause, no measure
+obligation, no `htv`. What is left over the while rule is the target
+binding, which is the loop's own assignment and lives inside the body's
+precondition (`assignToH` — plain names and tuple-unpacking targets, the
+same tier as an ordinary assignment).
+
+The `.ref` arm of `for` (H2's live index cursor, `execForList`) and the
+generator arm (`execForGen`) are deliberately NOT here: they are different
+recursion points with a different observational story (mutation during
+iteration), and a rule that quietly covered them would be claiming a
+snapshot semantics the interpreter does not have. -/
+
+/-- The value-sequence arms of `for`'s iterable dispatch: iterating the
+value `v` runs `execFor` over exactly `xs`. Immutable sources only — a
+snapshot IS the live semantics for each of these (`.listV`/`.tuple`/
+`.ntuple` are value containers, a `str` iterates its code points), which is
+what makes a remaining-elements invariant faithful. -/
+inductive IterVals : RVal → List RVal → Prop where
+  /-- A boundary/value list. -/
+  | listV (xs : Array RVal) : IterVals (.listV xs) xs.toList
+  /-- A tuple. -/
+  | tuple (xs : Array RVal) : IterVals (.tuple xs) xs.toList
+  /-- A namedtuple instance (iterates its fields, as CPython's does). -/
+  | ntuple (n : String) (fs : Array String) (xs : Array RVal) :
+      IterVals (.ntuple n fs xs) xs.toList
+  /-- A `str` iterates its code points (H5 iteration). -/
+  | str (s : String) : IterVals (.str s) (strCharVals s)
+
+/-- The for rule's engine, at the `execFor` level: from an invariant indexed
+by the REMAINING elements, some fuel threshold lands the whole loop in the
+arm `Q` prescribes. Structural induction on the element list — the one real
+simplification over `execWhile_of_invariant`, which needs a measure. The
+body's `brk`/`ret`/`err` escapes are routed to `Q`'s arms exactly as there
+(`brk` into `Q.next`: a `for`'s `break` skips the — refused — `orelse`).
+Instantiate directly when the loop occurrence is already an `execFor` term,
+e.g. after hand-unrolling an iteration.
+
+The elements are SPEC-side (`α`) behind a marshalling `elt`: a Python loop
+over a boundary list of ints wants its invariant over `List Int`, not over
+`List RVal` with an injectivity side-condition at every step. `elt := id`
+recovers the raw form. -/
+theorem execFor_of_invariant {m : Module} {α : Type} {target : Expr}
+    {body : List Stmt} {Q : PyPost} (elt : α → RVal)
+    (Inv : List α → FrameState → Prop)
+    (hexit : ∀ st, Inv [] st → Q.next st)
+    (hstep : ∀ a rest st, Inv (a :: rest) st →
+      ∃ env₁, assignToH st.world.heap st.locals target (elt a) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = { st with locals := env₁ }) body
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    ∀ as st, Inv as st →
+      ∃ t, ∀ F ≥ t, Q.holds (execFor m F st target (as.map elt) body) := by
+  intro as
+  induction as with
+  | nil =>
+    intro st hI
+    refine ⟨1, fun F hF => ?_⟩
+    obtain ⟨F', rfl, _⟩ := succ_le_dest hF
+    rw [List.map_nil, execFor.eq_2]
+    exact hexit st hI
+  | cons x rest ih =>
+    intro st hI
+    obtain ⟨env₁, hasg, hb⟩ := hstep x rest st hI
+    rw [List.map_cons]
+    obtain ⟨r, tb, hr, hrun⟩ := hb.exec (st := { st with locals := env₁ }) rfl
+    cases r with
+    | ok st' flow =>
+      cases flow with
+      | next =>
+        -- fell through: the tail runs from the same invariant, one element down
+        obtain ⟨tf, hf⟩ := ih st' hr
+        have h0 := hf tf (Nat.le_refl tf)
+        have hpin := execFor_mono rfl (PyPost.holds_ne_timeout h0)
+        refine ⟨tb + tf + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execFor.eq_3, hasg]
+        simp only [Run.liftRes_ok, Run.ok_bind]
+        rw [hrun F' (by omega)]
+        simp only [Run.ok_bind]
+        rw [hpin F' (by omega)]
+        exact h0
+      | cont =>
+        -- `continue` steps to the next element: an iteration like `next`
+        obtain ⟨tf, hf⟩ := ih st' hr
+        have h0 := hf tf (Nat.le_refl tf)
+        have hpin := execFor_mono rfl (PyPost.holds_ne_timeout h0)
+        refine ⟨tb + tf + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execFor.eq_3, hasg]
+        simp only [Run.liftRes_ok, Run.ok_bind]
+        rw [hrun F' (by omega)]
+        simp only [Run.ok_bind]
+        rw [hpin F' (by omega)]
+        exact h0
+      | brk =>
+        refine ⟨tb + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execFor.eq_3, hasg]
+        simp only [Run.liftRes_ok, Run.ok_bind]
+        rw [hrun F' (by omega)]
+        simpa using hr
+      | ret v =>
+        refine ⟨tb + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execFor.eq_3, hasg]
+        simp only [Run.liftRes_ok, Run.ok_bind]
+        rw [hrun F' (by omega)]
+        simpa using hr
+    | exn st' e =>
+      refine ⟨tb + 1, fun F hF => ?_⟩
+      obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+      rw [execFor.eq_3, hasg]
+      simp only [Run.liftRes_ok, Run.ok_bind]
+      rw [hrun F' (by omega)]
+      simpa using hr
+    | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
+    | unsupported msg => exact hr.elim
+
+/-- One `for` statement, given the iterable's value, IS the `execFor` loop
+over that value's elements — the dispatch, arm by arm. (Stated separately so
+the rule below never has to `cases` an `IterVals` whose index already
+appears in its other hypotheses.) -/
+theorem IterVals.forStmt_eq {m : Module} {v : RVal} {xs : List RVal}
+    (hv : IterVals v xs) {fuel : Nat} {st : FrameState} {target iter : Expr}
+    {body : Array Stmt} {sp : Span}
+    (hev : evalExpr m fuel st iter = .ok st v) :
+    execStmt m (fuel + 1) st (.forStmt target iter body #[] sp)
+      = execFor m fuel st target xs body.toList := by
+  cases hv <;> simp [execStmt, hev]
+
+/-- **The for rule** in the triple vocabulary: from an invariant indexed by
+the remaining elements, the iterable's evaluation (`hiter`, one `EvalsTo`
+from the ENTRY state — the sequence is captured once), its value-sequence
+dispatch (`hv`), the exit fact at the empty remainder, and a body triple
+whose precondition is the state with the target bound to the next element,
+the `for` statement's triple follows. Restriction: `orelse = #[]` (`for …
+else` is outside the tier — the interpreter refuses it loudly). -/
+theorem PyStmtTriple.forLoop {m : Module} {α : Type} {target iter : Expr}
+    {body : Array Stmt} {sp : Span} {Q : PyPost} (elt : α → RVal)
+    (Inv : List α → FrameState → Prop) (v : RVal) (as : List α)
+    (hv : IterVals v (as.map elt))
+    (hiter : ∀ st, Inv as st → EvalsTo m st iter v)
+    (hexit : ∀ st, Inv [] st → Q.next st)
+    (hstep : ∀ a rest st, Inv (a :: rest) st →
+      ∃ env₁, assignToH st.world.heap st.locals target (elt a) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = { st with locals := env₁ }) body.toList
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    PyStmtTriple m (Inv as) (.forStmt target iter body #[] sp) Q := by
+  intro st hI
+  obtain ⟨t, ht⟩ := execFor_of_invariant elt Inv hexit hstep as st hI
+  obtain ⟨ti, hi⟩ := (hiter st hI).at_least
+  refine ⟨t + ti + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  rw [hv.forStmt_eq (hi F' (by omega))]
+  exact ht F' (by omega)
+
+/-- List-level singleton form of the for rule (a loop standing alone as a
+statement list); for a loop in mid-list position feed
+`PyStmtTriple.forLoop` to `PyTriple.seq` instead. -/
+theorem PyTriple.forLoop {m : Module} {α : Type} {target iter : Expr}
+    {body : Array Stmt} {sp : Span} {Q : PyPost} (elt : α → RVal)
+    (Inv : List α → FrameState → Prop) (v : RVal) (as : List α)
+    (hv : IterVals v (as.map elt))
+    (hiter : ∀ st, Inv as st → EvalsTo m st iter v)
+    (hexit : ∀ st, Inv [] st → Q.next st)
+    (hstep : ∀ a rest st, Inv (a :: rest) st →
+      ∃ env₁, assignToH st.world.heap st.locals target (elt a) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = { st with locals := env₁ }) body.toList
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    PyTriple m (Inv as) [.forStmt target iter body #[] sp] Q :=
+  PyTriple.single (PyStmtTriple.forLoop elt Inv v as hv hiter hexit hstep)
+
+/-- The int-list instance the `py_vcgen` walker drives: a `for` over a
+boundary list of ints, invariant over `List Int`. (`IterVals` is discharged
+by `listV`; the `toArray`/`toList` round trip is definitional.) -/
+theorem PyStmtTriple.forLoopInt {m : Module} {target iter : Expr}
+    {body : Array Stmt} {sp : Span} {Q : PyPost}
+    (Inv : List Int → FrameState → Prop) (is : List Int)
+    (hiter : ∀ st, Inv is st →
+      EvalsTo m st iter (.listV (is.map RVal.int).toArray))
+    (hexit : ∀ st, Inv [] st → Q.next st)
+    (hstep : ∀ i rest st, Inv (i :: rest) st →
+      ∃ env₁, assignToH st.world.heap st.locals target (.int i) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = { st with locals := env₁ }) body.toList
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    PyStmtTriple m (Inv is) (.forStmt target iter body #[] sp) Q :=
+  PyStmtTriple.forLoop RVal.int Inv _ is
+    (by simpa using IterVals.listV (is.map RVal.int).toArray) hiter hexit hstep
+
 /-! ## Interprocedural rules -/
 
 /-- A call *expression* evaluates to the thaw of the callee's public

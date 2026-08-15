@@ -82,9 +82,8 @@ theorem sortedVal_int_list (l : List Int) :
 
 /-! ## Pure list lemmas (getD access, sortedness monotonicity, counting) -/
 
-/-- `l.getD n 0 = l[n]` at an in-range index (bisect precedent). -/
-theorem getD_eq_getElem (l : List Int) (n : Nat) (h : n < l.length) :
-    l.getD n 0 = l[n] := (List.getElem_eq_getD 0).symm
+-- `getD_eq_getElem` is the SHARED spec-side lemma now (VCTactic.lean
+-- §marshalled-list indexing); it was copied here from `bench_bisect`.
 
 /-- Sorted (`Pairwise (· ≤ ·)`) lists are monotone under `getD`-indexing
 (bisect's `sorted_getD`, copied — the shared home is a later refactor). -/
@@ -97,14 +96,15 @@ theorem sorted_getD {xs : List Int} (hs : List.Pairwise (· ≤ ·) xs)
     rw [getD_eq_getElem _ _ hi, getD_eq_getElem _ _ hj]
     exact this
   · subst h; exact Int.le_refl _
-/-- Indexing an int-marshalled list at an in-range index, in the
-`getElem?` normal form the symbolic run leaves behind (simp normalizes
-both `Array.getD` and `List.getD` to `·[·]?`; bisect's `arrVal_getElem`
-is the `ToVal.toVal`-mapped twin). Unbounded it would be FALSE — out of
-range the left side is `Val.none`, the right `Val.int 0`. -/
+/-- This example's marshalling of the shared subscript-read lemma
+(VCTactic.lean §marshalled-list indexing): `RVal.int` mapped directly, and
+the right-hand side in the `Option.getD` form this file's residuals carry.
+Unbounded it would be FALSE — out of range the left side is `RVal.none`,
+the right `RVal.int 0`. -/
 theorem arrVal_getElem (xs : List Int) (n : Nat) (h : n < xs.length) :
     (Option.map RVal.int xs[n]?).getD RVal.none = RVal.int (xs[n]?.getD 0) := by
-  rw [List.getElem?_eq_getElem h]; rfl
+  rw [map_getElem?_getD RVal.int RVal.none xs n h, List.getElem?_eq_getElem h]
+  rfl
 
 /-- A list all of whose elements satisfy `p` counts them all. -/
 theorem countP_of_all {p : Int → Bool} :

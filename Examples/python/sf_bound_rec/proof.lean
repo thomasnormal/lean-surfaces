@@ -40,19 +40,10 @@ def _root_.sfSearchMoves (gamma : Int) : List Int → Int → Int
     if gamma ≤ max best s then max best s
     else sfSearchMoves gamma rest (max best s)
 
-/-- `l.getD n 0 = l[n]` at an in-range index (bisect precedent, copied). -/
-private theorem getD_eq_getElem (l : List Int) (n : Nat) (h : n < l.length) :
-    l.getD n 0 = l[n] := (List.getElem_eq_getD 0).symm
-
-/-- Indexing an int-marshalled list at an in-range index, in the
-`getElem?` normal form the symbolic run leaves behind (bisect's
-`arrVal_getElem`, copied; here in `getElem` form — py_simp's set
-normalizes `getD` to `getElem` at an in-range index). -/
-private theorem arrVal_getElem (a : List Int) (n : Nat) (h : n < a.length) :
-    (Option.map (RVal.thaw ∘ ToVal.toVal) a[n]?).getD RVal.none
-      = RVal.int a[n] := by
-  rw [List.getElem?_eq_getElem h]
-  rfl
+-- `getD_eq_getElem` and `arrVal_getElem` (the `getElem?` normal form a
+-- symbolic subscript read leaves behind) are the SHARED spec-side lemmas
+-- (VCTactic.lean §marshalled-list indexing) — they were copied here, into
+-- `bench_bisect` and into `bench_statistics` until the family was promoted.
 
 /-- The guard exit: past the end of `scores` the run returns `best`. -/
 private theorem bound_rec_exit (scores : List PyInt) (gamma i best : PyInt)

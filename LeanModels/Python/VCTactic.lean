@@ -193,6 +193,49 @@ theorem Env.set_set {α} (e : List (String × α)) (k : String) (v w : α) :
     · have hk' : (kk == k) = false := by simpa using hk
       simp [Env.set, hk', ih]
 
+/-! ## Marshalled-list indexing (spec-side)
+
+The shape every symbolic subscript read leaves in a residual goal: the
+interpreter reads a boundary list through `getElem?` and MAPS the
+marshalling over the result, defaulting when out of range. Three example
+proofs each carried their own copy of this lemma (`arrVal_getElem` in
+`bench_bisect`, `bench_statistics`, `sf_bound_rec`, plus two copies of the
+`getD`/`getElem` bridge); the content lives here now, and each site is one
+instantiation. -/
+
+/-- Mapping over an IN-RANGE `getElem?` and defaulting is the map applied at
+the element. Unbounded this is FALSE: out of range the left side is `d` and
+the right side is `f` of nothing. -/
+theorem map_getElem?_getD {α β : Type} (f : α → β) (d : β) (l : List α)
+    (n : Nat) (h : n < l.length) :
+    (Option.map f l[n]?).getD d = f l[n] := by
+  rw [List.getElem?_eq_getElem h]; rfl
+
+/-- The `getD`/`getElem` bridge at an in-range index, general form (core
+states it the other way round). -/
+theorem getD_eq_getElem_gen {α : Type} (l : List α) (n : Nat) (d : α)
+    (h : n < l.length) : l.getD n d = l[n] :=
+  (List.getElem_eq_getD d).symm
+
+/-- The `getD`/`getElem` bridge on an int list at the `0` default — the
+signature the example proofs already call (`getD_eq_getElem a n h`). -/
+theorem getD_eq_getElem (l : List Int) (n : Nat) (h : n < l.length) :
+    l.getD n 0 = l[n] := getD_eq_getElem_gen l n 0 h
+
+/-- The `arrVal_getElem` family at the surface marshalling, `getElem`
+form. -/
+theorem arrVal_getElem (l : List Int) (n : Nat) (h : n < l.length) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal) l[n]?).getD RVal.none
+      = RVal.int l[n] :=
+  map_getElem?_getD _ _ l n h
+
+/-- The same, `getD` form (what a loop invariant carrying `a.getD n 0`
+needs). -/
+theorem arrVal_getD (l : List Int) (n : Nat) (h : n < l.length) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal) l[n]?).getD RVal.none
+      = RVal.int (l.getD n 0) := by
+  rw [arrVal_getElem l n h, getD_eq_getElem l n h]
+
 /-! ## Run splicing -/
 
 /-- Append two decided runs: statements that fell through (`.next`) followed

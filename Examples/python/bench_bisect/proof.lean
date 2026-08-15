@@ -461,14 +461,11 @@ theorem bisect_left_partial (xs : List PyInt) (x : PyInt)
 the prover's verbatim claim, the deterministic `takeWhile` forms are the
 adaptation-time strengthening recorded in docs/benchmark.md) -/
 
-theorem getD_eq_getElem (a : List Int) (n : Nat) (h : n < a.length) : a.getD n 0 = a[n] := by
-  rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h]; rfl
-
-theorem arrVal_getElem (a : List Int) (n : Nat) (h : n < a.length) :
-    (Option.map (RVal.thaw ∘ ToVal.toVal) a[n]?).getD RVal.none
-      = RVal.int (a.getD n 0) := by
-  rw [List.getElem?_eq_getElem h, getD_eq_getElem a n h]
-  rfl
+-- `getD_eq_getElem` and the marshalled subscript read (`arrVal_getD` — the
+-- `getD` form; `arrVal_getElem` is its `getElem` twin) are the SHARED
+-- spec-side lemmas, VCTactic.lean §marshalled-list indexing. They were born
+-- here and were copied into `sf_bound_rec` and `bench_statistics` before the
+-- family was promoted.
 
 namespace BR
 
@@ -654,7 +651,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
   have hmid0 : (0:Int) ≤ (lo + hi) / 2 := by omega
   have hmidN : (lo + hi) / 2 < (a.length : Int) := by omega
   have hmidNat : ((lo + hi) / 2).toNat < a.length := by omega
-  have harr := arrVal_getElem a ((lo + hi) / 2).toNat hmidNat
+  have harr := arrVal_getD a ((lo + hi) / 2).toNat hmidNat
   have hmidToNat : (((lo + hi) / 2).toNat : Int) = (lo + hi) / 2 := by omega
   have hnn : ¬ (lo + hi) / 2 < 0 := by omega
   have hfe : Int.fdiv (lo + hi) 2 = (lo + hi) / 2 := Int.fdiv_eq_ediv_of_nonneg (lo + hi) (by omega)
@@ -735,7 +732,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
   have hmid0 : (0:Int) ≤ (lo + hi) / 2 := by omega
   have hmidN : (lo + hi) / 2 < (a.length : Int) := by omega
   have hmidNat : ((lo + hi) / 2).toNat < a.length := by omega
-  have harr := arrVal_getElem a ((lo + hi) / 2).toNat hmidNat
+  have harr := arrVal_getD a ((lo + hi) / 2).toNat hmidNat
   have hmidToNat : (((lo + hi) / 2).toNat : Int) = (lo + hi) / 2 := by omega
   have hnn : ¬ (lo + hi) / 2 < 0 := by omega
   have hfe : Int.fdiv (lo + hi) 2 = (lo + hi) / 2 := Int.fdiv_eq_ediv_of_nonneg (lo + hi) (by omega)

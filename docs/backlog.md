@@ -4489,3 +4489,25 @@ invariant shape must carry, per builtin the body calls, the fact
 `Env.set tl "<target>" v`, and `Env.lookup_set_ne` steps past it). Doing
 that turns sf_bound_for, sf_bound_loop and sf_bound_rec into walker
 one-liners, and it is the single highest-value next step for this tactic.
+
+## The `arrVal_getElem` family, promoted (2026-08-15)
+
+F-6 is closed: the family that lived copied in three example proofs is one
+shared set of lemmas now (VCTactic.lean §marshalled-list indexing, beside
+the other spec-side residual helpers `envInt`/`Env.lookup_set_*`).
+
+The content is one lemma — mapping over an IN-RANGE `getElem?` and
+defaulting is the map applied at the element, `map_getElem?_getD`, false
+unbounded — plus the `getD`/`getElem` bridge in the orientation residuals
+want, and the two `RVal` instances the symbolic runs actually leave
+behind (`arrVal_getElem`, `getElem` form; `arrVal_getD`, `getD` form).
+
+Call sites: `sf_bound_rec` and `bench_bisect` deleted their copies
+outright (the shared signatures are the ones they already called; bisect's
+two `arrVal` uses moved to the `getD`-form name), and `bench_statistics`
+keeps a one-line local instance because its marshalling is `RVal.int`
+applied directly with an `Option.getD` right-hand side — the local
+statement is its own, the PROOF is the shared lemma.
+
+This feeds the gen_moves work: the reference enumeration indexes a board
+list at computed offsets, so every ray step meets exactly this shape.

@@ -568,6 +568,87 @@ decision:
    arg-mutation harness rows go live and `+= `/list concat can revisit
    the heap-free-fragment question.
 
+   **CENSUSED AND STOPPED (2026-08-15) — the estimate above is WRONG, and
+   this is the record of why.** The flip was authored (the wrapper edit
+   below is real and was reverted, not lost) and then stopped at the
+   blast-radius census, BEFORE a build, because the census says this is
+   not a wire-in plus five rebases. Two measured facts:
+
+   * **The rescue lemma covers ONE of the five.** Of the five example
+     proofs only `sf_bound_for` iterates its list argument with `for`;
+     `execForList_eq_execFor_snapshot` is exactly its obstacle and
+     exactly nobody else's. `sf_bound_rec` and `bench_bisect` SUBSCRIPT
+     the argument (`indexVal` → `indexValH` through a ref, `while`
+     loops), `bench_statistics` runs it through `sorted` (`sortedVal` →
+     the ALLOCATING `sortedValH`), and `sf_bound_tree`'s argument is a
+     `Val.tuple` CONTAINING a `Val.list` (`GTree.toVal`), so the thaw
+     allocates inside a tuple. None of those four has built machinery.
+   * **The break is in the MARSHALLING NORMAL FORM, below the loops.**
+     `Surface.lean`'s `@[simp] thaw_toVal_list` normalizes a marshalled
+     list argument to `RVal.listV (…)` — the immediate form the flip
+     removes — and `asIntList_map_toVal`/`asIntList_map_thaw_comp` (the
+     bridge `bench_statistics` runs entirely through) are stated over
+     that same element shape. After the flip a list argument is `.ref a`
+     with the heap grown, so these three lemmas stop describing what the
+     boundary produces and no heap-side twin exists. Downstream of that:
+     `sf_bound_for`'s pinned world `pw := ⟨#[], …⟩` is EMPTY-heaped and
+     its loop environment binds `("scores", RVal.listV …)`; both are
+     restatements, not rewrites, and the same is true of
+     `bench_bisect`'s three loop environments and its `arr_getD` /
+     `arrVal_getElem` subscript helpers.
+
+   PRICED, in landable stages (each its own build; stage 1 is the only
+   one with no user-visible change):
+
+   1. **Heap-side marshalling normal form** — `thaw_toVal_list`'s
+      ref-shaped twin, `asIntList` at a heap list, `indexValH` and
+      `sortedValH` subscript/sort helpers at a `ToVal`-marshalled
+      argument. Pure addition, nothing flips, everything still builds.
+      This is the missing ENGINE, and the honest analogue of what
+      `execForList_eq_execFor_snapshot` did for the `for` case.
+   2. **The wrapper edit** — DECIDED SHAPE, authored 2026-08-15 and
+      recorded here so it is not re-derived: a named
+      `boundaryEntry (w : World) (args : Array Val) : World × Array RVal`
+      = `thawArgsH` on `w.heap` re-seated into `w`, shared by
+      `callFunction` and `callFunctionClock` (both keep their
+      signatures), plus `boundaryEntry_of_listFree` (on list-free
+      arguments it is `(w, RVal.thawArgs args)` — the bridge every
+      pre-flip statement rides) and `boundaryEntry_clock` (the entry
+      touches only the heap). `thawH`/`thawListH`/`thawArgsH` and
+      `boundaryEntry` join `py_simp` and `interpUnfolds`.
+   3. **The `Val.listFreeArgs` autoparam sweep** — the census's real
+      cost. Every lemma whose STATEMENT pins the public geometry at
+      `initWorld m` with `RVal.thawArgs args` needs the argument-side
+      guard its return-side twin already has (`Val.listFree v`):
+      `Surface.lean`'s `CallsTo.callsIn_frame` / `callIn_at_least`;
+      `VCTactic.lean`'s four `PyTriple.exists_callsTo*` bridges;
+      `VC2.lean`'s `callsTo_arityOk` / `toTriple` / `callsTo_iff_triple`
+      / `raises_*` family; `Obs.lean`'s `callFunction_mono`;
+      `ClockErase.lean`'s `callFunctionClock_nil`/`_ok`/`_exn`/
+      `_timeout`; `LoopTactic.lean`'s `py_begin` entry normal form;
+      `VCTests.lean`'s entry shape. Autoparams keep every existing
+      call site unchanged — list-free arguments are the norm — so this
+      stage is mechanical but wide.
+   4. **The five rebases**, in ascending cost: `sf_bound_rec`
+      (subscript only), `bench_statistics` (stage-1 lemmas), then
+      `sf_bound_for` (the rescue lemma applies once the world and
+      environment are restated), `sf_bound_tree` (nested thaw), and
+      `bench_bisect` last (947 lines, ~400 of them one block).
+   5. **The payoff**, which is real and should be stated: two harness
+      rows go from REFUSE to MATCH — `sf_hist.push` and
+      `sf_hist.rotate_scores`, today `"expect": "unsupported"` in
+      `harness/cases.json`, are the arg-mutation rows the whole flip
+      exists for. `Surface.lean`'s `py_prove_residual_guard` root list
+      must gain `execForList` in the same landing (it has `execFor` and
+      not the cursor, so a residual live-cursor goal would slip the
+      guard).
+
+   Nothing in the census contradicts the DESIGN — the flip is still the
+   right next step and `boundaryEntry` is still its shape. What the
+   census contradicts is the SIZE: stage 1 is a missing engine, not a
+   detail, and stages 3-4 are the bulk. Do not start this behind a
+   single-session budget.
+
 4. **Classes — BUILT (H3, 2026-08-08),** per docs/memory-model.md
    §class semantics: ClassDef end to end (the three sunfish ClassDef
    bodies represented), methods flattened to qualified-name functions

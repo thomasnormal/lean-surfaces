@@ -693,12 +693,22 @@ decision:
    score-negation on the shipped file, symbolic in the score AND the
    world. Remaining, recorded: membership on strs (`q in " \nPNBRQK"`
    — gen_moves), `for` over a str / `enumerate`, str unpacking,
-   `ord`/`chr` (parse/render), `sorted()` on strs; and the
-   attribute-call heapFree whitelist is still `.get`-only — extending
-   it to the pure str trio is sound (dict/list referents refuse those
-   names; a heap-free module has no classes) but needs the
-   `attrCallPlan_get_heapFree`-family lemmas generalized and the
-   `worldInv` attribute case reworked from its `attr = "get"` subst.
+   `ord`/`chr` (parse/render), `sorted()` on strs. **The attribute-call
+   heapFree whitelist is DONE (2026-08-15)** — it is no longer
+   `.get`-only. `heapFreeAttr` names the six admitted attributes
+   (`get` plus the pure str set, which had grown from the trio recorded
+   here to `swapcase`/`isupper`/`islower`/`upper`/`index`);
+   `attrCallPlan_get_heapFree` generalized to `attrCallPlan_heapFree`
+   (the mutating arms die on `heapFreeAttr_ne` instead of on literal
+   comparisons, so the proof never needs to know WHICH name it has), the
+   `worldInv` attribute case lost its `attr = "get"` subst, and its str
+   receiver arm — previously vacuous, since `strCallPlan "get"` refuses
+   — carries the five pure plans explicitly. `time` is deliberately
+   OUT (a clock read consumes a reading:
+   `isClockCall_of_heapFreeAttr`), as are `.clear` and the list
+   mutators. Proof-side only: no interpreter behaviour changes and no
+   differential verdict moves; what it buys is that a function calling
+   a pure str method can now be IN the world-preservation fragment.
    `Position.value()` on the shipped file now gates on `ord`-free
    pieces only (pst dict reads are in tier — symbolic dict-read walker
    support is the proof-side gap); `gen_moves`/`bound()` gate on

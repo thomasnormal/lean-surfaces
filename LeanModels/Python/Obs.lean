@@ -2023,9 +2023,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     (∀ (st : FrameState) (target : Expr) (a : Addr) (i : Nat) (body : List Stmt),
         Stmt.heapFreeList body = true →
       Run.OkW (·.world = st.world) (execForList m fuel st target a i body)) ∧
-    (∀ (st : FrameState) (a : Addr) (args : List Expr),
-        Expr.heapFreeList args = true →
-      Run.OkW (·.world = st.world) (execAttrCall m fuel st a "get" args)) := by
+    -- generalized 2026-08-15 from `attr = "get"` to the whole
+    -- `heapFreeAttr` whitelist (docs/backlog.md)
+    (∀ (st : FrameState) (a : Addr) (attr : String) (args : List Expr),
+        heapFreeAttr attr = true → Expr.heapFreeList args = true →
+      Run.OkW (·.world = st.world) (execAttrCall m fuel st a attr args)) := by
   induction fuel with
   | zero =>
     refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
@@ -2039,7 +2041,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     · intro w fname args w' a h; simp [callIn] at h
     · intro st target xs body _ s a h; simp [execFor] at h
     · intro st target a i body _ s' a' h; simp [execForList] at h
-    · intro st a args _ s' a' h; simp [execAttrCall] at h
+    · intro st a attr args _ _ s' a' h; simp [execAttrCall] at h
   | succ fuel ih =>
     obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihForL, ihAttrC⟩ := ih
     have wtrans : ∀ (st st₁ : FrameState), st₁.world = st.world →
@@ -2108,35 +2110,63 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           -- path; in the catch-all arms both branches are loud
           cases cf <;> try (simp only [evalExpr]; exact .ite .unsupported .unsupported)
           case «attribute» recv attr spa =>
-            -- the method tier: the FRAGMENT admits exactly `.get` (a heap
-            -- read) — hfree pins the attribute, which kills the mutating
-            -- `.append`/`.pop` branches; instance receivers dispatch to
-            -- classes, and a heap-free module HAS no classes (hm), so the
-            -- method branch is vacuous
+            -- the method tier: the FRAGMENT admits the `heapFreeAttr`
+            -- whitelist — `.get` (a heap READ) plus the PURE str methods
+            -- (2026-08-15, generalized from `.get`-only). `hfree` pins the
+            -- attribute to the whitelist, which kills every MUTATING
+            -- branch (`.clear`/`.append`/`.pop`/`.insert`); instance
+            -- receivers dispatch to classes, and a heap-free module HAS
+            -- no classes (hm), so the method branch is vacuous.
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨hkw, hattr'⟩, hrecv⟩, hargsF⟩ := hfree
-            have hattr : attr = "get" := by simpa [beq_iff_eq] using hattr'
-            subst hattr
+            obtain ⟨⟨⟨hkw, hattr⟩, hrecv⟩, hargsF⟩ := hfree
             -- pass 6: the trace-clock fork dies at its FIRST conjunct
-            -- (`"get" == "time"` — the attr test sits outside the
-            -- receiver match precisely so this is `rfl` here)
-            have hclk : isClockCall m st recv "get" = false := rfl
-            simp only [evalExpr, hkw, eq_self_iff_true, if_true, hclk,
+            -- (`attr == "time"`, and `time` is deliberately outside the
+            -- whitelist — the attr test sits outside the receiver match
+            -- precisely so this closes before the receiver is evaluated)
+            have hclk : isClockCall m st recv attr = false :=
+              isClockCall_of_heapFreeAttr hattr
+            simp only [evalExpr, hkw, if_true, hclk,
               Bool.false_eq_true, if_false]
             refine .bind (ihE st recv hrecv) fun st₁ r h₁ => ?_
             cases r <;>
               first
               | exact .unsupported
-              | exact ((ihAttrC st₁ _ cargs.toList hargsF).mono
+              | exact ((ihAttrC st₁ _ attr cargs.toList hattr hargsF).mono
                   (wtrans st st₁ h₁))
               | skip
             case ntuple tn fs xs =>
               -- heap-free: no classes ⇒ the plan never dispatches
               dsimp only
-              rcases ntupleCallPlan_heapFree hm tn fs "get" with hp | ⟨msg, hp⟩ <;>
+              rcases ntupleCallPlan_heapFree hm tn fs attr with hp | ⟨msg, hp⟩ <;>
                 rw [hp]
               · exact .exn
               · exact .unsupported
+            case str sv =>
+              -- H5 strings (2026-08-15): the PURE str methods are IN the
+              -- fragment now. Every in-tier arm is argument evaluation
+              -- followed by `Run.liftRes` on a TOTAL PURE worker —
+              -- strings are immutable VALUES, so nothing allocates and
+              -- nothing mutates — while every arity miss is an `.exn`
+              -- and every out-of-tier name a decided refusal.
+              -- All five in-tier plans have ONE shape — evaluate the
+              -- arguments, then decide purely — so one recipe closes
+              -- them: `split` opens the arity matcher (and, for
+              -- `.index`, the nested start/end `ite`), and every leaf is
+              -- a `liftRes` of a pure worker, the faithful arity `.exn`,
+              -- or a decided refusal. `split` rather than `cases` on the
+              -- argument list: the recipe must not depend on how the
+              -- 4-pattern matcher happened to compile.
+              dsimp only
+              have hvs := (ihEs st₁ cargs.toList hargsF).mono (wtrans st st₁ h₁)
+              cases strCallPlan attr <;>
+                first
+                | exact .unsupported
+                | (refine .bind hvs fun st₂ vs h₂ => ?_
+                   split <;> (try split) <;>
+                     first
+                     | exact .liftResF h₂ _
+                     | exact .exn
+                     | exact .unsupported)
           case name fname _ =>
             -- H2: `sorted` ALLOCATES its result, so the fragment excludes
             -- it (hfree carries `fname != "sorted"` — the branch is
@@ -2773,11 +2803,11 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           | cont => exact (ihForL st₂ target a (i + 1) body hbody).mono (wtrans st st₂ h₂)
           | brk => exact .okF h₂ _
           | ret v => exact .okF h₂ _
-    -- execAttrCall (H3): in a heap-free module the `.get` plan is a heap
-    -- READ or a decided refusal (`attrCallPlan_get_heapFree`)
-    · intro st a args hargs
+    -- execAttrCall (H3): in a heap-free module a WHITELISTED attribute
+    -- plan is a heap READ or a decided refusal (`attrCallPlan_heapFree`)
+    · intro st a attr args hattr hargs
       simp only [execAttrCall]
-      rcases attrCallPlan_get_heapFree hm st.world.heap a with
+      rcases attrCallPlan_heapFree hm st.world.heap a hattr with
         hp | hp | hp | ⟨msg, hp⟩ <;> rw [hp]
       · refine .bind (ihEs st args hargs) fun st₂ vs h₂ => ?_
         cases vs with

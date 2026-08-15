@@ -3246,10 +3246,12 @@ def clockRecvOk (m : Module) (st : FrameState) : Expr → Bool
 
 /-- The trace-clock admission (docs/memory-model.md §the trace clock),
 decided BEFORE the receiver evaluates. The `attr == "time"` conjunct is
-FIRST and OUTSIDE the receiver match: `isClockCall m st recv "get"`
-reduces to `false` by `rfl` even at a symbolic receiver and world, which
-is exactly what the heap-free fragment's meta-theorems (`worldInv`,
-`fuelMono`) consume. -/
+FIRST and OUTSIDE the receiver match, so the fork collapses at a SYMBOLIC
+receiver and world as soon as the attribute is known not to be `time` —
+which is exactly what the heap-free fragment's meta-theorems (`worldInv`,
+`fuelMono`) consume. `time` is deliberately outside `heapFreeAttr` (a
+clock read CONSUMES a reading, so it changes the world), which is what
+makes `isClockCall_of_heapFreeAttr` hold for every whitelisted call. -/
 def isClockCall (m : Module) (st : FrameState) (recv : Expr)
     (attr : String) : Bool :=
   attr == "time" && clockRecvOk m st recv
@@ -3524,6 +3526,44 @@ can carry a CHANGED world must be `false` here. Today: dict literals
 `k in d`, `len(d)`, `d.get(k)`, `==`, truthiness) preserve the world; loud
 and raising arms are vacuous for `.ok`-invariance. -/
 
+/-- **The attribute-CALL whitelist of the world-preservation fragment**
+(2026-08-15, docs/backlog.md — the extension past `.get`-only).
+
+Membership is decided from the attribute NAME alone, which is all syntax
+knows; soundness is then per receiver kind, and every kind is covered:
+
+* `.get` — the dict READ. The one member with a live `.ok` arm that
+  touches the heap, and it only reads (`heapGet`).
+* `swapcase`/`isupper`/`islower`/`upper`/`index` — the PURE str methods
+  (H5 strings). Strings are immutable VALUES: each arm is argument
+  evaluation followed by `Run.liftRes` on a total pure worker, so the
+  world rides through untouched.
+
+Every other receiver is vacuous for `.ok`-invariance rather than merely
+unlikely, which is why this is sound and not optimistic. On a heap
+receiver (`attrCallPlan`) the five str names miss `get`/`clear` on a
+dict, miss `append`/`pop`/`insert` on a list, and refuse outright on a
+generator/closure/set — and an INSTANCE receiver cannot dispatch at all,
+because a heap-free module has no classes (`Module.heapFree_classes`), so
+the plan is `.instAttrValue` (loud), `.attrMissing` (an exn) or
+`.dangling` (loud). On a namedtuple receiver `ntupleCallPlan_heapFree`
+gives the same. `time` is deliberately ABSENT: it is the trace-clock
+call, which CONSUMES a reading and so changes the world. -/
+def heapFreeAttr (attr : String) : Bool :=
+  attr == "get" || attr == "swapcase" || attr == "isupper"
+    || attr == "islower" || attr == "upper" || attr == "index"
+
+/-- A whitelisted attribute is not some OTHER name — the shape every
+soundness step below wants (each `attrCallPlan`/`strCallPlan` branch is
+killed by naming the literal it would need). -/
+theorem heapFreeAttr_ne {attr s : String} (ha : heapFreeAttr attr = true)
+    (hs : heapFreeAttr s = false) : ¬ ((attr == s) = true) := by
+  intro hc
+  have hEq : attr = s := eq_of_beq hc
+  subst hEq
+  rw [ha] at hs
+  simp at hs
+
 mutual
   /-- Does evaluating this expression provably preserve the world? -/
   def Expr.heapFree : Expr → Bool
@@ -3550,7 +3590,8 @@ mutual
         && (id != "print") && (id != "list") && (id != "dict")
         && Expr.heapFreeList args.toList
     | .call (.attribute recv attr _) args kwargs _ _ =>
-      kwargs.isEmpty && attr == "get" && recv.heapFree && Expr.heapFreeList args.toList
+      kwargs.isEmpty && heapFreeAttr attr && recv.heapFree
+        && Expr.heapFreeList args.toList
     | .call f args kwargs _ _ =>
       kwargs.isEmpty && f.heapFree && Expr.heapFreeList args.toList
     | .list .. => false                 -- ALLOCATES (H2)
@@ -3926,37 +3967,57 @@ theorem getClass?_heapFree {m : Module} (hm : m.heapFree = true)
   rw [List.isEmpty_iff.mp h2]
   cases i <;> rfl
 
-/-- In a heap-free module, `.get`-attribute call dispatch never reaches a
-class method or a mutating list arm: the plan is `dictGet` (a heap READ)
-or a decided refusal — `worldInv`'s attribute-call case forks on this.
-(`attr = "get"` is what the heap-free fragment pins; the two list arms
-die on the literal comparisons, the instance method arm on `getClass?`.) -/
-theorem attrCallPlan_get_heapFree {m : Module} (hm : m.heapFree = true)
-    (h : Heap) (a : Addr) :
-    attrCallPlan m h a "get" = .dictGet ∨
-    attrCallPlan m h a "get" = .instAttrValue ∨
-    attrCallPlan m h a "get" = .dangling ∨
-    (∃ msg, attrCallPlan m h a "get" = .refuse msg) := by
+/-- In a heap-free module, a WHITELISTED attribute call (`heapFreeAttr`)
+never reaches a class method or a MUTATING arm: the plan is `dictGet` (a
+heap READ — reachable only for `.get` itself) or a decided refusal —
+`worldInv`'s attribute-call case forks on this. The mutating arms die on
+the literal comparisons (no whitelisted name is `clear`/`append`/`pop`/
+`insert`), the instance method arm on `getClass?`.
+
+Generalized 2026-08-15 from the `attr = "get"` form: the whitelist is now
+six names, and the proof no longer needs to know WHICH — only that it is
+not one of the four mutators (`heapFreeAttr_ne`). -/
+theorem attrCallPlan_heapFree {m : Module} (hm : m.heapFree = true)
+    (h : Heap) (a : Addr) {attr : String} (ha : heapFreeAttr attr = true) :
+    attrCallPlan m h a attr = .dictGet ∨
+    attrCallPlan m h a attr = .instAttrValue ∨
+    attrCallPlan m h a attr = .dangling ∨
+    (∃ msg, attrCallPlan m h a attr = .refuse msg) := by
   unfold attrCallPlan
   cases Heap.get? h a with
   | none => right; right; left; rfl
   | some o =>
     cases o with
     | dict es ver =>
-      rw [if_pos (by decide : ((("get" : String) == "get") = true))]
-      left; rfl
+      by_cases hg : (attr == "get") = true
+      · rw [if_pos hg]; left; rfl
+      · rw [if_neg hg, if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "clear" = false))]
+        right; right; right; exact ⟨_, rfl⟩
     | list xs =>
-      rw [if_neg (by decide : ¬ ((("get" : String) == "append") = true)),
-          if_neg (by decide : ¬ ((("get" : String) == "pop") = true)),
-          if_neg (by decide : ¬ ((("get" : String) == "insert") = true))]
+      rw [if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "append" = false)),
+          if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "pop" = false)),
+          if_neg (heapFreeAttr_ne ha (by decide : heapFreeAttr "insert" = false))]
       right; right; right; exact ⟨_, rfl⟩
     | generator qn lo k st => right; right; right; exact ⟨_, rfl⟩
     | closure nm ps ao lo' hg ig bd cap => right; right; right; exact ⟨_, rfl⟩
     | pyset xs => right; right; right; exact ⟨_, rfl⟩
     | «instance» ci attrs =>
-      cases hv : Env.lookup attrs.toList "get" with
+      cases hv : Env.lookup attrs.toList attr with
       | some v => simp [hv]
       | none => simp [hv, getClass?_heapFree hm ci]
+
+/-- A whitelisted attribute call is never the TRACE-CLOCK call: `time` is
+deliberately outside `heapFreeAttr` (a clock read CONSUMES a reading, so
+it changes the world). This is the `isClockCall` fork `worldInv`'s
+attribute case must clear before it reaches the receiver match. -/
+theorem isClockCall_of_heapFreeAttr {m : Module} {st : FrameState}
+    {recv : Expr} {attr : String} (ha : heapFreeAttr attr = true) :
+    isClockCall m st recv attr = false := by
+  have hne : (attr == "time") = false := by
+    cases hb : attr == "time" with
+    | false => rfl
+    | true => exact absurd hb (heapFreeAttr_ne ha (by decide))
+  simp [isClockCall, hne]
 
 /-- In a heap-free module the namedtuple call plan never dispatches (no
 classes ⇒ no methods): it is a decided refusal or the faithful

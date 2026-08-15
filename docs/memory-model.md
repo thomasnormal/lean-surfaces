@@ -450,10 +450,24 @@ tier).
   (`Examples/python/sunfish/proof.lean` runs the 120-char board
   through each worker in ONE rewrite).
 * **heapFree**: the `Slice` node is in the fragment (every receiver
-  is pure or loud). Str METHOD calls conservatively LEAVE the
-  fragment — the attribute-call whitelist is still `.get`-only, like
-  every `sorted` call; extending it to the pure trio is sound and
-  recorded (docs/backlog.md).
+  is pure or loud), and since 2026-08-15 **so are the pure str
+  METHOD calls**. The attribute-call whitelist is now a named
+  predicate, `heapFreeAttr` = `get` plus
+  `swapcase`/`isupper`/`islower`/`upper`/`index`, decided from the
+  attribute NAME (all syntax knows) with soundness carried per
+  receiver kind: on a heap receiver the five str names miss
+  `get`/`clear` on a dict and `append`/`pop`/`insert` on a list and
+  refuse on a generator/closure/set, while an INSTANCE receiver
+  cannot dispatch at all in a heap-free module (no classes), so
+  `attrCallPlan_heapFree` yields a heap READ or a decided refusal;
+  on a namedtuple receiver `ntupleCallPlan_heapFree` says the same;
+  on a str receiver each arm is argument evaluation plus
+  `Run.liftRes` of a total pure worker. `time` is deliberately
+  OUTSIDE the whitelist — a trace-clock read consumes a reading, so
+  it changes the world (`isClockCall_of_heapFreeAttr` is the fork
+  `worldInv`'s attribute case clears first). `.clear` stays out
+  because it MUTATES, and every `sorted` call still leaves the
+  fragment.
 * Still loud, deliberately: str unpacking, `%`-formatting, `sorted()`
   on a str, and non-ASCII case mapping.
 * Acceptance: `Examples/python/str_lab` (every function differential);

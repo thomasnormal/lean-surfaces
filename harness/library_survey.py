@@ -294,8 +294,16 @@ def build_manifest(out_path):
 
 def run_script_batch(runner, envelopes, fuel, timeout):
     """The BODY phase: every module's top level in ONE runner process
-    (`--script-batch`). Returns ({envelope: row}, killed)."""
-    jobs_path = os.path.join(leanpy.default_cache(), "library-body-jobs.jsonl")
+    (`--script-batch`). Returns ({envelope: row}, killed).
+
+    THE JOBS FILE IS KEYED BY PID. The corpus is surveyed in disjoint chunks
+    when one process cannot own the machine long enough to finish it, and
+    those chunks run CONCURRENTLY — with a fixed filename in the shared
+    envelope cache, one chunk overwrites the jobs another chunk's runner is
+    about to read. The call phase pairs results to jobs POSITIONALLY, so a
+    same-length cross would mispair silently: a verdict attached to the wrong
+    call, which is the one failure this survey must never produce."""
+    jobs_path = os.path.join(leanpy.default_cache(), "library-body-jobs-%d.jsonl" % os.getpid())
     with open(jobs_path, "w", encoding="utf-8") as f:
         for envelope in envelopes:
             f.write(json.dumps({"path": envelope}) + "\n")
@@ -329,7 +337,7 @@ def run_call_batch(runner, jobs, fuel, timeout):
     (`--batch`). Returns a list positionally paired with `jobs`; a runner
     that dies early yields explicit `runner-error` rows for the tail, never
     a silently shortened table (harness/diff_test.py's rule)."""
-    jobs_path = os.path.join(leanpy.default_cache(), "library-call-jobs.jsonl")
+    jobs_path = os.path.join(leanpy.default_cache(), "library-call-jobs-%d.jsonl" % os.getpid())
     with open(jobs_path, "w", encoding="utf-8") as f:
         for job in jobs:
             f.write(json.dumps(job, separators=(",", ":")) + "\n")
@@ -403,6 +411,18 @@ def run_oracle(cpython, module, path, calls, max_calls, timeout, scratch):
 # ---------------------------------------------------------------------------
 # comparison
 # ---------------------------------------------------------------------------
+
+def _by_module(index):
+    """[(row, how many consecutive jobs it owns)] over the job index, which is
+    built module by module, so a module's jobs are contiguous by construction."""
+    out = []
+    for row, _fname, _i in index:
+        if out and out[-1][0] is row:
+            out[-1][1] += 1
+        else:
+            out.append([row, 1])
+    return [(row, n) for row, n in out]
+
 
 def lean_stdout(row):
     return "".join(line + "\n" for line in row.get("stdout", []))
@@ -591,8 +611,28 @@ def survey(opts):
                 jobs.append({"path": row["envelope"], "function": fn["name"],
                              "args": call["args"], "fuel": opts.call_fuel})
                 index.append((row, fn["name"], i))
+    # ONE RUNNER PROCESS PER MODULE, each with its own wall-clock bound.
+    #
+    # FUEL IS A DEPTH BOUND, NOT A TIME BOUND — measured, and it cost two full
+    # sweeps before it was understood: `fib(30)` at fuel 10000 returns 832040,
+    # because ~2.7M calls at depth 30 never approach the limit. So `fib(100)`,
+    # a perfectly ordinary row of the generated battery, runs effectively
+    # forever and never times out. With one batch for the whole corpus that
+    # single call ate the watchdog and took 239 later calls down with it. Per
+    # module, it costs its own module a loud INCOMPLETE and nothing else.
+    #
+    # The batch shape is still load-bearing WITHIN a module (never one process
+    # per row); a prebuilt binary starts in milliseconds, so per-module is the
+    # cheapest granularity that isolates a runaway.
     t1 = time.time()
-    call_results = run_call_batch(runner, jobs, opts.call_fuel, opts.batch_timeout) if jobs else []
+    call_results = []
+    if jobs:
+        start = 0
+        for _, group in _by_module(index):
+            end = start + group
+            call_results.extend(run_call_batch(runner, jobs[start:end], opts.call_fuel,
+                                               opts.module_timeout))
+            start = end
     call_secs = time.time() - t1
 
     for (row, fname, i), model in zip(index, call_results):
@@ -614,8 +654,10 @@ def survey(opts):
         calls = row.get("calls", [])
         matched = [c for c in calls if c["verdict"] == "MATCH"]
         diverged = [c for c in calls if c["verdict"] == "DIVERGE"]
+        unrun = [c for c in calls if c["verdict"] == "RUNNER"]
         row["ncalls"] = len(calls)
         row["nmatched"] = len(matched)
+        row["nunrun"] = len(unrun)
         skipped = [f for f in row["oracle"].get("functions", []) if f.get("skipped")]
         row["nfunctions"] = len(row["oracle"].get("functions", []))
         row["nskipped"] = len(skipped)
@@ -624,6 +666,15 @@ def survey(opts):
             row["detail"] = "%d of %d calls DIVERGED: %s" % (
                 len(diverged), len(calls),
                 "; ".join("%s%s" % (c["function"], c["detail"]) for c in diverged[:3]))
+        elif unrun:
+            # The battery did not finish. PARTIAL would be a lie in the one
+            # direction that matters: it reads as "the model answered and some
+            # answers were wrong", when in fact these calls never ran. An
+            # unfinished battery gets its own verdict and its own count.
+            row["verdict"] = "INCOMPLETE"
+            row["detail"] = ("%d of %d calls never ran (the runner batch did not finish); "
+                             "%d of the %d that did agree"
+                             % (len(unrun), len(calls), len(matched), len(calls) - len(unrun)))
         elif not calls:
             row["verdict"] = "BODY-ONLY"
             row["detail"] = ("body matched; no drivable public function (%d public, %d skipped)"
@@ -664,8 +715,8 @@ def wall_of(msg):
 
 
 def report(rows, stats):
-    order = ["VERIFIED", "BODY-ONLY", "PARTIAL", "REFUSED", "DIVERGED", "TIMEOUT",
-             "ORACLE", "RUNNER", "HUNG", "EXTRACT", "MISSING"]
+    order = ["VERIFIED", "BODY-ONLY", "PARTIAL", "REFUSED", "DIVERGED", "INCOMPLETE",
+             "TIMEOUT", "ORACLE", "RUNNER", "HUNG", "EXTRACT", "MISSING"]
     counts = {}
     for row in rows:
         counts[row.get("verdict", "?")] = counts.get(row.get("verdict", "?"), 0) + 1
@@ -680,8 +731,22 @@ def report(rows, stats):
     for verdict in sorted(set(counts) - set(order)):
         print("  %-10s %4d" % (verdict, counts[verdict]))
 
+    calls = [c for row in rows for c in row.get("calls", [])]
+    if calls:
+        hist = {}
+        for call in calls:
+            hist[call["verdict"]] = hist.get(call["verdict"], 0) + 1
+        print("\nBATTERY, per call (%d rows)" % len(calls))
+        for verdict, n in sorted(hist.items(), key=lambda kv: (-kv[1], kv[0])):
+            print("  %-13s %5d" % (verdict, n))
+        if hist.get("RUNNER"):
+            print("  *** %d calls NEVER RAN: the runner batch did not finish. This "
+                  "scoreboard is INCOMPLETE — raise --batch-timeout and re-run. ***"
+                  % hist["RUNNER"])
+
     for title, want in (("VERIFIED", "VERIFIED"), ("BODY-ONLY", "BODY-ONLY"),
-                        ("PARTIAL", "PARTIAL"), ("DIVERGED", "DIVERGED")):
+                        ("PARTIAL", "PARTIAL"), ("INCOMPLETE — the battery did not finish",
+                                                 "INCOMPLETE"), ("DIVERGED", "DIVERGED")):
         sel = [r for r in rows if r.get("verdict") == want]
         if not sel:
             continue
@@ -780,16 +845,50 @@ def main(argv=None):
     parser.add_argument("--cpython", default=os.environ.get("LEANPY_CPYTHON")
                         or leanpy_survey.default_oracle())
     parser.add_argument("--oracle-timeout", type=float, default=60.0)
-    parser.add_argument("--batch-timeout", type=float, default=900.0)
+    parser.add_argument("--batch-timeout", type=float, default=900.0,
+                        help="wall-clock bound on the BODY batch (the whole corpus at once)")
+    parser.add_argument("--module-timeout", type=float, default=120.0,
+                        help="wall-clock bound on ONE module's battery. Fuel bounds recursion "
+                             "DEPTH, not work, so it cannot serve as a time bound; this can.")
     parser.add_argument("--runner", default=None,
                         help="runner argv (default: tools/leanpy's, with its staleness check). "
                              "A git WORKTREE has no .lake, so point this at the built binary in "
                              "the main checkout rather than provoking a build there.")
     parser.add_argument("--json", dest="json_out", default=None)
+    parser.add_argument("--merge", nargs="+", metavar="RESULT.json", default=None,
+                        help="print the aggregate scoreboard over several --json results "
+                             "and exit. The corpus is surveyed in DISJOINT chunks when one "
+                             "process cannot own the machine long enough to finish it; the "
+                             "chunks run the same harness on the same battery, so the merged "
+                             "rows are the same rows. Overlapping chunks are a loud error — "
+                             "a module counted twice is a scoreboard that lies.")
     parser.add_argument("--determinism", action="store_true",
                         help="run the survey twice and compare the battery BYTES")
     opts = parser.parse_args(argv)
     os.chdir(REPO_ROOT)
+
+    if opts.merge:
+        rows, seen, secs, ncalls = [], {}, 0.0, 0
+        for path in opts.merge:
+            with open(path, "r", encoding="utf-8") as f:
+                part = json.load(f)
+            for row in part["rows"]:
+                key = (row["provenance"], row["file"])
+                if key in seen:
+                    raise SystemExit("library_survey --merge: %s appears in both %s and %s — "
+                                     "the chunks are not disjoint" % (row["file"], seen[key], path))
+                seen[key] = path
+                rows.append(row)
+            secs += part["stats"]["body_secs"] + part["stats"]["call_secs"]
+            ncalls += part["stats"]["ncalls"]
+        counts = report(rows, {"body_secs": secs, "call_secs": 0.0, "ncalls": ncalls,
+                               "runner": "merged over %d chunks" % len(opts.merge)})
+        if opts.json_out:
+            with open(opts.json_out, "w", encoding="utf-8") as f:
+                json.dump({"merged": opts.merge, "rows": rows}, f, indent=1,
+                          sort_keys=True, default=str)
+            print("\nwrote %s" % opts.json_out)
+        return 1 if (counts.get("DIVERGED") or counts.get("INCOMPLETE")) else 0
 
     if opts.build_manifest:
         manifest = build_manifest(MANIFEST)
@@ -816,7 +915,9 @@ def main(argv=None):
             json.dump({"cpython": opts.cpython, "stats": stats, "rows": rows},
                       f, indent=1, sort_keys=True, default=str)
         print("\nwrote %s" % opts.json_out)
-    return 1 if counts.get("DIVERGED") else 0
+    # A DIVERGED row is the headline; an INCOMPLETE one means the battery did
+    # not finish, and a scoreboard that certifies nothing must not exit 0.
+    return 1 if (counts.get("DIVERGED") or counts.get("INCOMPLETE")) else 0
 
 
 if __name__ == "__main__":

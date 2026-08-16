@@ -4472,31 +4472,159 @@ THIRD DOOR CLOSED pre-registered exactly this move (`shlex` and
 after that landing. The manifest uses the JSON, so its prediction column is
 the post-third-door one.
 
-### The baseline scoreboard — NOT YET MEASURED (venue, not scope)
+### THE BASELINE SCOREBOARD — MEASURED (2026-08-16, the L1 "before")
 
-The instrument is built and exercised; the full run is **held**. The
-laptop venue rule has no survey-scale exception (§the +400 meter's
-contamination), so the 197-row sweep waits for the lock to clear. What is
-measured, on the one module the pilot ran:
+197 modules, 3526 battery calls, CPython 3.9.19 both ends, model at
+`a1044ea`. This is the number the module system (L2) and the class tier
+(L3) get measured against.
 
-| module | verdict | detail |
-| --- | --- | --- |
-| `bisect` | PARTIAL | body MATCH; 15 of 32 battery calls agree over 4 public functions |
+| verdict | all | census 141 | in-repo 56 |
+| --- | --- | --- | --- |
+| VERIFIED | 12 | 0 | 12 |
+| BODY-ONLY | 8 | 8 | 0 |
+| PARTIAL | 40 | 1 | 39 |
+| REFUSED | 134 | 131 | 3 |
+| DIVERGED | 2 | 1 | 1 |
+| INCOMPLETE | 1 | 0 | 1 |
 
-Its 17 non-agreeing calls are all loud REFUSALs with named constructs, in
-two families: `<` between mixed types (`'str'`/`'int'`/`'list'`) and
-`.insert` on a list or a str — the second of which is the DESIGNED and
-unbuilt §`list.insert` — the §2.5 residue. The 15 agreements are pure
-fallback against C `_bisect`, the accelerator-equivalence rows.
+Per CALL, over the 3526 rows: **MATCH 2349, REFUSED 1124, DIVERGE 22,
+UNCOMPARABLE 22, RUNNER 7, TIMEOUT 2.** Every one of the 22
+UNCOMPARABLE rows is the same protocol gap — the call PRINTED and
+`--batch` reports no stdout — which makes the hook request below a
+measured number rather than an opinion.
 
-PRE-REGISTERED shape for the full baseline, so the measurement can
-contradict it: the function-only modules VERIFY or go PARTIAL, the 89
-class-walled REFUSE at `class-creation`, the import-walled REFUSE at
-`import`, and the new `import-semantics:__name__` bucket takes whatever
-modules would otherwise have claimed a body match. Any module whose
-observed wall is not in the census's wall SET at all is a finding; the
-report separates EXACT / ORDER (a different wall in the same set —
-admission order, not a census error) / UNPREDICTED for exactly that.
+**The headline of the shape: the stdlib half VERIFIES NOTHING.** Zero of
+141. Not one pure-Python library module can today have its public
+functions checked, because 131 of them refuse before the body finishes
+and the 8 that do get through have no drivable public function at all.
+Every VERIFIED row is in-repo. That is the honest "before", and it is
+what makes the L2/L3 numbers meaningful: they are being asked to move a
+count that starts at zero.
+
+The refusal walls, by the construct the model itself named:
+`class-creation` 91, `import` 34, then singletons —
+`try/except uses unsupported features` 2, and one each of the ordering
+admission (`locale`), heap-typed `+` (`__future__`), an unmodelled
+builtin `frozenset` (`keyword`), `.extend` (`unittest`),
+`node:Constant:bytes` (`quopri`), `node:DictComp` (`token`), `node:Set`
+(`hashlib`).
+
+### The census reconciliation: 179 EXACT, 2 ORDER, 16 UNPREDICTED
+
+The class tier's prediction lands EXACTLY: the census says 89 of the 141
+are class-walled, and **89 refused at `class-creation`** — plus the 2
+in-repo class-walled files, for the 91 above. The two ORDER rows
+(`hashlib` predicted `import`, fired `node:Set`; `quopri` predicted
+`import`, fired `node:Constant:bytes`) are admission order inside the
+census's own wall set, not census errors.
+
+The 16 UNPREDICTED are TWO findings, and neither is a census mistake:
+
+1. **Ten rows are the whole-file/import-time distinction** (`chunk`,
+   `email`, and eight `Examples` files): the census's wall set is a
+   property of the FILE, and the predicted wall sits inside a function
+   body, which importing the module never executes. Checked, not
+   assumed: recomputing those wall sets with the current extractor
+   reproduces them exactly, so this is not census staleness. The walls
+   are real and they resurface — in the CALL phase, as per-call
+   refusals. A one-phase instrument could not have told these apart.
+2. **Six rows are wall KINDS a static node census cannot see**
+   (`__future__`, `_compat_pickle`, `copyreg`, `keyword`, `locale`,
+   `unittest`): a heap-typed operator, an unmodelled builtin, a method
+   outside the tier, `runScript`'s ordering admission, and two
+   try/except shapes. The static census ranks NODES; these are dynamic
+   values and Script.lean admissions. Worth recording because every
+   ladder ranking to date has been computed from the static wall set.
+
+### THE TWO DIVERGED ROWS — the stop-and-report headline
+
+**1. `stat` — the §2.5 accelerator-equivalence obligation is FALSE, 21
+of 104 calls.** The guarded-import arm admits `stat` on the argument
+that running the pure fallback is observationally equal to CPython
+running the C accelerator (docs/memory-model.md §import forms: "the
+assertion that nothing observable differs is DIFFERENTIALLY TESTED,
+never taken from the docs"). It is now differentially tested, on the
+real module, and it fails: C `_stat` converts its argument to an
+unsigned int, so `S_IFMT(-1)` raises `OverflowError: can't convert
+negative value to unsigned int` and `S_ISDOOR('a')` raises `TypeError:
+an integer is required`, while the pure fallback answers 61440 and
+False. `S_ISDOOR`/`S_ISPORT`/`S_ISWHT` are literally `return False` in
+3.9, so they accept anything at all. THE MODEL IS FAITHFUL TO THE FILE
+IT WAS GIVEN; what is false is the admission's equivalence claim, on the
+negative-int and non-int domains. Note `stat` is one of the eight stdlib
+sweep MATCHes — program mode cannot see this, because the module prints
+nothing either way.
+
+The same test PASSES for `bisect`, the other C-accelerated module that
+got a battery: 15 of 15 comparable calls agree, 0 diverge (the rest are
+loud refusals at `<` across mixed types and the designed, unbuilt
+`list.insert`). So the obligation holds for one and fails for the other,
+which is exactly why it had to be measured.
+
+**2. `arith.mod` — `str % list` answers TypeError where CPython returns
+the string.** `"  x  " % [1, 3, 5]` is `'  x  '` under CPython 3.9 and a
+`TypeError` under the model; `"abc" % [1]` is `'abc'` and likewise
+refused-as-raised. A list satisfies `PyMapping_Check`, so `%` takes the
+MAPPING path, and the mapping path does not run the "not all arguments
+converted" check that the tuple path runs. Confirmed by hand at the
+runner, independently of the harness. This is a WRONG ANSWER in the
+recently landed `%` tier, not a refusal, and it is in-repo — an
+`Examples` file the typed-call battery already covers, which no existing
+row exercises with a non-tuple right operand.
+
+### What the sweep taught about ITS OWN instrument
+
+Five defects, each found by the run and fixed before the number above
+was taken. Recorded because they are the failure modes any battery over
+a real corpus will hit:
+
+1. **Module state accumulated across battery calls.** The oracle
+   imported once and drove the whole battery against one live module, so
+   `list_lab.bump_twice()` answered 3 on the model (fresh world, `TABLE
+   = [1,2,3]`) and 4 under CPython (earlier rows had already bumped it),
+   and the harness reported a DIVERGED THAT WAS ITS OWN. Battery calls
+   now re-execute the module body per call, which is what
+   `callFunction`'s fresh world actually means — and it makes the
+   battery order-independent, a stronger property than the seed alone.
+2. **FUEL IS A DEPTH BOUND, NOT A TIME BOUND.** `fib(30)` at fuel 10000
+   returns 832040: ~2.7M calls at depth 30 never approach the limit. So
+   `fib(100)` — an ordinary row of the generated battery — runs
+   effectively forever and never times out. With one batch for the whole
+   corpus it ate the watchdog and took 239 later calls down with it. The
+   call phase now runs ONE RUNNER PROCESS PER MODULE with a wall-clock
+   bound, so a runaway costs its own module a loud INCOMPLETE. `fib` is
+   the single INCOMPLETE row above, and it is the honest verdict.
+3. **A cyclic value killed the oracle subprocess** and cost its module a
+   verdict: canonicalization is now depth-capped, since a self-reference
+   hits the recursion limit long before the node budget.
+4. **Watchdog casualties were scored PARTIAL** — which reads as "the
+   model answered and some answers were wrong" when the calls never ran.
+   They now get their own INCOMPLETE verdict, a loud banner, and a
+   nonzero exit.
+5. **Concurrent chunks shared one jobs-file path** in the envelope
+   cache, so one chunk could overwrite the jobs another chunk's runner
+   was about to read — and the call phase pairs results POSITIONALLY, so
+   a same-length cross would mispair silently. The path is now keyed by
+   PID. (The same fixed-name pattern is in `harness/leanpy_survey.py`'s
+   `survey-jobs.jsonl`; not this lane's file, and harmless while nothing
+   runs two surveys at once.)
+
+### How the baseline was collected, so it reproduces
+
+The corpus is surveyed in six DISJOINT chunks selected by `--only`
+(the stdlib path, `Examples/python` split `[a-f]`/`[g-o]`/`[p-s]`/
+`[t-z]`, and the scripts/vendor pair), merged by `--merge`, which
+refuses overlapping chunks by name rather than double-counting a module.
+Chunking is not cosmetic: a single process surveying all 197 was stopped
+twice by the environment before finishing, and the chunks run in
+parallel in minutes.
+
+DETERMINISM: the whole corpus was surveyed TWICE and the battery — every
+module, function, argument tuple and its provenance (doctest or
+generated) — compared byte for byte. **315666 bytes, sha256 `5c94d723c94de3be…`, IDENTICAL** — and all 197
+module verdicts were stable across the two passes as well. Nothing in
+the battery reads the wall clock, `hash()` (salted per process) or set
+iteration order; the per-function seed is `crc32("module.function")`.
 
 ### Recorded hook requests (owned files this lane did not touch)
 

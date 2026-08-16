@@ -64,6 +64,12 @@ import zlib
 # ---------------------------------------------------------------------------
 
 MAX_VALUE_NODES = 4096
+# A SELF-REFERENTIAL value (`a = []; a.append(a)`) is finite in memory and
+# infinite in this walk, and it hits Python's recursion limit long before the
+# node budget — measured: it killed the oracle subprocess outright and cost the
+# whole module a verdict (list_lab, the first full sweep). Depth is the bound
+# that sees a cycle; the node budget is the bound that sees a big flat list.
+MAX_VALUE_DEPTH = 24
 
 
 class Unmappable(Exception):
@@ -74,15 +80,19 @@ class Unmappable(Exception):
     compared on. It is reported and excluded, never guessed at."""
 
 
-def to_canonical_value(v, budget=None):
+def to_canonical_value(v, budget=None, depth=0):
     """Python value -> canonical V form. bool before int: bool is an int
     subtype. `budget` caps the node count so a function returning a
-    million-element list cannot turn the manifest into a data dump."""
+    million-element list cannot turn the manifest into a data dump, and
+    `depth` caps the nesting so a CYCLIC value is refused instead of
+    recursing until the interpreter dies."""
     if budget is None:
         budget = [MAX_VALUE_NODES]
     budget[0] -= 1
     if budget[0] < 0:
         raise Unmappable("value larger than %d nodes" % MAX_VALUE_NODES)
+    if depth > MAX_VALUE_DEPTH:
+        raise Unmappable("value nested deeper than %d levels (a cycle?)" % MAX_VALUE_DEPTH)
     if isinstance(v, bool):
         return {"t": "bool", "v": v}
     if isinstance(v, int):
@@ -92,9 +102,9 @@ def to_canonical_value(v, budget=None):
     if v is None:
         return {"t": "none"}
     if isinstance(v, list):
-        return {"t": "list", "v": [to_canonical_value(x, budget) for x in v]}
+        return {"t": "list", "v": [to_canonical_value(x, budget, depth + 1) for x in v]}
     if isinstance(v, tuple):
-        return {"t": "tuple", "v": [to_canonical_value(x, budget) for x in v]}
+        return {"t": "tuple", "v": [to_canonical_value(x, budget, depth + 1) for x in v]}
     raise Unmappable(type(v).__name__)
 
 
@@ -408,6 +418,10 @@ def run_call(fn, enc_args, timeout):
                 row = {"status": "ok", "value": to_canonical_value(v)}
             except Unmappable as u:
                 row = {"status": "unmappable", "type": str(u)}
+            except RecursionError:
+                # Belt and braces behind MAX_VALUE_DEPTH: this must cost ONE
+                # call, never the subprocess and never the module's verdict.
+                row = {"status": "unmappable", "type": "recursive value"}
         finally:
             _alarm_off()
     finally:
@@ -421,6 +435,30 @@ def run_call(fn, enc_args, timeout):
     except Exception:
         row["mutated"] = "uncomparable"
     return row
+
+
+def call_on_a_FRESH_module(module, path, name, enc_args, timeout):
+    """One battery call against a module whose body has JUST been re-executed.
+
+    THIS IS A SEMANTIC REQUIREMENT, not a hygiene preference, and the first
+    full sweep proved it: `callFunction` (Main.lean `--batch`) runs each typed
+    call from a FRESH WORLD, with module globals resolved statically by the G1
+    fold. An oracle that imports once and drives the whole battery against one
+    live module compares that against CPython's ACCUMULATED state — so
+    `list_lab.bump_twice()` answered 3 on the model (from `TABLE = [1,2,3]`)
+    and 4 under CPython (because earlier battery rows had already bumped
+    `TABLE`), and the harness reported a DIVERGED that was its own.
+
+    Re-executing the body per call also makes the battery ORDER-INDEPENDENT,
+    which is a stronger determinism property than the seeds alone give."""
+    mod, body = import_body(module, path)
+    if mod is None:
+        return {"status": "oracle-error",
+                "msg": "re-import for the call failed: %s" % body.get("exn", body.get("msg"))}
+    fn, impl = resolve_runtime(mod, name, path)
+    if fn is None:
+        return {"status": "oracle-error", "msg": "public name is %s after re-import" % impl}
+    return run_call(fn, enc_args, timeout)
 
 
 def import_body(module, path):
@@ -590,7 +628,9 @@ def main(argv=None):
                     continue
                 seen.add(key)
                 candidates.append((enc, source))
-            probed = [(enc, source, run_call(fn, enc, opts.call_timeout))
+            probed = [(enc, source,
+                       call_on_a_FRESH_module(opts.module, opts.file, name, enc,
+                                              opts.call_timeout))
                       for enc, source in candidates]
             row["probed"] = len(probed)
             row["calls"] = [{"args": enc, "source": source, "oracle": oracle}

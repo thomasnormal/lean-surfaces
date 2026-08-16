@@ -5370,3 +5370,51 @@ sf_bound_rec 153 → 119 (it keeps the model constant, the exit lemma and
 the induction skeleton; what left is the four hand-written branch
 combinations and their `py_simp` runs). The hand proofs are in history at
 df7eba7 and before.
+
+## The ray leg, factored — and where the flagship actually stops (2026-08-16)
+
+The recorded plan worked exactly as recorded, which is the good news, and
+it also measured the bad news precisely.
+
+**Landed, in `Examples/python/sunfish/genmoves_theorem.lean`:**
+
+* `exceptBind_ok` / `exceptMap_ok` — inversion of a successful `do`-block
+  over `Except`. Core's simp set has no equivalent, and every tactic on
+  `Ref.ray` stalls at the first `←` without it.
+* `rayBody` — the ray's body with the recursive call abstracted as a
+  parameter, transcribed verbatim, so `ray_step` (`ray … (f+1) j =
+  rayBody … j (ray … f (j+d))`) holds by `rfl`.
+* `rayBody_map_or_const` — **the characterization**: every leaf either
+  ignores the tail or maps ONE fixed function over it. The whole proof is
+  `unfold; simp only [bind, Except.bind]; repeat' split` and then each
+  leaf by `rfl` on one side of the disjunction. This is the same fact the
+  earlier wrong turn stumbled over (an early `break` never forces the
+  tail, so refuting the `.error` branch is unprovable) — going THROUGH it
+  turns the obstacle into the tool.
+* `ray_mono` / `ray_at_least` — the budget lemma, three lines off the
+  characterization. The reference's step budget is now provably an
+  artifact of writing it in Lean, not part of what `GenMovesEqRef` claims.
+
+**Ray AGREEMENT does not land, and the reason is tooling, not effort.**
+Stating it is fine: a suspended `gen_moves` is a `GenCont` frame stack
+whose shape inside a ray is concrete (`block … :: countFrom j d :: … ::
+enumSeq <board> :: []`). Proving it is not, because the statement
+quantifies over an ARBITRARY board: every `self.board[j]` is a subscript
+on a symbolic 120-char string and every guard is a comparison on a
+symbolic character, so nothing reduces and the interpreter would have to
+be case-split by hand at every step. That is precisely what `py_vcgen`
+does for the heap-free fragment — and there is no generator case in the
+walker, no triple layer over `stepIter`/`execGen`, and (checked) no
+generator-level lemmas in the repo beyond `stepIter_mono` and clock
+erasure.
+
+So the flagship's remaining distance is a `PyGenTriple` layer (yield sites
+as postcondition arms, the frame stack as the state), a walker case that
+consumes it, and symbolic string/char reasoning for the guards. The same
+wall stands in front of the square-agreement and board-scan legs — both
+also quantify over an arbitrary board — which is why none of the three was
+attempted piecemeal. `GenMovesEqRef` stays a definition.
+
+What this session did close is the target: the reference side is a settled
+object now — factored, characterized, budget-free — so the agreement proof
+will meet a fixed target when the tooling exists.

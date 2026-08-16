@@ -137,49 +137,157 @@ arrives one yielded move at a time, so every step of the proof meets a
   | cons l rest ih =>
     simp only [List.flatten_cons, refTriples_append, ih, List.map_cons]
 
-/-! ### The reference's budget — ATTACKED, not claimed (2026-08-16)
+/-! ### The ray leg, factored
 
 `Ref.ray` stands in for CPython's unbounded `count(i + d, d)` with a step
-budget, and running out is an ERROR, never a truncated answer. The proof
-needs that budget to be irrelevant once it is large enough:
+budget, and running out is an ERROR, never a truncated answer. Everything
+below comes off ONE characterization, which is the shape worth having:
+the ray's body either IGNORES its tail (every leaf that breaks the ray)
+or MAPS one fixed function over it (the single leaf that continues).
 
-    ray b wc0 wc1 ep kp i p d f j = .ok ms →
-      ∀ k, ray b wc0 wc1 ep kp i p d (f + k) j = .ok ms
+That single fact is also what an earlier attempt got wrong, recorded here
+because it looks right: casing on the recursive call and refuting the
+`.error` branch is UNPROVABLE. A ray that breaks on its first guard
+returns `[]` without ever forcing the tail, so `body (.error e) = .ok []`
+is perfectly satisfiable. Going THROUGH the characterization instead of
+around it turns that obstacle into the tool. -/
 
-— otherwise the theorem's `rf` is part of the claim instead of an artifact
-of writing the reference in Lean. It is still NOT proved (this repo does
-not land `sorry`), but it is no longer unexplored: what follows is a
-worked map, including the wrong turn, so the next attempt starts past it.
+/-- Inversion of a successful `Except` bind — the primitive every tactic
+on a `do`-block over `Except` stalls without (core's simp set has no
+equivalent). -/
+theorem exceptBind_ok {ε α β} {x : Except ε α} {g : α → Except ε β} {c : β} :
+    (x >>= g) = .ok c ↔ ∃ a, x = .ok a ∧ g a = .ok c := by
+  cases x <;> simp [bind, Except.bind]
 
-**What works.** Induction on the budget, `rw [Ref.ray]` in goal and
-hypothesis (with `f + 1 + k = (f + k) + 1` first), and the `do`-block over
-`Except` decomposed by
+/-- Inversion of a successful `Except` map. -/
+theorem exceptMap_ok {ε α β} {x : Except ε α} {g : α → β} {c : β} :
+    (g <$> x) = .ok c ↔ ∃ a, x = .ok a ∧ g a = c := by
+  cases x <;> simp [Functor.map, Except.map]
 
-    (x >>= g) = .ok c ↔ ∃ a, x = .ok a ∧ g a = .ok c
+theorem bind_pure_eq_map {ε α β} (g : α → β) (x : Except ε α) :
+    (x >>= fun a => pure (g a)) = g <$> x := by cases x <;> rfl
 
-proved by `cases x <;> simp [bind, Except.bind]` — core's `simp` set does
-NOT have this, and without it every tactic stalls at the first `←`, which
-is the thing to know. `split at h` then steps through the `if`s and the
-`Option` match, and `Ref.A1`/`Ref.H1` must be in the simp set or the two
-castling branches leave `Ref.H1 = Ref.A1` unrefuted.
+open Ref in
+/-- `Ref.ray`'s body with the RECURSIVE CALL abstracted as `tail` —
+transcribed verbatim, which is what makes `ray_step` hold by `rfl`. -/
+def rayBody (b : List Char) (wc0 wc1 : Bool) (ep kp : Int) (i : Int) (p : Char)
+    (d : Int) (j : Int) (tail : Except String (List RefMove)) :
+    Except String (List RefMove) := do
+  let q ← at? b j
+  if inStr q " \nPNBRQK" then return []
+  match ← pawnBreak b ep kp i p q d j with
+  | some ms => return ms
+  | none =>
+    let here : RefMove := ⟨i, j, ""⟩
+    if inStr p "PNK" || inStr q "pnbrqk" then return [here]
+    let castle1 ← if i == A1 then
+        (do if (← at? b (j + E)) == 'K' && wc0 then
+              return [(⟨j + E, j - E, ""⟩ : RefMove)] else return [])
+      else pure []
+    let castle2 ← if i == H1 then
+        (do if (← at? b (j + W)) == 'K' && wc1 then
+              return [(⟨j + W, j - W, ""⟩ : RefMove)] else return [])
+      else pure []
+    let rest ← tail
+    return here :: castle1 ++ castle2 ++ rest
 
-**The wrong turn, recorded because it looks right.** Case on the recursive
-call and refute the `.error` branch: it is NOT contradictory. A ray that
-breaks immediately (`q in " \nPNBRQK"`, the very first guard) returns `[]`
-without ever forcing the tail, so `body(.error e) = .ok []` is perfectly
-satisfiable and `exfalso` is unprovable there. The tail is used on exactly
-one leaf; every other leaf is INDEPENDENT of it.
+open Ref in
+/-- One step of the ray IS the body applied to the rest of the ray. -/
+theorem ray_step (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int) (p : Char)
+    (d : Int) (f : Nat) (j : Int) :
+    ray b wc0 wc1 ep kp i p d (f + 1) j
+      = rayBody b wc0 wc1 ep kp i p d j (ray b wc0 wc1 ep kp i p d f (j + d)) :=
+  rfl
 
-**The shape that should close it.** Either (a) a lockstep walk —
-decompose goal and hypothesis together, so each leaf is `exact h` (the
-leaf does not mention the tail, and the two bodies are then syntactically
-equal) or one `ih` rewrite (the leaf that does); or (b) factor the body
-with the tail abstracted, `rayBody … (tail : Except String (List
-RefMove))`, with `ray … (f+1) j = rayBody … j (ray … f (j+d))` by `rfl`,
-and prove once that `rayBody` is "map-or-constant" in its tail — after
-which monotonicity is three lines and so is every later ray lemma. (b) is
-the better investment: the same characterization is what ray AGREEMENT
-needs, since the model's generator also consumes the tail exactly once
-per ray step. -/
+open Ref in
+set_option maxHeartbeats 2000000 in
+/-- **The characterization.** Every leaf of the ray body either returns a
+value that does not mention the tail, or returns one fixed function mapped
+over it. The proof is the leaf enumeration itself: unfold, split every
+guard, and each leaf closes by `rfl` on one side or the other. -/
+theorem rayBody_map_or_const (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d : Int) (j : Int) :
+    (∃ r, ∀ t, rayBody b wc0 wc1 ep kp i p d j t = r) ∨
+    (∃ g : List RefMove → List RefMove,
+        ∀ t, rayBody b wc0 wc1 ep kp i p d j t = g <$> t) := by
+  unfold rayBody
+  simp only [bind, Except.bind]
+  repeat' split
+  all_goals
+    first
+      | exact Or.inl ⟨_, fun t => rfl⟩
+      | exact Or.inr ⟨_, fun t => by cases t <;> rfl⟩
+
+open Ref in
+set_option maxHeartbeats 2000000 in
+/-- **The budget lemma**: an answer at budget `f` is the same answer at
+every larger budget, so the reference's step budget is an artifact of
+writing it in Lean and not part of what `GenMovesEqRef` claims. Three
+lines off the characterization — the constant leaves are equal outright,
+the map leaf consumes the induction hypothesis. -/
+theorem ray_mono (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int) (p : Char)
+    (d : Int) :
+    ∀ (f : Nat) (j : Int) (ms : List RefMove) (k : Nat),
+      ray b wc0 wc1 ep kp i p d f j = .ok ms →
+      ray b wc0 wc1 ep kp i p d (f + k) j = .ok ms := by
+  intro f
+  induction f with
+  | zero => intro j ms k h; simp [ray] at h
+  | succ f ih =>
+    intro j ms k h
+    rw [show f + 1 + k = (f + k) + 1 from by omega, ray_step]
+    rw [ray_step] at h
+    rcases rayBody_map_or_const b wc0 wc1 ep kp i p d j with ⟨r, hconst⟩ | ⟨g, hmap⟩
+    · rw [hconst] at h ⊢; exact h
+    · rw [hmap] at h ⊢
+      obtain ⟨a, ha, hga⟩ := exceptMap_ok.mp h
+      rw [ih (j + d) a k ha, ← hga]
+      rfl
+
+open Ref in
+/-- The budget lemma in the threshold form the rest of the repo speaks. -/
+theorem ray_at_least (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d : Int) (f : Nat) (j : Int) (ms : List RefMove)
+    (h : ray b wc0 wc1 ep kp i p d f j = .ok ms) :
+    ∀ f' ≥ f, ray b wc0 wc1 ep kp i p d f' j = .ok ms := by
+  intro f' hf'
+  obtain ⟨k, rfl⟩ : ∃ k, f' = f + k := ⟨f' - f, by omega⟩
+  exact ray_mono b wc0 wc1 ep kp i p d f j ms k h
+
+/-! ### Ray AGREEMENT — measured, and blocked on tooling, not on effort
+
+With the budget lemma in hand the next step was the other half of the ray
+leg: the model's generator, resumed inside one
+`for j in count(i + d, d)`, yields exactly `Ref.ray`'s list. It does not
+land here, and the reason is worth more than another attempt.
+
+**Stating it is fine.** A suspended `gen_moves` is a `GenCont`, a STACK of
+`GenFrame`s (Runtime.lean), and inside a ray that stack is concrete in
+shape: `block <rest of the ray body> :: countFrom j d :: block … ::
+forSeq <directions[p]> … :: enumSeq <the board> :: []`. "Resume until the
+`countFrom` frame is popped" is expressible against that.
+
+**Proving it needs a symbolic-execution calculus for the GENERATOR tier,
+which does not exist.** The statement quantifies over an arbitrary board,
+so every `self.board[j]` is a subscript on a SYMBOLIC 120-character
+string and every guard (`q in " \nPNBRQK"`, `p == "P"`, `A8 <= j <= H8`)
+is a comparison on a symbolic character. Nothing reduces; the proof would
+have to case-split the interpreter by hand at every step. That is exactly
+the work `py_vcgen` does for the heap-free fragment — and the walker has
+no generator case, layer 2 has no triple over `stepIter`/`execGen`, and
+the only generator-level lemmas in the repo are `stepIter_mono` and the
+clock-erasure one. Checked, not assumed.
+
+So the flagship's remaining distance is a TOOLING distance, and it is
+bigger than the leg it blocks: a `PyGenTriple` layer over `execGen` (yield
+sites as postcondition arms, the frame stack as the state), a walker case
+that consumes it, and symbolic string/char reasoning for the guards.
+Recorded rather than started, and deliberately not attempted piecemeal:
+the same wall stands in front of the square-agreement and board-scan legs,
+because both also quantify over an arbitrary board.
+
+What IS closed by this file: the reference side is now a settled object —
+factored, characterized, and budget-free — so when that tooling exists the
+agreement proof meets a fixed target instead of a moving one. -/
 
 end Examples.python.sunfish.genmoves_theorem

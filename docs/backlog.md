@@ -4838,3 +4838,134 @@ MEASURED: `lake build` 3660 jobs green; docs_check 67/67; diff_test
 (49 matched, 14 loud-blocked); in-repo survey 102/127, 0 DIVERGE. The
 library baseline's `arith` row goes **DIVERGED → PARTIAL 43/48** (the
 five are loud refusals on generated argument types, not answers).
+
+## THE §2.5 ADMISSION BECOMES A REGISTRY — and two admissions are withdrawn (2026-08-16)
+
+Divergence triage, item 2 of 2 — and the finding is bigger than the row
+that produced it. The baseline's `stat` DIVERGED row was never a model
+bug: "THE MODEL IS FAITHFUL TO THE FILE IT WAS GIVEN; what is false is
+the admission's equivalence claim." So the ADMISSION is what got fixed.
+Design and evidence: docs/memory-model.md §import forms →
+"per-module differential admission"; the registry itself is
+`ACCELERATOR_ADMISSIONS` in `extractors/python/extract.py`.
+
+### The census that reframes it: 24 assertions, ONE ever checked
+
+A guarded `from <C module> import …` of a platform-PRESENT module is the
+one import form where CPython succeeds and the model does not: the
+model's Pass 0 raises, the guard catches, and the PURE FALLBACK runs
+where CPython ran C. Admitting that continuation ASSERTS observational
+equivalence of the two branches, and the memo's own words
+(docs/c-intrinsics-proposal.md §2.5) are that the assertion "is not taken
+from the docs … any divergence — a message, a type, an edge case — is a
+blocker, not a footnote."
+
+Measured over the 197-module library corpus: **24 distinct accelerators
+in ~30 files sit in guard position on a platform-present module.**
+`_abc`, `_bisect`, `_codecs`, `_collections`, `_datetime`, `_decimal`,
+`_functools`, `_hashlib`, `_heapq`, `_io`, `_locale`, `_opcode`,
+`_operator`, `_pickle`, `_sha512`, `_ssl`, `_stat`, `_thread`,
+`_warnings`, `binascii`, `collections`, `grp`, `pwd`, `zipimport`.
+Exactly ONE of them had ever been differentially driven. Library mode
+drove a second and it failed. The census is the point: the design named
+four files and the corpus has twenty-four, so this was never a
+four-entry footnote.
+
+### The registry
+
+Guard position is now NECESSARY AND NOT SUFFICIENT. An accelerator is
+admitted only with a recorded measurement that PASSED, cited in the entry
+beside the fallback it was measured on. No entry, no admission, and the
+refusal says WHICH failure it is — so the census can tell "nobody looked"
+from "we looked and it is wrong":
+
+| py_kind | meaning | count in the corpus |
+| --- | --- | --- |
+| `ImportFrom:accelerator-unmeasured` | no entry — never driven | 22 accelerators; 2 modules reach it |
+| `ImportFrom:accelerator-diverges` | an entry measured FALSE | 2 accelerators, 2 modules |
+
+* **`_bisect` ADMITTED** — 15/15 comparable calls agree, 0 diverge
+  (library mode, this baseline). The rest of that battery is loud
+  refusals, never silent agreement.
+* **`_stat` REFUSED, measured** — 21 of 104 calls. C `_stat` converts to
+  an unsigned int, so `S_IFMT(-1)` raises `OverflowError` and
+  `S_ISDOOR('a')` raises `TypeError` where the pure fallback answers
+  61440 and False.
+* **`_opcode` REFUSED, by inspection** — the branches differ in the NAMES
+  they bind: CPython binds `stack_effect` and appends it to `__all__`,
+  the `pass` handler binds neither. docs/memory-model.md already called
+  this "the recorded §2.5 divergence, unseen because `__all__` is never
+  printed", and *unseen* is not *equivalent*.
+* the other 21, `binascii` included, are unmeasured. `quopri`'s is a
+  genuine pure-accel fallback that may well pass; nobody has driven it,
+  because `quopri` walls on `Constant:bytes` first.
+
+### THE COST, stated first because it is a headline regression
+
+**`opcode.py`'s program-mode MATCH — the `%` landing's flip — is
+WITHDRAWN, and so is `stat`'s.** Stdlib sweep, measured BOTH WAYS with
+the same binary (the extractor swapped between runs, 167 laptop seeds at
+3.9.19): **8 MATCH / 159 REFUSE → 6 MATCH / 161 REFUSE, flip set exactly
+{`opcode`, `stat`}** — the two withdrawn admissions and nothing else.
+
+Both were matches on EMPTY STDOUT over a module namespace that differs.
+`stat` proves that is not a technicality: the same untested assertion
+produced 21 wrong answers the moment an instrument could see them, and
+program mode called it a MATCH throughout. The module system (L2) is
+exactly the work that makes those namespaces observable.
+
+ONE LINE of the registry reverses either withdrawal if the owner would
+rather keep the flip. That reversibility is deliberate: the price of the
+doctrine is visible and payable in a single edit, rather than buried in
+a predicate.
+
+### THE BASELINE, RE-RUN — and DIVERGED is ZERO
+
+Both triage items measured together, same six-chunk `--only`/`--merge`
+protocol as the L1 baseline, CPython 3.9.19 both ends.
+
+| verdict | L1 baseline | after triage | Δ |
+| --- | --- | --- | --- |
+| VERIFIED | 12 | 12 | — |
+| BODY-ONLY | 8 | 7 | −1 |
+| PARTIAL | 40 | 41 | +1 |
+| REFUSED | 134 | 136 | +2 |
+| **DIVERGED** | **2** | **0** | **−2** |
+| INCOMPLETE | 1 | 1 | — |
+
+Per call, 3526 → 3448 rows: **MATCH 2349 → 2297, REFUSED 1124 → 1120,
+DIVERGE 22 → 0**, UNCOMPARABLE 22, RUNNER 7, TIMEOUT 2 all unchanged.
+The call-count drop is stat's 104-row battery leaving; `str_lab` gains 26
+for its five new public functions (derived from the three measured
+totals, and every other module's battery is row-identical).
+
+Every module that moved, and there are no others: `arith`
+DIVERGED → PARTIAL 43/48 (the `%` fix); `stat` DIVERGED → REFUSED;
+`opcode` BODY-ONLY → REFUSED; `abc` and `decimal` keep verdict REFUSED
+and change WALL from `import` to `accelerator-unmeasured`.
+
+Walls: `class-creation` 91 (unchanged — the class tier's number is
+untouched), `import` 34 → 32, `accelerator-unmeasured` 2,
+`accelerator-diverges` 2, the seven singletons unchanged.
+
+**THE GOAL IS MET: zero standing DIVERGED rows.** Each of the two became
+what it should have been — one a fix, one a named, evidenced gap.
+
+Gate: extractor units 74/74 (four new registry rows); ZERO envelope
+content changed in-repo (all 197 committed envelopes re-extracted and
+diffed — the only deltas were the known `frontend.version` stamp, reverted
+unstaged), because `_bisect` is the sole platform-present accelerator any
+in-repo file guards and it stays admitted; docs_check 67/67; diff_test
+1236 cases 0 failed; script corpus 63 scripts 0 failed; in-repo survey
+102/127 with 0 DIVERGE.
+
+### What this does NOT do
+
+It does not model a single C accelerator, and it does not claim the 22
+unmeasured ones diverge. It claims only that nobody has looked, and it
+stops the model from ACTING as though someone had. Adding an entry is a
+measurement, not an argument: drive the module through
+`harness/library_survey.py` — its CALLS phase runs the model's fallback
+against CPython's C accelerator, which is what makes it the instrument
+this obligation was waiting for — record numerator and denominator, cite
+the run.

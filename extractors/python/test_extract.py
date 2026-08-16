@@ -587,8 +587,9 @@ class ImportFromTests(unittest.TestCase):
         """The converted DIRECT body of a module-level try statement."""
         return self._module_body(source)[0]["body"]
 
-    def test_guarded_star_of_present_module_is_structured(self):
-        # bisect.py 73-76, the census's one program-mode flip
+    def test_guarded_star_of_admitted_accelerator_is_structured(self):
+        # bisect.py 73-76, the census's one program-mode flip -- and the
+        # ONE accelerator whose equivalence has been measured (15/15)
         s = self._try_body(
             "try:\n"
             "    from _bisect import *\n"
@@ -599,30 +600,79 @@ class ImportFromTests(unittest.TestCase):
         self.assertEqual(s["names"], [])
         self.assertIs(s["star"], True)
 
-    def test_guarded_names_of_present_module_are_structured(self):
-        # quopri.py 14-18: the handler binds both names to None
+    def test_second_try_body_statement_is_also_guarded(self):
+        # guard position is "direct body statement", never "sole
+        # statement" (opcode.py 18-21 is the shape; _bisect is used here
+        # because the shape question is separate from the registry one)
+        body = self._try_body(
+            "try:\n"
+            "    from _bisect import *\n"
+            "    x = 1\n"
+            "except ImportError:\n"
+            "    pass\n")
+        self.assertEqual(body[0]["kind"], "ImportFrom")
+        self.assertEqual(body[1]["kind"], "Assign")
+
+    # -- The 2.5 ACCELERATOR-EQUIVALENCE REGISTRY (2026-08-16). Guard
+    # position is necessary and NO LONGER SUFFICIENT: the fallback branch
+    # runs where CPython ran C, so the admission asserts the two branches
+    # agree, and that assertion now needs a recorded measurement. The
+    # refusal says WHICH of the two failures it is.
+
+    def test_guarded_unmeasured_accelerator_refuses_by_name(self):
+        # quopri.py 14-18: a genuine pure-accel fallback (`if b2a_qp is
+        # not None: ... else: <pure python>`) whose equivalence nobody
+        # has ever driven -- quopri walls on bytes long before it runs
         s = self._try_body(
             "try:\n"
             "    from binascii import a2b_qp, b2a_qp\n"
             "except ImportError:\n"
             "    a2b_qp = None\n"
             "    b2a_qp = None\n")[0]
-        self.assertEqual(s["kind"], "ImportFrom")
-        self.assertEqual(s["module"], "binascii")
-        self.assertEqual(s["names"], ["a2b_qp", "b2a_qp"])
-        self.assertNotIn("star", s)  # absent = False, default-tolerant
+        self.assertEqual(s["kind"], "Unsupported")
+        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-unmeasured")
+        self.assertEqual(s["text"], "from binascii import a2b_qp, b2a_qp")
 
-    def test_second_try_body_statement_is_also_guarded(self):
-        # opcode.py 18-21: the try BODY has a second statement, so guard
-        # position is "direct body statement", never "sole statement"
+    def test_guarded_diverging_accelerator_refuses_under_its_own_name(self):
+        # stat.py 192-195: MEASURED non-equivalent, 21 of 104 calls
+        s = self._try_body(
+            "try:\n"
+            "    from _stat import *\n"
+            "except ImportError:\n"
+            "    pass\n")[0]
+        self.assertEqual(s["kind"], "Unsupported")
+        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-diverges")
+
+    def test_opcode_binds_a_name_the_fallback_does_not(self):
+        # opcode.py 18-21: the branches differ by INSPECTION -- CPython
+        # binds `stack_effect`, the `pass` handler binds nothing
         body = self._try_body(
             "try:\n"
             "    from _opcode import stack_effect\n"
             "    x = 1\n"
             "except ImportError:\n"
             "    pass\n")
-        self.assertEqual(body[0]["kind"], "ImportFrom")
-        self.assertEqual(body[1]["kind"], "Assign")
+        self.assertEqual(body[0]["kind"], "Unsupported")
+        self.assertEqual(body[0]["py_kind"], "ImportFrom:accelerator-diverges")
+
+    def test_guarded_absent_module_needs_no_registry_entry(self):
+        # the raise is CPython's OWN behavior, so there is no fallback
+        # branch to assert anything about
+        s = self._try_body(
+            "try:\n"
+            "    from zzz_no_such_module import *\n"
+            "except ImportError:\n"
+            "    pass\n")[0]
+        self.assertEqual(s["kind"], "ImportFrom")
+
+    def test_every_registry_entry_carries_its_evidence(self):
+        # an admission whose evidence is not written down is the thing
+        # this registry exists to prevent
+        for mod, rec in extract.ACCELERATOR_ADMISSIONS.items():
+            self.assertIsInstance(rec["equivalent"], bool, mod)
+            self.assertTrue(rec["fallback"].strip(), mod)
+            self.assertGreater(len(rec["evidence"].strip()), 40, mod)
+            self.assertIn(mod, extract.platform_inventory())
 
     def test_unguarded_absent_module_is_structured(self):
         # CPython's own ModuleNotFoundError -- admitted anywhere at top

@@ -3061,7 +3061,67 @@ site-packages):
   message naming the module and the branch problem ("module 'X' exists
   on the pinned platform but is not modelled — outside a
   `try`/`except ImportError:` guard the fallback branch is not
-  asserted").
+  asserted"). **Guard position is NECESSARY AND NO LONGER SUFFICIENT —
+  see §per-module differential admission below.**
+
+### Per-module differential admission (2026-08-16)
+
+The paragraph above says the equivalence assertion is differentially
+tested. Until today nothing enforced that, and the numbers say what
+happened: measured over the library corpus, **24 distinct accelerators
+in ~30 files sit in guard position on a platform-present module, and
+exactly ONE had ever been driven.** Library mode then drove a second and
+it FAILED — `stat`, 21 of 104 calls (docs/backlog.md §THE TWO DIVERGED
+ROWS). An assertion made twenty-four times and checked once is not an
+assertion.
+
+So the admission is a REGISTRY, `ACCELERATOR_ADMISSIONS` in
+`extractors/python/extract.py`: guarded position admits a
+platform-present module **only** when the registry records a measurement
+that PASSED, and the entry carries the fallback it was measured on and
+the citation. No entry, no admission. The refusal names WHICH failure it
+is, so the census can tell "nobody looked" from "we looked and it is
+wrong":
+
+| py_kind | meaning |
+| --- | --- |
+| `ImportFrom:accelerator-unmeasured` | no registry entry — the equivalence has never been driven |
+| `ImportFrom:accelerator-diverges` | a registry entry that is measured FALSE |
+
+Entries today, and nothing else is admitted:
+
+* **`_bisect` — ADMITTED.** Library mode 2026-08-16: 15 of 15 comparable
+  battery calls agree, 0 diverge, against the real `_bisect`. The rest
+  of that battery is loud refusals (`<` across mixed types; the
+  designed, unbuilt `list.insert`), never silent agreement.
+* **`_stat` — REFUSED, measured.** 21 of 104 calls diverge: C `_stat`
+  converts to an unsigned int, so `S_IFMT(-1)` raises `OverflowError`
+  and `S_ISDOOR('a')` raises `TypeError`, where the pure fallback
+  answers `61440` and `False`. The model is faithful to the file; the
+  ADMISSION is what was false.
+* **`_opcode` — REFUSED, by inspection, and this one has a COST.** The
+  two branches differ in the NAMES they bind: CPython binds
+  `stack_effect` and appends it to `__all__`, the `pass` handler binds
+  neither. This document already called it "the recorded §2.5
+  divergence, unseen because `__all__` is never printed" — and *unseen*
+  is not *equivalent*. **`opcode.py`'s program-mode MATCH (the `%`
+  landing's flip) is WITHDRAWN by this**: it was a match on empty stdout
+  over a module namespace that differs, and the module system (L2) is
+  exactly the work that makes that namespace observable. One line of the
+  registry reverses it if the owner would rather keep the flip.
+* **`binascii` and the other 21 — REFUSED, unmeasured.** `quopri`'s is a
+  genuine pure-accel fallback (`if b2a_qp is not None: … else: <pure
+  python>`) and may well pass; nobody has driven it, because `quopri`
+  walls on `Constant:bytes` first. The rest are `_abc`, `_codecs`,
+  `_collections`, `_datetime`, `_decimal`, `_functools`, `_hashlib`,
+  `_heapq`, `_io`, `_locale`, `_operator`, `_pickle`, `_sha512`, `_ssl`,
+  `_thread`, `_warnings`, `collections`, `grp`, `pwd`, `zipimport` — all
+  behind other walls today, all admitted yesterday on nothing.
+
+To ADD an entry: drive the module's public surface through
+`harness/library_survey.py` — its CALLS phase IS this instrument, since
+it runs the model's fallback against CPython's C accelerator — record
+numerator and denominator, and cite the run.
 
 ### `except ImportError:` — the recorded first extension lands, narrowly
 

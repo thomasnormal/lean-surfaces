@@ -109,6 +109,77 @@ BENIGN_IMPORT_FROM = frozenset((
     "from collections import namedtuple",
 ))
 
+# THE §2.5 ACCELERATOR-EQUIVALENCE REGISTRY (2026-08-16; docs/memory-model.md
+# §import forms -- "per-module differential admission").
+#
+# A guarded `from <C module> import ...` of a module the pinned platform
+# SHIPS is the one import form where CPython succeeds and the model does
+# not: the model's Pass 0 raises, the guard catches it, and the PURE
+# FALLBACK runs where CPython ran C. Admitting that continuation ASSERTS
+# observational equivalence of the two branches, and the memo's own words
+# (docs/c-intrinsics-proposal.md 2.5) are that the assertion "is not taken
+# from the docs: every such file gets differential battery rows ... and any
+# divergence -- a message, a type, an edge case -- is a blocker, not a
+# footnote."
+#
+# Until 2026-08-16 the admission was granted to EVERY platform-present
+# module in guard position. Measured over the library corpus that is 24
+# distinct accelerators in ~30 files, of which exactly ONE had ever been
+# differentially tested. Library mode then tested a second one and it
+# FAILED (`stat`, 21 of 104 calls). An assertion made 24 times and checked
+# once is not an assertion, so the admission is a REGISTRY: an accelerator
+# is admitted only with a recorded measurement that PASSED, and its
+# evidence is cited here. NO ENTRY MEANS NO ADMISSION -- the refusal is
+# loud and named (`ImportFrom:accelerator-unmeasured`), never a silent
+# fallback run. A measured-FALSE entry refuses under its own name
+# (`ImportFrom:accelerator-diverges`), so the census can tell "nobody
+# looked" from "we looked and it is wrong".
+#
+# To ADD an entry: drive the module's public surface through
+# `harness/library_survey.py` (the CALLS phase IS this instrument -- it
+# runs the model's fallback against CPython's C accelerator), record the
+# numerator and denominator, and cite the run.
+ACCELERATOR_ADMISSIONS = {
+    "_bisect": {
+        "equivalent": True,
+        "fallback": "bisect.py (`from _bisect import *`, 3.9.19 lines 73-76)",
+        "evidence": "library mode 2026-08-16 (docs/backlog.md 'THE BASELINE "
+                    "SCOREBOARD'): 15 of 15 comparable battery calls agree, 0 "
+                    "diverge, against the real `_bisect`. The remainder of the "
+                    "battery is loud refusals (`<` across mixed types; the "
+                    "designed, unbuilt `list.insert`), never silent agreement.",
+    },
+    "_stat": {
+        "equivalent": False,
+        "fallback": "stat.py (`from _stat import *`, 3.9.19 lines 192-195)",
+        "evidence": "library mode 2026-08-16: 21 of 104 battery calls DIVERGE. "
+                    "C `_stat` converts its argument to an unsigned int, so "
+                    "`S_IFMT(-1)` raises OverflowError and `S_ISDOOR('a')` "
+                    "raises TypeError, where the pure fallback answers 61440 "
+                    "and False (`S_ISDOOR`/`S_ISPORT`/`S_ISWHT` are literally "
+                    "`return False` in 3.9 and accept anything). The MODEL is "
+                    "faithful to the file; the equivalence claim is what is "
+                    "false, on the negative-int and non-int domains.",
+    },
+    "_opcode": {
+        "equivalent": False,
+        "fallback": "opcode.py (`from _opcode import stack_effect` + "
+                    "`__all__.append('stack_effect')`, 3.9.19 lines 18-21)",
+        "evidence": "NO BATTERY NEEDED -- the two branches differ in the NAMES "
+                    "they bind, which is inspection, not measurement. CPython "
+                    "binds `stack_effect` and appends it to `__all__`; the "
+                    "fallback (`pass`) binds neither. docs/memory-model.md "
+                    "already called this 'the recorded 2.5 divergence, unseen "
+                    "because __all__ is never printed' -- and 'unseen' is not "
+                    "'equivalent'. Cost, stated: opcode.py's program-mode MATCH "
+                    "(the `%` landing's flip) is WITHDRAWN. It was a match on "
+                    "empty stdout over a module namespace that differs, and the "
+                    "module system (L2) is exactly what makes that namespace "
+                    "observable. One line of this registry reverses it if the "
+                    "owner would rather keep the flip.",
+    },
+}
+
 _PLATFORM_INVENTORY = None
 
 
@@ -1230,17 +1301,20 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # (Pass 0)"): STRUCTURE exactly the paying shape -- module top
         # level, absolute (level == 0), single unqualified module name,
         # plain names or star, no `as` aliases -- AND one of:
-        #   * import-guard position (a direct body statement of a
-        #     top-level `try` with a single `except ImportError:`
-        #     handler -- the raise is caught by construction, the
-        #     fallback branch runs under the memo's differential
-        #     obligation, docs/c-intrinsics-proposal.md 2.5);
         #   * the module is ABSENT from the pinned platform inventory
         #     (the Pass 0 raise is then CPython's own behavior,
         #     guarded or not);
         #   * the exact benign-whitelist texts (BENIGN_IMPORT_FROM
         #     above), structured here and canonicalized back to the
-        #     legacy Unsupported node at ingestion.
+        #     legacy Unsupported node at ingestion;
+        #   * import-guard position (a direct body statement of a
+        #     top-level `try` with a single `except ImportError:`
+        #     handler -- the raise is caught by construction and the
+        #     PURE FALLBACK runs) AND the accelerator carries a PASSING
+        #     entry in ACCELERATOR_ADMISSIONS above. That registry is the
+        #     memo's differential obligation made checkable
+        #     (docs/c-intrinsics-proposal.md 2.5): no entry, no
+        #     admission, and the refusal names which of the two it is.
         # EVERYTHING else -- relative, dotted, aliased, non-top-level,
         # and the unguarded from-import of a platform-present module --
         # keeps the Unsupported fallthrough below VERBATIM. The
@@ -1255,9 +1329,16 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 and all(a.asname is None for a in node.names)
                 and (star or all(STEM_RE.match(a.name) is not None
                                  for a in node.names))):
-            if (import_guard
-                    or unparse_truncated(node) in BENIGN_IMPORT_FROM
-                    or node.module not in platform_inventory()):
+            admitted = (unparse_truncated(node) in BENIGN_IMPORT_FROM
+                        or node.module not in platform_inventory())
+            if not admitted and import_guard:
+                record = ACCELERATOR_ADMISSIONS.get(node.module)
+                if record is None:
+                    return unsupported(node, "ImportFrom:accelerator-unmeasured")
+                if not record["equivalent"]:
+                    return unsupported(node, "ImportFrom:accelerator-diverges")
+                admitted = True
+            if admitted:
                 out = {
                     "kind": "ImportFrom",
                     "span": span(node),

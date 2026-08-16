@@ -459,6 +459,30 @@ theorem PyStmtTriple.forLoopInt {m : Module} {target iter : Expr}
   PyStmtTriple.forLoop RVal.int Inv _ is
     (by simpa using IterVals.listV (is.map RVal.int).toArray) hiter hexit hstep
 
+/-! ## Return -/
+
+/-- **The return rule**: a `return e` whose expression evaluates to `v` from
+every `P`-state lands in `Q`'s `ret` arm at `v`. Deliberately stated over an
+arbitrary expression rather than over a call: the call-specific half is
+`EvalsTo.call`, which is exactly the "any other expression position" its own
+docstring points at, so `return f(x)` needs no rule of its own. -/
+theorem PyStmtTriple.retExpr {m : Module} {e : Expr} {sp : Span}
+    {P : FrameState → Prop} {Q : PyPost} {v : RVal}
+    (hev : ∀ st, P st → EvalsTo m st e v)
+    (hQ : ∀ st, P st → Q.ret v st) :
+    PyStmtTriple m P (.ret (some e) sp) Q := by
+  intro st hP
+  obtain ⟨t, ht⟩ := (hev st hP).at_least
+  refine ⟨t + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  simpa [execStmt, ht F' hF'] using hQ st hP
+
+/-- Statements after a terminator are unreachable, and a triple from a
+`False` precondition is free — what the walker splices in place of the
+dead tail after a `return`. -/
+theorem PyTriple.of_false {m : Module} {ss : List Stmt} {Q : PyPost} :
+    PyTriple m (fun _ => False) ss Q := fun _ h => h.elim
+
 /-! ## Interprocedural rules -/
 
 /-- A call *expression* evaluates to the thaw of the callee's public

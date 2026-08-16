@@ -45,7 +45,10 @@ def _root_.sfSearchMoves (gamma : Int) : List Int → Int → Int
 -- (VCTactic.lean §marshalled-list indexing) — they were copied here, into
 -- `bench_bisect` and into `bench_statistics` until the family was promoted.
 
-/-- The guard exit: past the end of `scores` the run returns `best`. -/
+/-- The guard exit: past the end of `scores` the run returns `best`. The
+recursive branch is unreachable here, and pruning it is arithmetic the
+walker's branch normalization does not do, so this one stays a direct
+symbolic run. -/
 private theorem bound_rec_exit (scores : List PyInt) (gamma i best : PyInt)
     (hge : (scores.length : Int) ≤ i) :
     sf_bound_rec.bound_rec(scores, gamma, i, best) ==> best := by
@@ -53,15 +56,27 @@ private theorem bound_rec_exit (scores : List PyInt) (gamma i best : PyInt)
   unfold callFunction; rw [callIn.eq_2]
   py_simp [sf_bound_rec, show ((scores.length : Int) ≤ i) from hge]
 
-set_option maxHeartbeats 1000000 in
+set_option maxHeartbeats 1600000 in
 /-- **Total correctness** of the general index-carrying form: from index
-`i`, the run returns `sfSearchMoves gamma (scores.drop i.toNat) best`. -/
+`i`, the run returns `sfSearchMoves gamma (scores.drop i.toNat) best`.
+
+The recursion is on an index into a fixed list, so the induction is a
+plain `Nat` bound on the remaining length. Inside it, one `py_vcgen` call
+walks the whole body — the two sequential `if`s, the symbolic subscript,
+and the recursive `return bound_rec(…)`, whose callee fact is the IH
+itself (a ∀-quantified local hypothesis, instantiated at the branch's own
+`b`). What is left is the mathematics: peel one element off the scanned
+suffix and `sfSearchMoves` steps. -/
 theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
     (hi : 0 ≤ i) :
     sf_bound_rec.bound_rec(scores, gamma, i, best) ==>
       sfSearchMoves gamma (scores.drop i.toNat) best := by
-  have key : ∀ (n : Nat) (i best : Int), 0 ≤ i →
-      scores.length - i.toNat ≤ n →
+  -- `i`/`best` are ascribed at `Int`, not `PyInt`: `omega` does not see a
+  -- hypothesis or a goal whose type is the abbreviation (measured — it is
+  -- why this gallery writes `(i : Int)` everywhere), and every arithmetic
+  -- side condition below goes through it
+  have key : ∀ (n : Nat) (i best : Int), (0 : Int) ≤ i →
+      (scores.length : Int) ≤ i + (n : Int) →
       sf_bound_rec.bound_rec(scores, gamma, i, best) ==>
         sfSearchMoves gamma (scores.drop i.toNat) best := by
     intro n
@@ -75,71 +90,22 @@ theorem bound_rec_total (scores : List PyInt) (gamma i best : PyInt)
     | succ n ihn =>
       intro i best hi0 hle
       by_cases hlt : (i : Int) < scores.length
-      · have hnn : ¬ ((i : Int) < 0) := by omega
-        have hidxN : i.toNat < scores.length := by omega
-        have hdrop := List.drop_eq_getElem_cons hidxN
-        have harr := arrVal_getElem scores i.toNat hidxN
-        have ht1 : ((i : Int) + 1).toNat = i.toNat + 1 := by omega
-        have hle' : scores.length - ((i : Int) + 1).toNat ≤ n := by omega
-        rw [hdrop]
-        -- four branch combinations; the two cutoff ones are straight-line,
-        -- the two continue ones splice the IH at (i + 1).
-        by_cases hs : best < scores[i.toNat]
-        · have hmax : max best (scores[i.toNat]) = scores[i.toNat] :=
-            Int.max_eq_right (Int.le_of_lt hs)
-          by_cases hb : gamma ≤ scores[i.toNat]
-          · refine ⟨64, ?_⟩
-            unfold callFunction; rw [callIn.eq_2]
-            simp only [sfSearchMoves, hmax, if_pos hb]
-            py_simp [sf_bound_rec, hnn, harr,
-                     show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
-                     show ¬ ((scores.length : Int) ≤ i) by omega,
-                     show best < scores[i.toNat] from hs,
-                     show gamma ≤ scores[i.toNat] from hb]
-          · py_lift ⟨f₁, h₁⟩ :=
-              ihn ((i : Int) + 1) (scores[i.toNat]) (by omega) hle'
-              with [sf_bound_rec]
-            rw [ht1] at h₁
-            refine ⟨f₁ + 64, ?_⟩
-            unfold callFunction; rw [callIn.eq_2]
-            simp only [sfSearchMoves, hmax, if_neg hb]
-            py_simp [sf_bound_rec, hnn, harr,
-                     show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
-                     show ¬ ((scores.length : Int) ≤ i) by omega,
-                     show best < scores[i.toNat] from hs,
-                     show ¬ (gamma ≤ scores[i.toNat]) from hb]
-            simp (disch := omega) only [h₁]
-            py_simp []
-        · have hmax : max best (scores[i.toNat]) = best :=
-            Int.max_eq_left (Int.not_lt.mp hs)
-          by_cases hb : gamma ≤ best
-          · refine ⟨64, ?_⟩
-            unfold callFunction; rw [callIn.eq_2]
-            simp only [sfSearchMoves, hmax, if_pos hb]
-            py_simp [sf_bound_rec, hnn, harr,
-                     show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
-                     show ¬ ((scores.length : Int) ≤ i) by omega,
-                     show ¬ (best < scores[i.toNat]) from hs,
-                     show gamma ≤ best from hb]
-          · py_lift ⟨f₁, h₁⟩ :=
-              ihn ((i : Int) + 1) best (by omega) hle'
-              with [sf_bound_rec]
-            rw [ht1] at h₁
-            refine ⟨f₁ + 64, ?_⟩
-            unfold callFunction; rw [callIn.eq_2]
-            simp only [sfSearchMoves, hmax, if_neg hb]
-            py_simp [sf_bound_rec, hnn, harr,
-                     show ((0:Int) ≤ i ∧ i < (scores.length : Int)) by omega,
-                     show ¬ ((scores.length : Int) ≤ i) by omega,
-                     show ¬ (best < scores[i.toNat]) from hs,
-                     show ¬ (gamma ≤ best) from hb]
-            simp (disch := omega) only [h₁]
-            py_simp []
+      · have ih : ∀ b : Int,
+            sf_bound_rec.bound_rec(scores, gamma, i + 1, b) ==>
+              sfSearchMoves gamma (scores.drop (i + 1).toNat) b :=
+          fun b => ihn (i + 1) b (by omega) (by omega)
+        have hcons : scores.drop i.toNat
+            = scores[i.toNat] :: scores.drop (i + 1).toNat := by
+          rw [show (i + 1).toNat = i.toNat + 1 from by omega]
+          exact List.drop_eq_getElem_cons (by omega)
+        py_vcgen [sf_bound_rec]
+        all_goals grind [sfSearchMoves]
       · have hdrop : scores.drop i.toNat = [] :=
           List.drop_eq_nil_of_le (by omega)
         have h := bound_rec_exit scores gamma i best (by omega)
         simpa [hdrop, sfSearchMoves] using h
-  exact key (scores.length - i.toNat) i best hi (Nat.le_refl _)
+  have hi' : (0 : Int) ≤ i := hi
+  exact key scores.length i best hi' (by omega)
 
 /-- The headline form: from the top of the move loop
 (`i = 0`, `best = -MATE_UPPER = -69290`), the Python recursion computes

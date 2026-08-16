@@ -93,11 +93,17 @@ execution):
   generator (H4), over a `str` or a `range` refuse loudly and want the
   layer-2 rule by hand. `for … else` has no rule at all — the interpreter
   refuses it;
-* **calls** (`x = f(…)` or `(a, b, c) = f(…)`, the call the whole right-hand
-  side) — `PyStmtTriple.assign` ∘ `EvalsTo.call`, the callee fact found
-  among local `CallsTo` hypotheses (recursion IHs, destructured relational
-  specs) first, then the `@[py_spec]` registry; spec preconditions are
-  discharged by `assumption`/`omega`, or appended as `side` goals.
+* **calls** — `x = f(…)` / `(a, b, c) = f(…)` (the call the whole
+  right-hand side, `PyStmtTriple.assign` ∘ `EvalsTo.call`) and
+  `return f(…)` (`PyStmtTriple.retExpr` ∘ `EvalsTo.call`, which is the
+  "any other expression position" that primitive was built for). Both go
+  through the same front half (`buildCallEvalsTo`): the callee fact is
+  found among local `CallsTo` hypotheses first — ∀-QUANTIFIED ones
+  included, which is what makes a recursion IH usable, since the natural
+  shape of one is `∀ b, f(…, b) ==> …` — then in the `@[py_spec]`
+  registry; spec preconditions are discharged by `assumption`/`omega`, or
+  appended as `side` goals. A return-position call to a BUILTIN stays
+  straight-line, as before.
 
 Residual goals are pure mathematics over named atoms (`py_loop`
 presentation: invariant conjuncts split into `hinv1`, `hinv2`, …; the loop
@@ -126,8 +132,9 @@ v1 restrictions (deliberate): loop clause variables are `Int`-valued and
 must exist at loop entry; loop `orelse` is empty (the layer-2 rule's
 restriction); `if`-branches are straight-line (terminators allowed; no
 nested `if`/`while`/call); calls appear only as the whole right-hand side
-of an assignment, with a fully literal environment (not under an enclosing
-loop's symbolic tail); a loop test may not read a variable first assigned
+of an assignment or the whole returned expression, with a fully literal
+environment (not under an enclosing loop's symbolic tail); a loop test may
+not read a variable first assigned
 inside the loop body, and a `for`'s ITERABLE may not either (its value is
 captured once, at loop entry); `Raises` (`==>!`) goals are not walked.
 -/
@@ -1304,7 +1311,7 @@ def closeArm (ctx : VCCtx) (g : MVarId) (at_ : ArmTag) : MetaM Unit := do
 
 /-- Statement classification for the walk. -/
 inductive StmtKind where
-  | plain | term | ctrlWhile | ctrlFor | ctrlIf | ctrlCall
+  | plain | term | ctrlWhile | ctrlFor | ctrlIf | ctrlCall | ctrlRet
 deriving BEq, Inhabited
 
 /-- Classify one statement: control (`while`/`for`/`if`/call-assignment),
@@ -1316,7 +1323,20 @@ def classify (s : Lean.Expr) : MetaM StmtKind := do
   | ``Stmt.whileLoop => return .ctrlWhile
   | ``Stmt.forStmt => return .ctrlFor
   | ``Stmt.ifStmt => return .ctrlIf
-  | ``Stmt.ret | ``Stmt.brk | ``Stmt.cont => return .term
+  | ``Stmt.ret => do
+    -- `return f(…)` is a call site (the callee-in-module downgrade in
+    -- `walk` sends a BUILTIN callee back to `.term`, where the captured
+    -- run handles it as before)
+    let v ← whnfR (s.getArg! 0)
+    if v.isAppOfArity ``Option.some 2 then
+      let e ← whnfR (v.getArg! 1)
+      if e.isAppOfArity ``Expr.call 5 then
+        let fn ← whnfR (e.getArg! 0)
+        let unsup ← whnfR (e.getArg! 3)
+        if fn.isAppOfArity ``Expr.name 2 && unsup.isAppOfArity ``Option.none 1 then
+          return .ctrlRet
+    return .term
+  | ``Stmt.brk | ``Stmt.cont => return .term
   | ``Stmt.assign => do
     let rhs ← whnfR (s.getArg! 1)
     if rhs.isAppOfArity ``Expr.call 5 then
@@ -1337,13 +1357,20 @@ so the captured run steps straight through it. Without this downgrade,
 `data = sorted(data)` would be intercepted and fail with a bogus
 "no `CallsTo` fact for callee `sorted`". An unknown name also downgrades —
 the captured run then raises the honest `NameError`. -/
-def calleeInModule (ctx : VCCtx) (m s : Lean.Expr) : MetaM Bool := do
-  let s ← whnfR s
-  let rhs ← whnfR (s.getArg! 1)
-  let fnE ← whnfR (rhs.getArg! 0)
+def calleeInModule (ctx : VCCtx) (m call : Lean.Expr) : MetaM Bool := do
+  let fnE ← whnfR ((← whnfR call).getArg! 0)
   let (rF, _) ← captureRun ctx.pack
     (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
   return !(← whnfR rF).isAppOfArity ``Option.none 1
+
+/-- The call expression of a `.ctrlCall` (assignment) or `.ctrlRet`
+(`return`) statement. -/
+def callExprOf (s : Lean.Expr) : MetaM Lean.Expr := do
+  let s ← whnfR s
+  match s.getAppFn with
+  | .const ``Stmt.assign _ => whnfR (s.getArg! 1)
+  | .const ``Stmt.ret _ => whnfR ((← whnfR (s.getArg! 0)).getArg! 1)
+  | _ => throwError "py_vcgen: internal — not a call statement" 
 
 /-- The `Stmt` type constant. -/
 def stmtTy : Lean.Expr := Lean.mkConst ``Stmt
@@ -1559,46 +1586,52 @@ def findCalleeFact (ctx : VCCtx) (fname : String) (vsLit : Lean.Expr) :
     -- the call site evaluated to the thaws of the spec's boundary args?
     -- (`thawList` form: whnf-reducible, unlike `Array.map`)
     let thawed ← mkAppM ``RVal.thawList #[← mkAppM ``Array.toList #[argsE]]
-    isDefEq thawed vsLit
+    let st ← saveState
+    if ← isDefEq thawed vsLit then return true
+    st.restore
+    -- A marshalled LIST argument does not reduce definitionally: the
+    -- captured run holds `map (thaw ∘ toVal) l` while the spec's boundary
+    -- args thaw to `thawList (map toVal l)`, and bridging those is an
+    -- induction (`thawList_eq_map`), not an unfolding. Compare the normal
+    -- forms instead — without this, no fact about a list-taking callee
+    -- ever matches, which is every recursion over a boundary list.
+    let (r, _) ← Meta.simp thawed ctx.pack.exec ctx.pack.procs
+    isDefEq r.expr vsLit
+  -- One candidate: instantiate its ∀-telescope, unify the conclusion with
+  -- this call site, and keep the leftover Prop obligations as side goals.
+  -- Quantified LOCAL hypotheses go through this too, which is what makes a
+  -- recursion IH usable: the natural shape of one is `∀ b, f(…, b) ==> …`,
+  -- not a ground `CallsTo`, and a ground fact is just the empty telescope.
+  let tryFact (base ty : Lean.Expr) :
+      MetaM (Option (Lean.Expr × Lean.Expr × Lean.Expr × Array MVarId)) := do
+    try
+      let (ms, _, concl) ← forallMetaTelescope ty
+      let concl ← whnfR concl
+      unless concl.isAppOfArity ``CallsTo 4 do return none
+      unless (← isDefEq (concl.getArg! 0) ctx.mE)
+          && (← isDefEq (concl.getArg! 1) (mkStrLit fname))
+          && (← checkArgs (concl.getArg! 2)) do return none
+      let mut sides : Array MVarId := #[]
+      for mv in ms do
+        let mvId := mv.mvarId!
+        if ← mvId.isAssigned then continue
+        if ← isProp (← inferType mv) then sides := sides.push mvId
+        else return none
+      return some (mkAppN base ms, ← instantiateMVars (concl.getArg! 2),
+        ← instantiateMVars (concl.getArg! 3), sides)
+    catch _ => return none
   -- local hypotheses, most recent first
   for d in (← getLCtx).decls.toList.filterMap id |>.reverse do
     if d.isImplementationDetail then continue
-    let t ← instantiateMVars d.type
-    if t.isAppOfArity ``CallsTo 4 then
-      let s ← saveState
-      if (← isDefEq (t.getArg! 0) ctx.mE)
-          && (← isDefEq (t.getArg! 1) (mkStrLit fname))
-          && (← checkArgs (t.getArg! 2)) then
-        return some (d.toExpr, t.getArg! 2, t.getArg! 3, #[])
-      s.restore
+    let s ← saveState
+    match ← tryFact d.toExpr (← instantiateMVars d.type) with
+    | some r => return some r
+    | none => s.restore
   -- the @[py_spec] registry
   for n in ← Lean.labelled `py_spec do
     let s ← saveState
-    let res? ← try
-        let lemE ← mkConstWithFreshMVarLevels n
-        let (ms, _, concl) ← forallMetaTelescope (← inferType lemE)
-        let concl ← whnfR concl
-        if concl.isAppOfArity ``CallsTo 4 then
-          if (← isDefEq (concl.getArg! 0) ctx.mE)
-              && (← isDefEq (concl.getArg! 1) (mkStrLit fname))
-              && (← checkArgs (concl.getArg! 2)) then
-            let mut sides : Array MVarId := #[]
-            let mut ok := true
-            for mv in ms do
-              let mvId := mv.mvarId!
-              if ← mvId.isAssigned then continue
-              if ← isProp (← inferType mv) then
-                sides := sides.push mvId
-              else
-                ok := false
-            if ok then
-              pure (some (mkAppN lemE ms, ← instantiateMVars (concl.getArg! 2),
-                ← instantiateMVars (concl.getArg! 3), sides))
-            else pure none
-          else pure none
-        else pure none
-      catch _ => pure none
-    match res? with
+    let lemE ← mkConstWithFreshMVarLevels n
+    match ← tryFact lemE (← inferType lemE) with
     | some r => return some r
     | none => s.restore
   return none
@@ -1874,9 +1907,9 @@ partial def walk (ctx : VCCtx) (tags : PostTags) (g : MVarId) : TacticM Unit := 
       -- Builtin-callee downgrade: only MODULE-function call-assignments are
       -- control points (`handleCall`); `x = len(…)` / `x = sorted(…)` are
       -- straight-line (see `calleeInModule`).
-      let k ← if k == .ctrlCall then
-          (if ← calleeInModule ctx tg.m s then pure StmtKind.ctrlCall
-           else pure StmtKind.plain)
+      let k ← if k == .ctrlCall || k == .ctrlRet then
+          (if ← calleeInModule ctx tg.m (← callExprOf s) then pure k
+           else pure (if k == .ctrlCall then StmtKind.plain else StmtKind.term))
         else pure k
       kinds := kinds.push k
     let mut firstCtrl : Option Nat := none
@@ -1893,6 +1926,7 @@ partial def walk (ctx : VCCtx) (tags : PostTags) (g : MVarId) : TacticM Unit := 
       | .ctrlFor => handleFor ctx tags tg
       | .ctrlIf => handleIf ctx tags tg
       | .ctrlCall => handleCall ctx tags tg
+      | .ctrlRet => handleRet ctx tags tg
       | _ => throwError "py_vcgen: internal — classification"
     | some k => splitPrefix ctx tags tg k
 
@@ -1940,18 +1974,18 @@ partial def splitPrefix (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal)
     | none =>
       throwError "py_vcgen: symbolic execution of a straight-line prefix got stuck:{indentExpr r}"
 
-/-- Handle a call statement `x = f(…)` / `(a, b) = f(…)`: evaluate the
-arguments, find the callee's `CallsTo` fact, splice `EvalsTo.call` through
-the generic assignment rule, continue from the updated environment. -/
-partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
-    TacticM Unit := do
+/-- The shared front half of every call site: refuse a shadowed callee,
+evaluate the argument list, find the callee's `CallsTo` fact, and build the
+`EvalsTo.call` term for the whole call expression. Returns that fact, the
+THAWED result value the call produces, and the callee's undischarged spec
+side conditions.
+
+`handleCall` (a call as an assignment's right-hand side) and `handleRet`
+(a call in `return` position) differ only in what they do with those three
+things — which is the division `EvalsTo.call`'s own docstring predicted. -/
+partial def buildCallEvalsTo (ctx : VCCtx) (tg : TripleGoal) (rhs : Lean.Expr) :
+    TacticM (Lean.Expr × Lean.Expr × Array MVarId) := do
   tg.g.withContext do
-    unless isNilTail tg.shape.tail && tg.shape.sets.isEmpty do
-      throwError "py_vcgen: a call under a symbolic environment tail (inside a loop body) is outside the v1 tier"
-    let s ← whnfR tg.stmts[0]!
-    let tgtArr := s.getArg! 0
-    let rhs ← whnfR (s.getArg! 1)
-    let spA := s.getArg! 2
     let fnE ← whnfR (rhs.getArg! 0)
     let fnameE := fnE.getArg! 0
     let .lit (.strVal fname) ← whnfR fnameE
@@ -1963,9 +1997,6 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     unless kwEs.isEmpty do
       throwError "py_vcgen: a call with keyword arguments is outside the v1 tier"
     let spc := rhs.getArg! 4
-    let (tgts, _) ← parseListLit (← arrToList tgtArr)
-    let #[tgtE] := tgts
-      | throwError "py_vcgen: chained assignment is outside the v0 tier"
     let localsE := mkLocalsExpr tg.shape
     let (rL, prfL) ← captureRun ctx.pack
       (← mkAppM ``Env.lookup #[localsE, fnameE])
@@ -1992,14 +2023,14 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       throwError "py_vcgen: call arguments did not evaluate:{indentExpr rA}"
     let vsLit := rA'.getArg! 3
     let some (factE, argsValE, vE, sides) ← findCalleeFact ctx fname vsLit
-      | throwError "py_vcgen: no `CallsTo` fact for callee `{fname}` at these arguments — bring a hypothesis into scope or register a `@[py_spec]` lemma"
+      | throwError "py_vcgen: no `CallsTo` fact for callee `{fname}` at these arguments — bring a hypothesis into scope (a recursion IH may be ∀-quantified; it is instantiated) or register a `@[py_spec]` lemma. The call evaluated its arguments to:{indentExpr vsLit}"
     let (vr, _) ← Meta.simp vE ctx.pack.present ctx.pack.procs
     let (vNF, factE') ← match vr.proof? with
       | none => pure (vr.expr, factE)
       | some vp => do
         let factTy ← inferType factE
         pure (vr.expr, ← mkEqMP (← mkCongrArg factTy.appFn! vp) factE)
-    -- the runtime value bound by the assignment: the thaw of the result
+    -- the runtime value the call produces: the thaw of the result
     let rvRaw ← mkAppM ``RVal.thaw #[vNF]
     let (rvr, _) ← Meta.simp rvRaw ctx.pack.present ctx.pack.procs
     let rvNF := rvr.expr
@@ -2023,6 +2054,70 @@ partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       #[some tg.m, some tg.E, some fnameE, some argsArr, some argsValE,
         some vNF, some spf, some spc, some prfL, some hargs, some hworld,
         some factE', some prfG, some prfNt, some hHeapFree, some hListFree]
+    return (hcall, rvNF, sides)
+
+/-- Handle a `return f(…)`: the call's `EvalsTo` fact spliced through the
+return rule (`PyStmtTriple.retExpr`, VC2.lean), leaving the postcondition's
+`ret` arm at the callee's result as the only residual. This is the case a
+RECURSIVE tail call needs — the IH is an ordinary local `CallsTo`
+hypothesis, found by the same lookup as any other callee fact. -/
+partial def handleRet (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    unless isNilTail tg.shape.tail && tg.shape.sets.isEmpty do
+      throwError "py_vcgen: a call under a symbolic environment tail (inside a loop body) is outside the v1 tier"
+    let s ← whnfR tg.stmts[0]!
+    let rhs ← whnfR ((← whnfR (s.getArg! 0)).getArg! 1)
+    let spR := s.getArg! 1
+    let (hcall, rvNF, sides) ← buildCallEvalsTo ctx tg rhs
+    -- `return` never falls through: the tail after it is dead
+    let deadPre ← withLocalDeclD `env stateTy fun env =>
+      mkLambdaFVars #[env] (Lean.mkConst ``False)
+    let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
+    let seqT ← appOpt ``PyTriple.seq
+      #[some tg.m, none, some deadPre, some tg.Q, some tg.stmts[0]!,
+        some restLit, none, none]
+    let gs ← applyC ctx tg.g seqT
+    let (g1, g2) ← splitSeqGoals gs
+    let gsF ← applyC ctx g2 (← mkConstWithFreshMVarLevels ``PyTriple.of_false)
+    unless gsF.isEmpty do throwError "py_vcgen: internal — dead tail"
+    let retT ← appOpt ``PyStmtTriple.retExpr
+      #[some tg.m, some rhs, some spR, none, none, some rvNF, none, none]
+    let gsR ← applyC ctx g1 retT
+    let (some gev, some gq) := (gsR[0]?, gsR[1]?)
+      | throwError "py_vcgen: internal — retExpr goals"
+    -- `hev`: the call evaluates, at the pinned state
+    let (_, gev) ← gev.intro `env
+    let (heqFv, gev) ← gev.intro `henv
+    let gev ← Meta.subst gev heqFv
+    let gsE ← applyC ctx gev hcall
+    unless gsE.isEmpty do
+      for sg in gsE do trySide ctx sg
+    -- `hQ`: the postcondition's `ret` arm at the callee's result
+    let (_, gq) ← gq.intro `env
+    let (heqFv2, gq) ← gq.intro `henv
+    let gq ← Meta.subst gq heqFv2
+    closeArm ctx gq tags.ret
+    for sg in sides do
+      trySide ctx sg
+
+/-- Handle a call statement `x = f(…)` / `(a, b) = f(…)`: evaluate the
+arguments, find the callee's `CallsTo` fact, splice `EvalsTo.call` through
+the generic assignment rule, continue from the updated environment. -/
+partial def handleCall (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
+    TacticM Unit := do
+  tg.g.withContext do
+    unless isNilTail tg.shape.tail && tg.shape.sets.isEmpty do
+      throwError "py_vcgen: a call under a symbolic environment tail (inside a loop body) is outside the v1 tier"
+    let s ← whnfR tg.stmts[0]!
+    let tgtArr := s.getArg! 0
+    let rhs ← whnfR (s.getArg! 1)
+    let spA := s.getArg! 2
+    let (tgts, _) ← parseListLit (← arrToList tgtArr)
+    let #[tgtE] := tgts
+      | throwError "py_vcgen: chained assignment is outside the v0 tier"
+    let localsE := mkLocalsExpr tg.shape
+    let (hcall, rvNF, sides) ← buildCallEvalsTo ctx tg rhs
     let (rAs, prfAs) ← captureRun ctx.pack
       (← mkAppM ``assignTo #[localsE, tgtE, rvNF])
     let rAs' ← whnfR rAs

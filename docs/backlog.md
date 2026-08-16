@@ -5322,3 +5322,51 @@ and stops there. The leg it needs is a new walker case, and layer 2
 already has the primitive — VC2.lean's `EvalsTo.call` docstring names
 `return f(x)` as its splice point. That is a separate pass with a separate
 regression, so it is recorded rather than started.
+
+## Calls in return position — and the third bound proof falls (2026-08-16)
+
+`return f(…)` is a walker case now, and with it `sf_bound_rec` joins
+`sf_bound_for` and `sf_bound_loop`: all three transliterations of
+sunfish's fail-soft cutoff loop are `py_vcgen` calls, certified against
+the same `sfSearchMoves` constant from `formal/Sunfish/Bound.lean`.
+
+**The rule is not call-shaped.** `PyStmtTriple.retExpr` (VC2.lean) is
+stated over an arbitrary expression — `return e` with `e` evaluating to
+`v` lands in `Q.ret` at `v` — because the call-specific half is
+`EvalsTo.call`, whose own docstring already named `return f(x)` as a
+splice point. Layer 3 shares the whole front half of a call site between
+the assignment case and the return case (`buildCallEvalsTo`): shadowing
+checks, argument evaluation, callee-fact lookup, `EvalsTo.call`. The two
+handlers differ only in what they do with the result, which is exactly
+the division the primitive predicted.
+
+**Two things the recursion needed that the tooling did not have.**
+
+1. **Quantified local facts.** `findCalleeFact` matched a local hypothesis
+   only when its type was a ground `CallsTo`. A recursion IH is
+   `∀ b, f(…, b) ==> …`, because the branch that reaches the call binds
+   its own `b`. Local hypotheses now go through the same
+   `forallMetaTelescope` instantiation the `@[py_spec]` registry always
+   used, with leftover `Prop` obligations kept as `side` goals; a ground
+   fact is just the empty telescope.
+2. **Marshalled list arguments do not match definitionally.** The captured
+   run holds `map (thaw ∘ toVal) l` while a spec's boundary args thaw to
+   `thawList (map toVal l)`, and bridging those is an induction
+   (`thawList_eq_map`), not an unfolding — so `isDefEq` refused every fact
+   about a list-taking callee, which is every recursion over a boundary
+   list. `checkArgs` compares normal forms when the direct check fails.
+
+**And one that was not tooling at all, recorded because it cost the most
+time here.** `omega` does not see a hypothesis OR a goal whose type is
+`PyInt` — the abbreviation survives in the elaborated term and omega's
+matcher is syntactic on `Int`/`Nat`. This is why the gallery writes
+`(i : Int)` ascriptions everywhere; now the reason is written down. The
+`sf_bound_rec` induction states its bound at `Int` (`↑scores.length ≤
+i + n`, subtraction-free — Nat subtraction under a `toNat` is the other
+shape omega drops) and restates `0 ≤ i` at `Int` before using it.
+
+Sizes, for the record: sf_bound_for 149 → 47, sf_bound_loop blocked → 66,
+sf_bound_rec 153 → 119 (it keeps the model constant, the exit lemma and
+the induction skeleton; what left is the four hand-written branch
+combinations and their `py_simp` runs). The hand proofs are in history at
+df7eba7 and before.

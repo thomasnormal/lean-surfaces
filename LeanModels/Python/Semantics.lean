@@ -3895,9 +3895,10 @@ def Module.heapFree (m : Module) : Bool :=
   funsHeapFree m.functions.toList && m.classes.toList.isEmpty && moduleGenFree m
     && topLevelDefFree m
 
-/-- The three conjuncts of `Module.heapFree`, projected (H4 made it a
-three-way `&&`, so the `Bool.and_eq_true ▸` idiom no longer lines up
-positionally — these are the names to cite instead). -/
+/-- The FOUR conjuncts of `Module.heapFree`, projected (H4 made it a
+three-way `&&` and pass 3's `topLevelDefFree` made it a four-way one, so
+the `Bool.and_eq_true ▸` idiom no longer lines up positionally — these
+are the names to cite instead). -/
 theorem Module.heapFree_funs {m : Module} (hm : m.heapFree = true) :
     funsHeapFree m.functions.toList = true := by
   simp only [Module.heapFree, Bool.and_eq_true] at hm; exact hm.1.1.1

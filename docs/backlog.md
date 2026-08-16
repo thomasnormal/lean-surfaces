@@ -5073,3 +5073,116 @@ re-implemented, the `class_census.py` discipline). Reproduce by walking
 each module's top level, skipping `Import`/`ImportFrom` and
 `__name__`-guarded `if`s, and reporting the first `Unsupported` node or
 `creation_effects` class.
+
+## L3 — THE CLASS TIER v0: CENSUS-FIRST, and the VALUE moved (2026-08-16)
+
+The GO was granted on library-mode approval, and the census-first
+discipline says re-verify the design's claims against current HEAD before
+writing a line — the design (2026-08-14) predates the depth landings, and
+one of them touched `worldInv`'s neighbourhood. Done, both halves. **The
+COST is unchanged to the digit. The VALUE is not, and the instrument that
+moved it is the one the GO was granted on.**
+
+### The COST claims, re-verified at the statements (all HOLD)
+
+| design claim | measured at HEAD |
+| --- | --- |
+| `fuelMono` 18 conjuncts | **18** (17 `∧`, Obs.lean:410) |
+| `worldInv` 11 conjuncts | **11** (10 `∧`, Obs.lean:1999) |
+| `clockErase`'s `CE` 18 conjuncts | **18** (17 `∧`, ClockErase.lean:652) |
+| `worldInv` VACUOUS on the tier | **holds** — `Module.heapFree` still conjoins `m.classes.toList.isEmpty` (Semantics.lean:3894) |
+| 17 `Stmt.pass` match sites, 7/8/2 | **17** — 7 Semantics.lean, 8 Json.lean, 2 Script.lean; the other `.pass` occurrences in Json.lean are CONSTRUCTIONS, not enumerating matches, and VC.lean's is a triple rule, not a match |
+| `Stmt` gains one constructor | 19 → **20** |
+| Script.lean carries no meta-theorem | **0** `theorem`/`lemma` in 891 lines |
+
+The two depth landings moved none of it: 46ce995 (`while … else`) touched
+Script.lean, which no theorem quantifies over, and b1e31c1 (`heapFree`
+past `.get`) touched Obs.lean and Semantics.lean without adding a
+conjunct. So the 700–1000-line estimate over five files stands, and so do
+the three build-cost poles.
+
+ONE DRIFT FOUND AND FIXED on the way past: `Module.heapFree`'s projection
+docstring said "The three conjuncts" of what is a FOUR-way `&&` (pass 3's
+`topLevelDefFree` made it four, and four projection theorems sit under
+that comment). Model-matches-code, corrected in place.
+
+### The VALUE claim, MEASURED for the first time — and it is 1, not 16
+
+§THE CLASS-CREATION WALL's recommendation 2 says v0 "is built for the
+library batch (87 of 141 pure-Python modules are class-walled)", and the
+phase plan says "library mode is the first instrument that can collect
+it". Library mode has now collected it, and CLEARING A WALL IS NOT
+RUNNING A MODULE:
+
+* v0 (the instrument's own `V0` set, T1+T2+T3+T4) clears **16 of the 89**
+  class-walled library files — the design's number, reproduced exactly.
+* **ZERO of those 16 have no other wall.** Every single one re-walls on
+  `import`. Three (`code`, `string`, `unittest.main`) have `import` as
+  their ONLY remaining wall; the other thirteen have two to eight more
+  (`Starred` 9, `Delete` 5, `Global` 5, `With` 4, `Set` 3, …).
+* And it is not the whole-file/import-time confusion the L1 baseline
+  caught: the check was redone in SOURCE ORDER, admitting the class
+  statement and asking what the first top-level `Unsupported` is.
+  **16 of 16: `Import` 15, `ImportFrom` 1** — `import sys`,
+  `import select`, `import fnmatch`, `import _string`, … every one of
+  them a module-body statement the survey really reaches.
+* In-repo, `cls_lab` DOES flip: its only demand is
+  `base:same-module-class` and its `other_walls` is empty (censused
+  directly, controls 20/20 + 0 ground-truth violations). The OTHER
+  in-repo class-walled row, `seq_tests`, does not: it demands
+  `base:builtin-type` and `base:dotted`, both outside v0, so it stays
+  class-walled — which is what makes the arithmetic below exact.
+
+**So L3 v0 built ALONE moves the library metric by exactly ONE module.**
+Pre-registered, before any code:
+
+* wall census `class-creation` **91 → 74** (16 census clears + `cls_lab`);
+  `import` **32 → 48**. A wall RENAME for 16 of the 17.
+* module verdicts: **one** row improves — `cls_lab`, REFUSED →
+  BODY-ONLY/PARTIAL/VERIFIED as its battery decides. VERIFIED 12 → 12
+  or 13. Everything else in the table is unchanged.
+* program mode, unchanged from the design's own pre-registration: stdlib
+  flip set EMPTY, in-repo **+2 MATCH** (`cls_lab.py` and
+  `cls_effect_script.py` — the file that PINS the class-creation
+  refusal; that arc closes and the pin moves to the new boundary).
+
+### THE ORDERING, which is the actual product of this census
+
+Put beside §L2 — THE MODULE SYSTEM, measured the same night on the same
+corpus:
+
+| built | library-mode module bodies unlocked |
+| --- | --- |
+| L3 v0 alone | **1** (`cls_lab`) |
+| L2's opaque-module arm alone | **10** |
+| L2 then L3 v0 | 10 + 1 + the 3 import-only clears = **~14** |
+
+§The IMPORT CEILING wrote the sentence in 2026-08-13 — "every bit of that
+value is BEHIND a module system, because these are modules nothing
+imports today" — and §THE CLASS-CREATION WALL repeated it. Neither could
+put a number on it. **The numbers are 1 and 10, and they say the two
+phases are in the wrong order.**
+
+### STOPPED, and what to do instead
+
+Not built. The GO was granted on a library number, and the library
+instrument has now refuted that number for this ordering; building 700–
+1000 lines of Lean for one in-repo module would be exactly the grinding
+the census-first rule exists to prevent.
+
+1. **Take L2's opaque-module arm to the owner as one decision with this.**
+   It is the strictly larger number AND the unlock for L3's. The ask is
+   narrow: should a from-import bind an opaque value nothing may observe?
+2. **If the owner says yes, build L2 then L3 v0** — in that order, and
+   the class tier's pre-registration becomes ~4 library modules instead
+   of 1, on top of its language value.
+3. **If the owner says no, L3 v0 is still legitimate — but on the LANGUAGE
+   argument, not the library one.** §THE CLASS-CREATION WALL's
+   recommendation 2 names it: "inheritance is the biggest remaining hole
+   in the class model and `CallsIn` over an inheriting class is a theorem
+   shape this project does not have." That is a real reason. It is not a
+   number, and it should be chosen as itself.
+4. The SOUNDNESS half of this lane is already done and stays done: the
+   third door closed on 2026-08-14, and the census re-confirms it
+   (0 creation-pure classes running a decorator, "anything but 0 is a
+   REGRESSION").

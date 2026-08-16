@@ -4721,21 +4721,119 @@ the mutating half of the stdlib (`insort`, every in-place sort) would
 become comparable instead of merely counted. Not this lane's file, and
 each is a one-line addition to an existing JSON writer.
 
-### Phase plan
+### Phase plan — SUPERSEDED by measurement, and by this instrument
 
-* **L2 — the module system.** Import semantics proper: `__name__` bound
-  to the module name, so the gate above stops firing and the
-  `if __name__ == "__main__":` block is statically dead (§the module-init
-  mutation gap already argues this is EXACT, not an approximation).
-  Priced at single digits as a SEED tier (§the import ceiling) — but the
-  library metric is where its value was always claimed to be, and this
-  harness is what will show it as a number.
-* **L3 — the class tier v0**, priced in §THE CLASS-CREATION WALL at
-  700–1000 lines over five files and zero sweep flips. Its library value
-  (87/89 of 141 class-walled) is the reason it exists, and library mode is
-  the first instrument that can collect it.
-* Both phase BEHIND the H2 landing: each edits `Semantics.lean`, and two
-  depth lanes hold that surface today.
+The L1 entry proposed L2 (the module system) and L3 (the class tier v0) as
+the next two phases. Both have since been PRICED WITH THIS SURVEY and the
+answers are recorded in their own sections: §L2 CENSUSED AND STOPPED (the
+`__name__` half is worth ZERO modules — the `import-semantics:__name__`
+gate has never fired, in any run) and §L3 CENSUS-FIRST (cost unchanged,
+value 1 and not 16). Read those, not the two bullets this section used to
+carry. The library metric was built to say what a tier is worth before it
+is built; on its first two customers it said "less than you think," twice.
+
+## THE OBSERVATION HOOKS, WIRED — UNCOMPARABLE goes to zero (2026-08-16)
+
+`--batch --observations` (§THE BATCH OBSERVATION HOOKS) landed on the
+runner and this is the harness half: the flag on the CALL-phase
+invocation, and the two early returns in `compare_call` replaced by real
+comparisons — stdout against `lean_stdout(model)`, mutation against
+`model.get("mutated")` with `args_after` compared when both sides mutated.
+The oracle now records `args_after` in the runner's own encoding so the
+two mutations are compared and not merely both noticed.
+
+### The wiring delta, ISOLATED — exactly what was predicted
+
+Attributing honestly needs the two halves separated, because the model
+lane also moved the tree underneath. So the OLD comparison logic was
+replayed offline over the SAME rows of the SAME run — every call row
+stores both sides, so this is exact and needs no second sweep:
+
+| per call, one run, one commit | old logic | new logic |
+| --- | --- | --- |
+| MATCH | 2297 | **2319** |
+| REFUSED | 1120 | 1120 |
+| UNCOMPARABLE | **22** | **0** |
+| RUNNER | 7 | 7 |
+| TIMEOUT | 2 | 2 |
+| DIVERGE | 0 | 0 |
+
+**One movement, 22 rows, all of it UNCOMPARABLE → MATCH** — the model
+lane's replay predicted 22/22 and 22/22 is what happened. Nothing else
+moved by a single row. Module-side, that is `fnprint` and `g1_lab`
+PARTIAL → VERIFIED (8 printing rows each; `assert_lab`'s 6 rows clear too
+but it keeps other refusals).
+
+### The baseline, re-measured at `deddff7`
+
+| verdict | L1 (474ee31) | now | why it moved |
+| --- | --- | --- | --- |
+| VERIFIED | 12 | **14** | +`fnprint`, +`g1_lab` — THE WIRING |
+| BODY-ONLY | 8 | 7 | −`opcode` (upstream) |
+| PARTIAL | 40 | 39 | −2 wiring, +`arith` (upstream) |
+| REFUSED | 134 | **136** | +`stat`, +`opcode` (upstream) |
+| DIVERGED | **2** | **0** | BOTH FIXED UPSTREAM |
+| INCOMPLETE | 1 | 1 | `fib`, unchanged |
+
+Calls 3526 → 3448: `stat` contributes 104 fewer (it refuses before the
+call phase now) and `str_lab` 26 more (the starred-displays landing added
+functions to the file). Both accounted for; no other module's count moved.
+
+### BOTH L1 DIVERGED ROWS ARE CLOSED, and neither by this lane
+
+* `arith.mod` — `293dd09 str % <mapping>: CPython skips the leftover
+  check, and now so do we`. The row is MATCH; `mod("  x  ", [1,3,5])` now
+  answers the string on both sides.
+* `stat` — `724390d The §2.5 admission becomes a REGISTRY: 24 assertions,
+  one ever checked`. The accelerator-equivalence assertion is no longer
+  assumed per module; `stat` REFUSES with the named construct
+  `ImportFrom:accelerator-diverges`, and `opcode` moved to REFUSED with
+  it. A wrong answer became a loud refusal, which is the outcome the
+  finding was reported for.
+
+That is the library metric doing the job it was built for: two silent
+divergences found by driving public functions, both closed at the layer
+that owned them, and the scoreboard now reads DIVERGED 0.
+
+### THE MESSAGE-TEXT SURFACE — measured, NOT promoted, and here is why
+
+`--observations` also carries `exnmsg` on the call phase, so the message
+tier the BODY phase applies became available to `compare_call`. It was
+wired, measured, and then DELIBERATELY BACKED OUT: comparing message text
+turns **169 call rows into DIVERGE, across 27 distinct text pairs**, every
+one of them a `TypeError` whose CLASS already agrees. Promoting wording
+drift into the survey's headline verdict would cost DIVERGED its meaning —
+it is this instrument's word for a wrong VALUE or a wrong CLASS. The
+number is kept here instead, because it is a real fidelity surface and
+some of it is not wording at all:
+
+| rows | model | CPython 3.9 |
+| --- | --- | --- |
+| 44 | `unsupported operand type(s) for +: 'str' and 'int'` | `can only concatenate str (not "int") to str` |
+| 38 | same shape, `'list' and 'int'` | `can only concatenate list (not "int") to list` |
+| 13 | `unhashable type: 'tuple'` | `unhashable type: 'list'` |
+| 8 | `clear() takes no arguments (1 given)` | `dict.clear() takes no arguments (1 given)` |
+| 8 | `Counter.bump() got multiple values…` | `bump() got multiple values…` |
+| 8 | `Move() takes 3 positional arguments but 1 were given` | `<lambda>() missing 2 required positional arguments: 'j' and 'prom'` |
+| 12 | `list indices must be integers, not X` | `list indices must be integers or slices, not X` |
+| 9 | `range() arguments must be integers` | `'X' object cannot be interpreted as an integer` |
+
+**Three of these are not drift, they are wrong facts.** `unhashable type:
+'tuple'` NAMES THE WRONG TYPE where CPython names `'list'`; the `Move()`
+row reports a different function and a different error shape; and
+`range()` reports the wrong subject. The rest split into two systematic
+families — CPython's concatenation-specific text for `+` on `str`/`list`
+(82 rows, the bulk), and a qualifier convention the model gets backwards
+in both directions (`dict.clear` under-qualified, `Counter.bump`
+over-qualified). RECORDED AS THE NEXT DECISION, not taken here: a message
+tier for the call phase wants its own verdict bucket (the body phase's
+SAME/DRIFT/ABSENT vocabulary already exists), and the 13 wrong-type rows
+want fixing whatever is decided about the other 156.
+
+DETERMINISM, re-run after the wiring: the corpus surveyed twice, batteries
+compared byte for byte — **310567 bytes, sha256 `3b131927ed7b…`,
+IDENTICAL**, all 197 module verdicts stable.
+
 ## `py_vcgen` walks `for` — BUILT (2026-08-15)
 
 The cross-cutting gap carried since the 2026-08-09 stop point ("`py_vcgen`

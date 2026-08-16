@@ -341,7 +341,13 @@ def run_call_batch(runner, jobs, fuel, timeout):
     with open(jobs_path, "w", encoding="utf-8") as f:
         for job in jobs:
             f.write(json.dumps(job, separators=(",", ":")) + "\n")
-    cmd = list(runner) + ["--batch", jobs_path, "--fuel", str(fuel)]
+    # `--observations` makes the batch line report what the run OBSERVED —
+    # stdout, the exception message, and the post-call arguments
+    # (docs/backlog.md §THE BATCH OBSERVATION HOOKS). It is OPT-IN on the
+    # runner because the line is compared WHOLE by other consumers, so an
+    # extra key is not additive for them; here it is exactly the data three
+    # comparisons need.
+    cmd = list(runner) + ["--batch", jobs_path, "--fuel", str(fuel), "--observations"]
     proc = subprocess.Popen(cmd, cwd=REPO_ROOT, stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, text=True)
     killed = []
@@ -464,12 +470,25 @@ def compare_body(model, oracle):
 def compare_call(model, oracle):
     """(verdict, detail) for ONE battery call.
 
-    UNCOMPARABLE is a first-class answer and never agreement: the typed-call
-    protocol (`leanmodels-run --batch`) carries a VALUE and an exception
-    CLASS and nothing else, so a call whose CPython answer is outside the
-    canonical value set, or that printed, or that mutated its arguments, is
-    a call this protocol cannot adjudicate. Counting those as matches would
-    be exactly the silent agreement this project exists not to produce."""
+    UNCOMPARABLE is a first-class answer and never agreement: a call whose
+    CPython answer is outside the canonical value set is one this protocol
+    cannot adjudicate, and counting it as a match would be exactly the silent
+    agreement this project exists not to produce.
+
+    TWO OF THE THREE UNCOMPARABLE REASONS ARE GONE (2026-08-16). The batch
+    line used to carry a VALUE and an exception CLASS and nothing else, so a
+    call that PRINTED or that MUTATED its arguments could not be adjudicated
+    either. `--batch --observations` (docs/backlog.md §THE BATCH OBSERVATION
+    HOOKS) now reports `stdout`, `exnmsg` and `args_after`/`mutated`, so both
+    are ordinary comparisons here. The model lane measured the outcome before
+    this was wired: all 22 UNCOMPARABLE rows of the L1 baseline become MATCH.
+
+    On `mutated` the comparison is deliberately STRICT rather than tolerant.
+    A `Val.list` currently thaws to an immediate `RVal.listV`, so a callee
+    cannot reach a caller's argument and the model always answers false —
+    which means CPython's `insort` mutating and the model not is a real
+    DISAGREEMENT and is reported as one. That is the point of asking: an
+    answer that is wrong loudly beats a row quietly excluded."""
     mstatus, ostatus = model.get("status"), oracle.get("status")
     if mstatus == "unsupported":
         return "REFUSED", model.get("msg", "")
@@ -481,20 +500,39 @@ def compare_call(model, oracle):
         return "UNCOMPARABLE", "the oracle call timed out"
     if ostatus == "unmappable":
         return "UNCOMPARABLE", "cpython returned %s (outside the canonical value set)" % oracle.get("type")
-    if oracle.get("stdout"):
-        return "UNCOMPARABLE", "the call printed; --batch reports no stdout"
+    mout, oout = lean_stdout(model), oracle.get("stdout", "")
+    if mout != oout:
+        return "DIVERGE", "stdout %r vs cpython %r" % (mout[:200], oout[:200])
     if mstatus == "ok" and ostatus == "ok":
         if model.get("value") != oracle.get("value"):
             return "DIVERGE", "lean %s | cpython %s" % (json.dumps(model.get("value")),
                                                         json.dumps(oracle.get("value")))
-        if oracle.get("mutated"):
-            return "UNCOMPARABLE", "value agrees but the call MUTATED its arguments; " \
-                                   "--batch reports no post-call heap"
+        if bool(model.get("mutated")) != bool(oracle.get("mutated")):
+            return "DIVERGE", ("lean mutated=%s | cpython mutated=%s%s"
+                               % (bool(model.get("mutated")), bool(oracle.get("mutated")),
+                                  " (%s)" % model["args_after_refused"]
+                                  if "args_after_refused" in model else ""))
+        if model.get("mutated") and model.get("args_after") != oracle.get("args_after"):
+            return "DIVERGE", ("both mutated, differently: lean %s | cpython %s"
+                               % (json.dumps(model.get("args_after")),
+                                  json.dumps(oracle.get("args_after"))))
         return "MATCH", ""
     if mstatus == "exn" and ostatus == "exn":
         if model.get("exn") != oracle.get("exn"):
             return "DIVERGE", "lean raised %s | cpython raised %s" % (model.get("exn"),
                                                                       oracle.get("exn"))
+        # THE MESSAGE TEXT IS DELIBERATELY NOT COMPARED HERE, and the number
+        # says why. `--observations` makes `exnmsg` available on the call
+        # phase too, and comparing it turns 169 of these rows into DIVERGE —
+        # 27 distinct text pairs, every one of them a TypeError whose CLASS
+        # already agrees (docs/backlog.md §LIBRARY MODE, the message-text
+        # surface). That is a real fidelity gap and a WRONG-ANSWER verdict is
+        # the wrong instrument for it: DIVERGED is this survey's headline for
+        # a wrong VALUE or a wrong CLASS, and drowning it in wording drift
+        # would cost the headline its meaning. The body phase compares
+        # messages because a module body raising the wrong text is the whole
+        # of what it observes; a call has a value to be right or wrong about.
+        # Its own tier is the recorded next step, not a silent promotion.
         return "MATCH", ""
     return "DIVERGE", "lean %s | cpython %s" % (json.dumps(model), json.dumps(oracle))
 

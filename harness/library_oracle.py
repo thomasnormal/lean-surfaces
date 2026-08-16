@@ -395,9 +395,9 @@ def _alarm_off():
 def run_call(fn, enc_args, timeout):
     """One battery call. Returns the row the driver compares: the canonical
     outcome, the STDOUT it produced, and whether it MUTATED its arguments
-    (deep-compared against a copy taken before the call — the model's
-    typed-call protocol reports neither, so both are recorded here and
-    counted as unverified rather than assumed away)."""
+    (deep-compared against a copy taken before the call, and recorded as
+    `args_after` in the runner's own encoding so the two sides' mutations are
+    COMPARED — `--batch --observations` reports the same three things)."""
     args = [from_canonical_value(a) for a in enc_args]
     before = copy.deepcopy(args)
     buf = io.StringIO()
@@ -432,7 +432,14 @@ def run_call(fn, enc_args, timeout):
     try:
         if args != before:
             row["mutated"] = True
-    except Exception:
+            # The POST-CALL arguments, in the runner's own encoding, so the
+            # two sides' mutations are compared and not merely both noticed
+            # (`--batch --observations` reports `args_after` the same way).
+            try:
+                row["args_after"] = [to_canonical_value(a) for a in args]
+            except (Unmappable, RecursionError) as u:
+                row["args_after_refused"] = str(u)
+    except RecursionError:
         row["mutated"] = "uncomparable"
     return row
 

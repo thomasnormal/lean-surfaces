@@ -5236,3 +5236,31 @@ touches EVERY capture in the walker, so it wants its own pass and its own
 regression run rather than a ride-along. `sf_bound_rec` reads the same
 subscript and waits on the same fix (plus the recursion path, which the
 call rule already supports). The blocked file's header records this.
+
+## gen_moves, ray leg: the budget lemma ATTACKED (2026-08-16)
+
+Not proved, and therefore not claimed — but no longer unexplored. The
+worked map is in `Examples/python/sunfish/genmoves_theorem.lean`; the two
+findings worth having outside it:
+
+1. **The missing primitive.** Nothing in core's simp set decomposes a
+   successful `do`-block over `Except`. `(x >>= g) = .ok c ↔ ∃ a, x = .ok a
+   ∧ g a = .ok c` (by `cases x <;> simp [bind, Except.bind]`) is the lemma
+   every tactic on `Ref.ray` stalls without, and with it `split at h` walks
+   the guards and the `Option` match fine (`Ref.A1`/`Ref.H1` need
+   unfolding, or the two castling branches leave `Ref.H1 = Ref.A1`
+   standing).
+2. **The wrong turn, recorded because it looks right.** Casing on the
+   recursive call and refuting the `.error` branch does NOT work: a ray
+   that breaks on its first guard returns `[]` without forcing the tail, so
+   `body(.error e) = .ok []` is satisfiable. The tail is consumed on
+   exactly one leaf; every other leaf is independent of it — which is also
+   the shape the eventual ray-AGREEMENT proof has to exploit, since the
+   model's generator consumes its ray step the same way.
+
+The recommended next move is (b) in the file: factor the body as
+`rayBody … (tail)` with `ray … (f+1) j = rayBody … j (ray … f (j+d))` by
+`rfl`, prove once that `rayBody` is map-or-constant in its tail, and take
+both the budget lemma and the ray-agreement induction off that one
+characterization. Square agreement (`directions[p]`, six kernel-computable
+keys) and the `enumerate`-scan board leg are untouched and unchanged.

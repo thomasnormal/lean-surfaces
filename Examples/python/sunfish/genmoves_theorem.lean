@@ -137,24 +137,49 @@ arrives one yielded move at a time, so every step of the proof meets a
   | cons l rest ih =>
     simp only [List.flatten_cons, refTriples_append, ih, List.map_cons]
 
-/-! ### The reference's budget — the next step, NOT claimed here
+/-! ### The reference's budget — ATTACKED, not claimed (2026-08-16)
 
 `Ref.ray` stands in for CPython's unbounded `count(i + d, d)` with a step
 budget, and running out is an ERROR, never a truncated answer. The proof
-needs that budget to be irrelevant once it is large enough, i.e.
+needs that budget to be irrelevant once it is large enough:
 
     ray b wc0 wc1 ep kp i p d f j = .ok ms →
-      ∀ f' ≥ f, ray b wc0 wc1 ep kp i p d f' j = .ok ms
+      ∀ k, ray b wc0 wc1 ep kp i p d (f + k) j = .ok ms
 
-— otherwise the theorem's `rf` would be part of the claim instead of an
-artifact of writing the reference in Lean. It is a fuel-monotonicity lemma
-of exactly the interpreter's `_mono` family shape, by induction on the
-budget: everything in one ray step before the recursive call is
-budget-free, so only the tail consumes the IH. It is NOT stated as a
-theorem here because it is not proved here, and this repo does not land
-`sorry` — the shape above is the specification for whoever picks it up
-(the `do`-block over `Except` wants `Except.bind_eq_ok`-style decomposition
-rather than a naive `cases` chain; that is the one thing a first attempt
-gets wrong). -/
+— otherwise the theorem's `rf` is part of the claim instead of an artifact
+of writing the reference in Lean. It is still NOT proved (this repo does
+not land `sorry`), but it is no longer unexplored: what follows is a
+worked map, including the wrong turn, so the next attempt starts past it.
+
+**What works.** Induction on the budget, `rw [Ref.ray]` in goal and
+hypothesis (with `f + 1 + k = (f + k) + 1` first), and the `do`-block over
+`Except` decomposed by
+
+    (x >>= g) = .ok c ↔ ∃ a, x = .ok a ∧ g a = .ok c
+
+proved by `cases x <;> simp [bind, Except.bind]` — core's `simp` set does
+NOT have this, and without it every tactic stalls at the first `←`, which
+is the thing to know. `split at h` then steps through the `if`s and the
+`Option` match, and `Ref.A1`/`Ref.H1` must be in the simp set or the two
+castling branches leave `Ref.H1 = Ref.A1` unrefuted.
+
+**The wrong turn, recorded because it looks right.** Case on the recursive
+call and refute the `.error` branch: it is NOT contradictory. A ray that
+breaks immediately (`q in " \nPNBRQK"`, the very first guard) returns `[]`
+without ever forcing the tail, so `body(.error e) = .ok []` is perfectly
+satisfiable and `exfalso` is unprovable there. The tail is used on exactly
+one leaf; every other leaf is INDEPENDENT of it.
+
+**The shape that should close it.** Either (a) a lockstep walk —
+decompose goal and hypothesis together, so each leaf is `exact h` (the
+leaf does not mention the tail, and the two bodies are then syntactically
+equal) or one `ih` rewrite (the leaf that does); or (b) factor the body
+with the tail abstracted, `rayBody … (tail : Except String (List
+RefMove))`, with `ray … (f+1) j = rayBody … j (ray … f (j+d))` by `rfl`,
+and prove once that `rayBody` is "map-or-constant" in its tail — after
+which monotonicity is three lines and so is every later ray lemma. (b) is
+the better investment: the same characterization is what ray AGREEMENT
+needs, since the model's generator also consumes the tail exactly once
+per ray step. -/
 
 end Examples.python.sunfish.genmoves_theorem

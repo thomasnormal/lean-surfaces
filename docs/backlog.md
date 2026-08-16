@@ -4790,3 +4790,51 @@ agreement for the outer `enumerate` scan with its `continue` arm. The
 ray-monotonicity lemma was attempted and abandoned rather than landed
 half-done — its `do`-block over `Except` wants `Except.bind_eq_ok`-style
 decomposition, not a `cases` chain, and the file says so.
+
+## `str % <mapping>` — the baseline's wrong answer, CLOSED (2026-08-16)
+
+Divergence triage, item 1 of 2. The L1 baseline's `arith.mod` row was a
+LIVE WRONG ANSWER in the freshly landed `%` tier: `'  x  ' % [1, 3, 5]`
+is `'  x  '` under CPython 3.9.19 and was a `TypeError` under the model.
+Design and measurement: docs/memory-model.md §`%`-formatting on strings,
+"the mapping right operand".
+
+**The mechanism, from the C source and not from the docs.**
+`PyUnicode_Format` sets `ctx.dict = args` when
+`PyMapping_Check(args) && !PyTuple_Check(args) && !PyUnicode_Check(args)`,
+and the trailing leftover check is guarded `argidx < arglen && !ctx.dict`.
+So a mapping right operand SUPPRESSES `not all arguments converted`
+entirely. `PyMapping_Check` is `tp_as_mapping->mp_subscript ≠ NULL`,
+measured through `ctypes.pythonapi` on the pin rather than read off a
+doc page: **true for str, tuple, list, dict, range, bytes, bytearray;
+false for None, bool, int, float, set.** str and tuple are then struck
+out by the two `!` clauses, so inside this tier the mapping RHS is
+exactly `listV` and `rangeV`.
+
+**The fix is one predicate and one flag.** `strFormatMappingRhs`, and a
+`Bool` threaded into `strFormatWalk` that its base case consults. What
+did NOT change is the more interesting half: the positional state was
+already right, because `arglen = -1, argidx = -2` means the first
+conversion gets the WHOLE object and the second is `not enough
+arguments` — which is exactly what the one-element list `[rhs]` already
+did (`'%s' % [1,2]` → `'[1, 2]'`, `'%s %s' % [1,2]` → not enough
+arguments). And `%(key)s`, the other half of `ctx.dict`, stays LOUD, so
+the fix cannot open a path to a guessed answer.
+
+RECORDED ASYMMETRY, pinned as `fmt_dict_leftover`: `'abc' % {'k': 1}` is
+`'abc'` under CPython and LOUD here — `evalBinOp`'s heap-operand refusal
+fires before the arm. A declared gap, not a wrong answer. And a REVISIT
+marker: `listV` is the transitional value-semantics list, so when lists
+move to the heap at H2 this predicate moves with them.
+
+Battery: 21 new differential cases over five new `str_lab` functions
+(`fmt_bare_leftover` carries BOTH sides of the predicate in one row —
+list/empty-list answer, int/str/None/bool/tuple still raise) plus the
+`arith.mod` row the baseline found it on, and eleven `#py_check`/`#guard`
+pins in `str_lab/spec.lean`.
+
+MEASURED: `lake build` 3660 jobs green; docs_check 67/67; diff_test
+**1215 → 1236 cases, 0 failed**; script corpus 63 scripts 0 failed
+(49 matched, 14 loud-blocked); in-repo survey 102/127, 0 DIVERGE. The
+library baseline's `arith` row goes **DIVERGED → PARTIAL 43/48** (the
+five are loud refusals on generated argument types, not answers).

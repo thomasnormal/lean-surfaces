@@ -615,20 +615,43 @@ def strFormatConv (c : Char) (v : RVal) : Res String :=
       | Option.none =>
         .unsupported s!"'%{c}' of a '{v.typeName}' is outside the tier (only int/bool/str/None render here; docs/memory-model.md §`%`-formatting on strings)"
 
+/-- CPython's `ctx.dict` test, verbatim: `PyMapping_Check(args) &&
+!PyTuple_Check(args) && !PyUnicode_Check(args)` (`PyUnicode_Format`,
+Objects/unicodeobject.c). `PyMapping_Check` is `tp_as_mapping->mp_subscript
+≠ NULL` — MEASURED true on str/tuple/list/dict/range/bytes/bytearray and
+false on None/bool/int/float/set (3.9.19, through `ctypes.pythonapi`), so
+inside this tier the mapping right operand is exactly `listV` and `rangeV`:
+str and tuple are struck out by the two `!` clauses, a namedtuple by
+`PyTuple_Check` on the subclass, and a `.ref` never arrives at all
+(`evalBinOp`'s heap-operand refusal fires first — the invariant §`%`-
+formatting states, and the thing to revisit when lists move to the heap).
+
+It decides ONE observable, and that is why it is here: with a mapping RHS
+the trailing `not all arguments converted` check DOES NOT RUN (the check
+is guarded `argidx < arglen && !dict`), so `'  x  ' % [1, 3, 5]` is
+`'  x  '` and not a `TypeError`. The other half of the mapping path, the
+`%(key)s` protocol, is refused LOUDLY by the walker below and stays so. -/
+def strFormatMappingRhs : RVal → Bool
+  | .listV _ => true
+  | .rangeV _ _ _ => true
+  | _ => false
+
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
-consumes NOTHING; `%s`/`%r`/`%d` consume the next argument. Leftover
-arguments at the end and running out mid-walk are CPython's two arity
-`TypeError`s, verbatim. Anything else after a `%` — a flag, a width, a
-precision, a mapping key, another conversion character, or the end of
-the string — is LOUD: the format minilanguage is a second tier, and the
-forms CPython itself rejects (`%q`, a trailing `%`) get a refusal rather
-than a fabricated `ValueError` (recorded restriction). -/
-def strFormatWalk : List Char → List RVal → String → Res String
-  | [], args, acc =>
-      if args.isEmpty then .ok acc
+consumes NOTHING; `%s`/`%r`/`%d` consume the next argument. Running out
+mid-walk is CPython's `not enough arguments` verbatim, and so are
+leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
+flag above, which is exactly the condition CPython guards that second
+check with. Anything else after a `%` — a flag, a width, a precision, a
+mapping key, another conversion character, or the end of the string — is
+LOUD: the format minilanguage is a second tier, and the forms CPython
+itself rejects (`%q`, a trailing `%`) get a refusal rather than a
+fabricated `ValueError` (recorded restriction). -/
+def strFormatWalk : List Char → List RVal → Bool → String → Res String
+  | [], args, mapping, acc =>
+      if args.isEmpty || mapping then .ok acc
       else .exn (.typeError "not all arguments converted during string formatting")
-  | '%' :: '%' :: cs, args, acc => strFormatWalk cs args (acc ++ "%")
-  | '%' :: c :: cs, args, acc =>
+  | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
+  | '%' :: c :: cs, args, mapping, acc =>
       if c == 's' || c == 'r' || c == 'd' then
         match args with
         | [] => .exn (.typeError "not enough arguments for format string")
@@ -638,28 +661,31 @@ def strFormatWalk : List Char → List RVal → String → Res String
         -- kernel-reducible (the mergeSort trap, AGENTS.md)
         | a :: rest =>
             match strFormatConv c a with
-            | .ok piece => strFormatWalk cs rest (acc ++ piece)
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
             | .exn e => .exn e
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
       else
         .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%d/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
-  | ['%'], _, _ =>
+  | ['%'], _, _, _ =>
       .unsupported "a format string ending in '%' is outside the tier (CPython's `incomplete format` ValueError is not modelled; docs/memory-model.md §`%`-formatting on strings)"
-  | c :: cs, args, acc => strFormatWalk cs args (acc ++ String.mk [c])
+  | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])
 
 /-- `str % args`. The argument LIST is the RHS spread when it is a tuple
 — and a NAMEDTUPLE spreads too, because `PyTuple_Check` succeeds on the
 subclass (`'%s %s' % Move(1,2)` is `'1 2'`, measured): treating it as one
 argument would fabricate an arity error for a program CPython runs.
-Everything else is the one-element list. -/
+Everything else is the one-element list — which is CPython's `arglen = -1,
+argidx = -2` state exactly: the first conversion gets the whole object,
+the second is `not enough arguments`. Whether a LEFTOVER is an error is
+the separate `ctx.dict` question `strFormatMappingRhs` answers. -/
 def strFormat (fmt : String) (rhs : RVal) : Res RVal := do
   let args : List RVal :=
     match rhs with
     | .tuple xs => xs.toList
     | .ntuple _ _ xs => xs.toList
     | v => [v]
-  let s ← strFormatWalk fmt.data args ""
+  let s ← strFormatWalk fmt.data args (strFormatMappingRhs rhs) ""
   return .str s
 
 /-- Binary operator on already-evaluated operands. int/bool operands are

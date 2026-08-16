@@ -165,3 +165,40 @@ container argument, a non-ASCII `%r`, and a mapping RHS. -/
 #guard callFunction str_lab "fmt_container" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_nonascii_r" #[] 4096 matches .unsupported _
 #guard callFunction str_lab "fmt_mapping" #[] 4096 matches .unsupported _
+
+/-! ### The MAPPING right operand (docs/memory-model.md §`%`-formatting
+on strings — "the mapping right operand", 2026-08-16)
+
+A LIVE WRONG ANSWER, found by library mode and fixed here:
+`'  x  ' % [1, 3, 5]` is `'  x  '` under CPython and was a `TypeError`
+under the model. `PyUnicode_Format` sets `ctx.dict` when the right
+operand passes `PyMapping_Check` and is neither a tuple nor a str, and
+the trailing `not all arguments converted` check is guarded on
+`!ctx.dict` — so a list or a range SUPPRESSES it. Nothing else about
+the mapping path moves: `arglen = -1` already made the whole object the
+single positional argument, and `%(key)s` stays loud. -/
+
+#py_check str_lab.fmt_bare_leftover([1, 3, 5]) = "abc"
+#py_check str_lab.fmt_bare_leftover(([] : List Int)) = "abc"
+#py_check str_lab.fmt_range_leftover() = "abc"
+
+/-! The other side of the same predicate: a NON-mapping leftover is
+still the faithful `TypeError`, and `%d` of the whole mapping is the
+faithful type error raised at the FIRST conversion. -/
+
+#py_check str_lab.fmt_bare_leftover(1) raises
+  (.typeError "not all arguments converted during string formatting")
+#py_check str_lab.fmt_bare_leftover("z") raises
+  (.typeError "not all arguments converted during string formatting")
+#py_check str_lab.fmt_dec_seq([1, 2]) raises
+  (.typeError "%d format: a number is required, not list")
+#py_check str_lab.fmt_dec_seq(1) raises
+  (.typeError "not enough arguments for format string")
+
+/-! Loud, and the declared gaps: `%s` of a container is the heap walk
+this operator cannot see (CPython prints `'[1]'`), and a dict RHS is
+`'abc'` under CPython but never reaches the arm at all —
+`evalBinOp`'s heap-operand refusal fires first. -/
+
+#guard callFunction str_lab "fmt_seq_arg" #[.list #[.int 1]] 4096 matches .unsupported _
+#guard callFunction str_lab "fmt_dict_leftover" #[] 4096 matches .unsupported _

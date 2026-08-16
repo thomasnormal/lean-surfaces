@@ -6,7 +6,7 @@
     "version": "3.9.19"
   },
   "source_file": "Examples/python/str_lab/str_lab.py",
-  "source_sha256": "5cfd24623d814b3705ef8a1483006af39149947682222f9fd9376d455621c5f2",
+  "source_sha256": "70d947849cf5841b9d46679ba7814f2305f41c560cf56cb8b11844ec0e375bc9",
   "module": {
     "kind": "Module",
     "body": [
@@ -3487,6 +3487,376 @@
                       "col_offset": 27,
                       "end_lineno": 213,
                       "end_col_offset": 28
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 224,
+          "col_offset": 0,
+          "end_lineno": 227,
+          "end_col_offset": 20
+        },
+        "name": "fmt_bare_leftover",
+        "args": [
+          {
+            "arg": "v",
+            "span": {
+              "lineno": 224,
+              "col_offset": 22,
+              "end_lineno": 224,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 227,
+              "col_offset": 4,
+              "end_lineno": 227,
+              "end_col_offset": 20
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 227,
+                "col_offset": 11,
+                "end_lineno": 227,
+                "end_col_offset": 20
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 227,
+                  "col_offset": 11,
+                  "end_lineno": 227,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "abc"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 227,
+                  "col_offset": 19,
+                  "end_lineno": 227,
+                  "end_col_offset": 20
+                },
+                "id": "v"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 230,
+          "col_offset": 0,
+          "end_lineno": 234,
+          "end_col_offset": 19
+        },
+        "name": "fmt_seq_arg",
+        "args": [
+          {
+            "arg": "v",
+            "span": {
+              "lineno": 230,
+              "col_offset": 16,
+              "end_lineno": 230,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 234,
+              "col_offset": 4,
+              "end_lineno": 234,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 234,
+                "col_offset": 11,
+                "end_lineno": 234,
+                "end_col_offset": 19
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 234,
+                  "col_offset": 11,
+                  "end_lineno": 234,
+                  "end_col_offset": 15
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%s"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 234,
+                  "col_offset": 18,
+                  "end_lineno": 234,
+                  "end_col_offset": 19
+                },
+                "id": "v"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 237,
+          "col_offset": 0,
+          "end_lineno": 243,
+          "end_col_offset": 22
+        },
+        "name": "fmt_dec_seq",
+        "args": [
+          {
+            "arg": "v",
+            "span": {
+              "lineno": 237,
+              "col_offset": 16,
+              "end_lineno": 237,
+              "end_col_offset": 17
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 243,
+              "col_offset": 4,
+              "end_lineno": 243,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 243,
+                "col_offset": 11,
+                "end_lineno": 243,
+                "end_col_offset": 22
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 243,
+                  "col_offset": 11,
+                  "end_lineno": 243,
+                  "end_col_offset": 18
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%d %d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 243,
+                  "col_offset": 21,
+                  "end_lineno": 243,
+                  "end_col_offset": 22
+                },
+                "id": "v"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 246,
+          "col_offset": 0,
+          "end_lineno": 248,
+          "end_col_offset": 27
+        },
+        "name": "fmt_range_leftover",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 248,
+              "col_offset": 4,
+              "end_lineno": 248,
+              "end_col_offset": 27
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 248,
+                "col_offset": 11,
+                "end_lineno": 248,
+                "end_col_offset": 27
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 248,
+                  "col_offset": 11,
+                  "end_lineno": 248,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "abc"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Call",
+                "span": {
+                  "lineno": 248,
+                  "col_offset": 19,
+                  "end_lineno": 248,
+                  "end_col_offset": 27
+                },
+                "func": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 248,
+                    "col_offset": 19,
+                    "end_lineno": 248,
+                    "end_col_offset": 24
+                  },
+                  "id": "range"
+                },
+                "args": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 248,
+                      "col_offset": 25,
+                      "end_lineno": 248,
+                      "end_col_offset": 26
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "3"
+                    }
+                  }
+                ],
+                "keywords": [],
+                "call_unsupported": null
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 251,
+          "col_offset": 0,
+          "end_lineno": 255,
+          "end_col_offset": 27
+        },
+        "name": "fmt_dict_leftover",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 255,
+              "col_offset": 4,
+              "end_lineno": 255,
+              "end_col_offset": 27
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 255,
+                "col_offset": 11,
+                "end_lineno": 255,
+                "end_col_offset": 27
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 255,
+                  "col_offset": 11,
+                  "end_lineno": 255,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "abc"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Dict",
+                "span": {
+                  "lineno": 255,
+                  "col_offset": 19,
+                  "end_lineno": 255,
+                  "end_col_offset": 27
+                },
+                "keys": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 255,
+                      "col_offset": 20,
+                      "end_lineno": 255,
+                      "end_col_offset": 23
+                    },
+                    "value": {
+                      "type": "str",
+                      "value": "k"
+                    }
+                  }
+                ],
+                "values": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 255,
+                      "col_offset": 25,
+                      "end_lineno": 255,
+                      "end_col_offset": 26
                     },
                     "value": {
                       "type": "int",

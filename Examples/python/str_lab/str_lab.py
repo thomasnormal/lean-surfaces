@@ -211,3 +211,45 @@ def fmt_container():
 def fmt_mapping():
     # the %(key)s mapping protocol: the heap-operand refusal fires first
     return "%(k)s" % {"k": 1}
+
+
+# The MAPPING right operand (docs/memory-model.md §`%`-formatting on
+# strings, "the mapping right operand"). PyUnicode_Format sets ctx.dict
+# when PyMapping_Check(args) passes and args is neither a tuple nor a
+# str -- a LIST and a RANGE both pass -- and the trailing "not all
+# arguments converted" check is guarded on !ctx.dict. So a leftover is
+# an error for an int and NOT an error for a list.
+
+
+def fmt_bare_leftover(v):
+    # no conversion at all. A non-mapping v is the leftover TypeError; a
+    # list or a range comes back as the format string, UNCHANGED
+    return "abc" % v
+
+
+def fmt_seq_arg(v):
+    # the mapping is still the ONE positional argument (arglen == -1), so
+    # %s consumes it -- and a container's repr is the heap walk this
+    # operator cannot see, so the tier refuses where CPython prints '[1]'
+    return "%s" % v
+
+
+def fmt_dec_seq(v):
+    # the one argument reaching %d is the WHOLE mapping, so this is the
+    # faithful `%d format: a number is required, not list` -- and it is
+    # raised on the FIRST conversion, before the second one's arity is
+    # ever considered (a non-mapping v takes the same row to
+    # `not enough arguments`, which ctx.dict never suppresses)
+    return "%d %d" % v
+
+
+def fmt_range_leftover():
+    # range passes PyMapping_Check too: the skip is not list-specific
+    return "abc" % range(3)
+
+
+def fmt_dict_leftover():
+    # a dict is the mapping CPython's ctx.dict was named for, and it is
+    # LOUD here rather than 'abc': the heap-operand refusal fires before
+    # the operator arm, and that is the declared boundary
+    return "abc" % {"k": 1}

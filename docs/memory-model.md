@@ -3683,7 +3683,9 @@ Measured rows, all differential:
 * Arity, both directions, verbatim: `'%d %d' % (1,)` →
   `TypeError: not enough arguments for format string`; `'%d' % (1,2)`,
   `'abc' % (1,)`, `'abc' % 1` → `TypeError: not all arguments converted
-  during string formatting`; `'abc' % ()` → `'abc'`.
+  during string formatting`; `'abc' % ()` → `'abc'`. **The leftover
+  error has a condition the first version of this design missed — see
+  §the mapping right operand.**
 * Type: `'%d' % 'x'` → `TypeError: %d format: a number is required, not
   str` — the type name UNQUOTED, unlike this model's other messages.
 * Order is the single pass: `'%d %d' % ('x', 1)` raises the `%d`
@@ -3728,11 +3730,70 @@ complete valid-character set and its index arithmetic; a loud refusal is
 never a wrong answer, an invented `ValueError` would be. The refusal
 message names the character, so the census can still see the demand.
 
+### The mapping right operand (a WRONG ANSWER, fixed 2026-08-16)
+
+The design above is missing one branch of `PyUnicode_Format`, and library
+mode found it as a live divergence: **`'  x  ' % [1, 3, 5]` is `'  x  '`
+under CPython and was a `TypeError` under the model** (baseline row
+`arith.mod`, confirmed by hand at the runner). `'abc' % [1]` likewise.
+
+The C source is the whole explanation. `PyUnicode_Format` sets
+
+```
+ctx.dict = args   iff   PyMapping_Check(args) && !PyTuple_Check(args)
+                        && !PyUnicode_Check(args)
+```
+
+and the leftover check at the end of the pass is guarded
+`if (ctx.argidx < ctx.arglen && !ctx.dict)`. So a right operand that
+passes `PyMapping_Check` SUPPRESSES `not all arguments converted`
+entirely. `PyMapping_Check` is `tp_as_mapping->mp_subscript ≠ NULL`,
+measured through `ctypes.pythonapi` on the pinned 3.9.19: **true for
+str, tuple, list, dict, range, bytes, bytearray; false for None, bool,
+int, float, set.** str and tuple are then struck out by the two `!`
+clauses, so within this tier the mapping RHS is exactly `listV` and
+`rangeV` — `strFormatMappingRhs`, one predicate, threaded into
+`strFormatWalk` as the `mapping` flag its base case consults.
+
+Nothing else about the mapping path changes, and both reasons are
+recorded:
+
+* The positional state was ALREADY right. `arglen = -1, argidx = -2`
+  means the first conversion receives the WHOLE object and the second is
+  `not enough arguments` — which is what the one-element list `[rhs]`
+  does. Measured: `'%s' % [1, 2]` → `'[1, 2]'`, `'%s %s' % [1, 2]` →
+  `not enough arguments`.
+* The `%(key)s` protocol — the OTHER half of `ctx.dict` — is refused
+  LOUDLY by the walker and stays refused, so the fix cannot open a path
+  to a guessed answer. Note the asymmetry it leaves, pinned as
+  `fmt_dict_leftover`: `'abc' % {'k': 1}` is `'abc'` under CPython and
+  LOUD here, because `evalBinOp`'s heap-operand refusal fires before the
+  arm. That is a declared gap, not a wrong answer.
+
+REVISIT AT H2: `listV` is the transitional value-semantics list. When
+lists move to the heap the mapping RHS becomes a `.ref`, and this
+predicate must move with them — today `.ref` answers `false` only
+because `evalBinOp` refuses it first.
+
+Measured rows, all differential (`fmt_bare_leftover`, `fmt_seq_arg`,
+`fmt_dec_seq`, `fmt_range_leftover`, `fmt_dict_leftover` in `str_lab`,
+plus the `arith.mod` row the baseline found it on):
+`'abc' % [1,3,5]` → `'abc'`; `'abc' % []` → `'abc'`;
+`'abc' % range(3)` → `'abc'`; `'abc' % 1`, `'abc' % 'z'`,
+`'abc' % None`, `'abc' % True`, `'abc' % (7,)` → the leftover TypeError
+still; `'%d %d' % [1,2]` → `TypeError: %d format: a number is required,
+not list` (the FIRST conversion, before the second one's arity);
+`'%d %d' % 1` → `not enough arguments`. And the loud pair: `'%s' % [1]`
+is `'[1]'` under CPython and refuses here, because a container's `repr`
+is the heap walk this operator cannot see — the tier's pre-existing
+container rule, unchanged.
+
 ### Mechanism: one operator arm, and a verbatim MOVE
 
 `evalBinOp`'s `.mod, .str` refusal becomes `strFormat fmt b`. Workers:
-`strFormatWalk` (the single pass, `List Char → List RVal → String →
-Res String`, structural), `strFormatConv` (one conversion on one
+`strFormatWalk` (the single pass, `List Char → List RVal → Bool →
+String → Res String` since the mapping fix above, structural),
+`strFormatMappingRhs` (`ctx.dict`), `strFormatConv` (one conversion on one
 argument), `strFormatStr`/`strFormatRepr` (the scalar renderers, defined
 THROUGH `strOfVal`/`reprStr` so there is one source of truth for
 rendering). Simp doctrine as always: the dispatcher `strFormat` joins

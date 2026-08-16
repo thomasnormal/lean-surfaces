@@ -819,6 +819,67 @@ partial def stmtAssignedNames (s : Lean.Expr) : MetaM (Array String) := do
     return out
   | _ => return #[]
 
+/-- Every `f(…)` callee NAME appearing anywhere in an AST literal — a plain
+structural walk of the Lean term, so nested statements, array literals and
+optional fields are all covered without a per-constructor case.
+
+These are the names a captured run must LOOK UP in the environment before
+it can call them (the interpreter checks for a local shadowing the builtin
+first), which is why the loop rules have to say something about them: see
+`mkTailFreeFacts`. -/
+partial def calleeNames (e : Lean.Expr) : Array String :=
+  go e #[]
+where
+  go (e : Lean.Expr) (acc : Array String) : Array String :=
+    let acc :=
+      if e.isAppOfArity ``Expr.call 5 then
+        let fn := e.getArg! 0
+        if fn.isAppOfArity ``Expr.name 2 then
+          match fn.getArg! 0 with
+          | .lit (.strVal n) => if acc.contains n then acc else acc.push n
+          | _ => acc
+        else acc
+      else acc
+    match e with
+    | .app f a => go a (go f acc)
+    | .lam _ t b _ => go b (go t acc)
+    | .forallE _ t b _ => go b (go t acc)
+    | .letE _ t v b _ => go b (go v (go t acc))
+    | .mdata _ b => go b acc
+    | .proj _ _ b => go b acc
+    | _ => acc
+
+/-- `Env.lookup tl "n" = none` — the fact a captured run needs to decide
+that a call to `n` is NOT shadowed by a local living behind the invariant's
+symbolic environment tail.
+
+Without it a builtin call inside a loop body wedges the walker: the
+interpreter's shadowing check reduces past every literal entry and then
+stops dead at `Env.lookup tl "max"`. The fact is true at loop entry (the
+tail is `[]` there, so it closes by `rfl`) and preserved across an
+iteration (the tail only grows by `Env.set tl "<target>" v` for targets the
+loop assigns, and `Env.lookup_set_ne` steps past those), so it costs the
+invariant nothing that the walker cannot discharge itself. -/
+def mkTailFreeFact (tail : Lean.Expr) (n : String) : Lean.Expr :=
+  let rvalTy := Lean.mkConst ``RVal
+  mkApp3 (Lean.mkConst ``Eq [.succ .zero])
+    (mkApp (Lean.mkConst ``Option [Level.zero]) rvalTy)
+    (mkApp3 (Lean.mkConst ``Env.lookup [Level.zero]) rvalTy tail (mkStrLit n))
+    (mkApp (Lean.mkConst ``Option.none [Level.zero]) rvalTy)
+
+/-- Right-nest a non-empty conjunct array (`f₁ ∧ (f₂ ∧ f₃)`). -/
+def conjChain (xs : Array Lean.Expr) : Lean.Expr :=
+  xs.pop.foldr (init := xs.back!) mkAnd
+
+/-- Append conjuncts at the END of a right-nested `∧` chain, so the
+invariant's own conjuncts keep their positions (and therefore their
+`hinv1`, `hinv2`, … presentation) and the plumbing facts land after them. -/
+partial def appendConj (core : Lean.Expr) (extra : Array Lean.Expr) : Lean.Expr :=
+  if extra.isEmpty then core
+  else if core.isAppOfArity ``And 2 then
+    mkAnd (core.getArg! 0) (appendConj (core.getArg! 1) extra)
+  else mkAnd core (conjChain extra)
+
 /-- Does the statement contain a `break` at its own loop level (recursing
 into `if`s but not into nested loops)? -/
 partial def stmtHasBreak (s : Lean.Expr) : MetaM Bool := do
@@ -2003,6 +2064,13 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let allVars := tg.shape.entries ++ tg.shape.sets
     let slotEntries := allVars.filter (fun p => assigned.contains p.1)
     let slotNames := slotEntries.map (·.1)
+    -- names CALLED in the test or the body that the environment must be
+    -- searched for: their absence from the symbolic tail rides in the
+    -- invariant (`mkTailFreeFact`), or the captured runs wedge on the
+    -- interpreter's shadowing check
+    let entryNames := allVars.map (·.1)
+    let callNames := (calleeNames testE ++ (bStmts.map calleeNames).flatten).filter
+      (fun n => !assigned.contains n && !entryNames.contains n)
     let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
     let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
     let intTy := Lean.mkConst ``Int
@@ -2114,7 +2182,9 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         let some x := slotVarOf b
           | throwError "py_vcgen: internal — clause var `{b}`"
         pure x)
-      let invApp := (mkAppN invU clauseVars).headBeta
+      let tailFacts := callNames.map (mkTailFreeFact tailFv)
+      let invAppRaw := (mkAppN invU clauseVars).headBeta
+      let invApp := appendConj invAppRaw tailFacts
       let mkEnvEq (env : Lean.Expr) : Lean.Expr :=
         mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env shapeE
       let invE ← withLocalDeclD `env stateTy fun env => do
@@ -2155,9 +2225,10 @@ partial def handleWhile (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         pure (mkAppN u vars).headBeta
       let rE ← withLocalDeclD `env stateTy fun env => do
         let core := match exitApp? with
-          | some ea => mkAnd invApp ea
-          | none => if hasBrk then invApp else mkAnd invApp exitNF
-        mkLambdaFVars #[env] (← mkExistsNest fvs (mkAnd (mkEnvEq env) core))
+          | some ea => mkAnd invAppRaw ea
+          | none => if hasBrk then invAppRaw else mkAnd invAppRaw exitNF
+        mkLambdaFVars #[env]
+          (← mkExistsNest fvs (mkAnd (mkEnvEq env) (appendConj core tailFacts)))
       pure (invE, μE, tvE, rE)
     let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
     let seqT ← appOpt ``PyTriple.seq
@@ -2309,6 +2380,11 @@ partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let allVars := tg.shape.entries ++ tg.shape.sets
     let slotEntries := allVars.filter (fun p => assigned.contains p.1)
     let slotNames := slotEntries.map (·.1)
+    -- see `handleWhile`: the callee names whose absence from the symbolic
+    -- tail has to ride in the invariant (`mkTailFreeFact`)
+    let entryNames := allVars.map (·.1)
+    let callNames := (calleeNames iterE ++ (bStmts.map calleeNames).flatten).filter
+      (fun n => !assigned.contains n && !entryNames.contains n)
     let hasBrk ← (bStmts.anyM stmtHasBreak : MetaM Bool)
     let exitT? := (ctx.exits.find? (·.1 == li)).map (·.2)
     -- the `inv` clause: leading remainder binder, then the loop's Int slots
@@ -2399,9 +2475,11 @@ partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         pure x)
       let mkEnvEq (env : Lean.Expr) : Lean.Expr :=
         mkApp3 (Lean.mkConst ``Eq [.succ .zero]) stateTy env shapeE
+      let tailFacts := callNames.map (mkTailFreeFact tailFv)
       let invE ← withLocalDeclD `ys asTy fun ys => do
         withLocalDeclD `env stateTy fun env => do
-          let invApp := (mkAppN invU (#[ys] ++ clauseVars)).headBeta
+          let invApp :=
+            appendConj ((mkAppN invU (#[ys] ++ clauseVars)).headBeta) tailFacts
           mkLambdaFVars #[ys, env]
             (← mkExistsNest fvs (mkAnd (mkEnvEq env) invApp))
       let exitApp? ← exitInfo?.mapM fun (u, ebs) => do
@@ -2415,7 +2493,8 @@ partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
         let core := match exitApp? with
           | some ea => ea
           | none => (mkAppN invU (#[nilE] ++ clauseVars)).headBeta
-        mkLambdaFVars #[env] (← mkExistsNest fvs (mkAnd (mkEnvEq env) core))
+        mkLambdaFVars #[env]
+          (← mkExistsNest fvs (mkAnd (mkEnvEq env) (appendConj core tailFacts)))
       pure (invE, rE)
     let restLit := mkStmtsLit (tg.stmts.extract 1 tg.stmts.size)
     let seqT ← appOpt ``PyTriple.seq

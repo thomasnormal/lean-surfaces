@@ -5186,3 +5186,53 @@ the census-first rule exists to prevent.
    third door closed on 2026-08-14, and the census re-confirms it
    (0 creation-pure classes running a decorator, "anything but 0 is a
    REGRESSION").
+
+## The builtin-lookup gap is closed — and sf_bound_for collapses (2026-08-16)
+
+The fix recorded yesterday as "the single highest-value next step for this
+tactic" is built, and it is exactly the shape that was predicted: a loop
+invariant now carries, per name the loop CALLS, the fact
+
+    Env.lookup tl "<callee>" = none
+
+(`mkTailFreeFact`, appended to the invariant's conjunct chain by
+`appendConj` so the user's own conjuncts keep their `hinv1`/`hinv2`
+positions). Callee names come from `calleeNames`, a plain structural walk
+of the AST literal for `Expr.call (Expr.name f)` nodes at any depth;
+names the loop assigns, and names already in the literal environment
+prefix, are filtered out — the first because the fact would not be
+preserved, the second because the lookup never reaches the tail.
+
+Why it was needed: the interpreter checks for a local shadowing a builtin
+before calling it, and against an invariant's symbolic tail that check
+reduces past every literal entry and then stops dead. Why it is free: the
+fact is true at loop entry (`tl := []`, closes by `rfl` in the `init`
+shape-solve) and preserved across an iteration (the tail only grows by
+`Env.set tl "<target>" v`, and `Env.lookup_set_ne` — already in the
+walker's rewrite set — steps past it), so both obligations discharge
+inside the walker and neither reaches the user. Both loop rules get it,
+`while` and `for`, and the post-loop midcondition carries it too, so the
+continuation after the loop can call builtins as well.
+
+**Payoff, measured.** `Examples/python/sf_bound_for/proof.lean` — sunfish's
+fail-soft beta-cutoff loop, the step-2 milestone — went from 149 lines to
+47: a `pw`/`E` environment geometry, `loopTgt`/`loopBody` AST literals, a
+`key` list induction in fuel-threshold form and a main theorem that
+hand-unrolled the first iteration are all gone, replaced by a nine-line
+`py_vcgen` call with an `inv` and an `exit` clause and `grind
+[sfSearchMoves]` on the three residuals. The hand proof stays in git
+history at df7eba7.
+
+**The other two did NOT fall, and the reason is worth having.**
+`sf_bound_loop` (the index-`while` twin) is still blocked, but by ONE gap
+now instead of two: `scores[i]` in the loop body captures as
+`(Option.map (RVal.thaw ∘ ToVal.toVal) scores[i.toNat]?).getD RVal.none`
+and reducing it needs `i.toNat < scores.length` — which the invariant and
+the loop test DO supply, but only to an arithmetic discharger, and
+`captureRun`'s simp has none. The fix is a discharger on captured runs
+(`simp (disch := omega)`, the spelling this gallery's hand proofs already
+use) with the shared `arrVal_getElem` family as the landing shape. It
+touches EVERY capture in the walker, so it wants its own pass and its own
+regression run rather than a ride-along. `sf_bound_rec` reads the same
+subscript and waits on the same fix (plus the recursion path, which the
+call rule already supports). The blocked file's header records this.

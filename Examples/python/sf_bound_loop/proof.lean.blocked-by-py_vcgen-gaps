@@ -7,6 +7,24 @@ of `searchMoves` in sunfish's hand-written formal tree
 (formal/Sunfish/Bound.lean). Proving the tier-shaped Python loop returns
 exactly `searchMoves gamma scores (-69290)` machine-checks the
 Python-loop-to-Lean-model transcription step that today is audited by hand.
+
+STILL BLOCKED, and now by ONE gap, not two (2026-08-16). The builtin-lookup
+gap is CLOSED — a call under a loop's symbolic environment tail discharges
+now, because the loop invariant carries `Env.lookup tl "<callee>" = none`
+(VCTactic.lean, `mkTailFreeFact`), which is what let sf_bound_for's hand
+proof collapse into a `py_vcgen` call. What still wedges THIS file is the
+SUBSCRIPT: `scores[i]` in the loop body captures as
+
+    (Option.map (RVal.thaw ∘ ToVal.toVal) scores[i.toNat]?).getD RVal.none
+
+and reducing it needs the in-range side condition `i.toNat < scores.length`
+— which is available (the invariant carries `0 ≤ i`, `i ≤ scores.length`,
+and the loop test gives `i < n`), but only to an ARITHMETIC discharger.
+`captureRun`'s simp has none, so the read stays stuck. The fix is a
+discharger on the captured runs (`simp (disch := omega)`, the spelling the
+hand proofs in this gallery already use) plus the shared `arrVal_getElem`
+family as the landing shape; it is a change to EVERY capture, so it wants
+its own pass and its own regression run, not a ride-along.
 -/
 import LeanModels
 

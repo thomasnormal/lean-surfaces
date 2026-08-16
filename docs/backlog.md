@@ -5264,3 +5264,61 @@ The recommended next move is (b) in the file: factor the body as
 both the budget lemma and the ray-agreement induction off that one
 characterization. Square agreement (`directions[p]`, six kernel-computable
 keys) and the `enumerate`-scan board leg are untouched and unchanged.
+
+## The captured-run arithmetic pass — and sf_bound_loop falls (2026-08-16)
+
+The follow-up named in the previous entry is built. It turned out to be
+two mechanisms, not one, and the difference is the finding:
+
+* **A DISCHARGER** (`captureDischarge`) — simp's default first, then
+  `omega` over the accessible facts — for the hypotheses of conditional
+  rewrites. This is what lets the shared `arrVal_getElem` family fire: the
+  marshalled subscript read is a conditional rewrite whose in-range side
+  condition the loop invariant supplies.
+* **SIMPROCS** (`decideArith`, keyed on `<`/`≤`/`∧`) for the interpreter's
+  own guards. A discharger is NEVER consulted about an `ite` CONDITION,
+  and a subscript's range check `if (0 ≤ k) ∧ (k < ↑len) then some … else
+  none` is exactly that. Anyone who reaches for `simp (disch := omega)`
+  here and stops will watch it change nothing; the arithmetic has to be
+  IN the simp set, not beside it.
+
+Three implementation facts that cost real time and are worth not paying
+twice:
+
+1. `Omega.omega facts g` proves `False` from facts — it is not
+   goal-directed. Called on the goal directly it silently proves nothing
+   ("a possible counterexample may satisfy …" while the goal is not even
+   in the constraint set). The tactic's own shape — `falseOrByContra`
+   first, then every local hypothesis — is what works (`omegaProve`).
+2. A `simproc_decl` pattern written `(_ < _)` elaborates at the DEFAULT
+   numeric type, `Nat`, and then never matches an `Int` comparison. The
+   patterns are ascribed per type here.
+3. `getLocalHyps` returns value locals (`i : Int`) as well as proofs, and
+   omega chokes on them; filter by `isProp`.
+
+**Scope, measured rather than guessed.** The pass touches every capture,
+and two existing proofs said so: `nested_flow` broke because the walker
+became STRONGER (residuals it used to hand back were now closed, so the
+proof script's `⟨…⟩`s no longer matched), and `rsa_inverse` blew its simp
+step budget. Both are fixed without touching either proof: the simprocs
+are gated on a LENGTH mention (`isIndexGuard`), which keeps them on
+subscripts and off a loop measure's `Int.toNat`; and the exec context's
+step budget is raised to 1e6, a walker-internal limit that a longer — not
+looping — rewrite cascade legitimately needs (`rsa_inverse` elaborates in
+36s).
+
+**Payoff.** `Examples/python/sf_bound_loop` — blocked since the day it was
+written, the file that NAMED these gaps — is a live `py_vcgen` proof now.
+What the walker leaves is only mathematics: peel one element off the
+scanned suffix (`List.drop_eq_getElem_cons`), or none at all past the end,
+and `searchMoves` steps.
+
+**`sf_bound_rec` did NOT fall, and not for an arithmetic reason.** Its
+recursive call is `return bound_rec(scores, gamma, i + 1, b)` — a call in
+RETURN position, and the walker's v1 recipe takes calls only as the whole
+right-hand side of an assignment. Tested, not assumed: with the IH in
+context and every subscript now reducing, the walk gets to the `return`
+and stops there. The leg it needs is a new walker case, and layer 2
+already has the primitive — VC2.lean's `EvalsTo.call` docstring names
+`return f(x)` as its splice point. That is a separate pass with a separate
+regression, so it is recorded rather than started.

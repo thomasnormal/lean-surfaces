@@ -6,25 +6,19 @@ callback, pre-applied here because the children's scores are precomputed)
 of `searchMoves` in sunfish's hand-written formal tree
 (formal/Sunfish/Bound.lean). Proving the tier-shaped Python loop returns
 exactly `searchMoves gamma scores (-69290)` machine-checks the
-Python-loop-to-Lean-model transcription step that today is audited by hand.
+Python-loop-to-Lean-model transcription step that used to be audited by
+hand.
 
-STILL BLOCKED, and now by ONE gap, not two (2026-08-16). The builtin-lookup
-gap is CLOSED — a call under a loop's symbolic environment tail discharges
-now, because the loop invariant carries `Env.lookup tl "<callee>" = none`
-(VCTactic.lean, `mkTailFreeFact`), which is what let sf_bound_for's hand
-proof collapse into a `py_vcgen` call. What still wedges THIS file is the
-SUBSCRIPT: `scores[i]` in the loop body captures as
-
-    (Option.map (RVal.thaw ∘ ToVal.toVal) scores[i.toNat]?).getD RVal.none
-
-and reducing it needs the in-range side condition `i.toNat < scores.length`
-— which is available (the invariant carries `0 ≤ i`, `i ≤ scores.length`,
-and the loop test gives `i < n`), but only to an ARITHMETIC discharger.
-`captureRun`'s simp has none, so the read stays stuck. The fix is a
-discharger on the captured runs (`simp (disch := omega)`, the spelling the
-hand proofs in this gallery already use) plus the shared `arrVal_getElem`
-family as the landing shape; it is a change to EVERY capture, so it wants
-its own pass and its own regression run, not a ride-along.
+This file was `proof.lean.blocked-by-py_vcgen-gaps` from the day it was
+written until 2026-08-16, and the two gaps it was named for are both shut:
+a builtin call under the loop's symbolic environment tail (the invariant
+carries `Env.lookup tl "<callee>" = none` now), and the SUBSCRIPT
+`scores[i]`, whose range guard and negative-index fold are interpreter
+`ite` CONDITIONS — not rewrite side conditions — and so needed arithmetic
+inside the captured run's simp set, not a discharger beside it
+(`decideArith`, VCTactic.lean). What is left below is only the
+mathematics: peel one element off the scanned suffix, or none at all past
+the end, and `searchMoves` steps.
 -/
 import LeanModels
 
@@ -42,6 +36,8 @@ def searchMoves (gamma : Int) : List Int → Int → Int
     if gamma ≤ max best s then max best s
     else searchMoves gamma rest (max best s)
 
+set_option maxHeartbeats 4000000 in
+set_option maxRecDepth 8192 in
 theorem bound_loop_total (scores : List PyInt) (gamma : PyInt) :
     sf_bound_loop.bound_loop(scores, gamma) ==>
       searchMoves gamma scores (-69290) := by
@@ -53,6 +49,18 @@ theorem bound_loop_total (scores : List PyInt) (gamma : PyInt) :
     (dec := fun (best i : Int) => (scores.length - i).toNat)
     (exit := fun (best i : Int) =>
       searchMoves gamma scores (-69290) = best)
-  all_goals grind [searchMoves]
+  -- the mathematics the walker leaves: peel one element off the scanned
+  -- suffix (or, past the end, none at all) and `searchMoves` steps
+  all_goals
+    first
+      | (have hnil : List.drop i.toNat scores = [] :=
+           List.drop_eq_nil_of_le (by omega)
+         grind [searchMoves])
+      | (have hcons : List.drop i.toNat scores
+             = scores[i.toNat] :: List.drop (i + 1).toNat scores := by
+           rw [show (i + 1).toNat = i.toNat + 1 from by omega]
+           exact List.drop_eq_getElem_cons (by omega)
+         grind [searchMoves])
+      | grind [searchMoves]
 
 end Examples.python.sf_bound_loop.proof

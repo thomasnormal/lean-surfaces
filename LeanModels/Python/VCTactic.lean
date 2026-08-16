@@ -229,6 +229,29 @@ theorem arrVal_getElem (l : List Int) (n : Nat) (h : n < l.length) :
       = RVal.int l[n] :=
   map_getElem?_getD _ _ l n h
 
+/-- Python's negative-index fold, collapsed at a non-negative index. A
+conditional REWRITE rather than an arithmetic decision on the `ite`
+condition: the side condition `0 ≤ i` is a rewrite hypothesis, so
+`captureDischarge`'s `omega` half sees it, and nothing has to decide
+`i < 0` as a term. -/
+theorem ifNeg_index (i : Int) (n : Nat) (h : 0 ≤ i) :
+    (if i < 0 then i + (n : Int) else i) = i := if_neg (by omega)
+
+/-- The marshalled boundary-list subscript in the shape the interpreter
+actually leaves — Python's negative-index fold still standing as an `ite` —
+for an index the loop's own facts put in range. The side condition is
+stated over `i` rather than over the folded `Nat`, which is what lets
+`captureDischarge`'s `omega` half prove it straight from the invariant
+(`0 ≤ i`) and the loop test. -/
+theorem arrVal_indexVal (l : List Int) (i : Int)
+    (h : 0 ≤ i ∧ i < (l.length : Int)) :
+    (Option.map (RVal.thaw ∘ ToVal.toVal)
+        l[(if i < 0 then i + (l.length : Int) else i).toNat]?).getD RVal.none
+      = RVal.int l[i.toNat] := by
+  obtain ⟨h0, hl⟩ := h
+  rw [if_neg (by omega)]
+  exact arrVal_getElem l i.toNat (by omega)
+
 /-- The same, `getD` form (what a loop invariant carrying `a.getD n 0`
 needs). -/
 theorem arrVal_getD (l : List Int) (n : Nat) (h : n < l.length) :
@@ -522,7 +545,11 @@ marshalled `sorted(data)` call and its downstream `len`/index bounds). -/
 def interpLemmas : List Name :=
   [``ite_ok_bool, ``Env.lookup_set_self, ``Env.lookup_set_ne, ``Env.set_set,
    ``asIntList_map_int, ``asIntList_map_toVal, ``asIntList_map_thaw_comp,
-   ``sortInts_length]
+   ``sortInts_length,
+   -- the marshalled SUBSCRIPT read, conditional on the index being in
+   -- range: `captureDischarge` proves that side condition from the loop
+   -- invariant and the test (§the arithmetic discharger)
+   ``arrVal_getElem, ``arrVal_getD, ``arrVal_indexVal, ``ifNeg_index]
 
 /-- The truthiness-normalization set: turns `truthy <captured value> = true`
 facts into the clean arithmetic propositions residual goals should show. -/
@@ -562,6 +589,114 @@ private def addAll (thms : SimpTheorems) (unfolds lemmas : List Name) :
     thms ← thms.addConst n
   return thms
 
+/-- Prove a proposition with `omega` from the accessible facts, or fail.
+
+`Omega.omega` proves `False` from a fact list — it is not a goal-directed
+entry point — so this mirrors what the `omega` TACTIC does around it:
+`falseOrByContra` first (which puts the negated goal into the context),
+then hand it every local hypothesis. Calling it on the goal directly looks
+like it works and silently proves nothing, because the goal never enters
+the constraint set. -/
+def omegaProve (goal : Lean.Expr) : MetaM (Option Lean.Expr) := do
+  let g ← mkFreshExprSyntheticOpaqueMVar goal
+  try
+    let some g' ← g.mvarId!.falseOrByContra | return none
+    g'.withContext do
+      Lean.Elab.Tactic.Omega.omega (← getLocalHyps).toList g'
+    pure (some (← instantiateMVars g))
+  catch _ => pure none
+
+/-- Is this side condition worth handing to `omega`? A cheap syntactic
+gate: comparisons, equalities and their negations. Everything else fails in
+`omega` anyway, and the gate keeps the common case (a `beq` guard already
+settled by the default discharger) off the arithmetic path. -/
+private def isArithSide (e : Lean.Expr) : Bool :=
+  match e.getAppFn with
+  | .const n _ =>
+    n == ``LT.lt || n == ``LE.le || n == ``GT.gt || n == ``GE.ge ||
+    n == ``Eq || n == ``Ne || n == ``Not || n == ``And
+  | _ => false
+
+/-- Does this proposition come from the INTERPRETER's own index plumbing —
+a subscript's range check or Python's negative-index fold — rather than
+from the program's arithmetic?
+
+Keyed on a LENGTH mention, deliberately: `Int.toNat` alone also matches a
+loop MEASURE (`rsa_inverse`'s `(b - 1).toNat`), and deciding those atoms
+sends `omega` down every comparison in the run — measured, it blew that
+proof's simp step budget. The negative-index fold, whose condition `i < 0`
+mentions no length, is handled by the `ifNeg_index` rewrite instead, whose
+side condition goes to the discharger.
+
+The gate matters: `decideArith` must not start deciding a loop's ordinary
+comparisons, because those are the walker's residuals and every existing
+proof is written against their shape. Keying on `Int.toNat` / `List.length`
+/ `Array.size` (with a literal `0` bound for the fold) keeps the simprocs
+where the subscript lives and out of `nested_flow`'s and `rsa_inverse`'s
+arithmetic. -/
+private def isIndexGuard (e : Lean.Expr) : Bool :=
+  let mentions (n : Name) : Bool := (e.find? (·.isConstOf n)).isSome
+  mentions ``List.length || mentions ``Array.size
+
+/-- The discharger captured runs use for conditional rewrites: simp's own
+default first, then `omega` over the accessible hypotheses.
+
+The arithmetic half is what lets a SUBSCRIPT reduce. A loop body's
+`xs[i]` captures as `(Option.map … xs[i.toNat]?).getD RVal.none`, whose
+rewrite (`arrVal_getElem`) is conditional on `i.toNat < xs.length` — a fact
+the loop invariant and the loop test do supply, but only to an arithmetic
+prover. Without this the capture stops dead at the subscript, which is what
+kept `sf_bound_loop`/`sf_bound_rec` on hand proofs. `omega` sees the local
+context, so the invariant conjuncts (`0 ≤ i`, `i ≤ xs.length`) and the test
+fact (`i < n`, with `n = xs.length` already substituted by the walker) are
+exactly its premises. -/
+def captureDischarge : Simp.Discharge := fun e => do
+  match ← Simp.dischargeDefault? e with
+  | some prf => return some prf
+  | none =>
+    let e ← instantiateMVars e
+    if e.hasExprMVar || !isArithSide e then return none
+    match ← omegaProve e with
+    | some prf => return some prf
+    | none => return none
+
+/-- Decide an arithmetic atom from the accessible facts. When `omega`
+proves the atom (or its negation) from the local context it collapses to
+`True` (or `False`).
+
+This is the half a DISCHARGER cannot do. Simp asks a discharger only about
+the hypotheses of conditional rewrites; the interpreter's own guards are
+`ite` CONDITIONS — a subscript's range check
+`if (0 ≤ k) ∧ (k < len) then some … else none`, the negative-index fold
+`if i < 0 then i + len else i` — and those are decided by simplifying the
+condition, which needs arithmetic in the simp set itself. Without this a
+captured `xs[i]` stops at the range check even though the loop invariant
+says the index is in range, which is what kept `sf_bound_loop` and
+`sf_bound_rec` on hand proofs. -/
+def decideArith : Simp.Simproc := fun e => do
+  unless isArithSide e && isIndexGuard e do return .continue
+  let e ← instantiateMVars e
+  if e.hasExprMVar then return .continue
+  let tryOmega (goal : Lean.Expr) : SimpM (Option Lean.Expr) :=
+    liftM (omegaProve goal)
+  match ← tryOmega e with
+  | some prf =>
+    return .done { expr := Lean.mkConst ``True, proof? := ← mkAppM ``eq_true #[prf] }
+  | none =>
+    match ← tryOmega (Lean.mkApp (Lean.mkConst ``Not) e) with
+    | some prf =>
+      return .done { expr := Lean.mkConst ``False, proof? := ← mkAppM ``eq_false #[prf] }
+    | none => return .continue
+
+-- one declaration per keyed shape: an unascribed `_ < _` elaborates at the
+-- DEFAULT numeric type (`Nat`) and then never matches an `Int` comparison,
+-- which is exactly the way this silently does nothing
+simproc_decl decideArithLtInt ((_ : Int) < (_ : Int)) := decideArith
+simproc_decl decideArithLeInt ((_ : Int) ≤ (_ : Int)) := decideArith
+simproc_decl decideArithLtNat ((_ : Nat) < (_ : Nat)) := decideArith
+simproc_decl decideArithLeNat ((_ : Nat) ≤ (_ : Nat)) := decideArith
+simproc_decl decideArithAnd (_ ∧ _) := decideArith
+
 /-- Build the simp contexts, `progs` the program constants to unfold. -/
 def mkPack (progs : List Name) : MetaM SimpPack := do
   let congr ← getSimpCongrTheorems
@@ -571,11 +706,23 @@ def mkPack (progs : List Name) : MetaM SimpPack := do
     (normLemmas ++ interpLemmas)
   let presentThms ← addAll (← getSimpTheorems) (normUnfolds ++ progs)
     (normLemmas ++ presentLemmas ++ interpLemmas)
+  -- the arithmetic simprocs ride with every captured run (see `decideArith`)
+  let mut procs ← Simp.getSimprocs
+  procs ← procs.add ``decideArithLtInt (post := true)
+  procs ← procs.add ``decideArithLeInt (post := true)
+  procs ← procs.add ``decideArithLtNat (post := true)
+  procs ← procs.add ``decideArithLeNat (post := true)
+  procs ← procs.add ``decideArithAnd (post := true)
   return {
-    exec := ← Simp.mkContext {} #[execThms] congr
+    -- captured runs discharge more side conditions than they used to (the
+    -- arithmetic half), so the rewrite cascade behind one run is longer;
+    -- the default 100000-step budget is a walker-internal limit, not a
+    -- user-visible one, and a run that needs more is not a run that is
+    -- looping (measured on `rsa_inverse`, the longest one in the gallery)
+    exec := ← Simp.mkContext { maxSteps := 1000000 } #[execThms] congr
     norm := ← Simp.mkContext {} #[normThms] congr
     present := ← Simp.mkContext {} #[presentThms] congr
-    procs := #[← Simp.getSimprocs] }
+    procs := #[procs] }
 
 /-- All accessible `Prop`-typed hypotheses of the current local context —
 supplied to every captured run as rewrite rules (this is how a loop-test
@@ -599,12 +746,13 @@ def addFacts (ctx : Simp.Context) (facts : Array FVarId) :
     catch _ => pure ()
   return ctx.setSimpTheorems thms
 
+
 /-- Symbolically execute `e` (an interpreter term) with the local `Prop`
 hypotheses as extra rewrites; returns the normal form and a proof `e = nf`. -/
 def captureRun (pack : SimpPack) (e : Lean.Expr) :
     MetaM (Lean.Expr × Lean.Expr) := do
   let ctx ← addFacts pack.exec (← currentFacts)
-  let (r, _) ← Meta.simp e ctx pack.procs
+  let (r, _) ← Meta.simp e ctx pack.procs (discharge? := some captureDischarge)
   let prf ← match r.proof? with
     | some p =>
       -- Pin the equation's syntactic form: simp folds definitional steps
@@ -622,7 +770,8 @@ normalizes BOTH sides to the drifted form and `rfl` closes. -/
 def provePinned (pack : SimpPack) (ty : Lean.Expr) : MetaM Lean.Expr := do
   let g ← mkFreshExprMVar ty .syntheticOpaque
   let ctx ← addFacts pack.exec (← currentFacts)
-  let r? ← try Prod.fst <$> Meta.simpGoal g.mvarId! ctx pack.procs
+  let r? ← try
+      Prod.fst <$> Meta.simpGoal g.mvarId! ctx pack.procs (some captureDischarge)
     catch _ => pure (some (#[], g.mvarId!))
   match r? with
   | none => return g

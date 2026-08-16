@@ -25,6 +25,7 @@ step  "py-harness"      python3 harness/diff_test.py --no-build
 # completeness percentage it prints is telemetry, not a gate.
 maybe "leanpy-survey"   harness/leanpy_survey.py  python3 harness/leanpy_survey.py
 step  "extractor-tests" python3 extractors/python/test_extract.py
+step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \
   python3 Examples/spice/dram_bank_256x32/generate.py --check

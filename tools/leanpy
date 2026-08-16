@@ -204,7 +204,31 @@ def extractor_digest():
 
 def envelope_for(src, cache_dir, keep=False):
     """Extract ``src`` to a cached envelope; return its path, or None after
-    reporting the extractor's own loud error (syntax error, non-UTF-8)."""
+    reporting the extractor's own loud error (syntax error, non-UTF-8).
+
+    THE WRITE IS ATOMIC, and it has to be (2026-08-16). The early return
+    below tests `os.path.exists(out)`, so the final name is a PUBLICATION:
+    the instant it exists, any concurrent survey will read it. Writing the
+    envelope straight to it published a file that `json.dump` was still
+    filling — measured on a 26MB envelope, the path appears at +1.13s and
+    the dump runs to +2.01s through 554 distinct sizes — and a sweep
+    really did read one, scoring a module `RUNNER` on
+    ``offset 106380: unexpected end of input``. Same family as the
+    shared-jobs-file race (fixed by keying the path per process); this one
+    is fixed by never letting the final name exist in a partial state.
+
+    So the extractor writes a unique temp IN THE SAME DIRECTORY — same
+    filesystem, which is what makes `os.replace` atomic — and the entry
+    comes into existence by rename. Two racers write two temps and both
+    rename; the contents are equal by construction (the key IS the source,
+    the extractor and the frontend), so last-writer-wins is not a hazard.
+    The temp is a DOTFILE and it still ends in `.json`: the extractor
+    reads a non-`.json` `--out` as a DIRECTORY (`extract.py`, the
+    `json_path` branch), so the suffix is not ours to choose, and the
+    leading dot is what keeps a `<stem>-*.json` scan of the cache from
+    mistaking a temp for an entry. It is removed on every failure path —
+    a stray temp is litter, but a stray entry would be served.
+    """
     try:
         with open(src, "rb") as f:
             data = f.read()
@@ -216,14 +240,24 @@ def envelope_for(src, cache_dir, keep=False):
     out = os.path.join(cache_dir, "%s-%s.json" % (stem, digest))
     if os.path.exists(out) and not keep:
         return out
-    ext = subprocess.run(
-        [sys.executable, os.path.join(REPO_ROOT, "extractors/python/extract.py"),
-         src, "--out", out],
-        cwd=REPO_ROOT, capture_output=True, text=True)
-    if ext.returncode != 0:
-        sys.stderr.write(ext.stderr or ext.stdout)
-        return None
-    return out
+    os.makedirs(cache_dir, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=cache_dir,
+                               prefix="." + os.path.basename(out) + ".",
+                               suffix=".json")
+    os.close(fd)
+    try:
+        ext = subprocess.run(
+            [sys.executable, os.path.join(REPO_ROOT, "extractors/python/extract.py"),
+             src, "--out", tmp],
+            cwd=REPO_ROOT, capture_output=True, text=True)
+        if ext.returncode != 0:
+            sys.stderr.write(ext.stderr or ext.stdout)
+            return None
+        os.replace(tmp, out)
+        return out
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def main(argv=None):

@@ -5782,3 +5782,101 @@ family as the recorded "concurrent chunks shared one jobs-file path"
 finding, whose fix was to key the jobs file by PID; the cache write wants
 temp-file-plus-rename. Re-running the chunk serially clears it, and the
 baseline above was collected serially. Not this lane's file to fix.
+
+## THE ENVELOPE CACHE'S WRITE BECOMES ATOMIC — the last shared-infrastructure race (2026-08-16)
+
+The defect the previous section recorded but did not fix. `tools/leanpy`
+`envelope_for` returns early on `os.path.exists(out)`, so **the final name
+is a PUBLICATION**: the instant it exists, any concurrent survey reads it.
+The extractor wrote straight to it, and `json.dump` on a buffered file
+writes in chunks — so the entry was published empty and filled in
+afterwards.
+
+### The window, measured before anything was changed
+
+A 26 MB envelope: the path **appears at +1.13s** and the dump runs to
+**+2.01s**, growing through **554 distinct observed sizes**. Not a
+theoretical interleaving — an 870 ms window in which the cache serves a
+truncated file to anyone who asks. The casualty was real: a library sweep
+scored `dict_lab` a `RUNNER` on
+`is not a valid envelope: offset 106380: unexpected end of input`.
+
+It surfaces only on a source's FIRST extraction, which is why it waited
+for a run that added functions to `dict_lab` — every other sweep hit a
+warm cache and took the early return legitimately.
+
+### The fix
+
+Extract to a unique temp IN THE SAME DIRECTORY, then `os.replace` it into
+place. Same filesystem is what makes the rename atomic, so the entry
+either does not exist or is whole. Two racers write two temps and both
+rename: harmless, because the contents are equal BY CONSTRUCTION — the
+cache key IS (source, extractor, frontend family), so last-writer-wins
+cannot serve a different answer.
+
+Two details that are not free choices. The temp still ends in `.json`,
+because `extract.py` reads a non-`.json` `--out` as a DIRECTORY (found by
+the test: the first attempt used `.tmp` and every extraction failed). And
+it is a DOTFILE, so a `<stem>-*.json` scan of the cache cannot mistake a
+temp for an entry. It is unlinked on every failure path — a stray temp is
+litter; a stray entry would be served.
+
+### The gate: the race is PROVOKED, not argued
+
+`tools/test_leanpy.py` (new, wired into `tools/ci.sh` beside the extractor
+tests), three tests:
+
+1. **The race itself.** One process extracts a fresh 4000-function source;
+   a second waits for the entry's final name to appear — which is exactly
+   the condition the early return tests — and then does what a survey
+   does: asks `envelope_for` and reads. Pinning the arrival instead of
+   leaving it to luck is what makes it deterministic; the window it lands
+   in is the real one. **BEFORE the fix it fails**, with
+   `CORRUPT: Expecting property name enclosed in double quotes: line 1203
+   column 8 (char 32726)` — a truncated envelope at a buffer boundary,
+   the same failure class as the observed casualty. After, three rounds
+   clean.
+2. **The writer-level invariant, timing-free**: whatever path the
+   extractor is told to write is NOT the path handed back, it IS in the
+   same directory (or `os.replace` is not atomic), and it does not
+   outlive the rename. Also fails before the fix.
+3. **A failed extraction publishes nothing** — a syntax error must leave
+   the cache empty, temp included.
+
+### Measured
+
+Both new tests fail on the old writer and pass on the new one, under 3.9
+and under the 3.14 that `ci.sh` runs them with. `lake build` 3663 green;
+docs_check 67/67; diff_test 1288 cases 0 failed; extractor units 74/74;
+script corpus 64 scripts 0 failed; in-repo survey 105/130 and stdlib
+sweep 6/167, both 0 DIVERGE.
+
+**And the demonstration that matters: the six library chunks were re-run
+IN PARALLEL with the in-repo survey against a DELETED cache** — every one
+of the ~330 sources a first extraction, which is precisely the condition
+that produced the corruption. Result: **zero corrupt-envelope rows, and a
+scoreboard identical to the serial baseline** — VERIFIED 14, BODY-ONLY 7,
+PARTIAL 39, REFUSED 136, INCOMPLETE 1, DIVERGED 0; 3476 calls, MATCH
+2347, REFUSED 1120, RUNNER 7 (the known `fib` battery), TIMEOUT 2. No
+module moved.
+
+The concurrent-sweep protocol is safe again, which is what the six-chunk
+baseline procedure depends on.
+
+### One thing the cold-cache run exposed, reverted not fixed
+
+Deleting the cache made `sum_to.py` re-extract for the first time in
+weeks, and that dirtied `Examples/python/sum_to/SumTo.lean` — the
+INLINE-mode companion, which is regenerated next to the SOURCE on every
+extraction and records the path it was handed. Isolated: a RELATIVE path
+regenerates it byte-identically, an ABSOLUTE one writes absolute
+`source:`/`load_program` lines. So a survey that passes absolute paths
+dirties the tree, and a warm cache hides it by never re-extracting.
+
+Nothing to do with the atomic write (the companion is written beside the
+source whatever `--out` says) — it is the recorded
+`script_corpus.py dirties the tree` family, with the caller identified
+now. Reverted here; the fix belongs with whoever owns the companion
+write, and it is either "always relativise `source_path` against
+`REPO_ROOT`" or "never regenerate a companion for an out-of-tree
+extraction".

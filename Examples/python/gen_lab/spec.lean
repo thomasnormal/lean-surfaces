@@ -107,6 +107,18 @@ the infinite `itertools.count` (sunfish's ray shape) -/
 
 #py_check gen_lab.enum_str("abc") = 296
 #py_check gen_lab.enum_start("abc", 5) = 5
+
+/-! `enumerate`'s START argument names its OWN type, through the heap.
+A WRONG FACT until 2026-08-16: the arm said `'str'` unconditionally, so
+`enumerate(['a','b'], [])` reported 'str' where CPython 3.9.19 says
+'list'. Found by the message-drift census, same class as `range`'s. -/
+
+#py_check gen_lab.enum_start([1, 2], [3]) raises
+  (.typeError "'list' object cannot be interpreted as an integer")
+#py_check gen_lab.enum_start("ab", "x") raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check gen_lab.enum_start([1, 2], Val.none) raises
+  (.typeError "'NoneType' object cannot be interpreted as an integer")
 #py_check gen_lab.enum_lazy("abcdef", "c") = 3
 #py_check gen_lab.count_ray(2, 3, 10) = 8
 #py_check gen_lab.count_default() = 4

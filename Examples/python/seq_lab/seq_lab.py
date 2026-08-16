@@ -252,3 +252,50 @@ def fmt_spread(i, j):
 def fmt_spread_arity(i, j):
     # the spread's other half: three arguments, one conversion
     return "%s" % Move(i, j, "")
+
+
+# The arity TypeError in CPython's OWN two shapes (2026-08-16). A
+# namedtuple's `__new__` is an eval'd LAMBDA whose first parameter is
+# `_cls`, so CPython names `<lambda>` and counts one higher than the field
+# count -- the model used to say `Move() takes 3 positional arguments but
+# 1 were given`, which is the wrong callee, the wrong shape AND the wrong
+# counts. Measured live on 3.9.19.
+
+
+def move_few(i):
+    # too FEW is the MISSING form, naming the parameters not reached
+    return Move(i)
+
+
+def move_none():
+    # three names, so the Oxford comma appears
+    return Move()
+
+
+def move_many(i):
+    # too MANY is the TAKES form, and the counts include `_cls`
+    return Move(i, i, i, i)
+
+
+# `range()` names the OFFENDING OBJECT's type, never its own requirements
+# (the three-argument arm used to answer `range() arguments must be
+# integers`, a sentence CPython 3.9 does not produce), and it names the
+# FIRST bad argument left to right.
+
+
+def range3_step(n):
+    return range(1, n, [3])
+
+
+def range3_first(n):
+    return range([n], [n], [n])
+
+
+def range3_str(n):
+    return range(1, n, "a")
+
+
+def range1_dict():
+    # a HEAP operand: the type name must be resolved through the heap, or
+    # the message carries `typeName`'s "object" placeholder
+    return range({1: 2})

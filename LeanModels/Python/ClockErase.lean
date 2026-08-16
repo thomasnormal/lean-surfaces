@@ -2060,7 +2060,14 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       | cons v rest =>
                         dsimp only
                         cases hes : enumStart rest with
-                        | none => exact .ite (.exn hs2 _) (.exn hs2 _)
+                        -- the start-argument arm cases on `rest`'s SHAPE
+                        -- since 2026-08-16 (it names the argument's own
+                        -- type); both shapes are still `.exn` leaves
+                        | none =>
+                          match rest with
+                          | [] => exact .exn hs2 _
+                          | [_] => exact .exn hs2 _
+                          | _ :: _ :: _ => exact .exn hs2 _
                         | some i0 =>
                           ce_norm
                           cases hef : enumFrame s2.world.heap i0 v with

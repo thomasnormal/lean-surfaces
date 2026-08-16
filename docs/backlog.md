@@ -5672,3 +5672,113 @@ CALL-phase runner invocation, then in `compare_call` replace the
 `lean_stdout(model)`, and the `oracle.get("mutated")` early return with a
 comparison against `model.get("mutated")`. The `exnmsg` branch is the
 body phase's, already written.
+
+## THREE WRONG FACTS IN ERROR MESSAGES — FIXED, and a fourth found (2026-08-16)
+
+§THE MESSAGE-TEXT SURFACE split its 27 text families into 156 rows of
+systematic DRIFT and **three that are not drift but WRONG FACTS** — the
+model stating something untrue about the program. Those three are closed.
+Re-running that lane's own census against the fixed model:
+**169 → 138 drifting rows.** The −31 is the three families (13 + 8 + 9)
+plus one more the re-census exposed.
+
+The systematic 156 are untouched and stay with the call-phase
+message-tier decision.
+
+### 1. `unhashable type` named the KEY, not the offender (13 rows)
+
+`{(1, [2]): 0}` answered `unhashable type: 'tuple'`; CPython 3.9.19 says
+`'list'`. `tuple.__hash__` hashes its ELEMENTS, and the first one to
+raise is the one whose message escapes. `unhashableName?` now mirrors
+`hashableKey`'s recursion arm for arm and reports the first failing
+member, depth-first left to right; `keyRefusal` names it. Pinned in
+`dict_lab` on the store path, the read path and a doubly-nested tuple.
+
+### 2. The arity `TypeError` had ONE shape where CPython has TWO (8 rows)
+
+`Move(i)` answered `Move() takes 3 positional arguments but 1 were
+given`. CPython says `<lambda>() missing 2 required positional
+arguments: 'j' and 'prom'` — wrong callee, wrong shape, wrong counts,
+and a grammar error too.
+
+This was a KNOWN simplification, recorded at `arityOk`: "CPython's
+message wording differs per case … but the harness compares exception
+class names, so one canonical message serves both". The message tier is
+what turned that shortcut into a wrong fact. One builder now, measured
+live in every graduation:
+
+* too MANY is the TAKES form — `takes 1 positional argument` singular,
+  `but 1 was given` singular INDEPENDENTLY, and a defaulted callee is
+  `takes from L to N positional arguments` (plural even at `from 0 to 1`).
+* too FEW is the MISSING form, listing the parameters the call never
+  reached, with the Oxford comma from three names on (`'i', 'j', and
+  'prom'`; verified to five).
+* a NAMEDTUPLE's `__new__` is an eval'd LAMBDA whose first parameter is
+  `_cls`, so the callee is `<lambda>` and both counts are one higher
+  than the field count. Once that is said, the generic builder produces
+  CPython's text exactly.
+
+Wired at all five sites (`callIn`, `callClosure`, `mergeKwArgs`, and
+both namedtuple constructions). `fillKwSlots` came with it: it raised
+per-parameter, so `def g(a,b,c)` called `g(a=1)` named only `'b'` where
+CPython names `'b' and 'c'` — a census pass now collects every unfilled
+name and raises once.
+
+**THREE OF THE REPO'S OWN PINS HELD THE WRONG TEXT, and every one of them
+failed the build** — the acceptance signal firing exactly where it
+should: `Tests.lean`'s `clamp()` guard, `bench_statistics`' `median_low()`
+row (whose text also carried the `1 positional arguments` plural bug), and
+`sf_position`'s `bad_arity_raises` — in the SPEC and in the PROOF. All
+re-measured against 3.9.19 and re-pinned.
+
+### 3. `range()` named its own requirements, not the offender (9 rows)
+
+The three-argument arm answered `range() arguments must be integers`,
+which CPython 3.9 never says; the one- and two-argument arms were already
+right. Now per-position, first bad argument left to right — verified
+that CPython really is left-to-right (`range('a',[2],3)` is `'str'`,
+`range([1],'b',3)` is `'list'`).
+
+And through the HEAP: `range({1: 2})` is `'dict' object cannot be
+interpreted as an integer`, where the pure `typeName` would have put the
+`"object"` placeholder into a decided outcome — the recorded rule against
+exactly that. `RVal.typeNameH` MOVED verbatim above the range block for
+it (Lean has no forward references; the `%`-formatting landing's
+precedent).
+
+### 4. FOUND BY THE RE-CENSUS: `enumerate`'s start argument said `'str'`
+
+Not on the lane's list, and only visible once the range family was
+cleared: the start-argument arm had `'str'` **hard-coded**, so
+`enumerate(['a','b'], [])` reported `'str'` where CPython says `'list'`.
+One line, the same heap-resolved treatment, pinned over list/str/None
+starts in `gen_lab`. A literal in a message position is the cheapest
+possible wrong fact and the hardest to see.
+
+### Measured
+
+`lake build` 3663 jobs green; docs_check 67/67; diff_test **1271 → 1288
+cases, 0 failed**; extractor units 74/74; script corpus 64 scripts, 0
+failed; in-repo survey 105/130 with 0 DIVERGE; stdlib sweep 6/167 with 0
+DIVERGE.
+
+Library baseline, 197 modules: VERIFIED 14, BODY-ONLY 7, PARTIAL 39,
+REFUSED 136, INCOMPLETE 1, **DIVERGED 0**; per call over 3476 rows MATCH
+2347, REFUSED 1120, RUNNER 7, TIMEOUT 2, UNCOMPARABLE 0.
+**ZERO verdict movement from these fixes**, as predicted — the survey
+does not compare message text, which is exactly why these three could sit
+wrong for so long. The evidence is the drift census, not the scoreboard.
+
+### An instrument defect these runs exposed, recorded not fixed
+
+Running the six library chunks CONCURRENTLY with the in-repo survey
+produced a `RUNNER` verdict for `dict_lab`: *"is not a valid envelope:
+offset 106380: unexpected end of input"*. The envelope cache
+(`tools/leanpy`) is keyed by source hash and written NON-ATOMICALLY, so
+two surveys that both need to (re)write the same entry can have one read
+a half-written file. It only shows the first time a given source is
+extracted, which is why adding functions to `dict_lab` surfaced it. Same
+family as the recorded "concurrent chunks shared one jobs-file path"
+finding, whose fix was to key the jobs file by PID; the cache write wants
+temp-file-plus-rename. Re-running the chunk serially clears it, and the
+baseline above was collected serially. Not this lane's file to fix.

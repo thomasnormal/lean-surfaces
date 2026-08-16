@@ -186,3 +186,38 @@ program CPython runs. The envelope was RE-EXTRACTED for these rows. -/
 #py_check seq_lab.fmt_spread(0, -3) = "0/-3/''"
 #py_check seq_lab.fmt_spread_arity(1, 2) raises
   (.typeError "not all arguments converted during string formatting")
+
+/-! ### the arity `TypeError`, in CPython's OWN two shapes (2026-08-16)
+
+Three WRONG FACTS in one message, and library mode's message tier found
+them: the model said `Move() takes 3 positional arguments but 1 were
+given`. CPython 3.9's `namedtuple` builds `__new__` by `eval`ing a
+LAMBDA whose first parameter is `_cls`, so the callee it names is
+`<lambda>`, the counts are one higher than the field count, and too FEW
+arguments is a different SENTENCE — the missing form, which lists the
+parameters the call did not reach. Every text measured live. -/
+
+#py_check seq_lab.move_few(1) raises
+  (.typeError "<lambda>() missing 2 required positional arguments: 'j' and 'prom'")
+#py_check seq_lab.move_none() raises
+  (.typeError "<lambda>() missing 3 required positional arguments: 'i', 'j', and 'prom'")
+#py_check seq_lab.move_many(1) raises
+  (.typeError "<lambda>() takes 4 positional arguments but 5 were given")
+
+/-! ### `range()` names the OFFENDING OBJECT, never its own requirements
+
+The three-argument arm answered `range() arguments must be integers`, a
+sentence CPython 3.9 does not produce; the one- and two-argument arms
+were already right. It names the FIRST bad argument left to right, and
+through the HEAP — `range({1: 2})` is `'dict'`, where the pure
+`typeName` would have put the `"object"` placeholder into a decided
+outcome. -/
+
+#py_check seq_lab.range3_step(5) raises
+  (.typeError "'list' object cannot be interpreted as an integer")
+#py_check seq_lab.range3_first(1) raises
+  (.typeError "'list' object cannot be interpreted as an integer")
+#py_check seq_lab.range3_str(5) raises
+  (.typeError "'str' object cannot be interpreted as an integer")
+#py_check seq_lab.range1_dict() raises
+  (.typeError "'dict' object cannot be interpreted as an integer")

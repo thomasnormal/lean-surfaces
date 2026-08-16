@@ -67,7 +67,7 @@ theorem iterate_entry_total (lo hi : PyInt) :
 set_option maxRecDepth 4096 in
 theorem bad_arity_raises (i : PyInt) :
     sf_position.bad_arity(i) ==>!
-      .typeError "Move() takes 3 positional arguments but 1 were given" := by
+      .typeError "<lambda>() missing 2 required positional arguments: 'j' and 'prom'" := by
   py_prove [sf_position]
   rfl
 

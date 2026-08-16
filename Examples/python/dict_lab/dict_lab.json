@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/dict_lab/dict_lab.py",
-  "source_sha256": "d1d7b93d007b9864a383382ab9d71adbb346cb7671f27e89fb18aaba39c1dc27",
+  "source_sha256": "f1159414e6c8b0967bac70756546420d8dd07dab60cf0f08c334172b3725a3f9",
   "module": {
     "kind": "Module",
     "body": [
@@ -6371,6 +6371,349 @@
               ],
               "keywords": [],
               "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 221,
+          "col_offset": 0,
+          "end_lineno": 225,
+          "end_col_offset": 24
+        },
+        "name": "unhashable_in_tuple",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 225,
+              "col_offset": 4,
+              "end_lineno": 225,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "Dict",
+              "span": {
+                "lineno": 225,
+                "col_offset": 11,
+                "end_lineno": 225,
+                "end_col_offset": 24
+              },
+              "keys": [
+                {
+                  "kind": "Tuple",
+                  "span": {
+                    "lineno": 225,
+                    "col_offset": 12,
+                    "end_lineno": 225,
+                    "end_col_offset": 20
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 225,
+                        "col_offset": 13,
+                        "end_lineno": 225,
+                        "end_col_offset": 14
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "List",
+                      "span": {
+                        "lineno": 225,
+                        "col_offset": 16,
+                        "end_lineno": 225,
+                        "end_col_offset": 19
+                      },
+                      "elts": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 225,
+                            "col_offset": 17,
+                            "end_lineno": 225,
+                            "end_col_offset": 18
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "2"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "values": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 225,
+                    "col_offset": 22,
+                    "end_lineno": 225,
+                    "end_col_offset": 23
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 228,
+          "col_offset": 0,
+          "end_lineno": 230,
+          "end_col_offset": 29
+        },
+        "name": "unhashable_nested",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 230,
+              "col_offset": 4,
+              "end_lineno": 230,
+              "end_col_offset": 29
+            },
+            "value": {
+              "kind": "Dict",
+              "span": {
+                "lineno": 230,
+                "col_offset": 11,
+                "end_lineno": 230,
+                "end_col_offset": 29
+              },
+              "keys": [
+                {
+                  "kind": "Tuple",
+                  "span": {
+                    "lineno": 230,
+                    "col_offset": 12,
+                    "end_lineno": 230,
+                    "end_col_offset": 25
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 230,
+                        "col_offset": 13,
+                        "end_lineno": 230,
+                        "end_col_offset": 14
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "Tuple",
+                      "span": {
+                        "lineno": 230,
+                        "col_offset": 16,
+                        "end_lineno": 230,
+                        "end_col_offset": 24
+                      },
+                      "elts": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 230,
+                            "col_offset": 17,
+                            "end_lineno": 230,
+                            "end_col_offset": 18
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "2"
+                          }
+                        },
+                        {
+                          "kind": "List",
+                          "span": {
+                            "lineno": 230,
+                            "col_offset": 20,
+                            "end_lineno": 230,
+                            "end_col_offset": 23
+                          },
+                          "elts": [
+                            {
+                              "kind": "Constant",
+                              "span": {
+                                "lineno": 230,
+                                "col_offset": 21,
+                                "end_lineno": 230,
+                                "end_col_offset": 22
+                              },
+                              "value": {
+                                "type": "int",
+                                "repr": "3"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "values": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 230,
+                    "col_offset": 27,
+                    "end_lineno": 230,
+                    "end_col_offset": 28
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "0"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 233,
+          "col_offset": 0,
+          "end_lineno": 236,
+          "end_col_offset": 22
+        },
+        "name": "unhashable_tuple_read",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 235,
+              "col_offset": 4,
+              "end_lineno": 235,
+              "end_col_offset": 10
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 235,
+                  "col_offset": 4,
+                  "end_lineno": 235,
+                  "end_col_offset": 5
+                },
+                "id": "d"
+              }
+            ],
+            "value": {
+              "kind": "Dict",
+              "span": {
+                "lineno": 235,
+                "col_offset": 8,
+                "end_lineno": 235,
+                "end_col_offset": 10
+              },
+              "keys": [],
+              "values": []
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 236,
+              "col_offset": 4,
+              "end_lineno": 236,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Subscript",
+              "span": {
+                "lineno": 236,
+                "col_offset": 11,
+                "end_lineno": 236,
+                "end_col_offset": 22
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 236,
+                  "col_offset": 11,
+                  "end_lineno": 236,
+                  "end_col_offset": 12
+                },
+                "id": "d"
+              },
+              "index": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 236,
+                  "col_offset": 13,
+                  "end_lineno": 236,
+                  "end_col_offset": 21
+                },
+                "elts": [
+                  {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 236,
+                      "col_offset": 14,
+                      "end_lineno": 236,
+                      "end_col_offset": 15
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  {
+                    "kind": "List",
+                    "span": {
+                      "lineno": 236,
+                      "col_offset": 17,
+                      "end_lineno": 236,
+                      "end_col_offset": 20
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 236,
+                          "col_offset": 18,
+                          "end_lineno": 236,
+                          "end_col_offset": 19
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
             }
           }
         ]

@@ -75,15 +75,18 @@ duplicates, negatives, singleton, two-element, all-equal. -/
 #py_check bench_statistics.median_low([0, 0, 0, 0]) = 0
 #py_check bench_statistics.median_high([0, 0, 0, 0]) = 0
 
-/-! Honest exception paths (CPython class-matched): a non-iterable
-argument TypeErrors inside `sorted`, wrong arity TypeErrors at the call
-(canonical message — the harness compares exception classes). -/
+/-! Honest exception paths: a non-iterable argument TypeErrors inside
+`sorted`, wrong arity TypeErrors at the call. The arity TEXT was a WRONG
+FACT until 2026-08-16 — it read `median_low() takes 1 positional
+arguments but 0 were given`, which is not a sentence CPython produces
+(too FEW arguments is the MISSING form, and even the plural was wrong).
+Measured live on 3.9.19. -/
 #py_check bench_statistics.median_low(3) raises
   .typeError "'int' object is not iterable"
 #py_check bench_statistics.median_high(7) raises
   .typeError "'int' object is not iterable"
 #py_check bench_statistics.median_low() raises
-  .typeError "median_low() takes 1 positional arguments but 0 were given"
+  .typeError "median_low() missing 1 required positional argument: 'data'"
 
 /-! Tier-edge documentation: the EMPTY list reaches the vendored
 `raise StatisticsError('no median for empty data')` — the single

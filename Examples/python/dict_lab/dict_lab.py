@@ -216,3 +216,21 @@ def clear_none(n):
 def clear_arity(n):
     d = {1: n}
     return d.clear(2)
+
+
+def unhashable_in_tuple():
+    # 9c: CPython names the OFFENDING COMPONENT, not the key --
+    # `tuple.__hash__` hashes its elements and the first to raise is the
+    # one whose message escapes. The model used to say 'tuple'.
+    return {(1, [2]): 0}
+
+
+def unhashable_nested():
+    # the search is depth-first, left to right
+    return {(1, (2, [3])): 0}
+
+
+def unhashable_tuple_read():
+    # the same key on the READ path
+    d = {}
+    return d[(1, [2])]

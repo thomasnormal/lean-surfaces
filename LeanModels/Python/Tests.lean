@@ -541,8 +541,17 @@ private def checkCall (path : System.FilePath) (fn : String) (args : Array Val)
 #eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[.int 150] 1000 (.ok (.int 100))
 #eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[.int 5, .int 2, .int 3] 1000
         (.ok (.int 3))
+-- The arity TypeError in CPython's OWN two shapes (2026-08-16). This guard
+-- used to pin `clamp() takes 3 positional arguments but 0 were given`, which
+-- CPython 3.9.19 never says: too FEW arguments is the MISSING form, naming
+-- the parameters the call did not reach, and a defaulted callee's too-MANY
+-- form is the `from L to N` range. Both measured live against this file.
 #eval checkCall "Examples/python/opt_args/opt_args.json" "clamp" #[] 1000
-        (.exn (.typeError "clamp() takes 3 positional arguments but 0 were given"))
+        (.exn (.typeError "clamp() missing 1 required positional argument: 'x'"))
+#eval checkCall "Examples/python/opt_args/opt_args.json" "clamp"
+        #[.int 1, .int 2, .int 3, .int 4] 1000
+        (.exn (.typeError
+          "clamp() takes from 1 to 3 positional arguments but 4 were given"))
 #eval checkCall "Examples/python/opt_args/opt_args.json" "is_none" #[.none] 1000
         (.ok (.bool true))
 #eval checkCall "Examples/python/opt_args/opt_args.json" "latest" #[.int 3] 1000 (.ok (.int 3))

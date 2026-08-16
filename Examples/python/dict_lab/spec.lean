@@ -52,6 +52,21 @@ load_program dict_lab from "Examples/python/dict_lab/dict_lab.json"
 #py_check dict_lab.unhashable_probe() raises (.typeError "unhashable type: 'list'")
 #py_check dict_lab.unhashable_store() raises (.typeError "unhashable type: 'list'")
 
+/-! ### 9c: the message names the OFFENDING COMPONENT, not the key
+
+A WRONG FACT until 2026-08-16: `{(1, [2]): 0}` answered
+`unhashable type: 'tuple'`, and CPython 3.9.19 says `'list'` —
+`tuple.__hash__` hashes its elements, and the first element to raise is
+the one whose message escapes. Measured live, all three, and the search
+is depth-first left to right on both the store and the read path. -/
+
+#py_check dict_lab.unhashable_in_tuple() raises
+  (.typeError "unhashable type: 'list'")
+#py_check dict_lab.unhashable_nested() raises
+  (.typeError "unhashable type: 'list'")
+#py_check dict_lab.unhashable_tuple_read() raises
+  (.typeError "unhashable type: 'list'")
+
 /-! ### 11: subscript-store evaluation order (RHS, primary, key) -/
 
 #py_check dict_lab.eval_order_rhs() raises .zeroDivisionError

@@ -45,7 +45,7 @@ CPython (`harness/cases.json` rows). -/
 #py_check sf_position.iterate_entry(3, 7) = 10
 #py_check sf_position.move_index(3, 7) = (Val.tuple #[.int 3, .str "n", .int 7])
 #py_check sf_position.bad_arity(1) raises
-  (.typeError "Move() takes 3 positional arguments but 1 were given")
+  (.typeError "<lambda>() missing 2 required positional arguments: 'j' and 'prom'")
 #py_check sf_position.missing_field(1, 2) raises .attributeError
 #py_check sf_position.rotate_fields(5, 95, 22) =
   (Val.tuple #[.str "K.dC bA", .int (-5), .bool false, .bool true, .int 24, .int 97])
@@ -95,10 +95,16 @@ theorem iterate_entry_total (lo hi : PyInt) :
   proofs
 
 /-- Wrong constructor arity is the faithful `TypeError`, for every
-argument. -/
+argument — and the TEXT was a WRONG FACT until 2026-08-16, pinned here
+and in the proof: CPython 3.9's `namedtuple` builds `__new__` by
+`eval`ing a LAMBDA whose first parameter is `_cls`, so too few arguments
+is `<lambda>() missing 2 required positional arguments: 'j' and 'prom'`
+— a different callee, a different shape and different counts from the
+`Move() takes 3 positional arguments but 1 were given` this claimed.
+Measured live on 3.9.19. -/
 theorem bad_arity_raises (i : PyInt) :
     sf_position.bad_arity(i) ==>!
-      .typeError "Move() takes 3 positional arguments but 1 were given" := by
+      .typeError "<lambda>() missing 2 required positional arguments: 'j' and 'prom'" := by
   proofs
 
 /-- A non-field, non-protocol attribute is the faithful `AttributeError`. -/

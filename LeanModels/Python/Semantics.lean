@@ -258,6 +258,33 @@ def truthy : RVal → Res Bool
   | .ref _ => .unsupported
       "truthiness of a heap object lives in the heap (`truthyH` decides it; this pure helper is the proof-layer vocabulary)"
 
+/-- Heap-resolving type name (H2): a `.ref` names its referent's type.
+The `"object"` fallback is the dangling arm — unreachable from WF worlds,
+and never part of a decided outcome that isn't already loud.
+
+Deliberately OUT of `py_simp`/`interpUnfolds` (recorded H2 finding, the
+`sortInts`/`heapEq` freeze family): it occurs only inside error-message
+interpolations of undecided helper arms, so as a simp member it buys
+nothing — and with it in the set a plain symbolic run whnf-storms
+(≈740k `List.rec` / 1.5M `Array.toList` unfoldings on `sf_bound_rec`'s
+exit lemma before timing out; message-position `String.append` chains
+keep re-offering the pattern). A raise-theorem that needs a heap-named
+message passes it explicitly. -/
+def RVal.typeNameH (h : Heap) : RVal → String
+  | .ref a =>
+    match Heap.get? h a with
+    | some (.dict _ _) => "dict"
+    | some (.list _) => "list"
+    -- H3: the class NAME lives in the module, not the heap — "object" is
+    -- the message-only placeholder (the harness compares exception CLASS
+    -- names, never messages).
+    | some (.instance _ _) => "object"
+    | some (.generator ..) => "generator"
+    | some (.closure ..) => "function"
+    | some (.pyset _) => "set"
+    | Option.none => "object"
+  | v => v.typeName
+
 /-- bool→int coercion (Python's `bool` is an `int` subtype): `int` passes
 through, `True`/`False` become `1`/`0`, everything else is `none`. -/
 def asInt : RVal → Option Int
@@ -268,28 +295,38 @@ def asInt : RVal → Option Int
 /-- `range(…)` construction from evaluated arguments: 1–3 int args
 (bool coerces, CPython's `__index__` on bool), `step = 0` the faithful
 `ValueError`, wrong arity/types the faithful `TypeError`s. -/
-def rangeMake (vs : List RVal) : Res RVal :=
+def rangeMake (h : Heap) (vs : List RVal) : Res RVal :=
+  -- CPython names the OFFENDING OBJECT's type, never range's requirements,
+  -- and it names the FIRST bad argument left to right (measured 3.9.19:
+  -- `range([1],[2],[3])` and `range(1,[2],[3])` are both `'list' object
+  -- cannot be interpreted as an integer`). The three-argument arm used to
+  -- answer `range() arguments must be integers`, which is not a sentence
+  -- CPython 3.9 produces. `typeNameH` and not `typeName`: a heap operand
+  -- is reachable here (`range({1: 2})` is `'dict' object …`) and the bare
+  -- `typeName` would put the `"object"` placeholder into a decided
+  -- outcome, which the recorded rule forbids.
+  let bad := fun (v : RVal) =>
+    Res.exn (α := RVal)
+      (.typeError s!"'{RVal.typeNameH h v}' object cannot be interpreted as an integer")
   match vs with
   | [] => .exn (.typeError "range expected at least 1 argument, got 0")
   | [v] =>
     (match asInt v with
      | some n => .ok (.rangeV 0 n 1)
-     | Option.none =>
-       .exn (.typeError s!"'{v.typeName}' object cannot be interpreted as an integer"))
+     | Option.none => bad v)
   | [a, b] =>
     (match asInt a, asInt b with
      | some x, some y => .ok (.rangeV x y 1)
-     | some _, Option.none =>
-       .exn (.typeError s!"'{b.typeName}' object cannot be interpreted as an integer")
-     | Option.none, _ =>
-       .exn (.typeError s!"'{a.typeName}' object cannot be interpreted as an integer"))
+     | Option.none, _ => bad a
+     | some _, Option.none => bad b)
   | [a, b, c] =>
     (match asInt a, asInt b, asInt c with
      | some x, some y, some z =>
        if z == 0 then .exn (.valueError "range() arg 3 must not be zero")
        else .ok (.rangeV x y z)
-     | _, _, _ =>
-       .exn (.typeError "range() arguments must be integers"))
+     | Option.none, _, _ => bad a
+     | some _, Option.none, _ => bad b
+     | some _, some _, Option.none => bad c)
   | vs => .exn (.typeError s!"range expected at most 3 arguments, got {vs.length}")
 
 
@@ -1632,36 +1669,11 @@ end
 /-- CPython's type name in `unhashable type: '…'` messages. A `.ref` names
 its referent's type — every H1 heap object is a dict. (H2: superseded by
 the heap-resolving `RVal.typeNameH` in every reachable message position;
-retained as pure vocabulary.) -/
+retained as pure vocabulary. `typeNameH` itself MOVED verbatim above the
+range block on 2026-08-16 — `rangeMake` needs it and Lean has no forward
+references; §rendering's other members are unchanged.) -/
 def RVal.unhashName : RVal → String
   | .ref _ => "dict"
-  | v => v.typeName
-
-/-- Heap-resolving type name (H2): a `.ref` names its referent's type.
-The `"object"` fallback is the dangling arm — unreachable from WF worlds,
-and never part of a decided outcome that isn't already loud.
-
-Deliberately OUT of `py_simp`/`interpUnfolds` (recorded H2 finding, the
-`sortInts`/`heapEq` freeze family): it occurs only inside error-message
-interpolations of undecided helper arms, so as a simp member it buys
-nothing — and with it in the set a plain symbolic run whnf-storms
-(≈740k `List.rec` / 1.5M `Array.toList` unfoldings on `sf_bound_rec`'s
-exit lemma before timing out; message-position `String.append` chains
-keep re-offering the pattern). A raise-theorem that needs a heap-named
-message passes it explicitly. -/
-def RVal.typeNameH (h : Heap) : RVal → String
-  | .ref a =>
-    match Heap.get? h a with
-    | some (.dict _ _) => "dict"
-    | some (.list _) => "list"
-    -- H3: the class NAME lives in the module, not the heap — "object" is
-    -- the message-only placeholder (the harness compares exception CLASS
-    -- names, never messages).
-    | some (.instance _ _) => "object"
-    | some (.generator ..) => "generator"
-    | some (.closure ..) => "function"
-    | some (.pyset _) => "set"
-    | Option.none => "object"
   | v => v.typeName
 
 /-! (`RVal.refFree`/`refFreeList` moved to Runtime.lean at H2: the public
@@ -1720,16 +1732,46 @@ mutual
     | v :: vs => keyHasInstanceRef h v || keyHasInstanceRefList h vs
 end
 
+mutual
+  /-- The type CPython NAMES in `unhashable type: '…'` — the offending
+  COMPONENT, not the key. MEASURED on 3.9.19, and the model had it wrong:
+  `{(1, [2]): 0}` is `unhashable type: 'list'`, not `'tuple'`, because
+  `tuple.__hash__` hashes its elements and the first element to raise is
+  the one whose message escapes. So this mirrors `hashableKey`'s recursion
+  arm for arm and reports the first member that fails; `none` means the
+  key IS hashable and no message is owed. -/
+  def unhashableName? (h : Heap) : RVal → Option String
+    | .none | .bool _ | .int _ | .str _ => Option.none
+    | .tuple xs => unhashableNameList? h xs.toList
+    | .ntuple _ _ xs => unhashableNameList? h xs.toList
+    | v => some (RVal.typeNameH h v)
+
+  /-- Left to right, first failure wins — CPython's hashing order. -/
+  def unhashableNameList? (h : Heap) : List RVal → Option String
+    | [] => Option.none
+    | v :: vs =>
+      match unhashableName? h v with
+      | some n => some n
+      | Option.none => unhashableNameList? h vs
+end
+
 /-- The outcome when a probe/key fails `hashableKey`: a dict/list
 referent (or a value-list) is CPython's faithful `TypeError`; a key
 containing an INSTANCE ref is hashable in CPython (identity hash +
 identity `__eq__`) but instance dict keys are outside the H3 tier —
-loud, never a fake `TypeError`. -/
+loud, never a fake `TypeError`.
+
+The named type is the OFFENDING COMPONENT (`unhashableName?`), which for
+a flat key is the key's own type and for a tuple is the member that
+actually failed. `getD` supplies the key's own name for the arm the
+caller's precondition makes unreachable — `keyRefusal` is only reached
+when `hashableKey k = false`, and then the search always finds one. -/
 def keyRefusal (h : Heap) (k : RVal) : Res α :=
   if keyHasInstanceRef h k then
     .unsupported "a class instance or generator as a dict key (identity hash) is outside the tier (docs/memory-model.md)"
   else
-    .exn (.typeError s!"unhashable type: '{RVal.typeNameH h k}'")
+    .exn (.typeError
+      s!"unhashable type: '{(unhashableName? h k).getD (RVal.typeNameH h k)}'")
 
 /-- First entry whose stored key equals `k` (insertion order). -/
 def dictFind : List (RVal × RVal) → RVal → Option RVal
@@ -3333,22 +3375,114 @@ def kwFindDup : List (String × RVal) → Option String
   | [] => Option.none
   | (k, _) :: rest => if rest.any (·.1 == k) then some k else kwFindDup rest
 
-/-- Fill the parameter slots AFTER the positional prefix (H6 keyword
-merge): the keyword's value if given, else the literal default — a slot
-with neither is CPython's faithful missing-argument `TypeError`.
-Structural recursion (kernel-reducible, the `sortInts` discipline). -/
-def fillKwSlots (fname : String) (kws : List (String × RVal)) :
-    List Param → Res (List RVal)
-  | [] => .ok []
+/-! ### The arity `TypeError`, in CPython's own two shapes
+
+Until 2026-08-16 every arity failure got ONE canonical message — the
+`takes … but … were given` form — on the recorded ground that "the
+harness compares exception CLASS names, so one canonical message serves
+both". Library mode's message tier made that shortcut a WRONG FACT: too
+FEW arguments is a different sentence in CPython, with a different
+subject and a list of the parameters it did not get. All of the grammar
+below was measured live on 3.9.19, never read off a doc page. -/
+
+/-- CPython's parameter-name list: `'a'` | `'a' and 'b'` |
+`'a', 'b', and 'c'` — the Oxford comma appears from THREE on (measured to
+five). -/
+def quoteNamesTail : List String → String
+  | [] => ""
+  | [a] => s!"and '{a}'"
+  | a :: rest => s!"'{a}', " ++ quoteNamesTail rest
+
+@[inherit_doc quoteNamesTail]
+def quoteNames : List String → String
+  | [] => ""
+  | [a] => s!"'{a}'"
+  | [a, b] => s!"'{a}' and '{b}'"
+  | a :: rest => s!"'{a}', " ++ quoteNamesTail rest
+
+/-- The arity `TypeError`'s text. `ps` is the callee's parameter list as
+(name, has-a-default) IN ORDER — enough for both shapes and independent of
+`Param`, which is what lets a namedtuple's synthetic `__new__` use the
+same builder.
+
+TOO MANY (`given` exceeds the parameter count) is the TAKES form, and it
+has three graduations, all measured: `takes 1 positional argument` is
+singular; `but 1 was given` is singular independently; and a callee with
+defaults says `takes from L to N positional arguments` — plural even when
+`L`/`N` are 0 and 1.
+
+Otherwise it is the MISSING form, which names the defaultless parameters
+the call did not reach: `missing 2 required positional arguments: 'j' and
+'prom'`. Reached only from a failing `arityOk`, so the list is non-empty
+by the caller's precondition. -/
+def arityErrorMsg (callee : String) (ps : List (String × Bool)) (given : Nat) : String :=
+  let n := ps.length
+  let required := (ps.filter (fun p => !p.2)).length
+  if given > n then
+    (if required == n then
+       s!"{callee}() takes {n} positional argument" ++ (if n == 1 then "" else "s")
+     else
+       s!"{callee}() takes from {required} to {n} positional arguments")
+      ++ s!" but {given} " ++ (if given == 1 then "was" else "were") ++ " given"
+  else
+    let missing := (ps.drop given).filter (fun p => !p.2) |>.map Prod.fst
+    s!"{callee}() missing {missing.length} required positional argument"
+      ++ (if missing.length == 1 then "" else "s") ++ ": " ++ quoteNames missing
+
+/-- `arityErrorMsg` over a real parameter array. -/
+def paramArity (params : Array Param) : List (String × Bool) :=
+  params.toList.map fun p => (p.arg, p.default.isSome)
+
+/-- `arityErrorMsg` for a NAMEDTUPLE constructor, and the two corrections
+it carries are both measured. CPython 3.9's `namedtuple` builds `__new__`
+by `eval`ing a LAMBDA, so the callee it names is `<lambda>` and not the
+class; and that lambda's first parameter is `_cls`, so both counts are one
+higher than the field count. `Move(1)` is
+`<lambda>() missing 2 required positional arguments: 'j' and 'prom'`, and
+`Move(1,2,3,4)` is `<lambda>() takes 4 positional arguments but 5 were
+given`. -/
+def ntArityErrorMsg (fields : Array String) (given : Nat) : String :=
+  arityErrorMsg "<lambda>"
+    (("_cls", false) :: fields.toList.map (fun f => (f, false))) (given + 1)
+
+/-- The names a keyword call leaves unfilled: no keyword supplies them
+and they carry no default. In parameter order, which is the order
+CPython's message lists them in. -/
+def kwUnfilled (kws : List (String × RVal)) : List Param → List String
+  | [] => []
   | p :: ps =>
-    match kws.find? (·.1 == p.arg) with
-    | some (_, v) => do return v :: (← fillKwSlots fname kws ps)
-    | Option.none =>
-      match p.default with
-      | some c => do return Const.toRVal c :: (← fillKwSlots fname kws ps)
-      | Option.none =>
-        .exn (.typeError
-          s!"{fname}() missing 1 required positional argument: '{p.arg}'")
+    let rest := kwUnfilled kws ps
+    if (kws.find? (·.1 == p.arg)).isSome || p.default.isSome then rest
+    else p.arg :: rest
+
+/-- The fill itself, TOTAL: reached only when `kwUnfilled` is empty, so
+every parameter has a keyword or a default and no arm can fail. Splitting
+the census from the fill is what lets the message name all the missing
+names at once. -/
+def fillKwSlotsGo (kws : List (String × RVal)) : List Param → List RVal
+  | [] => []
+  | p :: ps =>
+    (match kws.find? (·.1 == p.arg) with
+     | some (_, v) => v
+     | Option.none => match p.default with
+                      | some c => Const.toRVal c
+                      | Option.none => .none)
+      :: fillKwSlotsGo kws ps
+
+/-- Fill the parameter slots AFTER the positional prefix (H6 keyword
+merge): the keyword's value if given, else the literal default. ONE `TypeError` naming EVERY parameter left
+unfilled, which is CPython's shape and not the per-parameter one this
+raised until 2026-08-16: `def g(a, b, c)` called as `g(a=1)` is
+`g() missing 2 required positional arguments: 'b' and 'c'`, measured — a
+message naming only `'b'` states a fact that is not true of the call. -/
+def fillKwSlots (fname : String) (kws : List (String × RVal))
+    (ps : List Param) : Res (List RVal) :=
+  match kwUnfilled kws ps with
+  | [] => .ok (fillKwSlotsGo kws ps)
+  | missing =>
+    .exn (.typeError
+      (s!"{fname}() missing {missing.length} required positional argument"
+        ++ (if missing.length == 1 then "" else "s") ++ ": " ++ quoteNames missing))
 
 /-- H6 keyword merge (docs/memory-model.md §call-site keyword arguments):
 resolve already-evaluated positional + keyword arguments against `params`
@@ -3367,8 +3501,7 @@ def mergeKwArgs (fname : String) (params : Array Param)
     .unsupported s!"duplicate keyword argument '{k}' (unreachable through ingestion — CPython rejects it at compile time)"
   | Option.none =>
   if pos.length > params.size then
-    .exn (.typeError
-      s!"{fname}() takes {params.size} positional arguments but {pos.length} were given")
+    .exn (.typeError (arityErrorMsg fname (paramArity params) pos.length))
   else match kws.find? (fun kv => !names.contains kv.1) with
   | some (k, _) =>
     .exn (.typeError s!"{fname}() got an unexpected keyword argument '{k}'")
@@ -4282,8 +4415,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     if vs.length == nt.fields.size then
                       .ok st (.ntuple nt.name nt.fields vs.toArray)
                     else
-                      .exn st (.typeError
-                        s!"{fname}() takes {nt.fields.size} positional arguments but {vs.length} were given")
+                      .exn st (.typeError (ntArityErrorMsg nt.fields vs.length))
                 | Option.none =>
                   if !c.ok then
                     .unsupported s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
@@ -4320,8 +4452,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   if vs.length == nt.fields.size then
                     .ok st (.ntuple nt.tname nt.fields vs.toArray)
                   else
-                    .exn st (.typeError
-                      s!"{fname}() takes {nt.fields.size} positional arguments but {vs.length} were given")
+                    .exn st (.typeError (ntArityErrorMsg nt.fields vs.length))
                 | Option.none =>
                   if fname == "len" then
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
@@ -4666,7 +4797,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- allocation); arity/type/step-zero faithfulness in
                     -- `rangeMake`
                     evalExprs m fuel st args.toList ⤳ fun st vs =>
-                    Run.liftRes st (rangeMake vs)
+                    Run.liftRes st (rangeMake st.world.heap vs)
                   else if fname == "enumerate" then
                     -- H4: a LAZY iterator object, not a materialized
                     -- list — `enumerate(self.board)` is stepped one pair
@@ -4677,9 +4808,19 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | v :: rest =>
                        (match enumStart rest with
                         | Option.none =>
-                          if rest.length ≤ 1 then
-                            .exn st (.typeError "'str' object cannot be interpreted as an integer")
-                          else .exn st (.typeError s!"enumerate expected at most 2 arguments, got {vs.length}")
+                          -- the START argument's OWN type, through the heap:
+                          -- this said `'str'` unconditionally until
+                          -- 2026-08-16, so `enumerate(['a','b'], [])` named
+                          -- 'str' where CPython names 'list' (measured). Same
+                          -- wrong-fact class as `range`'s, found by the same
+                          -- census. `rest = []` never reaches here (`enumStart`
+                          -- answers `some 0`), so a singleton is the only
+                          -- type-error shape.
+                          (match rest with
+                           | [bad] =>
+                             .exn st (.typeError
+                               s!"'{RVal.typeNameH st.world.heap bad}' object cannot be interpreted as an integer")
+                           | _ => .exn st (.typeError s!"enumerate expected at most 2 arguments, got {vs.length}"))
                         | some i0 =>
                           (match enumFrame st.world.heap i0 v with
                            | .ok fr =>
@@ -5747,8 +5888,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         .unsupported
           s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier"
       else if !arityOk f.params args.size then
-        .exn w (.typeError
-          s!"{fname}() takes {f.params.size} positional arguments but {args.size} were given")
+        .exn w (.typeError (arityErrorMsg fname (paramArity f.params) args.size))
       else if f.isGenerator then
         -- H4 CREATION: calling a generator function runs NO code. It
         -- allocates the suspended frame — arguments bound into its
@@ -6048,8 +6188,7 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
     else if !localsOk then
       .unsupported s!"nested function '{name}' calls a name it also assigns (CPython static-locals rule) — outside the tier"
     else if !arityOk params args.size then
-      .exn w (.typeError
-        s!"{name}() takes {params.size} positional arguments but {args.size} were given")
+      .exn w (.typeError (arityErrorMsg name (paramArity params) args.size))
     else if isGenerator then
       let g : Obj :=
         .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)

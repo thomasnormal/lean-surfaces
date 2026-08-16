@@ -264,6 +264,19 @@ agreement. The batch shape is load-bearing: one process per ROW paid the
 `lake` startup replay per row (hours over 615 rows); one process pays it once
 (seconds).
 
+`--observations` (2026-08-16, OPT-IN) adds to each line what the run
+OBSERVED and not only what it returned: `stdout` (the accumulated line
+list, present exactly when the run reached a world), `exnmsg` (present
+exactly when the model's `PyErr` carries a message — `--script-batch`'s
+rule verbatim), and `args_after`/`mutated` (the arguments frozen against
+the POST-call heap, plus the boolean, present exactly when every argument
+freezes; `args_after_refused` otherwise). The public wrapper erases the
+world, so under the flag the driver calls `callIn` directly and keeps it.
+Opt-in because `diff_test.py` compares by WHOLE-DICT equality, which is
+the strictness a differential wants and what any extra key breaks —
+measured: on by default it failed 1156 of 1271 cases. Without the flag
+the line is byte-identical.
+
 `harness/diff_test.py` reads `harness/cases.json`
 (`[{"file": "Examples/python/tri/tri.py", "function": "tri", "args": [[10],[0],[-3],…],
 "expect": "match"}]`; `"expect":"unsupported"` whitelists documented v0 gaps), runs

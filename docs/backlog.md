@@ -5502,3 +5502,75 @@ attempted piecemeal. `GenMovesEqRef` stays a definition.
 What this session did close is the target: the reference side is a settled
 object now — factored, characterized, budget-free — so the agreement proof
 will meet a fixed target when the tooling exists.
+
+## THE BATCH OBSERVATION HOOKS — `--batch --observations` (2026-08-16)
+
+The library lane's recorded hook request (§LIBRARY MODE, "Recorded hook
+requests"), and it arrived QUANTIFIED: **all 22 UNCOMPARABLE rows of the
+L1 baseline are one gap** — "the call printed; `--batch` reports no
+stdout". Contract: `Main.lean` header, "`--observations`"; and
+docs/DESIGN.md.
+
+### Why the fields were not there, and where they come from
+
+`callFunction` is `Run.toPublic ∘ callIn ∘ thaw` over a fresh world, and
+`Run.toPublic` ERASES the world — so the public result genuinely has
+nothing else to give. Under the flag the batch driver unrolls the wrapper
+one step, calls `callIn` itself, and keeps the world. That is the whole
+mechanism; no semantics moved and `LeanModels/` is untouched.
+
+| field | present exactly when |
+| --- | --- |
+| `stdout` | the run reached a world (`.ok`/`.exn`) — same shape and same `World.stdout` as `--script-batch`, so the survey's existing list-of-lines adapter reads it unchanged |
+| `exnmsg` | the model's `PyErr` carries a message — `--script-batch`'s rule verbatim |
+| `args_after`, `mutated` | the run reached a world AND every argument freezes; else `args_after_refused` says why |
+
+`args_after` is DERIVED, never asserted, and the distinction is the
+design: today a `Val.list` thaws to an IMMEDIATE `RVal.listV`, so a callee
+cannot reach a caller's argument and `mutated` comes out false. That is
+worth PRINTING rather than omitting — CPython's `insort` mutates, so the
+two answers then DISAGREE instead of being counted unverified. When lists
+move to the heap at H2 the same expression reads the real mutation with no
+edit here.
+
+### OPT-IN, and the reason is measured
+
+Turning the fields on unconditionally **failed 1156 of 1271 diff_test
+cases on the first run.** `harness/diff_test.py` compares the model's line
+to a dict it builds itself by WHOLE-DICT equality (`cpy == lean`) — which
+is exactly the strictness a differential wants, and exactly what an
+"additive" key breaks. So the flag: without it the line is byte-identical
+to what `resJson` always printed, and no existing consumer changes.
+Recorded as a general rule: **on this runner, "additive" is not a safe
+word — the result line is compared whole.**
+
+### THE 22, REPLAYED — the proof, without touching the fenced harness
+
+The survey's `compare_call` still returns UNCOMPARABLE on
+`oracle.get("stdout")` whatever the model emits, so the baseline delta is
+**ZERO BY CONSTRUCTION** until the harness lane wires the flag in. Rather
+than promise the outcome, it was MEASURED: every UNCOMPARABLE row was
+re-driven through `--batch --observations` and compared with the survey's
+OWN adapter (`lean_stdout`, copied not edited) against the oracle's
+captured stdout.
+
+**22 of 22 become MATCH.** `assert_lab.lazy_fail`/`lazy_pass`/`talk` (6,
+`'evaluated\n'` both sides, and the `exnmsg` `"boom"` agrees too),
+`g1_lab.try_print` (8), `fnprint.shout` (8). Zero DIVERGE, zero residual
+UNCOMPARABLE. The bucket is now a wiring step, not a protocol gap.
+
+### Measured
+
+Runner rebuilt and both modes diffed on the same jobs file (byte-identical
+without the flag). `lake build` 3663 jobs green; docs_check 67/67;
+diff_test **1271 cases, 0 failed**; script corpus 64 scripts, 0 failed;
+in-repo survey 105/130, 0 DIVERGE; stdlib sweep 6/167 unchanged; library
+baseline 197 modules, every module verdict and all 3448 call verdicts
+IDENTICAL — the zero-delta this section predicted.
+
+**HANDOFF, one line for the harness owner:** add `--observations` to the
+CALL-phase runner invocation, then in `compare_call` replace the
+`oracle.get("stdout")` early return with a comparison against
+`lean_stdout(model)`, and the `oracle.get("mutated")` early return with a
+comparison against `model.get("mutated")`. The `exnmsg` branch is the
+body phase's, already written.

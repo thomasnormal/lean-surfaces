@@ -49,6 +49,30 @@ unreadable or invalid envelope — emits `{"status":"runner-error",
 to stderr, and forces a nonzero exit: LOUD, never absorbed into the
 stream as agreement.
 
+**`--observations`** (2026-08-16, OPT-IN): with the flag, a `--batch`
+line also carries what the run OBSERVED and not only what it returned
+(`batchObs`). The public wrapper ERASES the world, so under the flag the
+driver calls `callIn` directly and keeps it. Added fields, each "present
+exactly when":
+
+* `stdout` — the accumulated line list, present exactly when the run
+  reached a world (`.ok`/`.exn`); the same field, the same shape and the
+  same `World.stdout` as `--script-batch`, so a consumer's existing
+  list-of-lines adapter reads it unchanged.
+* `exnmsg` — present exactly when the model's `PyErr` carries a message,
+  `--script-batch`'s rule verbatim.
+* `args_after` — the arguments frozen against the POST-call heap — and
+  `mutated`, the boolean off comparing them with the inputs. Present
+  exactly when the run reached a world AND every argument freezes;
+  otherwise `args_after_refused` says why.
+
+WHY OPT-IN, since the fields are strictly additive: `harness/diff_test.py`
+compares the model's line to a dict it builds itself by WHOLE-DICT
+equality (`cpy == lean`), which is precisely the strictness a differential
+wants and precisely what an extra key breaks. Emitting them by default
+failed 1156 of 1271 cases on the first run — measured, not feared. Without
+the flag the line is byte-identical to what `resJson` always printed.
+
 **Script mode** (`--script <envelope.json> [--fuel N] [--clock i,j,k]`):
 leanpy — execute the module's whole top level, print its stdout, exit
 0 (ok) / 1 (exn) / 3 (unsupported) / 4 (timeout). `--clock` seeds the
@@ -167,6 +191,87 @@ partial def valJson : Val → String
 def resJson : Res Val → String
   | .ok v => "{\"status\":\"ok\",\"value\":" ++ valJson v ++ "}"
   | .exn e => "{\"status\":\"exn\",\"exn\":" ++ jsonStr (errName e) ++ "}"
+  | .timeout => "{\"status\":\"timeout\"}"
+  | .unsupported msg => "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg ++ "}"
+
+/-- JSON array of strings (script stdout lines). -/
+def jsonStrArray (xs : List String) : String :=
+  "[" ++ ",".intercalate (xs.map jsonStr) ++ "]"
+
+/-- The `exnmsg` clause, shared by every arm that can raise: present
+exactly when the model's `PyErr` CARRIES a message. A constructor that
+carries none makes no claim, and inventing one for it would be a claim
+the semantics does not make. -/
+def exnMsgField (e : PyErr) : String :=
+  match errMessage e with
+  | some msg => ",\"exnmsg\":" ++ jsonStr msg
+  | Option.none => ""
+
+/-- `--batch`'s OBSERVATION fields (2026-08-16 — the library lane's
+request, and it arrived quantified: ALL 22 UNCOMPARABLE rows of the L1
+library baseline are one gap, "the call printed; `--batch` reports no
+stdout").
+
+What `resJson` prints is a VALUE and an exception CLASS, because that is
+everything `callFunction` returns — the public wrapper ERASES the world
+(`Run.toPublic`). These come off the RUN instead, so the batch driver
+calls `callIn` directly and keeps the world the wrapper throws away.
+Every field carries a "present exactly when" rule — the convention
+`--script-batch` already states — so a consumer can tell absence from
+emptiness:
+
+* `stdout` — the accumulated line list, present exactly when the run
+  reached a WORLD (`.ok`/`.exn`). The same field off the same
+  `World.stdout` as `--script-batch`, in the same shape, so the survey's
+  existing list-of-lines adapter reads it with no change.
+* `args_after` / `mutated` — the arguments AS THEY STAND AFTER THE CALL,
+  each frozen through the boundary against the POST-call heap, plus the
+  boolean the oracle already computes (`args != before`). DERIVED, never
+  asserted, and that distinction is the whole design: today a `Val.list`
+  thaws to an IMMEDIATE `RVal.listV`, so a callee cannot reach a caller's
+  argument and `mutated` comes out false — which is a claim worth
+  PRINTING rather than omitting, because CPython's `insort` mutates and
+  the two answers then DISAGREE instead of being counted unverified. When
+  lists move to the heap at H2 the same expression reads the real
+  mutation with no edit here.
+
+Both are present exactly when the run reached a world; `args_after` and
+`mutated` additionally require every argument to FREEZE, and otherwise
+`args_after_refused` carries the reason — a silently dropped field would
+read as "nothing changed". -/
+def batchObs (fuel : Nat) (inArgs : Array Val) (thawed : Array RVal)
+    (w : World) : String :=
+  ",\"stdout\":" ++ jsonStrArray w.stdout
+    ++ (match RVal.freezeListB w.heap fuel thawed.toList with
+        | .ok vs =>
+            ",\"args_after\":[" ++ ",".intercalate (vs.map valJson) ++ "]"
+              ++ ",\"mutated\":" ++ (if vs.toArray == inArgs then "false" else "true")
+        | .unsupported msg => ",\"args_after_refused\":" ++ jsonStr msg
+        | .exn e =>
+            ",\"args_after_refused\":"
+              ++ jsonStr ("freezing an argument raised " ++ errName e)
+        | .timeout =>
+            ",\"args_after_refused\":"
+              ++ jsonStr "freezing an argument exhausted the boundary fuel")
+
+/-- `resJson` PLUS `batchObs`, taken off the RUN rather than the public
+result. The status/value/exn fields are `resJson`'s verbatim — including
+the arm where the boundary FREEZE itself refuses, which stays a
+`status: unsupported` line and now also says what was printed on the way
+there. `.timeout`/`.unsupported` reached no world, so they carry nothing
+extra and are byte-identical to before. -/
+def batchResJson (fuel : Nat) (inArgs : Array Val) (thawed : Array RVal) :
+    Run World RVal → String
+  | .ok w v =>
+      (match RVal.freezeB w.heap fuel v with
+       | .ok pv => "{\"status\":\"ok\",\"value\":" ++ valJson pv
+       | .exn e => "{\"status\":\"exn\",\"exn\":" ++ jsonStr (errName e) ++ exnMsgField e
+       | .timeout => "{\"status\":\"timeout\""
+       | .unsupported msg => "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg)
+        ++ batchObs fuel inArgs thawed w ++ "}"
+  | .exn w e =>
+      "{\"status\":\"exn\",\"exn\":" ++ jsonStr (errName e) ++ exnMsgField e
+        ++ batchObs fuel inArgs thawed w ++ "}"
   | .timeout => "{\"status\":\"timeout\"}"
   | .unsupported msg => "{\"status\":\"unsupported\",\"msg\":" ++ jsonStr msg ++ "}"
 
@@ -293,10 +398,6 @@ def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) : IO UInt32 := do
       IO.eprintln "leanpy-timeout"
       return 4
 
-/-- JSON array of strings (script stdout lines). -/
-def jsonStrArray (xs : List String) : String :=
-  "[" ++ ",".intercalate (xs.map jsonStr) ++ "]"
-
 /-- Canonical one-line JSON form of a SCRIPT outcome, carrying the exit
 status the one-shot `--script` mode would have produced — so the batch
 stream and the process boundary can never disagree about what counts as
@@ -379,7 +480,7 @@ def parseJob (line : String) : Except String BatchJob := do
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
 `runner-error` lines PLUS a nonzero exit. -/
-def runBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
+def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --batch: cannot read '{jobsPath}': {toString e}"
@@ -416,12 +517,18 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
             IO.eprintln s!"leanmodels-run --batch: {e}"
             stdout.putStrLn ("{\"status\":\"runner-error\",\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
-            stdout.putStrLn (resJson (match job.clock with
-              | some clock =>
-                  callFunctionClock m job.fname job.args clock
-                    (job.fuel.getD defaultFuel)
-              | Option.none =>
-                  callFunction m job.fname job.args (job.fuel.getD defaultFuel)))
+            -- `callIn` rather than `callFunction`, and it is the SAME run:
+            -- the public wrapper IS `Run.toPublic ∘ callIn ∘ thaw` over a
+            -- fresh world, and `callFunction m f args fuel` is definitionally
+            -- `callFunctionClock m f args [] fuel` (the `clock := []` default).
+            -- Unrolling it one step is what keeps the post-call WORLD, which
+            -- `Run.toPublic` erases and `batchObs` reports.
+            let fuel := job.fuel.getD defaultFuel
+            let thawed := RVal.thawArgs job.args
+            let run := callIn m fuel
+              { initWorld m with clock := job.clock.getD [] } job.fname thawed
+            stdout.putStrLn (if obs then batchResJson fuel job.args thawed run
+                             else resJson (Run.toPublic fuel run))
         stdout.flush
       return (if hadError then 1 else 0)
 
@@ -520,11 +627,21 @@ def main (argv : List String) : IO UInt32 := do
         IO.eprintln s!"leanmodels-run --batch: {e}"
         return 2
     | .ok (positional, fuel?) =>
+      -- `--observations` is OPT-IN, and the reason is a measured one: the
+      -- differential harness compares the model's line to a dict it builds
+      -- itself, by WHOLE-DICT equality (`cpy == lean`, harness/diff_test.py),
+      -- which is exactly the strictness that differential wants and exactly
+      -- what an "additive" field breaks. Turning the fields on by default
+      -- failed 1156 of 1271 cases on the first run. So the result line stays
+      -- byte-identical for every consumer that did not ask.
+      let obs := positional.contains "--observations"
+      let positional := positional.filter (· != "--observations")
       let some jobsPath := (match positional with | [p] => some p | _ => Option.none)
         | do
-            IO.eprintln "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N]"
+            IO.eprintln
+              "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N] [--observations]"
             return 2
-      runBatchMode jobsPath (fuel?.getD 10000)
+      runBatchMode jobsPath (fuel?.getD 10000) obs
   | "--script-batch" :: rest =>
     match splitFuel rest with
     | .error e =>

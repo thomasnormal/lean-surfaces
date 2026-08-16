@@ -254,6 +254,61 @@ theorem ray_at_least (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
   obtain ⟨k, rfl⟩ : ∃ k, f' = f + k := ⟨f' - f, by omega⟩
   exact ray_mono b wc0 wc1 ep kp i p d f j ms k h
 
+/-! ### The first bridge between the reference and the model (L1)
+
+`Ref.at?` is the reference's board read, spelled over `List Char`; the
+interpreter's is `indexVal` on a `.str`. They agree — and the proof is the
+string-as-list family (VCTactic.lean §strings as lists of characters),
+which is the whole point of that family: every string operation in the
+tier is defined through `String.toList`, so a symbolic board reasons as
+the character list it wraps.
+
+This is the standalone gate of landing L1 in
+docs/generator-tier-architecture.md. It is stated over an ARBITRARY board
+and an arbitrary index — no concreteness anywhere — and it is the shape a
+future ray-agreement proof consumes each time it reads a square. -/
+
+open Ref in
+/-- Inversion of a successful reference read: it took the in-range arm, and
+the character came out of the character list at the folded index. -/
+private theorem at?_ok_inv (l : List Char) (j : Int) (c : Char)
+    (h : at? l j = .ok c) :
+    ∃ k : Int, (if j < 0 then j + (l.length : Int) else j) = k ∧
+      0 ≤ k ∧ k < (l.length : Int) ∧ l[k.toNat]? = some c := by
+  rw [at?] at h
+  by_cases hr : 0 ≤ (if j < 0 then j + (l.length : Int) else j) ∧
+      (if j < 0 then j + (l.length : Int) else j) < (l.length : Int)
+  · rw [if_pos hr] at h
+    refine ⟨_, rfl, hr.1, hr.2, ?_⟩
+    cases hg : l[(if j < 0 then j + (l.length : Int) else j).toNat]? with
+    | none => rw [hg] at h; simp at h
+    | some c' => rw [hg] at h; simpa using h
+  · rw [if_neg hr] at h; simp at h
+
+open Ref in
+/-- At any index the reference accepts, the model's subscript reads the
+same character (as the one-character string Python gives back). -/
+theorem at?_eq_indexVal (b : String) (j : Int) (c : Char)
+    (href : at? b.toList j = .ok c) :
+    indexVal (.str b) (.int j) = .ok (.str (String.singleton c)) := by
+  obtain ⟨k, hkeq, hk0, hklt, hget⟩ := at?_ok_inv b.toList j c href
+  have hnorm : normIndex j b.length = some k.toNat := by
+    simp only [normIndex, strLength_eq_toList, hkeq]
+    rw [if_pos ⟨hk0, hklt⟩]
+  have hgd : b.toList.getD k.toNat ' ' = c := by
+    rw [List.getD_eq_getElem?_getD, hget]; rfl
+  simp only [indexVal, asInt, hnorm, hgd]
+
+/-! Non-vacuity: the bridge on the shipped opening board, at a square that
+holds a piece (CPython's `initial[91] == "R"`). -/
+#guard (match indexVal (.str board0) (.int 91) with
+        | .ok (.str s) => s.toList
+        | _ => []) == ['R']
+
+#guard (match Ref.at? board0.toList 91 with
+        | .ok c => [c]
+        | _ => []) == ['R']
+
 /-! ### Ray AGREEMENT — measured, and blocked on tooling, not on effort
 
 With the budget lemma in hand the next step was the other half of the ray

@@ -5997,3 +5997,43 @@ gen_lab has 73 differential rows and no `proof.lean`) → L3 walker case
 the H6 ordering theorem) → L4 ray agreement (3–6d, LOW-MEDIUM — the band
 that could double) → L5 square + board + assembly (2–4d, MEDIUM; gate is
 `theorem gen_moves_eq_ref : GenMovesEqRef`). Total 9–17 working days.
+
+## L1 LANDED — the string-as-list bridge (2026-08-16)
+
+Landing 1 of docs/generator-tier-architecture.md, and only landing 1: L2–L5
+(`GenYields`, the frame rules, any `PyGenTriple` work) stay owner-gated.
+This family is ordinary depth tooling — it pays for any symbolic-string
+proof in the repo, tier or no tier.
+
+**What landed** (VCTactic.lean §strings as lists of characters, beside the
+`arrVal_getElem` family it is modelled on): `normIndex_of_nonneg`,
+`strLength_eq_toList`, `strIndex_ok` (the string subscript, in the shape
+the interpreter leaves, with the in-range side condition stated over `i` so
+the existing `omega` discharger proves it), `strFindAux_singleton_isSome`,
+`strContains_singleton`, `ofList_singleton`, `strCharVals_eq_map`,
+`valEq_singleton`. Ten declarations counting the gate's two — the memo
+predicted 10–15.
+
+**The gate** (`Examples/python/sunfish/genmoves_theorem.lean`):
+`at?_eq_indexVal` — at any index the reference accepts, the model's
+subscript reads the same character. Stated over an ARBITRARY board and an
+arbitrary index, negative-index fold included, with two `#guard` pins on
+the shipped opening board for non-vacuity. It is the first theorem in this
+repo relating the reference enumeration to the interpreter, and it is the
+shape a ray-agreement proof consumes at every square.
+
+**Wiring, measured rather than assumed.** `strIndex_ok`,
+`strContains_singleton` and `valEq_singleton` are in `interpLemmas`, so
+captured runs use them — the full regression is green with them in
+(3663 jobs), unlike the arithmetic pass, which needed gating. Nothing in
+the gallery exercises them yet; they are in place for L4.
+
+**Calibration data for the memo's other estimates** (the reason to record
+it): L1 was estimated 0.5–1 day at HIGH confidence and took roughly two
+hours, well inside the band. Three small tactic hiccups, all mechanical:
+`simp [String.singleton]` loops (use `String.toList_singleton` and the
+`toList_injective` route instead), `set` is not available in this
+toolchain's tactic set, and `beq_eq_false_iff_ne` wants `.mpr` rather than
+a simp rewrite. Nothing structural was wrong — which is the evidence that
+the HIGH-confidence band on mechanical lemma families is real. It says
+nothing about L4's LOW-MEDIUM band, which remains the one to watch.

@@ -266,6 +266,85 @@ theorem arrVal_getD (l : List Int) (n : Nat) (h : n < l.length) :
       = RVal.int (l.getD n 0) := by
   rw [arrVal_getElem l n h, getD_eq_getElem l n h]
 
+/-! ## Strings as lists of characters (spec-side)
+
+Every string operation the tier performs is defined THROUGH `String.toList`
+— `strCharVals`, the `.str` arm of `indexVal`, `strContains` via
+`strFindAux` — so none of Lean's `String.Pos`/UTF-8 machinery is on the
+path, and a symbolic string reasons exactly like the `List Char` it wraps.
+These are the bridges that say so. They are the string twins of the
+`arrVal_getElem` family above: same shape, same in-range side condition,
+same discharger.
+
+(Landing L1 of docs/generator-tier-architecture.md. The rest of that memo
+is owner-gated; this family is ordinary depth tooling and pays for any
+symbolic-string proof, tier or no tier.) -/
+
+/-- `normIndex` at a non-negative in-range index is the index itself.
+Python's negative-index fold is the `if` inside it; this is the arm every
+in-tier subscript takes. -/
+theorem normIndex_of_nonneg (i : Int) (n : Nat) (h0 : 0 ≤ i)
+    (hlt : i < (n : Int)) : normIndex i n = some i.toNat := by
+  simp only [normIndex, if_neg (by omega : ¬ i < 0)]
+  rw [if_pos (by omega)]
+
+/-- A string's Python length is its character-list length. -/
+theorem strLength_eq_toList (s : String) : s.length = s.toList.length :=
+  String.length_toList.symm
+
+/-- **The string subscript**, in the shape the interpreter leaves: reading
+`s[i]` at an in-range non-negative `i` is the character list read. The side
+condition is stated over `i`, so `captureDischarge`'s `omega` half proves
+it from a loop invariant exactly as it does for `arrVal_indexVal`. -/
+theorem strIndex_ok (s : String) (i : Int) (h0 : 0 ≤ i)
+    (hlt : i < (s.length : Int)) :
+    indexVal (.str s) (.int i)
+      = .ok (.str (String.singleton (s.toList.getD i.toNat ' '))) := by
+  simp only [indexVal, asInt, normIndex_of_nonneg i s.length h0 hlt]
+
+/-- `strFindAux` for a ONE-character needle is list membership — the whole
+of the membership family, because the guards `gen_moves` writes
+(`q in " \nPNBRQK"`, `p in "PNK"`) are single characters against a literal
+alphabet. -/
+theorem strFindAux_singleton_isSome (l : List Char) (c : Char) :
+    (strFindAux l [c]).isSome = l.contains c := by
+  induction l with
+  | nil => simp [strFindAux]
+  | cons x xs ih =>
+    by_cases h : x = c
+    · simp [strFindAux, h]
+    · simp [strFindAux, ih, Ne.symm h]
+
+/-- Membership of a single character in a string, as a list `contains`.
+The reference enumeration's `inStr` is definitionally this, so the two
+sides of a membership guard meet without a case split over the literal. -/
+theorem strContains_singleton (s : String) (c : Char) :
+    strContains s (String.singleton c) = s.toList.contains c := by
+  rw [strContains, String.toList_singleton, strFindAux_singleton_isSome]
+
+/-- Iterating a string yields its characters as one-character strings, in
+the `String.singleton` spelling the subscript also produces (the definition
+says `String.ofList [c]`; one spelling downstream is worth the lemma). -/
+theorem ofList_singleton (c : Char) : String.ofList [c] = String.singleton c :=
+  String.toList_injective (by simp)
+
+theorem strCharVals_eq_map (s : String) :
+    strCharVals s = s.toList.map (fun c => RVal.str (String.singleton c)) := by
+  simp only [strCharVals, ofList_singleton]
+
+/-- Equality of two one-character strings is equality of the characters. -/
+theorem valEq_singleton (a b : Char) :
+    valEq (.str (String.singleton a)) (.str (String.singleton b))
+      = .ok (a == b) := by
+  have hinj : (String.singleton a == String.singleton b) = (a == b) := by
+    by_cases h : a = b
+    · simp [h]
+    · have hne : String.singleton a ≠ String.singleton b := fun hs =>
+        h (by simpa using congrArg String.toList hs)
+      rw [beq_eq_false_iff_ne.mpr hne, beq_eq_false_iff_ne.mpr h]
+  show Res.ok (String.singleton a == String.singleton b) = Res.ok (a == b)
+  rw [hinj]
+
 /-! ## Run splicing -/
 
 /-- Append two decided runs: statements that fell through (`.next`) followed
@@ -556,7 +635,9 @@ def interpLemmas : List Name :=
    -- the marshalled SUBSCRIPT read, conditional on the index being in
    -- range: `captureDischarge` proves that side condition from the loop
    -- invariant and the test (§the arithmetic discharger)
-   ``arrVal_getElem, ``arrVal_getD, ``arrVal_indexVal, ``ifNeg_index]
+   ``arrVal_getElem, ``arrVal_getD, ``arrVal_indexVal, ``ifNeg_index,
+   -- the string twins (L1): a symbolic board reads as its character list
+   ``strIndex_ok, ``strContains_singleton, ``valEq_singleton]
 
 /-- The truthiness-normalization set: turns `truthy <captured value> = true`
 facts into the clean arithmetic propositions residual goals should show. -/

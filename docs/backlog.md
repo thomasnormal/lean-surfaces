@@ -4969,3 +4969,107 @@ measurement, not an argument: drive the module through
 against CPython's C accelerator, which is what makes it the instrument
 this obligation was waiting for — record numerator and denominator, cite
 the run.
+
+## L2 — THE MODULE SYSTEM: CENSUSED AND STOPPED, with the shape recorded (2026-08-16)
+
+The phase plan's L2 is two halves that library mode can now price
+separately, and they price very differently. Neither number was known
+before this instrument existed; both are measured below, against the
+post-triage baseline (197 modules, DIVERGED 0).
+
+### Half one — `__name__` import semantics. MEASURED WORTH: ZERO.
+
+The recorded item: bind `__name__` to the module name so the survey's
+`import-semantics:__name__` gate stops firing and
+`if __name__ == "__main__":` becomes statically dead.
+
+**The gate has never fired.** Not in the L1 baseline (whose refusal
+walls are `class-creation` 91, `import` 34, seven singletons and two
+try/except shapes — no gate row) and not in the post-triage re-run. It
+fires only where the model would otherwise have claimed a body match,
+and no module both gets a body run to completion AND reads `__name__`.
+
+Of the 32 `import`-walled modules, **5 read `__name__` at top level**
+(`base64`, `signal`, `site`, `sysconfig`, `uu`) and 4 of those carry a
+`__main__` guard — and every one of the five walls on something else
+first (`Constant:bytes`, `Lambda`, `Starred`, `Set`, `Constant:bytes`).
+So the change flips ZERO modules today. Its cost is a `Script.lean`
+binding mode, a `Main.lean` protocol field, a survey change, a battery
+script and a full rebuild. Building it now would be paying a rebuild for
+a number that is measured zero — §THE SEQUENCING PRINCIPLE, applied to
+this lane's own work. It becomes worth building the moment half two
+does, and not before.
+
+### Half two — the import wall itself. MEASURED WORTH: 10 module bodies, and OWNER-GATED.
+
+32 modules refuse at an import statement. The census asks the only
+question that matters: **if every import were granted for free, and
+`__main__` blocks were dead, where would the body stop next?**
+
+| next wall | modules |
+| --- | --- |
+| (none statically) | 11 |
+| `Constant:bytes` | 6 |
+| `With` | 4 |
+| `Set` | 3 |
+| `Import` / `ImportFrom` (a second, non-admitted form) | 3 |
+| `Starred` / `Starred:target` | 2 |
+| `Lambda`, `JoinedStr:conversion_r`, `UnaryOp:Invert` | 1 each |
+
+"Granted for free" cannot mean EXECUTED. §The IMPORT CEILING measured
+0 of 155 seeds with a pure-Python import closure, and that has not
+moved: of the eleven above, every census row with a recorded closure is
+C-reaching. The only shape available is the OPAQUE MODULE VALUE
+(docs/memory-model.md §The FUTURE modeled-module arm) — bind the name
+to a value every observation refuses on.
+
+An opaque value only helps if the top level never OBSERVES it, so the
+eleven were checked one by one (function and class bodies excluded —
+importing never runs them):
+
+* **8 never touch an imported name at top level**: `collections.abc`,
+  `contextvars`, `email.base64mime`, `email.charset`,
+  `importlib.machinery`, `reprlib`, `rsa_inverse`, `struct`.
+* **2 touch only BENIGN-whitelist names the model already models** —
+  `fnmatch` (`itertools.count`), `unittest.util`
+  (`collections.namedtuple`) — so they are clean too.
+* **1 genuinely observes**: `xml.parsers.expat`, line 7,
+  `sys.modules['xml.parsers.expat.model'] = model`.
+
+**So the opaque-module arm is worth TEN module bodies of 197** — they
+stop being REFUSED and become BODY-ONLY/PARTIAL/VERIFIED candidates,
+with the battery deciding which. That is the first honest number this
+idea has ever had, and it is the library metric the phase plan said was
+"where its value was always claimed to be".
+
+### THE STOP, and why it is a stop and not a slow-down
+
+The arm that pays is OWNER-GATED — docs/memory-model.md says so in its
+own words ("This arm is OWNER-GATED with the rest of the memo and is
+recorded here only so the Pass 0 constructor is not built in a shape
+that forecloses it"), and it is not small: a new `RVal` constructor
+means a loud arm at EVERY observation site (every operator, every
+builtin, attribute read, call, `print`, `==`, `is`, truthiness,
+rendering, the boundary freeze), which is the widest kind of edit this
+model has. The arm that is ungated flips zero.
+
+RECOMMENDED, in order:
+
+1. **Take the ten to the owner as the ask.** The question is no longer
+   "should there be a module system" — the import ceiling answered that,
+   NO. It is the narrower "should a from-import bind an opaque value
+   nothing may observe", and the answer is worth 10 module bodies plus
+   the retirement of a refusal class.
+2. If the answer is yes, `__name__` rides the same rebuild — it is a
+   few lines and it stops being a zero the moment bodies run.
+3. The 21 blocked-behind are a BATCH, not a ladder, and the biggest
+   single member is `Constant:bytes` at 6. §THE SEQUENCING PRINCIPLE
+   applies verbatim; nothing in that list is worth pricing alone.
+
+INSTRUMENTS: the two censuses are
+`/scratchpad`-local scripts derived from `harness/library_corpus.json` +
+the extractor's own `convert_stmt` (ground truth is never
+re-implemented, the `class_census.py` discipline). Reproduce by walking
+each module's top level, skipping `Import`/`ImportFrom` and
+`__name__`-guarded `if`s, and reporting the first `Unsupported` node or
+`creation_effects` class.

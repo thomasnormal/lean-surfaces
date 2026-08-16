@@ -2954,6 +2954,90 @@ Not registered, deliberately: the uncompilable positions (`*a`,
 there is no oracle output to compare against; they belong in an
 extractor totality test, not in `cases.json`.
 
+### STATUS: position 1 is BUILT (2026-08-13, docs/memory-model.md §starred displays)
+
+The DISPLAY lowering landed exactly as designed above — extractor-only,
+so `lake build` was a pure replay plus the two new example specs (3660
+jobs, from 3658). Positions 2 and 3 stay refused and are now pinned by
+row, not assumed.
+
+TWO CORRECTIONS the implementation MEASURED, both of which the design
+predicted the other way:
+
+* **Position 2 did not refuse — it answered a FAKE `ValueError`.** The
+  design said the existing all-names restriction in `targetNames` already
+  refuses a starred target. It does not: `unpackSeq` checks ARITY BEFORE
+  element kinds, so `x, *y = [1, 2, 3]` answered
+  `too many values to unpack (expected 2)` where CPython binds
+  `y = [2, 3]`. A wrong answer, not a loud one. The whole target now
+  ingests as `Unsupported "Starred:target"`. This is a pre-existing
+  defect, found only because the position was pinned by a row.
+* **The lowering needs a SHADOW CENSUS the design did not name.** It
+  spells the display as calls of the names `list` and `tuple`; a module
+  binding either would run the display through the shadow while CPython's
+  display looks nothing up. `Examples/python/star_shadow` is the row that
+  catches the census being dropped — the same shape the f-string
+  lowering's `str` census has, and it should be read as a rule for
+  lowerings generally: a lowering that synthesizes a NAME owes a census.
+
+Position 3 needed nothing: `callUnsupported` already carried
+`starred args`, measured rather than assumed, as the design asked.
+
+### REBASED onto master (2026-08-16) — and the sweep delta is ZERO FILES
+
+The branch sat 58 commits and spanned an envelope re-extraction. Rebased,
+re-extracted, gated, and the honest headline is that **the display
+lowering moves no file on either wild corpus.**
+
+Mechanically it was small: one cherry-pick, two conflicts (`backlog.md`
+and `scripts.json`, both tail-of-file), `extract.py`/`memory-model.md`/
+`cases.json` auto-merged. Every `#py_check` in `star_lab/spec.lean`
+passes against the FRESHLY re-extracted envelope, which is the real
+verification that the lowering still computes the right answers 58
+commits later — 3660 → **3662 jobs, green**.
+
+**THE SWEEP DELTA, all four:**
+
+| instrument | before | after |
+| --- | --- | --- |
+| stdlib sweep | 6 MATCH / 161 REFUSE | **6 / 161, MATCH set IDENTICAL** |
+| library baseline (197) | 12/7/41/136/0/1 | **byte-identical — every module verdict AND all 3448 call verdicts** |
+| in-repo survey | 102 MATCH / 25 REFUSE of 127 | 105 / 25 of **130** — the three new battery files, all MATCH |
+| script corpus | 63 scripts, 49 matched | 64, 50 matched, 0 failed |
+| diff_test | 1236 cases | **1271**, 0 failed |
+
+The static census is where the lowering shows at all, and it shows
+SMALL: stdlib `Starred` nodes **190 → 183**, still present in 68 files,
+sole-blocker 0. Seven nodes. The reason is the design's own
+three-position split: the stdlib's starred nodes are overwhelmingly CALL
+ARGUMENTS and ASSIGNMENT TARGETS, and the display is the rare one. §THE
+SEQUENCING PRINCIPLE predicted the shape ("`Starred` looks like 86 and is
+worth 3") and this is the sharper version of it — worth 3 files was the
+whole construct; position 1 alone is worth zero.
+
+**TWO CORRECTIONS the rebase measured** (docs/memory-model.md §starred
+displays, "AS REBASED"):
+
+1. **Position 2's defect was fixed TWICE, independently.** Master closed
+   it from the STATEMENT side on 2026-08-15 while this branch held the
+   EXPRESSION side. Both are kept, because master's covers `ast.Assign`
+   and nothing else — a `for`, `with … as`, or comprehension target
+   reaches only the expression arm. Master's is the stronger one for an
+   assignment, and it is the shape `star_lab.json` now re-extracts to.
+2. **The `for` target was ALREADY loud, and the obvious inference is
+   false.** Probed at all three arities that separated wrong answers from
+   loud ones in the `Assign` case: master REFUSES all three
+   (`unpacking targets other than plain names`), because `execFor`'s
+   target check is name-only and fires BEFORE arity — exactly where
+   `unpackSeq` differed. So this arm is a MESSAGE change for `for`, not a
+   soundness fix. Only the probe says so.
+
+**ONE DEDUP the second lowering exposed:** `binds_str` was
+`binds_any_name` with `names = {"str"}` inlined, line for line. One
+census function now, two named name sets, both decided in one place.
+Behaviour-neutral: 74/74 extractor units, and re-extracting every tracked
+envelope moved nothing but the `frontend.version` stamp.
+
 ## C intrinsics — proposal written, OWNER-GATED (2026-08-14)
 
 The import-ceiling census's follow-up decision — whether to model C

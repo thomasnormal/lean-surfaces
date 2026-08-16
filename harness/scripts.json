@@ -140,6 +140,10 @@
     "expect": "match"
   },
   {
+    "file": "harness/scripts/star_script.py",
+    "expect": "match"
+  },
+  {
     "file": "harness/scripts/assert_script.py",
     "expect": "match"
   },

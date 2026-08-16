@@ -5958,3 +5958,42 @@ reverted unstaged.)
 And the direct proof: the cold-cache PARALLEL sweep — every source a
 first extraction, the condition that dirtied the tree — now **leaves the
 tree clean**. `SumTo.lean` does not appear in `git status` at all.
+## The generator tier — DESIGN MEMO, awaiting a go (2026-08-16)
+
+`docs/generator-tier-architecture.md` is the decision document for the
+tooling that `GenMovesEqRef` is blocked behind. Nothing is implemented; the
+memo exists so a go starts landing 1 instead of starting design. Censused
+against the tree, and three things in it are worth surfacing here:
+
+1. **One price is revised DOWN, with evidence.** The stop-and-report called
+   symbolic string/char reasoning open-ended. It is not: every string
+   operation `gen_moves` performs is already defined through
+   `String.toList` (`strCharVals`, the `.str` arm of `indexVal`,
+   `strContains` via `strFindAux`) — no `String.Pos`, no UTF-8 byte
+   arithmetic on the path — and `Ref.at?` was already written over
+   `List Char`. The missing set is 10–15 lemmas hanging off two mechanisms
+   that already exist (the `arrVal_getElem` family and the captured-run
+   simprocs/discharger). What IS true is that the Python layer contains
+   zero string theorems today.
+2. **The generator tier EXTENDS the VC stack rather than duplicating it.**
+   `genPlan` splits every statement into `.delegate` (no yield → ordinary
+   `execStmt`, already covered by layers 1–2) and five suspendable shapes.
+   So the new layer is five constructors on top of the existing triples,
+   and every yield-free statement inside a generator body is discharged by
+   machinery that already ships.
+3. **A drained generator is a value list, so the `for` rule already
+   applies.** The `IterVals` exclusion of generators was right at the
+   SEMANTICS level and stands; at the SPEC level, a `GenYields` fact hands
+   the walker a finite element list and `execFor_of_invariant` applies
+   verbatim. Laziness only bites when the consumer breaks, which is why the
+   spec object has a prefix half (`GenYieldsPrefix`) — the half `bound`'s
+   beta cutoff needs.
+
+Plan: five landings, each gated and each collapsing something real —
+L1 string bridge (0.5–1d, HIGH confidence) ∥ L2 `GenYields` + frame rules
+(2–4d, MEDIUM; its gate is the FIRST generator theorem in the repo —
+gen_lab has 73 differential rows and no `proof.lean`) → L3 walker case
+(1–2d, MEDIUM-HIGH; gate collapses `sf_order`'s `bound_probe`, unlocking
+the H6 ordering theorem) → L4 ray agreement (3–6d, LOW-MEDIUM — the band
+that could double) → L5 square + board + assembly (2–4d, MEDIUM; gate is
+`theorem gen_moves_eq_ref : GenMovesEqRef`). Total 9–17 working days.

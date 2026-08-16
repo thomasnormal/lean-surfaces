@@ -1580,9 +1580,42 @@ def generate_companion(stem, source_rel, json_rel, source_sha256, blocks):
 # Driver
 # ---------------------------------------------------------------------------
 
+REPO_ROOT = os.path.realpath(
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
+
+
 def rel_posix(path):
-    """Normalize a user-supplied path for use inside emitted files."""
-    return os.path.normpath(path).replace(os.sep, "/")
+    """Normalize a user-supplied path for use inside emitted files —
+    PATH-INVARIANT, which it was not until 2026-08-16.
+
+    This one string is embedded in three places: the envelope's
+    `source_file`, the companion's `source:` header, and the companion's
+    `load_program … from "…"`. It used to be `normpath` of the path AS
+    GIVEN, so the same source extracted through a different spelling
+    produced different bytes — and an inline-mode source (`sum_to.py`)
+    regenerates its committed companion on every extraction, so a survey
+    that passed an ABSOLUTE path rewrote `SumTo.lean` with absolute
+    `source:`/`load_program` lines and DIRTIED THE TREE. Warm caches hid
+    it: the entry is keyed by source bytes, not by the spelling, so the
+    rewrite only happened on a first extraction. (It also meant the cache
+    could serve an absolute-path envelope to a relative-path caller, with
+    a `source_file` neither of them would have written.)
+
+    The canonical form is read off the committed companions, not chosen:
+    `Examples/python/sum_to/sum_to.py`, i.e. REPO-RELATIVE POSIX. A source
+    OUTSIDE the repo has no such form, so it keeps its absolute POSIX path
+    — already invariant, and what every cached stdlib envelope carries.
+    Both arms go through `realpath` first, so the answer no longer depends
+    on the caller's spelling or its CWD.
+    """
+    real = os.path.realpath(path)
+    try:
+        inside = os.path.commonpath([real, REPO_ROOT]) == REPO_ROOT
+    except ValueError:  # different drives (Windows): not inside, by definition
+        inside = False
+    if inside:
+        return os.path.relpath(real, REPO_ROOT).replace(os.sep, "/")
+    return real.replace(os.sep, "/")
 
 
 def process_file(source_path, companion_dir, out=None):

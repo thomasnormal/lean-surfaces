@@ -116,10 +116,15 @@ class ExtractorTests(unittest.TestCase):
         text = read(os.path.join(self.tmp, "Double.lean"))
         sha = extract.hashlib.sha256(
             SOURCE_WITH_BLOCK.encode("utf-8")).hexdigest()
+        # The subject here is the HEADER SHAPE, not the path policy: since
+        # 2026-08-16 `rel_posix` canonicalises (repo-relative inside the
+        # tree, realpath outside), and this fixture lives in a temp dir
+        # whose `/var` realpaths to `/private/var`. Path invariance has its
+        # own tests (tools/test_leanpy.py).
         expected = (
             "/-\n"
             + extract.AUTOGEN_MARKER + " — DO NOT EDIT.\n"
-            + "source: " + src.replace(os.sep, "/") + "\n"
+            + "source: " + extract.rel_posix(src) + "\n"
             + "sha256: " + sha + "\n"
             + "-/\n"
         )

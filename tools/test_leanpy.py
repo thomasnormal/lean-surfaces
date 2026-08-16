@@ -170,5 +170,115 @@ class CacheAtomicityTests(unittest.TestCase):
             shutil.rmtree(srcdir, ignore_errors=True)
 
 
+class CompanionPathInvarianceTests(unittest.TestCase):
+    """The dirty-tree family's other half.
+
+    `rel_posix` feeds three embedded strings — the envelope's
+    `source_file`, and the companion's `source:` header and
+    `load_program … from "…"`. It used to be the path AS GIVEN, so an
+    INLINE-mode source (`sum_to.py`, which regenerates its committed
+    companion on every extraction) came out with absolute lines whenever a
+    survey passed an absolute path, and the tree went dirty. Warm caches
+    hid it: the cache is keyed by source BYTES, so the rewrite only
+    happened on a first extraction.
+
+    The canonical form was read off the committed companion
+    (`Examples/python/sum_to/sum_to.py` — repo-relative POSIX), not
+    chosen. These tests drive the real committed example, because "matches
+    what is checked in" is the property that actually keeps the tree
+    clean.
+    """
+
+    SRC = "Examples/python/sum_to/sum_to.py"
+    COMPANION = "Examples/python/sum_to/SumTo.lean"
+    ENVELOPE = "Examples/python/sum_to/sum_to.json"
+
+    def setUp(self):
+        # A failure must not leave the tree dirty -- that is the very thing
+        # under test.
+        self._saved = {}
+        for rel in (self.COMPANION, self.ENVELOPE):
+            with open(os.path.join(REPO_ROOT, rel), "rb") as f:
+                self._saved[rel] = f.read()
+
+    def tearDown(self):
+        for rel, data in self._saved.items():
+            with open(os.path.join(REPO_ROOT, rel), "wb") as f:
+                f.write(data)
+
+    def _extract(self, arg, cwd):
+        r = leanpy.subprocess.run(
+            [sys.executable, os.path.join(REPO_ROOT, "extractors/python/extract.py"), arg],
+            cwd=cwd, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr or r.stdout)
+        with open(os.path.join(REPO_ROOT, self.COMPANION), "rb") as f:
+            companion = f.read()
+        with open(os.path.join(REPO_ROOT, self.ENVELOPE), "rb") as f:
+            envelope = f.read()
+        return companion, envelope
+
+    def test_relative_absolute_and_other_cwd_agree_with_what_is_committed(self):
+        spellings = [
+            ("relative, from the repo root", self.SRC, REPO_ROOT),
+            ("absolute", os.path.join(REPO_ROOT, self.SRC), REPO_ROOT),
+            ("relative, from a subdirectory",
+             os.path.join("python", "sum_to", "sum_to.py"),
+             os.path.join(REPO_ROOT, "Examples")),
+            ("absolute, from an unrelated cwd",
+             os.path.join(REPO_ROOT, self.SRC), tempfile.gettempdir()),
+        ]
+        results = {}
+        for name, arg, cwd in spellings:
+            results[name] = self._extract(arg, cwd)
+        first = spellings[0][0]
+        for name, _, _ in spellings[1:]:
+            self.assertEqual(results[name][0], results[first][0],
+                             "companion differs: %s vs %s" % (name, first))
+            self.assertEqual(results[name][1], results[first][1],
+                             "envelope differs: %s vs %s" % (name, first))
+        # …and the invariant form is the COMMITTED one, so extraction never
+        # dirties the tree.
+        self.assertEqual(results[first][0], self._saved[self.COMPANION],
+                         "the companion no longer matches what is committed")
+
+    def test_the_committed_form_is_repo_relative_posix(self):
+        """Read off the committed file, so the convention cannot drift
+        silently into `rel_posix`'s idea of it."""
+        text = self._saved[self.COMPANION].decode("utf-8")
+        self.assertIn("source: %s\n" % self.SRC, text)
+        self.assertIn('load_program sum_to from "%s"'
+                      % self.ENVELOPE, text)
+        self.assertEqual(leanpy_extract().rel_posix(
+            os.path.join(REPO_ROOT, self.SRC)), self.SRC)
+
+    def test_a_source_outside_the_repo_keeps_an_absolute_invariant_path(self):
+        """There is no repo-relative form for it, and absolute is already
+        invariant — but it must be the REALPATH, or two spellings of the
+        same out-of-tree file still disagree."""
+        extract = leanpy_extract()
+        d = tempfile.mkdtemp(prefix="leanpy-test-out-of-tree-")
+        try:
+            src = os.path.join(d, "m.py")
+            with open(src, "w", encoding="utf-8") as f:
+                f.write("def f():\n    return 1\n")
+            direct = extract.rel_posix(src)
+            self.assertTrue(direct.startswith("/"), direct)
+            self.assertEqual(direct, os.path.realpath(src).replace(os.sep, "/"))
+            # a second spelling of the same file
+            self.assertEqual(extract.rel_posix(os.path.join(d, ".", "m.py")), direct)
+        finally:
+            shutil.rmtree(d, ignore_errors=True)
+
+
+def leanpy_extract():
+    """The extractor module, loaded the way leanpy loads it."""
+    spec = importlib.util.spec_from_loader(
+        "leanpy_extract", importlib.machinery.SourceFileLoader(
+            "leanpy_extract", os.path.join(REPO_ROOT, "extractors/python/extract.py")))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -5880,3 +5880,81 @@ now. Reverted here; the fix belongs with whoever owns the companion
 write, and it is either "always relativise `source_path` against
 `REPO_ROOT`" or "never regenerate a companion for an out-of-tree
 extraction".
+
+## THE COMPANION WRITE BECOMES PATH-INVARIANT — the dirty-tree family closes (2026-08-16)
+
+The other half of the finding the atomic-cache section recorded. One
+string, `rel_posix(source_path)`, is embedded in THREE places: the
+envelope's `source_file`, the companion's `source:` header, and the
+companion's `load_program … from "…"`. It was `normpath` of the path AS
+GIVEN, so the same source extracted through a different spelling produced
+different bytes.
+
+That matters because an INLINE-mode source regenerates its committed
+companion on every extraction. A survey passing an absolute path rewrote
+`Examples/python/sum_to/SumTo.lean` with absolute `source:`/`load_program`
+lines — and warm caches hid it, because the cache is keyed by source
+BYTES and never re-extracts a known source. A second consequence, not
+noticed until the key was written out: the cache could serve an
+absolute-path envelope to a relative-path caller, with a `source_file`
+neither would have written.
+
+### The canonical form was READ, not chosen
+
+`Examples/python/sum_to/SumTo.lean` says
+`source: Examples/python/sum_to/sum_to.py` and
+`load_program sum_to from "Examples/python/sum_to/sum_to.json"` —
+**repo-relative POSIX**. So that is the rule, with the one honest
+exception the corpus forces: a source OUTSIDE the repo has no
+repo-relative form and keeps its absolute POSIX path, which is what every
+cached stdlib envelope already carries and is already invariant. Both
+arms go through `realpath` first, so the answer stops depending on the
+caller's spelling or its CWD.
+
+### The gate
+
+Three tests in `tools/test_leanpy.py`, beside the cache-race ones,
+driving the REAL committed example — "matches what is checked in" is the
+property that keeps the tree clean, so a fixture would have tested the
+wrong thing. They save and restore the two files in `setUp`/`tearDown`,
+because a failing dirty-tree test must not leave a dirty tree.
+
+1. **Four spellings agree, and agree with what is committed**: relative
+   from the repo root, absolute, relative from `Examples/`, and absolute
+   from an unrelated CWD — companion AND envelope byte-identical, and
+   equal to the committed companion.
+2. **The committed form is repo-relative POSIX**, asserted by reading the
+   committed file, so the convention cannot drift silently into
+   `rel_posix`'s idea of it.
+3. **An out-of-tree source keeps an absolute REALPATH**, and two
+   spellings of it agree.
+
+**All three FAIL before the fix**, with exactly the reported divergence:
+`source: /Users/ahle/repos/lean-surfaces/Examples/…` against
+`source: Examples/python/sum_to/sum_to.py`.
+
+One existing extractor unit test moved with it:
+`test_normal_path_keeps_block_comment_header_verbatim` built its
+expectation from the raw temp-dir path, and its fixture lives under a
+`/var` that realpaths to `/private/var`. Its subject is the HEADER SHAPE,
+so it now spells the path with `rel_posix` and says why; path invariance
+has its own tests.
+
+### Measured
+
+74/74 extractor units; 6/6 in `tools/test_leanpy.py` under 3.9 and under
+the 3.14 `ci.sh` uses; `lake build` 3663 green; docs_check 67/67;
+diff_test 1288 cases 0 failed; script corpus 64 scripts 0 failed; in-repo
+survey 105/130 and stdlib sweep 6/167, both 0 DIVERGE; library baseline
+197 modules unchanged (VERIFIED 14 / BODY-ONLY 7 / PARTIAL 39 / REFUSED
+136 / INCOMPLETE 1, DIVERGED 0; 3476 calls, no module moved).
+
+**Every tracked envelope was re-extracted and diffed: ZERO content
+change** — the committed corpus was already extracted with relative paths
+from the repo root, which is exactly the form the canonicalisation now
+guarantees. (The only deltas were the known `frontend.version` stamp,
+reverted unstaged.)
+
+And the direct proof: the cold-cache PARALLEL sweep — every source a
+first extraction, the condition that dirtied the tree — now **leaves the
+tree clean**. `SumTo.lean` does not appear in `git status` at all.

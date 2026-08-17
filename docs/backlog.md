@@ -7198,7 +7198,7 @@ everything that hangs off it, and price it. What that buys is a tier whose
 last debt is ONE named property with a measured proof cost, instead of a
 sentence in a closing note.
 
-## L7 IN FLIGHT — the price was wrong: the perturbation is a FUNCTION (2026-08-17)
+## L7 LANDED — the price was wrong: the perturbation is a FUNCTION (2026-08-17)
 
 Continuing §"L6 LANDED", whose closing section stated `PayloadBlind` exactly
 and priced its proof at ClockErase scale. **The price was wrong, and the
@@ -7209,12 +7209,17 @@ it — so the tree's expensive Examples never recompile while the proof is being
 DEVELOPED (the module's own target builds in 0.9 s). The full tree is still
 15m31s and is paid once per commit; that is the whole cost model.
 
-**Second pass (same day): 15 of the 18 arms are proved and §Tier B is
-complete for every helper those arms reach.** The module is 1794 lines / 126
-declarations, still elaborating in under a second. What remains is
-`evalExpr`, `execStmt`, `execAttrCall` and the three helper equations only
-they need — which is the difference between an enumerated debt and a
-described one, now down to three named members.
+**Third pass (same day): ALL EIGHTEEN ARMS ARE PROVED, `PBAll` is assembled
+by induction on fuel, and `payloadBlind : ∀ m, PayloadBlind m` is a
+theorem** — `propext`/`Classical.choice`/`Quot.sound`, no `sorry`, no side
+condition, no consumer-side hypothesis. The module is 3738 lines / 135
+declarations and still elaborates in 8 s (nothing in it meets `py_simp`).
+The tail §"What remains, enumerated" predicted below is exactly what the
+third pass paid, in the predicted order: the two named write-position pieces,
+the three private equations, then `execAttrCall` (79 lines of interpreter →
+105 of proof), `execStmt` (318 → 246) and `evalExpr` (1047 → 1125 — 5% over
+§L6's estimate, which named ClockErase's corresponding 1070-line arm and was
+the one number that pass got right).
 
 ### The shape finding
 
@@ -7313,35 +7318,43 @@ abbrev PBF (a : Addr) (o₀ o : Obj) (x y : Run FrameState α) : Prop :=
   hypotheses into the functional form. No glue survives the reduction — no
   side condition, no consumer-side hypothesis, nothing assumed of the body.
 
-### What remains, enumerated
+### The tail, as paid
 
-**Three arms: `evalExpr`, `execStmt`, `execAttrCall`** — 1047, 318 and 79 of
-the block's 1976 lines, and in that order the only members left. `evalExpr`
-alone is a session's worth of work (ClockErase's corresponding arm is 1070
-lines of proof) and is the honest reason this entry still says IN FLIGHT.
+**§Tier C′, the write position** — the two pieces both mutating arms wanted,
+and the prediction held at 34 lines rather than 130. `PBF.liftMapOk` threads
+a `map`-shaped equation into the continuation the interpreter applies to the
+helper's answer; `PBF.okWrite` is the write-back leaf (the post-write state's
+swap IS the swap of the post-write state — the heap is the only field that
+moves, so the whole obligation is the slot fact at the NEW heap);
+`PBF.pushRef` is the same statement for an allocation. Every mutating site in
+`execAttrCall`/`execStmt`/`evalExpr` is two lines over these.
 
-**Three Tier B equations go with them and no further** — `sortedValH` and
-`attrReadResult` (`evalExpr`), `unpackStoreH` (`execStmt`). `sortedValH`
-allocates, so its equation is `map`-shaped through `Heap.swapAt_push`;
-`unpackStoreH` THREADS the heap, so its induction (`unpackStoreH.induct` has
-the heap in the motive and hands case 3 an IH `∀ h'`) needs the slot fact
-re-established after each `heapAttrStore`.
+**Six slot-preservation lemmas** — `heapAppend`/`heapInsert`/`heapPop`/
+`heapStore`/`heapAttrStore`/`sortedValH`, each the writer's own arm
+enumeration under `Heap.get?_update_ne` (or `Heap.get?_push_of_get?`, which
+`sorted` and the displays need because they ALLOCATE), 14-24 lines apiece as
+predicted. `Heap.ne_slot_of_twin` is the side condition all six read off:
+the slot holds a GENERATOR, so an address answering a dict, a list or an
+instance is a different address. `unpackStoreH`'s pin rides INSIDE its
+equation as a second conjunct — one induction proves both, because both
+consume the same seven-case enumeration.
 
-**Two missing pieces, and both write-position arms want the same two.**
-(1) A slot-preservation lemma per heap-returning helper — `heapAppend h b v
-= .ok h' → Heap.get? h' pa = some o₀`, which is `Heap.get?_update_ne` under
-the writer's own arm enumeration, ~14 lines apiece for five writers.
-(2) One bridge over `Res.mapOk`: `Run.liftRes st r ⤳ fun st h' => .ok { st
-with world := { st.world with heap := h' } } v` is the shape EVERY mutating
-method call and subscript store is in, and it needs `PBF` from the map
-equation plus (1). Measured attempt cost for the pair: ~130 lines, which is
-why they are named here rather than half-landed.
+**The three private equations** — `sortedValH_swapAt` (`map`-shaped through
+`Heap.swapAt_push`, exactly as predicted), `unpackStoreH_swapAt` (the
+`induct` principle's heap-in-the-motive shape was the whole reason this was
+cheap), and `attrReadResult` — which turned out NOT to be an equation but a
+`PBF` statement (`attrReadResult_pb`), because the helper is `Run`-typed:
+its plan is blind (§Tier B) and every outcome carries the receiver's own
+frame. One more equation the census had missed: `isClockCall_swapAt`, one
+line, because `evalExpr`'s clock arm branches on the frame's LOCALS and the
+world's GLOBALS and the swap moves neither.
 
-**`PBAll` is NOT assembled and the consumers are NOT discharged.** The fuel
-induction cannot run until all eighteen arms exist, so
-`IterDrains.of_genYields` and `gen_moves_drains_ref` still carry
-`PayloadBlind sunfish` as a hypothesis. Nothing in this landing weakens or
-restates them.
+**`PBAll` IS assembled and `payloadBlind` IS a theorem.** The fuel induction
+is 27 lines, and 18 of them are the fuel-ZERO row (one `.timeout` per member,
+each guarding on fuel before it looks at anything): the successor row is
+`⟨pbEvalExpr_succ htwin ihn, …⟩`, one arm per conjunct, which is the whole
+dividend of the arms being standalone theorems. `payloadBlind : ∀ m, PayloadBlind m` then follows from
+`payloadBlind_of_execGen`, on `propext`/`Classical.choice`/`Quot.sound`.
 
 
 ### Findings worth carrying

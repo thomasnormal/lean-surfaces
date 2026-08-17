@@ -511,6 +511,21 @@ theorem Heap.get?_swapAt_twin {h : Heap} {pa b : Addr} {o₀ o : Obj}
       Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot) _⟩
   · exact Or.inl (Heap.get?_swapAt_ne hba)
 
+/-- **The read, resolved the OTHER way**: an answer that is not the slot's
+own object is at a different address, so the swap does not move it. The
+functional-induction case hypothesis of a recursive reader
+(`h.get? a = some (.list xs)`) is exactly this lemma's input, which is
+what keeps §Tier B's two mutual recursions to their `.ref` arms. -/
+theorem Heap.get?_swapAt_of_ne_slot {h : Heap} {pa b : Addr} {o₀ o obj : Obj}
+    (hslot : Heap.get? h pa = some o₀) (hne : obj ≠ o₀)
+    (hb : Heap.get? h b = some obj) :
+    Heap.get? (Heap.swapAt h pa o) b = some obj := by
+  refine (Heap.get?_swapAt_ne ?_).trans hb
+  intro hba
+  subst hba
+  rw [hslot] at hb
+  exact hne (Option.some.inj hb).symm
+
 /-- `RVal.typeNameH` is blind — the refusal messages name the CONSTRUCTOR,
 and a twin pair shares it. The template every §Tier B arm follows. -/
 theorem RVal.typeNameH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -640,6 +655,399 @@ theorem indexValH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   unfold indexValH
   split <;>
     simp_all [heapIndex_swapAt hslot htwin, RVal.typeNameH_swapAt hslot htwin]
+
+/-! ### The rest of the direct callers
+
+From here to §Tier D the heap rides as a fixed parameter, so the section's
+`variable`s carry the slot and the twin instead of every statement
+repeating them. -/
+
+section TierB
+variable {h : Heap} {pa : Addr} {o₀ o : Obj}
+
+/-- `range(…)` construction is blind (its `TypeError`s name the offending
+argument's type). -/
+theorem rangeMake_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (vs : List RVal) :
+    rangeMake (Heap.swapAt h pa o) vs = rangeMake h vs := by
+  unfold rangeMake
+  simp only [RVal.typeNameH_swapAt hslot htwin]
+
+/-- `max`/`min` over the heap are blind. -/
+theorem extremumValH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (isMax : Bool) (vs : List RVal) :
+    extremumValH (Heap.swapAt h pa o) isMax vs = extremumValH h isMax vs := by
+  match vs with
+  | [] => rfl
+  | [v] =>
+      cases v with
+      | ref b =>
+          rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+          · simp only [extremumValH, heq]
+          · simp only [extremumValH, h1, h2]
+      | _ => rfl
+  | _ :: _ :: _ => rfl
+
+/-- `enumerate`'s initial frame is blind. -/
+theorem enumFrame_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (i : Int) (v : RVal) :
+    enumFrame (Heap.swapAt h pa o) i v = enumFrame h i v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+      · rw [enumFrame, enumFrame, heq]
+      · rw [enumFrame, enumFrame, h1, h2]
+  | _ => rfl
+
+/-- Unpacking arity/type discipline is blind. -/
+theorem unpackSeq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (n : Nat) (v : RVal) :
+    unpackSeq (Heap.swapAt h pa o) n v = unpackSeq h n v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+      · rw [unpackSeq, unpackSeq, heq]
+      · rw [unpackSeq, unpackSeq, h1, h2]
+  | _ => rfl
+
+/-- The heap-aware assignment is blind: it diverts only on a `.ref`
+value at a tuple/list target, and reads the referent's CONSTRUCTOR. -/
+theorem assignToH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (env : Env) (target : Expr) (v : RVal) :
+    assignToH (Heap.swapAt h pa o) env target v = assignToH h env target v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+      · unfold assignToH; split <;> simp [heq]
+      · unfold assignToH; split <;> simp [h1, h2]
+  | _ => unfold assignToH; split <;> rfl
+
+/-- The attribute-READ plan is blind (a generator receiver refuses in read
+position, on both sides, with the same message). -/
+theorem attrReadPlan_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (m : Module) (b : Addr) (attr : String) :
+    attrReadPlan m (Heap.swapAt h pa o) b attr = attrReadPlan m h b attr := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · rw [attrReadPlan, attrReadPlan, heq]
+  · rw [attrReadPlan, attrReadPlan, h1, h2]
+
+/-- The attribute-CALL plan is blind — `execAttrCall`'s whole dispatch
+decision, decided before any argument runs. -/
+theorem attrCallPlan_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (m : Module) (b : Addr) (attr : String) :
+    attrCallPlan m (Heap.swapAt h pa o) b attr = attrCallPlan m h b attr := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · rw [attrCallPlan, attrCallPlan, heq]
+  · rw [attrCallPlan, attrCallPlan, h1, h2]
+
+/-! ### The two mutual recursions, and what rides on them
+
+`reprVal` and `heapEq` are the tier's only heap-recursive readers. Lean
+generates a functional-induction principle for each whose heap is a fixed
+PARAMETER — exactly the motive shape a blindness equation needs — and
+`fun_induction` does NOT work on them (they are mutual): the spelling is
+`induction … using f.induct (motive_2 := …)`, and supplying the sibling
+motives explicitly is mandatory since nothing can infer them -/
+
+/-- **`repr` is blind** — the first of §Tier B's two mutual recursions.
+`reprVal.induct`'s heap is a fixed PARAMETER and its `.ref` arms carry the
+base read as a hypothesis, so `Heap.get?_swapAt_of_ne_slot` discharges the
+four container arms and the twin the fifth (a generator renders as
+`none` either way). -/
+theorem reprVal_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (active : List Addr) (v : RVal) :
+    reprVal (Heap.swapAt h pa o) fuel active v = reprVal h fuel active v := by
+  obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+  induction fuel, active, v using reprVal.induct (h := h)
+    (motive2 := fun f act es =>
+      reprEntries (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act es
+        = reprEntries h f act es)
+    (motive3 := fun f act vs =>
+      reprVals (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs
+        = reprVals h f act vs) with
+  | case14 _ a _ _ hb _ =>
+      simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case15 _ a _ _ hb _ ih =>
+      simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case16 _ a _ _ _ hb _ =>
+      simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case17 _ a _ _ _ hb _ ih =>
+      simp_all [reprVal, Heap.get?_swapAt_of_ne_slot hslot (by simp) hb]
+  | case18 _ a _ hnl hnd =>
+      rcases Heap.get?_swapAt_twin (b := a) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heq | ⟨_, _, _, _, _, _, h2⟩
+      · simp only [reprVal, heq]
+      · simp only [reprVal, h2]
+  | _ => simp_all [reprVal, reprVals, reprEntries]
+
+/-- **`==` through the heap is blind** — the second mutual recursion, and
+the one whose ref/ref arm reads TWO addresses. A generator on either side
+falls through to the cross-type `False` (or the dangling refusal) on both
+heaps, which is why the twin closes the two negative arms. -/
+theorem heapEq_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (active : List (Addr × Addr)) (x y : RVal) :
+    heapEq (Heap.swapAt h pa o) fuel active x y = heapEq h fuel active x y := by
+  obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+  induction fuel, active, x, y using heapEq.induct (h := h)
+    (motive_2 := fun f act as bs =>
+      heapEqList (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act as bs
+        = heapEqList h f act as bs)
+    (motive_3 := fun f act ls rs =>
+      heapEqEntries (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act ls rs
+        = heapEqEntries h f act ls rs) with
+  | case4 _ _ x y _ _ _ _ _ _ hy hx _ ih =>
+      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+        Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
+  | case5 _ _ x y _ _ _ _ _ _ hy hx _ =>
+      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+        Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
+  | case6 _ _ x y _ _ _ _ hy hx _ ih =>
+      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+        Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
+  | case7 _ _ x y _ _ _ _ hy hx _ =>
+      simp_all [heapEq, Heap.get?_swapAt_of_ne_slot hslot (by simp) hx,
+        Heap.get?_swapAt_of_ne_slot hslot (by simp) hy]
+  | case8 _ _ x y _ _ _ _ _ _ hy hx =>
+      rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
+      rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
+      simp_all [heapEq]
+  | case9 _ _ x y _ _ hno =>
+      rcases Heap.get?_swapAt_twin (b := x) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqx | ⟨_, _, _, _, _, hx1, hx2⟩ <;>
+      rcases Heap.get?_swapAt_twin (b := y) hslot ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with
+        heqy | ⟨_, _, _, _, _, hy1, hy2⟩ <;>
+      simp_all [heapEq]
+  | _ => simp_all [heapEq, heapEqList, heapEqEntries]
+
+/-- `print`'s rendering of one value is blind. -/
+theorem printOne_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (v : RVal) : printOne (Heap.swapAt h pa o) v = printOne h v := by
+  cases v <;> simp only [printOne, reprVal_swapAt hslot htwin]
+
+/-- `str(…)` over the heap is blind. -/
+theorem strOfValH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (v : RVal) : strOfValH (Heap.swapAt h pa o) v = strOfValH h v := by
+  cases v <;> simp only [strOfValH, printOne_swapAt hslot htwin]
+
+/-- `print`'s space-joined argument rendering is blind. -/
+theorem strOfArgs_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (vs : List RVal) : strOfArgs (Heap.swapAt h pa o) vs = strOfArgs h vs := by
+  induction vs using strOfArgs.induct <;>
+    simp_all [strOfArgs, printOne_swapAt hslot htwin]
+
+/-- The `x in lst` scan is blind (each step is the fueled `heapEq`). -/
+theorem heapContainsScan_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (x : RVal) (vs : List RVal) :
+    heapContainsScan (Heap.swapAt h pa o) fuel x vs = heapContainsScan h fuel x vs := by
+  induction vs with
+  | nil => rfl
+  | cons v rest ih => simp only [heapContainsScan, heapEq_swapAt hslot htwin, ih]
+
+/-- `k in o` on a heap object is blind. -/
+theorem heapContains_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (b : Addr) (k : RVal) :
+    heapContains (Heap.swapAt h pa o) fuel b k = heapContains h fuel b k := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · simp only [heapContains, heq, keyRefusal_swapAt hslot htwin,
+      heapContainsScan_swapAt hslot htwin]
+  · rw [heapContains, heapContains, h1, h2]
+
+/-- `x in c` for every in-tier container is blind. -/
+theorem valContains_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (x y : RVal) :
+    valContains (Heap.swapAt h pa o) fuel x y = valContains h fuel x y := by
+  cases y <;>
+    simp only [valContains, heapContains_swapAt hslot htwin,
+      heapContainsScan_swapAt hslot htwin, RVal.typeNameH_swapAt hslot htwin]
+
+/-- **The comparison step is blind** — what `evalCompareChain`'s arm
+consumes. `is`/`is not` compare ADDRESSES, which the swap does not move. -/
+theorem evalCompareOpH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (op : CmpOp) (x y : RVal) :
+    evalCompareOpH (Heap.swapAt h pa o) fuel op x y = evalCompareOpH h fuel op x y := by
+  cases op <;>
+    simp only [evalCompareOpH, heapEq_swapAt hslot htwin, valContains_swapAt hslot htwin]
+
+/-- `any`/`all` over a snapshot are blind. -/
+theorem anyAllScan_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (isAll : Bool) (vs : List RVal) :
+    anyAllScan (Heap.swapAt h pa o) isAll vs = anyAllScan h isAll vs := by
+  induction vs with
+  | nil => rfl
+  | cons v rest ih => simp only [anyAllScan, truthyH_swapAt hslot htwin, ih]
+
+/-- Set construction's dedup is blind. -/
+theorem setDedup_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fuel : Nat) (acc vs : List RVal) :
+    setDedup (Heap.swapAt h pa o) fuel acc vs = setDedup h fuel acc vs := by
+  induction vs generalizing acc with
+  | nil => rfl
+  | cons v rest ih =>
+      simp only [setDedup, keyRefusal_swapAt hslot htwin,
+        heapContainsScan_swapAt hslot htwin, ih]
+
+/-- A dict literal's insertion sequence is blind. -/
+theorem dictBuild_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (acc es : List (RVal × RVal)) :
+    dictBuild (Heap.swapAt h pa o) acc es = dictBuild h acc es := by
+  induction es generalizing acc with
+  | nil => rfl
+  | cons kv rest ih =>
+      obtain ⟨k, v⟩ := kv
+      simp only [dictBuild, keyRefusal_swapAt hslot htwin, ih]
+
+/-! ### The heap-RETURNING helpers
+
+Seven helpers answer a new heap, so their equations are `map`-shaped
+rather than plain: the swap comes OUT of the call. `Heap.update_swapAt_ne`
+is what discharges each one — every write that decides is at a
+non-generator object, hence not at `pa` -/
+
+/-- `Res`'s functor action on the DECIDED value, written out: the
+`Monad`-derived `Functor.map` does not reduce in a simp set, and the
+heap-returning helpers' equations are all `map`-shaped. -/
+def Res.mapOk {α β : Type} (f : α → β) : Res α → Res β
+  | .ok a => .ok (f a)
+  | .exn e => .exn e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+/-- The key refusal never DECIDES a value, so a result-map leaves it
+alone — what closes the `unhashable` arm of a heap-returning helper's
+equation. -/
+theorem Res.mapOk_keyRefusal {α β : Type} (f : α → β) (h : Heap) (k : RVal) :
+    Res.mapOk f (keyRefusal h k) = keyRefusal h k := by
+  unfold keyRefusal; split <;> rfl
+
+/-- `lst.append(x)` is blind up to the swap it carries along. -/
+theorem heapAppend_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (v : RVal) :
+    heapAppend (Heap.swapAt h pa o) b v
+      = Res.mapOk (fun h' => Heap.swapAt h' pa o) (heapAppend h b v) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [heapAppend, hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    rfl
+  · cases hget : Heap.get? h b with
+    | none => simp only [heapAppend, Heap.get?_swapAt_ne hba, hget]; rfl
+    | some obj =>
+        cases obj with
+        | list xs =>
+            simp only [heapAppend, Heap.get?_swapAt_ne hba, hget]
+            rw [Heap.update_swapAt_ne hba]
+            cases Heap.update h b (Obj.list (xs.push v)) <;> rfl
+        | _ => simp only [heapAppend, Heap.get?_swapAt_ne hba, hget] <;> rfl
+
+/-- `lst.insert(i, x)` is blind up to the swap. -/
+theorem heapInsert_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (i : Int) (v : RVal) :
+    heapInsert (Heap.swapAt h pa o) b i v
+      = Res.mapOk (fun h' => Heap.swapAt h' pa o) (heapInsert h b i v) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [heapInsert, hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    rfl
+  · cases hget : Heap.get? h b with
+    | none => simp only [heapInsert, Heap.get?_swapAt_ne hba, hget]; rfl
+    | some obj =>
+        cases obj with
+        | list xs =>
+            simp only [heapInsert, Heap.get?_swapAt_ne hba, hget]
+            rw [Heap.update_swapAt_ne hba]
+            cases Heap.update h b (Obj.list ((xs.toList.take (if i < 0 then i + xs.size else i).toNat
+              ++ v :: xs.toList.drop (if i < 0 then i + xs.size else i).toNat).toArray)) <;> rfl
+        | _ => simp only [heapInsert, Heap.get?_swapAt_ne hba, hget] <;> rfl
+
+/-- `o.attr = v` is blind up to the swap (only an INSTANCE receiver
+writes, and the slot holds a generator). -/
+theorem heapAttrStore_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (attr : String) (v : RVal) :
+    heapAttrStore (Heap.swapAt h pa o) b attr v
+      = Res.mapOk (fun h' => Heap.swapAt h' pa o) (heapAttrStore h b attr v) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [heapAttrStore, hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    rfl
+  · cases hget : Heap.get? h b with
+    | none => simp only [heapAttrStore, Heap.get?_swapAt_ne hba, hget]; rfl
+    | some obj =>
+        cases obj with
+        | «instance» ci attrs =>
+            simp only [heapAttrStore, Heap.get?_swapAt_ne hba, hget]
+            rw [Heap.update_swapAt_ne hba]
+            cases Heap.update h b (Obj.instance ci (Env.set attrs.toList attr v).toArray) <;> rfl
+        | _ => simp only [heapAttrStore, Heap.get?_swapAt_ne hba, hget] <;> rfl
+
+/-- `lst.pop(i)` is blind up to the swap; the popped VALUE is untouched. -/
+theorem heapPop_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (i : Option Int) :
+    heapPop (Heap.swapAt h pa o) b i
+      = Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2)) (heapPop h b i) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [heapPop, hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    rfl
+  · cases hget : Heap.get? h b with
+    | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget]; rfl
+    | some obj =>
+        cases obj with
+        | list xs =>
+            cases hni : normIndex (i.getD (-1)) xs.size with
+            | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hni]; rfl
+            | some n =>
+                simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hni]
+                rw [Heap.update_swapAt_ne hba]
+                cases Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) <;> rfl
+        | _ => simp only [heapPop, Heap.get?_swapAt_ne hba, hget] <;> rfl
+
+/-- `o[k] = v` is blind up to the swap — the widest of the writers (dict
+and list arms, the hashability gate, and the index `TypeError`). -/
+theorem heapStore_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (k v : RVal) :
+    heapStore (Heap.swapAt h pa o) b k v
+      = Res.mapOk (fun h' => Heap.swapAt h' pa o) (heapStore h b k v) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    simp only [heapStore, hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    rfl
+  · cases hget : Heap.get? h b with
+    | none => simp only [heapStore, Heap.get?_swapAt_ne hba, hget]; rfl
+    | some obj =>
+        cases obj with
+        | dict es ver =>
+            cases hds : dictStore es.toList k v with
+            | mk es' grew =>
+              by_cases hk : hashableKey k = true
+              · simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hds, if_pos hk]
+                rw [Heap.update_swapAt_ne hba]
+                cases Heap.update h b
+                  (Obj.dict es'.toArray (if grew = true then ver + 1 else ver)) <;> rfl
+              · simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hds, if_neg hk,
+                  keyRefusal_swapAt hslot htwin]
+                exact (Res.mapOk_keyRefusal _ h k).symm
+        | list xs =>
+            cases hai : asInt k with
+            | none =>
+                simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai,
+                  RVal.typeNameH_swapAt hslot htwin]
+                rfl
+            | some j =>
+                cases hni : normIndex j xs.size with
+                | none => simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai, hni]; rfl
+                | some n =>
+                    simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai, hni]
+                    rw [Heap.update_swapAt_ne hba]
+                    cases Heap.update h b (Obj.list ((xs.toList.set n v).toArray)) <;> rfl
+        | _ => simp only [heapStore, Heap.get?_swapAt_ne hba, hget] <;> rfl
+
+end TierB
 
 /-! ## Tier D — the 18 conjuncts
 

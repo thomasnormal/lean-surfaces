@@ -90,9 +90,12 @@ execution):
   deliberately not repeated. The walker reads the iterable's captured value
   as a boundary/value LIST whose elements are marshalled (`xs.map elt`) or
   int literals; `for` over a heap list (H2's live index cursor), over a
-  generator (H4), over a `str` or a `range` refuse loudly and want the
-  layer-2 rule by hand. `for … else` has no rule at all — the interpreter
-  refuses it;
+  `str` or a `range` refuse loudly and want the layer-2 rule by hand, and
+  a GENERATOR refuses with its own rule named (`PyStmtTriple.forGen`, and
+  `EvalsIn.genCall` for the call that binds one) — the rules exist, the
+  walker's invariant grammar does not reach them yet (docs/backlog.md §L3
+  TAIL LANDED). `for … else` has no rule at all — the interpreter refuses
+  it;
 * **calls** — `x = f(…)` / `(a, b, c) = f(…)` (the call the whole
   right-hand side, `PyStmtTriple.assign` ∘ `EvalsTo.call`) and
   `return f(…)` (`PyStmtTriple.retExpr` ∘ `EvalsTo.call`, which is the
@@ -1444,6 +1447,42 @@ def calleeInModule (ctx : VCCtx) (m call : Lean.Expr) : MetaM Bool := do
     (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
   return !(← whnfR rF).isAppOfArity ``Option.none 1
 
+/-- Is this expression a call to a module GENERATOR function? Decided from
+the SYNTAX and the function table, never from a captured run — and that is
+the point: `callIn` is a frozen recursion point, so `evalExpr` over
+`upto(n)` does not reduce, and a walker step that asks the interpreter what
+a generator call evaluates to gets stuck (and prints the whole module
+literal saying so). Whoever needs to know "is this a generator?" must ask
+here, before any symbolic execution. -/
+def isGeneratorCall (ctx : VCCtx) (m e : Lean.Expr) : MetaM Bool := do
+  let e ← whnfR e
+  unless e.isAppOfArity ``Expr.call 5 do return false
+  let fnE ← whnfR (e.getArg! 0)
+  unless fnE.isAppOfArity ``Expr.name 2 do return false
+  let (rF, _) ← captureRun ctx.pack
+    (mkApp2 (Lean.mkConst ``findFunction) m (fnE.getArg! 0))
+  let rF ← whnfR rF
+  unless rF.isAppOfArity ``Option.some 2 do return false
+  let gen ← whnfR (mkApp (Lean.mkConst ``FunctionDefn.isGenerator) (rF.getArg! 1))
+  return gen.isConstOf ``Bool.true
+
+/-- The refusal a generator `for` earns, and why it is a refusal rather
+than an arm: the RULE exists (`PyStmtTriple.forGen`, VCGen.lean §L3, with
+`EvalsIn.genCall` in front of it), but the walker cannot build the
+invariant it needs. Every invariant `handleFor`/`handleWhile` construct
+pins ONE world (`EnvShape.world`) and varies only environment slots; a
+generator loop's invariant must range over the object's CONFIGURATION,
+which lives in the world. Priced in docs/backlog.md §L3 TAIL LANDED. -/
+def genForRefusal : String :=
+  "py_vcgen: `for` over a GENERATOR is outside the v1 recipe. The rule exists — `PyStmtTriple.forGen` (LeanModels/Python/VCGen.lean §L3), fed by `EvalsIn.genCall` — but the walker cannot drive it: its invariants pin ONE world (`EnvShape.world`) and vary only environment slots, while a generator loop's invariant must range over the object's configuration IN the world (docs/backlog.md §L3 TAIL LANDED). Apply the rule by hand; `Examples/python/gen_lab/proof.lean` (`total_calls`, `two_phase_calls`) is the worked shape."
+
+/-- The refusal a CALL to a generator function earns. Without it the
+callee-spec lookup asks for a `CallsTo` fact that cannot exist: calling a
+generator returns a suspended OBJECT, not a value, so its spec is an
+`EvalsIn` and its statement rule is `PyStmtTriple.assignNameIn`. -/
+def genCallRefusal (fname : String) : String :=
+  s!"py_vcgen: `{fname}` is a GENERATOR function, so it has no `CallsTo` fact and cannot get one — calling it ALLOCATES a suspended object instead of returning a value. Its spec is `EvalsIn.genCall`, and `PyStmtTriple.assignNameIn` binds the result to a name (LeanModels/Python/VCGen.lean §L3); the walker drives neither yet (docs/backlog.md §L3 TAIL LANDED). `Examples/python/gen_lab/proof.lean` (`two_phase_calls`) is the worked shape."
+
 /-- The call expression of a `.ctrlCall` (assignment) or `.ctrlRet`
 (`return`) statement. -/
 def callExprOf (s : Lean.Expr) : MetaM Lean.Expr := do
@@ -2071,6 +2110,10 @@ partial def buildCallEvalsTo (ctx : VCCtx) (tg : TripleGoal) (rhs : Lean.Expr) :
     let fnameE := fnE.getArg! 0
     let .lit (.strVal fname) ← whnfR fnameE
       | throwError "py_vcgen: callee name is not a literal"
+    -- A generator callee is refused before the spec lookup: it has no
+    -- `CallsTo` and never will, so "no `CallsTo` fact for callee" would
+    -- send the reader looking for a lemma that cannot be written.
+    if ← isGeneratorCall ctx tg.m rhs then throwError genCallRefusal fname
     let spf := fnE.getArg! 1
     let argsArr := rhs.getArg! 1
     -- H6: keyword-argument calls are outside the py_vcgen tier — LOUD.
@@ -2640,11 +2683,16 @@ structurally decreasing), apply the rule through `consequence`, discharge
 loop from the primed exit state.
 
 The iterable must evaluate to a boundary/value LIST at the entry state:
-`for` over a heap list (H2's live index cursor), over a generator (H4), over
-a `str` or a `range` are all outside this recipe and refuse loudly — the
-underlying rule covers the value-sequence arms, but the walker's v1 reads
-only the `.listV` one, whose elements are a `List.map` (a marshalled
-boundary list) or int literals. -/
+`for` over a heap list (H2's live index cursor), over a `str` or a `range`
+are outside this recipe and refuse loudly — the underlying rule covers the
+value-sequence arms, but the walker's v1 reads only the `.listV` one, whose
+elements are a `List.map` (a marshalled boundary list) or int literals.
+
+A GENERATOR is refused twice over, in both shapes it arrives in: a CALL in
+the iterable position is caught SYNTACTICALLY before the captured run below
+(which could not decide it — `callIn` is frozen), and a NAME already bound
+to the object is caught at the `.listV` check by reading the heap. Both name
+`PyStmtTriple.forGen`. -/
 partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     TacticM Unit := do
   tg.g.withContext do
@@ -2660,6 +2708,11 @@ partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
     let (bStmts, _) ← parseListLit (← arrToList bArr)
     let some li := ctx.loops.findIdx? (· == s)
       | throwError "py_vcgen: internal — loop not in pre-scan"
+    -- A generator CALL is refused HERE, before anything is executed: the
+    -- captured run below cannot decide one (`callIn` is frozen), so without
+    -- this the walker stops on a stuck run with the whole module literal in
+    -- the message instead of naming the rule that applies.
+    if ← isGeneratorCall ctx tg.m iterE then throwError genForRefusal
     -- The ELEMENT LIST, read off the iterable at the entry state. Doing this
     -- first fixes the element type, which the invariant's leading binder
     -- needs before the invariant shape can be built.
@@ -2670,7 +2723,18 @@ partial def handleFor (ctx : VCCtx) (tags : PostTags) (tg : TripleGoal) :
       throwError "py_vcgen: the iterable did not evaluate at the loop's entry state:{indentExpr vE}"
     let itV ← whnfR (vE'.getArg! 3)
     unless itV.isAppOfArity ``RVal.listV 1 do
-      throwError "py_vcgen: `for` over{indentExpr itV}\nis outside the v1 recipe — the walker reads a boundary/value LIST (`RVal.listV`); a heap list (H2's live cursor), a generator (H4), a `str` or a `range` need `PyStmtTriple.forLoop` by hand"
+      -- A `.ref` here is a heap OBJECT: a live list cursor, or a generator
+      -- already bound to a name (`g = upto(n)` … `for x in g`) — the shape
+      -- the syntactic check above cannot see, since the iterable is just a
+      -- name. Generators get their own refusal; it names their own rule.
+      if itV.isAppOfArity ``RVal.ref 1 then
+        let (rO, _) ← captureRun ctx.pack
+          (← mkAppM ``Heap.get? #[← mkAppM ``World.heap #[tg.shape.world], itV.getArg! 0])
+        let rO ← whnfR rO
+        if rO.isAppOfArity ``Option.some 2
+            && (← whnfR (rO.getArg! 1)).isAppOf ``Obj.generator then
+          throwError genForRefusal
+      throwError "py_vcgen: `for` over{indentExpr itV}\nis outside the v1 recipe — the walker reads a boundary/value LIST (`RVal.listV`); a heap list (H2's live cursor), a `str` or a `range` need `PyStmtTriple.forLoop` by hand (a GENERATOR has its own rule, `PyStmtTriple.forGen`)"
     let arrE ← whnfR (itV.getArg! 0)
     let innerL ←
       if arrE.isAppOfArity ``List.toArray 2 then pure (← whnfR (arrE.getArg! 1))

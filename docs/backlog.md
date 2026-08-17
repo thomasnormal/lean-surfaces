@@ -6263,3 +6263,104 @@ proofs did at the top level and what this one had to do locally; and
 `obtain rfl : k = N` eliminates the THEOREM BINDER `N`, not the local `k`
 (`subst` prefers the right-hand variable), which silently deletes the name
 the rest of the proof is written in.
+
+## L3 TAIL LANDED — the effectful bind, `two_phase`, and the walker arm measured a second time (2026-08-17)
+
+The remainder recorded at the end of §L3 LANDED (core), item by item: **item
+3 is closed, and with it the "lazy half" gap of finding 2**; item 1 (the
+walker arm) is not closed, and what it costs is now measured rather than
+inferred — the first measurement named the smaller of its three blockers.
+Item 2 (the `bound_probe` collapse) was out of scope here and is untouched.
+
+**The effectful bind (item 3).** `PyStmtTriple.assignNameIn` /
+`PyTriple.assignNameIn`, LeanModels/Python/VCGen.lean §L3 "Binding the
+object to a name". `PyStmtTriple.assign`'s conclusion PINS the out-state's
+world to the in-state's, so no instance of it can bind an allocation; the
+twin takes an `EvalsIn` and stores into the world the call produced. Four
+lines of proof — small, exactly as priced. Stated beside the pure rule
+rather than replacing it: every heap-free assignment should keep using the
+pure one.
+
+**`gen_lab.two_phase` (the gap in finding 2).** `two_phase_calls` —
+**`two_phase(n) ==> 1` for every `n ≥ 2`**, symbolically in `n`
+(Examples/python/gen_lab/proof.lean), with `two_phase5_calls` as the
+differential row's instance and a `#guard` non-vacuity pin. It is the first
+theorem in the repo about a generator that is ABANDONED and then RESUMED,
+and it EXERCISES the half §L3's finding 2 recorded as supported-but-untried:
+both loops carry `Inv rest := rest = [k] ∧ st = …`, so `Inv []` is
+`[] = [k] ∧ …` — a `False` that discharges `hexit` vacuously. Neither loop
+ever asks `upto(n)` to finish. That is the same shape an INFINITE generator
+would be consumed in, which is what makes the claim in VCGen.lean's section
+header a demonstrated one rather than a design intention.
+
+Two of the three claims gen_lab's own docstring names stop being rows
+because of it: **`break` SUSPENDS**, and **a generator is heap IDENTITY** —
+the second loop's `hiter` observes the SAME address in configuration 1
+(`.suspended`, `uptoResume`), which is exactly why `b = 1` and not `0`. The
+old note said identity would stay a `#py_check` row because promoting a
+CONCRETE run costs a checked kernel reduction this interpreter cannot
+afford; that measurement still holds, and the symbolic route sidesteps it
+rather than contradicting it.
+
+Cost: one session, no surprises. The two elaboration traps §L3 recorded were
+both avoided by following the record — project-and-pin every statement
+literal before any `py_simp`, and never `obtain rfl` against a pattern whose
+right-hand side is a theorem binder. First time that entry paid for itself.
+
+**The walker arm (item 1): three blockers, not one.** §L3 recorded the
+first. Probing `py_vcgen [gen_lab]` on `total(5) ==> 10` — a two-line
+scratch file, not a guess — surfaced the other two, and they change the
+shape of the work.
+
+1. *(recorded)* `py_vcgen`'s call path is `EvalsTo.call`, gated on
+   `m.heapFree = true`, which cannot hold in a module with a generator def.
+   `handleForGen` needs its own front half over `EvalsIn.genCall`.
+2. *(new, measured)* **`handleFor`'s FIRST step cannot see a generator at
+   all.** It reads the element list by symbolically executing the iterable
+   (`captureRun (evalExpr m fuelK tg.E iterE)`, VCTactic.lean:2719), and
+   `callIn` is a FROZEN recursion point — `py_simp` does not unfold it, so
+   `evalExpr` over `upto(n)` never reduces. The probe stops at
+   "the iterable did not evaluate at the loop's entry state" and prints the
+   whole 271 KB module literal saying so. A generator `for` therefore has to
+   be recognised SYNTACTICALLY — callee resolves in the function table with
+   `isGenerator := true` — BEFORE any captured run, i.e. in the classify
+   step, not inside `handleFor`. That is a different control shape from
+   every arm the walker has.
+3. *(new, structural)* **The walker's invariant language has no world in
+   it.** `EnvShape` (VCTactic.lean:967) carries ONE `world` expression, and
+   every invariant `handleFor`/`handleWhile` build is
+   `∃ slots tl, env = ⟨shape.world, …⟩ ∧ invU rest slots ∧ tailFacts`
+   (VCTactic.lean:2859–2886, and the same shape at 2547 for `while`): the
+   world is a CONSTANT of the loop and only locals vary. A generator loop's
+   invariant cannot be written there — the
+   object's configuration lives in the WORLD (`uptoWorld w n k`, one
+   `Heap.push` rewritten per round), so the world must become an indexed
+   slot exactly as the `RVal.int` env slots are. That reaches `EnvShape`,
+   `parseEnvShape`, `mkEnvExpr`, `normalizePre`, `destructInvHyp` and all
+   four obligation dischargers. It is an extension of the walker's invariant
+   GRAMMAR, not an arm bolted beside `handleFor`.
+
+What DID land on the walker is blocker 2's front edge — the syntactic
+recognition, which is the half of `classify` that does not need the
+invariant grammar. `isGeneratorCall` (VCTactic.lean, beside
+`calleeInModule`) decides "generator?" from the function table without
+running anything, and the three shapes a generator reaches the walker in now
+each refuse with the rule that DOES apply:
+
+| shape | before | now |
+| --- | --- | --- |
+| `for x in upto(n)` | stuck run + the whole 271 KB module literal | names `PyStmtTriple.forGen` and why the walker cannot drive it |
+| `for x in g` (name bound to the object) | "…need `PyStmtTriple.forLoop` by hand" — a rule that cannot take a generator | same generator refusal, via a heap-object check on the `.ref` |
+| `g = upto(n)` | "no `CallsTo` fact for callee `upto` — bring a hypothesis into scope" | says a generator HAS no `CallsTo` and cannot get one, and names `EvalsIn.genCall` / `PyStmtTriple.assignNameIn` |
+
+The third was the worst of them: it sent the reader after a lemma that
+cannot be written. A loud refusal is the documentation a user meets, and a
+wrong pointer in one is worse than none.
+
+**Re-priced.** The walker arm is **1.5–3 days at MEDIUM** (world-indexed
+invariants, the `EvalsIn.genCall` front half, an `IterSteps`-fact lookup on
+`findCalleeFact`'s shape) — up from the memo's 1–2 at MEDIUM-HIGH, and the
+increase is entirely blocker 3. It is worth doing when a THIRD generator
+consumer is wanted; the rules are usable by hand today at roughly 120 lines
+per function (`total_calls`, `two_phase_calls`), and both of those were
+written inside one session each.

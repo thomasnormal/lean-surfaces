@@ -1,7 +1,8 @@
 # The generator tier as a VERIFIED object — design memo
 
-Status: **L1, L2 LANDED; L3 CORE landed (rules + first consumer theorem);
-L4-L5 owner-gated.** Written 2026-08-16 after the ray leg of the
+Status: **L1, L2 LANDED; L3 LANDED except its walker arm (rules, both
+consumer theorems, the effectful bind); L4-L5 owner-gated.** Written
+2026-08-16 after the ray leg of the
 `gen_moves` theorem stopped on tooling rather than on effort
 (docs/backlog.md §the ray leg, factored). It exists so that a "go" starts
 landing 1 instead of starting design — and it did: L1 landed 2026-08-16
@@ -12,10 +13,15 @@ and the frame rules; gate `Examples/python/gen_lab/proof.lean`, the first
 generator theorems in the repo), and L3's rules landed the same day
 (`IterSteps`, `EvalsIn`/`EvalsIn.genCall`, `PyStmtTriple.forGen`; gate
 `total_calls` — the first arrow-form spec for a function that consumes a
-generator). L3's two OPEN pieces are the walker automation and §4's
-`bound_probe` gate, decomposed with their real prices in docs/backlog.md
-§L3 LANDED (core). All landings, their measurements, and their recorded
-remainders are in docs/backlog.md §L1 LANDED / §L2 LANDED / §L3 LANDED.
+generator), with its tail following (`PyStmtTriple.assignNameIn`, and
+`two_phase_calls` — a generator ABANDONED by one loop and RESUMED by the
+next, which is what exercises the lazy half). L3's two OPEN pieces are the
+walker automation and §4's `bound_probe` gate, decomposed with their real
+prices in docs/backlog.md §L3 LANDED (core) and §L3 TAIL LANDED — the
+walker arm has THREE blockers, not the one the first census found, and the
+biggest is that the walker's invariant grammar pins a single world. All
+landings, their measurements, and their recorded remainders are in
+docs/backlog.md §L1 LANDED / §L2 LANDED / §L3 LANDED / §L3 TAIL LANDED.
 Everything BELOW is the original design text, unedited — the estimates are
 what they were before the work, which is what makes the calibration notes
 in the backlog meaningful. Two of §2's predictions were revised by contact

@@ -92,9 +92,11 @@ theorem rayIter_lit : ∃ s1 s2 s3 s4 s5 s6, planForIter gmRayS =
 
 /-! ## The rules the scans need, and the ray did not
 
-Three frame rules and one composition, stated module-polymorphically: they
+Two frame rules and one composition, stated module-polymorphically: they
 belong beside VCGen.lean §L4's, and they live here only because touching
-VCGen re-elaborates the pinned modules. -/
+VCGen re-elaborates the pinned modules. (`enumObj` and the two
+`iterSteps_enum…` rules DID move, at L6 — the whole-drain bridge wanted
+them, which is the condition this note set for moving them.) -/
 
 /-- **Pushing a `forGen` frame**: `for x in <expression that allocates a
 generator>`. The `forHere` twin of `genSilent_forHere` (VCGen §L2) for the
@@ -113,36 +115,6 @@ theorem genSilent_forHereGen {m : Module} {st st₁ : FrameState} {s : Stmt}
   refine ⟨1, t, fun F hF => ?_⟩
   rw [execGen]
   simp only [hplan, ht F hF, Run.ok_bind, hobj]
-
-/-- The heap object `enumerate(s)` allocates over a value SNAPSHOT — the
-board scan's own generator, the twin of `countObj`. -/
-def enumObj (i : Int) (xs : List RVal) : Obj :=
-  .generator "<enumerate>" [] [.enumSeq i xs] .suspended
-
-/-- **One step of an `enumerate` object**: the `(index, element)` pair, the
-index advanced and the element consumed. `iterSteps_countFrom`'s twin for
-the finite object — same `pureStep` collapse, because an `enumSeq` frame
-touches nothing but itself. -/
-theorem iterSteps_enumSeq {m : Module} {w : World} {a : Addr} {i : Int}
-    {x : RVal} {rest : List RVal} {h₂ : Heap}
-    (hobj : Heap.get? w.heap a = some (enumObj i (x :: rest)))
-    (hback : Heap.update w.heap a (enumObj (i + 1) rest) = some h₂) :
-    IterSteps m w a (some (.tuple #[.int i, x])) { w with heap := h₂ } := by
-  obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
-    (.generator "<enumerate>" [] [.enumSeq i (x :: rest)] .running) hobj
-  exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_enumSeqCons hback
-
-/-- **The `enumerate` object is EXHAUSTED** — the board scan's only exit,
-and the first use of `GenEmits.forGenDone` on the sunfish path (a `count`
-object never gets here). -/
-theorem iterSteps_enumDone {m : Module} {w : World} {a : Addr} {i : Int} {h₂ : Heap}
-    (hobj : Heap.get? w.heap a = some (enumObj i []))
-    (hback : Heap.update w.heap a (.generator "<enumerate>" [] [] .closed) = some h₂) :
-    IterSteps m w a Option.none { w with heap := h₂ } := by
-  obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
-    (.generator "<enumerate>" [] [.enumSeq i []] .running) hobj
-  exact IterSteps.pureDone hobj (Or.inr rfl) hrun
-    (GenSteps.silent genSilent_enumSeqNil genSteps_nil) hback
 
 /-- **A silent transition that returns to the SAME frame prefix carries the
 rest of the loop** — which is what a `continue` round is: the interpreter
@@ -1137,31 +1109,30 @@ own and why that theorem emits nothing. -/
 stack the interpreter builds for `Position.gen_moves`, the machine yields
 exactly `Ref.refMoves`. `GenMovesEqRef` (genmoves_theorem.lean) says the
 same thing one level out — about the heap OBJECT the call returns, drained
-by `stepIter`. Two things stand between them, and both are recorded here
-rather than attempted.
+by `stepIter`. Two things stood between them when this file landed. The
+first is now BUILT one file over (L6, 2026-08-17) and this note is updated
+in place; the second is a defect in the frozen statement and is still only
+recorded.
 
-**1. The object-level drain bridge is missing, and it is not small.**
-`drain` peels ONE yield per `stepIter`, and `stepIter` writes the
-generator's resumption back into slot `a` before every step. The
-frame-level chain never writes that slot: after the body runs, slot `a`
-still holds the STALE `.running` object the entry write put there, while
-the object-level chain holds the CURRENT one. So the two chains sit at
-heaps that differ exactly at `a`, and stepping them in lockstep needs
-"`execGen` does not depend on slot `a`" — a locality property of the whole
-interpreter, not a fact about `gen_moves`. VCGen.lean's own §heap-object
-bridge names this as the recorded remainder of L2 ("the `drainIter` bridge
-over a WHOLE drain … needs a heap-stability side condition"), and it is
-what `sf_order`'s `bound_probe` is blocked behind too, so it is one
-mechanism serving two consumers rather than a detour.
+**1. The object-level drain bridge LANDED at L6, and what it rests on is one
+named property.** `genmoves_drain.lean` next door is `gen_moves_drains_ref`:
+the shipped method CALLED and its object DRAINED (`drainIter`) yields exactly
+`Ref.refMoves`' moves in `Ref.refMoves`' order. The bridge itself
+(`IterDrains.of_genYields`, VCGen.lean §L6) is an induction on the emitted
+list, exactly as this note predicted — but the lockstep it needs is real and
+is NOT proved: `stepIter` writes the resumption into slot `a` before every
+step and `drainGen` never writes that slot, so after the first yield the two
+chains sit at heaps differing exactly at `a`, and stepping them together
+needs "`execGen` does not depend on the payload of the RUNNING generator at
+`a`". That is `PayloadBlind` (VCGen.lean §L6): TRUE — `stepIter` is the
+interpreter's only reader of a generator's payload and its `.running` arm
+refuses before touching it — but its proof is an 18-conjunct mutual induction
+over the interpreter block, so it is a `Prop`-valued definition carried as a
+hypothesis rather than a claim.
 
-Peeling the frame-level `GenYields` does not avoid it: `GenYields` is a
-`drainGen` fact, `GenEmits` is a transformer over one, and neither exposes
-a per-yield `GenSteps` at the world the object-level chain is in. An
-object-level calculus mirroring `GenEmits` would need the same locality
-property to import the ray theorems, so the honest decomposition is: land
-the locality lemma (a read/write-set discipline on `execGen`, or a
-generator-slot-indexed frame rule), then the bridge is an induction on the
-emitted list.
+Peeling the frame-level `GenYields` is what the bridge does
+(`GenYields.uncons`), and it does not avoid the property: the per-yield facts
+come out at FRAME-level worlds, which is precisely the mismatch.
 
 **2. `GenMovesEqRef` as written is FALSE, and the counterexample is
 one line.** `drain` runs every step at a CONSTANT fuel — `stepIter sunfish

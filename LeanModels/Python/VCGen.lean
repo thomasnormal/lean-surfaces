@@ -70,6 +70,13 @@ says the body does not mutate the object under the cursor, and inventing
 one before a consumer needs it would be claiming a snapshot semantics the
 interpreter does not have (the `IterVals` exclusion note in VC2.lean, one
 level up).
+
+Landings **L3** (the consumer side: `IterSteps`, `EvalsIn.genCall`, the
+generator `for`), **L4** (the ray: the `count`/`enumerate` object steps and
+the `forGen` loop at `GenEmits` altitude) and **L6** (the WHOLE drain:
+`IterDrains`, and the interpreter locality property `PayloadBlind` the
+lockstep between a frame chain and an object chain needs) have their own
+sections below, in that order.
 -/
 
 namespace LeanModels.Python
@@ -340,6 +347,45 @@ theorem cons {m : Module} {st st₁ st' : FrameState} {k k' : GenCont}
   simp only [Run.ok_bind, drainCont]
   rw [ht₂ F' (by omega)]
   rfl
+
+/-- **The empty drain INVERTED**: nothing was yielded, so the very first
+resumption reported exhaustion. `done`'s converse, and with `uncons` below
+it is what makes a drain fact something a consumer can walk one yield at a
+time — the primitive §L6's whole-drain bridge inducts on. -/
+theorem unnil {m : Module} {st st' : FrameState} {k : GenCont}
+    (h : GenYields m st k [] st') : GenSteps m st k Option.none st' := by
+  obtain ⟨t, ht⟩ := h
+  have h1 := ht (t + 1) (by omega)
+  rw [drainGen, Run.bind_eq_ok] at h1
+  obtain ⟨s, r, hx, hc⟩ := h1
+  rcases r with _ | ⟨v, k'⟩
+  · simp only [Run.ok.injEq] at hc
+    obtain ⟨rfl, -⟩ := hc
+    exact ⟨t, fun F hF => execGen_mono hx (by simp) F hF⟩
+  · rw [Run.bind_eq_ok] at hc
+    obtain ⟨s₂, ws, -, hc2⟩ := hc
+    simp at hc2
+
+/-- **A nonempty drain INVERTED**: the head value came from one resumption
+step, which carries its own continuation, and the tail is a drain of that
+— `cons`' converse. The intermediate machine is EXISTENTIAL because
+`execGen` chose it; that is exactly what a consumer stepping the heap
+object needs to know it exists. -/
+theorem uncons {m : Module} {st st' : FrameState} {k : GenCont}
+    {v : RVal} {vs : List RVal} (h : GenYields m st k (v :: vs) st') :
+    ∃ st₁ k₁, GenSteps m st k (some (v, k₁)) st₁ ∧ GenYields m st₁ k₁ vs st' := by
+  obtain ⟨t, ht⟩ := h
+  have h1 := ht (t + 1) (by omega)
+  rw [drainGen, Run.bind_eq_ok] at h1
+  obtain ⟨s, r, hx, hc⟩ := h1
+  rcases r with _ | ⟨v', k'⟩
+  · simp at hc
+  · rw [Run.bind_eq_ok] at hc
+    obtain ⟨s₂, ws, hd, hc2⟩ := hc
+    simp only [Run.ok.injEq, List.cons.injEq] at hc2
+    obtain ⟨rfl, rfl, rfl⟩ := hc2
+    exact ⟨s, k', ⟨t, fun F hF => execGen_mono hx (by simp) F hF⟩,
+      ⟨t, fun F hF => drainGen_mono hd (by simp) F hF⟩⟩
 
 /-- A silent transition transports the whole remaining output. -/
 theorem silent {m : Module} {st st₁ st' : FrameState} {k k₁ : GenCont}
@@ -652,13 +698,11 @@ back. These two theorems are that wrapper, per step — a `GenSteps` fact
 about the stored continuation IS the object's step, with the write-back
 made explicit rather than assumed.
 
-What is NOT here, and is the recorded remainder of this landing: the
-`drainIter` bridge over a WHOLE drain. It needs a heap-stability side
-condition (the generator body must not itself write slot `a` — the
-write-back would otherwise clobber, and `drainGen`, which threads no
-object, cannot see it). Stating that condition before a consumer needs it
-would be guessing at its shape; the per-step bridges below are what L3's
-walker case consumes, and they are unconditional. -/
+The WHOLE-drain bridge is §L6 at the bottom of this file. It arrived once
+three consumers needed it, and the heap-stability condition L2 guessed it
+would need turns out to be DERIVABLE rather than assumed: while the object
+at `a` is `.running` nothing can write it, which is one half of §L6's
+`PayloadBlind`. -/
 
 /-- **One step of a suspended generator OBJECT** that yields: the stored
 continuation's `GenSteps` fact, plus the two heap writes `stepIter`
@@ -967,6 +1011,21 @@ theorem Heap.update_update {h h₁ : Heap} {a : Addr} {o o' : Obj}
       rw [dif_pos (by simpa using hlt : a < (h.set a o hlt).size), dif_pos hlt]
       exact congrArg some (Array.ext' (by simp [Array.toList_set]))
   · next => exact absurd hu (by simp)
+
+/-- **The slot a write landed in reads back as what was written** — the
+other half of the `update`/`get?` pair, and what lets a chain of object
+steps carry its own liveness (§L6: every round's write-back is the next
+round's readable object). -/
+theorem Heap.get?_update_self {h h₁ : Heap} {a : Addr} {o : Obj}
+    (hu : Heap.update h a o = some h₁) : Heap.get? h₁ a = some o := by
+  rw [Heap.update] at hu
+  split at hu
+  · next hlt =>
+    injection hu with hu
+    subst hu
+    rw [Heap.get?, dif_pos (by simpa using hlt : a < (h.set a o hlt).size)]
+    simp
+  · simp at hu
 
 /-- **Writing the last-allocated slot rebuilds the same push.** Small, and
 load-bearing: it is what keeps the worlds a generator loop passes through
@@ -1438,6 +1497,37 @@ theorem iterSteps_countFrom {m : Module} {w : World} {a : Addr}
     Heap.update_of_get? (.generator "<count>" [] [.countFrom cur step] .running) hobj
   exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_countFrom hback
 
+/-- The heap object `enumerate(s)` allocates over a value SNAPSHOT — the
+board scan's own generator, `countObj`'s finite twin. -/
+def enumObj (i : Int) (xs : List RVal) : Obj :=
+  .generator "<enumerate>" [] [.enumSeq i xs] .suspended
+
+/-- **One step of an `enumerate` OBJECT**: the `(index, element)` pair, the
+index advanced and the element consumed. `iterSteps_countFrom`'s finite
+twin — same `pureStep` collapse, because an `enumSeq` frame touches nothing
+but itself. (Landed in `Examples/python/sunfish/genmoves_scan.lean` at L5
+and moved here at L6, which is the first thing outside sunfish to want it:
+§L6's unconditional whole drain.) -/
+theorem iterSteps_enumSeq {m : Module} {w : World} {a : Addr} {i : Int}
+    {x : RVal} {rest : List RVal} {h₂ : Heap}
+    (hobj : Heap.get? w.heap a = some (enumObj i (x :: rest)))
+    (hback : Heap.update w.heap a (enumObj (i + 1) rest) = some h₂) :
+    IterSteps m w a (some (.tuple #[.int i, x])) { w with heap := h₂ } := by
+  obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
+    (.generator "<enumerate>" [] [.enumSeq i (x :: rest)] .running) hobj
+  exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_enumSeqCons hback
+
+/-- **The `enumerate` object is EXHAUSTED** — the board scan's only exit
+(a `count` object never gets here), and a whole drain's last step. -/
+theorem iterSteps_enumDone {m : Module} {w : World} {a : Addr} {i : Int} {h₂ : Heap}
+    (hobj : Heap.get? w.heap a = some (enumObj i []))
+    (hback : Heap.update w.heap a (.generator "<enumerate>" [] [] .closed) = some h₂) :
+    IterSteps m w a Option.none { w with heap := h₂ } := by
+  obtain ⟨h₁, hrun⟩ := Heap.update_of_get?
+    (.generator "<enumerate>" [] [.enumSeq i []] .running) hobj
+  exact IterSteps.pureDone hobj (Or.inr rfl) hrun
+    (GenSteps.silent genSilent_enumSeqNil genSteps_nil) hback
+
 /-- **Generator-internal `break`**, as a silent transition. The statement
 is yield-free, so `execGen` DELEGATES it and routes the `.brk` flow through
 `genBreak`, which drops the pending blocks and the enclosing loop frame.
@@ -1523,6 +1613,318 @@ theorem GenEmits.forGenDone {m : Module} {target : Expr} {body : List Stmt}
     (fun _ => by simpa using genSilent_forGenDone (target := target) (body := body) hiter)
     GenEmits.nil
 
+/-! ## L6: the WHOLE drain — L2's remainder, and the interpreter's locality
+property
+
+`drainIter` is what `sorted`/`max`/`min` do to a generator ARGUMENT
+(Semantics.lean's H6 arms) and what the flagship's object-level statement
+drains through. Its judgment is `IterDrains`, and it composes from the
+per-step `IterSteps` facts unconditionally (`nil`/`cons` below): a chain of
+object steps IS a whole drain, and `iterDrains_enumSeq` is that route end to
+end for `enumerate` — no side condition, because an `enumSeq` frame reads
+nothing, so each step's fact is re-derivable at the world the previous step
+left.
+
+**What the chain costs for a generator whose body reads the heap, and it is
+one property, not a family.** A frame-level spec (`GenYields`, which every
+theorem of this tier concludes) inverts into a per-yield chain
+(`GenYields.uncons`) — but at FRAME-level worlds. `stepIter` writes the
+resumption into the generator's own slot `a` before every step, and
+`drainGen` never writes that slot, so after the first yield the two chains
+sit at heaps that differ EXACTLY at `a`: the frame chain still holds the
+`.running` object the entry write put there, the object chain holds the
+current one. Stepping them in lockstep therefore needs
+
+> `execGen` does not depend on the payload of the RUNNING generator at `a`
+
+which is a locality property of the whole interpreter, not a fact about any
+one generator. `PayloadBlind` states it; `GenSteps.transport` /
+`GenYields.transport` / `IterDrains.of_genYields` consume it, and
+`callIn_drains` is the shape a consumer meets (call a generator function,
+drain the object it answered).
+
+**Why it is TRUE, censused rather than assumed.** `stepIter` is the
+interpreter's ONLY reader of a generator object's `locals` and `cont`: it is
+the one place in Semantics.lean that BINDS those fields, and its `.running`
+arm answers `.valueError "generator already executing"` before reaching
+either. Every other occurrence either binds nothing — the payload-blind
+`.generator ..` of the type name, the `for`-dispatch, the subscript/len/attr
+refusals, the identity-hash refusal, the drain refusals in
+`sortedValH`/`extremumValH` — or is a catch-all that never mentions the
+constructor (`reprVal`'s `none`, `heapEq`'s cross-type `false`). The same
+guard is why the run cannot WRITE slot `a` either: `stepIter` is also the
+only writer. That is the "heap-stability side condition" §L2 recorded as the
+missing piece — not an assumption, the first conjunct of this property
+(`GenSteps.slot_stable`).
+
+**Why it is not proved here.** It is an 18-conjunct mutual induction on fuel
+over the interpreter block, in the shape of `ClockErase.lean`'s
+`clockErase` — and strictly bigger, because clock seeding leaves every heap
+term syntactically identical while this one changes the heap: all 119
+heap-consuming call sites in the block need a congruence lemma at a heap
+that differs at one slot, across 34 distinct heap-reading helpers — four of
+them mutual inductions of their own (`heapEq`, `reprVal`,
+`keyHasInstanceRef`, `unhashableName?`) and three more recursions that need a
+lemma each (`setDedup`, `dictBuild`, `unpackSeq`). `ClockErase.lean` is 2662
+lines for the easier relation. So `PayloadBlind` is a `Prop`-valued
+DEFINITION, exactly as `GenMovesEqRef` is: the claim recorded, "proved" left
+unclaimed, and every theorem that consumes it carries it as a hypothesis
+where a reader can see it. -/
+
+/-- **A whole DRAIN of the generator object at `a`** — `drainIter`'s
+threshold judgment, the world-level twin of `GenYields`, and what a
+draining consumer (`sorted`/`max`/`min`) needs about its argument. -/
+def IterDrains (m : Module) (w : World) (a : Addr) (vs : List RVal)
+    (w' : World) : Prop :=
+  ∃ t, ∀ F ≥ t, drainIter m F w a = .ok w' vs
+
+namespace IterDrains
+
+/-- Introduce a whole drain from one concrete run (any fuel). -/
+theorem of_drain {m : Module} {fuel : Nat} {w w' : World} {a : Addr}
+    {vs : List RVal} (h : drainIter m fuel w a = .ok w' vs) :
+    IterDrains m w a vs w' :=
+  ⟨fuel, fun F hF => drainIter_mono h (by simp) F hF⟩
+
+/-- The object reported EXHAUSTION: the drain is over and yielded nothing
+more. -/
+theorem nil {m : Module} {w w' : World} {a : Addr}
+    (h : IterSteps m w a Option.none w') : IterDrains m w a [] w' := by
+  obtain ⟨t, ht⟩ := h
+  refine ⟨t + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  rw [drainIter]
+  simp only [ht F' hF', Run.ok_bind]
+
+/-- One yield, then the rest — the drain's induction step, and the reason
+the whole-drain bridge is an induction on the emitted LIST. -/
+theorem cons {m : Module} {w w₁ w' : World} {a : Addr} {v : RVal}
+    {vs : List RVal} (hstep : IterSteps m w a (some v) w₁)
+    (hrest : IterDrains m w₁ a vs w') : IterDrains m w a (v :: vs) w' := by
+  obtain ⟨t₁, ht₁⟩ := hstep
+  obtain ⟨t₂, ht₂⟩ := hrest
+  refine ⟨t₁ + t₂ + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  rw [drainIter]
+  simp only [ht₁ F' (by omega), Run.ok_bind, ht₂ F' (by omega)]
+
+end IterDrains
+
+/-- The pairs a drained `enumerate` object hands over, from index `i` — the
+spec side of `iterDrains_enumSeq`. -/
+def enumPairs (i : Int) : List RVal → List RVal
+  | [] => []
+  | x :: rest => .tuple #[.int i, x] :: enumPairs (i + 1) rest
+
+/-- **A whole drain with NO locality hypothesis** — `sorted(enumerate(xs))`'s
+engine. An `enumSeq` frame reads no heap and writes none, so the step fact
+at each round is re-derivable from the object the previous write-back left
+(`Heap.get?_update_self`), and `IterDrains.cons` chains them. This is the
+half of the bridge that needs nothing: every generator whose frames are
+heap-blind drains by this route today. -/
+theorem iterDrains_enumSeq {m : Module} :
+    ∀ (xs : List RVal) (w : World) (a : Addr) (i : Int),
+      Heap.get? w.heap a = some (enumObj i xs) →
+      ∃ w', IterDrains m w a (enumPairs i xs) w' := by
+  intro xs
+  induction xs with
+  | nil =>
+    intro w a i hobj
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get?
+      (.generator "<enumerate>" [] [] .closed) hobj
+    exact ⟨_, IterDrains.nil (iterSteps_enumDone hobj hback)⟩
+  | cons x rest ih =>
+    intro w a i hobj
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (enumObj (i + 1) rest) hobj
+    obtain ⟨w', hd⟩ := ih { w with heap := h₂ } a (i + 1) (Heap.get?_update_self hback)
+    exact ⟨w', IterDrains.cons (iterSteps_enumSeq hobj hback) hd⟩
+
+/-- **THE LOCALITY PROPERTY: the interpreter cannot observe the payload of a
+RUNNING generator.** For every fuel, every frame stack and every state whose
+heap holds `.generator qname locals₀ cont₀ .running` at `a`, a decided
+`execGen` run
+
+1. leaves that slot exactly as it found it (STABILITY — nothing in the run
+   can write a running generator, because `stepIter` is the only writer and
+   its `.running` arm refuses), and
+2. runs identically when the payload is REPLACED (TRANSPORT — same result,
+   same locals, same heap off `a`, and the substituted payload still there),
+
+for any other `locals₁`/`cont₁` at the same `qname` and the same `.running`
+status. Deliberately narrow on all three counts: an arbitrary OBJECT at `a`
+is observable (a list is not a generator), a `.suspended` payload is
+observable (`stepIter` resumes it), and `qname` is observable (`repr` and
+the type-error messages name it).
+
+Stated as a definition and consumed as a hypothesis (`GenMovesEqRef`'s
+precedent): its proof is the 18-conjunct mutual induction described in this
+section's header, and a landing that has not done that induction does not
+get to claim it. Every theorem below takes it explicitly, so `#print axioms`
+stays clean and the debt is visible in the signatures. -/
+def PayloadBlind (m : Module) : Prop :=
+  ∀ (F : Nat) (a : Addr) (qname : String) (locals₀ : REnv) (cont₀ : GenCont)
+    (st st₁ : FrameState) (k : GenCont) (r : Option (RVal × GenCont)),
+    Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running) →
+    execGen m F st k = .ok st₁ r →
+    Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) ∧
+    ∀ (locals₁ : REnv) (cont₁ : GenCont) (h h₁ : Heap),
+      Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h →
+      Heap.update st₁.world.heap a (.generator qname locals₁ cont₁ .running) = some h₁ →
+      execGen m F ⟨{ st.world with heap := h }, st.locals⟩ k
+        = .ok ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ r
+
+/-- **The generator's own slot survives its own step** — L2's recorded
+heap-stability side condition, DERIVED from locality rather than assumed of
+the body. -/
+theorem GenSteps.slot_stable {m : Module} (hb : PayloadBlind m) {a : Addr}
+    {qname : String} {locals₀ : REnv} {cont₀ : GenCont} {st st₁ : FrameState}
+    {k : GenCont} {r : Option (RVal × GenCont)}
+    (hslot : Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running))
+    (hstep : GenSteps m st k r st₁) :
+    Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) := by
+  obtain ⟨t, ht⟩ := hstep
+  exact (hb t a qname locals₀ cont₀ st st₁ k r hslot (ht t (Nat.le_refl t))).1
+
+/-- **One step transports** across a payload swap at `a`: same yield, same
+resumption, same locals, and the world moved the same way off `a`. -/
+theorem GenSteps.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
+    {qname : String} {locals₀ : REnv} {cont₀ : GenCont} {st st₁ : FrameState}
+    {k : GenCont} {r : Option (RVal × GenCont)}
+    (hslot : Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running))
+    (hstep : GenSteps m st k r st₁) (locals₁ : REnv) (cont₁ : GenCont)
+    {h h₁ : Heap}
+    (hset : Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h)
+    (hset₁ : Heap.update st₁.world.heap a (.generator qname locals₁ cont₁ .running) = some h₁) :
+    GenSteps m ⟨{ st.world with heap := h }, st.locals⟩ k r
+      ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ := by
+  obtain ⟨t, ht⟩ := hstep
+  refine ⟨t, fun F hF => ?_⟩
+  exact (hb F a qname locals₀ cont₀ st st₁ k r hslot (ht F hF)).2
+    locals₁ cont₁ h h₁ hset hset₁
+
+/-- **A whole drain transports** — the per-step transport lifted over the
+emitted list, with the slot's survival carried along (it is what makes the
+next round's write-back defined). This is the LOCKSTEP piece: the frame-level
+fact a generator theorem concludes, re-read at the world the object-level
+chain is actually in. -/
+theorem GenYields.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
+    {qname : String} :
+    ∀ (vs : List RVal) (st st' : FrameState) (k : GenCont) (locals₀ : REnv)
+      (cont₀ : GenCont) (locals₁ : REnv) (cont₁ : GenCont) (h : Heap),
+      Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running) →
+      Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h →
+      GenYields m st k vs st' →
+      Heap.get? st'.world.heap a = some (.generator qname locals₀ cont₀ .running) ∧
+        ∃ h', Heap.update st'.world.heap a (.generator qname locals₁ cont₁ .running) = some h' ∧
+          GenYields m ⟨{ st.world with heap := h }, st.locals⟩ k vs
+            ⟨{ st'.world with heap := h' }, st'.locals⟩ := by
+  intro vs
+  induction vs with
+  | nil =>
+    intro st st' k locals₀ cont₀ locals₁ cont₁ h hslot hset hy
+    have hstable := GenSteps.slot_stable hb hslot (GenYields.unnil hy)
+    obtain ⟨h', hset'⟩ := Heap.update_of_get?
+      (.generator qname locals₁ cont₁ .running) hstable
+    exact ⟨hstable, h', hset', GenYields.done
+      (GenSteps.transport hb hslot (GenYields.unnil hy) locals₁ cont₁ hset hset')⟩
+  | cons v vs ih =>
+    intro st st' k locals₀ cont₀ locals₁ cont₁ h hslot hset hy
+    obtain ⟨st₁, k₁, hstep, hrest⟩ := GenYields.uncons hy
+    have hstable := GenSteps.slot_stable hb hslot hstep
+    obtain ⟨h₁, hset₁⟩ := Heap.update_of_get?
+      (.generator qname locals₁ cont₁ .running) hstable
+    obtain ⟨hstable', h', hset', hrest'⟩ :=
+      ih st₁ st' k₁ locals₀ cont₀ locals₁ cont₁ h₁ hstable hset₁ hrest
+    exact ⟨hstable', h', hset',
+      GenYields.cons (GenSteps.transport hb hslot hstep locals₁ cont₁ hset hset₁) hrest'⟩
+
+/-- **THE WHOLE-DRAIN BRIDGE (L2's remainder)**: a frame-level `GenYields`
+fact about a suspended object's stored continuation IS the object's whole
+drain. The induction is on the emitted list — one `stepIter` per yield
+through the per-step bridges, the resumption written back into slot `a`, and
+the remaining frame-level fact transported to the world that write left.
+The exit world is existential: a drain's own last write (the object goes
+`.closed`) is bookkeeping no consumer of the VALUES needs to name. -/
+theorem IterDrains.of_genYields {m : Module} (hb : PayloadBlind m) {a : Addr}
+    {qname : String} :
+    ∀ (vs : List RVal) (w : World) (locals : REnv) (cont : GenCont)
+      (status : GenStatus) (h₁ : Heap) (st' : FrameState),
+      Heap.get? w.heap a = some (.generator qname locals cont status) →
+      (status = .created ∨ status = .suspended) →
+      Heap.update w.heap a (.generator qname locals cont .running) = some h₁ →
+      GenYields m ⟨{ w with heap := h₁ }, locals⟩ cont vs st' →
+      ∃ w', IterDrains m w a vs w' := by
+  intro vs
+  induction vs with
+  | nil =>
+    intro w locals cont status h₁ st' hobj hstatus hrun hy
+    have hslot : Heap.get? ({ w with heap := h₁ } : World).heap a
+        = some (.generator qname locals cont .running) :=
+      Heap.get?_update_self hrun
+    have hstable := GenSteps.slot_stable hb hslot (GenYields.unnil hy)
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get?
+      (.generator qname st'.locals [] .closed) hstable
+    exact ⟨_, IterDrains.nil (IterSteps.of_genDone hobj hstatus hrun
+      (GenYields.unnil hy) hback)⟩
+  | cons v vs ih =>
+    intro w locals cont status h₁ st' hobj hstatus hrun hy
+    have hslot : Heap.get? ({ w with heap := h₁ } : World).heap a
+        = some (.generator qname locals cont .running) :=
+      Heap.get?_update_self hrun
+    obtain ⟨st₁, k₁, hstep, hrest⟩ := GenYields.uncons hy
+    have hstable := GenSteps.slot_stable hb hslot hstep
+    -- the object-level step: `stepIter`'s write-back, and the object it leaves
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get?
+      (.generator qname st₁.locals k₁ .suspended) hstable
+    have hobj₂ : Heap.get? h₂ a = some (.generator qname st₁.locals k₁ .suspended) :=
+      Heap.get?_update_self hback
+    obtain ⟨h₁', hrun₂⟩ := Heap.update_of_get?
+      (.generator qname st₁.locals k₁ .running) hobj₂
+    -- the next round's entry write, seen at the FRAME-level world: two
+    -- writes to one slot are the second write
+    have hsetf : Heap.update st₁.world.heap a
+        (.generator qname st₁.locals k₁ .running) = some h₁' := by
+      rw [← Heap.update_update hback]; exact hrun₂
+    obtain ⟨-, h', -, hrest'⟩ :=
+      GenYields.transport hb vs st₁ st' k₁ locals cont st₁.locals k₁ h₁'
+        hstable hsetf hrest
+    obtain ⟨w', hdrain⟩ := ih { st₁.world with heap := h₂ } st₁.locals k₁
+      .suspended h₁' ⟨{ st'.world with heap := h' }, st'.locals⟩ hobj₂ (Or.inr rfl)
+      hrun₂ hrest'
+    exact ⟨w', IterDrains.cons
+      (IterSteps.of_genSteps hobj hstatus hrun hstep hback) hdrain⟩
+
+/-- **Call it, then drain it** — the shape a draining consumer meets, and the
+object-level twin of `EvalsIn.genCall` composed with a body spec: calling a
+generator function allocates at the heap's end (`callIn_genCall`) and
+draining what it answered yields exactly what the BODY's frame-level fact
+says, at one shared fuel threshold for both halves. -/
+theorem callIn_drains {m : Module} (hb : PayloadBlind m) {w : World}
+    {fname : String} {f : FunctionDefn} {args : Array RVal} {vs : List RVal}
+    {st' : FrameState}
+    (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
+    (hlocalsOk : f.localsOk = true) (harity : arityOk f.params args.size = true)
+    (hgen : f.isGenerator = true)
+    (hy : GenYields m
+      ⟨{ w with heap := w.heap.push (.generator fname (mkCallEnv f.params args)
+          [.block f.body.toList] .running) }, mkCallEnv f.params args⟩
+      [.block f.body.toList] vs st') :
+    ∃ w', ∃ t, ∀ F ≥ t,
+      callIn m F w fname args
+          = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) ∧
+      drainIter m F { w with heap := w.heap.push (genObj fname f args) }
+          w.heap.size = .ok w' vs := by
+  obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields hb vs
+    { w with heap := w.heap.push (genObj fname f args) } (mkCallEnv f.params args)
+    [.block f.body.toList] .created
+    (w.heap.push (.generator fname (mkCallEnv f.params args)
+      [.block f.body.toList] .running)) st'
+    (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hy
+  exact ⟨w', t + 1, fun F hF => by
+    obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+    exact ⟨callIn_genCall hf hargsOk hlocalsOk harity hgen,
+      hdrain (F' + 1) (by omega)⟩⟩
+
 /-! ## Smoke tests
 
 Two ends of the calculus on hand-built frame stacks over an EMPTY module
@@ -1569,6 +1971,22 @@ OBJECT on the heap, stepped by the `forGen` frame above it. -/
 example : IterSteps m0 ⟨#[countObj 5 3], [], [], []⟩ 0 (some (.int 5))
     ⟨#[countObj 8 3], [], [], []⟩ :=
   iterSteps_countFrom (by rfl) (by rfl)
+
+/-- L6: a two-element `enumerate` OBJECT drained WHOLE — both pairs in
+order, the object left `.closed`, and no locality hypothesis anywhere (an
+`enumSeq` frame reads nothing, so the chain composes on its own). -/
+example : IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], []⟩ 0
+    [.tuple #[.int 0, .int 7], .tuple #[.int 1, .int 8]]
+    ⟨#[.generator "<enumerate>" [] [] .closed], [], [], []⟩ :=
+  IterDrains.cons (iterSteps_enumSeq (by rfl) (by rfl))
+    (IterDrains.cons (iterSteps_enumSeq (by rfl) (by rfl))
+      (IterDrains.nil (iterSteps_enumDone (by rfl) (by rfl))))
+
+/-- The same drain through the general rule, which computes the pair list
+from the snapshot rather than being handed it. -/
+example : ∃ w', IterDrains m0 ⟨#[enumObj 0 [.int 7, .int 8]], [], [], []⟩ 0
+    [.tuple #[.int 0, .int 7], .tuple #[.int 1, .int 8]] w' :=
+  iterDrains_enumSeq [.int 7, .int 8] _ 0 0 (by rfl)
 
 end GenSmokeTest
 

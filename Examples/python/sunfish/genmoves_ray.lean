@@ -1575,55 +1575,2098 @@ block breaks). -/
         | .ok c => !Ref.inStr c " \nPNBRQK" && (c != '.')
         | _ => false) == true
 
-/-! ## What is left
+/-! ## THE FIVE REMAINING LEAVES
 
-Recorded rather than attempted, so the next session starts from a measured
-position instead of a blank page.
+Everything above carries the ray's four DISCHARGED leaves. What follows
+closes the other five, and none of them needed a new judgment, a new frame
+rule or a tactic change — the kit is the one three ray shapes already run
+on. The five, in the order the record at the end of §L4 CLOSED named them:
 
-**Counted honestly, FOUR of `Ref.ray`'s nine leaves are discharged** — and
-they are the four that carry three whole ray shapes end to end
-(`ray_crawl_agrees`, `ray_slide_agrees`, `ray_pawn_push_agrees`):
+* **the castling YIELD** — the only ray statement whose taken arm had never
+  been run: on a corner the `and` chain does not short-circuit, so the board
+  is read at a SHIFTED index, `self.wc` is subscripted, and a second move
+  comes out of a round;
+* **the two double-move guards** (`d = N + N`) — the `or` whose first arm is
+  the pawn's rank and whose second is the ray's only SECOND board read;
+* **the capture guard** (`d = N + W`, `d = N + E`) — the first statement to
+  read `self.ep` and to call `abs`;
+* **the promotion** — a `forSeq` frame over `"NBRQ"` inside the ray, four
+  yields and the `break` behind them.
 
-* the stop guard, a blocked square — every shape reaches it;
-* the crawler guard, at both of its reasons: a piece that does not slide
-  (`ray_crawl_agrees`) and a capture that ends one (`ray_slide_agrees`);
-* the CONTINUING leaf, which is the one the round induction exists for;
-* the pawn block's first guard, a push into an occupied square.
+### The new statements, projected and pinned -/
 
-The five that remain are all pawn-or-corner leaves, and none of them needs a
-new judgment, a new frame rule, or a tactic change — the kit that carries
-three ray shapes carries these too:
+/-- The taken arm of each castling `if` — one `yield` each. -/
+def cA : Stmt := nth 0 (planBody rCastA)
+def cH : Stmt := nth 0 (planBody rCastH)
 
-**The castling YIELD** (`Ref.ray`'s ninth leaf). On a corner square the
-`and` chain does not short-circuit: it reads `self.board[j + E]` — an
-`rQ_run`-shaped fact at a shifted index — and then `self.wc[0]`, a tuple
-subscript of a namedtuple FIELD, and on success `yield Move(j + E, j - E,
-"")`. That is the only ray statement in the file whose taken arm has never
-been run. It is what `iv ≠ A1`/`iv ≠ H1` buys in `ray_slide_agrees`, and it
-is the reason a rook that has not moved is out of scope while every other
-slider is in.
+theorem rCastA_body : planBody rCastA = [cA] := rfl
+theorem rCastH_body : planBody rCastH = [cH] := rfl
+theorem cA_plan : genPlan cA = .yieldHere (planValue cA) := rfl
+theorem cH_plan : genPlan cH = .yieldHere (planValue cH) := rfl
 
-**The pawn's other three directions and its promotion** — four leaves.
-`d = N` is one of `directions['P']`'s four entries, and the three that
-remain are exactly the three that reach the reads the single push
-short-circuits away:
-* `d = N + N` runs the double-move guard, so it needs a SECOND
-  `rQ_run`-shaped board read at `i + N` under an `or` — the first statement
-  in the ray that reads the board twice;
-* `d = N + W` and `d = N + E` run the capture guard, which compares against
-  `self.ep` and calls `abs(j - self.kp)` — namedtuple FIELDS, so they are
-  not exposed to the module-global defect `castA_test_false` records, but
-  `abs` is a builtin call inside a comparison chain and is new here;
-* the promotion arm (`A8 <= j <= H8`) is `for prom in "NBRQ": yield
-  Move(i, j, prom)` — a `forSeq` frame over a string literal, so
-  `GenEmits.forSeq` already covers the loop and `GenEmits.blockBreak` the
-  `break` behind it; `pB3_test_run` already supplies its guard at both truth
-  values, so what is missing is the four-element `forSeq` invariant and
-  `Move(i, j, prom)` at a symbolic `prom`.
+theorem cAVal_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9, planValue cA =
+    (.call (.name "Move" s1)
+      #[(.binOp (.name "j" s2) .add (.name "E" s3) s4),
+        (.binOp (.name "j" s5) .add (.name "W" s6) s7),
+        (.constant (.str "") s8)] #[] none s9) :=
+  ⟨_, _, _, _, _, _, _, _, _, rfl⟩
 
-The counting matters because it is the honest shape of what is left: the
-CALCULUS half of L4 is finished (the round induction, the segment kit, the
-reference trichotomy, three whole rays), and the remainder is five more
-captured runs of statements whose shapes are all precedented. -/
+theorem cHVal_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9, planValue cH =
+    (.call (.name "Move" s1)
+      #[(.binOp (.name "j" s2) .add (.name "W" s3) s4),
+        (.binOp (.name "j" s5) .add (.name "E" s6) s7),
+        (.constant (.str "") s8)] #[] none s9) :=
+  ⟨_, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- The three parts of a `.forHere` plan, projected rather than retyped. -/
+def planForTarget (s : Stmt) : Expr :=
+  match genPlan s with | .forHere t _ _ => t | _ => .constant .none nowhere
+def planForIter (s : Stmt) : Expr :=
+  match genPlan s with | .forHere _ it _ => it | _ => .constant .none nowhere
+def planForBody (s : Stmt) : List Stmt :=
+  match genPlan s with | .forHere _ _ b => b | _ => []
+
+theorem pProm_plan : genPlan pProm
+    = .forHere (planForTarget pProm) (planForIter pProm) (planForBody pProm) := rfl
+
+/-- The promotion loop's single statement, `yield Move(i, j, prom)`. -/
+def pPromY : Stmt := nth 0 (planForBody pProm)
+
+theorem promLoop_split : planForBody pProm = [pPromY] := rfl
+theorem pPromY_plan : genPlan pPromY = .yieldHere (planValue pPromY) := rfl
+
+theorem pPromTarget_lit : ∃ s, planForTarget pProm = .name "prom" s := ⟨_, rfl⟩
+theorem pPromIter_lit : ∃ s, planForIter pProm = .constant (.str "NBRQ") s := ⟨_, rfl⟩
+
+theorem pPromYVal_lit : ∃ s1 s2 s3 s4 s5, planValue pPromY =
+    (.call (.name "Move" s1)
+      #[(.name "i" s2), (.name "j" s3), (.name "prom" s4)] #[] none s5) :=
+  ⟨_, _, _, _, _, rfl⟩
+
+/-- **The board read's residual, packaged.** `at?_eq_indexVal` does NOT fire
+inside a `boolOp` chain — its LHS is `indexVal` applied to CONSTRUCTORS, so
+the `interpUnfolds` delta beats it (the corrected house rule: only a head
+applied to VARIABLES wins). What `py_simp` leaves is Python's negative-index
+fold, verbatim, so this states the four rewrites that close it — the same
+three lines `rQ_run` writes by hand, reusable at any index. -/
+theorem board_read_facts (b : String) (j : Int) (c : Char)
+    (href : Ref.at? b.toList j = .ok c) :
+    ∃ k : Int, (if j < 0 then j + (b.length : Int) else j) = k ∧
+      0 ≤ k ∧ k < (b.length : Int) ∧ b.toList[k.toNat]?.getD ' ' = c := by
+  obtain ⟨k, hkeq, hk0, hklt, hget⟩ := at?_ok_inv b.toList j c href
+  have hlen : (b.length : Int) = (b.toList.length : Int) := by rw [strLength_eq_toList]
+  refine ⟨k, ?_, hk0, ?_, ?_⟩
+  · rw [hlen]; exact hkeq
+  · rw [hlen]; exact hklt
+  · rw [hget]; rfl
+
+/-- The one-character bridge at `"K"`, the character the castling guard
+tests against. -/
+theorem sing_K (c : Char) : (String.singleton c == "K") = (c == 'K') := by
+  rw [show ("K" : String) = String.singleton 'K' from by decide]; exact sing_eq c 'K'
+
+/-- Python's `abs` on an int IS `Int.natAbs`, which is what the reference's
+`(j - kp).natAbs` speaks. -/
+theorem absInt_natAbs (x : Int) : (if x < 0 then -x else x) = (x.natAbs : Int) := by
+  by_cases h : x < 0
+  · rw [if_pos h]; omega
+  · rw [if_neg h]; omega
+
+/-! ### The castling test, at the CORNER -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`i == A1 and self.board[j + E] == "K" and self.wc[0]` ON a1** — the
+`and` chain that `castA_test_false` short-circuits, run to the END. Two
+things happen here for the first time in the ray: the board is read at a
+SHIFTED index (`j + E`, not the loop's own `j`), and a namedtuple FIELD is
+subscripted (`self.wc[0]`, a value tuple, so no heap read). The chain's
+value is the LAST operand when the first two are truthy, and `self.wc[0]` is
+a `.bool`, so the test is `.bool ((c == 'K') && wc0)` at every board. -/
+theorem castA_test_true (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.A1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList (jv + Ref.E) = .ok c) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest rCastA) (.bool ((c == 'K') && wc0)) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, hlit⟩ :=
+    rCastATest_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  have hi' : Env.lookup env "i" = some (.int 91) := hi
+  have href' : Ref.at? b.toList (jv + 1) = .ok c := href
+  obtain ⟨k, hkeq, hk0, hklt, hgd⟩ := board_read_facts b (jv + 1) c href'
+  by_cases hK : c = 'K' <;>
+    py_simp [sunfish, posOf, hloc.miss "A1", hloc.miss "E", hi', hj, hself, valEq.eq_def,
+      hkeq, hk0, hklt, hgd, sing_K, hK]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`Move(j + E, j + W, "")`** — the castling slide's move, at a symbolic
+square. The reference spells the same move `⟨j + E, j - E, ""⟩`, and `W` is
+`-E`, so the one arithmetic step this run leaves is `jv + -1 = jv - 1`. -/
+theorem cA_yield_evals (w : World) (env : REnv) (jv : Int)
+    (hloc : RayLocals env)
+    (hj : Env.lookup env "j" = some (.int jv)) :
+    EvalsTo sunfish ⟨w, env⟩ (planValue cA) (moveVal ⟨jv + Ref.E, jv - Ref.E, ""⟩) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, hlit⟩ := cAVal_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  py_simp [sunfish, moveVal, hloc.miss "Move", hloc.miss "E", hloc.miss "W", hj, Ref.E]
+  omega
+
+/-! ### The pawn's DOUBLE move (`d = N + N`) -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB0_run_dbl (w : World) (env : REnv) (c : Char) (bq : Bool)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hbq : (c != '.') = bq) :
+    execStmt sunfish 16 ⟨w, env⟩ pB0 = .ok ⟨w, env⟩ (if bq then .brk else .next) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, hlit⟩ := pB0_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-20)) := hd
+  subst hbq
+  by_cases hc : c = '.' <;>
+    py_simp [sunfish, hloc.miss "N", hd', hq, valEq.eq_def, heapEq_int, sing_dot, hc]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB1_run_near (w : World) (env : REnv) (iv : Int)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hnear : iv < Ref.A1 + Ref.N) :
+    execStmt sunfish 16 ⟨w, env⟩ pB1 = .ok ⟨w, env⟩ .brk := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, hlit⟩ := pB1_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-20)) := hd
+  have hnear' : iv < (81 : Int) := hnear
+  py_simp [sunfish, hloc.miss "N", hloc.miss "A1", hd', hi, valEq.eq_def, hnear']
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB1_run_far (w : World) (env : REnv) (b : String) (score ep kp iv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (c : Char) (bc : Bool)
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hfar : ¬ (iv < Ref.A1 + Ref.N))
+    (href : Ref.at? b.toList (iv + Ref.N) = .ok c)
+    (hbc : (c != '.') = bc) :
+    execStmt sunfish 16 ⟨w, env⟩ pB1 = .ok ⟨w, env⟩ (if bc then .brk else .next) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, hlit⟩ := pB1_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-20)) := hd
+  have hfar' : ¬ (iv < (81 : Int)) := hfar
+  have href' : Ref.at? b.toList (iv + (-10)) = .ok c := href
+  obtain ⟨k, hkeq, hk0, hklt, hgd⟩ := board_read_facts b (iv + (-10)) c href'
+  subst hbc
+  by_cases hc : c = '.' <;>
+    py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "A1", hd', hi, hself, valEq.eq_def,
+      hfar', hkeq, hk0, hklt, hgd, sing_dot, hc]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB2_run_dbl (w : World) (env : REnv) (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N))) :
+    execStmt sunfish 16 ⟨w, env⟩ pB2 = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, s23, s24, s25, s26, s27, hlit⟩ := pB2_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-20)) := hd
+  py_simp [sunfish, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', valEq.eq_def, heapEq_int]
+
+/-! ### The pawn's CAPTURES (`d = N + W`, `d = N + E`) -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB0_run_diag (w : World) (env : REnv) (dv : Int) (hloc : RayLocals env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv)) :
+    execStmt sunfish 16 ⟨w, env⟩ pB0 = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, hlit⟩ := pB0_lit
+  rw [hlit]
+  rcases hdv with rfl | rfl
+  · have hd' : Env.lookup env "d" = some (.int (-11)) := hd
+    py_simp [sunfish, hloc.miss "N", hd', valEq.eq_def, heapEq_int]
+  · have hd' : Env.lookup env "d" = some (.int (-9)) := hd
+    py_simp [sunfish, hloc.miss "N", hd', valEq.eq_def, heapEq_int]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB1_run_diag (w : World) (env : REnv) (dv : Int) (hloc : RayLocals env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv)) :
+    execStmt sunfish 16 ⟨w, env⟩ pB1 = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, hlit⟩ := pB1_lit
+  rw [hlit]
+  rcases hdv with rfl | rfl
+  · have hd' : Env.lookup env "d" = some (.int (-11)) := hd
+    py_simp [sunfish, hloc.miss "N", hd', valEq.eq_def]
+  · have hd' : Env.lookup env "d" = some (.int (-9)) := hd
+    py_simp [sunfish, hloc.miss "N", hd', valEq.eq_def]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem pB2_run_cap (w : World) (env : REnv) (b : String) (dv : Int)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    (hloc : RayLocals env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c))) :
+    execStmt sunfish 16 ⟨w, env⟩ pB2 = .ok ⟨w, env⟩
+      (if (c == '.') && (jv != ep) && decide (1 < (jv - kp).natAbs) then .brk else .next) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, s23, s24, s25, s26, s27, hlit⟩ := pB2_lit
+  rw [hlit]
+  rcases hdv with rfl | rfl
+  · have hd' : Env.lookup env "d" = some (.int (-11)) := hd
+    by_cases hc : c = '.'
+    · by_cases hep : jv = ep
+      · py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', hj, hq,
+          hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep]
+      · by_cases habs : 1 < (jv - kp).natAbs
+        · have habs' : (1 : Int) < ((jv - kp).natAbs : Int) := by omega
+          py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hloc.miss "abs",
+            hd', hj, hq, hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep, absInt_natAbs,
+            habs, habs']
+        · have habs' : ¬ ((1 : Int) < ((jv - kp).natAbs : Int)) := by omega
+          py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hloc.miss "abs",
+            hd', hj, hq, hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep, absInt_natAbs,
+            habs, habs']
+    · py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', hj, hq, hself,
+        valEq.eq_def, heapEq_int, sing_dot, hc]
+  · have hd' : Env.lookup env "d" = some (.int (-9)) := hd
+    by_cases hc : c = '.'
+    · by_cases hep : jv = ep
+      · py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', hj, hq,
+          hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep]
+      · by_cases habs : 1 < (jv - kp).natAbs
+        · have habs' : (1 : Int) < ((jv - kp).natAbs : Int) := by omega
+          py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hloc.miss "abs",
+            hd', hj, hq, hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep, absInt_natAbs,
+            habs, habs']
+        · have habs' : ¬ ((1 : Int) < ((jv - kp).natAbs : Int)) := by omega
+          py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hloc.miss "abs",
+            hd', hj, hq, hself, valEq.eq_def, heapEq_int, sing_dot, hc, hep, absInt_natAbs,
+            habs, habs']
+    · py_simp [sunfish, posOf, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', hj, hq, hself,
+        valEq.eq_def, heapEq_int, sing_dot, hc]
+
+/-! ### The PROMOTION body -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+theorem promYield_evals (w : World) (env : REnv) (iv jv : Int) (pr : Char)
+    (hloc : RayLocals env)
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hp : Env.lookup env "prom" = some (.str (String.singleton pr))) :
+    EvalsTo sunfish ⟨w, env⟩ (planValue pPromY) (moveVal ⟨iv, jv, String.singleton pr⟩) := by
+  obtain ⟨s1, s2, s3, s4, s5, hlit⟩ := pPromYVal_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  py_simp [sunfish, moveVal, hloc.miss "Move", hi, hj, hp]
+
+set_option maxHeartbeats 1600000 in
+theorem promIter_evals (w : World) (env : REnv) :
+    EvalsTo sunfish ⟨w, env⟩ (planForIter pProm) (.str "NBRQ") := by
+  obtain ⟨s, hlit⟩ := pPromIter_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 4) ?_
+  py_simp []
+
+theorem promBrk_run (st : FrameState) : execStmt sunfish 16 st pPromBrk = .ok st .brk := by
+  obtain ⟨s, hlit⟩ := pPromBrk_lit
+  rw [hlit]
+  py_simp []
+
+theorem toString_eq_singleton (c : Char) : c.toString = String.singleton c := rfl
+
+theorem promVals : strCharVals "NBRQ"
+    = "NBRQ".toList.map (fun pr => RVal.str (String.singleton pr)) := strCharVals_eq_map _
+
+theorem flatten_map_singleton {α β : Type} (f : α → β) (l : List α) :
+    (l.map (fun a => [f a])).flatten = l.map f := by
+  induction l with
+  | nil => rfl
+  | cons a t ih => simp [ih]
+
+/-! ## The new segments
+
+Same discipline as §The segments: one `GenEmits` transformer per statement
+over a FREE trailing continuation, so each serves a round that falls through
+and a round that breaks. -/
+
+theorem pB0_breaks_dbl (w : World) (env : REnv) (c : Char) (a : Addr)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hne : c ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [pB0, pB1, pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH],
+        .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay]) pB0_plan (fun _ => rfl)
+    (run_at_least (by simpa using pB0_run_dbl w env c true hloc hd hq (by simpa using hne)))
+
+theorem pB0_falls_dbl (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton '.')))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB0, pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB1, pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB0) (ss := [pB1, pB2, pB3])
+      (k := pre ++ k) pB0_plan
+      (run_at_least (by simpa using pB0_run_dbl w env '.' false hloc hd hq (by simp)))) hrest
+
+theorem pB1_breaks_near (w : World) (env : REnv) (iv : Int) (a : Addr)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hnear : iv < Ref.A1 + Ref.N) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [pB1, pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH],
+        .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay]) pB1_plan (fun _ => rfl)
+    (run_at_least (pB1_run_near w env iv hloc hd hi hnear))
+
+theorem pB1_breaks_far (w : World) (env : REnv) (b : String) (score ep kp iv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hfar : ¬ (iv < Ref.A1 + Ref.N))
+    (href : Ref.at? b.toList (iv + Ref.N) = .ok c) (hne : c ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [pB1, pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH],
+        .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay]) pB1_plan (fun _ => rfl)
+    (run_at_least (by
+      simpa using pB1_run_far w env b score ep kp iv wc0 wc1 bc0 bc1 c true hloc hself hd hi
+        hfar href (by simpa using hne)))
+
+theorem pB1_falls_far (w : World) (env : REnv) (b : String) (score ep kp iv : Int)
+    (wc0 wc1 bc0 bc1 : Bool)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hfar : ¬ (iv < Ref.A1 + Ref.N))
+    (href : Ref.at? b.toList (iv + Ref.N) = .ok '.')
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB1) (ss := [pB2, pB3])
+      (k := pre ++ k) pB1_plan
+      (run_at_least (by
+        simpa using pB1_run_far w env b score ep kp iv wc0 wc1 bc0 bc1 '.' false hloc hself hd
+          hi hfar href (by simp)))) hrest
+
+theorem pB2_falls_dbl (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB2) (ss := [pB3])
+      (k := pre ++ k) pB2_plan (run_at_least (pB2_run_dbl w env hloc hd))) hrest
+
+theorem pB0_falls_diag (w : World) (env : REnv) (dv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB0, pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB1, pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB0) (ss := [pB1, pB2, pB3])
+      (k := pre ++ k) pB0_plan (run_at_least (pB0_run_diag w env dv hloc hdv hd))) hrest
+
+theorem pB1_falls_diag (w : World) (env : REnv) (dv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB1) (ss := [pB2, pB3])
+      (k := pre ++ k) pB1_plan (run_at_least (pB1_run_diag w env dv hloc hdv hd))) hrest
+
+theorem pB2_breaks_cap (w : World) (env : REnv) (b : String) (dv : Int)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hloc : RayLocals env) (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hbrk : ((c == '.') && (jv != ep) && decide (1 < (jv - kp).natAbs)) = true) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH],
+        .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay]) pB2_plan (fun _ => rfl)
+    (run_at_least (by
+      simpa [hbrk] using pB2_run_cap w env b dv score ep kp jv wc0 wc1 bc0 bc1 c hloc hdv
+        hself hd hj hq))
+
+theorem pB2_falls_cap (w : World) (env : REnv) (b : String) (dv : Int)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hgo : ((c == '.') && (jv != ep) && decide (1 < (jv - kp).natAbs)) = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB2) (ss := [pB3])
+      (k := pre ++ k) pB2_plan
+      (run_at_least (by
+        simpa [hgo] using pB2_run_cap w env b dv score ep kp jv wc0 wc1 bc0 bc1 c hloc hdv
+          hself hd hj hq))) hrest
+
+/-- The promotion branch is ENTERED: two frames go on, the loop's and the
+empty remainder of the pawn block. -/
+theorem pB3_enters (w : World) (env : REnv) (jv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hj : Env.lookup env "j" = some (.int jv))
+    (hprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = true)
+    (hrest : GenEmits sunfish ⟨w, env⟩
+      ([.block [pProm, pPromBrk], .block ([] : List Stmt)] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB3]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planBody pB3), GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := pB3) (b := true)
+        (k := pre ++ k) pB3_plan (pB3_test_run w env jv true hloc hj hprom)
+        (truthy_boolH w true)) ?_
+  simpa [promBody_split] using hrest
+
+/-- **The promotion loop.** `for prom in "NBRQ": yield Move(i, j, prom)` —
+`GenEmits.forSeq`'s remainder-indexed invariant at four literal elements.
+The invariant carries no `prom` at all: what the ray owes its caller is the
+FRAME (`RayFrame` plus `j`), and `prom` is one of `rayNames`, so every
+iteration re-establishes it by `RayFrame.set`. -/
+theorem prom_loop_emits (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hj : Env.lookup env "j" = some (.int jv)) :
+    ∃ env₂, RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env₂ ∧
+      Env.lookup env₂ "j" = some (.int jv) ∧
+      GenEmits sunfish ⟨w, env⟩
+        [.forSeq (planForTarget pProm) (strCharVals "NBRQ") (planForBody pProm)]
+        ("NBRQ".toList.map (fun pr => moveVal ⟨iv, jv, pr.toString⟩)) ⟨w, env₂⟩ := by
+  obtain ⟨sp, htgt⟩ := pPromTarget_lit
+  obtain ⟨st₂, ⟨hw₂, hfr₂, hj₂⟩, hloop⟩ :=
+    GenEmits.forSeq (m := sunfish) (target := planForTarget pProm) (body := planForBody pProm)
+      (elt := fun pr : Char => RVal.str (String.singleton pr))
+      (Inv := fun _ st => st.world = w ∧
+        RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+        Env.lookup st.locals "j" = some (.int jv))
+      (out := fun pr : Char => [moveVal ⟨iv, jv, pr.toString⟩])
+      (fun pr rest st hI => by
+        obtain ⟨hw, hfr, hjj⟩ := hI
+        refine ⟨Env.set st.locals "prom" (.str (String.singleton pr)),
+          ⟨st.world, Env.set st.locals "prom" (.str (String.singleton pr))⟩,
+          by rw [htgt]; rfl,
+          ⟨hw, RayFrame.set hfr (x := "prom") (by decide) _,
+            by rw [Env.lookup_set_ne _ (by decide)]; exact hjj⟩, ?_⟩
+        refine GenEmits.cons (pre₁ := [GenFrame.block ([] : List Stmt)]) (fun k => by
+          simpa [promLoop_split] using genSteps_yieldHere (m := sunfish) (s := pPromY)
+            (ss := ([] : List Stmt)) (k := k) pPromY_plan
+            (by
+              simpa [toString_eq_singleton] using
+                promYield_evals st.world (Env.set st.locals "prom" (.str (String.singleton pr)))
+                  iv jv pr (RayLocals.set hfr.1 (x := "prom") (by decide) _)
+                  (by rw [Env.lookup_set_ne _ (by decide)]; exact hfr.2.2.1)
+                  (by rw [Env.lookup_set_ne _ (by decide)]; exact hjj)
+                  (Env.lookup_set_self _ _ _))) ?_
+        simpa using block_done ⟨st.world, Env.set st.locals "prom" (.str (String.singleton pr))⟩)
+      "NBRQ".toList ⟨w, env⟩ ⟨rfl, hframe, hj⟩
+  refine ⟨st₂.locals, hfr₂, hj₂, ?_⟩
+  rw [show (⟨w, st₂.locals⟩ : FrameState) = st₂ from by rw [← hw₂]]
+  simpa [promVals, flatten_map_singleton] using hloop
+
+/-! ## The reference side of the five leaves
+
+`rayBody_stop_const`/`_break_const`/`_slide_map` already classify the leaves
+a non-pawn reaches. These are the pawn's own arms at the three directions
+the single push never runs, plus the promotion — and each is the same proof:
+unfold `rayBody`/`pawnBreak`, feed the guards their decided values. -/
+
+/-- The four moves a promotion yields, in the shipped `"NBRQ"` order. -/
+def promMoves (i j : Int) : List Ref.RefMove :=
+  "NBRQ".toList.map fun pr => ⟨i, j, pr.toString⟩
+
+open Ref in
+/-- The push PROMOTES: the four pieces, and the ray ends. -/
+theorem rayBody_pawn_prom_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int)
+    (href : at? b j = .ok '.')
+    (hprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' N j t = .ok (promMoves i j) := by
+  intro t
+  have h1 : A8 ≤ j ∧ j ≤ H8 := by
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at hprom; exact hprom
+  have hop : inStr '.' " \nPNBRQK" = false := rfl
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hop, h1.1, h1.2, pure, Except.pure, N, W, E, promMoves]
+
+open Ref in
+/-- **A PROMOTING push ends the ray in exactly three ways**: the square is
+off the board or ours, it holds a piece (a pawn does not capture forwards),
+or it is empty and the four promotions come out. -/
+theorem ray_pawn_prom_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c : Char)
+    (r : List RefMove) (href : at? b j = .ok c)
+    (hprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = true)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i 'P' N j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧ c ≠ '.' ∧ r = []) ∨
+    (c = '.' ∧ r = promMoves i j) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i 'P' N j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hdot : c = '.'
+    · subst hdot
+      exact Or.inr (Or.inr ⟨rfl, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_pawn_prom_const b wc0 wc1 ep kp i j href hprom (.ok [])))⟩)
+    · exact Or.inr (Or.inl ⟨hstop, hdot, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_pawn_block_const b wc0 wc1 ep kp i j c href hstop hdot (.ok [])))⟩)
+
+open Ref in
+/-- The DOUBLE push is refused by the square it lands on. -/
+theorem rayBody_dbl_land_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hne : c ≠ '.') :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' (N + N) j t = .ok [] := by
+  intro t
+  have hc : (c != '.') = true := by simpa using hne
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hopen, hc, pure, Except.pure, N]
+
+open Ref in
+/-- The DOUBLE push is refused because the pawn is not on its home rank —
+and Python's `or` means the second board read never happens. -/
+theorem rayBody_dbl_near_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int)
+    (href : at? b j = .ok '.') (hnear : i < A1 + N) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' (N + N) j t = .ok [] := by
+  intro t
+  have hop : inStr '.' " \nPNBRQK" = false := rfl
+  have hnear' : i < (81 : Int) := hnear
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hop, hnear', pure, Except.pure, N, A1]
+
+open Ref in
+/-- The DOUBLE push is refused by the square it passes THROUGH. -/
+theorem rayBody_dbl_far_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c2 : Char)
+    (href : at? b j = .ok '.') (hfar : ¬ (i < A1 + N))
+    (href2 : at? b (i + N) = .ok c2) (hne2 : c2 ≠ '.') :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' (N + N) j t = .ok [] := by
+  intro t
+  have hop : inStr '.' " \nPNBRQK" = false := rfl
+  have hc2 : (c2 != '.') = true := by simpa using hne2
+  have hfar' : ¬ (i < (81 : Int)) := hfar
+  have href2' : at? b (i + (-10)) = .ok c2 := href2
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hop, hfar', href2', hc2, pure, Except.pure, N, A1]
+
+open Ref in
+/-- The DOUBLE push HAPPENS: one quiet move, and the ray ends because a pawn
+is a crawler. -/
+theorem rayBody_dbl_move_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int)
+    (href : at? b j = .ok '.') (hfar : ¬ (i < A1 + N))
+    (href2 : at? b (i + N) = .ok '.')
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' (N + N) j t = .ok [⟨i, j, ""⟩] := by
+  intro t
+  have h1 : ¬ (A8 ≤ j ∧ j ≤ H8) := fun h => by simp [h.1, h.2] at hnoprom
+  have hop : inStr '.' " \nPNBRQK" = false := rfl
+  have hcr : inStr 'P' "PNK" = true := rfl
+  have hfar' : ¬ (i < (81 : Int)) := hfar
+  have href2' : at? b (i + (-10)) = .ok '.' := href2
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hop, hcr, hfar', href2', h1, pure, Except.pure, N, W, E, A1]
+
+open Ref in
+/-- **A non-promoting DOUBLE push ends the ray in exactly five ways** — the
+two the single push has, the two the double-move guard adds (its `or` is
+what makes them two), and the move itself. -/
+theorem ray_pawn_dbl_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c : Char)
+    (r : List RefMove) (href : at? b j = .ok c)
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i 'P' (N + N) j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧ c ≠ '.' ∧ r = []) ∨
+    (c = '.' ∧ i < A1 + N ∧ r = []) ∨
+    (c = '.' ∧ ¬ (i < A1 + N) ∧ ∃ c2, at? b (i + N) = .ok c2 ∧ c2 ≠ '.' ∧ r = []) ∨
+    (c = '.' ∧ ¬ (i < A1 + N) ∧ at? b (i + N) = .ok '.' ∧ r = [⟨i, j, ""⟩]) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i 'P' (N + N) j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hdot : c = '.'
+    · subst hdot
+      by_cases hnear : i < A1 + N
+      · exact Or.inr (Or.inr (Or.inl ⟨rfl, hnear, Except.ok.inj
+          ((hbody (.ok [])).symm.trans
+            (rayBody_dbl_near_const b wc0 wc1 ep kp i j href hnear (.ok [])))⟩))
+      · -- the second board read SUCCEEDED, or the reference would not be `.ok`
+        have hat2 : ∃ c2, at? b (i + N) = .ok c2 := by
+          cases hx : at? b (i + N) with
+          | ok c2 => exact ⟨c2, rfl⟩
+          | error e =>
+            exfalso
+            have h := hbody (.error "unused")
+            have hnear' : ¬ (i < (81 : Int)) := hnear
+            have hx' : at? b (i + (-10)) = Except.error e := hx
+            unfold rayBody pawnBreak at h
+            simp [bind, Except.bind, href, hstop, hnear', hx', N, A1] at h
+        obtain ⟨c2, h2⟩ := hat2
+        by_cases hd2 : c2 = '.'
+        · subst hd2
+          exact Or.inr (Or.inr (Or.inr (Or.inr ⟨rfl, hnear, h2, Except.ok.inj
+            ((hbody (.ok [])).symm.trans
+              (rayBody_dbl_move_const b wc0 wc1 ep kp i j href hnear h2 hnoprom (.ok [])))⟩)))
+        · exact Or.inr (Or.inr (Or.inr (Or.inl ⟨rfl, hnear, c2, h2, hd2, Except.ok.inj
+            ((hbody (.ok [])).symm.trans
+              (rayBody_dbl_far_const b wc0 wc1 ep kp i j c2 href hnear h2 hd2 (.ok [])))⟩)))
+    · exact Or.inr (Or.inl ⟨hstop, hdot, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_dbl_land_const b wc0 wc1 ep kp i j c href hstop hdot (.ok [])))⟩)
+
+open Ref in
+/-- A pawn's body ignores its tail at EVERY direction — `rayBody_pawn_indep`
+stated where the double and capture rays need it. -/
+theorem rayBody_pawnD_indep (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int) (d j : Int)
+    (t₁ t₂ : Except String (List RefMove)) :
+    rayBody b wc0 wc1 ep kp i 'P' d j t₁ = rayBody b wc0 wc1 ep kp i 'P' d j t₂ :=
+  rayBody_pawn_indep b wc0 wc1 ep kp i d j t₁ t₂
+
+open Ref in
+/-- The pawn's CAPTURE guard breaks: the diagonal square is empty and is
+neither the en-passant square nor beside the king-passant one. -/
+theorem rayBody_cap_break_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j dv : Int)
+    (c : Char) (hdv : dv = N + W ∨ dv = N + E)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false)
+    (hbrk : ((c == '.') && (j != ep) && decide (1 < (j - kp).natAbs)) = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' dv j t = .ok [] := by
+  intro t
+  rcases hdv with rfl | rfl <;>
+    (unfold rayBody pawnBreak
+     simp only [Bool.and_eq_true, beq_iff_eq, bne_iff_ne, ne_eq, decide_eq_true_eq] at hbrk
+     obtain ⟨⟨hc, hje⟩, hkk⟩ := hbrk
+     subst hc
+     simp [bind, Except.bind, href, hopen, hje, hkk, pure, Except.pure, N, W, E])
+
+open Ref in
+/-- The pawn's CAPTURE guard falls through, and the move is a real one. -/
+theorem rayBody_cap_move_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j dv : Int)
+    (c : Char) (hdv : dv = N + W ∨ dv = N + E)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false)
+    (hgo : ((c == '.') && (j != ep) && decide (1 < (j - kp).natAbs)) = false)
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' dv j t = .ok [⟨i, j, ""⟩] := by
+  intro t
+  have h1 : ¬ (A8 ≤ j ∧ j ≤ H8) := fun h => by simp [h.1, h.2] at hnoprom
+  have hcr : inStr 'P' "PNK" = true := rfl
+  have hgo' : ¬ (c = '.') ∨ ¬ (j ≠ ep) ∨ ¬ (1 < (j - kp).natAbs) := by
+    by_cases hdot : c = '.'
+    · by_cases hje : j = ep
+      · exact Or.inr (Or.inl (fun hh => hh hje))
+      · refine Or.inr (Or.inr ?_)
+        simp [hdot, hje] at hgo
+        omega
+    · exact Or.inl hdot
+  rcases hdv with rfl | rfl <;> rcases hgo' with h | h | h <;>
+    (unfold rayBody pawnBreak
+     simp [bind, Except.bind, href, hopen, hcr, h1, h, pure, Except.pure, N, W, E])
+
+open Ref in
+/-- **A non-promoting CAPTURE direction ends the ray in exactly three
+ways**: the square is a blocker, the guard breaks, or the move happens. -/
+theorem ray_pawn_cap_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i j dv : Int) (c : Char)
+    (r : List RefMove) (hdv : dv = N + W ∨ dv = N + E)
+    (href : at? b j = .ok c)
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i 'P' dv j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧
+      ((c == '.') && (j != ep) && decide (1 < (j - kp).natAbs)) = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧
+      ((c == '.') && (j != ep) && decide (1 < (j - kp).natAbs)) = false ∧
+      r = [⟨i, j, ""⟩]) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i 'P' dv j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hbrk : ((c == '.') && (j != ep) && decide (1 < (j - kp).natAbs)) = true
+    · exact Or.inr (Or.inl ⟨hstop, hbrk, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_cap_break_const b wc0 wc1 ep kp i j dv c hdv href hstop hbrk (.ok [])))⟩)
+    · simp only [Bool.not_eq_true] at hbrk
+      exact Or.inr (Or.inr ⟨hstop, hbrk, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_cap_move_const b wc0 wc1 ep kp i j dv c hdv href hstop hbrk hnoprom
+          (.ok [])))⟩)
+
+/-! ## The new rounds
+
+The model side of one round, per leaf, assembled out of the segments. -/
+
+/-- The four lookups every pawn round re-establishes after `q` is bound. -/
+theorem pawnQ_facts {b : String} {score ep kp iv : Int} {wc0 wc1 bc0 bc1 : Bool}
+    {env : REnv} {jv dv : Int} (c : Char)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv)) :
+    RayLocals (Env.set env "q" (.str (String.singleton c))) ∧
+    RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P'
+      (Env.set env "q" (.str (String.singleton c))) ∧
+    Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) ∧
+    Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton 'P')) ∧
+    Env.lookup (Env.set env "q" (.str (String.singleton c))) "i" = some (.int iv) ∧
+    Env.lookup (Env.set env "q" (.str (String.singleton c))) "j" = some (.int jv) ∧
+    Env.lookup (Env.set env "q" (.str (String.singleton c))) "d" = some (.int dv) :=
+  ⟨hframe.1.set (x := "q") (by decide) _, hframe.set (x := "q") (by decide) _,
+    Env.lookup_set_self _ _ _,
+    by rw [Env.lookup_set_ne _ (by decide)]; exact hframe.2.2.2,
+    by rw [Env.lookup_set_ne _ (by decide)]; exact hframe.2.2.1,
+    by rw [Env.lookup_set_ne _ (by decide)]; exact hj,
+    by rw [Env.lookup_set_ne _ (by decide)]; exact hd⟩
+
+/-- **The model side of a PROMOTING push**: through the pawn block's three
+guards into the promotion branch, four yields out of the `forSeq` frame, and
+the `break` behind them takes the ray's loop frame with it. -/
+theorem pawn_promotes_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok '.')
+    (hprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = true) :
+    ∃ env₂, RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env₂ ∧
+      GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay]
+        ("NBRQ".toList.map (fun pr => moveVal ⟨iv, jv, pr.toString⟩)) ⟨w, env₂⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts '.' hframe hd hj
+  obtain ⟨env₂, hfr₂, hj₂, hloop⟩ :=
+    prom_loop_emits w (Env.set env "q" (.str (String.singleton '.'))) b score ep kp iv jv
+      wc0 wc1 bc0 bc1 hfr₁ hj₁
+  refine ⟨env₂, hfr₂, ?_⟩
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 '.' hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ '.' hq₁ rfl ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ hq₁ ?_
+  refine pB1_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ ?_
+  refine pB2_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ ?_
+  refine pB3_enters (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ jv hloc₁ hj₁ hprom ?_
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.forSeq (planForTarget pProm) (strCharVals "NBRQ") (planForBody pProm),
+      GenFrame.block [pPromBrk], GenFrame.block ([] : List Stmt),
+      GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay])
+    (fun k => by
+      simpa using genSilent_forHere (m := sunfish) (s := pProm) (ss := [pPromBrk])
+        (k := [GenFrame.block ([] : List Stmt),
+          GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+          GenFrame.forGen gmRayTarget a gmRay] ++ k)
+        pProm_plan (promIter_evals _ _) (IterVals.str "NBRQ")) ?_
+  have hbreak : GenEmits sunfish ⟨w, env₂⟩
+      [GenFrame.block [pPromBrk], GenFrame.block ([] : List Stmt),
+        GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+        GenFrame.forGen gmRayTarget a gmRay] [] ⟨w, env₂⟩ :=
+    GenEmits.blockBreak (pre := [GenFrame.block ([] : List Stmt),
+        GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+        GenFrame.forGen gmRayTarget a gmRay]) pPromBrk_plan (fun _ => rfl)
+      (run_at_least (promBrk_run ⟨w, env₂⟩))
+  simpa using GenEmits.trans hloop hbreak
+
+/-- The DOUBLE push, blocked by the square it lands on. -/
+theorem pawn_dbl_land_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hne : c ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay] []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts c hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 c hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ c hq₁ hopen ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  exact pB0_breaks_dbl w _ c a hloc₁ hd₁ hq₁ hne
+
+/-- The DOUBLE push, refused by the pawn's rank — the second board read is
+provably never taken. -/
+theorem pawn_dbl_near_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok '.')
+    (hnear : iv < Ref.A1 + Ref.N) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay] []
+      ⟨w, Env.set env "q" (.str (String.singleton '.'))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts '.' hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 '.' hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ '.' hq₁ rfl ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls_dbl (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ hq₁ ?_
+  exact pB1_breaks_near w _ iv a hloc₁ hd₁ hi₁ hnear
+
+/-- The DOUBLE push, blocked by the square it passes THROUGH — the ray's
+only statement that reads the board a second time. -/
+theorem pawn_dbl_far_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c2 : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok '.')
+    (hfar : ¬ (iv < Ref.A1 + Ref.N))
+    (href2 : Ref.at? b.toList (iv + Ref.N) = .ok c2) (hne2 : c2 ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay] []
+      ⟨w, Env.set env "q" (.str (String.singleton '.'))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts '.' hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 '.' hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ '.' hq₁ rfl ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls_dbl (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ hq₁ ?_
+  exact pB1_breaks_far w _ b score ep kp iv wc0 wc1 bc0 bc1 c2 a hloc₁ hfr₁.2.1 hd₁ hi₁
+    hfar href2 hne2
+
+/-- The DOUBLE push HAPPENS. -/
+theorem pawn_dbl_push_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok '.')
+    (hfar : ¬ (iv < Ref.A1 + Ref.N))
+    (href2 : Ref.at? b.toList (iv + Ref.N) = .ok '.')
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay]
+      [moveVal ⟨iv, jv, ""⟩] ⟨w, Env.set env "q" (.str (String.singleton '.'))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts '.' hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 '.' hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ '.' hq₁ rfl ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls_dbl (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ hq₁ ?_
+  refine pB1_falls_far (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ b score ep kp iv wc0 wc1 bc0 bc1
+    hloc₁ hfr₁.2.1 hd₁ hi₁ hfar href2 ?_
+  refine pB2_falls_dbl (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ ?_
+  refine pB3_skips (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ jv hloc₁ hj₁ hnoprom ?_
+  refine yield_emits (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w _ iv jv hloc₁ hi₁ hj₁ ?_
+  exact crawl_breaks w _ 'P' '.' a hp₁ hq₁ rfl
+
+/-- The pawn's CAPTURE guard BREAKS — an empty diagonal that is neither the
+en-passant square nor beside the king-passant one. -/
+theorem pawn_cap_break_round (w : World) (env : REnv) (b : String) (dv : Int)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false)
+    (hbrk : ((c == '.') && (jv != ep) && decide (1 < (jv - kp).natAbs)) = true) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay] []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts c hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 c hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ c hq₁ hopen ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls_diag (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ dv hloc₁ hdv hd₁ ?_
+  refine pB1_falls_diag (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ dv hloc₁ hdv hd₁ ?_
+  exact pB2_breaks_cap w _ b dv score ep kp jv wc0 wc1 bc0 bc1 c a hloc₁ hdv hfr₁.2.1
+    hd₁ hj₁ hq₁ hbrk
+
+/-- The pawn's CAPTURE happens — a real capture, an en passant, or a
+king-passant square. -/
+theorem pawn_cap_move_round (w : World) (env : REnv) (b : String) (dv : Int)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false)
+    (hgo : ((c == '.') && (jv != ep) && decide (1 < (jv - kp).natAbs)) = false)
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay, .forGen gmRayTarget a gmRay]
+      [moveVal ⟨iv, jv, ""⟩] ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc₁, hfr₁, hq₁, hp₁, hi₁, hj₁, hd₁⟩ := pawnQ_facts c hframe hd hj
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 c hframe.2.1 hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ c hq₁ hopen ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls_diag (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ dv hloc₁ hdv hd₁ ?_
+  refine pB1_falls_diag (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ dv hloc₁ hdv hd₁ ?_
+  refine pB2_falls_cap (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ b dv score ep kp jv wc0 wc1 bc0 bc1 c
+    hloc₁ hdv hfr₁.2.1 hd₁ hj₁ hq₁ hgo ?_
+  refine pB3_skips (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ jv hloc₁ hj₁ hnoprom ?_
+  refine yield_emits (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w _ iv jv hloc₁ hi₁ hj₁ ?_
+  exact crawl_breaks w _ 'P' c a hp₁ hq₁ rfl
+
+
+/-! ## THREE MORE WHOLE RAYS: the pawn's other three directions
+
+`ray_pawn_push_agrees` covers `d = N` without promotion. These three cover
+the rest of `directions['P']` and the promotion arm, so every pawn ray in
+`Position.gen_moves` is now an agreement theorem. -/
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A PROMOTING PUSH, WHOLE, OVER AN ARBITRARY BOARD.** -/
+theorem ray_pawn_prom_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hcount : Heap.get? w.heap a = some (countObj jv Ref.N))
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = true)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' Ref.N f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j Ref.N) ∧
+      Env.lookup st.locals "d" = some (.int Ref.N) ∧
+      (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = true)
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hpr⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + Ref.N) Ref.N) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hd₁ : Env.lookup (Env.set env₁ "j" (.int j)) "d" = some (.int Ref.N) := by
+      rw [Env.lookup_set_ne _ (by decide)]; exact hdd
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hne, rfl⟩ | ⟨rfl, rfl⟩ :=
+      ray_pawn_prom_leaf b.toList wc0 wc1 ep kp iv j c r href hpr hbody
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa using pawn_blocked_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 c a hfr₁ hd₁ hj₁ href hopen hne
+    · obtain ⟨env₂, hfr₂, hemit⟩ := pawn_promotes_round { w₁ with heap := h₂ }
+        (Env.set env₁ "j" (.int j)) b score ep kp iv j wc0 wc1 bc0 bc1 a hfr₁ hd₁ hj₁
+        href hpr
+      refine ⟨⟨{ w₁ with heap := h₂ }, env₂⟩, hfr₂, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa [promMoves, List.map_map] using hemit
+  · rintro j st pre _ hmap
+    exfalso
+    have h := rayBody_pawn_indep b.toList wc0 wc1 ep kp iv Ref.N j
+      (Except.ok []) (Except.ok [⟨iv, j, ""⟩])
+    rw [hmap (Except.ok []), hmap (Except.ok [⟨iv, j, ""⟩])] at h
+    simp only [Functor.map, Except.map] at h
+    have h' : pre ++ ([] : List Ref.RefMove) = pre ++ [⟨iv, j, ""⟩] := Except.ok.inj h
+    have hl := congrArg List.length h'
+    simp at hl
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A PAWN'S DOUBLE PUSH, WHOLE, OVER AN ARBITRARY
+BOARD.** The direction that runs the double-move guard, so the FIRST ray in
+the file whose round reads the board twice. -/
+theorem ray_pawn_double_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hcount : Heap.get? w.heap a = some (countObj jv (Ref.N + Ref.N)))
+    (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' (Ref.N + Ref.N) f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j (Ref.N + Ref.N)) ∧
+      Env.lookup st.locals "d" = some (.int (Ref.N + Ref.N)) ∧
+      (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + (Ref.N + Ref.N)) (Ref.N + Ref.N)) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hd₁ : Env.lookup (Env.set env₁ "j" (.int j)) "d"
+        = some (.int (Ref.N + Ref.N)) := by
+      rw [Env.lookup_set_ne _ (by decide)]; exact hdd
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      hfr₁.set (x := "q") (by decide) _, ?_⟩
+    refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hne, rfl⟩ | ⟨rfl, hnear, rfl⟩ |
+      ⟨rfl, hfar, c2, href2, hne2, rfl⟩ | ⟨rfl, hfar, href2, rfl⟩ :=
+      ray_pawn_dbl_leaf b.toList wc0 wc1 ep kp iv j c r href hnpr hbody
+    · obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · simpa using pawn_dbl_land_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 c a hfr₁ hd₁ hj₁ href hopen hne
+    · simpa using pawn_dbl_near_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 a hfr₁ hd₁ hj₁ href hnear
+    · simpa using pawn_dbl_far_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 c2 a hfr₁ hd₁ hj₁ href hfar href2 hne2
+    · simpa using pawn_dbl_push_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 a hfr₁ hd₁ hj₁ href hfar href2 hnpr
+  · rintro j st pre _ hmap
+    exfalso
+    have h := rayBody_pawn_indep b.toList wc0 wc1 ep kp iv (Ref.N + Ref.N) j
+      (Except.ok []) (Except.ok [⟨iv, j, ""⟩])
+    rw [hmap (Except.ok []), hmap (Except.ok [⟨iv, j, ""⟩])] at h
+    simp only [Functor.map, Except.map] at h
+    have h' : pre ++ ([] : List Ref.RefMove) = pre ++ [⟨iv, j, ""⟩] := Except.ok.inj h
+    have hl := congrArg List.length h'
+    simp at hl
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A PAWN'S CAPTURE DIRECTIONS, WHOLE, OVER AN
+ARBITRARY BOARD.** Both diagonals at once, so `self.ep` and `abs(j -
+self.kp)` are read for the first time — en passant and the king-passant
+squares included, since they are exactly the two ways the guard falls
+through onto an empty square. -/
+theorem ray_pawn_capture_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (dv : Int) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hdv : dv = Ref.N + Ref.W ∨ dv = Ref.N + Ref.E)
+    (hcount : Heap.get? w.heap a = some (countObj jv dv))
+    (hd : Env.lookup env "d" = some (.int dv))
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' dv f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j dv) ∧
+      Env.lookup st.locals "d" = some (.int dv) ∧
+      (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + dv) dv) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hd₁ : Env.lookup (Env.set env₁ "j" (.int j)) "d" = some (.int dv) := by
+      rw [Env.lookup_set_ne _ (by decide)]; exact hdd
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      hfr₁.set (x := "q") (by decide) _, ?_⟩
+    refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hbrk, rfl⟩ | ⟨hopen, hgo, rfl⟩ :=
+      ray_pawn_cap_leaf b.toList wc0 wc1 ep kp iv j dv c r hdv href hnpr hbody
+    · obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · simpa using pawn_cap_break_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b dv score ep kp iv j wc0 wc1 bc0 bc1 c a hfr₁ hdv hd₁ hj₁ href hopen hbrk
+    · simpa using pawn_cap_move_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b dv score ep kp iv j wc0 wc1 bc0 bc1 c a hfr₁ hdv hd₁ hj₁ href hopen hgo hnpr
+  · rintro j st pre _ hmap
+    exfalso
+    have h := rayBody_pawn_indep b.toList wc0 wc1 ep kp iv dv j
+      (Except.ok []) (Except.ok [⟨iv, j, ""⟩])
+    rw [hmap (Except.ok []), hmap (Except.ok [⟨iv, j, ""⟩])] at h
+    simp only [Functor.map, Except.map] at h
+    have h' : pre ++ ([] : List Ref.RefMove) = pre ++ [⟨iv, j, ""⟩] := Except.ok.inj h
+    have hl := congrArg List.length h'
+    simp at hl
+
+
+/-! ## TWO MORE WHOLE RAYS: the corners
+
+`ray_slide_agrees` excludes `i = A1` and `i = H1` because on a corner the
+castling `and` chain runs to the end. These two put the corners back, and
+they are the only rays in the file whose round can emit TWO moves. -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+@[inherit_doc castA_test_true]
+theorem castH_test_true (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.H1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList (jv + Ref.W) = .ok c) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest rCastH) (.bool ((c == 'K') && wc1)) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, hlit⟩ :=
+    rCastHTest_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  have hi' : Env.lookup env "i" = some (.int 98) := hi
+  have href' : Ref.at? b.toList (jv + (-1)) = .ok c := href
+  obtain ⟨k, hkeq, hk0, hklt, hgd⟩ := board_read_facts b (jv + (-1)) c href'
+  by_cases hK : c = 'K' <;>
+    py_simp [sunfish, posOf, hloc.miss "H1", hloc.miss "W", hi', hj, hself, valEq.eq_def,
+      hkeq, hk0, hklt, hgd, sing_K, hK]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+@[inherit_doc cA_yield_evals]
+theorem cH_yield_evals (w : World) (env : REnv) (jv : Int)
+    (hloc : RayLocals env)
+    (hj : Env.lookup env "j" = some (.int jv)) :
+    EvalsTo sunfish ⟨w, env⟩ (planValue cH) (moveVal ⟨jv + Ref.W, jv - Ref.W, ""⟩) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, hlit⟩ := cHVal_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  py_simp [sunfish, moveVal, hloc.miss "Move", hloc.miss "E", hloc.miss "W", hj, Ref.W]
+  all_goals omega
+
+/-- **The castling slide is OFFERED** — the only ray statement whose taken
+arm runs: on a1 the `and` chain does not short-circuit, so the board is read
+at `j + E`, `self.wc[0]` is consulted, and the rook's slide is yielded. -/
+theorem castA_yields (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c2 : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.A1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href2 : Ref.at? b.toList (jv + Ref.E) = .ok c2)
+    (hyes : ((c2 == 'K') && wc0) = true)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastA, rCastH]] ++ pre)
+      (moveVal ⟨jv + Ref.E, jv - Ref.E, ""⟩ :: ws) st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block [cA], GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa [rCastA_body] using genSilent_branch (m := sunfish) (s := rCastA) (b := true)
+        (k := pre ++ k) rCastA_plan
+        (by
+          simpa [hyes] using
+            castA_test_true w env b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc hself hi hj href2)
+        (truthy_boolH w true)) ?_
+  refine GenEmits.cons
+    (pre₁ := [GenFrame.block ([] : List Stmt), GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa using genSteps_yieldHere (m := sunfish) (s := cA) (ss := ([] : List Stmt))
+        (k := GenFrame.block [rCastH] :: (pre ++ k)) cA_plan
+        (cA_yield_evals w env jv hloc hj)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block [rCastH] :: (pre ++ k))) hrest
+
+/-- The castling slide is NOT offered although the piece IS on a1: the board
+read or the rights say no. `castA_skips`' other reason. -/
+theorem castA_skips_corner (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c2 : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.A1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href2 : Ref.at? b.toList (jv + Ref.E) = .ok c2)
+    (hno : ((c2 == 'K') && wc0) = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastA, rCastH]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse rCastA), GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := rCastA) (b := false)
+        (k := pre ++ k) rCastA_plan
+        (by
+          simpa [hno] using
+            castA_test_true w env b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc hself hi hj href2)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa [rCastA_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block [rCastH] :: (pre ++ k))) hrest
+
+/-! ### The reference at the a1 corner -/
+
+open Ref in
+/-- On a1 the ray slides on AND offers the rook's slide. -/
+theorem rayBody_castA_yield_map (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c c2 : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (inStr p "PNK" || inStr c "pnbrqk") = false)
+    (href2 : at? b (j + E) = .ok c2) (hyes : ((c2 == 'K') && wc0) = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp A1 p d j t
+      = (([⟨A1, j, ""⟩, ⟨j + E, j - E, ""⟩] : List RefMove) ++ ·) <$> t := by
+  intro t
+  simp only [Bool.and_eq_true, beq_iff_eq] at hyes
+  cases t <;>
+    (unfold rayBody pawnBreak
+     simp [bind, Except.bind, href, hopen, hnp, hgo, href2, hyes.1, hyes.2,
+       pure, Except.pure, Functor.map, Except.map, A1, H1])
+
+open Ref in
+/-- On a1 the ray slides on and offers NOTHING extra. -/
+theorem rayBody_castA_plain_map (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c c2 : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (inStr p "PNK" || inStr c "pnbrqk") = false)
+    (href2 : at? b (j + E) = .ok c2) (hno : ((c2 == 'K') && wc0) = false) :
+    ∀ t, rayBody b wc0 wc1 ep kp A1 p d j t
+      = (([⟨A1, j, ""⟩] : List RefMove) ++ ·) <$> t := by
+  intro t
+  cases t <;>
+    (unfold rayBody pawnBreak
+     simp [bind, Except.bind, href, hopen, hnp, hgo, href2, hno,
+       pure, Except.pure, Functor.map, Except.map, A1, H1])
+
+open Ref in
+/-- **A slider on a1 ends its ray only two ways** — and if it does not end,
+the board read at `j + E` provably happened. -/
+theorem ray_castA_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c : Char) (r : List RefMove)
+    (href : at? b j = .ok c) (hnp : p ≠ 'P') (hslide : inStr p "PNK" = false)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp A1 p d j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧ inStr c "pnbrqk" = true ∧ r = [⟨A1, j, ""⟩]) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp A1 p d j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : inStr c "pnbrqk" = true
+    · exact Or.inr ⟨hstop, hcap, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_break_const b wc0 wc1 ep kp A1 p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _) (.ok [])))⟩
+    · simp only [Bool.not_eq_true] at hcap
+      exfalso
+      have hgo : (inStr p "PNK" || inStr c "pnbrqk") = false := by rw [hslide, hcap]; rfl
+      have hat2 : ∃ c2, at? b (j + E) = .ok c2 := by
+        cases hx : at? b (j + E) with
+        | ok c2 => exact ⟨c2, rfl⟩
+        | error e =>
+          exfalso
+          have h := hbody (.ok [])
+          unfold rayBody pawnBreak at h
+          simp [bind, Except.bind, href, hstop, hnp, hgo, hx, pure, Except.pure, A1] at h
+      obtain ⟨c2, href2⟩ := hat2
+      by_cases hyes : ((c2 == 'K') && wc0) = true
+      · exact rayBody_const_not_append b wc0 wc1 ep kp A1 p d j r _ hbody
+          (rayBody_castA_yield_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes)
+      · simp only [Bool.not_eq_true] at hyes
+        exact rayBody_const_not_append b wc0 wc1 ep kp A1 p d j r _ hbody
+          (rayBody_castA_plain_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes)
+
+open Ref in
+/-- …and when it CONTINUES, what it prepends is the move plus the castling
+slide exactly when the board and the rights say so. -/
+theorem ray_castA_go (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c : Char) (pre : List RefMove)
+    (href : at? b j = .ok c) (hnp : p ≠ 'P') (hslide : inStr p "PNK" = false)
+    (hmap : ∀ t, rayBody b wc0 wc1 ep kp A1 p d j t = (pre ++ ·) <$> t) :
+    inStr c " \nPNBRQK" = false ∧ inStr c "pnbrqk" = false ∧
+      ∃ c2, at? b (j + E) = .ok c2 ∧
+        ((((c2 == 'K') && wc0) = true ∧ pre = [⟨A1, j, ""⟩, ⟨j + E, j - E, ""⟩]) ∨
+         (((c2 == 'K') && wc0) = false ∧ pre = [⟨A1, j, ""⟩])) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact (rayBody_const_not_append b wc0 wc1 ep kp A1 p d j [] pre
+      (rayBody_stop_const b wc0 wc1 ep kp A1 p d j c href hstop) hmap).elim
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : inStr c "pnbrqk" = true
+    · exact (rayBody_const_not_append b wc0 wc1 ep kp A1 p d j [⟨A1, j, ""⟩] pre
+        (rayBody_break_const b wc0 wc1 ep kp A1 p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _)) hmap).elim
+    · simp only [Bool.not_eq_true] at hcap
+      have hgo : (inStr p "PNK" || inStr c "pnbrqk") = false := by rw [hslide, hcap]; rfl
+      have hat2 : ∃ c2, at? b (j + E) = .ok c2 := by
+        cases hx : at? b (j + E) with
+        | ok c2 => exact ⟨c2, rfl⟩
+        | error e =>
+          exfalso
+          have h := hmap (.ok [])
+          unfold rayBody pawnBreak at h
+          simp [bind, Except.bind, href, hstop, hnp, hgo, hx, pure, Except.pure, A1,
+            Functor.map, Except.map] at h
+      obtain ⟨c2, href2⟩ := hat2
+      refine ⟨hstop, hcap, c2, href2, ?_⟩
+      by_cases hyes : ((c2 == 'K') && wc0) = true
+      · refine Or.inl ⟨hyes, ?_⟩
+        have h := (hmap (.ok [])).symm.trans
+          (rayBody_castA_yield_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes
+            (.ok []))
+        simp only [Functor.map, Except.map] at h
+        simpa using Except.ok.inj h
+      · simp only [Bool.not_eq_true] at hyes
+        refine Or.inr ⟨hyes, ?_⟩
+        have h := (hmap (.ok [])).symm.trans
+          (rayBody_castA_plain_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes
+            (.ok []))
+        simp only [Functor.map, Except.map] at h
+        simpa using Except.ok.inj h
+
+/-! ### The a1 corner's continuing round -/
+
+/-- **The model side of an a1 slider's CONTINUING round, castling OFFERED**:
+the ray's own move, then the rook's slide, then the body ends. -/
+theorem castA_round_yield (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c c2 : Char)
+    (hframe : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = false)
+    (href2 : Ref.at? b.toList (jv + Ref.E) = .ok c2)
+    (hyes : ((c2 == 'K') && wc0) = true) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay]
+      [moveVal ⟨Ref.A1, jv, ""⟩, moveVal ⟨jv + Ref.E, jv - Ref.E, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int Ref.A1) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hs₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "self"
+      = some (posOf b score wc0 wc1 bc0 bc1 ep kp) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hself
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  have hdone : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block []] ++ ([] : GenCont)) []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+    simpa using block_done ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+  simpa using
+    q_falls w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href
+      (stop_falls w _ c hq₁ hopen
+        (pawn_skips w _ p hp₁ hnp
+          (yield_emits w _ Ref.A1 jv hloc₁ hi₁ hj₁
+            (crawl_falls w _ p c hp₁ hq₁ hgo
+              (castA_yields w _ b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc₁ hs₁ hi₁ hj₁
+                href2 hyes
+                (castH_skips w _ Ref.A1 hloc₁ hi₁ (by decide) hdone))))))
+
+/-- **…and with the castling REFUSED**: the slide is skipped, and what is
+left is `slider_round` at the corner. -/
+theorem castA_round_plain (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c c2 : Char)
+    (hframe : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = false)
+    (href2 : Ref.at? b.toList (jv + Ref.E) = .ok c2)
+    (hno : ((c2 == 'K') && wc0) = false) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay] [moveVal ⟨Ref.A1, jv, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int Ref.A1) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hs₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "self"
+      = some (posOf b score wc0 wc1 bc0 bc1 ep kp) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hself
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  have hdone : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block []] ++ ([] : GenCont)) []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+    simpa using block_done ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+  simpa using
+    q_falls w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href
+      (stop_falls w _ c hq₁ hopen
+        (pawn_skips w _ p hp₁ hnp
+          (yield_emits w _ Ref.A1 jv hloc₁ hi₁ hj₁
+            (crawl_falls w _ p c hp₁ hq₁ hgo
+              (castA_skips_corner w _ b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc₁ hs₁ hi₁ hj₁
+                href2 hno
+                (castH_skips w _ Ref.A1 hloc₁ hi₁ (by decide) hdone))))))
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A SLIDER ON a1, WHOLE, OVER AN ARBITRARY BOARD.**
+The one ray shape `ray_slide_agrees` had to exclude: on the corner the
+castling `and` chain runs to the end, so every round may yield a SECOND
+move — the rook's slide next to the king — and the round's output is no
+longer a singleton. `ray_rounds` does not move: `pre` was a list all
+along. -/
+theorem ray_castA_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp d : Int) (wc0 wc1 bc0 bc1 : Bool) (p : Char)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p env)
+    (hcount : Heap.get? w.heap a = some (countObj jv d))
+    (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp Ref.A1 p d f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j d))
+    (Out := fun st => RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hcap, rfl⟩ :=
+      ray_castA_leaf b.toList wc0 wc1 ep kp p d j c r href hnp hslide hbody
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp Ref.A1 j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
+        (by rw [hcap]; exact Bool.or_true _)
+  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hmap (Except.ok [])
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr, Functor.map, Except.map] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hopen, hcap, c2, href2, harm⟩ :=
+      ray_castA_go b.toList wc0 wc1 ep kp p d j c pre href hnp hslide hmap
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+    refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    rcases harm with ⟨hyes, rfl⟩ | ⟨hno, rfl⟩
+    · simpa using castA_round_yield { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp j wc0 wc1 bc0 bc1 p c c2 hfr₁ hj₁ href hopen hnp
+        (by rw [hslide, hcap]; rfl) href2 hyes
+    · simpa using castA_round_plain { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp j wc0 wc1 bc0 bc1 p c c2 hfr₁ hj₁ href hopen hnp
+        (by rw [hslide, hcap]; rfl) href2 hno
+
+
+/-! ### The h1 corner, mirrored -/
+
+@[inherit_doc castA_yields]
+theorem castH_yields (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c2 : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.H1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href2 : Ref.at? b.toList (jv + Ref.W) = .ok c2)
+    (hyes : ((c2 == 'K') && wc1) = true)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block ([] : List Stmt)] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre)
+      (moveVal ⟨jv + Ref.W, jv - Ref.W, ""⟩ :: ws) st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block [cH], GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa [rCastH_body] using genSilent_branch (m := sunfish) (s := rCastH) (b := true)
+        (k := pre ++ k) rCastH_plan
+        (by
+          simpa [hyes] using
+            castH_test_true w env b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc hself hi hj href2)
+        (truthy_boolH w true)) ?_
+  refine GenEmits.cons
+    (pre₁ := [GenFrame.block ([] : List Stmt), GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSteps_yieldHere (m := sunfish) (s := cH) (ss := ([] : List Stmt))
+        (k := GenFrame.block ([] : List Stmt) :: (pre ++ k)) cH_plan
+        (cH_yield_evals w env jv hloc hj)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block ([] : List Stmt) :: (pre ++ k))) hrest
+
+@[inherit_doc castA_skips_corner]
+theorem castH_skips_corner (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c2 : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hi : Env.lookup env "i" = some (.int Ref.H1))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href2 : Ref.at? b.toList (jv + Ref.W) = .ok c2)
+    (hno : ((c2 == 'K') && wc1) = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block ([] : List Stmt)] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse rCastH), GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := rCastH) (b := false)
+        (k := pre ++ k) rCastH_plan
+        (by
+          simpa [hno] using
+            castH_test_true w env b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc hself hi hj href2)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa [rCastH_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block ([] : List Stmt) :: (pre ++ k))) hrest
+
+open Ref in
+@[inherit_doc rayBody_castA_yield_map]
+theorem rayBody_castH_yield_map (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c c2 : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (inStr p "PNK" || inStr c "pnbrqk") = false)
+    (href2 : at? b (j + W) = .ok c2) (hyes : ((c2 == 'K') && wc1) = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp H1 p d j t
+      = (([⟨H1, j, ""⟩, ⟨j + W, j - W, ""⟩] : List RefMove) ++ ·) <$> t := by
+  intro t
+  simp only [Bool.and_eq_true, beq_iff_eq] at hyes
+  cases t <;>
+    (unfold rayBody pawnBreak
+     simp [bind, Except.bind, href, hopen, hnp, hgo, href2, hyes.1, hyes.2,
+       pure, Except.pure, Functor.map, Except.map, A1, H1])
+
+open Ref in
+@[inherit_doc rayBody_castA_plain_map]
+theorem rayBody_castH_plain_map (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c c2 : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (inStr p "PNK" || inStr c "pnbrqk") = false)
+    (href2 : at? b (j + W) = .ok c2) (hno : ((c2 == 'K') && wc1) = false) :
+    ∀ t, rayBody b wc0 wc1 ep kp H1 p d j t
+      = (([⟨H1, j, ""⟩] : List RefMove) ++ ·) <$> t := by
+  intro t
+  cases t <;>
+    (unfold rayBody pawnBreak
+     simp [bind, Except.bind, href, hopen, hnp, hgo, href2, hno,
+       pure, Except.pure, Functor.map, Except.map, A1, H1])
+
+open Ref in
+@[inherit_doc ray_castA_leaf]
+theorem ray_castH_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c : Char) (r : List RefMove)
+    (href : at? b j = .ok c) (hnp : p ≠ 'P') (hslide : inStr p "PNK" = false)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp H1 p d j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧ inStr c "pnbrqk" = true ∧ r = [⟨H1, j, ""⟩]) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp H1 p d j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : inStr c "pnbrqk" = true
+    · exact Or.inr ⟨hstop, hcap, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_break_const b wc0 wc1 ep kp H1 p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _) (.ok [])))⟩
+    · simp only [Bool.not_eq_true] at hcap
+      exfalso
+      have hgo : (inStr p "PNK" || inStr c "pnbrqk") = false := by rw [hslide, hcap]; rfl
+      have hat2 : ∃ c2, at? b (j + W) = .ok c2 := by
+        cases hx : at? b (j + W) with
+        | ok c2 => exact ⟨c2, rfl⟩
+        | error e =>
+          exfalso
+          have h := hbody (.ok [])
+          unfold rayBody pawnBreak at h
+          simp [bind, Except.bind, href, hstop, hnp, hgo, hx, pure, Except.pure,
+            A1, H1] at h
+      obtain ⟨c2, href2⟩ := hat2
+      by_cases hyes : ((c2 == 'K') && wc1) = true
+      · exact rayBody_const_not_append b wc0 wc1 ep kp H1 p d j r _ hbody
+          (rayBody_castH_yield_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes)
+      · simp only [Bool.not_eq_true] at hyes
+        exact rayBody_const_not_append b wc0 wc1 ep kp H1 p d j r _ hbody
+          (rayBody_castH_plain_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes)
+
+open Ref in
+@[inherit_doc ray_castA_go]
+theorem ray_castH_go (b : List Char) (wc0 wc1 : Bool) (ep kp : Int)
+    (p : Char) (d j : Int) (c : Char) (pre : List RefMove)
+    (href : at? b j = .ok c) (hnp : p ≠ 'P') (hslide : inStr p "PNK" = false)
+    (hmap : ∀ t, rayBody b wc0 wc1 ep kp H1 p d j t = (pre ++ ·) <$> t) :
+    inStr c " \nPNBRQK" = false ∧ inStr c "pnbrqk" = false ∧
+      ∃ c2, at? b (j + W) = .ok c2 ∧
+        ((((c2 == 'K') && wc1) = true ∧ pre = [⟨H1, j, ""⟩, ⟨j + W, j - W, ""⟩]) ∨
+         (((c2 == 'K') && wc1) = false ∧ pre = [⟨H1, j, ""⟩])) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact (rayBody_const_not_append b wc0 wc1 ep kp H1 p d j [] pre
+      (rayBody_stop_const b wc0 wc1 ep kp H1 p d j c href hstop) hmap).elim
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : inStr c "pnbrqk" = true
+    · exact (rayBody_const_not_append b wc0 wc1 ep kp H1 p d j [⟨H1, j, ""⟩] pre
+        (rayBody_break_const b wc0 wc1 ep kp H1 p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _)) hmap).elim
+    · simp only [Bool.not_eq_true] at hcap
+      have hgo : (inStr p "PNK" || inStr c "pnbrqk") = false := by rw [hslide, hcap]; rfl
+      have hat2 : ∃ c2, at? b (j + W) = .ok c2 := by
+        cases hx : at? b (j + W) with
+        | ok c2 => exact ⟨c2, rfl⟩
+        | error e =>
+          exfalso
+          have h := hmap (.ok [])
+          unfold rayBody pawnBreak at h
+          simp [bind, Except.bind, href, hstop, hnp, hgo, hx, pure, Except.pure, A1, H1,
+            Functor.map, Except.map] at h
+      obtain ⟨c2, href2⟩ := hat2
+      refine ⟨hstop, hcap, c2, href2, ?_⟩
+      by_cases hyes : ((c2 == 'K') && wc1) = true
+      · refine Or.inl ⟨hyes, ?_⟩
+        have h := (hmap (.ok [])).symm.trans
+          (rayBody_castH_yield_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes
+            (.ok []))
+        simp only [Functor.map, Except.map] at h
+        simpa using Except.ok.inj h
+      · simp only [Bool.not_eq_true] at hyes
+        refine Or.inr ⟨hyes, ?_⟩
+        have h := (hmap (.ok [])).symm.trans
+          (rayBody_castH_plain_map b wc0 wc1 ep kp p d j c c2 href hstop hnp hgo href2 hyes
+            (.ok []))
+        simp only [Functor.map, Except.map] at h
+        simpa using Except.ok.inj h
+
+@[inherit_doc castA_round_yield]
+theorem castH_round_yield (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c c2 : Char)
+    (hframe : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = false)
+    (href2 : Ref.at? b.toList (jv + Ref.W) = .ok c2)
+    (hyes : ((c2 == 'K') && wc1) = true) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay]
+      [moveVal ⟨Ref.H1, jv, ""⟩, moveVal ⟨jv + Ref.W, jv - Ref.W, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int Ref.H1) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hs₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "self"
+      = some (posOf b score wc0 wc1 bc0 bc1 ep kp) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hself
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  have hdone : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block []] ++ ([] : GenCont)) []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+    simpa using block_done ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+  simpa using
+    q_falls w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href
+      (stop_falls w _ c hq₁ hopen
+        (pawn_skips w _ p hp₁ hnp
+          (yield_emits w _ Ref.H1 jv hloc₁ hi₁ hj₁
+            (crawl_falls w _ p c hp₁ hq₁ hgo
+              (castA_skips w _ Ref.H1 hloc₁ hi₁ (by decide)
+                (castH_yields w _ b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc₁ hs₁ hi₁ hj₁
+                  href2 hyes hdone))))))
+
+@[inherit_doc castA_round_plain]
+theorem castH_round_plain (w : World) (env : REnv) (b : String)
+    (score ep kp jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c c2 : Char)
+    (hframe : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = false)
+    (href2 : Ref.at? b.toList (jv + Ref.W) = .ok c2)
+    (hno : ((c2 == 'K') && wc1) = false) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay] [moveVal ⟨Ref.H1, jv, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int Ref.H1) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hs₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "self"
+      = some (posOf b score wc0 wc1 bc0 bc1 ep kp) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hself
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  have hdone : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block []] ++ ([] : GenCont)) []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+    simpa using block_done ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+  simpa using
+    q_falls w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href
+      (stop_falls w _ c hq₁ hopen
+        (pawn_skips w _ p hp₁ hnp
+          (yield_emits w _ Ref.H1 jv hloc₁ hi₁ hj₁
+            (crawl_falls w _ p c hp₁ hq₁ hgo
+              (castA_skips w _ Ref.H1 hloc₁ hi₁ (by decide)
+                (castH_skips_corner w _ b score ep kp jv wc0 wc1 bc0 bc1 c2 hloc₁ hs₁ hi₁ hj₁
+                  href2 hno hdone))))))
+
+set_option maxHeartbeats 800000 in
+@[inherit_doc ray_castA_agrees]
+theorem ray_castH_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp d : Int) (wc0 wc1 bc0 bc1 : Bool) (p : Char)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p env)
+    (hcount : Heap.get? w.heap a = some (countObj jv d))
+    (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp Ref.H1 p d f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j d))
+    (Out := fun st => RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hcap, rfl⟩ :=
+      ray_castH_leaf b.toList wc0 wc1 ep kp p d j c r href hnp hslide hbody
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp Ref.H1 j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
+        (by rw [hcap]; exact Bool.or_true _)
+  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hmap (Except.ok [])
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr, Functor.map, Except.map] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hopen, hcap, c2, href2, harm⟩ :=
+      ray_castH_go b.toList wc0 wc1 ep kp p d j c pre href hnp hslide hmap
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+    refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    rcases harm with ⟨hyes, rfl⟩ | ⟨hno, rfl⟩
+    · simpa using castH_round_yield { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp j wc0 wc1 bc0 bc1 p c c2 hfr₁ hj₁ href hopen hnp
+        (by rw [hslide, hcap]; rfl) href2 hyes
+    · simpa using castH_round_plain { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp j wc0 wc1 bc0 bc1 p c c2 hfr₁ hj₁ href hopen hnp
+        (by rw [hslide, hcap]; rfl) href2 hno
+
+/-! ## Non-vacuity for the five leaves
+
+Every arm below is reachable on a board from `pins_genmoves.lean`'s own
+differential battery — the boards CPython answered for. -/
+
+/-- The promotion row of the battery: a white pawn on 31, one push from the
+last rank. -/
+def promBoard : String :=
+  "         \n         \n ........\n P.......\n ........\n ........\n ........\n ........\n ........\n K.......\n         \n         \n"
+
+/-- The castling row: rooks on a1 and h1, the king between them. -/
+def castleBoard : String :=
+  "         \n         \n ........\n ........\n ........\n ........\n ........\n ........\n ........\n R...K..R\n         \n         \n"
+
+/-- The capture row: a white pawn on 54 with a black pawn on its west
+diagonal and an empty east one. -/
+def capBoard : String :=
+  "         \n         \n ........\n ........\n ..p.....\n ...P....\n ........\n ........\n ........\n K.......\n         \n         \n"
+
+/-! The PROMOTION leaf EMITS: 31 holds a pawn, 21 is empty and on the last
+row, and the ray reports exactly the four promotions — the emission itself,
+not just the guard. -/
+
+#guard (match Ref.at? promBoard.toList 31 with | .ok c => c == 'P' | _ => false) == true
+#guard (match Ref.at? promBoard.toList 21 with | .ok c => c == '.' | _ => false) == true
+#guard (decide (Ref.A8 ≤ (21 : Int)) && decide ((21 : Int) ≤ Ref.H8)) == true
+
+#guard (match Ref.ray promBoard.toList false false 0 0 31 'P' Ref.N 64 21 with
+        | .ok ms => ms == [⟨31, 21, "N"⟩, ⟨31, 21, "B"⟩, ⟨31, 21, "R"⟩, ⟨31, 21, "Q"⟩]
+        | _ => false) == true
+
+#guard promMoves 31 21 == [⟨31, 21, "N"⟩, ⟨31, 21, "B"⟩, ⟨31, 21, "R"⟩, ⟨31, 21, "Q"⟩]
+
+/-! The DOUBLE move, both of its guards: from 84 the pawn is far enough
+(`¬ 84 < A1 + N`), 74 is clear and 64 is clear, so the move happens; from
+71 the same direction is refused by the rank alone. -/
+
+#guard (decide ((84 : Int) < Ref.A1 + Ref.N)) == false
+#guard (match Ref.at? board0.toList 74 with | .ok c => c == '.' | _ => false) == true
+#guard (match Ref.ray board0.toList true true 0 0 84 'P' (Ref.N + Ref.N) 64 64 with
+        | .ok ms => ms == [⟨84, 64, ""⟩]
+        | _ => false) == true
+
+#guard (decide ((71 : Int) < Ref.A1 + Ref.N)) == true
+#guard (match Ref.ray board0.toList true true 0 0 71 'P' (Ref.N + Ref.N) 64 51 with
+        | .ok ms => ms == []
+        | _ => false) == true
+
+/-! The CAPTURE guard, all four of its arms, on one board: west takes a real
+piece; east is empty and breaks; east at the EN-PASSANT square does not; and
+neither does east beside the KING-PASSANT square. -/
+
+#guard (match Ref.at? capBoard.toList 54 with | .ok c => c == 'P' | _ => false) == true
+#guard (match Ref.at? capBoard.toList 43 with | .ok c => c == 'p' | _ => false) == true
+#guard (match Ref.at? capBoard.toList 45 with | .ok c => c == '.' | _ => false) == true
+
+#guard (match Ref.ray capBoard.toList false false 0 0 54 'P' (Ref.N + Ref.W) 64 43 with
+        | .ok ms => ms == [⟨54, 43, ""⟩]
+        | _ => false) == true
+#guard (match Ref.ray capBoard.toList false false 0 0 54 'P' (Ref.N + Ref.E) 64 45 with
+        | .ok ms => ms == []
+        | _ => false) == true
+#guard (match Ref.ray capBoard.toList false false 45 0 54 'P' (Ref.N + Ref.E) 64 45 with
+        | .ok ms => ms == [⟨54, 45, ""⟩]
+        | _ => false) == true
+#guard (match Ref.ray capBoard.toList false false 0 45 54 'P' (Ref.N + Ref.E) 64 45 with
+        | .ok ms => ms == [⟨54, 45, ""⟩]
+        | _ => false) == true
+
+/-! The CASTLING yield, at both corners and at both truth values of the
+right: the a1 rook sliding east reaches 94, reads `K` at 95 and offers
+`Move(95, 93, "")`; the h1 rook sliding west reaches 96 and offers
+`Move(95, 97, "")`; with the right withdrawn neither does. -/
+
+#guard (match Ref.at? castleBoard.toList 95 with | .ok c => c == 'K' | _ => false) == true
+
+#guard (match Ref.ray castleBoard.toList true true 0 0 Ref.A1 'R' Ref.E 64 92 with
+        | .ok ms => ms == [⟨91, 92, ""⟩, ⟨91, 93, ""⟩, ⟨91, 94, ""⟩, ⟨95, 93, ""⟩]
+        | _ => false) == true
+#guard (match Ref.ray castleBoard.toList false true 0 0 Ref.A1 'R' Ref.E 64 92 with
+        | .ok ms => ms == [⟨91, 92, ""⟩, ⟨91, 93, ""⟩, ⟨91, 94, ""⟩]
+        | _ => false) == true
+
+#guard (match Ref.ray castleBoard.toList true true 0 0 Ref.H1 'R' Ref.W 64 97 with
+        | .ok ms => ms == [⟨98, 97, ""⟩, ⟨98, 96, ""⟩, ⟨95, 97, ""⟩]
+        | _ => false) == true
+#guard (match Ref.ray castleBoard.toList true false 0 0 Ref.H1 'R' Ref.W 64 97 with
+        | .ok ms => ms == [⟨98, 97, ""⟩, ⟨98, 96, ""⟩]
+        | _ => false) == true
+
+/-! ## What L5 consumes, and what is left
+
+**`Ref.ray`'s nine leaves are all discharged**, and the file now carries an
+agreement theorem for every ray `Position.gen_moves` can enter — six of
+them, one per shape the shipped loop distinguishes:
+
+| theorem | the ray it covers |
+|---|---|
+| `ray_crawl_agrees` | a knight or a king |
+| `ray_slide_agrees` | a bishop, rook or queen off the corners |
+| `ray_castA_agrees` / `ray_castH_agrees` | a slider ON a corner, castling slide included |
+| `ray_pawn_push_agrees` | a pawn's single push, no promotion |
+| `ray_pawn_double_agrees` | a pawn's double push |
+| `ray_pawn_capture_agrees` | a pawn's two capture directions |
+| `ray_pawn_prom_agrees` | a pawn's push onto the last row |
+
+All seven land in ONE shape — `∃ st', RayFrame … st'.locals ∧ GenEmits
+sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st'` — over
+an arbitrary board, an arbitrary square, at every fuel, so the board scan
+can chain rays without knowing which piece it is holding. `RayFrame` is the
+interface: the scans hand `self`/`i`/`p` in and get them back, and
+`RayLocals` is what keeps the module globals visible.
+
+**Five measurements this half added.**
+
+1. *A board read inside a `boolOp` chain does not go through
+   `at?_eq_indexVal`.* Its LHS is `indexVal` applied to CONSTRUCTORS, and
+   the `interpUnfolds` delta beats a specific-shape LHS — the corrected
+   house rule exactly. What `py_simp` leaves is Python's negative-index fold
+   verbatim, so `board_read_facts` packages the four rewrites that close it,
+   and the castling read and the double move's second read are then the same
+   three lines `rQ_run` writes by hand.
+2. *A guard whose value is symbolic must be case-split BEFORE `py_simp`, and
+   only there.* `pB2_run_cap` forks on `q == "."` and on `j != self.ep`
+   because the chain cannot step past an undecided operand — but its LAST
+   operand needs no fork at all, since `abs(j - self.kp) > 1` is only
+   consumed by the statement's own truthiness. Six captured runs instead of
+   eight.
+3. *`GenEmits.forSeq`'s invariant should carry the FRAME, not the loop
+   variable.* The promotion loop's `Inv` says "the world is unchanged and
+   `RayFrame` holds"; `prom` is one of `rayNames`, so every iteration
+   re-establishes it by `RayFrame.set` and the exit state is exactly what
+   the ray owes its caller. Tracking `prom` would have bought nothing and
+   cost an existential.
+4. *`cases h : e` GENERALIZES `e` in the goal.* Extracting "the second board
+   read succeeded" with `cases h2 : at? b (i + N)` rewrote the goal's own
+   mentions of that read and the leaf classifier stopped typechecking; the
+   fix is the `hat` pattern the whole-ray proofs already use — prove
+   `∃ c2, at? b (i + N) = .ok c2` inside a `have`, then `obtain`.
+5. *A `def` in a hypothesis still never meets its own value, and now in both
+   directions.* `hnear : i < A1 + N` does not close a goal that says
+   `i < 81`, and `href2 : at? b (i + N) = …` does not match `at? b (i + -10)`
+   — one `have` at the numeral each time, exactly as §L4 CLOSED recorded for
+   `Ref.N`.
+
+**What L5 still needs.** Nothing from the ray. The board scan is a `forGen`
+over an `<enumerate>` OBJECT (not an `enumSeq` — the correction from §L4
+PARTIAL stands), it must skip a square whose piece is not ours (`if p not in
+"PNBRQK": continue`, the ray tier's first `continue`), and the direction
+scan is a `for d in directions[p]` over a module-global dict entry, which is
+a heap read the ray never performs. `Ref.piece` and `Ref.refMoves` are the
+reference sides, and `refTriples_flatten` (genmoves_theorem.lean) is the
+presentation lemma they arrive through. -/
 
 end Examples.python.sunfish.genmoves_ray

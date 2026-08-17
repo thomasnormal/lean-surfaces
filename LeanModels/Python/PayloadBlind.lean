@@ -473,4 +473,208 @@ theorem allocDict {st : FrameState} (hslot : Heap.get? st.world.heap a = some o�
 
 end PBF
 
+
+/-! ## Tier B — the universal read primitive
+
+Every heap-reading helper resolves its reads through this one fact, and
+that is why each helper's blindness lemma is an ARM-BY-ARM `rfl` rather
+than a simulation: away from `pa` the swapped heap reads the SAME object,
+and AT `pa` both sides read a `.running` generator of the same `qname` —
+which every arm in the semantics but `stepIter`'s answers without looking
+at the payload (the census, docs/backlog.md §L6). -/
+
+/-- **The read, resolved**: same object off `pa`, twin generators at it. -/
+theorem Heap.get?_swapAt_twin {h : Heap} {pa b : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) :
+    Heap.get? (Heap.swapAt h pa o) b = Heap.get? h b ∨
+      (∃ (q : String) (l₀ : REnv) (c₀ : GenCont) (l₁ : REnv) (c₁ : GenCont),
+        Heap.get? h b = some (.generator q l₀ c₀ .running) ∧
+        Heap.get? (Heap.swapAt h pa o) b = some (.generator q l₁ c₁ .running)) := by
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    exact Or.inr ⟨q, l₀, c₀, l₁, c₁, hslot,
+      Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot) _⟩
+  · exact Or.inl (Heap.get?_swapAt_ne hba)
+
+/-- `RVal.typeNameH` is blind — the refusal messages name the CONSTRUCTOR,
+and a twin pair shares it. The template every §Tier B arm follows. -/
+theorem RVal.typeNameH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (v : RVal) :
+    RVal.typeNameH (Heap.swapAt h pa o) v = RVal.typeNameH h v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨q, l₀, c₀, l₁, c₁, h1, h2⟩
+      · rw [RVal.typeNameH, RVal.typeNameH, heq]
+      · rw [RVal.typeNameH, RVal.typeNameH, h1, h2]
+  | _ => rfl
+
+/-! ## Tier D — the 18 conjuncts
+
+One statement per member of the interpreter's mutual block
+(Semantics.lean:4232–6207), `fuelMono`'s conjunct order — ClockErase.lean's
+`CE` geometry. `PBAll` is what the mutual induction on fuel proves; each
+arm is a composition of §Tier C's combinators over §Tier B's equations.
+
+Every conjunct is stated here so that the remainder of this proof is
+ENUMERATED rather than described: `payloadBlind_of_execGen` below shows
+the reduction closes, and what is owed is exactly the arms. -/
+
+section Conjuncts
+variable (pa : Addr) (o₀ o : Obj)
+
+abbrev PBEvalExpr (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (e : Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalExpr m fuel st e) (evalExpr m fuel (st.swapAt pa o) e)
+
+abbrev PBEvalExprs (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (es : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalExprs m fuel st es) (evalExprs m fuel (st.swapAt pa o) es)
+
+abbrev PBEvalDictItems (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (keys values : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalDictItems m fuel st keys values)
+      (evalDictItems m fuel (st.swapAt pa o) keys values)
+
+abbrev PBExecAttrCall (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (b : Addr) (attr : String) (args : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execAttrCall m fuel st b attr args)
+      (execAttrCall m fuel (st.swapAt pa o) b attr args)
+
+abbrev PBEvalBoolChain (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (op : BoolOp) (e : Expr) (rest : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalBoolChain m fuel st op e rest)
+      (evalBoolChain m fuel (st.swapAt pa o) op e rest)
+
+abbrev PBEvalCompareChain (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (lhs : RVal) (ops : List CmpOp)
+    (comparators : List Expr),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (evalCompareChain m fuel st lhs ops comparators)
+      (evalCompareChain m fuel (st.swapAt pa o) lhs ops comparators)
+
+abbrev PBExecStmt (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (s : Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execStmt m fuel st s) (execStmt m fuel (st.swapAt pa o) s)
+
+abbrev PBExecStmts (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (ss : List Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execStmts m fuel st ss) (execStmts m fuel (st.swapAt pa o) ss)
+
+abbrev PBExecFor (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (target : Expr) (xs : List RVal)
+    (body : List Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execFor m fuel st target xs body)
+      (execFor m fuel (st.swapAt pa o) target xs body)
+
+abbrev PBExecForList (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (target : Expr) (b : Addr) (i : Nat)
+    (body : List Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execForList m fuel st target b i body)
+      (execForList m fuel (st.swapAt pa o) target b i body)
+
+abbrev PBExecWhile (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (test : Expr) (body orelse : List Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execWhile m fuel st test body orelse)
+      (execWhile m fuel (st.swapAt pa o) test body orelse)
+
+abbrev PBCallIn (fuel : Nat) : Prop :=
+  ∀ (m : Module) (w : World) (fname : String) (args : Array RVal),
+    Heap.get? w.heap pa = some o₀ →
+    PBW pa o₀ o (callIn m fuel w fname args)
+      (callIn m fuel (w.swapAt pa o) fname args)
+
+/-- The load-bearing one: `stepIter` is the ONLY reader of a generator's
+payload, and at `pa` — a `.running` object — it refuses before reaching
+either field. -/
+abbrev PBStepIter (fuel : Nat) : Prop :=
+  ∀ (m : Module) (w : World) (b : Addr),
+    Heap.get? w.heap pa = some o₀ →
+    PBW pa o₀ o (stepIter m fuel w b) (stepIter m fuel (w.swapAt pa o) b)
+
+abbrev PBExecGen (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (k : GenCont),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execGen m fuel st k) (execGen m fuel (st.swapAt pa o) k)
+
+abbrev PBExecForGen (fuel : Nat) : Prop :=
+  ∀ (m : Module) (st : FrameState) (target : Expr) (b : Addr) (body : List Stmt),
+    Heap.get? st.world.heap pa = some o₀ →
+    PBF pa o₀ o (execForGen m fuel st target b body)
+      (execForGen m fuel (st.swapAt pa o) target b body)
+
+abbrev PBDrainIter (fuel : Nat) : Prop :=
+  ∀ (m : Module) (w : World) (b : Addr),
+    Heap.get? w.heap pa = some o₀ →
+    PBW pa o₀ o (drainIter m fuel w b) (drainIter m fuel (w.swapAt pa o) b)
+
+abbrev PBAnyAllIter (fuel : Nat) : Prop :=
+  ∀ (m : Module) (w : World) (b : Addr) (isAll : Bool),
+    Heap.get? w.heap pa = some o₀ →
+    PBW pa o₀ o (anyAllIter m fuel w b isAll)
+      (anyAllIter m fuel (w.swapAt pa o) b isAll)
+
+abbrev PBCallClosure (fuel : Nat) : Prop :=
+  ∀ (m : Module) (w : World) (name : String) (params : Array Param)
+    (ao lo ig : Bool) (body : Array Stmt) (cap : REnv) (args : Array RVal),
+    Heap.get? w.heap pa = some o₀ →
+    PBW pa o₀ o (callClosure m fuel w name params ao lo ig body cap args)
+      (callClosure m fuel (w.swapAt pa o) name params ao lo ig body cap args)
+
+/-- **The whole-block statement** — what the mutual induction on fuel
+proves, `fuelMono`'s conjunct order. -/
+abbrev PBAll (fuel : Nat) : Prop :=
+  PBEvalExpr pa o₀ o fuel ∧ PBEvalExprs pa o₀ o fuel ∧
+  PBEvalBoolChain pa o₀ o fuel ∧ PBEvalCompareChain pa o₀ o fuel ∧
+  PBExecStmt pa o₀ o fuel ∧ PBExecStmts pa o₀ o fuel ∧
+  PBExecWhile pa o₀ o fuel ∧ PBCallIn pa o₀ o fuel ∧
+  PBExecFor pa o₀ o fuel ∧ PBEvalDictItems pa o₀ o fuel ∧
+  PBExecForList pa o₀ o fuel ∧ PBExecAttrCall pa o₀ o fuel ∧
+  PBStepIter pa o₀ o fuel ∧ PBExecGen pa o₀ o fuel ∧
+  PBExecForGen pa o₀ o fuel ∧ PBDrainIter pa o₀ o fuel ∧
+  PBAnyAllIter pa o₀ o fuel ∧ PBCallClosure pa o₀ o fuel
+
+end Conjuncts
+
+/-! ## The reduction — `PayloadBlind` IS the `execGen` conjunct
+
+What remains after this theorem is exactly the arms: no glue, no side
+condition, no consumer-side hypothesis. Both of `PayloadBlind`'s conjuncts
+come from the SAME instance of `PBExecGen`, which is the shape finding
+§L6 recorded (stability is not a side condition — it is derivable from the
+guard transport rests on), now discharged rather than assumed. -/
+
+/-- **The whole property reduces to one conjunct.** Stability is
+`PBExecGen` at the IDENTITY twin; transport is `PBExecGen` at the swap the
+consumer asks for, with `Heap.update_eq_swapAt` turning its two `update`
+hypotheses into the functional form. -/
+theorem payloadBlind_of_execGen {m : Module}
+    (harm : ∀ (pa : Addr) (o₀ o : Obj), PayloadTwin o₀ o →
+      ∀ (fuel : Nat), PBExecGen pa o₀ o fuel) :
+    PayloadBlind m := by
+  intro F pa qname locals₀ cont₀ st st₁ k r hslot hrun
+  refine ⟨?_, fun locals₁ cont₁ h h₁ hset hset₁ => ?_⟩
+  · -- STABILITY: the identity twin.
+    have htwin : PayloadTwin (.generator qname locals₀ cont₀ .running)
+        (.generator qname locals₀ cont₀ .running) :=
+      ⟨qname, locals₀, cont₀, locals₀, cont₀, rfl, rfl⟩
+    exact ((harm pa _ _ htwin F m st k hslot).1 st₁ r hrun).1
+  · -- TRANSPORT: the swap the consumer names.
+    have htwin : PayloadTwin (.generator qname locals₀ cont₀ .running)
+        (.generator qname locals₁ cont₁ .running) :=
+      ⟨qname, locals₀, cont₀, locals₁, cont₁, rfl, rfl⟩
+    have hgoal := ((harm pa _ _ htwin F m st k hslot).1 st₁ r hrun).2
+    rw [Heap.update_eq_swapAt hset, Heap.update_eq_swapAt hset₁]
+    exact hgoal
+
 end LeanModels.Python

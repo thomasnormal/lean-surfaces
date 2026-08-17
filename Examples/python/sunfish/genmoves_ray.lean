@@ -147,6 +147,73 @@ theorem rayBody_append_or_const (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
       | exact Or.inl ⟨_, fun t => rfl⟩
       | exact Or.inr ⟨_, fun t => by cases t <;> rfl⟩
 
+/-! ### Which leaf, for a NON-PAWN
+
+`rayBody_append_or_const` says a leaf is one of the two shapes; these three
+say WHICH, from the two guards a non-pawn ray actually consults. Together
+they are the trichotomy the whole file's reference side runs on — a blocked
+square, a square that ends the slide, and a square the ray slides through —
+and the last of them is the one no crawler ever reaches. -/
+
+open Ref in
+/-- The square is a BLOCKER: the ray stops before it, whatever the tail. -/
+theorem rayBody_stop_const (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (href : at? b j = .ok c)
+    (hstop : inStr c " \nPNBRQK" = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok [] := by
+  intro t
+  unfold rayBody
+  simp only [bind, Except.bind, href, hstop, if_pos, pure, Except.pure]
+
+open Ref in
+/-- The square is reachable but ENDS the slide — a crawler, or a capture:
+the one move, and no tail. -/
+theorem rayBody_break_const (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (href : at? b j = .ok c)
+    (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hbrk : (inStr p "PNK" || inStr c "pnbrqk") = true) :
+    ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok [⟨i, j, ""⟩] := by
+  intro t
+  unfold rayBody pawnBreak
+  simp only [bind, Except.bind, href, hopen, Bool.false_eq_true, if_false,
+    bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos, hbrk, pure, Except.pure]
+
+open Ref in
+/-- The ray SLIDES ON: the one move is prepended and the tail is consumed.
+Off the two corner squares both castling slides are empty, so `pre` is the
+single move — which is what makes `ray_rounds`' `hgo` inhabitable. -/
+theorem rayBody_slide_map (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (href : at? b j = .ok c)
+    (hopen : inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (inStr p "PNK" || inStr c "pnbrqk") = false)
+    (hA : i ≠ A1) (hH : i ≠ H1) :
+    ∀ t, rayBody b wc0 wc1 ep kp i p d j t
+      = ([(⟨i, j, ""⟩ : RefMove)] ++ ·) <$> t := by
+  have hA' : (i == A1) = false := beq_eq_false_iff_ne.mpr hA
+  have hH' : (i == H1) = false := beq_eq_false_iff_ne.mpr hH
+  intro t
+  unfold rayBody pawnBreak
+  simp only [bind, Except.bind, href, hopen, Bool.false_eq_true, if_false,
+    bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos, hgo, hA', hH', pure,
+    Except.pure]
+  cases t <;> rfl
+
+open Ref in
+/-- The two arms of `rayBody_append_or_const` are EXCLUSIVE: a body that
+ignores its tail cannot also prepend to it. Read off the lengths at two
+tails — the whole content of "the ray either ends here or it does not". -/
+theorem rayBody_const_not_append (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (r pre : List RefMove)
+    (hconst : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok r)
+    (hmap : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = (pre ++ ·) <$> t) : False := by
+  have h₀ := (hconst (.ok [])).symm.trans (hmap (.ok []))
+  have h₁ := (hconst (.ok [⟨i, j, ""⟩])).symm.trans (hmap (.ok [⟨i, j, ""⟩]))
+  simp only [Functor.map, Except.map] at h₀ h₁
+  have e₀ : r = pre ++ [] := Except.ok.inj h₀
+  have e₁ : r = pre ++ [⟨i, j, ""⟩] := Except.ok.inj h₁
+  have hl := congrArg List.length (e₀.symm.trans e₁)
+  simp at hl
+
 /-! ## One ROUND, in continuation-passing form
 
 The model side of a round cannot be stated as "it emits `out` and lands in
@@ -340,6 +407,30 @@ theorem rPawnTest_lit : ∃ s1 s2 s3, planTest rPawn =
     (.compare (.name "p" s1) #[.eq] #[(.constant (.str "P") s2)] s3) :=
   ⟨_, _, _, rfl⟩
 
+/-- The castling tests are three-operand `and` chains whose FIRST operand
+is the corner-square comparison, so off a corner Python never reads the
+board or the rights — which is the whole reason a slider round is cheap. -/
+theorem rCastATest_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16,
+    planTest rCastA =
+    (.boolOp .and #[(.compare (.name "i" s1) #[.eq] #[(.name "A1" s2)] s3),
+      (.compare (.subscript (.attribute (.name "self" s4) "board" s5)
+        (.binOp (.name "j" s6) .add (.name "E" s7) s8) s9) #[.eq]
+        #[(.constant (.str "K") s10)] s11),
+      (.subscript (.attribute (.name "self" s12) "wc" s13)
+        (.constant (.int 0) s14) s15)] s16) :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+@[inherit_doc rCastATest_lit]
+theorem rCastHTest_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16,
+    planTest rCastH =
+    (.boolOp .and #[(.compare (.name "i" s1) #[.eq] #[(.name "H1" s2)] s3),
+      (.compare (.subscript (.attribute (.name "self" s4) "board" s5)
+        (.binOp (.name "j" s6) .add (.name "W" s7) s8) s9) #[.eq]
+        #[(.constant (.str "K") s10)] s11),
+      (.subscript (.attribute (.name "self" s12) "wc" s13)
+        (.constant (.int 1) s14) s15)] s16) :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
 /-! ## The captured runs -/
 
 set_option maxHeartbeats 1600000 in
@@ -403,6 +494,48 @@ theorem rPawn_test_run (w : World) (env : REnv) (p : Char)
   by_cases h : p = 'P'
   · subst h; simp
   · rw [if_neg h, beq_eq_false_iff_ne.mpr h]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`i == A1 and …` off the a1 square** — and with it the tool defect
+that held the slider rounds up, which is why the `valEq.eq_def` in the
+`py_simp` list is load-bearing rather than decorative.
+
+`valEq` is in `interpUnfolds`, so `py_simp` DELTA-unfolds it, and a delta
+unfold is recorded as a rewrite proved by `Eq.refl`. That is fine wherever
+the match can fire, but `evalCompareChain` puts the right operand behind a
+`fun st rhs => …`, and simp opens `valEq (.int iv) rhs` under that binder
+before the operand's own evaluation has resolved. `valEq` lives in a MUTUAL
+block, so at a stuck match the elaborator accepts the `Eq.refl` (its `whnf`
+does smart unfolding) and the KERNEL rejects it — `(kernel) application
+type mismatch`, on a reduction that was otherwise perfect. `valEq.eq_def`
+is that same rewrite carrying a REAL proof, and a lemma at the head fires
+before the unfold does, so the term the kernel sees is the same one with a
+proof it can check. -/
+theorem castA_test_false (w : World) (env : REnv) (iv : Int)
+    (hloc : RayLocals env) (hi : Env.lookup env "i" = some (.int iv))
+    (hne : iv ≠ Ref.A1) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest rCastA) (.bool false) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, hlit⟩ :=
+    rCastATest_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  have hne' : ¬ (iv = 91) := hne
+  py_simp [sunfish, hi, hloc.miss "A1", valEq.eq_def, hne']
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+@[inherit_doc castA_test_false]
+theorem castH_test_false (w : World) (env : REnv) (iv : Int)
+    (hloc : RayLocals env) (hi : Env.lookup env "i" = some (.int iv))
+    (hne : iv ≠ Ref.H1) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest rCastH) (.bool false) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, hlit⟩ :=
+    rCastHTest_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  have hne' : ¬ (iv = 98) := hne
+  py_simp [sunfish, hi, hloc.miss "H1", valEq.eq_def, hne']
 
 /-! ## The segments
 
@@ -495,9 +628,7 @@ theorem crawl_breaks (w : World) (env : REnv) (p q : Char) (a : Addr)
     (fun _ => rfl)
     (run_at_least (by simpa [hbrk] using rCrawl_run w env p q _ _ hp hq rfl rfl))
 
-/-- The crawler guard falls through: a slider keeps going. Landed for the
-slider rounds, which `castA_test_false` still blocks (see the record at the
-end of this file). -/
+/-- The crawler guard falls through: a slider keeps going. -/
 theorem crawl_falls (w : World) (env : REnv) (p q : Char)
     {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
     (hp : Env.lookup env "p" = some (.str (String.singleton p)))
@@ -509,6 +640,46 @@ theorem crawl_falls (w : World) (env : REnv) (p q : Char)
     simpa using genSilent_delegate (m := sunfish) (s := rCrawl) (ss := [rCastA, rCastH])
       (k := pre ++ k) rCrawl_plan
       (run_at_least (by simpa [hgo] using rCrawl_run w env p q _ _ hp hq rfl rfl))) hrest
+
+/-- The a1 castling `if` is SKIPPED: the piece is not on a1, so the `and`
+chain short-circuits at its first comparison and the board is never read.
+The statement is a `.branch` with an empty `else`, so this is `pawn_skips`'
+shape — the branch pushes the empty arm, and the empty arm pops. -/
+theorem castA_skips (w : World) (env : REnv) (iv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hi : Env.lookup env "i" = some (.int iv))
+    (hne : iv ≠ Ref.A1)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastA, rCastH]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse rCastA), GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := rCastA) (b := false)
+        (k := pre ++ k) rCastA_plan (castA_test_false w env iv hloc hi hne)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block [rCastH]] ++ pre)
+    (fun k => by
+      simpa [rCastA_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block [rCastH] :: (pre ++ k))) hrest
+
+/-- The h1 castling `if` is SKIPPED, and with it the ray body ENDS: what is
+left is the empty block frame that `block_done` pops. -/
+theorem castH_skips (w : World) (env : REnv) (iv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hi : Env.lookup env "i" = some (.int iv))
+    (hne : iv ≠ Ref.H1)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block []] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCastH]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse rCastH), GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := rCastH) (b := false)
+        (k := pre ++ k) rCastH_plan (castH_test_false w env iv hloc hi hne)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa [rCastH_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block ([] : List Stmt) :: (pre ++ k))) hrest
 
 /-- A finished block frame pops, at `GenEmits` altitude. -/
 theorem block_done (st : FrameState) : GenEmits sunfish st [.block []] [] st :=
@@ -540,7 +711,7 @@ theorem rayBody_crawler_indep (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
     rayBody b wc0 wc1 ep kp i p d j t₁ = rayBody b wc0 wc1 ep kp i p d j t₂ := by
   unfold rayBody Ref.pawnBreak
   simp only [bind, Except.bind, bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos,
-    hcrawl, Bool.true_or, if_true]
+    hcrawl, Bool.true_or]
   repeat' split <;> rfl
 
 /-- A crawler's ray is ONE round: `Ref.ray` reports either nothing (the
@@ -551,28 +722,26 @@ theorem ray_crawler_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
     (hbody : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok r) :
     (Ref.inStr c " \nPNBRQK" = true ∧ r = []) ∨
     (Ref.inStr c " \nPNBRQK" = false ∧ r = [⟨i, j, ""⟩]) := by
-  have h := hbody (Except.error "unused")
-  rw [rayBody] at h
   by_cases hstop : Ref.inStr c " \nPNBRQK" = true
-  · refine Or.inl ⟨hstop, ?_⟩
-    simp only [bind, Except.bind, href, hstop, if_pos] at h
-    exact (Except.ok.inj h).symm
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i p d j c href hstop (.ok [])))⟩
   · simp only [Bool.not_eq_true] at hstop
-    refine Or.inr ⟨hstop, ?_⟩
-    simp only [bind, Except.bind, href, hstop, Bool.false_eq_true, if_false,
-      Ref.pawnBreak, bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos,
-      hcrawl, Bool.true_or, if_true] at h
-    exact (Except.ok.inj h).symm
+    exact Or.inr ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_break_const b wc0 wc1 ep kp i p d j c href hstop hnp
+        (by rw [hcrawl]; rfl) (.ok [])))⟩
 
-/-- **The model side of a crawler's round**: the whole ray body, from the
-loop frame's block down to the `break`, emitting the one move. -/
-theorem crawler_round (w : World) (env : REnv) (b : String)
+/-- **The model side of the round that ENDS a ray having moved**: the whole
+ray body, from the loop frame's block down to the `break` at the crawler
+guard, emitting the one move. Stated at the guard's own condition rather
+than at `p in "PNK"`, so it serves a crawler and a CAPTURING slider alike —
+they break at the same statement for the two different reasons. -/
+theorem breaking_round (w : World) (env : REnv) (b : String)
     (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c : Char) (a : Addr)
     (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
     (hj : Env.lookup env "j" = some (.int jv))
     (href : Ref.at? b.toList jv = .ok c)
-    (hopen : Ref.inStr c " \nPNBRQK" = false)
-    (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true) :
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hbrk : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = true) :
     GenEmits sunfish ⟨w, env⟩
       [.block gmRay, .forGen gmRayTarget a gmRay] [moveVal ⟨iv, jv, ""⟩]
       ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
@@ -594,7 +763,7 @@ theorem crawler_round (w : World) (env : REnv) (b : String)
   refine pawn_skips (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ p hp₁ hnp ?_
   refine yield_emits (pre := [GenFrame.forGen gmRayTarget a gmRay])
     w _ iv jv hloc₁ hi₁ hj₁ ?_
-  exact crawl_breaks w _ p c a hp₁ hq₁ (by rw [hcrawl]; rfl)
+  exact crawl_breaks w _ p c a hp₁ hq₁ hbrk
 
 set_option maxHeartbeats 800000 in
 /-- **RAY AGREEMENT FOR A CRAWLER, WHOLE, OVER AN ARBITRARY BOARD.**
@@ -664,8 +833,9 @@ theorem ray_crawl_agrees (w : World) (env : REnv) (a : Addr)
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
-      simpa using crawler_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
-        b score ep kp iv j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp hcrawl
+      simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
+        (by rw [hcrawl]; rfl)
   -- the ray CONTINUES: unreachable, because a crawler's body ignores its tail
   · rintro j st pre _ hmap
     exfalso
@@ -695,64 +865,247 @@ guard, yielding nothing). Neither branch of the theorem is vacuous. -/
         | .ok c => Ref.inStr c " \nPNBRQK"
         | _ => false) == true
 
-/-! ## What is left, and the one thing that BLOCKS it
+/-! ## A WHOLE RAY: the sliders
 
-Recorded rather than attempted, so the next session starts from a measured
-position instead of a blank page.
+The crawler's ray closes without ever running the statements past the
+crawler guard, because it never takes a second round. A SLIDER does, and
+those statements are the two castling `if`s — which is where the ray's last
+tool-level obstacle sat (see `castA_test_false` for the mechanism and the
+fix). With them stepping, the continuing round is the segment kit read
+straight through, `ray_rounds`' `hgo` gets a real inhabitant instead of the
+crawler's vacuous one, and the induction itself does not move: it was
+stated against `rayBody_append_or_const`, not against the statements. -/
 
-**The slider rounds are blocked on ONE fact**, and it is a tool-level
-blocker, not a missing calculus. A ray that continues must step past the
-two castling `if`s, so it needs `planTest rCastA`/`planTest rCastH` to
-evaluate — and for a piece that is not on a corner square that is just
-`i == A1` short-circuiting to false. That run does not go through:
+/-- **A slot reads back what was written to it** — the companion to
+`Heap.update_of_get?` (VCGen.lean §L4), and the first thing a CONTINUING
+loop needs that an ending one does not: a crawler's ray never re-reads the
+count object, so the round invariant is re-established here for the first
+time. -/
+theorem heap_readback {h h' : Heap} {a : Addr} {o : Obj}
+    (hu : Heap.update h a o = some h') : Heap.get? h' a = some o := by
+  unfold Heap.update at hu
+  split at hu
+  · next hlt =>
+      injection hu with hu
+      subst hu
+      rw [Heap.get?, dif_pos (by simpa using hlt)]
+      simp
+  · next => exact absurd hu (by simp)
 
-```
-py_simp [sunfish, hi, hloc.miss "A1"]   -- on `i == A1`, `i` symbolic
-```
+/-- **The model side of a slider's CONTINUING round**: the whole ray body,
+from the loop frame's block down to the empty block that pops, emitting the
+one move and falling through so the loop goes round again. Eight segments
+end to end, and the last three (`crawl_falls`, `castA_skips`/`castH_skips`,
+`block_done`) are exactly the ones a crawler never reaches. -/
+theorem slider_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c : Char)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hnp : p ≠ 'P')
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr c "pnbrqk") = false)
+    (hA : iv ≠ Ref.A1) (hH : iv ≠ Ref.H1) :
+    GenEmits sunfish ⟨w, env⟩ [.block gmRay] [moveVal ⟨iv, jv, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int iv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  have hdone : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block []] ++ ([] : GenCont)) []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+    simpa using block_done ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+  simpa using
+    q_falls w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href
+      (stop_falls w _ c hq₁ hopen
+        (pawn_skips w _ p hp₁ hnp
+          (yield_emits w _ iv jv hloc₁ hi₁ hj₁
+            (crawl_falls w _ p c hp₁ hq₁ hgo
+              (castA_skips w _ iv hloc₁ hi₁ hA
+                (castH_skips w _ iv hloc₁ hi₁ hH hdone))))))
 
-REDUCES correctly (the residual is a clean `if iv = 91 then … else …`) but
-emits a proof term the KERNEL rejects — `(kernel) application type
-mismatch`, on an `Eq.refl` for `valEq (.int iv) rhs = match .int iv, rhs
-with …` where `rhs` is still the match-bound value of the global. `valEq`
-is in `interpUnfolds` (VCTactic.lean), so it is opened before the operand
-is in whnf, and the equation it generates is not one the kernel accepts.
+/-- **A non-corner slider's ray ENDS at `j` only two ways**: the square is a
+blocker (nothing), or it holds an enemy piece (the one move). Anything else
+and the body would have consumed its tail, which the constant hypothesis
+forbids. -/
+theorem ray_slider_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (r : List Ref.RefMove)
+    (href : Ref.at? b j = .ok c) (hnp : p ≠ 'P')
+    (hslide : Ref.inStr p "PNK" = false) (hA : i ≠ Ref.A1) (hH : i ≠ Ref.H1)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok r) :
+    (Ref.inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (Ref.inStr c " \nPNBRQK" = false ∧ Ref.inStr c "pnbrqk" = true ∧
+      r = [⟨i, j, ""⟩]) := by
+  by_cases hstop : Ref.inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i p d j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : Ref.inStr c "pnbrqk" = true
+    · exact Or.inr ⟨hstop, hcap, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_break_const b wc0 wc1 ep kp i p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _) (.ok [])))⟩
+    · simp only [Bool.not_eq_true] at hcap
+      exact (rayBody_const_not_append b wc0 wc1 ep kp i p d j r [⟨i, j, ""⟩] hbody
+        (rayBody_slide_map b wc0 wc1 ep kp i p d j c href hstop hnp
+          (by rw [hslide, hcap]; rfl) hA hH)).elim
 
-The measurement that pins it — four runs, all recorded, three green:
+/-- **…and it CONTINUES only one way**: the square is empty of anything the
+ray cares about, and what it prepends is the single move. The other
+direction of `ray_slider_leaf`, and what discharges `ray_rounds`' `hgo`. -/
+theorem ray_slider_go (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (pre : List Ref.RefMove)
+    (href : Ref.at? b j = .ok c) (hnp : p ≠ 'P')
+    (hslide : Ref.inStr p "PNK" = false) (hA : i ≠ Ref.A1) (hH : i ≠ Ref.H1)
+    (hmap : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = (pre ++ ·) <$> t) :
+    Ref.inStr c " \nPNBRQK" = false ∧ Ref.inStr c "pnbrqk" = false ∧
+      pre = [⟨i, j, ""⟩] := by
+  by_cases hstop : Ref.inStr c " \nPNBRQK" = true
+  · exact (rayBody_const_not_append b wc0 wc1 ep kp i p d j [] pre
+      (rayBody_stop_const b wc0 wc1 ep kp i p d j c href hstop) hmap).elim
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hcap : Ref.inStr c "pnbrqk" = true
+    · exact (rayBody_const_not_append b wc0 wc1 ep kp i p d j [⟨i, j, ""⟩] pre
+        (rayBody_break_const b wc0 wc1 ep kp i p d j c href hstop hnp
+          (by rw [hcap]; exact Bool.or_true _)) hmap).elim
+    · simp only [Bool.not_eq_true] at hcap
+      refine ⟨hstop, hcap, ?_⟩
+      have h := (hmap (.ok [])).symm.trans
+        (rayBody_slide_map b wc0 wc1 ep kp i p d j c href hstop hnp
+          (by rw [hslide, hcap]; rfl) hA hH (.ok []))
+      simp only [Functor.map, Except.map] at h
+      simpa using Except.ok.inj h
 
-* symbolic `Int` vs a LITERAL (`i == 91`, both truth values): **green**;
-* symbolic `Char`-as-string vs a literal (`q == "K"`): **green**;
-* symbolic `Int` vs a module GLOBAL (`i == A1`), inside the `and` chain:
-  kernel mismatch;
-* the same comparison ALONE, no `boolOp` around it: kernel mismatch.
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A SLIDER, WHOLE, OVER AN ARBITRARY BOARD.**
 
-So it is neither the `boolOp` nor symbolic `valEq`: it is specifically a
-comparison whose operand arrives from module-global resolution. Passing the
-condition in as `(iv == 91) = false`, as `(iv = 91) = False`, or as a
-`valEq` rewrite does not move it, and `interpUnfolds` is not user-editable
-from a proof file. The fix belongs in `py_simp` (resolve a `.name` operand
-to its value BEFORE `valEq` opens, or keep `valEq` shut on a non-whnf
-operand), and it wants `evals_glob`-style lemmas — `evalExpr m F st
-(.name g s) = .ok st v`, uniform in `F` — as the rewrite that fires first.
-`evalBoolChain` is structural and clean, so hand-stepping the short-circuit
-is the fallback if the tactic is not to be touched.
+A bishop, rook or queen off the two castling squares, suspended in a ray at
+the `count` object holding `j`: the shipped generator emits exactly the
+moves `Ref.ray` reports, for the WHOLE ray at every fuel — sliding square
+by square, stopping at the first blocker or capture — and leaves the frame
+in a state the enclosing scans can carry on from.
 
-**What that one fact unblocks, in order.** `crawl_falls` and `block_done`
-above are already proved and unused precisely because they are the next
-two segments: with `castA_skips`/`castH_skips` the continuing round closes,
-`ray_rounds`' `hgo` gets its real inhabitant instead of the crawler's
-vacuous one, and slider agreement follows with no new calculus — the
-induction does not move, which is the point of stating it against
-`rayBody_append_or_const` rather than against the statements.
+This is the first ray in the repo that takes MORE THAN ONE round, so it is
+the first use of `ray_rounds`' `hgo` and of `RayRound`'s composition; the
+crawler theorem could close with that case vacuous. Board free, square
+free, character free, direction free, fuel free.
 
-**The pawn leaves are independent of that blocker** and are the other half
-of the remainder: `pB0`/`pB1`/`pB2` are `.delegate` breaks (projected and
-plan-pinned above), `pB3` is the promotion branch whose body is
-`for prom in "NBRQ": yield Move(i, j, prom)` — a `forSeq` over a string
-literal, so `GenEmits.forSeq` already covers it — followed by the `break`
-that `GenEmits.blockBreak` covers. `pB1` reads the board a SECOND time
-(`self.board[i + N]`) under a short-circuit, so it needs an `rQ_run`-shaped
-companion plus the `or` ordering; `pB2` compares against `self.ep` and
-`self.kp`, which are namedtuple FIELDS rather than module globals and so
-are not exposed to the blocker above. -/
+`iv ≠ A1`/`iv ≠ H1` is a real restriction and not a technicality: on a
+corner square the castling `and` chain reads the board a second time and
+consults `self.wc`, which is the one `Ref.ray` leaf still open (the record
+at the end of this file). Every OTHER slider on the board is covered. -/
+theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp iv d : Int) (wc0 wc1 bc0 bc1 : Bool) (p : Char)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
+    (hcount : Heap.get? w.heap a = some (countObj jv d))
+    (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
+    (hA : iv ≠ Ref.A1) (hH : iv ≠ Ref.H1)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv p d f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
+        (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j d))
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+  -- the ray ENDS here: a blocker, or a capture
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hcap, rfl⟩ :=
+      ray_slider_leaf b.toList wc0 wc1 ep kp iv p d j c r href hnp hslide hA hH hbody
+    · -- BLOCKER: nothing is emitted, and the frame carries the `q` that was read
+      refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · -- CAPTURE: the one move, and the crawler guard ends the slide behind it
+      refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
+        (by rw [hcap]; exact Bool.or_true _)
+  -- the ray CONTINUES: the one move, the count advances, the invariant holds
+  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hmap (Except.ok [])
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr, Functor.map, Except.map] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hopen, hcap, rfl⟩ :=
+      ray_slider_go b.toList wc0 wc1 ep kp iv p d j c pre href hnp hslide hA hH hmap
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+    refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    simpa using slider_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+      b score ep kp iv j wc0 wc1 bc0 bc1 p c hfr₁ hj₁ href hopen hnp
+      (by rw [hslide, hcap]; rfl) hA hH
+
+/-! Non-vacuity for the slider, on the shipped opening board: the queen on
+94 is a slider, is not a pawn, and is on neither castling square, so
+`ray_slide_agrees` applies to it — and all THREE arms of its round are
+reachable as squares of that board: 84 is our own pawn (blocker), 74 is
+empty (the ray slides on), 24 is the enemy queen (capture). -/
+
+#guard (match Ref.at? board0.toList 94 with | .ok c => c == 'Q' | _ => false) == true
+#guard (Ref.inStr 'Q' "PNK" == false) && ('Q' != 'P') && (94 != Ref.A1) && (94 != Ref.H1)
+
+#guard (match Ref.at? board0.toList 84 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => false) == true
+
+#guard (match Ref.at? board0.toList 74 with
+        | .ok c => !Ref.inStr c " \nPNBRQK" && !Ref.inStr c "pnbrqk"
+        | _ => false) == true
+
+#guard (match Ref.at? board0.toList 24 with
+        | .ok c => !Ref.inStr c " \nPNBRQK" && Ref.inStr c "pnbrqk"
+        | _ => false) == true
 
 end Examples.python.sunfish.genmoves_ray

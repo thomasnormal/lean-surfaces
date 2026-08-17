@@ -7463,3 +7463,157 @@ whether the obligations factor — and the factoring turned on one structural
 fact about the tier's own heap API that a line count could not see. The
 lesson generalizes: before paying a measured price, check whether the
 measurement assumed a relation where the code offers a function.
+
+## L8 LANDED — the three constructs `bound_probe` was blocked behind, and a FOURTH the census had missed (2026-08-17)
+
+Continuing §"L7 LANDED". `Examples/python/sunfish/genmoves_drain.lean`'s
+closing section named, verbatim, what `sf_order`'s `bound_probe` still needed
+on top of the whole-drain bridge: *a `sorted`-over-a-generator EXPRESSION rule,
+generator-internal `break` at the loop-frame level, and `callClosure`'s
+generator arm.* **All three are landed, each with a gate theorem over the
+shipped program, and a fourth construct the enumeration had missed was found by
+building them.** The collapse itself is NOT reached, and §"What the collapse
+still waits on" below says precisely why — it is the agreement half of the
+tier, not the calculus.
+
+Everything is in a NEW module (LeanModels/Python/GenBound.lean, 575 lines / 25
+declarations, elaborating in **2.3 s**) that IMPORTS VCGen rather than editing
+it — §L7 finding 3 promoted to house layout, and it held: the development cycle
+was seconds throughout.
+
+### The three, and what each actually needed
+
+**1. `sorted` over a generator EXPRESSION** (`EvalsIn.sortedDrainRev`,
+`EvalsIn.sortedDrain`). `IterDrains` (§L6) says what the argument's drain IS;
+nothing said what the CALL evaluates to. Both interpreter arms (the keyword
+path and the keyword-free path — a call with no keywords never reaches the
+keyword dispatch, so they are genuinely two theorems) drain through
+`drainIter`, order with `sortByLt` and ALLOCATE the answer, so the value is a
+`.ref` at the POST-DRAIN heap's end and no pinned-state judgment can hold it.
+
+**2. Generator-internal `break` at the LOOP-FRAME level** — and here the L4-era
+note needs a correction. §L4 landed the UNWIND (`GenEmits.blockBreak`: put the
+enclosing loop frame in the polymorphic prefix and `genBreak` lands at the free
+continuation) and recorded it as "the piece §L3's remainder named as blocking
+`bound_probe`". It is half of it. `sorted` ALLOCATES, so `execGen`'s `.forHere`
+arm pushes a **`forList`** frame — and `forList` had NO `GenEmits`-altitude
+rule at all, where `forSeq` has an induction and `forGen` got L4's
+round/break/done trio. `GenEmits.forListRound`/`forListBreak`/`forListDone`
+plus `GenEmits.forListRounds` (n whole rounds, then whatever ending the caller
+has — the beta-cutoff idiom) are the loop that RECEIVES the unwind:
+
+```
+-- LeanModels/Python/GenBound.lean (excerpt)
+theorem GenEmits.forListBreak {m : Module} {target : Expr} {body : List Stmt}
+    {ad : Addr} {i : Nat} {xs : Array RVal} {st st₂ : FrameState} {env₁ : REnv}
+    {ws : List RVal}
+    (hobj : Heap.get? st.world.heap ad = some (.list xs)) (hi : i < xs.size)
+    (hasg : assignToH st.world.heap st.locals target (xs.getD i .none) = .ok env₁)
+    (hbody : GenEmits m { st with locals := env₁ }
+      [.block body, .forList target ad (i + 1) body] ws st₂) :
+    GenEmits m st [.forList target ad i body] ws st₂ :=
+```
+
+**3. `callClosure`'s generator arm** (`callClosure_genCall`,
+`execStmt_nestedDef`, `EvalsIn.closureGenCall`). `callIn_genCall` is the
+MODULE-function creation arm; a nested `def` that yields is a `.closure` object
+whose call allocates the H4 generator with `mkCallEnv params args ++ captured`
+as the stored locals. Three declarations, all of them one `rw` and one `simp`:
+this was the cheapest of the three by an order of magnitude, and the
+enumeration was right that it was missing.
+
+### The FOURTH, found by building the gate rather than by reading the census
+
+**You cannot ENTER the loop.** `genSilent_forHere` (VCGen §L2) covers a value
+SEQUENCE, through `IterVals` and a pinned-state `EvalsTo`. The ordering line is
+neither: it answers a `.ref` to a heap LIST, and it allocates three times
+getting there. So `genSilent_forHereList` / `GenEmits.blockForList` — the
+`.forHere` arm's heap-object dispatch, over `EvalsIn` — are as load-bearing as
+the three that were enumerated, and no amount of reading the blocker record
+would have produced them. The census names what a rule must CONCLUDE; only
+composing the rules finds what they cannot be composed FROM.
+
+A second, smaller instance of the same thing: `EvalsToList` (VC2) pins the
+out-state, and the shipped ordering line's lowered genexp is called with
+`pos.gen_moves()` as its first argument — which ALLOCATES. `EvalsInList` (the
+effectful argument list, with `EvalsIn.genCallIn` and `EvalsIn.ntupleGenMethod`
+over it) is the prerequisite that makes construct 1 usable on real code rather
+than on a hypothesis.
+
+### The gates — `Examples/python/sf_order/proof.lean`, and `sf_order` gets its
+### first `proof.lean`
+
+`spec.lean` has said "No `proof.lean` yet" since H6. There is one now, 646
+lines, elaborating in **5.7 s**, with every piece of program PROJECTED out of
+`sf_order` and `rfl`-pinned (`bpDef_lit`, `ordLine_lit`, `gxCall_lit`,
+`gmCall_lit`, `mvBreak_lit`, `mvYield_lit`, …), so a changed program stops the
+gates loudly.
+
+* **`order_line_sorts`** / `order_line_sorts_pos` — **the shipped ordering line
+  (sunfish.py 412) evaluates to the sorted list.** Everything between the
+  source text and the value is discharged: `pos.gen_moves()` (a generator
+  METHOD call that allocates), the effectful argument list, the genexp call,
+  the `reverse=` flag's truthiness, the drain and the allocation of the answer.
+  The one hypothesis left is the lowered genexp OBJECT's drain — `IterDrains`,
+  §L6's own judgment.
+* **`moves_loop_cuts`** — **the shipped loop with the beta cutoff.** `for val,
+  move in <ordered list>: if val < val_lower: break; yield (val, move.i,
+  move.j)` emits exactly the triples of the rows at or above the threshold and
+  STOPS at the first row below it, with the loop frame consumed. Rows free,
+  threshold free, count free, and *the tail beyond the cutting row is not
+  constrained at all* — laziness is the content of the statement, and an eager
+  design cannot state it.
+* **`moves_def_allocates`** / `moves_call_creates` / `movesGen_eq` — the
+  shipped `def moves():` allocates the closure with `depth`/`pos`/`val_lower`
+  snapshotted, and `moves()` allocates the generator whose stored locals ARE
+  that snapshot and whose stored continuation IS `moves`' body.
+
+Four `#guard`s pin non-vacuity by RUNNING `bound_probe` on the opening board,
+and they pin BOTH arms of the cutoff: at `depth = 0` the threshold is 40, two
+of the twenty rows clear it and the probe consumes three yields (the inner
+`break` fires at row three of twenty); at `depth = 1` the threshold is -100,
+every row clears it and all twenty are consumed. `#print axioms` on all five
+gate theorems and on all fifteen public rules is
+`propext`/`Classical.choice`/`Quot.sound`.
+
+### What the collapse still waits on, measured
+
+Two things, neither of them one of the three:
+
+1. **The ordering line's CONTENT** — `hdrain`. Proving `IterDrains` for the
+   lowered `<genexpr@2>` is `Position.value` agreement composed with the
+   `gen_moves` drain. `gen_moves_drains_ref` is exactly that theorem for the
+   `sunfish` module and `sf_order`'s method body is the same text — but it is a
+   different `Module` LITERAL, so the sunfish chain does not transfer without a
+   module-transfer argument, and `Position.value` has no agreement theorem in
+   either lane. §L3 called this "the ordering line itself, which is L4/L5";
+   that is still exactly what it is.
+2. **`bound_probe`'s own loop** — the `best`/`searched` fold over `moves()`
+   with the OUTER cutoff. A statement-level `forGen` (`PyStmtTriple.forGen`,
+   §L3) over the object gate 3 allocates, blocked on 1 rather than on any
+   missing rule: the rounds it takes ARE the yields the ordering line decides.
+
+### Findings worth carrying
+
+1. *An enumerated blocker list is a list of CONCLUSIONS, not of premises.*
+   Three constructs were named; four were needed, and the missing one
+   (`genSilent_forHereList`) is the one without which the other two cannot
+   meet. The way to find it was to write the gate, not to re-read the record.
+2. *A module literal does NOT have to be unfolded to reason about a namedtuple
+   field read.* `ntupleAttr` is in `interpUnfolds`, so `py_simp` opens it and
+   no lemma stated at that head can fire (§L4 measurement 2) — but the RESIDUE
+   is a `findClassAux` match on the module's class list, and one ground
+   `have hfc : findClassAux sf_order.classes.toList "Move" 0 = Option.none := by
+   rfl` closes it. `py_simp [sf_order, …]` on the same goal costs 15 s and then
+   blows `maxRecDepth`; the pin costs **0.2 s**. That is the general recipe for
+   symbolic work over an ingested module: pin the residue, never unfold the
+   program.
+3. *`set` is Mathlib's — again* (§L6 finding 4). It bit inside an `Examples`
+   proof exactly as recorded, and the fix was to state the theorem over the
+   generic value with the shipped shape as a one-line corollary, which is a
+   better statement anyway.
+4. *The interpreter's `sorted` has two dispatch sites, not one.* A keyword call
+   and a keyword-free call take different paths through `evalExpr`, so a rule
+   for one says nothing about the other. The shipped line uses `reverse=True`;
+   the keyword-free arm landed beside it because the tier's other consumers
+   (`sorted(<genexp>)` with no flag) are the common case elsewhere.

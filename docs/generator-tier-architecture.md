@@ -353,6 +353,13 @@ the prefix half, which is the half that can be got wrong.
 **Unlocks:** `sf_order`'s ordering theorem (docs/backlog.md §H6 open item
 5); the `moves()`-consumed-by-`bound()` capstone stops being blocked on
 tooling.
+**STATUS (2026-08-17, docs/backlog.md §L8):** the gate's three enumerated
+prerequisites are landed (LeanModels/Python/GenBound.lean) and each is
+exercised on the shipped program (`Examples/python/sf_order/proof.lean`),
+plus a fourth the enumeration had missed. The COLLAPSE is not reached: it
+waits on the ordering line's own content (`Position.value` agreement
+composed with the `gen_moves` drain), which is this memo's L4/L5, not on
+any missing rule.
 **Estimate: 1–2 days. Confidence MEDIUM-HIGH** — it mirrors two landings I
 just did (the `for` rule and the return-position case), and the reuse is
 real rather than hoped-for.

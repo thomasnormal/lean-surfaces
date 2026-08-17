@@ -7204,7 +7204,7 @@ Continuing §"L6 LANDED", whose closing section stated `PayloadBlind` exactly
 and priced its proof at ClockErase scale. **The price was wrong, and the
 reason is one sentence: the perturbation is not a relation.** What landed is
 the whole factoring plus the top-level reduction, in a new module
-(LeanModels/Python/PayloadBlind.lean, 887 lines) that IMPORTS VCGen rather
+(LeanModels/Python/PayloadBlind.lean, 901 lines) that IMPORTS VCGen rather
 than editing it — so the tree's expensive Examples never recompile for a
 change in this proof. Five of the 18 arms are proved and the other
 thirteen are STATED, which is the difference between an enumerated debt and a
@@ -7371,7 +7371,7 @@ combinators shares a name with `ClockErasedF`'s and `Obs`'s (`ok`, `exn`,
 sit in `PBW`/`PBF` — the namespaced-combinator pattern is what makes the
 tier's three transport relations coexist.
 
-**Cost, measured.** LeanModels/Python/PayloadBlind.lean 887 lines / 87
+**Cost, measured.** LeanModels/Python/PayloadBlind.lean 901 lines / 87
 declarations, elaborating in **0.9 s** — nothing in it meets `py_simp`, and
 nothing in it touches a module literal. VCGen.lean and Semantics.lean are
 UNTOUCHED. `#print axioms payloadBlind_of_execGen` is

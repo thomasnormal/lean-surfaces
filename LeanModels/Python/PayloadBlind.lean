@@ -3,10 +3,23 @@ import LeanModels.Python.VCGen
 /-! # Payload blindness — the interpreter cannot see a RUNNING generator's payload
 
 docs/backlog.md §"L6 LANDED" states `PayloadBlind` (VCGen.lean §L6) and
-prices its proof; this module is that proof. The claim: for a slot `a`
-holding `.generator qname locals cont .running`, a decided interpreter run
-(1) leaves the slot exactly as it found it and (2) runs identically when
-the payload is replaced by any other `locals`/`cont` at the same `qname`.
+prices its proof. The claim: for a slot `a` holding
+`.generator qname locals cont .running`, a decided interpreter run (1)
+leaves the slot exactly as it found it and (2) runs identically when the
+payload is replaced by any other `locals`/`cont` at the same `qname`.
+
+**STATUS — the property is NOT yet proved, and nothing here pretends
+otherwise.** What is proved is the factoring (§Tier A/C), the universal read
+primitive and thirteen of the ~37 helper equations (§Tier B), five of the
+eighteen interpreter arms, and — the point of the module —
+`payloadBlind_of_execGen`: the whole property reduces to ONE conjunct, with
+no glue and no side condition left over. The other thirteen arms are STATED
+as `PBEvalExpr … PBCallClosure` rather than described, so the debt is visible
+in this file and checkable against it; docs/backlog.md §L7 names each one and
+each remaining helper. `IterDrains.of_genYields` and `gen_moves_drains_ref`
+therefore still carry `PayloadBlind sunfish` as an explicit hypothesis,
+exactly as they do on §L6. There is no `sorry` and no axiom standing in for
+any of it.
 
 **Why it is true.** `stepIter` is the interpreter's ONLY reader of a
 generator object's `locals`/`cont` fields, and its `.running` arm answers
@@ -27,8 +40,9 @@ proved once (§Tier C) and consumed by the arms (§Tier D). `.timeout` and
 `.unsupported` constrain nothing, exactly as `ClockErasedF` leaves its
 refusals free — nothing in the block converts either back to a decision.
 Because the relation is functional, the per-helper obligations are plain
-EQUATIONS (`f (h.swapAt a o) … = f h …`, §Tier B) rather than two-world
-simulations, which is what brings 34 helpers into reach.
+EQUATIONS (`f (Heap.swapAt h a o) … = f h …`, §Tier B) rather than two-world
+simulations, which is what brings the helper tier into reach at four lines
+apiece.
 
 Geometry mirrors ClockErase.lean: swap algebra, the relation and its
 combinators, per-helper blindness, then the mutual induction on fuel. -/

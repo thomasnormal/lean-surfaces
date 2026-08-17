@@ -6640,3 +6640,122 @@ the reference-side lemmas are seconds; each captured `py_simp` over the
 module literal is the ~20 s the previous entry priced. Triad at the cut:
 `lake build` clean, `docs_check` 67/67 marked blocks, `diff_test` 1288
 cases / 0 failed / 115 whitelisted-unsupported.
+
+## L4 CLOSED (calculus half) — the blocker was `valEq`'s UNFOLD, and three whole rays (2026-08-17)
+
+Continuing §"L4 REMAINDER". That entry ended on one measured blocker with
+four pin runs; this one clears it, and the fix cost **no tactic edit at
+all** — the previous entry's conclusion ("the fix belongs in `py_simp`") was
+wrong, and the way it was wrong is the finding.
+
+**THE BLOCKER, and the mechanism.** `valEq` is in `interpUnfolds`, so a
+captured run DELTA-unfolds it, and simp records a delta unfold as a rewrite
+proved by `Eq.refl`. That is sound wherever the match can fire. But
+`evalCompareChain` (Semantics.lean:5430) parks a comparison's right operand
+behind a `fun st rhs => …` until its own evaluation resolves, and simp opens
+`valEq (.int iv) rhs` under that binder with `rhs` a free variable. `valEq`
+lives in a **mutual block** (Semantics.lean:333-377), so at a stuck match
+the elaborator accepts the `Eq.refl` — its `whnf` does smart unfolding —
+and the kernel cannot. Hence `(kernel) application type mismatch` on a run
+whose REDUCTION was perfect: the residual of the failing pin was literally
+`⊢ ¬ iv = 91`.
+
+Three lines pin it, and they are the measurement that redirected the fix:
+
+```
+theorem minrepro (iv : Int) (rhs : RVal) : valEq (.int iv) rhs = valEq (.int iv) rhs := by
+  simp only [valEq]          -- (kernel) declaration type mismatch
+theorem viaEqDef (iv : Int) (rhs : RVal) : valEq (.int iv) rhs = valEq (.int iv) rhs := by
+  rw [valEq.eq_def]          -- green
+```
+
+**THE FIX: `valEq.eq_def` in the `py_simp` list.** It is the SAME rewrite
+carrying a real proof, and — this is the part that corrects §L4 PARTIAL's
+recorded trap — **a lemma at an `interpUnfolds` head DOES fire before the
+unfold, when its LHS is the head applied to variables.** `at?_eq_indexVal`
+failed not because unfolds beat rewrites in general but because its LHS was
+a SPECIFIC shape that no longer matched once the inner terms had been
+normalised. `eq_def`'s LHS matches unconditionally, so it wins. The house
+rule is therefore narrower than recorded: *to keep a definition in
+`interpUnfolds` from delta-unfolding badly, hand `py_simp` its `eq_def`.*
+Zero VCGen/VCTactic edits, and the ~35-minute triad that an
+`interpUnfolds` change would have cost was not spent.
+
+**THREE WHOLE RAYS, and the round induction earns its shape.**
+`Examples/python/sunfish/genmoves_ray.lean` now proves ray agreement for
+three of `Position.gen_moves`' four piece shapes, all over an arbitrary
+board at every fuel:
+
+* `ray_crawl_agrees` (landed in §L4 REMAINDER) — a knight or a king;
+* `ray_slide_agrees` — a bishop, rook or queen off `A1`/`H1`. **The first
+  ray in the repo that takes more than one round**, so the first use of
+  `ray_rounds`' `hgo` and of `RayRound`'s composition; the crawler theorem
+  closed with that case vacuous. `ray_rounds` did not move — which is what
+  stating it against `rayBody_append_or_const` rather than against the
+  statements was for, and is now demonstrated rather than claimed;
+* `ray_pawn_push_agrees` — a pawn at `d = N`. The crawler theorems assume
+  `p ≠ 'P'` by necessity (`pawnBreak` is where a pawn differs), so this is
+  its own shape, with the pawn block entered for the first time.
+
+**LEAF COUNT, corrected DOWNWARD.** Four of `Ref.ray`'s nine leaves are
+discharged, not eight: the stop guard, the crawler guard at both of its
+reasons (a non-slider, and a capture), the CONTINUING leaf, and the pawn
+block's first guard. The five that remain are named individually in the
+file's closing record with the shape each needs — the castling yield (the
+only ray statement whose taken arm has never been run: a board read at
+`j + E`, then `self.wc[0]`, then a `yield`), the pawn's two double-move
+guards, its capture guard, its promotion. **The calculus half of L4 is
+finished; the remainder is captured runs of precedented shapes.**
+
+**Five measurements worth carrying.**
+
+1. *At a FIXED direction, Python's `and` proves the expensive reads never
+   happen.* `pB1_run` shows the double move's SECOND board read is not
+   evaluated at `d = N`, and `pB2_run` shows `self.ep`/`self.kp` are not —
+   because the direction operand short-circuits first. Not "we did not need
+   them": the shipped code does not evaluate them. This is what makes a pawn
+   round as cheap as a slider's, and it is the reason `d` is a fixed
+   parameter rather than a symbolic one.
+2. *A tuple membership reaches `heapEq`, an ordinary `==` does not.*
+   `evalCompareOpH`'s `.eq` arm has a `refFree` fast path to `valEq`;
+   `valContains` on a `.tuple` goes through `heapContainsScan` straight into
+   `heapEq`, which is deliberately OUT of `interpUnfolds` (a frozen
+   recursion point). `heapEq_int` is the one-step bridge, and `d in (N, N+N)`
+   is why it exists.
+3. *A `def` in a hypothesis never meets its own value.* `Ref.N` is
+   semi-reducible, so a hypothesis reading `some (.int Ref.N)` does not match
+   the `-10` the module global resolves to. `have hd' : … = some (.int (-10))
+   := hd` — defeq, one line — is the whole fix, and it is the same trick the
+   castling runs use for `iv ≠ Ref.A1`.
+4. *The reference side wants a TRICHOTOMY, not a leaf enumeration.*
+   `rayBody_stop_const` / `rayBody_break_const` / `rayBody_slide_map`, made
+   exclusive by `rayBody_const_not_append`, replaced §L4 REMAINDER's bespoke
+   `ray_crawler_leaf` simp block and shortened it by fifteen lines; every
+   later leaf classifier (`ray_slider_leaf`, `ray_slider_go`,
+   `ray_pawn_leaf`) is three lines on top of it.
+5. *A doc comment must come AFTER `set_option … in` / `open … in`, and a
+   continuation line inside `fun k => by simpa …` must be indented past the
+   tactic.* Both cost a build cycle; both are silent until they are not.
+
+**Cost, measured.** The blocker took four scratch runs to reproduce and one
+(14 s) to fix. The slider half — two castling runs, two segments, the
+reference trichotomy, the round, the whole-ray theorem — was green on first
+or second try throughout. The pawn half was four captured runs, six
+segments, two rounds and four reference facts. The module now elaborates in
+**133 s** (it was 22 s), and that is entirely captured `py_simp` runs over
+the `sunfish` module literal: ten of them now, at ~13-20 s each. Triad at
+the cut: `lake build` clean (3666 jobs), `diff_test` 1288 cases / 0 failed /
+115 whitelisted-unsupported, `docs_check` 67/67 marked blocks. The file is +949/-78 lines for 39 new
+theorems (38 added, plus `breaking_round`, which is `crawler_round`
+generalised and renamed); `#print axioms` on every one of them, and on the
+two landed theorems the trichotomy rewrote: `propext`/`Classical.choice`/
+`Quot.sound` only, no `sorryAx` and no `ofReduceBool`.
+
+**What L5 consumes.** Three whole-ray facts in one shape —
+`∃ st', RayFrame … st'.locals ∧ GenEmits sunfish ⟨w, env⟩ [.forGen
+gmRayTarget a gmRay] (ms.map moveVal) st'` — so the board scan can chain
+rays without knowing which piece it is holding. `RayFrame` is the interface:
+the scans hand `self`/`i`/`p` in and get them back, and `RayLocals` is what
+keeps the module globals visible. The correction from §L4 PARTIAL still
+stands and L5 inherits it: the board scan's own frame is a `forGen` over an
+`<enumerate>` OBJECT, not an `enumSeq`.

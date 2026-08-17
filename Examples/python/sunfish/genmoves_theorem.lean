@@ -346,7 +346,9 @@ moves when the other leaves arrive) — docs/backlog.md §L4 prices them. -/
 Never retyped: every definition projects out of `sunfish`, so a changed
 PROGRAM stops the `rfl`s loudly. -/
 
-private def nowhere : Span := ⟨0, 0, 0, 0⟩
+/-- The span a projection falls back to. Public because `genmoves_ray.lean`
+projects the rest of the ray with the same kit. -/
+def nowhere : Span := ⟨0, 0, 0, 0⟩
 
 private def gmBody : List Stmt :=
   match findFunction sunfish "Position.gen_moves" with
@@ -362,7 +364,9 @@ private def forBody (s : Stmt) : List Stmt :=
 private def forTarget (s : Stmt) : Expr :=
   match s with | .forStmt t _ _ _ _ => t | _ => .constant .none nowhere
 
-private def nth (n : Nat) (ss : List Stmt) : Stmt :=
+/-- Positional projection into a statement list — public for the same
+reason as `nowhere`. -/
+def nth (n : Nat) (ss : List Stmt) : Stmt :=
   match n, ss with
   | 0, s :: _ => s
   | n + 1, _ :: r => nth n r

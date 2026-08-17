@@ -892,6 +892,439 @@ theorem genYieldsPrefix_countFrom {m : Module} {st : FrameState} {k : GenCont} :
     intro cur step
     exact GenYieldsPrefix.cons genSteps_countFrom (ih (cur + step) step)
 
+/-! ## L3: the consumer side — a generator OBJECT in a `for` statement
+
+Landing **L3** of docs/generator-tier-architecture.md §2. Everything above
+specifies a suspended MACHINE (a frame stack and a frame state). A consumer
+never sees one: it calls a generator function, gets a heap OBJECT back, and
+steps it with a `for`. Two facts are new here, and nothing else is.
+
+* **`EvalsIn`** — evaluating `upto(n)` ALLOCATES, so its value fact cannot
+  be an `EvalsTo`: that judgment is pinned-state by construction. `EvalsIn`
+  is its stateful twin, exactly as `CallsIn` is `CallsTo`'s.
+  `EvalsIn.genCall` is the memo's `EvalsTo.genCall` under the name its own
+  state change forces: a generator call is a `.ref` at the heap's end whose
+  object carries the frame stack `GenYields` talks about — **a value with a
+  specification**, which is the sentence L3 exists to make true.
+
+* **`PyStmtTriple.forGen`** — `for x in <generator>`, with the same
+  remainder-indexed invariant the value-sequence `for` rule uses.
+  `execForGen_of_invariant` underneath is `execFor_of_invariant` with one
+  `stepIter` in front of each round.
+
+**Where the heap-stability side condition went.** L2 recorded that a
+whole-drain bridge needs one (the body must not write the iterator slot).
+The loop rule does not: it asks for a FRESH `IterSteps` fact at the state
+each round actually begins in, and the INVARIANT is what carries the object
+across the body. A body that clobbers slot `a` cannot re-establish the
+invariant; a body that leaves it alone re-establishes it for free. So no
+`WritesAvoid`-style frame predicate is introduced — at this altitude it
+would be a special case dressed as a rule. (The `drainIter` bridge still
+wants one and is still recorded as L2's remainder: a drain has no body in
+which to re-establish anything.)
+
+**And the lazy half needs no second rule.** The memo expected
+`GenYieldsPrefix` at the consumer level for the `break` case. It is not
+needed, and the reason is worth stating: **`Inv []` may be `False`.** A
+consumer that always escapes — `first_over_inf`'s `return`, `bound`'s beta
+`break` — writes an invariant that is unsatisfiable at the empty remainder;
+that discharges the exhaustion obligation vacuously and never asks the
+generator to finish. An INFINITE generator is consumed by this rule, and it
+is the same rule. -/
+
+/-! ### Heap bookkeeping for a suspended object
+
+Three small `Array` facts, stated here because the generator tier is where
+they are load-bearing: a call allocates at the END of the heap, and
+`stepIter` writes that one slot twice per step. -/
+
+/-- **The freshly allocated object is readable at the address the call
+answered** — the heap fact `PyStmtTriple.forGen`'s `hiter` obligation needs
+the moment `EvalsIn.genCall` has fired. -/
+theorem Heap.get?_push_size (h : Heap) (o : Obj) :
+    Heap.get? (h.push o) h.size = some o := by
+  simp [Heap.get?, Array.size_push]
+
+/-- **Two writes to the same slot are the second write** — what makes
+`stepIter`'s enter-`.running`/exit-`.suspended` pair one observable change
+of the object rather than two. -/
+theorem Heap.update_update {h h₁ : Heap} {a : Addr} {o o' : Obj}
+    (hu : Heap.update h a o = some h₁) :
+    Heap.update h₁ a o' = Heap.update h a o' := by
+  unfold Heap.update at *
+  split at hu
+  · next hlt =>
+      injection hu with hu
+      subst hu
+      rw [dif_pos (by simpa using hlt : a < (h.set a o hlt).size), dif_pos hlt]
+      exact congrArg some (Array.ext' (by simp [Array.toList_set]))
+  · next => exact absurd hu (by simp)
+
+/-- **Writing the last-allocated slot rebuilds the same push.** Small, and
+load-bearing: it is what keeps the worlds a generator loop passes through
+UNIFORM (`h.push objₖ` at every round) instead of a growing tower of
+`Array.set`s, and `stepIter` writes that slot twice per step. -/
+theorem Heap.update_push_size (h : Heap) (o o' : Obj) :
+    Heap.update (h.push o) h.size o' = some (h.push o') := by
+  have hlt : h.size < (h.push o).size := by simp [Array.size_push]
+  simp only [Heap.update, hlt, dif_pos]
+  refine congrArg some (Array.ext' ?_)
+  simp [Array.toList_set, Array.toList_push]
+
+/-- **One decided step of the generator OBJECT at `a`** — the world-level
+twin of `GenSteps`, in the same threshold form: from world `w`, stepping
+the object either yields (`some v`) or reports exhaustion (`none`), leaving
+`w'`. This is what every consumer of a generator consumes, one at a time
+(`execForGen`, `drainIter`, `anyAllIter`, `next`), and the two heap-object
+bridges above are its introduction rules. -/
+def IterSteps (m : Module) (w : World) (a : Addr) (r : Option RVal)
+    (w' : World) : Prop :=
+  ∃ t, ∀ F ≥ t, stepIter m F w a = .ok w' r
+
+namespace IterSteps
+
+/-- Introduce an object step from one concrete run (any fuel). -/
+theorem of_step {m : Module} {fuel : Nat} {w w' : World} {a : Addr}
+    {r : Option RVal} (h : stepIter m fuel w a = .ok w' r) :
+    IterSteps m w a r w' :=
+  ⟨fuel, fun F hF => stepIter_mono h (by simp) F hF⟩
+
+/-- **A yield of the object**, from a `GenSteps` fact about its stored
+continuation: `stepIter_of_genSteps` read as this judgment (its conclusion
+IS this judgment, unfolded). -/
+theorem of_genSteps {m : Module} {w : World} {a : Addr} {qname : String}
+    {locals : REnv} {cont cont' : GenCont} {status : GenStatus}
+    {h₁ h₂ : Heap} {st₁ : FrameState} {v : RVal}
+    (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
+    (hstatus : status = .created ∨ status = .suspended)
+    (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
+    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont (some (v, cont')) st₁)
+    (hback : Heap.update st₁.world.heap a
+        (.generator qname st₁.locals cont' .suspended) = some h₂) :
+    IterSteps m w a (some v) { st₁.world with heap := h₂ } :=
+  stepIter_of_genSteps hobj hstatus hrun hstep hback
+
+/-- **Exhaustion of the object**, likewise from `stepIter_of_genDone`. -/
+theorem of_genDone {m : Module} {w : World} {a : Addr} {qname : String}
+    {locals : REnv} {cont : GenCont} {status : GenStatus} {h₁ h₂ : Heap}
+    {st₁ : FrameState}
+    (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
+    (hstatus : status = .created ∨ status = .suspended)
+    (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
+    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont Option.none st₁)
+    (hback : Heap.update st₁.world.heap a
+        (.generator qname st₁.locals [] .closed) = some h₂) :
+    IterSteps m w a Option.none { st₁.world with heap := h₂ } :=
+  stepIter_of_genDone hobj hstatus hrun hstep hback
+
+/-- **One step of a generator object whose own resumption is heap-pure** —
+the common case, and the one every consumer of `EvalsIn.genCall` meets: a
+generator whose body touches only its own frame. Then `stepIter`'s two
+writes (`.running` on entry, the resumption on exit) land on the same slot
+and collapse (`Heap.update_update`), so the whole step is ONE observable
+change of the object and the caller never has to name the intermediate
+heap twice. `of_genSteps` is the general form, for a resumption that moves
+the world. -/
+theorem pureStep {m : Module} {w : World} {a : Addr} {qname : String}
+    {locals locals' : REnv} {cont cont' : GenCont} {status : GenStatus}
+    {h₁ h₂ : Heap} {v : RVal}
+    (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
+    (hstatus : status = .created ∨ status = .suspended)
+    (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
+    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont (some (v, cont'))
+      ⟨{ w with heap := h₁ }, locals'⟩)
+    (hback : Heap.update w.heap a
+      (.generator qname locals' cont' .suspended) = some h₂) :
+    IterSteps m w a (some v) { w with heap := h₂ } :=
+  IterSteps.of_genSteps hobj hstatus hrun hstep (by
+    show Heap.update h₁ a (.generator qname locals' cont' .suspended) = some h₂
+    rw [Heap.update_update hrun]
+    exact hback)
+
+/-- `pureStep`'s exhaustion twin. -/
+theorem pureDone {m : Module} {w : World} {a : Addr} {qname : String}
+    {locals locals' : REnv} {cont : GenCont} {status : GenStatus} {h₁ h₂ : Heap}
+    (hobj : Heap.get? w.heap a = some (.generator qname locals cont status))
+    (hstatus : status = .created ∨ status = .suspended)
+    (hrun : Heap.update w.heap a (.generator qname locals cont .running) = some h₁)
+    (hstep : GenSteps m ⟨{ w with heap := h₁ }, locals⟩ cont Option.none
+      ⟨{ w with heap := h₁ }, locals'⟩)
+    (hback : Heap.update w.heap a (.generator qname locals' [] .closed) = some h₂) :
+    IterSteps m w a Option.none { w with heap := h₂ } :=
+  IterSteps.of_genDone hobj hstatus hrun hstep (by
+    show Heap.update h₁ a (.generator qname locals' [] .closed) = some h₂
+    rw [Heap.update_update hrun]
+    exact hback)
+
+/-- A CLOSED object answers exhaustion forever without running anything —
+what makes a second `for` over a drained generator run zero times
+(`gen_lab.drain_then_more`). -/
+theorem closed {m : Module} {w : World} {a : Addr} {qname : String}
+    {locals : REnv} {cont : GenCont}
+    (hobj : Heap.get? w.heap a = some (.generator qname locals cont .closed)) :
+    IterSteps m w a Option.none w :=
+  ⟨1, fun F hF => by
+    obtain ⟨F', rfl, _⟩ := succ_le_dest hF
+    rw [stepIter]
+    simp only [hobj]⟩
+
+end IterSteps
+
+/-- **Terminating EFFECTFUL expression evaluation**: `e` evaluates to `v`
+and moves the state to `st'`. The stateful twin of `EvalsTo` (VC.lean),
+which pins the out-state to the in-state, exactly as `CallsIn` is the
+stateful twin of `CallsTo`.
+
+Stated here rather than in VC.lean because a generator call is the first
+expression in the tier whose evaluation is *not* pinned-state — it
+allocates — and this file is where its consumer lives. -/
+def EvalsIn (m : Module) (st : FrameState) (e : Expr) (v : RVal)
+    (st' : FrameState) : Prop :=
+  ∃ t, ∀ F ≥ t, evalExpr m F st e = .ok st' v
+
+namespace EvalsIn
+
+/-- Introduce from one concrete evaluation (any fuel). -/
+theorem of_eval {m : Module} {fuel : Nat} {st st' : FrameState} {e : Expr}
+    {v : RVal} (h : evalExpr m fuel st e = .ok st' v) : EvalsIn m st e v st' :=
+  ⟨fuel, fun F hF => evalExpr_mono h (by simp) F hF⟩
+
+/-- A pure evaluation is an effectful one that moved nothing. -/
+theorem of_evalsTo {m : Module} {st : FrameState} {e : Expr} {v : RVal}
+    (h : EvalsTo m st e v) : EvalsIn m st e v st := h.at_least
+
+end EvalsIn
+
+/-- **The heap object a generator CALL allocates** — `callIn`'s H4 creation
+arm as a name, so the rules below can say it once: the arguments bound by
+`mkCallEnv`, the whole body as the initial continuation, status `.created`.
+
+That middle field is the hinge of this landing. `[.block f.body.toList]` is
+literally the frame stack every `GenYields` theorem in this file is stated
+over, so a spec for the BODY and a spec for the CALL compose with no glue. -/
+def genObj (fname : String) (f : FunctionDefn) (args : Array RVal) : Obj :=
+  .generator fname (mkCallEnv f.params args) [.block f.body.toList] .created
+
+/-- **Calling a generator function runs no code**: it appends the suspended
+frame to the heap and answers its address. `callIn`'s creation arm in
+equational form (the guards are the interpreter's own, in its own order). -/
+theorem callIn_genCall {m : Module} {fuel : Nat} {w : World} {fname : String}
+    {f : FunctionDefn} {args : Array RVal}
+    (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
+    (hlocalsOk : f.localsOk = true)
+    (harity : arityOk f.params args.size = true) (hgen : f.isGenerator = true) :
+    callIn m (fuel + 1) w fname args
+      = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) := by
+  rw [callIn]
+  simp [hf, hargsOk, hlocalsOk, harity, hgen, genObj]
+
+/-- **A generator call is a value with a specification** (the memo's
+`EvalsTo.genCall`, §2.1). The call expression `f(e₁, …, eₖ)` evaluates to a
+`.ref` at the heap's END, and the object there is `genObj` — whose stored
+continuation is exactly what a `GenYields` fact about the body speaks
+about, so the generator arrives as a heap value whose remaining output is
+already known.
+
+The guards are `evalExpr`'s own name-resolution order, hypothesis by
+hypothesis; at a literal module every one of them closes by `rfl`. Note
+there is no `heapFree` hypothesis and there could not be: a module with a
+generator def is not heap-free, which is exactly why `EvalsTo.call` cannot
+serve here. -/
+theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
+    {f : FunctionDefn} {argEs : Array Expr} {vs : List RVal} {sp sp' : Span}
+    (hlocal : Env.lookup st.locals fname = Option.none)
+    (hglob : lookupG (moduleGlobals m).1 fname = Option.none)
+    (hcls : findClass m fname = Option.none)
+    (hnt : findNamedTuple m fname = Option.none)
+    (hf : findFunction m fname = some f)
+    (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
+    (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
+    (hargs : EvalsToList m st argEs.toList vs) :
+    EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
+      (.ref st.world.heap.size)
+      ⟨{ st.world with heap := st.world.heap.push (genObj fname f vs.toArray) },
+        st.locals⟩ := by
+  obtain ⟨ta, ha⟩ := hargs.at_least
+  refine ⟨ta + 2, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
+  have hcall := callIn_genCall (m := m) (fuel := F'') (w := st.world) (fname := fname)
+    (args := vs.toArray) hf hargsOk hlocalsOk (by simpa using harity) hgen
+  rw [evalExpr]
+  simp only [Array.isEmpty, Array.size_empty, hlocal, hglob, hcls, hnt, hf,
+    ha (F'' + 1) (by omega), Run.ok_bind, Option.isSome_some, if_pos,
+    Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_neg,
+    not_false_eq_true, hcall, Run.withLocals]
+  rfl
+
+/-! ### The loop engine and the statement rule -/
+
+/-- **The generator `for`'s engine**, at the `execForGen` level:
+`execFor_of_invariant` (VC2.lean) with one `stepIter` in front of each
+round. The invariant is indexed by the REMAINING elements exactly as there,
+and the two obligations are the interpreter's two arms:
+
+* `hexit` — at the empty remainder the object must report EXHAUSTION (the
+  loop still takes a step to learn that), landing in `Q.next`;
+* `hstep` — at `x :: rest` the object must yield `elt x` from the state
+  this round begins in, and the body must re-establish `Inv rest`.
+
+The per-round `IterSteps` obligation is deliberate: it is what makes the
+rule sound without a heap-stability side condition, since the body's effect
+on the object is re-observed rather than assumed away. `Inv [] = False` is
+allowed and is how an infinite generator is consumed (file section header). -/
+theorem execForGen_of_invariant {m : Module} {α : Type} {target : Expr}
+    {body : List Stmt} {Q : PyPost} {a : Addr} (elt : α → RVal)
+    (Inv : List α → FrameState → Prop)
+    (hexit : ∀ st, Inv [] st →
+      ∃ w', IterSteps m st.world a Option.none w' ∧ Q.next ⟨w', st.locals⟩)
+    (hstep : ∀ x rest st, Inv (x :: rest) st →
+      ∃ w' env₁, IterSteps m st.world a (some (elt x)) w' ∧
+        assignToH w'.heap st.locals target (elt x) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = (⟨w', env₁⟩ : FrameState)) body
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    ∀ as st, Inv as st →
+      ∃ t, ∀ F ≥ t, Q.holds (execForGen m F st target a body) := by
+  intro as
+  induction as with
+  | nil =>
+    intro st hI
+    obtain ⟨w', hit, hQ⟩ := hexit st hI
+    obtain ⟨ts, hts⟩ := hit
+    refine ⟨ts + 1, fun F hF => ?_⟩
+    obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+    rw [execForGen, hts F' hF']
+    simp only [Run.withLocals, Run.ok_bind]
+    exact hQ
+  | cons x rest ih =>
+    intro st hI
+    obtain ⟨w', env₁, hit, hasg, hb⟩ := hstep x rest st hI
+    obtain ⟨ts, hts⟩ := hit
+    obtain ⟨r, tb, hr, hrun⟩ := hb.exec (st := (⟨w', env₁⟩ : FrameState)) rfl
+    cases r with
+    | ok st' flow =>
+      cases flow with
+      | next =>
+        obtain ⟨tf, hf⟩ := ih st' hr
+        have h0 := hf tf (Nat.le_refl tf)
+        have hpin := execForGen_mono rfl (PyPost.holds_ne_timeout h0)
+        refine ⟨ts + tb + tf + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execForGen, hts F' (by omega)]
+        simp only [Run.withLocals, Run.ok_bind, hasg, Run.liftRes]
+        rw [hrun F' (by omega)]
+        simp only [Run.ok_bind]
+        rw [hpin F' (by omega)]
+        exact h0
+      | cont =>
+        obtain ⟨tf, hf⟩ := ih st' hr
+        have h0 := hf tf (Nat.le_refl tf)
+        have hpin := execForGen_mono rfl (PyPost.holds_ne_timeout h0)
+        refine ⟨ts + tb + tf + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execForGen, hts F' (by omega)]
+        simp only [Run.withLocals, Run.ok_bind, hasg, Run.liftRes]
+        rw [hrun F' (by omega)]
+        simp only [Run.ok_bind]
+        rw [hpin F' (by omega)]
+        exact h0
+      | brk =>
+        refine ⟨ts + tb + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execForGen, hts F' (by omega)]
+        simp only [Run.withLocals, Run.ok_bind, hasg, Run.liftRes]
+        rw [hrun F' (by omega)]
+        simpa using hr
+      | ret v =>
+        refine ⟨ts + tb + 1, fun F hF => ?_⟩
+        obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+        rw [execForGen, hts F' (by omega)]
+        simp only [Run.withLocals, Run.ok_bind, hasg, Run.liftRes]
+        rw [hrun F' (by omega)]
+        simpa using hr
+    | exn st' e =>
+      refine ⟨ts + tb + 1, fun F hF => ?_⟩
+      obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+      rw [execForGen, hts F' (by omega)]
+      simp only [Run.withLocals, Run.ok_bind, hasg, Run.liftRes]
+      rw [hrun F' (by omega)]
+      simpa using hr
+    | timeout => exact (PyPost.holds_ne_timeout hr rfl).elim
+    | unsupported msg => exact hr.elim
+
+/-- **The generator `for` rule** in the triple vocabulary
+(docs/generator-tier-architecture.md §2.2). Deliberately NOT an `IterVals`
+constructor: nothing here claims a snapshot — the elements arrive one
+`stepIter` at a time and the invariant re-observes the object every round —
+so the exclusion note in VC2.lean's for-rule section stands untouched.
+
+`hiter` is the effectful evaluation of the iterable (`EvalsIn`, since
+`gen()` allocates) plus the fact that what it names is a generator object.
+`hgenfree` is the interpreter's own guard: a generator object in a module
+with no generator defs is a heap well-formedness violation and
+`execForList` says so loudly rather than stepping, so the rule must know
+the module has generator defs. It closes by `rfl` at a literal module. -/
+theorem PyStmtTriple.forGen {m : Module} {α : Type} {target iter : Expr}
+    {body : Array Stmt} {sp : Span} {P : FrameState → Prop} {Q : PyPost}
+    {a : Addr} (elt : α → RVal) (Inv : List α → FrameState → Prop)
+    (as : List α) (hgenfree : moduleGenFree m = false)
+    (hiter : ∀ st, P st → ∃ st₁ qname locals cont status,
+      EvalsIn m st iter (.ref a) st₁ ∧
+        Heap.get? st₁.world.heap a = some (.generator qname locals cont status) ∧
+        Inv as st₁)
+    (hexit : ∀ st, Inv [] st →
+      ∃ w', IterSteps m st.world a Option.none w' ∧ Q.next ⟨w', st.locals⟩)
+    (hstep : ∀ x rest st, Inv (x :: rest) st →
+      ∃ w' env₁, IterSteps m st.world a (some (elt x)) w' ∧
+        assignToH w'.heap st.locals target (elt x) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = (⟨w', env₁⟩ : FrameState)) body.toList
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    PyStmtTriple m P (.forStmt target iter body #[] sp) Q := by
+  intro st hP
+  obtain ⟨st₁, qname, locals, cont, status, hev, hobj, hI⟩ := hiter st hP
+  obtain ⟨ti, hi⟩ := hev
+  obtain ⟨t, ht⟩ := execForGen_of_invariant elt Inv hexit hstep as st₁ hI
+  refine ⟨ti + t + 2, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
+  rw [execStmt]
+  simp only [hi (F'' + 1) (by omega), Run.ok_bind]
+  rw [execForList]
+  simp only [hobj, hgenfree, Bool.false_eq_true, if_neg, not_false_eq_true]
+  exact ht F'' (by omega)
+
+/-- List-level singleton form of the generator `for` rule; for a loop in
+mid-list position feed `PyStmtTriple.forGen` to `PyTriple.seq` instead. -/
+theorem PyTriple.forGen {m : Module} {α : Type} {target iter : Expr}
+    {body : Array Stmt} {sp : Span} {P : FrameState → Prop} {Q : PyPost}
+    {a : Addr} (elt : α → RVal) (Inv : List α → FrameState → Prop)
+    (as : List α) (hgenfree : moduleGenFree m = false)
+    (hiter : ∀ st, P st → ∃ st₁ qname locals cont status,
+      EvalsIn m st iter (.ref a) st₁ ∧
+        Heap.get? st₁.world.heap a = some (.generator qname locals cont status) ∧
+        Inv as st₁)
+    (hexit : ∀ st, Inv [] st →
+      ∃ w', IterSteps m st.world a Option.none w' ∧ Q.next ⟨w', st.locals⟩)
+    (hstep : ∀ x rest st, Inv (x :: rest) st →
+      ∃ w' env₁, IterSteps m st.world a (some (elt x)) w' ∧
+        assignToH w'.heap st.locals target (elt x) = .ok env₁ ∧
+        PyTriple m (fun st' => st' = (⟨w', env₁⟩ : FrameState)) body.toList
+          { next := Inv rest
+            ret := Q.ret
+            brk := Q.next
+            cont := Inv rest
+            err := Q.err }) :
+    PyTriple m P [.forStmt target iter body #[] sp] Q :=
+  PyTriple.single (PyStmtTriple.forGen elt Inv as hgenfree hiter hexit hstep)
+
 /-! ## Smoke tests
 
 Two ends of the calculus on hand-built frame stacks over an EMPTY module

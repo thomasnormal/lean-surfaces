@@ -1,19 +1,28 @@
 # The generator tier as a VERIFIED object — design memo
 
-Status: **L1 and L2 LANDED; L3-L5 owner-gated.** Written 2026-08-16 after
-the ray leg of the `gen_moves` theorem stopped on tooling rather than on
-effort (docs/backlog.md §the ray leg, factored). It exists so that a "go"
-starts landing 1 instead of starting design — and it did: L1 landed
-2026-08-16 (the string-as-list bridge, VCTactic.lean §strings as lists of
-characters; gate `at?_eq_indexVal`) and L2 landed 2026-08-17
+Status: **L1, L2 LANDED; L3 CORE landed (rules + first consumer theorem);
+L4-L5 owner-gated.** Written 2026-08-16 after the ray leg of the
+`gen_moves` theorem stopped on tooling rather than on effort
+(docs/backlog.md §the ray leg, factored). It exists so that a "go" starts
+landing 1 instead of starting design — and it did: L1 landed 2026-08-16
+(the string-as-list bridge, VCTactic.lean §strings as lists of characters;
+gate `at?_eq_indexVal`), L2 landed 2026-08-17
 (`LeanModels/Python/VCGen.lean` — `GenYields`/`GenYieldsPrefix`/`GenEmits`
 and the frame rules; gate `Examples/python/gen_lab/proof.lean`, the first
-generator theorems in the repo). Both landings, their measurements, and
-L2's ONE recorded remainder (the whole-drain `drainIter` bridge and its
-heap-stability side condition) are in docs/backlog.md §L1 LANDED / §L2
-LANDED. Everything BELOW is the original design text, unedited — the
-estimates are what they were before the work, which is what makes the
-calibration notes in the backlog meaningful.
+generator theorems in the repo), and L3's rules landed the same day
+(`IterSteps`, `EvalsIn`/`EvalsIn.genCall`, `PyStmtTriple.forGen`; gate
+`total_calls` — the first arrow-form spec for a function that consumes a
+generator). L3's two OPEN pieces are the walker automation and §4's
+`bound_probe` gate, decomposed with their real prices in docs/backlog.md
+§L3 LANDED (core). All landings, their measurements, and their recorded
+remainders are in docs/backlog.md §L1 LANDED / §L2 LANDED / §L3 LANDED.
+Everything BELOW is the original design text, unedited — the estimates are
+what they were before the work, which is what makes the calibration notes
+in the backlog meaningful. Two of §2's predictions were revised by contact
+with the code and the backlog says how: `EvalsTo.genCall` had to become
+`EvalsIn.genCall` (a call that allocates cannot be a pinned-state fact),
+and the consumer-level `GenYieldsPrefix` turned out unnecessary
+(`Inv [] = False` is the break case).
 
 Everything below is censused against the tree at `31ff3fb`, not recalled.
 

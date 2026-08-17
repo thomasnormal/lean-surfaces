@@ -42,9 +42,14 @@ SPECIFYING a suspended generator (`GenYields`/`GenYieldsPrefix`/
 first generator theorems written with it: the drain of `upto(n)`
 symbolically in `n`, and LAZINESS — a prefix of every length out of the
 INFINITE `naturals()`, which is the first of the three claims above.
-Identity and `break`-suspends stay rows; proof.lean's last section records
-the measurement that says why a concrete run is not affordable as a
-theorem here.
+
+Landing **L3** and its tail added the CONSUMER side, and with it the other
+two claims: `total_calls` is `total(n) ==> 0 + 1 + ⋯ + (n−1)` through a
+generator, and `two_phase_calls` is `break` SUSPENDS and a generator is
+heap IDENTITY — one object, two loops, the second resuming where the first
+abandoned it, symbolically in `n`. What is still not a theorem is a kernel
+promotion of a CONCRETE row; proof.lean records the measurement that says
+why a 4096-fuel checked run is not affordable here.
 -/
 
 open LeanModels LeanModels.Python

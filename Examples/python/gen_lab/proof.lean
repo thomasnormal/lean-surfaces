@@ -8,8 +8,8 @@ could be SPECIFIED. Everything here is stated in that vocabulary
 (`GenYields`/`GenYieldsPrefix`/`GenEmits`) over the ingested module and
 proved from its frame rules.
 
-Two of the three claims gen_lab's docstring names stop being rows and
-become theorems:
+All three claims gen_lab's docstring names are theorems here — the first
+two since L2, the third since L3's tail:
 
 * **the drain** — `upto(n)` yields exactly `0, 1, …, n-1`, SYMBOLICALLY in
   `n`, over an arbitrary world;
@@ -17,11 +17,14 @@ become theorems:
   at all) and yet hands over a prefix of EVERY length and is left in one
   fixed resumption configuration. A design that pre-expanded a generator
   into a list could not state this, let alone prove it.
+* **`break` SUSPENDS, and a generator is heap IDENTITY** —
+  `two_phase_calls`, in the L3 section: one object, two loops, the second
+  resuming at the configuration the first abandoned. Symbolic in `n`.
 
-The third — a generator is heap IDENTITY — stays a `#py_check` row, and
-the last section records the measurement that says why: promoting a
-CONCRETE run to a theorem costs a checked kernel reduction, which this
-interpreter cannot afford at 4096 fuel.
+What is still not here is a kernel promotion of a CONCRETE surface row
+(`aliased(4) ==> 1` by `rfl` at 4096 fuel); the last section of the L2
+material records the measurement that says why, and the symbolic route
+above is the better trade anyway.
 
 MEASURED, and recorded because it is a general trap: stating the program
 shape as ONE existential over twelve source spans
@@ -468,7 +471,9 @@ untrusted and ~1000× faster than a checked reduction, and one 2-node probe
 exceeded 16 minutes of `decide +kernel`). The identity rows therefore stay
 `#py_check` pins at the trust level of the whole existing pin battery, and
 the theorems here are the symbolic ones — which is the better trade
-anyway: `upto_yields` covers every `n`, and no concrete row does. -/
+anyway: `upto_yields` covers every `n`, and no concrete row does. (The
+identity CLAIM is not left to the rows: `two_phase_calls` in the L3 section
+proves it symbolically. What stays out is promoting a concrete run.) -/
 
 theorem upto5_yields (w : World) :
     GenYields gen_lab ⟨w, uptoEntry 5⟩ uptoCont
@@ -900,5 +905,316 @@ theorem total5_calls : CallsTo gen_lab "total" #[.int 5] (.int 10) := by
   rw [show ((5 : Nat) : Int) = 5 from rfl,
     show sumUpto 5 = 10 from by first | rfl | decide] at h
   exact h
+
+/-! ## `two_phase(n)`: ONE object, two consumers — and the LAZY half
+
+```python
+def two_phase(n):
+    g = upto(n)
+    a = -1
+    for x in g:
+        a = x
+        break
+    b = -1
+    for y in g:
+        b = y
+        break
+    return a * 100 + b
+```
+
+`total` drains its generator, so its invariant is satisfiable at the empty
+remainder and the exhaustion obligation does real work. This theorem is the
+other half of the rule, the one VCGen.lean's section header claims and
+nothing exercised until now: **both loops carry an invariant that is `False`
+at the empty remainder.** Each escapes by `break` after one value, so the
+`hexit` obligation — "at the empty remainder the object reports exhaustion"
+— is discharged VACUOUSLY, and the generator is never asked to finish. That
+is exactly how an infinite generator would be consumed; `upto(n)` is used
+here because it is the object already specified above.
+
+The other thing it pins is IDENTITY. The second loop's `hiter` observes the
+SAME address the first loop left behind, in configuration 1 rather than 0,
+which is why `b = 1` and not `0`. gen_lab's docstring calls that claim
+"`break` SUSPENDS" and had it only as a differential row; it is a theorem
+now, symbolically in `n` for every `n ≥ 2`.
+
+`g = upto(n)` is the statement the pure assignment rule cannot bind (the
+RHS allocates), so it goes through `PyStmtTriple.assignNameIn`. -/
+
+/-- `two_phase`'s own `FunctionDefn` and body, projected (never retyped). -/
+def twoPhaseF : FunctionDefn :=
+  match findFunction gen_lab "two_phase" with
+  | some f => f
+  | none => default
+
+/-- `two_phase`'s body as the call bridge presents it. -/
+def twoPhaseBody : List Stmt := twoPhaseF.body.toList
+
+private def stmt3 (ss : List Stmt) : Stmt :=
+  match ss with | _ :: _ :: _ :: s :: _ => s | _ => .pass nowhere
+
+private def stmt4 (ss : List Stmt) : Stmt :=
+  match ss with | _ :: _ :: _ :: _ :: s :: _ => s | _ => .pass nowhere
+
+private def stmt5 (ss : List Stmt) : Stmt :=
+  match ss with | _ :: _ :: _ :: _ :: _ :: s :: _ => s | _ => .pass nowhere
+
+private def rhsOf (s : Stmt) : Expr :=
+  match s with | .assign _ e _ => e | _ => .constant .none nowhere
+
+private def retE (s : Stmt) : Expr :=
+  match s with | .ret (some e) _ => e | _ => .constant .none nowhere
+
+/-- `g = upto(n)` — the statement that ALLOCATES. -/
+def tpBindG : Stmt := stmt0 twoPhaseBody
+/-- `a = -1`. -/
+def tpInitA : Stmt := stmt1 twoPhaseBody
+/-- `for x in g: a = x; break`. -/
+def tpForX : Stmt := stmt2 twoPhaseBody
+/-- `b = -1`. -/
+def tpInitB : Stmt := stmt3 twoPhaseBody
+/-- `for y in g: b = y; break` — the SECOND consumer of the same object. -/
+def tpForY : Stmt := stmt4 twoPhaseBody
+/-- `return a * 100 + b`. -/
+def tpRet : Stmt := stmt5 twoPhaseBody
+
+/-- `upto(n)`. -/
+def tpCall : Expr := rhsOf tpBindG
+/-- `g`, in the first loop's iterable position. -/
+def tpIterX : Expr := iterOf tpForX
+/-- `x`. -/
+def tpTargetX : Expr := targetOf tpForX
+/-- `a = x; break`. -/
+def tpBodyX : Array Stmt := forBodyOf tpForX
+/-- `g` again — the same name, and therefore the same object. -/
+def tpIterY : Expr := iterOf tpForY
+/-- `y`. -/
+def tpTargetY : Expr := targetOf tpForY
+/-- `b = y; break`. -/
+def tpBodyY : Array Stmt := forBodyOf tpForY
+/-- `a * 100 + b`. -/
+def tpRetE : Expr := retE tpRet
+
+theorem twoPhaseBody_split :
+    twoPhaseBody = [tpBindG, tpInitA, tpForX, tpInitB, tpForY, tpRet] := rfl
+
+theorem tpBindG_lit : ∃ s₁ s₂, tpBindG = .assign #[.name "g" s₁] tpCall s₂ :=
+  ⟨_, _, rfl⟩
+
+theorem tpCall_lit :
+    ∃ s₁ s₂ s₃,
+      tpCall = .call (.name "upto" s₁) #[.name "n" s₂] #[] Option.none s₃ :=
+  ⟨_, _, _, rfl⟩
+
+theorem tpInitA_lit :
+    ∃ s₁ s₂ s₃ s₄,
+      tpInitA = .assign #[.name "a" s₁] (.unaryOp .usub (.constant (.int 1) s₂) s₃) s₄ :=
+  ⟨_, _, _, _, rfl⟩
+
+theorem tpInitB_lit :
+    ∃ s₁ s₂ s₃ s₄,
+      tpInitB = .assign #[.name "b" s₁] (.unaryOp .usub (.constant (.int 1) s₂) s₃) s₄ :=
+  ⟨_, _, _, _, rfl⟩
+
+theorem tpForX_lit :
+    ∃ sp, tpForX = .forStmt tpTargetX tpIterX tpBodyX #[] sp := ⟨_, rfl⟩
+
+theorem tpForY_lit :
+    ∃ sp, tpForY = .forStmt tpTargetY tpIterY tpBodyY #[] sp := ⟨_, rfl⟩
+
+theorem tpIterX_lit : ∃ sp, tpIterX = .name "g" sp := ⟨_, rfl⟩
+theorem tpIterY_lit : ∃ sp, tpIterY = .name "g" sp := ⟨_, rfl⟩
+theorem tpTargetX_lit : ∃ sp, tpTargetX = .name "x" sp := ⟨_, rfl⟩
+theorem tpTargetY_lit : ∃ sp, tpTargetY = .name "y" sp := ⟨_, rfl⟩
+
+theorem tpBodyX_lit :
+    ∃ s₁ s₂ s₃ s₄,
+      tpBodyX = #[.assign #[.name "a" s₁] (.name "x" s₂) s₃, .brk s₄] :=
+  ⟨_, _, _, _, rfl⟩
+
+theorem tpBodyY_lit :
+    ∃ s₁ s₂ s₃ s₄,
+      tpBodyY = #[.assign #[.name "b" s₁] (.name "y" s₂) s₃, .brk s₄] :=
+  ⟨_, _, _, _, rfl⟩
+
+theorem tpRet_lit : ∃ sp, tpRet = .ret (some tpRetE) sp := ⟨_, rfl⟩
+
+theorem tpRetE_lit :
+    ∃ s₁ s₂ s₃ s₄ s₅,
+      tpRetE = .binOp (.binOp (.name "a" s₁) .mult (.constant (.int 100) s₂) s₃)
+        .add (.name "b" s₄) s₅ :=
+  ⟨_, _, _, _, _, rfl⟩
+
+/-- `two_phase`'s frame at the seven points the proof names: after
+`g = upto(n)` (0), after `a = -1` (1), with `x` bound (2), after `a = x`
+(3), after `b = -1` (4), with `y` bound (5), after `b = y` (6). The
+generator address `A` is in every one of them — one object, two
+consumers. -/
+def tpEnv (N : Nat) (A : Addr) : Nat → REnv
+  | 0 => [("n", .int (N : Int)), ("g", .ref A)]
+  | 1 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int (-1))]
+  | 2 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int (-1)), ("x", .int 0)]
+  | 3 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int 0), ("x", .int 0)]
+  | 4 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int 0), ("x", .int 0),
+          ("b", .int (-1))]
+  | 5 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int 0), ("x", .int 0),
+          ("b", .int (-1)), ("y", .int 1)]
+  | 6 => [("n", .int (N : Int)), ("g", .ref A), ("a", .int 0), ("x", .int 0),
+          ("b", .int 1), ("y", .int 1)]
+  | _ => []
+
+/-- **The first loop's invariant, and the point of the theorem**: at the
+empty remainder it is `False` — `[] = [0]` has no proof. So the exhaustion
+obligation is discharged vacuously and the loop never asks `upto(n)` to
+finish; it takes one value and escapes. -/
+abbrev tpInv1 (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop :=
+  rest = [0] ∧ st = ⟨uptoWorld w (N : Int) 0, tpEnv N w.heap.size 1⟩
+
+/-- The second loop's invariant — the same shape, over the object in
+configuration ONE. That index is the whole `break`-suspends claim: the
+first loop left the object there, and this loop starts from it. -/
+abbrev tpInv2 (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop :=
+  rest = [1] ∧ st = ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 4⟩
+
+/-- `two_phase`'s whole body, as a triple over an arbitrary entry world. -/
+theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
+    PyTriple gen_lab (fun st => st = ⟨w, [("n", .int (N : Int))]⟩) twoPhaseBody
+      (.ofRet fun rv _ => rv = RVal.int 1) := by
+  obtain ⟨g₁, g₂, hbind⟩ := tpBindG_lit
+  obtain ⟨c₁, c₂, c₃, hcall⟩ := tpCall_lit
+  obtain ⟨a₁, a₂, a₃, a₄, hinitA⟩ := tpInitA_lit
+  obtain ⟨b₁, b₂, b₃, b₄, hinitB⟩ := tpInitB_lit
+  obtain ⟨fx, hforX⟩ := tpForX_lit
+  obtain ⟨fy, hforY⟩ := tpForY_lit
+  obtain ⟨ix, hiterX⟩ := tpIterX_lit
+  obtain ⟨iy, hiterY⟩ := tpIterY_lit
+  obtain ⟨tx, htargetX⟩ := tpTargetX_lit
+  obtain ⟨ty, htargetY⟩ := tpTargetY_lit
+  obtain ⟨x₁, x₂, x₃, x₄, hbodyX⟩ := tpBodyX_lit
+  obtain ⟨y₁, y₂, y₃, y₄, hbodyY⟩ := tpBodyY_lit
+  obtain ⟨r₀, hret⟩ := tpRet_lit
+  obtain ⟨r₁, r₂, r₃, r₄, r₅, hretE⟩ := tpRetE_lit
+  rw [twoPhaseBody_split]
+  -- `g = upto(n)` — the RHS ALLOCATES, so the pure assign rule cannot bind it
+  refine PyTriple.seq
+    (R := fun st => st = (⟨uptoWorld w (N : Int) 0, tpEnv N w.heap.size 0⟩ : FrameState))
+    ?_ ?_
+  · rw [hbind]
+    refine PyStmtTriple.assignNameIn ?_
+    rintro st rfl
+    refine ⟨.ref w.heap.size,
+      ⟨uptoWorld w (N : Int) 0, [("n", .int (N : Int))]⟩, ?_, rfl⟩
+    rw [hcall]
+    have hev := EvalsIn.genCall (m := gen_lab)
+      (st := (⟨w, [("n", .int (N : Int))]⟩ : FrameState))
+      (fname := "upto") (f := uptoF) (argEs := #[.name "n" c₂])
+      (vs := [.int (N : Int)]) (sp := c₁) (sp' := c₃)
+      rfl rfl rfl rfl uptoF_found rfl rfl rfl rfl
+      (EvalsToList.cons
+        (evals_name w [("n", .int (N : Int))] "n" (.int (N : Int)) c₂ rfl)
+        EvalsToList.nil)
+    simpa [uptoWorld, genObj_upto] using hev
+  -- `a = -1`
+  refine PyTriple.run_seq (f := 8) (pre := [tpInitA])
+    (rest := [tpForX, tpInitB, tpForY, tpRet])
+    (E' := ⟨uptoWorld w (N : Int) 0, tpEnv N w.heap.size 1⟩) ?_ ?_
+  · rw [hinitA]
+    py_simp [tpEnv]
+  refine PyTriple.seq
+    (R := fun st => st = (⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 3⟩ : FrameState))
+    ?_ ?_
+  · -- the FIRST loop: one value, then `break`
+    rw [hforX]
+    refine PyStmtTriple.forGen (α := Nat) (a := w.heap.size)
+      (fun i => .int (i : Int)) (tpInv1 w N) [0] rfl ?_ ?_ ?_
+    · rintro st rfl
+      refine ⟨⟨uptoWorld w (N : Int) 0, tpEnv N w.heap.size 1⟩, "upto",
+        uptoEntry (N : Int), uptoCont, .created, ?_, Heap.get?_push_size _ _,
+        rfl, rfl⟩
+      rw [hiterX]
+      exact EvalsIn.of_evalsTo
+        (evals_name _ (tpEnv N w.heap.size 1) "g" (.ref w.heap.size) ix rfl)
+    · -- VACUOUS: the invariant is `False` at the empty remainder
+      rintro st ⟨hnil, -⟩
+      exact absurd hnil (by simp)
+    · rintro x rest st ⟨hcons, hst⟩
+      obtain ⟨rfl, rfl⟩ : x = 0 ∧ rest = [] := by simpa using hcons
+      subst hst
+      refine ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 2,
+        upto_iter w (N : Int) 0 (by omega), by rw [htargetX]; rfl, ?_⟩
+      have hrun : execStmts gen_lab 8
+          (⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 2⟩ : FrameState)
+          tpBodyX.toList
+          = .ok ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 3⟩ .brk := by
+        rw [hbodyX]
+        py_simp [tpEnv]
+      refine PyTriple.of_exec ?_
+      rintro st' rfl
+      exact ⟨8, by rw [hrun]; rfl⟩
+  -- `b = -1`
+  refine PyTriple.run_seq (f := 8) (pre := [tpInitB]) (rest := [tpForY, tpRet])
+    (E' := ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 4⟩) ?_ ?_
+  · rw [hinitB]
+    py_simp [tpEnv]
+  refine PyTriple.seq
+    (R := fun st => st = (⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 6⟩ : FrameState))
+    ?_ ?_
+  · -- the SECOND loop: the SAME object, resumed where the first left it
+    rw [hforY]
+    refine PyStmtTriple.forGen (α := Nat) (a := w.heap.size)
+      (fun i => .int (i : Int)) (tpInv2 w N) [1] rfl ?_ ?_ ?_
+    · rintro st rfl
+      refine ⟨⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 4⟩, "upto",
+        uptoEnv (N : Int) 0, uptoResume, .suspended, ?_, Heap.get?_push_size _ _,
+        rfl, rfl⟩
+      rw [hiterY]
+      exact EvalsIn.of_evalsTo
+        (evals_name _ (tpEnv N w.heap.size 4) "g" (.ref w.heap.size) iy rfl)
+    · rintro st ⟨hnil, -⟩
+      exact absurd hnil (by simp)
+    · rintro y rest st ⟨hcons, hst⟩
+      obtain ⟨rfl, rfl⟩ : y = 1 ∧ rest = [] := by simpa using hcons
+      subst hst
+      refine ⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 5,
+        upto_iter w (N : Int) 1 (by omega), by rw [htargetY]; rfl, ?_⟩
+      have hrun : execStmts gen_lab 8
+          (⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 5⟩ : FrameState)
+          tpBodyY.toList
+          = .ok ⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 6⟩ .brk := by
+        rw [hbodyY]
+        py_simp [tpEnv]
+      refine PyTriple.of_exec ?_
+      rintro st' rfl
+      exact ⟨8, by rw [hrun]; rfl⟩
+  -- `return a * 100 + b`
+  refine PyTriple.single ?_
+  rw [hret]
+  refine PyStmtTriple.retExpr (v := .int 1) ?_ ?_
+  · rintro st rfl
+    rw [hretE]
+    refine EvalsTo.of_eval (fuel := 8) ?_
+    py_simp [tpEnv]
+  · rintro st rfl
+    rfl
+
+/-- **`two_phase(n) = 1` for every `n ≥ 2`** — the first theorem in this repo
+about a generator that is ABANDONED and then RESUMED. Both loops carry an
+invariant that is `False` at the empty remainder (`PyStmtTriple.forGen`'s
+lazy half, VCGen.lean §L3), and the second loop's `hiter` reads the object
+at configuration 1, which is `break`-suspends as a theorem. -/
+theorem two_phase_calls (N : Nat) (hN : 2 ≤ N) :
+    CallsTo gen_lab "two_phase" #[.int (N : Int)] (.int 1) :=
+  PyTriple.callsTo_ofRet (f := twoPhaseF) rfl rfl rfl rfl rfl
+    (two_phase_body_triple _ N hN)
+
+/-! ### Non-vacuity: the symbolic theorem against the differential row -/
+
+#guard callFunction gen_lab "two_phase" #[.int 5] 4096 == .ok (.int 1)
+
+/-- The `two_phase(5) = 1` row's content as a theorem — an INSTANCE of the
+symbolic one, with no interpreter run elaborated. -/
+theorem two_phase5_calls : CallsTo gen_lab "two_phase" #[.int 5] (.int 1) := by
+  have h := two_phase_calls 5 (by omega)
+  rwa [show ((5 : Nat) : Int) = 5 from rfl] at h
 
 end Examples.python.gen_lab.proof

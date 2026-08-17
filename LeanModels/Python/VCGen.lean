@@ -897,7 +897,7 @@ theorem genYieldsPrefix_countFrom {m : Module} {st : FrameState} {k : GenCont} :
 Landing **L3** of docs/generator-tier-architecture.md §2. Everything above
 specifies a suspended MACHINE (a frame stack and a frame state). A consumer
 never sees one: it calls a generator function, gets a heap OBJECT back, and
-steps it with a `for`. Two facts are new here, and nothing else is.
+steps it with a `for`. Three facts are new here, and nothing else is.
 
 * **`EvalsIn`** — evaluating `upto(n)` ALLOCATES, so its value fact cannot
   be an `EvalsTo`: that judgment is pinned-state by construction. `EvalsIn`
@@ -906,6 +906,12 @@ steps it with a `for`. Two facts are new here, and nothing else is.
   state change forces: a generator call is a `.ref` at the heap's end whose
   object carries the frame stack `GenYields` talks about — **a value with a
   specification**, which is the sentence L3 exists to make true.
+
+* **`PyStmtTriple.assignNameIn`** — `g = upto(n)`. The pure assignment rule
+  pins the out-state's world to the in-state's, so no instance of it can
+  bind an allocation; this one stores into the world the CALL produced. It
+  is what lets a generator be NAMED rather than only consumed in place,
+  which is what a second consumer of the same object needs.
 
 * **`PyStmtTriple.forGen`** — `for x in <generator>`, with the same
   remainder-indexed invariant the value-sequence `for` rule uses.
@@ -930,7 +936,9 @@ consumer that always escapes — `first_over_inf`'s `return`, `bound`'s beta
 `break` — writes an invariant that is unsatisfiable at the empty remainder;
 that discharges the exhaustion obligation vacuously and never asks the
 generator to finish. An INFINITE generator is consumed by this rule, and it
-is the same rule. -/
+is the same rule. `gen_lab.two_phase` is where that half is EXERCISED: both
+its loops carry an invariant whose empty-remainder case is `False`, and the
+second one resumes the object the first abandoned. -/
 
 /-! ### Heap bookkeeping for a suspended object
 
@@ -1156,6 +1164,40 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
     Option.isSome_none, Bool.false_or, Bool.false_eq_true, if_neg,
     not_false_eq_true, hcall, Run.withLocals]
   rfl
+
+/-! ### Binding the object to a name -/
+
+/-- **`x = e` where evaluating `e` MOVES the state** —
+`PyStmtTriple.assignName`'s stateful twin, over `EvalsIn` instead of
+`EvalsTo`. It is what binds a generator to a name (`g = upto(n)`), the
+statement `EvalsIn.genCall` cannot reach on its own: the pure rule stores
+into `st.locals` at `st.world`, and an allocating RHS has already left that
+world behind. Here the store lands in the world the CALL produced, which is
+the only place the fresh object exists.
+
+Not a special case of `PyStmtTriple.assign`: that rule's conclusion pins the
+out-state's world to the in-state's, so no instance of it can bind an
+allocation. The two rules stay side by side — the pure one is what every
+heap-free assignment should keep using. -/
+theorem PyStmtTriple.assignNameIn {m : Module} {P : FrameState → Prop}
+    {Q : PyPost} {x : String} {e : Expr} {sp sp' : Span}
+    (h : ∀ st, P st → ∃ v st₁, EvalsIn m st e v st₁ ∧
+        Q.next ⟨st₁.world, Env.set st₁.locals x v⟩) :
+    PyStmtTriple m P (.assign #[.name x sp] e sp') Q := by
+  intro st hP
+  obtain ⟨v, st₁, hv, hQ⟩ := h st hP
+  obtain ⟨t, ht⟩ := hv
+  refine ⟨t + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
+  simpa [execStmt, ht F' hF', assignToH, assignTo] using hQ
+
+/-- List-level singleton form of the effectful name-assignment rule. -/
+theorem PyTriple.assignNameIn {m : Module} {P : FrameState → Prop}
+    {Q : PyPost} {x : String} {e : Expr} {sp sp' : Span}
+    (h : ∀ st, P st → ∃ v st₁, EvalsIn m st e v st₁ ∧
+        Q.next ⟨st₁.world, Env.set st₁.locals x v⟩) :
+    PyTriple m P [.assign #[.name x sp] e sp'] Q :=
+  PyTriple.single (PyStmtTriple.assignNameIn h)
 
 /-! ### The loop engine and the statement rule -/
 

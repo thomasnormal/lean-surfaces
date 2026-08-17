@@ -527,8 +527,11 @@ locals cont status` is the suspended frame AS DATA. It is heap-allocated
 because a generator is IDENTITY: `h = g; next(g); next(h)` advances one
 shared frame, and a `for` loop that abandons a generator by `break` must
 leave the very object the next consumer resumes. Both are pinned
-differentially (`gen_lab.aliased`, `gen_lab.two_phase`); an
-immediate-value representation answers them wrong, silently. `status`
+differentially (`gen_lab.aliased`, `gen_lab.two_phase`), and the second is
+also a THEOREM — `two_phase_calls`, symbolic in `n`, whose second loop
+reads the same address in the configuration the first abandoned
+(Examples/python/gen_lab/proof.lean); an immediate-value representation
+answers them wrong, silently. `status`
 (`created`/`suspended`/`running`/`closed`) exists so a generator that
 re-enters itself is CPython's faithful `ValueError`, never a silent
 nested resumption.

@@ -764,6 +764,95 @@ abbrev PBAll (fuel : Nat) : Prop :=
 
 end Conjuncts
 
+/-! ## Tier D arms — the composition-only members
+
+The five members whose bodies are nothing but `Run` plumbing over
+recursive calls: they need §Tier C's combinators and the block IH, and no
+new helper reasoning at all. `ClockErase.lean`'s `_succ` shape — each is a
+standalone theorem taking `PBAll fuel` as the induction hypothesis, so the
+block's arms land one at a time rather than all-or-nothing. -/
+
+section Arms
+variable {pa : Addr} {o₀ o : Obj} {fuel : Nat}
+
+/-- Argument lists: `evalExpr` then recurse, cons the values. -/
+theorem pbEvalExprs_succ (ih : PBAll pa o₀ o fuel) : PBEvalExprs pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, ihEs, -⟩ := ih
+  intro m st es hslot
+  cases es with
+  | nil => simp only [evalExprs]; exact PBF.ok hslot _
+  | cons e rest =>
+      simp only [evalExprs]
+      exact PBF.bind (ihE m st e hslot) fun s v _ hs =>
+        PBF.bind (ihEs m s rest hs) fun s2 vs _ hs2 => PBF.ok hs2 _
+
+/-- Dict literals: key, value, recurse — CPython's `BUILD_MAP` order. -/
+theorem pbEvalDictItems_succ (ih : PBAll pa o₀ o fuel) :
+    PBEvalDictItems pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, -, -, -, -, -, -, ihItems, -⟩ := ih
+  intro m st keys values hslot
+  cases keys with
+  | nil =>
+      cases values with
+      | nil => simp only [evalDictItems]; exact PBF.ok hslot _
+      | cons _ _ => simp only [evalDictItems]; exact PBF.unsupported
+  | cons k ks =>
+      cases values with
+      | nil => simp only [evalDictItems]; exact PBF.unsupported
+      | cons v vs =>
+          simp only [evalDictItems]
+          exact PBF.bind (ihE m st k hslot) fun s kv _ hs =>
+            PBF.bind (ihE m s v hs) fun s2 vv _ hs2 =>
+              PBF.bind (ihItems m s2 ks vs hs2) fun s3 rest _ hs3 => PBF.ok hs3 _
+
+/-- Statement sequences: run one, and only `.next` continues. -/
+theorem pbExecStmts_succ (ih : PBAll pa o₀ o fuel) : PBExecStmts pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, ihS, ihSs, -⟩ := ih
+  intro m st ss hslot
+  cases ss with
+  | nil => simp only [execStmts]; exact PBF.ok hslot _
+  | cons s rest =>
+      simp only [execStmts]
+      refine PBF.bind (ihS m st s hslot) fun s2 flow _ hs2 => ?_
+      cases flow with
+      | next => exact ihSs m s2 rest hs2
+      | ret v => exact PBF.ok hs2 _
+      | brk => exact PBF.ok hs2 _
+      | cont => exact PBF.ok hs2 _
+
+/-- The WHOLE drain: step, and recurse until exhaustion. -/
+theorem pbDrainIter_succ (ih : PBAll pa o₀ o fuel) : PBDrainIter pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, ihIter, -, -, ihDrain, -⟩ := ih
+  intro m w b hslot
+  simp only [drainIter]
+  refine PBW.bind (ihIter m w b hslot) fun w2 r _ hw2 => ?_
+  cases r with
+  | none => exact PBW.ok hw2 _
+  | some v => exact PBW.bind (ihDrain m w2 b hw2) fun w3 vs _ hw3 => PBW.ok hw3 _
+
+/-- The SHORT-CIRCUIT drain: step, test, stop or recurse. The one arm here
+that consumes a §Tier B equation (`truthyH`), and the reason these lemmas
+take the twin. -/
+theorem pbAnyAllIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBAnyAllIter pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, ihIter, -, -, -, ihAny, -⟩ := ih
+  intro m w b isAll hslot
+  simp only [anyAllIter]
+  refine PBW.bind (ihIter m w b hslot) fun w2 r _ hw2 => ?_
+  cases r with
+  | none => exact PBW.ok hw2 _
+  | some v =>
+      -- The two truthiness probes are EQUAL, not defeq, so the lifted pair is
+      -- stated explicitly; `PBW.bind` then meets the goal's match by iota.
+      have hlift : PBW pa o₀ o (Run.liftRes w2 (truthyH w2.heap v))
+          (Run.liftRes (w2.swapAt pa o) (truthyH (Heap.swapAt w2.heap pa o) v)) := by
+        rw [truthyH_swapAt hw2 htwin]
+        exact PBW.liftRes hw2 _
+      refine PBW.bind hlift fun w3 bb _ hw3 => ?_
+      exact PBW.ite (fun _ => PBW.ok hw3 _) (fun _ => ihAny m w3 b isAll hw3)
+
+end Arms
+
 /-! ## The reduction — `PayloadBlind` IS the `execGen` conjunct
 
 What remains after this theorem is exactly the arms: no glue, no side

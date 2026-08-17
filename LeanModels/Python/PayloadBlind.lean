@@ -509,6 +509,124 @@ theorem RVal.typeNameH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
       · rw [RVal.typeNameH, RVal.typeNameH, h1, h2]
   | _ => rfl
 
+/-! ### The key-hashing helpers
+
+`keyRefusal`'s two message helpers recurse through tuples; both have a
+generated functional-induction principle whose heap is a fixed PARAMETER,
+which is exactly the motive shape a blindness equation needs. -/
+
+/-- A key's instance/identity census is blind: it reads the CONSTRUCTOR. -/
+theorem keyHasInstanceRef_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (v : RVal) :
+    keyHasInstanceRef (Heap.swapAt h pa o) v = keyHasInstanceRef h v := by
+  induction v using keyHasInstanceRef.induct (h := h)
+    (motive_2 := fun vs => keyHasInstanceRefList (Heap.swapAt h pa o) vs
+      = keyHasInstanceRefList h vs) with
+  | case1 b cls attrs hb | case2 b q l c st hb | case3 b n p a1 a2 a3 a4 bd cp hb
+  | case4 b xs hb | case5 b _ _ _ _ =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+      · rw [keyHasInstanceRef, keyHasInstanceRef, heq]
+      · rw [keyHasInstanceRef, keyHasInstanceRef, h1, h2]
+  | case6 xs ih | case7 _ _ xs ih => rw [keyHasInstanceRef, keyHasInstanceRef]; exact ih
+  | case8 _ _ _ => rfl
+  | case9 t _ _ _ _ => rw [keyHasInstanceRef.eq_def, keyHasInstanceRef.eq_def]; split <;> simp_all
+  | case10 => rfl
+  | case11 x rest ih1 ih2 => rw [keyHasInstanceRefList, keyHasInstanceRefList, ih1, ih2]
+
+/-- The name CPython would print in `unhashable type: '…'` is blind. -/
+theorem unhashableName?_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (v : RVal) :
+    unhashableName? (Heap.swapAt h pa o) v = unhashableName? h v := by
+  induction v using unhashableName?.induct (h := h)
+    (motive_2 := fun vs => unhashableNameList? (Heap.swapAt h pa o) vs
+      = unhashableNameList? h vs) <;>
+  simp_all [unhashableName?, unhashableNameList?, RVal.typeNameH_swapAt hslot htwin]
+
+/-- The unhashable-key refusal is blind — both its branch and its
+message. -/
+theorem keyRefusal_swapAt {α : Type} {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (k : RVal) :
+    keyRefusal (α := α) (Heap.swapAt h pa o) k = keyRefusal h k := by
+  rw [keyRefusal, keyRefusal, keyHasInstanceRef_swapAt hslot htwin,
+    unhashableName?_swapAt hslot htwin, RVal.typeNameH_swapAt hslot htwin]
+
+/-! ### The single-address readers
+
+Each is `match Heap.get? h b with …` over the six `Obj` constructors, and
+`Heap.get?_swapAt_twin` resolves that scrutinee in one step: the `.generator`
+arm is reached on BOTH sides at `pa` and answers the same, every other arm
+is reached with the identical object. -/
+
+/-- `len(o)` is blind. -/
+theorem heapLen_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (b : Addr) :
+    heapLen (Heap.swapAt h pa o) b = heapLen h b := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · rw [heapLen, heapLen, heq]
+  · rw [heapLen, heapLen, h1, h2]
+
+/-- Truthiness is blind (a generator object is truthy either way). -/
+theorem truthyH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (v : RVal) :
+    truthyH (Heap.swapAt h pa o) v = truthyH h v := by
+  cases v with
+  | ref b =>
+      rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+      · rw [truthyH, truthyH, heq]
+      · rw [truthyH, truthyH, h1, h2]
+  | _ => rfl
+
+/-- `d.get(k)` is blind. -/
+theorem heapGet_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (k dflt : RVal) :
+    heapGet (Heap.swapAt h pa o) b k dflt = heapGet h b k dflt := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · simp only [heapGet, heq, keyRefusal_swapAt hslot htwin]
+  · rw [heapGet, heapGet, h1, h2]
+
+/-- `o[k]` is blind. -/
+theorem heapIndex_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (b : Addr) (k : RVal) :
+    heapIndex (Heap.swapAt h pa o) b k = heapIndex h b k := by
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · simp only [heapIndex, heq, keyRefusal_swapAt hslot htwin,
+      RVal.typeNameH_swapAt hslot htwin]
+  · rw [heapIndex, heapIndex, h1, h2]
+
+/-! ### The forwarders
+
+Nothing left to see: each hands its heap to a helper already proved
+blind. -/
+
+/-- `len(v)` at the value level is blind. -/
+theorem lenValH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o) (v : RVal) :
+    lenValH (Heap.swapAt h pa o) v = lenValH h v := by
+  cases v with
+  | ref b => rw [lenValH, lenValH, heapLen_swapAt hslot htwin]
+  | _ => rfl
+
+/-- Unary operators are blind (`not` is the only heap consumer). -/
+theorem evalUnaryOpH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (op : UnaryOp) (v : RVal) :
+    evalUnaryOpH (Heap.swapAt h pa o) op v = evalUnaryOpH h op v := by
+  cases op with
+  | not => simp only [evalUnaryOpH, truthyH_swapAt hslot htwin]
+  | usub => rfl
+
+/-- Subscription at the value level is blind. -/
+theorem indexValH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (container index : RVal) :
+    indexValH (Heap.swapAt h pa o) container index
+      = indexValH h container index := by
+  unfold indexValH
+  split <;>
+    simp_all [heapIndex_swapAt hslot htwin, RVal.typeNameH_swapAt hslot htwin]
+
 /-! ## Tier D — the 18 conjuncts
 
 One statement per member of the interpreter's mutual block

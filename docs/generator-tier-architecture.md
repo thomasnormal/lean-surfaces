@@ -1,9 +1,19 @@
 # The generator tier as a VERIFIED object — design memo
 
-Status: **decision document, nothing implemented.** Written 2026-08-16 after
+Status: **L1 and L2 LANDED; L3-L5 owner-gated.** Written 2026-08-16 after
 the ray leg of the `gen_moves` theorem stopped on tooling rather than on
 effort (docs/backlog.md §the ray leg, factored). It exists so that a "go"
-starts landing 1 instead of starting design.
+starts landing 1 instead of starting design — and it did: L1 landed
+2026-08-16 (the string-as-list bridge, VCTactic.lean §strings as lists of
+characters; gate `at?_eq_indexVal`) and L2 landed 2026-08-17
+(`LeanModels/Python/VCGen.lean` — `GenYields`/`GenYieldsPrefix`/`GenEmits`
+and the frame rules; gate `Examples/python/gen_lab/proof.lean`, the first
+generator theorems in the repo). Both landings, their measurements, and
+L2's ONE recorded remainder (the whole-drain `drainIter` bridge and its
+heap-stability side condition) are in docs/backlog.md §L1 LANDED / §L2
+LANDED. Everything BELOW is the original design text, unedited — the
+estimates are what they were before the work, which is what makes the
+calibration notes in the backlog meaningful.
 
 Everything below is censused against the tree at `31ff3fb`, not recalled.
 

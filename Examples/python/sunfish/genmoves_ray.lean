@@ -376,6 +376,22 @@ theorem sing_P (p : Char) : (String.singleton p == "P") = (p == 'P') := by
 theorem truthy_boolH (w : World) (b : Bool) : truthyH w.heap (.bool b) = .ok b := by
   simp [truthyH, truthy]
 
+/-- The same bridge at `"."`, which is the character the pawn block tests
+against three times. -/
+theorem sing_dot (c : Char) : (String.singleton c == ".") = (c == '.') := by
+  rw [show ("." : String) = String.singleton '.' from by decide]; exact sing_eq c '.'
+
+/-- **`==` between two INTEGERS through the heap-aware equality.** `heapEq`
+is a frozen recursion point, deliberately out of `interpUnfolds`, and
+`evalCompareOpH`'s `.eq` arm has a `refFree` fast path that keeps ordinary
+comparisons off it. A TUPLE MEMBERSHIP has no such path: `valContains`
+reaches `heapEq` directly through `heapContainsScan`, which is how the
+pawn's `d in (N, N + N)` guards meet it. One step of the recursion, and its
+scalar arm is `valEq`. -/
+theorem heapEq_int (h : Heap) (f : Nat) (act : List (Addr × Addr)) (m n : Int) :
+    heapEq h (f + 1) act (.int m) (.int n) = .ok (m == n) := by
+  rw [heapEq] <;> simp [valEq]
+
 /-! ## The statements, pinned to literals
 
 The recorded trap: `py_simp` over a still-PROJECTED statement blows
@@ -430,6 +446,47 @@ theorem rCastHTest_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 
       (.subscript (.attribute (.name "self" s12) "wc" s13)
         (.constant (.int 1) s14) s15)] s16) :=
   ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-! The pawn block's four statements. Every guard is an `and` chain whose
+FIRST operand tests the direction, so at a fixed `d` the later operands —
+the second board read in `pB1`, `self.ep`/`self.kp` in `pB2` — are reached
+only for the directions that need them. -/
+
+theorem pB0_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13, pB0 =
+    (.ifStmt (.boolOp .and #[(.compare (.name "d" s1) #[.inOp]
+      #[(.tuple #[(.name "N" s2), (.binOp (.name "N" s3) .add (.name "N" s4) s5)] s6)] s7),
+      (.compare (.name "q" s8) #[.notEq] #[(.constant (.str ".") s9)] s10)] s11)
+      #[(.brk s12)] #[] s13) :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem pB1_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18 s19 s20 s21 s22,
+    pB1 =
+    (.ifStmt (.boolOp .and #[(.compare (.name "d" s1) #[.eq]
+      #[(.binOp (.name "N" s2) .add (.name "N" s3) s4)] s5),
+      (.boolOp .or #[(.compare (.name "i" s6) #[.lt]
+        #[(.binOp (.name "A1" s7) .add (.name "N" s8) s9)] s10),
+        (.compare (.subscript (.attribute (.name "self" s11) "board" s12)
+          (.binOp (.name "i" s13) .add (.name "N" s14) s15) s16) #[.notEq]
+          #[(.constant (.str ".") s17)] s18)] s19)] s20) #[(.brk s21)] #[] s22) :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem pB2_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18 s19 s20 s21 s22
+    s23 s24 s25 s26 s27, pB2 =
+    (.ifStmt (.boolOp .and #[(.compare (.name "d" s1) #[.inOp]
+      #[(.tuple #[(.binOp (.name "N" s2) .add (.name "W" s3) s4),
+        (.binOp (.name "N" s5) .add (.name "E" s6) s7)] s8)] s9),
+      (.compare (.name "q" s10) #[.eq] #[(.constant (.str ".") s11)] s12),
+      (.compare (.name "j" s13) #[.notEq] #[(.attribute (.name "self" s14) "ep" s15)] s16),
+      (.compare (.call (.name "abs" s17)
+        #[(.binOp (.name "j" s18) .sub (.attribute (.name "self" s19) "kp" s20) s21)] #[] none s22)
+        #[.gt] #[(.constant (.int 1) s23)] s24)] s25) #[(.brk s26)] #[] s27) :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- The promotion test is a CHAINED comparison, `A8 <= j <= H8`, so the
+middle operand is evaluated once and compared twice. -/
+theorem pB3Test_lit : ∃ s1 s2 s3 s4, planTest pB3 =
+    (.compare (.name "A8" s1) #[.ltE, .ltE] #[(.name "j" s2), (.name "H8" s3)] s4) :=
+  ⟨_, _, _, _, rfl⟩
 
 /-! ## The captured runs -/
 
@@ -536,6 +593,73 @@ theorem castH_test_false (w : World) (env : REnv) (iv : Int)
   refine EvalsTo.of_eval (fuel := 16) ?_
   have hne' : ¬ (iv = 98) := hne
   py_simp [sunfish, hi, hloc.miss "H1", valEq.eq_def, hne']
+
+/-! The pawn block's four statements, run at a SINGLE PUSH (`d = N`). At
+that direction three of the four guards are decided by the direction alone,
+which is what keeps them cheap: `pB1` never reads the board and `pB2` never
+reads `self.ep`/`self.kp`. -/
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`if d in (N, N + N) and q != ".": break`** — the pawn's own stop
+guard. At `d = N` the membership is true, so the statement breaks exactly
+when the square ahead is occupied. -/
+theorem pB0_run (w : World) (env : REnv) (c : Char) (bq : Bool)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hbq : (c != '.') = bq) :
+    execStmt sunfish 16 ⟨w, env⟩ pB0 = .ok ⟨w, env⟩ (if bq then .brk else .next) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, hlit⟩ := pB0_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-10)) := hd
+  subst hbq
+  by_cases hc : c = '.' <;>
+    py_simp [sunfish, hloc.miss "N", hd', hq, valEq.eq_def, heapEq_int, sing_dot, hc]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **The double-move guard falls through at a single push**: `d == N + N`
+is false, so Python never evaluates the `or` behind it and the SECOND board
+read never happens. -/
+theorem pB1_run (w : World) (env : REnv) (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int Ref.N)) :
+    execStmt sunfish 16 ⟨w, env⟩ pB1 = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, hlit⟩ := pB1_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-10)) := hd
+  py_simp [sunfish, hloc.miss "N", hd', valEq.eq_def]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **The capture guard falls through at a single push**: `d in (N + W,
+N + E)` is false, so `self.ep` and `self.kp` are never read. -/
+theorem pB2_run (w : World) (env : REnv) (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int Ref.N)) :
+    execStmt sunfish 16 ⟨w, env⟩ pB2 = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19,
+    s20, s21, s22, s23, s24, s25, s26, s27, hlit⟩ := pB2_lit
+  rw [hlit]
+  have hd' : Env.lookup env "d" = some (.int (-10)) := hd
+  py_simp [sunfish, hloc.miss "N", hloc.miss "W", hloc.miss "E", hd', valEq.eq_def, heapEq_int]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`A8 <= j <= H8`**, the promotion test, at a symbolic square. Both
+bounds are module globals and the comparison is ORDERING, so it never
+reaches `valEq` — the chained shape is the only new thing here. -/
+theorem pB3_test_run (w : World) (env : REnv) (jv : Int) (b : Bool)
+    (hloc : RayLocals env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hb : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = b) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest pB3) (.bool b) := by
+  obtain ⟨s1, s2, s3, s4, hlit⟩ := pB3Test_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 12) ?_
+  subst hb
+  by_cases h1 : (21 : Int) ≤ jv <;> by_cases h2 : jv ≤ (28 : Int) <;>
+    py_simp [sunfish, Ref.A8, Ref.H8, hloc.miss "A8", hloc.miss "H8", hj, h1, h2]
 
 /-! ## The segments
 
@@ -686,6 +810,105 @@ theorem block_done (st : FrameState) : GenEmits sunfish st [.block []] [] st :=
   GenEmits.silent (pre₁ := ([] : GenCont))
     (fun k => by simpa using genSilent_blockNil (m := sunfish) (st := st) (k := k))
     GenEmits.nil
+
+/-! ### Inside the pawn block
+
+The pawn block is the one `.branch` the ray ever ENTERS, so its four
+statements need the same kit one level down. The frame below it — the rest
+of the ray body — is just part of `pre`, which is why nothing here mentions
+it. -/
+
+/-- The pawn block is ENTERED: the piece is a pawn, so the branch pushes its
+body ON TOP of the rest of the ray body. `pawn_skips`' other arm. -/
+theorem pawn_enters (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hp : Env.lookup env "p" = some (.str (String.singleton 'P')))
+    (hrest : GenEmits sunfish ⟨w, env⟩
+      ([.block [pB0, pB1, pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH]] ++ pre)
+      ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block rRest] ++ pre) ws st₂ :=
+  GenEmits.silent
+    (pre₁ := [GenFrame.block (planBody rPawn),
+              GenFrame.block [rYield, rCrawl, rCastA, rCastH]] ++ pre)
+    (fun k => by
+      simpa [rRest_split] using genSilent_branch (m := sunfish) (s := rPawn) (b := true)
+        (k := pre ++ k) rPawn_plan (by simpa using rPawn_test_run w env 'P' hp)
+        (truthy_boolH w true))
+    (by simpa [pawnBody_split] using hrest)
+
+/-- **The pawn's push is BLOCKED** — the square ahead is occupied, so the
+ray ends with no move at all. The `break` is two block frames deep, so
+`pre` carries the rest of the ray body as well as the loop frame; both
+leave, which is exactly what `genBreak` does and why one break rule covers
+every one of these guards. -/
+theorem pB0_breaks (w : World) (env : REnv) (c : Char) (a : Addr)
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hne : c ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [pB0, pB1, pB2, pB3], .block [rYield, rCrawl, rCastA, rCastH],
+        .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+      GenFrame.forGen gmRayTarget a gmRay]) pB0_plan (fun _ => rfl)
+    (run_at_least (by
+      simpa using pB0_run w env c true hloc hd hq (by simpa using hne)))
+
+/-- The push is clear: the square ahead is empty. -/
+theorem pB0_falls (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hq : Env.lookup env "q" = some (.str (String.singleton '.')))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB0, pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB1, pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB0) (ss := [pB1, pB2, pB3])
+      (k := pre ++ k) pB0_plan
+      (run_at_least (by simpa using pB0_run w env '.' false hloc hd hq (by simp)))) hrest
+
+/-- The double-move guard falls through: this is not a double move. -/
+theorem pB1_falls (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB1, pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB2, pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB1) (ss := [pB2, pB3])
+      (k := pre ++ k) pB1_plan (run_at_least (pB1_run w env hloc hd))) hrest
+
+/-- The capture guard falls through: this is not a diagonal move. -/
+theorem pB2_falls (w : World) (env : REnv)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [pB3]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB2, pB3]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [pB3]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := pB2) (ss := [pB3])
+      (k := pre ++ k) pB2_plan (run_at_least (pB2_run w env hloc hd))) hrest
+
+/-- The promotion branch is SKIPPED, and with it the pawn block ends: two
+empty block frames pop — the branch's `else` arm, and the pawn block
+itself — so what is left is the rest of the ray body. -/
+theorem pB3_skips (w : World) (env : REnv) (jv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env) (hj : Env.lookup env "j" = some (.int jv))
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ pre ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [pB3]] ++ pre) ws st₂ := by
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse pB3), GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa using genSilent_branch (m := sunfish) (s := pB3) (b := false)
+        (k := pre ++ k) pB3_plan (pB3_test_run w env jv false hloc hj hnoprom)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block ([] : List Stmt)] ++ pre)
+    (fun k => by
+      simpa [pB3_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block ([] : List Stmt) :: (pre ++ k))) ?_
+  exact GenEmits.silent (pre₁ := pre)
+    (fun k => by
+      simpa using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩) (k := pre ++ k)) hrest
 
 /-! ## A WHOLE RAY: the crawlers
 
@@ -1107,5 +1330,300 @@ empty (the ray slides on), 24 is the enemy queen (capture). -/
 #guard (match Ref.at? board0.toList 24 with
         | .ok c => !Ref.inStr c " \nPNBRQK" && Ref.inStr c "pnbrqk"
         | _ => false) == true
+
+/-! ## A WHOLE RAY: the pawn's push
+
+The third and last shape of ray. A pawn is a crawler in `sunfish`'s own
+sense (`p in "PNK"` breaks its ray where it starts) but it is the only
+piece whose ray runs the pawn BLOCK first, so the crawler theorem does not
+cover it: `rayBody_crawler_indep` and `ray_crawler_leaf` both assume
+`p ≠ 'P'` precisely because `pawnBreak` is where a pawn differs.
+
+What lands here is the SINGLE PUSH, `d = N`. That direction decides three
+of the block's four guards by itself, so the two expensive reads the pawn
+block can perform — `self.board[i + N]` for the double move, `self.ep` and
+`self.kp` for the captures — are provably never reached, and the round is
+the segment kit again. -/
+
+open Ref in
+/-- **A pawn's body ignores its tail** — the crawler fact for the piece the
+crawler fact excludes. Whatever the pawn block decides, and whatever is at
+the square, `p in "PNK"` holds for `'P'`, so the ray ends in the round it
+starts and the body is the same at every tail. -/
+theorem rayBody_pawn_indep (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int) (d j : Int)
+    (t₁ t₂ : Except String (List RefMove)) :
+    rayBody b wc0 wc1 ep kp i 'P' d j t₁ = rayBody b wc0 wc1 ep kp i 'P' d j t₂ := by
+  unfold rayBody
+  simp only [bind, Except.bind, show inStr 'P' "PNK" = true from rfl, Bool.true_or, if_true]
+  repeat' split <;> rfl
+
+open Ref in
+/-- The push is BLOCKED: the square ahead is on the board and not empty, so
+the pawn block breaks with nothing. -/
+theorem rayBody_pawn_block_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c : Char)
+    (href : at? b j = .ok c) (hopen : inStr c " \nPNBRQK" = false) (hne : c ≠ '.') :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' N j t = .ok [] := by
+  intro t
+  have hc : (c != '.') = true := by simpa using hne
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hopen, hc, pure, Except.pure]
+
+open Ref in
+/-- The push is CLEAR and not a promotion: exactly the one quiet move. -/
+theorem rayBody_pawn_move_const (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int)
+    (href : at? b j = .ok '.')
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false) :
+    ∀ t, rayBody b wc0 wc1 ep kp i 'P' N j t = .ok [⟨i, j, ""⟩] := by
+  intro t
+  have h1 : ¬ (A8 ≤ j ∧ j ≤ H8) := fun h => by simp [h.1, h.2] at hnoprom
+  have hop : inStr '.' " \nPNBRQK" = false := rfl
+  have hcr : inStr 'P' "PNK" = true := rfl
+  unfold rayBody pawnBreak
+  simp [bind, Except.bind, href, hop, hcr, h1, pure, Except.pure, N, W, E]
+
+open Ref in
+/-- **A non-promoting single push ends the ray in exactly three ways**: the
+square is off the board or ours (nothing), it holds an enemy piece
+(nothing — a pawn does not capture forwards), or it is empty (the one quiet
+move). -/
+theorem ray_pawn_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i j : Int) (c : Char)
+    (r : List RefMove) (href : at? b j = .ok c)
+    (hnoprom : (decide (A8 ≤ j) && decide (j ≤ H8)) = false)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i 'P' N j t = .ok r) :
+    (inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (inStr c " \nPNBRQK" = false ∧ c ≠ '.' ∧ r = []) ∨
+    (c = '.' ∧ r = [⟨i, j, ""⟩]) := by
+  by_cases hstop : inStr c " \nPNBRQK" = true
+  · exact Or.inl ⟨hstop, Except.ok.inj ((hbody (.ok [])).symm.trans
+      (rayBody_stop_const b wc0 wc1 ep kp i 'P' N j c href hstop (.ok [])))⟩
+  · simp only [Bool.not_eq_true] at hstop
+    by_cases hdot : c = '.'
+    · subst hdot
+      exact Or.inr (Or.inr ⟨rfl, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_pawn_move_const b wc0 wc1 ep kp i j href hnoprom (.ok [])))⟩)
+    · exact Or.inr (Or.inl ⟨hstop, hdot, Except.ok.inj ((hbody (.ok [])).symm.trans
+        (rayBody_pawn_block_const b wc0 wc1 ep kp i j c href hstop hdot (.ok [])))⟩)
+
+/-- **The model side of a BLOCKED push**: into the pawn block and out again
+through its first guard, emitting nothing. -/
+theorem pawn_blocked_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (c : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false) (hne : c ≠ '.') :
+    GenEmits sunfish ⟨w, env⟩
+      [.block gmRay, .forGen gmRayTarget a gmRay] []
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton 'P')) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hd₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "d"
+      = some (.int Ref.N) := by rw [Env.lookup_set_ne _ (by decide)]; exact hd
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ c hq₁ hopen ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  exact pB0_breaks w _ c a hloc₁ hd₁ hq₁ hne
+
+/-- **The model side of a QUIET PUSH**: through all four statements of the
+pawn block, out the bottom of it, and on to the unconditional `yield` — nine
+segments, and the ray ends at the crawler guard because a pawn is one. -/
+theorem pawn_push_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok '.')
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block gmRay, .forGen gmRayTarget a gmRay] [moveVal ⟨iv, jv, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton '.'))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton '.'))) "q"
+      = some (.str (String.singleton '.')) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton '.'))) "p"
+      = some (.str (String.singleton 'P')) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton '.'))) "i"
+      = some (.int iv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton '.'))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hd₁ : Env.lookup (Env.set env "q" (.str (String.singleton '.'))) "d"
+      = some (.int Ref.N) := by rw [Env.lookup_set_ne _ (by decide)]; exact hd
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton '.'))) :=
+    hloc.set (x := "q") (by decide) _
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 '.' hself hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ '.' hq₁ rfl ?_
+  refine pawn_enters (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ hp₁ ?_
+  refine pB0_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ hq₁ ?_
+  refine pB1_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ ?_
+  refine pB2_falls (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ hloc₁ hd₁ ?_
+  refine pB3_skips (pre := [GenFrame.block [rYield, rCrawl, rCastA, rCastH],
+    GenFrame.forGen gmRayTarget a gmRay]) w _ jv hloc₁ hj₁ hnoprom ?_
+  refine yield_emits (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w _ iv jv hloc₁ hi₁ hj₁ ?_
+  exact crawl_breaks w _ 'P' '.' a hp₁ hq₁ rfl
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A PAWN'S PUSH, WHOLE, OVER AN ARBITRARY BOARD.**
+
+A pawn suspended in its `d = N` ray at the `count` object holding `j`, on a
+square that is not the last row: the shipped generator emits exactly the
+moves `Ref.ray` reports — the one quiet move, or nothing if the square
+ahead is occupied — and leaves the frame in a state the enclosing scans can
+carry on from.
+
+The third ray shape and the first that runs the pawn block. Board free,
+square free, character free, fuel free; `self.ep`, `self.kp` and the second
+board read are provably never consulted, because at `d = N` each of their
+guards short-circuits on the direction. `d`'s binding joins the round
+invariant — the ray's other two shapes never read it. -/
+theorem ray_pawn_push_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' env)
+    (hcount : Heap.get? w.heap a = some (countObj jv Ref.N))
+    (hd : Env.lookup env "d" = some (.int Ref.N))
+    (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' Ref.N f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
+        (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j Ref.N) ∧
+      Env.lookup st.locals "d" = some (.int Ref.N) ∧
+      (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + Ref.N) Ref.N) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    have hd₁ : Env.lookup (Env.set env₁ "j" (.int j)) "d" = some (.int Ref.N) := by
+      rw [Env.lookup_set_ne _ (by decide)]; exact hdd
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    refine ⟨⟨{ w₁ with heap := h₂ },
+        Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+      hfr₁.set (x := "q") (by decide) _, ?_⟩
+    refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+      (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+      (by rw [htgt]; rfl) ?_
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, hne, rfl⟩ | ⟨rfl, rfl⟩ :=
+      ray_pawn_leaf b.toList wc0 wc1 ep kp iv j c r href hnpr hbody
+    · -- OFF THE BOARD or one of ours: the stop guard ends it, as for any piece
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · -- AN ENEMY PIECE straight ahead: the pawn block breaks, no move
+      simpa using pawn_blocked_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 c a hfr₁ hd₁ hj₁ href hopen hne
+    · -- EMPTY: the one quiet move
+      simpa using pawn_push_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 a hfr₁ hd₁ hj₁ href hnpr
+  -- a pawn never slides, so the continuing case is vacuous
+  · rintro j st pre _ hmap
+    exfalso
+    have h := rayBody_pawn_indep b.toList wc0 wc1 ep kp iv Ref.N j
+      (Except.ok []) (Except.ok [⟨iv, j, ""⟩])
+    rw [hmap (Except.ok []), hmap (Except.ok [⟨iv, j, ""⟩])] at h
+    simp only [Functor.map, Except.map] at h
+    have h' : pre ++ ([] : List Ref.RefMove) = pre ++ [⟨iv, j, ""⟩] := Except.ok.inj h
+    have hl := congrArg List.length h'
+    simp at hl
+
+/-! Non-vacuity for the pawn, on the shipped opening board: 84 holds a pawn
+of ours, its single push lands on 74, which is empty and is not the last
+row — so the quiet-move arm is reachable. The other two arms are reachable
+as characters of that same board: 94 is our own queen (the stop guard ends
+the ray) and 34 is an enemy pawn (on the board, not empty, so the pawn
+block breaks). -/
+
+#guard (match Ref.at? board0.toList 84 with | .ok c => c == 'P' | _ => false) == true
+#guard (match Ref.at? board0.toList 74 with | .ok c => c == '.' | _ => false) == true
+#guard ((decide (Ref.A8 ≤ (74 : Int)) && decide ((74 : Int) ≤ Ref.H8)) == false) == true
+
+#guard (match Ref.at? board0.toList 94 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => false) == true
+
+#guard (match Ref.at? board0.toList 34 with
+        | .ok c => !Ref.inStr c " \nPNBRQK" && (c != '.')
+        | _ => false) == true
+
+/-! ## What is left
+
+Recorded rather than attempted, so the next session starts from a measured
+position instead of a blank page.
+
+**Counted honestly, FOUR of `Ref.ray`'s nine leaves are discharged** — and
+they are the four that carry three whole ray shapes end to end
+(`ray_crawl_agrees`, `ray_slide_agrees`, `ray_pawn_push_agrees`):
+
+* the stop guard, a blocked square — every shape reaches it;
+* the crawler guard, at both of its reasons: a piece that does not slide
+  (`ray_crawl_agrees`) and a capture that ends one (`ray_slide_agrees`);
+* the CONTINUING leaf, which is the one the round induction exists for;
+* the pawn block's first guard, a push into an occupied square.
+
+The five that remain are all pawn-or-corner leaves, and none of them needs a
+new judgment, a new frame rule, or a tactic change — the kit that carries
+three ray shapes carries these too:
+
+**The castling YIELD** (`Ref.ray`'s ninth leaf). On a corner square the
+`and` chain does not short-circuit: it reads `self.board[j + E]` — an
+`rQ_run`-shaped fact at a shifted index — and then `self.wc[0]`, a tuple
+subscript of a namedtuple FIELD, and on success `yield Move(j + E, j - E,
+"")`. That is the only ray statement in the file whose taken arm has never
+been run. It is what `iv ≠ A1`/`iv ≠ H1` buys in `ray_slide_agrees`, and it
+is the reason a rook that has not moved is out of scope while every other
+slider is in.
+
+**The pawn's other three directions and its promotion** — four leaves.
+`d = N` is one of `directions['P']`'s four entries, and the three that
+remain are exactly the three that reach the reads the single push
+short-circuits away:
+* `d = N + N` runs the double-move guard, so it needs a SECOND
+  `rQ_run`-shaped board read at `i + N` under an `or` — the first statement
+  in the ray that reads the board twice;
+* `d = N + W` and `d = N + E` run the capture guard, which compares against
+  `self.ep` and calls `abs(j - self.kp)` — namedtuple FIELDS, so they are
+  not exposed to the module-global defect `castA_test_false` records, but
+  `abs` is a builtin call inside a comparison chain and is new here;
+* the promotion arm (`A8 <= j <= H8`) is `for prom in "NBRQ": yield
+  Move(i, j, prom)` — a `forSeq` frame over a string literal, so
+  `GenEmits.forSeq` already covers the loop and `GenEmits.blockBreak` the
+  `break` behind it; `pB3_test_run` already supplies its guard at both truth
+  values, so what is missing is the four-element `forSeq` invariant and
+  `Move(i, j, prom)` at a symbolic `prom`.
+
+The counting matters because it is the honest shape of what is left: the
+CALCULUS half of L4 is finished (the round induction, the segment kit, the
+reference trichotomy, three whole rays), and the remainder is five more
+captured runs of statements whose shapes are all precedented. -/
 
 end Examples.python.sunfish.genmoves_ray

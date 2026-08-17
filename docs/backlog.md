@@ -6521,3 +6521,122 @@ it — a missing calculus for the ray frame, and symbolic char guards not
 reducing — are both measured and both closed. What could still stretch is
 the round induction's invariant, which is the one piece with no precedent
 in the tier.
+
+## L4 REMAINDER — the round induction, the segment kit, and a WHOLE ray (2026-08-17)
+
+Continuing §"L4 PARTIAL" in a new
+`Examples/python/sunfish/genmoves_ray.lean` (the separate module that entry
+asked for; `genmoves_theorem.lean` gains only four un-`private`d helpers,
+whose second consumer this is). The entry priced the remainder as "eight
+more `Ref.ray` leaves and the round induction" and flagged the induction as
+"the one piece with no precedent". That is the piece that landed, and it
+cost hours rather than days; what did NOT land is blocked on one measured
+tool defect, recorded below.
+
+**THE ROUND INDUCTION IS NOT AN INDUCTION OVER THE GENERATOR** — this is
+the shape finding, and L5 inherits it. `count(i + d, d)` never exhausts, so
+the model side has no remainder list and no decreasing measure;
+`GenEmits.forGenDone` is unreachable on a ray and the only thing that ever
+ends one is a `break`. So the induction runs on the REFERENCE's fuel and
+the model side rides along in continuation-passing form: `RayRound a out st
+st₂` says "the loop frame emits `out` from `st`, then behaves as it does
+from `st₂`", `GenEmits.forGenRound` is its introduction rule, and composing
+rounds is composing transformers. `ray_rounds` folds that over `Ref.ray`'s
+fuel against the two arms of `rayBody_append_or_const`.
+
+Two consequences worth carrying:
+
+* `rayBody_map_or_const` (the L4 characterization) was one notch too weak.
+  An arbitrary `g` does not let `ms.map moveVal` split into round-output ++
+  rest; the tail-consuming leaf must be known to PREPEND a fixed list.
+  `rayBody_append_or_const` is the same proof at `(pre ++ ·)`.
+* `ray_rounds` runs no statement at all — the model side enters entirely
+  through its two hypotheses — so it is pure `Except`/`List` reasoning,
+  elaborates in seconds rather than the ~20 s a captured `py_simp` costs,
+  and the leaves land underneath it one at a time without it moving.
+
+**A WHOLE RAY, not just leaves.** `ray_crawl_agrees` is the first COMPLETE
+ray in the repo: a knight or a king (`p ∈ {'N','K'}`), every round, at every
+fuel, over an arbitrary board, leaving a frame the enclosing scans can
+carry on from. Crawlers are exactly the pieces whose ray provably never
+takes a second round (`p in "PNK"` breaks it where it starts), so
+`rayBody_crawler_indep` makes `ray_rounds`' continuing case vacuous and the
+induction closes without the statements past the crawler guard. It is the
+first use of `ray_rounds` and the first fact relating the generator's whole
+output — not one leaf — to `Ref.ray`.
+
+**The segment kit** is the reusable half: one `GenEmits` transformer per
+ray statement over a FREE trailing continuation `pre`, so the same lemma
+serves a round that falls through (`pre = []`) and a leaf that breaks
+(`pre = [.forGen …]`, since `break` unwinds past the loop frame and body
+and loop leave together). `q_falls`, `stop_falls`, `stop_breaks`,
+`pawn_skips`, `yield_emits`, `crawl_breaks`, `crawl_falls`, `block_done`.
+`ray_stop_agrees` had to inline both shapes; nothing here does.
+
+**Three house-practice measurements.**
+
+1. *`RayLocals` is a real side condition, not a technicality.* Name
+   resolution consults the LOCAL env before module globals, so over an
+   abstract `env` "the frame does not shadow `Move`" must be stated or
+   `rYield_evals` stalls at `match Env.lookup env "Move"`. Stated once as
+   "the frame binds nothing but `gen_moves`' own locals", which is true and
+   stable under the ray's own writes (`j`, `q`, `prom` are in the list).
+2. *A guard must be rewritten to its CONSTANT before `py_simp` runs.*
+   Handed `strContains "PNK" (singleton p) = Ref.inStr p "PNK"`, the two
+   crawler guards expand into a nine-character disjunction and the run
+   times out; handed `= bp` with `bp` case-split first, each of the four
+   arms is cheap. This generalizes `rStop_run`'s trick into a rule.
+3. *One-character string equality is not `rfl` in this Lean* (a `String` is
+   no longer a `List Char`). `sing_eq` goes through
+   `String.toList_singleton`; `strContains_singleton` had only the
+   containment half. Also: the `_lit` pins are PRINTED off the shipped AST
+   with spans blanked, not transcribed — 27 span binders by hand is how a
+   pin silently stops matching the program it claims to project.
+
+**THE BLOCKER, measured — it is `py_simp`, not the calculus.** Slider
+rounds must step past the two castling `if`s, which for a piece off the
+corner squares is just `i == A1` short-circuiting to false. That run
+REDUCES correctly (the residual is a clean `if iv = 91 then … else …`) but
+emits a proof term the KERNEL rejects: `(kernel) application type mismatch`
+on an `Eq.refl` for `valEq (.int iv) rhs = match .int iv, rhs with …`,
+where `rhs` is still the match-bound value of the global. `valEq` is in
+`interpUnfolds` (VCTactic.lean), so it opens before the operand is in whnf.
+
+Four runs pin it, three green:
+
+* symbolic `Int` vs a LITERAL (`i == 91`, both truth values): green;
+* symbolic `Char`-as-string vs a literal (`q == "K"`): green;
+* symbolic `Int` vs a module GLOBAL (`i == A1`) inside the `and` chain: kernel mismatch;
+* the same comparison ALONE, no `boolOp`: kernel mismatch.
+
+So it is neither the `boolOp` nor symbolic `valEq` — it is specifically a
+comparison whose operand arrives from module-global resolution. Passing the
+condition as `(iv == 91) = false`, as `(iv = 91) = False`, or as a `valEq`
+rewrite does not move it, and `interpUnfolds` is not user-editable from a
+proof file. The fix belongs in `py_simp` (resolve a `.name` operand to its
+value BEFORE `valEq` opens, or keep `valEq` shut on a non-whnf operand) and
+wants `evals_glob`-style lemmas — `evalExpr m F st (.name g s) = .ok st v`,
+uniform in `F` — as the rewrite that fires first; `evalBoolChain` is
+structural and clean, so hand-stepping the short-circuit is the fallback if
+the tactic is not to be touched. `crawl_falls` and `block_done` are already
+proved and deliberately unused: they are the two segments that close the
+continuing round the moment this clears, and then slider agreement follows
+with NO new calculus, because `ray_rounds` is stated against
+`rayBody_append_or_const` rather than against the statements.
+
+**The pawn leaves are independent of that blocker** and are the rest of the
+remainder. `pB0`/`pB1`/`pB2` are `.delegate` breaks (projected and
+plan-pinned); `pB3` is the promotion branch whose body is
+`for prom in "NBRQ": yield Move(i, j, prom)` — a `forSeq` over a string
+literal, already covered by `GenEmits.forSeq` — then the `break` that
+`GenEmits.blockBreak` covers. `pB1` reads the board a SECOND time
+(`self.board[i + N]`) under a short-circuit, so it needs an `rQ_run`-shaped
+companion plus the `or` ordering; `pB2` compares against `self.ep`/`self.kp`,
+which are namedtuple FIELDS rather than module globals and so are not
+exposed to the blocker.
+
+**Cost, measured.** The whole module elaborates in 22 s. `ray_rounds` and
+the reference-side lemmas are seconds; each captured `py_simp` over the
+module literal is the ~20 s the previous entry priced. Triad at the cut:
+`lake build` clean, `docs_check` 67/67 marked blocks, `diff_test` 1288
+cases / 0 failed / 115 whitelisted-unsupported.

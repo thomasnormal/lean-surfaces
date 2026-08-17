@@ -516,4 +516,243 @@ theorem block_done (st : FrameState) : GenEmits sunfish st [.block []] [] st :=
     (fun k => by simpa using genSilent_blockNil (m := sunfish) (st := st) (k := k))
     GenEmits.nil
 
+/-! ## A WHOLE RAY: the crawlers
+
+`ray_stop_agrees` is one leaf of one round. This is the first COMPLETE ray
+in the repo — every round, at every fuel, over an arbitrary board — and it
+is what shows `ray_rounds` is usable rather than merely true.
+
+The pieces it covers are the ones sunfish's own comment calls crawlers:
+`p ∈ {'N', 'K'}`. They are exactly the pieces whose ray provably never
+takes a second round, because `p in "PNK"` breaks it in the round it
+starts — so the reference body is INDEPENDENT of its tail at every square,
+`ray_rounds`' continuing case is vacuous, and the induction closes without
+ever needing the statements past the crawler guard. (A slider needs those;
+see the record at the end of this file.) -/
+
+/-- **The reference's body ignores its tail, for a crawler.** Whatever is
+at square `j` — off-board, blocker, capture, empty — the ray ends there, so
+the body is the same whatever tail it is handed. This is what makes
+`ray_rounds`' `hgo` unreachable below. -/
+theorem rayBody_crawler_indep (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true)
+    (t₁ t₂ : Except String (List Ref.RefMove)) :
+    rayBody b wc0 wc1 ep kp i p d j t₁ = rayBody b wc0 wc1 ep kp i p d j t₂ := by
+  unfold rayBody Ref.pawnBreak
+  simp only [bind, Except.bind, bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos,
+    hcrawl, Bool.true_or, if_true]
+  repeat' split <;> rfl
+
+/-- A crawler's ray is ONE round: `Ref.ray` reports either nothing (the
+square is a blocker) or exactly the one move to it. -/
+theorem ray_crawler_leaf (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int)
+    (p : Char) (d j : Int) (c : Char) (r : List Ref.RefMove)
+    (href : Ref.at? b j = .ok c) (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true)
+    (hbody : ∀ t, rayBody b wc0 wc1 ep kp i p d j t = .ok r) :
+    (Ref.inStr c " \nPNBRQK" = true ∧ r = []) ∨
+    (Ref.inStr c " \nPNBRQK" = false ∧ r = [⟨i, j, ""⟩]) := by
+  have h := hbody (Except.error "unused")
+  rw [rayBody] at h
+  by_cases hstop : Ref.inStr c " \nPNBRQK" = true
+  · refine Or.inl ⟨hstop, ?_⟩
+    simp only [bind, Except.bind, href, hstop, if_pos] at h
+    exact (Except.ok.inj h).symm
+  · simp only [Bool.not_eq_true] at hstop
+    refine Or.inr ⟨hstop, ?_⟩
+    simp only [bind, Except.bind, href, hstop, Bool.false_eq_true, if_false,
+      Ref.pawnBreak, bne_iff_ne, ne_eq, hnp, not_false_eq_true, if_pos,
+      hcrawl, Bool.true_or, if_true] at h
+    exact (Except.ok.inj h).symm
+
+/-- **The model side of a crawler's round**: the whole ray body, from the
+loop frame's block down to the `break`, emitting the one move. -/
+theorem crawler_round (w : World) (env : REnv) (b : String)
+    (score ep kp iv jv : Int) (wc0 wc1 bc0 bc1 : Bool) (p c : Char) (a : Addr)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hopen : Ref.inStr c " \nPNBRQK" = false)
+    (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block gmRay, .forGen gmRayTarget a gmRay] [moveVal ⟨iv, jv, ""⟩]
+      ⟨w, Env.set env "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨hloc, hself, hi, hp⟩ := hframe
+  have hq₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "q"
+      = some (.str (String.singleton c)) := Env.lookup_set_self _ _ _
+  have hp₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "p"
+      = some (.str (String.singleton p)) := by
+    rw [Env.lookup_set_ne _ (by decide)]; exact hp
+  have hi₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "i"
+      = some (.int iv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hi
+  have hj₁ : Env.lookup (Env.set env "q" (.str (String.singleton c))) "j"
+      = some (.int jv) := by rw [Env.lookup_set_ne _ (by decide)]; exact hj
+  have hloc₁ : RayLocals (Env.set env "q" (.str (String.singleton c))) :=
+    hloc.set (x := "q") (by decide) _
+  refine q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href ?_
+  refine stop_falls (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ c hq₁ hopen ?_
+  refine pawn_skips (pre := [GenFrame.forGen gmRayTarget a gmRay]) w _ p hp₁ hnp ?_
+  refine yield_emits (pre := [GenFrame.forGen gmRayTarget a gmRay])
+    w _ iv jv hloc₁ hi₁ hj₁ ?_
+  exact crawl_breaks w _ p c a hp₁ hq₁ (by rw [hcrawl]; rfl)
+
+set_option maxHeartbeats 800000 in
+/-- **RAY AGREEMENT FOR A CRAWLER, WHOLE, OVER AN ARBITRARY BOARD.**
+
+A knight or a king, suspended in a ray at the `count` object holding `j`:
+the shipped generator emits exactly the moves `Ref.ray` reports, for the
+WHOLE ray at every fuel, and leaves the frame in a state the enclosing
+scans can carry on from — `RayFrame` again, so `self`, `i` and `p` are
+still bound and no module global is shadowed.
+
+Board free, square free (negative-index fold included), character free,
+world and frame free apart from the count object and the lookups the
+statements perform. The first complete ray in the repo, and the first use
+of `ray_rounds`. -/
+theorem ray_crawl_agrees (w : World) (env : REnv) (a : Addr)
+    (b : String) (score ep kp iv d : Int) (wc0 wc1 bc0 bc1 : Bool) (p : Char)
+    (f : Nat) (jv : Int) (ms : List Ref.RefMove)
+    (hframe : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
+    (hcount : Heap.get? w.heap a = some (countObj jv d))
+    (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp iv p d f jv = .ok ms) :
+    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st'.locals ∧
+      GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
+        (ms.map moveVal) st' := by
+  refine ray_rounds
+    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals ∧
+      Heap.get? st.world.heap a = some (countObj j d))
+    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+  -- the ray ENDS here: either the square is a blocker, or the crawler breaks
+  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
+    obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+    have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
+      hfr.set (x := "j") (by decide) _
+    have hj₁ : Env.lookup (Env.set env₁ "j" (.int j)) "j" = some (.int j) :=
+      Env.lookup_set_self _ _ _
+    -- the reference must have READ the square, or its body could not be `.ok`
+    have hat : ∃ c, Ref.at? b.toList j = .ok c := by
+      cases hr : Ref.at? b.toList j with
+      | ok c => exact ⟨c, rfl⟩
+      | error e =>
+        exfalso
+        have h := hbody (Except.error "unused")
+        rw [rayBody] at h
+        simp [bind, Except.bind, hr] at h
+    obtain ⟨c, href⟩ := hat
+    obtain ⟨hstop, rfl⟩ | ⟨hopen, rfl⟩ :=
+      ray_crawler_leaf b.toList wc0 wc1 ep kp iv p d j c r href hnp hcrawl hbody
+    · -- BLOCKER: nothing is emitted, but `q = self.board[j]` ran before the
+      -- guard broke, so the frame the ray leaves has `q` bound
+      refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      obtain ⟨hloc, hself, hi, hp⟩ := hfr₁
+      simpa using q_falls (pre := [GenFrame.forGen gmRayTarget a gmRay])
+        { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j)) b score ep kp j
+        wc0 wc1 bc0 bc1 c hself hj₁ href
+        (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
+    · -- OPEN: the one move, then the crawler guard ends the ray
+      refine ⟨⟨{ w₁ with heap := h₂ },
+          Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
+        hfr₁.set (x := "q") (by decide) _, ?_⟩
+      refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
+        (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
+        (by rw [htgt]; rfl) ?_
+      simpa using crawler_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
+        b score ep kp iv j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp hcrawl
+  -- the ray CONTINUES: unreachable, because a crawler's body ignores its tail
+  · rintro j st pre _ hmap
+    exfalso
+    have h := rayBody_crawler_indep b.toList wc0 wc1 ep kp iv p d j hnp hcrawl
+      (Except.ok []) (Except.ok [⟨iv, j, ""⟩])
+    rw [hmap (Except.ok []), hmap (Except.ok [⟨iv, j, ""⟩])] at h
+    simp only [Functor.map, Except.map] at h
+    have h' : pre ++ ([] : List Ref.RefMove) = pre ++ [⟨iv, j, ""⟩] := Except.ok.inj h
+    have hl := congrArg List.length h'
+    simp at hl
+
+/-! Non-vacuity, on the shipped opening board: the knight on 92 IS a
+crawler and is not a pawn, so `ray_crawl_agrees` applies to it; and both
+arms of its round are reachable — square 73 is empty (the ray yields and
+then breaks) while square 84 holds our own pawn (the ray breaks at the stop
+guard, yielding nothing). Neither branch of the theorem is vacuous. -/
+
+#guard (match Ref.at? board0.toList 92 with | .ok c => c == 'N' | _ => false) == true
+#guard Ref.inStr 'N' "PNK" == true
+#guard ('N' != 'P') == true
+
+#guard (match Ref.at? board0.toList 73 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => true) == false
+
+#guard (match Ref.at? board0.toList 84 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => false) == true
+
+/-! ## What is left, and the one thing that BLOCKS it
+
+Recorded rather than attempted, so the next session starts from a measured
+position instead of a blank page.
+
+**The slider rounds are blocked on ONE fact**, and it is a tool-level
+blocker, not a missing calculus. A ray that continues must step past the
+two castling `if`s, so it needs `planTest rCastA`/`planTest rCastH` to
+evaluate — and for a piece that is not on a corner square that is just
+`i == A1` short-circuiting to false. That run does not go through:
+
+```
+py_simp [sunfish, hi, hloc.miss "A1"]   -- on `i == A1`, `i` symbolic
+```
+
+REDUCES correctly (the residual is a clean `if iv = 91 then … else …`) but
+emits a proof term the KERNEL rejects — `(kernel) application type
+mismatch`, on an `Eq.refl` for `valEq (.int iv) rhs = match .int iv, rhs
+with …` where `rhs` is still the match-bound value of the global. `valEq`
+is in `interpUnfolds` (VCTactic.lean), so it is opened before the operand
+is in whnf, and the equation it generates is not one the kernel accepts.
+
+The measurement that pins it — four runs, all recorded, three green:
+
+* symbolic `Int` vs a LITERAL (`i == 91`, both truth values): **green**;
+* symbolic `Char`-as-string vs a literal (`q == "K"`): **green**;
+* symbolic `Int` vs a module GLOBAL (`i == A1`), inside the `and` chain:
+  kernel mismatch;
+* the same comparison ALONE, no `boolOp` around it: kernel mismatch.
+
+So it is neither the `boolOp` nor symbolic `valEq`: it is specifically a
+comparison whose operand arrives from module-global resolution. Passing the
+condition in as `(iv == 91) = false`, as `(iv = 91) = False`, or as a
+`valEq` rewrite does not move it, and `interpUnfolds` is not user-editable
+from a proof file. The fix belongs in `py_simp` (resolve a `.name` operand
+to its value BEFORE `valEq` opens, or keep `valEq` shut on a non-whnf
+operand), and it wants `evals_glob`-style lemmas — `evalExpr m F st
+(.name g s) = .ok st v`, uniform in `F` — as the rewrite that fires first.
+`evalBoolChain` is structural and clean, so hand-stepping the short-circuit
+is the fallback if the tactic is not to be touched.
+
+**What that one fact unblocks, in order.** `crawl_falls` and `block_done`
+above are already proved and unused precisely because they are the next
+two segments: with `castA_skips`/`castH_skips` the continuing round closes,
+`ray_rounds`' `hgo` gets its real inhabitant instead of the crawler's
+vacuous one, and slider agreement follows with no new calculus — the
+induction does not move, which is the point of stating it against
+`rayBody_append_or_const` rather than against the statements.
+
+**The pawn leaves are independent of that blocker** and are the other half
+of the remainder: `pB0`/`pB1`/`pB2` are `.delegate` breaks (projected and
+plan-pinned above), `pB3` is the promotion branch whose body is
+`for prom in "NBRQ": yield Move(i, j, prom)` — a `forSeq` over a string
+literal, so `GenEmits.forSeq` already covers it — followed by the `break`
+that `GenEmits.blockBreak` covers. `pB1` reads the board a SECOND time
+(`self.board[i + N]`) under a short-circuit, so it needs an `rQ_run`-shaped
+companion plus the `or` ordering; `pB2` compares against `self.ep` and
+`self.kp`, which are namedtuple FIELDS rather than module globals and so
+are not exposed to the blocker above. -/
+
 end Examples.python.sunfish.genmoves_ray

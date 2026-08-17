@@ -9,17 +9,24 @@ leaves the slot exactly as it found it and (2) runs identically when the
 payload is replaced by any other `locals`/`cont` at the same `qname`.
 
 **STATUS — the property is NOT yet proved, and nothing here pretends
-otherwise.** What is proved is the factoring (§Tier A/C), the universal read
-primitive and thirteen of the ~37 helper equations (§Tier B), five of the
-eighteen interpreter arms, and — the point of the module —
-`payloadBlind_of_execGen`: the whole property reduces to ONE conjunct, with
-no glue and no side condition left over. The other thirteen arms are STATED
-as `PBEvalExpr … PBCallClosure` rather than described, so the debt is visible
-in this file and checkable against it; docs/backlog.md §L7 names each one and
-each remaining helper. `IterDrains.of_genYields` and `gen_moves_drains_ref`
-therefore still carry `PayloadBlind sunfish` as an explicit hypothesis,
-exactly as they do on §L6. There is no `sorry` and no axiom standing in for
-any of it.
+otherwise.** What is proved is the factoring (§Tier A/C), twenty-four of the
+~27 helper equations (§Tier B — everything the fifteen proved arms reach),
+fifteen of the eighteen interpreter arms, and — the point of the module — `payloadBlind_of_execGen`: the whole property reduces
+to ONE conjunct, with no glue and no side condition left over. THREE arms
+remain: `evalExpr`, `execStmt` and `execAttrCall`, which are 1047, 318 and 79
+of the block's 1976 lines. They are STATED (`PBEvalExpr`, `PBExecStmt`,
+`PBExecAttrCall`) rather than described, so the debt is visible in this file
+and checkable against it; docs/backlog.md §L7 names what each needs. Three
+§Tier B equations go with them and no further: `sortedValH` (`evalExpr`),
+`unpackStoreH` (`execStmt`), `attrReadResult` (`evalExpr`). Both remaining
+WRITE-position arms want the same two missing pieces beyond that — a
+slot-preservation lemma per heap-returning helper (`heapAppend h b v = .ok h'
+→ Heap.get? h' pa = some o₀`, the `Heap.get?_update_ne` shape) and one
+`liftRes`-then-write-back bridge over `Res.mapOk` — and `PBAll` cannot be
+assembled until all eighteen land. `IterDrains.of_genYields` and
+`gen_moves_drains_ref` therefore still carry `PayloadBlind sunfish` as an
+explicit hypothesis, exactly as they do on §L6. There is no `sorry` and no
+axiom standing in for any of it.
 
 **Why it is true.** `stepIter` is the interpreter's ONLY reader of a
 generator object's `locals`/`cont` fields, and its `.running` arm answers
@@ -41,8 +48,10 @@ proved once (§Tier C) and consumed by the arms (§Tier D). `.timeout` and
 refusals free — nothing in the block converts either back to a decision.
 Because the relation is functional, the per-helper obligations are plain
 EQUATIONS (`f (Heap.swapAt h a o) … = f h …`, §Tier B) rather than two-world
-simulations, which is what brings the helper tier into reach at four lines
-apiece.
+simulations, which is what brings the helper tier into reach: four lines
+apiece for the readers, and for the seven that answer a NEW heap a
+`map`-shaped equation (`f (Heap.swapAt h a o) … = Res.mapOk (Heap.swapAt ·
+a o) (f h …)`) that `Heap.update_swapAt_ne` discharges.
 
 Geometry mirrors ClockErase.lean: swap algebra, the relation and its
 combinators, per-helper blindness, then the mutual induction on fuel. -/
@@ -157,6 +166,15 @@ theorem Heap.update_swapAt_ne {h : Heap} {a b : Addr} {o v : Obj} (hne : b ≠ a
       Heap.swapAt_comm hne]
   · have hb' : ¬ b < (Heap.swapAt h a o).size := by rw [Heap.size_swapAt]; exact hb
     rw [Heap.update_eq_none hb', Heap.update_eq_none hb, Option.map_none]
+
+/-- A write ELSEWHERE leaves the slot alone — the `Heap.update` form of
+`Heap.get?_swapAt_ne`, and what carries the slot fact across `stepIter`'s
+four write-backs. -/
+theorem Heap.get?_update_ne {h h' : Heap} {pa b : Addr} {v : Obj}
+    (hu : Heap.update h b v = some h') (hne : pa ≠ b) :
+    Heap.get? h' pa = Heap.get? h pa := by
+  rw [Heap.update_eq_swapAt hu]
+  exact Heap.get?_swapAt_ne hne
 
 /-- Two swaps of one slot are the second swap. -/
 @[simp] theorem Heap.swapAt_swapAt (h : Heap) (a : Addr) (o o' : Obj) :
@@ -342,6 +360,28 @@ theorem withLocals {l : REnv} {x y : Run World α} (h : PBW a o₀ o x y) :
   | unsupported msg =>
                        exact ⟨fun _ _ h => absurd h (by simp [Run.withLocals]),
                          fun _ _ h => absurd h (by simp [Run.withLocals])⟩
+
+/-- Allocation at the WORLD level: the heap grows at the END, so the fresh
+address is the same on both sides, the slot survives the append, and the
+swap commutes with it. -/
+theorem push {w : World} {g : Obj}
+    (hslot : Heap.get? w.heap a = some o₀) :
+    PBW a o₀ o (.ok { w with heap := w.heap.push g } (RVal.ref w.heap.size))
+      (.ok { w.swapAt a o with heap := (w.swapAt a o).heap.push g }
+        (RVal.ref (w.swapAt a o).heap.size)) := by
+  have hlt := Heap.lt_size_of_get? hslot
+  have hne : a ≠ w.heap.size := Nat.ne_of_lt hlt
+  have hslot' : Heap.get? (w.heap.push g) a = some o₀ := by
+    rw [Heap.get?_eq_getElem?, Array.getElem?_push, if_neg hne, ← Heap.get?_eq_getElem?]
+    exact hslot
+  have hst : ({ w.swapAt a o with heap := (w.swapAt a o).heap.push g } : World)
+      = ({ w with heap := w.heap.push g } : World).swapAt a o := by
+    simp only [World.swapAt, World.swapAt_heap]
+    rw [Heap.swapAt_push hlt]
+  have hsz : (w.swapAt a o).heap.size = w.heap.size := by
+    rw [World.swapAt_heap, Heap.size_swapAt]
+  rw [hst, hsz]
+  exact ok hslot' _
 
 end PBW
 
@@ -656,11 +696,11 @@ theorem indexValH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   split <;>
     simp_all [heapIndex_swapAt hslot htwin, RVal.typeNameH_swapAt hslot htwin]
 
-/-! ### The rest of the direct callers
+/-! ### The direct callers
 
-From here to §Tier D the heap rides as a fixed parameter, so the section's
-`variable`s carry the slot and the twin instead of every statement
-repeating them. -/
+Every helper the fifteen proved arms reach. From here to §Tier D the heap
+rides as a fixed parameter, so the section's `variable`s carry the slot and
+the twin instead of every statement repeating them. -/
 
 section TierB
 variable {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -1272,6 +1312,453 @@ theorem pbAnyAllIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fue
         exact PBW.liftRes hw2 _
       refine PBW.bind hlift fun w3 bb _ hw3 => ?_
       exact PBW.ite (fun _ => PBW.ok hw3 _) (fun _ => ihAny m w3 b isAll hw3)
+
+/-! ### The composition-and-dispatch arms
+
+Nine more members, and between them they consume every §Tier B equation
+the block's non-`evalExpr` control flow can reach: `truthyH`,
+`assignToH`, `evalCompareOpH`, `RVal.typeNameH`. Nothing here is a new
+idea — each is §Tier C's combinators over the block IH, which is what
+`_succ` theorems taking `PBAll fuel` buy: an arm at a time. -/
+
+theorem pbEvalBoolChain_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBEvalBoolChain pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, ihBool, -⟩ := ih
+  intro m st op e rest hslot
+  simp only [evalBoolChain]
+  refine PBF.bind (ihE m st e hslot) fun s v _ hs => ?_
+  cases rest with
+  | nil => exact PBF.ok hs _
+  | cons e' rest' =>
+      have hlift : PBF pa o₀ o (Run.liftRes s (truthyH s.world.heap v))
+          (Run.liftRes (s.swapAt pa o) (truthyH (Heap.swapAt s.world.heap pa o) v)) := by
+        rw [truthyH_swapAt hs htwin]
+        exact PBF.liftRes hs _
+      refine PBF.bind hlift fun s2 b _ hs2 => ?_
+      cases op with
+      | and => exact PBF.ite (fun _ => ihBool m s2 .and e' rest' hs2) (fun _ => PBF.ok hs2 _)
+      | or => exact PBF.ite (fun _ => PBF.ok hs2 _) (fun _ => ihBool m s2 .or e' rest' hs2)
+
+theorem pbEvalCompareChain_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBEvalCompareChain pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, ihCmp, -⟩ := ih
+  intro m st lhs ops comparators hslot
+  simp only [evalCompareChain]
+  cases ops with
+  | nil =>
+      cases comparators with
+      | nil => exact PBF.ok hslot _
+      | cons _ _ => exact PBF.unsupported
+  | cons op ops' =>
+      cases comparators with
+      | nil => exact PBF.unsupported
+      | cons e rest =>
+          refine PBF.bind (ihE m st e hslot) fun s rhs _ hs => ?_
+          have hlift : PBF pa o₀ o
+              (Run.liftRes s (evalCompareOpH s.world.heap fuel op lhs rhs))
+              (Run.liftRes (s.swapAt pa o)
+                (evalCompareOpH (Heap.swapAt s.world.heap pa o) fuel op lhs rhs)) := by
+            rw [evalCompareOpH_swapAt hs htwin]
+            exact PBF.liftRes hs _
+          refine PBF.bind hlift fun s2 b _ hs2 => ?_
+          exact PBF.ite (fun _ => ihCmp m s2 rhs ops' rest hs2) (fun _ => PBF.ok hs2 _)
+
+theorem pbExecFor_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBExecFor pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, ihSs, -, -, ihFor, -⟩ := ih
+  intro m st target xs body hslot
+  simp only [execFor]
+  cases xs with
+  | nil => exact PBF.ok hslot _
+  | cons x rest =>
+      have hlift : PBF pa o₀ o
+          (Run.liftRes st (assignToH st.world.heap st.locals target x))
+          (Run.liftRes (st.swapAt pa o)
+            (assignToH (Heap.swapAt st.world.heap pa o) st.locals target x)) := by
+        rw [assignToH_swapAt hslot htwin]
+        exact PBF.liftRes hslot _
+      refine PBF.bind hlift fun s env₁ _ hs => ?_
+      refine PBF.bind (ihSs m { s with locals := env₁ } body hs) fun s2 flow _ hs2 => ?_
+      cases flow with
+      | next => exact ihFor m s2 target rest body hs2
+      | cont => exact ihFor m s2 target rest body hs2
+      | brk => exact PBF.ok hs2 _
+      | ret v => exact PBF.ok hs2 _
+
+theorem pbExecWhile_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBExecWhile pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, -, -, ihSs, ihWhile, -⟩ := ih
+  intro m st test body orelse hslot
+  simp only [execWhile]
+  refine PBF.bind (ihE m st test hslot) fun s t _ hs => ?_
+  have hlift : PBF pa o₀ o (Run.liftRes s (truthyH s.world.heap t))
+      (Run.liftRes (s.swapAt pa o) (truthyH (Heap.swapAt s.world.heap pa o) t)) := by
+    rw [truthyH_swapAt hs htwin]
+    exact PBF.liftRes hs _
+  refine PBF.bind hlift fun s2 b _ hs2 => ?_
+  refine PBF.ite (fun _ => ?_) (fun _ => ihSs m s2 orelse hs2)
+  refine PBF.bind (ihSs m s2 body hs2) fun s3 flow _ hs3 => ?_
+  cases flow with
+  | next => exact ihWhile m s3 test body orelse hs3
+  | cont => exact ihWhile m s3 test body orelse hs3
+  | brk => exact PBF.ok hs3 _
+  | ret v => exact PBF.ok hs3 _
+
+theorem pbExecForGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBExecForGen pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, ihSs, -, -, -, -, -, -, ihIter, -, ihForGen, -⟩ := ih
+  intro m st target b body hslot
+  simp only [execForGen]
+  refine PBF.bind (PBW.withLocals (ihIter m st.world b hslot)) fun s r _ hs => ?_
+  cases r with
+  | none => exact PBF.ok hs _
+  | some v =>
+      have hlift : PBF pa o₀ o
+          (Run.liftRes s (assignToH s.world.heap s.locals target v))
+          (Run.liftRes (s.swapAt pa o)
+            (assignToH (Heap.swapAt s.world.heap pa o) s.locals target v)) := by
+        rw [assignToH_swapAt hs htwin]
+        exact PBF.liftRes hs _
+      refine PBF.bind hlift fun s2 env₁ _ hs2 => ?_
+      refine PBF.bind (ihSs m { s2 with locals := env₁ } body hs2) fun s3 flow _ hs3 => ?_
+      cases flow with
+      | next => exact ihForGen m s3 target b body hs3
+      | cont => exact ihForGen m s3 target b body hs3
+      | brk => exact PBF.ok hs3 _
+      | ret v => exact PBF.ok hs3 _
+
+theorem pbExecForList_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBExecForList pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, ihSs, -, -, -, -, ihForList, -, -, -, ihForGen, -⟩ := ih
+  intro m st target b i body hslot
+  simp only [execForList, FrameState.swapAt_world, World.swapAt_heap]
+  rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
+  · rw [heq]
+    cases hget : Heap.get? st.world.heap b with
+    | none => exact PBF.unsupported
+    | some obj =>
+        cases obj with
+        | list xs =>
+            refine PBF.ite (fun _ => ?_) (fun _ => PBF.ok hslot _)
+            have hlift : PBF pa o₀ o
+                (Run.liftRes st (assignToH st.world.heap st.locals target (xs.getD i .none)))
+                (Run.liftRes (st.swapAt pa o)
+                  (assignToH (Heap.swapAt st.world.heap pa o) st.locals target
+                    (xs.getD i .none))) := by
+              rw [assignToH_swapAt hslot htwin]
+              exact PBF.liftRes hslot _
+            refine PBF.bind hlift fun s env₁ _ hs => ?_
+            refine PBF.bind (ihSs m { s with locals := env₁ } body hs) fun s2 flow _ hs2 => ?_
+            cases flow with
+            | next => exact ihForList m s2 target b (i + 1) body hs2
+            | cont => exact ihForList m s2 target b (i + 1) body hs2
+            | brk => exact PBF.ok hs2 _
+            | ret v => exact PBF.ok hs2 _
+        | «instance» ci attrs => exact PBF.exn hslot _
+        | generator qn l c s =>
+            exact PBF.ite (fun _ => PBF.unsupported)
+              (fun _ => ihForGen m st target b body hslot)
+        | _ => exact PBF.unsupported
+  · rw [h1, h2]
+    exact PBF.ite (fun _ => PBF.unsupported) (fun _ => ihForGen m st target b body hslot)
+
+theorem pbCallClosure_succ (ih : PBAll pa o₀ o fuel) : PBCallClosure pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, ihSs, -⟩ := ih
+  intro m w name params ao lo ig body cap args hslot
+  simp only [callClosure]
+  refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
+  refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
+  refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
+  refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
+  refine PBF.toWorld ?_
+  refine PBF.bind (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList hslot)
+    fun s flow _ hs => ?_
+  cases flow with
+  | ret v => exact PBF.ok hs _
+  | next => exact PBF.ok hs _
+  | brk => exact PBF.unsupported
+  | cont => exact PBF.unsupported
+
+theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, ihSs, -⟩ := ih
+  intro m w fname args hslot
+  simp only [callIn]
+  cases findFunction m fname with
+  | none => exact PBW.exn hslot _
+  | some f =>
+      refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
+      refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
+      refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
+      refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
+      refine PBF.toWorld ?_
+      refine PBF.bind (ihSs m ⟨w, mkCallEnv f.params args⟩ f.body.toList hslot)
+        fun s flow _ hs => ?_
+      cases flow with
+      | ret v => exact PBF.ok hs _
+      | next => exact PBF.ok hs _
+      | brk => exact PBF.unsupported
+      | cont => exact PBF.unsupported
+
+theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBStepIter pa o₀ o (fuel + 1) := by
+  obtain ⟨-, -, -, -, -, -, -, -, -, -, -, -, -, ihGen, -⟩ := ih
+  intro m w b hslot
+  simp only [stepIter, World.swapAt_heap]
+  by_cases hba : b = pa
+  · subst hba
+    obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+    rw [hslot, Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot)]
+    exact PBW.exn hslot _
+  · rw [Heap.get?_swapAt_ne hba]
+    cases hget : Heap.get? w.heap b with
+    | none => exact PBW.unsupported
+    | some obj =>
+        cases obj with
+        | generator qname locals cont status =>
+            cases status with
+            | closed => exact PBW.ok hslot _
+            | running => exact PBW.exn hslot _
+            | created =>
+                simp only [Heap.update_swapAt_ne hba]
+                cases hu : Heap.update w.heap b (Obj.generator qname locals cont .running) with
+                | none => exact PBW.unsupported
+                | some h₁ =>
+                    have hslot₁ : Heap.get? h₁ pa = some o₀ :=
+                      (Heap.get?_update_ne hu (Ne.symm hba)).trans hslot
+                    refine PBF.toWorld ?_
+                    refine PBF.bindE (ihGen m ⟨{ w with heap := h₁ }, locals⟩ cont hslot₁)
+                      (fun s r _ hs => ?_) (fun s e _ hs => ?_)
+                    · cases r with
+                      | none =>
+                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                            World.swapAt_heap, Heap.update_swapAt_ne hba]
+                          cases hu2 : Heap.update s.world.heap b
+                            (Obj.generator qname s.locals [] .closed) with
+                          | none => exact PBF.unsupported
+                          | some h₂ =>
+                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                      | some vc =>
+                          obtain ⟨v, cont'⟩ := vc
+                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                            World.swapAt_heap, Heap.update_swapAt_ne hba]
+                          cases hu2 : Heap.update s.world.heap b
+                            (Obj.generator qname s.locals cont' .suspended) with
+                          | none => exact PBF.unsupported
+                          | some h₂ =>
+                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                    · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                        World.swapAt_heap, Heap.update_swapAt_ne hba]
+                      cases hu2 : Heap.update s.world.heap b
+                        (Obj.generator qname s.locals [] .closed) with
+                      | none => exact PBF.unsupported
+                      | some h₂ =>
+                          exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+            | suspended =>
+                simp only [Heap.update_swapAt_ne hba]
+                cases hu : Heap.update w.heap b (Obj.generator qname locals cont .running) with
+                | none => exact PBW.unsupported
+                | some h₁ =>
+                    have hslot₁ : Heap.get? h₁ pa = some o₀ :=
+                      (Heap.get?_update_ne hu (Ne.symm hba)).trans hslot
+                    refine PBF.toWorld ?_
+                    refine PBF.bindE (ihGen m ⟨{ w with heap := h₁ }, locals⟩ cont hslot₁)
+                      (fun s r _ hs => ?_) (fun s e _ hs => ?_)
+                    · cases r with
+                      | none =>
+                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                            World.swapAt_heap, Heap.update_swapAt_ne hba]
+                          cases hu2 : Heap.update s.world.heap b
+                            (Obj.generator qname s.locals [] .closed) with
+                          | none => exact PBF.unsupported
+                          | some h₂ =>
+                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                      | some vc =>
+                          obtain ⟨v, cont'⟩ := vc
+                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                            World.swapAt_heap, Heap.update_swapAt_ne hba]
+                          cases hu2 : Heap.update s.world.heap b
+                            (Obj.generator qname s.locals cont' .suspended) with
+                          | none => exact PBF.unsupported
+                          | some h₂ =>
+                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                    · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                        World.swapAt_heap, Heap.update_swapAt_ne hba]
+                      cases hu2 : Heap.update s.world.heap b
+                        (Obj.generator qname s.locals [] .closed) with
+                      | none => exact PBF.unsupported
+                      | some h₂ =>
+                          exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+        | _ =>
+            rw [RVal.typeNameH_swapAt hslot htwin]
+            exact PBW.exn hslot _
+
+/-! ### The continuation walker
+
+`execGen` is the block's second-largest member and the one whose shape the
+generator tier lives in — ten frame kinds, three of which read the heap.
+It writes NOTHING (the write-backs belong to `stepIter`), so every arm is
+§Tier C over the block IH again; the twin appears only where a frame
+carries an address (`forList`/`enumList`, and `forHere`'s `.ref`
+dispatch), where a generator referent is the LAZY cursor on both sides. -/
+
+theorem pbExecGen_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
+    PBExecGen pa o₀ o (fuel + 1) := by
+  obtain ⟨ihE, -, -, -, ihS, -, -, -, -, -, -, -, ihIter, ihGen, -⟩ := ih
+  intro m st k hslot
+  cases k with
+  | nil =>
+      simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+      exact PBF.ok hslot _
+  | cons frame k' =>
+      cases frame with
+      | block ss =>
+          cases ss with
+          | nil =>
+              simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+              exact ihGen m st k' hslot
+          | cons s ss =>
+              simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+              cases genPlan s with
+              | delegate =>
+                  refine PBF.bind (ihS m st s hslot) fun s2 flow _ hs2 => ?_
+                  cases flow with
+                  | next => exact ihGen m s2 (.block ss :: k') hs2
+                  | ret v =>
+                      cases v with
+                      | none => exact PBF.ok hs2 _
+                      | _ => exact PBF.unsupported
+                  | brk =>
+                      cases genBreak k' with
+                      | none => exact PBF.unsupported
+                      | some k'' => exact ihGen m s2 k'' hs2
+                  | cont =>
+                      cases genContinue k' with
+                      | none => exact PBF.unsupported
+                      | some k'' => exact ihGen m s2 k'' hs2
+              | yieldHere e =>
+                  refine PBF.bind (ihE m st e hslot) fun s2 v _ hs2 => ?_
+                  exact PBF.ok hs2 _
+              | branch test body orelse =>
+                  refine PBF.bind (ihE m st test hslot) fun s2 t _ hs2 => ?_
+                  have hlift : PBF pa o₀ o (Run.liftRes s2 (truthyH s2.world.heap t))
+                      (Run.liftRes (s2.swapAt pa o)
+                        (truthyH (Heap.swapAt s2.world.heap pa o) t)) := by
+                    rw [truthyH_swapAt hs2 htwin]
+                    exact PBF.liftRes hs2 _
+                  refine PBF.bind hlift fun s3 b _ hs3 => ?_
+                  exact ihGen m s3 _ hs3
+              | whileHere test body orelse => exact ihGen m st _ hslot
+              | forHere target iter body =>
+                  refine PBF.bind (ihE m st iter hslot) fun s2 it _ hs2 => ?_
+                  cases it with
+                  | listV xs => exact ihGen m s2 _ hs2
+                  | tuple xs => exact ihGen m s2 _ hs2
+                  | ntuple tn fs xs => exact ihGen m s2 _ hs2
+                  | str sv => exact ihGen m s2 _ hs2
+                  | rangeV lo hi step =>
+                      refine PBF.bind (PBF.liftRes hs2 _) fun s3 xs _ hs3 => ?_
+                      exact ihGen m s3 _ hs3
+                  | ref ad =>
+                      rcases Heap.get?_swapAt_twin (b := ad) hs2 htwin with
+                        heq | ⟨_, _, _, _, _, h1, h2⟩
+                      · simp only [FrameState.swapAt_world, World.swapAt_heap, heq]
+                        cases hget : Heap.get? s2.world.heap ad with
+                        | none => exact PBF.unsupported
+                        | some obj =>
+                            cases obj with
+                            | list xs => simp only []; exact ihGen m s2 _ hs2
+                            | generator qn l c stt => simp only []; exact ihGen m s2 _ hs2
+                            | «instance» ci attrs => simp only []; exact PBF.exn hs2 _
+                            | closure _ _ _ _ _ _ _ _ => simp only []; exact PBF.exn hs2 _
+                            | _ => simp only []; exact PBF.unsupported
+                      · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
+                        exact ihGen m s2 _ hs2
+                  | _ => exact PBF.exn hs2 _
+              | refuse msg => exact PBF.unsupported
+      | forSeq target xs body =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          cases xs with
+          | nil => exact ihGen m st k' hslot
+          | cons x rest =>
+              have hlift : PBF pa o₀ o
+                  (Run.liftRes st (assignToH st.world.heap st.locals target x))
+                  (Run.liftRes (st.swapAt pa o)
+                    (assignToH (Heap.swapAt st.world.heap pa o) st.locals target x)) := by
+                rw [assignToH_swapAt hslot htwin]
+                exact PBF.liftRes hslot _
+              refine PBF.bind hlift fun s2 env₁ _ hs2 => ?_
+              exact ihGen m { s2 with locals := env₁ } _ hs2
+      | forList target ad i body =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          rcases Heap.get?_swapAt_twin (b := ad) hslot htwin with
+            heq | ⟨_, _, _, _, _, h1, h2⟩
+          · rw [heq]
+            cases hget : Heap.get? st.world.heap ad with
+            | none => exact PBF.unsupported
+            | some obj =>
+                cases obj with
+                | list xs =>
+                    refine PBF.ite (fun _ => ?_) (fun _ => ihGen m st k' hslot)
+                    have hlift : PBF pa o₀ o
+                        (Run.liftRes st
+                          (assignToH st.world.heap st.locals target (xs.getD i .none)))
+                        (Run.liftRes (st.swapAt pa o)
+                          (assignToH (Heap.swapAt st.world.heap pa o) st.locals target
+                            (xs.getD i .none))) := by
+                      rw [assignToH_swapAt hslot htwin]
+                      exact PBF.liftRes hslot _
+                    refine PBF.bind hlift fun s2 env₁ _ hs2 => ?_
+                    exact ihGen m { s2 with locals := env₁ } _ hs2
+                | «instance» ci attrs => exact PBF.exn hslot _
+                | _ => exact PBF.unsupported
+          · rw [h1, h2]
+            exact PBF.unsupported
+      | forGen target ad body =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          refine PBF.bind (PBW.withLocals (ihIter m st.world ad hslot)) fun s2 r _ hs2 => ?_
+          cases r with
+          | none => exact ihGen m s2 k' hs2
+          | some v =>
+              have hlift : PBF pa o₀ o
+                  (Run.liftRes s2 (assignToH s2.world.heap s2.locals target v))
+                  (Run.liftRes (s2.swapAt pa o)
+                    (assignToH (Heap.swapAt s2.world.heap pa o) s2.locals target v)) := by
+                rw [assignToH_swapAt hs2 htwin]
+                exact PBF.liftRes hs2 _
+              refine PBF.bind hlift fun s3 env₁ _ hs3 => ?_
+              exact ihGen m { s3 with locals := env₁ } _ hs3
+      | enumSeq i xs =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          cases xs with
+          | nil => exact ihGen m st k' hslot
+          | cons x rest => exact PBF.ok hslot _
+      | enumList i ad cur =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          rcases Heap.get?_swapAt_twin (b := ad) hslot htwin with
+            heq | ⟨_, _, _, _, _, h1, h2⟩
+          · rw [heq]
+            cases hget : Heap.get? st.world.heap ad with
+            | none => exact PBF.unsupported
+            | some obj =>
+                cases obj with
+                | list xs =>
+                    exact PBF.ite (fun _ => PBF.ok hslot _) (fun _ => ihGen m st k' hslot)
+                | _ => exact PBF.unsupported
+          · rw [h1, h2]
+            exact PBF.unsupported
+      | countFrom cur step =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          exact PBF.ok hslot _
+      | whileLoop test body orelse =>
+          simp only [execGen, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+          refine PBF.bind (ihE m st test hslot) fun s2 t _ hs2 => ?_
+          have hlift : PBF pa o₀ o (Run.liftRes s2 (truthyH s2.world.heap t))
+              (Run.liftRes (s2.swapAt pa o)
+                (truthyH (Heap.swapAt s2.world.heap pa o) t)) := by
+            rw [truthyH_swapAt hs2 htwin]
+            exact PBF.liftRes hs2 _
+          refine PBF.bind hlift fun s3 b _ hs3 => ?_
+          exact PBF.ite (fun _ => ihGen m s3 _ hs3) (fun _ => ihGen m s3 _ hs3)
 
 end Arms
 

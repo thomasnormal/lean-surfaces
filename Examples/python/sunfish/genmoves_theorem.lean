@@ -271,7 +271,7 @@ future ray-agreement proof consumes each time it reads a square. -/
 open Ref in
 /-- Inversion of a successful reference read: it took the in-range arm, and
 the character came out of the character list at the folded index. -/
-private theorem at?_ok_inv (l : List Char) (j : Int) (c : Char)
+theorem at?_ok_inv (l : List Char) (j : Int) (c : Char)
     (h : at? l j = .ok c) :
     ∃ k : Int, (if j < 0 then j + (l.length : Int) else j) = k ∧
       0 ≤ k ∧ k < (l.length : Int) ∧ l[k.toNat]? = some c := by
@@ -401,7 +401,7 @@ theorem rStop_lit : ∃ s₁ s₂ s₃ s₄ s₅, rStop =
 
 /-! #### The two statements, run at a SYMBOLIC board -/
 
-private theorem run_at_least {s : Stmt} {st st' : FrameState} {fl : Nat} {r : RFlow}
+theorem run_at_least {s : Stmt} {st st' : FrameState} {fl : Nat} {r : RFlow}
     (h : execStmt sunfish fl st s = .ok st' r) :
     ∃ t, ∀ F ≥ t, execStmt sunfish F st s = .ok st' r :=
   ⟨fl, fun F hF => execStmt_mono h (by simp) F hF⟩

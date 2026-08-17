@@ -229,4 +229,291 @@ theorem ray_rounds {b : String} {wc0 wc1 : Bool} {ep kp i d : Int} {p : Char}
       obtain ⟨st', hOut, htail⟩ := ih (jv + d) rest st₂ hI₂ hrest
       exact ⟨st', hOut, by simpa [List.map_append] using hround _ _ htail⟩
 
+/-! ## The frame's locals
+
+Every name the ray reads that is not one of `gen_moves`' own locals is a
+module GLOBAL — `Move`, `A1`, `H1`, `N`, `E`, `W` — and name resolution
+consults the LOCAL env first. Over an abstract `env` that is a real side
+condition, so it is stated once here rather than one hypothesis per name,
+and it is stable under the ray's own writes because `j`, `q` and `prom` are
+themselves locals. -/
+
+/-- `Position.gen_moves`' own locals: the parameter, the two loop targets of
+the enclosing scans, the ray's target, and the two names the ray body
+binds. -/
+def rayNames : List String := ["self", "i", "p", "d", "j", "q", "prom"]
+
+/-- The frame binds nothing but `rayNames`, so no module global is
+shadowed. -/
+def RayLocals (env : REnv) : Prop := ∀ x, x ∉ rayNames → Env.lookup env x = none
+
+theorem RayLocals.miss {env : REnv} (h : RayLocals env) (x : String)
+    (hx : x ∉ rayNames := by decide) : Env.lookup env x = none := h x hx
+
+theorem RayLocals.set {env : REnv} (h : RayLocals env) {x : String}
+    (hx : x ∈ rayNames := by decide) (v : RVal) : RayLocals (Env.set env x v) := by
+  intro y hy
+  rw [Env.lookup_set_ne _ (by
+    simp only [beq_eq_false_iff_ne, ne_eq]
+    rintro rfl
+    exact hy hx)]
+  exact h y hy
+
+/-- **What the ray's frame knows between rounds.** `self`, `i` and `p` are
+set by the two enclosing scans and never touched by the ray, so they ride
+across every round unchanged; `RayLocals` is what makes the module globals
+visible. This is the state half of the round invariant, and it is what the
+board scan (L5) will hand in and get back. -/
+def RayFrame (b : String) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (p : Char) (env : REnv) : Prop :=
+  RayLocals env ∧
+  Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp) ∧
+  Env.lookup env "i" = some (.int iv) ∧
+  Env.lookup env "p" = some (.str (String.singleton p))
+
+theorem RayFrame.set {b : String} {score ep kp iv : Int} {wc0 wc1 bc0 bc1 : Bool}
+    {p : Char} {env : REnv} (h : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p env)
+    {x : String} (hx : x = "d" ∨ x = "j" ∨ x = "q" ∨ x = "prom" := by decide)
+    (v : RVal) : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env x v) := by
+  obtain ⟨hloc, hself, hi, hp⟩ := h
+  have hmem : x ∈ rayNames := by rcases hx with rfl | rfl | rfl | rfl <;> decide
+  have hne : ∀ y : String, y = "self" ∨ y = "i" ∨ y = "p" → (y == x) = false := by
+    rintro y (rfl | rfl | rfl) <;> rcases hx with rfl | rfl | rfl | rfl <;> decide
+  exact ⟨hloc.set hmem v,
+    by rw [Env.lookup_set_ne _ (hne "self" (Or.inl rfl))]; exact hself,
+    by rw [Env.lookup_set_ne _ (hne "i" (Or.inr (Or.inl rfl)))]; exact hi,
+    by rw [Env.lookup_set_ne _ (hne "p" (Or.inr (Or.inr rfl)))]; exact hp⟩
+
+/-! ## The one-character string bridge
+
+`p` and `q` reach the frame from `enumerate(self.board)` and
+`self.board[j]` as ONE-CHARACTER strings, while the reference speaks
+`Char`. `strContains` already had `strContains_singleton`; equality needed
+its own, and it is not `rfl` in this Lean — a `String` is no longer a
+`List Char` — so it goes through `String.toList_singleton`. -/
+
+theorem sing_eq (p c : Char) : (String.singleton p == String.singleton c) = (p == c) := by
+  by_cases h : p = c
+  · subst h; simp
+  · have hne : String.singleton p ≠ String.singleton c := by
+      intro he
+      apply h
+      have hl := congrArg String.toList he
+      rw [String.toList_singleton, String.toList_singleton] at hl
+      simpa using hl
+    rw [beq_eq_false_iff_ne.mpr hne, beq_eq_false_iff_ne.mpr h]
+
+theorem sing_P (p : Char) : (String.singleton p == "P") = (p == 'P') := by
+  rw [show ("P" : String) = String.singleton 'P' from by decide]; exact sing_eq p 'P'
+
+theorem truthy_boolH (w : World) (b : Bool) : truthyH w.heap (.bool b) = .ok b := by
+  simp [truthyH, truthy]
+
+/-! ## The statements, pinned to literals
+
+The recorded trap: `py_simp` over a still-PROJECTED statement blows
+heartbeats, because it re-opens `findFunction sunfish …` at every rewrite.
+Every captured run below therefore rewrites through a `_lit` existential
+first, exactly as `rQ_lit`/`rStop_lit` do. The literals are not
+transcribed — they are printed off the shipped AST with the spans blanked,
+so a changed PROGRAM still stops the `rfl`s loudly. -/
+
+/-- The yielded expression of a `.yieldHere` statement. -/
+def planValue (s : Stmt) : Expr :=
+  match genPlan s with | .yieldHere e => e | _ => .constant .none nowhere
+
+theorem rYield_plan' : genPlan rYield = .yieldHere (planValue rYield) := rfl
+
+theorem rCrawl_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9, rCrawl =
+    (.ifStmt (.boolOp .or
+      #[(.compare (.name "p" s1) #[.inOp] #[(.constant (.str "PNK") s2)] s3),
+        (.compare (.name "q" s4) #[.inOp] #[(.constant (.str "pnbrqk") s5)] s6)] s7)
+      #[(.brk s8)] #[] s9) :=
+  ⟨_, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem rYieldVal_lit : ∃ s1 s2 s3 s4 s5, planValue rYield =
+    (.call (.name "Move" s1)
+      #[(.name "i" s2), (.name "j" s3), (.constant (.str "") s4)] #[] none s5) :=
+  ⟨_, _, _, _, _, rfl⟩
+
+theorem rPawnTest_lit : ∃ s1 s2 s3, planTest rPawn =
+    (.compare (.name "p" s1) #[.eq] #[(.constant (.str "P") s2)] s3) :=
+  ⟨_, _, _, rfl⟩
+
+/-! ## The captured runs -/
+
+set_option maxHeartbeats 1600000 in
+/-- **`if q in " \nPNBRQK": break` when the square is OPEN.** The mirror of
+`rStop_run`: same collapse to `strContains` on a one-character needle, the
+other way round, so the ray falls through to the pawn block. -/
+theorem rStop_run_next (w : World) (env : REnv) (c : Char)
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hopen : Ref.inStr c " \nPNBRQK" = false) :
+    execStmt sunfish 16 ⟨w, env⟩ rStop = .ok ⟨w, env⟩ .next := by
+  obtain ⟨s₁, s₂, s₃, s₄, s₅, hlit⟩ := rStop_lit
+  rw [hlit]
+  have hc : strContains " \nPNBRQK" (String.singleton c) = false := by
+    rw [strContains_singleton]; exact hopen
+  py_simp [hq, hc]
+
+set_option maxHeartbeats 1600000 in
+/-- **`if p in "PNK" or q in "pnbrqk": break`, BOTH arms at once.** Each
+`in` is rewritten to its constant BEFORE `py_simp` runs — left symbolic, the
+two guards expand into a nine-character disjunction and the run times out.
+Python's `or` short-circuits, so the four `bp`/`bq` cases are taken
+separately and each is a concrete, cheap reduction. -/
+theorem rCrawl_run (w : World) (env : REnv) (p q : Char) (bp bq : Bool)
+    (hp : Env.lookup env "p" = some (.str (String.singleton p)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton q)))
+    (hbp : Ref.inStr p "PNK" = bp) (hbq : Ref.inStr q "pnbrqk" = bq) :
+    execStmt sunfish 16 ⟨w, env⟩ rCrawl
+      = .ok ⟨w, env⟩ (if bp || bq then .brk else .next) := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, hlit⟩ := rCrawl_lit
+  rw [hlit]
+  have h1 : strContains "PNK" (String.singleton p) = bp := by
+    rw [strContains_singleton]; exact hbp
+  have h2 : strContains "pnbrqk" (String.singleton q) = bq := by
+    rw [strContains_singleton]; exact hbq
+  cases bp <;> cases bq <;> py_simp [hp, hq, h1, h2]
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`Move(i, j, "")`** — the namedtuple the ray yields, at a symbolic
+square. `Move` is a module-level namedtuple, so the call resolves off the
+module; `RayLocals` is what says the frame does not shadow the name. -/
+theorem rYield_evals (w : World) (env : REnv) (iv jv : Int)
+    (hloc : RayLocals env)
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hj : Env.lookup env "j" = some (.int jv)) :
+    EvalsTo sunfish ⟨w, env⟩ (planValue rYield) (moveVal ⟨iv, jv, ""⟩) := by
+  obtain ⟨s1, s2, s3, s4, s5, hlit⟩ := rYieldVal_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 16) ?_
+  py_simp [sunfish, moveVal, hloc.miss "Move", hi, hj]
+
+set_option maxHeartbeats 1600000 in
+/-- **`p == "P"`** — the pawn block's test, at a symbolic piece. -/
+theorem rPawn_test_run (w : World) (env : REnv) (p : Char)
+    (hp : Env.lookup env "p" = some (.str (String.singleton p))) :
+    EvalsTo sunfish ⟨w, env⟩ (planTest rPawn) (.bool (p == 'P')) := by
+  obtain ⟨s1, s2, s3, hlit⟩ := rPawnTest_lit
+  rw [hlit]
+  refine EvalsTo.of_eval (fuel := 8) ?_
+  py_simp [hp, sing_P]
+  by_cases h : p = 'P'
+  · subst h; simp
+  · rw [if_neg h, beq_eq_false_iff_ne.mpr h]
+
+/-! ## The segments
+
+One statement each, over a FREE trailing continuation `pre`, so the same
+lemma serves a round that falls through (`pre = []`, the block frame pops)
+and a round that breaks (`pre = [.forGen …]`, because `break` unwinds past
+the loop frame and the two leave together). That is the whole reason the
+kit is stated this way. -/
+
+/-- `q = self.board[j]` falls through. -/
+theorem q_falls (w : World) (env : REnv) (b : String) (score ep kp jv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c)
+    (hrest : GenEmits sunfish ⟨w, Env.set env "q" (.str (String.singleton c))⟩
+      ([.block (rStop :: rRest)] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block gmRay] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block (rStop :: rRest)] ++ pre) (fun k => by
+    simpa [gmRay_split] using genSilent_delegate (m := sunfish) (s := rQ)
+      (ss := rStop :: rRest) (k := pre ++ k) rQ_plan
+      (run_at_least (rQ_run w env b score ep kp jv wc0 wc1 bc0 bc1 c hself hj href))) hrest
+
+/-- The stop guard falls through: the square is open. -/
+theorem stop_falls (w : World) (env : REnv) (c : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hopen : Ref.inStr c " \nPNBRQK" = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block rRest] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block (rStop :: rRest)] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block rRest] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := rStop) (ss := rRest)
+      (k := pre ++ k) rStop_plan (run_at_least (rStop_run_next w env c hq hopen))) hrest
+
+/-- The stop guard BREAKS: the square is a blocker, and the loop frame goes
+with the body. This is `ray_stop_agrees`' leaf, restated as a segment. -/
+theorem stop_breaks (w : World) (env : REnv) (c : Char) (a : Addr)
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hstop : Ref.inStr c " \nPNBRQK" = true) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block (rStop :: rRest), .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.forGen gmRayTarget a gmRay]) rStop_plan
+    (fun _ => rfl) (run_at_least (rStop_run w env c hq hstop))
+
+/-- The pawn block is SKIPPED — the piece is not a pawn, so the branch takes
+its empty `else` arm and the frame pops straight through. -/
+theorem pawn_skips (w : World) (env : REnv) (p : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hp : Env.lookup env "p" = some (.str (String.singleton p))) (hnp : p ≠ 'P')
+    (hrest : GenEmits sunfish ⟨w, env⟩
+      ([.block [rYield, rCrawl, rCastA, rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block rRest] ++ pre) ws st₂ := by
+  have hb : (p == 'P') = false := by simp [hnp]
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (planOrelse rPawn),
+              GenFrame.block [rYield, rCrawl, rCastA, rCastH]] ++ pre)
+    (fun k => by
+      simpa [rRest_split] using genSilent_branch (m := sunfish) (s := rPawn) (b := false)
+        (k := pre ++ k) rPawn_plan (hb ▸ rPawn_test_run w env p hp)
+        (truthy_boolH w false)) ?_
+  refine GenEmits.silent (pre₁ := [GenFrame.block [rYield, rCrawl, rCastA, rCastH]] ++ pre)
+    (fun k => by
+      simpa [rPawn_orelse] using genSilent_blockNil (m := sunfish) (st := ⟨w, env⟩)
+        (k := GenFrame.block [rYield, rCrawl, rCastA, rCastH] :: (pre ++ k))) hrest
+
+/-- The unconditional `yield Move(i, j, "")` — the ray's one certain move. -/
+theorem yield_emits (w : World) (env : REnv) (iv jv : Int)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hloc : RayLocals env)
+    (hi : Env.lookup env "i" = some (.int iv))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [rCrawl, rCastA, rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rYield, rCrawl, rCastA, rCastH]] ++ pre)
+      (moveVal ⟨iv, jv, ""⟩ :: ws) st₂ :=
+  GenEmits.cons (pre₁ := [GenFrame.block [rCrawl, rCastA, rCastH]] ++ pre) (fun k => by
+    simpa using genSteps_yieldHere (m := sunfish) (s := rYield)
+      (ss := [rCrawl, rCastA, rCastH]) (k := pre ++ k) rYield_plan'
+      (rYield_evals w env iv jv hloc hi hj)) hrest
+
+/-- The crawler guard BREAKS — a crawler does not slide, and a capture ends
+the slide. This is where a knight's or a king's ray ends. -/
+theorem crawl_breaks (w : World) (env : REnv) (p q : Char) (a : Addr)
+    (hp : Env.lookup env "p" = some (.str (String.singleton p)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton q)))
+    (hbrk : (Ref.inStr p "PNK" || Ref.inStr q "pnbrqk") = true) :
+    GenEmits sunfish ⟨w, env⟩
+      [.block [rCrawl, rCastA, rCastH], .forGen gmRayTarget a gmRay] [] ⟨w, env⟩ :=
+  GenEmits.blockBreak (pre := [GenFrame.forGen gmRayTarget a gmRay]) rCrawl_plan
+    (fun _ => rfl)
+    (run_at_least (by simpa [hbrk] using rCrawl_run w env p q _ _ hp hq rfl rfl))
+
+/-- The crawler guard falls through: a slider keeps going. Landed for the
+slider rounds, which `castA_test_false` still blocks (see the record at the
+end of this file). -/
+theorem crawl_falls (w : World) (env : REnv) (p q : Char)
+    {pre : GenCont} {ws : List RVal} {st₂ : FrameState}
+    (hp : Env.lookup env "p" = some (.str (String.singleton p)))
+    (hq : Env.lookup env "q" = some (.str (String.singleton q)))
+    (hgo : (Ref.inStr p "PNK" || Ref.inStr q "pnbrqk") = false)
+    (hrest : GenEmits sunfish ⟨w, env⟩ ([.block [rCastA, rCastH]] ++ pre) ws st₂) :
+    GenEmits sunfish ⟨w, env⟩ ([.block [rCrawl, rCastA, rCastH]] ++ pre) ws st₂ :=
+  GenEmits.silent (pre₁ := [GenFrame.block [rCastA, rCastH]] ++ pre) (fun k => by
+    simpa using genSilent_delegate (m := sunfish) (s := rCrawl) (ss := [rCastA, rCastH])
+      (k := pre ++ k) rCrawl_plan
+      (run_at_least (by simpa [hgo] using rCrawl_run w env p q _ _ hp hq rfl rfl))) hrest
+
+/-- A finished block frame pops, at `GenEmits` altitude. -/
+theorem block_done (st : FrameState) : GenEmits sunfish st [.block []] [] st :=
+  GenEmits.silent (pre₁ := ([] : GenCont))
+    (fun k => by simpa using genSilent_blockNil (m := sunfish) (st := st) (k := k))
+    GenEmits.nil
+
 end Examples.python.sunfish.genmoves_ray

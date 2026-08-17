@@ -14,17 +14,15 @@ Position value, drain the object it answered, and the values that come out
 are the reference's moves in the reference's order, at every fuel above a
 threshold shared by the call and the drain.
 
-**What it rests on, in plain sight.** The hypothesis `PayloadBlind sunfish`
-(VCGen.lean §L6): the interpreter cannot observe the payload of a RUNNING
-generator object. That is the lockstep property the bridge needs — `stepIter`
-writes the resumption into the generator's own slot before every step and the
-frame-level chain never writes it, so the two chains sit at heaps differing
-exactly there. It is TRUE (`stepIter` is the only reader of a generator's
-`locals`/`cont`, and its `.running` arm refuses before touching them) and it
-is NOT proved: its proof is an 18-conjunct mutual induction over the
-interpreter's block, the shape of `ClockErase.lean`'s `clockErase`. Carried
-as a hypothesis so that `#print axioms` stays clean and the debt shows up in
-the signature of everything that uses it.
+**What it rests on, and it is no longer a hypothesis.** The lockstep the
+bridge needs is `PayloadBlind sunfish`: the interpreter cannot observe the
+payload of a RUNNING generator object. `stepIter` writes the resumption into
+the generator's own slot before every step and the frame-level chain never
+writes it, so the two chains sit at heaps differing exactly there. §L7
+PROVED it (LeanModels/Python/PayloadBlind.lean, `payloadBlind`), so this
+theorem takes no hypothesis at all: its `#print axioms` is
+`propext`/`Classical.choice`/`Quot.sound`, and there is nothing left in its
+signature for a reader to discount.
 
 **What this file is NOT.** It is not `GenMovesEqRef` (genmoves_theorem.lean),
 and it deliberately does not touch it: that statement drains through its own
@@ -98,7 +96,7 @@ them (`initWorld sunfish` satisfies both — `#guard`ed in genmoves_scan.lean).
 
 The exit world is existential. A drain's last act is to mark its own object
 `.closed`, and no consumer of the VALUES has to name that bookkeeping. -/
-theorem gen_moves_drains_ref (hb : PayloadBlind sunfish) (w : World) (dad : Addr)
+theorem gen_moves_drains_ref (w : World) (dad : Addr)
     (b : String) (score ep kp : Int) (wc0 wc1 bc0 bc1 : Bool) (rf : Nat)
     (ms : List Ref.RefMove)
     (hg : Env.lookup w.globals "directions" = some (.ref dad))
@@ -123,7 +121,7 @@ theorem gen_moves_drains_ref (hb : PayloadBlind sunfish) (w : World) (dad : Addr
           = w.heap.push _ from rfl, Heap.get?_push_lt hdlt]; exact hdirs) href
   obtain ⟨w', t, hcd⟩ := callIn_drains (m := sunfish) (w := w)
     (fname := "Position.gen_moves") (args := #[posOf b score wc0 wc1 bc0 bc1 ep kp])
-    (vs := ms.map moveVal) (st' := st') hb hf hargs hlocals
+    (vs := ms.map moveVal) (st' := st') hf hargs hlocals
     (by simpa using harity) hgen (by simpa only [henv, hbody] using hy)
   exact ⟨w', t, fun F hF => by
     simpa only [gmWorld, gmObj, genObj, henv, hbody] using hcd F hF⟩
@@ -132,12 +130,13 @@ theorem gen_moves_drains_ref (hb : PayloadBlind sunfish) (w : World) (dad : Addr
 
 Two things, and neither is a proof gap in this file.
 
-1. **`PayloadBlind sunfish`** — the hypothesis above, and the tier's one
-   remaining piece of real proof work. VCGen.lean §L6 states it, says why it
-   is true, and measures what proving it costs (an 18-conjunct mutual
-   induction over the interpreter block; 119 heap-consuming call sites across
-   34 heap-reading helpers, four of them mutual inductions of their own; the
-   easier `ClockErase.lean` precedent is 2662 lines).
+1. **`PayloadBlind sunfish` — LANDED (§L7).** It was the tier's one
+   remaining piece of real proof work and it is now
+   `payloadBlind sunfish` (LeanModels/Python/PayloadBlind.lean): all
+   eighteen interpreter arms, the block's induction on fuel, and the
+   reduction to the `execGen` conjunct. What §L6 priced at ClockErase scale
+   cost a third of that, because the perturbation is a FUNCTION and every
+   helper obligation is an equation.
 
 2. **The frozen statement's own fuel defect**, recorded at genmoves_scan.lean:
    `GenMovesEqRef` drains through `drain`, which passes the constant 16384 to

@@ -1,4 +1,4 @@
-import LeanModels.Python.VC2
+import LeanModels.Python.PayloadBlind
 
 /-!
 # The generator tier (`py_vcgen` layer 2G)
@@ -1638,10 +1638,11 @@ current one. Stepping them in lockstep therefore needs
 > `execGen` does not depend on the payload of the RUNNING generator at `a`
 
 which is a locality property of the whole interpreter, not a fact about any
-one generator. `PayloadBlind` states it; `GenSteps.transport` /
-`GenYields.transport` / `IterDrains.of_genYields` consume it, and
-`callIn_drains` is the shape a consumer meets (call a generator function,
-drain the object it answered).
+one generator. `PayloadBlind` (PayloadBlind.lean, §L7) states it and
+`payloadBlind` PROVES it; `GenSteps.transport` / `GenYields.transport` /
+`IterDrains.of_genYields` consume the theorem, and `callIn_drains` is the
+shape a consumer meets (call a generator function, drain the object it
+answered).
 
 **Why it is TRUE, censused rather than assumed.** `stepIter` is the
 interpreter's ONLY reader of a generator object's `locals` and `cont`: it is
@@ -1657,19 +1658,15 @@ only writer. That is the "heap-stability side condition" §L2 recorded as the
 missing piece — not an assumption, the first conjunct of this property
 (`GenSteps.slot_stable`).
 
-**Why it is not proved here.** It is an 18-conjunct mutual induction on fuel
-over the interpreter block, in the shape of `ClockErase.lean`'s
-`clockErase` — and strictly bigger, because clock seeding leaves every heap
-term syntactically identical while this one changes the heap: all 119
-heap-consuming call sites in the block need a congruence lemma at a heap
-that differs at one slot, across 34 distinct heap-reading helpers — four of
-them mutual inductions of their own (`heapEq`, `reprVal`,
-`keyHasInstanceRef`, `unhashableName?`) and three more recursions that need a
-lemma each (`setDedup`, `dictBuild`, `unpackSeq`). `ClockErase.lean` is 2662
-lines for the easier relation. So `PayloadBlind` is a `Prop`-valued
-DEFINITION, exactly as `GenMovesEqRef` is: the claim recorded, "proved" left
-unclaimed, and every theorem that consumes it carries it as a hypothesis
-where a reader can see it. -/
+**Where it is proved.** LeanModels/Python/PayloadBlind.lean (§L7), and the
+price §L6 quoted here — an 18-conjunct mutual induction on fuel over the
+interpreter block, bigger than `ClockErase.lean`'s 2662 lines because this
+relation MOVES the heap — was a fair estimate of the wrong proof. The
+perturbation is a FUNCTION (`Heap.swapAt` is `Heap.update`'s total twin), so
+every one of those 119 sites reduces to a plain EQUATION at 34 helpers
+rather than a two-world simulation. `payloadBlind : ∀ m, PayloadBlind m` is
+therefore a theorem, and nothing in this section carries it as a hypothesis
+any more. -/
 
 /-- **A whole DRAIN of the generator object at `a`** — `drainIter`'s
 threshold judgment, the world-level twin of `GenYields`, and what a
@@ -1739,55 +1736,27 @@ theorem iterDrains_enumSeq {m : Module} :
     obtain ⟨w', hd⟩ := ih { w with heap := h₂ } a (i + 1) (Heap.get?_update_self hback)
     exact ⟨w', IterDrains.cons (iterSteps_enumSeq hobj hback) hd⟩
 
-/-- **THE LOCALITY PROPERTY: the interpreter cannot observe the payload of a
-RUNNING generator.** For every fuel, every frame stack and every state whose
-heap holds `.generator qname locals₀ cont₀ .running` at `a`, a decided
-`execGen` run
-
-1. leaves that slot exactly as it found it (STABILITY — nothing in the run
-   can write a running generator, because `stepIter` is the only writer and
-   its `.running` arm refuses), and
-2. runs identically when the payload is REPLACED (TRANSPORT — same result,
-   same locals, same heap off `a`, and the substituted payload still there),
-
-for any other `locals₁`/`cont₁` at the same `qname` and the same `.running`
-status. Deliberately narrow on all three counts: an arbitrary OBJECT at `a`
-is observable (a list is not a generator), a `.suspended` payload is
-observable (`stepIter` resumes it), and `qname` is observable (`repr` and
-the type-error messages name it).
-
-Stated as a definition and consumed as a hypothesis (`GenMovesEqRef`'s
-precedent): its proof is the 18-conjunct mutual induction described in this
-section's header, and a landing that has not done that induction does not
-get to claim it. Every theorem below takes it explicitly, so `#print axioms`
-stays clean and the debt is visible in the signatures. -/
-def PayloadBlind (m : Module) : Prop :=
-  ∀ (F : Nat) (a : Addr) (qname : String) (locals₀ : REnv) (cont₀ : GenCont)
-    (st st₁ : FrameState) (k : GenCont) (r : Option (RVal × GenCont)),
-    Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running) →
-    execGen m F st k = .ok st₁ r →
-    Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) ∧
-    ∀ (locals₁ : REnv) (cont₁ : GenCont) (h h₁ : Heap),
-      Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h →
-      Heap.update st₁.world.heap a (.generator qname locals₁ cont₁ .running) = some h₁ →
-      execGen m F ⟨{ st.world with heap := h }, st.locals⟩ k
-        = .ok ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ r
+/-! `PayloadBlind` — the locality property this section's bridges rest on —
+is DEFINED and PROVED in LeanModels/Python/PayloadBlind.lean (§L7), which
+this file imports. `payloadBlind m` is the theorem; nothing below takes it
+as a hypothesis any more. -/
 
 /-- **The generator's own slot survives its own step** — L2's recorded
 heap-stability side condition, DERIVED from locality rather than assumed of
 the body. -/
-theorem GenSteps.slot_stable {m : Module} (hb : PayloadBlind m) {a : Addr}
+theorem GenSteps.slot_stable {m : Module} {a : Addr}
     {qname : String} {locals₀ : REnv} {cont₀ : GenCont} {st st₁ : FrameState}
     {k : GenCont} {r : Option (RVal × GenCont)}
     (hslot : Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running))
     (hstep : GenSteps m st k r st₁) :
     Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) := by
   obtain ⟨t, ht⟩ := hstep
-  exact (hb t a qname locals₀ cont₀ st st₁ k r hslot (ht t (Nat.le_refl t))).1
+  exact (payloadBlind m t a qname locals₀ cont₀ st st₁ k r hslot
+    (ht t (Nat.le_refl t))).1
 
 /-- **One step transports** across a payload swap at `a`: same yield, same
 resumption, same locals, and the world moved the same way off `a`. -/
-theorem GenSteps.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
+theorem GenSteps.transport {m : Module} {a : Addr}
     {qname : String} {locals₀ : REnv} {cont₀ : GenCont} {st st₁ : FrameState}
     {k : GenCont} {r : Option (RVal × GenCont)}
     (hslot : Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running))
@@ -1799,7 +1768,7 @@ theorem GenSteps.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
       ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ := by
   obtain ⟨t, ht⟩ := hstep
   refine ⟨t, fun F hF => ?_⟩
-  exact (hb F a qname locals₀ cont₀ st st₁ k r hslot (ht F hF)).2
+  exact (payloadBlind m F a qname locals₀ cont₀ st st₁ k r hslot (ht F hF)).2
     locals₁ cont₁ h h₁ hset hset₁
 
 /-- **A whole drain transports** — the per-step transport lifted over the
@@ -1807,7 +1776,7 @@ emitted list, with the slot's survival carried along (it is what makes the
 next round's write-back defined). This is the LOCKSTEP piece: the frame-level
 fact a generator theorem concludes, re-read at the world the object-level
 chain is actually in. -/
-theorem GenYields.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
+theorem GenYields.transport {m : Module} {a : Addr}
     {qname : String} :
     ∀ (vs : List RVal) (st st' : FrameState) (k : GenCont) (locals₀ : REnv)
       (cont₀ : GenCont) (locals₁ : REnv) (cont₁ : GenCont) (h : Heap),
@@ -1822,21 +1791,21 @@ theorem GenYields.transport {m : Module} (hb : PayloadBlind m) {a : Addr}
   induction vs with
   | nil =>
     intro st st' k locals₀ cont₀ locals₁ cont₁ h hslot hset hy
-    have hstable := GenSteps.slot_stable hb hslot (GenYields.unnil hy)
+    have hstable := GenSteps.slot_stable hslot (GenYields.unnil hy)
     obtain ⟨h', hset'⟩ := Heap.update_of_get?
       (.generator qname locals₁ cont₁ .running) hstable
     exact ⟨hstable, h', hset', GenYields.done
-      (GenSteps.transport hb hslot (GenYields.unnil hy) locals₁ cont₁ hset hset')⟩
+      (GenSteps.transport hslot (GenYields.unnil hy) locals₁ cont₁ hset hset')⟩
   | cons v vs ih =>
     intro st st' k locals₀ cont₀ locals₁ cont₁ h hslot hset hy
     obtain ⟨st₁, k₁, hstep, hrest⟩ := GenYields.uncons hy
-    have hstable := GenSteps.slot_stable hb hslot hstep
+    have hstable := GenSteps.slot_stable hslot hstep
     obtain ⟨h₁, hset₁⟩ := Heap.update_of_get?
       (.generator qname locals₁ cont₁ .running) hstable
     obtain ⟨hstable', h', hset', hrest'⟩ :=
       ih st₁ st' k₁ locals₀ cont₀ locals₁ cont₁ h₁ hstable hset₁ hrest
     exact ⟨hstable', h', hset',
-      GenYields.cons (GenSteps.transport hb hslot hstep locals₁ cont₁ hset hset₁) hrest'⟩
+      GenYields.cons (GenSteps.transport hslot hstep locals₁ cont₁ hset hset₁) hrest'⟩
 
 /-- **THE WHOLE-DRAIN BRIDGE (L2's remainder)**: a frame-level `GenYields`
 fact about a suspended object's stored continuation IS the object's whole
@@ -1845,7 +1814,7 @@ through the per-step bridges, the resumption written back into slot `a`, and
 the remaining frame-level fact transported to the world that write left.
 The exit world is existential: a drain's own last write (the object goes
 `.closed`) is bookkeeping no consumer of the VALUES needs to name. -/
-theorem IterDrains.of_genYields {m : Module} (hb : PayloadBlind m) {a : Addr}
+theorem IterDrains.of_genYields {m : Module} {a : Addr}
     {qname : String} :
     ∀ (vs : List RVal) (w : World) (locals : REnv) (cont : GenCont)
       (status : GenStatus) (h₁ : Heap) (st' : FrameState),
@@ -1861,7 +1830,7 @@ theorem IterDrains.of_genYields {m : Module} (hb : PayloadBlind m) {a : Addr}
     have hslot : Heap.get? ({ w with heap := h₁ } : World).heap a
         = some (.generator qname locals cont .running) :=
       Heap.get?_update_self hrun
-    have hstable := GenSteps.slot_stable hb hslot (GenYields.unnil hy)
+    have hstable := GenSteps.slot_stable hslot (GenYields.unnil hy)
     obtain ⟨h₂, hback⟩ := Heap.update_of_get?
       (.generator qname st'.locals [] .closed) hstable
     exact ⟨_, IterDrains.nil (IterSteps.of_genDone hobj hstatus hrun
@@ -1872,7 +1841,7 @@ theorem IterDrains.of_genYields {m : Module} (hb : PayloadBlind m) {a : Addr}
         = some (.generator qname locals cont .running) :=
       Heap.get?_update_self hrun
     obtain ⟨st₁, k₁, hstep, hrest⟩ := GenYields.uncons hy
-    have hstable := GenSteps.slot_stable hb hslot hstep
+    have hstable := GenSteps.slot_stable hslot hstep
     -- the object-level step: `stepIter`'s write-back, and the object it leaves
     obtain ⟨h₂, hback⟩ := Heap.update_of_get?
       (.generator qname st₁.locals k₁ .suspended) hstable
@@ -1886,7 +1855,7 @@ theorem IterDrains.of_genYields {m : Module} (hb : PayloadBlind m) {a : Addr}
         (.generator qname st₁.locals k₁ .running) = some h₁' := by
       rw [← Heap.update_update hback]; exact hrun₂
     obtain ⟨-, h', -, hrest'⟩ :=
-      GenYields.transport hb vs st₁ st' k₁ locals cont st₁.locals k₁ h₁'
+      GenYields.transport vs st₁ st' k₁ locals cont st₁.locals k₁ h₁'
         hstable hsetf hrest
     obtain ⟨w', hdrain⟩ := ih { st₁.world with heap := h₂ } st₁.locals k₁
       .suspended h₁' ⟨{ st'.world with heap := h' }, st'.locals⟩ hobj₂ (Or.inr rfl)
@@ -1899,7 +1868,7 @@ object-level twin of `EvalsIn.genCall` composed with a body spec: calling a
 generator function allocates at the heap's end (`callIn_genCall`) and
 draining what it answered yields exactly what the BODY's frame-level fact
 says, at one shared fuel threshold for both halves. -/
-theorem callIn_drains {m : Module} (hb : PayloadBlind m) {w : World}
+theorem callIn_drains {m : Module} {w : World}
     {fname : String} {f : FunctionDefn} {args : Array RVal} {vs : List RVal}
     {st' : FrameState}
     (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
@@ -1914,7 +1883,7 @@ theorem callIn_drains {m : Module} (hb : PayloadBlind m) {w : World}
           = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) ∧
       drainIter m F { w with heap := w.heap.push (genObj fname f args) }
           w.heap.size = .ok w' vs := by
-  obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields hb vs
+  obtain ⟨w', t, hdrain⟩ := IterDrains.of_genYields vs
     { w with heap := w.heap.push (genObj fname f args) } (mkCallEnv f.params args)
     [.block f.body.toList] .created
     (w.heap.push (.generator fname (mkCallEnv f.params args)

@@ -1119,16 +1119,16 @@ named property.** `genmoves_drain.lean` next door is `gen_moves_drains_ref`:
 the shipped method CALLED and its object DRAINED (`drainIter`) yields exactly
 `Ref.refMoves`' moves in `Ref.refMoves`' order. The bridge itself
 (`IterDrains.of_genYields`, VCGen.lean §L6) is an induction on the emitted
-list, exactly as this note predicted — but the lockstep it needs is real and
-is NOT proved: `stepIter` writes the resumption into slot `a` before every
-step and `drainGen` never writes that slot, so after the first yield the two
-chains sit at heaps differing exactly at `a`, and stepping them together
-needs "`execGen` does not depend on the payload of the RUNNING generator at
-`a`". That is `PayloadBlind` (VCGen.lean §L6): TRUE — `stepIter` is the
-interpreter's only reader of a generator's payload and its `.running` arm
-refuses before touching it — but its proof is an 18-conjunct mutual induction
-over the interpreter block, so it is a `Prop`-valued definition carried as a
-hypothesis rather than a claim.
+list, exactly as this note predicted — and the lockstep it needs is real:
+`stepIter` writes the resumption into slot `a` before every step and
+`drainGen` never writes that slot, so after the first yield the two chains
+sit at heaps differing exactly at `a`, and stepping them together needs
+"`execGen` does not depend on the payload of the RUNNING generator at `a`".
+That is `PayloadBlind`, and §L7 PROVED it
+(LeanModels/Python/PayloadBlind.lean, `payloadBlind`): the eighteen
+interpreter arms, the block's induction on fuel, and the reduction to the
+`execGen` conjunct. `gen_moves_drains_ref` next door therefore carries no
+hypothesis at all.
 
 Peeling the frame-level `GenYields` is what the bridge does
 (`GenYields.uncons`), and it does not avoid the property: the per-yield facts

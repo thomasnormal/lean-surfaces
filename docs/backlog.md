@@ -7217,9 +7217,9 @@ declarations and still elaborates in 8 s (nothing in it meets `py_simp`).
 The tail §"What remains, enumerated" predicted below is exactly what the
 third pass paid, in the predicted order: the two named write-position pieces,
 the three private equations, then `execAttrCall` (79 lines of interpreter →
-105 of proof), `execStmt` (318 → 246) and `evalExpr` (1047 → 1125 — 5% over
-§L6's estimate, which named ClockErase's corresponding 1070-line arm and was
-the one number that pass got right).
+105 of proof), `execStmt` (318 → 246) and `evalExpr` (1047 → 1125 — 5%
+over §L6's estimate, which named ClockErase's corresponding 1070-line arm
+and was the one number that pass got right).
 
 ### The shape finding
 
@@ -7320,12 +7320,13 @@ abbrev PBF (a : Addr) (o₀ o : Obj) (x y : Run FrameState α) : Prop :=
 
 ### The tail, as paid
 
-**§Tier C′, the write position** — the two pieces both mutating arms wanted,
-and the prediction held at 34 lines rather than 130. `PBF.liftMapOk` threads
-a `map`-shaped equation into the continuation the interpreter applies to the
-helper's answer; `PBF.okWrite` is the write-back leaf (the post-write state's
-swap IS the swap of the post-write state — the heap is the only field that
-moves, so the whole obligation is the slot fact at the NEW heap);
+**§Tier C′, the write position** — the two pieces both mutating arms
+wanted, and the prediction held at 34 lines rather than 130.
+`PBF.liftMapOk` threads a `map`-shaped equation into the continuation the
+interpreter applies to the helper's answer; `PBF.okWrite` is the write-back
+leaf (the post-write state's swap IS the swap of the post-write state — the
+heap is the only field that moves, so the whole obligation is the slot fact
+at the NEW heap);
 `PBF.pushRef` is the same statement for an allocation. Every mutating site in
 `execAttrCall`/`execStmt`/`evalExpr` is two lines over these.
 
@@ -7353,8 +7354,26 @@ world's GLOBALS and the swap moves neither.
 is 27 lines, and 18 of them are the fuel-ZERO row (one `.timeout` per member,
 each guarding on fuel before it looks at anything): the successor row is
 `⟨pbEvalExpr_succ htwin ihn, …⟩`, one arm per conjunct, which is the whole
-dividend of the arms being standalone theorems. `payloadBlind : ∀ m, PayloadBlind m` then follows from
-`payloadBlind_of_execGen`, on `propext`/`Classical.choice`/`Quot.sound`.
+dividend of the arms being standalone theorems. `payloadBlind : ∀ m,
+PayloadBlind m` then follows from `payloadBlind_of_execGen`, on
+`propext`/`Classical.choice`/`Quot.sound`.
+
+**The consumers are DISCHARGED, and the edge flipped to do it.** `PayloadBlind`
+was DEFINED in VCGen.lean and PayloadBlind.lean imported VCGen — the right way
+round while the property was being developed (a downstream module rebuilds in
+seconds; §finding 3). It is the wrong way round for a discharge, because
+`IterDrains.of_genYields` lives in VCGen.lean and cannot see a theorem
+downstream of it. So the definition MOVED into PayloadBlind.lean, that module
+now imports VC2 instead of VCGen, and VCGen.lean imports PayloadBlind: the
+DAG's one edge reversed, and the five bridges (`GenSteps.slot_stable`,
+`GenSteps.transport`, `GenYields.transport`, `IterDrains.of_genYields`,
+`callIn_drains`) drop `(hb : PayloadBlind m)` and call `payloadBlind m`
+instead. `gen_moves_drains_ref` (Examples/python/sunfish/genmoves_drain.lean)
+drops it too, which is the point of the whole arc: **the sunfish drain theorem
+now carries no hypothesis at all.** The flip is safe because PayloadBlind.lean
+needed exactly ONE name from VCGen (the definition) and shares no `Heap.*`
+name with it — checked by grep before the edit, the §L4/§L6 collision rule
+applied in advance rather than fifteen minutes into the tree.
 
 
 ### Findings worth carrying
@@ -7413,18 +7432,18 @@ combinators shares a name with `ClockErasedF`'s and `Obs`'s (`ok`, `exn`,
 sit in `PBW`/`PBF` — the namespaced-combinator pattern is what makes the
 tier's three transport relations coexist.
 
-**Cost, measured.** LeanModels/Python/PayloadBlind.lean 1794 lines / 126
-declarations, elaborating in **0.9 s** — nothing in it meets `py_simp`, and
-nothing in it touches a module literal. VCGen.lean and Semantics.lean are
-UNTOUCHED. `#print axioms` on every theorem in it is
-`propext`/`Classical.choice`/`Quot.sound` (the writers need only
-`propext`/`Quot.sound`); no `sorry`, no `native_decide`, no axiom standing in
-for anything. Per-arm cost for the ten arms of the second pass: 18 lines
-median, `stepIter` 102 and `execGen` 174 at the top, and the eight
-composition-and-dispatch arms went green in ONE build after a single
-mechanical fix. Full-tree cost (the price of the module being wired into
-`LeanModels/Python.lean`) is **15m31s**, paid once per commit and nothing to
-do with the proof's own cycle.
+**Cost, measured.** LeanModels/Python/PayloadBlind.lean 3786 lines / 136
+declarations, elaborating in **8 s** — nothing in it meets `py_simp`, and
+nothing in it touches a module literal. Semantics.lean is UNTOUCHED. `#print
+axioms` on every theorem in it is `propext`/`Classical.choice`/`Quot.sound`
+(the writers need only `propext`/`Quot.sound`); no `sorry`, no
+`native_decide`, no axiom standing in for anything. Per-arm cost across the
+three passes: 18 lines median, and the three big ones landed at `execAttrCall`
+105, `execStmt` 246, `evalExpr` 1125 — `evalExpr` 5% over §L6's estimate,
+which named ClockErase's corresponding 1070-line arm and was the one number
+that pass got right. Full-tree cost is
+**15m31s**, paid once per commit and nothing to do with the proof's own
+cycle.
 
 **One tactic fact worth the line, and it cost four iterations.** `cases`
 substitutes a constructor into a match WITHOUT iota-reducing it, so the

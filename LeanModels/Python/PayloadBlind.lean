@@ -1,9 +1,10 @@
-import LeanModels.Python.VCGen
+import LeanModels.Python.VC2
 
 /-! # Payload blindness — the interpreter cannot see a RUNNING generator's payload
 
-docs/backlog.md §"L6 LANDED" states `PayloadBlind` (VCGen.lean §L6) and
-prices its proof. The claim: for a slot `a` holding
+docs/backlog.md §"L6 LANDED" stated `PayloadBlind` in VCGen.lean and priced
+its proof; §L7 proved it, so the definition lives here and VCGen.lean's
+generator calculus imports this module. The claim: for a slot `a` holding
 `.generator qname locals cont .running`, a decided interpreter run (1)
 leaves the slot exactly as it found it and (2) runs identically when the
 payload is replaced by any other `locals`/`cont` at the same `qname`.
@@ -2163,7 +2164,20 @@ The three members that MUTATE, and the reason §Tier C′ exists: every one
 of their write sites is `Run.liftRes` of a heap-returning helper followed
 by a write-back, so each is `PBF.liftMapOk` over the helper's §Tier B
 equation, closed by `PBF.okWrite` at the slot fact the writer's own
-enumeration gives (`heapAppend_slot` and friends). -/
+enumeration gives (`heapAppend_slot` and friends).
+
+**Reading the bare `simp only []`s below.** `cases` substitutes a constructor
+into the member's own `match` WITHOUT iota-reducing it, and the stuck arm's
+pattern binders then SHADOW the names just introduced — so a following `cases`
+on an inner scrutinee generalizes the wrong occurrence and the failure
+surfaces as a type mismatch whose expected type still prints
+`match <constructor> with …`. `simp only []` reduces the match and nothing
+else, which is why it appears BETWEEN two `cases` and nowhere else. The dual
+is worth the line too: where the matcher's decision tree tests an ELEMENT
+before the list (`[.ref a]` before `vs`, `[.str sub]` before `[v]`,
+`[.subscript …]` before `[t]`) there is nothing to reduce until that element
+is cased, `simp only []` reports "no progress", and the fix is the opposite
+one — case the element first. -/
 
 /-- The builtin method tier: `.get`/`.clear` on a dict, `.append`/`.pop`/
 `.insert` on a list, and instance methods through `callIn`. The plan is
@@ -3693,6 +3707,39 @@ theorem pbAll (htwin : PayloadTwin o₀ o) : ∀ (fuel : Nat), PBAll pa o₀ o f
         pbAnyAllIter_succ htwin ihn, pbCallClosure_succ ihn⟩
 
 end Arms
+
+/-- **THE LOCALITY PROPERTY: the interpreter cannot observe the payload of a
+RUNNING generator.** For every fuel, every frame stack and every state whose
+heap holds `.generator qname locals₀ cont₀ .running` at `a`, a decided
+`execGen` run
+
+1. leaves that slot exactly as it found it (STABILITY — nothing in the run
+   can write a running generator, because `stepIter` is the only writer and
+   its `.running` arm refuses), and
+2. runs identically when the payload is REPLACED (TRANSPORT — same result,
+   same locals, same heap off `a`, and the substituted payload still there),
+
+for any other `locals₁`/`cont₁` at the same `qname` and the same `.running`
+status. Deliberately narrow on all three counts: an arbitrary OBJECT at `a`
+is observable (a list is not a generator), a `.suspended` payload is
+observable (`stepIter` resumes it), and `qname` is observable (`repr` and
+the type-error messages name it).
+
+§L6 stated this in VCGen.lean and carried it as a hypothesis, because the
+proof was an 18-conjunct mutual induction nobody had run. §L7 ran it, so the
+definition lives HERE, one line above `payloadBlind` — and VCGen.lean's
+generator calculus imports this module and consumes the theorem. -/
+def PayloadBlind (m : Module) : Prop :=
+  ∀ (F : Nat) (a : Addr) (qname : String) (locals₀ : REnv) (cont₀ : GenCont)
+    (st st₁ : FrameState) (k : GenCont) (r : Option (RVal × GenCont)),
+    Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running) →
+    execGen m F st k = .ok st₁ r →
+    Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) ∧
+    ∀ (locals₁ : REnv) (cont₁ : GenCont) (h h₁ : Heap),
+      Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h →
+      Heap.update st₁.world.heap a (.generator qname locals₁ cont₁ .running) = some h₁ →
+      execGen m F ⟨{ st.world with heap := h }, st.locals⟩ k
+        = .ok ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ r
 
 /-! ## The reduction — `PayloadBlind` IS the `execGen` conjunct
 

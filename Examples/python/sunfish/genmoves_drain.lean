@@ -147,11 +147,14 @@ Two things, and neither is a proof gap in this file.
    `ms.map moveVal` to `refTriples ms`, which is `drain`'s own `Move`
    projection over the same list.
 
-`sf_order`'s `bound_probe` consumes the same bridge and needs three further
+`sf_order`'s `bound_probe` consumes the same bridge and needed three further
 things this file does not touch: a `sorted`-over-a-generator EXPRESSION rule
 (the builtin arm drains through `drainIter` and then allocates the sorted
 list, so `IterDrains` is its engine but not its statement), generator-internal
 `break` at the loop-frame level, and `callClosure`'s generator arm for the
-lowered generator EXPRESSION. -/
+lowered generator EXPRESSION. All three landed at §L8
+(LeanModels/Python/GenBound.lean), with a fourth the list had missed — you
+cannot ENTER a `forList` loop whose iterable allocates — and each is gated on
+the shipped program in `Examples/python/sf_order/proof.lean`. -/
 
 end Examples.python.sunfish.genmoves_drain

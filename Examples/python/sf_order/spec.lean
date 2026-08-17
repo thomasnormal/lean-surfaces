@@ -23,9 +23,13 @@ an en-passant board, and the opening board's count/head/tail (the
 the capture arm (`q.islower()`/`q.upper()`, the H6 str additions) and
 the en-passant bonus.
 
-No `proof.lean` yet: the reference-enumeration equality theorem for the
-ordering (the decided gen_moves statement, extended by `value`) is the
-next proof-layer step; these are its concrete anchors.
+`proof.lean` (2026-08-17, docs/backlog.md §L8) proves the three constructs
+`bound_probe` was blocked behind, over the shipped program: the ordering
+line evaluates to the sorted list, the `moves` loop cuts at the threshold,
+and the nested `def` allocates the closure its call turns into a
+generator. The reference-enumeration equality for the ordering — the
+decided gen_moves statement extended by `value` — is still open, and these
+pins are its concrete anchors.
 -/
 
 open LeanModels LeanModels.Python

@@ -6,9 +6,25 @@ model-removal roadmap (docs/backlog.md §L10).
 the `sf_order` fixture and recorded the consumption note: *the fold's shape IS
 the recursion shape* — an induction hypothesis at depth `d-1` is consumed as a
 `Hands` schedule at depth `d`. This file takes that shape to the **shipped**
-`Searcher.bound`, on `Examples/python/sunfish/sunfish.py`, which is
-BYTE-IDENTICAL to the engine's `sunfish.py` (§L9 measured it; `sf_order.py` is
-not, which is why the arc moves here).
+`Searcher.bound`, on `Examples/python/sunfish/sunfish.py`.
+
+**FIXTURE DRIFT, measured 2026-08-19 (docs/backlog.md §L13) — read this before
+trusting the word "shipped" above.** The fixture is the engine's `sunfish.py`
+at `sha256 2142d9c2…` (engine commit `783b0d6`, 2026-08-11), and §L9/§L10
+verified byte-identity with the engine's master at that time. It is no longer
+identical: 33 further commits (287 changed lines) moved the engine's `bound()`
+from 13 top-level statements to 18. **Everything below is still a theorem about
+a real Python program — it is not a theorem about TODAY's engine master**, and
+the re-pin that would restore the claim is BLOCKED rather than expensive: on
+current master `moves()` captures `guard` and `val`, both REBOUND after the
+`def`, so the nested-def tier refuses it at extraction and every
+`Searcher.bound` call answers `unsupported statement 'NestedDef'`. §L13 has
+the measurements and the tier item. What the drift does NOT touch: the table's
+own shape — `entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER,
+MATE_UPPER))`, `self.tp_score[pos, depth] = Entry(…)` and `Entry =
+namedtuple("Entry", "lower upper")` are byte-identical in both versions, which
+is why step 3's calculus (`LeanModels/Python/DictCalc.lean`) was built in the
+GENERAL layer and is drift-proof.
 
 The object is the real thing: thirteen statements, a node counter and a wall
 clock on the receiver, two transposition dicts and a history set behind

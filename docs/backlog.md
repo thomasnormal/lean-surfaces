@@ -8273,3 +8273,190 @@ and it is route A proper.
 4. *OPS — kills by PID, never by pattern* (§L11 finding 3, respected: every
    long measurement here ran detached and was reaped by `timeout`, and the
    one orphan check was `ps` by parentage).
+
+
+## L13 — STEP 3's TABLE CALCULUS LANDS IN THE GENERAL LAYER, and the step-2 re-pin turns out to be BLOCKED, not expensive (2026-08-19)
+
+§L10 opened step 2 at the shipped `bound()` and priced step 3's remaining
+obligation — a table invariant plus "three `dictFind`/`dictStore` lemmas and a
+`keyEq` congruence, all pure … an hour, not a session". This pass did that, and
+it also answered a question the brief put first: whether §L10's fixture still
+IS the engine. **It is not, and the answer changed what the general layer had
+to look like.**
+
+### The fixture drift, measured before anything was written
+
+`Examples/python/sunfish/sunfish.py` is the engine's file at
+`sha256 2142d9c2…` — engine commit `783b0d6`, 2026-08-11 — and §L9/§L10
+verified byte-identity against engine master *at that time*. Engine master is
+now `e670434`; its `sunfish.py` is `sha256 f6c481a6…`.
+
+| | pinned fixture | engine master | |
+|---|---|---|---|
+| commits to `sunfish.py` since the pin | — | **33** | |
+| changed lines | — | **285** (187 added, 98 removed) | |
+| `Searcher.bound` top-level statements | **13** | **18** | every §0 pin from index 6 on shifts |
+| `Module.topLevel` statements | 24 | 27 | `LMR`, `NULL_MARGIN`, `DELAY` |
+| function bodies changed | — | `__init__`, `bound`, `moves`, `search`, `main` | |
+| function bodies UNCHANGED | — | `gen_moves`, `value`, `move`, `rotate`, `king_capture`, `parse`, `render` | the whole §L4–§L11 generator tier's object |
+
+So the drift is not "#236, merged today". It is a week of engine work, and the
+statement that stops is `bound_depth.lean`'s — which now carries the fact in
+its own header rather than a stale claim of byte-identity.
+
+### And the re-pin is BLOCKED — the measurement that decides the roadmap
+
+The obvious plan ("re-extract, re-pin, pay the elaboration") was run far enough
+to price it, on a scratch copy of engine master's `sunfish.py` (extractor: 0.13
+s; the envelope loads and `findFunction` answers). Three `#eval`s settle it:
+
+* `Searcher.bound`'s five `callIn` gates still pass — `(argsOk, localsOk,
+  isGenerator, params.size) = (true, true, false, 5)`;
+* its body carries **three** `unsupported` nodes: the two `del` statements
+  (already known, guarded false by `TABLE_SIZE`) and — new — **the nested
+  generator itself**:
+
+  > `NestedDef/moves: captured name 'guard' is rebound after the def (line
+  > 450) … captured name 'val' is rebound after the def (line 458) —
+  > snapshot-at-def would diverge from CPython's cell`
+
+* therefore **every** `Searcher.bound` call on current master answers
+  `unsupported statement 'NestedDef'` — measured at `(gamma, depth)` =
+  `(0,0)`, `(40,0)`, `(40,1)`, `(40,2)`.
+
+The refactor moved `guard = not root and calm` BELOW `def moves():`, and H7's
+nested-def tier admits only captures never rebound after the `def`. CPython is
+fine — the closure reads its cell at CALL time, after the assignment — and for
+`guard` the tier's refusal is CORRECT for snapshot-at-def semantics: a snapshot
+taken at the `def` would read an unbound name.
+
+The second name in the message, `val`, is worth a second look by whoever takes
+the tier item: inside `moves()` it is a WALRUS target
+(`(val := pos.value(killer))`), which in CPython binds `moves`'s own local, not
+a cell — so the capture census appears to be over-approximating there, and the
+consumer's `for val, move in moves():` is then not a rebinding of anything the
+closure reads. Fixing that would remove one of the two names but NOT the
+blocker: `guard` is a real rebound capture and refuses on its own.
+
+**So re-pinning step 2 is not expensive work — it is blocked behind a tier
+item: closure CELLS for captures rebound between the `def` and the call.**
+That item is now the gate on all of step 2, and it is named here rather than
+discovered by a lane that budgeted a re-pin.
+
+Two things the drift does NOT touch, both measured on the new envelope:
+
+* **The module-init tier survives verbatim.** On engine master's source
+  `initWorld` still gives `heap.size = 66`, `directions ↦ .ref 63`,
+  `MATE_UPPER = 69290`, `MATE_LOWER = 47923` — the three new constants are
+  scalars declared after `directions`, so §L12's slot arithmetic and the
+  `dirs_ref`/`dirs_obj` hypotheses are unaffected.
+* **The TABLE's shape is byte-identical in both versions** — the probe
+  (`entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER, MATE_UPPER))`),
+  the store (`self.tp_score[pos, depth] = Entry(best, entry.upper) if best >=
+  gamma else Entry(entry.lower, best)`) and `Entry = namedtuple("Entry",
+  "lower upper")`. That is why step 3's work belongs in the general layer, and
+  why it landed there.
+
+### What landed — `LeanModels/Python/DictCalc.lean` (728 lines, 40 theorems, elaborates in 2.1 s)
+
+§L10 (b)'s verdict was *"existing machinery for the heap FRAME, NEW calculus
+for the table CONTENTS."* The frame half was already there (`PayloadBlind`'s
+`swapAt` algebra, `Heap.get?_update_ne`). This is the other half, and nothing
+in it mentions a program, a module literal or an interpreter run.
+
+* **§1 — `keyEq` is an equivalence on the hashable keys.** Proved through a
+  normal form (`keyNF` : the value a key COMPARES AS) rather than 81
+  constructor pairs, with `hashableKey k = true ↔ (keyNF k).isSome` as its
+  companion. `keyEq_refl` / `_symm` / `_trans` are then one line each.
+* **§2 — the three lemmas §L10 priced.** `dictFind_store_self` (find after a
+  store at an equal key), `dictFind_store_ne` (at an unequal key — the arm that
+  actually consumes transitivity, because `dictStore` keeps the OLD stored key
+  at a replaced entry), and `dictFind_sound` (whatever a probe reads really is
+  stored, under a key it cannot tell apart from its own). Plus `dictStore_mem`,
+  the membership shape a preservation proof reads off.
+* **§3 — `Bracket` / `TableOK`.** A schema is a pair of partial functions —
+  what the KEY names, what an ENTRY carries — so the module commits to no entry
+  shape. `TableOK.store` (preservation) and `TableOK.find` (consumption) are
+  its two rules, and both run through `KeyDetermined`, the requirement that
+  keys a dict cannot tell apart name one value.
+* **§4 — the same at a heap slot.** `TableAt`, preserved by `heapStore` at the
+  slot and by `Heap.update` anywhere else, and read through `heapGet` — the
+  `.get(k, default)` shape, whose answer is *the default, or a bracketing
+  entry*. That is the shipped probe statement, minus the program.
+* **§5–§7 — the HARD SUB-CASE of §L10 (b), closed.** A depth-`d` store is
+  invisible to a depth-`e` probe whenever `d ≠ e`: `keyEq_pair_depth_ne` at the
+  key, `dictFind_store_depth_ne` at the dict, `heapGet_heapStore_depth_ne` at
+  the heap. It needs nothing about the positions, the entries or the rest of
+  the table — the key comparison alone decides it, which is *less* than §L10
+  expected to need.
+* **§8 — the recursion rule's table half.** `Bracket.SubtreeWrites` is a child
+  subtree as the parent's table sees it: any number of bracketing stores at
+  other depths, plus arbitrary writes at other slots. Across it the parent's
+  probe is STABLE (`probe_stable`) and the invariant SURVIVES (`tableAt`).
+  These two are the "IH at depth `d-1` consumed as one `Hands.cons` at depth
+  `d`" template's table obligations, discharged once and depth-generically.
+* **§9 — nine `#guard`s** (depth-2 misses a depth-1 table; the depth-1 probe
+  still hits; the namedtuple spelling of a key addresses the same slot;
+  `True` is `1` as a depth; the entry decoder).
+
+`#print axioms` on all fourteen headline theorems: `propext` and `Quot.sound`
+— not even `Classical.choice`. No `sorry`, no `native_decide`.
+
+**Triad, cold on the merged tree** (adding a module to the `LeanModels.Python`
+umbrella re-elaborates everything downstream, so this is a full pass, not an
+incremental one): `lake build` **3677 jobs green**, `DictCalc` itself 2.1 s and
+the two expensive pins re-elaborated from scratch (`pins_clock` 917 s,
+`genmoves_ray` 321 s — both well under §L11's 1731 s / 536 s); `docs_check` 71
+marked blocks, 71 ok, 15 illustrative-exempt; `diff_test` 1288 cases, 0 failed,
+115 whitelisted-unsupported, 1173 matched.
+
+### Findings worth carrying
+
+1. *A drifted fixture is not automatically a re-pin job — MEASURE which kind of
+   stale it is.* Three `#eval`s on a scratch envelope (about ten minutes)
+   separated "expensive" from "blocked", and the answer inverted the plan: the
+   shipped `bound()` no longer INGESTS, so no amount of elaboration budget
+   buys the re-pin. The same three `#eval`s also showed the generator tier's
+   object unchanged and the module-init tier unaffected, so the drift's blast
+   radius is one file, not the sunfish directory.
+2. *"Written post-finalizer only" needed no clause of its own.* §L10 stated
+   `TableOK` with a second requirement — entries written after the correction,
+   never mid-fold. In the calculus it is not a conjunct: it is
+   `TableOK.store`'s own hypothesis `S.Holds k v`, which a mid-fold `best`
+   cannot discharge. The program's statement ORDER is what makes the hypothesis
+   dischargeable; the invariant only has to demand it. An invariant clause that
+   is really a proof obligation should be a HYPOTHESIS, not a conjunct — it
+   moves the burden to the one site that can pay it.
+3. *A table schema keyed on the plain-tuple spelling is UNSOUND, and the proof
+   is what says so.* `keyEq` erases the namedtuple class and coerces `True` to
+   `1`, so `(pos, d)`, `Key(pos, d)` and `(pos, True)` can address one slot.
+   `KeyDetermined` is false for a schema that reads only `.tuple` + `.int` —
+   `tpBracket_keyDetermined` does not typecheck without `pairKey`/`keyInt`
+   reading both spellings. The dict-key doctrine's coercions are not a
+   curiosity; they are a soundness side condition on every memo-table spec.
+4. *The general layer is the drift hedge, and this pass is the evidence.* Every
+   theorem above was stated against `dictFind`/`dictStore`/`heapGet`/
+   `heapStore` rather than against `sunfish`, and all of it survives the very
+   refactor that stopped step 2's file. When a lane's fixture is a moving
+   target, altitude is not elegance — it is the only work that keeps.
+5. *OPS — the array-literal trap was AVOIDED by construction, not repaired.*
+   `entryBounds` decodes `Entry(lo, up)` through `xs.toList` and a `List`
+   pattern instead of a `#[…]` pattern (§L11 finding 1, §L12 finding 1: an
+   array-literal pattern costs the equational theorems outright). The recorded
+   trap cost nothing this pass because it was read first.
+
+### What step 3 still owes
+
+The calculus is general and proved; what it has no consumer for is the SHIPPED
+statement, and that is now gated on the tier item in §the re-pin above. In
+order:
+
+1. **closure cells for rebound captures** (H7 extension) — until it lands, no
+   statement about the current engine's `bound()` can be typed at all;
+2. then step 2's remaining gates on a re-pinned `bound_depth.lean` (the §0 pins
+   re-projected at 18 statements, and §3's fold vocabulary restated: the fold
+   target is `(val, move)`, the score is computed in the CONSUMER across five
+   branches, and there is an explicit `break` on a settled cap);
+3. then `tpBracket` instantiated at the engine's own `Entry`, `TableOK`
+   threaded through the fold beside `LoopFrame`, and the depth-`d`/depth-`(d-1)`
+   composition — for which §8's two theorems are the table half, already paid.

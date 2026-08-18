@@ -462,3 +462,36 @@ would recognize: the `sum` drain is `drainIter`, so it wants the sibling of
 §L8's `EvalsIn.sortedDrain` and then the tier's own `stepIter` machinery —
 with the six `pst` iterations proved ONCE, parametrically over the table,
 rather than six times over six literals.
+
+## TABLE-CALCULUS NOTE (2026-08-19) — appended, nothing above is edited
+
+This memo scoped the generator; the search's TABLE is one tier past it, and
+step 3 of the model-removal roadmap has now built its calculus
+(`LeanModels/Python/DictCalc.lean`, docs/backlog.md §L13). Two things belong
+here rather than only in the backlog, because they are about how this memo's
+kind of estimate goes right and wrong.
+
+**The estimate was right, and it was right for a reason worth naming.**
+docs/backlog.md §L10 priced the table work at "three lemmas plus a `keyEq`
+congruence, all pure … an hour, not a session", and that is what it cost: 38
+theorems, 689 lines, 2.4 s of elaboration, axioms `propext`/`Quot.sound`. The
+reason the estimate held where §L12's route-B estimate did not is that this
+work has NO interpreter in it. Every price this project has missed was a price
+on symbolic execution through a big literal; every price it has hit was a price
+on `Bool`- and `List`-level algebra. That is a usable rule for the next memo:
+*state the tier a task lives in before stating its days.*
+
+**And the fixture moved under the lane, which is the more important note.**
+The engine's `sunfish.py` has taken 33 commits since the pinned copy, and the
+shipped `bound()` no longer even INGESTS — its nested `moves()` captures two
+names that are rebound after the `def`, which H7's snapshot-at-def tier
+correctly refuses. The generator tier this memo planned is untouched
+(`gen_moves`, `value`, `move`, `rotate`, `king_capture` are byte-identical, and
+`initWorld` still puts `directions` at slot 63), but step 2's file is now a
+theorem about a program the engine used to ship. The response was not to chase
+the source: it was to build step 3 one level up, against
+`dictFind`/`dictStore`/`heapGet`/`heapStore` instead of against `sunfish`, so
+that the refactor which stopped step 2 cannot touch it. **Where a fixture is a
+moving target, altitude is the hedge** — and the concrete next inch is a tier
+item, not a proof: closure CELLS for captures rebound between the `def` and the
+call.

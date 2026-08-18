@@ -12,6 +12,7 @@ import LeanModels.Python.VC
 import LeanModels.Python.VC2
 import LeanModels.Python.PayloadBlind
 import LeanModels.Python.VCGen
+import LeanModels.Python.DictCalc
 import LeanModels.Python.GenBound
 import LeanModels.Python.VCTests
 import LeanModels.Python.LoopTactic

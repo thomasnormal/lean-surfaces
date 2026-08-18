@@ -7736,7 +7736,296 @@ Two things this measurement is worth beyond the refutation:
    continuation must be indented past the FIELD NAME. Two occurrences, both
    silent until the error appeared three declarations later.
 
-## L10 — THE TIER IS ON MASTER, and the frozen statement takes its one repair (2026-08-19)
+## L10 OPENS STEP 2 AT THE SHIPPED LITERAL — the raw `bound()` is projected, two gates land, and the price of the rest is measured (2026-08-18)
+
+Continuing §"L9 LANDED". Step 2 of the model-removal roadmap is *depth-bounded
+equivalences for the raw `bound()`*, and its first question was WHICH `bound()`.
+
+### The module strategy, both routes priced
+
+* **`sf_order` (not taken).** The machinery is there — §L9's fold, the four
+  algebra lemmas, the `Hands` shape. But `bound_probe` is not `bound()`: it is
+  a hand-written probe with no table, no null move, no correction and no
+  recursion, and §L9's `transport.lean` already showed `sf_order.py`'s
+  `Position.gen_moves`/`Position.value` are not the shipped text. Nothing
+  proved there transfers to the raw goal until the owner re-aligns the
+  fixture. Setup cost 0, transfer value 0.
+* **`sunfish` (taken).** `Examples/python/sunfish/sunfish.py` is byte-identical
+  to the engine's `sunfish.py` — re-verified this landing, `sha256
+  2142d9c25435e6b55ef31fcd18142f0117f033382d1bc9eb2bfe9e3de48316ca` on both —
+  and `Searcher.bound` IS the goal's function. `gen_moves_drains_ref`
+  (genmoves_drain.lean) is already at this literal, so the correction arm's
+  eventual dependency is in the same module. Setup cost: the whole §0
+  projection layer (13 statements) stood up from scratch; per-gate interpreter
+  cost 3–10x `sf_order`'s, measured below.
+
+**Verdict: `sunfish`.** The transfer difference is categorical, the cost
+difference is a constant factor.
+
+### What the shipped `bound()` IS — thirteen statements, read not assumed
+
+`Examples/python/sunfish/bound_depth.lean` §0 projects all thirteen and pins
+each by `rfl`. Four facts the pins make precise, three of which contradict the
+convenient reading:
+
+1. **Depth 0 is NOT recursion-free.** `for val, move in sorted(…)` yields
+   `-self.bound(pos.move(move), 1 - gamma, depth - 1)`, and `depth =
+   max(depth, 0)` turns the `-1` child straight back into a QS node. Measured:
+   `Searcher().bound(opening, 40, 0)` is **35 node entries**, `(…, 1, 0)` is 4.
+   The recursion-free depth-0 cases are exactly two — the **stand-pat cut**
+   (`pos.score >= gamma`, where the generator's FIRST yield `(None,
+   pos.score)` cuts the fold and `pos.gen_moves()` is never reached: measured
+   at **1 node**) and futility-first.
+2. **At depth 0 the fold is heap-free.** The killer store inside the cutoff is
+   `if move is not None and depth:` (`sbKill_lit`) — the second conjunct is
+   falsy at a QS node, so no `tp_move` write happens. Measured: after
+   `bound(opening, 0, 0)` `tp_move` is EMPTY and `tp_score` holds exactly one
+   entry, `(pos, 0) ↦ Entry(0, 69290)`. Both are `#guard`ed.
+3. **At depth 0 the correction never scans.** `if depth and not live and
+   all(… for m in pos.gen_moves())` (`sbCorr_lit`) short-circuits on `depth`,
+   so the `all(…)` drain — the arm that would need `gen_moves_drains_ref` — is
+   dead at QS.
+4. **The eviction branches carry a `Stmt.unsupported`.** `del d[k]` is out of
+   tier, so `sbEvict`'s body is unsupported and every gate must show the guard
+   is FALSE rather than step through it. `TABLE_SIZE = 10**6` is what buys
+   that, and it is now a stated obligation rather than an accident.
+
+Also pinned: `time.time()` sits behind the `and` in `sbClock`, so a node count
+that is not a multiple of 2048 never consults the clock trace — which is what
+keeps the pass-6 trace-underrun refusal unreachable below the frontier.
+
+### The model side, read (`formal/`), and what it forces
+
+* **The fuel model is TABLE-FREE.** `fuelValueD2 : Nat → Pos → Int`
+  (`formal/Sunfish/EventuallyWide.lean`) takes no `gamma` and no table; the
+  bracket it is meant to meet, `FuelBracketSpec`, quantifies a `search : Nat →
+  Pos → Int → Int` with **no table parameter**, and is STATED, not proven.
+  A fixed-depth refinement therefore has only two honest forms: quantify over
+  all table states and land on the same `(pos, depth)` value, or restrict to a
+  CLEARED table. This lane takes the second; the general stale-table case is
+  step 3's, and §5 says so.
+* **The model's depth 0 is a three-way LEAF** — no fold, no window, no
+  recursion, `movesAbove`/`val_lower` play no part. The gamma-aware depth-0
+  quiescence lives on the search side as `qsStrat`
+  (`formal/Sunfish/Stalemate.lean`), whose second clause is `if gamma ≤ eval p
+  then eval p`. **That clause is exactly the raw code's stand-pat cut**, and
+  `fold_standpat` (bound_depth.lean:407) is it, spec-side. The depth-0
+  correspondence is therefore to `qsStrat`, not to `fuelValueD2`'s leaf.
+* **The model's depth 1** is the sub-horizon branch with the pass term
+  collapsed to `LOSS`: each child at remaining depth 0, weight the plain
+  negation, combined by `foldMax` seeded at `-MATE_UPPER` — which is the same
+  seed the shipped `best, live = -MATE_UPPER, False` sets up.
+* **The mate-band audit's consumable lemmas were located, not duplicated.**
+  Branch `formal/band-contract`, `formal/Sunfish/BandContract.lean`:
+  `tt_sentinel_defaults_never_returned` is precisely the head's
+  "neither default-entry return fires under the documented window";
+  `window_flip_preserves_range` is the `1 - gamma` child window;
+  `windowReport_iff_boundSpec` is the vocabulary a table invariant would be
+  stated in. **They cannot be imported** — `formal/` is a different Lean
+  project with a different toolchain — so the two the head needs are
+  re-derived locally (both are one `omega`), and the correspondence is
+  recorded here rather than the lemma restated.
+
+### What landed — `Examples/python/sunfish/bound_depth.lean`, 666 lines, axiom-clean
+
+* **§0** — all thirteen statements of the shipped `Searcher.bound` projected
+  and `_lit`-pinned (bound_depth.lean:36–271), plus the loop's target, iterable
+  and three-statement body, the cutoff's body, the depth-gated killer store,
+  and the probe block's four statements. Nothing retyped; a changed program
+  stops every one of them.
+* **§1** — the constants and the pinned residues (:276–330). `MATE_LOWER`/
+  `MATE_UPPER` are *not* G1 module constants (the shipped file computes them
+  from the `piece` dict, a subscript, so the fold answers `some none`); they
+  come from the world's globals, and `sbF_noGlobal` is why they are invariant
+  along the whole recursion.
+* **§2** — the receiver and the entry frame (:333–347). `sbCallEnv` is an
+  `rfl`: the four-argument call's `root` is filled from the shipped
+  signature's own literal default.
+* **§3** — the QS fold's vocabulary (:357–450): `Yield`/`yieldVal`/`isLive`,
+  **`fold`** and `foldFrom` with the three algebra lemmas
+  (`foldFrom_nil`/`_cons_next`/`_cons_cut`), **`fold_standpat`**, the
+  world-threaded **`Hands`**, `LoopFrame`, `bindYield` and the `bind_eq`
+  transport.
+* **GATE 1 — `bound_enters`** (bound_depth.lean:476). Entering `bound` counts a
+  node and does NOT read the clock: the attribute `+=` through the receiver,
+  and the short-circuit that keeps `time.time()` unevaluated below the 2048
+  frontier. Free world, free frame, free position.
+* **GATE 2 — `max_evals`** (bound_depth.lean:502). The fold's `best =
+  max(best, score)` on the shipped file, with every module-level resolution
+  paid through the pinned residues instead of an unfolding of the 1MB literal.
+* **§5 — `QSStandPat`** (bound_depth.lean:549), the depth-0 statement step 3
+  closes, with every hypothesis one the shipped code forces.
+* **§6** — six `#guard`s: the two stand-pat rows at one node each, the two
+  rows that show depth 0 recursing (35 and 4 nodes), `fold` reproducing both
+  stand-pat answers, and the table effect (`tp_move` empty, `tp_score` exactly
+  `(pos, 0) ↦ Entry(0, MATE_UPPER)`).
+
+`#print axioms` on `bound_enters`, `max_evals`, `fold_standpat`, `bind_eq`:
+`propext`/`Classical.choice`/`Quot.sound` or less. Triad green.
+
+### The induction template step 3 formalizes
+
+`Hands` is world-threaded, and that is the whole induction.
+
+At depth `d` the fold consumes a schedule `ys : List Yield`. A **searched**
+entry of that schedule carries `score = -self.bound(pos.move(move), 1 - gamma,
+d - 1)`, so PRODUCING it runs a child call: the child bumps `self.nodes`, may
+write `tp_move`, and stores into `tp_score`. `Hands.cons`'s
+`IterSteps m w a (some (yieldVal y)) w₁` says "resuming the generator at `w`
+hands over `y` and lands at `w₁`" — and `w₁` is `w` plus the child's writes.
+
+So **an induction hypothesis at depth `d-1`, of the form `callIn … = .ok w₁
+(.int r)`, is consumed as one `Hands.cons` at depth `d`, with `y.score = -r`.**
+Everything else is depth-independent and reused verbatim: `fold`, the three
+algebra lemmas, `bind_eq`, `sbCallEnv`, and the §0 pins.
+
+Two things change with depth and must be discharged per level, both because of
+a `depth` conjunct the §0 pins now make explicit:
+
+1. `sbKill_lit` — at `d ≥ 1` a real cutting move WRITES `tp_move[pos]`, so the
+   fold is no longer heap-free and the loop invariant must carry the table;
+2. `sbCorr_lit` — at `d ≥ 1` the `all(… for m in pos.gen_moves())` scan runs
+   whenever `live` is false, which is where `gen_moves_drains_ref` enters this
+   arc. It is already at THIS module literal, so no transport is needed.
+
+### THE STEP-3 PROBE — the recursion rule, and what the table invariant must say
+
+Run probe-first alongside step 2, as briefed. Three findings.
+
+**(a) The table invariant cannot be borrowed from `formal/`.** The obvious
+candidate — "every entry is `WindowReport`-valid for its key" — is stated in
+`formal/`'s vocabulary over a model that HAS NO TABLE. `WindowReport gamma r s`
+relates a report to a *value*; the raw table's entries are `(lower, upper)`
+pairs. The invariant step 3 needs is therefore lane-local and is:
+
+> `TableOK`: for every `((pos, depth) ↦ Entry lo up)` in `tp_score` there is a
+> single value `V(pos, depth)` — the model's `fuelValueD2 … depth pos` — with
+> `lo ≤ V ≤ up`, and `lo`/`up` are only ever written **post-finalizer** (after
+> the correction), never mid-fold.
+
+The "post-finalizer only" clause is not decoration: `sbStore` is statement 10,
+*after* `sbCorr`, so a `tp_score` entry can never carry a pre-correction
+`best`. That ordering is now a pinned fact (`sbB_split`), and it is what makes
+the invariant preservable at all. The **sentinel reservation** is separate and
+weaker — `-MATE_UPPER < gamma ≤ MATE_UPPER` makes the two default-entry
+returns unreachable — and it is a *precondition*, not an invariant; the
+mate-band audit already has it as `tt_sentinel_defaults_never_returned`.
+
+**(b) The hard sub-case, measured: a depth-2 call probing an entry written at
+depth 1.** The existing Heap machinery carries the *plumbing* and not the
+*content*. Concretely: `PayloadBlind` (§L7) and the `swapAt` algebra are about
+a heap perturbation at ONE slot with everything else fixed; a depth-1 child's
+`tp_score` store is exactly one `dictStore` at the table's slot, so
+`Heap.get?_update_self`/`_update_ne` and `Heap.swapAt_comm` do carry the
+frame-separation reasoning — `bound_enters` already uses two of them and the
+counter/table separation was one `rintro rfl` away. What they do NOT carry is
+the *key* question: at depth 2 the probe `self.tp_score.get((pos, 2), …)`
+must miss or hit-correctly against a table whose entries were keyed at depth
+1, and the key is a `(Position, depth)` tuple compared by `keyEq` through a
+namedtuple. That comparison is in tier (the dict-key doctrine) but there is no
+lemma about it, and none of the Heap algebra is about dict CONTENTS.
+
+**Verdict: existing machinery for the heap frame, NEW calculus for the table
+contents.** The new calculus is small and specific — a `dictFind`/`dictStore`
+algebra: `find` after `store` at an equal key, `find` after `store` at an
+unequal key, and `keyEq` on `(Position, Int)` pairs being the conjunction of
+`Position` equality and `Int` equality. Priced at **three lemmas plus a
+`keyEq` congruence**, all pure (no interpreter, no module literal), i.e. the
+cheapest tier of work in this repo — an hour, not a session. It is the
+`probe`/`probeFrom` of step 3: the fold vocabulary for tables.
+
+**(c) The recursion rule's shape.** `callIn`-to-self, with the IH a pair:
+
+```
+IH(d) : ∀ w pos gamma, TableOK w → WindowOK gamma →
+          ∃ w' r, callIn sunfish F w "Searcher.bound" #[self, pos, gamma, d]
+                    = .ok w' (.int r)
+                  ∧ TableOK w' ∧ Bracket gamma r (V pos d)
+```
+
+consumed at `d+1` by turning each searched yield into one `Hands.cons` whose
+`IterSteps` is the child's `callIn` (the generator's frame is suspended across
+it — `PayloadBlind` is what makes that lockstep legal, and it is already
+proved). `TableOK` threads through the `Hands` chain as a second conjunct of
+the `forGen` invariant, beside `LoopFrame`.
+
+### The price, measured — this is the number the next lane needs
+
+The shipped literal is ~1MB and `initWorld sunfish` EXECUTES the module top
+level. Two consequences, both measured on this box (`LEAN_NUM_THREADS=2`,
+`nice 19`):
+
+* **Kernel `rfl` on anything through `initWorld sunfish` is not affordable.**
+  `theorem … : Env.lookup (initWorld sunfish).globals "MATE_LOWER" = some (.int
+  47923) := rfl` exceeded 4M heartbeats and was **OOM-killed** (exit 137) after
+  3m56s. The same fact as a `#guard` (compiled evaluator) is free. Recorded in
+  the file at the `#guard`s.
+* **One `py_simp` per STATEMENT, never per body.** The three-statement fold
+  body in a single `py_simp` did not finish in **10 minutes with heartbeats
+  disabled**; the same body's `max(best, score)` call ALONE, as an `EvalsTo`
+  gate with the residues pinned, is **12 seconds**. The six-statement head in
+  one `py_simp` exceeded 2M heartbeats at 1m47s; split into three segments,
+  segment A (`[sbDoc, sbNodes, sbClock]`) lands and is the shipped
+  `bound_enters`. The whole file, 666 lines with 40+ `rfl` pins, builds in
+  **48–73s**.
+
+So the remaining step-2 work is not blocked on any missing rule — it is a
+known quantity at a known unit cost, and the unit is **one gate per statement,
+each with its module-level residues pinned**. What is left, in order:
+
+1. the probe block (`sbEntry`/`sbLo`/`sbUp`/`sbRep`) — the `.get` miss on a
+   cleared dict and the two window returns; measured as the expensive one
+   (>4M heartbeats as a single block), to be split per statement;
+2. `depth = max(depth, 0)` and the mate check — one segment, needs the
+   `Position`-class `score`-guard residue pinned (`c.ntBase.isSome && "score" ∈
+   c.methods`, which `rfl` does not close: pin `posCls.2.methods` first and
+   `decide`, §L9 finding 3's recipe);
+3. the nested `def` (five captures) and `moves()` — the `sunfish` analogues of
+   §L9's `moves_def_allocates`/`moves_call_creates`, mechanical;
+4. the fold via `PyStmtTriple.forGen`, with `qs_round` built from
+   `assignName`/`augAssign`/`ifStmt` rules over per-expression `EvalsTo` gates
+   (NOT one `py_simp` — see the price above);
+5. the tail (`sbCorr` off at depth 0, `sbStore`, `sbEvict`'s false guard,
+   `sbRet`) and the boundary, closing `QSStandPat`;
+6. then depth 1 and depth 2 by the template above, and step 3's `TableOK`.
+
+### Findings worth carrying
+
+1. *"Depth 0 is the recursion-free case" is FALSE for the shipped code, and the
+   pins are what show it.* `max(depth, 0)` re-floors the `depth - 1` child, so
+   a QS node searches QS children — 35 entries on the opening board at
+   `gamma = 40`. The recursion-free depth-0 statement has to name its
+   condition (`gamma ≤ pos.score`), and once named it is the model's own
+   `qsStrat` clause. A depth-0 theorem written without that hypothesis would
+   have been false.
+2. *Two of the three `depth` conjuncts in `bound()` are load-bearing for the
+   PROOF, not just the engine.* `if move is not None and depth:` and `if depth
+   and not live and all(…):` are what make the QS fold heap-free and the
+   correction dead — i.e. what makes depth 0 a base case at all. They read as
+   optimisations in the source and are structural in the proof.
+3. *The cost model of the 1MB literal is: pin the residue, gate the
+   expression, never simp the block.* Isolated expression evaluation with
+   pinned residues is seconds; the same expression inside a three-statement
+   `py_simp` is unbounded. §L9 measured this class as "mechanical" at
+   `sf_order` — it still is at `sunfish`, but only in the per-expression
+   shape, and the file that ignores that does not build.
+4. *A kernel `rfl` and a `#guard` are not interchangeable at this scale.* The
+   `#guard` runs the compiled evaluator; the `rfl` runs the kernel on
+   `initWorld sunfish`, and the kernel path OOMs. Facts about the ingested
+   PROGRAM stay `rfl`; facts about the executed module-init WORLD become
+   `#guard`s, and the distinction is now explicit in the file.
+5. *Read the spec before choosing the statement.* `formal/`'s fuel model has no
+   table and no `gamma`, so the natural-looking statement "bound refines the
+   model at depth d" cannot even be typed against a stateful `callIn` without
+   first deciding what the table may say. Reading `FuelBracketSpec` — which is
+   itself STATED and unproven, over a table-free `search` — is what produced
+   the cleared-table restriction and the step-3 `TableOK` obligation, and it
+   took one read rather than a wrong theorem.
+
+## L11 — THE TIER IS ON MASTER, and the frozen statement takes its one repair (2026-08-19)
+
+*(Landed as §L10 in commit `d8cb1bd`; renumbered to §L11 when the step-2
+lane's own §L10 merged the same day. Nothing else in it moved.)*
 
 ### The stack landed
 

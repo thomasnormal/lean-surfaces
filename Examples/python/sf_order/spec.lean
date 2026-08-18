@@ -3,8 +3,15 @@ import LeanModels
 /-!
 # sf_order — sunfish's move-ordering surface, END TO END (H6)
 
-`Position.gen_moves` and `Position.value` are VERBATIM from the shipped
-sunfish.py; `pst` is the padded table (CPython's own output of the
+`Position.gen_moves` and `Position.value` are the shipped sunfish
+methods with ONE rewritten expression each — measured span-blind in
+`transport.lean` (2026-08-18, docs/backlog.md §L9), which corrects this
+file's earlier "VERBATIM" claim: the pawn-capture guard is
+`j not in (self.ep, self.kp, self.kp - 1, self.kp + 1)` where the shipped
+file has `j != self.ep and abs(j - self.kp) > 1`, and `value`'s capture
+arm tests `q.islower()` where the shipped file tests `q in "pnbrqk"`
+(equivalent, different ASTs — which is why the `sunfish` lane's drain
+theorem has no transport here). `pst` is the padded table (CPython's own output of the
 shipped padding loop — the module-init tier gap, worked around with the
 oracle's data, never with guessed semantics). `order_from` carries the
 shipped ordering line verbatim (sunfish.py line 412):
@@ -27,9 +34,13 @@ the en-passant bonus.
 `bound_probe` was blocked behind, over the shipped program: the ordering
 line evaluates to the sorted list, the `moves` loop cuts at the threshold,
 and the nested `def` allocates the closure its call turns into a
-generator. The reference-enumeration equality for the ordering — the
-decided gen_moves statement extended by `value` — is still open, and these
-pins are its concrete anchors.
+generator. `bound.lean` (2026-08-18, §L9) proves what the shipped
+`bound_probe` ANSWERS — the `best`/`searched` fold with the outer beta
+cutoff, up to a `CallsTo` at the public boundary, over the yield schedule
+of the generator the function's own `def` allocates. The
+reference-enumeration equality for the ordering — the decided gen_moves
+statement extended by `value` — is still open, and these pins are its
+concrete anchors.
 -/
 
 open LeanModels LeanModels.Python

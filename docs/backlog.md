@@ -7617,3 +7617,121 @@ Two things, neither of them one of the three:
    for one says nothing about the other. The shipped line uses `reverse=True`;
    the keyword-free arm landed beside it because the tier's other consumers
    (`sorted(<genexp>)` with no flag) are the common case elsewhere.
+
+## L9 LANDED — `bound_probe`'s own fold, and the transport the record asked for turns out not to exist (2026-08-18)
+
+Continuing §"L8 LANDED". That section closed with a two-item remainder: (1)
+the ordering line's CONTENT, whose route was named as *transporting
+`gen_moves_drains_ref` from the `sunfish` module literal to `sf_order`'s,
+"`sf_order`'s method body being the same text"*, and (2) **`bound_probe`'s own
+`best`/`searched` fold**, recorded as "blocked on 1 rather than on any missing
+rule".
+
+**(2) is landed, and it was not blocked on (1).** **(1) is not blocked on a
+transport argument either — the premise is false, and the measurement is now a
+theorem.**
+
+### (2) The fold: `Examples/python/sf_order/bound.lean`, 4 gates, 638 lines
+
+The fold is a theorem about what the loop does to *whatever* the generator
+hands over, so the object's output is a HYPOTHESIS (`Hands` — a schedule of
+`IterSteps`), exactly as `moves_loop_cuts` takes the ordered rows as one. Four
+gates, each over the RAW ingested `sf_order`, every piece of program projected
+and `rfl`-pinned:
+
+* **`bound_loop_folds`** (bound.lean:282) — the shipped `for val, i, j in
+  moves():` with its three-statement body, over the generator the shipped `def
+  moves():` allocates. `PyStmtTriple.forGen` with a remainder-indexed
+  invariant; `moves_call_creates` (§L8 gate 3b) discharges `hiter`, so the gate
+  COMPOSES the L8 landing rather than restating it. Both arms in one
+  statement: `probe`'s third component says whether the beta cutoff fired or
+  the generator ran out, and the exhaustion hypothesis is asked for only in
+  the arm that needs it — when the cutoff fires nothing at all is assumed
+  about the object past the cutting yield.
+* **`bound_tail_returns`** (bound.lean:334) — that loop and `return (best,
+  searched)`.
+* **`bound_body_returns`** (bound.lean:484) — the whole eight-statement body:
+  `Position(…)`, `val_lower = QS - depth * QS_A`, the nested `def` (§L8 gate
+  3a), the two accumulators, the loop, the return.
+* **`bound_probe_answers`** (bound.lean:534) — **a `CallsTo` on the raw module**:
+  the pair the shipped `bound_probe` returns is the beta-cutoff walk of the
+  yields its own `moves()` generator hands over. The first theorem in the repo
+  about a sunfish SEARCH function at the public boundary.
+
+`#print axioms` on all five is `propext`/`Classical.choice`/`Quot.sound`.
+Non-vacuity is not a hand-written list: the `#guard`s take CPython's own move
+ordering (`move_order`, differentially pinned) and check that `probe` — the
+spec-side walk every gate is stated against — reproduces `bound_probe`'s three
+pinned runs, `(46, 1)` / `(46, 20)` / `(46, 3)`, i.e. both arms of the cutoff
+and the `depth == 0` yield.
+
+### (1) The transport: `Examples/python/sf_order/transport.lean`
+
+The L8 record's premise — "the same text, a different `Module` literal" — is
+FALSE, and pricing the two routes (parametric restatement vs re-run) was
+therefore the wrong question. Measured span-blind (the `_lit` pin discipline
+already quantifies spans away), `sunfish`'s `Position.gen_moves` and
+`sf_order`'s agree everywhere EXCEPT the pawn-capture guard:
+
+* shipped: `… and j != self.ep and abs(j - self.kp) > 1: break` — a
+  FOUR-conjunct `and`;
+* `sf_order.py`: `… and j not in (self.ep, self.kp, self.kp - 1, self.kp + 1):
+  break` — THREE conjuncts, the third a `not in` over a 4-tuple.
+
+Equivalent on integers; different ASTs. `transport.ep_guard_differs` is that,
+as a theorem (conjunct census, 3 against 4, at the same position of the same
+statement of the same method), and `gen_moves_bodies_differ` follows.
+`Position.value` diverges the same way (`q.islower()` where the shipped file
+has `q in "pnbrqk"`). Both axiom-clean.
+
+Two things this measurement is worth beyond the refutation:
+
+* **The promotion arm is NOT a divergence.** §L8 expected `yield from (Move(i,
+  j, prom) for prom in "NBRQ")` (a lowered generator EXPRESSION) against
+  `sf_order`'s hand-written `for prom in "NBRQ": yield …`. Ingestion desugars
+  the first to the second: one skeleton, two instances
+  (`transport.promShape`, `sf_prom_shape`, `sun_prom_shape`).
+* **The fixture claims verbatim and is not.** `Examples/python/sf_order/spec.lean`
+  says "`Position.gen_moves` and `Position.value` are VERBATIM from the shipped
+  sunfish.py". `Examples/python/sunfish/sunfish.py` IS verbatim the shipped
+  file; `sf_order.py` is not. The comment is corrected in this landing; making
+  the two methods verbatim again and re-extracting is an owner call (it
+  re-ingests the fixture and re-runs its pinned CPython answers) and is step 1
+  of the remaining route.
+
+### The remaining route to the collapse, in order
+
+1. make `sf_order.py`'s two methods verbatim and re-extract;
+2. THEN the transport is a real question — and the measurement says which
+   route is cheap: every proof in the chain is already span-blind, so a
+   module-parametric restatement is the natural form and the captured-run
+   re-run is the fallback;
+3. `Position.value` agreement, which no lane has;
+4. `hdrain`, which discharges §5's `Hands` hypothesis and makes
+   `bound_probe_answers` unconditional.
+
+### Findings worth carrying
+
+1. *"Blocked on X" is a claim about a STATEMENT, not about a proof.* §L8 read
+   the fold as blocked on the ordering line because the collapse is. Stated
+   over the yield schedule instead of over the ordered rows, the fold needs
+   nothing from the ordering line — and it is the statement step 2 of the
+   roadmap (depth-bounded raw `bound()`) actually consumes.
+2. *A `#guard` on two ingested ASTs proves nothing: spans differ.* The first
+   comparison of the two `gen_moves` bodies came back `false` and it would
+   have come back `false` for a verbatim copy in a different file. The
+   span-blind comparison is what carries information, and the cheap way to
+   MACHINE-CHECK one is a structural census (`(andArgs …).size = 3` against
+   `= 4`) rather than a span eraser.
+3. *`py_simp` unfolds the guard you wanted to pin.* `hasExtraDunder`/
+   `findFunction`/`dunderShaped` are all in the unfold set, so a `rfl` pin at
+   that head never fires — the residue is an `∃ x ∈ m.functions, …`. Two
+   recipes, both used here: restate the pin in the simp-normal form
+   (`simpa [findFunction] using posF_pin`), or `split` the surviving `if` and
+   kill the branch from a pinned CONCRETE projection
+   (`rw [posCls_methods]; decide`). §L8 finding 2 generalizes: pin the
+   residue, and the residue is whatever the unfold set leaves.
+4. *A structure-instance field value may not continue on a less-indented
+   line.* `{ w with heap := f\n      (arg) }` parses as `expected '}'`; the
+   continuation must be indented past the FIELD NAME. Two occurrences, both
+   silent until the error appeared three declarations later.

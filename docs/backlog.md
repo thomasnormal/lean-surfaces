@@ -6846,3 +6846,166 @@ and the direction scan is `for d in directions[p]`, a subscript of a
 module-global DICT, which is a heap read no ray performs. `Ref.piece` and
 `Ref.refMoves` are the reference sides; `refTriples_flatten`
 (genmoves_theorem.lean) is the presentation lemma they arrive through.
+
+## L5 LANDED — the two scans, and the generator agrees with the reference (2026-08-17)
+
+Continuing §"L4 COMPLETE". The ray was finished there; what was left of
+`Position.gen_moves` was the two loops ABOVE it, and both are now proved
+against the reference. **`gen_moves_yields_ref`
+(Examples/python/sunfish/genmoves_scan.lean) is the first
+generator-producing FUNCTION in this repo whose whole output is proved
+equal to its reference enumeration**, over an arbitrary board:
+
+```
+theorem gen_moves_yields_ref (w : World) (dad : Addr)
+    (b : String) (score ep kp : Int) (wc0 wc1 bc0 bc1 : Bool) (rf : Nat)
+    (ms : List Ref.RefMove)
+    (hg : Env.lookup w.globals "directions" = some (.ref dad))
+    (hobj : Heap.get? w.heap dad = some dirsObj)
+    (href : Ref.refMoves b.toList wc0 wc1 ep kp rf = .ok ms) :
+    ∃ st', GenYields sunfish ⟨w, [("self", posOf b score wc0 wc1 bc0 bc1 ep kp)]⟩
+      [.block gmB] (ms.map moveVal) st'
+```
+
+Board free (an arbitrary `String`), rights/ep/kp free, the reference's own
+step budget free, every fuel above a threshold, and `[.block gmB]` is the
+frame stack the interpreter itself builds for the method — projected off
+`sunfish`, never retyped. The two world hypotheses are the module-global
+`directions` dict, and `initWorld sunfish` satisfies both (`#guard`ed).
+
+**The tier, end to end.** `piece_agrees` is square agreement (every ray of
+one piece, in `directions[p]` order = `Ref.piece`); `dir_scan` is the
+direction loop; `board_scan` is the enumerate loop; `ray_agrees` is the
+dispatch that turns nine ray theorems into one statement over `p` and
+`d ∈ directions p`.
+
+**What the ray's interface had to gain, and it is the finding of this
+landing.** L4's whole-ray theorems concluded `∃ st', RayFrame … st'.locals
+∧ GenEmits …` — the world of `st'` unconstrained. **That existential loses
+exactly what a scan needs**: the direction scan re-reads the `directions`
+dict after every ray and the board scan holds a live `<enumerate>` object
+across all of them, so a ray that says nothing about the world cannot be
+composed. `SlotOnly a w w'` (globals equal, every slot but `a` equal) plus
+`RayExit` (the frame AND that) is the fix, threaded through `ray_rounds`'
+`Inv`/`Out` in all eight whole-ray theorems: 40 mechanical edits and
+**no change to the elaboration time** (336 s, was 342 s), because the new
+conjunct never meets `py_simp`. Two shape notes: `RayExit` is a DEF and
+not two conjuncts because `ray_rounds` concludes `Out st' ∧ GenEmits …`, so
+spelling `Out` as a conjunction associates the wrong way and every consumer
+pays for it; and a name collision (`hpr` for the promotion flag) is what
+the first rebuild caught, which is the argument for one bundled predicate
+over one hypothesis per fact.
+
+**`Ref.directions 'P'` crossed with the promotion test is EIGHT cases, and
+L4 proved six.** The two missing ones are real chess, not corner cases: a
+capture that PROMOTES (a pawn on the seventh rank taking onto the last row)
+and a double push whose landing square is on the last row (only reachable
+from the sixth rank, where the double-move guard refuses outright and the
+promotion branch is never entered). Both land here —
+`ray_pawn_cap_prom_agrees`, `ray_pawn_double_near_agrees` — out of L4's own
+segments; the new model-side round is one (`pawn_cap_promotes_round`, which
+is `pawn_promotes_round` with the diagonal's three guards), and the new
+reference-side leaf is one (`rayBody_cap_prom_const`).
+
+**A mislabelled pin, found by needing it.** `pins_genmoves.lean`'s board
+commented "promotion captures (3 moves)" does not reach that leaf: its
+enemy rooks stand on 22 and 24, which blocks the pawn's push and leaves
+both its diagonals empty, so the three moves it pins are the KING's. The
+reference was right; the board was not the board its comment describes.
+`capPromBoard` in genmoves_scan.lean is a corrected one, checked against
+CPython's own `sunfish.gen_moves` on the shipped file (11 moves, eight of
+them promotions) as well as against `Ref.refMoves`. The old pin is left
+alone — it pins a true fact, just not the one it names.
+
+**Six measurements worth carrying.**
+
+1. *A heap read through a `Heap.get?` hypothesis does not fire — same rule
+   as the board's.* `dirs_evals` reads a module-global dict and
+   `interpUnfolds`' delta opens `Heap.get?` into its `dite` before any
+   `Heap.get?`-headed rewrite can match. What goes in is the RESIDUAL — the
+   bound and the element (`hlt`, `hget`) — exactly as `board_read_facts`
+   packages the board's four. The rule generalizes: package residuals, not
+   bridges, for anything `interpUnfolds` opens.
+2. *A `continue` round is not a `GenEmits`.* `genContinue` keeps the loop
+   frame, so the round starts and ends at the SAME frame prefix and no
+   `GenEmits` (which consumes its prefix) can state it.
+   `genEmits_silentLoop` is the shape: a `GenSilent` from `pre ++ k` back to
+   `pre ++ k`, at every `k`, carries the rest of the loop. Two silent steps
+   compose into it (`genSilent_forGenCons` then
+   `genSilent_delegateContinue`) and the tier's first `continue` costs four
+   lines.
+3. *`rw` with a lambda that PRINTS identically can still fail; `rfl` on the
+   whole equation succeeds.* `refMoves_eq_refScan` could not rewrite
+   `Ref.refMoves`' own per-square lambda into `refSq` (`funext`-proved
+   equality, same printout, no match), but the equation
+   `Ref.refMoves … = List.flatten <$> (List.range b.length).mapM (refSq …)`
+   holds by `rfl` — delta plus eta at the top level, where the rewriter has
+   to guess a motive.
+4. *`pure` is not `.ok` for `simp`.* Every `List.mapM` inversion over
+   `Except` needs `[pure, Except.pure]` in the simp set or the residual is
+   `Except.ok rss = pure []`, which nothing closes.
+5. *A `by` block inside a term argument ends at the first line indented
+   LESS than its first tactic.* Two syntax errors in this landing were
+   exactly that (`(by simpa using f x\n  (y))`), and the fix is to hoist the
+   `by` into a `have` rather than to re-indent — the hoisted form is what
+   the round rules read like anyway.
+6. *Examples do not see Mathlib's tactics.* Mathlib is a lakefile
+   dependency but nothing on this path imports it, so `push_cast`/`ring` are
+   unknown tactics; `omega` covers the `Nat`→`Int` casts the board scan's
+   index needs.
+
+**Cost, measured.** genmoves_scan.lean is 1184 lines / 61 declarations / 10
+`#guard`s, elaborating in **70 s** — four captured `py_simp` runs over the
+module literal (the dict read at six keys, the two allocating calls, the
+`continue` guard) and nothing else expensive, because the scans' own proofs
+never touch the interpreter. genmoves_ray.lean +150/-72 (the interface, its
+four heap lemmas, and the handoff note). Zero VCGen/VCTactic edits again —
+the four rules the scans needed (`genSilent_forHereGen`,
+`iterSteps_enumSeq`, `iterSteps_enumDone`, `genEmits_silentLoop`) are stated
+module-polymorphically in the example file and belong beside VCGen §L4's
+when something else wants them. `#print axioms` on all 76 declarations
+of the new module plus the ray tier's strengthened eight and its frame kit:
+`propext`/`Classical.choice`/`Quot.sound` only — no `sorryAx`, no
+`ofReduceBool`, no `native_decide` anywhere on the path.
+
+### The flagship's LAST step, and a DEFECT in the object-level statement
+
+`GenMovesEqRef` (genmoves_theorem.lean) is `gen_moves_yields_ref` one level
+out: about the heap OBJECT the call returns, drained by `stepIter`. It did
+not land, and the two reasons are different in kind.
+
+**1. The object-level drain bridge is missing, and it is the L2 remainder
+VCGen already names.** `drain` peels one yield per `stepIter`, and
+`stepIter` writes the resumption back into slot `a` before every step. The
+frame-level chain never writes that slot, so after the body runs it still
+holds the STALE `.running` object while the object-level chain holds the
+current one: the two chains sit at heaps differing exactly at `a`, and
+stepping them in lockstep needs "`execGen` does not depend on slot `a`" — a
+LOCALITY property of the interpreter, not a fact about `gen_moves`.
+Inverting the frame-level fact does not dodge it (`GenYields` is a
+`drainGen` fact and `GenEmits` a transformer over one; neither exposes a
+per-yield `GenSteps` at the object-level world), and an object-level
+calculus mirroring `GenEmits` would need the same property to import the
+ray theorems. Decomposition: land the locality lemma (a read/write-set
+discipline on `execGen`, or a generator-slot-indexed frame rule), then the
+bridge is an induction on the emitted list. Same mechanism unblocks
+`sf_order`'s `bound_probe` (§L3's remainder), so it serves two consumers.
+
+**2. `GenMovesEqRef` as written is FALSE.** `drain` runs every step at a
+CONSTANT fuel — `stepIter sunfish 16384 w a` — while the statement
+quantifies over an arbitrary board. Take `b` to be twenty thousand `'.'`
+characters: the reference answers `.ok []` (no square holds one of ours) so
+the hypothesis is satisfied, but a single `stepIter` has to cross every
+square before the scan can report exhaustion and `execGen` charges a fuel
+unit per frame step, so that step times out, `drain` answers `none`, and
+the equality fails at EVERY `F`. The statement is unprovable because it is
+untrue, and no amount of proof effort would have said so.
+
+The repair is one line and it is the statement's own stated intent — its
+note 4 says "`genMovesOf` runs at a single fuel `F` for both the call and
+the drain", which the code does not do: `drain` would take `F` and pass it
+to `stepIter`. **Not made here.** The statement is owner-decided
+(§H4, commit f536d93), and a landing that cannot also prove the repaired
+form is not the one that should edit it. `GenMovesEqRef` therefore stays
+exactly as it was, with the defect recorded at its own file
+(genmoves_scan.lean's closing section) and here.

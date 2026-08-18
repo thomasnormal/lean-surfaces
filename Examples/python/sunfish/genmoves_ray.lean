@@ -351,6 +351,79 @@ theorem RayFrame.set {b : String} {score ep kp iv : Int} {wc0 wc1 bc0 bc1 : Bool
     by rw [Env.lookup_set_ne _ (hne "i" (Or.inr (Or.inl rfl)))]; exact hi,
     by rw [Env.lookup_set_ne _ (hne "p" (Or.inr (Or.inr rfl)))]; exact hp⟩
 
+/-! ## What a ray does to the WORLD
+
+A scan needs more from a ray than its emission. The board scan holds a live
+`<enumerate>` object and the direction scan re-reads the module-global
+`directions` dict, so before it can run a second ray it has to know the
+first one left both alone. A ray writes exactly ONE slot — its own `count`
+object, once per round — and touches nothing else, and `SlotOnly` is that
+fact in the weakest form the scans consume: the globals are the same and
+every other slot reads back unchanged. It rides in the round invariant
+beside the count object, so it costs one `SlotOnly.update` per leaf. -/
+
+/-- Every OTHER slot keeps what it held (`Heap.update` is `Array.set`, so
+this is bounds-checked pointwise disagreement at one index). -/
+theorem Heap.get?_update_ne {h h' : Heap} {a ad : Addr} {o : Obj}
+    (hu : Heap.update h a o = some h') (hne : ad ≠ a) :
+    Heap.get? h' ad = Heap.get? h ad := by
+  rw [Heap.update] at hu
+  split at hu
+  · injection hu with hu
+    subst hu
+    simp only [Heap.get?, Array.size_set]
+    split
+    · rw [Array.getElem_set_ne _ _ (Ne.symm hne)]
+    · rfl
+  · simp at hu
+
+/-- An ALLOCATION keeps every address that was already live — what makes a
+count object pushed for the next direction invisible to the scans' own
+slots. -/
+theorem Heap.get?_push_lt {h : Heap} {ad : Addr} {o : Obj} (hlt : ad < h.size) :
+    Heap.get? (h.push o) ad = Heap.get? h ad := by
+  have h1 : ad < (h.push o).size := by rw [Array.size_push]; exact Nat.lt_succ_of_lt hlt
+  rw [Heap.get?, Heap.get?, dif_pos h1, dif_pos hlt]
+  exact congrArg some (Array.getElem_push_lt hlt)
+
+/-- A readable address is a LIVE address — the bound that says a slot the
+scans hold is not the one a fresh `count` object is pushed at. -/
+theorem Heap.lt_size_of_get? {h : Heap} {ad : Addr} {o : Obj}
+    (hg : Heap.get? h ad = some o) : ad < h.size := by
+  rw [Heap.get?] at hg
+  split at hg
+  · assumption
+  · simp at hg
+
+/-- **The world moved at slot `a` and nowhere else.** Deliberately weak: it
+says nothing about `a` itself (the ray's own count object is none of the
+scans' business) and nothing about `stdout`/`clock` (no statement on the
+path writes them, and a claim that is not needed is a claim not to make). -/
+def SlotOnly (a : Addr) (w w' : World) : Prop :=
+  w'.globals = w.globals ∧
+    ∀ ad, ad ≠ a → Heap.get? w'.heap ad = Heap.get? w.heap ad
+
+theorem SlotOnly.refl (a : Addr) (w : World) : SlotOnly a w w := ⟨rfl, fun _ _ => rfl⟩
+
+theorem SlotOnly.trans {a : Addr} {w w₁ w₂ : World} (h₁ : SlotOnly a w w₁)
+    (h₂ : SlotOnly a w₁ w₂) : SlotOnly a w w₂ :=
+  ⟨h₂.1.trans h₁.1, fun ad hne => (h₂.2 ad hne).trans (h₁.2 ad hne)⟩
+
+/-- One round's write, absorbed. -/
+theorem SlotOnly.update {a : Addr} {w w₁ : World} {h₂ : Heap} {o : Obj}
+    (h : SlotOnly a w w₁) (hback : Heap.update w₁.heap a o = some h₂) :
+    SlotOnly a w { w₁ with heap := h₂ } :=
+  ⟨h.1, fun ad hne => (Heap.get?_update_ne hback hne).trans (h.2 ad hne)⟩
+
+/-- **What a ray hands back to the scan that ran it**: the frame it was
+given (`self`, `i`, `p` still bound, no module global shadowed) and a world
+that differs from the one it started in only at its own count object. This
+is the ray tier's whole interface to L5, which is why it is one definition
+rather than two conjuncts spelled out at eight statements. -/
+def RayExit (b : String) (score ep kp iv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (p : Char) (a : Addr) (w : World) (st : FrameState) : Prop :=
+  RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals ∧ SlotOnly a w st.world
+
 /-! ## The one-character string bridge
 
 `p` and `q` reach the frame from `enumerate(self.board)` and
@@ -1008,16 +1081,16 @@ theorem ray_crawl_agrees (w : World) (env : REnv) (a : Addr)
     (hcount : Heap.get? w.heap a = some (countObj jv d))
     (hnp : p ≠ 'P') (hcrawl : Ref.inStr p "PNK" = true)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv p d f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
         (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w st ∧
       Heap.get? st.world.heap a = some (countObj j d))
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount⟩ hray
   -- the ray ENDS here: either the square is a blocker, or the crawler breaks
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -1040,7 +1113,7 @@ theorem ray_crawl_agrees (w : World) (env : REnv) (a : Addr)
       -- guard broke, so the frame the ray leaves has `q` bound
       refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -1052,7 +1125,7 @@ theorem ray_crawl_agrees (w : World) (env : REnv) (a : Addr)
     · -- OPEN: the one move, then the crawler guard ends the ray
       refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -1232,16 +1305,16 @@ theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
     (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
     (hA : iv ≠ Ref.A1) (hH : iv ≠ Ref.H1)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv p d f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
         (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w st ∧
       Heap.get? st.world.heap a = some (countObj j d))
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 p a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount⟩ hray
   -- the ray ENDS here: a blocker, or a capture
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -1262,7 +1335,7 @@ theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
     · -- BLOCKER: nothing is emitted, and the frame carries the `q` that was read
       refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -1274,7 +1347,7 @@ theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
     · -- CAPTURE: the one move, and the crawler guard ends the slide behind it
       refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -1282,7 +1355,7 @@ theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
         b score ep kp iv j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
         (by rw [hcap]; exact Bool.or_true _)
   -- the ray CONTINUES: the one move, the count advances, the invariant holds
-  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+  · rintro j ⟨w₁, env₁⟩ pre ⟨⟨hfr, hpr⟩, hcnt⟩ hmap
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -1302,7 +1375,7 @@ theorem ray_slide_agrees (w : World) (env : REnv) (a : Addr)
       ray_slider_go b.toList wc0 wc1 ep kp iv p d j c pre href hnp hslide hA hH hmap
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+      ⟨⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, heap_readback hback⟩, ?_⟩
     refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -1497,17 +1570,17 @@ theorem ray_pawn_push_agrees (w : World) (env : REnv) (a : Addr)
     (hd : Env.lookup env "d" = some (.int Ref.N))
     (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' Ref.N f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay]
         (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st ∧
       Heap.get? st.world.heap a = some (countObj j Ref.N) ∧
       Env.lookup st.locals "d" = some (.int Ref.N) ∧
       (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt, hdd, hnpr⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + Ref.N) Ref.N) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
@@ -1527,7 +1600,7 @@ theorem ray_pawn_push_agrees (w : World) (env : REnv) (a : Addr)
     obtain ⟨c, href⟩ := hat
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      hfr₁.set (x := "q") (by decide) _, ?_⟩
+      ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
     refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -2566,16 +2639,16 @@ theorem ray_pawn_prom_agrees (w : World) (env : REnv) (a : Addr)
     (hd : Env.lookup env "d" = some (.int Ref.N))
     (hprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = true)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' Ref.N f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st ∧
       Heap.get? st.world.heap a = some (countObj j Ref.N) ∧
       Env.lookup st.locals "d" = some (.int Ref.N) ∧
       (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = true)
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hprom⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hpr⟩ hbody
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount, hd, hprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hsl⟩, hcnt, hdd, hpr⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + Ref.N) Ref.N) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
@@ -2597,7 +2670,7 @@ theorem ray_pawn_prom_agrees (w : World) (env : REnv) (a : Addr)
       ray_pawn_prom_leaf b.toList wc0 wc1 ep kp iv j c r href hpr hbody
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hsl.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -2608,7 +2681,7 @@ theorem ray_pawn_prom_agrees (w : World) (env : REnv) (a : Addr)
         (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hsl.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -2617,7 +2690,7 @@ theorem ray_pawn_prom_agrees (w : World) (env : REnv) (a : Addr)
     · obtain ⟨env₂, hfr₂, hemit⟩ := pawn_promotes_round { w₁ with heap := h₂ }
         (Env.set env₁ "j" (.int j)) b score ep kp iv j wc0 wc1 bc0 bc1 a hfr₁ hd₁ hj₁
         href hpr
-      refine ⟨⟨{ w₁ with heap := h₂ }, env₂⟩, hfr₂, ?_⟩
+      refine ⟨⟨{ w₁ with heap := h₂ }, env₂⟩, ⟨hfr₂, hsl.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -2644,16 +2717,16 @@ theorem ray_pawn_double_agrees (w : World) (env : REnv) (a : Addr)
     (hd : Env.lookup env "d" = some (.int (Ref.N + Ref.N)))
     (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' (Ref.N + Ref.N) f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st ∧
       Heap.get? st.world.heap a = some (countObj j (Ref.N + Ref.N)) ∧
       Env.lookup st.locals "d" = some (.int (Ref.N + Ref.N)) ∧
       (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt, hdd, hnpr⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + (Ref.N + Ref.N)) (Ref.N + Ref.N)) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
@@ -2674,7 +2747,7 @@ theorem ray_pawn_double_agrees (w : World) (env : REnv) (a : Addr)
     obtain ⟨c, href⟩ := hat
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      hfr₁.set (x := "q") (by decide) _, ?_⟩
+      ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
     refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -2719,16 +2792,16 @@ theorem ray_pawn_capture_agrees (w : World) (env : REnv) (a : Addr)
     (hd : Env.lookup env "d" = some (.int dv))
     (hnoprom : (decide (Ref.A8 ≤ jv) && decide (jv ≤ Ref.H8)) = false)
     (hray : Ref.ray b.toList wc0 wc1 ep kp iv 'P' dv f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st'.locals ∧
+    ∃ st', RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w st ∧
       Heap.get? st.world.heap a = some (countObj j dv) ∧
       Env.lookup st.locals "d" = some (.int dv) ∧
       (decide (Ref.A8 ≤ j) && decide (j ≤ Ref.H8)) = false)
-    (Out := fun st => RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount, hd, hnoprom⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt, hdd, hnpr⟩ hbody
+    (Out := RayExit b score ep kp iv wc0 wc1 bc0 bc1 'P' a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount, hd, hnoprom⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt, hdd, hnpr⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + dv) dv) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp iv wc0 wc1 bc0 bc1 'P' (Env.set env₁ "j" (.int j)) :=
@@ -2748,7 +2821,7 @@ theorem ray_pawn_capture_agrees (w : World) (env : REnv) (a : Addr)
     obtain ⟨c, href⟩ := hat
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      hfr₁.set (x := "q") (by decide) _, ?_⟩
+      ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
     refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -3094,14 +3167,14 @@ theorem ray_castA_agrees (w : World) (env : REnv) (a : Addr)
     (hcount : Heap.get? w.heap a = some (countObj jv d))
     (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
     (hray : Ref.ray b.toList wc0 wc1 ep kp Ref.A1 p d f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st'.locals ∧
+    ∃ st', RayExit b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p a w st ∧
       Heap.get? st.world.heap a = some (countObj j d))
-    (Out := fun st => RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    (Out := RayExit b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -3121,7 +3194,7 @@ theorem ray_castA_agrees (w : World) (env : REnv) (a : Addr)
       ray_castA_leaf b.toList wc0 wc1 ep kp p d j c r href hnp hslide hbody
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -3132,14 +3205,14 @@ theorem ray_castA_agrees (w : World) (env : REnv) (a : Addr)
         (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
       simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
         b score ep kp Ref.A1 j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
         (by rw [hcap]; exact Bool.or_true _)
-  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+  · rintro j ⟨w₁, env₁⟩ pre ⟨⟨hfr, hpr⟩, hcnt⟩ hmap
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp Ref.A1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -3159,7 +3232,7 @@ theorem ray_castA_agrees (w : World) (env : REnv) (a : Addr)
       ray_castA_go b.toList wc0 wc1 ep kp p d j c pre href hnp hslide hmap
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+      ⟨⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, heap_readback hback⟩, ?_⟩
     refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -3438,14 +3511,14 @@ theorem ray_castH_agrees (w : World) (env : REnv) (a : Addr)
     (hcount : Heap.get? w.heap a = some (countObj jv d))
     (hnp : p ≠ 'P') (hslide : Ref.inStr p "PNK" = false)
     (hray : Ref.ray b.toList wc0 wc1 ep kp Ref.H1 p d f jv = .ok ms) :
-    ∃ st', RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st'.locals ∧
+    ∃ st', RayExit b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p a w st' ∧
       GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st' := by
   refine ray_rounds
-    (Inv := fun j st => RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st.locals ∧
+    (Inv := fun j st => RayExit b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p a w st ∧
       Heap.get? st.world.heap a = some (countObj j d))
-    (Out := fun st => RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p st.locals)
-    ?_ ?_ f jv ms ⟨w, env⟩ ⟨hframe, hcount⟩ hray
-  · rintro j ⟨w₁, env₁⟩ r ⟨hfr, hcnt⟩ hbody
+    (Out := RayExit b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p a w)
+    ?_ ?_ f jv ms ⟨w, env⟩ ⟨⟨hframe, SlotOnly.refl a w⟩, hcount⟩ hray
+  · rintro j ⟨w₁, env₁⟩ r ⟨⟨hfr, hpr⟩, hcnt⟩ hbody
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -3465,7 +3538,7 @@ theorem ray_castH_agrees (w : World) (env : REnv) (a : Addr)
       ray_castH_leaf b.toList wc0 wc1 ep kp p d j c r href hnp hslide hbody
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
@@ -3476,14 +3549,14 @@ theorem ray_castH_agrees (w : World) (env : REnv) (a : Addr)
         (stop_breaks _ _ c a (Env.lookup_set_self _ _ _) hstop)
     · refine ⟨⟨{ w₁ with heap := h₂ },
           Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-        hfr₁.set (x := "q") (by decide) _, ?_⟩
+        ⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, ?_⟩
       refine GenEmits.forGenBreak (v := .int j) (w' := { w₁ with heap := h₂ })
         (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
         (by rw [htgt]; rfl) ?_
       simpa using breaking_round { w₁ with heap := h₂ } (Env.set env₁ "j" (.int j))
         b score ep kp Ref.H1 j wc0 wc1 bc0 bc1 p c a hfr₁ hj₁ href hopen hnp
         (by rw [hcap]; exact Bool.or_true _)
-  · rintro j ⟨w₁, env₁⟩ pre ⟨hfr, hcnt⟩ hmap
+  · rintro j ⟨w₁, env₁⟩ pre ⟨⟨hfr, hpr⟩, hcnt⟩ hmap
     obtain ⟨h₂, hback⟩ := Heap.update_of_get? (countObj (j + d) d) hcnt
     obtain ⟨sj, htgt⟩ := gmRayTarget_lit
     have hfr₁ : RayFrame b score ep kp Ref.H1 wc0 wc1 bc0 bc1 p (Env.set env₁ "j" (.int j)) :=
@@ -3503,7 +3576,7 @@ theorem ray_castH_agrees (w : World) (env : REnv) (a : Addr)
       ray_castH_go b.toList wc0 wc1 ep kp p d j c pre href hnp hslide hmap
     refine ⟨⟨{ w₁ with heap := h₂ },
         Env.set (Env.set env₁ "j" (.int j)) "q" (.str (String.singleton c))⟩,
-      ⟨hfr₁.set (x := "q") (by decide) _, heap_readback hback⟩, ?_⟩
+      ⟨⟨hfr₁.set (x := "q") (by decide) _, hpr.update hback⟩, heap_readback hback⟩, ?_⟩
     refine RayRound.intro (v := .int j) (w' := { w₁ with heap := h₂ })
       (env₁ := Env.set env₁ "j" (.int j)) (iterSteps_countFrom hcnt hback)
       (by rw [htgt]; rfl) ?_
@@ -3621,12 +3694,15 @@ them, one per shape the shipped loop distinguishes:
 | `ray_pawn_capture_agrees` | a pawn's two capture directions |
 | `ray_pawn_prom_agrees` | a pawn's push onto the last row |
 
-All seven land in ONE shape — `∃ st', RayFrame … st'.locals ∧ GenEmits
+All seven land in ONE shape — `∃ st', RayExit … a w st' ∧ GenEmits
 sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st'` — over
 an arbitrary board, an arbitrary square, at every fuel, so the board scan
-can chain rays without knowing which piece it is holding. `RayFrame` is the
-interface: the scans hand `self`/`i`/`p` in and get them back, and
-`RayLocals` is what keeps the module globals visible.
+can chain rays without knowing which piece it is holding. `RayExit` is the
+interface: the frame goes in and comes back (`self`/`i`/`p` bound, no module
+global shadowed — `RayLocals`), and the WORLD comes back with one slot's
+worth of change named (`SlotOnly`, the ray's own count object), which is
+what lets the scans keep reading the `directions` dict and their own
+`<enumerate>` object after a ray has run.
 
 **Five measurements this half added.**
 
@@ -3660,13 +3736,15 @@ interface: the scans hand `self`/`i`/`p` in and get them back, and
    — one `have` at the numeral each time, exactly as §L4 CLOSED recorded for
    `Ref.N`.
 
-**What L5 still needs.** Nothing from the ray. The board scan is a `forGen`
-over an `<enumerate>` OBJECT (not an `enumSeq` — the correction from §L4
-PARTIAL stands), it must skip a square whose piece is not ours (`if p not in
-"PNBRQK": continue`, the ray tier's first `continue`), and the direction
-scan is a `for d in directions[p]` over a module-global dict entry, which is
-a heap read the ray never performs. `Ref.piece` and `Ref.refMoves` are the
-reference sides, and `refTriples_flatten` (genmoves_theorem.lean) is the
-presentation lemma they arrive through. -/
+**What L5 did with this, and what it needed that is not here.** The two
+scans are `genmoves_scan.lean`: the direction scan is a `forSeq` over the
+tuple a module-global DICT read hands back, the board scan is a `forGen`
+over an `<enumerate>` OBJECT (not an `enumSeq` — §L4 PARTIAL's correction
+stands) carrying the tier's first `continue`, and `gen_moves_yields_ref`
+is the two of them over the seven rays. Two ray CONFIGURATIONS were
+missing rather than two ray shapes — a capture that promotes, and a double
+push onto the last row — and they land there beside the scans, because
+`Ref.directions 'P'` crossed with the promotion test is eight cases and
+this file proved six. -/
 
 end Examples.python.sunfish.genmoves_ray

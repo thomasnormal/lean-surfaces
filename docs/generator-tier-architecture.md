@@ -1,9 +1,18 @@
 # The generator tier as a VERIFIED object — design memo
 
 Status: **L1, L2 LANDED; L3 LANDED except its walker arm (rules, both
-consumer theorems, the effectful bind); L4 PARTIAL (its rules and the
-ray's first agreement leaf — and it REFUTED §4's framing of L4, see
-below); L5 owner-gated.** Written
+consumer theorems, the effectful bind); L4 COMPLETE (every ray of every
+piece — and it REFUTED §4's framing of L4, see below); L5 LANDED as the
+FRAME-level flagship** — `gen_moves_yields_ref`
+(Examples/python/sunfish/genmoves_scan.lean): the shipped generator, as a
+suspended machine over the shipped AST, yields exactly `Ref.refMoves` on an
+arbitrary board. `GenMovesEqRef` — the same claim about the heap OBJECT the
+call returns — did NOT land, and the reasons are recorded rather than
+guessed: the object-level drain needs a locality property of `execGen`
+(L2's own recorded remainder), and the statement as frozen is FALSE because
+`drain` runs every step at a constant fuel (docs/backlog.md §L5 LANDED
+carries the counterexample and the one-line repair, deliberately not
+applied). Written
 2026-08-16 after the ray leg of the
 `gen_moves` theorem stopped on tooling rather than on effort
 (docs/backlog.md §the ray leg, factored). It exists so that a "go" starts

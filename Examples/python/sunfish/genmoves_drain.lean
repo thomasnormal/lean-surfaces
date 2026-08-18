@@ -256,23 +256,40 @@ generator tier:
   after about seven minutes on a 16 GB machine. A `#guard` is a COMPILED
   check, so the two `#guard`s next door are not proofs of these two facts.
 
-Two routes close it, both real work and neither in this tier:
+Two routes were named here for closing it. **Both have since been priced
+against this exact goal, and the answer is not the one this note expected**
+(docs/backlog.md §L12; the chain is `Examples/python/sunfish/init_chain.lean`,
+the calculus `LeanModels/Python/ModuleInit.lean`):
 
-1. **A module-init calculus** — step `initFoldLive` symbolically, with a loop
-   invariant for the `pst` pipeline and a locality argument that nothing after
-   the `directions` assignment writes slot 63. That is H1's machinery pointed
-   at module init, and it is the general fix: every future statement about the
-   shipped program's starting world needs it.
-2. **A pinned-literal chain** — the repo's `project+pin` recipe (docs/backlog.md
-   §L8 finding 2) one statement at a time, each intermediate world printed as a
-   literal and re-entered by `rfl`. Bounded per step, and the literals are
-   large (the `pst` tables alone are 720 integers).
+1. **A module-init calculus** — step `initFoldLive` symbolically. Its
+   TOP-LEVEL layer is cheap and landed (`initFoldLive_fold` / `_exec` /
+   `_dirty` / `_append`, general over arbitrary statements). Its
+   SUB-statement layer — a loop invariant for the `pst` pipeline — is the
+   remaining work, and it is now the only remaining work.
+2. **A pinned-literal chain**, one top-level statement at a time — this note
+   called it "bounded per step". **It is not, and the bound is not the
+   literal size.** Twenty-two of the twenty-four top-level statements are
+   kernel-reducible from pinned states (0.11 s for the seven before the
+   pipeline, 0.72 s for the fifteen after it). The other TWO are the `pst`
+   pipeline, and a single Python statement inside the first of them —
+   `pst[k] = sum((padrow(table[i*8:i*8+8]) for i in range(8)), ())` — ran
+   154 s to a 4 000 000-heartbeat timeout and 420 s / 8.5 GB to an OOM kill
+   from a fully pinned input state, without finishing. Chopping the top level
+   finer cannot help: the wall is inside one statement.
 
-Until one lands, the honest reading of this file is: the generator tier proves
+So the chain went as far as the chop granularity allows, and what it bought
+is real: `init_chain.lean` proves both of this theorem's hypotheses from ONE
+hypothesis about the `pst` pipeline's run (`gen_moves_eq_ref_of_pst`), with
+the address arithmetic that puts `directions` at slot 63, the live-view
+resolution, `resolvedG`, the poisoning arms and the `__main__` guard all
+kernel-proved rather than assumed.
+
+The honest reading of this file is therefore: the generator tier proves
 `gen_moves` against the reference on an arbitrary board through the real
-interpreter, with zero hypotheses about the GENERATOR — and the flagship's
-last two hypotheses are ground facts about module initialization that the
-compiled evaluator confirms and the kernel has not yet been asked to afford. -/
+interpreter with zero hypotheses about the GENERATOR, and the flagship's last
+assumption is one line of module initialization — the `pst` padding loop and
+the endgame table — which the compiled evaluator confirms and the kernel
+cannot yet afford. -/
 
 /-! ## What is still between here and `GenMovesEqRef`
 

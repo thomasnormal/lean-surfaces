@@ -427,3 +427,38 @@ Two pieces of scope the memo did not have, both now landed: `PayloadBlind`
 (§L7 — the interpreter cannot observe a running generator's payload, 18/18
 arms) and the `bound_probe` constructs (§L8/§L9). Both were discovered by
 building the gate, not by re-reading a plan.
+
+## MODULE-INIT NOTE (2026-08-19) — appended, nothing above is edited
+
+The completion note above ends: *"The remaining work is a MODULE-INIT
+calculus, which this memo never scoped because it planned around the
+generator, not around the starting world."* That work has now been priced and
+partly done (docs/backlog.md §L12 carries every number), and two things about
+it are worth recording where the memo's readers will find them.
+
+**The calculus split in two, and only one half was expensive.** Its TOP layer
+— the pipeline's own three arms as rewrite rules, general over arbitrary
+statements — is `LeanModels/Python/ModuleInit.lean`: eleven theorems, one
+rewrite each, 0.4 s to elaborate. That layer alone carried **22 of the
+shipped module's 24 top-level statements** into the kernel
+(`Examples/python/sunfish/init_chain.lean`), so the flagship now reads
+`gen_moves_eq_ref_of_pst` — `GenMovesEqRef` from ONE hypothesis about the
+`pst` pipeline (statements 7–8) instead of two about the whole starting
+world. Everything else about `initWorld sunfish` — including the address
+arithmetic that puts `directions` at slot 63, which is what the flagship
+actually needs — is proved.
+
+**The memo's own estimating lesson, one level up.** This memo priced its
+landings by the SHAPE of the work and was well calibrated. §L12's route B
+was priced by the shape too ("bounded per step, and the literals are large")
+and was wrong, because the bound is not the literal size: one Python
+statement — `pst[k] = sum((padrow(table[i*8:i*8+8]) for i in range(8)), ())`
+— is by itself unreducible in the kernel (420 s / 8.5 GB to an OOM kill from
+a fully pinned input state, never finishing), while its two neighbours cost
+0.062 s and 1.4 s. A per-statement chain inherits the SOURCE's granularity,
+and a source line can hold an arbitrary amount of computation. The next inch
+is therefore the sub-statement layer, and its shape is the one this memo
+would recognize: the `sum` drain is `drainIter`, so it wants the sibling of
+§L8's `EvalsIn.sortedDrain` and then the tier's own `stepIter` machinery —
+with the six `pst` iterations proved ONCE, parametrically over the table,
+rather than six times over six literals.

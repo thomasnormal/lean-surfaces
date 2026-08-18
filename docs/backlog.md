@@ -8129,3 +8129,147 @@ are about module INITIALIZATION. Two routes, neither in this tier:
    again: never edit sources under an in-flight build — the run that was
    verifying merged master had to be discarded and restarted.
 
+
+## L12 — THE MODULE INITIALIZER, PRICED: route B is REFUTED, 22 of 24 statements are proved, and the flagship's assumption becomes ONE line (2026-08-19)
+
+§L11 closed the generator tier and left `gen_moves_eq_ref_of_dirs` with two
+ground hypotheses about `initWorld sunfish`, plus two named routes for
+discharging them: **(A)** a symbolic module-init calculus, **(B)** a
+pinned-literal chain, one top-level statement at a time, "bounded per step".
+This pass priced both against that exact goal. **The pricing changed the
+plan: route B's bound is not the literal size, and it is not per statement —
+there is a single Python statement the kernel cannot reduce at all.**
+
+### What the measurements say (all on one 16 GB machine, `lake env lean`)
+
+The shipped top level is **24 statements**; `directions` is #12 and the `pst`
+pipeline is #7 (`for k, table in pst.items():`) and #8
+(`K_MID, K_END = pst["K"], tuple(<genexp over range(120)>)`).
+
+| unit | from | tool | result |
+|---|---|---|---|
+| statements 0–6 (imports, `version`, `piece`, raw `pst`) | scratch | `rfl` | **0.106 s** ✅ |
+| statement 7, whole | scratch | `rfl` | 21.4 s to a 1 M-heartbeat timeout, 3.5 GB, **unfinished** |
+| statement 7, ONE of six iterations | pinned state | `rfl` | 138 s, 6.1 GB, **OOM-killed** |
+| … its body stmt 0 (`padrow = lambda …`) | pinned | `rfl` | **0.062 s** ✅ |
+| … its body stmt 2 (`pst[k] = (0,)*20 + pst[k] + (0,)*20`) | pinned | `rfl` | **1.4 s** ✅ |
+| … its body stmt 1 (`pst[k] = sum((padrow(table[i*8:i*8+8]) for i in range(8)), ())`) | pinned | `rfl` | 154 s to a 4 M-heartbeat timeout; **420 s / 8.5 GB to an OOM kill** at `maxHeartbeats 0` — **never finished** |
+| statement 8 | pinned | `rfl` | 627 s, **OOM-killed**, unfinished |
+| statements 9–23 + `resolvedG` + `Env.lookup` | pinned | `rfl` | **0.716 s** ✅ |
+| the whole thing | scratch | `rfl` | OOM at ~7 min (§L11's measurement, reproduced) |
+
+Two negative results worth as much as the positive ones:
+
+* **Fuel is not the driver.** `initExecFuel` is 65536; the minimum fuel that
+  still reproduces the shipped answer is 256 (at 128 the pipeline diverges
+  and `directions` lands at `.ref 62` instead of 63 — the address is
+  load-bearing). Reducing statement 7 at fuel 64 cost 25.5 s / 8.7 GB against
+  21.4 s / 3.5 GB at 65536: no better, and the fuel numeral is not the cost.
+* **`py_simp` is the wrong tool at this altitude.** On the wall statement it
+  ran 1.02 s, expanded the 1 MB `sunfish` literal into the goal, and stalled
+  at the frozen `callIn` — §L8 finding 2's rule ("pin the residue, never
+  unfold the program") applies exactly. `rfl`/whnf keeps the program an
+  opaque constant, which is why it gets further.
+
+The gap that makes all of this necessary: compiled, the entire initializer is
+**~0.35 s** (`#eval`), and `#guard` has confirmed these facts since §L5.
+
+### What landed
+
+**`LeanModels/Python/ModuleInit.lean` (316 lines, elaborates in 0.4 s) — the
+module-init calculus, route A's first layer, general.** Every lemma
+quantifies over `m`, `s`, `done`, `rest`; nothing mentions sunfish:
+
+* top level — `initFoldLive_nil` / `_fold` / `_exec` / `_dirty` (+ the
+  `_unsupported` and `_exn` shapes) / `_append`, and `initWorld_of_run`
+  with its two projections. These are the three arms of the pipeline
+  (pure fold, exec attempt, rollback-and-poison) as rewrite rules;
+* one level in — `initExecStmt_items` (the dict-items shell, entered),
+  `initItemsLoop_step` / `_done` (per ENTRY), `initBodyStmts_nil` / `_cons`
+  (per body STATEMENT). This is the chop the residue needs.
+
+**`Examples/python/sunfish/init_chain.lean` (1689 lines, 5.8 s) — the chain
+on the shipped module.** Two pinned states (after statement 6 and after
+statement 8; ~102 KB of generated literals), and then:
+
+* `run_prefix` — statements 0–6, kernel-proved;
+* `PstPipelineRuns` — **the one hypothesis**, statements 7–8, a ground
+  equation between pinned literals, `#guard`ed under the compiled evaluator;
+* `run_all` / `initWorld_tail` — the initializer assembled from it;
+* `dirs_ref` / `dirs_obj` — **both of the flagship's hypotheses, PROVED**
+  from it, each one `rfl` through the remaining fifteen statements (the
+  address arithmetic that puts `directions` at slot 63, the live-view
+  resolution, `resolvedG`, `opt_ranges`' rolled-back attempt, `hist`'s
+  allocation and the `__main__` guard's `NameError` all run);
+* `pst_loop_entered` — the items shell rule fired on the SHIPPED statement
+  (no new pin): statement 7 IS `initItemsLoop` over the `pst` dict at
+  address 1, six entries, from 0. The door the remaining work goes through;
+* **`gen_moves_eq_ref_of_pst`** — the flagship, from that one hypothesis.
+
+```lean
+-- Examples/python/sunfish/init_chain.lean (excerpt)
+theorem gen_moves_eq_ref_of_pst (hpst : PstPipelineRuns) : GenMovesEqRef :=
+  gen_moves_eq_ref_of_dirs (dirs_ref hpst) (dirs_obj hpst)
+```
+
+`#print axioms` on every step and on the flagship:
+`propext`/`Classical.choice`/`Quot.sound`. No `sorry`, no `native_decide`.
+
+**Triad on the tree** (incremental over merged master): `lake build` 3676
+jobs green (30.8 s); `diff_test` 1288 cases, 0 failed, 115
+whitelisted-unsupported, 1173 matched; `docs_check` 70 marked blocks, 70 ok,
+15 illustrative-exempt.
+
+### So which route won
+
+**Neither, as written — and that is the finding.** Route B got 22 of the 24
+statements and then stopped, not on literal size (the biggest pin is 63 KB)
+but because the chop granularity it offers is ABOVE the wall: the wall is
+inside one statement. Route A's top layer turned out to be the cheap part
+(11 theorems, one rewrite each, 0.4 s to elaborate) and is what carried the
+22; its expensive part — a loop invariant for the `pst` pipeline, i.e.
+symbolic reasoning about `sum` over a lowered genexp with a closure call per
+round — is the whole of what remains. The honest split is therefore not
+"A vs B" but **"A's top layer + B's pins for what fits, and A's
+sub-statement layer for what does not"**, and the residue is now named to
+the line rather than to the initializer.
+
+### What the remaining work is, sized
+
+One statement, six times (the six `pst` keys), plus statement 8's
+120-round genexp. Its shape is known: `sum(<genexp>, ())` drains through
+`drainIter`, so the chop is a `sum`-over-a-generator evaluation rule (the
+sibling of §L8's landed `EvalsIn.sortedDrain`) plus the tier's existing
+`stepIter` machinery, at ~8 rounds per iteration. Measured at ~19 s and
+under 1 GB per round, that is affordable — but it is ~48 pinned mid-drain
+worlds for statement 7 alone, which is an artifact nobody should generate
+before trying the parametric version: the six iterations are structurally
+identical (same body, different table), so ONE symbolic iteration lemma
+proved over an abstract 64-tuple discharges all six. That is the next inch,
+and it is route A proper.
+
+### Findings worth carrying
+
+1. *The array-literal pattern trap is not about `drain`.* §L11 finding 1
+   recorded it at one definition; it bites `initExecStmt` too — its
+   items-shell arm matches through `#[]` for the call's args and kwargs, and
+   Lean fails outright with "failed to generate equality theorems for match
+   expression `initExecStmt.match_3`", taking out `rw`, `simp` and `unfold`
+   at that head together. The fix is the same and it is now used twice: state
+   the unfolding by hand (`initExecStmt_items_unfold`), prove it `rfl`, never
+   mention the definition again. **Treat this as a property of the interpreter's
+   pattern style, not of one function** — any admitted shape written with a
+   literal `#[]` argument list will need its own hand-stated equation.
+2. *"Bounded per step" is a claim about the step, and the step is whatever
+   the SOURCE says it is.* A per-statement chain inherits the source's own
+   granularity, and one Python line can hold an arbitrary amount of
+   computation (here: a lowered genexp, a closure call per round, and a
+   fold). Before pricing a chain, price its BIGGEST step — not its average
+   one, and not its literals.
+3. *A `SIGKILL` is not a timeout, and the difference is the whole diagnosis.*
+   Three of the runs above died at 137 (OOM kill) rather than reporting a
+   Lean error; only `/usr/bin/time -l`'s peak-RSS line distinguishes "too
+   slow" from "too big", and they point at different fixes. Measure both.
+4. *OPS — kills by PID, never by pattern* (§L11 finding 3, respected: every
+   long measurement here ran detached and was reaped by `timeout`, and the
+   one orphan check was `ps` by parentage).

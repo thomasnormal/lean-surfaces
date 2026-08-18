@@ -7009,3 +7009,191 @@ to `stepIter`. **Not made here.** The statement is owner-decided
 form is not the one that should edit it. `GenMovesEqRef` therefore stays
 exactly as it was, with the defect recorded at its own file
 (genmoves_scan.lean's closing section) and here.
+
+## L6 LANDED — the WHOLE drain, and the interpreter locality property under it (2026-08-17)
+
+Continuing §"L5 LANDED", whose closing section named the tier's last
+technical gap and got the mechanism right. **The object-level drain bridge is
+landed, the flagship's object level with it, and the locality property they
+rest on is now a stated `Prop` with a measured price rather than a sentence
+in a note.** Three things came out of one landing:
+
+1. **`IterDrains.of_genYields`** (LeanModels/Python/VCGen.lean §L6) — *the*
+   whole-drain bridge, L2's recorded remainder: a frame-level `GenYields`
+   fact about a suspended object's stored continuation IS that object's whole
+   `drainIter`. Induction on the emitted list, exactly as §L5 predicted.
+2. **`gen_moves_drains_ref`** (Examples/python/sunfish/genmoves_drain.lean) —
+   the shipped `Position.gen_moves` CALLED and its generator DRAINED yields
+   exactly `Ref.refMoves`' moves in `Ref.refMoves`' order, over an arbitrary
+   board, at one fuel threshold for the call and the drain both.
+3. **`iterDrains_enumSeq`** — a whole drain with NO hypothesis at all, for
+   every generator whose frames are heap-blind (`enumerate`'s are), which is
+   the half of the bridge that needed nothing and now has a `#guard`-free
+   concrete smoke in VCGen's own test section.
+
+Both (1) and (2) carry `PayloadBlind sunfish` as an explicit HYPOTHESIS. It is
+not proved here, and the rest of this entry is why that is the honest cut.
+
+### The property, exactly
+
+`PayloadBlind m` (VCGen.lean §L6) — *the interpreter cannot observe the
+payload of a RUNNING generator object*:
+
+```
+def PayloadBlind (m : Module) : Prop :=
+  ∀ (F : Nat) (a : Addr) (qname : String) (locals₀ : REnv) (cont₀ : GenCont)
+    (st st₁ : FrameState) (k : GenCont) (r : Option (RVal × GenCont)),
+    Heap.get? st.world.heap a = some (.generator qname locals₀ cont₀ .running) →
+    execGen m F st k = .ok st₁ r →
+    Heap.get? st₁.world.heap a = some (.generator qname locals₀ cont₀ .running) ∧
+    ∀ (locals₁ : REnv) (cont₁ : GenCont) (h h₁ : Heap),
+      Heap.update st.world.heap a (.generator qname locals₁ cont₁ .running) = some h →
+      Heap.update st₁.world.heap a (.generator qname locals₁ cont₁ .running) = some h₁ →
+      execGen m F ⟨{ st.world with heap := h }, st.locals⟩ k
+        = .ok ⟨{ st₁.world with heap := h₁ }, st₁.locals⟩ r
+```
+
+Two conjuncts: **STABILITY** (a decided run leaves that slot exactly as it
+found it) and **TRANSPORT** (replacing the payload changes nothing — same
+result, same locals, same heap off `a`). The first conjunct **is** L2's
+recorded "heap-stability side condition", and the shape finding of this
+landing is that it is not a side condition at all: it is derivable from the
+same guard the second one rests on, so nothing has to be assumed about the
+body (`GenSteps.slot_stable`).
+
+**Why it is the right generality — three narrowings that all matter.** An
+arbitrary OBJECT at `a` is observable (a list is not a generator, and the
+`for`-dispatch and every refusal message name the constructor); a
+`.suspended` payload is observable (`stepIter` resumes it); `qname` is
+observable (`repr` and the type errors print it). Widen any of the three and
+the property is FALSE. Narrow it further and the bridge does not close, because
+the two chains differ in exactly this way and no less: the frame chain holds
+`running (locals₀, cont₀)` — the entry write of the FIRST step — while the
+object chain holds `running (localsₙ, contₙ)` at step *n*.
+
+**Why it is TRUE, censused rather than asserted.** `stepIter` is the
+interpreter's ONLY reader of a generator object's `locals`/`cont`: of the
+occurrences of `Obj.generator` in Semantics.lean, exactly one BINDS those
+fields (`stepIter`, line 5929) and it answers `.valueError "generator already
+executing"` on `.running` before reaching either. Every other occurrence
+either binds nothing — the payload-blind `.generator ..` of the type name,
+the `for`-dispatch, the subscript/len/attr refusals, the identity-hash
+refusal, the drain refusals in `sortedValH`/`extremumValH` — or is a
+catch-all that never mentions the constructor (`reprVal`'s `none`, `heapEq`'s
+cross-type `false`). The same guard is why no run can WRITE the slot:
+`stepIter` is also the only writer, and it refuses first.
+
+### Why it is not PROVED here, measured
+
+It is an 18-conjunct mutual induction on fuel over the interpreter's block —
+the shape of ClockErase.lean's `clockErase`, and strictly bigger than it:
+
+* the block is **1976 lines** with **119 heap-consuming call sites**, across
+  **34 distinct heap-reading helpers**; four of those helpers are mutual
+  inductions of their own (`heapEq`, `reprVal`, `keyHasInstanceRef`,
+  `unhashableName?`) and three more are recursions needing their own lemma
+  (`setDedup`, `dictBuild`, `unpackSeq`);
+* clock erasure got to leave every heap term SYNTACTICALLY IDENTICAL on both
+  sides (`withClock` moves one field nothing reads), so its per-arm work was
+  congruence plumbing. A heap that differs at one slot does not: every one of
+  those 119 sites needs a helper-level lemma saying the read is blind to the
+  difference, and the two runs' worlds are related rather than equal, so
+  every `bind` continuation is applied at two different states;
+* ClockErase.lean is **2662 lines** for the easier relation, **1798** of them
+  in the per-member arms (`ceEvalExpr_succ` alone is 1070).
+
+So: a `Prop`-valued definition, `GenMovesEqRef`'s precedent — the claim
+recorded, "proved" left unclaimed, and every theorem that consumes it saying
+so in its signature. `#print axioms` on the whole path is
+`propext`/`Classical.choice`/`Quot.sound`; there is no `sorry` and no axiom
+standing in for the property.
+
+**What was tried and rejected before settling on it.** (a) *A reachability
+discipline* ("the run never reads `a` because nothing points at it") — needs a
+reachability invariant preserved through allocation and every write, which is
+a bigger induction than the payload one AND needs a consumer-side hypothesis
+the payload version does not. (b) *A "blind" refinement of the calculus*
+(`GenEmitsBlind`, every rule re-proved under a slot-`a` perturbation) — the
+leaf obligations would be nearly free, because the captured runs are already
+stated at a symbolic world with address-specific hypotheses, but the composed
+ray/scan theorems (thousands of lines, 336 s of elaboration) would all have to
+be restated. (c) *An object-level calculus mirroring `GenEmits`* — coherent,
+and it hits the same wall for the same reason (§L5 said this; it is right).
+(d) *Instantiating the frame-level theorem at the perturbed world* — the
+theorem IS ∀-world with two hypotheses that survive a perturbation at `a ≠
+dad`, and the yields match, but the per-step resumptions it hands back are
+existential, so nothing forces the two chains' continuations to agree. That
+last one is the trap worth recording: the ∀-world form looks like it dodges
+the property and does not.
+
+### What the three consumers have now
+
+* **The `drainIter` bridge (L2's remainder)** — CLOSED. Unconditional for
+  heap-blind frames; conditional on `PayloadBlind` in general.
+* **The flagship** — `gen_moves_drains_ref`. `GenMovesEqRef` itself is
+  untouched, as its own defect note requires: it drains through `drain`,
+  which passes a CONSTANT 16384 to every `stepIter` while quantifying over an
+  arbitrary board, and is therefore false as written (§L5). With that
+  statement repaired the way its note 4 says it was meant to be — `drain`
+  taking `F` — the remaining step is the value-shape move from
+  `ms.map moveVal` to `refTriples ms`, which is `drain`'s own `Move`
+  projection over the same list.
+* **`sf_order`'s `bound_probe`** — the bridge is its engine, and three things
+  beyond it are still open, now stated at the level of what they are: a
+  `sorted`-over-a-GENERATOR expression rule (the builtin arm drains through
+  `drainIter` and then allocates the sorted list, so `IterDrains` supplies
+  the drain but not the statement), generator-internal `break` at the
+  loop-frame level (§L3's remainder, unchanged), and `callClosure`'s
+  generator arm for the lowered generator EXPRESSION. Not built here — it is
+  `sf_order`'s own plan.
+
+### Findings worth carrying
+
+1. *A drain fact INVERTS, and that is what makes it walkable.* `GenYields`
+   is `∃ t, ∀ F ≥ t, drainGen … = .ok`, and `GenYields.uncons` /
+   `GenYields.unnil` invert it into per-step `GenSteps` facts — the missing
+   primitives of L2, three lines of `Run.bind_eq_ok` each. Every object-level
+   bridge over a whole drain is an induction on the emitted list through
+   them, and the only thing that was ever hard is which WORLD the inverted
+   facts live in.
+2. *`Run.bind_eq_ok` is the inversion tool; `rw [drainGen]` beats
+   `drainGen_succ` when `drainCont` is `private`.* Unfolding the driver
+   directly keeps the proof text identical inside VCGen.lean and in a scratch
+   file that only imports it, which is what made a 2-minute development cycle
+   possible for a change whose real build is half an hour.
+3. *Two writes to one slot are the second write — again, and load-bearing
+   again.* The bridge's induction step needs the next round's ENTRY write
+   seen at the frame-level world; `Heap.update_update` on the previous
+   round's write-back is exactly that, and without it the recursion cannot
+   line its two worlds up. `Heap.get?_update_self` (new, beside it) is the
+   other half: a chain of object steps carries its own liveness.
+4. *`set` is Mathlib's, and Examples do not see Mathlib* — §L5's measurement
+   6 generalizes past `push_cast`/`ring` to the abbreviation tactics. `le_refl`
+   too (`Nat.le_refl`).
+5. *A theorem whose hypotheses are ALL `rfl` on a projection is the cheap way
+   to meet `callIn_genCall`.* `gm_lit` bundles the found function, the four
+   parameter guards, the generator flag, the call environment and the body in
+   one existential closed by `⟨_, rfl, …, rfl⟩`; the alternative (naming the
+   `FunctionDefn` literal) transcribes the program.
+
+**Cost, measured.** VCGen.lean +428/-12 (§L6's twelve declarations, the two
+`GenYields` inversions, `Heap.get?_update_self`, two smoke examples, and
+`enumObj`/`iterSteps_enumSeq`/`iterSteps_enumDone` moved down from
+genmoves_scan.lean — which is where §L5 said they would go the moment
+something outside sunfish wanted them, and something now does);
+genmoves_scan.lean -61 lines net. genmoves_drain.lean is 158 lines / 5
+declarations. Elaboration: **VCGen.lean 1.9 s** (the whole §L6 addition
+never meets `py_simp` — nothing in it touches a module literal),
+genmoves_drain.lean **1.0 s**, and the price of touching VCGen.lean at all is
+the tree: **29 minutes**, of which genmoves_ray is 314 s, pins_clock 913 s and
+pins_bound 925 s. That ratio is the argument for developing against a scratch
+file that only IMPORTS the target (2-minute cycles) and batching one real
+build at the end.
+
+**Calibration.** The gap §L5 recorded as "land the locality lemma, then the
+bridge is an induction on the emitted list" was right about the second half
+and wrong about the first being landable in one session: the lemma is a
+ClockErase-scale build, and the useful move was to state it exactly, prove
+everything that hangs off it, and price it. What that buys is a tier whose
+last debt is ONE named property with a measured proof cost, instead of a
+sentence in a closing note.

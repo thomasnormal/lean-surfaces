@@ -362,20 +362,13 @@ fact in the weakest form the scans consume: the globals are the same and
 every other slot reads back unchanged. It rides in the round invariant
 beside the count object, so it costs one `SlotOnly.update` per leaf. -/
 
-/-- Every OTHER slot keeps what it held (`Heap.update` is `Array.set`, so
-this is bounds-checked pointwise disagreement at one index). -/
-theorem Heap.get?_update_ne {h h' : Heap} {a ad : Addr} {o : Obj}
-    (hu : Heap.update h a o = some h') (hne : ad ≠ a) :
-    Heap.get? h' ad = Heap.get? h ad := by
-  rw [Heap.update] at hu
-  split at hu
-  · injection hu with hu
-    subst hu
-    simp only [Heap.get?, Array.size_set]
-    split
-    · rw [Array.getElem_set_ne _ _ (Ne.symm hne)]
-    · rfl
-  · simp at hu
+-- `Heap.get?_update_ne` — every OTHER slot keeps what it held — used to live
+-- here too; it is a general fact about the tier's bounds-checked write and
+-- now lives in LeanModels/Python/PayloadBlind.lean §Tier A, where the swap
+-- algebra derives it from `Heap.update_eq_swapAt` in two lines. Keeping both
+-- made the bare name AMBIGUOUS in genmoves_scan.lean, exactly as
+-- `Heap.lt_size_of_get?` did below — the SECOND instance of that collision,
+-- and it surfaces only five files downstream, minutes into the tree.
 
 /-- An ALLOCATION keeps every address that was already live — what makes a
 count object pushed for the next direction invisible to the scans' own
@@ -386,14 +379,11 @@ theorem Heap.get?_push_lt {h : Heap} {ad : Addr} {o : Obj} (hlt : ad < h.size) :
   rw [Heap.get?, Heap.get?, dif_pos h1, dif_pos hlt]
   exact congrArg some (Array.getElem_push_lt hlt)
 
-/-- A readable address is a LIVE address — the bound that says a slot the
-scans hold is not the one a fresh `count` object is pushed at. -/
-theorem Heap.lt_size_of_get? {h : Heap} {ad : Addr} {o : Obj}
-    (hg : Heap.get? h ad = some o) : ad < h.size := by
-  rw [Heap.get?] at hg
-  split at hg
-  · assumption
-  · simp at hg
+-- `Heap.lt_size_of_get?` — a readable address is a LIVE address — used to
+-- live here; it is a general fact about the tier's bounds-checked read and
+-- now lives in LeanModels/Python/PayloadBlind.lean §Tier A, where the swap
+-- algebra needs it too. Keeping both made the bare name AMBIGUOUS in
+-- genmoves_scan.lean, which opens this namespace and the library's.
 
 /-- **The world moved at slot `a` and nowhere else.** Deliberately weak: it
 says nothing about `a` itself (the ray's own count object is none of the

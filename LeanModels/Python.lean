@@ -10,6 +10,7 @@ import LeanModels.Python.Obs
 import LeanModels.Python.ClockErase
 import LeanModels.Python.VC
 import LeanModels.Python.VC2
+import LeanModels.Python.PayloadBlind
 import LeanModels.Python.VCGen
 import LeanModels.Python.VCTests
 import LeanModels.Python.LoopTactic

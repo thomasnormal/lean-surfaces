@@ -7197,3 +7197,269 @@ ClockErase-scale build, and the useful move was to state it exactly, prove
 everything that hangs off it, and price it. What that buys is a tier whose
 last debt is ONE named property with a measured proof cost, instead of a
 sentence in a closing note.
+
+## L7 LANDED — the price was wrong: the perturbation is a FUNCTION (2026-08-17)
+
+Continuing §"L6 LANDED", whose closing section stated `PayloadBlind` exactly
+and priced its proof at ClockErase scale. **The price was wrong, and the
+reason is one sentence: the perturbation is not a relation.** What landed is
+the whole factoring plus the top-level reduction, in a new module
+(LeanModels/Python/PayloadBlind.lean) that IMPORTS VCGen rather than editing
+it — so the tree's expensive Examples never recompile while the proof is being
+DEVELOPED (the module's own target builds in 0.9 s). The full tree is still
+15m31s and is paid once per commit; that is the whole cost model.
+
+**Third pass (same day): ALL EIGHTEEN ARMS ARE PROVED, `PBAll` is assembled
+by induction on fuel, and `payloadBlind : ∀ m, PayloadBlind m` is a
+theorem** — `propext`/`Classical.choice`/`Quot.sound`, no `sorry`, no side
+condition, no consumer-side hypothesis. The module is 3738 lines / 135
+declarations and still elaborates in 8 s (nothing in it meets `py_simp`).
+The tail §"What remains, enumerated" predicted below is exactly what the
+third pass paid, in the predicted order: the two named write-position pieces,
+the three private equations, then `execAttrCall` (79 lines of interpreter →
+105 of proof), `execStmt` (318 → 246) and `evalExpr` (1047 → 1125 — 5%
+over §L6's estimate, which named ClockErase's corresponding 1070-line arm
+and was the one number that pass got right).
+
+### The shape finding
+
+§L6 priced the proof this way: "every one of those 119 sites needs a
+helper-level lemma saying the read is blind to the difference, and the two
+runs' worlds are related rather than equal, so every `bind` continuation is
+applied at two different states". Both halves of that are true only if the
+second heap is an arbitrary heap agreeing with the first off `a`. It is not.
+`Heap.update h a o` is `Array.set` under a bounds check, so its TOTAL twin
+
+```
+-- LeanModels/Python/PayloadBlind.lean (excerpt)
+def Heap.swapAt (h : Heap) (a : Addr) (o : Obj) : Heap :=
+  h.setIfInBounds a o
+```
+
+makes the perturbed heap a FUNCTION of the original. Three consequences,
+and they are the whole landing:
+
+1. **The relation on runs is one-directional and tiny.** `PBF`/`PBW` say a
+   DECIDED base run pins the slot and forces the swapped run to be its
+   image:
+
+```
+-- LeanModels/Python/PayloadBlind.lean (excerpt)
+abbrev PBF (a : Addr) (o₀ o : Obj) (x y : Run FrameState α) : Prop :=
+  (∀ st v, x = .ok st v → Heap.get? st.world.heap a = some o₀ ∧ y = .ok (st.swapAt a o) v) ∧
+  (∀ st e, x = .exn st e → Heap.get? st.world.heap a = some o₀ ∧ y = .exn (st.swapAt a o) e)
+```
+
+   Two conjuncts, not `ClockErasedF`'s three: `.timeout` needs no arm because
+   nothing in the block converts a timeout back to a decision, and
+   `.unsupported` is free for the same reason `ClockErasedF` leaves it free.
+   `bind`/`bindE` hand the continuation both the intermediate state AND the
+   slot fact at that state — which is exactly the hypothesis an inductive
+   call needs, so the "two different states" problem never arises: there is
+   one state and one function of it.
+2. **Every per-helper obligation is an EQUATION, not a simulation.**
+   `f (Heap.swapAt h pa o) … = f h …`. That is what brings the helper tier
+   into reach, and it is why the measured cost per helper is four lines.
+3. **The `alloc` problem disappears.** A swap inside the heap commutes with
+   `push` (`Heap.swapAt_push`) and a swap survives a write elsewhere
+   (`Heap.update_swapAt_ne`, via `Heap.swapAt_comm`). Those two lemmas are
+   the entire answer to "the heap moves under you", once for all 119 sites.
+
+### What is proved
+
+* **Tier A, the swap algebra** — `size_swapAt`, `get?_swapAt_self`,
+  `get?_swapAt_ne`, `lt_size_of_get?`, `update_eq_none`, `update_eq_swapAt`,
+  `update_swapAt_self`, `swapAt_push`, `swapAt_comm`, `update_swapAt_ne`,
+  `get?_update_ne`, `swapAt_swapAt`, plus the `World`/`FrameState` liftings
+  and their projection simp set. `Heap.get?_eq_getElem?` is what keeps each
+  of these to one `simp`: it puts the tier's bounds-checked read onto
+  `Array`'s mature `setIfInBounds`/`push` simp set instead of hand-rolling
+  `dif` surgery.
+* **Tier C, the combinators** — `ok`/`exn`/`timeout`/`unsupported`/
+  `of_undecided`/`liftRes`/`bind`/`bindE`/`ite`/`push` on both `PBW` and
+  `PBF`, plus `toWorld`, `withLocals`, `allocList`, `allocDict`.
+  `ClockErasedF`'s geometry, arm for arm.
+* **Tier B, ALL 24 of the helper equations the proved arms reach.** Two
+  primitives carry them. `Heap.get?_swapAt_twin` resolves a read as "same
+  object off the slot, twin generators at it". `Heap.get?_swapAt_of_ne_slot`
+  is the same fact read the OTHER way — an answer that is not the slot's own
+  object is at a different address — and that is exactly the shape a
+  functional-induction case hypothesis (`h.get? a = some (.list xs)`) hands
+  you, which is what keeps `reprVal` and `heapEq` to their `.ref` arms at 25
+  and 36 lines with `simp_all` closing every other case. The five
+  heap-RETURNING writers (`heapStore`, `heapAppend`, `heapPop`,
+  `heapInsert`, `heapAttrStore`) are stated `map`-shaped over a new
+  `Res.mapOk`, and `Heap.update_swapAt_ne` discharges each because every
+  write that DECIDES is at a list, a dict or an instance — never at `pa`.
+* **The 18 conjuncts, STATED** — `PBEvalExpr … PBCallClosure` in `fuelMono`'s
+  order, bundled as `PBAll`, one per member of the interpreter's mutual block
+  (Semantics.lean:4232-6207).
+* **15 of the 18 arms** — the five composition-only members
+  (`pbEvalExprs`/`pbEvalDictItems`/`pbExecStmts`/`pbDrainIter`/
+  `pbAnyAllIter`) plus `evalBoolChain`, `evalCompareChain`, `execFor`,
+  `execWhile`, `execForGen`, `execForList`, `callClosure`, `callIn`,
+  `stepIter` and `execGen`. Each is a standalone theorem taking `PBAll fuel`
+  as the IH (ClockErase's `ceEvalExpr_succ` shape), so the block's arms land
+  ONE AT A TIME instead of all-or-nothing — which is what makes a partial
+  landing here a green cut rather than an admitted one.
+* **`stepIter`, the load-bearing arm.** §L6's census is discharged as a
+  proof: at `b = pa` the slot is `.running`, so the status guard answers
+  `.valueError "generator already executing"` and NEITHER payload field is
+  reached — three lines. Away from `pa` the four `Heap.update` write-backs
+  (Semantics.lean:5935/5944/5950/5963) go through `Heap.update_swapAt_ne`,
+  and `Heap.get?_update_ne` carries the slot fact across each, which is what
+  `PBF.bindE`'s continuation needs.
+* **`payloadBlind_of_execGen`** — the reduction, and the point of the
+  landing. §L6 said stability was derivable from the guard transport rests
+  on rather than a side condition; this is that sentence as a theorem. BOTH
+  of `PayloadBlind`'s conjuncts come from ONE instance of `PBExecGen`:
+  stability at the IDENTITY twin, transport at the swap the consumer names,
+  with `Heap.update_eq_swapAt` turning the consumer's two `update`
+  hypotheses into the functional form. No glue survives the reduction — no
+  side condition, no consumer-side hypothesis, nothing assumed of the body.
+
+### The tail, as paid
+
+**§Tier C′, the write position** — the two pieces both mutating arms
+wanted, and the prediction held at 34 lines rather than 130.
+`PBF.liftMapOk` threads a `map`-shaped equation into the continuation the
+interpreter applies to the helper's answer; `PBF.okWrite` is the write-back
+leaf (the post-write state's swap IS the swap of the post-write state — the
+heap is the only field that moves, so the whole obligation is the slot fact
+at the NEW heap);
+`PBF.pushRef` is the same statement for an allocation. Every mutating site in
+`execAttrCall`/`execStmt`/`evalExpr` is two lines over these.
+
+**Six slot-preservation lemmas** — `heapAppend`/`heapInsert`/`heapPop`/
+`heapStore`/`heapAttrStore`/`sortedValH`, each the writer's own arm
+enumeration under `Heap.get?_update_ne` (or `Heap.get?_push_of_get?`, which
+`sorted` and the displays need because they ALLOCATE), 14-24 lines apiece as
+predicted. `Heap.ne_slot_of_twin` is the side condition all six read off:
+the slot holds a GENERATOR, so an address answering a dict, a list or an
+instance is a different address. `unpackStoreH`'s pin rides INSIDE its
+equation as a second conjunct — one induction proves both, because both
+consume the same seven-case enumeration.
+
+**The three private equations** — `sortedValH_swapAt` (`map`-shaped through
+`Heap.swapAt_push`, exactly as predicted), `unpackStoreH_swapAt` (the
+`induct` principle's heap-in-the-motive shape was the whole reason this was
+cheap), and `attrReadResult` — which turned out NOT to be an equation but a
+`PBF` statement (`attrReadResult_pb`), because the helper is `Run`-typed:
+its plan is blind (§Tier B) and every outcome carries the receiver's own
+frame. One more equation the census had missed: `isClockCall_swapAt`, one
+line, because `evalExpr`'s clock arm branches on the frame's LOCALS and the
+world's GLOBALS and the swap moves neither.
+
+**`PBAll` IS assembled and `payloadBlind` IS a theorem.** The fuel induction
+is 27 lines, and 18 of them are the fuel-ZERO row (one `.timeout` per member,
+each guarding on fuel before it looks at anything): the successor row is
+`⟨pbEvalExpr_succ htwin ihn, …⟩`, one arm per conjunct, which is the whole
+dividend of the arms being standalone theorems. `payloadBlind : ∀ m,
+PayloadBlind m` then follows from `payloadBlind_of_execGen`, on
+`propext`/`Classical.choice`/`Quot.sound`.
+
+**The consumers are DISCHARGED, and the edge flipped to do it.** `PayloadBlind`
+was DEFINED in VCGen.lean and PayloadBlind.lean imported VCGen — the right way
+round while the property was being developed (a downstream module rebuilds in
+seconds; §finding 3). It is the wrong way round for a discharge, because
+`IterDrains.of_genYields` lives in VCGen.lean and cannot see a theorem
+downstream of it. So the definition MOVED into PayloadBlind.lean, that module
+now imports VC2 instead of VCGen, and VCGen.lean imports PayloadBlind: the
+DAG's one edge reversed, and the five bridges (`GenSteps.slot_stable`,
+`GenSteps.transport`, `GenYields.transport`, `IterDrains.of_genYields`,
+`callIn_drains`) drop `(hb : PayloadBlind m)` and call `payloadBlind m`
+instead. `gen_moves_drains_ref` (Examples/python/sunfish/genmoves_drain.lean)
+drops it too, which is the point of the whole arc: **the sunfish drain theorem
+now carries no hypothesis at all.** The flip is safe because PayloadBlind.lean
+needed exactly ONE name from VCGen (the definition) and shares no `Heap.*`
+name with it — checked by grep before the edit, the §L4/§L6 collision rule
+applied in advance rather than fifteen minutes into the tree.
+
+
+### Findings worth carrying
+
+1. *The recursive helpers were the CHEAP ones, not the expensive ones.* §L6
+   flagged four mutual inductions and three recursions among the helpers as
+   aggravating factors. Lean generates a functional-induction principle for
+   every one of them (`keyHasInstanceRef.induct` and friends) **whose heap is
+   a fixed PARAMETER, not part of the motive** — which is exactly the motive
+   shape a blindness equation needs. `unhashableName?_swapAt` is one
+   `simp_all` line. `fun_induction` does NOT work on the mutual ones
+   ("no functional induction theorem … or function is mutually recursive");
+   `induction v using f.induct (h := h) (motive_2 := …)` does, and supplying
+   `motive_2` explicitly is mandatory since nothing can infer it.
+2. *`Heap` is an `abbrev`, so `h.swapAt a o` silently resolves to
+   `Array.swapAt`* — which exists, takes two indices, and returns
+   `Obj × Array Obj`. The failure surfaces as a type mismatch in the
+   STATEMENT, which then poisons every tactic in the body with unrelated
+   errors. `Heap.get?`'s own docstring records this caveat for dot notation;
+   the rule is full names for every `Heap.*` operator, at every use site.
+3. *A new module beats editing VCGen by two orders of magnitude.* §L6
+   measured the price of touching VCGen.lean at 29 minutes because every
+   Example imports the `LeanModels` umbrella transitively. A downstream
+   module that IMPORTS VCGen builds in 0.9 s, so the development cycle here
+   was seconds, not half an hour — and the full-tree cost is paid exactly
+   once, when the module is wired into `LeanModels/Python.lean` at the cut.
+   This is §L6's finding 2 (develop against a scratch file that only
+   imports the target) promoted from a workaround to the module layout.
+4. *Two conjuncts, not three.* `ClockErasedF` constrains `.timeout`;
+   `PBF` does not need to, because the block's only `.timeout` productions
+   are fuel-zero arms and faithful pass-throughs. Checking that before
+   writing the relation saved an arm in every one of the combinators.
+
+**The collision repeated, and that makes it a rule.** The second pass added
+`Heap.get?_update_ne` to §Tier A and hit the SAME failure at the same two
+files: genmoves_ray.lean held a local copy (different proof, identical
+statement), genmoves_scan.lean opens both namespaces, and the bare name went
+ambiguous — green in the module's own 0.9 s build, green in genmoves_ray's own
+308 s build, and only failing at target 3665 of 3669, **fifteen minutes into
+the tree**. The rule that follows: *before publishing a general `Heap.*` fact,
+`grep Examples/ LeanModels/ for the name* — the local copies in
+genmoves_ray.lean are where the tier's heap facts were first proved, and every
+one of them is a future collision. The fix is the same both times: delete the
+local copy, leave a comment in its place.
+
+**The first collision, and why it is worth recording.** `Heap.lt_size_of_get?`
+already existed as a local, byte-identical copy in genmoves_ray.lean (§L4), and
+publishing the general fact made the BARE name ambiguous in genmoves_scan.lean
+— which opens that namespace and the library's. The local copy is deleted and
+a comment left in its place. The failure mode is worth naming: it does not
+surface in the new module's own build (0.9 s, green), only in a consumer
+five files downstream, 333 s into the tree. Every one of §Tier C's
+combinators shares a name with `ClockErasedF`'s and `Obs`'s (`ok`, `exn`,
+`bind`, `bindE`, `liftRes`, `ite`, `timeout`, `unsupported`, `withLocals`,
+`toWorld`, `allocList`, `allocDict`) and NONE of those collide, because they
+sit in `PBW`/`PBF` — the namespaced-combinator pattern is what makes the
+tier's three transport relations coexist.
+
+**Cost, measured.** LeanModels/Python/PayloadBlind.lean 3786 lines / 136
+declarations, elaborating in **8 s** — nothing in it meets `py_simp`, and
+nothing in it touches a module literal. Semantics.lean is UNTOUCHED. `#print
+axioms` on every theorem in it is `propext`/`Classical.choice`/`Quot.sound`
+(the writers need only `propext`/`Quot.sound`); no `sorry`, no
+`native_decide`, no axiom standing in for anything. Per-arm cost across the
+three passes: 18 lines median, and the three big ones landed at `execAttrCall`
+105, `execStmt` 246, `evalExpr` 1125 — `evalExpr` 5% over §L6's estimate,
+which named ClockErase's corresponding 1070-line arm and was the one number
+that pass got right. Full-tree cost is
+**15m31s**, paid once per commit and nothing to do with the proof's own
+cycle.
+
+**One tactic fact worth the line, and it cost four iterations.** `cases`
+substitutes a constructor into a match WITHOUT iota-reducing it, so the
+enclosing `match` stays stuck and `rw` then cannot find a pattern that sits
+under the arm's pattern binders. `simp only [...]` reduces AND rewrites under
+binders, so the rule is: **`simp only` for anything downstream of a `cases`
+on a match scrutinee, `rw` only at the top of a goal.** Every failure in this
+pass but one was that mistake, in `extremumValH`, `assignToH`, the five
+writers, `stepIter` and `execGen`'s `.ref` dispatch. The dual is `simp only
+[f]` at the LEAF: unfolding an interpreter member before casing its
+scrutinee leaves a stuck outer match that nothing recovers — `execGen` needed
+its ten frame kinds cased first and `simp only [execGen]` applied per leaf.
+
+**Calibration.** §L6's price was a fair estimate of the wrong proof. The
+useful move was not to attempt the 2000 lines it predicted but to probe
+whether the obligations factor — and the factoring turned on one structural
+fact about the tier's own heap API that a line count could not see. The
+lesson generalizes: before paying a measured price, check whether the
+measurement assumed a relation where the code offers a function.

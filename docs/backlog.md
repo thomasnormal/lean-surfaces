@@ -6037,3 +6037,109 @@ toolchain's tactic set, and `beq_eq_false_iff_ne` wants `.mpr` rather than
 a simp rewrite. Nothing structural was wrong — which is the evidence that
 the HIGH-confidence band on mechanical lemma families is real. It says
 nothing about L4's LOW-MEDIUM band, which remains the one to watch.
+
+## L2 LANDED — `GenYields` and the first generator theorem (2026-08-17)
+
+Landing 2 of docs/generator-tier-architecture.md. L3–L5 (the walker case,
+ray agreement, the assembly) stay owner-gated; nothing below touches the
+walker or `py_vcgen`.
+
+**The new file** is `LeanModels/Python/VCGen.lean` — "the generator tier
+(`py_vcgen` layer 2G)", imported by `LeanModels/Python.lean` after VC2.
+Before it the repo held exactly two facts about the generator tier
+(`stepIter_mono`/`execGen_mono`, plus clock erasure) and no way to say what
+a generator COMPUTES.
+
+**The spec objects, as the memo decided them.** `GenYields m st k vs st'`
+(the machine yields exactly `vs` and then finishes) and
+`GenYieldsPrefix m st k vs st' k'` (the first `vs` values, machine left
+suspended at `k'`), both in the repo's fuel-threshold idiom over the two
+new spec-side drivers `drainGen`/`stepGenN`. Neither driver is in the
+interpreter's mutual block — nothing in the interpreter calls them — so
+they cost no `fuelMono`/`worldInv`/`clockErase` conjunct; their
+monotonicity (`drainGen_le`/`drainGen_mono`, `stepGenN_le`/`stepGenN_mono`)
+is proved here off `execGen_mono`.
+
+**The design decision the memo did not make, and the one that mattered.**
+Composition is list concatenation — the memo said so — but *what* composes
+had to be chosen. It is **`GenEmits m st pre ws st₁`**: the frame PREFIX
+`pre` emits `ws` and falls through, *for every continuation below it*.
+Frame-stack polymorphism is the whole trick: the interpreter only ever
+scrutinizes head frames, so every structural rule is stated over `pre ++ k`
+with `k` universally quantified, and `GenEmits.trans` is literal
+`List.append` on the frames and the output at once. Underneath sit two
+threshold primitives: `GenSteps` (one decided resumption step) and
+`GenSilent` (the machine rearranged its stack without yielding — with the
+fuel offset existentially quantified, which is what makes silent
+transitions compose transitively).
+
+**The frame rules**, one per `GenFrame` kind, each holding at EVERY
+continuation: `genSteps_nil`/`genYields_nil`, `genSilent_blockNil`,
+`genSteps_yieldHere`, `genSilent_branch`, `genSilent_whileHere`,
+`genSilent_whileTrue`/`genSilent_whileFalse`, `genSilent_forHere` (through
+VC2's `IterVals` — the same value-sequence dispatch the statement-level
+`for` rule uses), `genSilent_forSeqNil`/`genSilent_forSeqCons`,
+`genSilent_enumSeqNil`/`genSteps_enumSeqCons`, `genSteps_countFrom`, the
+live-cursor arms `genSilent_forListCons`/`genSilent_forListDone`/
+`genSteps_enumListCons`/`genSilent_enumListDone`/`genSilent_forGenCons`/
+`genSilent_forGenDone`, `genSilent_delegate` + `GenEmits.blockDelegate`
+(the yield-free statements go through the layer-1/2 `PyStmtTriple`, so
+statement semantics keeps exactly one definition) and
+`genYields_blockReturn`. The sequence rule `GenEmits.forSeq` is
+`execFor_of_invariant` with the output list threaded — remainder-indexed
+invariant, structural induction, no measure — and the ray rule
+`genYieldsPrefix_countFrom` says the only thing an infinite frame can say:
+a prefix of every length, machine still there.
+
+**The gate** — `Examples/python/gen_lab/proof.lean`, which did not exist
+(73 differential rows, no proofs):
+
+* `upto_yields` — **the first generator theorem in this repo.** `upto(n)`,
+  suspended exactly as `callIn` leaves it, yields `0, 1, …, n-1` and then
+  finishes. Symbolic in `n`, symbolic in the world, stated over the frame
+  stack the interpreter actually builds.
+* `naturals_prefix` — **laziness, as a theorem.** The INFINITE `naturals()`
+  has no `GenYields` at all and yet hands over a prefix of every length,
+  left in one fixed resumption configuration. An eager, list-producing
+  representation of a generator could not state this.
+* `upto5_yields`/`naturals4_prefix` — the `total(5)`/`first_over_inf` rows'
+  generator content, as instances of the symbolic theorems (no interpreter
+  run elaborated), plus two `#guard` non-vacuity pins running `drainGen`
+  and `stepGenN` in the kernel.
+
+**Two measurements worth keeping.**
+
+1. *Stating a program's shape as one big existential over its source spans
+   is a trap.* `∃ s₁ … s₁₂, uptoBody = [ … ] := ⟨_, …, rfl⟩` cost **5 min
+   37 s** of elaboration by itself — twelve metavariables unified at once
+   against a whnf of the 271 KB module literal. Projecting the pieces out
+   one at a time (`uptoWhileS`, `uptoTest`, `uptoYield`, …) and pinning
+   each with its own small existential is the same claim in **25 s**, and
+   the theorem statements then mention the projections, so they say "the
+   shipped `upto`" instead of "some program with these spans".
+2. *The concrete rows were NOT promoted to theorems, deliberately.*
+   `gen_lab.aliased(4) ==> 1` by `CallsTo.intro 4096 (by rfl)` blows past a
+   million heartbeats. That is the boundary already recorded in
+   `Examples/python/sunfish/pins_clock.lean` — `#guard`'s evaluator is
+   untrusted and ~1000× faster than a checked reduction — so the identity
+   rows stay `#py_check` pins at the trust level of the whole existing pin
+   battery. The symbolic theorems are the better trade regardless:
+   `upto_yields` covers every `n` and no concrete row does.
+
+**What remains of L2, precisely.** The `drainIter` bridge over a WHOLE
+drain. The per-step halves landed unconditional
+(`stepIter_of_genSteps`/`stepIter_of_genDone`: a `GenSteps` fact about the
+stored continuation IS the heap object's step, with both of `stepIter`'s
+writes explicit), and they are what L3's walker case consumes. The whole
+drain needs a heap-stability side condition — the body must not write slot
+`a` itself, which `drainGen` threads no object and therefore cannot see —
+and inventing its shape before a consumer needs it would be guessing.
+Recorded rather than attempted, per the standing stop-condition.
+
+**Calibration.** L2 was estimated 2–4 days at MEDIUM confidence and took
+roughly one working session. The memo's stated risk (the live-cursor
+frames) did not materialise at the per-step level — those rules are three
+lines each with the heap read as a hypothesis; the risk is real one level
+up, at the loop-invariant rule, which is exactly the piece deferred above.
+The unforecast cost was elaborator performance on the module literal
+(measurement 1), not the proofs.

@@ -1,7 +1,8 @@
 import LeanModels
+import Examples.python.gen_lab.proof
 
 /-!
-# gen_lab — the H4 generator acceptance set (checks-only example)
+# gen_lab — the H4 generator acceptance set
 
 Concrete regressions for generator functions (docs/memory-model.md
 §generator semantics), pinned two ways: differential rows in
@@ -32,11 +33,23 @@ Generator EXPRESSIONS are lowered at ingestion to generator functions
 lazy iterator objects riding the same stepper — `count` genuinely
 infinite. The loud frontier — a `yield` in expression position (the
 `send` channel), and a generator crossing the call boundary — is pinned
-by the raw `#guard`s below and by whitelisted differential rows. No
-`proof.lean`: checks-only, like `iter_lab`/`str_lab`/`cls_lab`.
+by the raw `#guard`s below and by whitelisted differential rows.
+
+**This example is no longer checks-only.** Landing L2 of
+docs/generator-tier-architecture.md gave the repo a vocabulary for
+SPECIFYING a suspended generator (`GenYields`/`GenYieldsPrefix`/
+`GenEmits`, LeanModels/Python/VCGen.lean), and `proof.lean` holds the
+first generator theorems written with it: the drain of `upto(n)`
+symbolically in `n`, and LAZINESS — a prefix of every length out of the
+INFINITE `naturals()`, which is the first of the three claims above.
+Identity and `break`-suspends stay rows; proof.lean's last section records
+the measurement that says why a concrete run is not affordable as a
+theorem here.
 -/
 
 open LeanModels LeanModels.Python
+open Examples.python.gen_lab.proof
+  (uptoCont uptoEntry uptoEnv natCont natEntry natEnv natResume intsFrom)
 
 load_program gen_lab from "Examples/python/gen_lab/gen_lab.json"
 
@@ -221,3 +234,37 @@ and refuse loudly. -/
 -- syntactic rule sees YieldFrom), lowered or not
 #guard (findFunction gen_lab "yf_promote").any (·.isGenerator)
 #guard (findFunction gen_lab "yf_list").any (·.isGenerator)
+
+/-! ## The generator THEOREMS (L2)
+
+Statements only; the proofs are in `proof.lean` (three-file layout —
+Surface.lean §the `proofs` tactic). Everything is stated over the frame
+stack the interpreter actually builds: `uptoCont` is `callIn`'s
+`[.block f.body.toList]` for the shipped `upto`, `uptoEntry` its
+`mkCallEnv`. -/
+
+/-- **The first generator theorem in this repo.** `upto(n)`, suspended
+exactly as `callIn` leaves it, yields `0, 1, …, n-1` and then finishes —
+for every `n`, in every world. -/
+theorem upto_yields (w : World) (c : Nat) :
+    GenYields gen_lab ⟨w, uptoEntry (c : Int)⟩ uptoCont (intsFrom 0 c)
+      ⟨w, uptoEnv (c : Int) (c : Int)⟩ := by proofs
+
+/-- **Laziness, as a theorem.** `naturals()` never finishes — it has no
+`GenYields` at all — and yet hands over a prefix of EVERY length, left in
+one fixed resumption configuration. The `first_over_inf`/`any_over` rows
+say this for two concrete lengths; this says it for all of them. -/
+theorem naturals_prefix (w : World) (c : Nat) :
+    GenYieldsPrefix gen_lab ⟨w, natEntry⟩ natCont (intsFrom 0 (c + 1))
+      ⟨w, natEnv (c : Int)⟩ natResume := by proofs
+
+/-- The generator behind the `total(5) = 10` row, as an instance of the
+symbolic theorem — no interpreter run is elaborated. -/
+theorem upto5_yields (w : World) :
+    GenYields gen_lab ⟨w, uptoEntry 5⟩ uptoCont
+      [.int 0, .int 1, .int 2, .int 3, .int 4] ⟨w, uptoEnv 5 5⟩ := by proofs
+
+/-- Four values out of the infinite one, likewise. -/
+theorem naturals4_prefix (w : World) :
+    GenYieldsPrefix gen_lab ⟨w, natEntry⟩ natCont
+      [.int 0, .int 1, .int 2, .int 3] ⟨w, natEnv 3⟩ natResume := by proofs

@@ -6143,3 +6143,224 @@ lines each with the heap read as a hypothesis; the risk is real one level
 up, at the loop-invariant rule, which is exactly the piece deferred above.
 The unforecast cost was elaborator performance on the module literal
 (measurement 1), not the proofs.
+
+## L3 LANDED (core) — the consumer side, and `total(n)` (2026-08-17)
+
+Landing 3 of docs/generator-tier-architecture.md, **its rules and its
+first consumer theorem**; the walker automation and the `bound_probe`
+collapse the memo named as L3's gate did NOT land and are decomposed at
+the end of this entry. L4–L5 stay owner-gated.
+
+**What a consumer needed that L2 did not have.** L2 specifies a suspended
+MACHINE — a frame stack and a frame state. A consumer never sees one: it
+CALLS a generator function, gets a heap object, and steps it with a `for`.
+The new file section is `LeanModels/Python/VCGen.lean` §"L3: the consumer
+side", and it holds exactly three things plus their plumbing.
+
+* **`IterSteps m w a r w'`** — one decided step of the generator OBJECT at
+  `a`, the world-level twin of `GenSteps`. L2's two heap-object bridges
+  are its introduction rules verbatim (`IterSteps.of_genSteps`/`of_genDone`
+  are one-liners over them); `IterSteps.pureStep`/`pureDone` are the common
+  case, where the resumption touches only its own frame, and `closed` is
+  the drained object answering `none` forever. Three `Array` facts carry
+  the heap bookkeeping: `Heap.get?_push_size`, `Heap.update_push_size`, and
+  `Heap.update_update` (two writes to one slot are the second write — which
+  is what makes `stepIter`'s enter-`.running`/exit-`.suspended` pair ONE
+  observable change of the object).
+
+* **`EvalsIn` and `EvalsIn.genCall`** — the memo called this
+  `EvalsTo.genCall`, and that name cannot be right: `EvalsTo` is
+  pinned-state by construction and a generator call ALLOCATES. `EvalsIn` is
+  the stateful twin of `EvalsTo` exactly as `CallsIn` is `CallsTo`'s, and
+  `EvalsIn.genCall` says a generator call is a `.ref` at the heap's end
+  whose object is `genObj` — whose stored continuation is `[.block body]`,
+  literally the frame stack every `GenYields` theorem is stated over. That
+  is what makes "a generator is a value with a specification" true with no
+  glue. Note there is no `heapFree` hypothesis and there could not be: a
+  module with a generator def is not heap-free, which is precisely why
+  `EvalsTo.call` cannot serve this position.
+
+* **`execForGen_of_invariant` / `PyStmtTriple.forGen` / `PyTriple.forGen`**
+  — `for x in <generator>` with the same remainder-indexed invariant the
+  value-sequence `for` rule uses; the engine is `execFor_of_invariant` with
+  one `stepIter` in front of each round. Deliberately not an `IterVals`
+  constructor, so VC2.lean's exclusion note stands untouched.
+
+**Two design questions the memo left open, and their answers.**
+
+1. *The heap-stability side condition — L2's recorded remainder — is not
+   needed here, and inventing one would have been wrong.* The loop rule
+   does not assume the body leaves the generator alone: it demands a FRESH
+   `IterSteps` fact at the state each round actually begins in, and the
+   INVARIANT carries the object across the body. A body that clobbers the
+   iterator slot cannot re-establish the invariant; one that leaves it
+   alone re-establishes it for free. A `WritesAvoid`-style frame predicate
+   would have been the special case dressed as a rule. **L2's remainder
+   narrows**: the whole-drain `drainIter` bridge (`sorted(gen)`) still
+   wants one, because a drain has no body in which to re-establish
+   anything.
+
+2. *The lazy half needs no second rule.* The memo budgeted
+   `GenYieldsPrefix` at the consumer level for the `break` case. It is not
+   needed, because **`Inv []` may be `False`**: a consumer that always
+   escapes states an invariant unsatisfiable at the empty remainder, which
+   discharges the exhaustion obligation vacuously and never asks the
+   generator to finish. An infinite generator is consumed by the same rule.
+   Supported, and stated in the file header — but see the remainder below:
+   it is not yet EXERCISED by a theorem.
+
+**The gate** — `Examples/python/gen_lab/proof.lean`, extended:
+
+* `total_calls` — **`total(n) ==> 0 + 1 + ⋯ + (n−1)`, the first arrow-form
+  spec in this repo for a function whose meaning runs through a
+  generator.** Symbolic in `n`, over the shipped `total`. Every L3 object
+  is on its path: the call allocates (`EvalsIn.genCall`), the loop steps
+  (`PyStmtTriple.forGen`), the per-round obligations are `upto_iter` /
+  `upto_iter_done`. `total5_calls` is the `total(5) = 10` differential row
+  as an instance, with two `#guard` non-vacuity pins.
+* Underneath it, `upto` as an OBJECT: `upto_first`, `upto_resume_step`,
+  `upto_first_done`, `upto_resume_done` (machine level, from L2's frame
+  rules) and `upto_iter`/`upto_iter_done` (object level). The worlds a
+  generator loop passes through come out UNIFORM — `w.heap.push (uptoObj n
+  k)` at every round, never a growing tower of `Array.set`s — which is what
+  `Heap.update_push_size` buys and what made the invariant writable.
+
+**What remains of L3, precisely.**
+
+1. *The walker arm* (`classify` → `handleForGen`, the `GenYields`-fact
+   lookup reusing `findCalleeFact`'s ∀-instantiating shape). Not attempted.
+   It is a bigger chunk than the memo priced, and the census says why:
+   `py_vcgen`'s whole call path goes through `EvalsTo.call`, which is
+   gated on `m.heapFree = true` and therefore CANNOT fire in a module with
+   a generator def. `handleForGen` needs its own front half over
+   `EvalsIn.genCall`, not a reuse of `buildCallEvalsTo`'s. The rules above
+   are what it would drive, and they are usable by hand today.
+2. *The `bound_probe` collapse* (the memo's stated gate). Beyond L3 it
+   needs, enumerated: the whole-drain `drainIter` bridge for
+   `sorted((… for m in pos.gen_moves()))` — L2's remainder, still open with
+   its heap-stability condition; generator-internal `break`, which unwinds
+   the frame stack (`genBreak`) and therefore reaches BELOW `GenEmits`'
+   polymorphic prefix, so it needs a loop-frame-level rule; the nested-def
+   GENERATOR closure (`callClosure`'s generator arm — `EvalsIn.genCall` is
+   the module-function arm only); and the ordering line itself, which is
+   L4/L5. It was not a one-landing gate.
+3. *An effectful ASSIGNMENT rule* — `g = upto(n)` as a statement.
+   `EvalsIn.genCall` covers the iterable position of a `for`;
+   `PyStmtTriple.assignName` takes an `EvalsTo` and so cannot bind a
+   generator to a name. This is the one small piece between here and
+   `gen_lab.two_phase`, which is the cheapest theorem that would EXERCISE
+   the lazy half (a `break` abandoning the object, a second loop resuming
+   it) — and exercising that half is the recorded gap in finding 2 above.
+
+**Calibration.** L3 was estimated 1–2 days at MEDIUM-HIGH. The rules and
+the gate took one working session, inside the band; the walker arm was not
+attempted and its price is now measured rather than guessed (item 1). Two
+elaboration traps, both the module literal again and both worth the record:
+a `py_simp` over a statement that is still a PROJECTION (`uptoBump`) rather
+than its pinned literal blows the 200 000-heartbeat budget — rewrite with
+the `_lit` existential inside the `by` first, which is what L2's
+proofs did at the top level and what this one had to do locally; and
+`obtain rfl : k = N` eliminates the THEOREM BINDER `N`, not the local `k`
+(`subst` prefers the right-hand variable), which silently deletes the name
+the rest of the proof is written in.
+
+## L3 TAIL LANDED — the effectful bind, `two_phase`, and the walker arm measured a second time (2026-08-17)
+
+The remainder recorded at the end of §L3 LANDED (core), item by item: **item
+3 is closed, and with it the "lazy half" gap of finding 2**; item 1 (the
+walker arm) is not closed, and what it costs is now measured rather than
+inferred — the first measurement named the smaller of its three blockers.
+Item 2 (the `bound_probe` collapse) was out of scope here and is untouched.
+
+**The effectful bind (item 3).** `PyStmtTriple.assignNameIn` /
+`PyTriple.assignNameIn`, LeanModels/Python/VCGen.lean §L3 "Binding the
+object to a name". `PyStmtTriple.assign`'s conclusion PINS the out-state's
+world to the in-state's, so no instance of it can bind an allocation; the
+twin takes an `EvalsIn` and stores into the world the call produced. Four
+lines of proof — small, exactly as priced. Stated beside the pure rule
+rather than replacing it: every heap-free assignment should keep using the
+pure one.
+
+**`gen_lab.two_phase` (the gap in finding 2).** `two_phase_calls` —
+**`two_phase(n) ==> 1` for every `n ≥ 2`**, symbolically in `n`
+(Examples/python/gen_lab/proof.lean), with `two_phase5_calls` as the
+differential row's instance and a `#guard` non-vacuity pin. It is the first
+theorem in the repo about a generator that is ABANDONED and then RESUMED,
+and it EXERCISES the half §L3's finding 2 recorded as supported-but-untried:
+both loops carry `Inv rest := rest = [k] ∧ st = …`, so `Inv []` is
+`[] = [k] ∧ …` — a `False` that discharges `hexit` vacuously. Neither loop
+ever asks `upto(n)` to finish. That is the same shape an INFINITE generator
+would be consumed in, which is what makes the claim in VCGen.lean's section
+header a demonstrated one rather than a design intention.
+
+Two of the three claims gen_lab's own docstring names stop being rows
+because of it: **`break` SUSPENDS**, and **a generator is heap IDENTITY** —
+the second loop's `hiter` observes the SAME address in configuration 1
+(`.suspended`, `uptoResume`), which is exactly why `b = 1` and not `0`. The
+old note said identity would stay a `#py_check` row because promoting a
+CONCRETE run costs a checked kernel reduction this interpreter cannot
+afford; that measurement still holds, and the symbolic route sidesteps it
+rather than contradicting it.
+
+Cost: one session, no surprises. The two elaboration traps §L3 recorded were
+both avoided by following the record — project-and-pin every statement
+literal before any `py_simp`, and never `obtain rfl` against a pattern whose
+right-hand side is a theorem binder. First time that entry paid for itself.
+
+**The walker arm (item 1): three blockers, not one.** §L3 recorded the
+first. Probing `py_vcgen [gen_lab]` on `total(5) ==> 10` — a two-line
+scratch file, not a guess — surfaced the other two, and they change the
+shape of the work.
+
+1. *(recorded)* `py_vcgen`'s call path is `EvalsTo.call`, gated on
+   `m.heapFree = true`, which cannot hold in a module with a generator def.
+   `handleForGen` needs its own front half over `EvalsIn.genCall`.
+2. *(new, measured)* **`handleFor`'s FIRST step cannot see a generator at
+   all.** It reads the element list by symbolically executing the iterable
+   (`captureRun (evalExpr m fuelK tg.E iterE)`, VCTactic.lean:2719), and
+   `callIn` is a FROZEN recursion point — `py_simp` does not unfold it, so
+   `evalExpr` over `upto(n)` never reduces. The probe stops at
+   "the iterable did not evaluate at the loop's entry state" and prints the
+   whole 271 KB module literal saying so. A generator `for` therefore has to
+   be recognised SYNTACTICALLY — callee resolves in the function table with
+   `isGenerator := true` — BEFORE any captured run, i.e. in the classify
+   step, not inside `handleFor`. That is a different control shape from
+   every arm the walker has.
+3. *(new, structural)* **The walker's invariant language has no world in
+   it.** `EnvShape` (VCTactic.lean:967) carries ONE `world` expression, and
+   every invariant `handleFor`/`handleWhile` build is
+   `∃ slots tl, env = ⟨shape.world, …⟩ ∧ invU rest slots ∧ tailFacts`
+   (VCTactic.lean:2859–2886, and the same shape at 2547 for `while`): the
+   world is a CONSTANT of the loop and only locals vary. A generator loop's
+   invariant cannot be written there — the
+   object's configuration lives in the WORLD (`uptoWorld w n k`, one
+   `Heap.push` rewritten per round), so the world must become an indexed
+   slot exactly as the `RVal.int` env slots are. That reaches `EnvShape`,
+   `parseEnvShape`, `mkEnvExpr`, `normalizePre`, `destructInvHyp` and all
+   four obligation dischargers. It is an extension of the walker's invariant
+   GRAMMAR, not an arm bolted beside `handleFor`.
+
+What DID land on the walker is blocker 2's front edge — the syntactic
+recognition, which is the half of `classify` that does not need the
+invariant grammar. `isGeneratorCall` (VCTactic.lean, beside
+`calleeInModule`) decides "generator?" from the function table without
+running anything, and the three shapes a generator reaches the walker in now
+each refuse with the rule that DOES apply:
+
+| shape | before | now |
+| --- | --- | --- |
+| `for x in upto(n)` | stuck run + the whole 271 KB module literal | names `PyStmtTriple.forGen` and why the walker cannot drive it |
+| `for x in g` (name bound to the object) | "…need `PyStmtTriple.forLoop` by hand" — a rule that cannot take a generator | same generator refusal, via a heap-object check on the `.ref` |
+| `g = upto(n)` | "no `CallsTo` fact for callee `upto` — bring a hypothesis into scope" | says a generator HAS no `CallsTo` and cannot get one, and names `EvalsIn.genCall` / `PyStmtTriple.assignNameIn` |
+
+The third was the worst of them: it sent the reader after a lemma that
+cannot be written. A loud refusal is the documentation a user meets, and a
+wrong pointer in one is worse than none.
+
+**Re-priced.** The walker arm is **1.5–3 days at MEDIUM** (world-indexed
+invariants, the `EvalsIn.genCall` front half, an `IterSteps`-fact lookup on
+`findCalleeFact`'s shape) — up from the memo's 1–2 at MEDIUM-HIGH, and the
+increase is entirely blocker 3. It is worth doing when a THIRD generator
+consumer is wanted; the rules are usable by hand today at roughly 120 lines
+per function (`total_calls`, `two_phase_calls`), and both of those were
+written inside one session each.

@@ -20,12 +20,21 @@ Both halves of that equality already exist and are already CPython-checked:
 What this file adds is the statement itself, `GenMovesEqRef`, plus the
 run-and-drain shape it is stated over. It is a `Prop`-valued definition,
 NOT a `sorry`ed theorem: the repo never lands a `sorry`, and a definition
-records the claim exactly while leaving "proved" unclaimed. When the proof
-lands, `theorem gen_moves_eq_ref : GenMovesEqRef` is the one line to add,
-and nothing about the statement moves.
+records the claim exactly while leaving "proved" unclaimed.
 
-**What the proof still needs** (the honest gap, so the next session starts
-from a plan rather than from a blank page):
+**STATE (2026-08-19).** Notes 1-3 below are landed (§L4/§L5, genmoves_ray.lean
+and genmoves_scan.lean); note 4 was NOT true of the code, which made the
+statement false on long boards, and the owner's repair — `drain` takes `F` —
+is now in `drain` below, the ONLY change this statement has ever taken.
+`Examples/python/sunfish/genmoves_drain.lean` proves the repaired statement
+from two ground facts about `initWorld sunfish`
+(`gen_moves_eq_ref_of_dirs`), and measures what those two cost the kernel;
+`theorem gen_moves_eq_ref : GenMovesEqRef` is that theorem applied to two
+`rfl`s, and it is the module INITIALIZER, not the generator, that has not
+paid for them yet.
+
+**What the proof needed** (the gap as it was written, kept because the plan
+it names is what got followed):
 
 1. **Ray agreement.** The model's generator, resumed inside one
    `for j in count(i + d, d)` ray, yields exactly `Ref.ray`'s list and then
@@ -66,25 +75,37 @@ def posOf (b : String) (score : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) :
     #[.str b, .int score, .tuple #[.bool wc0, .bool wc1],
       .tuple #[.bool bc0, .bool bc1], .int ep, .int kp]
 
-/-- Drain a generator object to exhaustion, collecting the `Move` fields.
-`none` is "the drain did not decide" — a step that refused, timed out, or
-yielded something that is not a `Move` — so a short list can never be
-mistaken for a finished one (`pins_genmoves.lean`'s private twin, public
-here because the statement quantifies over it). -/
-def drain (w : World) (a : Addr) : Nat → Option (List (Int × Int × String))
+/-- Drain a generator object to exhaustion at fuel `F`, collecting the
+`Move` fields. `none` is "the drain did not decide" — a step that refused,
+timed out, or yielded something that is not a `Move` — so a short list can
+never be mistaken for a finished one (`pins_genmoves.lean`'s private twin,
+public here because the statement quantifies over it).
+
+**The fuel is a parameter, and that is the repair** (owner-decided,
+2026-08-19). The frozen text ran every step at the CONSTANT `16384` while
+the statement quantifies over an arbitrary board, which made the statement
+false as written: on a board long enough that one step cannot cross it —
+twenty thousand `'.'`, genmoves_scan.lean's counterexample — the reference
+answers `.ok []`, the single `stepIter` times out, and the equality fails
+at every `F`. Note 4 above always said `genMovesOf` "runs at a single fuel
+`F` for both the call and the drain"; passing `F` here is that sentence,
+finally in the code. -/
+def drain (F : Nat) (w : World) (a : Addr) :
+    Nat → Option (List (Int × Int × String))
   | 0 => Option.none
   | n + 1 =>
-    match stepIter sunfish 16384 w a with
+    match stepIter sunfish F w a with
     | .ok w' (some (.ntuple _ _ #[.int i, .int j, .str p])) =>
-      (drain w' a n).map ((i, j, p) :: ·)
+      (drain F w' a n).map ((i, j, p) :: ·)
     | .ok _ Option.none => some []
     | _ => Option.none
 
 /-- The MODEL's answer: call `Position.gen_moves` on the shipped file at
-fuel `F` and drain the generator it returns. -/
+fuel `F` and drain the generator it returns — one `F` for the call, for
+every step of the drain, and for the number of steps the drain may take. -/
 def genMovesOf (F : Nat) (p : RVal) : Option (List (Int × Int × String)) :=
   match callIn sunfish F (initWorld sunfish) "Position.gen_moves" #[p] with
-  | .ok w (.ref a) => drain w a F
+  | .ok w (.ref a) => drain F w a F
   | _ => Option.none
 
 /-- The REFERENCE's answer in the same shape. -/

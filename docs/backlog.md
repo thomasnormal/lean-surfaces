@@ -7735,3 +7735,108 @@ Two things this measurement is worth beyond the refutation:
    line.* `{ w with heap := f\n      (arg) }` parses as `expected '}'`; the
    continuation must be indented past the FIELD NAME. Two occurrences, both
    silent until the error appeared three declarations later.
+
+## L10 — THE TIER IS ON MASTER, and the frozen statement takes its one repair (2026-08-19)
+
+### The stack landed
+
+`L2`–`L9` were eight stacked PRs, each based on the one below it. They are
+merged into `master` in stack order (each retargeted to `master` after its
+parent landed, so every diff shrank to its own commits before merging):
+
+| PR | branch | merge commit |
+|----|--------|--------------|
+| #1 | `l2-generator-tier` | `de14906` |
+| #2 | `l3-generator-tier` | `4a56967` |
+| #3 | `l4-generator-tier` | `7da324c` |
+| #4 | `l5-generator-tier` | `3f8c4f8` |
+| #5 | `l6-drain-bridge`   | `065d763` |
+| #6 | `l7-payload-blind`  | `00fda6b` |
+| #7 | `l8-constructs`     | `256ce8f` |
+| #8 | `l9-bound-probe`    | `7b1c2cb` |
+
+The merges are content-free: `master`'s tree after #8 is byte-identical to
+`l9-bound-probe`'s (`a018dc7`), which is what a linear stack of merge commits
+should produce and is worth checking rather than assuming.
+
+**The triad on merged master, run once and cold** (the stack was green PR by
+PR; this is the first time one tree carries all of it): `lake build` 3673 jobs
+green; `diff_test` 1288 cases, 0 failed, 115 whitelisted-unsupported, 1173
+matched; `docs_check` 70 marked blocks, 70 ok, 15 illustrative-exempt;
+`script_corpus` green. The two expensive pins re-elaborated from scratch
+(`pins_clock` 1731 s, `genmoves_ray` 536 s), so a cold triad on this tree is
+about an hour.
+
+### The fuel repair, and what it closes
+
+`GenMovesEqRef` was frozen with a defect §L5 measured and §L6 recorded: its
+`drain` ran every `stepIter` at the constant fuel `16384` while the statement
+quantified over an arbitrary board, so a board no single step can cross made
+it false at every `F`. The owner ruled the repair — `drain` takes `F`, which
+is what the statement's own note 4 always said `genMovesOf` does — and it is
+made, in `genmoves_theorem.lean`, as the only change that statement has ever
+taken.
+
+Landed with it (`genmoves_drain.lean`):
+
+* `drain_succ` / `drain_move` / `drain_done` — the drain's unfolding, stated
+  by hand (see finding 1) and its two step forms;
+* `drain_of_drainIter` — **the transport**: the statement's `Option`-valued
+  `Move` drain IS `drainIter`, projected. Induction on the drain's fuel, with
+  `stepIter_mono` absorbing the difference between the statement's single `F`
+  and `drainIter`'s decreasing one;
+* `gen_moves_eq_ref_of_dirs` — **the repaired flagship**, from two
+  hypotheses: `initWorld sunfish` binds `directions` to `.ref 63` and slot 63
+  holds `dirsObj`. Axioms `propext`/`Classical.choice`/`Quot.sound`.
+
+### The last inch is the module INITIALIZER, and it is measured
+
+`theorem gen_moves_eq_ref : GenMovesEqRef` is `gen_moves_eq_ref_of_dirs`
+applied to two `rfl`s, and those two `rfl`s do not typecheck here. The facts
+are ground and TRUE — `#eval` gives `(initWorld sunfish).heap.size = 66`,
+`Env.lookup … "directions" = some (.ref 63)` and the `dirsObj` test `true`,
+in well under a second — but `initWorld` RUNS the module (the `pst` pipeline:
+six pieces x 120 squares through a dict-items loop, a rebound lambda, three
+lowered genexps), and by kernel reduction that did not finish: at the
+defaults `rfl` reports `maximum recursion depth` and then a `whnf` heartbeat
+timeout; at `maxRecDepth 1000000` + `maxHeartbeats 0` the elaborator was
+OOM-killed after about seven minutes on a 16 GB machine.
+
+So the honest state of the generator tier is: `gen_moves` is proved against
+the reference on an arbitrary board through the real interpreter with ZERO
+hypotheses about the generator, and the flagship's remaining two hypotheses
+are about module INITIALIZATION. Two routes, neither in this tier:
+
+1. **A module-init calculus** — step `initFoldLive` symbolically, a loop
+   invariant for the `pst` pipeline plus a locality argument that nothing
+   after the `directions` assignment writes slot 63. This is H1's machinery
+   pointed at module init, and it is the general fix: every future statement
+   about the shipped program's STARTING WORLD needs it, not just this one.
+2. **A pinned-literal chain** — §L8 finding 2's `project+pin` recipe, one
+   top-level statement at a time, each intermediate world printed as a
+   literal and re-entered by `rfl`. Bounded per step; the literals are large
+   (the `pst` tables alone are 720 integers).
+
+### Findings worth carrying
+
+1. *An ARRAY-LITERAL pattern costs you the equational theorems.* `drain`
+   matches `#[.int i, .int j, .str p]`; Lean's equation generator goes through
+   `Array.getLit` under a sparse-cases motive and fails outright ("failed to
+   generate equational theorem for `drain`"), which takes out `rw [drain]`,
+   `simp [drain]` and `unfold drain` together. The fix is the one `Ref.ray`
+   already uses next door: state the unfolding yourself and prove it `rfl`
+   (`drain_succ`), then never mention the definition again. Reduction on a
+   CONCRETE scrutinee is fine — only the general splitter fails.
+2. *A `#guard` is a compiled check, and the gap to a proof can be a whole
+   tier.* Two `#guard`s have sat next to the flagship since §L5 saying exactly
+   what its last two hypotheses need. They are not proofs, and the distance
+   between them and `rfl` here is not a tactic — it is 1 or 2 above. Where a
+   `#guard` stands in for a fact a THEOREM needs, say so at the theorem.
+3. *OPS — do not kill build processes by pattern.* `pkill -f "lake build"`
+   during this pass killed two other lanes' builds on the same box along with
+   this lane's (both restarted, no corruption: lake writes its trace only on
+   success, so an interrupted module is simply rebuilt). Select by PID or by
+   parentage. The companion rule, recorded again because it was violated
+   again: never edit sources under an in-flight build — the run that was
+   verifying merged master had to be discarded and restarted.
+

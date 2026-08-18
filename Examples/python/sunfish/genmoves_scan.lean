@@ -1134,22 +1134,23 @@ Peeling the frame-level `GenYields` is what the bridge does
 (`GenYields.uncons`), and it does not avoid the property: the per-yield facts
 come out at FRAME-level worlds, which is precisely the mismatch.
 
-**2. `GenMovesEqRef` as written is FALSE, and the counterexample is
-one line.** `drain` runs every step at a CONSTANT fuel — `stepIter sunfish
-16384 w a` — while the statement quantifies over an arbitrary board. Take
-`b` to be twenty thousand `'.'` characters: the reference answers `.ok []`
-(no square holds one of ours), so the hypothesis is satisfied, but one
-`stepIter` has to cross every square before the scan can report
-exhaustion, and `execGen` charges a fuel unit per frame step — so the
-single step times out, `drain` answers `none`, and the equality fails at
-EVERY `F`. Nothing about the proof effort hides this: the statement is
-unprovable because it is untrue.
+**2. `GenMovesEqRef` as written was FALSE — REPAIRED (2026-08-19), and the
+counterexample is worth keeping.** `drain` ran every step at a CONSTANT
+fuel — `stepIter sunfish 16384 w a` — while the statement quantifies over an
+arbitrary board. Take `b` to be twenty thousand `'.'` characters: the
+reference answers `.ok []` (no square holds one of ours), so the hypothesis
+is satisfied, but one `stepIter` has to cross every square before the scan
+can report exhaustion, and `execGen` charges a fuel unit per frame step — so
+the single step times out, `drain` answers `none`, and the equality fails at
+EVERY `F`. Nothing about the proof effort hid this: the statement was
+unprovable because it was untrue.
 
-The repair is one line and it is the statement's own stated intent —
+The repair was one line and it was the statement's own stated intent —
 `genmoves_theorem.lean`'s note 4 says "`genMovesOf` runs at a single fuel
-`F` for both the call and the drain", which the code does not do: `drain`
-would take `F` and pass it to `stepIter`. It is NOT made here, because the
-statement is owner-decided (docs/backlog.md §H4) and a landing that cannot
-also prove the repaired form should not be the one to edit it. -/
+`F` for both the call and the drain", which the code did not do. The owner
+ruled it, `drain` now takes `F` and passes it to `stepIter`, and the
+repaired statement is proved from two ground facts about `initWorld sunfish`
+in genmoves_drain.lean (`gen_moves_eq_ref_of_dirs`) — the two this file
+`#guard`s above. What those two still cost the KERNEL is measured there. -/
 
 end Examples.python.sunfish.genmoves_scan

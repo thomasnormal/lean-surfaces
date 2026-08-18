@@ -394,3 +394,36 @@ than a heroic push, and no `sorry` reaches master. The two findings this
 memo is built on — the `Except`-bind primitive and the unprovable-looking-
 right `.error` refutation — both came out of exactly that discipline, and
 both are why L4's estimate is a band rather than a number.
+
+---
+
+## COMPLETION NOTE (2026-08-19) — appended, nothing above is edited
+
+The memo's L1–L5 all landed (docs/backlog.md §L2–§L9 for what each cost
+against what this memo priced; the 9–17 working days came in at about two).
+The whole tier is on `master` as of §L10, and three of this memo's estimates
+are worth reading against the outcome:
+
+* **L4 was the band that could double, and did not** — it came in inside the
+  band, but for a reason the memo could not have known: the ray is a `forGen`
+  frame over a `count` OBJECT, not a `countFrom` frame, so the L1 bridge the
+  memo planned to reuse was reused somewhere else entirely.
+* **L5's gate said `theorem gen_moves_eq_ref : GenMovesEqRef`, "the flagship,
+  said loudly."** It is landed as `gen_moves_eq_ref_of_dirs`
+  (`Examples/python/sunfish/genmoves_drain.lean`), with the owner's one-line
+  fuel repair to the frozen statement (the statement was FALSE as written —
+  a constant drain fuel against an arbitrary board) and two ground
+  hypotheses about `initWorld sunfish` that the compiled evaluator confirms
+  and the kernel cannot yet afford. The remaining work is a MODULE-INIT
+  calculus, which this memo never scoped because it planned around the
+  generator, not around the starting world.
+* **What the memo got most right** was the ordering constraint. L1 ∥ (L2 → L3)
+  → L4 → L5 held exactly, and every landing that opened beyond its band got a
+  recorded decomposition instead of a heroic push — §L6's PayloadBlind price
+  (quoted at ClockErase scale) was re-measured at a third of it in §L7 because
+  the perturbation turned out to be a function.
+
+Two pieces of scope the memo did not have, both now landed: `PayloadBlind`
+(§L7 — the interpreter cannot observe a running generator's payload, 18/18
+arms) and the `bound_probe` constructs (§L8/§L9). Both were discovered by
+building the gate, not by re-reading a plan.

@@ -1367,6 +1367,162 @@ theorem PyTriple.forGen {m : Module} {α : Type} {target iter : Expr}
     PyTriple m P [.forStmt target iter body #[] sp] Q :=
   PyTriple.single (PyStmtTriple.forGen elt Inv as hgenfree hiter hexit hstep)
 
+/-! ## L4: the RAY — `for j in count(i + d, d)` inside a generator
+
+Landing **L4** of docs/generator-tier-architecture.md §4, and the first
+thing to say is that the memo mis-addressed it. It priced L4 as "the
+`countFrom`-frame prefix spec for one ray", and
+`Examples/python/sunfish/genmoves_theorem.lean` said the suspended stack
+inside a ray was `block … :: countFrom j d :: … :: enumSeq <board> :: []`.
+**Measured, it is not.** A suspended `gen_moves` mid-ray carries
+
+```
+[block …, forGen a₁, block [], forSeq <directions[p]>, block [], forGen a₂, block []]
+```
+
+where `a₁` holds `.generator "<count>" [] [.countFrom j d] .suspended` and
+`a₂` holds `.generator "<enumerate>" [] [.enumSeq i <board>] .suspended`.
+`count(…)` and `enumerate(…)` are CALLS: they allocate their own generator
+OBJECT (Semantics.lean, the `count`/`enumerate` builtin arms) and the
+consuming `for` pushes a **`forGen`** frame at it (`execGen`'s `.forHere`
+arm dispatches on the heap object; only a VALUE sequence —
+`.listV`/`.tuple`/`.ntuple`/`.str`/`.rangeV` — becomes a `forSeq`, and a
+`.ref` to a heap LIST becomes a `forList`). A `countFrom` frame never appears in
+`gen_moves`' own stack — it is the ray's *inner object's* whole
+continuation, one `stepIter` below.
+
+So `genYieldsPrefix_countFrom` above is not the ray rule; it is the fact
+the ray rule consumes through the object bridge. What the ray needs is
+three things this section adds:
+
+* **`iterSteps_countFrom`** — one step of a `<count>` OBJECT, so the ray's
+  `j` arrives as an `IterSteps` fact;
+* **generator-internal `break`** — `genSilent_delegateBreak` and
+  `GenEmits.blockBreak`. `GenEmits.blockDelegate` above records why this
+  could not live at its altitude ("put the enclosing loop frame inside
+  `pre` and use the loop rules instead") and that is exactly what these
+  do: the loop frame is IN the prefix, so `genBreak` lands at the free
+  continuation and the rule stays frame-polymorphic. This is the piece
+  §L3's remainder named as blocking `bound_probe`'s collapse;
+* **the `forGen` loop at `GenEmits` altitude** — `forGenRound` (the body
+  fell through, the loop goes again), `forGenBreak` (the body broke, and
+  the body's own `GenEmits` consumed the loop frame with it) and
+  `forGenDone` (the inner generator was exhausted). The ray uses
+  `Round`/`Break`: `count` never exhausts, so `forGenDone` is unreachable
+  on it and is here for the finite inner generators (`gen_lab.evens`). -/
+
+/-- The heap object `count(cur, step)` allocates, verbatim as the `count`
+builtin arm builds it — the ray's inner generator. -/
+def countObj (cur step : Int) : Obj :=
+  .generator "<count>" [] [.countFrom cur step] .suspended
+
+/-- A live slot can always be written: `Heap.update` and `Heap.get?` share
+one bounds check. -/
+theorem Heap.update_of_get? {h : Heap} {a : Addr} {o : Obj} (o' : Obj)
+    (hobj : Heap.get? h a = some o) : ∃ h', Heap.update h a o' = some h' := by
+  rw [Heap.get?] at hobj
+  split at hobj
+  · next hlt => exact ⟨_, by rw [Heap.update, dif_pos hlt]⟩
+  · next => simp at hobj
+
+/-- **One step of a `count` object**: it hands over `cur` and advances to
+`cur + step`, forever. The `.running`/`.suspended` pair collapses
+(`IterSteps.pureStep`) because a `countFrom` frame touches nothing but
+itself, so the ray's world moves by exactly ONE slot write per round. -/
+theorem iterSteps_countFrom {m : Module} {w : World} {a : Addr}
+    {cur step : Int} {h₂ : Heap}
+    (hobj : Heap.get? w.heap a = some (countObj cur step))
+    (hback : Heap.update w.heap a (countObj (cur + step) step) = some h₂) :
+    IterSteps m w a (some (.int cur)) { w with heap := h₂ } := by
+  obtain ⟨h₁, hrun⟩ :=
+    Heap.update_of_get? (.generator "<count>" [] [.countFrom cur step] .running) hobj
+  exact IterSteps.pureStep hobj (Or.inr rfl) hrun genSteps_countFrom hback
+
+/-- **Generator-internal `break`**, as a silent transition. The statement
+is yield-free, so `execGen` DELEGATES it and routes the `.brk` flow through
+`genBreak`, which drops the pending blocks and the enclosing loop frame.
+`hbrk` is what keeps this frame-polymorphic: `pre` must contain the loop
+frame being broken out of, and then the unwind lands at the free `k` — at
+every concrete `pre` (`[.forGen …]`, `[.block ss, .forGen …]`, …) it closes
+by `rfl`, uniformly in `k`. -/
+theorem genSilent_delegateBreak {m : Module} {s : Stmt} {ss : List Stmt}
+    {pre k : GenCont} {st st₁ : FrameState} (hplan : genPlan s = .delegate)
+    (hbrk : genBreak (pre ++ k) = some k)
+    (hrun : ∃ t, ∀ F ≥ t, execStmt m F st s = .ok st₁ .brk) :
+    GenSilent m st (.block (s :: ss) :: (pre ++ k)) st₁ k := by
+  obtain ⟨t, ht⟩ := hrun
+  refine ⟨1, t, fun F hF => ?_⟩
+  rw [execGen]
+  simp only [hplan, ht F hF, Run.ok_bind, hbrk]
+
+/-- **`break` at `GenEmits` altitude**: the statement and everything down
+to and including the enclosing loop frame are consumed, and nothing is
+emitted. -/
+theorem GenEmits.blockBreak {m : Module} {s : Stmt} {ss : List Stmt}
+    {pre : GenCont} {st st₁ : FrameState} (hplan : genPlan s = .delegate)
+    (hbrk : ∀ k, genBreak (pre ++ k) = some k)
+    (hrun : ∃ t, ∀ F ≥ t, execStmt m F st s = .ok st₁ .brk) :
+    GenEmits m st (.block (s :: ss) :: pre) [] st₁ :=
+  fun k _ _ hk => GenYields.silent (genSilent_delegateBreak hplan (hbrk k) hrun) hk
+
+/-- **Generator-internal `continue`**: the pending blocks go, the loop
+frame STAYS (re-entering it takes the next element). `gen_lab.evens` is the
+shape. -/
+theorem genSilent_delegateContinue {m : Module} {s : Stmt} {ss : List Stmt}
+    {pre pre₁ k : GenCont} {st st₁ : FrameState} (hplan : genPlan s = .delegate)
+    (hcont : genContinue (pre ++ k) = some (pre₁ ++ k))
+    (hrun : ∃ t, ∀ F ≥ t, execStmt m F st s = .ok st₁ .cont) :
+    GenSilent m st (.block (s :: ss) :: (pre ++ k)) st₁ (pre₁ ++ k) := by
+  obtain ⟨t, ht⟩ := hrun
+  refine ⟨1, t, fun F hF => ?_⟩
+  rw [execGen]
+  simp only [hplan, ht F hF, Run.ok_bind, hcont]
+
+/-- **One round of a generator's `for x in <generator>` whose body FALLS
+THROUGH**: the inner object yields `v`, the target binds it, the body emits
+`ws`, and the loop frame is still there for the rest. `GenEmits.forSeq`'s
+proof shape with a `stepIter` in front — but the loop cannot be packaged as
+one induction here, because an infinite inner generator has no remainder
+list to induct on: the ray's rounds are chained by the CALLER, and `hrest`
+is where its own induction (or its `break`) goes. -/
+theorem GenEmits.forGenRound {m : Module} {target : Expr} {body : List Stmt}
+    {a : Addr} {st st₂ st₃ : FrameState} {w' : World} {env₁ : REnv} {v : RVal}
+    {ws ws' : List RVal}
+    (hiter : IterSteps m st.world a (some v) w')
+    (hasg : assignToH w'.heap st.locals target v = .ok env₁)
+    (hbody : GenEmits m ⟨w', env₁⟩ [.block body] ws st₂)
+    (hrest : GenEmits m st₂ [.forGen target a body] ws' st₃) :
+    GenEmits m st [.forGen target a body] (ws ++ ws') st₃ :=
+  GenEmits.silent (pre := [GenFrame.forGen target a body])
+    (pre₁ := [GenFrame.block body, GenFrame.forGen target a body])
+    (fun k => by simpa using genSilent_forGenCons (k := k) hiter hasg)
+    (GenEmits.trans hbody hrest)
+
+/-- **The round that BREAKS** — how a ray ends. The body's own emission
+consumes `[.block body, .forGen …]`: `break` unwinds past the loop frame,
+so the body and the loop leave together. -/
+theorem GenEmits.forGenBreak {m : Module} {target : Expr} {body : List Stmt}
+    {a : Addr} {st st₂ : FrameState} {w' : World} {env₁ : REnv} {v : RVal}
+    {ws : List RVal}
+    (hiter : IterSteps m st.world a (some v) w')
+    (hasg : assignToH w'.heap st.locals target v = .ok env₁)
+    (hbody : GenEmits m ⟨w', env₁⟩ [.block body, .forGen target a body] ws st₂) :
+    GenEmits m st [.forGen target a body] ws st₂ :=
+  GenEmits.silent (pre := [GenFrame.forGen target a body])
+    (pre₁ := [GenFrame.block body, GenFrame.forGen target a body])
+    (fun k => by simpa using genSilent_forGenCons (k := k) hiter hasg)
+    hbody
+
+/-- The inner generator is EXHAUSTED: the loop frame pops, emitting
+nothing. Unreachable on a `count` object; the finite arm of the rule. -/
+theorem GenEmits.forGenDone {m : Module} {target : Expr} {body : List Stmt}
+    {a : Addr} {st : FrameState} {w' : World}
+    (hiter : IterSteps m st.world a Option.none w') :
+    GenEmits m st [.forGen target a body] [] ⟨w', st.locals⟩ :=
+  GenEmits.silent (pre := [GenFrame.forGen target a body]) (pre₁ := ([] : GenCont))
+    (fun _ => by simpa using genSilent_forGenDone (target := target) (body := body) hiter)
+    GenEmits.nil
+
 /-! ## Smoke tests
 
 Two ends of the calculus on hand-built frame stacks over an EMPTY module
@@ -1407,6 +1563,12 @@ example : GenYields m0 st0
 example : GenYieldsPrefix m0 st0 [.countFrom 5 3]
     [.int 5, .int 8, .int 11, .int 14] st0 [.countFrom 17 3] :=
   genYieldsPrefix_countFrom 4 5 3
+
+/-- L4: the same frame seen from OUTSIDE, as the ray meets it — a `count`
+OBJECT on the heap, stepped by the `forGen` frame above it. -/
+example : IterSteps m0 ⟨#[countObj 5 3], [], [], []⟩ 0 (some (.int 5))
+    ⟨#[countObj 8 3], [], [], []⟩ :=
+  iterSteps_countFrom (by rfl) (by rfl)
 
 end GenSmokeTest
 

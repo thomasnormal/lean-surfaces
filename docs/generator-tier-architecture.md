@@ -1,7 +1,9 @@
 # The generator tier as a VERIFIED object — design memo
 
 Status: **L1, L2 LANDED; L3 LANDED except its walker arm (rules, both
-consumer theorems, the effectful bind); L4-L5 owner-gated.** Written
+consumer theorems, the effectful bind); L4 PARTIAL (its rules and the
+ray's first agreement leaf — and it REFUTED §4's framing of L4, see
+below); L5 owner-gated.** Written
 2026-08-16 after the ray leg of the
 `gen_moves` theorem stopped on tooling rather than on effort
 (docs/backlog.md §the ray leg, factored). It exists so that a "go" starts
@@ -21,14 +23,20 @@ prices in docs/backlog.md §L3 LANDED (core) and §L3 TAIL LANDED — the
 walker arm has THREE blockers, not the one the first census found, and the
 biggest is that the walker's invariant grammar pins a single world. All
 landings, their measurements, and their recorded remainders are in
-docs/backlog.md §L1 LANDED / §L2 LANDED / §L3 LANDED / §L3 TAIL LANDED.
+docs/backlog.md §L1 LANDED / §L2 LANDED / §L3 LANDED / §L3 TAIL LANDED /
+§L4 PARTIAL.
 Everything BELOW is the original design text, unedited — the estimates are
 what they were before the work, which is what makes the calibration notes
-in the backlog meaningful. Two of §2's predictions were revised by contact
+in the backlog meaningful. THREE of its predictions were revised by contact
 with the code and the backlog says how: `EvalsTo.genCall` had to become
 `EvalsIn.genCall` (a call that allocates cannot be a pinned-state fact),
-and the consumer-level `GenYieldsPrefix` turned out unnecessary
-(`Inv [] = False` is the break case).
+the consumer-level `GenYieldsPrefix` turned out unnecessary
+(`Inv [] = False` is the break case), and — the biggest —
+**§4's L4 is mis-addressed: the ray is a `forGen` frame over a heap
+`<count>` OBJECT, not a `countFrom` frame**, because `count(…)` is a call
+that allocates its own generator. Measured on the shipped AST, not
+recalled; docs/backlog.md §L4 PARTIAL prints the stack. `enumerate(…)`
+behaves the same way, so L5's board leg inherits the correction.
 
 Everything below is censused against the tree at `31ff3fb`, not recalled.
 

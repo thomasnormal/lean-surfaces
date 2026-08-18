@@ -271,7 +271,7 @@ future ray-agreement proof consumes each time it reads a square. -/
 open Ref in
 /-- Inversion of a successful reference read: it took the in-range arm, and
 the character came out of the character list at the folded index. -/
-private theorem at?_ok_inv (l : List Char) (j : Int) (c : Char)
+theorem at?_ok_inv (l : List Char) (j : Int) (c : Char)
     (h : at? l j = .ok c) :
     ∃ k : Int, (if j < 0 then j + (l.length : Int) else j) = k ∧
       0 ≤ k ∧ k < (l.length : Int) ∧ l[k.toNat]? = some c := by
@@ -309,40 +309,234 @@ holds a piece (CPython's `initial[91] == "R"`). -/
         | .ok c => [c]
         | _ => []) == ['R']
 
-/-! ### Ray AGREEMENT — measured, and blocked on tooling, not on effort
+/-! ### Ray AGREEMENT (L4) — the ray, taken apart against the SHIPPED AST
 
-With the budget lemma in hand the next step was the other half of the ray
-leg: the model's generator, resumed inside one
-`for j in count(i + d, d)`, yields exactly `Ref.ray`'s list. It does not
-land here, and the reason is worth more than another attempt.
+Landing **L4** of docs/generator-tier-architecture.md, and the first thing
+it did was correct the memo and the note that used to stand here. That note
+said a suspended `gen_moves` inside a ray carries
+`block … :: countFrom j d :: block … :: forSeq <directions[p]> :: enumSeq
+<board> :: []`. **Measured, it does not.** Stepping the shipped generator
+twice and printing the heap gives
 
-**Stating it is fine.** A suspended `gen_moves` is a `GenCont`, a STACK of
-`GenFrame`s (Runtime.lean), and inside a ray that stack is concrete in
-shape: `block <rest of the ray body> :: countFrom j d :: block … ::
-forSeq <directions[p]> … :: enumSeq <the board> :: []`. "Resume until the
-`countFrom` frame is popped" is expressible against that.
+```
+[66] gen Position.gen_moves
+       [block, forGen a₁, block, forSeq(3), block, forGen a₂, block]
+[67] gen <enumerate> [enumSeq(82, …)]
+[68] gen <count>     [countFrom(61, -10)]
+```
 
-**Proving it needs a symbolic-execution calculus for the GENERATOR tier,
-which does not exist.** The statement quantifies over an arbitrary board,
-so every `self.board[j]` is a subscript on a SYMBOLIC 120-character
-string and every guard (`q in " \nPNBRQK"`, `p == "P"`, `A8 <= j <= H8`)
-is a comparison on a symbolic character. Nothing reduces; the proof would
-have to case-split the interpreter by hand at every step. That is exactly
-the work `py_vcgen` does for the heap-free fragment — and the walker has
-no generator case, layer 2 has no triple over `stepIter`/`execGen`, and
-the only generator-level lemmas in the repo are `stepIter_mono` and the
-clock-erasure one. Checked, not assumed.
+`count(…)` and `enumerate(…)` are CALLS that ALLOCATE their own generator
+object, and the consuming `for` pushes a **`forGen`** frame pointed at it.
+A `countFrom` frame is never in `gen_moves`' own stack; it is the ray's
+inner object's entire continuation, one `stepIter` below. So L2's
+`genYieldsPrefix_countFrom` is not the ray rule — it is what the ray rule
+consumes through the object bridge, and the rules the ray actually needs
+(`iterSteps_countFrom`, `genSilent_delegateBreak`/`GenEmits.blockBreak`,
+`GenEmits.forGenRound`/`forGenBreak`/`forGenDone`) are LeanModels/Python/
+VCGen.lean §L4.
 
-So the flagship's remaining distance is a TOOLING distance, and it is
-bigger than the leg it blocks: a `PyGenTriple` layer over `execGen` (yield
-sites as postcondition arms, the frame stack as the state), a walker case
-that consumes it, and symbolic string/char reasoning for the guards.
-Recorded rather than started, and deliberately not attempted piecemeal:
-the same wall stands in front of the square-agreement and board-scan legs,
-because both also quantify over an arbitrary board.
+What lands here is the ray's FIRST LEAF, over an arbitrary board: the
+square is blocked, so the model emits nothing and leaves the ray, and
+`Ref.ray` says `[]`. It is one leaf of nine and it is stated in the shape
+the whole ray will have (`ms.map moveVal`, so nothing about the statement
+moves when the other leaves arrive) — docs/backlog.md §L4 prices them. -/
 
-What IS closed by this file: the reference side is now a settled object —
-factored, characterized, and budget-free — so when that tooling exists the
-agreement proof meets a fixed target instead of a moving one. -/
+/-! #### The shipped ray, projected
+
+Never retyped: every definition projects out of `sunfish`, so a changed
+PROGRAM stops the `rfl`s loudly. -/
+
+/-- The span a projection falls back to. Public because `genmoves_ray.lean`
+projects the rest of the ray with the same kit. -/
+def nowhere : Span := ⟨0, 0, 0, 0⟩
+
+private def gmBody : List Stmt :=
+  match findFunction sunfish "Position.gen_moves" with
+  | some f => f.body.toList
+  | none => []
+
+private def stmt0 (ss : List Stmt) : Stmt :=
+  match ss with | s :: _ => s | _ => .pass nowhere
+
+private def forBody (s : Stmt) : List Stmt :=
+  match s with | .forStmt _ _ b _ _ => b.toList | _ => []
+
+private def forTarget (s : Stmt) : Expr :=
+  match s with | .forStmt t _ _ _ _ => t | _ => .constant .none nowhere
+
+/-- Positional projection into a statement list — public for the same
+reason as `nowhere`. -/
+def nth (n : Nat) (ss : List Stmt) : Stmt :=
+  match n, ss with
+  | 0, s :: _ => s
+  | n + 1, _ :: r => nth n r
+  | _, _ => .pass nowhere
+
+/-- `for j in count(i + d, d): …` — the ray statement itself. -/
+def gmRayS : Stmt := stmt0 (forBody (nth 1 (forBody (stmt0 gmBody))))
+/-- **The ray body**, sunfish.py 184-203. -/
+def gmRay : List Stmt := forBody gmRayS
+/-- The ray's loop target, `j`. -/
+def gmRayTarget : Expr := forTarget gmRayS
+/-- `q = self.board[j]`. -/
+def rQ : Stmt := nth 0 gmRay
+/-- `if q in " \nPNBRQK": break` — the guard that ends this leaf. -/
+def rStop : Stmt := nth 1 gmRay
+/-- The six statements after the stop guard (the leaves still open). -/
+def rRest : List Stmt := match gmRay with | _ :: _ :: r => r | _ => []
+
+theorem gmRay_split : gmRay = rQ :: rStop :: rRest := rfl
+theorem rQ_plan : genPlan rQ = .delegate := rfl
+theorem rStop_plan : genPlan rStop = .delegate := rfl
+
+theorem gmRayTarget_lit : ∃ s, gmRayTarget = .name "j" s := ⟨_, rfl⟩
+
+theorem rQ_lit : ∃ s₁ s₂ s₃ s₄ s₅ s₆, rQ = .assign #[.name "q" s₁]
+    (.subscript (.attribute (.name "self" s₂) "board" s₃) (.name "j" s₄) s₅) s₆ :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+theorem rStop_lit : ∃ s₁ s₂ s₃ s₄ s₅, rStop =
+    .ifStmt (.compare (.name "q" s₁) #[.inOp] #[.constant (.str " \nPNBRQK") s₂] s₃)
+      #[.brk s₄] #[] s₅ := ⟨_, _, _, _, _, rfl⟩
+
+/-! #### The two statements, run at a SYMBOLIC board -/
+
+theorem run_at_least {s : Stmt} {st st' : FrameState} {fl : Nat} {r : RFlow}
+    (h : execStmt sunfish fl st s = .ok st' r) :
+    ∃ t, ∀ F ≥ t, execStmt sunfish F st s = .ok st' r :=
+  ⟨fl, fun F hF => execStmt_mono h (by simp) F hF⟩
+
+set_option maxHeartbeats 1600000 in
+set_option maxRecDepth 16384 in
+/-- **`q = self.board[j]` at an arbitrary board and an arbitrary index.**
+The board never becomes concrete: the attribute read resolves off the
+`Position` namedtuple's field table and the subscript reduces through L1's
+string family, so what is left is exactly Python's negative-index fold —
+which `at?_ok_inv` supplies, because it is the same fold the reference
+performs. -/
+theorem rQ_run (w : World) (env : REnv) (b : String) (score ep kp jv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (c : Char)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hj : Env.lookup env "j" = some (.int jv))
+    (href : Ref.at? b.toList jv = .ok c) :
+    execStmt sunfish 16 ⟨w, env⟩ rQ
+      = .ok ⟨w, Env.set env "q" (.str (String.singleton c))⟩ .next := by
+  obtain ⟨s₁, s₂, s₃, s₄, s₅, s₆, hlit⟩ := rQ_lit
+  rw [hlit]
+  py_simp [sunfish, posOf, hself, hj]
+  obtain ⟨k, hkeq, hk0, hklt, hget⟩ := at?_ok_inv b.toList jv c href
+  rw [show (b.length : Int) = (b.toList.length : Int) from by rw [strLength_eq_toList],
+    hkeq, if_pos ⟨hk0, hklt⟩]
+  refine ⟨_, rfl, ?_⟩
+  rw [hget]
+  rfl
+
+set_option maxHeartbeats 1600000 in
+/-- **`if q in " \nPNBRQK": break` at a symbolic character.** The guard
+collapses to `strContains` on a one-character needle, which is L1's
+`strContains_singleton` — and `Ref.inStr` is definitionally the same list
+`contains`, so the two sides of the guard meet with no case split over the
+literal alphabet. -/
+theorem rStop_run (w : World) (env : REnv) (c : Char)
+    (hq : Env.lookup env "q" = some (.str (String.singleton c)))
+    (hstop : Ref.inStr c " \nPNBRQK" = true) :
+    execStmt sunfish 16 ⟨w, env⟩ rStop = .ok ⟨w, env⟩ .brk := by
+  obtain ⟨s₁, s₂, s₃, s₄, s₅, hlit⟩ := rStop_lit
+  rw [hlit]
+  have hc : strContains " \nPNBRQK" (String.singleton c) = true := by
+    rw [strContains_singleton]; exact hstop
+  py_simp [hq, hc]
+
+/-! #### The leaf, and the agreement -/
+
+/-- The `Move` namedtuple value the generator yields for a reference move —
+the marshalling the whole ray theorem is stated through. -/
+def moveVal (m : Ref.RefMove) : RVal :=
+  .ntuple "Move" #["i", "j", "prom"] #[.int m.i, .int m.j, .str m.prom]
+
+/-- The REFERENCE's stop leaf: a blocked square ends the ray with no
+moves. -/
+theorem ray_stop_nil (b : List Char) (wc0 wc1 : Bool) (ep kp i : Int) (p : Char)
+    (d : Int) (f : Nat) (jv : Int) (c : Char) (ms : List Ref.RefMove)
+    (href : Ref.at? b jv = .ok c) (hstop : Ref.inStr c " \nPNBRQK" = true)
+    (hray : Ref.ray b wc0 wc1 ep kp i p d (f + 1) jv = .ok ms) : ms = [] := by
+  rw [Ref.ray] at hray
+  simp only [bind, Except.bind, href, hstop, if_pos] at hray
+  exact (Except.ok.inj hray).symm
+
+set_option maxHeartbeats 1600000 in
+/-- **RAY AGREEMENT AT THE STOP LEAF, over an ARBITRARY board.**
+
+The shipped `Position.gen_moves`, suspended in a ray at the `count` object
+`a` holding `j`, on a board whose square `j` the reference reads as a
+blocker: the generator emits exactly the moves `Ref.ray` reports (none),
+and leaves the ray frame with the count advanced and `j`/`q` bound.
+
+Nothing is concrete: the board is a free `String`, the square a free `Int`
+(the negative-index fold included), the character free, the world and the
+frame free apart from the two lookups the statement actually performs.
+This is the first fact in the repo relating the MODEL's generator to the
+reference enumeration — L1's `at?_eq_indexVal` related their board READS;
+this relates what they PRODUCE. -/
+theorem ray_stop_agrees
+    (w : World) (env : REnv) (a : Addr) (h₂ : Heap)
+    (b : String) (score ep kp i jv d : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (p c : Char) (f : Nat) (ms : List Ref.RefMove)
+    (hself : Env.lookup env "self" = some (posOf b score wc0 wc1 bc0 bc1 ep kp))
+    (hcount : Heap.get? w.heap a = some (countObj jv d))
+    (hback : Heap.update w.heap a (countObj (jv + d) d) = some h₂)
+    (href : Ref.at? b.toList jv = .ok c)
+    (hstop : Ref.inStr c " \nPNBRQK" = true)
+    (hray : Ref.ray b.toList wc0 wc1 ep kp i p d (f + 1) jv = .ok ms) :
+    GenEmits sunfish ⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal)
+      ⟨{ w with heap := h₂ },
+        Env.set (Env.set env "j" (.int jv)) "q" (.str (String.singleton c))⟩ := by
+  obtain ⟨sj, htgt⟩ := gmRayTarget_lit
+  rw [ray_stop_nil b.toList wc0 wc1 ep kp i p d f jv c ms href hstop hray]
+  refine GenEmits.forGenBreak (v := .int jv) (w' := { w with heap := h₂ })
+    (env₁ := Env.set env "j" (.int jv)) (iterSteps_countFrom hcount hback)
+    (by rw [htgt]; rfl) ?_
+  have hself₁ : Env.lookup (Env.set env "j" (RVal.int jv)) "self"
+      = some (posOf b score wc0 wc1 bc0 bc1 ep kp) := by
+    rw [Env.lookup_set_ne _ (by decide), hself]
+  have hj₁ : Env.lookup (Env.set env "j" (RVal.int jv)) "j" = some (.int jv) :=
+    Env.lookup_set_self _ _ _
+  refine GenEmits.silent
+    (pre₁ := [GenFrame.block (rStop :: rRest), GenFrame.forGen gmRayTarget a gmRay])
+    (fun k => by
+      simpa [gmRay_split] using genSilent_delegate (m := sunfish) (s := rQ)
+        (ss := rStop :: rRest) (k := [GenFrame.forGen gmRayTarget a gmRay] ++ k) rQ_plan
+        (run_at_least (rQ_run { w with heap := h₂ } (Env.set env "j" (.int jv)) b
+          score ep kp jv wc0 wc1 bc0 bc1 c hself₁ hj₁ href))) ?_
+  exact GenEmits.blockBreak (pre := [GenFrame.forGen gmRayTarget a gmRay]) rStop_plan
+    (fun _ => rfl)
+    (run_at_least (rStop_run { w with heap := h₂ }
+      (Env.set (Env.set env "j" (.int jv)) "q" (.str (String.singleton c))) c
+      (Env.lookup_set_self _ _ _) hstop))
+
+/-! Non-vacuity, on the shipped opening board: square 91 holds our own rook
+(a BLOCKER — the ray stops), square 71 is empty (it does NOT), so both arms
+of `ray_stop_agrees`' hypothesis are reachable and neither is vacuous. -/
+
+#guard (match Ref.at? board0.toList 91 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => false) == true
+
+#guard (match Ref.at? board0.toList 71 with
+        | .ok c => Ref.inStr c " \nPNBRQK"
+        | _ => true) == false
+
+/-! ### What the rest of the ray costs, and why it is recorded not attempted
+
+`rRest` is six statements — the pawn block (`.branch`, with the inlined
+`yield from` inside it), the unconditional `yield`, the crawler guard and
+the two castling `.branch`es — and `Ref.ray` has eight more leaves. Every
+one of them is the same three moves as above (project the statement, run it
+at a symbolic board, splice the frame rule), so the shape is settled; what
+is NOT settled is the state threading, because from the `yield` on the ray
+CONTINUES and the invariant has to carry `i`, `p`, `d`, the advancing count
+object and the board across rounds. `GenEmits.forGenRound` is the rule for
+that and it is landed; the induction over rounds is the work.
+docs/backlog.md §L4 carries the measured per-statement cost. -/
 
 end Examples.python.sunfish.genmoves_theorem

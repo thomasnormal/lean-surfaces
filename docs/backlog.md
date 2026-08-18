@@ -5580,7 +5580,11 @@ it also measured the bad news precisely.
 **Ray AGREEMENT does not land, and the reason is tooling, not effort.**
 Stating it is fine: a suspended `gen_moves` is a `GenCont` frame stack
 whose shape inside a ray is concrete (`block … :: countFrom j d :: … ::
-enumSeq <board> :: []`). Proving it is not, because the statement
+enumSeq <board> :: []`). **[CORRECTED 2026-08-17, §L4 PARTIAL: that stack
+is WRONG in two of its frames — `count`/`enumerate` allocate their own
+generator objects and the ray is a `forGen` frame over one. The shape was
+recalled here, not measured; §L4 prints the measured one.]** Proving it is
+not, because the statement
 quantifies over an ARBITRARY board: every `self.board[j]` is a subscript
 on a symbolic 120-char string and every guard is a comparison on a
 symbolic character, so nothing reduces and the interpreter would have to
@@ -6364,3 +6368,481 @@ increase is entirely blocker 3. It is worth doing when a THIRD generator
 consumer is wanted; the rules are usable by hand today at roughly 120 lines
 per function (`total_calls`, `two_phase_calls`), and both of those were
 written inside one session each.
+
+## L4 PARTIAL — the ray rules, the FIRST agreement leaf, and the memo's frame shape REFUTED (2026-08-17)
+
+Landing **L4** of docs/generator-tier-architecture.md, and it is a partial
+one by design: the memo self-rated L4 LOW-MEDIUM ("the band that could
+double"), the probe re-priced it before any of it was written, and what
+landed is the coherent green subset the probe validated. L5 stays
+owner-gated.
+
+**THE MEMO'S L4 IS MIS-ADDRESSED, and the measurement says so.** L4's
+content line is "the `countFrom`-frame prefix spec for one ray", and the
+note that stood in `Examples/python/sunfish/genmoves_theorem.lean` said a
+suspended `gen_moves` inside a ray carries `block … :: countFrom j d ::
+block … :: forSeq <directions[p]> :: enumSeq <board> :: []`. Neither is
+true. Stepping the SHIPPED generator twice and printing every heap
+generator object (a scratch `#eval`, not a guess) gives
+
+```
+[66] gen Position.gen_moves
+       [block(3), forGen(a=68), block(0), forSeq(rem=3), block(0), forGen(a=67), block(0)]
+[67] gen <enumerate> [enumSeq(i=82, rem=38)]  suspended
+[68] gen <count>     [countFrom(cur=61, step=-10)]  suspended
+```
+
+`count(…)` and `enumerate(…)` are CALLS: each allocates its **own**
+generator object (Semantics.lean, the `count`/`enumerate` builtin arms) and
+`execGen`'s `.forHere` arm dispatches on the heap object, so the consuming
+`for` pushes a **`forGen`** frame at it. Only a `.listV`/`.tuple`/
+`.ntuple`/`.str`/`.rangeV` iterable becomes a `forSeq`. **A `countFrom`
+frame never appears in `gen_moves`' own stack** — it is the ray's inner
+object's entire continuation, one `stepIter` below — and the same is true
+of `enumSeq` for the board scan, which means L5's board leg inherits the
+correction. Two of the five frames in the recorded shape were wrong, and a
+fresh `<count>` object is allocated per RAY (68, then 69, …), which the old
+shape also could not express.
+
+So L2's `genYieldsPrefix_countFrom` is not the ray rule. It is the fact the
+ray rule CONSUMES, through the object bridge.
+
+**What landed, LeanModels/Python/VCGen.lean §"L4: the RAY"** — the three
+things the corrected shape needs, all of which compiled first try (the
+probe wrote them in one pass, ~80 lines):
+
+* `countObj` / `iterSteps_countFrom` — one step of a `<count>` OBJECT:
+  it hands over `cur`, advances to `cur + step`, and because a `countFrom`
+  frame touches nothing but itself the `.running`/`.suspended` pair
+  collapses through `IterSteps.pureStep`, so a ray round moves the world by
+  exactly ONE slot write. `Heap.update_of_get?` (a live slot can always be
+  written) came with it.
+* `genSilent_delegateBreak` / `GenEmits.blockBreak` — **generator-internal
+  `break`**, which is §L3's recorded blocker for the `bound_probe` collapse
+  ("reaches BELOW `GenEmits`' polymorphic prefix"). It is expressible after
+  all, and `GenEmits.blockDelegate`'s own docstring said how: put the
+  enclosing loop frame INSIDE `pre`. Then `genBreak (pre ++ k) = some k`
+  holds uniformly in `k` — by `rfl` at every concrete prefix — and the rule
+  stays frame-polymorphic. `genSilent_delegateContinue` is the sibling
+  (`gen_lab.evens`' shape).
+* `GenEmits.forGenRound` / `forGenBreak` / `forGenDone` — the `for x in
+  <generator>` loop at `GenEmits` altitude. Not one induction like
+  `GenEmits.forSeq`: an INFINITE inner generator has no remainder list to
+  induct on, so the rounds are chained by the caller and `forGenBreak` is
+  where a ray ends. `forGenBreak`'s body fact is over `[.block body,
+  .forGen …]` — the break unwinds past the loop frame, so body and loop
+  leave together, which is exactly why no new judgment was needed.
+
+**The gate — RAY AGREEMENT AT THE STOP LEAF, over an ARBITRARY board**
+(`Examples/python/sunfish/genmoves_theorem.lean`): `ray_stop_agrees`. The
+shipped `Position.gen_moves`, suspended in a ray at the `count` object
+holding `j`, on a board whose square `j` the reference reads as a blocker —
+the generator emits exactly the moves `Ref.ray` reports (none) and leaves
+the ray frame with the count advanced and `j`/`q` bound. Board free, index
+free (negative-index fold included), character free, world and frame free
+apart from the two lookups the statement performs. **It is the first fact
+in the repo relating what the model's generator PRODUCES to the reference
+enumeration** — L1's `at?_eq_indexVal` related their board reads. It is
+stated through `ms.map moveVal`, so the statement does not move when the
+other leaves arrive. Underneath it: the ray projected off the shipped AST
+(`gmRayS`/`gmRay`/`gmRayTarget`/`rQ`/`rStop`/`rRest`, every one an `rfl`
+pin), `rQ_run` and `rStop_run` (the two statements at a symbolic board),
+`ray_stop_nil` (the reference's own leaf), and two `#guard` non-vacuity
+pins showing both arms of the hypothesis are reachable on the opening board
+(square 91 is a blocker, square 71 is not).
+
+**The ray's genPlan census, measured** (it decides the remaining work).
+The ray body is seven statements; the first two are the landed `rQ`/`rStop`
+and the other five are `rRest`, in order: `rQ` Assign → delegate; `rStop`
+If → delegate; then the pawn block If → **branch** (it contains the inlined
+`yield from`); the unconditional Yield → yieldHere; the crawler guard If →
+delegate; and the two castling Ifs → **branch**. Seven statements, and the five
+`if`s that merely `break` are all DELEGATE — their break arrives as
+`execStmt`'s `.brk` flow at the top of the ray body, which is why one break
+rule covers them. The inlined `yield from` lowers to
+`for prom in "NBRQ": yield Move(i, j, prom)` (Json.lean), i.e. a `forSeq`
+frame, so `GenEmits.forSeq` already covers the promotion leaf.
+
+**Three measurements worth the record.**
+
+1. *Symbolic char guards DO reduce, and L1 is why.* `py_simp` takes
+   `if q in " \nPNBRQK"` at a symbolic `q` all the way to
+   `if c = ' ' ∨ c = '\n' ∨ c = 'P' ∨ … then _ else _` — a decidable
+   disjunction over the free character. §3's F4 contingency ("a guard
+   simproc: probably NOT needed") is confirmed: no simproc was written.
+2. *An UNFOLD beats a REWRITE, and this cost the most time here.*
+   `ntupleMethodName`, `ntupleAttr`, `indexVal` and `normIndex` are all in
+   `interpUnfolds`, so `py_simp` opens them BEFORE any lemma stated at
+   those heads can fire — passing `at?_eq_indexVal` or a ground
+   `ntupleMethodName … = false` to `py_simp` changes nothing, and the
+   residue is the raw match. Two consequences, both now house practice for
+   symbolic-board work: `self.<field>` needs the module in the unfold list
+   (`py_simp [sunfish, …]`, with `maxHeartbeats 1600000` /
+   `maxRecDepth 16384` — proof.lean's `rotate` budgets), and the string
+   subscript is finished by hand from `at?_ok_inv` after `py_simp`, not by
+   `strIndex_ok` inside it.
+3. *State the statement runs over an ABSTRACT env with lookup hypotheses.*
+   `Env.lookup_set_ne` is a CONDITIONAL simp lemma and `py_simp` did not
+   discharge its side condition inside a captured run, so a goal written
+   over `Env.set env "j" v` stalls at the lookup. Written over a free `env`
+   with `hself`/`hj` hypotheses — `gen_lab`'s `evals_name` idiom — it goes
+   straight through, and the caller discharges the two lookups explicitly.
+
+**Cost, measured.** Each symbolic statement over the sunfish module literal
+is ~19-23 s of elaboration (`rQ_run` with `py_simp [sunfish, …]`;
+`rStop_run`, which needs no module facts, is inside that). Projecting and
+`rfl`-pinning the whole ray is 4 s. The theorem file builds in 22 s total.
+The VCGen §L4 rules build in 4 s.
+
+**RE-PRICED, and this is the deliverable's other half.** The memo put L4 at
+3-6 days LOW-MEDIUM. The rules were hours; the leaf was hours. What remains
+is **eight more `Ref.ray` leaves and the round induction**, and it does not
+decompose the way the memo implied:
+
+* *Per-leaf work is settled in SHAPE* — project the statement, run it at a
+  symbolic board, splice the frame rule — and each leaf's model side is
+  1-3 statements. Call it 20-30 captured runs at ~20 s: the elaboration
+  alone is 7-10 minutes of build time in that file, so it wants its own
+  module rather than growing `genmoves_theorem.lean`.
+* *The round INDUCTION is the real remainder, and it is not priced by the
+  leaves.* From the unconditional `yield` on, the ray CONTINUES, so the
+  proof needs an invariant carrying `i`, `p`, `d`, the board, and the
+  advancing `<count>` object across rounds, closed against
+  `ray_step`/`rayBody_map_or_const`. `GenEmits.forGenRound` is the rule for
+  it and is landed; nothing exercises it yet, and that is the honest gap.
+* *The pawn leaf needs `pawnBreak` agreement*, which reads the board a
+  SECOND time (`self.board[i + N]`) under a short-circuit — a second
+  `rQ_run`-shaped fact plus the `or` ordering.
+
+**2-4 more days at MEDIUM** for the remaining leaves plus the round
+induction, in a new `Examples/python/sunfish/genmoves_ray.lean`; the
+LOW-MEDIUM band is retired because the two things that could have doubled
+it — a missing calculus for the ray frame, and symbolic char guards not
+reducing — are both measured and both closed. What could still stretch is
+the round induction's invariant, which is the one piece with no precedent
+in the tier.
+
+## L4 REMAINDER — the round induction, the segment kit, and a WHOLE ray (2026-08-17)
+
+Continuing §"L4 PARTIAL" in a new
+`Examples/python/sunfish/genmoves_ray.lean` (the separate module that entry
+asked for; `genmoves_theorem.lean` gains only four un-`private`d helpers,
+whose second consumer this is). The entry priced the remainder as "eight
+more `Ref.ray` leaves and the round induction" and flagged the induction as
+"the one piece with no precedent". That is the piece that landed, and it
+cost hours rather than days; what did NOT land is blocked on one measured
+tool defect, recorded below.
+
+**THE ROUND INDUCTION IS NOT AN INDUCTION OVER THE GENERATOR** — this is
+the shape finding, and L5 inherits it. `count(i + d, d)` never exhausts, so
+the model side has no remainder list and no decreasing measure;
+`GenEmits.forGenDone` is unreachable on a ray and the only thing that ever
+ends one is a `break`. So the induction runs on the REFERENCE's fuel and
+the model side rides along in continuation-passing form: `RayRound a out st
+st₂` says "the loop frame emits `out` from `st`, then behaves as it does
+from `st₂`", `GenEmits.forGenRound` is its introduction rule, and composing
+rounds is composing transformers. `ray_rounds` folds that over `Ref.ray`'s
+fuel against the two arms of `rayBody_append_or_const`.
+
+Two consequences worth carrying:
+
+* `rayBody_map_or_const` (the L4 characterization) was one notch too weak.
+  An arbitrary `g` does not let `ms.map moveVal` split into round-output ++
+  rest; the tail-consuming leaf must be known to PREPEND a fixed list.
+  `rayBody_append_or_const` is the same proof at `(pre ++ ·)`.
+* `ray_rounds` runs no statement at all — the model side enters entirely
+  through its two hypotheses — so it is pure `Except`/`List` reasoning,
+  elaborates in seconds rather than the ~20 s a captured `py_simp` costs,
+  and the leaves land underneath it one at a time without it moving.
+
+**A WHOLE RAY, not just leaves.** `ray_crawl_agrees` is the first COMPLETE
+ray in the repo: a knight or a king (`p ∈ {'N','K'}`), every round, at every
+fuel, over an arbitrary board, leaving a frame the enclosing scans can
+carry on from. Crawlers are exactly the pieces whose ray provably never
+takes a second round (`p in "PNK"` breaks it where it starts), so
+`rayBody_crawler_indep` makes `ray_rounds`' continuing case vacuous and the
+induction closes without the statements past the crawler guard. It is the
+first use of `ray_rounds` and the first fact relating the generator's whole
+output — not one leaf — to `Ref.ray`.
+
+**The segment kit** is the reusable half: one `GenEmits` transformer per
+ray statement over a FREE trailing continuation `pre`, so the same lemma
+serves a round that falls through (`pre = []`) and a leaf that breaks
+(`pre = [.forGen …]`, since `break` unwinds past the loop frame and body
+and loop leave together). `q_falls`, `stop_falls`, `stop_breaks`,
+`pawn_skips`, `yield_emits`, `crawl_breaks`, `crawl_falls`, `block_done`.
+`ray_stop_agrees` had to inline both shapes; nothing here does.
+
+**Three house-practice measurements.**
+
+1. *`RayLocals` is a real side condition, not a technicality.* Name
+   resolution consults the LOCAL env before module globals, so over an
+   abstract `env` "the frame does not shadow `Move`" must be stated or
+   `rYield_evals` stalls at `match Env.lookup env "Move"`. Stated once as
+   "the frame binds nothing but `gen_moves`' own locals", which is true and
+   stable under the ray's own writes (`j`, `q`, `prom` are in the list).
+2. *A guard must be rewritten to its CONSTANT before `py_simp` runs.*
+   Handed `strContains "PNK" (singleton p) = Ref.inStr p "PNK"`, the two
+   crawler guards expand into a nine-character disjunction and the run
+   times out; handed `= bp` with `bp` case-split first, each of the four
+   arms is cheap. This generalizes `rStop_run`'s trick into a rule.
+3. *One-character string equality is not `rfl` in this Lean* (a `String` is
+   no longer a `List Char`). `sing_eq` goes through
+   `String.toList_singleton`; `strContains_singleton` had only the
+   containment half. Also: the `_lit` pins are PRINTED off the shipped AST
+   with spans blanked, not transcribed — 27 span binders by hand is how a
+   pin silently stops matching the program it claims to project.
+
+**THE BLOCKER, measured — it is `py_simp`, not the calculus.** Slider
+rounds must step past the two castling `if`s, which for a piece off the
+corner squares is just `i == A1` short-circuiting to false. That run
+REDUCES correctly (the residual is a clean `if iv = 91 then … else …`) but
+emits a proof term the KERNEL rejects: `(kernel) application type mismatch`
+on an `Eq.refl` for `valEq (.int iv) rhs = match .int iv, rhs with …`,
+where `rhs` is still the match-bound value of the global. `valEq` is in
+`interpUnfolds` (VCTactic.lean), so it opens before the operand is in whnf.
+
+Four runs pin it, three green:
+
+* symbolic `Int` vs a LITERAL (`i == 91`, both truth values): green;
+* symbolic `Char`-as-string vs a literal (`q == "K"`): green;
+* symbolic `Int` vs a module GLOBAL (`i == A1`) inside the `and` chain: kernel mismatch;
+* the same comparison ALONE, no `boolOp`: kernel mismatch.
+
+So it is neither the `boolOp` nor symbolic `valEq` — it is specifically a
+comparison whose operand arrives from module-global resolution. Passing the
+condition as `(iv == 91) = false`, as `(iv = 91) = False`, or as a `valEq`
+rewrite does not move it, and `interpUnfolds` is not user-editable from a
+proof file. The fix belongs in `py_simp` (resolve a `.name` operand to its
+value BEFORE `valEq` opens, or keep `valEq` shut on a non-whnf operand) and
+wants `evals_glob`-style lemmas — `evalExpr m F st (.name g s) = .ok st v`,
+uniform in `F` — as the rewrite that fires first; `evalBoolChain` is
+structural and clean, so hand-stepping the short-circuit is the fallback if
+the tactic is not to be touched. `crawl_falls` and `block_done` are already
+proved and deliberately unused: they are the two segments that close the
+continuing round the moment this clears, and then slider agreement follows
+with NO new calculus, because `ray_rounds` is stated against
+`rayBody_append_or_const` rather than against the statements.
+
+**The pawn leaves are independent of that blocker** and are the rest of the
+remainder. `pB0`/`pB1`/`pB2` are `.delegate` breaks (projected and
+plan-pinned); `pB3` is the promotion branch whose body is
+`for prom in "NBRQ": yield Move(i, j, prom)` — a `forSeq` over a string
+literal, already covered by `GenEmits.forSeq` — then the `break` that
+`GenEmits.blockBreak` covers. `pB1` reads the board a SECOND time
+(`self.board[i + N]`) under a short-circuit, so it needs an `rQ_run`-shaped
+companion plus the `or` ordering; `pB2` compares against `self.ep`/`self.kp`,
+which are namedtuple FIELDS rather than module globals and so are not
+exposed to the blocker.
+
+**Cost, measured.** The whole module elaborates in 22 s. `ray_rounds` and
+the reference-side lemmas are seconds; each captured `py_simp` over the
+module literal is the ~20 s the previous entry priced. Triad at the cut:
+`lake build` clean, `docs_check` 67/67 marked blocks, `diff_test` 1288
+cases / 0 failed / 115 whitelisted-unsupported.
+
+## L4 CLOSED (calculus half) — the blocker was `valEq`'s UNFOLD, and three whole rays (2026-08-17)
+
+Continuing §"L4 REMAINDER". That entry ended on one measured blocker with
+four pin runs; this one clears it, and the fix cost **no tactic edit at
+all** — the previous entry's conclusion ("the fix belongs in `py_simp`") was
+wrong, and the way it was wrong is the finding.
+
+**THE BLOCKER, and the mechanism.** `valEq` is in `interpUnfolds`, so a
+captured run DELTA-unfolds it, and simp records a delta unfold as a rewrite
+proved by `Eq.refl`. That is sound wherever the match can fire. But
+`evalCompareChain` (Semantics.lean:5430) parks a comparison's right operand
+behind a `fun st rhs => …` until its own evaluation resolves, and simp opens
+`valEq (.int iv) rhs` under that binder with `rhs` a free variable. `valEq`
+lives in a **mutual block** (Semantics.lean:333-377), so at a stuck match
+the elaborator accepts the `Eq.refl` — its `whnf` does smart unfolding —
+and the kernel cannot. Hence `(kernel) application type mismatch` on a run
+whose REDUCTION was perfect: the residual of the failing pin was literally
+`⊢ ¬ iv = 91`.
+
+Three lines pin it, and they are the measurement that redirected the fix:
+
+```
+theorem minrepro (iv : Int) (rhs : RVal) : valEq (.int iv) rhs = valEq (.int iv) rhs := by
+  simp only [valEq]          -- (kernel) declaration type mismatch
+theorem viaEqDef (iv : Int) (rhs : RVal) : valEq (.int iv) rhs = valEq (.int iv) rhs := by
+  rw [valEq.eq_def]          -- green
+```
+
+**THE FIX: `valEq.eq_def` in the `py_simp` list.** It is the SAME rewrite
+carrying a real proof, and — this is the part that corrects §L4 PARTIAL's
+recorded trap — **a lemma at an `interpUnfolds` head DOES fire before the
+unfold, when its LHS is the head applied to variables.** `at?_eq_indexVal`
+failed not because unfolds beat rewrites in general but because its LHS was
+a SPECIFIC shape that no longer matched once the inner terms had been
+normalised. `eq_def`'s LHS matches unconditionally, so it wins. The house
+rule is therefore narrower than recorded: *to keep a definition in
+`interpUnfolds` from delta-unfolding badly, hand `py_simp` its `eq_def`.*
+Zero VCGen/VCTactic edits, and the ~35-minute triad that an
+`interpUnfolds` change would have cost was not spent.
+
+**THREE WHOLE RAYS, and the round induction earns its shape.**
+`Examples/python/sunfish/genmoves_ray.lean` now proves ray agreement for
+three of `Position.gen_moves`' four piece shapes, all over an arbitrary
+board at every fuel:
+
+* `ray_crawl_agrees` (landed in §L4 REMAINDER) — a knight or a king;
+* `ray_slide_agrees` — a bishop, rook or queen off `A1`/`H1`. **The first
+  ray in the repo that takes more than one round**, so the first use of
+  `ray_rounds`' `hgo` and of `RayRound`'s composition; the crawler theorem
+  closed with that case vacuous. `ray_rounds` did not move — which is what
+  stating it against `rayBody_append_or_const` rather than against the
+  statements was for, and is now demonstrated rather than claimed;
+* `ray_pawn_push_agrees` — a pawn at `d = N`. The crawler theorems assume
+  `p ≠ 'P'` by necessity (`pawnBreak` is where a pawn differs), so this is
+  its own shape, with the pawn block entered for the first time.
+
+**LEAF COUNT, corrected DOWNWARD.** Four of `Ref.ray`'s nine leaves are
+discharged, not eight: the stop guard, the crawler guard at both of its
+reasons (a non-slider, and a capture), the CONTINUING leaf, and the pawn
+block's first guard. The five that remain are named individually in the
+file's closing record with the shape each needs — the castling yield (the
+only ray statement whose taken arm has never been run: a board read at
+`j + E`, then `self.wc[0]`, then a `yield`), the pawn's two double-move
+guards, its capture guard, its promotion. **The calculus half of L4 is
+finished; the remainder is captured runs of precedented shapes.**
+
+**Five measurements worth carrying.**
+
+1. *At a FIXED direction, Python's `and` proves the expensive reads never
+   happen.* `pB1_run` shows the double move's SECOND board read is not
+   evaluated at `d = N`, and `pB2_run` shows `self.ep`/`self.kp` are not —
+   because the direction operand short-circuits first. Not "we did not need
+   them": the shipped code does not evaluate them. This is what makes a pawn
+   round as cheap as a slider's, and it is the reason `d` is a fixed
+   parameter rather than a symbolic one.
+2. *A tuple membership reaches `heapEq`, an ordinary `==` does not.*
+   `evalCompareOpH`'s `.eq` arm has a `refFree` fast path to `valEq`;
+   `valContains` on a `.tuple` goes through `heapContainsScan` straight into
+   `heapEq`, which is deliberately OUT of `interpUnfolds` (a frozen
+   recursion point). `heapEq_int` is the one-step bridge, and `d in (N, N+N)`
+   is why it exists.
+3. *A `def` in a hypothesis never meets its own value.* `Ref.N` is
+   semi-reducible, so a hypothesis reading `some (.int Ref.N)` does not match
+   the `-10` the module global resolves to. `have hd' : … = some (.int (-10))
+   := hd` — defeq, one line — is the whole fix, and it is the same trick the
+   castling runs use for `iv ≠ Ref.A1`.
+4. *The reference side wants a TRICHOTOMY, not a leaf enumeration.*
+   `rayBody_stop_const` / `rayBody_break_const` / `rayBody_slide_map`, made
+   exclusive by `rayBody_const_not_append`, replaced §L4 REMAINDER's bespoke
+   `ray_crawler_leaf` simp block and shortened it by fifteen lines; every
+   later leaf classifier (`ray_slider_leaf`, `ray_slider_go`,
+   `ray_pawn_leaf`) is three lines on top of it.
+5. *A doc comment must come AFTER `set_option … in` / `open … in`, and a
+   continuation line inside `fun k => by simpa …` must be indented past the
+   tactic.* Both cost a build cycle; both are silent until they are not.
+
+**Cost, measured.** The blocker took four scratch runs to reproduce and one
+(14 s) to fix. The slider half — two castling runs, two segments, the
+reference trichotomy, the round, the whole-ray theorem — was green on first
+or second try throughout. The pawn half was four captured runs, six
+segments, two rounds and four reference facts. The module now elaborates in
+**133 s** (it was 22 s), and that is entirely captured `py_simp` runs over
+the `sunfish` module literal: ten of them now, at ~13-20 s each. Triad at
+the cut: `lake build` clean (3666 jobs), `diff_test` 1288 cases / 0 failed /
+115 whitelisted-unsupported, `docs_check` 67/67 marked blocks. The file is +949/-78 lines for 39 new
+theorems (38 added, plus `breaking_round`, which is `crawler_round`
+generalised and renamed); `#print axioms` on every one of them, and on the
+two landed theorems the trichotomy rewrote: `propext`/`Classical.choice`/
+`Quot.sound` only, no `sorryAx` and no `ofReduceBool`.
+
+**What L5 consumes.** Three whole-ray facts in one shape —
+`∃ st', RayFrame … st'.locals ∧ GenEmits sunfish ⟨w, env⟩ [.forGen
+gmRayTarget a gmRay] (ms.map moveVal) st'` — so the board scan can chain
+rays without knowing which piece it is holding. `RayFrame` is the interface:
+the scans hand `self`/`i`/`p` in and get them back, and `RayLocals` is what
+keeps the module globals visible. The correction from §L4 PARTIAL still
+stands and L5 inherits it: the board scan's own frame is a `forGen` over an
+`<enumerate>` OBJECT, not an `enumSeq`.
+
+## L4 COMPLETE — the last five leaves, and seven whole rays (2026-08-17)
+
+Continuing §"L4 CLOSED (calculus half)". That entry finished the CALCULUS and
+named five leaves as remaining, each with the shape it needed. All five are
+now landed, and **`Ref.ray`'s nine leaves are discharged**: every ray
+`Position.gen_moves` can enter is an agreement theorem over an arbitrary
+board, an arbitrary square and every fuel.
+
+**SEVEN whole rays**, one per shape the shipped loop distinguishes:
+`ray_crawl_agrees`, `ray_slide_agrees` (both landed before),
+`ray_castA_agrees`/`ray_castH_agrees` (a slider ON a corner, the castling
+slide included), `ray_pawn_push_agrees` (landed before),
+`ray_pawn_double_agrees`, `ray_pawn_capture_agrees`, `ray_pawn_prom_agrees`.
+All seven in ONE shape — `∃ st', RayFrame … st'.locals ∧ GenEmits sunfish
+⟨w, env⟩ [.forGen gmRayTarget a gmRay] (ms.map moveVal) st'` — which is what
+L5's board scan consumes.
+
+**The castling YIELD is the interesting one**, and the entry above was right
+that it is the only ray statement whose taken arm had never run. On a corner
+the `and` chain does not short-circuit, so `castA_test_true` is the first run
+in the file to read the board at a SHIFTED index (`j + E`, not the loop's own
+`j`) and the first to subscript a namedtuple FIELD (`self.wc[0]` — a value
+tuple, so no heap read). It also makes a round emit TWO moves, which is the
+first real use of `ray_rounds`' `pre` being a LIST: `ray_slide_agrees`'
+rounds always prepend a singleton, and nothing about the induction moved.
+
+**Five measurements worth carrying.**
+
+1. *A board read inside a `boolOp` chain does NOT go through
+   `at?_eq_indexVal`.* Its LHS is `indexVal` applied to CONSTRUCTORS, and an
+   `interpUnfolds` delta beats a specific-shape LHS — which is §L4 CLOSED's
+   corrected rule applied, not contradicted. What `py_simp` leaves is
+   Python's negative-index fold verbatim, so `board_read_facts` packages the
+   four rewrites that close it (`hkeq`/`hk0`/`hklt` and the `getD`), and both
+   new board reads — the castling one and the double move's second one — are
+   then the same three lines `rQ_run` writes by hand. Generalize the
+   RESIDUAL, not the bridge.
+2. *Fork a symbolic guard before `py_simp`, and only where the chain cannot
+   step.* `pB2_run_cap` must case-split `q == "."` and `j != self.ep` because
+   `evalBoolChain` cannot pass an undecided operand — but its LAST operand
+   needs no fork, since `abs(j - self.kp) > 1` is consumed only by the
+   statement's own truthiness, and a `split` AFTER the run closes it by
+   `omega`. Six captured runs where eight looked necessary. (`absInt_natAbs`
+   is the one-line bridge from the model's `if x < 0 then -x else x` to the
+   reference's `Int.natAbs`.)
+3. *`GenEmits.forSeq`'s invariant should carry the FRAME, not the loop
+   variable.* The promotion loop's `Inv` is "the world is unchanged and
+   `RayFrame` holds and `j` is still bound" — no mention of `prom` at all,
+   because `prom` is one of `rayNames` and every iteration re-establishes the
+   frame by `RayFrame.set`. The rule's own `∃ st₂` is then exactly the
+   existential the whole-ray theorem wants, so the four-element loop costs
+   ONE `hstep` and no plumbing. Hand-unrolling four iterations was the
+   alternative and it is longer and pins less.
+4. *`cases h : e` GENERALIZES `e` in the goal.* Extracting "the second board
+   read succeeded" with `cases h2 : at? b (i + N)` silently rewrote the
+   goal's own mentions of that read, and the leaf classifier stopped
+   typechecking with an `And.intro` type mismatch that pointed nowhere near
+   the cause. The fix is the `hat` pattern the whole-ray proofs already use:
+   prove `∃ c2, at? b (i + N) = .ok c2` inside a `have`, then `obtain`.
+5. *A `def` in a hypothesis never meets its own value — in BOTH directions.*
+   `hnear : i < A1 + N` does not close a goal that says `i < 81`, and
+   `href2 : at? b (i + N) = …` does not match `at? b (i + -10)`; one defeq
+   `have` at the numeral each time. §L4 CLOSED recorded this for `Ref.N` in a
+   lookup; it holds for every folded constant a reference lemma mentions,
+   and unfolding `N`/`A1`/`W`/`E` in the `simp` set is what exposes it.
+
+**Cost, measured.** 77 new declarations (`#print axioms` on every one:
+`propext`/`Classical.choice`/`Quot.sound` only — no `sorryAx`, no
+`ofReduceBool`), +2093/-50 lines. Fifteen new captured `py_simp` runs over
+the `sunfish` module literal, so the module now elaborates in **342 s** (it
+was 133 s) and that is almost entirely those runs. Zero VCGen/VCTactic
+edits — again. Triad at the cut: `lake build` clean (3666 jobs, no
+warnings), `diff_test` 1288 cases / 0 failed / 115 whitelisted-unsupported,
+`docs_check` 67/67 marked blocks. Development was done in a throwaway module
+importing `genmoves_ray` so each cycle recompiled ONE file (~2 min) instead
+of the 6-minute tree; the AST pretty-printer that printed the new `_lit`
+pins lived there too and went with it.
+
+**What L5 needs, and it is not the ray.** The board scan is a `forGen` over
+an `<enumerate>` OBJECT (the §L4 PARTIAL correction stands), it must skip a
+square whose piece is not ours (`if p not in "PNBRQK": continue` — the tier's
+first `continue`, `genSilent_delegateContinue` is the rule and it is landed),
+and the direction scan is `for d in directions[p]`, a subscript of a
+module-global DICT, which is a heap read no ray performs. `Ref.piece` and
+`Ref.refMoves` are the reference sides; `refTriples_flatten`
+(genmoves_theorem.lean) is the presentation lemma they arrive through.

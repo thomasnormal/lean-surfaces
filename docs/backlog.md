@@ -10163,3 +10163,205 @@ the better inch for a second lane.
 3. A premise is not paid until something DISCHARGES it. Land every gate with the
    corollary that consumes it, in the same pass, or the next pass inherits a
    theorem that may say nothing.
+
+
+## L26 — THE BASE CASE OPENS, and `BoundRefines` IS REFUTED (2026-08-19)
+
+§L25 priced the assembly's base case as *"the better inch for a second lane"*
+because it depends on none of R1–R5. It does not, and the lane ran. **Two of the
+base case's leaves are proved and the split is assembled — and the same discharge
+found that `BoundRefines`, the proposition the entire `RecursionStep` campaign is
+an induction over, is FALSE.** Not vacuous. False, at every depth, for every
+value function, with a two-slot witness world that satisfies every hypothesis it
+states.
+
+Everything below lives in `Examples/python/sunfish/basecase_depth0.lean`; no line
+of `bound_depth.lean` or `value_bound.lean` moved.
+
+### THE REFUTATION, and what it costs the plan
+
+`BoundRefines V d` quantifies over an **arbitrary `pos : RVal`** and concludes
+`∃ w' r t, ∀ F ≥ t, callIn … = .ok w' (.int r)`. At `pos := .int 5` the shipped
+`bound()` reaches `pos.score` at statement 4 and REFUSES — attribute access on an
+`int` is outside the tier — so no `w'` and no `r` exist.
+
+`not_boundRefines` is that, in 20 lines: one `py_simp` gate
+(`mate_check_refuses`, statement 4's third arm), `execStmts_append` to carry the
+refusal through the body (it already takes any non-timeout result — §L22's free
+wrinkle, spent here), a `callIn_of_body` twin for the refusal, and a witness
+world of two slots.
+
+**And the step is now vacuous too.** §L25 correctly re-priced `RecursionStep` as
+a STRONG induction (landed this pass by the R-track), so its hypothesis is
+`∀ e, 0 ≤ e → e < d → BoundRefines V e` — false at `e = 0`. So
+`recursionStep_vacuous : RecursionStep V` is a ONE-LINER for every `V`. The
+theorem R1–R5 is priced to prove is already true and says nothing, and it cannot
+fail loudly. That is the reason the repair belongs before the campaign and not
+after it.
+
+### TWO MORE HOLES in the same statement, both measured
+
+The `pos` hole alone settles it, so these are `#guard`s rather than theorems.
+They matter because a lane that repairs only `pos` still has a false statement.
+All three are the same shape: **the statement quantifies over something the
+shipped code constrains and the statement does not.**
+
+| hole | what the code does | evidence |
+|---|---|---|
+| `pos : RVal` free | `pos.score` refuses on a non-`Position` | **theorem** (`not_boundRefines`) |
+| `n : Int` free | `self.nodes % 2048 == 0 and time.time() > …` reads the trace at `n + 1 = 2048`; the default empty trace refuses LOUDLY | `#guard` at `n = 2047`, plus the contrast at `n = 0` |
+| `TableAt` | `entryBounds` wildcards the namedtuple's class AND field names; `bound()` reads `entry.lower` BY NAME. `Foo(a=20, b=900)` decodes to `(20, 900)`, satisfies `Holds`, and makes the probe raise `AttributeError` | two `#guard`s, both directions |
+
+The clock one is worth reading against `BoundRefines`' own docstring, which says
+it *"deliberately does not say"* anything about the clock. Saying nothing is not
+neutral: it admits the node counts at which the code stops. A fourth omission
+came out of the same discharge and needed no measurement — the two mate constants
+are statically POISONED (`mlG`/`muG`), so every head gate demands them on
+`w.globals`, and the statement offers an arbitrary world.
+
+### `BoundRefinesP`, and the base case's split — which is FOUR-way
+
+`BoundRefinesP` is `BoundRefines` with the four repairs and **nothing else**: the
+four conjuncts out are `RefinesAt`, which is `BoundRefines`' own body named
+(`boundRefines_eq` is the `rfl` receipt). So the strong-induction step consumes
+the repaired base case exactly as written — the shape §L25 asked this lane to
+preserve.
+
+`boundRefinesP_zero` assembles it, and the split is **four leaves, not three**:
+
+| leaf | status |
+|---|---|
+| **the STALE-TABLE probe hit**, both arms | **proved** (`refinesAt_probe_hit`) |
+| **the KING-CAPTURE return** — statement 4, which fires BEFORE the probe | **proved** (`refinesAt_king_capture`) |
+| the stand-pat CUT | one half of the `hfall` hypothesis |
+| the FAIL-LOW leaf | the other half |
+
+The fourth arm is the one §L25's plan does not name, and it is not the fold's —
+it is the head's. Every other leaf carries `-MATE_LOWER < pos.score` as a
+premise precisely because this arm is the other side of it, so three leaves could
+never have been total. The split is arithmetic on `(pos.score, lo, up, gamma)`
+and it is TOTAL by construction: a fifth arm would not elaborate.
+
+### The two proved leaves, and why they were the right two
+
+Both are HEAD-ONLY, and that is what makes their `SubtreeWrites` conjunct
+one constructor: **the only heap slot either run touches is the receiver's node
+counter**, so `.other` then `.nil` discharges it and the `.alloc` arm is never
+spent. Measured, not assumed — the delta on the fixture is the single slot 66.
+
+The probe-hit leaf's real economy is elsewhere: **`Report` is READ OFF the table**
+rather than earned by a fold. `TableAt` says the stored entry brackets `V pos 0`;
+a lower return sits at or above `gamma`, an upper return below it; those ARE
+`Report`'s two disjuncts. So the leaf spends §6's `sf_probe` and nothing of §3.
+The default arm of `sf_probe` is refuted by the window itself — `-MATE_UPPER` is
+below every legal `gamma` and `MATE_UPPER` at or above it — which is the one
+place the sentinel reservation (§L10 (a)) pays for something other than itself.
+
+The king-capture leaf carries **the only model-side premise in the file**:
+`V pos 0 ≤ -MATE_UPPER`. The docstring promises an EXACT value there (*"our own
+king already captured: r = -MATE_UPPER"*), not a bracket, so no table can supply
+it — it belongs to `formal/`'s depth-0 leaf.
+
+### §L25's one mispricing, and the gates it actually took
+
+§L25 wrote that the probe-hit leaf *"is head-only and reuses `probe_block_runs`
+unchanged"*. Head-only is right. `probe_block_runs` is not reusable: its `hdict`
+premise pins `.dict #[]` and its conclusion pins `.next`. Five new gates, all of
+the same shape as the cleared-table three, plus one general engine lemma:
+
+* `probe_reads` — the cleared-table `probe_misses` at an ARBITRARY dict, stated
+  in the COMPUTED shape (§L20's law): `heapGet` inlines to
+  `(dictFind es.toList k).getD dflt`, so the premise is about that term;
+* `probe_lower_returns` / `probe_upper_returns` — the two FIRING arms;
+* `probe_lower_passes_at` / `probe_upper_passes_at` — the two pass arms at an
+  arbitrary entry rather than at the default. **Unspent here**, and landed
+  anyway: they are what the two fall-through leaves need;
+* `execStmts_append_escape` — the mirror of §L21's `execStmts_append`. A segment
+  that does NOT fall through decides the concatenation, because the tail is
+  never reached. Four lines, and it is what turns a `return` inside statement 5
+  into a statement about all eighteen.
+
+### THE KILLER TABLE — named, measured, and owed by both remaining leaves
+
+`tp_move` is read on EVERY path (statement 6, `killer = self.tp_move.get(pos)`),
+and neither `BoundRefines` nor `BoundRefinesP` constrains it. `mid_runs` pins
+`Heap.get? w.heap tm = some (.dict #[] svm)`, so consuming it at an arbitrary
+table state needs a `killer_reads` generalisation exactly as `head_runs` needed
+`probe_reads`. Measured on the fixture:
+
+* at `gamma ≤ pos.score` a killer in `tp_move` does **not** change the answer
+  (0 either way, heap 74 either way) — the `depth == 0` stand-pat yield precedes
+  the killer test, so the fold cuts first. The leaf is TRUE; only the proof needs
+  the generalisation;
+* at `gamma > pos.score` it **does** change the run (heap 2882 against 2409), so
+  the fail-low leaf needs it for real.
+
+### And `qs_stand_pat_closed` cannot be consumed as-is
+
+Its conclusion is `∃ w' t, …` — it **hides the world**, so `TableAt w'.heap ts`
+and `SubtreeWrites ts e w.heap w'.heap` cannot be stated about it at all. The fix
+is not to reprove anything: `body_runs` is public and NAMES its world
+(`T1 (W4 …) ts …`), so re-closing the boundary on `body_runs` recovers what the
+∃ threw away. A finding for anyone stating the next leaf: **a run gate whose
+world is existential cannot serve a rule that owes anything about the world.**
+State the world, and let the ∃ form be the corollary.
+
+### Triad
+
+Both commits: `lake build` **3680 jobs green** (3679 + this file); `docs_check`
+71/71, 15 illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113
+whitelisted, 1202 matched** — unchanged since §L15; `script_corpus` 64 scripts,
+0 failed, 50 matched, 14 loud. Every theorem prints `[propext, Classical.choice,
+Quot.sound]` or less; `heapGet_of_find` and `probe_answer_spelled` depend on
+`[propext]` alone and `sf_probe_brackets` is choice-free. No `sorry`, no
+`native_decide`.
+
+The file's own throughput is **~25 s**, and it is the `#guard` battery rather than
+the proofs: every gate elaborates in 2–4 s, and §5 runs the shipped `bound()`
+eight times on purpose.
+
+### Findings worth carrying
+
+1. **A statement that quantifies over a TYPE quantifies over the values the code
+   refuses.** `pos : RVal`, `n : Int`, an arbitrary `w.globals` — three of the
+   four holes are one habit. The check is mechanical and this lane now has it:
+   for each universally quantified variable, name the value at which the shipped
+   code stops, and see whether the premise list excludes it.
+2. **A general-layer decoder is deliberately looser than the code that reads it.**
+   `entryBounds` wildcards the namedtuple's name and fields because `DictCalc` is
+   the general layer and should. That is correct there and a hole HERE: the
+   instantiating statement owes the spelling premise. Expect one of these at
+   every boundary between the general calculus and the shipped program.
+3. **A vacuous hypothesis makes a step lemma unfalsifiable.** Strong induction
+   was the right call (§L25) and it converted a false base case into a TRUE step
+   — so the campaign's own success criterion stopped being able to fail. Check a
+   step lemma's hypothesis for satisfiability at the same time you widen it.
+4. **The cheapest leaf is the one whose `Report` comes from an INVARIANT.** The
+   probe-hit leaf never touches §3's fold vocabulary. When a decomposition has a
+   leaf that answers out of a memo, do it first: it exercises the table calculus
+   end to end at a fraction of the fold's cost, and it is where the sentinel
+   reservation finally earns its keep.
+5. **Two lanes must not share a working tree.** The R-track and this lane were
+   pointed at one clone; a dirty `value_bound.lean` blocks `git rebase` and a
+   mid-edit file breaks the other lane's `lake build` indistinguishably from its
+   own error. An APFS `cp -Rc` of the whole clone (including `.lake`) costs 12
+   seconds and no disk, and keeps the build cache — so isolation was free.
+
+### What the base case still owes
+
+**One hypothesis, `hfall`, in two halves** — the stand-pat cut and the fail-low
+leaf, both at `lo < gamma ≤ up`, splitting on `gamma ≤ pos.score`. What each
+needs is named above: the world-naming re-close of `body_runs`, `probe_reads` in
+place of `probe_misses` in the head, `killer_reads` in place of `killer_misses`
+in the middle, and — for the fail-low leaf only — a real fold, `fold_report`'s
+fail-low half, and `SubtreeWrites`' `.alloc` arm.
+
+**But the repair comes first.** `BoundRefinesP` is stated and its base case is
+half proved; what is NOT done is retiring `BoundRefines` itself, which lives in
+`bound_depth.lean` and is the R-track's file. Until it moves, `RecursionStep` is
+a one-line theorem and the campaign's target is a proposition no run can satisfy.
+
+**`model_audit` CANNOT RETIRE**, and this pass moves the date out again — for the
+same reason §L24's did, and one level up. §L24 found three unsatisfiable premises
+inside a theorem. This pass found the same defect in the RULE the theorems are
+for.

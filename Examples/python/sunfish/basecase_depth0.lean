@@ -20,8 +20,10 @@ the leaf spends §6's `sf_probe` and nothing of §3's `fold`.
 **And it is where the rule's own statement was found to be FALSE.** §7 below
 refutes `BoundRefines V d` outright — it quantifies over an arbitrary
 `pos : RVal`, and at a non-`Position` the shipped `bound()` refuses, so the
-existential cannot be met at any depth. Two more holes in the same statement are
-measured beside it. `BoundRefinesP` (§8) is the repair, and
+existential cannot be met at any depth — and because `RecursionStep` is a STRONG
+induction over exactly that proposition, the STEP the whole campaign is priced to
+prove is now vacuously true, in one line. Two more holes in the same statement
+are measured beside it. `BoundRefinesP` (§8) is the repair, and
 `boundRefinesP_zero` is the base case's four-way split assembled on it, with two
 of the four leaves proved here and the other two named as one hypothesis.
 
@@ -776,6 +778,17 @@ theorem not_boundRefines (V : RVal → Int → Int) (d : Int) : ¬ BoundRefines 
   rw [h1] at h2
   simp at h2
 
+/-- **AND THE STEP IS VACUOUS.** `RecursionStep` is now a STRONG induction, so
+its hypothesis is `∀ e, 0 ≤ e → e < d → BoundRefines V e` — and that is false at
+`e = 0` for every `d ≥ 1`. So `RecursionStep V` holds for every value function,
+in one line, with no interpreter and no fold. §L25's whole R1–R5 program is
+priced to prove a theorem that is already true and says nothing.
+
+This is the sharpest form of the finding, and the reason the repair belongs
+before the campaign rather than after it: the campaign cannot fail loudly. -/
+theorem recursionStep_vacuous (V : RVal → Int → Int) : RecursionStep V :=
+  fun d hd hIH => absurd (hIH 0 (by omega) (by omega)) (not_boundRefines V 0)
+
 /-! ### Two MORE holes in the same statement, measured rather than proved
 
 The `pos` hole alone refutes it, so these two are recorded as measurements —
@@ -953,6 +966,7 @@ theorem boundRefinesP_zero {V : RVal → Int → Int}
 #print axioms body_refuses_int
 #print axioms callIn_of_body_unsupported
 #print axioms not_boundRefines
+#print axioms recursionStep_vacuous
 #print axioms probe_answer_spelled
 #print axioms boundRefinesP_zero
 

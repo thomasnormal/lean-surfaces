@@ -10199,11 +10199,11 @@ theorem R1–R5 is priced to prove is already true and says nothing, and it cann
 fail loudly. That is the reason the repair belongs before the campaign and not
 after it.
 
-### TWO MORE HOLES in the same statement, both measured
+### THREE MORE HOLES in the same statement, all measured
 
 The `pos` hole alone settles it, so these are `#guard`s rather than theorems.
 They matter because a lane that repairs only `pos` still has a false statement.
-All three are the same shape: **the statement quantifies over something the
+All four are the same shape: **the statement quantifies over something the
 shipped code constrains and the statement does not.**
 
 | hole | what the code does | evidence |
@@ -10211,23 +10211,53 @@ shipped code constrains and the statement does not.**
 | `pos : RVal` free | `pos.score` refuses on a non-`Position` | **theorem** (`not_boundRefines`) |
 | `n : Int` free | `self.nodes % 2048 == 0 and time.time() > …` reads the trace at `n + 1 = 2048`; the default empty trace refuses LOUDLY | `#guard` at `n = 2047`, plus the contrast at `n = 0` |
 | `TableAt` | `entryBounds` wildcards the namedtuple's class AND field names; `bound()` reads `entry.lower` BY NAME. `Foo(a=20, b=900)` decodes to `(20, 900)`, satisfies `Holds`, and makes the probe raise `AttributeError` | two `#guard`s, both directions |
+| **`tp_move` free** | read on EVERY path (statement 6) and UNPACKED by `Position.value` in the fold. An `int` there is harmless at `gamma ≤ pos.score` (the stand-pat yield precedes the killer test) and raises `TypeError: cannot unpack non-iterable int object` above it | one `#guard`, both windows |
 
 The clock one is worth reading against `BoundRefines`' own docstring, which says
 it *"deliberately does not say"* anything about the clock. Saying nothing is not
-neutral: it admits the node counts at which the code stops. A fourth omission
-came out of the same discharge and needed no measurement — the two mate constants
-are statically POISONED (`mlG`/`muG`), so every head gate demands them on
+neutral: it admits the node counts at which the code stops. A fifth omission came
+out of the same discharge and needed no measurement — the two mate constants are
+statically POISONED (`mlG`/`muG`), so every head gate demands them on
 `w.globals`, and the statement offers an arbitrary world.
 
-### `BoundRefinesP`, and the base case's split — which is FOUR-way
+### `BoundWF` / `BoundRefinesW`, and the split — which is FOUR-way
 
-`BoundRefinesP` is `BoundRefines` with the four repairs and **nothing else**: the
-four conjuncts out are `RefinesAt`, which is `BoundRefines`' own body named
-(`boundRefines_eq` is the `rfl` receipt). So the strong-induction step consumes
-the repaired base case exactly as written — the shape §L25 asked this lane to
-preserve.
+**The repair is ONE named predicate plus ONE added hypothesis**, and that is
+deliberate: the R-track's strong induction and the eventual assembly both have to
+speak it, so the delta had to be a rename rather than a restructuring.
 
-`boundRefinesP_zero` assembles it, and the split is **four leaves, not three**:
+* **`BoundWF V w ci sa ts tm hs n dl sf es sv`** — a `structure` with nine named
+  projections: `self`, `score`, `table`, `spelled`, `killer`, `history`, `clock`,
+  `ml`, `mu`. It is *"the receiver and its three tables are what
+  `Searcher.__init__` builds, and the node count is not on the clock guard"*.
+  `self` and `table` are `BoundRefines`' own two premises; the other seven are
+  the repairs. `history` (a `pyset` at `hs`) is not read at depth 0 — the
+  repetition test short-circuits — and is included anyway, because the STEP reads
+  it at every depth above and the predicate is meant to be spoken once.
+* **`IsPosition pos`** — `∃ b sc wc0 wc1 bc0 bc1 ep kp, pos = posOf …`, stated as
+  a predicate on a FREE `RVal` rather than by replacing `pos` with eight
+  quantifiers, so `RefinesAt V d w sa ts gamma pos` reads character-for-character
+  as before.
+* **`BoundRefinesW V d`** is then `BoundRefines V d` with `hself`/`TableAt` folded
+  into `BoundWF` and `IsPosition pos` added. Nothing else moves — the four
+  conjuncts out are `RefinesAt`, which is `BoundRefines`' own body named
+  (`boundRefines_eq` is the `rfl` receipt).
+
+**Which leaves consume which conjunct** — the R-track needs this to re-express
+the step: `refinesAt_king_capture` spends `self`, `table`, `clock`, `ml`, `mu`.
+`refinesAt_probe_hit` spends those plus `score` and, through
+`probe_answer_spelled`, `spelled`. **Neither spends `killer` or `history`** —
+both leaves return before `moves()` is called, which is exactly why they were the
+two to prove first. `killer` is spent by the `hfall` hypothesis; `history` by the
+depth-≥1 step.
+
+`BoundWF` is `#guard`ed satisfiable on the shipped engine: nine conjuncts
+recomputed on a real `Searcher()` whose `tp_score` carries a stale entry and whose
+`tp_move` carries a killer, both written through the interpreter's own
+`heapStore`, so the two CONTENTS conjuncts are checked against populated tables
+rather than empty ones.
+
+`boundRefinesW_zero` assembles it, and the split is **four leaves, not three**:
 
 | leaf | status |
 |---|---|
@@ -10235,6 +10265,9 @@ preserve.
 | **the KING-CAPTURE return** — statement 4, which fires BEFORE the probe | **proved** (`refinesAt_king_capture`) |
 | the stand-pat CUT | one half of the `hfall` hypothesis |
 | the FAIL-LOW leaf | the other half |
+
+(`hfall` is stated at `BoundWF` and `lo < gamma ≤ up`, so it is the shape a
+`qs_stand_pat_closed` successor can be written to meet directly.)
 
 The fourth arm is the one §L25's plan does not name, and it is not the fold's —
 it is the head's. Every other leaf carries `-MATE_LOWER < pos.score` as a
@@ -10281,10 +10314,10 @@ the same shape as the cleared-table three, plus one general engine lemma:
   never reached. Four lines, and it is what turns a `return` inside statement 5
   into a statement about all eighteen.
 
-### THE KILLER TABLE — named, measured, and owed by both remaining leaves
+### THE KILLER TABLE — now a premise, and still owed a gate
 
-`tp_move` is read on EVERY path (statement 6, `killer = self.tp_move.get(pos)`),
-and neither `BoundRefines` nor `BoundRefinesP` constrains it. `mid_runs` pins
+`BoundWF.killer` is what the repaired rule says about `tp_move`. The PROOF side
+is still open: `mid_runs` pins
 `Heap.get? w.heap tm = some (.dict #[] svm)`, so consuming it at an arbitrary
 table state needs a `killer_reads` generalisation exactly as `head_runs` needed
 `probe_reads`. Measured on the fixture:
@@ -10327,21 +10360,27 @@ eight times on purpose.
    four holes are one habit. The check is mechanical and this lane now has it:
    for each universally quantified variable, name the value at which the shipped
    code stops, and see whether the premise list excludes it.
-2. **A general-layer decoder is deliberately looser than the code that reads it.**
+2. **The repair is a PREDICATE, not a rewrite.** Four holes and five repairs, and
+   the temptation was to respell the rule. Folding them into one named
+   `structure` with named projections instead means the consuming lane changes a
+   hypothesis name and reads off which conjunct each leaf spends — and a leaf that
+   spends none of the new conjuncts (both proved ones spend no `killer` and no
+   `history`) is visibly the cheap one.
+3. **A general-layer decoder is deliberately looser than the code that reads it.**
    `entryBounds` wildcards the namedtuple's name and fields because `DictCalc` is
    the general layer and should. That is correct there and a hole HERE: the
    instantiating statement owes the spelling premise. Expect one of these at
    every boundary between the general calculus and the shipped program.
-3. **A vacuous hypothesis makes a step lemma unfalsifiable.** Strong induction
+4. **A vacuous hypothesis makes a step lemma unfalsifiable.** Strong induction
    was the right call (§L25) and it converted a false base case into a TRUE step
    — so the campaign's own success criterion stopped being able to fail. Check a
    step lemma's hypothesis for satisfiability at the same time you widen it.
-4. **The cheapest leaf is the one whose `Report` comes from an INVARIANT.** The
+5. **The cheapest leaf is the one whose `Report` comes from an INVARIANT.** The
    probe-hit leaf never touches §3's fold vocabulary. When a decomposition has a
    leaf that answers out of a memo, do it first: it exercises the table calculus
    end to end at a fraction of the fold's cost, and it is where the sentinel
    reservation finally earns its keep.
-5. **Two lanes must not share a working tree.** The R-track and this lane were
+6. **Two lanes must not share a working tree.** The R-track and this lane were
    pointed at one clone; a dirty `value_bound.lean` blocks `git rebase` and a
    mid-edit file breaks the other lane's `lake build` indistinguishably from its
    own error. An APFS `cp -Rc` of the whole clone (including `.lake`) costs 12
@@ -10356,10 +10395,12 @@ place of `probe_misses` in the head, `killer_reads` in place of `killer_misses`
 in the middle, and — for the fail-low leaf only — a real fold, `fold_report`'s
 fail-low half, and `SubtreeWrites`' `.alloc` arm.
 
-**But the repair comes first.** `BoundRefinesP` is stated and its base case is
-half proved; what is NOT done is retiring `BoundRefines` itself, which lives in
-`bound_depth.lean` and is the R-track's file. Until it moves, `RecursionStep` is
-a one-line theorem and the campaign's target is a proposition no run can satisfy.
+**But the repair comes first.** `BoundWF`/`BoundRefinesW` are stated and the base
+case is half proved on them; what is NOT done is retiring `BoundRefines` itself,
+which lives in `bound_depth.lean` and is the R-track's file. Until `RecursionStep`
+is re-expressed over `BoundRefinesW` — **one coordinated edit, before R3 picks a
+schedule** — it is a one-line theorem and the campaign's target is a proposition
+no run can satisfy.
 
 **`model_audit` CANNOT RETIRE**, and this pass moves the date out again — for the
 same reason §L24's did, and one level up. §L24 found three unsatisfiable premises

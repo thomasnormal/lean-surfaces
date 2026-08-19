@@ -69,7 +69,10 @@ edit, `load_program` does not track its JSON). -/
 #py_check gen_lab.walrus_filter(0) = 3020120602
 #py_check gen_lab.walrus_filter(26) = 0
 #guard callFunction gen_lab "walrus_leak" #[.int 2] 4096 matches .unsupported _
-#guard callFunction gen_lab "walrus_stmt" #[.int 5] 4096 matches .unsupported _
+-- H7+ (§the walrus operator): a walrus outside a comprehension binds in
+-- the running frame — the general node, not the filter lowering
+#py_check gen_lab.walrus_stmt(5) = 6
+#py_check gen_lab.walrus_stmt(0) = 0
 
 #py_check gen_lab.total(5) = 10
 #py_check gen_lab.total(0) = 0
@@ -232,7 +235,12 @@ and refuse loudly. -/
 #py_check gen_lab.yf_filter_drive(5) = 19
 #py_check gen_lab.yf_filter_drive(0) = -1
 
-#guard callFunction gen_lab "yf_list_drive" #[.int 3] 4096 matches .unsupported _
+-- pass 5+ (§yield from a non-genexp delegate): a list delegate inlines
+-- through a FRESH target that shadows nothing
+#py_check gen_lab.yf_list_drive(3) = 6
+-- still refused: the genexp arm keeps an inadmissible INLINING un-lowered
+-- rather than falling through to the fresh-target path (recorded
+-- over-refusal — inlining `x` here would leak it into the enclosing frame)
 #guard callFunction gen_lab "yf_leak_drive" #[.int 3] 4096 matches .unsupported _
 
 -- the census: yield-from defs are generators (CPython's scope-local

@@ -331,14 +331,50 @@ class ExtractorTests(unittest.TestCase):
         self.assertEqual(nd["captures"], ["lim"])
         self.assertIsNone(nd["closure_unsupported"])
 
-    def test_nested_def_rebound_after_refuses(self):
-        # snapshot-at-def would diverge from CPython's cell: LOUD.
+    def test_nested_def_rebound_after_is_a_CELL(self):
+        # H7 cells: snapshot-at-def would diverge from CPython's cell, so
+        # the capture ships as a real cell (`<cell>a`) and the def is
+        # ADMITTED -- `f` is called, never escapes, and is not a generator.
         fn = self._first_fn(
             "def outer(a):\n    def f():\n        return a\n"
             "    a = a + 1\n    return f()\n")
         nd = fn["body"][0]
         self.assertEqual(nd["kind"], "NestedDef")
-        self.assertIn("rebound after the def", nd["closure_unsupported"])
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["captures"], ["<cell>a"])
+
+    def test_cell_capture_escaping_the_frame_refuses(self):
+        # the cell is refreshed from the DEFINING frame at the call, so an
+        # escaping closure would read it stale: LOUD.
+        fn = self._first_fn(
+            "def outer(a):\n    def f():\n        return a\n"
+            "    a = a + 1\n    return f\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("ESCAPES", nd["closure_unsupported"])
+
+    def test_cell_capture_rebound_after_a_generator_call_refuses(self):
+        # a generator reads its cells at RESUME; the tier refreshes at the
+        # call only, so a rebinding at or after the first call is LOUD.
+        fn = self._first_fn(
+            "def outer(a):\n    def g():\n        yield a\n"
+            "    t = 0\n    for v in g():\n        a = a + 1\n"
+            "        t = t + v\n    return t\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIn("at or after the first call", nd["closure_unsupported"])
+
+    def test_generator_cell_bound_before_first_call_is_admitted(self):
+        # the shipped `moves()` shape: the celled name is written after the
+        # def but BEFORE the generator is ever called.
+        fn = self._first_fn(
+            "def outer(a):\n    def g():\n        yield a\n"
+            "    a = a + 1\n    t = 0\n    for v in g():\n"
+            "        t = t + v\n    return t\n")
+        nd = fn["body"][0]
+        self.assertEqual(nd["kind"], "NestedDef")
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["captures"], ["<cell>a"])
 
     def test_nested_def_nonlocal_refuses(self):
         fn = self._first_fn(
@@ -381,12 +417,13 @@ class ExtractorTests(unittest.TestCase):
         self.assertIsNone(nd["closure_unsupported"])
         self.assertEqual(nd["body"][0]["kind"], "Return")
 
-    def test_lambda_capture_rebound_refuses(self):
+    def test_lambda_capture_rebound_is_a_CELL(self):
         fn = self._first_fn(
             "def f(a):\n    g = lambda: a\n    a = a + 1\n    return g()\n")
         nd = fn["body"][0]
         self.assertEqual(nd["kind"], "NestedDef")
-        self.assertIn("rebound after the def", nd["closure_unsupported"])
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["captures"], ["<cell>a"])
 
     def test_call_kwargs_unpacking_stays_unsupported_loud(self):
         # `f(**d)` (a keyword node with arg=None) has no per-name binding
@@ -863,14 +900,15 @@ class DeleteTests(unittest.TestCase):
         self.assertEqual(body[1]["names"], ["b"])
 
     def test_del_counts_as_binding_for_closures(self):
-        # a capture DELETED after the def is a rebind for the snapshot
-        # tier (`_binding_linenos` and `_assigned_names` now agree)
+        # a capture DELETED after the def is a rebind (`_binding_linenos`
+        # and `_assigned_names` agree), so it cells rather than snapshots
         fn = self._first_fn(
             "def outer(a):\n    def f():\n        return a\n"
             "    del a\n    return 0\n")
         nd = fn["body"][0]
         self.assertEqual(nd["kind"], "NestedDef")
-        self.assertIn("rebound after the def", nd["closure_unsupported"])
+        self.assertIsNone(nd["closure_unsupported"])
+        self.assertEqual(nd["captures"], ["<cell>a"])
 
     def test_del_shadowed_call_refuses(self):
         # clause 1 makes the del'd name local, so calling it takes the

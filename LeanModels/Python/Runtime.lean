@@ -185,6 +185,17 @@ inductive Obj where
   guessed. Membership and len are order-independent, which is exactly
   why they are the admitted surface. -/
   | pyset (xs : Array RVal)
+  /-- A CLOSURE CELL (H7 cells, docs/memory-model.md §nested defs and
+  closures): the shared mutable location CPython gives a local that a
+  nested def captures and the enclosing frame REBINDS after the `def`.
+  A cell is a heap slot the closure body reads THROUGH — the closure's
+  captured env holds `("<cell>x", .ref a)` instead of a value, so a read
+  of `x` in the nested body resolves at CALL time, not at def time.
+  `none` is the UNBOUND cell (CPython's empty cell: reading it raises
+  the free-variable `NameError`, which is exactly what the name arm
+  answers). A cell is never a Python VALUE: every value-position
+  consumer refuses it loudly rather than treating it as an object. -/
+  | cell (value : Option RVal)
 deriving Repr, Inhabited, BEq
 
 /-- The heap: the address IS the index; allocation appends. -/
@@ -292,6 +303,7 @@ def Obj.WF (h : Heap) : Obj → Prop
   | .instance _ attrs => RVal.WFList h (attrs.toList.map Prod.snd)
   | .closure _ _ _ _ _ _ _ captured => RVal.WFList h (captured.map Prod.snd)
   | .pyset xs => RVal.WFList h xs.toList
+  | .cell v => RVal.WFList h v.toList
   | .generator _ lo k _ =>
       RVal.WFList h (lo.map Prod.snd) ∧ GenCont.WF h k
 
@@ -890,6 +902,8 @@ mutual
             .unsupported "returning a CYCLIC heap object through the call boundary is outside the tier (no cyclic observation form in `Val`; docs/memory-model.md §call layering)"
           else
             match Heap.get? h a with
+            | some (.cell _) =>
+                .unsupported "internal: a closure CELL crossed the call boundary (unreachable — report this)"
             | some (.list xs) => do
                 let vs ← RVal.freezeListH h fuel (a :: path) xs.toList
                 return .list vs.toArray
@@ -1088,6 +1102,7 @@ theorem RVal.freezeH_ne_exn_pair (h : Heap) (fuel : Nat) :
             | «instance» cls attrs => simp at hc
             | generator qn lo k st => simp at hc
             | closure nm ps ao lo' hg ig bd cap => simp at hc
+            | cell v => simp at hc
             | pyset xs => simp at hc
             | list xs =>
               cases hl : RVal.freezeListH h fuel (a :: path) xs.toList with
@@ -1230,6 +1245,7 @@ theorem RVal.eq_thaw_of_freezeH_pair (h : Heap) (fuel : Nat) :
             | «instance» cls attrs => cases hc
             | generator qn lo k st => cases hc
             | closure nm ps ao lo' hg ig bd cap => cases hc
+            | cell v => cases hc
             | pyset xs => cases hc
             | list xs =>
               -- freezes to a `.list` snapshot — excluded by `hlf`

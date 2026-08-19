@@ -772,6 +772,7 @@ theorem ceExecForList_succ (ih : CE fuel) : CEExecForList (fuel + 1) := by
     | dict entries ver => exact .unsupported
     | «instance» cid attrs => exact .exn h _
     | generator qn l k stat => exact .ite .unsupported (ihForG m st target a body h)
+    | cell cv => exact .unsupported
     | closure nm ps ao lo hg ig bd cap => exact .unsupported
     | pyset xs => exact .unsupported
 
@@ -880,8 +881,50 @@ theorem ceStepIter_succ (ih : CE fuel) : CEStepIter (fuel + 1) := by
     | list xs => exact .exn h _
     | dict entries ver => exact .exn h _
     | «instance» cid attrs => exact .exn h _
+    | cell cv => exact .exn h _
     | closure nm ps ao lo hg ig bd cap => exact .exn h _
     | pyset xs => exact .exn h _
+
+/-! ### H7 cells and the clock
+
+`allocCells` reads the frame's locals and APPENDS to the heap; it never
+touches the clock, so it commutes with seeding one. -/
+
+@[simp] theorem allocCells_withClock : ∀ (st : FrameState) (tr : List Int)
+    (caps : List String),
+    allocCells (st.withClock tr) caps = (allocCells st caps).withClock tr := by
+  intro st tr caps
+  induction caps generalizing st with
+  | nil => rfl
+  | cons c cs ih =>
+    rw [allocCells, allocCells]
+    by_cases hc : isCellKey c = true
+    · simp only [hc, if_true, FrameState.withClock_locals, FrameState.withClock_world,
+        World.withClock_heap]
+      cases Env.lookup st.locals c with
+      | some _ => exact ih st
+      | none =>
+        refine ih { st with
+            world := { st.world with
+              heap := st.world.heap.push (.cell (Env.lookup st.locals (cellName c))) },
+            locals := Env.set st.locals c (.ref st.world.heap.size) }
+    · simp only [hc, Bool.false_eq_true, if_false]
+      exact ih st
+
+@[simp] theorem allocCells_clock : ∀ (st : FrameState) (caps : List String),
+    (allocCells st caps).world.clock = st.world.clock := by
+  intro st caps
+  induction caps generalizing st with
+  | nil => rfl
+  | cons c cs ih =>
+    rw [allocCells]
+    by_cases hc : isCellKey c = true
+    · simp only [hc, if_true]
+      cases Env.lookup st.locals c with
+      | some _ => exact ih st
+      | none => exact ih _
+    · simp only [hc, Bool.false_eq_true, if_false]
+      exact ih st
 
 theorem ceExecForGen_succ (ih : CE fuel) : CEExecForGen (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,
@@ -990,6 +1033,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
               | generator qn l cont stat => exact ihGen m s2 _ hs2
               | dict entries ver => exact .unsupported
               | «instance» cid attrs => exact .exn hs2 _
+              | cell cv => exact .unsupported
               | closure nm ps ao lo hg ig bd cap => exact .exn hs2 _
               | pyset xs => exact .unsupported
         | refuse msg => exact .unsupported
@@ -1013,6 +1057,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
         | dict entries ver => exact .unsupported
         | «instance» cid attrs => exact .exn h _
         | generator qn l cont stat => exact .unsupported
+        | cell cv => exact .unsupported
         | closure nm ps ao lo hg ig bd cap => exact .unsupported
         | pyset xs => exact .unsupported
     | forGen target ad body =>
@@ -1042,6 +1087,7 @@ theorem ceExecGen_succ (ih : CE fuel) : CEExecGen (fuel + 1) := by
         | dict entries ver => exact .unsupported
         | «instance» cid attrs => exact .unsupported
         | generator qn l cont stat => exact .unsupported
+        | cell cv => exact .unsupported
         | closure nm ps ao lo hg ig bd cap => exact .unsupported
         | pyset xs => exact .unsupported
     | countFrom cur step => simp only [execGen]; exact .ok h _
@@ -1171,10 +1217,13 @@ theorem ceExecStmt_succ (ih : CE fuel) : CEExecStmt (fuel + 1) := by
   | defStmt name params argsOk localsOk hasGlobal isGenerator body captures sp =>
     simp only [execStmt]
     ce_norm
-    cases hcap : capturesSnapshot st.locals captures.toList with
+    -- H7 cells: `allocCells` only touches the heap and the locals, never
+    -- the clock, so the erasure walks straight through it
+    cases hcap : capturesSnapshot (allocCells st captures.toList).locals
+        captures.toList with
     | none => exact .unsupported
     | some cap =>
-      exact .of_seed (fun tr => by simp) (by simp [h])
+      exact .of_seed (fun tr => by simp [hcap]) (by simp [hcap, h])
   | assertStmt test msg sp =>
     -- the tail batch: the ifStmt shape, with the message evaluated only
     -- on the failing branch and the render decided purely
@@ -1388,6 +1437,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
   intro m st e h
   cases e with
   | constant cv sp => simp only [evalExpr]; exact .ok h _
+  | namedExpr id v sp =>
+    simp only [evalExpr]
+    refine .bind (ihE m st v h) fun s r hs => ?_
+    refine .ok ?_ _
+    exact hs
   | name id sp =>
     simp only [evalExpr]
     ce_norm
@@ -1488,10 +1542,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | none => exact .exn hs2 _
               | some obj =>
                 cases obj <;> try exact .exn hs2 _
+                case cell cv => exact .unsupported
                 case closure nm ps ao lo hg2 ig bd cap =>
                   ce_norm
+                  refine .bind (.liftRes hs2 _) fun s' cap' hs' => ?_
                   exact ClockErasedW.withLocals
-                    (ihClosure m s2.world nm ps ao lo ig bd cap vs.toArray hs2)
+                    (ihClosure m s'.world nm ps ao lo ig bd cap' vs.toArray hs')
           | none =>
             cases hg : lookupG (moduleGlobals m).1 fname with
             | some ov =>
@@ -1513,10 +1569,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     | none => exact .exn hs2 _
                     | some obj =>
                       cases obj <;> try exact .exn hs2 _
+                      case cell cv => exact .unsupported
                       case closure nm ps ao lo hg2 ig bd cap =>
                         ce_norm
+                        refine .bind (.liftRes hs2 _) fun s' cap' hs' => ?_
                         exact ClockErasedW.withLocals
-                          (ihClosure m s2.world nm ps ao lo ig bd cap vs.toArray hs2)
+                          (ihClosure m s'.world nm ps ao lo ig bd cap' vs.toArray hs')
             | none =>
               refine .ite (.ite .unsupported ?fcall) ?classes
               case fcall =>
@@ -1630,6 +1688,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             cases hh : Heap.get? s2.world.heap a with
                             | some obj =>
                               cases obj
+                              case cell cv0 =>
+                                ce_norm
+                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                obtain ⟨h9, r9⟩ := hr
+                                exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case list xs0 =>
                                 ce_norm
                                 refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
@@ -2168,11 +2231,13 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | none => exact .exn hs2 _
                           | some obj =>
                             cases obj <;> try exact .exn hs2 _
+                            case cell cv => exact .unsupported
                             case closure nm ps ao lo hg2 ig bd cap =>
                               ce_norm
+                              refine .bind (.liftRes hs2 _) fun s' cap' hs' => ?_
                               exact ClockErasedW.withLocals
-                                (ihClosure m s2.world nm ps ao lo ig bd cap
-                                  vs.toArray hs2)
+                                (ihClosure m s'.world nm ps ao lo ig bd cap'
+                                  vs.toArray hs')
         case «attribute» recv attr sp2 =>
           refine .ite ?clock ?dispatch
           case clock =>
@@ -2253,6 +2318,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | none => exact .exn hs3 _
               | some obj =>
                 cases obj <;> try exact .exn hs3 _
+                case cell cv => exact .unsupported
                 case closure nm ps ao lo hg2 ig bd cap => exact .unsupported
           | none =>
             cases hg : lookupG (moduleGlobals m).1 fname with
@@ -2357,6 +2423,11 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               cases hh : Heap.get? s4.world.heap a with
                               | some obj =>
                                 cases obj
+                                case cell cv0 =>
+                                  ce_norm
+                                  refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_
+                                  obtain ⟨h9, r9⟩ := hr
+                                  exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                                 case list xs0 =>
                                   ce_norm
                                   refine .bind (.liftRes hs4 _) fun s9 hr hs9 => ?_

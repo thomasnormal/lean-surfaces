@@ -353,7 +353,8 @@ def yf_filter_drive(n):
 
 
 def yf_list(n):
-    # REFUSED: the iterable is not a genexp (delegation to a list)
+    # pass 5+ (docs/memory-model.md §yield from a non-genexp delegate):
+    # a delegate that is not a genexp inlines through a FRESH target
     yield from [1, 2, n]
 
 
@@ -392,8 +393,9 @@ def walrus_leak(k):
 
 
 def walrus_stmt(n):
-    # REFUSED: a walrus outside a genexp filter stays the generic
-    # unsupported expression (loud, never half-structured)
+    # H7+ (docs/memory-model.md §the walrus operator): a walrus OUTSIDE a
+    # comprehension binds in the frame that evaluates it, and the binding
+    # outlives the test that made it
     if (v := n + 1) > 2:
         return v
     return 0

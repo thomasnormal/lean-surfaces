@@ -110,13 +110,79 @@ def gen_closure_any(n):
 
 
 def rebound_after(a):
-    # the row that would EXPOSE snapshot-vs-cell: CPython's f() sees the
-    # rebound a (cell), a snapshot would see the old one — REFUSED at
-    # extraction, never translated
+    # the row that EXPOSES snapshot-vs-cell: CPython's f() sees the rebound
+    # a (its cell), a snapshot would see the old one. H7 cells ship `a` as
+    # `<cell>a`, and the call reads it from the defining frame.
     def f():
         return a
     a = a + 1
     return f()
+
+
+def cell_read_twice(a):
+    # the cell is read at EVERY call, so two calls straddling a rebinding
+    # answer differently — the property a snapshot cannot have
+    def f():
+        return a
+    first = f()
+    a = a * 10
+    return first * 100 + f()
+
+
+def two_closures_one_cell(a):
+    # ONE cell per frame, shared by every closure the frame creates
+    def f():
+        return a
+
+    def g():
+        return a * 2
+    a = a + 1
+    return f() * 10 + g()
+
+
+def cell_unbound_at_def(n):
+    # the cell is EMPTY when the def runs (`guard`'s shape in the shipped
+    # bound()); the call after the assignment reads it normally
+    def f():
+        return later + n
+    later = n * 5
+    return f()
+
+
+def gen_cell_before_call(a):
+    # the shipped `moves()` shape: a GENERATOR closure whose celled name is
+    # written after the def but before the generator is ever called
+    def g():
+        yield a
+        yield a + 1
+    a = a * 3
+    t = 0
+    for v in g():
+        t = t + v
+    return t
+
+
+def cell_escapes(a):
+    # the cell is read from the DEFINING frame at the call, so a closure
+    # that ESCAPES would read it stale — REFUSED at extraction
+    def f():
+        return a
+    a = a + 1
+    return f
+
+
+def gen_cell_after_call(a):
+    # a generator reads its cells at RESUME and the tier reads at the CALL,
+    # so a rebinding at or after the first call is REFUSED
+    def g():
+        yield a
+        yield a
+    a = a + 1
+    t = 0
+    for v in g():
+        a = a + 1
+        t = t + v
+    return t
 
 
 def uses_nonlocal(a):
@@ -163,7 +229,7 @@ def lam_capture(a):
 
 def lam_rebound(a):
     # the exposing row again, lambda flavor: CPython's cell sees the
-    # rebound a — refused at extraction
+    # rebound a, and so does the tier's
     f = lambda: a
     a = a + 1
     return f()

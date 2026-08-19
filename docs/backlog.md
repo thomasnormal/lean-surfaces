@@ -8460,3 +8460,214 @@ order:
 3. then `tpBracket` instantiated at the engine's own `Entry`, `TableOK`
    threaded through the fold beside `LoopFrame`, and the depth-`d`/depth-`(d-1)`
    composition — for which §8's two theorems are the table half, already paid.
+
+
+## L14 — CLOSURE CELLS LAND, and the named blocker turns out to be THREE (2026-08-19)
+
+§L13 named the tier item that gates all of step 2: *"closure cells for
+rebound captures (H7 extension) — until it lands, no statement about the
+current engine's `bound()` can be typed at all."* It has landed, and the
+engine's `bound()` now runs through the interpreter. Two things the
+naming did not know, both found by measurement rather than by reading:
+
+1. **One of the two refused names was never a capture.** §L13 flagged
+   `val` for a second look; CPython's own compiler settles it. The cell
+   set for `moves()` is `{guard}`, not `{guard, val}`.
+2. **The cell was not the only blocker.** With it fixed, `bound()`'s
+   statement census came back clean — and the RUN still refused, twice.
+   The walrus in general expression position and `yield from` a
+   non-genexp delegate were both in the way, and only the second was
+   invisible to a node count.
+
+### What the shipped `bound()` actually needed, in the order it surfaced
+
+| # | blocker | how it was found | cost |
+|---|---------|------------------|------|
+| 1 | captures rebound after the `def` (`guard`) | §L13's census | the tier item |
+| 2 | `val` reported as a capture it is not | the same census, doubted | one extractor clause |
+| 3 | four `NamedExpr` nodes (`val`, `v`, `cap`, `proof`) | the census, once (1) stopped hiding the body | one `Expr` constructor |
+| 4 | `yield from sorted(…)` | **the SMOKE** — the census called it supported | one ingestion arm |
+
+Finding 3 is the one to carry: a statement-level `Unsupported` count is
+not an ingestion verdict. `yield from` a non-genexp is a STRUCTURED node
+that refuses at EVALUATION, so it counted as clean and would have been
+reported as clean. Run the thing.
+
+### The cell, as built
+
+A cell is a heap slot — `Obj.cell (value : Option RVal)`, `none` for
+CPython's empty cell — addressed from the frame's env under a directory
+key `"<cell>x"` that no Python identifier can spell. The frame's
+ordinary binding of `x` is untouched, so every existing read, write and
+frame lemma survives verbatim; `allocCells` creates or REUSES the slots
+when the `def` runs (one frame, one cell — which is what makes a `def`
+in a loop correct); `capturesSnapshot` copies the DIRECTORY entry
+instead of a value; `cellsFor` reads the cells at the CALL from the
+defining frame's live locals. Details and the boundary in
+docs/memory-model.md §closure CELLS for rebound captures.
+
+**The one concession, recorded rather than hidden.** The slot's CONTENT
+is never read back: under the escape admission the defining frame is the
+authority, so writing the live value into the slot at each call is an
+observationally invisible copy. The slot buys the cell's IDENTITY (one
+per frame, shared by every closure it creates), not its storage. Two
+consequences are priced: relaxing the ESCAPE admission needs the write
+plus a `Res.mapOk` blindness lemma beside `heapAttrStore_swapAt`;
+relaxing the GENERATOR admission (no rebinding at or after the first
+call) needs a refresh at the four frame-level resume sites. Neither is
+needed by anything shipped today, and both were measured before being
+skipped — see "the design that was NOT taken".
+
+### The design that was NOT taken, and why — the number that decided it
+
+The first implementation put the cell read in `evalExpr`'s NAME arm: no
+plain binding, so resolve THROUGH the slot, at every read, including a
+generator's resume. That is the fully general mechanism, and it is the
+one to come back to. It was abandoned on a measurement:
+
+| | name-arm deref | read at the call |
+|---|---|---|
+| `Obj.cell` arms in `Semantics` | 31 | 31 |
+| `Obs`/`ClockErase`/`PayloadBlind` proof arms | ~35 | ~35 |
+| NEW blindness lemmas needed | `cellsFor`, `allocCells`, **+ a write-commuting `Res.mapOk` lemma**, + the name arm in `worldInv`, `pbEvalExpr`, `ceEvalExpr` | `cellsFor_swapAt`, `allocCells_swapAt`, `allocCells_get?`, `allocCells_withClock`, `allocCells_clock` |
+| observable difference on the ADMITTED fragment | none | none |
+
+The name-arm version puts a heap read on the hottest path in the three
+proof files, and `PayloadBlind` is 3786 lines of delicate `swapAt`
+algebra. The call-time version is observationally identical wherever the
+tier admits a cell at all — the callee never WRITES one (`nonlocal` is
+refused) and no admitted generator can see a later value — so the
+general mechanism is in place and the general PROOF is not paid for
+until an admission is relaxed.
+
+### The capture census now agrees with CPython's compiler
+
+`_assigned_names` did not count the WALRUS as a binding, so `moves()`'s
+`val` — a walrus target, `moves`' own local — was reported as a capture
+of `bound()`. Adding the clause (and subtracting comprehension targets
+back out, since `_walk_scope` descends into comprehensions on purpose,
+because PEP 572 leaks out of them) makes the extractor's capture set
+equal `co_freevars` on **all 30 nested defs in `Examples/python` plus
+the engine's `sunfish.py`** — checked against `compile()`, not asserted.
+`moves()` captures `depth`/`gamma`/`guard`/`killer`/`pos`, exactly
+CPython's, and only `guard` cells.
+
+`_binding_linenos` took the same clause, which is the SOUNDNESS
+direction: a walrus after the `def` is a rebinding, and without it a
+capture the tier called snapshot-safe could have been rebound behind its
+back.
+
+### THE MEASUREMENT — engine master's `bound()`, end to end
+
+On a scratch copy of engine master (`e670434`) `sunfish.py`, extracted
+and driven by a five-line `probe(gamma, depth)` that builds the opening
+`Position` and a fresh `Searcher`:
+
+* `Searcher.bound` is **18 statements**, the five `callIn` gates
+  `(argsOk, localsOk, isGenerator, params.size) = (true, true, false, 5)`,
+  and **two** `unsupported` nodes — the two `del`s already known and
+  guarded false by `TABLE_SIZE`. The `NestedDef` refusal is gone.
+* Through the interpreter, against CPython on the same driver:
+
+  | `(gamma, depth)` | CPython | model | |
+  |---|---|---|---|
+  | `(0, 0)` | 0 | 0 | `#guard` |
+  | `(40, 0)` | 4 | 4 | `#guard` |
+  | `(-40, 0)` | 0 | 0 | `#guard` |
+  | `(0, 1)` | 0 | 0 | `#guard` |
+  | `(40, 1)` | 37 | 37 | `#guard` |
+  | `(40, 2)` | 36 | 36 | `#eval`, 75 s at fuel 400000 |
+
+  The first five are one 43 s `lake env lean` at fuel 40000.
+
+That is the milestone: the CURRENT engine's `bound()` ingests and RUNS.
+It is a measurement, not a committed gate — pinning it would mean
+re-pinning `Examples/python/sunfish/sunfish.py`, which is the frozen
+§L4–§L13 stack's object. What IS committed is drift-proof:
+`closure_lab.gen_cell_before_call` is `moves()`' shape (a generator
+closure whose celled name is written after the def and before the first
+call) and `walrus_lab.w_genexp_filter` is the shipped ordering line's.
+
+### The re-pin, priced honestly
+
+Nothing blocks it any more; what it costs is `bound_depth.lean`. The §0
+pins were projected at 13 statements and the shipped body is 18, so
+every pin from index 6 on moves, and §3's fold vocabulary is a different
+program: the fold target is `(val, move)`, the score is computed in the
+CONSUMER across five branches, and there is an explicit `break` on a
+settled cap. The generator tier's object is unchanged (§L13 measured
+`gen_moves`/`value`/`move`/`rotate`/`king_capture`/`parse`/`render`
+byte-identical) and module init is unaffected, so the blast radius is
+`bound_depth.lean` plus the `sunfish.json`/`sunfish.py` pin — one file
+of theorems, not the directory. Budget it as its own lane; this one
+spent its remainder on making the run possible.
+
+### What landed
+
+* `LeanModels/Python/Runtime.lean` — `Obj.cell`, its WF arm, the
+  boundary-freeze refusal, two proof arms.
+* `LeanModels/Python/Ast.lean` — `Expr.namedExpr`.
+* `LeanModels/Python/Semantics.lean` — `cellKey`/`isCellKey`/`cellName`,
+  `allocCells`, `cellsFor`, the two `*_cellFree` convenience lemmas, the
+  walrus arm, the cell allocation in `defStmt`, the cell read at the
+  three closure-call sites, and 32 loud `.cell` arms.
+* `LeanModels/Python/Json.lean` — the `NamedExpr` parse arm, the general
+  `yield from` lowering through `<yieldfrom@n>`.
+* `LeanModels/Python/PayloadBlind.lean` — `allocCells_swapAt`,
+  `allocCells_get?`, `cellsFor_swapAt`, and the `keyHasInstanceRef.induct`
+  renumbering the new `Obj` constructor forced.
+* `LeanModels/Python/ClockErase.lean` — `allocCells_withClock`,
+  `allocCells_clock`, and the arm updates.
+* `extractors/python/extract.py` — the walrus clauses, comprehension
+  targets, the cell split, `_name_escapes`, `_first_use_lineno`, the
+  general `NamedExpr` node with its comprehension-scope guard, and the
+  leftmost-walrus hoist in the pass-7 filter lowering.
+* `Examples/python/closure_lab` — six new cell rows; `Examples/python/
+  walrus_lab` — a new lab, 7 functions.
+
+**Triad, cold on the merged tree** (a new `Obj` constructor re-elaborates
+everything downstream, so this is a full pass): `lake build` **3678 jobs
+green**, zero `sorry`/`admit`/`native_decide` and zero `sorryAx` — the axiom
+profile is 299 `[propext, Classical.choice, Quot.sound]`, 14
+`[propext, Quot.sound]` (DictCalc's choice-free theorems, preserved) and 4
+`[propext]`. `diff_test` **1315 cases, 0 failed, 113 whitelisted-unsupported,
+1202 matched** — against §L13's 1288 / 115 / 1173, so the 1173 all still
+match and the tier ADDED 29 while turning two whitelisted refusals into
+agreements. `docs_check` 71 marked blocks, 71 ok, 15 illustrative-exempt;
+`extractors/python/test_extract.py` 77 ok.
+
+### Findings worth carrying
+
+1. *A statement-level `Unsupported` count is not an ingestion verdict.*
+   `yield from sorted(…)` is a STRUCTURED node that refuses at
+   EVALUATION; the census called `bound()` clean while the run refused.
+   The three `#eval`s §L13 recommended are the right first move, but the
+   verdict is a CALL, not a count. This cost nothing here only because
+   the smoke was run before the write-up.
+2. *When a hand-rolled static analysis has an oracle, RUN the oracle.*
+   The capture census had been over-approximating since H7; twenty lines
+   of `compile()`-and-compare over the whole corpus found it, confirmed
+   the fix, and turned "probably right" into 30 checked nested defs. The
+   analysis and CPython disagreeing is a bug in exactly one of them.
+3. *Put the general MECHANISM in and the general PROOF off.* The heap
+   cell, the directory key and the def-time allocation are the real
+   thing; only the call-time READ is the restricted step, and it is
+   restricted by an ADMISSION the extractor enforces loudly. That kept
+   `PayloadBlind` to three new lemmas instead of a rewrite, and every
+   relaxation is now a named, priced edit rather than a redesign.
+4. *A new `Obj` constructor costs the `.induct` numbering, and the
+   invoice arrives in the proof files.* `keyHasInstanceRef.induct`'s
+   twelve cases all shifted; the tempting fix (let the cell fall into the
+   existing catch-all) would have made a cell silently HASHABLE. The
+   renumber is eight lines and keeps the refusal loud — take it.
+5. *OPS — the pinned interpreter is part of the fixture.* Regenerating
+   the envelopes with the default `python3` (3.14) rewrote every f-string
+   span and the recorded CPython version across sixty files. `python3.9`
+   is what the envelopes were pinned with; the whole extraction, the
+   extractor tests and `diff_test` run under it. The version field still
+   moves `3.9.19 → 3.9.25` — honest provenance, one line per envelope.
+6. *OPS — kills by PID and parentage only, again respected.* One
+   `lake build` of this lane's was killed mid-flight (verified through
+   `ps -o ppid` up to this session's own pid) because the next edit
+   invalidated everything it was elaborating. No sources were edited
+   under an in-flight build.

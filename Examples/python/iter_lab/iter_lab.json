@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/iter_lab/iter_lab.py",
   "source_sha256": "bbc90dafe49727ecd8ed980d7a71ef61ee7b78d4e12c4450a0fd7252d1573bfb",

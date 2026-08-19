@@ -120,6 +120,15 @@ inductive Expr where
   representable and refuses loudly at evaluation. -/
   | genExp (elt : Expr) (target : Expr) (iter : Expr) (ifs : Array Expr)
       (walrus : Array (String × Expr)) (span : Span)
+  /-- The WALRUS `(x := e)` in general expression position (schema
+  `NamedExpr`, H7+ — docs/memory-model.md §the walrus operator).
+  Evaluates `e`, BINDS `x` in the executing frame, and answers the same
+  value. Only a plain NAME target is Python-legal, so the target is a
+  `String`. The genexp-FILTER walrus keeps its own lowering
+  (`genExp`'s `walrus` field, pass 7): a comprehension is its own scope
+  and PEP 572 leaks the binding to the ENCLOSING one, which the lowering
+  models and this constructor must not silently re-scope. -/
+  | namedExpr (target : String) (value : Expr) (span : Span)
   | unsupported (pyKind : String) (text : String) (span : Span)
 deriving Repr, Inhabited, BEq
 -- DecidableEq deriving does not cope with the nested `Array Expr`; derived BEq suffices.

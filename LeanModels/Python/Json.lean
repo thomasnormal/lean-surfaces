@@ -129,6 +129,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .constant (← parseConst (← getField j "value")) span
     | "Name" =>
         return .name (← (← getField j "id").getStr?) span
+    | "NamedExpr" =>
+        -- H7+ (docs/memory-model.md §the walrus operator): the general
+        -- `(x := e)`. Only a plain NAME target is Python-legal, and the
+        -- extractor emits this kind only OUTSIDE a comprehension scope
+        -- (inside one PEP 572 leaks the binding to the enclosing frame,
+        -- which the pass-7 filter lowering models and this does not).
+        return .namedExpr (← (← getField j "target").getStr?)
+          (← parseExpr (← getField j "value")) span
     | "BinOp" =>
         let left ← parseExpr (← getField j "left")
         let op ← parseBinOpName (← (← getField j "op").getStr?)
@@ -602,6 +610,8 @@ mutual
   private partial def exprRefs : Expr → List String
     | .constant .. => []
     | .name id _ => [id]
+    -- the WALRUS both binds and reads: the target counts as an occurrence
+    | .namedExpr id v _ => id :: exprRefs v
     | .binOp l _ r _ => exprRefs l ++ exprRefs r
     | .unaryOp _ e _ => exprRefs e
     | .boolOp _ vs _ => (vs.toList.map exprRefs).flatten
@@ -878,6 +888,12 @@ module apart, and the angle brackets make collision with a real Python
 identifier impossible. -/
 def genExpName (n : Nat) : String := s!"<genexpr@{n}>"
 
+/-- The FRESH loop target a non-genexp `yield from` inlines through
+(pass 5+, docs/memory-model.md §yield from). `<`/`>` cannot occur in a
+Python identifier, so the name is unspellable from the source and the
+inlined loop can shadow nothing. -/
+def yieldFromName (n : Nat) : String := s!"<yieldfrom@{n}>"
+
 /-- CPython's own name for the implicit first parameter (the
 already-evaluated outer iterator). No Python identifier contains `.`. -/
 def genExpArg : String := ".0"
@@ -1020,6 +1036,7 @@ live only inside its own genexp; any other occurrence lands in
 private partial def exprNamesXW : Expr → List String
   | .constant .. => []
   | .name id _ => [id]
+  | .namedExpr id v _ => id :: exprNamesXW v
   | .binOp l _ r _ => exprNamesXW l ++ exprNamesXW r
   | .unaryOp _ e _ => exprNamesXW e
   | .boolOp _ vs _ => (vs.toList.map exprNamesXW).flatten
@@ -1085,6 +1102,7 @@ mutual
       StateM (Nat × Array FunctionDefn) Expr := do
     match e with
     | .constant .. | .name .. | .unsupported .. => return e
+    | .namedExpr id v sp => return .namedExpr id (← lowerExpr ctx v) sp
     | .binOp l op r sp => return .binOp (← lowerExpr ctx l) op (← lowerExpr ctx r) sp
     | .unaryOp op v sp => return .unaryOp op (← lowerExpr ctx v) sp
     | .boolOp op vs sp => return .boolOp op (← lowerExprs ctx vs) sp
@@ -1216,7 +1234,22 @@ mutual
             return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
         | Option.none =>
             return .yieldFromStmt (.genExp elt target iter ifs wb gsp) sp
-       | v => do return .yieldFromStmt (← lowerExpr ctx v) sp)
+       | v => do
+        -- pass 5+ (docs/memory-model.md §yield from): a NON-genexp
+        -- delegate inlines the same way, through a FRESH target no
+        -- Python identifier can spell — so it collides with nothing in
+        -- the enclosing body and needs no `yfForbidden` check at all.
+        -- CPython-exact on this tier's surface: `yield from e` differs
+        -- from `for t in e: yield t` only in `send`/`throw`/`close`
+        -- propagation and in the delegation's RETURN value, and all four
+        -- are already outside the tier (a yield in EXPRESSION position
+        -- is `Expr.unsupported`, and the generator methods refuse). The
+        -- shipped `moves()` ends in `yield from sorted(…)`, a CALL.
+        let v ← lowerExpr ctx v
+        let (n, fns) ← get
+        set (n + 1, fns)
+        let t : Expr := .name (yieldFromName n) sp
+        return .forStmt t v #[.yieldStmt t sp] #[] sp)
     | .raiseStmt exc cause sp =>
         return .raiseStmt (← exc.mapM (lowerExpr ctx)) (← cause.mapM (lowerExpr ctx)) sp
     | .assertStmt t m sp =>

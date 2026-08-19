@@ -927,6 +927,131 @@ mechanical note: the sf_order envelope outgrew the default
 elaborator budget — `set_option maxRecDepth 100000 in load_program`,
 the `sunfish` example's own pattern.
 
+## Closure CELLS for rebound captures (H7 cells — BUILT 2026-08-19)
+
+The snapshot tier above admits exactly the captures a frame never
+rebinds after the `def`. The shipped engine walked out of that fragment:
+post-#236 `bound()` defines `def moves():` and assigns
+`guard = not root and calm` BELOW it, so `Searcher.bound` answered
+`unsupported statement 'NestedDef'` and NO statement about the current
+engine could be typed (docs/backlog.md §L13). Closures with late-bound
+captures are ubiquitous in real Python, so this is core capability, not
+a sunfish special case.
+
+**A cell is a heap slot.** CPython closes over VARIABLES; a local that a
+nested def captures and the enclosing frame REBINDS lives in a cell that
+both frames share. The tier models that as what it is:
+
+* `Obj.cell (value : Option RVal)` — a heap object, `none` for CPython's
+  empty cell. It is never a Python VALUE: every value-position consumer
+  refuses it with `cellInternal` rather than inventing a type for it.
+* The frame files the slot under a DIRECTORY key `"<cell>x"`. `<` and
+  `>` cannot occur in a Python identifier, so the directory can never
+  collide with a name the extractor emits, and the frame's ordinary
+  binding of `x` — every read, every write, every existing lemma about
+  frames — is untouched.
+* `allocCells` creates (or REUSES) the frame's slots when the `def`
+  executes, seeded with the name's current binding when it has one and
+  EMPTY when it does not (`guard`'s shape). Reuse is what makes a `def`
+  in a loop correct: one frame, one cell, every closure it creates
+  sharing it.
+* `capturesSnapshot` then copies the DIRECTORY entry instead of a value,
+  so what the `def` stored in the closure is a location, not a reading.
+* `cellsFor` reads the cells at the CALL, from the live locals of the
+  frame that is calling, and hands the body plain bindings. That is the
+  late binding, and the whole difference from snapshot-at-def.
+
+The extractor decides which captures are cells (`"<cell>x"` in the
+`captures` list) and admits exactly the fragment those three rules model
+exactly. Three LOUD refusals draw the boundary:
+
+* the nested name must never ESCAPE the defining frame — the cell is
+  read from that frame at the call, so an escaped closure would read it
+  stale (`closure_lab.cell_escapes`); `cellsFor` re-checks at runtime,
+  for hand-built modules;
+* for a GENERATOR nested def, every binding of a celled name must
+  precede the FIRST call of the nested name. A generator reads its cells
+  at RESUME and the tier reads them at the CALL, so a rebinding between
+  two resumes would be read late (`closure_lab.gen_cell_after_call`);
+* `nonlocal` (a cell WRITE from the closure) and a scope nested deeper
+  than one level keep the refusals they already had.
+
+**What the slot's CONTENT is for, stated honestly.** Under the escape
+admission the defining frame is the authority, so writing the live value
+back into the slot at each call would be an observationally invisible
+copy, and the tier does not do it. What the slot buys is the cell's
+IDENTITY — one per frame, shared by every closure the frame creates,
+reused by a `def` in a loop — which a snapshot cannot express. Relaxing
+the escape admission is where the content starts to matter, and where
+the write (plus its `Res.mapOk` blindness lemma next to
+`heapAttrStore_swapAt`) has to be paid for. Relaxing the generator
+admission is a refresh at the four frame-level resume sites.
+
+**The capture census was over-approximating, and CPython said so.**
+`_assigned_names` did not count the WALRUS as a binding, so `moves()`'s
+`val` — a walrus target, `moves`' OWN local — was reported as a capture
+of `bound()` and the census refused the whole nested def for a name
+CPython never cells. With the clause added (and comprehension targets
+subtracted back out, since `_walk_scope` descends into comprehensions on
+purpose), the extractor's capture set agrees with CPython's own compiler
+(`co_freevars`) on all 30 nested defs in `Examples/python` plus the
+engine's `sunfish.py`: `moves()` captures `depth`/`gamma`/`guard`/
+`killer`/`pos`, and only `guard` is a cell.
+
+**Acceptance.** `closure_lab`'s cell battery — `rebound_after` (6, where
+a snapshot would forge 5), `cell_read_twice` (two calls straddling a
+rebinding), `two_closures_one_cell` (one cell per frame),
+`cell_unbound_at_def` (empty at the def), `gen_cell_before_call`
+(`moves()`' shape), `lam_rebound` (the lambda flavour) — plus the two
+loud rows above, differential and `#py_check`ed.
+
+## The walrus operator (H7+ — BUILT 2026-08-19)
+
+`Expr.namedExpr`: `(x := e)` evaluates `e`, BINDS `x` in the frame that
+is running, and answers the same value. Only a plain NAME target is
+Python-legal, so the target is a `String`. Nothing else moves — a celled
+name keeps its plain binding here, because the cell is read at the
+closure call, which is the only place it can be observed.
+
+The general node is emitted ONLY outside a comprehension. A
+comprehension is its own scope and PEP 572 leaks the binding to the
+ENCLOSING one, which `Expr.namedExpr` would re-scope; inside one the
+admitted walrus stays the pass-7 FILTER lowering (§the walrus filter),
+whose `walrusForbidden` census is what makes the re-scoping
+unobservable. That lowering now hoists the filter's LEFTMOST walrus
+rather than requiring the filter to BE a compare: CPython evaluates the
+leftmost operand of a compare, a boolop, a binop or a unary first and
+without a guard, so hoisting exactly that one is CPython's own
+compilation, and the shipped ordering line
+(`… if (v := pos.value(m)) >= QS or depth`, a BoolOp) lowers. Anything
+deeper is conditional (`a or (v := b)`) and stays loud.
+
+`Expr.heapFree` answers `false` for a walrus. Evaluating one preserves
+the WORLD — it binds a frame local — but `worldInv` has no case for it
+yet, so the honest answer to "PROVABLY preserves" is `false`; it only
+shrinks the fragment. `genAllocFree` is the recursive answer, since a
+walrus allocates nothing of its own.
+
+**Acceptance.** `walrus_lab`: the binding outliving its expression, the
+evaluation ORDER (`w_order`, `w_call_arg`), the loop-condition idiom, a
+short-circuited walrus that never binds (`w_short_circuit(0)` is
+CPython's `UnboundLocalError`, which the harness maps to this tier's
+`NameError`), and the genexp filter's hoist.
+
+## `yield from` a non-genexp delegate (pass 5+ — BUILT 2026-08-19)
+
+`yield from <expr>` where the delegate is not an admitted genexp now
+inlines too, through a FRESH loop target `<yieldfrom@n>` that no Python
+identifier can spell — so it collides with nothing in the enclosing body
+and needs no `yfForbidden` check at all. `yield from e` differs from
+`for t in e: yield t` only in `send`/`throw`/`close` propagation and in
+the delegation's RETURN value, and all four are already outside the tier
+(a yield in EXPRESSION position is `Expr.unsupported`, and the generator
+methods refuse), so the lowering is exact on this tier's surface. The
+shipped `moves()` ends in `yield from sorted(…)`, a CALL — which the
+statement-level census reported as SUPPORTED while the run refused, so
+this one was found by the smoke, not by counting nodes.
+
 ## Set semantics (bound() arc pass 1 — BUILT 2026-08-10, the honest subset)
 
 The target is `self.history = set(history)` + `pos in self.history` —

@@ -544,7 +544,10 @@ theorem moves_def_allocates (w : World) (env : REnv) (F : Nat)
               Env.set env "moves" (.ref w.heap.size)⟩ .next := by
   obtain ⟨sp, hdef⟩ := bpDef_lit
   rw [hdef]
-  exact execStmt_nestedDef (moves_snapshot env d pv vl hd hp hv)
+  -- H7 cells: `moves` captures no LATE-bound name here, so the def
+  -- allocates no cell and the snapshot reads the frame it started in
+  exact execStmt_nestedDef (allocCells_cellFree _ _ (by simp [isCellKey, String.isPrefixOf]))
+    (moves_snapshot env d pv vl hd hp hv)
 
 /-- **GATE 3b — calling it allocates the generator.** `moves()` runs no code:
 it appends a suspended frame whose stored continuation is exactly `moves`'
@@ -558,7 +561,9 @@ theorem moves_call_creates (w : World) (env : REnv) (ad : Addr)
       ⟨{ w with heap := w.heap.push (movesGen d pv vl) }, env⟩ := by
   obtain ⟨s₁, s₂, hcall⟩ := movesCall_lit
   rw [hcall]
-  exact EvalsIn.closureGenCall hloc notHeapFree hobj rfl EvalsToList.nil
+  exact EvalsIn.closureGenCall hloc notHeapFree hobj
+    (cellsFor_cellFree _ _ _ (by simp [movesCap, isCellKey, String.isPrefixOf]))
+    rfl EvalsToList.nil
 
 /-- The object it left, spelled out: the captures ARE the generator's locals,
 and `moves`' body IS its continuation. -/

@@ -202,6 +202,7 @@ def CmpOp.symbol : CmpOp → String
 /-- Schema `kind` name of an expression node (error messages). For
 `unsupported` nodes this is the recorded CPython class name. -/
 def Expr.kindName : Expr → String
+  | .namedExpr .. => "NamedExpr"
   | .constant .. => "Constant"
   | .name .. => "Name"
   | .binOp .. => "BinOp"
@@ -242,6 +243,16 @@ def Stmt.kindName : Stmt → String
   | .cont _ => "Continue"
   | .unsupported pyKind _ _ => pyKind
 
+/-- A CLOSURE CELL reached a VALUE position (H7 cells,
+docs/memory-model.md §nested defs and closures). A cell is an
+interpreter-internal heap slot: it is created by a `def` with a
+late-bound capture, addressed ONLY through a frame's `<cell>x` env key,
+and read ONLY by `cellsFor`, at the closure call. No Python expression
+can produce one, so every value-position consumer says so LOUDLY rather
+than inventing a type for it. -/
+def cellInternal : String :=
+  "internal: a closure CELL reached a value position — a cell is never a Python value (unreachable through ingestion; report this)"
+
 /-- Python truthiness `bool(x)`: `None` → false; `bool` → itself;
 `int` → `≠ 0`; `str`/`listV`/`tuple` → nonempty. `Res`-valued since H1:
 a `.ref`'s truthiness lives in the heap (`bool(d)` is `len(d) != 0`) —
@@ -280,6 +291,10 @@ def RVal.typeNameH (h : Heap) : RVal → String
     -- names, never messages).
     | some (.instance _ _) => "object"
     | some (.generator ..) => "generator"
+    -- a CELL is interpreter-internal and never names a Python type; the
+    -- message-only placeholder keeps this total (the value-position
+    -- consumers all refuse with `cellInternal`).
+    | some (.cell _) => "cell"
     | some (.closure ..) => "function"
     | some (.pyset _) => "set"
     | Option.none => "object"
@@ -1716,6 +1731,7 @@ mutual
       match Heap.get? h a with
       | some (.instance _ _) => true
       | some (.generator ..) => true
+      | some (.cell _) => true
       | some (.closure ..) => true  -- identity hash, like instances: refuse
       | some (.pyset _) => false    -- sets are UNHASHABLE: the faithful TypeError path
       | _ => false
@@ -1826,6 +1842,7 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   -- protocol's refusal is the faithful outcome.
   | some (.instance _ _) => .exn (.typeError "'object' object is not subscriptable")
   | some (.generator ..) => .exn (.typeError "'generator' object is not subscriptable")
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn (.typeError "'function' object is not subscriptable")
   | some (.pyset _) => .exn (.typeError "'set' object is not subscriptable")
   | Option.none => .unsupported danglingMsg
@@ -1861,6 +1878,7 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
     .exn (.typeError "'object' object does not support item assignment")
   | some (.generator ..) =>
     .exn (.typeError "'generator' object does not support item assignment")
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) =>
     .exn (.typeError "'function' object does not support item assignment")
   | some (.pyset _) =>
@@ -1875,6 +1893,7 @@ def heapLen (h : Heap) (a : Addr) : Res RVal :=
   | some (.list xs) => .ok (.int xs.size)
   | some (.instance _ _) => .exn (.typeError "object of type 'object' has no len()")
   | some (.generator ..) => .exn (.typeError "object of type 'generator' has no len()")
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn (.typeError "object of type 'function' has no len()")
   | some (.pyset xs) => .ok (.int xs.size)
   | Option.none => .unsupported danglingMsg
@@ -1892,6 +1911,7 @@ def heapGet (h : Heap) (a : Addr) (k dflt : RVal) : Res RVal :=
   | some (.instance _ _) =>
     .unsupported "internal: '.get' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn .attributeError  -- functions have no .get
   | some (.pyset _) => .exn .attributeError     -- sets have no .get
   | Option.none => .unsupported danglingMsg
@@ -1910,6 +1930,7 @@ def heapAppend (h : Heap) (a : Addr) (v : RVal) : Res Heap :=
   | some (.instance _ _) =>
     .unsupported "internal: '.append' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn .attributeError
   | some (.pyset _) => .exn .attributeError    -- sets have no .append
   | Option.none => .unsupported danglingMsg
@@ -1932,6 +1953,7 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
   | some (.instance _ _) =>
     .unsupported "internal: '.pop' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn .attributeError
   | some (.pyset _) =>
       .unsupported "set.pop() is outside the tier (it removes an ARBITRARY element — hash order; docs/memory-model.md)"
@@ -1958,6 +1980,7 @@ def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
   | some (.instance _ _) =>
     .unsupported "internal: '.insert' dispatch reached an instance receiver (method dispatch owns instances — report this)"
   | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) => .exn .attributeError
   | some (.pyset _) => .exn .attributeError    -- sets have .add, not .insert
   | Option.none => .unsupported danglingMsg
@@ -1977,6 +2000,7 @@ def heapAttrStore (h : Heap) (a : Addr) (attr : String) (v : RVal) : Res Heap :=
   | some (.list _) => .exn .attributeError
   -- a generator's attributes (`gi_frame`, …) are all read-only
   | some (.generator ..) => .exn .attributeError
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) =>
       .unsupported "attribute stores on a function object are outside the tier (CPython allows them; a fake AttributeError would be wrong)"
   | some (.pyset _) => .exn .attributeError  -- sets have no writable attributes
@@ -1996,6 +2020,7 @@ def truthyH (h : Heap) : RVal → Res Bool
     | some (.instance _ _) => .ok true
     -- a generator object is always truthy (no `__bool__`/`__len__`)
     | some (.generator ..) => .ok true
+    | some (.cell _) => .unsupported cellInternal
     | some (.closure ..) => .ok true
     | some (.pyset xs) => .ok (xs.size != 0)
     | Option.none => .unsupported danglingMsg
@@ -2111,6 +2136,7 @@ def heapContains (h : Heap) (fuel : Nat) (a : Addr) (k : RVal) : Res Bool :=
     -- with a side effect, which this pure helper cannot express — loud,
     -- never a wrong answer (docs/memory-model.md §generator semantics)
     .unsupported "'in' on a generator CONSUMES it (a stateful membership test) — outside the tier"
+  | some (.cell _) => .unsupported cellInternal
   | some (.closure ..) =>
     .exn (.typeError "argument of type 'function' is not iterable")
   | some (.pyset xs) =>
@@ -2237,6 +2263,7 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
         .exn (.typeError "'object' object is not iterable")
     | some (.generator ..) =>
         .unsupported "sorted() over a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+    | some (.cell _) => .unsupported cellInternal
     | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
     | some (.pyset _) =>
         .unsupported "sorted() over a set is outside the tier (CPython sorts it; the drain order is hash order — recorded, docs/memory-model.md)"
@@ -2266,6 +2293,7 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
             .exn (.typeError "'object' object is not iterable")
         | some (.generator ..) =>
             .unsupported s!"{if isMax then "max" else "min"}() over a generator DRAINS it (a stateful read) — outside the tier"
+        | some (.cell _) => .unsupported cellInternal
         | some (.closure ..) =>
             .exn (.typeError "'function' object is not iterable")
         | some (.pyset _) =>
@@ -2273,6 +2301,128 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
         | Option.none => .unsupported danglingMsg)
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
+
+/-! ### Closure CELLS (H7 cells, docs/memory-model.md §nested defs and
+closures)
+
+CPython closes over VARIABLES, not values: a local the enclosing frame
+REBINDS after the `def` lives in a CELL, and the nested body reads that
+cell when it RUNS. The tier models a cell as what it is — a heap slot —
+and addresses it from the frame's env under a key no Python identifier
+can spell:
+
+* the enclosing frame keeps its ordinary plain binding of `x` (so every
+  existing read, write and lemma about frames is untouched) AND a
+  DIRECTORY entry `"<cell>x" ↦ .ref a`, created by the `def`;
+* the closure's captured env carries the DIRECTORY entry instead of a
+  value, so what the `def` stored is a location, not a reading;
+* `cellsFor` resolves those entries at the CALL, from the live locals of
+  the frame that is calling — which the tier admits only when that IS
+  the defining frame — and hands the body plain bindings. That is the
+  late binding, and the whole difference from snapshot-at-def.
+
+The extractor decides which captures are cells and admits only the
+fragment these three rules model exactly — a closure whose name never
+escapes the defining frame, and, for a GENERATOR, whose celled names are
+all written before the first call (a resume reads the cell, and the tier
+refreshes at the call). Everything else keeps the loud refusal. -/
+
+/-- The env key a CELL for `x` is filed under. `<` and `>` cannot occur
+in a Python identifier, so the directory can never collide with a name
+the extractor emits. -/
+def cellKey (x : String) : String := "<cell>" ++ x
+
+/-- Is this env key a cell DIRECTORY entry? -/
+def isCellKey (k : String) : Bool := "<cell>".isPrefixOf k
+
+/-- The Python name a cell key names (identity on non-cell keys). -/
+def cellName (k : String) : String := (k.toList.drop 6).asString
+
+/-- Allocate (or REUSE) this frame's cells for a `def`'s late-bound
+captures. Reuse is what makes a `def` in a LOOP correct: one frame, one
+cell, every closure it creates sharing it — exactly CPython. A cell
+starts holding the name's CURRENT binding when it has one (a capture
+written before the def) and EMPTY when it does not (`guard` in the
+shipped `bound()`, assigned below its own `def`). -/
+def allocCells (st : FrameState) : List String → FrameState
+  | [] => st
+  | c :: cs =>
+    if isCellKey c then
+      match Env.lookup st.locals c with
+      | some _ => allocCells st cs
+      | Option.none =>
+        let a := st.world.heap.size
+        let init : Obj := .cell (Env.lookup st.locals (cellName c))
+        allocCells
+          { st with
+            world := { st.world with heap := st.world.heap.push init },
+            locals := Env.set st.locals c (.ref a) } cs
+    else allocCells st cs
+
+/-- Read a closure's CELLS at the CALL — the late binding, and the whole
+difference from snapshot-at-def.
+
+The tier admits a late-bound capture only for a closure whose name never
+ESCAPES the frame that defined it, so the calling frame IS that frame and
+its live locals are the cell's content. The slot is consulted to confirm
+the directory is live (a broken one refuses loudly, never resolves), and
+a name the frame does not bind — never assigned, or `del`eted — is left
+OUT of the callee env, so the body's read is CPython's free-variable
+`NameError` through the existing arm.
+
+The slot's stored CONTENT is deliberately never read: under the escape
+admission the frame is the authority, so writing it back at each call
+would be an observationally invisible copy. What the slot buys is the
+cell's IDENTITY — one per frame, shared by every closure the frame
+creates and reused by a `def` inside a loop — which is what a snapshot
+could not express. Relaxing the escape admission is where the content
+starts to matter, and where the write (plus its `Res.mapOk` blindness
+lemma) has to be paid for. -/
+def cellsFor (h : Heap) (env : Env) : REnv → Res REnv
+  | [] => .ok []
+  | (k, v) :: rest =>
+    if isCellKey k then
+      match v with
+      | .ref a =>
+        match Heap.get? h a with
+        | some (.cell _) =>
+          match Env.lookup env (cellName k) with
+          | some x => (cellsFor h env rest) >>= fun cs => .ok ((cellName k, x) :: cs)
+          | Option.none =>
+            if (Env.lookup env k).isSome then cellsFor h env rest
+            else .unsupported s!"closure cell '{cellName k}' is not visible from the calling frame — a closure with a LATE-BOUND capture called outside the frame that defined it is outside the tier (docs/memory-model.md §nested defs and closures)"
+        | _ => .unsupported cellInternal
+      | _ => .unsupported cellInternal
+    else (cellsFor h env rest) >>= fun cs => .ok ((k, v) :: cs)
+
+/-- A capture list with NO cell keys allocates nothing — the snapshot
+tier's frame, unchanged. The decidable side condition is what keeps every
+pre-cells consumer a one-liner. -/
+theorem allocCells_cellFree : ∀ (st : FrameState) (caps : List String),
+    caps.all (fun c => !isCellKey c) = true → allocCells st caps = st := by
+  intro st caps
+  induction caps generalizing st with
+  | nil => intro _; rfl
+  | cons c cs ih =>
+    intro hall
+    simp only [List.all_cons, Bool.and_eq_true, Bool.not_eq_true'] at hall
+    rw [allocCells]
+    simp only [hall.1, Bool.false_eq_true, if_false]
+    exact ih st (by simpa using hall.2)
+
+/-- …and it resolves to itself. -/
+theorem cellsFor_cellFree : ∀ (h : Heap) (env : Env) (cap : REnv),
+    cap.all (fun p => !isCellKey p.1) = true → cellsFor h env cap = .ok cap := by
+  intro h env cap
+  induction cap with
+  | nil => intro _; rfl
+  | cons kv rest ih =>
+    intro hall
+    obtain ⟨k, v⟩ := kv
+    simp only [List.all_cons, Bool.and_eq_true, Bool.not_eq_true'] at hall
+    simp only [cellsFor, hall.1, Bool.false_eq_true, if_false,
+      ih (by simpa using hall.2)]
+    rfl
 
 /-- Snapshot the captured names from a frame (H7 nested defs,
 docs/memory-model.md §nested defs and closures): `none` iff any name is
@@ -2399,6 +2549,7 @@ def assignToH (h : Heap) (env : Env) (target : Expr) (v : RVal) : Res Env :=
          .exn (.typeError "cannot unpack non-iterable object object")
        | some (.generator ..) =>
          .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+       | some (.cell _) => .unsupported cellInternal
        | some (.closure ..) =>
          .exn (.typeError "cannot unpack non-iterable function object")
        | some (.pyset _) =>
@@ -2457,6 +2608,7 @@ def unpackSeq (h : Heap) (n : Nat) : RVal → Res (List RVal)
      | some (.instance _ _) => .exn (.typeError "cannot unpack non-iterable object object")
      | some (.generator ..) =>
        .unsupported "unpacking a generator DRAINS it (a stateful read) — outside the tier (docs/memory-model.md §generator semantics)"
+     | some (.cell _) => .unsupported cellInternal
      | some (.closure ..) => .exn (.typeError "cannot unpack non-iterable function object")
      | some (.pyset _) =>
        .unsupported "unpacking a set is outside the tier (hash order; docs/memory-model.md)"
@@ -2662,6 +2814,7 @@ def attrCallPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     -- guessing which other names exist would be silently wrong: loud,
     -- never a fake `AttributeError`
     .refuse s!"method call '.{attr}' on a generator is outside the tier (send/throw/close and finalization are deliberately out; docs/memory-model.md §generator semantics)"
+  | some (.cell _) => .refuse cellInternal
   | some (.closure ..) =>
     .refuse s!"method call '.{attr}' on a function object is outside the tier (docs/memory-model.md §nested defs and closures)"
   | some (.pyset _) =>
@@ -3538,6 +3691,7 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
      | some (.generator ..) =>
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
+     | some (.cell _) => .unsupported cellInternal
      | some (.closure ..) => .exn (.typeError "'function' object is not iterable")
      | some (.pyset _) =>
         .unsupported "enumerate() over a set is outside the tier (hash order; docs/memory-model.md)"
@@ -3728,6 +3882,11 @@ mutual
   def Expr.heapFree : Expr → Bool
     | .constant .. => true
     | .name .. => true
+    -- the WALRUS preserves the WORLD (it binds a frame local, and a cell
+    -- is only ever written at a closure CALL) — but `worldInv` has no
+    -- case for it yet, so the honest answer to "PROVABLY preserves" is
+    -- `false`. Conservative: it only shrinks the fragment.
+    | .namedExpr .. => false
     | .binOp l _ r _ => l.heapFree && r.heapFree
     | .unaryOp _ e _ => e.heapFree
     | .boolOp _ vs _ => Expr.heapFreeList vs.toList
@@ -3890,6 +4049,8 @@ mutual
   def Expr.genAllocFree : Expr → Bool
     | .constant .. => true
     | .name .. => true
+    -- a walrus allocates nothing of its own; its VALUE decides
+    | .namedExpr _ v _ => v.genAllocFree
     | .binOp l _ r _ => l.genAllocFree && r.genAllocFree
     | .unaryOp _ e _ => e.genAllocFree
     | .boolOp _ vs _ => Expr.genAllocFreeList vs.toList
@@ -4148,6 +4309,7 @@ theorem attrCallPlan_heapFree {m : Module} (hm : m.heapFree = true)
   | none => right; right; left; rfl
   | some o =>
     cases o with
+    | cell v => right; right; right; exact ⟨_, rfl⟩
     | dict es ver =>
       by_cases hg : (attr == "get") = true
       · rw [if_pos hg]; left; rfl
@@ -4242,6 +4404,13 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
   | fuel + 1 =>
     match e with
     | .constant c _ => .ok st (Const.toRVal c)
+    | .namedExpr id v _ =>
+      -- H7+ (docs/memory-model.md §the walrus operator): evaluate, BIND
+      -- in the frame that is running, answer the same value. A celled
+      -- name keeps its plain binding here — the cell is written at the
+      -- closure call, which is the only place it can be observed.
+      evalExpr m fuel st v ⤳ fun st r =>
+      .ok { st with locals := Env.set st.locals id r } r
     | .name id _ =>
       -- Resolution order: local env → module globals (G1, thawed on read;
       -- a later `X = …` rebinding a `def` name wins, as in CPython) →
@@ -4327,9 +4496,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                 .exn st (.typeError "'dict' object is not callable")
               else
                 match Heap.get? st.world.heap a with
+                | some (.cell _) => .unsupported cellInternal
                 | some (.closure nm ps ao lo _ ig bd cap) =>
+                  Run.liftRes st (cellsFor st.world.heap st.locals cap) ⤳ fun st cap' =>
                   Run.withLocals st.locals
-                    (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                    (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                 | _ =>
                   -- constant message on purpose: `typeNameH` here whnf-storms
                   -- symbolic proofs (the recorded H2 finding); the CLASS is
@@ -4357,9 +4528,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      .exn st (.typeError "'dict' object is not callable")
                    else
                      (match Heap.get? st.world.heap a with
+                      | some (.cell _) => .unsupported cellInternal
                       | some (.closure nm ps ao lo _ ig bd cap) =>
+                        Run.liftRes st (cellsFor st.world.heap st.locals cap) ⤳ fun st cap' =>
                         Run.withLocals st.locals
-                          (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                          (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                       | _ => .exn st (.typeError "'dict' object is not callable"))
                | some v =>
                    evalExprs m fuel st args.toList ⤳ fun st _ =>
@@ -4557,6 +4730,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.generator ..) =>
                              Run.withLocals st.locals (anyAllIter m fuel st.world a (fname == "all")) ⤳ fun st b =>
                              .ok st (.bool b)
+                           | some (.cell _) => .unsupported cellInternal
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | some (.pyset _) =>
@@ -4626,6 +4800,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .unsupported "set() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
+                           | some (.cell _) => .unsupported cellInternal
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
@@ -4680,6 +4855,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                 .unsupported "sum() over a set is outside the tier (hash order; docs/memory-model.md)"
                               | some (.instance _ _) =>
                                 .exn st (.typeError "'object' object is not iterable")
+                              | some (.cell _) => .unsupported cellInternal
                               | some (.closure ..) =>
                                 .exn st (.typeError "'function' object is not iterable")
                               | Option.none => .unsupported danglingMsg)
@@ -4716,6 +4892,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .unsupported "tuple() over a set is outside the tier (hash order; docs/memory-model.md)"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
+                           | some (.cell _) => .unsupported cellInternal
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
@@ -4755,6 +4932,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .unsupported "list() over a set is outside the tier (hash order; docs/memory-model.md)"
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
+                           | some (.cell _) => .unsupported cellInternal
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
@@ -4785,6 +4963,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .exn st (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
+                           | some (.cell _) => .unsupported cellInternal
                            | some (.closure ..) =>
                              .exn st (.typeError "'function' object is not iterable")
                            | Option.none => .unsupported danglingMsg)
@@ -4923,9 +5102,11 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            .exn st (.typeError "'dict' object is not callable")
                          else
                            (match Heap.get? st.world.heap a with
+                            | some (.cell _) => .unsupported cellInternal
                             | some (.closure nm ps ao lo _ ig bd cap) =>
+                              Run.liftRes st (cellsFor st.world.heap st.locals cap) ⤳ fun st cap' =>
                               Run.withLocals st.locals
-                                (callClosure m fuel st.world nm ps ao lo ig bd cap vs.toArray)
+                                (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                             | _ => .exn st (.typeError "'dict' object is not callable"))
                      | some v =>
                          evalExprs m fuel st args.toList ⤳ fun st _ =>
@@ -5045,6 +5226,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   evalExprs m fuel st args.toList ⤳ fun st _ =>
                   evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
                   match Heap.get? st.world.heap a with
+                  | some (.cell _) => .unsupported cellInternal
                   | some (.closure ..) =>
                     .unsupported "keyword arguments on a closure call are outside the tier (docs/memory-model.md §nested defs and closures)"
                   | _ => .exn st (.typeError "'dict' object is not callable")
@@ -5602,6 +5784,9 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- the captures from the current frame, ALLOCATE the closure
       -- object, bind the name. Under the extractor's never-rebound
       -- admission the snapshot IS CPython's cell.
+      -- H7 cells: allocate/reuse this frame's cells FIRST, so the
+      -- snapshot picks up the directory entries rather than values.
+      let st := allocCells st captures.toList
       (match capturesSnapshot st.locals captures.toList with
        | Option.none =>
          .unsupported s!"nested def '{name}': a captured name is unbound at def time (unreachable through ingestion — report this)"
@@ -5831,6 +6016,7 @@ def execForList (m : Module) (fuel : Nat) (st : FrameState) (target : Expr)
         if moduleGenFree m then
           .unsupported "internal: a generator object in a module with no generator defs (heap well-formedness violation — report this)"
         else execForGen m fuel st target a body
+    | some (.cell _) => .unsupported cellInternal
     | some (.closure ..) =>
         .unsupported "internal: a list cursor over a function object (report this)"
     | some (.pyset _) =>
@@ -6042,6 +6228,7 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
                    .unsupported "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
                | some (.instance _ _) =>
                    .exn st (.typeError "'object' object is not iterable")
+               | some (.cell _) => .unsupported cellInternal
                | some (.closure ..) =>
                    .exn st (.typeError "'function' object is not iterable")
                | some (.pyset _) =>
@@ -6069,6 +6256,7 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
        | some (.instance _ _) => .exn st (.typeError "'object' object is not iterable")
        | some (.generator ..) =>
            .unsupported "internal: a list cursor over a generator object (report this)"
+       | some (.cell _) => .unsupported cellInternal
        | some (.closure ..) =>
            .unsupported "internal: a list cursor over a function object (report this)"
        | some (.pyset _) =>

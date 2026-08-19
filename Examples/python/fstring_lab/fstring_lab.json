@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/fstring_lab/fstring_lab.py",
   "source_sha256": "b0890ffd0cc9e1261adcb87f995ce16cb9340ec8d0b88e6eee0d45537e86733d",

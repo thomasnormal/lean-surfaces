@@ -596,16 +596,19 @@ theorem keyHasInstanceRef_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   induction v using keyHasInstanceRef.induct (h := h)
     (motive_2 := fun vs => keyHasInstanceRefList (Heap.swapAt h pa o) vs
       = keyHasInstanceRefList h vs) with
-  | case1 b cls attrs hb | case2 b q l c st hb | case3 b n p a1 a2 a3 a4 bd cp hb
-  | case4 b xs hb | case5 b _ _ _ _ =>
+  -- case3 is the H7 CELL arm (a cell is identity, like an instance: the
+  -- key census refuses it), which is why every later case shifted by one
+  | case1 b cls attrs hb | case2 b q l c st hb | case3 b cv hb
+  | case4 b n p a1 a2 a3 a4 bd cp hb
+  | case5 b xs hb | case6 b _ _ _ _ =>
       rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq | ⟨_, _, _, _, _, h1, h2⟩
       · rw [keyHasInstanceRef, keyHasInstanceRef, heq]
       · rw [keyHasInstanceRef, keyHasInstanceRef, h1, h2]
-  | case6 xs ih | case7 _ _ xs ih => rw [keyHasInstanceRef, keyHasInstanceRef]; exact ih
-  | case8 _ _ _ => rfl
-  | case9 t _ _ _ _ => rw [keyHasInstanceRef.eq_def, keyHasInstanceRef.eq_def]; split <;> simp_all
-  | case10 => rfl
-  | case11 x rest ih1 ih2 => rw [keyHasInstanceRefList, keyHasInstanceRefList, ih1, ih2]
+  | case7 xs ih | case8 _ _ xs ih => rw [keyHasInstanceRef, keyHasInstanceRef]; exact ih
+  | case9 _ _ _ => rfl
+  | case10 t _ _ _ _ => rw [keyHasInstanceRef.eq_def, keyHasInstanceRef.eq_def]; split <;> simp_all
+  | case11 => rfl
+  | case12 x rest ih1 ih2 => rw [keyHasInstanceRefList, keyHasInstanceRefList, ih1, ih2]
 
 /-- The name CPython would print in `unhashable type: '…'` is blind. -/
 theorem unhashableName?_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -615,6 +618,80 @@ theorem unhashableName?_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
     (motive_2 := fun vs => unhashableNameList? (Heap.swapAt h pa o) vs
       = unhashableNameList? h vs) <;>
   simp_all [unhashableName?, unhashableNameList?, RVal.typeNameH_swapAt hslot htwin]
+
+/-! ### The H7 CELL workers are blind
+
+`allocCells` never READS the heap — it appends, and the swap commutes
+with an append at a live address. `cellsFor` reads exactly the cell
+slots, and a `PayloadTwin` is a running GENERATOR: at the perturbed
+address both sides see a generator, so both refuse identically, and
+everywhere else the read is literally the same. -/
+
+theorem allocCells_swapAt {pa : Addr} {o : Obj} :
+    ∀ (st : FrameState) (caps : List String), pa < st.world.heap.size →
+      allocCells (st.swapAt pa o) caps = (allocCells st caps).swapAt pa o := by
+  intro st caps
+  induction caps generalizing st with
+  | nil => intro _; rfl
+  | cons c cs ih =>
+    intro hlt
+    rw [allocCells, allocCells]
+    by_cases hc : isCellKey c = true
+    · simp only [hc, if_true, ite_true, FrameState.swapAt_locals]
+      cases Env.lookup st.locals c with
+      | some _ => exact ih st hlt
+      | none =>
+        simp only [FrameState.swapAt_world, World.swapAt_heap, Heap.size_swapAt,
+          Heap.swapAt_push hlt, World.swapAt_globals, World.swapAt_stdout,
+          World.swapAt_clock]
+        refine ih { st with
+            world := { st.world with
+              heap := st.world.heap.push (.cell (Env.lookup st.locals (cellName c))) },
+            locals := Env.set st.locals c (.ref st.world.heap.size) } ?_
+        simpa using Nat.lt_trans hlt (Nat.lt_succ_self _)
+    · simp only [hc, Bool.false_eq_true, if_false, ite_false]
+      exact ih st hlt
+
+/-- Allocating cells only APPENDS, so every live slot reads back. -/
+theorem allocCells_get? : ∀ (st : FrameState) (caps : List String) {pa : Addr} {o₀ : Obj},
+    Heap.get? st.world.heap pa = some o₀ →
+    Heap.get? (allocCells st caps).world.heap pa = some o₀ := by
+  intro st caps
+  induction caps generalizing st with
+  | nil => intro _ _ h; exact h
+  | cons c cs ih =>
+    intro pa o₀ h
+    rw [allocCells]
+    by_cases hc : isCellKey c = true
+    · simp only [hc, if_true]
+      cases Env.lookup st.locals c with
+      | some _ => exact ih st h
+      | none => exact ih _ (Heap.get?_push_of_get? _ h)
+    · simp only [hc, Bool.false_eq_true, if_false]
+      exact ih st h
+
+theorem cellsFor_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (env : Env) (cap : REnv) :
+    cellsFor (Heap.swapAt h pa o) env cap = cellsFor h env cap := by
+  induction cap with
+  | nil => rfl
+  | cons kv rest ih =>
+    obtain ⟨k, v⟩ := kv
+    -- `rw [cellsFor]` would ask for the pattern side conditions of
+    -- the inner match (§L11 finding 1's neighbourhood); `simp only`
+    -- unfolds the cons equation without them
+    simp only [cellsFor]
+    by_cases hk : isCellKey k = true
+    · simp only [hk, if_true]
+      cases v
+      all_goals try rfl
+      rename_i a
+      dsimp only
+      rcases Heap.get?_swapAt_twin (b := a) hslot htwin with heq | ⟨q, l₀, c₀, l₁, c₁, h1, h2⟩
+      · rw [heq, ih]
+      · rw [h1, h2]
+    · simp only [hk, Bool.false_eq_true, if_false, ite_false, ih]
 
 /-- The unhashable-key refusal is blind — both its branch and its
 message. -/
@@ -2439,13 +2516,20 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   | yieldStmt _ _ => simp only [execStmt]; exact PBF.unsupported
   | yieldFromStmt _ _ => simp only [execStmt]; exact PBF.unsupported
   | defStmt name params argsOk localsOk hasGlobal isGenerator body captures sp =>
-      simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
-      cases hcap : capturesSnapshot st.locals captures.toList with
+      -- H7 cells: the def ALLOCATES this frame's cells first, and that is
+      -- a pure append — it commutes with the swap (`allocCells_swapAt`)
+      simp only [execStmt]
+      rw [allocCells_swapAt _ _ (Heap.lt_size_of_get? hslot)]
+      generalize hst : allocCells st captures.toList = st'
+      have hslot' : Heap.get? st'.world.heap pa = some o₀ := by
+        subst hst; exact allocCells_get? _ _ hslot
+      simp only [FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_heap]
+      cases hcap : capturesSnapshot st'.locals captures.toList with
       | none => exact PBF.unsupported
       | some cap =>
-          simp only [Heap.swapAt_push (Heap.lt_size_of_get? hslot), Heap.size_swapAt]
+          simp only [Heap.swapAt_push (Heap.lt_size_of_get? hslot'), Heap.size_swapAt]
           refine PBF.ok ?_ _
-          exact Heap.get?_push_of_get? _ hslot
+          exact Heap.get?_push_of_get? _ hslot'
   | raiseStmt exc cause sp =>
       simp only [execStmt, FrameState.swapAt_world, FrameState.swapAt_locals,
         World.swapAt_globals]
@@ -2552,6 +2636,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
   intro m st e hslot
   cases e with
   | constant c sp => simp only [evalExpr]; exact PBF.ok hslot _
+  | namedExpr id v sp =>
+      simp only [evalExpr]
+      refine PBF.bind (ihE m st v hslot) fun s r _ hs => ?_
+      refine PBF.ok ?_ _
+      exact hs
   | name id sp =>
       simp only [evalExpr, FrameState.swapAt_locals, FrameState.swapAt_world,
         World.swapAt_globals]
@@ -2662,9 +2751,13 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                           | none => exact PBF.exn hs1 _
                           | some obj =>
                               cases obj with
+                              | cell cv => exact PBF.unsupported
                               | closure nm ps ao lo hg ig bd cap =>
+                                  dsimp only
+                                  rw [cellsFor_swapAt hs1 htwin]
+                                  refine PBF.bind (PBF.liftRes hs1 _) fun s cap' _ hs => ?_
                                   exact PBW.withLocals
-                                    (ihClosure m s1.world nm ps ao lo ig bd cap vs.toArray hs1)
+                                    (ihClosure m _ nm ps ao lo ig bd cap' vs.toArray hs)
                               | _ => exact PBF.exn hs1 _
                         · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                           exact PBF.exn hs1 _
@@ -2694,9 +2787,14 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                       | none => exact PBF.exn hs1 _
                                       | some obj =>
                                           cases obj with
+                                          | cell cv => exact PBF.unsupported
                                           | closure nm ps ao lo hg ig bd cap =>
-                                              exact PBW.withLocals (ihClosure m s1.world nm ps ao
-                                                lo ig bd cap vs.toArray hs1)
+                                              dsimp only
+                                              rw [cellsFor_swapAt hs1 htwin]
+                                              refine PBF.bind (PBF.liftRes hs1 _)
+                                                fun s cap' _ hs => ?_
+                                              exact PBW.withLocals (ihClosure m _ nm ps ao
+                                                lo ig bd cap' vs.toArray hs)
                                           | _ => exact PBF.exn hs1 _
                                     · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]
                                       exact PBF.exn hs1 _
@@ -3403,9 +3501,14 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                             | none => exact PBF.exn hs1 _
                                             | some obj =>
                                                 cases obj with
+                                                | cell cv => exact PBF.unsupported
                                                 | closure nm ps ao lo hg ig bd cap =>
-                                                    exact PBW.withLocals (ihClosure m s1.world nm
-                                                      ps ao lo ig bd cap vs.toArray hs1)
+                                                    dsimp only
+                                                    rw [cellsFor_swapAt hs1 htwin]
+                                                    refine PBF.bind (PBF.liftRes hs1 _)
+                                                      fun s cap' _ hs => ?_
+                                                    exact PBW.withLocals (ihClosure m _ nm
+                                                      ps ao lo ig bd cap' vs.toArray hs)
                                                 | _ => exact PBF.exn hs1 _
                                           · simp only [FrameState.swapAt_world,
                                               World.swapAt_heap, h1, h2]
@@ -3498,6 +3601,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                           | none => exact PBF.exn hs2 _
                           | some obj =>
                               cases obj with
+                              | cell cv => exact PBF.unsupported
                               | closure nm ps ao lo hg ig bd cap => exact PBF.unsupported
                               | _ => exact PBF.exn hs2 _
                         · simp only [FrameState.swapAt_world, World.swapAt_heap, h1, h2]

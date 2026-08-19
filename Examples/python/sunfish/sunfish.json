@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/sunfish/sunfish.py",
   "source_sha256": "2142d9c25435e6b55ef31fcd18142f0117f033382d1bc9eb2bfe9e3de48316ca",

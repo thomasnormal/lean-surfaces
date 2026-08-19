@@ -134,6 +134,7 @@ mutual
   def Expr.allNames : Expr → List String
     | .constant .. => []
     | .name id _ => [id]
+    | .namedExpr id v _ => id :: v.allNames
     | .binOp l _ r _ => l.allNames ++ r.allNames
     | .unaryOp _ e _ => e.allNames
     | .boolOp _ vs _ => Expr.allNamesList vs.toList
@@ -770,6 +771,7 @@ mutual
     | 0 => .timeout
     | fuel + 1 =>
       match Heap.get? st.world.heap a with
+      | some (.cell _) => .unsupported cellInternal
       | some (.list xs) =>
         if i < xs.size then
           Run.bind (Run.liftRes st (assignToH st.world.heap st.locals target (xs.getD i .none)))

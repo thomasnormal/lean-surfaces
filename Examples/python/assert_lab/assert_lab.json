@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/assert_lab/assert_lab.py",
   "source_sha256": "d03afc0498b42cb55e5caeefbd19c89a1ee4a7958557941af083eeb72fffa041",

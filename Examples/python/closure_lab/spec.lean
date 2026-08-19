@@ -19,11 +19,19 @@ The claims worth naming:
 * **Closures are heap IDENTITY** — two equal-bodied closures are `False`
   under `==` (exact: function equality is identity in CPython); truthy;
   `len` the faithful `TypeError`.
-* **The boundary of the tier is pinned by the rows that would expose
-  it** — `rebound_after` is CPython's cell semantics observable
-  (`rebound_after(5)` is 6 there; a snapshot would forge 5): REFUSED at
-  extraction, never translated. `nonlocal`, a def inside a loop, and a
-  call before the def (CPython's UnboundLocalError) refuse likewise.
+* **A capture the frame REBINDS after the def is a real CELL** — the
+  rows that used to expose snapshot-vs-cell now AGREE with CPython:
+  `rebound_after(5)` is 6 (a snapshot would forge 5), `cell_read_twice`
+  reads the same cell across a rebinding, `two_closures_one_cell` shows
+  one cell per FRAME, `cell_unbound_at_def` starts empty (the shipped
+  `guard`'s shape) and `gen_cell_before_call` is `moves()`' shape.
+* **The boundary of the CELL tier is pinned by the rows that would
+  expose it** — the cell is read from the DEFINING frame at the call, so
+  an ESCAPING closure (`cell_escapes`) refuses; a generator reads cells
+  at RESUME while the tier reads at the CALL, so a rebinding at or after
+  the first call (`gen_cell_after_call`) refuses. `nonlocal`, a def
+  inside a loop, and a call before the def (CPython's UnboundLocalError)
+  refuse as before.
 
 No `proof.lean`: checks-only, like `kw_lab`/`drain_lab`.
 -/
@@ -56,9 +64,19 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
 #py_check closure_lab.gen_closure_any(3) = true
 #py_check closure_lab.gen_closure_any(9) = false
 
-/-! ### the loud frontier — the rows that would expose snapshot-vs-cell -/
+/-! ### H7 CELLS — a capture the frame rebinds after the def -/
 
-#guard (match callFunction closure_lab "rebound_after" #[.int 5] 10000 with
+#py_check closure_lab.rebound_after(5) = 6
+#py_check closure_lab.cell_read_twice(2) = 220
+#py_check closure_lab.two_closures_one_cell(3) = 48
+#py_check closure_lab.cell_unbound_at_def(2) = 12
+#py_check closure_lab.gen_cell_before_call(2) = 13
+
+/-! ### the loud frontier — what the cell mechanism does NOT cover -/
+
+#guard (match callFunction closure_lab "cell_escapes" #[.int 5] 10000 with
+  | .unsupported _ => true | _ => false)
+#guard (match callFunction closure_lab "gen_cell_after_call" #[.int 1] 10000 with
   | .unsupported _ => true | _ => false)
 #guard (match callFunction closure_lab "uses_nonlocal" #[.int 4] 10000 with
   | .unsupported _ => true | _ => false)
@@ -71,8 +89,7 @@ load_program closure_lab from "Examples/python/closure_lab/closure_lab.json"
 
 #py_check closure_lab.lam_basic("abcde", 2, "Z") = "XbZde"
 #py_check closure_lab.lam_capture(3) = 11
-#guard (match callFunction closure_lab "lam_rebound" #[.int 5] 10000 with
-  | .unsupported _ => true | _ => false)
+#py_check closure_lab.lam_rebound(5) = 6
 
 /-! ### bound() arc pass 2: recursion FROM a generator frame through the
 captured self (the bound() shape). Each depth executes its own

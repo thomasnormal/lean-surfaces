@@ -461,6 +461,9 @@ it. The one statement between a nested generator's definition and its call. -/
 theorem execStmt_nestedDef {m : Module} {fuel : Nat} {st : FrameState}
     {name : String} {params : Array Param} {argsOk localsOk hasGlobal isGenerator : Bool}
     {body : Array Stmt} {captures : Array String} {cap : REnv} {sp : Span}
+    -- H7 cells: a capture list with no CELL keys allocates nothing, so the
+    -- frame the snapshot reads is the frame the statement started in
+    (hnc : allocCells st captures.toList = st)
     (hcap : capturesSnapshot st.locals captures.toList = some cap) :
     execStmt m (fuel + 1) st
         (.defStmt name params argsOk localsOk hasGlobal isGenerator body captures sp)
@@ -469,7 +472,7 @@ theorem execStmt_nestedDef {m : Module} {fuel : Nat} {st : FrameState}
                   (.closure name params argsOk localsOk hasGlobal isGenerator body cap) },
               Env.set st.locals name (.ref st.world.heap.size)⟩ .next := by
   rw [execStmt]
-  simp only [hcap]
+  simp only [hnc, hcap]
 
 /-- **Calling a generator CLOSURE runs no code**: it appends the suspended
 frame to the heap and answers its address. `callClosure`'s creation arm in
@@ -497,6 +500,8 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
     (hlocal : Env.lookup st.locals fname = some (.ref a))
     (hnotfree : (funsHeapFree m.functions.toList && topLevelDefFree m) = false)
     (hobj : Heap.get? st.world.heap a = some (.closure nm ps true true hg true bd cap))
+    -- H7 cells: a capture list with no CELL keys resolves to itself
+    (hnc : cellsFor st.world.heap st.locals cap = .ok cap)
     (harity : arityOk ps vs.length = true)
     (hargs : EvalsToList m st argEs.toList vs) :
     EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
@@ -513,7 +518,8 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
   rw [evalExpr]
   simp only [Array.isEmpty, Array.size_empty, hlocal, ha (F'' + 1) (by omega),
     Run.ok_bind, hnotfree, if_neg, Bool.false_eq_true, not_false_eq_true, hobj,
-    hcall, Run.withLocals]
+    Run.withLocals]
+  simp only [hnc, Run.liftRes, Run.ok_bind, hcall]
   simp
 
 /-! ## Smoke tests

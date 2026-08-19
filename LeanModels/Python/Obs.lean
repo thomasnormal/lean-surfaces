@@ -221,6 +221,7 @@ theorem heapEqMono (fuel : Nat) :
             | none => cases o1 <;> exact Res.le_refl _
             | some o2 =>
               cases o1 with
+              | cell cv => cases o2 <;> exact Res.le_refl _
               | dict es v1 =>
                 cases o2 with
                 | dict fs v2 =>
@@ -229,6 +230,7 @@ theorem heapEqMono (fuel : Nat) :
                 | list ys => exact Res.le_refl _
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
+                | cell cv => exact Res.le_refl _
                 | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
                 | pyset zs => exact Res.le_refl _
               | list xs =>
@@ -239,6 +241,7 @@ theorem heapEqMono (fuel : Nat) :
                     (Res.le_refl _)
                 | «instance» ci attrs => exact Res.le_refl _
                 | generator qn lo kk stt => exact Res.le_refl _
+                | cell cv => exact Res.le_refl _
                 | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
                 | pyset zs => exact Res.le_refl _
               | «instance» ci attrs => cases o2 <;> exact Res.le_refl _
@@ -315,6 +318,7 @@ theorem heapContains_mono {h : Heap} {fuel : Nat} {a : Addr} {k : RVal}
     | list xs => exact heapContainsScan_mono hf
     | «instance» ci attrs => exact Res.le_refl _
     | generator qn lo kk stt => exact Res.le_refl _
+    | cell cv => exact Res.le_refl _
     | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
     | pyset zs => exact Res.le_ite (heapContainsScan_mono hf) (Res.le_refl _)
 
@@ -353,6 +357,7 @@ theorem freezeHMono (fuel : Nat) :
             | dict es v => exact Res.le_refl _
             | «instance» ci attrs => exact Res.le_refl _
             | generator qn lo kk stt => exact Res.le_refl _
+            | cell cv => exact Res.le_refl _
             | closure nm ps ao lo' hg ig bd cap => exact Res.le_refl _
             | pyset zs => exact Res.le_refl _
             | list xs =>
@@ -497,6 +502,9 @@ theorem fuelMono (fuel : Nat) :
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         cases e with
         | constant c _ => simp only [evalExpr]; exact Run.le_refl _
+        | namedExpr id v _ =>
+          simp only [evalExpr]
+          exact Run.le_bind (ihE m st v k hk) fun st r => Run.le_refl _
         | name id _ => simp only [evalExpr]; exact Run.le_refl _
         | binOp l op r _ =>
           simp only [evalExpr]
@@ -697,8 +705,10 @@ theorem fuelMono (fuel : Nat) :
                     | some o =>
                       cases o <;> try exact Run.le_refl _
                       case closure nm ps ao lo hg ig bd cap =>
-                        exact Run.le_withLocals
-                          (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
+                        exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                          Run.le_withLocals
+                            (ihClosure m st.world
+                              nm ps ao lo ig bd cap' vs.toArray k hk)
                 | none =>
                   -- module globals (G1) → module function → builtins →
                   -- NameError/unsupported (the globals and the final fork are
@@ -730,8 +740,10 @@ theorem fuelMono (fuel : Nat) :
                           | some obj =>
                             cases obj <;> try exact Run.le_refl _
                             case closure nm ps ao lo hg ig bd cap =>
-                              exact Run.le_withLocals
-                                (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
+                              exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                                Run.le_withLocals
+                                  (ihClosure m st.world
+                                    nm ps ao lo ig bd cap' vs.toArray k hk)
                   | none =>
                     -- findFunction (def/class collision → call) → class
                     -- instantiation (guards, args, `__init__` through
@@ -1045,8 +1057,10 @@ theorem fuelMono (fuel : Nat) :
                               | some obj =>
                                 cases obj <;> try exact Run.le_refl _
                                 case closure nm ps ao lo hg ig bd cap =>
-                                  exact Run.le_withLocals
-                                    (ihClosure m st.world nm ps ao lo ig bd cap vs.toArray k hk)
+                                  exact Run.le_bind (Run.le_refl _) fun st cap' =>
+                                    Run.le_withLocals
+                                      (ihClosure m st.world
+                                        nm ps ao lo ig bd cap' vs.toArray k hk)
         | genExp elt tgt it ifs wb _ =>
           simp only [evalExpr]; exact Run.le_refl _
         | list elts _ =>
@@ -1393,6 +1407,7 @@ theorem fuelMono (fuel : Nat) :
           cases o with
           | dict es ver => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
+          | cell cv => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
           | pyset zs => exact Run.le_refl _
           | generator qn lo kk stt =>
@@ -1449,6 +1464,7 @@ theorem fuelMono (fuel : Nat) :
           | dict es ver => exact Run.le_refl _
           | list xs => exact Run.le_refl _
           | «instance» ci attrs => exact Run.le_refl _
+          | cell cv => exact Run.le_refl _
           | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
           | pyset zs => exact Run.le_refl _
           | generator qn lo kk stt =>
@@ -1559,6 +1575,7 @@ theorem fuelMono (fuel : Nat) :
                     cases o with
                     | dict es ver => exact Run.le_refl _
                     | «instance» ci attrs => exact Run.le_refl _
+                    | cell cv => exact Run.le_refl _
                     | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
                     | pyset zs => exact Run.le_refl _
                     | list xs => exact ihGen m st _ kf hk
@@ -1580,6 +1597,7 @@ theorem fuelMono (fuel : Nat) :
               | dict es ver => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
+              | cell cv => exact Run.le_refl _
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
               | pyset zs => exact Run.le_refl _
               | list xs =>
@@ -1608,6 +1626,7 @@ theorem fuelMono (fuel : Nat) :
               | dict es ver => exact Run.le_refl _
               | «instance» ci attrs => exact Run.le_refl _
               | generator qn lo kk stt => exact Run.le_refl _
+              | cell cv => exact Run.le_refl _
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
               | pyset zs => exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _
@@ -1671,7 +1690,8 @@ theorem fuelMono (fuel : Nat) :
         have hk : fuel ≤ k := Nat.le_of_succ_le_succ hf
         simp only [callClosure]
         refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
-          (Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)))
+          (Run.le_ite (Run.le_refl _) ?_))
+        refine Run.le_ite (Run.le_refl _) ?_
         refine Run.le_toWorld ?_
         refine Run.le_bind
           (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
@@ -2052,6 +2072,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
     · intro st e hfree
       cases e with
       | constant c _ => simp only [evalExpr]; exact .okF rfl _
+      | namedExpr id v _ => simp [Expr.heapFree] at hfree
       | name id _ =>
         simp only [evalExpr]
         cases Env.lookup st.locals id with
@@ -2783,6 +2804,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | none => exact .unsupported
       | some o =>
         cases o with
+        | cell cv => exact .unsupported
         | dict es ver => exact .unsupported
         | «instance» ci attrs => exact .exn
         | closure nm ps ao lo' hg ig bd cap => exact .unsupported

@@ -350,9 +350,70 @@ def convert_fstring(node):
     return out
 
 
+def _leftmost_walrus(e):
+    """The NamedExpr in UNCONDITIONALLY-FIRST evaluation position of a
+    comprehension filter, or None (pass 7, docs/memory-model.md §the
+    walrus filter). CPython evaluates the leftmost operand of a compare,
+    a boolop, a binop or a unary first and without a guard, so hoisting
+    exactly that one to `v = <value>` at the top of the synthesized
+    generator body is CPython's own compilation. Anything deeper is
+    conditional (`a or (v := b)`) and is NOT hoisted -- it stays the loud
+    generic unsupported expression."""
+    if isinstance(e, ast.NamedExpr):
+        return e
+    if isinstance(e, ast.Compare):
+        return _leftmost_walrus(e.left)
+    if isinstance(e, ast.BoolOp):
+        return _leftmost_walrus(e.values[0]) if e.values else None
+    if isinstance(e, ast.BinOp):
+        return _leftmost_walrus(e.left)
+    if isinstance(e, ast.UnaryOp):
+        return _leftmost_walrus(e.operand)
+    return None
+
+
+def _replace_node(root, old, new):
+    """Structural copy of `root` with the node `old` (by identity)
+    replaced by `new`. Used only for the hoisted filter rewrite."""
+    if root is old:
+        return new
+    if not isinstance(root, ast.AST):
+        return root
+    fields = {}
+    for f, v in ast.iter_fields(root):
+        if isinstance(v, list):
+            fields[f] = [_replace_node(x, old, new) for x in v]
+        else:
+            fields[f] = _replace_node(v, old, new)
+    return ast.copy_location(type(root)(**fields), root)
+
+
+# How many COMPREHENSION scopes deep the converter currently is
+# (docs/memory-model.md §the walrus operator). A comprehension is its own
+# scope, and PEP 572 leaks a walrus written inside it to the ENCLOSING
+# one -- the opposite of what `Expr.namedExpr` does, which binds in the
+# frame that evaluates it. Inside a comprehension the only admitted
+# walrus is the pass-7 FILTER lowering (hoisted, and gated on
+# `walrusForbidden`); every other one stays loud.
+_COMP_DEPTH = [0]
+
+
 def convert_expr(node):
     if isinstance(node, ast.JoinedStr):
         return convert_fstring(node)
+
+    if isinstance(node, ast.NamedExpr):
+        # H7+ (docs/memory-model.md §the walrus operator): `(x := e)` in
+        # general expression position binds `x` in the frame that
+        # evaluates it. Only a plain NAME target is Python-legal.
+        if _COMP_DEPTH[0] or not isinstance(node.target, ast.Name):
+            return unsupported(node, "NamedExpr")
+        return {
+            "kind": "NamedExpr",
+            "span": span(node),
+            "target": node.target.id,
+            "value": convert_expr(node.value),
+        }
 
     if isinstance(node, ast.Constant):
         v = node.value
@@ -539,54 +600,70 @@ def convert_expr(node):
         gens = node.generators
         if len(gens) == 1 and not getattr(gens[0], "is_async", 0):
             g = gens[0]
-            # pass 7 (docs/memory-model.md §the walrus filter): a filter of
-            # the EXACT shape `(v := <value>) <op> <rhs>` is emitted as the
-            # rewritten filter `v <op> <rhs>` plus a `walrus` binding record
-            # -- CPython's own compilation makes `v = <value>` a statement of
-            # the synthesized generator body. A NamedExpr anywhere else stays
-            # the generic unsupported expression (loud, never half-structured).
-            walrus = []
-            ifs_out = []
-            for i in g.ifs:
-                if (
-                    isinstance(i, ast.Compare)
-                    and isinstance(i.left, ast.NamedExpr)
-                    and isinstance(i.left.target, ast.Name)
-                    and not any(w["name"] == i.left.target.id for w in walrus)
-                    and all(
-                        type(o).__name__ in ALLOWED_CMPOPS for o in i.ops
-                    )
-                ):
-                    walrus.append({
-                        "name": i.left.target.id,
-                        "value": convert_expr(i.left.value),
-                    })
-                    ifs_out.append({
-                        "kind": "Compare",
-                        "span": span(i),
-                        "left": {
-                            "kind": "Name",
-                            "span": span(i.left.target),
-                            "id": i.left.target.id,
-                        },
-                        "ops": [type(o).__name__ for o in i.ops],
-                        "comparators": [convert_expr(c) for c in i.comparators],
-                    })
-                else:
-                    ifs_out.append(convert_expr(i))
-            return {
-                "kind": ("ListComp" if isinstance(node, ast.ListComp)
-                         else "GeneratorExp"),
-                "span": span(node),
-                "elt": convert_expr(node.elt),
-                "target": convert_expr(g.target),
-                "iter": convert_expr(g.iter),
-                "ifs": ifs_out,
-                "walrus": walrus,
-            }
+            _COMP_DEPTH[0] += 1
+            try:
+                return _convert_comprehension(node, g)
+            finally:
+                _COMP_DEPTH[0] -= 1
         return unsupported(node, type(node).__name__)
 
     return unsupported(node)
+
+
+def _in_enclosing_scope(e):
+    """Convert `e` OUTSIDE the comprehension scope (the outer iterable is
+    evaluated eagerly in the enclosing frame -- CPython passes it in as
+    `.0`), so a walrus there is an ordinary enclosing-scope one."""
+    saved = _COMP_DEPTH[0]
+    _COMP_DEPTH[0] = 0
+    try:
+        return convert_expr(e)
+    finally:
+        _COMP_DEPTH[0] = saved
+
+
+def _convert_comprehension(node, g):
+    """The single-clause comprehension body, converted INSIDE the
+    comprehension scope (`_COMP_DEPTH` is already raised by the caller).
+
+    pass 7 (docs/memory-model.md §the walrus filter): a filter whose
+    UNCONDITIONALLY-FIRST evaluated subexpression is a NamedExpr is
+    emitted as the rewritten filter plus a `walrus` binding record --
+    CPython's own compilation makes `v = <value>` a statement of the
+    synthesized generator body. A NamedExpr anywhere else inside the
+    comprehension stays the generic unsupported expression (loud, never
+    half-structured), because `Expr.namedExpr` would bind it in the
+    comprehension's own frame and PEP 572 binds it in the enclosing one.
+    """
+    walrus = []
+    ifs_out = []
+    for i in g.ifs:
+        w = _leftmost_walrus(i)
+        if w is not None and isinstance(w.target, ast.Name) \
+                and not any(x["name"] == w.target.id for x in walrus):
+            walrus.append({
+                "name": w.target.id,
+                "value": convert_expr(w.value),
+            })
+            ifs_out.append(convert_expr(_replace_node(
+                i, w, ast.copy_location(
+                    ast.Name(id=w.target.id, ctx=ast.Load()),
+                    w.target))))
+        else:
+            ifs_out.append(convert_expr(i))
+    return {
+        "kind": ("ListComp" if isinstance(node, ast.ListComp)
+                 else "GeneratorExp"),
+        "span": span(node),
+        "elt": convert_expr(node.elt),
+        "target": convert_expr(g.target),
+        # the OUTER iterable is evaluated eagerly in the ENCLOSING
+        # frame (CPython passes it in as `.0`), so a walrus there
+        # is an ordinary enclosing-scope one
+        "iter": _in_enclosing_scope(g.iter),
+        "ifs": ifs_out,
+        "walrus": walrus,
+    }
 
 
 def lower_starred_display(node):
@@ -726,10 +803,20 @@ def _target_has_starred(t):
 
 def _assigned_names(fn):
     """Names the function body assigns (CPython's static-locals rule makes
-    these local THROUGHOUT the body). Params excluded."""
+    these local THROUGHOUT the body). Params excluded.
+
+    The WALRUS binds too (PEP 572), and it binds in the CONTAINING scope
+    even when it is written inside a comprehension -- which is why
+    `_walk_scope` deliberately descends into comprehensions. Measured
+    against CPython's own `symtable` on 2026-08-19: without this clause
+    `moves()`'s `val` (a walrus target, `moves`'s OWN local) was reported
+    as a CAPTURE of the enclosing `bound()`, and the H7 census then
+    refused the whole nested def for a name CPython never cells."""
     names = set()
     for node in _walk_scope(fn):
-        if isinstance(node, ast.Assign):
+        if isinstance(node, ast.NamedExpr):
+            targets = [node.target]
+        elif isinstance(node, ast.Assign):
             targets = node.targets
         elif isinstance(node, (ast.AugAssign, ast.AnnAssign, ast.For)):
             targets = [node.target]
@@ -837,7 +924,9 @@ def _binding_linenos(fn, name):
     out = []
     for n in _walk_scope(fn):
         bound = []
-        if isinstance(n, ast.Assign):
+        if isinstance(n, ast.NamedExpr):
+            bound += _target_bound_names(n.target)
+        elif isinstance(n, ast.Assign):
             for t in n.targets:
                 bound += _target_bound_names(t)
         elif isinstance(n, (ast.AugAssign, ast.AnnAssign, ast.For)):
@@ -857,16 +946,72 @@ def _binding_linenos(fn, name):
     return out
 
 
-def _closure_analysis(nd, enclosing):
+CELL_PREFIX = "<cell>"
+
+
+def _comprehension_targets(scope):
+    """Names bound by a comprehension CLAUSE inside `scope`. A
+    comprehension is its own scope in CPython, so its target is neither a
+    free name of the enclosing body nor a local of it -- but `_walk_scope`
+    descends into comprehensions on purpose (the WALRUS leaks out of them,
+    PEP 572), so the targets have to be subtracted back out by hand."""
+    out = set()
+    for n in _walk_scope(scope):
+        if isinstance(n, (ast.GeneratorExp, ast.ListComp, ast.SetComp,
+                          ast.DictComp)):
+            for g in n.generators:
+                out.update(_target_bound_names(g.target))
+    return out
+
+
+def _name_escapes(enclosing, name):
+    """Is the nested def's own name used anywhere OTHER than as the callee
+    of a call? (H7 cells: the cell is refreshed from the DEFINING frame at
+    the call, so a closure that escapes -- returned, stored, passed as an
+    argument -- would read a stale cell. Loud, not wrong.)"""
+    callee = {id(n.func) for n in _walk_scope(enclosing)
+              if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)}
+    for n in _walk_scope(enclosing):
+        if isinstance(n, ast.Name) and n.id == name \
+                and isinstance(n.ctx, ast.Load) and id(n) not in callee:
+            return True
+    return False
+
+
+def _first_use_lineno(enclosing, name):
+    """Line of the FIRST call of the nested def's name, or None."""
+    lns = [n.lineno for n in _walk_scope(enclosing)
+           if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+           and n.func.id == name]
+    return min(lns) if lns else None
+
+
+def _closure_analysis(nd, enclosing, nd_name=None):
     """H7 nested defs (docs/memory-model.md §nested defs and closures):
-    the capture set and the LOUD refusals of the snapshot tier.
+    the capture set, split into SNAPSHOT captures and CELL captures, plus
+    the LOUD refusals of what neither models.
 
     Captures = free names of the nested body (own scope) that are locals
     or parameters of the enclosing function — CPython's symtable rule.
-    Snapshot-at-def equals CPython's cells exactly when no captured name
-    is bound after the def executes; the analysis refuses (with the
-    precise reason) everything outside that fragment. Returns
-    ``(captures, reason_or_None)``."""
+    A capture bound NOWHERE after the def is snapshot-safe (its cell can
+    no longer change, so snapshot = cell, the original H7 admission). A
+    capture the enclosing frame REBINDS after the def is a real CELL: it
+    ships as ``"<cell>name"``, the env key the closure reads THROUGH, and
+    the interpreter resolves it at CALL time.
+
+    Cells carry two extra admissions, both loud:
+
+    * the nested name must never ESCAPE the defining frame (the cell is
+      refreshed from that frame at the call — `_name_escapes`);
+    * for a GENERATOR nested def, every binding of a celled name must
+      precede the FIRST call of the nested name. A generator reads its
+      cells at RESUME, and the tier refreshes at the call only, so a
+      rebinding between two resumes would be read late. This is the one
+      place where the mechanism is more general than the admission, and
+      relaxing it is a 4-site change at the resume points.
+
+    Returns ``(captures, reason_or_None)`` — `captures` is the env-key
+    list, cells spelled with the prefix."""
     reasons = []
     for n in ast.walk(nd):
         if n is not nd and isinstance(
@@ -879,6 +1024,7 @@ def _closure_analysis(nd, enclosing):
     nested_locals = {p.arg for p in list(nd.args.posonlyargs) + list(nd.args.args)}
     if isinstance(nd, ast.FunctionDef):
         nested_locals |= _assigned_names(nd)
+    nested_locals |= _comprehension_targets(nd)
     enclosing_params = {p.arg for p in list(enclosing.args.posonlyargs)
                         + list(enclosing.args.args)}
     # direct nested-def names are enclosing locals too (a closure may
@@ -891,23 +1037,42 @@ def _closure_analysis(nd, enclosing):
     for n in _walk_scope(nd):
         if isinstance(n, ast.Name) and n.id not in nested_locals:
             free.add(n.id)
-    captures = sorted(free & enclosing_locals)
-    for c in captures:
+    out, cells = [], []
+    for c in sorted(free & enclosing_locals):
         linenos = _binding_linenos(enclosing, c)
         if c in def_bindings:
             linenos = linenos + [def_bindings[c]]
         after = [ln for ln in linenos if ln > nd.lineno]
         if after:
-            reasons.append(
-                "captured name %r is rebound after the def (line %d) — "
-                "snapshot-at-def would diverge from CPython's cell"
-                % (c, min(after)))
+            cells.append(c)
+            out.append(CELL_PREFIX + c)
         elif c not in enclosing_params and not [ln for ln in linenos
                                                 if ln < nd.lineno]:
             reasons.append(
                 "captured name %r has no binding before the def — the "
                 "snapshot could miss CPython's late cell fill" % c)
-    return captures, ("; ".join(reasons) if reasons else None)
+        else:
+            out.append(c)
+    if cells and nd_name is not None:
+        if _name_escapes(enclosing, nd_name):
+            reasons.append(
+                "nested def %r has late-bound captures (%s) and its name "
+                "ESCAPES the defining frame — the cell is refreshed at the "
+                "call, so an escaped closure would read it stale"
+                % (nd_name, ", ".join(cells)))
+        elif getattr(nd, "body", None) is not None and _is_generator(nd):
+            first = _first_use_lineno(enclosing, nd_name)
+            for c in cells:
+                late = [ln for ln in _binding_linenos(enclosing, c)
+                        if first is not None and ln >= first]
+                if late:
+                    reasons.append(
+                        "celled name %r is rebound at line %d, at or after "
+                        "the first call of the GENERATOR %r (line %d) — a "
+                        "resume reads its cell, and the tier refreshes cells "
+                        "at the call only"
+                        % (c, min(late), nd_name, first))
+    return out, ("; ".join(reasons) if reasons else None)
 
 
 def _early_nested_calls(fn):
@@ -978,7 +1143,7 @@ def _lambda_nested_def(node, enclosing):
         captures, refusal = [], ("; ".join(scope_reasons)
                                  if scope_reasons else None)
     else:
-        captures, refusal = _closure_analysis(lam, enclosing)
+        captures, refusal = _closure_analysis(lam, enclosing, name)
     out = {
         "kind": "NestedDef",
         "span": span(node),
@@ -1089,7 +1254,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # H7 (docs/memory-model.md §nested defs and closures): a def
             # DIRECTLY inside a function body is structured as NestedDef,
             # with the capture set and the snapshot tier's refusals
-            captures, refusal = _closure_analysis(node, enclosing)
+            captures, refusal = _closure_analysis(node, enclosing,
+                                                   node.name)
             out["kind"] = "NestedDef"
             out["captures"] = captures
             out["closure_unsupported"] = refusal

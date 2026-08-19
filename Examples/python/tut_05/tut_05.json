@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.25"
+    "version": "3.9.19"
   },
   "source_file": "Examples/python/tut_05/tut_05.py",
   "source_sha256": "cfd2b01384feeffec86acce7a2640b0164692bf43c4c03e560a8ee5a39372f0d",

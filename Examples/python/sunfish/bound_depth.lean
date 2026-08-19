@@ -1119,6 +1119,101 @@ theorem probe_repetition_skipped (w : World) (e : REnv)
   rw [h]
   py_simp [-globalsFold, -globalsStep, hd]
 
+theorem execStmt_if_true {m : Module} {F : Nat} {st st₁ : FrameState}
+    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
+    (hc : evalExpr m F st cond = .ok st₁ v)
+    (hb : truthyH st₁.world.heap v = .ok true) :
+    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
+      = execStmts m F st₁ body.toList := by
+  rw [execStmt, hc]
+  simp only [Run.bind, Run.liftRes, hb, if_true]
+
+theorem execStmt_if_false {m : Module} {F : Nat} {st st₁ : FrameState}
+    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
+    (hc : evalExpr m F st cond = .ok st₁ v)
+    (hb : truthyH st₁.world.heap v = .ok false) :
+    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
+      = execStmts m F st₁ orelse.toList := by
+  rw [execStmt, hc]
+  simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false]
+
+/-- **A singleton `execStmts` gate, read back at `execStmt`.** The gates above
+are stated over one-statement LISTS, which is the shape a reader wants and the
+WRONG shape for composition: chaining statements needs `execStmt`, because
+`execStmts` peels one off at a time. This bridge is the conversion, and landing
+it is what made the probe block below composable — a finding for anyone stating
+the next batch of gates. -/
+theorem execStmt_of_singleton {m : Module} {F : Nat} {st st' : FrameState} {s : Stmt}
+    (h : execStmts m (F + 2) st [s] = .ok st' .next) :
+    execStmt m (F + 1) st s = .ok st' .next := by
+  rw [execStmts] at h
+  cases hx : execStmt m (F + 1) st s with
+  | ok st₁ flow =>
+      rw [hx] at h
+      cases flow with
+      | next =>
+          rw [Run.bind, execStmts] at h
+          cases h
+          rfl
+      | brk => rw [Run.bind] at h; exact absurd h (by simp)
+      | cont => rw [Run.bind] at h; exact absurd h (by simp)
+      | ret v => rw [Run.bind] at h; exact absurd h (by simp)
+  | exn st₁ er => rw [hx, Run.bind] at h; exact absurd h (by simp)
+  | timeout => rw [hx, Run.bind] at h; exact absurd h (by simp)
+  | unsupported msg => rw [hx, Run.bind] at h; exact absurd h (by simp)
+
+/-! The four probe statements composed into one gate, with the `if not root:`
+wrapper. The two `simp only [Run.bind]` steps are load-bearing exactly as in
+`qs_body` — the linter disagrees and is wrong. -/
+set_option linter.unusedSimpArgs false in
+/-- **The probe BLOCK as one gate**: `if not root:` runs, the `.get` misses, and
+neither bound return nor the repetition test fires — so the whole block is a
+single binding of `entry` and nothing else. The four statement gates composed at
+their own fuels by `execStmt_mono`, plus the wrapper's guard. -/
+theorem probe_block_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma : Int) (pv : RVal) (sv : Nat)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (hk : hashableKey pv = true)
+    (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) :
+    execStmt sunfish 40 ⟨w, e⟩ sbProbe
+      = .ok ⟨w, Env.set e "entry" entryDefault⟩ .next := by
+  obtain ⟨p0, p1, p2, hpr⟩ := sbProbe_lit
+  have hc : evalExpr sunfish 39 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hpr, execStmt_if_true hc rfl]
+  have hE := probe_misses w e ci sa ts tm hs n dl sf 0 pv sv hslf hpos hd hnoe hnomu hmu
+    hobj hdict hk
+  have hen : Env.lookup (Env.set e "entry" entryDefault) "entry" = some entryDefault := by
+    simp [Env.lookup_set_self]
+  have hg' : Env.lookup (Env.set e "entry" entryDefault) "gamma" = some (.int gamma) := by
+    simp [Env.lookup_set_ne, hg]
+  have hd' : Env.lookup (Env.set e "entry" entryDefault) "depth" = some (.int 0) := by
+    simp [Env.lookup_set_ne, hd]
+  rw [show sbProbeB.toArray.toList = sbProbeB from rfl, sbProbeB_split]
+  simp only [execStmts]
+  rw [execStmt_mono (execStmt_of_singleton (F := 14) hE) (by simp) 38 (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (execStmt_of_singleton (F := 6)
+    (probe_lower_passes w (Env.set e "entry" entryDefault) gamma hen hg' hlo)) (by simp) 37
+    (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (execStmt_of_singleton (F := 6)
+    (probe_upper_passes w (Env.set e "entry" entryDefault) gamma hen hg' hup)) (by simp) 36
+    (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (execStmt_of_singleton (F := 6)
+    (probe_repetition_skipped w (Env.set e "entry" entryDefault) hd')) (by simp) 35 (by omega)]
+
 /-! ### #236's four statements between the probe and the fold
 
 `killer`, `calm`/`guard`, `t`, `nmr` — statements 6 and 8–11. Three of the four
@@ -1436,24 +1531,6 @@ chain — four more branches, two of them recursive — is a DEFINED projection
 (`sbElse1`), not an opaque variable, so `py_simp` will walk it and explode
 exactly as it did on `nmr`'s third operand. `execStmt_if_true` keeps it out by
 deciding the branch at the `ifStmt` rather than inside it. -/
-
-theorem execStmt_if_true {m : Module} {F : Nat} {st st₁ : FrameState}
-    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
-    (hc : evalExpr m F st cond = .ok st₁ v)
-    (hb : truthyH st₁.world.heap v = .ok true) :
-    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
-      = execStmts m F st₁ body.toList := by
-  rw [execStmt, hc]
-  simp only [Run.bind, Run.liftRes, hb, if_true]
-
-theorem execStmt_if_false {m : Module} {F : Nat} {st st₁ : FrameState}
-    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
-    (hc : evalExpr m F st cond = .ok st₁ v)
-    (hb : truthyH st₁.world.heap v = .ok false) :
-    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
-      = execStmts m F st₁ orelse.toList := by
-  rw [execStmt, hc]
-  simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false]
 
 /-- Branch 1's guard: `move is None and depth == 0`, both true at a QS node on
 a virtual yield. -/
@@ -2732,6 +2809,8 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms probe_lower_passes
 #print axioms probe_upper_passes
 #print axioms probe_repetition_skipped
+#print axioms execStmt_of_singleton
+#print axioms probe_block_runs
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

@@ -33,9 +33,17 @@ What #236 changed, and what it costs this file:
   byte-identical), and so is the whole TABLE shape — the probe
   (`entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER, MATE_UPPER))`),
   the store and `Entry = namedtuple("Entry", "lower upper")` are
-  byte-identical in both versions. §7 wires step 3's calculus
+  byte-identical in both versions. §6 wires step 3's calculus
   (`LeanModels/Python/DictCalc.lean`) to those three lines, which is what
   building it in the GENERAL layer bought.
+* **§7 is the RECURSION RULE's spec side** (added 2026-08-19): the window
+  contract `Report` — `formal/`'s `WindowReport`, restated and proved
+  equivalent to the shipped docstring — the fold's bracket algebra, the two
+  branches that consume an induction hypothesis, the table threaded through a
+  whole body, and `BoundRefines`, the depth-indexed statement the induction
+  runs on. It also records what the rule CANNOT have: without a futility
+  premise the refinement is false, and `settle_needs_futility` is the
+  schedule that refutes it.
 
 The object is the real thing: eighteen statements, a node counter and a wall
 clock on the receiver, two transposition dicts and a history set behind
@@ -1106,7 +1114,457 @@ theorem sf_subtree_tableAt {V : RVal → Int → Int}
     (sfBracket V).TableAt h a → (sfBracket V).TableAt h' a :=
   Bracket.SubtreeWrites.tableAt (sfBracket_keyDetermined hV) hw
 
-/-! ## §7 Non-vacuity, and the axioms
+/-! ## §7 THE RECURSION RULE — its spec side, paid
+
+§L10 (c) wrote the rule's shape (*an induction hypothesis at depth `d-1`
+consumed one round at a time at depth `d`*) and §L13 §8 paid its TABLE half in
+the general layer. Two halves were left unwritten, and both are here:
+
+* **what the fold does to a CHILD'S REPORT** — the arithmetic that makes a
+  null-window search compose at all, and
+* **what the composed statement IS** — `BoundRefines`, the depth-indexed
+  proposition the induction runs on.
+
+Everything below is arithmetic over §3's vocabulary and §6's wiring. No
+interpreter, no module literal, no run: it is the layer that says what the
+per-statement gates are FOR. What it does NOT contain is those gates — §L10's
+remaining step-2 list, items 1–5, at the measured unit cost of one `py_simp`
+per statement. `BoundRefines` is therefore STATED, in the manner of §5's
+`QSStandPat`, and the step lemma that consumes it is stated too. -/
+
+/-- **The zero-window contract, in the model's own words.**
+`formal/Sunfish/CappedNull.lean` (engine repo) spells it
+
+    def WindowReport (gamma report value : Int) : Prop :=
+      (report < gamma ∧ value ≤ report) ∨ (gamma ≤ report ∧ report ≤ value)
+
+and this is that predicate, RESTATED rather than imported: `formal/` lives in
+the engine repository and this lane depends on no package. The two definitions
+are deliberately identical, so a bridge between them is a rename and not an
+argument. -/
+def Report (gamma report value : Int) : Prop :=
+  (report < gamma ∧ value ≤ report) ∨ (gamma ≤ report ∧ report ≤ value)
+
+/-- **`Report` IS the shipped docstring**, which promises
+
+    if gamma >  s* then s* <= r < gamma  (A better upper bound)
+    if gamma <= s* then gamma <= r <= s* (A better lower bound)
+
+— two implications keyed on where the VALUE sits, where `Report` is a
+disjunction keyed on where the REPORT sits. The equivalence is what says this
+lane is proving the promise the engine makes rather than a neighbouring one,
+and it is not free: each direction needs the trichotomy the other side hides. -/
+theorem report_iff_docstring (gamma r v : Int) :
+    Report gamma r v ↔ ((v < gamma → v ≤ r ∧ r < gamma) ∧ (gamma ≤ v → gamma ≤ r ∧ r ≤ v)) := by
+  constructor
+  · rintro (⟨h1, h2⟩ | ⟨h1, h2⟩) <;>
+      exact ⟨fun hv => ⟨by omega, by omega⟩, fun hv => ⟨by omega, by omega⟩⟩
+  · intro h
+    by_cases hv : v < gamma
+    · have hd := h.1 hv; exact Or.inl ⟨by omega, by omega⟩
+    · have hd := h.2 (by omega); exact Or.inr ⟨by omega, by omega⟩
+
+/-- Negating a child's report carries it to the parent's window — the integer
+zero-window convention, and `formal/`'s `WindowReport.negate` verbatim. -/
+theorem Report.negate {gamma r v : Int} (h : Report (1 - gamma) r v) :
+    Report gamma (-r) (-v) := by
+  rcases h with h | h
+  · exact Or.inr ⟨by omega, by omega⟩
+  · exact Or.inl ⟨by omega, by omega⟩
+
+/-- And a `min` with a fixed cap survives it — `formal/`'s `WindowReport.cap`.
+Together with `negate` this is the whole of `min(cap, -self.bound(…))`. -/
+theorem Report.cap (cap : Int) {gamma r v : Int} (h : Report gamma r v) :
+    Report gamma (min cap r) (min cap v) := by
+  rcases h with h | h <;> simp only [Report, Int.min_def] <;> split <;> split <;> omega
+
+/-! ### The fold's bracket algebra
+
+`fold` walks `Round`s; the contract is about the number it ends with. These
+are the five facts that connect the two, one induction each. -/
+
+/-- The number a round contributes to `best`. Both terminals fold with `max`,
+so both have one. -/
+def Round.score : Round → Int
+  | .report sc _ => sc
+  | .settle cap => cap
+
+/-- **The fail-high invariant.** A number the fold may hold is either below
+the window — where the contract says nothing about it — or a genuine lower
+bound on the node's value.
+
+This predicate is exactly why a null-window search COMPOSES. A child that
+fails HIGH at `1 - gamma` reports `child ≥ 1 - gamma`, so its negation is at
+most `gamma - 1`: strictly below the parent's window, a number the parent can
+never fail high on. A child that fails LOW reports an upper bound, whose
+negation is a genuine lower bound. Both land in `Sound`, `Sound` is closed
+under `max`, and `max` is the whole fold. -/
+def Sound (gamma value x : Int) : Prop := x < gamma ∨ x ≤ value
+
+theorem Sound.max {gamma value x y : Int} (hx : Sound gamma value x)
+    (hy : Sound gamma value y) : Sound gamma value (max x y) := by
+  simp only [Sound] at hx hy ⊢; omega
+
+/-- **The fold preserves it**, through both terminals and the cut. -/
+theorem foldFrom_sound {gamma value : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    Sound gamma value best → (∀ r ∈ rs, Sound gamma value r.score) →
+    Sound gamma value (foldFrom gamma best live rs).1
+  | [], best, live, hb, _ => by rw [foldFrom_nil]; exact hb
+  | .settle cap :: rs, best, live, hb, hrs => by
+      rw [foldFrom_cons_settle]
+      exact hb.max (hrs (.settle cap) (by simp))
+  | .report sc lv :: rs, best, live, hb, hrs => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc]
+        exact hb.max (hrs (.report sc lv) (by simp))
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc]
+        exact foldFrom_sound rs _ _ (hb.max (hrs (.report sc lv) (by simp)))
+          (fun r hr => hrs r (by simp [hr]))
+
+/-- **The fold never lowers `best`.** -/
+theorem foldFrom_ge {gamma : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    best ≤ (foldFrom gamma best live rs).1
+  | [], best, live => by rw [foldFrom_nil]; exact Int.le_refl best
+  | .settle cap :: rs, best, live => by
+      rw [foldFrom_cons_settle]; show best ≤ max best cap; omega
+  | .report sc lv :: rs, best, live => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc]; show best ≤ max best sc; omega
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc]
+        have h := foldFrom_ge (gamma := gamma) rs (max best sc) (live || lv)
+        omega
+
+/-- **The `cut` terminal really is a fail-high.** -/
+theorem foldFrom_cut_ge {gamma : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    (foldFrom gamma best live rs).2.2 = Exit.cut → gamma ≤ (foldFrom gamma best live rs).1
+  | [], best, live, h => by rw [foldFrom_nil] at h; simp at h
+  | .settle cap :: rs, best, live, h => by
+      rw [foldFrom_cons_settle] at h; simp at h
+  | .report sc lv :: rs, best, live, h => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc]; exact hc
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc] at h ⊢
+        exact foldFrom_cut_ge rs _ _ h
+
+/-- **When the fold RAN OUT it consumed every round**, so every round's score
+is under the answer. This is the fail-low half's only ingredient at the `ran`
+terminal. -/
+theorem foldFrom_ran_ge {gamma : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    (foldFrom gamma best live rs).2.2 = Exit.ran →
+    ∀ r ∈ rs, r.score ≤ (foldFrom gamma best live rs).1
+  | [], best, live, _, r, hr => by simp at hr
+  | .settle cap :: rs, best, live, h, r, hr => by
+      rw [foldFrom_cons_settle] at h; simp at h
+  | .report sc lv :: rs, best, live, h, r, hr => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc] at h; simp at h
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc] at h ⊢
+        rcases List.mem_cons.mp hr with rfl | hr'
+        · have hg := foldFrom_ge (gamma := gamma) rs (max best sc) (live || lv)
+          show sc ≤ (foldFrom gamma (max best sc) (live || lv) rs).1
+          omega
+        · exact foldFrom_ran_ge rs _ _ h r hr'
+
+/-- **And when it SETTLED, the cap it folded is under the answer** — and the
+cap is one of the schedule's own rounds, which is what lets a caller state the
+futility premise over `rs` rather than over the fold's internals. -/
+theorem foldFrom_settled_ge {gamma : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    (foldFrom gamma best live rs).2.2 = Exit.settled →
+    ∃ cap, Round.settle cap ∈ rs ∧ cap ≤ (foldFrom gamma best live rs).1
+  | [], best, live, h => by rw [foldFrom_nil] at h; simp at h
+  | .settle cap :: rs, best, live, _ => by
+      refine ⟨cap, by simp, ?_⟩
+      rw [foldFrom_cons_settle]; show cap ≤ max best cap; omega
+  | .report sc lv :: rs, best, live, h => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc] at h; simp at h
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc] at h ⊢
+        obtain ⟨cap, hm, hle⟩ := foldFrom_settled_ge rs _ _ h
+        exact ⟨cap, by simp [hm], hle⟩
+
+/-! ### The two halves of the contract -/
+
+/-- **FAIL-HIGH SOUNDNESS.** If every round the schedule can produce is
+`Sound` and the fold ends at or above the window, its answer is a real lower
+bound. No exhaustiveness, no futility, no depth: this half is free. -/
+theorem fold_failHigh {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hb : Sound gamma value best) (hrs : ∀ r ∈ rs, Sound gamma value r.score)
+    (hge : gamma ≤ (foldFrom gamma best live rs).1) :
+    (foldFrom gamma best live rs).1 ≤ value := by
+  rcases foldFrom_sound rs best live hb hrs with h | h
+  · omega
+  · exact h
+
+/-- **FAIL-LOW COMPLETENESS**, and it is the half that costs. Below the window
+the contract claims the answer is an UPPER bound, and a fold that left early
+has not looked at everything. Two premises pay for the two early exits:
+
+* `hattain` — the schedule ATTAINS the value somewhere (the model's negamax
+  maximum is reached by some move), which covers the `ran` terminal;
+* `hfut` — the FUTILITY BET: a settled cap bounds the value. On the shipped
+  stream that is the sorted order's promise, and it is not a fact about the
+  fold — see `settle_needs_futility`.
+
+The `cut` terminal is excluded by hypothesis rather than paid for: there the
+answer is at or above the window and the other half applies. -/
+theorem fold_failLow {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hattain : value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score)
+    (hfut : ∀ cap, Round.settle cap ∈ rs → value ≤ cap)
+    (hnc : (foldFrom gamma best live rs).2.2 ≠ Exit.cut) :
+    value ≤ (foldFrom gamma best live rs).1 := by
+  cases hex : (foldFrom gamma best live rs).2.2 with
+  | cut => exact absurd hex hnc
+  | settled =>
+      obtain ⟨cap, hm, hle⟩ := foldFrom_settled_ge rs best live hex
+      exact Int.le_trans (hfut cap hm) hle
+  | ran =>
+      rcases hattain with h | ⟨r, hr, hv⟩
+      · exact Int.le_trans h (foldFrom_ge rs best live)
+      · exact Int.le_trans hv (foldFrom_ran_ge rs best live hex r hr)
+
+/-- **THE FOLD'S HALF OF THE RECURSION RULE.** The two halves assembled: the
+shipped contract at one node, from a classified schedule.
+
+Read against the source this is the whole of `for val, move in moves(): …`
+plus `return best`, with the correction and the store elsewhere — and the
+hypotheses are, in order, the accumulator's initialisation, the branch
+classification (§3, and `searchedMove_sound` below is how a child pays it),
+the model's negamax maximum, and the sorted stream's futility bet. -/
+theorem fold_report {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hb : Sound gamma value best) (hrs : ∀ r ∈ rs, Sound gamma value r.score)
+    (hattain : value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score)
+    (hfut : ∀ cap, Round.settle cap ∈ rs → value ≤ cap) :
+    Report gamma (foldFrom gamma best live rs).1 value := by
+  by_cases hge : gamma ≤ (foldFrom gamma best live rs).1
+  · exact Or.inr ⟨hge, fold_failHigh hb hrs hge⟩
+  · refine Or.inl ⟨by omega, fold_failLow hattain hfut ?_⟩
+    intro hcut
+    exact hge (foldFrom_cut_ge rs best live hcut)
+
+/-- **The futility premise cannot be dropped, and here is the schedule that
+drops it.** Window 100, value 50, a settled cap of 10 ahead of a round worth
+exactly 50: every round is `Sound`, the value IS attained by the schedule, and
+the fold still answers 10 — a number that is neither a lower bound (it is
+below the window) nor an upper bound (the value is 50).
+
+So `bound_refines_fuelModel` is **false without a futility side condition**.
+The shipped code's own justification is the comment on the break — *"the
+stream being sorted, [the cap answers] for everything after it"* — which is a
+property of `moves()`'s ordering, not of the fold; the fold cannot supply it
+and this lane must not pretend otherwise. `hfut` is where it enters. -/
+theorem settle_needs_futility :
+    ∃ (gamma value best : Int) (live : Bool) (rs : List Round),
+      Sound gamma value best ∧ (∀ r ∈ rs, Sound gamma value r.score) ∧
+      (value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score) ∧
+      (foldFrom gamma best live rs).2.2 = Exit.settled ∧
+      ¬ Report gamma (foldFrom gamma best live rs).1 value := by
+  refine ⟨100, 50, 0, false, [settledCap 10, standPat 50], Or.inl (by decide), ?_,
+    Or.inr ⟨standPat 50, by simp, by decide⟩, rfl, ?_⟩
+  · intro r hr
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl
+    · exact Or.inl (by decide)
+    · exact Or.inr (by decide)
+  · have hf : (foldFrom 100 0 false [settledCap 10, standPat 50]).1 = 10 := by decide
+    rw [hf]
+    rintro (⟨-, h2⟩ | ⟨h1, -⟩)
+    · exact absurd h2 (by decide)
+    · exact absurd h1 (by decide)
+
+/-! ### Consuming the induction hypothesis
+
+The rounds a depth-`d` node can produce are §3's five branch constructors.
+Three of them need no child; two are where the recursion enters, and both take
+the same route — `Report.negate` then `Report.cap`, which is `formal/`'s
+`cappedNull_report` at the parent's window. -/
+
+/-- **The recursion's consumption step: one searched move** (branch 5b,
+`score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))`).
+
+The child runs at the COMPLEMENTARY window `1 - gamma`; `hchild` is the
+induction hypothesis at depth `d-1` read through `BoundRefines`, and `hneg` is
+the model's negamax step — the parent's value is at least the negation of this
+child's. Nothing else is needed: the futility cap cannot break the direction
+the contract needs, because `min` only lowers.
+
+**`hneg` is where the REDUCTIONS enter, and it is the same kind of premise as
+`hfut`.** The child is searched at `moveDepth depth lmr nmr`, not at `depth -
+1`, so `-childValue ≤ value` is not the textbook negamax inequality — it holds
+because the docstring DEFINES `s*` to include *"null moves, QS, futility and
+the reductions"*, i.e. `V pos d` is the value of the tree the code actually
+walks. That definition is what makes `s*` a function of `(pos, depth)` alone
+rather than of the reduction flags, and it is also what a bridge to `formal/`'s
+`fuelValueD2` has to check: a model whose value is the UNREDUCED negamax owes
+`hneg` a proof, not a definition. -/
+theorem searchedMove_sound {gamma cap childReport childValue value : Int}
+    (hchild : Report (1 - gamma) childReport childValue)
+    (hneg : -childValue ≤ value) :
+    Sound gamma value (searchedMove cap childReport).score := by
+  rcases (hchild.negate).cap cap with ⟨h1, -⟩ | ⟨-, h2⟩
+  · exact Or.inl h1
+  · refine Or.inr ?_
+    show min cap (-childReport) ≤ value
+    omega
+
+/-- **And one null-move pass** (branch 2). Same route, one extra arm: when the
+capped report still meets the window AND `pos.king_capture()` produced a move,
+the shipped line substitutes the exact `MATE_UPPER` token. That substitution
+is not a bound the search computed — it is the docstring's *"if the opponent
+king capturable: r = MATE_UPPER"* promise — so it enters as its own
+hypothesis, discharged by the king-capture fact and never by arithmetic. -/
+theorem searchedPass_sound {gamma cap childReport childValue value : Int} {proof : Bool}
+    (hchild : Report (1 - gamma) childReport childValue)
+    (hneg : -childValue ≤ value)
+    (hproof : proof = true → mateUpper ≤ value) :
+    Sound gamma value (searchedPass gamma cap childReport proof).score := by
+  unfold searchedPass
+  split
+  · rename_i hguard
+    exact Or.inr (hproof ((Bool.and_eq_true _ _).mp hguard).2)
+  · exact searchedMove_sound (cap := cap) hchild hneg
+
+/-- Branches 1 and 4 need no child, only the model's own clause about the
+position: the QS stand-pat is a lower bound (`qsStrat`'s second clause), and an
+intrinsic mate-band value IS a king capture. -/
+theorem report_sound {gamma value sc : Int} {lv : Bool} (h : sc ≤ value) :
+    Sound gamma value (Round.report sc lv).score := Or.inr h
+
+/-- **Branch 3 and branch 5a need NOTHING at all.** Both fire under a shipped
+guard of the form `cap < gamma`, so both are `Sound` by the LEFT disjunct: a
+static estimate below the window is a number the contract is simply blind to.
+
+That is the asymmetry worth naming — the futility estimates are free for the
+fail-HIGH half and are exactly what `fold_failLow` has to buy back. -/
+theorem cappedPass_sound {gamma value cap : Int} (h : cap < gamma) :
+    Sound gamma value (cappedPass cap).score := Or.inl h
+
+theorem settledCap_sound {gamma value cap : Int} (h : cap < gamma) :
+    Sound gamma value (settledCap cap).score := Or.inl h
+
+/-! ### The table, threaded through the whole body -/
+
+/-- **The body's table effect, end to end**: the children write, then the node
+stores its own entry. `Bracket.SubtreeWrites.trans` is what makes the fold's
+whole schedule ONE subtree — the relation is already a chain, so composing
+rounds costs an append — and this is `TableOK` threaded beside `LoopFrame`,
+which is what §L13's "what step 3 still owes" listed third.
+
+`e` is the depth the parent's own key uses; `hkids` at `e` is exactly what
+`child_depth_lt` supplies at every `depth ≥ 1`. -/
+theorem sf_body_tableAt {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    {ts : Addr} {e : Int} {h h₁ h₂ : Heap} {p : RVal} {d lo up : Int}
+    (ht : (sfBracket V).TableAt h ts)
+    (hkids : (sfBracket V).SubtreeWrites ts e h h₁)
+    (hb : lo ≤ V p d ∧ V p d ≤ up)
+    (hs : heapStore h₁ ts (tpKey p d) (entryOf lo up) = .ok h₂) :
+    (sfBracket V).TableAt h₂ ts :=
+  sf_store hV (sf_subtree_tableAt hV hkids ht) hb hs
+
+/-- And the probe at the top of the body is blind to all of it — `n` children
+compose by `trans`, so this needs no theorem beyond §6's. -/
+theorem sf_rounds_probe {V : RVal → Int → Int} {ts : Addr} {e : Int} {q : RVal}
+    (hq : hashableKey q = true) {h h₁ h₂ : Heap}
+    (c₁ : (sfBracket V).SubtreeWrites ts e h h₁)
+    (c₂ : (sfBracket V).SubtreeWrites ts e h₁ h₂) :
+    heapGet h₂ ts (tpKey q e) entryDefault = heapGet h ts (tpKey q e) entryDefault :=
+  sf_subtree_probe hq (c₁.trans c₂)
+
+/-- §3's `LoopFrame` is the QS SPECIALIZATION — it pins `depth = 0` and `nmr =
+false`, which is what makes the QS fold heap-free. The recursion rule needs the
+same slots at an arbitrary depth, so here they are with both carried. -/
+def LoopFrameAt (e : REnv) (gamma best d : Int) (live nmr : Bool) : Prop :=
+  Env.lookup e "gamma" = some (.int gamma) ∧
+  Env.lookup e "best" = some (.int best) ∧
+  Env.lookup e "live" = some (.bool live) ∧
+  Env.lookup e "depth" = some (.int d) ∧
+  Env.lookup e "nmr" = some (.bool nmr)
+
+/-- And it IS the specialization, definitionally — so no §3 statement moves. -/
+theorem loopFrame_eq (e : REnv) (gamma best : Int) (live : Bool) :
+    LoopFrame e gamma best live = LoopFrameAt e gamma best 0 live false := rfl
+
+/-- **THE FOLD'S INVARIANT, both halves** — the frame slots the rounds read and
+the table the children write, in one proposition. This is §L13's "`TableOK`
+threaded through the fold beside `LoopFrame`", spelled. -/
+def FoldInv (V : RVal → Int → Int) (ts : Addr) (w : World) (e : REnv)
+    (gamma best d : Int) (live nmr : Bool) : Prop :=
+  LoopFrameAt e gamma best d live nmr ∧ (sfBracket V).TableAt w.heap ts
+
+/-- **Binding the loop target preserves the frame half.** `for val, move in
+moves():` rebinds `val` and `move`, and neither is a slot the invariant reads —
+`bind_eq` is the transport, `lookup_bind_ne` the reason. -/
+theorem LoopFrameAt.bindYield {e : REnv} {gamma best d : Int} {live nmr : Bool}
+    (y : Yield) (h : LoopFrameAt e gamma best d live nmr) :
+    LoopFrameAt (bindYield e y) gamma best d live nmr :=
+  ⟨lookup_bind_ne y (by decide) (by decide) h.1,
+   lookup_bind_ne y (by decide) (by decide) h.2.1,
+   lookup_bind_ne y (by decide) (by decide) h.2.2.1,
+   lookup_bind_ne y (by decide) (by decide) h.2.2.2.1,
+   lookup_bind_ne y (by decide) (by decide) h.2.2.2.2⟩
+
+/-- **A child call preserves the table half**, at every depth the child can key
+under. Together with the previous theorem this is one round of the invariant,
+with only the accumulator updates — interpreter work — left to pay. -/
+theorem FoldInv.subtree {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d) {ts : Addr} {w w' : World}
+    {e : REnv} {gamma best d : Int} {live nmr : Bool}
+    (hw : (sfBracket V).SubtreeWrites ts d w.heap w'.heap)
+    (h : FoldInv V ts w e gamma best d live nmr) :
+    FoldInv V ts w' e gamma best d live nmr :=
+  ⟨h.1, sf_subtree_tableAt hV hw h.2⟩
+
+/-! ### The rule -/
+
+/-- **THE RECURSION RULE, as a statement.** The depth-indexed proposition the
+induction runs on, at the shipped module literal and the shipped receiver
+shape.
+
+Four conjuncts, and each earns its place:
+
+* the run itself, in threshold form (`∀ F ≥ t`), as `QSStandPat` states it;
+* `TableAt` OUT — the invariant is preserved, so a sibling call may assume it;
+* **`SubtreeWrites` at every strictly greater depth** — what an ANCESTOR sees.
+  A call at `d` stores under `(pos, d)` and its descendants under smaller
+  depths still, so every ancestor probing at `e > d` is blind to the lot. This
+  is the conjunct that makes the rule compose, and it is also the conjunct
+  that needed `SubtreeWrites`'s allocation arm: a `bound()` call allocates on
+  every visit (the `moves()` generator, the `sorted(…)` list), so with three
+  arms this conjunct would have been unprovable and the whole rule vacuous;
+* `Report` — the docstring's promise, at the value function the table's schema
+  is instantiated on.
+
+What it deliberately does NOT say: nothing about the CLOCK (the trace is an
+input and the empty-trace frontier is `pins_search`'s business), nothing about
+`root=True` (a driver probe skips the table in both directions), and nothing
+about `live` or `tp_move` (the killer is a heuristic — the docstring promises
+only that its moves are legal). -/
+def BoundRefines (V : RVal → Int → Int) (d : Int) : Prop :=
+  ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int) (pos : RVal),
+    Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf) →
+    (sfBracket V).TableAt w.heap ts →
+    -mateUpper < gamma → gamma ≤ mateUpper →
+    ∃ (w' : World) (r : Int) (t : Nat),
+      (∀ F ≥ t, callIn sunfish F w "Searcher.bound"
+          #[.ref sa, pos, .int gamma, .int d] = .ok w' (.int r))
+      ∧ (sfBracket V).TableAt w'.heap ts
+      ∧ (∀ e : Int, d < e → (sfBracket V).SubtreeWrites ts e w.heap w'.heap)
+      ∧ Report gamma r (V pos d)
+
+/-- **The step the rule owes**, and the one thing in this file that is neither
+proved nor provable yet: turning §3's `Round` list into a run of the shipped
+loop is §L10's step-2 items 1–5, at one `py_simp` per statement.
+
+Everything the step needs on the SPEC side is above it — `fold_report` for the
+fold, `searchedMove_sound`/`searchedPass_sound` for the two recursive
+branches, `sf_body_tableAt` for the invariant, `sf_rounds_probe` for the
+probe, and `child_depth_lt` (§3) for the depth separation the third conjunct
+of `BoundRefines` needs. What is missing is the bridge from `callIn` to those
+objects, which is interpreter work and is priced. -/
+def RecursionStep (V : RVal → Int → Int) : Prop :=
+  ∀ d : Int, 1 ≤ d → BoundRefines V (d - 1) → BoundRefines V d
+
+/-! ## §8 Non-vacuity, and the axioms
 
 The gates are stated over a free world, a free window and a free board, so the
 question is whether their hypotheses are ever satisfied and whether `fold` —
@@ -1214,6 +1672,51 @@ one line that says the calculus and the interpreter agree about the shipped
 #guard pairKey (tpKey (posH 0) 0) == some (posH 0, 0)
 #guard entryBounds entryDefault == some (-mateUpper, mateUpper)
 
+/-! ### §7's contract, checked against the ENGINE
+
+`Report` is a claim about a value function this file does not compute, so the
+honest non-vacuity check is CONSISTENCY. Run the shipped `bound` at several
+windows on one `(pos, depth)` and intersect what its answers claim: a
+fail-high report is a lower bound on `s*`, a fail-low report an upper bound.
+If the code meets its docstring the intersection is non-empty; if the windows
+straddle the value it collapses to a single number, and that number IS `s*`
+for that key — measured, not modelled. A row that cannot run answers with the
+EMPTY interval, so a broken probe can never look consistent. -/
+private def bd_claim (pos : RVal) (depth : Int) : List Int → Int × Int
+  | [] => (-mateUpper, mateUpper)
+  | g :: gs =>
+      match bd_claim pos depth gs, bd_probe pos g depth with
+      | (lo, up), some (r, _) => if g ≤ r then (max lo r, up) else (lo, min up r)
+      | _, Option.none => (mateUpper, -mateUpper)
+
+/-! At depth 0 the five windows already pinned above straddle the answer, and
+they pin it exactly: the shipped QS value of the opening board is **4**. The
+gamma-1 run fails high at 4 (so `4 ≤ s*`) and the gamma-40 run fails low at 4
+(so `s* ≤ 4`) — two reports from two different searches, agreeing to the
+integer. That is what a satisfied `Report` looks like on real numbers. -/
+#guard bd_claim (posH 0) 0 [-100, -40, 0, 1, 40] == (4, 4)
+
+/-! Depth 1, the same way, and it collapses too: **37**. Four windows, three
+of them fail high (`0`, `20`, `37`) and one fails low (`40`), and the four
+answers have exactly one common value. The two new probes cost 41 nodes each. -/
+#guard bd_claim (posH 0) 1 [0, 20, 37, 40] == (37, 37)
+#guard bd_probe (posH 0) 20 1 == some (37, 41)
+#guard bd_probe (posH 0) 37 1 == some (37, 41)
+
+/-! **The settled terminal, and why `settle_needs_futility` is about ORDER.**
+The same two rounds, the settle first and the settle second: the first answers
+10 (below the window, and not an upper bound on the value 50), the second
+answers 50. The sorted stream is not a convenience — it is the entire content
+of the futility bet, and the fold sees only the order. -/
+#guard foldFrom 100 0 false [settledCap 10, standPat 50] == (10, false, Exit.settled)
+#guard foldFrom 100 0 false [standPat 50, settledCap 10] == (50, false, Exit.settled)
+
+/-! Both terminals carry a score, and it is the number the fold folds. -/
+#guard (Round.report 7 true).score == 7
+#guard (Round.settle 7).score == 7
+#guard (searchedMove 500 (-120)).score == 120
+#guard (searchedPass 40 500 (-120) true).score == mateUpper
+
 #print axioms bound_enters
 #print axioms max_evals
 #print axioms fold_standpat
@@ -1225,5 +1728,28 @@ one line that says the calculus and the interpreter agree about the shipped
 #print axioms sf_store
 #print axioms sf_subtree_probe
 #print axioms sf_subtree_tableAt
+#print axioms report_iff_docstring
+#print axioms Report.negate
+#print axioms Report.cap
+#print axioms Sound.max
+#print axioms foldFrom_sound
+#print axioms foldFrom_ge
+#print axioms foldFrom_cut_ge
+#print axioms foldFrom_ran_ge
+#print axioms foldFrom_settled_ge
+#print axioms fold_failHigh
+#print axioms fold_failLow
+#print axioms fold_report
+#print axioms settle_needs_futility
+#print axioms searchedMove_sound
+#print axioms searchedPass_sound
+#print axioms report_sound
+#print axioms cappedPass_sound
+#print axioms settledCap_sound
+#print axioms sf_body_tableAt
+#print axioms sf_rounds_probe
+#print axioms loopFrame_eq
+#print axioms LoopFrameAt.bindYield
+#print axioms FoldInv.subtree
 
 end Examples.python.sunfish.bound_depth

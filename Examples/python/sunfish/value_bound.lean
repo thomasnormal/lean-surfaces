@@ -289,6 +289,56 @@ theorem value_scores (w : World) (e : REnv) (pa : Addr) (pc : String)
     if_pos (show (0 ≤ i ∧ i < (120 : Int)) from ⟨hi, hi'⟩),
     if_pos (show (0 ≤ j ∧ j < (120 : Int)) from ⟨hj, hj'⟩)]
 
+theorem vlCap_lit : ∃ a b c d e f g h i k l m n o p, vlCap =
+    .ifStmt (.compare (.name "q" a) #[.inOp] #[.constant (.str "pnbrqk") b] c)
+      #[.augAssign (.name "score" d) .add
+          (.subscript
+            (.subscript (.name "pst" e)
+              (.call (.attribute (.name "q" f) "upper" g) #[] #[] Option.none h) i)
+            (.binOp (.constant (.int 119) k) .sub (.name "j" l) m) n) o]
+      #[] p :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **GATE 4a — a NON-capture skips the arm.** The destination square holds no
+black piece, so `pst[q.upper()]` is never reached — which matters, because for a
+`q` outside `"pnbrqk"` there is no row to reach: `pst['.']` is a genuine
+`KeyError`. That is why this statement gets TWO gates and not one existential:
+a single gate carrying the row premise unconditionally would be UNSATISFIABLE on
+every quiet move, which is §L24's trap exactly. -/
+theorem value_cap_skips (w : World) (e : REnv) (qc : String) (F : Nat)
+    (hq : Env.lookup e "q" = some (.str qc))
+    (hno : strContains "pnbrqk" qc = false) :
+    execStmts sunfish (F + 10) ⟨w, e⟩ [vlCap] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, g, h, i, k, l, m, n, o, p, hlit⟩ := vlCap_lit
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hq, hno]
+
+/-- **GATE 4b — a CAPTURE adds the taken piece's table value.** `q.upper()` is
+the row key, and the answer is again in the row's own entries. -/
+theorem value_cap_adds (w : World) (e : REnv) (pa : Addr) (qc uc : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs : Array RVal) (j s z : Int) (F : Nat)
+    (hq : Env.lookup e "q" = some (.str qc))
+    (hyes : strContains "pnbrqk" qc = true)
+    (hup : strUpper qc = .ok (.str uc))
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hej : Env.lookup e "j" = some (.int j))
+    (hs : Env.lookup e "score" = some (.int s))
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str uc) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hlo : 0 ≤ 119 - j) (hhi : 119 - j < 120)
+    (hx : xs[(119 - j).toNat]?.getD .none = .int z) :
+    execStmts sunfish (F + 14) ⟨w, e⟩ [vlCap]
+      = .ok ⟨w, Env.set e "score" (.int (s + z))⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, g, h, i, k, l, m, n, o, p, hlit⟩ := vlCap_lit
+  simp only [Heap.get?] at hd
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hq, hyes, hup, hnp, hej, hs, hg, hd, hrow, pstG,
+    normIndex, hsz, hx,
+    if_neg (show ¬ (119 - j) < 0 by omega),
+    if_pos (show (j ≤ 119 ∧ 119 - j < (120 : Int)) from ⟨by omega, hhi⟩)]
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -299,43 +349,58 @@ theorem value_scores (w : World) (e : REnv) (pa : Addr) (pc : String)
 #print axioms value_reads_pq
 #print axioms pstG
 #print axioms value_scores
+#print axioms vlCap_lit
+#print axioms value_cap_skips
+#print axioms value_cap_adds
 #print axioms value_unpacks
 #print axioms value_returns
 
 /-! ## What R1 still owes, in order
 
-Four of the eight statements have gates: the unpack (1), the board reads (2),
-the table delta (3) and the return (8). **The four `if`s remain**, and every one
-of them indexes `pst`, so every one of them takes GATE 3's shape — the row as a
-premise, the answer in the row's own entries, the index conditionals discharged
-by an in-range hypothesis. The law is landed; what is left is applying it.
+Five of the eight statements have gates: the unpack (1), the board reads (2),
+the table delta (3), the capture (4, in TWO arms) and the return (8).
 
-* **GATE 4, `vlCap`** — `if q in "pnbrqk": score += pst[q.upper()][119 - j]`.
-  Two cases on the membership test; the true arm needs `q.upper()`'s row and
-  `0 ≤ 119 - j < 120`.
+### THE SECOND LAW OF THIS FILE, learned at GATE 4
+
+Every `if` in `Position.value` guards a `pst` lookup whose KEY the guard is what
+makes legal. So an `if` statement gets **two gates, not one existential**:
+
+* `pst['.']` is a genuine `KeyError`. A single gate carrying the row premise
+  unconditionally would have an **unsatisfiable** hypothesis on every quiet
+  move — §L24's trap exactly, and the reason `value_cap_skips` exists beside
+  `value_cap_adds` rather than being folded into it.
+* The caller knows which arm it is in (`gen_moves` knows the board), so the
+  split costs the composition one `by_cases` and buys non-vacuity.
+
+The test's own value is the third application of the computed-shape law:
+`q in "pnbrqk"` leaves `strContains "pnbrqk" qc`, and that is what the premise
+names. Note also that simp NORMALIZES the index condition — `0 ≤ 119 - j`
+becomes `j ≤ 119` — so an `if_pos` must be stated in the normalized form or it
+will not fire. That cost one cycle at GATE 4b.
+
+### The three remaining
+
 * **GATE 5, `vlKp`** — `if abs(j - self.kp) < 2: score += pst["K"][119 - j]`.
-  Two cases on a test over a free `kp`; the `"K"` row is a literal key, so its
-  row premise is the only new one.
+  Two arms on a test over a free `kp`. The `"K"` key is a LITERAL, so this is
+  the one `if` whose row premise is safe in both arms — but it keeps two arms
+  anyway, because the score changes in only one.
 * **GATE 6, `vlCastle`** — `if p == "K" and abs(i - j) == 2:`, two statements
   inside, reading `pst["R"]` at `(i + j) // 2` and at `A1 if j < i else H1`.
   `A1`/`H1` resolve STATICALLY (§H4's dirty-name pass admits them), so this gate
-  says nothing about `w.globals` beyond `pst` — census that before writing it.
+  says nothing about `w.globals` beyond `pst` — census it before writing.
+  A conditional EXPRESSION in the index is new; nothing else here is.
 * **GATE 7, `vlPawn`** — `if p == "P":`, with `A8 ≤ j ≤ H8` (a chained compare)
-  and `j == self.ep` inside. The promotion arm reads `pst[prom]`, and `prom` is
-  `""` on every non-promotion move — so the arm is REACHABLE only under the
-  `A8 ≤ j ≤ H8` guard, and that guard is what restricts `prom` to `pstKeys`.
-  Census the empty-`prom` case first: `pst[""]` would be a `KeyError`, so the
-  guard is load-bearing and not decoration.
+  and `j == self.ep` inside. **The promotion arm reads `pst[prom]`, and `prom`
+  is `""` on every non-promotion move — `pst[""]` is a `KeyError`, so the
+  `A8 ≤ j ≤ H8` guard is load-bearing and the two-arm law above is mandatory
+  here, not stylistic.** This is the same fact as GATE 4's, one guard along.
 
 Then `value_runs` composes the eight at `callIn`, in the ∃-fuel form, with the
-answer EXISTENTIAL — §L25's re-sequencing. `execStmts_append` and
-`execStmts_singleton` (bound_depth.lean) are the composition engine and are
-already general.
-
-**The 8-second checks this file still owes**, one per gate, before its premise
-is written: run the statement on the fixture and confirm the world does not
-move. `Position.value` as a WHOLE is heap-free (guarded above), which makes each
-statement heap-free too — but the guard is on the whole, so a gate that claims
-it per statement should say so from the whole, not assume it. -/
+answer EXISTENTIAL (§L25's re-sequencing) and a `by_cases` per two-arm gate.
+`execStmts_append`/`execStmts_singleton` (bound_depth.lean) are the engine and
+are already general. **The instantiation check is owed with it**: run
+`value_runs`' own premises on the fixture and confirm they are met, rather than
+admiring the statement — §L24's rule, and the reason this file leads with
+`#guard`s. -/
 
 end Examples.python.sunfish.value_bound

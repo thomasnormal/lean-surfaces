@@ -10797,6 +10797,331 @@ the file's 25 printed declarations depends on `[propext, Classical.choice,
 Quot.sound]` or less, and the ten projection pins depend on `[propext]` alone or
 on nothing. No `sorry`, no `native_decide`.
 
+
+## L30 — THE FAIL-LOW CENSUS: three of §L27's own premises are REFUTED, and the arm is smaller than it was priced (2026-08-19)
+
+§L27 re-priced the fail-low arm as a second induction and, under §L25's law,
+refused to plan it before a census. This section is that census and the plan it
+implies. **Nothing of the induction is started here**, deliberately; what landed
+is `Examples/python/sunfish/faillow_census.lean`, a `#guard` battery and one
+two-line bridge, so every number below is re-run by `lake build` and cannot rot.
+
+The headline is that the census moved the plan three times, and the largest move
+is a REDUCTION: §L27 wrote that the second induction is *"what `formal/`'s fuel
+model exists for"*. It is not. `formal/` has no quiescence recursion at all, so
+there is no measure to import — and once that is faced, the arm's `Report`
+conjunct turns out to need the induction for only HALF of its cases.
+
+### THE CENSUS, six answers, all measured
+
+| § | question | measured |
+|---|---|---|
+| 1 | does the depth-0 recursion terminate for a reason the interpreter can SEE? | **NO.** It terminates — 34 nodes and recursion depth **10** on the reference fixture, **158 nodes / depth 19** on a 12-ply middlegame, worst **depth 21 / 270 nodes** over a 140-position sweep — but nothing in the body descends. `depth` is refloored to 0 at every child (`qs_child_depth_eq`), the table is a heuristic (probe hits do occur — **2 of 48** nodes on a 4-ply tactical position, **7 of 158** on a 12-ply middlegame, and **0 of 34** on the reference fixture, whose keys are all distinct — and only when the stored bracket happens to answer the child's window), and the admission test is a VALUE threshold. What bounds it is a property of `pst` and the board. |
+| 2 | what is the measure, concretely? | **All three candidates §L27 lists are REFUTED**, and a fourth survives 12,660 measured edges. See below. |
+| 3 | is `RefinesAt` at a depth-0 child the same proposition? | **Yes, and the measure is WINDOW-FREE.** The child is `RefinesAt V 0 w' sa ts (1 - gamma) child` — same `V`, same depth, same receiver and table ADDRESSES. The surviving measure is a function of the BOARD alone: no window, no score, no table. So the fuel indexes the position and `gamma` stays universally quantified inside, and the negated window costs nothing. |
+| 4 | how many rounds, and does `Inv []` come back? | **Rounds 1–11, mean 2.76** over 13,076 depth-0 nodes; admitted stream 0–14, mean 3.65; children searched 0–9, mean 0.88. Exits: **cut 6300 (48%), settled 5166 (40%), `ran` 1610 (12%)**. So yes — the exhaustion obligation returns at depth 0, and it is not rare. Five of the reference run's 34 nodes admit no move at all. |
+| 5 | does the killer branch fire in the fail-low arm? | **Yes, and it can never be self-inflicted.** The killer store is depth-GATED, so a pure depth-0 search never writes `tp_move` — all five guarded runs leave it at size 0. A killer therefore only arrives from OUTSIDE, which is exactly what `BoundWF.killer` permits: seeded with the top-value move it is admitted by the depth-0 ceiling in **221 of 240** runs and changes the answer or the node count in **118 of 240**. `killer_reads` (§10) is load-bearing, not defensive. |
+| 6 | the heap effect of a depth-0 CHILD call, first | cut **70 → 74** (4 objects); fail-low reference **70 → 2881**; child after `1. d4` at window `-39` **70 → 595**, 6 nodes, minimum fuel **403** (402 refuses); child after `1. e4` **70 → 2266**, 27 nodes; the exhausted node **70 → 154**, 1 node. **The child's `ext` is large and position-dependent** (525 against 2196 for two siblings), so anything said about a child's post-world must be `sw_append`-shaped over a free `ext` — never a size. |
+
+### THE MEASURE — three candidates dead, and the fourth is `pst`'s own sum
+
+§L27 offers *"the number of pieces on the board, the count of moves passing the
+`>= QS` filter, or `formal/`'s own fuel"*, and adds that only the third composes
+without a new well-foundedness proof. All three are gone.
+
+* **Pieces — refuted on the reference fixture itself.** Both moves the opening
+  position admits are QUIET, so parent and both children carry thirty-two pieces
+  (`#guard`ed). Across the whole reference run, **11 of 33 edges** keep the count.
+* **The admitted-stream length — refuted beside it.** Twenty moves generated and
+  two admitted at the parent, and twenty and two at EACH child: `2 → 2`, run
+  rather than asserted (`streamAt`, which drains `gen_moves` and then §L29's
+  genexp on top of it). Across the reference run, **14 of 33 edges** do not
+  descend.
+* **`formal/`'s fuel — refuted in `formal/`.** `fuelValueD2`'s `Nat` is
+  REMAINING DEPTH (`termination_by d _ => d`, discharged by `omega` on truncated
+  `Nat` subtraction), and its `| 0, p` clause is a static three-way LEAF with no
+  recursive call in it. `qsStrat` is not recursive either — a flat four-way `if`.
+  There is no `calm` and no `quiesc` definition anywhere in `formal/Sunfish/`,
+  and no `WellFounded`/`Acc`/`measure` outside Lean's own `termination_by`. **The
+  model does not model the shipped depth-0 recursion**, so it has nothing to lend.
+
+**What survives is a LEXICOGRAPHIC pair on the BOARD:** `(pieceCount board,
+-pstTotal board)`, where `pstTotal` is the shipped `pst` summed over BOTH sides —
+the mover at its own square, the opponent mirrored. It is `pos.score`'s
+companion: the score is the two sides' DIFFERENCE and this is their SUM.
+
+Read off `Position.value`, the reason it descends is one line per case: a move
+that TAKES a piece drops `pieceCount`; a move that does not leaves `pieceCount`
+alone and raises `pstTotal` by exactly its own `value(m)`, which the QS filter
+forces to be `≥ QS = 40 > 0`. Both halves measured before either is stated:
+
+| claim | measured |
+|---|---|
+| quiet move: `pstTotal(child) - pstTotal(pos) = value(m)` | **10368 moves, 0 failures** |
+| taking move: `pieceCount` strictly down | **1111 moves, 0 failures** |
+| admitted move (`value ≥ 40`): the LEX pair descends | **1941 moves, 0 failures** |
+| the same, over real SEARCH edges (140 positions × 6 windows, 11 559 nodes) | **10 719 edges, 0 failures** |
+| on the reference fixture, `#guard`ed | `pstTotal` 127158 → 127204 / 127200, i.e. **+46 / +42** — exactly the two values §L29's drain measured |
+
+**And the one place it can fail, named rather than hidden.** `Position.value`'s
+castle-transit arm adds `pst["K"][119 - j]` when `abs(j - kp) < 2` with no piece
+leaving the board, so `val` can be enormous while `pstTotal` FALLS: pieces equal,
+`U` down, LEX violated. A real king capture is safe (the king leaves, so
+`pieceCount` drops), and a transit move's child scores about `-60000`, which is
+below `-MATE_LOWER` and lands on the already-proved king-capture leaf — a child
+with no children, where the measure need not descend at all. But that escape is
+ARGUED, not measured: **the transit arm did not fire once** in 400 random
+positions' full move lists, and a hand-built board did not reach it either —
+which is the same emptiness §L28 `#guard`ed for `value_bound.lean`'s own kp
+fixture. So F1 must carry it as an explicit side condition and discharge it by
+argument; treating it as unreachable would be exactly the habit §L26's finding 1
+warns about.
+
+### WHAT §L27's FIVE SURFACES ACTUALLY ARE — three corrections to the record
+
+§L27's table was written from the section headings. Read against `formal/` at
+`master` (`e670434`; the surfaces are NOT in the working tree's branch):
+
+| surface | §L27 said | it is |
+|---|---|---|
+| `fuelValueD2` | *"the `Nat` IS the measure the induction runs on"* | the `Nat` is remaining DEPTH; the depth-0 clause is a static leaf. **Not a quiescence fuel.** |
+| `FuelBracketSpec` | *"STATED, not proven … an assumption boundary"* | correct, and stronger than stated: it is a `def … : Prop` that **nothing in `formal/` proves AND nothing in `formal/` assumes** — three hits in the whole tree, two of them comments. Its sibling `FuelTailBracketSpec` is the one actually consumed as a hypothesis. |
+| `qsStrat` | *"the gamma-aware depth-0 quiescence"* | right, and **not recursive** — four `if`s. Its second clause is §L26's cut; its OTHER clause is `hasKingCapture → MATE_UPPER`, falling through to `eval p`. |
+| `WindowReport` | already restated as `Report` | confirmed character-identical, and `formal/`'s `windowReport_iff_boundSpec` + `boundSpec_iff_docstring` are the same equivalence this lane proved as `report_iff_docstring`. |
+| `CapInBand` | *"the recorded AXIOM behind the futility bet"* | **not an axiom.** `formal/` contains ZERO `axiom` declarations; `CapInBand` is a `def … : Prop` taken as a hypothesis by four theorems. **And it is not spent in this arm at all** — see F3a. |
+
+### THE TABLE-FREE / TABLE-FUL CHOICE, TAKEN: **TABLE-FUL**
+
+§5 named the two honest options and left the choice to the census. The
+measurements decide it, and not on taste:
+
+1. **A cleared-table statement cannot be its own induction hypothesis.** The arm
+   WRITES: the reference run leaves 34 entries, all at depth 0, all under keys the
+   parent probes. The second child of the reference run therefore runs against a
+   table the first child left six entries in (measured: 6 then 27, cumulative).
+   A `RefinesAtQ` restricted to `es = #[]` could never be applied to its own
+   children.
+2. **The table is not inert inside the arm.** Probe hits fire — 2 of 48 nodes on
+   a tactical position, 7 of 158 on a middlegame — so a table-free statement
+   would describe a run the interpreter does not perform. (Zero on the reference
+   fixture, which is why one board is not a census.)
+3. **Table-ful costs nothing new.** The widenings are already paid: `probe_reads`,
+   `killer_reads`, `store_runs_at` (§10) and `store_runs_low`/`store_bridge_low`/
+   `sf_store_low` (§11, F4) are all stated at an ARBITRARY entry and dict, and
+   `hfall_cut` already consumes `BoundWF` at an arbitrary `es`.
+4. The model being table-free is not a conflict: `V` enters `RefinesAt` only
+   through `sfBracket V`'s `TableAt` and through `Report gamma r (V pos 0)`, and
+   both already quantify over the table independently of `V`.
+
+So `RefinesAtQ` keeps `BoundWF`'s arbitrary `es`/`ms` exactly as
+`boundRefinesW_zero` has them, and the fuel index rides beside them.
+
+### THE RE-PRICING: the `Report` conjunct needs the induction for HALF its cases
+
+This is the census's biggest single consequence and it comes from reading
+`qsStrat` against `fold_failLow`. At a position that is neither king-gone nor
+king-capturable, the model's depth-0 value is `eval p` — `qsStrat`'s fourth clause
+and `fuelValueD2`'s zero clause agree — which on the fixture is `pos.score`. And
+the shipped fold's FIRST round at depth 0 is the stand-pat, so `best ≥ pos.score`
+always. Therefore, when the fold EXITS FAIL-LOW:
+
+* `hattain` is the stand-pat round itself;
+* `hfut` — the futility premise `settle_needs_futility` proved cannot be dropped —
+  is **discharged outright at depth 0**: `moveCap_qs` (proved) says the cap is
+  `pos.score + val`, and §L29's `gx_keeps_high` says `val ≥ 40`, so every settled
+  cap is strictly above `pos.score`;
+* `hb` and `hrs` follow from `-mateUpper < gamma` and from the non-cut exit.
+
+**No child report appears anywhere in it.** Measured: the reference run answers
+`4` at `gamma = 40` against a stand-pat of `0`, and the exhausted node answers its
+own `-69` — both `Report`'s left disjunct, discharged by arithmetic
+(`reportB` guards).
+
+**The honest other half, stated because it would be easy to over-claim.** The arm
+is *"the head fell through"*, not *"the answer fails low"*, and 48% of depth-0
+nodes in it exit by CUT. A cut at depth 0 comes from the intrinsic-mate branch
+(no child) or from a searched move whose `min(cap, -child) ≥ gamma` — and THAT
+consumes `searchedMove_sound`, hence the IH. So the induction survives; it is
+half the `Report` work and all of the RUN work, not all of both.
+
+### THE PLAN — F1, F2, F3, F5, priced
+
+F4 is DONE (§11): `store_runs_low`, `store_bridge_low`, `sf_store_low`, with the
+calculus side paid, so once F3 supplies the fail-low report there is nothing left
+to build between the fold and the table.
+
+**F1 — the measure and its decrease.** *Two sessions, and the only new
+mathematics on the list.*
+*Restates from `formal/`:* **nothing.** `formal/` has no QS measure (measured
+above), so this is built here.
+*Statement, in computed shape:* `qsMeasure (b : String) : Nat × Int` as
+`(pieceCount b, -pstTotal b)` with `pstTotal` reading the live `pst` global
+exactly as the census file does, and `qsMeasure_lt`: for every move the ordering
+genexp ADMITS from a `posOf` board, `qsMeasure (Position.move m).board <
+qsMeasure pos.board` lexicographically — with the castle-transit side condition
+stated in the hypothesis list.
+*Premises the shipped body forces:* `40 ≤ Position.value pos m` (R1's
+`value_runs_*` supply it as an `Int`; §L29's `gx_keeps_high` is where the fold
+gets it), and the child board being `Position.move`'s own output.
+*Instantiation:* the reference fixture's two edges, already `#guard`ed
+(+46 / +42), plus the sweep numbers above.
+*The risk, named:* the quiet case is `pstTotal (Position.move m).board =
+pstTotal pos.board + value m`, and `Position.move` builds its board by STRING
+SLICING while `value` is `pst` arithmetic — so this is a string lemma, not an
+omega. It held on 10 368 moves before being written down, which is the most this
+lane can do for it; whoever proves it should `#guard` the identity over a
+generated board battery FIRST, the way this census did.
+
+**F2 — `RefinesAtQ`, the strengthened statement.** *One sitting, ~30 lines. The
+cheapest thing left.*
+*Restates:* nothing — the fuel index is F1's measure, not `fuelValueD2`'s.
+*Shape:* `RefinesAtQ V (k : Nat) …` is `RefinesAt` plus the hypothesis
+`qsRank pos ≤ k` (`qsRank` the `Nat` collapse of F1's pair), so the induction is
+ordinary strong induction on `k`. `RefinesAt` is its `∃ k` closure, and the
+closure is TOTAL because the measure is a total function of the board.
+*The trap §L26 named is avoided by construction:* `RefinesAt` already NAMES its
+world, which is what `refinesAt_stand_pat` had to re-earn from
+`qs_stand_pat_closed`; do not reintroduce an `∃ w'` here.
+*Premise, in computed shape:* the table stays arbitrary — see the choice above.
+*Instantiation:* `#guard` the rank finite on the fixture, and that the two
+children's ranks are strictly below the parent's.
+
+**F3 — the fold at many rounds. SPLITS IN THREE, and only one third is gated on
+F1/F2.**
+* **F3a — the fail-LOW exit's `Report`. One session, and it waits on nothing.**
+  Owed: a `fold_report_failLow` corollary of the proved `fold_failLow` that takes
+  only `hattain`/`hfut`/non-cut (~10 lines); `hattain` from the stand-pat being
+  the schedule's HEAD (`fold_standpat`'s sibling); `hfut` from `moveCap_qs` plus
+  `40 ≤ val`. One new model-side premise, `hqsV` — see the ledger below.
+  **`CapInBand` is NOT spent**: at depth 0 the cap has no slope term and the
+  filter supplies the sign, so the futility bet the arm was supposed to pay is
+  paid by the QS floor instead.
+* **F3b — the fail-HIGH exit's `Report`.** Consumes the IH per searched round via
+  `searchedMove_sound` (proved and waiting). Gated on F1/F2. One to two sessions
+  once the schedule exists.
+* **F3c — the RUN at many rounds.** §L16's `Hands` at a real schedule,
+  `PyStmtTriple.forGen`, and the round lemma whose shape §L29 fixed
+  (`moves_loop_cuts`-shaped, not `genSilent_forHere`), with `TableAt` and
+  `SubtreeWrites` threaded per child. **Its R-track gate has since CLEARED**:
+  §L31 landed `ord_stmt_emits`, the whole ordering line from source text to the
+  emitted stream. What is left between that and this arm is a DEPTH-0 twin of
+  §L32's `moves_prologue` — and it is a different theorem, not the same one at
+  another depth: at depth 1 the prologue is three DEAD statements and the stream
+  is the ordering line alone, while at depth 0 the stand-pat `yield None, None`
+  is LIVE (it is the round the whole fail-low `Report` argument stands on) and the
+  killer yield is live too whenever `BoundWF.killer` supplies one (§Q5). So the
+  depth-0 schedule is `standPat :: killer? :: sortedRounds`, and R3's
+  `moves_emits_ordered` is its sibling rather than its supply. Still gated on
+  F1/F2 for the IH, and on `hdrain` exactly as R3c is. Two to three sessions.
+
+**F5 — the assembly.** *One session after F3c, mechanical.* `hfall`'s remaining
+half on `hfall_cut`'s own template, then `boundRefinesW_zero` goes unconditional.
+Restates nothing. Its `SubtreeWrites` is `subtree_pre_store` plus one `.store`
+plus the children's subtrees by `trans` (all paid, §L26), and its store is F4.
+
+### THE ASSUMPTION BOUNDARY, named exactly where it falls
+
+**`FuelBracketSpec` is NOT load-bearing in this plan, and no inch above may take
+it as a hypothesis.** The reasons are measurements, not preference: it is stated
+over `fuelValueD2`, whose `Nat` is depth; at `d = 0` it says a search brackets the
+static leaf `eval p`; and it is proven by nothing and assumed by nothing in
+`formal/`. Taking it as a premise here would import a sense of backing that does
+not exist on either side of the boundary.
+
+What this lane needs instead is one more named model-side fact, in the manner
+§L26 established for the other three: **`hqsV : V pos 0 ≤ pos.score`** at a
+position that is neither king-gone nor king-capturable. `formal/` asserts the same
+thing with EQUALITY (`qsStrat`'s fourth clause, `fuelValueD2`'s zero clause), and
+`FuelBracketSpec`'s `d = 0` instance is the statement that would connect them —
+so the record should read: *stated on both sides, proven on neither.* The
+model-side ledger for the base case is therefore **four** facts, one per arm:
+
+| fact | arm | shape |
+|---|---|---|
+| `hmateV` | king capture | `V pos 0 ≤ -MATE_UPPER`, an EXACT value |
+| `hbandV` | the cut | `V pos 0 ≤ MATE_UPPER`, the mate band |
+| `hsval` | the cut | `pos.score ≤ V pos 0` |
+| **`hqsV`** | **the fail-low arm** | **`V pos 0 ≤ pos.score`, the reverse of `hsval` — together they say the depth-0 value IS the static eval** |
+
+One loose end worth pricing before F3a is written: the "neither king-gone nor
+king-capturable" side condition. A king-capturable position at depth 0 always
+fails HIGH — the capturing move's `val` is in the mate band, so branch 4 fires the
+exact token — but proving that needs the stream's DESCENDING order, which is
+`sf_order`'s `order_line_sorts` and not free. Either take the side condition as a
+hypothesis of `hqsV` or pay the sort; do not assume it away.
+
+### Cross-checks against the R-track, since the numbers overlap
+
+* **§L29's drain, confirmed independently.** `streamAt` runs `gen_moves` and then
+  the genexp on top of it at an arbitrary position: **20 generated, 2 admitted**
+  at depth 0 on the opening board, which is §L29's *"2 pairs at depth 0"* reached
+  by a different route (their `fxDrain` starts from `initWorld`, this starts from
+  a `Position.move` output and re-runs the pair at each child).
+* **34 nodes at `gamma = 40` at BOTH depths.** §L32's depth-1 census reads
+  `(37, 34, 70 → 2881)` and this lane's depth-0 reference reads
+  `(4, 34, 70 → 2881)` — the same node count and the same heap for different
+  answers. It is not a coincidence to build on and neither lane should: both
+  numbers are independently `#guard`ed (`bd_probe (posH 0) 40 1` has carried the
+  depth-1 pair since §8), and the shared arithmetic is that at depth 1 the child
+  refloors to depth 0, so the two calls walk overlapping trees.
+* **§L32's owed census, answered one depth down.** R3 records *"does the depth-1
+  fold ever EXHAUST on the fixture?"* as owed. At depth 0 it is answered here and
+  the answer is yes and often — `ran` on **1610 of 13 076** nodes, and five of the
+  reference run's own 34 admit no move at all. That is evidence about the depth-1
+  band's non-emptiness, not a proof of it; R3c should still take the half-hour.
+
+### Triad
+
+`lake build` **3684 jobs green** (§L32's 3683 + `faillow_census.lean`, re-run after the rebase onto it); `docs_check`
+71/71, 15 illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113
+whitelisted, 1202 matched** — unchanged since §L15; `script_corpus` 64 scripts,
+0 failed, 50 matched, 14 loud. The census file's one theorem, `reportB_iff`,
+depends on `[propext]` alone. No `sorry`, no `native_decide`. Its own throughput
+is **58 s**, and it is entirely the `#guard` battery: five runs of the shipped
+`bound()` and two fuel probes, on purpose.
+
+### Findings worth carrying
+
+1. **A census can shrink an estimate, and this one did it by reading the OTHER
+   repository.** §L27 priced the arm as a second induction *"which is what
+   `formal/`'s fuel model exists for"*. Eight minutes with `grep` over
+   `formal/Sunfish/` showed the model has no quiescence recursion, and that single
+   fact killed two candidate measures, corrected three surface descriptions and
+   removed the futility premise from the arm's bill. **Read the dependency before
+   pricing work against it**, even when the dependency is a sibling repo the lane
+   cannot import.
+2. **A measure that is a function of the STATE, not of the query, is what makes
+   an induction cheap.** `pieceCount` and `pstTotal` take a board and nothing
+   else. Because of that the fuel indexes the position and `gamma` stays
+   universally quantified — the negated window, which looked like it needed a
+   per-(position, window) order, costs nothing.
+3. **Measure the identity before stating the lemma, not after.** `pstTotal(child)
+   - pstTotal(parent) = value(m)` is F1's whole content, and it was run on 10 368
+   moves before a line of Lean was written. It cost four minutes and it is the
+   difference between pricing F1 at two sessions and discovering in session three
+   that promotions or en-passant break it.
+4. **A refuted candidate is worth `#guard`ing too.** The two dead measures are
+   pinned in the census file at the reference fixture (`32 → 32 → 32`,
+   `2 → 2`), so a later lane that reaches for "surely the piece count goes down"
+   is stopped by a build failure rather than by reading prose.
+5. **Both halves of an arm's outcome must be priced, even when one collapses.**
+   The fail-LOW exit's `Report` turned out free of the IH; the CUT exit's did not,
+   and 48% of the arm's nodes cut. Reporting only the collapse would have
+   mis-priced the plan in the same direction §L27 mis-priced it, just smaller.
+6. **An unreachable-looking arm is unmeasured, not absent.** The castle-transit
+   phantom fired zero times in 400 positions' full move lists and could not be
+   reached by hand — the same emptiness §L28 recorded for its kp fixture. That is
+   a reason to state a side condition, not a reason to omit one.
+
+### What this lane did NOT do
+
+No inch of F1–F3 or F5 is started, and no premise of the second induction is
+written anywhere. `boundRefinesW_zero` still takes `hfall`; `hfall_cut` still
+discharges only its cut half. The census file proves one two-line bridge and
+otherwise runs the engine. **`model_audit` CANNOT RETIRE**, and this pass neither
+moves the date nor pretends to: what it delivers is a plan whose every premise
+traces to a number, and three of §L27's own premises removed because the numbers
+contradicted them.
 ## L31 — R2b AND R2c CLOSE, and the ordering line meets itself (2026-08-19)
 
 *(§L30 is the census lane's, reserved while it works §L27's six questions.)*

@@ -10600,3 +10600,93 @@ since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. No
 what this lane was asked for: at the start of §L26 it did not exist and the rule
 it was a base case FOR was false. It is now three arms of four, on a repaired
 rule, with the fourth arm's true price on the table instead of a wrong one.
+
+## L28 — INCH R1 CLOSES, on all four of `Position.value`'s configurations (2026-08-19)
+
+§L25 priced R1 as *"one session"* and §L26/§L27's sibling lane opened the base case
+while it ran. R1 is now **closed**: `Position.value` decides, heap-free, on the
+quiet move, the capture, the beside-the-king arm and the castle, each composed
+through `callIn` and each INSTANTIATED on a position the shipped `Position.move`
+reached ply by ply. The two pawn ADD arms are gated. Everything is in
+`Examples/python/sunfish/value_bound.lean`; no line of `bound_depth.lean` or
+`basecase_depth0.lean` moved.
+
+### What landed, and what each piece cost
+
+| piece | shape | note |
+|---|---|---|
+| `value_prom_adds` | GATE 7e, `F + 7` | two row premises — the promoted piece's and the pawn's |
+| `value_ep_adds` | GATE 7f, `F + 7` | `compare_one` for the guard; the index premise in the residue's own spelling |
+| `vlEnv3_rescore` | 3 lines | the only new lemma the three compositions needed |
+| `value_body_capture` / `value_runs_capture` | one gate swapped | `Nc3xd5`, a move `gen_moves` produces |
+| `value_body_kp` / `value_runs_kp` | one gate swapped | the position `O-O` leaves, `kp = 23` computed by the ENGINE |
+| `value_body_castle` / `value_runs_castle` | one gate swapped | `O-O` itself, also a generated move; `vlEnv3_rescore` twice |
+
+Both pawn gates and all three compositions elaborated **on the first attempt**,
+which is the §L26 lane's point about a decomposition paying off: the ADD gates
+were already proved, so the compositions were application. The fuel offsets were
+MEASURED rather than guessed — both pawn arms close at `F + 7` and refuse at
+`F + 6`, the same offset as their skip twins.
+
+### The fixtures are played positions, not written boards
+
+The premise instantiation is where a non-quiet arm can be faked, so no board is
+invented. Three positions come out of the shipped `Position.move`:
+
+* **capture** — `1. e4 d5 2. Nc3 h6`, and `Move(73, 54)` is in `gen_moves`' own
+  output there. A KNIGHT capture and not a pawn's, because a pawn move enters the
+  pawn block as well and the composition swaps exactly one gate;
+* **castle** — `1. e4 e5 2. Nf3 Nf6 3. Be2 Be7`, and `Move(95, 97)` is in
+  `gen_moves`' output there;
+* **kp** — the position that castle LEAVES. Its `kp = 23` is `119 - (95 + 97) / 2`,
+  computed by the engine.
+
+**And one honest half.** The kp arm's move is the only synthetic pair in the file.
+The arm fires only when the mover attacks the square the opponent's king just
+crossed, and from this position no move `gen_moves` yields reaches the opponent's
+back rank — that filter is `#guard`ed EMPTY rather than left unsaid. Reaching a
+real one needs a piece already bearing on the transit square at the moment of the
+castle, which is roughly four more plies of hand-chosen book; it was priced and
+declined. The premises are met and the arithmetic agrees; legality is not claimed.
+
+### Three findings, all of them about cost
+
+1. **A skip arm pins its body existentially; an ADD arm must SPELL it** — and the
+   trap inside the spelled pin is span arithmetic. The promotion body has THREE
+   distinct trailing spans (`binOp`, `augAssign`, `ifStmt`), one more than it
+   reads at a glance, and a pin short by one fails as a type mismatch on the
+   final `rfl`. Both pins are kept: a gate that proves the body is never reached
+   should not spell what is not reached.
+2. **A chained compare's TRUE arm leaves NESTED `if`s, not a conjunction.**
+   `A8 <= j <= H8` closes on two `if_pos` where its false arm closed on `omega`
+   — one expression, two residues, because `simp` splits what it can decide and
+   leaves what it cannot. Law 3 again, in the one place it looks like law 3 does
+   not apply.
+3. **A nullary `def` is re-evaluated by every `#guard` that mentions it.** Reading
+   the fixture positions straight from the plies cost **twenty seconds** across
+   twenty premise checks. Caching each derived board as a literal PINNED to the
+   plies by one guard costs nothing and claims exactly as much — the file went
+   34 s to 24 s with no check removed. Anyone writing a `#guard` battery over a
+   computed fixture should cache first and pin once.
+
+### Triad
+
+`lake build` **3681 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched** — unchanged
+since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. Every one
+of the file's 51 printed declarations depends on `[propext, Classical.choice,
+Quot.sound]` or less; the eight literal pins and `vlArity`/`vlCallEnv` are
+axiom-free and the four spelled/existential body pins depend on `[propext]`
+alone. No `sorry`, no `native_decide`. The file's own throughput is **24 s**, of
+which the proofs are 14 s and the played-position `#guard`s are 10 s.
+
+### What R1 does NOT owe
+
+The two pawn arms are gated and deliberately not composed. `value_pawn_enters`
+PEELS the block and the two siblings are independent, so the four pawn
+combinations — the physically impossible promote-and-en-passant one included —
+compose from the gates by `execStmts_append` without a new statement. Writing
+four more chains would spell out what the peel already says.
+
+**R1′ stays unwanted.** Nothing downstream computes a value (§L25), so a
+reference function naming the NUMBER is still priced and unbuilt.

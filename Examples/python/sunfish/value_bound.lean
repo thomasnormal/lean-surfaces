@@ -30,7 +30,7 @@ namespace Examples.python.sunfish.value_bound
 
 open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
-open Examples.python.sunfish.genmoves_theorem (posOf)
+open Examples.python.sunfish.genmoves_theorem (posOf genMovesOf)
 open Examples.python.sunfish.bound_depth (posCAux posCls_methods absG absNotFun absCls absNT
   execStmt_if_true execStmt_if_false execStmts_singleton compare_one
   execStmts_append execStmts_singleton_flow)
@@ -658,6 +658,127 @@ theorem value_ep_skips (w : World) (e : REnv) (bd0 : String) (scv : Int)
   rw [hlit, execStmt_if_false (compare_one (F := F + 2) h1 h2 hop) rfl]
   rfl
 
+/-! ### GATE 7e/7f — the two pawn ADD arms, and why they need a SECOND pin
+
+`vlProm_lit` and `vlEp_lit` leave the body EXISTENTIAL, which is right for the
+skip arms — they never enter it, and §L19's law says pin the shape you compute
+with. **An ADD arm computes with the body**, so an existential `bd` cannot
+reduce and the pin has to spell it. That is the whole difference, and the trap
+inside it is span arithmetic: the promotion body has **three** distinct trailing
+spans (the `binOp`'s, the `augAssign`'s and the `ifStmt`'s), which is one more
+than the shape reads at a glance.
+
+Both pins are kept. Sharpening the skip arms' pin would say the same thing in a
+worse place: those gates prove the body is never reached, and a statement that
+spells what is not reached is a statement about the wrong thing. -/
+
+/-- The promotion arm, body SPELLED — `score += pst[prom][j] - pst["P"][j]`. -/
+theorem vlProm_body_lit : ∃ a b c d e f g h i k l m n o p q r s, vlProm =
+    .ifStmt (.compare (.name "A8" a) #[.ltE, .ltE] #[.name "j" b, .name "H8" c] d)
+      #[.augAssign (.name "score" e) .add
+          (.binOp
+            (.subscript (.subscript (.name "pst" f) (.name "prom" g) h) (.name "j" i) k)
+            .sub
+            (.subscript (.subscript (.name "pst" l) (.constant (.str "P") m) n)
+              (.name "j" o) p)
+            q)
+          r]
+      #[] s :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- The en-passant arm, body SPELLED — `score += pst["P"][119 - (j + S)]`. -/
+theorem vlEp_body_lit : ∃ a b c d e f g h i k l m n o p q, vlEp =
+    .ifStmt (.compare (.name "j" a) #[.eq] #[.attribute (.name "self" b) "ep" c] d)
+      #[.augAssign (.name "score" e) .add
+          (.subscript (.subscript (.name "pst" f) (.constant (.str "P") g) h)
+            (.binOp (.constant (.int 119) i) .sub
+              (.binOp (.name "j" k) .add (.name "S" l) m) n) o)
+          p]
+      #[] q :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **GATE 7e — the pawn PROMOTES.** `A8 <= j <= H8`, so `prom` is a real piece
+letter and `pst[prom]` is a legal key — which is the arm's whole reason for
+existing separately (`value_prom_skips`' docstring: at `prom = ""` there is no
+row). TWO rows are read, the promoted piece's and the pawn's, so the gate takes
+two row premises and answers in their own entries.
+
+The guard's chained compare leaves NESTED `if`s once `A8`/`H8` resolve — not a
+conjunction — so it closes on two `if_pos`, and the destination's range premises
+come free from `21 ≤ j ≤ 28` rather than being carried. -/
+theorem value_prom_adds (w : World) (e : REnv) (pa : Addr) (pr : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs ys : Array RVal) (j s z1 z2 : Int) (F : Nat)
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "A8" = Option.none)
+    (hnh : Env.lookup e "H8" = Option.none)
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hpr : Env.lookup e "prom" = some (.str pr))
+    (hs : Env.lookup e "score" = some (.int s))
+    (hin : 21 ≤ j ∧ j ≤ 28)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrowp : dictFind es.toList (.str pr) = some (.tuple xs))
+    (hrowP : dictFind es.toList (.str "P") = some (.tuple ys))
+    (hszx : xs.size = 120) (hszy : ys.size = 120)
+    (hx1 : xs[j.toNat]?.getD .none = .int z1)
+    (hx2 : ys[j.toNat]?.getD .none = .int z2) :
+    execStmt sunfish (F + 7) ⟨w, e⟩ vlProm
+      = .ok ⟨w, Env.set e "score" (.int (s + (z1 - z2)))⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, g, h, i, k, l, m, n, o, p, q, r, s', hlit⟩ := vlProm_body_lit
+  obtain ⟨hlo, hhi⟩ := hin
+  have hc : evalExpr sunfish (F + 6) ⟨w, e⟩
+      (.compare (.name "A8" a) #[.ltE, .ltE] #[.name "j" b, .name "H8" c] d)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hej, hna, hnh, a8G, h8G,
+      if_pos hlo, if_pos hhi]
+  simp only [Heap.get?] at hd
+  rw [hlit, execStmt_if_true hc rfl]
+  py_simp [-globalsFold, -globalsStep, hnp, hpr, hej, hs, hg, hd, hrowp, hrowP, pstG,
+    normIndex, hszx, hszy, hx1, hx2,
+    if_neg (show ¬ j < 0 by omega),
+    if_pos (show (0 ≤ j ∧ j < (120 : Int)) from ⟨by omega, by omega⟩)]
+
+/-- **GATE 7f — the pawn takes EN PASSANT.** `j == self.ep`, and the captured
+pawn's table value is read at the MIRROR of the square behind the destination.
+`S` resolves statically (`sG`), so like GATE 6 this says nothing about
+`w.globals` beyond `pst`; `compare_one` supplies the guard, which is the same
+altitude gap GATE 7d hit and the reason that lemma was written.
+
+The index premises are in the residue's OWN spelling — `119 - (j + S)` with `S`
+already folded to `10` and no arithmetic done — because a premise stated at the
+equivalent `109 - j` does not match what the path leaves. -/
+theorem value_ep_adds (w : World) (e : REnv) (pa : Addr) (bd0 : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp j s z : Int)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs : Array RVal) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf bd0 scv wc0 wc1 bc0 bc1 ep kp))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hnS : Env.lookup e "S" = Option.none)
+    (hs : Env.lookup e "score" = some (.int s))
+    (heq : j = ep)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str "P") = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hlo : j ≤ 109) (hhi : -10 ≤ j)
+    (hx : xs[(119 - (j + 10)).toNat]?.getD .none = .int z) :
+    execStmt sunfish (F + 7) ⟨w, e⟩ vlEp
+      = .ok ⟨w, Env.set e "score" (.int (s + z))⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, g, h, i, k, l, m, n, o, p, q, hlit⟩ := vlEp_body_lit
+  have h1 : evalExpr sunfish (F + 5) ⟨w, e⟩ (.name "j" a) = .ok ⟨w, e⟩ (.int j) := by
+    py_simp [-globalsFold, -globalsStep, hej]
+  have h2 : evalExpr sunfish (F + 4) ⟨w, e⟩ (.attribute (.name "self" b) "ep" c)
+      = .ok ⟨w, e⟩ (.int ep) := by
+    py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+  have hop : evalCompareOpH w.heap (F + 4) .eq (.int j) (.int ep) = .ok true := by
+    simp [evalCompareOpH, RVal.refFree, valEq, heq]
+  simp only [Heap.get?] at hd
+  rw [hlit, execStmt_if_true (compare_one (F := F + 3) h1 h2 hop) rfl]
+  py_simp [-globalsFold, -globalsStep, hnp, hnS, hej, hs, hg, hd, hrow, pstG, sG,
+    normIndex, hsz, hx,
+    if_neg (show ¬ (119 - (j + 10)) < 0 by omega),
+    if_pos (show (j + 10 ≤ 119 ∧ 119 - (j + 10) < (120 : Int)) from ⟨by omega, by omega⟩)]
+
 /-! ## §3 THE COMPOSITION, on the quiet move
 
 The eight gates, chained. Stated for the **quiet** configuration — not a
@@ -849,6 +970,574 @@ the engine answers, so `zj - zi` is not an artifact of the statement. -/
         | .ok w v => v == .int 5 && w.heap.size == (initWorld sunfish).heap.size
         | _ => false)
 
+/-! ## §4 THE THREE NON-QUIET COMPOSITIONS
+
+Each is §3's chain with **one gate swapped**, which is what the two-gates-per-`if`
+factoring (law 2) was for: the ADD gates are already proved, so nothing here is
+discovery. The three swaps are `value_cap_adds` for `value_cap_skips`,
+`value_kp_adds` for `value_kp_skips`, and `value_castles` for
+`value_castle_skips`.
+
+One bridge is owed and it is the only new lemma: an arm that fires WRITES
+`score`, and the frame `vlEnv3` already has a `score` slot, so the second write
+has to be recognised as a replacement rather than a second binding. -/
+
+/-- The score slot is written once per arm, so a later write REPLACES it — which
+is what lets an ADD arm's output frame be `vlEnv3` again rather than a tower of
+`Env.set`s. `value_castles` writes twice, so the castle composition spends this
+twice. -/
+theorem vlEnv3_rescore (pv : RVal) (i j : Int) (prom pc qc : String) (s t : Int) :
+    Env.set (vlEnv3 pv i j prom pc qc s) "score" (.int t)
+      = vlEnv3 pv i j prom pc qc t := by
+  simp [vlEnv3, Env.set_set]
+
+set_option linter.unusedVariables false in
+/-- **THE METHOD ON A CAPTURE.** `value_cap_adds` in place of
+`value_cap_skips`; every other arm is the quiet chain's. The captured piece's
+row is a SECOND row premise, keyed by `q.upper()`, and the answer carries its
+mirrored-square entry. -/
+theorem value_body_capture (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj zc : Int) (prom uc : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs ys : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str (boardAt b i)) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hcap : strContains "pnbrqk" (boardAt b j) = true)
+    (hup : strUpper (boardAt b j) = .ok (.str uc))
+    (hcrow : dictFind es.toList (.str uc) = some (.tuple ys))
+    (hcsz : ys.size = 120)
+    (hcx : ys[(119 - j).toNat]?.getD .none = .int zc)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2)
+    (hnk : boardAt b i ≠ "K") (hnpw : boardAt b i ≠ "P") :
+    ∃ f, execStmts sunfish f
+        ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ vlB
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ (.ret (.int (zj - zi + zc))) := by
+  have h1 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ [vlUnpack]
+      = .ok ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ .next :=
+    ⟨4, value_unpacks w (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom 0⟩
+  have h2 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ [vlPQ]
+      = .ok ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j)⟩ .next :=
+    ⟨8, value_reads_pq w b sc wc0 wc1 bc0 bc1 ep kp i j prom 0 hi hib hj hjb⟩
+  have h3 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j)⟩ [vlScore]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨10, value_scores w _ pa (boardAt b i) es svv xs i j zi zj 0
+      (by simp [vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+      (by simp [vlEnv2, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      hg hd hrow hsz hi hi2 hj hj2 hxi hxj⟩
+  have h4 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlCap]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ .next :=
+    ⟨14, by
+      have h := value_cap_adds w (vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+          (boardAt b i) (boardAt b j) (zj - zi)) pa (boardAt b j) uc es svv ys j
+          (zj - zi) zc 0
+        (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hcap hup
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+        (by simp [vlEnv3, Env.lookup_set_self])
+        hg hd hcrow hcsz (by omega) (by omega) hcx
+      rwa [vlEnv3_rescore] at h⟩
+  have h5 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ [vlKp]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ .next :=
+    ⟨14, value_kp_skips w _ b sc wc0 wc1 bc0 bc1 ep kp j 0
+      (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+      (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf]) hfar⟩
+  have h6 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ [vlCastle]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ .next :=
+    ⟨20, value_castle_skips w _ (boardAt b i) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hnk⟩
+  have h7 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ [vlPawn]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ .next :=
+    ⟨8, value_pawn_skips w _ (boardAt b i) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hnpw⟩
+  have h8 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ [vlRet]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zc)⟩ (.ret (.int (zj - zi + zc))) :=
+    ⟨4, value_returns w _ (zj - zi + zc) 0 (by simp [vlEnv3, Env.lookup_set_self])⟩
+  rw [vlB_appends]
+  exact execStmts_append (execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append (execStmts_append (execStmts_append h1 h2 (by simp)) h3 (by simp))
+      h4 (by simp)) h5 (by simp)) h6 (by simp)) h7 (by simp)) h8 (by simp)
+
+set_option linter.unusedVariables false in
+/-- **THE METHOD BESIDE THE KING SQUARE.** `value_kp_adds` in place of
+`value_kp_skips`. The row read here is the KING's at the mirrored destination,
+and the arm is the shipped castling-through-check detection: it fires exactly
+when the destination is within one of the opponent's king-passant square. -/
+theorem value_body_kp (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj zk : Int) (prom : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs ks : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str (boardAt b i)) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hquiet : strContains "pnbrqk" (boardAt b j) = false)
+    (hnear : -2 < j - kp ∧ j - kp < 2)
+    (hkrow : dictFind es.toList (.str "K") = some (.tuple ks))
+    (hksz : ks.size = 120)
+    (hkx : ks[(119 - j).toNat]?.getD .none = .int zk)
+    (hnk : boardAt b i ≠ "K") (hnpw : boardAt b i ≠ "P") :
+    ∃ f, execStmts sunfish f
+        ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ vlB
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ (.ret (.int (zj - zi + zk))) := by
+  have h1 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ [vlUnpack]
+      = .ok ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ .next :=
+    ⟨4, value_unpacks w (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom 0⟩
+  have h2 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ [vlPQ]
+      = .ok ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j)⟩ .next :=
+    ⟨8, value_reads_pq w b sc wc0 wc1 bc0 bc1 ep kp i j prom 0 hi hib hj hjb⟩
+  have h3 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j)⟩ [vlScore]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨10, value_scores w _ pa (boardAt b i) es svv xs i j zi zj 0
+      (by simp [vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+      (by simp [vlEnv2, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      hg hd hrow hsz hi hi2 hj hj2 hxi hxj⟩
+  have h4 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlCap]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨10, value_cap_skips w _ (boardAt b j) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hquiet⟩
+  have h5 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlKp]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ .next :=
+    ⟨16, by
+      have h := value_kp_adds w (vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+          (boardAt b i) (boardAt b j) (zj - zi)) pa b sc wc0 wc1 bc0 bc1 ep kp j
+          (zj - zi) zk es svv ks 0
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, Env.lookup_set_self])
+        hnear hg hd hkrow hksz (by omega) (by omega) hkx
+      rwa [vlEnv3_rescore] at h⟩
+  have h6 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ [vlCastle]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ .next :=
+    ⟨20, value_castle_skips w _ (boardAt b i) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hnk⟩
+  have h7 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ [vlPawn]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ .next :=
+    ⟨8, value_pawn_skips w _ (boardAt b i) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hnpw⟩
+  have h8 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ [vlRet]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + zk)⟩ (.ret (.int (zj - zi + zk))) :=
+    ⟨4, value_returns w _ (zj - zi + zk) 0 (by simp [vlEnv3, Env.lookup_set_self])⟩
+  rw [vlB_appends]
+  exact execStmts_append (execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append (execStmts_append (execStmts_append h1 h2 (by simp)) h3 (by simp))
+      h4 (by simp)) h5 (by simp)) h6 (by simp)) h7 (by simp)) h8 (by simp)
+
+set_option linter.unusedVariables false in
+/-- **THE METHOD ON A CASTLE.** `value_castles` in place of
+`value_castle_skips`, and the moved piece is the KING — so the mover's own row
+premise is `pst["K"]` and `boardAt b i ≠ "P"` is no longer a hypothesis but a
+consequence. Two table reads fire in this arm, so `vlEnv3_rescore` is spent
+twice and the answer carries the rook's new square minus its old corner. -/
+theorem value_body_castle (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj z1 z2 : Int) (prom : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs rs : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hk : boardAt b i = "K")
+    (hrow : dictFind es.toList (.str "K") = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hquiet : strContains "pnbrqk" (boardAt b j) = false)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2)
+    (hlong : i - j = 2 ∨ i - j = -2)
+    (hrrow : dictFind es.toList (.str "R") = some (.tuple rs))
+    (hrsz : rs.size = 120)
+    (hm1 : 0 ≤ (i + j).fdiv 2) (hm2 : (i + j).fdiv 2 < (rs.size : Int))
+    (hy1 : rs[((i + j).fdiv 2).toNat]?.getD .none = .int z1)
+    (hy2 : rs[(if j < i then (91 : Nat) else 98)]?.getD .none = .int z2) :
+    ∃ f, execStmts sunfish f
+        ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ vlB
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩
+          (.ret (.int (zj - zi + z1 - z2))) := by
+  have hnpw : boardAt b i ≠ "P" := by rw [hk]; decide
+  have h1 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf i j prom)⟩ [vlUnpack]
+      = .ok ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ .next :=
+    ⟨4, value_unpacks w (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom 0⟩
+  have h2 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ [vlPQ]
+      = .ok ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j)⟩ .next :=
+    ⟨8, value_reads_pq w b sc wc0 wc1 bc0 bc1 ep kp i j prom 0 hi hib hj hjb⟩
+  have h3 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j)⟩ [vlScore]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨10, value_scores w _ pa (boardAt b i) es svv xs i j zi zj 0
+      (by simp [vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+      (by simp [vlEnv2, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      hg hd (by rw [hk]; exact hrow) hsz hi hi2 hj hj2 hxi hxj⟩
+  have h4 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlCap]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨10, value_cap_skips w _ (boardAt b j) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hquiet⟩
+  have h5 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlKp]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi)⟩ .next :=
+    ⟨14, value_kp_skips w _ b sc wc0 wc1 bc0 bc1 ep kp j 0
+      (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+      (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf]) hfar⟩
+  have h6 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi)⟩ [vlCastle]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩ .next :=
+    ⟨24, by
+      have h := value_castles w (vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+          (boardAt b i) (boardAt b j) (zj - zi)) pa i j (zj - zi) z1 z2 es svv rs 0
+        (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self, hk])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, Env.lookup_set_ne, Env.lookup_set_self])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, vlEnv2, vlEnv1, vlEnv, Env.lookup_set_ne, Env.lookup, mvOf])
+        (by simp [vlEnv3, Env.lookup_set_self])
+        hlong hg hd hrrow hrsz hm1 hm2 hy1 hy2
+      rwa [vlEnv3_rescore, vlEnv3_rescore] at h⟩
+  have h7 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩ [vlPawn]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩ .next :=
+    ⟨8, value_pawn_skips w _ (boardAt b i) 0
+      (by simp [vlEnv3, vlEnv2, Env.lookup_set_ne, Env.lookup_set_self]) hnpw⟩
+  have h8 : ∃ f, execStmts sunfish f
+      ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+        (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩ [vlRet]
+      = .ok ⟨w, vlEnv3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+              (boardAt b i) (boardAt b j) (zj - zi + z1 - z2)⟩
+          (.ret (.int (zj - zi + z1 - z2))) :=
+    ⟨4, value_returns w _ (zj - zi + z1 - z2) 0 (by simp [vlEnv3, Env.lookup_set_self])⟩
+  rw [vlB_appends]
+  exact execStmts_append (execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append (execStmts_append (execStmts_append h1 h2 (by simp)) h3 (by simp))
+      h4 (by simp)) h5 (by simp)) h6 (by simp)) h7 (by simp)) h8 (by simp)
+
+/-! ### The three closing theorems, in `value_runs_quiet`'s own shape
+
+`callIn_of_value_body` plus `execStmts_mono` at a summed witness, three times —
+so each arm gets the `∃ t, ∀ F ≥ t` total-correctness form the rest of this tree
+speaks, and the world in is the world out in every one of them. -/
+
+set_option linter.unusedVariables false in
+/-- **`Position.value` DECIDES on a CAPTURE, heap-free.** -/
+theorem value_runs_capture (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj zc : Int) (prom uc : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs ys : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str (boardAt b i)) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hcap : strContains "pnbrqk" (boardAt b j) = true)
+    (hup : strUpper (boardAt b j) = .ok (.str uc))
+    (hcrow : dictFind es.toList (.str uc) = some (.tuple ys))
+    (hcsz : ys.size = 120)
+    (hcx : ys[(119 - j).toNat]?.getD .none = .int zc)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2)
+    (hnk : boardAt b i ≠ "K") (hnpw : boardAt b i ≠ "P") :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.value"
+        #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvOf i j prom]
+      = .ok w (.int (zj - zi + zc)) := by
+  obtain ⟨f, hf⟩ := value_body_capture w pa b sc wc0 wc1 bc0 bc1 ep kp i j zi zj zc prom uc
+    es svv xs ys hi hib hi2 hj hjb hj2 hg hd hrow hsz hxi hxj hcap hup hcrow hcsz hcx
+    hfar hnk hnpw
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_value_body (execStmts_mono hf (by simp) F' hF')
+
+set_option linter.unusedVariables false in
+/-- **`Position.value` DECIDES beside the king square, heap-free.** -/
+theorem value_runs_kp (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj zk : Int) (prom : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs ks : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str (boardAt b i)) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hquiet : strContains "pnbrqk" (boardAt b j) = false)
+    (hnear : -2 < j - kp ∧ j - kp < 2)
+    (hkrow : dictFind es.toList (.str "K") = some (.tuple ks))
+    (hksz : ks.size = 120)
+    (hkx : ks[(119 - j).toNat]?.getD .none = .int zk)
+    (hnk : boardAt b i ≠ "K") (hnpw : boardAt b i ≠ "P") :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.value"
+        #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvOf i j prom]
+      = .ok w (.int (zj - zi + zk)) := by
+  obtain ⟨f, hf⟩ := value_body_kp w pa b sc wc0 wc1 bc0 bc1 ep kp i j zi zj zk prom
+    es svv xs ks hi hib hi2 hj hjb hj2 hg hd hrow hsz hxi hxj hquiet hnear hkrow hksz hkx
+    hnk hnpw
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_value_body (execStmts_mono hf (by simp) F' hF')
+
+set_option linter.unusedVariables false in
+/-- **`Position.value` DECIDES on a CASTLE, heap-free.** -/
+theorem value_runs_castle (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj z1 z2 : Int) (prom : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs rs : Array RVal)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hk : boardAt b i = "K")
+    (hrow : dictFind es.toList (.str "K") = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hquiet : strContains "pnbrqk" (boardAt b j) = false)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2)
+    (hlong : i - j = 2 ∨ i - j = -2)
+    (hrrow : dictFind es.toList (.str "R") = some (.tuple rs))
+    (hrsz : rs.size = 120)
+    (hm1 : 0 ≤ (i + j).fdiv 2) (hm2 : (i + j).fdiv 2 < (rs.size : Int))
+    (hy1 : rs[((i + j).fdiv 2).toNat]?.getD .none = .int z1)
+    (hy2 : rs[(if j < i then (91 : Nat) else 98)]?.getD .none = .int z2) :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.value"
+        #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvOf i j prom]
+      = .ok w (.int (zj - zi + z1 - z2)) := by
+  obtain ⟨f, hf⟩ := value_body_castle w pa b sc wc0 wc1 bc0 bc1 ep kp i j zi zj z1 z2 prom
+    es svv xs rs hi hib hi2 hj hjb hj2 hg hd hk hrow hsz hxi hxj hquiet hfar hlong
+    hrrow hrsz hm1 hm2 hy1 hy2
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_value_body (execStmts_mono hf (by simp) F' hF')
+
+/-! ### THE INSTANTIATIONS — three arms, on positions the ENGINE reached
+
+§3's fixture answered "are these premises ever met?" for the quiet chain. The
+question is sharper here, because the non-quiet arms are the ones a hand-written
+board can fake. So no board below is invented: each is the result of running the
+shipped `Position.move` from the shipped opening position, ply by ply, and **two
+of the three moves are moves the shipped `gen_moves` produces from the position
+they are scored in.**
+
+* the CAPTURE fixture is `1. e4 d5 2. Nc3 h6`, and `Nc3xd5` — `Move(73, 54)` — is
+  in `gen_moves`' own output there. A KNIGHT capture and not a pawn's, because a
+  pawn would enter the pawn block too and this composition swaps ONE gate;
+* the CASTLE fixture is `1. e4 e5 2. Nf3 Nf6 3. Be2 Be7`, and `O-O` —
+  `Move(95, 97)` — is in `gen_moves`' output there;
+* the KP fixture is the position that castle LEAVES, so its `kp = 23` is a number
+  the ENGINE computed (`119 - (95 + 97) / 2`). Its move is the only synthetic
+  pair in this file, and the reason is a finding: **the king-passant arm fires
+  only when the mover attacks the square the opponent's king just crossed**, and
+  no move `gen_moves` yields from this position reaches the opponent's back rank.
+  That filter is checked below and it is EMPTY. The premises are met and the
+  arithmetic agrees; what is not claimed is that this pair is a legal move.
+
+Every `pst` row still comes from the live `initWorld`. -/
+
+/-- One ply of the shipped `Position.move`, threaded through `Option` so a ply
+that fails to decide cannot be mistaken for a position. 256 fuel is measured —
+64 already decides. -/
+private def vlPly (p : Option RVal) (i j : Int) : Option RVal :=
+  match p with
+  | some p0 =>
+    (match callIn sunfish 256 (initWorld sunfish) "Position.move" #[p0, mvOf i j ""] with
+     | .ok _ v => some v
+     | _ => Option.none)
+  | none => Option.none
+
+private def fxOpen : Option RVal := vlPly (vlPly (some (posH 0)) 85 65) 85 65
+/-- `1. e4 d5 2. Nc3 h6` — white to move, `Nc3xd5` available. -/
+private def fxCap : Option RVal := vlPly (vlPly fxOpen 92 73) 81 71
+/-- `1. e4 e5 2. Nf3 Nf6 3. Be2 Be7` — white to move, `O-O` available. -/
+private def fxCastle : Option RVal :=
+  vlPly (vlPly (vlPly (vlPly fxOpen 97 76) 97 76) 96 85) 96 85
+/-- And the position `O-O` leaves, whose `kp` the engine set. -/
+private def fxKp : Option RVal := vlPly fxCastle 95 97
+
+/-! **The three boards, written down as a CACHE.** Each is pinned to the plies
+above by one `#guard`, so nothing here is a claim about chess — and the reason to
+cache at all is measured: a nullary `def` is re-evaluated by every `#guard` that
+mentions it, so reading the plies from twenty premise checks costs twenty seconds
+where reading a literal costs none. -/
+
+private def capB : String :=
+  "         \n         \n rnbqkbnr\n ppp.ppp.\n .......p\n ...p....\n ....P...\n ..N.....\n PPPP.PPP\n R.BQKBNR\n         \n         \n"
+private def castleB : String :=
+  "         \n         \n r..qkbnr\n pppbpppp\n ..n.....\n ...p....\n ....P...\n .....N..\n PPPPBPPP\n RNBQK..R\n         \n         \n"
+private def kpB : String :=
+  "\n         \n         \n.kr.qbnr \npppbpppp \n..n..... \n...p.... \n....P... \n.....N.. \nPPPPBPPP \nRNBKQ..R \n         \n         "
+
+private def capPos : RVal := posOf capB 27 true true true true 0 0
+private def castlePos : RVal := posOf castleB 0 true true true true 0 0
+private def kpPos : RVal := posOf kpB (-48) true true false false 0 23
+
+/-! The pins: the literals ARE what the shipped `Position.move` computes, fields
+and all — and being `posOf`-shaped is what every theorem above quantifies over. -/
+#guard fxCap == some capPos
+#guard fxCastle == some castlePos
+#guard fxKp == some kpPos
+#guard capB.length == 120 && castleB.length == 120 && kpB.length == 120
+
+private def fxRowOf (c : String) : Option (Array RVal) :=
+  match Env.lookup (initWorld sunfish).globals "pst" with
+  | some (RVal.ref pa) =>
+    (match Heap.get? (initWorld sunfish).heap pa with
+     | some (Obj.dict es _) =>
+       (match dictFind es.toList (RVal.str c) with
+        | some (RVal.tuple xs) => some xs | _ => Option.none)
+     | _ => Option.none)
+  | _ => Option.none
+
+private def fxEnt (xs : Option (Array RVal)) (n : Nat) : Option Int :=
+  match xs with
+  | some a => (match a[n]?.getD RVal.none with | RVal.int z => some z | _ => Option.none)
+  | none => Option.none
+
+private def fxRow120 (c : String) : Bool :=
+  match fxRowOf c with | some xs => xs.size == 120 | _ => false
+
+/-- The engine's own answer for a move scored in a fixture position — and the
+heap check, so the instantiation confirms heap-freeness rather than assuming it. -/
+private def fxValue (p : RVal) (i j : Int) : Option Int :=
+  match callIn sunfish 64 (initWorld sunfish) "Position.value" #[p, mvOf i j ""] with
+  | .ok w (RVal.int v) =>
+    if w.heap.size == (initWorld sunfish).heap.size then some v else Option.none
+  | _ => Option.none
+
+/-! #### The CAPTURE arm at `Nc3xd5` — `Move(73, 54)`
+
+The move is one `gen_moves` PRODUCES from this very position, which is the
+premise set's real source: `value_body_capture`'s index and row hypotheses are
+exactly what a generated move guarantees. -/
+#guard (match genMovesOf 512 capPos with
+        | some ms => ms.contains ((73 : Int), (54 : Int), "")
+        | none => false)
+/-! The moved piece is a knight and the destination holds a black pawn. -/
+#guard boardAt capB 73 == "N" && boardAt capB 54 == "p"
+#guard strContains "pnbrqk" (boardAt capB 54) == true
+#guard (match strUpper (boardAt capB 54) with
+        | .ok (RVal.str u) => u == "P" | _ => false)
+#guard boardAt capB 73 != "K" && boardAt capB 73 != "P"
+/-! `hfar` — the destination is nowhere near the king-passant square, which the
+engine left at `0` in this position. -/
+#guard (decide ((2 : Int) ≤ 54 - 0) : Bool)
+/-! Both rows are present and 120 wide: the mover's and the captured piece's. -/
+#guard fxRow120 "N" && fxRow120 "P"
+/-! **And the CONCLUSION**: `zj - zi + zc` in the rows' own entries is exactly
+what the shipped method answers, heap-free. -/
+#guard (match fxEnt (fxRowOf "N") 54, fxEnt (fxRowOf "N") 73, fxEnt (fxRowOf "P") 65,
+              fxValue capPos 73 54 with
+        | some zj, some zi, some zc, some v => zj - zi + zc == v
+        | _, _, _, _ => false)
+
+/-! #### The CASTLE arm at `O-O` — `Move(95, 97)`, also a generated move -/
+#guard (match genMovesOf 512 castlePos with
+        | some ms => ms.contains ((95 : Int), (97 : Int), "")
+        | none => false)
+#guard boardAt castleB 95 == "K" && boardAt castleB 97 == "."
+#guard strContains "pnbrqk" (boardAt castleB 97) == false
+#guard (decide ((2 : Int) ≤ 97 - 0) : Bool)
+/-! `hlong`, and the two rook indices the arm computes: the transit square by
+FLOOR DIVISION and the corner by the conditional, at `Nat` (law 3). -/
+#guard (decide (((95 : Int) - 97 = 2) ∨ ((95 : Int) - 97 = -2)) : Bool)
+#guard ((95 + 97 : Int)).fdiv 2 == 96 && (if (97 : Int) < 95 then (91 : Nat) else 98) == 98
+#guard fxRow120 "K" && fxRow120 "R"
+#guard (match fxEnt (fxRowOf "K") 97, fxEnt (fxRowOf "K") 95, fxEnt (fxRowOf "R") 96,
+              fxEnt (fxRowOf "R") 98, fxValue castlePos 95 97 with
+        | some zj, some zi, some z1, some z2, some v => zj - zi + z1 - z2 == v
+        | _, _, _, _, _ => false)
+
+/-! #### The KP arm, in the position the castle LEFT
+
+`kp = 23` is the engine's own number and the arm's premise `-2 < j - kp < 2` is
+met at `j = 24`. The empty filter is the honest half. -/
+#guard (match genMovesOf 512 kpPos with
+        | some ms => (ms.filter (fun t : Int × Int × String =>
+            (t.2.1 - 23).natAbs < 2)).isEmpty
+        | none => false)
+#guard boardAt kpB 98 == "R" && boardAt kpB 24 == "."
+#guard strContains "pnbrqk" (boardAt kpB 24) == false
+#guard boardAt kpB 98 != "K" && boardAt kpB 98 != "P"
+#guard (decide (-2 < (24 : Int) - 23 ∧ (24 : Int) - 23 < 2) : Bool)
+#guard fxRow120 "R" && fxRow120 "K"
+#guard (match fxEnt (fxRowOf "R") 24, fxEnt (fxRowOf "R") 98, fxEnt (fxRowOf "K") 95,
+              fxValue kpPos 98 24 with
+        | some zj, some zi, some zk, some v => zj - zi + zk == v
+        | _, _, _, _ => false)
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -888,29 +1577,52 @@ the engine answers, so `zj - zi` is not an artifact of the statement. -/
 #print axioms vlB_appends
 #print axioms value_body_quiet
 #print axioms value_runs_quiet
+#print axioms vlProm_body_lit
+#print axioms vlEp_body_lit
+#print axioms value_prom_adds
+#print axioms value_ep_adds
+#print axioms vlEnv3_rescore
+#print axioms value_body_capture
+#print axioms value_body_kp
+#print axioms value_body_castle
+#print axioms value_runs_capture
+#print axioms value_runs_kp
+#print axioms value_runs_castle
 
-/-! ## What R1 still owes
+/-! ## INCH R1 IS CLOSED
 
-**Inch R1 is CLOSED for the quiet move**, which is the configuration the fold
-consumes most and the one R2's ordering line needs first: all eight statements
-gated, composed through `callIn`, and INSTANTIATED on the shipped fixture — the
-premises checked one by one at `Move(92, 71)` and the conclusion's `zj - zi`
-checked against CPython's own `5`.
+`Position.value` decides, heap-free, on **every configuration the method has**:
 
-What is left is the three non-quiet configurations, and each is the SAME chain
-with one gate swapped:
+| configuration | run gate | composition |
+|---|---|---|
+| quiet | eight skip/plain gates | `value_runs_quiet` |
+| capture | `value_cap_adds` | `value_runs_capture` |
+| beside the king square | `value_kp_adds` | `value_runs_kp` |
+| the castle | `value_castles` | `value_runs_castle` |
+| promotion | `value_prom_adds` | *(gate only — see below)* |
+| en passant | `value_ep_adds` | *(gate only — see below)* |
 
-* **capture** — `value_cap_adds` in place of `value_cap_skips`;
-* **beside the king square** — `value_kp_adds` for `value_kp_skips`;
-* **the castle** — `value_castles` for `value_castle_skips`.
+Every one of the twelve statement gates is proved, all four compositions are
+INSTANTIATED on positions the shipped `Position.move` reached ply by ply, and
+two of the four moves are moves the shipped `gen_moves` produces from the
+position they are scored in. No table constant is written down anywhere in the
+file: every answer is stated in the `pst` row's own entries and every row comes
+from the live `initWorld`.
 
-All three ADD gates are already proved, so these are compositions and not new
-work. The two pawn ADD arms (promotion, en passant) are the only gates still
-unwritten in this file; both need a sharper pin of their statement with the body
-spelled (the current pins leave it existential — right for the skip arms, wrong
-for these, §L19's law), and `compare_one` now unblocks their guards.
+**What is deliberately not here.** The two pawn arms are gated but not composed,
+and that is a choice rather than a remainder: `value_pawn_enters` PEELS the block
+and the two siblings are independent, so the four pawn combinations — including
+the physically impossible promote-and-en-passant one — compose from the gates by
+`execStmts_append` without a new statement. Writing four more chains would spell
+out what the peel already says. A consumer that needs a pawn move's number takes
+the peel and the two sibling gates; nothing is owed to make that possible.
 
-**The four laws this file paid for**, in the order they were learned:
+**R1′ still stands unwanted.** Nothing downstream computes a value (§L25), so a
+reference function naming the NUMBER is priced and unbuilt. The next inch is
+R2a: the ordering genexp's drain, and what it needs from here is exactly the
+`∃ t, ∀ F ≥ t` decidability these four theorems give it.
+
+**The laws this file paid for**, in the order they were learned:
 
 1. *The computed-shape law.* `evalExpr` inlines past `indexVal`, `normIndex` and
    `Heap.get?` alike, so a premise stated at a helper cannot match. State it in
@@ -922,12 +1634,34 @@ for these, §L19's law), and `compare_one` now unblocks their guards.
    trivially-true conjunct is discharged, not kept; `getElem?` collapses to
    `getElem` once the size is known; a conditional index must be stated at `Nat`.
    After the first failed `py_simp`, copy the residue's spelling — do not write
-   the premise you believe is equivalent.
+   the premise you believe is equivalent. **The en-passant arm is the sharpest
+   case**: the residue keeps `119 - (j + 10)` with the global already folded and
+   no arithmetic done, so `109 - j` — the same number — does not match.
 4. *An elaborator-accepted, KERNEL-refused proof means a missing ALTITUDE
    lemma*, not a worse premise. `compare_one` is `boolChain_and_falsy` for
    comparisons, and it was owed.
+5. *A SKIP arm pins its body existentially; an ADD arm must spell it.* §L19's law
+   says pin the shape you compute with, and the two arms of one `if` compute with
+   different shapes — so one statement gets two pins and neither is redundant.
+   The trap inside the spelled pin is span arithmetic: the promotion body has
+   THREE distinct trailing spans (`binOp`, `augAssign`, `ifStmt`), one more than
+   it reads at a glance, and a pin short by one fails as a type mismatch on the
+   final `rfl` rather than as a shape error.
+6. *A chained compare's TRUE arm leaves NESTED `if`s, not a conjunction.*
+   `A8 <= j <= H8` closes on two `if_pos`, where its false arm closed on `omega`
+   — the same expression, two different residues, because `simp` splits what it
+   can decide and leaves what it cannot.
+7. *An arm that fires REWRITES the frame slot it already has.* `Env.set_set` is
+   in `py_simp`'s default set, so a gate's own proof never sees the tower — but a
+   COMPOSITION does, because the gate's statement is literal. One three-line
+   bridge (`vlEnv3_rescore`) is what keeps every arm's output frame `vlEnv3`
+   instead of a stack of writes, and the castle spends it twice.
+8. *A nullary `def` is re-evaluated by every `#guard` that mentions it.* Reading
+   the fixture positions straight from the plies cost twenty seconds across
+   twenty premise checks; caching each derived board as a literal PINNED to the
+   plies by one guard costs none and claims exactly as much.
 
-And one prediction corrected: §L25 expected a conditional expression to ride
-into its index term. It does not — it SPLITS the run. -/
+And one prediction corrected: §L25 expected a conditional expression to ride into
+its index term. It does not — it SPLITS the run. -/
 
 end Examples.python.sunfish.value_bound

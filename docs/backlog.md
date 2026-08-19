@@ -9548,3 +9548,98 @@ choice-free. No `sorry`, no `native_decide`.
 
 **`model_audit` CANNOT RETIRE YET** — but the distance is now one statement plus
 the boundary, where at the start of §L17 it was seven statements plus the fold.
+
+
+## L20 — EIGHTEEN OF EIGHTEEN, the two halves MEET, and the last step is a composition (2026-08-19)
+
+§L19 left statement 15 and the boundary. **Statement 15 landed, so every
+statement of the shipped `Searcher.bound` now has an interpreter gate**, and the
+three sections that were built separately are joined. `QSStandPat` does NOT
+close: what is left is the COMPOSITION, and this pass measured what that costs
+and removed its blocker.
+
+### Statement 15 — the store, and the shape a gate must have
+
+`self.tp_score[pos, depth] = Entry(best, entry.upper) if best >= gamma else
+Entry(entry.lower, best)`. At a stand-pat node the conditional takes its
+fail-high arm, so what lands is `Entry(pos.score, MATE_UPPER)`.
+
+Two mechanical findings, both about SHAPE rather than difficulty:
+
+* The gate concludes with the **computed heap**, not an abstract `h'`. The
+  subscript-store path inlines past `heapStore` into `Heap.update`'s `dif`, and
+  `-heapStore` does not stop it, so a `heapStore` premise cannot match what
+  `py_simp` leaves. `bound_enters` took a `Heap.update` premise for the same
+  reason in §L10 — the precedent was there and was rediscovered rather than read.
+* The two `Array.set` terms then differ only in their liveness PROOF. Proof
+  irrelevance closes it: one `rfl`.
+
+### WHERE THE TWO HALVES MEET
+
+`sf_store_from_report`, §7. Two theorems had been waiting for each other:
+
+| proved | since | needed | had |
+|---|---|---|---|
+| `sf_store` (§6) | §L15 | `lo ≤ V p d ∧ V p d ≤ up` | nothing to discharge it |
+| `fold_report` (§7) | §L16 | — | `Report gamma best (V p d)`, nothing to give it to |
+
+The join is one `rcases`: **a fail-high report IS the lower bound the store's
+entry claims**, because `gamma ≤ best` forces `Report`'s right disjunct. With
+`store_runs` (§4) putting the entry there, three sections close a circle — the
+code stores a bound, the fold proves it is one, the calculus keeps the table's
+invariant across it. `hband` (`V p d ≤ MATE_UPPER`) stays a premise: the mate
+band is a fact about the value function, not something a store can establish.
+
+### The composition's blocker was the gates' own shape
+
+`probe_block_runs` composes the four probe statements plus the `if not root:`
+wrapper into one gate. The obstacle was not the statements — it was that **every
+gate is stated over a one-statement LIST** (`execStmts sunfish F st [s]`), which
+is the shape a reader wants and the wrong shape for composition, because
+`execStmts` peels one statement at a time and chaining needs `execStmt`.
+
+`execStmt_of_singleton` is the conversion, and with it the composition is four
+`rw`s instead of a page of bookkeeping. **State the next batch at `execStmt` and
+let the singleton form be the corollary.** `execStmt_if_true`/`_if_false` moved
+up to sit beside it — general, and needed by the probe wrapper before the fold.
+
+### Triad
+
+Both commits: `lake build` **3678 jobs green**; `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched** — unchanged since §L15 across all eighteen gates; `script_corpus` 64
+scripts, 0 failed, 50 matched, 14 loud. Every new theorem prints `[propext,
+Classical.choice, Quot.sound]` or less. No `sorry`, no `native_decide`.
+
+### What `QSStandPat` still needs, priced
+
+The gates are all there; the boundary is an assembly job with three named
+premises. In order:
+
+1. **The frame chain.** Eighteen gates, each stated over a frame satisfying a
+   handful of `Env.lookup` facts, composed through an `Env.set` chain that grows
+   at statements 3, 5, 6, 7 (twice), 8, 9, 10, 11, 12 and inside the loop. Each
+   gate's hypotheses must be re-established at the accumulated frame. This is
+   the bulk of it and it is pure bookkeeping — `Env.lookup_set_ne` per fact —
+   now that `execStmt_of_singleton` exists. `probe_block_runs` is the worked
+   example: four gates, four `rw`s, ~15 lines.
+2. **The world chain.** `w` → counter bump (statement 1) → cell + closure
+   (statement 7) → generator alloc and one step (the loop) → the store
+   (statement 15). Four world changes, each already the conclusion of its gate.
+3. **`callIn`'s own boundary** — `callIn.eq_2`, `sbCallEnv` (proved) for the
+   entry frame, and the `.ret` arm carrying `best` out.
+4. **THREE OPEN PREMISES**, all named and none blocking:
+   * `hev`/`hyield` — the `moves()` call allocating its generator, and that
+     generator's FIRST step yielding `(None, None)` from the `depth == 0`
+     clause. The sunfish analogue of §L9's `moves_call_creates`, plus one
+     `stepIter` through two statements of `moves()`.
+   * `calm`'s genexp (§L18) — `any(<genexpr@3>("RBNQ", pos))`, open by design at
+     depth 0 because nothing reads `calm` there.
+   Under the recorded model choice (§L18) the futility premise is definitional,
+   so it does NOT appear here; the sort-order theorem's tail step (§L17 item (a))
+   remains the immediately-next inch after the assembly and does not block it.
+
+**`model_audit` CANNOT RETIRE.** But the ledger is worth stating plainly: at the
+start of §L17 the interpreter half was UNSTARTED, and the distance was seven
+statements plus the fold plus the tail plus the assembly. It is now the assembly
+alone, with a worked example of every piece it composes.

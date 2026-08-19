@@ -1171,6 +1171,19 @@ theorem execStmt_of_stmtTriple {m : Module} {P : FrameState → Prop} {s : Stmt}
   | timeout => rw [hx] at hh; exact absurd hh (by simp [PyPost.holds])
   | unsupported msg => rw [hx] at hh; exact absurd hh (by simp [PyPost.holds])
 
+/-- The flow-generic singleton wrapper. `execStmts_singleton` covers `.next`,
+which is every statement but the LAST: `return best` lands `.ret`, and the
+chain's final link needs a wrapper that does not assume otherwise. -/
+theorem execStmts_singleton_flow {m : Module} {F : Nat} {st st' : FrameState} {s : Stmt}
+    {flow : RFlow} (h : execStmt m (F + 1) st s = .ok st' flow) :
+    execStmts m (F + 2) st [s] = .ok st' flow := by
+  rw [execStmts, h, Run.bind]
+  cases flow with
+  | next => rw [execStmts]
+  | brk => rfl
+  | cont => rfl
+  | ret v => rfl
+
 /-- **THE COMPOSABILITY ENGINE.** Two decided runs in sequence are one decided
 run of the concatenation, in the ∃-fuel form `QSStandPat` is itself stated in —
 so the fuel bookkeeping is internal (`execStmt_mono`/`execStmts_mono` at a summed
@@ -2035,6 +2048,186 @@ theorem store_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
   py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe, entryDefault,
     entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey, sbStored, dif_pos hlt]
   rfl
+
+/-! ### The chain: statements 6–12 and 13–17
+
+`head_runs`' pattern, applied. Both segments are stated over an ABSTRACT entry
+frame with its lookup facts as hypotheses — more general than the concrete
+frame, and the through-chain lookups are then `Env.lookup_set_ne` by `simp`
+rather than `rfl`, which is the only place the concrete/abstract choice shows.
+
+Three things cost a cycle each and are worth keeping. **Frame abbreviations
+must be `def`, not `abbrev`**: a reducible frame lets `isDefEq` unfold into
+`sbW2`, whose `sbMovesClosure` projects off the 1MB literal, and the
+elaboration diverges. **Pass the WORLD explicitly** at every link for the same
+reason — a `_` hole makes unification search where a term would not. And every
+`execStmts_singleton (F := k)` must have `k + 1` equal to its gate's own fuel;
+three off-by-ones here each presented as a `whnf` timeout, not as a type error,
+which is a genuinely misleading symptom worth recognising by shape. -/
+
+/-- The frame after statement 7, and the ones after 8-12. -/
+def G3 (e : REnv) : REnv := Env.set e "killer" .none
+def G4 (w : World) (e : REnv) : REnv := sbEnvDef w (G3 e)
+def G5 (w : World) (e : REnv) (av : Bool) : REnv := Env.set (G4 w e) "calm" (.bool av)
+def G6 (w : World) (e : REnv) (av : Bool) : REnv := Env.set (G5 w e av) "guard" (.bool av)
+def G7 (w : World) (e : REnv) (av : Bool) (sc : Int) : REnv :=
+  Env.set (G6 w e av) "t" (.int (sc + nullMargin))
+def G8 (w : World) (e : REnv) (av : Bool) (sc : Int) : REnv :=
+  Env.set (G7 w e av sc) "nmr" (.bool false)
+def G9 (w : World) (e : REnv) (av : Bool) (sc : Int) : REnv :=
+  Env.set (Env.set (G8 w e av sc) "best" (.int (-mateUpper))) "live" (.bool false)
+
+theorem mid_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (av : Bool) (sv : Nat)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hmove : Heap.get? w.heap tm = some (.dict #[] sv))
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (_hnmax : Env.lookup e "max" = Option.none)
+    (hnabs : Env.lookup e "abs" = Option.none)
+    (hnnm : Env.lookup e "NULL_MARGIN" = Option.none)
+    (hnmu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hng : Env.lookup e "guard" = Option.none)
+    (hnc : Env.lookup e "<cell>guard" = Option.none)
+    (hband : -750 < sc ∧ sc < 750)
+    (hgen : evalExpr sunfish 5
+        ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ calmG
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ (.bool av)) :
+    ∃ f, execStmts sunfish f ⟨w, e⟩
+        ([sbKiller] ++ [sbDef] ++ [sbCalm] ++ [sbGuard] ++ [sbT] ++ [sbNmr] ++ [sbAcc])
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+              G9 w e av sc⟩ .next := by
+  have h6 : ∃ f, execStmts sunfish f ⟨w, e⟩ [sbKiller] = .ok ⟨w, G3 e⟩ .next :=
+    ⟨16, killer_misses w e ci sa ts tm hs n dl sf (posOf b sc wc0 wc1 bc0 bc1 ep kp) sv
+      hslf hpos hobj hmove hk⟩
+  have h7 : ∃ f, execStmts sunfish f ⟨w, G3 e⟩ [sbDef]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ .next :=
+    ⟨2, execStmts_singleton (F := 0) (moves_def_allocates w (G3 e) 0 gamma 0 .none
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp)
+      (by simp [G3, Env.lookup_set_ne, hd]) (by simp [G3, Env.lookup_set_ne, hg])
+      (by simp [G3, Env.lookup_set_self]) (by simp [G3, Env.lookup_set_ne, hpos])
+      (by simp [G3, Env.lookup_set_ne, hng]) (by simp [G3, Env.lookup_set_ne, hnc]))⟩
+  have h8 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ [sbCalm]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G5 w e av⟩ .next :=
+    ⟨10, execStmts_singleton (F := 8) (calm_binds (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (G4 w e) b sc wc0 wc1 bc0 bc1 ep kp av
+      (by simp [G4, G3, sbEnvDef, Env.lookup_set_ne, hpos])
+      (by simp [G4, G3, sbEnvDef, Env.lookup_set_ne, hnabs]) hband hgen)⟩
+  have h9 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G5 w e av⟩ [sbGuard]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G6 w e av⟩ .next :=
+    ⟨8, guard_evals (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (G5 w e av) av
+      (by simp [G5, G4, G3, sbEnvDef, Env.lookup_set_ne, hroot])
+      (by simp [G5, Env.lookup_set_self])⟩
+  have h10 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G6 w e av⟩ [sbT]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G7 w e av sc⟩ .next :=
+    ⟨8, null_margin_adds (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (G6 w e av) b sc wc0 wc1 bc0 bc1 ep kp
+      (by simp [G6, G5, G4, G3, sbEnvDef, Env.lookup_set_ne, hpos])
+      (by simp [G6, G5, G4, G3, sbEnvDef, Env.lookup_set_ne, hnnm])⟩
+  have h11 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G7 w e av sc⟩ [sbNmr]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G8 w e av sc⟩ .next :=
+    ⟨10, execStmts_singleton (F := 8) (nmr_binds (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (G7 w e av sc) av
+      (by simp [G7, G6, G5, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [G7, G6, G5, G4, G3, sbEnvDef, Env.lookup_set_ne, hd]))⟩
+  have h12 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G8 w e av sc⟩ [sbAcc]
+      = .ok ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G9 w e av sc⟩ .next :=
+    ⟨16, acc_inits (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (G8 w e av sc)
+      (by simp [G8, G7, G6, G5, G4, G3, sbEnvDef, Env.lookup_set_ne, hnmu]) hmu⟩
+  exact execStmts_append (execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append (execStmts_append h6 h7 (by simp)) h8 (by simp)) h9 (by simp))
+      h10 (by simp)) h11 (by simp)) h12 (by simp)
+
+/-- The frame the fold leaves. -/
+def T0 (e : REnv) (sc : Int) : REnv := qsEnvEnd e sc
+
+/-- The world the store leaves. -/
+def T1 (w4 : World) (ts : Addr) (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal)
+    (sc : Int) (hlt : ts < w4.heap.size) : World :=
+  { w4 with heap := w4.heap.set ts (sbStored es sv pv sc) hlt }
+
+theorem tail_runs (w2 w3 w4 : World) (e : REnv) (a : Addr) (ci : ClassId)
+    (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es es' : Array (RVal × RVal)) (sv sv' : Nat)
+    (hlt : ts < w4.heap.size)
+    (hev : EvalsIn sunfish ⟨w2, e⟩ sbMovesCall (.ref a) ⟨w3, e⟩)
+    (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
+    (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hnmax : Env.lookup e "max" = Option.none)
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnlen : Env.lookup e "len" = Option.none)
+    (hnts : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hb : Env.lookup e "best" = some (.int (-mateUpper)))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict4 : Heap.get? w4.heap ts = some (.dict es sv))
+    (hobj5 : Heap.get? (T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hdict5 : Heap.get? (T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap ts
+      = some (.dict es' sv'))
+    (hsz : (es'.size : Int) ≤ tableSize)
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hge : gamma ≤ sc) (hsc : -mateUpper < sc) :
+    ∃ f, execStmts sunfish f ⟨w2, e⟩
+        ([sbFor] ++ [sbCorr] ++ [sbStore] ++ [sbEvict] ++ [sbRet])
+      = .ok ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩
+          (.ret (.int sc)) := by
+  have h13 : ∃ f, execStmts sunfish f ⟨w2, e⟩ [sbFor] = .ok ⟨w4, T0 e sc⟩ .next := by
+    obtain ⟨sp, hfor⟩ := sbFor_lit
+    rw [hfor]
+    obtain ⟨f, hf⟩ := execStmt_of_stmtTriple
+      (qs_fold_breaks w2 w3 w4 e a b sc gamma wc0 wc1 bc0 bc1 ep kp sp hev hgo
+        hyield hd hpos hnmax hb hg hge hsc) ⟨w2, e⟩ rfl
+    exact ⟨f + 2, execStmts_singleton (F := f) (execStmt_mono hf (by simp) (f + 1) (by omega))⟩
+  have h14 : ∃ f, execStmts sunfish f ⟨w4, T0 e sc⟩ [sbCorr] = .ok ⟨w4, T0 e sc⟩ .next :=
+    ⟨11, execStmts_singleton (F := 9) (corr_dead w4 (T0 e sc)
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hd]))⟩
+  have h15 : ∃ f, execStmts sunfish f ⟨w4, T0 e sc⟩ [sbStore]
+      = .ok ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩ .next :=
+    ⟨21, execStmts_singleton (F := 19) (store_runs w4 (T0 e sc) ci sa ts tm hs n dl sf sc gamma
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) es sv
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hslf])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hpos])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hd])
+      (by simp [T0, qsEnvEnd, Env.lookup_set_self])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hg])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hen])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hroot])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnoe])
+      hobj4 hdict4 hlt hge hk)⟩
+  have h16 : ∃ f, execStmts sunfish f
+      ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩ [sbEvict]
+      = .ok ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩ .next :=
+    ⟨13, execStmts_singleton (F := 11)
+      (evict_dead (T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt) (T0 e sc)
+        ci sa ts tm hs n dl sf es' sv'
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hslf])
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnlen])
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnts])
+        hobj5 hdict5 hsz)⟩
+  have h17 : ∃ f, execStmts sunfish f
+      ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩ [sbRet]
+      = .ok ⟨T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, T0 e sc⟩
+          (.ret (.int sc)) :=
+    ⟨9, execStmts_singleton_flow (F := 7)
+      (ret_best (T1 w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt) (T0 e sc) sc
+        (by simp [T0, qsEnvEnd, Env.lookup_set_self]))⟩
+  exact execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append h13 h14 (by simp)) h15 (by simp)) h16 (by simp)) h17 (by simp)
 
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
@@ -3006,6 +3199,9 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms execStmt_of_stmtTriple
 #print axioms calm_binds
 #print axioms nmr_binds
+#print axioms execStmts_singleton_flow
+#print axioms mid_runs
+#print axioms tail_runs
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

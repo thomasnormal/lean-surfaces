@@ -110,33 +110,56 @@ trust level; the theorem above is what upgrades any of these to
 
 #guard boundProbeT [] (posH 0) 0 1 == some (0, 2)
 #guard boundProbeT [123] (posH 0) 0 1 == some (0, 2)
-#guard boundProbeT [7, 8, 9] (posH 0) 40 1 == some (37, 35)
+#guard boundProbeT [7, 8, 9] (posH 0) 40 1 == some (37, 34)
 
-/-- Tactical (the mate band — the king-capture sentinel path). -/
+/-- Tactical. Pass 7 answered `MATE_LOWER` exactly here — the
+king-capture sentinel path; engine master's futility cap settles the
+position first (pins_bound.lean's header records the measurement). The
+row is kept for its TRACE content, which is what this file pins. -/
 private def posTacC : RVal :=
   .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
     #[.str "         \n         \n r.bqkb.r\n pppp.ppp\n ..n..n..\n ....p..Q\n ..B.P...\n ........\n PPPP.PPP\n RNB.K.NR\n         \n         \n",
       .int (-38), .tuple #[.bool true, .bool true],
       .tuple #[.bool true, .bool true], .int 0, .int 0]
 
-#guard boundProbeT [] posTacC 0 2 == some (47923, 4)
-#guard boundProbeT [55] posTacC 0 2 == some (47923, 4)
+#guard boundProbeT [] posTacC 0 2 == some (277, 3)
+#guard boundProbeT [55] posTacC 0 2 == some (277, 3)
 
 /-! ### DEEPER STEPPING THROUGH THE WALL (the pass-7 close of the
 pass-5 frontier): `search()` stepped to depth 4 under a SEEDED trace
 
-The pass-5 capstone stopped at four yields — the 2048-node wall stood
-between depth 2 and everything deeper, and the empty trace refuses
-there loudly. THE TRACE CLOCK opens it: with ONE seeded reading the
-stepping crosses node 2048 inside step 12 (depth 4's first yield,
-CPython consults `time.time()` exactly once against
-`deadline = 1 << 63` and continues), and every `(depth, gamma, score,
-move)` tuple AND cumulative `self.nodes` below is CPython's own answer
-(the counting-clock oracle: integer reading 0, calls counted — steps
-1–11 consume NOTHING, step 12 consumes exactly the one reading).
-Both directions are pinned: at `[]` the 12th step refuses with the
-underrun message at the exact consultation point; at `[0]` it
-continues to CPython's `(4, 33, 32, g8f6)` with the trace consumed. -/
+The pass-5 capstone stopped at three yields — under engine master the
+empty trace refuses at the end of depth 1 (`if time.time() >
+self.soft: return`), and the 2048-node `bound()` wall stands between
+depth 3 and depth 4 behind it. THE TRACE CLOCK opens both: with FOUR
+seeded readings the stepping runs the depth-1/2/3 brackets to
+convergence and crosses node 2048 inside step 13 (depth 4's first
+yield, both walls consulted against `1 << 63` and both passed), and
+every `(depth, gamma, score, move)` tuple AND cumulative `self.nodes`
+below is CPython's own answer
+(the counting-clock oracle: integer reading 0, calls counted).
+
+**PASS 8 — the consumption pattern changed, and it is now the pin's
+real content.** Engine master ends every depth iteration with
+`if time.time() > self.soft: return`, so the driver consults the wall
+once per COMPLETED DEPTH as well as at the 2048-node bound() frontier.
+Under a four-reading trace the walk consumes them at exactly four
+places, all measured:
+
+| between | why | trace after |
+|---|---|---|
+| steps 3 → 4 | depth 1 converged | 3 left |
+| steps 7 → 8 | depth 2 converged | 2 left |
+| step 13 | depth 3 converged **and** node 2048 crossed inside `bound` | 0 left |
+
+So the empty trace no longer reaches step 12 at all — its refusal is at
+the END OF DEPTH 1, four yields earlier, and is pinned at that point by
+`pins_search.lean` (45 nodes in, not 2048). What this file pins is the
+seeded direction: the whole depth-1/2/3 bracket plus depth 4's first
+yield, every tuple and cumulative `self.nodes` CPython-exact, and the
+trace drawn down to empty exactly on schedule. Depth 3 now takes FIVE
+probes to converge where pass 7 needed four, so the walk is 13 steps
+rather than 12. -/
 
 /-- `Searcher().search([posH 0])` created under a seeded trace. -/
 private def searchGenT (tr : ClockTrace) : Option (World × Addr × Addr) :=
@@ -176,37 +199,38 @@ private def searchStepsW (sa g : Addr) :
        | _ => Option.none)
     | _ => Option.none
 
--- ONE PASS pins everything: steps 1–11 (depth-1/2/3 brackets to
--- convergence — tuples and nodes CPython-exact) leave the trace
--- UNTOUCHED (`w11.clock == [0]`: no consultation below node 2048), and
--- step 12 — depth 4's first yield — crosses node 2048, consults the
--- clock ONCE and continues to CPython's (4, 33, 32, g8f6) with the
--- reading CONSUMED (`w12.clock.isEmpty`). The consumption is the
--- positive proof the consultation happened at the wall; the loud
--- direction (the empty trace refusing at the same consultation point)
--- is pinned at bound() level by pins_bound.lean's nodes-2047 frontier
--- probe — one node in, never a 2048-node walk per build.
-#guard (match searchGenT [0] with
+-- ONE PASS pins everything: steps 1–12 (the depth-1/2/3 brackets to
+-- convergence — tuples and nodes CPython-exact) draw the trace down to
+-- TWO readings (`w12.clock == [0, 0]`: one spent at the end of depth 1,
+-- one at the end of depth 2 — the soft-limit line, not the node wall),
+-- and step 13 — depth 4's first yield — spends BOTH remaining readings:
+-- depth 3's own soft-limit check and the 2048-node crossing inside
+-- `bound`. It continues to CPython's (4, 33, 32, g8f6) with the trace
+-- EMPTY. The consumption schedule is the positive proof of where the
+-- consultations are; the loud direction is `pins_search.lean`'s
+-- empty-trace refusal at the end of depth 1.
+#guard (match searchGenT [0, 0, 0, 0] with
         | some (w, sa, g) =>
-          (match searchStepsW sa g 11 w with
-           | some (rows, w11) =>
+          (match searchStepsW sa g 12 w with
+           | some (rows, w12) =>
              rows ==
                [((1, 0, 0, some (84, 64, "")), 2),
-                ((1, 34645, 46, some (84, 64, "")), 4),
-                ((1, 23, 37, some (97, 76, "")), 47),
-                ((2, 42, 41, some (97, 76, "")), 93),
-                ((2, -34624, -9, some (97, 76, "")), 96),
-                ((2, 16, 13, some (97, 76, "")), 334),
-                ((2, 2, 4, some (97, 76, "")), 347),
-                ((3, 9, 11, some (97, 76, "")), 466),
-                ((3, 34651, 46, some (97, 76, "")), 509),
-                ((3, 29, 29, some (97, 76, "")), 703),
-                ((3, 38, 36, some (97, 76, "")), 803)]
-               && w11.clock == [0]
-               && (match searchStepsW sa g 1 w11 with
-                   | some (rows12, w12) =>
-                     rows12 == [((4, 33, 32, some (97, 76, "")), 2073)]
-                       && w12.clock.isEmpty
+                ((1, 34645, 46, some (84, 64, "")), 3),
+                ((1, 23, 37, some (97, 76, "")), 45),
+                ((2, 42, 41, some (97, 76, "")), 91),
+                ((2, -34624, -9, some (97, 76, "")), 93),
+                ((2, 16, 13, some (97, 76, "")), 331),
+                ((2, 2, 4, some (97, 76, "")), 344),
+                ((3, 9, 11, some (97, 76, "")), 463),
+                ((3, 34651, 326, some (97, 76, "")), 464),
+                ((3, 169, 46, some (97, 76, "")), 506),
+                ((3, 29, 29, some (97, 76, "")), 696),
+                ((3, 38, 36, some (97, 76, "")), 795)]
+               && w12.clock == [0, 0]
+               && (match searchStepsW sa g 1 w12 with
+                   | some (rows13, w13) =>
+                     rows13 == [((4, 33, 32, some (97, 76, "")), 2053)]
+                       && w13.clock.isEmpty
                    | Option.none => false)
            | Option.none => false)
         | Option.none => false)

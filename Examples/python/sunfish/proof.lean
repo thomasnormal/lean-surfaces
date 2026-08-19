@@ -19,6 +19,13 @@ Two provisions keep the 955KB module literal out of the simp run:
   the compact handles and each collapses in ONE rewrite instead of
   thousands of character-level simp steps.
 
+Envelope note (pass 8): RE-PINNED to engine master `e670434`
+(sha256 `f6c481a6…`, 2026-08-19) — the #236 cap-break `bound()` and the
+three new module scalars. `Position.rotate` is byte-identical again
+(the whole `Position` class is, span-shifts aside), so the theorems and
+proofs are untouched; this comment is the required real edit for the
+re-extracted envelope.
+
 Envelope note (pass 7): RE-PINNED to current engine master (the QS
 walrus filter, explicit castling gen, branchless rights, the
 literal-membership capture test, inlined bodies, the null-gate score

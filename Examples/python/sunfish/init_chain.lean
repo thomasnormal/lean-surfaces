@@ -69,8 +69,8 @@ def prefix7 : List Stmt := sunfish.topLevel.toList.take 7
 /-- The prefix as the pipeline's `done` view. -/
 def done7 : Array Stmt := prefix7.toArray
 
-/-- The `pst` PIPELINE: the padding loop (line 78) and the `K_MID`/`K_END`
-line (line 90). The two statements this file does not run. -/
+/-- The `pst` PIPELINE: the padding loop (line 84) and the `K_MID`/`K_END`
+line (line 96). The two statements this file does not run. -/
 def pstPipeline : List Stmt := [sunfish.topLevel[7]!, sunfish.topLevel[8]!]
 
 /-- The `done` view after the pipeline. -/
@@ -515,7 +515,7 @@ def h9 : Heap :=
     0,
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -526,43 +526,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 0, LeanModels.Python.RVal.int 0, LeanModels.Python.RVal.int 0,
@@ -572,7 +572,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 78, LeanModels.Python.RVal.int 83, LeanModels.Python.RVal.int 86,
@@ -582,7 +582,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 7, LeanModels.Python.RVal.int 29, LeanModels.Python.RVal.int 21,
@@ -592,7 +592,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-17), LeanModels.Python.RVal.int 16, LeanModels.Python.RVal.int (-2),
@@ -602,7 +602,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-26), LeanModels.Python.RVal.int 3, LeanModels.Python.RVal.int 10,
@@ -612,7 +612,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-22), LeanModels.Python.RVal.int 9, LeanModels.Python.RVal.int 5,
@@ -622,7 +622,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-31), LeanModels.Python.RVal.int 8, LeanModels.Python.RVal.int (-7),
@@ -632,7 +632,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 0, LeanModels.Python.RVal.int 0, LeanModels.Python.RVal.int 0,
@@ -643,7 +643,7 @@ def h9 : Heap :=
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -654,43 +654,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-66), LeanModels.Python.RVal.int (-53), LeanModels.Python.RVal.int (-75),
@@ -700,7 +700,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-3), LeanModels.Python.RVal.int (-6), LeanModels.Python.RVal.int 100,
@@ -710,7 +710,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 10, LeanModels.Python.RVal.int 67, LeanModels.Python.RVal.int 1,
@@ -720,7 +720,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 24, LeanModels.Python.RVal.int 24, LeanModels.Python.RVal.int 45,
@@ -730,7 +730,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-1), LeanModels.Python.RVal.int 5, LeanModels.Python.RVal.int 31,
@@ -740,7 +740,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-18), LeanModels.Python.RVal.int 10, LeanModels.Python.RVal.int 13,
@@ -750,7 +750,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-23), LeanModels.Python.RVal.int (-15), LeanModels.Python.RVal.int 2,
@@ -760,7 +760,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-74), LeanModels.Python.RVal.int (-23), LeanModels.Python.RVal.int (-26),
@@ -771,7 +771,7 @@ def h9 : Heap :=
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -782,43 +782,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-59), LeanModels.Python.RVal.int (-78), LeanModels.Python.RVal.int (-82),
@@ -828,7 +828,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-11), LeanModels.Python.RVal.int 20, LeanModels.Python.RVal.int 35,
@@ -838,7 +838,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-9), LeanModels.Python.RVal.int 39, LeanModels.Python.RVal.int (-32),
@@ -848,7 +848,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 25, LeanModels.Python.RVal.int 17, LeanModels.Python.RVal.int 20,
@@ -858,7 +858,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 13, LeanModels.Python.RVal.int 10, LeanModels.Python.RVal.int 17,
@@ -868,7 +868,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 14, LeanModels.Python.RVal.int 25, LeanModels.Python.RVal.int 24,
@@ -878,7 +878,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 19, LeanModels.Python.RVal.int 20, LeanModels.Python.RVal.int 11,
@@ -888,7 +888,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-7), LeanModels.Python.RVal.int 2, LeanModels.Python.RVal.int (-15),
@@ -899,7 +899,7 @@ def h9 : Heap :=
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -910,43 +910,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 35, LeanModels.Python.RVal.int 29, LeanModels.Python.RVal.int 33,
@@ -956,7 +956,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 55, LeanModels.Python.RVal.int 29, LeanModels.Python.RVal.int 56,
@@ -966,7 +966,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 19, LeanModels.Python.RVal.int 35, LeanModels.Python.RVal.int 28,
@@ -976,7 +976,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 0, LeanModels.Python.RVal.int 5, LeanModels.Python.RVal.int 16,
@@ -986,7 +986,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-28), LeanModels.Python.RVal.int (-35), LeanModels.Python.RVal.int (-16),
@@ -996,7 +996,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-42), LeanModels.Python.RVal.int (-28), LeanModels.Python.RVal.int (-42),
@@ -1006,7 +1006,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-53), LeanModels.Python.RVal.int (-38), LeanModels.Python.RVal.int (-31),
@@ -1016,7 +1016,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-30), LeanModels.Python.RVal.int (-24), LeanModels.Python.RVal.int (-18),
@@ -1027,7 +1027,7 @@ def h9 : Heap :=
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -1038,43 +1038,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 6, LeanModels.Python.RVal.int 1, LeanModels.Python.RVal.int (-8),
@@ -1084,7 +1084,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 14, LeanModels.Python.RVal.int 32, LeanModels.Python.RVal.int 60,
@@ -1094,7 +1094,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-2), LeanModels.Python.RVal.int 43, LeanModels.Python.RVal.int 32,
@@ -1104,7 +1104,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 1, LeanModels.Python.RVal.int (-16), LeanModels.Python.RVal.int 22,
@@ -1114,7 +1114,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-14), LeanModels.Python.RVal.int (-15), LeanModels.Python.RVal.int (-2),
@@ -1124,7 +1124,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-30), LeanModels.Python.RVal.int (-6), LeanModels.Python.RVal.int (-13),
@@ -1134,7 +1134,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-36), LeanModels.Python.RVal.int (-18), LeanModels.Python.RVal.int 0,
@@ -1144,7 +1144,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-39), LeanModels.Python.RVal.int (-30), LeanModels.Python.RVal.int (-31),
@@ -1155,7 +1155,7 @@ def h9 : Heap :=
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.closure
     "padrow"
-    #[{ arg := "row", span := { lineno := 79, colOffset := 20, endLineno := 79, endColOffset := 23 }, default := none }]
+    #[{ arg := "row", span := { lineno := 85, colOffset := 20, endLineno := 85, endColOffset := 23 }, default := none }]
     true
     true
     false
@@ -1166,43 +1166,43 @@ def h9 : Heap :=
              (LeanModels.Python.Expr.tuple
                #[LeanModels.Python.Expr.constant
                    (LeanModels.Python.Const.int 0)
-                   { lineno := 79, colOffset := 26, endLineno := 79, endColOffset := 27 }]
-               { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 29 })
+                   { lineno := 85, colOffset := 26, endLineno := 85, endColOffset := 27 }]
+               { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 29 })
              (LeanModels.Python.BinOp.add)
              (LeanModels.Python.Expr.call
                (LeanModels.Python.Expr.name
                  "tuple"
-                 { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 37 })
+                 { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 37 })
                #[LeanModels.Python.Expr.call
                    (LeanModels.Python.Expr.name
-                     "<genexpr@4>"
-                     { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 })
+                     "<genexpr@5>"
+                     { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 })
                    #[LeanModels.Python.Expr.name
                        "row"
-                       { lineno := 79, colOffset := 60, endLineno := 79, endColOffset := 63 }]
+                       { lineno := 85, colOffset := 60, endLineno := 85, endColOffset := 63 }]
                    #[]
                    none
-                   { lineno := 79, colOffset := 37, endLineno := 79, endColOffset := 64 }]
+                   { lineno := 85, colOffset := 37, endLineno := 85, endColOffset := 64 }]
                #[]
                none
-               { lineno := 79, colOffset := 32, endLineno := 79, endColOffset := 64 })
-             { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 64 })
+               { lineno := 85, colOffset := 32, endLineno := 85, endColOffset := 64 })
+             { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 64 })
            (LeanModels.Python.BinOp.add)
            (LeanModels.Python.Expr.tuple
              #[LeanModels.Python.Expr.constant
                  (LeanModels.Python.Const.int 0)
-                 { lineno := 79, colOffset := 68, endLineno := 79, endColOffset := 69 }]
-             { lineno := 79, colOffset := 67, endLineno := 79, endColOffset := 71 })
-           { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }))
-        { lineno := 79, colOffset := 25, endLineno := 79, endColOffset := 71 }]
+                 { lineno := 85, colOffset := 68, endLineno := 85, endColOffset := 69 }]
+             { lineno := 85, colOffset := 67, endLineno := 85, endColOffset := 71 })
+           { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }))
+        { lineno := 85, colOffset := 25, endLineno := 85, endColOffset := 71 }]
     [],
   LeanModels.Python.Obj.generator
-    "<genexpr@5>"
+    "<genexpr@6>"
     [(".0", LeanModels.Python.RVal.rangeV 0 8 1), ("i", LeanModels.Python.RVal.int 7)]
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 4, LeanModels.Python.RVal.int 54, LeanModels.Python.RVal.int 47,
@@ -1212,7 +1212,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-32), LeanModels.Python.RVal.int 10, LeanModels.Python.RVal.int 55,
@@ -1222,7 +1222,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-62), LeanModels.Python.RVal.int 12, LeanModels.Python.RVal.int (-57),
@@ -1232,7 +1232,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-55), LeanModels.Python.RVal.int 50, LeanModels.Python.RVal.int 11,
@@ -1242,7 +1242,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-55), LeanModels.Python.RVal.int (-43), LeanModels.Python.RVal.int (-52),
@@ -1252,7 +1252,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-47), LeanModels.Python.RVal.int (-42), LeanModels.Python.RVal.int (-43),
@@ -1262,7 +1262,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int (-4), LeanModels.Python.RVal.int 3, LeanModels.Python.RVal.int (-14),
@@ -1272,7 +1272,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@4>"
+    "<genexpr@5>"
     [(".0",
       LeanModels.Python.RVal.tuple
         #[LeanModels.Python.RVal.int 17, LeanModels.Python.RVal.int 30, LeanModels.Python.RVal.int (-3),
@@ -1282,7 +1282,7 @@ def h9 : Heap :=
     []
     (LeanModels.Python.GenStatus.closed),
   LeanModels.Python.Obj.generator
-    "<genexpr@6>"
+    "<genexpr@7>"
     [(".0", LeanModels.Python.RVal.rangeV 0 120 1), ("i", LeanModels.Python.RVal.int 119)]
     []
     (LeanModels.Python.GenStatus.closed)]

@@ -1,6 +1,6 @@
 /-
 **Depth-bounded equivalences for the RAW shipped `bound()`** — step 2 of the
-model-removal roadmap (docs/backlog.md §L10).
+model-removal roadmap (docs/backlog.md §L10, re-pinned in §L15).
 
 `Examples/python/sf_order/bound.lean` (§L9) proved `bound_probe`'s own fold on
 the `sf_order` fixture and recorded the consumption note: *the fold's shape IS
@@ -8,29 +8,41 @@ the recursion shape* — an induction hypothesis at depth `d-1` is consumed as a
 `Hands` schedule at depth `d`. This file takes that shape to the **shipped**
 `Searcher.bound`, on `Examples/python/sunfish/sunfish.py`.
 
-**FIXTURE DRIFT, measured 2026-08-19 (docs/backlog.md §L13) — read this before
-trusting the word "shipped" above.** The fixture is the engine's `sunfish.py`
-at `sha256 2142d9c2…` (engine commit `783b0d6`, 2026-08-11), and §L9/§L10
-verified byte-identity with the engine's master at that time. It is no longer
-identical: 33 further commits (287 changed lines) moved the engine's `bound()`
-from 13 top-level statements to 18. **Everything below is still a theorem about
-a real Python program — it is not a theorem about TODAY's engine master**, and
-the re-pin that would restore the claim is BLOCKED rather than expensive: on
-current master `moves()` captures `guard` and `val`, both REBOUND after the
-`def`, so the nested-def tier refuses it at extraction and every
-`Searcher.bound` call answers `unsupported statement 'NestedDef'`. §L13 has
-the measurements and the tier item. What the drift does NOT touch: the table's
-own shape — `entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER,
-MATE_UPPER))`, `self.tp_score[pos, depth] = Entry(…)` and `Entry =
-namedtuple("Entry", "lower upper")` are byte-identical in both versions, which
-is why step 3's calculus (`LeanModels/Python/DictCalc.lean`) was built in the
-GENERAL layer and is drift-proof.
+**RE-PINNED 2026-08-19 to engine master `e670434`** (`sunfish.py` `sha256
+f6c481a6…`). The pass-7 fixture (`sha256 2142d9c2…`, engine `783b0d6`) had
+drifted 33 commits; §L13 measured the drift and found the re-pin BLOCKED
+rather than expensive (the shipped `moves()` captures `guard`, rebound after
+the `def`, so the whole call answered `unsupported statement 'NestedDef'`),
+and §L14 landed the closure-cell tier that unblocked it. The header this file
+carried in between — a drift warning saying "not a theorem about TODAY's
+engine master" — is retired: it is one again.
 
-The object is the real thing: thirteen statements, a node counter and a wall
+What #236 changed, and what it costs this file:
+
+* `Searcher.bound` is **18 top-level statements**, not 13. `moves()` yields
+  `(value, move)` PAIRS, `val_lower` is gone, and four new head statements
+  (`killer`, `calm`/`guard`, `t`, `nmr`) sit between the probe and the fold —
+  so every §0 pin from index 6 on moves. That is §0, re-projected.
+* **The score is computed in the CONSUMER**, across five branches, and one of
+  them BREAKS on a settled cap without touching `live` or the cutoff block.
+  §3's fold vocabulary is therefore a different program, re-derived here
+  against the new shape rather than patched: the walk is over ROUNDS (what the
+  consumer makes of a yield), and it has TWO terminals.
+* Everything the generator tier proves is unmoved (§L13 measured
+  `gen_moves`/`value`/`move`/`rotate`/`king_capture`/`parse`/`render`
+  byte-identical), and so is the whole TABLE shape — the probe
+  (`entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER, MATE_UPPER))`),
+  the store and `Entry = namedtuple("Entry", "lower upper")` are
+  byte-identical in both versions. §7 wires step 3's calculus
+  (`LeanModels/Python/DictCalc.lean`) to those three lines, which is what
+  building it in the GENERAL layer bought.
+
+The object is the real thing: eighteen statements, a node counter and a wall
 clock on the receiver, two transposition dicts and a history set behind
-attributes, a five-capture nested generator that RE-ENTERS `bound` on every
-searched move, a fold with a table write inside its cutoff, a terminality
-correction and a table store.
+attributes, a five-capture nested generator — one of them CELLED — that
+RE-ENTERS `bound` on every searched move and on both null probes, a fold with
+a table write inside its cutoff and an early break beside it, a terminality
+correction carrying the mate distance, and a table store.
 -/
 import Examples.python.sunfish.genmoves_drain
 
@@ -44,7 +56,7 @@ set_option maxRecDepth 100000
 
 /-! ## §0 The program, projected
 
-`Searcher.bound`'s thirteen statements, each READ OUT of the shipped module
+`Searcher.bound`'s eighteen statements, each READ OUT of the shipped module
 and pinned by `rfl`. Nothing below is retyped: a changed program stops these
 pins loudly. -/
 
@@ -64,10 +76,11 @@ def sbF : FunctionDefn :=
   | some f => f
   | none => ⟨"", #[], false, false, false, false, #[], nowhere⟩
 
-/-- Its body — thirteen statements. -/
+/-- Its body — eighteen statements. -/
 def sbB : List Stmt := sbF.body.toList
 
-/-- The docstring. -/
+/-- The docstring — #236 rewrote it (the four exact promises), and the pin
+below is span- AND text-blind on purpose. -/
 def sbDoc : Stmt := nth 0 sbB
 /-- `self.nodes += 1`. -/
 def sbNodes : Stmt := nth 1 sbB
@@ -80,24 +93,44 @@ def sbMate : Stmt := nth 4 sbB
 /-- `if not root:` — the table probe, the two bound returns, the repetition
 truncation. -/
 def sbProbe : Stmt := nth 5 sbB
-/-- `def moves(): …` — the nested generator, five captures. -/
-def sbDef : Stmt := nth 6 sbB
+/-- `killer = self.tp_move.get(pos)` — #236's first new statement: the killer
+is read BEFORE the null probe, in case the recursive probe evicts it. -/
+def sbKiller : Stmt := nth 6 sbB
+/-- `def moves(): …` — the nested generator, five captures, one of them a
+CELL (`guard`, written below the `def`). -/
+def sbDef : Stmt := nth 7 sbB
+/-- `calm = abs(pos.score) < 750 and any(c in pos.board for c in "RBNQ")` —
+the ONE calmness test #236 lifted out of `moves()`. -/
+def sbCalm : Stmt := nth 8 sbB
+/-- `guard = not root and calm` — the celled capture, written AFTER the
+`def` and read at the CALL. -/
+def sbGuard : Stmt := nth 9 sbB
+/-- `t = pos.score + NULL_MARGIN` — the deep-null probe's target. -/
+def sbT : Stmt := nth 10 sbB
+/-- `nmr = (calm and depth >= 6 and -self.bound(…) >= t)` — the fuel probe.
+At a QS node the `depth >= 6` conjunct is false, so it never recurses. -/
+def sbNmr : Stmt := nth 11 sbB
 /-- `best, live = -MATE_UPPER, False`. -/
-def sbAcc : Stmt := nth 7 sbB
-/-- `for move, score in moves():` — the fold. -/
-def sbFor : Stmt := nth 8 sbB
+def sbAcc : Stmt := nth 12 sbB
+/-- `for val, move in moves():` — the fold. The pair is `(value, move)`, in
+that order: #236 turned it around. -/
+def sbFor : Stmt := nth 13 sbB
 /-- `if depth and not live and all(…): …` — the terminality correction. -/
-def sbCorr : Stmt := nth 9 sbB
+def sbCorr : Stmt := nth 14 sbB
 /-- `if not root: self.tp_score[pos, depth] = …` — the table store. -/
-def sbStore : Stmt := nth 10 sbB
+def sbStore : Stmt := nth 15 sbB
 /-- `if len(self.tp_score) > TABLE_SIZE: del …` — the FIFO eviction. -/
-def sbEvict : Stmt := nth 11 sbB
+def sbEvict : Stmt := nth 16 sbB
 /-- `return best`. -/
-def sbRet : Stmt := nth 12 sbB
+def sbRet : Stmt := nth 17 sbB
 
 theorem sbB_split : sbB =
-    [sbDoc, sbNodes, sbClock, sbDepth, sbMate, sbProbe, sbDef, sbAcc, sbFor,
-     sbCorr, sbStore, sbEvict, sbRet] := rfl
+    [sbDoc, sbNodes, sbClock, sbDepth, sbMate, sbProbe, sbKiller, sbDef,
+     sbCalm, sbGuard, sbT, sbNmr, sbAcc, sbFor, sbCorr, sbStore, sbEvict,
+     sbRet] := rfl
+
+/-- The census as a NUMBER, so the 13 → 18 shift can never be silent again. -/
+theorem sbB_length : sbB.length = 18 := rfl
 
 /-! ### The head's five statements -/
 
@@ -132,7 +165,8 @@ theorem sbMate_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8, sbMate =
 /-! ### The probe block
 
 `sbProbe`'s four statements are projected separately: the gates below
-case-split on the two bound returns and on the repetition test. -/
+case-split on the two bound returns and on the repetition test. All four are
+byte-identical to the pass-7 fixture's. -/
 
 /-- The four statements under `if not root:`. -/
 def sbProbeB : List Stmt :=
@@ -175,13 +209,65 @@ theorem sbRep_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10, sbRep =
           .compare (.name "pos" p3) #[.inOp] #[.attribute (.name "self" p4) "history" p5] p6] p7)
       #[.ret (some (.constant (.int 0) p8)) p9] #[] p10 := ⟨_, _, _, _, _, _, _, _, _, _, _, rfl⟩
 
+/-! ### #236's four new head statements
+
+They run between the probe and the fold, and each one is a reason the
+statement census moved. `killer` feeds `moves()`; `calm` is the one calmness
+test, split two ways by `guard`; `t` and `nmr` are the deep-null fuel probe,
+which is the ONE recursive call `bound` makes outside the fold. -/
+
+theorem sbKiller_lit : ∃ p0 p1 p2 p3 p4 p5 p6, sbKiller =
+    .assign #[.name "killer" p0]
+      (.call (.attribute (.attribute (.name "self" p1) "tp_move" p2) "get" p3)
+        #[.name "pos" p4] #[] Option.none p5) p6 := ⟨_, _, _, _, _, _, _, rfl⟩
+
+/-- `calm`'s piece probe is a LOWERED genexp (`<genexpr@3>`), so the second
+conjunct is pinned existentially: what this file needs from it is that `calm`
+is an `and` whose FIRST conjunct is the score band, and that nothing in it
+reads the table. -/
+theorem sbCalm_lit : ∃ (g : Expr) (p0 p1 p2 p3 p4 p5 p6 p7 p8 : Span), sbCalm =
+    .assign #[.name "calm" p0]
+      (.boolOp .and
+        #[.compare (.call (.name "abs" p1) #[.attribute (.name "pos" p2) "score" p3] #[]
+            Option.none p4) #[.lt] #[.constant (.int 750) p5] p6, g] p7) p8 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **The celled capture, in the source order that makes it one.** `guard` is
+written HERE — below `def moves():` and above the first `moves()` call — so a
+snapshot taken at the `def` would read an unbound name and the H7 tier
+refused it outright (§L13). §L14's cell gives the name a heap slot addressed
+under the directory key `<cell>guard`, allocated when the `def` runs and read
+at the CALL, which is what makes this statement's position legal rather than
+fatal. -/
+theorem sbGuard_lit : ∃ p0 p1 p2 p3 p4 p5, sbGuard =
+    .assign #[.name "guard" p0]
+      (.boolOp .and #[.unaryOp .not (.name "root" p1) p2, .name "calm" p3] p4) p5 :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+theorem sbT_lit : ∃ p0 p1 p2 p3 p4 p5, sbT =
+    .assign #[.name "t" p0]
+      (.binOp (.attribute (.name "pos" p1) "score" p2) .add (.name "NULL_MARGIN" p3) p4) p5 :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+/-- **The deep-null fuel probe.** `depth >= 6` is the SECOND conjunct, so at
+any node below depth 6 — every QS node included — the `and` short-circuits
+before the recursive call and `nmr` is just `calm`'s truth value. That is what
+keeps the depth-0 gate below free of a child. -/
+theorem sbNmr_lit : ∃ (r : Expr) (p0 p1 p2 p3 p4 p5 p6 p7 p8 : Span), sbNmr =
+    .assign #[.name "nmr" p0]
+      (.boolOp .and
+        #[.name "calm" p1,
+          .compare (.name "depth" p2) #[.gtE] #[.constant (.int 6) p3] p4,
+          .compare r #[.gtE] #[.name "t" p5] p6] p7) p8 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, rfl⟩
+
 /-! ### The accumulators, the fold, and the tail -/
 
 theorem sbAcc_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7, sbAcc =
     .assign #[.tuple #[.name "best" p0, .name "live" p1] p2]
       (.tuple #[.unaryOp .usub (.name "MATE_UPPER" p3) p4, .constant (.bool false) p5] p6) p7 := ⟨_, _, _, _, _, _, _, _, rfl⟩
 
-/-- The fold's target, `(move, score)`. -/
+/-- The fold's target, `(val, move)` — #236's order. -/
 def sbTarget : Expr :=
   match sbFor with | .forStmt t _ _ _ _ => t | _ => .constant .none nowhere
 /-- `moves()` — the closure call. -/
@@ -190,11 +276,14 @@ def sbMovesCall : Expr :=
 /-- The fold's body — three statements. -/
 def sbBody : List Stmt :=
   match sbFor with | .forStmt _ _ b _ _ => b.toList | _ => []
-/-- `best = max(best, score)`. -/
-def sbMax : Stmt := nth 0 sbBody
-/-- `live |= move is not None and score > -MATE_UPPER`. -/
-def sbLive : Stmt := nth 1 sbBody
-/-- `if best >= gamma: …; break` — the beta cutoff. -/
+/-- `if move is None and depth == 0: … elif … else: …` — THE SCORE CHAIN,
+#236's central move: the score is computed here, in the consumer, not in
+`moves()`. -/
+def sbScore : Stmt := nth 0 sbBody
+/-- `best = max(best, score)` — byte-identical to pass 7's. -/
+def sbMax : Stmt := nth 1 sbBody
+/-- `if best >= gamma: …; break` — the beta cutoff, byte-identical to pass
+7's. -/
 def sbCut : Stmt := nth 2 sbBody
 /-- The cutoff's body: the killer store, then `break`. -/
 def sbCutB : List Stmt :=
@@ -205,31 +294,136 @@ def sbKill : Stmt := nth 0 sbCutB
 def sbKillB : List Stmt :=
   match sbKill with | .ifStmt _ b _ _ => b.toList | _ => []
 
-theorem sbBody_split : sbBody = [sbMax, sbLive, sbCut] := rfl
+theorem sbBody_split : sbBody = [sbScore, sbMax, sbCut] := rfl
 theorem sbCutB_split : ∃ s, sbCutB = [sbKill, .brk s] := ⟨_, rfl⟩
 
 theorem sbFor_lit : ∃ sp, sbFor = .forStmt sbTarget sbMovesCall sbBody.toArray #[] sp :=
   ⟨_, rfl⟩
 theorem sbTarget_lit : ∃ p0 p1 p2, sbTarget =
-    .tuple #[.name "move" p0, .name "score" p1] p2 := ⟨_, _, _, rfl⟩
-/-- The killer store's GATE: `move is not None` **and `depth`** — at a QS node
-(`depth == 0`) the second conjunct is falsy and the store never runs, which is
-what makes the depth-0 fold heap-free. -/
+    .tuple #[.name "val" p0, .name "move" p1] p2 := ⟨_, _, _, rfl⟩
 theorem sbMovesCall_lit : ∃ p0 p1, sbMovesCall =
     .call (.name "moves" p0) #[] #[] Option.none p1 := ⟨_, _, rfl⟩
+
+/-! #### The score chain, branch by branch
+
+Five branches, pinned as the nest the `elif` really is. The projections are
+positional so a reordering stops them; the pins name the TEST of each branch
+and leave the bodies existential where the body is another branch. -/
+
+/-- Branch 1's body — `score = pos.score`, the QS stand-pat. -/
+def sbB1 : List Stmt := match sbScore with | .ifStmt _ b _ _ => b.toList | _ => []
+/-- The `elif` chain hanging off branch 1. -/
+def sbElse1 : List Stmt := match sbScore with | .ifStmt _ _ o _ => o.toList | _ => []
+/-- `elif move is None:` — the null-move arm. -/
+def sbVirt : Stmt := nth 0 sbElse1
+/-- The null arm's body: the CAP test. -/
+def sbVirtB : List Stmt := match sbVirt with | .ifStmt _ b _ _ => b.toList | _ => []
+/-- `else:` — the real-move arm. -/
+def sbReal : Stmt := nth 0 (match sbVirt with | .ifStmt _ _ o _ => o.toList | _ => [])
+/-- `if (cap := pos.score + EVAL_ROUGHNESS) >= gamma:` — branch 2 vs 3. -/
+def sbCapPass : Stmt := nth 0 sbVirtB
+/-- The real arm's body: `if val >= MATE_LOWER:` — branch 4 vs 5. -/
+def sbMateVal : Stmt := sbReal
+/-- Branch 5's statements: the cap, THE BREAK, the reduction, the search,
+the `live` update. -/
+def sbB5 : List Stmt := match sbReal with | .ifStmt _ _ o _ => o.toList | _ => []
+/-- `cap = MATE_UPPER if depth > 3 else pos.score + val + max(depth-1,0)*QS_A`. -/
+def sbCapLine : Stmt := nth 0 sbB5
+/-- **`if cap < gamma: best = max(best, cap); break`** — #236's explicit
+break, and the fold's SECOND terminal. -/
+def sbBreak : Stmt := nth 1 sbB5
+/-- `move_depth = depth - 1 - (guard and depth >= 6 and val < LMR) - int(nmr)`. -/
+def sbMoveDepth : Stmt := nth 2 sbB5
+/-- `score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))`. -/
+def sbSearch : Stmt := nth 3 sbB5
+/-- `live |= score > -MATE_UPPER`. -/
+def sbLive : Stmt := nth 4 sbB5
+
+theorem sbElse1_split : sbElse1 = [sbVirt] := rfl
+theorem sbB5_split : sbB5 = [sbCapLine, sbBreak, sbMoveDepth, sbSearch, sbLive] := rfl
+
+/-- **Branch 1's test** — `move is None and depth == 0`. The `depth == 0`
+conjunct is what makes the QS stand-pat a LEAF: no cap, no child, no `live`. -/
+theorem sbScore_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7, sbScore =
+    .ifStmt (.boolOp .and
+        #[.compare (.name "move" p0) #[.is] #[.constant Const.none p1] p2,
+          .compare (.name "depth" p3) #[.eq] #[.constant (.int 0) p4] p5] p6)
+      sbB1.toArray sbElse1.toArray p7 := ⟨_, _, _, _, _, _, _, _, rfl⟩
+
+theorem sbB1_lit : ∃ p0 p1 p2 p3, sbB1 =
+    [.assign #[.name "score" p0] (.attribute (.name "pos" p1) "score" p2) p3] :=
+  ⟨_, _, _, _, rfl⟩
+
+/-- **Branch 2/3's test** — `move is None`, i.e. a null-move pass at depth
+≥ 1 (branch 1 already took the depth-0 case). -/
+theorem sbVirt_lit : ∃ (o : Array Stmt) (p0 p1 p2 p3 : Span), sbVirt =
+    .ifStmt (.compare (.name "move" p0) #[.is] #[.constant Const.none p1] p2)
+      sbVirtB.toArray o p3 := ⟨_, _, _, _, _, rfl⟩
+
+/-- **The pass's cap, and its WALRUS.** `(cap := pos.score + EVAL_ROUGHNESS)`
+is `Expr.namedExpr` — §L14's tier item 3, the constructor the general walrus
+needed. A cap below `gamma` answers the pass outright (branch 3); at or above
+it, the child runs (branch 2). -/
+theorem sbCapPass_lit : ∃ (b o : Array Stmt) (p0 p1 p2 p3 p4 p5 p6 p7 : Span), sbCapPass =
+    .ifStmt (.compare
+        (.namedExpr "cap"
+          (.binOp (.attribute (.name "pos" p0) "score" p1) .add
+            (.name "EVAL_ROUGHNESS" p2) p3) p4)
+        #[.gtE] #[.name "gamma" p5] p6) b o p7 := ⟨_, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **Branch 4/5's test** — `val >= MATE_LOWER`, the intrinsic king capture:
+an exact `MATE_UPPER` token and `live`, never a search. -/
+theorem sbReal_lit : ∃ (b : Array Stmt) (p0 p1 p2 p3 : Span), sbReal =
+    .ifStmt (.compare (.name "val" p0) #[.gtE] #[.name "MATE_LOWER" p1] p2)
+      b sbB5.toArray p3 := ⟨_, _, _, _, _, rfl⟩
+
+/-- **The futility cap.** Above depth 3 there is none (`MATE_UPPER`); at or
+below it the cap is `pos.score + val + max(depth - 1, 0) * QS_A`, and at a QS
+node the third term is `0 * QS_A`. -/
+theorem sbCapLine_lit :
+    ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 p16 p17 p18 p19, sbCapLine =
+    .assign #[.name "cap" p0]
+      (.ifExp (.compare (.name "depth" p1) #[.gt] #[.constant (.int 3) p2] p3)
+        (.name "MATE_UPPER" p4)
+        (.binOp (.binOp (.attribute (.name "pos" p5) "score" p6) .add (.name "val" p7) p8)
+          .add
+          (.binOp (.call (.name "max" p9)
+              #[.binOp (.name "depth" p10) .sub (.constant (.int 1) p11) p12,
+                .constant (.int 0) p13] #[] Option.none p14)
+            .mult (.name "QS_A" p15) p16) p17) p18) p19 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **THE BREAK.** `if cap < gamma: best = max(best, cap); break`. Two facts
+the fold's spec reads off this pin: the cap is folded with `max` (an earlier
+report may be tighter), and the `break` leaves the round BEFORE `live` and
+BEFORE the cutoff block — so a settled move witnesses no legality and stores
+no killer. -/
+theorem sbBreak_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10, sbBreak =
+    .ifStmt (.compare (.name "cap" p0) #[.lt] #[.name "gamma" p1] p2)
+      #[.assign #[.name "best" p3]
+          (.call (.name "max" p4) #[.name "best" p5, .name "cap" p6] #[] Option.none p7) p8,
+        .brk p9] #[] p10 := ⟨_, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- The reduction: `depth - 1` minus the LMR bit minus `int(nmr)`. Both
+subtrahends are booleans, so the child's depth is in `[depth - 3, depth - 1]`
+— strictly below the parent's at every `depth ≥ 1` (`child_depth_lt`). -/
+theorem sbMoveDepth_lit : ∃ (r : Expr) (p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 : Span), sbMoveDepth =
+    .assign #[.name "move_depth" p0]
+      (.binOp (.binOp (.binOp (.name "depth" p1) .sub (.constant (.int 1) p2) p3)
+          .sub r p4)
+        .sub (.call (.name "int" p5) #[.name "nmr" p6] #[] Option.none p7) p8) p9 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem sbLive_lit : ∃ p0 p1 p2 p3 p4 p5, sbLive =
+    .augAssign (.name "live" p0) .bitOr
+      (.compare (.name "score" p1) #[.gt]
+        #[.unaryOp .usub (.name "MATE_UPPER" p2) p3] p4) p5 :=
+  ⟨_, _, _, _, _, _, rfl⟩
 
 theorem sbMax_lit : ∃ p0 p1 p2 p3 p4 p5, sbMax =
     .assign #[.name "best" p0]
       (.call (.name "max" p1) #[.name "best" p2, .name "score" p3] #[] Option.none p4) p5 :=
   ⟨_, _, _, _, _, _, rfl⟩
-
-theorem sbLive_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9, sbLive =
-    .augAssign (.name "live" p0) .bitOr
-      (.boolOp .and
-        #[.compare (.name "move" p1) #[.isNot] #[.constant Const.none p2] p3,
-          .compare (.name "score" p4) #[.gt]
-            #[.unaryOp .usub (.name "MATE_UPPER" p5) p6] p7] p8) p9 :=
-  ⟨_, _, _, _, _, _, _, _, _, _, rfl⟩
 
 theorem sbCut_lit : ∃ p0 p1 p2 p3, sbCut =
     .ifStmt (.compare (.name "best" p0) #[.gtE] #[.name "gamma" p1] p2)
@@ -262,7 +456,9 @@ theorem sbStore_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12 p13 p14 p15 
 /-- The eviction guard, and the FIFO delete it hides. `del d[k]` is outside
 the tier and ingests as `Stmt.unsupported`, so every gate below must show the
 guard is FALSE rather than step through it — which is exactly what the shipped
-`TABLE_SIZE = 10**6` buys. -/
+`TABLE_SIZE = 10**6` buys. Both `del`s (this one and the `tp_move` one inside
+the cutoff) are the WHOLE of `bound`'s unsupported census — §L14 measured two,
+down from §L13's three, once the closure cell removed the `NestedDef`. -/
 theorem sbEvict_lit : ∃ (b : Array Stmt) (p0 p1 p2 p3 p4 p5 p6 : Span), sbEvict =
     .ifStmt (.compare (.call (.name "len" p0)
         #[.attribute (.name "self" p1) "tp_score" p2] #[] Option.none p3) #[.gt]
@@ -273,11 +469,22 @@ theorem sbRet_lit : ∃ p0 p1, sbRet = .ret (some (.name "best" p0)) p1 := ⟨_,
 
 /-- The five facts `callIn`'s function arm tests, and the two shapes the body
 gates are stated in: the parameter list is `self, pos, gamma, depth, root` and
-`root` carries its literal default `False`. -/
+`root` carries its literal default `False`. Unchanged by #236 — which is why
+§L14 could report the gates green before the pins moved. -/
 theorem sbF_lit : findFunction sunfish "Searcher.bound" = some sbF ∧
     sbF.argsOk = true ∧ sbF.localsOk = true ∧ sbF.isGenerator = false ∧
     sbF.body.toList = sbB ∧ (5 : Nat) = sbF.params.size :=
   ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- **The nested generator's capture set, pinned.** Five names, and `guard`
+carries the `<cell>` directory prefix that §L14's tier gives a capture rebound
+between the `def` and the call. The pin is the tier item's own object: drop
+the cell and this line stops. -/
+theorem sbDef_captures : ∃ (ps : Array Param) (ao lo hg : Bool)
+    (b : Array Stmt) (sp : Span), sbDef =
+    .defStmt "moves" ps ao lo hg true b
+      #["depth", "gamma", "<cell>guard", "killer", "pos"] sp :=
+  ⟨_, _, _, _, _, _, rfl⟩
 
 /-! ## §1 The constants, and the module-level resolutions
 
@@ -297,8 +504,14 @@ def mateLower : Int := 47923
 def mateUpper : Int := 69290
 /-- `TABLE_SIZE` — a G1 constant, unlike the two above. -/
 def tableSize : Int := 1000000
+/-- `EVAL_ROUGHNESS` — the null-move pass's cap increment. -/
+def evalRoughness : Int := 15
+/-- `QS_A` — the futility slope. -/
+def qsA : Int := 140
+/-- `NULL_MARGIN` — #236's deep-null target offset, a G1 constant. -/
+def nullMargin : Int := -200
 
-/-! The three values are the shipped file's own. They are checked by RUNNING
+/-! The values are the shipped file's own. They are checked by RUNNING
 module init (`#guard`, the compiled evaluator) rather than pinned by a kernel
 `rfl`: `initWorld sunfish` executes the 1MB top level, and reducing that in
 the kernel is measured at over 4M heartbeats and an out-of-memory kill
@@ -306,13 +519,18 @@ the kernel is measured at over 4M heartbeats and an out-of-memory kill
 #guard Env.lookup (initWorld sunfish).globals "MATE_LOWER" == some (.int mateLower)
 #guard Env.lookup (initWorld sunfish).globals "MATE_UPPER" == some (.int mateUpper)
 #guard Env.lookup (initWorld sunfish).globals "TABLE_SIZE" == some (.int tableSize)
+#guard Env.lookup (initWorld sunfish).globals "EVAL_ROUGHNESS" == some (.int evalRoughness)
+#guard Env.lookup (initWorld sunfish).globals "QS_A" == some (.int qsA)
+#guard Env.lookup (initWorld sunfish).globals "NULL_MARGIN" == some (.int nullMargin)
 
 /-! ### The pinned residues
 
 §L8 finding 2: pin the residue the unfold set leaves rather than let it
-unfold. `max` and `Entry` are the two names the head and the fold resolve;
-each resolution walks the constant fold, the function table, the class table
-and the namedtuple table, and each of those steps is an `rfl` here. -/
+unfold. `max`, `min` and `Entry` are the three names the head and the fold
+resolve (`min` is new: #236's `min(cap, -self.bound(…))` is how both searching
+branches apply their cap); each resolution walks the constant fold, the
+function table, the class table and the namedtuple table, and each of those
+steps is an `rfl` here. -/
 
 theorem maxG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "max"
     = Option.none := rfl
@@ -321,6 +539,14 @@ theorem maxNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "max" := by
   simpa [findFunction] using maxF
 theorem maxCls : findClassAux sunfish.classes.toList "max" 0 = Option.none := rfl
 theorem maxNT : findNamedTupleAux sunfish.namedtuples.toList "max" = Option.none := rfl
+
+theorem minG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "min"
+    = Option.none := rfl
+theorem minF : findFunction sunfish "min" = Option.none := rfl
+theorem minNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "min" := by
+  simpa [findFunction] using minF
+theorem minCls : findClassAux sunfish.classes.toList "min" 0 = Option.none := rfl
+theorem minNT : findNamedTupleAux sunfish.namedtuples.toList "min" = Option.none := rfl
 
 theorem mlG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
     "MATE_LOWER" = some Option.none := rfl
@@ -334,21 +560,47 @@ theorem entryNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "Entry" := 
   simpa [findFunction] using entryF
 theorem entryClsAux : findClassAux sunfish.classes.toList "Entry" 0 = Option.none := rfl
 /-- `Entry` IS a namedtuple: `Entry = namedtuple("Entry", "lower upper")`, and
-the table answers with the two fields the table probe reads. -/
+the table answers with the two fields the table probe reads. Byte-identical to
+pass 7's — the whole reason §7 below is a wiring job and not a proof. -/
 theorem entryNTAux : ∃ sp, findNamedTupleAux sunfish.namedtuples.toList "Entry"
     = some ⟨"Entry", "Entry", #["lower", "upper"], sp⟩ := ⟨_, rfl⟩
 
 /-! ## §2 The receiver, and the frame
 
-`Searcher.__init__` binds five attributes in this order; the two
-transposition tables and the history set are heap objects behind them, so a
-gate that says what `bound` does to the table says it about `ts`/`tm`, never
-about the instance. -/
+`Searcher.__init__` binds SIX attributes in this order; the two transposition
+tables and the history set are heap objects behind them, so a gate that says
+what `bound` does to the table says it about `ts`/`tm`, never about the
+instance.
+
+**Six, not five** — engine master's `__init__` is `self.nodes,
+self.deadline, self.soft = 0, 1 << 63, 1 << 63`, and `soft` is the second
+wall the UCI driver arms (`search()` reads it once per completed depth). It
+is nothing to `bound`, which never mentions it, but a receiver shape that
+omitted it would make every gate below VACUOUS rather than wrong — so the
+shape is pinned against a real `Searcher()` immediately after it. -/
 
 /-- The receiver as the gates see it. -/
-def searcherObj (ci : ClassId) (ts tm hs : Addr) (nodes dl : Int) : Obj :=
+def searcherObj (ci : ClassId) (ts tm hs : Addr) (nodes dl sft : Int) : Obj :=
   .instance ci #[("tp_score", .ref ts), ("tp_move", .ref tm), ("history", .ref hs),
-                 ("nodes", .int nodes), ("deadline", .int dl)]
+                 ("nodes", .int nodes), ("deadline", .int dl), ("soft", .int sft)]
+
+/-! **The shape is the engine's own.** A fresh `Searcher()` over the real
+`initWorld` matches `searcherObj` at the three fresh addresses, with both
+walls at `1 << 63`. This `#guard` is the non-vacuity check the gates below
+stand on: drop an attribute and it stops, instead of the gates quietly
+becoming statements about nothing. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance ci attrs) =>
+       (match attrs.toList with
+        | [("tp_score", .ref ts), ("tp_move", .ref tm), ("history", .ref hs),
+           ("nodes", .int n), ("deadline", .int dl), ("soft", .int sf)] =>
+          Heap.get? w.heap a == some (searcherObj ci ts tm hs n dl sf)
+            && n == 0 && dl == 9223372036854775808 && sf == 9223372036854775808
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
 
 /-- `Searcher.bound`'s entry frame: its five parameters, `root` filled from
 its literal default. -/
@@ -357,86 +609,222 @@ def sbEnv0 (slf pv : RVal) (gamma depth : Int) : REnv :=
    ("root", .bool false)]
 
 /-- The entry frame IS what `callIn` builds for a four-argument call: the
-default-filled `root` is the shipped signature's own, not a choice here. -/
+default-filled `root` is the shipped signature's own, not a choice here.
+Unchanged across the re-pin — #236 touched the body, never the signature. -/
 theorem sbCallEnv (slf pv : RVal) (gamma depth : Int) :
     mkCallEnv sbF.params #[slf, pv, .int gamma, .int depth] = sbEnv0 slf pv gamma depth := rfl
 
-/-! ## §3 The vocabulary of a QS fold
+/-! ## §3 The vocabulary of a QS fold — RE-DERIVED for #236
 
-What `moves()` hands over, what the fold does with it, and the walk that is
-the SPEC side of every depth-bounded gate below. -/
+Pass 7's `moves()` handed the consumer a finished `(move, score)`, and the
+fold was a three-line walk over scores. #236 turned the pair around and moved
+the SCORING into the loop: `moves()` now yields `(value, move)` — a static
+value and a move, both `None` for a virtual yield — and the consumer decides
+what that is worth across five branches, one of which BREAKS.
 
-/-- One yield of the shipped `moves()`: `yield <move>, <score>`. The move is
-`None` for a VIRTUAL yield — the null-move pass, the QS stand-pat, a futility
-estimate — and a `Move` for a searched one, which is exactly the distinction
-`live` tracks. -/
+So this section is not the old one patched. The walk is over **rounds** (what
+the consumer makes of a yield), and it has **two** terminals, not one. -/
+
+/-- One yield of the shipped `moves()`: `yield <value>, <move>`. Both are
+`None` for a VIRTUAL yield — the null-move pass and the QS stand-pat — and a
+real yield carries `.int v` beside its `Move`, which is exactly the
+distinction the consumer's `move is None` tests and `live` tracks. -/
 structure Yield where
+  /-- The static value, or `None` for a virtual yield. -/
+  val : RVal
   /-- The move, or `None` for a virtual yield. -/
   move : RVal
-  /-- The score the yield carries. -/
-  score : Int
 
-/-- The yield as the interpreter's value: the shipped tuple `(move, score)`. -/
-def yieldVal (y : Yield) : RVal := .tuple #[y.move, .int y.score]
+/-- The yield as the interpreter's value: the shipped tuple `(val, move)`. -/
+def yieldVal (y : Yield) : RVal := .tuple #[y.val, y.move]
 
-/-- `live |= move is not None and score > -MATE_UPPER`, spec-side. -/
-def isLive (y : Yield) : Bool := (!y.move.isNone) && decide (-mateUpper < y.score)
+/-- **What the consumer makes of one yield.** Branches 1–4 and the SECOND arm
+of branch 5 all end at a score plus a `live` contribution; branch 5's FIRST
+arm folds a cap and leaves. Two constructors are the smallest thing that keeps
+those apart, and keeping them apart is the point: a settled round writes no
+killer, sets no `live`, and answers for every yield after it. -/
+inductive Round where
+  /-- Branches 1–4 and branch 5b: a score, and whether the round witnesses
+  legality. -/
+  | report (score : Int) (live : Bool)
+  /-- Branch 5a: `cap < gamma` on the sorted stream — fold the cap with `max`
+  and BREAK. -/
+  | settle (cap : Int)
+  deriving DecidableEq, Repr
 
-/-- **The walk the shipped fold performs.** Raise `best` to the running
-maximum, or `live` if the yield is real evidence, and STOP at the first yield
-that lifts `best` to `gamma`: `.1` is the `best` it ends with, `.2.1` the
-`live` it ends with, `.2.2` whether it CUT rather than running `moves()` out.
+/-- How the shipped fold LEFT the loop. `cut` is the beta cutoff at the bottom
+of a round; `settled` is #236's early break; `ran` is `moves()` exhausted. -/
+inductive Exit where
+  /-- `moves()` ran out. -/
+  | ran
+  /-- `best >= gamma` at the bottom of a round. -/
+  | cut
+  /-- `cap < gamma` — the settled-cap break. -/
+  | settled
+  deriving DecidableEq, Repr
+
+/-- **The walk the shipped fold performs.** Per round: a `settle` folds its cap
+and leaves; a `report` raises `best` to the running maximum and `live` by its
+own contribution, and STOPS if that lifts `best` to `gamma`. `.1` is the `best`
+it ends with, `.2.1` the `live`, `.2.2` HOW it left.
 
 This is the shipped loop and nothing else: the killer store inside the cutoff
 is depth-gated (`sbKill_lit`) and does not run at a QS node, and the
 correction and the table store are the tail's business, not the fold's. -/
-def fold (gamma : Int) : Int → Bool → List Yield → Int × Bool × Bool
-  | best, live, [] => (best, live, false)
-  | best, live, y :: ys =>
-      if gamma ≤ max best y.score then (max best y.score, live || isLive y, true)
-      else fold gamma (max best y.score) (live || isLive y) ys
+def fold (gamma : Int) : Int → Bool → List Round → Int × Bool × Exit
+  | best, live, [] => (best, live, .ran)
+  | best, live, .settle cap :: _ => (max best cap, live, .settled)
+  | best, live, .report sc lv :: rs =>
+      if gamma ≤ max best sc then (max best sc, live || lv, .cut)
+      else fold gamma (max best sc) (live || lv) rs
 
 /-- The same walk from a running state — the loop invariant's handle on "what
 the rounds still to come will answer". -/
-def foldFrom (gamma best : Int) (live : Bool) (ys : List Yield) : Int × Bool × Bool :=
-  fold gamma best live ys
+def foldFrom (gamma best : Int) (live : Bool) (rs : List Round) : Int × Bool × Exit :=
+  fold gamma best live rs
 
 theorem foldFrom_nil (gamma best : Int) (live : Bool) :
-    foldFrom gamma best live [] = (best, live, false) := rfl
+    foldFrom gamma best live [] = (best, live, .ran) := rfl
 
-theorem foldFrom_cons_next (gamma best : Int) (live : Bool) (y : Yield) (ys : List Yield)
-    (h : ¬ gamma ≤ max best y.score) :
-    foldFrom gamma best live (y :: ys)
-      = foldFrom gamma (max best y.score) (live || isLive y) ys := by
+theorem foldFrom_cons_next (gamma best : Int) (live lv : Bool) (sc : Int) (rs : List Round)
+    (h : ¬ gamma ≤ max best sc) :
+    foldFrom gamma best live (.report sc lv :: rs)
+      = foldFrom gamma (max best sc) (live || lv) rs := by
   simp [foldFrom, fold, h]
 
-theorem foldFrom_cons_cut (gamma best : Int) (live : Bool) (y : Yield) (ys : List Yield)
-    (h : gamma ≤ max best y.score) :
-    foldFrom gamma best live (y :: ys) = (max best y.score, live || isLive y, true) := by
+theorem foldFrom_cons_cut (gamma best : Int) (live lv : Bool) (sc : Int) (rs : List Round)
+    (h : gamma ≤ max best sc) :
+    foldFrom gamma best live (.report sc lv :: rs) = (max best sc, live || lv, .cut) := by
   simp [foldFrom, fold, h]
 
-/-- **The stand-pat cut, spec-side.** A schedule whose FIRST yield already
+/-- **The settled-cap break, spec-side.** It takes no hypothesis at all: the
+round leaves whatever `gamma` is, because the shipped guard `cap < gamma` was
+already decided when the round was CLASSIFIED. Nothing after it is looked at,
+which is the sorted stream's payoff. -/
+theorem foldFrom_cons_settle (gamma best cap : Int) (live : Bool) (rs : List Round) :
+    foldFrom gamma best live (.settle cap :: rs) = (max best cap, live, .settled) := rfl
+
+/-! ### The five branches, named
+
+Each constructor below is one arm of `sbScore`, read off its pin. Together
+they are the classification a `Hands` schedule has to supply for the fold to
+be a statement about the shipped program rather than about a list. -/
+
+/-- Branch 1 (`move is None and depth == 0`) — the QS stand-pat: the static
+evaluation, and NO legality (a pass is not a move). -/
+def standPat (sc : Int) : Round := .report sc false
+
+/-- Branch 3 (`move is None`, `cap < gamma`) — the pass whose cap is already
+below the window answers with the cap and needs no child report. -/
+def cappedPass (cap : Int) : Round := .report cap false
+
+/-- Branch 2 (`move is None`, `cap >= gamma`) — the pass that must be checked:
+`min(cap, -child)`, and if that still meets the window AND `pos.king_capture()`
+returns a move, the exact `MATE_UPPER` token replaces it and `live` is set.
+
+**One effect this constructor does NOT carry**, recorded rather than hidden:
+the shipped line is `move, score, live = proof, MATE_UPPER, True`, so it also
+rebinds `move` — a virtual yield becomes a REAL one, and the cutoff block's
+`move is not None and depth` gate can then fire and write `tp_move[pos]`. A
+`Round` is what the FOLD sees (`best`, `live`, how it left), and the killer
+store is a heap effect beside it, so the rebinding belongs to the depth-≥1
+world-threading obligation (§5's list, item 1), not here. At depth 0 it cannot
+arise at all: branch 1 takes every virtual yield. -/
+def searchedPass (gamma cap child : Int) (proof : Bool) : Round :=
+  if decide (gamma ≤ min cap (-child)) && proof then .report mateUpper true
+  else .report (min cap (-child)) false
+
+/-- Branch 4 (`val >= MATE_LOWER`) — an intrinsic mate-band value IS a king
+capture: the exact token, never a search, and `live` outright. -/
+def intrinsicMate : Round := .report mateUpper true
+
+/-- Branch 5b — the searched real move: `min(cap, -child)`, and `live` iff the
+report clears the illegal-move sentinel. -/
+def searchedMove (cap child : Int) : Round :=
+  .report (min cap (-child)) (decide (-mateUpper < min cap (-child)))
+
+/-- Branch 5a — the settled cap. -/
+def settledCap (cap : Int) : Round := .settle cap
+
+/-- `live |= score > -MATE_UPPER`, spec-side — pass 7's `isLive` had to test
+the MOVE as well because the score alone did not say whether a yield was
+virtual. #236's branches decide that structurally, so the predicate is just
+the sentinel test. -/
+def isLive (sc : Int) : Bool := decide (-mateUpper < sc)
+
+theorem searchedMove_live (cap child : Int) :
+    searchedMove cap child = .report (min cap (-child)) (isLive (min cap (-child))) := rfl
+
+/-! ### The two arithmetic shapes the branches carry -/
+
+/-- A boolean in arithmetic position, CPython's coercion. -/
+def bit (b : Bool) : Int := if b then 1 else 0
+
+theorem bit_bounds (b : Bool) : 0 ≤ bit b ∧ bit b ≤ 1 := by cases b <;> simp [bit]
+
+/-- **The futility cap** (`sbCapLine_lit`): no cap above depth 3, else the
+static estimate `pos.score + val + max(depth - 1, 0) * QS_A`. -/
+def moveCap (depth score val : Int) : Int :=
+  if 3 < depth then mateUpper else score + val + max (depth - 1) 0 * qsA
+
+/-- At a QS node the slope term vanishes and the cap is the plain sum — which
+is what makes the depth-0 branch-5 arithmetic table-free. -/
+theorem moveCap_qs (score val : Int) : moveCap 0 score val = score + val := by
+  unfold moveCap
+  rw [if_neg (by omega : ¬ ((3:Int) < 0)), show max ((0:Int) - 1) 0 = 0 from by omega]
+  omega
+
+/-- **The child's depth** (`sbMoveDepth_lit`): `depth - 1` minus the LMR bit
+minus `int(nmr)`. -/
+def moveDepth (depth : Int) (lmr nmr : Bool) : Int := depth - 1 - bit lmr - bit nmr
+
+/-- **The child's KEY depth is strictly below the parent's — at every depth
+≥ 1.** The child refloors with `depth = max(depth, 0)`, so what it stores
+under is `max (moveDepth …) 0`, and both reductions only ever lower it. This
+is the side condition `Bracket.SubtreeWrites`'s depth-separation arm needs
+(§6), discharged for every reduction the shipped code can apply. -/
+theorem child_depth_lt {depth : Int} (lmr nmr : Bool) (h : 1 ≤ depth) :
+    max (moveDepth depth lmr nmr) 0 < depth := by
+  have h1 := bit_bounds lmr
+  have h2 := bit_bounds nmr
+  unfold moveDepth
+  omega
+
+/-- The two null probes lower it too: the pass searches `depth - 3` and the
+fuel probe `depth - 7`. -/
+theorem pass_depth_lt {depth : Int} (h : 1 ≤ depth) : max (depth - 3) 0 < depth := by omega
+theorem nmr_depth_lt {depth : Int} (h : 1 ≤ depth) : max (depth - 7) 0 < depth := by omega
+
+/-- **And at depth 0 it is NOT.** `moveDepth 0 false false = -1`, which the
+refloor sends straight back to `0`: a QS node's children store under the QS
+node's OWN key. `SubtreeWrites`'s separation arm does not cover them, and that
+is precisely why the depth-0 gate below carries a stand-pat hypothesis — it
+cuts before any child runs, so there is nothing to separate. -/
+theorem qs_child_depth_eq : max (moveDepth 0 false false) 0 = 0 := by
+  unfold moveDepth bit; omega
+
+/-- **The stand-pat cut, spec-side.** A schedule whose FIRST round already
 meets the window ends there, whatever follows — which is the depth-0 arm the
 model's `qsStrat` writes as `if gamma ≤ eval p then eval p`
-(formal/Sunfish/Stalemate.lean). The fold never looks past it, so no
-statement about the rest of `moves()` is needed to know the answer. -/
-theorem fold_standpat (gamma sc : Int) (ys : List Yield) (h : gamma ≤ sc) :
-    foldFrom gamma (-mateUpper) false (⟨.none, sc⟩ :: ys)
-      = (max (-mateUpper) sc, false, true) := by
-  refine foldFrom_cons_cut gamma (-mateUpper) false ⟨.none, sc⟩ ys ?_
-  simp only []
-  omega
+(formal/Sunfish/Stalemate.lean). The fold never looks past it, so no statement
+about the rest of `moves()` is needed to know the answer. -/
+theorem fold_standpat (gamma sc : Int) (rs : List Round) (h : gamma ≤ sc) :
+    foldFrom gamma (-mateUpper) false (standPat sc :: rs)
+      = (max (-mateUpper) sc, false, .cut) := by
+  have := foldFrom_cons_cut gamma (-mateUpper) false false sc rs (by omega)
+  simpa [standPat] using this
 
 /-- **The object's yield schedule**, world-threaded: stepping the generator at
 `a` from world `w` hands over exactly `ys`, one `IterSteps` at a time, and
 lands at `w'`.
 
-The worlds are the whole point at depth ≥ 1. A searched yield's score is
-`-self.bound(pos.move(move), 1 - gamma, depth - 1)`, so producing it RUNS a
-child call: it bumps `self.nodes`, it may write `tp_move`, and it stores into
-`tp_score`. `IterSteps` carries that world change, which is exactly why an
-induction hypothesis at depth `d-1` can be CONSUMED as one `cons` of this
-schedule at depth `d` (docs/backlog.md §L9 finding 1, §L10 §the template). -/
+The worlds are the whole point at depth ≥ 1. Under #236 the generator itself
+is cheaper — it yields a static `(value, move)` and never recurses — but
+`Hands` is unchanged, because the recursion moved into the CONSUMER and the
+consumer's rounds are threaded by the same worlds. An induction hypothesis at
+depth `d-1` is still consumed one `cons` at a time (docs/backlog.md §L9
+finding 1, §L10 §the template); what changed is which side of the pair carries
+the child's report. -/
 inductive Hands (m : Module) (a : Addr) : World → List Yield → World → Prop
   /-- The empty schedule: no step taken, the world is where it was. -/
   | nil {w : World} : Hands m a w [] w
@@ -445,40 +833,47 @@ inductive Hands (m : Module) (a : Addr) : World → List Yield → World → Pro
       IterSteps m w a (some (yieldVal y)) w₁ → Hands m a w₁ ys w₂ →
       Hands m a w (y :: ys) w₂
 
-/-- The four frame slots the QS fold reads, as LOOKUPS, so every gate is blind
-to the rest of the frame. `depth` is one of them: the killer store inside the
+/-- The frame slots the QS fold reads, as LOOKUPS, so every gate is blind to
+the rest of the frame. `depth` is one of them: the killer store inside the
 cutoff is gated on it, and pinning it to `0` is what makes the QS fold
-heap-free. -/
+heap-free. `nmr` joined the list with #236 — branch 5's `move_depth` reads it,
+and at a QS node it is `False` because `depth >= 6` short-circuits the `and`
+(`sbNmr_lit`). -/
 def LoopFrame (e : REnv) (gamma best : Int) (live : Bool) : Prop :=
   Env.lookup e "gamma" = some (.int gamma) ∧
   Env.lookup e "best" = some (.int best) ∧
   Env.lookup e "live" = some (.bool live) ∧
-  Env.lookup e "depth" = some (.int 0)
+  Env.lookup e "depth" = some (.int 0) ∧
+  Env.lookup e "nmr" = some (.bool false)
 
-/-- The frame with the loop target bound to a yield. -/
+/-- The frame with the loop target bound to a yield — `val` first, then
+`move`, which is the order `sbTarget_lit` pins. -/
 def bindYield (e : REnv) (y : Yield) : REnv :=
-  Env.set (Env.set e "move" y.move) "score" (.int y.score)
+  Env.set (Env.set e "val" y.val) "move" y.move
 
-/-- Binding `(move, score)` — an `rfl` on the projected target. -/
+/-- Binding `(val, move)` — an `rfl` on the projected target. -/
 theorem bind_eq (h : Heap) (e : REnv) (y : Yield) :
     assignToH h e sbTarget (yieldVal y) = .ok (bindYield e y) := rfl
 
 theorem lookup_bind_move (e : REnv) (y : Yield) :
     Env.lookup (bindYield e y) "move" = some y.move := by
-  simp [bindYield, Env.lookup_set_self, Env.lookup_set_ne]
-theorem lookup_bind_score (e : REnv) (y : Yield) :
-    Env.lookup (bindYield e y) "score" = some (.int y.score) := by
   simp [bindYield, Env.lookup_set_self]
+theorem lookup_bind_val (e : REnv) (y : Yield) :
+    Env.lookup (bindYield e y) "val" = some y.val := by
+  simp [bindYield, Env.lookup_set_self, Env.lookup_set_ne]
 theorem lookup_bind_ne {e : REnv} {x : String} {v : RVal} (y : Yield)
-    (hm : x ≠ "move") (hs : x ≠ "score") (h : Env.lookup e x = some v) :
+    (hm : x ≠ "move") (hs : x ≠ "val") (h : Env.lookup e x = some v) :
     Env.lookup (bindYield e y) x = some v := by
   simp [bindYield, Env.lookup_set_ne, hm, hs, h]
 
 /-! ## §4 Two gates on the shipped body
 
 `bound_enters` is the head's first three statements; `max_evals` is the
-fold's first. Both are stated over a FREE world and a free frame, and both
-are what the depth-bounded gates compose. -/
+fold's `best = max(best, score)`. Both are stated over a FREE world and a free
+frame, both are what the depth-bounded gates compose, and both survived the
+re-pin UNCHANGED — the statements they are about are byte-identical to pass
+7's, which is the cheapest possible evidence that #236's blast radius is the
+fold and not the head. -/
 
 /-- **GATE 1 — entering `bound` counts a node and does NOT read the clock.**
 
@@ -490,9 +885,9 @@ INPUT (docs/memory-model.md §the trace clock) and an empty one refuses
 loudly, so this is the statement that says the refusal cannot happen below
 the frontier. The frame is untouched and the only heap change is the counter. -/
 theorem bound_enters (w : World) (ci : ClassId) (sa ts tm hs : Addr)
-    (n dl gamma d : Int) (pv : RVal) (h' : Heap)
-    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl))
-    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl) = some h')
+    (n dl sf gamma d : Int) (pv : RVal) (h' : Heap)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
     (hclk : ¬ ((n + 1).fmod 2048 = 0)) :
     execStmts sunfish 16 ⟨w, sbEnv0 (.ref sa) pv gamma d⟩ [sbDoc, sbNodes, sbClock]
       = .ok ⟨{ w with heap := h' }, sbEnv0 (.ref sa) pv gamma d⟩ .next := by
@@ -556,21 +951,27 @@ Every hypothesis is one the shipped code forces:
 * `-MATE_LOWER < pos.score` — the king-capture termination check falls through;
 * `(nodes + 1) % 2048 ≠ 0` — the clock trace is an INPUT and is not consulted
   below the frontier (`bound_enters` is that half, proved);
+* `NULL_MARGIN` on the globals — #236's `t = pos.score + NULL_MARGIN` runs
+  before the fold even at depth 0, so the name has to resolve. `QS`, `QS_A`,
+  `LMR` and `EVAL_ROUGHNESS` do NOT appear: the stand-pat cut leaves on the
+  first round, and none of the four is reached before it;
 * `gamma ≤ pos.score` — the stand-pat cut.
 
 `bound_enters`, `max_evals`, `fold_standpat`, `bind_eq` and the §0 pins are the
 pieces; what is NOT yet paid is the table probe's `.get` miss, the nested
-`def`'s five-capture closure, the generator's first `IterSteps`, and the table
-store. Their price is measured in docs/backlog.md §L10. -/
+`def`'s five-capture closure (one of them now a CELL), the generator's first
+`IterSteps`, and the table store. Their price is measured in docs/backlog.md
+§L10, and the cell's own cost in §L14. -/
 def QSStandPat : Prop :=
-  ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl gamma sc : Int)
+  ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
     (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (sv sv' : Nat),
-    Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl) →
+    Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf) →
     Heap.get? w.heap ts = some (.dict #[] sv) →
     Heap.get? w.heap tm = some (.dict #[] sv') →
     Heap.get? w.heap hs = some (.pyset #[]) →
     Env.lookup w.globals "MATE_LOWER" = some (.int mateLower) →
     Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper) →
+    Env.lookup w.globals "NULL_MARGIN" = some (.int nullMargin) →
     ¬ ((n + 1).fmod 2048 = 0) →
     -mateLower < sc → -mateUpper < gamma → gamma ≤ mateUpper → gamma ≤ sc →
     ∃ w' t, ∀ F ≥ t, callIn sunfish F w "Searcher.bound"
@@ -580,21 +981,20 @@ def QSStandPat : Prop :=
 /-! ### The template depth 1 and depth 2 instantiate
 
 `Hands` is world-threaded, and that is the whole induction. At depth `d` the
-fold consumes a schedule `ys : List Yield`; a SEARCHED entry of that schedule
-carries `score = -self.bound(pos.move(move), 1 - gamma, d - 1)`, so producing
-it runs a child call — which bumps `self.nodes`, may write `tp_move`, and
-stores into `tp_score`. `Hands.cons` is exactly the shape that carries a
-child's world change: its `IterSteps m w a (some (yieldVal y)) w₁` says
-"resuming the generator at `w` hands over `y` and lands at `w₁`", and `w₁` is
-`w` plus the child's writes.
+fold consumes a schedule `ys : List Yield`; under #236 the SCHEDULE is cheap
+(static `(value, move)` pairs) and the CONSUMER is what recurses — branch 2's
+null probe, branch 5b's searched move — so the child call runs between
+`Hands.cons`'s `IterSteps` and the round's `Round.report`, not inside the
+generator. The template survives that move intact: `Hands.cons` still carries
+the world change, and the induction hypothesis at depth `d - 1` — a statement
+of the form `callIn … (d-1) … = .ok w₁ (.int r)` — is still consumed one round
+at a time, now as `searchedMove cap r` rather than as `y.score = -r`.
 
-So the induction hypothesis at depth `d - 1` — a statement of the form
-`callIn … (d-1) … = .ok w₁ (.int r)` — is CONSUMED as one `Hands.cons` at
-depth `d`, with `y.score = -r`. Nothing else changes: the fold, the algebra
-lemmas (`foldFrom_nil`/`_cons_next`/`_cons_cut`), the boundary bridge and the
-`bind_eq` transport are depth-independent and are reused verbatim.
+Nothing else changes: the fold, the algebra lemmas
+(`foldFrom_nil`/`_cons_next`/`_cons_cut`/`_cons_settle`), the boundary bridge
+and the `bind_eq` transport are depth-independent and are reused verbatim.
 
-Two things DO change with depth and must be discharged per level:
+Four things DO change with depth and must be discharged per level:
 1. the killer store inside the cutoff is gated on `depth` (`sbKill_lit`), so at
    `d ≥ 1` a real cutting move WRITES `tp_move[pos]` and the fold is no longer
    heap-free;
@@ -602,14 +1002,117 @@ Two things DO change with depth and must be discharged per level:
    `d ≥ 1` the `all(… for m in pos.gen_moves())` scan runs whenever `live` is
    false — which is where `gen_moves_drains_ref` (Examples/python/sunfish/
    genmoves_drain.lean) enters this arc, and it is already at THIS module
-   literal. -/
+   literal;
+3. #236's `nmr` probe recurses at `d ≥ 6` BEFORE the fold (`sbNmr_lit`), so a
+   depth-6 gate owes one child call that no round accounts for;
+4. the cap `moveCap` is `MATE_UPPER` above depth 3 and a static estimate at or
+   below it, so the settled-cap terminal is REACHABLE only for `d ≤ 3` — above
+   it branch 5a is dead and the fold has one terminal again. -/
 
-/-! ## §6 Non-vacuity, and the axioms
+/-! ## §6 The table lines, wired to step 3's calculus
+
+§L13 built `LeanModels/Python/DictCalc.lean` in the general layer precisely so
+that a re-pin would not touch it, and this section is the receipt. The three
+lines it models —
+
+* the probe `entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER,
+  MATE_UPPER))` (`sbEntry_lit`),
+* the store `self.tp_score[pos, depth] = Entry(best, entry.upper) if best >=
+  gamma else Entry(entry.lower, best)` (`sbStore_lit`),
+* and `Entry = namedtuple("Entry", "lower upper")` (`entryNTAux`)
+
+— are byte-identical between the pass-7 fixture and engine master, measured
+span-blind before this file was rewritten. So the wiring below is instantiation
+and nothing else: no lemma in `DictCalc` was restated, and its choice-free
+axiom profile is untouched. -/
+
+/-- The shipped probe's DEFAULT, as a value: `Entry(-MATE_UPPER, MATE_UPPER)`. -/
+def entryDefault : RVal :=
+  .ntuple "Entry" #["lower", "upper"] #[.int (-mateUpper), .int mateUpper]
+
+/-- The shipped table KEY, as a value: the plain tuple `(pos, depth)`. -/
+def tpKey (p : RVal) (d : Int) : RVal := .tuple #[p, .int d]
+
+/-- An `Entry(lo, up)`, as the store builds it. -/
+def entryOf (lo up : Int) : RVal := .ntuple "Entry" #["lower", "upper"] #[.int lo, .int up]
+
+/-- The decoder reads the shipped spelling. `entryBounds` goes through
+`xs.toList` rather than an array-literal pattern (§L11 finding 1), so this is
+an `rfl`. -/
+theorem entryBounds_entryOf (lo up : Int) : entryBounds (entryOf lo up) = some (lo, up) := rfl
+
+/-- The default decodes to the widest possible bracket — which is why a miss
+is never mistaken for a bound. -/
+theorem entryBounds_default : entryBounds entryDefault = some (-mateUpper, mateUpper) := rfl
+
+/-- The shipped key is in `pairKey`'s domain, at the plain-tuple spelling. -/
+theorem pairKey_tpKey (p : RVal) (d : Int) : pairKey (tpKey p d) = some (p, d) := rfl
+
+/-- **The schema, at the engine's own `Entry`.** `V` is the value function the
+docstring calls `s*` — determined by `(pos, depth)` alone, which is the
+property the store's comment says a change must not break. -/
+def sfBracket (V : RVal → Int → Int) : Bracket := tpBracket V
+
+/-- It is key-determined as soon as `V` is blind to what a dict cannot tell
+apart, which is the hypothesis the shipped comment already asserts. -/
+theorem sfBracket_keyDetermined {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d) : (sfBracket V).KeyDetermined :=
+  tpBracket_keyDetermined hV
+
+/-- **The probe, consumed.** Off a table satisfying the schema, the shipped
+`.get` answers the DEFAULT or a genuine bracket on `(pos, depth)`'s value —
+`Bracket.TableAt.get` at the engine's own default. The two returns above it
+(`entry.lower >= gamma`, `entry.upper < gamma`) read exactly this disjunction. -/
+theorem sf_probe {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    {h : Heap} {a : Addr} {p v : RVal} {d : Int}
+    (ht : (sfBracket V).TableAt h a)
+    (hg : heapGet h a (tpKey p d) entryDefault = .ok v) :
+    v = entryDefault ∨ (sfBracket V).Holds (tpKey p d) v :=
+  Bracket.TableAt.get (sfBracket_keyDetermined hV) ht hg
+
+/-- **The store, preserved.** Writing `Entry(lo, up)` at `(pos, depth)` keeps
+the invariant exactly when the entry brackets the key's value — which is
+`TableOK.store`'s hypothesis, not a conjunct of the invariant (§L13 finding
+2). The shipped statement ORDER is what discharges it: `best` is final by the
+time this line runs, the correction included. -/
+theorem sf_store {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    {h h' : Heap} {a : Addr} {p : RVal} {d lo up : Int}
+    (ht : (sfBracket V).TableAt h a)
+    (hb : lo ≤ V p d ∧ V p d ≤ up)
+    (hs : heapStore h a (tpKey p d) (entryOf lo up) = .ok h') :
+    (sfBracket V).TableAt h' a := by
+  refine Bracket.TableAt.store (sfBracket_keyDetermined hV) ht ?_ hs
+  refine ⟨lo, up, V p d, ?_, ?_, hb.1, hb.2⟩
+  · exact entryBounds_entryOf lo up
+  · show (pairKey (tpKey p d)).map (fun pd => V pd.1 pd.2) = some (V p d)
+    rw [pairKey_tpKey]; rfl
+
+/-- **The recursion, absorbed.** A depth-`d` probe is blind to everything its
+children write, and the invariant survives them — `SubtreeWrites`'s two
+theorems at the shipped slot. `child_depth_lt` (§3) is what supplies the
+`d ≠ e` side condition for every reduction the shipped code applies, at every
+`depth ≥ 1`; at depth 0 it does not hold and the QS gate cuts instead. -/
+theorem sf_subtree_probe {V : RVal → Int → Int} {a : Addr} {e : Int} {q : RVal}
+    (hq : hashableKey q = true) {h h' : Heap}
+    (hw : (sfBracket V).SubtreeWrites a e h h') :
+    heapGet h' a (tpKey q e) entryDefault = heapGet h a (tpKey q e) entryDefault :=
+  Bracket.SubtreeWrites.probe_stable hq hw
+
+theorem sf_subtree_tableAt {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d) {a : Addr} {e : Int}
+    {h h' : Heap} (hw : (sfBracket V).SubtreeWrites a e h h') :
+    (sfBracket V).TableAt h a → (sfBracket V).TableAt h' a :=
+  Bracket.SubtreeWrites.tableAt (sfBracket_keyDetermined hV) hw
+
+/-! ## §7 Non-vacuity, and the axioms
 
 The gates are stated over a free world, a free window and a free board, so the
 question is whether their hypotheses are ever satisfied and whether `fold` —
 the spec-side walk — reproduces what the shipped program DOES. These `#guard`s
-answer both by RUNNING `Searcher().bound` on the shipped opening board. -/
+answer both by RUNNING `Searcher().bound` on the shipped opening board, on the
+CURRENT engine. -/
 
 private def bd_probe (pos : RVal) (gamma depth : Int) : Option (Int × Int) :=
   match searcherW with
@@ -628,27 +1131,60 @@ private def bd_probe (pos : RVal) (gamma depth : Int) : Option (Int × Int) :=
 
 /-! **The stand-pat cut is ONE node.** At `depth = 0` on the opening board
 (`pos.score = 0`) with a window the stand-pat already meets, `bound` answers
-`0` after a single entry: the generator's first yield is `(None, pos.score)`
-and the fold cuts there, so `pos.gen_moves()` is never reached. -/
+`0` after a single entry: `moves()`'s first yield is `(None, None)`, the
+consumer's branch 1 reads `score = pos.score`, and the fold cuts there — so
+`pos.gen_moves()`, the sort and the killer test are never reached. -/
 #guard bd_probe (posH 0) 0 0 == some (0, 1)
 #guard bd_probe (posH 0) (-100) 0 == some (0, 1)
+#guard bd_probe (posH 0) (-40) 0 == some (0, 1)
 
-/-! **And depth 0 is NOT recursion-free in general** — the reason the two rows
+/-! **And depth 0 is NOT recursion-free in general** — the reason the rows
 above carry a `gamma ≤ pos.score` hypothesis. Above the stand-pat the QS node
-searches, and `max(depth, 0)` makes every child a QS node again: 35 entries at
-`gamma = 40`, 4 at `gamma = 1`. -/
-#guard bd_probe (posH 0) 40 0 == some (4, 35)
+searches, and `max(depth, 0)` REFLOORS every child back to a QS node
+(`qs_child_depth_eq`): 34 entries at `gamma = 40`, 4 at `gamma = 1`. The 34 is
+one BELOW pass 7's 35 — #236's settled-cap break leaves the fold one yield
+earlier on this board, which is the cheapest visible evidence that `Round`'s
+second terminal is a real arm and not bookkeeping. -/
+#guard bd_probe (posH 0) 40 0 == some (4, 34)
 #guard bd_probe (posH 0) 1 0 == some (4, 4)
 
+/-! Depth 1, for the same two windows — the row §L14 measured against CPython
+on the same driver (`(0,1) ↦ 0`, `(40,1) ↦ 37`). -/
+#guard bd_probe (posH 0) 0 1 == some (0, 2)
+#guard bd_probe (posH 0) 40 1 == some (37, 34)
+
 /-! **`fold` reproduces the stand-pat rows**, from the accumulator the shipped
-`best, live = -MATE_UPPER, False` sets up. -/
-#guard fold 0 (-mateUpper) false [⟨.none, 0⟩] == (0, false, true)
-#guard fold (-100) (-mateUpper) false [⟨.none, 0⟩] == (0, false, true)
+`best, live = -MATE_UPPER, False` sets up, through `standPat` — branch 1. -/
+#guard fold 0 (-mateUpper) false [standPat 0] == (0, false, Exit.cut)
+#guard fold (-100) (-mateUpper) false [standPat 0] == (0, false, Exit.cut)
+
+/-! **And the second terminal is reachable and distinguishable.** A settled cap
+folds with `max` and leaves; nothing after it is read, and `live` does not
+move — the three facts `sbBreak_lit` pins. -/
+#guard fold 40 (-mateUpper) false [settledCap 7, standPat 100] == (7, false, Exit.settled)
+#guard fold 40 (-mateUpper) true [settledCap (-mateUpper - 5)]
+    == (-mateUpper, true, Exit.settled)
+#guard fold 40 (-mateUpper) false [] == (-mateUpper, false, Exit.ran)
+
+/-! The four scoring branches, as the consumer computes them: the QS cap has no
+slope term, an intrinsic mate-band value is the exact token, and a searched
+move is `min(cap, -child)` with the sentinel test for `live`. -/
+#guard moveCap 0 12 30 == 42
+#guard moveCap 2 12 30 == 12 + 30 + 140
+#guard moveCap 4 12 30 == mateUpper
+#guard intrinsicMate == Round.report mateUpper true
+#guard searchedMove 500 (-120) == Round.report 120 true
+#guard searchedMove 90 (-120) == Round.report 90 true
+#guard searchedMove 500 mateUpper == Round.report (-mateUpper) false
+#guard searchedPass 40 500 (-120) true == Round.report mateUpper true
+#guard searchedPass 40 500 (-120) false == Round.report 120 false
+#guard searchedPass 400 500 (-120) true == Round.report 120 false
 
 /-! **What the depth-0 call leaves on the tables**, and it is what §5 claims:
 `tp_move` stays EMPTY (the killer store is depth-gated off) and `tp_score`
 gains exactly one entry, `(pos, 0) ↦ Entry(best, MATE_UPPER)` — the fail-high
-half of the store, with the probe's own default upper. -/
+half of the store, with the probe's own default upper. Byte-for-byte the same
+answer as pass 7's, on a rewritten `bound()`: the table lines did not move. -/
 #guard (match searcherW with
   | some (w, a) =>
     (match callIn sunfish 1000000 w "Searcher.bound"
@@ -671,12 +1207,23 @@ half of the store, with the probe's own default upper. -/
      | _ => false)
   | Option.none => false)
 
+/-! And the same entry, read through §6's decoder rather than by hand — the
+one line that says the calculus and the interpreter agree about the shipped
+`Entry`. -/
+#guard entryBounds (entryOf 0 mateUpper) == some (0, mateUpper)
+#guard pairKey (tpKey (posH 0) 0) == some (posH 0, 0)
+#guard entryBounds entryDefault == some (-mateUpper, mateUpper)
+
 #print axioms bound_enters
 #print axioms max_evals
 #print axioms fold_standpat
+#print axioms foldFrom_cons_settle
 #print axioms bind_eq
 #print axioms sbCallEnv
+#print axioms child_depth_lt
+#print axioms sf_probe
+#print axioms sf_store
+#print axioms sf_subtree_probe
+#print axioms sf_subtree_tableAt
 
 end Examples.python.sunfish.bound_depth
-
-

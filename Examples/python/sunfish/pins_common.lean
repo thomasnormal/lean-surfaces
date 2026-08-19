@@ -26,6 +26,18 @@ gen; branchless castling rights; the literal-membership capture test;
 inlined single-statement bodies; the null-gate score cap replacing the
 band-edge probe arm; the killer depth gate).
 
+Re-extraction log: pass 8 -- the RE-PIN to engine master `e670434`
+(`sunfish.py` sha256 f6c481a6..., 2026-08-19). `Searcher.bound` is the
+#236 cap-break body: `moves()` yields (value, move) PAIRS, `val_lower`
+is gone, the consumer computes the score across five branches and
+BREAKS on a settled cap, and four new head statements (`killer`,
+`calm`/`guard`, `t`, `nmr`) take the body from 13 top-level statements
+to 18. Module init gains three scalars (`LMR`, `NULL_MARGIN`, `DELAY`),
+so `Module.topLevel` goes 24 -> 27. Unchanged, measured span-blind
+against the previous envelope: `Position` in its entirety
+(`gen_moves`/`value`/`move`/`rotate`/`king_capture`), `parse`,
+`render`, and the whole table shape (probe, store, `Entry`).
+
 Re-extraction log: rebuild-20260814 -- f-strings LOWERED in the
 envelope (str-call spelling) and the two benign from-imports now
 STRUCTURED (Pass 0 import forms); frontend stamp moves to CPython

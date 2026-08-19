@@ -39,25 +39,37 @@ CPython's didn't — breaks the pair. Live in these runs: the tp_score
 probe under the dict-key doctrine (`(pos, depth)` tuple keys carrying
 the Position value), the history-set membership, the nested `moves()`
 generator with recursion through the captured `self`, the killer
-prologue (the depth-gated store `if move is not None and depth:` — the
-pass-7 re-pin), the null-move gate with the SCORE CAP
-(`score = min(pos.score + EVAL_ROUGHNESS, -self.bound(…))` — the cap
-keeps the pass's value below the mate band, so the old band-edge probe
-arm is GONE and the yield is one conditional expression:
-`yield (proof, MATE_UPPER) if proof and pos.value(proof) >= MATE_LOWER
-else (None, score)`), the QS ordering line with the WALRUS FILTER
-(`if (v:=pos.value(m)) >= val_lower` — filter-before-sort, the pass-7
-§the walrus filter lowering; the sub-threshold tail is never sorted),
-the fold with `live |=` and the `not live` correction gate
-(`pos.move(m).king_capture()` under the immediate `all(…)` drain), the
-attribute `+=`, and the table store.
+prologue (`killer = self.tp_move.get(pos)`, read before the null probe
+and yielded out of order under its own ceiling), the null-move gate
+with the SCORE CAP (`score = min(cap, -self.bound(…))` where
+`cap := pos.score + EVAL_ROUGHNESS`, a WALRUS in general expression
+position — §L14's tier item 3), the QS ordering line with the WALRUS
+FILTER (`if (v := pos.value(m)) >= QS or depth` — filter-before-sort;
+the sub-threshold tail is never sorted) delegated through a general
+`yield from sorted(…)`, the CELLED capture `guard` (written below the
+`def`, read at the call — §L14's cell), the fold with its five scoring
+branches and the SETTLED-CAP BREAK (`if cap < gamma: best = max(best,
+cap); break`), the `not live` correction gate carrying the mate
+DISTANCE, the attribute `+=`, and the table store.
 
-Every expected pair below is CPython's own answer (the current engine
-master imported and probed — re-derived, never reused: six of the 23
-pairs changed with this re-pin). The tactical rows end at
-MATE_LOWER = 47923 — the king-capture sentinel path; the endgame rows
-walk the correction (depth 3 at gamma 0 answers the
-repetition/stalemate-corrected 0). -/
+Every expected pair below is CPython's own answer, re-derived against
+engine master `e670434` and never reused — **pass 8 moved fourteen of
+the 23 pairs**. Where they moved and where they did not is the
+measurement:
+
+* **twelve rows kept their VALUE and lost nodes** — #236's
+  settled-cap break leaves the fold earlier on a sorted stream, so the
+  same bound is reached from fewer entries (`posH 40 3`: 208 → 197
+  nodes at the same 39; `posEnd 60 3`: 27 → 13 at the same 137).
+* **the two TACTICAL rows changed value outright**, and they are the
+  finding: pass 7's `posTac` answered exactly `MATE_LOWER = 47923` at
+  both depths — the king-capture sentinel path — and engine master
+  answers `277` / `417`. The futility cap now settles the position
+  before the mate line is searched at all, so the sentinel discipline
+  is simply not exercised by this board any more. Recorded rather
+  than repaired: it is CPython's answer, checked directly.
+* the endgame rows still walk the correction (depth 3 at gamma 0
+  answers the repetition/stalemate-corrected 0). -/
 
 -- (`sp0`/`searcherW` come from `pins_common.lean`)
 
@@ -111,34 +123,35 @@ private def posPend : RVal :=
 
 -- the opening board, depths 1-3 across failing-low and failing-high windows
 #guard boundProbe (posH 0) 0 1 == some (0, 2)
-#guard boundProbe (posH 0) 40 1 == some (37, 35)
+#guard boundProbe (posH 0) 40 1 == some (37, 34)
 #guard boundProbe (posH 0) (-100) 1 == some (0, 2)
 #guard boundProbe (posH 0) 0 2 == some (0, 2)
-#guard boundProbe (posH 0) 40 2 == some (36, 139)
-#guard boundProbe (posH 0) 0 3 == some (0, 38)
-#guard boundProbe (posH 0) 40 3 == some (39, 208)
+#guard boundProbe (posH 0) 40 2 == some (36, 138)
+#guard boundProbe (posH 0) 0 3 == some (0, 34)
+#guard boundProbe (posH 0) 40 3 == some (39, 197)
 #guard boundProbe (posH 0) (-100) 3 == some ((-46), 2)
 
 -- midgame
 #guard boundProbe posMid 0 1 == some (2, 66)
 #guard boundProbe posMid 60 1 == some (35, 5)
-#guard boundProbe posMid 0 2 == some ((-1), 587)
-#guard boundProbe posMid 60 2 == some (59, 241)
-#guard boundProbe posMid 0 3 == some (2, 427)
-#guard boundProbe posMid 60 3 == some (59, 247)
+#guard boundProbe posMid 0 2 == some ((-1), 586)
+#guard boundProbe posMid 60 2 == some (59, 240)
+#guard boundProbe posMid 0 3 == some (2, 413)
+#guard boundProbe posMid 60 3 == some (59, 240)
 
--- tactical: the mate band (MATE_LOWER exactly — the sentinel discipline)
-#guard boundProbe posTac 0 2 == some (47923, 4)
-#guard boundProbe posTac 0 3 == some (47923, 67)
+-- tactical: pass 7 answered MATE_LOWER exactly here; engine master
+-- settles on the futility cap first (see the header)
+#guard boundProbe posTac 0 2 == some (277, 3)
+#guard boundProbe posTac 0 3 == some (417, 24)
 
 -- endgames: the correction arms
-#guard boundProbe posEnd 0 1 == some (111, 8)
-#guard boundProbe posEnd 0 2 == some (91, 8)
+#guard boundProbe posEnd 0 1 == some (111, 5)
+#guard boundProbe posEnd 0 2 == some (91, 5)
 #guard boundProbe posEnd 0 3 == some (0, 2)
-#guard boundProbe posEnd 60 3 == some (137, 27)
+#guard boundProbe posEnd 60 3 == some (137, 13)
 #guard boundProbe posPend 0 2 == some (19, 2)
 #guard boundProbe posPend 60 2 == some (50, 13)
-#guard boundProbe posPend 0 3 == some (50, 15)
+#guard boundProbe posPend 0 3 == some (50, 14)
 
 /-! ### The wall-clock frontier under THE TRACE CLOCK (pass 6)
 

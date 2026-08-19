@@ -717,8 +717,14 @@ Four vertices, one program:
 The Python-side vertices are not hypothetical: the corpus
 `Examples/python/sunfish/sunfish.py` is **byte-identical** to the
 sunfish master engine (measured, sha256
-`2142d9c25435e6b55ef31fcd18142f0117f033382d1bc9eb2bfe9e3de48316ca`), and
-`sunfish.c` is that file's transcription.
+`f6c481a6a2c9f4c3686c13115adb36719693676d47b0121af03347d3a01219a1` —
+engine `e670434`, re-pinned 2026-08-19, docs/backlog.md §L15), and
+`sunfish.c` is a transcription of the same engine file. **The two pins
+are maintained in different repositories, so the square's Python-side
+identity is only as current as the OLDER of them**: whenever this corpus
+is re-pinned, `sunfish.c`'s own pin has to be checked against the same
+engine commit before A ≡ B ≡ C ≡ D is claimed at that commit. That check
+is not part of this repository's triad.
 
 **Edges that exist today.** A ≡ C is measured continuously by
 `tools/ctwin/difftest.py`: every MTD-bi probe compared byte for byte on

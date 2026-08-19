@@ -746,8 +746,12 @@ differential on whole ordered move lists, opening board included.
 ## Nested defs and closures (H7 — BUILT 2026-08-10)
 
 The target is `bound()`'s inner `def moves():` — a nested def that is
-ALSO a generator, closing over `self`/`pos`/`gamma`/`depth`/`root`/
-`val_lower`, consumed lazily by the fold below it. Python closes over
+ALSO a generator, consumed lazily by the fold below it. **The capture
+set below is the PRE-#236 engine's** (`self`/`pos`/`gamma`/`depth`/
+`root`/`val_lower`, none of them rebound after the `def`); engine master
+captures `depth`/`gamma`/`guard`/`killer`/`pos` and `guard` IS rebound,
+which is what §Closure CELLS below exists for. This section states the
+snapshot fragment, which is still the tier's base case. Python closes over
 VARIABLES (cells), not values; the tier implements a SNAPSHOT taken when
 the `def` statement executes, and admits exactly the fragment where the
 two are observationally equal:
@@ -774,9 +778,10 @@ refusal (never a snapshot translation that CPython's cells would
 falsify). Under the restriction, snapshot and cell agree even for a
 GENERATOR nested def, whose body reads captures at RESUME time: the
 cell's content can no longer change after creation, so read-at-resume
-equals read-at-def. The shipped `moves()` satisfies the restriction as
+equals read-at-def. The pre-#236 `moves()` satisfied the restriction as
 written (`depth = max(depth, 0)` and `val_lower = …` both precede the
-def; nothing rebinds after).
+def; nothing rebinds after). Engine master's does NOT — `guard` is
+assigned below the `def` — and is admitted by §Closure CELLS instead.
 
 **Representation.** `Stmt.defStmt` carries the nested function INLINE
 (name, params, the argsOk/localsOk/hasGlobal censuses scoped to the
@@ -816,9 +821,11 @@ the static-locals rule, so it rides the loud `locals_unsupported`
 channel (a module fallthrough would silently call the wrong function),
 and direct nested-def names count as enclosing LOCALS for the capture
 analysis, so a closure may capture an EARLIER closure (`chain`) under
-the same never-rebound rule. The shipped `moves()` is ADMITTED as
+the same never-rebound rule. The pre-#236 `moves()` was ADMITTED as
 analyzed: captures `depth`/`gamma`/`pos`/`root`/`self`/`val_lower`,
-no refusal, generator. Acceptance: `Examples/python/closure_lab`
+no refusal, generator. (Engine master's is
+`depth`/`gamma`/`<cell>guard`/`killer`/`pos`, pinned in
+`Examples/python/sunfish/spec.lean`.) Acceptance: `Examples/python/closure_lab`
 (the `rebound_after` row is CPython's cell semantics OBSERVABLE — 6
 where a snapshot would forge 5 — refused at extraction, never
 translated) and `sf_order.bound_probe`, the `moves()`-shaped nested
@@ -1402,11 +1409,15 @@ remaining gaps against the shipped file: THREE constructs.
    all-names (`targetNames.isSome`).
 
 3. **Genexp admission: body-assigned free names under an immediate
-   drain.** The correction's
+   drain.** The pre-#236 correction's
    `all(depth > 1 and pos.value(m) >= val_lower or … for m in
-   pos.gen_moves())` captures `depth` (a parameter the body REBINDS:
+   pos.gen_moves())` captured `depth` (a parameter the body REBINDS:
    `depth = max(depth, 0)`) and `val_lower` (a plain local) — both
-   outside the H4 by-value admission. The drain-gate argument
+   outside the H4 by-value admission. (Engine master's correction is
+   `all(pos.move(m).king_capture() for m in pos.gen_moves())`, which
+   captures only `pos`; the admission below is what still carries
+   `calm`'s `any(c in pos.board for c in "RBNQ")` and the ordering
+   line.) The drain-gate argument
    (pass 3's `genTargets` precedent) extends: a genexp passed DIRECTLY
    to a draining builtin is created and consumed within ONE expression
    evaluation, and no statement of the enclosing frame can run in
@@ -1589,12 +1600,18 @@ from the fragment; conservative and simple).
 
 ## The walrus filter (pass 7 — the QS ordering line; BUILT)
 
-The re-pin to current engine master hits ONE out-of-tier construct: the
-quiescent-search ordering line became
+The pass-7 re-pin hit ONE out-of-tier construct: the quiescent-search
+ordering line became
 
 ```python
 for val, move in sorted(((v, m) for m in pos.gen_moves() if (v:=pos.value(m)) >= val_lower), reverse=True):
 ```
+
+(Engine master's pass-8 spelling is the same construct with the
+threshold inlined and the sort DELEGATED — `yield from sorted(((v, m)
+for m in pos.gen_moves() if (v := pos.value(m)) >= QS or depth),
+reverse=True)` — so everything below applies verbatim; only the filter's
+right-hand side changed.)
 
 — a genexp whose FILTER binds `(v := …)` and whose ELEMENT reads `v`
 (filter-before-sort: the sub-threshold tail is never sorted, and the

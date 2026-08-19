@@ -1,13 +1,15 @@
 /-
 Examples/python/sunfish — THE SHIPPED FILE. `sunfish.py` here is
 byte-identical to the sunfish repository's engine (no wrappers, no
-edits); the envelope is its real AST. PASS 5 re-pinned it to the
-post-#158 master (the review rewrite: null validation inside `moves()`
-with the band-edge probe, the `not live` correction gate, the
-`K_MID, K_END` one-liner, the two-way per-search `pst["K"]` swap, the
-root-skipping eviction genexp, `deadline = 1 << 63` with NO None
-test). This example carries the first theorems proved against that
-file as shipped: `Position.rotate` score-negation — symbolic in the
+edits); the envelope is its real AST. PASS 8 re-pinned it to engine
+master `e670434` (sha256 `f6c481a6…`, 2026-08-19) — the #236 cap-break
+`bound()`: `moves()` yields (value, move) PAIRS, the consumer computes
+the score across five branches and BREAKS on a settled cap, and the
+head gains `killer`/`calm`/`guard`/`t`/`nmr` (13 top-level statements
+to 18); module init gains `LMR`/`NULL_MARGIN`/`DELAY`. `Position` is
+byte-identical to pass 7's, span-shifts aside, so the whole generator
+tier's object is unmoved. This example carries the first theorems
+proved against the file as shipped: `Position.rotate` score-negation — symbolic in the
 score AND in the world — on the real 120-char opening board, through
 the real string tier (`board[::-1].swapcase()`), the real
 `IfExp`/`and`/`not` en-passant flip, the real literal default
@@ -68,29 +70,37 @@ pinned below; every battery row stays under 2048 nodes). -/
     ("Position.king_capture", true, true), ("Searcher.__init__", true, true),
     ("Searcher.bound", true, true), ("Searcher.search", true, true),
     ("parse", true, true), ("render", true, true), ("main", true, true),
-    -- pass 7 (the re-pin): ingestion lowers SEVEN generator
+    -- pass 8 (the re-pin): ingestion lowers SEVEN generator
     -- expressions, CPython's own compilation (`<genexpr>` with the
     -- evaluated outer iterator as its first argument) —
-    -- `king_capture`'s filtered probe (@0), the two inside `bound`'s
-    -- nested `moves()` (the null-move `any` probe @1 and THE ORDERING
-    -- LINE @2 — now WALRUS-FILTERED, `if (v:=pos.value(m)) >=
-    -- val_lower`, the pass-7 §the-walrus-filter lowering: `v` becomes
-    -- a local of the synthesized frame, admitted because the enclosing
-    -- body never mentions it), the mate/stalemate CORRECTION's scan
-    -- (@3 — `pos.move(m).king_capture()` under the immediate `all(…)`
-    -- drain), and the module-init trio: the padding loop's pair (@4,
-    -- @5) and K_END's single formula genexp (@6). gen_moves's
-    -- promotion genexp is NOT in this table: the `yield from` INLINING
-    -- consumed it (docs/memory-model.md §yield from — no synthesized
-    -- function, the delegation reads the frame by reference). The
-    -- eviction genexp (`next(k for k in self.tp_move if k !=
-    -- self.root)`) sits inside an extraction-unsupported `del`
-    -- statement, dead under the TABLE_SIZE guard, so it never reaches
-    -- the lowering.
+    -- `king_capture`'s filtered probe (@0), THE ORDERING LINE inside
+    -- `bound`'s nested `moves()` (@1 — walrus-filtered, `if (v :=
+    -- pos.value(m)) >= QS or depth`: `v` becomes a local of the
+    -- synthesized frame, admitted because the enclosing body never
+    -- mentions it), `calm`'s piece probe (@3 — `any(c in pos.board for
+    -- c in "RBNQ")`, which #236 lifted OUT of `moves()` into `bound`'s
+    -- own body), the mate/stalemate CORRECTION's scan (@4 —
+    -- `pos.move(m).king_capture()` under the immediate `all(…)` drain),
+    -- and the module-init trio: the padding loop's pair (@5, @6) and
+    -- K_END's single formula genexp (@7).
+    --
+    -- **Index 2 is a GAP, and the gap is load-bearing.** `genExpName`
+    -- and `yieldFromName` (LeanModels/Python/Json.lean) draw from ONE
+    -- counter, so `<yieldfrom@2>` — the fresh loop target the general
+    -- `yield from` lowering synthesizes for `yield from sorted(…)`, a
+    -- NON-genexp delegate (docs/memory-model.md §closure CELLS …, the
+    -- §L14 arm) — took index 2. It is a NAME, not a function, so it
+    -- never appears in this table. gen_moves's promotion `yield from`
+    -- IS a genexp delegate and inlines with no counter at all, which is
+    -- why pass 7's numbering was contiguous and this one is not. The
+    -- eviction genexps (`next(k for k in self.tp_move if k !=
+    -- self.root)`, `next(iter(self.tp_score))`) sit inside
+    -- extraction-unsupported `del` statements, dead under the
+    -- TABLE_SIZE guard, so they never reach the lowering.
     ("<genexpr@0>", true, true), ("<genexpr@1>", true, true),
-    ("<genexpr@2>", true, true), ("<genexpr@3>", true, true),
-    ("<genexpr@4>", true, true), ("<genexpr@5>", true, true),
-    ("<genexpr@6>", true, true)]
+    ("<genexpr@3>", true, true), ("<genexpr@4>", true, true),
+    ("<genexpr@5>", true, true), ("<genexpr@6>", true, true),
+    ("<genexpr@7>", true, true)]
 
 /-! ### The H4 generator census on the shipped file
 
@@ -98,12 +108,22 @@ CPython's rule is scope-local and syntactic, and it lands here exactly:
 `Position.gen_moves` and `Searcher.search` are GENERATORS, everything
 else is an ordinary def. `bound`'s `moves()` is still not in THIS list —
 it is a NESTED def, structured since H7 as `Stmt.defStmt` INSIDE
-`bound`'s body (captures `depth`/`gamma`/`pos`/`root`/`self` — #158
-moved `val_lower` INSIDE `moves()`, so it is a plain local now —
-admitted by the never-rebound analysis, generator flag set) — the
-closure tier carries it inline, no flattening. A generator
-def evicts the module from the heap-free fragment (creation ALLOCATES
-and syntax cannot tell), which sunfish already was, having classes. -/
+`bound`'s body, generator flag set, and the closure tier carries it
+inline with no flattening. Its capture list is pinned below rather than
+described: #236 moved the calmness test out and `guard` in, and `guard`
+is written AFTER the `def`, so it is the file's one CELLED capture
+(§L14's tier item — the directory key `<cell>guard`, one cell per
+frame). The census equals CPython's own `co_freevars` for this def,
+checked by `compile()` and not asserted. A generator def evicts the
+module from the heap-free fragment (creation ALLOCATES and syntax
+cannot tell), which sunfish already was, having classes. -/
+
+#guard (match findFunction sunfish "Searcher.bound" with
+  | some f => f.body.toList.filterMap (fun s => match s with
+      | Stmt.defStmt n _ _ _ _ ig _ caps _ => some (n, ig, caps.toList)
+      | _ => Option.none)
+  | Option.none => []) ==
+  [("moves", true, ["depth", "gamma", "<cell>guard", "killer", "pos"])]
 
 #guard sunfish.functions.map (fun f => (f.name, f.isGenerator)) ==
   #[("Position.gen_moves", true), ("Position.rotate", false),
@@ -112,8 +132,8 @@ and syntax cannot tell), which sunfish already was, having classes. -/
     ("Searcher.bound", false), ("Searcher.search", true),
     ("parse", false), ("render", false), ("main", false),
     ("<genexpr@0>", true), ("<genexpr@1>", true),
-    ("<genexpr@2>", true), ("<genexpr@3>", true), ("<genexpr@4>", true),
-    ("<genexpr@5>", true), ("<genexpr@6>", true)]
+    ("<genexpr@3>", true), ("<genexpr@4>", true), ("<genexpr@5>", true),
+    ("<genexpr@6>", true), ("<genexpr@7>", true)]
 #guard !moduleGenFree sunfish
 
 /-- The shipped opening board (`sunfish.initial`): 120 chars, padded

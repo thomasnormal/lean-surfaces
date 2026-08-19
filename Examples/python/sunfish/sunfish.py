@@ -1,7 +1,13 @@
 #!/bin/sh
+
+################################################################################
+# Sunfish - a minimalist Python chess engine by Thomas Dybdahl Ahle and contributors.
+# Copyright (c) Thomas Dybdahl Ahle. Licensed under the GNU General Public License v3.
+# Original project: github.com/thomasahle/sunfish
+################################################################################
+
+# Python polyglot trick: find the best available python interpreter:
 """:"
-# Polyglot header: run with pypy3 when available, else python3 (issue #102).
-# No -u needed: all UCI output is flushed explicitly (sunfish_ui/uci.py).
 for cmd in pypy3 python3; do
    command -v "$cmd" > /dev/null && exec "$cmd" "$0" "$@"
 done
@@ -126,15 +132,52 @@ directions = {
 # Mate value must be greater than 8*queen + 2*(rook+knight+bishop)
 # King value is set to twice this value such that if the opponent is
 # 8 queens up, but we got the king, we still exceed MATE_VALUE.
-# When a MATE is detected, we'll set the score to MATE_UPPER - plies to get there
-# E.g. Mate in 3 will be MATE_UPPER - 6
+#
+# The band and what each landmark MEANS - the search reads these as three
+# different kinds of thing, and only the first kind is compared for equality:
+#
+#   +-MATE_UPPER  RESERVED TOKENS, never an evaluation. -MATE_UPPER is the
+#                 fold's init and the illegal-move sentinel: "score >
+#                 -MATE_UPPER" is the legality test, so a king-capturable
+#                 child must report the EXACT +MATE_UPPER (the same token,
+#                 seen from the parent) or a mated node looks alive.
+#   +-MATE_LOWER  band admission edges: |x| >= MATE_LOWER says "mate", below
+#                 says "evaluation". The 13-queen margin puts them out of
+#                 reach of any both-kings score and any non-capture move
+#                 value, which is what lets both tests be score tests.
+#   the gap       mate DISTANCE, strictly between the two: a mated node is
+#                 -MATE_LOWER - depth*EVAL_ROUGHNESS, floored at 1-MATE_UPPER
+#                 so it can never come back up the tree as the sentinel.
+#                 Only ever compared by size, never for equality.
+#
+# A mate found with `depth` still to spend scores MATE_LOWER + depth*EVAL_ROUGHNESS,
+# so a mate delivered near the root outscores one delivered near the horizon:
+# among winning lines the search takes the SHORTEST, and the losing side
+# drags the mate out as long as it can (issue #11). One ply is worth a whole
+# EVAL_ROUGHNESS because that is the width the MTD-bi bracket stops at - at
+# one point per ply the driver's last window could not tell two mates apart.
 MATE_LOWER = piece["K"] - 13 * piece["Q"]
 MATE_UPPER = piece["K"] + 10 * piece["Q"]
 
 # Constants for tuning search
 QS = 40
 QS_A = 140
+LMR = 75
+# Two jobs, deliberately one number: the width the MTD-bi bracket stops at,
+# and what one ply of mate distance is worth. Distances must be more than a
+# bracket apart or the driver's last window could not order two mates.
 EVAL_ROUGHNESS = 15
+# Target margin of the deep-null fuel probe (depth >= 6): the pass must
+# beat pos.score + NULL_MARGIN for real moves to burn two plies. Its own
+# parameter, not tied to EVAL_ROUGHNESS - the two knobs tune different
+# things (driver convergence vs reduction aggression).
+NULL_MARGIN = -200
+
+# Milliseconds between our bestmove and the clock actually stopping: network
+# lag plus the arbiter's own accounting. It is subtracted from every limit
+# rather than reserved in a pool, so the budget is what this move may spend
+# and not what the game has left. 200 is the measured lichess figure.
+DELAY = 200
 
 # Max entries kept in each transposition table, roughly 1GB per million.
 # Python dicts keep insertion order, so we cheaply evict the oldest entry
@@ -145,7 +188,9 @@ TABLE_SIZE = 10**6
 opt_ranges = dict(
     QS = (0, 300),
     QS_A = (0, 300),
+    LMR = (-200, 200),
     EVAL_ROUGHNESS = (0, 50),
+    NULL_MARGIN = (-400, 800),
     TABLE_SIZE = (10**4, 10**8),
 )
 # minifier-hide end
@@ -284,14 +329,15 @@ Entry = namedtuple("Entry", "lower upper")
 class Searcher:
     def __init__(self):
         self.tp_score, self.tp_move, self.history = {}, {}, set()
-        self.nodes, self.deadline = 0, 1 << 63
+        self.nodes, self.deadline, self.soft = 0, 1 << 63, 1 << 63
 
     def bound(self, pos, gamma, depth, root=False):
         """ Let s* be the score of the sub-tree from pos at this depth, as
-            a function of (pos, depth) alone. This includes null moves and
-            QS pruning, and global parameters like self.history that don't
-            change during search. (Things that change, like tp_move or gamma,
-            are not allowed to change the sub-tree and value of s*.)
+            a function of (pos, depth) alone. This includes null moves, QS,
+            futility and the reductions, and global parameters like
+            self.history that don't change during search. (Things that
+            change, like tp_move or gamma, are not allowed to change the
+            sub-tree and value of s*.)
 
             It is assumed 1 - MATE_UPPER < gamma <= MATE_UPPER.
 
@@ -303,12 +349,24 @@ class Searcher:
             in self.tp_score may be used to return a bound that is not the best
             possible, but it is guaranteed to be valid according to the rules above.
 
-            On top of the bound, three exact promises:
+            On top of the bound, four exact promises. The first two are
+            EXACT VALUES and not band membership: +-MATE_UPPER are reserved
+            tokens the fold compares for equality, never scores;
+            formal/Sunfish/BandContract.lean records what breaks if they
+            are weakened to |r| >= MATE_LOWER.
             - our own king already captured: r = -MATE_UPPER.
             - if depth >= 1:
                 - if the opponent king capturable: r = MATE_UPPER
-                  (note this is stronger than just gamma <= r <= s*.)
-                - if mate/stalemate returns the exact -MATE_LOWER / 0.
+                  (note this is stronger than just gamma <= r <= s*.) No
+                  searched move can reach MATE_UPPER, since its child is
+                  floored at 1 - MATE_UPPER, so an exact MATE_UPPER proves a
+                  king capture - which is what makes score > -MATE_UPPER a
+                  legality test one ply up. Only a searched real move sets
+                  live; null, stand pat and futility estimates never do.
+                - if mate/stalemate returns the exact
+                  max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)
+                  / 0. The mate value carries the unspent depth, so s* is
+                  still a function of (pos, depth) - see the constants.
             - every move in tp_move is legal. When a searched real move causes
               a fail-high at depth >= 1, it is written as the score witness;
               a virtual cutoff need not have one.
@@ -334,7 +392,7 @@ class Searcher:
             return -MATE_UPPER
 
         # Look in the table if we have already searched this position before.
-        # Driver probes (the search root, and IID below) are UNSTORED: they
+        # Driver probes (the search root) are UNSTORED: they
         # skip the table in both directions, the repetition-0 and the null
         # option, and store nothing - so every entry in the table describes
         # ONE value function, determined by (pos, depth) alone, and the key
@@ -352,90 +410,92 @@ class Searcher:
             # - at depth=0, since it would be expensive and break "futility pruning".
             if depth > 0 and pos in self.history: return 0
 
-        # Generator of moves to search in order.
-        # This allows us to define the moves, but only calculate them if needed.
+        # Look for the strongest move from earlier searches of this position.
+        # Read it before null-move in case the recursive probe evicts it.
+        killer = self.tp_move.get(pos)
+
         def moves():
-            # Look for the strongest move from earlier searches of this position.
-            # See https://chessprogramming.org/Killer_Move for details.
-            # We read this "killer move" before null-move in case it would get
-            # evicted from the table or replaced with something else worse.
-            killer = self.tp_move.get(pos)
 
             # First try not moving at all, i.e. the null move.
             # See https://chessprogramming.org/Null_Move for details.
             # The idea is that "doing nothing" is a lower bound on the score
             # of the position, but we have to be careful with zugzwang, where
-            # passing is better than any move - the piece test guards that
-            # (K+P endings). Capping the pass at static evaluation plus one
-            # score bucket also keeps its value monotone and below the positive
-            # mate band, so one child report is enough to bound it. No null at
-            # root, so we can always return a move.
-            if not root and depth > 2 and abs(pos.score) < 500 and any(c in pos.board for c in "RBNQ"):
-                score = min(pos.score + EVAL_ROUGHNESS,
-                    -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3))
-                # A king capture substitutes the exact MATE_UPPER for a
-                # virtual fail-high; the cached move is a capture certificate.
-                proof = score >= gamma and (self.tp_move.get(pos) or pos.king_capture())
-                yield (proof, MATE_UPPER) if proof and pos.value(proof) >= MATE_LOWER else (None, score)
+            # passing is better than any move - the piece test in guard covers
+            # that (K+P endings). No null at root, so we can always return a
+            # move. From depth 6 on the pass only fuels the probe below.
+            if 2 < depth < 6 and guard:
+                yield None, None
 
-            # For QSearch we have a different kind of null-move, namely we can just stop
-            # and not capture anything else. (Note depth at root is always > 0.)
+            # Stand pat: for QSearch the null move is simpler, we just stop
+            # and don't capture anything else. (Depth at root is always > 0.)
             if depth == 0:
-                yield None, pos.score
+                yield None, None
 
-            # Back to killer moves: This heuristic is so good, that if there
-            # is no registered move, it's worth it to run a shallow search to find one.
-            # See https://chessprogramming.org/Internal_Iterative_Deepening for detais.
-            # This is known as Internal Iterative Deepening (IID). The probe
-            # runs as a driver probe (root=True): no null cutoff that would
-            # end it without storing a move, no repetition truncation, and
-            # no table entry under deviant semantics.
-            if not killer and depth > 2:
-                self.bound(pos, gamma, depth - 3, root=True)
-                killer = self.tp_move.get(pos)
+            # Every out-of-order real move yielded can reach gamma: the killer
+            # is admitted by its own ceiling, so the consumer's break - only
+            # sound on the sorted stream - can never fire on it. (The ceiling
+            # is the old threshold with its min unfolded into an or.)
+            if killer and ((val := pos.value(killer)) >= QS or depth) and (val >= MATE_LOWER or depth > 3
+                    or pos.score + val + max(depth - 1, 0) * QS_A >= gamma):
+                yield val, killer
 
-            # We only generate moves with an intrinsic score above some treshold
-            # that decreases with depth. This is a generalization of Quiescent Search,
-            # See https://chessprogramming.org/Quiescence_Search for details.
-            val_lower = QS - depth * QS_A
+            # Then the real moves, best value first. The QS floor lives here,
+            # ahead of the sort, so the fold never walks sub-floor junk.
+            yield from sorted(((v, m) for m in pos.gen_moves() if (v := pos.value(m)) >= QS or depth), reverse=True)
 
-            # Now finally play the killer move. But note that we have to respect
-            # the QS lower bound, otherwise we would get search instability.
-            # We will search it again in the main loop below, but the tp will
-            # make this mostly free.
-            if killer and pos.value(killer) >= val_lower:
-                yield killer, -self.bound(pos.move(killer), 1 - gamma, depth - 1)
-
-            # Then all the other moves
-            # Quiescent search: only moves above the val-limit are admitted -
-            # filtering BEFORE the sort skips sorting the sub-threshold tail
-            # (most of the list at QS nodes), and is literally the model's
-            # movesAbove form (formal/Sunfish/Stalemate.lean).
-            for val, move in sorted(((v, m) for m in pos.gen_moves() if (v:=pos.value(m)) >= val_lower), reverse=True):
-                # If the new score is less than gamma, the opponent will for sure just
-                # stand pat, since ""pos.score + val < gamma === -(pos.score + val) >= 1-gamma""
-                # This is known as futility pruning.
-                if depth <= 1 and pos.score + val < gamma:
-                    # Need special case for MATE, since it would normally be caught
-                    # before standing pat. A sub-mate futility yield estimates
-                    # the child's stand-pat without searching it, so it is
-                    # value evidence only, never legality evidence: it goes
-                    # out as a virtual (None) yield - it can never cut (its
-                    # score is below gamma by construction), and it must not
-                    # set 'live' and mask the terminality correction below.
-                    yield (move, MATE_UPPER) if val >= MATE_LOWER else (None, pos.score + val)
-                    # We can also break, since we have ordered the moves by value,
-                    # so it can't get any better than this.
-                    break
-
-                yield move, -self.bound(pos.move(move), 1 - gamma, depth - 1)
+        # One calmness test, two roles: guard (root excluded) gates the scoring
+        # null above and intrinsic LMR; calm alone gates the fuel probe, which
+        # runs at the root too.
+        calm = abs(pos.score) < 750 and any(c in pos.board for c in "RBNQ")
+        guard = not root and calm
+        t = pos.score + NULL_MARGIN
+        nmr = (calm and depth >= 6 and
+               -self.bound(pos.rotate(nullmove=True), 1 - t, depth - 7) >= t)
 
         # Run through the moves, shortcutting when score >= gamma.
         # live is True if we saw a legal (not null, score > -MATE_UPPER) move
         best, live = -MATE_UPPER, False
-        for move, score in moves():
+        for val, move in moves():
+            if move is None and depth == 0:
+                score = pos.score
+            elif move is None:
+                # Cap the pass at static evaluation plus one score bucket: that
+                # keeps its value monotone and below the positive mate band. A
+                # sub-window cap needs no child report; otherwise one is enough.
+                # A king capture substitutes the exact MATE_UPPER for a virtual
+                # fail-high - and hands the store below its witness.
+                if (cap := pos.score + EVAL_ROUGHNESS) >= gamma:
+                    score = min(cap, -self.bound(pos.rotate(nullmove=True), 1 - gamma, depth - 3))
+                    if score >= gamma and (proof := pos.king_capture()):
+                        move, score, live = proof, MATE_UPPER, True
+                else:
+                    score = cap
+            else:
+                if val >= MATE_LOWER:
+                    # An intrinsic mate-band value is a king capture: the exact
+                    # MATE_UPPER token, never a search.
+                    score = MATE_UPPER
+                    live = True
+                else:
+                    # We lock in a futility bet: a shallow move is worth at most
+                    # a static estimate of what it wins. No mate-band clamp is
+                    # needed - both kings stand on the board at every call site,
+                    # so the sum tops out a third of the way to MATE_LOWER
+                    # (CapInBand in CappedMove.lean, and its caveat if
+                    # piece["Q"] ever grows past ~2400).
+                    cap = MATE_UPPER if depth > 3 else pos.score + val + max(depth - 1, 0) * QS_A
+                    # A cap below gamma answers for this move and, the stream
+                    # being sorted, for everything after it: fold the cap and
+                    # break. max, not assignment - an earlier report may be
+                    # tighter. Before live, because a settled move was never
+                    # searched and witnesses no legality; and skipping the
+                    # cutoff block, it stores nothing, exactly as the old
+                    # suffix report did.
+                    if cap < gamma: best = max(best, cap); break
+                    move_depth = depth - 1 - (guard and depth >= 6 and val < LMR) - int(nmr)
+                    score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))
+                    live |= score > -MATE_UPPER
             best = max(best, score)
-            live |= move is not None and score > -MATE_UPPER
             if best >= gamma:
                 # Save the move for pv construction and killer heuristic
                 if move is not None and depth:
@@ -451,11 +511,23 @@ class Searcher:
                         del self.tp_move[next(k for k in self.tp_move if k != self.root)]
                 break
 
-        # If only virtual evidence was seen, classify terminality exactly.
+        # If no legal real move was witnessed, classify terminality exactly.
         if depth and not live and all(
                 pos.move(m).king_capture() for m in pos.gen_moves()):
             # We can't move, but is it a checkmate or stalemate?
-            best = -MATE_LOWER if pos.rotate(nullmove=True).king_capture() else 0
+            # The mate carries its DISTANCE: the depth we still had left when
+            # we found it, one EVAL_ROUGHNESS per ply, so the winner picks the
+            # fastest mate and the loser the slowest (issue #11) and the gap
+            # survives the driver's final bracket. Nothing but (pos, depth)
+            # enters, which is why the table needs no store/probe adjustment
+            # and keeps its one value per key: measuring the distance from the
+            # ROOT is what would have poisoned it. The floor is 1 - MATE_UPPER
+            # and not -MATE_UPPER: one ply up this value is negated, and one
+            # more it is back, so -MATE_UPPER here would reach a grandparent
+            # as exactly the illegal-move sentinel and "score > -MATE_UPPER"
+            # would leave `live` unset for a legal move.
+            mate = max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)
+            best = mate if pos.rotate(nullmove=True).king_capture() else 0
 
         # Table part 2. Every search decision is gamma-independent, so all
         # bounds target one value function determined by the key and stored
@@ -500,6 +572,7 @@ class Searcher:
                 if score < gamma: upper = score
                 yield depth, gamma, score, self.tp_move.get(pos)
                 gamma = (lower + upper + 1) // 2
+            if time.time() > self.soft: return
 
 
 ###############################################################################
@@ -556,28 +629,44 @@ def main():
             times = dict(zip(args[1::2], map(int, args[2::2])))
             side = "wb"[len(hist) % 2 == 0]
             wtime, winc = times.get(side + "time", 60000), times.get(side + "inc", 0)
-            think = min(wtime / 40 + winc, wtime / 2 - 1000)
-            think = times.get("movetime", think) / 1000
+            # THREE NUMBERS, MILLISECONDS: what this move is worth, when to
+            # stop STARTING an iteration, and the wall one iteration may run
+            # to. `budget` is a fortieth of the clock plus the increment this
+            # move earns back, less the lag that move will cost; `soft` clamps
+            # it to a quarter clock and `think` to five budgets or half a
+            # clock, both minus that same lag. THE CLAMPS CANNOT GO NEGATIVE
+            # past their floors, which a wtime/2 - 1s cap can:
+            # lichess.org/EAThUL0P was lost that way, ~16 moves at no search
+            # on an already-expired deadline. think >= soft is STRUCTURAL, not
+            # asserted: min is monotone in both arguments, 5*budget >= budget
+            # wherever budget >= 0, and where it is not both sit on floors
+            # that are ordered 200 >= 100. So no clip line couples them.
+            budget = wtime / 40 + winc - DELAY
+            soft = max(min(budget, wtime / 4 - DELAY), 100) / 1000
+            think = max(min(5 * budget, wtime / 2 - DELAY), 200) / 1000
 
             start = time.time()
+            searcher.deadline, searcher.soft = start + think, start + soft
             # A fail high gives the move that achieved it, but only a
             # COMPLETED depth's last fail-high is trustworthy - a stop
             # inside a depth can catch a probe at a nonsense window.
+            # Searcher owns the exact MTD bracket, so it reads the soft limit
+            # only after that bracket closes; an unsettled move may use the wall.
             best, cand, d0 = None, None, 1
-            for depth, gamma, score, move in searcher.search(hist):
-                if depth > d0:
-                    best, d0 = cand or best, depth
-                if score >= gamma:
-                    if move is None: print("info depth", depth, "score cp", score); break
-                    i, j = move.i, move.j
-                    if len(hist) % 2 == 0:
-                        i, j = 119 - i, 119 - j
-                    cand = render(i) + render(j) + move.prom.lower()
-                    print("info depth", depth, "score cp", score, "pv", cand)
-                if (best or cand) and time.time() - start > think * 0.8:
-                    break
+            try:
+                for depth, gamma, score, move in searcher.search(hist):
+                    if depth > d0:
+                        best, d0 = cand or best, depth
+                    if score >= gamma:
+                        if move is None: print("info depth", depth, "score cp", score); break
+                        i, j = move.i, move.j
+                        if len(hist) % 2 == 0: i, j = 119 - i, 119 - j
+                        cand = render(i) + render(j) + move.prom.lower()
+                        print("info depth", depth, "score cp", score, "pv", cand)
+            except Stop:
+                cand = best or cand
 
-            print("bestmove", best or cand or '(none)')
+            print("bestmove", cand or best or '(none)')
 
 
 if __name__ == "__main__":

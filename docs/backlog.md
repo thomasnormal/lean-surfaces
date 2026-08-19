@@ -8671,3 +8671,236 @@ agreements. `docs_check` 71 marked blocks, 71 ok, 15 illustrative-exempt;
    `ps -o ppid` up to this session's own pid) because the next edit
    invalidated everything it was elaborating. No sources were edited
    under an in-flight build.
+
+
+## L15 — THE RE-PIN LANDS: `bound_depth.lean` is a theorem about TODAY's engine again, and the blast radius was four files wider than priced (2026-08-19)
+
+§L13 measured the fixture drift and found the re-pin BLOCKED; §L14 landed the
+closure cells that unblocked it and priced what remained: *"what it costs is
+`bound_depth.lean` … the blast radius is `bound_depth.lean` plus the
+`sunfish.json`/`sunfish.py` pin — one file of theorems, not the directory."*
+The re-pin is done and the header claim is retired. **The pricing was wrong in
+one direction and right in another**, and both halves are worth recording.
+
+### The fixture
+
+`Examples/python/sunfish/sunfish.py` is engine master `e670434`, `sha256
+f6c481a6a2c9f4c3686c13115adb36719693676d47b0121af03347d3a01219a1`, extracted
+under `python3.9` (3.9.19 — the pinned frontend). `pins_common.lean` carries
+the pass-8 re-extraction log; the drift header `bound_depth.lean` had been
+carrying since §L13 is replaced by the re-pinned claim.
+
+### What the re-pin actually touched
+
+| file | why |
+|---|---|
+| `bound_depth.lean` | the whole point: §0 re-projected at 18, §3 re-derived, §6 wired, §7 re-measured |
+| `sunfish.py` / `sunfish.json` | the fixture |
+| `pins_common.lean` | the envelope trap's required real edit |
+| `spec.lean` | **the genexp census** — 7 lowered genexps, indices `0,1,3,4,5,6,7` |
+| `pins_init.lean` | **the module-globals census** — three new scalars |
+| `init_chain.lean` | **78 pinned SPANS** at the padding-loop lambda, and 61 `<genexpr@n>` NAMES |
+| `pins_bound.lean` | 14 of the 23 CPython pairs moved |
+| `pins_search.lean` | the empty-trace frontier MOVED (below) |
+| `pins_clock.lean` | the same, at search scale |
+| `proof.lean` | envelope note (its own `load_program`) |
+
+So: **nine Lean files plus the fixture pair, not one.** §L14's estimate was measured over THEOREMS and it
+was right about those — every theorem in the generator tier
+(`genmoves_ray`/`_scan`/`_drain`/`_theorem`, 3740 + 1156 + 326 + 563 lines) and
+every theorem in `init_chain` re-elaborated green with no edit to a proof. What
+it did not price is that a re-pin's real cost is in the **census and battery
+`#guard`s**, which are pinned CONCRETE VALUES and move whenever the program
+does — spans, synthesized names, node counts. The lesson generalizes: *a
+drift-proof theorem is not a drift-proof file.*
+
+### §0 — the eighteen statements, and the four that are new
+
+`Searcher.bound`'s body census, pinned as a length (`sbB_length : sbB.length =
+18`) so 13 → 18 can never be silent again:
+
+| # | statement | |
+|---|---|---|
+| 0–5 | docstring, `nodes += 1`, the clock guard, `depth = max(depth,0)`, the king-capture check, the probe block | byte-identical to pass 7's, spans aside |
+| 6 | `killer = self.tp_move.get(pos)` | NEW |
+| 7 | `def moves()` | five captures, `guard` CELLED |
+| 8–11 | `calm`, `guard`, `t`, `nmr` | NEW — the calmness test #236 lifted out of `moves()`, its root-excluded twin, and the deep-null fuel probe |
+| 12–17 | `best, live = …`, the fold, the correction, the store, the eviction, `return best` | store/eviction/return byte-identical |
+
+Every pin is project-and-pin (`nth n sbB`, then `∃ spans, … = shape := ⟨…,
+rfl⟩`); no big-literal `rfl`, one statement per pin. Two pins are new kinds:
+`sbDef_captures` pins `#["depth", "gamma", "<cell>guard", "killer", "pos"]` —
+the cell's directory key as the tier's own object — and `sbCapPass_lit` pins an
+`Expr.namedExpr`, §L14's walrus constructor, in general expression position.
+
+### §3 — the fold vocabulary is a different program, and it has TWO terminals
+
+Pass 7's `moves()` handed the consumer a finished `(move, score)` and the fold
+was a walk over scores. #236 turned the pair around — `(value, move)`, both
+`None` for a virtual yield — and moved the SCORING into the loop, across five
+branches. The re-derivation makes the classification explicit:
+
+* `Round` — `report (score) (live)` for the four scoring branches, `settle
+  (cap)` for `if cap < gamma: best = max(best, cap); break`;
+* `Exit` — `ran` / `cut` / `settled`, because the loop now has two ways to
+  leave early and they are not interchangeable: a settled round folds its cap
+  with `max`, sets NO `live`, and skips the cutoff block entirely (so it
+  stores no killer);
+* the five branches named as constructors (`standPat`, `cappedPass`,
+  `searchedPass`, `intrinsicMate`, `searchedMove`/`settledCap`), each read off
+  its own §0 pin;
+* `moveCap` and `moveDepth` with their QS specializations, and `bit` for
+  CPython's boolean-in-arithmetic coercion.
+
+`foldFrom_nil`/`_cons_next`/`_cons_cut` survive in shape; `foldFrom_cons_settle`
+is new and is an `rfl` — the settled arm takes NO hypothesis about `gamma`,
+because `cap < gamma` was already decided when the round was classified.
+
+### The finding §3 produced: depth 0 recurses into ITSELF, and that is what the QS gate is dodging
+
+`moveDepth depth lmr nmr = depth - 1 - bit lmr - bit nmr`, and the child
+refloors with `depth = max(depth, 0)`. Two theorems, one line each:
+
+* `child_depth_lt` — at every `depth ≥ 1` the child's KEY depth is strictly
+  below the parent's, for every reduction the code can apply (and
+  `pass_depth_lt` / `nmr_depth_lt` for the two null probes at `depth - 3` and
+  `depth - 7`). This is exactly the `d ≠ e` side condition
+  `Bracket.SubtreeWrites` needs, discharged once for the whole tier.
+* `qs_child_depth_eq` — at `depth = 0` it is `max (-1) 0 = 0`: **a QS node's
+  children store under the QS node's own key.** The depth-separation arm does
+  not cover them at all.
+
+So the QS gate's `gamma ≤ pos.score` hypothesis is not a convenience — it is
+what makes the fold CUT before any child runs, which is the only reason a
+depth-0 statement can avoid the table question entirely. §L10 chose the
+cleared-table form for the model's sake; this says the depth-0 case would have
+needed it anyway.
+
+### §6 — the table lines, wired to `DictCalc`, and it cost five theorems
+
+§L13 built the calculus in the general layer *"precisely so that a re-pin would
+not touch it"*, and this is the receipt. The three lines it models — the probe,
+the store, `Entry = namedtuple("Entry", "lower upper")` — are byte-identical
+between the two fixtures (measured span-blind before anything was written), so
+the wiring is instantiation and nothing else: `sfBracket := tpBracket`,
+`entryDefault`/`tpKey`/`entryOf` as the shipped values, then `sf_probe`,
+`sf_store`, `sf_subtree_probe`, `sf_subtree_tableAt` — four one-to-three-line
+consequences of `TableAt.get`/`.store`/`SubtreeWrites`. `entryBounds_entryOf`,
+`entryBounds_default` and `pairKey_tpKey` are `rfl`. **`DictCalc`'s choice-free
+axiom set is preserved through the wiring**: all four wired theorems print
+`[propext, Quot.sound]`, no `Classical.choice`.
+
+### The near-miss: a sixth attribute, and the gate that would have been vacuous
+
+`Searcher.__init__` on engine master is `self.nodes, self.deadline, self.soft =
+0, 1 << 63, 1 << 63` — SIX attributes, not five. `searcherObj` was carried over
+at five, and it TYPECHECKED: `bound_enters` and `QSStandPat` would have been
+perfectly good theorems about a receiver shape the engine never builds. It was
+caught by reading `search()`'s new `if time.time() > self.soft: return` line,
+not by the build. The repair is one field plus a `#guard` that matches
+`searcherObj` against a real `Searcher()` over the real `initWorld` — the
+non-vacuity check that would have caught it, now standing.
+
+### The empty-trace frontier MOVED, and it got cheaper
+
+Pass 5/6 pinned the wall at node 2048: nothing consulted `time.time()` below
+it, so `pins_search` could step the driver four times at the empty trace.
+Engine master ends every depth iteration with `if time.time() > self.soft:
+return`, so the driver consults the wall once per COMPLETED DEPTH. At the empty
+trace the fourth step now refuses — at 45 nodes, not 2048 — with the same
+underrun message at the new consultation point. Both halves are pinned
+(`pins_search.lean`: three yields, then the refusal). The frontier is a
+statement about the PROGRAM, and it moved with the program.
+
+### The batteries: 15 of 23 pairs moved, and TWO of them changed value
+
+Every expected pair was re-derived by importing engine master's `sunfish.py`
+into CPython 3.9 and probing it directly — the oracle, not the model. The model
+then agreed on every row.
+
+* **Twelve rows kept their value and lost nodes.** The settled-cap break
+  leaves a sorted stream earlier: `posH 40 3` is `(39, 208) → (39, 197)`,
+  `posEnd 60 3` is `(137, 27) → (137, 13)`.
+* **The two TACTICAL rows changed value outright**: `posTac` answered exactly
+  `MATE_LOWER = 47923` at depths 2 and 3 under pass 7 — the king-capture
+  sentinel path — and engine master answers `277` and `417`. The futility cap
+  settles the position before the mate line is searched. The board no longer
+  exercises the sentinel discipline it was chosen for; recorded, not repaired.
+
+### The empty-trace frontier at search scale, and what the seeded pin costs now
+
+`pins_clock`'s deep-stepping pin had a matching shape change, and the new
+consumption schedule IS the pin's content. Under a four-reading trace the
+driver spends them at exactly four places, all measured on one pass:
+
+| between | why | trace after |
+|---|---|---|
+| steps 3 → 4 | depth 1 converged (`self.soft`) | 3 left |
+| steps 7 → 8 | depth 2 converged | 2 left |
+| step 13 | depth 3 converged **and** node 2048 crossed inside `bound()` | 0 left |
+
+Depth 3 now needs FIVE probes to converge where pass 7 needed four, so the walk
+is 13 steps, not 12, and depth 4's first yield is `(4, 33, 32, g8f6)` at 2053
+cumulative nodes. Every tuple and every node count is CPython's, checked
+directly; the model reproduced all fourteen rows exactly.
+
+### Triad, cold on the merged tree
+
+`lake build` **3678 jobs green**, zero `sorry`/`admit`/`native_decide` and zero
+`sorryAx`; the axiom profile over the whole tree is exactly three shapes —
+307 `[propext, Classical.choice, Quot.sound]`, 20 `[propext, Quot.sound]` and
+7 `[propext]` — and **`DictCalc`'s choice-free set is intact** (12 + 2 of its
+own, plus the six §6 wirings, which land in the choice-free bucket rather than
+widening it). The two expensive re-derived batteries dominate: `pins_bound`
+1111 s and `pins_clock` 1091 s, both re-elaborated from scratch (against
+§L13's `pins_clock` 917 s — the extra is depth 3's fifth probe and depth 4's
+2053 nodes). `diff_test` **1315 cases, 0 failed, 113 whitelisted-unsupported,
+1202 matched** — byte-identical to §L14's, so the fixture swap cost the
+differential nothing. `docs_check` 71 marked blocks, 71 ok, 15
+illustrative-exempt.
+
+### Findings worth carrying
+
+1. *A drift-proof THEOREM is not a drift-proof FILE.* Every theorem in the
+   §L4–§L13 generator tier re-elaborated green with no edit — §L14's estimate
+   was right about proofs. What moved was 78 pinned spans, 61 synthesized
+   `<genexpr@n>` names, three censuses and 15 battery pairs. Price a re-pin by
+   its `#guard`s, not by its `theorem`s.
+2. *A carried-over receiver shape is the quietest way to lose a gate.* Adding a
+   sixth attribute to `__init__` cannot break a build: it makes every statement
+   ABOUT that shape vacuous. Any hand-written projection of a runtime object
+   needs a `#guard` matching it against the real thing, and that guard belongs
+   next to the definition, not in a battery file.
+3. *Two terminals need two constructors.* Modelling #236's `break` as "a cut
+   with a different score" would have typechecked and lost three facts at once
+   (no `live`, no killer store, no look-ahead). The `Exit` enum costs one
+   `deriving` line and makes `foldFrom_cons_settle` an `rfl`.
+4. *A shared counter shows up as a GAP in a census, and the gap is evidence.*
+   `<genexpr@2>` is absent from `sunfish.functions` because `genExpName` and
+   `yieldFromName` draw from one counter in `Json.lean` and index 2 went to the
+   `<yieldfrom@2>` loop target for `yield from sorted(…)`. Pinning the gap with
+   its explanation is worth more than renumbering to hide it.
+5. *When a battery moves, re-derive from the ORACLE.* All 23 pairs were taken
+   from CPython on engine master, not from the model's own `#eval` — which is
+   what makes "the model agreed on every row" a check rather than a tautology.
+   The two tactical rows are why: a model-derived re-pin would have recorded
+   `277` just as confidently and proved nothing.
+6. *OPS — kills by PID and parentage only, and one edit-under-build slip
+   recorded.* Four of this lane's own jobs were killed mid-flight (a `lake
+   build` whose battery values were known-stale, two redundant duplicate
+   evaluations, and a `diff_test` that had started a full build before
+   `pins_clock` was re-pinned), each verified through `ps -o ppid` up to this
+   session's own shell before the signal. **One slip against "never edit
+   sources mid-build":** a COMMENT-only correction (a miscounted "fifteen of
+   23" → "fourteen") was applied to `pins_bound.lean` while a standalone
+   `lake env lean` of that same file was in flight. The values were untouched
+   and the file was re-elaborated from scratch in the final triad, so nothing
+   rests on the interrupted run — but the rule is about the dependency set, not
+   about whether the edit looks harmless, and the discipline is cheaper than
+   the audit.
+7. *Re-deriving a battery is two full evaluations, not one, unless you plan
+   it.* A failing `#guard` costs the same kernel run as a passing one and tells
+   you nothing but "no". The cheap route is `#eval` with `IO.println` per row
+   (output flushes as the walk proceeds) or — cheaper still — the CPython
+   oracle, which answered all 23 pairs in under a second and was the thing the
+   `#guard`s should agree with anyway.

@@ -41,8 +41,12 @@ stays statically poisoned (both names; the tuple-target census lists
 statically poisoned here, valued in `initWorld`'s globals below, same
 values, one heap. `opt_ranges` (a keyword call) and `hist` (a
 constructor call) are out-of-tier right-hand sides. (`__version__` is
-gone — #158 folded it into the `version` literal.) Reverse order =
-source order. -/
+gone — #158 folded it into the `version` literal.) Pass 8 adds three
+scalars in the search-constant block — `LMR`, `NULL_MARGIN` and
+`DELAY`, all heap-pure literals, all STATICALLY valued — which is the
+whole of the re-pin's effect on module init: they are declared AFTER
+`directions`, so nothing above them moves and the live view below is
+unchanged. Reverse order = source order. -/
 
 #guard ((moduleGlobals sunfish).1.map (fun p => (p.1, p.2.isSome))).reverse ==
   [("time", false), ("version", true),
@@ -52,7 +56,8 @@ source order. -/
    ("A1", true), ("H1", true), ("A8", true), ("H8", true),
    ("initial", true), ("N", true), ("E", true), ("S", true), ("W", true),
    ("directions", false), ("MATE_LOWER", false), ("MATE_UPPER", false),
-   ("QS", true), ("QS_A", true), ("EVAL_ROUGHNESS", true),
+   ("QS", true), ("QS_A", true), ("LMR", true), ("EVAL_ROUGHNESS", true),
+   ("NULL_MARGIN", true), ("DELAY", true),
    ("TABLE_SIZE", true), ("opt_ranges", false), ("hist", false)]
 
 /-! The live view serves what the static table ceded (same values — the
@@ -113,7 +118,7 @@ private def pstAt (p : String) (sq : Nat) : Option RVal :=
 centralization gradient — both 120 wide, both live-view bindings from
 the ONE #158 tuple-target assign, whose right-hand side runs through
 the live pipeline: a subscript read of the live `pst` AND
-`tuple(<genexpr@6>(range(120)))` — the drained module-scope genexp.
+`tuple(<genexpr@7>(range(120)))` — the drained module-scope genexp.
 The #158 formula covers all 120 squares (no zero padding ring
 anymore): the corner value 59870 = 60000 + 70 − 10·(11 + 9) is
 CPython's own answer at 0 and 119. -/

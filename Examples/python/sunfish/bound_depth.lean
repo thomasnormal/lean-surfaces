@@ -561,6 +561,16 @@ theorem mlG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).sn
 theorem muG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
     "MATE_UPPER" = some Option.none := rfl
 
+/-- **`NULL_MARGIN` is NOT poisoned** — measured, and it corrects a recorded
+assumption. `MATE_LOWER`/`MATE_UPPER` are `some none` (bound but dirty, so the
+live view decides), but `NULL_MARGIN`, like `QS` and `LMR`, survives the static
+fold with its value. So `t = pos.score + NULL_MARGIN` needs NO hypothesis about
+`w.globals`, and `QSStandPat`'s `NULL_MARGIN` premise is REDUNDANT. It stays
+(AGENTS.md: never delete a hypothesis that turns out unneeded — record it), and
+the record is here: it only weakens the statement, it does not falsify it. -/
+theorem nmarG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
+    "NULL_MARGIN" = some (some (.int nullMargin)) := rfl
+
 theorem entryG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
     "Entry" = Option.none := rfl
 theorem entryF : findFunction sunfish "Entry" = Option.none := rfl
@@ -1100,6 +1110,149 @@ theorem probe_repetition_skipped (w : World) (e : REnv)
   obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, h⟩ := sbRep_lit
   rw [h]
   py_simp [-globalsFold, -globalsStep, hd]
+
+/-! ### #236's four statements between the probe and the fold
+
+`killer`, `calm`/`guard`, `t`, `nmr` — statements 6 and 8–11. Three of the four
+are as cheap as the head; the fourth is the one statement in `bound()` that
+carries a RECURSIVE CALL outside the fold, and it is a measured wall with a
+measured fix. -/
+
+/-- **GATE 9 — the killer probe misses too.** `killer = self.tp_move.get(pos)`
+is the one-argument `.get`, so a miss is `None` rather than a default, and on a
+cleared `tp_move` that is the answer. Read BEFORE the null-move probe, which
+the shipped comment says is deliberate (*"in case the recursive probe evicts
+it"*) — an ordering this gate does not depend on but the fold's killer branch
+will. -/
+theorem killer_misses (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf : Int) (pv : RVal) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap tm = some (.dict #[] sv))
+    (hk : hashableKey pv = true) :
+    execStmts sunfish 16 ⟨w, e⟩ [sbKiller]
+      = .ok ⟨w, Env.set e "killer" .none⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, h⟩ := sbKiller_lit
+  simp only [Heap.get?] at hobj hdict
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hslf, hpos, hobj, hdict, searcherObj, hk]
+
+/-- **GATE 10 — `guard = not root and calm`** is `calm` itself away from the
+root. The celled capture (§L14) is what makes this statement's POSITION legal:
+it is written below `def moves():` and read at the call. -/
+theorem guard_evals (w : World) (e : REnv) (cm : Bool)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hcalm : Env.lookup e "calm" = some (.bool cm)) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbGuard]
+      = .ok ⟨w, Env.set e "guard" (.bool cm)⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, h⟩ := sbGuard_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hroot, hcalm]
+
+/-- **GATE 11 — `t = pos.score + NULL_MARGIN`.** The null-probe threshold, and
+the measurement `nmarG` records is what makes it cheap: `NULL_MARGIN` resolves
+statically, so this gate says nothing about `w.globals`. -/
+theorem null_margin_adds (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnonm : Env.lookup e "NULL_MARGIN" = Option.none) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbT]
+      = .ok ⟨w, Env.set e "t" (.int (sc + nullMargin))⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, h⟩ := sbT_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hpos, hnonm, nmarG, posOf, posCAux,
+    posCls_methods]
+
+/-! #### The `and`-chain short circuit, as a general lemma
+
+**MEASURED WALL, and it is not the recursion — it is `evalExpr` at a SYMBOLIC
+operand.** `nmr = calm and depth >= 6 and -self.bound(…) >= t` dies on its
+second conjunct at every QS node, so the child never runs. But `py_simp`
+normalizes the unreachable branch too: it unfolds `evalBoolChain` down to
+`evalExpr sunfish _ st r` with `r` the opaque third operand `sbNmr_lit`
+provides, and `evalExpr` at a free scrutinee splits into every arm of its
+match, each carrying the 1MB literal. Measured: **2 min to the simp step
+budget** at 8M heartbeats, with the diagnostics dominated by generic
+propositional lemmas (`imp_false` 1242, `eq_self` tried 7868) — the signature
+of a goal that has exploded, not of a hard fact.
+
+The fix is to keep `evalExpr` away from `r` by proving the short circuit ONCE,
+at the chain, with every operand symbolic. Neither lemma mentions a module, a
+program or a fuel numeral, and with them the gate below is **1.7 s**. Both
+belong in the general layer the moment a second consumer appears; they are
+here because this is the first. -/
+
+/-- A falsy FIRST operand ends an `and` chain at its own value — and it needs
+no hypothesis about the rest, because the empty and non-empty tails agree. -/
+theorem boolChain_and_falsy {m : Module} {F : Nat} {st st₁ : FrameState}
+    {e1 : Expr} {es : List Expr} {v1 : RVal}
+    (h1 : evalExpr m F st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok false) :
+    evalBoolChain m (F + 1) st .and e1 es = .ok st₁ v1 := by
+  rw [evalBoolChain, h1]
+  cases es <;>
+    simp only [Run.bind, Run.liftRes, hb1, Bool.false_eq_true, if_false]
+
+/-- **And a three-operand chain that dies on its SECOND operand never looks at
+its third.** `e3` is universally quantified and appears in no hypothesis, which
+is the whole point: the caller's third conjunct may be anything at all, a
+recursive call included. -/
+theorem boolChain_and3 {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {e1 e2 e3 : Expr} {v1 v2 : RVal}
+    (h1 : evalExpr m (F + 1) st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok true)
+    (h2 : evalExpr m F st₁ e2 = .ok st₂ v2)
+    (hb2 : truthyH st₂.world.heap v2 = .ok false) :
+    evalBoolChain m (F + 2) st .and e1 [e2, e3] = .ok st₂ v2 := by
+  rw [evalBoolChain, h1]
+  simp only [Run.bind, Run.liftRes, hb1]
+  rw [evalBoolChain, h2]
+  simp only [Run.bind, Run.liftRes, hb2, if_true, Bool.false_eq_true, if_false]
+
+/-- **GATE 12 — `nmr` is `False` at every QS node, and no child runs.**
+An EXPRESSION gate rather than a statement gate, like `max_evals`: what has to
+be said is that the chain's value is `False`, and it is `False` for two
+different reasons depending on `calm` — the first operand when `calm` is falsy,
+the second when it is not. Both land on `.bool false`, so the gate is stated
+over a symbolic `calm` and proved by casing on it.
+
+`r` is the shipped `-self.bound(pos.rotate(nullmove=True), 1 - t, depth - 7)`,
+carried as a free expression. That it can be free is the statement's content:
+**a depth-0 gate owes no child call.** At `depth ≥ 6` it does, and that is the
+one recursive call `bound()` makes outside the fold. -/
+theorem nmr_evals (w : World) (e : REnv) (cm : Bool) (r : Expr)
+    (p1 p2 p3 p4 p5 p6 p7 : Span)
+    (hcalm : Env.lookup e "calm" = some (.bool cm))
+    (hd : Env.lookup e "depth" = some (.int 0)) :
+    evalExpr sunfish 8 ⟨w, e⟩
+        (.boolOp .and #[.name "calm" p1,
+          .compare (.name "depth" p2) #[.gtE] #[.constant (.int 6) p3] p4,
+          .compare r #[.gtE] #[.name "t" p5] p6] p7)
+      = .ok ⟨w, e⟩ (.bool false) := by
+  have h1 : evalExpr sunfish 6 ⟨w, e⟩ (.name "calm" p1) = .ok ⟨w, e⟩ (.bool cm) := by
+    py_simp [-globalsFold, -globalsStep, hcalm]
+  have h2 : evalExpr sunfish 5 ⟨w, e⟩
+      (.compare (.name "depth" p2) #[.gtE] #[.constant (.int 6) p3] p4)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  rw [evalExpr]
+  cases cm
+  · exact boolChain_and_falsy (F := 6) h1 rfl
+  · exact boolChain_and3 (F := 5) h1 rfl h2 rfl
+
+/-- **GATE 13 — the accumulators.** `best, live = -MATE_UPPER, False` is a
+tuple-unpack assignment, and it is the fold's initial state: `Sound` holds of
+it for free (`-MATE_UPPER < gamma` is the window precondition), which is
+`fold_report`'s `hb`. -/
+theorem acc_inits (w : World) (e : REnv)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper)) :
+    execStmts sunfish 16 ⟨w, e⟩ [sbAcc]
+      = .ok ⟨w, Env.set (Env.set e "best" (.int (-mateUpper))) "live" (.bool false)⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, h⟩ := sbAcc_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hnomu, hmu, muG]
 
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
@@ -1898,6 +2051,18 @@ assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`
         | _ => false)
      | _ => false)
   | Option.none => false)
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_move" with
+        | some (.ref tm) =>
+          (match Heap.get? w.heap tm with
+           | some (.dict es _) => es.size == 0
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
 #guard hashableKey (posH 0) == true
 #guard hashableKey (tpKey (posH 0) 0) == true
 #guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
@@ -1937,6 +2102,14 @@ assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`
 #print axioms probe_lower_passes
 #print axioms probe_upper_passes
 #print axioms probe_repetition_skipped
+#print axioms killer_misses
+#print axioms guard_evals
+#print axioms null_margin_adds
+#print axioms boolChain_and_falsy
+#print axioms boolChain_and3
+#print axioms nmr_evals
+#print axioms acc_inits
+#print axioms nmarG
 #print axioms posCls_ntBase_isSome
 #print axioms sf_body_tableAt
 #print axioms sf_rounds_probe

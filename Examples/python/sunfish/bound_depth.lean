@@ -1488,6 +1488,45 @@ theorem boolChain_and2 {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
   rw [evalBoolChain, h2]
   simp only [Run.bind]
 
+/-! #### The same fix for a COMPARISON, and it was owed
+
+`boolChain_and_falsy`/`and2`/`and3` prove an `and` chain's outcome at the CHAIN
+with every operand universally quantified, so `evalExpr` is never applied to an
+operand. **`compare` had no such lemma**, and its absence has a distinctive
+failure: `==` cases on both `RVal` operands at once, so `py_simp` reduces UNDER
+the match binder and produces a `rfl` the ELABORATOR accepts and the KERNEL
+refuses (`id (Eq.refl (match RVal.int j, rhs with …))`). That reads like a proof
+until the build runs, which is the worst shape a failure can have.
+
+The two lemmas below close it. First consumer is `value_bound.lean`'s en-passant
+guard (`Position.value`'s `j == self.ep`); they belong in the general layer at
+the second, like the three above them. -/
+
+/-- One comparison operator, decided at the chain. -/
+theorem compareChain_one {m : Module} {F : Nat} {st st₁ : FrameState}
+    {lhs rhs : RVal} {op : CmpOp} {e : Expr} {b : Bool}
+    (h2 : evalExpr m (F + 1) st e = .ok st₁ rhs)
+    (hop : evalCompareOpH st₁.world.heap (F + 1) op lhs rhs = .ok b) :
+    evalCompareChain m (F + 2) st lhs [op] [e] = .ok st₁ (.bool b) := by
+  rw [evalCompareChain, h2]
+  cases b <;>
+    simp only [Run.bind, Run.liftRes, hop, Bool.false_eq_true, if_false, if_true,
+      evalCompareChain]
+
+/-- **A one-operator comparison, decided at the CHAIN.** Both operands are
+universally quantified and appear in no hypothesis but their own, so `evalExpr`
+is never applied to either — §L17's altitude fix in the construct that had no
+version of it. -/
+theorem compare_one {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {lhs rhs : RVal} {op : CmpOp} {e1 e2 : Expr} {sp : Span} {b : Bool}
+    (h1 : evalExpr m (F + 2) st e1 = .ok st₁ lhs)
+    (h2 : evalExpr m (F + 1) st₁ e2 = .ok st₂ rhs)
+    (hop : evalCompareOpH st₂.world.heap (F + 1) op lhs rhs = .ok b) :
+    evalExpr m (F + 3) st (.compare e1 #[op] #[e2] sp) = .ok st₂ (.bool b) := by
+  rw [evalExpr, h1]
+  simp only [Run.bind]
+  exact compareChain_one h2 hop
+
 /-- **GATE 12 — `nmr` is `False` at every QS node, and no child runs.**
 An EXPRESSION gate rather than a statement gate, like `max_evals`: what has to
 be said is that the chain's value is `False`, and it is `False` for two
@@ -3961,6 +4000,8 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms nmr_evals
 #print axioms acc_inits
 #print axioms boolChain_and2
+#print axioms compareChain_one
+#print axioms compare_one
 #print axioms execStmt_nestedDef_cells
 #print axioms sbDef_cells
 #print axioms sbDef_snapshot

@@ -32,7 +32,7 @@ open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.bound_depth (posCAux posCls_methods absG absNotFun absCls absNT
-  execStmt_if_true execStmt_if_false execStmts_singleton)
+  execStmt_if_true execStmt_if_false execStmts_singleton compare_one)
 
 set_option maxRecDepth 100000
 
@@ -617,29 +617,45 @@ theorem value_prom_skips (w : World) (e : REnv) (j : Int) (F : Nat)
   rw [hlit, execStmt_if_false hc rfl]
   rfl
 
-/-! ### GATE 7d is BLOCKED, and the failure mode is a new one
+/-! ### GATE 7d — the en-passant arm, and it took a GENERAL LEMMA
 
-`if j == self.ep:` — the en-passant arm. Its pin is above; its gate is not here,
-and the blocker is worth naming because it is **not** an unsolved goal:
-`py_simp` closes the branch and the **KERNEL** rejects the result with
-`application type mismatch: id (Eq.refl (match RVal.int j, rhs with …))`. The
-`rhs` there is a MATCH BINDER, so `py_simp` produced a `rfl` under a binder —
-the attribute read `self.ep` was never destructed inside the comparison's own
-match.
+Two fix attempts failed before the diagnosis landed, and the diagnosis is the
+useful output. **Attempt 1, inline**: `py_simp` closed the branch and the KERNEL
+refused it — `id (Eq.refl (match RVal.int j, rhs with …))`, a `rfl` under a match
+BINDER, because `==` cases on both `RVal` operands at once. **Attempt 2,
+sequence the read**: a `have` for `self.ep` does not FIRE, because the fuel the
+compare's unfolding exposes is not the one the `have` was stated at.
 
-This is a different failure from anything else in this file. `null_margin_adds`
-(bound_depth.lean) reads `pos.score` through a `binOp` with the same three
-residues and succeeds, so the difference is the COMPARISON's match, not the
-field read: `==` on two `RVal`s cases on both operands at once, and the
-attribute's `Run` has to be sequenced before that match can reduce.
+**Neither was a premise-spelling problem; it was an ALTITUDE gap.** §L17 fixed
+the same wall for `and` chains with `boolChain_and_falsy` — a lemma that proves
+the outcome at the CHAIN with every operand universally quantified, so `evalExpr`
+is never applied to an operand. `compare` had no such lemma. `compare_one`
+(bound_depth.lean, added beside the three `boolChain_*`) is it, and with it this
+gate is four lines: two operand facts, one `evalCompareOpH` fact, done. The
+kernel never sees a `rfl` under a binder because nothing reduces under one.
 
-**Two fix directions, in preference order.** (1) Read the field into the frame
-first — bind `self.ep` with a `have` at the `evalExpr` level and hand
-`py_simp` the VALUE, which is the residue-spelling law applied one step earlier.
-(2) State the comparison's own value as a premise in the residue's spelling.
-Either is a scratch cycle; what must not happen is another `py_simp` that the
-elaborator accepts and the kernel refuses, because that failure reads like a
-proof until the build runs. -/
+**Carry this shape:** when `py_simp` produces a proof the ELABORATOR accepts and
+the KERNEL refuses, do not hunt for a better premise — look for the construct
+that has no altitude lemma yet. -/
+
+/-- **GATE 7d — the destination is not the en-passant square**, so that arm is
+dead. -/
+theorem value_ep_skips (w : World) (e : REnv) (bd0 : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp j : Int) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf bd0 scv wc0 wc1 bc0 bc1 ep kp))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hne : j ≠ ep) :
+    execStmt sunfish (F + 6) ⟨w, e⟩ vlEp = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bd, a, b, c, d, e', hlit⟩ := vlEp_lit
+  have h1 : evalExpr sunfish (F + 4) ⟨w, e⟩ (.name "j" a) = .ok ⟨w, e⟩ (.int j) := by
+    py_simp [-globalsFold, -globalsStep, hej]
+  have h2 : evalExpr sunfish (F + 3) ⟨w, e⟩ (.attribute (.name "self" b) "ep" c)
+      = .ok ⟨w, e⟩ (.int ep) := by
+    py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+  have hop : evalCompareOpH w.heap (F + 3) .eq (.int j) (.int ep) = .ok false := by
+    simp [evalCompareOpH, RVal.refFree, valEq, hne]
+  rw [hlit, execStmt_if_false (compare_one (F := F + 2) h1 h2 hop) rfl]
+  rfl
 
 #print axioms vlF_lit
 #print axioms vlB_split
@@ -672,6 +688,7 @@ proof until the build runs. -/
 #print axioms vlProm_lit
 #print axioms vlEp_lit
 #print axioms value_prom_skips
+#print axioms value_ep_skips
 #print axioms value_unpacks
 #print axioms value_returns
 
@@ -751,15 +768,13 @@ enumeration wherever a statement's body is a sequence — it is the same economy
 
 ### What is left
 
-1. **GATE 7d** — the en-passant skip arm, blocked on the kernel-level failure
-   named above. Its two fix directions are written down; expect one cycle.
-2. **GATE 7e/7f** — the two ADD arms (promotion, en passant). Both need a
+1. **GATE 7e/7f** — the two ADD arms (promotion, en passant). Both need a
    sharper pin of their statement with the body spelled (the current pins leave
    it existential, which is right for the skip arms and wrong for these — §L19's
    law, third application), plus the `prom` row and the `119 - (j + S)` index.
-3. **The composition**, `value_runs`, with a `by_cases` per two-arm gate and a
+2. **The composition**, `value_runs`, with a `by_cases` per two-arm gate and a
    `value_pawn_enters` peel in the middle.
-4. **The fixture instantiation IN THE SAME COMMIT** — a `#guard` or checked
+3. **The fixture instantiation IN THE SAME COMMIT** — a `#guard` or checked
    example running `value_runs`' own premises on the shipped board, so the
    completed theorem is known non-vacuous the moment it lands. This file leads
    with `#guard`s for exactly that reason and the composition must not break the

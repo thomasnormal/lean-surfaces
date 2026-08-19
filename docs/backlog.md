@@ -9303,3 +9303,126 @@ retires it is a proved `bound_refines_fuelModel`; `QSStandPat` is its base case
 and four of the eighteen statements it needs are unpaid. What changed is that
 the head is done, the fold's spec side is done, and the two premises the
 statement must carry are named and half-priced.
+
+
+## L18 — THE CELL IS SPENT ON THE SHIPPED FILE, `calm` NAMES ITS GENEXP, and the model choice is TAKEN (2026-08-19)
+
+§L17 left statements 7 and 8 owed and everything else in the head paid. Both
+landed. **Thirteen of the eighteen statements now have an interpreter gate**;
+what remains is the fold and the tail.
+
+### Statement 7 — `def moves():` allocates TWO objects, and the cell is empty
+
+§L14 built the closure cells; this is the first time they are spent on the
+shipped file, and the shape is worth recording. The captures are
+`#["depth", "gamma", "<cell>guard", "killer", "pos"]` — four plain names and one
+CELL DIRECTORY KEY — so `allocCells` pushes one `.cell none` and binds
+`<cell>guard` to its address BEFORE the snapshot runs, and the snapshot then
+carries a REF where a value would have been. The `def` therefore leaves **two**
+heap objects where the snapshot tier left one.
+
+**The cell holds `none`, and that is the point rather than a defect.** `guard`
+is assigned at statement 9, below the `def` at 7, so at allocation time the name
+has no binding — precisely the source order the snapshot tier refused outright
+(§L13's blocker) and the cell admits.
+
+`execStmt_nestedDef` (GenBound.lean) does NOT apply: its hypothesis is
+`allocCells st caps = st`, i.e. no cells. `execStmt_nestedDef_cells` is the same
+theorem with the post-allocation frame as its own variable, and the snapshot
+version is its `st' = st` case — a strict generalization, so it belongs in
+GenBound the moment a second consumer appears.
+
+§L9 finding 4 cost exactly one parse error, as recorded: a structure-instance
+field value may not continue on a less-indented line. `sbW1`/`sbW2`/`sbEnvDef`
+are named partly for that and partly because the fold reads them.
+
+### Statement 8 — the gate NAMES the genexp's answer
+
+`calm = abs(pos.score) < 750 and any(c in pos.board for c in "RBNQ")`, and the
+second conjunct ingests as `any(<genexpr@3>("RBNQ", pos))` — the head's one
+lowered genexp. Its value depends on which piece letters the board carries, so
+over a symbolic board it cannot be decided without four membership tests.
+
+`calm_evals` carries it as ONE `evalExpr` premise instead, discharged per board,
+and the chain's value IS it (`boolChain_and2`, the two-operand sibling of §L17's
+lemmas). **That the premise can stay open is a fact about depth 0, not a
+shortcut**: `calm` reaches the fold only through `guard`, and `guard` is read at
+`2 < depth < 6` (the scoring null) and at `guard and depth >= 6` (intrinsic
+LMR) — both false at a QS node. A depth-≥2 gate owes the genexp its own drain.
+
+`abs` gets the five residues `max` already had. `<genexpr@3>` is pinned present
+in the census by `#guard`, so the premise cannot come to be about a name the
+ingestion no longer emits.
+
+### THE MODEL CHOICE, TAKEN — and the pairing, explicit
+
+§L17 split the futility premise into a provable sortedness half and an
+unprovable per-move half, and left the statement's target open. **Decided as
+default, pending Thomas's ratification:**
+
+> `bound_refines_fuelModel` is stated against **the DOCSTRING's `s*`** — the
+> promise `report_iff_docstring` pins, in which the per-move futility bound and
+> the reduction bound are DEFINITIONAL, because the docstring defines `s*` to
+> include *"null moves, QS, futility and the reductions"*. **`formal/`'s
+> `CapInBand` (`formal/Sunfish/CappedMove.lean`) is the recorded axiom for the
+> unreduced-negamax gap.** The two repositories then split the claim cleanly:
+> **lean-surfaces proves that the code keeps its own documented promise;
+> `formal/` carries the search-theory content that the promise is worth having.**
+
+The premise STRUCTURE is deliberately untouched by the choice — `hneg` and
+`hfut` are hypotheses under either reading — so the two readings are one
+definition of `V` apart and an override is a rename, not a reproof.
+
+### What landed
+
+`bound_depth.lean` only: `execStmt_nestedDef_cells`, `guardCell`, `sbDef_cells`,
+`sbMovesCap`, `sbMovesClosure`, `sbW1`, `sbW2`, `sbEnvDef`, `sbDef_snapshot`,
+`moves_def_allocates`, `boolChain_and2`, `abs_score_evals`, `calm_evals`, the
+five `abs` residues, four grounding `#guard`s and eight `#print axioms`. Every
+new theorem prints `[propext, Classical.choice, Quot.sound]` or less;
+`boolChain_and2` and `execStmt_nestedDef_cells` are choice-free.
+
+**Triad:** `lake build` 3678 jobs green; `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` 1315 cases, 0 failed, 113 whitelisted, 1202
+matched — unchanged since §L15 across thirteen gates; `script_corpus` 64
+scripts, 0 failed, 50 matched, 14 loud. The file elaborates in 3 m 25 s, all of
+the growth still the `#guard`s' real searches.
+
+### Findings worth carrying
+
+1. *A cell that holds `none` is the tier working, not failing.* The instinct on
+   reading `allocCells`' `.cell (Env.lookup st.locals (cellName c))` at an
+   unbound name is to look for the bug. There is none: the empty cell IS the
+   admission of a capture assigned below its own `def`, which is the shape that
+   blocked the whole re-pin until §L14.
+2. *When a subexpression's value is irrelevant to the statement, make it a
+   PREMISE and prove the irrelevance.* `calm_evals` does not decide the genexp;
+   what makes that honest is the separate reading of where `guard` is consumed
+   (`2 < depth < 6`, `depth >= 6`), both dead at depth 0. A premise without
+   that reading would be a gap; with it, it is a factored proof.
+3. *A generalization of a general-layer theorem is a general-layer theorem.*
+   `execStmt_nestedDef_cells` subsumes `execStmt_nestedDef`. It sits locally
+   only because moving it costs a tree-wide rebuild, and that is a scheduling
+   decision, not a design one — recorded so the next lane merges rather than
+   duplicates.
+4. *The model choice was cheap because the premise structure was already
+   right.* §L16 stated `hneg`/`hfut` as hypotheses at the sites that can pay
+   them rather than folding them into the value function. That is why choosing
+   the docstring reading is a definition swap and not a restatement — the same
+   reason §L13 finding 2 gave for making an invariant clause a hypothesis.
+
+### What is still owed
+
+1. **Statement 13, the fold**, via `PyStmtTriple.forGen`, with `qs_round` built
+   from per-expression `EvalsTo` gates — §L10's item 4. §L16's `fold_report` is
+   waiting for it, and §L18's `sbW2`/`sbEnvDef` are the world and frame it
+   starts from. This is now the single largest remaining piece.
+2. **Statements 14–17**, the correction (dead at depth 0 — `sbCorr` is
+   depth-gated), the store, the eviction's false guard and the return, then the
+   boundary — which together close `QSStandPat`.
+3. Then `RecursionStep`, and `bound_refines_fuelModel` assembles.
+
+**`model_audit` CANNOT RETIRE YET.** Five of eighteen statements are unpaid and
+`QSStandPat` is unproved. The head is complete, the recursion rule's spec side
+is complete, both side conditions are named, and the statement's target is now
+DECIDED — but the fold is not written and no assembly exists.

@@ -10796,3 +10796,89 @@ matched**; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. Every one 
 the file's 25 printed declarations depends on `[propext, Classical.choice,
 Quot.sound]` or less, and the ten projection pins depend on `[propext]` alone or
 on nothing. No `sorry`, no `native_decide`.
+
+## L31 — R2b AND R2c CLOSE, and the ordering line meets itself (2026-08-19)
+
+*(§L30 is the census lane's, reserved while it works §L27's six questions.)*
+
+`Examples/python/sunfish/order_genexp.lean` now carries the whole ordering line
+(sunfish.py:444) from its source text to the stream `moves()` emits, and its
+throughput is **15 s**. `ord_stmt_emits` is the join, and it has **one**
+hypothesis that is not bookkeeping.
+
+### What closed
+
+| inch | theorem | rule |
+|---|---|---|
+| R2b | `order_line_sorts` | `EvalsIn.sortedDrainRev` — three allocations inside one expression |
+| R2c | `ord_loop_emits` | `GenEmits.forListRound`/`forListDone`, by induction on the rows left |
+| R2b+R2c | `ord_stmt_emits` | `GenEmits.blockForList` joins them at the frame one pushes and the other consumes |
+| R2a's round | `gx_round_keeps` / `gx_round_drops` | `genSilent_delegate` → `genSilent_branch` → `genSteps_yieldHere` |
+
+**`sf_order` did most of this in §L8 and nobody had noticed.** Its
+`order_line_sorts` and `moves_loop_cuts` are these theorems on the ingested twin,
+whose `Position.gen_moves`/`Position.value` are the shipped sunfish methods
+verbatim. Transposing them was application: R2b landed on the first attempt.
+**A finding for the campaign's pricing: before pricing an inch, grep the OTHER
+program's proof file** — the twin exists precisely so a construct is paid once.
+
+Two differences from the twin, both from the census: sunfish's genexp takes a
+THIRD argument (its filter captures `depth`), and its loop has **no `break`** —
+ingestion's `yield from` rewrite left a body of one statement, so this loop runs
+to EXHAUSTION where the twin's cuts. The beta cutoff `moves_loop_cuts` proves
+lives in sunfish's consumer, not in this loop.
+
+### The round, and what R1 buys
+
+`gx_round_keeps` is one move's worth of the genexp: the binding statement runs
+(`genSilent_delegate` — the walrus is a plain `assign`, §L29), the filter decides
+(`genSilent_branch`), and the `(v, m)` pair is emitted. `gx_round_drops` is the
+same with the branch not taken, and it records something worth having in the
+model: **`Position.value` is called on every generated move, not only on the
+surviving ones**, so R1 is a prerequisite of the whole line rather than of its
+filtered half.
+
+`ValueAnswers` is the round's interface to R1 — the `∃ t, ∀ F ≥ t` threshold form
+the four `value_runs_*` theorems already produce, so they discharge it verbatim.
+
+### The line, RUN
+
+`fxOrd` evaluates `ordLine` itself, in exactly the frame `order_line_sorts`
+quantifies over, on the shipped opening position:
+
+* **2** rows at `depth = 0` and **20** at `depth = 3` — the QS floor of §L29's
+  measurement, now surviving the sort;
+* **descending**, checked pairwise on the first components — so `reverse=True`
+  reaches `sortByLt true` and is not a sort followed by a reversal, which is what
+  §L25's census predicted and nothing had yet run;
+* heap **150**: the live 66, plus the two generators, plus the drain's 81, plus
+  one list. Every number in that sum was measured separately.
+
+### What is left, and it is one thing
+
+`hdrain : IterDrains sunfish (gxW w d pos) (w.heap.size + 1) vs w'`. Everything
+under it is proved. The chain that would discharge it needs **per-round
+`IterSteps` on the INNER generator**, and what exists is `gen_moves_drains_ref`'s
+WHOLE drain: `IterDrains.cons` builds a drain from steps, and what is owed is the
+inverse — a step-indexed reading of `gen_moves_yields_ref`. That is
+genmoves_scan.lean's material, one session, and it is the single real piece of
+work left in R2.
+
+There is no `forGenRounds` batch lemma to shortcut it, and VCGen.lean says why:
+an infinite inner generator has no remainder list to induct on. Here it is finite
+and the induction is on the reference move list, which `gen_moves_drains_ref`
+already produces.
+
+**R3 is not blocked on it.** `ord_stmt_emits` is stated over a free `vs`, so the
+fold's schedule can be chosen against it now: what the fold consumes is a list of
+`(value, Move)` pairs in descending order, and that is what this theorem hands
+over.
+
+### Triad
+
+`lake build` **3682 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched**;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. All 50 printed
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less; the
+twenty-one projection and plan pins depend on `[propext]` alone or on nothing.
+No `sorry`, no `native_decide`.

@@ -1,7 +1,6 @@
 /-
-**THE ORDERING GENEXP'S ROUND** — inch R2a of the `RecursionStep` campaign
-(docs/backlog.md §L25), and the file that says which `for` rule the ordering line
-needs.
+**THE ORDERING LINE** — inches R2a, R2b and R2c of the `RecursionStep` campaign
+(docs/backlog.md §L25), from the genexp's round to the stream `moves()` emits.
 
 `moves()`' last statement is
 `yield from sorted(((v, m) for m in pos.gen_moves() if (v := pos.value(m)) >= QS or depth), reverse=True)`,
@@ -33,6 +32,18 @@ hypothesis, and value_bound.lean's four `value_runs_*` theorems are what dischar
 it. `value_call_evals` is the bridge, and it is three lines: past
 `posCls.2.ntBase.isSome` the interpreter's residue is `callIn` under
 `Run.withLocals`, so R1's conclusion plugs in with no transport.
+
+**R2b and R2c** (§7, §8) close the outside of the line, and `sf_order`'s
+`order_line_sorts`/`moves_loop_cuts` (§L8) are the worked precedents — the twin's
+`Position.gen_moves`/`Position.value` are the shipped sunfish methods verbatim, so
+transposing them is application rather than discovery. Two differences: the
+genexp takes a THIRD argument here (sunfish's filter captures `depth`), and the
+loop has no `break`, because ingestion's `yield from` rewrite left a body of one
+statement — so this loop runs to exhaustion where the twin's cuts.
+
+`ord_stmt_emits` (§8) is where the three meet: the shipped statement, from source
+text to emitted stream, with **one** non-bookkeeping hypothesis left — the genexp
+object's drain, which is R2a's remainder and is shaped in §10.
 -/
 import Examples.python.sunfish.value_bound
 
@@ -42,7 +53,7 @@ open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.bound_depth (posCAux posCls_methods posCls_ntBase_isSome
-  execStmt_if_true execStmt_if_false execStmt_assign_name compare_one)
+  execStmt_if_true execStmt_if_false execStmt_assign_name compare_one sbMB sbMBRest)
 open Examples.python.sunfish.value_bound
 
 set_option maxRecDepth 100000
@@ -355,5 +366,571 @@ are the four theorems that discharge it. `value_call_evals` is the only bridge
 that was missing: the interpreter reaches a namedtuple method through
 `posCls.2.ntBase.isSome`, and past that guard the residue is `callIn` under
 `Run.withLocals` — so R1's conclusion plugs in with no transport at all. -/
+
+/-! ## §7 R2b — THE ORDERING LINE ITSELF
+
+`sorted(<genexpr@1>(pos.gen_moves(), depth, pos), reverse=True)`, read outside
+in: a keyword `sorted` whose single argument is a call to the lowered genexp,
+whose own first argument is a generator METHOD call on the receiver. **Three
+allocations, two of them inside the argument list**, which is why the statement
+is `EvalsIn` and not `EvalsTo`.
+
+**Nothing here is new machinery.** `sf_order`'s `order_line_sorts` (§L8) is this
+theorem on the ingested twin, whose `Position.gen_moves`/`Position.value` are the
+shipped sunfish methods verbatim; `EvalsIn.sortedDrainRev` is the rule and the
+census §L25 ran is what said it already existed. The two differences from the
+twin are the genexp's THIRD argument — sunfish's filter captures `depth` as well
+as `pos` — and the module. -/
+
+def ordFor : Stmt := nth 1 sbMBRest
+def ordTarget : Expr :=
+  match ordFor with | .forStmt t _ _ _ _ => t | _ => .constant .none nowhere
+/-- **The shipped ordering line** (sunfish.py:444), as an AST. -/
+def ordLine : Expr :=
+  match ordFor with | .forStmt _ it _ _ _ => it | _ => .constant .none nowhere
+def ordBody : List Stmt :=
+  match ordFor with | .forStmt _ _ b _ _ => b.toList | _ => []
+/-- `yield <yieldfrom@2>` — what ingestion left of `yield from`. -/
+def ordYield : Stmt := nth 0 ordBody
+
+def ordGxCall : Expr :=
+  match ordLine with | .call _ args _ _ _ => args[0]! | _ => .constant .none nowhere
+def ordRevE : Expr :=
+  match ordLine with | .call _ _ kws _ _ => kws[0]!.2 | _ => .constant .none nowhere
+def ordGmCall : Expr :=
+  match ordGxCall with | .call _ args _ _ _ => args[0]! | _ => .constant .none nowhere
+def ordDepthE : Expr :=
+  match ordGxCall with | .call _ args _ _ _ => args[1]! | _ => .constant .none nowhere
+def ordPosE : Expr :=
+  match ordGxCall with | .call _ args _ _ _ => args[2]! | _ => .constant .none nowhere
+
+theorem sbMBRest_split : sbMBRest = [nth 0 sbMBRest, ordFor] := rfl
+
+theorem ordFor_lit : ∃ sp, ordFor = .forStmt ordTarget ordLine ordBody.toArray #[] sp :=
+  ⟨_, rfl⟩
+theorem ordTarget_lit : ∃ sp, ordTarget = .name "<yieldfrom@2>" sp := ⟨_, rfl⟩
+theorem ordBody_split : ordBody = [ordYield] := rfl
+theorem ordYield_lit : ∃ s₁ s₂, ordYield = .yieldStmt (.name "<yieldfrom@2>" s₁) s₂ :=
+  ⟨_, _, rfl⟩
+theorem ordLine_lit : ∃ s₁ s₂, ordLine =
+    .call (.name "sorted" s₁) #[ordGxCall] #[("reverse", ordRevE)] Option.none s₂ :=
+  ⟨_, _, rfl⟩
+theorem ordRevE_lit : ∃ s, ordRevE = .constant (.bool true) s := ⟨_, rfl⟩
+theorem ordGxCall_lit : ∃ s₁ s₂, ordGxCall =
+    .call (.name "<genexpr@1>" s₁) #[ordGmCall, ordDepthE, ordPosE] #[] Option.none s₂ :=
+  ⟨_, _, rfl⟩
+theorem ordGmCall_lit : ∃ s₁ s₂ s₃, ordGmCall =
+    .call (.attribute (.name "pos" s₁) "gen_moves" s₂) #[] #[] Option.none s₃ := ⟨_, _, _, rfl⟩
+theorem ordDepthE_lit : ∃ s, ordDepthE = .name "depth" s := ⟨_, rfl⟩
+theorem ordPosE_lit : ∃ s, ordPosE = .name "pos" s := ⟨_, rfl⟩
+
+theorem ordFor_plan : genPlan ordFor = .forHere ordTarget ordLine ordBody := rfl
+theorem ordYield_plan : ∃ s, genPlan ordYield = .yieldHere (.name "<yieldfrom@2>" s) :=
+  ⟨_, rfl⟩
+
+/-- The shipped `Position.gen_moves`, projected. -/
+def gmF : FunctionDefn :=
+  match findFunction sunfish "Position.gen_moves" with
+  | some f => f | none => default
+
+theorem gm_lit : findFunction sunfish "Position.gen_moves" = some gmF ∧
+    gmF.argsOk = true ∧ gmF.localsOk = true ∧ arityOk gmF.params 1 = true ∧
+    gmF.isGenerator = true ∧ (∀ p : RVal, mkCallEnv gmF.params #[p] = [("self", p)]) :=
+  ⟨rfl, rfl, rfl, rfl, rfl, fun _ => rfl⟩
+
+/-- `sorted` is the builtin here, not a shadow — `evalExpr`'s own resolution
+order, hypothesis by hypothesis, and every one is `rfl` at a literal module. -/
+theorem sorted_free : lookupG (moduleGlobals sunfish).1 "sorted" = Option.none ∧
+    findFunction sunfish "sorted" = Option.none ∧
+    findClass sunfish "sorted" = Option.none ∧
+    findNamedTuple sunfish "sorted" = Option.none := ⟨rfl, rfl, rfl, rfl⟩
+
+theorem gxName_free : lookupG (moduleGlobals sunfish).1 "<genexpr@1>" = Option.none ∧
+    findClass sunfish "<genexpr@1>" = Option.none ∧
+    findNamedTuple sunfish "<genexpr@1>" = Option.none := ⟨rfl, rfl, rfl⟩
+
+/-- `.gen_moves` on a `Position` value is the SUBCLASS method, resolved before
+any argument runs. -/
+theorem gm_plan : ntupleCallPlan sunfish "Position"
+    #["board", "score", "wc", "bc", "ep", "kp"] "gen_moves"
+    = .instMethod "Position.gen_moves" := rfl
+
+/-- The object `pos.gen_moves()` allocates. -/
+def gmObj (pv : RVal) : Obj := genObj "Position.gen_moves" gmF #[pv]
+/-- The object `<genexpr@1>(<that one>, depth, pos)` allocates. -/
+def gxObj3 (a : Addr) (d : Int) (pv : RVal) : Obj :=
+  genObj "<genexpr@1>" gxF #[.ref a, .int d, pv]
+/-- The world after the receiver's method call. -/
+def gmW (w : World) (pv : RVal) : World := { w with heap := w.heap.push (gmObj pv) }
+/-- The world after the genexp call — two objects, in evaluation order. -/
+def gxW (w : World) (d : Int) (pv : RVal) : World :=
+  { w with heap := (w.heap.push (gmObj pv)).push (gxObj3 w.heap.size d pv) }
+
+/-- **GATE R2b — the shipped ordering line evaluates to the sorted list.**
+
+In a frame that binds `pos` to a `Position` value and `depth` to an integer, and
+shadows neither `sorted` nor the lowered genexp, the line evaluates to a `.ref`
+at the post-drain heap's END, and the object there is a FRESH `.list` holding
+`sortByLt true` of exactly what the genexp object drained to.
+
+The one hypothesis that is not bookkeeping is `hdrain` — what the genexp OBJECT
+yields — and that is R2a's remaining obligation, named here so the two inches
+meet at a judgment rather than at a hope. -/
+theorem order_line_sorts (w : World) (env : REnv) (d : Int)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (vs sortedVs : List RVal) (w' : World)
+    (hpos : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hdepth : Env.lookup env "depth" = some (.int d))
+    (hsorted : Env.lookup env "sorted" = Option.none)
+    (hgxl : Env.lookup env "<genexpr@1>" = Option.none)
+    (hdrain : IterDrains sunfish
+      (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (w.heap.size + 1) vs w')
+    (hsort : sortByLt true vs = .ok sortedVs) :
+    EvalsIn sunfish ⟨w, env⟩ ordLine (.ref w'.heap.size)
+      ⟨{ w' with heap := w'.heap.push (.list sortedVs.toArray) }, env⟩ := by
+  obtain ⟨s₁, s₂, hord⟩ := ordLine_lit
+  obtain ⟨t₁, t₂, hgx⟩ := ordGxCall_lit
+  obtain ⟨u₁, u₂, u₃, hgm⟩ := ordGmCall_lit
+  obtain ⟨v₁, hposE⟩ := ordPosE_lit
+  obtain ⟨v₂, hdepE⟩ := ordDepthE_lit
+  obtain ⟨r₁, hrev⟩ := ordRevE_lit
+  have hrecv : EvalsIn sunfish ⟨w, env⟩ (.name "pos" u₁)
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) ⟨w, env⟩ :=
+    EvalsIn.of_evalsTo (EvalsTo.of_eval (fuel := 4) (by py_simp [hpos]))
+  have hgmEv : EvalsIn sunfish ⟨w, env⟩ ordGmCall (.ref w.heap.size)
+      ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ := by
+    rw [hgm]
+    have := EvalsIn.ntupleGenMethod (qname := "Position.gen_moves") (f := gmF)
+      (vs := []) (sp := u₂) (sp' := u₃) rfl hrecv gm_plan EvalsInList.nil
+      gm_lit.1 gm_lit.2.1 gm_lit.2.2.1 (by simpa using gm_lit.2.2.2.1)
+      gm_lit.2.2.2.2.1
+    simpa [gmW, gmObj, posOf] using this
+  have hdepEv : EvalsIn sunfish ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩
+      ordDepthE (.int d) ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ := by
+    rw [hdepE]
+    exact EvalsIn.of_evalsTo (EvalsTo.of_eval (fuel := 4) (by py_simp [hdepth]))
+  have hposEv : EvalsIn sunfish ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩
+      ordPosE (posOf b sc wc0 wc1 bc0 bc1 ep kp)
+      ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ := by
+    rw [hposE]
+    exact EvalsIn.of_evalsTo (EvalsTo.of_eval (fuel := 4) (by py_simp [hpos]))
+  have hargs : EvalsInList sunfish ⟨w, env⟩ [ordGmCall, ordDepthE, ordPosE]
+      [.ref w.heap.size, .int d, posOf b sc wc0 wc1 bc0 bc1 ep kp]
+      ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ :=
+    EvalsInList.cons hgmEv (EvalsInList.cons hdepEv (EvalsInList.one hposEv))
+  have hgxEv : EvalsIn sunfish ⟨w, env⟩ ordGxCall (.ref (w.heap.size + 1))
+      ⟨gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ := by
+    rw [hgx]
+    have := EvalsIn.genCallIn (m := sunfish) (st := ⟨w, env⟩)
+      (st₁ := ⟨gmW w (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩)
+      (fname := "<genexpr@1>") (f := gxF) (argEs := #[ordGmCall, ordDepthE, ordPosE])
+      (vs := [.ref w.heap.size, .int d, posOf b sc wc0 wc1 bc0 bc1 ep kp])
+      (sp := t₁) (sp' := t₂)
+      hgxl gxName_free.1 gxName_free.2.1 gxName_free.2.2 gxF_lit.1 gxF_lit.2.1
+      gxF_lit.2.2.1 (by simpa using gxF_lit.2.2.2.2.2.2) gxF_lit.2.2.2.1
+      (by simpa using hargs)
+    simpa [gmW, gxW, gxObj3] using this
+  have hrevEv : EvalsIn sunfish ⟨gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩
+      ordRevE (.bool true) ⟨gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp), env⟩ := by
+    rw [hrev]; exact EvalsIn.of_evalsTo (EvalsTo.of_eval (fuel := 1) rfl)
+  have hobj : Heap.get? (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)).heap (w.heap.size + 1)
+      = some (gxObj3 w.heap.size d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) := by
+    have h := Heap.get?_push_size (w.heap.push (gmObj (posOf b sc wc0 wc1 bc0 bc1 ep kp)))
+      (gxObj3 w.heap.size d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    simpa [gxW] using h
+  rw [hord]
+  exact EvalsIn.sortedDrainRev hsorted sorted_free.1 sorted_free.2.1
+    sorted_free.2.2.1 sorted_free.2.2.2 hgxEv hrevEv rfl
+    (by simpa [gxObj3, genObj] using hobj) hdrain hsort
+
+
+/-! ## §8 R2c — THE LIVE-CURSOR LOOP over the sorted list
+
+`sorted` ALLOCATES, so `execGen`'s `.forHere` arm pushes a **`forList`** frame at
+the ordering line's answer — not a `forSeq`, which is why §L25 named the
+live-cursor frame and why `genSilent_forHere`'s value-sequence rule is not the
+one. `sf_order`'s `moves_loop_cuts` is the worked precedent; sunfish's loop is
+**strictly simpler than its twin's**, because ingestion's `yield from` rewrite
+left a body of one statement and no `break`: this loop runs to EXHAUSTION and
+re-emits the list unchanged. The beta cutoff `moves_loop_cuts` proves lives in
+the CONSUMER here (`bound()`'s own fold), not in this loop.
+
+The exit FRAME is existential and the exit WORLD is not (§L26's law): the loop
+allocates nothing, so the world rides through, and the only thing left unnamed is
+the loop variable's last value — which nothing reads, because the ordering line
+is `moves()`' last statement. -/
+
+/-- The frame the target leaves; `Env.set` replaces in place, so the shape is
+stable across rounds. -/
+def ordEnvAt (env : REnv) (v : RVal) : REnv := Env.set env "<yieldfrom@2>" v
+
+theorem ord_assign (h : Heap) (env : REnv) (v : RVal) :
+    assignToH h env ordTarget v = .ok (ordEnvAt env v) := rfl
+
+/-- **The body at any element**: one `yield`, emitting exactly what the target
+was bound to. -/
+theorem ord_body_emits (w : World) (e : REnv) (v : RVal)
+    (hv : Env.lookup e "<yieldfrom@2>" = some v) :
+    GenEmits sunfish ⟨w, e⟩ [.block ordBody] [v] ⟨w, e⟩ := by
+  obtain ⟨s₁, s₂, hy⟩ := ordYield_lit
+  have hyield : ∀ k : GenCont, GenSteps sunfish ⟨w, e⟩ ([GenFrame.block ordBody] ++ k)
+      (some (v, [GenFrame.block []] ++ k)) ⟨w, e⟩ := by
+    intro k
+    have h := genSteps_yieldHere (m := sunfish) (st := ⟨w, e⟩) (s := ordYield)
+      (ss := ([] : List Stmt)) (k := k) (v := v)
+      (by rw [hy]; rfl) (EvalsTo.of_eval (fuel := 4) (by py_simp [hv]))
+    simpa [ordBody_split] using h
+  refine GenEmits.cons hyield ?_
+  exact GenEmits.silent (pre₁ := ([] : GenCont))
+    (fun k => by simpa using genSilent_blockNil (m := sunfish) (k := k)) GenEmits.nil
+
+/-- An exhausted block frame emits nothing — the tail `blockForList` leaves
+below the loop when the `for` is the last statement. -/
+theorem ord_blockNil_emits (st : FrameState) :
+    GenEmits sunfish st [.block []] [] st :=
+  GenEmits.silent (pre₁ := ([] : GenCont))
+    (fun k => by simpa using genSilent_blockNil (m := sunfish) (k := k)) GenEmits.nil
+
+/-- The rounds, by induction on how many are left. -/
+private theorem ord_go (w : World) (ad : Addr) (xs : Array RVal)
+    (hobj : Heap.get? w.heap ad = some (.list xs)) :
+    ∀ (n i : Nat) (env : REnv), i + n = xs.size →
+      ∃ env', GenEmits sunfish ⟨w, env⟩ [.forList ordTarget ad i ordBody]
+        (xs.toList.drop i) ⟨w, env'⟩ := by
+  intro n
+  induction n with
+  | zero =>
+    intro i env hn
+    refine ⟨env, ?_⟩
+    have hnil : xs.toList.drop i = [] := by
+      apply List.drop_eq_nil_of_le
+      simp
+      omega
+    rw [hnil]
+    exact GenEmits.forListDone (m := sunfish) (target := ordTarget)
+      (body := ordBody) (st := ⟨w, env⟩) (ad := ad) (i := i) hobj (by omega)
+  | succ n ih =>
+    intro i env hn
+    have hi : i < xs.size := by omega
+    have hil : i < xs.toList.length := by simpa using hi
+    obtain ⟨env', hrest⟩ := ih (i + 1) (ordEnvAt env (xs.getD i .none)) (by omega)
+    refine ⟨env', ?_⟩
+    have hval : xs.getD i .none = xs.toList[i] := by simp [Array.getD, hi]
+    have hround := GenEmits.forListRound (m := sunfish) (target := ordTarget)
+      (body := ordBody) (ad := ad) (i := i) (xs := xs) (st := ⟨w, env⟩)
+      (env₁ := ordEnvAt env (xs.getD i .none)) hobj hi (ord_assign w.heap env _)
+      (ord_body_emits w (ordEnvAt env (xs.getD i .none)) (xs.getD i .none)
+        (by simp [ordEnvAt, Env.lookup_set_self]))
+      hrest
+    rw [List.drop_eq_getElem_cons hil, ← hval]
+    simpa using hround
+
+/-- **GATE R2c — the loop re-emits the sorted list.** Over an arbitrary heap
+list, the shipped `for <yieldfrom@2> in …: yield <yieldfrom@2>` emits exactly its
+elements, in order, and pops its own frame at the end. -/
+theorem ord_loop_emits (w : World) (ad : Addr) (xs : Array RVal) (env : REnv)
+    (hobj : Heap.get? w.heap ad = some (.list xs)) :
+    ∃ env', GenEmits sunfish ⟨w, env⟩ [.forList ordTarget ad 0 ordBody]
+      xs.toList ⟨w, env'⟩ := by
+  obtain ⟨env', h⟩ := ord_go w ad xs hobj xs.size 0 env (by omega)
+  exact ⟨env', by simpa using h⟩
+
+/-- The world the whole line leaves: the drain's world plus the sorted list. -/
+def ordW (w' : World) (sortedVs : List RVal) : World :=
+  { w' with heap := w'.heap.push (.list sortedVs.toArray) }
+
+/-- **THE WHOLE ORDERING STATEMENT** — R2b and R2c joined at the frame the one
+pushes and the other consumes.
+
+From the source text of sunfish.py:444, inside the `moves()` generator: the line
+evaluates (allocating the `gen_moves` generator, the genexp generator and the
+sorted list), the loop opens on that list, and the generator emits `sortedVs` —
+the drained pairs in descending order — leaving the drain's world plus one list.
+
+`hdrain` is R2a's remaining obligation and the only hypothesis here that is not
+bookkeeping; `hsort` is `sortByLt`'s own totality on the drained values. -/
+theorem ord_stmt_emits (w : World) (env : REnv) (d : Int)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (vs sortedVs : List RVal) (w' : World)
+    (hpos : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hdepth : Env.lookup env "depth" = some (.int d))
+    (hsorted : Env.lookup env "sorted" = Option.none)
+    (hgxl : Env.lookup env "<genexpr@1>" = Option.none)
+    (hdrain : IterDrains sunfish
+      (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (w.heap.size + 1) vs w')
+    (hsort : sortByLt true vs = .ok sortedVs) :
+    ∃ env', GenEmits sunfish ⟨w, env⟩ [.block [ordFor]] sortedVs
+      ⟨ordW w' sortedVs, env'⟩ := by
+  have hline := order_line_sorts w env d b sc ep kp wc0 wc1 bc0 bc1 vs sortedVs w'
+    hpos hdepth hsorted hgxl hdrain hsort
+  have hobj : Heap.get? (ordW w' sortedVs).heap w'.heap.size
+      = some (.list sortedVs.toArray) := by
+    simpa [ordW] using Heap.get?_push_size w'.heap (Obj.list sortedVs.toArray)
+  obtain ⟨env', hloop⟩ := ord_loop_emits (ordW w' sortedVs) w'.heap.size
+    sortedVs.toArray env hobj
+  refine ⟨env', ?_⟩
+  have hrest : GenEmits sunfish ⟨ordW w' sortedVs, env⟩
+      [.forList ordTarget w'.heap.size 0 ordBody, .block []] sortedVs
+      ⟨ordW w' sortedVs, env'⟩ := by
+    simpa using GenEmits.trans hloop (ord_blockNil_emits ⟨ordW w' sortedVs, env'⟩)
+  have h := GenEmits.blockForList (m := sunfish) (s := ordFor) (target := ordTarget)
+    (iter := ordLine) (body := ordBody) (ss := ([] : List Stmt))
+    (ad := w'.heap.size) (xs := sortedVs.toArray) ordFor_plan
+    (by simpa [ordW] using hline) hobj hrest
+  simpa using h
+
+
+/-! ## §9 THE ROUND, both arms — what the `.forGen` induction will chain
+
+§L29 owed "the induction over rounds", and the round's BODY is the part with
+content: everything else is `GenEmits.forGenRound`/`forGenDone` bookkeeping. Two
+theorems, one per arm of the filter, and between them they say what one move
+costs the ordering stream.
+
+Note which loop rule this is. R2c's loop reads a heap LIST and takes
+`.forList`; **this one reads a generator OBJECT and takes `.forGen`**, because
+`.0` is the `.ref` `Position.gen_moves` answered. Same statement shape in the
+source, two different frames, and the census (§L29) is what separated them. -/
+
+/-- The genexp's frame after the binding statement. -/
+def gxEnvAt (env : REnv) (z : Int) : REnv := Env.set env "v" (.int z)
+
+/-- `Position.value`'s answer, in the threshold form R1's four `value_runs_*`
+theorems produce — so the round consumes them verbatim. -/
+def ValueAnswers (w : World) (pv mv : RVal) (z : Int) : Prop :=
+  ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.value" #[pv, mv] = .ok w (.int z)
+
+/-- The binding statement at threshold fuel, which is what `genSilent_delegate`
+consumes. -/
+theorem gx_binds_at {w : World} {env : REnv} {b : String} {sc ep kp : Int}
+    {wc0 wc1 bc0 bc1 : Bool} {mv : RVal} {z : Int}
+    (hp : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hm : Env.lookup env "m" = some mv)
+    (hval : ValueAnswers w (posOf b sc wc0 wc1 bc0 bc1 ep kp) mv z) :
+    ∃ t, ∀ F ≥ t, execStmt sunfish F ⟨w, env⟩ gxBind
+      = .ok ⟨w, gxEnvAt env z⟩ .next := by
+  obtain ⟨t, ht⟩ := hval
+  refine ⟨t + 9, fun F hF => ?_⟩
+  obtain ⟨F', rfl⟩ : ∃ F', F = F' + 9 := ⟨F - 9, by omega⟩
+  exact gx_binds hp hm (ht (F' + 7) (by omega))
+
+/-- **THE ROUND THAT KEEPS.** The move's value clears the QS floor, or the
+search is not a QSearch: the binding runs, the branch is taken, and the round
+emits the `(v, m)` pair the sort will order. -/
+theorem gx_round_keeps (w : World) (env : REnv) (mv : RVal) (d z : Int)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (hp : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hm : Env.lookup env "m" = some mv)
+    (hd : Env.lookup env "depth" = some (.int d))
+    (hnq : Env.lookup env "QS" = Option.none)
+    (hval : ValueAnswers w (posOf b sc wc0 wc1 bc0 bc1 ep kp) mv z)
+    (hpass : 40 ≤ z ∨ d ≠ 0) :
+    GenEmits sunfish ⟨w, env⟩ [.block gxBody] [.tuple #[.int z, mv]]
+      ⟨w, gxEnvAt env z⟩ := by
+  obtain ⟨a, b', c, dd, ee, hplan⟩ := gxPlan_test
+  have hv : Env.lookup (gxEnvAt env z) "v" = some (.int z) := by
+    simp [gxEnvAt, Env.lookup_set_self]
+  have hd' : Env.lookup (gxEnvAt env z) "depth" = some (.int d) := by
+    simp [gxEnvAt, Env.lookup_set_ne, hd]
+  have hnq' : Env.lookup (gxEnvAt env z) "QS" = Option.none := by
+    simp [gxEnvAt, Env.lookup_set_ne, hnq]
+  have hm' : Env.lookup (gxEnvAt env z) "m" = some mv := by
+    simp [gxEnvAt, Env.lookup_set_ne, hm]
+  -- the test's value, and it is truthy for whichever of the two reasons holds
+  have htest : ∃ tv, EvalsTo sunfish ⟨w, gxEnvAt env z⟩
+      (.boolOp .or #[.compare (.name "v" a) #[.gtE] #[.name "QS" b'] c,
+        .name "depth" dd] ee) tv ∧ truthyH w.heap tv = .ok true := by
+    by_cases hq : 40 ≤ z
+    · exact ⟨.bool true, EvalsTo.of_eval (fuel := 5)
+        (gx_filter_high w (gxEnvAt env z) z 0 a b' c dd ee hv hnq' hq), gx_keeps_high w⟩
+    · have hd0 : d ≠ 0 := hpass.resolve_left hq
+      exact ⟨.int d, EvalsTo.of_eval (fuel := 5)
+        (gx_filter_low w (gxEnvAt env z) z d 0 a b' c dd ee hv hd' hnq' (by omega)),
+        gx_keeps_deep w d hd0⟩
+  obtain ⟨tv, htv, htruthy⟩ := htest
+  -- statement 1 delegates, statement 2 branches into the yield
+  have hsil1 : ∀ k : GenCont, GenSilent sunfish ⟨w, env⟩
+      ([GenFrame.block gxBody] ++ k) ⟨w, gxEnvAt env z⟩ ([GenFrame.block [gxTest]] ++ k) := by
+    intro k
+    have h := genSilent_delegate (m := sunfish) (s := gxBind) (ss := [gxTest]) (k := k)
+      (st := ⟨w, env⟩) (st₁ := ⟨w, gxEnvAt env z⟩) gxPlan_bind
+      (gx_binds_at hp hm hval)
+    simpa [gxBody_split] using h
+  have hsil2 : ∀ k : GenCont, GenSilent sunfish ⟨w, gxEnvAt env z⟩
+      ([GenFrame.block [gxTest]] ++ k) ⟨w, gxEnvAt env z⟩
+      ([GenFrame.block [gxYield], GenFrame.block []] ++ k) := by
+    intro k
+    have h := genSilent_branch (m := sunfish) (s := gxTest) (ss := ([] : List Stmt))
+      (k := k) (st := ⟨w, gxEnvAt env z⟩) (b := true) hplan htv htruthy
+    simpa using h
+  have hyield : ∀ k : GenCont, GenSteps sunfish ⟨w, gxEnvAt env z⟩
+      ([GenFrame.block [gxYield]] ++ k)
+      (some (.tuple #[.int z, mv], [GenFrame.block []] ++ k)) ⟨w, gxEnvAt env z⟩ := by
+    intro k
+    obtain ⟨y1, y2, y3, y4, hy⟩ := gxYield_lit
+    have h := genSteps_yieldHere (m := sunfish) (st := ⟨w, gxEnvAt env z⟩) (s := gxYield)
+      (ss := ([] : List Stmt)) (k := k) (v := .tuple #[.int z, mv])
+      (by rw [hy]; rfl)
+      (EvalsTo.of_eval (fuel := 6) (by py_simp [hv, hm']))
+    simpa using h
+  have hy : GenEmits sunfish ⟨w, gxEnvAt env z⟩ [.block [gxYield]]
+      [.tuple #[.int z, mv]] ⟨w, gxEnvAt env z⟩ := by
+    refine GenEmits.cons hyield ?_
+    exact GenEmits.silent (pre₁ := ([] : GenCont))
+      (fun k => by simpa using genSilent_blockNil (m := sunfish) (k := k)) GenEmits.nil
+  refine GenEmits.silent hsil1 (GenEmits.silent hsil2 ?_)
+  simpa using GenEmits.trans hy (ord_blockNil_emits ⟨w, gxEnvAt env z⟩)
+
+/-- **THE ROUND THAT DROPS.** A sub-floor move at `depth = 0`: the binding still
+runs — `Position.value` is called on every generated move, which is what makes
+R1 a prerequisite of the whole line rather than of its surviving half — and the
+branch is NOT taken, so nothing is emitted. -/
+theorem gx_round_drops (w : World) (env : REnv) (mv : RVal) (z : Int)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (hp : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hm : Env.lookup env "m" = some mv)
+    (hd : Env.lookup env "depth" = some (.int 0))
+    (hnq : Env.lookup env "QS" = Option.none)
+    (hval : ValueAnswers w (posOf b sc wc0 wc1 bc0 bc1 ep kp) mv z)
+    (hlow : z < 40) :
+    GenEmits sunfish ⟨w, env⟩ [.block gxBody] [] ⟨w, gxEnvAt env z⟩ := by
+  obtain ⟨a, b', c, dd, ee, hplan⟩ := gxPlan_test
+  have hv : Env.lookup (gxEnvAt env z) "v" = some (.int z) := by
+    simp [gxEnvAt, Env.lookup_set_self]
+  have hd' : Env.lookup (gxEnvAt env z) "depth" = some (.int 0) := by
+    simp [gxEnvAt, Env.lookup_set_ne, hd]
+  have hnq' : Env.lookup (gxEnvAt env z) "QS" = Option.none := by
+    simp [gxEnvAt, Env.lookup_set_ne, hnq]
+  have hsil1 : ∀ k : GenCont, GenSilent sunfish ⟨w, env⟩
+      ([GenFrame.block gxBody] ++ k) ⟨w, gxEnvAt env z⟩ ([GenFrame.block [gxTest]] ++ k) := by
+    intro k
+    have h := genSilent_delegate (m := sunfish) (s := gxBind) (ss := [gxTest]) (k := k)
+      (st := ⟨w, env⟩) (st₁ := ⟨w, gxEnvAt env z⟩) gxPlan_bind
+      (gx_binds_at hp hm hval)
+    simpa [gxBody_split] using h
+  have hsil2 : ∀ k : GenCont, GenSilent sunfish ⟨w, gxEnvAt env z⟩
+      ([GenFrame.block [gxTest]] ++ k) ⟨w, gxEnvAt env z⟩
+      ([GenFrame.block [], GenFrame.block []] ++ k) := by
+    intro k
+    have h := genSilent_branch (m := sunfish) (s := gxTest) (ss := ([] : List Stmt))
+      (k := k) (st := ⟨w, gxEnvAt env z⟩) (b := false) hplan
+      (EvalsTo.of_eval (fuel := 5)
+        (gx_filter_low w (gxEnvAt env z) z 0 0 a b' c dd ee hv hd' hnq' hlow))
+      (gx_drops_at_qs w)
+    simpa using h
+  refine GenEmits.silent hsil1 (GenEmits.silent hsil2 ?_)
+  simpa using GenEmits.trans (ord_blockNil_emits ⟨w, gxEnvAt env z⟩)
+    (ord_blockNil_emits ⟨w, gxEnvAt env z⟩)
+
+
+/-! ### The ordering line, RUN — R2b's own statement on the live engine
+
+`order_line_sorts` says the line evaluates to a fresh list holding `sortByLt`
+of the drain. These guards run exactly that expression, in exactly the frame the
+theorem quantifies over (`pos` a `Position`, `depth` an int, neither `sorted` nor
+`<genexpr@1>` shadowed), on the shipped opening position. -/
+
+private def fxOrd (F : Nat) (d : Int) : Option (Nat × Array RVal) :=
+  match evalExpr sunfish F ⟨initWorld sunfish, [("pos", posH 0), ("depth", .int d)]⟩ ordLine with
+  | .ok st (RVal.ref a) =>
+    (match Heap.get? st.world.heap a with
+     | some (Obj.list xs) => some (st.world.heap.size, xs)
+     | _ => Option.none)
+  | _ => Option.none
+
+/-- The first component of a `(v, m)` row. -/
+private def rowV : RVal → Int
+  | RVal.tuple #[RVal.int v, _] => v
+  | _ => -100000
+
+/-! **The QS floor survives the sort**: two rows at `depth = 0`, twenty at
+`depth = 3` — the same numbers §6 measured at the drain, now through `sorted`. -/
+#guard (match fxOrd 512 0 with | some (_, xs) => xs.size == 2 | _ => false)
+#guard (match fxOrd 512 3 with | some (_, xs) => xs.size == 20 | _ => false)
+
+/-! **And it is DESCENDING**, which is `reverse=True` reaching `sortByLt true`
+rather than a sort followed by a reversal. -/
+#guard (match fxOrd 512 3 with
+        | some (_, xs) =>
+          (List.range (xs.size - 1)).all (fun k =>
+            rowV (xs.getD (k + 1) RVal.none) ≤ rowV (xs.getD k RVal.none))
+        | _ => false)
+
+/-! **The allocation, end to end.** §6 measured the drain at 81 objects from a
+heap of 68; the line starts from the live 66, allocates the two generators, drains,
+and pushes ONE list — 66 + 2 + 81 + 1 = 150. -/
+#guard (match fxOrd 512 3 with | some (h, _) => h == 150 | _ => false)
+
+#print axioms ordFor_lit
+#print axioms ordTarget_lit
+#print axioms ordBody_split
+#print axioms ordYield_lit
+#print axioms ordLine_lit
+#print axioms ordRevE_lit
+#print axioms ordGxCall_lit
+#print axioms ordGmCall_lit
+#print axioms ordDepthE_lit
+#print axioms ordPosE_lit
+#print axioms ordFor_plan
+#print axioms ordYield_plan
+#print axioms gm_lit
+#print axioms sorted_free
+#print axioms gxName_free
+#print axioms gm_plan
+#print axioms order_line_sorts
+#print axioms ord_assign
+#print axioms ord_body_emits
+#print axioms ord_blockNil_emits
+#print axioms ord_loop_emits
+#print axioms ord_stmt_emits
+#print axioms gx_binds_at
+#print axioms gx_round_keeps
+#print axioms gx_round_drops
+
+/-! ## §10 WHAT THE ORDERING LINE STILL OWES — one induction, shaped
+
+R2b and R2c are closed and meet: `ord_stmt_emits` carries the shipped statement
+from its source text to the stream it emits, with **one** hypothesis that is not
+bookkeeping. That hypothesis is `hdrain`, and it is all of R2a that is left:
+
+  `IterDrains sunfish (gxW w d pos) (w.heap.size + 1) vs w'`
+
+— the genexp OBJECT, at the address the line allocated it at, drains to `vs`.
+
+**Everything under it is proved.** `gx_round_keeps` and `gx_round_drops` are the
+body at a kept and at a dropped move, `gx_call` is the object's creation, and R1's
+four `value_runs_*` theorems discharge `ValueAnswers`. What is missing is the
+CHAIN, and its three premises are these, in computed shape:
+
+1. **Per-round `IterSteps` on the INNER generator.** `GenEmits.forGenRound` takes
+   `IterSteps sunfish st.world (w.heap.size) (some mv) w₁` — one step of
+   `pos.gen_moves()`'s object, at the world the round starts from. What exists is
+   `gen_moves_drains_ref` (§L8), a WHOLE drain (`IterDrains`). The chain needs it
+   decomposed the other way: `IterDrains.cons` builds a drain from steps, so what
+   is owed is the inverse — a step-indexed reading of `gen_moves_yields_ref`. That
+   is the single real piece of work left in R2, and it is genmoves_scan.lean's
+   material rather than this file's.
+2. **The per-round world.** Each round's `Position.value` call is heap-free (R1,
+   measured), the binding is heap-free and the yield allocates the pair — so the
+   round's world moves by exactly the tuple, and `Heap.get?_append` carries the
+   inner generator's own slot. §6 measured the total at 81 objects for twenty
+   moves; nothing in the chain has to name that number.
+3. **The invariant across rounds.** `gxEnvAt env z` is `Env.set env "v" _`, so the
+   frame's SHAPE is stable and the next round's premises are the previous round's
+   with one `Env.set` in front — the same "assign_again" step `moves_loop_cuts`
+   needs, and `Env.lookup_set_ne` is the whole of it.
+
+**Price.** One session for the step-indexed reading of the inner drain, then the
+chain itself is `GenEmits.forGenRound` iterated with `GenEmits.forGenDone` at the
+end — there is no `forGenRounds` batch lemma because, as VCGen.lean's own note
+says, an infinite inner generator has no remainder list to induct on; here it is
+finite and the caller's induction is on the reference move list, which
+`gen_moves_drains_ref` already produces.
+
+**And R3 is not blocked on this.** `ord_stmt_emits` is stated over a free `vs`,
+so the fold's schedule can be chosen against it now: what the fold consumes is a
+list of `(value, Move)` pairs in descending order, and that is exactly what this
+theorem hands over. -/
+
 
 end Examples.python.sunfish.order_genexp

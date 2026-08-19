@@ -11389,3 +11389,82 @@ declarations depend on `[propext, Classical.choice, Quot.sound]` or less;
 R3c's exhaustion census — *does the depth-1 fold ever exhaust on this board?* —
 is still owed and still belongs before `Inv []` is written. Nothing in this pass
 touched it, and nothing in this pass touched a depth-0 arm.
+
+## L34 — R3b's ARITHMETIC HALF LANDS; its CALL half is censused and left whole (2026-08-19)
+
+`Examples/python/sunfish/fold_depth1.lean` §6 and §7. **R3b did not close this
+pass, and the honest split is the report.** The searched round's two non-call
+statements are proved; the one statement that moves the world twice is censused
+down to its plans, its allocation and its arity, and deliberately not attempted.
+
+### What landed (§6)
+
+* `sbMoveDepth_sharp` — the reduction line with the LMR chain SPELLED.
+  `sbMoveDepth_lit` leaves it existential and this arm computes with it, so §L28's
+  law 5 applies exactly as it did to the pawn ADD arms.
+* `move_depth_low` — below depth 6 both subtrahends are `False`: the LMR chain
+  dies on its second operand, or on its first when `guard` is falsy, and `nmr` is
+  `False` at every node the census reaches. So `move_depth = depth - 1`, and at
+  depth 1 the child sits at **0**.
+* `live_updates` — `live |= score > -MATE_UPPER`, with `MATE_UPPER` off
+  `w.globals` because it is statically POISONED.
+* `intG`/`intF`/`intNotFun`/`intCls`/`intNT` — `int`'s module-level residues in
+  `maxG`/`minG`'s shape, which §L33's census made necessary.
+
+**A small correction to law 4's scope, worth recording.** The LMR chain was
+decided by CASING on `guard` and letting `py_simp` walk all three operands — no
+altitude lemma. That works here and did not work for `nmr` because `nmr`'s third
+operand is a RECURSIVE CALL; these three are a name and two compares. The rule is
+not "chains need altitude lemmas" but "chains with expensive operands do", and
+the `nmr` gate's own docstring is where the distinction was already written down.
+
+Two premises came off the reduction gate as a result: `val` and `LMR` are never
+read, because the chain short-circuits before its third operand in BOTH cases.
+
+### What was censused and NOT proved (§7)
+
+`score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))`:
+
+| measured | value |
+|---|---|
+| `pos.move(move)` allocation | **exactly one object** (heap 66 → 67) |
+| its fuel | **32** decides; 16 times out |
+| its plan | `.instMethod "Position.move"` on a Position VALUE |
+| `self.bound(…)` plan | `.instMethod "Searcher.bound"` via `attrCallPlan` on an instance `.ref` |
+| `Searcher.bound` params | **5**, and the call site passes **4** — `root` rides its default |
+| `min` | the builtin, unshadowed |
+
+Two of those change how the gate has to be written. The two plans are **different
+plan functions** — a namedtuple value's method against an instance ref's — so they
+cannot share a lemma, and `value_call_evals` (§L31) transposes to `pos.move` but
+not to `self.bound`. And the arity check is at **4**, not 5.
+
+### Why it was left whole
+
+`pos.move(move)` allocating means the statement's out-world is **two hops** from
+its in-world: `w` plus one object for the move, plus whatever the subtree wrote
+for the child. Every later premise in the round then has to be restated at the
+second hop — the same bookkeeping `SubtreeWrites` needs at R3e. Doing it once,
+carefully, is worth more than doing it twice, and a half-proved call gate is
+worse than none.
+
+The shape is written into §7 so the next pass starts from it: three `EvalsIn`
+steps threaded through one `EvalsInList` (receiver, then an argument list whose
+FIRST element allocates), then the child call with its answer as a threshold
+hypothesis, then `unaryOp .usub`, then `min`. `order_line_sorts` (§L31) is the
+worked precedent for an expression whose argument list moves the world.
+
+### Triad
+
+`lake build` **3684 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched**;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. All twenty-two printed
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
+`sorry`, no `native_decide`. File throughput **22 s**.
+
+### The next dispatch's two front items, in order
+
+1. **R3b's call gate** — censused above, one session, and it should be taken
+   before anything else in R3 because R3c's `Inv` will carry its world.
+2. **R3c's exhaustion census** — *does the depth-1 fold ever exhaust on this
+   board?* — still owed, still a fresh half-hour, and still ahead of `Inv []`.

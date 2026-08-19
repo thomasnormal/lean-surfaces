@@ -45,7 +45,9 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   sbB5 sbB5_split sbCapLine sbCapLine_lit sbBreak sbBreak_lit
   maxG maxNotFun maxCls maxNT mlG posCAux posCls_methods
   execStmt_if_true execStmt_if_false execStmts_singleton_flow
-  Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle)
+  Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle
+  sbMoveDepth sbLive minG minNotFun minCls minNT muG boolChain_and3
+  execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
 
 set_option maxRecDepth 100000
@@ -254,7 +256,7 @@ keeps `py_simp` out of the recursive arms, exactly as `qs_score` does for
 branch 1. **This inch consumes no IH and no `RecursionStepW` hypothesis**, so it
 is the one that can be written against the census alone.
 
-### R3b — the CUT arm: one searched round, then the cutoff. *One session.*
+### R3b — the CUT arm: one searched round, then the cutoff. **HALF LANDED: §6 proves the reduction and the `live` update; §7 censuses the call.**
 
 `gamma ≤ 0`: the cap clears the window, the child is searched at
 `move_depth = depth - 1 - (…) - int(nmr)`, and `best ≥ gamma` cuts — TWO nodes.
@@ -592,6 +594,168 @@ dies on its second operand and `nmr` on its own second, so both subtrahends are
 #print axioms settle_folds
 #print axioms settle_report
 #print axioms settle_agrees
+
+
+/-! ## §6 R3b — THE REDUCTION AND THE `live` UPDATE
+
+The two halves of the searched round that are NOT the call. §5's census said the
+reduction would be cheap and it is: below depth 6 both subtrahends are `False` —
+the LMR chain dies on its second operand, or on its first when `guard` is falsy,
+and `nmr` is `False` at every node the census reaches — so `move_depth` is
+`depth - 1` and the child sits at `0` when the parent sits at `1`.
+
+`sbMoveDepth_lit` leaves the LMR chain existential and this arm COMPUTES with it,
+so it gets the sharper pin (§L28's law 5), and the chain is decided by casing on
+`guard` rather than by an altitude lemma: all three operands are simple, so
+`py_simp` can walk them once the case is fixed. That is the exception the `nmr`
+gate's docstring predicts — the explosion there was a RECURSIVE third operand.
+
+`live |= score > -MATE_UPPER` is the round's only other non-call statement, and
+`MATE_UPPER` is statically POISONED, so it comes off `w.globals`. -/
+
+/-! `int`'s module-level residues, in `maxG`/`minG`'s shape — the builtin the
+reduction line reaches because ingestion did NOT lower `int()` (§L33). -/
+theorem intG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "int"
+    = Option.none := rfl
+theorem intF : findFunction sunfish "int" = Option.none := rfl
+theorem intNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "int" := by
+  simpa [findFunction] using intF
+theorem intCls : findClassAux sunfish.classes.toList "int" 0 = Option.none := rfl
+theorem intNT : findNamedTupleAux sunfish.namedtuples.toList "int" = Option.none := rfl
+
+/-- The reduction line, body SPELLED — the LMR chain is COMPUTED with, so
+`sbMoveDepth_lit`'s existential `r` cannot serve (§L28's law 5). -/
+theorem sbMoveDepth_sharp : ∃ a b c d e f g h i k l m n o p q r t, sbMoveDepth =
+    .assign #[.name "move_depth" a]
+      (.binOp (.binOp (.binOp (.name "depth" b) .sub (.constant (.int 1) c) d)
+          .sub
+          (.boolOp .and #[.name "guard" e,
+            .compare (.name "depth" f) #[.gtE] #[.constant (.int 6) g] h,
+            .compare (.name "val" i) #[.lt] #[.name "LMR" k] l] m) n)
+        .sub (.call (.name "int" o) #[.name "nmr" p] #[] Option.none q) r) t :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem sbLive_sharp : ∃ a b c d e f, sbLive =
+    .augAssign (.name "live" a) .bitOr
+      (.compare (.name "score" b) #[.gt]
+        #[.unaryOp .usub (.name "MATE_UPPER" c) d] e) f :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+/-- **R3b's reduction gate.** Below depth 6 both subtrahends are `False`: the
+LMR chain dies on its second operand (or its first, if `guard` is falsy) and
+`nmr` is `False` at every node the census reaches. `int()` is a CALL — not
+lowered (§L33) — and both coercions are the interpreter's own, so the line is
+ordinary arithmetic and the child's depth is `depth - 1`. -/
+theorem move_depth_low (w : World) (e : REnv) (d : Int) (gv : Bool) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hg : Env.lookup e "guard" = some (.bool gv))
+    (hnmr : Env.lookup e "nmr" = some (.bool false))
+    (hni : Env.lookup e "int" = Option.none)
+    (hd6 : d < 6) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ sbMoveDepth
+      = .ok ⟨w, Env.set e "move_depth" (.int (d - 1))⟩ .next := by
+  obtain ⟨a, b, c, d', e', f, g, h, i, k, l, m, n, o, p, q, r, t, hlit⟩ := sbMoveDepth_sharp
+  rw [hlit]
+  cases gv
+  · py_simp [-globalsFold, -globalsStep, hd, hg, hnmr, hni, intG, intNotFun, intCls, intNT,
+      if_neg (show ¬ (6 : Int) ≤ d by omega)]
+  · py_simp [-globalsFold, -globalsStep, hd, hg, hnmr, hni, intG, intNotFun, intCls, intNT,
+      if_neg (show ¬ (6 : Int) ≤ d by omega)]
+
+/-- **R3b's `live` gate.** `live |= score > -MATE_UPPER` — a bitwise-or
+augAssign on two Bools, and `MATE_UPPER` is statically POISONED so it comes off
+`w.globals`. -/
+theorem live_updates (w : World) (e : REnv) (scv mu : Int) (lv : Bool) (F : Nat)
+    (hs : Env.lookup e "score" = some (.int scv))
+    (hl : Env.lookup e "live" = some (.bool lv))
+    (hnmu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmuw : Env.lookup w.globals "MATE_UPPER" = some (.int mu)) :
+    execStmt sunfish (F + 12) ⟨w, e⟩ sbLive
+      = .ok ⟨w, Env.set e "live" (.bool (lv || decide (-mu < scv)))⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, hlit⟩ := sbLive_sharp
+  rw [hlit]
+  by_cases hlt : -mu < scv
+  · py_simp [-globalsFold, -globalsStep, hs, hl, hnmu, hmuw, muG, if_pos hlt,
+      decide_eq_true hlt]
+  · py_simp [-globalsFold, -globalsStep, hs, hl, hnmu, hmuw, muG, if_neg hlt,
+      decide_eq_false hlt]
+
+/-! ## §7 R3b's CALL HALF — censused, not yet proved
+
+The searched round's remaining statement is
+`score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))`, and it is
+the one place in the fold where the world MOVES twice inside one expression. Its
+census is taken here so the next pass starts from measurements rather than from
+the source text; the gate itself is deliberately not attempted, because a
+half-proved call gate is worse than none.
+
+**What was measured**, on the live engine:
+
+* `pos.move(move)` allocates **exactly one object** (heap 66 → 67) and decides at
+  **32** fuel — 16 times out. Its plan is `.instMethod "Position.move"` on a
+  `Position` VALUE, the same namedtuple route `Position.value` takes (§L29's
+  `value_call_evals`), so the bridge is the same shape one notch out;
+* `self.bound(…)` on the shipped `Searcher()` instance resolves to
+  `.instMethod "Searcher.bound"` through `attrCallPlan` — an INSTANCE `.ref`,
+  not a namedtuple, so it is a different plan function from `pos.move`'s and the
+  two cannot share a lemma;
+* `Searcher.bound` takes **five** parameters and the call site passes **four**:
+  `root` rides its default. So the arity check the call bridge runs is
+  `arityOk f.params 4`, not `= 5`;
+* `min` is the builtin, unshadowed.
+
+**The shape the gate will take.** Three `EvalsIn` steps threaded through one
+`EvalsInList` — the receiver `self`, then the argument list whose FIRST element
+allocates — then the child call, then `unaryOp .usub`, then `min`. The child's
+answer enters as a hypothesis in the same threshold form R1's `ValueAnswers` and
+§L31's `hdrain` use, and `searchedMove_sound` is what consumes it at the spec
+side. `order_line_sorts` (§L31) is the worked precedent for an expression whose
+argument list moves the world; the difference is that there the mover was a
+generator allocation and here it is a whole recursive search.
+
+**Why it is a session and not a tail.** `pos.move(move)` allocating means the
+child call's world is `w` plus one object, and the child's own world is that plus
+whatever the subtree wrote — so the statement's out-world is two hops from its
+in-world and every later premise in the round has to be restated at the second
+hop. That is the same bookkeeping `SubtreeWrites` will need at R3e, and doing it
+once, carefully, is worth more than doing it twice. -/
+
+private def mvR (i j : Int) : RVal :=
+  .ntuple "Move" #["i", "j", "prom"] #[.int i, .int j, .str ""]
+
+private def mvHeap (F : Nat) : Option (Nat × Nat) :=
+  match callIn sunfish F (initWorld sunfish) "Position.move" #[posH 0, mvR 84 64] with
+  | .ok w (RVal.ntuple "Position" _ _) => some ((initWorld sunfish).heap.size, w.heap.size)
+  | _ => Option.none
+
+/-! `pos.move(move)` allocates exactly one object, and 32 fuel decides it. -/
+#guard mvHeap 32 == some (66, 67)
+#guard (mvHeap 16).isNone
+
+/-! The two plans, and they are different functions: a namedtuple VALUE's method
+against an instance `.ref`'s. -/
+#guard (match ntupleCallPlan sunfish "Position"
+          #["board", "score", "wc", "bc", "ep", "kp"] "move" with
+        | .instMethod q => q == "Position.move" | _ => false)
+#guard (match searcherW with
+        | some (w, a) =>
+          (match attrCallPlan sunfish w.heap a "bound" with
+           | .instMethod q => q == "Searcher.bound" | _ => false)
+        | _ => false)
+
+/-! `Searcher.bound` takes five parameters and the call site passes four —
+`root` rides its default, so the bridge's arity check is at 4. -/
+#guard (match findFunction sunfish "Searcher.bound" with
+        | some f => f.params.size == 5 && arityOk f.params 4 && f.argsOk && f.localsOk
+            && !f.isGenerator && !f.hasGlobal
+        | none => false)
+
+#print axioms intG
+#print axioms intNotFun
+#print axioms sbMoveDepth_sharp
+#print axioms sbLive_sharp
+#print axioms move_depth_low
+#print axioms live_updates
 
 
 end Examples.python.sunfish.fold_depth1

@@ -573,6 +573,53 @@ pass 7's — the whole reason §7 below is a wiring job and not a proof. -/
 theorem entryNTAux : ∃ sp, findNamedTupleAux sunfish.namedtuples.toList "Entry"
     = some ⟨"Entry", "Entry", #["lower", "upper"], sp⟩ := ⟨_, rfl⟩
 
+/-! ### The shipped VALUES the table lines are about
+
+The probe's default, the table key and the entry the store builds. They sit
+with the constants because §4's head gates read them — §6's theorems are what
+wires them to `DictCalc`, and that wiring is unchanged by where the values are
+declared. -/
+
+/-- The shipped probe's DEFAULT, as a value: `Entry(-MATE_UPPER, MATE_UPPER)`. -/
+def entryDefault : RVal :=
+  .ntuple "Entry" #["lower", "upper"] #[.int (-mateUpper), .int mateUpper]
+
+/-- The shipped table KEY, as a value: the plain tuple `(pos, depth)`. -/
+def tpKey (p : RVal) (d : Int) : RVal := .tuple #[p, .int d]
+
+/-- An `Entry(lo, up)`, as the store builds it. -/
+def entryOf (lo up : Int) : RVal := .ntuple "Entry" #["lower", "upper"] #[.int lo, .int up]
+
+/-! ### The `Position` class, projected
+
+An attribute read on a namedtuple-SUBCLASS value forks on `c.ntBase.isSome &&
+attr ∈ c.methods` — methods shadow field properties, CPython's MRO — and
+`py_simp` OPENS that guard rather than matching it (§L9 finding 3). So the
+class is projected once and the guard is decided from the pinned method ARRAY.
+`posCAux` must be in the simp set for the residue to reach the shape
+`posCls.2.methods`; without it the surviving `match` is a different matcher
+constant and no pin can fire. -/
+
+/-- The shipped `Position`, projected off the class table. -/
+def posCls : Nat × ClassDefn :=
+  match findClassAux sunfish.classes.toList "Position" 0 with
+  | some p => p
+  | none => default
+
+theorem posCAux : findClassAux sunfish.classes.toList "Position" 0 = some posCls := rfl
+
+/-- **The five methods, and `score` is not one of them.** `score` is a FIELD
+of the namedtuple base, so `pos.score` is a tuple index and not a bound-method
+value — which is what the head's mate check and four of the fold's five
+branches read. -/
+theorem posCls_methods :
+    posCls.2.methods = #["gen_moves", "rotate", "move", "value", "king_capture"] := rfl
+
+/-- And the base is there, so the shipped `Position` really is the subclass
+shape the guard is about — a class WITHOUT `ntBase` would make every gate
+below true for the wrong reason. -/
+theorem posCls_ntBase_isSome : posCls.2.ntBase.isSome = true := rfl
+
 /-! ## §2 The receiver, and the frame
 
 `Searcher.__init__` binds SIX attributes in this order; the two transposition
@@ -929,6 +976,131 @@ theorem max_evals (w : World) (e : REnv) (b sc : Int)
   rw [hme]
   py_simp [-globalsFold, -globalsStep, hnomax, hb, hs, maxG, maxNotFun, maxCls, maxNT]
 
+/-! ### The head's remaining statements, and the probe block
+
+§L10 priced the rest of the head as *"one gate per statement, each with its
+module-level residues pinned"*, and measured the probe block as the expensive
+one — over 4M heartbeats as a single block. Split per statement it is not
+expensive at all: the six gates below elaborate in about 3 s TOGETHER. The
+measurement that mattered was never the total work, it was the SHAPE.
+
+Each is stated over a free world and a free frame, like the two above, and
+each hypothesis is one the shipped code forces. Together with `bound_enters`
+they are statements 1–5 of the eighteen, plus the four inside `if not root:`. -/
+
+/-- **GATE 3 — `depth = max(depth, 0)`.** The QS refloor, and the same builtin
+resolution `max_evals` pays for: the constant fold, the function table, the
+class table and the namedtuple table, all pinned residues. -/
+theorem depth_refloors (w : World) (e : REnv) (d : Int)
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hd : Env.lookup e "depth" = some (.int d)) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbDepth]
+      = .ok ⟨w, Env.set e "depth" (.int (max d 0))⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, hdep⟩ := sbDepth_lit
+  rw [hdep]
+  py_simp [-globalsFold, -globalsStep, hnomax, hd, maxG, maxNotFun, maxCls, maxNT]
+
+/-- **GATE 4 — the king-capture check falls through.** `if pos.score <=
+-MATE_LOWER: return -MATE_UPPER` is the engine's ONLY termination check, so
+every later gate needs it to have passed. `-MATE_LOWER < pos.score` is the
+condition, and it is `QSStandPat`'s third hypothesis.
+
+The `pos.score` read is where the `Position` class projection above is spent:
+`posCAux` puts the residue in the pinned shape and `posCls_methods` decides it,
+so the field read never opens the 1MB literal. `MATE_LOWER` is statically
+POISONED (`mlG`), so the live view decides — hence `hml` on `w.globals`. -/
+theorem mate_check_passes (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnoml : Env.lookup e "MATE_LOWER" = Option.none)
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hsc : -mateLower < sc) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbMate] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, hm⟩ := sbMate_lit
+  rw [hm]
+  py_simp [-globalsFold, -globalsStep, hpos, hnoml, hml, mlG, posOf, posCAux,
+    posCls_methods]
+  rw [if_neg (show ¬ (sc ≤ -mateLower) by omega)]
+  py_simp [-globalsFold, -globalsStep]
+
+/-- **GATE 5 — the probe MISSES on a cleared table**, and the miss is the
+shipped default. This is `sf_probe`'s left disjunct as an interpreter run:
+`entry = self.tp_score.get((pos, depth), Entry(-MATE_UPPER, MATE_UPPER))` off
+an empty dict binds `entry` to `entryDefault` and touches nothing.
+
+`hk` is the probe's own hashability, which the shipped `.get` checks before it
+compares — a Position value satisfies it and the `#guard`s below say so. The
+world is unchanged: a `.get` allocates nothing, so this gate is heap-free. -/
+theorem probe_misses (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf d : Int) (pv : RVal) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (hk : hashableKey pv = true) :
+    execStmts sunfish 16 ⟨w, e⟩ [sbEntry]
+      = .ok ⟨w, Env.set e "entry" entryDefault⟩ .next := by
+  obtain ⟨q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, hen⟩ := sbEntry_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  rw [hen]
+  py_simp [-globalsFold, -globalsStep, hslf, hpos, hd, hnoe, hmu, hnomu, muG,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryDefault,
+    tpKey, hk]
+
+/-- **GATE 6 — the lower-bound return is unreachable at the default.**
+`if entry.lower >= gamma: return entry.lower` with `entry.lower = -MATE_UPPER`
+needs exactly the docstring's own window precondition. This is one half of
+what the mate-band audit calls `tt_sentinel_defaults_never_returned`.
+
+`entryClsAux` is the residue here: an attribute read consults the class table
+even for a plain namedtuple, and `Entry` is not in it. -/
+theorem probe_lower_passes (w : World) (e : REnv) (gamma : Int)
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hlo : -mateUpper < gamma) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbLo] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, h⟩ := sbLo_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hen, hg, entryDefault, entryClsAux]
+  rw [if_neg (show ¬ (gamma ≤ -mateUpper) by omega)]
+  py_simp [-globalsFold, -globalsStep]
+
+/-- **GATE 7 — and so is the upper-bound return.** The other half:
+`gamma <= MATE_UPPER`. With GATE 6 this is the whole sentinel reservation, and
+it is a PRECONDITION rather than an invariant (§L10 (a)). -/
+theorem probe_upper_passes (w : World) (e : REnv) (gamma : Int)
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hup : gamma ≤ mateUpper) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbUp] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, h⟩ := sbUp_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hen, hg, entryDefault, entryClsAux]
+  rw [if_neg (show ¬ (mateUpper < gamma) by omega)]
+  py_simp [-globalsFold, -globalsStep]
+
+/-- **GATE 8 — the repetition test is SHORT-CIRCUITED at a QS node.**
+`if depth > 0 and pos in self.history: return 0` — at `depth = 0` the left
+conjunct is false and the membership test never runs, so the gate needs
+nothing about the history set at all. The shipped comment says why the test is
+skipped there (*"at depth=0, since it would be expensive and break futility
+pruning"*), and the interpreter agrees for the same reason CPython does: `and`
+does not evaluate its right operand.
+
+At `depth ≥ 1` this is the one head statement that reads `self.history`, and a
+depth-`d` gate owes a hypothesis about it. -/
+theorem probe_repetition_skipped (w : World) (e : REnv)
+    (hd : Env.lookup e "depth" = some (.int 0)) :
+    execStmts sunfish 8 ⟨w, e⟩ [sbRep] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, h⟩ := sbRep_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hd]
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -1033,16 +1205,6 @@ lines it models —
 span-blind before this file was rewritten. So the wiring below is instantiation
 and nothing else: no lemma in `DictCalc` was restated, and its choice-free
 axiom profile is untouched. -/
-
-/-- The shipped probe's DEFAULT, as a value: `Entry(-MATE_UPPER, MATE_UPPER)`. -/
-def entryDefault : RVal :=
-  .ntuple "Entry" #["lower", "upper"] #[.int (-mateUpper), .int mateUpper]
-
-/-- The shipped table KEY, as a value: the plain tuple `(pos, depth)`. -/
-def tpKey (p : RVal) (d : Int) : RVal := .tuple #[p, .int d]
-
-/-- An `Entry(lo, up)`, as the store builds it. -/
-def entryOf (lo up : Int) : RVal := .ntuple "Entry" #["lower", "upper"] #[.int lo, .int up]
 
 /-- The decoder reads the shipped spelling. `entryBounds` goes through
 `xs.toList` rather than an array-literal pattern (§L11 finding 1), so this is
@@ -1717,6 +1879,29 @@ of the futility bet, and the fold sees only the order. -/
 #guard (searchedMove 500 (-120)).score == 120
 #guard (searchedPass 40 500 (-120) true).score == mateUpper
 
+/-! ### What the head gates stand on
+
+`probe_misses` assumes the table is CLEARED and the key HASHABLE. Both are
+facts about the real objects, not conveniences: a fresh `Searcher()` over the
+real `initWorld` has an empty `tp_score`, and a real `Position` is hashable at
+both the bare and the `(pos, depth)` spelling. `probe_repetition_skipped`
+assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_score" with
+        | some (.ref ts) =>
+          (match Heap.get? w.heap ts with
+           | some (.dict es _) => es.size == 0
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
+#guard hashableKey (posH 0) == true
+#guard hashableKey (tpKey (posH 0) 0) == true
+#guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
+
 #print axioms bound_enters
 #print axioms max_evals
 #print axioms fold_standpat
@@ -1746,6 +1931,13 @@ of the futility bet, and the fold sees only the order. -/
 #print axioms report_sound
 #print axioms cappedPass_sound
 #print axioms settledCap_sound
+#print axioms depth_refloors
+#print axioms mate_check_passes
+#print axioms probe_misses
+#print axioms probe_lower_passes
+#print axioms probe_upper_passes
+#print axioms probe_repetition_skipped
+#print axioms posCls_ntBase_isSome
 #print axioms sf_body_tableAt
 #print axioms sf_rounds_probe
 #print axioms loopFrame_eq

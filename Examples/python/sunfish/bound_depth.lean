@@ -1424,6 +1424,219 @@ theorem calm_evals (w : World) (e : REnv) (b : String) (sc : Int)
   exact boolChain_and2 (F := 5)
     (abs_score_evals w e b sc wc0 wc1 bc0 bc1 ep kp p1 p2 p3 p4 p5 p6 hpos hnoabs hlt) rfl hg
 
+/-! ### Statement 13 — THE FOLD, via `PyStmtTriple.forGen`
+
+§L10's item 4, and §L16's `fold_report` is what it feeds. The loop is
+`for val, move in moves():` over three body statements, and at a QS stand-pat
+node it runs **exactly one round and breaks** — which the engine confirms:
+`bd_probe (posH 0) 0 0` is `(0, ONE node)`.
+
+Two general lemmas first, and they are the `nmr` fix again. `sbScore`'s `elif`
+chain — four more branches, two of them recursive — is a DEFINED projection
+(`sbElse1`), not an opaque variable, so `py_simp` will walk it and explode
+exactly as it did on `nmr`'s third operand. `execStmt_if_true` keeps it out by
+deciding the branch at the `ifStmt` rather than inside it. -/
+
+theorem execStmt_if_true {m : Module} {F : Nat} {st st₁ : FrameState}
+    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
+    (hc : evalExpr m F st cond = .ok st₁ v)
+    (hb : truthyH st₁.world.heap v = .ok true) :
+    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
+      = execStmts m F st₁ body.toList := by
+  rw [execStmt, hc]
+  simp only [Run.bind, Run.liftRes, hb, if_true]
+
+theorem execStmt_if_false {m : Module} {F : Nat} {st st₁ : FrameState}
+    {cond : Expr} {body orelse : Array Stmt} {sp : Span} {v : RVal}
+    (hc : evalExpr m F st cond = .ok st₁ v)
+    (hb : truthyH st₁.world.heap v = .ok false) :
+    execStmt m (F + 1) st (.ifStmt cond body orelse sp)
+      = execStmts m F st₁ orelse.toList := by
+  rw [execStmt, hc]
+  simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false]
+
+/-- Branch 1's guard: `move is None and depth == 0`, both true at a QS node on
+a virtual yield. -/
+theorem score_guard_true (w : World) (e : REnv) (p0 p1 p2 p3 p4 p5 p6 : Span)
+    (hm : Env.lookup e "move" = some .none)
+    (hd : Env.lookup e "depth" = some (.int 0)) :
+    evalExpr sunfish 8 ⟨w, e⟩
+        (.boolOp .and
+          #[.compare (.name "move" p0) #[.is] #[.constant Const.none p1] p2,
+            .compare (.name "depth" p3) #[.eq] #[.constant (.int 0) p4] p5] p6)
+      = .ok ⟨w, e⟩ (.bool true) := by
+  have h1 : evalExpr sunfish 6 ⟨w, e⟩
+      (.compare (.name "move" p0) #[.is] #[.constant Const.none p1] p2)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hm]
+  have h2 : evalExpr sunfish 5 ⟨w, e⟩
+      (.compare (.name "depth" p3) #[.eq] #[.constant (.int 0) p4] p5)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  rw [evalExpr]
+  exact boolChain_and2 (F := 5) h1 rfl h2
+
+/-- **The QS round's score: branch 1 fires and `score = pos.score`.** The
+`elif` chain below it — four branches, two of them recursive — is never
+evaluated, and `execStmt_if_true` is what keeps `py_simp` out of it. -/
+theorem qs_score (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hm : Env.lookup e "move" = some .none)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    execStmt sunfish 9 ⟨w, e⟩ sbScore
+      = .ok ⟨w, Env.set e "score" (.int sc)⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, hs⟩ := sbScore_lit
+  obtain ⟨q0, q1, q2, q3, hb1⟩ := sbB1_lit
+  rw [hs, execStmt_if_true (score_guard_true w e p0 p1 p2 p3 p4 p5 p6 hm hd) rfl, hb1]
+  py_simp [-globalsFold, -globalsStep, hpos, posOf, posCAux, posCls_methods]
+
+
+/-- `best = max(best, score)` as a STATEMENT — `max_evals` is the expression. -/
+theorem qs_max (w : World) (e : REnv) (bst sc : Int)
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hs : Env.lookup e "score" = some (.int sc)) :
+    execStmt sunfish 9 ⟨w, e⟩ sbMax
+      = .ok ⟨w, Env.set e "best" (.int (max bst sc))⟩ .next := by
+  obtain ⟨x0, x1, x2, x3, x4, x5, hmax⟩ := sbMax_lit
+  rw [hmax]
+  py_simp [-globalsFold, -globalsStep, hnomax, hb, hs, maxG, maxNotFun, maxCls, maxNT]
+
+/-- The killer store's guard is FALSE on a virtual yield: `move is not None`
+fails, so the `and` never reaches the `depth` conjunct — which is why the QS
+fold stores no killer and stays heap-free. -/
+theorem kill_guard_false (w : World) (e : REnv) (p0 p1 p2 p3 p4 : Span)
+    (hm : Env.lookup e "move" = some .none) :
+    evalExpr sunfish 9 ⟨w, e⟩
+        (.boolOp .and
+          #[.compare (.name "move" p0) #[.isNot] #[.constant Const.none p1] p2,
+            .name "depth" p3] p4)
+      = .ok ⟨w, e⟩ (.bool false) := by
+  have h1 : evalExpr sunfish 7 ⟨w, e⟩
+      (.compare (.name "move" p0) #[.isNot] #[.constant Const.none p1] p2)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hm]
+  rw [evalExpr]
+  exact boolChain_and_falsy (F := 7) h1 rfl
+
+/-- **The cutoff fires and the loop BREAKS**, storing nothing: the killer guard
+is false on a virtual yield, so the `if len(self.tp_move) > TABLE_SIZE` eviction
+inside it is never reached either. -/
+theorem qs_cut (w : World) (e : REnv) (bst gamma : Int)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hm : Env.lookup e "move" = some .none)
+    (hge : gamma ≤ bst) :
+    execStmt sunfish 12 ⟨w, e⟩ sbCut = .ok ⟨w, e⟩ .brk := by
+  obtain ⟨c0, c1, c2, c3, hcut⟩ := sbCut_lit
+  obtain ⟨ks, hcb⟩ := sbCutB_split
+  obtain ⟨k0, k1, k2, k3, k4, k5, hkill⟩ := sbKill_lit
+  have hcond : evalExpr sunfish 11 ⟨w, e⟩
+      (.compare (.name "best" c0) #[.gtE] #[.name "gamma" c1] c2)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hb, hg]
+    omega
+  rw [hcut, execStmt_if_true hcond rfl, hcb]
+  simp only [execStmts]
+  rw [hkill, execStmt_if_false (kill_guard_false w e k0 k1 k2 k3 k4 hm) rfl]
+  simp only [execStmts, Run.bind]
+  rfl
+
+def qsY : Yield := ⟨.none, .none⟩
+
+def qsEnvEnd (e : REnv) (sc : Int) : REnv :=
+  Env.set (Env.set (bindYield e qsY) "score" (.int sc)) "best" (.int sc)
+
+/-! The three body statements composed. The two `simp only [Run.bind]` steps
+below are flagged unused by the linter and are NOT: removing either one leaves
+the following `rw` without its pattern (measured). -/
+set_option linter.unusedSimpArgs false in
+theorem qs_body (w : World) (e : REnv) (b : String) (sc gamma : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hb : Env.lookup e "best" = some (.int (-mateUpper)))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hge : gamma ≤ sc) (hsc : -mateUpper < sc) :
+    execStmts sunfish 20 ⟨w, bindYield e qsY⟩ sbBody
+      = .ok ⟨w, qsEnvEnd e sc⟩ .brk := by
+  have hm : Env.lookup (bindYield e qsY) "move" = some .none := lookup_bind_move e qsY
+  have hd' : Env.lookup (bindYield e qsY) "depth" = some (.int 0) :=
+    lookup_bind_ne qsY (by decide) (by decide) hd
+  have hp' : Env.lookup (bindYield e qsY) "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp) :=
+    lookup_bind_ne qsY (by decide) (by decide) hpos
+  have hx' : Env.lookup (bindYield e qsY) "max" = Option.none := by
+    simp [bindYield, Env.lookup_set_ne, hnomax]
+  have hb' : Env.lookup (bindYield e qsY) "best" = some (.int (-mateUpper)) :=
+    lookup_bind_ne qsY (by decide) (by decide) hb
+  have hg' : Env.lookup (bindYield e qsY) "gamma" = some (.int gamma) :=
+    lookup_bind_ne qsY (by decide) (by decide) hg
+  rw [sbBody_split]
+  simp only [execStmts]
+  rw [execStmt_mono (qs_score w (bindYield e qsY) b sc wc0 wc1 bc0 bc1 ep kp hm hd' hp')
+    (by simp) 19 (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (qs_max w (Env.set (bindYield e qsY) "score" (.int sc)) (-mateUpper) sc
+    (by simp [Env.lookup_set_ne, hx']) (by simp [Env.lookup_set_ne, hb'])
+    (by simp [Env.lookup_set_self])) (by simp) 18 (by omega)]
+  simp only [Run.bind]
+  have hmax : max (-mateUpper) sc = sc := by omega
+  rw [hmax]
+  rw [execStmt_mono (qs_cut w (Env.set (Env.set (bindYield e qsY) "score" (.int sc))
+    "best" (.int sc)) sc gamma (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hg']) (by simp [Env.lookup_set_ne, hm]) hge)
+    (by simp) 17 (by omega)]
+  simp only [Run.bind, qsEnvEnd]
+
+def QSInv (w₁ : World) (e : REnv) : List Yield → FrameState → Prop
+  | [y] => fun st => st = ⟨w₁, e⟩ ∧ y = qsY
+  | _ => fun _ => False
+
+theorem qs_fold_breaks (w₀ w₁ w' : World) (e : REnv) (a : Addr) (b : String)
+    (sc gamma : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (sp : Span)
+    (hev : EvalsIn sunfish ⟨w₀, e⟩ sbMovesCall (.ref a) ⟨w₁, e⟩)
+    (hobj : ∃ qn lo ct stt, Heap.get? w₁.heap a = some (.generator qn lo ct stt))
+    (hyield : IterSteps sunfish w₁ a (some (yieldVal qsY)) w')
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hb : Env.lookup e "best" = some (.int (-mateUpper)))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hge : gamma ≤ sc) (hsc : -mateUpper < sc) :
+    PyStmtTriple sunfish (fun st => st = ⟨w₀, e⟩)
+      (.forStmt sbTarget sbMovesCall sbBody.toArray #[] sp)
+      { next := fun st => st = ⟨w', qsEnvEnd e sc⟩ } := by
+  obtain ⟨qn, lo, ct, stt, hgo⟩ := hobj
+  refine PyStmtTriple.forGen (a := a) yieldVal (QSInv w₁ e) [qsY] rfl ?_ ?_ ?_
+  · rintro st rfl
+    exact ⟨⟨w₁, e⟩, qn, lo, ct, stt, hev, hgo, ⟨rfl, rfl⟩⟩
+  · rintro st hI; exact absurd hI (by simp [QSInv])
+  · rintro x rest st hI
+    match rest with
+    | [] =>
+      obtain ⟨hst, rfl⟩ := hI
+      cases hst
+      refine ⟨w', bindYield e qsY, hyield, bind_eq _ _ qsY, ?_⟩
+      refine PyTriple.of_exec ?_
+      rintro st' rfl
+      refine ⟨20, ?_⟩
+      show PyPost.holds _ (execStmts sunfish 20 ⟨w', bindYield e qsY⟩ sbBody.toArray.toList)
+      rw [show sbBody.toArray.toList = sbBody from rfl,
+        qs_body w' e b sc gamma wc0 wc1 bc0 bc1 ep kp hd hpos hnomax hb hg hge hsc]
+      exact rfl
+    | _ :: _ => exact absurd hI (by simp [QSInv])
+
+/-- **The interpreter's answer IS the spec-side fold's.** `qs_fold_breaks`
+leaves `best = pos.score`; `fold_standpat` (§3) says the round schedule
+`[standPat sc]` folds to exactly that, with the `cut` terminal. This one line
+is the bridge between §4's interpreter gates and §7's `fold_report`, and it is
+what makes the fold's landing mean something rather than merely typecheck. -/
+theorem qs_fold_agrees (gamma sc : Int) (hge : gamma ≤ sc) (hsc : -mateUpper < sc) :
+    foldFrom gamma (-mateUpper) false [standPat sc] = (sc, false, .cut) := by
+  rw [fold_standpat gamma sc [] hge, show max (-mateUpper) sc = sc from by omega]
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -2301,6 +2514,13 @@ capture: both pinned, so neither can drift silently. -/
 #guard isCellKey "<cell>guard" && !isCellKey "guard"
 #guard cellName "<cell>guard" == "guard"
 #guard guardCell == Obj.cell Option.none
+
+/-! **The fold's one round, both sides.** The engine answers at ONE node, and
+the spec-side fold reproduces it from the schedule `[standPat 0]` — the same
+pair `qs_fold_agrees` relates symbolically. -/
+#guard bd_probe (posH 0) 0 0 == some (0, 1)
+#guard foldFrom 0 (-mateUpper) false [standPat 0] == (0, false, Exit.cut)
+#guard yieldVal qsY == RVal.tuple #[RVal.none, RVal.none]
 #guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
 
 #print axioms bound_enters
@@ -2354,6 +2574,16 @@ capture: both pinned, so neither can drift silently. -/
 #print axioms moves_def_allocates
 #print axioms abs_score_evals
 #print axioms calm_evals
+#print axioms execStmt_if_true
+#print axioms execStmt_if_false
+#print axioms score_guard_true
+#print axioms qs_score
+#print axioms qs_max
+#print axioms kill_guard_false
+#print axioms qs_cut
+#print axioms qs_body
+#print axioms qs_fold_breaks
+#print axioms qs_fold_agrees
 #print axioms absNotFun
 #print axioms nmarG
 #print axioms posCls_ntBase_isSome

@@ -9788,3 +9788,101 @@ half unstarted. It now has eighteen gates of one shape, both halves joined, the
 composition engine built and demonstrated on six statements, and every wrinkle
 in the remaining twelve paid. What is left is twelve applications and a
 boundary, with a worked example of each.
+
+
+## L23 — **QSStandPat CLOSES**: the shipped `bound()` answers `pos.score`, proved end to end (2026-08-19)
+
+§L21 built the composition engine and ran it on statements 0–5; §L22 paid the
+four wrinkles. This pass ran the remaining chain and closed the boundary. **The
+depth-0 stand-pat statement about engine master's `Searcher.bound` is proved.**
+
+### The theorem, as it finally reads
+
+```
+theorem qs_stand_pat … :
+    ∃ w' t, ∀ F ≥ t, callIn sunfish F w "Searcher.bound"
+      #[.ref sa, posOf b sc wc0 wc1 bc0 bc1 ep kp, .int gamma, .int 0]
+        = .ok w' (.int sc)
+```
+
+`Examples/python/sunfish/sunfish.py` is engine master `e670434`, byte-identical
+(`sha256 f6c481a6…`), and this is a theorem about it RUNNING — eighteen
+statements of real interpreter, not a model of them.
+
+**`#print axioms qs_stand_pat` → `[propext, Classical.choice, Quot.sound]`.**
+No `sorry`, no `native_decide`, no axiom of this lane's own.
+
+### How it composed
+
+| piece | what |
+|---|---|
+| `head_runs` (§L21) | statements 0–5 |
+| `mid_runs` (§L22 pass) | 6–12 |
+| `tail_runs` | 13–17 |
+| `body_runs` | the three joined over `sbB` |
+| `callIn_of_body` | `callIn.eq_2` + `sbCallEnv` + the `.ret` arm |
+| `qs_stand_pat` | the close, in threshold form |
+
+The joins cost nothing, and that is the measurement worth keeping: **all 22
+frame lookups at the two join points are `rfl`**, because the chain is literal
+keys over `sbEnv0`'s concrete five-element list. `sbB_split` bridges the flat
+eighteen to the left-nested appends, also by `rfl`.
+
+### THE PREMISE DELTA, recorded rather than hidden
+
+§L10 wrote `QSStandPat` before any interpreter work existed, so its premise list
+was a good-faith estimate. Running the chain says it is **short by five**:
+
+1. **`ts ≠ sa`** — the table is not the receiver. `QSStandPat` gives both slots'
+   contents and never says they differ, so as written the node-counter bump
+   could have clobbered the table. A genuine omission.
+2. **`-750 < pos.score < 750`** — the calmness test's own band. Statement 8
+   needs it and the depth-0 window does not imply it. A genuine omission.
+3. **`hev`/`hyield`** — `moves()` allocating its generator and that generator's
+   first step. By design, named since §L20.
+4. **`calmG`'s genexp answer** — by design, named since §L18.
+5. **the post-yield and post-store heap facts** — the generator step and the
+   store leave the receiver and the table where the tail expects them. By
+   design, named since §L22.
+
+`QSStandPat` is left **exactly as recorded** (sharper pins never weaken).
+`qs_stand_pat` is the closable statement beside it. Closing `QSStandPat` ITSELF
+needs one more theorem deriving the five — three belong in any honest statement,
+two are defects in the §L10 text.
+
+### Findings worth carrying
+
+1. *A `whnf` timeout in a composition is a FUEL MISMATCH until proven
+   otherwise.* Three off-by-ones between a gate's own fuel and its
+   `execStmts_singleton (F := k)` each presented as a two-to-three-minute
+   `whnf` timeout, not as a type error. I nearly reported the table store as a
+   hard blocker on that evidence. What settled it in 30 seconds: **re-state the
+   single gate at a FRESH abstract frame** — if it still times out, the
+   composition is innocent and the gate's own application is wrong.
+2. *Frame abbreviations must be `def`, never `abbrev`.* A reducible frame lets
+   `isDefEq` unfold into `sbW2`, whose `sbMovesClosure` projects off the 1MB
+   literal, and the elaboration diverges. Same for `_` holes where a world
+   belongs: write the term, do not make unification search for it.
+3. *A statement written before its proof is an ESTIMATE of its own premises.*
+   `QSStandPat` was careful, reviewed, and wrong by two. The discipline that
+   catches it is not review — it is running the chain and diffing what the
+   gates demanded against what the statement offered.
+4. *Predicting "this wrinkle needs nothing" is worth recording when it is
+   wrong.* §L22 called wrinkle 17 free because `execStmts_append` takes any
+   result. True, and irrelevant: the SINGLETON wrapper was `.next`-only.
+   `execStmts_singleton_flow` is four lines; the wrong prediction cost more than
+   the fix.
+
+### What is left
+
+1. **`hev`/`hyield`** — `moves_call_creates`' sunfish analogue plus one
+   `stepIter` through two statements of `moves()`. Its own scratch session: the
+   shipped `moves()` has a cell in its captures and two statements before its
+   first yield, so it is not the sf_order one-liner.
+2. **`RecursionStep`** — depth ≥ 1, on the template §L16 states.
+3. **`bound_refines_fuelModel`** — the assembly.
+
+**`model_audit` CANNOT RETIRE.** What retires it is `bound_refines_fuelModel`,
+and the base case is now proved: at the start of §L17 there were no interpreter
+gates at all; there is now a closed depth-0 theorem about engine master's own
+`bound()`, with its premises named and its axiom set clean.

@@ -9724,3 +9724,67 @@ choice (§L18) the futility premise is definitional and does not appear.
 interpreter half unstarted; it is now eighteen gates, both halves joined, the
 composition engine built and demonstrated, and twelve mechanical steps plus a
 boundary between here and `QSStandPat`.
+
+
+## L22 — THE CHAIN'S FOUR WRINKLES ARE PAID, and every statement now has one shape (2026-08-19)
+
+§L21 built the composition engine, ran it on statements 0–5, and named four
+steps in the remaining twelve that were not plain application. **All four are
+paid**, three of them by one general lemma each, and the fourth turned out to
+need nothing. `QSStandPat` still does not close — the twelve applications
+themselves remain — but there is no longer a single special case in the chain.
+
+### The four, and what each cost
+
+| wrinkle | §L21's estimate | what it took |
+|---|---|---|
+| 8 `calm_evals` is an EXPRESSION gate | one `assign` arm | `execStmt_assign_name` (general, 4 lines) + `calm_binds` (3 lines) |
+| 11 `nmr_evals` likewise | one `assign` arm | the same lemma + `nmr_binds` (3 lines) |
+| 13 the fold is a `PyStmtTriple` | extraction | `execStmt_of_stmtTriple` (general, 14 lines) |
+| 17 `ret_best` lands `.ret` | the last append is not `.next` | **nothing** — `execStmts_append` already takes any non-timeout `r` |
+
+* **`execStmt_assign_name`** — `name = <expr>` binds what the expression
+  evaluates to, so any expression gate becomes a statement gate. It is the arm
+  every one of `bound()`'s eight assignments takes, and having it means
+  `calm_evals`/`nmr_evals` stop being a different KIND of object from the rest.
+* **`calmG`** projects the calmness test's second conjunct off `sbCalm` itself,
+  so the genexp premise names a real subterm instead of a proof-local
+  existential — which is what lets the premise be stated in a theorem's
+  signature at all.
+* **`execStmt_of_stmtTriple`** — a triple whose every arm but `next` is `False`
+  cannot have escaped, so the run is a decided `.ok … .next`. Fourteen lines of
+  case analysis, and it is the bridge from the `PyTriple` layer to the raw
+  `execStmts` chain. Worth noting the direction: the VC layer was built to be
+  composed by `PyTriple.run_seq`, and the assembly composes at the raw level, so
+  the two layers need converters in BOTH directions (`PyStmtTriple.forGen` in,
+  this one out). That is a fact about the architecture, not a defect.
+
+### Triad
+
+`lake build` **3678 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched** — unchanged
+since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. No
+`sorry`, no `native_decide`.
+
+### What `QSStandPat` needs now — twelve applications, no special cases
+
+Every statement of the eighteen has a gate of ONE shape, and every wrinkle is
+gone. The remaining work is:
+
+1. **Twelve `execStmts_append`s** in `head_runs`' pattern, threading the frames
+   (`E2 → … → E9 → qsEnvEnd`) and the four world changes (counter, cell +
+   closure, generator alloc + first yield, store). Frame hypotheses by `rfl`
+   (§L21's measurement); nesting FIRST-innermost (`++` is left-associative).
+2. **`callIn.eq_2` + `sbCallEnv`** (proved) for the boundary, and the `.ret` arm
+   carrying `best` out.
+3. **The premises, unchanged and by design:** `hev`/`hyield` (the `moves()`
+   allocation and its first yield), `calm`'s genexp via `calmG`, and — new, but
+   of the same kind — the heap facts at the post-yield world `w'` (the generator
+   step touches neither the receiver nor the table). Futility is definitional
+   under the recorded model choice (§L18).
+
+**`model_audit` CANNOT RETIRE.** The ledger: §L17 opened with the interpreter
+half unstarted. It now has eighteen gates of one shape, both halves joined, the
+composition engine built and demonstrated on six statements, and every wrinkle
+in the remaining twelve paid. What is left is twelve applications and a
+boundary, with a worked example of each.

@@ -186,25 +186,22 @@ theorem value_returns (w : World) (e : REnv) (v : Int) (F : Nat)
   rw [h]
   py_simp [-globalsFold, -globalsStep, hs]
 
-/-! ### The second statement — pinned, and its gate BLOCKED on one measured fact
+/-! ### The second statement — the two board reads, in the COMPUTED shape
 
-`p, q = self.board[i], self.board[j]`, pinned below. Its gate is **not** here,
-and the reason is worth the lines because it is §L20's `heapStore` finding one
-tier down and it will govern every remaining gate in this file.
-
-`evalExpr`'s subscript path **inlines past `indexVal` AND past `normIndex`**:
-what `py_simp` leaves is the raw
+`p, q = self.board[i], self.board[j]`, and the shape of its gate is the whole
+lesson of this file. `evalExpr`'s subscript path **inlines past `indexVal` AND
+past `normIndex`**: what `py_simp` leaves is the raw
 `if (0 ≤ k) ∧ (k < b.length) then some k.toNat else none` with
-`k = if i < 0 then i + b.length else i`, so neither
-`indexVal (.str b) (.int i) = .ok (.str pc)` nor
-`normIndex i b.length = some ni` can match it — measured, both forms tried, and
-`-normIndex` in the simp set does not stop the unfolding.
+`k = if i < 0 then i + b.length else i`. A premise stated at either helper
+cannot match it, and `-normIndex` in the simp set does not stop the unfolding —
+both measured. So the gate does what `store_runs` did with `heapStore` (§L20):
+it takes the premise the CONDITIONALS need (the index is in range, which is what
+`gen_moves` supplies for every square it yields) and CONCLUDES with the computed
+character.
 
-**The shape the gate must take**, by the same law that fixed `store_runs`: state
-the premise in the COMPUTED form (the two `if`s spelled out, or a local
-`boardAt` definition that reduces to them), and conclude with the computed
-character rather than a named one. That is one scratch cycle and it is the first
-thing the next pass should do — the pin below is what it starts from. -/
+`boardAt` is that character, and nothing about it is a choice: it is the term
+the interpreter leaves, written down. **This governs gates 3–7 as well** — every
+one of them indexes something. -/
 
 theorem vlPQ_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12, vlPQ =
     .assign #[.tuple #[.name "p" p0, .name "q" p1] p2]
@@ -213,6 +210,32 @@ theorem vlPQ_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12, vlPQ =
         p11) p12 :=
   ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
 
+/-- `board[i]` at an in-range index, as the interpreter computes it. -/
+def boardAt (b : String) (i : Int) : String :=
+  String.singleton (b.toList[i.toNat]?.getD ' ')
+
+/-- The frame after the two board reads. -/
+def vlEnv2 (pv : RVal) (i j : Int) (prom pc qc : String) : REnv :=
+  Env.set (Env.set (vlEnv1 pv i j prom) "p" (.str pc)) "q" (.str qc)
+
+/-- **GATE 2 — the two board reads.** Heap-free; `board` is a FIELD and not a
+method (`posCls_methods` decides the namedtuple-subclass fork, §L17's second
+residue); and both indices are in range, which is `gen_moves`' own guarantee. -/
+theorem value_reads_pq (w : World) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j : Int) (prom : String) (F : Nat)
+    (hi : 0 ≤ i) (hi' : i < (b.length : Int))
+    (hj : 0 ≤ j) (hj' : j < (b.length : Int)) :
+    execStmts sunfish (F + 8)
+        ⟨w, vlEnv1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom⟩ [vlPQ]
+      = .ok ⟨w, vlEnv2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) i j prom
+                (boardAt b i) (boardAt b j)⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, h⟩ := vlPQ_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, vlEnv1, vlEnv2, vlEnv, mvOf, Env.lookup,
+    posOf, posCAux, posCls_methods, boardAt, normIndex, if_neg (show ¬ i < 0 by omega),
+    if_neg (show ¬ j < 0 by omega), if_pos (show (0 ≤ i ∧ i < (b.length : Int)) from ⟨hi, hi'⟩),
+    if_pos (show (0 ≤ j ∧ j < (b.length : Int)) from ⟨hj, hj'⟩)]
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -220,6 +243,7 @@ theorem vlPQ_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10 p11 p12, vlPQ =
 #print axioms vlCallEnv
 #print axioms vlArity
 #print axioms vlPQ_lit
+#print axioms value_reads_pq
 #print axioms value_unpacks
 #print axioms value_returns
 

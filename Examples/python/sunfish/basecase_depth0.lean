@@ -1100,6 +1100,282 @@ the value function — holds on that table for `V = fun _ _ => 20`, which is wha
   #[.str board0, .int 0, .tuple #[.bool true, .bool true],
     .tuple #[.bool true, .bool true], .int 0, .int 0])
 
+/-! ## §9 THE STAND-PAT CUT LEAF, with its world VISIBLE
+
+§L23's `qs_stand_pat` and §L24's `qs_stand_pat_closed` both conclude
+`∃ w' t, …` — they HIDE the world, so nothing about `TableAt w'.heap ts` or
+`SubtreeWrites ts e w.heap w'.heap` can be stated about them, and a rule that
+owes two conjuncts about the world cannot consume them. The repair needs no
+reproving: **`body_runs` is public and NAMES its world**
+(`T1 (W4 …) ts es sv pos sc hlt`), so re-closing the boundary on it recovers
+what the `∃` threw away.
+
+This section is that, plus the two world conjuncts, at a CLEARED table — and it
+is where `SubtreeWrites`' `.alloc` arm is finally spent and where §L20's join
+(`sf_store_from_report`) is finally applied at a real store.
+
+**The heap chain, read off the world definitions rather than guessed:**
+
+    w.heap  --(.other)-->  h'                    the node counter
+            --(.alloc)-->  push guardCell        the cell (statement 7)
+            --(.alloc)-->  push closure          the `moves` closure
+            --(.alloc*)-->  ++ ext                the calm genexp (§L24)
+            --(.alloc)-->  push generator        the `moves()` call and its step
+            --(.store)-->  set ts                the table store (statement 15)
+
+Six links, three constructors, and the `.store` link is legal at every `e > 0`
+because the key's depth is `0`. -/
+
+/-- One `push` is one `alloc` step. -/
+theorem sw_push {S : Bracket} {a : Addr} {e : Int} {h : Heap} {o : Obj}
+    (hlt : a < h.size) : S.SubtreeWrites a e h (h.push o) :=
+  .alloc (h := h) (o := o) (b := h.size) rfl (Nat.ne_of_lt hlt) .nil
+
+/-- A push keeps a live slot live. -/
+theorem lt_size_push {a : Addr} {h : Heap} {o : Obj} (hlt : a < h.size) :
+    a < (h.push o).size := by
+  rw [Array.size_push]; exact Nat.lt_succ_of_lt hlt
+
+/-- So does an append. -/
+theorem lt_size_append {a : Addr} {h ext : Heap} (hlt : a < h.size) :
+    a < (h ++ ext).size := by
+  rw [Array.size_append]; exact Nat.lt_of_lt_of_le hlt (Nat.le_add_right _ _)
+
+/-- **An arbitrary APPEND is a run of allocations.** `sbW3`'s `++ ext` (§L24's
+repair for the calm genexp) is not a `Heap.update` and not one `Heap.alloc` — it
+is `ext.size` of them, and this is the induction that says so. Without it the
+genexp's world change cannot enter `SubtreeWrites` at all. -/
+theorem sw_append {S : Bracket} {a : Addr} {e : Int} :
+    ∀ (ext : Array Obj) {h : Heap}, a < h.size → S.SubtreeWrites a e h (h ++ ext)
+  | ⟨[]⟩, h, _ => by simpa using Bracket.SubtreeWrites.nil
+  | ⟨o :: os⟩, h, hlt => by
+      have hstep : S.SubtreeWrites a e h (h.push o) := sw_push hlt
+      have hrest : S.SubtreeWrites a e (h.push o) ((h.push o) ++ ⟨os⟩) :=
+        sw_append ⟨os⟩ (lt_size_push hlt)
+      have hcat : (h.push o) ++ (⟨os⟩ : Array Obj) = h ++ (⟨o :: os⟩ : Array Obj) := by
+        apply Array.ext'; simp [Array.push]
+      exact hcat ▸ hstep.trans hrest
+
+/-- **The store, as `heapStore` rather than as the computed `.set`.** §L20's law
+says a store gate must CONCLUDE with the computed heap, and §6's calculus is
+stated over `heapStore` — so somebody has to bridge them, and this is the one
+place it is owed. Both sides are the shipped `sbStored`. -/
+theorem store_bridge {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {pv : RVal} {sc : Int} (hlt : ts < w4.heap.size)
+    (hdict : Heap.get? w4.heap ts = some (.dict es sv)) (hk : hashableKey pv = true) :
+    heapStore w4.heap ts (tpKey pv 0) (entryOf sc mateUpper)
+      = .ok (T1 w4 ts es sv pv sc hlt).heap := by
+  have hkk : hashableKey (tpKey pv 0) = true := by
+    simp [tpKey, hashableKey, hashableKeyList, hk]
+  simp only [heapStore, hdict, if_pos hkk, sbStored, T1, Heap.update, dif_pos hlt]
+
+/-- **THE ALLOCATION CHAIN, before the store.** Links 1–5: the node counter and
+the four allocations. It holds at EVERY `e` without a side condition — `.other`
+and `.alloc` say nothing about depths — which is why it is the half that also
+carries the invariant into `sf_store_from_report`. -/
+theorem subtree_pre_store {V : RVal → Int → Int} {w : World} {h' : Heap}
+    {ci : ClassId} {sa ts tm hs : Addr} {n dl sf gamma : Int} {pv : RVal}
+    {av : Bool} {ext : Array Obj} {sv : Nat} {e : Int}
+    (hts : ts ≠ sa)
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hdict1 : Heap.get? h' ts = some (.dict #[] sv)) :
+    (sfBracket V).SubtreeWrites ts e w.heap (W4 w h' gamma pv av ext).heap := by
+  have hlt0 : ts < h'.size := Heap.lt_size_of_get? hdict1
+  have hlt1 := lt_size_push (o := guardCell) hlt0
+  have hlt2 := lt_size_push (o := sbMovesClosure h'.size gamma 0 .none pv) hlt1
+  have hlt3 := lt_size_append (ext := ext) hlt2
+  have k1 : (sfBracket V).SubtreeWrites ts e w.heap h' := .other (Ne.symm hts) hupd .nil
+  have k2 : (sfBracket V).SubtreeWrites ts e h' (h'.push guardCell) := sw_push hlt0
+  have k3 : (sfBracket V).SubtreeWrites ts e (h'.push guardCell)
+      ((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 .none pv)) := sw_push hlt1
+  have k4 : (sfBracket V).SubtreeWrites ts e
+      ((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 .none pv))
+      (((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 .none pv)) ++ ext) :=
+    sw_append ext hlt2
+  have k5 : (sfBracket V).SubtreeWrites ts e
+      (((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 .none pv)) ++ ext)
+      (W4 w h' gamma pv av ext).heap := sw_push hlt3
+  exact ((k1.trans k2).trans k3).trans (k4.trans k5)
+
+/-- **THE WHOLE CHAIN**, at every depth an ancestor can probe. Link 6 is the
+store, and it is the only link that needs `0 ≠ e` — the QS node keys at depth
+`0`, so every ancestor probing above it is blind to the write. -/
+theorem subtree_of_stand_pat {V : RVal → Int → Int} {w : World} {h' : Heap}
+    {ci : ClassId} {sa ts tm hs : Addr} {n dl sf gamma sc : Int} {pv : RVal}
+    {av : Bool} {ext : Array Obj} {sv : Nat} {e : Int}
+    (hne : (0 : Int) ≠ e)
+    (hts : ts ≠ sa)
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hdict1 : Heap.get? h' ts = some (.dict #[] sv))
+    (hk : hashableKey pv = true)
+    (hlt : ts < (W4 w h' gamma pv av ext).heap.size)
+    (hlo : sc ≤ V pv 0) (hband : V pv 0 ≤ mateUpper) :
+    (sfBracket V).SubtreeWrites ts e w.heap
+      (T1 (W4 w h' gamma pv av ext) ts #[] sv pv sc hlt).heap := by
+  have hdict4 : Heap.get? (W4 w h' gamma pv av ext).heap ts = some (.dict #[] sv) :=
+    W4_get w h' gamma pv av ext hdict1
+  have hholds : (sfBracket V).Holds (tpKey pv 0) (entryOf sc mateUpper) :=
+    ⟨sc, mateUpper, V pv 0, entryBounds_entryOf sc mateUpper,
+      by show (pairKey (tpKey pv 0)).map (fun pd => V pd.1 pd.2) = some (V pv 0)
+         rw [pairKey_tpKey]; rfl,
+      hlo, hband⟩
+  exact (subtree_pre_store (V := V) (gamma := gamma) (pv := pv) (av := av) (ext := ext)
+    hts hupd hdict1).trans (.store hne hholds (store_bridge hlt hdict4 hk) .nil)
+
+set_option linter.unusedVariables false in
+/-- **THE STAND-PAT CUT LEAF, world-visible.** `qs_stand_pat_closed`'s run with
+its world named, plus the three conjuncts the `∃` made unstateable.
+
+`TableAt` OUT is where §L20's join finally runs on a real store: the fold's
+report IS the lower bound the stored `Entry(best, MATE_UPPER)` claims, and
+`sf_store_from_report` is the theorem that says so. `hband` (`V pos 0 ≤
+MATE_UPPER`) and `hsval` (`pos.score ≤ V pos 0` — the stand-pat is a LOWER bound
+on the QS value) are the two model-side premises; both belong to `formal/`'s
+depth-0 leaf, and `hband` is the one §L20 named and left open on purpose.
+
+`hgen` and `hband'` are §L24's own residue, unchanged and open BY DESIGN: over a
+free board nothing decides the calmness genexp, and the depth-0 window does not
+imply the `±750` band. `hmove` (an empty `tp_move`) is `mid_runs`' premise, not
+this leaf's choice — see the file tail. -/
+theorem refinesAt_stand_pat {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    (w : World) (h' : Heap) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (av : Bool) (ext : Array Obj) (Fg : Nat) (sv svm : Nat)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (ht : (sfBracket V).TableAt w.heap ts)
+    (hmove : Heap.get? w.heap tm = some (.dict #[] svm))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper)
+    (hband' : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
+        ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+         G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
+      = .ok ⟨sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+             G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ (.bool av))
+    (hge : gamma ≤ sc) (hmus : -mateUpper < sc)
+    (hsval : sc ≤ V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+    (hbandV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ mateUpper) :
+    RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
+  have hts : ts ≠ sa := dict_ne_instance hself hdict
+  have htm : tm ≠ sa := dict_ne_instance hself hmove
+  have hk := posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp
+  have hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    Heap.get?_update_self hupd
+  have hdict1 : Heap.get? (W1 w h').heap ts = some (.dict #[] sv) :=
+    (Heap.get?_update_ne hupd hts).trans hdict
+  have hmove1 : Heap.get? (W1 w h').heap tm = some (.dict #[] svm) :=
+    (Heap.get?_update_ne hupd htm).trans hmove
+  -- the generator half, discharged exactly as `qs_stand_pat_closed` does
+  have hev := moves_call_creates
+    (sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc)
+    (W1 w h').heap.size gamma .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) av Option.none
+    (by simp [G9, G8, G7, G6, G5, G4, sbEnvDef, Env.lookup_set_ne, Env.lookup_set_self])
+    (sbW3_cell (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (sbW3_closure (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (by simp [G9, G8, G7, G6, Env.lookup_set_ne, Env.lookup_set_self])
+  have hyield := moves_first_iter
+    (sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    gamma .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) av
+  have hobj4 : Heap.get? (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap sa
+      = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    W4_get w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext hobj1
+  have hdict4 : Heap.get? (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap ts
+      = some (.dict #[] sv) :=
+    W4_get w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext hdict1
+  have hlt : ts < (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap.size :=
+    Heap.lt_size_of_get? hdict4
+  have hu : Heap.update (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap ts
+      (sbStored #[] sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc)
+      = some (T1 (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts #[] sv
+          (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap := by
+    simp only [Heap.update, T1, dif_pos hlt]
+  have hobj5 := (Heap.get?_update_ne hu (Ne.symm hts)).trans hobj4
+  have hdict5 := Heap.get?_update_self hu
+  -- THE RUN, with the world named
+  obtain ⟨f, hf⟩ := body_runs w
+    (W3 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext)
+    (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) h'
+    (sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext).heap.size
+    ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av ext Fg sv svm
+    #[] (dictStore ([] : List (RVal × RVal)) (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+          (entryOf sc mateUpper)).1.toArray
+    sv (if (dictStore ([] : List (RVal × RVal)) (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+          (entryOf sc mateUpper)).2 = true then sv + 1 else sv)
+    hlt hself hupd hclk hts hdict hml hmu hk hsc hlo hup
+    hobj1 hmove1 hmu hband' hFg hgen hev
+    (W3_gen w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) hyield
+    hobj4 hdict4 hobj5 hdict5 (by show ((1 : Nat) : Int) ≤ tableSize; decide) hge hmus
+  refine ⟨T1 (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts #[] sv
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, sc, f + 1, fun F hF => ?_, ?_, ?_,
+      Or.inr ⟨hge, hsval⟩⟩
+  · obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+    exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
+  · -- TableAt OUT: §L20's join, at the computed store
+    refine sf_store_from_report hV (h := (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap)
+      ?_ (Or.inr ⟨hge, hsval⟩) hge hbandV
+      (store_bridge hlt hdict4 hk)
+    -- the invariant survives the allocations the body made before the store
+    exact sf_subtree_tableAt (e := (1 : Int)) hV
+      (subtree_pre_store (V := V) (gamma := gamma)
+        (pv := posOf b sc wc0 wc1 bc0 bc1 ep kp) (av := av) (ext := ext) hts hupd hdict1) ht
+  · intro e he
+    exact subtree_of_stand_pat (V := V) (e := e) (by omega) hts hupd hdict1 hk hlt hsval hbandV
+
+/-! ### §9's chain, CORROBORATED slot by slot on the shipped engine
+
+The proof's six links are a claim about the shape of the run's heap effect, and
+the shipped engine answers it exactly. At `gamma = 0` on the opening board the
+depth-0 cut run:
+
+* **allocates four objects, in this order** — `cell`, `closure`, `generator`,
+  `generator`. Those are `subtree_pre_store`'s links 2–5: the `<cell>guard`, the
+  `moves` closure, the calm genexp's own generator (so `ext.size = 1`, which is
+  §L24's 70 → 71 measurement seen from here), and the `moves()` generator;
+* **moves exactly two live slots** — the receiver (the node counter, link 1's
+  `.other`) and `tp_score` (the store, link 6's `.store`).
+
+Six links, four allocations, two updates. If the chain had a link too many or
+too few this guard would say so. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match callIn sunfish 1000000 w "Searcher.bound" #[.ref a, posH 0, .int 0, .int 0] with
+     | .ok w' _ =>
+       w.heap.size == 70 && w'.heap.size == 74
+         && ((List.range w.heap.size).filter
+              (fun i => Heap.get? w.heap i != Heap.get? w'.heap i) == [66, 67])
+         && ((List.range' w.heap.size 4).map
+              (fun i => match Heap.get? w'.heap i with
+                        | some (.cell _) => "cell"
+                        | some (.closure ..) => "closure"
+                        | some (.generator ..) => "generator"
+                        | _ => "other")
+             == ["cell", "closure", "generator", "generator"])
+     | _ => false)
+  | Option.none => false)
+
+/-! And the entry the store leaves is `sbStored`'s own — `Entry(best, MATE_UPPER)`
+at `(pos, 0)`, one entry, which is what `store_bridge` claims and what
+`sf_store_from_report` brackets. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_score" with
+        | some (.ref ts) =>
+          (match callIn sunfish 1000000 w "Searcher.bound"
+              #[.ref a, posH 0, .int 0, .int 0] with
+           | .ok w' _ => Heap.get? w'.heap ts == some (sbStored #[] 0 (posH 0) 0)
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
+
 /-! ### The axioms -/
 
 #print axioms execStmts_append_escape
@@ -1125,39 +1401,61 @@ the value function — holds on that table for `V = fun _ _ => 20`, which is wha
 #print axioms recursionStep_vacuous
 #print axioms probe_answer_spelled
 #print axioms boundRefinesW_zero
+#print axioms sw_append
+#print axioms store_bridge
+#print axioms subtree_pre_store
+#print axioms subtree_of_stand_pat
+#print axioms refinesAt_stand_pat
 
-/-! ## What the base case still owes — ONE hypothesis, in two halves
+/-! ## What the base case still owes — and why it is NOT one more leaf
 
-`boundRefinesW_zero` is the assembly, and after it the base case's whole
-remaining debt is `hfall`: the leaf at `lo < gamma ≤ up`, where the probe answers
-nothing decisive and `moves()` finally runs. It splits once more, on
-`gamma ≤ pos.score`:
+Three of the four arms are proved: the king capture, the stale-table probe hit
+(both returns), and now the stand-pat CUT. `boundRefinesW_zero` is still stated
+against `hfall` rather than unconditionally, and the reasons are worth being
+exact about, because two of the three are statement-level and one is structural.
 
-1. **the stand-pat CUT** — `qs_stand_pat_closed` (§L23/§L24) is this leaf over a
-   CLEARED table, and consuming it needs three things it does not have. Its
-   conclusion HIDES the world (`∃ w' t, …`), so `TableAt`/`SubtreeWrites` cannot
-   be stated about it — the fix is to re-close `body_runs` (public, and it names
-   the world `T1 (W4 …) ts …`) rather than to reprove anything. Its `hdict`
-   pins `.dict #[]`, so `head_runs` needs `probe_reads` +
-   `probe_lower_passes_at`/`probe_upper_passes_at` (all three above, and the two
-   pass gates land here unspent for exactly this). And `mid_runs` pins
-   `Heap.get? w.heap tm = some (.dict #[] svm)` — **the KILLER table**, which
-   `BoundWF.killer` is what the repaired rule now says about it, and
-   `killer_misses` still owes a `killer_reads` generalisation, exactly as
-   `probe_misses` owed `probe_reads`. Measured: at `gamma ≤ pos.score` a killer
-   in `tp_move` does NOT change the answer (both 0, both heap 74) because the
-   stand-pat yield precedes the killer test — so the leaf is true and the proof
-   is what needs the generalisation. At `gamma > pos.score` it changes the run
-   (heap 2882 against 2409), and with GARBAGE there it raises — which is why
-   `BoundWF.killer` exists.
-2. **the FAIL-LOW leaf** — the fold runs out and the store takes its other arm.
-   The only leaf of the four that needs a fold, the only one that needs
-   `fold_report`'s fail-low half, and the only one where `SubtreeWrites`' `.alloc`
-   arm is finally spent — the two head leaves proved above never needed it, which
-   is why they were the ones to do first.
+**(1) THE FAIL-LOW ARM IS NOT A LEAF — it is a SECOND INDUCTION.** This is the
+structural one, and `bound_depth.lean` already contains its proof in two pieces.
+`qs_child_depth_eq` says `max (moveDepth 0 false false) 0 = 0`: at depth 0 a
+searched real move recurses at depth 0 — *"a QS node's children store under the
+QS node's OWN key"* — and §8's guards measure it, `bd_probe (posH 0) 40 0 =
+some (4, 34)` against `bd_probe (posH 0) 0 0 = some (0, 1)`. **34 nodes.** So the
+fail-low arm's `Report` consumes a report from a depth-0 CHILD, which is
+`BoundRefinesW V 0` itself — circular. No amount of interpreter work closes it;
+what closes it is a second induction on the QS termination measure (calmness,
+not depth), which is what `formal/`'s fuel model exists for. §L25's plan lists
+this as one of three sibling leaves; it is not a sibling.
 
-`SubtreeWrites` at both is the same shape as here plus allocation: the counter
-bump, the generator and sorted-list pushes, and the store — `.other`, `.alloc`
-and `.store` in that order, and `trans` composes them. -/
+The good news is that everything ELSE the fail-low arm needs is now built: its
+`SubtreeWrites` is `subtree_pre_store` plus one `.store` plus the children's own
+subtrees composed by `trans`, and the children's stores are at depth `0 ≠ e` for
+every `e > 0` exactly as link 6 is.
+
+**(2) The cut leaf is CLEARED-table.** `hfall` is stated at an arbitrary `es`,
+and `refinesAt_stand_pat` needs `es = #[]`. Two shipped gates are why, and both
+are `probe_misses → probe_reads` again:
+
+* `mid_runs` pins `Heap.get? w.heap tm = some (.dict #[] svm)` — an empty
+  `tp_move`. Owed: `killer_reads`, and `mid_runs` recomposed at it.
+* `store_runs`/`tail_runs` pin `Env.lookup e "entry" = some entryDefault`,
+  because the store's fail-high arm reads `entry.upper`: over a stale table the
+  shipped line writes `Entry(best, up)` and not `Entry(best, MATE_UPPER)`. Owed:
+  `store_runs` at an arbitrary entry, with `sbStored` carrying `up`.
+  **The calculus side of that is already free** — `sf_store_from_report` would
+  then need `V pos 0 ≤ up`, which is exactly what `sf_probe_brackets` reads off
+  the probed entry. The stale entry's own upper bound is what validates the new
+  one.
+
+**(3) Two premises are open BY DESIGN and always were** (§L18, §L24): the
+calmness genexp `hgen` over a free board, and the `±750` band. They are
+`QSStandPatB`'s residue, they are not this lane's to close, and they ride into
+`refinesAt_stand_pat` unchanged.
+
+**And the two model-side premises are named, not hidden.** `hbandV`
+(`V pos 0 ≤ MATE_UPPER`, the mate band — §L20 named it and left it open) and
+`hsval` (`pos.score ≤ V pos 0`, the stand-pat is a LOWER bound on the QS value).
+Both belong to `formal/`'s depth-0 leaf, beside `hmateV`'s exact
+`V pos 0 ≤ -MATE_UPPER` at a captured king. Three model facts, one per arm, and
+no arm needs anything else from the model. -/
 
 end Examples.python.sunfish.basecase_depth0

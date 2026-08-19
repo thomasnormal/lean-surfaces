@@ -10263,11 +10263,8 @@ rather than empty ones.
 |---|---|
 | **the STALE-TABLE probe hit**, both arms | **proved** (`refinesAt_probe_hit`) |
 | **the KING-CAPTURE return** — statement 4, which fires BEFORE the probe | **proved** (`refinesAt_king_capture`) |
-| the stand-pat CUT | one half of the `hfall` hypothesis |
-| the FAIL-LOW leaf | the other half |
-
-(`hfall` is stated at `BoundWF` and `lo < gamma ≤ up`, so it is the shape a
-`qs_stand_pat_closed` successor can be written to meet directly.)
+| **the stand-pat CUT**, world-visible | **proved** (`refinesAt_stand_pat`), at a CLEARED table |
+| the FAIL-LOW arm | **not a leaf** — see below |
 
 The fourth arm is the one §L25's plan does not name, and it is not the fold's —
 it is the head's. Every other leaf carries `-MATE_LOWER < pos.score` as a
@@ -10314,10 +10311,21 @@ the same shape as the cleared-table three, plus one general engine lemma:
   never reached. Four lines, and it is what turns a `return` inside statement 5
   into a statement about all eighteen.
 
-### THE KILLER TABLE — now a premise, and still owed a gate
+### Why the cut leaf is CLEARED-table, and the two gates that would widen it
 
-`BoundWF.killer` is what the repaired rule says about `tp_move`. The PROOF side
-is still open: `mid_runs` pins
+`hfall` is stated at an arbitrary `es`; `refinesAt_stand_pat` needs `es = #[]`.
+Two shipped gates are why, and both are `probe_misses → probe_reads` a second
+and third time:
+
+* **`store_runs`/`tail_runs` pin `entry = entryDefault`**, because the store's
+  fail-high arm reads `entry.upper`: over a stale table the shipped line writes
+  `Entry(best, up)`, not `Entry(best, MATE_UPPER)`. Owed: `store_runs` at an
+  arbitrary entry, with `sbStored` carrying `up`. **The calculus side is already
+  free** — `sf_store_from_report` would then need `V pos 0 ≤ up`, which is
+  exactly what `sf_probe_brackets` reads off the probed entry. The stale entry's
+  own upper bound is what validates the new one.
+* **`mid_runs` pins an empty `tp_move`.** `BoundWF.killer` is what the repaired
+  rule says about it; the PROOF side is still open. `mid_runs` pins
 `Heap.get? w.heap tm = some (.dict #[] svm)`, so consuming it at an arbitrary
 table state needs a `killer_reads` generalisation exactly as `head_runs` needed
 `probe_reads`. Measured on the fixture:
@@ -10329,15 +10337,61 @@ table state needs a `killer_reads` generalisation exactly as `head_runs` needed
 * at `gamma > pos.score` it **does** change the run (heap 2882 against 2409), so
   the fail-low leaf needs it for real.
 
-### And `qs_stand_pat_closed` cannot be consumed as-is
+### `qs_stand_pat_closed` could not be consumed as-is — so it was RE-CLOSED
 
-Its conclusion is `∃ w' t, …` — it **hides the world**, so `TableAt w'.heap ts`
+Its conclusion is `∃ w' t, …`; it **hides the world**, so `TableAt w'.heap ts`
 and `SubtreeWrites ts e w.heap w'.heap` cannot be stated about it at all. The fix
-is not to reprove anything: `body_runs` is public and NAMES its world
+needed no reproving: `body_runs` is public and NAMES its world
 (`T1 (W4 …) ts …`), so re-closing the boundary on `body_runs` recovers what the
-∃ threw away. A finding for anyone stating the next leaf: **a run gate whose
-world is existential cannot serve a rule that owes anything about the world.**
-State the world, and let the ∃ form be the corollary.
+`∃` threw away. `refinesAt_stand_pat` is that, with all four conjuncts. A finding
+for anyone stating the next run gate: **a run gate whose world is existential
+cannot serve a rule that owes anything about the world.** State the world, and
+let the `∃` form be the corollary.
+
+**And it is where `SubtreeWrites`' `.alloc` arm is finally spent** — §L13 added
+that arm because *"a child call allocates on every visit"* and warned the
+relation would otherwise be uninhabitable; this is the first run that inhabits
+it. The chain is six links, read off the world definitions rather than guessed:
+
+    w.heap --(.other)--> h'  --(.alloc)--> +cell --(.alloc)--> +closure
+           --(.alloc×)--> ++ ext --(.alloc)--> +generator --(.store)--> set ts
+
+Two pieces were owed and are new: **`sw_append`**, because `sbW3`'s `++ ext`
+(§L24's repair for the calm genexp) is neither a `Heap.update` nor one
+`Heap.alloc` but `ext.size` of them; and **`store_bridge`**, because §L20's law
+makes the store gate conclude with the computed `.set` while §6's calculus is
+stated over `heapStore` — somebody had to bridge them and this was the place.
+`subtree_pre_store` (links 1–5) holds at EVERY `e` with no side condition, which
+is also what carries the invariant into `sf_store_from_report`; only link 6
+needs `0 ≠ e`.
+
+**The chain is corroborated slot by slot.** At `gamma = 0` on the opening board
+the cut run allocates FOUR objects in order — `cell`, `closure`, `generator`,
+`generator` (so `ext.size = 1`, which is §L24's 70 → 71 seen from here) — and
+moves exactly TWO live slots, the receiver and `tp_score`. Six links, four
+allocations, two updates; a link too many or too few and the `#guard` says so.
+
+### THE FAIL-LOW ARM IS NOT A LEAF — it is a SECOND INDUCTION
+
+§L25 lists it as one of three sibling leaves. It is not a sibling, and
+`bound_depth.lean` already contains the proof in two pieces that were never put
+together. `qs_child_depth_eq` says `max (moveDepth 0 false false) 0 = 0` — at
+depth 0 a searched real move recurses **at depth 0**, and its own docstring says
+why that matters (*"a QS node's children store under the QS node's OWN key…
+which is precisely why the depth-0 gate carries a stand-pat hypothesis — it cuts
+before any child runs"*). §8's guards measure the size of it: `bd_probe (posH 0)
+40 0 = some (4, 34)` against `some (0, 1)` for the cut. **34 nodes.**
+
+So the fail-low arm's `Report` consumes a report from a depth-0 CHILD, which is
+`BoundRefinesW V 0` itself. Circular. No interpreter work closes it; what closes
+it is a **second induction on the QS termination measure** — calmness, not depth
+— which is what `formal/`'s fuel model exists for. **This is the item to re-price
+in the campaign plan**, and it is bigger than an inch.
+
+Everything else the arm needs is now built: its `SubtreeWrites` is
+`subtree_pre_store` plus one `.store` plus the children's own subtrees composed
+by `trans`, and the children's stores sit at depth `0 ≠ e` for every `e > 0`
+exactly as link 6 does.
 
 ### Triad
 
@@ -10388,12 +10442,18 @@ eight times on purpose.
 
 ### What the base case still owes
 
-**One hypothesis, `hfall`, in two halves** — the stand-pat cut and the fail-low
-leaf, both at `lo < gamma ≤ up`, splitting on `gamma ≤ pos.score`. What each
-needs is named above: the world-naming re-close of `body_runs`, `probe_reads` in
-place of `probe_misses` in the head, `killer_reads` in place of `killer_misses`
-in the middle, and — for the fail-low leaf only — a real fold, `fold_report`'s
-fail-low half, and `SubtreeWrites`' `.alloc` arm.
+**Three of four arms are proved.** What is left of `hfall` is two things of very
+different size: **widening the cut leaf off the cleared table** (two gates,
+`killer_reads` and `store_runs`-at-an-arbitrary-entry, both mechanical and both
+with their calculus side already paid), and **the fail-low arm, which is a second
+induction and not a leaf at all**. Two premises stay open by design (§L18/§L24):
+the calmness genexp over a free board and the `±750` band.
+
+The model side is now fully enumerated: **three facts, one per arm** — `hmateV`
+(`V pos 0 ≤ -MATE_UPPER` at a captured king, an EXACT value), `hbandV`
+(`V pos 0 ≤ MATE_UPPER`, the mate band §L20 named and left open) and `hsval`
+(`pos.score ≤ V pos 0`, the stand-pat is a lower bound on the QS value). No arm
+needs anything else from `formal/`.
 
 **But the repair comes first.** `BoundWF`/`BoundRefinesW` are stated and the base
 case is half proved on them; what is NOT done is retiring `BoundRefines` itself,

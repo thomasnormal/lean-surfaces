@@ -10882,3 +10882,102 @@ over.
 declarations depend on `[propext, Classical.choice, Quot.sound]` or less; the
 twenty-one projection and plan pins depend on `[propext]` alone or on nothing.
 No `sorry`, no `native_decide`.
+
+## L32 — R3 OPENS WITH ITS CENSUS, and it is FIVE inches, not two (2026-08-19)
+
+*(§L30 remains the census lane's.)*
+
+`Examples/python/sunfish/fold_depth1.lean` — the measurement, the plan, and the
+one piece that was already cheap. §L25 priced R3 at *two sessions*. Running the
+shipped `bound()` at depth 1 before writing a gate says otherwise, and it also
+says which two inches are the cheap ones. **The §L25 law applied to R3 itself.**
+
+### The census
+
+`Searcher().bound(posH 0, gamma, 1)` on the live engine:
+
+| window | answer | nodes | heap |
+|---|---|---|---|
+| `gamma ≥ 47` | 46 | **1** | 70 → 246 |
+| `gamma ≤ 0` | 0 | **2** | 70 → 247 |
+| `gamma = 5` | 37 | 35 | 70 → 3024 |
+| `gamma = 10` | 37 | 41 | 70 → 3496 |
+| `gamma = 40` | 37 | 34 | 70 → 2881 |
+
+**The edges are one round and two; the middle is forty.** 300 fuel decides both
+edges, 200 does not. The five cheap numbers are `#guard`ed in the file; the three
+expensive ones are recorded here and deliberately NOT guarded — a 41-node `bound`
+is seconds of elaboration for a number that prices the plan rather than
+discharging a premise.
+
+### The depth-1 stream has NO virtual rounds — and that is a theorem now
+
+Both `yield None, None` statements are dead at depth 1 by arithmetic
+(`2 < depth` fails, `depth == 0` fails) and the killer yield dies on its FIRST
+operand, because a fresh `Searcher()`'s `tp_move` is empty — the one item on that
+list which is a measurement rather than arithmetic, and it is `#guard`ed.
+`moves_prologue` proves all three as one silent transition, and
+`moves_emits_ordered` composes it with §L31's `ord_stmt_emits`: **at depth 1 the
+generator's whole body emits exactly the ordering line's sorted pairs.**
+
+That is the complement of the depth-0 schedule (one virtual round, on which the
+fold cuts), so **R3's ground and the base case's do not overlap** — the depth-0
+circular arm stays the census lane's and nothing here touches it.
+
+`branch_false_silent` is the small general lemma it took: a `.branch` whose test
+is falsy and whose `else` is empty is two silent steps and no emission
+(`genSilent_branch` then `genSilent_blockNil`). All three prologue statements are
+that shape.
+
+### The five inches
+
+* **R3a — the SETTLE arm.** One round, ONE node, no child and **no IH**: at
+  `gamma ≥ 47` the futility cap `pos.score + val` is below the window and the
+  fold settles and breaks. Schedule `[Round.settle cap]`, and `fold_report`'s
+  `hfut` is discharged by the cap being the round's own. Owed: `sbScore`'s `elif`
+  chain taken to its LAST arm, with `execStmt_if_false` keeping `py_simp` out of
+  the recursive branches exactly as `qs_score` does for branch 1. *One session,
+  and it can be written against the census alone.*
+* **R3b — the CUT arm.** One searched round, then the cutoff — two nodes, and the
+  cheapest schedule that CONSUMES THE IH, through `searchedMove_sound`. The
+  child's depth is `0` at depth 1, inside `RecursionStepW`'s `∀ e, 0 ≤ e → e < d`,
+  which is what the strong form was landed for (§L26). Owed: `move_depth`'s
+  arithmetic — three subtractions, two of them boolean coercions, so the census
+  question is whether the extractor lowered `int()` or left it a call.
+* **R3c — the many-round fold**, §L25's R3 proper. `PyStmtTriple.forGen` at a
+  schedule longer than one, with `Inv` carrying `(best, live)` and the rounds
+  left; `qs_fold_breaks`/`QSInv` are the one-round template. `Inv []` stops being
+  `False`, so the exhaustion obligation returns. *Two sessions.*
+* **R3d — the correction and the store.** §L25's R5 plus `sf_store_from_report`
+  at the computed store; listed because `RefinesAt`'s four conjuncts are not
+  discharged until they are.
+* **R3e — `SubtreeWrites` at a searched node.** Depth 0's two proved leaves touch
+  ONE slot and spend `.other`/`.nil`; a depth-1 node allocates **176 objects** on
+  the settle arm alone, so §L14's `.alloc` arm is unavoidable and finally gets
+  spent at a real node.
+
+### The one census this pass did NOT take
+
+**Does the depth-1 fold ever EXHAUST on the fixture?** Every window measured ends
+in a cut or a settle. Exhaustion needs a `gamma` below every futility cap and
+above every child score, and whether that band is non-empty on this board is a
+half-hour of probing. It is recorded as owed *in the file*, at the inch that needs
+it (R3c, before `Inv []` is written) rather than as a general note — which is the
+shape §L25's law asks for: name the measurement at the gate it prices.
+
+### R2's remainder does not block R3a or R3b
+
+`hdrain` — the genexp object's drain (§L31 §10) — is still open, and
+`moves_emits_ordered` carries it. R3a and R3b are stated over a free `sortedVs`,
+so neither waits on it. R3c's `Inv` is where a concrete schedule first has to be
+named, and that is when the step-indexed reading of `gen_moves_yields_ref` has to
+land.
+
+### Triad
+
+`lake build` **3683 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched**;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. All eight printed
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less; the five
+projection and plan pins depend on `[propext]` alone. No `sorry`, no
+`native_decide`. File throughput **9 s**.

@@ -2391,6 +2391,68 @@ theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Cl
   obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
   exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
 
+/-! ### Toward `hev`: the cell resolves at the CALL
+
+The first of `qs_stand_pat`'s two generator premises. Both pieces below are
+about the CELL — the thing that made the shipped `moves()` untypeable before
+§L14 — and together they are what a `moves()` call does to the heap, minus the
+address pins. -/
+
+/-- **Calling a generator closure whose captures include a CELL.**
+`EvalsIn.closureGenCall` (GenBound.lean) requires `cellsFor … cap = .ok cap` —
+no cells. The shipped `moves()` has one, and its whole point is that the cell
+RESOLVES at the call: the object the call allocates holds the resolved env, not
+the directory. Same proof, one variable apart. -/
+theorem EvalsIn.closureGenCall_cells {m : Module} {st : FrameState} {fname : String}
+    {a : Addr} {nm : String} {ps : Array Param} {hg : Bool} {bd : Array Stmt}
+    {cap cap' : REnv} {argEs : Array Expr} {vs : List RVal} {sp sp' : Span}
+    (hlocal : Env.lookup st.locals fname = some (.ref a))
+    (hnotfree : (funsHeapFree m.functions.toList && topLevelDefFree m) = false)
+    (hobj : Heap.get? st.world.heap a = some (.closure nm ps true true hg true bd cap))
+    (hnc : cellsFor st.world.heap st.locals cap = .ok cap')
+    (harity : arityOk ps vs.length = true)
+    (hargs : EvalsToList m st argEs.toList vs) :
+    EvalsIn m st (.call (.name fname sp) argEs #[] Option.none sp')
+      (.ref st.world.heap.size)
+      ⟨{ st.world with heap :=
+            st.world.heap.push (closureGenObj nm ps bd cap' vs.toArray) }, st.locals⟩ := by
+  obtain ⟨ta, ha⟩ := hargs.at_least
+  refine ⟨ta + 2, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ ta + 1 ≤ F' := ⟨F - 1, by omega, by omega⟩
+  obtain ⟨F'', rfl, hF''⟩ : ∃ F'', F' = F'' + 1 ∧ ta ≤ F'' := ⟨F' - 1, by omega, by omega⟩
+  have hcall := callClosure_genCall (m := m) (fuel := F'') (w := st.world) (name := nm)
+    (params := ps) (body := bd) (captured := cap') (args := vs.toArray)
+    (by simpa using harity)
+  rw [evalExpr]
+  simp only [Array.isEmpty, Array.size_empty, hlocal, ha (F'' + 1) (by omega),
+    Run.ok_bind, hnotfree, if_neg, Bool.false_eq_true, not_false_eq_true, hobj,
+    Run.withLocals]
+  simp only [hnc, Run.liftRes, Run.ok_bind, hcall]
+  simp
+
+/-- **The cell RESOLVES at the call, and this is the theorem that says so.**
+`cellsFor` walks the closure's captures: the four plain names pass through, and
+`<cell>guard` is replaced by the CALLING frame's current `guard`. The value the
+`def` could not see — `guard` is assigned at statement 9, below the `def` at 7 —
+arrives here, which is the entire difference between §L14's cells and the
+snapshot tier they replaced. -/
+theorem sbMovesCap_cells (h : Heap) (env : REnv) (acell : Addr) (gamma : Int)
+    (kv pv : RVal) (av : Bool) (c : Option RVal)
+    (hcell : Heap.get? h acell = some (.cell c))
+    (hguard : Env.lookup env "guard" = some (.bool av)) :
+    cellsFor h env (sbMovesCap acell gamma 0 kv pv)
+      = .ok [("depth", .int 0), ("gamma", .int gamma), ("guard", .bool av),
+             ("killer", kv), ("pos", pv)] := by
+  have k1 : isCellKey "depth" = false := by simp [isCellKey, String.isPrefixOf]
+  have k2 : isCellKey "gamma" = false := by simp [isCellKey, String.isPrefixOf]
+  have k3 : isCellKey "<cell>guard" = true := by simp [isCellKey, String.isPrefixOf]
+  have k4 : isCellKey "killer" = false := by simp [isCellKey, String.isPrefixOf]
+  have k5 : isCellKey "pos" = false := by simp [isCellKey, String.isPrefixOf]
+  have kn : cellName "<cell>guard" = "guard" := by rfl
+  simp only [sbMovesCap, cellsFor, k1, k2, k3, k4, k5, kn, hcell, hguard,
+    Bool.false_eq_true, if_false, if_true]
+  rfl
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -3368,6 +3430,8 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms callIn_of_body
 #print axioms body_runs
 #print axioms qs_stand_pat
+#print axioms EvalsIn.closureGenCall_cells
+#print axioms sbMovesCap_cells
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

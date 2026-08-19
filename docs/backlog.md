@@ -9120,3 +9120,186 @@ retires it is a proved `bound_refines_fuelModel`, and that needs item 1. What
 this pass changes is that the statement is now WRITTEN (`BoundRefines`), every
 non-interpreter ingredient is proved, and the two side conditions it must carry
 are named rather than discovered later.
+
+
+## L17 — THE INTERPRETER HALF OPENS: eleven of eighteen statements have gates, and the wall is `evalExpr` at a symbolic operand (2026-08-19)
+
+§L16 paid the recursion rule's spec side and named the remaining cost as *"the
+interpreter half of `RecursionStep`"* — §L10's step-2 items 1–5, one `py_simp`
+per statement. This pass ran that list in order. **Eleven of the eighteen
+statements now have an interpreter gate**, `QSStandPat` does NOT close, and the
+pass produced one measurement that corrects a recorded assumption and one wall
+whose diagnosis was not what the roadmap expected.
+
+### The gates, and what §L10's price turned out to mean
+
+| # | statement | gate |
+|---|---|---|
+| 0–2 | docstring, `nodes += 1`, the clock guard | `bound_enters` (§L10) |
+| 3 | `depth = max(depth, 0)` | `depth_refloors` |
+| 4 | the king-capture check | `mate_check_passes` |
+| 5 | the probe block, four statements | `probe_misses`, `probe_lower_passes`, `probe_upper_passes`, `probe_repetition_skipped` |
+| 6 | `killer = self.tp_move.get(pos)` | `killer_misses` |
+| 7 | `def moves()` | **owed** |
+| 8 | `calm` | **owed** |
+| 9 | `guard = not root and calm` | `guard_evals` |
+| 10 | `t = pos.score + NULL_MARGIN` | `null_margin_adds` |
+| 11 | `nmr` | `nmr_evals` |
+| 12 | `best, live = -MATE_UPPER, False` | `acc_inits` |
+| 13 | the fold | **owed** |
+| 14–17 | correction, store, eviction, return | **owed** |
+
+§L10 measured the probe block at *"over 4M heartbeats as a single block"* and
+concluded it was the expensive one. Split per statement the four gates
+elaborate in about **3 s together**. So the measurement was right and the
+conclusion was wrong: what it measured was not the work, it was the SHAPE. The
+whole six-gate head batch is ~3 s; the file's total went 58 s → 3 m 21 s and
+every second of the increase is `#guard`s running real searches, not proofs.
+
+### Two residues, both §L9 finding 3's shape
+
+* `pos.score` on a namedtuple-SUBCLASS value forks on `c.ntBase.isSome && attr
+  ∈ c.methods` (methods shadow field properties, CPython's MRO). `Position` is
+  projected once — `posCls`, `posCAux`, `posCls_methods` (five methods, `score`
+  not among them), `posCls_ntBase_isSome` — and the guard is decided from the
+  pinned ARRAY. **`posCAux` must be IN the simp set**: without it the surviving
+  `match` is a different matcher constant from any hand-written one and no pin
+  can fire, however exactly it is spelled.
+* `entry.lower` needs `entryClsAux`: an attribute read consults the class table
+  even for a plain namedtuple.
+
+One tactic note: a `¬ P` passed in `py_simp`'s list does NOT reduce the `ite`
+it is about. `rw [if_neg (show ¬ P by omega)]` does, and five gates use it.
+
+### THE MEASUREMENT: `NULL_MARGIN` is not poisoned, and a recorded premise is redundant
+
+§L15's `QSStandPat` carries `Env.lookup w.globals "NULL_MARGIN" = some (.int
+nullMargin)` with the reasoning *"#236's `t = pos.score + NULL_MARGIN` runs
+before the fold even at depth 0, so the name has to resolve."* It does have to
+resolve — but it resolves STATICALLY. Measured on the fixture:
+
+| name | static fold |
+|---|---|
+| `MATE_LOWER`, `MATE_UPPER` | `some none` — bound but dirty, live view decides |
+| `NULL_MARGIN` | `some (some -200)` |
+| `QS` | `some (some 40)` |
+| `LMR` | `some (some 75)` |
+
+So `null_margin_adds` says nothing about `w.globals`, and `QSStandPat`'s
+`NULL_MARGIN` premise is **redundant**. It stays — AGENTS.md's rule is to keep
+an unneeded hypothesis and record the fact, and a redundant premise only
+weakens a statement — but the record is now in the file at `nmarG` and here.
+
+### THE WALL, and it is NOT the recursion
+
+`nmr = calm and depth >= 6 and -self.bound(...) >= t` dies on its SECOND
+conjunct at every QS node, so the child never runs and the roadmap treated the
+statement as cheap at depth 0. It is not, and the reason is instructive:
+
+`py_simp` normalizes the UNREACHABLE branch. It unfolds `evalBoolChain` down to
+`evalExpr sunfish _ st r`, where `r` is the opaque third operand `sbNmr_lit`
+provides — and **`evalExpr` at a FREE SCRUTINEE splits into every arm of its
+match, each carrying the 1MB literal.** Measured: 2 minutes to the simp STEP
+budget at 8M heartbeats. The diagnostics are the tell — `imp_false` used 1242
+times, `eq_self` tried 7868, `nonempty_prop` 634 — all generic propositional
+lemmas, which is the signature of a goal that has exploded rather than of a
+hard fact. Casing on the symbolic `calm` first does not help: the problem is
+the third operand, not the first. Nor does the `t` lookup: supplying it changes
+nothing.
+
+**The fix is altitude, and it is cheap.** `boolChain_and_falsy` and
+`boolChain_and3` prove the short circuit ONCE at the chain with every operand
+symbolic — in `and3`, `e3` is universally quantified and appears in NO
+hypothesis, so `evalExpr` is never applied to it. Neither lemma mentions a
+module, a program or a fuel numeral; both are five lines. With them the gate is
+**1.7 s**, from a two-minute failure. They sit in `bound_depth.lean` because
+this is their first consumer and belong in the general layer at the second.
+
+### Item 3, PRICED: the futility premise splits, and only half is a theorem
+
+The brief asked whether `hfut` can become a theorem about `moves()`'s sort
+order. Reading the shipped ordering line answers it in two halves.
+
+* **(a) The sortedness half is provable.** The stream is descending in `val`
+  and `moveCap` is monotone in `val`, so a cap under the window stays under it
+  for every later move — the source's own *"the stream being sorted, [the cap
+  answers] for everything after it"*. `moveCap_mono` and `moveCap_lt_of_tail`
+  are that claim at the cap, landed. What remains is carrying it to the fold's
+  TAIL, which needs the drained ordered list — an object `sf_order` produces and
+  `gen_moves_drains_ref` specifies. A session's work in this lane.
+* **(b) The per-move bound is not provable here.** Sortedness says the tail's
+  CAPS are low; it does not say a cap bounds the tail's true VALUES. That step
+  is `-V(child m) ≤ moveCap depth pos.score (value m)` — a property of the
+  evaluation function against the search value, which no reading of `bound()`
+  establishes. The shipped comment points at exactly this
+  (`CapInBand in CappedMove.lean`, with its caveat about `piece["Q"]`).
+
+**So "can `bound_refines_fuelModel` drop the futility premise" is YES BY
+DEFINITION and NO BY THEOREM, and which holds is a choice about the MODEL.**
+The docstring defines `s*` to include *"null moves, QS, futility and the
+reductions"*; under that definition (b) is definitional and (a) is the whole
+content. Against a model whose value is unreduced, unpruned negamax, (b) is a
+genuine axiom and belongs in `formal/`. Either way the premise stays visible,
+which is what `settle_needs_futility` bought.
+
+### Triad
+
+Both commits: `lake build` **3678 jobs green**; `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113
+whitelisted-unsupported, 1202 matched** — unchanged since §L15, so eleven new
+gates cost the differential nothing; `script_corpus` 64 scripts, 0 failed, 50
+matched, 14 loud. Every new theorem prints `[propext, Classical.choice,
+Quot.sound]` or less; `boolChain_and_falsy`/`boolChain_and3` and
+`moveCap_lt_of_tail` are choice-free. No `sorry`, no `native_decide`.
+
+### Findings worth carrying
+
+1. *A measured price is a price for a SHAPE, not for a quantity.* "Over 4M
+   heartbeats" said the probe block could not be done in one `py_simp`; it did
+   not say the block was expensive, and split per statement it is 3 s. Record
+   the shape a measurement rules out, not the difficulty it seems to imply.
+2. *A short circuit in the PROGRAM is not a short circuit in the PROOF.* simp
+   normalizes the branch the interpreter never takes, so an unreachable
+   subexpression is still a cost — and if it is symbolic, `evalExpr` at a free
+   scrutinee makes it an unbounded one. The H3/H5 free-scrutinee findings were
+   about the interpreter's own dispatch; this is the same fact one level up, in
+   the PROOF's simp set. When a statement carries an operand you deliberately
+   left opaque, prove the control flow at the CHAIN, never at the statement.
+3. *Read the diagnostics, not the timeout.* `set_option diagnostics true` with a
+   small heartbeat budget answered in 11 s what two 2-minute runs could not: a
+   used-theorem histogram topped by `imp_false`/`eq_self`/`nonempty_prop` means
+   the goal exploded, and points at a term simp should never have opened.
+4. *A hypothesis can be wrong by being UNNECESSARY.* `QSStandPat`'s
+   `NULL_MARGIN` premise was added from a correct reading of the source and a
+   wrong assumption about the globals fold. It is harmless and it is still a
+   defect in the record, because the next lane would have paid it. Measure
+   which globals are poisoned before assuming the live view is needed.
+5. *OPS — both §L16 fixes held.* Every build this pass was started AFTER `git
+   add`, and no source was edited while a build ran; process checks used `ps
+   -eo pid,comm | grep -E "lean$|lake$"`, never `pgrep -f "lake build"`. The
+   scratch-file loop (`lake env lean` against a scratch file importing the
+   built module) is what made a 3 m file iterable at 2 s, and it is the single
+   biggest throughput win of the pass — 20+ iterations that would each have
+   cost 3 m against the file itself.
+
+### What is still owed, in order
+
+1. **Statement 7, `def moves()`** — the closure allocation with the celled
+   `guard` (§L14's tier), the `sunfish` analogue of §L9's
+   `moves_def_allocates`/`moves_call_creates`. Mechanical, and the cell is the
+   only new part.
+2. **Statement 8, `calm`** — `abs(pos.score) < 750 and any(c in pos.board for c
+   in "RBNQ")`. The heaviest of the head: `abs` and `any` residues plus a
+   LOWERED genexp, so it needs its own `<genexpr@n>` census pin. Expect
+   `boolChain_and3`'s sibling for the two-operand chain.
+3. **Statement 13, the fold**, via `PyStmtTriple.forGen` with `qs_round` built
+   from per-expression `EvalsTo` gates — §L10's item 4, unchanged, and now with
+   §L16's `fold_report` waiting for it.
+4. **Statements 14–17, the tail**, then the boundary, closing `QSStandPat`.
+5. Then `RecursionStep`, and then `bound_refines_fuelModel` assembles.
+
+**`model_audit` STILL CANNOT RETIRE, and this pass does not change that.** What
+retires it is a proved `bound_refines_fuelModel`; `QSStandPat` is its base case
+and four of the eighteen statements it needs are unpaid. What changed is that
+the head is done, the fold's spec side is done, and the two premises the
+statement must carry are named and half-priced.

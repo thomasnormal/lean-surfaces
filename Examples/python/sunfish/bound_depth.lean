@@ -1686,6 +1686,53 @@ theorem settle_needs_futility :
     · exact absurd h2 (by decide)
     · exact absurd h1 (by decide)
 
+/-! #### Pricing the futility premise as a THEOREM
+
+`hfut` is a hypothesis today. The question is whether it can be a theorem, and
+reading the shipped ordering line answers it — in two halves, only one of which
+this lane can pay.
+
+    yield from sorted(((v, m) for m in pos.gen_moves()
+                       if (v := pos.value(m)) >= QS or depth), reverse=True)
+
+**(a) The SORTEDNESS half is provable, and its core is below.** The stream is
+descending in `val`, and `moveCap` is MONOTONE in `val`, so a cap under the
+window stays under it for every later move — which is exactly the *"the stream
+being sorted, [the cap answers] for everything after it"* the source claims.
+`moveCap_mono` and `moveCap_lt_of_tail` are that claim at the cap; what remains
+is to carry it from one cap to the fold's TAIL, which needs the drained ordered
+list — an object `sf_order` already produces and `gen_moves_drains_ref` already
+specifies. A session's work in this lane, not a research question.
+
+**(b) The PER-MOVE bound is not provable here, and naming it is the point.**
+Sortedness says the tail's caps are low; it does not say a cap bounds the
+tail's true VALUES. That step is `-V(child m) ≤ moveCap depth pos.score (value
+m)` — a property of the evaluation function against the search value, which no
+amount of reading `bound()` establishes. The shipped comment points at exactly
+this (`CapInBand in CappedMove.lean`, *"and its caveat if piece["Q"] ever grows
+past ~2400"*).
+
+**So the answer to "can `bound_refines_fuelModel` drop its futility premise" is
+YES BY DEFINITION and NO BY THEOREM**, and which one holds is a choice about
+the model, not about the code: the docstring DEFINES `s*` to include *"null
+moves, QS, futility and the reductions"*, and under that definition (b) is
+definitional and (a) is the whole content. Against a model whose value is the
+unreduced, unpruned negamax, (b) is a genuine axiom and belongs in `formal/`.
+Either way the premise stays VISIBLE, which is what `settle_needs_futility`
+bought. -/
+
+/-- The futility cap is monotone in the move's static value — the first half of
+what the sorted stream buys. -/
+theorem moveCap_mono {depth score v1 v2 : Int} (h : v1 ≤ v2) :
+    moveCap depth score v1 ≤ moveCap depth score v2 := by
+  unfold moveCap; split <;> omega
+
+/-- And so a cap below the window stays below it for every LATER move on a
+descending stream. This is the shipped break's own justification, at one step. -/
+theorem moveCap_lt_of_tail {depth score v v' gamma : Int} (hle : v' ≤ v)
+    (h : moveCap depth score v < gamma) : moveCap depth score v' < gamma :=
+  Int.lt_of_le_of_lt (moveCap_mono hle) h
+
 /-! ### Consuming the induction hypothesis
 
 The rounds a depth-`d` node can produce are §3's five branch constructors.
@@ -2091,6 +2138,8 @@ assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`
 #print axioms fold_failLow
 #print axioms fold_report
 #print axioms settle_needs_futility
+#print axioms moveCap_mono
+#print axioms moveCap_lt_of_tail
 #print axioms searchedMove_sound
 #print axioms searchedPass_sound
 #print axioms report_sound

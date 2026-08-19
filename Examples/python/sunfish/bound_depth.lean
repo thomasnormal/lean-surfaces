@@ -3641,7 +3641,25 @@ probe, and `child_depth_lt` (§3) for the depth separation the third conjunct
 of `BoundRefines` needs. What is missing is the bridge from `callIn` to those
 objects, which is interpreter work and is priced. -/
 def RecursionStep (V : RVal → Int → Int) : Prop :=
-  ∀ d : Int, 1 ≤ d → BoundRefines V (d - 1) → BoundRefines V d
+  ∀ d : Int, 1 ≤ d → (∀ e : Int, 0 ≤ e → e < d → BoundRefines V e) → BoundRefines V d
+
+/-! **Why the induction is STRONG, decided at plan time rather than at proof
+time** (docs/backlog.md §L25). The rule as first written took `BoundRefines V
+(d - 1)` — the immediate predecessor — and that is not what the shipped body
+consumes. `bound()` makes recursive calls at TWO depths:
+
+* the fold's searched move, at `depth - 1` (and at `depth - 3` under the
+  intrinsic LMR reduction);
+* **the deep-null probe, at `depth - 7`** —
+  `-self.bound(pos.rotate(nullmove=True), 1 - t, depth - 7) >= t`, sunfish.py
+  line 453, live from `depth ≥ 6`.
+
+A weak hypothesis cannot discharge either of the last two. The floor `0 ≤ e` is
+the shipped `depth = max(depth, 0)` refloor at statement 3, which is what makes
+the descent well-founded at all — a raw `depth - 7` would otherwise run
+arbitrarily negative. **This is a statement change, not a proof**, and it is
+landed BEFORE the fold's schedule is written so the schedule can never bind to
+the weaker form. -/
 
 /-! ## §8 Non-vacuity, and the axioms
 

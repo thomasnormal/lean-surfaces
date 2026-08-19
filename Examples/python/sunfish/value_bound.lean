@@ -406,6 +406,118 @@ theorem value_kp_adds (w : World) (e : REnv) (pa : Addr) (b : String) (scv : Int
     if_neg (show ¬ (119 - j) < 0 by omega),
     if_pos (show (j ≤ 119 ∧ 119 - j < (120 : Int)) from ⟨hlo, hhi⟩)]
 
+/-! ### The fifth statement — the castle itself
+
+`if p == "K" and abs(i - j) == 2: score += pst["R"][(i + j) // 2];
+score -= pst["R"][A1 if j < i else H1]`.
+
+**CENSUS FIRST, as the plan ordered.** `A1`, `H1`, `A8`, `H8` and `S` all resolve
+STATICALLY in the globals fold (`some (some (.int 91))`, `98`, `21`, `28`, `10`)
+— the dirty-name pass admits them, exactly as it does `TABLE_SIZE` for
+`evict_dead`. **So this gate says nothing about `w.globals` beyond `pst`**, which
+is what the census was for and it came out the way §L25 predicted.
+
+Two shapes here are new: a floor DIVISION in an index, and a conditional
+EXPRESSION in an index whose test (`j < i`) is symbolic. -/
+
+theorem vlCastle_lit : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18 s19 s20 s21 s22 s23 s24 s25 s26 s27 s28 s29 s30 s31 s32 s33 s34 s35, vlCastle =
+    .ifStmt
+      (.boolOp .and
+        #[.compare (.name "p" s1) #[.eq] #[.constant (.str "K") s2] s3,
+          .compare (.call (.name "abs" s4)
+              #[.binOp (.name "i" s5) .sub (.name "j" s6) s7] #[] Option.none s8)
+            #[.eq] #[.constant (.int 2) s9] s10] s11)
+      #[.augAssign (.name "score" s12) .add
+          (.subscript (.subscript (.name "pst" s13) (.constant (.str "R") s14) s15)
+            (.binOp (.binOp (.name "i" s16) .add (.name "j" s17) s18) .floorDiv
+              (.constant (.int 2) s19) s20) s21) s22,
+        .augAssign (.name "score" s23) .sub
+          (.subscript (.subscript (.name "pst" s24) (.constant (.str "R") s25) s26)
+            (.ifExp (.compare (.name "j" s27) #[.lt] #[.name "i" s28] s29)
+              (.name "A1" s30) (.name "H1" s31) s32) s33) s34]
+      #[] s35 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **GATE 6a — the moved piece is not the king**, so the castle arm is dead.
+The overwhelmingly common case, and it is one `if_neg`: the chain dies on its
+FIRST operand and never looks at `abs(i - j)`. -/
+theorem value_castle_skips (w : World) (e : REnv) (pc : String) (F : Nat)
+    (hp : Env.lookup e "p" = some (.str pc)) (hne : pc ≠ "K") :
+    execStmts sunfish (F + 20) ⟨w, e⟩ [vlCastle] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, hlit⟩ := vlCastle_lit
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hp, if_neg hne]
+
+/-- **GATE 6b — the king moved, but only one square**, so the arm is dead for
+the other reason. -/
+theorem value_castle_skips_short (w : World) (e : REnv) (i j : Int) (F : Nat)
+    (hp : Env.lookup e "p" = some (.str "K"))
+    (hei : Env.lookup e "i" = some (.int i))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "abs" = Option.none)
+    (hshort : i - j ≠ 2 ∧ i - j ≠ -2) :
+    execStmts sunfish (F + 20) ⟨w, e⟩ [vlCastle] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, hlit⟩ := vlCastle_lit
+  have habs : ¬ ((if i - j < 0 then -(i - j) else i - j) = 2) := by
+    obtain ⟨h1, h2⟩ := hshort; split <;> omega
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hp, hei, hej, hna, absG, absNotFun, absCls, absNT,
+    if_neg habs]
+
+/-- `A1` and `H1` resolve STATICALLY — the census this gate was priced on. -/
+theorem a1G : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "A1"
+    = some (some (.int 91)) := rfl
+theorem h1G : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "H1"
+    = some (some (.int 98)) := rfl
+
+/-- **GATE 6c — the castle itself.** Two table reads: the rook's new square at
+`(i + j) // 2` — Python floor division, which the interpreter leaves as
+`Int.fdiv` — and the rook's old corner at `A1 if j < i else H1`, whose test is
+symbolic, so the CONDITIONAL rides into the index term rather than splitting the
+gate. Both are the computed-shape law: the premise names what the path leaves. -/
+theorem value_castles (w : World) (e : REnv) (pa : Addr) (i j sv0 z1 z2 : Int)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs : Array RVal) (F : Nat)
+    (hp : Env.lookup e "p" = some (.str "K"))
+    (hei : Env.lookup e "i" = some (.int i))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "abs" = Option.none)
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hna1 : Env.lookup e "A1" = Option.none)
+    (hnh1 : Env.lookup e "H1" = Option.none)
+    (hs : Env.lookup e "score" = some (.int sv0))
+    (hlong : i - j = 2 ∨ i - j = -2)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str "R") = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hm1 : 0 ≤ (i + j).fdiv 2) (hm2 : (i + j).fdiv 2 < (xs.size : Int))
+    (hx1 : xs[((i + j).fdiv 2).toNat]?.getD .none = .int z1)
+    (hx2 : xs[(if j < i then (91 : Nat) else 98)]?.getD .none = .int z2) :
+    execStmts sunfish (F + 24) ⟨w, e⟩ [vlCastle]
+      = .ok ⟨w, Env.set (Env.set e "score" (.int (sv0 + z1))) "score"
+              (.int (sv0 + z1 - z2))⟩ .next := by
+  obtain ⟨s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31, s32, s33, s34, s35, hlit⟩ := vlCastle_lit
+  have habs : ((if i - j < 0 then -(i - j) else i - j) = 2) := by
+    rcases hlong with h | h <;> split <;> omega
+  have hfd : ¬ ((i + j).fdiv 2 < 0) := by omega
+  simp only [Heap.get?] at hd
+  rw [hlit]
+  by_cases hji : j < i
+  · simp only [if_pos hji] at hx2
+    py_simp [-globalsFold, -globalsStep, hp, hei, hej, hna, hnp, hna1, hnh1, hs, hg, hd, hrow,
+      pstG, a1G, h1G, absG, absNotFun, absCls, absNT, normIndex, hx1, hx2,
+      Env.lookup_set_self, Env.lookup_set_ne, if_pos habs, if_neg hfd, if_pos hji,
+      if_neg (show ¬ (91 : Int) < 0 by decide),
+      if_pos (show (91 : Int) < (xs.size : Int) by omega),
+      if_pos (show (0 ≤ (i + j).fdiv 2 ∧ (i + j).fdiv 2 < (xs.size : Int)) from ⟨hm1, hm2⟩)]
+  · simp only [if_neg hji] at hx2
+    py_simp [-globalsFold, -globalsStep, hp, hei, hej, hna, hnp, hna1, hnh1, hs, hg, hd, hrow,
+      pstG, a1G, h1G, absG, absNotFun, absCls, absNT, normIndex, hx1, hx2,
+      Env.lookup_set_self, Env.lookup_set_ne, if_pos habs, if_neg hfd, if_neg hji,
+      if_neg (show ¬ (98 : Int) < 0 by decide),
+      if_pos (show (98 : Int) < (xs.size : Int) by omega),
+      if_pos (show (0 ≤ (i + j).fdiv 2 ∧ (i + j).fdiv 2 < (xs.size : Int)) from ⟨hm1, hm2⟩)]
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -422,14 +534,20 @@ theorem value_kp_adds (w : World) (e : REnv) (pa : Addr) (b : String) (scv : Int
 #print axioms vlKp_lit
 #print axioms value_kp_skips
 #print axioms value_kp_adds
+#print axioms vlCastle_lit
+#print axioms value_castle_skips
+#print axioms value_castle_skips_short
+#print axioms a1G
+#print axioms h1G
+#print axioms value_castles
 #print axioms value_unpacks
 #print axioms value_returns
 
 /-! ## What R1 still owes, in order
 
-Six of the eight statements have gates: the unpack (1), the board reads (2),
+Seven of the eight statements have gates: the unpack (1), the board reads (2),
 the table delta (3), the capture (4, in two arms), the castling-check detection
-(5, in two arms) and the return (8).
+(5, in two arms), the castle (6, in THREE arms) and the return (8).
 
 ### THE SECOND LAW OF THIS FILE, learned at GATE 4
 
@@ -449,23 +567,45 @@ names. Note also that simp NORMALIZES the index condition — `0 ≤ 119 - j`
 becomes `j ≤ 119` — so an `if_pos` must be stated in the normalized form or it
 will not fire. That cost one cycle at GATE 4b.
 
-### The two remaining
+### THE THIRD LAW: simp NORMALIZES the condition, and the spelling must follow
 
-* **GATE 6, `vlCastle`** — `if p == "K" and abs(i - j) == 2:`, two statements
-  inside, reading `pst["R"]` at `(i + j) // 2` and at `A1 if j < i else H1`.
-  Both keys are LITERAL, so the two-arm law is about the score and not about a
-  `KeyError` here. Two things are new and neither is GATE-3-shaped: a
-  conditional EXPRESSION in the index, and a floor-division index. `A1`/`H1`
-  resolve STATICALLY (§H4's dirty-name pass admits them) — census that before
-  writing the gate, because if true this gate says nothing about `w.globals`
-  beyond `pst`, exactly as `evict_dead` says nothing about `TABLE_SIZE`.
+GATE 6c cost four cycles, every one of them the same mistake in a different
+dress, and the pattern is worth more than the gate:
+
+* `0 ≤ 119 - j` normalizes to `j ≤ 119`, so an `if_pos` stated un-normalized
+  does not fire (GATE 4b);
+* `0 ≤ 91 ∧ 91 < xs.size` normalizes to `91 < xs.size` — the trivially-true
+  conjunct is DISCHARGED, not kept — so the `if_pos` must name the survivor
+  only (GATE 6c);
+* giving `hsz : xs.size = 120` to `py_simp` makes it collapse
+  `xs[k]?.getD .none` into `xs[k]`, which then does not match a premise written
+  in the `getElem?` spelling. Keep `hsz` a HYPOTHESIS and state the range
+  premises against `xs.size` itself;
+* `(91 : Int).toNat` in a premise does not match the literal `91` simp leaves in
+  the goal, so a conditional INDEX must be stated at `Nat`.
+
+**The rule that covers all four: after the first failed `py_simp`, read the
+residue and copy its spelling into the premise — do not write the premise you
+think is equivalent.** That is the computed-shape law applied to the CONDITIONS
+rather than to the terms, and it is the whole content of this file's friction.
+
+One shape did NOT ride into the term, and it is worth naming because §L25
+predicted otherwise: **a conditional EXPRESSION splits the run.** `A1 if j < i
+else H1` does not normalize into an `if` inside the index; the interpreter
+evaluates the test and branches, so the gate `by_cases` on `j < i` and runs
+`py_simp` twice. The premise still carries the conditional (at `Nat`), so the
+gate stays single — but the proof does not.
+
+### The one remaining
+
 * **GATE 7, `vlPawn`** — `if p == "P":`, with `A8 ≤ j ≤ H8` (a chained compare)
   and `j == self.ep` inside, so it is a NEST of three tests rather than one.
-  **The promotion arm reads `pst[prom]`, and `prom` is `""` on every
-  non-promotion move — `pst[""]` is a `KeyError`, so the `A8 ≤ j ≤ H8` guard is
-  load-bearing and the two-arm law is mandatory here, not stylistic.** This is
-  GATE 4's fact one guard along, and it is the one place in the method where
-  getting the split wrong would produce a vacuous gate rather than a false one.
+  `A8`/`H8`/`S` resolve statically (censused with `A1`/`H1`), so like GATE 6 it
+  says nothing about `w.globals` beyond `pst`. **The promotion arm reads
+  `pst[prom]`, and `prom` is `""` on every non-promotion move — `pst[""]` is a
+  `KeyError`, so the `A8 ≤ j ≤ H8` guard is load-bearing and the two-arm law is
+  mandatory here, not stylistic.** Expect four arms: not-a-pawn; a pawn that
+  neither promotes nor takes en passant; promotion; en passant.
 
 Then `value_runs` composes the eight at `callIn`, in the ∃-fuel form, with the
 answer EXISTENTIAL (§L25's re-sequencing) and a `by_cases` per two-arm gate.

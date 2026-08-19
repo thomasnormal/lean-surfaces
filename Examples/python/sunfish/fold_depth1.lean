@@ -40,7 +40,12 @@ open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_split
-  sbNull_lit sbStand_lit compare_one boolChain_and_falsy)
+  sbNull_lit sbStand_lit compare_one boolChain_and_falsy
+  sbScore sbScore_lit sbElse1 sbElse1_split sbVirt sbVirt_lit sbReal sbReal_lit
+  sbB5 sbB5_split sbCapLine sbCapLine_lit sbBreak sbBreak_lit
+  maxG maxNotFun maxCls maxNT mlG posCAux posCls_methods
+  execStmt_if_true execStmt_if_false execStmts_singleton_flow
+  Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle)
 open Examples.python.sunfish.order_genexp
 
 set_option maxRecDepth 100000
@@ -234,7 +239,7 @@ theorem moves_emits_ordered (w : World) (e : REnv) (d : Int)
 **five inches**, and they say which two to do first. The ordering is the one the
 numbers imply, not the one the source text reads in.
 
-### R3a — the SETTLE arm: one round, no recursion. *One session.*
+### R3a — the SETTLE arm: one round, no recursion. **LANDED, §4 below.**
 
 `gamma ≥ 47` on the fixture: the first move's futility cap
 `pos.score + val + max(depth-1,0) * QS_A` is `pos.score + val` at depth 1, it is
@@ -260,9 +265,11 @@ This is the cheapest schedule that **consumes the IH**, through
 reason the strong form was landed (§L26).
 
 *Owed:* `move_depth`'s arithmetic gate (three subtractions, two of them boolean
-coercions — `int(nmr)` and a parenthesised `and` chain, so the census question is
-whether the extractor lowered `int()` or left it a call), and the child call's
-`EvalsIn`, which allocates.
+coercions), and the child call's `EvalsIn`, which allocates. **Its census is
+taken (§5 below): `int()` is NOT lowered**, and both coercions the line needs are
+implemented — so `move_depth` is ordinary arithmetic once its two boolean
+operands are decided, and R3b's cost is the child call rather than the
+reduction.
 
 ### R3c — the MANY-round fold. *Two sessions, and this is §L25's R3 proper.*
 
@@ -305,6 +312,286 @@ out to need a depth-0 fact, the answer is to ask rather than to re-census.
 R3a and R3b are stated over a free `sortedVs`, so **neither is blocked on it**;
 R3c's `Inv` is where a concrete schedule first has to be named, and that is the
 point at which the step-indexed reading of `gen_moves_yields_ref` has to land. -/
+
+
+/-! ## §4 R3a — THE SETTLE ARM, LANDED
+
+The census's cheapest schedule: a real move whose futility cap is below the
+window. The score chain falls through both `move is None` arms and the mate-band
+arm, computes the cap, folds it into `best` with `max`, and BREAKS — no child
+call, no `live` update, no killer store. One round, one node.
+
+**`hfut` is discharged by the cap being the round's own.** `fold_report`'s
+futility premise quantifies over every `settle` in the schedule; a one-settle
+schedule has exactly one, so the premise collapses to the single hypothesis
+`value ≤ capv`. And `Sound` comes free from the interpreter's own break
+condition `capv < gamma` — the same inequality, read on the spec side.
+
+`MATE_LOWER` is statically POISONED (§L26's `mlG`), so the mate-band arm's guard
+takes it from `w.globals`; `QS_A` resolves statically, so the cap line says
+nothing about the world beyond `pos`. -/
+
+theorem qsaG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "QS_A"
+    = some (some (.int 140)) := rfl
+
+/-- **The futility cap at or below depth 3.** -/
+theorem cap_line_low (w : World) (e : REnv) (d val sc : Int) (b : String)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hval : Env.lookup e "val" = some (.int val))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hnqa : Env.lookup e "QS_A" = Option.none)
+    (hlo : 1 ≤ d) (hhi : d ≤ 3) :
+    execStmt sunfish (F + 16) ⟨w, e⟩ sbCapLine
+      = .ok ⟨w, Env.set e "cap" (.int (sc + val + (d - 1) * 140))⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16,
+    p17, p18, p19, hlit⟩ := sbCapLine_lit
+  have hm : max (d - 1) (0 : Int) = d - 1 := by omega
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hd, hval, hpos, hnomax, hnqa, qsaG,
+    maxG, maxNotFun, maxCls, maxNT, posOf, posCAux, posCls_methods,
+    if_neg (show ¬ (3 : Int) < d by omega), hm]
+
+
+theorem sbVirtElse_split :
+    (match sbVirt with | Stmt.ifStmt _ _ o _ => o.toList | _ => []) = [sbReal] := rfl
+
+/-- **THE BREAK.** `if cap < gamma: best = max(best, cap); break`. -/
+theorem break_fires (w : World) (e : REnv) (capv bst gamma : Int) (F : Nat)
+    (hcap : Env.lookup e "cap" = some (.int capv))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hlt : capv < gamma) :
+    execStmt sunfish (F + 12) ⟨w, e⟩ sbBreak
+      = .ok ⟨w, Env.set e "best" (.int (max bst capv))⟩ .brk := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, hlit⟩ := sbBreak_lit
+  have hcond : evalExpr sunfish (F + 11) ⟨w, e⟩
+      (.compare (.name "cap" p0) #[.lt] #[.name "gamma" p1] p2) = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hcap, hg, if_pos hlt]
+  rw [hlit, execStmt_if_true hcond rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, hcap, hb, hnomax, maxG, maxNotFun, maxCls, maxNT]
+
+/-- The frame a settled round leaves: `cap` bound and `best` folded. -/
+def envSettle (e : REnv) (capv bst : Int) : REnv :=
+  Env.set (Env.set e "cap" (.int capv)) "best" (.int (max bst capv))
+
+/-- **R3a — THE SETTLE ROUND.** A real move whose futility cap is below the
+window: the score chain falls through both `move is None` arms and the mate-band
+arm, the cap is computed, and the round BREAKS with `best` folded — no child
+call, no `live`, no killer store. -/
+theorem settle_round (w : World) (e : REnv) (d val sc bst gamma ml : Int) (mvv : RVal)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (F : Nat)
+    (hmv : Env.lookup e "move" = some mvv)
+    (hisnot : ∀ G : Nat, evalCompareOpH w.heap G .is mvv .none = .ok false)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hval : Env.lookup e "val" = some (.int val))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hnqa : Env.lookup e "QS_A" = Option.none)
+    (hnml : Env.lookup e "MATE_LOWER" = Option.none)
+    (hmlw : Env.lookup w.globals "MATE_LOWER" = some (.int ml))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hlo : 1 ≤ d) (hhi : d ≤ 3)
+    (hband : val < ml)
+    (hcut : sc + val + (d - 1) * 140 < gamma) :
+    execStmt sunfish (F + 30) ⟨w, e⟩ sbScore
+      = .ok ⟨w, envSettle e (sc + val + (d - 1) * 140) bst⟩ .brk := by
+  obtain ⟨s0, s1, s2, s3, s4, s5, s6, s7, hslit⟩ := sbScore_lit
+  obtain ⟨vo, v0, v1, v2, v3, hvlit⟩ := sbVirt_lit
+  obtain ⟨rb, r0, r1, r2, r3, hrlit⟩ := sbReal_lit
+  -- the `move is None` compare, at both spans
+  have hmvE : ∀ (G : Nat) (q0 : Span), evalExpr sunfish (G + 2) ⟨w, e⟩ (.name "move" q0)
+      = .ok ⟨w, e⟩ mvv := by
+    intro G q0; py_simp [-globalsFold, -globalsStep, hmv]
+  have hnoneE : ∀ (G : Nat) (q1 : Span),
+      evalExpr sunfish (G + 1) ⟨w, e⟩ (.constant Const.none q1) = .ok ⟨w, e⟩ .none := by
+    intro G q1; py_simp [-globalsFold, -globalsStep]
+  have hisNone : ∀ (G : Nat) (q0 q1 q2 : Span), evalExpr sunfish (G + 3) ⟨w, e⟩
+      (.compare (.name "move" q0) #[.is] #[.constant Const.none q1] q2)
+        = .ok ⟨w, e⟩ (.bool false) :=
+    fun G q0 q1 q2 => compare_one (F := G) (hmvE G q0) (hnoneE G q1) (hisnot (G + 1))
+  -- the mate-band compare
+  have hvalE : ∀ G : Nat, evalExpr sunfish (G + 2) ⟨w, e⟩ (.name "val" r0)
+      = .ok ⟨w, e⟩ (.int val) := by
+    intro G; py_simp [-globalsFold, -globalsStep, hval]
+  have hmlE : ∀ G : Nat, evalExpr sunfish (G + 1) ⟨w, e⟩ (.name "MATE_LOWER" r1)
+      = .ok ⟨w, e⟩ (.int ml) := by
+    intro G; py_simp [-globalsFold, -globalsStep, hnml, hmlw, mlG]
+  have hmlOp : ∀ G : Nat, evalCompareOpH w.heap G .gtE (.int val) (.int ml) = .ok false := by
+    intro G; simp [evalCompareOpH, evalCompareOp, asInt, intCmp,
+      show ¬ ml ≤ val by omega]
+  have hmate : ∀ (G : Nat), evalExpr sunfish (G + 3) ⟨w, e⟩
+      (.compare (.name "val" r0) #[.gtE] #[.name "MATE_LOWER" r1] r2)
+        = .ok ⟨w, e⟩ (.bool false) :=
+    fun G => compare_one (F := G) (hvalE G) (hmlE G) (hmlOp (G + 1))
+  -- branch 5's two statements
+  have hb5 : execStmts sunfish (F + 25) ⟨w, e⟩ sbB5
+      = .ok ⟨w, envSettle e (sc + val + (d - 1) * 140) bst⟩ .brk := by
+    rw [sbB5_split]
+    simp only [execStmts]
+    rw [cap_line_low w e d val sc b wc0 wc1 bc0 bc1 ep kp (F + 8) hd hval hpos hnomax
+      hnqa hlo hhi]
+    simp only [Run.bind]
+    rw [break_fires w (Env.set e "cap" (.int (sc + val + (d - 1) * 140)))
+      (sc + val + (d - 1) * 140) bst gamma (F + 11)
+      (by simp [Env.lookup_set_self]) (by simp [Env.lookup_set_ne, hg])
+      (by simp [Env.lookup_set_ne, hb]) (by simp [Env.lookup_set_ne, hnomax]) hcut]
+    simp only [envSettle]
+  -- the real-move arm
+  have hreal : execStmt sunfish (F + 26) ⟨w, e⟩ sbReal
+      = .ok ⟨w, envSettle e (sc + val + (d - 1) * 140) bst⟩ .brk := by
+    rw [hrlit, execStmt_if_false (hmate (F + 22)) rfl]
+    simpa using hb5
+  -- the null arm
+  have hvirt : execStmt sunfish (F + 28) ⟨w, e⟩ sbVirt
+      = .ok ⟨w, envSettle e (sc + val + (d - 1) * 140) bst⟩ .brk := by
+    rw [hvlit, execStmt_if_false (hisNone (F + 24) v0 v1 v2) rfl]
+    have ho : vo.toList = [sbReal] := by
+      have := sbVirtElse_split
+      rw [hvlit] at this
+      simpa using this
+    rw [ho]
+    exact execStmts_singleton_flow (F := F + 25) (by simpa using hreal)
+  -- and the chain's head
+  rw [hslit, execStmt_if_false
+    (m := sunfish) (F := F + 29) (st₁ := ⟨w, e⟩) (v := .bool false)
+    (by
+      rw [evalExpr]
+      exact boolChain_and_falsy (F := F + 27) (hisNone (F + 24) s0 s1 s2) rfl) rfl]
+  have hel : sbElse1.toArray.toList = [sbVirt] := by simp [sbElse1_split]
+  rw [hel]
+  exact execStmts_singleton_flow (F := F + 27) (by simpa using hvirt)
+
+
+/-- The spec-side fold of a one-settle schedule: `max` and nothing else. -/
+theorem settle_folds (gamma bst capv : Int) (live : Bool) :
+    (foldFrom gamma bst live [settledCap capv]).1 = max bst capv := by
+  rw [show settledCap capv = Round.settle capv from rfl, foldFrom_cons_settle]
+
+/-- **R3a's spec half — `Report` at a one-settle schedule.** `hfut` is
+discharged by the cap being the round's OWN: the schedule has exactly one
+`settle` and it is `capv`, so the futility premise is the single hypothesis
+`value ≤ capv` rather than a quantified bet. `Sound` comes free from the
+interpreter's own break condition `capv < gamma`. -/
+theorem settle_report (gamma value bst capv : Int) (live : Bool)
+    (hb : Sound gamma value bst) (hlt : capv < gamma) (hfut : value ≤ capv) :
+    Report gamma (foldFrom gamma bst live [settledCap capv]).1 value := by
+  refine fold_report hb ?_ (Or.inr ⟨settledCap capv, by simp, hfut⟩) ?_
+  · intro r hr
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hr
+    subst hr
+    exact Or.inl hlt
+  · intro cap hm
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hm
+    rw [show settledCap capv = Round.settle capv from rfl] at hm
+    cases hm
+    exact hfut
+
+/-- **AND THE TWO HALVES AGREE.** The interpreter leaves `max bst capv` in
+`best`; the schedule `[settledCap capv]` folds to the same number. One line, and
+it is what makes R3a mean something rather than merely typecheck. -/
+theorem settle_agrees (gamma bst capv : Int) (live : Bool) (e : REnv) :
+    Env.lookup (envSettle e capv bst) "best"
+      = some (.int (foldFrom gamma bst live [settledCap capv]).1) := by
+  rw [settle_folds]
+  simp [envSettle, Env.lookup_set_self]
+
+/-! ### The settle arm, INSTANTIATED on the fixture -/
+
+/-- The top row of the ordering line at depth `d`, on the opening position. -/
+private def fxTopVal (d : Int) : Option Int :=
+  match evalExpr sunfish 512
+      ⟨initWorld sunfish, [("pos", posH 0), ("depth", .int d)]⟩ ordLine with
+  | .ok st (RVal.ref a) =>
+    (match Heap.get? st.world.heap a with
+     | some (Obj.list xs) =>
+       (match xs[0]?.getD RVal.none with
+        | RVal.tuple #[RVal.int v, _] => some v
+        | _ => Option.none)
+     | _ => Option.none)
+  | _ => Option.none
+
+private def fxGlob (n : String) : Option Int :=
+  match Env.lookup (initWorld sunfish).globals n with
+  | some (RVal.int z) => some z | _ => Option.none
+
+/-! The best move on the opening board is worth **46**, and `pos.score` is `0` —
+so at depth 1 the cap is `0 + 46 + (1-1)*140 = 46`, which is `settle_round`'s
+`hcut` at every window above it. -/
+#guard fxTopVal 1 == some 46
+#guard (0 : Int) + 46 + (1 - 1) * 140 == 46
+#guard (decide ((46 : Int) < 47) : Bool)
+
+/-! `hband` — the top value is far below the mate band, which the live world
+supplies (`MATE_LOWER` is statically POISONED, so it is a world premise). -/
+#guard (match fxGlob "MATE_LOWER" with | some ml => decide ((46 : Int) < ml) | _ => false)
+
+/-! **And the two halves agree on the engine's own answer.** `settle_round`
+leaves `best = max (-MATE_UPPER) 46`; `settle_folds` says the schedule
+`[settledCap 46]` folds to the same; and the shipped `bound()` answers `46` in
+ONE node at `gamma = 47`. -/
+#guard (match fxGlob "MATE_UPPER" with | some mu => max (-mu) 46 == 46 | _ => false)
+#guard (match fxGlob "MATE_UPPER" with
+        | some mu => (foldFrom 47 (-mu) false [settledCap 46]).1 == 46 | _ => false)
+
+/-! ## §5 R3b's CENSUS, taken — `int()` is NOT lowered
+
+R3b's price turns on
+`move_depth = depth - 1 - (guard and depth >= 6 and val < LMR) - int(nmr)`, and
+§L32 named the open question: did the extractor lower `int()` or leave it a call?
+**It left it a call** — `sbMoveDepth_lit` pins
+`.call (.name "int" _) #[.name "nmr" _]` — so the line needs the interpreter's
+`int` builtin on a Bool, and it needs `Int - Bool` as well, because the `and`
+chain's value is a Bool and it is SUBTRACTED.
+
+Both are implemented, measured below. So `move_depth` is ordinary arithmetic once
+its two boolean operands are decided, and **R3b's cost is the child call rather
+than the reduction** — which is the opposite of what the source text suggests.
+
+`int` is also not shadowed: no global, no function, no class, no namedtuple. -/
+
+private def evAt (e : Expr) (env : REnv) : Option RVal :=
+  match evalExpr sunfish 64 ⟨initWorld sunfish, env⟩ e with
+  | .ok _ v => some v | _ => Option.none
+
+private def spz : Span := ⟨0, 0, 0, 0⟩
+
+/-! `int(False)` is `0` and `int(True)` is `1` — the builtin coerces. -/
+#guard evAt (.call (.name "int" spz) #[.name "nmr" spz] #[] Option.none spz)
+  [("nmr", .bool false)] == some (RVal.int 0)
+#guard evAt (.call (.name "int" spz) #[.name "nmr" spz] #[] Option.none spz)
+  [("nmr", .bool true)] == some (RVal.int 1)
+
+/-! And `Int - Bool` coerces too, which is what the LMR subtrahend needs. -/
+#guard evAt (.binOp (.name "d" spz) .sub (.name "g" spz) spz)
+  [("d", .int 1), ("g", .bool false)] == some (RVal.int 1)
+#guard evAt (.binOp (.name "d" spz) .sub (.name "g" spz) spz)
+  [("d", .int 1), ("g", .bool true)] == some (RVal.int 0)
+
+/-! `int` is the builtin, not a shadow. -/
+#guard (lookupG (moduleGlobals sunfish).1 "int").isNone
+  && !(findFunction sunfish "int").isSome
+  && !(findClass sunfish "int").isSome
+  && !(findNamedTuple sunfish "int").isSome
+
+/-! **And the child's depth at depth 1 is `0`.** `guard and depth >= 6 and …`
+dies on its second operand and `nmr` on its own second, so both subtrahends are
+`False` and `move_depth = 1 - 1 - 0 - 0`. That is inside `RecursionStepW`'s
+`∀ e, 0 ≤ e → e < d`, which is what the strong form was landed for. -/
+#guard (1 : Int) - 1 - 0 - 0 == 0
+
+#print axioms qsaG
+#print axioms cap_line_low
+#print axioms sbVirtElse_split
+#print axioms break_fires
+#print axioms settle_round
+#print axioms settle_folds
+#print axioms settle_report
+#print axioms settle_agrees
 
 
 end Examples.python.sunfish.fold_depth1

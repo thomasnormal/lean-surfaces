@@ -11306,3 +11306,86 @@ land.
 declarations depend on `[propext, Classical.choice, Quot.sound]` or less; the five
 projection and plan pins depend on `[propext]` alone. No `sorry`, no
 `native_decide`. File throughput **9 s**.
+
+## L33 — R3a LANDS, and R3b's census answers: the cost is the child, not the reduction (2026-08-19)
+
+`Examples/python/sunfish/fold_depth1.lean` §4 and §5. The settle arm is proved
+end to end and instantiated; R3b's one open census question is answered, and the
+answer moves R3b's price.
+
+### R3a — the settle arm, both halves and the bridge
+
+The interpreter side is `settle_round`: at a real move whose futility cap is
+below the window, the score chain falls through both `move is None` arms and the
+mate-band arm, computes `cap = pos.score + val + max(depth-1,0) * QS_A`, folds it
+into `best` with `max`, and **breaks** — no child call, no `live`, no killer
+store. It composes four gates: two `is None` compares (`compare_one`, both spans
+from one `∀`-quantified fact), the mate-band compare against a world-supplied
+`MATE_LOWER`, `cap_line_low`, and `break_fires`.
+
+The spec side is `settle_report`, and **`hfut` is discharged by the cap being the
+round's own**: `fold_report`'s futility premise quantifies over every `settle` in
+the schedule, a one-settle schedule has exactly one, so the premise collapses to
+the single hypothesis `value ≤ capv`. `Sound` comes free from the interpreter's
+own break condition `capv < gamma` — the same inequality read on the other side.
+
+`settle_folds` and `settle_agrees` are the bridge, in `qs_fold_agrees`' shape:
+the interpreter leaves `max bst capv` in `best`, and the schedule
+`[settledCap capv]` folds to the same number.
+
+**Instantiated in the same commit.** The best move on the opening board is worth
+**46** and `pos.score` is `0`, so the depth-1 cap is `0 + 46 + 0*140 = 46`, which
+is `hcut` at every window above it; `MATE_LOWER` from the live world is far above
+46, which is `hband`; and `max (-MATE_UPPER) 46 = 46`, which is what the shipped
+`bound()` answers in ONE node at `gamma = 47` (§L32's guard). Every premise
+checked separately, then the conclusion against the engine.
+
+Two facts the arm needed and the census had already supplied: **`QS_A` resolves
+statically** (140), so the cap line says nothing about the world beyond `pos`;
+**`MATE_LOWER` is statically POISONED** (§L26's `mlG`), so the mate-band guard
+takes it from `w.globals`.
+
+### R3b's census: `int()` is NOT lowered — and that makes R3b CHEAPER
+
+§L32 named the question because it prices `move_depth`. **The extractor left
+`int(nmr)` as a call** to the builtin — `sbMoveDepth_lit` pins it — so the line
+needs `int` on a Bool, and it needs `Int - Bool` as well, because the LMR `and`
+chain's value is a Bool and it is subtracted.
+
+Both are implemented, measured on the live engine and `#guard`ed:
+`int(False) = 0`, `int(True) = 1`, `1 - False = 1`, `1 - True = 0`. And `int` is
+not shadowed — no global, no function, no class, no namedtuple.
+
+So `move_depth` is **ordinary arithmetic** once its two boolean operands are
+decided, and **R3b's cost is the child call rather than the reduction** — the
+opposite of what the source line suggests at a glance. The reduction was the
+scary-looking half and it is free; the `pos.move(move)` argument, which
+ALLOCATES, is the half to price.
+
+At depth 1 the LMR chain dies on its second operand (`depth >= 6`) and `nmr` on
+its own second, so both subtrahends are `False` and the child's depth is
+`1 - 1 - 0 - 0 = 0` — inside `RecursionStepW`'s `∀ e, 0 ≤ e → e < d`, which is
+what the strong form was landed for.
+
+### Where this stops, and why
+
+R3b's PROOF is not started. What it needs beyond the census is the child call's
+`EvalsIn` at an allocating argument (`pos.move(move)` builds a Position and
+rotates it), `min(cap, -child)`, the `live |=` update, and then `sbMax` and
+`sbCut` — the two body statements a settling round never reaches. That is a
+session, not a tail, and starting it here would have left it half-proved.
+
+### Triad
+
+`lake build` **3683 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched**;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. All sixteen printed
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less;
+`settle_folds` is **axiom-free** and `settle_report` needs only
+`[propext, Quot.sound]`. No `sorry`, no `native_decide`. File throughput **17 s**.
+
+### Next dispatch's front item, unchanged
+
+R3c's exhaustion census — *does the depth-1 fold ever exhaust on this board?* —
+is still owed and still belongs before `Inv []` is written. Nothing in this pass
+touched it, and nothing in this pass touched a depth-0 arm.

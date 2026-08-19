@@ -2297,10 +2297,10 @@ theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Class
       ⟨w3, G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩)
     (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
     (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
-    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hdict4 : Heap.get? w4.heap ts = some (.dict es svs))
     (hobj5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap sa
-      = some (searcherObj ci ts tm hs n dl sf))
+      = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hdict5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap ts
       = some (.dict es' sv'))
     (hsz : (es'.size : Int) ≤ tableSize)
@@ -2317,7 +2317,7 @@ theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Class
     rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hband hgen
   have hT := tail_runs (sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) w3 w4
     (G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc) a ci sa ts tm hs
-    n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp es es' svs sv' hlt hev hgo hyield
+    (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp es es' svs sv' hlt hev hgo hyield
     rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl
     hobj4 hdict4 hobj5 hdict5 hsz hk hge hmus
   rw [sbB_split]
@@ -2373,10 +2373,10 @@ theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Cl
       ⟨w3, G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩)
     (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
     (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
-    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hdict4 : Heap.get? w4.heap ts = some (.dict es svs))
     (hobj5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap sa
-      = some (searcherObj ci ts tm hs n dl sf))
+      = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hdict5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap ts
       = some (.dict es' sv'))
     (hsz : (es'.size : Int) ≤ tableSize)
@@ -2452,6 +2452,265 @@ theorem sbMovesCap_cells (h : Heap) (env : REnv) (acell : Addr) (gamma : Int)
   simp only [sbMovesCap, cellsFor, k1, k2, k3, k4, k5, kn, hcell, hguard,
     Bool.false_eq_true, if_false, if_true]
   rfl
+
+/-! ### `hev` and `hyield` — the call, and the first step
+
+`qs_stand_pat`'s two generator premises. Neither is the `sf_order` one-liner
+(§L9's `moves_call_creates`): the shipped closure carries a CELL in its
+captures, and two statements run before the first yield.
+
+**The pin first.** `sbDef_captures` (§0) leaves `argsOk`/`localsOk`
+existential, and `EvalsIn.closureGenCall_cells` needs them TRUE. `sbDef_sharp`
+is the sharper pin beside it — same statement, plus the parameter list
+(`moves()` takes none) and both flags. The recorded pin is untouched. -/
+
+theorem sbDef_sharp : ∃ (hg : Bool) (b : Array Stmt) (sp : Span), sbDef =
+    .defStmt "moves" #[] true true hg true b
+      #["depth", "gamma", "<cell>guard", "killer", "pos"] sp :=
+  ⟨_, _, _, rfl⟩
+
+/-- The tier's closure guard is open on the shipped module: `bound()` contains
+a nested `def`, so `topLevelDefFree` is false. -/
+theorem notHeapFree :
+    (funsHeapFree sunfish.functions.toList && topLevelDefFree sunfish) = false := rfl
+
+/-! **The two address facts**, and they are the reason `sbW1`/`sbW2` were named
+rather than inlined. The `def` pushes TWICE: the cell lands at the frame's own
+heap end and the closure one slot above it, and the call has to read BOTH — the
+closure to dispatch, the cell to resolve `<cell>guard`. -/
+
+/-- The cell survives the closure push. -/
+theorem sbW2_cell (w : World) (gamma d : Int) (kv pv : RVal) :
+    Heap.get? (sbW2 w gamma d kv pv).heap w.heap.size = some guardCell := by
+  show Heap.get? ((w.heap.push guardCell).push
+      (sbMovesClosure w.heap.size gamma d kv pv)) w.heap.size = _
+  rw [Heap.get?_push_ne (by simp [Array.size_push]), Heap.get?_push_size]
+
+/-- And the closure sits one slot above it — the address `sbEnvDef` binds
+`moves` to. -/
+theorem sbW2_closure (w : World) (gamma d : Int) (kv pv : RVal) :
+    Heap.get? (sbW2 w gamma d kv pv).heap (w.heap.size + 1)
+      = some (sbMovesClosure w.heap.size gamma d kv pv) := by
+  show Heap.get? ((w.heap.push guardCell).push
+      (sbMovesClosure w.heap.size gamma d kv pv)) (w.heap.size + 1) = _
+  have hsz : (w.heap.push guardCell).size = w.heap.size + 1 := by simp [Array.size_push]
+  rw [← hsz, Heap.get?_push_size]
+
+theorem sbEnvDef_moves (w : World) (e : REnv) :
+    Env.lookup (sbEnvDef w e) "moves" = some (.ref (w.heap.size + 1)) := by
+  simp [sbEnvDef, Env.lookup_set_self]
+
+/-! #### `moves()`'s own statements, projected
+
+Four of them, and only the first two run before the stand-pat yield. -/
+
+/-- `moves()`' body, read out of the `def` rather than retyped. -/
+def sbMB : List Stmt :=
+  match sbDef with | .defStmt _ _ _ _ _ _ b _ _ => b.toList | _ => []
+/-- `if 2 < depth < 6 and guard: yield None, None` — the scoring null. -/
+def sbNull : Stmt := nth 0 sbMB
+/-- `if depth == 0: yield None, None` — the STAND PAT. -/
+def sbStand : Stmt := nth 1 sbMB
+/-- The killer yield and the `yield from sorted(…)`, never reached at depth 0
+and never opened here. -/
+def sbMBRest : List Stmt := sbMB.drop 2
+
+theorem sbMB_len : sbMB.length = 4 := rfl
+theorem sbMB_split : sbMB = sbNull :: sbStand :: sbMBRest := rfl
+
+theorem sbNull_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7 p8 p9 p10, sbNull =
+    .ifStmt (.boolOp .and
+        #[.compare (.constant (.int 2) p0) #[.lt, .lt]
+            #[.name "depth" p1, .constant (.int 6) p2] p3,
+          .name "guard" p4] p5)
+      #[.yieldStmt (.tuple #[.constant .none p6, .constant .none p7] p8) p9] #[] p10 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem sbStand_lit : ∃ p0 p1 p2 p3 p4 p5 p6 p7, sbStand =
+    .ifStmt (.compare (.name "depth" p0) #[.eq] #[.constant (.int 0) p1] p2)
+      #[.yieldStmt (.tuple #[.constant .none p3, .constant .none p4] p5) p6] #[] p7 :=
+  ⟨_, _, _, _, _, _, _, _, rfl⟩
+
+/-! #### The objects the call and the step leave -/
+
+/-- The generator's stored locals: `sbMovesCap` with the cell RESOLVED, which
+is what `sbMovesCap_cells` computes and `closureGenObj` stores. -/
+def sbMovesEnv (gamma : Int) (kv pv : RVal) (av : Bool) : REnv :=
+  [("depth", .int 0), ("gamma", .int gamma), ("guard", .bool av),
+   ("killer", kv), ("pos", pv)]
+
+/-- The object `moves()` allocates — created, with the whole body as its
+continuation and NO code run. -/
+def sbMovesGenObj (gamma : Int) (kv pv : RVal) (av : Bool) : Obj :=
+  .generator "<closure:moves>" (sbMovesEnv gamma kv pv av) [.block sbMB] .created
+
+/-- Where the stand-pat yield leaves it: the empty tail of the `if` body, then
+the two statements it never reaches at depth 0. -/
+def sbMovesResume : GenCont := [.block [], .block sbMBRest]
+
+def sbMovesGenSusp (gamma : Int) (kv pv : RVal) (av : Bool) : Obj :=
+  .generator "<closure:moves>" (sbMovesEnv gamma kv pv av) sbMovesResume .suspended
+
+/-- **`hev` — the call allocates the generator, and the CELL resolves in it.**
+`EvalsIn.closureGenCall_cells` plus `sbMovesCap_cells`: the four plain captures
+pass through and `<cell>guard` is replaced by the CALLING frame's `guard`, so
+the value the `def` at statement 7 could not see (it is assigned at statement 9)
+arrives here. That is the whole content of §L14's tier, spent. -/
+theorem moves_call_creates (w : World) (e : REnv) (ac : Addr) (gamma : Int)
+    (kv pv : RVal) (av : Bool) (c : Option RVal)
+    (hloc : Env.lookup e "moves" = some (.ref (ac + 1)))
+    (hcell : Heap.get? w.heap ac = some (.cell c))
+    (hclos : Heap.get? w.heap (ac + 1) = some (sbMovesClosure ac gamma 0 kv pv))
+    (hguard : Env.lookup e "guard" = some (.bool av)) :
+    EvalsIn sunfish ⟨w, e⟩ sbMovesCall (.ref w.heap.size)
+      ⟨{ w with heap := w.heap.push (sbMovesGenObj gamma kv pv av) }, e⟩ := by
+  obtain ⟨p0, p1, hcall⟩ := sbMovesCall_lit
+  obtain ⟨hg, b, sp, hdef⟩ := sbDef_sharp
+  rw [hcall]
+  have hobj : Heap.get? w.heap (ac + 1)
+      = some (.closure "moves" #[] true true hg true b (sbMovesCap ac gamma 0 kv pv)) := by
+    rw [hclos]; simp only [sbMovesClosure, hdef]
+  have hbody : b.toList = sbMB := by simp only [sbMB, hdef]
+  have hcall' := EvalsIn.closureGenCall_cells (m := sunfish) (st := ⟨w, e⟩) (fname := "moves")
+    (a := ac + 1) (vs := []) (argEs := #[]) (sp := p0) (sp' := p1)
+    hloc notHeapFree hobj
+    (sbMovesCap_cells w.heap e ac gamma kv pv av c hcell hguard) rfl EvalsToList.nil
+  have hobjeq : closureGenObj "moves" #[] b (sbMovesEnv gamma kv pv av) #[]
+      = sbMovesGenObj gamma kv pv av := by
+    simp only [closureGenObj, sbMovesGenObj, mkCallEnv, hbody]
+    rfl
+  rw [← hobjeq]
+  exact hcall'
+
+/-! **`hyield`, and the altitude fix's FOURTH use.** `2 < depth < 6 and guard`
+is false at depth 0 on its FIRST operand, and the second operand is a CELL-
+resolved capture — so the chain is decided AT the chain (`boolChain_and_falsy`,
+§L17) and `py_simp` is never applied to it. Then `if depth == 0:` fires and the
+generator hands over `(None, None)`: the virtual yield §3's fold consumes, and
+the only one it consumes. -/
+
+/-- **The first resumption of a freshly created `moves()`**: the scoring null
+is skipped, the stand-pat clause fires, and the yield is `qsY`. -/
+theorem moves_first_yield (w : World) (gamma : Int) (kv pv : RVal) (av : Bool) :
+    GenSteps sunfish ⟨w, sbMovesEnv gamma kv pv av⟩ [.block sbMB]
+      (some (yieldVal qsY, sbMovesResume)) ⟨w, sbMovesEnv gamma kv pv av⟩ := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, hnull⟩ := sbNull_lit
+  obtain ⟨q0, q1, q2, q3, q4, q5, q6, q7, hstand⟩ := sbStand_lit
+  have hd : Env.lookup (sbMovesEnv gamma kv pv av) "depth" = some (.int 0) := rfl
+  have hcmp1 : evalExpr sunfish 6 ⟨w, sbMovesEnv gamma kv pv av⟩
+      (.compare (.constant (.int 2) p0) #[.lt, .lt]
+        #[.name "depth" p1, .constant (.int 6) p2] p3)
+      = .ok ⟨w, sbMovesEnv gamma kv pv av⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  have ht1 : EvalsTo sunfish ⟨w, sbMovesEnv gamma kv pv av⟩
+      (.boolOp .and
+        #[.compare (.constant (.int 2) p0) #[.lt, .lt]
+            #[.name "depth" p1, .constant (.int 6) p2] p3,
+          .name "guard" p4] p5) (.bool false) :=
+    EvalsTo.of_eval (fuel := 8) (by rw [evalExpr]; exact boolChain_and_falsy (F := 6) hcmp1 rfl)
+  have ht2 : EvalsTo sunfish ⟨w, sbMovesEnv gamma kv pv av⟩
+      (.compare (.name "depth" q0) #[.eq] #[.constant (.int 0) q1] q2) (.bool true) :=
+    EvalsTo.of_eval (fuel := 6) (by py_simp [-globalsFold, -globalsStep, hd])
+  have hty : EvalsTo sunfish ⟨w, sbMovesEnv gamma kv pv av⟩
+      (.tuple #[.constant .none q3, .constant .none q4] q5) (yieldVal qsY) :=
+    EvalsTo.of_eval (fuel := 6) (by py_simp [-globalsFold, -globalsStep, yieldVal, qsY])
+  have hplan1 : genPlan sbNull = .branch
+      (.boolOp .and
+        #[.compare (.constant (.int 2) p0) #[.lt, .lt]
+            #[.name "depth" p1, .constant (.int 6) p2] p3,
+          .name "guard" p4] p5)
+      [.yieldStmt (.tuple #[.constant .none p6, .constant .none p7] p8) p9] [] := by
+    rw [hnull]; rfl
+  have hplan2 : genPlan sbStand = .branch
+      (.compare (.name "depth" q0) #[.eq] #[.constant (.int 0) q1] q2)
+      [.yieldStmt (.tuple #[.constant .none q3, .constant .none q4] q5) q6] [] := by
+    rw [hstand]; rfl
+  have hplan3 : genPlan (.yieldStmt (.tuple #[.constant .none q3, .constant .none q4] q5) q6)
+      = .yieldHere (.tuple #[.constant .none q3, .constant .none q4] q5) := rfl
+  rw [sbMB_split]
+  refine GenSteps.silent (st₁ := ⟨w, sbMovesEnv gamma kv pv av⟩)
+    (k₁ := .block [] :: .block (sbStand :: sbMBRest) :: [])
+    (genSilent_branch (s := sbNull) (ss := sbStand :: sbMBRest) (k := []) hplan1 ht1 rfl) ?_
+  refine GenSteps.silent (k₁ := .block (sbStand :: sbMBRest) :: [])
+    genSilent_blockNil ?_
+  refine GenSteps.silent
+    (k₁ := .block [.yieldStmt (.tuple #[.constant .none q3, .constant .none q4] q5) q6]
+      :: .block sbMBRest :: [])
+    (genSilent_branch (s := sbStand) (ss := sbMBRest) (k := []) hplan2 ht2 rfl) ?_
+  rw [sbMovesResume]
+  exact genSteps_yieldHere (ss := []) hplan3 hty
+
+/-- **`hyield` — the same step as an OBJECT step.** `moves()`' resumption
+touches only its own frame, so `stepIter`'s two writes collapse onto the slot
+the call allocated (`IterSteps.pureStep`) and the whole step is one observable
+change of the generator. -/
+theorem moves_first_iter (w : World) (gamma : Int) (kv pv : RVal) (av : Bool) :
+    IterSteps sunfish { w with heap := w.heap.push (sbMovesGenObj gamma kv pv av) }
+      w.heap.size (some (yieldVal qsY))
+      { w with heap := w.heap.push (sbMovesGenSusp gamma kv pv av) } :=
+  IterSteps.pureStep (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _)
+    (moves_first_yield _ gamma kv pv av) (Heap.update_push_size _ _ _)
+
+/-! #### The two worlds the tail runs in
+
+Three pushes over the post-bump heap: the cell, the closure, the generator —
+and the generator's slot is written in place, so the world the fold's tail sees
+differs from `W1` by exactly three allocations. Every heap fact `tail_runs`
+asks for at the post-yield world is that observation. -/
+
+/-- The world the `moves()` call leaves. -/
+def W3 (w : World) (h' : Heap) (gamma : Int) (pv : RVal) (av : Bool) : World :=
+  { sbW2 (W1 w h') gamma 0 .none pv with
+      heap := (sbW2 (W1 w h') gamma 0 .none pv).heap.push (sbMovesGenObj gamma .none pv av) }
+
+/-- And the world its first step leaves: the same slot, suspended. -/
+def W4 (w : World) (h' : Heap) (gamma : Int) (pv : RVal) (av : Bool) : World :=
+  { sbW2 (W1 w h') gamma 0 .none pv with
+      heap := (sbW2 (W1 w h') gamma 0 .none pv).heap.push (sbMovesGenSusp gamma .none pv av) }
+
+/-- **Every live slot of the post-bump heap survives all three allocations.**
+One lemma for the receiver AND the table, because allocation is blind to both. -/
+theorem W4_get (w : World) (h' : Heap) (gamma : Int) (pv : RVal) (av : Bool)
+    {x : Addr} {o : Obj} (hx : Heap.get? h' x = some o) :
+    Heap.get? (W4 w h' gamma pv av).heap x = some o :=
+  Heap.get?_push_of_get? _ (Heap.get?_push_of_get? _ (Heap.get?_push_of_get? _ hx))
+
+/-- `hgo`: the address the call answered holds a generator. -/
+theorem W3_gen (w : World) (h' : Heap) (gamma : Int) (pv : RVal) (av : Bool) :
+    ∃ qn lo ct stt, Heap.get? (W3 w h' gamma pv av).heap
+      (sbW2 (W1 w h') gamma 0 .none pv).heap.size = some (.generator qn lo ct stt) :=
+  ⟨_, _, _, _, Heap.get?_push_size _ _⟩
+
+/-! #### A PREMISE THAT WAS REFUTED, and the statement it made vacuous
+
+§L23 landed `body_runs`/`qs_stand_pat` with the post-yield receiver premise
+stated at `n` — the counter the receiver held BEFORE statement 1 bumped it.
+Nothing in the chain needed the two to agree, so the proof went through; what
+running the discharge shows is that the premise is not merely unproved but
+**false**, and a theorem carrying it says nothing.
+
+Both statements now carry `n + 1`. The lemma below is the refutation, kept
+because a defect the record can check is worth more than a defect the record
+describes: `searcherObj` is injective in `nodes`, so at the post-yield world the
+receiver premise has exactly one satisfiable form. -/
+
+theorem searcherObj_nodes_inj {ci : ClassId} {ts tm hs : Addr} {n n' dl sf : Int}
+    (h : searcherObj ci ts tm hs n dl sf = searcherObj ci ts tm hs n' dl sf) : n = n' := by
+  simp only [searcherObj, Obj.instance.injEq, true_and] at h
+  have := congrArg (fun a => a[3]?) h
+  simpa using this
+
+/-- **The post-yield receiver carries the BUMPED counter, and only that.** -/
+theorem post_yield_receiver_bumped (w : World) (h' : Heap) (gamma : Int) (pv : RVal)
+    (av : Bool) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf : Int)
+    (hobj' : Heap.get? h' sa = some (searcherObj ci ts tm hs (n + 1) dl sf)) :
+    Heap.get? (W4 w h' gamma pv av).heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf)
+      ∧ Heap.get? (W4 w h' gamma pv av).heap sa
+          ≠ some (searcherObj ci ts tm hs n dl sf) := by
+  refine ⟨W4_get w h' gamma pv av hobj', fun hc => ?_⟩
+  rw [W4_get w h' gamma pv av hobj'] at hc
+  have := searcherObj_nodes_inj (Option.some.inj hc)
+  omega
 
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
@@ -3471,5 +3730,21 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms loopFrame_eq
 #print axioms LoopFrameAt.bindYield
 #print axioms FoldInv.subtree
+
+#print axioms sbDef_sharp
+#print axioms notHeapFree
+#print axioms sbW2_cell
+#print axioms sbW2_closure
+#print axioms sbEnvDef_moves
+#print axioms sbMB_split
+#print axioms sbNull_lit
+#print axioms sbStand_lit
+#print axioms moves_call_creates
+#print axioms moves_first_yield
+#print axioms moves_first_iter
+#print axioms W4_get
+#print axioms W3_gen
+#print axioms searcherObj_nodes_inj
+#print axioms post_yield_receiver_bumped
 
 end Examples.python.sunfish.bound_depth

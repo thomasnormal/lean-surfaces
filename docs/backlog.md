@@ -9643,3 +9643,84 @@ premises. In order:
 start of §L17 the interpreter half was UNSTARTED, and the distance was seven
 statements plus the fold plus the tail plus the assembly. It is now the assembly
 alone, with a worked example of every piece it composes.
+
+
+## L21 — THE ASSEMBLY GETS ITS ENGINE, and the head composes for real (2026-08-19)
+
+§L20 priced the remaining work as *"the assembly alone"* and called it
+bookkeeping. This pass built the engine that bookkeeping needs and ran it on
+statements 0–5, which is the evidence the pricing was right. `QSStandPat` still
+does not close — twelve statements of the same shape remain — but there is
+**nothing left to discover**, and that claim is now backed by a worked example
+rather than by an estimate.
+
+### The engine
+
+* **`execStmts_append`** — two decided runs in sequence are one decided run of
+  the concatenation, in the ∃-fuel form `QSStandPat` is itself stated in, so the
+  fuel bookkeeping is internal (`execStmt_mono`/`execStmts_mono` at a summed
+  witness) and the caller never counts interpreter steps. `VCTactic.lean` has
+  this as the PRIVATE `execStmts_append_run`, the engine of `PyTriple.run_seq`;
+  the assembly needs it at the raw `execStmts` level, so it is public here.
+* **`execStmts_singleton`** — the converse of §L20's `execStmt_of_singleton`, so
+  a statement gate and a one-element-list gate convert both ways. Between them
+  the shape mismatch §L20 identified is closed in both directions.
+
+### `head_runs`, and the three things it establishes
+
+Statements 0–5 — docstring, node count, clock guard, refloor, king-capture
+check, the whole probe block — as ONE gate. What it demonstrates is the point:
+
+1. **The frame lookups are FREE.** `sbEnv0` is a concrete five-element list and
+   every gate's hypothesis about it is `rfl`; it STAYS `rfl` through the
+   `Env.set` chain because every key is a literal. All seven of
+   `probe_block_runs`' frame premises are discharged by `rfl` — not by
+   `Env.lookup_set_ne`, which §L20 expected to need ~100 times. The pricing was
+   pessimistic in the right direction.
+2. **The world chain threads through the gates' own conclusions.** The counter
+   bump is `bound_enters`' output; the table survives it by
+   `Heap.get?_update_ne` at `ts ≠ sa`, which is one premise and an honest one
+   (the table is not the receiver).
+3. **The segments compose with no fuel arithmetic caller-side.**
+
+### Two cycles lost, both worth recording
+
+* **`set` is a MATHLIB tactic** and this repo is core-only (`leanprover/lean4`,
+  no packages). It fails as `unknown tactic`, which reads like a syntax error
+  and is not. Abbreviate with a `have`-bound term or write the term out.
+* **`++` is LEFT-associative.** `A ++ B ++ C ++ D` is `((A ++ B) ++ C) ++ D`, so
+  nested `execStmts_append`s must go FIRST-innermost. Getting it backwards
+  produces an application-type-mismatch whose "expected" side names the wrong
+  segment, which is legible once you know and baffling until then.
+
+### Triad
+
+`lake build` **3678 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched** — unchanged
+since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. No
+`sorry`, no `native_decide`.
+
+### What `QSStandPat` needs now — twelve statements of one shape
+
+The pattern is fixed: per statement, instantiate its gate at the accumulated
+frame (hypotheses by `rfl`), wrap with `execStmts_singleton` if it is an
+`execStmt` gate, and `execStmts_append` onto the chain. In order:
+
+| segment | gates | note |
+|---|---|---|
+| 6 | `killer_misses` | same shape as the probe |
+| 7 | `moves_def_allocates` | world grows by cell + closure |
+| 8–11 | `calm_evals`, `guard_evals`, `null_margin_adds`, `nmr_evals` | 8 and 11 are EXPRESSION gates — they need their statement wrappers, one `assign` arm each |
+| 12 | `acc_inits` | |
+| 13 | `qs_fold_breaks` | a `PyStmtTriple`, so it needs `PyStmtTriple` → `execStmt` extraction before `execStmts_singleton` |
+| 14–17 | `corr_dead`, `store_runs`, `evict_dead`, `ret_best` | the store changes the world; the return lands `.ret`, so the LAST append is the `.ret` arm rather than `.next` |
+
+Then `callIn.eq_2` + `sbCallEnv` (proved) closes the boundary, and the three
+premises are unchanged: `hev`/`hyield` (the `moves()` allocation and its first
+yield), and `calm`'s genexp, open by design at depth 0. Under the recorded model
+choice (§L18) the futility premise is definitional and does not appear.
+
+**`model_audit` CANNOT RETIRE.** The honest ledger: §L17 began with the
+interpreter half unstarted; it is now eighteen gates, both halves joined, the
+composition engine built and demonstrated, and twelve mechanical steps plus a
+boundary between here and `QSStandPat`.

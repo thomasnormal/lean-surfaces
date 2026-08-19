@@ -17,7 +17,15 @@ It is the cheapest for a reason worth stating: **the whole run is the head**, an
 `gamma`, an upper return below it; those are exactly `Report`'s two disjuncts. So
 the leaf spends §6's `sf_probe` and nothing of §3's `fold`.
 
-**MEASURED FIRST, on the shipped engine** (§L24's exit law, and §8 below keeps
+**And it is where the rule's own statement was found to be FALSE.** §7 below
+refutes `BoundRefines V d` outright — it quantifies over an arbitrary
+`pos : RVal`, and at a non-`Position` the shipped `bound()` refuses, so the
+existential cannot be met at any depth. Two more holes in the same statement are
+measured beside it. `BoundRefinesP` (§8) is the repair, and
+`boundRefinesP_zero` is the base case's four-way split assembled on it, with two
+of the four leaves proved here and the other two named as one hypothesis.
+
+**MEASURED FIRST, on the shipped engine** (§L24's exit law, and §5 below keeps
 every number where it cannot rot):
 
 * a stale `Entry(20, 900)` at `(posH 0, 0)` with `gamma = 5` makes `bound()`
@@ -574,6 +582,355 @@ and the run must fall through to the other two leaves. -/
      | _ => false)
   | Option.none => false)
 
+/-! ## §6 THE KING-CAPTURE LEAF — the arm §L25's plan does not name
+
+`if pos.score <= -MATE_LOWER: return -MATE_UPPER`, statement 4, which fires
+BEFORE the probe. Every leaf above and below carries `-MATE_LOWER < pos.score`
+as a premise precisely because this arm is the other side of it, so the base
+case's split is not complete without it — three leaves is one short.
+
+It is the cheapest of the four: three statements, and the run never reaches the
+table at all. **Measured on the fixture:** `pos.score = -MATE_LOWER` answers
+`-69290 = -MATE_UPPER`, heap 70 → 70, minimum fuel **11**, and the only slot
+that moves is the receiver's.
+
+What it needs that no other leaf does is a MODEL-side fact: the docstring
+promises an EXACT value here (*"our own king already captured: r =
+-MATE_UPPER"*), not a bracket, so `Report` cannot be read off the table. `hmateV`
+is that obligation, and it belongs to `formal/`'s depth-0 leaf. -/
+
+/-- **GATE — the king-capture check FIRES.** `mate_check_passes` (§4) is this
+statement's other arm; between them the head's statement 4 is total. -/
+theorem mate_check_returns (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (F : Nat)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnoml : Env.lookup e "MATE_LOWER" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : sc ≤ -mateLower) :
+    execStmts sunfish (F + 8) ⟨w, e⟩ [sbMate]
+      = .ok ⟨w, e⟩ (.ret (.int (-mateUpper))) := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, hm⟩ := sbMate_lit
+  rw [hm]
+  py_simp [-globalsFold, -globalsStep, hpos, hnoml, hnomu, hml, hmu, mlG, muG, posOf, posCAux,
+    posCls_methods]
+  rw [if_pos (show (sc ≤ -mateLower) from hsc)]
+  py_simp [-globalsFold, -globalsStep, hnomu, hmu, muG]
+
+/-- **The whole body, at a captured king.** Statements 0–4 run; the probe and
+everything under it are unreachable. -/
+theorem body_returns_king_capture (w : World) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (h' : Heap)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : sc ≤ -mateLower) :
+    ∃ f, execStmts sunfish f
+        ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ sbB
+      = .ok ⟨W1 w h', EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma⟩
+          (.ret (.int (-mateUpper))) := by
+  have hD : execStmts sunfish 8
+      ⟨W1 w h', sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDepth]
+      = .ok ⟨W1 w h', EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma⟩ .next := by
+    have := depth_refloors (W1 w h')
+      (sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0) 0 rfl rfl
+    simpa [EA, show max (0 : Int) 0 = 0 from by omega] using this
+  have hA : ∃ f, execStmts sunfish f
+      ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDoc, sbNodes, sbClock]
+        = .ok ⟨W1 w h', sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ .next :=
+    ⟨16, bound_enters w ci sa ts tm hs n dl sf gamma 0
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) h' hself hupd hclk⟩
+  have hAB := execStmts_append hA ⟨8, hD⟩ (by simp)
+  have hABC := execStmts_append hAB
+    ⟨8, mate_check_returns (W1 w h') (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)
+      b sc wc0 wc1 bc0 bc1 ep kp 0 rfl rfl rfl hml hmu hsc⟩ (by simp)
+  rw [sbB_split]
+  exact execStmts_append_escape (by simp) hABC
+
+/-- **THE KING-CAPTURE LEAF.** All four conjuncts, at a position whose own score
+says the king is gone. `hmateV` is the only model-side premise anywhere in this
+file, and it is the one the docstring's EXACT promise forces. -/
+theorem refinesAt_king_capture {V : RVal → Int → Int}
+    (w : World) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (ht : (sfBracket V).TableAt w.heap ts)
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : sc ≤ -mateLower)
+    (hlo : -mateUpper < gamma)
+    (hmateV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ -mateUpper) :
+    RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
+  obtain ⟨es, ver, hdict, hok⟩ := ht
+  have hts : ts ≠ sa := dict_ne_instance hself hdict
+  obtain ⟨h', hupd⟩ := update_exists (o' := searcherObj ci ts tm hs (n + 1) dl sf) hself
+  obtain ⟨f, hf⟩ := body_returns_king_capture w ci sa ts tm hs n dl sf gamma sc
+    b wc0 wc1 bc0 bc1 ep kp h' hself hupd hclk hml hmu hsc
+  refine ⟨W1 w h', -mateUpper, f + 1, fun F hF => ?_, ?_, ?_, Or.inl ⟨hlo, hmateV⟩⟩
+  · obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+    exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
+  · exact Bracket.TableAt.update_ne (Ne.symm hts) hupd ⟨es, ver, hdict, hok⟩
+  · exact fun e _ => Bracket.SubtreeWrites.other (Ne.symm hts) hupd Bracket.SubtreeWrites.nil
+
+/-! ## §7 `BoundRefines` AS RECORDED IS FALSE — proved, not suspected
+
+§L24 finding 5: *`searcherObj`-style injectivity turns a suspicion into a
+refutation, and the theorem is what stops the next lane re-introducing it.* This
+section is that, applied to the rule the whole campaign runs on.
+
+`BoundRefines V d` (§7 of `bound_depth.lean`) quantifies over an **arbitrary
+`pos : RVal`** and asks for `∃ w' r t, ∀ F ≥ t, callIn … = .ok w' (.int r)`. At
+`pos := .int 5` the shipped `bound()` reaches `pos.score` and REFUSES — attribute
+access on an `int` is outside the tier — so no such `w'` exists and the
+proposition is false. Not vacuous: FALSE, at every depth, for every `V`. The
+induction `RecursionStep` runs cannot start, and no amount of interpreter work on
+the leaves would ever have closed it.
+
+It was found the way §L24 says these are found: by trying to DISCHARGE the
+statement's hypotheses at a leaf rather than by reading them. -/
+
+/-- The interpreter's own words when an attribute is read off an `int`. -/
+def intAttrRefusal : String :=
+  "attribute access on 'int' is outside the tier (heap receivers only; docs/memory-model.md)"
+
+/-- **GATE — the king-capture check REFUSES at a non-`Position`.** The third arm
+of statement 4, and the one no leaf can pay. -/
+theorem mate_check_refuses (w : World) (e : REnv) (k : Int) (F : Nat)
+    (hpos : Env.lookup e "pos" = some (.int k)) :
+    execStmts sunfish (F + 8) ⟨w, e⟩ [sbMate] = .unsupported intAttrRefusal := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, hm⟩ := sbMate_lit
+  rw [hm]
+  py_simp [-globalsFold, -globalsStep, hpos, intAttrRefusal, RVal.typeName]
+  rfl
+
+/-- And the refusal is the whole body's, because `execStmts_append` propagates
+any non-timeout result — the same engine the leaves compose with. -/
+theorem body_refuses_int (w : World) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma d k : Int) (h' : Heap)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0)) :
+    ∃ f, execStmts sunfish f ⟨w, sbEnv0 (.ref sa) (.int k) gamma d⟩ sbB
+      = .unsupported intAttrRefusal := by
+  have hA : ∃ f, execStmts sunfish f ⟨w, sbEnv0 (.ref sa) (.int k) gamma d⟩
+      [sbDoc, sbNodes, sbClock]
+      = .ok ⟨W1 w h', sbEnv0 (.ref sa) (.int k) gamma d⟩ .next :=
+    ⟨16, bound_enters w ci sa ts tm hs n dl sf gamma d (.int k) h' hself hupd hclk⟩
+  have hD : execStmts sunfish 8 ⟨W1 w h', sbEnv0 (.ref sa) (.int k) gamma d⟩ [sbDepth]
+      = .ok ⟨W1 w h',
+              Env.set (sbEnv0 (.ref sa) (.int k) gamma d) "depth" (.int (max d 0))⟩ .next :=
+    depth_refloors (W1 w h') (sbEnv0 (.ref sa) (.int k) gamma d) d rfl rfl
+  have hM := mate_check_refuses (W1 w h')
+    (Env.set (sbEnv0 (.ref sa) (.int k) gamma d) "depth" (.int (max d 0))) k 0 rfl
+  rw [sbB_split]
+  exact execStmts_append (execStmts_append hA ⟨8, hD⟩ (by simp)) ⟨8, hM⟩ (by simp)
+
+/-- `callIn_of_body`'s refusal twin: the boundary carries a refusal out too. -/
+theorem callIn_of_body_unsupported {w : World} {sa : Addr} {pv : RVal} {gamma d : Int}
+    {msg : String} {F : Nat}
+    (h : execStmts sunfish F ⟨w, sbEnv0 (.ref sa) pv gamma d⟩ sbB = .unsupported msg) :
+    callIn sunfish (F + 1) w "Searcher.bound" #[.ref sa, pv, .int gamma, .int d]
+      = .unsupported msg := by
+  obtain ⟨hfind, hargs, hloc, hgen, hbody, harity⟩ := sbF_lit
+  rw [callIn, hfind]
+  simp only [hargs, hloc, hgen, Bool.not_true, Bool.false_eq_true, if_neg,
+    not_false_eq_true, hbody, sbCallEnv, h, Run.bind, Run.toWorld,
+    show (#[RVal.ref sa, pv, RVal.int gamma, RVal.int d] : Array RVal).size = 4 from rfl,
+    sbArity]
+
+/-! The witness: two slots, a receiver and its (empty, valid) table. Every
+hypothesis `BoundRefines` states is met on it — so the refutation is about the
+CONCLUSION and cannot be dismissed as an unsatisfiable antecedent. -/
+
+private def refHeap : Heap := #[searcherObj 0 1 1 1 0 0 0, .dict #[] 0]
+private def refWorld : World := { heap := refHeap, globals := [] }
+
+theorem refWorld_self : Heap.get? refWorld.heap 0 = some (searcherObj 0 1 1 1 0 0 0) := rfl
+
+theorem refWorld_table (V : RVal → Int → Int) : (sfBracket V).TableAt refWorld.heap 1 :=
+  ⟨#[], 0, rfl, Bracket.TableOK.nil _⟩
+
+/-- **`BoundRefines V d` IS FALSE, at every depth and every value function.**
+The repair is `BoundRefinesP` below; this theorem is what stops the next lane
+re-introducing the statement it repairs. -/
+theorem not_boundRefines (V : RVal → Int → Int) (d : Int) : ¬ BoundRefines V d := by
+  intro hBR
+  obtain ⟨h', hupd⟩ := update_exists (o' := searcherObj 0 1 1 1 (0 + 1) 0 0) refWorld_self
+  obtain ⟨f, hbody⟩ := body_refuses_int refWorld 0 0 1 1 1 0 0 0 0 d 5 h'
+    refWorld_self hupd (by decide)
+  obtain ⟨w', r, t, hrun, -⟩ := hBR refWorld 0 0 1 1 1 0 0 0 0 (.int 5)
+    refWorld_self (refWorld_table V) (by decide) (by decide)
+  have h1 := hrun (max t (f + 1)) (Nat.le_max_left _ _)
+  have h2 : callIn sunfish (max t (f + 1)) refWorld "Searcher.bound"
+      #[.ref 0, .int 5, .int 0, .int d] = .unsupported intAttrRefusal := by
+    have := callIn_of_body_unsupported
+      (execStmts_mono hbody (by simp) (max t (f + 1) - 1)
+        (by have := Nat.le_max_right t (f + 1); omega))
+    rw [show max t (f + 1) - 1 + 1 = max t (f + 1) by
+      have := Nat.le_max_right t (f + 1); omega] at this
+    exact this
+  rw [h1] at h2
+  simp at h2
+
+/-! ### Two MORE holes in the same statement, measured rather than proved
+
+The `pos` hole alone refutes it, so these two are recorded as measurements —
+they matter because a lane that repairs only `pos` still has a false statement.
+Both are the same shape: `BoundRefines` quantifies over something the shipped
+code constrains and the statement does not.
+
+**(b) THE CLOCK.** `n` is arbitrary, and `self.nodes % 2048 == 0 and time.time()
+> self.deadline` reads the trace when the bump lands on a multiple. `BoundRefines`'
+own docstring says it *"deliberately does not say"* anything about the clock —
+but by saying nothing it admits `n = 2047`, where the default empty trace refuses
+LOUDLY. `pins_search`'s frontier is about which traces suffice; this is about
+whether the statement is true at all. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance ci attrs) =>
+       (match attrs.toList with
+        | [("tp_score", .ref ts), ("tp_move", .ref tm), ("history", .ref hs),
+           ("nodes", .int _), ("deadline", .int dl), ("soft", .int sft)] =>
+          (match Heap.update w.heap a (searcherObj ci ts tm hs 2047 dl sft) with
+           | some h' =>
+             (match callIn sunfish 100000 { w with heap := h' } "Searcher.bound"
+                 #[.ref a, posH 0, .int 0, .int 0] with
+              | .unsupported _ => true      -- the trace underruns
+              | _ => false)
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
+
+/-! And one below the multiple decides, so the guard above is about the CLOCK and
+not about the fixture being broken. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match callIn sunfish 100000 w "Searcher.bound"
+        #[.ref a, posH 0, .int 0, .int 0] with
+     | .ok _ (.int r) => r == 0
+     | _ => false)
+  | Option.none => false)
+
+/-! **(c) THE ENTRY SPELLING.** `TableAt` is `entryBounds`-shaped, and
+`entryBounds` matches `.ntuple _ _ #[.int lo, .int up]` at ANY class name and ANY
+field names — deliberately, because `DictCalc` is the general layer. But
+`bound()` reads `entry.lower` and `entry.upper` BY NAME. So a table satisfying
+`TableAt` can hold an entry the shipped code cannot read, and the probe raises
+`AttributeError` instead of answering.
+
+`Foo(a=20, b=900)` is such an entry: `entryBounds` decodes it to `(20, 900)`, so
+`Bracket.Holds` and `TableAt` accept it, and `bound()` dies on it. The repair is
+the `hspell` premise of `BoundRefinesP`. -/
+#guard entryBounds (.ntuple "Foo" #["a", "b"] #[.int 20, .int 900]) == some (20, 900)
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_score" with
+        | some (.ref ts) =>
+          (match heapStore w.heap ts (tpKey (posH 0) 0)
+              (.ntuple "Foo" #["a", "b"] #[.int 20, .int 900]) with
+           | .ok h' =>
+             (match callIn sunfish 100000 { w with heap := h' } "Searcher.bound"
+                 #[.ref a, posH 0, .int 5, .int 0] with
+              | .exn _ .attributeError => true
+              | _ => false)
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
+
+/-! ## §8 `BoundRefinesP` — the repaired rule, and the base case's SPLIT
+
+Four repairs, each named where it came from: the position is a `Position` (§7's
+theorem), the node count does not land on the clock (§7 (b)), the table's entries
+are the shipped SPELLING (§7 (c)), and the two mate constants are in the live
+globals — which every head gate demands and `BoundRefines` never offered.
+
+Nothing else moves: the four conjuncts out are `RefinesAt`, unchanged, so the
+strong-induction restatement §L25's R4 forces still consumes this base case
+as written. -/
+
+/-- **The rule, with the premises the shipped code actually forces.** -/
+def BoundRefinesP (V : RVal → Int → Int) (d : Int) : Prop :=
+  ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+    (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es : Array (RVal × RVal)) (sv : Nat),
+    Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf) →
+    Heap.get? w.heap ts = some (.dict es sv) →
+    (sfBracket V).TableAt w.heap ts →
+    (∀ p ∈ es.toList, ∃ lo up, p.2 = entryOf lo up) →
+    ¬ ((n + 1).fmod 2048 = 0) →
+    Env.lookup w.globals "MATE_LOWER" = some (.int mateLower) →
+    Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper) →
+    -mateUpper < gamma → gamma ≤ mateUpper →
+    RefinesAt V d w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp)
+
+/-- **The probe always answers something the code can READ**, once the table's
+entries are spelled — including on a miss, because the shipped default IS an
+`entryOf`. This is the one derivation the spelling premise is for. -/
+theorem probe_answer_spelled {es : Array (RVal × RVal)} {p : RVal} {d : Int}
+    (hspell : ∀ q ∈ es.toList, ∃ lo up, q.2 = entryOf lo up) :
+    ∃ lo up, (dictFind es.toList (tpKey p d)).getD entryDefault = entryOf lo up := by
+  cases hf : dictFind es.toList (tpKey p d) with
+  | none => exact ⟨-mateUpper, mateUpper, rfl⟩
+  | some v =>
+    obtain ⟨k', hmem, -⟩ := dictFind_sound es.toList hf
+    obtain ⟨lo, up, hv⟩ := hspell (k', v) hmem
+    exact ⟨lo, up, hv⟩
+
+/-- **THE BASE CASE'S CASE SPLIT.** Four leaves, two of them proved here and two
+supplied — and the two supplied ones are exactly what `qs_stand_pat_closed`
+(§L23/§L24) and the unwritten fail-low leaf owe.
+
+The split itself is arithmetic on `(pos.score, lo, up, gamma)` and it is TOTAL:
+the king capture on `sc ≤ -MATE_LOWER`, then the lower return on `gamma ≤ lo`,
+then the upper return on `up < gamma`, and what is left is `lo < gamma ≤ up` —
+the fall-through, which is where `moves()` finally runs. If a fifth arm existed
+this theorem would not elaborate. -/
+theorem boundRefinesP_zero {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    (hmateV : ∀ (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int),
+      sc ≤ -mateLower → V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ -mateUpper)
+    (hfall : ∀ (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+        (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+        (es : Array (RVal × RVal)) (sv : Nat) (lo up : Int),
+      Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf) →
+      Heap.get? w.heap ts = some (.dict es sv) →
+      (sfBracket V).TableAt w.heap ts →
+      ¬ ((n + 1).fmod 2048 = 0) →
+      Env.lookup w.globals "MATE_LOWER" = some (.int mateLower) →
+      Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper) →
+      -mateUpper < gamma → gamma ≤ mateUpper → -mateLower < sc →
+      (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+        = entryOf lo up →
+      lo < gamma → gamma ≤ up →
+      RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    BoundRefinesP V 0 := by
+  intro w ci sa ts tm hs n dl sf gamma b sc wc0 wc1 bc0 bc1 ep kp es sv
+    hself hdict ht hspell hclk hml hmu hlo hup
+  by_cases hmate : sc ≤ -mateLower
+  · exact refinesAt_king_capture w ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp
+      hself ht hclk hml hmu hmate hlo (hmateV b sc wc0 wc1 bc0 bc1 ep kp hmate)
+  · obtain ⟨lo, up, hfind⟩ :=
+      probe_answer_spelled (p := posOf b sc wc0 wc1 bc0 bc1 ep kp) (d := 0) hspell
+    by_cases hA : gamma ≤ lo
+    · exact refinesAt_probe_hit hV w ci sa ts tm hs n dl sf gamma sc lo up
+        b wc0 wc1 bc0 bc1 ep kp es sv hself hdict ht hclk hml hmu (by omega) hlo hup hfind
+        (Or.inl hA)
+    · by_cases hB : up < gamma
+      · exact refinesAt_probe_hit hV w ci sa ts tm hs n dl sf gamma sc lo up
+          b wc0 wc1 bc0 bc1 ep kp es sv hself hdict ht hclk hml hmu (by omega) hlo hup hfind
+          (Or.inr hB)
+      · exact hfall w ci sa ts tm hs n dl sf gamma b sc wc0 wc1 bc0 bc1 ep kp es sv lo up
+          hself hdict ht hclk hml hmu hlo hup (by omega) hfind (by omega) (by omega)
+
 /-! ### The axioms -/
 
 #print axioms execStmts_append_escape
@@ -589,36 +946,48 @@ and the run must fall through to the other two leaves. -/
 #print axioms heapGet_of_find
 #print axioms boundRefines_eq
 #print axioms refinesAt_probe_hit
+#print axioms mate_check_returns
+#print axioms body_returns_king_capture
+#print axioms refinesAt_king_capture
+#print axioms mate_check_refuses
+#print axioms body_refuses_int
+#print axioms callIn_of_body_unsupported
+#print axioms not_boundRefines
+#print axioms probe_answer_spelled
+#print axioms boundRefinesP_zero
 
-/-! ## What the base case still owes, in order
+/-! ## What the base case still owes — ONE hypothesis, in two halves
 
-`BoundRefines V 0` is a FOUR-way case split, not the three-way one §L25's plan
-names — and the fourth is not the fold's, it is the head's:
+`boundRefinesP_zero` is the assembly, and after it the base case's whole
+remaining debt is `hfall`: the leaf at `lo < gamma ≤ up`, where the probe answers
+nothing decisive and `moves()` finally runs. It splits once more, on
+`gamma ≤ pos.score`:
 
-1. **the stale-table probe hit** — this file, both arms;
-2. **the KING-CAPTURE return** — `if pos.score <= -MATE_LOWER: return
-   -MATE_UPPER`, statement 4, which fires BEFORE the probe. Every leaf above and
-   below carries `-MATE_LOWER < pos.score` as a premise precisely because this
-   arm is the other side of it, so the split is not complete without it. It is
-   head-only and cheaper than this file: three statements, one return, and the
-   docstring's own *"our own king already captured: r = -MATE_UPPER"* is an
-   EXACT value rather than a band, so its `Report` needs `V pos 0 = -MATE_UPPER`
-   from the model side (`formal/`'s depth-0 leaf) rather than from the table;
-3. **the stand-pat CUT** — `qs_stand_pat_closed`, which exists, over a CLEARED
-   table. Consuming it as a leaf needs it restated over a table whose entry
-   falls in the window (`lo < gamma ≤ up`): the head gates for that are
-   `probe_lower_passes_at`/`probe_upper_passes_at` above, and what remains is
-   `mid_runs`/`tail_runs` at a non-empty `es` — the tail's store is already
-   stated at an arbitrary `es`, so the delta is `probe_misses` → `probe_reads`
-   in `head_runs` and the `sf_store_from_report` join at the computed store;
-4. **the FAIL-LOW leaf** — `pos.score < gamma`, the fold runs out and the store
-   takes its other arm. The only leaf of the four that needs a fold, and the
-   only one that needs `fold_report`'s fail-low half.
+1. **the stand-pat CUT** — `qs_stand_pat_closed` (§L23/§L24) is this leaf over a
+   CLEARED table, and consuming it needs three things it does not have. Its
+   conclusion HIDES the world (`∃ w' t, …`), so `TableAt`/`SubtreeWrites` cannot
+   be stated about it — the fix is to re-close `body_runs` (public, and it names
+   the world `T1 (W4 …) ts …`) rather than to reprove anything. Its `hdict`
+   pins `.dict #[]`, so `head_runs` needs `probe_reads` +
+   `probe_lower_passes_at`/`probe_upper_passes_at` (all three above, and the two
+   pass gates land here unspent for exactly this). And `mid_runs` pins
+   `Heap.get? w.heap tm = some (.dict #[] svm)` — **the KILLER table**, which
+   `BoundRefinesP` constrains no more than `BoundRefines` did. `tp_move` is read
+   on every path (statement 6), so either the rule owes a `tp_move` premise or
+   `killer_misses` owes a `killer_reads` generalisation, exactly as
+   `probe_misses` owed `probe_reads`. Measured: at `gamma ≤ pos.score` a killer
+   in `tp_move` does NOT change the answer (both 0, both heap 74) because the
+   stand-pat yield precedes the killer test — so the leaf is true and the proof
+   is what needs the generalisation. At `gamma > pos.score` it changes the run
+   (heap 2882 against 2409), so the fail-low leaf needs it for real.
+2. **the FAIL-LOW leaf** — the fold runs out and the store takes its other arm.
+   The only leaf of the four that needs a fold, the only one that needs
+   `fold_report`'s fail-low half, and the only one where `SubtreeWrites`' `.alloc`
+   arm is finally spent — the two head leaves proved above never needed it, which
+   is why they were the ones to do first.
 
-Then the split itself is arithmetic on `(lo, up, gamma)`: `gamma ≤ lo` fires the
-lower return, `up < gamma` the upper, and `lo < gamma ≤ up` falls through to 3
-or 4 on `gamma ≤ pos.score`. `SubtreeWrites` at leaves 3 and 4 is where the
-`.alloc` arm is finally spent — this leaf never needed it, which is why it was
-the one to do first. -/
+`SubtreeWrites` at both is the same shape as here plus allocation: the counter
+bump, the generator and sorted-list pushes, and the store — `.other`, `.alloc`
+and `.store` in that order, and `trans` composes them. -/
 
 end Examples.python.sunfish.basecase_depth0

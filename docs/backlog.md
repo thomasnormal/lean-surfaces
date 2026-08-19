@@ -10714,3 +10714,85 @@ four more chains would spell out what the peel already says.
 
 **R1′ stays unwanted.** Nothing downstream computes a value (§L25), so a
 reference function naming the NUMBER is still priced and unbuilt.
+
+## L29 — R2a: THE ORDERING GENEXP'S ROUND, and the census corrects §L25 twice (2026-08-19)
+
+`Examples/python/sunfish/order_genexp.lean`, its own file per the throughput law
+(14 s against `bound_depth`'s 3 m 25 s). One round of the ordering genexp is
+proved — the call, the binding statement, the filter in all three arms — and the
+whole drain is MEASURED. Nothing else moved.
+
+### The two corrections, and both were the census's
+
+**1. There is no walrus.** §L25 reserved a session for it: *"the WALRUS `v :=`
+binds in the genexp's own frame — census it before writing the gate."* Ingestion
+lowered `(v := pos.value(m)) >= QS` into an ordinary `assign` HOISTED above the
+`if`, so `v` is a plain local, `genPlan gxBind = .delegate`, and the binding is an
+ordinary statement gate. `gxBind_lit`/`gxPlan_bind` pin it by `rfl`. **The
+construct the plan priced does not exist in the projected program** — the same
+shape as §L25's own finding that `yield from` was already lowered, and for the
+same reason.
+
+**2. `.forList` is R2c's problem, not R2a's.** §L25 named *"the `.forList`
+live-cursor frame"* among what the ordering line needs. It does — for the `for`
+over `sorted(…)`'s heap LIST. The genexp's own `for` runs over `.0`, which is the
+`.ref` `Position.gen_moves` answered, so its rule advances a GENERATOR by
+`stepIter` and `gen_moves_drains_ref` (§L8) is the supply. Two different `for`
+rules in one line, and only the census separates them.
+
+### What landed
+
+The genexp projected and its four `genPlan`s pinned (`forHere`, `delegate`,
+`branch`, `yieldHere`); `QS` resolves STATICALLY, so no gate here says anything
+about `w.globals`; `gx_call`, the creation arm at the three-parameter generator;
+the binding statement; and the filter in all three arms — clears the floor, below
+the floor with `depth` live, below the floor at `depth = 0` — with the two
+truthiness readings the `.branch` plan routes on.
+
+**Two altitude lemmas were owed and law 4 predicted them.** `boolChain_and_falsy`
+/`and2`/`and3` had no `or` twin; `boolChain_or_truthy` and `boolChain_or2` are it,
+four lines each. Third time the same law has paid: `and` (§L17), `compare`
+(§L28's `compare_one`), now `or`.
+
+**And R1 plugs in with no transport.** `gx_binds` takes `Position.value`'s answer
+as a `callIn` hypothesis and value_bound.lean's four `value_runs_*` discharge it.
+The bridge, `value_call_evals`, is three lines: past `posCls.2.ntBase.isSome` the
+interpreter's residue for a namedtuple method call is `callIn` under
+`Run.withLocals` — literally R1's conclusion. That is the payoff for having
+stated R1 at `callIn` rather than inside an expression.
+
+### The measurements, and one of them is the shipped comment in numbers
+
+On the opening position, whose `gen_moves` yields twenty moves:
+
+| measured | value |
+|---|---|
+| pairs drained at `depth = 0` | **2** — the only two moves clearing the 40-point QS floor |
+| pairs drained at `depth = 3` | **20** — the chain's second operand is truthy and the floor never applies |
+| objects allocated by the drain | **81** (heap 68 → 149) |
+| fuel that decides call + both drains | **208**; 200 refuses |
+
+The first two are sunfish.py:443's own comment — *"the QS floor lives here, ahead
+of the sort, so the fold never walks sub-floor junk"* — turned into a number, and
+they are `#guard`ed on the live engine rather than argued. The third cross-checks
+§L25's 84 for the whole ordering line: 81 of the 84 are the genexp's, so `sorted`
+and the outer `for` account for three, and the post-world is `++ ext`-shaped
+exactly as priced.
+
+### What R2a still owes
+
+The round is complete; the INDUCTION over rounds is not, and its shape is now
+fixed: a `moves_loop_cuts`-shaped round lemma (sf_order's worked precedent) rather
+than `genSilent_forHere`'s value-sequence form, over the inner generator, with
+`Heap.get?_append` carrying every slot the rest of `moves()` reads. The yield's
+payload is a heap-free two-value tuple (`gxYield_lit`), so the round's output owes
+no allocation lemma of its own.
+
+### Triad
+
+`lake build` **3682 jobs green** (3681 + this file); `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched**; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. Every one of
+the file's 25 printed declarations depends on `[propext, Classical.choice,
+Quot.sound]` or less, and the ten projection pins depend on `[propext]` alone or
+on nothing. No `sorry`, no `native_decide`.

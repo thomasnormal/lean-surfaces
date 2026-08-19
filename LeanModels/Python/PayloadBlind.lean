@@ -148,6 +148,34 @@ theorem Heap.get?_push_of_get? {h : Heap} {a : Addr} {o₀ : Obj} (g : Obj)
   rw [Heap.get?_eq_getElem?, Array.getElem?_push, if_neg hne, ← Heap.get?_eq_getElem?]
   exact hslot
 
+/-- **The slot's ANSWER survives allocation**, live or not — the same fact one
+step more general than `Heap.get?_push_of_get?`, which needs the slot to be
+occupied already. The one address a `push` moves is the fresh one, so `a ≠
+h.size` is the whole side condition; a frame lemma that must also cover a
+`none` answer (a probe of a slot the caller has not proved live) needs this
+form. Consumer: `Bracket.SubtreeWrites`'s allocation arm in DictCalc.lean.
+
+Proved from the `dif` rather than through `Array.getElem?_push`, and that is
+not style: **`Array.getElem?_push` depends on `Classical.choice`** while
+`Array.getElem_push_lt` depends on `propext` alone. Its sibling above pays
+that price; a lemma DictCalc consumes may not, because DictCalc's axiom set is
+choice-free by contract (docs/backlog.md §L13).
+
+The size arithmetic is by name and not by `omega` for the reason AGENTS.md's
+failure table gives for `PyInt`: `Addr` is a reducible abbrev of `Nat`, so a
+comparison headed at it is skipped wholesale and `omega` reports "no usable
+constraints" with the constraint in plain sight. -/
+theorem Heap.get?_push_ne {h : Heap} {a : Addr} {o : Obj} (hne : a ≠ h.size) :
+    Heap.get? (h.push o) a = Heap.get? h a := by
+  by_cases hlt : a < h.size
+  · have hlt' : a < (h.push o).size := by
+      rw [Array.size_push]; exact Nat.lt_succ_of_lt hlt
+    rw [Heap.get?, dif_pos hlt', Heap.get?, dif_pos hlt, Array.getElem_push_lt]
+  · have hlt' : ¬ a < (h.push o).size := by
+      rw [Array.size_push]
+      exact fun hc => (Nat.lt_succ_iff_lt_or_eq.mp hc).elim hlt hne
+    rw [Heap.get?, dif_neg hlt', Heap.get?, dif_neg hlt]
+
 /-- **Two swaps at DIFFERENT slots commute.** -/
 theorem Heap.swapAt_comm {h : Heap} {a b : Addr} {o v : Obj} (hne : b ≠ a) :
     Heap.swapAt (Heap.swapAt h a o) b v = Heap.swapAt (Heap.swapAt h b v) a o := by

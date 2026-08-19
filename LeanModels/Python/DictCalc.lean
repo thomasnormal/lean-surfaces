@@ -35,9 +35,10 @@ Nothing here mentions a program, a module literal or an interpreter run. It is
   heap. It needs nothing about the positions or the entries; the key
   comparison decides it.
 * §8 — `SubtreeWrites`: the recursion rule's table half. A child subtree is
-  any number of bracketing stores at other depths plus arbitrary writes
-  elsewhere, and across it the parent's probe is STABLE and the invariant
-  SURVIVES.
+  any number of bracketing stores at other depths, arbitrary writes elsewhere
+  and ALLOCATIONS, and across it the parent's probe is STABLE and the
+  invariant SURVIVES. `trans` makes a schedule of children one subtree, so a
+  move fold needs no third theorem.
 
 **Two things the proofs forced, both worth knowing before writing a schema.**
 
@@ -642,12 +643,17 @@ theorem heapGet_heapStore_depth_ne {h h' : Heap} {a : Addr} {p q : RVal} {d e : 
 can see: any number of steps, each either
 
 * a bracketing store at the table's OWN slot, keyed at a depth `≠ e` (a child
-  searching at `d - 1` while the parent probes at `d`), or
-* a write at ANY OTHER slot — the node counter, `tp_move`, an allocation.
+  searching at `d - 1` while the parent probes at `d`),
+* a write at ANY OTHER slot — the node counter, `tp_move`, a mutated list, or
+* an ALLOCATION, at a fresh address that is by construction not the table's.
 
-The two arms are exactly §L10 (b)'s split: the second is carried by the
-existing `Heap` frame algebra, the first is what the dict-contents calculus
-above adds. -/
+The first two arms are §L10 (b)'s split: the second is carried by the existing
+`Heap` frame algebra, the first is what the dict-contents calculus above adds.
+The third arm is not decoration — a child call of `Searcher.bound` allocates
+on every visit (the `moves()` generator object, the `sorted(...)` list), and
+`Heap.update` cannot describe an append. Without it the relation is true and
+UNINHABITABLE at the shipped code, and `probe_stable`/`tableAt` would be
+theorems about a subtree that does not exist. -/
 inductive Bracket.SubtreeWrites (S : Bracket) (a : Addr) (e : Int) : Heap → Heap → Prop
   | nil {h : Heap} : S.SubtreeWrites a e h h
   | store {h h₁ h₂ : Heap} {p v : RVal} {d : Int} :
@@ -656,6 +662,13 @@ inductive Bracket.SubtreeWrites (S : Bracket) (a : Addr) (e : Int) : Heap → He
       S.SubtreeWrites a e h₁ h₂ → S.SubtreeWrites a e h h₂
   | other {h h₁ h₂ : Heap} {b : Addr} {o : Obj} :
       b ≠ a → Heap.update h b o = some h₁ →
+      S.SubtreeWrites a e h₁ h₂ → S.SubtreeWrites a e h h₂
+  /-- The fresh address is `h.size`, and the side condition `a ≠ b` says the
+  table is not it — which a live table discharges outright. It is a real
+  condition and not a formality: at `a = h.size` the probe's answer changes
+  from `.unsupported` (dangling) to whatever was appended. -/
+  | alloc {h h₁ h₂ : Heap} {o : Obj} {b : Addr} :
+      Heap.alloc h o = (h₁, b) → a ≠ b →
       S.SubtreeWrites a e h₁ h₂ → S.SubtreeWrites a e h h₂
 
 /-- **The parent's probe is blind to the whole child subtree.** This is the
@@ -673,15 +686,47 @@ theorem Bracket.SubtreeWrites.probe_stable {S : Bracket} {a : Addr} {e : Int}
         simp [hashableKey, hashableKeyList, hq]
       rw [probe_stable hq rest]
       simp only [heapGet, Heap.get?_update_ne hu (Ne.symm hb), if_pos hqk]
+  | h, h', .alloc ha hab rest => by
+      have ih := probe_stable (dflt := dflt) hq rest
+      have hqk : hashableKey (RVal.tuple #[q, .int e]) = true := by
+        simp [hashableKey, hashableKeyList, hq]
+      simp only [Heap.alloc, Prod.mk.injEq] at ha
+      obtain ⟨rfl, rfl⟩ := ha
+      rw [ih]
+      simp only [heapGet, Heap.get?_push_ne hab, if_pos hqk]
 
 /-- **And the invariant survives it.** Together with `probe_stable` this is the
 whole of what a depth-`d` statement has to know about its children's effect on
-the table. -/
+the table.
+
+Both new arms read the slot through `Heap.get?_push_ne` rather than through
+its older sibling `Heap.get?_push_of_get?`: the probe's arm needs the extra
+generality (a probe carries no liveness hypothesis), and this one needs the
+CHOICE-FREEDOM — the sibling goes through `Array.getElem?_push`, which costs
+`Classical.choice`. -/
 theorem Bracket.SubtreeWrites.tableAt {S : Bracket} (hd : S.KeyDetermined) {a : Addr} {e : Int} :
     {h h' : Heap} → S.SubtreeWrites a e h h' → S.TableAt h a → S.TableAt h' a
   | _, _, .nil, ht => ht
   | _, _, .store _ hv hs rest, ht => tableAt hd rest (ht.store hd hv hs)
   | _, _, .other hb hu rest, ht => tableAt hd rest (ht.update_ne hb hu)
+  | _, _, .alloc ha _ rest, ht => by
+      refine tableAt hd rest ?_
+      obtain ⟨es, ver, hg, hok⟩ := ht
+      simp only [Heap.alloc, Prod.mk.injEq] at ha
+      obtain ⟨rfl, -⟩ := ha
+      exact ⟨es, ver, (Heap.get?_push_ne (Nat.ne_of_lt (Heap.lt_size_of_get? hg))).trans hg, hok⟩
+
+/-- **A schedule's worth of children is ONE subtree.** The relation is already
+a chain, so composing the fold's rounds costs an append and no new reasoning:
+this is why threading the table through the move loop needs nothing beyond the
+two theorems above. -/
+theorem Bracket.SubtreeWrites.trans {S : Bracket} {a : Addr} {e : Int} :
+    {h h₁ h₂ : Heap} → S.SubtreeWrites a e h h₁ → S.SubtreeWrites a e h₁ h₂ →
+    S.SubtreeWrites a e h h₂
+  | _, _, _, .nil, k => k
+  | _, _, _, .store hne hv hs rest, k => .store hne hv hs (trans rest k)
+  | _, _, _, .other hb hu rest, k => .other hb hu (trans rest k)
+  | _, _, _, .alloc ha hab rest, k => .alloc ha hab (trans rest k)
 
 /-! ## §9 Non-vacuity -/
 
@@ -710,6 +755,19 @@ the reason `pairKey` reads both. -/
 #guard entryBounds (entryV 3 7) == some (3, 7)
 #guard entryBounds (.int 3) == Option.none
 
+/-! **The allocation arm, and why its side condition is real.** A one-slot heap
+holding the table: appending leaves the probe's answer alone at slot `0`, and
+the fresh address is `1` — where the same append turns a dangling read into a
+live one. `a ≠ b` is that difference, not a formality. -/
+private def hTab : Heap := #[.dict #[(kA, entryV 3 7)] 1]
+
+#guard heapGet hTab 0 kA (.int 0) == Res.ok (entryV 3 7)
+#guard heapGet (Heap.alloc hTab (.list #[])).1 0 kA (.int 0) == Res.ok (entryV 3 7)
+#guard (Heap.alloc hTab (.list #[])).2 == 1
+#guard Heap.get? hTab 1 == Option.none
+#guard (Heap.get? (Heap.alloc hTab (.list #[])).1 1).isSome
+#guard Heap.update hTab 1 (.list #[]) == Option.none
+
 #print axioms keyEq_refl
 #print axioms keyEq_trans
 #print axioms dictFind_store_self
@@ -723,6 +781,7 @@ the reason `pairKey` reads both. -/
 #print axioms heapGet_heapStore_depth_ne
 #print axioms Bracket.SubtreeWrites.probe_stable
 #print axioms Bracket.SubtreeWrites.tableAt
+#print axioms Bracket.SubtreeWrites.trans
 #print axioms narrowBracket_not_keyDetermined
 
 end LeanModels.Python

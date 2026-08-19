@@ -3682,6 +3682,22 @@ objects, which is interpreter work and is priced. -/
 def RecursionStep (V : RVal → Int → Int) : Prop :=
   ∀ d : Int, 1 ≤ d → (∀ e : Int, 0 ≤ e → e < d → BoundRefines V e) → BoundRefines V d
 
+/-! **SUPERSEDED (2026-08-19).** `BoundRefines` is FALSE — `not_boundRefines`
+(`basecase_depth0.lean`, commit `a8e3393`) refutes it at `pos := .int 5`, where
+the shipped `bound()` reaches `pos.score` and refuses. So the definition above is
+**vacuously true**: its hypothesis `∀ e < d, BoundRefines V e` includes `e = 0`
+and cannot be met. The strong-induction shape is right and is kept; the
+proposition it ranged over is not.
+
+The successor is `RecursionStepW` (`Examples/python/sunfish/recursion_step.lean`),
+strong induction over `BoundRefinesW` — the repair landed at `d13d2ae`, whose
+`RefinesAt` conclusion is character-for-character this one, so leaves transfer
+unchanged (`boundRefines_eq` is the receipt). It lives in its own file because
+`basecase_depth0.lean` imports THIS file and the reference would invert the
+import; and this definition stays exactly as recorded because a recorded
+statement is never edited into something else (§L23). **R3 reads
+`RecursionStepW`, not this.** -/
+
 /-! **Why the induction is STRONG, decided at plan time rather than at proof
 time** (docs/backlog.md §L25). The rule as first written took `BoundRefines V
 (d - 1)` — the immediate predecessor — and that is not what the shipped body

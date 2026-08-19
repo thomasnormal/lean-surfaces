@@ -556,6 +556,14 @@ theorem minNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "min" := by
 theorem minCls : findClassAux sunfish.classes.toList "min" 0 = Option.none := rfl
 theorem minNT : findNamedTupleAux sunfish.namedtuples.toList "min" = Option.none := rfl
 
+theorem absG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "abs"
+    = Option.none := rfl
+theorem absF : findFunction sunfish "abs" = Option.none := rfl
+theorem absNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "abs" := by
+  simpa [findFunction] using absF
+theorem absCls : findClassAux sunfish.classes.toList "abs" 0 = Option.none := rfl
+theorem absNT : findNamedTupleAux sunfish.namedtuples.toList "abs" = Option.none := rfl
+
 theorem mlG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
     "MATE_LOWER" = some Option.none := rfl
 theorem muG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
@@ -1210,6 +1218,19 @@ theorem boolChain_and3 {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
   rw [evalBoolChain, h2]
   simp only [Run.bind, Run.liftRes, hb2, if_true, Bool.false_eq_true, if_false]
 
+/-- And a TWO-operand chain returns its last operand's value outright — the
+`calm` shape, where the second operand is the one that decides. -/
+theorem boolChain_and2 {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {e1 e2 : Expr} {v1 v2 : RVal}
+    (h1 : evalExpr m (F + 1) st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok true)
+    (h2 : evalExpr m F st₁ e2 = .ok st₂ v2) :
+    evalBoolChain m (F + 2) st .and e1 [e2] = .ok st₂ v2 := by
+  rw [evalBoolChain, h1]
+  simp only [Run.bind, Run.liftRes, hb1, if_true]
+  rw [evalBoolChain, h2]
+  simp only [Run.bind]
+
 /-- **GATE 12 — `nmr` is `False` at every QS node, and no child runs.**
 An EXPRESSION gate rather than a statement gate, like `max_evals`: what has to
 be said is that the chain's value is `False`, and it is `False` for two
@@ -1253,6 +1274,155 @@ theorem acc_inits (w : World) (e : REnv)
   obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, h⟩ := sbAcc_lit
   rw [h]
   py_simp [-globalsFold, -globalsStep, hnomu, hmu, muG]
+
+/-! ### Statements 7 and 8 — the nested `def` with its CELL, and `calm`
+
+The two the head batch left owed. Statement 7 is §L14's cell tier spent for the
+first time on the shipped file; statement 8 is the head's only lowered genexp,
+and its gate names the genexp's answer rather than deciding it. -/
+
+/-- **The `def` statement, cell-aware.** `execStmt_nestedDef` (GenBound.lean)
+requires `allocCells st caps = st` — NO cells — and the shipped `moves()`
+captures `<cell>guard`, so it does not apply. This is the same theorem with the
+post-allocation frame as its own variable; the snapshot-tier version is the
+`st' = st` case. A strict generalization, so it belongs in GenBound at the
+second consumer; it is here because this is the first. -/
+theorem execStmt_nestedDef_cells {m : Module} {fuel : Nat} {st st' : FrameState}
+    {name : String} {params : Array Param} {argsOk localsOk hasGlobal isGenerator : Bool}
+    {body : Array Stmt} {captures : Array String} {cap : REnv} {sp : Span}
+    (hnc : allocCells st captures.toList = st')
+    (hcap : capturesSnapshot st'.locals captures.toList = some cap) :
+    execStmt m (fuel + 1) st
+        (.defStmt name params argsOk localsOk hasGlobal isGenerator body captures sp)
+      = .ok ⟨{ st'.world with
+                heap := st'.world.heap.push
+                  (.closure name params argsOk localsOk hasGlobal isGenerator body cap) },
+              Env.set st'.locals name (.ref st'.world.heap.size)⟩ .next := by
+  rw [execStmt]
+  simp only [hnc, hcap]
+
+/-- **The cell the `def` allocates for `guard`, and it is EMPTY.** `guard` is
+assigned at statement 9, BELOW the `def` at 7, so at allocation time the name
+has no binding — which is exactly the shape the snapshot tier refused (§L13)
+and the cell admits. A cell holding `none` is not a defect; it is the reason
+the cell exists. -/
+def guardCell : Obj := .cell Option.none
+
+/-- **The allocation, computed.** Four captures are plain names and allocate
+nothing; the fifth is the cell directory key and pushes one object. -/
+theorem sbDef_cells (w : World) (e : REnv)
+    (hnocell : Env.lookup e "<cell>guard" = Option.none)
+    (hnoguard : Env.lookup e "guard" = Option.none) :
+    allocCells ⟨w, e⟩ ["depth", "gamma", "<cell>guard", "killer", "pos"]
+      = ⟨{ w with heap := w.heap.push guardCell },
+          Env.set e "<cell>guard" (.ref w.heap.size)⟩ := by
+  have k1 : isCellKey "depth" = false := by simp [isCellKey, String.isPrefixOf]
+  have k2 : isCellKey "gamma" = false := by simp [isCellKey, String.isPrefixOf]
+  have k3 : isCellKey "<cell>guard" = true := by simp [isCellKey, String.isPrefixOf]
+  have k4 : isCellKey "killer" = false := by simp [isCellKey, String.isPrefixOf]
+  have k5 : isCellKey "pos" = false := by simp [isCellKey, String.isPrefixOf]
+  have kn : cellName "<cell>guard" = "guard" := by rfl
+  simp only [allocCells, k1, k2, k3, k4, k5, kn, hnocell, hnoguard,
+    Bool.false_eq_true, if_false, if_true, guardCell]
+
+/-- The captures snapshot: four VALUES and one cell REF — the directory entry,
+not `guard`'s value, which is the whole difference from a snapshot. -/
+def sbMovesCap (a : Addr) (gamma d : Int) (kv pv : RVal) : REnv :=
+  [("depth", .int d), ("gamma", .int gamma), ("<cell>guard", .ref a),
+   ("killer", kv), ("pos", pv)]
+
+/-- The closure object, projected off the statement so no component of the
+shipped `def` is spelled by hand. -/
+def sbMovesClosure (a : Addr) (gamma d : Int) (kv pv : RVal) : Obj :=
+  match sbDef with
+  | .defStmt nm ps ao lo hgl ig body _ _ =>
+      .closure nm ps ao lo hgl ig body (sbMovesCap a gamma d kv pv)
+  | _ => default
+
+theorem sbDef_snapshot (w : World) (e : REnv) (gamma d : Int) (kv pv : RVal)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hk : Env.lookup e "killer" = some kv)
+    (hp : Env.lookup e "pos" = some pv) :
+    capturesSnapshot (Env.set e "<cell>guard" (.ref w.heap.size))
+        ["depth", "gamma", "<cell>guard", "killer", "pos"]
+      = some (sbMovesCap w.heap.size gamma d kv pv) := by
+  simp [capturesSnapshot, sbMovesCap, Env.lookup_set_self, Env.lookup_set_ne,
+    hd, hg, hk, hp]
+
+/-- The world after the cell, and after the closure beside it. Named rather
+than inlined because a structure-instance field value may not continue on a
+less-indented line (§L9 finding 4). -/
+def sbW1 (w : World) : World := { w with heap := w.heap.push guardCell }
+
+def sbW2 (w : World) (gamma d : Int) (kv pv : RVal) : World :=
+  { sbW1 w with heap := (sbW1 w).heap.push (sbMovesClosure w.heap.size gamma d kv pv) }
+
+/-- The frame after the `def`: the cell directory entry, then the closure name. -/
+def sbEnvDef (w : World) (e : REnv) : REnv :=
+  Env.set (Env.set e "<cell>guard" (.ref w.heap.size)) "moves" (.ref (w.heap.size + 1))
+
+/-- **GATE 14 — `def moves():` allocates the CELL and the closure**, in that
+order, and binds the name. TWO heap objects where the snapshot tier pushed one,
+and the extra one is what makes the shipped source order legal. -/
+theorem moves_def_allocates (w : World) (e : REnv) (F : Nat) (gamma d : Int) (kv pv : RVal)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hk : Env.lookup e "killer" = some kv)
+    (hp : Env.lookup e "pos" = some pv)
+    (hnoguard : Env.lookup e "guard" = Option.none)
+    (hnocell : Env.lookup e "<cell>guard" = Option.none) :
+    execStmt sunfish (F + 1) ⟨w, e⟩ sbDef
+      = .ok ⟨sbW2 w gamma d kv pv, sbEnvDef w e⟩ .next := by
+  obtain ⟨ps, ao, lo, hgl, b, sp, hdef⟩ := sbDef_captures
+  rw [hdef]
+  have hcells := sbDef_cells w e hnocell hnoguard
+  have hsnap := sbDef_snapshot w e gamma d kv pv hd hg hk hp
+  rw [execStmt_nestedDef_cells (st' := ⟨sbW1 w, Env.set e "<cell>guard" (.ref w.heap.size)⟩)
+    (by simpa [sbW1] using hcells) (by simpa using hsnap)]
+  simp only [sbMovesClosure, hdef, sbW2, sbW1, sbEnvDef, Array.size_push]
+
+/-- `abs(pos.score) < 750`, the calmness test's first conjunct — `abs`'s
+resolution is `max`'s, and the field read is the `Position` projection again. -/
+theorem abs_score_evals (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (p1 p2 p3 p4 p5 p6 : Span)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnoabs : Env.lookup e "abs" = Option.none)
+    (hlt : -750 < sc ∧ sc < 750) :
+    evalExpr sunfish 6 ⟨w, e⟩
+        (.compare (.call (.name "abs" p1) #[.attribute (.name "pos" p2) "score" p3] #[]
+          Option.none p4) #[.lt] #[.constant (.int 750) p5] p6)
+      = .ok ⟨w, e⟩ (.bool true) := by
+  py_simp [-globalsFold, -globalsStep, hpos, hnoabs, absG, absNotFun, absCls, absNT,
+    posOf, posCAux, posCls_methods]
+  omega
+
+/-- **GATE 15 — `calm` is whatever the BOARD says, and the gate says exactly
+that.** The second conjunct is `any(<genexpr@3>("RBNQ", pos))` — the head's one
+lowered genexp, drained by `any` — and its value depends on which piece letters
+the board carries. So `hg` names that answer instead of deciding it: one
+`evalExpr` premise, discharged per board, and the chain's value IS it.
+
+That the premise can stay open is a fact about depth 0, not a shortcut: `calm`
+reaches the fold only through `guard`, and `guard` is read at `2 < depth < 6`
+(the scoring null) and at `guard and depth >= 6` (intrinsic LMR). Both are
+false at a QS node, so the depth-0 statement never consults it. A depth-≥2 gate
+owes the genexp its own drain. -/
+theorem calm_evals (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (g : Expr) (av : Bool)
+    (p1 p2 p3 p4 p5 p6 p7 : Span)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnoabs : Env.lookup e "abs" = Option.none)
+    (hlt : -750 < sc ∧ sc < 750)
+    (hg : evalExpr sunfish 5 ⟨w, e⟩ g = .ok ⟨w, e⟩ (.bool av)) :
+    evalExpr sunfish 8 ⟨w, e⟩
+        (.boolOp .and
+          #[.compare (.call (.name "abs" p1) #[.attribute (.name "pos" p2) "score" p3] #[]
+              Option.none p4) #[.lt] #[.constant (.int 750) p5] p6, g] p7)
+      = .ok ⟨w, e⟩ (.bool av) := by
+  rw [evalExpr]
+  exact boolChain_and2 (F := 5)
+    (abs_score_evals w e b sc wc0 wc1 bc0 bc1 ep kp p1 p2 p3 p4 p5 p6 hpos hnoabs hlt) rfl hg
 
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
@@ -1719,7 +1889,17 @@ moves, QS, futility and the reductions"*, and under that definition (b) is
 definitional and (a) is the whole content. Against a model whose value is the
 unreduced, unpruned negamax, (b) is a genuine axiom and belongs in `formal/`.
 Either way the premise stays VISIBLE, which is what `settle_needs_futility`
-bought. -/
+bought.
+
+**THE CHOICE, TAKEN (default, pending ratification — docs/backlog.md §L18).**
+`bound_refines_fuelModel` is stated against the DOCSTRING's `s*`: the promise
+`report_iff_docstring` already pins, where (b) is definitional. `formal/`'s
+`CapInBand` (`formal/Sunfish/CappedMove.lean`) is the recorded axiom for the
+unreduced-negamax gap, and the two repositories split the claim cleanly — this
+lane proves the CODE KEEPS ITS OWN DOCUMENTED PROMISE, `formal/` carries the
+search-theory content. The premise STRUCTURE below is deliberately unchanged by
+the choice: `hneg` and `hfut` are hypotheses either way, so the two readings are
+one definition of `V` apart and restating is a rename, not a reproof. -/
 
 /-- The futility cap is monotone in the move's static value — the first half of
 what the sorted stream buys. -/
@@ -2112,6 +2292,15 @@ assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`
   | Option.none => false)
 #guard hashableKey (posH 0) == true
 #guard hashableKey (tpKey (posH 0) 0) == true
+
+/-! **`<genexpr@3>` is real**, and `calm_evals`' premise is about a function the
+census actually carries — the lowered `any(c in pos.board for c in "RBNQ")`.
+The cell directory key is the tier's own spelling, and `guard` is not a plain
+capture: both pinned, so neither can drift silently. -/
+#guard sunfish.functions.toList.any (fun f => f.name == "<genexpr@3>")
+#guard isCellKey "<cell>guard" && !isCellKey "guard"
+#guard cellName "<cell>guard" == "guard"
+#guard guardCell == Obj.cell Option.none
 #guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
 
 #print axioms bound_enters
@@ -2158,6 +2347,14 @@ assumes only `depth = 0`, which `depth_refloors` produces from any `depth ≤ 0`
 #print axioms boolChain_and3
 #print axioms nmr_evals
 #print axioms acc_inits
+#print axioms boolChain_and2
+#print axioms execStmt_nestedDef_cells
+#print axioms sbDef_cells
+#print axioms sbDef_snapshot
+#print axioms moves_def_allocates
+#print axioms abs_score_evals
+#print axioms calm_evals
+#print axioms absNotFun
 #print axioms nmarG
 #print axioms posCls_ntBase_isSome
 #print axioms sf_body_tableAt

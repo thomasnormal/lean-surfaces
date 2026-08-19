@@ -304,21 +304,38 @@ theorem value_scores (w : World) (e : REnv) (pa : Addr) (pc : String)
 
 /-! ## What R1 still owes, in order
 
-`vlPQ`, `vlScore`, `vlCap`, `vlKp`, `vlCastle`, `vlPawn` — six gates. `vlPQ` is
-pinned and blocked only on the computed-shape restatement above; the six-way
-case split on the piece letter lives in `vlScore` and `vlCap`. The
-premises they will need, read off the shipped body and to be measured before
-each is written:
+Four of the eight statements have gates: the unpack (1), the board reads (2),
+the table delta (3) and the return (8). **The four `if`s remain**, and every one
+of them indexes `pst`, so every one of them takes GATE 3's shape — the row as a
+premise, the answer in the row's own entries, the index conditionals discharged
+by an in-range hypothesis. The law is landed; what is left is applying it.
 
-* `board[i]` and `board[j]` in range — `gen_moves` supplies both;
-* `board[i] ∈ pstKeys` — else `pst[p]` is a genuine `KeyError`, and the
-  reference declines rather than guesses;
-* `q ∈ "pnbrqk" → q.upper() ∈ pstKeys` for the capture arm;
-* `0 ≤ j ≤ 119` and `0 ≤ 119 - j ≤ 119` for every table index;
-* `prom ∈ pstKeys` on the promotion arm only, which the `A8 ≤ j ≤ H8` guard
-  is what restricts.
+* **GATE 4, `vlCap`** — `if q in "pnbrqk": score += pst[q.upper()][119 - j]`.
+  Two cases on the membership test; the true arm needs `q.upper()`'s row and
+  `0 ≤ 119 - j < 120`.
+* **GATE 5, `vlKp`** — `if abs(j - self.kp) < 2: score += pst["K"][119 - j]`.
+  Two cases on a test over a free `kp`; the `"K"` row is a literal key, so its
+  row premise is the only new one.
+* **GATE 6, `vlCastle`** — `if p == "K" and abs(i - j) == 2:`, two statements
+  inside, reading `pst["R"]` at `(i + j) // 2` and at `A1 if j < i else H1`.
+  `A1`/`H1` resolve STATICALLY (§H4's dirty-name pass admits them), so this gate
+  says nothing about `w.globals` beyond `pst` — census that before writing it.
+* **GATE 7, `vlPawn`** — `if p == "P":`, with `A8 ≤ j ≤ H8` (a chained compare)
+  and `j == self.ep` inside. The promotion arm reads `pst[prom]`, and `prom` is
+  `""` on every non-promotion move — so the arm is REACHABLE only under the
+  `A8 ≤ j ≤ H8` guard, and that guard is what restricts `prom` to `pstKeys`.
+  Census the empty-`prom` case first: `pst[""]` would be a `KeyError`, so the
+  guard is load-bearing and not decoration.
 
-Then `value_runs` composes them at `callIn`, in the ∃-fuel form, with the
-answer EXISTENTIAL — §L25's re-sequencing. -/
+Then `value_runs` composes the eight at `callIn`, in the ∃-fuel form, with the
+answer EXISTENTIAL — §L25's re-sequencing. `execStmts_append` and
+`execStmts_singleton` (bound_depth.lean) are the composition engine and are
+already general.
+
+**The 8-second checks this file still owes**, one per gate, before its premise
+is written: run the statement on the fixture and confirm the world does not
+move. `Position.value` as a WHOLE is heap-free (guarded above), which makes each
+statement heap-free too — but the guard is on the whole, so a gate that claims
+it per statement should say so from the whole, not assume it. -/
 
 end Examples.python.sunfish.value_bound

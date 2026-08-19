@@ -1137,6 +1137,40 @@ theorem execStmt_if_false {m : Module} {F : Nat} {st st₁ : FrameState}
   rw [execStmt, hc]
   simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false]
 
+/-- **An expression gate, wrapped as a statement.** `name = <expr>` binds the
+value the expression evaluates to — the one `assign` arm, so an EXPRESSION gate
+(`calm_evals`, `nmr_evals`) becomes a statement gate for free. -/
+theorem execStmt_assign_name {m : Module} {F : Nat} {st st₁ : FrameState}
+    {nm : String} {rhs : Expr} {v : RVal} {sp p : Span}
+    (h : evalExpr m F st rhs = .ok st₁ v) :
+    execStmt m (F + 1) st (.assign #[.name nm p] rhs sp)
+      = .ok ⟨st₁.world, Env.set st₁.locals nm v⟩ .next := by
+  rw [execStmt, h]
+  simp only [Run.bind, Run.liftRes, assignToH, assignTo]
+
+/-- **A statement triple, read back as a decided run.** Every arm but `next` is
+`False`, so the run cannot have escaped — the extraction the fold gate needs
+before it can join the chain. -/
+theorem execStmt_of_stmtTriple {m : Module} {P : FrameState → Prop} {s : Stmt}
+    {w' : World} {e' : REnv}
+    (h : PyStmtTriple m P s { next := fun st => st = ⟨w', e'⟩ })
+    (st : FrameState) (hP : P st) :
+    ∃ f, execStmt m f st s = .ok ⟨w', e'⟩ .next := by
+  obtain ⟨t, ht⟩ := h st hP
+  refine ⟨t, ?_⟩
+  have hh := ht t (Nat.le_refl t)
+  cases hx : execStmt m t st s with
+  | ok st'' flow =>
+      rw [hx] at hh
+      cases flow with
+      | next => rw [show st'' = (⟨w', e'⟩ : FrameState) from hh]
+      | brk => exact absurd hh (by simp [PyPost.holds])
+      | cont => exact absurd hh (by simp [PyPost.holds])
+      | ret v => exact absurd hh (by simp [PyPost.holds])
+  | exn st'' er => rw [hx] at hh; exact absurd hh (by simp [PyPost.holds])
+  | timeout => rw [hx] at hh; exact absurd hh (by simp [PyPost.holds])
+  | unsupported msg => rw [hx] at hh; exact absurd hh (by simp [PyPost.holds])
+
 /-- **THE COMPOSABILITY ENGINE.** Two decided runs in sequence are one decided
 run of the concatenation, in the ∃-fuel form `QSStandPat` is itself stated in —
 so the fuel bookkeeping is internal (`execStmt_mono`/`execStmts_mono` at a summed
@@ -1633,6 +1667,45 @@ theorem calm_evals (w : World) (e : REnv) (b : String) (sc : Int)
   rw [evalExpr]
   exact boolChain_and2 (F := 5)
     (abs_score_evals w e b sc wc0 wc1 bc0 bc1 ep kp p1 p2 p3 p4 p5 p6 hpos hnoabs hlt) rfl hg
+
+/-! ### The two EXPRESSION gates, wrapped
+
+§L21's wrinkles 8 and 11, one line each as priced: `execStmt_assign_name` turns
+`calm_evals`/`nmr_evals` into statement gates, so every statement of the
+eighteen now has a gate of the SAME shape and the chain is uniform. -/
+
+/-- The calmness test's SECOND conjunct, projected: `any(<genexpr@3>("RBNQ",
+pos))`. Its value is the board's business, so it is a premise everywhere. -/
+def calmG : Expr :=
+  match sbCalm with
+  | .assign _ (.boolOp _ vs _) _ =>
+      (match vs.toList with | _ :: g :: _ => g | _ => .constant .none nowhere)
+  | _ => .constant .none nowhere
+
+/-- Statement 8 as a statement gate: the expression gate through the `assign`
+wrapper, with the genexp's answer named. -/
+theorem calm_binds (w : World) (e : REnv) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool)
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnoabs : Env.lookup e "abs" = Option.none)
+    (hlt : -750 < sc ∧ sc < 750)
+    (hg : evalExpr sunfish 5 ⟨w, e⟩ calmG = .ok ⟨w, e⟩ (.bool av)) :
+    execStmt sunfish 9 ⟨w, e⟩ sbCalm = .ok ⟨w, Env.set e "calm" (.bool av)⟩ .next := by
+  obtain ⟨g, p0, p1, p2, p3, p4, p5, p6, p7, p8, hcalm⟩ := sbCalm_lit
+  have hgg : calmG = g := by rw [calmG, hcalm]
+  rw [hcalm]
+  exact execStmt_assign_name (F := 8)
+    (calm_evals w e b sc wc0 wc1 bc0 bc1 ep kp g av p1 p2 p3 p4 p5 p6 p7 hpos hnoabs hlt
+      (by rw [← hgg]; exact hg))
+
+/-- Statement 11 the same way. -/
+theorem nmr_binds (w : World) (e : REnv) (cm : Bool)
+    (hcalm : Env.lookup e "calm" = some (.bool cm))
+    (hd : Env.lookup e "depth" = some (.int 0)) :
+    execStmt sunfish 9 ⟨w, e⟩ sbNmr = .ok ⟨w, Env.set e "nmr" (.bool false)⟩ .next := by
+  obtain ⟨r, p0, p1, p2, p3, p4, p5, p6, p7, p8, hn⟩ := sbNmr_lit
+  rw [hn]
+  exact execStmt_assign_name (F := 8) (nmr_evals w e cm r p1 p2 p3 p4 p5 p6 p7 hcalm hd)
 
 /-! ### Statement 13 — THE FOLD, via `PyStmtTriple.forGen`
 
@@ -2929,6 +3002,10 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms execStmts_append
 #print axioms execStmts_singleton
 #print axioms head_runs
+#print axioms execStmt_assign_name
+#print axioms execStmt_of_stmtTriple
+#print axioms calm_binds
+#print axioms nmr_binds
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

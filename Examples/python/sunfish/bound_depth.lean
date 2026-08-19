@@ -1710,6 +1710,67 @@ theorem evict_dead (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
   rw [h, execStmt_if_false hc rfl]
   simp only [execStmts]
 
+/-! ### Statement 15 — THE TABLE STORE, and where the two halves meet
+
+The last of the eighteen. `self.tp_score[pos, depth] = Entry(best, entry.upper)
+if best >= gamma else Entry(entry.lower, best)` — the only tail statement that
+changes the heap, and at a stand-pat node the conditional takes its `best >=
+gamma` arm, so what lands is `Entry(pos.score, MATE_UPPER)`.
+
+The gate concludes with the COMPUTED heap rather than an abstract `h'`: the
+subscript-store path inlines past `heapStore` into `Heap.update`'s `dif`, so a
+`heapStore` premise cannot match what `py_simp` leaves. `bound_enters` took the
+same shape for the same reason. The two `Array.set` terms then differ only in
+their liveness PROOF, and proof irrelevance closes it — one `rfl`.
+
+**And this is where §4 and §7 meet.** `sf_store` (§6) needs `lo ≤ V p d ∧ V p d
+≤ up`: the invariant half, proved since §L15, waiting for someone to discharge
+its hypothesis. `fold_report` (§7) produces `Report gamma best (V p d)`: the
+arithmetic half, proved since §L16, with nothing to hand it to.
+`sf_store_from_report` is the join, and it is stated in §7 where both halves are
+in scope: a fail-high report IS the lower bound the store's entry needs, and
+`gamma ≤ best` is what forces `Report`'s right disjunct. The upper bound is the
+mate band, which stays a model-side premise. -/
+
+/-- The dict object the QS store leaves at `tp_score`: the table plus one
+`(pos, 0) |-> Entry(best, MATE_UPPER)` entry, with the shape version bumped iff
+the key was new. -/
+def sbStored (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (sc : Int) : Obj :=
+  .dict (dictStore es.toList (tpKey pv 0) (entryOf sc mateUpper)).1.toArray
+    (if (dictStore es.toList (tpKey pv 0) (entryOf sc mateUpper)).2 = true then sv + 1 else sv)
+
+theorem store_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hlt : ts < w.heap.size)
+    (hge : gamma ≤ sc) (hk : hashableKey pv = true) :
+    execStmt sunfish 20 ⟨w, e⟩ sbStore
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStored es sv pv sc) hlt }, e⟩ .next := by
+  obtain ⟨p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+    hs'⟩ := sbStore_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 19 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hs', execStmt_if_true hc rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe, entryDefault,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey, sbStored, dif_pos hlt]
+  rw [if_pos hge]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe, entryDefault,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey, sbStored, dif_pos hlt]
+  rfl
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -2298,6 +2359,31 @@ theorem sf_rounds_probe {V : RVal → Int → Int} {ts : Addr} {e : Int} {q : RV
     heapGet h₂ ts (tpKey q e) entryDefault = heapGet h ts (tpKey q e) entryDefault :=
   sf_subtree_probe hq (c₁.trans c₂)
 
+/-- **WHERE THE TWO HALVES MEET.** `sf_store` (§6) has needed `lo ≤ V p d ∧ V p
+d ≤ up` since §L15 with nothing to discharge it; `fold_report` (§7) has produced
+`Report gamma best (V p d)` since §L16 with nothing to hand it to. This is the
+join: a FAIL-HIGH report is exactly the lower bound the store's entry claims,
+because `gamma ≤ best` forces `Report`'s right disjunct. `store_runs` (§4) is
+the interpreter run that puts the entry there, so the three sections close a
+circle — the code stores a bound, the fold proves it is one, and the calculus
+keeps the table's invariant across it.
+
+`hband` stays a premise: `V p d ≤ MATE_UPPER` is the mate band, a model-side
+fact about the value function and not something the store can establish. -/
+theorem sf_store_from_report {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    {h h' : Heap} {ts : Addr} {p : RVal} {d gamma sc : Int}
+    (ht : (sfBracket V).TableAt h ts)
+    (hrep : Report gamma sc (V p d))
+    (hge : gamma ≤ sc)
+    (hband : V p d ≤ mateUpper)
+    (hs : heapStore h ts (tpKey p d) (entryOf sc mateUpper) = .ok h') :
+    (sfBracket V).TableAt h' ts := by
+  refine sf_store hV ht ⟨?_, hband⟩ hs
+  rcases hrep with ⟨h1, -⟩ | ⟨-, h2⟩
+  · omega
+  · exact h2
+
 /-- §3's `LoopFrame` is the QS SPECIALIZATION — it pins `depth = 0` and `nmr =
 false`, which is what makes the QS fold heap-free. The recursion rule needs the
 same slots at an arbitrary depth, so here they are with both carried. -/
@@ -2600,6 +2686,13 @@ resolves statically like `NULL_MARGIN` (so `evict_dead` says nothing about
 `w.globals`), and one entry is nowhere near the cap. -/
 #guard tableSize == 1000000
 #guard decide ((1 : Int) ≤ tableSize)
+
+/-! **What the store leaves, on the live engine.** The depth-0 call's own
+`tp_score` entry after the stand-pat cut — `(pos, 0) |-> Entry(0, MATE_UPPER)` —
+is what §5's `#guard` below already reads off a real run, and `sbStored` is that
+object's shape. The decoder agrees with the interpreter on it. -/
+#guard entryBounds (entryOf 0 mateUpper) == some (0, mateUpper)
+#guard (dictStore [] (tpKey (posH 0) 0) (entryOf 0 mateUpper)).2 == true
 #guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
 
 #print axioms bound_enters
@@ -2668,6 +2761,8 @@ resolves statically like `NULL_MARGIN` (so `evict_dead` says nothing about
 #print axioms ret_best
 #print axioms evict_dead
 #print axioms tsG
+#print axioms store_runs
+#print axioms sf_store_from_report
 #print axioms absNotFun
 #print axioms nmarG
 #print axioms posCls_ntBase_isSome

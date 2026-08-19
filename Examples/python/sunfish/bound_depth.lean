@@ -1137,6 +1137,57 @@ theorem execStmt_if_false {m : Module} {F : Nat} {st st₁ : FrameState}
   rw [execStmt, hc]
   simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false]
 
+/-- **THE COMPOSABILITY ENGINE.** Two decided runs in sequence are one decided
+run of the concatenation, in the ∃-fuel form `QSStandPat` is itself stated in —
+so the fuel bookkeeping is internal (`execStmt_mono`/`execStmts_mono` at a summed
+witness) and a caller never counts interpreter steps.
+
+`VCTactic.lean` has this as the PRIVATE `execStmts_append_run`, the engine of
+`PyTriple.run_seq`; the assembly needs it at the raw `execStmts` level, so here
+it is public. Note `++` is LEFT-associative: the segments nest first-innermost. -/
+theorem execStmts_append {m : Module} {l₁ l₂ : List Stmt} {st st' : FrameState}
+    {r : Run FrameState RFlow}
+    (h1 : ∃ f, execStmts m f st l₁ = .ok st' .next)
+    (h2 : ∃ f, execStmts m f st' l₂ = r) (hr : r ≠ .timeout) :
+    ∃ f, execStmts m f st (l₁ ++ l₂) = r := by
+  induction l₁ generalizing st with
+  | nil =>
+    obtain ⟨f, hf⟩ := h1
+    match f, hf with
+    | f + 1, hf =>
+      rw [execStmts] at hf
+      have henv : st = st' := (Run.ok.inj hf).1
+      subst henv
+      simpa using h2
+  | cons s l₁' ih =>
+    obtain ⟨f, hf⟩ := h1
+    match f, hf with
+    | f + 1, hf =>
+      rw [execStmts] at hf
+      cases hx : execStmt m f st s with
+      | ok st₁ flow =>
+        rw [hx, Run.bind] at hf
+        cases flow with
+        | next =>
+          obtain ⟨g, hg⟩ := ih ⟨f, hf⟩
+          refine ⟨(f + g) + 1, ?_⟩
+          rw [List.cons_append, execStmts,
+            execStmt_mono hx (by simp) (f + g) (by omega), Run.bind]
+          exact execStmts_mono hg (by simpa using hr) _ (by omega)
+        | brk => exact absurd hf (by simp)
+        | cont => exact absurd hf (by simp)
+        | ret v => exact absurd hf (by simp)
+      | exn st₁ er => rw [hx, Run.bind] at hf; exact absurd hf (by simp)
+      | timeout => rw [hx, Run.bind] at hf; exact absurd hf (by simp)
+      | unsupported msg => rw [hx, Run.bind] at hf; exact absurd hf (by simp)
+
+/-- The converse of `execStmt_of_singleton`: a statement gate read as a
+one-element list, which is what `execStmts_append` consumes. -/
+theorem execStmts_singleton {m : Module} {F : Nat} {st st' : FrameState} {s : Stmt}
+    (h : execStmt m (F + 1) st s = .ok st' .next) :
+    execStmts m (F + 2) st [s] = .ok st' .next := by
+  rw [execStmts, h, Run.bind, execStmts]
+
 /-- **A singleton `execStmts` gate, read back at `execStmt`.** The gates above
 are stated over one-statement LISTS, which is the shape a reader wants and the
 WRONG shape for composition: chaining statements needs `execStmt`, because
@@ -1213,6 +1264,70 @@ theorem probe_block_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Ad
   simp only [Run.bind]
   rw [execStmt_mono (execStmt_of_singleton (F := 6)
     (probe_repetition_skipped w (Env.set e "entry" entryDefault) hd')) (by simp) 35 (by omega)]
+
+/-! ### THE ASSEMBLY, demonstrated on the head
+
+The frame chain §L20 priced, run for real on statements 0–5. Three things it
+establishes, and they are what make the rest bookkeeping:
+
+* **the frame lookups are FREE** — `sbEnv0` is a concrete five-element list and
+  every gate's hypothesis about it is `rfl`, and stays `rfl` through the
+  `Env.set` chain because every key is a literal (all seven of
+  `probe_block_runs`' frame premises below are discharged by `rfl`);
+* **the world chain threads through the gates' own conclusions** — the counter
+  bump is `bound_enters`' output, and the dict survives it by
+  `Heap.get?_update_ne` at `ts ≠ sa`, one premise;
+* **the segments compose by `execStmts_append`** with no fuel arithmetic on the
+  caller's side.
+
+What remains for `QSStandPat` is twelve more statements of exactly this, plus
+the three premises §L20 named. -/
+
+/-- The frame after the QS refloor: `depth` rebound to `max 0 0 = 0`. -/
+abbrev EA (sa : Addr) (pv : RVal) (gamma : Int) : REnv :=
+  Env.set (sbEnv0 (.ref sa) pv gamma 0) "depth" (.int 0)
+
+/-- **THE HEAD, COMPOSED.** Statements 0–5: the docstring, the node count, the
+clock guard, the refloor, the king-capture check and the whole probe block —
+one gate, in the ∃-fuel form `QSStandPat` is stated in. -/
+theorem head_runs (w : World) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (sv : Nat) (h' : Heap)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hts : ts ≠ sa)
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) :
+    ∃ f, execStmts sunfish f
+        ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩
+        ([sbDoc, sbNodes, sbClock] ++ [sbDepth] ++ [sbMate] ++ [sbProbe])
+      = .ok ⟨{ w with heap := h' },
+              Env.set (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) "entry" entryDefault⟩
+          .next := by
+  have hobj' : Heap.get? h' sa = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    Heap.get?_update_self hupd
+  have hdict' : Heap.get? h' ts = some (.dict #[] sv) :=
+    (Heap.get?_update_ne hupd hts).trans hdict
+  have hD : execStmts sunfish 8 ⟨{ w with heap := h' }, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDepth]
+      = .ok ⟨{ w with heap := h' }, EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma⟩ .next := by
+    have := depth_refloors { w with heap := h' } (sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0) 0 rfl rfl
+    simpa [EA, show max (0 : Int) 0 = 0 from by omega] using this
+  have hA : ∃ f, execStmts sunfish f
+      ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDoc, sbNodes, sbClock]
+        = .ok ⟨{ w with heap := h' }, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ .next :=
+    ⟨16, bound_enters w ci sa ts tm hs n dl sf gamma 0 (posOf b sc wc0 wc1 bc0 bc1 ep kp) h' hself hupd hclk⟩
+  have hAB := execStmts_append hA ⟨8, hD⟩ (by simp)
+  have hABC := execStmts_append hAB
+    ⟨8, mate_check_passes { w with heap := h' } (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) b sc wc0 wc1 bc0 bc1 ep kp
+      rfl rfl hml hsc⟩ (by simp)
+  exact execStmts_append hABC
+    ⟨41, execStmts_singleton (F := 39)
+      (probe_block_runs { w with heap := h' } (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) ci sa ts tm hs (n + 1) dl sf
+        gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) sv rfl rfl rfl rfl rfl rfl rfl hmu hobj' hdict' hk hlo hup)⟩ (by simp)
 
 /-! ### #236's four statements between the probe and the fold
 
@@ -2811,6 +2926,9 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms probe_repetition_skipped
 #print axioms execStmt_of_singleton
 #print axioms probe_block_runs
+#print axioms execStmts_append
+#print axioms execStmts_singleton
+#print axioms head_runs
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

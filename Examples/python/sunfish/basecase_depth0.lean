@@ -919,7 +919,20 @@ one is a value the shipped `bound()` refuses without:
 `probe_answer_spelled` — `spelled`. Neither spends `killer` or `history`: both
 return before `moves()` is called, which is exactly why they were the two leaves
 to prove first. The `hfall` hypothesis is where `killer` is spent, and the
-depth-≥1 step is where `history` is. -/
+depth-≥1 step is where `history` is.
+
+**And the honest limit of this predicate.** `BoundWF` is COMPLETE for the two
+leaves below — every premise each of them needs is discharged from it, which is
+what `boundRefinesW_zero` typechecking says. For `hfall` and for the depth-≥1
+step it is a best ESTIMATE, arrived at the way §L24's premise list was: by
+reading the shipped body. §L24's own law governs what happens next — *a premise
+is not paid until something DISCHARGES it* — so expect `hfall`'s proof to demand
+a conjunct this structure does not have, and add it there rather than trusting
+this list. The constants the fall-through reads (`QS_A`, `NULL_MARGIN`,
+`EVAL_ROUGHNESS`, `TABLE_SIZE`) are the first place to look: unlike the two mate
+constants they are statically resolvable (`nmarG`, `tsG`), so they need nothing
+here — a claim to RE-CHECK when the fold's gates are composed, not one to
+assume. -/
 
 /-- **The shipped `Position` VALUE shape, as a predicate on a free `RVal`.**
 `posOf` is the constructor; this is the same fact stated so a rule can keep

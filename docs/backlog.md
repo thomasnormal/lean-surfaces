@@ -10466,3 +10466,137 @@ no run can satisfy.
 same reason §L24's did, and one level up. §L24 found three unsatisfiable premises
 inside a theorem. This pass found the same defect in the RULE the theorems are
 for.
+
+
+## L27 — THE FAIL-LOW ARM RE-PRICED: it is a SECOND INDUCTION, and the census comes first (2026-08-19)
+
+§L26 landed three of the base case's four arms and named the fourth as *"not a
+leaf"*. This section is the re-pricing that claim obliges, written under §L25's
+own law — **plan before grind, and census before plan.** Nothing of the induction
+itself is started here, deliberately.
+
+### What the arm actually is
+
+At `lo < gamma ≤ up` and `pos.score < gamma` the probe answers nothing decisive,
+the stand-pat does not cut, and `moves()` runs to completion. The children are
+the problem, and `bound_depth.lean` already carried the proof of it in two pieces
+that had never been put together:
+
+* **`qs_child_depth_eq`** — `max (moveDepth 0 false false) 0 = 0`. A searched
+  real move at depth 0 recurses **at depth 0**. Its own docstring says the
+  consequence: *"a QS node's children store under the QS node's OWN key.
+  `SubtreeWrites`'s separation arm does not cover them, and that is precisely why
+  the depth-0 gate below carries a stand-pat hypothesis — it cuts before any
+  child runs, so there is nothing to separate."*
+* **§8's guards** size it: `bd_probe (posH 0) 40 0 = some (4, 34)` against
+  `some (0, 1)` for the cut. **34 nodes for one depth-0 call.**
+
+So the arm's `Report` consumes a report from a depth-0 child, which is
+`BoundRefinesW V 0` itself. **Circular.** A depth induction cannot reach it,
+because the depth does not decrease; what decreases is QUIESCENCE — the capture
+sequence runs out. That is a different well-founded order and it needs its own
+induction.
+
+**This is a re-pricing, not a discovery of extra work.** The work was always
+there; §L25 priced it as one of three sibling leaves and it is a program of the
+same order as the depth-≥1 arc.
+
+### What the second induction imports from `formal/`
+
+`formal/` lives in the engine repository and this lane depends on no package, so
+everything below is RESTATED here in the manner of `Report` (§7) rather than
+imported — which is also why the surfaces have to be enumerated before anything
+is written:
+
+| surface | where | what it gives |
+|---|---|---|
+| `fuelValueD2 : Nat → Pos → Int` | `formal/Sunfish/EventuallyWide.lean` | the fuel-indexed value; the `Nat` IS the measure the induction runs on |
+| `FuelBracketSpec` | same | the bracket the fuel model is meant to meet — **STATED, not proven** (§5's reading), so it is an assumption boundary and must be declared as one |
+| `qsStrat` | `formal/Sunfish/Stalemate.lean` | the gamma-aware depth-0 quiescence; its second clause `if gamma ≤ eval p then eval p` is the cut §L26 proved, so the fail-low arm is its OTHER clause |
+| `WindowReport` | `formal/Sunfish/CappedNull.lean` | already restated as `Report` and proved equivalent to the docstring |
+| `CapInBand` | `formal/Sunfish/CappedMove.lean` | the recorded AXIOM behind the futility bet — the fail-low arm is where it is finally spent |
+
+Note the shape mismatch §5 already recorded and this arm has to face: the fuel
+model is **table-free** (`fuelValueD2` takes no `gamma` and no table). §L26's
+`RefinesAt` is table-ful. A bridge has to choose, and §5 names the two honest
+options — quantify over all table states, or restrict to a cleared table.
+
+### THE CENSUS, owed BEFORE the plan is written
+
+§L25's own lesson was that its pricing was written without a census and three of
+the answers changed the plan. The same discipline applies here, and none of these
+is answered yet:
+
+1. **Does the depth-0 recursion terminate on the shipped code for a reason the
+   interpreter can see?** QS terminates because the capture sequence is finite,
+   but the shipped filter is `(v := pos.value(m)) >= QS or depth` — a VALUE
+   threshold, not a "is a capture" test. Measure the recursion depth and the node
+   count on a tactical position, not just the opening board (34 nodes there says
+   almost nothing about the worst case).
+2. **What is the measure, concretely?** Candidates: the number of pieces on the
+   board, the count of moves passing the `>= QS` filter, or `formal/`'s own fuel.
+   Only the third composes with `fuelValueD2` without a new well-foundedness
+   proof — census which one the shipped filter actually decreases.
+3. **Is `RefinesAt` at a depth-0 CHILD the same proposition as at the parent?**
+   The child is called with `1 - gamma` and `-` on the result (`Report.negate`
+   handles the arithmetic), and at `max(depth-1,0) = 0` the child's key is the
+   child's own position at depth 0. So the induction hypothesis is `RefinesAt` at
+   a DIFFERENT position — census whether the measure decreases per position or
+   per (position, window).
+4. **How many rounds does the fold run, and does `Inv []` become reachable?**
+   §L25's R3 notes that at depth ≥ 1 `Inv []` is no longer `False`; the same is
+   true here once the stand-pat does not cut, so the exhaustion obligation
+   returns at depth 0 too.
+5. **Does the killer branch fire in the fail-low arm?** §L26 measured that it
+   changes the run (heap 2882 against 2409) and that garbage there raises. So
+   `searchedMove`/`searchedPass` are both live here, unlike in the cut.
+6. **Eight seconds each, before any premise is written** — the exit law, and the
+   heap effect of a depth-0 child call is the first thing to measure.
+
+### The plan sketch, contingent on the census
+
+Written as a sketch precisely because the census may move it, in §L25's manner:
+
+* **F1 — the measure, and its decrease.** One theorem: the shipped filter's
+  successor positions have a strictly smaller measure. This is the whole
+  well-foundedness argument and it belongs before anything else.
+* **F2 — `RefinesAtQ`, the strengthened statement.** `RefinesAt` with a fuel
+  index, so the induction has something to run on. State it so `RefinesAt` is its
+  `∃ fuel` closure — the same relationship `qs_stand_pat` has to its threshold
+  form, and the same trap: **name the world, do not hide it in an `∃`** (§L26).
+* **F3 — the fold at many rounds.** §L16's `Hands` schedule at a real schedule,
+  `fold_report`'s fail-low half, and the exhaustion obligation F4 of the census
+  brings back. `searchedMove_sound`/`searchedPass_sound` are proved and waiting.
+* **F4 — the store's other arm.** `Entry(entry.lower, best)` rather than
+  `Entry(best, entry.upper)`: §L26's `store_runs_at` did the fail-HIGH arm at an
+  arbitrary entry, and this is its twin. Cheap, and the calculus side is the same
+  `sf_store` with the bounds swapped.
+* **F5 — the assembly.** `hfall`'s remaining half, then `boundRefinesW_zero`
+  goes unconditional.
+
+**Sequencing note.** F4 is independent of the census and of F1–F3, and it is the
+cheapest thing on this list — an hour, on `store_runs_at`'s own template. It is
+the right inch for a lane that has to stop before the induction.
+
+### And a FIFTH hole in the rule, found by discharging F-adjacent work
+
+`BoundWF` does not bound the table's SIZE, and `sbEvict`'s own comment records
+what that costs: *"`del d[k]` is outside the tier and ingests as
+`Stmt.unsupported`, so every gate below must show the guard is FALSE."* At
+`len(self.tp_score) > TABLE_SIZE` the shipped eviction becomes reachable and the
+run REFUSES — the same species as §L26's four. `refinesAt_stand_pat_at` and
+`hfall_cut` carry it as `hroom` in the COMPUTED shape (§L20's law); it belongs in
+`BoundWF` as a tenth conjunct, and that is a one-line change to make when the
+next lane touches the structure.
+
+### Triad
+
+`lake build` **3681 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched** — unchanged
+since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. No
+`sorry`, no `native_decide`.
+
+**`model_audit` CANNOT RETIRE.** The honest ledger for the base case, which is
+what this lane was asked for: at the start of §L26 it did not exist and the rule
+it was a base case FOR was false. It is now three arms of four, on a repaired
+rule, with the fourth arm's true price on the table instead of a wrong one.

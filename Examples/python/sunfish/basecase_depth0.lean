@@ -1327,6 +1327,720 @@ theorem refinesAt_stand_pat {V : RVal → Int → Int}
   · intro e he
     exact subtree_of_stand_pat (V := V) (e := e) (by omega) hts hupd hdict1 hk hlt hsval hbandV
 
+/-! ## §10 THE TWO WIDENINGS — off the cleared table
+
+§9's leaf needs `es = #[]` and an empty `tp_move`, and §9's tail names the two
+shipped gates that pin them. Both are `probe_misses → probe_reads` again, and
+both are landed here with the chain recomposed at them, so `hfall` is meetable
+at an ARBITRARY table.
+
+* **`killer_reads`** — `killer = self.tp_move.get(pos)` at any `tp_move`. The
+  one-argument `.get`, so a miss is `None` rather than a default; stated in the
+  COMPUTED shape like `probe_reads`.
+* **`store_runs_at`** — the store at any probed entry. The shipped fail-high arm
+  is `Entry(best, entry.upper)`, so over a stale table the line writes
+  `Entry(best, up)` and not `Entry(best, MATE_UPPER)`. **And the calculus side
+  was already paid**: `sf_store_from_report` then needs `V pos 0 ≤ up`, which is
+  exactly what `sf_probe_brackets` reads off the entry the probe just returned.
+  The stale entry's own upper bound is what validates the new one — the nicest
+  thing in this file.
+
+Everything between them was already `kv`-parametric: `sbMovesCap`,
+`sbMovesClosure`, `sbW2`, `sbW3`, `moves_call_creates` and `moves_first_iter`
+all take the captured killer as an argument and `mid_runs` merely instantiates
+it at `.none`. So the recomposition below is threading, with no gate reproved. -/
+
+/-- The frame chain at a general killer — `G3`–`G9` with `kv` free. -/
+def K3 (e : REnv) (kv : RVal) : REnv := Env.set e "killer" kv
+/-- ditto -/
+def K4 (w : World) (e : REnv) (kv : RVal) : REnv := sbEnvDef w (K3 e kv)
+/-- ditto -/
+def K5 (w : World) (e : REnv) (kv : RVal) (av : Bool) : REnv :=
+  Env.set (K4 w e kv) "calm" (.bool av)
+/-- ditto -/
+def K6 (w : World) (e : REnv) (kv : RVal) (av : Bool) : REnv :=
+  Env.set (K5 w e kv av) "guard" (.bool av)
+/-- ditto -/
+def K7 (w : World) (e : REnv) (kv : RVal) (av : Bool) (sc : Int) : REnv :=
+  Env.set (K6 w e kv av) "t" (.int (sc + nullMargin))
+/-- ditto -/
+def K8 (w : World) (e : REnv) (kv : RVal) (av : Bool) (sc : Int) : REnv :=
+  Env.set (K7 w e kv av sc) "nmr" (.bool false)
+/-- ditto -/
+def K9 (w : World) (e : REnv) (kv : RVal) (av : Bool) (sc : Int) : REnv :=
+  Env.set (Env.set (K8 w e kv av sc) "best" (.int (-mateUpper))) "live" (.bool false)
+
+/-- GATE — the killer probe reads WHATEVER `tp_move` holds. `killer_misses` is
+its cleared-table specialisation. -/
+theorem killer_reads (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf : Int) (pv : RVal) (ms : Array (RVal × RVal)) (svm : Nat) (kv : RVal)
+    (F : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap tm = some (.dict ms svm))
+    (hk : hashableKey pv = true)
+    (hfind : (dictFind ms.toList pv).getD .none = kv) :
+    execStmts sunfish (F + 16) ⟨w, e⟩ [sbKiller]
+      = .ok ⟨w, Env.set e "killer" kv⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, h⟩ := sbKiller_lit
+  simp only [Heap.get?] at hobj hdict
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hslf, hpos, hobj, hdict, searcherObj, hk, hfind]
+
+/-- The dict the store leaves at a STALE table: the probed entry's own upper
+rides through, because the fail-high arm is `Entry(best, entry.upper)`. -/
+def sbStoredAt (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (sc up : Int) : Obj :=
+  .dict (dictStore es.toList (tpKey pv 0) (entryOf sc up)).1.toArray
+    (if (dictStore es.toList (tpKey pv 0) (entryOf sc up)).2 = true then sv + 1 else sv)
+
+/-- GATE — the store, at an ARBITRARY probed entry. `store_runs` is its
+`entryDefault` specialisation, and `sbStored es sv pv sc = sbStoredAt es sv pv sc
+mateUpper` by definition. -/
+theorem store_runs_at (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma lo up : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some (entryOf lo up))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hlt : ts < w.heap.size)
+    (hge : gamma ≤ sc) (hk : hashableKey pv = true) :
+    execStmt sunfish 20 ⟨w, e⟩ sbStore
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStoredAt es sv pv sc up) hlt }, e⟩ .next := by
+  obtain ⟨p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+    hs'⟩ := sbStore_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 19 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hs', execStmt_if_true hc rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredAt, dif_pos hlt]
+  rw [if_pos hge]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredAt, dif_pos hlt]
+  rfl
+
+/-! ### The head, FALLING THROUGH — where the two unspent probe gates are spent
+
+`probe_lower_passes_at` and `probe_upper_passes_at` landed in §2 without a
+consumer. This is it: at `lo < gamma ≤ up` neither return fires, the repetition
+test is short-circuited by `depth = 0`, and the block binds `entry` and falls
+through. -/
+
+/-- The frame after a fall-through probe: `FH`'s shape at a stale entry. -/
+def FHs (sa : Addr) (pv : RVal) (gamma lo up : Int) : REnv :=
+  Env.set (EA sa pv gamma) "entry" (entryOf lo up)
+
+/-- **The probe BLOCK, falling through**, at an arbitrary table. -/
+theorem probe_block_falls (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma lo up : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hk : hashableKey pv = true)
+    (hfind : (dictFind es.toList (tpKey pv 0)).getD entryDefault = entryOf lo up)
+    (hlo : lo < gamma) (hup : gamma ≤ up) :
+    ∃ f, execStmts sunfish f ⟨w, e⟩ [sbProbe]
+      = .ok ⟨w, Env.set e "entry" (entryOf lo up)⟩ .next := by
+  obtain ⟨p0, p1, p2, hpr⟩ := sbProbe_lit
+  have hc : ∀ k : Nat, evalExpr sunfish (k + 4) ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    intro k; py_simp [-globalsFold, -globalsStep, hroot]
+  have hen : Env.lookup (Env.set e "entry" (entryOf lo up)) "entry" = some (entryOf lo up) := by
+    simp [Env.lookup_set_self]
+  have hg' : Env.lookup (Env.set e "entry" (entryOf lo up)) "gamma" = some (.int gamma) := by
+    simp [Env.lookup_set_ne, hg]
+  have hd' : Env.lookup (Env.set e "entry" (entryOf lo up)) "depth" = some (.int 0) := by
+    simp [Env.lookup_set_ne, hd]
+  have hE : ∃ f, execStmts sunfish f ⟨w, e⟩ [sbEntry]
+      = .ok ⟨w, Env.set e "entry" (entryOf lo up)⟩ .next :=
+    ⟨16, probe_reads w e ci sa ts tm hs n dl sf 0 pv es sv (entryOf lo up) 0
+      hslf hpos hd hnoe hnomu hmu hobj hdict hk hfind⟩
+  have hB : ∃ f, execStmts sunfish f ⟨w, e⟩ sbProbeB
+      = .ok ⟨w, Env.set e "entry" (entryOf lo up)⟩ .next := by
+    rw [sbProbeB_split]
+    exact execStmts_append (execStmts_append (execStmts_append hE
+      ⟨8, probe_lower_passes_at w (Env.set e "entry" (entryOf lo up)) gamma lo up 0
+        hen hg' hlo⟩ (by simp))
+      ⟨8, probe_upper_passes_at w (Env.set e "entry" (entryOf lo up)) gamma lo up 0
+        hen hg' hup⟩ (by simp))
+      ⟨8, probe_repetition_skipped w (Env.set e "entry" (entryOf lo up)) hd'⟩ (by simp)
+  obtain ⟨f, hf⟩ := hB
+  refine ⟨(f + 4) + 2, ?_⟩
+  rw [hpr]
+  refine execStmts_singleton (F := f + 4) ?_
+  rw [execStmt_if_true (hc f) rfl, show sbProbeB.toArray.toList = sbProbeB from rfl]
+  exact execStmts_mono hf (by simp) _ (by omega)
+
+/-- **THE HEAD, falling through** — statements 0–5 at an arbitrary table. -/
+theorem head_falls (w : World) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc lo up : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es : Array (RVal × RVal)) (sv : Nat) (h' : Heap)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hts : ts ≠ sa)
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : -mateLower < sc)
+    (hfind : (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+      = entryOf lo up)
+    (hlo : lo < gamma) (hup : gamma ≤ up) :
+    ∃ f, execStmts sunfish f
+        ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩
+        ([sbDoc, sbNodes, sbClock] ++ [sbDepth] ++ [sbMate] ++ [sbProbe])
+      = .ok ⟨W1 w h', FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up⟩ .next := by
+  have hobj' : Heap.get? h' sa = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    Heap.get?_update_self hupd
+  have hdict' : Heap.get? h' ts = some (.dict es sv) :=
+    (Heap.get?_update_ne hupd hts).trans hdict
+  have hD : execStmts sunfish 8
+      ⟨W1 w h', sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDepth]
+      = .ok ⟨W1 w h', EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma⟩ .next := by
+    have := depth_refloors (W1 w h')
+      (sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0) 0 rfl rfl
+    simpa [EA, show max (0 : Int) 0 = 0 from by omega] using this
+  have hA : ∃ f, execStmts sunfish f
+      ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ [sbDoc, sbNodes, sbClock]
+        = .ok ⟨W1 w h', sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ .next :=
+    ⟨16, bound_enters w ci sa ts tm hs n dl sf gamma 0
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) h' hself hupd hclk⟩
+  have hAB := execStmts_append hA ⟨8, hD⟩ (by simp)
+  have hABC := execStmts_append hAB
+    ⟨8, mate_check_passes (W1 w h') (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)
+      b sc wc0 wc1 bc0 bc1 ep kp rfl rfl hml hsc⟩ (by simp)
+  exact execStmts_append hABC
+    (probe_block_falls (W1 w h') (EA sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)
+      ci sa ts tm hs (n + 1) dl sf gamma lo up (posOf b sc wc0 wc1 bc0 bc1 ep kp) es sv
+      rfl rfl rfl rfl rfl rfl rfl hmu hobj' hdict'
+      (posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp) hfind hlo hup) (by simp)
+
+/-! ### The middle and the tail, recomposed at a general killer and entry
+
+`mid_runs` and `tail_runs` are mirrored here with exactly one sub-step changed
+each — `killer_misses → killer_reads` and `store_runs → store_runs_at`. Every
+other sub-gate is the shipped one, unmodified and un-reproved: `sbMovesCap`,
+`sbW2`, `sbW3`, `moves_call_creates` and `moves_first_iter` were already
+`kv`-parametric, and `qs_fold_breaks`, `corr_dead`, `evict_dead` and `ret_best`
+never read `entry` or `killer`. -/
+
+/-- Statements 6–12 at an arbitrary `tp_move`. -/
+theorem mid_runs_at (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (av : Bool) (ms : Array (RVal × RVal)) (svm : Nat) (kv : RVal)
+    (ext : Array Obj) (Fg : Nat)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hmove : Heap.get? w.heap tm = some (.dict ms svm))
+    (hkf : (dictFind ms.toList (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none = kv)
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (_hnmax : Env.lookup e "max" = Option.none)
+    (hnabs : Env.lookup e "abs" = Option.none)
+    (hnnm : Env.lookup e "NULL_MARGIN" = Option.none)
+    (hnmu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hng : Env.lookup e "guard" = Option.none)
+    (hnc : Env.lookup e "<cell>guard" = Option.none)
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
+        ⟨sbW2 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp), K4 w e kv⟩ calmG
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K4 w e kv⟩ (.bool av)) :
+    ∃ f, execStmts sunfish f ⟨w, e⟩
+        ([sbKiller] ++ [sbDef] ++ [sbCalm] ++ [sbGuard] ++ [sbT] ++ [sbNmr] ++ [sbAcc])
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+              K9 w e kv av sc⟩ .next := by
+  have h6 : ∃ f, execStmts sunfish f ⟨w, e⟩ [sbKiller] = .ok ⟨w, K3 e kv⟩ .next :=
+    ⟨16, killer_reads w e ci sa ts tm hs n dl sf (posOf b sc wc0 wc1 bc0 bc1 ep kp) ms svm kv 0
+      hslf hpos hobj hmove hk hkf⟩
+  have h7 : ∃ f, execStmts sunfish f ⟨w, K3 e kv⟩ [sbDef]
+      = .ok ⟨sbW2 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp), K4 w e kv⟩ .next :=
+    ⟨2, execStmts_singleton (F := 0) (moves_def_allocates w (K3 e kv) 0 gamma 0 kv
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp)
+      (by simp [K3, Env.lookup_set_ne, hd]) (by simp [K3, Env.lookup_set_ne, hg])
+      (by simp [K3, Env.lookup_set_self]) (by simp [K3, Env.lookup_set_ne, hpos])
+      (by simp [K3, Env.lookup_set_ne, hng]) (by simp [K3, Env.lookup_set_ne, hnc]))⟩
+  have h8 : ∃ f, execStmts sunfish f
+      ⟨sbW2 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp), K4 w e kv⟩ [sbCalm]
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K5 w e kv av⟩ .next :=
+    ⟨Fg + 5, execStmts_singleton (F := Fg + 3) (calm_binds Fg
+      (sbW2 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+      (sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (K4 w e kv)
+      b sc wc0 wc1 bc0 bc1 ep kp av
+      (by simp [K4, K3, sbEnvDef, Env.lookup_set_ne, hpos])
+      (by simp [K4, K3, sbEnvDef, Env.lookup_set_ne, hnabs]) hband hFg hgen)⟩
+  have h9 : ∃ f, execStmts sunfish f
+      ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K5 w e kv av⟩ [sbGuard]
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K6 w e kv av⟩ .next :=
+    ⟨8, guard_evals (sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (K5 w e kv av) av
+      (by simp [K5, K4, K3, sbEnvDef, Env.lookup_set_ne, hroot])
+      (by simp [K5, Env.lookup_set_self])⟩
+  have h10 : ∃ f, execStmts sunfish f
+      ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K6 w e kv av⟩ [sbT]
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K7 w e kv av sc⟩ .next :=
+    ⟨8, null_margin_adds (sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+      (K6 w e kv av) b sc wc0 wc1 bc0 bc1 ep kp
+      (by simp [K6, K5, K4, K3, sbEnvDef, Env.lookup_set_ne, hpos])
+      (by simp [K6, K5, K4, K3, sbEnvDef, Env.lookup_set_ne, hnnm])⟩
+  have h11 : ∃ f, execStmts sunfish f
+      ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K7 w e kv av sc⟩ [sbNmr]
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K8 w e kv av sc⟩ .next :=
+    ⟨10, execStmts_singleton (F := 8) (nmr_binds
+      (sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (K7 w e kv av sc) av
+      (by simp [K7, K6, K5, Env.lookup_set_ne, Env.lookup_set_self])
+      (by simp [K7, K6, K5, K4, K3, sbEnvDef, Env.lookup_set_ne, hd]))⟩
+  have h12 : ∃ f, execStmts sunfish f
+      ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K8 w e kv av sc⟩ [sbAcc]
+      = .ok ⟨sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, K9 w e kv av sc⟩ .next :=
+    ⟨16, acc_inits (sbW3 w gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (K8 w e kv av sc)
+      (by simp [K8, K7, K6, K5, K4, K3, sbEnvDef, Env.lookup_set_ne, hnmu]) hmu⟩
+  exact execStmts_append (execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append (execStmts_append h6 h7 (by simp)) h8 (by simp)) h9 (by simp))
+      h10 (by simp)) h11 (by simp)) h12 (by simp)
+
+/-- The generator worlds at a general killer — `W3`/`W4` with `kv` free. -/
+def W3K (w : World) (h' : Heap) (gamma : Int) (kv pv : RVal) (av : Bool)
+    (ext : Array Obj) : World :=
+  { sbW3 (W1 w h') gamma 0 kv pv ext with
+      heap := (sbW3 (W1 w h') gamma 0 kv pv ext).heap.push (sbMovesGenObj gamma kv pv av) }
+
+/-- ditto, suspended. -/
+def W4K (w : World) (h' : Heap) (gamma : Int) (kv pv : RVal) (av : Bool)
+    (ext : Array Obj) : World :=
+  { sbW3 (W1 w h') gamma 0 kv pv ext with
+      heap := (sbW3 (W1 w h') gamma 0 kv pv ext).heap.push (sbMovesGenSusp gamma kv pv av) }
+
+theorem W4K_get (w : World) (h' : Heap) (gamma : Int) (kv pv : RVal) (av : Bool)
+    (ext : Array Obj) {x : Addr} {o : Obj} (hx : Heap.get? h' x = some o) :
+    Heap.get? (W4K w h' gamma kv pv av ext).heap x = some o :=
+  Heap.get?_push_of_get? _ (sbW3_get (W1 w h') gamma 0 kv pv ext hx)
+
+theorem W3K_gen (w : World) (h' : Heap) (gamma : Int) (kv pv : RVal) (av : Bool)
+    (ext : Array Obj) :
+    ∃ qn lo ct stt, Heap.get? (W3K w h' gamma kv pv av ext).heap
+      (sbW3 (W1 w h') gamma 0 kv pv ext).heap.size = some (.generator qn lo ct stt) :=
+  ⟨_, _, _, _, Heap.get?_push_size _ _⟩
+
+/-- The world the STALE store leaves. -/
+def T1K (w4 : World) (ts : Addr) (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal)
+    (sc up : Int) (hlt : ts < w4.heap.size) : World :=
+  { w4 with heap := w4.heap.set ts (sbStoredAt es sv pv sc up) hlt }
+
+set_option linter.unusedVariables false in
+/-- Statements 13–17 at an arbitrary probed entry. -/
+theorem tail_runs_at (w2 w3 w4 : World) (e : REnv) (a : Addr) (ci : ClassId)
+    (sa ts tm hs : Addr) (n dl sf gamma sc lo up : Int)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es es' : Array (RVal × RVal)) (sv sv' : Nat)
+    (hlt : ts < w4.heap.size)
+    (hev : EvalsIn sunfish ⟨w2, e⟩ sbMovesCall (.ref a) ⟨w3, e⟩)
+    (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
+    (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hen : Env.lookup e "entry" = some (entryOf lo up))
+    (hnmax : Env.lookup e "max" = Option.none)
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnlen : Env.lookup e "len" = Option.none)
+    (hnts : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hb : Env.lookup e "best" = some (.int (-mateUpper)))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict4 : Heap.get? w4.heap ts = some (.dict es sv))
+    (hobj5 : Heap.get? (T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt).heap sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hdict5 : Heap.get? (T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt).heap ts
+      = some (.dict es' sv'))
+    (hsz : (es'.size : Int) ≤ tableSize)
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hge : gamma ≤ sc) (hsc : -mateUpper < sc) :
+    ∃ f, execStmts sunfish f ⟨w2, e⟩
+        ([sbFor] ++ [sbCorr] ++ [sbStore] ++ [sbEvict] ++ [sbRet])
+      = .ok ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩
+          (.ret (.int sc)) := by
+  have h13 : ∃ f, execStmts sunfish f ⟨w2, e⟩ [sbFor] = .ok ⟨w4, T0 e sc⟩ .next := by
+    obtain ⟨sp, hfor⟩ := sbFor_lit
+    rw [hfor]
+    obtain ⟨f, hf⟩ := execStmt_of_stmtTriple
+      (qs_fold_breaks w2 w3 w4 e a b sc gamma wc0 wc1 bc0 bc1 ep kp sp hev hgo
+        hyield hd hpos hnmax hb hg hge hsc) ⟨w2, e⟩ rfl
+    exact ⟨f + 2, execStmts_singleton (F := f) (execStmt_mono hf (by simp) (f + 1) (by omega))⟩
+  have h14 : ∃ f, execStmts sunfish f ⟨w4, T0 e sc⟩ [sbCorr] = .ok ⟨w4, T0 e sc⟩ .next :=
+    ⟨11, execStmts_singleton (F := 9) (corr_dead w4 (T0 e sc)
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hd]))⟩
+  have h15 : ∃ f, execStmts sunfish f ⟨w4, T0 e sc⟩ [sbStore]
+      = .ok ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩ .next :=
+    ⟨21, execStmts_singleton (F := 19) (store_runs_at w4 (T0 e sc) ci sa ts tm hs n dl sf sc
+      gamma lo up (posOf b sc wc0 wc1 bc0 bc1 ep kp) es sv
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hslf])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hpos])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hd])
+      (by simp [T0, qsEnvEnd, Env.lookup_set_self])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hg])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hen])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hroot])
+      (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnoe])
+      hobj4 hdict4 hlt hge hk)⟩
+  have h16 : ∃ f, execStmts sunfish f
+      ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩ [sbEvict]
+      = .ok ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩ .next :=
+    ⟨13, execStmts_singleton (F := 11)
+      (evict_dead (T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt) (T0 e sc)
+        ci sa ts tm hs n dl sf es' sv'
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hslf])
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnlen])
+        (by simp [T0, qsEnvEnd, bindYield, Env.lookup_set_ne, hnts])
+        hobj5 hdict5 hsz)⟩
+  have h17 : ∃ f, execStmts sunfish f
+      ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩ [sbRet]
+      = .ok ⟨T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, T0 e sc⟩
+          (.ret (.int sc)) :=
+    ⟨9, execStmts_singleton_flow (F := 7)
+      (ret_best (T1K w4 ts es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt) (T0 e sc) sc
+        (by simp [T0, qsEnvEnd, Env.lookup_set_self]))⟩
+  exact execStmts_append (execStmts_append (execStmts_append
+    (execStmts_append h13 h14 (by simp)) h15 (by simp)) h16 (by simp)) h17 (by simp)
+
+/-- `store_bridge` at a stale entry. -/
+theorem store_bridge_at {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {pv : RVal} {sc up : Int} (hlt : ts < w4.heap.size)
+    (hdict : Heap.get? w4.heap ts = some (.dict es sv)) (hk : hashableKey pv = true) :
+    heapStore w4.heap ts (tpKey pv 0) (entryOf sc up)
+      = .ok (T1K w4 ts es sv pv sc up hlt).heap := by
+  have hkk : hashableKey (tpKey pv 0) = true := by
+    simp [tpKey, hashableKey, hashableKeyList, hk]
+  simp only [heapStore, hdict, if_pos hkk, sbStoredAt, T1K, Heap.update, dif_pos hlt]
+
+/-- `subtree_pre_store` at a general killer. -/
+theorem subtree_pre_store_at {V : RVal → Int → Int} {w : World} {h' : Heap}
+    {ci : ClassId} {sa ts tm hs : Addr} {n dl sf gamma : Int} {kv pv : RVal}
+    {av : Bool} {ext : Array Obj} {es : Array (RVal × RVal)} {sv : Nat} {e : Int}
+    (hts : ts ≠ sa)
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hdict1 : Heap.get? h' ts = some (.dict es sv)) :
+    (sfBracket V).SubtreeWrites ts e w.heap (W4K w h' gamma kv pv av ext).heap := by
+  have hlt0 : ts < h'.size := Heap.lt_size_of_get? hdict1
+  have hlt1 := lt_size_push (o := guardCell) hlt0
+  have hlt2 := lt_size_push (o := sbMovesClosure h'.size gamma 0 kv pv) hlt1
+  have hlt3 := lt_size_append (ext := ext) hlt2
+  have k1 : (sfBracket V).SubtreeWrites ts e w.heap h' := .other (Ne.symm hts) hupd .nil
+  have k2 : (sfBracket V).SubtreeWrites ts e h' (h'.push guardCell) := sw_push hlt0
+  have k3 : (sfBracket V).SubtreeWrites ts e (h'.push guardCell)
+      ((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 kv pv)) := sw_push hlt1
+  have k4 : (sfBracket V).SubtreeWrites ts e
+      ((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 kv pv))
+      (((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 kv pv)) ++ ext) :=
+    sw_append ext hlt2
+  have k5 : (sfBracket V).SubtreeWrites ts e
+      (((h'.push guardCell).push (sbMovesClosure h'.size gamma 0 kv pv)) ++ ext)
+      (W4K w h' gamma kv pv av ext).heap := sw_push hlt3
+  exact ((k1.trans k2).trans k3).trans (k4.trans k5)
+
+set_option linter.unusedVariables false in
+/-- **THE WHOLE BODY at an arbitrary table** — `body_runs` with both widenings. -/
+theorem body_runs_at (w : World) (h' : Heap) (a : Addr) (ci : ClassId)
+    (sa ts tm hs : Addr) (n dl sf gamma sc lo up : Int)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool) (ext : Array Obj)
+    (Fg : Nat) (es ms : Array (RVal × RVal)) (sv svm : Nat) (kv : RVal)
+    (es' : Array (RVal × RVal)) (sv' : Nat)
+    (hlt : ts < (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap.size)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hts : ts ≠ sa) (htm : tm ≠ sa)
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hmove : Heap.get? w.heap tm = some (.dict ms svm))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : -mateLower < sc)
+    (hfind : (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+      = entryOf lo up)
+    (hkf : (dictFind ms.toList (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none = kv)
+    (hlow : lo < gamma) (hupp : gamma ≤ up)
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
+        ⟨sbW2 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+         K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv⟩ calmG
+      = .ok ⟨sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+             K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv⟩
+          (.bool av))
+    (hev : EvalsIn sunfish
+      ⟨sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+       K9 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv av sc⟩
+      sbMovesCall (.ref a)
+      ⟨W3K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext,
+       K9 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv av sc⟩)
+    (hgo : ∃ qn l ct stt, Heap.get? (W3K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap a
+      = some (.generator qn l ct stt))
+    (hyield : IterSteps sunfish (W3K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) a
+      (some (yieldVal qsY)) (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext))
+    (hobj4 : Heap.get? (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap sa
+      = some (searcherObj ci ts tm hs (n + 1) dl sf))
+    (hdict4 : Heap.get? (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap ts
+      = some (.dict es sv))
+    (hobj5 : Heap.get? (T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
+        (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt).heap sa
+      = some (searcherObj ci ts tm hs (n + 1) dl sf))
+    (hdict5 : Heap.get? (T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
+        (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt).heap ts = some (.dict es' sv'))
+    (hsz : (es'.size : Int) ≤ tableSize)
+    (hge : gamma ≤ sc) (hmus : -mateUpper < sc) :
+    ∃ f, execStmts sunfish f
+        ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ sbB
+      = .ok ⟨T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
+              (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt,
+              T0 (K9 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv av sc)
+                sc⟩ (.ret (.int sc)) := by
+  have hk := posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp
+  have hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    Heap.get?_update_self hupd
+  have hmove1 : Heap.get? (W1 w h').heap tm = some (.dict ms svm) :=
+    (Heap.get?_update_ne hupd htm).trans hmove
+  have hH := head_falls w ci sa ts tm hs n dl sf gamma sc lo up b wc0 wc1 bc0 bc1 ep kp es sv h'
+    hself hupd hclk hts hdict hml hmu hsc hfind hlow hupp
+  have hM := mid_runs_at (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up)
+    ci sa ts tm hs (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av ms svm kv ext Fg
+    hobj1 hmove1 hkf hk hmu rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hband hFg hgen
+  have hT := tail_runs_at (sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (W3K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext)
+    (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext)
+    (K9 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv av sc)
+    a ci sa ts tm hs (n + 1) dl sf gamma sc lo up b wc0 wc1 bc0 bc1 ep kp es es' sv sv'
+    hlt hev hgo hyield rfl rfl rfl rfl rfl rfl rfl rfl rfl
+    (by simp [K9, Env.lookup_set_ne, Env.lookup_set_self]) rfl
+    hobj4 hdict4 hobj5 hdict5 hsz hk hge hmus
+  rw [sbB_split]
+  exact execStmts_append (execStmts_append hH hM (by simp)) hT (by simp)
+
+set_option linter.unusedVariables false in
+/-- **THE STAND-PAT CUT LEAF, at an ARBITRARY table.** §9's leaf with both
+widenings, and it meets `hfall`'s shape: `lo < gamma ≤ up`, arbitrary `es`,
+arbitrary `tp_move`.
+
+`V pos 0 ≤ up` is where the stale entry pays for its own successor: the probe's
+answer brackets the value (`sf_probe_brackets`), and that upper bound is exactly
+what the newly stored `Entry(best, up)` needs to be legal. On a cleared table
+`up = MATE_UPPER` and this degenerates to §L20's `hband`. -/
+theorem refinesAt_stand_pat_at {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    (w : World) (h' : Heap) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma sc lo up : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (av : Bool) (ext : Array Obj) (Fg : Nat)
+    (es ms : Array (RVal × RVal)) (sv svm : Nat) (kv : RVal)
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (ht : (sfBracket V).TableAt w.heap ts)
+    (hmove : Heap.get? w.heap tm = some (.dict ms svm))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper)
+    (hfind : (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+      = entryOf lo up)
+    (hkf : (dictFind ms.toList (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none = kv)
+    (hlow : lo < gamma) (hupp : gamma ≤ up)
+    (hband' : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
+        ⟨sbW2 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+         K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv⟩ calmG
+      = .ok ⟨sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+             K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv⟩
+          (.bool av))
+    (hge : gamma ≤ sc) (hmus : -mateUpper < sc)
+    (hroom : ((dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+        (entryOf sc up)).1.toArray.size : Int) ≤ tableSize)
+    (hsval : sc ≤ V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+    (hbandV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ mateUpper) :
+    RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
+  have hts : ts ≠ sa := dict_ne_instance hself hdict
+  have htm : tm ≠ sa := dict_ne_instance hself hmove
+  have hk := posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp
+  -- the stale entry's own upper bound, which the new entry inherits
+  have hVup : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ up := by
+    rcases sf_probe_brackets hV ht (heapGet_of_find hdict hk hfind) with ⟨hl, hu⟩ | hb
+    · omega
+    · exact hb.2
+  have hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf) :=
+    Heap.get?_update_self hupd
+  have hdict1 : Heap.get? (W1 w h').heap ts = some (.dict es sv) :=
+    (Heap.get?_update_ne hupd hts).trans hdict
+  have hev := moves_call_creates
+    (sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (K9 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv av sc)
+    (W1 w h').heap.size gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av Option.none
+    (by simp [K9, K8, K7, K6, K5, K4, sbEnvDef, Env.lookup_set_ne, Env.lookup_set_self])
+    (sbW3_cell (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (sbW3_closure (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    (by simp [K9, K8, K7, K6, Env.lookup_set_ne, Env.lookup_set_self])
+  have hyield := moves_first_iter
+    (sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext)
+    gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av
+  have hobj4 := W4K_get w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext hobj1
+  have hdict4 := W4K_get w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext hdict1
+  have hlt : ts < (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap.size :=
+    Heap.lt_size_of_get? hdict4
+  have hu : Heap.update (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext).heap ts
+      (sbStoredAt es sv (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up)
+      = some (T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
+          (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt).heap := by
+    simp only [Heap.update, T1K, dif_pos hlt]
+  have hobj5 := (Heap.get?_update_ne hu (Ne.symm hts)).trans hobj4
+  have hdict5 := Heap.get?_update_self hu
+  obtain ⟨f, hf⟩ := body_runs_at w h'
+    (sbW3 (W1 w h') gamma 0 kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext).heap.size
+    ci sa ts tm hs n dl sf gamma sc lo up b wc0 wc1 bc0 bc1 ep kp av ext Fg es ms sv svm kv
+    (dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0) (entryOf sc up)).1.toArray
+    (if (dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+        (entryOf sc up)).2 = true then sv + 1 else sv)
+    hlt hself hupd hclk hts htm hdict hmove hml hmu hsc hfind hkf hlow hupp hband' hFg hgen
+    hev (W3K_gen w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) hyield
+    hobj4 hdict4 hobj5 hdict5
+    hroom hge hmus
+  refine ⟨T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, sc, f + 1, fun F hF => ?_, ?_, ?_,
+      Or.inr ⟨hge, hsval⟩⟩
+  · obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+    exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
+  · exact sf_store hV
+      (sf_subtree_tableAt (e := (1 : Int)) hV
+        (subtree_pre_store_at (V := V) (gamma := gamma) (kv := kv)
+          (pv := posOf b sc wc0 wc1 bc0 bc1 ep kp) (av := av) (ext := ext) hts hupd hdict1) ht)
+      ⟨hsval, hVup⟩ (store_bridge_at hlt hdict4 hk)
+  · intro e he
+    refine (subtree_pre_store_at (V := V) (e := e) (gamma := gamma) (kv := kv)
+      (pv := posOf b sc wc0 wc1 bc0 bc1 ep kp) (av := av) (ext := ext)
+      hts hupd hdict1).trans (.store (by omega) ?_ (store_bridge_at hlt hdict4 hk) .nil)
+    exact ⟨sc, up, V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0, entryBounds_entryOf sc up,
+      by show (pairKey (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).map
+             (fun pd => V pd.1 pd.2) = some (V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+         rw [pairKey_tpKey]; rfl,
+      hsval, hVup⟩
+
+/-- **`hfall`'s CUT half, DISCHARGED.** `boundRefinesW_zero` asks for
+`RefinesAt` at `BoundWF` and `lo < gamma ≤ up`; this supplies it whenever the
+stand-pat cuts, so what is left of `hfall` is the fail-low arm alone — and that
+arm is not a leaf (see the file tail).
+
+The four hypotheses after `hge` are the honest residue, and each is named where
+it comes from: `hcalm` is §L18/§L24's genexp, open by design over a free board;
+`hroom` is the eviction guard (a full `tp_score` makes the shipped `del` — which
+is outside the tier — reachable, so the run refuses; `sbEvict_lit`'s own comment
+records this and `BoundWF` does not yet say it); `hsval` and `hbandV` are
+`formal/`'s depth-0 leaf. -/
+theorem hfall_cut {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
+    (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
+    (es : Array (RVal × RVal)) (sv : Nat) (lo up : Int)
+    (hwf : BoundWF V w ci sa ts tm hs n dl sf es sv)
+    (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper) (hsc : -mateLower < sc)
+    (hfind : (dictFind es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)).getD entryDefault
+      = entryOf lo up)
+    (hlow : lo < gamma) (hupp : gamma ≤ up)
+    (hge : gamma ≤ sc)
+    (hband' : -750 < sc ∧ sc < 750)
+    (hcalm : ∀ h' : Heap, Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h' →
+      ∃ (av : Bool) (ext : Array Obj) (Fg : Nat), 5 ≤ Fg ∧
+        evalExpr sunfish Fg
+          ⟨sbW2 (W1 w h') gamma 0
+              ((dictFind (match Heap.get? w.heap tm with
+                          | some (.dict ms _) => ms.toList | _ => [])
+                 (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none)
+              (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+           K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up)
+             ((dictFind (match Heap.get? w.heap tm with
+                         | some (.dict ms _) => ms.toList | _ => [])
+                (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none)⟩ calmG
+        = .ok ⟨sbW3 (W1 w h') gamma 0
+                 ((dictFind (match Heap.get? w.heap tm with
+                             | some (.dict ms _) => ms.toList | _ => [])
+                    (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none)
+                 (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
+               K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up)
+                 ((dictFind (match Heap.get? w.heap tm with
+                             | some (.dict ms _) => ms.toList | _ => [])
+                    (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none)⟩ (.bool av))
+    (hroom : ((dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+        (entryOf sc up)).1.toArray.size : Int) ≤ tableSize)
+    (hsval : sc ≤ V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
+    (hbandV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ mateUpper) :
+    RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
+  obtain ⟨ms, svm, hmove, -⟩ := hwf.killer
+  obtain ⟨h', hupd⟩ := update_exists (o' := searcherObj ci ts tm hs (n + 1) dl sf) hwf.self
+  obtain ⟨av, ext, Fg, hFg, hgen⟩ := hcalm h' hupd
+  rw [hmove] at hgen
+  exact refinesAt_stand_pat_at hV w h' ci sa ts tm hs n dl sf gamma sc lo up
+    b wc0 wc1 bc0 bc1 ep kp av ext Fg es ms sv svm _
+    hwf.self hupd hwf.clock hwf.score hwf.table hmove hwf.ml hwf.mu hsc hlo hup
+    hfind rfl hlow hupp hband' hFg hgen hge (by omega) hroom hsval hbandV
+
+/-! ### §10's widening, INSTANTIATED on the shipped engine
+
+The claim that distinguishes `store_runs_at` from `store_runs` is that the
+probed entry's UPPER rides through the fail-high arm. Measured: with
+`Entry(-100, 900)` stale at `(posH 0, 0)` — so `lo = -100 < gamma = 0 ≤ up =
+900`, the fall-through — and a real killer in `tp_move`, the shipped `bound()`
+answers **0** and leaves the table holding exactly ONE entry, **`Entry(0,
+900)`**. `Entry(best, up)`, not `Entry(best, MATE_UPPER)`.
+
+Both widenings are exercised at once: the probe hits and falls through
+(`probe_reads` + the two pass gates), `tp_move` is non-empty (`killer_reads`),
+and the store carries the stale upper (`store_runs_at`). The heap still goes
+70 → 74, so §9's six-link chain is unchanged by either widening. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_score", Env.lookup attrs.toList "tp_move" with
+        | some (.ref ts), some (.ref tm) =>
+          (match heapStore w.heap ts (tpKey (posH 0) 0) (entryOf (-100) 900) with
+           | .ok h1 =>
+             (match heapStore h1 tm (posH 0) (mvOf 84 64 "") with
+              | .ok h2 =>
+                (match callIn sunfish 1000000 { w with heap := h2 } "Searcher.bound"
+                    #[.ref a, posH 0, .int 0, .int 0] with
+                 | .ok w' (.int r) =>
+                   r == 0 && w'.heap.size == 74
+                     && (match Heap.get? w'.heap ts with
+                         | some (.dict es _) =>
+                           es.size == 1
+                             && (match es[0]! with
+                                 | (_, RVal.ntuple "Entry" _ #[RVal.int x, RVal.int y]) =>
+                                   x == 0 && y == 900
+                                 | _ => false)
+                         | _ => false)
+                 | _ => false)
+              | _ => false)
+           | _ => false)
+        | _, _ => false)
+     | _ => false)
+  | Option.none => false)
+
 /-! ### §9's chain, CORROBORATED slot by slot on the shipped engine
 
 The proof's six links are a claim about the shape of the run's heap effect, and
@@ -1406,6 +2120,15 @@ at `(pos, 0)`, one entry, which is what `store_bridge` claims and what
 #print axioms subtree_pre_store
 #print axioms subtree_of_stand_pat
 #print axioms refinesAt_stand_pat
+#print axioms killer_reads
+#print axioms store_runs_at
+#print axioms probe_block_falls
+#print axioms head_falls
+#print axioms mid_runs_at
+#print axioms tail_runs_at
+#print axioms body_runs_at
+#print axioms refinesAt_stand_pat_at
+#print axioms hfall_cut
 
 /-! ## What the base case still owes — and why it is NOT one more leaf
 
@@ -1431,20 +2154,10 @@ The good news is that everything ELSE the fail-low arm needs is now built: its
 subtrees composed by `trans`, and the children's stores are at depth `0 ≠ e` for
 every `e > 0` exactly as link 6 is.
 
-**(2) The cut leaf is CLEARED-table.** `hfall` is stated at an arbitrary `es`,
-and `refinesAt_stand_pat` needs `es = #[]`. Two shipped gates are why, and both
-are `probe_misses → probe_reads` again:
-
-* `mid_runs` pins `Heap.get? w.heap tm = some (.dict #[] svm)` — an empty
-  `tp_move`. Owed: `killer_reads`, and `mid_runs` recomposed at it.
-* `store_runs`/`tail_runs` pin `Env.lookup e "entry" = some entryDefault`,
-  because the store's fail-high arm reads `entry.upper`: over a stale table the
-  shipped line writes `Entry(best, up)` and not `Entry(best, MATE_UPPER)`. Owed:
-  `store_runs` at an arbitrary entry, with `sbStored` carrying `up`.
-  **The calculus side of that is already free** — `sf_store_from_report` would
-  then need `V pos 0 ≤ up`, which is exactly what `sf_probe_brackets` reads off
-  the probed entry. The stale entry's own upper bound is what validates the new
-  one.
+**(2) PAID — the cut leaf is no longer cleared-table.** §10 lands both
+widenings (`killer_reads`, `store_runs_at`) with the chain recomposed at them,
+and `hfall_cut` discharges `hfall`'s CUT half at an arbitrary table. The stale
+entry's own upper bound is what validates the new one, exactly as predicted.
 
 **(3) Two premises are open BY DESIGN and always were** (§L18, §L24): the
 calmness genexp `hgen` over a free board, and the `±750` band. They are
@@ -1456,6 +2169,15 @@ calmness genexp `hgen` over a free board, and the `±750` band. They are
 `hsval` (`pos.score ≤ V pos 0`, the stand-pat is a LOWER bound on the QS value).
 Both belong to `formal/`'s depth-0 leaf, beside `hmateV`'s exact
 `V pos 0 ≤ -MATE_UPPER` at a captured king. Three model facts, one per arm, and
-no arm needs anything else from the model. -/
+no arm needs anything else from the model.
+
+**And a FIFTH hole in the rule, found by discharging §10.** `BoundWF` does not
+bound the table's SIZE, and `sbEvict`'s own comment records what that costs:
+*"`del d[k]` is outside the tier and ingests as `Stmt.unsupported`, so every
+gate below must show the guard is FALSE."* At `len(self.tp_score) > TABLE_SIZE`
+the shipped eviction becomes reachable and the run REFUSES — the same species as
+§7's four. `refinesAt_stand_pat_at` and `hfall_cut` carry it as `hroom` in the
+COMPUTED shape (§L20's law); it belongs in `BoundWF` as a tenth conjunct, and
+that is a one-line change for the next lane that touches the structure. -/
 
 end Examples.python.sunfish.basecase_depth0

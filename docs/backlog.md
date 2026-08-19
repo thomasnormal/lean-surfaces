@@ -8904,3 +8904,219 @@ illustrative-exempt.
    (output flushes as the walk proceeds) or — cheaper still — the CPython
    oracle, which answered all 23 pairs in under a second and was the thing the
    `#guard`s should agree with anyway.
+
+
+## L16 — THE RECURSION RULE'S ARITHMETIC LANDS, and the futility break turns out to be a PREMISE, not a step (2026-08-19)
+
+§L10 (c) wrote the rule's shape — *an induction hypothesis at depth `d-1`
+consumed one round at a time at depth `d`* — and §L13 §8 paid its TABLE half in
+the general layer. §L15's re-pin made the fixture current again. What was still
+unwritten is the rule itself, and it has two halves that are not the
+interpreter: **what the fold does to a child's REPORT**, and **what the composed
+statement is**. Both landed. A third thing landed that was not on the list: the
+general layer's child-subtree relation could not be instantiated at the shipped
+code at all, and the theorems standing on it were vacuous.
+
+### The vacuity, found by reading the relation against a real call
+
+`Bracket.SubtreeWrites` (§L13 §8) had three arms: a bracketing store at the
+table's own slot keyed at another depth, a write at any other slot, and `nil`.
+Read against an actual `Searcher.bound` child that is not enough — a child
+ALLOCATES on every visit (the `moves()` generator object, the `sorted(...)`
+list), and `Heap.update` describes a write at an existing slot, never an
+append. So the relation was true, `probe_stable` and `tableAt` were proved, and
+**nothing in the shipped program could ever be shown to satisfy it.** Green and
+meaningless, exactly the class §L15 finding 2 recorded for the sixth attribute.
+
+The repair is one arm, `alloc`, with `a ≠ b` — the table is not the fresh
+address — as its side condition. That condition is real and not a formality:
+at `a = h.size` the same append turns a dangling probe into a live one, and
+§9's new `#guard`s pin both halves against a one-slot heap.
+
+`trans` came with it: `SubtreeWrites` is already a chain, so `n` children
+compose to ONE subtree by append and a move fold needs no third theorem.
+
+### The choice-freedom nearly went, and the culprit is a core lemma
+
+Both new arms read the slot across a `push`. The obvious route is
+`Heap.get?_push_of_get?` (PayloadBlind), and it made `probe_stable` and
+`tableAt` print `[propext, Classical.choice, Quot.sound]` — DictCalc's
+choice-free contract broken by a lemma nobody had printed. The cause is
+**`Array.getElem?_push`, which depends on `Classical.choice`**, where
+`Array.getElem_push_lt` depends on `propext` alone. The new
+`Heap.get?_push_ne` is proved from the `dif` instead, is strictly more general
+(a probe carries no liveness hypothesis, so it must cover the `none` answer
+too), and is `[propext]`. DictCalc's profile is intact: 13 theorems at
+`[propext, Quot.sound]` or less, `trans` at `[propext]`.
+
+Its size arithmetic is by name and not by `omega`, for AGENTS.md's `PyInt`
+reason one type down: **`Addr` is a reducible abbrev of `Nat`**, so a
+comparison headed at it is skipped wholesale and `omega` answers "no usable
+constraints found" with the constraint in plain sight.
+
+### §7 — the rule's spec side, 31 declarations and no interpreter
+
+* **The contract.** `Report` is `formal/Sunfish/CappedNull.lean`'s
+  `WindowReport` restated verbatim (the lane depends on no package, so a
+  bridge is a rename), with `negate` and `cap` — together they are
+  `min(cap, -self.bound(…))` — and **`report_iff_docstring`**, which proves the
+  predicate IS the shipped docstring's own two-implication promise. The
+  docstring keys on where the VALUE sits and `Report` on where the REPORT
+  sits; the equivalence is what says the lane proves the promise the engine
+  makes rather than a neighbouring one.
+* **Why a null window composes.** `Sound gamma value x := x < gamma ∨ x ≤
+  value`. A child that fails HIGH at `1 - gamma` negates to at most `gamma -
+  1` — strictly below the parent's window, a number it can never fail high on;
+  a child that fails LOW negates to a genuine lower bound. Both land in
+  `Sound`, `Sound` is closed under `max`, and `max` is the whole fold.
+* **Five inductions over `foldFrom`** (`_sound`, `_ge`, `_cut_ge`, `_ran_ge`,
+  `_settled_ge`) turn that into `fold_failHigh` — free, no exhaustiveness, no
+  depth — and `fold_failLow`, which costs two premises. `fold_report` is the
+  two assembled: the shipped contract at one node, from a classified schedule.
+* **Consuming the IH.** `searchedMove_sound` (branch 5b) and
+  `searchedPass_sound` (branch 2) are the two branches that call `bound`;
+  both go `negate` then `cap`, which is `formal/`'s `cappedNull_report` at the
+  parent's window. `report_sound` covers branches 1 and 4. Branch 3 and branch
+  5a need NOTHING — both fire under a shipped guard `cap < gamma`, so both are
+  `Sound` by the LEFT disjunct.
+* **The table beside the frame.** `LoopFrameAt` generalizes §3's QS-specialized
+  `LoopFrame` (which pins `depth = 0`, `nmr = false`) to any depth —
+  `loopFrame_eq` is `rfl`, so no §3 statement moved — and `FoldInv` is the two
+  halves in one proposition, with `LoopFrameAt.bindYield` (the loop target
+  disturbs no slot) and `FoldInv.subtree` (a child disturbs no invariant).
+  That is §L13's owed item 3, "TableOK threaded through the fold beside
+  LoopFrame", spelled. `sf_body_tableAt` is the whole body — children, then
+  the node's own store — and `sf_rounds_probe` is `trans` at the shipped slot.
+* **`BoundRefines`**, the depth-indexed statement, stated in the manner of §5's
+  `QSStandPat`, and `RecursionStep`, the step it owes.
+
+### THE FINDING: `bound_refines_fuelModel` is FALSE without a futility premise
+
+`settle_needs_futility` is a theorem, not a caveat. It exhibits a schedule —
+window 100, value 50, a settled cap of 10 ahead of a round worth exactly 50 —
+in which every round is `Sound`, the value IS attained by the schedule, and
+the fold still answers **10**: neither a lower bound (it is below the window)
+nor an upper one (the value is 50).
+
+So the refinement statement needs a side condition, and the shipped code's own
+justification for it is the comment on the break — *"the stream being sorted,
+[the cap answers] for everything after it"* — which is a property of `moves()`'s
+ORDERING and not of the fold. The fold cannot supply it; `hfut` is where it
+enters. Two `#guard`s make the point concrete: the same two rounds with the
+settle SECOND answer 50, the value. The fold sees only the order.
+
+The same shape recurs one level down and is recorded at `searchedMove_sound`:
+`hneg : -childValue ≤ value` is not the textbook negamax inequality, because
+the child is searched at `moveDepth depth lmr nmr` and not at `depth - 1`. It
+holds because the docstring DEFINES `s*` to include *"null moves, QS, futility
+and the reductions"*. A model whose value is the unreduced negamax owes `hneg`
+a proof, not a definition — which is the first thing a bridge to `formal/`'s
+`fuelValueD2` has to check.
+
+### Non-vacuity, measured on the ENGINE — and it pins two values exactly
+
+`Report` is a claim about a value function this file does not compute, so the
+check is CONSISTENCY: `bd_claim` runs the shipped `bound` at several windows on
+one key and intersects what the answers claim — a fail-high report is a lower
+bound on `s*`, a fail-low report an upper bound. A row that cannot run answers
+with the EMPTY interval, so a broken probe can never look consistent.
+
+| key | windows | reports | interval |
+|---|---|---|---|
+| opening board, depth 0 | −100, −40, 0, 1, 40 | 0, 0, 0, 4, 4 | **(4, 4)** |
+| opening board, depth 1 | 0, 20, 37, 40 | 0, 37, 37, 37 | **(37, 37)** |
+
+Nine independent searches, and at each key the reports agree to the integer:
+the shipped code's own answers determine `s*(opening, 0) = 4` and
+`s*(opening, 1) = 37`. That is what a satisfied `Report` looks like on real
+numbers, and it is a differential check rather than a tautology because the
+value never came from the model.
+
+### What landed
+
+| file | what |
+|---|---|
+| `LeanModels/Python/PayloadBlind.lean` | `Heap.get?_push_ne`, choice-free (+28 lines) |
+| `LeanModels/Python/DictCalc.lean` | `SubtreeWrites`'s `alloc` arm, `trans`, 6 `#guard`s (+79 lines) |
+| `Examples/python/sunfish/bound_depth.lean` | §7, the recursion rule; §7→§8 renumber (+530 lines) |
+
+**31 new declarations** in `bound_depth` (23 theorems, 7 `def`s, one private
+helper), **16 new `#guard`s**, **24 new `#print axioms`**. Every new theorem
+prints `[propext, Classical.choice, Quot.sound]` or less; `settle_needs_futility`,
+`foldFrom_cut_ge`, `LoopFrameAt.bindYield` and `Heap.get?_push_ne` are
+`[propext]`, and `report_sound`/`cappedPass_sound`/`settledCap_sound`/
+`loopFrame_eq` depend on no axioms at all. No `sorry`, no `native_decide`.
+
+**Triad, both commits:** `lake build` **3678 jobs green**; `docs_check` 71
+marked blocks, 71 ok, 15 illustrative-exempt; `diff_test` **1315 cases, 0
+failed, 113 whitelisted-unsupported, 1202 matched** — byte-identical to §L15's,
+so neither change touched the differential; `script_corpus` 64 scripts, 0
+failed, 50 matched, 14 loud. The DictCalc edit re-elaborated the whole tree
+(`pins_bound` and `pins_clock` 1108 s each, against §L15's 1111/1091 — flat).
+`bound_depth` itself went **58 s → 3 m 15 s**, all of it the nine added real
+searches.
+
+### Findings worth carrying
+
+1. *A relation with the wrong arms is the quietest vacuity there is.* A missing
+   CONSTRUCTOR cannot break a build, cannot break a proof, and cannot be seen
+   in an axiom print — it just means nothing in the program inhabits the
+   relation. §L15 caught a receiver shape by reading `__init__`; this was
+   caught by reading `SubtreeWrites` against what a `bound()` call actually
+   does to the heap. **Read every inductive's arms against one real execution
+   before proving anything over it**, and prefer a `#guard` on the underlying
+   computation to a proof about the relation.
+2. *Print the axioms of the LEMMAS, not only of the theorems.* DictCalc's
+   choice-freedom was broken by `Array.getElem?_push` two levels down, through
+   a PayloadBlind lemma that had never been printed. A contract about an axiom
+   set is a contract about a transitive closure.
+3. *A premise that the code justifies in a COMMENT is a premise.* The futility
+   break's soundness rests on `moves()`'s sort order, the reductions' on the
+   docstring's definition of `s*`. Both are true and neither is a step of the
+   fold; a refinement theorem that omits them typechecks and is false
+   (`settle_needs_futility` is the witness). Name them as hypotheses at the
+   site that can pay them — §L13 finding 2's rule, applied to arithmetic
+   instead of a table.
+4. *The consistency sweep is the cheapest non-vacuity instrument this lane
+   has.* Nine `#guard`s over the real engine pinned two exact values without
+   the file computing a single one of them, and they would fail loudly if the
+   contract were violated at either key. It costs one `bd_probe` per window and
+   it checks the THEOREM's predicate, not the theorem's proof.
+5. *OPS — one slip against "never edit sources mid-build", recorded.* §7 was
+   written into `bound_depth.lean` while the tree-wide `lake build` triggered
+   by the DictCalc edit was still running, and lake read the half-finished file
+   when it reached that job. Nothing rests on the interrupted run — the errors
+   it printed were from a snapshot that no longer exists, `bound_depth` is not
+   in any other job's dependency set, and the final triad rebuilt it from
+   scratch — but the rule is about the dependency set and the discipline is
+   cheaper than the audit. §L15 finding 6 recorded the same slip; twice is a
+   pattern, and the fix is to stage the edit and start the build after it.
+6. *`pgrep -f "lake build"` matches its own waiter.* An `until ! pgrep -f "lake
+   build"` loop never terminates, because the loop's own command line contains
+   the pattern. Two waiters spun for the whole session before `ps -eo
+   pid,comm | grep lean$` answered the question in one line. Match on the
+   process NAME, never on a command line the watcher itself contains.
+
+### What step 3 still owes
+
+§L13's list, updated. Items 1 (closure cells) and 2 (the re-pin) landed in
+§L14/§L15; item 3 is now half paid.
+
+1. **The interpreter half of `RecursionStep`** — §L10's step-2 items 1–5, at
+   the measured unit cost of one `py_simp` per statement with its module-level
+   residues pinned. This is the whole remaining cost, and it is a known
+   quantity: the probe block, the mate check, the nested `def` and `moves()`,
+   the fold via `PyStmtTriple.forGen`, and the tail.
+2. **`QSStandPat`**, which the same gates close, and which is the base case.
+3. **The futility premise itself** — either as a hypothesis carried into
+   `bound_refines_fuelModel` (honest, and what `hfut` already is), or as a
+   theorem about `moves()`'s sort order, which is a statement about the
+   generator this lane has already proved a great deal about
+   (`gen_moves_drains_ref`, `sf_order`). The second is the better answer and
+   nobody has priced it.
+
+**`model_audit` cannot retire yet, and the report should say so plainly.** What
+retires it is a proved `bound_refines_fuelModel`, and that needs item 1. What
+this pass changes is that the statement is now WRITTEN (`BoundRefines`), every
+non-interpreter ingredient is proved, and the two side conditions it must carry
+are named rather than discovered later.

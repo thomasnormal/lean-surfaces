@@ -236,6 +236,59 @@ theorem value_reads_pq (w : World) (b : String) (sc : Int)
     if_neg (show ¬ j < 0 by omega), if_pos (show (0 ≤ i ∧ i < (b.length : Int)) from ⟨hi, hi'⟩),
     if_pos (show (0 ≤ j ∧ j < (b.length : Int)) from ⟨hj, hj'⟩)]
 
+/-! ### The third statement — `score = pst[p][j] - pst[p][i]`
+
+The move's own table delta, and the first statement that reads a GLOBAL. `pst`
+is dirtied by the module's own `for k, table in pst.items()` loop, so the static
+fold declines and the LIVE view decides — the gate therefore takes the global as
+a world hypothesis, exactly as `gen_moves_drains_ref` takes `directions`.
+
+**The row is a premise, not a table.** `pst[p]` cannot reduce at a free piece
+letter, so the caller supplies the row it found; what the gate then needs of it
+is only that the two squares hold integers. That is what makes this gate say
+`zj - zi` — an AGREEMENT, at this statement, with no 120-wide constant written
+down anywhere. -/
+
+theorem vlScore_lit : ∃ a b c d e f g h i k l m n, vlScore =
+    .assign #[.name "score" a]
+      (.binOp (.subscript (.subscript (.name "pst" b) (.name "p" c) d) (.name "j" e) f)
+        .sub
+        (.subscript (.subscript (.name "pst" g) (.name "p" h) i) (.name "i" k) l) m) n :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- `pst` is BOUND but DIRTY in the static fold — the module's own
+`for k, table in pst.items()` loop writes it — so every gate below reads it
+from the world's globals and none of them says anything about the fold. -/
+theorem pstG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "pst"
+    = some Option.none := rfl
+
+/-- **GATE 3 — `score = pst[p][j] - pst[p][i]`.** The row arrives as a premise
+and the answer is stated in the row's own entries, so the gate AGREES with the
+table without naming one. -/
+theorem value_scores (w : World) (e : REnv) (pa : Addr) (pc : String)
+    (es : Array (RVal × RVal)) (sv : Nat) (xs : Array RVal) (i j zi zj : Int) (F : Nat)
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hp : Env.lookup e "p" = some (.str pc))
+    (hei : Env.lookup e "i" = some (.int i))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es sv))
+    (hrow : dictFind es.toList (.str pc) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hi : 0 ≤ i) (hi' : i < 120) (hj : 0 ≤ j) (hj' : j < 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj) :
+    execStmts sunfish (F + 10) ⟨w, e⟩ [vlScore]
+      = .ok ⟨w, Env.set e "score" (.int (zj - zi))⟩ .next := by
+  obtain ⟨a, b, c, d, e', f, g, h, i', k, l, m, n, hlit⟩ := vlScore_lit
+  simp only [Heap.get?] at hd
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hnp, hp, hei, hej, hg, hd, hrow, pstG,
+    normIndex, hsz, hxi, hxj,
+    if_neg (show ¬ i < 0 by omega), if_neg (show ¬ j < 0 by omega),
+    if_pos (show (0 ≤ i ∧ i < (120 : Int)) from ⟨hi, hi'⟩),
+    if_pos (show (0 ≤ j ∧ j < (120 : Int)) from ⟨hj, hj'⟩)]
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -244,6 +297,8 @@ theorem value_reads_pq (w : World) (b : String) (sc : Int)
 #print axioms vlArity
 #print axioms vlPQ_lit
 #print axioms value_reads_pq
+#print axioms pstG
+#print axioms value_scores
 #print axioms value_unpacks
 #print axioms value_returns
 

@@ -1637,6 +1637,79 @@ theorem qs_fold_agrees (gamma sc : Int) (hge : gamma ≤ sc) (hsc : -mateUpper <
     foldFrom gamma (-mateUpper) false [standPat sc] = (sc, false, .cut) := by
   rw [fold_standpat gamma sc [] hge, show max (-mateUpper) sc = sc from by omega]
 
+/-! ### Statements 14, 16 and 17 — three quarters of the tail
+
+The correction is DEAD at depth 0, the eviction never fires, and the return
+hands back `best`. What is left of `QSStandPat` after these is statement 15,
+the table STORE — the one tail statement that changes the heap, and the one
+§6's `sf_store` is waiting for. -/
+
+/-- The correction has NO `else` — sharper than `sbCorr_lit`, which left the
+arm existential, and needed because the dead branch must REDUCE. -/
+theorem sbCorr_noElse : ∃ (bx : Expr) (bd : Array Stmt) (p0 p1 p2 p3 p4 p5 p6 : Span),
+    sbCorr = .ifStmt (.boolOp .and
+        #[.name "depth" p0, .unaryOp .not (.name "live" p1) p2,
+          .call (.name "all" p3) #[bx] #[] Option.none p4] p5) bd #[] p6 :=
+  ⟨_, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **GATE — the terminality correction is DEAD at depth 0.** -/
+theorem corr_dead (w : World) (e : REnv)
+    (hd : Env.lookup e "depth" = some (.int 0)) :
+    execStmt sunfish 10 ⟨w, e⟩ sbCorr = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bx, bd, p0, p1, p2, p3, p4, p5, p6, h⟩ := sbCorr_noElse
+  have hc : evalExpr sunfish 9 ⟨w, e⟩
+      (.boolOp .and
+        #[.name "depth" p0, .unaryOp .not (.name "live" p1) p2,
+          .call (.name "all" p3) #[bx] #[] Option.none p4] p5)
+        = .ok ⟨w, e⟩ (.int 0) := by
+    have h1 : evalExpr sunfish 7 ⟨w, e⟩ (.name "depth" p0) = .ok ⟨w, e⟩ (.int 0) := by
+      py_simp [-globalsFold, -globalsStep, hd]
+    rw [evalExpr]
+    exact boolChain_and_falsy (F := 7) h1 rfl
+  rw [h, execStmt_if_false hc rfl]
+  simp only [execStmts]
+
+/-- **GATE — `return best`. -/
+theorem ret_best (w : World) (e : REnv) (bst : Int)
+    (hb : Env.lookup e "best" = some (.int bst)) :
+    execStmt sunfish 8 ⟨w, e⟩ sbRet = .ok ⟨w, e⟩ (.ret (.int bst)) := by
+  obtain ⟨p0, p1, h⟩ := sbRet_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep, hb]
+
+theorem tsG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
+    "TABLE_SIZE" = some (some (.int tableSize)) := rfl
+theorem lenG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "len"
+    = Option.none := rfl
+theorem lenF : findFunction sunfish "len" = Option.none := rfl
+theorem lenNotFun : ¬ ∃ x, x ∈ sunfish.functions ∧ x.name = "len" := by
+  simpa [findFunction] using lenF
+theorem lenCls : findClassAux sunfish.classes.toList "len" 0 = Option.none := rfl
+theorem lenNT : findNamedTupleAux sunfish.namedtuples.toList "len" = Option.none := rfl
+
+/-- **GATE — the eviction never fires**: a table holding `n <= TABLE_SIZE`
+entries is not over the cap, and after a QS node's single store it holds one. -/
+theorem evict_dead (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf : Int) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hnolen : Env.lookup e "len" = Option.none)
+    (hnots : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hsz : (es.size : Int) ≤ tableSize) :
+    execStmt sunfish 12 ⟨w, e⟩ sbEvict = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bd, p0, p1, p2, p3, p4, p5, p6, h⟩ := sbEvict_lit
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 11 ⟨w, e⟩
+      (.compare (.call (.name "len" p0) #[.attribute (.name "self" p1) "tp_score" p2] #[]
+        Option.none p3) #[.gt] #[.name "TABLE_SIZE" p4] p5)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hslf, hnolen, hnots, lenG, lenNotFun, lenCls,
+      lenNT, tsG, hobj, hdict, searcherObj]
+    omega
+  rw [h, execStmt_if_false hc rfl]
+  simp only [execStmts]
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -2521,6 +2594,12 @@ pair `qs_fold_agrees` relates symbolically. -/
 #guard bd_probe (posH 0) 0 0 == some (0, 1)
 #guard foldFrom 0 (-mateUpper) false [standPat 0] == (0, false, Exit.cut)
 #guard yieldVal qsY == RVal.tuple #[RVal.none, RVal.none]
+
+/-! **The tail's three dead-or-trivial statements, grounded.** `TABLE_SIZE`
+resolves statically like `NULL_MARGIN` (so `evict_dead` says nothing about
+`w.globals`), and one entry is nowhere near the cap. -/
+#guard tableSize == 1000000
+#guard decide ((1 : Int) ≤ tableSize)
 #guard (max (-3 : Int) 0, max (0 : Int) 0, max (5 : Int) 0) == (0, 0, 5)
 
 #print axioms bound_enters
@@ -2584,6 +2663,11 @@ pair `qs_fold_agrees` relates symbolically. -/
 #print axioms qs_body
 #print axioms qs_fold_breaks
 #print axioms qs_fold_agrees
+#print axioms sbCorr_noElse
+#print axioms corr_dead
+#print axioms ret_best
+#print axioms evict_dead
+#print axioms tsG
 #print axioms absNotFun
 #print axioms nmarG
 #print axioms posCls_ntBase_isSome

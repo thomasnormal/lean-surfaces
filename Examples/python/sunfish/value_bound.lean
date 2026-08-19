@@ -31,7 +31,8 @@ namespace Examples.python.sunfish.value_bound
 open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
-open Examples.python.sunfish.bound_depth (posCAux posCls_methods absG absNotFun absCls absNT)
+open Examples.python.sunfish.bound_depth (posCAux posCls_methods absG absNotFun absCls absNT
+  execStmt_if_true execStmt_if_false execStmts_singleton)
 
 set_option maxRecDepth 100000
 
@@ -518,6 +519,128 @@ theorem value_castles (w : World) (e : REnv) (pa : Addr) (i j sv0 z1 z2 : Int)
       if_pos (show (98 : Int) < (xs.size : Int) by omega),
       if_pos (show (0 ≤ (i + j).fdiv 2 ∧ (i + j).fdiv 2 < (xs.size : Int)) from ⟨hm1, hm2⟩)]
 
+/-! ### The sixth statement — the pawn block, and A FIFTH ARM NOBODY PREDICTED
+
+`if p == "P":` with TWO SIBLING `if`s inside — promotion and en passant — not
+one nest. That matters: sibling tests give **four** pawn combinations, not
+three, and the fourth is *promotion AND en passant at once*. It is physically
+impossible (an en-passant square is on rank 3 or 6, a promotion square on rank
+8), but it is REACHABLE IN THE CONTROL FLOW, so a four-arm enumeration would
+have missed it and a five-arm one would spell out a case chess forbids.
+
+**The factoring answers it without enumerating anything**: gate the outer `if`
+as a PEEL and each sibling separately, and the caller composes with
+`execStmts_append`. Every combination is then covered by construction, the
+impossible one included, and nothing in this file has to claim it cannot happen.
+
+`A8`/`H8`/`S` resolve statically (censused with `A1`/`H1`), so like GATE 6 this
+says nothing about `w.globals` beyond `pst`. -/
+
+theorem a8G : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "A8"
+    = some (some (.int 21)) := rfl
+theorem h8G : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "H8"
+    = some (some (.int 28)) := rfl
+theorem sG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst "S"
+    = some (some (.int 10)) := rfl
+
+/-- The pawn block's two sibling statements. -/
+def vlPawnB : List Stmt := match vlPawn with | .ifStmt _ b _ _ => b.toList | _ => []
+/-- `if A8 <= j <= H8: score += pst[prom][j] - pst["P"][j]` — promotion. -/
+def vlProm : Stmt := nth 0 vlPawnB
+/-- `if j == self.ep: score += pst["P"][119 - (j + S)]` — en passant. -/
+def vlEp : Stmt := nth 1 vlPawnB
+
+theorem vlPawnB_split : vlPawnB = [vlProm, vlEp] := rfl
+
+theorem vlPawn_lit : ∃ a b c d, vlPawn =
+    .ifStmt (.compare (.name "p" a) #[.eq] #[.constant (.str "P") b] c)
+      vlPawnB.toArray #[] d :=
+  ⟨_, _, _, _, rfl⟩
+
+/-- **GATE 7a — not a pawn**, and the whole block is dead. -/
+theorem value_pawn_skips (w : World) (e : REnv) (pc : String) (F : Nat)
+    (hp : Env.lookup e "p" = some (.str pc)) (hne : pc ≠ "P") :
+    execStmts sunfish (F + 8) ⟨w, e⟩ [vlPawn] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨a, b, c, d, hlit⟩ := vlPawn_lit
+  have hc : evalExpr sunfish (F + 6) ⟨w, e⟩
+      (.compare (.name "p" a) #[.eq] #[.constant (.str "P") b] c)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hp, if_neg hne]
+  have hs : execStmt sunfish (F + 7) ⟨w, e⟩ vlPawn = .ok ⟨w, e⟩ .next := by
+    rw [hlit, execStmt_if_false hc rfl]
+    rfl
+  exact execStmts_singleton (F := F + 6) (by simpa using hs)
+
+/-- **GATE 7b — the PEEL.** A pawn enters the block, and what is left is the two
+sibling statements — each with its own gate below, so the four combinations
+compose rather than being enumerated. -/
+theorem value_pawn_enters (w : World) (e : REnv) (F : Nat)
+    (hp : Env.lookup e "p" = some (.str "P")) :
+    execStmt sunfish (F + 7) ⟨w, e⟩ vlPawn
+      = execStmts sunfish (F + 6) ⟨w, e⟩ [vlProm, vlEp] := by
+  obtain ⟨a, b, c, d, hlit⟩ := vlPawn_lit
+  have hc : evalExpr sunfish (F + 6) ⟨w, e⟩
+      (.compare (.name "p" a) #[.eq] #[.constant (.str "P") b] c)
+        = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hp]
+  have hL : vlPawnB.toArray.toList = [vlProm, vlEp] := by simp [vlPawnB_split]
+  rw [hlit, execStmt_if_true hc rfl, hL]
+
+/-- The promotion test, pinned with its body EXISTENTIAL — the skip arm never
+enters it, and `sbCorr_noElse`'s law (§L19) says pin the shape you compute
+with: here that is the `else`, which is empty. -/
+theorem vlProm_lit : ∃ (bd : Array Stmt) (a b c d e : Span), vlProm =
+    .ifStmt (.compare (.name "A8" a) #[.ltE, .ltE] #[.name "j" b, .name "H8" c] d) bd #[] e :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+theorem vlEp_lit : ∃ (bd : Array Stmt) (a b c d e : Span), vlEp =
+    .ifStmt (.compare (.name "j" a) #[.eq] #[.attribute (.name "self" b) "ep" c] d) bd #[] e :=
+  ⟨_, _, _, _, _, _, rfl⟩
+
+/-- **GATE 7c — the pawn does not reach the last rank**, so the promotion arm is
+dead — and this is the arm that makes the whole split MANDATORY: `prom` is `""`
+on every non-promotion move, and `pst[""]` is a `KeyError`, so a gate carrying
+the `prom` row unconditionally would be unsatisfiable here. The chained compare
+`A8 <= j <= H8` reduces to plain arithmetic once `A8`/`H8` are resolved. -/
+theorem value_prom_skips (w : World) (e : REnv) (j : Int) (F : Nat)
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "A8" = Option.none)
+    (hnh : Env.lookup e "H8" = Option.none)
+    (hout : j < 21 ∨ 28 < j) :
+    execStmt sunfish (F + 7) ⟨w, e⟩ vlProm = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bd, a, b, c, d, e', hlit⟩ := vlProm_lit
+  have hc : evalExpr sunfish (F + 6) ⟨w, e⟩
+      (.compare (.name "A8" a) #[.ltE, .ltE] #[.name "j" b, .name "H8" c] d)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hej, hna, hnh, a8G, h8G]
+    omega
+  rw [hlit, execStmt_if_false hc rfl]
+  rfl
+
+/-! ### GATE 7d is BLOCKED, and the failure mode is a new one
+
+`if j == self.ep:` — the en-passant arm. Its pin is above; its gate is not here,
+and the blocker is worth naming because it is **not** an unsolved goal:
+`py_simp` closes the branch and the **KERNEL** rejects the result with
+`application type mismatch: id (Eq.refl (match RVal.int j, rhs with …))`. The
+`rhs` there is a MATCH BINDER, so `py_simp` produced a `rfl` under a binder —
+the attribute read `self.ep` was never destructed inside the comparison's own
+match.
+
+This is a different failure from anything else in this file. `null_margin_adds`
+(bound_depth.lean) reads `pos.score` through a `binOp` with the same three
+residues and succeeds, so the difference is the COMPARISON's match, not the
+field read: `==` on two `RVal`s cases on both operands at once, and the
+attribute's `Run` has to be sequenced before that match can reduce.
+
+**Two fix directions, in preference order.** (1) Read the field into the frame
+first — bind `self.ep` with a `have` at the `evalExpr` level and hand
+`py_simp` the VALUE, which is the residue-spelling law applied one step earlier.
+(2) State the comparison's own value as a premise in the residue's spelling.
+Either is a scratch cycle; what must not happen is another `py_simp` that the
+elaborator accepts and the kernel refuses, because that failure reads like a
+proof until the build runs. -/
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -540,6 +663,15 @@ theorem value_castles (w : World) (e : REnv) (pa : Addr) (i j sv0 z1 z2 : Int)
 #print axioms a1G
 #print axioms h1G
 #print axioms value_castles
+#print axioms a8G
+#print axioms h8G
+#print axioms sG
+#print axioms vlPawn_lit
+#print axioms value_pawn_skips
+#print axioms value_pawn_enters
+#print axioms vlProm_lit
+#print axioms vlEp_lit
+#print axioms value_prom_skips
 #print axioms value_unpacks
 #print axioms value_returns
 
@@ -547,7 +679,10 @@ theorem value_castles (w : World) (e : REnv) (pa : Addr) (i j sv0 z1 z2 : Int)
 
 Seven of the eight statements have gates: the unpack (1), the board reads (2),
 the table delta (3), the capture (4, in two arms), the castling-check detection
-(5, in two arms), the castle (6, in THREE arms) and the return (8).
+(5, in two arms), the castle (6, in three arms) and the return (8). Statement 7,
+the pawn block, is peeled and half-gated: the not-a-pawn arm, the peel, and the
+promotion-skip arm are proved; the en-passant arm is BLOCKED (above) and the two
+ADD arms are unwritten.
 
 ### THE SECOND LAW OF THIS FILE, learned at GATE 4
 
@@ -596,16 +731,39 @@ evaluates the test and branches, so the gate `by_cases` on `j < i` and runs
 `py_simp` twice. The premise still carries the conditional (at `Nat`), so the
 gate stays single — but the proof does not.
 
-### The one remaining
+### THE FIFTH ARM NOBODY PREDICTED, and why it costs nothing
 
-* **GATE 7, `vlPawn`** — `if p == "P":`, with `A8 ≤ j ≤ H8` (a chained compare)
-  and `j == self.ep` inside, so it is a NEST of three tests rather than one.
-  `A8`/`H8`/`S` resolve statically (censused with `A1`/`H1`), so like GATE 6 it
-  says nothing about `w.globals` beyond `pst`. **The promotion arm reads
-  `pst[prom]`, and `prom` is `""` on every non-promotion move — `pst[""]` is a
-  `KeyError`, so the `A8 ≤ j ≤ H8` guard is load-bearing and the two-arm law is
-  mandatory here, not stylistic.** Expect four arms: not-a-pawn; a pawn that
-  neither promotes nor takes en passant; promotion; en passant.
+§L25 and the last two passes all priced statement 7 as a NEST of tests. It is
+not: `if p == "P":` contains **two SIBLING `if`s**, so a pawn has FOUR
+combinations and the fourth is *promotion and en passant at once*. That is
+physically impossible — an en-passant square sits on rank 3 or 6, a promotion
+square on rank 8 — and it is REACHABLE IN THE CONTROL FLOW, so a four-arm
+enumeration would have missed it and a five-arm one would spell out a case chess
+forbids.
+
+**The peel factoring answers it without enumerating anything.** `value_pawn_skips`
+handles not-a-pawn, `value_pawn_enters` reduces the block to its two siblings,
+and each sibling gets its own two arms; `execStmts_append` composes them. All
+four combinations are then covered by construction, the impossible one included,
+and no theorem in this file has to claim it cannot happen. Prefer a PEEL to an
+enumeration wherever a statement's body is a sequence — it is the same economy
+`execStmts_append` bought the eighteen-statement chain.
+
+### What is left
+
+1. **GATE 7d** — the en-passant skip arm, blocked on the kernel-level failure
+   named above. Its two fix directions are written down; expect one cycle.
+2. **GATE 7e/7f** — the two ADD arms (promotion, en passant). Both need a
+   sharper pin of their statement with the body spelled (the current pins leave
+   it existential, which is right for the skip arms and wrong for these — §L19's
+   law, third application), plus the `prom` row and the `119 - (j + S)` index.
+3. **The composition**, `value_runs`, with a `by_cases` per two-arm gate and a
+   `value_pawn_enters` peel in the middle.
+4. **The fixture instantiation IN THE SAME COMMIT** — a `#guard` or checked
+   example running `value_runs`' own premises on the shipped board, so the
+   completed theorem is known non-vacuous the moment it lands. This file leads
+   with `#guard`s for exactly that reason and the composition must not break the
+   habit.
 
 Then `value_runs` composes the eight at `callIn`, in the ∃-fuel form, with the
 answer EXISTENTIAL (§L25's re-sequencing) and a `by_cases` per two-arm gate.

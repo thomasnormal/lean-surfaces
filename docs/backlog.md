@@ -9426,3 +9426,125 @@ the growth still the `#guard`s' real searches.
 `QSStandPat` is unproved. The head is complete, the recursion rule's spec side
 is complete, both side conditions are named, and the statement's target is now
 DECIDED — but the fold is not written and no assembly exists.
+
+
+## L19 — THE FOLD LANDS, three quarters of the tail with it, and 17 of 18 statements are gated (2026-08-19)
+
+§L18 named the fold as *"the single largest remaining piece"*. It is done, via
+`PyStmtTriple.forGen`, and the three cheap tail statements came with it.
+**Seventeen of the eighteen statements now have an interpreter gate.** The one
+remaining is statement 15, the table STORE.
+
+### The fold, and why one round is the whole proof
+
+At a QS stand-pat node the shipped `for val, move in moves():` runs **exactly
+one round and breaks**, and the engine says so at ONE node
+(`bd_probe (posH 0) 0 0 == some (0, 1)` — a `#guard` that has stood since §L15
+and is now what the gate is checked against).
+
+The rule instantiation is where the economy is:
+
+* **schedule `[qsY]`** — the virtual `(None, None)` the `depth == 0` clause
+  yields, and nothing after it;
+* **`QSInv` pins the frame AND the yield** (`| [y] => st = ⟨w₁, e⟩ ∧ y = qsY`).
+  Pinning the yield is not decoration: `hstep` is quantified over every `x`, so
+  an invariant that constrained only the frame would owe a round for a yield the
+  generator never produces;
+* **`Inv [] = False`** — the empty schedule is UNREACHABLE, because the fold
+  breaks on round one. That makes `hexit` vacuous and leaves exactly ONE
+  `hstep` obligation. A rule with three obligations collapses to one because the
+  program never runs out of moves; it leaves early.
+
+Two generator-side facts stay named premises — `hev` (the `moves()` call
+allocating the object) and `hyield` (its first step) — which is the sf_order
+precedent's own shape (`bound_body_returns` took its `hands` schedule the same
+way).
+
+### The body is paid, and the altitude fix earned its keep twice more
+
+* `qs_score` — branch 1 fires and `score = pos.score`. The `elif` chain below it
+  is four more branches, two of them recursive, and it is a **defined
+  projection** (`sbElse1`), not an opaque variable — so `py_simp` would walk it
+  and explode exactly as it did on `nmr`'s third operand.
+  `execStmt_if_true`/`execStmt_if_false` keep it out by deciding the branch AT
+  the `ifStmt`. §L17's finding, second and third applications.
+* `qs_max` — `best = max(best, score)`, with `max (-MATE_UPPER) sc = sc`.
+* `qs_cut` — the cutoff fires, and `kill_guard_false` gets **three facts from one
+  guard**: `move is not None` is false on a virtual yield, so the `and` never
+  reaches `depth`, the killer is not stored, the eviction inside the cutoff is
+  never reached, and the QS fold is heap-free. All three were assumptions in
+  §L10's `LoopFrame` docstring; now they are one lemma.
+
+`execStmt_mono` composes the three at their own fuels — no threshold plumbing
+needed — and `PyTriple.of_exec` lifts the `.brk` run into the triple the rule
+wants.
+
+### The bridge, and it is one line
+
+`qs_fold_agrees`: `foldFrom gamma (-mateUpper) false [standPat sc] = (sc, false,
+.cut)`. The interpreter's answer IS §3's fold, so §4's gates and §7's
+`fold_report` are now connected rather than merely adjacent. Without this line
+the fold would typecheck and mean nothing — it is the same discipline the
+`report_iff_docstring` equivalence applies to the contract.
+
+### The tail: three of four
+
+* `corr_dead` — the correction is DEAD at depth 0, because `depth` is the FIRST
+  conjunct of `depth and not live and all(…)` and a falsy `0` short-circuits
+  before the `gen_moves()` scan. `boolChain_and_falsy`, third application. It
+  needed a sharper pin: `sbCorr_lit` left the `else` arm existential and a dead
+  branch has to REDUCE, so `sbCorr_noElse` records that the shipped correction
+  has no `else`. The old pin is untouched.
+* `evict_dead` — the eviction never fires, stated over a FREE entry array with
+  `es.size ≤ TABLE_SIZE` rather than at one entry, so the same gate serves every
+  depth. `TABLE_SIZE` resolves statically (like `NULL_MARGIN`, §L17), so the gate
+  says nothing about `w.globals`; `len` gets the five residues `max`/`abs` had.
+* `ret_best` — `return best`, in the `.ret` arm.
+
+### Triad
+
+Both commits: `lake build` **3678 jobs green**; `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched** — unchanged since §L15 across seventeen gates; `script_corpus` 64
+scripts, 0 failed, 50 matched, 14 loud. Every new theorem prints `[propext,
+Classical.choice, Quot.sound]` or less; `execStmt_if_true`/`_if_false` are
+choice-free. No `sorry`, no `native_decide`.
+
+### Findings worth carrying
+
+1. *A loop that LEAVES EARLY is cheaper to verify than a loop that finishes.*
+   `Inv [] = False` turns `PyStmtTriple.forGen`'s three obligations into one,
+   because the exit obligation is about a state the program never reaches. When
+   a loop provably breaks, choose the schedule that ends where the break does
+   and let the invariant refute the rest — do not prove the tail you never run.
+2. *An invariant over a quantified element must pin the ELEMENT.* `hstep` ranges
+   over every `x`; an invariant constraining only the frame would have owed a
+   round for a yield `moves()` never produces. One extra conjunct (`y = qsY`)
+   is the whole fix, and its absence would have shown up as an unprovable
+   obligation rather than as a false theorem — but only after the work.
+3. *An existential pin is a liability wherever a branch must REDUCE.*
+   `sbCorr_lit`'s `oe : Array Stmt` is right for a census and wrong for a dead
+   branch: `execStmts _ oe.toList` cannot step. Pin the shape you will need to
+   COMPUTE with, and add the sharper pin rather than weakening the recorded one.
+4. *One guard can be worth three facts.* `kill_guard_false` is why the QS fold
+   stores no killer, never reaches the eviction, and is heap-free — three
+   properties §L10 asserted separately in prose. Look for the single decision
+   that discharges a cluster of assumptions.
+5. *A linter can be wrong about which simp argument did the work.*
+   `simp only [Run.bind]` twice in `qs_body` is flagged unused and is not:
+   removing either leaves the next `rw` without its pattern. Measured both ways,
+   silenced on that theorem with the reason recorded — never by deleting the
+   step and hoping.
+
+### What is left
+
+1. **Statement 15, the table STORE** — `self.tp_score[pos, depth] = Entry(best,
+   entry.upper) if best >= gamma else Entry(entry.lower, best)`, the only tail
+   statement that changes the heap. §6's `sf_store` is the invariant half,
+   already proved; what is owed is the interpreter run — the conditional
+   expression, the `Entry(…)` construction and the `heapStore`.
+2. **The boundary**, and `QSStandPat` closes.
+3. Then `RecursionStep`, and `bound_refines_fuelModel` assembles.
+
+**`model_audit` CANNOT RETIRE YET** — but the distance is now one statement plus
+the boundary, where at the start of §L17 it was seven statements plus the fold.

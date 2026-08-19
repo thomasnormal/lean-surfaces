@@ -31,7 +31,7 @@ namespace Examples.python.sunfish.value_bound
 open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
-open Examples.python.sunfish.bound_depth (posCAux posCls_methods)
+open Examples.python.sunfish.bound_depth (posCAux posCls_methods absG absNotFun absCls absNT)
 
 set_option maxRecDepth 100000
 
@@ -339,6 +339,73 @@ theorem value_cap_adds (w : World) (e : REnv) (pa : Addr) (qc uc : String)
     if_neg (show ¬ (119 - j) < 0 by omega),
     if_pos (show (j ≤ 119 ∧ 119 - j < (120 : Int)) from ⟨by omega, hhi⟩)]
 
+theorem vlKp_lit : ∃ a b c d e f g h i k l m n o p q r t, vlKp =
+    .ifStmt (.compare
+        (.call (.name "abs" a)
+          #[.binOp (.name "j" b) .sub (.attribute (.name "self" c) "kp" d) e] #[] Option.none f)
+        #[.lt] #[.constant (.int 2) g] h)
+      #[.augAssign (.name "score" i) .add
+          (.subscript (.subscript (.name "pst" k) (.constant (.str "K") l) m)
+            (.binOp (.constant (.int 119) n) .sub (.name "j" o) p) q) r]
+      #[] t :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-! ### The fourth statement — the castling-check detection
+
+`if abs(j - self.kp) < 2: score += pst["K"][119 - j]`. Two arms again, and here
+the row key is the LITERAL `"K"`, so the row premise would be safe in both — the
+split is kept because the score changes in only one, and because a caller that
+knows which arm it is in should not have to carry a table row it never reads.
+
+`abs` leaves `if j - kp < 0 then -(j - kp) else j - kp`, so the premises below
+are ordinary arithmetic and the proof `split`s the interpreter's own `if`. -/
+
+/-- **GATE 5a — the destination is far from the king square**, and the arm is
+skipped. -/
+theorem value_kp_skips (w : World) (e : REnv) (b : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp j : Int) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf b scv wc0 wc1 bc0 bc1 ep kp))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "abs" = Option.none)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2) :
+    execStmts sunfish (F + 14) ⟨w, e⟩ [vlKp] = .ok ⟨w, e⟩ .next := by
+  obtain ⟨a, b', c, d, e', f, g, h, i, k, l, m, n, o, p, q, r, t, hlit⟩ := vlKp_lit
+  have hif : ¬ ((if j - kp < 0 then -(j - kp) else j - kp) < 2) := by
+    split <;> omega
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hself, hej, hna, absG, absNotFun, absCls, absNT,
+    posOf, posCAux, posCls_methods, if_neg hif]
+
+/-- **GATE 5b — the destination is beside the king square**, and the king
+table's value at the mirrored square is added. -/
+theorem value_kp_adds (w : World) (e : REnv) (pa : Addr) (b : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp j s z : Int)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs : Array RVal) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf b scv wc0 wc1 bc0 bc1 ep kp))
+    (hej : Env.lookup e "j" = some (.int j))
+    (hna : Env.lookup e "abs" = Option.none)
+    (hnp : Env.lookup e "pst" = Option.none)
+    (hs : Env.lookup e "score" = some (.int s))
+    (hnear : -2 < j - kp ∧ j - kp < 2)
+    (hg : Env.lookup w.globals "pst" = some (.ref pa))
+    (hd : Heap.get? w.heap pa = some (.dict es svv))
+    (hrow : dictFind es.toList (.str "K") = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hlo : j ≤ 119) (hhi : 119 - j < 120)
+    (hx : xs[(119 - j).toNat]?.getD .none = .int z) :
+    execStmts sunfish (F + 16) ⟨w, e⟩ [vlKp]
+      = .ok ⟨w, Env.set e "score" (.int (s + z))⟩ .next := by
+  obtain ⟨a, b', c, d, e', f, g, h, i, k, l, m, n, o, p, q, r, t, hlit⟩ := vlKp_lit
+  have hif : (if j - kp < 0 then -(j - kp) else j - kp) < 2 := by
+    split <;> omega
+  simp only [Heap.get?] at hd
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hself, hej, hna, hnp, hs, hg, hd, hrow, pstG,
+    absG, absNotFun, absCls, absNT, posOf, posCAux, posCls_methods,
+    normIndex, hsz, hx, if_pos hif,
+    if_neg (show ¬ (119 - j) < 0 by omega),
+    if_pos (show (j ≤ 119 ∧ 119 - j < (120 : Int)) from ⟨hlo, hhi⟩)]
+
 #print axioms vlF_lit
 #print axioms vlB_split
 #print axioms vlUnpack_lit
@@ -352,13 +419,17 @@ theorem value_cap_adds (w : World) (e : REnv) (pa : Addr) (qc uc : String)
 #print axioms vlCap_lit
 #print axioms value_cap_skips
 #print axioms value_cap_adds
+#print axioms vlKp_lit
+#print axioms value_kp_skips
+#print axioms value_kp_adds
 #print axioms value_unpacks
 #print axioms value_returns
 
 /-! ## What R1 still owes, in order
 
-Five of the eight statements have gates: the unpack (1), the board reads (2),
-the table delta (3), the capture (4, in TWO arms) and the return (8).
+Six of the eight statements have gates: the unpack (1), the board reads (2),
+the table delta (3), the capture (4, in two arms), the castling-check detection
+(5, in two arms) and the return (8).
 
 ### THE SECOND LAW OF THIS FILE, learned at GATE 4
 
@@ -378,22 +449,23 @@ names. Note also that simp NORMALIZES the index condition — `0 ≤ 119 - j`
 becomes `j ≤ 119` — so an `if_pos` must be stated in the normalized form or it
 will not fire. That cost one cycle at GATE 4b.
 
-### The three remaining
+### The two remaining
 
-* **GATE 5, `vlKp`** — `if abs(j - self.kp) < 2: score += pst["K"][119 - j]`.
-  Two arms on a test over a free `kp`. The `"K"` key is a LITERAL, so this is
-  the one `if` whose row premise is safe in both arms — but it keeps two arms
-  anyway, because the score changes in only one.
 * **GATE 6, `vlCastle`** — `if p == "K" and abs(i - j) == 2:`, two statements
   inside, reading `pst["R"]` at `(i + j) // 2` and at `A1 if j < i else H1`.
-  `A1`/`H1` resolve STATICALLY (§H4's dirty-name pass admits them), so this gate
-  says nothing about `w.globals` beyond `pst` — census it before writing.
-  A conditional EXPRESSION in the index is new; nothing else here is.
+  Both keys are LITERAL, so the two-arm law is about the score and not about a
+  `KeyError` here. Two things are new and neither is GATE-3-shaped: a
+  conditional EXPRESSION in the index, and a floor-division index. `A1`/`H1`
+  resolve STATICALLY (§H4's dirty-name pass admits them) — census that before
+  writing the gate, because if true this gate says nothing about `w.globals`
+  beyond `pst`, exactly as `evict_dead` says nothing about `TABLE_SIZE`.
 * **GATE 7, `vlPawn`** — `if p == "P":`, with `A8 ≤ j ≤ H8` (a chained compare)
-  and `j == self.ep` inside. **The promotion arm reads `pst[prom]`, and `prom`
-  is `""` on every non-promotion move — `pst[""]` is a `KeyError`, so the
-  `A8 ≤ j ≤ H8` guard is load-bearing and the two-arm law above is mandatory
-  here, not stylistic.** This is the same fact as GATE 4's, one guard along.
+  and `j == self.ep` inside, so it is a NEST of three tests rather than one.
+  **The promotion arm reads `pst[prom]`, and `prom` is `""` on every
+  non-promotion move — `pst[""]` is a `KeyError`, so the `A8 ≤ j ≤ H8` guard is
+  load-bearing and the two-arm law is mandatory here, not stylistic.** This is
+  GATE 4's fact one guard along, and it is the one place in the method where
+  getting the split wrong would produce a vacuous gate rather than a false one.
 
 Then `value_runs` composes the eight at `callIn`, in the ∃-fuel form, with the
 answer EXISTENTIAL (§L25's re-sequencing) and a `by_cases` per two-arm gate.

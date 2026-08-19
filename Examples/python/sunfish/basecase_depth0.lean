@@ -911,6 +911,7 @@ one is a value the shipped `bound()` refuses without:
 | `spelled` | `entry.lower` raises `AttributeError` | §7 (c) |
 | `killer` | `pos.value(killer)` raises `TypeError: cannot unpack non-iterable int object` — measured at `gamma > pos.score`, where the fold reaches the killer test | §7 (d) |
 | `history` | `pos in self.history` at `depth ≥ 1` | not read at depth 0 (short-circuit), so the base case never spends it; the STEP will |
+| `room` | the out-of-tier `del` becomes reachable and the run refuses | `sbEvict_lit`'s own comment; hole five, found by discharging §10 |
 | `clock` | the trace underruns | §7 (b) |
 | `ml` / `mu` | `-MATE_LOWER` is a `NameError`; both constants are statically POISONED (`mlG`/`muG`), so the live globals decide | every head gate's premise list |
 
@@ -946,6 +947,34 @@ def IsPosition (pos : RVal) : Prop :=
 def mvOf (i j : Int) (prom : String) : RVal :=
   .ntuple "Move" #["i", "j", "prom"] #[.int i, .int j, .str prom]
 
+/-- **A store grows a table by at most one entry.** What makes the pre-store
+size bound the honest form of the eviction guard. -/
+theorem dictStore_length_le : (es : List (RVal × RVal)) → (k v : RVal) →
+    (dictStore es k v).1.length ≤ es.length + 1
+  | [], _, _ => by simp [dictStore]
+  | (k', v') :: rest, k, v => by
+      simp only [dictStore]
+      split
+      · simp
+      · have ih := dictStore_length_le rest k v
+        cases hd : dictStore rest k v with
+        | mk rest' grew =>
+          rw [hd] at ih
+          simp only at ih
+          simp only [List.length_cons]
+          omega
+
+/-- …and the bridge to the COMPUTED shape `evict_dead` reads (§L20's law): the
+gate wants the POST-store size, the predicate states the pre-store one. -/
+theorem room_after_store {es : Array (RVal × RVal)} {k v : RVal}
+    (h : (es.size : Int) < tableSize) :
+    ((dictStore es.toList k v).1.toArray.size : Int) ≤ tableSize := by
+  have hl := dictStore_length_le es.toList k v
+  have h1 : (dictStore es.toList k v).1.toArray.size
+      = (dictStore es.toList k v).1.length := by simp
+  have h2 : es.toList.length = es.size := by simp
+  omega
+
 /-- **THE WELL-FORMEDNESS PREDICATE the repaired rule quantifies over.** Named
 so the strong-induction step and the eventual assembly can both speak it. -/
 structure BoundWF (V : RVal → Int → Int) (w : World) (ci : ClassId)
@@ -967,6 +996,14 @@ structure BoundWF (V : RVal → Int → Int) (w : World) (ci : ClassId)
   /-- `history` is the set `__init__` builds. Not read at depth 0 — the
   repetition test short-circuits on `depth > 0` — and read at every depth above. -/
   history : ∃ items : Array RVal, Heap.get? w.heap hs = some (.pyset items)
+  /-- **`tp_score` has ROOM.** `sbEvict`'s own comment records the cost of
+  omitting this: *"`del d[k]` is outside the tier and ingests as
+  `Stmt.unsupported`, so every gate below must show the guard is FALSE"* — so at
+  `len(self.tp_score) > TABLE_SIZE` the shipped eviction becomes REACHABLE and the
+  run refuses. Stated as the pre-store bound, because the store adds at most one
+  entry (`dictStore_length_le`); `room_after_store` is the bridge to the computed
+  shape `evict_dead` reads. Hole five, and the same species as the other four. -/
+  room : (es.size : Int) < tableSize
   /-- The bump does not land on the clock guard (§7 (b)). -/
   clock : ¬ ((n + 1).fmod 2048 = 0)
   /-- Both mate constants are live; both are statically POISONED. -/
@@ -1077,6 +1114,7 @@ private def wfCheck : Bool :=
                        | _ => false)
                   && (es.size == 1) && (ms.size == 1)
                   -- clock, ml, mu
+                  && (es.size < 1000000) && (ms.size < 1000000)
                   && !((n + 1).fmod 2048 == 0)
                   && (Env.lookup w.globals "MATE_LOWER" == some (.int mateLower))
                   && (Env.lookup w.globals "MATE_UPPER" == some (.int mateUpper))
@@ -1872,8 +1910,7 @@ theorem refinesAt_stand_pat_at {V : RVal → Int → Int}
              K4 (W1 w h') (FHs sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma lo up) kv⟩
           (.bool av))
     (hge : gamma ≤ sc) (hmus : -mateUpper < sc)
-    (hroom : ((dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
-        (entryOf sc up)).1.toArray.size : Int) ≤ tableSize)
+    (hroom : (es.size : Int) < tableSize)
     (hsval : sc ≤ V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
     (hbandV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ mateUpper) :
     RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
@@ -1920,7 +1957,7 @@ theorem refinesAt_stand_pat_at {V : RVal → Int → Int}
     hlt hself hupd hclk hts htm hdict hmove hml hmu hsc hfind hkf hlow hupp hband' hFg hgen
     hev (W3K_gen w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) hyield
     hobj4 hdict4 hobj5 hdict5
-    hroom hge hmus
+    (room_after_store hroom) hge hmus
   refine ⟨T1K (W4K w h' gamma kv (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) ts es sv
       (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc up hlt, sc, f + 1, fun F hF => ?_, ?_, ?_,
       Or.inr ⟨hge, hsval⟩⟩
@@ -1948,10 +1985,8 @@ arm is not a leaf (see the file tail).
 
 The four hypotheses after `hge` are the honest residue, and each is named where
 it comes from: `hcalm` is §L18/§L24's genexp, open by design over a free board;
-`hroom` is the eviction guard (a full `tp_score` makes the shipped `del` — which
-is outside the tier — reachable, so the run refuses; `sbEvict_lit`'s own comment
-records this and `BoundWF` does not yet say it); `hsval` and `hbandV` are
-`formal/`'s depth-0 leaf. -/
+the eviction guard now comes from `BoundWF.room` rather than as a loose
+hypothesis; `hsval` and `hbandV` are `formal/`'s depth-0 leaf. -/
 theorem hfall_cut {V : RVal → Int → Int}
     (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
     (w : World) (ci : ClassId) (sa ts tm hs : Addr) (n dl sf gamma : Int)
@@ -1985,8 +2020,7 @@ theorem hfall_cut {V : RVal → Int → Int}
                  ((dictFind (match Heap.get? w.heap tm with
                              | some (.dict ms _) => ms.toList | _ => [])
                     (posOf b sc wc0 wc1 bc0 bc1 ep kp)).getD .none)⟩ (.bool av))
-    (hroom : ((dictStore es.toList (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
-        (entryOf sc up)).1.toArray.size : Int) ≤ tableSize)
+    (hroom : (es.size : Int) < tableSize)
     (hsval : sc ≤ V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
     (hbandV : V (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0 ≤ mateUpper) :
     RefinesAt V 0 w sa ts gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) := by
@@ -1997,7 +2031,7 @@ theorem hfall_cut {V : RVal → Int → Int}
   exact refinesAt_stand_pat_at hV w h' ci sa ts tm hs n dl sf gamma sc lo up
     b wc0 wc1 bc0 bc1 ep kp av ext Fg es ms sv svm _
     hwf.self hupd hwf.clock hwf.score hwf.table hmove hwf.ml hwf.mu hsc hlo hup
-    hfind rfl hlow hupp hband' hFg hgen hge (by omega) hroom hsval hbandV
+    hfind rfl hlow hupp hband' hFg hgen hge (by omega) hwf.room hsval hbandV
 
 /-! ### §10's widening, INSTANTIATED on the shipped engine
 
@@ -2090,6 +2124,139 @@ at `(pos, 0)`, one entry, which is what `store_bridge` claims and what
      | _ => false)
   | Option.none => false)
 
+/-! ## §11 F4 — THE STORE'S FAIL-LOW ARM
+
+The shipped store is one conditional with two arms:
+
+    self.tp_score[pos, depth] = Entry(best, entry.upper) if best >= gamma
+                                else Entry(entry.lower, best)
+
+`store_runs_at` (§10) is the fail-HIGH arm at an arbitrary entry. This is its
+twin, and §L27 priced it as the one item on the fail-low list that depends on
+neither the census nor F1–F3 — because it is a statement about the STORE, not
+about the fold that decides `best`. Same template, `if_neg` for `if_pos`, and the
+symmetry is exact: **the fail-high arm inherits the stale entry's UPPER, the
+fail-low arm inherits its LOWER.**
+
+Its calculus side is `sf_store` with the bounds swapped: `Entry(lo, best)`
+brackets `V pos 0` when `lo ≤ V pos 0` (which `sf_probe_brackets` reads off the
+probed entry, exactly as `V pos 0 ≤ up` was read off it in §10) and
+`V pos 0 ≤ best` (which is the fail-low half of `Report` — `fold_report`'s
+other disjunct, and what F3 will supply). So F4 owes the fold nothing. -/
+
+/-- The dict the FAIL-LOW store leaves: the probed entry's own LOWER rides
+through, mirroring `sbStoredAt`. -/
+def sbStoredLow (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (lo sc : Int) : Obj :=
+  .dict (dictStore es.toList (tpKey pv 0) (entryOf lo sc)).1.toArray
+    (if (dictStore es.toList (tpKey pv 0) (entryOf lo sc)).2 = true then sv + 1 else sv)
+
+/-- **GATE — the store's FAIL-LOW arm**, at an arbitrary probed entry. -/
+theorem store_runs_low (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma lo up : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int 0))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some (entryOf lo up))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hlt : ts < w.heap.size)
+    (hfl : sc < gamma) (hk : hashableKey pv = true) :
+    execStmt sunfish 20 ⟨w, e⟩ sbStore
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStoredLow es sv pv lo sc) hlt }, e⟩ .next := by
+  obtain ⟨p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+    hs'⟩ := sbStore_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 19 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hs', execStmt_if_true hc rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredLow, dif_pos hlt]
+  rw [if_neg (show ¬ (gamma ≤ sc) by omega)]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredLow, dif_pos hlt]
+  rfl
+
+/-- The `heapStore` bridge for the fail-low arm, so §6's calculus can consume it
+the moment F3 supplies the report. -/
+theorem store_bridge_low {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {pv : RVal} {lo sc : Int} (hlt : ts < w4.heap.size)
+    (hdict : Heap.get? w4.heap ts = some (.dict es sv)) (hk : hashableKey pv = true) :
+    heapStore w4.heap ts (tpKey pv 0) (entryOf lo sc)
+      = .ok ({ w4 with heap := w4.heap.set ts (sbStoredLow es sv pv lo sc) hlt }).heap := by
+  have hkk : hashableKey (tpKey pv 0) = true := by
+    simp [tpKey, hashableKey, hashableKeyList, hk]
+  simp only [heapStore, hdict, if_pos hkk, sbStoredLow, Heap.update, dif_pos hlt]
+
+/-- **And the calculus side, complete.** The fail-low entry brackets the value
+under exactly two facts, and neither is the store's to prove: the probed entry's
+own LOWER (`sf_probe_brackets`, §4) and the fail-low half of `Report`. Landed
+with the gate, in the same pass, so nothing here waits on an unpaid premise —
+§L25's law 3. -/
+theorem sf_store_low {V : RVal → Int → Int}
+    (hV : ∀ p q d, keyEq p q = true → V p d = V q d)
+    {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {pv : RVal} {lo sc : Int} (hlt : ts < w4.heap.size)
+    (ht : (sfBracket V).TableAt w4.heap ts)
+    (hdict : Heap.get? w4.heap ts = some (.dict es sv)) (hk : hashableKey pv = true)
+    (hlo : lo ≤ V pv 0) (hrep : V pv 0 ≤ sc) :
+    (sfBracket V).TableAt
+      ({ w4 with heap := w4.heap.set ts (sbStoredLow es sv pv lo sc) hlt }).heap ts :=
+  sf_store hV ht ⟨hlo, hrep⟩ (store_bridge_low hlt hdict hk)
+
+/-! ### F4, INSTANTIATED — a real fail-low run on the shipped engine
+
+`gamma = 40` on the opening board with `Entry(-100, 900)` stale: the stand-pat
+does NOT cut (`pos.score = 0 < 40`), the fold runs, and `bound()` answers **4**.
+The entry at `(posH 0, 0)` becomes **`Entry(-100, 4)`** — `Entry(entry.lower,
+best)`, the stale LOWER riding through with `best` as the new upper. That is
+`sbStoredLow`'s claim, on the engine.
+
+And the same run is §L27's circularity made visible in the table: **34 entries**,
+because the 33 depth-0 children each stored their own under their own key. One
+depth-0 call, 34 keys — which is why the fail-low arm cannot be a leaf of an
+induction on depth. -/
+#guard (match searcherW with
+  | some (w, a) =>
+    (match Heap.get? w.heap a with
+     | some (.instance _ attrs) =>
+       (match Env.lookup attrs.toList "tp_score" with
+        | some (.ref ts) =>
+          (match heapStore w.heap ts (tpKey (posH 0) 0) (entryOf (-100) 900) with
+           | .ok h' =>
+             (match callIn sunfish 1000000 { w with heap := h' } "Searcher.bound"
+                 #[.ref a, posH 0, .int 40, .int 0] with
+              | .ok w' (.int r) =>
+                r == 4
+                  && (match Heap.get? w'.heap ts with
+                      | some (.dict es _) =>
+                        es.size == 34
+                          && (match es[0]! with
+                              | (_, RVal.ntuple "Entry" _ #[RVal.int x, RVal.int y]) =>
+                                x == -100 && y == 4
+                              | _ => false)
+                      | _ => false)
+              | _ => false)
+           | _ => false)
+        | _ => false)
+     | _ => false)
+  | Option.none => false)
+
+/-! And the two arms are genuinely different writes at the same window boundary:
+the fail-HIGH arm at `gamma = 0` leaves `Entry(0, 900)` (§10's guard) and the
+fail-LOW arm at `gamma = 40` leaves `Entry(-100, 4)`. Same stale entry, same
+board; the window decides which bound the node has improved. -/
+#guard entryBounds (entryOf 0 900) == some (0, 900)
+#guard entryBounds (entryOf (-100) 4) == some (-100, 4)
+
 /-! ### The axioms -/
 
 #print axioms execStmts_append_escape
@@ -2129,6 +2296,11 @@ at `(pos, 0)`, one entry, which is what `store_bridge` claims and what
 #print axioms body_runs_at
 #print axioms refinesAt_stand_pat_at
 #print axioms hfall_cut
+#print axioms dictStore_length_le
+#print axioms room_after_store
+#print axioms store_runs_low
+#print axioms store_bridge_low
+#print axioms sf_store_low
 
 /-! ## What the base case still owes — and why it is NOT one more leaf
 
@@ -2164,6 +2336,13 @@ calmness genexp `hgen` over a free board, and the `±750` band. They are
 `QSStandPatB`'s residue, they are not this lane's to close, and they ride into
 `refinesAt_stand_pat` unchanged.
 
+**And the fail-low arm's STORE is paid ahead of it** (§11, F4). `store_runs_low`
+is the other arm of the same conditional, `store_bridge_low` its `heapStore`
+bridge and `sf_store_low` its calculus side — all three landed with the gate, so
+when F3 finally supplies the fail-low report there is nothing left to build
+between the fold and the table. What F4 does NOT touch is the circularity: it is
+a statement about the store, not about what decides `best`.
+
 **And the two model-side premises are named, not hidden.** `hbandV`
 (`V pos 0 ≤ MATE_UPPER`, the mate band — §L20 named it and left it open) and
 `hsval` (`pos.score ≤ V pos 0`, the stand-pat is a LOWER bound on the QS value).
@@ -2171,13 +2350,19 @@ Both belong to `formal/`'s depth-0 leaf, beside `hmateV`'s exact
 `V pos 0 ≤ -MATE_UPPER` at a captured king. Three model facts, one per arm, and
 no arm needs anything else from the model.
 
-**And a FIFTH hole in the rule, found by discharging §10.** `BoundWF` does not
-bound the table's SIZE, and `sbEvict`'s own comment records what that costs:
-*"`del d[k]` is outside the tier and ingests as `Stmt.unsupported`, so every
-gate below must show the guard is FALSE."* At `len(self.tp_score) > TABLE_SIZE`
-the shipped eviction becomes reachable and the run REFUSES — the same species as
-§7's four. `refinesAt_stand_pat_at` and `hfall_cut` carry it as `hroom` in the
-COMPUTED shape (§L20's law); it belongs in `BoundWF` as a tenth conjunct, and
-that is a one-line change for the next lane that touches the structure. -/
+**The FIFTH hole is now `BoundWF.room`**, the tenth conjunct: at
+`len(self.tp_score) > TABLE_SIZE` the shipped eviction becomes reachable, the
+out-of-tier `del` runs, and the call REFUSES. `hfall_cut` takes it from the
+structure; `refinesAt_stand_pat_at` takes the same bound directly.
+
+**It was not the one-line change it looked like**, and the reason is §L20's law
+biting in the other direction. The gate (`evict_dead`) reads the POST-store size,
+because that is what `len()` computes at statement 16; a predicate about the
+world going IN can only state the PRE-store size. So the conjunct needs a bridge,
+and the bridge needs `dictStore_length_le` — a store adds at most one entry.
+Twenty-five lines, not one. The generalisable form: **a well-formedness predicate
+speaks about the world at entry, and a gate's premise speaks about the world it
+runs in; whenever a statement between them writes, the two shapes differ by that
+write and somebody owes the arithmetic.** -/
 
 end Examples.python.sunfish.basecase_depth0

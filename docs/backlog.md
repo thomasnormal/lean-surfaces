@@ -10567,10 +10567,19 @@ Written as a sketch precisely because the census may move it, in §L25's manner:
 * **F3 — the fold at many rounds.** §L16's `Hands` schedule at a real schedule,
   `fold_report`'s fail-low half, and the exhaustion obligation F4 of the census
   brings back. `searchedMove_sound`/`searchedPass_sound` are proved and waiting.
-* **F4 — the store's other arm.** `Entry(entry.lower, best)` rather than
-  `Entry(best, entry.upper)`: §L26's `store_runs_at` did the fail-HIGH arm at an
-  arbitrary entry, and this is its twin. Cheap, and the calculus side is the same
-  `sf_store` with the bounds swapped.
+* **F4 — the store's other arm. DONE (2026-08-19), ahead of the census.**
+  `store_runs_low` is `Entry(entry.lower, best)` at an arbitrary entry —
+  `store_runs_at`'s twin, `if_neg` for `if_pos`, and the symmetry is exact: the
+  fail-HIGH arm inherits the stale entry's UPPER, the fail-LOW arm its LOWER.
+  `store_bridge_low` and `sf_store_low` land with it, so the calculus side is
+  paid too: the entry brackets the value under `lo ≤ V pos 0` (which
+  `sf_probe_brackets` reads off the probed entry) and `V pos 0 ≤ best` (the
+  fail-low half of `Report`, which F3 supplies). **When F3 arrives there is
+  nothing left to build between the fold and the table.**
+  Instantiated on the engine: `gamma = 40` with `Entry(-100, 900)` stale answers
+  **4** and leaves `Entry(-100, 4)`. The same run leaves **34 entries** in the
+  table — §L27's circularity visible as keys, one depth-0 call writing 34 of
+  them.
 * **F5 — the assembly.** `hfall`'s remaining half, then `boundRefinesW_zero`
   goes unconditional.
 
@@ -10578,23 +10587,38 @@ Written as a sketch precisely because the census may move it, in §L25's manner:
 cheapest thing on this list — an hour, on `store_runs_at`'s own template. It is
 the right inch for a lane that has to stop before the induction.
 
-### And a FIFTH hole in the rule, found by discharging F-adjacent work
+### The FIFTH hole is now `BoundWF.room` — and it was not one line
 
-`BoundWF` does not bound the table's SIZE, and `sbEvict`'s own comment records
-what that costs: *"`del d[k]` is outside the tier and ingests as
-`Stmt.unsupported`, so every gate below must show the guard is FALSE."* At
-`len(self.tp_score) > TABLE_SIZE` the shipped eviction becomes reachable and the
-run REFUSES — the same species as §L26's four. `refinesAt_stand_pat_at` and
-`hfall_cut` carry it as `hroom` in the COMPUTED shape (§L20's law); it belongs in
-`BoundWF` as a tenth conjunct, and that is a one-line change to make when the
-next lane touches the structure.
+`sbEvict`'s own comment records the cost of omitting it: *"`del d[k]` is outside
+the tier and ingests as `Stmt.unsupported`, so every gate below must show the
+guard is FALSE."* At `len(self.tp_score) > TABLE_SIZE` the shipped eviction
+becomes reachable and the run REFUSES — the same species as §L26's four. It is
+now `BoundWF`'s tenth conjunct; `hfall_cut` takes it from the structure and
+`refinesAt_stand_pat_at` takes the same bound directly.
+
+**The one-line estimate was wrong, and the reason generalises.** §L20's
+computed-shape law bites in the OTHER direction here: the gate (`evict_dead`)
+reads the POST-store size, because that is what `len()` computes at statement 16,
+while a predicate about the world going IN can only state the PRE-store size. So
+the conjunct needs a bridge, and the bridge needs `dictStore_length_le` (a store
+adds at most one entry). **Twenty-five lines, not one.** The carryable form: *a
+well-formedness predicate speaks about the world at ENTRY and a gate's premise
+about the world it RUNS in; whenever a statement between them writes, the two
+shapes differ by that write and somebody owes the arithmetic.*
+
+`boundRefines_eq` — the `rfl` receipt that `RefinesAt` IS `BoundRefines`' own
+body — is untouched by this and by every other repair, because it relates the
+CONCLUSION shapes and the repairs are all premises. That is the property that
+keeps the rename cheap, and it still holds.
 
 ### Triad
 
 `lake build` **3681 jobs green**; `docs_check` 71/71, 15 illustrative-exempt;
 `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202 matched** — unchanged
 since §L15; `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud. No
-`sorry`, no `native_decide`.
+`sorry`, no `native_decide`. The file's own throughput is now **~63 s**, and it
+is entirely the `#guard` battery: F4's instantiation runs a 34-node search on the
+shipped engine, on purpose.
 
 **`model_audit` CANNOT RETIRE.** The honest ledger for the base case, which is
 what this lane was asked for: at the start of §L26 it did not exist and the rule

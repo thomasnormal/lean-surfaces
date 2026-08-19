@@ -2229,6 +2229,168 @@ theorem tail_runs (w2 w3 w4 : World) (e : REnv) (a : Addr) (ci : ClassId)
   exact execStmts_append (execStmts_append (execStmts_append
     (execStmts_append h13 h14 (by simp)) h15 (by simp)) h16 (by simp)) h17 (by simp)
 
+/-! ### THE BODY, AND THE CLOSE
+
+`head_runs ++ mid_runs ++ tail_runs = sbB`, then `callIn`. The joins cost
+nothing: all 22 frame lookups at the two join points are `rfl`, because the
+chain is literal keys over `sbEnv0`'s concrete list. `sbB_split` bridges the
+flat eighteen to the left-nested appends by `rfl`.
+
+**`qs_stand_pat` is `QSStandPat`'s statement with the premises it actually
+needs, and the delta is recorded rather than hidden.** §L10 wrote `QSStandPat`
+before the interpreter work existed, so its premise list was a good-faith
+estimate; running the chain says it is short by five:
+
+* `ts ≠ sa` — the table is not the receiver. `QSStandPat` gives both slots'
+  contents but never says they differ, so the counter bump could have clobbered
+  the table.
+* `-750 < pos.score < 750` — the calmness test's own band, which statement 8
+  needs and the depth-0 window does not imply.
+* `hev`/`hyield` — `moves()` allocating its generator and that generator's first
+  step. By design, and named since §L20.
+* `calmG`'s genexp answer. By design, and named since §L18.
+* the post-yield and post-store heap facts — the generator step and the store
+  leave the receiver and the table where the tail expects them.
+
+`QSStandPat` itself is left EXACTLY as recorded (sharper pins never weaken), and
+what it would take to close IT rather than this is one more theorem deriving the
+five: three are by-design premises that belong in any honest statement, and two
+(`ts ≠ sa`, the score band) are genuine omissions in the §L10 text. -/
+
+def W1 (w : World) (h' : Heap) : World := { w with heap := h' }
+def FH (sa : Addr) (pv : RVal) (gamma : Int) : REnv :=
+  Env.set (EA sa pv gamma) "entry" entryDefault
+
+set_option linter.unusedVariables false in
+/-- **THE WHOLE BODY.** All eighteen statements of the shipped `Searcher.bound`,
+from the entry frame to the `return`. -/
+theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : ClassId)
+    (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool)
+    (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
+    (hlt : ts < w4.heap.size)
+    -- the head
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hts : ts ≠ sa)
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper)
+    -- the middle
+    (hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
+    (hmove1 : Heap.get? (W1 w h').heap tm = some (.dict #[] svm))
+    (hmu1 : Env.lookup (W1 w h').globals "MATE_UPPER" = some (.int mateUpper))
+    (hband : -750 < sc ∧ sc < 750)
+    (hgen : evalExpr sunfish 5
+        ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+         G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
+      = .ok ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+             G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ (.bool av))
+    -- the tail
+    (hev : EvalsIn sunfish
+      ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+       G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩
+      sbMovesCall (.ref a)
+      ⟨w3, G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩)
+    (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
+    (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict4 : Heap.get? w4.heap ts = some (.dict es svs))
+    (hobj5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hdict5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap ts
+      = some (.dict es' sv'))
+    (hsz : (es'.size : Int) ≤ tableSize)
+    (hge : gamma ≤ sc) (hmus : -mateUpper < sc) :
+    ∃ f, execStmts sunfish f
+        ⟨w, sbEnv0 (.ref sa) (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma 0⟩ sbB
+      = .ok ⟨T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt,
+              T0 (G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc) sc⟩
+          (.ret (.int sc)) := by
+  have hH := head_runs w ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp sv h'
+    hself hupd hclk hts hdict hml hmu hk hsc hlo hup
+  have hM := mid_runs (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) ci sa ts tm hs
+    (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av svm hobj1 hmove1 hk hmu1
+    rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hband hgen
+  have hT := tail_runs (sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) w3 w4
+    (G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc) a ci sa ts tm hs
+    n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp es es' svs sv' hlt hev hgo hyield
+    rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl
+    hobj4 hdict4 hobj5 hdict5 hsz hk hge hmus
+  rw [sbB_split]
+  exact execStmts_append (execStmts_append hH hM (by simp)) hT (by simp)
+
+theorem sbArity : arityOk sbF.params 4 = true := rfl
+
+/-- **The boundary**: `callIn` reaches the body and carries `.ret` out. -/
+theorem callIn_of_body {w w' : World} {sa : Addr} {pv : RVal} {gamma d : Int}
+    {e' : REnv} {v : RVal} {F : Nat}
+    (h : execStmts sunfish F ⟨w, sbEnv0 (.ref sa) pv gamma d⟩ sbB = .ok ⟨w', e'⟩ (.ret v)) :
+    callIn sunfish (F + 1) w "Searcher.bound" #[.ref sa, pv, .int gamma, .int d]
+      = .ok w' v := by
+  obtain ⟨hfind, hargs, hloc, hgen, hbody, harity⟩ := sbF_lit
+  rw [callIn, hfind]
+  simp only [hargs, hloc, hgen, Bool.not_true, Bool.false_eq_true, if_neg,
+    not_false_eq_true, hbody, sbCallEnv, h, Run.bind, Run.toWorld,
+    show (#[RVal.ref sa, pv, RVal.int gamma, RVal.int d] : Array RVal).size = 4 from rfl,
+    sbArity]
+
+set_option linter.unusedVariables false in
+/-- **QSStandPat, CLOSED** — with the premises it actually needs. -/
+theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : ClassId)
+    (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
+    (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool)
+    (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
+    (hlt : ts < w4.heap.size)
+    -- the head
+    (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
+    (hclk : ¬ ((n + 1).fmod 2048 = 0))
+    (hts : ts ≠ sa)
+    (hdict : Heap.get? w.heap ts = some (.dict #[] sv))
+    (hml : Env.lookup w.globals "MATE_LOWER" = some (.int mateLower))
+    (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
+    (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
+    (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper)
+    -- the middle
+    (hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
+    (hmove1 : Heap.get? (W1 w h').heap tm = some (.dict #[] svm))
+    (hmu1 : Env.lookup (W1 w h').globals "MATE_UPPER" = some (.int mateUpper))
+    (hband : -750 < sc ∧ sc < 750)
+    (hgen : evalExpr sunfish 5
+        ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+         G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
+      = .ok ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+             G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ (.bool av))
+    -- the tail
+    (hev : EvalsIn sunfish
+      ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
+       G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩
+      sbMovesCall (.ref a)
+      ⟨w3, G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc⟩)
+    (hgo : ∃ qn lo ct stt, Heap.get? w3.heap a = some (.generator qn lo ct stt))
+    (hyield : IterSteps sunfish w3 a (some (yieldVal qsY)) w4)
+    (hobj4 : Heap.get? w4.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict4 : Heap.get? w4.heap ts = some (.dict es svs))
+    (hobj5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hdict5 : Heap.get? (T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt).heap ts
+      = some (.dict es' sv'))
+    (hsz : (es'.size : Int) ≤ tableSize)
+    (hge : gamma ≤ sc) (hmus : -mateUpper < sc) :
+    ∃ w' t, ∀ F ≥ t, callIn sunfish F w "Searcher.bound"
+      #[.ref sa, posOf b sc wc0 wc1 bc0 bc1 ep kp, .int gamma, .int 0]
+        = .ok w' (.int sc) := by
+  obtain ⟨f, hf⟩ := body_runs w w3 w4 h' a ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1
+    ep kp av sv svm es es' svs sv' hlt hself hupd hclk hts hdict hml hmu hk hsc hlo hup
+    hobj1 hmove1 hmu1 hband hgen hev hgo hyield hobj4 hdict4 hobj5 hdict5 hsz hge hmus
+  refine ⟨T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
+
 /-! ## §5 The depth-bounded statements — what step 3 closes
 
 The SPEC side is `formal/`'s fuel model, and the first thing to read off it is
@@ -3202,6 +3364,10 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms execStmts_singleton_flow
 #print axioms mid_runs
 #print axioms tail_runs
+#print axioms sbArity
+#print axioms callIn_of_body
+#print axioms body_runs
+#print axioms qs_stand_pat
 #print axioms killer_misses
 #print axioms guard_evals
 #print axioms null_margin_adds

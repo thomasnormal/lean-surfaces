@@ -2332,7 +2332,20 @@ estimate; running the chain says it is short by five:
 `QSStandPat` itself is left EXACTLY as recorded (sharper pins never weaken), and
 what it would take to close IT rather than this is one more theorem deriving the
 five: three are by-design premises that belong in any honest statement, and two
-(`ts ≠ sa`, the score band) are genuine omissions in the §L10 text. -/
+(`ts ≠ sa`, the score band) are genuine omissions in the §L10 text.
+
+**CORRECTED (§L24), on both counts, by running the discharge.** `ts ≠ sa` is NOT
+an omission — it follows from the two slot facts §L10 already has, because a slot
+is not both a `.dict` and an `.instance` (`dict_ne_instance`). And the delta
+above was itself too generous: three of the premises as first stated were
+UNSATISFIABLE, so the theorem carrying them was vacuous. The post-yield receiver
+was pinned at `n` rather than the bumped `n + 1` (`post_yield_receiver_bumped`
+refutes it); the calm gate's world was pinned unchanged when the calmness genexp
+ALLOCATES (`sbW3` is the repair, and §8 guards the 70 → 71 measurement); and the
+calm gate's fuel was pinned at `5` when the genexp needs `10` (§8 guards the
+timeout at 9). All three are repaired above, `qs_stand_pat_closed` discharges
+`hev`/`hyield` and every heap fact, and `QSStandPatB` (§5) is §L10's own
+statement plus exactly the two facts that remain. -/
 
 def W1 (w : World) (h' : Heap) : World := { w with heap := h' }
 def FH (sa : Addr) (pv : RVal) (gamma : Int) : REnv :=

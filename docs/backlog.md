@@ -9886,3 +9886,168 @@ two are defects in the §L10 text.
 and the base case is now proved: at the start of §L17 there were no interpreter
 gates at all; there is now a closed depth-0 theorem about engine master's own
 `bound()`, with its premises named and its axiom set clean.
+
+
+## L24 — `hev`/`hyield` COMPLETE, and running the discharge finds §L23's close was **VACUOUS** (2026-08-19)
+
+§L23 closed `qs_stand_pat` with three by-design premises left open and called
+the remainder mechanical. Both halves of that are now settled and only one of
+them the way it was expected. **`hev` and `hyield` are theorems**, the five
+post-yield/post-store heap facts discharge with them, and
+`qs_stand_pat_closed` carries nothing about the generator at all. But the
+discharge is also what exposed **three unsatisfiable premises** in the chain
+§L23 shipped, so the headline theorem of §L23 was true and EMPTY. All three are
+repaired; the close is now non-vacuous.
+
+### The two generator premises, paid
+
+* **`hev`** — `moves_call_creates`. The shipped closure has a CELL in its
+  captures, so `EvalsIn.closureGenCall` does not apply and §L14's
+  `closureGenCall_cells` does; `sbMovesCap_cells` resolves `<cell>guard` from
+  the CALLING frame, which is the whole point of the cell tier and the first
+  time it is spent end to end. Two pins were owed and are added beside the
+  recorded ones (never in place of them): `sbDef_sharp` (the parameter list is
+  empty and both frame-shape flags are TRUE — `sbDef_captures` left them
+  existential), and the two address facts `sbW2_cell`/`sbW2_closure` — the cell
+  survives the closure push, and the closure sits one slot above it, which is
+  the address `sbEnvDef` binds `moves` to.
+* **`hyield`** — `moves_first_yield` + `moves_first_iter`. Two statements run
+  before the stand-pat yield. `if 2 < depth < 6 and guard:` is false at depth 0
+  on its FIRST operand and its second is a cell-resolved capture, so the chain
+  is decided AT the chain (`boolChain_and_falsy`, its fourth use) and `py_simp`
+  never touches the operand; then `if depth == 0:` fires. `IterSteps.pureStep`
+  does the object bookkeeping — `moves()`' resumption touches only its own
+  frame, so `stepIter`'s two writes collapse onto the allocated slot.
+
+Both went through on the first elaboration, in 2 s each, against the `gen_lab`
+`upto_first` precedent. The generator half of the roadmap really was mechanical.
+
+### THE THREE DEFECTS, and how each was found
+
+Every one was found by trying to DISCHARGE a premise rather than by reading it.
+
+1. **The post-yield receiver was pinned at `n`, not `n + 1`.** `body_runs`
+   passes its own `n` to `tail_runs` for `hobj4`/`hobj5`, but statement 1 bumps
+   the node counter, so at the post-yield world the receiver holds `n + 1`.
+   `searcherObj` is injective in `nodes`, so the premise is not unproved, it is
+   REFUTED — `post_yield_receiver_bumped` is that refutation, kept as a checked
+   fact. Both statements now carry `n + 1`.
+2. **The calm gate premised an unchanged world, and the genexp ALLOCATES.**
+   `calm = abs(pos.score) < 750 and any(<genexpr@3>("RBNQ", pos))`, and a genexp
+   lowers to a generator FUNCTION — so evaluating the second conjunct calls it
+   (a heap push) and `anyAllIter` then steps the object. **Measured on the
+   shipped fixture: the heap goes 70 → 71 across `calmG`.** §L18 read the
+   premise's VALUE correctly (open by design at depth 0) and its EFFECT wrongly.
+3. **And its fuel was pinned at the numeral `5`, when the genexp needs `10`.**
+   Measured the same way: `calmG` times out at every fuel below 10. Two
+   independent reasons for the same premise to be unsatisfiable, and either one
+   alone makes the chain vacuous.
+
+**The repair.** `sbW3 w gamma d kv pv ext = { sbW2 … with heap := … ++ ext }` —
+the genexp only ALLOCATES (every address it writes is one it just created), so
+the post-`calm` heap is the pre-`calm` heap with an arbitrary suffix, and every
+slot the rest of `bound()` reads survives by one lemma (`Heap.get?_append`).
+The world is threaded through statements 9–17, the boundary and the corollary;
+the fuel becomes a parameter with `evalExpr_mono` lifting the `abs` half to meet
+it. Two `#guard`s in §8 keep both measurements where they cannot rot: the answer
+plus the heap growth at fuel 10, and the timeout at 9.
+
+### `qs_stand_pat_closed`, and what `QSStandPat` actually needs
+
+`qs_stand_pat_closed` is `qs_stand_pat` with `hev`, `hgo`, `hyield` and all five
+post-yield/post-store heap facts supplied rather than assumed. What is left is
+the entry world's own shape, the window, the score band, and the genexp.
+
+`QSStandPatB` (§5, beside the untouched `QSStandPat`) is §L10's own statement
+plus **exactly two** premises, and §L23's classification of the delta was wrong
+in the other direction too:
+
+| §L23 called it | it is |
+|---|---|
+| `ts ≠ sa` — a genuine omission | **derivable** — a slot is not both a `.dict` and an `.instance` (`dict_ne_instance`), and §L10 already has both slot facts |
+| `-750 < pos.score < 750` | a genuine omission — statement 8 needs it, the window does not imply it |
+| `hev`/`hyield` | **derived** |
+| the post-yield/post-store heap facts | **derived** |
+| the genexp's answer | a genuine omission — over a FREE board nothing in the statement decides it |
+
+`update_exists` (a live slot can always be written) and `posOf_hashable` come
+along, so the bump's `h'` and the key's hashability are derived too.
+
+### Triad
+
+All four commits: `lake build` **3678 jobs green**; `docs_check` 71/71, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched** — unchanged since §L15; `script_corpus` 64 scripts, 0 failed, 50
+matched, 14 loud. Every new theorem prints `[propext, Classical.choice,
+Quot.sound]` or less; `Heap.get?_append`, `sbW3_closure`, `dict_ne_instance`,
+`update_exists` and `sbDef_sharp` are choice-free and `posOf_hashable` depends on
+no axioms at all. No `sorry`, no `native_decide`.
+
+### Findings worth carrying
+
+1. **A premise is not paid until something DISCHARGES it.** Three defects, three
+   theorems that typechecked for hours, one method that found all three: stop
+   assuming the hypothesis and try to build it. Two of the three were
+   unsatisfiable — which means the theorems were true, green, printed clean
+   axioms, and said nothing. Review did not catch them; §L23 reviewed the
+   premise list explicitly and got two of five wrong in each direction.
+2. **A premise whose evaluation ALLOCATES may not name its own input world.**
+   The generic form: an `evalExpr … = .ok ⟨w, e⟩ v` premise is a claim that the
+   expression is heap-free, and it is a claim you have to CHECK, not a shape you
+   get for free. Check it by running the expression on a fixture and comparing
+   heap sizes — 8 seconds, and it is the cheapest vacuity test available.
+3. **A premise that pins a fuel NUMERAL is a claim about cost.** `evalExpr
+   sunfish 5 … calmG` is not "some fuel"; it is "five is enough", and five was
+   not. Measure the minimum before writing the numeral, or make it a parameter.
+   The corollary for the whole file: numerals are fine for a gate you PROVE (the
+   proof fails loudly if the numeral is wrong) and dangerous for a gate you
+   ASSUME (nothing fails at all).
+4. **With a symbolic fuel, §L23's mismatch law changes shape for the better.**
+   `Fg + 3 + 2` against a witness of `Fg + 6` is an application type mismatch
+   naming both sides — where the same off-by-one on numerals presented as a
+   two-to-three-minute `whnf` timeout. Prefer a symbolic fuel in a composition
+   when you have the choice.
+5. **`searcherObj`-style injectivity turns a suspicion into a refutation.** The
+   counter defect could have been recorded as prose ("this premise looks
+   wrong"). Four lines make it a theorem instead, and the theorem is what stops
+   the next lane re-introducing it.
+
+### What is left — and the price is NOT what §L23 implied
+
+§L23 listed the remainder as *"`RecursionStep` (depth ≥ 1) on §L16's template,
+then `bound_refines_fuelModel` assembles."* That reads as two steps of the size
+just completed. It is not, and the honest re-pricing matters more than the
+optimism:
+
+1. **`RecursionStep` is a program, not a step.** At depth ≥ 1 the shipped
+   `moves()` runs its remaining two statements — the killer yield, and `yield
+   from sorted(((v, m) for m in pos.gen_moves() if …), reverse=True)`. That one
+   line needs the `gen_moves` drain (exists for this module,
+   `gen_moves_drains_ref`), `Position.value` agreement (**exists in neither
+   lane** — named as missing since §L9), `sorted(…, reverse=True)` as a KEYWORD
+   call over a drained genexp, and the lowered genexp's own drain. Then the fold
+   runs MANY rounds consuming an induction hypothesis per round, the null-move
+   probe becomes a real recursive call at depth ≥ 6, and the correction statement
+   comes alive with its own `gen_moves()` scan. The depth-0 arc (§L17–§L23) got
+   to skip every one of those. Expect the depth-≥1 arc to be larger than the
+   depth-0 arc was, not smaller.
+2. **`bound_refines_fuelModel` needs a base case that does not exist yet.**
+   `BoundRefines V 0` quantifies over an ARBITRARY `pos` and an arbitrary table
+   satisfying `TableAt`, and owes `TableAt` out, `SubtreeWrites` at every greater
+   depth, and `Report gamma r (V pos 0)`. `qs_stand_pat_closed` is the
+   cleared-table, stand-pat-CUT case of it — one leaf of a three-way leaf. The
+   fail-low leaf and the stale-table case are both unwritten.
+3. **The immediately-next inch, if one is wanted, is the out-of-band `calm`.**
+   When `|pos.score| ≥ 750` the calmness test dies on its FIRST conjunct
+   (`boolChain_and_falsy` a fifth time), `calm` is `False` and the genexp premise
+   DISAPPEARS. Parametrise `mid_runs` by statement 8's gate rather than by
+   `hband`+`hgen` and both cases feed it; that shrinks `QSStandPatB`'s residue
+   from two facts to one and costs one signature refactor.
+
+**`model_audit` CANNOT RETIRE, and this pass moves the date further out rather
+than nearer.** What it delivers instead is a base case that is now worth
+something: at the start of the pass there was a green, clean-axiom, vacuous
+theorem about `bound()`; there is now a green, clean-axiom theorem about
+`bound()` whose premises can all be met, whose generator half is proved rather
+than assumed, and whose two remaining hypotheses are named, classified and
+measured.

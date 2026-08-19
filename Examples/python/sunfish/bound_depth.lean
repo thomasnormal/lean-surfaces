@@ -1739,21 +1739,23 @@ reaches the fold only through `guard`, and `guard` is read at `2 < depth < 6`
 (the scoring null) and at `guard and depth >= 6` (intrinsic LMR). Both are
 false at a QS node, so the depth-0 statement never consults it. A depth-≥2 gate
 owes the genexp its own drain. -/
-theorem calm_evals (w w₁ : World) (e : REnv) (b : String) (sc : Int)
+theorem calm_evals (Fg : Nat) (w w₁ : World) (e : REnv) (b : String) (sc : Int)
     (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (g : Expr) (av : Bool)
     (p1 p2 p3 p4 p5 p6 p7 : Span)
     (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
     (hnoabs : Env.lookup e "abs" = Option.none)
-    (hlt : -750 < sc ∧ sc < 750)
-    (hg : evalExpr sunfish 5 ⟨w, e⟩ g = .ok ⟨w₁, e⟩ (.bool av)) :
-    evalExpr sunfish 8 ⟨w, e⟩
+    (hlt : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hg : evalExpr sunfish Fg ⟨w, e⟩ g = .ok ⟨w₁, e⟩ (.bool av)) :
+    evalExpr sunfish (Fg + 3) ⟨w, e⟩
         (.boolOp .and
           #[.compare (.call (.name "abs" p1) #[.attribute (.name "pos" p2) "score" p3] #[]
               Option.none p4) #[.lt] #[.constant (.int 750) p5] p6, g] p7)
       = .ok ⟨w₁, e⟩ (.bool av) := by
   rw [evalExpr]
-  exact boolChain_and2 (F := 5)
-    (abs_score_evals w e b sc wc0 wc1 bc0 bc1 ep kp p1 p2 p3 p4 p5 p6 hpos hnoabs hlt) rfl hg
+  exact boolChain_and2 (F := Fg)
+    (evalExpr_mono
+      (abs_score_evals w e b sc wc0 wc1 bc0 bc1 ep kp p1 p2 p3 p4 p5 p6 hpos hnoabs hlt)
+      (by simp) (Fg + 1) (by omega)) rfl hg
 
 /-! ### The two EXPRESSION gates, wrapped
 
@@ -1771,19 +1773,20 @@ def calmG : Expr :=
 
 /-- Statement 8 as a statement gate: the expression gate through the `assign`
 wrapper, with the genexp's answer named. -/
-theorem calm_binds (w w₁ : World) (e : REnv) (b : String) (sc : Int)
+theorem calm_binds (Fg : Nat) (w w₁ : World) (e : REnv) (b : String) (sc : Int)
     (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool)
     (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
     (hnoabs : Env.lookup e "abs" = Option.none)
-    (hlt : -750 < sc ∧ sc < 750)
-    (hg : evalExpr sunfish 5 ⟨w, e⟩ calmG = .ok ⟨w₁, e⟩ (.bool av)) :
-    execStmt sunfish 9 ⟨w, e⟩ sbCalm = .ok ⟨w₁, Env.set e "calm" (.bool av)⟩ .next := by
+    (hlt : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hg : evalExpr sunfish Fg ⟨w, e⟩ calmG = .ok ⟨w₁, e⟩ (.bool av)) :
+    execStmt sunfish (Fg + 4) ⟨w, e⟩ sbCalm
+      = .ok ⟨w₁, Env.set e "calm" (.bool av)⟩ .next := by
   obtain ⟨g, p0, p1, p2, p3, p4, p5, p6, p7, p8, hcalm⟩ := sbCalm_lit
   have hgg : calmG = g := by rw [calmG, hcalm]
   rw [hcalm]
-  exact execStmt_assign_name (F := 8)
-    (calm_evals w w₁ e b sc wc0 wc1 bc0 bc1 ep kp g av p1 p2 p3 p4 p5 p6 p7 hpos hnoabs hlt
-      (by rw [← hgg]; exact hg))
+  exact execStmt_assign_name (F := Fg + 3)
+    (calm_evals Fg w w₁ e b sc wc0 wc1 bc0 bc1 ep kp g av p1 p2 p3 p4 p5 p6 p7 hpos hnoabs hlt
+      hFg (by rw [← hgg]; exact hg))
 
 /-- Statement 11 the same way. -/
 theorem nmr_binds (w : World) (e : REnv) (cm : Bool)
@@ -2153,7 +2156,7 @@ def G9 (w : World) (e : REnv) (av : Bool) (sc : Int) : REnv :=
 
 theorem mid_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
     (n dl sf gamma sc : Int) (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int)
-    (av : Bool) (sv : Nat) (ext : Array Obj)
+    (av : Bool) (sv : Nat) (ext : Array Obj) (Fg : Nat)
     (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
     (hmove : Heap.get? w.heap tm = some (.dict #[] sv))
     (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
@@ -2169,8 +2172,8 @@ theorem mid_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
     (hnmu : Env.lookup e "MATE_UPPER" = Option.none)
     (hng : Env.lookup e "guard" = Option.none)
     (hnc : Env.lookup e "<cell>guard" = Option.none)
-    (hband : -750 < sc ∧ sc < 750)
-    (hgen : evalExpr sunfish 5
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
         ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ calmG
       = .ok ⟨sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, G4 w e⟩ (.bool av)) :
     ∃ f, execStmts sunfish f ⟨w, e⟩
@@ -2190,9 +2193,9 @@ theorem mid_runs (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
   have h8 : ∃ f, execStmts sunfish f
       ⟨sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp), G4 w e⟩ [sbCalm]
       = .ok ⟨sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, G5 w e av⟩ .next :=
-    ⟨10, execStmts_singleton (F := 8) (calm_binds (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (G4 w e) b sc wc0 wc1 bc0 bc1 ep kp av
+    ⟨Fg + 5, execStmts_singleton (F := Fg + 3) (calm_binds Fg (sbW2 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp)) (sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) (G4 w e) b sc wc0 wc1 bc0 bc1 ep kp av
       (by simp [G4, G3, sbEnvDef, Env.lookup_set_ne, hpos])
-      (by simp [G4, G3, sbEnvDef, Env.lookup_set_ne, hnabs]) hband hgen)⟩
+      (by simp [G4, G3, sbEnvDef, Env.lookup_set_ne, hnabs]) hband hFg hgen)⟩
   have h9 : ∃ f, execStmts sunfish f
       ⟨sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, G5 w e av⟩ [sbGuard]
       = .ok ⟨sbW3 w gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext, G6 w e av⟩ .next :=
@@ -2341,7 +2344,7 @@ from the entry frame to the `return`. -/
 theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : ClassId)
     (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
     (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool) (ext : Array Obj)
-    (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
+    (Fg : Nat) (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
     (hlt : ts < w4.heap.size)
     -- the head
     (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
@@ -2357,8 +2360,8 @@ theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Class
     (hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hmove1 : Heap.get? (W1 w h').heap tm = some (.dict #[] svm))
     (hmu1 : Env.lookup (W1 w h').globals "MATE_UPPER" = some (.int mateUpper))
-    (hband : -750 < sc ∧ sc < 750)
-    (hgen : evalExpr sunfish 5
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
         ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
          G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
       = .ok ⟨sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
@@ -2387,8 +2390,8 @@ theorem body_runs (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Class
   have hH := head_runs w ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp sv h'
     hself hupd hclk hts hdict hml hmu hk hsc hlo hup
   have hM := mid_runs (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) ci sa ts tm hs
-    (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av svm ext hobj1 hmove1 hk hmu1
-    rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hband hgen
+    (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av svm ext Fg hobj1 hmove1 hk hmu1
+    rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl rfl hband hFg hgen
   have hT := tail_runs (sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext) w3 w4
     (G9 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma) av sc) a ci sa ts tm hs
     (n + 1) dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp es es' svs sv' hlt hev hgo hyield
@@ -2417,7 +2420,7 @@ set_option linter.unusedVariables false in
 theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : ClassId)
     (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
     (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool) (ext : Array Obj)
-    (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
+    (Fg : Nat) (sv svm : Nat) (es es' : Array (RVal × RVal)) (svs sv' : Nat)
     (hlt : ts < w4.heap.size)
     -- the head
     (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
@@ -2433,8 +2436,8 @@ theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Cl
     (hobj1 : Heap.get? (W1 w h').heap sa = some (searcherObj ci ts tm hs (n + 1) dl sf))
     (hmove1 : Heap.get? (W1 w h').heap tm = some (.dict #[] svm))
     (hmu1 : Env.lookup (W1 w h').globals "MATE_UPPER" = some (.int mateUpper))
-    (hband : -750 < sc ∧ sc < 750)
-    (hgen : evalExpr sunfish 5
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
         ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
          G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
       = .ok ⟨sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
@@ -2459,8 +2462,8 @@ theorem qs_stand_pat (w : World) (w3 w4 : World) (h' : Heap) (a : Addr) (ci : Cl
       #[.ref sa, posOf b sc wc0 wc1 bc0 bc1 ep kp, .int gamma, .int 0]
         = .ok w' (.int sc) := by
   obtain ⟨f, hf⟩ := body_runs w w3 w4 h' a ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1
-    ep kp av ext sv svm es es' svs sv' hlt hself hupd hclk hts hdict hml hmu hk hsc hlo hup
-    hobj1 hmove1 hmu1 hband hgen hev hgo hyield hobj4 hdict4 hobj5 hdict5 hsz hge hmus
+    ep kp av ext Fg sv svm es es' svs sv' hlt hself hupd hclk hts hdict hml hmu hk hsc hlo hup
+    hobj1 hmove1 hmu1 hband hFg hgen hev hgo hyield hobj4 hdict4 hobj5 hdict5 hsz hge hmus
   refine ⟨T1 w4 ts es svs (posOf b sc wc0 wc1 bc0 bc1 ep kp) sc hlt, f + 1, fun F hF => ?_⟩
   obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
   exact callIn_of_body (execStmts_mono hf (by simp) F' hF')
@@ -2802,7 +2805,7 @@ set_option linter.unusedVariables false in
 theorem qs_stand_pat_closed (w : World) (h' : Heap) (ci : ClassId)
     (sa ts tm hs : Addr) (n dl sf gamma sc : Int)
     (b : String) (wc0 wc1 bc0 bc1 : Bool) (ep kp : Int) (av : Bool)
-    (ext : Array Obj) (sv svm : Nat)
+    (ext : Array Obj) (Fg : Nat) (sv svm : Nat)
     (hself : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
     (hupd : Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h')
     (hclk : ¬ ((n + 1).fmod 2048 = 0))
@@ -2813,8 +2816,8 @@ theorem qs_stand_pat_closed (w : World) (h' : Heap) (ci : ClassId)
     (hmu : Env.lookup w.globals "MATE_UPPER" = some (.int mateUpper))
     (hk : hashableKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) = true)
     (hsc : -mateLower < sc) (hlo : -mateUpper < gamma) (hup : gamma ≤ mateUpper)
-    (hband : -750 < sc ∧ sc < 750)
-    (hgen : evalExpr sunfish 5
+    (hband : -750 < sc ∧ sc < 750) (hFg : 5 ≤ Fg)
+    (hgen : evalExpr sunfish Fg
         ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
          G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
       = .ok ⟨sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
@@ -2859,13 +2862,13 @@ theorem qs_stand_pat_closed (w : World) (h' : Heap) (ci : ClassId)
     (W3 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext)
     (W4 w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) h'
     (sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext).heap.size
-    ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av ext sv svm
+    ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp av ext Fg sv svm
     #[] (dictStore ([] : List (RVal × RVal)) (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
           (entryOf sc mateUpper)).1.toArray
     sv (if (dictStore ([] : List (RVal × RVal)) (tpKey (posOf b sc wc0 wc1 bc0 bc1 ep kp) 0)
           (entryOf sc mateUpper)).2 = true then sv + 1 else sv)
     hlt hself hupd hclk hts hdict hml hmu hk hsc hlo hup
-    hobj1 hmove1 hmu hband hgen hev
+    hobj1 hmove1 hmu hband hFg hgen hev
     (W3_gen w h' gamma (posOf b sc wc0 wc1 bc0 bc1 ep kp) av ext) hyield
     hobj4 hdict4 hobj5 hdict5 (by show ((1 : Nat) : Int) ≤ tableSize; decide) hge hmus
 
@@ -2956,8 +2959,8 @@ def QSStandPatB : Prop :=
     -- the two §L10 omitted, and they are the only two
     (-750 < sc ∧ sc < 750) →
     (∀ h' : Heap, Heap.update w.heap sa (searcherObj ci ts tm hs (n + 1) dl sf) = some h' →
-      ∃ (av : Bool) (ext : Array Obj),
-        evalExpr sunfish 5
+      ∃ (av : Bool) (ext : Array Obj) (Fg : Nat), 5 ≤ Fg ∧
+        evalExpr sunfish Fg
             ⟨sbW2 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp),
              G4 (W1 w h') (FH sa (posOf b sc wc0 wc1 bc0 bc1 ep kp) gamma)⟩ calmG
           = .ok ⟨sbW3 (W1 w h') gamma 0 .none (posOf b sc wc0 wc1 bc0 bc1 ep kp) ext,
@@ -2970,10 +2973,11 @@ theorem qsStandPatB : QSStandPatB := by
   intro w ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp sv sv'
     hself hdict hmove _hhist hml hmu _hnm hclk hsc hlo hup hge hband hgen
   obtain ⟨h', hupd⟩ := update_exists (o' := searcherObj ci ts tm hs (n + 1) dl sf) hself
-  obtain ⟨av, ext, hg⟩ := hgen h' hupd
+  obtain ⟨av, ext, Fg, hFg, hg⟩ := hgen h' hupd
   exact qs_stand_pat_closed w h' ci sa ts tm hs n dl sf gamma sc b wc0 wc1 bc0 bc1 ep kp
-    av ext sv sv' hself hupd hclk (dict_ne_instance hself hdict) (dict_ne_instance hself hmove)
-    hdict hmove hml hmu (posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp) hsc hlo hup hband
+    av ext Fg sv sv' hself hupd hclk (dict_ne_instance hself hdict)
+    (dict_ne_instance hself hmove)
+    hdict hmove hml hmu (posOf_hashable b sc wc0 wc1 bc0 bc1 ep kp) hsc hlo hup hband hFg
     hg hge (by omega)
 
 /-! ### The template depth 1 and depth 2 instantiate
@@ -3822,15 +3826,23 @@ capture: both pinned, so neither can drift silently. -/
 #guard cellName "<cell>guard" == "guard"
 #guard guardCell == Obj.cell Option.none
 
-/-! **And the genexp ALLOCATES**, which is why the calm gate's post-world is
-`sbW3` and not `sbW2`. On the shipped fixture `calmG` answers `True` and leaves
-the heap ONE object longer — so a gate premising an unchanged world has an
-unsatisfiable hypothesis, and every theorem below such a gate is vacuous. This
-guard is the measurement, kept where it cannot rot. -/
+/-! **And the genexp ALLOCATES, and it costs TEN fuel**, which is why the calm
+gate's post-world is `sbW3` and not `sbW2` and why its fuel is a parameter and
+not the numeral `5`. On the shipped fixture `calmG` answers `True`, leaves the
+heap ONE object longer, and TIMES OUT at every fuel below 10 — so a gate
+premising an unchanged world at fuel 5 has an unsatisfiable hypothesis twice
+over, and every theorem below such a gate is vacuous. Both guards are the
+measurement, kept where they cannot rot. -/
 #guard (match searcherW with
   | some (w, _) =>
-    (match evalExpr sunfish 4096 ⟨w, [("pos", posH 0)]⟩ calmG with
+    (match evalExpr sunfish 10 ⟨w, [("pos", posH 0)]⟩ calmG with
      | .ok st v => v == RVal.bool true && st.world.heap.size == w.heap.size + 1
+     | _ => false)
+  | none => false)
+#guard (match searcherW with
+  | some (w, _) =>
+    (match evalExpr sunfish 9 ⟨w, [("pos", posH 0)]⟩ calmG with
+     | .timeout => true
      | _ => false)
   | none => false)
 

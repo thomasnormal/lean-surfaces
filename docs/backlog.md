@@ -10051,3 +10051,115 @@ theorem about `bound()`; there is now a green, clean-axiom theorem about
 `bound()` whose premises can all be met, whose generator half is proved rather
 than assumed, and whose two remaining hypotheses are named, classified and
 measured.
+
+
+## L25 — THE RECURSIONSTEP CAMPAIGN PLAN, priced per inch and CENSUSED FIRST (2026-08-19)
+
+§L24 re-priced `RecursionStep` as *"a program, not a step"* and left it at
+that. This section is the decomposition, and the first thing it did was run the
+census that §L24's pricing was written without. **Three of the census answers
+change the plan**, two of them in the campaign's favour, and the ordering below
+is the one the measurements imply rather than the one §L24's prose listed.
+
+Every gate named here is to be stated under §L24's exit law: **fuel as a
+PARAMETER, worlds THREADED, and the heap effect MEASURED on the fixture before
+the premise is written.** The measurements below are that discipline applied to
+the plan itself, before a line of it is proved.
+
+### THE CENSUS, and what it changed
+
+| question | §L24 assumed | measured |
+|---|---|---|
+| is `yield from sorted(…)` a blocker? | named as a construct to pay | **NO — already lowered.** `genPlan` on `moves()`' four statements is `branch, branch, branch, forHere`. Ingestion rewrote `yield from X` into `for <yieldfrom@2> in X: yield <yieldfrom@2>`, so the statement is an ordinary `for` and `genSilent_forHere` is its rule. The whole "un-lowered `yield from`" refusal arm is unreachable here. |
+| is the ordering genexp lowered? | unknown | **YES — `<genexpr@1>`, params `#[".0", "depth", "pos"]`.** The iterable is `sorted(<genexpr@1>(pos.gen_moves(), depth, pos), reverse=True)`, a KEYWORD call the interpreter already implements (`desc`, stable descending insertion — not sort-then-reverse). |
+| does `Position.value` move the world? | unknown | **NO.** `callIn sunfish 8192 (initWorld sunfish) "Position.value"` leaves the heap at 66 → 66. So a `= .ok w (.int v)` conclusion is honest for `value` — unlike `calmG`, which is why this had to be checked and not assumed. |
+| does `Position.rotate` move the world? | unknown | **NO.** 66 → 66. The null-move probe's argument is heap-free. |
+| what does the ordering line cost? | unknown | **fuel ≈ 400** (times out at 200, decides at 400) and it **allocates 84 objects** (heap 70 → 154), answering a `.ref` to a heap LIST. So its gate needs the `sbW3`-shaped `++ ext` world and a live-cursor `.forList` frame, not a value sequence. |
+
+**The re-sequencing, and why.** §L24 called `Position.value` *agreement* the
+oldest unpaid debt and the first inch. The census says agreement — a reference
+function naming the NUMBER — is **not what the campaign consumes**. Nothing
+downstream computes `value`: the futility premise, `moveCap`, `Report` and the
+fold are all stated over a FREE `val` that is merely THREADED from the yield to
+the cap. What the campaign needs from `value` is that it **decides, without
+raising and without touching the world**, on the boards and moves `gen_moves`
+produces. That is `value_runs` with an existential answer, and it is strictly
+cheaper: the six-way case split on the piece letter is unavoidable either way
+(`pst[p]` cannot reduce at a free `p`), but with an existential answer every
+case's ARITHMETIC is free — no padded-table sums, no 120-wide reference.
+
+The reference-agreement version stays on the list as **R1′**, wanted only if a
+later theorem must compute a move's value. `sf_order`'s bound.lean names
+"`Position.value` agreement, which no lane has" as one of three transport
+blockers; that framing is what §L24 inherited, and it is a debt of `sf_order`'s
+transport route, not of this one.
+
+### THE INCHES, in prerequisite order
+
+**R1 — `value_runs`: `Position.value` decides, heap-free.** *One session.*
+`callIn sunfish F w "Position.value" #[posOf …, mvOf i j prom] = .ok w (.int v)`
+for some `v`, over a free board, given the `pst` global. Premises the shipped
+body forces and which `gen_moves` supplies: `board[i] ∈ "PNBRQK"` (else
+`pst[p]` is a KeyError), `board[j]` free but the capture arm needs
+`q ∈ "pnbrqk" → q.upper() ∈ "PNBRQK"`, and `0 ≤ j ≤ 119`, `0 ≤ 119 - j ≤ 119`
+for every table index. Six arms on `p`, six on `q.upper()`, plus the
+castle-check `abs(j - kp) < 2`, the castling arm (`p == "K"`), and the two pawn
+arms (promotion reads `pst[prom]` at a free `prom` — a SEVENTH case set, and
+the one to census first: `prom` is `""` for every non-promotion move).
+*Risk:* the `pst` heap dict is the shipped 6 × 120 table; the `dirsObj`
+precedent (`gen_moves_drains_ref`'s `hdirs`) is the shape to copy.
+*8-second check owed before the gate is written:* already done — heap-free, 66 → 66.
+
+**R2 — the ordering line.** *One to two sessions, and it decomposes further.*
+* **R2a — `<genexpr@1>`'s drain.** `for m in .0: if (v := pos.value(m)) >= QS or depth: yield (v, m)` over the drain of `pos.gen_moves()`. `gen_moves_drains_ref` (§L8) supplies `.0`; R1 supplies the filter's decidability. The WALRUS `v :=` binds in the genexp's own frame — census it before writing the gate.
+* **R2b — `sorted(…, reverse=True)`.** A keyword call draining a generator into a heap LIST. The interpreter has it; what is owed is the gate plus the fact that descending-stable insertion is what `sf_order`'s `order_line_sorts` already proves about the same line.
+* **R2c — the `for` over the sorted list.** A `.forList` LIVE-CURSOR frame (the iterable is a `.ref`, not a value sequence), so `sf_order`'s `moves_loop_cuts` is the worked precedent and `genSilent_forHere` is NOT the rule.
+* *World:* the line allocates 84 objects, so its post-world is `++ ext`-shaped exactly like `sbW3`, and every slot the rest of `moves()` reads survives by `Heap.get?_append`.
+
+**R3 — the many-round fold, with an IH per round.** *Two sessions.* §L16's
+`Hands` schedule is world-threaded and §L19's `PyStmtTriple.forGen` is the rule;
+what changes from depth 0 is that `Inv []` is no longer `False` (the loop can
+run out of moves), so the exhaustion obligation comes back and `fold_report`
+must be discharged at a real schedule. `searchedMove_sound`/`searchedPass_sound`
+are the two IH-consuming branches and are already proved.
+
+**R4 — the null recursive call.** *One session.* At `depth ≥ 6`,
+`-self.bound(pos.rotate(nullmove=True), 1 - t, depth - 7) >= t`. `rotate` is
+heap-free (measured), so the argument is a value; the call consumes the IH at
+`depth - 7`, which is below `depth - 1`, so `BoundRefines` must be strengthened
+to a STRONG induction (`∀ e < d`) or the rule restated. **This is the one place
+the §L16 template as recorded does not fit, and it is a statement change, not a
+proof.** Price it before R3 so the schedule is chosen once.
+
+**R5 — the live correction.** *One session.* `depth and not live and
+all(gen_moves() scan)` — dead at depth 0 by the falsy `depth`, live above it,
+and it runs a second `gen_moves()` drain (R2a's machinery, without the sort).
+
+### THE ASSEMBLY'S BASE CASE — its own program
+
+`BoundRefines V 0` is NOT `qs_stand_pat_closed` with the premises relaxed. It
+quantifies over an arbitrary `pos` and an arbitrary table satisfying `TableAt`,
+and owes four conjuncts where the depth-0 theorem delivers one:
+
+| conjunct | status |
+|---|---|
+| the run | **one leaf of three.** `qs_stand_pat_closed` is the CLEARED-table, stand-pat-CUT case. Owed: the fail-low leaf (`pos.score < gamma`, the fold runs out and the correction fires) and the STALE-table case (the probe HITS, which is `sf_probe`'s own arm and returns early — plausibly the cheapest of the three). |
+| `TableAt` out | `sf_store_from_report` (§L20) is the join; what is owed is applying it at the computed store. |
+| `SubtreeWrites` at every `e > 0` | needs the allocation arm (§L14) at each of the three leaves; a depth-0 call allocates on every visit. |
+| `Report gamma r (V pos 0)` | `fold_report` + `qs_fold_agrees` connect the interpreter's fold to §3's; at depth 0 the value function's own depth-0 clause is `formal/`'s three-way leaf. |
+
+**Ordering:** the stale-table (probe-hit) leaf first — it is a HEAD-only run and
+reuses `probe_block_runs` unchanged; then fail-low; then the three conjuncts.
+None of it depends on R1–R5, so it can run in parallel with the campaign and is
+the better inch for a second lane.
+
+### The standing law, restated for every gate in this plan
+
+1. Before writing `= .ok ⟨w, e⟩ v`, RUN the expression on the fixture and
+   compare heap sizes. `calmG` cost three passes for want of eight seconds.
+2. Before writing a fuel NUMERAL, measure the minimum. Prefer a parameter:
+   with a symbolic fuel a mismatch is a type error naming both sides, where the
+   numeral version is a two-to-three-minute `whnf` timeout.
+3. A premise is not paid until something DISCHARGES it. Land every gate with the
+   corollary that consumes it, in the same pass, or the next pass inherits a
+   theorem that may say nothing.

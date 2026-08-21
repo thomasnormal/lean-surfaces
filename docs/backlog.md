@@ -11646,21 +11646,18 @@ battery claims it.
 
 ### Triad
 
-`docs_check` **73/73**, 15 illustrative-exempt — and the charter's two quoted
-Lean blocks are MARKED, so `Run` and `Report` are gate-enforced against the tree
-rather than transcribed; a drift in either is now a red check rather than a
-stale quotation.
+`lake build` **3684 jobs, "Build completed successfully"**; `docs_check`
+**73/73**, 15 illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113
+whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched,
+14 loud**. No Lean changed, so no axioms moved; no `sorry`, no `native_decide`.
 
-**`lake build` / `diff_test` / `script_corpus` are stated as PENDING at the
-moment of writing, not as green, because they were not observed green.** The
-commit changes four files — `docs/c-tier-charter.md`, `docs/backlog.md`,
-`docs/c-construct-census.json`, `harness/c_construct_census.py` — and **no
-`.lean` file and no file `lake build` reads**, so it cannot move any of the
-three. The reason they were not observed is environmental and worth recording
-for the next lane that clones: `cp -Rc` gives an APFS clone but does NOT
-preserve mtimes, so Lake re-elaborates from cold — this clone came up rebuilding
-Mathlib from source (2790 of 8268 oleans at the time of writing) with three
-sibling lanes' builds competing for the same laptop. **Use `cp -Rpc`.** The run
-is in flight and the numbers land in the next entry; the last observed values on
-this commit's parent were `lake build` 3684 jobs green, `diff_test` 1315/0
-(1202 matched, 113 whitelisted), `script_corpus` 64/0.
+The charter's two quoted Lean blocks are MARKED, so `Run` and `Report` are
+gate-enforced against the tree rather than transcribed: a drift in either is now
+a red check rather than a stale quotation.
+
+**One environmental note for the next lane that clones.** `cp -Rc` gives an APFS
+clone but does NOT preserve mtimes, so Lake re-elaborates from cold — this clone
+came up rebuilding Mathlib from source with three sibling lanes' builds competing
+for the same laptop, and was moving at ~8 oleans per several minutes. **Use
+`cp -Rpc`**, and if a clone does come up cold, `lake exe cache get` restored
+Mathlib in minutes where the source rebuild would have taken hours.

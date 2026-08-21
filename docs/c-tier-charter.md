@@ -823,12 +823,14 @@ static int pyfloordiv(int a, int b) {
 ```
 
 Chosen deliberately, and the reasons are the milestone's whole thesis:
-it is five statements; it exercises declaration-with-initializer, `/`,
-`%`, `!=`, `<`, `&&`, `--`, `if`, and `return`; it is the site the ctwin
-README names as **the #1 place C clones silently diverge from Python**,
-which makes it the square's first cross-language datum; and it carries
-TWO of the eleven armed UB classes in five lines (`b == 0`, and
-`INT_MIN / -1`) so the first thing the tier ever says about C includes
+it is THREE statements (a two-object declaration, an `if`, a `return`)
+exercising declaration-with-initializer, `/`, `%`, `!=`, `<`, `&&`,
+`--`, `if` and `return`; it is the site the ctwin README names as **the
+#1 place C clones silently diverge from Python**, which makes it the
+square's first cross-language datum; and it carries **two of the eleven
+armed UB classes in three statements** — the division class at `b == 0`
+and at `INT_MIN / -1`, and the signed-overflow class at `q--` when `q`
+is `INT_MIN` — so the first thing the tier ever says about C includes
 something it must REFUSE.
 
 **M1 is complete when** the envelope for `sunfish.c` ingests, the
@@ -889,7 +891,8 @@ must be verified on the build box before any battery claims it.
 No Lean. The only existing file changed is `docs/backlog.md`. The
 commit touches no `.lean` file and no file `lake build` reads, so it
 cannot move the Python tier — but "cannot" is an argument, not a
-measurement, and `docs/backlog.md` §L35 records which thirds of the
-triad were actually OBSERVED at this commit and which were still in
-flight. A charter that claimed a green it had not seen would have failed
-its own covenant in its last paragraph.
+measurement, so the triad was run: `lake build` **3684 jobs, completed
+successfully**; `docs_check` **73/73**; `diff_test` **1315 cases, 0
+failed** (1202 matched, 113 whitelisted); `script_corpus` **64 scripts,
+0 failed** (50 matched, 14 loud). A charter that claimed a green it had
+not seen would have failed its own covenant in its last paragraph.

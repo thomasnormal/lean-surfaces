@@ -12568,7 +12568,8 @@ owner questions are unchanged: whether the lane gets `LeanModels/C/` and a
 
 ### Triad
 
-`lake build` **3685 jobs green**; `docs_check` **73/73**, 15
+`lake build` **3686 jobs green** (re-run after rebasing onto §L41, which
+changed two `.lean` files); `docs_check` **73/73**, 15
 illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. This
 lane changed no Lean; no `sorry`, no `native_decide`, no axioms moved.

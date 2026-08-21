@@ -84,9 +84,9 @@ parent searches the two moves that clear the QS floor, each at the NEGATED windo
 plies below — a nullary `def` is re-evaluated by every `#guard` that names it
 (§L28's third finding). Note the leading newline: this is the residue's own
 spelling for a ROTATED board, copied and not tidied. -/
-private def d4B : String :=
+def d4B : String :=
   "\n         \n         \nrnbkqbnr \npppp.ppp \n........ \n....p... \n........ \n........ \nPPPPPPPP \nRNBKQBNR \n         \n         "
-private def e4B : String :=
+def e4B : String :=
   "\n         \n         \nrnbkqbnr \nppp.pppp \n........ \n...p.... \n........ \n........ \nPPPPPPPP \nRNBKQBNR \n         \n         "
 
 /-- …and the `ep` squares are the ENGINE's: `119 - (84 + 64) / 2 = 45` and
@@ -127,9 +127,9 @@ remaining DEPTH, and its depth-0 clause is a static leaf with no recursion at
 all). -/
 
 /-- Candidate one. -/
-private def pieceCount (b : String) : Nat := (b.toList.filter Char.isAlpha).length
+def pieceCount (b : String) : Nat := (b.toList.filter Char.isAlpha).length
 
-private def pstRowOf (c : String) : Option (Array RVal) :=
+def pstRowOf (c : String) : Option (Array RVal) :=
   match Env.lookup (initWorld sunfish).globals "pst" with
   | some (.ref pa) =>
     (match Heap.get? (initWorld sunfish).heap pa with
@@ -140,7 +140,7 @@ private def pstRowOf (c : String) : Option (Array RVal) :=
      | _ => Option.none)
   | _ => Option.none
 
-private def pstAt (c : String) (sq : Nat) : Int :=
+def pstAt (c : String) (sq : Nat) : Int :=
   match pstRowOf c with
   | some xs => (match xs[sq]?.getD .none with | .int z => z | _ => 0)
   | none => 0
@@ -150,7 +150,7 @@ the mover at its own square, the opponent mirrored. It is `pos.score`'s
 companion: the score is the two sides' DIFFERENCE and this is their SUM. And it
 is a function of the BOARD alone — no window, no score, no table — which is the
 answer to §L27's third question as well. -/
-private def pstTotal (b : String) : Int :=
+def pstTotal (b : String) : Int :=
   b.toList.zipIdx.foldl (fun acc p =>
     if p.1.isUpper then acc + pstAt (String.singleton p.1) p.2
     else if p.1.isLower then acc + pstAt (String.singleton p.1.toUpper) (119 - p.2)

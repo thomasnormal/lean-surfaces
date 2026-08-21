@@ -11783,3 +11783,169 @@ instantiation reuses guards the file already ran.
    plan.** §L30 corrected `CapInBand` in a table; a later reader of
    `bound_depth.lean` would still have found §7's prose calling it *"the recorded
    axiom"*. F3a's docstring carries the correction where the theorem is.
+## L37 — F1a LANDS: the measure's cell calculus, and the rotate is proved invisible (2026-08-21)
+
+§L30 named F1 *"the only new mathematics on the list"* and priced it at two
+sessions with a clean edge in the middle. This is the first half —
+`Examples/python/sunfish/qs_measure.lean`, the BOARD mathematics `(pieceCount,
+-pstTotal)`'s strict descent runs on — and the edge it stops at is the one the
+plan drew: everything here is about `List Char`, and nothing here runs the
+shipped `Position.move`.
+
+### The measure is IMPORTED, not restated
+
+`pstTotal`, `pieceCount`, `pstRowOf` and `pstAt` were `private` in
+`faillow_census.lean`. They are now public and this file imports them, so there
+is exactly ONE definition of the measure in the tree and it is the one §L30's
+12 660 edges were measured with. A second copy pinned to the same three fixture
+numbers would have been cheaper to write and would have drifted the first time
+anybody re-pinned the envelope.
+
+Two bridges make it induction-shaped without redefining it: `pstTotal_cellSum`
+(the census's `foldl` over `zipIdx`, read as a structural sum) and
+`alphaCount_eq` (its `filter … |>.length`, likewise). Everything downstream is
+about the same numbers.
+
+### THE STRING RESIDUE, CENSUSED BEFORE ANY PREMISE
+
+§L30's F1 risk note is the reason this file has a `#guard` before it has a
+theorem about `Position.move`'s board: *"`Position.move` builds its board by
+STRING SLICING while `value` is `pst` arithmetic — so this is a string lemma, not
+an omega."* `moveCells` is the shipped pipeline (`put(put(board, j, board[i]), i,
+".")`, then `board[::-1].swapcase()`) modelled on `List Char`, and the first
+thing under it is
+
+* `plainMoveBoard board0 84 64 == d4B` and `plainMoveBoard board0 85 65 == e4B`
+
+— character for character against the two boards `faillow_census.lean` §3 pinned
+against the ENGINE's own `Position.move`. That guard is what licenses every
+premise below; it was run before the first lemma was written, and it caught the
+one thing reading the source does not tell you: `board[::-1]` reverses the WHOLE
+string, so each rank is mirrored left-to-right too (`rnbqkbnr` becomes
+`rnbkqbnr`), and the leading newline in the census's `d4B` literal is the
+residue's own spelling for that, not a typo.
+
+### What is proved
+
+* **The cell calculus** (`cellSum_append`, `cellSum_single`, `cellSum_map`,
+  `cellSum_set`) — one `put` moves the sum by exactly the two squares' cells.
+  Stated over a FREE `f : Char → Nat → Int`, which is what makes it blind to
+  `pst` and therefore survives the shipped `pst["K"] = K_MID if … else K_END`
+  swap (`sunfish.py:557`, once per SEARCH, outside `bound()`).
+* **`cellSum_reverse`** — the reversal lemma with a membership-restricted mirror
+  hypothesis, and the reason it is restricted is worth recording: the unrestricted
+  form needs `(c.toLower).toUpper = c` for every ASCII letter, which is a `UInt32`
+  wraparound argument. **A sunfish board is made of fifteen characters**, so the
+  alphabet becomes a stated side condition and every char fact becomes `rfl` on a
+  CONCRETE character. Fifteen cases, three tactics, no ASCII lemma.
+* **`pstCell_swapCase`** — the mirror identity, and with it the fact the measure
+  was designed around: **`pstTotal` cannot see a rotation.** That is what makes it
+  `pos.score`'s companion — the score is the two sides' DIFFERENCE and this is
+  their SUM — and it is now a theorem rather than a design intention.
+* **`cellSum_moveCells` / `pstTotal_plainMove`** — §L30's headline identity,
+  proved: across a move onto an EMPTY square, `pstTotal` rises by exactly
+  `pstCell p j - pstCell p i`, which is `Position.value`'s first line.
+* **`pieceCount_plainMove`** — and the count does not move, which is why the
+  fixture's own two edges refute §L27's first candidate.
+* **`qsMeasure`, `qsLt`, `qsLtB`/`qsLtB_iff`, `qsMeasure_lt_of_board`,
+  `qsMeasure_plainMove_lt`** — the measure, the order, the Bool mirror with its
+  two-line `iff`, and the descent.
+
+### The castle transit is STATED, in two places, and both are load-bearing
+
+§L30's finding 6: *an unreachable-looking arm is unmeasured, not absent.* The
+transit arm adds `pst["K"][119 - j]` with no piece leaving the board, so `val`
+can be large while `pstTotal` FALLS — pieces equal, `pstTotal` down, the pair NOT
+descending. It fired zero times in 400 positions' full move lists and could not
+be reached by hand, and it is carried anyway:
+
+1. **`qsMeasure_lt_of_board`'s `hpst`** demands `pstTotal b' = pstTotal b + v` at
+   an unchanged piece count rather than assuming it. A caller who cannot
+   discharge it does not get the descent.
+2. **`cellSum_moveCells`'s `hqj`** — the target square is `'.'` — is what makes
+   that identity TRUE for the plain-move pipeline, and it is exactly what the
+   transit arm does not satisfy in the way that matters: the transit adds a term
+   for a square the two `put`s never touch.
+
+A `#guard` pins the negative direction too (`!qsLtB (qsMeasure board0) (qsMeasure
+d4B)`), so a later pass that reaches for "the pair always descends" is stopped by
+a build failure rather than by prose.
+
+### The instantiation, and why it is a `#guard` through a proved mirror
+
+`pstTotal` reads the live `pst` out of `initWorld sunfish`, whose module
+initialiser pads and joins the tables at elaboration time. The elaborator runs
+that in milliseconds; the KERNEL would not, so a `decide`-closed theorem at the
+fixture is not affordable. The instantiation is therefore `descendsB` —
+`qsMeasure_lt_of_board`'s hypotheses as one `Bool` — plus
+`qsMeasure_lt_of_descendsB`, the theorem that consumes it, plus guards saying the
+premises HOLD at the fixture's own two values (46 and 42) and are REFUSED below
+the floor (39). Same shape as `faillow_census.lean`'s `reportB`/`reportB_iff`,
+and for the same reason.
+
+### The numbers, cross-checked against CPython
+
+Every guard in the file was run against the shipped `sunfish.py` under CPython
+before the build confirmed it in Lean — `pstTotal(board0) = 127158`,
+`pstCell 'P' 64 - pstCell 'P' 84 = 46`, `pstCell 'P' 65 - pstCell 'P' 85 = 42`,
+`pieceCount = 32`, and both children's `(value, pstTotal delta, pieces)` triples
+`(46, +46, 32)` and `(42, +42, 32)`. Two oracles for the same measure, and the
+second one is what turned up the en-passant case below.
+
+### The clean edge — what F1b owes
+
+* **The interpreter bridge.** That the shipped `put`'s string slicing IS
+  `List.set`, and that `Position.move`'s output board IS `plainMoveBoard`. Here
+  that is MEASURED on two edges; F1b must prove it at a free board, and §L20's
+  computed-shape law says the residue's own spelling decides the statement.
+* **`Position.value`'s own arithmetic.** That `pstCell p j - pstCell p i` is
+  `pst[p][j] - pst[p][i]` as the shipped `value` computes it. `value_bound.lean`
+  (§L28, all four configurations) is the supply.
+* **The capture arm at the interpreter.** `pieceCount` strictly down when the
+  target is a piece — the mathematics is `alphaCount_set`, already here; what is
+  missing is the same bridge.
+* **En passant is a THIRD case, the plan did not name it, and it is MEASURED.**
+  `Position.move`'s `if j == self.ep: board = put(board, j + S, ".")` removes a
+  pawn from a square the move did not land on. Run against CPython on a real ep
+  capture four plies into the opening tree (`Move(56, 45, "")`): the target square
+  is `'.'`, `Position.value` answers **149**, the piece count goes **32 → 31**,
+  and `pstTotal` **FALLS by 69**. So an ep capture satisfies the "quiet" test and
+  breaks the quiet identity outright. It is safe for the descent — the count
+  falls, arm one, and `hpst` is vacuous there — but **the classification that
+  matters is the piece COUNT, not whether the target square is empty**, and F1b's
+  bridge must exclude `j == self.ep` alongside promotion and castling.
+
+### Triad
+
+`lake build` **3685 jobs green**; `docs_check` **73/73 marked blocks, 15 illustrative-exempt**; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No `sorry`, no
+`native_decide`. Every printed declaration depends on `[propext, Classical.choice,
+Quot.sound]` or less. The new file's own throughput is **7.6 s**, and
+it is the `pstTotal` guards: each one walks 120 squares through a `pst` lookup on
+purpose.
+
+### Findings worth carrying
+
+1. **De-privatising beats re-defining.** The measure had one definition in a
+   census file marked *"nothing here is proved"*. Making it public cost four
+   words and removed a whole class of drift; a second copy pinned to the same
+   three numbers would have looked identical and diverged at the first re-pin.
+2. **A finite alphabet turns a lemma into fifteen `rfl`s.** The general mirror
+   identity needs an ASCII round-trip through `UInt32` wraparound. Restricting it
+   to the board's own fifteen characters — a side condition every caller can
+   `decide` — replaced that with case analysis on concrete `Char`s, where every
+   fact is definitional. **Look for the finite side condition before proving the
+   general lemma.**
+3. **The plan's two-way classification was WRONG, and one CPython run said so.**
+   §L30 wrote the arms as *"a move that TAKES a piece drops `pieceCount`; a move
+   that does not leaves `pieceCount` alone and raises `pstTotal` by exactly its own
+   `value(m)`"* — with "takes" read off `q in "pnbrqk"`, the shipped capture test.
+   En passant is neither: `q` is `'.'` and a piece leaves anyway. The measure
+   survives (the count still falls) but the CLASSIFIER does not, and the fix is to
+   split on the count rather than on the target square. **Four minutes of CPython
+   found it; no amount of reading the plan would have.**
+4. **`omega`'s atom abstraction is the reason the count half is short.**
+   `alphaCount_set` carries `if c.isAlpha then 1 else 0` on both sides;
+   `omega` treats each `if` as an opaque `Nat` atom, so the induction closes by
+   linear arithmetic without ever case-splitting on the boolean. Choosing the
+   structural `alphaCount` over `filter … |>.length` is what made that available.

@@ -12573,3 +12573,115 @@ changed two `.lean` files); `docs_check` **73/73**, 15
 illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. This
 lane changed no Lean; no `sorry`, no `native_decide`, no axioms moved.
+
+## L43 — R3c's EXHAUSTION CENSUS ANSWERS, and it answers TWICE: never here, reachable there (2026-08-21)
+
+`Examples/python/sunfish/fold_depth1.lean` §9. §L32 left exactly one measurement
+owed and named the gate that needs it — *"does the depth-1 fold ever EXHAUST on
+the fixture? … Take it before writing `Inv []`"*. It is taken. **The fixture says
+never and the engine says yes**, and both halves change what `Inv` may say.
+
+### The band, written down before it was probed
+
+The fold exhausts at `gamma` iff no round settles and no round cuts:
+
+    max_m min(cap_m, -child_m)  <  gamma  ≤  min_m cap_m
+
+— right end because the sorted stream's LAST cap must still clear the window,
+left end because no prefix maximum may reach it. Both ends are measurable, and
+the census is the two of them on real boards.
+
+### On the FIXTURE: NEVER — and ROUND ONE is the reason, not the scan
+
+`pos.score = 0` at depth 1, so `cap_m = val_m`, and the ordering line's bottom row
+is **-5**: every `gamma > -5` settles. At `gamma ≤ -5` nothing settles — and
+nothing needs to, because the FIRST round already scores **0**, and `0 ≥ gamma`
+cuts. **Two nodes, at every window from -5 down to -20000.** The band's two ends
+are the wrong way round by 5 points on this board.
+
+Scanned on the shipped engine over `gamma ∈ [-1000, 1000]`: **1038 cut, 963
+settled, ZERO ran.** The two facts the argument needs (`min cap = -5`, the
+round-one cut) are `#guard`ed; the scan is the corroboration, not the evidence.
+
+### Off the fixture: REACHABLE, and in TWO flavours
+
+| flavour | board | rounds | band | `live` | the fold's `best` | `bound()` |
+|---|---|---|---|---|---|---|
+| terminal | `1. f3 e5 2. g4 Qh4#` (4 plies of the shipped `Position.move`) | 19, all `searchedMove` | `1 - MATE_UPPER < gamma ≤ -93` — **69 197 wide** | **False** | `-MATE_UPPER` = -69290 | **-47938** |
+| non-terminal | a self-play position, 32 rows | 32, all `searchedMove` | `gamma ∈ [39, 56]` — 18 wide | **True** | 38 | 38 |
+
+The terminal one is a checkmate: every child answers `MATE_UPPER` because the
+opponent captures the king, so every round scores `-MATE_UPPER`. The
+non-terminal one is the ordinary shape — **every move's true value below the
+WORST move's static cap**, i.e. the futility bet loose on all of them at once.
+A self-play sweep found **3 of 112** positions exhausting at some `gamma`.
+
+### FOUR consequences for `Inv`, and one of them is a THEOREM
+
+1. **`Inv []` is reachable, so it is not `False`** — §L25's prediction confirmed at
+   depth 1, and confirmed OFF the fixture rather than on it.
+2. **`live` must be a real variable.** Both flavours occur; the invariant cannot
+   pin it either way.
+3. **No `settle` can precede exhaustion.** `foldFrom_ran_no_settle` — a theorem
+   about the walk, not a measurement: a `.settle` at the head returns
+   `Exit.settled`. So **`fold_report`'s `hfut` is VACUOUS on the `Exit.ran` arm**
+   (`fold_report_ran`). *The futility bet §L27 called the hard premise is empty
+   exactly where `Inv []` lives* — which is the finding that makes R3c smaller
+   than §L25 priced it. 2160 classified runs agree, and did not have to.
+4. **THE WARNING, and it is a sequencing fact.** At `live = False` the TAIL
+   REWRITES the fold's number: the fold leaves `-MATE_UPPER` and `bound()` returns
+   `max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)` = **-47938** at
+   depth 1. So **an `Exit.ran` `Report` is not a statement about `bound()`'s
+   return until R3d's correction lands**, and `Inv` may not be written as though
+   it were. This is the one place the census contradicts a natural reading of the
+   plan.
+
+### The instrument, and its falsification test
+
+The scan is a faithful simulator of the depth-1 fold that calls the REAL
+`Searcher.bound` for children and classifies the exit. Its test: it must
+reproduce the shipped `bound()`'s **(answer, node count)** exactly. Over
+`gamma ∈ [-200, 120]` on the opening board — 321 windows — **0 disagreements**.
+Where it does disagree is precisely the terminal-exhaustion row, because the
+simulator models the FOLD and the tail rewrites the number; that disagreement is
+consequence 4, measured rather than assumed.
+
+### Evidence strength, stated per verdict
+
+* *fixture never*: a 2001-window scan PLUS a round-one argument needing two
+  numbers. **Measured, not proved.**
+* *reachable elsewhere*: a construction — a played position with its band
+  computed — reproduced on both instruments. **Measured, and the fixture is
+  pinned in the file** so the next inch can instantiate on it.
+* *no settle before exhaustion*: **proved** (`[propext]` alone).
+
+### Throughput, and one guard deliberately not written
+
+The mate row costs **45 s** of elaboration on its own against **4 s** for
+everything else in §9, so it is recorded and not `#guard`ed — §L32 made the same
+call for its 34- and 41-node rows. What IS guarded is the fixture it runs on: the
+position pinned to its four plies, and its stream (19 rows, values `[-24, 46]`,
+so caps `[-93, -23]`). File throughput **29 s → 34 s**.
+
+**Placement note.** `foldFrom_ran_no_settle` and `fold_report_ran` are about
+`fold` and belong beside §L36's `foldFrom_ran_ge` in `bound_depth.lean` §7. They
+are in `fold_depth1.lean` because that file costs 34 s and `bound_depth` costs
+3 m 25 s, and because the fail-low lane is editing it. Migrating them is a move,
+not an argument.
+
+### Triad
+
+`lake build` **3686 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed**, 113 whitelisted, 1202 matched;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud.
+`foldFrom_ran_no_settle` depends on
+`[propext]` alone and `fold_report_ran` on `[propext, Quot.sound]`. No `sorry`,
+no `native_decide`.
+
+### What R3c needs next, now that the census is in
+
+`Inv` carrying `(best, live, rounds-left)` at a schedule of length > 1, with
+`Inv []` DISCHARGED rather than refuted — and by consequence 3 it is discharged
+without a futility premise. The two remainders stand where they were: the
+depth-1 cutoff's killer store (filed with R3e, because it writes), and R2's
+`hdrain`, which is what turns "a free `sortedVs`" into a concrete schedule.

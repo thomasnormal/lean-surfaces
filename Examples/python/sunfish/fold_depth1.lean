@@ -47,7 +47,8 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   execStmt_if_true execStmt_if_false execStmts_singleton_flow
   Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle
   sbMoveDepth sbLive sbSearch searcherObj searchedMove searchedMove_sound
-  minG minNotFun minCls minNT muG boolChain_and3
+  minG minNotFun minCls minNT muG boolChain_and3 Exit fold
+  foldFrom_nil foldFrom_cons_next foldFrom_cons_cut
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
 
@@ -283,11 +284,11 @@ remaining rounds, which is §L16's `Hands`. **`Inv []` is no longer `False`** �
 loop can run out of moves — so the exhaustion obligation returns and
 `fold_report` must be discharged at `Exit.ran` as well as at `Exit.cut`.
 
-*Census still owed here, and it is the one measurement this pass did NOT take:*
-**does the depth-1 fold ever exhaust on the fixture?** Every window measured
-above ends in a cut or a settle. Exhaustion needs `gamma` below every cap and
-above every score, and whether that band is non-empty on this board is a
-half-hour of `bd_probe`. Take it before writing `Inv []`.
+*That census is TAKEN — §9 below, and it answers twice.* On this fixture the
+fold **never** exhausts (the band's two ends are the wrong way round, and round
+ONE is the reason). Off it exhaustion is reachable in two flavours, so `Inv []`
+is not `False` and `live` cannot be pinned. Three consequences for `Inv`, one of
+them a theorem (`foldFrom_ran_no_settle`), are recorded there.
 
 ### R3d — the correction and the store. *One session.*
 
@@ -957,6 +958,195 @@ cannot serve: its `hm` premise is `move is None`.
 
 That is a heap WRITE inside the round, which puts it with R3e's allocation arm
 rather than with this gate — and it is the honest edge this pass stops at. -/
+
+
+/-! ## §9 R3c's EXHAUSTION CENSUS — ANSWERED, and it answers TWICE
+
+§L32 left exactly one measurement owed and named the gate that needs it: *"does
+the depth-1 fold ever EXHAUST on the fixture? … Take it before writing `Inv []`."*
+Both halves are measured now, and they do not give the same answer.
+
+**The band, written down first.** The fold exhausts at `gamma` iff no round
+settles and no round cuts, i.e.
+
+    max_m min(cap_m, -child_m)  <  gamma  ≤  min_m cap_m
+
+— the right-hand end because the sorted stream's LAST cap must still clear the
+window, the left-hand end because no prefix maximum may reach it.
+
+### On the FIXTURE: NEVER — and round ONE is the reason, not a scan
+
+`pos.score` is 0 at depth 1, so `cap_m = val_m`, and the ordering line's bottom
+row is **-5**: every `gamma > -5` settles. At `gamma ≤ -5` the fold does not
+settle — and it does not need to, because the FIRST round already scores 0 and
+`0 ≥ gamma`, so it CUTS. Two nodes, at every window from -5 down to -20000.
+`min_m cap_m` is -5 and the best move's score is 0: the band's two ends are the
+wrong way round, by 5 points, on this board.
+
+Scanned on the shipped engine over `gamma ∈ [-1000, 1000]`: **1038 cut, 963
+settled, ZERO ran.**
+
+### Off the fixture: REACHABLE, in two flavours
+
+1. **Terminal (`live = False`) — checkmate.** `1. f3 e5 2. g4 Qh4#`, four plies of
+   the shipped `Position.move`, pinned below. 19 rows, `pos.score = -69`, caps in
+   `[-93, -23]`. At `gamma = -93` every round is a `searchedMove`, every child
+   answers `MATE_UPPER` (the opponent captures the king), so every score is
+   `-MATE_UPPER`, `live` stays **False**, and the fold RUNS OUT after 19 rounds —
+   20 nodes, answer -47938. The band here is `1 - MATE_UPPER < gamma ≤ -93`,
+   **69 197 integers wide**, against the fixture's empty one.
+2. **Non-terminal (`live = True`).** A self-play position 32 rows wide exhausts on
+   `gamma ∈ [39, 56]` (18 integers) with `best = 38`: every move's true value is
+   below the WORST move's static cap, so the futility bet is loose on all of them
+   at once. Measured on the shipped engine only — it is 119 nodes and is not
+   reproduced here.
+
+### FOUR consequences for `Inv`, and one of them is a theorem
+
+* **`Inv []` is reachable, so it is not `False`** — §L25's prediction confirmed at
+  depth 1, and confirmed OFF the fixture rather than on it.
+* **`live` must be a real variable.** Both flavours occur, so the invariant cannot
+  pin it either way.
+* **No `settle` can precede exhaustion** — `foldFrom_ran_no_settle` below, and it
+  is a theorem about the walk rather than a measurement: a `.settle` at the head
+  returns `Exit.settled`. So **`fold_report`'s `hfut` is VACUOUS on the `Exit.ran`
+  arm** (`fold_report_ran`): the futility bet §L27 called the hard premise is
+  empty exactly where `Inv []` lives. 2160 classified runs agree, and did not
+  have to.
+* **THE WARNING, and it is a sequencing fact.** At `live = False` the tail
+  REWRITES the fold's number: the fold leaves `-MATE_UPPER` and the shipped
+  `bound()` returns `max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)`,
+  which at depth 1 is **-47938**. So **an `Exit.ran` `Report` is NOT a statement
+  about `bound()`'s return until R3d's correction lands.** `Inv` may not be
+  written as though it were.
+
+### Evidence strength, stated
+
+The fixture verdict is a 2001-window scan PLUS a round-one argument that needs
+only two numbers (`min cap = -5`, `score₁ = 0`); it is measured, not proved. The
+reachability verdict is a construction — a played position with its band computed
+— and the mate row is reproduced by the Lean interpreter as well as by the shipped
+engine, though it is recorded rather than guarded (45 s — see below). The
+`no settle` consequence is the only one that is proved.
+
+**Placement note.** `foldFrom_ran_no_settle` and `fold_report_ran` are about
+`fold` and belong beside `foldFrom_ran_ge` in `bound_depth.lean` §7; they are here
+because that file is the 3 m 25 s one and a sibling lane is editing it. Migrating
+them is a move, not an argument. -/
+
+theorem foldFrom_ran_no_settle : ∀ (rs : List Round) (gamma best : Int) (live : Bool),
+    (foldFrom gamma best live rs).2.2 = Exit.ran → ∀ cap, Round.settle cap ∉ rs
+  | [], _, _, _, _, _ => by simp
+  | .settle _ :: _, gamma, best, live, hran, _ => by
+      rw [foldFrom_cons_settle] at hran; exact absurd hran (by simp)
+  | .report sc lv :: rs, gamma, best, live, hran, cap => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc] at hran
+        exact absurd hran (by simp)
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc] at hran
+        have := foldFrom_ran_no_settle rs gamma (max best sc) (live || lv) hran cap
+        simpa using this
+
+/-- **The exhausting arm's `Report` needs NO futility premise.** `fold_report`'s
+`hfut` quantifies over the schedule's `settle` rounds and an exhausting schedule
+has none — so R3c's hardest-looking premise is discharged by the exit itself. -/
+theorem fold_report_ran {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hran : (foldFrom gamma best live rs).2.2 = Exit.ran)
+    (hb : Sound gamma value best) (hrs : ∀ r ∈ rs, Sound gamma value r.score)
+    (hattain : value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score) :
+    Report gamma (foldFrom gamma best live rs).1 value :=
+  fold_report hb hrs hattain
+    (fun cap hm => absurd hm (foldFrom_ran_no_settle rs gamma best live hran cap))
+
+/-! ### The census, RUN -/
+
+/-- The BOTTOM row of the ordering line at depth `d` — `fxTopVal`'s twin, and the
+largest `gamma` that settles nothing. -/
+private def fxBotVal (d : Int) : Option Int :=
+  match evalExpr sunfish 512
+      ⟨initWorld sunfish, [("pos", posH 0), ("depth", .int d)]⟩ ordLine with
+  | .ok st (RVal.ref a) =>
+    (match Heap.get? st.world.heap a with
+     | some (Obj.list xs) =>
+       (match xs.toList.getLast? with
+        | some (RVal.tuple #[RVal.int v, _]) => some v
+        | _ => Option.none)
+     | _ => Option.none)
+  | _ => Option.none
+
+/-! The band's right-hand end on the fixture: `min_m cap_m = -5`. -/
+#guard fxBotVal 1 == some (-5)
+
+/-! And its left-hand end is ABOVE that: at every window from the bottom cap down,
+the fold still cuts on round ONE — two nodes, answer 0. The band is empty. -/
+#guard probe (-5) 1 300 == some (0, 2, 70, 247)
+#guard probe (-40) 1 300 == some (0, 2, 70, 247)
+#guard probe (-1000) 1 300 == some (0, 2, 70, 247)
+
+/-- The board `1. f3 e5 2. g4 Qh4#` leaves, cached as a literal and PINNED to the
+plies by one guard (§L28's law 8). -/
+def mateBoard : String :=
+  "         \n         \n rnb.kbnr\n pppp.ppp\n ........\n ....p...\n ......Pq\n .....P..\n PPPPP..P\n RNBQKBNR\n         \n         \n"
+
+/-- Fool's mate, from White's side: the fold's terminal exhaustion fixture. -/
+def posMate : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str mateBoard, .int (-69), .tuple #[.bool true, .bool true],
+      .tuple #[.bool true, .bool true], .int 0, .int 0]
+
+private def ply (p : Option RVal) (i j : Int) : Option RVal :=
+  match p with
+  | some pv =>
+    (match callIn sunfish 64 (initWorld sunfish) "Position.move" #[pv, mvR i j] with
+     | .ok _ v => some v | _ => Option.none)
+  | Option.none => Option.none
+
+/-! The literal is the shipped `Position.move`'s own answer, four plies deep —
+`f2f3`, `e7e5`, `g2g4`, `d8h4` in the mover's frame. -/
+#guard ply (ply (ply (ply (some (posH 0)) 86 76) 84 64) 87 67) 95 51 == some posMate
+
+/-- Rows, and the value range, of the depth-1 ordering line at a position. -/
+private def lineShape (p : RVal) (d : Int) : Option (Nat × Int × Int) :=
+  match evalExpr sunfish 1024 ⟨initWorld sunfish, [("pos", p), ("depth", .int d)]⟩ ordLine with
+  | .ok st (RVal.ref a) =>
+    (match Heap.get? st.world.heap a with
+     | some (Obj.list xs) =>
+       (match xs.toList.filterMap (fun v => match v with
+          | RVal.tuple #[RVal.int z, _] => some z | _ => Option.none) with
+        | [] => Option.none
+        | z :: zs => some (zs.length + 1, zs.foldl min z, zs.foldl max z))
+     | _ => Option.none)
+  | _ => Option.none
+
+/-! The mate position's stream: **19 rows**, values in `[-24, 46]`, so its caps
+(`pos.score + val` at depth 1, `pos.score = -69`) run `[-93, -23]`. Every window
+at or below **-93** therefore settles NOTHING — which is the right-hand end of
+the band, computed rather than asserted. -/
+#guard lineShape posMate 1 == some (19, -24, 46)
+#guard (-69 : Int) + (-24) == -93 && (-69 : Int) + 46 == -23
+
+/-! **EXHAUSTION, RUN — and NOT guarded, for the throughput law's own reason.**
+At `gamma = -93` the depth-1 fold at `posMate` consumes all 19 rounds and cuts on
+none of them: `bound()` answers **-47938** in **20 nodes**, this one and its
+nineteen children. Every child answers `MATE_UPPER`, so every round scores
+`-MATE_UPPER` and `live` stays False.
+
+That row is **run on both instruments** — the shipped engine and, through
+`Searcher.bound` on `searcherW`, this interpreter — and deliberately left
+unguarded: it costs **45 s** of elaboration against 4 s for everything else in
+§9, and §L32 made the same call for its own 34- and 41-node rows. What IS guarded
+is the fixture it runs on (the pinned position and its stream), so the next inch
+can instantiate `Inv []` on it without paying for the search twice.
+
+The number the fold left in `best` is `-MATE_UPPER = -69290`; the number
+`bound()` returned is `-47938`. The gap is the mate correction, in the constants'
+own arithmetic: -/
+#guard (match fxGlob "MATE_LOWER", fxGlob "MATE_UPPER" with
+        | some ml, some mu => max (1 - mu) (-ml - 1 * 15) == -47938 && -mu == -69290
+        | _, _ => false)
+
+#print axioms foldFrom_ran_no_settle
+#print axioms fold_report_ran
 
 
 end Examples.python.sunfish.fold_depth1

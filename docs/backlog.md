@@ -11468,3 +11468,199 @@ declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
    before anything else in R3 because R3c's `Inv` will carry its world.
 2. **R3c's exhaustion census** — *does the depth-1 fold ever exhaust on this
    board?* — still owed, still a fresh half-hour, and still ahead of `Inv []`.
+
+## L35 — THE C TIER'S FOUNDING CHARTER: the census was STALE by one engine release, the SURFACE did not move, and M0 was already DONE (2026-08-21)
+
+The owner chartered "building out C in lean" today, which answers the gate
+`docs/c-tier-architecture.md` (§The C tier, 2026-08-15) was left under. The
+charter is [docs/c-tier-charter.md](c-tier-charter.md): a re-census with a
+LANDED instrument, the one architecture decision the memo never had to ask,
+three endgames priced for the owner to choose between, and the first milestone
+planned. **No Lean, no change to any existing file.**
+
+**Census first, and it caught something.** The memo's census was taken by a
+scratch script that did not survive, on a corpus that lives in ANOTHER
+repository. `harness/c_construct_census.py` lands with the charter, walks
+`clang -std=c23 -D_FORTIFY_SOURCE=0 -Xclang -ast-dump=json` under the same
+sticky-`loc.file` rule, exits NON-ZERO when it attributes zero nodes to the
+source (an empty census is an instrument fault, never a finding), emits sorted
+JSON (double run byte-identical, verified) and carries a `--compare` mode so
+staleness is MECHANICALLY detectable rather than merely possible. **All three
+refusal paths were RUN, and the third was a defect found that way**: clang emits
+a PARTIAL AST alongside its diagnostic, so the first version censused a program
+that does not compile and exited 0 with a plausible table of near-zeros — a
+silent wrong answer, invisible until the broken-input fixture was actually
+executed. It was stale:
+the memo censused sha `66c569c1…` at 1310 lines; master's is `7d5e0ff8…` at
+1458.
+
+**The instrument locates the memo's exact file** — sunfish commit `4d4974f`,
+2026-08-14 — **and re-derives every headline it published**: 1310/1236/3200
+lines, 54 functions (53 `static`), 50 file-scope objects (28 initialized), 45
+node kinds, 8 `castKind`s, 898 binary and 262 unary sites, 2732 implicit
+conversions, 290 call sites, 27 libc names over 124 sites, 19 indirect calls,
+295 subscripts, 17 shifts, 9 `sizeof`, 10 float literals, 78 explicit casts, 96
+string literals, `switch` 0. (The memo's "75 distinct callees" is 74 named plus
+the one indirect class, which the instrument reports separately.) So the delta
+is a fact about the CORPUS, not about two scripts.
+
+**THE HEADLINE: the corpus grew 11.3% and the tier's SURFACE did not move at
+all.** `node kinds 45 -> 45, added none, dropped none; libc names 27 -> 27,
+added none, dropped none.` Every delta is a COUNT — lines +148, functions +4,
+file-scope objects +21, binary sites +109, implicit conversions +391, external
+call sites +22, `&`-on-automatic +19, overflow-capable arithmetic +35. Still
+zero `switch`, `union`, `_Atomic`, `volatile`, `_Generic`, `#if`, `__int128`,
+VLA, type-punning cast, and member-read-off-a-call-result. The memo had one
+data point and could only ASSERT its 45-kind vocabulary was the v0 vocabulary;
+two points across a real engine release make it a measured claim about the
+corpus's development. **A v0 scoped to those 45 kinds and 27 names is not a bet
+on a frozen file.**
+
+**Three deltas that are not merely counts.** (1) **Floats grew and grew AWAY
+from v0's path** — all five new literals are in `go`'s time-control arm
+(L1418-1439), while `go_depth` still zeroes `deadline` at L967 before the
+`setjmp` at L968 and the fixed-depth path still evaluates exactly one float
+operation, `deadline != 0.0`. The memo's finding 5 holds and is strengthened.
+(2) **File-scope objects 50 → 71**, 25 zero-initialized — mutable static
+duration is the corpus's norm and is growing. (3) **The sequencing census is
+CHEAPER than priced, and its method is now recorded.** The memo's "828 full
+expressions, 64 candidates" reproduces to the digit under the rule *"parent is
+a statement, excluding declarator initializers"*; its further "32 are `x =
+f(…)`" does not — an assignment's store is sequenced after the WHOLE right
+operand whatever its shape, so the memo's own 64 splits 45/19, not 32/32. On
+today's corpus under the C23 §6.8 definition: 1169 full expressions, 73
+candidates, 53 admitted by inspection, **20 left for the may-alias check**
+against the memo's estimate of 32.
+
+**The four pins agree, today, measured.** `tools/ctwin/` is now on sunfish
+MASTER (the memo recorded it as branch-carried). This repo's corpus
+`Examples/python/sunfish/sunfish.py` is byte-identical to sunfish master's
+`sunfish.py` (`f6c481a6…`), and `git rev-list --count e670434..master` is **0**
+for both `sunfish.py` and `tools/ctwin/sunfish.c` — both twins stable since
+engine commit `e670434` (2026-08-18). The memo's standing worry ("only as
+current as the OLDER of them") is SATISFIED by observation, not by
+construction, so the check stays standing — and `--compare` is now the cheap
+way to run it.
+
+**`ae70a69` and this census are DISJOINT, and the charter says so precisely.**
+The bridge census's unit is the CPython API name; `sunfish.c` uses **zero** of
+them, and bridge v0's libc count was zero where ctwin's is 27 names over 146
+sites, its state "none" where ctwin has 71 file-scope objects. `ae70a69` §5
+says it itself: *"none of this prices the C definitional interpreter itself."*
+What transfers is one sentence — its UB-is-loud-refusal covenant line — and
+the whole METHOD, which this charter is that method applied to the language
+instead of to the bridge.
+
+**THE ARCHITECTURE DECISION, the sixth one (the memo assumed a standalone
+`LeanModels/C/` and so never asked): own semantic model, shared world
+DISCIPLINE, shared CODE only where the Python tier is already parametric.** The
+census decides it three times. (a) **Values**: `RVal.int` is unbounded; C is
+fixed-width across 11 scalar types and 327 overflow-capable sites, and `mix64`
+(L191-195, deliberate UNSIGNED wraparound, DEFINED) sits beside `PACK_VM`
+(L649, signed bias into unsigned order) — the tier needs "unsigned wraps" and
+"signed refuses" in adjacent operands, which one `Int` cannot express. (b)
+**Memory**: **86 `&`-of-automatic and 20 `&`-of-subobject sites** say a C local
+is an OBJECT with an address, so `REnv := List (String × RVal)` is wrong on
+line one — and `&c` on `struct kcctx` (L369-370) is not a corner, it is the
+callback protocol behind all 19 indirect calls. Plus `realloc` MOVES the hot
+table (L453-454), which `Addr := Nat` cannot express. (c) **Refusals**: Python's
+`.unsupported` is a tier gap that retires; C's is that AND eleven UB classes
+that never retire, two of them invisible to every sanitizer on the pinned host.
+What DOES reuse is `Run σ α` **verbatim** — σ is already a parameter, the four
+constructors are the covenant not Python, and the corpus's one `abort()` site
+(L669-672, already written as a loud terminal) is the `.exn`-shaped outcome.
+The `Run.exn` `PyErr` payload is the one wart and is named, not papered over.
+
+**The shared-core refactor is PRICED AND DEFERRED, and measured not to gate
+anything**: the movable block is `Runtime.lean:329-477` (149 lines) referenced
+by 24 files / 1251 `Run.` occurrences / 143 `: Run` signatures, and a namespace
+move plus `export` keeps all of them compiling — but `Ast.lean` and `Json.lean`
+**do not use `Run` at all**, so the first milestone's entire Lean content has
+no opinion on where it lives. Stated plainly in the charter: if the C
+interpreter ever lands with its own copy of `Run`, that is a defect.
+
+**Three endgames, priced, NOT chosen.** (a) **verified C-subset semantics with
+ctwin running** — the memo's v0, ~35-60 sessions, ~7-11k Lean, buys
+undefinedness detection on a real program and **not one theorem**. (b) **the
+TWIN-BRIDGE THEOREM**, ctwin ≡ sunfish.py per node, which would make the
+rule-14 gate a theorem — and the charter is blunt about four things that are
+not currently true: the gate's observable is `(depth, gamma, score, killer
+move, node count)` while the Python arc's target `RefinesAt` concludes only
+`Report gamma r (V pos d)`, a fail-soft BRACKET that does not pin `r` and never
+mentions nodes; the right shape is not a two-model comparison but a factoring
+through a shared vertex `S` **that the Python arc is already building** (`V` +
+`Report`), so the C side's job is to aim at the same `S` rather than invent
+one; making it imply the gate needs `S` STRENGTHENED to an observable tuple on
+both sides, a change to a frozen statement; and the Python side is mid-campaign
+(`BoundRefines` refuted at §L26, `RecursionStepW` at §L34). Honest price: 150+
+sessions, gated on a campaign this workstream does not own. (c) **a general C
+completeness ladder** — R1-R7, R4 gated on a toolchain defining
+`__STDC_IEC_60559_BFP__` (the candidate oracle does NOT), R6 the one rung that
+replaces the state function with a memory-ORDER relation and would break
+`fuelMono`, `#py_check` and the batch protocol at once. Buys the broadest
+surface and NOT the square.
+
+**All three share the same first four steps** — census (landed), the oracle pin,
+the pinned profile, extractor+envelope+ingester — so the choice is not needed to
+start and becomes load-bearing at the fifth.
+
+**THE FIRST MILESTONE, planned in full: M1, the corpus is INGESTED** — one
+function round-trips source → envelope → Lean AST literal → `#guard`, with no
+semantics, no memory model and no interpreter. Seven inches: (1) census +
+charter, LANDED; (2) **M0 turns out to be DONE, and this repo's record did not
+know** — `tools/ctwin/README.md` records a 2026-08-16 interpreter cross-check
+(the full 7-line gate run twice on one commit, swapping only the reference
+interpreter, byte-identical coverage and **0 mismatches under CPython 3.9.19**),
+which is exactly the M0 that §"The square's FRONTEND edge" had recorded as STILL
+OWED the day before. Nobody carried it back, so this repository carried a stale
+"owed" for five days — the same cross-repo staleness `--compare` exists for,
+hitting a second time on a different artifact. What remains is smaller and
+different: the swap was a one-line, env-gated, **uncommitted** change and
+`pypy3` stays the default for a measured reason (CPython ~3.2x on a smoke
+config; on the gate's `QS=0 EVAL_ROUGHNESS=40` line, on the order of two hours
+against pypy3's share of a 351s total gate), so the RESULT is in but is not
+reproducible from a clean checkout — inch 2 is landing the flag, not re-running
+the check; (3) the pinned profile document,
+which must precede the extractor because it is an INPUT to the AST; (4)
+`docs/c-envelope-schema.md` over the 45 kinds, now ENUMERATED in the JSON rather
+than merely counted; (5) `extractors/c/extract.py` under the never-fail
+contract; (6) `LeanModels/C/Ast.lean` + `Json.lean`, whose `#guard` asserts
+structural facts **the census independently knows** — 58 functions, 71
+file-scope objects, 19 indirect calls, 0 `SwitchStmt` — which is why the census
+lands as an instrument and lands first; (7) `pyfloordiv` (L160-164) round-tripped,
+chosen because it is five statements, it is the site the ctwin README names as
+the **#1** silent-divergence class between C and Python clones, and it carries
+two armed UB classes in five lines so the tier's first word about C includes
+something it must REFUSE.
+
+**STILL OWED BY THE OWNER.** The memo's open question 2 (the 2026-08-07 "no
+sunfish deliverable" scope decision) is **ANSWERED** — a classic C sunfish
+exists, on master, and the workstream is chartered. Two remain: whether the lane
+gets `LeanModels/C/` and a `leanmodels-c-run` exe (touching the two fenced
+files — sequenced past M1 so it can be answered concretely), and **which host is
+the pinned oracle**, which BLOCKS inch 3 and therefore inches 4-7 and is the one
+open question on M1's critical path. A fourth is added: which endgame. Standing
+obligation unchanged: the ASan channel is DESIGNED and UNVERIFIED (ASan binaries
+time out in this sandbox) and must be checked on the build box before any
+battery claims it.
+
+### Triad
+
+`docs_check` **73/73**, 15 illustrative-exempt — and the charter's two quoted
+Lean blocks are MARKED, so `Run` and `Report` are gate-enforced against the tree
+rather than transcribed; a drift in either is now a red check rather than a
+stale quotation.
+
+**`lake build` / `diff_test` / `script_corpus` are stated as PENDING at the
+moment of writing, not as green, because they were not observed green.** The
+commit changes four files — `docs/c-tier-charter.md`, `docs/backlog.md`,
+`docs/c-construct-census.json`, `harness/c_construct_census.py` — and **no
+`.lean` file and no file `lake build` reads**, so it cannot move any of the
+three. The reason they were not observed is environmental and worth recording
+for the next lane that clones: `cp -Rc` gives an APFS clone but does NOT
+preserve mtimes, so Lake re-elaborates from cold — this clone came up rebuilding
+Mathlib from source (2790 of 8268 oleans at the time of writing) with three
+sibling lanes' builds competing for the same laptop. **Use `cp -Rpc`.** The run
+is in flight and the numbers land in the next entry; the last observed values on
+this commit's parent were `lake build` 3684 jobs green, `diff_test` 1315/0
+(1202 matched, 113 whitelisted), `script_corpus` 64/0.

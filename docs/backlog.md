@@ -12335,3 +12335,166 @@ R-track.** A cold clone must run `lake exe cache get` BEFORE its first
 records the `cp -Rpc` half of the same lesson. And **never run `lake build` as a
 harness background task**: one was reaped mid-build here, and the rerun had to
 be detached with `nohup` to survive.
+## L41 — F1b-i LANDS: the string residue is proved, and the exclusion is FINER than the plan wrote it (2026-08-21)
+
+§L37 left F1b owing three things and named the first as §L30's own risk: *"`put`
+builds its board by STRING SLICING while `value` is `pst` arithmetic — so this is
+a string lemma, not an omega."* This section is that string lemma, landed as
+`Examples/python/sunfish/move_residue.lean`, together with the exclusion §L37's
+en-passant finding demanded — which reading the two `if`s turns out to sharpen.
+
+**Numbering note.** Three sections landed from two sibling lanes while this inch
+was being written — §L38 (R3b's call gate), §L39 and §L40 (the C tier and the
+Python-completeness census). The pushed tail was re-read at each push, which is
+the third renumber this lane has taken today; on a four-lane master the free
+number is the one you read AFTER the fetch, never the one you reserved.
+
+### THE CENSUS, before a premise — four workers, run on the shipped board
+
+`put = lambda board, i, p: board[:i] + p + board[i + 1:]` is two slices and two
+appends; `.rotate()` is `self.board[::-1].swapcase()`. That is four calls into the
+model's frozen VALUE workers, and §1 of the file pins what each answers on
+`board0` **before** the first lemma was written:
+
+| worker | what it answers |
+|---|---|
+| `strSlice b .none (.int k) .none` | `String.ofList (b.toList.take k)` |
+| `strSlice b (.int k) .none .none` | `String.ofList (b.toList.drop k)` |
+| `strSlice b .none .none (.int (-1))` | `String.ofList b.toList.reverse` — a NEGATIVE-step slice, a different arm of `strSlice` from the two above |
+| `strSwapcase b` | `String.ofList (b.toList.map swapChar)` |
+
+and `board0.length == board0.toList.length == 120`, so `String.length` is the
+character count and the slice bounds are `List` indices.
+
+### THE FIRST FINDING: the model had already written F1a's helper
+
+`LeanModels/Python/Semantics.lean`'s `swapChar` is **character-identical** to the
+`swapCase` F1a had defined for itself —
+
+    def swapChar (c : Char) : Char :=
+      if c.isUpper then c.toLower else if c.isLower then c.toUpper else c
+
+— and `example : swapChar = swapCase := rfl` passed on the first run of the
+census. One definition survives, the interpreter's: `qs_measure.lean` now speaks
+`swapChar` throughout (`pstCell_swapChar`, `isAlpha_swapChar`, `swapChar_mem`,
+`alphaCount_map_swapChar`) and F1a's twin is deleted. That is the same discipline
+that made §L37 de-privatise `pstTotal` rather than copy it, applied one layer
+down — and it means the bridge below is a RENAME and not an argument.
+
+### What is proved
+
+* **`strSliceChars_fwd` / `strSliceChars_rev`** — the walker at the only two steps
+  the shipped code uses. `+1` for the two `put` slices collapses to
+  `(cs.drop i).take n`; `-1` for the rotate collapses to `(cs.take n).reverse`.
+  One definition, two directions, one induction each.
+* **`sliceAdj_nat`, `sliceCount_pre/suf/rev`** — CPython's own
+  `PySlice_AdjustIndices` and slice-length formula, collapsed at a `Nat` index
+  inside the string. Separated out so each slice theorem is a `rw` chain rather
+  than an arithmetic argument.
+* **`strSlice_prefix` / `strSlice_suffix` / `strSlice_reverse`** — the three
+  slices at their shipped spellings. `.none` for an omitted bound is not this
+  lane's choice: ingestion normalizes an absent bound to the `None` constant,
+  which is CPython's own compilation, and `asSliceIdx` reads it.
+* **`putStr_toList` — THE RISK, DISCHARGED.** `board[:k] + c + board[k+1:]` IS
+  `b.toList.set k c`. Two slices from §4, two `String.toList_append`s, and core's
+  own `set_eq_take_append_cons_drop`.
+* **`putStr_slices`** — and the two slices it is built from are the two the
+  interpreter runs, stated so a later gate discharges both from one place. The
+  inserted character does not appear in it, because `put`'s slices are taken from
+  the board BEFORE it — which is why the same pair serves both of
+  `Position.move`'s calls.
+* **`strAscii_ofList_reverse` / `rotStr_residue`** — the rotate, and the only
+  thing in it that needed proving: `strSwapcase`'s ASCII guard survives the
+  reversal.
+* **`moveStr_eq_plainMoveBoard` — THE BRIDGE.** The two `put`s and the rotate,
+  each spelled in the interpreter's own workers, produce F1a's `plainMoveBoard`
+  character for character. This is the statement `pstTotal_plainMove` and
+  `pieceCount_plainMove` have been waiting for since §L37, and the reason F1a
+  could stop where it did.
+
+### THE EXCLUSION IS FINER THAN §L37 WROTE IT
+
+§L37 recorded *"F1b's bridge must exclude `j == self.ep` alongside promotion and
+castling"*. True, and incomplete in a way that would have mattered: reading the
+two `if`s shows **all three extra `put`s live inside statement 10 (`if p == "K"`)
+or statement 11 (`if p == "P"`)**, so the board-level condition is a statement
+about `p`, `i`, `j` and `self.ep` alone. `PlainBoard` is that condition, with its
+`Bool` mirror and the two-line `iff` on `reportB_iff`'s template:
+
+* if the mover is a king, this is not a castle (`j - i ≠ 2 ∧ i - j ≠ 2`);
+* if the mover is a pawn, the target is off the promotion rank
+  (`A8, H8 = 21, 28`) and is not the en-passant square.
+
+**Two things that reading gets right which the coarse one would not.**
+
+1. *"Not a pawn move"* would have been vacuous on the very board the bridge was
+   built for: **both** of the reference fixture's admitted edges are pawn moves
+   (`1. d4` and `1. e4`). The guards, not the piece, are what must be excluded.
+2. **The double push is NOT excluded**, and the predicate has three conjuncts
+   rather than four because of it: `if j - i == 2 * N: ep = i + N` writes `ep`
+   and never the board. `1. d4` is itself a double push, and it satisfies
+   `PlainBoard`. A predicate that excluded it would have been sound and useless.
+
+`#guard`s pin both edges as plain and each of the three excluded shapes as
+refused, at the square the shipped code tests.
+
+### `Position.move`'s OWN exit law, measured for F1b-ii
+
+The next inch's statement shape is decided by measurement rather than by taste,
+which is what §L24's law is for:
+
+* **thirteen statements**, and none of them is `Stmt.unsupported` — two unpacks,
+  a `defStmt` binding the `put` lambda, seven assignments, two `if`s with their
+  own inner `put`s, and a `return` through `.rotate()`. That is a full inch on the
+  scale of `Position.value`'s eight (§L28), which is why this section is F1b-**i**;
+* **fuel exactly 32**; 31 refuses;
+* **heap 66 → 67, and the only changed slot is the new one.** The call allocates
+  exactly one object — the `put` lambda's closure — and MUTATES NOTHING. So the
+  gate's conclusion is a single-object append, not an update, and not a
+  same-world `= .ok w v` either.
+
+### Triad
+
+`lake build` **3686 jobs green**; `docs_check` **73/73 marked blocks, 15 illustrative-exempt**; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No `sorry`, no
+`native_decide`, and no linter warning in the new file. Every printed declaration
+depends on `[propext, Classical.choice, Quot.sound]` or less. Its own throughput
+is **2.5 s** — the census's six engine-free guards plus two
+`Position.move` runs.
+
+### What F1b-ii owes
+
+* **The thirteen-statement gate**, at a free board, with `PlainBoard` as its
+  hypothesis and the single-object append as its conclusion. `value_bound.lean`
+  (§L28) is the template and `Position.value`'s own call inside statement 5 is
+  its one recursive obligation.
+* **`pstCell p j - pstCell p i` IS `Position.value`'s first line.** Statement 2 of
+  `Position.value` is `score = pst[p][j] - pst[p][i]`, and §L28 gates it; what is
+  missing is the identification with `pstCell` at an uppercase mover, which is
+  `pstCell`'s own `isUpper` branch and should be short.
+* **The capture arm at the interpreter.** `alphaCount_set` is already here; what
+  is missing is the same bridge at `q in "pnbrqk"`.
+
+### Findings worth carrying
+
+1. **Grep the interpreter before defining a helper over its data.** F1a wrote
+   `swapCase` from the Python source; the model already had `swapChar`, byte for
+   byte. The cost was one duplicated definition and the fix was four words — but
+   the same habit is how two definitions of a MEASURE would have drifted, and
+   §L37 had already been bitten once in the same file.
+2. **When the residue's normal form fights `simp`, use `show`.** `strSlice`'s
+   residue normalizes to `sliceAdj … (decide True)` and `if True then 0 else …`;
+   `simp only [ite_true, decide_true]` reported both lemmas UNUSED and left the
+   terms standing, so no `rw` could match. `show` at the reduced spelling worked
+   first try, because the two forms are DEFEQ and `show` checks defeq at default
+   transparency where `simp` matches syntactically. The copy-the-residue-spelling
+   law has a tactic, and it is `show`.
+3. **A stale `olean` masquerades as a failed proof.** After the `swapChar`
+   consolidation, `lake env lean move_residue.lean` reported an unsolved
+   `List.map swapChar … = List.map swapCase …` — which is not a proof problem but
+   an unbuilt dependency. **Rebuild the dependency before believing a cross-file
+   goal**, especially in the fast `lake env lean` loop that skips it by design.
+4. **A named exclusion should be re-derived from the source, not carried over
+   from the note that named it.** §L37's en-passant finding was right about the
+   hazard and imprecise about the fix; five minutes with the two `if`s produced a
+   predicate that keeps the fixture's own edges and drops exactly three arms.

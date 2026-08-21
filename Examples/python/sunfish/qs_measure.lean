@@ -171,9 +171,11 @@ sunfish board is made of fifteen characters and every fact about a CONCRETE one
 is `rfl`. The alphabet is therefore a stated side condition, discharged per
 fixture, in preference to an unproved `UInt32` lemma. -/
 
-/-- Python's `str.swapcase`, one character at a time. -/
-def swapCase (c : Char) : Char :=
-  if c.isUpper then c.toLower else if c.isLower then c.toUpper else c
+/-! `swapChar` — Python's `str.swapcase` one character at a time — is the MODEL's
+own worker (`LeanModels/Python/Semantics.lean`, `strSwapcase`'s kernel), not a
+restatement of it. F1a first wrote a private twin and F1b's census found the two
+character-identical; the twin is gone and this file speaks the residue's own
+spelling, so the bridge in `move_residue.lean` is a rename and not an argument. -/
 
 /-- The fifteen characters `sunfish.initial` and every `Position.move` output are
 built from: the two padding characters, the empty square, and the twelve
@@ -193,27 +195,27 @@ private theorem pstCell_none {c : Char} (hu : c.isUpper = false) (hl : c.isLower
 theorem pstCell_dot (i : Nat) : pstCell '.' i = 0 := pstCell_none rfl rfl i
 
 private theorem swap_up {c : Char} (hc : c.isUpper = true)
-    (hd : (swapCase c).isUpper = false) (hdl : (swapCase c).isLower = true)
-    (hdu : (swapCase c).toUpper = c) (i : Nat) :
-    pstCell (swapCase c) i = pstCell c (119 - i) := by
+    (hd : (swapChar c).isUpper = false) (hdl : (swapChar c).isLower = true)
+    (hdu : (swapChar c).toUpper = c) (i : Nat) :
+    pstCell (swapChar c) i = pstCell c (119 - i) := by
   rw [pstCell_low hd hdl, hdu, pstCell_up hc]
 
 private theorem swap_low {c : Char} (hc : c.isUpper = false) (hcl : c.isLower = true)
-    (hd : (swapCase c).isUpper = true) (hcu : c.toUpper = swapCase c) (i : Nat)
-    (hi : i ≤ 119) : pstCell (swapCase c) i = pstCell c (119 - i) := by
+    (hd : (swapChar c).isUpper = true) (hcu : c.toUpper = swapChar c) (i : Nat)
+    (hi : i ≤ 119) : pstCell (swapChar c) i = pstCell c (119 - i) := by
   have hii : 119 - (119 - i) = i := by omega
   rw [pstCell_up hd, pstCell_low hc hcl, hcu, hii]
 
 private theorem swap_none {c : Char} (hu : c.isUpper = false) (hl : c.isLower = false)
-    (hswap : swapCase c = c) (i : Nat) :
-    pstCell (swapCase c) i = pstCell c (119 - i) := by
+    (hswap : swapChar c = c) (i : Nat) :
+    pstCell (swapChar c) i = pstCell c (119 - i) := by
   rw [hswap, pstCell_none hu hl, pstCell_none hu hl]
 
 /-- **THE MIRROR IDENTITY.** Swapping a board character's case and reading it at
 `i` is reading it unswapped at `119 - i` — which is exactly why `pstTotal` cannot
 see a rotation. Fifteen cases; every `rfl` below is a closed `Char` fact. -/
-theorem pstCell_swapCase (c : Char) (hc : c ∈ boardChars) (i : Nat) (hi : i ≤ 119) :
-    pstCell (swapCase c) i = pstCell c (119 - i) := by
+theorem pstCell_swapChar (c : Char) (hc : c ∈ boardChars) (i : Nat) (hi : i ≤ 119) :
+    pstCell (swapChar c) i = pstCell c (119 - i) := by
   simp only [boardChars, List.mem_cons, List.not_mem_nil, or_false] at hc
   rcases hc with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
       rfl | rfl <;>
@@ -225,13 +227,13 @@ theorem pstCell_swapCase (c : Char) (hc : c ∈ boardChars) (i : Nat) (hi : i �
 /-- …and the swap does not move a character across the alpha test, nor out of the
 alphabet — the same fact for `pieceCount`, and what keeps the rotate invisible to
 both halves of the pair. -/
-theorem isAlpha_swapCase (c : Char) (hc : c ∈ boardChars) :
-    (swapCase c).isAlpha = c.isAlpha := by
+theorem isAlpha_swapChar (c : Char) (hc : c ∈ boardChars) :
+    (swapChar c).isAlpha = c.isAlpha := by
   simp only [boardChars, List.mem_cons, List.not_mem_nil, or_false] at hc
   rcases hc with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
       rfl | rfl <;> rfl
 
-theorem swapCase_mem (c : Char) (hc : c ∈ boardChars) : swapCase c ∈ boardChars := by
+theorem swapChar_mem (c : Char) (hc : c ∈ boardChars) : swapChar c ∈ boardChars := by
   simp only [boardChars, List.mem_cons, List.not_mem_nil, or_false] at hc
   rcases hc with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl |
       rfl | rfl <;> decide
@@ -271,12 +273,12 @@ theorem alphaCount_reverse : ∀ (l : List Char), alphaCount l.reverse = alphaCo
       simp only [List.reverse_cons, alphaCount_append, alphaCount]
       omega
 
-theorem alphaCount_map_swapCase : ∀ (l : List Char), (∀ c ∈ l, c ∈ boardChars) →
-    alphaCount (l.map swapCase) = alphaCount l
+theorem alphaCount_map_swapChar : ∀ (l : List Char), (∀ c ∈ l, c ∈ boardChars) →
+    alphaCount (l.map swapChar) = alphaCount l
   | [], _ => rfl
   | c :: cs, h => by
-      have ih := alphaCount_map_swapCase cs (fun d hd => h d (by simp [hd]))
-      have hc := isAlpha_swapCase c (h c (by simp))
+      have ih := alphaCount_map_swapChar cs (fun d hd => h d (by simp [hd]))
+      have hc := isAlpha_swapChar c (h c (by simp))
       simp only [List.map_cons, alphaCount, hc, ih]
 
 /-- **A single `put`, at the count.** One character leaves and one arrives, so the
@@ -323,7 +325,7 @@ for the descent — the count falls, which is §8's FIRST arm, and
 square is empty**, and F1b's bridge from the shipped `Position.move` to
 `moveCells` must exclude `j == self.ep` alongside promotion and castling. -/
 def moveCells (L : List Char) (i j : Nat) : List Char :=
-  (((L.set j (L.getD i '.')).set i '.').reverse).map swapCase
+  (((L.set j (L.getD i '.')).set i '.').reverse).map swapChar
 
 /-- The same, at the shipped `String`. -/
 def plainMoveBoard (b : String) (i j : Nat) : String := String.ofList (moveCells b.toList i j)
@@ -429,10 +431,10 @@ theorem cellSum_moveCells (L : List Char) (i j : Nat) (p : Char)
   have hpi' : (L.set j p)[i]'hiL1 = p := hps p hiL1 hij
   have hrot : cellSum pstCell 0 (moveCells L i j)
       = cellSum pstCell 0 ((L.set j p).set i '.') := by
-    rw [moveCells, hgetD, cellSum_map pstCell swapCase,
-      cellSum_reverse pstCell (fun c k => pstCell (swapCase c) k) 120
+    rw [moveCells, hgetD, cellSum_map pstCell swapChar,
+      cellSum_reverse pstCell (fun c k => pstCell (swapChar c) k) 120
         ((L.set j p).set i '.') 0 (by omega)
-        (fun c hc k hk => pstCell_swapCase c (hmemX c hc) k (by omega)),
+        (fun c hc k hk => pstCell_swapChar c (hmemX c hc) k (by omega)),
       hlen2]
   rw [hrot, cellSum_set pstCell (L.set j p) i '.' 0 hiL1, hpi',
     cellSum_set pstCell L j p 0 hjL, hej hjL, pstCell_dot, pstCell_dot,
@@ -472,7 +474,7 @@ theorem pieceCount_plainMove (b : String) (i j : Nat) (p : Char)
   have hdot : ('.' : Char).isAlpha = false := rfl
   rw [pieceCount_alphaCount, pieceCount_alphaCount, plainMoveBoard, String.toList_ofList,
     moveCells, hgetD,
-    alphaCount_map_swapCase _ (fun c hc => hmemX c (by simpa using hc)),
+    alphaCount_map_swapChar _ (fun c hc => hmemX c (by simpa using hc)),
     alphaCount_reverse]
   simp only [halpha, hdot, if_false, Bool.false_eq_true, if_pos] at h1 h2
   omega
@@ -594,14 +596,14 @@ is REFUSED, which is where the filter earns its place in the argument. -/
 #print axioms cellSum_set
 #print axioms cellSum_reverse
 #print axioms pstCell_dot
-#print axioms pstCell_swapCase
-#print axioms isAlpha_swapCase
-#print axioms swapCase_mem
+#print axioms pstCell_swapChar
+#print axioms isAlpha_swapChar
+#print axioms swapChar_mem
 #print axioms alphaCount_eq
 #print axioms pieceCount_alphaCount
 #print axioms alphaCount_append
 #print axioms alphaCount_reverse
-#print axioms alphaCount_map_swapCase
+#print axioms alphaCount_map_swapChar
 #print axioms alphaCount_set
 #print axioms cellSum_moveCells
 #print axioms pstTotal_plainMove

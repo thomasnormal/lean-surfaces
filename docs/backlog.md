@@ -13115,3 +13115,108 @@ that lands the mate arm's `Report` stays a statement about `foldFrom`.
 All four new declarations depend on
 `[propext, Classical.choice, Quot.sound]`. No `sorry`, no `native_decide`. File
 throughput **39 s → 48 s**.
+
+## L48 — THE `put` CALL GATE LANDS: three of thirteen, and `py_simp` was the wrong tool at this altitude (2026-08-21)
+
+§L45 mapped the `put` call gate end to end and named its supply at each step:
+*"`evalExprs` on three arguments, the module-heap-free branch (pinned),
+`cellsFor` at a cell-free capture list, `callClosure`'s four guards, then the
+body's single `ret`."* **The map was right and the path had one obstacle the map
+did not predict.** Statements 6 and 7 are gated; the census is now **3 of 13**.
+
+### The obstacle: `py_simp` on `put`'s body is a `whnf` timeout
+
+The first attempt was the file's own house style — `py_simp [-globalsFold,
+-globalsStep, …]` on the one-statement body — and it does not finish. Not slowly:
+at the default budget it reports *"timeout at `simp`"* in 15 s, and at **ten
+times** the heartbeat budget it reports *"timeout at `whnf`"* after two minutes.
+
+The diagnosis is §L34's, from the other side. That section's rule was *"chains
+with EXPENSIVE OPERANDS need altitude lemmas"*, and `put`'s body is the purest
+instance of it in the tree: `board[:i] + p + board[i + 1:]` is two `BinOp.add`s
+whose operands are two `Expr.slice`s over a FREE string. `strSlice` is
+deliberately outside the simp sets (the `sortInts` freeze doctrine), so simp
+cannot finish the operand and cannot stop trying.
+
+**Six altitude lemmas closed it**, each proving one interpreter construct's
+outcome with every operand universally quantified:
+
+| lemma | construct |
+|---|---|
+| `binOp_two` | `a <op> b`, both operands and the `evalBinOp` step as hypotheses |
+| `slice_four` | `v[l:u:s]` — receiver, lower, upper, step, then `sliceVal` |
+| `subscript_two` | `v[k]`, then `indexValH` |
+| `name_evals` / `const_evals` / `evalExprs_cons` / `evalExprs_nil` | the leaves and the argument list |
+| `call_closure_local` | **the closure-call arm** — the whole of it |
+| `callClosure_body` | `callClosure`'s four guards, retired in the interpreter's own order |
+
+With them the entire §2 chain elaborates in **under two seconds**. The measured
+ratio between the two approaches is not 2× or 10×; it is *finishes* versus *does
+not*.
+
+### What landed
+
+* **`put_body`** — `board[:i] + p + board[i + 1:]` answers `putStr`, at a free
+  world, a free board and a free character. The two `Expr.slice`s are discharged
+  by `putStr_slices`, the §L41 lemma written for exactly this call; `++` is
+  left-associative on both sides and `putStr`'s own spelling matches.
+* **`put_call`** — `callClosure`'s four guards plus the body. `put` is
+  **heap-free**: the world in is the world out, which is the other half of §L44's
+  exit law (one allocation at the `def`, none at either call).
+* **`move_puts_target`** (statement 6, `board = put(board, j, board[i])`) and
+  **`move_puts_source`** (statement 7, `board = put(board, i, ".")`). Both at a
+  free world and a free frame. `sunfish_not_heapFree` discharges the pinned
+  branch; `putObj_captures` + `cellsFor_cellFree` discharge the capture list;
+  `putArity` is the third guard at 3.
+
+**Instantiated against the engine, four ways.** `cellAt board0 84 == 'P'` (the
+subscript's own residue); the two gates' conclusions composed and rotated equal
+`d4B` and `e4B`, `faillow_census`'s shipped children; the live `Position.move`
+returns a `Position` whose board IS that string; and slots 0–65 of the heap are
+byte-identical before and after, so neither call allocated.
+
+### Findings worth carrying
+
+1. **The lambda's `i` is not the method's `i`.** `put`'s second parameter is
+   named `i`, and statement 6 passes `j` into it. The call frame is
+   `[board, i ↦ j, p]` — the parameter SHADOWS the enclosing name, and a gate
+   written from the source line rather than from `mkCallEnv` would have put the
+   wrong square in the conclusion. `putEnv` is spelled at the callee's names for
+   exactly this reason.
+2. **`py_simp` fails LOUDLY in two different places for one cause.** The same
+   goal reports a `simp` timeout at one budget and a `whnf` timeout at ten times
+   it. Neither message names the operand. The recorded rule — *kernel-refusal or
+   whnf-storm in a chain means a missing altitude lemma* — is the diagnosis for
+   both, and the budget knob is the wrong knob.
+3. **An altitude lemma for a CALL arm is worth more than one for an operator.**
+   `call_closure_local` states the closure branch of `evalExpr` in six
+   hypotheses, and each one is a fact the file already had (`sunfish_not_heapFree`,
+   `putObj_captures`, `cellsFor_cellFree`, `putArity`). The gate is then a
+   four-line application, twice. The operator lemmas each save a simp storm; the
+   call lemma saves the whole branch structure from ever being unfolded in a
+   caller.
+4. **Where the general lemmas live is a decision, and it was deferred on
+   purpose.** All six belong beside `compare_one` in `bound_depth.lean` once a
+   second file wants them. They are in `move_gate.lean` because every consumer
+   this pass is in `move_gate.lean`, and because touching the general layer
+   rebuilds the whole `sunfish` example tree on a four-lane master. The comment
+   in the file says so.
+
+### What is still owed — statements 0, 1, 3, 4, 5, 8–12
+
+Unchanged from §L45's list and re-priced now that the hard one is done: the six
+unpacks/reads/tuples are `value_unpacks`' template; statement 5 composes
+`value_bound.lean`'s eight-statement gate as a sub-call; statements 10 and 11 are
+two-gates-per-`if` under `PlainBoard`; statement 12 spends `rotStr_residue`.
+**F1 is still not complete**, and the milestone print still belongs to the pass
+that closes the gate.
+
+### Triad
+
+`lake build` **3687 jobs green**; `docs_check` **73/73 marked blocks, 15
+illustrative-exempt**; `diff_test` **1315 cases, 0 failed**, 113 whitelisted,
+1202 matched; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No
+`sorry`, no `native_decide`, no linter warning. All twenty-one printed
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less. The
+file's throughput is **6.5 s → 12 s**, and the growth is the four new engine
+guards, not the proofs.

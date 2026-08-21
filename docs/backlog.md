@@ -12821,3 +12821,114 @@ walks) and `move_residue` **2.5 s → 14 s** (`valueRuns` calls the shipped
    thirteen statement shapes cost ten minutes and produced a cross-check of §L41's
    slice premises from the AST side. It did not produce a gate, and the section
    heading says so.
+## L45 — F1b-iii OPENS: the ONE allocation is gated, and F1 is NOT complete (2026-08-21)
+
+The dispatch for this inch asked for the thirteen-statement `Position.move` gate
+and for the F1 completion ledger. **One statement of thirteen is gated, and F1 is
+not complete.** This section says so at the top because the alternative — landing
+a projection under a heading that claims a milestone — is the failure mode §L44's
+own title was written to avoid.
+
+### What landed — `Examples/python/sunfish/move_gate.lean`
+
+**§0, the projection.** Thirteen statements named and split, `mvB_split` by `rfl`,
+`mvF_lit` pinning the two parameters, and `mvB_in_tier` — *no statement is
+`Stmt.unsupported`* — as a `rfl` rather than as §L44's prose. Three statement
+literals are pinned: `mvDef_lit` (twenty spans), `mvPut1_lit` and `mvPut2_lit`.
+
+**§1, THE ONE ALLOCATION, gated.** `move_defines_put`:
+
+* `put` captures NOTHING (`captures = #[]` in the projected AST), so `allocCells`
+  is a no-op and `capturesSnapshot` answers `[]`;
+* the statement pushes exactly one object and binds one name, and **nothing else
+  moves**.
+
+That is the statement §L44's exit law was *about* — heap 66 → 67 with only the
+new slot touched — now proved at a free world and a free frame rather than
+measured at one.
+
+**Two landmines pinned before anything depends on them.**
+
+* `sunfish_not_heapFree` — `evalExpr`'s call arm short-circuits to a faithful
+  `TypeError` when `funsHeapFree … && topLevelDefFree`, and only otherwise
+  reaches the closure. sunfish is not heap-free *because of `put` itself*, and
+  the `rfl` says so. A gate written without checking this would have been proving
+  something about the wrong branch.
+* `putObj_captures` — the closure is cell-free, so `cellsFor` is the identity at
+  both call sites (`cellsFor_cellFree`) and no cell can reach a value position.
+
+**Instantiated against the engine's own heap slot, not against a description of
+it.** After a real `Position.move`, slot **66** holds a closure named `put` with
+three parameters, not a generator, empty captures — and, the sharper guard,
+`Heap.get? w.heap 66 == some putObj`: the gate's own conclusion object, compared
+to what the interpreter actually left there.
+
+### What is OWED, itemised
+
+* **The `put` CALL gate** (statements 6 and 7) — the inch's real content, and the
+  next one to take. The path is now fully mapped: `evalExprs` on three arguments,
+  the module-heap-free branch (pinned), `cellsFor` at a cell-free capture list
+  (`putObj_captures` + `cellsFor_cellFree`), `callClosure`'s four guards
+  (`argsOk`, `localsOk`, `arityOk` at 3, not-a-generator), then the body's single
+  `ret` — which is exactly where §L41's `strSlice_prefix`, `strSlice_suffix` and
+  `putStr_toList` are spent.
+* **Statement 5**, `score = self.score + self.value(move)`, which composes
+  `value_bound.lean`'s whole eight-statement gate (§L28) as a sub-call.
+* **Statements 0, 1, 3, 4, 8, 9** — unpacks, reads and tuples, on
+  `value_unpacks`' template.
+* **Statements 10 and 11** — the two `if`s, whose guards are `PlainBoard`'s
+  (§L41) and whose bodies are dead under it.
+* **Statement 12** — the `return` through `Position(…)` and `.rotate()`, where
+  §L41's `rotStr_residue` is spent.
+
+### THE F1 LEDGER, stated plainly
+
+The dispatch asked for the full F1 axiom print *"because F1 complete is the
+campaign's only-new-mathematics milestone"*. The print is not owed yet, and here
+is the honest ledger instead:
+
+| piece | state |
+|---|---|
+| **F1a** — the measure's cell calculus, the rotate's invisibility, the lex descent, both arms | **DONE** (§L37, §L44) |
+| **F1b-i** — the string residue: two slices, the reverse, `swapcase`, `put ↔ List.set`, the bridge to `moveCells` | **DONE** (§L41) |
+| **F1b-ii** — the value residue: `pstCell`'s delta ↔ `Position.value`'s first line; the capture arm | **DONE** (§L44) |
+| **F1b-iii** — the `Position.move` gate | **1 of 13 statements** (this section) |
+
+**F1 is therefore not complete**, and the milestone print belongs to the pass
+that closes the gate. What IS complete is all of F1's mathematics: every lemma
+about boards, sums, counts, slices and cases is proved and instantiated. What
+remains is interpreter plumbing — twelve statements of it, on two templates that
+already exist.
+
+### Triad
+
+`lake build` **3687 jobs green**; `docs_check` **73/73 marked blocks, 15 illustrative-exempt**; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No `sorry`, no
+`native_decide`, no linter warning. All nine printed declarations depend on
+`[propext, Classical.choice, Quot.sound]` or less. The new file's throughput is
+**6.5 s**, and it is the four engine guards.
+
+### Findings worth carrying
+
+1. **Pin the BRANCH before gating the call.** `evalExpr`'s call arm has a
+   module-level short circuit (`funsHeapFree && topLevelDefFree`) that answers a
+   `TypeError` for heap-free modules. It is `rfl`-false for sunfish, and it is
+   false *because of the very statement being gated* — but a gate written against
+   the closure arm without pinning it would have been a proof about a branch the
+   interpreter does not take on some other module. **A conditional in the
+   interpreter is a premise until a `rfl` retires it.**
+2. **Instantiate a gate against the OBJECT, not the size.** §L44 measured
+   `Position.move` as *"heap 66 → 67, only the new slot touched"*, which is a
+   claim about counts. §1's guard compares `Heap.get? w.heap 66` to `putObj` —
+   the gate's own conclusion term. The size measurement would have passed for any
+   one-object allocation; this one passes only for the right object.
+3. **A twenty-span literal is worth the tedium exactly once.** `mvDef_lit`
+   carries twenty `Span` metavariables and is proved by a single `rfl`. It cost
+   two iterations to get the count right (the first attempt reused one span
+   variable in fifteen positions, which type-checks as a *different, false*
+   statement and fails only at the `rfl`). **A `_lit` that reuses a span binder is
+   not a weaker pin, it is a wrong one** — the shipped AST has distinct spans and
+   the reuse asserts they are equal.
+4. **Stopping one statement in is a result if the map is the deliverable.** The
+   call path is now written down end to end in the file tail, with each step named
+   and its supply identified. The next pass does not re-derive it.

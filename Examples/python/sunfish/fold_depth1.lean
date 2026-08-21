@@ -1179,7 +1179,12 @@ be about `bound()` would be false.
 | `sound` | the accumulator is `Sound` — closed under `max`, which is the whole fold |
 | `rounds` | every round still to come is `Sound` — one `searchedMove_sound` each |
 | `attain` | the value is attained by the accumulator or by a round still to come |
-| ~~futility~~ | **NOT carried.** `foldFrom_ran_no_settle` (§9) says a schedule that reaches `Inv []` has no `settle` in it, so `fold_report`'s `hfut` is vacuous there. §L27 called that premise the hard one; on this arm it does not exist. |
+| ~~futility~~ | **NOT carried** — see below |
+
+The fourth row is the whole economy of this inch. `foldFrom_ran_no_settle` (§9)
+says a schedule that reaches `Inv []` has no `settle` in it, so `fold_report`'s
+`hfut` is vacuous there. §L27 called that premise the hard one; on this arm it
+does not exist.
 
 ### The three obligations, and `Inv []` is DISCHARGED
 
@@ -1493,9 +1498,55 @@ theorem tail_runs_live (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr
   rw [execStmt_mono (ret_best { w with heap := w.heap.set ts (sbStoredAt es sv pv d sc) hlt }
     e sc hb) (by simp) 37 (by omega)]
 
+
+/-- **THE LOOP, CLOSED on the `live = True` arm.** `tail_runs_live` returns the
+frame's `best`; `fold_report_ran` says that very number satisfies the shipped
+contract, with no futility premise because the exit had no `settle` in it. Stated
+as ONE theorem so the interpreter's answer and the model's claim cannot drift
+apart — the two halves are about the same `(foldFrom gamma bst lv rs).1`, written
+once and used on both sides.
+
+**This is the sentence R3 has been building toward at depth 1**, and it is
+carefully not more than it is: it holds where `live` is set, which §9 measured as
+one of exhaustion's two flavours. The other is R3d-ii's. -/
+theorem ran_live_answers (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf gamma d value bst : Int) (lv : Bool) (rs : List Round)
+    (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hlt : ts < w.heap.size)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hlive : Env.lookup e "live" = some (.bool true))
+    (hb : Env.lookup e "best" = some (.int (foldFrom gamma bst lv rs).1))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnolen : Env.lookup e "len" = Option.none)
+    (hnots : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hd0 : d ≠ 0) (hge : gamma ≤ (foldFrom gamma bst lv rs).1) (hk : hashableKey pv = true)
+    (hobj' : Heap.get? (w.heap.set ts
+        (sbStoredAt es sv pv d (foldFrom gamma bst lv rs).1) hlt) sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hroom : ((dictStore es.toList (tpKey pv d)
+        (entryOf (foldFrom gamma bst lv rs).1 mateUpper)).1.toArray.size : Int) ≤ tableSize)
+    (hran : (foldFrom gamma bst lv rs).2.2 = Exit.ran)
+    (hinv : RanInv gamma value bst rs) :
+    execStmts sunfish 41 ⟨w, e⟩ [sbCorr, sbStore, sbEvict, sbRet]
+        = .ok ⟨{ w with heap := w.heap.set ts (sbStoredAt es sv pv d (foldFrom gamma bst lv rs).1) hlt }, e⟩
+          (.ret (.int (foldFrom gamma bst lv rs).1))
+      ∧ Report gamma (foldFrom gamma bst lv rs).1 value :=
+  ⟨tail_runs_live w e ci sa ts tm hs n dl sf (foldFrom gamma bst lv rs).1 gamma d pv es sv
+      hlt hslf hpos hd hlive hb hg hen hroot hnoe hnolen hnots hobj hdict hd0 hge hk
+      hobj' hroom,
+   fold_report_ran hran hinv.sound hinv.rounds hinv.attain⟩
+
 #print axioms corr_skips_live
 #print axioms store_runs_d
 #print axioms tail_runs_live
+#print axioms ran_live_answers
 
 
 end Examples.python.sunfish.fold_depth1

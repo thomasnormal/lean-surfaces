@@ -13091,11 +13091,27 @@ then the value `max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)` —
 that rewrites the number and it is a session of its own. The depth-1 cutoff's
 killer store stays filed with **R3e**, unchanged.
 
+### AND THE LOOP, CLOSED — `ran_live_answers`
+
+The point of doing §L46 and this section in that order was to be able to write
+one sentence at the end, and here it is: **at a `live = True` exhausting
+schedule, the number the shipped tail RETURNS satisfies the shipped contract.**
+`tail_runs_live` hands back the frame's `best`; `fold_report_ran` says that very
+number is a `Report`. They are stated as ONE theorem over a single
+`(foldFrom gamma bst lv rs).1`, written once and used on both sides, so the
+interpreter's answer and the model's claim cannot drift apart — the
+`model_always_matches_code` discipline enforced by construction rather than by
+review.
+
+It is carefully not more than it is. It holds where `live` is set, which §L43
+measured as one of exhaustion's two flavours; the other is R3d-ii's, and until
+that lands the mate arm's `Report` stays a statement about `foldFrom`.
+
 ### Triad
 
 `lake build` **3687 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
 `diff_test` **1315 cases, 0 failed**, 113 whitelisted, 1202 matched;
 `script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud.
-All three new declarations depend on
+All four new declarations depend on
 `[propext, Classical.choice, Quot.sound]`. No `sorry`, no `native_decide`. File
-throughput **39 s → 40 s**.
+throughput **39 s → 48 s**.

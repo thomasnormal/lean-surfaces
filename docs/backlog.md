@@ -13557,3 +13557,107 @@ itself stays REFUSE because its witness is module-scope.
 whitelisted, 1276 matched** (from 1372/0/114); `script_corpus` **65
 scripts, 0 failed, 50 matched, 15 loud**; `refusal_census` **89 + 118 +
 15 rows, 0 drifts**; extractor tests 77 OK.
+
+
+## L52 — R3d-ii: the correction FIRES, and the census changes what the exit law can even ask for (2026-08-21)
+
+`Examples/python/sunfish/fold_depth1.lean` §12.
+`if depth and not live and all(pos.move(m).king_capture() for m in pos.gen_moves())`
+— the guard runs a SECOND generator and the body a third inside `king_capture`'s
+`next`. §L43's fourth consequence made this the piece that upgrades the
+`live = False` flavour, and the census run before the gate is the part of this
+entry that will outlive it.
+
+### THE FINDING: a drain's out-world is a function of its ANSWER
+
+Measured on `initWorld` (heap 66), the guard's third operand alone:
+
+| position | `all(…)` | heap | objects | fuel |
+|---|---|---|---|---|
+| the mate fixture (§L43) | **true** — drains to EXHAUSTION | 320 | **254** | 256 decides, 128 times out |
+| the ordinary fixture (§L46) | false — stops at the first escape | 207 | 141 | |
+| the opening board | false — stops at the first escape | 154 | **88** | |
+
+Three boards, three worlds, and **nothing but the answer distinguishes them**:
+`all` short-circuits on the first falsy element, so the heap records exactly how
+far it got. `king_capture`'s `next` is the same in mirror image — **8** objects
+on the mate fixture (found immediately), **83** on the opening board (drained to
+find none).
+
+**So the exit law's usual move cannot be made here.** "Measure the world, then
+write it into the conclusion" presumes the world is a function of the gate's
+inputs. Under a short-circuiting drain it is a function of the *output*. The gate
+must RECEIVE the answer and the world together — the `hdrain` shape §L31 landed
+for the ordering line — and that is not a shortcut, it is the only honest
+statement available. **Carryable: before writing a gate over a builtin that may
+short-circuit a generator, ask whether its out-world is determined by its inputs.
+If it is not, the world belongs in the hypothesis with the answer.**
+
+### And it ATTRIBUTES §L32's unexplained 176
+
+§L32 measured a settling depth-1 node at heap 70 → 246 and called it *"176
+objects on the settle arm alone"* without saying where they went. They decompose:
+the ordering line allocates **84** (§L25's number, re-measured) and this
+correction's PARTIAL drain allocates **88** — **172 of the 176**. A settle leaves
+`live = False`, so the correction's guard *always* runs after one. **The arm §L32
+called the cheapest is the one that pays for the second drain**, and R3e's
+allocation accounting now has a decomposition instead of a total.
+
+### What landed
+
+| declaration | |
+|---|---|
+| `corrBody_split`, `sbCorr_sharp` | the statement spelled — 18 spans, and the body's two statements named |
+| `boolChain_and3_last` | the `and` chain whose first two operands are truthy returns its THIRD |
+| `evalIfExp_true` | the conditional's true arm |
+| `mate_line` | `mate = max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)` |
+| `best_line` | the check test choosing mate over stalemate |
+| `corr_fires` | the whole correction, both drains as world-carrying hypotheses |
+
+**Both altitude lemmas were owed for the recorded reason and one of them proved
+it the hard way**: letting `py_simp` walk the conditional's test — a whole
+generator — hit **200 000 heartbeats, reached**. That is §L14's `nmr` wall at a
+second site, and it confirms the §L34 refinement exactly: chains and conditionals
+need altitude lemmas when an operand is a CALL, not when they are long.
+
+**`EVAL_ROUGHNESS` resolves statically** (15, measured), unlike `MATE_LOWER` and
+`MATE_UPPER`, which are poisoned — so the mate value costs two world premises and
+no third.
+
+### The premises are DISCHARGED on the fixture, not merely stated
+
+`corr_fires`' two drain hypotheses are exactly the two `#guard`ed rows: `all(…)`
+answers **true** at the mate fixture in 254 objects, and
+`pos.rotate(nullmove=True).king_capture()` answers a **Move** there in 8. So the
+gate is instantiated at a real position rather than left conditional — §L25's
+law 3 paid at the fixture, with the general drains named as the R2a-class
+machinery they are.
+
+### What R3d-ii does NOT close, and why it is an ASK
+
+The mate arm's table store is the fail-**LOW** one — `best = -47938` sits far
+below any `gamma` that reached this arm — and `store_runs_low` lives in
+`basecase_depth0.lean`, **the census lane's ground**. The file's own rule for
+that case (§L32: *"if an inch here turns out to need a depth-0 fact, the answer
+is to ask rather than to re-census"*) says request the depth-free twin rather
+than duplicate the proof, so `tail_runs_mate` waits on it. **That is the one
+thing standing between §12 and the `bound()` statement for the mate flavour**,
+and it is a generalisation of exactly the shape `store_runs_d` already made once
+(§L47) — the depth pin was scaffolding there too, in all likelihood.
+
+R3e (the killer-store write) and R3c's `hdrain`-gated interpreter half stay filed
+where they were.
+
+### Triad
+
+`lake build` **3692 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched;
+`script_corpus` **65 scripts**, 0 failed, 50 matched, 15 loud. All seven new
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
+`sorry`, no `native_decide`. File throughput **40 s → 47 s**, of which ~5 s is
+§12's own census battery.
+
+*(The corpus and the job count both moved under §L49/§L51's extractor work while
+this section was being written — 1315 → 1372 → 1394 cases — and §L51 touched
+`Ast.lean` and `Semantics.lean`, so the whole subtree was rebuilt. These are the
+numbers at the merged tip, re-run after the last rebase.)*

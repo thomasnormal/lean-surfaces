@@ -1549,4 +1549,249 @@ theorem ran_live_answers (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Ad
 #print axioms ran_live_answers
 
 
+/-! ## §12 R3d-ii — THE CORRECTION THAT FIRES, and a census that changes the exit law
+
+`if depth and not live and all(pos.move(m).king_capture() for m in pos.gen_moves())`
+— the guard runs a SECOND generator, and the body runs a third inside
+`king_capture`'s `next`. §9's fourth consequence made this the piece that
+upgrades the `live = False` flavour from a `foldFrom` statement into a `bound()`
+statement, and the census below is what its gate is built from.
+
+### THE CENSUS, and its finding is about the exit law itself
+
+Measured on `initWorld` (heap 66), with the guard's third operand alone:
+
+| position | `all(…)` | heap | objects | fuel |
+|---|---|---|---|---|
+| the mate fixture (§9) | **true** — drains to EXHAUSTION | 320 | **254** | 256 decides, 128 times out |
+| the ordinary fixture (§10) | false — stops at the first escape | 207 | 141 | |
+| the opening board | false — stops at the first escape | 154 | **88** | |
+
+**An `all()` over a generator has an out-world that depends on its ANSWER.** The
+three numbers differ by more than a factor of two and nothing but the answer
+distinguishes them: `all` short-circuits on the first falsy element, so the heap
+records exactly how far it got. The same is true in mirror image of
+`king_capture`'s `next` — on the mate fixture it finds a move after **8** objects
+and on the opening board it drains **83** to find none.
+
+So the exit law's usual move — measure the world, then write it into the
+conclusion — **cannot be made here**: the world is not a function of the inputs
+the gate quantifies over. The gate must RECEIVE the drain's answer and its world
+together, which is the `hdrain` shape §L31 landed for the ordering line, and it
+is not a shortcut but the only honest statement.
+
+### And it ATTRIBUTES §L32's 176
+
+§L32 measured a settling depth-1 node at heap 70 → 246 and called it *"176
+objects on the settle arm alone"*, unattributed. It decomposes: the ordering line
+allocates **84** (§L25's own number, re-measured here) and this correction's
+PARTIAL drain allocates **88**. That is **172 of the 176**, and it says something
+the plan did not know: **a settling depth-1 node spends more than half its heap
+in the correction, not in the fold.** A settle leaves `live = False`, so the
+correction's guard always runs — the arm §L32 called the cheapest is the one that
+pays for the second drain.
+
+### Two altitude lemmas, both owed for the recorded reason
+
+`boolChain_and3_last` (the `and` chain whose first two operands are truthy) and
+`evalIfExp_true` (the conditional's true arm) exist because the operands they
+skip past are EXPENSIVE — a whole generator each. Letting `py_simp` walk the
+conditional's test hit the recorded wall exactly: **200 000 heartbeats, reached.**
+That is the `nmr` finding (§L14) at a second site, and it confirms the rule as
+stated in §6: chains and conditionals need altitude lemmas when an operand is a
+call, not when they are long.
+
+### What the gate says
+
+`corr_fires` takes both drains as world-carrying hypotheses, decides the guard,
+computes the mate value and lets the check test choose between mate and
+stalemate. On the fixture BOTH hypotheses are discharged by the `#guard`s below —
+so this is a gate with its premises paid at a real position, not a conditional.
+
+`EVAL_ROUGHNESS` resolves **statically** (15, measured); `MATE_LOWER` and
+`MATE_UPPER` are POISONED, so the mate value's two bounds come off `w.globals`.
+
+### What R3d-ii does NOT close, and why not here
+
+The mate arm's TABLE STORE is the fail-LOW one (`best = -47938` is far below any
+`gamma` that reached this arm), and `store_runs_low` lives in
+`basecase_depth0.lean` — **the census lane's ground**. §3's rule for that case is
+to ASK rather than re-derive, so the depth-free twin of `store_runs_low` is
+requested rather than duplicated here, and `tail_runs_mate` waits on it. The two
+drains' own gates (a `gen_moves` re-drain under `all`, and `next` over
+`king_capture`'s genexp) are R2a-class machinery and are named, not assumed away:
+they are what the `#guard`s below stand in for off the fixture. -/
+
+def corrBody : List Stmt :=
+  match sbCorr with | .ifStmt _ b _ _ => b.toList | _ => []
+
+def corrAllE : Expr :=
+  match sbCorr with
+  | .ifStmt (.boolOp _ es _) _ _ _ => es[2]!
+  | _ => .constant .none nowhere
+
+def corrKcE : Expr :=
+  match corrBody[1]! with
+  | .assign _ (.ifExp c _ _ _) _ => c
+  | _ => .constant .none nowhere
+
+theorem corrBody_split : ∃ s1 s2 s3 s4 s5 s6 s7 s8 s9 s10 s11 s12 s13 s14 s15 s16 s17 s18,
+    corrBody = [.assign #[.name "mate" s1]
+        (.call (.name "max" s2)
+          #[.binOp (.constant (.int 1) s3) .sub (.name "MATE_UPPER" s4) s5,
+            .binOp (.unaryOp .usub (.name "MATE_LOWER" s6) s7) .sub
+              (.binOp (.name "depth" s8) .mult (.name "EVAL_ROUGHNESS" s9) s10) s11] #[]
+          Option.none s12) s13,
+      .assign #[.name "best" s14] (.ifExp corrKcE (.name "mate" s15)
+        (.constant (.int 0) s16) s17) s18] :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem sbCorr_sharp : ∃ p0 p1 p2 p3 p4, sbCorr =
+    .ifStmt (.boolOp .and
+        #[.name "depth" p0, .unaryOp .not (.name "live" p1) p2, corrAllE] p3)
+      corrBody.toArray #[] p4 :=
+  ⟨_, _, _, _, _, rfl⟩
+
+
+theorem erG : lookupG (globalsFold #[] [] true false sunfish.topLevel.toList).snd.fst
+    "EVAL_ROUGHNESS" = some (some (.int 15)) := rfl
+
+/-- A three-operand `and` whose first TWO operands are truthy: the chain returns
+its THIRD, and the altitude lemma is owed because that operand is expensive — a
+whole second generator drained. -/
+theorem boolChain_and3_last {m : Module} {F : Nat} {st st₁ st₂ st₃ : FrameState}
+    {e1 e2 e3 : Expr} {v1 v2 v3 : RVal}
+    (h1 : evalExpr m (F + 2) st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok true)
+    (h2 : evalExpr m (F + 1) st₁ e2 = .ok st₂ v2)
+    (hb2 : truthyH st₂.world.heap v2 = .ok true)
+    (h3 : evalExpr m F st₂ e3 = .ok st₃ v3) :
+    evalBoolChain m (F + 3) st .and e1 [e2, e3] = .ok st₃ v3 := by
+  rw [evalBoolChain, h1]
+  simp only [Run.bind, Run.liftRes, hb1, if_true]
+  rw [evalBoolChain, h2]
+  simp only [Run.bind, Run.liftRes, hb2, if_true]
+  rw [evalBoolChain, h3]
+  simp only [Run.bind]
+
+/-- **The mate value.** `EVAL_ROUGHNESS` resolves STATICALLY (15, measured); the
+mate band does NOT, so both bounds come off `w.globals`. -/
+theorem mate_line (w : World) (e : REnv) (d ml mu : Int) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hnoml : Env.lookup e "MATE_LOWER" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hnoer : Env.lookup e "EVAL_ROUGHNESS" = Option.none)
+    (hmlw : Env.lookup w.globals "MATE_LOWER" = some (.int ml))
+    (hmuw : Env.lookup w.globals "MATE_UPPER" = some (.int mu)) :
+    execStmt sunfish (F + 16) ⟨w, e⟩ corrBody[0]!
+      = .ok ⟨w, Env.set e "mate" (.int (max (1 - mu) (-ml - d * 15)))⟩ .next := by
+  obtain ⟨s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18, hlit⟩ := corrBody_split
+  rw [show corrBody[0]! = _ from congrArg (fun l => l[0]!) hlit]
+  py_simp [-globalsFold, -globalsStep, hd, hnomax, hnoml, hnomu, hnoer,
+    hmlw, hmuw, mlG, muG, erG, maxG, maxNotFun, maxCls, maxNT]
+
+/-- **The conditional expression's TRUE arm, as an altitude lemma.** Owed for
+the same reason the `nmr` chain owed one: the test here is a whole generator
+drained, and letting `py_simp` walk it is the recorded wall (200 000 heartbeats,
+reached). -/
+theorem evalIfExp_true {m : Module} {F : Nat} {st st₁ : FrameState}
+    {t b o : Expr} {v : RVal} {sp : Span}
+    (hc : evalExpr m F st t = .ok st₁ v)
+    (hb : truthyH st₁.world.heap v = .ok true) :
+    evalExpr m (F + 1) st (.ifExp t b o sp) = evalExpr m F st₁ b := by
+  rw [evalExpr, hc]
+  simp only [Run.bind, Run.liftRes, hb, if_true]
+
+/-- **The check test decides `best`.** A truthy `pos.rotate(nullmove=True)
+.king_capture()` says the side to move is in CHECK, so the terminal is mate and
+`best` takes the mate value. The drain's answer AND its world are one hypothesis,
+because the census says the world an `all`/`next` leaves is a function of where
+it stopped. -/
+theorem best_line (w w' : World) (e : REnv) (mv : Int) (kcv : RVal) (F : Nat)
+    (hmate : Env.lookup e "mate" = some (.int mv))
+    (hkc : ∀ G : Nat, evalExpr sunfish (F + G) ⟨w, e⟩ corrKcE = .ok ⟨w', e⟩ kcv)
+    (hkct : truthyH w'.heap kcv = .ok true) :
+    execStmt sunfish (F + 8) ⟨w, e⟩ corrBody[1]!
+      = .ok ⟨w', Env.set e "best" (.int mv)⟩ .next := by
+  obtain ⟨s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18, hlit⟩ := corrBody_split
+  have h : evalExpr sunfish (F + 7) ⟨w, e⟩
+      (.ifExp corrKcE (.name "mate" s15) (.constant (.int 0) s16) s17)
+      = .ok ⟨w', e⟩ (.int mv) := by
+    rw [evalIfExp_true (hkc 6) hkct]
+    py_simp [-globalsFold, -globalsStep, hmate]
+  rw [show corrBody[1]! = _ from congrArg (fun l => l[1]!) hlit]
+  exact execStmt_assign_name h
+
+/-- **R3d-ii — THE CORRECTION FIRES.** At `¬live` with the drain exhausted, the
+guard reaches its third operand, the body computes the mate value and the check
+test decides between mate and stalemate. Both drains enter as hypotheses
+carrying their WORLDS, which is what the census forces. -/
+theorem corr_fires (w w₁ w₂ : World) (e : REnv) (d ml mu : Int) (kcv : RVal) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hlive : Env.lookup e "live" = some (.bool false))
+    (hd0 : d ≠ 0)
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hnoml : Env.lookup e "MATE_LOWER" = Option.none)
+    (hnomu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hnoer : Env.lookup e "EVAL_ROUGHNESS" = Option.none)
+    (hmlw : Env.lookup w₁.globals "MATE_LOWER" = some (.int ml))
+    (hmuw : Env.lookup w₁.globals "MATE_UPPER" = some (.int mu))
+    (hall : ∀ G : Nat, evalExpr sunfish (F + G) ⟨w, e⟩ corrAllE = .ok ⟨w₁, e⟩ (.bool true))
+    (hkc : ∀ G : Nat, evalExpr sunfish (F + G)
+        ⟨w₁, Env.set e "mate" (.int (max (1 - mu) (-ml - d * 15)))⟩ corrKcE
+      = .ok ⟨w₂, Env.set e "mate" (.int (max (1 - mu) (-ml - d * 15)))⟩ kcv)
+    (hkct : truthyH w₂.heap kcv = .ok true) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ sbCorr
+      = .ok ⟨w₂, Env.set (Env.set e "mate" (.int (max (1 - mu) (-ml - d * 15))))
+          "best" (.int (max (1 - mu) (-ml - d * 15)))⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, hlit⟩ := sbCorr_sharp
+  have h1 : evalExpr sunfish (F + 17) ⟨w, e⟩ (.name "depth" p0) = .ok ⟨w, e⟩ (.int d) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  have h2 : evalExpr sunfish (F + 16) ⟨w, e⟩ (.unaryOp .not (.name "live" p1) p2)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hlive]
+  have hb1 : truthyH w.heap (.int d) = .ok true := by simp [truthyH, truthy, hd0]
+  have hc : evalExpr sunfish (F + 19) ⟨w, e⟩
+      (.boolOp .and #[.name "depth" p0, .unaryOp .not (.name "live" p1) p2, corrAllE] p3)
+      = .ok ⟨w₁, e⟩ (.bool true) := by
+    rw [evalExpr]
+    exact boolChain_and3_last (F := F + 15) h1 hb1 h2 rfl (hall 15)
+  rw [hlit, execStmt_if_true hc rfl]
+  rw [show corrBody.toArray.toList = corrBody from rfl]
+  obtain ⟨s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18, hbl⟩ := corrBody_split
+  rw [show corrBody = [corrBody[0]!, corrBody[1]!] from by rw [hbl]; rfl]
+  simp only [execStmts]
+  rw [execStmt_mono (mate_line w₁ e d ml mu (F + 2) hd hnomax hnoml hnomu hnoer hmlw hmuw)
+    (by simp) (F + 18) (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (best_line w₁ w₂ (Env.set e "mate" (.int (max (1 - mu) (-ml - d * 15))))
+      (max (1 - mu) (-ml - d * 15)) kcv (F + 9)
+      (by simp [Env.lookup_set_self])
+      (fun G => by simpa [Nat.add_assoc] using hkc (9 + G)) hkct) (by simp) (F + 17) (by omega)]
+
+
+private def allAnswer (p : RVal) (F : Nat) : Option (RVal × Nat) :=
+  match evalExpr sunfish F ⟨initWorld sunfish, [("pos", p)]⟩ corrAllE with
+  | .ok st v => some (v, st.world.heap.size) | _ => Option.none
+
+private def kcAnswer (p : RVal) (F : Nat) : Option (String × Nat) :=
+  match evalExpr sunfish F ⟨initWorld sunfish, [("pos", p)]⟩ corrKcE with
+  | .ok st v => some (v.typeName, st.world.heap.size) | _ => Option.none
+
+#guard allAnswer posMate 256 == some (RVal.bool true, 320)
+#guard (allAnswer posMate 128).isNone
+#guard allAnswer (posH 0) 512 == some (RVal.bool false, 154)
+#guard kcAnswer posMate 256 == some ("Move", 74)
+#guard kcAnswer (posH 0) 512 == some ("NoneType", 149)
+
+#print axioms corrBody_split
+#print axioms sbCorr_sharp
+#print axioms boolChain_and3_last
+#print axioms evalIfExp_true
+#print axioms mate_line
+#print axioms best_line
+#print axioms corr_fires
+
+
 end Examples.python.sunfish.fold_depth1

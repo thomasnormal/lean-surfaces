@@ -383,16 +383,18 @@ private theorem charAt_of_getElem? {l : List Char} {k : Nat} {c : Char}
   rw [h] at hg
   exact (Option.some.inj hg).symm
 
-/-- The four facts the two halves share, so neither proof re-derives them. -/
-private structure MoveFacts (L : List Char) (i j : Nat) (p : Char) : Prop where
+/-- The four facts the two arms share, so no proof re-derives them. `q` is the
+character ON the target square: `'.'` for the quiet arm and a piece for the
+capture arm, which is the ONLY place the two differ. -/
+private structure MoveFacts (L : List Char) (i j : Nat) (p q : Char) : Prop where
   gi : L.getD i '.' = p
-  ej : ∀ h : j < L.length, L[j]'h = '.'
+  ej : ∀ h : j < L.length, L[j]'h = q
   pm : (∀ c ∈ L, c ∈ boardChars) → p ∈ boardChars
-  ps : ∀ (q : Char) (h : i < (L.set j q).length), i ≠ j → (L.set j q)[i]'h = p
+  ps : ∀ (r : Char) (h : i < (L.set j r).length), i ≠ j → (L.set j r)[i]'h = p
 
-private theorem moveFacts (L : List Char) (i j : Nat) (p : Char)
+private theorem moveFacts (L : List Char) (i j : Nat) (p q : Char)
     (hlen : L.length = 120) (hi : i < 120) (_hj : j < 120)
-    (hpi : L[i]? = some p) (hqj : L[j]? = some '.') : MoveFacts L i j p := by
+    (hpi : L[i]? = some p) (hqj : L[j]? = some q) : MoveFacts L i j p q := by
   have hiL : i < L.length := by omega
   refine ⟨?_, ?_, ?_, ?_⟩
   · rw [List.getD_eq_getElem?_getD, hpi]; rfl
@@ -423,7 +425,7 @@ theorem cellSum_moveCells (L : List Char) (i j : Nat) (p : Char)
     (hpi : L[i]? = some p) (hqj : L[j]? = some '.') :
     cellSum pstCell 0 (moveCells L i j)
       = cellSum pstCell 0 L + (pstCell p j - pstCell p i) := by
-  obtain ⟨hgetD, hej, hpm, hps⟩ := moveFacts L i j p hlen hi hj hpi hqj
+  obtain ⟨hgetD, hej, hpm, hps⟩ := moveFacts L i j p '.' hlen hi hj hpi hqj
   have hjL : j < L.length := by omega
   have hlen2 : ((L.set j p).set i '.').length = 120 := by simp [hlen]
   have hiL1 : i < (L.set j p).length := by simp [hlen]; omega
@@ -462,7 +464,7 @@ theorem pieceCount_plainMove (b : String) (i j : Nat) (p : Char)
     (halpha : p.isAlpha = true)
     (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some '.') :
     pieceCount (plainMoveBoard b i j) = pieceCount b := by
-  obtain ⟨hgetD, hej, hpm, hps⟩ := moveFacts b.toList i j p hlen hi hj hpi hqj
+  obtain ⟨hgetD, hej, hpm, hps⟩ := moveFacts b.toList i j p '.' hlen hi hj hpi hqj
   have hjL : j < b.toList.length := by omega
   have hiL1 : i < (b.toList.set j p).length := by simp [hlen]; omega
   have hmemX := memX b.toList i j p hchars (hpm hchars)
@@ -477,6 +479,38 @@ theorem pieceCount_plainMove (b : String) (i j : Nat) (p : Char)
     alphaCount_map_swapChar _ (fun c hc => hmemX c (by simpa using hc)),
     alphaCount_reverse]
   simp only [halpha, hdot, if_false, Bool.false_eq_true, if_pos] at h1 h2
+  omega
+
+/-- **THE CAPTURE ARM.** When the target square holds a PIECE the count falls by
+exactly one: the piece that was standing there is overwritten and the square the
+mover left becomes empty. `alphaCount_set` is applied twice, once per `put`, and
+the two alpha bits do the rest.
+
+Note what this arm does NOT need: no QS floor, no `pstTotal`, no hypothesis about
+the move's value at all. A capture descends because a piece left the board, which
+is why §8's first component exists. -/
+theorem pieceCount_plainMove_capture (b : String) (i j : Nat) (p q : Char)
+    (hlen : b.toList.length = 120)
+    (hchars : ∀ c ∈ b.toList, c ∈ boardChars)
+    (hi : i < 120) (hj : j < 120) (hij : i ≠ j)
+    (halpha : p.isAlpha = true) (hqa : q.isAlpha = true)
+    (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some q) :
+    pieceCount (plainMoveBoard b i j) + 1 = pieceCount b := by
+  obtain ⟨hgetD, hej, hpm, hps⟩ := moveFacts b.toList i j p q hlen hi hj hpi hqj
+  have hjL : j < b.toList.length := by omega
+  have hiL1 : i < (b.toList.set j p).length := by simp [hlen]; omega
+  have hmemX := memX b.toList i j p hchars (hpm hchars)
+  have hpi' : (b.toList.set j p)[i]'hiL1 = p := hps p hiL1 hij
+  have h2 := alphaCount_set (b.toList.set j p) i '.' hiL1
+  have h1 := alphaCount_set b.toList j p hjL
+  rw [hpi'] at h2
+  rw [hej hjL] at h1
+  have hdot : ('.' : Char).isAlpha = false := rfl
+  rw [pieceCount_alphaCount, pieceCount_alphaCount, plainMoveBoard, String.toList_ofList,
+    moveCells, hgetD,
+    alphaCount_map_swapChar _ (fun c hc => hmemX c (by simpa using hc)),
+    alphaCount_reverse]
+  simp only [halpha, hqa, hdot, if_false, Bool.false_eq_true, if_pos] at h1 h2
   omega
 
 /-! ## §8 THE MEASURE, AND ITS STRICT DESCENT -/
@@ -535,6 +569,20 @@ theorem qsMeasure_plainMove_lt (b : String) (i j : Nat) (p : Char)
     (Nat.le_of_eq (pieceCount_plainMove b i j p hlen hchars hi hj hij halpha hpi hqj))
     (fun _ => pstTotal_plainMove b i j p hlen hchars hi hj hij hpi hqj)
 
+/-- **THE CAPTURE COROLLARY** — the pair's FIRST component alone, and it needs no
+floor. -/
+theorem qsMeasure_plainMove_capture_lt (b : String) (i j : Nat) (p q : Char)
+    (hlen : b.toList.length = 120)
+    (hchars : ∀ c ∈ b.toList, c ∈ boardChars)
+    (hi : i < 120) (hj : j < 120) (hij : i ≠ j)
+    (halpha : p.isAlpha = true) (hqa : q.isAlpha = true)
+    (hpi : b.toList[i]? = some p) (hqj : b.toList[j]? = some q) :
+    qsLt (qsMeasure (plainMoveBoard b i j)) (qsMeasure b) := by
+  refine Or.inl ?_
+  show pieceCount (plainMoveBoard b i j) < pieceCount b
+  have hc := pieceCount_plainMove_capture b i j p q hlen hchars hi hj hij halpha hqa hpi hqj
+  omega
+
 /-! ## §9 INSTANTIATED — the reference fixture's two edges
 
 The pair descends on both edges the opening position admits, and it descends in
@@ -551,6 +599,38 @@ the census's own refutation) while `pstTotal` rises by 46 and 42 — the two val
 a `pstTotal` that FALLS at an unchanged piece count would have — the castle
 transit's signature, and what `hpst` exists to exclude. -/
 #guard !qsLtB (qsMeasure board0) (qsMeasure d4B)
+
+/-! ### The CAPTURE arm, on a real search edge
+
+The opening board admits no capture, so this arm's fixture is a position four
+plies in, reached by `gen_moves` and measured against CPython BEFORE it was
+written down: `P` on 63 takes `p` on 54, `Position.value` answers **111**, the
+count goes **32 → 31**, and `pstTotal` **FALLS by 101**.
+
+That fall is the point. The lex pair descends here through its FIRST component
+ONLY, and the second component moves the WRONG way — so a measure that had
+`pstTotal` alone would not descend on a capture at all, and §L27's first
+candidate (`pieceCount` alone) would not descend on the quiet edges of §9. Each
+component is refuted on its own by the other arm's fixture, and neither refutes
+the pair. -/
+private def capB : String :=
+  "\n         \n         \nrnbkqbnr \nppp.ppp. \n.......p \n...p.... \n..P..... \n........ \nPP.PPPPP \nRNBKQBNR \n         \n         "
+private def capChildB : String :=
+  "         \n         \n rnbqkbnr\n ppppp.pp\n ........\n ........\n ....p...\n P.......\n .PPP.PPP\n RNBQKBNR\n         \n         \n"
+
+/-! The residue first, as always: the model's pipeline reproduces the engine's own
+child board on the capture edge too, not only on the two quiet ones. -/
+#guard plainMoveBoard capB 63 54 == capChildB
+#guard capB.toList.length == 120 && capChildB.toList.length == 120
+#guard capB.toList.getD 63 'x' == 'P' && capB.toList.getD 54 'x' == 'p'
+#guard pieceCount capB == 32 && pieceCount capChildB == 31
+#guard pstTotal capB == 127226 && pstTotal capChildB == 127125
+#guard qsLtB (qsMeasure capChildB) (qsMeasure capB)
+#guard !qsLtB (qsMeasure capB) (qsMeasure capChildB)
+
+/-! …and the second component really does move the wrong way here, which is the
+guard that would fail if anybody dropped `pieceCount` from the pair. -/
+#guard decide (pstTotal capChildB < pstTotal capB)
 
 /-! ### The premises, RUN rather than admired
 
@@ -610,7 +690,9 @@ is REFUSED, which is where the filter earns its place in the argument. -/
 #print axioms pieceCount_plainMove
 #print axioms qsLtB_iff
 #print axioms qsMeasure_lt_of_board
+#print axioms pieceCount_plainMove_capture
 #print axioms qsMeasure_plainMove_lt
+#print axioms qsMeasure_plainMove_capture_lt
 #print axioms qsMeasure_lt_of_descendsB
 
 end Examples.python.sunfish.qs_measure

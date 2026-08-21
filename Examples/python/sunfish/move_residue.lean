@@ -32,6 +32,7 @@ namespace Examples.python.sunfish.move_residue
 open LeanModels LeanModels.Python
 open Examples.python.sunfish.pins
 open Examples.python.sunfish.basecase_depth0 (mvOf)
+open Examples.python.sunfish.faillow_census (pstAt pstRowOf)
 open Examples.python.sunfish.qs_measure
 
 set_option maxRecDepth 100000
@@ -356,6 +357,73 @@ board: `1. d4` itself is one (`84 → 64` is `2 * N`), and it is the first guard
 above. -/
 #guard plainBoardB 'P' 84 64 0 && decide ((64 : Int) - 84 = 2 * (-10))
 
+/-! ## §9 THE VALUE SIDE — `pstCell`'s delta IS `Position.value`'s first line
+
+`Position.move`'s statement 5 is `score = self.score + self.value(move)`, and
+`Position.value`'s own first line (its statement 2, gated as `value_scores` in
+`value_bound.lean`, §L28) is
+
+    score = pst[p][j] - pst[p][i]
+
+`value_scores` states its answer as `zj - zi` in the ROW's own entries, with no
+120-wide constant written down — *"an AGREEMENT, at this statement"*. F1a's
+`pstCell` reads the same two entries through `pstAt`. This section is the one
+line that says they are the same number, which is the second of the three things
+§L41 left F1b owing.
+
+**The `isUpper` branch is the whole content.** `pstCell` is a three-way match and
+only its first arm reads `pst[p][sq]` unmirrored; the mover on a sunfish board is
+always uppercase (the board is kept from the side to move), so that is the arm
+`Position.value` computes in — and stating the hypothesis is how the other two
+arms are excluded rather than assumed away. -/
+
+/-- `pstAt` at a row the caller has already located — the shape `value_scores`
+hands over. -/
+theorem pstAt_of_row (c : String) (pa : Addr) (es : Array (RVal × RVal)) (sv : Nat)
+    (xs : Array RVal) (k : Nat) (z : Int)
+    (hg : Env.lookup (initWorld sunfish).globals "pst" = some (.ref pa))
+    (hd : Heap.get? (initWorld sunfish).heap pa = some (.dict es sv))
+    (hrow : dictFind es.toList (.str c) = some (.tuple xs))
+    (hx : xs[k]?.getD .none = .int z) :
+    pstAt c k = z := by
+  unfold pstAt pstRowOf
+  simp only [hg, hd, hrow, hx]
+
+/-- **THE IDENTIFICATION.** At an uppercase mover, `pstCell`'s delta across the
+two squares is exactly the `zj - zi` `value_scores` answers with. -/
+theorem pstCell_sub_eq (c : Char) (hup : c.isUpper = true) (i j : Nat)
+    (pa : Addr) (es : Array (RVal × RVal)) (sv : Nat) (xs : Array RVal) (zi zj : Int)
+    (hg : Env.lookup (initWorld sunfish).globals "pst" = some (.ref pa))
+    (hd : Heap.get? (initWorld sunfish).heap pa = some (.dict es sv))
+    (hrow : dictFind es.toList (.str (String.singleton c)) = some (.tuple xs))
+    (hxi : xs[i]?.getD .none = .int zi)
+    (hxj : xs[j]?.getD .none = .int zj) :
+    pstCell c j - pstCell c i = zj - zi := by
+  have hj : pstCell c j = zj := by
+    rw [show pstCell c j = pstAt (String.singleton c) j from by simp [pstCell, hup]]
+    exact pstAt_of_row _ pa es sv xs j zj hg hd hrow hxj
+  have hi : pstCell c i = zi := by
+    rw [show pstCell c i = pstAt (String.singleton c) i from by simp [pstCell, hup]]
+    exact pstAt_of_row _ pa es sv xs i zi hg hd hrow hxi
+  rw [hi, hj]
+
+/-! **INSTANTIATED against the shipped `Position.value`.** The identification is
+worth nothing if the two numbers ever part, so the fixture's own two edges are
+run through the ENGINE and compared to `pstCell`'s delta — not to a constant.
+`1. d4` and `1. e4`, `46` and `42`, on the live interpreter. -/
+private def valueRuns (i j : Int) (p : Char) : Bool :=
+  match callIn sunfish 8192 (initWorld sunfish) "Position.value" #[posH 0, mvOf i j ""] with
+  | .ok _ (.int v) => v == pstCell p j.toNat - pstCell p i.toNat
+  | _ => false
+
+#guard valueRuns 84 64 'P'
+#guard valueRuns 85 65 'P'
+
+/-! And the identification is not vacuous in the other direction either: the
+LOWERCASE arm of `pstCell` is a different number at the same square, which is
+what `hup` is there to exclude. -/
+#guard pstCell 'P' 64 != pstCell 'p' 64
+
 /-! ### The axioms -/
 
 #print axioms strSliceChars_fwd
@@ -370,5 +438,7 @@ above. -/
 #print axioms rotStr_residue
 #print axioms moveStr_eq_plainMoveBoard
 #print axioms plainBoardB_iff
+#print axioms pstAt_of_row
+#print axioms pstCell_sub_eq
 
 end Examples.python.sunfish.move_residue

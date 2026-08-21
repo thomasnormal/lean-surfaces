@@ -12685,3 +12685,139 @@ no `native_decide`.
 without a futility premise. The two remainders stand where they were: the
 depth-1 cutoff's killer store (filed with R3e, because it writes), and R2's
 `hdrain`, which is what turns "a free `sortedVs`" into a concrete schedule.
+## L44 — F1b-ii: the VALUE side and the CAPTURE arm close, and the gate is projected but NOT started (2026-08-21)
+
+§L41 left F1b-ii owing three things. **Two of them land here and the third does
+not**, and saying which is which is the point of this section: the
+thirteen-statement `Position.move` gate is projected, its shapes read out and its
+exit law measured, and no line of it is proved. Calling that "F1b-ii" without the
+qualifier would be exactly the over-claim §L30's finding 5 warns about.
+
+**Numbering.** §L42 (the C tier) landed between the triad and the push, and §L43
+(R3c's exhaustion census) landed between the commit and the push. That is the
+FIFTH renumber this lane has taken today, and the read-after-fetch law (§L41)
+held each time — but the sharper form is now visible: **on a four-lane master the
+section number is not chosen at write time at all, it is read at push time**, so
+the number belongs in the commit message and the section heading and nowhere
+else. Both are one `sed` away; a number woven through the prose would not be.
+
+### LANDED — `pstCell`'s delta IS `Position.value`'s first line
+
+`Position.move`'s statement 5 is `score = self.score + self.value(move)`, and
+`Position.value`'s own statement 2 — gated as `value_scores` since §L28 — is
+`score = pst[p][j] - pst[p][i]`. That gate states its answer as `zj - zi` in the
+ROW's own entries, deliberately naming no 120-wide constant. F1a's `pstCell`
+reads the same two entries through `pstAt`. `move_residue.lean` §9 is the one line
+that says they are the same number:
+
+* `pstAt_of_row` — `pstAt` at a row the caller has already located, which is the
+  shape `value_scores` hands over;
+* `pstCell_sub_eq` — at an **uppercase** mover, `pstCell c j - pstCell c i` IS
+  `zj - zi`. The `isUpper` branch is the whole content: `pstCell` is a three-way
+  match and only its first arm reads `pst[p][sq]` unmirrored. The mover on a
+  sunfish board is always uppercase, so that is the arm `Position.value` computes
+  in — and stating it as a hypothesis is how the other two arms are excluded
+  rather than assumed away.
+
+**Instantiated against the ENGINE, not against a constant.** `valueRuns` calls
+the shipped `Position.value` on both fixture edges and compares its answer to
+`pstCell`'s delta; 46 and 42 on the live interpreter. A `#guard` also pins
+`pstCell 'P' 64 ≠ pstCell 'p' 64`, so the `hup` hypothesis is not decoration.
+
+### LANDED — the capture arm, and each component refuted on its own
+
+`pieceCount_plainMove_capture`: when the target square holds a PIECE the count
+falls by exactly one — the piece standing there is overwritten and the square the
+mover left becomes empty. `alphaCount_set` applied twice, once per `put`, and the
+two alpha bits do the rest. `qsMeasure_plainMove_capture_lt` is its corollary
+through the pair's first component.
+
+**What this arm does NOT need is worth recording:** no QS floor, no `pstTotal`,
+no hypothesis about the move's value at all. A capture descends because a piece
+left the board.
+
+`MoveFacts` grew one parameter to serve both arms — `q`, the character ON the
+target square, `'.'` for the quiet arm and a piece for the capture arm. That is
+the only place the two proofs differ, which is a small piece of evidence that the
+two-arm split §L30 read off `Position.value` is the right one.
+
+**THE FIXTURE, and the thing it shows.** The opening board admits no capture, so
+the arm's fixture is a position four plies in, reached by `gen_moves` and
+measured against CPython before it was written down: `P` on 63 takes `p` on 54,
+`Position.value` answers **111**, the count goes **32 → 31**, and `pstTotal`
+**FALLS by 101**.
+
+That fall is the finding. On this edge the pair descends through its FIRST
+component only and **the second component moves the wrong way**; on §9's two
+quiet edges the FIRST component stands still (32 → 32) and only the second moves.
+So each half of `(pieceCount, -pstTotal)` is refuted as a measure ON ITS OWN by
+the other arm's fixture, and both refutations are now `#guard`ed rather than
+argued. §L30 refuted `pieceCount` alone; this section refutes `pstTotal` alone,
+which the census had not needed to.
+
+The residue census was extended to the capture edge too:
+`plainMoveBoard capB 63 54 == capChildB`, character for character against the
+engine's own child board — the third edge on which the §L41 pipeline is checked.
+
+### NOT STARTED — the thirteen-statement gate, projected and priced
+
+`Position.move`'s body was projected and its statement shapes read out:
+
+| # | statement |
+|---|---|
+| 0 | `i, j, prom = move` |
+| 1 | `p, q = self.board[i], self.board[j]` |
+| 2 | **`defStmt "put"`** — the lambda, `[board, i, p]`, whose body is `board[:i] + p + board[i+1:]` as two `Expr.slice`s and two `BinOp.add`s |
+| 3–5 | `board = self.board`; `wc, bc, ep, kp = …`; `score = self.score + self.value(move)` |
+| 6–7 | the two `put` calls |
+| 8–9 | the castling-rights tuples |
+| 10–11 | `if p == "K"` and `if p == "P"` — where all three conditional `put`s live (§L41) |
+| 12 | `return Position(…).rotate()` |
+
+The `Expr.slice` argument order confirms §L41's premises from the other side:
+`board[:i]` is `slice (name "board") (constant none) (name "i") (constant none)`
+and `board[i+1:]` is `slice (name "board") (binOp i add 1) (constant none)
+(constant none)` — lower, upper, step, exactly as `strSlice_prefix` and
+`strSlice_suffix` take them.
+
+Its exit law (§L41, re-stated because it decides the next statement's shape):
+**fuel exactly 32**, **heap 66 → 67 with only the new slot touched** — one
+closure allocation, zero mutation — and **no statement is `Stmt.unsupported`**.
+`value_bound.lean`'s eight-statement gate ran to 1667 lines; this is thirteen with
+a closure and two nested `if`s, and it is its own inch.
+
+### Triad
+
+`lake build` **3686 jobs green**; `docs_check` **73/73 marked blocks, 15 illustrative-exempt**; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No `sorry`, no
+`native_decide`, no linter warning in either file. Throughputs moved with the new
+engine work: `qs_measure` **7.6 s → 15 s** (the capture fixture's `pstTotal`
+walks) and `move_residue` **2.5 s → 14 s** (`valueRuns` calls the shipped
+`Position.value` twice). Both are guards that RUN the engine, on purpose.
+
+### Findings worth carrying
+
+1. **An unknown identifier in a theorem STATEMENT is auto-bound, and the error
+   surfaces somewhere else.** §9 was written without `open …faillow_census`, so
+   `pstAt` became a universe-polymorphic implicit variable and Lean reported
+   *"Local variable `pstAt` has no definition"* from inside the PROOF — a tactic
+   failure that looks like a broken proof and is a missing `open`. In a file that
+   opens four namespaces, read the first error as *"is this name actually in
+   scope?"* before reading it as mathematics. (§L41 banked the sibling of this:
+   a stale `olean` also masquerades as a failed proof.)
+2. **`rw` cannot see through an unreduced `match`; `simp only` can.**
+   `pstAt_of_row` unfolds two nested pattern matches, and rewriting the outer
+   scrutinee leaves the inner match un-iota-reduced, so the second `rw` finds no
+   pattern. `simp only [hg, hd, hrow, hx]` closes it because simp interleaves
+   rewriting with iota. The §L41 rule (`show` for a residue's spelling) and this
+   one are the same lesson from two sides: **`rw` is syntactic, and the residue
+   is not in normal form.**
+3. **Refute each component of a composite measure separately, and `#guard` both
+   refutations.** The pair's two halves are each dead on the other arm's fixture.
+   Until this section only one of those two facts was pinned, and a later pass
+   simplifying the measure to "just `pstTotal`" would have passed the whole
+   battery.
+4. **Project before you gate, and say when you have only projected.** Reading
+   thirteen statement shapes cost ten minutes and produced a cross-check of §L41's
+   slice premises from the AST side. It did not produce a gate, and the section
+   heading says so.

@@ -833,9 +833,15 @@ Anchored, re-measured today rather than quoted: the Python extractor is
 **1913** lines (the memo's 1512 has since grown), SV's is 2495; clang
 does the hard work here, so the low end.
 
-**Green when**: the corpus extracts twice byte-identically, and the
-`Unsupported` path is exercised by a lab file that is deliberately
-outside the vocabulary — the path must be RUN, not admired.
+**LANDED.** All three contract paths were RUN, not admired: the corpus
+extracts twice byte-identically; a missing file and a clang DIAGNOSTIC
+both refuse non-zero; and a file containing `switch` produces an
+`Unsupported` leaf naming `SwitchStmt` rather than failing. The extractor
+also found a bug in ITSELF the way §6 predicts — its first `externals`
+walk lacked the `loc.file` filter and reported 30 names where the census
+said 27, the three extras being names the SYSTEM HEADERS reference from
+their own macro bodies. `--source-name` was added because the corpus is
+cross-repo and a path relative to this root would be a fiction.
 
 ### 4.6 Inch 6 — `LeanModels/C/Ast.lean` + `LeanModels/C/Json.lean`.
 
@@ -848,12 +854,19 @@ compound-assignment operators, 6 unary operators, 8 `castKind`s, the
 control-flow set MINUS `switch`, 13 record types, 7 typedefs, 3 enums,
 function pointers, string literals, one compound literal.
 
-**The `#guard` this milestone exists to produce**: ingest `sunfish.c`'s
-envelope and assert structural facts the census independently knows —
-58 function definitions, 71 file-scope objects, 19 indirect call sites,
-0 `SwitchStmt`. **The census is the oracle for the ingester**, which is
-why it lands first, and why it lands as an instrument rather than as
-prose.
+**LANDED**, and the shape changed once on contact with C's grammar. A
+function DEFINITION is the only declaration containing statements and C
+has no nested functions, so `Expr`, `Decl` and `Stmt` form NO cycle and
+`FunctionDefn` sits on top as a structure — the same shape the Python
+lane's `FunctionDefn` has, arrived at from the language rather than
+borrowed. `LeanModels/C/` defines its own JSON helpers rather than
+importing the Python lane's: it is a SIBLING, not a client (§2.1), and
+twenty lines is not a reason to couple two tiers.
+
+`load_c_program` defines the whole `Envelope` (not just the unit),
+because `externals` is a claim the ingester must be checkable against
+too, and it REFUSES a `profile_id` mismatch — the profile is an input to
+the AST, so an envelope from another profile is a different program.
 
 ### 4.7 Inch 7 — one function round-tripped, with its `#guard`.
 
@@ -878,25 +891,46 @@ and at `INT_MIN / -1`, and the signed-overflow class at `q--` when `q`
 is `INT_MIN` — so the first thing the tier ever says about C includes
 something it must REFUSE.
 
-**M1 is complete when** the envelope for `sunfish.c` ingests, the
-structural `#guard`s pass, and `pyfloordiv`'s AST term is printed and
-pinned — with no interpreter in the repository.
+**M1 IS COMPLETE.** `Examples/c/sunfish/guards.lean` ingests the 5.5 MB
+envelope in ~6 s and passes **19 `#guard`s** with no interpreter in the
+repository: the five structural ones the schema fixed in advance (58
+function definitions, 57 of them `static`, 71 file-scope objects, 19
+indirect call sites, 0 unsupported statements) plus the 27-name libc list
+verbatim; six on the envelope's own claims (schema version, language,
+profile id, profile flags, source path, source sha256); and seven on
+`pyfloordiv` — signature, storage, span L160-164, both parameters, three
+statements, the `q`/`r` binding order, the `/ % --` operator triple, and
+zero unsupported statements inside it.
+
+**They are non-vacuous, checked**: flipping 58 to 59, or appending a name
+to the libc list, makes Lean report the failing expression.
 
 ### 4.8 What M1 deliberately does NOT decide
 
-Where `Run` lives (§2.4 — measured not to gate this milestone, since the
-ingester tier does not use it); whether `Run.exn`'s `PyErr` payload
-becomes a parameter; whether `LeanModels/C/` is imported from
-`LeanModels.lean` (that edit is coordinator-gated and belongs to the
-milestone that first needs CI to typecheck C Lean, not to this one); and
-the endgame.
+Where `Run` lives (§2.4 — measured not to gate this milestone, and
+confirmed: the ingester tier does not mention it); whether `Run.exn`'s
+`PyErr` payload becomes a parameter; and the endgame.
+
+**One authorized edit was measured UNNECESSARY and not taken.** The
+coordinator approved importing `LeanModels/C/` from `LeanModels.lean`
+plus a `leanmodels-c-run` exe target. Measured: `Examples/c/sunfish/guards.lean`
+imports `LeanModels.C` directly, and the `Examples` lib's `Examples.+`
+glob therefore pulls the whole lane into `lake build` — and into CI —
+with no edit to either fenced file. Taking the import anyway would couple
+the C lane into every Python file's import graph, so that a C change
+invalidates the Python tree; it was tried, cost a full Examples rebuild,
+and was reverted. The exe is likewise deferred: `leanmodels-c-run` has
+nothing to run until the interpreter exists (M4), and a build target that
+does nothing is not a container, it is a stub. **Both authorizations are
+banked, unspent.**
 
 ---
 
 ## 5 STILL OWED BY THE OWNER
 
-The architecture memo left three open questions. Two are now answered,
-one is not, and this charter adds a fourth.
+The architecture memo left three open questions. **All three are now
+answered**, and the one this charter added — the endgame — is the only
+thing still open.
 
 1. **ANSWERED — the 2026-08-07 "no sunfish deliverable" scope decision
    is amended.** That entry conditioned itself precisely: *"The C tier
@@ -904,11 +938,13 @@ one is not, and this charter adds a fourth.
    sunfish ever exists (none is planned)."* One exists, it is on sunfish
    MASTER, and the owner chartered the workstream on 2026-08-21. Recorded
    as answered by the charter itself.
-2. **OPEN — does the C lane get `LeanModels/C/` and a `leanmodels-c-run`
-   executable?** That touches `lakefile.toml` and `LeanModels.lean`, the
-   two files AGENTS.md fences off. §4.8 sequences the question past M1
-   so it can be answered when it is concrete, but it must be answered
-   before the interpreter lands.
+2. **ANSWERED (coordinator), and HALF OF IT TURNED OUT UNNECESSARY.**
+   `LeanModels/C/` and a `leanmodels-c-run` exe were both approved. The
+   directory exists and is in CI — but **neither fenced file was
+   touched**: `Examples/c/sunfish/guards.lean` imports `LeanModels.C`
+   directly and the `Examples.+` glob does the rest (§4.8). The exe is
+   banked until M4 gives it something to run. So the fence held on its
+   own, and the authorization is unspent rather than used.
 3. **ANSWERED — the question dissolved rather than being decided.** It
    asked which host is the pinned oracle. The answer taken (§4.3,
    `docs/c-profile.md`) is that NO host is: the tier pins the eight facts
@@ -917,9 +953,12 @@ one is not, and this charter adds a fourth.
    on `char_signed` — and the guard says so by name in under a second.
    **This was M1's critical-path blocker and it is cleared**; the ruling
    is the coordinator's default and remains Thomas's to override.
-4. **NEW — which endgame?** §3 presents (a), (b), (c) priced. The choice
-   is not needed to start (§3.4) and becomes load-bearing at the fifth
-   step.
+4. **THE ONLY OPEN QUESTION — which endgame?** §3 presents (a), (b),
+   (c) priced. M1 is complete and was endgame-NEUTRAL by construction:
+   all three options need the corpus ingested, and nothing in
+   `LeanModels/C/` presupposes any of them. The choice binds at **M2**,
+   the semantic layer — (a) spends it on the memory model, (b) on a
+   Lean-level statement of the gate, (c) on a second corpus.
 
 One further item, not a question but a standing obligation: the ASan
 channel is DESIGNED and unverified — ASan binaries do not run in this
@@ -936,11 +975,18 @@ must be verified on the build box before any battery claims it.
 * `docs/c-tier-charter.md` — this document.
 * `docs/backlog.md` §L35 — the record.
 
-No Lean. The only existing file changed is `docs/backlog.md`. The
-commit touches no `.lean` file and no file `lake build` reads, so it
-cannot move the Python tier — but "cannot" is an argument, not a
-measurement, so the triad was run: `lake build` **3684 jobs, completed
-successfully**; `docs_check` **73/73**; `diff_test` **1315 cases, 0
-failed** (1202 matched, 113 whitelisted); `script_corpus` **64 scripts,
-0 failed** (50 matched, 14 loud). A charter that claimed a green it had
-not seen would have failed its own covenant in its last paragraph.
+Inches 2-7 added, in later commits: `harness/c_profile_probe.py` +
+`docs/c-profile.{md,json}`, `docs/c-envelope-schema.md`,
+`extractors/c/extract.py`, `LeanModels/C/{Ast,Json,Load}.lean` +
+`LeanModels/C.lean`, and `Examples/c/sunfish/{sunfish.json,guards.lean,README.md}`
+— plus sunfish PR #256.
+
+**The charter commit itself carried no Lean**, changing only
+`docs/backlog.md` among existing files — but "it cannot break anything"
+is an argument, not a measurement, so the triad was run then and at every
+inch since. At M1's completion: `lake build` **3691 jobs** (the five new
+C modules included), `docs_check` **73/73**, `diff_test` **1315 cases, 0
+failed** (1202 matched, 113 whitelisted), `script_corpus` **64 scripts, 0
+failed** (50 matched, 14 loud). The Python tier is unmoved at every one
+of those numbers. A charter that claimed a green it had not seen would
+have failed its own covenant in its last paragraph.

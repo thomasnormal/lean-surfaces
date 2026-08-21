@@ -13334,3 +13334,99 @@ the new budget refusal); `script_corpus` 64 scripts, 0 failed, 50
 matched, 14 loud — unmoved, as it should be, since no script in the
 corpus uses these operators; `refusal_census` **87 + 114 + 14 rows, 0
 drifts**. No `sorry`, no `native_decide`.
+## L50 — M1 IS COMPLETE: the C twin is INGESTED, and two authorized edits turned out unnecessary (2026-08-21)
+
+Inches 5-7 of the C-tier charter's first milestone
+([docs/c-tier-charter.md](c-tier-charter.md) §4.5-§4.7). `tools/ctwin/sunfish.c`
+now round-trips source → clang → `c-0.1` envelope → a literal Lean term, and the
+term answers structural questions the CENSUS knows by an independent path. **No
+semantics**: M1 is ingestion, and it was endgame-NEUTRAL by construction — all
+three of §3's options need the corpus ingested, and nothing in `LeanModels/C/`
+presupposes any of them. The choice binds at M2.
+
+**Inch 5 — `extractors/c/extract.py`.** All three contract paths RUN, not
+admired: the corpus extracts twice byte-identically; a missing file and a clang
+DIAGNOSTIC both refuse non-zero; a file containing `switch` yields an
+`Unsupported` leaf naming `SwitchStmt` rather than failing. **The extractor
+found a bug in ITSELF the way the schema's §6 predicts it should**: its first
+`externals` walk lacked the `loc.file` filter and reported 30 names where the
+census said 27 — the three extras (`__builtin_bswap32`, `__builtin_bswap64`,
+`__swbuf`) being names the SYSTEM HEADERS reference from their own macro bodies,
+appearing nowhere in the corpus. Two instruments, one answer, catching a defect
+before the guard that formalizes the cross-check was even written.
+
+**THE SCHEMA WAS WRONG IN EXACTLY ONE PLACE, and it is the place it predicted.**
+`docs/c-envelope-schema.md` §7 said *"the first real envelope is what will prove
+the shape survives contact with clang's actual JSON."* It did not, for types:
+the schema specified a recursive `type` object, and clang gives a **`qualType`
+STRING** almost everywhere. Measured: the 7 structured type kinds appear at 22
+nodes, **all of them under the corpus's 7 `TypedefDecl`s**. So the envelope
+carries the frontend's string plus an `underlying` tree on typedefs, and the
+schema is corrected with the measurement — parsing `qualType` into a tree would
+be writing the C type parser the frontend decision exists to avoid. Everything
+else held: the 45-kind vocabulary, spans, the macro field, `externals`, the
+`Unsupported` leaf. Recording WHICH prediction failed is the point of having
+written them down. (Second, smaller: clang wraps enum values in a `ConstantExpr`
+which is flattened into `EnumConstantDecl.value`; all 11 in-corpus `ConstantExpr`
+nodes are exactly these.)
+
+**Inch 6 — `LeanModels/C/{Ast,Json,Load}.lean`, and the shape changed on contact
+with C's grammar.** A function DEFINITION is the only declaration containing
+statements and C has no nested functions, so `Expr`, `Decl` and `Stmt` form **no
+cycle** and `FunctionDefn` sits on top as a structure — the same shape the Python
+lane's `FunctionDefn` has, arrived at from the language rather than borrowed
+(the first draft used a `mutual` block and did not derive `Repr`). `CType` is a
+`String` for the reason above. Literals keep their SOURCE SPELLING as strings:
+an `IntegerLiteral` is `"2147483648"`, never a `Nat`, because a literal that
+overflowed its type during ingestion would have been silently decided before the
+semantics ever saw it. **`LeanModels/C/` defines its own JSON helpers rather
+than importing the Python lane's** — it is a SIBLING, not a client (§2.1), and
+twenty lines is not a reason to couple two tiers. `load_c_program` defines the
+whole `Envelope`, because `externals` is a claim the ingester must be checkable
+against too, and it REFUSES a `profile_id` mismatch.
+
+**Inch 7 — the capstone. `Examples/c/sunfish/guards.lean` ingests the 5.5 MB
+envelope in ~6 s and passes 19 `#guard`s**, with no interpreter in the
+repository. The five the schema fixed BEFORE the ingester existed — 58 function
+definitions, 57 `static`, 71 file-scope objects, 19 indirect call sites, 0
+unsupported statements — plus the 27-name libc list verbatim; six on the
+envelope's own claims (schema, language, profile id, profile flags, source path,
+source sha256); and seven on `pyfloordiv` — signature, storage, span L160-164,
+both parameters, three statements, the `q`/`r` binding order, the `/ % --`
+operator triple, and zero unsupported statements inside it. **Non-vacuous,
+checked**: flipping 58 to 59, or appending a name to the libc list, makes Lean
+report the failing expression.
+
+`pyfloordiv` was the charter's §4.7 choice and its reasons are M1's thesis: the
+site the ctwin README names as **the #1 place C clones silently diverge from
+Python**, so the square's first cross-language datum, and two of the eleven
+armed UB classes in three statements. The first thing this tier says about C
+includes something it must REFUSE.
+
+**TWO AUTHORIZED STRUCTURAL EDITS, MEASURED UNNECESSARY, NOT TAKEN.** The
+coordinator approved `LeanModels/C/` imported from `LeanModels.lean` plus a
+`leanmodels-c-run` exe. Measured: `Examples/c/sunfish/guards.lean` imports
+`LeanModels.C` directly, so the `Examples` lib's `Examples.+` glob pulls the
+whole lane into `lake build` — and into CI — **with neither fenced file
+touched**. The import was tried, cost a full Examples rebuild, and was reverted:
+taking it would couple the C lane into every Python file's import graph, so a C
+change would invalidate the Python tree forever after. The exe is deferred until
+M4 gives it something to run; a build target that does nothing is a stub, not a
+container. **Both authorizations are banked, unspent, and the fence held on its
+own.**
+
+**Open question 2 is therefore ANSWERED, and with it all three of the
+architecture memo's.** The only thing still open is the one this charter added:
+**which endgame** — (a) verified C-subset with ctwin running, (b) the
+twin-bridge theorem, (c) a general C ladder. Inch 2's sunfish PR **#256**
+(`SF_PYREF`, making the interpreter cross-check reproducible) is also still with
+Thomas.
+
+### Triad
+
+`lake build` **3691 jobs green** — the five new C modules (`LeanModels.C`,
+`.C.Ast`, `.C.Json`, `.C.Load`, `Examples.c.sunfish.guards`) included;
+`docs_check` **73/73**, 15 illustrative-exempt; `diff_test` **1315 cases, 0
+failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed,
+50 matched, 14 loud**. The Python tier is unmoved at every number. No `sorry`,
+no `native_decide`; the C lane declares no theorems, so no axioms moved.

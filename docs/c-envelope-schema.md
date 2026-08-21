@@ -107,7 +107,7 @@ Counts are today's corpus and are informative, not normative.
 | `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl`…] |
 | `TypedefDecl` | 7 | `name`, `type` |
 | `EnumDecl` | 3 | `name` \| null, `constants`: [`EnumConstantDecl`…] |
-| `EnumConstantDecl` | 11 | `name`, `value`: int |
+| `EnumConstantDecl` | 11 | `name`, `value`: str (decimal). clang wraps the value in a `ConstantExpr`; it is FLATTENED here, because an enum constant's meaning is the folded integer. **All 11 in-corpus `ConstantExpr` nodes are exactly these**, so the emitted vocabulary is 44 kinds + this flattening |
 
 ### 3.2 Statements (11)
 
@@ -152,18 +152,34 @@ rung rather than a v0 hole.
 | `InitListExpr` | 75 | `inits`: [expr…], `type` |
 | `CompoundLiteralExpr` | 1 | `init`: `InitListExpr`, `type` |
 | `UnaryExprOrTypeTraitExpr` | 12 | `trait`: `"sizeof"` \| `"alignof"`, `arg_type` \| `sub`, `type` |
-| `ConstantExpr` | 11 | `value`: str, `sub`, `type` |
+| `ConstantExpr` | 11 | `value`: str, `sub`, `type` — emitted as a NODE only where it is not flattened into `EnumConstantDecl.value` (0 such sites today; bit-field widths at rung R2) |
 
-### 3.4 Types (7)
+### 3.4 Types — a STRING almost everywhere, a tree only on typedefs
 
-`BuiltinType`, `PointerType`, `RecordType`, `TypedefType`,
-`ElaboratedType`, `ParenType`, `FunctionProtoType`. Emitted as a `type`
-object wherever a node carries one:
-`{"kind": "PointerType", "pointee": {...}}`, with `BuiltinType` carrying
-`{"name": "int"}`. Qualifiers ride the type as `"const": true` /
-`"volatile": true` / `"restrict": true` — **`restrict` is INGESTED and
-NEVER EXPLOITED** (the memo's §2.5 non-claim, recorded here so nobody
-later reads it from the AST and assumes the model checked it).
+**Corrected against clang's actual output** (see §7): this section
+originally specified a recursive `type` object at every node. clang's
+`-ast-dump=json` does not emit one. Every expression and declaration
+carries `"type"` as clang's **`qualType` STRING** (`"int"`,
+`"int (*)(Move, void *)"`, `"const char[121]"`), and the seven structured
+type kinds appear in exactly one place.
+
+Measured on the corpus: **22 structured type nodes, ALL of them under the
+7 `TypedefDecl`s.** So:
+
+* every node's `"type"` is the qualType string the frontend gives;
+* a `TypedefDecl` additionally carries `"underlying"`: a tree over
+  `BuiltinType` (`{"name": "int"}`), `PointerType`/`ParenType`/
+  `ElaboratedType` (`{"inner": …}`), `FunctionProtoType`
+  (`{"ret": …, "params": […]}`), `RecordType`, `TypedefType`.
+
+**Parsing `qualType` into a tree would be writing the C type parser this
+schema exists to avoid**, and it would put a transformation between the
+model and the oracle. The string is what the frontend decided; the tier
+inherits it and the structured form arrives only where clang volunteers
+it. Qualifiers therefore ride inside the string (`"const char *"`) rather
+than as flags — including `restrict`, which is **INGESTED and NEVER
+EXPLOITED** (the memo's §2.5 non-claim, recorded so nobody later reads it
+off the AST and assumes the model checked it).
 
 The scalar type vocabulary the corpus actually uses, by node count:
 `int` 4733, `long` 340, `char` 254, `unsigned char` 173, `uint64_t` 153,
@@ -268,6 +284,18 @@ as prose.
   libc names MEANS is the interpreter's libc slice (inch/milestone M4),
   not this schema's business. The list exists so the ingester can tell a
   declared-elsewhere name from an undeclared one.
-* **No envelope has been produced yet.** This document fixes the target
-  for inch 5; the first real envelope is what will prove the shape
-  survives contact with clang's actual JSON.
+* **The shape survived contact with clang's actual JSON in all but one
+  place, and that place is now fixed.** Inch 5 produced the first real
+  envelope and the schema was wrong about types: it specified a recursive
+  `type` object where clang gives a `qualType` STRING, with structured
+  type nodes only under typedefs (§3.4, corrected, with the measurement).
+  Everything else — the 45-kind vocabulary, the span encoding, the macro
+  field, `externals`, the `Unsupported` leaf — held as written. Recording
+  which prediction failed is the point of having written them down.
+* **The extractor found one bug in itself the same way.** Its first
+  `externals` walk lacked the `loc.file` filter and reported 30 names
+  instead of 27, the three extras (`__builtin_bswap32`,
+  `__builtin_bswap64`, `__swbuf`) being names the SYSTEM HEADERS
+  reference from their own macro bodies and which appear nowhere in the
+  corpus. The census's 27 caught it — two instruments, one answer, which
+  is what §6 is for, working before §6 was built.

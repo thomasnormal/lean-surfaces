@@ -12059,7 +12059,8 @@ file at the statement that owes it.
 
 ### Triad
 
-`lake build` **3684 jobs green**; `docs_check` 73/73, 15 illustrative-exempt; `diff_test`
+`lake build` **3685 jobs green** (3684 on this lane's own tree, plus §L37's `qs_measure`
+after the rebase onto it); `docs_check` 73/73, 15 illustrative-exempt; `diff_test`
 **1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` 64
 scripts, 0 failed, 50 matched, 14 loud. All twenty-six printed declarations depend
 on `[propext, Classical.choice, Quot.sound]` or less; `settle_folds` is

@@ -155,7 +155,25 @@ print(x)
 w("stmt.AnnAssign", """
 x: int = 1
 print(x)
-""", "REFUSE", "the annotation sort is unextracted")
+""", "REFUSE",
+  "MODULE scope: the annotation IS evaluated here and `__annotations__` is "
+  "written, so §L49 rung 2's rewrite deliberately stops short of it")
+w("stmt.AnnAssign-local", """
+def f(n):
+    x: int = n + 1
+    return x
+print(f(1))
+""", "MATCH",
+  "FUNCTION scope: PEP 526 never evaluates the annotation, so this is an "
+  "ordinary assign — was REFUSE, landed by §L49 rung 2")
+w("stmt.AnnAssign-novalue", """
+def f(n):
+    x: int
+    return n
+print(f(1))
+""", "REFUSE",
+  "`x: int` binds nothing yet LOCALISES the name; dropping it would read a "
+  "module global where CPython raises UnboundLocalError")
 w("stmt.For", """
 for i in [1, 2]:
     print(i)
@@ -514,6 +532,10 @@ WHITELIST_CLASS = {
     "star_lab::star_for": "starred.position",
     "star_shadow::shadowed": "shadow.module-census",
     "star_shadow::elsewhere": "shadow.module-census",
+    "ann_lab::ann_novalue": "annassign.no-value",
+    "ann_lab::ann_novalue_read": "annassign.no-value",
+    "ann_lab::ann_novalue_shadows_global": "annassign.no-value",
+    "ann_lab::ann_attr_target": "annassign.non-simple-target",
     "assert_lab::msg_set": "set.order",
     "assert_lab::catch_assert": "exc.handler",
     "fstring_lab::conversion_repr": "fstring.conversion",
@@ -543,6 +565,7 @@ SCRIPT_CLASS = {
     "print_nonascii": "str.non-ascii",
     "import_not_top_level": "import.position",
     "alias_before_def": "alias.admission",
+    "ann_module_script": "annassign.module-scope",
     "alias_rebound": "alias.admission",
     "del_def_mid_script": "del.definition-name",
     "del_dunder_script": "del.definition-name",

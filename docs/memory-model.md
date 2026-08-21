@@ -1646,6 +1646,83 @@ guaranteed to be short by however many `cases` sites exist.
 3.9.19 over a 95481-pair XOR grid and a 24720-pair shift grid (plus the
 `~`/`+` identities and the bool-type rules), 0 mismatches.
 
+## Annotated assignment (`AnnAssign`, §L49 rung 2)
+
+`x: int = 1` in a FUNCTION BODY is an ordinary assignment, rewritten to
+one at extraction. Everywhere else it stays loud. The split is not a
+narrowing of convenience — it is where CPython itself puts a semantic
+boundary, and the census measured it rather than reading PEP 526 for it.
+
+**What was measured** (CPython 3.9.19, `harness/refusal_census.py`'s
+witnesses plus a one-off probe; every row run, none inferred):
+
+| probe | function scope | module scope |
+| --- | --- | --- |
+| `x: boom() = 1` where `boom` raises | **runs clean** | **raises** |
+| `x: Undef = 1` | **runs clean** | `NameError` |
+| `x: Undef` (no value) | **runs clean** | `NameError` |
+| `__annotations__` afterwards | does not exist | `{'x': <class 'int'>}` |
+
+So in a function body the annotation is not merely unused — it is never
+evaluated, and an annotation that could not even be evaluated does not
+matter. That is what makes the rewrite EXACT with no condition on the
+annotation expression: `List[int]`, a string forward reference, a
+division by zero, all identical, because none of them runs.
+
+**Three further measurements fix the boundary.**
+
+* **Order at module scope is VALUE, then the store, then the
+  ANNOTATION** — `r.a: t('ANN') = t('VAL')` prints `eval VAL`, `store a
+  VAL`, `eval ANN`. A raising annotation therefore leaves the target
+  BOUND (measured: `x bound? True 7`). Any future module-scope admission
+  has to reproduce that order, which is why it is written down here
+  before anyone needs it.
+* **A value-less `x: int` binds nothing but LOCALISES its name.** In a
+  function, `x: int` followed by `return x` is `UnboundLocalError` — and
+  so is `g: int; return g` where `g` is a module global holding 5. This
+  is the shape that must never be quietly dropped: a model that treated
+  the statement as `pass` would resolve `g` to the module global and
+  answer 5 where CPython raises. It is refused as a SHAPE rather than
+  case by case, and `ann_lab.ann_novalue_shadows_global` is the row that
+  says so.
+* **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
+  `__annotations__` entry but still evaluate the annotation, so they are
+  their own refusal.
+
+**As built.** One extractor clause, no interpreter change, no proof-layer
+change, no new AST node: a function-body `AnnAssign` with `simple == 1`
+and a value converts to the `Assign` node it already is. The refusal
+`py_kind` splits three ways — `AnnAssign:module-scope`,
+`AnnAssign:no-value`, `AnnAssign:non-simple-target` — so the survey's
+static telemetry ranks them separately, which is the point of splitting
+them.
+
+The one mechanical piece is a `func_scope` flag threaded through
+`convert_stmt` beside the existing `module_scope`, set only by the
+FunctionDef/NestedDef body conversion and passed down the eight compound
+bodies. It is not decoration: `module_scope=False` alone would have
+admitted the rewrite inside a CLASS body, where the annotation IS
+evaluated. (A class body carrying one is loud today on two independent
+counts — `class_unsupported: class-level statements` and
+`creation_effects: True` — so the flag buys correctness by construction
+rather than by that coincidence, which is the same reason the alias
+census re-checks at ingestion.)
+
+**The static binding census needed nothing.** `_target_bound_names` is
+already reached for `ast.AnnAssign` through the `AugAssign`/`For` clause,
+so the census already counted `x` as bound before the rewrite existed —
+the rewrite tells it nothing new, and the value-less form was already
+counted as a binding too, which is exactly CPython's localisation.
+
+**Owed, with its price.** Module scope is admissible as a TWO-statement
+ingestion rewrite — the assign, then the annotation as an expression
+statement, in CPython's measured order — because `__annotations__` is
+unobservable in tier (every module dunder but `__name__` refuses
+loudly). It is not taken here because rewriting one statement into two
+moves `Module.topLevel` indices, which the proof campaign's pins are
+stated against (`nth n sbB`), and that blast radius belongs to a pass
+that budgets for it.
+
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 
 #158 rewrote gen_moves's promotion loop as

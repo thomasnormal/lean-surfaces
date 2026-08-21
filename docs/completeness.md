@@ -59,11 +59,13 @@ forks on and two measured edge rows.
 | edge rows (2) | 1 | `Pow-negative` |
 | `cmpop` (10), `boolop` (2) | 0 | — |
 
-**Then rung 1 landed in the same pass**, so the table above is the census
-AS TAKEN and the current numbers are **87 witnesses, 64 MATCH, 23
-REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH, and
-`RShift-budget` joined as the new edge row. The taken-table is kept
-rather than overwritten — it is what the ladder was priced against.
+**Then rungs 1 and 2 landed**, so the table above is the census AS TAKEN
+and the current numbers are **89 witnesses, 65 MATCH, 24 REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
+`RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` joined
+as a MATCH and `AnnAssign-novalue` as a refusal, with `stmt.AnnAssign`
+itself staying REFUSE because its witness is module-scope (rung 2). The
+taken-table is kept rather than overwritten — it is what the ladder was
+priced against.
 
 **25 of the 26 are gaps; one is faithful.** `1 @ 2` is a `TypeError` in
 CPython too, so `op.MatMult` costs a program nothing — no operand type in
@@ -90,8 +92,9 @@ model actually produced, against a construct class recorded per row in
 the instrument. A whitelisted row with no class fails the run — the
 census covers the whole whitelist, or it is not one.
 
-**113 whitelisted rows, 44 classes** as taken (114 after rung 1 landed —
-`>>`'s budget row joined `<<`'s in `op.LShift-budget`). The head:
+**113 whitelisted rows, 44 classes** as taken (118 in 46 classes after
+rungs 1-2: `>>`'s budget row joined `<<`'s in `op.LShift-budget`, and
+`annassign.no-value` / `annassign.non-simple-target` are new). The head:
 
 | class | rows | representative |
 | --- | --- | --- |
@@ -134,7 +137,8 @@ then 3 rows each for `builtin.int-of-str`, `fstring.conversion`,
   stdout. These 11 rows price the HARNESS, not the language, and belong
   in a different queue from the rest.
 
-**14 loud scripts, 9 classes**: `del.definition-name` 3;
+**14 loud scripts, 9 classes** as taken (15 in 10 after rung 2 added
+`annassign.module-scope`): `del.definition-name` 3;
 `alias.admission`, `class.creation-effect`, `script.definition-order` 2
 each; `format.percent-minilanguage`, `import.position`, `set.order`,
 `starred.position`, `str.non-ascii` 1 each.
@@ -245,22 +249,37 @@ before a line of Lean was written. `>>` takes `<<`'s budget refusal
 rather than CPython's saturation — loud, never a claim CPython raises,
 with saturation recorded as owed.
 
-### Rung 2 — `AnnAssign`. Price: SMALL.
+### Rung 2 — `AnnAssign`. Price: SMALL. **LANDED (function bodies).**
 
-`x: int = 1` is the single most common construct in modern Python that
-this model refuses outright, and it refuses the WHOLE FILE.
+`x: int = 1` was the single most common construct in modern Python that
+this model refused outright, and it refused the WHOLE FILE.
 
-The semantics split by scope and the split is what makes it cheap. In a
-FUNCTION body PEP 526 says the annotation is not evaluated at all, so
-`x: T = v` with a plain-name target is `Assign` exactly — an ingestion
-rewrite, zero interpreter change, zero risk. At MODULE and CLASS scope
-the annotation IS evaluated and stored into `__annotations__`; that half
-can stay loud, or be admitted when the annotation is a name that
-resolves to a builtin type. A bare `x: T` (no value) BINDS NOTHING and
-must not be rewritten to anything.
+The semantics split by scope, and the split is what made it cheap — one
+extractor clause, no interpreter change, no proof-layer change, no new
+AST node. docs/memory-model.md §annotated assignment is the contract.
 
-**Unblocks**: typed application and library code — where a single
-annotated local currently costs the whole module.
+**Measured, not read off PEP 526**: in a function body the annotation is
+never evaluated, so `x: boom() = 1` and `x: Undef = 1` both run clean
+inside a `def` and both raise at module scope. That is what makes the
+rewrite exact with NO condition on the annotation expression.
+
+**Three shapes stay loud, each for a measured reason.** Module and class
+scope evaluate the annotation and write `__annotations__` (after storing
+the value — the order is measured). A value-less `x: int` binds nothing
+but LOCALISES its name, so dropping it would read a module global where
+CPython raises `UnboundLocalError` — the one shape whose quiet narrowing
+would be a silent wrong answer, pinned by
+`ann_lab.ann_novalue_shadows_global`. Non-simple targets still evaluate
+their annotation.
+
+**Unblocks**: typed application and library code, where a single
+annotated local used to cost the whole module.
+
+**Owed**: module scope is admissible as a two-statement ingestion rewrite
+(assign, then the annotation as an expression statement, in CPython's
+measured order), because `__annotations__` is unobservable in tier. Not
+taken here because one-statement-into-two moves `Module.topLevel`
+indices that the proof campaign's pins are stated against.
 
 ### Rung 3 — live dict iteration. Price: MEDIUM. Value: the highest per unit.
 

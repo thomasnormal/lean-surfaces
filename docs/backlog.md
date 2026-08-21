@@ -13430,3 +13430,118 @@ Thomas.
 failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed,
 50 matched, 14 loud**. The Python tier is unmoved at every number. No `sorry`,
 no `native_decide`; the C lane declares no theorems, so no axioms moved.
+
+## L51 — RUNG 2 LANDS: `AnnAssign` in function bodies, and the census found the one shape that must NOT be narrowed (2026-08-21)
+
+*(python-completeness lane; §L39 is its census, §L49 its rung 1. §L50 is
+the C tier's and §L40–L48 the sunfish campaign's; both win conflicts.
+This lane claims §L51.)*
+
+`x: int = 1` inside a `def` runs. It was the most common construct in
+modern Python that this model refused outright, and it refused the WHOLE
+FILE. **One extractor clause. No interpreter change, no proof-layer
+change, no new AST node, no Lean file touched at all** — so the whole
+rung cost one extraction and three harness runs rather than a rebuild.
+docs/memory-model.md §annotated assignment is the contract;
+docs/completeness.md rung 2 is updated in place.
+
+Grammar census **87 → 89 witnesses, 64 → 65 MATCH**.
+
+### The census, and it is why the rewrite needs NO condition
+
+Measured on CPython 3.9.19 before a line was written — the point of the
+probe was to make "PEP 526 says the annotation is unevaluated"
+FALSIFIABLE rather than cited:
+
+| probe | function scope | module scope |
+| --- | --- | --- |
+| `x: boom() = 1`, `boom` raising | **runs clean** | **raises** |
+| `x: Undef = 1` | **runs clean** | `NameError` |
+| `x: Undef` (no value) | **runs clean** | `NameError` |
+| `__annotations__` afterwards | does not exist | `{'x': <class 'int'>}` |
+
+In a function body the annotation is not merely unused, it is never
+evaluated — so `List[int]`, a string forward reference and a division by
+zero are all identical, and the rewrite carries no condition on the
+annotation expression. `ann_lab.ann_raising_ann` (`x: (1 // 0) = n`) is
+the row that keeps this honest.
+
+### THE SHAPE THAT MUST NOT BE NARROWED, and the census is what caught it
+
+A value-less `x: int` **binds nothing yet LOCALISES its name.** Measured:
+inside a function, `g: int` followed by `return g` raises
+`UnboundLocalError` even though `g` is a module global holding 5.
+
+A model that treated the statement as `pass` — the obvious "it binds
+nothing, so drop it" move — would resolve `g` to the module global and
+**answer 5 where CPython raises**. Not a refusal: a silent wrong answer,
+the failure class the loudness doctrine exists for. So the value-less
+form is refused as a SHAPE, not case by case, and
+`ann_lab.ann_novalue_shadows_global` is the row that says why.
+
+Two more measurements fix the rest of the boundary:
+
+* **Module-scope order is VALUE, then the store, then the ANNOTATION** —
+  `r.a: t('ANN') = t('VAL')` prints `eval VAL` / `store a VAL` /
+  `eval ANN`, and a raising annotation leaves the target BOUND. Recorded
+  now, before anyone needs it, because any module-scope admission must
+  reproduce that order.
+* **`simple == 0` targets** (`(x)`, `c.a`, `d[k]`) get no
+  `__annotations__` entry but still evaluate the annotation, so they are
+  their own refusal.
+
+The refusal `py_kind` splits three ways — `AnnAssign:module-scope`,
+`AnnAssign:no-value`, `AnnAssign:non-simple-target` — so the survey's
+static telemetry ranks them separately, which is the reason to split.
+
+### The one mechanical piece, and why it is not decoration
+
+`convert_stmt` gains a `func_scope` flag beside the existing
+`module_scope`, set only by the FunctionDef/NestedDef body conversion and
+threaded through the eight compound bodies. `module_scope=False` alone
+would have admitted the rewrite inside a CLASS body, where the annotation
+IS evaluated (`C.__annotations__` measured non-empty).
+
+A class body carrying an annotated assignment is loud today on two
+independent counts — `class_unsupported: class-level statements (class
+attributes)` and `creation_effects: True`, both checked rather than
+assumed — so the flag buys correctness BY CONSTRUCTION instead of by that
+coincidence. Same reason the alias census re-checks at ingestion.
+
+**The static binding census needed nothing**, and that was checked too:
+`_target_bound_names` is already reached for `ast.AnnAssign` through the
+`AugAssign`/`For` clause, so the census already counted `x` as bound
+before the rewrite existed — including the value-less form, which is
+exactly CPython's localisation.
+
+### Owed, with its price
+
+Module scope is admissible as a TWO-statement ingestion rewrite: the
+assign, then the annotation as an expression statement, in the measured
+order. `__annotations__` is unobservable in tier (every module dunder but
+`__name__` refuses loudly), so skipping the store is sound. NOT taken
+here because rewriting one statement into two moves `Module.topLevel`
+indices, which the proof campaign's pins are stated against
+(`nth n sbB`) — a blast radius that belongs to a pass which budgets for
+it, not to a rung priced at one clause.
+
+### Battery
+
+`Examples/python/ann_lab` — a differential lab in the `assert_lab` shape
+(no `spec.lean`, so no Lean module): 13 functions, 9 admitted and 4 loud,
+22 `cases.json` rows including the raising annotation, the undefined and
+subscripted and string annotations, a target that shadows a builtin,
+compound-body nesting (which is what `func_scope`'s threading is for),
+`+=` after an annotated init, and all three refusal shapes.
+`harness/scripts/ann_module_script.py` pins the module-scope refusal on
+the whole-program surface. Census: `stmt.AnnAssign-local` joins as a
+MATCH, `stmt.AnnAssign-novalue` as a refusal, and `stmt.AnnAssign`
+itself stays REFUSE because its witness is module-scope.
+
+### Triad
+
+`lake build` unaffected — **no Lean file changed**; `docs_check` 73/73,
+15 illustrative-exempt; `diff_test` **1394 cases, 0 failed, 118
+whitelisted, 1276 matched** (from 1372/0/114); `script_corpus` **65
+scripts, 0 failed, 50 matched, 15 loud**; `refusal_census` **89 + 118 +
+15 rows, 0 drifts**; extractor tests 77 OK.

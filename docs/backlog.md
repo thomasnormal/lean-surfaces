@@ -12244,3 +12244,94 @@ touched by this pass.
 * The witness corpus is INSIDE the instrument, not in the tree: nothing
   is added to `harness/scripts/`, so no existing measured number moves.
   `--keep DIR` dumps the witnesses when you want to look at one.
+## L40 — M1 INCHES 2-3: the cross-check becomes reproducible, and the profile becomes a SCHEMA (2026-08-21)
+
+Two inches of the C-tier charter's first milestone
+([docs/c-tier-charter.md](c-tier-charter.md) §4.2, §4.3). The endgame choice is
+still Thomas's and is still not needed: both inches are in the prefix all three
+options share.
+
+**Inch 2 — M0's residue, as sunfish PR #256.** §L35 found that M0 was DONE
+(the 2026-08-16 interpreter cross-check, 0 mismatches under CPython 3.9.19) but
+that the swap producing it was an **uncommitted** patch, so the result did not
+reproduce from a clean checkout. `SF_PYREF` is now that patch, in the tree:
+pypy3 stays the default for the measured reason, every difftest coverage line
+NAMES the interpreter that produced it — a passing log now records what it
+verified instead of leaving it to memory — and a bad value fails loudly with no
+silent fallback, because a gate that quietly ran the other interpreter would be
+worse than one that did not run. Verified both ways on the branch at
+`--n 6 --depth 5 --walk`: 7 positions, 210 probes, 266 movegen lists, **0
+mismatches under each**. ctwin lives in the sunfish repo, so this is a PR for
+Thomas rather than a push. Both pins re-checked at its base (sunfish master has
+since moved to `fd4dd5f`): `sunfish.py` `f6c481a6…` and `tools/ctwin/sunfish.c`
+`7d5e0ff8…`, neither touched since `e670434`.
+
+**Inch 3 — the profile, and it CHANGED SHAPE.** The memo's §3.3 proposed
+pinning ONE machine as the oracle and left "which host" as its open question 3.
+The tier has **two** development hosts — an arm64 macOS laptop and an x86-64
+Linux box — so pinning either makes the other silently produce a different
+envelope. Ruling taken (coordinator's default, Thomas can override): **pin the
+FACTS the corpus depends on, as a schema every host must satisfy**, with a
+`#guard` per host instead of an anointed machine.
+
+**The ruling carried a stop-condition — *if ctwin depends on any fact where the
+two hosts DIFFER, stop and flag loudly* — and it was tested BEFORE anything was
+built. Measured: 13 facts, 8 depended-on, ZERO disagreements.** The condition
+does not fire; the ruling stands on that measurement rather than on taste.
+
+`harness/c_profile_probe.py` decides every fact by `_Static_assert` under
+`clang -target <triple> -fsyntax-only`. clang folds the constant for the
+TARGET's ABI, so **one laptop certifies a host it cannot execute** — which is
+the whole reason a two-host schema is checkable at all, and no cross-compiled
+binary is ever run. A failed assertion is the NEGATIVE answer; anything else (an
+unknown triple, a missing header) is an instrument fault that exits non-zero
+saying so, because reporting a broken probe as "the host differs" would be a
+silent wrong answer.
+
+**The guard, exercised on a real divergence.** Both dev hosts pass all 8
+depended-on facts. **Linux AArch64 — the exact divergence the memo flagged —
+FAILS by name** on `char_signed`, printing the expression, both answers, and the
+witness (the board is `char b[120]` and `CLS[(int)p->b[j]]` indexes a 128-entry
+table by it, L346). That is the difference between a gate and an assertion.
+
+**Three findings from the dependence analysis.** (1) **The `-std=c23` pin is
+LOAD-BEARING, not a formality**: `VM_VAL` recovers the signed move value with
+`(int)((uint32_t)((k) >> 32) ^ 0x80000000u)` (L652), an out-of-range
+unsigned→signed conversion that **C23 §6.3.1.3 MANDATES** and that C17 left
+implementation-defined — permitting a signal. The move ordering, which is the
+first thing the fidelity gate compares, rests on a guarantee that arrived in the
+standard version the tier pins. Both hosts already did the C23 thing, which is
+why nobody noticed. (2) **Endianness is measured and deliberately NOT depended
+on**, against the naive reading: `pos_seal` hashes the board THROUGH `uint64_t`
+words so `h` really does differ by endianness — but `h` is never observable, and
+the corpus argues it in its own comments (a fast reject in front of a full
+`memcmp`, L209-217, *"never a substitute"*; an unobservable bucket layout,
+L403-405). Recorded with the reason, because the reason is a property of TODAY's
+`pos_seal`. (3) **The corpus has ZERO signed right shifts** — all six `>>` sites
+are on `uint64_t` (L192-194, L652-653) — so the memo's right-shift-of-negative
+fact is not depended on either. The `<<` side is likewise clean.
+
+`profile_id` stays a first-class envelope field; what changed is what it
+identifies — not a machine, but the schema version plus the flag pin, so "two
+conforming hosts produce the same envelope" is a CHECKED property.
+
+**Open question 3 is therefore ANSWERED, and it dissolved rather than being
+decided.** It was M1's critical-path blocker; inches 4-7 are unblocked.
+
+### Triad
+
+Rebased onto §L36/§L37 (two sibling lanes landed first and took those numbers;
+this section renumbered from 36 to 40 as sibling lanes claimed the numbers first), and the triad was re-run AFTER the
+rebase because those commits changed `.lean` files:
+
+`lake build` **3685 jobs green**; `docs_check` **73/73**, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. This
+lane changed no Lean, so no axioms moved; no `sorry`, no `native_decide`.
+
+**Two operational notes, both paid for here and confirmed independently by the
+R-track.** A cold clone must run `lake exe cache get` BEFORE its first
+`lake build` — Mathlib from source is hours where the cache is seconds; §L35
+records the `cp -Rpc` half of the same lesson. And **never run `lake build` as a
+harness background task**: one was reaped mid-build here, and the rerun had to
+be detached with `nohup` to survive.

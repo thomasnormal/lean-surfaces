@@ -748,21 +748,53 @@ the tree.
 Inch 2 is therefore: land the env-gated interpreter flag in
 `tools/ctwin/difftest.py` so the cross-check is re-runnable rather than
 re-derivable only by hand — keeping `pypy3` the default, for the recorded
-performance reason. Cross-repo, needs sunfish write scope, and is one
-line plus a note.
+performance reason.
 
-### 4.3 Inch 3 — the pinned profile document.
+**DONE, as sunfish PR #256** (`ctwin: make the interpreter cross-check
+reproducible`), awaiting review. `SF_PYREF` is in the tree, every
+difftest coverage line now NAMES the interpreter that produced it, and a
+bad value fails loudly with no silent fallback to `pypy3`. Verified both
+ways on that branch at `--n 6 --depth 5 --walk`: 7 positions, 210 probes,
+266 movegen lists, **0 mismatches under each**.
 
-`docs/c-profile-<id>.md` + `docs/c-profile.json`, recording `char`
-signedness (SIGNED on this host, UNSIGNED on Linux AArch64 — and the
-corpus stores the board as `char b[120]` compared against `'R'`, `'q'`,
-`'.'`), `CHAR_BIT`, LP64 sizes, endianness, right-shift of negatives,
-`__STDC_VERSION__`, `__STDC_IEC_60559_BFP__` (NOT defined on the
-candidate oracle) and `_FORTIFY_SOURCE=0`.
+### 4.3 Inch 3 — the profile. **LANDED — as a SCHEMA, not a pinned host.**
 
-**This must land before the extractor**, because the profile is an INPUT
-to the AST and not a stamp on it. A profile mismatch between an envelope
-and a runner is a LOUD harness error, never a silent re-run.
+`docs/c-profile.md` + `docs/c-profile.json` +
+`harness/c_profile_probe.py`. This inch changed shape while it was being
+done, and the change is the interesting part.
+
+The memo's §3.3 proposed pinning ONE machine as the oracle, and left
+"which host" as its open question 3. The tier has **two** development
+hosts — an arm64 macOS laptop and an x86-64 Linux box — so pinning either
+makes the other silently produce a different envelope. **The ruling
+taken: pin the FACTS the corpus depends on, as a schema every host must
+satisfy**, with a `#guard` per host rather than an anointed machine.
+
+The ruling carried a stop-condition — *if ctwin depends on any fact where
+the two hosts DIFFER, stop and flag* — and it was tested first.
+**Measured: 13 facts, 8 depended-on, ZERO disagreements.** The condition
+does not fire.
+
+Every fact is decided by `_Static_assert` under
+`clang -target <triple> -fsyntax-only`, so clang folds it for the
+TARGET's ABI and one laptop certifies a host it cannot execute. The guard
+rejects a bad host BY NAME: Linux AArch64 — the divergence the memo
+flagged — fails on `char_signed`, with the witness attached.
+
+Three findings from the dependence analysis, all in `docs/c-profile.md`:
+`VM_VAL`'s `(int)` conversion of an out-of-range `uint32_t` is
+**C23-MANDATED and was implementation-defined under C17**, so the
+`-std=c23` pin is load-bearing for the move ordering rather than a
+formality; endianness is measured and deliberately NOT depended on,
+because `pos_seal`'s hash is never observable (a fast reject in front of
+a full `memcmp`, and an unobservable bucket layout); and the corpus has
+**zero signed right shifts**, so the memo's right-shift fact is not
+depended on either.
+
+`profile_id` stays a first-class envelope field. What changed is what it
+identifies: not a machine, but the schema version plus the flag pin —
+and that two conforming hosts produce the same envelope is now a CHECKED
+property rather than a hope.
 
 ### 4.4 Inch 4 — `docs/c-envelope-schema.md`.
 
@@ -850,8 +882,8 @@ the endgame.
 
 ## 5 STILL OWED BY THE OWNER
 
-The architecture memo left three open questions. One is answered, two
-are not, and this charter adds a fourth.
+The architecture memo left three open questions. Two are now answered,
+one is not, and this charter adds a fourth.
 
 1. **ANSWERED — the 2026-08-07 "no sunfish deliverable" scope decision
    is amended.** That entry conditioned itself precisely: *"The C tier
@@ -864,11 +896,14 @@ are not, and this charter adds a fourth.
    two files AGENTS.md fences off. §4.8 sequences the question past M1
    so it can be answered when it is concrete, but it must be answered
    before the interpreter lands.
-3. **OPEN — which host is the pinned oracle?** The profile is per-host:
-   this laptop's Apple clang 17 makes `char` SIGNED and does not define
-   `__STDC_IEC_60559_BFP__`; a Linux AArch64 box flips the first. This
-   BLOCKS inch 3 and therefore inches 4-7. It is the one open question
-   on M1's critical path.
+3. **ANSWERED — the question dissolved rather than being decided.** It
+   asked which host is the pinned oracle. The answer taken (§4.3,
+   `docs/c-profile.md`) is that NO host is: the tier pins the eight facts
+   the corpus depends on as a schema, and both development hosts satisfy
+   all eight with zero disagreements. Linux AArch64 would not — it fails
+   on `char_signed` — and the guard says so by name in under a second.
+   **This was M1's critical-path blocker and it is cleared**; the ruling
+   is the coordinator's default and remains Thomas's to override.
 4. **NEW — which endgame?** §3 presents (a), (b), (c) priced. The choice
    is not needed to start (§3.4) and becomes load-bearing at the fifth
    step.

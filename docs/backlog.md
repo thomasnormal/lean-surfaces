@@ -12932,3 +12932,91 @@ already exist.
 4. **Stopping one statement in is a result if the map is the deliverable.** The
    call path is now written down end to end in the file tail, with each step named
    and its supply identified. The next pass does not re-derive it.
+
+## L46 — R3c's INVARIANT, SPEC HALF: `Inv []` is DISCHARGED, and it carries three fields where the plan wrote four (2026-08-21)
+
+`Examples/python/sunfish/fold_depth1.lean` §10. §L25 asked for *"`Inv` carrying
+`(best, live)` and the rounds left"* and warned that `Inv []` stops being
+`False`. §L43 measured both halves of that; this is the invariant those
+measurements imply, **spec side only, with its conclusion stated about THE FOLD
+and not about `bound()`'s return.** That restriction is not caution — it is
+§L43's fourth consequence, and writing the arm any other way would be false
+until R3d lands.
+
+### The invariant, and the field it does NOT carry
+
+| field | why |
+|---|---|
+| `sound` | the accumulator is `Sound` — closed under `max`, which is the whole fold |
+| `rounds` | every round still to come is `Sound` — one `searchedMove_sound` each |
+| `attain` | the value is attained by the accumulator or by a round still to come |
+| ~~`futility`~~ | **absent.** §L43's `foldFrom_ran_no_settle` says a schedule that reaches `Inv []` has no `settle` in it, so `fold_report`'s `hfut` is vacuous there. |
+
+**That is the whole economy of this inch.** §L27 priced the futility bet as the
+hard premise of the fail-low arm, and the census says the arm where `Inv []`
+lives cannot contain one. The invariant is three fields, not four, and the
+fourth is not deferred — it is *unreachable*.
+
+### Three obligations, and the one depth 0 never had
+
+* **`RanInv.step`** — one non-cutting `report` round consumed, accumulator
+  advanced by `max`; the invariant's half of `foldFrom_cons_next`.
+* **`RanInv.nil`** — at the empty remainder `attain` collapses to `value ≤ best`
+  and the contract falls out by trichotomy on `best < gamma`. **`Inv []` is
+  DISCHARGED, not refuted** — the exact difference from depth 0, where `QSInv []`
+  is `False` and the obligation never arises.
+* **`RanInv.run`** — the whole schedule through `fold_report`, with `hfut`
+  supplied by the EXIT rather than by the loop.
+
+### Instantiated on both of §L43's flavours
+
+| flavour | schedule | fold | tail |
+|---|---|---|---|
+| mate (`live = False`) | 19 rounds, caps off the stream §9 guards, every child `MATE_UPPER` | `(-MATE_UPPER, false, .ran)` | rewrites the number — R3d's |
+| ordinary (`live = True`) | 32 rounds, position pinned to four plies of the shipped `Position.move` | `(38, true, .ran)` | leaves it alone |
+
+The ordinary fixture is the one the `ran` arm is *for*: nothing settles (its
+bottom cap **is** `gamma = 56`) and nothing cuts (the best score is 38).
+
+### Throughput: two more rows RUN AND RECORDED rather than guarded
+
+`lineVals posRan 1` — the ordinary fixture's stream — costs **40 s** on its own,
+a queen and 32 moves against the opening board's 20. It answers exactly the
+recorded list on both instruments and is **not** `#guard`ed, which is §L43's own
+call made twice more (its 45-s mate row, these 40 s, and the 32 depth-0 child
+searches). The anchors that ARE guarded are the ones that cannot be fabricated:
+the position is the shipped `Position.move`'s answer four plies deep, and the
+mate fixture's caps come off the stream §9 evaluates.
+
+**A near-miss worth recording.** The mate schedule's caps were first written from
+memory rather than derived, and the `#guard` on the fold PASSED anyway — because
+every score there is `min(cap, -MATE_UPPER) = -MATE_UPPER` whatever the cap is.
+A guard that cannot see the numbers it is fed is not a check. The fix was to
+derive the caps from the stream (`mateVals`, one evaluation, pinned by one
+guard). **Before trusting a `#guard` over a recorded list, perturb it in your
+head: if a wrong entry still passes, the entry is decoration.**
+
+File throughput **34 s → 39 s**.
+
+### What the INTERPRETER half owes, unchanged
+
+`PyStmtTriple.forGen` at a schedule longer than one, with the world threaded
+through each round's two hops (§8) and `Hands` handing the yields. Two things
+gate it and neither is spec-side: **R2's `hdrain`** (until it lands the schedule
+is a free `sortedVs` and no concrete round list can be named) and the **depth-1
+cutoff's killer store**, which stays filed with R3e because it writes.
+
+### Triad
+
+`lake build` **3687 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed**, 113 whitelisted, 1202 matched;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud.
+`RanInv`'s three theorems depend on
+`[propext, Quot.sound]`. No `sorry`, no `native_decide`.
+
+### Next, in the order the warning implies
+
+**R3d** — the tail at depth 1: the live correction and the store. It is what
+upgrades a `ran`-arm `Report` from a statement about `foldFrom` into a statement
+about `bound()`, and §L43's mate fixture is the row that exercises it
+(`-MATE_UPPER` in, `-47938` out).

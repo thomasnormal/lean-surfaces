@@ -47,7 +47,7 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   execStmt_if_true execStmt_if_false execStmts_singleton_flow
   Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle
   sbMoveDepth sbLive sbSearch searcherObj searchedMove searchedMove_sound
-  minG minNotFun minCls minNT muG boolChain_and3 Exit fold
+  minG minNotFun minCls minNT muG boolChain_and3 Exit fold mateUpper
   foldFrom_nil foldFrom_cons_next foldFrom_cons_cut
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
@@ -1105,25 +1105,33 @@ private def ply (p : Option RVal) (i j : Int) : Option RVal :=
 `f2f3`, `e7e5`, `g2g4`, `d8h4` in the mover's frame. -/
 #guard ply (ply (ply (ply (some (posH 0)) 86 76) 84 64) 87 67) 95 51 == some posMate
 
-/-- Rows, and the value range, of the depth-1 ordering line at a position. -/
-private def lineShape (p : RVal) (d : Int) : Option (Nat × Int × Int) :=
+/-- The ordering line's VALUES at a position, descending — the engine's own
+stream, read off the list `ordLine` allocates. -/
+private def lineVals (p : RVal) (d : Int) : Option (List Int) :=
   match evalExpr sunfish 1024 ⟨initWorld sunfish, [("pos", p), ("depth", .int d)]⟩ ordLine with
   | .ok st (RVal.ref a) =>
     (match Heap.get? st.world.heap a with
      | some (Obj.list xs) =>
-       (match xs.toList.filterMap (fun v => match v with
-          | RVal.tuple #[RVal.int z, _] => some z | _ => Option.none) with
-        | [] => Option.none
-        | z :: zs => some (zs.length + 1, zs.foldl min z, zs.foldl max z))
+       some (xs.toList.filterMap (fun v => match v with
+         | RVal.tuple #[RVal.int z, _] => some z | _ => Option.none))
      | _ => Option.none)
   | _ => Option.none
 
-/-! The mate position's stream: **19 rows**, values in `[-24, 46]`, so its caps
-(`pos.score + val` at depth 1, `pos.score = -69`) run `[-93, -23]`. Every window
-at or below **-93** therefore settles NOTHING — which is the right-hand end of
-the band, computed rather than asserted. -/
-#guard lineShape posMate 1 == some (19, -24, 46)
-#guard (-69 : Int) + (-24) == -93 && (-69 : Int) + 46 == -23
+/-- The mate fixture's stream, CACHED as a literal and pinned by the one guard
+below — a nullary `def` re-runs in every `#guard` that mentions it (§L28's
+law 8), and this line is the expensive part of §9. -/
+def mateVals : List Int :=
+  [46, 42, 36, 35, 30, 26, 26, 17, 15, 12, 12, 9, 8, 5, 5, 3, 1, -5, -24]
+
+#guard lineVals posMate 1 == some mateVals
+
+/-! **19 rows**, and the caps are `pos.score + val` at `pos.score = -69`, so they
+run `[-93, -23]`. Every window at or below **-93** therefore settles NOTHING —
+the band's right-hand end, computed rather than asserted. -/
+#guard mateVals.length == 19
+#guard mateVals.map (fun v => -69 + v)
+  == [-23, -27, -33, -34, -39, -43, -43, -52, -54, -57, -57, -60, -61,
+      -64, -64, -66, -68, -74, -93]
 
 /-! **EXHAUSTION, RUN — and NOT guarded, for the throughput law's own reason.**
 At `gamma = -93` the depth-1 fold at `posMate` consumes all 19 rounds and cuts on
@@ -1147,6 +1155,161 @@ own arithmetic: -/
 
 #print axioms foldFrom_ran_no_settle
 #print axioms fold_report_ran
+
+
+/-! ## §10 R3c's INVARIANT — the SPEC half, written against §9's census
+
+§L25 asked for *"`Inv` carrying `(best, live)` and the rounds left"* and warned
+that `Inv []` stops being `False`. §9 measured both halves of that, and this
+section is the invariant those measurements imply. **It is the spec half only,
+and its conclusion is about THE FOLD** — `foldFrom`'s number — *not* about what
+`bound()` returns. §9's fourth consequence is why: at `live = False` the tail
+rewrites the number, and until R3d lands, an `Exit.ran` `Report` that claimed to
+be about `bound()` would be false.
+
+### What the invariant carries, and the ONE field it does not
+
+`RanInv` carries three things and deliberately not a fourth:
+
+| field | why |
+|---|---|
+| `sound` | the accumulator is `Sound` — closed under `max`, which is the whole fold |
+| `rounds` | every round still to come is `Sound` — one `searchedMove_sound` each |
+| `attain` | the value is attained by the accumulator or by a round still to come |
+| ~~futility~~ | **NOT carried.** `foldFrom_ran_no_settle` (§9) says a schedule that reaches `Inv []` has no `settle` in it, so `fold_report`'s `hfut` is vacuous there. §L27 called that premise the hard one; on this arm it does not exist. |
+
+### The three obligations, and `Inv []` is DISCHARGED
+
+* **step** — consuming one non-cutting `report` round preserves it, and the
+  accumulator advances by `max`. That is `foldFrom_cons_next`'s side of the walk.
+* **nil** — at the empty remainder `attain` collapses to `value ≤ best` and the
+  `Report` falls out by trichotomy. **`Inv []` is discharged, not refuted** —
+  which is exactly the difference from depth 0, where `QSInv []` is `False`.
+* **run** — the whole schedule, through `fold_report` with `hfut` supplied by the
+  exit rather than by the invariant.
+
+### What the INTERPRETER half still owes
+
+`PyStmtTriple.forGen` at a schedule of length > 1, with the world threaded
+through each round's two hops (§8) and `Hands` handing the yields. Two things
+gate it and neither is in this section: R2's `hdrain` (until it lands the
+schedule is a free `sortedVs`, so no concrete round list can be named), and the
+depth-1 cutoff's killer store, which is filed with R3e because it writes. -/
+
+/-- **R3c's LOOP INVARIANT, spec side.** Three fields; the futility bet is not
+one of them (§9). -/
+structure RanInv (gamma value best : Int) (rs : List Round) : Prop where
+  sound : Sound gamma value best
+  rounds : ∀ r ∈ rs, Sound gamma value r.score
+  attain : value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score
+
+/-- **THE STEP.** One non-cutting `report` round consumed, the accumulator
+advanced by `max` — the invariant's half of `foldFrom_cons_next`. -/
+theorem RanInv.step {gamma value best sc : Int} {lv : Bool} {rs : List Round}
+    (h : RanInv gamma value best (.report sc lv :: rs)) :
+    RanInv gamma value (max best sc) rs := by
+  have h1 : Sound gamma value sc := by
+    have := h.rounds (.report sc lv) (by simp)
+    simpa [Round.score] using this
+  refine ⟨h.sound.max h1, fun r hr => h.rounds r (by simp [hr]), ?_⟩
+  rcases h.attain with hb | ⟨r, hr, hv⟩
+  · exact Or.inl (by omega)
+  · rcases List.mem_cons.mp hr with rfl | hr'
+    · have hs : value ≤ sc := by simpa [Round.score] using hv
+      exact Or.inl (by omega)
+    · exact Or.inr ⟨r, hr', hv⟩
+
+/-- **`Inv []` IS DISCHARGED** — the one thing depth 0 never had to do, because
+`QSInv []` was `False` there. At the empty remainder `attain` collapses to
+`value ≤ best` and the contract falls out by trichotomy on `best < gamma`. -/
+theorem RanInv.nil {gamma value best : Int} (h : RanInv gamma value best []) :
+    Report gamma best value := by
+  have hv : value ≤ best := by
+    rcases h.attain with hb | ⟨r, hr, -⟩
+    · exact hb
+    · exact absurd hr (by simp)
+  by_cases hlt : best < gamma
+  · exact Or.inl ⟨hlt, hv⟩
+  · have hbv : best ≤ value := by
+      rcases h.sound with h1 | h2
+      · omega
+      · exact h2
+    exact Or.inr ⟨by omega, hbv⟩
+
+/-- **AND THE WHOLE SCHEDULE.** The futility premise comes from the schedule
+having no `settle` — which on the `ran` arm is `foldFrom_ran_no_settle`, not an
+assumption the loop has to carry. -/
+theorem RanInv.run {gamma value best : Int} {live : Bool} {rs : List Round}
+    (h : RanInv gamma value best rs) (hns : ∀ cap, Round.settle cap ∉ rs) :
+    Report gamma (foldFrom gamma best live rs).1 value :=
+  fold_report h.sound h.rounds h.attain (fun cap hm => absurd hm (hns cap))
+
+/-! ### The `ran` arm, INSTANTIATED on both of §9's flavours
+
+The mate schedule's caps come off the stream this file EVALUATES (`mateVals`,
+guarded in §9). The ordinary fixture's position is pinned to four plies of the
+shipped `Position.move`, and its stream and child reports are RUN AND RECORDED
+rather than guarded — 40 s and 32 depth-0 searches respectively, which is §9's
+throughput call applied twice more. Every number below was produced by an
+instrument, and which instrument is said at each one. -/
+
+/-- The mate fixture's schedule: every child answers `MATE_UPPER`, so every round
+scores `-MATE_UPPER`. -/
+private def mateSched : List Round :=
+  mateVals.map (fun v => searchedMove (-69 + v) mateUpper)
+
+/-! It RUNS OUT, at `best = -MATE_UPPER` and `live = False` — flavour one, and the
+flavour whose number R3d rewrites. -/
+#guard foldFrom (-93) (-mateUpper) false mateSched == (-mateUpper, false, Exit.ran)
+
+/-- The ordinary fixture — `pos.score = 112`, 32 rows — reached by four plies of
+the shipped `Position.move` and cached as a literal (§L28's law 8). -/
+def ranBoard : String :=
+  "         \n         \n rnb.kbnr\n pp.ppppp\n ........\n q.P.....\n ........\n ........\n PPP.PPPP\n RNBQKBNR\n         \n         \n"
+
+def posRan : RVal :=
+  .ntuple "Position" #["board", "score", "wc", "bc", "ep", "kp"]
+    #[.str ranBoard, .int 112, .tuple #[.bool true, .bool true],
+      .tuple #[.bool true, .bool true], .int 0, .int 0]
+
+#guard ply (ply (ply (ply (some (posH 0)) 84 64) 86 66) 64 53) 95 68 == some posRan
+
+/-- Its stream. **RUN, not guarded**: `lineVals posRan 1` answers exactly this
+list in the Lean interpreter and on the shipped engine, and it costs **40 s** on
+its own — a queen and 32 moves against the opening board's 20. §9 made the same
+call for its own expensive row, and the anchor that matters is above: the
+POSITION is the shipped `Position.move`'s answer, four plies deep. -/
+def ranVals : List Int :=
+  [73, 67, 42, 37, 36, 31, 30, 30, 26, 23, 23, 23, 21, 17, 15, 12, 12, 12, 9, 8,
+   8, 8, 5, 5, 2, 1, 1, 0, -3, -5, -6, -56]
+
+/-! 32 rows, and the bottom cap is `112 + (-56) = 56` — the band's right end. -/
+#guard ranVals.length == 32
+#guard (ranVals.map (fun v => 112 + v)).foldl min 999 == 56
+
+/-- The 32 child reports, MEASURED on the shipped engine at `gamma = 56` (window
+`1 - 56`); most are `MATE_UPPER`, because after most moves the opponent captures
+the king. -/
+private def ranChildren : List Int :=
+  [69290, 69290, 69290, 69290, -38, 69290, 69290, 69290, 69290, 69290,
+   -25, 69290, -23, 69290, 69290, 69290, 69290, -14, 69290, 69290,
+   69290, 69290, 69290, 69290, 69290, 69290, 69290, 69290, 69290, -37,
+   -38, 69290]
+
+#guard ranChildren.length == 32
+
+private def ranSched : List Round :=
+  (ranVals.zip ranChildren).map (fun p => searchedMove (112 + p.1) p.2)
+
+/-! **Flavour two: it runs out at `best = 38` with `live = True`** — nothing
+settles (the bottom cap IS `gamma`) and nothing cuts (the best score is 38 < 56).
+This is the `ran` arm the invariant is for, and the flavour whose number the tail
+leaves alone. -/
+#guard foldFrom 56 (-mateUpper) false ranSched == (38, true, Exit.ran)
+
+#print axioms RanInv.step
+#print axioms RanInv.nil
+#print axioms RanInv.run
 
 
 end Examples.python.sunfish.fold_depth1

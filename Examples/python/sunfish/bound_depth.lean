@@ -3464,6 +3464,111 @@ theorem moveCap_lt_of_tail {depth score v v' gamma : Int} (hle : v' ≤ v)
     (h : moveCap depth score v < gamma) : moveCap depth score v' < gamma :=
   Int.lt_of_le_of_lt (moveCap_mono hle) h
 
+/-! #### F3a — THE FAIL-LOW EXIT'S `Report`, and it needs NO child report
+
+docs/backlog.md §L30's census re-priced the fail-low arm by reading `qsStrat`
+against `fold_failLow`, and this is the half that collapsed. At depth 0 the
+schedule's FIRST round is the stand-pat — branch 1 takes every virtual yield —
+so `best` is at or above `pos.score` from round one onward, and the model's own
+depth-0 leaf is `eval p`. That one coincidence discharges both of
+`fold_failLow`'s premises with no induction hypothesis anywhere in it:
+
+* `hattain` is the stand-pat round ITSELF. The schedule attains the value at its
+  HEAD, so the `ran` terminal — reachable and not rare at depth 0, `ran` on 1610
+  of 13 076 census nodes — is covered without knowing anything about the tail.
+* `hfut` is discharged by the QS FLOOR. `moveCap_qs` says the depth-0 cap is the
+  plain sum `pos.score + val` with no slope term, and the ordering genexp admits
+  a move only at `40 ≤ val` (`order_genexp`'s `gx_filter_high`), so every settled
+  cap is STRICTLY above the stand-pat and therefore above the value.
+
+**`CapInBand` is NOT spent here, and the record needed a correction.** §L27's
+surface table called it *"the recorded AXIOM behind the futility bet — the
+fail-low arm is where it is finally spent"*. It is not an axiom: `formal/`
+contains ZERO `axiom` declarations, and `CapInBand` is a `def … : Prop` that four
+theorems take as a HYPOTHESIS (§L30's correction, measured by `grep` over
+`formal/Sunfish/`). And it is not spent in this arm at all — the bet it pays for
+is the per-move bound (b) above, which at depth 0 the floor supplies instead.
+What the arm DOES owe the model is `hqsV` (`V pos 0 ≤ pos.score`), the fourth
+entry in §L30's ledger, and it enters below as an ordinary hypothesis.
+
+The `Sound` premises go too: `fold_report` needs `hb`/`hrs` only for its
+fail-HIGH half, which below the window never fires. That is why this inch waits
+on nothing while F3b — the CUT exit, 48% of the arm's nodes — waits on the
+measure and the strengthened statement for all of it. -/
+
+/-- **A non-cut fold that STARTED below the window ENDS below it.** The `report`
+rounds need no side condition: a round that lifted `best` to `gamma` would have
+exited `cut`, which is excluded by hypothesis. The `settle` rounds do need one,
+and it is branch 5a's own guard — `cap < gamma` is what CLASSIFIES a round as a
+settle in the first place, the same guard `settledCap_sound` reads on the
+`Sound` side. -/
+theorem foldFrom_noncut_lt {gamma : Int} : ∀ (rs : List Round) (best : Int) (live : Bool),
+    best < gamma → (∀ cap, Round.settle cap ∈ rs → cap < gamma) →
+    (foldFrom gamma best live rs).2.2 ≠ Exit.cut →
+    (foldFrom gamma best live rs).1 < gamma
+  | [], best, live, hb, _, _ => by rw [foldFrom_nil]; exact hb
+  | .settle cap :: rs, best, live, hb, hcap, _ => by
+      have hc := hcap cap (by simp)
+      rw [foldFrom_cons_settle]
+      show max best cap < gamma
+      omega
+  | .report sc lv :: rs, best, live, hb, hcap, hnc => by
+      by_cases hc : gamma ≤ max best sc
+      · rw [foldFrom_cons_cut gamma best live lv sc rs hc] at hnc
+        simp at hnc
+      · rw [foldFrom_cons_next gamma best live lv sc rs hc] at hnc ⊢
+        exact foldFrom_noncut_lt rs _ _ (by omega)
+          (fun cap hm => hcap cap (by simp [hm])) hnc
+
+/-- **F3a's general half — the fail-LOW `Report`, with no `Sound` premise at
+all.** `fold_report` proves the contract at BOTH exits and pays `hb`/`hrs` for
+the privilege. This is the fail-low half alone: `fold_failLow`'s two premises,
+plus the two guards that keep the answer under the window. Nothing about a
+child, and nothing about the rounds the fold never reached. -/
+theorem fold_report_failLow {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hbest : best < gamma)
+    (hcap : ∀ cap, Round.settle cap ∈ rs → cap < gamma)
+    (hattain : value ≤ best ∨ ∃ r ∈ rs, value ≤ r.score)
+    (hfut : ∀ cap, Round.settle cap ∈ rs → value ≤ cap)
+    (hnc : (foldFrom gamma best live rs).2.2 ≠ Exit.cut) :
+    Report gamma (foldFrom gamma best live rs).1 value :=
+  Or.inl ⟨foldFrom_noncut_lt rs best live hbest hcap hnc, fold_failLow hattain hfut hnc⟩
+
+/-- **THE QS FUTILITY DISCHARGE.** At depth 0 `moveCap` loses its slope term and
+the admitted move has cleared the QS floor, so the cap is STRICTLY above the
+stand-pat. This is the whole of what the fail-low arm was priced to buy with
+`CapInBand`, and it costs one `omega`. -/
+theorem qs_cap_gt (sc val : Int) (hval : 40 ≤ val) : sc < moveCap 0 sc val := by
+  rw [moveCap_qs]; omega
+
+/-- **F3a — THE DEPTH-0 FAIL-LOW `Report`, end to end.** The schedule is the
+shipped one: the stand-pat at its HEAD (branch 1, the virtual yield every depth-0
+node takes) and whatever `moves()` produces after it. `hqsV` is the model-side
+fact §L30's ledger names for this arm, `hcaps` is the shape branch 5a gives a
+settled round at depth 0, and `hsettle` is that branch's own guard.
+
+No induction hypothesis, no child report, no `Sound` obligation on the tail —
+which is the census's answer, and the reason the arm is smaller than §L27 priced
+it. -/
+theorem qs_fold_report_failLow {gamma sc value : Int} {live : Bool} {rs : List Round}
+    (hwin : -mateUpper < gamma)
+    (hqsV : value ≤ sc)
+    (hcaps : ∀ cap, Round.settle cap ∈ rs → ∃ val, 40 ≤ val ∧ cap = moveCap 0 sc val)
+    (hsettle : ∀ cap, Round.settle cap ∈ rs → cap < gamma)
+    (hnc : (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).2.2 ≠ Exit.cut) :
+    Report gamma (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).1 value := by
+  refine fold_report_failLow hwin ?_ (Or.inr ⟨standPat sc, by simp, hqsV⟩) ?_ hnc
+  · intro cap hm
+    rcases List.mem_cons.mp hm with h | h
+    · exact absurd h (by simp [standPat])
+    · exact hsettle cap h
+  · intro cap hm
+    rcases List.mem_cons.mp hm with h | h
+    · exact absurd h (by simp [standPat])
+    · obtain ⟨val, hval, rfl⟩ := hcaps cap h
+      have := qs_cap_gt sc val hval
+      omega
+
 /-! ### Consuming the induction hypothesis
 
 The rounds a depth-`d` node can produce are §3's five branch constructors.
@@ -3787,8 +3892,50 @@ move is `min(cap, -child)` with the sentinel test for `live`. -/
 #guard searchedMove 90 (-120) == Round.report 90 true
 #guard searchedMove 500 mateUpper == Round.report (-mateUpper) false
 #guard searchedPass 40 500 (-120) true == Round.report mateUpper true
-#guard searchedPass 40 500 (-120) false == Round.report 120 false
 #guard searchedPass 400 500 (-120) true == Round.report 120 false
+#guard searchedPass 40 500 (-120) false == Round.report 120 false
+
+/-! ### F3a, INSTANTIATED — the reference run's own fail-LOW schedule
+
+Every number here is the shipped engine's, measured elsewhere in the tree and
+assembled into the schedule the fold walks:
+
+* the stand-pat is `pos.score = 0` on the opening board (`posH 0`);
+* the two admitted moves are `1. d4` and `1. e4`, whose `Position.value`s are
+  **46** and **42** — §L29's drained pair, and `faillow_census.lean`'s
+  `pstTotal` guards read the same two numbers off the child boards;
+* both caps are `moveCap 0 0 val`, i.e. 46 and 42, so both clear `gamma = 40`
+  and both rounds are SEARCHED — nothing settles on this board, which is why
+  `hcaps`/`hsettle` below are discharged by an empty membership;
+* the children answer **-4** and **0** at the negated window `1 - 40 = -39`
+  (`faillow_census.lean` §3, each measured from a FRESH table).
+
+The fold on that schedule answers **4** — which is what
+`bd_probe (posH 0) 40 0 = some (4, 34)` above reads off the engine. The second
+child's number is the fresh-table one and the run's own second child sees six
+entries the first child left, so this is a CORROBORATION of the answer and not a
+derivation of it: any second report at or above `-4` leaves the fold at 4. -/
+#guard fold 40 (-mateUpper) false [standPat 0, searchedMove 46 (-4), searchedMove 42 0]
+    == (4, true, Exit.ran)
+#guard moveCap 0 0 46 == 46
+#guard moveCap 0 0 42 == 42
+
+/-- **F3a on the fixture.** `qs_fold_report_failLow` applied to the schedule
+above: the contract holds at the engine's own answer, discharged by the stand-pat
+and arithmetic alone. -/
+theorem qs_report_fixture :
+    Report 40 (foldFrom 40 (-mateUpper) false
+      [standPat 0, searchedMove 46 (-4), searchedMove 42 0]).1 0 :=
+  qs_fold_report_failLow (by decide) (by decide)
+    (fun cap hm => absurd hm (by simp [searchedMove]))
+    (fun cap hm => absurd hm (by simp [searchedMove]))
+    (by decide)
+
+/-- …and the report it is about is the number the engine returns. -/
+theorem qs_report_fixture_four : Report 40 4 0 := by
+  have h := qs_report_fixture
+  rwa [show (foldFrom 40 (-mateUpper) false
+    [standPat 0, searchedMove 46 (-4), searchedMove 42 0]).1 = 4 from by decide] at h
 
 /-! **What the depth-0 call leaves on the tables**, and it is what §5 claims:
 `tp_move` stays EMPTY (the killer store is depth-gated off) and `tp_score`
@@ -3979,6 +4126,12 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms settle_needs_futility
 #print axioms moveCap_mono
 #print axioms moveCap_lt_of_tail
+#print axioms foldFrom_noncut_lt
+#print axioms fold_report_failLow
+#print axioms qs_cap_gt
+#print axioms qs_fold_report_failLow
+#print axioms qs_report_fixture
+#print axioms qs_report_fixture_four
 #print axioms searchedMove_sound
 #print axioms searchedPass_sound
 #print axioms report_sound

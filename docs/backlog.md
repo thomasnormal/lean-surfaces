@@ -11661,3 +11661,125 @@ came up rebuilding Mathlib from source with three sibling lanes' builds competin
 for the same laptop, and was moving at ~8 oleans per several minutes. **Use
 `cp -Rpc`**, and if a clone does come up cold, `lake exe cache get` restored
 Mathlib in minutes where the source rebuild would have taken hours.
+## L36 — F3a CLOSES: the fail-low EXIT'S `Report` needs no child, and `CapInBand` is not spent (2026-08-21)
+
+§L30's census split F3 in three and priced **F3a as the third that waits on
+nothing**. This is F3a, landed with its fixture instantiation in the same commit.
+It is the first inch of the second induction to reach master, and it is the
+cheapest one on the list because the census had already found the collapse: at
+depth 0 the fail-LOW exit's `Report` consumes no child report at all.
+
+**A note the record needs.** The pass that was to write this inch lost its work
+UNPUSHED to a `/private/tmp` purge. What survived is §L30's census — the
+expensive part — on the remote, and this section is the redo FROM it. Every
+premise below traces to a number in `faillow_census.lean`; nothing was
+re-measured from memory and nothing was re-derived without a guard behind it.
+**That is what the census discipline is for**, and it is the first time this lane
+has had to spend it.
+
+
+**Numbering note.** The predecessor's own backlog section died unpushed and
+reserved nothing; **§L35 went to the C-tier lane** in the interim
+(`7c100fa`, the C tier's founding charter). This lane's two sections are §L36 and
+§L37, taken after re-reading the pushed tail.
+
+### What landed, in `bound_depth.lean` §7 beside `fold_failLow`
+
+| declaration | what it says |
+|---|---|
+| `foldFrom_noncut_lt` | a non-cut fold that STARTED below the window ENDS below it. The `report` rounds need no side condition — a round that lifted `best` to `gamma` would have exited `cut` — and the `settle` rounds need exactly branch 5a's own guard, `cap < gamma`, which is what CLASSIFIES a round as a settle. |
+| `fold_report_failLow` | `Report` at the fail-low exit from `fold_failLow`'s two premises plus those two guards, and **no `Sound` premise at all**. `fold_report` pays `hb`/`hrs` for its fail-HIGH half; below the window that half never fires. |
+| `qs_cap_gt` | the QS futility discharge: `moveCap_qs` plus `40 ≤ val` gives `sc < moveCap 0 sc val`, one `omega`. |
+| `qs_fold_report_failLow` | the arm end to end, at the shipped depth-0 schedule `standPat sc :: rs`. |
+| `qs_report_fixture` / `qs_report_fixture_four` | the theorem RUN on the reference fixture's own schedule. |
+
+### The two premises, and where each one is discharged
+
+* **`hattain` is the stand-pat ROUND ITSELF.** Branch 1 takes every virtual yield
+  at depth 0, so the schedule's HEAD is `standPat pos.score` and the model's
+  depth-0 value is at or below it. `hattain`'s right disjunct is therefore
+  witnessed by the head, and the `ran` terminal — which §L30 measured as
+  **1610 of 13 076** depth-0 nodes, five of the reference run's own 34 admitting
+  no move at all — is covered without a word about the tail.
+* **`hfut` is discharged by the QS FLOOR, not by the futility bet.** `moveCap_qs`
+  (proved since §L16) says the depth-0 cap is the plain sum `pos.score + val`
+  with no slope term, and the ordering genexp admits a move only at `40 ≤ val`
+  (§L29's `gx_filter_high`). So a settled cap is STRICTLY above the stand-pat and
+  therefore above the value, and `settle_needs_futility`'s counterexample cannot
+  arise at depth 0.
+
+### `CapInBand` is NOT spent here — and it was never an axiom
+
+§L27's surface table wrote it as *"the recorded AXIOM behind the futility bet —
+the fail-low arm is where it is finally spent"*. §L30 corrected the first half by
+measurement (`formal/` contains **zero** `axiom` declarations; `CapInBand` is a
+`def … : Prop` four theorems take as a hypothesis) and predicted the second. F3a
+is the prediction discharged: the arm is proved and `CapInBand` appears nowhere
+in it. **The bet it exists to pay — the per-move bound `-V(child m) ≤ moveCap` —
+is what the QS floor supplies instead at depth 0**, because the cap has no slope
+term there and the filter supplies the sign. The correction is now on the record
+in the file as well as in the plan.
+
+### The model-side ledger's fourth fact now has a CONSUMER
+
+`hqsV` (`V pos 0 ≤ pos.score`) entered §L30's ledger as a named premise with
+nothing to spend it. It is `qs_fold_report_failLow`'s `hqsV`, and it is the ONLY
+model-side fact the arm takes. §L24's law has a converse worth writing down: *a
+premise is not paid until something discharges it, and a model fact is not real
+until something CONSUMES it.* `hqsV` is now real.
+
+### The instantiation — the reference run's own schedule
+
+Every number is the engine's, and none of them is new; F3a adds no run to the
+build. The stand-pat is `pos.score = 0` on the opening board; the two admitted
+moves are `1. d4` and `1. e4` with `Position.value` **46** and **42** (§L29's
+drained pair); both caps are `moveCap 0 0 val`, i.e. 46 and 42, so both clear
+`gamma = 40` and nothing settles on this board; the children answer **-4** and
+**0** at the negated window `-39` (`faillow_census.lean` §3). The fold on that
+schedule answers **4**, which is what `bd_probe (posH 0) 40 0 = some (4, 34)` has
+read off the engine since §8, and `Report 40 4 0` is what F3a draws from it.
+
+**One honesty note, stated in the file.** The second child's `0` is its
+FRESH-table answer; the run's own second child sees the six entries the first
+child left (§L30's table-ful argument). So the instantiation is a
+CORROBORATION of the engine's answer, not a derivation of it — any second report
+at or above `-4` leaves the fold at 4, and the guard says so.
+
+### What F3a did NOT do
+
+* **`hfall`'s fail-low half is still open.** F3a is the SPEC side: it says what
+  the fold's answer means, not that the interpreter's run produces that fold.
+  That is F3c, and it is still gated on `hdrain` and on a depth-0 twin of §L32's
+  `moves_prologue`. `boundRefinesW_zero` still takes `hfall`; `hfall_cut` still
+  discharges only its cut half.
+* **`hcaps` and `hsettle` are schedule properties, and F3c owes both.** They are
+  branch 5a's shape and branch 5a's guard, so neither is new mathematics — but
+  neither is free either, and pretending F3a closed them would be exactly the
+  over-claim §L30's finding 5 warns about.
+* **The CUT exit is untouched.** 48% of the arm's depth-0 nodes cut, and that
+  half consumes the IH through `searchedMove_sound`. F3b is still gated on F1/F2.
+
+### Triad
+
+`lake build` **3685 jobs green**; `docs_check` **73/73 marked blocks, 15 illustrative-exempt (71 → 73 is §L35's two new blocks, not this pass's)**; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched — unchanged since §L15**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. No `sorry`, no
+`native_decide`. The six new declarations depend on `[propext]` or less.
+`bound_depth.lean`'s own throughput is unchanged — F3a is arithmetic and its
+instantiation reuses guards the file already ran.
+
+### Findings worth carrying
+
+1. **A census survives a purge; proofs do not.** The predecessor's F3a and F1a
+   died unpushed and were redone in one sitting each, because §L30 had already
+   priced them premise by premise against measured numbers. The expensive artifact
+   is the one that was safe. **Push the cheap thing anyway** — but if you must
+   lose something, lose the derivation and not the measurement.
+2. **A collapse is worth stating as its own theorem.** `fold_report_failLow` is
+   three lines and it is the whole of why this inch waits on nothing: dropping
+   `hb`/`hrs` is what makes the fail-low half free of the induction. Had it been
+   inlined into the arm, the next reader would have had to rediscover that the
+   `Sound` premises were never used below the window.
+3. **A corrected axiom claim should be corrected in the CODE, not only in the
+   plan.** §L30 corrected `CapInBand` in a table; a later reader of
+   `bound_depth.lean` would still have found §7's prose calling it *"the recorded
+   axiom"*. F3a's docstring carries the correction where the theorem is.

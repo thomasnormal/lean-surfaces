@@ -154,6 +154,39 @@ private def isUnsupported : Res α → Bool
 -- True division is a float: the extractor ships `BinOp:Div` as Unsupported.
 #guard isUnsupported (ev (.unsupported "BinOp:Div" "a / b" sp))
 
+/-! ## `>>`, `^`, unary `+`, unary `~` — §L39 rung 1 (docs/completeness.md)
+
+The four the grammar census measured REFUSED while `<<`, `|` and `&` ran. -/
+
+-- `>>` is the ARITHMETIC shift: it rounds toward -inf (`-5 >> 1 == -3`).
+#guard ev (bo (iL 20) .rshift (iL 2)) == .ok (.int 5)
+#guard ev (bo (.unaryOp .usub (iL 5) sp) .rshift (iL 1)) == .ok (.int (-3))
+#guard ev (bo (.unaryOp .usub (iL 1) sp) .rshift (iL 10)) == .ok (.int (-1))
+#guard ev (bo (iL 7) .rshift (iL 0)) == .ok (.int 7)
+-- bool operands DROP boolness (`bool` has no `__rshift__`; int's slot runs).
+#guard ev (bo (bL true) .rshift (iL 0)) == .ok (.int 1)
+#guard ev (bo (iL 5) .rshift (.unaryOp .usub (iL 1) sp)) == .exn (.valueError "negative shift count")
+#guard isTypeError (ev (bo (sL "a") .rshift (iL 1)))
+-- `^` over the full int range, negatives included (`intXor`).
+#guard ev (bo (iL 11) .bitXor (iL 13)) == .ok (.int 6)
+#guard ev (bo (.unaryOp .usub (iL 3) sp) .bitXor (.unaryOp .usub (iL 5) sp)) == .ok (.int 6)
+#guard ev (bo (.unaryOp .usub (iL 3) sp) .bitXor (iL 5)) == .ok (.int (-8))
+#guard ev (bo (iL 5) .bitXor (.unaryOp .usub (iL 3) sp)) == .ok (.int (-8))
+#guard ev (bo (.unaryOp .usub (iL 1) sp) .bitXor (.unaryOp .usub (iL 1) sp)) == .ok (.int 0)
+-- bool^bool is a BOOL; any int operand makes it an int (the `|`/`&` rule).
+#guard ev (bo (bL true) .bitXor (bL false)) == .ok (.bool true)
+#guard ev (bo (bL true) .bitXor (bL true)) == .ok (.bool false)
+#guard ev (bo (bL true) .bitXor (iL 3)) == .ok (.int 2)
+#guard isTypeError (ev (bo (sL "a") .bitXor (iL 1)))
+-- unary `+` is the identity and DROPS boolness; `~x` is `-x - 1`.
+#guard ev (.unaryOp .uadd (iL 3) sp) == .ok (.int 3)
+#guard ev (.unaryOp .uadd (bL true) sp) == .ok (.int 1)
+#guard ev (.unaryOp .invert (iL 5) sp) == .ok (.int (-6))
+#guard ev (.unaryOp .invert (.unaryOp .usub (iL 1) sp) sp) == .ok (.int 0)
+#guard ev (.unaryOp .invert (bL true) sp) == .ok (.int (-2))
+#guard isTypeError (ev (.unaryOp .uadd (sL "a") sp))
+#guard isTypeError (ev (.unaryOp .invert (sL "a") sp))
+
 /-! ## `+` type rules -/
 
 #guard ev (bo (sL "ab") .add (sL "cd")) == .ok (.str "abcd")

@@ -795,6 +795,10 @@ theorem evalUnaryOpH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
   cases op with
   | not => simp only [evalUnaryOpH, truthyH_swapAt hslot htwin]
   | usub => rfl
+  -- §L39 rung 1: `+` and `~` delegate to the PURE `evalUnaryOp` exactly as
+  -- `-` does, so they never look at the heap and the swap is `rfl` too.
+  | uadd => rfl
+  | invert => rfl
 
 /-- Subscription at the value level is blind. -/
 theorem indexValH_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}

@@ -380,22 +380,22 @@ w("op.Pow", "print(2 ** 3)\n", "MATCH",
 w("op.Pow-negative", "print(2 ** -1)\n", "REFUSE",
   "the boundary op.Pow's witness does not reach")
 w("op.LShift", "print(1 << 4)\n", "MATCH", "budget-capped shift width")
-w("op.RShift", "print(16 >> 2)\n", "REFUSE",
-  "MEASURED: `>>` is NOT in `BinOp` — `<<` landed and its mirror did not")
+w("op.RShift", "print(16 >> 2)\n", "MATCH",
+  "was REFUSE; §L39 rung 1 landed it (op.RShift-budget is its edge)")
+w("op.RShift-budget", "print(1 >> 10 ** 30)\n", "REFUSE",
+  "`<<`'s budget, for `<<`'s reason: forming 2**b would abort")
 w("op.BitOr", "print(5 | 2)\n", "MATCH", "")
-w("op.BitXor", "print(5 ^ 3)\n", "REFUSE",
-  "MEASURED: `^` is NOT in `BinOp` — `|` and `&` landed, `^` did not")
+w("op.BitXor", "print(5 ^ 3)\n", "MATCH",
+  "was REFUSE — the one witness that found the whole rung; §L39 landed it")
 w("op.BitAnd", "print(5 & 3)\n", "MATCH", "")
 w("op.MatMult", "print(1 @ 2)\n", "REFUSE",
   "FAITHFUL: no operand type in or out of tier has it (CPython TypeError)")
 
 # --- unaryop (4) -----------------------------------------------------------
-w("op.UAdd", "print(+3)\n", "REFUSE",
-  "MEASURED: `UnaryOp` is `usub | not` — unary `+` is not in it")
+w("op.UAdd", "print(+3)\n", "MATCH", "was REFUSE; §L39 rung 1")
 w("op.USub", "print(-3)\n", "MATCH", "")
 w("op.Not", "print(not 0)\n", "MATCH", "")
-w("op.Invert", "print(~5)\n", "REFUSE",
-  "MEASURED: `~` is not in `UnaryOp` either")
+w("op.Invert", "print(~5)\n", "MATCH", "was REFUSE; §L39 rung 1")
 
 # --- cmpop (10) ------------------------------------------------------------
 w("op.Eq", "print(1 == 1)\n", "MATCH", "")
@@ -502,6 +502,7 @@ WHITELIST_CLASS = {
     "seq_lab::list_slice_loud": "slice.allocating",
     "seq_lab::str_repeat_loud": "op.Mult-repetition",
     "seq_lab::shl": "op.LShift-budget",
+    "seq_lab::shr": "op.LShift-budget",
     "clock_lab::armed": "exc.handler",
     "clock_lab::read_clock": "clock.underrun",
     "clock_lab::shadowed": "attr.on-scalar",

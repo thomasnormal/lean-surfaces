@@ -73,8 +73,15 @@ ALLOWED_BINOPS = ("Add", "Sub", "Mult", "FloorDiv", "Mod", "Pow",
                   # (negative `|` operands compute exactly there since
                   # the tail batch admitted `&` — docs/memory-model.md
                   # §bitwise `&`).
-                  "LShift", "BitOr", "BitAnd")
-ALLOWED_UNARYOPS = ("USub", "Not")
+                  # §L39 rung 1 (docs/completeness.md): the grammar census
+                  # measured `>>`, `^`, `+x` and `~x` REFUSED while their
+                  # siblings ran — the tail batch landed `<<`, `|` and `&`
+                  # and nothing recorded the omission. All four are exact
+                  # over unbounded ints and cost the proof layer nothing
+                  # (`fuelMono`/`worldInv`/`clockErase` never case on the
+                  # operator — the `BinOp:BitAnd` precedent).
+                  "LShift", "RShift", "BitOr", "BitXor", "BitAnd")
+ALLOWED_UNARYOPS = ("USub", "Not", "UAdd", "Invert")
 ALLOWED_CMPOPS = ("Eq", "NotEq", "Lt", "LtE", "Gt", "GtE",
                   "Is", "IsNot", "In", "NotIn")
 # Is/IsNot are emitted structurally for EVERY identity comparison since

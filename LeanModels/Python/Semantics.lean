@@ -183,7 +183,9 @@ def BinOp.symbol : BinOp → String
   | .mod => "%"
   | .pow => "**"
   | .lshift => "<<"
+  | .rshift => ">>"
   | .bitOr => "|"
+  | .bitXor => "^"
   | .bitAnd => "&"
 
 /-- Python surface syntax of a comparison operator (error messages). -/
@@ -563,6 +565,18 @@ def intOr : Int → Int → Int
   | .ofNat a,   .negSucc b => .negSucc (ndiff b a)
   | .negSucc a, .negSucc b => .negSucc (a &&& b)
 
+/-- `^` over `Int`, the same construction — and the simplest of the three,
+because XOR commutes with complement. `.negSucc a` IS `~a`, and
+`~p ^ q = ~(p ^ q)`, `~p ^ ~q = p ^ q`, so every arm is one `Nat` XOR
+whose sign is read off the operands' parity: no `ndiff`, no subtraction,
+nothing to underflow. (§L39 rung 1: the tail batch landed `|` and `&`
+and left `^` out, with nothing recorded about the omission.) -/
+def intXor : Int → Int → Int
+  | .ofNat a,   .ofNat b   => .ofNat (a ^^^ b)
+  | .negSucc a, .ofNat b   => .negSucc (a ^^^ b)
+  | .ofNat a,   .negSucc b => .negSucc (a ^^^ b)
+  | .negSucc a, .negSucc b => .ofNat (a ^^^ b)
+
 /-! ### Scalar rendering (`str()` and a str's `repr`)
 
 These sit HERE, above the operator block, because both users need them
@@ -778,6 +792,22 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         else if y.toNat > shiftBudget then
           .unsupported "a left shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
         else .ok (.int (x * (2 : Int) ^ y.toNat))
+    -- `>>` is `<<`'s mirror and is CPython's ARITHMETIC shift: it rounds
+    -- toward -inf, which is exactly `Int.fdiv` by `2^n` (`-5 >> 1 == -3`).
+    -- The budget is `<<`'s, for the same reason and not a weaker one:
+    -- forming `2 ^ y` to divide by would hit the very `Nat.pow exponent
+    -- is too big` abort the budget exists to prevent. CPython SATURATES
+    -- there (a shift past the operand's bit length is 0, or -1 when
+    -- negative) and answers instantly; saturating here would be exact
+    -- only under a bound on `x`'s bit length that this tier does not
+    -- have, so the honest answer is the same loud, fuel-independent
+    -- refusal `<<` gives — never a claim that CPython raises. Recorded
+    -- as owed: saturation behind a width argument.
+    | .rshift =>
+        if y < 0 then .exn (.valueError "negative shift count")
+        else if y.toNat > shiftBudget then
+          .unsupported "a right shift beyond shiftBudget is outside the tier (docs/memory-model.md §left shift and bitwise or)"
+        else .ok (.int (Int.fdiv x ((2 : Int) ^ y.toNat)))
     -- `|` and `&` decide BOOLNESS first (`bool.__or__(bool)` returns a
     -- BOOL, any int operand makes it an int), then compute over `Int` —
     -- negative operands INCLUDED (docs/memory-model.md §bitwise `&`; the
@@ -787,6 +817,10 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         (match a, b with
          | .bool p, .bool q => .ok (.bool (p || q))
          | _, _ => .ok (.int (intOr x y)))
+    | .bitXor =>
+        (match a, b with
+         | .bool p, .bool q => .ok (.bool (p != q))
+         | _, _ => .ok (.int (intXor x y)))
     | .bitAnd =>
         (match a, b with
          | .bool p, .bool q => .ok (.bool (p && q))
@@ -844,8 +878,12 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
           s!"unsupported operand type(s) for {op.symbol}: '{a.typeName}' and '{b.typeName}'")
 
 /-- Unary operator: `not` is truthiness negation (`Res`-valued through
-`truthy` since H1); unary `-` needs an int/bool operand (`-True == -1`);
-a `.ref` operand is refused loudly (its `__neg__` lives in the heap). -/
+`truthy` since H1); `-`, `+` and `~` need an int/bool operand and all
+three DROP boolness the way CPython does (`-True == -1`, `+True == 1`,
+`~True == -2` — `bool` has no `__neg__`/`__pos__`/`__invert__`, so the
+int slots run); a `.ref` operand is refused loudly (its dunder lives in
+the heap). `+` is the identity on an int and `~x` is `-x - 1`, which is
+two's complement by definition, not a bit-level guess. -/
 def evalUnaryOp (op : UnaryOp) (v : RVal) : Res RVal :=
   match op with
   | .not => do let b ← truthy v; return .bool (!b)
@@ -857,6 +895,22 @@ def evalUnaryOp (op : UnaryOp) (v : RVal) : Res RVal :=
       match asInt v with
       | some n => .ok (.int (-n))
       | Option.none => .exn (.typeError s!"bad operand type for unary -: '{v.typeName}'")
+  | .uadd =>
+    match v with
+    | .ref _ =>
+        .unsupported "unary '+' on a heap object is outside the H1 tier (docs/memory-model.md)"
+    | v =>
+      match asInt v with
+      | some n => .ok (.int n)
+      | Option.none => .exn (.typeError s!"bad operand type for unary +: '{v.typeName}'")
+  | .invert =>
+    match v with
+    | .ref _ =>
+        .unsupported "unary '~' on a heap object is outside the H1 tier (docs/memory-model.md)"
+    | v =>
+      match asInt v with
+      | some n => .ok (.int (-n - 1))
+      | Option.none => .exn (.typeError s!"bad operand type for unary ~: '{v.typeName}'")
 
 /-- First match wins (shadowing is by position in the list). Polymorphic in
 the value type: runtime envs bind `RVal`, the G1 accumulator binds `Val`. -/
@@ -2214,12 +2268,14 @@ def evalCompareOpH (h : Heap) (fuel : Nat) (op : CmpOp) (a b : RVal) : Res Bool 
   | .notIn => do let e ← valContains h fuel a b; return !e
   | op => evalCompareOp op a b
 
-/-- Unary operators over the heap: `not d` is dict truthiness; `-` stays
-pure (a `.ref` operand is refused there). -/
+/-- Unary operators over the heap: `not d` is dict truthiness; `-`, `+`
+and `~` stay pure (a `.ref` operand is refused there). -/
 def evalUnaryOpH (h : Heap) (op : UnaryOp) (v : RVal) : Res RVal :=
   match op with
   | .not => do let b ← truthyH h v; return .bool (!b)
   | .usub => evalUnaryOp .usub v
+  | .uadd => evalUnaryOp .uadd v
+  | .invert => evalUnaryOp .invert v
 
 /-- `len` over the heap: dicts count entries; non-refs decide as `lenVal`. -/
 def lenValH (h : Heap) : RVal → Res RVal

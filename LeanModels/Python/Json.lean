@@ -75,13 +75,17 @@ def parseBinOpName : String → Except String BinOp
   | "Mod" => .ok .mod
   | "Pow" => .ok .pow
   | "LShift" => .ok .lshift
+  | "RShift" => .ok .rshift
   | "BitOr" => .ok .bitOr
+  | "BitXor" => .ok .bitXor
   | "BitAnd" => .ok .bitAnd
   | s => .error s!"unknown BinOp name {s.quote}"
 
 def parseUnaryOpName : String → Except String UnaryOp
   | "USub" => .ok .usub
   | "Not" => .ok .not
+  | "UAdd" => .ok .uadd
+  | "Invert" => .ok .invert
   | s => .error s!"unknown UnaryOp name {s.quote}"
 
 def parseBoolOpName : String → Except String BoolOp

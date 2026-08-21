@@ -59,6 +59,12 @@ forks on and two measured edge rows.
 | edge rows (2) | 1 | `Pow-negative` |
 | `cmpop` (10), `boolop` (2) | 0 | — |
 
+**Then rung 1 landed in the same pass**, so the table above is the census
+AS TAKEN and the current numbers are **87 witnesses, 64 MATCH, 23
+REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH, and
+`RShift-budget` joined as the new edge row. The taken-table is kept
+rather than overwritten — it is what the ladder was priced against.
+
 **25 of the 26 are gaps; one is faithful.** `1 @ 2` is a `TypeError` in
 CPython too, so `op.MatMult` costs a program nothing — no operand type in
 or out of tier has `__matmul__`. Every other refusal stops a program
@@ -84,7 +90,8 @@ model actually produced, against a construct class recorded per row in
 the instrument. A whitelisted row with no class fails the run — the
 census covers the whole whitelist, or it is not one.
 
-**113 whitelisted rows, 44 classes.** The head:
+**113 whitelisted rows, 44 classes** as taken (114 after rung 1 landed —
+`>>`'s budget row joined `<<`'s in `op.LShift-budget`). The head:
 
 | class | rows | representative |
 | --- | --- | --- |
@@ -186,26 +193,57 @@ Ordered by (price, unblocked value), §L14's pricing style. "Price" is
 implementation cost including the proof layer; "unblocks" names concrete
 Python, not a category.
 
-### Rung 1 — the four missing integer operators. Price: TRIVIAL.
+### Rung 1 — the four missing integer operators. Price: TRIVIAL. **LANDED.**
 
 `>>`, `^`, unary `+`, unary `~`. Two `BinOp` constructors, two `UnaryOp`
-constructors, four extractor table entries, four evaluation arms.
+constructors, four extractor table entries, four evaluation arms, one
+`intXor`. Built in the same pass that censused it —
+docs/memory-model.md §the operator remainder. `BinOp` is now missing only
+`Div` and `MatMult`, both out by KIND; `UnaryOp` is complete.
 
-**The proof layer costs ZERO** and this is recorded, not hoped:
-`fuelMono`/`worldInv`/`clockErase` handle `binOp` and `unaryOp`
-generically and never case on the operator — the `BinOp:BitAnd`
-precedent (§the tail, construct 4). Nothing allocates, so
-`Expr.heapFree` is untouched.
+**The proof layer cost TWO `rfl` arms, not the zero this rung predicted**
+— and the miss is the rung's most transferable finding.
+`fuelMono`/`worldInv`/`clockErase` are operator-generic as the
+`BinOp:BitAnd` precedent says, so the two `BinOp` constructors really were
+free and the build carried 3545 of 3685 jobs. It stopped at
+`evalUnaryOpH_swapAt`, which `cases op` exhaustively because
+`evalUnaryOpH` exists at all (`not` reads the heap for dict truthiness,
+while `evalBinOp` is pure and no blindness lemma mentions it). The site
+was invisible to the survey that priced the rung for one character:
+`match` arms are written `| .usub =>` and `cases op with` arms are
+written `| usub =>`, and the grep had the dot. **Grep an operator sort's
+constructors without the leading dot.** Nothing allocates, so
+`Expr.heapFree` is untouched, and `>>=`/`^=` came free with the
+`ALLOWED_BINOPS` entries.
 
-**Unblocks**: hashing and checksum code (`h = h ^ b`, `h >> 5`), mask
-idioms (`x & ~mask`), bitboards, `struct`-shaped packing, and every
-`+n` written for symmetry with `-n`. Four of the six remaining operator
-refusals; after it the only refused operators are `Div` and `MatMult`,
-and `MatMult` is faithful.
+**Unblocks**: hashing and checksum code (`h ^= b`, `h >> 5`), mask idioms
+(`x & ~mask`), bitboards, `struct`-shaped packing, and every `+n` written
+for symmetry with `-n`.
 
-**Risk**: none identified. `~x = -x - 1` and `+x = x` on `int`; `>>` is
-`<<`'s mirror and can share its budget guard, or needs none (a right
-shift shrinks).
+**Why the census found this and re-reading did not.** The record on each
+of the four is different, and none of them says "hard":
+
+* `>>` was deferred *with a reason* — §bitwise `&` says it "needs a
+  budget decision it shares with a pre-existing hole in `<<`". The same
+  batch closed that hole with `shiftBudget`. **The deferral outlived its
+  cause by four passes.**
+* `^` is named in that same section as "a rider that can be added the
+  same way if `^` is ever wanted". Nobody wanted it, so nobody added it.
+* `~` was measured as the **sole** static next wall of a stdlib module in
+  the library sweep's next-wall table — a real blocker, counted and left.
+* `+x` is mentioned nowhere in the repository.
+
+So the earlier phrasing of this finding, "nothing recorded about the
+omission", is CORRECT only of `+x`. The other three were recorded, in
+three different places, none of which is where a person looks to ask
+"which operators run?". That is the argument for a census being an
+instrument rather than a reading: `print(5 ^ 3)` needs no index.
+
+**Risk**: none realized. `intXor`'s arms and `Int.fdiv`-as-`>>` were
+checked against CPython 3.9.19 over 95481 + 24720 pairs, 0 mismatches,
+before a line of Lean was written. `>>` takes `<<`'s budget refusal
+rather than CPython's saturation — loud, never a claim CPython raises,
+with saturation recorded as owed.
 
 ### Rung 2 — `AnnAssign`. Price: SMALL.
 

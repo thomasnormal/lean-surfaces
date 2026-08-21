@@ -25,12 +25,14 @@ namespace LeanModels.Python
 (pass 5 — docs/memory-model.md §left shift and bitwise or), `bitAnd` ↔
 `BitAnd` (the tail batch — docs/memory-model.md §bitwise `&`). -/
 inductive BinOp where
-  | add | sub | mult | floorDiv | mod | pow | lshift | bitOr | bitAnd
+  | add | sub | mult | floorDiv | mod | pow | lshift | rshift
+  | bitOr | bitXor | bitAnd
 deriving Repr, Inhabited, BEq, DecidableEq
 
-/-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`. -/
+/-- Unary operators. 1:1 with CPython: `usub` ↔ `USub`, `not` ↔ `Not`,
+`uadd` ↔ `UAdd`, `invert` ↔ `Invert`. -/
 inductive UnaryOp where
-  | usub | not
+  | usub | not | uadd | invert
 deriving Repr, Inhabited, BEq, DecidableEq
 
 /-- Boolean (short-circuit) operators. 1:1 with CPython: `and` ↔ `And`, `or` ↔ `Or`. -/

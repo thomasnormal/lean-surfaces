@@ -1556,6 +1556,96 @@ budget decision it shares with a pre-existing hole in `<<`, whose
 unbounded `x * 2^y` would HANG where CPython raises `OverflowError`).
 That hole is recorded as a live defect in shipped `<<`, not created here.
 
+*(That hole was closed by `shiftBudget` and the deferral outlived its
+cause by four passes; `>>` and `^` land in §the operator remainder
+below, found by the grammar census rather than by re-reading this
+paragraph.)*
+
+## The operator remainder: `>>`, `^`, unary `+`, unary `~` (§L39 rung 1)
+
+The grammar census (`harness/refusal_census.py --grammar`,
+docs/completeness.md) ran one witness per production of CPython 3.9's
+`ast` grammar and measured four operators REFUSED whose siblings ran.
+The completing landing, and it completes two inventories: `BinOp` is now
+missing only `Div` and `MatMult` (both out by KIND — a float result and
+an operand type nothing in or out of tier has), and `UnaryOp` is
+complete.
+
+**Why each was missing is a different story, and none of them is "it is
+hard".**
+
+| operator | the record before the census |
+| --- | --- |
+| `>>` | DEFERRED with a reason, in §bitwise `&` above: it "needs a budget decision it shares with a pre-existing hole in `<<`". `shiftBudget` closed that hole in the same batch. **The deferral outlived its cause and nothing revisited it.** |
+| `^` | named in §bitwise `&` as "a rider that can be added the same way if `^` is ever wanted". It was never wanted, so it was never added. |
+| `~` | measured as the **sole** static next wall of a stdlib module in the library sweep (docs/backlog.md, the next-wall table) and never designed. |
+| `+x` | not mentioned anywhere in the repository. |
+
+**The semantics.**
+
+* **`>>` is CPython's ARITHMETIC shift**: it rounds toward -inf, which is
+  exactly `Int.fdiv` by `2 ^ n` — `-5 >> 1 == -3`, not `-2`. Boolness
+  DROPS (`type(True >> True)` is `int`), which the shared `asInt` route
+  gives for free.
+* **`>>` carries `<<`'s budget, for `<<`'s reason and not a weaker one.**
+  Forming `2 ^ y` to divide by would hit the very
+  `INTERNAL PANIC: Nat.pow exponent is too big` abort the budget exists
+  to prevent. CPython SATURATES above it (a shift past the operand's bit
+  length is `0`, or `-1` when negative) and answers instantly;
+  saturating here would be exact only under a bound on `x`'s bit length
+  that this tier does not have, so the model gives the same loud,
+  fuel-independent refusal `<<` gives — never a claim that CPython
+  raises. **Owed**: saturation behind a width argument.
+* **`^` is `intXor`, and it is the simplest of the three** bitwise
+  helpers, because XOR commutes with complement. `Int.negSucc a` IS
+  `~a`; `~p ^ q = ~(p ^ q)` and `~p ^ ~q = p ^ q`, so each of the four
+  arms is one `Nat` XOR with the sign read off the operands' parity — no
+  `ndiff`, no subtraction, nothing to underflow. Boolness is decided
+  FIRST as for `|`/`&`: `True ^ False is True`, and any int operand makes
+  it an int.
+* **`+x` is the identity on an int and `~x` is `-x - 1`** — two's
+  complement by definition rather than a bit-level guess. Both DROP
+  boolness (`+True == 1`, `~True == -2`): `bool` has no `__pos__` or
+  `__invert__`, so int's slot runs. A `.ref` operand is refused loudly,
+  exactly as unary `-` already did.
+* **`>>=` and `^=` arrive free**: one `ALLOWED_BINOPS` entry is consulted
+  by the `BinOp` clause AND the `AugAssign` clause, as `|=` and `&=`
+  were.
+
+**The proof-layer cost is TWO `rfl` arms, and the prediction that it
+would be zero was wrong in an instructive way.** §bitwise `&`'s check
+holds where it was made: `evalBinOp`/`evalUnaryOp` sit outside every
+`mutual` block, every walker binds the operator and drops it, and
+`fuelMono`/`worldInv`/`clockErase` `.bind` the operand IHs and discharge
+the operator through `.liftRes`, which is generic over the whole `Res` —
+so the two `BinOp` constructors really did cost nothing, and the build
+carried 3545 of 3685 jobs before it stopped.
+
+What it stopped on is the asymmetry between the two sorts. `evalBinOp` is
+PURE, so no payload-blindness lemma mentions it; `evalUnaryOpH` exists
+because `not` reads the heap for dict truthiness, and
+`evalUnaryOpH_swapAt` therefore `cases op` EXHAUSTIVELY. Two new
+constructors, two missing alternatives, two `rfl`s — because `+` and `~`
+delegate to the pure `evalUnaryOp` exactly as `-` does and never look at
+the heap. Recorded because the shape generalizes: **a new constructor of
+an operator sort costs the proof layer exactly as many arms as there are
+heap-aware dispatchers over that sort**, which is zero for `BinOp` and
+one for `UnaryOp`.
+
+**And the survey that priced it wrong has a reusable lesson.** The sites
+were enumerated by grepping for `\.usub` — which finds every
+`match`/pattern position, because those are written `| .usub =>`, and
+misses every `cases op with` arm, because THOSE are written `| usub =>`
+with no dot. `evalUnaryOpH_swapAt` was invisible to the survey for
+exactly one character. **Grep an operator sort's constructors WITHOUT the
+leading dot** (`grep -rn 'usub'`), or the census of its dispatchers is
+guaranteed to be short by however many `cases` sites exist.
+
+**Measured before a line was written**, the discipline §bitwise `&` set:
+`intXor`'s four arms and `Int.fdiv`-as-`>>` were executed against CPython
+3.9.19 over a 95481-pair XOR grid and a 24720-pair shift grid (plus the
+`~`/`+` identities and the bool-type rules), 0 mismatches.
+
 ## `yield from` (pass 5 — the promotion arm returns to gen_moves)
 
 #158 rewrote gen_moves's promotion loop as

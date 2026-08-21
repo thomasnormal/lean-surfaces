@@ -13220,3 +13220,117 @@ illustrative-exempt**; `diff_test` **1315 cases, 0 failed**, 113 whitelisted,
 declarations depend on `[propext, Classical.choice, Quot.sound]` or less. The
 file's throughput is **6.5 s → 12 s**, and the growth is the four new engine
 guards, not the proofs.
+
+## L49 — RUNG 1 LANDS: the four operators the census found, and the "zero proof arms" prediction is off by two (2026-08-21)
+
+*(python-completeness lane. §L39 is its census; sections L36–L38 and
+L40–L48 are the sunfish campaign's and the C tier's, which win every
+conflict. This lane claims §L49.)*
+
+§L39's grammar census measured `>>`, `^`, unary `+` and unary `~`
+REFUSED while `<<`, `|` and `&` ran, and priced admitting them as the
+ladder's cheapest rung. They are in. **`BinOp` is now missing only `Div`
+and `MatMult`** — both out by KIND, a float result and an operand type
+nothing in or out of tier has — **and `UnaryOp` is COMPLETE.** The
+grammar census moves 60/86 → **64/87 MATCH**.
+
+docs/memory-model.md §the operator remainder is the model side;
+docs/completeness.md rung 1 is updated in place with what it cost.
+
+### Why four operators were missing, which is four different stories
+
+Not one of which is "it is hard", and only one of which is "nobody
+wrote it down":
+
+| operator | the record before the census |
+| --- | --- |
+| `>>` | DEFERRED WITH A REASON, in §bitwise `&`: it "needs a budget decision it shares with a pre-existing hole in `<<`". The SAME BATCH closed that hole with `shiftBudget`. **The deferral outlived its cause by four passes and nothing revisited it.** |
+| `^` | named in that same section as "a rider that can be added the same way if `^` is ever wanted". Never wanted, never added. |
+| `~` | measured as the **sole** static next wall of a stdlib module in the library sweep's next-wall table — a real blocker, counted and left. |
+| `+x` | not mentioned anywhere in the repository. |
+
+So §L39's phrasing — "nothing in the backlog says so" — was right only
+about `+x`, and this section corrects it. The other three were recorded,
+in three different places, none of which is where anyone looks to ask
+*which operators run*. That is the argument for the census being an
+INSTRUMENT and not a reading: `print(5 ^ 3)` needs no index, and it found
+in one run what four passes of prose had each half-recorded.
+
+### THE PREDICTION THAT WAS WRONG, and it is the transferable part
+
+Rung 1 was priced at **zero proof arms**, on §bitwise `&`'s recorded
+check: `fuelMono`/`worldInv`/`clockErase` bind the operand IHs and
+discharge the operator through `.liftRes`, which is generic over the
+whole `Res`. That check is TRUE and it held — the build carried **3545 of
+3685 jobs** before it stopped, with both `BinOp` constructors free
+exactly as predicted.
+
+It stopped at `PayloadBlind.evalUnaryOpH_swapAt`, which `cases op`
+EXHAUSTIVELY. The asymmetry is structural and worth stating as a rule:
+
+> A new constructor of an operator sort costs the proof layer exactly as
+> many arms as there are HEAP-AWARE dispatchers over that sort — zero for
+> `BinOp` (`evalBinOp` is pure, so no blindness lemma mentions it), one
+> for `UnaryOp` (`evalUnaryOpH` exists because `not` reads the heap for
+> dict truthiness).
+
+Both arms are `rfl`: `+` and `~` delegate to the pure `evalUnaryOp`
+exactly as `-` does.
+
+**And the survey that priced it wrong failed for ONE CHARACTER.** The
+dispatcher sites were enumerated with `grep -rn '\.usub'`. That finds
+every `match` position, which are written `| .usub =>`, and misses every
+`cases op with` arm, which are written `| usub =>` — no dot.
+`evalUnaryOpH_swapAt` was invisible to the survey that was supposed to
+find it. **Grep an operator sort's constructors WITHOUT the leading
+dot**, or the dispatcher census is short by however many `cases` sites
+exist. Recorded in docs/memory-model.md beside the rule.
+
+### The semantics, and what was measured before a line was written
+
+* `>>` is CPython's ARITHMETIC shift — it rounds toward -inf, which is
+  `Int.fdiv` by `2 ^ n` (`-5 >> 1 == -3`, not `-2`).
+* `>>` takes `<<`'s budget for `<<`'s reason: forming `2 ^ y` to divide
+  by would hit the very `Nat.pow exponent is too big` abort the budget
+  exists to prevent. CPython SATURATES there (0, or -1 when negative);
+  saturating here would be exact only under a bound on `x`'s bit length
+  this tier does not have, so the answer is the same loud,
+  fuel-independent refusal — never a claim CPython raises. **Owed:**
+  saturation behind a width argument.
+* `intXor` is the simplest of the three bitwise helpers, because XOR
+  commutes with complement: `.negSucc a` IS `~a`, `~p ^ q = ~(p ^ q)`,
+  `~p ^ ~q = p ^ q`, so each arm is one `Nat` XOR with the sign read off
+  the operands' parity — no `ndiff`, no subtraction, nothing to
+  underflow.
+* `+x` is the identity, `~x` is `-x - 1`. All three new value arms DROP
+  boolness (`+True == 1`, `~True == -2`, `True >> 1 == 1` are ints);
+  `^` alone keeps it, because `bool ^ bool` IS a bool.
+* `>>=` and `^=` arrived free: one `ALLOWED_BINOPS` entry serves the
+  `BinOp` clause and the `AugAssign` clause.
+
+MEASURED FIRST, the §bitwise-`&` discipline: `intXor`'s four arms and
+`Int.fdiv`-as-`>>` were run against CPython 3.9.19 over a **95481-pair**
+XOR grid and a **24720-pair** shift grid, plus the `~`/`+` identities and
+the bool-type rules — **0 mismatches**, before any Lean was written.
+
+### Battery
+
+`seq_lab` gains 11 differential functions (`shr`, `shr_aug`, `bxor`,
+`bxor_aug`, `bxor_big`, `uadd`, `invert`, `invert_mask`, `bitwise_all`
+and the two budget rows), 57 new `cases.json` rows including both
+augmented forms, both bool-drop rules, the negative-count `ValueError`,
+the `TypeError` fallbacks and the unbounded `(1 << 100) ^ 0xFF`;
+`Tests.lean` gains 23 `#guard`s at the value level. The four census
+witnesses flip REFUSE → MATCH and `op.RShift-budget` joins as the edge
+row — the census IS the acceptance battery, which is what a census
+instrument is for.
+
+### Triad
+
+`lake build` **3687 jobs green** (the post-rebase count); `docs_check` 73/73, 15
+illustrative-exempt; `diff_test` **1372 cases, 0 failed, 114
+whitelisted, 1258 matched** (from 1315/0/113 — 57 new rows, one of them
+the new budget refusal); `script_corpus` 64 scripts, 0 failed, 50
+matched, 14 loud — unmoved, as it should be, since no script in the
+corpus uses these operators; `refusal_census` **87 + 114 + 14 rows, 0
+drifts**. No `sorry`, no `native_decide`.

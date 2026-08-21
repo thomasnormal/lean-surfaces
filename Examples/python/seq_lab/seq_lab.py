@@ -299,3 +299,66 @@ def range1_dict():
     # a HEAP operand: the type name must be resolved through the heap, or
     # the message carries `typeName`'s "object" placeholder
     return range({1: 2})
+
+
+# §L39 rung 1 (docs/completeness.md): the four operators the grammar
+# census measured REFUSED while their siblings ran. `<<`, `|` and `&`
+# landed in the tail batch; `>>`, `^`, unary `+` and unary `~` were left
+# out with nothing recorded about it, and one `print(5 ^ 3)` found it.
+
+
+def shr(a, b):
+    # `>>` is CPython's ARITHMETIC shift: it rounds toward -inf, which is
+    # `Int.fdiv` by `2 ** b` (`-5 >> 1 == -3`, not -2). bool operands DROP
+    # boolness -- the typed JSON pins the type, not just the value
+    return a >> b
+
+
+def shr_aug(n):
+    # `>>=` rides the SAME operator entry as `>>` (one ALLOWED_BINOPS row
+    # buys both forms)
+    x = 1 << n
+    for i in range(n):
+        x >>= 1
+    return x
+
+
+def bxor(a, b):
+    # `^` with the full int semantics, negatives included; bool^bool is a
+    # BOOL and any int operand makes it an int
+    return a ^ b
+
+
+def bxor_aug(n):
+    # the checksum fold: `h ^= i` over a range
+    h = 0
+    for i in range(n):
+        h ^= i
+    return h
+
+
+def bxor_big():
+    # unbounded ints: no word size anywhere in the construction
+    return ((1 << 100) - 1) ^ 0xFF
+
+
+def uadd(a):
+    # unary `+` is the identity on an int and DROPS boolness (`+True` is
+    # 1, an int) -- `bool` has no `__pos__`, so int's slot runs
+    return +a
+
+
+def invert(a):
+    # `~x` is `-x - 1`, two's complement by definition rather than a
+    # bit-level guess; `~True` is -2
+    return ~a
+
+
+def invert_mask(a):
+    # the mask idiom the rung exists for
+    return a & ~0b1010
+
+
+def bitwise_all(a, b):
+    # the four together, in the shape hashing code writes them
+    return ((a ^ b) >> 2) & ~(+b)

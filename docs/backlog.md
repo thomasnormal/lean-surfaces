@@ -13020,3 +13020,82 @@ cutoff's killer store**, which stays filed with R3e because it writes.
 upgrades a `ran`-arm `Report` from a statement about `foldFrom` into a statement
 about `bound()`, and §L43's mate fixture is the row that exercises it
 (`-MATE_UPPER` in, `-47938` out).
+
+## L47 — R3d-i: the TAIL at depth ≥ 1 on the arm where it changes nothing, and a `ran` Report becomes a statement about `bound()` (2026-08-21)
+
+`Examples/python/sunfish/fold_depth1.lean` §11. §L46 stopped at a `Report` about
+**the fold**, and §L43's fourth consequence is why: at `live = False` the tail
+rewrites the number. **This pays the other arm.** At `live = True` the tail is a
+no-op on the answer, so the `ran`-arm `Report` about `foldFrom` IS a `Report`
+about what `bound()` returns — the upgrade R3d owes, delivered on exactly the
+flavour §L43's ordinary fixture exhibits.
+
+### What landed
+
+| declaration | what it says |
+|---|---|
+| `corr_skips_live` | the terminality correction is DEAD whenever `live`, at ANY non-zero depth — the `and` chain dies on operand **two**, so the third (a second `gen_moves` drain under `all(...)`) never runs |
+| `store_runs_d` | `store_runs` with the depth UNPINNED; the depth-0 gate is its `d := 0` instance |
+| `tail_runs_live` | the four tail statements composed: correction skipped, entry stored, eviction dead, `best` returned |
+
+**Depth 0's `corr_dead` kills the same statement on its FIRST operand.** Between
+them the two gates cover every node except the one R3d-ii owes, and the split is
+structural rather than incidental: at depth 0 the correction cannot fire because
+`depth` is falsy; above it, because a legal move was witnessed.
+
+### `store_runs`' depth pin was incidental
+
+`store_runs` writes `tpKey pv 0` because it was stated at a QS node, not because
+anything in the proof needed it. `store_runs_d` frees the depth and
+`sbStoredAt` frees the key; the proof is unchanged line for line. **When a gate's
+constant turns out to be scaffolding, the generalisation is free and the old gate
+becomes an instance** — worth checking before assuming a depth-1 twin is work.
+
+### The eviction runs in the world the STORE made — §L27's bridge, in the open
+
+`evict_dead`'s guard reads `len(self.tp_score)`, and the store between them
+WRITES, so its premises are stated at `w.heap.set ts (sbStoredAt …)` and not at
+`w`. `hroom` is the post-store size bound in the residue's own spelling
+(`dictStore`'s own array). §L27 predicted this exactly — *"a well-formedness
+predicate speaks about the world at ENTRY and a gate's premise about the world it
+RUNS in; whenever a statement between them writes, somebody owes the
+arithmetic"* — and here the somebody is the caller, explicitly, rather than a
+hidden `∃`.
+
+### A NEW trap, and it cost a cycle: the auto-bound implicit
+
+`tableSize` was missing from the `open` list, so Lean **auto-bound it as an
+implicit variable** and the theorem quietly became a statement about an arbitrary
+`Int`. It typechecked. It failed later and elsewhere — as an argument type
+mismatch at the `evict_dead` application, with the real cause invisible from the
+error. *An auto-bound implicit is a silent generalisation; the symptom surfaces
+at the first place the real constant is needed, which can be many lines away.*
+The tell is a lowercase name appearing in the goal's context as a hypothesis you
+did not bind.
+
+### Two fuel findings, both mechanical and both worth the line
+
+* **`execStmts` DECREMENTS per statement.** The four tail statements run at 40,
+  39, 38, 37 — not at one shared fuel. Every gate therefore needs
+  `execStmt_mono` to reach its own slot.
+* **`28 + 12` is not `40` to `rw`.** A gate stated at `F + 12` instantiated at
+  `F := 28` will not rewrite a goal holding the literal `40`; `execStmt_mono`
+  does the arithmetic where `rw` will not.
+
+### What R3d still owes — R3d-ii, the correction that FIRES
+
+At `live = False` the third operand runs: a second `gen_moves` drain,
+`pos.move(m).king_capture()` per move, the `all` builtin over a generator, and
+then the value `max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)` —
+§L43 measured it as **-47938** at depth 1 on the mate fixture. That is the arm
+that rewrites the number and it is a session of its own. The depth-1 cutoff's
+killer store stays filed with **R3e**, unchanged.
+
+### Triad
+
+`lake build` **3687 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1315 cases, 0 failed**, 113 whitelisted, 1202 matched;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud.
+All three new declarations depend on
+`[propext, Classical.choice, Quot.sound]`. No `sorry`, no `native_decide`. File
+throughput **39 s → 40 s**.

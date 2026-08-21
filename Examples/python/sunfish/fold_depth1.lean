@@ -49,6 +49,9 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   sbMoveDepth sbLive sbSearch searcherObj searchedMove searchedMove_sound
   minG minNotFun minCls minNT muG boolChain_and3 Exit fold mateUpper
   foldFrom_nil foldFrom_cons_next foldFrom_cons_cut
+  sbCorr sbCorr_noElse sbStore sbStore_lit sbEvict sbRet tableSize
+  entryDefault entryOf tpKey entryG entryNotFun entryClsAux entryNTAux
+  evict_dead ret_best corr_dead
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
 
@@ -1310,6 +1313,189 @@ leaves alone. -/
 #print axioms RanInv.step
 #print axioms RanInv.nil
 #print axioms RanInv.run
+
+
+/-! ## §11 R3d-i — THE TAIL AT DEPTH ≥ 1, ON THE ARM WHERE IT CHANGES NOTHING
+
+§10 stopped at a `Report` about **the fold**, and §9's fourth consequence is why:
+at `live = False` the tail rewrites the number. This section pays the other
+arm — **`live = True`** — and there the tail is a no-op on the answer, so a
+`ran`-arm `Report` about `foldFrom` becomes a `Report` about what `bound()`
+returns. That is the upgrade R3d owes, delivered on the flavour §9's ordinary
+fixture exhibits.
+
+### The one gate that makes it cheap
+
+`if depth and not live and all(pos.move(m).king_capture() for m in pos.gen_moves())`
+— the `and` chain dies on its **second** operand when `live` is set, so the
+third, a whole second `gen_moves` drain under `all(...)`, never runs.
+`corr_skips_live` is that, at any non-zero depth, in twelve fuel. Depth 0's
+`corr_dead` kills the same statement on the FIRST operand; these are the two
+ways the correction is dead, and between them they cover every node except the
+one R3d-ii owes.
+
+### What the store needed: depth, unpinned
+
+`store_runs` is stated at `depth = 0` — the key it writes is `tpKey pv 0`.
+`store_runs_d` is the same gate with the depth free (`sbStoredAt` is `sbStored`
+with the same generalisation), and the depth-0 gate is its `d := 0` instance.
+Nothing in the proof cared; the pin was incidental.
+
+### The eviction's premises live at the SECOND world, and that is the point
+
+The store WRITES, so `evict_dead` — whose guard reads `len(self.tp_score)` —
+runs in a world the store made. Its premises are therefore stated at
+`w.heap.set ts (sbStoredAt …)`, not at `w`: **§L27's `BoundWF.room` bridge, in
+the open.** `hroom` is the post-store size bound, in the residue's own spelling
+(`dictStore`'s own array), because that is what the path leaves.
+
+### One trap worth the line it costs
+
+`tableSize` was not in the `open` list, so Lean **auto-bound it as an implicit
+variable** and the theorem quietly became a statement about an arbitrary `Int`.
+It typechecked; it only failed later, at the `evict_dead` application, as an
+argument type mismatch a long way from the cause. *An auto-bound implicit is a
+silent generalisation, and the symptom surfaces at the first place the real
+constant is needed.*
+
+### What R3d still owes
+
+**R3d-ii — the correction that FIRES.** At `live = False` the third operand runs:
+a second `gen_moves` drain, `pos.move(m).king_capture()` per move, and the `all`
+builtin over a generator, then the mate/stalemate value
+`max(1 - MATE_UPPER, -MATE_LOWER - depth * EVAL_ROUGHNESS)` — §9 measured it as
+**-47938** at depth 1 on the mate fixture. That is the arm that rewrites the
+number, and it is a session of its own. -/
+
+/-- **GATE — the terminality correction is DEAD whenever `live`.** The `and`
+chain dies on its SECOND operand, so the third — a whole second `gen_moves`
+drain under `all(...)` — never runs. This is the arm §L43's ordinary flavour
+needs, and it is the reason a `live = True` exhaustion leaves `bound()`'s number
+alone. -/
+theorem corr_skips_live (w : World) (e : REnv) (d : Int) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hlive : Env.lookup e "live" = some (.bool true))
+    (hd0 : d ≠ 0) :
+    execStmt sunfish (F + 12) ⟨w, e⟩ sbCorr = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bx, bd, p0, p1, p2, p3, p4, p5, p6, h⟩ := sbCorr_noElse
+  have h1 : evalExpr sunfish (F + 9) ⟨w, e⟩ (.name "depth" p0) = .ok ⟨w, e⟩ (.int d) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  have h2 : evalExpr sunfish (F + 8) ⟨w, e⟩ (.unaryOp .not (.name "live" p1) p2)
+      = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hlive]
+  have hb1 : truthyH w.heap (.int d) = .ok true := by
+    simp [truthyH, truthy, hd0]
+  have hc : evalExpr sunfish (F + 11) ⟨w, e⟩
+      (.boolOp .and
+        #[.name "depth" p0, .unaryOp .not (.name "live" p1) p2,
+          .call (.name "all" p3) #[bx] #[] Option.none p4] p5)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    rw [evalExpr]
+    exact boolChain_and3 (F := F + 8) h1 hb1 h2 rfl
+  rw [h, execStmt_if_false hc rfl]
+  simp only [execStmts]
+
+/-- The dict the store leaves at ANY depth — `sbStored`'s twin with the key's
+depth free. -/
+def sbStoredAt (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (d sc : Int) : Obj :=
+  .dict (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).1.toArray
+    (if (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).2 = true then sv + 1 else sv)
+
+/-- **GATE — the table store at a FREE depth.** `store_runs` with `depth`
+unpinned; the depth-0 gate is its `d := 0` instance. -/
+theorem store_runs_d (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma d : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hlt : ts < w.heap.size)
+    (hge : gamma ≤ sc) (hk : hashableKey pv = true) :
+    execStmt sunfish 20 ⟨w, e⟩ sbStore
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStoredAt es sv pv d sc) hlt }, e⟩ .next := by
+  obtain ⟨p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+    hs'⟩ := sbStore_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 19 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hs', execStmt_if_true hc rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryDefault, entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf,
+    tpKey, sbStoredAt, dif_pos hlt]
+  rw [if_pos hge]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryDefault, entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf,
+    tpKey, sbStoredAt, dif_pos hlt]
+  rfl
+
+/-- **R3d-i — THE TAIL AT DEPTH ≥ 1 WITH `live`, and it leaves the number
+alone.** The correction is skipped on its second operand, the store writes the
+entry, the eviction does not fire and the return hands back `best`. So a
+`live = True` exhaustion's `Report` about the FOLD is a `Report` about
+`bound()`'s own answer — which is precisely what §9's fourth consequence said
+was NOT available at `live = False`.
+
+The eviction's premises are stated at the POST-STORE world, because that is the
+world it runs in and the store between them writes: §L27's `BoundWF.room`
+bridge, made explicit rather than hidden. -/
+theorem tail_runs_live (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma d : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hlt : ts < w.heap.size)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hlive : Env.lookup e "live" = some (.bool true))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some entryDefault)
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hnolen : Env.lookup e "len" = Option.none)
+    (hnots : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hd0 : d ≠ 0) (hge : gamma ≤ sc) (hk : hashableKey pv = true)
+    (hobj' : Heap.get? (w.heap.set ts (sbStoredAt es sv pv d sc) hlt) sa
+      = some (searcherObj ci ts tm hs n dl sf))
+    (hroom : ((dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).1.toArray.size : Int)
+      ≤ tableSize) :
+    execStmts sunfish 41 ⟨w, e⟩ [sbCorr, sbStore, sbEvict, sbRet]
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStoredAt es sv pv d sc) hlt }, e⟩
+          (.ret (.int sc)) := by
+  have hdict' : Heap.get? (w.heap.set ts (sbStoredAt es sv pv d sc) hlt) ts
+      = some (.dict (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).1.toArray
+          (if (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).2 = true then sv + 1
+           else sv)) := by
+    show Heap.get? (w.heap.set ts (sbStoredAt es sv pv d sc) hlt) ts
+      = some (sbStoredAt es sv pv d sc)
+    simp [Heap.get?, hlt]
+  simp only [execStmts]
+  rw [execStmt_mono (corr_skips_live w e d 28 hd hlive hd0) (by simp) 40 (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (store_runs_d w e ci sa ts tm hs n dl sf sc gamma d pv es sv
+    hslf hpos hd hb hg hen hroot hnoe hobj hdict hlt hge hk) (by simp) 39 (by omega)]
+  simp only []
+  rw [execStmt_mono (evict_dead { w with heap := w.heap.set ts (sbStoredAt es sv pv d sc) hlt }
+    e ci sa ts tm hs n dl sf
+    (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).1.toArray
+    (if (dictStore es.toList (tpKey pv d) (entryOf sc mateUpper)).2 = true then sv + 1 else sv)
+    hslf hnolen hnots hobj' hdict' hroom) (by simp) 38 (by omega)]
+  simp only []
+  rw [execStmt_mono (ret_best { w with heap := w.heap.set ts (sbStoredAt es sv pv d sc) hlt }
+    e sc hb) (by simp) 37 (by omega)]
+
+#print axioms corr_skips_live
+#print axioms store_runs_d
+#print axioms tail_runs_live
 
 
 end Examples.python.sunfish.fold_depth1

@@ -12082,3 +12082,165 @@ before its first `lake build`.**
    board?* — still owed, still a fresh half-hour, and still ahead of `Inv []`.
 2. **The depth-1 cutoff's killer store**, with `BoundWF.room`'s eviction guard —
    R3b's remainder, and it belongs with R3e because it writes.
+
+## L39 — PYTHON-COMPLETENESS OPENS WITH ITS CENSUS: 60 of 86 grammar productions run, and the measurement REFUTES four of its own predictions (2026-08-21)
+
+*(§L35 is the C tier's; §L36–L38 were claimed by the sunfish campaign
+while this pass ran, so this lane takes §L39. The campaign holds
+§L30–L34 and §L36–L38 and wins every conflict.)*
+
+A new lane, chartered today: **completing Python in Lean** — closing the
+extractor/interpreter refusal surface toward ARBITRARY Python, beyond
+what sunfish needs. Founding deliverable is a census, per the §L25 law,
+and the census is an INSTRUMENT rather than a reading:
+`harness/refusal_census.py`, three modes, every claim a run.
+`docs/completeness.md` is the census and the ladder off it.
+
+### The instrument
+
+* `--grammar` — one minimal witness per production of CPython 3.9's
+  `ast` grammar (25 `stmt`, 27 `expr`, 13+4+10+2 operators, the four
+  `Constant` payload types the extractor forks on, two measured edge
+  rows). Each witness is a whole PROGRAM: written to a temp dir (never
+  beside a source), extracted through `tools/leanpy`'s cache, run under
+  the pinned 3.9 oracle, run through ONE `--script-batch` process, and
+  compared by `harness/leanpy_survey.py`'s own rule — which is imported,
+  not re-implemented, so the census cannot drift from the survey's
+  verdicts.
+* `--whitelist` — `harness/cases.json`'s 113 `expect: unsupported` rows
+  through one `--batch`, bucketed by the refusal message they ACTUALLY
+  produce against a per-row construct class. A whitelisted row with no
+  class FAILS the run: the census covers the whole whitelist or it is
+  not one.
+* `--scripts` — the same for the 14 loud rows of `harness/scripts.json`.
+
+Exit is nonzero on DRIFT. Whole run: **12 s**.
+
+### The headline
+
+**86 witnesses: 60 MATCH, 26 REFUSE, 0 DIVERGE.** Of the 26, exactly one
+(`1 @ 2`) is FAITHFUL — CPython raises `TypeError` too. The other 25
+stop a program CPython runs.
+
+Four sorts are COMPLETE: every `cmpop`, both `boolop`s, and — with the
+edges named as their own rows — assignment, control flow, def/class,
+generators, list comprehension, bare f-strings and both displays. One
+sort is entirely absent: `async` (four productions, one refusal message,
+because `async def` refuses first).
+
+113 whitelisted rows classify into **44 construct classes**, 14 loud
+scripts into **9**. Source-side upper bound, counted: **143** distinct
+`.unsupported` literals in `LeanModels/Python/*.lean` (16 of them
+`internal:`, so 127 reachable), **11** literal extractor `py_kind`s,
+**6** computed operator-table families, **3** generic fall-throughs, and
+**6** structured-but-loud envelope fields — the family §L14 warned a node
+count cannot see.
+
+### THE MEASUREMENT REFUTED FOUR OF ITS OWN PREDICTIONS, and they are the ladder's first rung
+
+The witness table was written from a reading of the source, then run.
+Five rows came back different, and the reading that produced four of
+them was "the bitwise tier landed":
+
+| row | recorded | MEASURED |
+| --- | --- | --- |
+| `op.RShift` | MATCH | **REFUSE** — `>>` is not in `BinOp` |
+| `op.BitXor` | MATCH | **REFUSE** — `^` is not in `BinOp` |
+| `op.UAdd` | MATCH | **REFUSE** — `UnaryOp` is `usub \| not` |
+| `op.Invert` | MATCH | **REFUSE** — nor is `~` |
+| `op.Pow` | REFUSE | **MATCH** — only the NEGATIVE exponent refuses |
+
+`<<`, `\|` and `&` landed; `>>`, `^`, `+x` and `~x` did not, and nothing
+in `docs/backlog.md` says so. One `print(5 ^ 3)` found it. `op.Pow`'s
+correction went the other way and cost a second row (`op.Pow-negative`)
+to pin the edge the first witness does not reach — the discipline the
+file states: when a MATCH is known to have an edge, the edge gets a row,
+not a footnote.
+
+### Two readings the classification forces
+
+* **Exceptions are the largest single class (17 of 113 rows) AND the
+  tier has moved under the record.** The measured message says a
+  user-defined `class N(Exception): pass` handler IS admitted today.
+  What remains is builtin handler classes, `as` bindings, `else`, bare
+  `except`, tuple handlers, `raise <expr>`, `raise C(args)`, bare
+  re-raise, `raise … from …`, `finally`. **AGENTS.md, which still
+  describes exceptions as deferred wholesale, is STALE** — recorded here
+  rather than edited, because the sunfish campaign owns that file's
+  tier paragraph.
+* **11 of 113 rows price the HARNESS, not the language.** Every
+  `boundary.*` class and `firstclass.callable` refuses because `Val` —
+  the observation type the differential compares — has no form for a
+  dict, a namedtuple, a range, a generator, a closure or an instance. A
+  PROGRAM never meets them; leanpy compares stdout. Different queue.
+
+### The ladder's top five (docs/completeness.md §6 carries the argument)
+
+1. **The four missing integer operators.** Price TRIVIAL — two `BinOp`
+   constructors, two `UnaryOp` constructors, four extractor entries,
+   four evaluation arms, and the proof layer costs ZERO by the
+   `BinOp:BitAnd` precedent (`fuelMono`/`worldInv`/`clockErase` never
+   case on the operator). Unblocks hashing, masks, bitboards.
+2. **`AnnAssign`.** Price SMALL — in a FUNCTION body PEP 526 does not
+   evaluate the annotation, so `x: T = v` at a plain-name target is
+   `Assign` exactly, an ingestion rewrite with zero interpreter change;
+   the module/class half (which does evaluate, and stores
+   `__annotations__`) can stay loud. Unblocks typed code, where one
+   annotated local currently costs the whole module.
+3. **Live dict iteration.** Price MEDIUM, value the highest per unit —
+   TEN interpreter messages ride on one missing cursor. The census's
+   finding is that this is **not** a hash-order refusal: 3.7+ specifies
+   insertion order, the model already stores dicts in it (`reprVal`
+   renders them in it), and `initItemsLoop` already runs a live items
+   cursor with the faithful `RuntimeError`. `execForList`'s index cursor
+   is the shape, one heap kind over.
+4. **Exceptions, the remainder.** Price MEDIUM-LARGE, and the sequencing
+   is forced: `PyErr` is a closed enum, so an exception VALUE (class +
+   args, with a subclass relation for handler matching) comes first and
+   the `else`/`finally` flow arms fall out behind it.
+5. **Allocating slices and sequence repetition.** Price SMALL — the
+   tuple halves are already in tier (`seqSlice`/`tupleRepeat`, which is
+   what the shipped padding line runs through); the missing half is the
+   one whose result is a fresh HEAP object, and that shape is already
+   paid for by `list(iterable)` (`hlstx` + one `bind` arm + one
+   `allocList` leaf).
+
+Named and deliberately NOT in the top five: `float` (largest value AND
+largest price, and a DECISION not a work item — Lean's `Float` is not
+kernel-reducible, the mergeSort trap's family, so `#py_check` and every
+captured `rfl` run would break; owner-gated); the boundary observation
+forms; `with` (rides 4); `SetComp`/`DictComp` (ride 3); `nonlocal` cell
+writes (priced in §L14); `import` (priced out for the stdlib in §the
+import ceiling); `async`.
+
+### The over-refusals, tracked as a class rather than as tier boundaries
+
+Five rows where CPython succeeds and the model could be right:
+`gen_lab::yf_leak_drive`, `del_lab::rebind_after`, `del_lab::loop_del`
+(each one census clause), and the two `elsewhere` rows of
+`star_shadow`/`fstring_shadow` (a recorded trade: per-scope shadow
+analysis means re-deciding CPython's scoping rules inside the
+extractor). `nonlocal` is NOT one of these — it is refused by design and
+the design HOLDS for arbitrary Python, since the closure tier reads
+cells at the CALL from the defining frame and a write-back has nowhere
+to land. It is a rung, not a bug.
+
+### Triad
+
+`lake build` **3684 jobs green**; `docs_check` 73/73 marked blocks, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113
+whitelisted, 1202 matched** — unmoved, as a census must leave it;
+`script_corpus` 64 scripts, 0 failed, 50 matched, 14 loud;
+`refusal_census` 86 + 113 + 14 rows, **0 drifts**. No Lean file was
+touched by this pass.
+
+### Two operational notes for the next lane
+
+* **`cp -Rc` does not preserve mtimes** — independently hit here and in
+  §L35 on the same afternoon. This clone came up re-elaborating ~35
+  modules with three sibling lanes competing for the laptop; the whole
+  build took over two hours of wall clock for what should have been a
+  replay. Use `cp -Rpc`.
+* The witness corpus is INSIDE the instrument, not in the tree: nothing
+  is added to `harness/scripts/`, so no existing measured number moves.
+  `--keep DIR` dumps the witnesses when you want to look at one.

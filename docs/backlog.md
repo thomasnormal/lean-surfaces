@@ -11949,3 +11949,135 @@ purpose.
    `omega` treats each `if` as an opaque `Nat` atom, so the induction closes by
    linear arithmetic without ever case-splitting on the boolean. Choosing the
    structural `alphaCount` over `filter … |>.length` is what made that available.
+
+**`lake build` / `diff_test` / `script_corpus` are stated as PENDING at the
+moment of writing, not as green, because they were not observed green.** The
+commit changes four files — `docs/c-tier-charter.md`, `docs/backlog.md`,
+`docs/c-construct-census.json`, `harness/c_construct_census.py` — and **no
+`.lean` file and no file `lake build` reads**, so it cannot move any of the
+three. The reason they were not observed is environmental and worth recording
+for the next lane that clones: `cp -Rc` gives an APFS clone but does NOT
+preserve mtimes, so Lake re-elaborates from cold — this clone came up rebuilding
+Mathlib from source (2790 of 8268 oleans at the time of writing) with three
+sibling lanes' builds competing for the same laptop. **Use `cp -Rpc`.** The run
+is in flight and the numbers land in the next entry; the last observed values on
+this commit's parent were `lake build` 3684 jobs green, `diff_test` 1315/0
+(1202 matched, 113 whitelisted), `script_corpus` 64/0.
+
+## L38 — R3b's CALL GATE LANDS, and the judgment §L34 committed to was not needed (2026-08-21)
+
+`Examples/python/sunfish/fold_depth1.lean` §8. The searched round's one
+world-moving statement —
+`score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))` — is
+proved over a free world and a free frame, joined to §3's `searchedMove`, and
+instantiated on the `gamma ≤ 0` census row. **R3b's call half is closed**; what
+R3b still owes is named at the statement that owes it, and it is not this one.
+
+### What landed
+
+| piece | shape |
+|---|---|
+| `sbSearch_sharp` | the statement SPELLED — the gate computes with every operand, so §L28's law 5 applies |
+| `search_line` | the gate: two `callIn` premises, two world hops (`w → w₁ → w₂`), answer `min cap (-child)` |
+| `search_agrees` | `settle_agrees`' twin — the frame the gate leaves holds `(searchedMove cap child).score` |
+| `search_sound` | `searchedMove_sound` at the number the gate produces: the IH, consumed |
+
+### THREE FINDINGS, and the first one retires a plan
+
+**1. `EvalsIn` is for handing a moved world BETWEEN gates, not for moving it
+INSIDE one.** §L34 committed the shape precisely: *"three `EvalsIn` steps
+threaded through one `EvalsInList` — the receiver, then the argument list whose
+FIRST element allocates — then the child call, then `unaryOp .usub`, then
+`min`."* Those five steps are exactly what the interpreter walks and §8 does walk
+them. **The judgment is not needed for any of them.** Four general lemmas were
+drafted for it (a non-generator namedtuple method, an instance-`.ref` method,
+`usub`, two-argument `min`) and all four were thrown away: with the whole
+expression inside ONE theorem at a symbolic fuel `F`, the two calls enter as
+`∀ G, callIn sunfish (F + G) … = …` and a single `py_simp` crosses them.
+
+The carryable rule, and it prices the rest of the campaign: **an
+`∀`-over-fuel-offset call premise is the cheap substitute for `EvalsIn` whenever
+the mover and its consumer are inside the same theorem.** `EvalsIn` earns its
+existential exactly when one theorem's conclusion becomes another's hypothesis —
+which is why `order_line_sorts` (§L31) genuinely needs it (`ord_stmt_emits`
+consumes it) and why this gate does not. §L34 read the precedent off the SHAPE of
+the expression; the thing that decides is the SHAPE OF THE OBLIGATION.
+
+**2. The plan premise cannot be `attrCallPlan … = .instMethod …`.** §L34's census
+recorded the plan as one measured line. It cannot be stated that way: `py_simp`
+UNFOLDS `attrCallPlan`, and `-attrCallPlan` does not stop it, because simp's erase
+does not remove a lemma the tactic itself adds to its list. So the one line
+becomes **four premises in the residue's own spelling** — the heap slot
+(`searcherObj`, `Heap.get?`-normalised the way `killer_misses` does it), the class
+(`classAt`), the method's membership in `c.methods`, and the class NAME, because
+the plan the interpreter builds is `c.name ++ "." ++ attr` and not a constant.
+The computed-shape law (§L20) at a new place, with the twist that the erase
+mechanism does not rescue it. `pos.move`'s plan needs none of this: its receiver
+is a namedtuple VALUE, so `ntupleCallPlan` computes.
+
+**3. `posOf` must be unfolded IN THE PREMISE before the walk.** Listing `posOf` in
+the simp set unfolds it in the GOAL and not in `hmove`'s left-hand side, and the
+rewrite then silently misses — the residue keeps a `callIn` with a spelled-out
+`.ntuple` where the premise still says `posOf`. `value_call_evals` (§L31) closes
+the same trap one level out with `simpa only [posOf] using hcall`; here it is
+`simp only [posOf] at hmove`, one line, and without it the gate reads as
+unprovable rather than as mis-spelled.
+
+**The gate elaborated on the SECOND attempt** once those two premises were in the
+residue's spelling — 3.8 s in the scratch file, against the session that the
+`EvalsIn` route was priced at.
+
+### Instantiated on the `gamma ≤ 0` row — every premise, then the conclusion
+
+§L32 measured that row as **answer 0 in two nodes**, heap 70 → 247. Those two
+nodes are this gate: the parent's round and the child it searches.
+
+| premise | on the live fixture |
+|---|---|
+| `hmove` | `pos.move(Move(84,64))` at the SEARCHER's world: heap **70 → 71**, decided at **32** fuel, 16 times out |
+| `hchild` | `self.bound(pos.move(move), 1, 0)` **answers 0**, leaves the heap at **159**; **512** fuel decides, 256 times out |
+| `hobj`/`hcl`/`hmeth`/`hnm` | the live instance's class is `Searcher` and `bound` is one of its methods |
+| conclusion | `min 46 (-0) = 0 = (searchedMove 46 0).score`, and `max (-MATE_UPPER) 0 = 0` — the number the shipped `bound()` returns at `gamma = 0` |
+
+The cap 46 is §L33's own measurement (the top row of the ordering line at depth 1
+on the opening board), so the settle arm and the cut arm are instantiated on the
+same move.
+
+### What R3b still owes, and why it is NOT this gate's business
+
+The searched round's five statements are all gated (`cap_line_low`,
+`break_fires`, `move_depth_low`, `search_line`, `live_updates`). The two the fold
+runs AFTER the round are not, and one of them is not cheap: **the cutoff is not
+free at depth 1 the way it is at depth 0.** `sbKill_lit`'s guard is
+`move is not None and depth`, and at a real move with `depth = 1` BOTH conjuncts
+hold, so `self.tp_move[pos] = move` runs and behind it the eviction guard
+`len(self.tp_move) > TABLE_SIZE` that §L27 recorded as `BoundWF.room`. `qs_cut`
+cannot serve — its `hm` premise is `move is None`, which is exactly what makes the
+depth-0 fold heap-free. That is a heap WRITE inside the round, which puts it with
+**R3e**'s allocation arm rather than with the call gate, and it is recorded in the
+file at the statement that owes it.
+
+### Triad
+
+`lake build` **3684 jobs green**; `docs_check` 73/73, 15 illustrative-exempt; `diff_test`
+**1315 cases, 0 failed, 113 whitelisted, 1202 matched**; `script_corpus` 64
+scripts, 0 failed, 50 matched, 14 loud. All twenty-six printed declarations depend
+on `[propext, Classical.choice, Quot.sound]` or less; `settle_folds` is
+axiom-free and the five spelled pins depend on `[propext]` alone. No `sorry`, no
+`native_decide`. File throughput **29 s** (§L34's 22 s plus §8's own battery,
+whose expensive row is the child's 512-fuel search).
+
+### One operational note, because it cost this pass most of its wall clock
+
+The clone was cold and `lake build` began compiling **Mathlib from source**
+(`LeanModels/Circuit/*` imports it). `lake exe cache get` decompressed 5969
+already-cached files in **13 seconds** and retired an estimated five hours of
+compilation. **Any fresh clone of this repo should run `lake exe cache get`
+before its first `lake build`.**
+
+### The next dispatch's front items, in order
+
+1. **R3c's exhaustion census** — *does the depth-1 fold ever exhaust on this
+   board?* — still owed, still a fresh half-hour, and still ahead of `Inv []`.
+2. **The depth-1 cutoff's killer store**, with `BoundWF.room`'s eviction guard —
+   R3b's remainder, and it belongs with R3e because it writes.

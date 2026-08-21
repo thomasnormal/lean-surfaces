@@ -43,10 +43,11 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   sbNull_lit sbStand_lit compare_one boolChain_and_falsy
   sbScore sbScore_lit sbElse1 sbElse1_split sbVirt sbVirt_lit sbReal sbReal_lit
   sbB5 sbB5_split sbCapLine sbCapLine_lit sbBreak sbBreak_lit
-  maxG maxNotFun maxCls maxNT mlG posCAux posCls_methods
+  maxG maxNotFun maxCls maxNT mlG posCAux posCls_methods posCls_ntBase_isSome
   execStmt_if_true execStmt_if_false execStmts_singleton_flow
   Round Sound Report foldFrom settledCap fold_report foldFrom_cons_settle
-  sbMoveDepth sbLive minG minNotFun minCls minNT muG boolChain_and3
+  sbMoveDepth sbLive sbSearch searcherObj searchedMove searchedMove_sound
+  minG minNotFun minCls minNT muG boolChain_and3
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
 
@@ -680,14 +681,13 @@ theorem live_updates (w : World) (e : REnv) (scv mu : Int) (lv : Bool) (F : Nat)
   · py_simp [-globalsFold, -globalsStep, hs, hl, hnmu, hmuw, muG, if_neg hlt,
       decide_eq_false hlt]
 
-/-! ## §7 R3b's CALL HALF — censused, not yet proved
+/-! ## §7 R3b's CALL HALF — the census it was built from
 
 The searched round's remaining statement is
 `score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))`, and it is
-the one place in the fold where the world MOVES twice inside one expression. Its
-census is taken here so the next pass starts from measurements rather than from
-the source text; the gate itself is deliberately not attempted, because a
-half-proved call gate is worse than none.
+the one place in the fold where the world MOVES twice inside one expression. This
+section is the census the gate was built from; **the gate itself is §8**, and the
+measurements below are what it takes as premises rather than guesses.
 
 **What was measured**, on the live engine:
 
@@ -704,21 +704,19 @@ half-proved call gate is worse than none.
   `arityOk f.params 4`, not `= 5`;
 * `min` is the builtin, unshadowed.
 
-**The shape the gate will take.** Three `EvalsIn` steps threaded through one
-`EvalsInList` — the receiver `self`, then the argument list whose FIRST element
-allocates — then the child call, then `unaryOp .usub`, then `min`. The child's
-answer enters as a hypothesis in the same threshold form R1's `ValueAnswers` and
-§L31's `hdrain` use, and `searchedMove_sound` is what consumes it at the spec
-side. `order_line_sorts` (§L31) is the worked precedent for an expression whose
-argument list moves the world; the difference is that there the mover was a
-generator allocation and here it is a whole recursive search.
+**The shape the gate was PREDICTED to take, and did not.** This section used to
+say: three `EvalsIn` steps threaded through one `EvalsInList` — the receiver, the
+argument list whose first element allocates, the child call, `unaryOp .usub`,
+`min` — with `order_line_sorts` (§L31) as the precedent. Those five steps are
+exactly what the interpreter walks, and §8 does walk them; what it does NOT need
+is the judgment. See §8's first finding: `EvalsIn` buys the ability to hand a
+moved world BETWEEN gates, and this statement is ONE gate.
 
-**Why it is a session and not a tail.** `pos.move(move)` allocating means the
-child call's world is `w` plus one object, and the child's own world is that plus
-whatever the subtree wrote — so the statement's out-world is two hops from its
-in-world and every later premise in the round has to be restated at the second
-hop. That is the same bookkeeping `SubtreeWrites` will need at R3e, and doing it
-once, carefully, is worth more than doing it twice. -/
+**The two hops are real.** `pos.move(move)` allocating means the child call's
+world is `w` plus one object, and the child's own world is that plus whatever the
+subtree wrote — so the statement's out-world is two hops from its in-world and
+every later premise in the round has to be restated at the second hop. That is
+the same bookkeeping `SubtreeWrites` will need at R3e. -/
 
 private def mvR (i j : Int) : RVal :=
   .ntuple "Move" #["i", "j", "prom"] #[.int i, .int j, .str ""]
@@ -756,6 +754,209 @@ against an instance `.ref`'s. -/
 #print axioms sbLive_sharp
 #print axioms move_depth_low
 #print axioms live_updates
+
+
+/-! ## §8 R3b — THE CALL GATE, LANDED
+
+`score = min(cap, -self.bound(pos.move(move), 1 - gamma, move_depth))` in one
+statement gate, over a free world, with the two nested calls as premises and the
+answer `min cap (-child)` — which is `searchedMove cap child`'s score on the
+schedule side, so the interpreter and §3's fold agree on the searched round the
+same way `settle_agrees` makes them agree on the settled one.
+
+### Three findings, and each one moved the gate
+
+**1. `EvalsIn` is for handing a moved world BETWEEN gates, not for moving it
+INSIDE one.** §7 committed to three `EvalsIn` steps through an `EvalsInList`, and
+four general lemmas were drafted for it (a non-generator namedtuple method, an
+instance-`.ref` method, `usub`, the two-argument `min`). None is needed. The
+judgment exists because `evalExpr`'s fuel has to be existentially quantified when
+one theorem's conclusion becomes another theorem's hypothesis — that is exactly
+`order_line_sorts` feeding `ord_stmt_emits`. Here the whole expression is a
+SINGLE gate at a symbolic fuel `F`, so the two `callIn` premises can be stated
+`∀ G, … (F + G) …` and one `py_simp` walks receiver, argument list, child call,
+`usub` and `min` in one step. **The carryable rule: an `∀`-over-fuel-offset call
+premise is the cheap substitute for `EvalsIn` whenever the mover and its consumer
+are inside the same theorem.**
+
+**2. The plan premise CANNOT be `attrCallPlan … = .instMethod …`** — the
+computed-shape law (§L20) at a new place, and with a twist: `py_simp` UNFOLDS
+`attrCallPlan`, and `-attrCallPlan` does not stop it, because simp's erase does
+not remove a lemma the tactic itself puts in the list. So the census's one line
+becomes **four premises in the residue's own spelling**: the heap slot
+(`searcherObj`, `Heap.get?`-normalised the way `killer_misses` does it), the
+class (`classAt`), the method's membership in `c.methods`, and the class NAME —
+because the plan the interpreter builds is `c.name ++ "." ++ attr`, not a
+constant. `pos.move`'s plan needs none of this: its receiver is a namedtuple
+VALUE, so `ntupleCallPlan` computes.
+
+**3. `posOf` must be unfolded IN THE PREMISE before `py_simp` runs.** Listing
+`posOf` in the simp set unfolds it in the GOAL but not in `hmove`'s left-hand
+side, and the rewrite then silently misses — the residue keeps a `callIn` with a
+spelled-out `.ntuple` where the premise has `posOf`. `value_call_evals` (§L31)
+closes the same trap one level out with `simpa only [posOf] using hcall`; here it
+is `simp only [posOf] at hmove` before the walk. Costs one line, and without it
+the whole gate looks unprovable.
+
+### What the gate says, and what it leaves free
+
+The world moves TWICE — `w` to `w₁` (the one object `pos.move` allocates) to `w₂`
+(whatever the child's subtree wrote) — and both hops are NAMED rather than hidden
+in an `∃`, which is §L26's law. Nothing about `w₂` is claimed here: it is the
+child's own out-world, and the round's later premises (`live_updates`' `MATE_UPPER`
+read) are stated at it. -/
+
+/-- The searched round's call statement, body SPELLED — the gate computes with
+every operand, so `sbSearch` gets the sharp pin (§L28's law 5). -/
+theorem sbSearch_sharp : ∃ a b c d e f g h i k l m n o p q t, sbSearch =
+    .assign #[.name "score" a]
+      (.call (.name "min" b)
+        #[.name "cap" c,
+          .unaryOp .usub
+            (.call (.attribute (.name "self" d) "bound" e)
+              #[.call (.attribute (.name "pos" f) "move" g) #[.name "move" h] #[] Option.none i,
+                .binOp (.constant (.int 1) k) .sub (.name "gamma" l) m,
+                .name "move_depth" n] #[] Option.none o) p]
+        #[] Option.none q) t :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+/-- **R3b's CALL GATE.** The child search, from source text to a bound `score`,
+over a free world and a free frame.
+
+The receiver `self` is an instance `.ref`, so the plan comes off the heap slot,
+the class and the class's own name (finding 2); `pos.move(move)` is a namedtuple
+method whose plan computes, and it is the argument that ALLOCATES, so the child
+call runs at `w₁` and the statement lands at `w₂`. Both calls enter as premises
+quantified over the fuel OFFSET, which is what lets one walk cross them
+(finding 1). -/
+theorem search_line (w w₁ w₂ : World) (e : REnv) (ci : ClassId) (scls : ClassDefn)
+    (sa ts tm hs : Addr) (nd dl sft : Int)
+    (capv gamma md r : Int) (mvv pv : RVal)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool) (F : Nat)
+    (hself : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hmv : Env.lookup e "move" = some mvv)
+    (hcap : Env.lookup e "cap" = some (.int capv))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hmd : Env.lookup e "move_depth" = some (.int md))
+    (hnomin : Env.lookup e "min" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs nd dl sft))
+    (hcl : classAt sunfish.classes.toList ci = some scls)
+    (hmeth : "bound" ∈ scls.methods)
+    (hnm : scls.name = "Searcher")
+    (hmove : ∀ G : Nat, callIn sunfish (F + G) w "Position.move"
+      #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvv] = .ok w₁ pv)
+    (hchild : ∀ G : Nat, callIn sunfish (F + G) w₁ "Searcher.bound"
+      #[.ref sa, pv, .int (1 - gamma), .int md] = .ok w₂ (.int r)) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ sbSearch
+      = .ok ⟨w₂, Env.set e "score" (.int (min capv (-r)))⟩ .next := by
+  obtain ⟨a, b', c, d, e', f, g, h, i, k, l, m, n, o, p, q, t, hlit⟩ := sbSearch_sharp
+  simp only [Heap.get?] at hobj
+  simp only [posOf] at hmove
+  rw [hlit]
+  py_simp [-globalsFold, -globalsStep, hself, hpos, hmv, hcap, hg, hmd,
+    hnomin, hobj, hcl, hmeth, hnm, searcherObj, hmove, hchild,
+    minG, minNotFun, minCls, minNT,
+    posOf, posCAux, posCls_methods, posCls_ntBase_isSome]
+
+/-- **AND THE TWO HALVES AGREE**, `settle_agrees`' twin for a searched round: the
+frame the gate leaves holds exactly the number `searchedMove cap child` scores. -/
+theorem search_agrees (capv r : Int) (e : REnv) :
+    Env.lookup (Env.set e "score" (.int (min capv (-r)))) "score"
+      = some (.int (searchedMove capv r).score) := by
+  simp [searchedMove, Round.score, Env.lookup_set_self]
+
+/-- **THE IH, CONSUMED.** The child's own contract at the flipped window is what
+makes the round `Sound`, and `searchedMove_sound` (§L16) is the consumer — stated
+here at the number the gate actually produces. At depth 1 the child sits at
+`move_depth = 0` (`move_depth_low`), inside `RecursionStepW`'s
+`∀ e, 0 ≤ e → e < d`, which is the whole reason the strong form was landed. -/
+theorem search_sound {gamma capv childReport childValue value : Int}
+    (hchild : Report (1 - gamma) childReport childValue)
+    (hneg : -childValue ≤ value) :
+    Sound gamma value (min capv (-childReport)) :=
+  searchedMove_sound (cap := capv) hchild hneg
+
+/-! ### The call gate, INSTANTIATED on the `gamma ≤ 0` census row
+
+§0 measured that row as **answer 0 in two nodes**, heap 70 → 247. Those two nodes
+are this gate: the parent's round, and the child it searches. Every premise is
+checked separately on the live fixture below, then the conclusion. -/
+
+/-- `pos.move(Move(84, 64))` at the SEARCHER's world — the top row of the ordering
+line (§4's `fxTopVal`), and the one object it allocates. -/
+private def mvAtW (F : Nat) : Option Nat :=
+  match searcherW with
+  | some (w, _) =>
+    (match callIn sunfish F w "Position.move" #[posH 0, mvR 84 64] with
+     | .ok w' (RVal.ntuple "Position" _ _) => some w'.heap.size
+     | _ => Option.none)
+  | _ => Option.none
+
+/-! `hmove` on the fixture: heap **70 → 71**, and 32 fuel decides it (16 times
+out) — the same one object §7 measured at `initWorld`. -/
+#guard mvAtW 32 == some 71
+#guard (mvAtW 16).isNone
+
+/-- `self.bound(pos.move(move), 1 - 0, 0)` — the child, at the world the move
+left. -/
+private def childAtW (F : Nat) : Option (Int × Nat) :=
+  match searcherW with
+  | some (w, a) =>
+    (match callIn sunfish 32 w "Position.move" #[posH 0, mvR 84 64] with
+     | .ok w₁ pv =>
+       (match callIn sunfish F w₁ "Searcher.bound" #[.ref a, pv, .int 1, .int 0] with
+        | .ok w₂ (RVal.int rr) => some (rr, w₂.heap.size)
+        | _ => Option.none)
+     | _ => Option.none)
+  | _ => Option.none
+
+/-! `hchild` on the fixture: the child **answers 0** and leaves the heap at 159;
+**512** fuel decides it and 256 times out. That is the second of the row's two
+nodes, and the exit law's measurement for the second hop. -/
+#guard childAtW 512 == some (0, 159)
+#guard (childAtW 256).isNone
+
+/-! `hobj`/`hcl`/`hmeth`/`hnm` on the fixture: the live instance's class is
+`Searcher` and `bound` is one of its methods — the four premises finding 2
+replaced the one-line plan with. -/
+#guard (match searcherW with
+        | some (w, a) =>
+          (match Heap.get? w.heap a with
+           | some (Obj.instance ci _) =>
+             (match classAt sunfish.classes.toList ci with
+              | some c => c.name == "Searcher" && c.methods.toList.contains "bound"
+              | _ => false)
+           | _ => false)
+        | _ => false)
+
+/-! And the conclusion: the cap is 46 (§4), the child answered 0, so the round's
+score is `min 46 (-0) = 0` — which is `searchedMove 46 0`'s score, and which
+`max (-MATE_UPPER) 0 = 0` folds to the number the shipped `bound()` returns at
+`gamma = 0` in TWO nodes (§0's guard). -/
+#guard min (46 : Int) (-0) == 0
+#guard (searchedMove 46 0).score == 0
+#guard (match fxGlob "MATE_UPPER" with | some mu => max (-mu) (0 : Int) == 0 | _ => false)
+
+#print axioms sbSearch_sharp
+#print axioms search_line
+#print axioms search_agrees
+#print axioms search_sound
+
+/-! ### What R3b still owes, named at the statement that owes it
+
+The searched round's five statements are all gated now (`cap_line_low`,
+`break_fires`'s skip arm is the one-line twin of §4's, `move_depth_low`,
+`search_line`, `live_updates`), and the two the fold runs AFTER the round are not:
+`best = max(best, score)` is `qs_max` at the second hop, but **the cutoff is not
+free at depth 1** the way it is at depth 0. `sbKill_lit`'s guard is
+`move is not None and depth`, and at a real move with `depth = 1` BOTH conjuncts
+hold — so `self.tp_move[pos] = move` runs, and behind it the eviction guard
+`len(self.tp_move) > TABLE_SIZE` that §L27 recorded as `BoundWF.room`. `qs_cut`
+cannot serve: its `hm` premise is `move is None`.
+
+That is a heap WRITE inside the round, which puts it with R3e's allocation arm
+rather than with this gate — and it is the honest edge this pass stops at. -/
 
 
 end Examples.python.sunfish.fold_depth1

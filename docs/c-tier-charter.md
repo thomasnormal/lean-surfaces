@@ -796,16 +796,29 @@ identifies: not a machine, but the schema version plus the flag pin —
 and that two conforming hosts produce the same envelope is now a CHECKED
 property rather than a hope.
 
-### 4.4 Inch 4 — `docs/c-envelope-schema.md`.
+### 4.4 Inch 4 — `docs/c-envelope-schema.md`. **LANDED.**
 
-The vocabulary the ingester will refuse outside of: the **45 node
-kinds**, now enumerated in `docs/c-construct-census.json` rather than
-merely counted. Fields per the memo's §4.2 — `schema_version "c-0.1"`,
-`language "c"`, `frontend` (FAMILY), `profile_id`, `source_file`,
-`source_sha256`, `translation_unit`, `externals` (the 27 libc names),
-`lean_blocks`. Spans carry BOTH spelling and expansion location, because
-6 function-like macros produce corpus constructs and a refusal that
-cannot name the macro is a refusal a human cannot act on.
+Schema `c-0.1`, mirroring `docs/envelope-schema.md` and
+`docs/sv-envelope-schema.md`. **Every vocabulary table is DERIVED from
+`docs/c-construct-census.json` rather than chosen**, and a check confirms
+all 45 kinds are listed with nothing extra — so "what the ingester
+accepts" and "what the corpus contains" cannot silently drift apart.
+
+Three things this envelope has that its two siblings do not, each forced
+by a measurement rather than by taste: **`profile_id` is a first-class
+field** (the profile is an INPUT to the AST — `_FORTIFY_SOURCE` injects
+10 `__builtin_object_size` nodes that are in nobody's source, so same
+source + different profile = different program, and the ingester refuses
+a mismatch loudly); **spans carry BOTH spelling and expansion location**,
+because 6 function-like macros produce corpus constructs and a refusal
+that cannot name the macro is one a human cannot act on; and
+**`externals` is a list of 27 names + prototypes, not an ingested
+subtree**, because the preprocessed TU is 3335 lines around 58 functions.
+
+The document also fixes the `Unsupported` leaf, the determinism contract,
+the cache key (`(source, extractor, PROFILE)`), and §6 — the five
+structural `#guard`s the ingester will be checked by, all of them facts
+the census independently knows.
 
 ### 4.5 Inch 5 — `extractors/c/extract.py`.
 

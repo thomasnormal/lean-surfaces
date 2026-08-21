@@ -12498,3 +12498,77 @@ is **2.5 s** — the census's six engine-free guards plus two
    from the note that named it.** §L37's en-passant finding was right about the
    hazard and imprecise about the fix; five minutes with the two `if`s produced a
    predicate that keeps the fixture's own edges and drops exactly three arms.
+
+## L42 — M1 INCH 4: the C envelope schema, DERIVED from the census rather than chosen (2026-08-21)
+
+`docs/c-envelope-schema.md`, schema `c-0.1` — inch 4 of the C-tier charter's
+first milestone ([docs/c-tier-charter.md](c-tier-charter.md) §4.4), and the last
+inch before the extractor. Still no Lean; still inside the prefix all three
+endgames share, so Thomas's choice is still not needed.
+
+**The schema's vocabulary is DERIVED, not chosen.** Every table comes out of
+`docs/c-construct-census.json`: 45 node kinds (8 declarations, 11 statements, 19
+expressions, 7 types), 20 binary + 5 compound-assignment + 6 unary operators, 8
+`castKind`s, 27 external names. A check run with the doc confirms all 45 kinds
+are listed and nothing extra is — so "what the ingester accepts" and "what the
+corpus contains" cannot drift apart silently. That mattering is not
+hypothetical: §L35 is the entry where a hand-written census went stale.
+
+**Three fields the sibling schemas do not have, each forced by a measurement.**
+(1) **`profile_id` is first-class**, because the profile is an INPUT to the AST
+and not a stamp on it — `_FORTIFY_SOURCE` rewrites four libc calls and injects
+10 `__builtin_object_size` nodes present in nobody's source, so the same source
+under a different profile is a different program; the ingester refuses a
+mismatch loudly, and the cache key becomes `(source, extractor, PROFILE)`.
+(2) **Spans carry BOTH spelling and expansion location**, emitted only when they
+differ, because 6 function-like macros (`YIELD`, `YIELD_PAWN`, `PACK_VM`,
+`VM_VAL`, `VM_MOVE`, `PROCESS`) produce corpus constructs and a refusal that
+cannot name the macro is one a human cannot act on. Macro-free sources stay
+byte-identical to a schema without the field. (3) **`externals` is 27 names plus
+prototypes, not an ingested subtree** — the preprocessed TU is 3335 lines around
+58 functions, so the extractor filters by clang's sticky `loc.file` and records
+the boundary instead of crossing it.
+
+**`SwitchStmt` is deliberately absent from the statement table**, measured 0 in
+the corpus — the one `switch` in the file is the word, in a comment at L283.
+That absence is what makes R1 a rung rather than a v0 hole.
+
+**The conversion lattice arrives PRE-SOLVED, and that is the argument for clang
+over a hand parser.** 3123 implicit conversions in exactly 8 `castKind`s
+(`LValueToRValue` 1837, `ArrayToPointerDecay` 405, `FunctionToPointerDecay` 307,
+`IntegralCast` 239, `NoOp` 217, `NullToPointer` 53, `BitCast` 52,
+`IntegralToFloating` 13). The usual arithmetic conversions, the integer
+promotions and both decays are exactly where a hand parser goes wrong, and clang
+materializes every one as an explicit node: the ingester never re-derives a
+conversion, it reads one off. Explicit casts split 57 `NullToPointer` + 38
+`IntegralCast` — **no `T*`→`U*` cast between incompatible object types anywhere,
+and no union**, so the effective-type wall fires on nothing in this corpus,
+which is exactly when it is cheap to install right.
+
+**§6 fixes the ingester's gate before the ingester exists**: five structural
+`#guard`s — 58 function definitions, 71 file-scope objects, 19 indirect call
+sites, 0 `SwitchStmt`, 27 external names — each a fact the census knows by an
+independent path. Two instruments, one answer; the ingester will be checked
+against a measurement rather than against itself. That is the reason the census
+landed first as an instrument and not as prose.
+
+The `Unsupported` leaf, the never-fail contract and the determinism rules mirror
+both sibling schemas. One inheritance worth naming: **a clang DIAGNOSTIC is a
+hard error, not a smaller program.** The census instrument paid for that lesson
+in §L35 — clang emits a PARTIAL AST alongside its diagnostic, and the first
+version censused a non-compiling program and exited 0 — and the extractor
+inherits the refusal.
+
+**Stopping here, at the clean edge.** Inch 5 is the extractor, which is step
+five's neighbour — near where the endgame choice starts to matter. Inches 1-4
+are done: census + charter, the cross-check made reproducible (sunfish PR #256,
+awaiting review), the profile as a schema, and now the envelope. The remaining
+owner questions are unchanged: whether the lane gets `LeanModels/C/` and a
+`leanmodels-c-run` exe, and which endgame.
+
+### Triad
+
+`lake build` **3685 jobs green**; `docs_check` **73/73**, 15
+illustrative-exempt; `diff_test` **1315 cases, 0 failed, 113 whitelisted, 1202
+matched**; `script_corpus` **64 scripts, 0 failed, 50 matched, 14 loud**. This
+lane changed no Lean; no `sorry`, no `native_decide`, no axioms moved.

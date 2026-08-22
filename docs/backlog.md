@@ -19646,3 +19646,286 @@ full build would have been the speculative build the protocol forbids.)*
 R3c's interpreter half: `ord_stmt_emits_run` hands the fold a stream that is a
 function of a RUN rather than of an assumption, so a concrete round list can be
 named as soon as the frame lemma above turns the inner drain into a `GxRun`.
+
+## L81 — THE LEAN-STRUCTURES CENSUS: the biggest win is a one-line SEAM between two registries, `EStateM` is the corrected layer order already shipped (and 1.4x SLOWER in the kernel), and `bv_decide` is `native_decide`-class whenever SAT runs (2026-08-22)
+
+Thomas asked, after the mvcgen pilot: *"We've been relying a lot on Lean's
+`mvcgen`. Are there other Lean structures we can lean on?"* This is that
+question answered by measurement, at the pin `leanprover/lean4:v4.33.0-rc1`.
+The report is `docs/lean-structures-census.md`; its experiment file is
+`docs/lean-structures-census.lean` (out of the pinned build by construction,
+run with `lake env lean`). **Zero `lake build`s were run for the whole census**
+— every one of the ~20 experiments is a dependency-free scratch file
+elaborating in seconds, and the machine-wide build lock was never taken because
+it was never needed.
+
+### THE HEADLINE — the answer was a seam, not a structure
+
+`grind` is already at the pin and the tree already calls it **67 times in 22
+files**. What the tree does NOT use is `grind`'s **registry** — `@[grind]` and
+its seventeen modifiers, **zero occurrences** — and the single line that makes
+that registry compose with `@[spec]`.
+
+Core declares `mvcgen_trivial` as delegating to a *user-extensible*
+`mvcgen_trivial_extensible`, and says so in its own docstring (*"Users are
+encouraged to extend `mvcgen_trivial_extensible` instead of this tactic"*). One
+`macro_rules` line wires `grind` into it, and on §L61's own worked gate
+(`value_scores_M`, GATE 3 through the monadic twin, the gate's fourteen
+premises) the effect is measured:
+
+| closing | proof lines after the 8 `have`s | VCs left | wall clock | axioms |
+|---|---|---|---|---|
+| the pilot's (`intros`/`subst_vars`/`simp_all [8 lemmas]`) | 4 | 0 | 7.23 s | `[propext, Classical.choice, Quot.sound]` |
+| `mvcgen` then `all_goals grind` | 2 | 0 | 4.00 s | identical |
+| `mvcgen` alone | 1 | **12** | 4.14 s | unclosed |
+| **`mvcgen` alone, `grind` WIRED** | **1** | **0** | **4.00 s** | **identical** |
+
+`@[spec]` says what `mvcgen` APPLIES; `@[grind]` says what CLOSES what is left.
+They do not overlap, they do not conflict, and the second registry is currently
+empty — which is why every VC today is closed by a hand-written `simp_all`
+naming its lemmas, while `grind` takes the local hypotheses without being told.
+
+### AND THE LAW THAT SURVIVES IT — §L61's residue row, re-measured
+
+§L61 recorded *"computed-shape / residue-spelling PERSISTS verbatim."* Measured
+in `grind`'s vocabulary on the gate's four real residues: `grind` **closes the
+two that are LOOKUPS** (`resolve`'s two-level name lookup; `indexValH` at a
+heap ref) and **fails on the two that are COMPUTATIONS** — the `normIndex`/
+`asInt` tuple index, and `evalBinOp .sub (.int zj) (.int zi)`, which also
+defeats `grind [= evalBinOp]`, `simp [evalBinOp]` and `unfold evalBinOp; grind`.
+`grind` is E-matching plus congruence closure; it settles lookups, it does not
+compute a `match` down to a value. **The law and its tactic are intact.**
+
+**But the pin shipped a different instrument aimed exactly at that class, and
+the census found it without being sent to look.** `Init/Tactics.lean:2391`
+declares a **`cbv`** tactic with its own third registry `@[cbv_eval]` — zero
+uses in the tree. It closes the `evalBinOp` residue **in one token**, axioms
+clean, non-vacuity checked (the false `.add` variant leaves goals). Bounded
+honestly: `cbv` blew `maxRecDepth` at 40 000 on the *heap*-index residue, so its
+reach is the pure-arithmetic / small-`match` residues, not the heap-walking
+ones.
+
+### `EStateM` IS §3.4's CORRECTED LAYER ORDER, ALREADY SHIPPED — with two prices
+
+`docs/family-architecture.md` §3.4 reached `ExceptT ρ (StateT W Halt)` by
+`rfl` after §L61 refuted its first sketch. Core's
+`EStateM.instWPMonad : WPMonad (EStateM ε σ) (.except ε (.arg σ .pure))` is
+**that same order, already instantiated** — and core's own `EStateM` docstring
+is `docs/memory-model.md` v2's rule verbatim: *"exceptions do not automatically
+roll back the state."*
+
+* **Defeq REFUTED, iso proved.** `EStateM ε σ α = ExceptT ε (StateT σ Id) α` is
+  not `rfl` (`Result` is an inductive, the other a product of a sum). The
+  isomorphism is **8 lines**, axioms `[Quot.sound]`.
+* **Seven `@[spec]` lemmas ship in core** (`get`, `set`, `modifyGet`, `throw`,
+  `tryCatch`, `orElse`, `adaptExcept`).
+* **§L61's §1.4 BUG DOES NOT ARISE.** There a bare polymorphic `throw` in
+  `StateT W (Except ε)` left four metavariable goals and the declaration was
+  REJECTED for universe metavariables, because `Spec.throw_Except` sits under a
+  `variable {m} {ps}` its conclusion does not determine.
+  `Spec.throw_EStateM`'s conclusion determines everything: the bare `throw`
+  elaborates and closes with no workaround. **The pilot's rule "never write a
+  bare polymorphic `throw`" is a workaround for a stack EStateM replaces.**
+* **`EStateM.Backtrackable`** gives partial state rollback on catch a
+  first-class home; its default instance is `δ = Unit`, i.e. no rollback —
+  Python's rule exactly.
+
+**PRICE 1 — the Halt barrel becomes STATE-AWARE.** Stacking the
+state-discarding third layer on EStateM synthesizes a `WPMonad` for free, but
+`ExceptConds (.except L (.except ε (.arg σ .pure)))` gives the Halt barrel
+`L → σ → ULift Prop`, where the pilot's three-layer stack gives `L → ULift Prop`.
+The pilot's stack can SAY the state is gone on a timeout; this one can only
+decline to mention it. `Run.timeout` genuinely carries no state.
+
+**PRICE 2 — EStateM IS SLOWER IN THE KERNEL, and this cuts against the
+folklore.** Core's "more efficient" is about compiled runtime; the tier's hot
+path is kernel `rfl` at fuel 4096. Measured on a `countdown` of `n` `modify`
+steps at `maxHeartbeats 0`:
+
+| steps | `EStateM ε σ` | `ExceptT ρ (StateT σ (Except L))` |
+|---|---|---|
+| 1 000 | 2.93 s | 3.00 s |
+| **4 096** | **50.1 s** | **35.3 s** |
+
+**~1.4x slower at the size that matters**, and both need `maxHeartbeats 0`.
+Recommendation is therefore narrow: rest the substrate's **two-layer core** on
+EStateM, keep Halt outside it, take the seven lemmas and the `throw` fix, and
+write the state-aware-barrel obligation down. **Decide it BEFORE the rebuild
+lane writes its interpreter** — the same rule §3.4 already gives for fuel.
+
+### THE POLICY ITEM — `bv_decide`'s exact axiom facts, for Thomas's ruling
+
+**The report takes no position. These are the facts.**
+
+| tactic | `#print axioms` |
+|---|---|
+| `decide` | `[propext]` / `[propext, Quot.sound]` |
+| `bv_decide`, NORMALIZER closes it (SAT never runs) | `[propext, Classical.choice, Quot.sound]` — **clean** |
+| `bv_decide`, **SAT RUNS** | `[propext, Classical.choice, Quot.sound, `**`<thm>._native.bv_decide.ax_1_5`**`]` |
+| `native_decide` | `[`**`<thm>._native.native_decide.ax_1_1`**`]` |
+
+The generated axiom, printed:
+
+```
+axiom mulComm8._native.bv_decide.ax_1_5 :
+  Std.Tactic.BVDecide.Reflect.verifyBVExpr mulComm8._expr_def_1_1 mulComm8._cert_def_1_1 = true
+```
+
+**The mechanism is core's own, and core names it.**
+`Lean/Meta/Tactic/BVDecide/Prover/Bitblast.lean:39` calls `nativeEqTrue`, whose
+docstring in `Lean/Meta/Native.lean` reads: *"…will **add an axiom** asserting
+`e = true`… **It is the basis for `native_decide` and `bv_decide` tactics.**"*
+It `addAndCompile`s the reflection term and evaluates it with
+`unsafe evalConst Bool`. **So `bv_decide` and `native_decide` are the SAME trust
+mechanism at this pin**, differing in what is evaluated and in the axiom's name.
+Two things that does NOT say: the evaluated object is a *verified* LRAT checker
+with a soundness theorem, so the trusted step is materially smaller than a bare
+`native_decide` over arbitrary code; and the axiom is per-theorem and always
+visible to `#print axioms`.
+
+**THE CROSSOVER**, on real shapes — FACT-C is `Rv/Exec.lean`'s `divRem .div`
+overflow arm (`UB.divideOverflow`'s neighbour), FACT-SV is `Sv/Basic.lean`'s
+4-state De Morgan vectorised into a `(value, unknown)` BitVec pair:
+
+| | symbolic, ∀ w | `decide` | `bv_decide` |
+|---|---|---|---|
+| FACT-C | **6 lines, ~0.25 s, all widths**, axioms clean | 8-bit 2.46 s, 12-bit 8.53 s, **16-bit timeout** | 8–128 bit all ~1.5 s — **but the NORMALIZER closed it; SAT never ran** (verified by trace), axioms clean |
+| FACT-SV | **18 lines, all widths**, axioms clean | w=2 19.0 s, w=3 17.8 s, **w=4 timeout** | 8/16/32/64/128 in 10–23 s — **SAT RAN; +2 `_native` axioms at EVERY width** |
+
+**`bv_decide`'s own ceiling:** multiplier commutativity closes at 8 bits in
+0.59 s of SAT and **times out at 12, 16 and 32 bits** on the default 10 s
+budget. It is free on bit-parallel structure and falls off a cliff on
+multipliers.
+
+**TWO CONSEQUENCES WORTH TAKING WHATEVER THE RULING IS.**
+
+1. **A DENYLIST gate is blind at this pin.** `Lean.ofReduceBool` does not appear
+   anywhere in axiom output at v4.33.0-rc1 — `native_decide` now emits
+   `<thm>._native.native_decide.ax_N_M`, and `decide +native` evades a source
+   grep for `native_decide` too. **`AGENTS.md`'s law is already the robust
+   form** — *"`#print axioms` … must show ONLY `[propext, Classical.choice,
+   Quot.sound]`"*, an **allowlist**, which catches bv_decide's axiom,
+   native_decide's, and anything future. Recorded as a deliberate property of
+   the law rather than luck. (No automated gate in `harness/` or `tools/`
+   enforces it today; it is enforced by reading.)
+2. **The symbolic route is more INFORMATIVE, not just cleaner.** The
+   width-parametric FACT-C proof forced out an edge case: **at `w = 1`,
+   `intMin 1 = 1#1`, the side condition genuinely fails and the fact is a
+   DIFFERENT fact** (`a.sdiv (allOnes 1) = a`, not `-a`). No fixed-width run at
+   8/16/32/64/128 could surface that. Relatedly, this census's first probe
+   stated the C fact with a redundant `a ≠ intMin` hypothesis; `bv_decide`
+   proved it and said nothing — the *unused-variable linter* caught it. A
+   fixed-width oracle answers the question you asked; it does not tell you the
+   question was wrong.
+
+### THE OTHER SEVEN CANDIDATES, in one paragraph each
+
+* **Std verified containers (CANDIDATE 4) — the decisive fact is `EquivBEq`.**
+  `Std.HashMap` ships **1 354 theorems**, **151 already `@[grind]`-tagged**
+  (so this COMPOUNDS with the headline), under `[EquivBEq α] [LawfulHashable α]`
+  — **BEq need only be an EQUIVALENCE, not `Eq`**. That is Python's `==`, and
+  it is what `DictCalc.lean` §1 already proves about `keyEq` through `keyNF`.
+  **DictCalc §1 is not merely compatible with `EquivBEq`; it IS its obligation,
+  already discharged** — six lines given the normal form. Of DictCalc's **47**
+  theorems: §1's ~10 are PROMOTED into the instance, §2's 8 are SUBSUMED
+  (verified: `dictFind_store_self`/`_ne` and the `.get(k,default)` shape all
+  close by `simp`/`grind` one-liners), and **~29 are ours forever** —
+  `Bracket`, `TableOK`, `TableAt`, the pair-key/depth family, and
+  `SubtreeWrites`, which are about a table in a heap under a recursion.
+  **BLOCKED on two decisions that are Python semantics, not tooling:**
+  `Std.insert` REPLACES the stored key where `dictStore` retains it (`{True: _}`
+  updated through `1` still lists `[True]`; the matching arm is
+  `insertIfNew`-then-`modify`), and **no Std container has insertion order** —
+  `toList_insert_perm` is a `Perm`, and `TreeMap` orders by comparator, not
+  insertion. Mitigating: the tier currently refuses live dict iteration outright.
+* **`Decidable` exhaustion (CANDIDATE 5) — CORE HAS NO `Fintype`.** `decide` on
+  `∀ a b : Logic` FAILS at the pin; core ships `Decidable (∀ …)` only for
+  `Bool`, `Fin n`, `Ordering`, bounded `Nat` and `Option` membership. The
+  core-only instance for a user inductive is **three lines**, and keeps Mathlib
+  out of the Sv closure. Frontier measured on the real 4-state type: 4^6 in
+  2.25 s, 4^7 5.21 s, **4^8 (65 536) 19.3 s**, 4^9 heartbeat timeout —
+  **the wall is ~10^5 cases**. `decide +kernel` gave **no win** (23.8 s at 4^8).
+  Where it STOPS is exact: `ScheduleOracle` is a structure with a FUNCTION
+  FIELD, so `∀ σ` is a quantifier over a function space and no instance can
+  exist. **Reified at a bound** (`revWhen`'s Booleans, which the tier already
+  has) it becomes decidable, and `Obs.lean`'s `choose_singleton`-shaped
+  σ-irrelevance settles by `decide` with no axioms at all. **One honest datum:
+  `decide` REFUTED the author's first draft of that theorem** — a refuting
+  `decide` is a counterexample finder at kernel strength.
+* **`deriving ToJson`/`FromJson` (CANDIDATE 3) — DECLINED for the envelope
+  loaders, on structure.** The derived wire format is constructor-tagged
+  nesting (`{"binop": {…}}`) with Lean camelCase fields (`endLine`); the real
+  envelope is clang's (`{"kind":"BinaryOperator", …, "end_line":…}`), and there
+  is **no field-name customization** in the deriving handler at the pin.
+  Measured errors on the real spelling: `"no inductive tag found"`,
+  `"no inductive constructor matched"` — no path, no context, against the hand
+  loader's nested `withCtx`. The tiers hand-write **2 618 lines** of loaders
+  (Python 1 660, Sv 374, C 318, Es 266) and derive **zero** codecs — correctly,
+  because deriving would require changing the EXTRACTOR to emit Lean's encoding,
+  trading away the spec-mirroring those schemas exist to uphold. **Where it IS
+  right: the tree's own serialized artifacts** (harness jobs, envelope caches,
+  census JSON) — the same reasoning that already justifies **107** uses of
+  `deriving Lean.ToExpr`.
+* **`partial_fixpoint` (CANDIDATE 7) — model-side ONLY, and the kernel says so.**
+  At the pin; `loop.eq_def` ✓ and rewrites; `loop.partial_correctness` ✓ (and it
+  is *partial* — termination is never on offer); `#eval` ✓. **`rfl` FAILS**:
+  *"Not a definitional equality."* Demonstrated. It can never be the observable
+  interpreter, because `#py_check`/`py_check`/`py_vcgen`'s captured runs are
+  kernel `rfl` at fuel 4096 and this deletes exactly that.
+* **Plausible (CANDIDATE 6) — the search half, and only that.** Already in the
+  dep tree. Counterexamples with shrinking on a false ∀-schedule claim and on a
+  false 32-bit wrap claim; on a TRUE claim it says *"Unable to find a
+  counter-example"* and leaves a `sorry`. **A refuter, never a prover** — its
+  place is before the proof effort, in a scratch file, not in the tree.
+* **Aesop (CANDIDATE 9) — a real win on ONE shape, with a structural tax.**
+  Heaviest import measured (**12.6 s**), and a rule set is **not usable in the
+  file that declares it**, nor can its `attribute` lines live there — a working
+  setup needs **three modules**. With that paid it wins on our hardest shape:
+  on a `Bracket.SubtreeWrites` miniature (transitively closed inductive
+  relation), `aesop` with a tier rule set closes the **2-step AND 3-step**
+  chains with no axioms, while **default `aesop` fails** (*"made no progress"*)
+  and **`grind` with `@[grind intro]` fails**. Recommended narrowly: one
+  `Rules` module per tier that has a composition-closed relation.
+* **A structural fact both of those depend on: MATHLIB IS ALREADY A REQUIRED
+  DEPENDENCY** of `lakefile.toml`, and 26 files under `LeanModels/` import it
+  (Circuit and Spice). Aesop, Plausible, Batteries and Qq are all built and
+  present. **The core-only law is a PER-TIER discipline, not a repository-wide
+  absence** — the cost of adopting either in Python/C/Sv is Mathlib entering
+  *their* closure, not a package fetch.
+
+### THE TOP-3 ADOPTION RECOMMENDATION
+
+1. **Wire `grind` into `mvcgen_trivial_extensible` — one line per tier, now.**
+   12 VCs → 0 on the real gate, entire closing script deleted, identical
+   axioms, 0.14 s faster. No import, no package, no toolchain move. Then start
+   populating `@[grind]`, which has **zero** uses against 67 calls to the
+   tactic. Only cost: grind's failure dumps are noisier than 12 tidy VCs.
+2. **Rest the substrate's TWO-LAYER CORE on `EStateM`, and decide it before the
+   rebuild writes its interpreter.** Buys the corrected order already
+   instantiated, seven core `@[spec]` lemmas, the §1.4 `throw` bug GONE rather
+   than worked around, and `Backtrackable`. Costs, both measured and both to be
+   written down rather than discovered: the state-aware Halt barrel, and
+   **~1.4x slower kernel `rfl` at fuel 4096**.
+3. **Re-base `DictCalc.lean` §1–§2 onto `Std.HashMap` as a SCOPED experiment,
+   gated on the two named mismatches.** 1 354 lemmas, 151 grind-tagged,
+   ~18 of 47 theorems subsumed or promoted. Land the `EquivBEq`/`LawfulHashable`
+   instance and the §2 correspondence first; do not touch
+   Bracket/TableAt/SubtreeWrites.
+
+**Runners-up worth taking cheaply:** `cbv` for the pure-arithmetic residue
+class; three-line `Decidable (∀ …)` instances for the Sv tier's finite types;
+Plausible as a scratch-file refuter; Aesop in exactly one module per
+composition-closed relation.
+
+### Triad — PARTIAL, and the reason is the census's own method
+
+`docs_check` **83/83 marked blocks OK** (up from 75 — the eight new marked
+blocks are verbatim excerpts of `docs/lean-structures-census.lean`, so the
+report cannot drift from the file it reports on), 20 illustrative-exempt.
+The experiment file elaborates with **0 errors, 0 warnings, 0 `sorry`,
+0 `native_decide`, 0 `bv_decide`**, and 23 `#print axioms` all inside
+`[propext, Classical.choice, Quot.sound]` or smaller. **`lake build` was
+deliberately NOT run: nothing this landing touches is in the build** —
+`lakefile.toml`'s globs are the `LeanModels` lib root and `Examples.+`, and
+both landed files are under `docs/`. The Lean third is owed by no line of this
+change.

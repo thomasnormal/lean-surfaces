@@ -16775,3 +16775,122 @@ corpus sv-tests-2**; double run byte-identical; refusal paths run (bad corpus �
 exit 2, drift → exit 1, SIGTRAP → one named `error` row). `diff_test.py --sim
 iverilog` **10/10 PASS**. No axioms moved; no `sorry`, no `native_decide`.
 Corpora and surveyed repos untouched — verified read-only.
+
+## L68 — R1'S SCHEDULER CENSUS: the anchor corpus is 99.2% OUT OF REACH, `initial` alone is 98.8%, and the estate metric was wrong by 3x (2026-08-22)
+
+R1 is designed in [docs/sv-r1-scheduler.md](sv-r1-scheduler.md): the clause-4
+region census, the determinism boundary, the Lean shape, the adequacy lemma,
+the divider's statement shape, and nine priced inches. Census-first per ruling
+§6.4. **No Lean lands with it** — inches 2-3 are ready but need a locked full
+build, and a speculative build is what the lock exists to prevent.
+
+**THE CORPUS HEADLINE, and it re-orders the rung's internals.** Counted with
+`rg -l` over both corpora: **`initial` appears in 20 939 of 21 186 sv-tests-2
+files — 98.8%**; `#<n>` delays in 46.7%; while `always_comb` is **1.0%** and
+`always_ff` **1.1%**. The anchor corpus is not RTL, it is **self-checking
+testbench code**. Files containing NONE of {`initial`, `#<n>`, `fork`,
+`clocking`, `assert property`, `program`, `wait(`, `##`, `final`} — i.e. what
+the present cycle model could in principle execute — number **171 of 21 186 =
+0.80%**. The public suite scores 43.6% on the same test, and the gap is itself
+the finding rather than a discrepancy: **a corpus of RUNNABLE tests is an
+`initial`-shaped corpus**, where the public suite carries a large population of
+parse/elaborate-only tests that never run. Any conformance ladder scored on
+simulation is gated on `initial` before anything else. (Lexical counts, so
+upper bounds; at 98.8% the conclusion is not sensitive to the error bar, and
+the independent M0 census agrees in direction — 806 of 21 186 files, 3.8%,
+extract with zero `Unsupported` nodes.)
+
+**This re-orders inch 4 against the charter's own intuition.** The charter
+framed the expensive half of clause 4 as the REACTIVE family
+(Observed/Reactive/Re-NBA — clocking, programs, assertions). The corpus agrees
+about cost but disagrees about priority: **`initial` alone unlocks 98.8% and
+needs only the Active region plus time advancement** — one process kind and a
+time loop, not a new region family — with `#<n>` at 46.7% needing the same
+machinery. The reactive family is a long tail BY FILE COUNT: assertions 8.4%,
+clocking 3.9%, programs 2.6%. **Postponed is nearly unused** (`$strobe` 0.2%,
+`$monitor` 0.2%), which is why it can ship as a write-prohibited no-op and be
+right about essentially the whole corpus.
+
+**THE ESTATE METRIC WAS WRONG BY 3x — the fourth self-correction.** §L67
+published *"50 of 98 proof-carrying declarations (51%) are trace-shaped"* as
+the number that ordered the scheduler before breadth. It was scoped wrong
+twice: it counted only `LeanModels/Sv/`, and its regex missed the `⊨`/`⊑`
+surface forms, so it **excluded every theorem about an actual design**.
+Re-measured: `LeanModels/Sv/` 98 proof-carrying / 61 trace-shaped;
+`Examples/system-verilog/` **133 / 95**; **TOTAL 231 / 156 = 68%**, of which
+only 23 are plumbing and the `Examples/` 95 are entirely semantic. **156 of
+231, not 50 of 98.** The correction STRENGTHENS Order B three-fold rather than
+weakening it.
+
+**AND THE SAME CENSUS MAKES THE NUMBER NEARLY MOOT.** `Ast.lean`'s `Process`
+has five constructors — `alwaysFF`, `alwaysPlain`, `alwaysComb`, `assign`, and
+**`unsupported`** — so `initial`, `#`, `fork`, `clocking`, `program` and
+assertions all extract to `unsupported` today and `Semantics.lean` REFUSES (17
+sites). **Outside its fragment the cycle model does not give a wrong answer; it
+gives NO answer.** There is nothing to supersede because nothing to
+contradict, so R1 is a conservative **EXTENSION** and adequacy is needed only
+ON the fragment. This is the "never hide errors" law paying a dividend a month
+after it was paid: **because the dormant tier refused loudly instead of
+guessing, its successor can extend it instead of replacing it.**
+
+The mechanism is one definition and one theorem — `cycleOf (tr : RegionTrace)
+: List SvState := tr.map (·.final)` and `cycleOf_runRegion`, stating that on
+`isCycleFragment` designs the region semantics projects exactly onto the cycle
+semantics at the same σ, fuel and stimulus. **That single lemma is what the 156
+cost**; with it they transfer by rewriting, without it each re-opens. It is not
+free and the design says so: its step obligation is that one `slotStep` agrees
+with one `cycleStep` on a fragment design — Preponed unobserved, Inactive and
+the reactive family empty, Postponed a no-op, and the Active/NBA loop settling
+in exactly the pattern `cycleStep` hard-codes. That is the honest price, and
+the right place for it: proved once against the plumbing, not 156 times against
+designs.
+
+**THE DETERMINISM BOUNDARY — the document's core, because under the doctrine it
+IS the definition of `⊨`.** FIXED and therefore NOT ∀-quantified (§4.6):
+region order; statement order within `begin`/`end`; NBA update order to the
+same variable within a slot; Preponed's pre-slot sampling. FREE and therefore
+exactly the ∀ (§4.7-4.8): the selection order of ready processes **within one
+region**; interleaving at suspension points; `#0` ordering in Inactive;
+evaluation order among independent continuous assignments. Stated as the
+oracle's contract: *it chooses a permutation of the ready list WITHIN ONE
+REGION, and never the region order, the statement order, or the NBA
+application order.* **The M0 oracle already has exactly this shape** —
+`choose : Nat → List Nat → List Nat` with a `choose_perm` legality proof — so
+R1 adds one `Region` parameter and every existing `∀ σ` theorem keeps its
+meaning.
+
+**THE LEAN SHAPE.** `Region` carries all **15** regions from day one — 9 core
++ 6 PLI — with PLI constructors uninhabited at R1, because naming them costs
+one constructor each while retrofitting them would change the region type and
+re-open everything a second time. `Slot` records `time`, `sampled` (what
+Preponed saw) and `final` (what closes the slot); `RegionTrace := List Slot`.
+Deliberately NOT a per-region state sequence: nothing outside the slot can
+observe intermediate regions, and **a trace richer than the observation
+relation makes every theorem quantify over detail no property can mention**.
+
+**THE DIVIDER, cycleOf-FROM-LINE-ONE.** Rung A's statement never mentions
+`run`, `cycleStep` or `Slot` — it quantifies over σ and observes through
+`cycleOf`. Before R1 lands, `cycleOf` is a definitional stub (the identity on
+`List SvState`), so **the statement text does not change** when regions
+arrive; only the stub is replaced and adequacy discharges the difference. That
+is the whole trick and it costs one definition today. HardFloat's
+`divSqrtRecFN` inherits the shape; its obstacles are unchanged and are not
+scheduler problems (`recFN` recoding, Verilog-not-SV, gated on the SoftFloat
+spec layer).
+
+**Nine priced inches**, of which 2 (types only: `Region`, widened oracle,
+`Slot`, `isCycleFragment`, `cycleOf`) and 3 (the stub + divider shape) are
+trivially landable and worth landing before inch 4 — they let rung A be
+written in final form while the semantics is still being built. Inch 5 is the
+adequacy lemma and the rung's centre; inch 9 (the reactive family for real) is
+explicitly deferred, now with corpus numbers behind the deferral rather than
+an intuition.
+
+### Triad
+
+`lake build` **NOT RUN** — no Lean changed this pass (two docs), and per
+build-lock amendment 2 a speculative build is exactly what the lock prevents.
+`docs_check` **75/75 marked blocks ok**, 20 illustrative-exempt. Corpus counts
+are `rg -l` over read-only checkouts; nothing in `~/repos/mox` or
+`~/repos/sv-tests` was modified. No axioms moved; no `sorry`, no
+`native_decide`.

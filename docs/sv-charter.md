@@ -1048,15 +1048,25 @@ The charter priced the upgrade as *"re-opens every existing theorem"*,
 so the decisive metric is **how much estate a trace-type change
 re-opens, and how fast that estate is growing.**
 
-Measured today:
+Measured today — **and re-measured in `docs/sv-r1-scheduler.md` §0,
+which corrects this table**. The figures first published here were
+scoped wrong twice: they counted only `LeanModels/Sv/` and their regex
+missed the `⊨`/`⊑` surface forms, so they excluded every theorem about
+an actual design. The corrected estate:
 
-| | count |
-| --- | ---: |
-| proof-carrying declarations (§7.4) | 98 |
-| **of those, referencing `run` / `Runs` / `cycleStep` / `SvState`** | **50 (51%)** |
+| estate | proof-carrying | trace-shaped |
+| --- | ---: | ---: |
+| `LeanModels/Sv/` | 98 | 61 |
+| `Examples/system-verilog/` | 133 | 95 |
+| **TOTAL** | **231** | **156 (68%)** |
 
-**Half the estate is trace-shaped, and it is the half that grows with
-every rung.** Under the region upgrade the trace type changes from *one
+*(As first published: "50 of 98, 51%".)*
+
+**Two thirds of the estate is trace-shaped, and it is the part that
+grows with every rung.** The correction does not weaken the ordering
+below — it strengthens it, and R1's design then makes the number nearly
+moot by routing all 156 through a single adequacy lemma
+(`docs/sv-r1-scheduler.md` §5). Under the region upgrade the trace type changes from *one
 snapshot per cycle* to *one per time slot with region structure*, so
 those 50 re-open. Every construct rung completed first adds to that 50.
 
@@ -1109,7 +1119,11 @@ closed, the round-trip gate green at 18/18, the census committable and
 `--compare`-checkable. Remaining: retrofits 1, 5, 6, 7 of §7.2, and
 `language_version` (retrofit 3) which ruling 6.5 makes load-bearing.
 
-**R1 — THE SCHEDULER. Clause 4 in full.** Census-first, per the ruling:
+**R1 — THE SCHEDULER. Clause 4 in full.** **Designed in
+[docs/sv-r1-scheduler.md](sv-r1-scheduler.md)** — the region census, the
+determinism boundary, the Lean shape, the `cycleOf` adequacy lemma, the
+divider's statement shape, and nine priced inches. Census-first, per the
+ruling:
 
 1. **Census the region semantics before modelling it** — the nine
    regions (Preponed, Active, Inactive, NBA, Observed, Reactive,

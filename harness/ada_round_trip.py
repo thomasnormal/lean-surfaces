@@ -36,8 +36,22 @@ that gate honest:
   paths into another machine's scratch directory is unreproducible anywhere,
   and saying so is the point.
 
+VERDICT VOCABULARY is `docs/family-architecture.md` §5.1's, not this gate's
+own: **MATCH | REFUSE | DIVERGE | TIMEOUT**.  This file said `DIFFER` until
+2026-08-22 and was one of the emitters §9.4 measured as drifted; `DIVERGE` is
+the law's name and `DIFFER` is gone.  `ERROR`, `SKIP` and `VACUOUS` are NOT
+verdicts and are not offered as ones — they are instrument-level outcomes,
+which is exactly what §5.3 says a vacuous run is: *"an instrument-level
+ERROR, not a verdict — a scoreboard that reports it as MATCH is broken, and
+one that reports it as REFUSE is lying about coverage."*
+
+`REFUSE` and `TIMEOUT` do not appear because this gate cannot produce them:
+it re-extracts and compares, so there is nothing for the model to decline and
+no fuel to exhaust.  When the SCOREBOARD lands (the trace emitter of
+`docs/ada-charter.md` §4.4) it carries all four.
+
 Python >= 3.9 plus libadalang (for regeneration).  Exit non-zero on any
-DIFFER or ERROR; SKIP is reported and does not fail the gate.
+DIVERGE or ERROR; SKIP is reported and does not fail the gate.
 """
 
 import argparse
@@ -125,11 +139,11 @@ def check(env, source_root, vocab, tmpdir):
 
     # EDGE 1 — schema version.
     if env.get("schema_version") != "ada-0.1":
-        return "DIFFER", ["schema_version is %r, not 'ada-0.1'"
+        return "DIVERGE", ["schema_version is %r, not 'ada-0.1'"
                           % env.get("schema_version")]
     # EDGE 4 — edition.  An envelope with no edition is not a program.
     if not env.get("language_version"):
-        return "DIFFER", ["no language_version — the edition is part of the "
+        return "DIVERGE", ["no language_version — the edition is part of the "
                           "program (docs/ada-envelope-schema.md §0.1)"]
 
     # THE VOCABULARY CHECK — binding, per the schema's §3.
@@ -141,7 +155,7 @@ def check(env, source_root, vocab, tmpdir):
                        if not k.startswith("Unsupported")
                        and k != "Unsupported" and k not in vocab)
         if stray:
-            return "DIFFER", ["node kinds outside the census vocabulary and "
+            return "DIVERGE", ["node kinds outside the census vocabulary and "
                               "not emitted as Unsupported: %s"
                               % ", ".join(stray[:8])]
 
@@ -165,7 +179,7 @@ def check(env, source_root, vocab, tmpdir):
     if json.dumps(env["compilation_units"], sort_keys=True) != \
             json.dumps(regen["compilation_units"], sort_keys=True):
         notes.append("compilation_units payload differs")
-    return ("MATCH" if not notes else "DIFFER"), notes
+    return ("MATCH" if not notes else "DIVERGE"), notes
 
 
 _SUM_SEQ = [0]
@@ -253,7 +267,7 @@ def check_markings(env, summary_exe, source_root, tmpdir):
                      % (spelled, len(only_ours), only_ours[:2],
                         len(only_theirs), only_theirs[:2]))
     if notes:
-        return "DIFFER", "; ".join(notes)
+        return "DIVERGE", "; ".join(notes)
     if total == 0:
         return "VACUOUS", ("no markings on either side across %d source(s) — "
                            "nothing was compared, so this is not agreement"
@@ -285,8 +299,8 @@ def main():
         with open(args.vocab) as fh:
             vocab = set(json.load(fh)["node_kinds"])
 
-    tally = {"MATCH": 0, "DIFFER": 0, "ERROR": 0, "SKIP": 0}
-    mtally = {"MATCH": 0, "DIFFER": 0, "ERROR": 0, "SKIP": 0, "VACUOUS": 0}
+    tally = {"MATCH": 0, "DIVERGE": 0, "ERROR": 0, "SKIP": 0}
+    mtally = {"MATCH": 0, "DIVERGE": 0, "ERROR": 0, "SKIP": 0, "VACUOUS": 0}
     bad = False
     with tempfile.TemporaryDirectory() as tmpdir:
         for path in args.envelopes:
@@ -301,14 +315,14 @@ def main():
             tally[verdict] = tally.get(verdict, 0) + 1
             print("%-6s %s%s" % (verdict, os.path.basename(path),
                                  ("  | " + "; ".join(notes)) if notes else ""))
-            if verdict in ("DIFFER", "ERROR"):
+            if verdict in ("DIVERGE", "ERROR"):
                 bad = True
             if args.summary:
                 mv, mnote = check_markings(env, args.summary, args.source_root,
                                            tmpdir)
                 mtally[mv] = mtally.get(mv, 0) + 1
                 print("       markings %-6s %s" % (mv, mnote))
-                if mv in ("DIFFER", "ERROR"):
+                if mv in ("DIVERGE", "ERROR"):
                     bad = True
     print("round-trip: " + ", ".join("%s %d" % (k, v)
                                      for k, v in sorted(tally.items())))
@@ -335,11 +349,11 @@ def self_test():
 
     cases = [
         ("a wrong schema version is caught",
-         verdict({**base, "schema_version": "ada-9.9"}), "DIFFER"),
+         verdict({**base, "schema_version": "ada-9.9"}), "DIVERGE"),
         ("a missing edition is caught",
-         verdict({**base, "language_version": ""}), "DIFFER"),
+         verdict({**base, "language_version": ""}), "DIVERGE"),
         ("a node kind outside the vocabulary is caught",
-         verdict(base, {"SomethingElse"}), "DIFFER"),
+         verdict(base, {"SomethingElse"}), "DIVERGE"),
         ("a kind INSIDE the vocabulary passes the vocabulary check",
          verdict(base, {"PackageDecl"}), "SKIP"),
         ("an Unsupported leaf is NOT a vocabulary violation",

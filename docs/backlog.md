@@ -20653,6 +20653,11 @@ built immediately. Total lock tenure: **~2 minutes**, released promptly.
 Everything else this dispatch needed no lock: the instruments are Python over
 out-of-tree corpora, plus single niced dependency-free `lean` processes under
 protocol rule 3.
+> **The Ada lane's landings continue in [`docs/backlog/ada.md`](backlog/ada.md)**
+> from 2026-08-22 on, per `docs/family-architecture.md` §9.5. This section and
+> the lane's earlier ones (§L63, §L69, §L70, §L74, §L75) stay here and keep
+> resolving; the migration is append-only and rewrites no history.
+
 ## L86 — ADA M1 INCH 6: the lane's first Lean, the node is KIND-AGNOSTIC — and a scratchpad purge ate the commit, so this entry is also a durability finding (2026-08-22)
 
 `LeanModels/Ada/{Ast,Json,Load}.lean` + `LeanModels/Ada.lean`, and

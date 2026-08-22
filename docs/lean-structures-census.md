@@ -637,16 +637,29 @@ multipliers.
 
 ### 8.4 Two consequences worth taking regardless of the ruling
 
-**(a) A DENYLIST gate is blind at this pin.** `Lean.ofReduceBool` does not
-appear anywhere in the axiom output at v4.33.0-rc1; `native_decide` now emits
-`<thm>._native.native_decide.ax_N_M`. A gate that greps for `ofReduceBool` (or
-for `native_decide` in source, which `decide +native` evades) catches nothing.
+**(a) A DENYLIST gate is blind at this pin.** Stated precisely: the
+`ofReduceBool` family still *exists* in the environment — but `native_decide`
+no longer *emits* it. What `#print axioms` shows at v4.33.0-rc1 is
+`<thm>._native.native_decide.ax_N_M`, and a source grep for `native_decide` is
+evaded by `decide +native` besides. So a gate that greps for either name
+catches nothing.
+
+**This is independently corroborated inside the tree, from the other
+direction.** `harness/lean_kernel_census.py:136` already records that *"Upstream
+is RETIRING in-kernel native reduction: the whole `ofReduceBool` family carries
+a dated `@[deprecated …]` attribute"* — the Lean tier's census noticed the
+deprecation; this census measures what replaced it at the call site. (That
+instrument is a **census, not a gate**: its own docstring says it is
+*"deliberately NOT wired into CI"*, and it measures the kernel's vocabulary, not
+this tier's axiom discipline.)
+
 **`AGENTS.md`'s law is already the robust form** — *"`#print axioms` of every
 `@[spec]` theorem must show only `[propext, Classical.choice, Quot.sound]`"* —
 an **allowlist**, which catches bv_decide's extra axiom, `native_decide`'s, and
-anything future. That is worth recording as a deliberate property of the law,
-not luck. Measured: no automated gate in `harness/` or `tools/` enforces it
-today; it is enforced by reading.
+anything future, because it names what is PERMITTED rather than what is
+forbidden. That is worth recording as a deliberate property of the law, not
+luck. Measured: no automated gate in `harness/` or `tools/` enforces it today;
+it is enforced by reading.
 
 **(b) The symbolic route is not merely axiom-cleaner; it is more
 INFORMATIVE.** The width-parametric FACT-C proof needed the side condition

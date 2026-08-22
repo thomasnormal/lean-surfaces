@@ -19806,8 +19806,14 @@ multipliers.
    form** — *"`#print axioms` … must show ONLY `[propext, Classical.choice,
    Quot.sound]`"*, an **allowlist**, which catches bv_decide's axiom,
    native_decide's, and anything future. Recorded as a deliberate property of
-   the law rather than luck. (No automated gate in `harness/` or `tools/`
-   enforces it today; it is enforced by reading.)
+   the law rather than luck, because it names what is PERMITTED rather than
+   what is forbidden. (No automated gate in `harness/` or `tools/` enforces it
+   today; it is enforced by reading.) **Independently corroborated inside the
+   tree, from the other direction:** `harness/lean_kernel_census.py:136` already
+   records that *"the whole `ofReduceBool` family carries a dated
+   `@[deprecated …]` attribute"* — the Lean tier's census caught the
+   deprecation, this census measures what replaced it at the call site. Stated
+   precisely: the family still EXISTS; `native_decide` no longer EMITS it.
 2. **The symbolic route is more INFORMATIVE, not just cleaner.** The
    width-parametric FACT-C proof forced out an edge case: **at `w = 1`,
    `intMin 1 = 1#1`, the side condition genuinely fails and the fact is a

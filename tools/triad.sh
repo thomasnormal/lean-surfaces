@@ -68,6 +68,11 @@
 #   tools/triad.sh --self-test          # exercises the queue logic, NO Lean
 #   tools/triad.sh --lane x --dry-run   # takes a real tenure, runs no Lean
 #   tools/triad.sh --lane x --classify  # scope the triad from the diff
+#   tools/triad.sh --lane x --gates "a; b"   # YOUR gates, and no default warning
+#
+# GATES.  Without --gates the default set is `docs_check; diff_test`, which is
+# NARROWER than some retired lane scripts.  A run that did not choose its own
+# gates SAYS WHICH ONES IT IS RUNNING — see the notice by `gate_notice` below.
 #   tools/triad.sh --classify-only      # print the classification, run nothing
 #   tools/triad.sh --classify --against <ref>    # default: github/master
 #
@@ -476,6 +481,50 @@ gate_floor() {          # class -> the gates this landing owes at minimum
   esac
 }
 
+# ---- THE DEFAULT GATE SET IS NARROWER THAN SOME RETIRED LANE SCRIPTS
+# The ES lane found this by READING ITS OWN LOG rather than trusting it: this
+# script's default gates are `docs_check; diff_test`, and `script_corpus` is
+# not among them — though the `es-build.sh` it retired ran all three.  The
+# default is not wrong (gates are a lane's business, and the script takes
+# `--gates`), but a lane migrating to the shared wrapper INHERITS A NARROWER
+# GATE SET SILENTLY, and the failure mode is a landing that reads green
+# against fewer checks than the one before it.  In that lane's own words:
+# "which no amount of care at the build itself would catch."
+#
+# So it is not caught, it is ANNOUNCED — every run that did not choose its
+# own gates says which ones it is about to run, and names the trap.
+# (docs/backlog/es.md 2026-08-22-es-1.)
+GATE_NOTICE_DONE=0
+
+gate_names() {          # a gate list -> the script names in it, for reading
+  printf '%s' "$1" | awk -F';' '{
+    out = ""
+    for (i = 1; i <= NF; i++) {
+      n = split($i, w, /[ \t]+/)
+      for (j = 1; j <= n; j++) if (w[j] ~ /\.(py|sh)$/) {
+        m = split(w[j], parts, "/"); b = parts[m]
+        sub(/\.(py|sh)$/, "", b)
+        out = out (out == "" ? "" : ", ") b
+      }
+    }
+    print (out == "" ? $0 : out)
+  }'
+}
+
+gate_notice() {         # $1 = the gate list in use, $2 = the lane's own --gates
+  [ -n "$2" ] && return 0        # the lane chose its gates; it needs no warning
+  [ "$GATE_NOTICE_DONE" = "1" ] && return 0
+  GATE_NOTICE_DONE=1
+  echo ""
+  echo "  !! DEFAULT GATES: $(gate_names "$1") (minimal).  A lane migrating from a"
+  echo "     private script should pass --gates matching what it RETIRED."
+  echo "     es-build.sh also ran script_corpus; a lane that retires its script and"
+  echo "     takes this default lands GREEN AGAINST FEWER CHECKS THAN THE ONE"
+  echo "     BEFORE IT — which no amount of care at the build itself would catch."
+  echo "     (docs/backlog/es.md 2026-08-22-es-1)"
+  echo ""
+}
+
 tenure_needed() {       # class, lane's own --gates -> yes | no
   # A11: the lock covers ALL Lean execution.  docs_check runs none — it
   # shells out to nothing — so a docs-only landing owes no tenure.  A lane
@@ -650,6 +699,22 @@ if [ "$SELF_TEST" = "1" ]; then
   check "DOUBT (no tree to probe) -> stays tier"        "$(class_name "$CLASS_RANK")" "tier"
   LS_GREP_ROOT=""
 
+  # ---- the default-gate-set notice (the ES lane's migration finding)
+  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test"
+  check "the docs floor names one gate"   "$(gate_names "$(gate_floor docs)")" "docs_check"
+  GATE_NOTICE_DONE=0
+  check "a DEFAULT invocation warns"      "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "1"
+  GATE_NOTICE_DONE=0
+  check "  ...and names what to do"       "$(gate_notice "$(gate_floor tier)" "" | grep -c -- '--gates matching what it RETIRED')" "1"
+  GATE_NOTICE_DONE=0
+  check "  ...and cites the incident"     "$(gate_notice "$(gate_floor tier)" "" | grep -c '2026-08-22-es-1')" "1"
+  GATE_NOTICE_DONE=0
+  check "a lane's OWN --gates does not warn" "$(gate_notice "$(gate_floor tier)" 'python3 harness/script_corpus.py')" ""
+  GATE_NOTICE_DONE=0
+  gate_notice "$(gate_floor tier)" "" > /dev/null
+  check "the notice is printed ONCE per run" "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "0"
+  GATE_NOTICE_DONE=0
+
   check "NEVER DOWNGRADE: lane gates keep the tenure" "$(tenure_needed docs 'python3 x.py')" "yes"
   check "tier gates include the differential" \
         "$(gate_floor tier)" "python3 tools/docs_check.py; python3 harness/diff_test.py"
@@ -757,13 +822,16 @@ if [ "$CLASSIFY" = "1" ]; then
   FLOOR="$(gate_floor "$CLASS")"
   if [ -n "$LANE_GATES" ]; then GATES="$FLOOR; $LANE_GATES"; else GATES="$FLOOR"; fi
   printf '  gates     %s\n' "$GATES"
+  printf '  gate set  %s   (the CLASS FLOOR for `%s`)\n' "$(gate_names "$FLOOR")" "$CLASS"
   [ -n "$LANE_GATES" ] && printf '  %s\n' "(the floor, then the lane's own --gates: a classification never REMOVES a gate)"
   printf '  COVERAGE (§5.4a)  %s\n' "$(coverage_statement "$CLASS")"
+  gate_notice "$GATES" "$LANE_GATES"
 
   if [ "$CLASSIFY_ONLY" = "1" ]; then exit 0; fi
 
   if [ "$(tenure_needed "$CLASS" "$LANE_GATES")" = "no" ]; then
     say "docs-only: NO TENURE TAKEN — nothing here starts a Lean process (A11)"
+    gate_notice "$GATES" "$LANE_GATES"
     run_gates "$GATES"
     say "TRIAD DONE (docs-only, no build; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
     say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
@@ -906,6 +974,7 @@ fi
 if [ -z "$GATES" ]; then
   GATES='python3 tools/docs_check.py; python3 harness/diff_test.py'
 fi
+gate_notice "$GATES" "$LANE_GATES"
 run_gates "$GATES"
 
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"

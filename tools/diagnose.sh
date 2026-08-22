@@ -23,6 +23,24 @@
 # revisions — and it does not exist at any revision.  The repo has no
 # numbered-code linter to emit it.  An empty row beats a plausible rule.
 #
+# FAILURES WITH NO LINE TO MATCH, and one of them is NOT a signature here.
+# A decoder annotates lines; some failures produce none.
+#   * THE BUILD THAT NEVER RAN — an argument error and a resource kill both
+#     emit no line the failure greps look for.  This one is still catchable,
+#     as a WHOLE-LOG verdict (`build-did-not-happen`) rather than a match.
+#   * GREEN AGAINST FEWER CHECKS — a lane migrating off a private script
+#     inherits `tools/triad.sh`'s default gate set, which is narrower than
+#     some of the scripts it replaced: `es-build.sh` also ran `script_corpus`.
+#     The log of such a run is green AND CORRECT.  The missing gate leaves no
+#     trace, and there is no baseline in the log to compare against — in the
+#     finding lane's own words, "no amount of care at the build itself would
+#     catch" it.  So it is not DECODED, it is ANNOUNCED: `tools/triad.sh`
+#     names the gate set it is about to run whenever the lane did not choose
+#     one, and names this trap.  (docs/backlog/es.md 2026-08-22-es-1.)
+# Adding a signature that matched that notice would only restate the notice —
+# a second copy of one rule, which is the defect docs/duplication-audit.md
+# measured.  A signature that cannot fire on the FAILURE is not a signature.
+#
 # USAGE
 #   tools/diagnose.sh build.log             # annotate a log
 #   lake build 2>&1 | tools/diagnose.sh     # or a pipe

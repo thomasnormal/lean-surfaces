@@ -348,3 +348,67 @@ real cases: `pipeline.go` → **docs**, `sunfish.json` → **tier C**,
 `exc_lab.py` (named only by `cases.json`) → **tier Python**. Tools-only
 change: **no tenure, no Lean executed** — this lane's own rule, applied to
 this lane.
+
+---
+
+## 2026-08-22-qol-6 — the DEFAULT GATE SET now announces itself: the ES lane's migration finding, made loud
+
+The ES lane found this **by reading its own log rather than trusting it**:
+`tools/triad.sh`'s default gates are `docs_check; diff_test`, and
+**`script_corpus` is not among them** — though the `es-build.sh` it retired
+ran all three. The default is not wrong (gates are a lane's business, and the
+script takes `--gates`), but **a lane migrating to the shared wrapper
+inherits a narrower gate set silently**, and the failure mode is *a landing
+that reads green against fewer checks than the one before it*
+(`docs/backlog/es.md 2026-08-22-es-1`).
+
+That lane also wrote the sentence that decides the fix: **"which no amount of
+care at the build itself would catch."** A missing gate leaves no trace in the
+log — the run is green *and correct*. There is nothing to detect. So it is
+not caught, it is **ANNOUNCED**.
+
+### What lands
+
+Every run that did **not** choose its own gates now prints, before running
+them:
+
+```
+  !! DEFAULT GATES: docs_check, diff_test (minimal).  A lane migrating from a
+     private script should pass --gates matching what it RETIRED.
+     es-build.sh also ran script_corpus; a lane that retires its script and
+     takes this default lands GREEN AGAINST FEWER CHECKS THAN THE ONE
+     BEFORE IT — which no amount of care at the build itself would catch.
+     (docs/backlog/es.md 2026-08-22-es-1)
+```
+
+A lane that passed `--gates` gets **nothing** — it already chose, and a
+warning it cannot act on is noise. The notice fires **once per run**, on all
+three paths that run gates (the normal tenure, the docs-only no-tenure path,
+and the classification report). `--classify` additionally states its floor in
+the same short-name style — `gate set  docs_check, diff_test   (the CLASS
+FLOOR for `tier`)` — so the class's full list is legible next to the coverage
+statement rather than only as a shell command line.
+
+### It is deliberately NOT a diagnose.sh signature
+
+`tools/diagnose.sh` now names it under **"FAILURES WITH NO LINE TO MATCH"**,
+alongside the build that never ran. The distinction is worth keeping sharp:
+the build that never ran is still catchable as a **whole-log verdict**,
+because "no success line and no error lines" is a property of the log.
+Green-against-fewer-checks is not — the log is green, correct, and carries no
+baseline. The only string a decoder could match is `triad.sh`'s own notice,
+and a signature matching that would **restate the notice**: a second copy of
+one rule, which is the defect `docs/duplication-audit.md` measured. **A
+signature that cannot fire on the failure is not a signature.**
+
+### Triad
+
+`bash -n` clean on both scripts. `tools/triad.sh --self-test`: **61 ok, 0
+failed** (54 → 61, **7 new**) — gate names read as script names, the docs
+floor names one gate, a default invocation warns, names what to do, and cites
+the incident; a lane's own `--gates` does **not** warn; and the notice prints
+**once** per run. `tools/diagnose.sh --self-test`: **51 ok, 0 failed**,
+unchanged (a comment, not a signature). Live: exercised on a tier diff with
+and without `--gates`, and end-to-end on a real **docs-only landing** — notice
+printed once, `docs_check` green 83/83, **no tenure taken**. Tools-only
+change: **no Lean executed**.

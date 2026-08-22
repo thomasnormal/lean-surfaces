@@ -13990,3 +13990,107 @@ depends on it.
 `script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud. All five new
 declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
 `sorry`, no `native_decide`. File throughput **47 s → 53 s**.
+
+## L56 — ALL THIRTEEN STATEMENTS OF `Position.move` ARE GATED, and F1b is one chain short (2026-08-22)
+
+§L48 landed three of thirteen. **The other ten land here**, so every statement of
+`Position.move` now has a gate at a free world and a free frame — statements 10
+and 11 including *every arm of their inner `if`s*. F1b does not close: what is
+left is the CHAIN that joins them and the one premise it needs, and the section
+heading says so rather than claiming the milestone.
+
+### What landed — ten statements, on three templates
+
+| # | statement | gate | template |
+|---|---|---|---|
+| 0 | `i, j, prom = move` | `move_unpacks` | `value_unpacks` |
+| 1 | `p, q = self.board[i], self.board[j]` | `move_reads_pq` | `value_reads_pq` |
+| 3 | `board = self.board` | `move_copies_board` | attribute read |
+| 4 | `wc, bc, ep, kp = self.wc, self.bc, 0, 0` | `move_resets_fields` | 4-tuple unpack |
+| 5 | `score = self.score + self.value(move)` | `move_scores` | `value_call_evals` (§L31) |
+| 8 | `wc = (wc[0] and i != A1, …)` | `move_wc` | new — tuple + `and` + compare |
+| 9 | `bc = (bc[0] and j != H8, …)` | `move_bc` | ditto |
+| 10 | `if p == "K": …` | `move_king_skips` / `_enters` / `_clears_wc` / `move_castle_skips` | two gates per `if` |
+| 11 | `if p == "P": …` | `move_pawn_skips` / `_enters` / `move_prom_skips` / `move_ep_set_skips` / `move_ep_sets` / `move_epcap_skips` | ditto |
+| 12 | `return Position(…).rotate()` | `move_returns` | new — constructor + method |
+
+Statement 1 is worth one line on its own: it is the **same source line** as
+`Position.value`'s statement 1, so its gate says the same thing in the same
+`boardAt` spelling. Reusing the spelling rather than the proof is the honest
+version — the two methods are separate `FunctionDefn`s with separate spans.
+
+### THE DOUBLE PUSH IS THE ONE LIVE ARM OF FOUR
+
+Statements 10 and 11 contain four inner conditional bodies. Under `PlainBoard`
+(§L41) three of them are dead — the castling rook slide, the promotion `put` and
+the en-passant capture `put`. **The fourth fires.** `if j - i == 2 * N: ep = i + N`
+writes `ep` and never the board, which is exactly why §L41's predicate has three
+conjuncts and not four. That section argued it in prose; `move_ep_sets` and
+`move_ep_set_skips` are the two gates that make it a theorem, and the split is
+what keeps a plain double push (the fixture's own `1. d4`) inside the arm rather
+than excluded from it.
+
+The king block has the same shape from the other side: `p == "K"` is *allowed* by
+`PlainBoard` — only the castle is excluded — so statement 10 needs its ENTER arm
+too (`move_king_clears_wc`: a king move forfeits both rights unconditionally),
+not just its skip.
+
+### Findings worth carrying
+
+1. **§L28's kernel refusal reproduced EXACTLY, and the recorded fix worked
+   first try.** `move_ep_sets`/`move_ep_set_skips` were written with `py_simp`
+   on the `j - i == 2 * N` condition. The elaborator accepted both; the KERNEL
+   refused both with `id (Eq.refl (match RVal.int (j - i), rhs with …))` — a
+   `rfl` under a match binder, because `==` cases on both `RVal` operands at
+   once. That is §L28's finding verbatim, on a different file and a different
+   comparison, and `compare_one` closed it with no exploration. **A recorded
+   failure mode that reproduces character-for-character a section later is the
+   cheapest kind of knowledge there is.** The other seven `compare`s in this
+   file were written through `compare_one` from the start.
+2. **A namedtuple-subclass instantiation is FIVE conditionals deep before the
+   constructor.** `Position(board, …)` passes through: not a G1 global, not
+   bound by a `def`, not also a namedtuple assignment, not an exception class,
+   `ok`, and no `Position.__init__` — then the `ntBase` match, pinned as
+   `some ⟨…the six fields IN ORDER…⟩`. Each is `rfl` and each is a branch the
+   interpreter takes first: §L45's law (*a conditional is a premise until a
+   `rfl` retires it*) applied five times in one expression. The field-order pin
+   is the one that matters most — `posOf` mirrors that order, and a permuted
+   `ntBase` would make every downstream gate true about the wrong tuple.
+3. **`and` at two BOOLEANS is one gate, not two.** Python's `and` answers the
+   first operand when falsy and the second otherwise; the two-gates-per-`if` law
+   would ask for both arms. At two `Bool`s both arms are `.bool (p && q)`, so
+   `boolOp_and2_bool` states one answer and cases inside the proof. That is not
+   a weakening of the law — the law is about arms that DIFFER.
+4. **The throughput cost is one declaration, and it is worth naming.** The file
+   went **6.5 s → 37 s**. Nearly all of it is `move_builds_position`, whose
+   `py_simp` walks the class table of the 955 KB module literal at
+   `maxHeartbeats 1600000`. The twelve other gates together are a couple of
+   seconds. If this file grows again, that is the declaration to lift out.
+
+### What is owed before F1b closes
+
+* **The COMPOSITION** — thirteen gates chained from the entry frame to the
+  `return`, on `value_body_quiet`'s template (§L28), plus the `callIn` boundary
+  (`callIn_of_value_body`'s twin) and the ∃-fuel closing form.
+* **`Position.rotate` at a SYMBOLIC board** — statement 12's `hrot` premise.
+  `proof.lean` gates it at a CONCRETE board (`rotate_home_callsIn`, three of
+  them); the chain needs it over a free board, which is where §L41's
+  `rotStr_residue` is finally spent, with the two `ifExp`s on `self.ep` and
+  `self.kp` decided.
+
+**F1 is therefore still not complete**, and the milestone print still belongs to
+the pass that closes the chain. What IS complete: all of F1's mathematics
+(§L37, §L41, §L44) and now all thirteen of F1b's statement gates.
+
+### Triad
+
+`lake build` **3692 jobs green** (a FULL cold rebuild — §L49's `Semantics.lean`
+operator batch invalidated the whole tree, and `pins_bound`/`pins_clock` cost
+**1182 s each** on their own because their `#guard`s run the shipped SEARCH to
+depth 3 in the kernel); `docs_check` **73/73 marked blocks, 15
+illustrative-exempt**; `diff_test` **1394 cases, 0 failed**, 118 whitelisted,
+1276 matched — the count moved from 1315 because §L49's operators and §L54's C
+work added cases, and **1394/0 is the new baseline**; `script_corpus` **64 scripts,
+0 failed, 50 matched, 14 loud**. No `sorry`, no `native_decide`, no linter
+warning. All **64** printed declarations depend on
+`[propext, Classical.choice, Quot.sound]` or less.

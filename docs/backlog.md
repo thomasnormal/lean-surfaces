@@ -21564,3 +21564,51 @@ and replacing it with the real layer is **one `@[spec]` lemma that deletes a
 check from every statement case**. The cheapest possible first touch, on the
 tier that proved the shape was right by inventing it independently a month
 early.
+
+### HARVEST RULE — port the SUCCESSOR, keep the PREDECESSOR as the failure it fixed
+
+From the rebuild's tactic archaeology, into §9.2's consolidation-by-touch.
+Verified in the tree before writing.
+
+Consolidation harvests from a tier's HISTORY, and a history contains superseded
+mechanisms that still look authoritative because they still work and are still
+in the tree. The measured case: **`py_loop` derived its loop-test value by
+Miller-pattern unification**, reading `tv`/`Cont`/`step` off goals containing
+metavariables — and the lane honestly recorded the shapes that destroy it (a
+surviving `ite`, a destructured state, a full-simp-set rewrite; the record is in
+`AGENTS.md`). **`py_vcgen` then REPLACED that** with symbolic evaluation at the
+invariant shape.
+
+**A tier that harvests the first inherits a known-fragile mechanism together
+with its known failure modes — silently, because the predecessor is not marked
+superseded, merely older.** So: **take the latest generation, and keep the
+earlier one as documentation of the failure it fixed.** The predecessor is the
+record of WHY the successor has its shape, which is exactly what a harvesting
+tier needs and exactly what a bare port drops.
+
+**NAMING CAUTION, same archaeology**: `VCGen.lean` is **NOT "VC generation."**
+Its header is explicit — `VC.lean`/`VC2.lean` specify STATEMENTS, while
+**`VCGen.lean` specifies SUSPENDED MACHINES**: what a generator's frame stack
+still has to yield. That is why its predicates get **re-defined over a new
+stepper** rather than replaced by a core word. Checked: `docs/family-architecture.md`
+never called it VC generation (its 5 343-line breakdown lists `VC`, `VC2`,
+`VCTactic`, `LoopTactic` and not `VCGen`), so no correction was needed there —
+the caution is recorded in §9.2 where a *harvesting* tier will meet it.
+
+### §5.4a GAINS A FOURTH INSTANCE — the search that agrees with you
+
+A name collision made a `grep` confirm a prior: `DRAIN` in `VCGen.lean` is the
+**generator drain**, 47 occurrences, not the short-circuit `DRAIN` trick being
+looked for. The hits were real, numerous, and about something else.
+
+> **A grep that agrees with your prior is the one to re-run.**
+
+**This lane supplied its own instance and it is cited beside it**: `grep -rl
+'\bRun\b'` returned three SystemVerilog files and **confirmed the expectation
+that `Run` was shared substrate** — the hits were the English word opening a
+docstring and the true count was ZERO. Both searches were *correct*; both
+answered a question narrower than the one being asked; and in both cases
+**agreement is what stopped the search.** A disagreeing grep gets investigated.
+That asymmetry is the provenance law pointed at retrieval rather than at
+measurement, and it is now the fourth instance — with two of the four
+contributed by the document that states the law.

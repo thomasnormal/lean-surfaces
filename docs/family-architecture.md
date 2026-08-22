@@ -2369,6 +2369,23 @@ why it is stated once rather than three times:
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
 
+**A FOURTH INSTANCE, and it is the one that flatters hardest: the SEARCH
+that agrees with you.** A name collision made a `grep` confirm a prior —
+`DRAIN` in `VCGen.lean` is the *generator drain*, 47 occurrences, and not
+the short-circuit `DRAIN` trick the searcher was looking for. The hits were
+real, numerous, and about something else.
+
+> **A grep that agrees with your prior is the one to re-run.**
+
+This document supplied its own instance: `grep -rl '\bRun\b'` returned
+three SystemVerilog files and **confirmed the expectation that `Run` was
+shared substrate** — the hits were the English word opening a docstring,
+and the true count was zero (§3.1). Both searches were *correct*; both
+answered a question narrower than the one being asked; and in both cases
+**agreement is what stopped the search.** A disagreeing grep gets
+investigated. That asymmetry is the provenance law again, pointed at
+retrieval rather than at measurement.
+
 Every instrument output, triad line, coverage count, `#guard` batch, axiom
 print and timing is reported **with the state that produced it** — clean
 elaboration, faithful subject, untorn tree. The failure mode is not that
@@ -2951,6 +2968,36 @@ deadline, no sweep, and the test is that the committed output is
 | `harness/censuskit.py` (~160 lines) | ~520 generic lines across **14** instruments; net ≈ −300 | a lane next touches its instrument |
 | `tools/triad.sh` (landed) | 6 hand-rolled triad scripts, **38%** violation density | a lane's next build |
 | `Core` loader utilities | 32 of 46 common lines across four tiers' loaders | a lane next touches its loader |
+
+**WHERE TWO GENERATIONS OF A TRICK EXIST, PORT THE SUCCESSOR — and record
+the PREDECESSOR as the thing it fixed.** Consolidation harvests from a
+tier's history, and a history contains superseded mechanisms that still
+look authoritative because they are still in the tree and still work.
+
+The measured case: **`py_loop` derived its loop-test value by
+Miller-pattern unification**, reading `tv`/`Cont`/`step` off goals
+containing metavariables — and the lane honestly recorded *the two shapes
+that destroy it*: a surviving `ite`, a destructured state, a full-simp-set
+rewrite. **`py_vcgen` then REPLACED that mechanism** with symbolic
+evaluation at the invariant shape. Both are in the tree. **A tier that
+harvests the first inherits a known-fragile mechanism together with its
+known failure modes**, and inherits them silently, because the predecessor
+is not marked as superseded — it is merely older.
+
+So the harvest rule is: **take the latest generation, and keep the earlier
+one as documentation of the failure it fixed.** The predecessor is not
+dead weight — it is the record of *why* the successor is shaped the way it
+is, which is precisely what a harvesting tier needs and precisely what a
+bare port drops.
+
+**One naming caution that follows from the same archaeology**, because a
+harvesting tier will meet it: **`VCGen.lean` is NOT "VC generation."** Its
+own header is explicit — layers 1 and 2 (`VC.lean`, `VC2.lean`) specify
+STATEMENTS; **`VCGen.lean` specifies SUSPENDED MACHINES**, what a
+generator's frame stack still has to yield. That is why its predicates get
+**re-defined over a new stepper** rather than replaced by a core word: they
+are about suspension, not about verification conditions, and the name
+suggests otherwise.
 
 **Why on-touch and not a sweep**: a sweep is a spine-touch that invalidates
 every lane's build at once, and the audit's own §9 records this lane taking

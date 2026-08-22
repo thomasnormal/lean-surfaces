@@ -6,10 +6,14 @@ can similarly follow"* — versioned surfaces, spec-mirror as the general
 behaviour — and this charter founds the SV lane on the C tier's proven
 template (`docs/c-tier-charter.md`, §L35): census first, corpus and
 licence surveyed per-file, taxonomy mapped, first milestone planned.
-**No Lean semantics in this pass. No existing file changed.**
+**No Lean semantics in this pass. No existing file changed** by the
+charter itself; the consolidation commit that followed it is listed in
+§10.
 
-**It recommends no endgame.** §6 presents them; §8 lists what the owner still has to
-answer.
+**It presented six decisions and recommended none. The owner ruled all
+six the same day** — §6 records them verbatim, §8 re-cuts the ladder
+around them, and §9 lists the one thing still outstanding, which is an
+access rather than a decision.
 
 ---
 
@@ -59,15 +63,24 @@ today, not a citation.**
    example really does need the other schedule and the harness really
    does try it.
 
-2. **The extractor still round-trips BYTE-IDENTICALLY.** Re-running
-   `extractors/sv/extract.py` over every pinned source in
+2. **The extractor still round-trips BYTE-IDENTICALLY — 18 of 18.**
+   Re-running `extractors/sv/extract.py` over every pinned source in
    `Examples/system-verilog/` and diffing against the committed
-   envelopes: **17 of 18 identical, 0 differing, 1 error.** Six are
-   schema `sv-0.1` (single-file mode), eleven are `sv-0.2` (symbolic
-   `--top` mode). The one error is
-   `cv32e40p_register_file_ff`, which needs `cv32e40p_pkg.sv` from the
-   external OpenHW checkout that is deliberately **not vendored** — an
-   absent input, not a defect.
+   envelopes: **18 identical, 0 differing, 0 errors.** Six are schema
+   `sv-0.1` (single-file), twelve are `sv-0.2` (symbolic `--top`).
+
+   **This paragraph first published "17 of 18", and that was wrong
+   twice over** — wrong in the count and wrong in the cause. The
+   holdout, `cv32e40p_register_file_ff`, was blamed on a missing
+   `cv32e40p_pkg.sv` from the un-vendored OpenHW checkout. In fact the
+   file `cv32e40p_register_file_ff.sv` declares module
+   `cv32e40p_register_file` — filename and module name differ, as they
+   do across all three of OpenHW's register-file variants — so a
+   `--top` derived from the *filename* could not resolve it. Read from
+   the envelope's own `top` field it regenerates byte-identically **and
+   needs no external checkout at all**. A plausible, unverified
+   diagnosis survived a whole publication; `harness/sv_round_trip.py`
+   now runs this check so the next one cannot.
 
 3. **The tier still builds.** `lake build` reached **3 690 of 3 693
    jobs with ZERO compilation errors**, and **all 14 `LeanModels.Sv.*`
@@ -81,21 +94,30 @@ today, not a citation.**
    therefore *"the SV tier builds clean; the run was interrupted
    elsewhere"* — not *"the build is green."*
 
-**A methodological note that belongs in the charter because it nearly
+**A methodological note that belongs in the charter because it twice
 became a false finding.** The first round-trip run reported *12
 differing*. That was the instrument, not the tree: the `sem2` envelopes
 are `sv-0.2`, which requires `--top <module>`, and the loop had invoked
 single-file mode. Re-run with the mode each envelope declares in its own
-`schema` field, the differences vanished entirely. **An envelope
+`schema_version` field, the differences vanished entirely. **An envelope
 compared against the wrong extraction mode is a silent wrong answer of
 exactly the C charter's kind**, and the rule it yields is now written
 down: *read the mode out of the artefact, never assume it.*
+
+The rule has **three** edges, and each was found by tripping over it:
+the **schema** (`sv-0.1` vs `sv-0.2`), the **top module** (from the
+envelope's `top`, never the filename — item 2 above), and the **source
+path spelling**, because the recorded path is *part of the envelope*:
+regenerating with absolute paths where the envelope recorded
+repo-relative ones made all 18 differ, by exactly the string-length
+delta. The gate now mirrors the recorded layout in a scratch directory
+and runs there.
 
 ---
 
 ## 1 THE CENSUS — and the four defects it found
 
-### 1.1 The frontend is `pyslang`, and it is NOT installed
+### 1.1 The frontend is `pyslang`, and it is NOT installed — **CLOSED**
 
 `extractors/sv/extract.py` requires **python3.12 + pyslang 11.x** — the
 Python bindings to **slang**, an MIT-licensed SystemVerilog frontend.
@@ -128,7 +150,7 @@ the envelope carry `sv-0.1`'s resolved widths **and** `sv-0.2`'s
 symbolic parameter binders. Verilator is also not plain-permissive
 (LGPL-3/Artistic dual), where slang is MIT.
 
-### 1.2 The corpus census cites an artefact that is NOT in the tree
+### 1.2 The corpus census cites an artefact that is NOT in the tree — **CLOSED**
 
 `docs/sv-corpus-coverage.md` states its machine-readable results live
 at `harness/sv/conformance/census.json`. Measured:
@@ -139,7 +161,19 @@ harness/sv/conformance/runner.lean
 harness/sv/conformance/unlockable.txt
 ```
 
-**`census.json` is not tracked and not present.** The document's
+**`census.json` is not tracked and not present** — and the reason is
+worse than an oversight: `.gitignore:5` lists
+`harness/sv/conformance/census.json`, so the document cites an artefact
+its own repository is configured to exclude. It was not forgotten; it
+was **excluded by rule**, which looks deliberate and so invites nobody
+to fix it.
+
+**CLOSED.** The per-file records are 11.9 MB across 21 186 files, far
+outside this repository's census range (6 KB - 773 KB in `docs/`), so
+they stay regenerable-but-uncommitted while the half every claim
+actually cites — provenance + summary, 20 KB, sorted — lands as
+`docs/sv-construct-census.json`, with a `--compare` mode that exits
+non-zero on drift. The document's
 headline numbers — 21 336 files walked, the construct-frequency table
 that it calls *"THE IMPLEMENTATION PRIORITY QUEUE"*, the per-chapter
 coverage — are therefore **unreproducible from this repository**: the
@@ -147,7 +181,7 @@ aggregates survive only as prose in the memo that cites the missing
 file. The sibling `unlockable.txt` (11 lines) did land, which is how
 §1.4 below could be measured at all.
 
-### 1.3 The census instrument points at a path that does not exist
+### 1.3 The census instrument points at a path that does not exist — **CLOSED**
 
 `extractors/sv/census.py:58`:
 
@@ -165,6 +199,17 @@ it runs, and a 40-file smoke completed in **2.0 s**. The defect is
 purely the hard-coded default, and it is the SV analogue of exactly
 what `--compare` was invented for in the C tier: **a corpus that lives
 outside the repository, with no mechanical staleness check.**
+
+**CLOSED.** The hard-coded path is replaced by a registry resolved by
+`--corpus-name`, which tries candidate locations in order and
+**REFUSES** with every path it tried when none exists (exit 2). Both
+corpora are registered, so ruling §6.1's anchor is a flag rather than a
+project. And the missing staleness check now exists: `--compare` reports
+every drifting key against the committed summary. Verified — a
+perturbed artefact is caught and exits 1; an unperturbed one reports
+`compare: IDENTICAL (21186 files, corpus sv-tests-2)`; two consecutive
+runs are byte-identical, once `elapsed_seconds` was removed from the
+artefact for being a fact about the afternoon rather than the corpus.
 
 ### 1.4 THE HEADLINE: the censused corpus is NOT the public one
 
@@ -409,14 +454,25 @@ worth more than either saying it alone.
   in `harness/`"*, to fix *"when the SV lane is next open."* **The lane
   is now open**, so SV-M1 adopts it (§7 inch 7).
 
-**And one CORRECTION this charter owes the family doc.** The registry
-row's corpus field reads **`sv-tests-2`** — which §1.4 measures as
-employer-internal, carrying **no licence**, and embedding the IEEE PDF.
-**A public repository's registry should not name a corpus its readers
-cannot obtain.** The row cannot be ratified as written; §8.1 is the
-decision that settles it, and until then the corpus field should be
-read as PROPOSED in the strong sense — *unresolved*, not merely
-provisional.
+**And one correction this charter owed the family doc — now
+RESOLVED BY RULING.** The registry row's corpus field reads
+**`sv-tests-2`**, which §1.4 measures as employer-internal, carrying
+**no licence**, and embedding the IEEE PDF; the charter objected that a
+public repository's registry should not name a corpus its readers
+cannot obtain. **Ruling §6.1 settles it:** `sv-tests-2` is citable
+internally, open-sourcing is deferred, and the standing condition is
+that it **stays out of public artifacts** until a further ruling. So the
+row stands for internal purposes, and the registry's *public*
+presentation is what remains gated. The IEEE PDF stays unopened
+regardless — that is our own law, not a consequence of the licence
+question.
+
+**A second correction, still owed OUTWARD and not resolved by any
+ruling** (§7.3): the family document records `Run σ α` as used by
+*"Python (16 files) and SystemVerilog (3)"*. SV's true count is
+**zero** — it uses its own `Sv.Res`, and the "3" is a bare-word match on
+doc comments. The move-to-`Core` trigger is fixed on the premise that SV
+is a second consumer, and it is not.
 
 ---
 
@@ -568,7 +624,7 @@ refusal is the weaker fallback for a harder problem — **not a different
 philosophy**, and the charter records that the two lanes should not be
 "harmonised" into the weaker one.
 
-### 2.5 The verification tier is a SEPARATE tier
+### 2.5 The verification tier — proposed as separate, **RULED IN**
 
 Clauses 8, 13, 15, 18, 19, 24 — classes, constrained randomisation,
 functional coverage, mailboxes, programs — are **half the public
@@ -577,13 +633,18 @@ suite's mass** (`uvm` is the single most common tag at 105 occurrences,
 nothing with the simulation semantics. They need an object model, a
 constraint solver, and a randomisation oracle.
 
-**The charter's position: this is a distinct tier with its own
-milestone ladder, and conflating it with the simulation semantics
-would misprice both.** The existing `docs/sv-spec-surface.md` gallery
-already anticipates this (examples 8, 17, 18 are explicitly
-design-target). A tier that models clauses 4/6/7/9/10/11/12 well and
-refuses clause 18 loudly is a *coherent* product; one that half-models
-both is not.
+**The charter proposed** that this be a distinct tier with its own
+ladder, on the argument that a tier which models clauses 4/6/7/9/10/11/12
+well and refuses clause 18 loudly is a *coherent* product where one that
+half-models both is not.
+
+**RULED OTHERWISE (§6.3): everything is in scope, one lane, one
+ladder.** The argument above is not thereby refuted — it is answered by
+sequencing instead of by separation. §8.3 puts the verification tier at
+**R2 and later, after the scheduler**, precisely because clauses 8/18/19
+need a clock and a process model to hang on, and R1 is what supplies
+them. "Refuses clause 18 loudly" remains the correct *interim* state;
+it is now a rung rather than a boundary.
 
 ---
 
@@ -678,7 +739,14 @@ degraded one.
 
 ---
 
-## 4 DRIVER-ARTIFACT CENSUS
+## 4 DRIVER-ARTIFACT CENSUS — **DISSOLVED by ruling §6.2**
+
+> The census below stands as measurement; its *question* was answered by
+> dissolving it. With full-spec support as the endgame, **the
+> conformance suite is the fixture set** and no dedicated driver is
+> wanted. `DRAM_uvm` is recorded as an optional showcase. The section's
+> own conclusion — that SV has no ctwin-analogue and does not need one,
+> because its oracle is a simulator — is upheld.
 
 The C tier's driver is `tools/ctwin/sunfish.c`, a node-identical twin
 of the Python corpus — which is what makes the square (A ≡ C) even
@@ -742,7 +810,15 @@ hand-maintained twin.
 
 ---
 
-## 5 CONFORMANCE CORPUS — the recommendation
+## 5 CONFORMANCE CORPUS — the recommendation, and how it was **RULED**
+
+> **Ruling §6.1 took the other branch from the one this section leans
+> toward, and did so knowingly.** `sv-tests-2` is citable for internal
+> docs and proofs; open-sourcing is deferred; it stays out of *public*
+> artifacts meanwhile. The per-file licence work below is therefore not
+> wasted — it is what makes the public/internal split enforceable, and
+> it is what the vendoring rule (`tests/**` only) still governs the
+> moment anything is vendored. The IEEE PDF stays unopened either way.
 
 Per the family law, **fetch-don't-vendor unless licences clearly
 permit**. The two candidates split cleanly:
@@ -771,310 +847,368 @@ permissive but the harness is LGPL-3/Artistic; Verilator's suite is
 purchases, and the charter proposes none.**
 
 ---
+## 6 THE RULINGS — all six taken, 2026-08-22
 
-## 6 THE ENDGAME MENU — priced, not chosen
+The charter presented six decisions and recommended none. **The owner
+ruled all six the same day.** They are recorded here verbatim, each with
+what it changes.
 
-The owner has named a flagship: **prove that an SV circuit computes
-IEEE 754 division correctly.** The shape is the verified-FPU tradition
-placed inside this family's pattern — the SV semantics runs the circuit
-at bit level, a shared SoftFloat component's *spec* layer says what the
-output bits must be (`op_correct` = the correctly-rounded exact
-rational result, decidable, no reals), and the correctness theorem is
-the bridge between them.
+### 6.1 The anchor corpus — `sv-tests-2` IS citable
 
-This section prices that honestly, and censuses the one existing
-artifact that might have been a foothold.
+> *"sv-tests-2 IS CITABLE (open-sourcing deferred — so: internal
+> docs/proofs may cite it freely; keep it out of PUBLIC artifacts until
+> he rules; the embedded IEEE PDF stays unopened per our own law
+> regardless)."*
 
-### 6.1 `LeanModels/Circuit/` — censused, and it is NOT the foothold
+So `docs/sv-corpus-coverage.md` keeps its anchor and its numbers stand.
+Three standing conditions: internal citation is free; **public
+artifacts must not name it** until a further ruling; and the embedded
+`ieee-1800-2023.pdf` **stays unopened**, which is our own law and not
+contingent on the licence question.
 
-Measured: **25 files, 4 309 lines**. What it models, read from the
-sources:
+**What landed under this ruling.** `extractors/sv/census.py` keeps
+`sv-tests-2` as its default corpus — but by *name* through a registry,
+never by a hard-coded absolute path, and the public suite is wired
+beside it so the anchor is a flag. §8.1's decision-neutral half is
+therefore already done: switching is `--corpus-name sv-tests`.
 
-| module | subject |
+### 6.2 The driver artefact — DISSOLVED
+
+> *"Driver artifact: DISSOLVED by ruling 6 — no dedicated driver; suite
+> tests are the rung fixtures; DRAM_uvm noted as optional showcase
+> only."*
+
+The charter's §4 conclusion is upheld and then made moot: with full-spec
+support as the endgame, **the conformance suite IS the fixture set**.
+There is no ctwin-analogue and none is wanted. `DRAM_uvm` survives as an
+optional showcase, not a dependency.
+
+### 6.3 Scope — EVERYTHING, with a PLUGGABLE oracle
+
+> *"EVERYTHING IN SCOPE — the whole spec including the verification tier
+> (classes/constrained-random/assertions). New oracle policy: XCELIUM
+> where Icarus falls short."*
+
+This reverses the charter's §2.5 suggestion that the verification tier
+be a separate lane. It is one lane and one ladder.
+
+The ruling carries a design order with it: **the oracle becomes a
+parameter from day one**, with *per-test oracle attribution recorded* —
+which oracle produced each expected result is **provenance**, exactly as
+the C tier names the interpreter on its coverage lines. Icarus stays the
+default; Xcelium is used where Icarus falls short; **access details are
+owed by Thomas (§9), and the design must not block on them.**
+
+This is the same lesson the census just paid for in cash: an artifact
+that does not record what produced it cannot be checked later. The
+census now stamps corpus, frontend family, platform and walk mode for
+precisely this reason, and the harness must stamp its oracle for the
+same one.
+
+### 6.4 Clause 4 — the FULL scheduler, and EARLY
+
+> *"Clause-4: FULL scheduler in scope, sequenced as rungs — cycle-level
+> first (the divider milestone's fragment), full regions after."*
+
+with the emphasis:
+
+> *"modelling the scheduler is very important to have full SV support."*
+
+§8 re-cuts the ladder around this. The charter's own pricing note — *the
+region ladder re-opens every theorem* — is the argument **for** doing it
+early rather than against doing it at all: the cheapest moment for a
+semantics change is before the theorem estate grows.
+
+### 6.5 Editions — BOTH, with -2023 priority
+
+> *"BOTH editions, 1800-2023 priority: adopt the family's
+> sibling-editions layout — plan the move of the dormant tier's
+> edition-sensitive files under Sv/V2023/ (census WHICH files are
+> edition-sensitive first, the C tier's Value.lean lesson: measure,
+> don't assume)."*
+
+So the -2017/-2023 mixing this charter found (§2.1, §1.7) becomes a
+concrete cleanup with a destination. **Census first**: which files are
+actually edition-sensitive is to be *measured*, not assumed. The
+starting evidence is in §7 — all 7 in-Lean edition tags are `-2017`,
+concentrated in `Basic.lean`, while the corpus targets `-2023`.
+
+### 6.6 The endgame — FULL SPEC SUPPORT
+
+> *"ENDGAME = FULL SPEC SUPPORT, like every surface. The FP-divider
+> (integer rung A then HardFloat) is a MILESTONE on the ladder, not the
+> endgame — position it as the clause-4 cycle-level rung's flagship
+> exit."*
+
+§6's menu of three endgames collapses: options (a) and (b) were
+milestones misfiled as destinations, and (c) — the completeness ladder —
+is the endgame. **The scoreboard is coverage-by-clause against the
+482-entry dictionary** the public suite already ships (§1.5).
+
+---
+
+## 7 THE DORMANCY RECORD — what 322 commits of law did while the lane slept
+
+The lane stopped at `db9bb3e` on **2026-07-31** and this charter opened
+at `39ea9ff` on **2026-08-22**: **322 commits, 22 days.** That window is
+the C arc, and it is where most of this repository's *general* law was
+written. The SV tier predates all of it.
+
+**This section exists because a dormant tier does not merely fall
+behind on features — it falls behind on RULES, and rules are invisible
+until someone checks.** What follows is that check.
+
+### 7.1 What the tier already satisfies BY ITS OWN ROUTE
+
+The most useful finding is not the retrofit list — it is that the SV
+lane independently invented a good deal of what later became law, and
+in two places invented it *better*.
+
+| law (later) | SV's independent route |
 | --- | --- |
-| `Nature.lean` | physical dimensions as integer exponents of the **seven SI base units** |
-| `Discipline.lean` | conservative vs signal ports; potential/flow, KCL-style conservation |
-| `Behavior.lean` | the semantic root: an **acausal relation**, deliberately not functional |
-| `DC / AC / Transient / RobustDC` | the analysis interpretations |
-| `Contract / Enclosure / Assurance` | compositional port contracts, interval enclosures |
-| `Spice / Surface / ParserRunner` | `load_circuit` — parses SPICE **in Lean** |
+| **schedule-as-parameter + executable counterexample** (family §3.6) | `ScheduleOracle` bundles a choice function *with its legality proof*; `⊨` is `∀ σ stim tr`; `Sv.Deterministic` makes race-freedom a **theorem**. `race_blk/spec.lean` runs one stimulus under `σ_src` and `σ_rev` as kernel-checked `#sv_check` pairs — the family document's illustrative example, **in the tree a month early** |
+| four-constructor outcome covenant (§3.2) | `Sv.Res` reproduces the covenant's *semantics* (`.timeout` is fuel exhaustion and nothing else; `.unsupported` is loud and fuel-independent) with its own short-circuit simp lemmas |
+| ∃-fuel + monotonicity (§3.2) | `Obs.lean` builds the ⊑-lattice, `run_mono`, and `Runs.at_least` as `∃ f₀, ∀ F ≥ f₀, …` |
+| `--compare` staleness intent (§5.4) | `--recheck`: a fixed-seed determinism check against the stored census — half the law, invented independently |
+| ingester REFUSES a provenance mismatch (§1.5) | `PDesign.crossCheck` refuses the envelope when the frontend's elaboration disagrees with the ingester's — the right mechanism, keyed on a different field |
+| `maybe`-gated CI with reported SKIPs (§3) | both SV harnesses were `maybe`-gated from day one, a month before it became family law |
+| goal-state-as-interface | 7 `#guard_msgs`-pinned delaborators |
 
-**This is the ANALOG tier.** Its carriers are `Rat`/`Real`/`Complex`,
-its ports conserve signed flow, and its whole design goal is to keep
-the numeric carrier an *interpretation parameter* so DC, transient and
-AC analyses can differ. It is the partner of `LeanModels/Spice/`
-(23 366 lines) and `LeanModels/VerilogA/` (606) — continuous-domain
-circuit theory, Verilog-AMS's natures and disciplines made precise.
+**Two of these are stronger than the law that later replaced them**, and
+§2.4 already records why: where C refuses what it cannot show
+unobservable, SV proves over the whole schedule space.
 
-**It is therefore not a foothold for a bit-level divider proof, and the
-charter says so plainly rather than stretching a resemblance.** An
-IEEE 754 divider correctness theorem is a statement about *finite
-vectors of bits* under Boolean operations. `Circuit/` has no bit, no
-`BitVec`, no Boolean gate; `Sv/` has `Logic`, `LVec` and
-`LVec.known? : LVec → Option (BitVec w)`. **The digital foothold is the
-SV tier itself**, which is the reassuring answer: the flagship needs
-the tier this charter is founding, not a different one.
+### 7.2 What needs retrofitting — measured, and ranked
 
-Two honest qualifications. (a) `Circuit/` remains the right home if the
-question ever becomes *"does this transistor-level divider settle to
-the right voltages"* — a genuinely different and much harder claim, and
-not the one the owner named. (b) `Circuit/` is a **live demonstration
-that this repository can carry a large, Mathlib-backed, non-Python
-semantic tier to a real proof surface**, which is evidence about
-feasibility even though none of its code transfers.
+| # | gap | price | note |
+| --- | --- | --- | --- |
+| 1 | **`extractors/sv/census.py` is an instrument in the extractor tree** | one move | The family document names this as *the* one violation in the repository, to fix *"when the SV lane is next open."* It is open. `cv32e40p_census.py` is a second, unnoticed instance |
+| 2 | **`--compare`, sorted output, committed artifact** | ~25 lines | **DONE with this charter's consolidation commit** |
+| 3 | **`language_version` first-class in the envelope**, ingester refuses a mismatch | one function + 21 regens | SV is the family document's *named* failure mode: "one lane, two editions, no field that says so". Ruling 6.5 makes this load-bearing |
+| 4 | **`frontend.version` must be the FAMILY, not a point release** | one line | **DONE for the census** (`pyslang-11`); the envelope still stamps `11.0.0` |
+| 5 | **verdict vocabulary**: MATCH / REFUSE(cause) / DIVERGE / TIMEOUT | one function each | The harnesses speak PASS/FAIL only, and conflate timeout with unsupported. Ruling 6.3's oracle attribution lands in the same edit |
+| 6 | **`docs_check` coverage is ZERO for SV docs** | one marker per block | 73/73 marked blocks pass repo-wide and **none is in an SV document**; the quickstart's 6 blocks are literally what a reader types |
+| 7 | **one runner process per batch** | one function + lakefile line | `diff_test.py` spawns a fresh `lake env lean --run` per (case, σ). Affordable at 10 cases, fatal at corpus scale — and ruling 6.6 makes corpus scale the point |
+| 8 | **`#print axioms` on the theorem set** | one block | 1 occurrence against 98 declarations |
+| 9 | **the clause manifest** — generated and checked, never hand-maintained | one file, 30-60 rows | Highest long-run value: it is simultaneously the reader's view, the cross-edition gate, and ruling 6.6's scoreboard. **Uniquely cheap here** because `conf/lrm.conf` is a ready-made 482-entry dictionary |
 
-### 6.2 The minimal sufficient 1800 fragment — and most of it EXISTS
+**Deliberately not retrofitted.** `Sv.Res` → `Core/` unification is
+structural, and the family document fixes its trigger on the C tier's
+M2, not on SV. `LeanModels/Sv/SV2023/` waits on §6.5's census.
 
-The C tier's rung 0 was "the 45 node kinds ctwin actually uses". The
-analogue here: **which slice of IEEE 1800 does a divider proof actually
-need?** The answer is much less than the language, and — the charter's
-best news — **much less than the full scheduler.**
+### 7.3 Two corrections this lane owes OUTWARD
 
-A combinational or pipelined arithmetic datapath needs:
+1. **The family document's `Run σ α` count is wrong for SV.** It records
+   *"Python (16 files) and SystemVerilog (3)"*. Re-derived:
+   `grep -rn ': Run\b\|Run\.' LeanModels/Sv/*.lean` → **0**. The "3" is a
+   bare-word match on doc comments ("Run one comb-phase process"). SV
+   uses its own `Sv.Res`; **`Run σ α` has exactly one consumer, Python.**
+   This matters because the move-to-`Core` trigger is fixed on the
+   premise that SV is a second consumer.
 
-| clause | what is needed | status in the tier |
-| --- | --- | --- |
-| 6, 7 | packed vectors, `logic`, parameters, packed structs | **have** (`LVec`, `sv-0.2` binders) |
-| 11 | operators: arithmetic, bitwise, shift, compare, concat, ternary, part-select | **have** |
-| 10 | continuous assignment (`assign`) | **have** |
-| 12 | `if`/`case`/`for` inside procedural blocks | **have** |
-| 9 | `always_comb`; `always_ff @(posedge)` if pipelined | **have** |
-| 23, 27 | module instantiation, hierarchy, `generate` loops | **have** (generate unrolls structurally; `popcnt`'s four levels → 31 processes) |
-| **4** | **comb settle to fixpoint; for pipelined, the NBA split** | **have — at cycle granularity** |
+2. **The theorem count, settled with its rule** (§7.4).
 
-**Clause 4's full region ladder is NOT required.** A combinational
-divider needs only the Active-region fixpoint; a pipelined one needs
-the Active/NBA split the cycle model already implements. `initial`,
-`#` delays, Inactive, Observed/Reactive and Postponed — the expensive
-half of §2.3 — **are all testbench concerns, and a datapath proof
-touches none of them.** Likewise clause 8/18's verification tier is
-entirely out of scope. **The flagship does not depend on either of the
-two largest open scoping questions in §8**, which is what makes it a
-credible endgame rather than a wish.
+### 7.4 The counting rule, stated so the number stops drifting
 
-**The evidence that the fragment is real: a divider is ALREADY
-INGESTED.** `Examples/system-verilog/sem2/alu_div/cv32e40p_alu_div.sv`
-— CV32E40P's *"Simple Serial Divider … for signed integers (int32)"*,
-226 lines — round-trips byte-identically today (§0) at schema
-`sv-0.2`. It is a clocked, real, industrial divider already inside the
-tier's vocabulary. **It is an integer divider, not a floating-point
-one**, and the charter will not blur that.
+Two lanes reported two numbers — 86 and 93 — which is how folklore
+starts. The owning charter fixes the rule:
 
-### 6.3 The ladder, priced in three rungs
+> **RULE.** A *proof-carrying declaration* is a `theorem`, `lemma` or
+> `example` at the start of a line in `LeanModels/Sv/*.lean`, allowing
+> optional `@[...]` attributes and `protected`/`private`/`nonrec`/
+> `scoped` modifiers before the keyword.
 
-**Rung A — the integer divider, as the warm-up.** Prove
-`cv32e40p_alu_div` computes signed 32-bit quotient/remainder. The SV
-side is *already done*: ingested, in-tier, dual-sim validated. What is
-missing is a Lean spec (`Int` division with the RISC-V rounding and
-divide-by-zero conventions) and the bridge theorem over the divider's
-serial cycle count. **This is the cheapest real theorem available to
-the tier and it needs no new semantics** — its difficulty is the
-induction over serial iterations, not the language.
+Under that rule, measured today:
 
-**Rung B — IEEE 754 division, the flagship.** Two prerequisites, and
-neither is SV work:
+| | count |
+| --- | ---: |
+| `theorem` | 93 |
+| `example` | 5 |
+| `lemma` | 0 |
+| **TOTAL** | **98** |
 
-1. **The spec layer.** `op_correct` = round-to-nearest-even of the
-   exact rational quotient. Decidable over `Rat`, no `Real` needed —
-   which is what makes it a `#guard`-able, `decide`-able specification
-   rather than an analysis. **Censused: nothing of the kind exists in
-   this repository today** (`git ls-files` for softfloat/ieee754/float
-   returns only `Spice/DiffPair.lean` and a SPICE fixture, both
-   unrelated). It is being commissioned via the architecture lane, and
-   **rung B is gated on it**.
-2. **The RTL.** No FP divider is vendored here. **But Berkeley
-   HardFloat is already on this machine**, at
-   `sv-tests/third_party/cores/black-parrot/external/HardFloat`: 44
-   `.v` files including `divSqrtRecFN.v`, `divSqrtRecFN_small.v`,
-   `divSqrtRecFN_medium.v`, plus a `divSqrtRecFN_small_spec.v`. Its
-   `COPYING.txt` is the Berkeley HardFloat Release 1 licence (BSD-3
-   style) and states it applies *to the whole release as well as to
-   each source file individually* — **a clean per-file grant**, which
-   is exactly what the family law wants and what `sv-tests`'s other
-   `third_party` entries lack.
-
-   **A pleasing alignment worth recording:** HardFloat's author, John
-   Hauser, also wrote Berkeley **SoftFloat** — so the spec layer being
-   commissioned and the RTL being verified descend from the same
-   reference. That is a strong pairing.
-
-   **One honest obstacle, named now rather than discovered later:**
-   HardFloat computes in a *recoded* internal format (`recFN`), not raw
-   IEEE 754 bit patterns, with `fNToRecFN`/`recFNToFN` at the
-   boundaries. The correctness theorem must therefore compose through
-   the recoding, which is extra proof surface and a place where a
-   sloppy statement would prove the wrong thing. It is also **Verilog,
-   not SystemVerilog** — inside the tier's fragment, but the extractor
-   has only ever been run on `.sv`.
-
-**Rung C — the general completeness ladder.** Climb the clause coverage
-of §1.5's dictionary corpus-wide. Buys the broadest surface and no
-flagship theorem. Listed for completeness; the charter observes that A
-and B are *narrow and deep* while C is *wide and shallow*, and that the
-owner has already indicated which he values.
-
-**What all three share** is SV-M1 (§7): a pinned frontend, a corpus
-that resolves, a committed census artifact, and a round-trip gate.
-**None of the endgames needs to be chosen to start**, and the choice
-becomes load-bearing only after M1 — the same structure §L35 found for
-C.
+**Reconciliation in one line:** the sibling lane's **93** is this count
+restricted to `theorem`; this charter's earlier **86** was a regex that
+required the keyword at the start of the line and so silently dropped
+the 12 attribute- and modifier-prefixed declarations. **98 is the
+number**; 93 is reproducible as "theorems only".
 
 ---
 
-## 7 THE FIRST MILESTONE — SV-M1
+## 8 THE LADDER — re-cut for full-spec support
 
-**The M1-analogue the dispatch asked for — "a pinned SV source ingested
-via a real frontend to an envelope schema, round-tripped with
-census-anchored `#guards`" — is ALREADY DONE, twice.** Schema `sv-0.1`
-(concrete) and `sv-0.2` (symbolic) both exist, 17 of 18 envelopes
-regenerate byte-identically today (§0), and `Examples/system-verilog/`
-carries ingested designs with load-time cross-checks
-(`PDesign.crossCheck` refuses a load on mismatch).
+The endgame is **full spec support** (§6.6). The scoreboard is
+**coverage-by-clause against the 482-entry dictionary**. What follows is
+the rung order, and the one sequencing question the rulings left open.
 
-**Re-doing it would be re-work.** The charter therefore proposes the
-milestone that the census says is actually next, and it is a
-*consolidation* milestone — because a tier that is green but
-unreproducible is one bad afternoon from being neither.
+### 8.1 THE SEQUENCING DECISION: the scheduler goes EARLY, and here is the number
 
-### SV-M1: THE LANE IS REPRODUCIBLE FROM A CLEAN CHECKOUT
+Ruling 6.4 puts the full scheduler in scope; the emphasis puts it early.
+The charter priced the upgrade as *"re-opens every existing theorem"*,
+so the decisive metric is **how much estate a trace-type change
+re-opens, and how fast that estate is growing.**
 
-Eight inches, each closing a defect this census actually found.
+Measured today:
 
-1. **Pin the frontend.** `pyslang==11.0.0` recorded as a declared
-   dependency with the `python3.12` requirement, so §1.1's
-   `ModuleNotFoundError` cannot recur silently. *Closes §1.1.*
+| | count |
+| --- | ---: |
+| proof-carrying declarations (§7.4) | 98 |
+| **of those, referencing `run` / `Runs` / `cycleStep` / `SvState`** | **50 (51%)** |
 
-2. **Un-hard-code the corpus path.** `census.py`'s `DEFAULT_CORPUS`
-   becomes a required `--corpus` (or env var) that **refuses loudly**
-   when unset or absent — never a silent default to a path that does
-   not exist. *Closes §1.3.*
+**Half the estate is trace-shaped, and it is the half that grows with
+every rung.** Under the region upgrade the trace type changes from *one
+snapshot per cycle* to *one per time slot with region structure*, so
+those 50 re-open. Every construct rung completed first adds to that 50.
 
-3. **Land the missing census artefact.** Re-run the instrument and
-   commit `census.json`, with a `--compare` mode on the C tier's model
-   so corpus staleness is **mechanically detectable**. *Closes §1.2.*
+**Decision, and it follows the emphasis:** *the full scheduler is the
+rung immediately after consolidation.* Doing breadth first would buy
+clause coverage at the cost of compounding the one refactor that touches
+half of everything — and under the doctrine the scheduler **is** the
+tier's definition, because the `∀ stim σ tr` quantifier that every
+theorem is stated under ranges over clause 4. A tier whose central
+quantifier ranges over a placeholder is not a tier that has defined
+correctness completely.
 
-4. **Decide and record the anchor corpus** (owner's call, §8) and make
-   `docs/sv-corpus-coverage.md` state which corpus, which commit,
-   which licence — the memo currently names none of the three.
+### 8.2 The divider exemplar — both orders priced, and the choice
 
-5. **A round-trip gate that runs in CI.** Today's 17/18 check was run
-   *by hand by this charter*. It should be a `maybe`-gated script:
-   regenerate every committed envelope, diff, fail on drift. This is
-   the SV analogue of `--compare`, and it is cheap because the
-   envelopes and sources are both in-tree. *Guards §0's finding.*
+Ruling 6.6 makes the FP divider *"the clause-4 cycle-level rung's
+flagship exit"*, which sits in tension with 8.1's ordering. Priced both
+ways:
 
-6. **Designate the driver artefact** (owner's call, §8) and, if
-   `DRAM_uvm` is chosen, ingest `design.sv` + `interface.sv` to an
-   envelope with `#guard`s anchored on facts the census independently
-   knows — module count, port count, process count.
+**Order A — divider first, stated scheduler-parametrically.** The
+good news: **∀-over-σ is already free.** Every SV theorem is stated as
+`∀ stim σ tr, Runs d σ stim tr → P`, so schedule-parametricity is not
+something to add — it is the tier's existing shape. What is *not* free
+is **trace-type stability**: the divider's observable is a cycle-indexed
+projection, and after the upgrade "cycle" is a derived notion.
+Parametricity therefore costs one abstraction function
+`cycleOf : Trace → CycleTrace` plus an **adequacy lemma** saying the
+region semantics projects onto the cycle semantics for designs in the
+cycle-level fragment. Price: the adequacy lemma is the real work — it is
+the theorem that the two models agree, and it cannot be cheap because it
+is exactly the content of the upgrade. Divider theorems then survive
+untouched.
 
-7. **Move the instrument to `harness/`.**
-   `extractors/sv/census.py` → `harness/sv_construct_census.py`, per
-   `docs/family-architecture.md`'s rule that *extractors extract,
-   instruments measure*. The family doc names this as the one standing
-   exception, to be fixed when this lane next opened. It has.
+**Order B — scheduler first, divider after.** Zero divider theorems
+re-open, because none exist yet. The adequacy lemma is still wanted (see
+8.3) but is no longer on the divider's critical path.
 
-8. **Contain the frontend crash.** Per-file subprocess isolation in the
-   census so a SIGTRAP becomes a recorded `error` row with a file name,
-   never a silent hang (§1.6) — and an upstream report to slang for
-   `` `unconnected_drive pull2 ``. **This is the inch that makes the
-   anchor-corpus decision free to take either way.**
+**Chosen: Order B, with one exception.** The adequacy lemma has to be
+written either way, and writing it *before* there is a divider estate to
+protect means writing it once against 50 declarations rather than twice
+against 50-plus-N. The exception is **rung A, the integer divider**: its
+SV side is already ingested and in-tier, so if a demonstrable theorem is
+wanted before the scheduler lands, `cv32e40p_alu_div` is the cheap one
+to state — and it should be stated *through* `cycleOf` from the first
+line, so it is Order-A-shaped and survives.
 
-**What SV-M1 deliberately does NOT do:** no new semantics, no clause-4
-region ladder, no verification tier, no new proofs. It makes the
-existing 8 166 lines *reproducible and defensible*, which is the
-precondition for every larger choice in §8.
+### 8.3 The rungs
 
----
+**R0 — CONSOLIDATION. (Largely landed.)** The four instrument defects
+closed, the round-trip gate green at 18/18, the census committable and
+`--compare`-checkable. Remaining: retrofits 1, 5, 6, 7 of §7.2, and
+`language_version` (retrofit 3) which ruling 6.5 makes load-bearing.
 
-## 8 STILL OWED BY THE OWNER
+**R1 — THE SCHEDULER. Clause 4 in full.** Census-first, per the ruling:
 
-The charter recommends nothing in this section. Six decisions, in
-dependency order.
+1. **Census the region semantics before modelling it** — the nine
+   regions (Preponed, Active, Inactive, NBA, Observed, Reactive,
+   Re-Inactive, Re-NBA, Postponed) plus the PLI regions, which are in
+   scope under 6.3. Enumerate, for each: what enters it, what may
+   reorder within it, and what the standard *fixes*.
+2. **Draw the determinism boundary explicitly** — what within a region
+   is ∀-quantified versus ordered. This is the `ScheduleOracle`'s new
+   contract and the single most important artifact of the rung.
+3. **Map the existing cycle model onto it.** The upgrade must be an
+   **extension** where the cycle model is a faithful projection, and a
+   **supersession-with-adequacy** where it is not — and *never a silent
+   replacement*. The definition-change discipline applies to our own
+   tiers: if `cycleStep` stops meaning what it meant, that is a recorded
+   change with an adequacy lemma, not a quiet edit.
+4. Then the semantics, then re-establish the 50 trace-shaped
+   declarations through the projection.
 
-1. **THE ANCHOR CORPUS — blocks SV-M1 inches 3–4, and it is the one
-   with a licence consequence.** `sv-tests-2` is 21× larger, spans
-   clauses 3–40, and is the better instrument — but it is inside
-   `normal-computing/mox`, carries **no licence**, and embeds the IEEE
-   1800-2023 PDF. The public `sv-tests` is ISC-clean and vendorable but
-   1 028 tests over clauses 5–26. Options: (a) switch the public claims
-   to `sv-tests`, keep `sv-tests-2` private and path-configured;
-   (b) keep `sv-tests-2` as the anchor and accept that no outside
-   reader can reproduce a coverage number; (c) both, with the public
-   suite as the *published* claim and `sv-tests-2` as an internal
-   supplement. **Whether `sv-tests-2` may be cited at all in a public
-   repository is a question only the owner can answer**, and the
-   coverage memo already cites it.
+Unlocks `initial`, `#` delays, clocking blocks (cl. 14), program blocks
+(cl. 24) — and therefore most of the verification tier's *timing*.
 
-2. **THE DRIVER ARTEFACT.** Designate one, per §4: `DRAM_uvm`'s
-   `design.sv` (Thomas's own, personal account, 98 lines), the existing
-   M0 six promoted, or CV32E40P expanded with its `pkg` dependency
-   pinned. **Or rule that the lane needs no single driver** because its
-   oracle is a simulator — which is a defensible answer the C tier
-   could not have given.
+**R1-exit — THE DIVIDER FLAGSHIP.** Integer first
+(`cv32e40p_alu_div`, already ingested), then IEEE 754 via Berkeley
+HardFloat's `divSqrtRecFN` (§6.2's obstacles stand: the `recFN`
+recoding, and it is Verilog not SV). Gated on the shared SoftFloat spec
+layer, which is not SV work.
 
-3. **THE SCOPE BOUNDARY: is the verification tier (clauses 8, 18, 19,
-   24) in or out?** §2.5 argues it is a separate tier; the owner
-   decides whether the SV lane's remit is *simulation semantics* or
-   *the whole language*. This is the single largest scoping question
-   and it changes every downstream estimate.
+**R2..Rn — BREADTH BY CLAUSE**, ordered by the census's own priority
+queue rather than by taste. Today's blockers on the public suite are
+**signedness and range metadata** (`VariableSymbol:signed`,
+`NamedValueExpression:signed`, `VariableSymbol:range`) — unglamorous,
+and the highest-frequency thing in the way. The verification tier
+(cl. 8, 18, 19) enters here, after R1 has given it a clock to hang on.
 
-4. **THE CLAUSE-4 LADDER: does the tier go past the cycle collapse?**
-   Full region semantics (Inactive, Observed, Reactive, Postponed)
-   unlocks `initial`, `#` delays, clocking blocks and program blocks —
-   and **re-opens every existing theorem**, because the trace type
-   changes. Priced in §2.3 as its own milestone. Not needed for
-   synthesisable RTL; required for testbench semantics.
-
-5. **THE SPEC EDITION.** -2023 (the corpus's target) or -2017 (what
-   `sv-design-m0.md` cites)? They mostly agree, but the lane currently
-   mixes them. §2.1's rule — cite the edition you measured — holds
-   either way, but the *reference* edition should be named once.
-
-6. **WHICH ENDGAME (§6)** — and specifically whether **rung A**, the
-   integer divider, is worth taking as a warm-up. It is unusually
-   cheap: the RTL is already ingested and in-tier, so the only new work
-   is a Lean spec and the bridge. It would be the tier's **first real
-   correctness theorem about a real industrial module**, and it
-   de-risks rung B's proof architecture before the SoftFloat spec layer
-   arrives. The counter-argument is that it proves nothing about
-   floating point, which is what the owner actually named.
-
-**A standing obligation, recorded.** The Xcelium results that make
-`docs/sv-design-m0.md`'s 4-state table "normative — verified on
-Xcelium" were taken on a host this charter cannot reach. Icarus
-reproduces the 10 harness cases today, but the *operator-level* table
-has not been re-verified here. It should not be called
-dual-simulator-verified in any new claim without a re-run.
+**Scoreboard, every rung:** clauses covered / 482, generated and
+checked, never hand-maintained.
 
 ---
 
-## 9 WHAT LANDED WITH THIS CHARTER
+## 9 WHAT REMAINS OWED
 
-This document and a backlog section. **No Lean, no code, no existing
-file changed** — the C charter's rule, kept.
+The six decisions are taken. What is still outstanding is not a decision
+but an **access** and two standing obligations.
 
-**Every headline is a run made today**, not a citation: the harness
-(10/10 green vs Icarus 12.0), the round-trip (17/18 byte-identical,
-1 absent-input), the build (3 690/3 693 jobs, zero compilation errors,
-all 14 `LeanModels.Sv.*` built, two Python-tier targets SIGTERMed under
-contention), the proof
-hygiene (86 theorems, 0 `sorry`, 0 `native_decide`), the frontend gap
-(`ModuleNotFoundError`, fixed by a venv in under a minute), the missing
-`census.json`, the non-existent `DEFAULT_CORPUS` path, the
-corpus-disjointness (0 of 11 `unlockable.txt` files present upstream),
-the licence censuses of both corpora, the re-census of the public suite
-through the committed instrument — **which found a SIGTRAP crash in
-pyslang on a two-line negative test, and a `Pool` deadlock that turns
-that crash into a silent hang** — the census of `LeanModels/Circuit/`
-that rules it out as the flagship's foothold, and the location of
-Berkeley HardFloat's `divSqrtRecFN` under a per-file BSD-3 grant.
+1. **Xcelium access — machine and licence.** Ruling 6.3 makes Xcelium
+   the oracle where Icarus falls short. The details are owed by Thomas.
+   **The design must not block on it**: the oracle is a parameter,
+   Icarus is the default, and per-test oracle attribution is recorded
+   from the first commit that touches the harness.
 
-**Two corrections the charter made to itself**, both kept visible
-because the family law says instrument faults are findings. (1) The
-first round-trip run reported 12 failures that were the *charter's*
-invocation error, not the tree's defect — *read the mode out of the
-artefact*. (2) §1.6 began life asserting that switching the anchor
-corpus was *"a licensing decision, not an engineering one"*; running
-the instrument refuted it. **Neither was visible without executing the
-thing**, which is the entire argument for census-first.
+2. **The Xcelium 4-state table is UNVERIFIED on any reachable host.**
+   `docs/sv-design-m0.md` calls its operator table *"normative —
+   verified on Xcelium"*. Icarus reproduces the 10 harness cases today,
+   but the **operator-level table has not been re-checked here**. No new
+   claim may call it dual-simulator-verified without a re-run — and
+   ruling 6.3 supplies the mechanism to do so properly.
+
+3. **`sv-tests-2` stays out of public artifacts** until the
+   open-sourcing ruling, and **the IEEE PDF stays unopened**. Both are
+   standing conditions of ruling 6.1, not one-time checks.
+
+---
+
+## 10 WHAT LANDED WITH THIS CHARTER
+
+The charter itself, backlog §L60, and — in the consolidation commit that
+followed it — `harness/sv_round_trip.py`, a rebuilt
+`extractors/sv/census.py`, and `docs/sv-construct-census.json`.
+
+**Every headline is a run**: the harness 10/10 green vs Icarus 12.0; the
+round-trip **18/18 byte-identical, 3 documented SKIPs**; the build
+3 690/3 693 jobs with zero compilation errors and all 14
+`LeanModels.Sv.*` built (two Python-tier targets SIGTERMed under
+contention — a resource kill, not a proof failure); **98** proof-carrying
+declarations under §7.4's rule, 0 `sorry`, 0 `native_decide`; the
+frontend gap and its one-minute fix; the gitignored census; the dead
+corpus path; the corpus disjointness; the licence censuses; the pyslang
+SIGTRAP and the `Pool` hang it caused; and the full 717-file public
+census now completing in **1.0 s** where it previously never completed
+at any job count.
+
+**THREE corrections the charter made to itself**, all kept visible
+because instrument faults are findings:
+
+1. The first round-trip run reported 12 failures that were the
+   *charter's* invocation error — **read the mode out of the artefact.**
+2. §1.6 began by asserting that switching the anchor corpus was *"a
+   licensing decision, not an engineering one"*; running the instrument
+   refuted it.
+3. **The 18th envelope was never broken.** The charter published
+   *"17 of 18, 1 absent input"* and blamed a missing `cv32e40p_pkg.sv`.
+   Wrong on both count and cause: the file
+   `cv32e40p_register_file_ff.sv` declares module
+   `cv32e40p_register_file`, so a `--top` derived from the *filename*
+   could not resolve it. Read from the envelope, it regenerates
+   byte-identically with no external checkout. **18 of 18.** The
+   plausible-but-unverified diagnosis survived one whole publication,
+   which is the argument for the gate that now runs it.
+
+**Not one of the three was visible without executing the thing.** That
+is the entire case for census-first, and this lane has now paid for it
+three times.

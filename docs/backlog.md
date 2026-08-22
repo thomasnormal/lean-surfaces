@@ -16476,3 +16476,135 @@ per-file shape was never tried, for the reason recorded three times in this
 document: 615 differential rows once went from hours to ~11 s by stopping the
 per-row spawn. A new lane's first instrument is exactly where that lesson
 gets re-learned expensively.
+## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
+
+The owner ruled all six of §L60's decisions the same day, and the SV lane's
+consolidation landed against them. [docs/sv-charter.md](sv-charter.md) is
+re-cut: §6 records the rulings verbatim, §7 is the dormancy record, §8 is the
+re-cut ladder. Code landed too — this is no longer a docs-only pass.
+
+**THE RULINGS.** (1) `sv-tests-2` **IS citable** — internal docs and proofs
+freely, open-sourcing deferred, **out of PUBLIC artifacts** until further
+ruling, and the embedded IEEE PDF **stays unopened regardless** (our law, not
+a licence consequence). (2) The driver artefact is **DISSOLVED**: the
+conformance suite is the fixture set; `DRAM_uvm` is an optional showcase. (3)
+**EVERYTHING in scope**, verification tier included — reversing the charter's
+§2.5 proposal — with a **PLUGGABLE oracle**: simulator as a harness parameter,
+**per-test oracle attribution recorded as provenance** exactly as the C tier
+names its interpreter, Icarus the default, Xcelium where Icarus falls short.
+(4) **FULL clause-4 scheduler**, sequenced as rungs, with the emphasis that
+*"modelling the scheduler is very important to have full SV support."* (5)
+**BOTH editions, -2023 priority**, adopting the family's sibling-editions
+layout — and **census which files are edition-sensitive before moving any**
+(the C tier's `Value.lean` lesson). (6) **ENDGAME = FULL SPEC SUPPORT**; the
+FP divider is a **milestone**, not the endgame.
+
+**THE SEQUENCING NUMBER, measured.** Ruling 4's "early" is priced against the
+estate a trace-type change re-opens: **50 of 98 proof-carrying declarations
+(51%) reference `run`/`Runs`/`cycleStep`/`SvState`**. Half the estate is
+trace-shaped and it is the half that grows with every construct rung, so the
+scheduler goes **immediately after consolidation** — the cheapest moment for a
+semantics change is before the estate grows. Under the doctrine it IS the
+tier's definition: the `∀ stim σ tr` quantifier every SV theorem is stated
+under **ranges over clause 4**. The divider's ordering is priced both ways and
+**Order B chosen** (scheduler first): ∀-over-σ is already free — every theorem
+is `∀ stim σ tr` today — so what costs is *trace-type stability*, one
+abstraction `cycleOf : Trace → CycleTrace` plus an adequacy lemma; that lemma
+must be written either way, and writing it against 50 declarations beats
+writing it against 50-plus-N. Exception: the integer divider `alu_div` (already
+ingested, already in-tier) may be stated earlier **provided it is stated
+through `cycleOf` from the first line**. R1 is census-first per the ruling: the
+nine regions plus PLI, the determinism boundary (what within a region is
+∀-quantified vs ordered), and the cycle model mapped on as an **extension**
+where faithful and a **supersession-with-adequacy** where not — never a silent
+replacement, because the definition-change discipline applies to our own tiers.
+
+**THE 18TH ENVELOPE WAS NEVER BROKEN — §L60 was wrong on both count and
+cause.** It published *"17 of 18, 1 absent input"* and blamed a missing
+`cv32e40p_pkg.sv`. In fact `cv32e40p_register_file_ff.sv` declares module
+`cv32e40p_register_file` — filename and module differ across all three OpenHW
+register-file variants — so a `--top` derived from the FILENAME could not
+resolve it. Read from the envelope's own `top`, it regenerates
+byte-identically **and needs no external checkout at all: 18 of 18.** A
+plausible, unverified diagnosis survived a full publication. The new gate
+`harness/sv_round_trip.py` (**MATCH 18, DIFFER 0, ERROR 0, SKIP 3 of 21**) now
+runs the check, never writes into the repo, and encodes the rule with all
+**three** of its edges — schema, top module, **and source-path spelling**,
+because the recorded path is part of the envelope: regenerating with absolute
+paths where the envelope recorded repo-relative ones made all 18 differ by
+exactly the string-length delta. The 3 SKIPs are the phase-1 envelopes whose
+`source_files` are absolute paths into **another machine's scratch
+directory** — unreproducible anywhere, now reported with the missing path
+instead of passing silently.
+
+**THE CENSUS HANG WAS A FRONTEND CRASH, and the instrument made it worse.**
+pyslang 11.0.0 aborts with **SIGTRAP** on
+`chapter-22/22.9--unconnected_drive-invalid-2.sv` (whole body: ``
+`unconnected_drive pull2 ``), and `multiprocessing.Pool` waits forever for a
+worker that cannot answer — no exit code, no message, no file name. Replaced
+with `ProcessPoolExecutor` + per-file isolation: the crash is now one `error`
+row **naming the file**, and the full **717-file public corpus completes in
+1.0 s where it previously never completed at any job count**. The 90 s
+per-file `SIGALRM` could never have helped — the process carrying the alarm is
+the one that dies.
+
+**THREE MORE INSTRUMENT DEFECTS CLOSED.** `DEFAULT_CORPUS` was an absolute
+path on another host used whenever `--corpus` was omitted; it is now a
+**registry** resolved by `--corpus-name` that tries candidates in order and
+**REFUSES with every path it tried** (exit 2), with the public suite wired
+beside `sv-tests-2` so ruling 1's anchor is a flag (`--all-dirs` reaches the
+311 tests outside `chapter-*`). The cited-but-absent `census.json` turns out to
+be **in `.gitignore:5`** — excluded *by rule*, not forgotten, which is worse
+because it looks deliberate; the committable half now lands as
+`docs/sv-construct-census.json` (provenance + summary, 20 KB, sorted) since the
+per-file records are **11.9 MB** against this repo's 6 KB-773 KB census range.
+And **provenance is now stamped** — corpus name/path/file-count/walk, frontend
+**FAMILY** (`pyslang-11`, never a point release), platform, python — with
+`--compare` reporting every drifting key. All verified: perturbed artefact
+caught (exit 1), unperturbed reports `IDENTICAL (21186 files)`, **double run
+byte-identical** once `elapsed_seconds` was removed for being a fact about the
+afternoon rather than the corpus.
+
+**A DELTA RECORDED RATHER THAN HIDDEN.** `unlockable.txt` goes **11 entries to
+0**. Two of the 11 files no longer exist in the corpus; the other 9 do and are
+no longer classified unlockable. `classify()` is **byte-identical to HEAD**
+(verified function by function), so this is corpus-or-host, not regression —
+the landed set was measured on Linux, this on `darwin-arm64`. **With no
+provenance stamp there was no way to tell those three causes apart**, which is
+the whole argument for the stamp.
+
+**THE COUNTING RULE, fixed so the number stops drifting.** Two lanes reported
+86 and 93. The owning charter now states the rule — *`theorem`/`lemma`/
+`example` at line start in `LeanModels/Sv/*.lean`, allowing `@[...]`
+attributes and `protected`/`private`/`nonrec`/`scoped` modifiers* — under
+which the tier has **98** (93 `theorem` + 5 `example` + 0 `lemma`).
+Reconciliation: the sibling lane's **93** is this count restricted to
+`theorem`; §L60's **86** was a regex requiring the keyword at line start,
+silently dropping 12 attribute- and modifier-prefixed declarations. **98 is the
+number.**
+
+**THE DORMANCY RECORD (charter §7).** 322 commits, 22 days, and the tier
+predates most of the repository's general law. The useful half is what it
+satisfies **by its own independent route**: schedule-as-parameter with the
+executable counterexample as kernel-checked `#sv_check` pairs (the family
+document's illustrative example, in the tree a month early), the
+four-constructor outcome covenant via `Sv.Res`, ∃-fuel + monotonicity in
+`Obs.lean`, `--recheck` as half of `--compare`, `PDesign.crossCheck` as a
+refusing provenance check, and `maybe`-gated CI a month before it was law. Nine
+retrofits are ranked; #2 and #4 landed here. **One correction owed outward:**
+the family document records `Run σ α` as used by SystemVerilog in 3 files —
+the true count is **zero** (`grep -rn ': Run\b\|Run\.' LeanModels/Sv/*.lean`),
+the "3" being a bare-word match on doc comments. `Run σ α` has exactly one
+consumer, Python, and the move-to-`Core` trigger rests on the contrary premise.
+
+### Triad
+
+`lake build` **NOT RUN this pass** — no Lean changed (the landing is one new
+harness script, one instrument, two docs), and per build-lock amendment 2 a
+speculative build is exactly what the lock exists to prevent. `docs_check`
+**74/74 marked blocks ok**, 20 illustrative-exempt. `sv_round_trip` **18 MATCH
+/ 0 DIFFER / 0 ERROR / 3 SKIP**. `census --compare` **IDENTICAL, 21 186 files,
+corpus sv-tests-2**; double run byte-identical; refusal paths run (bad corpus →
+exit 2, drift → exit 1, SIGTRAP → one named `error` row). `diff_test.py --sim
+iverilog` **10/10 PASS**. No axioms moved; no `sorry`, no `native_decide`.
+Corpora and surveyed repos untouched — verified read-only.

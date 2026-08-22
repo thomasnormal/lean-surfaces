@@ -368,6 +368,76 @@ and switch at the inch boundary — switching mid-inch pays the re-statement cos
 
 ---
 
+## §4.5 THE SPIKE TICKET — four measurements, and what is already known
+
+Upgraded from `docs/proof-framework-research.md` §9. Three are cheap; all four
+share one ticket and run as dependency-free scratch files.
+
+### Already established by READING (no ticket needed)
+
+**`Std/Internal/Do/` is real and it is 17 files** at the pin —
+`WP/Frame.lean`, `WP/Conjunctive.lean`, `Order/PreservesSup.lean`,
+`Triple/{Basic,Gadget,SpecLemmas}.lean` and the rest. `WPMonad.of_frameClosure`
+and `WP.Frames.of_wp_conjunctive` exist as documented. **`Std.Internal` is
+explicitly internal and will move — that is a first-class supply-chain finding,
+not a footnote**, and it must be priced exactly as the pilot priced `mvcgen`'s
+experimental warning.
+
+**A `vcgen` tactic is declared** (`Std/Tactic/Do/Syntax.lean:464`) and its
+grammar carries every clause §9 names: `until <term>`, `frames <alt>+`,
+`invariantAlts`, `simplifying_assumptions`, and `with <grind-step>` — the last
+documented as *"a single `grind`-mode tactic … so it can share `vcgen`'s
+internalised E-graph"*. That is the grind seam **built into the tactic** rather
+than wired by a `macro_rules` line.
+
+**`jp` defaults to `false`** (`Syntax.lean:43`), so **no measurement this lane
+has ever recorded used the linear encoding.** Core's docstring, verbatim:
+
+> *"If `false` (the default), then we aggressively split `if` and `match`
+> statements and inline join points unconditionally. For some programs this
+> causes exponential blowup of VCs. Set this flag to choose a more conservative
+> (but slightly lossy) encoding that traverses every join point only once and
+> yields a formula the size of which is linear in the number of control flow
+> splits."*
+
+**That is this gate's failure mode named exactly.** It died with `timeout at
+whnf` *inside mvcgen's splitting*, and `evalOpen`'s `.name` arm is a nine-way
+`match` nested four deep — the precise shape "aggressively split `match`
+statements" blows up on. The prior that `+jp` helps should be high.
+
+**Provenance rule adopted: every VC number from now on records its `jp`
+setting.** §5.4a says a number carries the state it was measured in, and a
+tactic option is part of that state. Both of this lane's recorded ceilings —
+the four-deep timeout and the `⊢ False` unstateable lemma — are hereby marked
+*measured at `jp := false`* and are not evidence about the linear encoding.
+
+### §4.5.1 A CORRECTION TO THE PROBE SUBJECT
+
+§9 proposes `star_lab/spec.lean` for the Leroy–Grall probe. Measured, the
+fuel-family plumbing is far thinner than "13 files" suggests — **~68 sites in
+total**, distributed:
+
+| file | lines | plumbing sites |
+|---|---:|---:|
+| `sunfish/genmoves_ray.lean` | 3740 | **20** |
+| `gen_lab/proof.lean` | 1220 | 9 |
+| `sunfish/genmoves_theorem.lean` | 563 | **8** |
+| `sunfish/value_bound.lean` | 1765 | 7 |
+| `sunfish/move_gate.lean` | 2090 | 6 |
+| `bench_bisect/proof.lean` | 944 | 5 |
+| … | | 3, 3, 2, 2, 2 |
+| `star_lab/spec.lean` | 102 | **1** |
+
+**`star_lab` is the worst available probe: it has ONE site.** A probe there
+answers "did the single site go away" — 0 % or 100 %, with n = 1 — which cannot
+measure *the fraction of plumbing a collapse deletes*, the number the probe
+exists to produce.
+
+**Probe `genmoves_theorem.lean` instead**: 8 sites in 563 lines is enough signal
+to give a fraction, and still small enough to redo if the collapse needs a
+different shape. `genmoves_ray` (20 sites) is the eventual payoff and the right
+*second* subject, not the first.
+
 ## §5 TOP-3 RECOMMENDATION
 
 1. **Switch F3c to the monadic interpreter now.** Smallest in-flight surface (8

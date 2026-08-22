@@ -36,13 +36,17 @@ other than the rebuild not having been written that far.
 | `mvcgen` on the REBUILT interpreter | **two gates close** (~11 s, ~10 s); the second closes the pilot's own fidelity gap. The full four-deep gate does **not** close at 8M heartbeats — §3.1 prices that |
 | the trunk's baseline (re-measured, not quoted) | diff_test **1394 / 0 failed / 118 whitelisted / 1276 matched**; script_corpus **65 / 0 failed / 50 matched / 15 loud** |
 | run 1 — the first parity run | 846 / 1394 (60.7 %), 548 frontier in 19 arms, zero divergences |
-| **run 2 — after eleven buckets** | **1374 / 1394 (98.6 %)**, 10 frontier in 4 arms, 10 divergences — all ONE missing arm (§5.3.1) |
+| run 2 — after eleven buckets | 1374 / 1394 (98.6 %), 10 frontier in 4 arms, 10 divergences — all ONE missing arm (§5.3.1) |
+| **run 3 — closed-function surface** | **1394 / 1394 (100.0 %), zero frontier, zero divergences** |
+| the SCRIPT surface | found three arms the closed-function corpus cannot reach (§5.3.3); frontier now empty on both |
+| memory at fuel 10⁶ | **flat and equal to the trunk** after the lazy-knot fix (§5.3.2) |
 
-**This is not the gate PASSING.** Acceptance is 1394/1394 with the trunk's own
-match/whitelist split, and the script half cannot be scored at all until
-`runScript` is rebuilt. It is the gate *existing*, with an honest first reading,
-zero divergences on everything the slice reaches, and a burn-down list — measured,
-not guessed — that ranks exactly what closes the rest.
+**The frontier is now EMPTY on both surfaces**: all 22 names in
+`isBuiltinName`'s implemented set are handled, and `CallPlan.notYetArm` is
+declared but never constructed — the remaining `notYet` sites are unreachable
+defensive arms. **Acceptance is still not claimed here**: it requires both
+corpora green in the SAME run, and §5.3.3 is the reason that phrasing is not
+pedantry.
 
 The three things a later session inherits and does not have to invent: the fuel
 architecture, the gate command, and a frontier that is **bucketed by arm** rather
@@ -519,6 +523,71 @@ Fixed in the same session, along with the four remaining frontier arms —
 `max`/`min` over a heap referent (with the `moduleGenFree` guard that keeps them
 inside the heap-free fragment), `sorted` over a generator, and statically-poisoned
 module bindings consulting the live view.
+
+### 5.3.2 THE LAZY-KNOT DEFECT — correct answers, catastrophic constant
+
+Found by the gate STALLING, not by reading, and it is the sharpest cost lesson
+this rebuild produced.
+
+The obvious spelling of a defunctionalized knot binds the successor level once:
+
+```lean
+-- (illustrative — the WRONG spelling)
+| fuel + 1 => let K := kont m fuel
+              { call := fun … => … K …, … }
+```
+
+`let` is **strict**. So constructing `kont m F` forces the entire chain down to
+`0` **before a single statement runs** — O(F) work and O(F) stack *per entry*.
+
+**It survived three green gate runs**, because the closed-function surface runs
+at fuel 10 000, where the cost is merely wasteful. Script mode runs at
+**1 000 000**, and there it stalls outright: a runner pinned at ~0 % CPU having
+executed nothing, and (on the machine's shared load) growing to gigabytes.
+
+The fix is one property — every field takes its successor level *inside* its own
+lambda, so construction is O(1) and the chain is forced exactly as deep as the
+run goes.
+
+**The generalisable warning, for any tier adopting this shape.** The trunk gets
+this laziness FOR FREE by matching `fuel` inside each function; only the levels
+actually reached are ever built. **A defunctionalized knot has to ask for it, and
+asking is invisible**: the strict version compiles, type-checks, passes every
+`#guard` (they all run at low fuel), and is wrong *only in cost*. Correct
+answers, catastrophic constant — a failure mode no correctness gate detects.
+`Kont`'s three earlier jobs all worked at low fuel and hid it.
+
+**Measured after the fix**, same script, both interpreters:
+
+| fuel | trunk | monadic |
+|---|---|---|
+| 1 000 | 37 MB | 37 MB |
+| 10 000 | 37 MB | 36 MB |
+| 1 000 000 | 36 MB | 36 MB |
+
+Flat across three orders of magnitude and identical to the trunk. **A predicted
+second defect — that the run itself retained the world/trace unboundedly — DOES
+NOT EXIST**; the O(fuel) construction cost was the whole story. Recorded because
+the prediction was made in writing first and the measurement refuted it.
+
+### 5.3.3 WHY ACCEPTANCE IS BOTH CORPORA, demonstrated rather than argued
+
+The closed-function gate read **1394/1394, 100.0 %, zero frontier, zero
+divergences** — while **three arms were still `notYet`**.
+
+They were invisible there because `harness/cases.json` cannot contain them: a
+from-import and a positional `dict()` are script-shaped constructs, and a live
+module binding only exists once a top level has run. Six script rows found them
+immediately.
+
+> **A gate is blind to whatever its corpus does not contain, and "zero frontier"
+> means zero frontier ON THIS CORPUS.**
+
+This is the same class of error as §5.5's instrument findings, one level up: there
+the *comparison* was too weak, here the *corpus* was. Both were caught by adding
+an independent instrument rather than by inspecting the first one harder — which
+is the argument for keeping the acceptance gate at both corpora permanently, even
+once both are green.
 
 ### 5.4 THE PRE-REGISTRATION SCORECARD — one of three
 

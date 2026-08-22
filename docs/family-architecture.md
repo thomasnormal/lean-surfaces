@@ -81,6 +81,13 @@ reasoning — are a LIBRARY section and not part of the semantics.** They are
 three ways to find a proof of a statement whose meaning was already fixed
 without reference to them.
 
+**And the same boundary, drawn through THEOREM STATEMENTS, has a measured
+price** — §8 step 9: of 949 theorems in the flagship estate, the **65%**
+whose statements do not mention the interpreter recompile unchanged under a
+definition swap. A lane that separates its spec half from its interpreter
+half is drawing this principle's line one level down, and it is worth two
+thirds of a re-founding.
+
 The library grows **by demand**, and §5.6 gives that clause its selection
 rule: the demand comes from **one theorem-worthy exemplar per tier**,
 because a library gap is invisible to anything that never asks the library
@@ -2889,6 +2896,32 @@ real until an instrument re-derives it.**
    (`#guard` at a fixed fuel) has already chosen fuel.
 8. **`LeanModels/<Lang>/<Ver>/`** — the semantics, and the manifest
    (§5.5) starting the same day.
+9. **SEPARATE THE SPEC HALF FROM THE INTERPRETER HALF — from theorem one.**
+
+   > **An estate that separates them is cheap to re-found; one that
+   > interleaves them is not.**
+
+   Classify every theorem by whether its **STATEMENT mentions the
+   interpreter**. Measured across the whole sunfish estate: **949 theorems
+   = 615 mathematics (65%) + 334 interpreter-facing (35%)**. Under a
+   definition swap the mathematics **recompiles unchanged** — the 35% is
+   the entire re-founding scope, and **four files re-found to nothing at
+   all**.
+
+   **The decisive part is that the split was not made for this.** The
+   calmness lane separated its spec half from its interpreter half **for
+   proof-engineering reasons, long before any rebuild existed** — and that
+   choice is now worth **two thirds of the migration cost**. This is the
+   family's own doctrine arriving from the other direction: §0.1
+   principle II draws the trust boundary between definition and library,
+   and this is the same boundary drawn through **theorem statements**, with
+   a price tag attached.
+
+   Concretely: a theorem that can be stated about the mathematics should
+   be, and the interpreter-facing statement should be the thin layer that
+   connects it. A tier writes this discipline in on day one because it
+   costs nothing then and cannot be retrofitted cheaply — the 35% is not
+   work you can decide to have done differently after the fact.
 
 ---
 
@@ -2921,6 +2954,27 @@ Named here so it is a scheduled artifact rather than a standing caveat.
   becomes collectable, and §3.4 clause (c)'s erosion begins: new work
   monadic, old theorems transported on demand, the deep interpreter
   retiring gradually or never.
+* **RE-SCOPED — on corrected counts, adequacy is LIKELY NEVER NEEDED for
+  this migration.** Transporting a file's theorems across the bridge beats
+  proving adequacy for that file above a crossover of roughly **100
+  theorems**, and on the corrected classification (step 9 above) **no file
+  clears it.** So the expected path is theorem-by-theorem transport, and
+  `twinAgrees` is a **contingency** rather than a gate on the critical
+  path.
+
+  **The general law is untouched, and the distinction matters.** *Any route
+  that introduces a second semantics owes an adequacy theorem* — §3.4
+  clause (b) — remains family law. What the counts changed is the
+  probability that **this particular migration takes that route at all**:
+  transport is cheaper per file than adequacy, so the second semantics
+  never has to become the definition. A future migration that *does* swap
+  a definition wholesale owes `twinAgrees` exactly as before.
+
+  **What still decides it**: the spike, which fixes the **deep-statement
+  ceiling** — the point past which a single statement is too entangled with
+  the interpreter to transport. Until that number exists, "likely never"
+  is a measured expectation and not a closure, and this item stays
+  registered rather than retired.
 
 ---
 

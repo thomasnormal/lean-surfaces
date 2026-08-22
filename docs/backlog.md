@@ -21612,3 +21612,45 @@ answered a question narrower than the one being asked; and in both cases
 That asymmetry is the provenance law pointed at retrieval rather than at
 measurement, and it is now the fourth instance — with two of the four
 contributed by the document that states the law.
+
+### THE SPEC/INTERPRETER SPLIT HAS A PRICE TAG — 65% of the estate survives a definition swap
+
+Measured by the rebuild lane across the whole sunfish estate, classifying every
+theorem by whether its **STATEMENT mentions the interpreter**:
+
+> **949 theorems = 615 mathematics (65%) + 334 interpreter-facing (35%).**
+
+The mathematics **recompiles unchanged** under a definition swap; the 35% is the
+entire re-founding scope; **four files re-found to nothing at all.**
+
+**The decisive part is that the split was not made for this.** The calmness lane
+separated its spec half from its interpreter half **for proof-engineering
+reasons, long before any rebuild existed** — and that choice is now worth **two
+thirds of the migration cost**. This is the family's own doctrine arriving from
+the other direction: §0.1 principle II draws the trust boundary between
+definition and library, and this is the **same boundary drawn through theorem
+statements**, with a number on it.
+
+Landed as **§8 step 9** — where founding lanes read their checklist, because it
+costs nothing on day one and cannot be retrofitted cheaply; the 35% is not work
+you can decide to have done differently after the fact. Cross-referenced from
+§0.1 principle II as the doctrine's third dimension.
+
+### §8.5 RE-SCOPED — adequacy is LIKELY NEVER NEEDED for this migration
+
+On the corrected counts, transporting a file's theorems across the bridge beats
+proving adequacy for that file above a crossover of roughly **100 theorems**, and
+**no file clears it**. So the expected path is theorem-by-theorem transport and
+`twinAgrees` becomes a **contingency rather than a gate on the critical path**.
+
+**The general law is untouched, and the distinction is the point.** *Any route
+that introduces a second semantics owes an adequacy theorem* remains family law.
+What the counts changed is the **probability that this particular migration takes
+that route at all** — transport is cheaper per file than adequacy, so the second
+semantics never has to become the definition. A future migration that *does* swap
+a definition wholesale owes `twinAgrees` exactly as before.
+
+**What still decides it**: the spike, which fixes the **deep-statement ceiling**
+— the point past which a single statement is too entangled with the interpreter
+to transport. Until that number exists, "likely never" is a measured expectation
+and not a closure, so the item stays **registered rather than retired**.

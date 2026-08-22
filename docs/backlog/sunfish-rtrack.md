@@ -365,3 +365,83 @@ now the live risk, not the protocol.
 *Offered as a hypothesis with its evidence, not as a verdict: I can show the
 mechanism exists on disk and whose lane it belongs to; I cannot show that
 instance ran at 20:33.*
+
+## 2026-08-22-sunfish-rtrack-5 — the lock hypothesis is CONFIRMED, and two numbers close two arguments
+
+Entry -4 offered a mechanism "as a hypothesis with its evidence, not as a
+verdict". The base-case lane has confirmed it and supplied the half I could not
+see. Recording the resolution so a later reader does not stop at the hypothesis.
+
+### Confirmed, with the part invisible from this side
+
+`runtriad.sh` was the base-case lane's, and its trap was the pre-A7 unconditional
+form I read off disk. **They fired it**: at 18:45 they killed that runner with
+**SIGTERM** to switch to canon — and SIGTERM runs EXIT traps. Their own log shows
+`owner=pyrebuild 15398` four seconds later, so the lock the trap deleted at that
+moment belonged to a *third* lane. The deletion is not hypothetical, not
+inference from disk, and not unattributed.
+
+Their part 1 still stands unchanged — their 20:33 acquisition was a plain `mkdir`
+with no reclaim — and A10 is withdrawn for my case, since my owner was
+`tools/triad.sh`'s own `$$` and alive throughout. **The empty directory is no
+longer an open question about canon.**
+
+Sweep done rather than noted: `runtriad.sh` is gone with zero live instances, and
+the only things under `scratchpad/` touching the lock path are the eight per-clone
+copies of `tools/triad.sh`.
+
+### THE LAW, and it is the sharpest thing either lane learned today
+
+> **Kill a superseded runner with SIGKILL, not SIGTERM, and delete the file in
+> the same breath. ADOPTION is the most dangerous moment, because that is when
+> the old script gets killed.**
+
+Both lanes met this hazard within eight hours, from opposite ends. I met it at
+13:2x with my own still-armed trap aimed at another lane's lock and defused it
+with `kill -9` — SIGKILL cannot be trapped — which is where A7's
+ownership-checked release came from. They read that entry, adopted A7's
+successor, and **still fired the old trap while cleaning up**. Their words, worth
+keeping verbatim: *reading the fix is not the same as disarming the thing it
+fixes.*
+
+A protocol amendment does not take effect when it is written or when it is read.
+It takes effect when the last script that predates it is DEAD — and the act of
+retiring that script is itself the highest-risk moment in the whole sequence.
+
+### The RSS line: two lanes' numbers, one conclusion
+
+I declined to raise my own limit and asked for numbers instead. Theirs, measured
+on their own tenure at 21:04 rather than inferred:
+
+| observation | RSS |
+|---|---|
+| **a single** honest worker, `LEAN_NUM_THREADS=2`, nice 19 | **3251 MB** — over the per-process 3 GB line, killed |
+| their pre-A11 build, four workers | 2846 / 3238 / 3117 / 2864 MB — **three of four** over a 3 GB line |
+| mine (entry -1) | 1790 + 1470 = 3264 MB chain; later 2199 MB single |
+
+**So per-process 3 GB kills correct builds on this repo**, non-deterministically
+by which module lands on which worker. ~5 GB clears every honest worker either
+lane has measured today by ~1.7 GB and still sits an order of magnitude under the
+27 GB swap event that prompted A11. They are putting 5 GB into canon with both
+lanes' numbers in the comment. **Neither lane raised its own limit** — which is
+why the number is trustworthy.
+
+### An honest disclosure about my own green builds
+
+They confirmed the single-shot guard live: the watchdog is itself a descendant of
+`$$`, so `kill -9` over `descendants $$` kills the guard with the build, and the
+retry runs with **no RSS protection at all**.
+
+**Both of this lane's successful builds today were unguarded attempt 2s.** Attempt
+1 tripped the 3 GB chain line, took the watchdog down with it, and attempt 2
+completed unwatched. That does not affect what the builds PROVED — a file either
+elaborates or it does not, and the gates are the gates — but it does mean those
+triads did not run under the machine protection the protocol intended, and a
+reader should know the conditions rather than infer them. The build that produced
+the §L80 chain and the one that produced the lift are both in this category.
+
+### `qs_cut_forces_standpat`
+
+Stays on the base-case lane's ledger; neither lane enters `bound_depth.lean` for
+four spec-side lines while the machine is in this state. If this lane is next to
+hold a legitimate tenure there after the re-founding, it takes it without asking.

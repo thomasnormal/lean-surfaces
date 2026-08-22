@@ -19,7 +19,7 @@
     "tool": "alr (Alire)",
     "toolchain_command": "alr -n toolchain --select gnat_native gprbuild"
   },
-  "all_needs_met": false,
+  "all_needs_met": true,
   "extra_path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin",
   "impostors_on_path": {
     "adaparse": {
@@ -30,12 +30,12 @@
   "instrument": "harness/ada_toolchain_census.py",
   "language": "Ada",
   "libadalang": {
-    "error": "ModuleNotFoundError: No module named 'libadalang'",
-    "importable": false
+    "importable": true,
+    "version": "undefined"
   },
   "needs": {
     "frontend": {
-      "met": false,
+      "met": true,
       "needs": "libadalang \u2014 emits the envelope",
       "ruled_in": "docs/ada-charter.md \u00a74.2"
     },
@@ -100,7 +100,7 @@
       {
         "check": "C-test reports PASSED",
         "expected": "PASSED",
-        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:13:18\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
+        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:39:33\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
         "passed": true
       },
       {

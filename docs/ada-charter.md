@@ -763,9 +763,13 @@ objects, aspects, representation clauses and Annex J obsolescent forms
 actually has. A tier that scoped itself to "the whole language" would be
 pricing seven C tiers.
 
-The count is derived from the grammar file's own declarations under a stated
-rule; the authoritative count is whatever the built frontend reports, and
-that is milestone-1 work, not charter work.
+**MEASURED SINCE, on the corpus rather than the grammar (§5.2.2): the ACATS
+reaches 280 of those 316 kinds — 89% — over 2,976,861 nodes in 4,821 parsed
+sources.** So the 316 was not a grammar's theoretical ceiling that a real
+corpus barely touches; the official suite is a near-exhaustive exercise of
+Ada's syntax, which is what a conformance suite is *for* and is a much
+harder starting point than C's 45. The median source uses 58 distinct kinds
+and the largest uses 169.
 
 ### 3.2 The feature census, and the ladder
 
@@ -1200,28 +1204,53 @@ cannot silently stop being needed. (The ACAA also ships a `.tar.Z` delivery,
 which is the likely LF-clean route; the census records the workaround because
 it works on either.)
 
-**What is NOT done: the frontend — in flight, and priced.** `libadalang` **26.0.0** deploys through
-Alire with its whole dependency closure (`gnatcoll`, `libgpr2`,
-`langkit_support`, `adasat`, `vss`, `xmlada`, `prettier_ada`) and **ships its
-Python bindings in-tree** (`python/libadalang/__init__.py`), so the API §4.2
-verified from the repository is present. What is not yet built is the
-**shared** library the ctypes bindings load. Diagnosed precisely rather than
-left as "it didn't work": a relocatable `libadalang` cannot import a static
-dependency, so the whole closure has to be built relocatable together, and
-the census records the exact `-X` externals, and one that is NOT among them:
-`-XGNATCOLL_BUILD_MODE=prod` is rejected by `gnatcoll_iconv.gpr` as an
-illegal value for its `build` typed string. The long pole is the generated
-`libadalang-implementation.adb`, a single very large unit, and the build is
-in flight under `nice -n 19` — it is `gprbuild`, not `lake`, so the
-machine-wide lock does not cover it and the courtesy is this lane's own job,
-declared in `scratchpad/build-lock-log.md` with the rule that kills go by
-ppid chain and never by path.
+#### 5.2.2 THE FRONTEND HALF IS DONE TOO — and the corpus reaches 280 of 316 kinds
 
-**`needs.frontend` is therefore still `met: false`, and the instrument says
-so** — which is the point of having it. The oracle and the grader are met;
-the frontend is inch 2's remaining half, and inches 5 and 7 are blocked
-behind it by construction. Inch 4 was not (§5.3), which is why the order run
-is 2 → 4 → 5 → 3.
+**`harness/ada_construct_census.py` + `docs/ada-construct-census.json`,
+landed.** `libadalang` 26.0.0 builds, imports, and parses. The build took
+814 s of `gprbuild` under `nice -n 19`; the shared-library recipe is in the
+toolchain census's `acquisition` block, including the external that looks
+right and is not (`-XGNATCOLL_BUILD_MODE=prod`, which `gnatcoll_iconv.gpr`
+rejects as an illegal value for its `build` typed string).
+
+**All three of the tier's toolchain needs are now met**: frontend, oracle,
+grader.
+
+The census, over the whole ACATS delivery:
+
+| dimension | measured |
+| --- | ---: |
+| Ada sources censused | **4,973** (63 `.tst` macro files excluded — not Ada until expanded) |
+| parsed clean | **4,821** |
+| **distinct node kinds** | **280** of the grammar's 316 |
+| total nodes | **2,976,861** |
+| distinct kinds in the median source / the largest | 58 / 169 |
+
+**AND THE 152 SOURCES WITH PARSE DIAGNOSTICS ARE ALL CLASS B. Every single
+one.** Zero class A, C, D, E or L. So on this corpus **libadalang rejects
+only what the suite says is illegal**, which is the strongest statement
+available about a frontend before any semantics exist.
+
+Two honest readings of that, and the second is the interesting one. It does
+**not** mean libadalang caught all the B tests' illegalities — 1,484 B tests
+exist and only 152 produce a PARSE diagnostic, because most B-test
+illegalities are **Legality Rule** violations rather than syntax errors, and
+a parser does not check legality. That is §1.4's own table showing up in the
+data: **572 Syntax paragraphs against 953 Legality Rules paragraphs**, and
+the ~1,332 B tests a parser cannot decide are exactly the ones a semantic
+tier has to earn.
+
+**The rarest kinds are the tier's map of Ada's corners**, and they price the
+ladder better than the ladder did: `ProtectedBodyStub` 1, `SimpleDeclStmt`
+8, `DiscreteSubtypeName` 9, `EntryIndexSpec` 11, `TaskBodyStub` 16,
+`GenericSubpRenamingDecl` 20, `DigitsConstraint` 21.
+
+**A HOST TRAP, recorded because it cost a run.** `nice` is a
+SIP-protected system binary on macOS, so macOS **strips `DYLD_*` from the
+environment it passes on** — `nice -n 19 python3 …` loses the library path
+and the import fails with a `dlopen` error that looks like a broken build.
+`nice -n 19 env DYLD_LIBRARY_PATH=… python3 …` re-establishes it after
+`nice` has run, and that is the incantation the census's docstring carries.
 
 ### 5.3 Inch 3 — the profile. **DEFERRED behind inch 4, deliberately.**
 

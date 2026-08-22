@@ -18160,3 +18160,101 @@ reader can declare a live lock stale. Writing it once under `set -C` (noclobber)
 at acquisition would make a second writer fail loudly instead of silently taking
 over the identity.
 
+## L74 — ADA M1 INCH 2 CLOSES: libadalang builds and parses, the corpus reaches 280 of 316 node kinds, and every parse diagnostic is a class-B test (2026-08-22)
+
+The frontend half. `harness/ada_construct_census.py` +
+`docs/ada-construct-census.json` land, and
+`harness/ada_toolchain_census.py` now reports **unmet needs: none** — all
+three of the tier's toolchain needs (frontend, oracle, grader) are met on
+this host. **No Lean.**
+
+**libadalang 26.0.0 builds, imports and parses**, after 814 s of `gprbuild`
+under `nice -n 19`. The recipe is in the toolchain census's `acquisition`
+block rather than in a transcript, including the external that looks right
+and is not: `-XGNATCOLL_BUILD_MODE=prod` is rejected by `gnatcoll_iconv.gpr`
+as an illegal value for its `build` typed string.
+
+**THE CENSUS, over the whole delivery**: 4,973 Ada sources (63 `.tst` macro
+files EXCLUDED and counted — they are not Ada until expanded), **4,821 parsed
+clean**, **280 distinct node kinds** of the grammar's 316, over **2,976,861
+nodes**; median source 58 distinct kinds, largest 169. So §L63's 316 was not
+a grammar's theoretical ceiling a real corpus barely touches — **the official
+suite exercises 89% of Ada's syntax**, which is what a conformance suite is
+for and a far harder start than C's 45.
+
+**AND ALL 152 SOURCES WITH PARSE DIAGNOSTICS ARE CLASS B. Every single one** —
+zero A, C, D, E, L. On this corpus **libadalang rejects only what the suite
+says is illegal**, which is the strongest thing sayable about a frontend
+before any semantics exist. The census splits the count BY TEST CLASS for
+exactly this reason: a B test the frontend rejects is the corpus working as
+designed, a class C test that will not parse is a finding, and pooling them
+would make the number unreadable.
+
+**The second reading is the interesting one, and it is §L63's own table
+showing up in the data.** This does NOT mean libadalang caught all the B
+tests' illegalities: 1,484 B tests exist and only 152 produce a PARSE
+diagnostic, because most B-test illegalities are **Legality Rule** violations
+rather than syntax errors and a parser does not check legality. §L63 measured
+the ARM at **572 Syntax paragraphs against 953 Legality Rules paragraphs**;
+the ~1,332 B tests a parser cannot decide are precisely the ones a semantic
+tier has to earn. The suite's own split and the standard's own split agree.
+
+**THE TOP-UNIT HAZARD, now measured over the whole corpus and much worse than
+the sample said.** §L70 reported 4 of 140 from a sample. Full census with
+GNAT as oracle (`gnatchop -w` names outputs after their units): **680 of
+4,810 files — 14.1% — have a name that is not among their unit names**, 723
+declare more than one unit, and **383 contain CHILD units**. `AD7001C0.ADA`
+holds `ad7001c_package` and `ad7001c0m`; `AD7001D1.ADA` holds the child unit
+`ad7001d0m-ad7001d_package`. **One file in seven**, so §L67's path-derived-top
+mistake would not have been a corner case here — it would have been the
+common case.
+
+**AN INSTRUMENT BUG THE SELF-TEST CAUGHT, and it is the same species as
+§L67's.** **The parse tree's ROOT SHAPE DIFFERS BY FILE**: a source with ONE
+compilation unit parses to a root whose own kind is `CompilationUnit` (three
+children: prelude list, `LibraryItem`, pragma list), while a source with
+SEVERAL parses to a `CompilationUnitList`. Walking `root.children` yields
+three non-units and no name for the first shape — a silently wrong answer
+that looked like a working instrument on `report.a` (2 units) and failed on
+every single-unit file. And the fix has its own trap: **`finditer` does not
+yield the root itself**, so searching for `CompilationUnit` finds nothing in
+the single-unit shape unless the root is offered to the filter explicitly.
+Both halves are pinned by the self-test, which is why they are findings and
+not defects.
+
+**A HOST TRAP: `nice` STRIPS `DYLD_*`.** `nice` is a SIP-protected system
+binary on macOS, so the OS removes `DYLD_*` from the environment it passes
+on. `nice -n 19 python3 …` loses the library path and fails with a `dlopen`
+error that reads exactly like a broken build — it cost a run.
+`nice -n 19 env DYLD_LIBRARY_PATH=… python3 …` re-establishes it after `nice`
+has run, and that incantation is in the census's docstring.
+
+**THE M1 GUARDS ARE CONFIRMED AGAINST THE REAL PARSER.** §L63's charter
+predicted `Report`'s spec by reading the source: 15 subprogram declarations,
+6 procedures, 9 functions. libadalang, parsing the shipped file, reports
+**SubpDecl 15, procedures 6, functions 9**, 0 diagnostics, 111 distinct node
+kinds, 2,952 nodes, and **2 compilation units in one file** — §L70's
+one-envelope-is-one-COMPILATION point, met in the very first unit the tier
+will ingest. Two instruments, two paths, one answer, before a line of Lean.
+
+**THE SCHEMA'S NODE TABLE STAYS OUT OF THE SCHEMA, and now that a vocabulary
+exists that is a stronger statement.** A 280-row markdown table transcribed
+from a JSON file is a second source of truth that drifts the moment the
+corpus moves — §L59 §2.5 measured a hand-maintained citation wrong three
+times out of five. So `docs/ada-envelope-schema.md` §3 NAMES
+`docs/ada-construct-census.json`'s `node_kinds` as the vocabulary and the
+gate makes the naming binding: the ingester's accepted set is READ from that
+file, a check asserts the two are the same SET, and `--compare` reports an
+added or dropped kind by name. **Scoping note the census makes unavoidable**:
+280 is the whole corpus, tasking and generics included — the kinds §L63's
+81.7% viable core reaches is a different and unmeasured number, and the
+document says so rather than pretending.
+
+### Triad — PARTIAL, unchanged reason
+
+`docs_check` **75/75**, 20 illustrative-exempt. All four instruments pass
+`--self-test`; the construct census is byte-identical on a double run and
+`--compare` reports 0 differences; the toolchain census's nine `--verify`
+checks still pass. **No Lean, no Python any Lean or existing harness
+imports.** The Lean third's debt is unchanged and still owed at the first
+Ada-lane landing that touches Lean — which is inch 6, now unblocked.

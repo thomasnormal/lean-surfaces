@@ -57,11 +57,20 @@ different from the Ada unit."* Worse, the eighth character of a multi-file
 test's name is a **compilation-order digit**, so for every multi-file test
 the file name is systematically not a unit name.
 
-Measured with GNAT itself as the oracle (`gnatchop -w` names each output
-after the unit it contains, so the chopped names ARE the unit names):
-`B3710010.A` holds units `b371001_0`, `b371001_1` and the child unit
-`b371001_1-child_1`; `B3710013.A` holds `b371001_1`. **No `-top` derived
-from those file names resolves.**
+**Measured with GNAT itself as the oracle, over the whole delivery**
+(`gnatchop -w` names each output after the unit it contains, so the chopped
+names ARE the unit names):
+
+| dimension | measured, 4,810 files |
+| --- | ---: |
+| files whose NAME is not among their unit names | **680 — 14.1%** |
+| files declaring MORE THAN ONE unit | **723** |
+| files containing CHILD units (`parent-child`) | **383** |
+
+`AD7001C0.ADA` holds `ad7001c_package` and `ad7001c0m`; `AD7001D1.ADA` holds
+the child unit `ad7001d0m-ad7001d_package`; `B3710010.A` holds `b371001_0`,
+`b371001_1` and `b371001_1-child_1`. **No top derived from those file names
+resolves any of them, and it is one file in seven.**
 
 > **RULE: the compilation units are read from the ENVELOPE, never derived
 > from a path.** `compilation_units` is a first-class, ORDERED list (§1), and
@@ -201,30 +210,44 @@ envelope never describes an unexpanded `.TST`.
 
 ## 3 The node vocabulary — a CHECK, not a claim
 
-**This section deliberately contains no table.**
+**This section deliberately contains no table, and now that one exists that
+is a stronger statement rather than a weaker one.**
 
-`docs/ada-charter.md` §3.1 measured, from libadalang's grammar file, that Ada
-has **316 concrete node kinds against C's 45** — a 7× multiplier. Choosing a
-subset of 316 kinds here, before any parser has run on any Ada, would be
-exactly the kind of unverified claim the C lane's §1.1 built its instrument
-to prevent.
+`docs/ada-charter.md` §3.1 measured 316 concrete node kinds in libadalang's
+grammar against C's 45. Inch 2 has since measured what the CORPUS reaches:
+**280 of those 316, over 2,976,861 nodes in 4,821 parsed sources**
+(`docs/ada-construct-census.json`). So the vocabulary is no longer unknown.
 
-What is fixed now is the rule and the gate:
+**It still does not get copied into this document.** A 280-row markdown
+table transcribed from a JSON file is a second source of truth that begins
+drifting the moment the corpus moves, and the family's whole census
+discipline exists because a hand-maintained citation was measured wrong three
+times out of five (`docs/family-architecture.md` §2.5). So:
 
-1. Inch 2's `harness/ada_construct_census.py` emits
-   `docs/ada-construct-census.json`, whose `node_kinds` is the vocabulary the
-   BUILT frontend reports on the corpus.
-2. `docs/ada-envelope-schema.md` gains its table by GENERATION from that
-   file, never by hand.
-3. A check asserts the schema's table and the census's `node_kinds` are the
-   same set — **neither a subset nor a superset**. "What the ingester
-   accepts" and "what the corpus contains" cannot silently drift apart.
-4. Anything outside the table becomes an `Unsupported` leaf (§4) carrying the
+> **THE VOCABULARY IS `docs/ada-construct-census.json`'s `node_kinds`.**
+> This document names the file, and the gate below is what makes the naming
+> binding.
+
+The rule, unchanged and now satisfiable:
+
+1. `harness/ada_construct_census.py` emits `docs/ada-construct-census.json`,
+   whose `node_kinds` is the vocabulary the BUILT frontend reports on the
+   corpus. **LANDED — 280 kinds.**
+2. The ingester's accepted set is READ from that file, never restated here.
+3. A check asserts the ingester's accepted set and the census's `node_kinds`
+   are the same set — **neither a subset nor a superset**. "What the ingester
+   accepts" and "what the corpus contains" cannot silently drift apart, and
+   `--compare` reports an added or dropped kind by name.
+4. Anything outside it becomes an `Unsupported` leaf (§4) carrying the
    libadalang node class and ≤200 characters of source text, and increments
    `unsupported_count`.
 
-Until step 1 lands, the honest statement is: **the vocabulary is unknown and
-this document says so.**
+**A scoping note the census makes unavoidable.** 280 kinds is not a v0
+vocabulary — it is the whole corpus, tasking and generics and protected
+objects included. `docs/ada-charter.md` §3.3's viable core is a subset of
+tests, and the kinds THOSE tests reach is the number a v0 ingester should be
+scoped to. That subset has not been measured, and this document does not
+pretend it has.
 
 ## 4 `Unsupported`
 

@@ -83,10 +83,37 @@ and that structure genuinely differs: fuel is spent only at `Kont`'s boundary,
 so a claim that counted per-node decrements is not merely re-typed, it is
 re-derived. **These are the expensive ones and they cannot be transported.**
 
-**(c) DELETE** — walker internals with no theorem value: `VCTactic.lean` (3371),
-`LoopTactic.lean` (487), and the generation half of `VCGen.lean`. Under "no
-compat" these have no successor: the monadic route's vcgen is core's `mvcgen`.
-**~5 300 lines deleted outright**, which is the saving §3.4 priced.
+**(c) DELETE — AND THE FIRST DRAFT OF THIS SECTION WAS WRONG.** It said
+`VCTactic` (3371), `LoopTactic` (487) and `VCGen`'s generation half could be
+"deleted immediately, ~5 300 lines, no successor". **Measured, every one of them
+is CONSUMED right now:**
+
+| file | export | consumer files | of which `Examples/` |
+|---|---|---:|---:|
+| `VCTactic.lean` | `py_vcgen` | **17** | 10 |
+| `LoopTactic.lean` | `py_loop` | **14** | 13 |
+| `LoopTactic.lean` | `py_begin` | **11** | 11 |
+| `VCGen.lean` | 63 distinctive symbols | **40 used elsewhere**, 23 by nobody | — |
+
+`VCGen`'s live symbols are the worst case for the original claim, because they
+are **statement vocabulary**, not generation internals: `PyStmtTriple` (10
+files), `IterSteps` (10), `GenEmits` (10), `IterDrains` (8). Deleting that file
+would not remove machinery, it would remove the words 10 campaign files use to
+*say* what they prove.
+
+**The error, named so it is not repeated: "has no successor" is a claim about
+the FUTURE and says nothing about PRESENT consumers.** The monadic route's vcgen
+really is core's `mvcgen`, so nothing new will ever import the walker — and that
+is exactly the sentence that made a zero-consumer conclusion feel safe without
+counting. The master-never-red rule is what a deletion on that reasoning would
+have broken.
+
+**Revised: NOTHING in class (c) deletes now.** The ~5 300 lines are a real
+saving and remain collectable, but **per file, on re-founding, as each file's
+consumers move** — the deletion is the LAST step of a file's migration, never a
+precondition for it. The only genuinely zero-consumer surface measured is **23
+dead symbols inside `VCGen.lean`**, which is not worth editing a file that ten
+campaign files depend on.
 
 **SHARED — not retiring at all**: `Ast`, `Json`, `Runtime`, `Surface`,
 `Script`'s admissions, `DictCalc`. The rebuild already imports these; they were
@@ -152,10 +179,14 @@ and switch at the inch boundary — switching mid-inch pays the re-statement cos
    theorems), and it makes the next campaign inch the first one *founded* on the
    new interpreter rather than transported to it. This is the sequencing
    decision with the shortest half-life — it gets more expensive every day.
-2. **Delete class (c) immediately** — `VCTactic` + `LoopTactic` + `VCGen`'s
-   generation half, ~5 300 lines with no successor and no theorem value. It is
-   the largest, safest, most immediately-collectable win, it needs no proof
-   work, and leaving a dead walker in the tree invites a new consumer.
+2. ~~Delete class (c) immediately.~~ **WITHDRAWN ON MEASUREMENT.** All three
+   files are consumed today (`py_vcgen` 17 files, `py_loop` 14, `py_begin` 11,
+   `VCGen` 40 live symbols including the statement vocabulary of 10 campaign
+   files). The saving is real and stays on the books, collected **per file at
+   the end of that file's migration**. What replaces this slot is the cheap,
+   genuinely-zero-risk half: **mark the layer LEGACY and forbid new consumers**,
+   which captures the "a dead walker invites a new consumer" worry without
+   touching a line the campaign compiles against.
 3. **Spike ONE deep gate before committing to a plan for the big four.** The
    §2 ceiling is the plan's only real unknown: if `bound_depth`-scale statements
    re-prove under `mvcgen`+`grind`, the whole estate is class (a) and

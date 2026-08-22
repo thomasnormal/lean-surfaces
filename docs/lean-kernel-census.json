@@ -1,0 +1,556 @@
+{
+  "axioms": {
+    "rows": [
+      {
+        "class": "sound",
+        "file": "Init/Core.lean",
+        "line": 1591,
+        "local_name": "propext",
+        "name": "propext",
+        "namespace": "",
+        "signature": "axiom propext {a b : Prop} : (a \u2194 b) \u2192 a = b"
+      },
+      {
+        "class": "sound",
+        "file": "Init/Core.lean",
+        "line": 1787,
+        "local_name": "sound",
+        "name": "Quot.sound",
+        "namespace": "Quot",
+        "signature": "axiom sound : \u2200 {\u03b1 : Sort u} {r : \u03b1 \u2192 \u03b1 \u2192 Prop} {a b : \u03b1}, r a b \u2192 Quot.mk r a = Quot.mk r b"
+      },
+      {
+        "class": "trust-extension",
+        "file": "Init/Core.lean",
+        "line": 2378,
+        "local_name": "trustCompiler",
+        "name": "Lean.trustCompiler",
+        "namespace": "Lean",
+        "signature": "axiom trustCompiler : True"
+      },
+      {
+        "class": "trust-extension",
+        "file": "Init/Core.lean",
+        "line": 2436,
+        "local_name": "ofReduceBool",
+        "name": "Lean.ofReduceBool",
+        "namespace": "Lean",
+        "signature": "axiom ofReduceBool (a b : Bool) (h : reduceBool a = b) : a = b"
+      },
+      {
+        "class": "trust-extension",
+        "file": "Init/Core.lean",
+        "line": 2449,
+        "local_name": "ofReduceNat",
+        "name": "Lean.ofReduceNat",
+        "namespace": "Lean",
+        "signature": "axiom ofReduceNat (a b : Nat) (h : reduceNat a = b) : a = b"
+      },
+      {
+        "class": "unsoundness-marker",
+        "file": "Init/Prelude.lean",
+        "line": 747,
+        "local_name": "sorryAx",
+        "name": "sorryAx",
+        "namespace": "",
+        "signature": "axiom sorryAx (\u03b1 : Sort u) (synthetic : Bool) : \u03b1"
+      },
+      {
+        "class": "sound",
+        "file": "Init/Prelude.lean",
+        "line": 818,
+        "local_name": "Classical.choice",
+        "name": "Classical.choice",
+        "namespace": "",
+        "signature": "axiom Classical.choice {\u03b1 : Sort u} : Nonempty \u03b1 \u2192 \u03b1"
+      }
+    ],
+    "sound": [
+      "propext",
+      "Quot.sound",
+      "Classical.choice"
+    ],
+    "total": 7,
+    "trust_extensions": [
+      "Lean.trustCompiler",
+      "Lean.ofReduceBool",
+      "Lean.ofReduceNat"
+    ],
+    "unsoundness_markers": [
+      "sorryAx"
+    ]
+  },
+  "constant_info": {
+    "kinds": [
+      {
+        "line": 431,
+        "name": "axiomInfo",
+        "text": "| axiomInfo    (val : AxiomVal)"
+      },
+      {
+        "line": 432,
+        "name": "defnInfo",
+        "text": "| defnInfo     (val : DefinitionVal)"
+      },
+      {
+        "line": 433,
+        "name": "thmInfo",
+        "text": "| thmInfo      (val : TheoremVal)"
+      },
+      {
+        "line": 434,
+        "name": "opaqueInfo",
+        "text": "| opaqueInfo   (val : OpaqueVal)"
+      },
+      {
+        "line": 435,
+        "name": "quotInfo",
+        "text": "| quotInfo     (val : QuotVal)"
+      },
+      {
+        "line": 436,
+        "name": "inductInfo",
+        "text": "| inductInfo   (val : InductiveVal)"
+      },
+      {
+        "line": 437,
+        "name": "ctorInfo",
+        "text": "| ctorInfo     (val : ConstructorVal)"
+      },
+      {
+        "line": 438,
+        "name": "recInfo",
+        "text": "| recInfo      (val : RecursorVal)"
+      }
+    ],
+    "total": 8
+  },
+  "declaration": {
+    "kinds": [
+      {
+        "line": 186,
+        "name": "axiomDecl",
+        "text": "| axiomDecl       (val : AxiomVal)"
+      },
+      {
+        "line": 187,
+        "name": "defnDecl",
+        "text": "| defnDecl        (val : DefinitionVal)"
+      },
+      {
+        "line": 188,
+        "name": "thmDecl",
+        "text": "| thmDecl         (val : TheoremVal)"
+      },
+      {
+        "line": 189,
+        "name": "opaqueDecl",
+        "text": "| opaqueDecl      (val : OpaqueVal)"
+      },
+      {
+        "line": 190,
+        "name": "quotDecl",
+        "text": "| quotDecl"
+      },
+      {
+        "line": 191,
+        "name": "mutualDefnDecl",
+        "text": "| mutualDefnDecl  (defns : List DefinitionVal) -- All definitions must be marked as `unsafe` or `partial`"
+      },
+      {
+        "line": 192,
+        "name": "inductDecl",
+        "text": "| inductDecl      (lparams : List Name) (nparams : Nat) (types : List InductiveType) (isUnsafe : Bool)"
+      }
+    ],
+    "total": 7
+  },
+  "expr": {
+    "constructors": [
+      {
+        "line": 321,
+        "name": "bvar",
+        "text": "| bvar (deBruijnIndex : Nat)"
+      },
+      {
+        "line": 336,
+        "name": "fvar",
+        "text": "| fvar (fvarId : FVarId)"
+      },
+      {
+        "line": 344,
+        "name": "mvar",
+        "text": "| mvar (mvarId : MVarId)"
+      },
+      {
+        "line": 352,
+        "name": "sort",
+        "text": "| sort (u : Level)"
+      },
+      {
+        "line": 360,
+        "name": "const",
+        "text": "| const (declName : Name) (us : List Level)"
+      },
+      {
+        "line": 372,
+        "name": "app",
+        "text": "| app (fn : Expr) (arg : Expr)"
+      },
+      {
+        "line": 383,
+        "name": "lam",
+        "text": "| lam (binderName : Name) (binderType : Expr) (body : Expr) (binderInfo : BinderInfo)"
+      },
+      {
+        "line": 402,
+        "name": "forallE",
+        "text": "| forallE (binderName : Name) (binderType : Expr) (body : Expr) (binderInfo : BinderInfo)"
+      },
+      {
+        "line": 421,
+        "name": "letE",
+        "text": "| letE (declName : Name) (type : Expr) (value : Expr) (body : Expr) (nondep : Bool)"
+      },
+      {
+        "line": 434,
+        "name": "lit",
+        "text": "| lit : Literal \u2192 Expr"
+      },
+      {
+        "line": 446,
+        "name": "mdata",
+        "text": "| mdata (data : MData) (expr : Expr)"
+      },
+      {
+        "line": 469,
+        "name": "proj",
+        "text": "| proj (typeName : Name) (idx : Nat) (struct : Expr)"
+      }
+    ],
+    "elaboration_only": [
+      "fvar",
+      "mvar"
+    ],
+    "kernel_admissible": 10,
+    "total": 12
+  },
+  "kernel_checkout": "v4.33.0-rc1",
+  "kernel_cpp": {
+    "by_file": {
+      "abstract.cpp": 78,
+      "abstract.h": 17,
+      "declaration.cpp": 326,
+      "declaration.h": 500,
+      "environment.cpp": 303,
+      "environment.h": 112,
+      "equiv_manager.cpp": 127,
+      "equiv_manager.h": 34,
+      "expr.cpp": 538,
+      "expr.h": 390,
+      "expr_cache.cpp": 33,
+      "expr_cache.h": 31,
+      "expr_eq_fn.cpp": 137,
+      "expr_eq_fn.h": 29,
+      "expr_maps.h": 26,
+      "expr_sets.h": 16,
+      "find_fn.h": 27,
+      "for_each_fn.cpp": 225,
+      "for_each_fn.h": 30,
+      "inductive.cpp": 1249,
+      "inductive.h": 145,
+      "init_module.cpp": 42,
+      "init_module.h": 13,
+      "instantiate.cpp": 266,
+      "instantiate.h": 45,
+      "kernel_exception.h": 218,
+      "level.cpp": 552,
+      "level.h": 206,
+      "local_ctx.cpp": 140,
+      "local_ctx.h": 106,
+      "quot.cpp": 117,
+      "quot.h": 99,
+      "replace_fn.cpp": 155,
+      "replace_fn.h": 26,
+      "trace.cpp": 61,
+      "trace.h": 48,
+      "type_checker.cpp": 1247,
+      "type_checker.h": 174
+    },
+    "files": 38,
+    "lines": 7888
+  },
+  "kernel_exceptions": {
+    "rows": [
+      {
+        "base": "exception",
+        "line": 14,
+        "name": "kernel_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 25,
+        "name": "unknown_constant_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 32,
+        "name": "already_declared_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 39,
+        "name": "definition_type_mismatch_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 49,
+        "name": "declaration_has_metavars_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 59,
+        "name": "declaration_has_free_vars_exception"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 69,
+        "name": "theorem_type_is_not_prop"
+      },
+      {
+        "base": "kernel_exception",
+        "line": 79,
+        "name": "kernel_exception_with_lctx"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 87,
+        "name": "function_expected_exception"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 95,
+        "name": "type_expected_exception"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 103,
+        "name": "type_mismatch_exception"
+      },
+      {
+        "base": "type_mismatch_exception",
+        "line": 113,
+        "name": "def_type_mismatch_exception"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 121,
+        "name": "expr_type_mismatch_exception"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 131,
+        "name": "app_type_mismatch_exception"
+      },
+      {
+        "base": "kernel_exception_with_lctx",
+        "line": 144,
+        "name": "invalid_proj_exception"
+      }
+    ],
+    "total": 15
+  },
+  "level": {
+    "constructors": [
+      {
+        "line": 91,
+        "name": "zero",
+        "text": "| zero   : Level"
+      },
+      {
+        "line": 92,
+        "name": "succ",
+        "text": "| succ   : Level \u2192 Level"
+      },
+      {
+        "line": 93,
+        "name": "max",
+        "text": "| max    : Level \u2192 Level \u2192 Level"
+      },
+      {
+        "line": 94,
+        "name": "imax",
+        "text": "| imax   : Level \u2192 Level \u2192 Level"
+      },
+      {
+        "line": 95,
+        "name": "param",
+        "text": "| param  : Name \u2192 Level"
+      },
+      {
+        "line": 96,
+        "name": "mvar",
+        "text": "| mvar   : LMVarId \u2192 Level"
+      }
+    ],
+    "elaboration_only": [
+      "mvar"
+    ],
+    "kernel_admissible": 5,
+    "total": 6
+  },
+  "literal": {
+    "constructors": [
+      {
+        "line": 20,
+        "name": "natVal",
+        "text": "| natVal (val : Nat)"
+      },
+      {
+        "line": 22,
+        "name": "strVal",
+        "text": "| strVal (val : String)"
+      }
+    ],
+    "total": 2
+  },
+  "nat_acceleration": {
+    "ops": [
+      "add",
+      "beq",
+      "ble",
+      "div",
+      "gcd",
+      "land",
+      "lor",
+      "mod",
+      "mul",
+      "pow",
+      "shiftLeft",
+      "shiftRight",
+      "sub",
+      "succ",
+      "xor"
+    ],
+    "total": 15
+  },
+  "reduction_rules": {
+    "rules": [
+      {
+        "definition_line": 341,
+        "file": "type_checker.cpp",
+        "note": "application of a lambda, inside whnf_core's App case",
+        "rule": "beta",
+        "symbol": "whnf_core"
+      },
+      {
+        "definition_line": 341,
+        "file": "type_checker.cpp",
+        "note": "let-expansion, inside whnf_core's Let case",
+        "rule": "zeta",
+        "symbol": "whnf_core"
+      },
+      {
+        "definition_line": 349,
+        "file": "type_checker.cpp",
+        "note": "expansion of a let-bound free variable",
+        "rule": "zeta-fvar",
+        "symbol": "whnf_fvar"
+      },
+      {
+        "definition_line": 488,
+        "file": "type_checker.cpp",
+        "note": "definitional unfolding",
+        "rule": "delta",
+        "symbol": "unfold_definition"
+      },
+      {
+        "definition_line": 886,
+        "file": "type_checker.cpp",
+        "note": "the defeq loop's lazy unfolding strategy",
+        "rule": "delta-lazy",
+        "symbol": "lazy_delta_reduction"
+      },
+      {
+        "definition_line": 334,
+        "file": "type_checker.cpp",
+        "note": "recursor application to a constructor",
+        "rule": "iota",
+        "symbol": "reduce_recursor"
+      },
+      {
+        "definition_line": 359,
+        "file": "type_checker.cpp",
+        "note": "structure projection of a constructor",
+        "rule": "proj",
+        "symbol": "reduce_proj"
+      },
+      {
+        "definition_line": 780,
+        "file": "type_checker.cpp",
+        "note": "function eta",
+        "rule": "eta",
+        "symbol": "try_eta_expansion_core"
+      },
+      {
+        "definition_line": 795,
+        "file": "type_checker.cpp",
+        "note": "structure eta",
+        "rule": "eta-struct",
+        "symbol": "try_eta_struct_core"
+      },
+      {
+        "definition_line": 838,
+        "file": "type_checker.cpp",
+        "note": "any two proofs of a Prop are equal",
+        "rule": "proof-irrelevance",
+        "symbol": "is_def_eq_proof_irrel"
+      },
+      {
+        "definition_line": 1046,
+        "file": "type_checker.cpp",
+        "note": "eta for unit-like inductive types",
+        "rule": "unit-like",
+        "symbol": "is_def_eq_unit_like"
+      },
+      {
+        "definition_line": 539,
+        "file": "type_checker.cpp",
+        "note": "GMP-backed Nat literal arithmetic",
+        "rule": "nat-lit",
+        "symbol": "reduce_nat"
+      },
+      {
+        "definition_line": 590,
+        "file": "type_checker.cpp",
+        "note": "Nat.pow, guarded separately against blowup",
+        "rule": "nat-pow",
+        "symbol": "reduce_pow"
+      },
+      {
+        "definition_line": 1032,
+        "file": "type_checker.cpp",
+        "note": "String literal vs String.mk expansion",
+        "rule": "string-lit",
+        "symbol": "try_string_lit_expansion"
+      },
+      {
+        "definition_line": 963,
+        "file": "type_checker.cpp",
+        "note": "the Nat-offset fast path (n+k vs m+k)",
+        "rule": "offset",
+        "symbol": "is_def_eq_offset"
+      },
+      {
+        "definition_line": 47,
+        "file": "quot.cpp",
+        "note": "Quot.lift / Quot.ind computation",
+        "rule": "quot",
+        "symbol": "environment::add_quot"
+      }
+    ],
+    "total": 16
+  },
+  "schema": "lean-kernel-census/1",
+  "toolchain": "leanprover/lean4:v4.33.0-rc1"
+}

@@ -593,15 +593,20 @@ The honest answer is a split one.
 | `harness/refusal_census.py` | `MATCH REFUSE DIVERGE TIMEOUT` + `ERROR` |
 | `harness/leanpy_survey.py` | `MATCH REFUSE DIVERGE TIMEOUT` |
 | `harness/lean_independent_check.py` | `MATCH REFUSE DIVERGE TIMEOUT` |
-| `harness/library_survey.py` | `MATCH REFUSED DIVERGE`/`DIVERGED` `TIMEOUT` |
+| `harness/library_survey.py` | `MATCH REFUSED DIVERGE` `TIMEOUT` *(was `DIVERGE`/`DIVERGED`; fixed 2026-08-22, python-completeness lane)* |
 | `harness/diff_test.py` | `MATCH MISMATCH WHITELISTED ERROR` |
 | `harness/spice/diff_test.py` | `MATCH MISMATCH` |
 | `harness/sv/diff_test.py` | `PASS FAIL` |
 
 §5.1 fixes four names. **Three of seven emitters use none of them for the
-failure case**, and one emits both `DIVERGE` and `DIVERGED`
-(`harness/library_survey.py:637` maps one to the other, which is the
-tell).
+failure case**, and one emitted both `DIVERGE` and `DIVERGED`
+(`harness/library_survey.py:637` mapped one to the other, which was the
+tell). **That one is FIXED** — the translation at the emission boundary is
+deleted, the direct set and its detail string say `DIVERGE`, and the six
+consumers that keyed on the drifted name (scoreboard order, the title
+pairing, both exit gates) follow it; the gates still fail on `DIVERGE` or
+`INCOMPLETE` and pass otherwise, so §5.4's both-directions discipline is
+preserved. The remaining two emitters are untouched here.
 
 Row *shapes*, where they exist:
 

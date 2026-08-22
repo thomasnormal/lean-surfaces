@@ -116,3 +116,31 @@ its ORIGINAL position, `list(d)[0]`), every consumer, the empty-dict `max`
 `ValueError` through the shared arm, non-int keys through the generic ordering
 path, the `True`/`1` key-collision rule, the empty dict, and the still-loud
 live cursor. Census: six `dict.*` witnesses flip REFUSE → MATCH.
+
+## 2026-08-22-pycomplete-2 — the §9.4 DIVERGE/DIVERGED violation, closed
+
+`harness/library_survey.py` emitted the family's failure verdict under two
+names. The Go lane pinned the mechanism exactly — a deliberate rename at the
+EMISSION BOUNDARY (`row["verdict"] = "DIVERGED" if verdict == "DIVERGE" else
+verdict`) sitting downstream of eleven sites that already produced the
+canonical `DIVERGE` — so the fix was mechanical rather than a redesign.
+
+Eight sites: the translation is deleted, the direct set and its detail string
+say `DIVERGE`, and the six consumers keyed on the drifted name follow it —
+scoreboard order, the title/verdict pairing (which was `("DIVERGED",
+"DIVERGED")`, a display title and a selector that had drifted TOGETHER, so
+neither half revealed the other), and both exit gates.
+
+**§5.4 both-directions discipline verified, not assumed**: both gates read
+`return 1 if (counts.get("DIVERGE") or counts.get("INCOMPLETE")) else 0` — they
+fail on a divergence or an unfinished battery and pass otherwise, and they now
+key on the same string the 18 emission sites produce. Before the fix the gates
+keyed on `DIVERGED`, which only worked because the boundary translation fed
+them; delete that translation alone and the gates would have gone silent. The
+two halves had to move together, which is why the audit's "one emits both" row
+was the right tell.
+
+`harness/library_oracle.py`'s `DIVERGED` is prose in a comment, not an
+emission; normalized anyway so the vocabulary is single-valued in `harness/`.
+`docs/duplication-audit.md`'s row is updated to record the fix rather than
+left asserting a defect that no longer exists.

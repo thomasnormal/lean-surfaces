@@ -83,37 +83,77 @@ and that structure genuinely differs: fuel is spent only at `Kont`'s boundary,
 so a claim that counted per-node decrements is not merely re-typed, it is
 re-derived. **These are the expensive ones and they cannot be transported.**
 
-**(c) DELETE — AND THE FIRST DRAFT OF THIS SECTION WAS WRONG.** It said
-`VCTactic` (3371), `LoopTactic` (487) and `VCGen`'s generation half could be
-"deleted immediately, ~5 300 lines, no successor". **Measured, every one of them
-is CONSUMED right now:**
+**(c) — AND THIS SECTION WAS WRONG TWICE, in opposite directions.**
 
-| file | export | consumer files | of which `Examples/` |
-|---|---|---:|---:|
-| `VCTactic.lean` | `py_vcgen` | **17** | 10 |
-| `LoopTactic.lean` | `py_loop` | **14** | 13 |
-| `LoopTactic.lean` | `py_begin` | **11** | 11 |
-| `VCGen.lean` | 63 distinctive symbols | **40 used elsewhere**, 23 by nobody | — |
+The first draft said `VCTactic` (3371), `LoopTactic` (487) and `VCGen` (2034) could be
+"deleted immediately, no successor". The second draft withdrew that on a
+consumer count. **Both were confused, because they treated tactic files and
+predicate files as one class.** Thomas's correction is the distinction that
+makes the section true:
 
-`VCGen`'s live symbols are the worst case for the original claim, because they
-are **statement vocabulary**, not generation internals: `PyStmtTriple` (10
-files), `IterSteps` (10), `GenEmits` (10), `IterDrains` (8). Deleting that file
-would not remove machinery, it would remove the words 10 campaign files use to
-*say* what they prove.
+> **A tactic can only appear in a PROOF, never in a theorem STATEMENT.**
 
-**The error, named so it is not repeated: "has no successor" is a claim about
-the FUTURE and says nothing about PRESENT consumers.** The monadic route's vcgen
-really is core's `mvcgen`, so nothing new will ever import the walker — and that
-is exactly the sentence that made a zero-consumer conclusion feel safe without
-counting. The master-never-red rule is what a deletion on that reasoning would
-have broken.
+That single fact splits (c) cleanly, and the halves have nothing in common.
 
-**Revised: NOTHING in class (c) deletes now.** The ~5 300 lines are a real
-saving and remain collectable, but **per file, on re-founding, as each file's
-consumers move** — the deletion is the LAST step of a file's migration, never a
-precondition for it. The only genuinely zero-consumer surface measured is **23
-dead symbols inside `VCGen.lean`**, which is not worth editing a file that ten
-campaign files depend on.
+### (c1) THE TACTIC FILES — zero semantic weight
+
+`VCTactic.lean` (3371, exports `py_vcgen`) and `LoopTactic.lean` (487, exports
+`py_loop`/`py_begin`). Their 17 / 14 / 11 consumers are **proof sites**, and
+under the ruling those proofs are being rewritten anyway.
+
+**These files carry no meaning.** They are LIBRARY in §0.1's sense — untrusted
+by doctrine, producing proofs the kernel rechecks against a definition they
+cannot influence. Deleting them cannot make any statement weaker or any theorem
+false; it can only make a proof fail to compile.
+
+**So the only reason not to delete them today is `master`-never-red — not loss
+of meaning**, and that is the whole of it. They retire **file-by-file with the
+old proofs they serve**, and the last one to go takes the file with it. Nothing
+here needs designing, only sequencing.
+
+### (c2) THE PREDICATE FILE — re-founded, and some words REPLACED
+
+`VCGen.lean`'s predicates *are* statement vocabulary (`PyStmtTriple` 10 files,
+`IterSteps` 10, `GenEmits` 10, `IterDrains` 8). But they do not survive
+unchanged either, and the reason is visible in every one of their definitions:
+
+**every one is the ∃-threshold form over the OLD interpreter's run relation** —
+`∃ t, ∀ F ≥ t, <old interpreter …> = …`. They are not neutral vocabulary that
+happens to be used with the trunk; they are *defined by* it. So each is either
+re-founded over the monadic interpreter or replaced by a core word that already
+says it.
+
+**Per-predicate disposition:**
+
+| predicate | defined over | disposition |
+|---|---|---|
+| `PyTriple` | `execStmts m F` | **REPLACE** with core `Std.Do.Triple` — the pilot showed it is a hand-rolled stand-in |
+| `PyStmtTriple` | `execStmt m F` | **REPLACE** — same, one level down |
+| `PyPost` | `Run FrameState RFlow` | **REPLACE** with core `PostCond`; the five flow arms ride the success barrel as a sum (`Spec.repeatM`'s own idiom) |
+| `EvalsTo` | `evalExpr m fuel` | **REPLACE, and it gets STRICTLY simpler** — `evalOpen` is fuel-free, so this becomes a plain `Triple` with **no threshold at all** |
+| `EvalsIn` | `evalExpr m F` | **REPLACE** — same, with the state threaded |
+| `IterSteps` | `stepIter m F` | **RE-DEFINE** over `K.stepIter` — no core equivalent |
+| `IterDrains` | `drainIter m F` | **RE-DEFINE** over `K.drainIter` |
+| `GenSteps` | `execGen m F` | **RE-DEFINE** over `K.execGen` |
+| `GenYields` / `GenYieldsPrefix` | `drainGen` / `stepGenN` | **RE-DEFINE** over the new stepper |
+| `GenSilent` | `execGen m (F + d)` | **RE-DEFINE, and its SHAPE moves most.** Its entire content is composing FUEL OFFSETS, and the rebuild spends fuel once per `Kont` level rather than per interpreter step |
+| `GenEmits` (GenBound) | frame-prefix emission | **RE-DEFINE** over the new generator step |
+
+**Five replace, six re-define, and zero preserve.**
+
+**The replacements are a trust win, not just tidying.** Every hand-rolled word
+removed from a STATEMENT is one fewer definition a reader must audit before
+believing a theorem. `PyTriple` was a stand-in for `Std.Do.Triple`; saying so in
+core's vocabulary means the statement's meaning is fixed by Lean's own library
+rather than by 546 lines of ours. §0.1's trust boundary is drawn at the
+DEFINITION, so shrinking the definition layer is the one kind of simplification
+that is also a soundness argument.
+
+**And `EvalsTo` is the shape of the whole win.** It is currently a threshold
+claim because the trunk charges fuel per expression node; on the rebuild,
+expression evaluation is fuel-free and structural, so the *same fact* is stated
+without a fuel quantifier. That is the fuel-boundary ruling paying out in the
+statement layer, not just the interpreter.
 
 **SHARED — not retiring at all**: `Ast`, `Json`, `Runtime`, `Surface`,
 `Script`'s admissions, `DictCalc`. The rebuild already imports these; they were
@@ -121,6 +161,96 @@ never interpreter-specific. This is the maximal-trunk instinct paying at
 retirement time.
 
 ---
+
+## §2.5 THE ARCHAEOLOGY — harvest before (c1) deletes
+
+Retiring a tactic layer risks losing ideas that took a campaign to find. So the
+three files were swept mechanism by mechanism before any deletion. **Two
+findings changed the premise of the exercise itself.**
+
+### 2.5.1 THE NAMED TRICKS ARE NOT IN THE FILES BEING DELETED
+
+The harvest was scoped from a ledger of named tricks. Measured, they are almost
+entirely somewhere else:
+
+| named trick | in the 3 retiring files | in `Examples/python/sunfish/*` + `backlog.md` |
+|---|---:|---:|
+| "altitude" | 6 | **44** |
+| "exit law" | 0 | **33** |
+| "PstAt" | 0 | **58** |
+| "two gates" | 0 | **14** |
+| "DRAIN" (short-circuit) | 2 | **12** |
+
+**They live in the PROOFS and the record, not in the walker.** That is the
+natural place for them — they are *statement-and-proof* disciplines, and a
+tactic file is neither. So **(c1)'s deletion loses none of them**, and the
+harvest's real subject is the machinery the sweep found instead.
+
+One de-confliction: `DRAIN` occurs in `VCGen.lean` 47 times meaning *generator*
+drain (`drainGen`/`drainIter`), which is an unrelated notion from the
+short-circuit DRAIN trick. Counting the lowercase name would have "confirmed"
+the trick was there.
+
+### 2.5.2 `VCGen.lean` IS NOT VC GENERATION
+
+Its header: *"The generator tier (`py_vcgen` layer 2G) … Layers 1 and 2
+(VC.lean, VC2.lean) specify STATEMENTS … This file specifies SUSPENDED
+MACHINES."* Earlier drafts of this plan called it "VCGen's generation half" and
+were simply wrong about what the file is. The VC *rules* are in `VC.lean` /
+`VC2.lean`; `VCGen.lean` is the generator calculus — which is why its predicates
+are `GenYields` / `IterDrains` and why they need re-definition over the new
+stepper rather than replacement by a core word.
+
+### 2.5.3 THE INVENTORY, classified
+
+**(A) ALREADY PRESENT in the monadic route — harvest nothing, note the
+convergence.** `(dec := …)`/`(inv := …)` ↔ `WhileVariant`/`WhileInvariant`
+(the pilot measured this one-to-one). Two-gates-per-`if` ↔ `mvcgen`'s own split,
+which hands each arm its guard already in context. Straight-line chunking ↔
+`mvcgen` walking a `do` block natively. Computed-shape closers ↔ still needed,
+though `grind` now closes many of them.
+
+**(B) GENERALIZABLE — worth a home outside this lane.** These are the harvest.
+
+| mechanism | the idea, language-free |
+|---|---|
+| named-telescope clause goals | a function-typed goal is consumed POSITIONALLY and silently cross-wires binders; introduce the telescope so there is no order to get wrong — and introduce it AFTER the walk, because a delayed-assigned mvar leaks to the kernel |
+| discharger **+** condition-deciding simproc | simp asks a discharger only about conditional-rewrite hypotheses; an `ite` CONDITION needs arithmetic *inside* the set. Both halves or neither |
+| side conditions in the discharger's vocabulary | phrase a lemma's side condition over the ORIGINAL variable, not a derived term, or the discharger cannot reach it from the invariant |
+| frame-stack polymorphism | state every rule over `pre ++ k` with `k` free; composition is then literal `List.append` |
+| re-observe, don't frame | demand a FRESH per-round observation instead of a `WritesAvoid`-style stability side condition — a body that clobbers the slot simply cannot re-establish the invariant |
+| `Inv [] = False` | one loop rule covers finite AND infinite consumers, because an unsatisfiable empty-remainder invariant discharges exhaustion vacuously |
+| one interpreter-wide locality theorem | hoist a repeated frame condition into a single censused property instead of a side condition per rule |
+| inversion for threshold-DEFINED judgments | a `∃ t, ∀ F ≥ t` predicate is a definition, not an inductive, so consumers cannot `cases` it — supply `uncons`/`exhausts` or whole-drain specs are unusable |
+| unbranding before `omega`/`grind` | reducible abbreviations are transparent to defeq but OPAQUE to syntactic atom matching, so branded hypotheses are silently invisible |
+| one hypothesis per conjunct | `grind`'s e-matching instantiates from atoms, not conjunctions |
+| match specs modulo the NORMALIZER | a marshalled argument never matches by defeq; compare normal forms |
+| read structure fields by NAME | `py_vcgen` read a body at positional field 5, then 6 when a field was inserted — it cost the tier twice |
+| dispatchers IN the simp set, workers OUT | the free-scrutinee PLAN resolves the fork; the pure WORKER stays out so proofs rewrite through kernel `rfl` facts |
+
+**(C) PYTHON-SPECIFIC — dies with the tier.** The ~150-name `interpUnfolds`
+list; `envInt`; thaw-inversion-by-freezing; `EnvShape`'s `RVal`/`Env` instance
+(though "known prefix + symbolic tail" is itself a (B) idea).
+
+**(D) TRAPS — record, do not port.** `omega` is not goal-directed and *silently
+proves nothing* on a bare goal. A simproc is keyed by ELABORATED type, so an
+unascribed `_ < _` binds at `Nat` and never matches `Int`. Arithmetic simprocs
+must be gated or they blow the step budget. The full simp set migrates `!`
+across an equation and destroys Miller patterns. Beta-variant types containing
+opaque flex applications are not `isDefEq`-decidable. Same-tag goals are
+silently consumed by `case`.
+
+### 2.5.4 THE ONE SUPERSESSION, and it is the most valuable datum here
+
+`py_loop` derived its test-value function by **Miller-pattern unification**, and
+recorded the two shapes that destroy it: a destructured state variable, and a
+surviving `ite`. `py_vcgen` then replaced that with **symbolic evaluation of the
+test at the invariant shape** — no unification, no fragility.
+
+**A tier that harvests only the first trick inherits a known-fragile
+mechanism.** This is the one place the archaeology must carry the *verdict*
+rather than the technique: where two generations of a trick exist, port the
+successor and record the predecessor as the thing it fixed.
 
 ## §3 `twinAgrees` — NOT a bridge, possibly a TRANSPORT TOOL
 
@@ -179,14 +309,14 @@ and switch at the inch boundary — switching mid-inch pays the re-statement cos
    theorems), and it makes the next campaign inch the first one *founded* on the
    new interpreter rather than transported to it. This is the sequencing
    decision with the shortest half-life — it gets more expensive every day.
-2. ~~Delete class (c) immediately.~~ **WITHDRAWN ON MEASUREMENT.** All three
-   files are consumed today (`py_vcgen` 17 files, `py_loop` 14, `py_begin` 11,
-   `VCGen` 40 live symbols including the statement vocabulary of 10 campaign
-   files). The saving is real and stays on the books, collected **per file at
-   the end of that file's migration**. What replaces this slot is the cheap,
-   genuinely-zero-risk half: **mark the layer LEGACY and forbid new consumers**,
-   which captures the "a dead walker invites a new consumer" worry without
-   touching a line the campaign compiles against.
+2. **Mark the layer LEGACY, and split (c) by the tactic/predicate line.**
+   Deletion today is blocked only by `master`-never-red, and only for (c1) —
+   whose files carry **zero semantic weight**, so their retirement is pure
+   sequencing behind the proofs they serve. (c2) is the half that needs design,
+   and §2 now carries the per-predicate table: **five replaced by core words,
+   six re-defined, zero preserved.** Do the five REPLACEMENTS early even so —
+   they shrink the trusted definition layer, which is a soundness argument and
+   not merely tidying.
 3. **Spike ONE deep gate before committing to a plan for the big four.** The
    §2 ceiling is the plan's only real unknown: if `bound_depth`-scale statements
    re-prove under `mvcgen`+`grind`, the whole estate is class (a) and

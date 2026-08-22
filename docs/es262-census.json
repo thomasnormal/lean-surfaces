@@ -16,7 +16,7 @@
     "lines": 68429,
     "sec_anchor_sites": 1868,
     "sec_anchors_distinct": 1782,
-    "sec_anchors_resolving_to_pinned_spec": 1152
+    "sec_anchors_resolving_to_pinned_spec": 1141
   },
   "frontend": {
     "attempted": 18114,
@@ -259,51 +259,48 @@
       "under_reject_early_errors": 285
     }
   },
+  "language_version": "ES2026",
   "schema": "es-census-0.1",
   "sources": {
-    "ecma262": "ed463bc10dbeaad0410ce67e541a77ea8e9900a5 2026-08-20T23:41:44-07:00",
+    "ecma262": "",
     "engine262": "c7939eaf0bcfa292b4a8872e78f4c221bc2477a2 2026-08-09T00:00:00Z",
     "test262": "3655e7464de3d52643ecddd4b5f9f4f3e7f62398 2026-08-10T12:21:58-07:00"
   },
   "spec": {
-    "algorithm_steps": 14470,
-    "algorithms": 2301,
+    "algorithm_steps": 14221,
+    "algorithms": 2239,
     "annexB": {
       "algorithms": 39,
       "clauses": 52,
-      "steps": 171
+      "steps": 179
     },
     "annexes": 73,
-    "bytes": 3082799,
-    "clause_ids": 2340,
+    "bytes": 2979557,
+    "clause_ids": 2263,
     "clause_types": {
-      "abstract operation": 500,
-      "built-in function": 548,
+      "abstract operation": 489,
+      "built-in function": 527,
       "concrete method": 48,
       "host-defined abstract operation": 16,
       "implementation-defined abstract operation": 4,
       "internal method": 59,
       "numeric method": 36,
-      "sdo": 206
+      "sdo": 202
     },
-    "clauses": 2266,
+    "clauses": 2189,
     "core_slice": {
-      "algorithms": 1406,
-      "bytes": 1540736,
-      "clauses": 924,
-      "grammar_blocks": 1348,
-      "steps": 6375
+      "algorithms": 1365,
+      "bytes": 1494297,
+      "clauses": 907,
+      "grammar_blocks": 1312,
+      "steps": 6216
     },
     "esmeta": {
-      "ignore_entries": 12,
-      "ignore_file_present": true,
-      "workflows": [
-        "esmeta-installer",
-        "esmeta-typecheck.yml",
-        "esmeta-yetcheck.yml"
-      ]
+      "ignore_entries": null,
+      "ignore_file_present": false,
+      "workflows": []
     },
-    "grammar_blocks": 1545,
+    "grammar_blocks": 1507,
     "host_defined_operations": [
       "HostCallJobCallback",
       "HostEnqueueFinalizationRegistryCleanupJob",
@@ -359,29 +356,29 @@
         "sec-ecmascript-data-types-and-values": 2,
         "sec-ecmascript-language-source-code": 2,
         "sec-ecmascript-language-statements-and-declarations": 3,
-        "sec-executable-code-and-execution-contexts": 5,
-        "sec-fundamental-objects": 3,
+        "sec-executable-code-and-execution-contexts": 4,
+        "sec-fundamental-objects": 2,
         "sec-global-object": 1,
         "sec-indexed-collections": 6,
         "sec-intro": 1,
         "sec-numbers-and-dates": 13,
-        "sec-ordinary-and-exotic-objects-behaviours": 2,
+        "sec-ordinary-and-exotic-objects-behaviours": 1,
         "sec-overview": 9,
         "sec-structured-data": 3,
         "sec-text-processing": 3
       }
     },
-    "lines": 55131,
-    "notes": 710,
-    "path_name": "spec.html",
-    "sha256": "e6f11ed3c0ab387e5e34560867077419ba5511b8a74e1b8eaabc4a8dbc5f3973",
+    "lines": 53845,
+    "notes": 711,
+    "path_name": "es2026-errata-spec.html",
+    "sha256": "032ecc740356b38f6846338d8c44536291a134a6ce60e651f935befb239cfc1a",
     "status": "draft",
-    "tables": 100,
-    "title": "ECMAScript(R) 2027 Language Specification",
+    "tables": 95,
+    "title": "ECMAScript(R) 2026 Language Specification",
     "top_level": [
       {
         "algorithms": 0,
-        "bytes": 13890,
+        "bytes": 13538,
         "clauses": 0,
         "grammar_blocks": 0,
         "id": "sec-intro",
@@ -430,18 +427,18 @@
         "title": "Overview"
       },
       {
-        "algorithms": 23,
-        "bytes": 54983,
+        "algorithms": 21,
+        "bytes": 54210,
         "clauses": 30,
         "grammar_blocks": 34,
         "id": "sec-notational-conventions",
-        "steps": 50,
+        "steps": 48,
         "tag": "emu-clause",
         "title": "Notational Conventions"
       },
       {
         "algorithms": 67,
-        "bytes": 178824,
+        "bytes": 173458,
         "clauses": 95,
         "grammar_blocks": 0,
         "id": "sec-ecmascript-data-types-and-values",
@@ -450,38 +447,38 @@
         "title": "ECMAScript Data Types and Values"
       },
       {
-        "algorithms": 113,
-        "bytes": 116114,
-        "clauses": 114,
+        "algorithms": 103,
+        "bytes": 105118,
+        "clauses": 103,
         "grammar_blocks": 12,
         "id": "sec-abstract-operations",
-        "steps": 725,
+        "steps": 660,
         "tag": "emu-clause",
         "title": "Abstract Operations"
       },
       {
-        "algorithms": 406,
-        "bytes": 143751,
-        "clauses": 37,
-        "grammar_blocks": 413,
+        "algorithms": 385,
+        "bytes": 138550,
+        "clauses": 34,
+        "grammar_blocks": 392,
         "id": "sec-syntax-directed-operations",
-        "steps": 727,
+        "steps": 702,
         "tag": "emu-clause",
         "title": "Syntax-Directed Operations"
       },
       {
-        "algorithms": 75,
-        "bytes": 138068,
-        "clauses": 104,
+        "algorithms": 73,
+        "bytes": 132460,
+        "clauses": 102,
         "grammar_blocks": 0,
         "id": "sec-executable-code-and-execution-contexts",
-        "steps": 332,
+        "steps": 314,
         "tag": "emu-clause",
         "title": "Executable Code and Execution Contexts"
       },
       {
         "algorithms": 124,
-        "bytes": 191954,
+        "bytes": 187365,
         "clauses": 131,
         "grammar_blocks": 8,
         "id": "sec-ordinary-and-exotic-objects-behaviours",
@@ -491,7 +488,7 @@
       },
       {
         "algorithms": 7,
-        "bytes": 19077,
+        "bytes": 18900,
         "clauses": 13,
         "grammar_blocks": 1,
         "id": "sec-ecmascript-language-source-code",
@@ -501,9 +498,9 @@
       },
       {
         "algorithms": 15,
-        "bytes": 91118,
+        "bytes": 90465,
         "clauses": 38,
-        "grammar_blocks": 193,
+        "grammar_blocks": 192,
         "id": "sec-ecmascript-language-lexical-grammar",
         "steps": 20,
         "tag": "emu-clause",
@@ -511,47 +508,47 @@
       },
       {
         "algorithms": 177,
-        "bytes": 162931,
+        "bytes": 160673,
         "clauses": 135,
-        "grammar_blocks": 231,
+        "grammar_blocks": 229,
         "id": "sec-ecmascript-language-expressions",
-        "steps": 914,
+        "steps": 912,
         "tag": "emu-clause",
         "title": "ECMAScript Language: Expressions"
       },
       {
-        "algorithms": 95,
-        "bytes": 108523,
-        "clauses": 84,
-        "grammar_blocks": 133,
+        "algorithms": 91,
+        "bytes": 100771,
+        "clauses": 83,
+        "grammar_blocks": 123,
         "id": "sec-ecmascript-language-statements-and-declarations",
-        "steps": 531,
+        "steps": 486,
         "tag": "emu-clause",
         "title": "ECMAScript Language: Statements and Declarations"
       },
       {
-        "algorithms": 184,
-        "bytes": 141399,
+        "algorithms": 182,
+        "bytes": 139582,
         "clauses": 71,
-        "grammar_blocks": 226,
+        "grammar_blocks": 224,
         "id": "sec-ecmascript-language-functions-and-classes",
-        "steps": 707,
+        "steps": 698,
         "tag": "emu-clause",
         "title": "ECMAScript Language: Functions and Classes"
       },
       {
         "algorithms": 120,
-        "bytes": 187854,
+        "bytes": 186608,
         "clauses": 70,
         "grammar_blocks": 97,
         "id": "sec-ecmascript-language-scripts-and-modules",
-        "steps": 763,
+        "steps": 770,
         "tag": "emu-clause",
         "title": "ECMAScript Language: Scripts and Modules"
       },
       {
         "algorithms": 0,
-        "bytes": 6140,
+        "bytes": 6137,
         "clauses": 2,
         "grammar_blocks": 0,
         "id": "sec-error-handling-and-language-extensions",
@@ -571,57 +568,57 @@
       },
       {
         "algorithms": 14,
-        "bytes": 47699,
-        "clauses": 74,
+        "bytes": 45694,
+        "clauses": 71,
         "grammar_blocks": 0,
         "id": "sec-global-object",
-        "steps": 289,
+        "steps": 291,
         "tag": "emu-clause",
         "title": "The Global Object"
       },
       {
-        "algorithms": 66,
-        "bytes": 98671,
-        "clauses": 163,
+        "algorithms": 65,
+        "bytes": 91400,
+        "clauses": 150,
         "grammar_blocks": 1,
         "id": "sec-fundamental-objects",
-        "steps": 398,
+        "steps": 388,
         "tag": "emu-clause",
         "title": "Fundamental Objects"
       },
       {
-        "algorithms": 130,
-        "bytes": 182564,
+        "algorithms": 131,
+        "bytes": 181877,
         "clauses": 191,
         "grammar_blocks": 1,
         "id": "sec-numbers-and-dates",
-        "steps": 942,
+        "steps": 947,
         "tag": "emu-clause",
         "title": "Numbers and Dates"
       },
       {
         "algorithms": 214,
-        "bytes": 264451,
+        "bytes": 256262,
         "clauses": 152,
         "grammar_blocks": 143,
         "id": "sec-text-processing",
-        "steps": 1525,
+        "steps": 1528,
         "tag": "emu-clause",
         "title": "Text Processing"
       },
       {
-        "algorithms": 121,
-        "bytes": 217597,
-        "clauses": 157,
+        "algorithms": 120,
+        "bytes": 220385,
+        "clauses": 156,
         "grammar_blocks": 0,
         "id": "sec-indexed-collections",
-        "steps": 1713,
+        "steps": 1829,
         "tag": "emu-clause",
         "title": "Indexed Collections"
       },
       {
         "algorithms": 53,
-        "bytes": 77351,
+        "bytes": 76154,
         "clauses": 98,
         "grammar_blocks": 0,
         "id": "sec-keyed-collections",
@@ -630,18 +627,18 @@
         "title": "Keyed Collections"
       },
       {
-        "algorithms": 120,
-        "bytes": 181337,
-        "clauses": 162,
+        "algorithms": 119,
+        "bytes": 179344,
+        "clauses": 161,
         "grammar_blocks": 5,
         "id": "sec-structured-data",
-        "steps": 1080,
+        "steps": 1092,
         "tag": "emu-clause",
         "title": "Structured Data"
       },
       {
         "algorithms": 6,
-        "bytes": 13430,
+        "bytes": 13408,
         "clauses": 24,
         "grammar_blocks": 0,
         "id": "sec-managing-memory",
@@ -650,18 +647,18 @@
         "title": "Managing Memory"
       },
       {
-        "algorithms": 107,
-        "bytes": 220329,
-        "clauses": 213,
+        "algorithms": 88,
+        "bytes": 184266,
+        "clauses": 171,
         "grammar_blocks": 0,
         "id": "sec-control-abstraction-objects",
-        "steps": 1316,
+        "steps": 1090,
         "tag": "emu-clause",
         "title": "Control Abstraction Objects"
       },
       {
         "algorithms": 15,
-        "bytes": 11593,
+        "bytes": 11505,
         "clauses": 23,
         "grammar_blocks": 0,
         "id": "sec-reflection",
@@ -671,7 +668,7 @@
       },
       {
         "algorithms": 10,
-        "bytes": 42668,
+        "bytes": 41265,
         "clauses": 28,
         "grammar_blocks": 0,
         "id": "sec-memory-model",
@@ -681,7 +678,7 @@
       },
       {
         "algorithms": 0,
-        "bytes": 24996,
+        "bytes": 24103,
         "clauses": 9,
         "grammar_blocks": 0,
         "id": "sec-grammar-summary",
@@ -691,17 +688,17 @@
       },
       {
         "algorithms": 39,
-        "bytes": 56796,
+        "bytes": 56588,
         "clauses": 52,
-        "grammar_blocks": 43,
+        "grammar_blocks": 41,
         "id": "sec-additional-ecmascript-features-for-web-browsers",
-        "steps": 171,
+        "steps": 179,
         "tag": "emu-annex",
         "title": "Additional ECMAScript Features for Web Browsers"
       },
       {
         "algorithms": 0,
-        "bytes": 5989,
+        "bytes": 5986,
         "clauses": 1,
         "grammar_blocks": 4,
         "id": "sec-strict-mode-of-ecmascript",
@@ -711,7 +708,7 @@
       },
       {
         "algorithms": 0,
-        "bytes": 2670,
+        "bytes": 2800,
         "clauses": 7,
         "grammar_blocks": 0,
         "id": "sec-host-layering-points",
@@ -731,7 +728,7 @@
       },
       {
         "algorithms": 0,
-        "bytes": 14856,
+        "bytes": 14850,
         "clauses": 1,
         "grammar_blocks": 0,
         "id": "sec-additions-and-changes-that-introduce-incompatibilities-with-prior-editions",
@@ -741,7 +738,7 @@
       },
       {
         "algorithms": 0,
-        "bytes": 3412,
+        "bytes": 3187,
         "clauses": 1,
         "grammar_blocks": 0,
         "id": "sec-bibliography",
@@ -761,24 +758,25 @@
       }
     ],
     "vocabulary": {
-      "abrupt_completion": 122,
-      "assert_steps": 621,
+      "abrupt_completion": 114,
+      "assert_steps": 598,
       "host_defined": 52,
       "host_hooks": 9,
       "implementation_approximated": 47,
-      "implementation_defined": 57,
+      "implementation_defined": 54,
       "implementation_dependent": 0,
       "in_any_order": 0,
       "left_to_right": 11,
-      "normal_completion": 422,
+      "normal_completion": 409,
       "return_if_abrupt": 0,
-      "shorthand_bang": 567,
-      "shorthand_question": 2405,
-      "throw_completion": 318,
+      "shorthand_bang": 555,
+      "shorthand_question": 2328,
+      "throw_completion": 309,
       "undefined_behavior": 1,
       "unspecified": 1
     }
   },
+  "spec_revision": "es2026-errata",
   "test262": {
     "built_ins_slice": {
       "by_second_level": {
@@ -1201,15 +1199,15 @@
       "tests": 18114
     },
     "esid_distinct": 1798,
-    "esid_resolving_to_pinned_spec": 21874,
+    "esid_resolving_to_pinned_spec": 21572,
     "esid_rows": 42599,
     "esid_unresolved_distinct": {
-      "clause-id-absent": 239,
+      "clause-id-absent": 269,
       "grammar-production-anchor": 53,
       "outside-ecma262": 587
     },
     "esid_unresolved_rows": {
-      "clause-id-absent": 6776,
+      "clause-id-absent": 7078,
       "grammar-production-anchor": 4532,
       "outside-ecma262": 7760,
       "placeholder-pending": 1657

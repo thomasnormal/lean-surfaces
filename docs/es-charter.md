@@ -46,11 +46,11 @@ this tier.
 | --- | --- |
 | `<Lang>` | **`Es`** — as proposed |
 | authority | **SPEC-MIRROR (ECMA-262) + OFFICIAL-SUITE (test262)** — as proposed, and §3.2 measures why the second half is earned |
-| **edition token** | **`ES2026`** — ratified here |
-| pinned artifact | the **`es2026-errata`** git tag (§1.4.1) |
+| **edition token** | **`ES2026`** — ratified here, and **PINNED** (§0.2) |
+| pinned artifact | the **`es2026-errata`** git tag (§1.4.1), sha256 `032ecc74…` |
 | oracle | an engine for behaviour; **test262's expectation for the verdict** (§4.3) |
 | corpus | test262, fetched not vendored (§3.4) |
-| state | founding — **and the SoftFloat block is DOWNGRADED, §0.2** |
+| state | founding — **SoftFloat block DOWNGRADED (§0.3); edition PINNED, M1 inch 2 landed (§0.2)** |
 
 ### 0.1 The edition token, against the four laws
 
@@ -78,7 +78,51 @@ called that field `edition_id` by analogy with `c-0.1`'s `profile_id`;
 the family's name wins, and the schema version (`es-0.1`) stays
 orthogonal.
 
-### 0.2 The SoftFloat row — the block is a DEPENDENCY, and Layer 1 is satisfied
+### 0.2 The pin is LANDED, and it refuses
+
+Thomas's standing latest-spec-priority ruling and this charter's priced
+recommendation agree, so the edition is pinned rather than proposed:
+**`ES2026`, at the `es2026-errata` revision.**
+
+`docs/es-edition.json` is the artifact — written by the census
+(`--write-edition`), read by it (`--edition`), and the single place the
+extractor and the envelope will read the token from, so path, envelope
+and citation cannot drift. It mirrors `docs/c-profile.json`'s role
+exactly: an identity a downstream tool verifies rather than assumes.
+
+**It refuses, and all four paths were RUN rather than designed:**
+
+* the pinned spec against the pin — **passes**, and stamps
+  `language_version: ES2026`;
+* the **draft** against the pin — REFUSES, naming both sha256s;
+* **`es2026` (non-errata)** against the errata pin — REFUSES. The two
+  editions differ by 764 bytes and zero structural counts (§1.4.1), and
+  the pin still separates them. An identity check that tolerated a
+  764-byte difference would not be one;
+* the token `es2026-errata` as an EDITION TOKEN — REFUSES, because it is
+  not a valid Lean identifier (`family-architecture.md` §1.1 law 1). This
+  is the mechanical reason the token and the revision are two strings.
+
+**And pinning has a second measured cost, beyond §1.4.1's 249 steps.**
+Re-running the whole census against `ES2026` instead of the draft moves
+exactly two joins, and both moves are the suite and the engine being
+ahead of the edition rather than anything being wrong:
+
+| | draft | **ES2026** | delta |
+| --- | ---: | ---: | ---: |
+| test262 `esid` rows resolving to the pinned spec | 21,874 | **21,572** | **−302** |
+| …correspondingly, `clause-id-absent` | 6,776 | **7,078** | +302 |
+| engine262 `#sec-` anchors resolving | 1,152 | **1,141** | −11 |
+| everything measured on the SUITE and the FRONTEND | — | — | **0** |
+
+**302 suite citations and 11 engine anchors name clauses that exist only
+in the draft** — the §3.3 Stage-4 mechanism, now quantified against the
+pinned edition instead of asserted. The frontend's 97.8% and the 66-type
+vocabulary do not move at all, because they are edition-independent, and
+that they did not move is the check that the re-pin changed what it
+should and nothing else.
+
+### 0.3 The SoftFloat row — the block is a DEPENDENCY, and Layer 1 is satisfied
 
 `docs/family-architecture.md` §3.5.3 lists this tier as **BLOCKING** on
 SoftFloat, on the correct grounds that *"a float-free JS core slice is

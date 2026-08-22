@@ -16476,6 +16476,48 @@ per-file shape was never tried, for the reason recorded three times in this
 document: 615 differential rows once went from hours to ~11 s by stopping the
 per-row spawn. A new lane's first instrument is exactly where that lesson
 gets re-learned expensively.
+
+### ADDENDUM — M1 INCH 2: the edition is PINNED, and the pin refuses (2026-08-22)
+
+The coordinator resolved §the decision points: **edition `es2026-errata`** (this
+charter's priced recommendation meeting Thomas's standing latest-spec-priority
+ruling, flagged to him for override), token **`ES2026`**; **driver = the test262
+slice as rung 0** per the family's suites-drive-scope ruling, with `sunfish.js`
+a recorded candidate only; and the `Run σ ε` payload question routed to the
+architecture lane as the substrate's second-consumer question — **this tier's
+requirement is recorded as ε = an RVal-like arbitrary language value**, not a
+closed enum, and M1 does not block on it.
+
+**`docs/es-edition.json` lands as the pin**, written by
+`es_census.py --write-edition` and verified by `--edition` — the artifact the
+census, the extractor and the envelope all read, so path, envelope and citation
+cannot drift. It is `docs/c-profile.json`'s role exactly: an identity a
+downstream tool VERIFIES rather than assumes.
+
+**All four refusal paths were RUN, not designed.** The pinned spec passes and
+stamps `language_version: ES2026`; the DRAFT refuses, naming both sha256s;
+**`es2026` non-errata refuses against the errata pin** — the two differ by 764
+bytes and zero structural counts, and an identity check that tolerated that
+would not be one; and the string `es2026-errata` refuses as an edition TOKEN
+because it is not a valid Lean identifier (family-architecture §1.1 law 1),
+which is the mechanical reason the token and the revision are two strings.
+`--self-test` now covers all three edition paths beside the original three.
+
+**Re-censusing against `ES2026` instead of the draft moves exactly two joins,
+and both are the suite and the engine being AHEAD of the edition:** test262
+`esid` rows resolving 21,874 → **21,572** (−302, with `clause-id-absent` +302),
+engine262 anchors resolving 1,152 → **1,141** (−11). **Everything measured on
+the SUITE and the FRONTEND is unchanged to the digit** — 53,578 tests, the
+18,114-test core slice, 97.8% parse agreement, 66 ESTree node types — because
+those are edition-independent, and that they did NOT move is the check that the
+re-pin changed what it should and nothing else. So the price of pinning is now
+fully stated: 249 numbered steps of newer built-in material (§the
+recommendation), 302 suite citations, 11 engine anchors, and no structural
+taxonomy movement at all.
+
+Census re-run is byte-identical on a double `--compare`; `docs_check` 75/75.
+No Lean, so the build lock was not taken.
+
 ## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
 
 The owner ruled all six of §L60's decisions the same day, and the SV lane's

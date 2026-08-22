@@ -1,0 +1,18 @@
+{
+  "algorithm_steps": 14221,
+  "algorithms": 2239,
+  "clauses": 2262,
+  "core_slice": {
+    "algorithms": 1365,
+    "bytes": 1494297,
+    "clauses": 907,
+    "grammar_blocks": 1312,
+    "steps": 6216
+  },
+  "language": "ecmascript",
+  "language_version": "ES2026",
+  "spec_bytes": 2979557,
+  "spec_revision": "es2026-errata",
+  "spec_sha256": "032ecc740356b38f6846338d8c44536291a134a6ce60e651f935befb239cfc1a",
+  "spec_title": "ECMAScript(R) 2026 Language Specification"
+}

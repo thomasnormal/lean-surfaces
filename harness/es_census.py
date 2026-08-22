@@ -74,6 +74,20 @@ from pathlib import Path
 SCHEMA = "es-census-0.1"
 
 # ---------------------------------------------------------------------------
+# THE EDITION PIN.  `docs/family-architecture.md` §1.1-§1.5: a tier names its
+# edition with a TOKEN that is a valid Lean identifier and never renames, and
+# every envelope carries it as `language_version`.  The token and the pinned
+# REVISION of that edition's text are deliberately different strings — the
+# token names the edition (ES2026), the revision names the bytes this tier
+# extracts from (the `es2026-errata` tag).
+#
+# This constant is the fallback only.  The authority is `docs/es-edition.json`,
+# written by --write-edition and verified by --edition, so the census, the
+# extractor and the envelope all read ONE artifact and a spec from another
+# edition REFUSES rather than being silently censused.
+EDITION_TOKEN = "ES2026"
+
+# ---------------------------------------------------------------------------
 # The core slice, as the charter defines it.  Kept here so the number and the
 # definition cannot drift apart: docs/es-charter.md quotes this table.
 # ---------------------------------------------------------------------------
@@ -110,6 +124,24 @@ EXCLUDED_TEST_DIRS = {
 OUT_OF_SLICE_FLAGS = {"module", "async", "CanBlockIsTrue", "CanBlockIsFalse"}
 
 FRONTMATTER = re.compile(r"/\*---(.*?)---\*/", re.S)
+
+
+def load_edition(path):
+    d = json.loads(Path(path).read_text(encoding="utf-8"))
+    for k in ("language_version", "spec_revision", "spec_sha256"):
+        if k not in d:
+            raise Refusal(f"{path}: edition pin is missing `{k}`")
+    return d
+
+
+def check_edition(pin, spec):
+    """An envelope from another edition is a DIFFERENT PROGRAM.  Refuse."""
+    if spec["sha256"] != pin["spec_sha256"]:
+        raise Refusal(
+            f"edition mismatch: the pin {pin['language_version']} "
+            f"({pin['spec_revision']}) names spec sha256 {pin['spec_sha256'][:16]}…, "
+            f"but --spec is {spec['sha256'][:16]}… — censusing a different edition "
+            f"than the tier claims. Re-pin deliberately or pass the pinned spec.")
 
 
 class Refusal(Exception):
@@ -780,6 +812,28 @@ def self_test():
         assert m["negative"] == {"phase": "parse", "type": "SyntaxError"}, m
         assert m["description"].splitlines() == ["  two", "  lines"], m
         ok.append("the corpus's own shapes parse")
+
+        # 4. the EDITION pin.  A pin that cannot refuse is decoration.
+        (d / "pin.json").write_text(json.dumps({
+            "language_version": "ES2026", "spec_revision": "es2026-errata",
+            "spec_sha256": "0" * 64}))
+        pin = load_edition(d / "pin.json")
+        try:
+            check_edition(pin, {"sha256": "f" * 64})
+            print("SELF-TEST FAIL: an edition mismatch did not refuse")
+            return 1
+        except Refusal:
+            ok.append("edition mismatch refuses")
+        check_edition(pin, {"sha256": "0" * 64})          # the matching case passes
+        ok.append("the matching edition passes")
+        (d / "bad.json").write_text(json.dumps({"language_version": "ES2026"}))
+        try:
+            load_edition(d / "bad.json")
+            print("SELF-TEST FAIL: an incomplete pin did not refuse")
+            return 1
+        except Refusal:
+            ok.append("an incomplete edition pin refuses")
+
     for line in ok:
         print("  ok:", line)
     return 0
@@ -797,6 +851,12 @@ def main():
     ap.add_argument("-o", "--out", help="write JSON here")
     ap.add_argument("--compare", help="compare against a previous JSON; nonzero on drift")
     ap.add_argument("--self-test", action="store_true", help="run the refusal paths")
+    ap.add_argument("--edition", help="path to docs/es-edition.json; verifies --spec "
+                                      "is the pinned edition and stamps language_version")
+    ap.add_argument("--write-edition", metavar="OUT",
+                    help="write the edition pin for --spec (needs --edition-token/--edition-revision)")
+    ap.add_argument("--edition-token", help="the registry's edition token, e.g. ES2026")
+    ap.add_argument("--edition-revision", help="the pinned revision of that edition's text, e.g. es2026-errata")
     args = ap.parse_args()
 
     if args.self_test:
@@ -812,6 +872,35 @@ def main():
             clause_ids = spec.pop("_clause_id_set")
             result["spec"] = spec
             result["sources"]["ecma262"] = rev(Path(args.spec).parent)
+            if args.write_edition:
+                if not (args.edition_token and args.edition_revision):
+                    ap.error("--write-edition needs --edition-token and --edition-revision")
+                if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", args.edition_token):
+                    raise Refusal(f"edition token {args.edition_token!r} is not a valid Lean "
+                                  f"identifier — family-architecture.md §1.1 law 1")
+                pin = {
+                    "language": "ecmascript",
+                    "language_version": args.edition_token,
+                    "spec_revision": args.edition_revision,
+                    "spec_sha256": spec["sha256"],
+                    "spec_bytes": spec["bytes"],
+                    "spec_title": spec["title"],
+                    "clauses": spec["clauses"] + spec["annexes"],
+                    "algorithms": spec["algorithms"],
+                    "algorithm_steps": spec["algorithm_steps"],
+                    "core_slice": spec["core_slice"],
+                }
+                Path(args.write_edition).write_text(
+                    json.dumps(pin, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+                print(f"wrote {args.write_edition}: {args.edition_token} "
+                      f"({args.edition_revision}), sha256 {spec['sha256'][:16]}…")
+            if args.edition:
+                pin = load_edition(args.edition)
+                check_edition(pin, spec)
+                result["language_version"] = pin["language_version"]
+                result["spec_revision"] = pin["spec_revision"]
+        elif args.edition or args.write_edition:
+            ap.error("--edition/--write-edition need --spec")
         if args.tests:
             result["test262"] = census_tests(args.tests, clause_ids)
             result["sources"]["test262"] = rev(args.tests)

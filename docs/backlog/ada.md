@@ -136,3 +136,104 @@ read out of its own front matter. Content pinning is strictly stronger than a
 revision stamp for an artifact that lives outside the repository, so there is
 nothing here to fix — but "we have no `git_rev`" would have looked like the
 defect if it had not been explained.
+
+## 2026-08-22-ada-2 — M2's DESIGN: the substrate instantiated, and Ada needs a REFUSAL CAUSE the substrate does not have
+
+M1 is complete and durable, so M2 begins. `docs/ada-semantics-design.md`
+lands — census-first, **no interpreter built**, classified `docs` by
+`tools/triad.sh --classify-only` and therefore owing no tenure. Every clause
+title in it was read out of `docs/ada-spec-census.json` rather than recalled,
+which is the joined-ladder discipline applied to the design's own citations.
+
+### THE FINDING: `RefusalCause` is three constructors and Ada needs a fourth
+
+`LeanModels/Es/Completion.lean` fixes `RefusalCause` at
+`unsupportedConstruct | unmodeledIntrinsic | environment`.
+`docs/family-architecture.md` §5.2 fixes **four** causes for the family. Ada
+needs the one neither list has as a constructor: **`undefined` — §5.2's cause
+2, *the language says this run has no meaning***.
+
+For ES that bucket is expected EMPTY and is gated as such, because ES has no
+undefined behaviour. **Ada has it by name**: ARM 1.1.5, *Classification of
+Errors*, defines erroneous execution as the class with *no language-specified
+bound on the possible effect*. Measured: **23 Erroneous Execution paragraphs
+in clauses 1-13**, 115 document-wide, concentrated in ARM 11.5 (*Suppressing
+Checks*) and ARM 13.9.1 (*Data Validity*).
+
+**This lane does not move the ES type.** Two options exist — a `Core` cause
+with all four, or a per-tier cause type — and choosing is the architecture
+lane's call, exactly as the ES charter left it. What this lane owes is the
+measurement, and that is delivered rather than a patch to somebody else's
+file.
+
+### `ρ` is an exception OCCURRENCE, and it VALIDATES the substrate's parametricity
+
+The ES tier records a requirement that `throw` carry a `Val` and not a closed
+enum, because a thrown JS value is an arbitrary language value, and notes
+this lane would be the second consumer that settles where such a type lives.
+**Ada's answer is the opposite and the conclusion is that it need not be
+settled centrally at all.** Ada does not throw values: `raise` names a
+declared exception (ARM 11.1, 11.3) and an occurrence carries an identity
+plus a message (ARM 11.4.1). `ρ` is a parameter, the two languages want
+genuinely different things, and both get them.
+
+`Constraint_Error` and `Program_Error` are **not a separate mechanism** —
+predefined exceptions travelling in the same arm as any other, which is why
+Ada's run-time errors are an ORDINARY OUTCOME and not a refusal.
+
+### THE TRACE IS IN `W` FROM INCH 1 — the grader ruling reaching into the monad
+
+The C tier put stdout in `World` because stdout is world data. **Ada's
+scoreboard computes no verdict at all**: it emits the ACAA's event-trace rows
+and `GRADE` decides (§L69, validated with both negative cases). An emitter is
+not retrofittable — if the trace is not in `W` at the first statement rule,
+every rule is revisited to add it. The envelope already carries `line`,
+`col`, `endLine`, `endCol` on every node for exactly this, so inch 1 has the
+spans a `CERR` row needs before there is a semantics that could produce one.
+
+`W`'s other Ada-specific component: **elaboration order**, which no sibling
+tier's world has. It is data the tier was handed rather than derived —
+§L74 measured that one ACATS file in seven has a name that is not among its
+unit names, so it could not have been re-derived.
+
+### v0 IS 517 TESTS, and every one of the 1,374 uses `Report`
+
+Re-derived today: 2,633 executable → 2,194 without tasking → **1,374 needing
+no predefined library unit at all**, of which 1,322 are class C — and
+**1,374 of 1,374 use `Report`**. That settles the v0 library obligation
+completely: it is `Report`, natively modeled, and nothing else.
+
+Inside that: 322 use no feature bucket, **517 are within {exceptions}**, 659
+within {+access types}, 812 within {+separate compilation}, 834
+{+instantiation}. So **v0 = sequential + exceptions + `Report` = 517 tests**,
+the first number the tier can actually score.
+
+**The ladder is ten inches, ~21-24 sessions, with THE FIRST SCORE AT INCH 6**
+— the shape the C lane's ladder deliberately took, rather than a score at the
+end.
+
+### Inch 1's one irreversible decision, and it is the mirror of C's
+
+A scalar value carries its SUBTYPE, and a constraint violation **raises
+`Constraint_Error`** rather than wrapping or refusing (ARM 3.5, 4.6, 5.2).
+This is where Ada differs from C most sharply and most cheaply: C's
+out-of-range signed arithmetic is UB and must REFUSE; **Ada's is a defined
+raise of a predefined exception** — an ordinary outcome. Getting it backwards
+would make the tier refuse a huge fraction of a suite that is largely *about*
+constraint checking.
+
+`Value.lean` goes in **`Ada2012/`, not the trunk** — the mirror of inch 6's
+argument. The AST is trunk because it is kind-agnostic and provably
+edition-insensitive; **meaning is not**, and the ARM's 953 Legality-Rule
+paragraphs against 572 Syntax paragraphs is the first number that differs
+between editions.
+
+### A tool caught a defect in this lane's old lane name
+
+`tools/triad.sh --lane ada-lane` is REFUSED: *"`-` would break the ticket
+parse"*. The ticket format is `<ts>-<pid>-<lane>` and the reaper reads the
+pid with `cut -d-`, so a hyphenated lane name silently corrupts the
+staleness check. **This lane's deleted hand-rolled script used exactly
+`ada-lane`**, and its own reaper would have parsed the wrong field. The lane
+is `ada` from here on. This is §9.2's argument in one line: the shared script
+validates what a lane-private one merely got away with.

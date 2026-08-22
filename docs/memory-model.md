@@ -1723,22 +1723,58 @@ stores.
 
 ### The inches, ordered by price
 
-* **3b — the DRAINING consumers** (`list(d)`, `tuple(d)`, `sorted(d)`,
-  `sum(d)`, `max`/`min(d)`, `set(d)`, `[*d]`, unpacking). **These have no
-  mutation window at all**: they drain the keys with no user code running
-  in between, so not one of the three regimes above can arise. They need
-  only "the keys, in insertion order". Eight of the ten refusal messages
-  are here, each a one-line arm beside an existing `.list` arm in the
-  same `match` — which makes it the cheapest inch and the largest single
-  reduction in the refusal surface. *The recorded refusals cite "live
-  dict iteration" for all of them: eight of the ten messages guard a
-  hazard only two of them can meet.*
+* **3b — the DRAINING consumers — BUILT.** `list(d)`, `tuple(d)`,
+  `sorted(d)`, `sum(d)`, `max`/`min(d)`, `set(d)`, `any`/`all(d)` and
+  `[*d]` (which lowers through `tuple`). **These have no mutation window
+  at all**: they drain the keys with no user code running in between, so
+  not one of the three regimes above can arise inside them. They need
+  only "the keys, in insertion order" — `dictKeys`, one `Array.map`.
+  *The recorded refusals cited "live dict iteration" for all of them:
+  eight of the ten messages guarded a hazard only two of them can meet.*
+  See §the draining consumers, as built.
 * **3a — the cursor at function scope, and the bare `for k in d` form.**
   The semantics are settled and already exercised at module scope; the
   work is a mutual-block member and its four walker arms.
 * **3c — the view methods as first-class iterables** (`.keys()`,
   `.values()`, `.items()` outside the shell) and `enumerate(d)`.
 * **3d — `DictComp`**, which rides 3a.
+
+### The draining consumers, as built (inch 3b)
+
+One helper — `dictKeys es = es.map Prod.fst`, the entries array being the
+insertion sequence already — and seven value arms, each the `.list` arm
+sitting beside it in the same `match` with `dictKeys es` for `xs`. Nothing
+allocates that did not already: `list(d)` pushes exactly as `list(xs)`
+does, `tuple`/`sum`/`max`/`min`/`any`/`all` allocate nothing, and `set(d)`
+runs the ordinary `setDedup` — a no-op on keys, which are distinct by the
+dict-key doctrine, RUN rather than assumed away so a hand-built module
+cannot slip a duplicate past it.
+
+**The proof-layer price was 19 arms across two walkers, and §L53 called
+it.** The census recorded the risk before the inch was written:
+`PayloadBlind`'s and `ClockErase`'s dispatchers reach the same `match`,
+and their `| _ => exact PBF.unsupported` / `cases obj <;> try exact
+.unsupported` catch-alls were LOAD-BEARING on the dict arm being a
+refusal. Twelve `ClockErase` arms and seven `PayloadBlind` arms, every one
+the adjacent `.list` arm's tactic verbatim (`exact .liftRes hs2 _`,
+`exact PBF.ok hs1 _`, `exact PBF.allocList hs1 _`, and the two
+`sortedValH` helper blocks with `(dictKeys es).toList` for `xs.toList`).
+
+**The rule this sharpens**: a change that makes a previously-REFUSING arm
+DECIDE costs exactly as many proof arms as there are walkers whose
+catch-all was leaning on that refusal. A refusal is not free in the proof
+layer — it is a case someone else is standing on.
+
+Payload-blindness holds for a structural reason worth keeping: a
+`PayloadTwin` is `.generator … .running` on BOTH sides, so the swapped
+slot can never hold a dict — the new arms read entries at an address the
+twin cannot be, and `swapAt` leaves them alone.
+
+**The regression guard that flipped is the acceptance signal.**
+`Examples/python/star_lab/spec.lean` asserted `star_dict` refuses; `[*d]`
+now answers CPython's `['x', 'y']`, so the guard became a `#py_check` of
+the real value and its `cases.json` row moved `unsupported` → `match`.
+That is the only pre-existing expectation the inch moves.
 
 ## Annotated assignment (`AnnAssign`, §L49 rung 2)
 

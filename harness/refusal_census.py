@@ -382,23 +382,23 @@ for k in d:
 """, "REFUSE", "the live cursor — inch 3a")
 w("dict.list", """
 print(list({2: 'b', 1: 'a'}))
-""", "REFUSE", "a DRAINING consumer: no mutation window — inch 3b")
+""", "MATCH", "a DRAINING consumer: no mutation window — landed by §L53 rung 3b")
 w("dict.tuple", """
 print(tuple({2: 'b', 1: 'a'}))
-""", "REFUSE", "inch 3b")
+""", "MATCH", "landed by §L53 rung 3b")
 w("dict.sorted", """
 print(sorted({2: 'b', 1: 'a'}))
-""", "REFUSE", "inch 3b")
+""", "MATCH", "landed by §L53 rung 3b")
 w("dict.sum", """
 print(sum({2: 20, 1: 10}))
-""", "REFUSE", "inch 3b")
+""", "MATCH", "landed by §L53 rung 3b")
 w("dict.max", """
 print(max({2: 'b', 1: 'a'}))
-""", "REFUSE", "inch 3b")
+""", "MATCH", "landed by §L53 rung 3b")
 w("dict.star", """
 d = {2: 'b', 1: 'a'}
 print([*d])
-""", "REFUSE", "inch 3b")
+""", "MATCH", "landed by §L53 rung 3b")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -552,6 +552,7 @@ WHITELIST_CLASS = {
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
     "dict_lab::iter_dict": "iter.dict",
+    "dict_lab::keys_for_is_still_loud": "iter.dict",
     "sf_hist::push": "boundary.list-mutation",
     "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",
@@ -631,7 +632,6 @@ WHITELIST_CLASS = {
     "clock_lab::call_with_arg": "clock.arity",
     "star_lab::star_call": "starred.position",
     "star_lab::star_set": "set.order",
-    "star_lab::star_dict": "iter.dict",
     "star_lab::star_target": "starred.position",
     "star_lab::star_for": "starred.position",
     "star_shadow::shadowed": "shadow.module-census",

@@ -1398,6 +1398,21 @@ theorem sortedValH_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadT
                     | timeout => simp only [hai, hsb, Res.timeout_bind, Res.mapOk, Res.pure_eq]
                     | unsupported msg =>
                         simp only [hai, hsb, Res.unsupported_bind, Res.mapOk, Res.pure_eq]
+            -- §L53 rung 3b: the KEYS, allocating the same fresh result
+            | dict es sv =>
+                cases hai : (if desc then Option.none else asIntList (dictKeys es).toList) with
+                | some ns =>
+                    simp only [hai, Heap.swapAt_push hlt, Heap.size_swapAt, Res.mapOk,
+                      Res.pure_eq]
+                | none =>
+                    cases hsb : sortByLt desc (dictKeys es).toList with
+                    | ok l =>
+                        simp only [hai, hsb, Res.ok_bind, Heap.swapAt_push hlt,
+                          Heap.size_swapAt, Res.mapOk, Res.pure_eq]
+                    | exn e => simp only [hai, hsb, Res.exn_bind, Res.mapOk, Res.pure_eq]
+                    | timeout => simp only [hai, hsb, Res.timeout_bind, Res.mapOk, Res.pure_eq]
+                    | unsupported msg =>
+                        simp only [hai, hsb, Res.unsupported_bind, Res.mapOk, Res.pure_eq]
             | _ => rfl
       · simp only [sortedValH, h1, h2, Res.mapOk]
   | _ =>
@@ -1424,6 +1439,23 @@ theorem sortedValH_slot (hslot : Heap.get? h pa = some o₀)
                   exact Heap.get?_push_of_get? _ hslot
               | none =>
                   cases hsb : sortByLt desc xs.toList with
+                  | ok l =>
+                      simp only [sortedValH, hget, hai, hsb, Res.ok_bind, Res.pure_eq,
+                        Res.ok.injEq] at hw
+                      subst hw
+                      exact Heap.get?_push_of_get? _ hslot
+                  | exn e => simp [sortedValH, hget, hai, hsb] at hw
+                  | timeout => simp [sortedValH, hget, hai, hsb] at hw
+                  | unsupported msg => simp [sortedValH, hget, hai, hsb] at hw
+          -- §L53 rung 3b: the KEYS, allocating the same fresh result
+          | dict es sv =>
+              cases hai : (if desc then Option.none else asIntList (dictKeys es).toList) with
+              | some ns =>
+                  simp only [sortedValH, hget, hai, Res.ok.injEq] at hw
+                  subst hw
+                  exact Heap.get?_push_of_get? _ hslot
+              | none =>
+                  cases hsb : sortByLt desc (dictKeys es).toList with
                   | ok l =>
                       simp only [sortedValH, hget, hai, hsb, Res.ok_bind, Res.pure_eq,
                         Res.ok.injEq] at hw
@@ -3079,6 +3111,9 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                       | list xs =>
                                                           simp only [anyAllScan_swapAt hs1 htwin]
                                                           exact PBF.liftRes hs1 _
+                                                      | dict es sv =>
+                                                          simp only [anyAllScan_swapAt hs1 htwin]
+                                                          exact PBF.liftRes hs1 _
                                                       | generator qn l cnt stt =>
                                                           refine PBF.bind (PBW.withLocals
                                                             (ihAny m s1.world b _ hs1))
@@ -3152,6 +3187,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                   | some obj =>
                                                       cases obj with
                                                       | list xs =>
+                                                          simp only [setDedup_swapAt hs1 htwin]
+                                                          refine PBF.bind (PBF.liftRes hs1 _)
+                                                            fun s2 es _ hs2 => ?_
+                                                          exact PBF.pushRef hs2 _
+                                                      | dict es sv =>
                                                           simp only [setDedup_swapAt hs1 htwin]
                                                           refine PBF.bind (PBF.liftRes hs1 _)
                                                             fun s2 es _ hs2 => ?_
@@ -3233,6 +3273,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                   | some obj =>
                                                       cases obj with
                                                       | list xs => exact PBF.liftRes hs1 _
+                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                      | dict es sv => exact PBF.liftRes hs1 _
                                                       | generator qn l cnt stt =>
                                                           refine PBF.ite
                                                             (fun _ => PBF.unsupported) fun _ => ?_
@@ -3280,6 +3322,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                   | some obj =>
                                                       cases obj with
                                                       | list xs => exact PBF.ok hs1 _
+                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                      | dict es sv => exact PBF.ok hs1 _
                                                       | generator qn l cnt stt =>
                                                           refine PBF.ite
                                                             (fun _ => PBF.unsupported) fun _ => ?_
@@ -3333,6 +3377,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                   | some obj =>
                                                       cases obj with
                                                       | list xs => exact PBF.allocList hs1 _
+                                                      -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
+                                                      | dict es sv => exact PBF.allocList hs1 _
                                                       | generator qn l cnt stt =>
                                                           refine PBF.bind (PBW.withLocals
                                                             (ihDrain m s1.world b hs1))

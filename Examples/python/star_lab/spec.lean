@@ -89,7 +89,11 @@ display and the dict receiver -/
 
 #guard callFunction star_lab "star_call" #[] 4096 matches .unsupported _
 #guard callFunction star_lab "star_set" #[] 4096 matches .unsupported _
-#guard callFunction star_lab "star_dict" #[] 4096 matches .unsupported _
+-- the DICT receiver LANDED with §L53 rung 3b: `[*d]` is CPython's key
+-- iteration, insertion-ordered. This guard asserted the refusal, and it is
+-- the regression guard that flipped when the draining consumers gained
+-- their dict arms (docs/memory-model.md §dict iteration).
+#py_check star_lab.star_dict() = (Val.list #[.str "x", .str "y"])
 #guard callFunction star_lab "star_target" #[] 4096 matches .unsupported _
 #guard callFunction star_lab "star_for" #[] 4096 matches .unsupported _
 

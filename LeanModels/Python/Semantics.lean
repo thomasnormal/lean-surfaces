@@ -1848,6 +1848,19 @@ def dictFind : List (RVal × RVal) → RVal → Option RVal
   | [], _ => Option.none
   | (k', v') :: rest, k => if keyEq k' k then some v' else dictFind rest k
 
+/-- The keys of a dict, in INSERTION ORDER — CPython's specified iteration
+order since 3.7, which `entries` already is (a store replaces a present
+key's value in place and appends an absent one, so the array IS the
+insertion sequence).
+
+This serves the DRAINING consumers only (`list`/`tuple`/`sorted`/`sum`/
+`max`/`min`/`set`/`any`/`all`, §L53 rung 3b). They are sound where the
+live cursor is delicate for one structural reason: they consume the keys
+with NO user code running in between, so none of the three mutation
+regimes the census measured (value update, size change, same-size key-set
+churn) can arise inside them — docs/memory-model.md §dict iteration. -/
+def dictKeys (es : Array (RVal × RVal)) : Array RVal := es.map Prod.fst
+
 /-- Store `k ↦ v`: an equal key present replaces ONLY THE VALUE (stored key
 and insertion position retained — `{True: _}` updated through `1` still
 lists `[True]`); an absent key appends. The `Bool` reports growth (the
@@ -2313,8 +2326,15 @@ def sortedValH (h : Heap) (v : RVal) (desc : Bool := false) : Res (Heap × RVal)
           .ok (h.push (.list (((sortInts ns).map RVal.int).toArray)), .ref h.size)
        | Option.none => do
           return (h.push (.list (← sortByLt desc xs.toList).toArray), .ref h.size))
-    | some (.dict _ _) =>
-        .unsupported "sorted() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+    -- §L53 rung 3b: sorted() drains, so no mutation window exists — the
+    -- keys in insertion order are all it needs (and the sort makes the
+    -- order unobservable anyway)
+    | some (.dict es _) =>
+      (match (if desc then Option.none else asIntList (dictKeys es).toList) with
+       | some ns =>
+          .ok (h.push (.list (((sortInts ns).map RVal.int).toArray)), .ref h.size)
+       | Option.none => do
+          return (h.push (.list (← sortByLt desc (dictKeys es).toList).toArray), .ref h.size))
     | some (.instance _ _) =>
         .exn (.typeError "'object' object is not iterable")
     | some (.generator ..) =>
@@ -2343,8 +2363,14 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
                .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
            | Option.none =>
                extremumOf isMax (if isMax then "max" else "min") xs.toList)
-        | some (.dict _ _) =>
-            .unsupported s!"{if isMax then "max" else "min"}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+        -- §L53 rung 3b: ranges over the KEYS, order-independent
+        | some (.dict es _) =>
+          (match asIntList (dictKeys es).toList with
+           | some (n :: rest) => .ok (.int (foldExtremum isMax n rest))
+           | some [] =>
+               .exn (.valueError s!"{if isMax then "max" else "min"}() arg is an empty sequence")
+           | Option.none =>
+               extremumOf isMax (if isMax then "max" else "min") (dictKeys es).toList)
         | some (.instance _ _) =>
             .exn (.typeError "'object' object is not iterable")
         | some (.generator ..) =>
@@ -4779,8 +4805,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.list xs) =>
                              Run.liftRes st
                                (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") xs.toList))
-                           | some (.dict _ _) =>
-                             .unsupported s!"{fname}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           -- §L53 rung 3b: scans the KEYS, short-circuiting
+                           | some (.dict es _) =>
+                             Run.liftRes st
+                               (do return RVal.bool (← anyAllScan st.world.heap (fname == "all") (dictKeys es).toList))
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.generator ..) =>
@@ -4852,8 +4880,14 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              .ok { st with world :=
                                      { st.world with heap := st.world.heap.push (.pyset es.toArray) } }
                                (.ref st.world.heap.size)
-                           | some (.dict _ _) =>
-                             .unsupported "set() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           -- §L53 rung 3b: the KEYS, already distinct under the
+                           -- dict-key doctrine, so setDedup is a no-op that is
+                           -- still RUN rather than assumed away
+                           | some (.dict es _) =>
+                             Run.liftRes st (setDedup st.world.heap fuel [] (dictKeys es).toList) ⤳ fun st ds =>
+                             .ok { st with world :=
+                                     { st.world with heap := st.world.heap.push (.pyset ds.toArray) } }
+                               (.ref st.world.heap.size)
                            | some (.instance _ _) =>
                              .exn st (.typeError "'object' object is not iterable")
                            | some (.cell _) => .unsupported cellInternal
@@ -4905,8 +4939,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                                 else
                                   Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
                                   Run.liftRes st (sumFold start vals)
-                              | some (.dict _ _) =>
-                                .unsupported "sum() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                              -- §L53 rung 3b: sums the KEYS, order-independent
+                              | some (.dict es _) =>
+                                Run.liftRes st (sumFold start (dictKeys es).toList)
                               | some (.pyset _) =>
                                 .unsupported "sum() over a set is outside the tier (hash order; docs/memory-model.md)"
                               | some (.instance _ _) =>
@@ -4942,8 +4977,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                              else
                                Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
                                .ok st (.tuple vals.toArray)
-                           | some (.dict _ _) =>
-                             .unsupported "tuple() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           -- §L53 rung 3b: the KEYS in insertion order (this arm
+                           -- also serves `[*d]`, which lowers through tuple)
+                           | some (.dict es _) =>
+                             .ok st (.tuple (dictKeys es))
                            | some (.pyset _) =>
                              .unsupported "tuple() over a set is outside the tier (hash order; docs/memory-model.md)"
                            | some (.instance _ _) =>
@@ -4982,8 +5019,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                            | some (.generator ..) =>
                              Run.withLocals st.locals (drainIter m fuel st.world a) ⤳ fun st vals =>
                              allocListRun st vals.toArray
-                           | some (.dict _ _) =>
-                             .unsupported "list() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
+                           -- §L53 rung 3b: the KEYS in insertion order
+                           | some (.dict es _) => allocListRun st (dictKeys es)
                            | some (.pyset _) =>
                              .unsupported "list() over a set is outside the tier (hash order; docs/memory-model.md)"
                            | some (.instance _ _) =>

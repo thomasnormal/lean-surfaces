@@ -405,8 +405,12 @@ and map the outcome to the process exit status (docs/memory-model.md
   differential driver must never read it as agreement;
 * `timeout` → 4 (loud likewise).
 -/
-def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) : IO UInt32 := do
-  match runScriptClock m clock fuel with
+def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) (mono : Bool) :
+    IO UInt32 := do
+  -- THE SAME SWAP as the batch surface: `runScriptClockMono` has
+  -- `runScriptClock`'s type by construction, so `script_corpus.py` compares the
+  -- two script executors through its own `--runner` flag and learns nothing.
+  match (if mono then Monadic.runScriptClockMono else runScriptClock) m clock fuel with
   | .ok w () =>
       for line in w.stdout do IO.println line
       return 0
@@ -608,7 +612,8 @@ it is produced. Envelopes are deliberately NOT cached (each program runs
 once; a corpus sweep must not accumulate every module it has seen).
 Runner-level failures are per-row `runner-error` lines PLUS a nonzero exit
 — LOUD, never absorbed into the stream as agreement. -/
-def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
+def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) (mono : Bool) :
+    IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --script-batch: cannot read '{jobsPath}': {toString e}"
@@ -647,27 +652,13 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
               ++ ",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
             stdout.putStrLn (scriptJson job.path m.topLevel.size
-              (runScriptClock m (job.clock.getD []) (job.fuel.getD defaultFuel)))
+              ((if mono then Monadic.runScriptClockMono else runScriptClock)
+                m (job.clock.getD []) (job.fuel.getD defaultFuel)))
         stdout.flush
       return (if hadError then 1 else 0)
 
 def main (argv : List String) : IO UInt32 := do
   let (argv, mono) := splitMonadic argv
-  -- A MODE THE REBUILD HAS NOT BUILT REFUSES AS A CAPABILITY ERROR (exit 2),
-  -- never as a semantic refusal (exit 3). Conflating "the rebuild has not got
-  -- here yet" with "Python says no" is exactly what the `monadic-rebuild:`
-  -- refusal prefix exists to prevent, and the exit code has to keep the same
-  -- distinction or the script corpus would score a missing module as a tier
-  -- boundary.
-  if mono then
-    match argv with
-    | "--script" :: _ | "--script-batch" :: _ => do
-        IO.eprintln
-          "leanmodels-run --monadic: the script executor is NOT rebuilt yet \
-           (Monadic/ covers the call surface; `runScript` is the plan's next \
-           milestone). Refusing rather than silently answering with the trunk."
-        return 2
-    | _ => pure ()
   match argv with
   | "--batch" :: rest =>
     match splitFuel rest with
@@ -697,7 +688,7 @@ def main (argv : List String) : IO UInt32 := do
         return 2
     | .ok (positional, fuel?) =>
       match positional with
-      | [jobsPath] => runScriptBatchMode jobsPath (fuel?.getD 1000000)
+      | [jobsPath] => runScriptBatchMode jobsPath (fuel?.getD 1000000) mono
       | _ =>
           IO.eprintln "usage: leanmodels-run --script-batch <jobs.jsonl> [--fuel N]"
           return 2
@@ -728,7 +719,7 @@ def main (argv : List String) : IO UInt32 := do
             unless envl.language == "python" do
               IO.eprintln s!"leanmodels-run --script: '{path}' has language '{envl.language}', expected 'python'"
               return 1
-            runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000)
+            runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000) mono
   | _ =>
   match parseCli argv with
   | .error e =>

@@ -29,3 +29,4 @@ import LeanModels.Python.Monadic.Substrate
 import LeanModels.Python.Monadic.Prim
 import LeanModels.Python.Monadic.Eval
 import LeanModels.Python.Monadic.Spec
+import LeanModels.Python.Monadic.Script

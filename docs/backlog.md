@@ -13633,17 +13633,32 @@ gate is instantiated at a real position rather than left conditional — §L25's
 law 3 paid at the fixture, with the general drains named as the R2a-class
 machinery they are.
 
-### What R3d-ii does NOT close, and why it is an ASK
+### THE ASK, written out — and the pin is CHECKED, not assumed
 
 The mate arm's table store is the fail-**LOW** one — `best = -47938` sits far
-below any `gamma` that reached this arm — and `store_runs_low` lives in
+below any `gamma` that reached this arm, so the shipped conditional takes its
+`Entry(entry.lower, best)` branch — and `store_runs_low` lives in
 `basecase_depth0.lean`, **the census lane's ground**. The file's own rule for
 that case (§L32: *"if an inch here turns out to need a depth-0 fact, the answer
 is to ask rather than to re-census"*) says request the depth-free twin rather
-than duplicate the proof, so `tail_runs_mate` waits on it. **That is the one
-thing standing between §12 and the `bound()` statement for the mate flavour**,
-and it is a generalisation of exactly the shape `store_runs_d` already made once
-(§L47) — the depth pin was scaffolding there too, in all likelihood.
+than duplicate the proof. **That is the one thing standing between §12 and the
+`bound()` statement for the mate flavour.**
+
+**The pin is scaffolding there too, and §12 now says so from READING rather than
+from analogy.** In `store_runs_low`, `depth`'s value enters in exactly two
+places: the `hd` premise handed to `py_simp`, and `tpKey pv 0` inside
+`sbStoredLow`. Those are the same two — and the only two — that `store_runs_d`
+(§L47) had to change in the fail-HIGH twin, where the proof then went through
+line for line. §12 writes out the requested `sbStoredLowAt`/`store_runs_low_d`
+signatures in full, with `store_runs_low` surviving as the `d := 0` instance, so
+the ask can be landed in one pass rather than designed.
+
+**And it writes out how `tail_runs_mate` will consume it**, so the join needs no
+design when it arrives: `tail_runs_live`'s chain unchanged, with `corr_fires` for
+`corr_skips_live` and `sbStoredLowAt` for `sbStoredAt`. One real difference, and
+it is a third hop — `corr_skips_live` leaves the world where it found it, so its
+chain runs at `w`; `corr_fires` moves the world TWICE, so the store, the eviction
+and the return all run at `w₂` and their premises are stated there.
 
 R3e (the killer-store write) and R3c's `hdrain`-gated interpreter half stay filed
 where they were.

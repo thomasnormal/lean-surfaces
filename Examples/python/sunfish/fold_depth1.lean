@@ -1611,16 +1611,52 @@ so this is a gate with its premises paid at a real position, not a conditional.
 `EVAL_ROUGHNESS` resolves **statically** (15, measured); `MATE_LOWER` and
 `MATE_UPPER` are POISONED, so the mate value's two bounds come off `w.globals`.
 
-### What R3d-ii does NOT close, and why not here
+### What R3d-ii does NOT close — and THE ASK, written out
 
-The mate arm's TABLE STORE is the fail-LOW one (`best = -47938` is far below any
-`gamma` that reached this arm), and `store_runs_low` lives in
-`basecase_depth0.lean` — **the census lane's ground**. §3's rule for that case is
-to ASK rather than re-derive, so the depth-free twin of `store_runs_low` is
-requested rather than duplicated here, and `tail_runs_mate` waits on it. The two
-drains' own gates (a `gen_moves` re-drain under `all`, and `next` over
-`king_capture`'s genexp) are R2a-class machinery and are named, not assumed away:
-they are what the `#guard`s below stand in for off the fixture. -/
+The mate arm's TABLE STORE is the fail-LOW one: `best = -47938` sits far below
+any `gamma` that reached this arm, so the shipped conditional takes its
+`Entry(entry.lower, best)` branch. That gate is `store_runs_low`, and it lives in
+`basecase_depth0.lean` — **the census lane's ground**. §3's standing rule for
+that case is to ASK rather than re-derive, so what follows is the request,
+written precisely enough to be landed in one pass rather than gestured at.
+
+**The pin is scaffolding there too, and that is CHECKED rather than assumed.**
+Reading `store_runs_low`, `depth`'s value enters in exactly two places: the `hd`
+premise handed to `py_simp`, and `tpKey pv 0` inside `sbStoredLow`. Those are the
+same two places — and the only two — that `store_runs_d` (§11) had to change to
+free the depth in the fail-HIGH twin, where the proof then went through line for
+line. So the request is:
+
+    def sbStoredLowAt (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal)
+        (d lo sc : Int) : Obj :=
+      .dict (dictStore es.toList (tpKey pv d) (entryOf lo sc)).1.toArray
+        (if (dictStore es.toList (tpKey pv d) (entryOf lo sc)).2 = true
+         then sv + 1 else sv)
+
+    theorem store_runs_low_d …                      -- `store_runs_low` verbatim,
+        (hd : Env.lookup e "depth" = some (.int d))  -- with `0` freed to `d`
+        … :
+        execStmt sunfish 20 ⟨w, e⟩ sbStore
+          = .ok ⟨{ w with heap := w.heap.set ts
+              (sbStoredLowAt es sv pv d lo sc) hlt }, e⟩ .next
+
+with `store_runs_low` surviving as its `d := 0` instance, exactly as
+`store_runs` now is of `store_runs_d`.
+
+**And how `tail_runs_mate` will consume it**, so the join needs no design when it
+arrives: the four-statement chain of `tail_runs_live` unchanged — fuels 40/39/38/
+37 through `execStmt_mono`, `evict_dead`'s premises at the post-store world,
+`hroom` in `dictStore`'s own spelling — with two substitutions. `corr_fires`
+replaces `corr_skips_live`, and `sbStoredLowAt` replaces `sbStoredAt`. The one
+REAL difference is worth stating because it is a third hop: `corr_skips_live`
+leaves the world where it found it, so its chain runs at `w`; `corr_fires` moves
+the world TWICE (the `all` drain, then `king_capture`'s), so the store, the
+eviction and the return all run at `w₂` and their premises are stated there.
+
+The two drains' own gates — a `gen_moves` re-drain under `all`, and `next` over
+`king_capture`'s genexp — are R2a-class machinery. They are named, not assumed
+away: the `#guard`s below are what stands in for them ON the fixture, and off it
+they remain hypotheses. -/
 
 def corrBody : List Stmt :=
   match sbCorr with | .ifStmt _ b _ _ => b.toList | _ => []

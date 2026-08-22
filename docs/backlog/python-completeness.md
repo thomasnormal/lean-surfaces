@@ -294,3 +294,79 @@ is shared, so this capability cannot be opened on the monadic definition
 alone** — the trunk gains a `refuse` arm and three walkers gain a line each.
 That is a fact about the type's home, and it is worth a ruling, but it is a
 9-line fact rather than a 35-line one.
+
+## 2026-08-23-pycomplete-5 — INCH 3a BUILT: the live dict cursor, on the monadic definition only
+
+`for k in d` runs on the monadic interpreter, at BOTH scopes, with the three
+regimes §L53 measured against CPython 3.9.19. The trunk gains a refuse arm and
+nothing else, per the ruling. **Queued for verification at the time of
+writing** (queue depth 9); this entry records what was built and why, and the
+triad's numbers land with the next push.
+
+### What the ruling bought, and what it cost
+
+| file | change | kind |
+| --- | --- | --- |
+| `Runtime.lean` | `GenFrame.forDict` + its `WF` arm | shared type grows (ruled) |
+| `Semantics.lean` | `genBreak`/`genContinue` arms + the trunk's `execGen` REFUSE arm | legacy contract: compiles, refuses, gains no consumers |
+| `ClockErase/Obs/PayloadBlind` | one line each | walker bookkeeping |
+| `Monadic/Eval.lean` | the dispatch builds the frame; the cursor arm | **the capability** |
+| `Monadic/Script.lean` | `SKont.forDict` + `scriptForDictAt` + wiring | **the capability**, module scope |
+| `Monadic/Prim.lean` | `dictStepM` | the new primitive |
+| `Monadic/Spec.lean` | `dictStepM_spec` | its `@[spec]` lemma |
+
+Measured at ~9 shared arms in §2026-08-23-pycomplete-4; that held.
+
+### `genBreak`/`genContinue` are the arms a mechanical patch gets WRONG
+
+`forDict` is a LOOP frame: `break` must pop it and `continue` must keep it, so
+it belongs with `forSeq`/`forList`/`forGen`/`whileLoop` and NOT with the
+builtin-iterator group (`enumSeq`/`enumList`/`countFrom`), which returns
+`Option.none` because those frames have no body and flow can never reach one.
+A patch that added `forDict` to the refusing group would have compiled and
+been silently wrong for every `break` in a dict loop.
+`dict.for-in-function` exercises exactly that — it `continue`s past a key and
+`break`s early — which is why the witness is written that way.
+
+### The step is a PURE PLAN, because the walker law says it must be
+
+AGENTS.md records that `execGen` MUST fork on a pure plan (`genPlan`'s
+precedent): with the match inline, the equation compiler splits the arm per
+constructor and `simp only [execGen]` never fires at a symbolic frame. So the
+three regimes are `DictStep` — `resized` / `rekeyed` / `yieldKey` / `done` —
+decided by the pure `dictStep`, and BOTH cursors fork on it. One decision, two
+consumers, no drift; and `dictStepM` lifts it to one action with one `@[spec]`
+lemma instead of a heap read plus a decision that `mvcgen` must re-split at
+each call site. `dictStepM_spec` says the step leaves the state UNCHANGED —
+a cursor must not disturb the dict it walks, and that is now a theorem.
+
+### THE GATE COULD NOT EXPRESS A RULED DIVERGENCE, and that is an instrument finding
+
+`harness/monadic_gate.py` asserts trunk/monadic PARITY and exits non-zero on
+any divergence whose monadic answer is not a `monadic-rebuild:` frontier
+refusal. **Inch 3a creates a legitimate divergence on purpose** —
+`dict_lab.iter_dict` refuses on the trunk and returns `1` on the rebuild — so
+the ruled inch could not have landed green, and the wrong fix would have been
+to switch the gate off.
+
+The gate now has an `OPENED` classification, and its design is what keeps it
+honest: **a row counts as OPENED only when the rebuild's answer MATCHES
+CPYTHON.** If the rebuild diverges from the oracle it is a FINDING no matter
+what the table says, because the adjudicator is CPython and never the table.
+This is the same shape as the two other instrument gaps this lane has hit —
+a check whose vocabulary cannot express a legitimate new state
+(§2026-08-22-pycomplete-2's `DIVERGE`/`DIVERGED`, and the census's own
+trunk-vs-monadic expectations below).
+
+### The census becomes a TWO-INTERPRETER scoreboard
+
+A witness may now carry `mono=` — the expectation under `--target monadic`,
+when it differs. Four do, all of them this inch: `dict.for`,
+`dict.for-in-function`, `dict.update-value-during-iter` and
+`dict.grow-during-iter` are REFUSE on the trunk and MATCH on the rebuild.
+`dict.churn-during-iter` stays REFUSE on both — `del d[k]` refuses first, so
+the same-size churn hazard remains unreachable, exactly as §L53 recorded.
+
+Encoding the divergence beats switching the parity check off: the census keeps
+gating BOTH interpreters, and the rows where they differ ON PURPOSE are
+written down rather than tolerated. 106 witnesses now.

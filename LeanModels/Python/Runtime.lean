@@ -114,6 +114,18 @@ inductive GenFrame where
   /-- `for target in <heap list at `a`>` with the LIVE cursor `i` — the
   object is re-read every step, exactly as `execForList` does. -/
   | forList (target : Expr) (a : Addr) (i : Nat) (body : List Stmt)
+  /-- `for target in <dict at `a`>` with the LIVE cursor `i`, carrying the
+  size `n` and the `shapeVersion` `sv` the loop STARTED with. The object is
+  re-read every step, exactly as `forList` does; the two extra fields are
+  what let the cursor tell CPython's two mutation regimes apart — a SIZE
+  change is the faithful `RuntimeError`, while a same-size key-set change is
+  REFUSED, because CPython's answer there depends on its entries-array
+  layout and its compaction schedule (docs/memory-model.md §dict iteration).
+
+  Constructed only by `LeanModels/Python/Monadic/` — the trunk interpreter
+  refuses it by the no-backwards-compat ruling (it never builds one). -/
+  | forDict (target : Expr) (a : Addr) (i : Nat) (n : Nat) (sv : Nat)
+      (body : List Stmt)
   /-- `for target in <generator at `a`>` — a generator consuming a
   generator; re-entering the frame steps the inner one. -/
   | forGen (target : Expr) (a : Addr) (body : List Stmt)
@@ -283,6 +295,7 @@ value-iterator frame; loop-frame addresses are checked at the read). -/
 def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .forSeq _ xs _ => RVal.WFList h xs
   | .forList _ a _ _ => a < h.size
+  | .forDict _ a _ _ _ _ => a < h.size
   | .forGen _ a _ => a < h.size
   | .enumSeq _ xs => RVal.WFList h xs
   | .enumList _ a _ => a < h.size

@@ -143,6 +143,17 @@ does not leak into the proof layer. -/
     ⦃⇓ r => fun st => ⌜lenValH st0.world.heap v = .ok r ∧ st = st0⌝⦄ := by
   mvcgen [lenM, liftRes, frameHeap]; all_goals grind
 
+/-- §3a THE DICT CURSOR'S STEP: a PURE READ that answers the plan. The state
+is unchanged, which is the half that matters — a cursor step must not disturb
+the dict it is walking, and this is where that is a theorem rather than a
+reading of the code. -/
+@[spec] theorem dictStepM_spec (a i n sv : Nat) (st0 : FrameState) :
+    ⦃fun st => ⌜st = st0⌝⦄ dictStepM a i n sv
+    ⦃⇓ r => fun st => ⌜st = st0 ∧ r = (match Heap.get? st0.world.heap a with
+        | some (.dict es sv') => some (dictStep es sv' i n sv)
+        | _ => Option.none)⌝⦄ := by
+  mvcgen [dictStepM, frameHeap]; all_goals grind
+
 /-- The one primitive that both READS the heap and WRITES the locals. -/
 @[spec] theorem assignM_spec (t : Expr) (v : RVal) (st0 : FrameState)
     (h : ∃ e, assignToH st0.world.heap st0.locals t v = .ok e) :

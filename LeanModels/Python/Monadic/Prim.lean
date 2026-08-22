@@ -50,6 +50,18 @@ def frameWorld : SemF World := do
 def frameHeap : SemF Heap := do
   let st ← get; pure st.world.heap
 
+/-- §3a THE DICT CURSOR'S STEP, as ONE action: read the referent, decide the
+pure `dictStep` plan. `none` means the address does not hold a dict — an
+invariant break the callers refuse loudly rather than guess through.
+
+It exists as a primitive so the cursor has ONE `@[spec]` lemma
+(`dictStepM_spec`) instead of a heap read and a decision that `mvcgen` must
+re-split at both call sites — `execGen`'s and the script shell's. -/
+def dictStepM (a i n sv : Nat) : SemF (Option DictStep) := do
+  match Heap.get? (← frameHeap) a with
+  | some (.dict es sv') => pure (some (dictStep es sv' i n sv))
+  | _ => pure Option.none
+
 /-- Read the live module globals out of the frame. -/
 def frameGlobals : SemF REnv := do
   let st ← get; pure st.world.globals

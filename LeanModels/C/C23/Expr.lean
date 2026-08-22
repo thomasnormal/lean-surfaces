@@ -100,13 +100,27 @@ open LeanModels.C (CType Expr CSpan)
 /-- The expression evaluator's monad. See the module docstring: `ExceptT`
 OUTSIDE `StateT` is the state-retaining order, and it is not the obvious
 one. -/
-abbrev EvalM (α : Type) := ExceptT Refusal (StateT Mem Id) α
+abbrev EvalM (α : Type) := ExceptT Refusal (StateT Mem Halt) α
 
 /-- Run an evaluation against a starting memory, keeping BOTH halves: the
 outcome and the memory as it stood when the outcome was produced. A
-refusal that threw away its memory could not say what had happened. -/
-def EvalM.run (m : Mem) (x : EvalM α) : Except Refusal α × Mem :=
+refusal that threw away its memory could not say what had happened.
+
+The `Halt` wrapper is the uncatchable layer (`Memory.lean` §3.4) — a
+`timeout` or an out-of-tier construct answers there and carries no
+`Mem` alongside, because neither is an observation. -/
+def EvalM.run (m : Mem) (x : EvalM α) : Halt (Except Refusal α × Mem) :=
   StateT.run x m
+
+/-- The run's VERDICT, in `docs/c23-goal.md` §3's vocabulary. This is what
+a scoreboard reads, and it is where the diagnostic snapshot stops: there
+is nowhere to put a `Mem` in an `Outcome`. -/
+def EvalM.verdict (m : Mem) (x : EvalM α) : Outcome α :=
+  match EvalM.run m x with
+  | .ok (.ok a, _) => .ok a
+  | .ok (.error r, _) => .refused r
+  | .timeout => .timeout
+  | .unsupported w _ => .unsupported w
 
 /-! ### The named refusal primitives
 
@@ -124,8 +138,16 @@ friends). Cause: `ub`. -/
 def refuseValue (u : UB) : EvalM α := throw (.valueUB u)
 
 /-- Refuse a construct outside the tier's vocabulary. Cause:
-`unsupported`, which retires by climbing a rung. -/
-def refuseUnsupported (what : String) : EvalM α := throw (.unsupported what)
+`unsupported`, which retires by climbing a rung.
+
+**It answers in `Halt`, not in `ExceptT`** — per §3.4, an out-of-tier
+refusal is uncatchable by definition rather than by a per-construct
+proof. And **this primitive performs the `get` itself**, capturing the
+memory as it stood AT the refusal site, so no call site can forget to.
+That snapshot is diagnostic only: `Halt`'s `BEq` ignores it and
+`Outcome` drops it. -/
+def refuseUnsupported (what : String) : EvalM α := fun m =>
+  Halt.unsupported what (some m)
 
 /-- Refuse an unmodeled library function. Cause: `libc`, which retires by
 widening the slice. -/
@@ -772,7 +794,7 @@ variable {α : Type}
 
 /-- Running a `pure` keeps the memory it was handed. -/
 @[simp] theorem run_pure (m : Mem) (a : α) :
-    EvalM.run m (pure a : EvalM α) = (.ok a, m) := rfl
+    EvalM.run m (pure a : EvalM α) = .ok (.ok a, m) := rfl
 
 end Spec
 
@@ -796,8 +818,8 @@ right's…" would be unprovable here, which is the point. -/
 the left operand's own out-memory**, whatever the right operand is. -/
 theorem and_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
     (m m' : Mem) (t : IntTy)
-    (hl : EvalM.run m (evalExpr ctx l) = (.ok (.int t 0), m')) :
-    EvalM.run m (evalExpr ctx (.binop "&&" l r ty sp)) = (.ok (ofBool false), m') := by
+    (hl : EvalM.run m (evalExpr ctx l) = .ok (.ok (.int t 0), m')) :
+    EvalM.run m (evalExpr ctx (.binop "&&" l r ty sp)) = .ok (.ok (ofBool false), m') := by
   simp only [EvalM.run, StateT.run] at hl ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,
     hl, truthy, ofBool, pure, ExceptT.pure, StateT.pure]
@@ -806,8 +828,8 @@ theorem and_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
 left operand's own out-memory, and the right operand is not evaluated. -/
 theorem or_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
     (m m' : Mem) (t : IntTy) (n : Int) (hn : n ≠ 0)
-    (hl : EvalM.run m (evalExpr ctx l) = (.ok (.int t n), m')) :
-    EvalM.run m (evalExpr ctx (.binop "||" l r ty sp)) = (.ok (ofBool true), m') := by
+    (hl : EvalM.run m (evalExpr ctx l) = .ok (.ok (.int t n), m')) :
+    EvalM.run m (evalExpr ctx (.binop "||" l r ty sp)) = .ok (.ok (ofBool true), m') := by
   simp only [EvalM.run, StateT.run] at hl ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,
     hl, hn, truthy, ofBool, pure, ExceptT.pure, StateT.pure]
@@ -816,7 +838,7 @@ theorem or_shortCircuits (ctx : Ctx) (l r : Expr) (ty : CType) (sp : CSpan)
 only the arm that ran. -/
 theorem cond_takesOneArm (ctx : Ctx) (c t e : Expr) (ty : CType) (sp : CSpan)
     (m m' : Mem) (it : IntTy)
-    (hc : EvalM.run m (evalExpr ctx c) = (.ok (.int it 0), m')) :
+    (hc : EvalM.run m (evalExpr ctx c) = .ok (.ok (.int it 0), m')) :
     EvalM.run m (evalExpr ctx (.cond c t e ty sp)) = EvalM.run m' (evalExpr ctx e) := by
   simp only [EvalM.run, StateT.run] at hc ⊢
   simp [evalExpr, ExceptT.bind, ExceptT.bindCont, ExceptT.mk, bind, StateT.bind,

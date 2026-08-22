@@ -63,8 +63,8 @@ private def setInt (m : Mem) (o : ObjId) (n : Int) : Mem :=
   (Mem.storeInt m (Ptr.toObject o) IntTy.int_ n).toOption.getD m
 
 /-- Run the condition with `r` and `b` both determinate. -/
-private def runBoth (r b : Int) : Except Refusal CVal × Mem :=
-  EvalM.run (setInt (setInt mem0 0 r) 1 b) (evalExpr ctx0 cond)
+private def runBoth (r b : Int) : Outcome CVal :=
+  EvalM.verdict (setInt (setInt mem0 0 r) 1 b) (evalExpr ctx0 cond)
 
 /-! ## The condition computes what C says it computes
 
@@ -73,11 +73,11 @@ non-zero and its sign differs from the divisor's, which is the correction
 `pyfloordiv` applies to turn C's truncating division into Python's
 flooring one. -/
 
-#guard (runBoth 0 5).1 == .ok (ofBool false)      -- r == 0: no correction
-#guard (runBoth 1 5).1 == .ok (ofBool false)      -- signs agree (+, +)
-#guard (runBoth (-1) (-5)).1 == .ok (ofBool false) -- signs agree (-, -)
-#guard (runBoth (-1) 5).1 == .ok (ofBool true)    -- signs DIFFER: correct
-#guard (runBoth 1 (-5)).1 == .ok (ofBool true)    -- signs DIFFER: correct
+#guard runBoth 0 5 == .ok (ofBool false)      -- r == 0: no correction
+#guard runBoth 1 5 == .ok (ofBool false)      -- signs agree (+, +)
+#guard runBoth (-1) (-5) == .ok (ofBool false) -- signs agree (-, -)
+#guard runBoth (-1) 5 == .ok (ofBool true)    -- signs DIFFER: correct
+#guard runBoth 1 (-5) == .ok (ofBool true)    -- signs DIFFER: correct
 
 /-! ## §6.5.14p4 — THE DRAIN AMENDMENT, executed
 
@@ -99,16 +99,20 @@ One term, one uninitialised object, opposite outcomes — and the
 difference is exactly the short-circuit. -/
 
 /-- Only `r` is written; `b` stays indeterminate. -/
-private def runIndet (r : Int) : Except Refusal CVal × Mem :=
+private def runIndet (r : Int) : Outcome CVal :=
+  EvalM.verdict (setInt mem0 0 r) (evalExpr ctx0 cond)
+
+/-- The same run, unwrapped, for the memory-retention gate below. -/
+private def runIndetRaw (r : Int) : Halt (Except Refusal CVal × Mem) :=
   EvalM.run (setInt mem0 0 r) (evalExpr ctx0 cond)
 
 -- r = 0: the right operand is NOT evaluated, so the indeterminate `b` is
 -- never read and the expression succeeds.
-#guard (runIndet 0).1 == .ok (ofBool false)
+#guard runIndet 0 == .ok (ofBool false)
 
 -- r = 1: the right operand IS evaluated, reads `b`, and refuses — J.2(11).
-#guard (runIndet 1).1 == .error (.memUB (.indetAutomatic 1 0))
-#guard ((runIndet 1).1.toOption).isNone
+#guard runIndet 1 == .refused (.memUB (.indetAutomatic 1 0))
+#guard runIndet 1 != .ok (ofBool false)
 
 -- The refusal names its Annex J entry, and its cause never retires.
 #guard (Refusal.memUB (.indetAutomatic 1 0)).j2 == some "J.2(11)"
@@ -116,7 +120,7 @@ private def runIndet (r : Int) : Except Refusal CVal × Mem :=
 
 -- ...and the SAME term with `b` written succeeds, so the refusal above is
 -- about the short circuit and not about the term being unevaluable.
-#guard (runBoth 1 5).1 == .ok (ofBool false)
+#guard runBoth 1 5 == .ok (ofBool false)
 
 /-! ### The memory is RETAINED across a refusal
 
@@ -124,8 +128,9 @@ The monad's layer order (`ExceptT` outside `StateT`) exists for this: a
 refusal that discarded its memory could not say what had happened by the
 time it fired. `r` is still readable in the out-memory of a refused run. -/
 
-#guard (Mem.loadInt (runIndet 1).2 (Ptr.toObject 0) IntTy.int_)
-  == .ok (.int IntTy.int_ 1)
+#guard (match runIndetRaw 1 with
+        | .ok (_, m) => Mem.loadInt m (Ptr.toObject 0) IntTy.int_
+        | _ => .error (.libc "unreachable")) == .ok (.int IntTy.int_ 1)
 
 /-! ## §6.5.6p6 — division by zero, from the same function
 
@@ -142,8 +147,8 @@ private def readInt (name : String) : Expr :=
 
 private def lit (n : String) : Expr := .intLit n "int" noSpan
 
-private def runE (r b : Int) (e : Expr) : Except Refusal CVal :=
-  (EvalM.run (setInt (setInt mem0 0 r) 1 b) (evalExpr ctx0 e)).1
+private def runE (r b : Int) (e : Expr) : Outcome CVal :=
+  EvalM.verdict (setInt (setInt mem0 0 r) 1 b) (evalExpr ctx0 e)
 
 -- C truncates toward zero, and Lean's `/` on `Int` would floor to -4.
 #guard runE (-7) 2 (divExpr (readInt "r") (readInt "b")) == .ok (.int IntTy.int_ (-3))
@@ -151,16 +156,16 @@ private def runE (r b : Int) (e : Expr) : Except Refusal CVal :=
 
 -- §6.5.6p6 — a zero divisor is undefined: J.2(41).
 #guard runE 1 0 (divExpr (readInt "r") (readInt "b"))
-  == .error (.valueUB (.divideByZero "/"))
+  == .refused (.valueUB (.divideByZero "/"))
 #guard (Refusal.valueUB (.divideByZero "/")).j2 == some "J.2(41)"
 
 -- §6.5.1p5 — `INT_MIN / -1` is not representable: J.2(35).
 #guard runE (-2147483648) (-1) (divExpr (readInt "r") (readInt "b"))
-  == .error (.valueUB .divideOverflow)
+  == .refused (.valueUB .divideOverflow)
 
 -- §6.5.1p5 — signed overflow in `+`, refused rather than wrapped.
 #guard runE 2147483647 1 (.binop "+" (readInt "r") (readInt "b") "int" noSpan)
-  == .error (.valueUB (.signedOverflow "+" IntTy.int_ 2147483648))
+  == .refused (.valueUB (.signedOverflow "+" IntTy.int_ 2147483648))
 
 /-! ## §6.3.2.1p3 + §6.5.3.2 — decay and subscript, the common path
 
@@ -205,18 +210,18 @@ private def boardAt (i : String) : Expr :=
       (lit i) "char" noSpan)
     "char" noSpan
 
-#guard (EvalM.run posMem (evalExpr posCtx (boardAt "0"))).1 == .ok (.int IntTy.char_ 46)
-#guard (EvalM.run posMem (evalExpr posCtx (boardAt "119"))).1 == .ok (.int IntTy.char_ 46)
+#guard EvalM.verdict posMem (evalExpr posCtx (boardAt "0")) == .ok (.int IntTy.char_ 46)
+#guard EvalM.verdict posMem (evalExpr posCtx (boardAt "119")) == .ok (.int IntTy.char_ 46)
 
 -- One past the board is still INSIDE the object (it is `score`'s first
 -- byte), and that byte is indeterminate — so this refuses for the right
 -- reason: J.2(11), not an out-of-bounds.
-#guard (EvalM.run posMem (evalExpr posCtx (boardAt "120"))).1
-  == .error (.memUB (.indetAutomatic 0 120))
+#guard EvalM.verdict posMem (evalExpr posCtx (boardAt "120"))
+  == .refused (.memUB (.indetAutomatic 0 120))
 
 -- ...and past the OBJECT it is the structural refusal instead: J.2(46).
-#guard (EvalM.run posMem (evalExpr posCtx (boardAt "144"))).1
-  == .error (.memUB (.outOfBounds 0 144 1 144))
+#guard EvalM.verdict posMem (evalExpr posCtx (boardAt "144"))
+  == .refused (.memUB (.outOfBounds 0 144 1 144))
 
 /-! ## §6.5.3.4 — `p->f`, the 226-site path
 
@@ -240,13 +245,13 @@ private def arrowScore : Expr :=
 
 -- `score` was never written, so the arrow path reaches an indeterminate
 -- read — which is the RIGHT answer, and proves the offset arithmetic ran.
-#guard (EvalM.run ptrMem (evalExpr ptrCtx arrowScore)).1
-  == .error (.memUB (.indetAutomatic 0 120))
+#guard EvalM.verdict ptrMem (evalExpr ptrCtx arrowScore)
+  == .refused (.memUB (.indetAutomatic 0 120))
 
 -- Write it, and the same term reads it back through the pointer.
-#guard (EvalM.run
+#guard EvalM.verdict
   ((Mem.storeInt ptrMem (Mem.member (Ptr.toObject 0) 120) IntTy.int_ 42).toOption.getD ptrMem)
-  (evalExpr ptrCtx arrowScore)).1 == .ok (.int IntTy.int_ 42)
+  (evalExpr ptrCtx arrowScore) == .ok (.int IntTy.int_ 42)
 
 /-! ## §6.5.17.2 / §6.5.3.5 — assignment and the all-postfix increment
 
@@ -261,19 +266,21 @@ private def decr (name : String) : Expr :=
   .unop "--" (.declRef name "VarDecl" "int" noSpan) true "int" noSpan
 
 -- `r++` ANSWERS 5 and LEAVES 6.
-#guard (let (a, m) := EvalM.run (setInt mem0 0 5) (evalExpr ctx0 (incr "r"))
-        (a, Mem.loadInt m (Ptr.toObject 0) IntTy.int_))
+#guard (match EvalM.run (setInt mem0 0 5) (evalExpr ctx0 (incr "r")) with
+        | .ok (a, m) => (a, Mem.loadInt m (Ptr.toObject 0) IntTy.int_)
+        | _ => (.error (.libc "x"), .error (.libc "x")))
   == (.ok (.int IntTy.int_ 5), .ok (.int IntTy.int_ 6))
 
 -- `q--` — `pyfloordiv`'s own correction, and at `INT_MIN` it OVERFLOWS.
-#guard (EvalM.run (setInt mem0 0 (-2147483648)) (evalExpr ctx0 (decr "r"))).1
-  == .error (.valueUB (.signedOverflow "-" IntTy.int_ (-2147483649)))
+#guard EvalM.verdict (setInt mem0 0 (-2147483648)) (evalExpr ctx0 (decr "r"))
+  == .refused (.valueUB (.signedOverflow "-" IntTy.int_ (-2147483649)))
 
 -- §6.5.17.2 — assignment answers the value it stored, and stores it.
 #guard (let e : Expr := .binop "=" (.declRef "r" "VarDecl" "int" noSpan)
                          (lit "7") "int" noSpan
-        let (a, m) := EvalM.run mem0 (evalExpr ctx0 e)
-        (a, Mem.loadInt m (Ptr.toObject 0) IntTy.int_))
+        match EvalM.run mem0 (evalExpr ctx0 e) with
+        | .ok (a, m) => (a, Mem.loadInt m (Ptr.toObject 0) IntTy.int_)
+        | _ => (.error (.libc "x"), .error (.libc "x")))
   == (.ok (.int IntTy.int_ 7), .ok (.int IntTy.int_ 7))
 
 /-! ## The type-spelling trap the census found
@@ -293,13 +300,15 @@ so the evaluator RESOLVES instead. -/
 
 /-! ## The three refusal causes stay unpooled through the evaluator -/
 
-#guard (EvalM.run mem0 (evalExpr ctx0 (.floatLit "1.0" "double" noSpan))).1.toOption == none
-#guard (EvalM.run mem0 (evalExpr ctx0 (.strLit "hi" "char[3]" noSpan))).1.toOption == none
+#guard EvalM.verdict mem0 (evalExpr ctx0 (.floatLit "1.0" "double" noSpan))
+  == .unsupported "floating literal (floats are a named decision)"
+#guard EvalM.verdict mem0 (evalExpr ctx0 (.strLit "hi" "char[3]" noSpan))
+  == .unsupported "string literal (inch 4: it needs a static object)"
 
 -- A call refuses as `unsupported` — the cause that retires by climbing a
 -- rung — and names the callee so a human can act on it.
-#guard (EvalM.run mem0 (evalExpr ctx0
-  (.call (.declRef "abort" "FunctionDecl" "void (void)" noSpan) [] "void" noSpan))).1
-  == .error (.unsupported "call to 'abort' — the call semantics is inch 5")
+#guard EvalM.verdict mem0 (evalExpr ctx0
+  (.call (.declRef "abort" "FunctionDecl" "void (void)" noSpan) [] "void" noSpan))
+  == .unsupported "call to 'abort' — the call semantics is inch 5"
 
 end Examples.c.sunfish.expr

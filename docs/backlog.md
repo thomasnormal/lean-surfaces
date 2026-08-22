@@ -19370,3 +19370,207 @@ was written with; `--compare` **byte-identical** on a double run; the M1
 instruments (`es_census`, `extract.py`) still self-test green. **No Lean, so
 the build lock was not taken.** Forty design assertions were re-checked against
 the census programmatically, including every row of the ladder table.
+
+## L79 — THE LEAN TIER IS FOUNDED: the scoreboard endgame is OCCUPIED, our own pin accepts a proof of `False`, and four instruments all landed on `proj` (2026-08-22)
+
+Thomas chartered a LEAN tier — *"Adding Lean as another language to
+lean-surfaces. This would allow us to prove correctness of lean itself, similar
+to lean4lean."* Founding charter only: census and positioning, **no semantics,
+no Lean, no change to any existing file**. Landed
+`docs/lean-tier-charter.md`, `harness/lean_kernel_census.py`,
+`docs/lean-kernel-census.json`.
+
+**The census changed the plan twice**, which is the whole argument for
+census-first.
+
+### The instrument, and it corrected the brief on day one
+
+`harness/lean_kernel_census.py` takes **two** inputs, because the kernel is
+written in two languages and neither half is optional: the **datatypes** from
+the toolchain's shipped Lean sources, the **rules** from the lean4 repository's
+`src/kernel` C++ tree. **The C++ half is not shipped inside an elan toolchain** —
+measured, `src/kernel` exists and is EMPTY, all 2485 shipped files are `.lean`.
+So the instrument fetches the C++ at the tag matching the toolchain and
+**REFUSES when the two disagree about the version** rather than measuring a
+chimera. That refusal fired for real during development before it was ever
+tested deliberately.
+
+Measured at `leanprover/lean4:v4.33.0-rc1`: **7888 lines** of C++ kernel across
+38 files. **12 `Expr` constructors** (10 kernel-admissible — `mvar`/`fvar` are
+elaboration-only and the kernel rejects declarations containing them),
+**6 `Level`** (5 admissible), 2 `Literal`, **7 `Declaration` kinds**,
+**8 `ConstantInfo` kinds**, **16 reduction rules** each a separately named C++
+function, **15 accelerated `Nat` operations**, 15 kernel exception classes,
+**7 axioms**.
+
+**The dispatching brief expected ~11 `Expr` and ~7 `Level`. The source says 12
+and 6.** Neither was close enough to carry into a charter unmeasured — §5.4's
+lesson arriving on a new tier's first day.
+
+Three parsing traps, each found by running rather than reading: a naive grep
+reports **five extra axioms**, all inside ```-fenced docstring blocks (counting
+them would more than double Lean's stated trusted base); `Quot.sound` is
+declared as bare `sound` inside `namespace Quot`, so the instrument tracks a
+namespace stack; and once namespaces resolved, a classifier keyed on bare names
+silently re-filed all three trust extensions as **sound**.
+
+To the §5.4 contract: sorted machine-readable JSON, `--compare`, double-run
+byte-identical (verified), and **six refusal paths RUN** with their exit codes.
+Not wired into CI — the C++ half is an out-of-tree corpus.
+
+### FINDING 1 — the rung-0 scoreboard endgame is ALREADY OCCUPIED
+
+`leanprover/lean-kernel-arena` is an **official, live, daily-regenerated**
+differential scoreboard: 19 checkers, 197 tests, 3743 results. This lane did not
+quote its front page — it **recomputed the entire table from the raw result
+rows**.
+
+> **The official C++ kernel AT OUR PIN rejects 63 of 67 soundness tests.
+> `lean4lean` rejects 67 of 67. The four the official kernel accepts are all
+> proofs of `False`.**
+
+Named: `proj-of-stuck-prop`, `proj-of-subst-prop`, `rec-missing-ih`,
+`rec-of-subst-prop`. Three are fixed on nightly. **`rec-of-subst-prop` is
+accepted by ALL THREE official builds and rejected by ALL FIFTEEN other
+checkers** — a live, currently-unfixed divergence in which the independent field
+is ahead of the reference implementation.
+
+**Our own toolchain is one of the builds that accepts it.** Every `.olean` in
+this repository was checked by a kernel with a known, reproducible,
+currently-open soundness gap. Not cause for alarm — it needs an adversarially
+constructed declaration no honest elaboration produces — but it is the concrete
+answer to "why would this repository care".
+
+### FINDING 2 — a FOURTH endgame the brief did not contain
+
+**No external checker can check a `native_decide` proof at all.** Not lean4lean
+(it hard-refuses `reduceBool`), not any of the nineteen. Lean's own reference
+manual says so, and the arena encodes it structurally as a *decline* mechanism
+rather than a verdict.
+
+That is the one genuinely unoccupied ground, and it is **exactly the axiom
+Thomas's decide ladder rations** (§0.1 II(a), landed the same day). Measured
+corroboration: all three trust extensions carry
+`@[deprecated ... (since := "2026-02-01")]` and **none of the three sound axioms
+does** — the deprecation partitions exactly onto the class this census drew
+independently. Upstream's RFC *"One axiom per native computation"* closed
+2026-02-03, two days after that date.
+
+### THE CONVERGENCE — four instruments, one construct
+
+Run separately, for different reasons, all landing on **`Expr.proj`**:
+
+* **kernel census** — `proj` is kernel-primitive with **three** mechanisms, its
+  typing rule enforcing a `Prop`-squashing side condition twice;
+* **spec census** — `proj` **does not exist in the thesis grammar at all** (7
+  expression forms there, 12 in Lean 4);
+* **lean4lean census** — `VExpr` has 6 constructors and `proj` has **no abstract
+  counterpart**; `TrProj` is a `sorry`; **11 of 24 shipped sorries** cluster
+  there;
+* **arena** — all four official-kernel unsoundnesses are proj/rec-over-`Prop`,
+  and lean4lean's only two accept-side failures are the same family from the
+  other direction.
+
+`proj` is where Lean's kernel is provably unsound today, where its specification
+is silent, where its verification is blocked, and where its checkers disagree in
+both directions.
+
+### The other censuses, in one line each
+
+**The envelope question the other tiers hand-built is ANSWERED.**
+`lean4export` (Apache-2.0, bumped one day before this census) emits **NDJSON
+format 3.1.0** with a 353-line in-repo spec, a **reference parser back into
+`Lean.ConstantInfo`**, and 745 lines of golden tests. Its coverage is **exactly
+the 10 kernel-admissible constructors**, refusing exactly the 2 elaboration-only
+ones — three artifacts partition the same 12 the same way. It has a commit
+pinned at **our exact toolchain**, byte-identical to master except one test
+expectation. The one real gap is **source provenance**: the format carries no
+file, no hash, no spans.
+
+**`lean4checker` is DEPRECATED and now ships inside Lean** as `leanchecker` —
+present at our pin, 78128 bytes. But it replays `.olean`s through the *same*
+kernel and its own README says *"this is not an external verifier"*, so it
+catches environment hacking, not kernel bugs.
+
+**Corpus ladder at our pin:** core `import Lean` = **2322 modules, 206644
+declarations, 126187 exportable**; Mathlib is present **in this repository's own
+tree at our EXACT pin**. Mathlib's declaration count NOT MEASURED (the probe
+declined on measured memory pressure — load 15.73, ~34MB free, two other lanes
+building).
+
+**lean4lean:** 39468 lines, **proof-to-executable ratio 5.43**. The executable
+checker is **3964 lines with ZERO sorries**, full inductive elaboration, and
+67/67 on the arena. The proof story is 21531 lines and its top-level
+`addDecl.WF` reads `| inductDecl _ _ _ _ => sorry`, sitting on an **8-line
+`Theory/Inductive.lean` whose two definitions are both `sorry`** — the abstract
+specification of inductive types has not been written. CI is green **with**
+sorries and says so in its own comment.
+
+**The spec is prose, and the answer to "is it formal" is NO.** 158 `\frac` and
+9 `\dfrac` in bare LaTeX, **no rule macro, no rule names**. **72 kernel-relevant
+rules** across 12 judgment families is the spec-mirror index. Four families end
+in a literal `...` standing for unwritten congruence rules. The thesis is
+**dormant since 2022** and **forked** — the published PDF is not an ancestor of
+master, and **carries a constructor level-constraint its own author has since
+corrected**. Charter pins `master 0ba1787`. **No LICENCE: cite, never vendor.**
+
+### Honesty the charter leads with
+
+**Gödel is on page one**, not in a footnote: this tier will never prove Lean
+consistent, the three achievable theorems are named with where each can and
+cannot be proved, and the reflexive capstone **reduces trust and never
+eliminates it** — with what remains trusted enumerated.
+
+**Kernel soundness bugs cluster by DATE as well as by construct:** 9 confirmed
+axiom-free `False` proofs in the Lean 4 era, but **six of ten in a five-week
+window** under AI-assisted adversarial search, against a prior rate of roughly
+one every one to two years. **The charter refuses to quote a per-year base rate
+as if it were stable.**
+
+**Independence is not immunity** — one bogus proof was accepted by nanoda too,
+and lean4lean's own README says it *"is not really an independent
+implementation"*. **lean4lean is a personal repository** with a sole committer,
+not under the `leanprover` org, and the FRO's Year 3 roadmap mentions neither it
+nor kernel verification at all.
+
+### The recommendation, and what is Thomas's
+
+**(b) consume-and-extend lean4lean, with (d) the trust-extension surface as its
+companion.** (a) is occupied; **(c) is priced out honestly** — and the pricing
+produced a finding about the family rather than only about this tier: **the
+`SemM`/`Run` substrate is a POOR FIT for a typechecker.** It is built for
+interpreters with fuel over a mutable world; a typechecker is a recursive
+decision procedure over an immutable environment. Forcing it would be measuring
+the substrate and calling it the kernel.
+
+**Nondeterminism: none.** The family's simplest ∀-resolution row — no schedule,
+no evaluation order, no implementation-defined value. Cause-4 bucket empty,
+`undefined` bucket empty and gated, every membership set a singleton.
+
+M1 is **six inches, every one useful under all four options**. Inch 2 (build
+`lean4lean` at `v4.33.0-rc2`) is the first real fork. **Inch 6 has standing
+value regardless of the endgame**: running an independent checker over this
+repository's own `.olean`s, because our pin accepts a proof of `False` that
+fifteen other checkers reject.
+
+**Five decisions are Thomas's** (§11), including the edition token — Lean has no
+editions, only releases, so §1.1 law 3 may have met its first legitimate
+exception.
+
+### Two corrections this lane made to its own work
+
+Kept visible rather than quietly fixed: the **Mathlib export estimate (1–5 GB)**
+was checked against the arena's published **5.2 GB / 100M lines** and was the
+right order but low — the method is trustworthy to about a factor of two. And a
+claim of **"fourteen"** checkers rejecting `rec-of-subst-prop` was **corrected to
+fifteen** by recounting the raw rows.
+
+### No triad
+
+**No Lean, no change to any existing file** — the landing is two new files and
+one new document. The machine-wide build lock was held by another lane
+throughout and **this charter needed no build**; the census instrument is Python
+over out-of-tree sources, and the two `lean` runs behind the corpus ladder were
+single niced dependency-free processes under protocol rule 3. Nothing here can
+break a build, and unlike the usual case that is a statement about the artifact
+rather than an argument to be checked.

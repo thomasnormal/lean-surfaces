@@ -52,7 +52,7 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   sbCorr sbCorr_noElse sbStore sbStore_lit sbEvict sbRet tableSize
   entryDefault entryOf tpKey entryG entryNotFun entryClsAux entryNTAux
   evict_dead ret_best corr_dead
-  sbKill sbKill_lit sbKillB sbCut sbCut_lit sbCutB sbCutB_split sbCalm
+  sbKill sbKill_lit sbKillB sbCut sbCut_lit sbCutB sbCutB_split sbCalm sbBreak_lit
   tsG lenG lenNotFun lenCls lenNT boolChain_and2
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
@@ -2056,6 +2056,118 @@ private def calmE : Expr :=
 #guard probe 47 1 300 == some (46, 1, 70, 246) && 246 - 70 == 176
 #guard probe 0 1 300 == some (0, 2, 70, 247) && 247 - 70 == 177
 
+
+
+/-! ## §14 THE SEARCHED ROUND, COMPOSED — branch 5 end to end (2026-08-22)
+
+§L47 said branch 5's five statements were "all gated" and left it there. Gated is
+not composed, and the difference is where the round's WORLD lives: `cap_line_low`,
+`break_skips` and `move_depth_low` run at `w`, `search_line` moves it to `w₂` in
+two hops (§8), and `live_updates` runs at `w₂` and reads `MATE_UPPER` off ITS
+globals. Writing that down is what makes the round a thing R3c's fold can consume
+rather than five facts a reader has to assemble.
+
+`break_skips` is the one gate that was missing: `break_fires`' twin at a cap that
+CLEARS the window, which is the arm every searched round takes. One `if_neg`, and
+it is the difference between R3a's arm and R3b's.
+
+**The frame is a four-`Env.set` tower and it does not collapse.** `cap`,
+`move_depth`, `score`, `live` are four different keys, so `Env.set_set` never
+fires and every later gate's lookups are `Env.lookup_set_ne` through the ones
+before it. That is mechanical but it is not free, and it is why the composition
+is a theorem rather than a `simp`. -/
+
+/-- **THE BREAK THAT DOES NOT FIRE.** `break_fires`' twin: at a cap that clears
+the window the round falls through to the reduction instead of settling. -/
+theorem break_skips (w : World) (e : REnv) (capv gamma : Int) (F : Nat)
+    (hcap : Env.lookup e "cap" = some (.int capv))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hge : gamma ≤ capv) :
+    execStmt sunfish (F + 12) ⟨w, e⟩ sbBreak = .ok ⟨w, e⟩ .next := by
+  obtain ⟨p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, hlit⟩ := sbBreak_lit
+  have hcond : evalExpr sunfish (F + 11) ⟨w, e⟩
+      (.compare (.name "cap" p0) #[.lt] #[.name "gamma" p1] p2)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hcap, hg, if_neg (show ¬ capv < gamma by omega)]
+  rw [hlit, execStmt_if_false hcond rfl]
+  simp only [execStmts]
+
+/-- The frame branch 5 leaves when the round SEARCHES. -/
+def envSearched (e : REnv) (capv md scv : Int) (lv : Bool) (mu : Int) : REnv :=
+  Env.set (Env.set (Env.set (Env.set e "cap" (.int capv)) "move_depth" (.int md))
+    "score" (.int scv)) "live" (.bool (lv || decide (-mu < scv)))
+
+/-- **R3b's SEARCHED ROUND, branch 5 composed.** The cap clears the window, so
+the break does NOT fire; the reduction, the child search and the `live` update
+follow, and the world moves exactly where §8's call gate puts it. -/
+theorem branch5_searches (w w₁ w₂ : World) (e : REnv) (ci : ClassId) (scls : ClassDefn)
+    (sa ts tm hs : Addr) (nd dl sft : Int)
+    (d val sc gamma r mu : Int) (gv lv : Bool) (mvv pv : RVal)
+    (b : String) (ep kp : Int) (wc0 wc1 bc0 bc1 : Bool) (F : Nat)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hval : Env.lookup e "val" = some (.int val))
+    (hpos : Env.lookup e "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hnomax : Env.lookup e "max" = Option.none)
+    (hnqa : Env.lookup e "QS_A" = Option.none)
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hguard : Env.lookup e "guard" = some (.bool gv))
+    (hnmr : Env.lookup e "nmr" = some (.bool false))
+    (hni : Env.lookup e "int" = Option.none)
+    (hself : Env.lookup e "self" = some (.ref sa))
+    (hmv : Env.lookup e "move" = some mvv)
+    (hnomin : Env.lookup e "min" = Option.none)
+    (hlive : Env.lookup e "live" = some (.bool lv))
+    (hnmu : Env.lookup e "MATE_UPPER" = Option.none)
+    (hmuw : Env.lookup w₂.globals "MATE_UPPER" = some (.int mu))
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs nd dl sft))
+    (hcl : classAt sunfish.classes.toList ci = some scls)
+    (hmeth : "bound" ∈ scls.methods) (hnm : scls.name = "Searcher")
+    (hmove : ∀ G : Nat, callIn sunfish (F + G) w "Position.move"
+      #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvv] = .ok w₁ pv)
+    (hchild : ∀ G : Nat, callIn sunfish (F + G) w₁ "Searcher.bound"
+      #[.ref sa, pv, .int (1 - gamma), .int (d - 1)] = .ok w₂ (.int r))
+    (hlo : 1 ≤ d) (hhi : d ≤ 3) (hd6 : d < 6)
+    (hge : gamma ≤ sc + val + (d - 1) * 140) :
+    execStmts sunfish (F + 41) ⟨w, e⟩ sbB5
+      = .ok ⟨w₂, envSearched e (sc + val + (d - 1) * 140) (d - 1)
+          (min (sc + val + (d - 1) * 140) (-r)) lv mu⟩ .next := by
+  rw [sbB5_split]
+  simp only [execStmts]
+  rw [execStmt_mono (cap_line_low w e d val sc b wc0 wc1 bc0 bc1 ep kp (F + 24)
+    hd hval hpos hnomax hnqa hlo hhi) (by simp) (F + 40) (by omega)]
+  simp only [Run.bind]
+  rw [execStmt_mono (break_skips w (Env.set e "cap" (.int (sc + val + (d - 1) * 140)))
+    (sc + val + (d - 1) * 140) gamma (F + 27)
+    (by simp [Env.lookup_set_self]) (by simp [Env.lookup_set_ne, hg]) hge)
+    (by simp) (F + 39) (by omega)]
+  simp only []
+  rw [execStmt_mono (move_depth_low w (Env.set e "cap" (.int (sc + val + (d - 1) * 140)))
+    d gv (F + 18) (by simp [Env.lookup_set_ne, hd]) (by simp [Env.lookup_set_ne, hguard])
+    (by simp [Env.lookup_set_ne, hnmr]) (by simp [Env.lookup_set_ne, hni]) hd6)
+    (by simp) (F + 38) (by omega)]
+  simp only []
+  rw [execStmt_mono (search_line w w₁ w₂
+    (Env.set (Env.set e "cap" (.int (sc + val + (d - 1) * 140))) "move_depth" (.int (d - 1)))
+    ci scls sa ts tm hs nd dl sft (sc + val + (d - 1) * 140) gamma (d - 1) r mvv pv
+    b sc ep kp wc0 wc1 bc0 bc1 (F + 17)
+    (by simp [Env.lookup_set_ne, hself]) (by simp [Env.lookup_set_ne, hpos])
+    (by simp [Env.lookup_set_ne, hmv]) (by simp [Env.lookup_set_ne, Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hg]) (by simp [Env.lookup_set_self])
+    (by simp [Env.lookup_set_ne, hnomin]) hobj hcl hmeth hnm
+    (fun G => by simpa [Nat.add_assoc] using hmove (17 + G))
+    (fun G => by simpa [Nat.add_assoc] using hchild (17 + G)))
+    (by simp) (F + 37) (by omega)]
+  simp only []
+  rw [execStmt_mono (live_updates w₂
+    (Env.set (Env.set (Env.set e "cap" (.int (sc + val + (d - 1) * 140)))
+      "move_depth" (.int (d - 1))) "score" (.int (min (sc + val + (d - 1) * 140) (-r))))
+    (min (sc + val + (d - 1) * 140) (-r)) mu lv (F + 24)
+    (by simp [Env.lookup_set_self]) (by simp [Env.lookup_set_ne, hlive])
+    (by simp [Env.lookup_set_ne, hnmu]) hmuw) (by simp) (F + 36) (by omega)]
+  simp only [envSearched]
+
+#print axioms break_skips
+#print axioms branch5_searches
 #print axioms sbKillB_split
 #print axioms sbKillEvict_lit
 #print axioms killer_stores

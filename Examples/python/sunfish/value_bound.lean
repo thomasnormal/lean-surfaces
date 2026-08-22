@@ -1664,4 +1664,102 @@ R2a: the ordering genexp's drain, and what it needs from here is exactly the
 And one prediction corrected: §L25 expected a conditional expression to ride into
 its index term. It does not — it SPLITS the run. -/
 
+
+/-! ## §THE `pst` LOCALITY LEMMA — what the world enters through (2026-08-22)
+
+R2's chain (order_genexp.lean §11) needs `ValueAnswers` at EVERY round's world,
+and the rounds' worlds are whatever the inner generator's steps left — non-uniform,
+1 to 25 objects apiece (§L58's census). §L80 named that residue and said it was a
+FRAME condition rather than an induction. This is the frame condition's first
+half, and it is the *frame-lookups-need-altitude* law (F1) arriving at the
+generator layer.
+
+**The observation the section is built on:** read the four `value_runs_*`
+signatures and the world appears in exactly TWO hypotheses — `pst` in the globals
+and the shipped table at its slot. Every other premise is about the board, the
+indices or the move. So the world's whole contribution to `Position.value` is one
+predicate, and once it is named, "does the value survive this step?" becomes
+"does `PstAt` survive this step?" — a question about the HEAP rather than about
+the interpreter.
+
+`PstAt` is stable under the three shapes a generator step can leave: a push, an
+append (a run of pushes — the shape `IterSteps` actually produces here), and a
+write at a slot that is not `pst`'s (which is what a resumption write-back is).
+The general heap facts are reused, not re-proved: `Heap.get?_push_of_get?` and
+`Heap.get?_update_ne` (PayloadBlind.lean).
+
+**What is still owed, and it is now ONE line rather than a paragraph:** *the
+inner generator's steps preserve `PstAt`.* §L58 measured that they only ever grow
+the heap — 67 → 69 → 70 → … → 148, monotone, no shrink and no write outside the
+generator's own slot — so it is true; it is simply not derivable from `IterSteps`,
+which says nothing about slots a step did not touch. With `PstAt` named, that
+obligation is stateable in the vocabulary the consumer actually uses, which it
+was not before. -/
+
+/-- **The two world facts every `Position.value` gate needs — and the only two.**
+Read off the four `value_runs_*` signatures: `pst` in the globals, and the
+shipped table at its slot. -/
+def PstAt (w : World) (pa : Addr) (es : Array (RVal × RVal)) (sv : Nat) : Prop :=
+  Env.lookup w.globals "pst" = some (.ref pa) ∧
+  Heap.get? w.heap pa = some (.dict es sv)
+
+/-- A PUSH preserves it. -/
+theorem PstAt.push {w : World} {pa : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    (h : PstAt w pa es sv) (o : Obj) :
+    PstAt { w with heap := w.heap.push o } pa es sv :=
+  ⟨h.1, Heap.get?_push_of_get? o h.2⟩
+
+/-- An APPEND preserves it — a run of pushes, which is the shape a generator
+step's allocations actually leave. -/
+theorem PstAt.append {pa : Addr} {es : Array (RVal × RVal)} {sv : Nat} :
+    ∀ (ext : Array Obj) {w : World}, PstAt w pa es sv →
+      PstAt { w with heap := w.heap ++ ext } pa es sv
+  | ⟨[]⟩, w, h => by simpa using h
+  | ⟨o :: os⟩, w, h => by
+      have hrest := PstAt.append (⟨os⟩ : Array Obj) (h.push o)
+      have hcat : (w.heap.push o) ++ (⟨os⟩ : Array Obj)
+          = w.heap ++ (⟨o :: os⟩ : Array Obj) := by
+        apply Array.ext'; simp [Array.push]
+      simpa [hcat] using hrest
+
+/-- A write at a slot that is NOT `pst`'s preserves it — a generator's own
+resumption write-back is exactly that. -/
+theorem PstAt.update_ne {w : World} {pa : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {bb : Addr} {o : Obj} {h' : Heap}
+    (h : PstAt w pa es sv) (hne : pa ≠ bb) (hu : Heap.update w.heap bb o = some h') :
+    PstAt { w with heap := h' } pa es sv :=
+  ⟨h.1, by
+    rw [show ({ w with heap := h' } : World).heap = h' from rfl,
+      Heap.get?_update_ne hu hne]
+    exact h.2⟩
+
+/-- **And `PstAt` IS the interface.** The quiet arm restated with the world
+entering only through the predicate — the same theorem, with its two world
+hypotheses packaged so a consumer can transport them. The other three arms
+restate identically; this one is written out because it is the one R2's chain
+reaches first. -/
+theorem valueRuns_quiet_of_pstAt (w : World) (pa : Addr) (b : String) (sc : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ep kp i j zi zj : Int) (prom : String)
+    (es : Array (RVal × RVal)) (svv : Nat) (xs : Array RVal)
+    (hpst : PstAt w pa es svv)
+    (hi : 0 ≤ i) (hib : i < (b.length : Int)) (hi2 : i < 120)
+    (hj : 0 ≤ j) (hjb : j < (b.length : Int)) (hj2 : j < 120)
+    (hrow : dictFind es.toList (.str (boardAt b i)) = some (.tuple xs))
+    (hsz : xs.size = 120)
+    (hxi : xs[i.toNat]?.getD .none = .int zi)
+    (hxj : xs[j.toNat]?.getD .none = .int zj)
+    (hquiet : strContains "pnbrqk" (boardAt b j) = false)
+    (hfar : 2 ≤ j - kp ∨ j - kp ≤ -2)
+    (hnk : boardAt b i ≠ "K") (hnpw : boardAt b i ≠ "P") :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.value"
+        #[posOf b sc wc0 wc1 bc0 bc1 ep kp, mvOf i j prom]
+      = .ok w (.int (zj - zi)) :=
+  value_runs_quiet w pa b sc wc0 wc1 bc0 bc1 ep kp i j zi zj prom es svv xs
+    hi hib hi2 hj hjb hj2 hpst.1 hpst.2 hrow hsz hxi hxj hquiet hfar hnk hnpw
+
+#print axioms PstAt.push
+#print axioms PstAt.append
+#print axioms PstAt.update_ne
+#print axioms valueRuns_quiet_of_pstAt
+
 end Examples.python.sunfish.value_bound

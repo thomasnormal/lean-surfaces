@@ -14968,3 +14968,150 @@ and §L59 set for exactly this shape. Every probe in the pilot was a small
 `lake env lean` run under `nice -n 19`, which rule 3 permits. The one expensive
 thing the brief anticipated — a build under a newer toolchain — **does not exist,
 because `Std.Do` is already at the pin.**
+
+## L62 — **F1 IS COMPLETE**: the calmness campaign's only-new-mathematics milestone, and a stale `olean` cost the whole detour (2026-08-22)
+
+§L30 named F1 *"the only new mathematics on the list"* and priced it at two
+inches. It took six sections (§L37, §L41, §L44, §L45, §L48, §L56) and this one.
+**It is done.** `Position.move` — thirteen statements, a closure, two nested
+`if`s, a sub-call to `Position.value` and a sub-call to `Position.rotate` — is
+gated end to end, and the child it returns is F1a's `plainMoveBoard`.
+
+### THE F1 LEDGER, closed
+
+| piece | state | where |
+|---|---|---|
+| **F1a** — the measure's cell calculus, the rotate's invisibility, the lex descent, both arms | **DONE** | §L37, §L44 |
+| **F1b-i** — the string residue: two slices, the reverse, `swapcase`, `put ↔ List.set`, the bridge to `moveCells` | **DONE** | §L41 |
+| **F1b-ii** — the value residue: `pstCell`'s delta ↔ `Position.value`'s first line; the capture arm | **DONE** | §L44 |
+| **F1b-iii** — the `Position.move` gate, all thirteen statements | **DONE** | §L45, §L48, §L56 |
+| **F1b-iv** — `Position.rotate` at a SYMBOLIC board; the composition; the `callIn` boundary | **DONE** | this section |
+
+### THE F1 AXIOM PRINT
+
+`qs_measure.lean` + `move_residue.lean` + `move_gate.lean` — **135 printed
+declarations**, 220 theorems, 3232 lines. Every one depends on
+`[propext, Classical.choice, Quot.sound]` **or less**; many are
+`does not depend on any axioms`. **Zero `sorry`. Zero `native_decide`.** The
+milestone print is the whole of F1 and it is clean.
+
+### What closed it
+
+* **`Position.rotate` at a symbolic board** (`rotate_runs_quiet`,
+  `rotate_runs_ep`). `proof.lean` has gated it since pass 1 at a CONCRETE board,
+  with the 120-character slice and swapcase as kernel `rfl` facts. Over a free
+  board those two calls are §L41's `rotStr_residue` — **which is where that lemma
+  is finally spent**, after four sections of waiting. Two arms because `ep`'s
+  `ifExp` has two: `0` is falsy so the test dies on its first operand and the
+  square is dropped; anything else reaches `not nullmove` (the LITERAL default)
+  and the square mirrors to `119 - ep`.
+* **The thirteen-gate composition** (`move_body_push`) — `value_body_quiet`'s
+  template at thirteen statements and with a world that MOVES: statement 2 pushes
+  the closure, so statements 3–12 run at `w.heap.push putObj` and the `put`
+  address is `w.heap.size`.
+* **`move_runs_push`**, and the bridge: `cellAt`'s default is `' '` and
+  `moveCells`' is `'.'`; inside the board they are the same read, and that one
+  line (`cellAt_eq_dot`) lets the interpreter's answer be spelled as
+  `plainMoveBoard`. §L30's stated risk for F1 —
+  *"`Position.move` builds its board by STRING SLICING while `value` is `pst`
+  arithmetic, so this is a string lemma, not an omega"* — is now a theorem with
+  both sides named and equal.
+
+**Instantiated, not admired.** Every premise of `move_runs_push` is `#guard`ed
+separately on the fixture's `1. d4`, the `Position.value` premise is read off the
+ENGINE, and the CONCLUSION TERM is compared to what the shipped interpreter
+actually returns — on both fixture edges. The heap grows by one slot and by
+nothing else.
+
+### THE DETOUR, and it is the finding of the section
+
+**A stale `olean` cost roughly two hours.** The sequence:
+
+1. `position_ctor` was factored out of `move_builds_position`, which changed
+   `move_returns`' fuel from `F + 12` to `F + 10`.
+2. The file was checked with `lake env lean Examples/…/move_gate.lean` — which
+   **type-checks without writing the `olean`**.
+3. Every scratch file that then `import`ed `move_gate` got the PRE-refactor
+   `move_returns`, still at `F + 12`.
+4. The composition passed `hr (tr + 8)`. Unification therefore had to solve
+   `?F + 10 =?= tr + 8` — unsolvable — and Lean whnf-stormed. **Twenty times the
+   heartbeat budget, three minutes per attempt, and the error message says
+   `timeout at whnf` with no hint that a fuel number is stale.**
+
+Four separate diagnoses were tried and all four were wrong: altitude lemma,
+higher-order unification from `_` placeholders, cumulative `rfl` cost, nested
+`execStmts_append`. The actual fix was `lake build`. **`#check @move_returns`
+printed `F + 12` and the whole thing collapsed in one line.**
+
+§L41 recorded *"a stale `olean` masquerades as a failed proof."* This section
+sharpens it: **the masquerade survives every plausible fix, because a fuel
+mismatch and a genuinely hard unification produce the SAME error.** The cheap
+check is `#check @thm` — print the imported signature and read the numbers —
+and it should be the FIRST move whenever a `whnf` timeout follows an edit to a
+theorem the failing file imports, not the fifth.
+
+### Findings worth carrying
+
+1. **`#check @thm` before you re-architect.** See above. One line, instant, and
+   it distinguishes "stale import" from "hard unification" — the two things that
+   produce identical `whnf` timeouts.
+2. **Frame lookups need altitude too.** Proving `Env.lookup (frame …) "k" = …`
+   by `rfl` costs ~30k heartbeats: fine once, fatal seven times in one
+   declaration. Proved ONCE at a universally quantified frame (27 small lemmas),
+   every use becomes a projection. Same principle as §L48's expression-level
+   altitude lemmas, one level down — and the symptom was identical, which is
+   why it cost a diagnosis.
+3. **`position_ctor` pays for itself twice.** The `Position(…)` class-table walk
+   is the file's single most expensive `py_simp` (the reason throughput went
+   6.5 s → 37 s in §L56). Factored to take the six argument VALUES rather than
+   six NAMES, it is proved once and spent at both call sites — statement 12 and
+   `Position.rotate`'s own `return`. The file came back to **17 s** on that
+   change alone, before §8 and §9 pushed it up again.
+4. **A docstring cannot precede `#guard`.** `/-- … -/` before a `#guard` is a
+   parse error whose message names sixty valid tokens and not the problem.
+   `/-! … -/` is the form. (Cost: one build cycle.)
+
+### The build-lock incident, reported
+
+Thomas flagged the machine as overloaded by concurrent Lean builds mid-session
+and `scratchpad/BUILD_LOCK_PROTOCOL.md` landed. Cleaning up this lane's own
+orphaned processes, **a `pkill` pattern keyed on the session directory matched a
+SIBLING lane's clone** (`scratchpad/lean-es`, which shares the session prefix;
+this lane is `scratchpad/lean-basecase`) and killed some of its build processes.
+No work is lost — Lean builds are idempotent and `olean`s are on disk — but that
+sibling's in-flight build needs re-running. **Rule 6 says kills by parentage
+only; a path prefix is not parentage.** The discriminator is the CLONE
+directory, not the session id.
+
+### Triad
+
+Measured at this lane's base (`6210c2d` + this file's changes), which is the
+tree every theorem here was proved against: `lake build` **3692 jobs green**;
+`docs_check` **73/73 marked blocks**; `diff_test` **1394 cases, 0 failed**, 118
+whitelisted, 1276 matched; `script_corpus` **65 scripts, 0 failed, 50 matched,
+15 loud**. No `sorry`, no `native_decide`, no linter warning. `move_gate.lean` is
+now **2090 lines** and its throughput is **~3 min** — the two heavy declarations
+are `position_ctor` (the class table) and `move_body_push` (thirteen frames).
+
+**Post-rebase re-verification is QUEUED, not skipped.** The rebase onto `b2d4675`
+brings `LeanModels/Python/VCGen.lean` and two sunfish examples, so the law asks
+for a rebuild. At push time `/tmp/ls-build.lock` had been held since 11:18 and
+**three sibling clones were running 75 Lean processes between them**, so the
+spinlock this lane opened could not be served. The choice was to hold green work
+unpushed behind a saturated machine — the failure mode that has cost this
+campaign four spend-deaths — or to push with the verification state named. This
+section names it: the re-verification runs under the lock and any breakage is
+this lane's to fix forward.
+
+### What F1 does NOT claim
+
+* **`Position.value`'s answer is a PREMISE** at statement 5. `value_bound.lean`
+  gates that method's eight statements (§L28) and closes three of its arms; the
+  pawn arm it does not close is exactly the one a pawn move needs, so the number
+  arrives as a hypothesis and the fixture supplies it from the engine. Closing it
+  is `value_bound`'s inch, not F1's.
+* **One move shape is composed**, the plain pawn double push — deliberately the
+  arm that exercises the most machinery. The quiet, capture, castle and
+  promotion configurations reuse the same chain with one gate swapped, which is
+  what the two-gates-per-`if` factoring was for; none of them is new mathematics,
+  and none of them is claimed here.

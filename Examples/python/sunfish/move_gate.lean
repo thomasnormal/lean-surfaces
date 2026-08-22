@@ -13,10 +13,11 @@ open Examples.python.sunfish.pins
 open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.basecase_depth0 (mvOf)
 open Examples.python.sunfish.move_residue
+open Examples.python.sunfish.qs_measure (plainMoveBoard)
 open Examples.python.sunfish.faillow_census (d4B e4B)
 open Examples.python.sunfish.value_bound (boardAt a1G h1G a8G h8G)
 open Examples.python.sunfish.bound_depth (execStmts_singleton_flow execStmts_singleton
-  execStmt_assign_name execStmt_if_true execStmt_if_false compare_one boolChain_and_falsy
+  execStmts_append execStmt_assign_name execStmt_if_true execStmt_if_false compare_one boolChain_and_falsy
   boolChain_and2 posCAux posCls posCls_methods posCls_ntBase_isSome absG absNotFun absCls absNT)
 
 set_option maxRecDepth 100000
@@ -929,8 +930,25 @@ theorem posCls_ntBase_pin : ∃ sp, posCls.2.ntBase =
     some ⟨"Position", "Position", #["board", "score", "wc", "bc", "ep", "kp"], sp⟩ := ⟨_, rfl⟩
 
 set_option maxHeartbeats 1600000 in
-/-- **`Position(board, score, wc, bc, ep, kp)` IS `posOf`.** No allocation: a
-namedtuple-subclass instantiation is a VALUE. -/
+/-- **`Position(…)` IS `posOf`, at ANY six argument expressions.** The class-table
+walk happens exactly ONCE in the tree: statement 12 and `Position.rotate`'s own
+`return` (§8) both spend this lemma, and neither pays the walk again. No
+allocation — a namedtuple-subclass instantiation is a VALUE, which is why §L44's
+exit law measured ONE heap slot for the whole method. -/
+theorem position_ctor {F : Nat} {st st' : FrameState} {args : Array Expr}
+    {bd : String} {scv : Int} {wc0 wc1 bc0 bc1 : Bool} {epv kpv : Int} {q0 q7 : Span}
+    (hnP : Env.lookup st.locals "Position" = Option.none)
+    (hargs : evalExprs sunfish F st args.toList
+      = .ok st' [.str bd, .int scv, .tuple #[.bool wc0, .bool wc1],
+                 .tuple #[.bool bc0, .bool bc1], .int epv, .int kpv]) :
+    evalExpr sunfish (F + 1) st (.call (.name "Position" q0) args #[] Option.none q7)
+      = .ok st' (posOf bd scv wc0 wc1 bc0 bc1 epv kpv) := by
+  obtain ⟨spnt, hnt⟩ := posCls_ntBase_pin
+  py_simp [-globalsFold, -globalsStep, hnP, hargs, posG, posFind,
+    posNotFun, posInitNotFun, posNT, posCls_isExc, posCls_ok, posCAux, posCls_methods,
+    posCls_ntBase_isSome, hnt, posOf]
+
+/-- Statement 12's own constructor, at the six NAMES the shipped line passes. -/
 theorem move_builds_position (w : World) (e : REnv) (bd : String) (scv : Int)
     (wc0 wc1 bc0 bc1 : Bool) (epv kpv : Int) (F : Nat) (q0 q1 q2 q3 q4 q5 q6 q7 : Span)
     (hb : Env.lookup e "board" = some (.str bd))
@@ -940,15 +958,16 @@ theorem move_builds_position (w : World) (e : REnv) (bd : String) (scv : Int)
     (hep : Env.lookup e "ep" = some (.int epv))
     (hkp : Env.lookup e "kp" = some (.int kpv))
     (hnP : Env.lookup e "Position" = Option.none) :
-    evalExpr sunfish (F + 10) ⟨w, e⟩
+    evalExpr sunfish (F + 8) ⟨w, e⟩
         (.call (.name "Position" q0) #[.name "board" q1, .name "score" q2, .name "wc" q3,
                                        .name "bc" q4, .name "ep" q5, .name "kp" q6]
           #[] Option.none q7)
-      = .ok ⟨w, e⟩ (posOf bd scv wc0 wc1 bc0 bc1 epv kpv) := by
-  obtain ⟨spnt, hnt⟩ := posCls_ntBase_pin
-  py_simp [-globalsFold, -globalsStep, hb, hs, hwc, hbc, hep, hkp, hnP, posG, posFind,
-    posNotFun, posInitNotFun, posNT, posCls_isExc, posCls_ok, posCAux, posCls_methods,
-    posCls_ntBase_isSome, hnt, posOf]
+      = .ok ⟨w, e⟩ (posOf bd scv wc0 wc1 bc0 bc1 epv kpv) :=
+  position_ctor hnP
+    (evalExprs_cons (name_evals hb) (evalExprs_cons (name_evals hs)
+      (evalExprs_cons (name_evals hwc) (evalExprs_cons (name_evals hbc)
+        (evalExprs_cons (name_evals hep) (evalExprs_cons (name_evals hkp)
+          evalExprs_nil))))))
 
 /-- **A METHOD CALL ON A NAMEDTUPLE VALUE, at the chain.** The plan is decided
 BEFORE the arguments (CPython's order), the clock guard is retired by the
@@ -984,14 +1003,906 @@ theorem move_returns (w : World) (e : REnv) (bd : String) (scv : Int)
     (hep : Env.lookup e "ep" = some (.int epv))
     (hkp : Env.lookup e "kp" = some (.int kpv))
     (hnP : Env.lookup e "Position" = Option.none)
-    (hrot : callIn sunfish (F + 10) w "Position.rotate"
+    (hrot : callIn sunfish (F + 8) w "Position.rotate"
       #[posOf bd scv wc0 wc1 bc0 bc1 epv kpv] = .ok w' r) :
-    execStmt sunfish (F + 12) ⟨w, e⟩ mvRet = .ok ⟨w', e⟩ (.ret r) := by
+    execStmt sunfish (F + 10) ⟨w, e⟩ mvRet = .ok ⟨w', e⟩ (.ret r) := by
   obtain ⟨q0, q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, hlit⟩ := mvRet_lit
   rw [hlit]
-  exact execStmt_ret (ntuple_method_call (F := F + 9)
+  exact execStmt_ret (ntuple_method_call (F := F + 7)
     (move_builds_position w e bd scv wc0 wc1 bc0 bc1 epv kpv F q0 q1 q2 q3 q4 q5 q6 q7
       hb hs hwc hbc hep hkp hnP) rfl rotatePlan hrot)
+
+/-! ## §8 `Position.rotate` AT A SYMBOLIC BOARD — statement 12's premise
+
+`proof.lean` gates `Position.rotate` at a CONCRETE board (three `CallsIn`
+theorems, each spending a kernel-checked `strSlice`/`strSwapcase` fact on the
+120-character literal). Statement 12 needs it over a FREE board, and that is
+where §L41's `rotStr_residue` is finally spent: the negative-step slice and the
+`swapcase` are the two calls it proves, and `rotStr` is the answer.
+
+Two arms, because the `ep` field's own `ifExp` has two: `0` is falsy so the test
+dies on its FIRST operand and the square is dropped; anything else reaches
+`not nullmove` — the LITERAL default `False` — and the square is mirrored to
+`119 - ep`. `kp` is `0` at every child of a plain `Position.move` (statement 4
+resets it and only the dead castle arm writes it), so both arms fix it. -/
+
+theorem unaryOp_evals {m : Module} {F : Nat} {st st₁ : FrameState}
+    {op : UnaryOp} {e : Expr} {sp : Span} {a v : RVal}
+    (h : evalExpr m F st e = .ok st₁ a)
+    (hop : evalUnaryOpH st₁.world.heap op a = .ok v) :
+    evalExpr m (F + 1) st (.unaryOp op e sp) = .ok st₁ v := by
+  rw [evalExpr, h]
+  simp only [Run.bind, Run.liftRes, hop]
+
+theorem ifExp_true {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {t b o : Expr} {sp : Span} {tv v : RVal}
+    (ht : evalExpr m F st t = .ok st₁ tv)
+    (hb : truthyH st₁.world.heap tv = .ok true)
+    (hbr : evalExpr m F st₁ b = .ok st₂ v) :
+    evalExpr m (F + 1) st (.ifExp t b o sp) = .ok st₂ v := by
+  rw [evalExpr, ht]
+  simp only [Run.bind, Run.liftRes, hb, if_true, hbr]
+
+theorem ifExp_false {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {t b o : Expr} {sp : Span} {tv v : RVal}
+    (ht : evalExpr m F st t = .ok st₁ tv)
+    (hb : truthyH st₁.world.heap tv = .ok false)
+    (hbr : evalExpr m F st₁ o = .ok st₂ v) :
+    evalExpr m (F + 1) st (.ifExp t b o sp) = .ok st₂ v := by
+  rw [evalExpr, ht]
+  simp only [Run.bind, Run.liftRes, hb, Bool.false_eq_true, if_false, hbr]
+
+/-- `x and y` at ARBITRARY values — the shape §4's `boolOp_and2_bool` specialises.
+`self.ep and not nullmove` is an `Int` and a `Bool`, so the general one is the
+one this section needs. -/
+theorem boolOp_and2 {m : Module} {F : Nat} {st st₁ st₂ : FrameState}
+    {e1 e2 : Expr} {sp : Span} {v1 v2 : RVal}
+    (h1 : evalExpr m (F + 1) st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok true)
+    (h2 : evalExpr m F st₁ e2 = .ok st₂ v2) :
+    evalExpr m (F + 3) st (.boolOp .and #[e1, e2] sp) = .ok st₂ v2 := by
+  rw [evalExpr]
+  simpa using boolChain_and2 h1 hb1 h2
+
+theorem boolOp_and_falsy {m : Module} {F : Nat} {st st₁ : FrameState}
+    {e1 e2 : Expr} {sp : Span} {v1 : RVal}
+    (h1 : evalExpr m F st e1 = .ok st₁ v1)
+    (hb1 : truthyH st₁.world.heap v1 = .ok false) :
+    evalExpr m (F + 2) st (.boolOp .and #[e1, e2] sp) = .ok st₁ v1 := by
+  rw [evalExpr]
+  exact boolChain_and_falsy h1 hb1
+
+/-- `s.swapcase()` on a str receiver — the plan is decided from the attribute
+name BEFORE the arguments, and the worker is pure. -/
+theorem str_method_swapcase {m : Module} {F : Nat} {st st₁ : FrameState}
+    {recv : Expr} {sv : String} {sp asp : Span} {v : RVal}
+    (hr : evalExpr m (F + 1) st recv = .ok st₁ (.str sv))
+    (hsw : strSwapcase sv = .ok v) :
+    evalExpr m (F + 2) st (.call (.attribute recv "swapcase" asp) #[] #[] Option.none sp)
+      = .ok st₁ v := by
+  rw [evalExpr, hr]
+  simp only [Run.bind, isClockCall, strCallPlan, evalExprs, Run.liftRes, hsw]
+  rfl
+
+theorem truthy_int_ne (h : Heap) (n : Int) (hn : n ≠ 0) : truthyH h (.int n) = .ok true := by
+  simp [truthyH, truthy, hn]
+
+/-! ### The six field reads, once each
+
+`self.X` on a `Position` VALUE is a tuple index, not a bound method — the
+`ntBase.isSome && attr ∈ methods` fork, decided from `posCls_methods`. -/
+
+theorem selfBoard (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "board" s2)
+      = .ok ⟨w, e⟩ (.str b) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+theorem selfScore (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "score" s2)
+      = .ok ⟨w, e⟩ (.int sc) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+theorem selfWc (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "wc" s2)
+      = .ok ⟨w, e⟩ (.tuple #[.bool wc0, .bool wc1]) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+theorem selfBc (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "bc" s2)
+      = .ok ⟨w, e⟩ (.tuple #[.bool bc0, .bool bc1]) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+theorem selfEp (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "ep" s2)
+      = .ok ⟨w, e⟩ (.int ep) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+theorem selfKp (w : World) (e : REnv) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (F : Nat) (s1 s2 : Span)
+    (hself : Env.lookup e "self" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp)) :
+    evalExpr sunfish (F + 2) (⟨w, e⟩ : FrameState) (.attribute (.name "self" s1) "kp" s2)
+      = .ok ⟨w, e⟩ (.int kp) := by
+  py_simp [-globalsFold, -globalsStep, hself, posOf, posCAux, posCls_methods]
+
+/-! ### The method, projected — and it is TWO statements, not one -/
+
+def rtF : FunctionDefn :=
+  match findFunction sunfish "Position.rotate" with | some f => f | none => default
+def rtB : List Stmt := rtF.body.toList
+/-- The DOCSTRING. `Position.rotate`'s body is two statements and the first is
+`"""Rotates the board, preserving enpassant, unless nullmove"""` — a real
+`Stmt.exprStmt` that the interpreter really executes. -/
+def rtDoc : Stmt := nth 0 rtB
+/-- …and the `return`. -/
+def rtRet : Stmt := nth 1 rtB
+
+theorem rtB_split : rtB = [rtDoc, rtRet] := rfl
+theorem rtB_appends : rtB = [rtDoc] ++ [rtRet] := rfl
+
+theorem rtF_lit : findFunction sunfish "Position.rotate" = some rtF ∧
+    rtF.argsOk = true ∧ rtF.localsOk = true ∧ rtF.isGenerator = false ∧
+    rtF.body.toList = rtB ∧ rtF.hasGlobal = false ∧ arityOk rtF.params 1 = true :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- The frame a ONE-argument `rotate` call builds: `nullmove` takes its literal
+default `False`, which is the whole reason the two `ifExp` tests can be decided
+without a hypothesis about the caller. -/
+def rtEnv (pv : RVal) : REnv := [("self", pv), ("nullmove", .bool false)]
+
+theorem rtCallEnv (pv : RVal) : mkCallEnv rtF.params #[pv] = rtEnv pv := rfl
+
+theorem rtDoc_lit : ∃ s0 s1, rtDoc =
+    .exprStmt (.constant (.str "Rotates the board, preserving enpassant, unless nullmove") s0)
+      s1 := ⟨_, _, rfl⟩
+
+theorem rt_docstring (w : World) (e : REnv) (F : Nat) :
+    execStmt sunfish (F + 2) ⟨w, e⟩ rtDoc = .ok ⟨w, e⟩ .next := by
+  obtain ⟨s0, s1, h⟩ := rtDoc_lit
+  rw [h]
+  py_simp [-globalsFold, -globalsStep]
+
+theorem rtRet_lit : ∃ r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 r17 r18 r19
+    r20 r21 r22 r23 r24 r25 r26 r27 r28 r29 r30 r31 r32 r33 r34 r35 r36 r37 r38 r39 r40,
+    rtRet =
+    .ret (some (.call (.name "Position" r0)
+      #[.call (.attribute
+            (.slice (.attribute (.name "self" r1) "board" r2)
+              (.constant .none r3) (.constant .none r4)
+              (.unaryOp .usub (.constant (.int 1) r5) r6) r7) "swapcase" r8)
+          #[] #[] Option.none r9,
+        .unaryOp .usub (.attribute (.name "self" r10) "score" r11) r12,
+        .attribute (.name "self" r13) "bc" r14,
+        .attribute (.name "self" r15) "wc" r16,
+        .ifExp (.boolOp .and #[.attribute (.name "self" r17) "ep" r18,
+                               .unaryOp .not (.name "nullmove" r19) r20] r21)
+          (.binOp (.constant (.int 119) r22) .sub (.attribute (.name "self" r23) "ep" r24) r25)
+          (.constant (.int 0) r26) r27,
+        .ifExp (.boolOp .and #[.attribute (.name "self" r28) "kp" r29,
+                               .unaryOp .not (.name "nullmove" r30) r31] r32)
+          (.binOp (.constant (.int 119) r33) .sub (.attribute (.name "self" r34) "kp" r35) r36)
+          (.constant (.int 0) r37) r38]
+      #[] Option.none r39)) r40 :=
+  ⟨_, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _,
+   _, _, _, _, _, _, _, _, _, _, _, rfl⟩
+
+theorem callIn_of_rotate_body {w w' : World} {pv : RVal} {e' : REnv} {v : RVal} {F : Nat}
+    (h : execStmts sunfish F ⟨w, rtEnv pv⟩ rtB = .ok ⟨w', e'⟩ (.ret v)) :
+    callIn sunfish (F + 1) w "Position.rotate" #[pv] = .ok w' v := by
+  obtain ⟨hfind, hargs, hloc, hgen, hbody, hglob, harity⟩ := rtF_lit
+  rw [callIn, hfind]
+  simp only [hargs, hloc, hgen, Bool.not_true, Bool.false_eq_true, if_neg,
+    not_false_eq_true, hbody, rtCallEnv, h, Run.bind, Run.toWorld,
+    show (#[pv] : Array RVal).size = 1 from rfl, harity]
+
+/-- **THE ROTATE'S FOUR UNCONDITIONAL COMPONENTS**, shared by both `ep` arms.
+`hA1` is where `rotStr_residue` is spent: the negative-step slice answers
+`String.ofList b.toList.reverse` and `swapcase` maps it to `rotStr b`. -/
+theorem rt_common (w : World) (e : REnv) (bd : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (epv kpv : Int) (F : Nat)
+    (r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15 r16 : Span)
+    (hself : Env.lookup e "self" = some (posOf bd scv wc0 wc1 bc0 bc1 epv kpv))
+    (hasc : strAscii bd = true) :
+    evalExpr sunfish (F + 17) (⟨w, e⟩ : FrameState)
+        (.call (.attribute
+          (.slice (.attribute (.name "self" r1) "board" r2)
+            (.constant .none r3) (.constant .none r4)
+            (.unaryOp .usub (.constant (.int 1) r5) r6) r7) "swapcase" r8)
+          #[] #[] Option.none r9) = .ok ⟨w, e⟩ (.str (rotStr bd))
+      ∧ evalExpr sunfish (F + 16) (⟨w, e⟩ : FrameState)
+        (.unaryOp .usub (.attribute (.name "self" r10) "score" r11) r12)
+        = .ok ⟨w, e⟩ (.int (-scv))
+      ∧ evalExpr sunfish (F + 15) (⟨w, e⟩ : FrameState)
+        (.attribute (.name "self" r13) "bc" r14) = .ok ⟨w, e⟩ (.tuple #[.bool bc0, .bool bc1])
+      ∧ evalExpr sunfish (F + 14) (⟨w, e⟩ : FrameState)
+        (.attribute (.name "self" r15) "wc" r16)
+        = .ok ⟨w, e⟩ (.tuple #[.bool wc0, .bool wc1]) := by
+  obtain ⟨hrev, hswap⟩ := rotStr_residue bd hasc
+  refine ⟨?_, ?_, selfBc w e bd scv wc0 wc1 bc0 bc1 epv kpv (F + 13) r13 r14 hself,
+    selfWc w e bd scv wc0 wc1 bc0 bc1 epv kpv (F + 12) r15 r16 hself⟩
+  · exact str_method_swapcase (F := F + 15)
+      (slice_four (selfBoard w e bd scv wc0 wc1 bc0 bc1 epv kpv (F + 13) r1 r2 hself)
+        const_evals const_evals (unaryOp_evals const_evals rfl) hrev) hswap
+  · exact unaryOp_evals (selfScore w e bd scv wc0 wc1 bc0 bc1 epv kpv (F + 13) r10 r11 hself) rfl
+
+/-- **GATE — the `return`, at `ep = kp = 0`.** Both `ifExp` tests die on their
+FIRST operand: `0` is falsy, so `not nullmove` never runs. -/
+theorem rotate_ret_quiet (w : World) (e : REnv) (bd : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf bd scv wc0 wc1 bc0 bc1 0 0))
+    (hnP : Env.lookup e "Position" = Option.none)
+    (hasc : strAscii bd = true) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ rtRet
+      = .ok ⟨w, e⟩ (.ret (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 0 0)) := by
+  obtain ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18,
+    r19, r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30, r31, r32, r33, r34, r35, r36,
+    r37, r38, r39, r40, hlit⟩ := rtRet_lit
+  rw [hlit]
+  obtain ⟨hA1, hA2, hA3, hA4⟩ :=
+    rt_common w e bd scv wc0 wc1 bc0 bc1 0 0 F r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12
+      r13 r14 r15 r16 hself hasc
+  have hA5 : evalExpr sunfish (F + 13) (⟨w, e⟩ : FrameState)
+      (.ifExp (.boolOp .and #[.attribute (.name "self" r17) "ep" r18,
+                              .unaryOp .not (.name "nullmove" r19) r20] r21)
+        (.binOp (.constant (.int 119) r22) .sub (.attribute (.name "self" r23) "ep" r24) r25)
+        (.constant (.int 0) r26) r27) = .ok ⟨w, e⟩ (.int 0) :=
+    ifExp_false (boolOp_and_falsy
+      (selfEp w e bd scv wc0 wc1 bc0 bc1 0 0 (F + 8) r17 r18 hself) rfl) rfl const_evals
+  have hA6 : evalExpr sunfish (F + 12) (⟨w, e⟩ : FrameState)
+      (.ifExp (.boolOp .and #[.attribute (.name "self" r28) "kp" r29,
+                              .unaryOp .not (.name "nullmove" r30) r31] r32)
+        (.binOp (.constant (.int 119) r33) .sub (.attribute (.name "self" r34) "kp" r35) r36)
+        (.constant (.int 0) r37) r38) = .ok ⟨w, e⟩ (.int 0) :=
+    ifExp_false (boolOp_and_falsy
+      (selfKp w e bd scv wc0 wc1 bc0 bc1 0 0 (F + 7) r28 r29 hself) rfl) rfl const_evals
+  exact execStmt_ret (position_ctor hnP
+    (evalExprs_cons hA1 (evalExprs_cons hA2 (evalExprs_cons hA3 (evalExprs_cons hA4
+      (evalExprs_cons hA5 (evalExprs_cons hA6 evalExprs_nil)))))))
+
+/-- **GATE — the `return`, at `ep ≠ 0`.** The `and` chain reaches its SECOND
+operand, `not nullmove`, and `nullmove` is the literal default — so the
+en-passant square is MIRRORED to `119 - ep` rather than dropped. -/
+theorem rotate_ret_ep (w : World) (e : REnv) (bd : String) (scv : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (epv : Int) (F : Nat)
+    (hself : Env.lookup e "self" = some (posOf bd scv wc0 wc1 bc0 bc1 epv 0))
+    (hnm : Env.lookup e "nullmove" = some (.bool false))
+    (hnP : Env.lookup e "Position" = Option.none)
+    (hep : epv ≠ 0)
+    (hasc : strAscii bd = true) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ rtRet
+      = .ok ⟨w, e⟩ (.ret (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 (119 - epv) 0)) := by
+  obtain ⟨r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15, r16, r17, r18,
+    r19, r20, r21, r22, r23, r24, r25, r26, r27, r28, r29, r30, r31, r32, r33, r34, r35, r36,
+    r37, r38, r39, r40, hlit⟩ := rtRet_lit
+  rw [hlit]
+  obtain ⟨hA1, hA2, hA3, hA4⟩ :=
+    rt_common w e bd scv wc0 wc1 bc0 bc1 epv 0 F r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12
+      r13 r14 r15 r16 hself hasc
+  have hA5 : evalExpr sunfish (F + 13) (⟨w, e⟩ : FrameState)
+      (.ifExp (.boolOp .and #[.attribute (.name "self" r17) "ep" r18,
+                              .unaryOp .not (.name "nullmove" r19) r20] r21)
+        (.binOp (.constant (.int 119) r22) .sub (.attribute (.name "self" r23) "ep" r24) r25)
+        (.constant (.int 0) r26) r27) = .ok ⟨w, e⟩ (.int (119 - epv)) :=
+    ifExp_true
+      (boolOp_and2 (selfEp w e bd scv wc0 wc1 bc0 bc1 epv 0 (F + 8) r17 r18 hself)
+        (truthy_int_ne w.heap epv hep)
+        (unaryOp_evals (name_evals hnm) rfl)) rfl
+      (binOp_two const_evals (selfEp w e bd scv wc0 wc1 bc0 bc1 epv 0 (F + 9) r23 r24 hself) rfl)
+  have hA6 : evalExpr sunfish (F + 12) (⟨w, e⟩ : FrameState)
+      (.ifExp (.boolOp .and #[.attribute (.name "self" r28) "kp" r29,
+                              .unaryOp .not (.name "nullmove" r30) r31] r32)
+        (.binOp (.constant (.int 119) r33) .sub (.attribute (.name "self" r34) "kp" r35) r36)
+        (.constant (.int 0) r37) r38) = .ok ⟨w, e⟩ (.int 0) :=
+    ifExp_false (boolOp_and_falsy
+      (selfKp w e bd scv wc0 wc1 bc0 bc1 epv 0 (F + 7) r28 r29 hself) rfl) rfl const_evals
+  exact execStmt_ret (position_ctor hnP
+    (evalExprs_cons hA1 (evalExprs_cons hA2 (evalExprs_cons hA3 (evalExprs_cons hA4
+      (evalExprs_cons hA5 (evalExprs_cons hA6 evalExprs_nil)))))))
+
+/-- **`Position.rotate` DECIDES, heap-free, at a SYMBOLIC board with
+`ep = kp = 0`.** The world in is the world out — `rotate` allocates nothing. -/
+theorem rotate_runs_quiet (w : World) (bd : String) (scv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (hasc : strAscii bd = true) :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.rotate"
+        #[posOf bd scv wc0 wc1 bc0 bc1 0 0]
+      = .ok w (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 0 0) := by
+  have hbody : ∃ f, execStmts sunfish f
+      ⟨w, rtEnv (posOf bd scv wc0 wc1 bc0 bc1 0 0)⟩ rtB
+      = .ok ⟨w, rtEnv (posOf bd scv wc0 wc1 bc0 bc1 0 0)⟩
+          (.ret (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 0 0)) := by
+    rw [rtB_appends]
+    exact execStmts_append ⟨4, execStmts_singleton (rt_docstring w _ 1)⟩
+      ⟨21, execStmts_singleton_flow
+        (rotate_ret_quiet w _ bd scv wc0 wc1 bc0 bc1 0 rfl rfl hasc)⟩ (by simp)
+  obtain ⟨f, hf⟩ := hbody
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_rotate_body (execStmts_mono hf (by simp) F' hF')
+
+/-- **…and at `ep ≠ 0`**, where the en-passant square is mirrored. -/
+theorem rotate_runs_ep (w : World) (bd : String) (scv : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (epv : Int) (hep : epv ≠ 0) (hasc : strAscii bd = true) :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.rotate"
+        #[posOf bd scv wc0 wc1 bc0 bc1 epv 0]
+      = .ok w (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 (119 - epv) 0) := by
+  have hbody : ∃ f, execStmts sunfish f
+      ⟨w, rtEnv (posOf bd scv wc0 wc1 bc0 bc1 epv 0)⟩ rtB
+      = .ok ⟨w, rtEnv (posOf bd scv wc0 wc1 bc0 bc1 epv 0)⟩
+          (.ret (posOf (rotStr bd) (-scv) bc0 bc1 wc0 wc1 (119 - epv) 0)) := by
+    rw [rtB_appends]
+    exact execStmts_append ⟨4, execStmts_singleton (rt_docstring w _ 1)⟩
+      ⟨21, execStmts_singleton_flow
+        (rotate_ret_ep w _ bd scv wc0 wc1 bc0 bc1 epv 0 rfl rfl rfl hep hasc)⟩ (by simp)
+  obtain ⟨f, hf⟩ := hbody
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_rotate_body (execStmts_mono hf (by simp) F' hF')
+
+/-! ## §9 THE COMPOSITION — thirteen gates, one method
+
+`value_body_quiet`'s template (§L28) at thirteen statements instead of eight, and
+with a world that MOVES: statement 2 pushes the closure, so statements 3–12 run
+at `{ w with heap := w.heap.push putObj }` and the `put` address is
+`w.heap.size`.
+
+The configuration is a **plain pawn DOUBLE PUSH** — the fixture's own `1. d4`.
+It is the arm that exercises the most machinery: statement 10 skips, statement 11
+ENTERS and its middle `if` fires, and the child therefore carries a mirrored
+en-passant square out of `Position.rotate`.
+
+Two premises are sub-calls, taken in the ∃-mono form the tree's closing theorems
+use: `Position.value`'s answer (statement 5) and `Position.rotate`'s (statement
+12). The second is discharged by §8's `rotate_runs_ep`; the first is
+`value_bound.lean`'s business and is left a premise, which is the same discipline
+`value_scores` used for the `pst` row.
+
+**The lookup lemmas below are not decoration.** Proving a frame lookup by `rfl`
+costs ~30k heartbeats — fine once, fatal seven times in one declaration (the
+`move_returns` step blew a 20× budget). Proved ONCE at a universally quantified
+frame, each use is a projection. That is the same altitude principle as §2a, one
+level down. -/
+
+def mvEnv (pv mv : RVal) : REnv := [("self", pv), ("move", mv)]
+
+theorem mvArity : arityOk mvF.params 2 = true := rfl
+theorem mvCallEnv (pv mv : RVal) : mkCallEnv mvF.params #[pv, mv] = mvEnv pv mv := rfl
+
+theorem mvF_lit2 : findFunction sunfish "Position.move" = some mvF ∧
+    mvF.argsOk = true ∧ mvF.localsOk = true ∧ mvF.isGenerator = false ∧
+    mvF.body.toList = mvB ∧ mvF.hasGlobal = false ∧ arityOk mvF.params 2 = true :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+theorem callIn_of_move_body {w w' : World} {pv mv : RVal} {e' : REnv} {v : RVal} {F : Nat}
+    (h : execStmts sunfish F ⟨w, mvEnv pv mv⟩ mvB = .ok ⟨w', e'⟩ (.ret v)) :
+    callIn sunfish (F + 1) w "Position.move" #[pv, mv] = .ok w' v := by
+  obtain ⟨hfind, hargs, hloc, hgen, hbody, hglob, harity⟩ := mvF_lit2
+  rw [callIn, hfind]
+  simp only [hargs, hloc, hgen, Bool.not_true, Bool.false_eq_true, if_neg,
+    not_false_eq_true, hbody, mvCallEnv, h, Run.bind, Run.toWorld,
+    show (#[pv, mv] : Array RVal).size = 2 from rfl, harity]
+
+/-- The frame from statement 5 onward: every key present, in binding order. -/
+def mvFrame (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom),
+   ("p", .str pc), ("q", .str qc), ("put", .ref a), ("board", .str bd),
+   ("wc", .tuple #[.bool wc0, .bool wc1]), ("bc", .tuple #[.bool bc0, .bool bc1]),
+   ("ep", .int epv), ("kp", .int kpv), ("score", .int scv)]
+
+/-- The frame after statements 0–4, before `score` is bound. -/
+def mvPre (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom),
+   ("p", .str pc), ("q", .str qc), ("put", .ref a), ("board", .str bd),
+   ("wc", .tuple #[.bool wc0, .bool wc1]), ("bc", .tuple #[.bool bc0, .bool bc1]),
+   ("ep", .int 0), ("kp", .int 0)]
+
+/-- Statements 0–4 build `mvPre` out of the two-key call frame, one `Env.set` at
+a time, in exactly the order the keys appear. -/
+theorem mvPre_build (pv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) :
+    Env.set (Env.set (Env.set (Env.set (Env.set (Env.set (Env.set (Env.set (Env.set (Env.set
+      (Env.set (mvEnv pv (mvOf i j prom)) "i" (.int i))
+      "j" (.int j)) "prom" (.str prom)) "p" (.str pc)) "q" (.str qc)) "put" (.ref a))
+      "board" (.str bd)) "wc" (.tuple #[.bool wc0, .bool wc1]))
+      "bc" (.tuple #[.bool bc0, .bool bc1])) "ep" (.int 0)) "kp" (.int 0)
+      = mvPre pv (mvOf i j prom) i j prom pc qc a bd wc0 wc1 bc0 bc1 := rfl
+
+theorem mvPre_score (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (scv : Int) :
+    Env.set (mvPre pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1) "score" (.int scv)
+      = mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 0 0 scv := rfl
+
+theorem mvFrame_board (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd bd' : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.set (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv)
+        "board" (.str bd')
+      = mvFrame pv mv i j prom pc qc a bd' wc0 wc1 bc0 bc1 epv kpv scv := rfl
+
+theorem mvFrame_wc (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 u0 u1 : Bool) (epv kpv scv : Int) :
+    Env.set (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv)
+        "wc" (.tuple #[.bool u0, .bool u1])
+      = mvFrame pv mv i j prom pc qc a bd u0 u1 bc0 bc1 epv kpv scv := rfl
+
+theorem mvFrame_bc (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 u0 u1 : Bool) (epv kpv scv : Int) :
+    Env.set (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv)
+        "bc" (.tuple #[.bool u0, .bool u1])
+      = mvFrame pv mv i j prom pc qc a bd wc0 wc1 u0 u1 epv kpv scv := rfl
+
+theorem mvFrame_ep (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv t : Int) :
+    Env.set (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "ep" (.int t)
+      = mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 t kpv scv := rfl
+
+theorem mvB_appends : mvB =
+    (((((((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore])
+      ++ [mvPut1]) ++ [mvPut2]) ++ [mvWc]) ++ [mvBc]) ++ [mvKing]) ++ [mvPawn]) ++ [mvRet]) :=
+  rfl
+
+theorem mvPawnB_appends : [mvProm, mvEpSet, mvEpCap] = (([mvProm] ++ [mvEpSet]) ++ [mvEpCap]) :=
+  rfl
+
+def mvE1 (pv mv : RVal) (i j : Int) (prom : String) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom)]
+
+def mvE2 (pv mv : RVal) (i j : Int) (prom pc qc : String) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom),
+   ("p", .str pc), ("q", .str qc)]
+
+def mvE3 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom),
+   ("p", .str pc), ("q", .str qc), ("put", .ref a)]
+
+def mvE4 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) (bd : String) : REnv :=
+  [("self", pv), ("move", mv), ("i", .int i), ("j", .int j), ("prom", .str prom),
+   ("p", .str pc), ("q", .str qc), ("put", .ref a), ("board", .str bd)]
+
+/-! The chain's first five links, each a `rfl` between a gate's `Env.set` output
+and the next named frame. -/
+theorem e1_of_env (pv mv : RVal) (i j : Int) (prom : String) :
+    Env.set (Env.set (Env.set (mvEnv pv mv) "i" (.int i)) "j" (.int j)) "prom" (.str prom)
+      = mvE1 pv mv i j prom := rfl
+theorem e2_of_e1 (pv mv : RVal) (i j : Int) (prom pc qc : String) :
+    Env.set (Env.set (mvE1 pv mv i j prom) "p" (.str pc)) "q" (.str qc)
+      = mvE2 pv mv i j prom pc qc := rfl
+theorem e3_of_e2 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) :
+    Env.set (mvE2 pv mv i j prom pc qc) "put" (.ref a) = mvE3 pv mv i j prom pc qc a := rfl
+theorem e4_of_e3 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) (bd : String) :
+    Env.set (mvE3 pv mv i j prom pc qc a) "board" (.str bd)
+      = mvE4 pv mv i j prom pc qc a bd := rfl
+theorem pre_of_e4 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) (bd : String)
+    (wc0 wc1 bc0 bc1 : Bool) :
+    Env.set (Env.set (Env.set (Env.set (mvE4 pv mv i j prom pc qc a bd)
+        "wc" (.tuple #[.bool wc0, .bool wc1])) "bc" (.tuple #[.bool bc0, .bool bc1]))
+        "ep" (.int 0)) "kp" (.int 0)
+      = mvPre pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 := rfl
+
+/-! ### The frame lookups, proved once each -/
+
+set_option linter.unusedVariables false
+
+theorem frame_self (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "self" = some pv := rfl
+
+theorem frame_move (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "move" = some mv := rfl
+
+theorem frame_i (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "i" = some (.int i) := rfl
+
+theorem frame_j (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "j" = some (.int j) := rfl
+
+theorem frame_p (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "p" = some (.str pc) := rfl
+
+theorem frame_put (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "put" = some (.ref a) := rfl
+
+theorem frame_board (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "board" = some (.str bd) := rfl
+
+theorem frame_wc (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "wc" = some (.tuple #[.bool wc0, .bool wc1]) := rfl
+
+theorem frame_bc (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "bc" = some (.tuple #[.bool bc0, .bool bc1]) := rfl
+
+theorem frame_ep (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "ep" = some (.int epv) := rfl
+
+theorem frame_kp (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "kp" = some (.int kpv) := rfl
+
+theorem frame_score (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "score" = some (.int scv) := rfl
+
+theorem frame_noA1 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "A1" = Option.none := rfl
+
+theorem frame_noH1 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "H1" = Option.none := rfl
+
+theorem frame_noA8 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "A8" = Option.none := rfl
+
+theorem frame_noH8 (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "H8" = Option.none := rfl
+
+theorem frame_noN (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "N" = Option.none := rfl
+
+theorem frame_noPosition (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "Position" = Option.none := rfl
+
+theorem frame_noabs (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) (epv kpv scv : Int) :
+    Env.lookup (mvFrame pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1 epv kpv scv) "abs" = Option.none := rfl
+
+theorem pre_self (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) :
+    Env.lookup (mvPre pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1) "self" = some pv := rfl
+
+theorem pre_move (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr)
+    (bd : String) (wc0 wc1 bc0 bc1 : Bool) :
+    Env.lookup (mvPre pv mv i j prom pc qc a bd wc0 wc1 bc0 bc1) "move" = some mv := rfl
+
+theorem e1_self (pv mv : RVal) (i j : Int) (prom : String) :
+    Env.lookup (mvE1 pv mv i j prom) "self" = some pv := rfl
+
+theorem e1_i (pv mv : RVal) (i j : Int) (prom : String) :
+    Env.lookup (mvE1 pv mv i j prom) "i" = some (.int i) := rfl
+
+theorem e1_j (pv mv : RVal) (i j : Int) (prom : String) :
+    Env.lookup (mvE1 pv mv i j prom) "j" = some (.int j) := rfl
+
+theorem env_move (pv mv : RVal) :
+    Env.lookup (mvEnv pv mv) "move" = some mv := rfl
+
+theorem e3_self (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) :
+    Env.lookup (mvE3 pv mv i j prom pc qc a) "self" = some pv := rfl
+
+theorem e4_self (pv mv : RVal) (i j : Int) (prom pc qc : String) (a : Addr) (bd : String) :
+    Env.lookup (mvE4 pv mv i j prom pc qc a bd) "self" = some pv := rfl
+
+set_option maxHeartbeats 4000000 in
+set_option linter.unusedVariables false in
+theorem move_body_push (w : World) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (i j : Nat) (prom : String) (z : Int) (r : RVal)
+    (hib : i < b.toList.length) (hjb : j < b.toList.length)
+    (hpw : (boardAt b (i : Int)) = "P")
+    (hprom : (j : Int) < 21 ∨ 28 < (j : Int))
+    (hpush : (j : Int) - (i : Int) = -20)
+    (hepne : (j : Int) ≠ ep)
+    (hval : ∃ t, ∀ Fv ≥ t, callIn sunfish Fv ({ w with heap := w.heap.push putObj }) "Position.value" #[(posOf b sc wc0 wc1 bc0 bc1 ep kp), (mvOf (i : Int) (j : Int) prom)]
+      = .ok ({ w with heap := w.heap.push putObj }) (.int z))
+    (hrot : ∃ t, ∀ Fr ≥ t, callIn sunfish Fr ({ w with heap := w.heap.push putObj }) "Position.rotate"
+        #[posOf (putStr (putStr b j (cellAt b i)) i '.') (sc + z) (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0] = .ok ({ w with heap := w.heap.push putObj }) r) :
+    ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ mvB
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ (.ret r) := by
+  obtain ⟨tv, hv⟩ := hval
+  obtain ⟨tr, hr⟩ := hrot
+  have hlen : b.toList.length = b.length := String.length_toList
+  have hnk : (boardAt b (i : Int)) ≠ "K" := by rw [hpw]; decide
+  have hobj : Heap.get? (w.heap.push putObj) w.heap.size = some putObj := Heap.get?_push_size _ _
+  have hb1 : i < (putStr b j (cellAt b i)).toList.length := by
+    rw [putStr_length b j (cellAt b i) (by omega)]; omega
+  have hp4 : Env.lookup (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) "p" = some (.str "P") := by
+    rw [← hpw]; exact (frame_p (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))
+  have h1 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ [mvUnpack]
+      = .ok ⟨w, (mvE1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom)⟩ .next :=
+    ⟨4, execStmts_singleton (move_unpacks w (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom)) (i : Int) (j : Int) prom 0
+      (env_move (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom)))⟩
+  have h2 : ∃ f, execStmts sunfish f ⟨w, (mvE1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom)⟩ [mvPQ]
+      = .ok ⟨w, (mvE2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)))⟩ .next :=
+    ⟨8, execStmts_singleton (move_reads_pq w (mvE1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom) b sc wc0 wc1 bc0 bc1 ep kp
+      (i : Int) (j : Int) 0 (e1_self (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom) (e1_i (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom) (e1_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom)
+      (by omega) (by omega) (by omega) (by omega))⟩
+  have h3 : ∃ f, execStmts sunfish f ⟨w, (mvE2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)))⟩ [mvDef]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvE3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size)⟩ .next :=
+    ⟨3, execStmts_singleton (move_defines_put w (mvE2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int))) 0)⟩
+  have h4 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvE3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size)⟩ [mvBoard]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvE4 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b)⟩ .next :=
+    ⟨4, execStmts_singleton (move_copies_board ({ w with heap := w.heap.push putObj }) (mvE3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size) b sc wc0 wc1 bc0 bc1 ep kp 0
+      (e3_self (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size))⟩
+  have h5 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvE4 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b)⟩ [mvFields]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvPre (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b
+          wc0 wc1 bc0 bc1)⟩ .next :=
+    ⟨9, execStmts_singleton (move_resets_fields ({ w with heap := w.heap.push putObj }) (mvE4 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b) b sc wc0 wc1 bc0 bc1 ep kp 0
+      (e4_self (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b))⟩
+  have h6 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvPre (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b
+          wc0 wc1 bc0 bc1)⟩ [mvScore]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    ⟨tv + 11, execStmts_singleton (move_scores ({ w with heap := w.heap.push putObj }) (mvPre (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b
+          wc0 wc1 bc0 bc1) b sc wc0 wc1 bc0 bc1 ep kp
+      (mvOf (i : Int) (j : Int) prom) z tv (pre_self (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b wc0 wc1 bc0 bc1) (pre_move (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b wc0 wc1 bc0 bc1) (hv (tv + 7) (by omega)))⟩
+  have h7 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ [mvPut1]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    ⟨11, execStmts_singleton (move_puts_target ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z)) w.heap.size b i j 0
+      (frame_put (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z)) hobj (frame_board (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_i (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      b wc0 wc1 bc0 bc1 0 0 (sc + z)) hib hjb)⟩
+  have h8 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ [mvPut2]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    ⟨11, execStmts_singleton (move_puts_source ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z)) w.heap.size (putStr b j (cellAt b i)) i 0
+      (frame_put (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z)) hobj (frame_board (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_i (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z)) hb1)⟩
+  have h9 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ [mvWc]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z))⟩ .next :=
+    ⟨13, execStmts_singleton (move_wc ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z)) wc0 wc1 (i : Int) 0
+      (frame_wc (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_i (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_noA1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z)) (frame_noH1 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z)))⟩
+  have h10 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z))⟩ [mvBc]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ .next :=
+    ⟨13, execStmts_singleton (move_bc ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z)) bc0 bc1 (j : Int) 0
+      (frame_bc (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z)) (frame_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z)) (frame_noA8 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z)) (frame_noH8 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z)))⟩
+  have h11 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ [mvKing]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ .next :=
+    ⟨8, execStmts_singleton (move_king_skips ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (boardAt b (i : Int)) 0 (frame_p (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) hnk)⟩
+  have hin1 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ [mvProm]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ .next :=
+    ⟨8, execStmts_singleton (move_prom_skips ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (j : Int) 0
+      (frame_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (frame_noA8 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (frame_noH8 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) hprom)⟩
+  have hin2 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ [mvEpSet]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ .next :=
+    ⟨9, execStmts_singleton (move_ep_sets ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (i : Int) (j : Int) 0
+      (frame_i (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (frame_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) (frame_noN (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) hpush)⟩
+  have hin3 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ [mvEpCap]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ .next :=
+    ⟨7, execStmts_singleton (move_epcap_skips ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) b sc wc0 wc1 bc0 bc1 ep kp
+      (j : Int) 0 (frame_self (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_j (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) hepne)⟩
+  have hinner : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ [mvProm, mvEpSet, mvEpCap]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ .next := by
+    rw [mvPawnB_appends]
+    exact execStmts_append (execStmts_append hin1 hin2 (by simp)) hin3 (by simp)
+  have h12 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ [mvPawn]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ .next := by
+    obtain ⟨fi, hfi⟩ := hinner
+    refine ⟨fi + 8, execStmts_singleton (F := fi + 6) ?_⟩
+    rw [move_pawn_enters ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z)) fi hp4]
+    exact execStmts_mono hfi (by simp) (fi + 6) (by omega)
+  have h13 : ∃ f, execStmts sunfish f ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ [mvRet]
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ (.ret r) :=
+    ⟨tr + 11, execStmts_singleton_flow (move_returns ({ w with heap := w.heap.push putObj }) (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (putStr (putStr b j (cellAt b i)) i '.') (sc + z)
+      (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 r ({ w with heap := w.heap.push putObj }) tr
+      (frame_board (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_score (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_wc (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_bc (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))
+      (frame_ep (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_kp (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z)) (frame_noPosition (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+      (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))
+      (hr (tr + 8) (by omega)))⟩
+  rw [mvB_appends]
+  have c1 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ([mvUnpack] ++ [mvPQ])
+      = .ok ⟨w, (mvE2 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)))⟩ .next :=
+    execStmts_append h1 h2 (by simp)
+  have c2 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ (([mvUnpack] ++ [mvPQ]) ++ [mvDef])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvE3 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size)⟩ .next :=
+    execStmts_append c1 h3 (by simp)
+  have c3 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvE4 (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b)⟩ .next :=
+    execStmts_append c2 h4 (by simp)
+  have c4 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ (((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvPre (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size b
+          wc0 wc1 bc0 bc1)⟩ .next :=
+    execStmts_append c3 h5 (by simp)
+  have c5 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        b wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    execStmts_append c4 h6 (by simp)
+  have c6 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ (((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr b j (cellAt b i)) wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    execStmts_append c5 h7 (by simp)
+  have c7 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1]) ++ [mvPut2])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr (putStr b j (cellAt b i)) i '.') wc0 wc1 bc0 bc1 0 0 (sc + z))⟩ .next :=
+    execStmts_append c6 h8 (by simp)
+  have c8 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ (((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1]) ++ [mvPut2]) ++ [mvWc])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) bc0 bc1 0 0 (sc + z))⟩ .next :=
+    execStmts_append c7 h9 (by simp)
+  have c9 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ((((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1]) ++ [mvPut2]) ++ [mvWc]) ++ [mvBc])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ .next :=
+    execStmts_append c8 h10 (by simp)
+  have c10 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ (((((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1]) ++ [mvPut2]) ++ [mvWc]) ++ [mvBc]) ++ [mvKing])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) 0 0 (sc + z))⟩ .next :=
+    execStmts_append c9 h11 (by simp)
+  have c11 : ∃ f, execStmts sunfish f ⟨w, (mvEnv (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom))⟩ ((((((((((([mvUnpack] ++ [mvPQ]) ++ [mvDef]) ++ [mvBoard]) ++ [mvFields]) ++ [mvScore]) ++ [mvPut1]) ++ [mvPut2]) ++ [mvWc]) ++ [mvBc]) ++ [mvKing]) ++ [mvPawn])
+      = .ok ⟨({ w with heap := w.heap.push putObj }), (mvFrame (posOf b sc wc0 wc1 bc0 bc1 ep kp) (mvOf (i : Int) (j : Int) prom) (i : Int) (j : Int) prom (boardAt b (i : Int)) (boardAt b (j : Int)) w.heap.size
+        (putStr (putStr b j (cellAt b i)) i '.') (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) 0 (sc + z))⟩ .next :=
+    execStmts_append c10 h12 (by simp)
+  exact execStmts_append c11 h13 (by simp)
+
+
+/-! ### THE CLOSING THEOREM, and the bridge back to F1a
+
+`cellAt`'s default is `' '` and `moveCells`' is `'.'`; inside the board they are
+the same character read, and that one line is what lets the interpreter's answer
+be spelled as F1a's `plainMoveBoard` — the string `pstTotal_plainMove` and
+`pieceCount_plainMove` are written about. -/
+
+theorem cellAt_eq_dot (b : String) (i : Nat) (h : i < b.toList.length) :
+    cellAt b i = b.toList.getD i '.' := by
+  rw [cellAt, List.getD_eq_getElem?_getD, List.getD_eq_getElem?_getD,
+    List.getElem?_eq_getElem h]
+  rfl
+
+theorem interpBoard_eq_plainMoveBoard (b : String) (i j : Nat)
+    (hi : i < b.toList.length) (hj : j < b.toList.length) :
+    rotStr (putStr (putStr b j (cellAt b i)) i '.') = plainMoveBoard b i j := by
+  rw [cellAt_eq_dot b i hi, ← moveStr]
+  exact moveStr_eq_plainMoveBoard b i j hi hj
+
+set_option maxHeartbeats 1000000 in
+set_option linter.unusedVariables false in
+/-- **`Position.move` DECIDES on a plain pawn double push**, and the child's
+BOARD is F1a's `plainMoveBoard`. This is the statement §L30 called F1's risk —
+*"`Position.move` builds its board by STRING SLICING while `value` is `pst`
+arithmetic"* — with both sides named and equal.
+
+The score premise is `Position.value`'s own answer; everything else is decided
+here. The world grows by exactly one slot (the `put` closure) and nothing else
+moves, which is §L44's exit law as a theorem rather than a measurement. -/
+theorem move_runs_push (w : World) (b : String) (sc : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ep kp : Int) (i j : Nat) (prom : String) (z : Int)
+    (hib : i < b.toList.length) (hjb : j < b.toList.length)
+    (hpw : boardAt b (i : Int) = "P")
+    (hprom : (j : Int) < 21 ∨ 28 < (j : Int))
+    (hpush : (j : Int) - (i : Int) = -20)
+    (hepne : (j : Int) ≠ ep)
+    (hne0 : (i : Int) + -10 ≠ 0)
+    (hasc : strAscii (putStr (putStr b j (cellAt b i)) i '.') = true)
+    (hval : ∃ t, ∀ Fv ≥ t, callIn sunfish Fv ({ w with heap := w.heap.push putObj }) "Position.value" #[(posOf b sc wc0 wc1 bc0 bc1 ep kp), (mvOf (i : Int) (j : Int) prom)]
+      = .ok ({ w with heap := w.heap.push putObj }) (.int z)) :
+    ∃ t, ∀ F ≥ t, callIn sunfish F w "Position.move" #[(posOf b sc wc0 wc1 bc0 bc1 ep kp), (mvOf (i : Int) (j : Int) prom)]
+      = .ok ({ w with heap := w.heap.push putObj })
+        (posOf (plainMoveBoard b i j) (-(sc + z)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98))
+          (119 - ((i : Int) + -10)) 0) := by
+  have hrot := rotate_runs_ep ({ w with heap := w.heap.push putObj }) (putStr (putStr b j (cellAt b i)) i '.') (sc + z) (wc0 && decide ((i : Int) ≠ 91)) (wc1 && decide ((i : Int) ≠ 98)) (bc0 && decide ((j : Int) ≠ 28)) (bc1 && decide ((j : Int) ≠ 21)) ((i : Int) + -10) hne0 hasc
+  obtain ⟨f, hf⟩ := move_body_push w b sc wc0 wc1 bc0 bc1 ep kp i j prom z _
+    hib hjb hpw hprom hpush hepne hval hrot
+  rw [interpBoard_eq_plainMoveBoard b i j hib hjb] at *
+  refine ⟨f + 1, fun F hF => ?_⟩
+  obtain ⟨F', rfl, hF'⟩ : ∃ F', F = F' + 1 ∧ f ≤ F' := ⟨F - 1, by omega, by omega⟩
+  exact callIn_of_move_body (execStmts_mono hf (by simp) F' hF')
+
+/-! ### §9, INSTANTIATED on the shipped engine — RUN, not admired
+
+`move_runs_push` is stated over a free board, a free score and free castling
+rights, so the question is whether its premises are ever MET. These guards answer
+it on the fixture's own `1. d4` (`84 → 64`): **each premise separately**, then the
+conclusion TERM compared to what the interpreter actually returns. -/
+
+/-! The mover is a pawn, both squares are on the board. -/
+#guard boardAt board0 (84 : Int) == "P"
+#guard decide (84 < board0.toList.length ∧ 64 < board0.toList.length)
+/-! Not a promotion, IS a double push, not an en-passant capture, and the
+en-passant square it sets is non-zero (which is what makes `rotate` mirror it). -/
+#guard decide ((64 : Int) < 21 ∨ 28 < (64 : Int))
+#guard decide ((64 : Int) - (84 : Int) = -20)
+#guard decide ((64 : Int) ≠ (0 : Int))
+#guard decide ((84 : Int) + -10 ≠ 0)
+/-! The board `rotate` receives is ASCII. -/
+#guard strAscii (putStr (putStr board0 64 (cellAt board0 84)) 84 '.')
+/-! The `Position.value` premise, read off the ENGINE rather than written down. -/
+#guard (match callIn sunfish 64 (initWorld sunfish) "Position.value"
+          #[posH 0, mvOf 84 64 ""] with
+        | .ok _ (.int v) => v == 46 | _ => false)
+
+/-! **AND THE CONCLUSION**, term for term: the shipped `Position.move` returns
+exactly the `posOf` the theorem names — F1a's `plainMoveBoard` as the board, the
+negated sum as the score, the castling pairs SWAPPED, and `119 - ep`. The heap
+grew by the one closure slot and by nothing else. -/
+#guard (match callIn sunfish 32 (initWorld sunfish) "Position.move"
+          #[posH 0, mvOf 84 64 ""] with
+        | .ok w v =>
+          (v == posOf (plainMoveBoard board0 84 64) (-(0 + 46))
+              (true && decide ((64 : Int) ≠ 28)) (true && decide ((64 : Int) ≠ 21))
+              (true && decide ((84 : Int) ≠ 91)) (true && decide ((84 : Int) ≠ 98))
+              (119 - ((84 : Int) + -10)) 0)
+            && w.heap.size == 67
+        | _ => false)
+
+/-! And the same on `1. e4`, the fixture's second edge. -/
+#guard (match callIn sunfish 32 (initWorld sunfish) "Position.move"
+          #[posH 0, mvOf 85 65 ""] with
+        | .ok _ v =>
+          v == posOf (plainMoveBoard board0 85 65) (-(0 + 42))
+              (true && decide ((65 : Int) ≠ 28)) (true && decide ((65 : Int) ≠ 21))
+              (true && decide ((85 : Int) ≠ 91)) (true && decide ((85 : Int) ≠ 98))
+              (119 - ((85 : Int) + -10)) 0
+        | _ => false)
 
 /-! ### §1, INSTANTIATED on the shipped engine
 
@@ -1115,25 +2026,65 @@ side. -/
 #print axioms move_scores
 #print axioms mvRet_lit
 #print axioms posCls_ntBase_pin
+#print axioms position_ctor
 #print axioms move_builds_position
 #print axioms ntuple_method_call
 #print axioms rotatePlan
 #print axioms move_returns
+#print axioms unaryOp_evals
+#print axioms ifExp_true
+#print axioms ifExp_false
+#print axioms boolOp_and2
+#print axioms str_method_swapcase
+#print axioms rtB_split
+#print axioms rtF_lit
+#print axioms rtRet_lit
+#print axioms rt_docstring
+#print axioms callIn_of_rotate_body
+#print axioms rt_common
+#print axioms rotate_ret_quiet
+#print axioms rotate_ret_ep
+#print axioms rotate_runs_quiet
+#print axioms rotate_runs_ep
+#print axioms mvArity
+#print axioms mvCallEnv
+#print axioms mvF_lit2
+#print axioms callIn_of_move_body
+#print axioms mvPre_build
+#print axioms mvPre_score
+#print axioms mvFrame_board
+#print axioms mvFrame_wc
+#print axioms mvFrame_bc
+#print axioms mvFrame_ep
+#print axioms mvB_appends
+#print axioms mvPawnB_appends
+#print axioms move_body_push
+#print axioms cellAt_eq_dot
+#print axioms interpBoard_eq_plainMoveBoard
+#print axioms move_runs_push
 
-/-! ## What this file does NOT prove — and the bill for it
+/-! ## F1b IS CLOSED — what this file proves, and what it does not
 
-**ALL THIRTEEN STATEMENTS ARE GATED** — 0 through 12, statements 10 and 11
-including every arm of their inner `if`s. What is owed before F1b closes:
+**All thirteen statements of `Position.move` are gated**, `Position.rotate` is
+gated at a symbolic board, the thirteen are CHAINED (`move_body_push`), the
+`callIn` boundary is crossed (`callIn_of_move_body`), and the closing theorem
+`move_runs_push` names the child the interpreter returns — with F1a's
+`plainMoveBoard` as its board. §L30's named risk for F1 was *"`Position.move`
+builds its board by STRING SLICING while `value` is `pst` arithmetic"*; that
+sentence is now a theorem with both sides equal.
 
-* **the COMPOSITION** — the thirteen gates chained from the entry frame to the
-  `return`, on `value_body_quiet`'s template, plus the `callIn` boundary;
-* **`Position.rotate` at a SYMBOLIC board** — statement 12's `hrot` premise.
-  `proof.lean` gates it at a CONCRETE board (`rotate_home_callsIn`); the
-  composition needs it over a free board with the two `ifExp`s on `self.ep` and
-  `self.kp` decided, and that is where §L41's `rotStr_residue` is spent.
+What is deliberately a PREMISE and not a proof:
 
-The honest reading of the campaign ledger: **F1 is not complete.** F1a is
-(§L37), F1b's string and value residues are (§L41, §L44), and F1b's interpreter
-gate has all thirteen statements but not yet the chain that joins them. -/
+* **`Position.value`'s answer** at statement 5. `value_bound.lean` gates that
+  method's eight statements (§L28) and closes three of its arms; the pawn arm it
+  does not close is exactly the one a pawn move needs, so the number arrives as a
+  hypothesis and the fixture supplies it from the engine. Discharging it is
+  `value_bound`'s inch, not this one.
+* **The other move shapes.** `move_body_push` is stated for a plain pawn DOUBLE
+  PUSH — the arm that exercises the most machinery (statement 11 enters, its
+  middle `if` fires, and `rotate` mirrors the square). The quiet, capture,
+  castle and promotion configurations reuse the same chain with the
+  corresponding gate swapped, which is what the two-gates-per-`if` factoring was
+  for; none of them is new mathematics. -/
 
 end Examples.python.sunfish.move_gate

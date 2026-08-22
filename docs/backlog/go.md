@@ -1,12 +1,14 @@
 # The Go lane's backlog
 
-Per-lane file per `docs/family-architecture.md` §9. Entries newest-last.
+Per-lane file per `docs/family-architecture.md` §9.5. **Appended only by the
+Go lane.** Ids are `YYYY-MM-DD-go-<n>` and need no reservation, because the
+lane name makes them unique. Entries newest-last.
 The founding charter is `docs/go-charter.md`; the founding landing is
 `docs/backlog.md` §L76.
 
 ---
 
-## G1 — RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (2026-08-22)
+## 2026-08-22-go-1 — RUNG 1'S SCOPE IS DERIVED: coverage is CONJUNCTIVE, and the charter's "21" was wrong (formerly `§G1`)
 
 Rung 1's scope was not chosen. It was measured, by a reach-ladder mode
 added to the census instrument, and the measurement changed both the

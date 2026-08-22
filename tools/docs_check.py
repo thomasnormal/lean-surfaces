@@ -229,6 +229,33 @@ def main(argv=None):
     print("docs_check: %d marked blocks (%d ok), %d illustrative-exempt, "
           "%d unmarked (not checked)"
           % (n_checked, n_ok, n_illustrative, n_unmarked))
+
+    # §9.5's generated index, REPORTED but not enforced.  A hard gate here
+    # would red every lane that appends a backlog entry without regenerating,
+    # and imposing that unilaterally on lanes mid-tenure is a coordination
+    # cost to schedule rather than to spring.  So it is a notice — visible in
+    # every triad, actionable in one command — and `tools/backlog-index.sh
+    # --check` is the gate for anyone who wants the exit code.
+    index_path = REPO / "docs" / "backlog" / "INDEX.md"
+    gen = REPO / "tools" / "backlog-index.sh"
+    if gen.is_file():
+        try:
+            import subprocess
+            fresh = subprocess.run(
+                ["bash", str(gen), "--stdout"],
+                capture_output=True, text=True, timeout=60)
+            if fresh.returncode != 0:
+                print("docs_check: NOTE — backlog-index.sh --stdout failed "
+                      "(exit %d); the index was not checked" % fresh.returncode)
+            elif not index_path.is_file():
+                print("docs_check: NOTE — docs/backlog/INDEX.md is MISSING; "
+                      "run tools/backlog-index.sh (§9.5)")
+            elif index_path.read_text(encoding="utf-8") != fresh.stdout:
+                print("docs_check: NOTE — docs/backlog/INDEX.md is STALE; "
+                      "run tools/backlog-index.sh (§9.5)")
+        except Exception as exc:                       # never hide it
+            print("docs_check: NOTE — the backlog index check could not run: "
+                  "%s: %s" % (type(exc).__name__, exc))
     if args.list_unmarked and unmarked:
         print("unmarked blocks:")
         for u in unmarked:

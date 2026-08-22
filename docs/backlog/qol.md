@@ -662,3 +662,61 @@ a mechanism: `--no-build` is *how* a narrowed run's log carries no full-build
 lines from the gate phase. **No Lean was executed** — this lane holds no
 ticket, so the gate-phase build itself is exercised by its decision functions,
 not by running it.
+
+---
+
+## 2026-08-22-qol-11 — §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated
+
+§9.5 was landed as a scheme and left half-adopted: the monolith took **10 more
+commits after v2** and stands at **21,797 lines**, and the "generated index"
+it promised did not exist. Three moves close it.
+
+### 1. The monolith is frozen, and 111 citations still resolve
+
+`docs/backlog.md` → **`docs/backlog-archive.md`**, with a header that says
+FROZEN, points at `docs/backlog/<lane>.md`, and states that **every `§Lnn`
+reference still resolves at the heading it always had** — nothing is
+rewritten.
+
+**And `docs/backlog.md` stays, as a twelve-line redirect.** Measured before
+deciding: **111 tracked files cite that path**, including `.lean` files —
+whose edit would make a docs landing **tier-class** and demand a tenure this
+lane does not hold. A big-bang sweep is what §9.2 forbids in as many words, so
+the old spelling retires **by touch**, and until then a citation that lands
+here is one hop from its target. The stub says FROZEN too, so a lane that
+opens the old path is told where its entries go.
+
+### 2. `tools/backlog-index.sh` — the index §9.5 promised
+
+`docs/backlog/INDEX.md`, **36 entries across 12 lanes**, newest first, one row
+of id + title + lane. Generated, never hand-maintained (§5.5).
+
+The trap it was written around: **a lexicographic sort puts `-10` before
+`-2`**. Ids sort by date and then by the entry number **as a number**, and
+that is a self-test row rather than a hope. An **undated heading is reported,
+not dropped** — a drifter quietly skipped is a row nobody sees is missing — so
+it gets a line and the page says how many there are.
+
+Wired as a **notice, not a gate**: `tools/docs_check.py` reports a stale or
+missing index in every triad, and `tools/backlog-index.sh --check` is the
+gate for anyone who wants the exit code. A hard gate would red every lane that
+appends an entry without regenerating, and springing that on lanes mid-tenure
+is a coordination cost to schedule rather than to impose. Both directions are
+verified: stale → the NOTE fires; regenerated → silent; `--check` → `in sync
+(36 entries)`.
+
+### 3. The one id drifter is dated
+
+`docs/backlog/go.md`'s `## G1` → **`## 2026-08-22-go-1`**, carrying
+`(formerly §G1)` so any citation resolves, and the file's header now states
+the §9.5 scheme like every other lane's. Nothing cited `§G1` yet — checked,
+not assumed.
+
+### Triad
+
+`bash -n` clean. `backlog-index.sh --self-test`: **15 ok, 0 failed** — rows
+from headings, lane from the filename, title from the em-dash tail, newest
+first with **10 outranking 2 numerically**, a drifter flagged and sorted last,
+`INDEX.md` excluded from its own input, **double-run byte-identical** (§5.4),
+and `--check` verified in **both** directions (MEAS-42). `docs_check`
+**83/83**. Docs-and-tools landing: no build, **no tenure**, no Lean executed.

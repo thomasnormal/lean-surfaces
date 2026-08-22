@@ -99,3 +99,115 @@ our own `.olean`s: awaits a quiet machine** — a ~3 700-job build that would ho
 the machine's entire Lean allowance.
 
 No Lean run, no build, no ticket taken for this landing.
+
+---
+
+## 2026-08-22-lean-tier-2 — M2 OBLIGATION CENSUS: 24 sorries are 3 missing DEFINITIONS, and two of the three are already being written by strangers
+
+Thomas ruled the endgame **(b) CONSUME-AND-EXTEND** — *"no reason to copy
+lean4lean; if we can reuse most of it that sounds good."* Option (d), the
+trust-extension surface, stays registered as the companion after (b)'s first
+milestone. The edition token **`Lean433`** is **RATIFIED** as the family's first
+§1.1 law-3 exception: Lean has no editions, only releases, so the law's premise
+is false here — recorded with its reasoning in charter §12.1.
+
+M2's deliverable: `docs/lean4lean-obligation-census.md` +
+`harness/lean4lean_obligation_census.py` + its JSON.
+
+### The counting rule, and the delta is a finding
+
+**138 raw / 113 real / 25 comment-only.** A raw grep overstates the load by
+**22%**, concentrated in docstrings and commented-out attempts. The stripper
+handles nested `/- /- -/ -/`, docstrings, line comments and escaped string
+literals while preserving line numbers; 11-case `--selftest`, nesting included.
+
+### All three M1 figures re-verified: two confirmed, one wrong
+
+24 shipped sorries **CONFIRMED**; 89 experimental **CONFIRMED** (24+89=113); the
+two-stub `Theory/Inductive.lean` **CONFIRMED verbatim**; partition line counts
+identical. **"11 proj-related" was WRONG — it is 10.**
+
+### The structural finding
+
+**24 obligations are 3 definitional stubs + 21 theorems, and 14 of the 21 are
+blocked by a stub.** `TrProj` is `def … := sorry` — the relation does not exist —
+and it alone gates **11 of 21 (52%)**. The seven `TrProj.*` lemmas are not seven
+hard proofs; they are statements about nothing. **Writing `TrProj` is a
+definition task, not a proof task.**
+
+### The dependency graph is SEMANTIC, not nominal
+
+Two obligations that look independent by name are not, and only reading the
+executables found it: `tryEtaStructCore.WF` builds `.proj` terms directly;
+`reduceRecursor.WF` reaches `.proj` **transitively**, two call hops away via
+`toCtorWhenK → expandEtaStruct`. A name-prefix analysis put a blocked theorem at
+the top of the candidate list. Both edges are now declared in the instrument with
+the reasoning attached.
+
+The corner table also found a bug in itself: a path-based classifier filed all
+seven `TrProj.*` lemmas as "other" because they live in a generically-named file,
+making the census's largest cluster invisible in its own summary. Name rules now
+run first.
+
+### The active-work split changes the plan
+
+**DO NOT ENTER:** inductive types (open PR #43 replaces both stubs), `addDecl`
+surroundings (PR #32, updated the day of the census), injectivity, universe
+levels (11 commits on one day this month), church-rosser.
+
+**UNTOUCHED, ranked:** (1) **`TrProj`** — no branch, no PR, no issue; `sorry`
+~15 months; dependent lemmas from 2023. (2) `isDefEqUnitLike.WF` /
+`tryEtaStructCore.WF` — 11 months idle, *partly* gated on (1), and this census
+says precisely which half: `isDefEqUnitLike` is free, `tryEtaStructCore` is not.
+
+**THE CHARTER'S "SEAM" CLAIM IS NOW STALE.** M1 §6.4 called
+`Theory/Inductive.lean` the highest-value unwritten artifact in the field; three
+weeks later there is an open PR filling it. A lane that had started there on the
+charter alone would have duplicated a stranger's work. That is the argument for
+running the activity check *before* choosing a target.
+
+### The injectivity trap — a stale docstring nearly set our direction
+
+M1 quoted `Injectivity.lean`'s *"theorems which we can't prove :("* and concluded
+these were hard-and-avoid. **Wrong: injectivity is already proved sorry-free on
+master**, for the `SExpr` development — and `Theory/`/`Verify/` contain **zero**
+`import Lean4Lean.Experimental`. The open work is the SExpr→VExpr port, which is
+the author's obvious next move. The right conclusion (avoid) survives; the reason
+was wrong and the header predates the proof.
+
+Related measurement hazard: the `logrel` branch reports 42 commits "ahead" but
+was **rebased onto master with new SHAs**. **A branch-ahead count is not evidence
+of unmerged work here**, and every "untouched" verdict inherits that caveat.
+
+### Two traps recorded for any future run
+
+**`sorry` → `axiom` laundering:** the `types2025` branch converts eight sorries
+into `axiom`s with `-- := sorry` kept as a comment — zero proof content. A
+sorry-counter run there would report an improvement that did not happen. This
+instrument counts axioms alongside sorries for exactly that reason.
+**Recency that discharges nothing:** several sorry-bearing files show August
+dates from toolchain bumps and a namespace move; the *site* blame is the honest
+signal, and several are from 2023.
+
+### Candidate first proof
+
+**`isDefEqUnitLike.WF`** — the independent half of the second-ranked untouched
+cluster: 9-line subject, no proj dependency (verified directly and
+transitively), one waiting consumer in the same file, 26 proved analogues around
+it at a median of 15 lines, and it realises `unit-like`, one of the 16 named
+kernel rules in `docs/lean-kernel-census.json`. `checkPrimitiveDef.WF` was
+**disqualified mid-census** when the activity data showed PR #32 touching it.
+
+### Governance, for the engagement decision
+
+Nine external proof PRs unanswered; one maintainer reply across eleven; no
+published open-problems list; and **Thomas's own issue #16 — asking exactly which
+sorries are unclaimed — open 23 days with zero replies.** No contact was made by
+this census; engagement remains Thomas's call.
+
+### Discipline
+
+No Lean run, no build, no ticket. M1 inch 2 already built this commit green in
+98 s and that is cited rather than repeated. Public reading only. Deferred items
+unchanged: Mathlib export blocked; inch-6 gate over our own `.olean`s awaits a
+quiet machine.

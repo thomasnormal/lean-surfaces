@@ -21740,3 +21740,58 @@ it reads as a real theorem. Correct family phrasing:
 
 > **Determinism is a PREMISE or a PER-DESIGN THEOREM — never a tier-wide
 > conclusion.**
+
+### RULING — `RefusalCause`: the four CLASSES in `Core`, the PAYLOAD per tier
+
+Ada's M2 measurement forced the question the ES charter left open. Three tiers
+have a stake: ES fixed a three-constructor type; Ada needs `undefined` as a
+constructor (ARM 1.1.5 erroneous execution, **23 paragraphs** in its core
+clauses); C already refuses with **J.2 indices**.
+
+> **RULING: `Core` carries the FOUR §5.2 classes as a four-constructor type,
+> PARAMETERIZED by a tier payload — `RefusalCause π`.**
+
+C instantiates `π` with a J.2 index, Ada with an ARM paragraph, ES with a
+host-hook name. **The payload objection dissolves exactly the way `ρ` did**:
+what differs irreducibly per tier is not a CLASS, it is a PARAMETER.
+
+**Per-tier types under a family law were rejected on this document's own
+precedent.** "Each tier defines its own, constrained to partition into the
+four" makes the partition a **per-tier proof obligation**, and the `Halt` ruling
+already settled that shape: *a family invariant that must be re-established per
+tier is not a family invariant, it is N lemmas.* It also defeats the scoreboard
+— §9.4's shared-vocabulary argument applies verbatim to causes, since "how many
+REFUSE(`undefined`) across the family" is exactly what a cross-tier scoreboard
+exists to answer.
+
+**AN EXPECTED-EMPTY CLASS IS PRESENT AND GATED, NEVER ABSENT** — the part that
+changes ES. Omitting `undefined` makes the emptiness **a fact about the type,
+invisible to the scoreboard**, which then cannot distinguish *"this language has
+no UB"* from *"this tier did not model that column."* §4.3 already prescribed the
+opposite for Wasm: expect the bucket empty and GATE it — and a gate needs a
+constructor to be about. **ES converges by touch.**
+
+**ES'S REFINEMENT IS PRESERVED, because inspection showed it is a real finding
+and not sloppiness.** ES did not merely drop classes — it **split `environment`
+by RETIREMENT SCHEDULE**: `unmodeledIntrinsic` (outside the slice, retires by
+widening) vs `environment` (a host facility, *does not retire by building more
+language*). §5.2 justifies its four causes on exactly that criterion, so by the
+family's own rationale the distinction is legitimate. It lives in the **payload**
+today — and is **registered as a candidate FIFTH class**: if a second tier splits
+`environment` the same way independently, that is §9.3's convergence standard and
+§5.2 gains a cause. **One tier's distinction is a payload; two tiers' identical
+distinction is a class.**
+
+**Ada's inch 1 consumes this directly**: four constructors, `π` = the ARM
+paragraph reference, `undefined` carrying its 1.1.5 citation, and
+`order-dependence` present and gated until Ada measures whether it fires.
+
+### THE `ε` QUESTION DISSOLVES — the second consumer proved the parameter is the answer
+
+Ada raises **identities**; ES throws **values**. Both fit with no negotiation
+because `ρ` is a **parameter**, never a shared enumeration. So **`ε` need not be
+settled centrally**, and the ES charter's *"where does `RVal` live"* question
+**dissolves rather than being answered** — it was a question about a type that
+was never going to be shared. Folded into §3.4 beside the `Run.exn` payload
+deferral, which it effectively resolves in the parameterize direction. The same
+move rules `RefusalCause`: **the two rulings are one idea applied twice.**

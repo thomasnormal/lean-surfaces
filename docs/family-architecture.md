@@ -2104,6 +2104,16 @@ The `Run.exn` payload decision (`Run σ ε α`, or C's terminal riding in α)
 belongs to the same inch. It is the one place the outcome type is not yet
 neutral, and naming it here is cheaper than discovering it there.
 
+**AND THE SECOND CONSUMER HAS SETTLED WHICH WAY IT GOES.** Ada raises
+**identities**; ES throws **values**. Both fit with no negotiation, because
+`ρ` is a **parameter** and never a shared enumeration. So **`ε` does not
+need to be settled centrally at all** — the answer is *parameterize*, which
+is what the family already does everywhere it has two consumers. The ES
+charter's *"where does `RVal` live"* question therefore **dissolves rather
+than being answered**: it was a question about a type that was never going
+to be shared. The same move rules `RefusalCause` (§5.2) — classes in
+`Core`, payload per tier — and the two rulings are one idea applied twice.
+
 ---
 
 ## 4 THE AUTHORITY TAXONOMY
@@ -2320,6 +2330,66 @@ not), and nothing is missing from the slice (not cause 3). Python's twelve
 hash-order refusals and its permanently-loud same-size key-set regime are
 the same cause, arrived at from the other authority. SystemVerilog's event
 regions will be its largest bucket.
+
+#### RULING — WHERE `RefusalCause` LIVES: the four CLASSES in `Core`, the PAYLOAD per tier
+
+Ada's M2 measurement forced the question the ES charter left open, and
+three tiers now have a stake: ES fixed a three-constructor cause type; Ada
+needs `undefined` as a constructor (ARM 1.1.5 erroneous execution, **23
+paragraphs** in its core clauses); C already refuses with **J.2 indices**,
+a richer shape than either.
+
+> **RULING: `Core` carries the FOUR §5.2 CLASSES as a four-constructor
+> type, PARAMETERIZED by a tier payload — `RefusalCause π`. The classes are
+> family law; the payload is the tier's.**
+
+C instantiates `π` with a J.2 index, Ada with an ARM paragraph, ES with a
+host-hook name. **The payload objection dissolves exactly the way `ρ` did**
+(§3.4): what differs irreducibly per tier is not a *class*, it is a
+*parameter*, and a parameter is the thing this family already knows how to
+share.
+
+**Why not per-tier cause types under a family law** — the alternative, and
+it fails on this document's own precedent. "Each tier defines its own type,
+constrained to partition into the four classes" makes the partition a
+**per-tier proof obligation**, and the `Halt` ruling settled that shape:
+*a family invariant that must be re-established per tier is not a family
+invariant, it is N lemmas.* It also defeats the scoreboard — §9.4's
+argument for a shared verdict vocabulary applies verbatim to causes, since
+"how many REFUSE(`undefined`) across the family" is exactly the question a
+cross-tier scoreboard exists to answer, and per-tier types make it a
+translation table.
+
+**AN EXPECTED-EMPTY CLASS IS PRESENT AND GATED, NEVER ABSENT.** This is the
+part of the ruling that changes ES. Omitting `undefined` because ES has no
+undefined behavior makes the emptiness **a fact about the type, invisible
+to the scoreboard** — it cannot distinguish *"this language has no UB"*
+from *"this tier did not model that column."* §4.3 already prescribed the
+opposite for WebAssembly: *expect the bucket to be empty, and gate it — a
+tier emitting `undefined` has a bug.* A gate needs a constructor to be
+about. **ES converges by touch** (§9.2), gaining the two constructors it
+omits and gating both.
+
+**AND ES'S OWN REFINEMENT IS PRESERVED, because it is a real finding.** ES
+did not merely drop a class — it **split `environment` in two by
+RETIREMENT SCHEDULE**: `unmodeledIntrinsic` (a built-in outside the slice,
+retires by widening it) versus `environment` (a host facility, *does not
+retire by building more language*). §5.2 justifies its four causes on
+exactly that criterion — *they retire on completely different schedules* —
+so by the family's own rationale ES's distinction is legitimate. It lives
+in the **payload** today, where the tier's docs can explain it and the
+scoreboard still aggregates on the class.
+
+**And it is registered as a candidate FIFTH class, not dismissed.** If a
+second tier independently splits `environment` the same way, that is the
+convergence standard §9.3 used to ratify the span field names — a
+measurement, not a taste — and §5.2 should gain a fifth cause. One tier's
+distinction is a payload; two tiers' identical distinction is a class.
+
+**Ada's inch 1 consumes this directly**: four constructors, `π` = the ARM
+paragraph reference, `undefined` carrying its 1.1.5 erroneous-execution
+citation, and `order-dependence` present and gated until Ada measures
+whether it fires.
 
 **Why it is a REFUSAL cause and not a fifth verdict.** A refusal is what
 the model actually emits today, on both boards. The alternative — a

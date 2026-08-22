@@ -59,15 +59,16 @@ forks on and two measured edge rows.
 | edge rows (2) | 1 | `Pow-negative` |
 | `cmpop` (10), `boolop` (2) | 0 | — |
 
-**Then rungs 1 and 2 landed and rung 3's battery was added**, so the
-table above is the census AS TAKEN and the current numbers are **105
-witnesses, 68 MATCH, 37 REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
+**Then rungs 1, 2 and 3b landed**, so the table above is the census AS
+TAKEN and the current numbers are **105 witnesses, 74 MATCH, 31
+REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
 `RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` joined
 as a MATCH and `AnnAssign-novalue` as a refusal, with `stmt.AnnAssign`
 itself staying REFUSE because its witness is module-scope (rung 2); and
 sixteen `dict.*` rows joined as rung 3's acceptance battery, three of
-which measured MATCH and re-scoped the rung. The taken-table is kept
-rather than overwritten — it is what the ladder was priced against.
+which measured MATCH and re-scoped the rung, six more flipping when 3b
+landed. The taken-table is kept rather than overwritten — it is what the
+ladder was priced against.
 
 **25 of the 26 are gaps; one is faithful.** `1 @ 2` is a `TypeError` in
 CPython too, so `op.MatMult` costs a program nothing — no operand type in
@@ -309,14 +310,16 @@ day dict deletion lands.
 
 **The inches, ordered by price:**
 
-* **3b — the draining consumers** (`list`/`tuple`/`sorted`/`sum`/`max`/
-  `min`/`set`/`[*d]`/unpacking). **No mutation window exists** — they
-  drain with no user code in between — so none of the hazards can arise
-  and they need only "the keys, in insertion order". Eight of the ten
-  messages, each a one-line arm beside an existing `.list` arm in the
-  same `match`. Cheapest inch, largest reduction. *The recorded refusals
-  cite "live dict iteration" for all eight: they guard a hazard only two
-  of them can meet.*
+* **3b — the draining consumers — LANDED.** `list`/`tuple`/`sorted`/
+  `sum`/`max`/`min`/`set`/`any`/`all`/`[*d]`. **No mutation window
+  exists** — they drain with no user code in between — so none of the
+  hazards can arise, and they need only "the keys, in insertion order":
+  one `dictKeys` helper and seven value arms, each the `.list` arm beside
+  it. *The recorded refusals cited "live dict iteration" for all of them:
+  they guarded a hazard only two of them can meet.* The proof-layer price
+  was 19 walker arms across `PayloadBlind` and `ClockErase`, predicted by
+  §L53 before the inch was written and every one the adjacent `.list`
+  tactic verbatim.
 * **3a — the cursor at function scope and the bare `for k in d` form**:
   a mutual-block member plus its four walker arms.
 * **3c — the view methods as iterables** and `enumerate(d)`.

@@ -454,7 +454,7 @@ def call_on_a_FRESH_module(module, path, name, enc_args, timeout):
     live module compares that against CPython's ACCUMULATED state — so
     `list_lab.bump_twice()` answered 3 on the model (from `TABLE = [1,2,3]`)
     and 4 under CPython (because earlier battery rows had already bumped
-    `TABLE`), and the harness reported a DIVERGED that was its own.
+    `TABLE`), and the harness reported a DIVERGE that was its own.
 
     Re-executing the body per call also makes the battery ORDER-INDEPENDENT,
     which is a stronger determinism property than the seeds alone give."""

@@ -1,0 +1,2402 @@
+{
+  "axioms": [
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 38,
+      "name": "WHRedUpToN",
+      "partition": "experimental",
+      "text": "axiom WHRedUpToN (\u0393 : List SExpr) (e e' : SExpr) (n : Nat) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 39,
+      "name": "WHRedUpToN.mono",
+      "partition": "experimental",
+      "text": "axiom WHRedUpToN.mono : n \u2264 n' \u2192 WHRedUpToN \u0393 e e' n \u2192 WHRedUpToN \u0393 e e' n'"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 40,
+      "name": "ParRedN",
+      "partition": "experimental",
+      "text": "axiom ParRedN (\u0393 : List SExpr) (e e' : SExpr) (n : Nat) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 41,
+      "name": "ParRedN.mono",
+      "partition": "experimental",
+      "text": "axiom ParRedN.mono : n \u2264 n' \u2192 ParRedN \u0393 e e' n \u2192 ParRedN \u0393 e e' n'"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 42,
+      "name": "InferTypeN",
+      "partition": "experimental",
+      "text": "axiom InferTypeN (\u0393 : List SExpr) (e A : SExpr) (n : Nat) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 43,
+      "name": "InferTypeN.mono",
+      "partition": "experimental",
+      "text": "axiom InferTypeN.mono : n \u2264 n' \u2192 InferTypeN \u0393 e e' n \u2192 InferTypeN \u0393 e e' n'"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 44,
+      "name": "NormalEqN",
+      "partition": "experimental",
+      "text": "axiom NormalEqN (\u0393 : List SExpr) (e e' : SExpr) (n : Nat) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 45,
+      "name": "NormalEqN.mono",
+      "partition": "experimental",
+      "text": "axiom NormalEqN.mono : n \u2264 n' \u2192 NormalEqN \u0393 e e' n \u2192 NormalEqN \u0393 e e' n'"
+    },
+    {
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 614,
+      "name": "Params.extra_pat",
+      "partition": "experimental",
+      "text": "axiom Params.extra_pat (\u0393) : env.defeqs df \u2192 ls.length = df.uvars \u2192"
+    },
+    {
+      "file": "Lean4Lean/Experimental/StepIndexed.lean",
+      "line": 59,
+      "name": "IsTy",
+      "partition": "experimental",
+      "text": "axiom IsTy (\u0393 : List SExpr) (A : SExpr) (C : Classifier \u0393 A) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/StepIndexed.lean",
+      "line": 60,
+      "name": "IsTyN",
+      "partition": "experimental",
+      "text": "axiom IsTyN (\u0393 : List SExpr) (A : SExpr) (C : Classifier \u0393 A) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/StepIndexed.lean",
+      "line": 62,
+      "name": "IsTy.def",
+      "partition": "experimental",
+      "text": "axiom IsTy.def : IsTy \u0393 A C \u2194 \u0393 \u22a2 A \u25b7* .sort C.level \u2227"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 9,
+      "name": "mySorry",
+      "partition": "experimental",
+      "text": "axiom mySorry : \u03b1"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 11,
+      "name": "D",
+      "partition": "experimental",
+      "text": "axiom D : Type"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 12,
+      "name": "DF.OK",
+      "partition": "experimental",
+      "text": "axiom DF.OK (f : D \u2192 D) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 19,
+      "name": "D.bot",
+      "partition": "experimental",
+      "text": "axiom D.bot : D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 20,
+      "name": "D.U",
+      "partition": "experimental",
+      "text": "axiom D.U : D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 21,
+      "name": "D.lam",
+      "partition": "experimental",
+      "text": "axiom D.lam : DF \u2192 D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 22,
+      "name": "D.pi",
+      "partition": "experimental",
+      "text": "axiom D.pi : D \u2192 DF \u2192 D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 23,
+      "name": "D.LE",
+      "partition": "experimental",
+      "text": "axiom D.LE : D \u2192 D \u2192 Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 28,
+      "name": "D.LE.antisymm",
+      "partition": "experimental",
+      "text": "axiom D.LE.antisymm {x y : D} : x \u2264 y \u2192 y \u2264 x \u2192 x = y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 29,
+      "name": "D.LE.trans",
+      "partition": "experimental",
+      "text": "axiom D.LE.trans {x y z : D} : x \u2264 y \u2192 y \u2264 z \u2192 x \u2264 z"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 32,
+      "name": "DF.mono",
+      "partition": "experimental",
+      "text": "axiom DF.mono {f : DF} : x \u2264 y \u2192 f x \u2264 f y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 37,
+      "name": "D.lam_bot",
+      "partition": "experimental",
+      "text": "axiom D.lam_bot : D.lam .bot = .bot"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 39,
+      "name": "D.app",
+      "partition": "experimental",
+      "text": "axiom D.app : D \u2192 D \u2192 D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 41,
+      "name": "D.app_lam",
+      "partition": "experimental",
+      "text": "axiom D.app_lam : D.lam f x = f x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 43,
+      "name": "D.LE.bot",
+      "partition": "experimental",
+      "text": "axiom D.LE.bot {x : D} : .bot \u2264 x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 45,
+      "name": "D.LE.rfl",
+      "partition": "experimental",
+      "text": "axiom D.LE.rfl {x : D} : x \u2264 x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 46,
+      "name": "D.LE.lam",
+      "partition": "experimental",
+      "text": "axiom D.LE.lam {x y : DF} : D.lam x \u2264 .lam y \u2194 x \u2264 y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 47,
+      "name": "D.LE.pi",
+      "partition": "experimental",
+      "text": "axiom D.LE.pi {x y : D} : D.pi x f \u2264 D.pi y g \u2194 x \u2264 y \u2227 f \u2264 g"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 58,
+      "name": "FinElem.embed",
+      "partition": "experimental",
+      "text": "axiom FinElem.embed : FinElem \u2192 D"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 59,
+      "name": "FinFun.embed",
+      "partition": "experimental",
+      "text": "axiom FinFun.embed : FinFun \u2192 DF"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 68,
+      "name": "FinFun.eval",
+      "partition": "experimental",
+      "text": "axiom FinFun.eval : FinFun \u2192 FinElem \u2192 FinElem"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 75,
+      "name": "FinElem.embed_bot",
+      "partition": "experimental",
+      "text": "@[simp] axiom FinElem.embed_bot : ((.bot : FinElem) : D) = .bot"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 76,
+      "name": "FinFun.embed_bot",
+      "partition": "experimental",
+      "text": "@[simp] axiom FinFun.embed_bot : ((.bot : FinFun) : DF) = .bot"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 77,
+      "name": "FinElem.embed_U",
+      "partition": "experimental",
+      "text": "@[simp] axiom FinElem.embed_U : ((.U : FinElem) : D) = .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 86,
+      "name": "FinElem.LE.unfold",
+      "partition": "experimental",
+      "text": "axiom FinElem.LE.unfold : a \u2264 b \u2192 FinElem.LE_unfold a b"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 96,
+      "name": "FinMut.LE.cons",
+      "partition": "experimental",
+      "text": "axiom FinMut.LE.cons : FinMut.cons u v f \u2264 g \u2194 v \u2264 g u \u2227 f \u2264 g"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 97,
+      "name": "eval_cons",
+      "partition": "experimental",
+      "text": "axiom eval_cons : FinMut.cons u v f x \u2264 y \u2194 (u \u2264 x \u2192 v \u2264 y) \u2227 f x \u2264 y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 98,
+      "name": "eval_embed",
+      "partition": "experimental",
+      "text": "@[simp] axiom eval_embed : ((f : FinFun) x : D) = (f : DF) x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 99,
+      "name": "bot_apply",
+      "partition": "experimental",
+      "text": "@[simp] axiom bot_apply : (.bot : FinFun) x = .bot"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 126,
+      "name": "proj",
+      "partition": "experimental",
+      "text": "axiom proj : D \u2192 DF"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 127,
+      "name": "proj_U_U",
+      "partition": "experimental",
+      "text": "axiom proj_U_U : proj .U .U = .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 128,
+      "name": "proj_U_pi",
+      "partition": "experimental",
+      "text": "axiom proj_U_pi : proj .U (.pi a f) = .pi (proj .U a) ((proj .U).comp <| f.comp <| proj a)"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 129,
+      "name": "proj_pi",
+      "partition": "experimental",
+      "text": "axiom proj_pi : proj (.pi a f) (.lam w) ="
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 132,
+      "name": "proj_le",
+      "partition": "experimental",
+      "text": "axiom proj_le : proj a u \u2264 u"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 133,
+      "name": "proj_proj",
+      "partition": "experimental",
+      "text": "axiom proj_proj (a u : D) : proj a (proj a u) = proj a u"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 170,
+      "name": "HasType",
+      "partition": "experimental",
+      "text": "axiom HasType (\u0393 : List Expr) (M N : Expr) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 171,
+      "name": "HasType.U",
+      "partition": "experimental",
+      "text": "axiom HasType.U : HasType \u0393 .U .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 181,
+      "name": "WHRedTS.uniq_pi",
+      "partition": "experimental",
+      "text": "axiom WHRedTS.uniq_pi : M \u2933* .pi B F : A \u2192 M \u2933* .pi B' F' : A \u2192 B.pi F = B'.pi F'"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 9,
+      "name": "mySorry",
+      "partition": "experimental",
+      "text": "axiom mySorry : \u03b1"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 401,
+      "name": "ShapeFun.embed",
+      "partition": "experimental",
+      "text": "axiom ShapeFun.embed : ShapeFun n \u2192 DF"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 422,
+      "name": "DF.mk'_app",
+      "partition": "experimental",
+      "text": "@[simp] axiom DF.mk'_app : DF.mk' g x = g x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 539,
+      "name": "D.app_lam",
+      "partition": "experimental",
+      "text": "axiom D.app_lam : D.lam f x = f x"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 541,
+      "name": "D.LE.lam",
+      "partition": "experimental",
+      "text": "axiom D.LE.lam {x y : DF} : D.lam x \u2264 .lam y \u2194 x \u2264 y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 542,
+      "name": "D.LE.pi",
+      "partition": "experimental",
+      "text": "axiom D.LE.pi {x y : D} : D.pi x f \u2264 D.pi y g \u2194 x \u2264 y \u2227 f \u2264 g"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 544,
+      "name": "D.LE.embed",
+      "partition": "experimental",
+      "text": "axiom D.LE.embed {x y : Shape n} : Shape.embed x \u2264 Shape.embed y \u2194 x \u2264 y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 545,
+      "name": "DF.LE.embed",
+      "partition": "experimental",
+      "text": "axiom DF.LE.embed {x y : ShapeFun n} : ShapeFun.embed x \u2264 ShapeFun.embed y \u2194 x \u2264\u2264 y"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 547,
+      "name": "Shape.embed_U",
+      "partition": "experimental",
+      "text": "@[simp] axiom Shape.embed_U : (Shape.U (n := n) : D) = .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 549,
+      "name": "proj",
+      "partition": "experimental",
+      "text": "axiom proj : D \u2192 DF"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 550,
+      "name": "proj_U_U",
+      "partition": "experimental",
+      "text": "axiom proj_U_U : proj .U .U = .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 551,
+      "name": "proj_U_pi",
+      "partition": "experimental",
+      "text": "axiom proj_U_pi : proj .U (.pi a f) = .pi (proj .U a) ((proj .U).comp <| f.comp <| proj a)"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 552,
+      "name": "proj_pi",
+      "partition": "experimental",
+      "text": "axiom proj_pi : proj (.pi a f) (.lam w) ="
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 555,
+      "name": "proj_le",
+      "partition": "experimental",
+      "text": "axiom proj_le : proj a u \u2264 u"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 556,
+      "name": "proj_proj",
+      "partition": "experimental",
+      "text": "axiom proj_proj (a u : D) : proj a (proj a u) = proj a u"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 607,
+      "name": "DefEq",
+      "partition": "experimental",
+      "text": "axiom DefEq (\u0393 : List Expr) (M N A : Expr) : Prop"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 608,
+      "name": "DefEq.U",
+      "partition": "experimental",
+      "text": "axiom DefEq.U : DefEq \u0393 .U .U .U"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 609,
+      "name": "DefEq.left",
+      "partition": "experimental",
+      "text": "axiom DefEq.left : DefEq \u0393 M N A \u2192 DefEq \u0393 M M A"
+    },
+    {
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 619,
+      "name": "WHRedTS.uniq_pi",
+      "partition": "experimental",
+      "text": "axiom WHRedTS.uniq_pi : M \u2933* .pi B F : A \u2192 M \u2933* .pi B' F' : A \u2192 B.pi F = B'.pi F'"
+    },
+    {
+      "file": "Lean4Lean/PtrEq.lean",
+      "line": 17,
+      "name": "ptrEqExpr_eq",
+      "partition": "executable",
+      "text": "axiom ptrEqExpr_eq : ptrEqExpr a b \u2192 a = b"
+    },
+    {
+      "file": "Lean4Lean/PtrEq.lean",
+      "line": 22,
+      "name": "ptrEqConstantInfo_eq",
+      "partition": "executable",
+      "text": "axiom ptrEqConstantInfo_eq : ptrEqConstantInfo a b \u2192 a = b"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 10,
+      "name": "all_eq_all_toList",
+      "partition": "proof",
+      "text": "axiom all_eq_all_toList {p : \u03b1 \u2192 \u03b2 \u2192 Bool} :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 14,
+      "name": "any_eq_any_toList",
+      "partition": "proof",
+      "text": "axiom any_eq_any_toList {p : \u03b1 \u2192 \u03b2 \u2192 Bool} :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 39,
+      "name": "toList'_push",
+      "partition": "proof",
+      "text": "@[simp] axiom toList'_push {\u03b1} (arr : PersistentArray \u03b1) (x : \u03b1) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 72,
+      "name": "WF.toList'_insert",
+      "partition": "proof",
+      "text": "axiom WF.toList'_insert {\u03b1 \u03b2} [BEq \u03b1] [Hashable \u03b1]"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 78,
+      "name": "WF.find?_eq",
+      "partition": "proof",
+      "text": "axiom WF.find?_eq {\u03b1 \u03b2} [BEq \u03b1] [Hashable \u03b1]"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 83,
+      "name": "findAux_isSome",
+      "partition": "proof",
+      "text": "axiom findAux_isSome {\u03b1 \u03b2} [BEq \u03b1] {node : Node \u03b1 \u03b2} (i : USize) (a : \u03b1) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 115,
+      "name": "structEq_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom structEq_eq : structEq a b = structEq' a b"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 177,
+      "name": "mkMaxAux_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom mkMaxAux_eq : mkMaxAux = Total.mkMaxAux"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 185,
+      "name": "skipExplicit_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom skipExplicit_eq : skipExplicit = Total.skipExplicit"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 194,
+      "name": "isExplicitSubsumedAux_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom isExplicitSubsumedAux_eq : isExplicitSubsumedAux = Total.isExplicitSubsumedAux"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 257,
+      "name": "normalize_eq",
+      "partition": "proof",
+      "text": "axiom normalize_eq : normalize = Total.normalize"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 269,
+      "name": "mkData_eq",
+      "partition": "proof",
+      "text": "axiom mkData_eq : @mkData = @mkData'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 279,
+      "name": "hasParam_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom hasParam_eq (l : Level) : l.hasParam = l.hasParam'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 289,
+      "name": "hasMVar_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom hasMVar_eq (l : Level) : l.hasMVar = l.hasMVar'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 292,
+      "name": "instLawfulBEqLevel",
+      "partition": "proof",
+      "text": "@[instance] axiom instLawfulBEqLevel : LawfulBEq Level"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 303,
+      "name": "mkLevelIMaxCore_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom mkLevelIMaxCore_eq (e : Expr) (n : Nat) : mkLevelIMaxCore = mkIMaxCore"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 325,
+      "name": "mkData_eq",
+      "partition": "proof",
+      "text": "axiom mkData_eq : @mkData = @mkData'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 342,
+      "name": "mkAppData_eq",
+      "partition": "proof",
+      "text": "axiom mkAppData_eq : @mkAppData = @mkAppData'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 360,
+      "name": "looseBVarRange_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom looseBVarRange_eq (e : Expr) : e.looseBVarRange = e.looseBVarRange'"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 363,
+      "name": "replace_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom replace_eq (e : Expr) (f) : e.replace f = e.replaceNoCache f"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 382,
+      "name": "liftLooseBVars_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom liftLooseBVars_eq (e : Expr) (s d) : e.liftLooseBVars s d = e.liftLooseBVars' s d"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 402,
+      "name": "lowerLooseBVars_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom lowerLooseBVars_eq (e : Expr) (s d) : e.lowerLooseBVars s d = e.lowerLooseBVars' s d"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 421,
+      "name": "instantiate1_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom instantiate1_eq (e : Expr) (subst) : e.instantiate1 subst = e.instantiate1' subst"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 428,
+      "name": "instantiate_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom instantiate_eq (e : Expr) (subst) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 432,
+      "name": "instantiateRev_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom instantiateRev_eq (e : Expr) (subst) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 436,
+      "name": "instantiateRange_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom instantiateRange_eq (e : Expr) (subst) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 440,
+      "name": "instantiateRevRange_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom instantiateRevRange_eq (e : Expr) (subst) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 463,
+      "name": "abstract_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom abstract_eq (e : Expr) (xs : List FVarId) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 467,
+      "name": "abstractRange_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom abstractRange_eq (e : Expr) (n : Nat) (xs : Array Expr) :"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 485,
+      "name": "hasLooseBVar_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom hasLooseBVar_eq (e : Expr) (n : Nat) : e.hasLooseBVar n = e.hasLooseBVar' n"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 505,
+      "name": "eqv_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom eqv_eq (e1 e2 : Expr) : e1.eqv e2 = e1.eqv' e2"
+    },
+    {
+      "file": "Lean4Lean/Verify/Axioms.lean",
+      "line": 508,
+      "name": "equal_eq",
+      "partition": "proof",
+      "text": "@[simp] axiom equal_eq (e1 e2 : Expr) : e1.equal e2 = e1.eqv' e2 (strict := true)"
+    }
+  ],
+  "axioms_by_partition": {
+    "executable": 2,
+    "experimental": 69,
+    "proof": 32
+  },
+  "counting_rule": "raw = every `sorry`/`admit` token including comments, docstrings and string literals; real = the same after blanking Lean comments (nested /- -/, /-- -/, --) and string literals while preserving line numbers. The DELTA is a finding.",
+  "lean4lean_commit": "e0e3f6bcccb840cb0ea6f11c2b274ada93a12e00",
+  "lines_by_partition": {
+    "executable": 3964,
+    "experimental": 13309,
+    "proof": 21531,
+    "tests": 664
+  },
+  "obligations": [
+    {
+      "corner": "other",
+      "decl": "LREqTy.defeq_r",
+      "decl_kind": "theorem",
+      "decl_line": 243,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 244,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "(H : J \u22a9\u2261 B) (H2 : J \u22a9 a \u2261 b) : J' \u22a9 a \u2261 b := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "LREqTy.symm",
+      "decl_kind": "def",
+      "decl_line": 246,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 250,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .stuck .. => sorry -- \u27e8\u27e8_, .stuck _ H.1.hasType.2\u27e9, H.1.symm, \u27e8\u27e9\u27e9"
+    },
+    {
+      "corner": "other",
+      "decl": "LREqTy.symm",
+      "decl_kind": "def",
+      "decl_line": 246,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 251,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .sort .. => sorry -- \u27e8\u27e8_, _\u27e9, _, _\u27e9"
+    },
+    {
+      "corner": "other",
+      "decl": "LREqTy.symm",
+      "decl_kind": "def",
+      "decl_line": 246,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 252,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .forallE .. => sorry -- \u27e8\u27e8_, _\u27e9, _, _\u27e9"
+    },
+    {
+      "corner": "other",
+      "decl": "LVIsType.sort",
+      "decl_kind": "def",
+      "decl_line": 287,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 288,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry -- \u27e8.sort, fun _ => \u27e8.sort _, fun _ _ => \u27e8.sort, .rfl\u27e9\u27e9\u27e9"
+    },
+    {
+      "corner": "other",
+      "decl": "fundamental",
+      "decl_kind": "theorem",
+      "decl_line": 353,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 375,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "fundamental",
+      "decl_kind": "theorem",
+      "decl_line": 353,
+      "file": "Lean4Lean/Experimental/LogRel.lean",
+      "line": 379,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| _ => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.app_mono_l",
+      "decl_kind": "theorem",
+      "decl_line": 309,
+      "file": "Lean4Lean/Experimental/MoreStepIndexed.lean",
+      "line": 310,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.parRed",
+      "decl_kind": "theorem",
+      "decl_line": 687,
+      "file": "Lean4Lean/Experimental/ParallelReduction.lean",
+      "line": 699,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.parRed",
+      "decl_kind": "theorem",
+      "decl_line": 687,
+      "file": "Lean4Lean/Experimental/ParallelReduction.lean",
+      "line": 718,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEq.strong",
+      "decl_kind": "theorem",
+      "decl_line": 679,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 679,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem IsDefEq.strong : \u0393 \u22a2 e1 \u2261 e2 : A \u2192 IsDefEqStrong \u0393 e1 e2 A := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEqStrong.defeq",
+      "decl_kind": "theorem",
+      "decl_line": 680,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 680,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem IsDefEqStrong.defeq : IsDefEqStrong \u0393 e1 e2 A \u2192 \u0393 \u22a2 e1 \u2261 e2 : A := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "_root_.Lean4Lean.Params.ctor_ty",
+      "decl_kind": "theorem",
+      "decl_line": 682,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 688,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "Ts.foldr .forallE (args.foldr (fun A acc => acc.app A) (.const I ls)) : .sort u := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "HasTypeStratifiedS.to_core",
+      "decl_kind": "theorem",
+      "decl_line": 734,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 735,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "\u2203 A', \u0393 \u22a2 e :! A' !! n := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "HasTypeStratifiedS.isType",
+      "decl_kind": "theorem",
+      "decl_line": 737,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 738,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "\u2203 u, \u0393 \u22a2 A : .sort u !! n - 1 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Ctx.Subst.lift_r",
+      "decl_kind": "theorem",
+      "decl_line": 760,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 761,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "Ctx.Subst HasType \u0394 (\u03c3.lift_r \u03c1) \u0393 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Ctx.Subst.id",
+      "decl_kind": "theorem",
+      "decl_line": 770,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 770,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Ctx.Subst.id : Ctx.Subst HasType \u0393 .id \u0393 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEq.subst",
+      "decl_kind": "theorem",
+      "decl_line": 786,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 787,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "\u0393 \u22a2 e1 \u2261 e2 : A \u2192 \u0393\u2080 \u22a2 e1.subst \u03c3 \u2261 e2.subst \u03c3' : A.subst \u03c3 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Ctx.SubstEq.lookup",
+      "decl_kind": "theorem",
+      "decl_line": 794,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 795,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "Lookup \u0393 i A \u2192 \u0393\u2080 \u22a2 \u03c3 i \u2261 \u03c3' i : A.subst \u03c3 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Ctx.SubstEq.lift",
+      "decl_kind": "theorem",
+      "decl_line": 797,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 798,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "Ctx.SubstEq (A.subst \u03c3 :: \u0393\u2080) \u03c3.lift \u03c3'.lift (A :: \u0393) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEq.defeqDF_l'",
+      "decl_kind": "theorem",
+      "decl_line": 823,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 825,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEqLift.subst",
+      "decl_kind": "theorem",
+      "decl_line": 885,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 886,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "\u0394 \u22a2 e1.subst \u03c3 \u2261 e2.subst \u03c3 :\u2191 A.subst \u03c3 := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.subst",
+      "decl_kind": "theorem",
+      "decl_line": 953,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 957,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .extra h1 h2 h3 h4 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.weak'",
+      "decl_kind": "theorem",
+      "decl_line": 959,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 963,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .extra h1 h2 h3 h4 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.weakU_inv",
+      "decl_kind": "theorem",
+      "decl_line": 965,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 973,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| extra => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.determ",
+      "decl_kind": "theorem",
+      "decl_line": 981,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 987,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| extra => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.determ",
+      "decl_kind": "theorem",
+      "decl_line": 981,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 992,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| extra _ r2 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.determ",
+      "decl_kind": "theorem",
+      "decl_line": 981,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 995,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| beta => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.determ",
+      "decl_kind": "theorem",
+      "decl_line": 981,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 996,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| app => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRed.determ",
+      "decl_kind": "theorem",
+      "decl_line": 981,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 997,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| extra _ r2 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRedS.defeq",
+      "decl_kind": "theorem",
+      "decl_line": 1008,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1008,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem WHRedS.defeq (H : \u0393 \u22a2 e1 \u2933* e2) (he : \u0393 \u22a2 e1 : A) : \u0393 \u22a2 e1 \u2261 e2 : A := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ParRed.weak'",
+      "decl_kind": "theorem",
+      "decl_line": 1060,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1069,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| .extra h1 h2 h3 h4 h5 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "InferType.hasType",
+      "decl_kind": "theorem",
+      "decl_line": 1091,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1091,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem InferType.hasType (H : \u0393 \u22a2 e \u25b7 A) : \u0393 \u22a2 e : A := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "InferTypeS.hasType",
+      "decl_kind": "theorem",
+      "decl_line": 1167,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1167,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem InferTypeS.hasType : \u0393 \u22a2 e \u25b7* A \u2192 \u0393 \u22a2 e : A := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "WHRedS.parRedS",
+      "decl_kind": "theorem",
+      "decl_line": 1182,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1182,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem WHRedS.parRedS (H : \u0393 \u22a2 e \u2933* e') : \u0393 \u22a2 e \u226b* e' := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.symm",
+      "decl_kind": "theorem",
+      "decl_line": 1248,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1251,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| appDF h1 h2 ih1 ih2 => exact .defeqDF sorry (u := sorry) <| .appDF ih1 ih2"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.symm",
+      "decl_kind": "theorem",
+      "decl_line": 1248,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1251,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| appDF h1 h2 ih1 ih2 => exact .defeqDF sorry (u := sorry) <| .appDF ih1 ih2"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.weak'",
+      "decl_kind": "theorem",
+      "decl_line": 1259,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1263,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| appDF h1 h2 ih1 ih2 => exact .defeqDF sorry (u := sorry) <| .appDF (ih1 W) (ih2 W)"
+    },
+    {
+      "corner": "other",
+      "decl": "NormalEq.weak'",
+      "decl_kind": "theorem",
+      "decl_line": 1259,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1263,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| appDF h1 h2 ih1 ih2 => exact .defeqDF sorry (u := sorry) <| .appDF (ih1 W) (ih2 W)"
+    },
+    {
+      "corner": "other",
+      "decl": "CRDefEq.trans",
+      "decl_kind": "theorem",
+      "decl_line": 1294,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1295,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| \u27e8l1, _, _, l3, l4, l5\u27e9, \u27e8r1, _, _, r3, r4, r5\u27e9 => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "InferType.whRed",
+      "decl_kind": "theorem",
+      "decl_line": 1316,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1323,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "exact .inst sorry b2"
+    },
+    {
+      "corner": "other",
+      "decl": "InferType.whRed",
+      "decl_kind": "theorem",
+      "decl_line": 1316,
+      "file": "Lean4Lean/Experimental/SExpr.lean",
+      "line": 1324,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| extra => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "LR.adequacy",
+      "decl_kind": "theorem",
+      "decl_line": 106,
+      "file": "Lean4Lean/Experimental/ShapeLogRelAdequacy.lean",
+      "line": 154,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEq.induction1",
+      "decl_kind": "theorem",
+      "decl_line": 75,
+      "file": "Lean4Lean/Experimental/Stratified.lean",
+      "line": 91,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": ".defeq (u := u.inst ls\u2081) sorry <| .const h1 h3 (h5.length_eq.symm.trans h4),"
+    },
+    {
+      "corner": "other",
+      "decl": "IsDefEq.inductionU1",
+      "decl_kind": "theorem",
+      "decl_line": 55,
+      "file": "Lean4Lean/Experimental/StratifiedUntyped.lean",
+      "line": 72,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "exact \u27e8.const h1 h2 h4, .defeq sorry <| .const h1 h3 (h5.length_eq.symm.trans h4), .constDF h5\u27e9"
+    },
+    {
+      "corner": "defeq",
+      "decl": "IsDefEqStrong.uniqL'",
+      "decl_kind": "theorem",
+      "decl_line": 574,
+      "file": "Lean4Lean/Experimental/Stronger.lean",
+      "line": 623,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "refine \u27e8?_, sorry\u27e9"
+    },
+    {
+      "corner": "defeq",
+      "decl": "IsDefEqStrong.uniqL'",
+      "decl_kind": "theorem",
+      "decl_line": 574,
+      "file": "Lean4Lean/Experimental/Stronger.lean",
+      "line": 625,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry -- looks like it needs unique typing :("
+    },
+    {
+      "corner": "defeq",
+      "decl": "IsDefEqStrong.uniqL'",
+      "decl_kind": "theorem",
+      "decl_line": 574,
+      "file": "Lean4Lean/Experimental/Stronger.lean",
+      "line": 626,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| _ => sorry"
+    },
+    {
+      "corner": "defeq",
+      "decl": "IsDefEqStrong.uniqL'",
+      "decl_kind": "theorem",
+      "decl_line": 574,
+      "file": "Lean4Lean/Experimental/Stronger.lean",
+      "line": 627,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "| _ => sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinMut.LE.rfl",
+      "decl_kind": "theorem",
+      "decl_line": 93,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 93,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "@[simp] theorem FinMut.LE.rfl {x : FinMut b} : x \u2264 x := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinMut.LE.lam",
+      "decl_kind": "theorem",
+      "decl_line": 94,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 94,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "@[simp] theorem FinMut.LE.lam {x y : FinFun} : x.lam \u2264 y.lam \u2194 x \u2264 y := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinMut.LE.pi",
+      "decl_kind": "theorem",
+      "decl_line": 95,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 95,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "@[simp] theorem FinMut.LE.pi {x y : FinElem} : x.pi f \u2264 y.pi g \u2194 x \u2264 y \u2227 f \u2264 g := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinHasType.mono",
+      "decl_kind": "theorem",
+      "decl_line": 118,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 118,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem FinHasType.mono : u :\u1da0 a \u2192 a \u2264 b \u2192 u :\u1da0 b := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinHasType.join",
+      "decl_kind": "theorem",
+      "decl_line": 120,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 120,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem FinHasType.join (H : Join u v w) : u :\u1da0 a \u2192 v :\u1da0 b \u2192 w :\u1da0 b := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinHasType.pi_eval",
+      "decl_kind": "theorem",
+      "decl_line": 122,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 122,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem FinHasType.pi_eval : FinHasType f (.pi a) \u2192 u :\u1da0 a \u2192 f u :\u1da0 .U := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinHasType.lam_eval",
+      "decl_kind": "theorem",
+      "decl_line": 123,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 123,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem FinHasType.lam_eval : FinHasType f (.lam a g) \u2192 u :\u1da0 a \u2192 f u :\u1da0 g u := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "FinHasType.lem5",
+      "decl_kind": "theorem",
+      "decl_line": 124,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 124,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem FinHasType.lem5 : .lam w :\u1da0 .pi b f \u2192 b \u2264 a \u2192 u :\u1da0 a \u2192 \u2203 v, v :\u1da0 b \u2227 v \u2264 u \u2227 w u = w v := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "El_iff",
+      "decl_kind": "theorem",
+      "decl_line": 137,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 137,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem El_iff {u a : FinElem} : El a u \u2194 u :\u1da0 a := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "El.mono",
+      "decl_kind": "theorem",
+      "decl_line": 139,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 139,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem El.mono : v \u2264 u \u2192 El a u \u2192 El a v := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "subst",
+      "decl_kind": "def",
+      "decl_line": 148,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 148,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "def subst : Expr \u2192 Expr \u2192 Expr := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "meas_apply_lt",
+      "decl_kind": "theorem",
+      "decl_line": 190,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 190,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem meas_apply_lt (f : FinFun) (x) : meas (f x) < meas f := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "HasTypeFamF.def",
+      "decl_kind": "theorem",
+      "decl_line": 222,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 224,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "HasTypeF N B v b \u2192 HasTypeF (subst F N) .U (f v) .U := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "HasPiFamF.def",
+      "decl_kind": "theorem",
+      "decl_line": 226,
+      "file": "Lean4Lean/Experimental/Thierry.lean",
+      "line": 228,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "HasTypeF N B v b \u2192 HasTypeF (.app M N) (subst F N) (m v) (f v) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.LE.bot",
+      "decl_kind": "theorem",
+      "decl_line": 97,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 97,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem ShapeFun.LE.bot : .bot \u2264\u2264 f := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.Compat.def",
+      "decl_kind": "theorem",
+      "decl_line": 132,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 132,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Shape.Compat.def {x y : Shape n} : x.Compat y \u2194 \u2203 z, x \u2264 z \u2227 y \u2264 z := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.Join.mk",
+      "decl_kind": "theorem",
+      "decl_line": 156,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 156,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Shape.Join.mk (H : x.Compat y) : Join x y (x.join y) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.Join.mk",
+      "decl_kind": "theorem",
+      "decl_line": 158,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 158,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem ShapeFun.Join.mk (H : Compat Shape.Compat x y) : Join x y (join Shape.join x y) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.app_mono_l",
+      "decl_kind": "theorem",
+      "decl_line": 166,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 167,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.app_mono_r",
+      "decl_kind": "theorem",
+      "decl_line": 169,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 170,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.Join.app",
+      "decl_kind": "theorem",
+      "decl_line": 172,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 172,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem ShapeFun.Join.app (H : Join x y z) : Shape.Join (x.app a) (y.app a) (z.app a) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.Compat.def",
+      "decl_kind": "theorem",
+      "decl_line": 174,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 176,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.bot_app",
+      "decl_kind": "theorem",
+      "decl_line": 178,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 178,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "@[simp] theorem ShapeFun.bot_app : (@ShapeFun.bot n).app x = .bot := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.Join.app",
+      "decl_kind": "theorem",
+      "decl_line": 184,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 184,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Shape.Join.app (H : Join x y z) : Shape.Join (x.app a) (y.app a) (z.app a) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.app_mono_r",
+      "decl_kind": "theorem",
+      "decl_line": 192,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 192,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Shape.app_mono_r {f : Shape (n + 1)} (h1 : x \u2264 y) : f.app x \u2264 f.app y := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.HasType.mono",
+      "decl_kind": "theorem",
+      "decl_line": 240,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 240,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem Shape.HasType.mono {m a a' : Shape n} (ha : a \u2264 a') : m :\u1da0 a \u2192 m :\u1da0 a' := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.HasTypeLam.app",
+      "decl_kind": "theorem",
+      "decl_line": 242,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 243,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "HasType (ShapeFun.app f x) (ShapeFun.app b x) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.HasTypePi.app",
+      "decl_kind": "theorem",
+      "decl_line": 245,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 246,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "(ht : HasType x a) : HasType (ShapeFun.app f x) .U := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.HasType.maximal",
+      "decl_kind": "theorem",
+      "decl_line": 248,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 250,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "\u2203 x, HasType x a \u2227 x \u2264 x' \u2227 ShapeFun.app f x = ShapeFun.app f x' := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.Compat.lift",
+      "decl_kind": "theorem",
+      "decl_line": 329,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 330,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "(x.lift : Shape m).Compat y.lift \u2194 x.Compat y := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.Compat.lift",
+      "decl_kind": "theorem",
+      "decl_line": 332,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 334,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "Compat Shape.Compat x y := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.lift_join",
+      "decl_kind": "theorem",
+      "decl_line": 336,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 337,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "((x.join y).lift : Shape m) = x.lift.join y.lift := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.lift_join",
+      "decl_kind": "theorem",
+      "decl_line": 339,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 341,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "join Shape.join (lift Shape.lift x) (lift Shape.lift y) := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "ShapeFun.lift_app",
+      "decl_kind": "theorem",
+      "decl_line": 343,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 345,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "Shape.lift_app",
+      "decl_kind": "theorem",
+      "decl_line": 347,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 349,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "DF.mk'",
+      "decl_kind": "def",
+      "decl_line": 421,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 421,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "def DF.mk' (f : D \u2192 D) : DF := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "D.pi",
+      "decl_kind": "def",
+      "decl_line": 472,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 472,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "def D.pi : D \u2192 DF \u2192 D := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "El_iff",
+      "decl_kind": "theorem",
+      "decl_line": 560,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 560,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem El_iff {u a : Shape n} : El a u \u2194 u :\u1da0 a := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "El.mono",
+      "decl_kind": "theorem",
+      "decl_line": 562,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 562,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "theorem El.mono : v \u2264 u \u2192 El a u \u2192 El a v := sorry"
+    },
+    {
+      "corner": "other",
+      "decl": "subst",
+      "decl_kind": "def",
+      "decl_line": 571,
+      "file": "Lean4Lean/Experimental/Thierry2.lean",
+      "line": 571,
+      "marker": "sorry",
+      "partition": "experimental",
+      "proj_related": false,
+      "text": "def subst : Expr \u2192 Expr \u2192 Expr := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "inductive-types",
+      "decl": "VInductDecl.WF",
+      "decl_kind": "def",
+      "decl_line": 5,
+      "file": "Lean4Lean/Theory/Inductive.lean",
+      "line": 5,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "def VInductDecl.WF (env : VEnv) (decl : VInductDecl) : Prop := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "inductive-types",
+      "decl": "VEnv.addInduct",
+      "decl_kind": "def",
+      "decl_line": 7,
+      "file": "Lean4Lean/Theory/Inductive.lean",
+      "line": 7,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "def VEnv.addInduct (env : VEnv) (decl : VInductDecl) : Option VEnv := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "church-rosser",
+      "decl": "NormalEq.parRed",
+      "decl_kind": "theorem",
+      "decl_line": 1178,
+      "file": "Lean4Lean/Theory/Typing/ChurchRosser.lean",
+      "line": 1190,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "church-rosser",
+      "decl": "NormalEq.parRed",
+      "decl_kind": "theorem",
+      "decl_line": 1178,
+      "file": "Lean4Lean/Theory/Typing/ChurchRosser.lean",
+      "line": 1209,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "blocked_by": [
+        "VEnv.addInduct",
+        "VInductDecl.WF"
+      ],
+      "corner": "inductive-types",
+      "decl": "addInduct_WF",
+      "decl_kind": "theorem",
+      "decl_line": 8,
+      "file": "Lean4Lean/Theory/Typing/InductiveLemmas.lean",
+      "line": 10,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "injectivity",
+      "decl": "IsDefEqU.sort_inv",
+      "decl_kind": "theorem",
+      "decl_line": 11,
+      "file": "Lean4Lean/Theory/Typing/Injectivity.lean",
+      "line": 12,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "(h1 : env.IsDefEqU U \u0393 (.sort u) (.sort v)) : u \u2248 v := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "injectivity",
+      "decl": "IsDefEqU.forallE_inv_stratified",
+      "decl_kind": "theorem",
+      "decl_line": 14,
+      "file": "Lean4Lean/Theory/Typing/Injectivity.lean",
+      "line": 21,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "env.HasTypeStratified U (A'::\u0393) B' (.sort u) true n' := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "injectivity",
+      "decl": "IsDefEqU.sort_forallE_inv",
+      "decl_kind": "theorem",
+      "decl_line": 33,
+      "file": "Lean4Lean/Theory/Typing/Injectivity.lean",
+      "line": 34,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "\u00acenv.IsDefEqU U \u0393 (.sort u) (.forallE A B) := sorry"
+    },
+    {
+      "blocked_by": [
+        "IsDefEqU.sort_inv",
+        "IsDefEqU.forallE_inv_stratified"
+      ],
+      "corner": "unique-typing",
+      "decl": "IsDefEqU.weakN_iff",
+      "decl_kind": "theorem",
+      "decl_line": 172,
+      "file": "Lean4Lean/Theory/Typing/UniqueTyping.lean",
+      "line": 174,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "refine \u27e8fun h => have := henv; have := h\u0393; sorry, fun h => h.weakN henv W\u27e9"
+    },
+    {
+      "blocked_by": [
+        "addInduct_WF"
+      ],
+      "corner": "environment/addDecl",
+      "decl": "addDecl.WF",
+      "decl_kind": "theorem",
+      "decl_line": 225,
+      "file": "Lean4Lean/Verify/Environment.lean",
+      "line": 236,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "| inductDecl _ _ _ _ => sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "environment/addDecl",
+      "decl": "checkPrimitiveDef.WF",
+      "decl_kind": "theorem",
+      "decl_line": 31,
+      "file": "Lean4Lean/Verify/Environment/Boundaries.lean",
+      "line": 35,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "inferProj.WF",
+      "decl_kind": "theorem",
+      "decl_line": 388,
+      "file": "Lean4Lean/Verify/TypeChecker/InferType.lean",
+      "line": 391,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "\u2203 ty', c.TrTyping (.proj st i e) ty e' ty' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "defeq",
+      "decl": "tryEtaStructCore.WF",
+      "decl_kind": "theorem",
+      "decl_line": 225,
+      "file": "Lean4Lean/Verify/TypeChecker/IsDefEq.lean",
+      "line": 227,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "RecM.WF c s (tryEtaStructCore e\u2081 e\u2082) fun b _ => b \u2192 c.IsDefEqU e\u2081' e\u2082' := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "defeq",
+      "decl": "isDefEqUnitLike.WF",
+      "decl_kind": "theorem",
+      "decl_line": 486,
+      "file": "Lean4Lean/Verify/TypeChecker/IsDefEq.lean",
+      "line": 488,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "RecM.WF c s (isDefEqUnitLike e\u2081 e\u2082) fun b _ => b = .true \u2192 c.IsDefEqU e\u2081' e\u2082' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "reduceProjCore.WF",
+      "decl_kind": "theorem",
+      "decl_line": 143,
+      "file": "Lean4Lean/Verify/TypeChecker/Reduce.lean",
+      "line": 145,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "\u2200 e\u2081, oe = some e\u2081 \u2192 c.FVarsBelow (.proj n i e) e\u2081 \u2227 c.TrExpr e\u2081 e' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "whnf/reduction",
+      "decl": "reduceRecursor.WF",
+      "decl_kind": "theorem",
+      "decl_line": 6,
+      "file": "Lean4Lean/Verify/TypeChecker/WHNF.lean",
+      "line": 8,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": false,
+      "text": "\u2200 e\u2081, oe = some e\u2081 \u2192 c.FVarsBelow e e\u2081 \u2227 c.TrExpr e\u2081 e' := sorry"
+    },
+    {
+      "blocked_by": [],
+      "corner": "proj",
+      "decl": "TrProj",
+      "decl_kind": "def",
+      "decl_line": 67,
+      "file": "Lean4Lean/Verify/Typing/Expr.lean",
+      "line": 67,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "def TrProj : \u2200 (\u0393 : List VExpr) (structName : Name) (idx : Nat) (e : VExpr), VExpr \u2192 Prop := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.weak'",
+      "decl_kind": "theorem",
+      "decl_line": 558,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 559,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "(H : TrProj \u0393 s i e e') : TrProj \u0393' s i (e.lift' n) (e'.lift' n) := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.weak'_inv",
+      "decl_kind": "theorem",
+      "decl_line": 639,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 640,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "(W : Ctx.Lift' l \u0393 \u0393') : TrProj \u0393' s i (e.lift' l) e' \u2192 \u2203 e', TrProj \u0393 s i e e' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.defeqDFC",
+      "decl_kind": "theorem",
+      "decl_line": 642,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 644,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "\u2203 e', TrProj \u0393\u2082 s i e\u2082 e' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.wf",
+      "decl_kind": "theorem",
+      "decl_line": 810,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 810,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "theorem TrProj.wf (H1 : TrProj \u0394 s i e e') (H2 : VExpr.WF env U \u0393 e) : VExpr.WF env U \u0393 e' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.uniq",
+      "decl_kind": "theorem",
+      "decl_line": 853,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 855,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "env.IsDefEqU U \u0393\u2081 e\u2081' e\u2082' := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.instN",
+      "decl_kind": "theorem",
+      "decl_line": 1156,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 1157,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "(H : TrProj \u0393\u2081 s i e e') : TrProj \u0393 s i (e.inst e\u2080 k) (e'.inst e\u2080 k) := sorry"
+    },
+    {
+      "blocked_by": [
+        "TrProj"
+      ],
+      "corner": "proj",
+      "decl": "TrProj.instL",
+      "decl_kind": "theorem",
+      "decl_line": 1425,
+      "file": "Lean4Lean/Verify/Typing/Lemmas.lean",
+      "line": 1426,
+      "marker": "sorry",
+      "partition": "proof",
+      "proj_related": true,
+      "text": "TrProj (\u0393.map (VExpr.instL ls)) s i (e.instL ls) (e'.instL ls) := sorry"
+    }
+  ],
+  "per_file": {
+    "Lean4Lean/Experimental/LogRel.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 7,
+      "real": 7
+    },
+    "Lean4Lean/Experimental/MoreStepIndexed.lean": {
+      "comment_only": 4,
+      "partition": "experimental",
+      "raw": 5,
+      "real": 1
+    },
+    "Lean4Lean/Experimental/ParallelReduction.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 2,
+      "real": 2
+    },
+    "Lean4Lean/Experimental/SExpr.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 32,
+      "real": 32
+    },
+    "Lean4Lean/Experimental/ShapeLogRel.lean": {
+      "comment_only": 10,
+      "partition": "experimental",
+      "raw": 10,
+      "real": 0
+    },
+    "Lean4Lean/Experimental/ShapeLogRelAdequacy.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Experimental/Stratified.lean": {
+      "comment_only": 2,
+      "partition": "experimental",
+      "raw": 3,
+      "real": 1
+    },
+    "Lean4Lean/Experimental/StratifiedUntyped.lean": {
+      "comment_only": 2,
+      "partition": "experimental",
+      "raw": 3,
+      "real": 1
+    },
+    "Lean4Lean/Experimental/Stronger.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 4,
+      "real": 4
+    },
+    "Lean4Lean/Experimental/Thierry.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 14,
+      "real": 14
+    },
+    "Lean4Lean/Experimental/Thierry2.lean": {
+      "comment_only": 0,
+      "partition": "experimental",
+      "raw": 26,
+      "real": 26
+    },
+    "Lean4Lean/Experimental/UniqueTyping.lean": {
+      "comment_only": 1,
+      "partition": "experimental",
+      "raw": 1,
+      "real": 0
+    },
+    "Lean4Lean/Level.lean": {
+      "comment_only": 1,
+      "partition": "executable",
+      "raw": 1,
+      "real": 0
+    },
+    "Lean4Lean/Theory/Inductive.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 2,
+      "real": 2
+    },
+    "Lean4Lean/Theory/Typing/ChurchRosser.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 2,
+      "real": 2
+    },
+    "Lean4Lean/Theory/Typing/InductiveLemmas.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Theory/Typing/Injectivity.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 3,
+      "real": 3
+    },
+    "Lean4Lean/Theory/Typing/UniqueTyping.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/TypeChecker.lean": {
+      "comment_only": 1,
+      "partition": "executable",
+      "raw": 1,
+      "real": 0
+    },
+    "Lean4Lean/Verify/Environment.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Verify/Environment/Basic.lean": {
+      "comment_only": 2,
+      "partition": "proof",
+      "raw": 2,
+      "real": 0
+    },
+    "Lean4Lean/Verify/Environment/Boundaries.lean": {
+      "comment_only": 1,
+      "partition": "proof",
+      "raw": 2,
+      "real": 1
+    },
+    "Lean4Lean/Verify/Level.lean": {
+      "comment_only": 1,
+      "partition": "proof",
+      "raw": 1,
+      "real": 0
+    },
+    "Lean4Lean/Verify/TypeChecker/InferType.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Verify/TypeChecker/IsDefEq.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 2,
+      "real": 2
+    },
+    "Lean4Lean/Verify/TypeChecker/Reduce.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Verify/TypeChecker/WHNF.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Verify/Typing/Expr.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 1,
+      "real": 1
+    },
+    "Lean4Lean/Verify/Typing/Lemmas.lean": {
+      "comment_only": 0,
+      "partition": "proof",
+      "raw": 7,
+      "real": 7
+    }
+  },
+  "proof_layer": {
+    "blocked_by_a_stub_or_lemma": 14,
+    "by_corner": {
+      "church-rosser": 2,
+      "defeq": 2,
+      "environment/addDecl": 2,
+      "inductive-types": 3,
+      "injectivity": 3,
+      "proj": 10,
+      "unique-typing": 1,
+      "whnf/reduction": 1
+    },
+    "by_decl": {
+      "Lean4Lean/Theory/Inductive.lean::VEnv.addInduct": 1,
+      "Lean4Lean/Theory/Inductive.lean::VInductDecl.WF": 1,
+      "Lean4Lean/Theory/Typing/ChurchRosser.lean::NormalEq.parRed": 2,
+      "Lean4Lean/Theory/Typing/InductiveLemmas.lean::addInduct_WF": 1,
+      "Lean4Lean/Theory/Typing/Injectivity.lean::IsDefEqU.forallE_inv_stratified": 1,
+      "Lean4Lean/Theory/Typing/Injectivity.lean::IsDefEqU.sort_forallE_inv": 1,
+      "Lean4Lean/Theory/Typing/Injectivity.lean::IsDefEqU.sort_inv": 1,
+      "Lean4Lean/Theory/Typing/UniqueTyping.lean::IsDefEqU.weakN_iff": 1,
+      "Lean4Lean/Verify/Environment.lean::addDecl.WF": 1,
+      "Lean4Lean/Verify/Environment/Boundaries.lean::checkPrimitiveDef.WF": 1,
+      "Lean4Lean/Verify/TypeChecker/InferType.lean::inferProj.WF": 1,
+      "Lean4Lean/Verify/TypeChecker/IsDefEq.lean::isDefEqUnitLike.WF": 1,
+      "Lean4Lean/Verify/TypeChecker/IsDefEq.lean::tryEtaStructCore.WF": 1,
+      "Lean4Lean/Verify/TypeChecker/Reduce.lean::reduceProjCore.WF": 1,
+      "Lean4Lean/Verify/TypeChecker/WHNF.lean::reduceRecursor.WF": 1,
+      "Lean4Lean/Verify/Typing/Expr.lean::TrProj": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.defeqDFC": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.instL": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.instN": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.uniq": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.weak'": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.weak'_inv": 1,
+      "Lean4Lean/Verify/Typing/Lemmas.lean::TrProj.wf": 1
+    },
+    "definitional_stub_count": 3,
+    "definitional_stubs": [
+      "TrProj",
+      "VEnv.addInduct",
+      "VInductDecl.WF"
+    ],
+    "independent_count": 7,
+    "independent_obligations": [
+      "IsDefEqU.forallE_inv_stratified",
+      "IsDefEqU.sort_forallE_inv",
+      "IsDefEqU.sort_inv",
+      "NormalEq.parRed",
+      "NormalEq.parRed",
+      "checkPrimitiveDef.WF",
+      "isDefEqUnitLike.WF"
+    ],
+    "proj_related": 10,
+    "proof_obligations": 21,
+    "real": 24,
+    "unblocks": {
+      "IsDefEqU.forallE_inv_stratified": 1,
+      "IsDefEqU.sort_inv": 1,
+      "TrProj": 11,
+      "VEnv.addInduct": 1,
+      "VInductDecl.WF": 1,
+      "addInduct_WF": 1
+    }
+  },
+  "real_by_partition": {
+    "experimental": 89,
+    "proof": 24
+  },
+  "schema": "lean4lean-obligation-census/1",
+  "totals": {
+    "axioms": 103,
+    "comment_only": 25,
+    "raw": 138,
+    "real": 113
+  }
+}

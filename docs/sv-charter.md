@@ -610,7 +610,29 @@ Sv.Deterministic m — all schedules give the same observable trace
 **Every SV theorem is already universally quantified over the schedule
 oracle.** The tier does not pick a canonical order and apologise; it
 proves the property *for all legal orders*, and race-freedom is a
-theorem (`Sv.Deterministic`) rather than an assumption. `σ_src`
+**per-design obligation that is discharged or refuted, never assumed**.
+
+> **CORRECTION (2026-08-22), because the sentence this replaces
+> overclaimed.** It read *"race-freedom is a theorem (`Sv.Deterministic`)
+> rather than an assumption"*, which invites the reading that the tier
+> establishes race-freedom. **It does not, and cannot: IEEE 1800 leaves
+> same-region ordering unspecified, so a racy design genuinely has no
+> single outcome.** `Deterministic (d : Design) : Prop` is a
+> **design-indexed predicate**, not a law — and the tier proves it for
+> five designs (`adder_det`, `xsel_det`, `swap_nba_det`, `toggle_det`,
+> `counter_det`) and proves its **negation** for the sixth:
+> `race_blk_not_deterministic : ¬ Deterministic raceBlkDesign`.
+>
+> **The Lean was never wrong** — audited, no `∀ d, Deterministic d`
+> exists and no proof consumes an unrestricted form. The defect was in
+> this document's wording.
+>
+> One refinement on how the correction should be phrased: in this tier
+> `Deterministic d` **IS** race-freedom — the same predicate, "all legal
+> schedules agree on the trace". So the fix is *not* to write
+> `RaceFree d → Deterministic d`, which would be a tautology here; it is
+> that the predicate is a **premise or a per-design theorem, never a
+> tier-wide conclusion**. `σ_src`
 (declaration order) exists only as the *executable* default for
 differential testing, and the harness demonstrably tries others —
 `race_blk_one_edge` matched `sigma_rev` in today's run.
@@ -966,7 +988,7 @@ in two places invented it *better*.
 
 | law (later) | SV's independent route |
 | --- | --- |
-| **schedule-as-parameter + executable counterexample** (family §3.6) | `ScheduleOracle` bundles a choice function *with its legality proof*; `⊨` is `∀ σ stim tr`; `Sv.Deterministic` makes race-freedom a **theorem**. `race_blk/spec.lean` runs one stimulus under `σ_src` and `σ_rev` as kernel-checked `#sv_check` pairs — the family document's illustrative example, **in the tree a month early** |
+| **schedule-as-parameter + executable counterexample** (family §3.6) | `ScheduleOracle` bundles a choice function *with its legality proof*; `⊨` is `∀ σ stim tr`; `Sv.Deterministic` makes race-freedom a **per-design obligation, proved or refuted** (five designs prove it; `race_blk_not_deterministic` refutes it). `race_blk/spec.lean` runs one stimulus under `σ_src` and `σ_rev` as kernel-checked `#sv_check` pairs — the family document's illustrative example, **in the tree a month early** |
 | four-constructor outcome covenant (§3.2) | `Sv.Res` reproduces the covenant's *semantics* (`.timeout` is fuel exhaustion and nothing else; `.unsupported` is loud and fuel-independent) with its own short-circuit simp lemmas |
 | ∃-fuel + monotonicity (§3.2) | `Obs.lean` builds the ⊑-lattice, `run_mono`, and `Runs.at_least` as `∃ f₀, ∀ F ≥ f₀, …` |
 | `--compare` staleness intent (§5.4) | `--recheck`: a fixed-seed determinism check against the stored census — half the law, invented independently |

@@ -81,6 +81,13 @@ reasoning — are a LIBRARY section and not part of the semantics.** They are
 three ways to find a proof of a statement whose meaning was already fixed
 without reference to them.
 
+**And the same boundary, drawn through THEOREM STATEMENTS, has a measured
+price** — §8 step 9: of 949 theorems in the flagship estate, the **65%**
+whose statements do not mention the interpreter recompile unchanged under a
+definition swap. A lane that separates its spec half from its interpreter
+half is drawing this principle's line one level down, and it is worth two
+thirds of a re-founding.
+
 The library grows **by demand**, and §5.6 gives that clause its selection
 rule: the demand comes from **one theorem-worthy exemplar per tier**,
 because a library gap is invisible to anything that never asks the library
@@ -1148,6 +1155,151 @@ spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
 it was a fact about the tree, not about the type. The instance was never
 unavailable; it was never asked for.
 
+#### FAMILY LAW — ONE `Except`/`throw` PATTERN, EVERY TIER
+
+Thomas, on reading the `Halt` ruling below: *"Probably a good idea to use
+the same `Except ε α` / `throw` pattern for all languages."* Codified.
+
+> **Every tier's interpreter is written on `SemM`. It is the ordinary Lean
+> `Except`/`throw` idiom, used TWICE — and the two are told apart by WHO
+> SPEAKS, not by what is thrown.**
+
+| channel | speaker | carries | reachable by a language construct? |
+| --- | --- | --- | --- |
+| **`ρ`** | **the PROGRAM** | its own errors: exceptions, abrupt completions, `longjmp`, `panic`/`recover`, Ada's exceptions | **YES — this is where a tier instantiates its catch constructs** |
+| **`Halt`** | **the MODEL** | refusal (with the structured payload ruled below) and timeout | **NEVER — by type, per the ruling below** |
+
+That split is the whole design, and it is why the ruling below is the one
+that had to come first: **`ρ` is what the program can talk about; `Halt` is
+what only the model can say.** A tier that gets a new catch construct
+extends `ρ` and touches nothing else; a tier that grows a new refusal cause
+extends `Halt` and no program can observe it.
+
+**NO TIER-LOCAL OUTCOME TYPES going forward.** A new tier does not define
+its own result inductive — it picks `W` and `ρ` and it is done.
+
+**The existing ones converge BY TOUCH** (§9.2's discipline, and never a
+big-bang): `Sv.Res`, C's value-layer `CRes`, and the legacy Python `Run`.
+Under Thomas's *keep only the new versions, no backwards compatibility*
+ruling, by-touch is about **SCHEDULING, not coexistence** — when a tier is
+touched its local type is **replaced**, not wrapped, and no adapter is left
+behind.
+
+**Two seams that could be misread as contradictions, closed here.**
+
+* **This does not reopen the `EStateM` question.** `Core.SemM` is **our**
+  spelling — the explicit `ExceptT ρ (StateT W Halt)` stack, named once in
+  `Core` — not core Lean's `EStateM`, which stays rejected on the measured
+  1.4× kernel-`rfl` cost. One shared *name* for our own stack is exactly
+  what "adopted by shape, not by spelling" asks for.
+* **This is cheaper than the Python migration and must not be confused with
+  it.** `Run → SemM` is a **re-spelling with a proved iso** (`ofRun`/
+  `toRun`, mutually inverse), so it owes **no adequacy theorem**. The
+  migration that owes `twinAgrees` is the move to a *second semantics*
+  (§3.4 clause b), which is a different thing entirely. Re-spelling: cheap,
+  by touch. Second semantics: gated.
+
+**THE RECONCILIATION, measured — and two of the sites are a SEMANTICS FIX,
+not a rename.** Audit #2 counted the by-shape adoptions actually in the
+tree: **13 sites across 5 spellings.** Most are genuine spelling variants
+that an import will absorb. **Two are not:**
+
+| finding | consequence |
+| --- | --- |
+| 11 sites: the stack's shape, spelled differently | **rename on import** — mechanical, by touch |
+| **2 sites: `Except Loud` where the stack requires `Halt`** | **NOT interchangeable** — a semantics fix |
+
+The two are not interchangeable **by this document's own `rfl`**: `Halt`
+sits outside `StateT`, so a `Loud` result carries **no `W`**; an
+`Except Loud` in a position the stack types as `Halt` is a *different
+type*, not a different name for one. Whatever those two sites currently
+prove, they prove about a stack that retains state where the family's does
+not.
+
+**So the rule at `Core`'s landing:** by-shape definitions are **REPLACED by
+import** — that is the cheap, mechanical majority — **and the two
+`Except Loud` sites are opened as a semantics fix**, with whatever their
+theorems said re-established over the real stack. Filing them under
+"rename" would be the quiet way to lose two facts.
+
+**`Core.SemM` becomes the one spelling once the rebuild's extraction lands
+on master** — imminent, in its post-merge triad as this is written.
+
+**And the SV verdict softens accordingly.** §3.6's hybrid reading — *a
+dormant tier that will not be rebuilt* — becomes **migrates when touched**,
+and the opener is already identified: the `SelfCheck` `halted` flag is a
+hand-rolled `ExceptT ρ`, and replacing it with the real layer is **one
+`@[spec]` lemma that deletes a check from every statement case**. The
+cheapest possible first touch, on a tier that already proved the shape was
+right by inventing it.
+
+#### RULING — WHERE `unsupported` LIVES: in `Halt`, with a PAYLOAD
+
+Two tiers diverged and a third was about to invent a third answer, so this
+is ruled rather than left to convention.
+
+**The divergence.** ES and the Python rebuild put `unsupported` in the
+**`Halt` base**, outside `ρ`, each pinning by lemma that no language-level
+`try`/`except` can reach it — *an except clause can never swallow "I do not
+model this."* The C tier put it **inside `ExceptT ρ`**, so a REFUSE row can
+report the state at refusal time: because `Halt` sits outside `StateT`, the
+stack unfolds to `W → Except Loud (Except ρ α × W)` and **a `Loud` result
+carries no `W` at all**. C's diagnostic need is real, and neither placement
+is obviously right.
+
+**THE RULING: refusal stays in `Halt`. The diagnostic need is met by giving
+`Halt.unsupported` a STRUCTURED PAYLOAD** — a cause, plus an *optional*
+state snapshot captured **at the refusal site**, where `W` is in hand,
+before the abort. It says what happened without becoming catchable.
+
+**Why the invariant must be TYPE-level and not lemma-level.** Inside
+`ExceptT ρ`, "no catch reaches a refusal" becomes a proof obligation
+**re-discharged per language, per catch-like construct** — Python's
+`except`, C's `longjmp` *and* signal handlers, Ada's handlers and `abort`,
+ES's `try`/`catch` plus a generator's `.throw()`, and Go's `recover()`,
+which is designed to catch everything. ES and the rebuild pinned their
+lemmas honestly, but they pinned them for languages whose catch is one
+well-understood construct. **A family law that holds only where the
+language happens to be simple is not a family law** — and §0.1 principle II
+is decisive here: the uncatchability of a refusal belongs to the
+**definition**, which is trusted and minimal, not to the **library**, which
+is incomplete by design. Putting it in the library inverts the trust
+boundary for the one property that makes a refusal loud.
+
+**Why the payload is nearly free for C — the existing law already pays for
+it.** §3.4 already requires *never a bare polymorphic `throw`; route every
+refusal through a NAMED primitive with its own `@[spec]` lemma.* **That
+primitive is exactly where the snapshot is captured**, by a `get` the
+primitive performs itself, so no refusal site can forget it and the
+plumbing is the plumbing the family already mandates.
+
+**Two constraints on the payload**, so it cannot be abused: the snapshot is
+**optional** (a tier needing no diagnostics passes none), and it is
+**never an observable** — it is diagnostic data on a REFUSE row, never part
+of a verdict, or it becomes a way to smuggle state out of a halt and into a
+comparison.
+
+**Why the alternative — `Halt` INSIDE `StateT`, so every halt retains `W`
+— is REJECTED.** It would work at the type level:
+`ExceptT ρ (ExceptT L (StateT W Id)) α` unfolds to
+`W → (Except L (Except ρ α) × W)`, retaining `W` on every outcome. It is
+refused for three reasons that are not about C:
+
+1. **It changes `Run`'s covenant.** `.timeout` and `.unsupported` carry
+   **no state** today; under this order every halt would. That is the
+   four-constructor covenant §3.2 calls neutral, and it breaks the pilot's
+   proved `ofRun`/`toRun` iso.
+2. **It invalidates landed work in two tiers** — ES's pinned lemmas and the
+   rebuild's `tryCatch` dividend both rest on the current order.
+3. **It is wrong for `.timeout` on the merits.** Fuel exhaustion means the
+   run did not complete; handing back "the state at exhaustion" invites
+   treating a TIMEOUT as an observation, which §5.1 forbids.
+
+*(The unfolding above is the same `ExceptT`/`StateT` pair whose order §3.4
+already establishes by `rfl`; the two tiers independently report the
+`Loud`-carries-no-`W` consequence from opposite sides, which is the
+corroboration that matters here.)*
+
 **What this stack CANNOT do, stated here because it is a property of the
 substrate and not of any tier: it cannot SUSPEND.** `ExceptT ρ (StateT W
 Halt) α` unfolds to `W → (Except ρ α × W)` — an `α`, or a `ρ`, plus a `W`,
@@ -1349,6 +1501,30 @@ standing rule with a named blocker.**
    retires **gradually, or never**. "Never" then costs nothing, because a
    proved interchangeability makes the surviving form an implementation
    detail rather than a commitment. Erosion, not migration.
+
+   **THE `GenFrame` RULING — what a SHARED type may do while the legacy
+   layer erodes.** Erosion raises a question neither "freeze it" nor
+   "maintain it" answers well: a type used by *both* layers, which is not
+   itself retiring, and which the new layer needs to **grow** for a new
+   capability. Ruled:
+
+   > **A shared-not-retiring type MAY grow for new capability. The legacy
+   > interpreter's contract is exactly three things: it COMPILES, it
+   > REFUSES what it does not implement, and it GAINS NO CONSUMERS.**
+
+   So the growth lands, and the legacy layer absorbs it with **a one-line
+   refuse arm — which is the legacy layer's ONLY permitted growth.** That
+   is the whole allowance: not a stub that half-works, not a TODO, and
+   certainly not an implementation. A refusal is loud, fuel-independent and
+   correct (§5.2 cause 1), so the legacy layer stays *true* without being
+   *maintained*.
+
+   **Both failure modes it forecloses are real.** Freezing the type blocks
+   the new layer's capability on a layer that is supposed to be dying —
+   the dead hand of the thing being retired. Implementing the arm in the
+   legacy layer gives it a new consumer and a new reason to live, which is
+   the opposite of erosion. The one-line refuse arm is the unique move that
+   keeps the legacy layer compiling without giving it a future.
 
    **The SEQUENCING rationale, which is about risk and not about Python.**
    `mvcgen` warns on every invocation that it is experimental, and one Std
@@ -1665,7 +1841,8 @@ architecture. Four pieces.
 **(1) INTERLEAVING SEMANTICS — the schedule is a parameter.** A schedule is
 an explicit input: a thread-choice stream, exactly the shape §3.5.4 gives
 a NaN payload and §6.2 gives an entropy stream. The interpreter is
-**deterministic per (program, schedule)**, so `SemM`, `fuelMono`, the
+**deterministic per (program, schedule)** — and, precisely, per observable
+(§6's determinism-indexing sibling) — so `SemM`, `fuelMono`, the
 ∃-fuel threshold form and `mvcgen` are all untouched — a threaded step
 function is `sched → Nat → SemM W ρ α`, and nothing about the monad
 changes. Correctness is then the ordinary shape:
@@ -1974,6 +2151,16 @@ The `Run.exn` payload decision (`Run σ ε α`, or C's terminal riding in α)
 belongs to the same inch. It is the one place the outcome type is not yet
 neutral, and naming it here is cheaper than discovering it there.
 
+**AND THE SECOND CONSUMER HAS SETTLED WHICH WAY IT GOES.** Ada raises
+**identities**; ES throws **values**. Both fit with no negotiation, because
+`ρ` is a **parameter** and never a shared enumeration. So **`ε` does not
+need to be settled centrally at all** — the answer is *parameterize*, which
+is what the family already does everywhere it has two consumers. The ES
+charter's *"where does `RVal` live"* question therefore **dissolves rather
+than being answered**: it was a question about a type that was never going
+to be shared. The same move rules `RefusalCause` (§5.2) — classes in
+`Core`, payload per tier — and the two rulings are one idea applied twice.
+
 ---
 
 ## 4 THE AUTHORITY TAXONOMY
@@ -2179,6 +2366,15 @@ scoreboard unreadable.
 4. **`order-dependence` — the language admits several orders and the
    model cannot show the observable invariant under all of them.**
 
+**THE LAST CODE-LEVEL OBSTACLE TO THE VOCABULARY IS C's `libc`.** C's cause
+type is `valueUB` / `memUB` / `libc`, and the first two are refinements of
+cause 2 (`undefined`) that fit the payload rule (§5.2's ruling above)
+cleanly. **`libc` is the outlier**: it is §5.2's cause 3, `environment`,
+under a name that says *which* environment rather than *that* it is one.
+Recorded as **C's next-touch item** — the rename is mechanical, the payload
+keeps the `libc` distinction, and it is the last place a cause class in the
+tree does not carry a family name.
+
 **Cause 4 is new at the family level, and the C tier is the evidence that
 it is needed.** `docs/c-semantics-design.md` §3.1 fixes three causes;
 §4.4 then rules "REFUSE where a static census cannot show the order
@@ -2190,6 +2386,66 @@ not), and nothing is missing from the slice (not cause 3). Python's twelve
 hash-order refusals and its permanently-loud same-size key-set regime are
 the same cause, arrived at from the other authority. SystemVerilog's event
 regions will be its largest bucket.
+
+#### RULING — WHERE `RefusalCause` LIVES: the four CLASSES in `Core`, the PAYLOAD per tier
+
+Ada's M2 measurement forced the question the ES charter left open, and
+three tiers now have a stake: ES fixed a three-constructor cause type; Ada
+needs `undefined` as a constructor (ARM 1.1.5 erroneous execution, **23
+paragraphs** in its core clauses); C already refuses with **J.2 indices**,
+a richer shape than either.
+
+> **RULING: `Core` carries the FOUR §5.2 CLASSES as a four-constructor
+> type, PARAMETERIZED by a tier payload — `RefusalCause π`. The classes are
+> family law; the payload is the tier's.**
+
+C instantiates `π` with a J.2 index, Ada with an ARM paragraph, ES with a
+host-hook name. **The payload objection dissolves exactly the way `ρ` did**
+(§3.4): what differs irreducibly per tier is not a *class*, it is a
+*parameter*, and a parameter is the thing this family already knows how to
+share.
+
+**Why not per-tier cause types under a family law** — the alternative, and
+it fails on this document's own precedent. "Each tier defines its own type,
+constrained to partition into the four classes" makes the partition a
+**per-tier proof obligation**, and the `Halt` ruling settled that shape:
+*a family invariant that must be re-established per tier is not a family
+invariant, it is N lemmas.* It also defeats the scoreboard — §9.4's
+argument for a shared verdict vocabulary applies verbatim to causes, since
+"how many REFUSE(`undefined`) across the family" is exactly the question a
+cross-tier scoreboard exists to answer, and per-tier types make it a
+translation table.
+
+**AN EXPECTED-EMPTY CLASS IS PRESENT AND GATED, NEVER ABSENT.** This is the
+part of the ruling that changes ES. Omitting `undefined` because ES has no
+undefined behavior makes the emptiness **a fact about the type, invisible
+to the scoreboard** — it cannot distinguish *"this language has no UB"*
+from *"this tier did not model that column."* §4.3 already prescribed the
+opposite for WebAssembly: *expect the bucket to be empty, and gate it — a
+tier emitting `undefined` has a bug.* A gate needs a constructor to be
+about. **ES converges by touch** (§9.2), gaining the two constructors it
+omits and gating both.
+
+**AND ES'S OWN REFINEMENT IS PRESERVED, because it is a real finding.** ES
+did not merely drop a class — it **split `environment` in two by
+RETIREMENT SCHEDULE**: `unmodeledIntrinsic` (a built-in outside the slice,
+retires by widening it) versus `environment` (a host facility, *does not
+retire by building more language*). §5.2 justifies its four causes on
+exactly that criterion — *they retire on completely different schedules* —
+so by the family's own rationale ES's distinction is legitimate. It lives
+in the **payload** today, where the tier's docs can explain it and the
+scoreboard still aggregates on the class.
+
+**And it is registered as a candidate FIFTH class, not dismissed.** If a
+second tier independently splits `environment` the same way, that is the
+convergence standard §9.3 used to ratify the span field names — a
+measurement, not a taste — and §5.2 should gain a fifth cause. One tier's
+distinction is a payload; two tiers' identical distinction is a class.
+
+**Ada's inch 1 consumes this directly**: four constructors, `π` = the ARM
+paragraph reference, `undefined` carrying its 1.1.5 erroneous-execution
+citation, and `order-dependence` present and gated until Ada measures
+whether it fires.
 
 **Why it is a REFUSAL cause and not a fifth verdict.** A refusal is what
 the model actually emits today, on both boards. The alternative — a
@@ -2246,6 +2502,56 @@ why it is stated once rather than three times:
 
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**
+
+**A FOURTH INSTANCE, and it is the one that flatters hardest: the SEARCH
+that agrees with you.** A name collision made a `grep` confirm a prior —
+`DRAIN` in `VCGen.lean` is the *generator drain*, 47 occurrences, and not
+the short-circuit `DRAIN` trick the searcher was looking for. The hits were
+real, numerous, and about something else.
+
+> **A grep that agrees with your prior is the one to re-run.**
+
+This document supplied its own instance: `grep -rl '\bRun\b'` returned
+three SystemVerilog files and **confirmed the expectation that `Run` was
+shared substrate** — the hits were the English word opening a docstring,
+and the true count was zero (§3.1). Both searches were *correct*; both
+answered a question narrower than the one being asked; and in both cases
+**agreement is what stopped the search.** A disagreeing grep gets
+investigated. That asymmetry is the provenance law again, pointed at
+retrieval rather than at measurement.
+
+**AND ITS CONSTRUCTIVE HALF, minted on a third hit and corroborated the
+same day.** The rule above says *re-run the search*; this one says **what
+to count**:
+
+> **A COUNT THAT PRICES A DECISION MUST COME FROM THE PATTERN POSITION,
+> NEVER FROM THE IDENTIFIER.**
+
+An identifier count answers *"how often is this name written?"* — which
+includes mentions, docstrings, other lemmas' statements and the doc you are
+reading. A decision is priced by *"how many places must change?"*, and
+those are **pattern positions**: match arms, clause slots, the actual
+branch points. Four instances, three of which moved or nearly moved a
+plan:
+
+| instance | what went wrong | direction |
+| --- | --- | --- |
+| §L49's `\.usub` grep | missed every `cases op with \| usub =>` arm **by one character** — the leading dot | **UNDER**-counted |
+| §L53's walker price | landed at **19** because **catch-all arms were load-bearing**: the arm count was not the case count | **UNDER**-counted |
+| today's VCGen price | **26 lemma NAMES** priced a **9-arm** change at **35**, and nearly moved a date | **OVER**-counted |
+| the rebuild's `DRAIN` | generator drain vs the short-circuit trick — a name collision confirming a prior | over-counted, and *agreed* |
+
+**The two directions are both live, which is why the rule names the
+POSITION rather than saying "count carefully."** Identifiers over-count
+because names appear where no work happens. Pattern searches under-count
+when the syntax differs by a character, and **catch-all arms defeat arm
+counting entirely** — a single `| _ =>` can absorb a dozen cases, so even a
+correct arm count can be the wrong price.
+
+The practical form: **price a change by enumerating the positions the
+change must visit, and check that enumeration against the thing that
+dispatches** — the `match`, the clause list, the table — not against the
+name index.
 
 Every instrument output, triad line, coverage count, `#guard` batch, axiom
 print and timing is reported **with the state that produced it** — clean
@@ -2386,6 +2692,47 @@ parameters; (4) per-run claims are **quantified over those parameters**;
 (5) observation is **termination-indexed** — the ∃-fuel threshold form
 needs a final answer to index.
 
+**AND (5) HAS A SIBLING THAT IS EASIER TO MISS: observation is also
+DETERMINISM-INDEXING.** Assumption 5 says a claim needs a final answer to
+be indexed *by*; this one says a claim about *sameness* needs an observable
+to be indexed *over*.
+
+> **Determinism quantifies over the TRACE, so its meaning MOVES WITH THE
+> TRACE TYPE.**
+
+A **coarser** observation makes **more** programs deterministic; exposing
+**finer** state — per-region internals, intermediate scheduler structure —
+makes designs non-deterministic **by construction** at that granularity.
+Neither answer is wrong; they are answers to different questions, and only
+the trace type says which was asked.
+
+**So every determinism and agreement claim in this family is
+OBSERVATION-INDEXED, and a tier that changes its trace or observable type
+DOES NOT INHERIT its determinism theorems.** They must be re-established
+over the new observable. The measured instance: the SV tier's **five
+`_det` theorems must be re-proved through `cycleOf`** — the theorems were
+never false, they were about a different trace.
+
+**This refines §3.4's and §3.6's own wording.** Those sections say the
+interpreter is *"deterministic per (program, schedule)"*, which is true and
+incomplete: it is deterministic per (program, schedule, **observable**). A
+tier that later exposes more state in `W` has not broken that claim — it
+has asked a new one, and owes new proofs.
+
+**THE ANTI-TAUTOLOGY RULE, from the same audit.** *"RaceFree → determinism"*
+is **vacuous wherever the two are one predicate**, which is easy to arrange
+by accident and reads as a real theorem. The correct family phrasing:
+
+> **Determinism is a PREMISE or a PER-DESIGN THEOREM — never a tier-wide
+> conclusion.**
+
+The audit that produced this is worth its outcome being stated, because it
+went the good way: **the Lean was never wrong.** `Deterministic` was
+design-indexed all along, and the racy design's **negation** was proved.
+Only the surrounding prose overclaimed — and prose is the part §9's whole
+strategy is about moving into things that can be run. The fix was to the
+prose, and the theorems stood.
+
 ### 6.1 The misfits
 
 1. **THE RELAXED-ATOMICS FRAGMENT ITSELF** — and note how narrow this now
@@ -2504,6 +2851,15 @@ Concurrent Lean builds took the development machine down — load 29 across
 3. **Scratch-file loops** — `lake env lean` on small dependency-free files
    — are allowed WITHOUT the lock, but must run under `nice -n 19` and
    stay small.
+
+   **AND ONLY IN A WARM CLONE — the exemption is a property of the CLONE,
+   not of the file.** `lake env lean` on a dependency-free scratch file is
+   cheap only where the dependencies are already resolved; in a **cold**
+   clone the same command resolves and downloads them, which is Lean
+   execution outside the lock (A11) and a GB-scale download instead of CoW
+   seeding (A13). This lane made exactly that mistake, reading rule 3 as
+   being about the file when it is about the clone. **Seed first (A13),
+   then probe.**
 4. **Batch aggressively: one triad per landing, never per edit.**
    Stage, then build. No speculative builds.
 5. **A stale lock** (left by a dead lane) is cleared only after verifying
@@ -2565,7 +2921,10 @@ durable home. Anything a lane must obey belongs in a git-tracked file.
 | 10 | **the owner pid must span the tenure** — below | **carried** |
 | 11 | **the lock covers ALL Lean execution** — below | **new** |
 | 12 | **traps kill descendants RECURSIVELY** — below | **new** |
-| 13 | **mandatory CoW cache seeding** — below | **new** |
+| 13 | **mandatory CoW cache seeding** — below | **carried** |
+| 14 | **full-tree builds are QUIET-MACHINE-ONLY** — below | **new** |
+| 15 | `pkill -f <path>` does NOT kill a `lake build` — below | **new** (its RSS number is SUPERSEDED by 16) |
+| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **new** |
 
 **AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
 lane holding the lock had its `owner` file **overwritten by another lane**.
@@ -2582,6 +2941,25 @@ that **succeeds against someone else's lock**: a surviving detached trap
 pointed at a *re-created* lock would delete an active holder's lock and
 stampede the queue. Observed working in the wild — a lane whose lock had
 been handed on exited without removing anything.
+
+**OBSERVED WORKING, this session** — recorded because an amendment that has
+never fired is a design, not a control:
+
+* **A7's owner-conditional trap refused to release a taken-over lock
+  TWICE**, printing *"NOT RELEASING: not my lock"*. That is the exact
+  scenario A7 exists for — a surviving trap pointed at a lock somebody else
+  now holds — and it declined, twice. (Observed in a lane's own A7
+  implementation; `tools/triad.sh` implements the same rule.)
+* **The 143/137 resource-kill retry came back GREEN on attempt 2.**
+  `tools/triad.sh` treats those exits as a resource kill rather than a red
+  build and re-runs once, which is base rule 2 firing as designed rather
+  than a lane deciding a red was spurious.
+
+**And the wrapper asserts success POSITIVELY**, which is §5.4a implemented
+rather than described: it greps for `Build completed successfully` instead
+of grepping for errors, because — in its own words — *an argument error and
+a resource kill both emit no line the failure greps look for, and "no error
+found" must never read as "the build happened".*
 
 **AMENDMENT 9 — a FIFO TICKET QUEUE, because the spinlock starves.**
 Measured cause: the lock changed hands between four lanes while one
@@ -2643,11 +3021,38 @@ compares **HEAD**, not the ref you are about to push. So:
 * **push `HEAD:master`**, never bare `master`, which pushes the local ref
   rather than the work in hand.
 
-This lane hit the same trap independently and from the other direction
-(§7.2's clone incident): a clone whose `origin` was a stale bundle and
-whose branch tracked `pyrebuild-monadic`. Three lanes, one root cause —
-**a seeded or borrowed clone's identity is inherited, not chosen, so it
-must be verified rather than assumed.**
+**AND SEEDING INHERITS THE REMOTES TOO — the rule's complete form.** A
+fourth lane paid a full tenure for the other half: in the seeded clones
+**`origin` points at a stale local BUNDLE** (2026-08-14), so
+
+* `git reset --hard origin/master` **silently lands a tree eight days
+  back**, and
+* `git rev-list HEAD..origin/master` reports **0** — nothing to pull,
+  because it is comparing against the bundle, and
+* a feature branch reads **"238 commits ahead"**, which looks like a
+  branch-hygiene problem and is not.
+
+**That last line explains the audit's branch-hygiene observation: same root
+cause.** What looked like several lanes drifting onto feature branches was
+one seeding defect wearing three different faces.
+
+> **A seeded or borrowed clone's identity — BRANCH AND REMOTES BOTH — is
+> INHERITED, not chosen.**
+
+After seeding: run **`git remote -v`** *and* **`git branch --show-current`**,
+and **compare or reset only against `github/master`** — never against
+`origin`, which in a seeded clone is not what the name implies. This lane
+hit the same trap from the third direction (§7.2's clone incident), and the
+count is now **four lanes, one root cause.**
+
+**AND THE SCRIPT PRINTS ITS PROTOCOL LEVEL.** Audit #2 found **two drifted
+copies of `tools/triad.sh` in `/tmp`**. Copying before editing is legitimate —
+bash reads a script **incrementally**, so editing one that is running corrupts
+it — but a copy whose diffs never land is a private script again, at the 38%
+violation density this section already prices. `tools/triad.sh --version`, and
+one line at tenure open, name the protocol level implemented
+(`base 1-6 + A4-A13 + A16`) and the sha. Drift becomes visible in the log
+instead of invisible in a temp directory.
 
 **One operational note on the wrapper**: `--lane` rejects hyphens
 (`[A-Za-z0-9_.]+`), and the reason is Amendment 9's ticket format — a
@@ -2659,6 +3064,102 @@ having it: private per-lane scripts were measured at a **38% violation
 density** across the applicable protocol cells, and a prose register can
 sit one amendment behind its own birth — as §7.1a's did, by two minutes —
 while **a missing amendment in a script is a diff.**
+
+**AMENDMENT 14 — A FULL-TREE BUILD IS QUIET-MACHINE-ONLY.** Lake has **no
+process-count cap**, so a full build fans out as wide as it likes — and on
+a box already in swap it is **the first thing jetsam takes**. The rules:
+
+* **exit 137 is never red** (base rule 2, and now with a named cause);
+* **ONE retry**, then stop retrying and switch strategy;
+* fall back to **SCOPED builds** (`--build-target`), and when you do, the
+  landing carries a **§5.4a coverage statement** — *what was built, what
+  was not, and therefore what the green covers*;
+* the **full triad stays OWED**, discharged when the box is quiet:
+  **load < 5 and swap < 1 GB**.
+
+A scoped green is a real green about a smaller claim. Reporting it as a
+full triad is the flattering direction §5.4a exists to catch.
+
+**AMENDMENT 15 — `pkill -f <path>` DOES NOT KILL A `lake build`.** Its RSS
+number is superseded by A16; **this rule survives and is the important
+half.** `lake`'s command line **contains no path**, so a `-f <path>` match
+finds only the *workers*. Kill them and the **parent respawns them** — and
+if the parent has by then lost its lock, the result is an **unlocked
+orphan** eating the box with nobody's name on it. **Kill by CWD, then by
+tree** (A12's recursive descent). This is the same lesson as A12 from the
+matching side: identify the chain correctly *before* killing anything.
+
+**AMENDMENT 16 — THE RSS LINE IS PER-PROCESS 5 GB / CHAIN 10 GB**, raising
+A11's single 3 GB chain line. The number comes from a measurement, not a
+concession: **one honest worker measured 3 251 MB** — a single legitimate
+process above the old *chain* limit. **Neither lane raised its own limit**,
+which is why the number is trustworthy: it was set by a third party after
+the fact, not by the lanes that kept hitting it.
+
+Two implementation defects the amendment fixes, both single-shot bugs:
+
+* **the guard EXCLUDES ITSELF** — a watchdog that counts its own RSS
+  eventually kills the thing doing the watching;
+* **it RESTARTS PER ATTEMPT** — the original fired once and then stopped
+  watching, so a retry ran unguarded.
+
+**16.2 — RETIRING A RUNNER: `SIGKILL` superseded scripts, and delete the
+file in the same breath.** `SIGTERM` runs **EXIT traps**, and a
+**pre-A7 trap deleted a third lane's lock** on its way out — the retiring
+script's last act was to break the amendment that replaced it. So a
+superseded runner is **SIGKILL**ed and its file removed immediately, or the
+next person to find it will run it.
+
+**AND SIGKILL BYPASSES THE EXIT TRAP — WHICH IS ALSO WHAT REMOVES THE
+TICKET.** Measured by the Lean tier on its own migration. The trap that
+`SIGKILL` skips is the trap that does `rm -f "$QUEUE/$TICKET"`, so a
+retired **ticket-holding** script leaves its ticket behind: a **phantom at
+the queue head**, blocking every lane behind it (A9 gives the lock to the
+oldest ticket) until a human reaps it.
+
+**So retiring a runner is a THREE-step act, in one breath:**
+
+1. **`SIGKILL`** the process — never `SIGTERM`, per the trap hazard above;
+2. **delete the file**, or the next person to find it runs it;
+3. **remove its ticket by hand** — `/tmp/ls-build-queue/<ts>-<pid>-<lane>`.
+
+**The third step exists BECAUSE of the first**, and that is the shape worth
+noticing: the fix for one hazard *creates* another. `SIGTERM` would have
+cleaned the ticket up and might have deleted a third lane's lock;
+`SIGKILL` protects the lock and orphans the ticket. There is no signal that
+does both, so the manual step is not an oversight in the amendment — it is
+the amendment's price, and leaving it implicit is how the two-step version
+of this rule shipped incomplete.
+
+> **Adoption is the most dangerous moment**, and **an amendment takes
+> effect when the last script predating it is dead** — not when it is
+> written, not when it is landed, and not when the first lane adopts it.
+
+That is the protocol's own version of §9.2's by-touch discipline, and it is
+sharper: by-touch tolerates a slow migration because the old artifact is
+*inert*. A superseded **runner is not inert** — it holds locks, kills
+processes and runs traps — so its migration window is a hazard rather than
+merely a delay.
+
+**`tools/triad.sh --classify` IS OUR-REPO-ONLY BY CONSTRUCTION**, and a
+lane pointing it at a foreign checkout will get a confident wrong answer
+rather than an error. Two reasons, both structural:
+
+* **the class floor hard-wires our gates** — `docs_check` / `diff_test` are
+  named in the classifier's floor and in the default gate set, and a
+  foreign project has neither;
+* **classification diffs against `github/master`** (the flag's default
+  `--against` ref), which names **our** master. A foreign checkout either
+  has no such ref or has one that means something entirely different — and
+  §7.1a's seeding caveat is the reminder that a remote's *name* is not its
+  identity.
+
+**Until a `--foreign` flag lands** (the QoL lane holds the request), a
+foreign checkout — `lean4lean`, `spectec` — is built with **plain
+`--gates` under the full tenure discipline**: the lock, the queue, the RSS
+line and A14's quiet-machine rule all still apply. What does not apply is
+the *scoping*, so those tenures run the full gate set the lane names
+explicitly, and their landings carry a §5.4a coverage statement saying so.
 
 ### 7.2 The master branch
 
@@ -2675,6 +3176,15 @@ amendment 6, from the Go lane's torn-tree incident). The build reads
 cheap part is the failure; the expensive part is the investigation cycle
 that ends by proving master was fine all along — theirs did, with all four
 "missing" constants present and the diff empty.
+
+**COROLLARY — never rebase while HOLDING A QUEUED TICKET that could acquire
+mid-operation.** A6 forbids rebasing under a running build; the ticket
+queue (A9) adds a second window with the same shape, and it is easier to
+miss because nothing is running yet. If your ticket reaches the head of the
+queue and takes the lock while `git` is rewriting the tree, the tenure
+opens on a torn tree — a build that was never going to be meaningful,
+holding the machine-wide lock while it fails. Drop the ticket or finish the
+rebase first.
 
 **The order is `stage → build → rebase`, or `rebase → build`.** Never both
 at once, and note that this is a *same-clone* hazard: it is not prevented
@@ -2741,6 +3251,32 @@ real until an instrument re-derives it.**
    (`#guard` at a fixed fuel) has already chosen fuel.
 8. **`LeanModels/<Lang>/<Ver>/`** — the semantics, and the manifest
    (§5.5) starting the same day.
+9. **SEPARATE THE SPEC HALF FROM THE INTERPRETER HALF — from theorem one.**
+
+   > **An estate that separates them is cheap to re-found; one that
+   > interleaves them is not.**
+
+   Classify every theorem by whether its **STATEMENT mentions the
+   interpreter**. Measured across the whole sunfish estate: **949 theorems
+   = 615 mathematics (65%) + 334 interpreter-facing (35%)**. Under a
+   definition swap the mathematics **recompiles unchanged** — the 35% is
+   the entire re-founding scope, and **four files re-found to nothing at
+   all**.
+
+   **The decisive part is that the split was not made for this.** The
+   calmness lane separated its spec half from its interpreter half **for
+   proof-engineering reasons, long before any rebuild existed** — and that
+   choice is now worth **two thirds of the migration cost**. This is the
+   family's own doctrine arriving from the other direction: §0.1
+   principle II draws the trust boundary between definition and library,
+   and this is the same boundary drawn through **theorem statements**, with
+   a price tag attached.
+
+   Concretely: a theorem that can be stated about the mathematics should
+   be, and the interpreter-facing statement should be the thin layer that
+   connects it. A tier writes this discipline in on day one because it
+   costs nothing then and cannot be retrofitted cheaply — the 35% is not
+   work you can decide to have done differently after the fact.
 
 ---
 
@@ -2773,6 +3309,27 @@ Named here so it is a scheduled artifact rather than a standing caveat.
   becomes collectable, and §3.4 clause (c)'s erosion begins: new work
   monadic, old theorems transported on demand, the deep interpreter
   retiring gradually or never.
+* **RE-SCOPED — on corrected counts, adequacy is LIKELY NEVER NEEDED for
+  this migration.** Transporting a file's theorems across the bridge beats
+  proving adequacy for that file above a crossover of roughly **100
+  theorems**, and on the corrected classification (step 9 above) **no file
+  clears it.** So the expected path is theorem-by-theorem transport, and
+  `twinAgrees` is a **contingency** rather than a gate on the critical
+  path.
+
+  **The general law is untouched, and the distinction matters.** *Any route
+  that introduces a second semantics owes an adequacy theorem* — §3.4
+  clause (b) — remains family law. What the counts changed is the
+  probability that **this particular migration takes that route at all**:
+  transport is cheaper per file than adequacy, so the second semantics
+  never has to become the definition. A future migration that *does* swap
+  a definition wholesale owes `twinAgrees` exactly as before.
+
+  **What still decides it**: the spike, which fixes the **deep-statement
+  ceiling** — the point past which a single statement is too entangled with
+  the interpreter to transport. Until that number exists, "likely never"
+  is a measured expectation and not a closure, and this item stays
+  registered rather than retired.
 
 ---
 
@@ -2820,6 +3377,36 @@ deadline, no sweep, and the test is that the committed output is
 | `harness/censuskit.py` (~160 lines) | ~520 generic lines across **14** instruments; net ≈ −300 | a lane next touches its instrument |
 | `tools/triad.sh` (landed) | 6 hand-rolled triad scripts, **38%** violation density | a lane's next build |
 | `Core` loader utilities | 32 of 46 common lines across four tiers' loaders | a lane next touches its loader |
+
+**WHERE TWO GENERATIONS OF A TRICK EXIST, PORT THE SUCCESSOR — and record
+the PREDECESSOR as the thing it fixed.** Consolidation harvests from a
+tier's history, and a history contains superseded mechanisms that still
+look authoritative because they are still in the tree and still work.
+
+The measured case: **`py_loop` derived its loop-test value by
+Miller-pattern unification**, reading `tv`/`Cont`/`step` off goals
+containing metavariables — and the lane honestly recorded *the two shapes
+that destroy it*: a surviving `ite`, a destructured state, a full-simp-set
+rewrite. **`py_vcgen` then REPLACED that mechanism** with symbolic
+evaluation at the invariant shape. Both are in the tree. **A tier that
+harvests the first inherits a known-fragile mechanism together with its
+known failure modes**, and inherits them silently, because the predecessor
+is not marked as superseded — it is merely older.
+
+So the harvest rule is: **take the latest generation, and keep the earlier
+one as documentation of the failure it fixed.** The predecessor is not
+dead weight — it is the record of *why* the successor is shaped the way it
+is, which is precisely what a harvesting tier needs and precisely what a
+bare port drops.
+
+**One naming caution that follows from the same archaeology**, because a
+harvesting tier will meet it: **`VCGen.lean` is NOT "VC generation."** Its
+own header is explicit — layers 1 and 2 (`VC.lean`, `VC2.lean`) specify
+STATEMENTS; **`VCGen.lean` specifies SUSPENDED MACHINES**, what a
+generator's frame stack still has to yield. That is why its predicates get
+**re-defined over a new stepper** rather than replaced by a core word: they
+are about suspension, not about verification conditions, and the name
+suggests otherwise.
 
 **Why on-touch and not a sweep**: a sweep is a spine-touch that invalidates
 every lane's build at once, and the audit's own §9 records this lane taking

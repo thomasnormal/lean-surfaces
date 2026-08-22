@@ -1,8 +1,27 @@
 # The LEAN tier: Lean 4's kernel language as a versioned surface
 
-**Status: founding charter. No semantics. No Lean.** Thomas chartered this
-tier on 2026-08-22: *"Adding Lean as another language to lean-surfaces. This
-would allow us to prove correctness of lean itself, similar to lean4lean."*
+**Status: founding charter, plus M1-M3.** Thomas chartered this tier on
+2026-08-22: *"Adding Lean as another language to lean-surfaces. This would allow
+us to prove correctness of lean itself, similar to lean4lean."* The endgame is
+**RULED — option (b), consume-and-extend** (§10.2).
+
+> ## THE TIER'S CENTRAL FACT
+>
+> **lean4lean's MODEL is further from Lean's kernel than its EXECUTABLE CHECKER
+> is.** The checker handles projections, unit-like types and structure eta
+> correctly today — it scores 67/67 on the Lean Kernel Arena's soundness suite
+> where our own pinned C++ kernel scores 63/67. The *model* it is proved against
+> has **no projections, no unit-like rule, no structure eta, and no inductives**:
+> `VExpr` has 6 constructors to Lean's 12, and `VEnv` holds a name→type map and a
+> set of equations, nothing more.
+>
+> **So a large share of the open work is not proof effort. It is SPECIFICATION
+> GAPS WEARING PROOF OBLIGATIONS' CLOTHES** — theorems that cannot be proved
+> because the model contains no rule that could conclude them, and definitions
+> that cannot be written because the model cannot express their subject. M3
+> withdrew two targets on exactly this ground (§8, §10.2), and the triage rule
+> that catches it is now family-wide: **before asking whether a proof is hard,
+> ask whether the model can conclude it at all.**
 
 This document is the census and the positioning. Everything numeric in it was
 **measured at our pin** by an instrument that ships with it
@@ -1277,13 +1296,19 @@ applied one level up.
 
 ---
 
-## 10 THE ENDGAME MENU — priced, none chosen
+## 10 THE ENDGAME MENU — priced; **(b) RULED by Thomas, 2026-08-22**
 
-Thomas's decision. Each option below is priced against the census, and the
-recommendation is argued rather than assumed. **No option is started this
-dispatch.**
+**RULED: option (b), CONSUME-AND-EXTEND lean4lean.** Thomas, 2026-08-22:
+*"no reason to copy lean4lean; if we can reuse most of it that sounds good."*
+Option **(d)** — the trust-extension surface — stays **registered as the small
+companion**, to be taken up after (b)'s first milestone. **(a) and (c) are
+closed.**
 
-### 10.1 Option (a) — the conformance scoreboard. **NOT RECOMMENDED.**
+The menu below is kept as landed, because the pricing is the argument for the
+ruling and a charter that erased its rejected options would be unable to explain
+its chosen one.
+
+### 10.1 Option (a) — the conformance scoreboard. **CLOSED.**
 
 Run our own checker, or lean4lean's, against the C++ kernel over core → Std →
 Mathlib, with family-style verdicts and drift guards.
@@ -1301,7 +1326,7 @@ already says. And we could not even use its corpus (§9.2, no licence).
 arena's published results, so that when the arena's verdicts move, this
 repository notices. That is an hour of work, not an endgame.
 
-### 10.2 Option (b) — consume and extend lean4lean. **RECOMMENDED.**
+### 10.2 Option (b) — consume and extend lean4lean. **RULED — this is the tier.**
 
 Engage Mario's project seriously: adopt the executable checker, and contribute
 the family's apparatus where the census says the gap is.
@@ -1358,7 +1383,7 @@ whether lean4lean shares the bug — **with no published commitment to adopt it.
 Depending on it is depending on one person's research project, and the charter
 says so rather than letting a lane infer institutional backing from 228 stars.
 
-### 10.3 Option (c) — an independent kernel-language surface on the family substrate. **EXPENSIVE; PRICED HONESTLY.**
+### 10.3 Option (c) — an independent kernel-language surface on the family substrate. **CLOSED; the pricing is why.**
 
 Instantiate the family's own substrate — `SemM`, `Run σ α`, the verdict system —
 for the Lean kernel, and build the surface from the thesis's rules.
@@ -1391,7 +1416,7 @@ seventh is small.
 question — *what would it cost to own this outright* — now answered with a
 number.
 
-### 10.4 Option (d) — the TRUST-EXTENSION surface. **The genuinely unoccupied ground.**
+### 10.4 Option (d) — the TRUST-EXTENSION surface. **REGISTERED — the companion, after (b)'s first milestone.**
 
 This option did not exist when this lane was dispatched. The census produced it,
 and it is the one place where the census found **no incumbent at all**.
@@ -1542,17 +1567,16 @@ and §9.1 measured the reason: **our own pinned toolchain accepts a proof of
 
 Named, so they are decisions rather than drift.
 
-1. **The endgame.** §10's menu — **four** options, none chosen. The
-   recommendation is **(b) with (d)**; the argument is §8, §9.1 and §10.4.
-   Option (d) did not exist when this lane was dispatched; the census produced
-   it, and it is the only ground with no incumbent.
+1. **The endgame — RULED, 2026-08-22: option (b), CONSUME-AND-EXTEND.** Thomas:
+   *"no reason to copy lean4lean; if we can reuse most of it that sounds good."*
+   Option **(d)**, the trust-extension surface, stays **registered as the small
+   companion**, taken up after (b)'s first milestone. Options (a) and (c) are
+   closed. M2 is the obligation census that (b) needs on day one —
+   `docs/lean4lean-obligation-census.md`.
 2. **Whether this tier is founded at all, and in what order against the five
    other tiers founded this week.** §9 of the family charter reserves this.
-3. **The registry row's edition token.** §12 proposes `Lean433` and explains why
-   the choice is genuinely awkward here — Lean has no editions, only releases,
-   and §1.1 law 3 says an edition token *"names an edition a reader can hold …
-   never a point release"*. This tier may be the family's first legitimate
-   exception, and that is Thomas's call, not this charter's.
+3. **The registry row's edition token — RATIFIED, 2026-08-22.** `Lean433`, as
+   the family's **first §1.1 law-3 exception**. See §12.
 4. **Whether we engage Mario Carneiro directly.** Option (b) is a contribution
    to someone else's project. The repository has no precedent for that posture
    and it should be an explicit decision, not a side effect of a merge.
@@ -1568,20 +1592,59 @@ Named, so they are decisions rather than drift.
 | language | Lean |
 | `<Lang>` | `Lean` |
 | authority | **SPEC-MIRROR** — Carneiro, *The Type Theory of Lean*, pinned at `digama0/lean-type-theory` **`master 0ba1787`** (§7.2), **cite-never-vendor: no licence** |
-| edition tokens | **`Lean433` — PROPOSED, and see §11.3** |
+| edition tokens | **`Lean433` — RATIFIED**, as the family's first law-3 exception (below) |
 | oracle | the **C++ kernel** at the pinned toolchain — and, uniquely in this family, **the program that checks the tier** |
 | corpus | core `Init`/`Std`/`Lean` (**2 322 modules, 206 644 declarations**) and Mathlib (**8 268 files**, at our exact pin, already on disk) — **licence: Apache-2.0 both** |
 | envelope | **adopt `lean4export` NDJSON format 3.1.0** (§4) — do not design one |
 | state | **founding** |
 
-**Two rows are unusual enough to flag.** The *oracle* is the program that checks
-every artifact in this repository, so this tier's differential is free and its
-DIVERGE is the family's highest-stakes (§3.2). And the *edition token* is
-genuinely hard: §1.1 law 3 forbids point releases, but Lean has nothing else —
-no ISO editions, no ECMA years. The honest options are a release-pinned token
-(`Lean433`, accurate and law-3-violating) or a format-pinned one
-(`Export31`, law-3-clean but naming the envelope rather than the language).
-**Flagged, not decided.**
+**Two rows are unusual enough to flag, and one of them needed a ruling.** The
+*oracle* is the program that checks every artifact in this repository, so this
+tier's differential is free and its DIVERGE is the family's highest-stakes
+(§3.2).
+
+### 12.1 THE EDITION TOKEN — `Lean433`, and the family's first law-3 exception
+
+**RATIFIED by Thomas, 2026-08-22.**
+
+§1.1 law 3 says an edition token *"names an edition a reader can hold — a
+published document, or a released interpreter's minor line. Never a point
+release, a patch level, or a build."* Every other tier satisfies it easily: C has
+ISO editions, ECMAScript has ECMA-262 years, Ada has 2012 and 2022, Wasm has
+core versions.
+
+> **Lean has no editions. It has releases, and nothing else.** There is no
+> standards body, no numbered edition, no ratified document — the type theory's
+> only written specification is a 2019 MS thesis that is not versioned with the
+> language (§7.2), and the kernel changes between point releases in ways that
+> matter to this tier: §2.4's trust extensions were deprecated *within* the
+> 4.x line, and §6.8 measured a checker limitation that was fixed between the
+> census being read and the charter being written.
+
+So the law's premise — that a language *has* editions a reader can hold — is
+simply false here, and there is nothing to be gained by pretending otherwise.
+The two honest candidates were a release-pinned token (`Lean433`) and a
+format-pinned one (`Export31`). **`Lean433` is ratified**, and the reasoning is
+worth recording because the next lane in this position will face it:
+
+* **`Export31` names the wrong thing.** The export format is the *envelope*
+  (§4), not the language. A tier called `Export31` would claim to model a
+  serialization, and its version would move when the serialization moved rather
+  than when the type theory did.
+* **The token satisfies laws 1, 2 and 4 exactly** — it is a valid Lean
+  identifier, it is self-identifying out of context (`LeanModels/Lean/Lean433/`
+  tells a reader everything), and it never renames.
+* **Law 3's *purpose* is served even as its letter is broken.** The law exists
+  so a token names something stable and citable. A Lean release **is** stable and
+  citable — it is a tag, a toolchain string every lane already pins, and the
+  thing `lean-toolchain` files name. It is more precisely citable than most
+  editions, not less.
+
+**The exception is narrow and it is stated as one.** It licenses a
+release-pinned token *only* for a language with no editions at all, and the
+burden stays on the next tier to show its language is in the same position
+rather than merely inconvenient. **The family's registry now carries one row
+whose token is a release, and it says why on its face.**
 
 ---
 

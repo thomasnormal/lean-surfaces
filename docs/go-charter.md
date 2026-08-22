@@ -1710,15 +1710,29 @@ there is no long tail to discover. A v0 scoped to those 52 kinds is not
 a bet at all.
 
 **The driver covers 28 of the 52 — 54%** — and every kind it uses is in
-the stdlib set (the driver contains nothing exotic). The 21 kinds in the
-stdlib set but not the driver are the ordinary sequential remainder:
-`ArrayType BranchStmt CaseClause CompositeLit Ellipsis EmptyStmt IfStmt
-IndexExpr IndexListExpr InterfaceType KeyValueExpr LabeledStmt MapType
-ParenExpr ReturnStmt SliceExpr StructType SwitchStmt TypeAssertExpr
-TypeSpec TypeSwitchStmt`. **That list is the sequential inch ladder,
-derived rather than proposed** — and it is 21 items long, not 21 rungs,
-because several are one construct (`SwitchStmt`+`CaseClause`,
+the stdlib set (the driver contains nothing exotic). The **24** kinds in
+the stdlib set but not the driver are the ordinary sequential remainder:
+`ArrayType BranchStmt CaseClause CompositeLit DeclStmt DeferStmt Ellipsis
+EmptyStmt IfStmt IndexExpr IndexListExpr InterfaceType KeyValueExpr
+LabeledStmt MapType ParenExpr ReturnStmt SliceExpr StarExpr StructType
+SwitchStmt TypeAssertExpr TypeSpec TypeSwitchStmt`. **That list is the
+sequential inch ladder, derived rather than proposed** — and it is 24
+items long, not 24 rungs, because several are one construct
+(`SwitchStmt`+`CaseClause`,
 `TypeSwitchStmt`+`TypeAssertExpr`).
+
+> **CORRECTION (rung 1, `docs/backlog/go.md`).** This paragraph first read
+> *21 kinds*, and 21 was wrong: 52 − 28 = **24**. The list was computed
+> against the driver's PRE-REWRITE vocabulary of 31 kinds, before §7.1's
+> `sync.WaitGroup` join was replaced by a counted channel receive — a
+> change that removed `StarExpr`, `DeclStmt` and `DeferStmt` from the
+> fixture and therefore *added* them to the remainder. The count was
+> never re-derived after the rewrite. It is now, by the reach-ladder
+> instrument, which independently produced exactly 24 steps. **A number
+> carried across an edit that invalidated it is the failure mode
+> `--compare` exists to prevent, hit in prose rather than in JSON** —
+> which is an argument for the census artifact covering the charter's
+> derived numbers too, not only the instrument's own.
 
 For scale, the standard library's own concurrency density, per thousand
 lines: `defer` 2.48, channel types 0.86, receive expressions 0.84,

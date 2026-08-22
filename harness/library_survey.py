@@ -36,7 +36,7 @@ VERDICTS, per module:
              function): reported apart from VERIFIED, never folded into it
   PARTIAL    body agreed, N of M calls agreed — the rest are listed
   REFUSED    the model refused loudly, and the named construct IS the datum
-  DIVERGED   a silent mismatch anywhere. The headline. Any DIVERGED row
+  DIVERGE    a silent mismatch anywhere. The headline. Any DIVERGE row
              fails the run (exit 1).
   ORACLE     CPython itself could not import the module — excluded, reported
 
@@ -527,7 +527,7 @@ def compare_call(model, oracle):
         # 27 distinct text pairs, every one of them a TypeError whose CLASS
         # already agrees (docs/backlog.md §LIBRARY MODE, the message-text
         # surface). That is a real fidelity gap and a WRONG-ANSWER verdict is
-        # the wrong instrument for it: DIVERGED is this survey's headline for
+        # the wrong instrument for it: DIVERGE is this survey's headline for
         # a wrong VALUE or a wrong CLASS, and drowning it in wording drift
         # would cost the headline its meaning. The body phase compares
         # messages because a module body raising the wrong text is the whole
@@ -634,7 +634,7 @@ def survey(opts):
         verdict, detail = compare_body(model, oracle.get("body", oracle))
         row["body_verdict"] = verdict
         if verdict != "MATCH":
-            row["verdict"] = "DIVERGED" if verdict == "DIVERGE" else verdict
+            row["verdict"] = verdict
             row["detail"] = detail
         else:
             row["detail"] = detail
@@ -700,8 +700,8 @@ def survey(opts):
         row["nfunctions"] = len(row["oracle"].get("functions", []))
         row["nskipped"] = len(skipped)
         if diverged:
-            row["verdict"] = "DIVERGED"
-            row["detail"] = "%d of %d calls DIVERGED: %s" % (
+            row["verdict"] = "DIVERGE"
+            row["detail"] = "%d of %d calls DIVERGE: %s" % (
                 len(diverged), len(calls),
                 "; ".join("%s%s" % (c["function"], c["detail"]) for c in diverged[:3]))
         elif unrun:
@@ -753,7 +753,7 @@ def wall_of(msg):
 
 
 def report(rows, stats):
-    order = ["VERIFIED", "BODY-ONLY", "PARTIAL", "REFUSED", "DIVERGED", "INCOMPLETE",
+    order = ["VERIFIED", "BODY-ONLY", "PARTIAL", "REFUSED", "DIVERGE", "INCOMPLETE",
              "TIMEOUT", "ORACLE", "RUNNER", "HUNG", "EXTRACT", "MISSING"]
     counts = {}
     for row in rows:
@@ -784,14 +784,14 @@ def report(rows, stats):
 
     for title, want in (("VERIFIED", "VERIFIED"), ("BODY-ONLY", "BODY-ONLY"),
                         ("PARTIAL", "PARTIAL"), ("INCOMPLETE — the battery did not finish",
-                                                 "INCOMPLETE"), ("DIVERGED", "DIVERGED")):
+                                                 "INCOMPLETE"), ("DIVERGE", "DIVERGE")):
         sel = [r for r in rows if r.get("verdict") == want]
         if not sel:
             continue
         print("\n%s" % title)
         for row in sel:
             print("  %-28s %s" % (row["module"], row.get("detail", "")))
-            if want in ("PARTIAL", "DIVERGED"):
+            if want in ("PARTIAL", "DIVERGE"):
                 for call in row.get("calls", []):
                     if call["verdict"] != "MATCH":
                         print("      %-9s %s(%s) %s" % (
@@ -926,7 +926,7 @@ def main(argv=None):
                 json.dump({"merged": opts.merge, "rows": rows}, f, indent=1,
                           sort_keys=True, default=str)
             print("\nwrote %s" % opts.json_out)
-        return 1 if (counts.get("DIVERGED") or counts.get("INCOMPLETE")) else 0
+        return 1 if (counts.get("DIVERGE") or counts.get("INCOMPLETE")) else 0
 
     if opts.build_manifest:
         manifest = build_manifest(MANIFEST)
@@ -953,9 +953,9 @@ def main(argv=None):
             json.dump({"cpython": opts.cpython, "stats": stats, "rows": rows},
                       f, indent=1, sort_keys=True, default=str)
         print("\nwrote %s" % opts.json_out)
-    # A DIVERGED row is the headline; an INCOMPLETE one means the battery did
+    # A DIVERGE row is the headline; an INCOMPLETE one means the battery did
     # not finish, and a scoreboard that certifies nothing must not exit 0.
-    return 1 if (counts.get("DIVERGED") or counts.get("INCOMPLETE")) else 0
+    return 1 if (counts.get("DIVERGE") or counts.get("INCOMPLETE")) else 0
 
 
 if __name__ == "__main__":

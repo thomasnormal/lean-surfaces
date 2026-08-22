@@ -59,23 +59,107 @@ layer, not for `ρ`; `docs/es-semantics-design.md` §1.2 argues both halves.
 
 namespace LeanModels.Es
 
-/--
-Why a run refused. `docs/es-charter.md` §3.6 fixes exactly three, and they
-are never pooled because they retire on completely different schedules.
+/-!
+## Refusal causes — the family's FOUR classes, with this tier's payload
+
+`docs/family-architecture.md` §5.2 + its `RefusalCause` ruling (`14bdd7a`):
+**`Core` carries the four classes as `RefusalCause π`, parameterized by a
+tier payload. The classes are family law; the payload is the tier's.**
+
+**ADOPTION NOTE: `LeanModels/Core/` does not yet export `RefusalCause`, so
+this file defines the family's SHAPE locally and is replaced by the core
+export when it lands — it is not a variant.** Same treatment as `SemM`
+above, and for the same reason.
+
+**This tier GAINED two constructors it had omitted, and that is the point
+of the ruling.** ES has no undefined behaviour and no unspecified
+evaluation order — both MEASURED (`docs/es-charter.md` §2.1 found
+"undefined behaviour" occurring once in 3.08 MB, in a sentence asserting
+there is none; §2.3 found zero occurrences of all five order-latitude
+phrasings). Omitting the constructors would have made that emptiness *a
+fact about the type, invisible to the scoreboard*, which could then not
+tell **"this language has no UB"** from **"this tier did not model that
+column."** So both are PRESENT and GATED: `es_never_undefined` and
+`es_never_orderDependent` below prove this tier's own constructors cannot
+produce them, and a future UB refusal would have to bypass the
+constructor and break the lemma.
 -/
-inductive RefusalCause where
-  /-- Syntax or a construct the tier does not model yet. Retires by
-  climbing a rung. -/
-  | unsupportedConstruct
-  /-- A built-in outside the modeled slice. Retires by widening the slice,
-  and is NEVER a language-tier gap — `docs/es-semantics-design.md` §3.2. -/
+
+/-- This tier's refusal payload — `π`.
+
+The `unmodeledIntrinsic` / `hostFacility` split is a REAL distinction this
+lane found and the ruling PRESERVED rather than flattened: it tracks
+§5.2's own criterion, *retirement schedule*. A built-in outside the
+modeled slice retires by widening the slice; a host facility does not
+retire by building more language. It lives in the payload today and is
+registered as a **candidate fifth class** — one tier's distinction is a
+payload; two tiers' identical distinction is a class. -/
+inductive EsCause where
+  /-- Class `unsupported`: syntax or a construct not modeled yet. -/
+  | construct
+  /-- Class `environment`, retiring by widening the slice. -/
   | unmodeledIntrinsic
-  /-- A host-defined facility: a job queue, a host hook, an
-  implementation-approximated `Math`. Does not retire by building more
-  language — `docs/family-architecture.md` §3.5.4 routes
-  implementation-approximated here too. -/
-  | environment
-  deriving Repr, DecidableEq, Inhabited
+  /-- Class `environment`, NOT retiring by building more language. -/
+  | hostFacility
+  deriving DecidableEq, Repr, Inhabited
+
+/-- The payload proper: which ES cause, and what it was about. -/
+structure EsDetail where
+  kind : EsCause
+  name : String := ""
+  deriving Repr, Inhabited
+
+/--
+The family's four REFUSE classes — §5.2 — parameterized by a tier payload.
+
+They retire on completely different schedules, which is why pooling them
+makes a scoreboard unreadable.
+-/
+inductive RefusalCause (π : Type) where
+  /-- Out-of-tier construct. Retires by climbing a rung. -/
+  | unsupported (detail : π)
+  /-- The language says this run has no meaning. **Never retires: it is the
+  product.** Expected EMPTY for ECMAScript, and gated below. -/
+  | undefined (detail : π)
+  /-- The run needs something outside the modeled slice. -/
+  | environment (detail : π)
+  /-- The language admits several orders and the model cannot show the
+  observable invariant under all of them. Expected EMPTY for ECMAScript
+  (§2.3 measured zero order latitude), and gated below. -/
+  | orderDependence (detail : π)
+  deriving Repr, Inhabited
+
+/-- This tier's instantiation. -/
+abbrev EsRefusal := RefusalCause EsDetail
+
+namespace RefusalCause
+
+/-- The class, as a scoreboard bucket name — the string §9.4's shared
+verdict vocabulary aggregates on. -/
+def className : RefusalCause π → String
+  | .unsupported _ => "unsupported"
+  | .undefined _ => "undefined"
+  | .environment _ => "environment"
+  | .orderDependence _ => "order-dependence"
+
+def isUndefined : RefusalCause π → Bool
+  | .undefined _ => true
+  | _ => false
+
+def isOrderDependence : RefusalCause π → Bool
+  | .orderDependence _ => true
+  | _ => false
+
+end RefusalCause
+
+/-- **The tier's ONLY cause constructor.** Everything that refuses goes
+through here, which is what makes the two gates below meaningful: a UB or
+order-dependence refusal cannot be built without bypassing it. -/
+def esRefusal (k : EsCause) (name : String) : EsRefusal :=
+  match k with
+  | .construct => .unsupported { kind := .construct, name := name }
+  | .unmodeledIntrinsic => .environment { kind := .unmodeledIntrinsic, name := name }
+  | .hostFacility => .environment { kind := .hostFacility, name := name }
 
 /--
 The base of the stack: a computation that produced a value, ran out of
@@ -94,7 +178,7 @@ inductive Halt (α : Type) where
   /-- Outside the tier. Loud, fuel-independent, and carries its cause so a
   scoreboard can bucket it without parsing prose (`docs/es-charter.md`
   §3.6: the three causes are never pooled). -/
-  | unsupported (cause : RefusalCause) (message : String)
+  | unsupported (cause : EsRefusal) (message : String)
   deriving Repr, Inhabited
 
 namespace Halt
@@ -164,8 +248,22 @@ def raise (e : ρ) : SemM W ρ α := throw e
 
 /-- Refuse: loud, fuel-independent, and cause-bucketed. Not an error in
 `ρ` — a refusal is not something a program can catch. -/
-def refuse (c : RefusalCause) (msg : String) : SemM W ρ α :=
+def refuse (c : EsRefusal) (msg : String) : SemM W ρ α :=
   fun _ => Halt.unsupported c msg
+
+/-- Refuse an unmodeled CONSTRUCT — class `unsupported`. -/
+def refuseConstruct (msg : String) : SemM W ρ α :=
+  refuse (esRefusal .construct msg) msg
+
+/-- Refuse an unmodeled BUILT-IN — class `environment`, retires by
+widening the slice. -/
+def refuseIntrinsic (name : String) : SemM W ρ α :=
+  refuse (esRefusal .unmodeledIntrinsic name) name
+
+/-- Refuse a HOST facility — class `environment`, does NOT retire by
+building more language. -/
+def refuseHost (hook : String) : SemM W ρ α :=
+  refuse (esRefusal .hostFacility hook) hook
 
 /-- Fuel exhaustion. The only exhaustion outcome. -/
 def timeout : SemM W ρ α := fun _ => Halt.timeout
@@ -174,6 +272,38 @@ def timeout : SemM W ρ α := fun _ => Halt.timeout
 def run (m : SemM W ρ α) (w : W) : Halt (Except ρ α × W) := m w
 
 end SemM
+
+/-! ## THE TWO EXPECTED-EMPTY GATES
+
+`docs/family-architecture.md` §4.3: *expect the bucket to be empty, and
+gate it — a tier emitting it has a bug.* A gate needs a constructor to be
+about, which is why the constructors are present. These are the gate: the
+tier's only cause constructor provably cannot produce either class. -/
+
+/-- **ECMAScript has no undefined behaviour, and this is the checkable
+form of that claim.** §2.1 measured "undefined behaviour" occurring once
+in the whole specification, in a sentence asserting there is none. -/
+theorem es_never_undefined (k : EsCause) (n : String) :
+    (esRefusal k n).isUndefined = false := by
+  cases k <;> rfl
+
+/-- **ECMAScript specifies its evaluation order**, so the
+order-dependence bucket is empty too. §2.3 measured zero occurrences of
+all five order-latitude phrasings; the one clause that is relational
+rather than algorithmic (§29, the memory model) is outside the slice. -/
+theorem es_never_orderDependent (k : EsCause) (n : String) :
+    (esRefusal k n).isOrderDependence = false := by
+  cases k <;> rfl
+
+/-- Every cause this tier can build lands in one of TWO classes, and the
+scoreboard aggregates on that name. -/
+theorem es_class_is_unsupported_or_environment (k : EsCause) (n : String) :
+    (esRefusal k n).className = "unsupported" ∨
+    (esRefusal k n).className = "environment" := by
+  cases k
+  · exact Or.inl rfl
+  · exact Or.inr rfl
+  · exact Or.inr rfl
 
 namespace Abrupt
 

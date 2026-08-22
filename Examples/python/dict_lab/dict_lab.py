@@ -234,3 +234,111 @@ def unhashable_tuple_read():
     # the same key on the READ path
     d = {}
     return d[(1, [2])]
+
+
+# §L53 rung 3b (docs/memory-model.md paragraph "dict iteration"): the
+# DRAINING consumers over a dict's KEYS. They are sound where the live
+# cursor is delicate for one structural reason -- they consume the keys
+# with NO user code running in between, so not one of the three mutation
+# regimes the census measured can arise inside them. Order is CPython's
+# specified insertion order, which the entries array already is.
+
+
+def keys_tuple(a):
+    # ORDER-OBSERVING: the keys come out in insertion order, not sorted
+    d = {3: "c", 1: "a", a: "z"}
+    return tuple(d)
+
+
+def keys_list_first(a):
+    # list() allocates; index it rather than returning the heap object
+    d = {3: "c", 1: "a", a: "z"}
+    return list(d)[0]
+
+
+def keys_list_len(a):
+    d = {3: "c", 1: "a", a: "z"}
+    return len(list(d))
+
+
+def keys_star(a):
+    # `[*d]` is CPython's key iteration
+    d = {3: "c", 1: "a", a: "z"}
+    return tuple([*d])
+
+
+def keys_overwrite_keeps_position(a):
+    # an overwrite keeps the key's ORIGINAL position (measured)
+    d = {3: "c", 1: "a"}
+    d[3] = "zz"
+    d[a] = "q"
+    return tuple(d)
+
+
+def keys_sorted(a):
+    d = {3: 0, 1: 0, a: 0}
+    return tuple(sorted(d))
+
+
+def keys_sum(a):
+    d = {3: 0, 1: 0, a: 0}
+    return sum(d)
+
+
+def keys_max(a):
+    d = {3: 0, 1: 0, a: 0}
+    return max(d)
+
+
+def keys_min(a):
+    d = {3: 0, 1: 0, a: 0}
+    return min(d)
+
+
+def keys_max_empty():
+    # the empty-sequence ValueError still comes from the shared arm
+    d = {}
+    return max(d)
+
+
+def keys_any(a):
+    d = {0: "x", a: "y"}
+    return any(d)
+
+
+def keys_all(a):
+    d = {0: "x", a: "y"}
+    return all(d)
+
+
+def keys_set_len(a):
+    # set() over the keys: already distinct, and set membership is
+    # order-blind, so nothing about order is claimed
+    d = {3: 0, 1: 0, a: 0}
+    return len(set(d))
+
+
+def keys_str_keys(a):
+    # non-int keys go through the generic ordering path, not asIntList
+    d = {"b": 1, "a": 2}
+    return tuple(sorted(d)) + (a,)
+
+
+def keys_bool_int_collision(a):
+    # the dict-key doctrine: True and 1 are the SAME key, first key wins
+    d = {True: "x", 1: "y", a: "z"}
+    return tuple(d)
+
+
+def keys_empty():
+    d = {}
+    return tuple(d)
+
+
+def keys_for_is_still_loud(a):
+    # the LIVE cursor is a separate inch (3a) and stays refused
+    d = {1: a}
+    t = 0
+    for k in d:
+        t = t + k
+    return t

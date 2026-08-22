@@ -287,13 +287,31 @@ direction is a class of bug the corpus's 328 subscripts would hide. -/
 `docs/c23-goal.md` §3.1: they retire on completely different schedules,
 so the scorer must be able to tell them apart without parsing a string. -/
 
-#guard (Refusal.unsupported "SwitchStmt").cause == Cause.unsupported
 #guard (Refusal.libc "qsort").cause == Cause.libc
 #guard (Refusal.valueUB (.divideByZero "/")).cause == Cause.ub
 #guard (Refusal.valueUB (.divideByZero "/")).j2 == some "J.2(41)"
 #guard (Refusal.valueUB (.signedOverflow "+" IntTy.int_ 2147483648)).j2 == some "J.2(35)"
--- The two retiring causes have no J.2 index, because they are not UB.
-#guard (Refusal.unsupported "SwitchStmt").j2 == none
+-- `libc` has no J.2 index, because it is not UB.
 #guard (Refusal.libc "qsort").j2 == none
+
+-- **The third cause lives in `Halt`, not in `Refusal`** — the §3.4 ruling.
+-- It reaches a scoreboard through `Outcome`, which is where the causes are
+-- compared, and the three still do not pool.
+#guard (Outcome.unsupported (α := CVal) "SwitchStmt").cause? == some Cause.unsupported
+#guard (Outcome.refused (α := CVal) (.libc "qsort")).cause? == some Cause.libc
+#guard (Outcome.refused (α := CVal) (.valueUB (.divideByZero "/"))).cause? == some Cause.ub
+#guard (Outcome.timeout (α := CVal)).cause? == none
+
+-- **THE SNAPSHOT IS NOT AN OBSERVABLE, and these gates are where that is
+-- checked rather than asserted.** Two refusals of the same construct
+-- reached through DIFFERENT memories compare EQUAL, because `Halt`'s `BEq`
+-- ignores the snapshot; and `Outcome` has nowhere to put a `Mem` at all.
+#guard (Halt.unsupported (α := Nat) "switch" (some Mem.empty))
+    == (Halt.unsupported (α := Nat) "switch" none)
+#guard (Halt.unsupported (α := Nat) "switch" (some m1))
+    == (Halt.unsupported (α := Nat) "switch" (some Mem.empty))
+-- ...but the CAUSE is still compared, so the guard has not disabled the gate.
+#guard (Halt.unsupported (α := Nat) "switch" none)
+    != (Halt.unsupported (α := Nat) "goto" none)
 
 end Examples.c.sunfish.memory

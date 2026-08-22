@@ -48,7 +48,8 @@ the reason the consumer needs no special case for it. -/
 def standPatPair : RVal := .tuple #[.none, .none]
 
 /-- The killer yield, projected off `sbMBRest`. (`fold_depth1.lean` has the same
-statement under the same name; it is not imported here — see `branchFalseSilent`
+statement under the same name; the silent-branch lemma is now shared — see
+`genSilent_branchFalse` (VCGen.lean)
 for why this file stays off that lane's ground.) -/
 def sbKillerQ : Stmt :=
   match sbMBRest with | s :: _ => s | [] => .pass ⟨0, 0, 0, 0⟩
@@ -73,21 +74,6 @@ theorem sbNull_plan_qs : ∃ p0 p1 p2 p3 p4 p5 bd, genPlan sbNull =
 theorem sbKiller_plan_qs : ∃ (e₂ e₃ : Expr) (p q : Span) (bd : List Stmt),
     genPlan sbKillerQ = .branch (.boolOp .and #[.name "killer" p, e₂, e₃] q) bd [] :=
   ⟨_, _, _, _, _, rfl⟩
-
-/-- **A `.branch` whose test is FALSY and whose `else` is empty is two silent
-steps.** `fold_depth1.lean`'s `branch_false_silent` is this at `m := sunfish`;
-stated here at a FREE module because nothing in it is about the engine. The two
-should become one at the general layer the next time either file is touched. -/
-theorem branchFalseSilent {m : Module} {s : Stmt} {test : Expr} {bd ss : List Stmt}
-    {st : FrameState} {tv : RVal}
-    (hplan : genPlan s = .branch test bd [])
-    (hv : EvalsTo m st test tv)
-    (hb : truthyH st.world.heap tv = .ok false) :
-    ∀ k : GenCont, GenSilent m st (.block (s :: ss) :: k) st (.block ss :: k) := by
-  intro k
-  refine GenSilent.trans (genSilent_branch (m := m) (s := s) (ss := ss) (k := k)
-    (st := st) (b := false) hplan hv hb) ?_
-  simpa using genSilent_blockNil (m := m) (st := st) (k := .block ss :: k)
 
 /-- …and its LIVE twin: a `.branch` whose test is TRUTHY pushes its body. -/
 theorem branchTrueEnters {m : Module} {s : Stmt} {test : Expr} {bd ss : List Stmt}
@@ -126,7 +112,7 @@ theorem moves_prologue_qs (w : World) (e : REnv) {ws : List RVal} {stF : FrameSt
       (.compare (.constant (.int 2) p0) #[.lt, .lt]
         #[.name "depth" p1, .constant (.int 6) p2] p3) = .ok ⟨w, e⟩ (.bool false) := by
     py_simp [-globalsFold, -globalsStep, hd]
-  have hs1 := branchFalseSilent (m := sunfish) (s := sbNull)
+  have hs1 := genSilent_branchFalse (m := sunfish) (s := sbNull)
     (ss := [sbStand, sbKillerQ, ordFor]) hpl1
     (EvalsTo.of_eval (fuel := 8)
       (by rw [evalExpr]; exact boolChain_and_falsy (F := 6) h1e rfl)) rfl
@@ -146,7 +132,7 @@ theorem moves_prologue_qs (w : World) (e : REnv) {ws : List RVal} {stF : FrameSt
   -- branch 3: the killer is absent
   have h3e : evalExpr sunfish 4 ⟨w, e⟩ (.name "killer" kp) = .ok ⟨w, e⟩ .none := by
     py_simp [-globalsFold, -globalsStep, hk]
-  have hs3 := branchFalseSilent (m := sunfish) (s := sbKillerQ) (ss := [ordFor]) hpl3
+  have hs3 := genSilent_branchFalse (m := sunfish) (s := sbKillerQ) (ss := [ordFor]) hpl3
     (EvalsTo.of_eval (fuel := 6)
       (by rw [evalExpr]; exact boolChain_and_falsy (F := 4) h3e rfl)) rfl
   rw [sbMB_four_qs]
@@ -250,7 +236,6 @@ own shape and not an assumption bolted on. -/
 #print axioms sbNull_plan_qs
 #print axioms sbMB_four_qs
 #print axioms sbKiller_plan_qs
-#print axioms branchFalseSilent
 #print axioms branchTrueEnters
 #print axioms moves_prologue_qs
 #print axioms moves_emits_qs

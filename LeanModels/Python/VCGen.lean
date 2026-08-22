@@ -529,6 +529,29 @@ theorem genSilent_branch {m : Module} {st : FrameState} {s : Stmt}
   rw [execGen]
   simp only [hplan, ht F hF, Run.ok_bind, hb, Run.liftRes]
 
+/-- **A `.branch` whose test is FALSY and whose `else` is EMPTY is two silent
+steps and no emission** — `genSilent_branch` at `b := false` followed by
+`genSilent_blockNil` popping the empty arm.
+
+Lifted here on 2026-08-22 from two lane-private copies that were proved
+independently and could not see each other: `fold_depth1.lean`'s
+`branch_false_silent` (at `m := sunfish`) and `qs_stream.lean`'s
+`branchFalseSilent` (at a free module, and whose own docstring asked for exactly
+this). The two files are SIBLINGS in the import graph, so neither could consume
+the other's — which is the general argument for the general layer: it is the only
+place two lanes can both look. Named into the `genSilent_*` family it joins
+rather than after either lane. -/
+theorem genSilent_branchFalse {m : Module} {s : Stmt} {test : Expr}
+    {bd ss : List Stmt} {st : FrameState} {tv : RVal}
+    (hplan : genPlan s = .branch test bd [])
+    (hv : EvalsTo m st test tv)
+    (hb : truthyH st.world.heap tv = .ok false) :
+    ∀ k : GenCont, GenSilent m st (.block (s :: ss) :: k) st (.block ss :: k) := by
+  intro k
+  refine GenSilent.trans (genSilent_branch (m := m) (s := s) (ss := ss) (k := k)
+    (st := st) (b := false) hplan hv hb) ?_
+  simpa using genSilent_blockNil (m := m) (st := st) (k := .block ss :: k)
+
 /-- **The while rule (push)**: a `while` with a `yield` inside becomes a
 `whileLoop` frame; re-entering the frame re-tests. -/
 theorem genSilent_whileHere {m : Module} {st : FrameState} {s : Stmt}

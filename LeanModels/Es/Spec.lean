@@ -1,4 +1,4 @@
-import LeanModels.Es.Ordinary
+import LeanModels.Es.Convert
 import LeanModels.Es.SpecAttr
 
 /-!
@@ -122,7 +122,7 @@ A refusal is not an error a program can catch: it is not in `ρ`, so it
 cannot be reached by `try`. These pin that, which is the property the
 scoreboard's REFUSE bucket depends on. -/
 
-@[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : RefusalCause) (m : String) :
+@[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : EsRefusal) (m : String) :
     SemM.run (ρ := Abrupt) (α := Unit) (SemM.refuse c m) w = Halt.unsupported c m := rfl
 
 @[es_spec] theorem timeout_is_not_catchable (W : Type) (w : W) :
@@ -183,5 +183,126 @@ string key, not index 1, so it enumerates with the string keys. -/
 `OrdinaryOwnPropertyKeys`'s creation order depends on. -/
 
 @[es_spec] theorem find_empty (k : PropKey) : Obj.find? {} k = none := rfl
+
+/-! ## Environment bindings — ES2026 §9.1.1.1
+
+The TDZ is the distinction worth arms: an UNINITIALIZED binding is not a
+binding holding `undefined`, and `Binding.value : Option Val` is what
+keeps them apart. -/
+
+@[es_spec] theorem binding_fresh_is_uninitialized :
+    (Binding.value { mutable := true }) = none := rfl
+@[es_spec] theorem binding_undefined_is_initialized :
+    (Binding.value { value := some .undef, mutable := true }) = some .undef := rfl
+
+@[es_spec] theorem env_find_empty (n : String) : EnvRec.find? {} n = none := rfl
+
+/-! ## `[[ThisBindingStatus]]` — §9.1.1.3, §9.1.2.4
+
+A fresh declarative record is `lexical` — it has no `this` at all, which is
+what makes `GetThisEnvironment` walk THROUGH it. -/
+
+@[es_spec] theorem fresh_env_is_lexical : (EnvRec.thisStatus {}) = ThisStatus.lexical := rfl
+
+/-- The three statuses are distinct — `GetThisBinding` branches on
+`uninitialized` and `BindThisValue` on `initialized`, so conflating any
+two would silently change both. -/
+@[es_spec] theorem thisStatus_distinct₁ :
+    (ThisStatus.lexical == ThisStatus.uninitialized) = false := rfl
+@[es_spec] theorem thisStatus_distinct₂ :
+    (ThisStatus.uninitialized == ThisStatus.initialized) = false := rfl
+
+/-! ## `IsCallable` / `IsConstructor` are SLOT TESTS — §7.2.3, §7.2.4
+
+Neither inspects a value's shape: a non-object is never callable, and a
+callable is not automatically a constructor. -/
+
+@[es_spec] theorem thisMode_lexical_ne_strict :
+    (ThisMode.lexical == ThisMode.strict) = false := rfl
+
+/-- A plain function has `[[Call]]` and NOT `[[Construct]]` until
+`MakeConstructor` runs — §10.2.5 is what adds the slot. -/
+@[es_spec] theorem plain_function_is_not_constructor (b : Body) :
+    (FuncData.constructorDerived { body := b }) = none := rfl
+
+@[es_spec] theorem plain_object_is_not_callable : (Obj.callable {}) = none := rfl
+
+/-! ## `Body` — the one boundary inch 3 leaves
+
+A `builtin` runs; an `ecmascript` body is `OrdinaryCallEvaluateBody`, which
+is the statement evaluator. Distinct constructors, so the arm cannot be
+taken by accident. -/
+
+@[es_spec] theorem body_builtin_ne_ecmascript (n : String) :
+    (Body.builtin n == Body.ecmascript) = false := rfl
+
+/-! ## The four REFUSE classes — §5.2, adopted at `14bdd7a`
+
+Arms for the class map, and the two EXPECTED-EMPTY gates restated at the
+lemma level (their proofs live in `Completion.lean`, where the constructor
+they are about is). -/
+
+@[es_spec] theorem class_construct (n : String) :
+    (esRefusal .construct n).className = "unsupported" := rfl
+@[es_spec] theorem class_intrinsic (n : String) :
+    (esRefusal .unmodeledIntrinsic n).className = "environment" := rfl
+@[es_spec] theorem class_host (n : String) :
+    (esRefusal .hostFacility n).className = "environment" := rfl
+
+/-- The payload keeps the retirement-schedule split the ruling preserved
+as a candidate FIFTH class. -/
+@[es_spec] theorem payload_keeps_the_split (n : String) :
+    (match esRefusal .unmodeledIntrinsic n with
+     | .environment d => d.kind
+     | _ => EsCause.construct) = EsCause.unmodeledIntrinsic := rfl
+
+/-! ## `Number::toString` — §6.1.6.1.20, the arms that are total
+
+An `Option`: `none` is "outside the exact-integer fragment", and the
+caller REFUSES rather than emitting the host's rendering. -/
+
+@[es_spec] theorem numberToString_nan : numberToString (0.0 / 0.0) = some "NaN" := rfl
+@[es_spec] theorem numberToString_inf : numberToString (1.0 / 0.0) = some "Infinity" := rfl
+@[es_spec] theorem numberToString_neg_inf : numberToString (-1.0 / 0.0) = some "-Infinity" := rfl
+@[es_spec] theorem numberToString_zero : numberToString 0.0 = some "0" := rfl
+
+/-- **`-0` renders as `"0"`** — the row that separates `String(-0)` from
+`Object.is(-0, 0)`, and the reason the zero arm tests `== 0.0` (which is
+true of both zeros) rather than `sameValue`. -/
+@[es_spec] theorem numberToString_neg_zero : numberToString (-0.0) = some "0" := rfl
+
+/- **The INTEGER path is deliberately unlemmatized, and that is a
+measured boundary rather than an omission.** `numberToString`'s
+exact-integer test goes through `Float.toInt64`, which is `@[extern]`:
+`rfl`, `decide` and `with_unfolding_all rfl` all fail on BOTH directions
+(`numberToString 42.0 = some "42"` and `numberToString 0.5 = none`),
+while `#guard` evaluates both. So this tier now has TWO verification
+strengths, and the arms above are exactly the ones in the stronger class
+— they short-circuit before reaching `toInt64`.
+
+This is §L88's asymmetry again (`#guard` is a weaker oracle than `rfl`)
+but with the opposite resolution, and the difference is the point: there,
+a pure-Lean reformulation existed (`List Char`) so the DEFINITION moved.
+Here the obstruction is an extern primitive with no kernel-reducible
+substitute short of the bit-level model, and correctly-rounded decimal
+conversion is already scheduled and owned elsewhere
+(`docs/family-architecture.md` §3.5.5 step 3). Claiming a lemma we cannot
+prove would be worse than naming the gap; weakening the definition until
+`String(42)` refuses would be worse than both. -/
+
+/-! ## Property-key text — §6.2.5's environment references use it -/
+
+@[es_spec] theorem keyText_str (s : String) : (PropKey.str s).text = s := rfl
+
+/-! ## Reference Records — §6.2.5.2, §6.2.5.3, one arm each -/
+
+@[es_spec] theorem ref_unresolvable (n : PropKey) :
+    Ref.isUnresolvable { base := .unresolvable, name := n } = true := rfl
+@[es_spec] theorem ref_env_is_not_unresolvable (e : EnvRef) (n : PropKey) :
+    Ref.isUnresolvable { base := .env e, name := n } = false := rfl
+@[es_spec] theorem ref_value_is_property (v : Val) (n : PropKey) :
+    Ref.isProperty { base := .value v, name := n } = true := rfl
+@[es_spec] theorem ref_env_is_not_property (e : EnvRef) (n : PropKey) :
+    Ref.isProperty { base := .env e, name := n } = false := rfl
 
 end LeanModels.Es

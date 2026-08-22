@@ -1791,6 +1791,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             | some obj =>
                               cases obj <;> try exact .unsupported
                               case list xs => ce_norm; exact .liftRes hs2 _
+                              case dict es sv => ce_norm; exact .liftRes hs2 _
                               case «instance» cid attrs => exact .exn hs2 _
                               case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                               case generator qn l k stat =>
@@ -1843,6 +1844,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 ce_norm
                                 refine .bind (.liftRes hs2 _) fun s3 es hs3 => ?_
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
+                              case dict des sv =>
+                                ce_norm
+                                refine .bind (.liftRes hs2 _) fun s3 es hs3 => ?_
+                                exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
                               case pyset xs =>
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [hs2])
                               case «instance» cid attrs => exact .exn hs2 _
@@ -1888,6 +1893,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -1907,6 +1914,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -1926,6 +1935,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -1945,6 +1956,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -1964,6 +1977,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -1983,6 +1998,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -2002,6 +2019,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -2021,6 +2040,8 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
               | some obj =>
                 cases obj <;> try exact .unsupported
                 case list xs => exact .liftRes hs2 _
+                -- §L53 rung 3b: the dict arm drains its KEYS, same shape
+                case dict es sv => exact .liftRes hs2 _
                 case «instance» cid attrs => exact .exn hs2 _
                 case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                 case generator qn l k stat =>
@@ -2051,6 +2072,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             | some obj =>
                               cases obj <;> try exact .unsupported
                               case list xs => exact .ok hs2 _
+                              case dict es sv => exact .ok hs2 _
                               case «instance» cid attrs => exact .exn hs2 _
                               case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                               case generator qn l k stat =>
@@ -2085,6 +2107,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             | some obj =>
                               cases obj <;> try exact .unsupported
                               case list xs => exact .allocList hs2 _
+                              case dict es sv => exact .allocList hs2 _
                               case «instance» cid attrs => exact .exn hs2 _
                               case closure nm ps ao lo hg2 ig bd cap => exact .exn hs2 _
                               case generator qn l k stat =>

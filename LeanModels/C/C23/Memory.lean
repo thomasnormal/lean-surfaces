@@ -207,16 +207,20 @@ def clause : MemFault → String
 
 end MemFault
 
-/-- A refusal, with its cause kept structural.
+/-- A refusal that rides in `ExceptT`, with its cause kept structural.
 
-The four constructors are `docs/c23-goal.md` §3.1's three causes with the
-UB one split by layer — the value rules (`Value.lean`) and the memory
-rules (this file) both produce undefined behavior and both must stay
-separable for diagnosis while pooling identically for scoring. -/
+Two of `docs/c23-goal.md` §3.1's three causes live here, with the UB one
+split by layer — the value rules (`Value.lean`) and the memory rules
+(this file) both produce undefined behavior and both must stay separable
+for diagnosis while pooling identically for scoring.
+
+**The third cause, `unsupported`, is NOT here: it lives in `Halt`**, per
+the family ruling at `docs/family-architecture.md` §3.4. Uncatchability
+belongs to the definition rather than to a per-language proof
+obligation. -/
 inductive Refusal where
   | valueUB (u : UB)
   | memUB (f : MemFault)
-  | unsupported (what : String)
   | libc (name : String)
 deriving Repr, Inhabited, BEq
 
@@ -226,7 +230,6 @@ namespace Refusal
 retires: it is the product.** -/
 def cause : Refusal → Cause
   | .valueUB _ | .memUB _ => .ub
-  | .unsupported _ => .unsupported
   | .libc _ => .libc
 
 /-- The Annex J.2 index, where the refusal is UB and the annex has one. -/
@@ -238,7 +241,7 @@ def j2 : Refusal → Option String
       | .divideOverflow => "J.2(35)"
       | .shiftCountTooLarge .. | .shiftCountNegative _ => "J.2(48)"
       | .shiftNegativeOperand _ | .shiftOverflow .. => "J.2(49)")
-  | .unsupported _ | .libc _ => none
+  | .libc _ => none
 
 end Refusal
 
@@ -718,5 +721,92 @@ The standing requirement: every theorem prints its axioms, and no
 #print axioms loadBytes_storeBytes
 
 end Mem
+
+/-! ## §3.4 — `Halt`, the base outside `ρ`
+
+Per `docs/family-architecture.md` §3.4: the outcomes that **no construct
+in any modelled language may catch** live in the monad's BASE, not in
+`ExceptT`'s error. Inside `ρ`, "no catch reaches a refusal" is a
+per-language, per-construct PROOF OBLIGATION — and C cannot discharge it
+cheaply: this corpus alone has `setjmp` 2, `longjmp` 2 and 5 `jmp_buf`
+objects, plus signal handlers in the language at large. Uncatchability
+belongs to the definition.
+
+So `timeout` and `unsupported` are here, and the two catchable-in-
+principle refusal causes (`ub`, `libc`) stay in `Refusal`. -/
+
+/-- The base monad: outcomes nothing can catch. -/
+inductive Halt (α : Type) where
+  | ok (a : α)
+  /-- Fuel exhaustion, and nothing else. Carries NO state: a timeout is
+  not an observation, and state here would invite treating it as one. -/
+  | timeout
+  /-- Outside the tier. Carries its CAUSE, and optionally a snapshot of
+  the memory as it stood AT the refusal site.
+
+  **The snapshot is diagnostic only and is NEVER an observable.** It
+  exists so a REFUSE row can say what had happened by the time the model
+  declined; it must not reach any verdict comparison. That guard is
+  structural rather than advisory — see the `BEq` instance below, which
+  ignores it, and `Outcome`, which drops it. -/
+  | unsupported (what : String) (snapshot : Option Mem)
+deriving Repr, Inhabited
+
+namespace Halt
+
+/-- **The snapshot is not an observable, and this instance is where that
+is enforced.** Two runs that refused the same construct compare EQUAL
+even if they reached it through different memories — because the memory
+is diagnostic. A derived `BEq` would have compared it and quietly made a
+diagnostic aid into part of the verdict. -/
+instance [BEq α] : BEq (Halt α) where
+  beq
+    | .ok a, .ok b => a == b
+    | .timeout, .timeout => true
+    | .unsupported a _, .unsupported b _ => a == b
+    | _, _ => false
+
+@[inline] def bind : Halt α → (α → Halt β) → Halt β
+  | .ok a, f => f a
+  | .timeout, _ => .timeout
+  | .unsupported w s, _ => .unsupported w s
+
+instance : Monad Halt where
+  pure := .ok
+  bind := Halt.bind
+
+@[simp] theorem bind_ok (a : α) (f : α → Halt β) : Halt.bind (.ok a) f = f a := rfl
+@[simp] theorem bind_timeout (f : α → Halt β) :
+    Halt.bind (.timeout : Halt α) f = .timeout := rfl
+@[simp] theorem bind_unsupported (w : String) (sn : Option Mem) (f : α → Halt β) :
+    Halt.bind (.unsupported w sn) f = .unsupported w sn := rfl
+
+end Halt
+
+/-! ## The verdict a scoreboard sees
+
+`docs/c23-goal.md` §3's four verdicts, as one type. This is what inch 6
+reads, and it is the second place the snapshot guard is enforced: there
+is nowhere to put a `Mem` here, so a snapshot cannot reach a comparison
+even by accident. -/
+
+/-- What a run produced, with the three refusal causes kept apart. -/
+inductive Outcome (α : Type) where
+  | ok (value : α)
+  /-- A refusal that rode in `ExceptT`: cause `ub` or `libc`. -/
+  | refused (r : Refusal)
+  /-- Cause `unsupported` — out of tier. The snapshot is deliberately
+  NOT carried across this boundary. -/
+  | unsupported (what : String)
+  /-- Fuel exhaustion. Never conflated with a refusal. -/
+  | timeout
+deriving Repr, Inhabited, BEq
+
+/-- The cause of an outcome, where it has one. -/
+def Outcome.cause? : Outcome α → Option Cause
+  | .ok _ => none
+  | .refused r => some r.cause
+  | .unsupported _ => some .unsupported
+  | .timeout => none
 
 end LeanModels.C.C23

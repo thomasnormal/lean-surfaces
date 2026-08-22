@@ -54,6 +54,8 @@
 #          no Lean execution for A11's lock to cover.
 #   tier   LeanModels/<tier>/ and its Examples/ -> a SCOPED `lake build` of
 #          the touched modules (plus the tier root module where one exists).
+#          A NON-LEAN fixture under Examples/ is tier-local only when it is
+#          REACHABLE — see the reachability probe below.
 #   spine  LeanModels.lean, LeanModels/Core/, the shared harness, the
 #          lakefile -> the full build.  Anything UNRECOGNIZED lands here too.
 #
@@ -205,9 +207,9 @@ sweep_stale_tickets() {
 }
 
 # =================================================== THE DIFF CLASSIFIER
-# Pure functions over PATHS — no git, no filesystem except the one lookup
-# `tier_targets` needs — so `--self-test` exercises every branch without a
-# repository and without Lean.
+# Pure functions over PATHS — no git, no filesystem except the two lookups
+# `tier_targets` and the Examples reachability probe need — so `--self-test`
+# exercises every branch without a repository and without Lean.
 #
 # The direction of every doubt is fixed: an unrecognized path ESCALATES.  A
 # classifier that guesses "probably docs" and is wrong ships an unbuilt
@@ -321,6 +323,72 @@ module_of() {           # path.lean -> dotted module, or '' if any component
   echo "$out"
 }
 
+# ---- REACHABILITY, for the non-Lean fixtures under `Examples/`
+# The Go lane measured the hole in the first cut of this rule: their
+# `Examples/go/<case>/<case>.go` classified `tier` although it is PROVABLY
+# invisible to lake — nothing imports it, the Examples glob matches Lean
+# MODULE names, and a `.go` file has none.  The distinguishing property is
+# not the extension: `Examples/c/sunfish/sunfish.json` must STAY tier-local,
+# because a `.lean` ingests it.  The property is REACHABILITY.
+#
+# And reachability is not "reachable from a Lean module" either, which is
+# where this lane's own first cut would have been wrong.  Measured over the
+# 200 non-Lean fixtures in the tree: grepping `*.lean` alone leaves 79
+# unreferenced — but 40 of those are `Examples/python/**` fixtures named by
+# `harness/cases.json`, which is precisely what `harness/diff_test.py` reads.
+# Downgrading them to `docs` would have SKIPPED THE DIFFERENTIAL for a change
+# that is an input to it.  So the referencing set is what runs UNDER THE
+# TENURE: the Lean modules AND the gate corpora.  With both, 160 fixtures are
+# reachable and 40 are provably invisible — the `.go` case among them.
+#
+# The probe is an approximation (a bare basename can collide), and its errors
+# are steered: a false hit keeps a file tier-local, which costs a build; a
+# false miss would skip one.  So ANY DOUBT resolves to REACHABLE.
+#
+# And the doubt test is STRUCTURAL, not an exit code.  The self-test caught
+# this: pointed at an unreadable root, this grep exits **1 — "not found" —
+# where the same grep exits 2 for a bare missing operand, so "the probe could
+# not run" is INDISTINGUISHABLE from "nothing references it" by status alone.
+# Trusting the code would have silently downgraded every fixture whenever the
+# root was wrong.  So the root is checked before any status is believed —
+# §7.1 rule 5's lesson in another costume: a broken liveness check does not
+# fall back to caution, it falls FORWARD.
+example_fixture_is_reachable() {   # path -> 0 reachable, 1 provably invisible
+  local p="$1" base root rc
+  root="${LS_GREP_ROOT:-$CLONE}"
+  base="${p##*/}"
+  # DOUBT, structurally: no readable root means no probe, and no probe means
+  # reachable.  Never infer "unreferenced" from a search that did not happen.
+  [ -d "$root" ] && [ -r "$root" ] || return 0
+  if git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$root" grep -q -I -F --untracked -e "$p" -e "$base" \
+        -- '*.lean' 'harness/*.json' >/dev/null 2>&1
+    rc=$?
+  else
+    grep -rqI -F --include='*.lean' -e "$p" -e "$base" "$root" 2>/dev/null
+    rc=$?
+    if [ "$rc" != "0" ] && [ -d "$root/harness" ]; then
+      grep -rqI -F --include='*.json' -e "$p" -e "$base" "$root/harness" 2>/dev/null
+      rc=$?
+    fi
+  fi
+  case "$rc" in
+    0) return 0 ;;                  # a Lean module or a gate corpus names it
+    1) return 1 ;;                  # nothing under the tenure can see it
+    *) return 0 ;;                  # a status we cannot read: DOUBT -> reachable
+  esac
+}
+
+is_example_fixture() {  # a non-Lean Examples file the LAKEFILE does not name
+  case "$1" in
+    Examples/*.lean)                                   return 1 ;;
+    Examples/spice/*.cir)                              return 1 ;;
+    Examples/verilog-a/*.va|Examples/verilog-a/*.json) return 1 ;;
+    Examples/*/*)                                      return 0 ;;
+    *)                                                 return 1 ;;
+  esac
+}
+
 path_targets() {        # path -> build targets it makes owed ('' = none)
   local m
   case "$1" in
@@ -334,9 +402,13 @@ path_targets() {        # path -> build targets it makes owed ('' = none)
       # GUESSING the CLI spelling, and A11 forbids running Lean to find out.
       # Widen to the library instead: less scope, zero invention.
       if [ -n "$m" ]; then echo "$m"; else echo "Examples"; fi ;;
-    # `[[input_dir]]` in lakefile.toml: these files ARE build inputs.
+    # `[[input_dir]]` in lakefile.toml: these files ARE build inputs, and
+    # that is a fact of the lakefile rather than a heuristic — no probe.
     Examples/spice/*.cir)                       echo "Examples" ;;
     Examples/verilog-a/*.va|Examples/verilog-a/*.json) echo "Examples" ;;
+    # Any OTHER Examples fixture only reaches here once the probe has found
+    # it reachable, and the library that reads it must rebuild to see it.
+    Examples/*)                                 echo "Examples" ;;
     *) echo "" ;;
   esac
 }
@@ -352,9 +424,22 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     c="$(classify_path "$p")"
+    # A non-Lean fixture under Examples/ is tier-local only if something that
+    # RUNS UNDER THE TENURE can see it.  The line SAYS SO when it is not, so
+    # the coverage statement carries the reasoning and not just the verdict.
+    if [ "$c" = "tier" ] && is_example_fixture "$p"; then
+      if ! example_fixture_is_reachable "$p"; then
+        c="docs"
+        add_note "'$p' is a non-Lean fixture, unreferenced by any Lean module or gate corpus — invisible to lake, classified docs"
+      fi
+    fi
     case "$c" in spine) rank=3 ;; tier) rank=2 ;; *) rank=1 ;; esac
     [ "$rank" -gt "$CLASS_RANK" ] && CLASS_RANK="$rank"
     is_recognized "$p" || CLASS_UNKNOWN="${CLASS_UNKNOWN:+$CLASS_UNKNOWN }$p"
+    # A path classified `docs` contributes no tier and no target — including
+    # one the probe just downgraded.  Otherwise the scope would still carry a
+    # file nothing under the tenure reads.
+    if [ "$c" != "docs" ]; then
     for t in $(tiers_of "$p"); do
       seen=0
       for tt in $CLASS_TIERS; do [ "$tt" = "$t" ] && seen=1; done
@@ -368,6 +453,7 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
         add_build_target "$t"
       fi
     done
+    fi
     case "$p" in
       docs/*.lean|harness/*.lean|tools/*.lean)
         add_note "'$p' is Lean but no lake target — running it is still Lean execution (A11): pass --gates" ;;
@@ -519,6 +605,50 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a doc's .lean is still docs"       "$(class_name "$CLASS_RANK")" "docs"
   case "$CLASS_NOTES" in *A11*) n=said ;; *) n=silent ;; esac
   check "  ...but A11 is said out loud"     "$n" "said"
+
+  # ---- the Examples reachability probe (the Go lane's measurement)
+  # A fixture TREE, so both directions are exercised for real: a `.lean` that
+  # names one fixture, a gate corpus that names another, and one file that
+  # nothing names at all.
+  fx="$tmp/fixroot"
+  mkdir -p "$fx/Examples/c/sunfish" "$fx/Examples/go/rung1" \
+           "$fx/Examples/python/exc_lab" "$fx/harness"
+  printf 'import LeanModels.C\n-- ingests Examples/c/sunfish/sunfish.json\n' \
+         > "$fx/Examples/c/sunfish/guards.lean"
+  : > "$fx/Examples/c/sunfish/sunfish.json"
+  : > "$fx/Examples/go/rung1/rung1.go"
+  : > "$fx/Examples/python/exc_lab/exc_lab.py"
+  printf '{"cases": [{"file": "Examples/python/exc_lab/exc_lab.py"}]}\n' \
+         > "$fx/harness/cases.json"
+  LS_GREP_ROOT="$fx"
+
+  cls Examples/c/sunfish/sunfish.json
+  check "a REFERENCED fixture (.lean names it) -> tier" "$(class_name "$CLASS_RANK")" "tier"
+  check "  ...and it owes the Examples library"         "$BUILD_TARGETS" "Examples LeanModels.C"
+
+  cls Examples/python/exc_lab/exc_lab.py
+  check "a GATE-CORPUS fixture -> tier"                 "$(class_name "$CLASS_RANK")" "tier"
+
+  cls Examples/go/rung1/rung1.go
+  check "an UNREFERENCED fixture -> docs"               "$(class_name "$CLASS_RANK")" "docs"
+  check "  ...contributing no tier"                     "$CLASS_TIERS" ""
+  check "  ...and no build target"                      "$BUILD_TARGETS" ""
+  case "$CLASS_NOTES" in *"unreferenced by any Lean module or gate corpus"*) n=said ;; *) n=silent ;; esac
+  check "  ...and the line SAYS WHY"                    "$n" "said"
+
+  cls Examples/c/sunfish/guards.lean
+  check "a .lean under Examples is tier, no probe"      "$(class_name "$CLASS_RANK")" "tier"
+  cls Examples/spice/rc/net.cir
+  check "an input_dir fixture is tier without a probe"  "$(class_name "$CLASS_RANK")" "tier"
+
+  cls Examples/go/rung1/rung1.go Examples/c/sunfish/sunfish.json
+  check "MIXED invisible+reachable -> tier"             "$(class_name "$CLASS_RANK")" "tier"
+  check "  ...scoped to the reachable one's tier"       "$CLASS_TIERS" "C"
+
+  LS_GREP_ROOT="$tmp/does-not-exist"
+  cls Examples/go/rung1/rung1.go
+  check "DOUBT (no tree to probe) -> stays tier"        "$(class_name "$CLASS_RANK")" "tier"
+  LS_GREP_ROOT=""
 
   check "NEVER DOWNGRADE: lane gates keep the tenure" "$(tenure_needed docs 'python3 x.py')" "yes"
   check "tier gates include the differential" \

@@ -286,3 +286,65 @@ cited per-lane backlog id was verified to resolve in the tree at push time
 against the heading list rather than remembered — §5.4a's retrieval clause:
 **a grep that agrees with your prior is the one to re-run.** No Lean was
 executed.
+
+---
+
+## 2026-08-22-qol-5 — `--classify` reachability: the Go lane's correction, and the measurement that widened it
+
+The Go lane measured a hole in `2026-08-22-qol-1`'s `Examples/*` rule:
+`Examples/go/pipeline/pipeline.go` classified **tier** although it is
+*provably invisible to lake* — nothing imports it, the `Examples` glob
+matches Lean **module** names, and a `.go` file has none. Their reasoning is
+right and the fix is theirs: **the distinguishing property is not the
+extension, it is REACHABILITY.** `Examples/c/sunfish/sunfish.json` must stay
+tier-local because a `.lean` ingests it.
+
+### The measurement widened the referencing set, and this is the finding
+
+Implemented verbatim — `git grep` the path and basename across `*.lean` — the
+rule was **measured against all 200 non-Lean fixtures in the tree before it
+landed**: 121 referenced, **79 unreferenced**. But **40 of those 79 are
+`Examples/python/**` fixtures named by `harness/cases.json`**, which is
+exactly what `harness/diff_test.py` reads. Downgrading them to `docs` would
+have **skipped the differential for a change that is an input to it** — a
+real downgrade, and the law the classifier is built around forbids it.
+
+So the referencing set is *what runs under the tenure*: **the Lean modules
+AND the gate corpora**. With both: **160 reachable, 40 provably invisible** —
+the `.go` case among them, alongside a README, the ingested-then-committed
+envelopes, and the SV `sem2` probe corpus.
+
+Order of rules, strongest evidence first: a `.lean` is tier without a probe;
+a lakefile **`[[input_dir]]`** member (`Examples/spice/*.cir`,
+`Examples/verilog-a/*.va|*.json`) is tier without a probe, because that is a
+fact of `lakefile.toml` and not a heuristic; everything else is probed. A
+downgraded fixture contributes **no tier and no build target**, and the
+classification line **says why** — so the §5.4a statement carries the
+reasoning, not just the verdict.
+
+### The self-test caught a defect in the doubt direction
+
+Doubt was supposed to resolve to *reachable* via grep's error status. Pointed
+at an unreadable root, **this grep exits 1 — "not found" — where the same
+grep exits 2 for a bare missing operand.** "The probe could not run" is
+therefore **indistinguishable from "nothing references it" by status alone**,
+and trusting the code would have silently downgraded every fixture whenever
+the root was wrong. The doubt test is now **structural** — the root must be a
+readable directory before any status is believed. That is §7.1 rule 5's
+lesson in another costume: *a broken liveness check does not fall back to
+caution, it falls FORWARD.*
+
+### Triad
+
+`bash -n` clean. `--self-test`: **54 ok, 0 failed** (42 → 54, **12 new**): a
+referenced fixture (a `.lean` names it) → tier and owes the `Examples`
+library; a gate-corpus fixture → tier; an unreferenced one → docs with no
+tier, no target, and the line that says why; a `.lean` under `Examples` and an
+`input_dir` member → tier **without** a probe; mixed invisible+reachable →
+tier scoped to the reachable one; and DOUBT → tier. The probe's two
+directions run against a real fixture tree built by the test, so both the
+`git grep` and plain-`grep` paths are exercised. Verified live on all three
+real cases: `pipeline.go` → **docs**, `sunfish.json` → **tier C**,
+`exc_lab.py` (named only by `cases.json`) → **tier Python**. Tools-only
+change: **no tenure, no Lean executed** — this lane's own rule, applied to
+this lane.

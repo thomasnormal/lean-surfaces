@@ -52,6 +52,8 @@ open Examples.python.sunfish.bound_depth (sbMB sbMBRest sbNull sbStand sbMB_spli
   sbCorr sbCorr_noElse sbStore sbStore_lit sbEvict sbRet tableSize
   entryDefault entryOf tpKey entryG entryNotFun entryClsAux entryNTAux
   evict_dead ret_best corr_dead
+  sbKill sbKill_lit sbKillB sbCut sbCut_lit sbCutB sbCutB_split sbCalm
+  tsG lenG lenNotFun lenCls lenNT boolChain_and2
   execStmt_assign_name)
 open Examples.python.sunfish.order_genexp
 
@@ -1828,6 +1830,237 @@ private def kcAnswer (p : RVal) (F : Nat) : Option (String × Nat) :=
 #print axioms mate_line
 #print axioms best_line
 #print axioms corr_fires
+
+
+/-! ## §13 R3e — THE ALLOCATION LEDGER, and the WRITE `qs_cut` could not serve
+
+§L32 measured a depth-1 node's heap and left it a total: *"a depth-1 node
+allocates 176 objects on the settle arm alone"*. §12 attributed 172 of them.
+This section closes the ledger — **both arms, exactly** — and lands the write
+that §11 filed here.
+
+### THE LEDGER, and it closes to the object on both arms
+
+| link | `SubtreeWrites` arm | settle (`gamma ≥ 47`) | cut (`gamma ≤ 0`) |
+|---|---|---|---|
+| `self.nodes += 1` | `.other` | 0 | 0 |
+| the guard cell (statement 7) | `.alloc` | 1 | 1 |
+| the `moves` closure | `.alloc` | 1 | 1 |
+| the calm genexp | `.alloc` | **1** | 1 |
+| `moves()`'s generator | `.alloc` | 1 | 1 |
+| the ordering line | `.alloc` ×84 | **84** | **84** |
+| `pos.move(move)` | `.alloc` | — | **1** |
+| the child's whole subtree | `.alloc` ×88 | — | **88** |
+| the killer store | **`.other`** | — | 0 |
+| the correction's partial drain | `.alloc` ×88 | **88** | — |
+| the table store | `.store` | 0 | 0 |
+| | | **176** | **177** |
+
+against §L32's measured `70 → 246` and `70 → 247`. **Both close exactly.**
+
+**And the two arms cost the same for opposite reasons.** The settle arm spends
+its 88 on the correction's partial drain — it never searches. The cut arm spends
+its 88 on the child — its `live` is set, so §11's `corr_skips_live` fires and the
+correction costs nothing. One number, two entirely different provenances, and the
+plan had attributed neither.
+
+**How the remaining three are pinned.** The guard cell, the `moves` closure and
+the generator are the same three `basecase_depth0.lean` §9's own chain names at
+depth 0, and here they are pinned by ARITHMETIC rather than by a separate
+measurement: both totals close at exactly 3, and they are *different* totals
+(176 and 177) reached through *different* terms, so a wrong 3 would have to be
+wrong twice in the same direction. The four measured rows are `#guard`ed below or
+in §9/§10/§12.
+
+### THE WRITE, and why `qs_cut` could not serve it
+
+`if best >= gamma:` → `if move is not None and depth: self.tp_move[pos] = move`.
+`qs_cut` proves the cutoff heap-free at a QS node, and its premise is
+`move is None` — precisely what makes the depth-0 fold heap-free. At depth 1 with
+a real move BOTH conjuncts hold and the store lands, which is the `.other` link
+in the table above and the reason the cut arm's ledger has a write in it at all.
+
+**The eviction behind it is not a formality.** Its body is
+`Stmt.unsupported "Delete"` — the shipped `del self.tp_move[next(…)]` is outside
+the tier — so a table over `TABLE_SIZE` makes the run REFUSE, not evict.
+`km_evict_dead` is `BoundWF.room` for `tp_move`, the twin of `evict_dead`'s for
+`tp_score`, and its premises are stated at the POST-STORE world for the reason
+§11 recorded.
+
+### The ASK this section leaves, and it is a MISPLACED-GENERALITY one
+
+Turning the table above into a `SubtreeWrites` chain needs four helpers —
+`sw_push`, `lt_size_push`, `lt_size_append` and `sw_append` (an append is a RUN
+of allocations, and that one is a real induction). All four are already proved…
+in `basecase_depth0.lean` §9, which this file does not import and which is the
+census lane's ground. **None of them mentions sunfish**: they are general facts
+about `Heap` and `SubtreeWrites` and they belong in
+`LeanModels/Python/DictCalc.lean`, beside the inductive they are about. The ask
+is to LIFT them there rather than to copy them here — general plumbing parked in
+a lane's file is a duplication trap, and this is the second lane to reach for it.
+With them in scope the chain above is six `.trans` links and the ledger becomes a
+theorem instead of a table. -/
+
+/-- The dict the KILLER store leaves at `tp_move`: `pos |-> move`. -/
+def kmStored (es : Array (RVal × RVal)) (sv : Nat) (pv mvv : RVal) : Obj :=
+  .dict (dictStore es.toList pv mvv).1.toArray
+    (if (dictStore es.toList pv mvv).2 = true then sv + 1 else sv)
+
+theorem sbKillB_split : ∃ (a b c d f g : Span) (ev : Stmt),
+    sbKillB = [.assign #[.subscript (.attribute (.name "self" a) "tp_move" b)
+        (.name "pos" c) d] (.name "move" f) g, ev] :=
+  ⟨_, _, _, _, _, _, _, rfl⟩
+
+theorem sbKillEvict_lit : ∃ (bd : Array Stmt) (q0 q1 q2 q3 q4 q5 q6 : Span),
+    sbKillB[1]! = .ifStmt (.compare
+        (.call (.name "len" q0) #[.attribute (.name "self" q1) "tp_move" q2] #[] Option.none q3)
+        #[.gt] #[.name "TABLE_SIZE" q4] q5) bd #[] q6 :=
+  ⟨_, _, _, _, _, _, _, _, rfl⟩
+
+/-- **THE KILLER STORE.** `self.tp_move[pos] = move` — the write `qs_cut` could
+not serve, because its `hm` premise is `move is None`. -/
+theorem killer_stores (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sfl : Int) (pv mvv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hmv : Env.lookup e "move" = some mvv)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sfl))
+    (hdict : Heap.get? w.heap tm = some (.dict es sv))
+    (hlt : tm < w.heap.size)
+    (hk : hashableKey pv = true) :
+    execStmt sunfish 12 ⟨w, e⟩ sbKillB[0]!
+      = .ok ⟨{ w with heap := w.heap.set tm (kmStored es sv pv mvv) hlt }, e⟩ .next := by
+  obtain ⟨a, b, c, d, f, g, ev, hlit⟩ := sbKillB_split
+  simp only [Heap.get?] at hobj hdict
+  rw [show sbKillB[0]! = _ from congrArg (fun l => l[0]!) hlit]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hmv, hobj, hdict,
+    searcherObj, kmStored, dif_pos hlt]
+
+/-- **AND THE `tp_move` EVICTION NEVER FIRES.** `evict_dead`'s twin at the OTHER
+table — and it is not decoration: the body is `Stmt.unsupported "Delete"`, so a
+table over the cap makes the shipped run REFUSE. This is `BoundWF.room` for
+`tp_move`. -/
+theorem km_evict_dead (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sfl : Int) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hnolen : Env.lookup e "len" = Option.none)
+    (hnots : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sfl))
+    (hdict : Heap.get? w.heap tm = some (.dict es sv))
+    (hsz : (es.size : Int) ≤ tableSize) :
+    execStmt sunfish 12 ⟨w, e⟩ sbKillB[1]! = .ok ⟨w, e⟩ .next := by
+  obtain ⟨bd, q0, q1, q2, q3, q4, q5, q6, hlit⟩ := sbKillEvict_lit
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 11 ⟨w, e⟩
+      (.compare (.call (.name "len" q0) #[.attribute (.name "self" q1) "tp_move" q2] #[]
+        Option.none q3) #[.gt] #[.name "TABLE_SIZE" q4] q5)
+        = .ok ⟨w, e⟩ (.bool false) := by
+    py_simp [-globalsFold, -globalsStep, hslf, hnolen, hnots, lenG, lenNotFun, lenCls,
+      lenNT, tsG, hobj, hdict, searcherObj]
+    omega
+  rw [hlit, execStmt_if_false hc rfl]
+  simp only [execStmts]
+
+/-- **R3e's WRITE HALF — the depth-1 cutoff fires and STORES the killer.**
+`qs_cut` proves the same statement heap-free at a QS node, and it cannot serve
+here: its `hm` premise is `move is None`, which is exactly what makes the depth-0
+fold heap-free. At a real move with `depth ≠ 0` both conjuncts of the killer
+guard hold, `tp_move[pos] = move` lands, and the eviction — whose body is
+`Stmt.unsupported "Delete"` — must be shown DEAD or the shipped run refuses. -/
+theorem kill_fires (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sfl bst gamma d : Int) (pv mvv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (F : Nat) (hlt : tm < w.heap.size)
+    (hb : Env.lookup e "best" = some (.int bst))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hmv : Env.lookup e "move" = some mvv)
+    (hisnot : ∀ G : Nat, evalCompareOpH w.heap G .isNot mvv .none = .ok true)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hd0 : d ≠ 0)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hnolen : Env.lookup e "len" = Option.none)
+    (hnots : Env.lookup e "TABLE_SIZE" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sfl))
+    (hdict : Heap.get? w.heap tm = some (.dict es sv))
+    (hk : hashableKey pv = true) (hge : gamma ≤ bst)
+    (hobj' : Heap.get? (w.heap.set tm (kmStored es sv pv mvv) hlt) sa
+      = some (searcherObj ci ts tm hs n dl sfl))
+    (hroom : ((dictStore es.toList pv mvv).1.toArray.size : Int) ≤ tableSize) :
+    execStmt sunfish (F + 20) ⟨w, e⟩ sbCut
+      = .ok ⟨{ w with heap := w.heap.set tm (kmStored es sv pv mvv) hlt }, e⟩ .brk := by
+  obtain ⟨c0, c1, c2, c3, hcut⟩ := sbCut_lit
+  obtain ⟨ks, hcb⟩ := sbCutB_split
+  obtain ⟨k0, k1, k2, k3, k4, k5, hkill⟩ := sbKill_lit
+  have hdict' : Heap.get? (w.heap.set tm (kmStored es sv pv mvv) hlt) tm
+      = some (.dict (dictStore es.toList pv mvv).1.toArray
+          (if (dictStore es.toList pv mvv).2 = true then sv + 1 else sv)) := by
+    show Heap.get? (w.heap.set tm (kmStored es sv pv mvv) hlt) tm = some (kmStored es sv pv mvv)
+    simp [Heap.get?, hlt]
+  have hcond : evalExpr sunfish (F + 19) ⟨w, e⟩
+      (.compare (.name "best" c0) #[.gtE] #[.name "gamma" c1] c2) = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hb, hg]
+    omega
+  have hmvE : evalExpr sunfish (F + 15) ⟨w, e⟩ (.name "move" k0) = .ok ⟨w, e⟩ mvv := by
+    py_simp [-globalsFold, -globalsStep, hmv]
+  have hnoneE : evalExpr sunfish (F + 14) ⟨w, e⟩ (.constant Const.none k1)
+      = .ok ⟨w, e⟩ .none := by
+    py_simp [-globalsFold, -globalsStep]
+  have h1 : evalExpr sunfish (F + 16) ⟨w, e⟩
+      (.compare (.name "move" k0) #[.isNot] #[.constant Const.none k1] k2)
+        = .ok ⟨w, e⟩ (.bool true) :=
+    compare_one (F := F + 13) hmvE hnoneE (hisnot (F + 14))
+  have h2 : evalExpr sunfish (F + 15) ⟨w, e⟩ (.name "depth" k3) = .ok ⟨w, e⟩ (.int d) := by
+    py_simp [-globalsFold, -globalsStep, hd]
+  have hkc : evalExpr sunfish (F + 17) ⟨w, e⟩
+      (.boolOp .and #[.compare (.name "move" k0) #[.isNot] #[.constant Const.none k1] k2,
+        .name "depth" k3] k4) = .ok ⟨w, e⟩ (.int d) := by
+    rw [evalExpr]
+    exact boolChain_and2 (F := F + 15) h1 rfl h2
+  rw [hcut, execStmt_if_true hcond rfl, hcb]
+  simp only [execStmts]
+  rw [hkill, execStmt_if_true hkc (by simp [truthyH, truthy, hd0])]
+  obtain ⟨a, b, c, d', f, g, ev, hbl⟩ := sbKillB_split
+  rw [show sbKillB.toArray.toList = [sbKillB[0]!, sbKillB[1]!] from by rw [hbl]; rfl]
+  simp only [execStmts]
+  rw [execStmt_mono (killer_stores w e ci sa ts tm hs n dl sfl pv mvv es sv
+    hslf hpos hmv hobj hdict hlt hk) (by simp) (F + 16) (by omega)]
+  simp only [Run.ok_bind]
+  rw [execStmt_mono (km_evict_dead { w with heap := w.heap.set tm (kmStored es sv pv mvv) hlt }
+    e ci sa ts tm hs n dl sfl (dictStore es.toList pv mvv).1.toArray
+    (if (dictStore es.toList pv mvv).2 = true then sv + 1 else sv)
+    hslf hnolen hnots hobj' hdict' hroom) (by simp) (F + 15) (by omega)]
+  simp only [Run.bind]
+  rfl
+
+/-! ### The ledger's measured rows
+
+The correction's 88 is §12's own `#guard` (154 − 66 at the opening board); the
+child's 88 and `pos.move`'s 1 are §8's. These two are the ones §12 did not need. -/
+
+private def allocOf (ex : Expr) (env : REnv) (F : Nat) : Option Nat :=
+  match evalExpr sunfish F ⟨initWorld sunfish, env⟩ ex with
+  | .ok st _ => some (st.world.heap.size - (initWorld sunfish).heap.size)
+  | _ => Option.none
+
+private def calmE : Expr :=
+  match sbCalm with | .assign _ v _ => v | _ => .constant .none nowhere
+
+/-! The calm genexp allocates **one** object, and the ordering line **84** —
+§L25's own number, re-measured here as a ledger row. -/
+#guard allocOf calmE [("pos", posH 0)] 1024 == some 1
+#guard allocOf ordLine [("pos", posH 0), ("depth", .int 1)] 1024 == some 84
+
+/-! And the ledger closes, on both arms, against §0's measured totals. -/
+#guard 1 + 1 + 1 + 1 + 84 + 88 == 176
+#guard 1 + 1 + 1 + 1 + 84 + 1 + 88 == 177
+#guard probe 47 1 300 == some (46, 1, 70, 246) && 246 - 70 == 176
+#guard probe 0 1 300 == some (0, 2, 70, 247) && 247 - 70 == 177
+
+#print axioms sbKillB_split
+#print axioms sbKillEvict_lit
+#print axioms killer_stores
+#print axioms km_evict_dead
+#print axioms kill_fires
 
 
 end Examples.python.sunfish.fold_depth1

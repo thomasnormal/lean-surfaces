@@ -13907,3 +13907,86 @@ landing is research + two instruments + docs; **no Lean changed**, so no axioms
 moved. (`diff_test` 1372 → 1394 and `script_corpus` 64 → 65 since §L50 are
 sibling lanes' growth, not this one's — the C lane still adds no rows to
 either.)
+
+
+## L55 — R3e: the ALLOCATION LEDGER closes to the object on BOTH arms, and the write `qs_cut` could not serve lands (2026-08-22)
+
+`Examples/python/sunfish/fold_depth1.lean` §13. §L32 measured a depth-1 node's
+heap and left it a total; §L52 attributed 172 of the 176. **The ledger now
+closes exactly, on both arms**, and the killer-store write filed here in §L47 is
+proved.
+
+### The ledger
+
+| link | `SubtreeWrites` arm | settle (`gamma ≥ 47`) | cut (`gamma ≤ 0`) |
+|---|---|---|---|
+| `self.nodes += 1` | `.other` | 0 | 0 |
+| the guard cell (statement 7) | `.alloc` | 1 | 1 |
+| the `moves` closure | `.alloc` | 1 | 1 |
+| the calm genexp | `.alloc` | **1** | 1 |
+| `moves()`'s generator | `.alloc` | 1 | 1 |
+| the ordering line | `.alloc` ×84 | **84** | **84** |
+| `pos.move(move)` | `.alloc` | — | **1** |
+| the child's whole subtree | `.alloc` ×88 | — | **88** |
+| the killer store | **`.other`** | — | 0 |
+| the correction's partial drain | `.alloc` ×88 | **88** | — |
+| the table store | `.store` | 0 | 0 |
+| | | **176** | **177** |
+
+against §L32's measured `70 → 246` and `70 → 247`. Both close **exactly**.
+
+**The two arms cost the same for opposite reasons**, which is the finding worth
+carrying. The settle arm spends 88 on the correction's partial drain — it never
+searches. The cut arm spends 88 on the CHILD, and its correction is free, because
+`live` is set and §L47's `corr_skips_live` kills the guard on operand two. One
+number, two entirely different provenances, and the plan had attributed neither.
+
+**How the remaining three are pinned, stated honestly.** The guard cell, the
+`moves` closure and the generator are the three `basecase_depth0.lean` §9's own
+chain names at depth 0. They are pinned here by ARITHMETIC, not by a separate
+measurement: both totals close at exactly 3, and they are *different* totals
+(176 and 177) reached through *different* terms — so a wrong 3 would have to be
+wrong twice in the same direction. The measured rows (calm 1, ordering 84,
+drain 88, `pos.move` 1, child 88) are `#guard`ed in §8/§9/§12/§13.
+
+### The write, and why `qs_cut` could not serve it
+
+`qs_cut` proves the cutoff heap-free at a QS node and its premise is
+`move is None` — which is exactly what MAKES the depth-0 fold heap-free. At
+depth 1 with a real move both conjuncts of `move is not None and depth` hold, so
+`self.tp_move[pos] = move` lands. `killer_stores`, `km_evict_dead` and
+`kill_fires` are that, and the middle one is not a formality: **the eviction's
+body is `Stmt.unsupported "Delete"`**, so a `tp_move` over `TABLE_SIZE` makes the
+shipped run REFUSE rather than evict. It is `BoundWF.room` for `tp_move`, the
+twin of `evict_dead`'s for `tp_score`, with its premises at the POST-STORE world
+for §L47's reason.
+
+All three gates elaborated on the first attempt — the `store_runs`/`evict_dead`
+template transferred with only the key and the table changed.
+
+### THE ASK, and it is a MISPLACED-GENERALITY one
+
+Turning the ledger into a `SubtreeWrites` chain needs four helpers: `sw_push`,
+`lt_size_push`, `lt_size_append`, and `sw_append` (an append is a RUN of
+allocations — that one is a real induction). All four are already proved, in
+`basecase_depth0.lean` §9, which this file does not import and which is the
+census lane's ground.
+
+**None of them mentions sunfish.** They are general facts about `Heap` and
+`SubtreeWrites`, and they belong in `LeanModels/Python/DictCalc.lean` beside the
+inductive they are about. So the ask is to **LIFT them there**, not to copy them
+here. *General plumbing parked in a lane's file is a duplication trap, and this
+is the second lane to reach for it.* With them in scope the ledger above is six
+`.trans` links and becomes a theorem instead of a table.
+
+The `store_runs_low_d` ask (§L52) is still queued behind the calmness lane's F1
+close, so `tail_runs_mate` still waits on it — as filed, nothing in this section
+depends on it.
+
+### Triad
+
+`lake build` **3692 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched;
+`script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud. All five new
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
+`sorry`, no `native_decide`. File throughput **47 s → 53 s**.

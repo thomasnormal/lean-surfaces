@@ -18110,28 +18110,25 @@ through a NAMED primitive with its own `@[spec]` — the same discipline as
 **Measured: `Std.Do` (`WP`, `Triple`, `SPred`, `PredTrans`) ships in the
 pinned `v4.33.0-rc1`**, so nothing is blocked on a toolchain bump.
 
-### Triad — and an honest gap
+### Triad
 
-**`docs_check` 75/75**, 20 illustrative-exempt. `c_construct_census
---selftest` passes, the census is byte-identical on a double run, and
-`c_profile_probe --check` passes all 8 depended-on facts.
+Run once, under the machine-wide build lock, after queueing 63 minutes
+for it.
 
-**The full-tree `lake build`, `diff_test` and `script_corpus` did NOT
-run.** The machine-wide build lock (`scratchpad/BUILD_LOCK_PROTOCOL.md`)
-was held continuously by sibling lanes for over an hour; this lane queued
-for it, spun correctly, and never reached the front. What was verified
-instead, and it is the whole of this lane's delta:
+`lake build` **3702 jobs, exit 0** — including `LeanModels.C.C23.Value`,
+`LeanModels.C.C23.Memory`, `LeanModels.C.C23`, `LeanModels.C`,
+`Examples.c.sunfish.guards` and `Examples.c.sunfish.memory` (5.4s, all 50
+gates). `docs_check` **75/75**, 20 illustrative-exempt. `diff_test`
+**1394 cases, 0 failed**, 118 whitelisted, 1276 matched. `script_corpus`
+**65 scripts, 0 failed**, 50 matched, 15 loud.
 
-**every file of the delta compiles from a FRESH olean root** with the
-pinned `v4.33.0-rc1` — `C/Ast`, `C/C23/Value`, `C/C23/Memory`, `C/Json`,
-`C/Load`, `C/C23`, `C`, `Examples/c/sunfish/guards`, and
-`Examples/c/sunfish/memory` with all 50 gates. That is not a substitute
-for the tree build in general, but here it is close to one: **nothing
-outside the C lane imports `LeanModels.C`** (measured — the lane reaches
-`lake build` only through `Examples/c/sunfish/guards.lean`), so the
-tree-build delta is exactly the nine files above. `diff_test` and
-`script_corpus` exercise the Python lane, which this landing does not
-touch.
+`c_construct_census --selftest` passes, the census is byte-identical on a
+double run, and `c_profile_probe --check` passes all 8 depended-on facts.
+
+**Axioms, as printed by the build**: `get?_set_self` `[propext]`;
+`get?_alloc`, `resolve_alloc`, `resolve_ok`, `loadBytes_storeBytes`
+`[propext, Quot.sound]`; `resolve_kill` `[propext, Classical.choice,
+Quot.sound]`. No `sorryAx`, no `native_decide`.
 
 Two lock defects were found and reported along the way: a **stale lock**
 whose owner PID was dead (cleared after verifying no live `lake`

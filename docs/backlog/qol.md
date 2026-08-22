@@ -763,7 +763,7 @@ doing anything about it.
 
 ### Triad
 
-`bash -n` clean. `--self-test`: **99 ok, 0 failed** (88 → 99, **11 new**).
+`bash -n` clean. `--self-test`: **98 ok, 0 failed** (88 → 98, **10 new**).
 Both refusals are exercised **by invoking the script itself** and asserting
 exit 2 plus the message; the accepted path runs end to end under a
 **sandboxed lock and queue** with `--dry-run`, proving it reaches the tenure,
@@ -772,3 +772,15 @@ unreachable without Lean, so what is asserted there is the decision — the
 coverage statement names the remote, says the floor is not applicable, and
 **claims nothing about this repository**. No real lock was taken and **no Lean
 was executed**.
+
+### Correction, same day: the count above was PREDICTED, not measured
+
+The entry and the commit message for this landing first said **99 ok (11
+new)**. The measured number is **98 ok (10 new)** — I counted the checks I
+intended to write rather than reading the ones the run reported. It is a
+harmless number attached to a green run, which is exactly why it is worth
+recording: **§5.4a is not a rule about important numbers**, it is a rule about
+where every number comes from, and a figure written from intent rather than
+from output is the failure mode in its cheapest form. The commit message
+carrying `99` is already on master and is **not rewritten** — shared history
+does not get rebased to hide an error; it gets a correction that points at it.

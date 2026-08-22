@@ -2632,6 +2632,28 @@ result. The `-c` is the whole point (APFS clones the blocks); `-p`
 preserves the timestamps Lake's staleness checks read. Seed only from a
 peer with **no build running** (verify by parentage) and an untorn tree.
 
+**THE A13 CAVEAT, and it has already caught three lanes: `cp -Rpc` SEEDS THE
+PEER'S BRANCH TOO.** A seeded clone inherits whatever branch the peer had
+checked out. Two lanes were silently sitting on `pyrebuild-monadic` and
+pushing a **stale local `master` ref**, and the obvious check does not
+catch it: `git rev-list HEAD..github/master` reads **0** because it
+compares **HEAD**, not the ref you are about to push. So:
+
+* **check `git branch --show-current` immediately after seeding**, and
+* **push `HEAD:master`**, never bare `master`, which pushes the local ref
+  rather than the work in hand.
+
+This lane hit the same trap independently and from the other direction
+(§7.2's clone incident): a clone whose `origin` was a stale bundle and
+whose branch tracked `pyrebuild-monadic`. Three lanes, one root cause —
+**a seeded or borrowed clone's identity is inherited, not chosen, so it
+must be verified rather than assumed.**
+
+**One operational note on the wrapper**: `--lane` rejects hyphens
+(`[A-Za-z0-9_.]+`), and the reason is Amendment 9's ticket format — a
+ticket is `<epoch>-<pid>-<lane>`, so a hyphen in the lane tag breaks the
+field parse the FIFO queue depends on. Lane tags are bare words.
+
 **`tools/triad.sh` is the canonical wrapper**, and adoption is the point of
 having it: private per-lane scripts were measured at a **38% violation
 density** across the applicable protocol cells, and a prose register can
@@ -2874,6 +2896,20 @@ race §7.2's push-time re-read rule exists to survive.
   concurrent `lake build` by parentage). The audit found the build lock
   being violated by two lanes for 48 minutes *while it was being written*,
   so this is the check that pays.
+**THE FIRST RE-MEASUREMENT HAS LANDED, and the cadence is what produced
+it.** Amendment 9's FIFO ticket queue was adopted on the strength of a
+failure — the C lane losing five consecutive handoffs while queued first,
+and a 43-minute wait under bare spinning. Re-measured by the ES lane, **the
+same lane under the same contention acquired the lock in 58 SECONDS**:
+roughly a **45× improvement**, and the starvation mode is gone rather than
+merely shortened.
+
+That is the point of §9.7 rather than a footnote to it: an amendment
+adopted from an incident is a hypothesis until someone re-runs it under the
+same conditions. **This is the first strategy item to complete that loop**,
+and it is the template for the rest — the exit-code fixes and the 38%
+violation density are next, and they are owed the same treatment.
+
 * **FULL — about every 10 landings**, and the next full audit **re-measures
   its own headline numbers**: the **38%** violation density, and whether
   the three `--compare` exit codes and four `git_rev` stamps are actually

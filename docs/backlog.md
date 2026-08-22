@@ -21400,3 +21400,38 @@ and it belongs to the kit. No committed census JSON was touched; no output
 schema changed, so `--compare` against every committed artifact still agrees and
 only the exit status moved. Regressions checked: `c_construct_census --selftest`
 ok, `es_census --self-test` ok (7 paths), `docs_check` 83/83.
+
+### AMENDMENT 9 RE-MEASURED (~45x), and the A13 branch caveat — three lanes, one root cause
+
+**THE FIRST RE-MEASUREMENT OF A STRATEGY ITEM, and §9.7's cadence is what
+produced it.** Amendment 9's FIFO ticket queue was adopted on the strength of a
+failure: the C lane lost **five consecutive handoffs while queued first**, and
+bare spinning waited **43 minutes**. Re-measured by the ES lane under the same
+contention: **58 SECONDS** — roughly **45x**, with the starvation mode gone
+rather than merely shortened.
+
+Written into §9.7 as more than a footnote, because it is the loop closing: **an
+amendment adopted from an incident is a hypothesis until someone re-runs it
+under the same conditions.** This is the first item to complete that loop and it
+is the template for the rest — the three `--compare` exit-code fixes and the 38%
+violation density are owed the same treatment at the next full audit.
+
+**THE A13 CAVEAT — `cp -Rpc` SEEDS THE PEER'S BRANCH TOO.** A seeded clone
+inherits whatever branch the peer had checked out. Two lanes were silently on
+`pyrebuild-monadic` **pushing a stale local `master` ref**, and the obvious check
+does not catch it: `git rev-list HEAD..github/master` reads **0** because it
+compares **HEAD**, not the ref about to be pushed. Rules now in §7.1a: check
+`git branch --show-current` **immediately after seeding**, and push
+**`HEAD:master`**, never bare `master`.
+
+**Three lanes, one root cause.** This lane hit the same trap from the other
+direction — a fallback clone whose `origin` was a stale *bundle* and whose branch
+tracked `pyrebuild-monadic` (recorded above). Different entry points, same
+failure: **a seeded or borrowed clone's identity is INHERITED, not chosen, so it
+must be verified rather than assumed.** That generalization is what the doc now
+carries, rather than two separate war stories.
+
+**One operational note**, verified in the script: `tools/triad.sh --lane` rejects
+hyphens (`[A-Za-z0-9_.]+`), and the reason is Amendment 9's own ticket format —
+a ticket is `<epoch>-<pid>-<lane>`, so a hyphen in the lane tag breaks the field
+parse the FIFO queue depends on. Lane tags are bare words.

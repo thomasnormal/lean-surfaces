@@ -21513,3 +21513,54 @@ measurement — which is §5.4a applied to this lane's own evidence.
 rule 3 exempts "small dependency-free scratch files" — that exemption assumes a
 **warm** clone, and this lane read it as a property of the *file* when it is a
 property of the *clone*. Rule 3 should say so.
+
+### FAMILY LAW — one `Except`/`throw` pattern, every tier; no tier-local outcome types
+
+Thomas, on reading the `Halt` ruling: *"Probably a good idea to use the same
+`Except ε α` / `throw` pattern for all languages."* Codified in §3.4.
+
+**Every tier's interpreter is written on `SemM` — the ordinary Lean
+`Except`/`throw` idiom, used TWICE, and the two are told apart by WHO SPEAKS:**
+
+* **`ρ` — the PROGRAM's channel**: its own errors (exceptions, abrupt
+  completions, `longjmp`, `panic`/`recover`, Ada exceptions). **This is where a
+  tier instantiates its catch constructs**, and a language construct CAN reach
+  it.
+* **`Halt` — the MODEL's channel**: refusal (with the ruled structured payload)
+  and timeout. **No language construct can ever reach it**, by type.
+
+That is why the `Halt` ruling had to come first: **`ρ` is what the program can
+talk about; `Halt` is what only the model can say.** A tier gaining a catch
+construct extends `ρ` and touches nothing else; a tier gaining a refusal cause
+extends `Halt` and no program can observe it.
+
+**NO TIER-LOCAL OUTCOME TYPES going forward** — a new tier picks `W` and `ρ` and
+is done. The existing ones (`Sv.Res`, C's value-layer `CRes`, the legacy Python
+`Run`) converge **BY TOUCH** per §9.2. Under Thomas's *keep only the new
+versions, no backwards compatibility* ruling, by-touch is about **SCHEDULING,
+not coexistence**: at the touch the local type is **replaced, not wrapped**, and
+no adapter is left behind.
+
+**TWO SEAMS CLOSED, because each could be misread as a contradiction:**
+
+1. **This does not reopen `EStateM`.** `Core.SemM` is OUR spelling — the
+   explicit `ExceptT ρ (StateT W Halt)` stack named once in `Core` — not core
+   Lean's `EStateM`, which stays rejected on the measured 1.4x kernel-`rfl`
+   cost. One shared NAME for our own stack is precisely what "adopted by shape,
+   not by spelling" asks for.
+2. **`Run → SemM` is CHEAP and must not be confused with the Python migration.**
+   It is a **re-spelling with a proved iso** (`ofRun`/`toRun`, mutually
+   inverse), so it owes **no adequacy theorem**. What owes `twinAgrees` is the
+   move to a *second semantics* (§3.4 clause b). Re-spelling: cheap, by touch.
+   Second semantics: gated.
+
+**`Core.SemM` becomes the one spelling once the rebuild's extraction lands on
+master** (imminent — in its post-merge triad as this was written).
+
+**AND THE SV VERDICT SOFTENS.** §3.6's hybrid reading — *a dormant tier that
+will not be rebuilt* — becomes **migrates when touched**, with the opener
+already identified: `SelfCheck`'s `halted` flag is a hand-rolled `ExceptT ρ`,
+and replacing it with the real layer is **one `@[spec]` lemma that deletes a
+check from every statement case**. The cheapest possible first touch, on the
+tier that proved the shape was right by inventing it independently a month
+early.

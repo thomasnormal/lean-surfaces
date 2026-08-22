@@ -1148,6 +1148,61 @@ spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
 it was a fact about the tree, not about the type. The instance was never
 unavailable; it was never asked for.
 
+#### FAMILY LAW — ONE `Except`/`throw` PATTERN, EVERY TIER
+
+Thomas, on reading the `Halt` ruling below: *"Probably a good idea to use
+the same `Except ε α` / `throw` pattern for all languages."* Codified.
+
+> **Every tier's interpreter is written on `SemM`. It is the ordinary Lean
+> `Except`/`throw` idiom, used TWICE — and the two are told apart by WHO
+> SPEAKS, not by what is thrown.**
+
+| channel | speaker | carries | reachable by a language construct? |
+| --- | --- | --- | --- |
+| **`ρ`** | **the PROGRAM** | its own errors: exceptions, abrupt completions, `longjmp`, `panic`/`recover`, Ada's exceptions | **YES — this is where a tier instantiates its catch constructs** |
+| **`Halt`** | **the MODEL** | refusal (with the structured payload ruled below) and timeout | **NEVER — by type, per the ruling below** |
+
+That split is the whole design, and it is why the ruling below is the one
+that had to come first: **`ρ` is what the program can talk about; `Halt` is
+what only the model can say.** A tier that gets a new catch construct
+extends `ρ` and touches nothing else; a tier that grows a new refusal cause
+extends `Halt` and no program can observe it.
+
+**NO TIER-LOCAL OUTCOME TYPES going forward.** A new tier does not define
+its own result inductive — it picks `W` and `ρ` and it is done.
+
+**The existing ones converge BY TOUCH** (§9.2's discipline, and never a
+big-bang): `Sv.Res`, C's value-layer `CRes`, and the legacy Python `Run`.
+Under Thomas's *keep only the new versions, no backwards compatibility*
+ruling, by-touch is about **SCHEDULING, not coexistence** — when a tier is
+touched its local type is **replaced**, not wrapped, and no adapter is left
+behind.
+
+**Two seams that could be misread as contradictions, closed here.**
+
+* **This does not reopen the `EStateM` question.** `Core.SemM` is **our**
+  spelling — the explicit `ExceptT ρ (StateT W Halt)` stack, named once in
+  `Core` — not core Lean's `EStateM`, which stays rejected on the measured
+  1.4× kernel-`rfl` cost. One shared *name* for our own stack is exactly
+  what "adopted by shape, not by spelling" asks for.
+* **This is cheaper than the Python migration and must not be confused with
+  it.** `Run → SemM` is a **re-spelling with a proved iso** (`ofRun`/
+  `toRun`, mutually inverse), so it owes **no adequacy theorem**. The
+  migration that owes `twinAgrees` is the move to a *second semantics*
+  (§3.4 clause b), which is a different thing entirely. Re-spelling: cheap,
+  by touch. Second semantics: gated.
+
+**`Core.SemM` becomes the one spelling once the rebuild's extraction lands
+on master** — imminent, in its post-merge triad as this is written.
+
+**And the SV verdict softens accordingly.** §3.6's hybrid reading — *a
+dormant tier that will not be rebuilt* — becomes **migrates when touched**,
+and the opener is already identified: the `SelfCheck` `halted` flag is a
+hand-rolled `ExceptT ρ`, and replacing it with the real layer is **one
+`@[spec]` lemma that deletes a check from every statement case**. The
+cheapest possible first touch, on a tier that already proved the shape was
+right by inventing it.
+
 #### RULING — WHERE `unsupported` LIVES: in `Halt`, with a PAYLOAD
 
 Two tiers diverged and a third was about to invent a third answer, so this

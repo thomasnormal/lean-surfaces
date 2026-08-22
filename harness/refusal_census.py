@@ -891,6 +891,19 @@ def main(argv=None):
     p.add_argument("--scripts", action="store_true")
     p.add_argument("--no-build", action="store_true")
     p.add_argument("--runner", default="lake exe leanmodels-run")
+    p.add_argument(
+        "--monadic", action="store_true",
+        help="target the MONADIC REBUILD (LeanModels/Python/Monadic/) instead of "
+             "the trunk interpreter - appends --monadic to the runner command. "
+             "WHAT THIS DOES AND DOES NOT CHECK, measured 2026-08-22: it "
+             "checks DRIFT against the recorded class table, so a 0-drift run "
+             "under --monadic claims every whitelisted row still REFUSES "
+             "(verdict-level parity, which matters). It does NOT compare the "
+             "refusal MESSAGE against the trunk's, so a "
+             "`monadic-rebuild: arm not yet transliterated: ...` refusal "
+             "satisfies it silently - both interpreters exited 0 while 66 "
+             "lines of this tool's own output differed. Row-level, "
+             "message-included parity is harness/monadic_gate.py's job.")
     p.add_argument("--json", default=None)
     p.add_argument("--keep", default=None,
                    help="write the grammar witnesses here and keep them")
@@ -900,6 +913,11 @@ def main(argv=None):
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
+    if opts.monadic:
+        runner_cmd = runner_cmd + ["--monadic"]
+    print("interpreter: %s"
+          % ("MONADIC REBUILD (LeanModels/Python/Monadic/)" if opts.monadic
+             else "trunk (LeanModels/Python/Semantics.lean)"))
     if not opts.no_build:
         if subprocess.run(["lake", "build"], cwd=REPO_ROOT).returncode != 0:
             print("error: `lake build` failed", file=sys.stderr)

@@ -659,7 +659,9 @@ def census_frontend(tests_root, acorn_path, limit=0):
     stdin = "\n".join(str(p) for p, _, _ in rows) + "\n"
     proc = subprocess.run(["node", str(probe), str(acorn_path)],
                           input=stdin, capture_output=True, text=True)
-    out = [l for l in proc.stdout.splitlines() if l.strip()]
+    # "\n" only — never `splitlines()`, which also splits on U+2028/U+2029.
+    # test262's line-terminator tests contain both; see extractors/es/extract.py.
+    out = [l for l in proc.stdout.split("\n") if l.strip()]
     if proc.returncode == 3:
         raise Refusal(f"frontend probe refused: {out[0] if out else proc.stderr.strip()}")
     if len(out) != len(rows):
@@ -945,6 +947,24 @@ def main():
             for k, d_, a_ in wrong:
                 print(f"  count differs: {k} doc={d_} census={a_}", file=sys.stderr)
             return 1
+        # ...and the EXTRACTOR's own constant, so census, schema document and
+        # ingester cannot drift apart in any pair.
+        ex = Path(__file__).resolve().parent.parent / "extractors" / "es" / "extract.py"
+        if ex.is_file():
+            src = ex.read_text(encoding="utf-8")
+            m = re.search(r"VOCABULARY = frozenset\(\{(.*?)\}\)", src, re.S)
+            if not m:
+                print(f"REFUSED: {ex}: no VOCABULARY frozenset to check", file=sys.stderr)
+                return 1
+            vocab = set(re.findall(r'"([A-Za-z]+)"', m.group(1)))
+            if vocab != set(actual):
+                print(f"REFUSED: {ex} has DRIFTED from the census", file=sys.stderr)
+                for k in sorted(set(actual) - vocab):
+                    print(f"  missing from the extractor: {k}", file=sys.stderr)
+                for k in sorted(vocab - set(actual)):
+                    print(f"  in the extractor but not the corpus: {k}", file=sys.stderr)
+                return 1
+            print(f"{ex.name}: VOCABULARY matches the census ({len(vocab)} kinds)")
         print(f"{args.check_schema}: {len(actual)} node kinds, all listed, "
               f"all counts exact")
         if not (args.out or args.compare):

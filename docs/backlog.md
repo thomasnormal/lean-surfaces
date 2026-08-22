@@ -16643,6 +16643,57 @@ sub-language.
 `docs_check` 75/75; `--check-schema` green and non-vacuous; census unchanged.
 No Lean, so the build lock was not taken.
 
+### ADDENDUM — M1 INCH 4: the extractor, and the corpus that tests line terminators broke the line-splitting idiom (2026-08-22)
+
+`extractors/es/extract.py` + `extractors/es/estree_dump.mjs` under the family's
+never-fail contract. The dumper is ONE node process for the whole batch (the
+lesson recorded three times in this document); the Python side owns the
+lowering, because that is where the schema lives.
+
+**THE BUG THE BATCH CHECK CAUGHT, and it is the best kind — the corpus broke the
+idiom by being what it is.** First run over a 2,000-file sample REFUSED:
+*"frontend returned 2035 rows for 2000 inputs — the batch protocol requires
+exactly one row per job."* Diagnosis, measured on the raw stream: node wrote
+**exactly 2000** records (2000 `\n`), but Python's `str.splitlines()` found
+**2046**, because it splits on the UNICODE line boundaries — U+2028, U+2029,
+`\x0b`, `\x0c`, `\x85` — while JSON escapes only `\n`. The sample contained
+**24 U+2028 and 22 U+2029**, inside the `raw`/`text` fields of test262's
+LINE-TERMINATOR tests. **The conformance suite for a language whose line
+terminators include U+2028 is precisely the corpus that breaks the naive
+splitting idiom**, and the one-row-per-job rule is the only reason it surfaced
+as a refusal instead of 35 silently mis-paired envelopes. Fixed to `split("\n")`
+in the extractor AND in `es_census.py`'s frontend probe, which had the same
+latent bug (it had not fired there because that probe emits only counts, never
+source text). **Never `splitlines()` on a JSONL stream.**
+
+**Measured over 2,000 real corpus files, one node process, 10 s:** 2,000
+envelopes, **1,534 `parse.status: ok` and 466 `parse.status: error`**, zero
+schema violations, 61 of the 66 node kinds exercised, **zero `Unsupported`
+leaves**, and the parse verdict agrees with test262's own `negative` metadata on
+**1,961 of 2,000 (98.0%)** — consistent with the census's 97.8% over the full
+slice, which is the cross-check that the extractor inherits the frontend's
+verdict rather than inventing one. Double run **byte-identical across all 2,000
+envelopes**.
+
+**Every contract path RUN, not admired.** A missing edition pin, an incomplete
+pin, and a missing acorn all refuse non-zero. A source that does NOT parse exits
+**0** with a well-formed envelope, `program: null` and
+`error_kind: SyntaxError` — the design §inch 3 forced, now exercised on 466 real
+files. And the `Unsupported` leaf is reachable from REAL source, not only
+synthetically: module syntax yields `ExportNamedDeclaration`,
+`ExportAllDeclaration` and `ImportSpecifier` leaves carrying their source text,
+because the 66-kind vocabulary was measured on a slice that EXCLUDES the module
+system — so the vocabulary boundary and the charter's slice boundary are the
+same line, observed rather than arranged.
+
+**The drift check now closes the triangle**: `es_census.py --check-schema`
+asserts the census, `docs/es-envelope-schema.md`'s 66-row table AND
+`extract.py`'s own `VOCABULARY` constant are the same set, so no pair of the
+three can drift. Non-vacuous in every direction.
+
+`docs_check` 75/75; both self-tests green. No Lean, so the build lock was not
+taken for this inch.
+
 ## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
 
 The owner ruled all six of §L60's decisions the same day, and the SV lane's

@@ -1304,6 +1304,57 @@ new tiers adopt the substrate and use mvcgen on the fuel-free fragment,
 **deciding fuel's fate BEFORE writing the interpreter** — which is a
 founding-checklist item, not an afterthought.
 
+#### 3.4.1 THE FIT BOUNDARY — the substrate is for INTERPRETERS, and one tier found the edge
+
+Recorded by the **Lean tier's founding lane** (`docs/lean-tier-charter.md`
+§10.3, §L79), because this section says *"new tiers adopt the substrate"*
+without stating for what, and the first tier to price the instantiation
+honestly found it does not fit.
+
+> **`SemM`/`Run σ α` is a substrate for INTERPRETERS: a program RUNS,
+> consuming fuel, over a mutable world, producing effects. A tier whose
+> subject is a JUDGMENT rather than a run does not have that shape, and
+> forcing it would be measuring the substrate and calling it the
+> language — principle I's failure mode, pointed inward.**
+
+The Lean tier's subject is Lean's own kernel: a **recursive decision
+procedure over an immutable environment**, returning `Except`. Mapping it
+against §3.2's list, item by item and measured against a 7 888-line C++
+kernel and a 39 468-line existing mechanization:
+
+| substrate element | fit for a typechecker |
+| --- | --- |
+| `.unsupported` — loud, fuel-independent | **fits exactly** — it is REFUSE |
+| `.timeout` — fuel exhaustion | **fits** — the kernel ships its own recursion-depth guard, and the existing mechanization uses fuel counters |
+| `W` — heap, globals, stdout | **absent.** There is no mutable world; the environment only grows, monotonically, and is never destructively updated |
+| effects as world data | **absent.** A typechecker has no observable effects |
+| the schedule ∀-parameter (§3.6) | **absent.** Zero nondeterminism — the family's simplest ∀-resolution row |
+| the ∃-fuel threshold form | **fits the shape, but the interesting theorems are not about fuel** — they are `checker accepts ⟹ the model admits it` |
+
+**Two rulings this does NOT imply**, stated so the note is not over-read:
+
+* **It is not an argument against the substrate.** Six of the seven
+  language lanes ARE interpreters and the substrate is right for them.
+  It is an argument against the word *"every"*.
+* **It is not a licence to invent a second substrate.** The Lean tier's
+  own conclusion is to **consume an existing mechanization** rather than
+  build a surface at all (its option (b)), precisely because a
+  from-scratch instantiation prices badly.
+
+**The generalizable rule, and it belongs in the founding checklist:**
+§8 step 7 already says *decide fuel's fate before writing the
+interpreter*. This adds the question that comes **before** it:
+
+> **Does this tier HAVE a run?** A tier whose artifact is a relation — a
+> typechecker, a linker, a type system in isolation — answers no, and
+> should say so in its charter rather than discovering it at step 7.
+
+The Circuit and Spice lanes are the existing precedent (§0.2: they model
+by enclosure and contract, do not use `Run`, and *are not asked to*). The
+Lean tier is the second family of misfit, and unlike theirs it was found
+by pricing rather than by inheritance — which is why it is cheap to
+record now and would have been expensive to discover at inch 7.
+
 ### 3.5 SOFTFLOAT — shared component #2, and the premise it was deferred on is FALSE
 
 **The correction first, because the record is wrong.** Three tier documents

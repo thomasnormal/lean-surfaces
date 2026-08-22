@@ -714,7 +714,7 @@ rules have nothing to be checked against.
 is hiding; it is the hardest part of the subject, it is where the C++ kernel
 spends its mass, and it is where a spec-mirror discipline — one Lean definition
 per thesis rule, cited — has the most to offer, because the thesis *does* state
-those rules (§7.1: 11 of the 72 kernel-relevant rules are the inductive
+those rules (§7.1: the inductive families are 17 of the 71 kernel-relevant rules
 families).
 
 **THE SECOND SEAM IS `proj`, and it is worse — because there the thesis states
@@ -807,36 +807,74 @@ charter's §1.7) applies at its strictest: **cite by section and rule, never
 vendor, never reproduce.** This charter names rules and counts them; it
 reproduces none.
 
-### 7.1 The rule inventory — 72 kernel-relevant rules
+### 7.1 The rule inventory — 71 kernel-relevant rules, and the count has an instrument
 
-Measured from the LaTeX source, not from the PDF. The source uses **bare
-`\frac`** display math — there is no `\inferrule`, no `mathpar`, no rule macro —
-so the census had to count 158 `\frac` plus 9 `\dfrac` plus 10 `align*`-typeset
-rules and classify each by the judgment it concludes.
+**Measured by `harness/lean_spec_census.py` → `docs/lean-spec-census.json`**
+(M1 inch 3), from the LaTeX source at the pinned commit, not from the PDF. The
+instrument refuses to run against any other commit without an explicit override,
+because of §7.2 finding 3.
 
-| judgment family | rules | thesis sections |
+The source uses **bare `\frac` display math** — no `\inferrule`, no `mathpar`,
+no rule macro, and no rule names. So the unit of measure is *a `\frac`/`\dfrac`
+occurrence, attributed to the most recent `\boxed{…}` judgment and the current
+section*. That is reproducible, and it is a **proxy for "a rule" rather than the
+thing itself** — which matters, below.
+
+**Measured totals: 167 typeset rules in the document, 71 of them in the axioms
+chapter across 12 judgment families**, 5 of which carry the source's only inline
+names: *(beta)*, *(delta)*, *(eta)*, *(iota)*, *(zeta)*.
+
+| judgment family | rules | declared at |
 | --- | ---: | --- |
-| Typing `Γ ⊢ e : α` | **12** | 2.1, 2.4, 2.5, 2.6.1, 2.6.3 |
+| Typing `Γ ⊢ e : α` | 7 | 2.1 |
 | `Γ ⊢ α type` | 1 | 2.1 |
 | `⊢ Γ ok` | 2 | 2.1 |
-| Defeq `Γ ⊢ e ≡ e'` | **14** | 2.2, 2.4, 2.5, 2.6.4 |
-| Level equality | 1 | 2.2 |
-| Level order `l ≤ l' + n` | **14** | 2.2 |
-| Algorithmic defeq `Γ ⊢ e ⇔ e'` | 10 | 2.3, 2.5 |
-| Head reduction `e ↝ e'` | 7 | 2.3, 2.4, 2.5, 2.6.4, 2.7 |
-| Inductive spec | 1 | 2.6.1 |
-| Constructor | 3 | 2.6.1 |
-| Large elimination | 3 | 2.6.2 |
-| Subsingleton constructor | 4 | 2.6.2 |
-| **KERNEL-RELEVANT TOTAL** | **72** | — |
+| Defeq `Γ ⊢ e ≡ e'` | 10 | 2.2 |
+| Level equality `ℓ ≡ ℓ'` | 1 | 2.2 |
+| Level order `ℓ ≤ ℓ' + n` | **14** | 2.2 |
+| Algorithmic defeq `Γ ⊢ e ⇔ e'` | 9 | 2.3 |
+| Head reduction `e ↝ e'` | 10 | 2.3 — **ELIDED** |
+| Inductive spec `K spec` | 1 | 2.6.1 |
+| Constructor `α ctor` | 5 | 2.6.1 — **ELIDED** |
+| Large elimination `K LE` | 3 | 2.6.2 |
+| Subsingleton ctor `α LEctor` | 8 | 2.6.2 |
+| **KERNEL-RELEVANT TOTAL** | **71** | 12 families |
 
-Plus 47 metatheory rules, 48 model-only rules, and 10 in unfinished sections —
-**177 typeset rules in all**.
+Per file, the rest: `Wtypes` 38, `unique` 25, `normalization` 11, `soundness`
+10, `compilation` 9, `typesys` 3.
 
-**72 is the spec-mirror index**: one Lean definition per rule, each citing its
-thesis section, and coverage measured as a set equality against this list. It is
-a tractable number — smaller than Wasm's 568 rules, and an order of magnitude
-smaller than a C edition's clause count.
+**THE INSTRUMENT CORRECTED THIS CHARTER'S OWN FIRST TABLE, and the correction is
+worth more than the number.** An earlier hand-classification of the same chapter
+reported **72** rules with a materially different per-family split (Typing 12,
+Defeq 14, Head reduction 7, Constructor 3, Subsingleton 4). The disagreement is
+**not** a counting error on either side — it is two different attribution rules:
+
+* the **hand** classification attributed each rule to the judgment it
+  **concludes**, so a typing rule stated in §2.6 counts under Typing;
+* the **instrument** attributes by **position**, to the most recently boxed
+  judgment.
+
+**Both are defensible; only one is reproducible.** So the charter adopts the
+instrument's numbers and records why they differ, rather than quietly keeping
+the prettier table. The lesson generalizes and is exactly §5.5's: **the chapter
+TOTAL is robust (71 either way, ±1 for the align* question below); the
+per-family SPLIT is an artifact of the attribution rule and must never be quoted
+without saying which rule produced it.**
+
+**Two known undercounts, declared by the instrument itself** rather than
+discovered later:
+
+1. **`align*`-typeset computation rules are not counted.** The iota menagerie
+   and the quotient-lift computation rule are typeset as equations, not
+   `\frac`s. This is the ±1 to ~10 the two counts differ over.
+2. **Two of the twelve kernel-relevant families are ELIDED** — `e ↝ e'` and
+   `α ctor` end in an explicit `…` standing for unwritten congruence rules.
+
+**~71 is the spec-mirror index**: one Lean definition per rule, each citing its
+thesis section, coverage measured as a set equality against the committed JSON.
+It is a tractable number — an order of magnitude below Wasm's 568 rules — and
+the two elided families are where the mirror will have to *write* a rule before
+it can check one.
 
 ### 7.2 Four findings that change how the mirror must be built
 
@@ -853,7 +891,9 @@ each end in an explicit `...` standing for an unwritten set of compatibility and
 congruence rules, described in prose as *"compatibility rules for every syntax
 operator"*. **A faithful mirror cannot be built from the LaTeX alone for those
 families** — the missing rules must be reconstructed from prose. All four are in
-the *metatheory* rather than the kernel-relevant 72, which limits the damage,
+the *metatheory* rather than the kernel-relevant 71 — though **two of the twelve
+kernel-relevant families are elided too** (§7.1), which limits the damage less
+than it first appeared,
 but a lane that promised a complete mirror without reading this would have
 promised something the document does not contain.
 
@@ -882,7 +922,7 @@ in two tiers founded a day apart.
 
 **(4) THE SPEC IS ALREADY BEHIND THE KERNEL.** The thesis predates structure
 eta, the current accelerated-`Nat` set, and `Expr.mdata` as the kernel now
-handles it. §2.2's 16 rules are measured at *our pin*; the thesis's 72 are
+handles it. §2.2's 16 rules are measured at *our pin*; the thesis's 71 are
 measured at *2019*. **Reconciling those two lists is the tier's first real
 intellectual task**, and it is exactly the family's §4.2 divergence discipline:
 the model states the spec's rule, the harness records what the oracle does, and
@@ -895,7 +935,7 @@ the disagreement is published as a finding.
 `VEnv` and the typing judgments — which is the thesis's type theory rendered in
 Lean. `Verify/` proves the executable checker meets it.
 
-But **the correspondence between `Theory/` and the thesis's 72 rules is not
+But **the correspondence between `Theory/` and the thesis's 71 rules is not
 itself machine-checked**, and cannot be while the spec is a PDF with unnamed
 rules. And the formalization is **incomplete exactly where §6.4 says**: the
 inductive families are stubs.
@@ -917,7 +957,7 @@ instruments, run separately and for different reasons, all landed on
 | # | measurement | what it found at `proj` |
 | --- | --- | --- |
 | 1 | **the kernel census** (§2) | `proj` is kernel-primitive with **three** separate mechanisms — its own typing rule enforcing a `Prop`-squashing side condition twice, its own reduction rule, and its own defeq congruence with a dedicated lazy-delta loop |
-| 2 | **the spec census** (§7) | `proj` **does not exist in the thesis grammar at all**. The thesis has 7 expression forms; Lean 4 has 12. `proj` is the largest single divergence, and nothing in the 72 kernel-relevant rules describes it |
+| 2 | **the spec census** (§7) | `proj` **does not exist in the thesis grammar at all**. The thesis has 7 expression forms; Lean 4 has 12. `proj` is the largest single divergence, and nothing in the 71 kernel-relevant rules describes it |
 | 3 | **the lean4lean census** (§6) | `VExpr` has **6 constructors** and `proj` has **no abstract counterpart**. `TrProj` is a `sorry`, and **11 of the 24 shipped sorries cluster on projections** |
 | 4 | **the arena scoreboard** (§9) | the **four soundness tests the official C++ kernel fails** are all `proj`/`rec`-over-`Prop`. lean4lean's only two accept-side failures are the same family, from the other direction |
 
@@ -1095,10 +1135,12 @@ the family's apparatus where the census says the gap is.
 2. **`TrProj`, and the projection metatheory** — §8's construct; 11 of 24
    shipped sorries; the site of four live kernel unsoundnesses.
 3. **The spec-mirror correspondence itself** — a census-backed, cited mapping
-   from the thesis's **72 kernel-relevant rules** (§7.1) to `Theory/`'s
+   from the thesis's **71 kernel-relevant rules** (§7.1) to `Theory/`'s
    definitions, with a `--compare` gate. **Nobody has this**, the correspondence
-   is hand-maintained prose today, and **6 of 13 rule names have already
-   drifted** between the LaTeX and the Lean. This is precisely §5.5's manifest,
+   is hand-maintained prose today. The instrument makes the scale of the job
+   concrete: **the LaTeX names only 5 rules** (§7.1), so the correspondence
+   cannot be a name match — it has to be built as a citation per definition,
+   which is precisely §5.5's manifest shape. This is precisely §5.5's manifest,
    and it is the family's most transferable instrument.
 4. **A drift guard on the spec's two heads** (§7.2 finding 3) — mechanically
    detecting that a citation points at the corrected `master` rule rather than
@@ -1260,8 +1302,8 @@ start before Thomas decides:
 | --- | --- | --- |
 | **1** | **the kernel-vocabulary census + instrument. LANDED** (this dispatch) | the vocabulary is the vocabulary under every option |
 | 2 | **the toolchain reconciliation, measured**: install `v4.33.0-rc2`, build `lean4lean` under the lock, run its own test suite. Report buildability — currently **NOT MEASURED** | every option needs a working checker on this box |
-| 3 | **the spec-rule instrument** — `harness/lean_spec_census.py` over the thesis LaTeX at pinned `master 0ba1787`, emitting the **72 kernel-relevant rules** with `--compare` | this is item 3 of option (b) and §5.5's manifest; it is also the only artifact that makes any spec-mirror claim checkable |
-| 4 | **the correspondence gate** — map the 72 rules onto `Theory/`'s definitions, publish the coverage and the **drift already found** (6 of 13 names) | the deliverable nobody in the field has |
+| 3 | **the spec-rule instrument** — `harness/lean_spec_census.py` over the thesis LaTeX at pinned `master 0ba1787`, emitting the **71 kernel-relevant rules** with `--compare`. **LANDED** (this dispatch) | item 3 of option (b) and §5.5's manifest; the only artifact that makes any spec-mirror claim checkable |
+| 4 | **the correspondence gate** — map the 71 rules onto `Theory/`'s definitions and publish the coverage. The hard part is named in §7.1: with only 5 rules named in the source, the mapping is a cited manifest, not a name match | the deliverable nobody in the field has |
 | 5 | **the axiom-dependency instrument** — for a given environment, report which theorems depend on a native computation and which one. Option (d)'s first artifact | a `#print axioms` refinement; useful under every option, and it is the receipt §0.1 II(a) asks a rung-3 use to carry |
 | 6 | **the reflexive gate** — run an independent checker over this repository's own `.olean`s in CI, `maybe`-guarded | §10.5's cheapest honest form; pure gain, no theorem required |
 
@@ -1327,6 +1369,16 @@ no ISO editions, no ECMA years. The honest options are a release-pinned token
 
 ## 13 WHAT LANDED WITH THIS CHARTER
 
+* **`harness/lean_spec_census.py`** — the spec-rule instrument (M1 inch 3).
+  Pinned-commit enforcement with a deliberate `--allow-unpinned` override,
+  `--compare`, double-run byte-identical, **six refusal paths RUN**. Declares its
+  own two known undercounts rather than leaving them to be discovered.
+* **`docs/lean-spec-census.json`** — its output. 167 typeset rules, **71
+  kernel-relevant across 12 families**, 5 named rules, 2 elided families.
+* **`docs/family-architecture.md` §3.4.1** — the substrate FIT BOUNDARY scope
+  note, contributed upward: the substrate is for interpreters, and a tier whose
+  subject is a judgment rather than a run should say so in its charter rather
+  than discover it at founding-checklist step 7.
 * **`harness/lean_kernel_census.py`** — the kernel-vocabulary instrument.
   Two-input (Lean datatypes + C++ rules), version-agreement enforced,
   `--compare`, double-run byte-identical (verified), **six refusal paths RUN**

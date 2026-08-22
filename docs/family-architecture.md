@@ -32,7 +32,78 @@ best argument for the instruments existing at all:
 
 ---
 
-## 0 What is being unified, and what is not
+## 0 THE DOCTRINE, and what is being unified
+
+### 0.1 Three principles, and they govern every tier
+
+Thomas, on what this family is for:
+
+> *We are not saying it'll be easy to prove correctness of arbitrary
+> threaded C programs. It might be really really hard or undecidable. But
+> we want to make it possible to DEFINE correctness, and it's the burden of
+> the prover to find a proof. We can give some tools, tactics and so on,
+> but ultimately if it's too hard to prove, the program should probably be
+> rewritten.*
+
+Everything below follows from that, and the three principles are the form
+it takes in this repository.
+
+**I. THE DEFINITION IS NEVER WEAKENED FOR PROVABILITY.** The semantics'
+one job is a **sound and complete definition of correctness** — ∀ schedule,
+∀ evaluation order, ∀ resolution of every nondeterminism the language
+admits. **Definitional completeness outranks proof convenience, always.**
+If the honest definition quantifies over a space no tactic can search, the
+definition still quantifies over it. Undecidability of the general problem
+is **accepted at the definition layer** and is not an argument against the
+definition; a semantics that narrowed its ∀ to what the current library can
+discharge would be measuring the library and calling it the language. This
+is the same law the tiers already obey when they REFUSE rather than invent
+a rule (§4.2), stated at the level that governs all of them.
+
+**II. THE TRUST BOUNDARY, and it is drawn tightly.** Two strata, and only
+one of them is trusted:
+
+| stratum | contents | property |
+| --- | --- | --- |
+| **the DEFINITION** — trusted, kept **minimal** | the interpreter, the spec citations, the verdict system | soundness and completeness are its obligations; every addition is a liability and is argued for |
+| **the LIBRARY** — trusted **never**, growable **forever** | tactics, mover/commutativity lemmas, `Spec`/`@[spec]` collections, `mvcgen` integrations, altitude lemmas | **incomplete by design.** Its incompleteness is expected, published, and never hidden |
+
+A library lemma cannot make a wrong program right, because nothing in the
+library is believed — it only ever produces a proof the kernel rechecks
+against the definition. That asymmetry is what lets the library grow
+without bound and without review anxiety, and it is why the library's gaps
+are reported as gaps rather than papered over. **This is exactly why §3.6's
+proof-burden tiers — bounded-fixture exhaustion, mover lemmas, ownership
+reasoning — are a LIBRARY section and not part of the semantics.** They are
+three ways to find a proof of a statement whose meaning was already fixed
+without reference to them.
+
+**III. HARDNESS IS A SIGNAL TO THE PROGRAM, not to the definition.** When a
+proof will not come, the framework owes the user a next step, and there are
+exactly two — both constructive, neither touching the definition:
+
+* **(a) A counterexample is found.** Search turns up a breaking schedule,
+  order or resolution, and it lands as a **kernel-checked witness** —
+  §3.6's counterexample-as-artifact, a finite concrete schedule replayed by
+  `#guard`. The verdict is not "unproven"; it is **the program is wrong**,
+  here is the run. Fix the program.
+* **(b) No witness is found AND the proof resists the library.** Then the
+  program's correctness is, in the precise sense this repository can
+  measure, **unarguable** — and that is information about the program.
+  **Rewrite toward provability.** The discipline that says "use mutexes and
+  `memory_order_seq_cst`, not hand-rolled relaxed atomics", or "structure
+  your concurrency", has always been cultural advice backed by folklore.
+  **This framework turns it into a formal pressure**: the DRF-SC fence
+  (§3.6, piece 3) is the standard's own clause, so a program that stays
+  inside it is one the tooling can actually reason about, and a program
+  that leaves it has left on purpose and pays for it.
+
+Neither exit ever weakens the definition, and a third exit — narrowing the
+∀ until the theorem goes through — is **not available**. That is the whole
+doctrine: the definition is the contract, the library is the help, and the
+program is the variable.
+
+### 0.2 What is being unified, and what is not
 
 Seven language lanes exist today. Measured (`.lean` lines under
 `LeanModels/`):
@@ -622,6 +693,13 @@ Per-language work under this scheme is then exactly: **the World type, the
 error type, the primitive step functions, and `@[spec]` lemmas for the
 primitives.** No language writes a vcgen.
 
+**And none of this stratum is trusted (§0.1, principle II).** The monad is
+part of the definition — it is how the interpreter is written — but the
+vcgen, the `@[spec]` collection and every tactic over them are LIBRARY:
+they search for proofs of statements the semantics fixed without them, the
+kernel rechecks whatever they produce, and a gap in them is a gap to
+report rather than a reason to restate a theorem.
+
 **This formalizes existing practice; it does not discard it.** The Python
 lane already has a hand-built triple layer — `PyTriple.call`,
 `PyTriple.callsTo_ofRet`, `execStmts_append_run` — and its altitude lemmas
@@ -875,6 +953,11 @@ breaking interleaving**, which is precisely the asymmetry Thomas asked
 for: the artifact cannot be talked into a proof, and when it declines it
 says why in a form a human can replay.
 
+This is **§0.1's exit (a)** made concrete, and it is the reason the
+doctrine's third principle is constructive rather than a shrug: when a
+proof does not come, the framework's first move is to try to hand back a
+run that shows why it should not have.
+
 **(3) THE DRF-SC FENCE, spec-mirrored — the standard's own clause carries
 the bridge.** Full C11/C23 atomics exceed interleaving semantics: relaxed
 and acquire-release orderings admit behaviors no interleaving generates.
@@ -914,7 +997,11 @@ which is REFUSE(`undefined`) indexed at J.2 (5) — **with the witness
 schedule attached**, per piece (2). The refusal is not a shrug; it is a
 bug report.
 
-**(4) PROOF-BURDEN TIERS — three, and the default is the cheap one.**
+**(4) PROOF-BURDEN TIERS — three, and the default is the cheap one. All
+three are LIBRARY, none is semantics (§0.1, principle II).** Piece (1)
+fixed what correctness MEANS, quantified over every schedule; these are
+three ways to find a proof of it. None of them may narrow the ∀, and their
+incompleteness is expected rather than concealed.
 
 | burden | method | analogue already in the tree |
 | --- | --- | --- |
@@ -1193,6 +1280,18 @@ tier.
 
 Tier selection stays principled only if the model's assumptions are
 written down. Five assumptions, then the misfits.
+
+**Read this section against §0.1, because the doctrine fixes what "does
+not fit" may mean.** A misfit is **never** "hard to prove" — hardness is
+expected, is accepted at the definition layer, and is a signal to the
+program rather than to the model (principle III). A misfit is strictly
+narrower: a subject whose correctness this architecture **cannot DEFINE**
+soundly and completely, because its behaviors are not generated by an
+interpreter over explicit parameters. Every entry below fails at that
+layer, not at the proof layer. That is why the concurrency entry shrank to
+the relaxed-atomics fragment (§3.6) and why floats left the list entirely
+(§3.5): in both cases the definition was available, and only the folklore
+said otherwise.
 
 **The model assumes:** (1) execution proceeds in **discrete steps**; (2)
 the observable state is **finitely representable**; (3) behavior is

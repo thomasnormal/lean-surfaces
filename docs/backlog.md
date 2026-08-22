@@ -14388,6 +14388,39 @@ three. And §6 writes down the model's five assumptions and what does NOT fit �
 with the residual true misfit narrowed to the relaxed-atomics fragment, and
 floats explicitly REMOVED from the misfit list.
 
+### THE DOCTRINE — added as the doc's spine, because it governs every tier
+
+Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary
+threaded C programs. It might be really really hard or undecidable. But we want
+to make it possible to DEFINE correctness, and it's the burden of the prover to
+find a proof... ultimately if it's too hard to prove, the program should probably
+be rewritten."* §0.1 states it as three principles.
+
+**I. The definition is never weakened for provability.** The semantics owes a
+sound and complete definition — ∀ schedule, ∀ order, ∀ resolution — and
+definitional completeness OUTRANKS proof convenience. Undecidability of the
+general problem is accepted at the definition layer. A semantics that narrowed
+its ∀ to what today's tactics can discharge would be measuring the library and
+calling it the language.
+
+**II. The trust boundary.** The DEFINITION (interpreter + spec citations + the
+verdict system) is trusted and kept MINIMAL; tactics, mover lemmas, `Spec`
+libraries and `mvcgen` integrations are CONVENIENCES — growable forever, trusted
+never, **incomplete by design**, with their incompleteness published rather than
+hidden. Nothing in the library can make a wrong program right, because nothing in
+it is believed: it only produces proofs the kernel rechecks. **This is why the
+concurrency pattern's three proof-burden tiers are a LIBRARY section and not part
+of the semantics** — piece (1) already fixed what correctness MEANS.
+
+**III. Hardness is a signal to the PROGRAM**, with two constructive exits and no
+third. (a) A counterexample is found → a kernel-checked witness schedule, and the
+verdict is not "unproven" but "the program is wrong, here is the run". (b) No
+witness AND the proof resists the library → the program's correctness is
+unarguable; **rewrite toward provability**. The DRF/structured-concurrency lesson
+has always been cultural advice; the DRF-SC fence being the standard's OWN clause
+turns it into a formal pressure. Narrowing the ∀ until the theorem goes through
+is not an available exit.
+
 ### Gate
 
 **This charter carries no Lean** — `docs/` plus two `harness/` instruments, and

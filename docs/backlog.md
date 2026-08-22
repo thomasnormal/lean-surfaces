@@ -14758,6 +14758,67 @@ numbers place the files. Expectation recorded before the measurement so it can
 be wrong: a **thick trunk**, with 2023's additions in a thin `SV2023/` that does
 not disturb it. If the census says otherwise, the census wins.
 
+### CORRECTION FROM THE SV LANE — "SV uses `Run` in 3 files" was MY bare-word grep
+
+Re-derived here type-aware, and the correction is sharper than reported: **`Run`
+has exactly ONE lane consumer, Python** — 15 files under `LeanModels/Python/`
+plus 6 under `Examples/python/`. **SV, C, RISC-V, Circuit, Spice and Verilog-A
+are all ZERO.**
+
+The three SV "consumers" were `grep -rl '\bRun\b'` matching the **English word**
+opening a docstring — `/-- Run one comb-phase process…` — in files whose actual
+outcome type is `inductive Res` at `Sv/Semantics.lean:85`. **A bare-word grep
+over a corpus containing prose is not a type census.** The C charter records the
+mirror-image lesson (*grep an operator sort's constructors WITHOUT the leading
+dot*); this is that trap from the other side, and I walked into it while writing
+the section that prescribes instruments.
+
+**The sharpest part: the right answer was already in the document.** §0.2's
+inventory table records SV's outcome type as `Sv.Res α` — correctly — three
+hundred lines above the bullet calling SV a `Run` consumer. **The failure was
+not a missing measurement but two measurements of the same fact that were never
+checked against each other**, which is exactly what §5.5's manifest does for
+clause citations and is now an argument for doing it to this doc's own counts.
+
+**CONSEQUENCE — the move-`Run`-to-`Core` trigger is RE-DERIVED (§3.8).** It
+previously leaned on `Run` already having two lane consumers. It has one, so the
+trigger is not an observation about the present but a statement about which lane
+arrives first, and there are three candidates: **C's M2 inch 4** (planned; C is
+at inch 1 and uses its own `CRes`), **the rebuild lane's `SemM`** (in flight —
+checked, `SemM` is NOT in the tree), or a third tier adopting the outcome type.
+Whichever lands first triggers it; the substance is unchanged (not before a
+second consumer, not after one ships its own copy).
+
+**And §3.4 collapses the question into one landing.** Since `Run σ α` is *proved*
+to be `ExceptT ρ (StateT W Halt)` (`ofRun`/`toRun` mutually inverse), "move `Run`
+to `Core`" and "land the `SemM` substrate" are **the same landing**, not two — so
+the destination is the stack with `Run` as its established view, and a lane
+arriving by either route finds one artifact.
+
+Also folded: the **§3.1 headline is now honest in both halves** — the shared
+substrate is one structure (`Span`, two lane consumers) while the outcome type
+the architecture is argued around has one.
+
+### SV THEOREM COUNT SETTLED AT 98 — adopted because REPRODUCED
+
+The earlier disagreement is resolved and it was never about the tree. Under the
+SV charter's stated rule — `theorem`/`lemma` declarations **plus `example`s** —
+this lane counts **93 + 5 = 98 exactly**. The 93 was the same measurement under
+a narrower rule omitting the five `example`s. **A number is adopted here when a
+second rule reproduces it, not when a neighbour asserts it**, and this one now
+is; the registry cites it.
+
+### ENVELOPE DISCIPLINE — read the mode out of the ARTEFACT, in three edges
+
+From the SV lane's §L67, folded into §3.2's envelope item: **the schema version,
+the top module, and the source-path spelling.** All three are properties of the
+envelope in hand, and each is a place a tool can silently assume instead of
+asking — a configured-elsewhere default, an implied entry point, a path
+normalized one way here and another there. An envelope that cannot answer "which
+mode am I?" from its own bytes is one whose consumers will disagree about it —
+the same failure `language_version` fixes for editions and `profile_id` for the
+C ABI.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

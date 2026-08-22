@@ -185,7 +185,7 @@ mislabelled.
 | --- | --- | --- | --- | --- | --- | --- |
 | C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
 | Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — mid-campaign |
-| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, dormant but verified working |
+| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, **98 theorems**, dormant but verified working |
 | WebAssembly | `Wasm` | spec-mirror — W3C core **+ official suite** | **PROPOSED** | the reference interpreter **and the `.wast` runner** | the official `.wast` suite | founding |
 | ECMAScript | `Es` | spec-mirror — ECMA-262 **+ official suite** | **PROPOSED** | an engine **and test262's harness** | test262 | founding — blocked on SoftFloat (§3.5.3) |
 | Ada | `Ada` | spec-mirror — ISO/IEC 8652 **+ official suite** | **`Ada2022`** (spec head) **and `Ada2012`** (suite edition) — RATIFIED | a GNAT toolchain **and the ACATS grader** | **ACATS 4.2**, 4 188 tests | founding — **version pair FORCED** |
@@ -247,11 +247,15 @@ disturb it — the same shape C measured at 933 trunk lines of 934.
 *The maturity.* The SV tier is **not greenfield**: `LeanModels/Sv/` is
 **8 166 lines** (measured) with a differential harness recorded green
 against Icarus, dormant rather than absent. Labelling it "founding" would
-have priced a rebuild of work that exists and passes. Its theorem count is
-the SV charter's to state — this document's counting rule gives 93
-`theorem`/`lemma` declarations in the lane where that charter says 86, and
-two counting rules disagreeing is exactly the kind of number a charter
-should own rather than a neighbour quote.
+have priced a rebuild of work that exists and passes.
+
+**Its theorem count is SETTLED at 98, and adopted because it was
+REPRODUCED.** The SV charter states the rule — `theorem`/`lemma`
+declarations plus `example`s — and under that rule this document counts
+**93 + 5 = 98 exactly**. The earlier disagreement was never about the tree:
+93 was the same measurement under a narrower rule that omitted the five
+`example`s. A number is adopted here when a second rule reproduces it, not
+when a neighbour asserts it, and this one now is.
 
 **One standing violation, flagged and not fixed here.**
 `docs/sv-corpus-coverage.md` line 5 records a corpus path under a private
@@ -767,8 +771,29 @@ how it shrinks.
 * `LeanModels/Core/Basic.lean` is **13 lines** and defines `Span`.
 * It is imported by **three** lane files: `Python/Ast.lean`, `C/Ast.lean`,
   `C/Value.lean` (plus the two umbrella modules).
-* `Run σ α` is used by **Python (16 files) and SystemVerilog (3)**. C,
-  RISC-V, Circuit, Spice and Verilog-A: zero.
+* `Run σ α` has **exactly ONE lane consumer: Python** — 15 files under
+  `LeanModels/Python/` plus 6 under `Examples/python/`. **SystemVerilog,
+  C, RISC-V, Circuit, Spice and Verilog-A are all zero.**
+
+  **CORRECTION, and the error is one this document warns about
+  elsewhere.** An earlier revision claimed *"Python (16 files) and
+  SystemVerilog (3)"*. The SV three were `grep -rl '\bRun\b'` matching the
+  **English word** at the head of a docstring — `/-- Run one comb-phase
+  process…` — in files whose actual outcome type is SV's own
+  `inductive Res` (`Sv/Semantics.lean:85`). A bare-word grep over a corpus
+  that contains prose is not a type census. The C tier's own charter
+  records the mirror-image lesson — *grep an operator sort's constructors
+  **without** the leading dot* — and this is that trap from the other side.
+  Re-derived type-aware (`: Run`, `Run.ok`/`.exn`/`.timeout`/`.unsupported`,
+  `Run <Type>`), the SV count is **0** and Python's is **15**.
+
+  **And the right answer was already in this document.** §0.2's inventory
+  table records SystemVerilog's outcome type as `Sv.Res α` — correctly —
+  three hundred lines above the bullet that called SV a `Run` consumer. The
+  failure was not a missing measurement but **two measurements of the same
+  fact that were never checked against each other.** That is precisely what
+  §5.5's manifest does for clause citations, and it is an argument for
+  doing the same to this document's own load-bearing counts.
 * Re-derived today, and **grown since §L35 priced the move**: `Run.`
   appears **1282** times (was 1251), `: Run` **160** times (was 143),
   across **31** files (was 24).
@@ -776,9 +801,10 @@ how it shrinks.
 **Everything else the C lane "reused" is METHOD, not code** — and the C
 charter says so itself. That is not a failure; a method that transfers
 entire is the most valuable thing this repository has. But it means the
-substrate is one structure with two consumers, and a document that spoke
-of it as an established platform would be describing something that does
-not exist.
+shared substrate is **one structure — `Span` — with two lane consumers
+(Python and C)**, while the outcome type that the whole architecture is
+argued around has **one**. A document that spoke of either as an
+established platform would be describing something that does not exist.
 
 ### 3.2 The list
 
@@ -800,6 +826,17 @@ not exist.
    `source_sha256`, `Unsupported` leaves for anything outside a pinned
    vocabulary, deterministic output, and a cache key that includes the
    profile.
+
+   **READ THE MODE OUT OF THE ARTEFACT, never out of an ambient setting**,
+   and the SV lane's §L67 sharpened this to **three edges** worth copying:
+   the **schema version**, the **top module**, and the **source-path
+   spelling**. All three are properties of the envelope in hand, and each
+   is a place a tool can silently assume instead of asking — a
+   configured-elsewhere default, an implied entry point, a path normalized
+   one way here and another way there. An envelope that cannot answer
+   "which mode am I?" from its own bytes is one whose consumers will
+   disagree about it, which is the same failure `language_version`
+   (§1.5) fixes for editions and `profile_id` fixes for the C ABI.
 6. **The batch protocol** — `jobs.jsonl`, ONE runner process for the whole
    batch, exactly one line per job in job order, a `runner-error` row
    rather than a missing row.
@@ -1415,16 +1452,35 @@ deferral is confirmed and two things about it are made concrete, because
 `LeanModels/Python/Runtime.lean` re-exporting so no Python call site
 changes.
 
-**Trigger:** the inch that gives `Run` its **second consumer with a
-world** — C's M2 inch 4 (statements + `CWorld`). Not before, because the
-ingester tier does not mention `Run`; not after, because the standing
-prohibition is that a C interpreter landing with its own copy of `Run` is
-a defect and not a design.
+**Trigger — RE-DERIVED, because its old premise was false.** This section
+previously leaned on `Run` already having two lane consumers. It does not:
+type-aware, it has **one, Python** (§3.1). So the trigger cannot be "when
+the second consumer appears" as an observation about the present; it is a
+statement about which lane arrives first, and there are now **three
+candidates**:
+
+| candidate | status | would it trigger? |
+| --- | --- | --- |
+| **C's M2 inch 4** — statements + `CWorld` | planned; C is at inch 1 and uses its own `CRes` at the value layer | yes — the first C code that needs a world |
+| **the rebuild lane's `SemM`** | in flight; **`SemM` is not in the tree** (checked) | yes — and it arrives as the stack, not as bare `Run` |
+| a third tier adopting the outcome type | none proposed | yes |
+
+**Whichever lands first is the trigger**, and the rule is unchanged in
+substance: the move happens when a second consumer exists, not before
+(the ingester tier does not mention `Run`) and not after (a second
+interpreter landing with its own copy of `Run` is a defect, not a design).
+
+**And §3.4 collapses this question into one.** Since `Run σ α` is
+*proved* to be `ExceptT ρ (StateT W Halt)` — `ofRun`/`toRun` mutually
+inverse — "move `Run` to `Core`" and "land the `SemM` substrate" are **the
+same landing**, not two. The destination should therefore be the stack,
+with `Run` as its established view, so that a lane arriving via either
+route finds one artifact.
 
 **And the price is drifting.** §L35 measured 1251 `Run.` sites in 24
 files; today it is **1282 in 31**. The deferral is correct and it is not
-free, which is precisely why the trigger is now a named inch rather than
-a judgement call.
+free, which is precisely why the trigger is a named landing rather than a
+judgement call.
 
 The `Run.exn` payload decision (`Run σ ε α`, or C's terminal riding in α)
 belongs to the same inch. It is the one place the outcome type is not yet

@@ -308,6 +308,26 @@ a tactic whose authors call it experimental is being asked to carry a family-wid
 substrate, and the family should expect to work around it by shape rather than by
 volume.
 
+**AND `grind` DOES NOT FIX IT EITHER — measured, and the failure separates two
+things cleanly.** With `grind` wired into `mvcgen_trivial_extensible` (which
+deletes the closing scripts of both landed gates outright), the four-deep gate
+**still** dies at 4M heartbeats with `timeout at whnf`. That is not a discharge
+failure: `grind`'s job is to close verification conditions once they exist, and
+this run never gets that far. The blowup is inside `mvcgen`'s **own splitting**,
+before any VC is handed to any discharge tactic.
+
+So the two results do not compete, they partition the problem:
+
+| stage | tool | status |
+|---|---|---|
+| GENERATING the VCs | `mvcgen`'s split | **the blocker** — cannot be helped from outside, and the one altitude lemma that would shrink it is unstateable |
+| DISCHARGING them | `mvcgen_trivial` → `grind` | **solved** — closing scripts deleted on both landed gates |
+
+The practical rule this yields, and it is the one to carry into other tiers:
+**`grind` buys you the bottom of the pipeline for free; the top still has to be
+bought with SHAPE** — smaller statements, or arm lemmas stated in a form
+`mvcgen`'s splitter can actually consume.
+
 ### 3.2 A TRAP IN THE `#print axioms` LAW, worth recording
 
 The failed `value_scores_M` printed

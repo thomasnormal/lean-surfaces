@@ -14772,3 +14772,199 @@ repo-wide lock protocol was broadcast and was allowed to finish under the
 build has been started since**, and the charter pass changed no Lean, so none
 is owed. Any future build from this lane takes `/tmp/ls-build.lock` with the
 lake pid in `owner`, at `-j4`.
+## L61 — THE MVCGEN PILOT: `Run` IS the monad, fuel is the wall, and the gate lands both ways (2026-08-22)
+
+Thomas asked it as an architecture question — *do we have to implement an
+`mvcgen` tactic for each language, or can we convert everything into monads and
+use the default one?* — and it is answered BY MEASUREMENT in
+[docs/mvcgen-pilot.md](mvcgen-pilot.md), whose experiment file
+[docs/mvcgen-pilot.lean](mvcgen-pilot.lean) runs under `lake env lean` and is
+**out of the pinned build by construction** (nothing under `docs/` is in a
+`lakefile.toml` glob), so eleven other lanes are untouched by it. Zero `sorry`,
+zero `native_decide`, `#print axioms` on every theorem, all
+`[propext, Classical.choice, Quot.sound]` or less.
+
+**THE HEADLINE IS A SPLIT, and the split is where the measurement falls.** The
+MONAD half of the hypothesis is confirmed and is cheaper than hoped; the FUEL
+half is refuted, and sharply.
+
+### The census: no bump, no package, and a bug
+
+`mvcgen` is on the pin. `Std/Do` (21 files), `Std/Tactic/Do` (2) and
+`Lean/Elab/Tactic/Do/VCGen.lean` are all there, so **the toolchain-bump price is
+zero and no such build was ever run** — the expensive experiment the brief
+anticipated does not exist, and the machine-wide build lock was never taken.
+This is an independent second measurement of §L59's premise 2. The import
+boundary is exact: `@[spec]` is a BUILTIN attribute needing no import (which is
+why `Logic.lean` already uses it), while `Std.Do.Triple` and the tactic need
+`import Std.Do` + `import Std.Tactic.Do` — CORE modules, so `lakefile.toml` and
+`lake-manifest.json` are untouched. Measured: a file importing only
+`LeanModels.Python.Semantics` answers ``to use `mvcgen`, please include `import
+Std.Tactic.Do` ``.
+
+**One real Std bug, found in twenty lines.** `Spec.throw_Except`
+(`Std/Do/Triple/SpecLemmas.lean:484`) carries `[Monad m] [WPMonad m ps]` binders
+its conclusion does not determine, so a bare polymorphic `throw` inside
+`StateT W (Except ε)` leaves `vc2.m : Type ?u → Type ?u` and three more, and the
+declaration is rejected for *"universe level metavariables at the expression
+`Spec.throw_Except.{?u.89, ?u.88, 0}`"*. **The workaround is what the
+architecture wants anyway**: never write a bare `throw` in interpreter code —
+route every refusal through a NAMED primitive with its own `@[spec]` lemma. A
+refusal is a first-class notion in this family; mvcgen rewards making it one.
+
+### §L59's `SemM` HAS THE LAYERS BACKWARDS, and the correction is decided by `rfl`
+
+`docs/family-architecture.md` §3.4's illustrative substrate is
+`StateT W (ExceptT ρ Halt)`. **`StateT` outside `ExceptT` DISCARDS the state on a
+raise.** `Run`'s `.exn` RETAINS it (docs/memory-model.md v2), and
+`PyPost.err : PyErr → FrameState → Prop` is state-aware for exactly that reason.
+The difference is visible in the `PostShape` and is `rfl`:
+`ExceptConds (.arg W (.except ρ …))` has barrel `ρ → ULift Prop` — no `W` —
+while `ExceptConds (.except ρ (.arg W …))` has `ρ → W → ULift Prop`. So the
+substrate is **`ExceptT ρ (StateT W Halt)`**, the two are NOT interchangeable,
+and the wrong one cannot state the tier's own error postcondition. One line, and
+load-bearing for every tier written against that sketch.
+
+### `Run σ α` IS that stack — proved, not asserted
+
+`ofRun`/`toRun` are mutually inverse in 22 lines, with `Loud := Unit ⊕ String`
+carrying the two state-DISCARDING arms and `PyErr` the one that is not. Both
+stacks `#synth` a `WPMonad` with **zero instances written**. This RETIRES the
+2026-08-13 spike's obstacle 1 (*"`Run` is not a monad"*) as a permanent
+obstacle: it was a fact about the tree, not about the type. The instance was
+never unavailable — it was never asked for.
+
+### THE FUEL QUESTION, three runs, one available route
+
+1. **Fuel as a monad LAYER: NOT DEFINABLE.** `fail to show termination … no
+   parameters suitable for structural recursion … `loopF` does not take any
+   (non-fixed) arguments`. Fuel's job is to BE the recursion argument; hidden in
+   state it is not an argument, so the interpreter does not exist to have an
+   instance. §L59's ruling *"fuel stays OUT of the monad"* is confirmed, and for
+   a stronger reason than the one recorded there: **the alternative does not
+   typecheck.**
+2. **Fuel as an explicit ARGUMENT (today's shape): mvcgen does NOTHING.** At a
+   symbolic `F`, `mvcgen [triF]` returns the goal **unchanged after 1 m 31 s** —
+   one VC, `⊢ ∀ s, (wp⟦triF F n 0 1⟧ … s).down`. Nothing in `Std.Do` relates two
+   runs at DIFFERENT fuels; `Triple` is unary on one program while `fuelMono`
+   and the threshold form are about a family. They stay exactly where `VC.lean`
+   already puts them.
+3. **Fuel-free, total by a MEASURE: NATIVE, and it closes.** `Spec.repeatM`'s
+   `WhileVariant`/`WhileInvariant` pair is **one-to-one** with `py_vcgen`'s
+   `(dec := …)`/`(inv := …)`, down to the goal list (preservation-and-decrease,
+   exit algebra, initial invariant, the two landing arms). `Examples/python/tri`'s
+   arithmetic, as a Lean monadic `while`, closes in 13 lines.
+
+**So `∃ t, ∀ F ≥ t, run F = .ok w v` is neither produced nor consumed by mvcgen;
+it is assembled around it.** Using mvcgen natively means removing fuel, which
+removes kernel-reducible runs — and `#py_check`/`py_check`/`py_vcgen`'s captured
+runs are all kernel `rfl` at fuel 4096. That is a semantics change, not a
+proof-layer change. **But the fuel-free fragment is large**: `evalM` in the
+pilot is STRUCTURAL on `Expr`, and GATE 3's whole slice carries no fuel numeral
+anywhere. Fuel is owed only at `callIn`/`execWhile`/`execFor`/`heapEq`/generators.
+
+### THE WORKED COMPARISON — GATE 3 (`value_scores`) both ways
+
+`value_scores_M` proves the SAME fact with the gate's OWN fourteen premises,
+through a monadic shallow twin of the `evalExpr` path.
+
+| | real gate | monadic twin |
+|---|---|---|
+| statement / proof lines | 15 / 8 | 20 / 14 |
+| supply in file | 9 (`vlScore_lit`, `pstG`) | 68 (primitives 30, `@[spec]` 26, twin 12) |
+| SUBSTRATE, shared over all gates | **5 343** (`VC` 546 + `VC2` 939 + `VCTactic` 3 371 + `LoopTactic` 487) | **28** |
+| axioms | `[propext, Classical.choice, Quot.sound]` | identical |
+| fuel | `F + 10` | none |
+| elaboration | file 24 s / 51 decls (recorded) | `mvcgen` step **568 ms** |
+| **subject** | **`execStmts sunfish (F + 10)` — the shipped interpreter** | **a second semantics** |
+
+The last row is the verdict. The fidelity gap is exact and stated: the twin's
+`resolve` is locals-then-globals while the real `.name` arm consults the static
+`globalsFold` first — which is why the gate needs `pstG` and erases
+`-globalsFold, -globalsStep`, and the twin needs neither. The twin IS executable
+(`toRun (execM …)` computes `score = 20` on a fixture, `#guard`ed), so it could
+join `diff_test.py` — at the price of a maintained second interpreter, which the
+standing model-matches-code law then binds.
+
+### THE LAWS — four of six say the campaign was right
+
+* **Altitude lemmas PERSIST, and `@[spec]` is their registry.** Decisive:
+  `mvcgen` with the primitives UNFOLDED leaves **259+ VCs** and `mvcgen_trivial`
+  fails outright; the same goal with four `@[spec]` triples leaves **12**, all
+  pure, and closes. That is §L17's *"prove it ONCE at the chain with every
+  operand symbolic"* in mvcgen's own vocabulary, with a price tag on forgetting
+  it. `boolChain_and_falsy` and `compare_one` do not merely resemble `Spec`
+  lemmas — they transliterate.
+* **Computed-shape / residue-spelling PERSIST VERBATIM.** `simp [evalBinOp]`
+  left the `match` standing and `rfl` closed it; the index premises had to be
+  spelled in `indexValH`'s own residue (`xs[i.toNat]?.getD .none`), which is why
+  the gate spells them that way.
+* **Two-gates-per-`if` DISSOLVES as a statement discipline** — mvcgen splits the
+  arm and supplies its hypothesis. The arm count is unchanged; the bookkeeping
+  is gone.
+* **whnf-timeout = fuel-mismatch is MOOT on the fuel-free fragment and
+  UNCHANGED elsewhere**, because mvcgen does not reach there.
+* **NEW LAW — specs must be OUTPUT-DETERMINED.** Hit twice. A spec taking the
+  answer as an INPUT made mvcgen unify `?v` with the loop ACCUMULATOR (a
+  wrong-but-typechecking instantiation), and left 23 VCs with dependent
+  metavariables `?vc16 s h : RVal`. Restated as `⇓ r => ⌜… = some r⌝`: 3 and 12
+  VCs, no metavariables. **This applies verbatim to `@[py_spec]` and costs
+  nothing to adopt.**
+* **NEW LAW — `Triple` does not frame the state.** A read-only primitive must
+  SAY it leaves the state unchanged, by pinning the pre-state. Std ships
+  `Triple.observe` for exactly this.
+
+### THE PRICES, and the recommendation
+
+**Per language under the monadic architecture** (C's six pieces from
+docs/c-semantics-design.md): value model 0; `CWorld` 1 structure + ~7 spec
+lemmas; UB 1 `refuse` + 1 lemma (the three never-pooled causes cost nothing —
+one `.except` layer each, free by composition); the judgment free by the iso —
+**and the drain amendment at C's 181 short-circuit sites (`&&` 111, `||` 28,
+`?:` 42) IS the altitude law, 3 `@[spec]` lemmas**; `abort`/`exit` 2 lemmas;
+`printf` 1. **≈ 2 type declarations + 2 `abbrev`s + ~14 `@[spec]` lemmas ≈ 120
+lines**, against 5 343 lines of Python-specific walker.
+
+**That saving is real and it is BOUNDED.** §L59's *"no language writes a
+vcgen"* is true on the fuel-free fragment and **false at the fuel-recursive
+points**, where mvcgen makes no progress and each language still needs its own
+threshold assembly. c-semantics-design §4.2's *"the ∃-fuel threshold form
+transfers unchanged"* is therefore choosing the route mvcgen cannot walk at
+`call` and loop points — a decision to take consciously, with these numbers.
+
+**The Python bridge, priced but not built.** `pyPostToPostCond` (five `PyPost`
+arms onto one success barrel + the except layers, with `ret`/`brk`/`cont` riding
+a flow SUM — core's own `Spec.repeatM` `α ⊕ β` idiom), and
+`PyTriple.of_triple (hagree) (h)`. The load-bearing member is **`twinAgrees`** —
+an adequacy theorem for a second semantics, over the same AST, which
+`diff_test.py`'s 1 213 cases do not validate. Named as the elephant it is.
+
+**RECOMMENDED.** New tiers adopt the substrate and use mvcgen on the fuel-free
+fragment, deciding fuel's fate BEFORE writing the interpreter. Python **bridges,
+does not migrate** — the campaign is mid-flight and the 5 343-line saving is not
+collectable without an adequacy theorem it cannot afford to owe; revisit when
+`RecursionStep` closes, on that day's numbers, never forced. Four things are
+worth taking NOW at zero cost: output-determined specs; the altitude law with
+its 259-vs-12 price tag; the `SemM` layer-order correction; and never a bare
+polymorphic `throw`. **Risk recorded straight:** mvcgen warns on every
+invocation that it is experimental and should be avoided in production, and one
+bug surfaced in twenty lines of probing.
+
+### Gate
+
+**This landing carries no Lean the build sees** — `docs/mvcgen-pilot.md`,
+`docs/mvcgen-pilot.lean` and this section. That the build does not see it is
+CHECKED, not asserted: `lake query docs.mvcgen-pilot` answers ``error: unknown
+target `docs.mvcgen-pilot` `` (the `lakefile.toml` globs are the `LeanModels`
+lib root and `Examples.+`; a `-` is not a legal module-name component either, so
+nothing can import it). `docs_check` is therefore the gate: **74/74 marked
+blocks, 20 illustrative-exempt.** `lake env lean docs/mvcgen-pilot.lean` is
+green and prints its eight `#print axioms` lines and its fixture `#guard`.
+
+Per §7.1's build lock — the lock was HELD by another lane and the machine was at
+load 22 — **no `lake build` and no `diff_test` were started for a change
+containing no built Lean and no semantics edit**, which is the precedent §L57
+and §L59 set for exactly this shape. Every probe in the pilot was a small
+`lake env lean` run under `nice -n 19`, which rule 3 permits. The one expensive
+thing the brief anticipated — a build under a newer toolchain — **does not exist,
+because `Std.Do` is already at the pin.**

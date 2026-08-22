@@ -230,3 +230,96 @@ the honest number: the ticket queue is fair but the machine is saturated, so
 fairness converts starvation into a long, *bounded* wait. Work was pushed to a
 branch while queued so a purge could not take it, and merged to master only
 once green.
+
+
+---
+
+## 2026-08-23-c-3 — §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic
+
+### The census corrected my own number, and then found the fact that mattered
+
+I had written "34 `InitListExpr` sites". There are **75** (35 top-level, 40
+nested) — the 34 counted only those sitting directly on a `VarDecl`'s `init`.
+But the number that shapes the work is one I had not measured at all:
+
+> **ALL 75 ARE FULL.** No array initializer is shorter than its extent; no
+> structure initializer omits a member.
+
+So **§6.7.11p10 — the unmentioned members are initialized as objects with
+static storage duration, i.e. to zero — fires on ZERO corpus sites.**
+
+That is the effective-types situation from §2.5, exactly: cheap to install
+correctly while nothing exercises it, expensive to retrofit afterwards, and
+**no instrument in this project would otherwise notice it was missing.** So it
+is implemented, and gated on a **SYNTHETIC** partial initializer, because the
+corpus cannot exercise it and a rule nobody ran is a rule nobody checked.
+
+### Two gates that make the zero mean something
+
+`int a[4] = {7, 8};` appears nowhere in the corpus. The gate checks elements 2
+and 3 read back as **0** — and the neighbouring gate checks that with **no**
+initializer the same read **REFUSES** as indeterminate. Without that second
+gate, the zero could have come from `alloc` handing back zeroed memory rather
+than from §6.7.11p10, and the gate would have been decoration.
+
+### Zero-initialization is TYPE-DIRECTED, not a memset
+
+§6.7.11p10 initializes an unmentioned member *as if by `= 0`*, and for a
+POINTER that is a **null pointer**, not all-bits-zero. Writing zero bytes would
+leave a member that reads back as the integer 0 and makes `loadPtr` refuse — a
+wrong answer wearing the shape of a right one. Gated: a partially-initialized
+`struct box` reads its unmentioned `int *` member back as `Ptr.null`.
+
+`Layout` gains `elem` and `members`, because **aggregate initialization WRITES
+through the layout** where reading only ever asked it for one offset — the
+obligation this lane named when it held the work.
+
+### `fuelMono` — NOT proved, and the reason is structural
+
+The technique is no longer open: **`LeanModels/Sv/Obs.lean` already solves this
+exact problem** — a flat approximation order with `timeout` at the bottom,
+`fuelMono` as ONE conjunction over the mutual block, induction on fuel with a
+`le_bind` congruence — in **96 lines for four functions**. This lane should
+**LIFT that machinery, not write a second copy**; a second hand-rolled
+monotonicity order is precisely what §9.2 exists to stop.
+
+Two things make it more than a transcription: this mutual block is **ten**
+functions, not four, and its functions are MONADIC, so monotonicity is
+pointwise in the memory.
+
+**Why it was not attempted here, specifically.** Proof iteration needs many
+short Lean runs, and under Amendment 11 every one needs a tenure — which cost
+this lane **88 minutes** on the previous landing and **~80 minutes** on this
+one. A 300-line proof developed at one compile per tenure is not a session's
+work. **That is the lock's real cost on PROOF work as distinct from build
+verification**, and it is a different shape of problem from the starvation the
+ticket queue fixed. Reported rather than worked around.
+
+### HOLD: `Core.SemM`'s `Halt` is not adopted yet, deliberately
+
+`LeanModels/Core/SemM.lean` has this lane's `Halt` shape, but a **poorer
+payload**: `unsupported (msg : String)` against this lane's
+`(what, snapshot : Option Mem)` with the two structural guards that make the
+§3.4 ruling real. **Importing it today would delete the ruling, not
+consolidate it.** The rebuild lane is landing a Core payload that subsumes
+this one; adoption then becomes a substitution. Recorded at the definition
+site so the next lane to look does not "tidy" it away. Deliberate duplication
+with a reason, not drift.
+
+### A second RSS data point for Amendment 15
+
+The first build attempt was killed by this lane's own watchdog at **6171 MB
+against the 6144 MB (6 GB) chain line** — 27 MB over. So A15's chain SECONDARY
+is marginally too tight for a full-tree build at `LEAN_NUM_THREADS=2` on this
+machine; the per-process 3 GB line is the one doing the real work, and the
+chain figure wants ~6.5 GB or advisory status. `triad.sh` handled it correctly
+(exit 137 recognised as a resource kill, re-run once, second attempt green),
+which is the amendment working as designed.
+
+### Triad
+
+`lake build` **3724 jobs exit 0**; `docs_check` 83/83; `diff_test` **1427
+cases, 0 failed**, 118 whitelisted, 1309 matched; `script_corpus` **65
+scripts, 0 failed**. **Coverage: full** — a green covers every default target
+at this sha. 43 gates in `Examples/c/sunfish/stmt.lean`. No `sorry`, no
+`native_decide`.

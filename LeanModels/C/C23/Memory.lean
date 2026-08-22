@@ -735,6 +735,23 @@ belongs to the definition.
 So `timeout` and `unsupported` are here, and the two catchable-in-
 principle refusal causes (`ub`, `libc`) stay in `Refusal`. -/
 
+/-! ### HOLD: do NOT replace this with `Core.SemM`'s `Halt` yet
+
+`LeanModels/Core/SemM.lean` is on master and has this type's exact SHAPE.
+Adopting it today would still be wrong, because **its payload is poorer
+than this one**: Core carries `unsupported (msg : String)`, while this
+carries `(what, snapshot : Option Mem)` plus the two structural guards
+that make the §3.4 ruling real — the hand-written `BEq` that ignores the
+snapshot, and `Outcome`, which has nowhere to put a `Mem`.
+
+**Importing Core now would delete the ruling**, not consolidate it. The
+rebuild lane is landing a Core payload that SUBSUMES this one (cause +
+message + optional snapshot, with the guards lifted into Core); when it
+does, this lane's adoption is a substitution rather than a rewrite, and
+the duplication is retired the way §9.2 wants — by touch, once the shared
+thing is actually the better one. Until then, this is deliberate
+duplication with a reason, not drift. -/
+
 /-- The base monad: outcomes nothing can catch. -/
 inductive Halt (α : Type) where
   | ok (a : α)

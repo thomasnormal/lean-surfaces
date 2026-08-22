@@ -1,4 +1,9 @@
 import LeanModels.Core.Basic
+-- The family's shared semantic monad (docs/family-architecture.md §3.4, §3.8).
+-- Landed in Core so that no tier writes its own copy — §3.8's rule is that a
+-- second interpreter arriving with its own stack is a defect, not a design.
+-- Additive: nine new names, all measured to collide with nothing in the tree.
+import LeanModels.Core.Outcome
 import LeanModels.Python
 -- The SystemVerilog lane. The specs under `Examples/system-verilog/` already pull the
 -- core Sv chain in transitively; these imports make the whole lane (including

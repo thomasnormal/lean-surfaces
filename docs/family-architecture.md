@@ -1502,6 +1502,30 @@ standing rule with a named blocker.**
    proved interchangeability makes the surviving form an implementation
    detail rather than a commitment. Erosion, not migration.
 
+   **THE `GenFrame` RULING — what a SHARED type may do while the legacy
+   layer erodes.** Erosion raises a question neither "freeze it" nor
+   "maintain it" answers well: a type used by *both* layers, which is not
+   itself retiring, and which the new layer needs to **grow** for a new
+   capability. Ruled:
+
+   > **A shared-not-retiring type MAY grow for new capability. The legacy
+   > interpreter's contract is exactly three things: it COMPILES, it
+   > REFUSES what it does not implement, and it GAINS NO CONSUMERS.**
+
+   So the growth lands, and the legacy layer absorbs it with **a one-line
+   refuse arm — which is the legacy layer's ONLY permitted growth.** That
+   is the whole allowance: not a stub that half-works, not a TODO, and
+   certainly not an implementation. A refusal is loud, fuel-independent and
+   correct (§5.2 cause 1), so the legacy layer stays *true* without being
+   *maintained*.
+
+   **Both failure modes it forecloses are real.** Freezing the type blocks
+   the new layer's capability on a layer that is supposed to be dying —
+   the dead hand of the thing being retired. Implementing the arm in the
+   legacy layer gives it a new consumer and a new reason to live, which is
+   the opposite of erosion. The one-line refuse arm is the unique move that
+   keeps the legacy layer compiling without giving it a future.
+
    **The SEQUENCING rationale, which is about risk and not about Python.**
    `mvcgen` warns on every invocation that it is experimental, and one Std
    bug surfaced in twenty lines of probing (§3.4). **New tiers should
@@ -2495,6 +2519,39 @@ answered a question narrower than the one being asked; and in both cases
 **agreement is what stopped the search.** A disagreeing grep gets
 investigated. That asymmetry is the provenance law again, pointed at
 retrieval rather than at measurement.
+
+**AND ITS CONSTRUCTIVE HALF, minted on a third hit and corroborated the
+same day.** The rule above says *re-run the search*; this one says **what
+to count**:
+
+> **A COUNT THAT PRICES A DECISION MUST COME FROM THE PATTERN POSITION,
+> NEVER FROM THE IDENTIFIER.**
+
+An identifier count answers *"how often is this name written?"* — which
+includes mentions, docstrings, other lemmas' statements and the doc you are
+reading. A decision is priced by *"how many places must change?"*, and
+those are **pattern positions**: match arms, clause slots, the actual
+branch points. Four instances, three of which moved or nearly moved a
+plan:
+
+| instance | what went wrong | direction |
+| --- | --- | --- |
+| §L49's `\.usub` grep | missed every `cases op with \| usub =>` arm **by one character** — the leading dot | **UNDER**-counted |
+| §L53's walker price | landed at **19** because **catch-all arms were load-bearing**: the arm count was not the case count | **UNDER**-counted |
+| today's VCGen price | **26 lemma NAMES** priced a **9-arm** change at **35**, and nearly moved a date | **OVER**-counted |
+| the rebuild's `DRAIN` | generator drain vs the short-circuit trick — a name collision confirming a prior | over-counted, and *agreed* |
+
+**The two directions are both live, which is why the rule names the
+POSITION rather than saying "count carefully."** Identifiers over-count
+because names appear where no work happens. Pattern searches under-count
+when the syntax differs by a character, and **catch-all arms defeat arm
+counting entirely** — a single `| _ =>` can absorb a dozen cases, so even a
+correct arm count can be the wrong price.
+
+The practical form: **price a change by enumerating the positions the
+change must visit, and check that enumeration against the thing that
+dispatches** — the `match`, the clause list, the table — not against the
+name index.
 
 Every instrument output, triad line, coverage count, `#guard` batch, axiom
 print and timing is reported **with the state that produced it** — clean

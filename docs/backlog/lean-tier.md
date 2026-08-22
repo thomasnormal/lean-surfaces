@@ -211,3 +211,102 @@ No Lean run, no build, no ticket. M1 inch 2 already built this commit green in
 98 s and that is cited rather than repeated. Public reading only. Deferred items
 unchanged: Mathlib export blocked; inch-6 gate over our own `.olean`s awaits a
 quiet machine.
+
+---
+
+## 2026-08-22-lean-tier-3 — M3 inch 1 WITHDRAWN: the candidate first proof is blocked on a MISSING MODEL RULE, and my own M2 census recommended it
+
+M3 was ranked: (1) prove `isDefEqUnitLike.WF`, (2) `TrProj` the definition. **Inch
+1 is not available, and the census that recommended it was wrong.** No proof was
+forced and no trusted definition was quietly extended to make one go through.
+
+### The measurement
+
+`isDefEqUnitLike.WF` must conclude that two arbitrary inhabitants of a unit-like
+inductive are definitionally equal. **`VEnv.IsDefEq` has 13 constructors and none
+of them can conclude that.** Walked individually: `eta` is *function* eta;
+`proofIrrel` requires `.sort .zero` so it only reaches `Prop`; `extra` admits
+only what `env.defeqs` carries, and that is populated from exactly two checked
+places — δ-unfolding (`Theory/Typing/Env.lean:15-16,26,31`) and the quotient
+package (`Theory/Quot.lean:21`). No lemma in `Theory/` concludes defeq of two
+arbitrary inhabitants.
+
+Cross-checked against this tier's own M1 instruments, which is what makes it firm:
+
+| source | unit-like rule? |
+| --- | --- |
+| C++ kernel (`lean-kernel-census.json`) | **YES** — `is_def_eq_unit_like`, and separately `try_eta_struct_core` |
+| the thesis (`lean-spec-census.json`) | **NO** — names only β, δ, η, ι, ζ |
+| lean4lean's model | **NO** — 13 constructors |
+
+**These are SPEC-GAP obligations, not proof obligations.** The rule exists in the
+kernel, is absent from the 2019 spec, and is absent from the model that mirrors
+that spec. Proving the theorem requires first *adding a rule to the model* — a
+change to a trusted definition. That is why both `IsDefEq.lean` sorries have
+stood eleven months with no claimant, and it is a better explanation than
+"nobody got round to it".
+
+### The method error, and it is mine
+
+M2 introduced the semantic-dependency lesson and then committed a second instance
+of it. My dependency check asked *"does the executable touch `proj`?"* — about
+the **implementation**. It never asked *"does the model contain a rule that could
+make this theorem true?"* — about the **specification**. Corrected triage rule,
+now in the census: check **(a)** is the definition it needs present, **(b)** does
+its executable reach a blocked construct directly or transitively, **(c)** can
+the model discharge its conclusion at all. **(c) is the cheapest of the three and
+it eliminated two candidates instantly.**
+
+### Consequence: every independent obligation is unavailable
+
+Injectivity ×3 and `NormalEq.parRed` ×2 and `checkPrimitiveDef.WF` are all DO NOT
+ENTER (author's port; the `.extra` case circled by his own work and PR #43; PR
+#32 updated the day of the census). `isDefEqUnitLike.WF` is blocked on the
+missing rule; `tryEtaStructCore.WF` is blocked twice, on that **and** on `TrProj`.
+
+There is no available first proof of the shape M2 proposed. Forcing one would
+mean racing the author or quietly extending a trusted definition. Both refused.
+**This promotes inch 2 from "highest-leverage" to "the only available item"** —
+which is where the ruling already pointed.
+
+### Inch 2 — the `TrProj` design census (census-first, not started)
+
+What must be matched, from the kernel: `reduceProjCore` selects
+`args[numParams + i]` from a constructor application; `inferProj` walks the
+constructor telescope instantiating **earlier fields as `proj I j s`** (dependent
+projections) and enforces the `Prop`-squashing side condition **twice**.
+
+What the thesis offers: **nothing.** `proj` is absent from its 7-form grammar and
+from all 71 kernel-relevant rules. So "match both sources" resolves
+asymmetrically — design against the kernel, then write it *as the rule the thesis
+would have had* so it can be cited into the §7.4 correspondence manifest.
+
+`VExpr` has 6 constructors and no `proj`, so the projection must be **encoded**.
+Three candidates, two rejected with reasons: **(a) recursor encoding — REJECTED**,
+it needs `VInductDecl.WF`/`addInduct`, i.e. PR #43's territory, which the ruling
+excludes; **(b) projection-constant encoding — REJECTED**, those are derived
+declarations that need not exist, and `proj` is primitive precisely to avoid
+them; **(c) reduction-relational — RECOMMENDED**, mirrors `reduceProjCore` and
+`inferProj` and stays clear of both live PRs.
+
+**The crux, and it is where the kernel is unsound.** The hard case is a STUCK
+projection, and `proj-of-stuck-prop` / `proj-of-subst-prop` are two of the four
+arena soundness tests **our own pinned kernel fails**. So `TrProj`'s hardest case
+is the case the reference implementation gets wrong, and the design question —
+model what the kernel *does*, or what it *should do*? — has to be settled before
+any code. §4.2's precedence rule answers it (state the rule, record the oracle's
+behaviour, publish the divergence), but this is the first time in this tier that
+rule has teeth.
+
+### Hygiene
+
+No PRs, no comments, no contact upstream — engagement remains Thomas's call and
+he has personal standing via issue #16. Work stays in our own clone. The
+axiom-counting rule is now in the instrument's docstring **as the trap it
+prevents**, with the measured `types2025` evidence: eight sorries converted to
+`axiom`s with `-- := sorry` kept as a comment, zero proof content — a
+sorry-counter run there reports an improvement that did not happen.
+
+No Lean run, no build, no ticket taken this dispatch: the finding is a source
+measurement, and the C++ kernel side was taken from our own committed
+`lean-kernel-census.json` rather than re-fetching a wiped corpus.

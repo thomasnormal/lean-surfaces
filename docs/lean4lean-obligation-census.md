@@ -480,3 +480,184 @@ seam that is still open is **`TrProj`**, not inductives.
 * **PR #43's branch history** was not read — only its merged diff and metadata.
 * The paper is **paraphrased and cited by section**; no long passage reproduced.
 
+---
+
+## 8 M3 INCH 1 IS NOT AVAILABLE — and the census that recommended it was wrong
+
+**M2 recommended `isDefEqUnitLike.WF` as the candidate first proof (§5.1). That
+recommendation is WITHDRAWN.** The theorem cannot be proved against lean4lean's
+model as it stands, and neither can its sibling. This section records why, because
+the reason is more useful than the proof would have been.
+
+### 8.1 The measurement
+
+`isDefEqUnitLike.WF` must conclude `c.IsDefEqU e₁' e₂'` — two arbitrary
+inhabitants of a unit-like inductive are definitionally equal. **The model has no
+rule that can conclude that.**
+
+`VEnv.IsDefEq` has **13 constructors**, enumerated: `bvar`, `symm`, `trans`,
+`sortDF`, `constDF`, `appDF`, `lamDF`, `forallEDF`, `defeqDF`, `beta`, `eta`,
+`proofIrrel`, `extra`. Walking them:
+
+* **`eta` is FUNCTION eta** (`λx. e x ≡ e`). It says nothing about structures.
+* **`proofIrrel` requires `Γ ⊢ p : .sort .zero`** — it applies only in `Prop`,
+  and `isDefEqUnitLike` fires for unit-like inductives in any universe.
+* **`extra` admits only what the ENVIRONMENT declares**, and `env.defeqs` is
+  populated from exactly two places, both checked: δ-unfolding of definitions
+  (`ci.toDefEq`, `Theory/Typing/Env.lean:15-16,26,31`) and the quotient package
+  (`Theory/Quot.lean:21`). There is no path by which a unit-like equation enters.
+* No lemma anywhere in `Theory/` concludes defeq of two arbitrary inhabitants of
+  a type — searched by name and by shape.
+
+**Cross-checked against this tier's own M1 instruments**, which is what makes the
+diagnosis firm rather than a reading:
+
+| source | has a unit-like rule? |
+| --- | --- |
+| **the C++ kernel** (`docs/lean-kernel-census.json`) | **YES** — `unit-like` / `is_def_eq_unit_like`, and separately `eta-struct` / `try_eta_struct_core` |
+| **the thesis** (`docs/lean-spec-census.json`) | **NO** — the source names only β, δ, η, ι, ζ; struct-eta and unit-like postdate it |
+| **lean4lean's model** (`Theory/Typing/Basic.lean`) | **NO** — 13 constructors, none of them |
+
+> **These are not proof obligations. They are SPEC-GAP obligations.** The rule
+> exists in the kernel, is absent from the 2019 specification, and is absent from
+> the model that mirrors that specification. Proving the theorem requires first
+> **adding a rule to the model** — a change to a trusted definition, not a proof.
+
+That is why both `IsDefEq.lean` sorries have stood for eleven months with no
+claimant, and it is a better explanation than "nobody got round to it".
+
+**`tryEtaStructCore.WF` is doubly blocked**: on `TrProj` (§3.2) *and* on the same
+missing struct-eta rule.
+
+### 8.2 What this says about the census's own method
+
+M2 introduced the semantic-dependency lesson (§3.2) and then **committed a second
+instance of it.** The dependency check asked *"does the executable touch
+`proj`?"* — a question about the **implementation**. It did not ask *"does the
+model contain a rule that could make this theorem true?"* — a question about the
+**specification**. The first question is necessary; both are.
+
+**The obligation-triage rule, corrected:**
+
+> For each candidate, check **three** things, not one: (a) is the *definition*
+> it needs present (`TrProj`, `VInductDecl.WF`); (b) does its *executable* reach
+> a blocked construct, directly or transitively; and (c) **does the model contain
+> a rule that can discharge its conclusion at all.** (c) is the cheapest of the
+> three to check and it eliminated two candidates instantly.
+
+This is M1 §7.2 finding (4) — *"the spec is already behind the kernel"* — arriving
+with a price tag attached. Two of the seven independent obligations are not
+work-that-is-hard; they are **work that cannot start until the specification
+catches up with the implementation**.
+
+### 8.3 The consequence: every "independent" obligation is unavailable
+
+| obligation | status |
+| --- | --- |
+| `IsDefEqU.sort_inv`, `forallE_inv_stratified`, `sort_forallE_inv` | DO NOT ENTER — author's `SExpr`→`VExpr` port (§6.4) |
+| `NormalEq.parRed` ×2 | DO NOT ENTER — both sorries are in the **`.extra`** case, which §6.1 measured as circled by the author's own `.extra` work and PR #43. Zero consumers besides |
+| `checkPrimitiveDef.WF` | DO NOT ENTER — PR #32, updated the day of the census |
+| **`isDefEqUnitLike.WF`** | **BLOCKED — missing model rule (§8.1)** |
+| `tryEtaStructCore.WF` | BLOCKED twice — `TrProj` **and** missing model rule |
+
+**So there is no available first proof of the shape M2 proposed, and forcing one
+would mean either racing the author or quietly extending a trusted definition to
+make a theorem go through.** Both are refused.
+
+**This promotes inch 2 from "the high-value item" to "the only available item"**,
+and it was already the correct target: untouched for fifteen months, nothing in
+flight, gating 52% of the proof layer. §9 begins it.
+
+---
+
+## 9 M3 INCH 2 — `TrProj`, the design census
+
+Census-first even here, because this is a **definition** in someone else's
+metatheory: a wrong guess is expensive and hard to retract. This section fixes
+what the definition must satisfy, from both authorities, before any Lean is
+written.
+
+### 9.1 What must be matched, from the C++ kernel
+
+From this tier's own `docs/lean-kernel-census.json` (measured at our pin) and
+lean4lean's executable, which the definition must agree with:
+
+**Reduction** — `reduceProjCore`: `proj I i (mk params… fields…)` ↦
+`args[numParams + i]`. A projection applied to a *constructor application*
+selects the i-th field. Kernel symbol: `reduce_proj`.
+
+**Typing** — `inferProj`: the type of `proj I i s` is computed by walking the
+constructor's telescope: instantiate the parameters from the structure type's
+arguments, then **for each earlier field `j < i`, instantiate with
+`proj I j s`** — projections are *dependent*, and the type of field `i` may
+mention fields `0..i-1`. Then two side conditions, and the census's §8 of the
+charter noted this is where four live kernel unsoundnesses sit:
+
+> `if maybePropType then if !(← isProp dom) then fail` — **enforced twice**, once
+> inside the field loop and once at the result. A `Prop`-valued structure may not
+> project out a non-`Prop` field.
+
+**Defeq** — `lazy_delta_proj_reduction`, a dedicated loop. Three mechanisms in
+total, which is what makes `proj` kernel-primitive rather than sugar.
+
+### 9.2 What the thesis offers: nothing, measured
+
+`docs/lean-spec-census.json`: the thesis's grammar has **7 expression forms**;
+Lean 4 has 12. **`proj` is not among the thesis's.** Its 71 kernel-relevant rules
+contain no projection rule of any kind.
+
+**So the "match BOTH sources" instruction resolves asymmetrically, and the
+charter should say so plainly: there is nothing to match on the spec side.** The
+definition must be *designed* against the kernel alone, and then — this is the
+part worth doing well — **written as the rule the thesis would have had**, in the
+thesis's own style, so it can be cited into the §7.4 correspondence manifest as
+a proposed addition rather than an unexplained Lean definition.
+
+### 9.3 The hard constraint: `VExpr` cannot say "projection"
+
+Measured: `VExpr` has **6 constructors** — `bvar`, `sort`, `const`, `app`, `lam`,
+`forallE`. No `proj`, no `lit`, no `letE`. So `TrProj Γ S i e v` cannot map a
+projection to "the same thing"; it must **encode** it. Three candidate
+encodings, priced against the standing constraint that **PR #43 / #32 territory
+(inductives, `addDecl`) is out of bounds**:
+
+| encoding | mechanism | verdict |
+| --- | --- | --- |
+| **(a) recursor** — `proj I i e` ≡ `I.rec …` | uses the eliminator | **REJECTED.** Requires `VInductDecl.WF`/`addInduct`, which are PR #43's stubs. Would put this lane straight into the territory the ruling excludes |
+| **(b) projection constant** — `proj I i e` ≡ `@I.i params e` | uses derived projection functions | **REJECTED.** Those are *derived* declarations that need not be in the environment; `proj` is kernel-primitive precisely so it does not depend on them |
+| **(c) reduction-relational** — `TrProj` holds when `e` translates to a constructor application whose i-th field is `v`, plus the typing side conditions | mirrors `reduceProjCore` and `inferProj` directly | **RECOMMENDED.** Needs no inductive machinery beyond what `Theory/` already has, and stays clear of both live PRs |
+
+### 9.4 The crux, and it is where the kernel is unsound
+
+Encoding (c) is straightforward for a projection applied to a constructor. **The
+hard case is a STUCK projection** — `proj I i e` where `e` is a variable or an
+otherwise irreducible term. `TrExprS` must translate *every* well-typed `.proj`
+term, not only the reducible ones, so `TrProj` must say something about stuck
+projections too, and there is no field to select.
+
+**This is not an incidental corner. It is exactly where the C++ kernel is
+provably unsound today** — the charter's §9.1 named the four arena soundness
+tests our own pinned kernel fails, and two are literally
+`proj-of-stuck-prop` and `proj-of-subst-prop`.
+
+> **So `TrProj`'s hardest case is the case the reference implementation gets
+> wrong.** A definition that models stuck projections *correctly* will not
+> validate the kernel's current behaviour there — and that is a feature: it would
+> make the unsoundness visible as a proof obligation that cannot be discharged,
+> which is the strongest possible form of the family's DIVERGE row (§3.2).
+
+**This is the single most important design decision in the item**, and it should
+be taken deliberately rather than discovered mid-proof: does `TrProj` model what
+the kernel *does*, or what the kernel *should do*? The family's §4.2 precedence
+rule already answers it — **the model states the rule; the harness records what
+the oracle does; the disagreement is published as a finding** — but this is the
+first time in this tier that the rule has real teeth, so it is recorded here
+before any code exists.
+
+### 9.5 Status
+
+**Not started.** This dispatch establishes the constraints, rejects two of three
+encodings with reasons, and identifies the crux. Writing the definition is the
+next inch, and §9.4's question is the thing to settle first — it is a
+specification decision, not an implementation one.
+

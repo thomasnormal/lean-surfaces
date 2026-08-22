@@ -14,6 +14,22 @@ reported and the DELTA IS A FINDING** — a large gap means the project talks ab
 its holes as much as it has them, which is itself information about how the
 proof layer is maintained.
 
+WHY AXIOMS ARE COUNTED ALONGSIDE `sorry`, and it is a trap this instrument
+exists to prevent rather than a completeness gesture. **MEASURED:** lean4lean's
+`types2025` branch converts eight obligations — `VInductDecl.WF`, `addInduct`,
+`addInduct_WF`, `IsDefEq.uniq`, `sort_inv`, `forallE_inv`, `sort_forallE_inv`,
+`weakN_inv` — from `sorry` into **`axiom`**, keeping `-- := sorry` as a trailing
+comment. **Zero proof content changed.** It is presentation hygiene for a paper
+snapshot.
+
+A `sorry`-counting instrument pointed at that branch would report a dramatic
+improvement that did not happen, and would report it *green*. That is the same
+failure the family's `--compare` audit found elsewhere — an artifact that reads
+green because it cannot read anything else — so this census reports
+`totals.axioms` beside `totals.real`, and **any comparison across branches or
+over time must read both numbers or be fooled.** An obligation that changes
+shape has not been discharged.
+
 Lean's comment syntax needs real handling, not a regex: `--` to end of line,
 `/- ... -/` block comments that **nest**, `/-- ... -/` docstrings, and string
 literals that may contain any of the above. A stripper that got nesting wrong

@@ -25,3 +25,9 @@ import LeanModels.Sv.Regions
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).
 import LeanModels.Rv.Step
+-- SoftFloat: the family's shared IEEE 754 component (docs/family-architecture.md
+-- §3.5, docs/softfloat-charter.md). Layer 2 — the spec algebra over a general
+-- `Float.Model.Format`. Depends on NO package: core's float model and nothing
+-- else. Not in `LeanModels/Core/` yet, and that is §3.8's second-consumer
+-- trigger rather than a preference — see docs/backlog/softfloat.md.
+import LeanModels.SoftFloat

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**63 entries across 15 lanes.** Regenerate with
+**64 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -71,6 +71,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-wasm-1` | THE SORRY CENSUS: the number that carried the ruling was **5, not 13**, and the whole ledger is ONE corner of the metatheory | wasm |
 | `2026-08-22-sv-1` | THE DETERMINISM CLAIM IS CORRECTED: the Lean was right, the PROSE overclaimed, and determinism turns out to be relative to the trace | sv |
 | `2026-08-22-sunfish-rtrack-1` | THE `pst` LOCALITY LEMMA and the SEARCHED ROUND, rebuilt after a purge | sunfish-rtrack |
+| `2026-08-22-softfloat-1` | M1: the two censuses, the layer-2 design, and inch 1 | softfloat |
 | `2026-08-22-research-1` | the proof-framework survey, and the two best findings were in our own toolchain | research |
 | `2026-08-22-qol-1` | `tools/triad.sh --classify`: the triad now sizes itself to the diff, and SAYS WHAT ITS GREEN COVERS | qol |
 | `2026-08-22-pyrebuild-1` | THE ACCEPTANCE GATE PASSES | pyrebuild |

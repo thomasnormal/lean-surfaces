@@ -1,0 +1,220 @@
+# The SoftFloat lane's backlog
+
+Per-lane backlog, per `docs/family-architecture.md` §9.5. **Appended only by
+the SoftFloat lane.** Ids are `YYYY-MM-DD-softfloat-<n>`.
+
+SoftFloat is **shared component #2** (`docs/family-architecture.md` §3.5), not
+a language tier: no frontend, no envelope, no oracle, no corpus of its own. Its
+charter is `docs/softfloat-charter.md`.
+
+---
+
+## 2026-08-22-softfloat-1 — M1: the two censuses, the layer-2 design, and inch 1
+
+`docs/softfloat-charter.md` + `LeanModels/SoftFloat/{Basic,Theorems}.lean` +
+`LeanModels/SoftFloat.lean` — **12 theorems, zero `sorry`, zero `native_decide`,
+zero `bv_decide`, no package dependency.** State: pin
+`leanprover/lean4:v4.33.0-rc1`; every quoted axiom line from a zero-error
+elaboration; probes under `harness/softfloat/probe_*.lean`, run through `tools/check.sh` (case `scratch`).
+
+### THE COMMISSION'S OWN GATING INSTRUCTION CANNOT WORK — `#guard` is not a kernel oracle
+
+§3.5.1 says to *"gate the reduction behaviour with `#guard`s"*. `#guard` runs
+`unsafe evalExpr` — core says so in `Init/Guard.lean` (*"this uses the untrusted
+evaluator, so `#guard` passing is not a proof"*) — so it honours `@[extern]`,
+calls the C runtime, and **passes identically whether a declaration reduces or
+is `opaque` with no body**.
+
+Measured here **before** the docstring was found, which is why it is a
+measurement and not a quotation. Three propositions where `#guard` says yes and
+the kernel cannot: `Nat.sqrt 49 = 7`; `pack b16 (sqrt b16 49) = pack b16 7`;
+`(2.75 : Float).toInt64 = 2`. All three fail `rfl` **and** `decide`.
+
+**The rule, and it is now the lane's:** a reduction gate is `rfl` or `decide`.
+What the pair is good for is a **differential** — `#guard` attests the compiled
+C runtime, `rfl`/`decide` attest core's logical model — and a row carrying both
+has checked the two against each other. Every consumer row in
+`Theorems.lean` carries both.
+
+**Owed to the ES lane:** `docs/backlog/es.md` 2026-08-22-es-3 frames this as
+*"`#guard` is a weaker oracle than `rfl`"* and `harness/es/float_probe.lean`
+describes `#guard` as kernel evaluation. Direction right, degree understated:
+~50 float-touching `#guard` rows under `Examples/es/` are attested by the host
+FPU, not by Lean.
+
+### THE ES BLOCKER IS UNBLOCKED, AND THE UNBLOCK WAS RUN
+
+`docs/backlog/es.md` 2026-08-22-es-3 says the exact-integer arm of
+`numberToString` has *"no kernel-reducible substitute short of the bit-level
+model"*. **The bit-level model is in core, is kernel-reducible, and is one
+structure projection away.** `Float.toInt64` is `opaque` — core's docstring says
+*"This function does not reduce in the kernel"* — but `Float.Model.toInt64` is a
+plain `def` over `UnpackedFloat.toInt64`, and `Float.toModel` is a projection.
+
+Replicated verbatim from `LeanModels/Es/Convert.lean` into a core-only scratch
+file and run both ways:
+
+| row | `#guard` | `rfl` | `decide` |
+| --- | --- | --- | --- |
+| `numberToString 42.0 = some "42"` (as landed) | passes | **fails** | **fails** |
+| `numberToStringViaModel 42.0 = some "42"` | passes | **passes** | **passes** |
+| `7.0`, `-7.0`, `1000.0` | passes | **passes** | — |
+| NaN / ±Infinity / ±0 arms | passes | **passes** | — |
+| the `%` site (`Convert.lean:303`) | passes | — | **passes** |
+| `2.5 ⇒ none` (still refused) | passes | **passes** | — |
+
+Two expressions change: `n.toInt64` → `n.toModel.toInt64`, `t.toFloat` →
+`Float.ofModel (Float.Model.ofInt64 t)`. **It is the ES lane's edit to make;
+this lane owes them the measurement, not the commit.** Still blocked for ES:
+non-integer `Number::toString`, i.e. shortest-round-trip decimal printing —
+`Float.toString` is `opaque` and core has no decimal printer at all. That is
+plan step 3.
+
+### CORE SHIPS THREE THEOREMS AND SAYS IT WILL NEVER SHIP MORE — and it commissions us in its own words
+
+`Unpacked/Pack/Lemmas.lean` is the whole lemma inventory (three packing
+lemmas). Its header: *"There will not be any additional lemmas."* And
+`UnpackedFloat`'s docstring instructs downstream users to build a library
+**completely separately** and then prove core's operations **equivalent** to it
+and **transfer** lemmas back to `Float`/`Float32`.
+
+**That is a THIRD layer the commission does not have** — equivalence and
+transfer — and it is where the packed boundary's non-parametricity gets paid,
+once per width. Practical consequence: no proof in this component gets help
+from core.
+
+### THE NaN RESIDUE HAS NOTHING TO RANGE OVER
+
+§3.5.4 routes NaN payload to ∀-resolution; §3.5.1 clause (3) says build over
+`UnpackedFloat`. **`UnpackedFloat.notANumber` takes no arguments**
+(*"There is no payload attached to a NaN in this format"*), `Format.Valid`
+requires the canonical NaN, and `Float.ofBits` canonicalizes. The two
+instructions are individually correct and jointly unsatisfiable. Wasm — the
+doc's own exemplar — needs **3 325 `nan:canonical` / 3 409 `nan:arithmetic`
+result patterns at wg-3.0** (`docs/wasm-charter.md` §2.4; **0** at wg-1.0, which
+spelled the same nondeterminism as two dedicated assertion forms — so the number
+carries its suite version) and **103** float→int bit-exact `reinterpret` sites
+(`docs/wasm-suite-census.json`). **Named decision, charter §7 item 1;
+this lane recommends extending the type.**
+
+### `sqrt` IS THE ONE ARITHMETIC OP THAT DOES NOT REDUCE, AND FLOATS ARE NOT THE CAUSE
+
+`+ − × ÷` all close by `rfl` and `decide`. `sqrt` closes by neither, because
+`Nat.sqrt` is **well-founded** (`Nat.sqrt.iter`, `termination_by guess`).
+Isolated: `Nat.sqrt 49 = 7` fails both. `docs/completeness.md` §6's mergeSort-trap
+prediction was right about the *family* and wrong about the *scope* — it costs
+one operation, not the tier. It lands on the SV flagship, whose RTL module is
+`divSqrtRecFN` (division **and** square root).
+
+### THE WIDTH SCALE IS REAL TO binary256, AND THE PRICE IS `maxRecDepth`
+
+`rfl` on `pack (div fmt 12 4) = pack fmt 3`: `tiny`(1/1), binary16, binary32,
+binary64 at the default 512; **binary128 at 1 000; binary256 at 2 000**. Cost is
+linear in the significand width — `ExtendedMantissa`'s `>>>` is
+`Nat.repeat shiftRightOne`, so a shift of *n* is *n* kernel steps. Nothing is
+blocked; three of the six widths are formats core does not ship.
+
+### RUNG 1 IS CHEAPER THAN RUNG 2 IN AXIOMS, WHICH THE LADDER DOES NOT CLAIM
+
+| statement | scope | axioms |
+| --- | --- | --- |
+| `∀ fmt, add fmt NaN x = NaN` | every format | `[propext]` |
+| `∀ fmt s₁ s₂ m e, div fmt (finite …) (zero s₂) = infinity (s₁/s₂)` | every format | **none at all** |
+| `pack b16 (add b16 1 2) = pack b16 3` | binary16 only | `[propext, Quot.sound]` |
+
+The parametric statement covers infinitely many formats **and** asks the kernel
+to believe less. §0.1 II(a) argues rung 1 on informativeness; in this component
+it wins on trust too.
+
+### INCH 1's DELIVERABLE
+
+```lean
+-- LeanModels/SoftFloat/Theorems.lean (excerpt)
+theorem toInt_eq_truncate {lo hi : Int} {x : UnpackedFloat} {q : Q}
+    (h : valQ x = some q) : UnpackedFloat.toInt lo hi x = q.truncate := by
+```
+
+Core's float→int conversion **is** truncation-toward-zero of the exact value
+(IEEE §5.8). NaN and the infinities are excluded **by the hypothesis**, not by a
+side condition — the specification's statement, not the algorithm's. It mentions
+no `Format`, because truncation does not depend on one: clause (2) satisfied *a
+fortiori*. Plus nine IEEE special-value rows (§6.2, §6.3, §7.2, §7.3, §5.11),
+each **over a general `Format`**, and instance corollaries at four widths.
+
+**Fuel/termination, decided before the code:** none. Every layer-2 function is a
+composition of total `Int`/`Nat` operations; rounding a rational to a format
+does not search. That is what keeps the component kernel-reducible, which is
+what lets rung 2 close the base cases at all.
+
+### FIVE CORRECTIONS TO OTHER DOCUMENTS, FLAGGED NOT EDITED
+
+* **§3.5.3's SV row** names `real`. No SV document asks for it; `LeanModels/Sv/`
+  has zero `Float`/`real`/`shortreal`. The need is the divider.
+* **§3.5.3's Go row** (*"same component, no new work"*). `docs/go-charter.md`
+  has **zero** occurrences of `float`; nor do the Go backlog or its three census
+  JSONs. `LeanModels/Go/` does not exist.
+* **`docs/ada-semantics-design.md`** defers floats citing *"the charter's R4
+  gate"*. `docs/ada-charter.md` has no R4 and no `float` — R4 is the **C**
+  charter's rung. Annex G appears nowhere in the repository (case-sensitively;
+  the case-insensitive search hits `annex gap` in `docs/backlog.md` — §5.4a's
+  name-collision trap).
+* **`docs/c-semantics-design.md` §1.3** says v0 admits `double` values,
+  assignment and comparison. `LeanModels/C/C23/Expr.lean` refuses **every**
+  float literal and every `IntegralToFloating`. Model and doc diverge; that is a
+  blocker for the C lane, not a footnote.
+* **§3.5.5's "stale in three places"** is stale in **one**:
+  `docs/completeness.md` §6 still defers floats on the false Lean-side premise.
+  The two C documents are oracle-side only and have nothing to correct.
+
+### NEXT
+
+1. **`roundQ` + `IsCorrectlyRounded`** — the computable correctly-rounded
+   rounding of a `Q` to a `Format` under a `RoundingMode`, with its declarative
+   characterization proved equivalent. The spec/interpreter split one level down.
+2. **`op_correct` for `+ − × ÷`** — the round-of-exact bridge, from scratch,
+   with no help from core.
+3. **Layer 3** — equivalence and transfer to `Float`/`Float32`.
+4. **Decimal printing** (plan step 3) — the largest single item, and what
+   unblocks ES's `Number::toString` and, on the C side, **21 printf-family tests**
+   (2 of 61 c-testsuite + 19 of 261 sampled Fujitsu). The C tier's headline
+   "21% of format specs / 10% of Fujitsu's" counts SPECS; its own table counts
+   TESTS. Both are in `docs/c-semantics-design.md` §6; they price this step
+   very differently and the test-level number is the actionable one.
+
+### THE BUILD STATE OF THIS LANDING (§5.4a, A14) — SAY WHAT THE GREEN COVERS
+
+**What was RUN, and it covers every Lean claim in the charter.** All five
+probes and a faithful simulation of the two-module split were elaborated
+through `tools/check.sh`, case `scratch` — §7.1 rule 3's exemption, with the
+warm-clone amendment CHECKED by the script rather than assumed, under
+`nice -n 19` and needing no lock. Zero errors on `probe_reduces`,
+`probe_widths`, `probe_es_unblock_axioms` and the split simulation; exactly
+nine expected errors on `probe_walls`, which is the wall map and is pinned as
+a gate. Every axiom line quoted in the charter comes from one of the
+zero-error files.
+
+**What is OWED: the full `lake build`.** `tools/triad.sh --lane softfloat
+--classify` reads this landing as **spine** (it touches `LeanModels.lean`),
+so the triad is a full-tree build — and A14 makes those quiet-machine-only.
+At landing time the machine was **load 3.6 but 6.1 GB of swap in use**, and
+the FIFO queue was **nine lanes deep** with another lane's tenure past
+thirty-five minutes. The ticket is enqueued and the wrapper is detached; it
+runs when the queue reaches it.
+
+**Therefore, precisely: the green this landing carries is that every module
+and probe elaborates against the pinned toolchain. It is NOT yet a claim that
+the whole default target set still builds with `import LeanModels.SoftFloat`
+added to `LeanModels.lean`.** That integration risk is small — these two
+modules import `Init.Data.Float.Model` and nothing else, so there is no name
+they can collide with outside their own namespace — but small is not zero and
+it is not measured yet. **The full triad stays owed** and is discharged by the
+queued tenure.
+
+### THE `Core/` TRIGGER, NAMED SO IT IS NOT A JUDGEMENT CALL
+
+SoftFloat lives at `LeanModels/SoftFloat/`, **not** `LeanModels/Core/`, and that
+is §3.8's own rule rather than a preference: a thing moves into `Core` when a
+**second consumer** exists, and SoftFloat has **zero** in-tree consumers today
+(ES is blocked, SV is dormant). **The trigger is the second tier that imports
+`LeanModels.SoftFloat`.** ES importing it for the truncation family would be the
+first; SV's divider the likely second.

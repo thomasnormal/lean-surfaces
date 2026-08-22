@@ -1004,3 +1004,332 @@ that refusal is the finding, not a regression.
 Regression checks after the fix:
 `c_construct_census.py --selftest` ok (6 stubs, `&automatic=2 &static=1`);
 `es_census.py --self-test` ok (7 paths); `tools/docs_check.py` 83/83.
+
+---
+
+# AUDIT #2 — re-measured 2026-08-22, at `64ab535`
+
+The dated second audit §9.7 requires: **FULL, about every ten landings, and
+it re-measures its own headline numbers.** There have been **43 landings**
+since audit #1 (`git rev-list --count f66b1ad..HEAD`). Same clone
+(`~/repos/lean-audit`), fetch-rebased to master, `origin` verified as the
+real remote on branch `master` tracking `origin/master`. Docs and shell
+only; **no Lean executed**.
+
+An audit that only confirms is not an audit, so the summary first: **five of
+audit #1's six items moved in the right direction, one did not move at all,
+and one defect class came back — in a file written three hours after the fix
+that removed it.**
+
+> **PIN, and one re-measurement.** Every number below was taken at
+> `64ab535`. Two landings arrived during the write-up (`a7acd87`,
+> `ad90bd2`) and moved two of them; rather than land a number whose state
+> had already changed — §5.4a's whole point — both were re-measured at
+> `ad90bd2` and are marked **RE-MEASURED** where they appear. Nothing else
+> was re-run, and nothing else is claimed for that commit.
+
+## 2.1 SCOREBOARD — every #1 headline, re-measured
+
+| # | audit #1 | audit #2 | Δ |
+| --- | --- | --- | :-: |
+| private runner scripts | **6**, 382 lines | **1**, 74 lines | −5 |
+| amendment violations in them | **24 / 63 cells (38%)** | **6 / 12 cells (50%)** | −18 total, +12pp density |
+| lanes on a shared runner | **0** | **6** (live, by owner + `ps`) | +6 |
+| `--compare` that cannot fail | **3 of 14** | **1 of 16** | −2 |
+| provenance stamps that swallow | **4** | **1** | −3 |
+| census instruments | 21 | 23 | +2 |
+| `censuskit.py` | proposed | **absent (correct)** | — |
+| durable amendments / in practice | **8 / 12** | **13 / 16** | +5 registered, still 3 behind |
+| backlog: files / id schemes | **1 file**, colliding ids | **12 files**, 28 of 29 ratified ids | +11 |
+| `SemM` definition sites | not measured | **13 sites, 5 spellings** | new |
+| refusal-cause shapes | not measured | **4 spellings, 8 constructor names** | new |
+
+## 2.2 (1) THE 38% — the population collapsed, the density did not
+
+**Private scripts: 6 → 1.** The sweep retired four; `pyc_triad.sh` and
+`runtriad.sh` are gone. The survivor is
+`<scratchpad>/leantier-m3.sh` (74 lines, mtime **21:20**, i.e. written
+**after** audit #1), and it re-hand-rolls the whole lock. Scored on audit
+#1's axes: A9 ✓, A4 ✓, `LEAN_NUM_THREADS=2` ✓, `nice 19` ✓, 143-retry ✓ —
+and **A5 ✗, A7 ✗, RSS line ✗, recursive kill ✗, A8 ✗**: six violations in
+twelve applicable cells.
+
+Its A5 violation is the one worth naming, because it is now the **third**
+occurrence of a defect the law book documents by name:
+
+```
+( set -C; echo "$LANE lake pid $$ (M3 TrProj)" > "$LOCK/owner" )
+```
+
+Last whitespace-separated field: `TrProj)`. §7.1 rule 5 records this exact
+shape as the Go lane's (`lean-go)`); audit #1 found it again in
+`leantier-inch2.sh` (`lean4lean)`); here it is a third time, from the same
+lane, in a script written after both.
+
+**Adoption, measured live rather than claimed.** At 23:03 the lock owner
+file read `go 54886` — two fields, pid last, `tools/triad.sh`'s exact A5
+format — and `ps` resolves 54886 to `bash tools/triad.sh --lane go
+--classify`, with exactly one `lake` and one `lean` descending from it.
+Every queued ticket resolves to the same script:
+
+    cat /tmp/ls-build.lock/owner ; for t in $(ls /tmp/ls-build-queue); do
+      ps -o args= -p $(echo $t | cut -d- -f2); done
+
+| lane | ticket pid | process |
+| --- | --- | --- |
+| go | 54886 | `bash tools/triad.sh --lane go --classify` (**holding**) |
+| ada | 69754 | `bash tools/triad.sh --lane ada --gates …` |
+| basecase | 71861 | `bash tools/triad.sh --lane basecase --gates …` |
+| wasm | 78540 | `bash tools/triad.sh --lane wasm --dir …` |
+| es | 2934 | `bash tools/triad.sh --lane es --dir …` |
+| pyc3a | 80356 | `bash tools/triad.sh --lane pyc3a --dir …` (arrived mid-measurement) |
+
+**Six lanes on the shared script, one lane not.** Audit #1's top
+recommendation was adoption; that is the delta.
+
+Also measured, and it is *not* good news: **the three live checks found no
+violation this time.** One owner, one build chain by parentage, all five
+queued pids alive. Audit #1 caught two concurrent builds for 48 minutes; the
+same check now passes.
+
+### 2.2a THE NEW FAILURE MODE: the shared script is being FORKED
+
+    for f in /tmp/triad_sh /tmp/triad_new.sh /tmp/my_triad.sh; do md5 -q $f; done
+    # then compare against every committed version of tools/triad.sh
+
+| copy | lines | matches a commit? |
+| --- | ---: | --- |
+| `/tmp/triad_sh` | 381 | ✓ `f66b1ad` (a stale snapshot) |
+| `/tmp/triad_new.sh` | 454 | **NO MATCH — a fork** |
+| `/tmp/my_triad.sh` | 502 | **NO MATCH — a fork** |
+
+Of the non-comment lines each fork adds over the 381-line base, only
+**11 / 66** and **23 / 111** are present in today's `tools/triad.sh`. So
+roughly four fifths of two lanes' improvements are sitting in `/tmp`.
+
+And one of them is not a style difference. `/tmp/my_triad.sh` carries:
+
+```
+#   A16.1   per-process 5 GB AND chain 10 GB.  Measured, not chosen: a single
+#           HONEST `lean` worker on the sunfish tree reached 3251 MB at
+#           LEAN_NUM_THREADS=2 (base-case lane, 21:04), and a pre-A11 build of
+#           the same tree ran 2846/3238/3117/2864 MB (three of four over 3 GB).
+#           A15's 3 GB therefore killed …
+```
+
+`tools/triad.sh:89` still reads `RSS_LIMIT_KB="${LS_RSS_LIMIT_KB:-3145728}"
+# 3 GB, amendment 11`, **summed over the chain**. If that measurement is
+right, the canonical script's kill line terminates honest builds — and the
+correction lives only in a purgeable file. This is audit #1's finding one
+level up: the protocol moved from prose into a script, and the *amendments*
+are now moving from the script into `/tmp`.
+
+**And the register is behind again.** `A14`, `A15` and `A16.1` are cited by
+`leantier-m3.sh` and `/tmp/my_triad.sh`; `grep -rn 'A1[4-9]' docs/*.md`
+returns **nothing**, and §7.1a's table ends at 13. Audit #1 found the
+register one amendment behind; it was completed to thirteen; it is now
+**three** behind. The LOST problem is solved and the BEHIND problem is not —
+the register is a snapshot of a moving thing, and only the script is the
+thing itself.
+
+## 2.3 (2) THE SEVEN FIXES — all still correct, re-run not re-read
+
+`git rev-list --count 28b9f5e..HEAD -- <each file>` is **0** for all five
+files, but "a fixed guard can regress" is the reason to run it, so all
+fourteen checks were re-executed against fresh fixtures at `64ab535`:
+
+| | agree / resolvable | drift / unresolvable |
+| --- | :-: | :-: |
+| A1 `c_construct_census --compare` | 0 ✓ | 1 ✓ |
+| A2 `wasm_spec_census --compare` | 0 ✓ | 1 ✓ |
+| A3 `wasm_suite_census --compare` | 0 ✓ | 1 ✓ |
+| B1 `wasm_spec_census` revision | 0, `4a46e190` ✓ | 2, no file ✓ |
+| B2 `wasm_suite_census` revision | 0, `6a68dda2` ✓ | 2, no file ✓ |
+| B3 `es_census` sources | 0, `1d82ead6` ✓ | 2, no file ✓ |
+| B4 `lean_independent_check` checker_commit | 0, `274a4599` ✓ | 2, no file ✓ |
+
+**14 / 14. No regression.** (The revisions differ from the fix report
+because the fixtures are rebuilt each time; that they are non-empty and the
+`-nogit` runs write nothing is the property under test.)
+
+## 2.4 (3) THE CONTRACT — censuskit correctly absent, and a defect came BACK
+
+`harness/censuskit.py` does not exist, and neither does any other shared
+census module (`git ls-files harness/ tools/ | grep -iE 'kit|common|shared'`
+→ nothing). **Correct**: §9.2 made it by-touch.
+
+Eight instruments were touched since #1, **two of them new**:
+
+| instrument | landed | `--compare` on drift | provenance |
+| --- | --- | :-: | --- |
+| `harness/lean4lean_obligation_census.py` | **21:01** | **1** ✓ (missing baseline → 2) | **REFUSES**: *"--l4l is not a git checkout, so the census has no provenance"* ✓ |
+| `harness/wasm_sorry_census.py` | **20:44** | **0** ✗ | **returns `None`** ✗ |
+
+The fix landed at ~18:05. `wasm_sorry_census.py` was written **2h39m
+later**, and its `git_rev` is **byte-identical** to the function that fix
+deleted from `wasm_spec_census.py` — same lane, copied from its own sibling:
+
+    git show f66b1ad:harness/wasm_spec_census.py | sed -n '/^def git_rev/,/^    return None/p' > /tmp/old
+    sed -n '/^def git_rev/,/^    return None/p' harness/wasm_sorry_census.py > /tmp/new
+    diff /tmp/old /tmp/new        # identical
+
+It stamps the result at line 208 (`"revision": git_rev(...)`) and its
+`--compare` returns 0 on drift at line 250. Seventeen minutes later the Lean
+lane's new instrument got **both** right, in that lane's own words.
+
+> **This is the measurement the censuskit argument was missing.**
+> Copy-paste propagates a defect FORWARD faster than a fix propagates
+> SIDEWAYS. Fixing seven implementations did not stop the eighth from being
+> born with two of them, because the fix changed files and the defect lives
+> in a habit.
+
+Net contract-defect count: **7 → 2**, both in one new file, both in the lane
+whose sibling was fixed. Recommended, in §9.1's own shape: **fix those two
+today** (two lines), and let the by-touch migration continue.
+
+## 2.5 (4) NEW DUPLICATION SINCE #1
+
+### Backlog v2 — landed, and now there are TWO backlogs
+
+Eleven per-lane files, 2,934 lines, and **28 of 29 entries carry the
+ratified `YYYY-MM-DD-<lane>-<n>` id**. The single drifter is the Go lane
+(`docs/backlog/go.md:9` — `## G1`), i.e. the sequential scheme §9.5 exists
+to replace; its header also cites "§9" rather than §9.5 and states an
+ordering convention ("Entries newest-last") no other file states. Four
+distinct header spellings across eleven files.
+
+The larger finding is what did **not** happen. §9.5's migration says *"the
+current file is renamed to an archive"* and *"`docs/backlog.md` becomes a
+generated index"*. Neither has:
+
+    V2=$(git log --diff-filter=A --format=%h -- docs/backlog/ | tail -1)   # 3ad1550
+    git rev-list --count $V2..HEAD -- docs/backlog.md    # 10
+    git rev-list --count $V2..HEAD -- docs/backlog/      # 29
+
+**Ten landings appended to the monolith after the replacement shipped**, it
+grew from 21,050 to 21,797 lines, and no `tools/backlog_index.py` exists. So
+the family currently maintains two backlogs and no index — a duplication
+created by a half-finished de-duplication. Cheapest close: rename the
+monolith to `docs/backlog/archive-L1-L89.md` (every `§Lnn` reference keeps
+resolving, no history rewrite) and generate the index. **This audit lane
+moved first**: its entry is `docs/backlog/audit.md`, not the monolith.
+
+### `RefusalCause` — four spellings, eight constructor names, four causes
+
+| site | kind | constructors (at `64ab535`) |
+| --- | --- | --- |
+| family §5.2 | law | `unsupported`, `undefined`, `environment`, `order-dependence` |
+| `LeanModels/Es/Completion.lean:66` | **code** | `unsupportedConstruct`, `unmodeledIntrinsic`, `environment` |
+| `LeanModels/C/C23/Memory.lean:221` | **code** | `valueUB (UB)`, `memUB (MemFault)`, `libc (String)` + a separate `Cause` projection |
+| `docs/ada-semantics-design.md:120` | prose | `unsupportedConstruct`, `undefined`, `environment`, `orderDependence` |
+
+Nine distinct constructor names for four causes, two implementations that
+shared none of them, and `libc` — which §5.2 says in as many words is *"too
+C-specific a name for a family contract"* — still in the code.
+
+> **RE-MEASURED at `ad90bd2`, and this one RESOLVED ITSELF while the audit
+> was being written.** `a7acd87` replaced the ES type with
+> `LeanModels/Es/Completion.lean:118` — **`inductive RefusalCause (π : Type)`**,
+> documented as *"the family's four REFUSE classes — §5.2 — parameterized by
+> a tier payload"*, with `unsupported`/`undefined`/`environment`/
+> `orderDependence` each carrying a `π`, a per-tier instantiation
+> (`abbrev EsRefusal := RefusalCause EsDetail`), and a `className`
+> projection emitting **exactly** §5.2's four strings — `order-dependence`
+> included. The two ES-specific causes became payload.
+>
+> That is, precisely, audit #1 §5's recommendation: *a shared core with a
+> per-tier extension, because the vocabulary is already law and only the
+> extension is genuinely per-tier.* It was proposed, not imposed; a lane
+> reached it independently, and the shape it reached is the proposed one.
+>
+> Residual bill: **9 distinct names → still 9**, because C's
+> `valueUB`/`memUB`/`libc` and Ada's prose `unsupportedConstruct` have not
+> moved. What changed is the direction: the family type now EXISTS in code
+> for the first time, so C and Ada have something to instantiate rather than
+> something to negotiate. `libc` is the one name §5.2 names as wrong, and it
+> is now the only code-level obstacle to a straight instantiation.
+
+**But the drift is DECLARED, not silent**, and that is a genuine improvement
+over what audit #1 found: the Ada design states *"the Ada tier's
+`RefusalCause` is not ES's, and this is stated as a finding rather than
+silently diverging"*, prices the difference against ARM 1.1.5 with a census
+number (23 erroneous-execution paragraphs in clauses 1-13), and explicitly
+leaves the Core-vs-per-tier choice to the architecture lane. That is the
+right shape for a pre-Core divergence.
+
+### `SemM` by shape — 13 sites, 5 spellings, and 2 are a DIFFERENT MONAD
+
+    grep -rnE 'ExceptT [^ ]+ \(StateT' --include=*.lean --include=*.md .
+
+| spelling | sites |
+| --- | --- |
+| `ExceptT ρ (StateT W Halt)` — canonical | family §3.4 (`:1126`), `Es/Completion.lean:154` (**the only code**), `es-semantics-design.md:129`, `ada-semantics-design.md:22`, `sv-r1-scheduler.md:795`, `docs/backlog/go.md:155` (by shape, with an adoption note) |
+| `ExceptT ρ (StateT CWorld Halt) α` — world fixed, α explicit | `c-semantics-design.md:330` |
+| `ExceptT Refusal (StateT Mem Halt) α` — both slots fixed | `C/C23/Expr.lean:103`, `C/C23/Stmt.lean:43`, `c-semantics-design.md:563` |
+| `ExceptT PyErr (StateT σ (Except Loud))` — **different base** | `docs/mvcgen-pilot.lean:63`, `docs/lean-structures-census.lean:49` |
+| `ExceptT ρ (StateT SvWorld (Except Loud))` — **different base** | `sv-r1-scheduler.md:1158` |
+
+**The reconciliation bill, stated so it can be paid deliberately:** thirteen
+sites, of which three are Lean that must compile against a `Core.SemM` the
+day it lands, and **two use `Except Loud` rather than `Halt` — which §3.4
+proves are NOT interchangeable**, so those two are a semantics decision and
+not a rename. The Go lane is the model: it declined to define its own and
+wrote the adoption note instead (*"`Core.SemM` has not landed … so it is
+defined BY SHAPE with the adoption note"*).
+
+One free finding while counting: `LeanModels/C/C23/Expr.lean`'s **module
+docstring** says `EvalM α := ExceptT Refusal (StateT Mem Id) α` (line 59)
+while the `abbrev` twelve lines later says `Halt` (line 103). Doc-vs-code
+drift inside one file, and `tools/docs_check.py` cannot see it because it
+checks `docs/**`, `README.md` and `AGENTS.md` — not Lean docstrings.
+
+## 2.6 (5) THE CLASSIFIER'S FIRST HOURS
+
+`tools/triad.sh --classify` landed at **21:21** (`a0fd332`), so its life is
+**hours, not a week**; the numbers below say so rather than annualising
+them. Every landing's diff was classified with the **shipped**
+`classify_path`, sourced out of `tools/triad.sh` itself — not a
+re-implementation:
+
+    sed -n '/^classify_path() {/,/^}/p' tools/triad.sh > /tmp/cp.sh   # then source it
+
+| window | landings | docs-only (**no tenure owed**) | tier | spine |
+| --- | ---: | ---: | ---: | ---: |
+| since audit #1 (`f66b1ad`) | 43 | **35 (81%)** | 7 | 1 |
+| since `--classify` landed (`a0fd332`) | 14 | **11 (79%)** | 3 | 0 |
+
+These are **conservative**: `classify_path` alone ranks every `Examples/*`
+path as `tier`, and the shipped classifier's reachability probe can only
+*demote* unreferenced fixtures to `docs`. So the docs-only count can only go
+up, never down.
+
+What the landings themselves claim, across the 43:
+
+* **20** state *no ticket / no tenure / docs-only / no Lean*;
+* **17** name `tools/triad.sh`;
+* **8** report a build or a gate result.
+
+So the classifier's rule and the lanes' behaviour agree to within a few
+landings: **roughly four out of five landings in this period owed no
+tenure**, against a queue that was five deep while this was measured. That
+is the item's value, and it is why §2.2's contention numbers improved
+without anyone building faster.
+
+## 2.7 WHAT AUDIT #3 SHOULD RE-MEASURE
+
+0. **Whether C and Ada instantiated `RefusalCause π`** — the family type now
+   exists in code (`ad90bd2`), so #3 measures uptake rather than divergence,
+   and `libc` is the named obstacle.
+1. **Whether the two `wasm_sorry_census.py` defects were fixed**, and
+   whether instrument #24 is born clean. That is the by-touch policy's real
+   test, and #2 is the first evidence against it.
+2. **Whether `tools/triad.sh`'s forks came home** — specifically whether the
+   A16.1 RSS measurement landed in the repo script, and whether A14-A16
+   reached §7.1a. Fork count and register lag are now the leading
+   indicators, replacing #1's private-script count.
+3. **Whether the monolith was archived and an index generated** — the
+   dual-write count (`10` and rising) is the metric.
+4. **The `SemM` bill at the moment `Core.SemM` lands**: 13 sites, and
+   whether the two `Except Loud` sites were decided rather than renamed.
+5. **The three live checks**, every keeper tick. They passed this time; #1's
+   48-minute violation is why they exist.

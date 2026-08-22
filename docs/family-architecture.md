@@ -1255,6 +1255,10 @@ needs a final answer to index.
 
 ### 6.2 The deceptive fits, for contrast
 
+* **Go** — looks like a concurrency misfit, is not: its memory model is
+  explicitly DRF-SC, so schedules GENERATE its behavior and §3.6's four
+  pieces apply unchanged. Go and a future C-threads extension are one
+  pattern with two spec citations.
 * **Prolog** — looks nondeterministic, is not: ISO fixes depth-first
   search with leftmost selection, so the interpreter is deterministic and
   the tier is ordinary.

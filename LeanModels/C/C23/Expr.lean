@@ -276,18 +276,28 @@ def calleeNameOf : Expr → String
   | .declRef n _ _ _ => n
   | _ => "<indirect>"
 
-/-- What a call site delegates to: the callee and the ARGUMENT
-EXPRESSIONS, **unevaluated**.
+/-- What a call site delegates to: **the caller's own evaluator**, the
+callee, and the ARGUMENT EXPRESSIONS, unevaluated.
 
-Taking expressions rather than values is what keeps this layer fuel-free.
-Evaluating the arguments is the handler's job, and inch 5's handler will
-do it with fuel in hand — so the recursion that needs fuel lives where
-fuel lives, and `evalExpr` never recurses through a `List Expr`. -/
-abbrev CallHandler := Expr → List Expr → EvalM CVal
+Two things this signature gets right that the inch-3 draft did not.
+
+**The evaluator is passed in.** §6.5.3.3p4 evaluates the arguments in the
+CALLER's scope, and a handler holding only the expressions had no way to
+do that — inch 3 could not see the gap because it refused every call.
+Passing `evalExpr ctx` as a closure supplies the caller's context without
+`Ctx` having to contain itself.
+
+**The ORDER stays the handler's choice**, which is where Thomas's ruling
+lives: §6.5.3.3p10 leaves argument evaluation indeterminately sequenced,
+so `∀ order` is a property of the handler, not of this type.
+
+Taking expressions rather than values is still what keeps this layer
+fuel-free: `evalExpr` hands the list off without recursing through it. -/
+abbrev CallHandler := (Expr → EvalM CVal) → Expr → List Expr → EvalM CVal
 
 /-- The inch-3 handler: every call refuses as `unsupported`, which is the
 cause that retires by climbing a rung — NOT `libc`, and never silently. -/
-def noCalls : CallHandler := fun callee _ =>
+def noCalls : CallHandler := fun _ callee _ =>
   refuseUnsupported s!"call to '{calleeNameOf callee}' — the call semantics is inch 5"
 
 /-! ## Layout — the implementation-defined surface, PARAMETERIZED
@@ -741,7 +751,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
 
   -- §6.5.3.3 — the call, DELEGATED. This layer is fuel-free precisely
   -- because it does not evaluate the arguments; see `CallHandler`.
-  | .call callee args _ _ => ctx.call callee args
+  | .call callee args _ _ => ctx.call (evalExpr ctx) callee args
 
   -- §6.5.4.4 — `sizeof`, answered by the layout, never computed here.
   | .typeTrait trait argTy sub ty _ =>

@@ -14263,3 +14263,138 @@ declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
 `sorry`, no `native_decide`. This is a `LeanModels` change, so the whole tree
 rebuilt — twice, the second time after rebasing onto §L57's own `LeanModels/C`
 work.
+
+## L59 — THE FAMILY ARCHITECTURE: the spec moved 79%, the MODEL moved one line, and three recorded premises were wrong (2026-08-22)
+
+Thomas chartered the repository as a FAMILY of VERSIONED language surfaces — C
+and SystemVerilog per spec edition, three new spec tiers founding (WebAssembly,
+ECMAScript, Ada), Python per CPython minor, a user choosing the proof target by
+naming a language and a version. The architecture that has to exist BEFORE five
+lanes lay down structure is [docs/family-architecture.md](family-architecture.md).
+**It carries no Lean**: the document constrains, the lanes implement.
+
+### THE CENTRAL MEASUREMENT, and it is two numbers that look contradictory
+
+`harness/c_clause_delta.py`, landed here, diffs the two public C drafts at clause
+granularity. Its first answer was WRONG and the way it was wrong is the finding:
+matching clauses by NUMBER measures the C23 renumbering, not the change. C17's
+`6.5.7 Bitwise shift operators` is C23's `6.5.8`; C17's `5.1.2.3 Program
+execution` is C23's `5.1.2.4 Program semantics`. Both verified by direct grep,
+independently of the parser. Re-matched on the ancestor-title path:
+
+* **996 → 1267 body clauses; 933 matched, 679 substantive; 145 identical — 21.4%.**
+  334 added, 63 removed, and **612 of 933 renumbered (65.6%)**.
+* Clause 6.7 *Declarations*: **0 of 18 identical, 18 new subclauses.** 6.5
+  *Expressions*: 3 of 29. 6.10 *Preprocessing*: 1 of 17.
+* **Annex J.2 — the refusal taxonomy's own delta**: 211 → 221 UB items, 171
+  identical modulo the moved citation, 40 retired, 50 new. And C23 **NUMBERED**
+  the items where C17 used bare bullets, so a C23 refusal can cite a UB item by
+  number. That paid off immediately: the data-race UB is J.2 item **(5)**.
+
+Against 21.4% document identity, the tier that mirrors those clauses measures:
+**0 of 45 ingested AST node kinds are edition-specific, 1 of 11 value-layer
+definitions is, and 933 of `LeanModels/C/`'s 934 lines are common to both
+editions.** The one line is `IntTy.wrap`'s signed arm, reachable only from
+`convert`, which is C23 §6.3.1.3's mandate.
+
+**The two are not in conflict and confusing them is the whole trap.** The
+standard changed enormously; the modeled fragment did not, because C23's edits
+landed in declarations, preprocessing and the library while the tier models a
+45-kind C89-era vocabulary. **The delta that prices the architecture is the delta
+over the CLAIMED CLAUSES, never over the document** — which can only be known by
+an instrument that knows which clauses are claimed, and that is why the clause
+manifest is not optional.
+
+### THE PYTHON SIDE, and the delta is real but SHALLOW
+
+`harness/py_version_delta.py`, also landed, plus a fuller closed-function run.
+1458 rows under CPython 3.9.19 / 3.11.11 / 3.12.8 / 3.14.5:
+
+* **3.9 → 3.12 and 3.9 → 3.14: 1458 of 1458 VALUE-identical — 100.00%.** Not one
+  returned value, exception class, stdout byte or exit code moved.
+* Message-identical 97.87% (3.12) and 95.95% (3.14). **All 59 deltas are
+  exception message TEXT**, in eight buckets.
+* Grammar: **+17 node classes, −0**, and 110 of 113 common classes have identical
+  `_fields` — 97.3%. `operator`/`unaryop`/`cmpop`/`boolop` are **frozen across
+  all four versions**; `expr` is frozen 3.9→3.12.
+* The instrument re-derives docs/completeness.md §2's counts on 3.9 exactly
+  (25/27/13/4/10/2), which is its validation.
+
+**The finding that decided the mechanism**: `PyErr` encodes zero-division as TWO
+nullary constructors because 3.9 has exactly two texts; **3.11 and 3.12 split it
+three ways.** A 3.11 surface needs a different constructor ARITY, not a different
+string.
+
+### THE RULING — shared substrate, SIBLING editions
+
+Full copies are refuted by both censuses (933 duplicated lines to carry 1; or
+duplicating 32 331 lines of Python Lean to change 59 strings). **Base+delta
+layering is refuted by the `PyErr` finding specifically — you cannot override a
+DATATYPE's constructor arity from a delta layer** — and by the ordering it
+imposes: neither C17 nor C23 is derived from the other. Version-parameterized
+definitions are refuted on readability and scale (a version parameter on
+`evalBinOp` to express that `+` never changed).
+
+So: the measured INTERSECTION lives once in `LeanModels/<Lang>/`; everything an
+edition decides lives WHOLE in `LeanModels/<Lang>/<Ver>/`; editions are SIBLINGS.
+The per-edition "whole surface" the reader needs is a **generated VIEW** — the
+clause manifest — not a copied tree, and the same artifact is the cross-edition
+diff gate and the coverage scoreboard. `LeanModels/C/C23/` is **RATIFIED** with
+one refinement: only `Value.lean` moves; `Ast`/`Json`/`Load` stay up, because the
+census measured them neutral.
+
+### THREE RECORDED PREMISES MEASURED WRONG
+
+1. **The C tier's own ISO citations are three-of-five an edition out of date.**
+   `Value.lean:157` cites "C23 §6.5.7" for `<<` (C23 has it at §6.5.8);
+   `Value.lean:141` cites §6.5.5 for truncating division (C23: §6.5.6);
+   c-semantics-design §4.4 cites 5.1.2.3 for sequencing (C23: 5.1.2.4). The
+   §6.3.1.3 and §7.23.6.1 citations are correct. Nothing in the tree could have
+   caught this, which is the argument for clause citations being CHECKED DATA.
+2. **`Std.Do.Triple`/`WP`/`WPMonad`/`PostShape`/`SPred`/`PostCond` and the
+   `mvcgen` tactic are ALL present on `v4.33.0-rc1`.** The toolchain-bump caveat
+   on "one shared vcgen instead of one per language" is retired by measurement.
+3. **Lean's `Float` IS kernel-reducible on the pinned toolchain**, contradicting
+   docs/completeness.md §6. `Float` is now a plain structure over a bit-level
+   model; core ships **1856 lines** of width-parametric IEEE 754 (`binary32` AND
+   `binary64`, ops `Add Sub Mul Div Sqrt Compare`, a rounding layer whose
+   `Accuracy` type encodes exact/inexact-relative-to-half-ulp). Three theorems
+   kernel-checked with only `[propext, Classical.choice, Quot.sound]`: reduction
+   through `List.foldl`, through user-defined structural recursion, and
+   `0.1 + 0.2 = 0.30000000000000004`. **No `native_decide`.**
+
+### THE SUBSTRATE, and the honest headline
+
+`LeanModels/Core/` is **13 lines of 71 766 — 0.018%** of the model tree, one
+structure, three lane importers. `Run` is used by Python (16 files) and SV (3)
+and by nobody else; `Run.` has grown 1251 → **1282** sites in 24 → **31** files
+since §L35 priced the move. Everything else the C lane "reused" is METHOD. The
+contract names three shared COMPONENTS: (1) one `SemM` + one `WPMonad` instance
++ the default `mvcgen`, with fuel OUTSIDE the monad and nondeterminism as an
+explicit parameter; (2) **SoftFloat**, two layers — core supplies the executable
+bit-level ops, the family builds the `round-of-exact` spec algebra, and
+**ECMAScript BLOCKS on it** because binary64 is its only number type; (3) the
+**concurrency pattern**, where ∀-schedule correctness is an ordinary parameter
+theorem, a violation witness is a finite schedule checked by a `#guard`, and the
+DRF-SC fence is spec-mirrored to C23 §5.1.2.5 ¶35 + NOTE 18 and §7.17.3 — all
+verified against the draft, with the honest note that NOTE 18 is informative.
+
+Also ruled: `language_version` becomes a first-class envelope field (today
+Python's lives in `frontend.version` as a POINT release, C's inside
+`profile_flags[0]`, and SV's nowhere — while that lane cites IEEE 1800-2017 for
+semantics and censuses the 1800-2023 corpus). REFUSE gains a **fourth cause,
+order-dependence**, because C's own §4.4 sequencing refusals fit none of its
+three. And §6 writes down the model's five assumptions and what does NOT fit —
+with the residual true misfit narrowed to the relaxed-atomics fragment, and
+floats explicitly REMOVED from the misfit list.
+
+### Gate
+
+**This charter carries no Lean** — `docs/` plus two `harness/` instruments, and
+no `.lean`, `lakefile.toml`, `LeanModels.lean` or `lean-toolchain` touched. So
+`docs_check` is the gate: **73/73, 19 illustrative-exempt**. Both instruments
+were run twice and are byte-identical; both refusal paths were RUN (a missing
+interpreter is reported and skipped loudly; a zero-clause parse refuses). Per the
+new §7.1 build lock — the machine was at load 22 under other lanes — no build was
+started for a change containing no Lean, and the toolchain probes were small
+dependency-free scratch files under `nice -n 19`, which rule 3 permits.

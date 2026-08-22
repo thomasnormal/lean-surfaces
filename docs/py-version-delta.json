@@ -1,0 +1,275 @@
+{
+  "grammar": {
+    "per_version": {
+      "3.11": {
+        "node_classes_all": 130,
+        "node_classes_excl_aliases": 125,
+        "runtime": "3.11.11",
+        "sorts": {
+          "boolop": 2,
+          "cmpop": 10,
+          "excepthandler": 1,
+          "expr": 27,
+          "mod": 5,
+          "operator": 13,
+          "pattern": 8,
+          "stmt": 27,
+          "type_param": null,
+          "unaryop": 4
+        }
+      },
+      "3.12": {
+        "node_classes_all": 131,
+        "node_classes_excl_aliases": 130,
+        "runtime": "3.12.8",
+        "sorts": {
+          "boolop": 2,
+          "cmpop": 10,
+          "excepthandler": 1,
+          "expr": 27,
+          "mod": 5,
+          "operator": 13,
+          "pattern": 8,
+          "stmt": 28,
+          "type_param": 3,
+          "unaryop": 4
+        }
+      },
+      "3.14": {
+        "node_classes_all": 132,
+        "node_classes_excl_aliases": 132,
+        "runtime": "3.14.5",
+        "sorts": {
+          "boolop": 2,
+          "cmpop": 10,
+          "excepthandler": 1,
+          "expr": 29,
+          "mod": 5,
+          "operator": 13,
+          "pattern": 8,
+          "stmt": 28,
+          "type_param": 3,
+          "unaryop": 4
+        }
+      },
+      "3.9": {
+        "node_classes_all": 118,
+        "node_classes_excl_aliases": 113,
+        "runtime": "3.9.19",
+        "sorts": {
+          "boolop": 2,
+          "cmpop": 10,
+          "excepthandler": 1,
+          "expr": 27,
+          "mod": 5,
+          "operator": 13,
+          "pattern": null,
+          "stmt": 25,
+          "type_param": null,
+          "unaryop": 4
+        }
+      }
+    },
+    "steps": {
+      "3.11->3.12": {
+        "added": [
+          "ParamSpec",
+          "TypeAlias",
+          "TypeVar",
+          "TypeVarTuple",
+          "type_param"
+        ],
+        "common": 125,
+        "fields_changed": {
+          "AsyncFunctionDef": {
+            "from": [
+              "name",
+              "args",
+              "body",
+              "decorator_list",
+              "returns",
+              "type_comment"
+            ],
+            "to": [
+              "name",
+              "args",
+              "body",
+              "decorator_list",
+              "returns",
+              "type_comment",
+              "type_params"
+            ]
+          },
+          "ClassDef": {
+            "from": [
+              "name",
+              "bases",
+              "keywords",
+              "body",
+              "decorator_list"
+            ],
+            "to": [
+              "name",
+              "bases",
+              "keywords",
+              "body",
+              "decorator_list",
+              "type_params"
+            ]
+          },
+          "FunctionDef": {
+            "from": [
+              "name",
+              "args",
+              "body",
+              "decorator_list",
+              "returns",
+              "type_comment"
+            ],
+            "to": [
+              "name",
+              "args",
+              "body",
+              "decorator_list",
+              "returns",
+              "type_comment",
+              "type_params"
+            ]
+          }
+        },
+        "identical_fields": 122,
+        "removed": []
+      },
+      "3.12->3.14": {
+        "added": [
+          "Interpolation",
+          "TemplateStr"
+        ],
+        "common": 130,
+        "fields_changed": {
+          "ParamSpec": {
+            "from": [
+              "name"
+            ],
+            "to": [
+              "name",
+              "default_value"
+            ]
+          },
+          "TypeVar": {
+            "from": [
+              "name",
+              "bound"
+            ],
+            "to": [
+              "name",
+              "bound",
+              "default_value"
+            ]
+          },
+          "TypeVarTuple": {
+            "from": [
+              "name"
+            ],
+            "to": [
+              "name",
+              "default_value"
+            ]
+          }
+        },
+        "identical_fields": 127,
+        "removed": []
+      },
+      "3.9->3.11": {
+        "added": [
+          "Match",
+          "MatchAs",
+          "MatchClass",
+          "MatchMapping",
+          "MatchOr",
+          "MatchSequence",
+          "MatchSingleton",
+          "MatchStar",
+          "MatchValue",
+          "TryStar",
+          "match_case",
+          "pattern"
+        ],
+        "common": 113,
+        "fields_changed": {},
+        "identical_fields": 113,
+        "removed": []
+      }
+    }
+  },
+  "instrument": "harness/py_version_delta.py",
+  "interpreters": {
+    "3.11": "python3.11",
+    "3.12": "python3.12",
+    "3.14": "python3.14",
+    "3.9": "python3.9"
+  },
+  "scripts": {
+    "base": "3.9",
+    "deltas": {
+      "3.11": [
+        {
+          "base_tail": "!!NameError: name 'nope' is not defined",
+          "file": "harness/scripts/exc_message_script.py",
+          "kind": "error-text",
+          "other_tail": "!!NameError: name 'nope' is not defined. Did you mean: 'None'?"
+        }
+      ],
+      "3.12": [
+        {
+          "base_tail": "!!NameError: name 'nope' is not defined",
+          "file": "harness/scripts/exc_message_script.py",
+          "kind": "error-text",
+          "other_tail": "!!NameError: name 'nope' is not defined. Did you mean: 'None'?"
+        }
+      ],
+      "3.14": [
+        {
+          "base_tail": "!!NameError: name 'nope' is not defined",
+          "file": "harness/scripts/exc_message_script.py",
+          "kind": "error-text",
+          "other_tail": "!!NameError: name 'nope' is not defined. Did you mean: 'None'?"
+        },
+        {
+          "base_tail": "!!ZeroDivisionError: integer division or modulo by zero",
+          "file": "harness/scripts/init_raise_script.py",
+          "kind": "error-text",
+          "other_tail": "!!ZeroDivisionError: division by zero"
+        },
+        {
+          "base_tail": "!!ZeroDivisionError: integer division or modulo by zero",
+          "file": "harness/scripts/raiser.py",
+          "kind": "error-text",
+          "other_tail": "!!ZeroDivisionError: division by zero"
+        },
+        {
+          "base_tail": "!!ZeroDivisionError: 0.0 cannot be raised to a negative power",
+          "file": "harness/scripts/zerodiv_pow_script.py",
+          "kind": "error-text",
+          "other_tail": "!!ZeroDivisionError: zero to a negative power"
+        }
+      ]
+    },
+    "errors": [],
+    "rows": 65,
+    "same_as_base": {
+      "3.11": {
+        "of": 65,
+        "same": 64
+      },
+      "3.12": {
+        "of": 65,
+        "same": 64
+      },
+      "3.14": {
+        "of": 65,
+        "same": 61
+      }
+    }
+  }
+}

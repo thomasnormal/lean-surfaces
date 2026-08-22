@@ -1,0 +1,101 @@
+{
+  "schema": "go-census-0.1",
+  "toolchain_family": "go1.25",
+  "lang_versions": {
+    "(from go.mod)": 1
+  },
+  "files": 1,
+  "source_sha256": {
+    "Examples/go/pipeline/pipeline.go": "e5410a49735e0115f85597802827055380577bbe489de5a3b43e88a4d0adc353"
+  },
+  "lines_total": 112,
+  "lines_non_blank": 102,
+  "bytes": 3959,
+  "nodes": 228,
+  "node_kinds": {
+    "AssignStmt": 12,
+    "BasicLit": 11,
+    "BinaryExpr": 4,
+    "BlockStmt": 10,
+    "CallExpr": 11,
+    "ChanType": 6,
+    "CommClause": 2,
+    "Comment": 44,
+    "CommentGroup": 2,
+    "ExprStmt": 6,
+    "Field": 3,
+    "FieldList": 4,
+    "File": 1,
+    "ForStmt": 3,
+    "FuncDecl": 2,
+    "FuncLit": 2,
+    "FuncType": 4,
+    "GenDecl": 2,
+    "GoStmt": 3,
+    "Ident": 77,
+    "ImportSpec": 1,
+    "IncDecStmt": 4,
+    "RangeStmt": 2,
+    "SelectStmt": 1,
+    "SelectorExpr": 3,
+    "SendStmt": 3,
+    "UnaryExpr": 3,
+    "ValueSpec": 2
+  },
+  "node_kind_count": 28,
+  "decls": {
+    "const": 1,
+    "func": 2,
+    "import": 1
+  },
+  "binary_ops": {
+    "*": 1,
+    "\u003c": 2,
+    "\u003c=": 1
+  },
+  "unary_ops": {
+    "!": 1,
+    "\u003c-": 2
+  },
+  "assign_ops": {
+    "+=": 1,
+    ":=": 9,
+    "=": 2
+  },
+  "incdec_ops": {
+    "++": 4
+  },
+  "branch_ops": {},
+  "concurrency": {
+    "chan_type": 6,
+    "comm_clause": 2,
+    "go_stmt": 3,
+    "receive_expr": 2,
+    "select_stmt": 1,
+    "select_with_2_cases": 1,
+    "select_with_default": 1,
+    "send_stmt": 3
+  },
+  "chan_dirs": {
+    "bidirectional": 3,
+    "recv_only": 1,
+    "send_only": 2
+  },
+  "range_over": {
+    "declares_vars": 2,
+    "for_clause_declares_vars": 3,
+    "ident": 2
+  },
+  "builtin_calls": {
+    "close": 2,
+    "make": 3
+  },
+  "imports": {
+    "fmt": 1
+  },
+  "imports_external": null,
+  "basic_lit_kinds": {
+    "INT": 7,
+    "STRING": 4
+  }
+}

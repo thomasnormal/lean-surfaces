@@ -18540,3 +18540,399 @@ exactly the drift the schema's own gate exists to catch.
 census's verify battery is 10/10. **No Lean.** The Lean third's debt is
 unchanged and owed at inch 6, which is next and is the first Lean the lane
 writes.
+
+## L76 — THE GO TIER IS FOUNDED: the vocabulary is CLOSED at 52, and "undefined" appears zero times in the spec (2026-08-22)
+
+Thomas chartered the Go tier with a one-line reason — *"I like Go — short
+spec, and it's a common language for concurrency, which is itself interesting
+to formalize."* Both halves are claims, so the founding pass measured them
+instead of repeating them. `docs/go-charter.md` is the result, built on
+`docs/c-tier-charter.md`'s template: census first, take only the decisions the
+census forces, recommend no endgame.
+
+**Both claims survived, and two unclaimed facts turned out to matter more.**
+
+### The spec is short — by 7.90×, measured on both ends
+
+The Go spec is **39,149 words** in **19** top-level sections, **166** EBNF
+productions across 62 normative blocks. The C23 draft (WG14 N3220) is
+**309,405** words. Spec plus memory model together, C23 is still 7.20×. Both
+Go documents ship inside the distribution, which is where this census took
+them — §1.4 of the charter explains why that is load-bearing and not
+convenient.
+
+### THE HEADLINE: Go's AST vocabulary is CLOSED, not merely small
+
+`go/ast` declares exactly **56** node types. The whole standard library —
+**5,419 files, 1,980,087 lines, 8,255,321 nodes** — exercises **52**. The four
+it never touches are `BadExpr`/`BadStmt`/`BadDecl`, the parse-error
+placeholders the instrument refuses on rather than censusing, and the
+deprecated `Package`.
+
+This is categorically stronger than anything §L35 could say for C. That entry
+had to *argue* its 45-kind vocabulary was stable, by re-censusing across an
+engine release and finding no new kinds — a claim about corpus development.
+**Go's vocabulary is closed by construction**: `go/ast` is a fixed exhaustive
+type set with no extension point, and the stdlib saturates it to within four
+error nodes. A v0 scoped to 52 kinds is not a bet at all.
+
+The rung-0 driver covers **28 of the 52**. The 21-kind remainder is the
+sequential inch ladder, **derived rather than proposed**.
+
+### "undefined" appears ZERO times in the Go specification
+
+Verified twice independently — a section-wise census and a raw grep over the
+unprocessed HTML. Measured on the same terms, C23 uses the word **284** times
+and **Annex J.2 enumerates 221** numbered undefined-behavior circumstances.
+
+**This empties a whole REFUSE cause.** The C tier arms eleven UB classes at v0;
+**the Go tier arms none**, and `docs/family-architecture.md` §4.3's Go row (filled
+by this charter) says that emptiness should be **gated** — a Go tier emitting
+`undefined` has a bug, the same prescription that section gives WebAssembly. Two
+near-empty cause-2 buckets for different reasons: Wasm's by design, Go's because
+the memory model deliberately bounds its worst case instead of surrendering it.
+
+Not simply cheaper, though: what replaces UB is *bounded nondeterminism*, which
+is harder to score than a refusal. **An earlier draft of the charter proposed a
+fourth REFUSE cause and a new verdict `ADMITS` for this; both were superseded
+mid-drafting by the family contract, and the charter cites rather than restates.**
+`docs/family-architecture.md` §5.2 already carries cause 4 `order-dependence`
+(from C's 20 may-alias sites and Python's hash-order refusals), and §5.1 rules
+that **MATCH is MEMBERSHIP** at sites where the language enumerates permitted
+outcomes — the verdict vocabulary is unchanged, the permitted set is a per-site
+datum, and equality is the degenerate singleton. That ruling names this tier
+explicitly. **The contrast in one line: racy C = REFUSE(`undefined`); racy Go =
+a membership site.** Two Go-specific riders the charter adds: the permitted set
+is **size-stratified** (so it is a function of the location's width, not a
+constant — which pushes on §5.1's open "explicit set vs. tier-supplied
+predicate" fork harder than Ada does), and `halt-with-race-report` is a member of
+every racy site's set, which is what keeps `-race` a conforming implementation
+rather than a contradiction.
+
+### The concurrency taxonomy: four classes, and the budget is smaller than the folklore
+
+The concurrency core of the spec is **1,479 words — 3.8% of the document** —
+and carries **exactly one hedge**. Channel types, Send statements, Receive
+operator, Go statements and Close have **zero**. The single hedge is
+`pseudo-random`, in `select`.
+
+* **∀-schedule** (goroutines) — `docs/c-semantics-design.md` §4.4's Annex-J.1
+  ruling, generalized: canonical execution, prove the observable invariant,
+  refuse and name the site otherwise. The charter is blunt about the one place
+  the generalization costs more: C's quantified object is an evaluation order
+  inside one full expression — bounded, syntactic, statically censusable (the C
+  lane measured 1169 / 73 / 20). **A schedule is not syntactically bounded.**
+  What replaces the may-alias check is a **race-freedom census**, and it is
+  the largest single piece of work the charter identifies and is *not priced*.
+* **specified-random** (`select`) — the spec specifies a *distribution*, not a
+  free choice. Measured: of the stdlib's 458 selects, **387 have exactly two
+  cases**, 190 carry a `default`, 10 are `select {}`.
+* **∀-order** (map iteration) — and this one points **both ways**. The spec
+  says "not specified" and never mentions randomization. Measured over 20,000
+  iterations at n = 8, 40, 200: the runtime produces a uniform random
+  **rotation of a per-process base permutation** — exactly *n* observable
+  orders, **not** *n*!. For n=8 that is 8 of 40,320, **0.02% of the permutation
+  space**. So the spec is weaker than the runtime (it permits a constant
+  order), *and* the runtime is weaker than it looks. A model axiomatizing "any
+  permutation" is sound-but-loose; one axiomatizing "uniform over permutations"
+  is **unsound against the measured implementation**. Cleanest example of the
+  spec-versus-implementation gap the family has produced.
+* **bounded outcomes** (data races) — the brief asked whether Go's races are
+  UB-refused or Ada-style bounded. **Bounded, and size-stratified.** The memory
+  model names C++ and declines it. Word-sized reads get a value bound plus an
+  explicit out-of-thin-air prohibition (*stronger* than the C++ model it
+  otherwise follows). But multiword values tear, and the document itself says
+  races on (pointer,len)/(pointer,type) pairs *"can in turn lead to arbitrary
+  memory corruption."* **A mirror claiming "Go races are always memory-safe"
+  would be wrong against the text**, and the charter records that before anyone
+  builds one. Race-detect-and-halt is "may", never "must".
+
+### The versioning exemplar, handed to the architecture lane — and it settles their question
+
+Go 1.21 → 1.22 loop-variable scoping. The spec diff is **one clause swapped in
+each of two productions and nothing else**; the go1.21 sentence *"Variables
+declared by the init statement are re-used in each iteration"* is deleted and a
+per-iteration rule added. Storage identity is the clean proof: collecting `&i`
+gives **1 distinct address under go1.21 and 3 under go1.22**.
+
+**And then the result that decides copies-vs-deltas.** One package, `go.mod`
+saying `go 1.21`, two files with byte-identical loop bodies tagged
+`//go:build go1.21` and `//go:build go1.22`, produces `[3 3 3]` and `[0 1 2]`
+— from **one compiler invocation**, `compile … -lang=go1.21 … ./main.go
+./new_122.go ./old_121.go`. The per-file version is resolved *inside the type
+checker*.
+
+**A COPY architecture is therefore not inelegant, it is incorrect**: two whole
+per-version mirrors cannot express a program whose files disagree, because
+there is no single model in which such a program has a meaning. A pure DELTA is
+also wrong — it privileges a base and misrepresents siblings as
+base-and-amendment. What the evidence recommends: **one model, the loop rule
+factored over a version parameter, version carried as a per-FILE attribute.**
+
+The subtle part is recorded because a model can pass the famous tests and still
+be wrong: the go1.22 rule must also **copy back out** so the post statement
+advances. That is what preserves the spec's own worked example `1 3 5` across
+both versions. Freshen bindings without the copy-out and you pass every
+closure-capture test while silently corrupting ordinary counting loops.
+
+### The corpus, and the worst news in the document
+
+No official suite — the same position as C, the opposite of Wasm and Ada. The
+de-facto corpus is `$GOROOT/test`: **3,397 files**, but only **2,617
+registered test cases**, because the runner hard-codes its directories and
+reads them **non-recursively**. Counting `.go` files overstates it by 25%.
+
+17 legal directives (`run` 1,023, `errorcheck` 660, `compile` 501, …), the
+authoritative list being a validation switch in the runner source — `test/run.go`
+no longer exists. Expected stdout is a sibling `.out` file **and if absent the
+output must be empty**: only **97** `.out` files exist, so **1,085 of 1,182
+execution tests (91.8%) must print nothing**, and 556 of them `panic` to
+self-check. Scoreable with zero output modeling — the same result
+`docs/c23-goal.md` §1.2 found for GCC's torture suite, reached by a different
+mechanism.
+
+**`errorcheck` is a trap and most of it is not about the language.** It matches
+exact diagnostic *text* per line, failing in both directions: **6,382 expected
+regexps in 698 files**, of which **3,511 — 55% — are gc optimizer-internal
+output** (escape analysis, liveness maps, SSA prove dumps; `escape2.go` alone
+carries 401). Ruling: score the coarse bit only, and say plainly that this is a
+weaker predicate than the corpus checks.
+
+Honest scale: **694 cases (26.5%)** are scoreable today by a sequential
+interpreter — 456 importing nothing, 570 importing only `fmt`; **1,643 (62.8%)**
+with accept/reject added. The charter lists five reasons the true number is
+smaller, including that `fixedbugs/` is adversarial by construction (428 of the
+694 are minimized compiler-bug reproducers).
+
+**And the fact that creates a real tension with the charter's own mandate:
+`test/` contains ZERO memory-model tests.** The Go Memory Model exists only as
+prose. The nearest proxy — 372 tests in `src/runtime/race/testdata/` — asserts
+what ThreadSanitizer *reports*, not what the model permits. **For the part of Go
+this lane was chartered for, the lane would be building the oracle, not
+borrowing one.** That is §9's first decision and the charter refuses to paper
+over it.
+
+Licence: `test/` is **uniformly Go Authors BSD-3-Clause** — 97.44% of files
+carry the grant, 84 are headerless generated support code, and a scan for
+Apache/MIT/GPL/LGPL/MPL/SPDX/CC found **zero** third-party notices. **The
+c-testsuite trap does not exist here**, and saying so is worth as much as
+finding one would have been. Recommendation is still **fetch, not vendor** —
+not for size (1.1 MB compressed) but because 6,382 diagnostic regexps written
+against one `cmd/compile` mean a vendored tree rots silently into a claim about
+a compiler that is no longer present. Pinned by tarball SHA256, since the
+distribution is not a git checkout and has no commit to cite.
+
+### A third corpus, found late, that corroborates the versioning thesis independently
+
+The first corpus pass took `test/` as the only candidate because it is the one
+the folklore names. **`$GOROOT/src/internal/types/testdata/` — 346 `.go` files**
+— is a better fit for a spec-mirror: `test/` is organized around *compiler
+regressions* (428 of the 694 reachable cases are minimized bug reproducers),
+while this one is organized around **the specification**, and its `spec/`
+subdirectory says so in its filenames (`assignability.go`, `comparisons.go`,
+`conversions.go`, `receivers.go`).
+
+**And five of its twelve `spec/` files carry a language version in the
+filename** — `comparable1.19.go`, `typeAliases1.8.go`, `typeAliases1.22.go`,
+`typeAliases1.23a.go`, `typeAliases1.23b.go`. The Go project versions its own
+conformance tests per language version, in the corpus layout. The loop-var
+result argued from an executable that per-version semantics must coexist inside
+one model; here is the Go project reaching the same conclusion about its own
+tests by a different route. Limit: static semantics only.
+
+Two consumption precedents also exist and neither had to be invented: GCC
+mirrors `test/` into its tree with a DejaGNU adapter (`go-test.exp`) that
+**relaxes `// ERROR` matching from all-must-match to any-may-match** — which is
+the coarse-bit ruling above, already implemented by someone else against the
+same obstacle; and `x/tools/go/ssa/interp`'s `TestGorootTest` runs **64 programs
+from `$GOROOT/test` against a deliberately STUBBED stdlib**, which is the
+shipped answer to "how does an interpreter that cannot run `fmt` still get a
+conformance signal".
+
+### PRECEDENT: the nearest Go work is Goose, but the nearest ARCHITECTURE is JSCert
+
+**Goose** (MIT PDOS, Go→Coq, under Perennial/Iris) is the closest Go artifact,
+and the census produced four facts that position it — plus one correction to a
+claim this charter was about to make.
+
+**The published subset is five years stale.** Through the 2022 thesis Goose
+rejected interfaces, channels, `defer`, closures, signed integers and recursion
+(files had to be topologically ordered — hence corpus filenames like
+`0constants.go`). **"New goose" v0.10.0, 2025-11-30, accepts** `defer` including
+defers queued in a loop, `select`, type switches, interfaces, generics,
+closures, and both `panic` and `recover`; its CI translates etcd, grpc and zap.
+Anyone citing the thesis's subset today is citing a five-year-old artifact.
+Still rejected: **labeled statements and `goto`** (no `ast.LabeledStmt` case at
+all), `reflect`, `uintptr`, complex numbers. **GC has never been modeled in any
+version** — the heap only grows.
+
+**The translator is trusted; there has never been a faithfulness proof.** Stated
+three independent times. The mitigation is a real fail-safe asymmetry — any bug
+causing a translation failure, a Coq type error or modeled UB is automatically
+*sound*, so *"the most important bugs are those where the translation is
+well-defined but its behavior differs from that of Go."*
+
+**THE HEADLINE, and it runs opposite to intuition. Goose assumes sequential
+consistency and says so**, thesis §7.5.1: *"Go's own memory model documentation
+specifies even weaker guarantees. Rather than attempt to formalize Go's rules,
+the semantics side-steps the issue and makes any races undefined."* No store
+buffer, no happens-before, no memory-order parameter. **So GooseLang
+reintroduces exactly the C-style undefined behavior that Go's memory model was
+written to refuse** — strictly more restrictive than the document it models.
+Legitimate for its purpose, a defect for a spec-mirror. Four further admitted
+divergences: function application evaluates **right-to-left, opposite Go**
+(*"one extant bug"*, still carrying a `BUG` comment); **map iteration
+deterministic where Go randomizes**; slice capacity left nondeterministic
+*"because the Go language reference isn't specific"*; `sync.Cond.Wait` weaker
+than Go's guarantee.
+
+**A claim this charter was about to make is FALSE, and the census caught it.**
+"Goose cannot be differentially tested the way an interpreter can" is wrong —
+**Waddle** (Gibson, MEng MIT, 2020) built a GooseLang interpreter in Coq, proved
+it matched the semantics, ran each test both natively under `gc` and through the
+interpreter, and found a dozen real bugs (`<` and `<=` compiling identically;
+untyped-constant arithmetic at 64 bits instead of infinite precision; missing
+short-circuiting). It is struck from the charter. The **real** asymmetry is
+threefold: Goose's corpus is bounded by the **translator** where a spec-mirror's
+is bounded by the **language**; its model is a *relation*, so executing it needs
+a separately-proved interpreter that is sound-only and deterministic-sequential;
+and the economics never reward fidelity testing — Waddle ran six years and was
+deleted in the rewrite. **Goose has never been run against Go's `test/` or any
+conformance suite. Verified, not assumed.**
+
+**And the actual architectural precedent is JSCert** (Bodin et al., POPL 2014),
+whose trust chain *is* this lane's design: ES5 ←eyeball→ JSCert ←correctness→
+JSRef ←running tests→ Test262. Their term for spec-mirroring is **"eyeball
+closeness"**. JSRef is proved **sound only** and scored 1,796 of 2,782
+core-language Test262 tests. The transferable result: they reported bugs in
+browsers, bugs in **Test262 itself**, and **declined to specify `for-in` at all
+because in trying to they discovered ES5 and ES6 were broken** — the
+find-bugs-in-the-specification capability, demonstrated rather than argued.
+
+### The architecture commitment: the schedule enters on day one
+
+The sequential core comes first — Expressions is **32.4%** of the spec and the
+whole concurrency core is 3.8%, so building goroutines first would be building
+the small end first. **But `GoWorld` carries a `sched : Schedule` field from the
+first commit, while `Schedule` is a one-element type and no rule reads it.**
+
+Three grounds, each measured rather than argued: the memory model *defines*
+`sequenced before` by delegation to the spec's own evaluation-order section, so
+the sequential semantics is already a component of the concurrent one by the
+document's own construction; §L35's charter measured that C's R6 *"is the one
+rung that is not a widening — it replaces a state function with a memory-ORDER
+relation, which would change the interpreter's TYPE and break `fuelMono`,
+`#py_check` kernel-reducibility and the one-line-per-job batch protocol at
+once"*, and **that is precisely the retrofit this commitment avoids**; and a
+phantom field costs nothing to carry and everything to add later. The same
+parameter carries select's choices and map orders, because all three are
+choices resolved outside the program text and the model should have one place
+for them.
+
+### The instrument, and two `go run` traps found by running them
+
+`harness/go/construct_census.go` + `harness/go/census.sh`. Double run
+byte-identical and **every reachable exit path was RUN**: missing path **2**,
+no-`.go`-under-dir **2**, does-not-parse **3** (go/parser returns a partial tree
+alongside its error, exactly like clang — §L35's defect, in a second language),
+`--compare` agreeing **0**, `--compare` differing **5**.
+
+**The zero-nodes guard (exit 4) is UNREACHABLE and is labelled rather than
+counted as a fourth run.** `ast.Inspect` over a parsed file always visits at
+least the `File` and its package `Ident`. It is kept because the thing that made
+the same guard fire in C was a source FILTER (clang's sticky `loc.file`);
+add any comparable filter here and it goes live. Recording an unreachable branch
+as "a refusal path we ran" would be exactly the small overclaim this repository
+treats as a defect.
+
+Two traps, both measured, both of which would have destroyed the exit-code
+convention silently:
+
+1. **`go run` does not propagate exit codes.** A program calling `os.Exit(3)`
+   makes `go run` print `exit status 3` and itself exit **1**. The built binary
+   exits 3. Under `go run`, all four refusal causes collapse to 1 and **"3 and
+   4 are never agreement" becomes unenforceable without anyone noticing.**
+2. **`go run a.go b.go` treats both as SOURCES of one package** — and this
+   instrument's arguments *are* `.go` paths.
+
+Hence `census.sh`, which builds and forwards the exit code. This is the
+`docs/backlog.md` "never hide errors" law meeting a language's tooling.
+
+### The driver, and why it was rewritten
+
+The read-only survey of Thomas's repos ran **first**, and it is what says the
+driver had to be written: **64 files across harbor/evals/quasar carry both a
+`go` statement and a channel**, but the smallest stdlib-only one is a *package*
+pulling `context`/`sync`/`time`, and the smallest `package main` with both is
+3,558 bytes with **16 external imports**. A rung-0 fixture dragging in 16
+modules measures the library, not the language.
+
+`Examples/go/pipeline/pipeline.go`: **112 lines, one import (`fmt`), 228 nodes,
+28 node kinds**. Its point is the split between two observables — `sum` and
+`count` are invariant under every schedule; arrival order and the per-worker
+split are not (**measured: 6 distinct per-worker splits over 30 runs, one of them
+`[51 49 0 0]` — two workers starved outright — with the observable identical in
+all 30**). A
+deterministic observable in spite of a nondeterministic execution is exactly
+what makes it differentially testable at all. **Verified over 530 runs** — 300
+consecutive, a GOMAXPROCS sweep over 1/2/4/8/16 at 40 each, and 30 under
+`-race` — byte-identical every time, zero race reports.
+
+**It was rewritten once, on a census finding rather than taste.** The first
+version used `sync.WaitGroup`, which is what idiomatic Go does. The memory
+model's §4.9 **explicitly delegates `WaitGroup`, `Cond`, `Map` and `Pool` to
+their package documentation and states no rule for them.** A rung-0 fixture
+must depend only on guarantees the memory model itself makes, or the first
+thing the tier models is a library contract rather than the language. The join
+is now a counted receive on an unbuffered channel, covered by channel rules 1,
+3 and 4.
+
+### Frontend: `go/ast` + `go/types`, not tree-sitter
+
+`go/ast` **is** the vocabulary, so a tree-sitter grammar would be a second
+description of Go's syntax to keep in agreement with the real one. And
+`go/types` is not optional: the census hit this directly — the instrument
+reports what a `range` ranges over only *syntactically*, because **`range` has
+seven type-dependent meanings on one production** (array, slice, map, string,
+channel, integer, iterator function). The cost is honest: a Go toolchain
+dependency, which is why the instrument stays out of `tools/ci.sh` behind
+`maybe`. Precedent: `extractors/veriloga/` already depends on a Rust crate.
+
+The envelope's version field is `docs/c-envelope-schema.md`'s `profile_id`
+generalized — **and Go makes it PER FILE**, which is the one place the Go
+envelope must be structurally different from C's.
+
+### Triad — and the build arm is a RECORDED DEBT, not a claimed green
+
+`docs_check` **75/75 marked blocks, 20 illustrative-exempt** — run after the
+rebase, so the totals include sibling lanes' new blocks; this lane's own blocks
+are Go/shell/JSON and sit in the 319 unmarked. `gofmt -l` clean on
+both new Go artifacts; `go vet` clean. The instrument's own gate re-run after
+every edit: double run **byte-identical**, `--compare` against the committed
+JSON **exit 0**, and every reachable exit path re-verified on the final binary.
+
+**`lake build` is OWED, and this entry says so rather than implying otherwise.**
+This landing contains **zero `.lean` files** — the whole change set is `docs/`,
+one Go program, one shell script and one JSON, none of it reachable from
+`lakefile.toml`'s globs, so it cannot move the Lean tree. The first build of this
+clone predated the lock broadcast, was allowed to finish per instruction, and
+died at **3,678 of 3,693 jobs** with **exit 143 (SIGTERM)** on three heavy
+Python-tier files (`pins_clock`, `pins_bound`, `genmoves_ray`) during the
+concurrent-build overload — load average peaked at **40.3** with five lanes
+building. Exit 143 is a resource kill, not a proof failure. The completion build
+was then queued under the machine-wide lock and **starved across roughly ninety
+minutes and four handoffs**; it is unrun. Following the ES lane's precedent, the
+charter lands on the non-build arms with the build **recorded as debt**.
+
+**Two protocol defects were found by running it, and both are fixed in the
+broadcast rather than left in this lane's script.** First, `rmdir
+/tmp/ls-build.lock` **cannot** release the lock once the amendment's `owner` file
+is written inside it — `rmdir` refuses a non-empty directory — so a lane that
+traps on EXIT logs "releasing lock" and silently leaks it; this lane leaked its
+own lock exactly once, verified the owner pid dead and no go-lane build running,
+released it, and reported. Second, **`lake build -j4` is rejected outright** by
+Lean 4.33.0-rc1 / Lake 5.0.0 — there is no `-j`/`--jobs` option at any level —
+so a lane scripting it gets an instant `BUILD_EXIT=1` that reads like a build
+failure but is an argument error. The control that exists is one level down,
+`lean -j/--threads` and `LEAN_NUM_THREADS`, which caps threads *inside* each
+`lean` process and is not a true `make -j`.

@@ -796,6 +796,89 @@ throughout — no passage reproduced.*
 
 ---
 
+### 6.8 IT BUILDS, IT RUNS, AND ONE CENSUS CLAIM IS NOW REFUTED — M1 inch 2
+
+The charter's first version could not answer whether any of this works on this
+box. It can now.
+
+| measurement | result |
+| --- | --- |
+| toolchain reconciliation | `v4.33.0-rc2` installed; resolves in the checkout |
+| `lake build` | **GREEN — 151 jobs, 98 seconds**, no source changes |
+| `.lake` size | 404 MB |
+| `lean4lean Init.Core` | **exit 0, 1 035 declarations, 4 seconds** |
+
+**The build's own output independently confirmed this charter's proof-status
+census**, which is corroboration worth recording: the compiler emitted
+`Lean4Lean/Verify/Environment.lean:225:8: declaration uses 'sorry'` — and §6.3's
+table names line 225 as `addDecl.WF`, the top-level soundness theorem whose
+`inductDecl` case is `sorry`. The census read that from source; the toolchain
+reported it independently.
+
+**AND ONE CENSUS CLAIM IS NOW REFUTED, by running rather than reading.** §6.2 and
+the verdict census recorded, from the project's CI comment and its open issue
+17, that *modules importing `Lean` fail with "type checker does not support loose
+bound variables"* — reported as the standing blocker on checking anything beyond
+core `Init`. **Measured at HEAD: it is fixed.**
+
+> `Lean.Expr` **MATCH** (3.0 s). `Lean.Elab.Command` **MATCH** (5.7 s).
+
+The whole elaborator checks green. The issue is still open upstream, so the CI
+comment and the issue are **stale rather than wrong** — which is exactly why the
+family's rule is that a claim read from an artifact gets re-derived before it is
+relied on. The practical consequence is large: **the corpus available to a
+rung-0 scoreboard is not "core `Init` only"** as the census concluded, and any
+plan scoped to that limit was scoped to a limit that no longer exists.
+
+### 6.9 THE INDEPENDENT-CHECKER GATE — M1 inch 6, and it is green
+
+`harness/lean_independent_check.py` -> `docs/lean-independent-check.json`. Runs
+an independent checker over compiled `.olean` environments and scores each module
+with the family's verdicts.
+
+**The verdict mapping is the whole design.** Every `.olean` carries the C++
+kernel's implicit accept, so the oracle's expected value is free and always
+"accept":
+
+* **MATCH** — the independent checker also accepted.
+* **DIVERGE** — it REJECTED something the kernel admitted. §3.2's highest-stakes
+  row: a soundness bug in one of the two, and not automatically ours.
+* **REFUSE** — declined for a reason that is not a verdict (an unsupported
+  construct, or the native-reduction axioms lean4lean will not model). Never
+  scored as agreement.
+* **TIMEOUT** — never conflated with REFUSE.
+
+**Measured: 8 modules, 8 MATCH, 0 DIVERGE, ~10 seconds** — `Init.Prelude`,
+`Init.Core`, three more `Init` modules, `Std.Data.HashMap.Basic`, `Lean.Expr`
+and `Lean.Elab.Command`.
+
+**A BUG IN THIS INSTRUMENT WAS FOUND BY RUNNING ITS OWN FIXTURE, and it was the
+worst kind available here.** A deliberately bogus module name scored **DIVERGE** —
+the checker exits non-zero when it cannot find an `.olean`, and the classifier
+read any unrecognized non-zero exit as a disagreement. **That manufactures a
+DIVERGE**, which §5.1 names as the specific failure that either halts a lane
+chasing a non-bug or trains it to tolerate the row. A module the checker cannot
+locate is a bad module list, not a verdict about anything, so the whole run now
+**REFUSES** as an input fault. The fixture is kept.
+
+**What a green run does and does not buy**, stamped into the JSON so no consumer
+reads the number without them: it does **not** establish consistency (§0), and
+lean4lean's own README says it *"is not really an independent implementation"*,
+being derived from the C++ kernel — so this is differential testing, and
+agreement with a from-scratch checker would be stronger evidence.
+
+**`--maybe` implements the family's CI contract**: checker present => run,
+absent => SKIP loudly and exit 0. Verified.
+
+**Still owed, and it is the half that matters most to this repository:** running
+this over **our own** `.olean`s. That needs the tree built, and the scratchpad
+tree was destroyed by a harness restart mid-dispatch; rebuilding it is a
+multi-hour job that would have held the machine-wide lock for no proportionate
+gain. The instrument is written, calibrated and green on core — pointing it at
+`LeanModels.*` is a `--modules` argument, not new code.
+
+---
+
 ## 7 THE SPEC — and the answer to "is it formal" is NO
 
 The authority document is **Mario Carneiro, "The Type Theory of Lean" (MS
@@ -1417,16 +1500,15 @@ start before Thomas decides:
 | inch | deliverable | why it is neutral |
 | --- | --- | --- |
 | **1** | **the kernel-vocabulary census + instrument. LANDED** (this dispatch) | the vocabulary is the vocabulary under every option |
-| 2 | **the toolchain reconciliation, measured**: install `v4.33.0-rc2`, build `lean4lean` under the lock, run its own test suite. Report buildability — currently **NOT MEASURED** | every option needs a working checker on this box |
+| 2 | **the toolchain reconciliation, measured**. **LANDED** (§6.8): `v4.33.0-rc2` installed, `lake build` **GREEN in 98s**, `lean4lean Init.Core` **1 035 declarations in 4s** | every option needs a working checker on this box |
 | 3 | **the spec-rule instrument** — `harness/lean_spec_census.py` over the thesis LaTeX at pinned `master 0ba1787`, emitting the **71 kernel-relevant rules** with `--compare`. **LANDED** (this dispatch) | item 3 of option (b) and §5.5's manifest; the only artifact that makes any spec-mirror claim checkable |
 | 4 | **the correspondence gate** — map the 71 rules onto `Theory/`'s definitions and publish the coverage. **LANDED** (this dispatch, §7.4): 24% of the spec maps onto a 7-line stub | the deliverable nobody in the field has |
 | 5 | **the axiom-dependency instrument** — which declarations depend on a native computation, and which one. Option (d)'s first artifact. **LANDED** (this dispatch, §10.5.1): flagship tier **0 native-dependent, 0 sorry-dependent** over 4 281 declarations | a `#print axioms` refinement; the receipt §0.1 II(a) asks a rung-3 use to carry, computed for a whole tier at once |
-| 6 | **the reflexive gate** — run an independent checker over this repository's own `.olean`s in CI, `maybe`-guarded | §10.5's cheapest honest form; pure gain, no theorem required |
+| 6 | **the reflexive gate** — an independent checker over `.olean`s, `maybe`-guarded. **LANDED** (§6.9): **8 modules, 8 MATCH, 0 DIVERGE**, incl. `Lean.Elab.Command`. Pointing it at our own tree is a `--modules` argument, and is the one piece still owed | §10.5's cheapest honest form; pure gain, no theorem required |
 
-**Inch 2 is the first real fork** and should be reported before inch 3 starts:
-if `lean4lean` does not build on this box, options (a), (b) and the inch-6 gate
-all need rescoping, and Thomas should hear that immediately rather than at the
-end of M1.
+**Inch 2 was the first real fork and it resolved GREEN** (§6.8), which unblocks
+options (a), (b) and the inch-6 gate together. It also refuted a census claim:
+the "core `Init` only" corpus limit no longer exists.
 
 **Inch 6 is the one with standing value regardless of the endgame.** Even if
 Thomas founds no tier at all, running an independent checker over this
@@ -1485,6 +1567,12 @@ no ISO editions, no ECMA years. The honest options are a release-pinned token
 
 ## 13 WHAT LANDED WITH THIS CHARTER
 
+* **`harness/lean_independent_check.py`** — the independent-checker gate (M1
+  inch 6). Family verdicts over `.olean`s, `--maybe`, `--gate`, `--compare`,
+  four refusal paths RUN. Its manufactured-DIVERGE bug was found by its own
+  fixture and fixed.
+* **`docs/lean-independent-check.json`** — its output: **8 modules, 8 MATCH, 0
+  DIVERGE**.
 * **`harness/lean_axiom_census.py`** + **`harness/lean_axiom_deps.lean`** — the
   axiom-dependency instrument (M1 inch 5). One niced `lean` process on a
   dependency-free file: no `lake`, no build lock. `--gate`, `--compare`,
@@ -1530,10 +1618,10 @@ lane throughout and this charter needed none.
 
 Stated because the rest is measured and honesty about the edges is the point.
 
-* **`lean4lean` was never built and never run by this lane.** Its coverage,
-  sorry counts and theorem statuses are read from its source; its arena scores
-  are recomputed from the arena's published `results.json`, not reproduced by
-  running it. Buildability on this box is **NOT MEASURED** and is M1 inch 2.
+* **`lean4lean`'s sorry counts and theorem statuses are read from its source**;
+  its arena scores are recomputed from the arena's published `results.json`, not
+  reproduced by running it. **Buildability and basic operation are now MEASURED
+  — see §6.8** (this was NOT MEASURED when the charter first landed).
 * **`lean4export` was never built and no export was ever run.** The Mathlib
   export cost in §5 is an **order-of-magnitude estimate** with its basis stated.
 * **Mathlib's declaration count is NOT MEASURED** — the probe declined it on

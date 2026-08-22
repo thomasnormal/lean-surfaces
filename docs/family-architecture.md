@@ -2473,6 +2473,25 @@ Concurrent Lean builds took the development machine down — load 29 across
 5. **A stale lock** (left by a dead lane) is cleared only after verifying
    by parentage and cwd that no build is running — then `rmdir` and note
    it.
+
+   **THE STALENESS TEST IS TWO-PART AND MUST NEVER BE SIMPLIFIED TO
+   PID-ONLY: the owner pid is alive AND a live `lake` descends from it.**
+   Both parts, always. The second is not redundant, because **a lane's
+   death does not imply its build's death** — detachment is deliberate, it
+   is what lets a triad survive a restart.
+
+   The rebuild lane found the violation in the wild and it is the reason
+   this line exists: an owner file reading
+   `go-lane lake pid 43341 (cwd /…/lean-go)` has `lean-go)` as its last
+   field, so the pid parse yields a non-numeric string and `kill -0`
+   **errors**. A pid-only test would not merely have failed to detect
+   staleness — it would have concluded *stale* and **reclaimed an ACTIVE
+   holder's lock**, stampeding the queue. It was harmless only because
+   part two found a live `bin/lake build` and no reclaim fired.
+
+   **The failure direction is what makes this worth a rule**: a broken
+   liveness check does not fall back to caution, it falls forward into
+   reclaiming a lock somebody is holding.
 6. **Never kill another lane's processes.** Kills by parentage only. The
    owner's own tooling is not yours, and this has been got wrong twice.
 

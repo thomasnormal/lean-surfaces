@@ -15215,6 +15215,27 @@ core-only and *are* core-only. A founding lane states its own dependency posture
 in its charter — the claim is checkable per tier and false if read as a claim
 about the repository.
 
+### §7 — THE STALENESS TEST IS TWO-PART, and a pid-only version fails FORWARD
+
+The rebuild lane found an Amendment-5 violation in the wild and the two-part test
+is what made it harmless. Owner file read
+`go-lane lake pid 43341 (cwd /…/lean-go)`; the last field is `lean-go)`, not a
+pid, so the parse yields a non-numeric string and `kill -0` **errors**.
+
+**A pid-only staleness test would not merely have failed to detect staleness — it
+would have concluded *stale* and reclaimed an ACTIVE holder's lock, stampeding
+the queue.** It was harmless only because part two found a live `bin/lake build`
+and no reclaim fired.
+
+So §7.1 rule 5 now states it explicitly: **owner pid alive AND a live `lake`
+descending from it, both parts, never simplified to one.** Part two is not
+redundant because **a lane's death does not imply its build's death** —
+detachment is deliberate and is what lets a triad survive a restart.
+
+**The failure DIRECTION is why it earns a rule**: a broken liveness check does
+not fall back to caution, it falls forward into reclaiming a lock somebody is
+holding.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

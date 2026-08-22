@@ -99,7 +99,7 @@ overusing** them, which is a preference ladder rather than a prohibition.
 | rung | when | why it is preferred |
 | --- | --- | --- |
 | **1. width-parametric SYMBOLIC proof** | the fact is true at every width | it **mirrors the spec's own generality** — the standard says "for an N-bit type", and so does the proof |
-| **2. kernel `decide`** | small, fixed widths; the goal is genuinely finite and cheap | stays inside the kernel; no extra axiom, no external oracle |
+| **2. kernel `decide`** | small, fixed widths; **the inductive BASE CASE** of a width-parametric argument; any goal genuinely finite and cheap | stays inside the kernel; no extra axiom, no external oracle. Thomas: *decide can be useful for the inductive base case, but width-parametric theorems are usually desired* |
 | **3. `bv_decide` / `native_decide`** | cost/benefit favors them — the symbolic proof is out of reach or disproportionate | fastest to obtain; carries the largest trust and information cost |
 
 **Rung 1 is the spec-mirror principle applied to PROOFS**, which is why it
@@ -1231,8 +1231,9 @@ on."*
 #### 3.5.1 The two layers
 
 **Layer 1 — executable bit-level operations.** What interpreters observe.
-Kernel-reducible, width-parametric, `binary32` and `binary64`. **Supplied
-by core Lean on the pinned toolchain**; the family's work here is to
+Kernel-reducible and **width-parametric down to the packed boundary**
+(`binary32` and `binary64` are instances, not definitions — see the
+requirement below). **Supplied by core Lean on the pinned toolchain**; the family's work here is to
 *depend on it deliberately* — pin the interface, gate the reduction
 behaviour with `#guard`s the way every other tier gates its primitives, and
 own the residue core does not cover.
@@ -1242,8 +1243,58 @@ Per-operation correctness, proved once, in IEEE form:
 
 ```
 -- (illustrative — the obligation shape, not a tree file)
-op_correct :  bitOp x y  =  round mode (exactRational (val x ∘ val y))
+op_correct (fmt : Format) :
+    bitOp fmt x y  =  round fmt mode (exactRational (val x ∘ val y))
 ```
+
+##### WIDTH-PARAMETRICITY IS A REQUIREMENT, not a description
+
+Thomas's directive, and it is binding on this component: **the Float spec
+must be width-parametric — no hard-coded mantissa or exponent widths.**
+Three clauses.
+
+**(1) THE SPEC ALGEBRA IS DEFINED OVER A GENERAL `Format`** — exponent
+width and significand width as **parameters**, mirroring IEEE 754-2019's
+own §3.3 parameterization of formats. **`binary16`, `binary32`, `binary64`
+and `binary128` are INSTANCES, never separate definitions.** A component
+that defines "the binary64 algebra" and later "the binary32 algebra" has
+already lost: it will carry two of every lemma, and the second copy is
+where the divergence lives.
+
+**(2) EVERY LAYER-2 THEOREM IS STATED OVER THE GENERAL `Format`.** The
+`op_correct` family above quantifies over `fmt`. Width-specific theorems
+are admissible **only** as (a) instance corollaries — `op_correct
+binary64` — or (b) `decide`-closed **base cases** of an induction, per the
+§0.1 II(a) ladder. Thomas, precisely: *decide can be useful for the
+inductive base case, but width-parametric theorems are usually desired.*
+This is the ladder's rung 1 with a component-specific edge: here, rung 1 is
+not merely preferred, it is the deliverable.
+
+**(3) THE ALIGNMENT CHECK ON CORE, verified at the pin — and it has a
+boundary that must be FLAGGED, not absorbed.** Measured:
+
+| core declaration | width-parametric? |
+| --- | --- |
+| `Float.Model.Format` (`mantissaBitsWithoutImplicit`, `exponentBits`, `numBits`) | **yes** — the parameter record itself |
+| `Float.Model.Format.Valid : (spec : Format) → BitVec spec.numBits → Prop` | **yes** — indexed by the format |
+| `Float.Model.UnpackedFloat` | **yes** — width-agnostic; the format is not baked into the type |
+| `UnpackedFloat.add : Format → UnpackedFloat → UnpackedFloat → UnpackedFloat` | **yes** — takes the format as an ARGUMENT |
+| `Float.Model` | **NO** — zero parameters; hard-codes `Format.binary64` and `UInt64` |
+| `Float32.Model` | **NO** — zero parameters; hard-codes `Format.binary32` and `UInt32` |
+
+**Core's parametricity stops at the PACKED boundary.** Everything beneath
+it — the format record, validity, the unpacked representation, the
+rounding layer and the operations — is parametric; the two packed wrapper
+types are per-width duplicates. So the requirement has a concrete
+consequence: **build layer 2 over `Format` + `UnpackedFloat`, never over
+`Float`/`Float32`.** The moment a theorem mentions `Float`, it has
+hard-coded binary64 and clause (2) is violated silently, because nothing
+about the statement looks width-specific.
+
+Where core's API forces a fixed width, the tier **flags it** — records the
+declaration, states which widths it therefore cannot serve, and either
+wraps it parametrically or reports the gap. It does **not** absorb the
+fixed width into our layer and call the result general.
 
 Downstream proofs then target **round-of-exact** and never our bit
 algorithm. A SystemVerilog divider proof says "these output bits are the
@@ -1331,10 +1382,12 @@ Layer 1 is **free on the pinned toolchain** and its cost is a pin plus
 gates. Layer 2 is the build, and it has a natural order:
 
 1. **Base operations and comparisons** — `+ − × ÷ √`, the six comparison
-   predicates, and the exact-rational bridge they all share. This is the
-   component; everything below is a widening.
-2. **Conversions** — integer↔float both directions, and the format
-   conversions `binary32 ↔ binary64` Wasm needs.
+   predicates, and the exact-rational bridge they all share, **all stated
+   over a general `Format`**. This is the component; everything below is a
+   widening.
+2. **Conversions** — integer↔float both directions, and format-to-format
+   conversion **stated between two general `Format`s**, of which
+   `binary32 ↔ binary64` (what Wasm needs) is an instance.
 3. **Decimal parsing and printing — its own sub-inch, and larger than it
    looks.** Correctly-rounded decimal↔binary conversion is a real
    algorithm, and it is where `printf`'s `%f` lives. The C tier's own

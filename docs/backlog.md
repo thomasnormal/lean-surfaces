@@ -14917,6 +14917,60 @@ effort stops beating rung 3's runtime — to be cited here when it lands. Until
 then the ladder is an ORDERING, not a threshold, and a lane needing a threshold
 should say so rather than guess one.
 
+### DIRECTIVE — SoftFloat's width-parametricity becomes a REQUIREMENT
+
+Thomas: *"make sure the Float spec we are using is width-parametric. We don't
+want to hard code mantissas and other widths."* §3.5 described it; it now
+REQUIRES it, in three clauses.
+
+**(1) The spec algebra is defined over a general `Format`** — exponent and
+significand widths as PARAMETERS, mirroring IEEE 754-2019 §3.3's own
+parameterization. **`binary16/32/64/128` are INSTANCES, never separate
+definitions.** A component that defines "the binary64 algebra" and later "the
+binary32 algebra" carries two of every lemma, and the second copy is where the
+divergence lives.
+
+**(2) Every layer-2 theorem is stated over the general `Format`.** Width-specific
+theorems are admissible ONLY as instance corollaries (`op_correct binary64`) or
+as `decide`-closed inductive BASE CASES per the §0.1 II(a) ladder — Thomas:
+*decide can be useful for the inductive base case, but width-parametric theorems
+are usually desired.* Here rung 1 is not merely preferred, it is the deliverable.
+
+**(3) THE ALIGNMENT CHECK ON CORE — verified at the pin, and it has a BOUNDARY.**
+Measured: `Format` (parametric), `Format.Valid : (spec : Format) → BitVec
+spec.numBits → Prop` (indexed), `UnpackedFloat` (width-agnostic — the format is
+not baked into the type), and `UnpackedFloat.add : Format → …` (takes the format
+as an ARGUMENT) are all parametric. But **`Float.Model` and `Float32.Model` have
+ZERO parameters** and hard-code `binary64`/`UInt64` and `binary32`/`UInt32`.
+
+> **Core's parametricity stops at the PACKED boundary.**
+
+Concrete consequence, now written in: **build layer 2 over `Format` +
+`UnpackedFloat`, NEVER over `Float`/`Float32`.** The moment a theorem mentions
+`Float` it has hard-coded binary64 and clause (2) is violated *silently*, because
+nothing about the statement looks width-specific. Where core forces a fixed
+width the tier FLAGS it — records the declaration, states which widths it
+therefore cannot serve, wraps it parametrically or reports the gap — and does
+not absorb the fixed width into our layer and call the result general.
+
+The priced build order now carries the requirement too: step 1's base operations
+are "all stated over a general `Format`", and step 2's format conversion is
+stated between two general `Format`s with `binary32 ↔ binary64` as the instance.
+
+### AGENTS.md 9f822ed CHECKED AGAINST §0.1 II(a) — consistent, one enrichment folded back
+
+The reconciliation I flagged was made by Thomas and it reads consistently with my
+section: same three rungs (width-parametric symbolic > kernel `decide` >
+decide-class), same receipts rule (`#print axioms` + one-line justification at
+the use site), same file's-contract-wins rule (*"A file whose header contracts
+their absence stays true to it or stops saying so"*), and it cites
+family-architecture §0.1 II(a). `sorry`/`admit` correctly stay absolute.
+
+**One enrichment flowed the other way**: AGENTS.md's rung 2 carries Thomas's
+"good for inductive base cases" rationale, which my table lacked. Folded into
+§0.1 II(a) rather than left to drift — the two documents now say the same thing
+in the same order, which is the only state in which having both is safe.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

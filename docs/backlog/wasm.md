@@ -287,3 +287,104 @@ text, not of a build.
 **Not run; not applicable.** This landing edits **one file**
 (`docs/backlog/wasm.md`) and adds none. No Lean was executed anywhere in this
 lane this session. `docs_check` passes.
+
+---
+
+## 2026-08-22-wasm-3 — INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE
+
+Coordinator-approved resource spend (recorded per A11 rule 6, and the
+approval is the record): **`elan toolchain install leanprover/lean4:v4.32.0`**
+— the fork pins that version and this box had 4.12.0 / 4.27.0-rc1 /
+4.33.0-rc1 / 4.33.0-rc2 only — then **`lake exe cache get`**, which downloaded
+and decompressed **8639 Mathlib olean files, exit 0**. Disk checked before
+starting: 205 GB free. A13's warm-peer `.lake` clone genuinely does not apply
+across toolchains — no peer holds a v4.32.0 cache — which is why this was a
+download rather than a copy. Neither step is CPU contention, so neither took
+the lock; **only the build did.**
+
+**THE BUILD RAN UNDER `tools/triad.sh` — this lane's first adoption of the
+canonical wrapper**, per A13's directive to drop lane-private scripts.
+`--lane wasm --dir <fork>/spectec/test-lean`. Its `--self-test` was run first
+(**12 ok, 0 failed**) and the script was checked for lane-specific
+assumptions: it makes no git calls and only `cd`s to `--dir`, so it drives a
+foreign tree correctly. **Queue behaviour observed and worth recording: the
+ticket waited ~49 minutes behind four lanes** (`pyrebuild`, `c`, `sv`, `es`)
+at a machine load of only 5-8 — the lock was serializing, not the CPU
+saturating. The FIFO worked exactly as designed and the wait was fair.
+
+**THE ANSWER: the tree does NOT build at `b399351f`. Six errors, ALL of them
+in `typing_lemmas.lean`:**
+
+```
+typing_lemmas.lean:371:8   too many variable names provided
+typing_lemmas.lean:380:17  Tactic `rcases` failed
+typing_lemmas.lean:537:17  Unknown identifier `cvtop`
+typing_lemmas.lean:1035:2  Case tag `SELECT` not found
+typing_lemmas.lean:1113:2  Case tag `frame` not found
+typing_lemmas.lean:1865:4  No goals to be solved
+```
+
+**AND THE MODEL IS FINE — that is the load-bearing half.** Measured from the
+build log: `«wasm2.0»` **BUILT** (with warnings, 12s), `custom_notation`
+**BUILT**, `ExtendedDeriveDecEq` **BUILT**, `sandbox_5` **BUILT** — and only
+`typing_lemmas` failed. **The generated 10 385-line model elaborates; the
+hand-written 1865-line proof file does not.** So the SpecTec→Lean backend's
+output is in better shape than its proof lane, which is the opposite of what
+"savepoint" commit titles might suggest.
+
+**WHAT THE ERRORS MEAN: MODEL DRIFT, not broken proofs.** `Unknown identifier
+cvtop`, `Case tag SELECT not found`, `Case tag frame not found` are the
+signature of a **proof file written against an older generated model**. The
+generator's constructor and case names moved underneath it. That is consistent
+with the branch's own commit titles — `savepoint`, `savepoint before laptop
+dies, probably good wasm 2.0 model`, `remaining issue: deal with decidable
+equality` — and with `2026-08-22-wasm-1`'s LOW-confidence flag, which named
+exactly this risk and is now **resolved as: it does not build.**
+
+**A CORRECTION TO THIS LANE'S OWN CENSUS, and it is the sharpest one yet.**
+`2026-08-22-wasm-1` published **"5 live obligations"**. That count is a count
+of `sorry` tokens **in a file that does not elaborate**, and one of the six
+errors is `1865:4: No goals to be solved` — **at the very `sorry` the census
+called O5.** "No goals to be solved" at a `sorry` means the preceding tactics
+already closed everything there, so **O5's surviving `sorry` is unreachable
+as written.** (Whether that is genuine or a cascade from the five earlier
+errors is NOT determined here — the earlier failures can change what
+elaborates downstream.)
+
+So the honest statement, replacing the census's headline: **the obligation
+ledger is not merely small — at this pin it is not yet WELL-DEFINED**, because
+the file it lives in does not compile. The count went 13 → 5 → *"5, in a file
+that does not build, one of which is unreachable"*. Each step came from a
+better instrument than the last: `grep` → a comment-aware scanner → **a
+compiler**. That is the census ladder working as intended, and it is why
+step 2 was worth the toolchain.
+
+**WHAT SURVIVES THE CORRECTION, unchanged.** Everything in
+`2026-08-22-wasm-1` and `-wasm-2` that is a property of *text* rather than of
+elaboration: the five theorem statements and their locations; `instrtype_sub`'s
+definition; that all five are the stack-polymorphic frame rule and not five
+feature gaps; the dependency graph read out of the proof bodies; that Mathlib
+is already a dependency; and every finding about Aaron Lee's Isabelle
+development, which is a different file in a different assistant.
+
+**CONSEQUENCE FOR THE LADDER — it gets a new inch 0.** Porting into
+`typing_lemmas.lean` is not possible while it does not elaborate. But the
+model builds, so **a port can live in its own file** depending only on
+`«wasm2.0»` and `«custom_notation»` — both of which build. That is what
+`SubtypingPort.lean` (written, verification ticket queued at time of writing)
+does, and the broken proof file makes that isolation a *feature* rather than a
+workaround.
+
+**Still owed and now sharper: whether the fork intends `typing_lemmas.lean` to
+build at this commit at all**, or whether it is a scratch file the author
+knows is mid-refactor. That is an upstream question, and upstream contact
+remains **Thomas's decision** — now with a concrete finding to offer, which is
+a better position than the census had.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** This landing edits **one file**
+(`docs/backlog/wasm.md`) and adds none to this repository. The Lean execution
+recorded above was in the **fork's** tree, under a ticket, with
+`LEAN_NUM_THREADS=2` and `nice -n 19` via `tools/triad.sh`, and the lock was
+released cleanly (`LOCK RELEASED (mine)`). `docs_check` passes.

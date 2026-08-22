@@ -20041,3 +20041,117 @@ deliberately NOT run: nothing this landing touches is in the build** —
 `lakefile.toml`'s globs are the `LeanModels` lib root and `Examples.+`, and
 both landed files are under `docs/`. The Lean third is owed by no line of this
 change.
+
+## L82 — ES M2 INCH 1: values and completion records, and `ρ` gets all four abrupt types (2026-08-22)
+
+The ES tier's first semantic Lean. `LeanModels/Es/{Value,Completion,SpecAttr,Spec}.lean`
++ `Examples/es/values/guards.lean` — **619 lines, 36 `#guard`s, 36 `@[es_spec]`
+lemmas, and still no evaluator.** The design is §L78's
+[docs/es-semantics-design.md](es-semantics-design.md); this is its inch 1.
+
+**§L81'S `EStateM` RULING LANDED WHILE THIS INCH WAS BUILDING, and it is
+COMPATIBLE — checked rather than hoped.** The census rules: two-layer core on
+`EStateM`, **`Halt` kept OUTSIDE**. That is what is already written here, and
+not by luck — `ExceptT ρ (StateT W Halt) α` unfolds to
+`W → Halt (Except ρ α × W)`, so `Halt` is already outermost and the two inner
+layers are exactly the `(Except, State)` pair `EStateM ρ W` spells. Re-spelling
+them is an internal change with the same unfolding, and since §L81 also
+measured `EStateM` **~1.4x slower in the kernel**, the swap belongs at the core
+extraction taken deliberately, not eagerly here. The adoption note cites the
+ruling rather than speculating about it.
+
+**THE SUBSTRATE IS ADOPTED BY SHAPE, and the note is one line because
+`Core.SemM` has not landed.** `LeanModels/Core/` still exports only
+`Basic.lean`, so `Completion.lean` defines the family's §3.4 shape locally —
+`ExceptT ρ (StateT W Halt)`, that layer order, `ExceptT` OUTSIDE so the world
+survives a raise — under an explicit ADOPTION NOTE saying it is the family's
+shape and will be replaced by the core export, **not a variant**. Nothing
+below depends on which combinators spell it, so an `EStateM` base would change
+nothing.
+
+**`ρ = Abrupt`, all four types** — `throw`/`ret`/`brk`/`cont` — per §L78's
+argument from the spec's own `?` notation (2,328 sites vs `ReturnIfAbrupt` at
+0). `Halt` is the base with three of `Run`'s four constructors; **`.exn` is
+deliberately absent, because in this tier an exception IS an abrupt completion
+and therefore lives in `ρ`**, which is the whole point. `throw` carries a
+`Val` and not an error enum — the ε-is-RVal-like requirement §L66 recorded,
+now met in code rather than in prose.
+
+**`Halt.unsupported` carries its CAUSE as data**, not as prose: a
+`RefusalCause` with exactly the three §3.6 causes
+(`unsupportedConstruct`/`unmodeledIntrinsic`/`environment`), so the scoreboard
+can bucket a refusal without parsing a message. Two lemmas pin the covenant
+that makes the bucket meaningful — **a refusal is not in `ρ`, so no `try` can
+reach it**, and neither can a timeout.
+
+**THE VALUE MODEL** is ES2026 §6.1's eight types with `Number` = core `Float`,
+depended on deliberately per §L66's Layer-1 finding. `Val` derives **no
+`DecidableEq`** — and that is the design, not a limitation: `Float` has none
+because NaN ≠ NaN, and **the spec has THREE equalities** (§7.2.10 `SameValue`,
+§7.2.11 `SameValueZero`, §7.2.16 `IsStrictlyEqual`) which agree everywhere
+except on NaN and ±0. A derived `==` would silently pick one. All three are
+defined against their own clause and the two rows where they differ are pinned
+six ways.
+
+**`typeof` takes CALLABILITY AS AN INPUT**, because ES2026 §13.5.3.1 splits
+the Object row by `[[Call]]` — an object that implements it answers
+`"function"`. The alternative was to fabricate an answer about a heap that does
+not exist yet. (`typeof null === "object"` is pinned too; it is the spec's and
+nobody is allowed to fix it.)
+
+**ARM-LEVEL `@[es_spec]` LEMMAS, and the granularity has a reason.** A
+whole-function lemma restates the definition and lands a rewrite back in a
+case split; an ARM is what a proof wants, what a `#guard` can pin, and — the
+fidelity point — **the granularity at which a spec clause's STEP is stated**,
+so an arm-level lemma is citable against `(edition, clause, step)` while a
+whole-function one is citable only against the clause. 35 of the 36 close by
+`rfl`, i.e. by KERNEL reduction, which is possible only because nothing here
+is `partial` (§L66's law) and core `Float` reduces on the pin.
+
+**Three mechanical findings, each cost a compile.** (1) `register_label_attr`
+declares an attribute that becomes available at an IMPORT boundary, so **it
+cannot be used in the file that declares it** — hence `SpecAttr.lean` as its
+own module, which is forced rather than tidy. (2) `RefusalCause` had to move
+ABOVE `Halt`: Lean has no forward references and the constructor mentions it.
+(3) **`sameValue (.sym i d) (.sym i e) = true` is NOT `rfl`** — the arm is
+`i == j`, and `Nat.beq i i` reduces only at a literal, not at a variable. The
+genuine arm-level lemma states the arm (`= (i == j)`, which IS `rfl`) and the
+`i = i` corollary is proved separately. Stating an instance where the arm was
+meant is how an "arm-level" lemma quietly stops being one.
+
+**Non-vacuity, checked six ways**: claiming `SameValue(+0,-0)`, `NaN === NaN`,
+`typeof null === "null"`, `0.1+0.2 === 0.3`, or `"0"` falsy each fails with the
+expression printed, and flipping the `strictEquals_zeros` LEMMA fails with
+"Not a definitional equality".
+
+**What inch 1 does NOT contain, as a boundary rather than a gap**: every
+conversion that can reach an object — `ToPrimitive`, and so `ToNumber`/
+`ToString` at an object — needs `[[Get]]` and `[[Call]]`. Those are inch 2,
+the ordinary object model, which §L78 measured to be **rung 0 rather than a
+later rung** because `sta.js` cannot construct `Test262Error` without it. The
+arms refuse rather than guess.
+
+### Triad — and this one DOES cover the lane
+
+`lake build` **3708 jobs, "Build completed successfully", exit 0** (3694 → 3708
+since §L78, this lane's five new modules among them); `docs_check` **75/75**
+marked blocks, 22 illustrative-exempt; `diff_test` **1394 cases, 0 failed, 118
+whitelisted, 1276 matched**; `script_corpus` **65 scripts, 0 failed, 50 matched,
+15 loud**. The Python-tier numbers are unmoved, as a landing that touches no
+Python file must leave them.
+
+**Verified that it covered the ES lane, rather than assumed** — §L66's addendum
+had to record the opposite and this entry does not get to inherit the
+correction. All eight `LeanModels/Es/*.olean` plus **both**
+`Examples/es/{test262,values}/guards.olean` exist and are stamped **14:08**,
+the minute this build took the lock. **The instrumentation nearly said
+otherwise**: the script grepped a SECOND `lake build` for ES targets and got 0,
+because a re-run of a completed build prints nothing — an absence of output
+from an up-to-date build is not an absence of the target, and the olean
+timestamps are what settle it. Same family as §L66's `tail -2` defect: do not
+ask a command that has nothing to say whether something happened.
+
+Lock discipline: acquired after **43 minutes** behind ada-lane and go-lane,
+owner written `es-lane <pid>` (pid last, Amendment 5). By exit the lock had
+been handed on, so the ownership-checked trap printed **"LOCK NOT MINE — left
+alone"** and removed nothing.

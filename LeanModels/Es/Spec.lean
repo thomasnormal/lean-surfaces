@@ -1,0 +1,131 @@
+import LeanModels.Es.Completion
+import LeanModels.Es.SpecAttr
+
+/-!
+# `@[es_spec]` — the tier's specification-lemma registry
+
+M2 inch 1's third piece. One registry, and lemmas at **ARM-LEVEL
+granularity**: a lemma per arm of each primitive, not one per function.
+
+**Why arm-level.** A whole-function lemma of the form
+`toBoolean v = <a big match>` is true and useless — it restates the
+definition and a rewrite through it lands the caller back in a case split.
+The arms are what a proof actually wants (`toBoolean (.str "") = false`),
+they are what a `#guard` can pin, and — the fidelity point — **an arm is
+the granularity at which a spec clause's STEP is stated**, so an
+arm-level lemma is citable against `(edition, clause, step)` while a
+whole-function one is citable only against the clause.
+
+The attribute itself is declared in `LeanModels/Es/SpecAttr.lean`, and
+that separation is forced: a `register_label_attr` attribute becomes
+available at an IMPORT boundary, so it cannot be used in the file that
+declares it. It follows the Python lane's `py_spec` — a label attribute,
+per lane, so the ES vcgen's registry can never be confused with a
+sibling's.
+
+**Everything below is a `Bool` equation closed by `rfl`**, i.e. by KERNEL
+reduction — which is only possible because none of these definitions is
+`partial` and because core `Float` is kernel-reducible on the pin
+(`harness/es/float_probe.lean`). §L66 recorded the trap: a `partial`
+definition is opaque to the kernel, so a lemma or `#guard` stated through
+one proves nothing.
+-/
+
+namespace LeanModels.Es
+
+open Val
+
+/-! ## `ToBoolean` — ES2026 §7.1.2, one lemma per row of the table -/
+
+@[es_spec] theorem toBoolean_undef : toBoolean .undef = false := rfl
+@[es_spec] theorem toBoolean_null : toBoolean .null = false := rfl
+@[es_spec] theorem toBoolean_true : toBoolean (.bool true) = true := rfl
+@[es_spec] theorem toBoolean_false : toBoolean (.bool false) = false := rfl
+@[es_spec] theorem toBoolean_str_empty : toBoolean (.str "") = false := rfl
+@[es_spec] theorem toBoolean_sym (i : SymId) (d : Option String) :
+    toBoolean (.sym i d) = true := rfl
+@[es_spec] theorem toBoolean_obj (r : ObjRef) : toBoolean (.obj r) = true := rfl
+
+/-- The Number row is the one with edges, so it gets a lemma per edge.
+`+0`, `-0` and `NaN` are falsy; every other Number is truthy. -/
+@[es_spec] theorem toBoolean_pos_zero : toBoolean (.num 0.0) = false := rfl
+@[es_spec] theorem toBoolean_neg_zero : toBoolean (.num (-0.0)) = false := rfl
+@[es_spec] theorem toBoolean_nan : toBoolean (.num (0.0 / 0.0)) = false := rfl
+@[es_spec] theorem toBoolean_one : toBoolean (.num 1.0) = true := rfl
+@[es_spec] theorem toBoolean_inf : toBoolean (.num (1.0 / 0.0)) = true := rfl
+
+/-- The BigInt row: `0n` is the only falsy BigInt. -/
+@[es_spec] theorem toBoolean_bigint_zero : toBoolean (.bigint 0) = false := rfl
+@[es_spec] theorem toBoolean_bigint_one : toBoolean (.bigint 1) = true := rfl
+
+/-! ## The three equalities, pinned where they DIFFER
+
+ES2026 §7.2.10 `SameValue`, §7.2.11 `SameValueZero`, §7.2.16
+`IsStrictlyEqual` agree everywhere except on NaN and on ±0. Those two rows
+are the whole content of the distinction and the classic implementation
+bug, so each is a lemma in all three operations rather than a comment. -/
+
+@[es_spec] theorem sameValue_nan :
+    sameValue (.num (0.0 / 0.0)) (.num (0.0 / 0.0)) = true := rfl
+@[es_spec] theorem sameValueZero_nan :
+    sameValueZero (.num (0.0 / 0.0)) (.num (0.0 / 0.0)) = true := rfl
+/-- `NaN === NaN` is FALSE — the row that separates `===` from the other two. -/
+@[es_spec] theorem strictEquals_nan :
+    strictEquals (.num (0.0 / 0.0)) (.num (0.0 / 0.0)) = false := rfl
+
+/-- `SameValue(+0, -0)` is FALSE — the row that separates `Object.is` from
+`===`. -/
+@[es_spec] theorem sameValue_zeros :
+    sameValue (.num 0.0) (.num (-0.0)) = false := rfl
+@[es_spec] theorem sameValueZero_zeros :
+    sameValueZero (.num 0.0) (.num (-0.0)) = true := rfl
+@[es_spec] theorem strictEquals_zeros :
+    strictEquals (.num 0.0) (.num (-0.0)) = true := rfl
+
+/-- Cross-type comparison is `false` in all three, never a coercion:
+`===` does not coerce, which is what distinguishes it from `==` (§7.2.15,
+not modelled at this inch). -/
+@[es_spec] theorem strictEquals_cross : strictEquals (.num 1.0) (.str "1") = false := rfl
+@[es_spec] theorem strictEquals_undef_null : strictEquals .undef .null = false := rfl
+
+/-- A Symbol is equal only to itself, and the DESCRIPTION is not part of
+identity (§20.4.3.3 makes it informative). -/
+@[es_spec] theorem sameValue_sym (i j : SymId) (d e : Option String) :
+    sameValue (.sym i d) (.sym j e) = (i == j) := rfl
+
+/-- …and therefore the description is irrelevant to identity, which is the
+consequence a proof actually uses. Not `rfl`: `i == i` at a VARIABLE needs
+`Nat.beq` to reduce, which it does only at a literal. -/
+@[es_spec] theorem sameValue_sym_desc_irrelevant (i : SymId) (d e : Option String) :
+    sameValue (.sym i d) (.sym i e) = true := by
+  simp [sameValue]
+
+/-! ## `typeof` — ES2026 §13.5.3.1, one lemma per row -/
+
+@[es_spec] theorem typeof_undef (c) : typeofWith c .undef = "undefined" := rfl
+/-- The famous row, and it is the spec's. -/
+@[es_spec] theorem typeof_null (c) : typeofWith c .null = "object" := rfl
+@[es_spec] theorem typeof_bool (c b) : typeofWith c (.bool b) = "boolean" := rfl
+@[es_spec] theorem typeof_num (c n) : typeofWith c (.num n) = "number" := rfl
+@[es_spec] theorem typeof_str (c s) : typeofWith c (.str s) = "string" := rfl
+@[es_spec] theorem typeof_sym (c i d) : typeofWith c (.sym i d) = "symbol" := rfl
+@[es_spec] theorem typeof_bigint (c i) : typeofWith c (.bigint i) = "bigint" := rfl
+/-- The Object row is SPLIT by callability, which is why it is an input. -/
+@[es_spec] theorem typeof_obj_callable (r : ObjRef) :
+    typeofWith (fun _ => true) (.obj r) = "function" := rfl
+@[es_spec] theorem typeof_obj_plain (r : ObjRef) :
+    typeofWith (fun _ => false) (.obj r) = "object" := rfl
+
+/-! ## The refusal covenant
+
+A refusal is not an error a program can catch: it is not in `ρ`, so it
+cannot be reached by `try`. These pin that, which is the property the
+scoreboard's REFUSE bucket depends on. -/
+
+@[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : RefusalCause) (m : String) :
+    SemM.run (ρ := Abrupt) (α := Unit) (SemM.refuse c m) w = Halt.unsupported c m := rfl
+
+@[es_spec] theorem timeout_is_not_catchable (W : Type) (w : W) :
+    SemM.run (ρ := Abrupt) (α := Unit) SemM.timeout w = Halt.timeout := rfl
+
+end LeanModels.Es

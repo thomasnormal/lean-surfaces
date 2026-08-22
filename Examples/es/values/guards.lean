@@ -80,17 +80,38 @@ scoreboard's REFUSE bucket depends on, and it is a fact about the STACK
 rather than about any operation. -/
 
 #guard match SemM.run (W := Unit) (ρ := Abrupt) (α := Unit)
-              (SemM.refuse .unmodeledIntrinsic "Symbol.species") () with
-  | .unsupported .unmodeledIntrinsic _ => true
+              (SemM.refuseIntrinsic "Symbol.species") () with
+  | .unsupported c _ => c.className == "environment"
   | _ => false
 
 #guard match SemM.run (W := Unit) (ρ := Abrupt) (α := Unit) SemM.timeout () with
   | .timeout => true
   | _ => false
 
-/-! ## The three refusal causes are distinct — §3.6 says they are never pooled -/
+/-! ## The FOUR family classes, and this tier's two EXPECTED-EMPTY gates
 
-#guard (RefusalCause.unsupportedConstruct == RefusalCause.unmodeledIntrinsic) == false
-#guard (RefusalCause.unmodeledIntrinsic == RefusalCause.environment) == false
+`docs/family-architecture.md` §5.2's classes, adopted at
+`14bdd7a`'s ruling. The two ES buckets that must stay empty are gated in
+`Completion.lean` (`es_never_undefined`, `es_never_orderDependent`);
+these pin the same facts at the value level. -/
+
+#guard (esRefusal .construct "x").className == "unsupported"
+#guard (esRefusal .unmodeledIntrinsic "Symbol.species").className == "environment"
+#guard (esRefusal .hostFacility "HostEnqueuePromiseJob").className == "environment"
+
+/- The two expected-empty classes: this tier's only cause constructor
+cannot produce either, for any input. -/
+#guard (esRefusal .construct "x").isUndefined == false
+#guard (esRefusal .unmodeledIntrinsic "x").isUndefined == false
+#guard (esRefusal .hostFacility "x").isUndefined == false
+#guard (esRefusal .construct "x").isOrderDependence == false
+#guard (esRefusal .hostFacility "x").isOrderDependence == false
+
+/- …and the PAYLOAD keeps the split the ruling preserved as a candidate
+fifth class: both are class `environment`, and they are still telling
+apart by retirement schedule. -/
+#guard match esRefusal .unmodeledIntrinsic "n", esRefusal .hostFacility "n" with
+  | .environment a, .environment b => (a.kind == .unmodeledIntrinsic) && (b.kind == .hostFacility)
+  | _, _ => false
 
 end Examples.es.values

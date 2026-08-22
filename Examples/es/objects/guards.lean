@@ -30,9 +30,9 @@ def yields (m : EsW Val) (v : Val) : Bool :=
   | _ => false
 
 /-- Did the computation REFUSE, with this cause? -/
-def refusesWith (m : EsW α) (c : RefusalCause) : Bool :=
+def refusesWith (m : EsW α) (cls : String) : Bool :=
   match SemM.run m default with
-  | .unsupported c' _ => c' == c
+  | .unsupported c _ => c.className == cls
   | _ => false
 
 /-! ## The `sta.js` floor
@@ -197,7 +197,7 @@ answer that every accessor test would then score as a pass. -/
   let o ← ordinaryObjectCreate none
   let _ ← ordinaryDefineOwnProperty o (.str "g")
             { get := some (.obj 0), enumerable := some true, configurable := some true }
-  ordinaryGet 10 o (.str "g") (.obj o)) .unsupportedConstruct
+  ordinaryGet 10 o (.str "g") (.obj o)) "unsupported"
 
 /- …but a getter that is literally `undefined` answers `undefined`
 without needing a call — §10.1.8.1 step 7, honoured BEFORE the refusal. -/

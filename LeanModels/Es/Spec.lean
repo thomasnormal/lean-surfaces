@@ -122,7 +122,7 @@ A refusal is not an error a program can catch: it is not in `ρ`, so it
 cannot be reached by `try`. These pin that, which is the property the
 scoreboard's REFUSE bucket depends on. -/
 
-@[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : RefusalCause) (m : String) :
+@[es_spec] theorem refuse_is_not_catchable (W : Type) (w : W) (c : EsRefusal) (m : String) :
     SemM.run (ρ := Abrupt) (α := Unit) (SemM.refuse c m) w = Halt.unsupported c m := rfl
 
 @[es_spec] theorem timeout_is_not_catchable (W : Type) (w : W) :
@@ -235,5 +235,25 @@ taken by accident. -/
 
 @[es_spec] theorem body_builtin_ne_ecmascript (n : String) :
     (Body.builtin n == Body.ecmascript) = false := rfl
+
+/-! ## The four REFUSE classes — §5.2, adopted at `14bdd7a`
+
+Arms for the class map, and the two EXPECTED-EMPTY gates restated at the
+lemma level (their proofs live in `Completion.lean`, where the constructor
+they are about is). -/
+
+@[es_spec] theorem class_construct (n : String) :
+    (esRefusal .construct n).className = "unsupported" := rfl
+@[es_spec] theorem class_intrinsic (n : String) :
+    (esRefusal .unmodeledIntrinsic n).className = "environment" := rfl
+@[es_spec] theorem class_host (n : String) :
+    (esRefusal .hostFacility n).className = "environment" := rfl
+
+/-- The payload keeps the retirement-schedule split the ruling preserved
+as a candidate FIFTH class. -/
+@[es_spec] theorem payload_keeps_the_split (n : String) :
+    (match esRefusal .unmodeledIntrinsic n with
+     | .environment d => d.kind
+     | _ => EsCause.construct) = EsCause.unmodeledIntrinsic := rfl
 
 end LeanModels.Es

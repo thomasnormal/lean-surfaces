@@ -165,3 +165,76 @@ Concretely, at next touch:
   retire by building more language. If a second tier independently makes the
   same split, §9.3's convergence standard promotes it. *One tier's distinction
   is a payload; two tiers' identical distinction is a class.*
+
+## 2026-08-22-es-2 — `RefusalCause π` ADOPTED, both expected-empty gates PROVED — and the ladder was being read one layer up
+
+Two things, and the second is a correction this lane owed the coordinator
+rather than the other way round.
+
+### THE LADDER CONFIRMATION — the next rung is NOT the destructuring cluster
+
+The dispatch named the destructuring/literals cluster as inch 4, from this
+lane's own 16-step ladder, and asked for a confirmation against the census
+first. **The confirmation says otherwise, and the census is what says so.**
+
+`docs/es-m2-census.json`'s ladder is a **VOCABULARY** ladder — what the
+INGESTER accepts — and `docs/es-semantics-design.md` §4.1 says so in as many
+words: *"this is reach of the vocabulary… It is not a claim that the
+semantics would run any of these tests."* All 66 kinds have been ingested
+since M1. So adding `ObjectExpression` to the ingester buys **zero** tests,
+because nothing evaluates `if (x) return y` yet.
+
+Read the other column and it resolves: the ladder's **step 0 is 2,828 tests
+reachable with the PRELUDE'S 27 SEED KINDS** — and those 27 are exactly
+`ExpressionStatement`, `IfStatement`, `BinaryExpression`, `CallExpression`,
+`VariableDeclaration`, `ReturnStatement`, `TryStatement`, `SwitchStatement`
+and friends: **the kinds this tier can ingest and cannot evaluate.** The
+rung-0 target (1,205 tests) is defined as syntax ∩ intrinsics over that same
+seed. **So the next rung is the EVALUATOR over the seed vocabulary** — this
+lane's design-ladder inch 5 — and the destructuring cluster is the rung
+*after* it, at which point the vocabulary ladder starts meaning something.
+
+**Sized before writing, as ever**: that evaluator is **397 numbered steps**
+(reference records 39, operands 8, operators 82, calls 38, statements 28,
+declaration instantiation 152, the still-owed conversions 50) against inch
+3's 204 — so it SPLITS. Expressions + reference records + conversions is one
+landing; statements, declaration instantiation and body evaluation is the
+next, and that one reaches the first score.
+
+### THE ADOPTION — `RefusalCause π`, four classes, both gates PROVED
+
+Taken now rather than deferred, and the reason is small but real: **inch 4
+adds refusal sites**, and adding call sites to a type already ruled to change
+is building debt. `Core` does not export `RefusalCause` yet, so this file
+carries the family SHAPE under the same adoption note `SemM` has — replaced
+by the core export when it lands, not a variant.
+
+* Four classes, `RefusalCause π`, `π` = `EsDetail` (an `EsCause` + a name).
+* `unsupportedConstruct → unsupported`; `unmodeledIntrinsic` and
+  `environment` → **class `environment`**, with the split moved into the
+  payload and **preserved** as the registered candidate fifth class.
+* **`esRefusal` is the tier's ONLY cause constructor**, which is what makes
+  the gates mean something.
+
+**THE TWO EXPECTED-EMPTY GATES ARE THEOREMS, not comments:**
+
+    theorem es_never_undefined      (k n) : (esRefusal k n).isUndefined       = false
+    theorem es_never_orderDependent (k n) : (esRefusal k n).isOrderDependence = false
+
+Both by `cases k <;> rfl`, plus
+`es_class_is_unsupported_or_environment`. **This is the checkable form of
+this lane's two headline measurements** — §L66 measured "undefined behaviour"
+occurring ONCE in 3.08 MB, in a sentence asserting there is none, and ZERO
+occurrences of all five order-latitude phrasings. Until now those were
+quotable; now a UB refusal cannot be built without bypassing `esRefusal` and
+breaking a theorem. Non-vacuity checked: asserting the tier CAN emit
+`undefined` fails with "not definitionally equal".
+
+**One reclassification the adoption forced, and it is a real one.**
+Sloppy-mode `this` substituting the global object was refusing as
+`unmodeledIntrinsic`; it is a **host facility** — the global object comes
+from the realm the HOST provides, and it does not retire by widening an
+intrinsic slice. Moved to `hostFacility`. The split earning its keep the
+first time it was applied is the argument for keeping it.
+
+115 `#guard`s in the lane, 67 `@[es_spec]` lemmas, lint clean.

@@ -39,9 +39,9 @@ def throwsKind (m : EsW α) (k : String) : Bool :=
   | _ => false
 
 /-- Did it REFUSE (not in `ρ`, so no `try` can reach it), with this cause? -/
-def refuses (m : EsW α) (c : RefusalCause) : Bool :=
+def refuses (m : EsW α) (cls : String) : Bool :=
   match SemM.run m default with
-  | .unsupported c' _ => c' == c
+  | .unsupported c _ => c.className == cls
   | _ => false
 
 /-! ## The `sta.js` construction shape -/
@@ -97,7 +97,7 @@ the back-link `sta.js` depends on. -/
 than inventing a global object. -/
 #guard refuses (do
   let f ← ordinaryFunctionCreate none (.builtin "%thisValue%") none .global false
-  esCall f .undef []) .unmodeledIntrinsic
+  esCall f .undef []) "environment"
 
 /- A LEXICAL (arrow) function binds NOTHING, so its record has no `this`
 and the lookup walks outward — §10.2.1.2 step 1. -/
@@ -155,7 +155,7 @@ feature. -/
 rather than answering `undefined`. -/
 #guard refuses (do
   let f ← ordinaryFunctionCreate none .ecmascript none .strict true
-  esCall f .undef []) .unsupportedConstruct
+  esCall f .undef []) "unsupported"
 
 /-! ## Environment Records — §9.1.1.1
 

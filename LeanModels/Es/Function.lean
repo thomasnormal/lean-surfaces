@@ -34,7 +34,7 @@ def callBuiltin (name : String) (thisArg : Val) (args : List Val) : EsW Val :=
   | "%identity%" => return args.headD .undef
   | "%thisValue%" => return thisArg
   | "%argCount%" => return .num (Float.ofNat args.length)
-  | _ => SemM.refuse .unmodeledIntrinsic s!"builtin '{name}' is not modeled"
+  | _ => SemM.refuseIntrinsic s!"builtin '{name}' is not modeled"
 
 /-! ## `IsCallable` / `IsConstructor` — §7.2.3, §7.2.4
 
@@ -76,7 +76,7 @@ to `F`. `sta.js` relies on exactly this pair.
 def makeConstructor (f : ObjRef) (protoObj : Option ObjRef) : EsW Unit := do
   let fo ← deref f
   match fo.callable with
-  | none => SemM.refuse .unsupportedConstruct
+  | none => SemM.refuseConstruct
               "internal: MakeConstructor on a non-callable (report this)"
   | some fd =>
     store f { fo with callable := some { fd with constructorDerived := some false } }
@@ -115,7 +115,7 @@ test262 runs half its corpus in, and what `sta.js` is — is complete.**
 def ordinaryCallBindThis (f : ObjRef) (calleeEnv : EnvRef) (thisArg : Val) : EsW Unit := do
   let fo ← deref f
   match fo.callable with
-  | none => SemM.refuse .unsupportedConstruct
+  | none => SemM.refuseConstruct
               "internal: OrdinaryCallBindThis on a non-callable (report this)"
   | some fd =>
     match fd.thisMode with
@@ -124,11 +124,11 @@ def ordinaryCallBindThis (f : ObjRef) (calleeEnv : EnvRef) (thisArg : Val) : EsW
     | .global =>
       match thisArg with
       | .undef | .null =>
-        SemM.refuse .unmodeledIntrinsic
+        SemM.refuseHost
           "sloppy-mode `this`: undefined/null becomes the global object, which needs the realm (inch 6)"
       | .obj _ => do let _ ← envBindThisValue calleeEnv thisArg; pure ()
       | _ =>
-        SemM.refuse .unmodeledIntrinsic
+        SemM.refuseIntrinsic
           "sloppy-mode `this`: a primitive is boxed by ToObject, which needs the wrapper intrinsics (inch 6)"
 
 /-- `PrepareForOrdinaryCall(F, newTarget)` — §10.2.1.1, 14 steps: build the
@@ -147,13 +147,13 @@ call in the corpus score as a pass.
 -/
 def ordinaryCallEvaluateBody (f : ObjRef) (thisArg : Val) (args : List Val) : EsW Val := do
   match (← deref f).callable with
-  | none => SemM.refuse .unsupportedConstruct
+  | none => SemM.refuseConstruct
               "internal: evaluate body of a non-callable (report this)"
   | some fd =>
     match fd.body with
     | .builtin n => callBuiltin n thisArg args
     | .ecmascript =>
-      SemM.refuse .unsupportedConstruct
+      SemM.refuseConstruct
         "ECMAScript function body: OrdinaryCallEvaluateBody needs the statement evaluator (inch 5)"
 
 /-- `[[Call]](thisArgument, argumentsList)` — §10.2.1, 14 steps. -/
@@ -181,7 +181,7 @@ non-object `prototype` refuses rather than inventing one. -/
 def getPrototypeFromConstructor (fuel : Nat) (c : ObjRef) : EsW (Option ObjRef) := do
   match ← ordinaryGet fuel c (.str "prototype") (.obj c) with
   | .obj p => return some p
-  | _ => SemM.refuse .unmodeledIntrinsic
+  | _ => SemM.refuseIntrinsic
            "GetPrototypeFromConstructor's fallback is a realm intrinsic (inch 6)"
 
 /-- `OrdinaryCreateFromConstructor(newTarget, intrinsic)` — §10.1.13, 5

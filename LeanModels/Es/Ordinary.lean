@@ -14,7 +14,7 @@ recursion argument and the interpreter could not show termination.
 
 **Accessor properties REFUSE.** `[[Get]]` on an accessor calls the getter,
 which needs `[[Call]]` — inch 4. That arm raises
-`RefusalCause.unsupportedConstruct`, loudly, rather than inventing a
+`unsupported`-class, loudly, rather than inventing a
 value. Data properties are complete, and `sta.js` uses only data
 properties, so §0.1's floor is cleared without the refusal firing.
 -/
@@ -26,7 +26,7 @@ not a program error, so it is not in `ρ` and no `try` can catch it. -/
 def deref (r : ObjRef) : EsW Obj := fun w =>
   match w.get? r with
   | some o => Halt.ok (.ok o, w)
-  | none => Halt.unsupported .unsupportedConstruct
+  | none => Halt.unsupported (esRefusal .construct "internal")
               s!"internal: dangling object reference {r} (report this)"
 
 def store (r : ObjRef) (o : Obj) : EsW Unit := fun w =>
@@ -201,7 +201,7 @@ def ordinaryGet : Nat → ObjRef → PropKey → Val → EsW Val
         let getter := d.get.getD .undef
         match getter with
         | .undef => return .undef                      -- step 7
-        | _ => SemM.refuse .unsupportedConstruct
+        | _ => SemM.refuseConstruct
                  "accessor property: [[Get]] must call the getter, which needs [[Call]] (inch 4)"
 
 /--
@@ -250,7 +250,7 @@ def ordinarySetWithOwnDescriptor :
       else
         match d.set.getD .undef with
         | .undef => return false                                 -- step 4
-        | _ => SemM.refuse .unsupportedConstruct
+        | _ => SemM.refuseConstruct
                  "accessor property: [[Set]] must call the setter, which needs [[Call]] (inch 4)"
 
 /-- `OrdinarySet(O, P, V, Receiver)` — ES2026 §10.1.9.1, 2 steps. -/

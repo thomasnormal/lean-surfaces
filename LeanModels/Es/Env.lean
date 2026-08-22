@@ -24,7 +24,7 @@ is a tier fault, not a program error, so it is not catchable. -/
 def derefEnv (r : EnvRef) : EsW EnvRec := fun w =>
   match w.envs[r]? with
   | some e => Halt.ok (.ok e, w)
-  | none => Halt.unsupported .unsupportedConstruct
+  | none => Halt.unsupported (esRefusal .construct "internal")
               s!"internal: dangling environment reference {r} (report this)"
 
 def storeEnv (r : EnvRef) (e : EnvRec) : EsW Unit := fun w =>
@@ -77,7 +77,7 @@ def envCreateImmutableBinding (r : EnvRef) (n : String) (strict : Bool) : EsW Un
 def envInitializeBinding (r : EnvRef) (n : String) (v : Val) : EsW Unit := do
   let e ← derefEnv r
   match e.find? n with
-  | none => SemM.refuse .unsupportedConstruct
+  | none => SemM.refuseConstruct
               s!"internal: InitializeBinding on absent '{n}' (report this)"
   | some b => storeEnv r (e.put n { b with value := some v })
 
@@ -113,7 +113,7 @@ def envSetMutableBinding (r : EnvRef) (n : String) (v : Val) (strict : Bool) : E
 binding throws `ReferenceError` — the TDZ again, on the read side. -/
 def envGetBindingValue (r : EnvRef) (n : String) : EsW Val := do
   match (← derefEnv r).find? n with
-  | none => SemM.refuse .unsupportedConstruct
+  | none => SemM.refuseConstruct
               s!"internal: GetBindingValue on absent '{n}' (report this)"
   | some b =>
     match b.value with
@@ -193,7 +193,7 @@ def getThisEnvironment : Nat → EnvRef → EsW EnvRef
     if ← envHasThisBinding r then return r
     match (← derefEnv r).outer with
     | some o => getThisEnvironment n o
-    | none => SemM.refuse .unsupportedConstruct
+    | none => SemM.refuseConstruct
                 "internal: no `this` environment in the chain (report this)"
 
 /-- `ResolveThisBinding()` — §9.4.2, 2 steps. -/

@@ -313,10 +313,22 @@ structure Layout where
   /-- `offsetof`, keyed on the BASE expression's spelling, so `p->f` and
   `x.f` look up under `"const Pos *"` and `"Pos"` respectively. -/
   fieldOff : CType → String → Option Nat
+  /-- An array type's element type and extent, for `T[N]`.
+
+  Needed because **aggregate initialization WRITES through the layout**
+  where reading only ever asked it for one offset: §6.7.11 has to know how
+  many elements there are to know which are unmentioned. `none` for a
+  non-array type. -/
+  elem : CType → Option (CType × Nat) := fun _ => none
+  /-- A structure's members, IN DECLARATION ORDER with their types.
+  §6.7.11p9 initializes members in order, so the order is load-bearing and
+  not a convenience. `none` for a non-structure type. -/
+  members : CType → Option (List (String × CType)) := fun _ => none
 
 /-- A layout that knows nothing: every query refuses. The DEFAULT, so a
 missing layout fact is a loud refusal rather than a guessed offset. -/
-def Layout.unknown : Layout := ⟨fun _ => none, fun _ _ => none⟩
+def Layout.unknown : Layout :=
+  ⟨fun _ => none, fun _ _ => none, fun _ => none, fun _ => none⟩
 
 /-! ## The evaluation context
 

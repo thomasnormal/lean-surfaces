@@ -181,4 +181,119 @@ a rung — and the snapshot it carries never reaches this comparison. -/
 #guard (Outcome.unsupported (α := Flow) "out of tier: SwitchStmt").cause?
   == some Cause.unsupported
 
+/-! ## §6.7.11 — aggregate initialization, and the rule that fires on NOTHING
+
+**Measured across all 75 `InitListExpr` nodes in the corpus: every one is
+FULL.** No array initializer is shorter than its extent; no structure
+initializer omits a member. So §6.7.11p10 — *unmentioned members are
+initialized as objects with static storage duration* — **fires on zero
+corpus sites**, and the corpus therefore CANNOT check it.
+
+That is the effective-types situation again, and it gets the same
+treatment: implement it correctly while nothing exercises it, and gate it
+on a SYNTHETIC case, because a rule nobody ran is a rule nobody checked.
+-/
+
+/-- `Move` as the corpus declares it, with the offsets inch 2 measured on
+both profile hosts, plus a 4-element `int` array and a struct carrying a
+POINTER member for the zero-init gate below. -/
+private def aggLayout : Layout where
+  size := fun t => match t with
+    | "int" => some 4 | "char" => some 1 | "Move" => some 12
+    | "int[4]" => some 16 | "int[3]" => some 12
+    | "struct box" => some 16 | "int *" => some 8
+    | _ => none
+  fieldOff := fun base f => match base, f with
+    | "Move", "i" => some 0 | "Move", "j" => some 4 | "Move", "prom" => some 8
+    | "struct box", "n" => some 0 | "struct box", "p" => some 8
+    | _, _ => none
+  elem := fun t => match t with
+    | "int[4]" => some ("int", 4) | "int[3]" => some ("int", 3)
+    | _ => none
+  members := fun t => match t with
+    | "Move" => some [("i", "int"), ("j", "int"), ("prom", "char")]
+    | "struct box" => some [("n", "int"), ("p", "int *")]
+    | _ => none
+
+private def aggCtx : Ctx := { env := [], layout := aggLayout }
+private def iLit (n : String) : Expr := .intLit n "int" noSpan
+private def brace (es : List Expr) (ty : CType) : Expr := .initList es ty noSpan
+
+/-- Declare one object of type `ty` with initializer `e`, then read a
+member/element back as an `int`. -/
+private def declThenRead (ty : CType) (e : Expr) (off : Nat) : Except Refusal CVal :=
+  let st : Stmt := .compound [.decl [.var "x" ty none (some e) noSpan] noSpan] noSpan
+  match ExecM.run Mem.empty (execStmt 64 aggCtx st) with
+  | .ok (.ok _, m) => Mem.loadInt m (Mem.member (Ptr.toObject 0) off) IntTy.int_
+  | _ => .error (.libc "did not complete")
+
+-- A FULL structure initializer — the shape all 75 corpus sites have.
+#guard declThenRead "Move" (brace [iLit "11", iLit "22", iLit "33"] "Move") 0
+  == .ok (.int IntTy.int_ 11)
+#guard declThenRead "Move" (brace [iLit "11", iLit "22", iLit "33"] "Move") 4
+  == .ok (.int IntTy.int_ 22)
+
+-- A FULL array initializer.
+#guard declThenRead "int[3]" (brace [iLit "7", iLit "8", iLit "9"] "int[3]") 0
+  == .ok (.int IntTy.int_ 7)
+#guard declThenRead "int[3]" (brace [iLit "7", iLit "8", iLit "9"] "int[3]") 8
+  == .ok (.int IntTy.int_ 9)
+
+/-! ### THE SYNTHETIC PARTIAL — the only way this rule gets checked
+
+`int a[4] = {7, 8};` appears nowhere in the corpus. §6.7.11p10 says
+elements 2 and 3 are zero, and the alternative a model would otherwise
+produce is that they stay INDETERMINATE and refuse on read. The gate
+distinguishes those two outcomes, which is the whole point. -/
+
+#guard declThenRead "int[4]" (brace [iLit "7", iLit "8"] "int[4]") 0
+  == .ok (.int IntTy.int_ 7)
+#guard declThenRead "int[4]" (brace [iLit "7", iLit "8"] "int[4]") 4
+  == .ok (.int IntTy.int_ 8)
+-- …and the two the list never reached are ZERO, not indeterminate.
+#guard declThenRead "int[4]" (brace [iLit "7", iLit "8"] "int[4]") 8
+  == .ok (.int IntTy.int_ 0)
+#guard declThenRead "int[4]" (brace [iLit "7", iLit "8"] "int[4]") 12
+  == .ok (.int IntTy.int_ 0)
+-- The contrast: with NO initializer at all the object stays indeterminate
+-- and the same read REFUSES. So the zero above came from §6.7.11p10 and
+-- not from `alloc` happening to hand back zeros.
+#guard declThenRead "int[4]" (brace [] "int[4]") 8 == .ok (.int IntTy.int_ 0)
+#guard (match ExecM.run Mem.empty (execStmt 64 aggCtx
+          (.compound [.decl [.var "x" "int[4]" none none noSpan] noSpan] noSpan)) with
+        | .ok (.ok _, m) => Mem.loadInt m (Ptr.toObject 0) IntTy.int_
+        | _ => .error (.libc "x"))
+  == .error (.memUB (.indetAutomatic 0 0))
+
+/-! ### Zero-initialization is TYPE-DIRECTED, not a memset
+
+§6.7.11p10 initializes an unmentioned member *as if by `= 0`*, and for a
+POINTER that is a NULL POINTER. A model that wrote zero BYTES would leave
+a member that reads back as the integer 0 and makes `loadPtr` refuse — a
+wrong answer wearing the shape of a right one. -/
+
+private def boxPartial : Except Refusal Ptr :=
+  let st : Stmt := .compound
+    [.decl [.var "b" "struct box" none (some (brace [iLit "5"] "struct box")) noSpan] noSpan]
+    noSpan
+  match ExecM.run Mem.empty (execStmt 64 aggCtx st) with
+  | .ok (.ok _, m) => Mem.loadPtr m (Mem.member (Ptr.toObject 0) 8)
+  | _ => .error (.libc "did not complete")
+
+-- The mentioned member holds 5…
+#guard declThenRead "struct box" (brace [iLit "5"] "struct box") 0
+  == .ok (.int IntTy.int_ 5)
+-- …and the unmentioned POINTER member reads back as a NULL POINTER.
+#guard boxPartial == .ok Ptr.null
+#guard (boxPartial.toOption.map Ptr.isNull) == some true
+
+/-! ### §6.7.11p2 is a CONSTRAINT, so too many initializers REFUSE -/
+
+#guard (match ExecM.verdict Mem.empty (execStmt 64 aggCtx
+          (.compound [.decl [.var "x" "int[3]" none
+            (some (brace [iLit "1", iLit "2", iLit "3", iLit "4"] "int[3]")) noSpan] noSpan]
+            noSpan)) with
+        | .unsupported w => w | _ => "did not refuse")
+  == "more initializers than array elements"
+
 end Examples.c.sunfish.stmt

@@ -38,6 +38,14 @@ inductive PropKey where
   | sym (id : SymId)
   deriving DecidableEq, Repr, Inhabited
 
+/-- A key's text, for messages and for `GetValue` on an environment
+reference (where the "property name" IS the binding name). A Symbol has
+no text — it is rendered by its id, never by its description, which is
+the same identity rule `Val.sameValue` follows. -/
+def PropKey.text : PropKey → String
+  | .str s => s
+  | .sym i => s!"Symbol({i})"
+
 /-- Is this key an array index — a canonical numeric String in
 `[0, 2^32 - 2]`? ES2026 §6.1.7 defines it, and §10.1.11 needs it because
 integer-indexed keys are enumerated FIRST, in ascending numeric order,

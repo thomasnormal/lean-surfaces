@@ -238,3 +238,81 @@ intrinsic slice. Moved to `hostFacility`. The split earning its keep the
 first time it was applied is the argument for keeping it.
 
 115 `#guard`s in the lane, 67 `@[es_spec]` lemmas, lint clean.
+
+## 2026-08-22-es-3 — M2 INCH 4(a): reference records and the conversions, and the tier now has TWO verification strengths
+
+`LeanModels/Es/Convert.lean` + `Examples/es/convert/guards.lean` — **the
+operations layer expressions are built from.** 4(b) is the AST walk itself
+(expressions *and* statements, since one walk serves both), plus declaration
+instantiation and body evaluation, which reaches the first score.
+
+**Sized first: 191 numbered steps** — reference records 39, conversions 63,
+the binary-operator applications 28, `IsLessThan` 38, `IsLooselyEqual` 23.
+
+**INCH 1'S CONVERSION REFUSALS RETIRE.** `Value.lean` shipped `ToBoolean`
+alone and said why: everything else can reach an object. Objects arrived at
+inch 2 and `[[Call]]` at inch 3, so `ToPrimitive`, `ToNumber`, `ToString`,
+`ToPropertyKey` and `ToObject` are real now, and `OrdinaryToPrimitive`'s
+METHOD ORDER — `"string"` tries `toString` then `valueOf`, every other hint
+the reverse — is pinned, because that order is what `[] + {}` depends on.
+
+**The `Val`-equality discipline carried through, as instructed.**
+`ToNumber(undefined)` is NaN, so a guard pins that the result is
+`sameValue`-equal to itself and **`strictEquals`-UNEQUAL** to itself — the row
+that shows the three equalities still matter after conversion, not just
+before it.
+
+### TWO VERIFICATION STRENGTHS, and naming which is which is the finding
+
+`numberToString` (§6.1.6.1.20) splits inside one function:
+
+* the **NaN / ±Infinity / ±0** arms are `rfl`-provable and carry `@[es_spec]`
+  lemmas — including **`-0` rendering as `"0"`**, the row that separates
+  `String(-0)` from `Object.is(-0, 0)`;
+* the **exact-integer** arm is **NOT**. It goes through `Float.toInt64`,
+  which is `@[extern]`, and `rfl`, `decide` AND `with_unfolding_all rfl` all
+  fail on it **in both directions**, while `#guard` evaluates both.
+
+**This is §L88's asymmetry again — `#guard` is a weaker oracle than `rfl` —
+but with the OPPOSITE resolution, and the difference is the whole point.**
+There a pure-Lean reformulation existed (`List Char`), so the law said move
+the DEFINITION, and it moved. Here the obstruction is an extern primitive
+with no kernel-reducible substitute short of the bit-level model, and
+correctly-rounded decimal conversion is already scheduled and owned elsewhere
+(`docs/family-architecture.md` §3.5.5 step 3). **Claiming a lemma that cannot
+be proved would be worse than naming the gap; weakening the definition until
+`String(42)` refuses would be worse than both.** So the gap is stated in both
+the definition and the lemma file, and the tier's verification strength is now
+a thing a reader can look up per primitive rather than assume uniform.
+
+### The refusal boundary, narrower again
+
+Every refusal added here is `environment`-class and names the realm:
+`ToObject` on a primitive, property access or assignment on a primitive
+(§6.2.5.4 step 3.a boxes it), and sloppy assignment to an undeclared name
+(which creates a GLOBAL property — a **host facility**, the second time that
+classification has been the right one). The `undefined`/`null` arm of
+`ToObject` is complete and THROWS, as does `ToNumber`/`ToString` of a Symbol
+and `ToPrimitive` of an object with neither method — all program outcomes in
+`ρ`, catchable.
+
+One deliberate `unsupported`-class refusal: `StringToNumber` outside the
+decimal-integer fragment. The StringNumericLiteral grammar (hex, octal,
+binary, exponents, `Infinity`) is its own sub-language and a rung; guessing a
+number for `"0x10"` would be exactly the silent wrong answer this tier exists
+not to emit, so `ToNumber("0x10")` refuses and a guard pins that it does.
+
+**`IsLessThan` answers THREE values, not two** (§7.2.13, 38 steps): `none` for
+NaN, modelled as `Option Bool` so it cannot be confused with `false` — which
+is the confusion the spec's own three-valued answer exists to prevent, and
+what makes all four relational operators false for NaN.
+
+165 `#guard`s in the lane, 77 `@[es_spec]` lemmas, lint clean, five guard
+files green. Non-vacuity checked three ways (`1 - "2"` claimed to
+concatenate, `String(-0)` claimed `"-0"`, `ToNumber("0x10")` claimed 16).
+
+Three mechanical notes for the next lane: **`try` is a reserved keyword**
+(a local `rec try` does not parse); **`String.trim` now answers a
+`String.Slice`** with no `.toList`, so char-list forms are both the portable
+and the kernel-reducible choice; and a multi-line `SemM.refuseHost\n "msg"`
+parses as two terms, not an application.

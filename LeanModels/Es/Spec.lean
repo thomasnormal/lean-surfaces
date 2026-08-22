@@ -1,4 +1,4 @@
-import LeanModels.Es.Function
+import LeanModels.Es.Convert
 import LeanModels.Es.SpecAttr
 
 /-!
@@ -255,5 +255,54 @@ as a candidate FIFTH class. -/
     (match esRefusal .unmodeledIntrinsic n with
      | .environment d => d.kind
      | _ => EsCause.construct) = EsCause.unmodeledIntrinsic := rfl
+
+/-! ## `Number::toString` — §6.1.6.1.20, the arms that are total
+
+An `Option`: `none` is "outside the exact-integer fragment", and the
+caller REFUSES rather than emitting the host's rendering. -/
+
+@[es_spec] theorem numberToString_nan : numberToString (0.0 / 0.0) = some "NaN" := rfl
+@[es_spec] theorem numberToString_inf : numberToString (1.0 / 0.0) = some "Infinity" := rfl
+@[es_spec] theorem numberToString_neg_inf : numberToString (-1.0 / 0.0) = some "-Infinity" := rfl
+@[es_spec] theorem numberToString_zero : numberToString 0.0 = some "0" := rfl
+
+/-- **`-0` renders as `"0"`** — the row that separates `String(-0)` from
+`Object.is(-0, 0)`, and the reason the zero arm tests `== 0.0` (which is
+true of both zeros) rather than `sameValue`. -/
+@[es_spec] theorem numberToString_neg_zero : numberToString (-0.0) = some "0" := rfl
+
+/- **The INTEGER path is deliberately unlemmatized, and that is a
+measured boundary rather than an omission.** `numberToString`'s
+exact-integer test goes through `Float.toInt64`, which is `@[extern]`:
+`rfl`, `decide` and `with_unfolding_all rfl` all fail on BOTH directions
+(`numberToString 42.0 = some "42"` and `numberToString 0.5 = none`),
+while `#guard` evaluates both. So this tier now has TWO verification
+strengths, and the arms above are exactly the ones in the stronger class
+— they short-circuit before reaching `toInt64`.
+
+This is §L88's asymmetry again (`#guard` is a weaker oracle than `rfl`)
+but with the opposite resolution, and the difference is the point: there,
+a pure-Lean reformulation existed (`List Char`) so the DEFINITION moved.
+Here the obstruction is an extern primitive with no kernel-reducible
+substitute short of the bit-level model, and correctly-rounded decimal
+conversion is already scheduled and owned elsewhere
+(`docs/family-architecture.md` §3.5.5 step 3). Claiming a lemma we cannot
+prove would be worse than naming the gap; weakening the definition until
+`String(42)` refuses would be worse than both. -/
+
+/-! ## Property-key text — §6.2.5's environment references use it -/
+
+@[es_spec] theorem keyText_str (s : String) : (PropKey.str s).text = s := rfl
+
+/-! ## Reference Records — §6.2.5.2, §6.2.5.3, one arm each -/
+
+@[es_spec] theorem ref_unresolvable (n : PropKey) :
+    Ref.isUnresolvable { base := .unresolvable, name := n } = true := rfl
+@[es_spec] theorem ref_env_is_not_unresolvable (e : EnvRef) (n : PropKey) :
+    Ref.isUnresolvable { base := .env e, name := n } = false := rfl
+@[es_spec] theorem ref_value_is_property (v : Val) (n : PropKey) :
+    Ref.isProperty { base := .value v, name := n } = true := rfl
+@[es_spec] theorem ref_env_is_not_property (e : EnvRef) (n : PropKey) :
+    Ref.isProperty { base := .env e, name := n } = false := rfl
 
 end LeanModels.Es

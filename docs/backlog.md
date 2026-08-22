@@ -377,3 +377,52 @@ Two instances, different mechanisms and the same shape — **ES's
 `es_never_undefined`** (a theorem, beside `es_never_orderDependent`; ES's own
 file already records both as *"PRESENT and GATED"*) and **Go's build-breaking
 guard**. The class is **nameable by the family and unconstructible by the tier.**
+
+### CORRECTION — `Run` is a RETRACT of `SemM`, not an isomorphism (and this doc claimed the iso twice)
+
+The Core payload landing forces it. With `Loud.unsupported` carrying
+`(cause, message, snapshot)` and `Run.unsupported` carrying **one field**, a round
+trip through `Run` returns the only class `Run` can represent: **an
+`orderDependence` refusal goes in and `unsupported` comes out.** The pilot's
+isomorphism was true of the **poorer `Loud` it was proved against** — and the
+payload ruling, which **this document argued for**, is exactly what broke it.
+Corrected at all three sites (§3.4 headline, §3.4's re-spelling contrast, §3.8).
+
+**The lane replaced the claim rather than weakening it, which is the right move.**
+`toRun ∘ ofRun = id` still holds, so **`Run` embeds faithfully and no
+trunk-shaped outcome is corrupted by lifting**. The residue is stated as
+**theorems** rather than left as a caveat: `ofRun_toRun_normalises` says exactly
+what is lost, `ofRun_toRun_of_plain` says exactly when the trip is the identity.
+**A retract with its residue characterised is a stronger artifact than an
+isomorphism that quietly stopped being one.**
+
+> **`Run` is a faithfully-embedded VIEW. The stack is RICHER by the refusal
+> payload. Theorems about `Run` transport ALONG THE EMBEDDING — never the other
+> way.**
+
+**Two conclusions survive, and it is worth saying why rather than asserting it.**
+(1) *"`Run → SemM` owes no adequacy theorem"* holds, for the reason that always
+mattered: **a retract is not a second semantics** — it is one semantics with a
+poorer view, and `Run`'s theorems lift unchanged. (2) *"move `Run` to `Core`" and
+"land `SemM`" are the same landing* holds; what changes is the **direction of
+travel** — `Run`'s theorems lift into the stack, and the stack's facts do not
+descend into `Run` without passing through the residue theorems.
+
+### TWO FOLLOW-UPS RECORDED
+
+**Default type args FAIL for monad-returning abbrevs.** `SemM W ρ Int` binds
+**`Int` to `π`**, not to the value type — the abbrev returns a monad, so the next
+argument lands on the defaulted slot. **The two-abbrev spelling (`SemMWith` /
+`SemM`) is canon**, with `rfl`s pinning the `Unit` instantiation so the
+specialised spelling is provably the general one at the default payload.
+Recorded because the failure mode is a type error that **does not name its
+cause**, and a tier will otherwise re-derive it.
+
+**The runner's canonical JSON drops the refusal class**, so the scoreboard
+**cannot bucket** — the one thing the shared vocabulary and the `RefusalCause`
+ruling exist to make possible. **A cause type no consumer can read is a
+well-typed private note.** Follow-up is an **OPT-IN field** on the
+`--observations` model: off by default so canonical output stays byte-stable for
+every existing `--compare` baseline, on when a scoreboard asks. Recorded as the
+ruling's **delivery gap** rather than an implementation detail — until it lands,
+the four classes are family law the scoreboard cannot see.

@@ -1126,6 +1126,17 @@ this document it says so.
 abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
 ```
 
+**THE TWO-ABBREV SPELLING IS CANON, and the reason is a Lean fact worth
+recording so no tier re-derives it: DEFAULT TYPE ARGUMENTS FAIL FOR
+MONAD-RETURNING ABBREVS.** Giving the payload parameter a default does not
+work — `SemM W ρ Int` binds **`Int` to `π`**, not to the value type,
+because the abbrev returns a monad and the next argument lands on the
+defaulted slot. So the family spells it as **two** abbrevs, `SemMWith` and
+`SemM`, with `rfl`s **pinning the `Unit` instantiation** so the specialised
+spelling is provably the general one at the default payload. A tier that
+tries the single-abbrev-with-default spelling will get a type error that
+does not name the cause.
+
 **This document first wrote `StateT W (ExceptT ρ Halt)`, and that is
 REFUTED BY `rfl`.** `StateT` outside `ExceptT` **discards the state on a
 raise** — the shapes are `W → Except ρ (α × W)` versus
@@ -1151,12 +1162,32 @@ family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
 the iso as available rather than mandatory. A tier with no kernel-reducible
 runs to protect may spell it either way.
 
-**`Run σ α` IS that stack — proved, not asserted.** The pilot's
-`ofRun`/`toRun` are mutually inverse in 22 lines, and both stacks `#synth`
-a `WPMonad` with **zero instances written**. That **retires the 2026-08-13
-spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
-it was a fact about the tree, not about the type. The instance was never
-unavailable; it was never asked for.
+**`Run σ α` IS A FAITHFULLY-EMBEDDED VIEW of that stack — a RETRACT, not
+an isomorphism.** Both stacks `#synth` a `WPMonad` with **zero instances
+written**, which **retires the 2026-08-13 spike's obstacle 1** — *"`Run` is
+not a monad"* — as a permanent obstacle: it was a fact about the tree, not
+about the type. The instance was never unavailable; it was never asked for.
+
+**CORRECTION — this document twice called `ofRun`/`toRun` "mutually
+inverse", and the Core payload landing makes that FALSE.** With
+`Loud.unsupported` now carrying `(cause, message, snapshot)` and
+`Run.unsupported` carrying **one field**, a round trip through `Run`
+returns the only class `Run` can represent: **an `orderDependence` refusal
+goes in and `unsupported` comes out.** The pilot's iso was true of the
+poorer `Loud` it was proved against, and the payload ruling — which this
+document argued for — is exactly what broke it.
+
+**The lane replaced the claim rather than weakening it, which is the right
+move**: `toRun ∘ ofRun = id` **still holds**, so `Run` embeds faithfully
+and **no trunk-shaped outcome is corrupted by lifting**. The residue is
+stated as theorems rather than left as a caveat — `ofRun_toRun_normalises`
+says *exactly what is lost*, `ofRun_toRun_of_plain` says *exactly when the
+trip is the identity*. A retract with its residue characterised is a
+stronger artifact than an isomorphism that quietly stopped being one.
+
+> **`Run` is a faithfully-embedded VIEW. The stack is RICHER by the
+> refusal payload. Theorems about `Run` transport ALONG THE EMBEDDING —
+> never the other way.**
 
 #### FAMILY LAW — ONE `Except`/`throw` PATTERN, EVERY TIER
 
@@ -1196,8 +1227,11 @@ behind.
   1.4× kernel-`rfl` cost. One shared *name* for our own stack is exactly
   what "adopted by shape, not by spelling" asks for.
 * **This is cheaper than the Python migration and must not be confused with
-  it.** `Run → SemM` is a **re-spelling with a proved iso** (`ofRun`/
-  `toRun`, mutually inverse), so it owes **no adequacy theorem**. The
+  it.** `Run → SemM` is an **embedding with a proved retract** (`toRun ∘
+  ofRun = id`), so it owes **no adequacy theorem** — the contrast survives
+  the correction above, and for the reason that always mattered: **a
+  retract is not a second semantics.** It is one semantics with a poorer
+  view, and `Run`'s theorems lift along the embedding unchanged. The
   migration that owes `twinAgrees` is the move to a *second semantics*
   (§3.4 clause b), which is a different thing entirely. Re-spelling: cheap,
   by touch. Second semantics: gated.
@@ -2254,12 +2288,15 @@ substance: the move happens when a second consumer exists, not before
 (the ingester tier does not mention `Run`) and not after (a second
 interpreter landing with its own copy of `Run` is a defect, not a design).
 
-**And §3.4 collapses this question into one.** Since `Run σ α` is
-*proved* to be `ExceptT ρ (StateT W Halt)` — `ofRun`/`toRun` mutually
-inverse — "move `Run` to `Core`" and "land the `SemM` substrate" are **the
-same landing**, not two. The destination should therefore be the stack,
-with `Run` as its established view, so that a lane arriving via either
-route finds one artifact.
+**And §3.4 collapses this question into one.** `Run σ α` is a
+**faithfully-embedded VIEW** of `ExceptT ρ (StateT W Halt)` — a retract,
+`toRun ∘ ofRun = id`, **not** the isomorphism this section first claimed
+(§3.4 carries the correction). So "move `Run` to `Core`" and "land the
+`SemM` substrate" are still **the same landing**, not two: the destination
+is the stack, with `Run` as its established view, so a lane arriving by
+either route finds one artifact. What changes is the direction of travel —
+**`Run`'s theorems lift into the stack; the stack's facts do not descend
+into `Run` without passing through the residue theorems.**
 
 **And the price is drifting.** §L35 measured 1251 `Run.` sites in 24
 files; today it is **1282 in 31**. The deferral is correct and it is not
@@ -2581,6 +2618,19 @@ second tier independently splits `environment` the same way, that is the
 convergence standard §9.3 used to ratify the span field names — a
 measurement, not a taste — and §5.2 should gain a fifth cause. One tier's
 distinction is a payload; two tiers' identical distinction is a class.
+
+**AND THE RULING IS NOT DELIVERED UNTIL THE CLASS REACHES THE JSON.** The
+runner's canonical JSON currently **drops the refusal class**, so the
+scoreboard **cannot bucket** — which is the one thing §9.4's shared
+vocabulary and this ruling exist to make possible. A cause type that no
+consumer can read is a well-typed private note.
+
+**Follow-up: an OPT-IN field**, on the `--observations` model — off by
+default so the canonical output stays byte-stable for every existing
+`--compare` baseline (§5.4), on when a scoreboard asks for it. Recorded
+here rather than in a lane's notes because it is the ruling's **delivery
+gap**, not an implementation detail: until it lands, the four classes are
+family law that the scoreboard cannot see.
 
 **Ada's inch 1 consumes this directly**: four constructors, `π` = the ARM
 paragraph reference, `undefined` carrying its 1.1.5 erroneous-execution

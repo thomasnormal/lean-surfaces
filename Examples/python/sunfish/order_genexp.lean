@@ -55,6 +55,7 @@ open Examples.python.sunfish.genmoves_theorem (posOf)
 open Examples.python.sunfish.bound_depth (posCAux posCls_methods posCls_ntBase_isSome
   execStmt_if_true execStmt_if_false execStmt_assign_name compare_one sbMB sbMBRest)
 open Examples.python.sunfish.value_bound
+open Examples.python.sunfish.genmoves_scan (genSilent_forHereGen)
 
 set_option maxRecDepth 100000
 
@@ -940,7 +941,203 @@ caller's induction is the one to write.
 **And R3 is not blocked on this.** `ord_stmt_emits` is stated over a free `vs`,
 so the fold's schedule can be chosen against it now: what the fold consumes is a
 list of `(value, Move)` pairs in descending order, and that is exactly what this
-theorem hands over. -/
+theorem hands over.
 
+**§11 below is the chain, landed** — so `hdrain` is discharged from a run of the
+inner generator, and what remains is named there rather than here. -/
+
+
+
+/-! ## §11 THE CHAIN — R2 CLOSES, and `hdrain` is discharged (2026-08-22)
+
+§10 named one induction and priced it. This is it. `GenEmits.forGenRound`
+iterated, `forGenDone` at the end, and the induction is the CALLER's — which is
+what VCGen's own note says it must be, because a `forGenRounds` batch lemma
+cannot exist for a generator that might be infinite. Here it is finite, and the
+finiteness lives in the run.
+
+### What the chain is stated over
+
+`GxRun` is the genexp's walk of the inner generator, world-threaded: each round
+takes one `IterSteps` on `pos.gen_moves()`' object — a **non-uniform** world
+move, 1 to 25 objects, measured in genmoves_drain.lean — and then either KEEPS
+the pair (`gx_round_keeps`) or DROPS it (`gx_round_drops`). The intermediate
+worlds are existential in the relation for the reason the census gave: nothing
+computes them.
+
+`GxFrame` is the three slots every round reads (`pos`, `depth`, `QS`), and the
+two `Env.set`s a round performs — `m` from the loop, `v` from the binding —
+disturb none of them. That is §10's premise 3, and it is two lines rather than
+the "assign_again" step it was priced as.
+
+### The pieces
+
+| declaration | |
+|---|---|
+| `GxRun` | the run: per-round inner step, then keep or drop |
+| `gx_chain` | `forGenRound` iterated — the induction, on the run |
+| `gx_drains` | the chain entered (`genSilent_forHereGen`) and closed (`toYields`, `IterDrains.of_genYields`): the genexp OBJECT drains |
+| `ord_stmt_emits_run` | **R2's statement with `hdrain` discharged** |
+
+`IterDrains.uncons`/`.exhausts` (§L58) are what let a whole-drain agreement feed
+a round-by-round loop, and `gen_moves_iterDrains` is the rename that makes them
+applicable to the shipped generator.
+
+### What is STILL owed, named exactly
+
+`gx_drains` takes a `GxRun`. Building one from `gen_moves_iterDrains`' drain is
+`uncons` applied down the reference move list — mechanical — except for one
+premise per round: **`ValueAnswers` at THAT round's world.** `Position.value` is
+heap-free (R1, measured) but its answer is stated at a world, and the round's
+world is whatever the inner step left. So the missing step is a FRAME condition:
+*the inner generator's steps preserve the `pst` slot.* The census says they only
+ever grow the heap — 67 → 69 → 70 → … → 148, monotone, never a shrink or an
+in-place write outside the generator's own slot — so it is true and measurable;
+it is simply not derivable from `IterSteps` alone, which says nothing about what
+a step does to slots it did not touch.
+
+That is one lemma about `Position.gen_moves`' stepper, and it is genmoves-side
+material. With it, `GxRun` is produced by an induction on the reference list and
+R2's `vs` becomes the concrete twenty pairs the fixture guards below already
+show. -/
+
+/-- The three frame slots every genexp round reads. `m` and `v` are written by
+the loop and the binding; neither disturbs these. -/
+def GxFrame (env : REnv) (pos : RVal) (d : Int) : Prop :=
+  Env.lookup env "pos" = some pos ∧
+  Env.lookup env "depth" = some (.int d) ∧
+  Env.lookup env "QS" = Option.none
+
+theorem GxFrame.set_m {env pos d} (h : GxFrame env pos d) (mv : RVal) :
+    GxFrame (Env.set env "m" mv) pos d :=
+  ⟨by simp [Env.lookup_set_ne, h.1], by simp [Env.lookup_set_ne, h.2.1],
+   by simp [Env.lookup_set_ne, h.2.2]⟩
+
+theorem GxFrame.set_v {env pos d} (h : GxFrame env pos d) (z : Int) :
+    GxFrame (gxEnvAt env z) pos d :=
+  ⟨by simp [gxEnvAt, Env.lookup_set_ne, h.1], by simp [gxEnvAt, Env.lookup_set_ne, h.2.1],
+   by simp [gxEnvAt, Env.lookup_set_ne, h.2.2]⟩
+
+/-- **The genexp's run over the inner generator**, world-threaded: each round
+steps the inner object (a NON-uniform world move — genmoves_drain.lean's census)
+and either keeps the pair or drops it. -/
+inductive GxRun (pos : RVal) (d : Int) (a : Addr) :
+    World → List RVal → List RVal → World → Prop
+  | done {w w'} : IterSteps sunfish w a Option.none w' → GxRun pos d a w [] [] w'
+  | keep {w w₁ w₂ : World} {mv : RVal} {z : Int} {ms vs : List RVal} :
+      IterSteps sunfish w a (some mv) w₁ →
+      ValueAnswers w₁ pos mv z → (40 ≤ z ∨ d ≠ 0) →
+      GxRun pos d a w₁ ms vs w₂ →
+      GxRun pos d a w (mv :: ms) (.tuple #[.int z, mv] :: vs) w₂
+  | drop {w w₁ w₂ : World} {mv : RVal} {z : Int} {ms vs : List RVal} :
+      IterSteps sunfish w a (some mv) w₁ →
+      ValueAnswers w₁ pos mv z → z < 40 → d = 0 →
+      GxRun pos d a w₁ ms vs w₂ →
+      GxRun pos d a w (mv :: ms) vs w₂
+
+/-- **THE CHAIN.** `GenEmits.forGenRound` iterated, `forGenDone` at the end, the
+induction on the run — which is the caller's, exactly as VCGen's note says it
+must be for a generator whose remainder list is finite. -/
+theorem gx_chain {d : Int} {a : Addr} {b : String} {sc ep kp : Int}
+    {wc0 wc1 bc0 bc1 : Bool} (sp : Span) :
+    ∀ {w w' : World} {ms vs : List RVal},
+      GxRun (posOf b sc wc0 wc1 bc0 bc1 ep kp) d a w ms vs w' →
+      ∀ env : REnv, GxFrame env (posOf b sc wc0 wc1 bc0 bc1 ep kp) d →
+      ∃ env', GenEmits sunfish ⟨w, env⟩ [.forGen (.name "m" sp) a gxBody] vs
+        ⟨w', env'⟩ := by
+  intro w w' ms vs hrun
+  induction hrun with
+  | done hstep => intro env _; exact ⟨env, GenEmits.forGenDone hstep⟩
+  | @keep w w₁ w₂ mv z ms vs hstep hval hpass hrest ih =>
+      intro env hfr
+      obtain ⟨env', hem⟩ := ih (gxEnvAt (Env.set env "m" mv) z)
+        ((hfr.set_m mv).set_v z)
+      refine ⟨env', ?_⟩
+      have hbody := gx_round_keeps w₁ (Env.set env "m" mv) mv d z b sc ep kp
+        wc0 wc1 bc0 bc1
+        (by simp [Env.lookup_set_ne, hfr.1]) (by simp [Env.lookup_set_self])
+        (by simp [Env.lookup_set_ne, hfr.2.1]) (by simp [Env.lookup_set_ne, hfr.2.2])
+        hval hpass
+      simpa using GenEmits.forGenRound (m := sunfish) (target := .name "m" sp) (a := a)
+        (st := ⟨w, env⟩) (w' := w₁) (env₁ := Env.set env "m" mv) (v := mv)
+        hstep rfl hbody hem
+  | @drop w w₁ w₂ mv z ms vs hstep hval hlow hd0 hrest ih =>
+      intro env hfr
+      obtain ⟨env', hem⟩ := ih (gxEnvAt (Env.set env "m" mv) z)
+        ((hfr.set_m mv).set_v z)
+      refine ⟨env', ?_⟩
+      have hbody := gx_round_drops w₁ (Env.set env "m" mv) mv z b sc ep kp
+        wc0 wc1 bc0 bc1
+        (by simp [Env.lookup_set_ne, hfr.1]) (by simp [Env.lookup_set_self])
+        (by simp [Env.lookup_set_ne, hd0 ▸ hfr.2.1]) (by simp [Env.lookup_set_ne, hfr.2.2])
+        hval hlow
+      simpa using GenEmits.forGenRound (m := sunfish) (target := .name "m" sp) (a := a)
+        (st := ⟨w, env⟩) (w' := w₁) (env₁ := Env.set env "m" mv) (v := mv)
+        hstep rfl hbody hem
+
+/-- **THE GENEXP OBJECT DRAINS** — the chain, entered and closed. -/
+theorem gx_drains (w : World) (d : Int) (b : String) (sc ep kp : Int)
+    (wc0 wc1 bc0 bc1 : Bool) (ms vs : List RVal) (h₁ : Heap) (wend : World)
+    (iq : String) (il : REnv) (ic : GenCont) (ist : GenStatus)
+    (hupd : Heap.update (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)).heap (w.heap.size + 1)
+        (.generator "<genexpr@1>" (gxEnv (.ref w.heap.size) d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+          [.block gxB] .running) = some h₁)
+    (hinner : Heap.get? h₁ w.heap.size = some (.generator iq il ic ist))
+    (hgx : GxRun (posOf b sc wc0 wc1 bc0 bc1 ep kp) d w.heap.size
+      { (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) with heap := h₁ } ms vs wend) :
+    ∃ w', IterDrains sunfish (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+      (w.heap.size + 1) vs w' := by
+  obtain ⟨a', b', hfor⟩ := gxPlan_for
+  have hfr : GxFrame (gxEnv (.ref w.heap.size) d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+      (posOf b sc wc0 wc1 bc0 bc1 ep kp) d := ⟨rfl, rfl, rfl⟩
+  obtain ⟨envF, hem⟩ := gx_chain (b := b) (sc := sc) (ep := ep) (kp := kp)
+    (wc0 := wc0) (wc1 := wc1) (bc0 := bc0) (bc1 := bc1) a' hgx
+    (gxEnv (.ref w.heap.size) d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) hfr
+  refine IterDrains.of_genYields vs _
+    (gxEnv (.ref w.heap.size) d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    [.block gxB] .created h₁ ⟨wend, envF⟩ ?_ (Or.inl rfl) hupd ?_
+  · simpa [gxW, gxObj3, genObj, gxCallEnv, gxF_lit.2.2.2.2.2.1] using
+      Heap.get?_push_size (w.heap.push (gmObj (posOf b sc wc0 wc1 bc0 bc1 ep kp)))
+        (gxObj3 w.heap.size d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+  · refine GenEmits.toYields ?_
+    refine GenEmits.silent
+      (pre₁ := [GenFrame.forGen (.name "m" a') w.heap.size gxBody,
+                GenFrame.block ([] : List Stmt)])
+      (fun k => by
+        simpa [gxB_split] using genSilent_forHereGen (m := sunfish) (s := gxFor)
+          (ss := ([] : List Stmt)) (k := k) hfor
+          (EvalsIn.of_evalsTo (EvalsTo.of_eval (fuel := 4) (by py_simp [gxEnv])))
+          hinner) ?_
+    simpa using GenEmits.trans hem (ord_blockNil_emits ⟨wend, envF⟩)
+
+/-- **R2 CLOSES.** `ord_stmt_emits` with `hdrain` DISCHARGED: the statement's
+emitted stream, from a run of the inner generator rather than from an assumption
+about the genexp object. -/
+theorem ord_stmt_emits_run (w : World) (env : REnv) (d : Int)
+    (b : String) (sc ep kp : Int) (wc0 wc1 bc0 bc1 : Bool)
+    (ms vs sortedVs : List RVal) (h₁ : Heap) (wend : World)
+    (iq : String) (il : REnv) (ic : GenCont) (ist : GenStatus)
+    (hpos : Env.lookup env "pos" = some (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+    (hdepth : Env.lookup env "depth" = some (.int d))
+    (hsorted : Env.lookup env "sorted" = Option.none)
+    (hgxl : Env.lookup env "<genexpr@1>" = Option.none)
+    (hupd : Heap.update (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)).heap (w.heap.size + 1)
+        (.generator "<genexpr@1>" (gxEnv (.ref w.heap.size) d (posOf b sc wc0 wc1 bc0 bc1 ep kp))
+          [.block gxB] .running) = some h₁)
+    (hinner : Heap.get? h₁ w.heap.size = some (.generator iq il ic ist))
+    (hgx : GxRun (posOf b sc wc0 wc1 bc0 bc1 ep kp) d w.heap.size
+      { (gxW w d (posOf b sc wc0 wc1 bc0 bc1 ep kp)) with heap := h₁ } ms vs wend)
+    (hsort : sortByLt true vs = .ok sortedVs) :
+    ∃ w' env', GenEmits sunfish ⟨w, env⟩ [.block [ordFor]] sortedVs
+      ⟨ordW w' sortedVs, env'⟩ := by
+  obtain ⟨w', hdrain⟩ := gx_drains w d b sc ep kp wc0 wc1 bc0 bc1 ms vs h₁ wend
+    iq il ic ist hupd hinner hgx
+  obtain ⟨env', hem⟩ := ord_stmt_emits w env d b sc ep kp wc0 wc1 bc0 bc1 vs sortedVs w'
+    hpos hdepth hsorted hgxl hdrain hsort
+  exact ⟨w', env', hem⟩
+
+#print axioms gx_chain
+#print axioms gx_drains
+#print axioms ord_stmt_emits_run
 
 end Examples.python.sunfish.order_genexp

@@ -19574,3 +19574,75 @@ over out-of-tree sources, and the two `lean` runs behind the corpus ladder were
 single niced dependency-free processes under protocol rule 3. Nothing here can
 break a build, and unlike the usual case that is a statement about the artifact
 rather than an argument to be checked.
+
+## L80 — THE CHAIN: R2 CLOSES, `hdrain` is discharged, and the last gap is a FRAME condition (2026-08-22)
+
+`Examples/python/sunfish/order_genexp.lean` §11. §L31 §10 named one induction
+and priced it at a session; §L58 landed the inverses it needed. This is the
+induction, and R2's one non-bookkeeping hypothesis is gone.
+
+### What landed
+
+| declaration | |
+|---|---|
+| `GxFrame` | the three slots a genexp round reads (`pos`, `depth`, `QS`), and the two `Env.set`s a round performs disturb none of them |
+| `GxRun` | the genexp's walk of the inner generator: per round one `IterSteps`, then KEEP the pair or DROP it |
+| `gx_chain` | `GenEmits.forGenRound` iterated with `forGenDone` at the end — **the induction, on the run** |
+| `gx_drains` | the chain entered (`genSilent_forHereGen`) and closed (`toYields`, `IterDrains.of_genYields`): the genexp OBJECT drains |
+| `ord_stmt_emits_run` | **R2's statement with `hdrain` DISCHARGED** |
+
+The induction is the caller's, which is what VCGen's own note says it must be: a
+`forGenRounds` batch lemma cannot exist for a generator that might be infinite.
+Here the finiteness lives in `GxRun`, so the batch lemma is not missing — it is
+**refused**, and the run is what replaces it.
+
+**§L31 §10's premise 3 cost two lines.** It was priced as an "assign_again" step
+needing `moves_loop_cuts`' machinery; it is `GxFrame.set_m`/`set_v`, because
+`m` and `v` are different keys from `pos`/`depth`/`QS` and `Env.lookup_set_ne` is
+the whole argument.
+
+### The one gap, named exactly — and it is a FRAME condition, not an induction
+
+`gx_drains` takes a `GxRun`. Building one from `gen_moves_iterDrains`' drain is
+`IterDrains.uncons` down the reference move list, mechanically — **except for one
+premise per round: `ValueAnswers` at THAT round's world.** `Position.value` is
+heap-free (R1, measured), but its answer is stated *at a world*, and the round's
+world is whatever the inner step left.
+
+So what is missing is: *the inner generator's steps preserve the `pst` slot.*
+§L58's census says they only ever GROW the heap — 67 → 69 → 70 → … → 148,
+monotone, never a shrink and never an in-place write outside the generator's own
+slot — so the condition is true and measured. It is simply **not derivable from
+`IterSteps`**, which says nothing about what a step does to slots it did not
+touch. One lemma about `Position.gen_moves`' stepper, genmoves-side material.
+
+That this is the residue is itself the finding: the chain was priced as the hard
+part and it is forty lines; what actually resists is a locality fact that nobody
+had written down, and §L58's census is what made it visible rather than a
+surprise at the last `exact`.
+
+### Cost
+
+`order_genexp.lean` **14 s → 43 s**, essentially all of it `gx_chain`'s
+induction. That is a real throughput hit on a file whose separateness was
+justified by being cheap, and it is worth watching: if the remaining frame lemma
+lands here too, the file wants splitting the way §L29 split it from
+`bound_depth`.
+
+### Triad
+
+`lake build` **3702 jobs green**; `docs_check` 75/75, 20 illustrative-exempt;
+`diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched;
+`script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud. No `sorry`, no
+`native_decide`.
+
+*(Measured at the pre-rebase tip. The rebase onto §L77 adds one NEW file,
+`qs_stream.lean`, and modifies nothing this section depends on, so the run was
+not repeated — the machine was under another lane's build lock and a second
+full build would have been the speculative build the protocol forbids.)*
+
+### What this unblocks
+
+R3c's interpreter half: `ord_stmt_emits_run` hands the fold a stream that is a
+function of a RUN rather than of an assumption, so a concrete round list can be
+named as soon as the frame lemma above turns the inner drain into a `GxRun`.

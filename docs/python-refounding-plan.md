@@ -252,6 +252,69 @@ mechanism.** This is the one place the archaeology must carry the *verdict*
 rather than the technique: where two generations of a trick exist, port the
 successor and record the predecessor as the thing it fixed.
 
+## §2.6 THE SPEC-HALF / INTERPRETER-HALF SPLIT — 65 % OF THE ESTATE DOES NOT MOVE
+
+The calmness lane's §L30 clean-edge report supplies the datum that resizes this
+whole plan, and it is checkable, so it was checked rather than taken.
+
+**Their claim:** their spec half — `foldFrom`, `Report`, `Sound`, `QSRoundOK`,
+`fold_report_cut`, `qsRank` and F1's measure calculus — mentions **no
+interpreter**. Verified: all six named symbols have **zero** interpreter
+mentions in their signatures.
+
+**Measured across the whole sunfish estate**, classifying each theorem by
+whether its STATEMENT (not its proof) mentions `execStmt`/`evalExpr`/`CallsTo`/
+`CallsIn`/`GenEmits`/`callIn`/`PyTriple`/`∃ t, ∀ …`:
+
+| file | theorems | mathematics | interpreter-facing |
+|---|---:|---:|---:|
+| `bound_depth.lean` | 221 | **164** | 57 |
+| `genmoves_ray.lean` | 174 | 92 | **82** |
+| `move_gate.lean` | 163 | **102** | 61 |
+| `order_genexp.lean` | 60 | 37 | 23 |
+| `value_bound.lean` | 57 | 29 | 28 |
+| `basecase_depth0.lean` | 54 | 28 | 26 |
+| `fold_depth1.lean` | 54 | 32 | 22 |
+| `genmoves_scan.lean` | 42 | 25 | 17 |
+| `qs_measure.lean` | 37 | **37** | **0** |
+| `move_residue.lean` | 20 | **20** | **0** |
+| `genmoves_theorem.lean` | 20 | 16 | 4 |
+| `init_chain.lean` | 10 | **10** | **0** |
+| `qs_rank.lean` | 7 | **7** | **0** |
+| others | 30 | 16 | 14 |
+| **TOTAL** | **949** | **615 (65 %)** | **334 (35 %)** |
+
+**Two thirds of the flagship estate is mathematics about `Round` lists,
+strings and measures. It survives the re-founding UNCHANGED — it does not need
+re-proving, transporting, or even reading.** Four files are 100 % mathematics
+and re-found to nothing at all.
+
+### What this changes
+
+**The re-founding scope is 334 theorems, not 949.** Every earlier estimate in
+this document — including §3's "671 theorems in four files" — silently counted
+statements that never mention an interpreter. The corrected figures for the big
+files: `bound_depth` 57, `genmoves_ray` 82, `move_gate` 61 — **200
+interpreter-facing theorems across the three, not 558.**
+
+**It re-scopes the `twinAgrees` question too**, in the direction of not needing
+it. Transport is only ever needed for the interpreter-facing third; the other
+two thirds recompile. A transport tool amortised over 200 theorems is a much
+weaker proposition than one amortised over 558.
+
+**And it sharpens §5's spike.** The deep gate to spike must be an
+INTERPRETER-FACING one, because those are the only statements whose shape
+changes. `genmoves_ray` is the right subject — at 82/174 it is the most
+interpreter-facing large file in the estate, so it is where the ceiling bites
+hardest.
+
+**The generalisable lesson, which is this repository's own doctrine arriving
+from the other direction:** a proof estate that separates its spec half from its
+interpreter half is *cheap to re-found*, and one that interleaves them is not.
+The calmness lane's split was made for proof-engineering reasons long before a
+rebuild existed; it is now worth **two thirds of the migration cost**. That is
+an argument for the discipline in every tier, stated as a number.
+
 ## §3 `twinAgrees` — NOT a bridge, possibly a TRANSPORT TOOL
 
 Under "no compat" `twinAgrees` is explicitly **not** a compatibility layer to
@@ -267,10 +330,12 @@ the old file *and the adequacy theorem with it*.
   the genuinely hard artifact — and then near-zero per theorem.
 
 **The crossover is roughly "does one file carry more than ~100 theorems of
-mostly-mechanical value-claims".** By the census, four files do:
+mostly-mechanical value-claims".** A first pass named four files on RAW counts —
 `bound_depth` (221), `genmoves_ray` (174), `move_gate` (163), `PayloadBlind`
-(113). Together they are **671 theorems, ~14 000 lines** — about half the
-campaign's theorem count in four files.
+(113), "671 theorems". **§2.6 retires that figure**: counting only
+INTERPRETER-FACING statements, the three sunfish files carry **57, 82 and 61 —
+200, not 558.** No file clears ~100 on the corrected count, which weakens the
+case for transport considerably.
 
 **Recommendation: decide `twinAgrees` on those four alone.** If they re-prove
 cheaply in a spike, skip it entirely; if they resist, `twinAgrees` pays for
@@ -317,7 +382,10 @@ and switch at the inch boundary — switching mid-inch pays the re-statement cos
    six re-defined, zero preserved.** Do the five REPLACEMENTS early even so —
    they shrink the trusted definition layer, which is a soundness argument and
    not merely tidying.
-3. **Spike ONE deep gate before committing to a plan for the big four.** The
+3. **Spike ONE deep INTERPRETER-FACING gate before committing to a plan for the
+   big files** — §2.6 makes the qualifier load-bearing, since two thirds of the
+   estate never mentions an interpreter and cannot exercise the ceiling.
+   `genmoves_ray` (82 of 174 interpreter-facing) is the subject. The
    §2 ceiling is the plan's only real unknown: if `bound_depth`-scale statements
    re-prove under `mvcgen`+`grind`, the whole estate is class (a) and
    `twinAgrees` is never needed; if they do not, `twinAgrees` becomes the

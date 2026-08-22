@@ -55,6 +55,9 @@ DECL_KWS = [
 MODIFIERS = r"(?:@\[[^\]]*\]\s*)*(?:private\s+|protected\s+|noncomputable\s+|unsafe\s+|partial\s+|nonrec\s+|scoped\s+|local\s+)*"
 DECL_RE = re.compile(r"^" + MODIFIERS + r"(" + "|".join(DECL_KWS) + r")\b[ \t]*([^\s:({\[]*)")
 
+# `'c'` | `'\\n'` | `'\\''` | `'"'` — a Lean character literal.
+CHAR_LIT_RE = re.compile(r"'(?:\\.|[^'\\\n])'")
+
 RAW_RE = re.compile(r"(?<![A-Za-z0-9_'!?])(" + "|".join(OBLIGATION_TOKENS) + r")(?![A-Za-z0-9_'!?])")
 
 
@@ -100,6 +103,24 @@ def strip_lean(text, path="<input>"):
             while i < n and text[i] != "\n":
                 out[i] = " "
                 i += 1
+            continue
+        if c == "'" and (i == 0 or not (text[i - 1].isalnum() or text[i - 1] in "_'")):
+            # A Lean CHARACTER LITERAL: `'c'`, `'\\n'`, `'\\''`, and — the case
+            # that found this bug — `'"'`.  Without this arm the inner quote of
+            # `'"'` opens a string that never closes, and the whole file
+            # refuses.  Measured on Mathlib/Tactic/Linter/TextBased.lean:611.
+            #
+            # The guard on the PRECEDING character is what keeps this from
+            # eating Lean's prime-suffixed identifiers (`h'`, `foo'`), where the
+            # apostrophe follows an identifier character and is not a literal.
+            m = CHAR_LIT_RE.match(text, i)
+            if m:
+                for k in range(i, m.end()):
+                    if text[k] != "\n":
+                        out[k] = " "
+                i = m.end()
+                continue
+            i += 1
             continue
         if c == '"':
             out[i] = " "
@@ -174,15 +195,44 @@ def census_file(path, root=None):
     }
 
 
-def git_rev(root):
+def _git(root, *args):
+    """`git -C root <args>`, REFUSED loudly when git cannot answer.
+
+    §5.4a — a number carries the state it was measured in; quote both, or
+    quote neither.  The previous version of this function swallowed every
+    failure and returned `None`, so the census kept its `revision` key and
+    filled it with null: the artifact still LOOKS provenanced and the null
+    reads CLEANER than the truth, which is the exact silent-and-flattering
+    failure §5.4a names.
+
+    This file inherited that defect BY COPY from a sibling instrument, 2h39m
+    after `28b9f5e` had already deleted it there — which is the whole lesson:
+    **copy-paste propagates a defect forward faster than a fix propagates
+    sideways.**  When seeding an instrument from a sibling, diff its contract
+    functions against the most recently FIXED sibling, not the nearest one.
+
+    A corpus whose revision cannot be recovered is an INPUT FAULT, so this is
+    a §5.2 refusal, never a finding.
+    """
     try:
-        r = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
+        r = subprocess.run(["git", "-C", str(root), *args],
                            capture_output=True, text=True, timeout=30)
-        if r.returncode == 0:
-            return r.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        pass
-    return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise Refusal(f"cannot run git in {root}: {exc} — the corpus revision is "
+                      f"part of the result (§5.4a), so it is refused, not stamped null")
+    if r.returncode != 0:
+        raise Refusal(f"`git {' '.join(args)}` failed in {root} (exit {r.returncode}): "
+                      f"{(r.stderr or '').strip()[:200]} — census a git CHECKOUT of the "
+                      f"corpus; the revision is an input to the result, not a stamp on it (§5.4a)")
+    out = r.stdout.strip()
+    if not out:
+        raise Refusal(f"`git {' '.join(args)}` returned nothing in {root} — refusing an "
+                      f"empty provenance stamp (§5.4a)")
+    return out
+
+
+def git_rev(root):
+    return _git(root, "rev-parse", "HEAD")
 
 
 def census(paths):
@@ -192,7 +242,13 @@ def census(paths):
         p = Path(p).resolve()
         if p.is_dir():
             root = root or p
-            files.extend(sorted(p.rglob("*.lean"), key=str))
+            # NEVER census a dependency tree.  `.lake` holds Mathlib and
+            # friends: they are not the subject, they dwarf it (8639 oleans'
+            # worth of source), and a defect in one of THEM would be reported
+            # as a finding about the corpus.
+            files.extend(sorted(
+                (f for f in p.rglob("*.lean") if ".lake" not in f.parts),
+                key=str))
         elif p.is_file():
             files.append(p)
         else:
@@ -246,7 +302,14 @@ def main(argv=None):
             if a != b:
                 print(f"  {k:24s} {a} -> {b}")
                 drift += 1
-        print("no drift" if not drift else f"{drift} total(s) drifted")
+        if drift:
+            # §5.4: the mode exists "because staleness must be mechanically
+            # detectable rather than merely possible". A mode that always
+            # exits 0 is detectable only by a human reading stdout: it cannot
+            # gate and cannot run under `set -e`.
+            print(f"{drift} total(s) drifted")
+            return 1
+        print("no drift")
         return 0
 
     if not args.quiet:

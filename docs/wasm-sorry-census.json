@@ -2,7 +2,7 @@
   "schema": "wasm-sorry-census-0.1",
   "revision": "b399351f98d8a0350d6e818fe53442117cfe5637",
   "totals": {
-    "files_scanned": 39,
+    "files_scanned": 40,
     "files_with_obligations": 9,
     "raw_count": 861,
     "live_count": 849,

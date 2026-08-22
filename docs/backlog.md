@@ -14630,6 +14630,91 @@ need no amendment to cover it. And it validates §1.4's "pay the directory level
 early" ruling from the other direction: a tier that must carry two editions from
 its first commit never has a cheap moment to add the level later.
 
+### POLICY REVISION — Python migrates BY EROSION; "never" was too strong
+
+Thomas challenged the prescription: *why shouldn't Python migrate?* He is right
+that "bridges, does not migrate" reads as a standing no and is not defensible.
+The right question is not WHETHER but in what order and against what evidence.
+Three clauses, replacing it:
+
+**(a) Not DURING the sunfish campaign — an interpreter rewrite RE-FOUNDS every
+landed theorem.** The precedent is §L15's re-pin, and it is sobering in the
+direction that matters: that re-pin changed only the OBJECT PROGRAM, not the
+interpreter, and its blast radius still came in **four files wider than
+priced** — **78 pinned spans, 61 synthesized `<genexpr@n>` names, three censuses
+and 15 battery pairs** moved, producing the law *"price a re-pin by its
+`#guard`s, not by its `theorem`s."* The reassuring half was that **every theorem
+re-elaborated green with no edit**, because the interpreter did not move. **A
+monadic migration moves exactly what the re-pin held fixed**, so the half that
+saved §L15 is the half that would not apply, across every file with proof edits.
+That prices doing it NOW; it is not an argument that it is wrong.
+
+**(b) The bridge IS the first half of any sound migration, not an alternative to
+one.** The monadic form is a SECOND SEMANTICS, so replacing the tier's
+definition — validated by **1 394 differential cases** — without `twinAgrees`
+would be an **untrusted definition change**, which doctrine §0.1 principle I
+forbids outright: the definition is the trusted artifact, and swapping it on the
+strength of a convenience layer inverts the trust boundary. Adequacy is
+therefore the required artifact on EVERY route, and `twinAgrees` sits on the
+critical path whether the monadic form ends up the bridge's far side or the
+tier's new definition. Building the bridge is progress toward migration, not a
+detour around it.
+
+**(c) After adequacy the question DISSOLVES.** The two forms become
+interchangeable BY THEOREM, so no flag day is needed: new Python work is written
+monadic, old theorems transport across the bridge ON DEMAND (paid per theorem
+that is touched anyway, never as a campaign), and the deep interpreter retires
+gradually or never — "never" then costs nothing, because proved
+interchangeability makes the surviving form an implementation detail.
+
+**The SEQUENCING rationale is about risk, not about Python.** `mvcgen` warns on
+every invocation that it is experimental and one Std bug surfaced in twenty
+lines of probing. **New tiers should absorb that tactic churn; the flagship
+estate should not** — a tier with no landed theorems pays nothing when a
+tactic's behavior shifts, a tier with a campaign's worth pays in re-proofs.
+
+**REGISTERED as a campaign item (§8.5), not a caveat**: the adequacy milestone
+`twinAgrees`, **gated on `bound_refines_fuelModel` closing** (the campaign's own
+assembly point — `RecursionStep` first). Starting earlier competes with the
+campaign for the same files. What it unlocks is the **5 343-line** substrate
+saving and the start of erosion.
+
+### POLICY — SUITES DRIVE SCOPE, ONE EXEMPLAR DRIVES THE PROOF LIBRARY
+
+Thomas rejected pet programs — *"a test suite should be able to [find gaps]
+too"* — and the measurement agrees, with one carve-out that is measured rather
+than sentimental. New §5.6.
+
+**Suites drive SCOPE.** The evidence cuts against the driver program: ctwin's
+**accidental** 45-kind vocabulary already clears **357 of 431 freestanding suite
+tests (83%)**, which means the suite finds the same vocabulary **plus the
+remainder**, in the standard's order rather than one author's. The
+counter-evidence is in-tree: Python's coverage grew **sunfish-shaped** — `>>`,
+`^`, unary `+`, `~` were absent because nothing the flagship needed asked for
+them, three of the four were recorded as deferred in three different places, and
+it took `print(5 ^ 3)` (a census, not a program) to find them. That is the cost
+the completeness workstream corrects.
+
+**The carve-out.** Suite scoring exercises the **DEFINITION** — a verdict runs
+the interpreter, no theorem is involved — so it can never find a gap in the
+proof **LIBRARY**, because it never asks the library for anything. Library gaps
+surface only under deep end-to-end theorems about one real program, and every
+minted law traces to exactly that: the altitude lemmas (259+ VCs vs 12),
+computed-shape/residue-spelling, the vacuity catches, `Bracket.SubtreeWrites`'s
+arm whose own docstring says **"UNINHABITABLE at the shipped code"**, and
+`settle_needs_futility`'s countermodel. **Single-construct witnesses are shallow
+by design**: a witness exercising one production cannot yield a law about
+composing twenty of them under a heap.
+
+**THE POLICY: suites drive scope; ONE theorem-worthy EXEMPLAR per tier drives
+the proof library; the exemplar is chosen for its THEOREM, never its
+authorship.** SV's is the FP divider; C's is ctwin, which ALREADY SERVED and is
+not re-commissioned. No program is commissioned as a driver for its own sake. A
+founding lane names its exemplar by stating the theorem it intends to prove; if
+it cannot state one, it does not need an exemplar yet and its suite is enough.
+This is doctrine §0.1's library-grows-by-demand clause given a selection rule,
+and §8 step 1 now carries it.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

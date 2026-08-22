@@ -81,6 +81,11 @@ reasoning — are a LIBRARY section and not part of the semantics.** They are
 three ways to find a proof of a statement whose meaning was already fixed
 without reference to them.
 
+The library grows **by demand**, and §5.6 gives that clause its selection
+rule: the demand comes from **one theorem-worthy exemplar per tier**,
+because a library gap is invisible to anything that never asks the library
+for a proof — and suite scoring never does.
+
 **III. HARDNESS IS A SIGNAL TO THE PROGRAM, not to the definition.** When a
 proof will not come, the framework owes the user a next step, and there are
 exactly two — both constructive, neither touching the definition:
@@ -935,26 +940,65 @@ standing rule with a named blocker.**
    fact with the gate's own fourteen premises.
 2. **Toolchain — RETIRED**, twice independently (this document's probes and
    the pilot's census). `Std.Do` is already at the pin.
-3. **Python is MID-CAMPAIGN — and this is now the STANDING RULE, with its
-   blocker named.** **New tiers are monadic from day one; Python BRIDGES,
-   it does not migrate.** The bridge is priced (`pyPostToPostCond` over five
-   `PyPost` arms plus the except layers, with `ret`/`brk`/`cont` riding a
-   flow SUM — core's own `α ⊕ β` idiom — and `PyTriple.of_triple`), and its
-   load-bearing member is **`twinAgrees`: an ADEQUACY theorem**. That is
-   the general law, not a Python quirk:
+3. **Python is MID-CAMPAIGN. The policy is MIGRATION BY EROSION** — not a
+   permanent exemption. An earlier draft of this section said Python
+   *"bridges, does not migrate"*, which reads as a standing no and is not
+   defensible: the right question is not *whether* but *in what order and
+   against what evidence.* Three clauses.
+
+   **(a) NOT DURING THE SUNFISH CAMPAIGN — because an interpreter rewrite
+   RE-FOUNDS every landed theorem.** The precedent is measured and it is
+   sobering in the direction that matters. §L15's re-pin changed only the
+   OBJECT PROGRAM — not the interpreter — and its blast radius still came
+   in **four files wider than priced**; what moved was **78 pinned spans,
+   61 synthesized `<genexpr@n>` names, three censuses and 15 battery
+   pairs**, and the law it produced is *"price a re-pin by its `#guard`s,
+   not by its `theorem`s."* The reassuring half is that **every theorem
+   re-elaborated green with no edit** — because the interpreter did not
+   move. **A monadic migration moves exactly the thing the re-pin held
+   fixed**, so the half that saved §L15 is the half that would not apply,
+   across every file carrying proof edits. That is the cost of doing it
+   *now*; it is not an argument that it is wrong.
+
+   **(b) THE BRIDGE IS THE FIRST HALF OF ANY SOUND MIGRATION, not an
+   alternative to one.** The monadic form is a **second semantics**, so
+   replacing the tier's definition — validated by **1 394 differential
+   cases** — without `twinAgrees` would be an **untrusted definition
+   change**, and §0.1's first principle makes that the one move the
+   architecture forbids: the definition is the trusted artifact, and
+   swapping it on the strength of a convenience layer inverts the trust
+   boundary. So adequacy is not a toll gate peculiar to Python; it is the
+   required artifact on **every** route:
 
    > **Any route that introduces a second semantics owes an adequacy
    > theorem, and the differential corpus does not discharge it.**
 
-   The pilot's monadic twin is executable and `#guard`ed on a fixture, so
-   it *could* join the differential harness — at the price of a maintained
-   second interpreter, which the model-matches-code law then binds. Its
-   fidelity gap to the real interpreter is exact and stated (name
-   resolution consults the static globals fold first; the twin's does not).
-   **The 5 343-line saving is not collectable without the adequacy theorem
-   Python cannot afford to owe mid-campaign.** Revisit when the campaign
-   closes, on that day's numbers, **never forced.** §3.8 applies the same
-   trigger discipline to `Run`.
+   Whether the monadic form ends up the bridge's far side or the tier's
+   new definition, `twinAgrees` is on the critical path either way — which
+   is precisely why building the bridge is progress toward migration
+   rather than a detour around it. The pilot's twin is already executable
+   and `#guard`ed on a fixture, and its fidelity gap to the real
+   interpreter is exact and stated (name resolution consults the static
+   globals fold first; the twin's does not).
+
+   **(c) AFTER ADEQUACY, THE QUESTION DISSOLVES.** With `twinAgrees`
+   proved, the two forms are **interchangeable by theorem**, and the
+   migration needs no flag day: new Python work is written monadic, old
+   theorems transport across the bridge **on demand** — paid per theorem
+   that is touched anyway, never as a campaign — and the deep interpreter
+   retires **gradually, or never**. "Never" then costs nothing, because a
+   proved interchangeability makes the surviving form an implementation
+   detail rather than a commitment. Erosion, not migration.
+
+   **The SEQUENCING rationale, which is about risk and not about Python.**
+   `mvcgen` warns on every invocation that it is experimental, and one Std
+   bug surfaced in twenty lines of probing (§3.4). **New tiers should
+   absorb that tactic churn; the flagship estate should not.** A tier with
+   no landed theorems pays nothing when a tactic's behavior shifts under
+   it; a tier with a campaign's worth pays in re-proofs. So the order is
+   the risk-weighted one, and it happens to also be the cheap one.
+
+   §3.8 applies the same trigger discipline to `Run`.
 
 **The pilot is landed** (`docs/mvcgen-pilot.md`, §L61) and its numbers
 replace this section's earlier estimates throughout. Its recommendation:
@@ -1612,6 +1656,76 @@ tier.
 
 ---
 
+### 5.6 SUITES drive SCOPE; ONE EXEMPLAR drives the PROOF LIBRARY
+
+A tier needs corpora for two different jobs, and conflating them is how a
+repository acquires pet programs. The split below is **measured, not
+sentimental**, and it is §0.1's principle II — the library grows by demand
+— given an actual selection rule.
+
+**SUITES DRIVE SCOPE, because they walk the spec systematically and a
+single program cannot.** The evidence is the C tier's own numbers, and they
+cut against the program: `ctwin/sunfish.c`'s **accidental** 45-kind
+vocabulary already clears **357 of 431 freestanding suite tests — 83%**
+before a single construct is added. Read carefully, that is an argument for
+the suite, not for the program: the suite finds *the same vocabulary* the
+flagship happened to use **plus the remainder**, and it finds the remainder
+in the standard's own order rather than in one author's. A driver program
+can only ever discover its own vocabulary.
+
+**The counter-evidence is in the tree too, and it is the Python tier.** Its
+coverage grew **sunfish-shaped**: `>>`, `^`, unary `+` and `~` were absent
+not because they were hard — they landed in the session that censused them
+— but because nothing the flagship needed had asked for them, and three of
+the four were *recorded as deferred in three different places*, none of
+which was where a person looks to ask "which operators run?". It took
+`print(5 ^ 3)` — a census, not a program — to find them. That is the cost
+the completeness workstream exists to correct, and it is what scope-by-
+driver-program buys you.
+
+**THE CARVE-OUT, and it is why one exemplar is still required.** Suite
+scoring exercises the **DEFINITION**: a verdict runs the interpreter and
+compares an observable, and **no theorem is involved**. It therefore cannot
+find a gap in the proof **LIBRARY**, because it never asks the library for
+anything. Library gaps surface only under **deep end-to-end theorems about
+one real program**, and every law this repository has minted traces to
+exactly that:
+
+* the **altitude lemmas** — prove it once at the chain with every operand
+  symbolic — and their price tag, 259+ VCs unfolded against 12;
+* **computed-shape / residue-spelling**: index premises must be spelled in
+  the interpreter's own residue, not in the reader's preferred normal form;
+* the **vacuity catches** — a carried-over receiver shape makes every
+  statement about it vacuous and cannot break a build;
+* `Bracket.SubtreeWrites`, whose docstring records an arm **"UNINHABITABLE
+  at the shipped code"** — a distinction only a real program's heap can
+  draw;
+* `settle_needs_futility`, a **countermodel** exhibiting the schedule that
+  refutes the theorem-without-its-premise.
+
+Not one of those could have come from a single-construct witness, and that
+is not an accident of history: **single-construct witnesses are shallow by
+design.** A witness that exercises one production establishes that the
+production is reachable; it cannot produce a law about *composing twenty of
+them under a heap*, because it never composes anything.
+
+**THE POLICY.**
+
+> **Suites drive scope. ONE theorem-worthy EXEMPLAR per tier drives the
+> proof library. The exemplar is chosen for its THEOREM — never for its
+> authorship — and no program is commissioned as a driver for its own
+> sake.**
+
+Applied: **SystemVerilog's exemplar is the floating-point divider** (§3.5.2
+states its theorem, and it factors through the shared vertex rather than
+comparing two models). **C's is `ctwin/sunfish.c`, which already served**
+and is not re-commissioned — its job was the construct census and the
+ingestion milestone, both done. A founding lane names its exemplar by
+stating the theorem it intends to prove; if it cannot state one, it does
+not need an exemplar yet, and its suite is enough.
+
+---
+
 ## 6 LIMITS — the languages this model does NOT fit
 
 Tier selection stays principled only if the model's assumptions are
@@ -1795,7 +1909,10 @@ real until an instrument re-derives it.**
    "we can sort the licensing out later" is how a repository acquires
    something it cannot ship.
 1. **The construct CENSUS and its instrument**, on a real corpus, to the
-   §5.4 contract.
+   §5.4 contract. **The scope corpus is a SUITE** (§5.6) — a driver program
+   discovers only its own vocabulary. A tier may also name **one exemplar**
+   for its proof library, and names it **by stating the theorem**; if it
+   cannot state one, it does not need an exemplar yet.
 2. **The AUTHORITY declaration** — the spec document and edition, or the
    reference implementation and release line; where both exist, the §4.2
    precedence statement; and for a spec tier, the §4.3 mapping table.
@@ -1822,20 +1939,53 @@ real until an instrument re-derives it.**
 
 ---
 
+## 8.5 REGISTERED CAMPAIGN ITEM — THE ADEQUACY MILESTONE
+
+Named here so it is a scheduled artifact rather than a standing caveat.
+
+> **`twinAgrees` — an adequacy theorem relating the deep interpreter to its
+> monadic twin over the same AST.**
+
+* **Why it is a milestone and not a caveat.** It is the required artifact
+  on **every** route (§3.4 clause b): the bridge's far side and any future
+  definition swap both go through it, so it is on the critical path whether
+  or not Python ever migrates. Until it exists, the monadic form is a
+  second semantics with no theorem tying it to the trusted one, and §0.1
+  principle I forbids treating it as the definition.
+* **What does NOT discharge it.** The differential corpus. **1 394 cases**
+  validate the *deep* interpreter against CPython; they say nothing about
+  the twin, and the twin's fidelity gap is already known and stated (name
+  resolution consults the static globals fold first; the twin's does not).
+  An executable twin joining `diff_test` would buy evidence, not a theorem
+  — and would cost a second maintained interpreter under the
+  model-matches-code law.
+* **GATED ON `bound_refines_fuelModel` closing.** That is the campaign's
+  own assembly point — `RecursionStep` first, then
+  `bound_refines_fuelModel` — and it is the moment the flagship estate
+  stops absorbing re-proof cost from an interpreter change. Starting
+  adequacy earlier competes with the campaign for the same files.
+* **What it unlocks, priced.** The **5 343-line** substrate saving (§3.4)
+  becomes collectable, and §3.4 clause (c)'s erosion begins: new work
+  monadic, old theorems transported on demand, the deep interpreter
+  retiring gradually or never.
+
+---
+
 ## 9 WHAT THIS DOCUMENT DOES NOT DECIDE
 
 * **Whether any of the three new spec tiers is founded, or in what
   order.** The registry rows are PROPOSED and §4.3's observation that
   WebAssembly is the family's best calibration case is an argument, not a
   schedule.
-* **The monad migration's numbers.** §3.4 states the design and retires
-  the toolchain caveat by measurement; the pilot lane's report is the
-  evidence, and Python's retrofit is priced when its campaign closes and
-  never forced.
+* **WHEN the adequacy milestone starts, and how fast erosion runs.** §3.4
+  clause (c) and §8.5 fix the policy — migration by erosion, gated on
+  `bound_refines_fuelModel` — but the schedule, and how much old work ever
+  transports across the bridge, are the Python lane's on that day's
+  numbers.
 * **Whether `Run` moves at C's M2 inch 4 or the inch slips.** The trigger
-  is fixed (§3.6); the inch is the C lane's.
+  is fixed (§3.8); the inch is the C lane's.
 * **The C lane's three stale citations** (§2.5). Found here, fixed there.
-* **`VerilogA.Span`'s rename** (§3.5) — when that lane is next open.
+* **`VerilogA.Span`'s rename** (§3.7) — when that lane is next open.
 * **`extractors/sv/census.py`'s move** into `harness/` (§1.6) — likewise.
 * **SoftFloat's layer-2 build.** §3.5 states the design, corrects the
   premise by measurement and prices the order; the commissioned build

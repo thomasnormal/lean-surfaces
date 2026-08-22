@@ -943,83 +943,84 @@ Lean executed.**
 
 ---
 
-## 2026-08-23-qol-15 — `check.sh --iterate`: proof iteration without a tenure, on four measured conditions
+## 2026-08-23-qol-15 — `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling
 
 The C lane measured **~85 minutes per compile** for a 300-line proof under
-"one tenure per compile". That is not a slow loop; **it is no loop at all**,
-and it is the reason proof work in this repo happens in bursts separated by
-waiting.
+"one tenure per compile". That is not a slow loop; **it is no loop at all**.
+`--iterate` runs a single-shot `lake env lean` on a **library** file — the case
+§7.1 rule 3 does not cover — **without a ticket**.
 
-`--iterate` runs a single-shot `lake env lean` on a **library** file — the one
-case §7.1 rule 3 does not cover — **without a ticket**, and only while four
-conditions hold, **re-checked on every run**:
+Implemented to **A17's five tightenings**, which supersede the first dispatch
+where they differ.
 
-| # | condition | refused by |
-| --- | --- | --- |
-| 1 | at most **one iterate per lane** | a pidfile, staleness by the **two-part test** |
-| 2 | load average **< 10** | the number, printed |
-| 3 | swap **< 50%** | the number, printed |
-| 4 | every project import already has an **olean** | the existing cold-clone logic |
+### It is framed as a courtesy protocol, and that framing is the honest part
 
-Plus `nice -n 19` and `LEAN_NUM_THREADS=2`, exported.
+Everything this mode does to stay polite — the load line, the swap line, the
+single slot, yielding to the owner's workloads — is **checked at the moment it
+starts and enforced by nothing afterwards**. Another lane can take a tenure a
+second later and nothing stops this process. So `--help` says it plainly:
+**the only guarantee is the RSS ceiling**, 3 GB on its own chain, and it
+**kills rather than pauses**, because nothing else is watching an unticketed
+process. That ceiling is deliberately **stricter than A16's 5 GB per-process
+tenure line**: a tenure has a watchdog and a lock behind it; an iterate has
+only this.
 
-### Why this is not a hole in A11
+### The five tightenings
 
-The lock exists because **concurrent builds took the machine down at load 29**.
-A single-file elaboration on a **quiet** machine is not that. So A11 is not
-weakened — it is given the one exemption **its own rationale allows**, and the
-exemption is **conditional and measured** rather than asserted. Conditions 2
-and 3 are what make it safe; they are also the two a lane cannot eyeball,
-which is why they are read per run rather than trusted.
+1. **The slot is MACHINE-WIDE**, not per-lane — a shared `/tmp/ls-iterate/`
+   with one live entry total, staleness by the two-part test. Two lanes
+   iterating is the shape that took the box down at load 29, only smaller.
+2. **An explicit RSS kill line at 3 GB** on the iterate's own chain — and,
+   applying A16's lesson at this scale, **the guard is not in its own kill
+   set**.
+3. **The STOP mirrors the START on both axes.** One function decides both, so
+   the mirror is true *by construction* rather than by two lists agreeing: a
+   loop whose machine degrades mid-flight is refused its **next** run, by
+   number. Load and swap never kill a run in progress; only the ceiling does.
+4. **The provenance line names the priority clause** — *"yields to owner
+   workloads (Thomas's own processes have absolute priority, A11)"*.
+5. **The whole mode is framed as courtesy in `--help`.**
 
-Every run prints the numbers it was permitted by:
+Every run prints what it was permitted by, so a green carries its own
+provenance (§5.4a) rather than resting on a claim that the machine *was*
+quiet.
 
-```
-  CASE   iterate: conditions met — lock-free per A17
-  WHY    conditions met — lock-free per A17: load 2.1 < 10, swap 12.5% < 50%, ...
-  STATE  load 2.1 (line 10), swap 12.5% (line 50%), lane qol
-```
+### The citation checks itself, and "present" is not "adopted"
 
-so a green carries its own provenance (§5.4a) instead of resting on a claim
-that the machine *was* quiet.
+A17 had **no row** in §7.1a when this was written, so the tool grepped the
+register at run time and said so. **While the work was in flight the row
+landed — marked `DRAFT`** — which would have silently switched the honest note
+off. So the check now distinguishes **three** states: absent, **draft**, and
+adopted, and only the third is silent. Today it prints *"A17 is in §7.1a but
+marked DRAFT. Present is not adopted."*
 
-### The citation checks itself
-
-**A17 has no row in §7.1a** — the arch lane is drafting it. Rather than cite a
-rule that is not yet written, the tool **greps the register at run time** and,
-finding nothing, prints: *"A17 has no row in §7.1a yet — it is in DRAFT. This
-run's permission rests on the four conditions above, which were CHECKED, not
-on the register. When A17 lands, this note disappears on its own."*
-
-A pointer to a rule that does not exist is the exact failure §7.1a was written
-about. This is the smallest honest version: cite it, and say what the citation
-is worth today.
+The register row is the arch lane's to promote; this lane does not edit
+another lane's amendment text. **The note clears itself when the row does.**
 
 ### Every reader is mockable, because a guard nobody can trigger is untested
 
-`read_load`, `read_swap_pct` and `has_lean_descendant` all honour mock
-environment variables, so the self-test drives **each refusal** rather than
-admiring it. That includes the two-part staleness test in all four of its
-states: a live holder with a Lean child **refuses**; a **dead** holder is
-reclaimed (part 1); a live pid with **no Lean descendant** is stale (part 2);
-and an **unparseable** holder is never reclaimed — the same failure direction
-§7.1 rule 5 fixes for the lock, where the safe answer is to refuse rather than
-to seize.
+`read_load`, `read_swap_pct` and `has_lean_descendant` honour mock variables,
+so the self-test drives **each refusal**. The machine-wide test uses a **real
+foreign pid** from a different lane name — a live `sleep` — rather than a
+simulated one.
 
 ### Live, on the machine as it actually was
 
-This landing could not demonstrate the happy path for real: the box was at
-**load 33.43 and swap 90.1%** while the work was done — other lanes building —
-so the tool **refused by number**, which is the demonstration that matters.
+The box sat at **load 19–33 and swap ~90%** throughout, so every live run
+**refused by number**. That is the demonstration that matters: the happy path
+is exercised through `--explain` and its decision functions, never by running
+Lean, because this lane holds no ticket and the machine was never quiet enough
+for its own tool to permit it.
 
 ### Triad
 
-`bash -n` clean. `tools/check.sh --self-test`: **43 ok, 0 failed** (26 → 43,
-**17 new**) — the quiet-machine happy path and its A17 citation, the same file
-refused by the ticket path (`refuse-library`) and permitted by the iterate
-path, high load and high swap each naming their number, load **exactly at**
-the line allowed, a cold clone naming A13, concurrency outranking the load
-check, all four staleness states, and the pidfile keyed by lane. `triad.sh
---self-test` **122 ok** unchanged. **No Lean was executed** — the happy path
-runs `lake env lean`, so it is exercised through `--explain` and its decision
-function, never by running it.
+`bash -n` clean. `tools/check.sh --self-test`: **58 ok, 0 failed** (26 → 58,
+**32 new**) — the courtesy framing and the priority clause in the WHY, the
+same file refused by the ticket path and permitted by the iterate path,
+stop-mirrors-start asserted on **both** axes and shown to be the same function
+the refusal quotes, load exactly at the line allowed, a cold clone naming A13,
+**a second iterate refused across lane names** with the stale entry reaped,
+all four staleness states, our own entry never blocking us, the RSS ceiling in
+**both** directions plus the offender it names, and the A17 citation in all
+three states. `triad.sh` **122 ok**, `backlog-index.sh` **25 ok**, `docs_check`
+**83/83**. **No Lean was executed.**

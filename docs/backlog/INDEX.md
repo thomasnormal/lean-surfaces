@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**62 entries across 15 lanes.** Regenerate with
+**63 entries across 15 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-c-3` | §6.7.11 AGGREGATE INITIALIZATION: the rule fires on NOTHING, so it is gated on a synthetic | c |

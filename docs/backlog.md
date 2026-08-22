@@ -20883,3 +20883,82 @@ with all **50** `#guard`s elaborating, and `lake env lean docs/sv-step-wip.lean`
 takes a ticket for. The tree-level risk is argued, not assumed: `SStmt` is
 named in one file only, so no dependent matches on it, and `Edge` clashes with
 nothing.
+
+
+## L88 — ES M2 INCH 2: the ordinary object model, and two definitions moved because a LEMMA could not state what a `#guard` could check (2026-08-22)
+
+`LeanModels/Es/{Object,Ordinary}.lean` + `Examples/es/objects/guards.lean` +
+`harness/es_lean_lint.py` — **685 lines, 25 new `#guard`s, 53 `@[es_spec]`
+lemmas total.** The design is §L78's; this is its inch 2, the rung-0 floor
+§0.1 measured.
+
+**SIZED FROM THE PINNED SPEC BEFORE BEING WRITTEN**: the 21 clauses realized
+here carry **159 numbered steps** in `ES2026`, of which
+`ValidateAndApplyPropertyDescriptor` (§10.1.6.3) alone is **34** — the longest
+algorithm in the ordinary object model and the one implementations most often
+get subtly wrong.
+
+**THE `sta.js` FLOOR IS CLEARED, and that is the inch's point.** §L78 measured
+that no test262 test can report a pass OR a failure until a tier can create an
+ordinary object, define a data property, and walk a prototype chain, because
+`harness/sta.js` builds `Test262Error` out of exactly those three. The first
+guard is that shape end to end.
+
+**THE RECEIVER RULE — what §10.1.9.2's 20 steps are FOR.** `obj.x = 1` where
+`x` lives on the prototype must create an OWN property on `obj` and leave the
+prototype untouched; getting it wrong makes every object on a shared prototype
+alias. Pinned, including that the prototype's value is still `1` afterwards.
+
+**AN UNUSED-VARIABLE WARNING WAS A FIDELITY BUG.** The linter flagged `fuel`
+unused in `ordinarySetWithOwnDescriptor` — because the first version had
+*peeked* at the parent's own descriptor instead of doing step 1.b.i, which
+**RETURNS the parent's `[[Set]]`**. The difference is observable when the
+parent also lacks the property (the walk must continue) or when the parent's
+property is an accessor (the parent's SETTER runs). Fixed to a real recursion,
+and the warning is what found it: **an unused fuel argument in a chain walk
+means the walk is not happening.**
+
+**TWO DEFINITIONS MOVED BECAUSE A LEMMA COULD NOT STATE WHAT A `#guard` COULD
+CHECK.** `PropKey.arrayIndex?` was written over `String.all`/`String.foldl`.
+The `#guard` passed — the elaborator unfolds far enough — but **`rfl` AND
+`decide` both got stuck**, because String's iteration goes through
+`String.Pos`. Measured on the pin: `"10".toList` reduces by `rfl` and
+`"10".all Char.isDigit` does not. **A primitive the guards can evaluate and
+the proof layer cannot state is a fidelity gap**, so the definition moved to
+`List Char` rather than the claim being weakened. This is the sharper form of
+§L82's partial-def law: `#guard` is a WEAKER oracle than `rfl`, so a guard
+passing does not certify that a lemma can be written.
+
+**THE TRAP GOT A GATE.** The doc-comment-attachment law (§L66, §L82) cost a
+compile a fourth time. `harness/es_lean_lint.py` now catches it before
+`lake build`: a `/-- -/` before `#guard`/`mutual`/`#print`/`#check`/`#eval`/
+`open`/`namespace` is an error naming the line. **Every entry in that list was
+determined by RUNNING the toolchain** — the first version also held `example`,
+which is LEGAL (it appears in Lean's own "expected:" token list), and that
+false positive fired on `harness/es/float_probe.lean`, a file on master and
+green. **A lint's first run accusing a passing file is the lint being wrong,
+not the file**, and the `example` case is now pinned in `--self-test` so it
+cannot come back.
+
+**THE ONE REFUSAL IS A BOUNDARY, NOT A GAP.** An accessor's `[[Get]]`/`[[Set]]`
+invokes the getter/setter, which needs `[[Call]]` — inch 4. Those arms refuse
+with `unsupportedConstruct`, loudly, and a guard pins that they refuse rather
+than quietly answering `undefined` — **a silent `undefined` there would make
+every accessor test score as a pass.** Step 7's "getter is `undefined` ⇒ return
+`undefined`" is honoured BEFORE the refusal, because that arm needs no call.
+Data properties are complete, and `sta.js` uses only data properties, so the
+floor clears without the refusal firing.
+
+Also pinned: `[[OwnPropertyKeys]]`'s NORMATIVE order (integer indices ascending,
+then strings in creation order, then symbols), leading-zero keys (`"01"` is not
+an index), extensibility, non-configurable delete, prototype-cycle rejection,
+and that fuel exhaustion is `timeout` rather than a wrong answer. Non-vacuity
+checked five ways.
+
+**A DURABILITY NOTE, the second this week.** A restart wiped the entire
+scratchpad — clone, corpora and tooling — and cost nothing, because inch 1 was
+pushed. Rebuilding took minutes: `cp -Rpc` from the home clone (§L35's mtime
+lesson), re-fetch the spec, and **`docs/es-edition.json` VERIFIED the
+re-fetched `spec.html` byte-for-byte against the pin**. The edition pin earned
+its keep exactly as designed: re-fetching from a moving upstream and *proving*
+the same bytes came back is what the sha256 is for.

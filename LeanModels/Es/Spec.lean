@@ -1,4 +1,4 @@
-import LeanModels.Es.Completion
+import LeanModels.Es.Ordinary
 import LeanModels.Es.SpecAttr
 
 /-!
@@ -127,5 +127,61 @@ scoreboard's REFUSE bucket depends on. -/
 
 @[es_spec] theorem timeout_is_not_catchable (W : Type) (w : W) :
     SemM.run (ρ := Abrupt) (α := Unit) SemM.timeout w = Halt.timeout := rfl
+
+/-! ## The Property Descriptor classification — ES2026 §6.2.6.1-.3
+
+Three predicates, and §10.1.6.3 branches on all three, so each gets its
+arms rather than one lemma per predicate. -/
+
+@[es_spec] theorem isData_of_value (v : Val) :
+    PropDesc.isData { value := some v } = true := rfl
+@[es_spec] theorem isData_of_writable (b : Bool) :
+    PropDesc.isData { writable := some b } = true := rfl
+@[es_spec] theorem isAccessor_of_get (g : Val) :
+    PropDesc.isAccessor { get := some g } = true := rfl
+@[es_spec] theorem isAccessor_of_set (s : Val) :
+    PropDesc.isAccessor { set := some s } = true := rfl
+
+/- The empty descriptor is GENERIC — neither data nor accessor. It is the
+one §10.1.6.3 step 3 short-circuits on. -/
+@[es_spec] theorem isGeneric_empty : PropDesc.isGeneric {} = true := rfl
+@[es_spec] theorem isData_empty : PropDesc.isData {} = false := rfl
+@[es_spec] theorem isAccessor_empty : PropDesc.isAccessor {} = false := rfl
+
+/- A descriptor carrying only `enumerable`/`configurable` is STILL generic:
+the classification asks about value/writable/get/set and nothing else. -/
+@[es_spec] theorem isGeneric_of_enumerable (b : Bool) :
+    PropDesc.isGeneric { enumerable := some b } = true := rfl
+
+/-! ## `CompletePropertyDescriptor` — ES2026 §6.2.6.6, its two arms -/
+
+@[es_spec] theorem complete_data_defaults (v : Val) :
+    PropDesc.complete { value := some v }
+      = { value := some v, writable := some false,
+          enumerable := some false, configurable := some false } := rfl
+
+@[es_spec] theorem complete_accessor_defaults (g : Val) :
+    PropDesc.complete { get := some g }
+      = { get := some g, set := some .undef,
+          enumerable := some false, configurable := some false } := rfl
+
+/-! ## Array indices — ES2026 §6.1.7
+
+The rule an implementation gets wrong is leading zeros: `"01"` is a plain
+string key, not index 1, so it enumerates with the string keys. -/
+
+@[es_spec] theorem arrayIndex_zero : (PropKey.str "0").arrayIndex? = some 0 := rfl
+@[es_spec] theorem arrayIndex_ten : (PropKey.str "10").arrayIndex? = some 10 := rfl
+@[es_spec] theorem arrayIndex_leading_zero : (PropKey.str "01").arrayIndex? = none := rfl
+@[es_spec] theorem arrayIndex_nonnumeric : (PropKey.str "x").arrayIndex? = none := rfl
+@[es_spec] theorem arrayIndex_empty : (PropKey.str "").arrayIndex? = none := rfl
+@[es_spec] theorem arrayIndex_symbol (i : SymId) : (PropKey.sym i).arrayIndex? = none := rfl
+
+/-! ## Own-property storage
+
+`put` REPLACES in place rather than appending, which is the half
+`OrdinaryOwnPropertyKeys`'s creation order depends on. -/
+
+@[es_spec] theorem find_empty (k : PropKey) : Obj.find? {} k = none := rfl
 
 end LeanModels.Es

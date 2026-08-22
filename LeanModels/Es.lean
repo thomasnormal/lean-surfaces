@@ -3,6 +3,8 @@ import LeanModels.Es.Json
 import LeanModels.Es.Load
 import LeanModels.Es.Value
 import LeanModels.Es.Completion
+import LeanModels.Es.Object
+import LeanModels.Es.Ordinary
 import LeanModels.Es.SpecAttr
 import LeanModels.Es.Spec
 

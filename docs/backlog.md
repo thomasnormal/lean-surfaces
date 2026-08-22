@@ -16694,6 +16694,74 @@ three can drift. Non-vacuous in every direction.
 `docs_check` 75/75; both self-tests green. No Lean, so the build lock was not
 taken for this inch.
 
+### ADDENDUM — M1 INCHES 5-6: **M1 IS COMPLETE**, and a doc comment cost three parse errors (2026-08-22)
+
+`LeanModels/Es/{Ast,Json,Load}.lean` + `LeanModels/Es.lean` +
+`Examples/es/test262/guards.lean` — **790 lines of Lean, and no evaluator in
+the repository.** Source → envelope → Lean AST literal → `#guard`, which is
+M1's whole statement.
+
+**TWO FIXTURES, and the pair is the point.** `ifCptn` is an ordinary positive
+test that parses; `classDup` is one test262 declares `negative: {phase:
+parse}`, which must NOT parse. **The tier's first statement about ECMAScript
+therefore includes something it must REJECT** — the reasoning that chose
+`pyfloordiv` for the C lane, and here it is not a nicety: 4,248 of the
+language-core slice's 18,114 tests are parse-negative, so a tier that could not
+represent a rejection could not be scored on 23% of its own corpus. **21
+`#guard`s pass**, and they are NON-VACUOUS in four directions, checked:
+`vocabularySize 66→67`, the node count `31→32`, `!accepted→accepted` on the
+negative fixture, and `ES2026→ES2025` each fail with the expression printed.
+The loader's two refusals fire too — a wrong `language_version` and a wrong
+`schema_version` are both named elaboration errors.
+
+**THE AST IS DELIBERATELY NOT MUTUAL, and that is a modelling decision, not a
+Lean workaround.** The C lane's AST is sorted into Decl/Stmt/Expr because
+clang's is; **ESTree's is not** — `ArrayPattern` and `ArrayExpression` are the
+same surface syntax classified by CONTEXT, and the spec's own grammar
+reinterprets a parenthesized expression as a pattern after the fact. Imposing
+a Lean sort discipline at M1 would invent a classification the frontend does
+not make. So `Node` carries its `NodeKind` and splits its properties into
+**SCALARS** (the flags a semantics reads — `computed`, `static`, an operator's
+spelling) and **CHILDREN** (the subtrees it recurses into), which also keeps
+`Node` recursing only through `List`/`Option`/product — exactly how the C
+lane's `Expr` recurses through `List Expr`, and off the mutual-inductive
+`deriving` path entirely. Child arity is uniform: a required child is
+`[some n]`, an absent optional child is `[]`, and an elided array element
+(`[1, , 3]`) keeps its hole as `none` rather than being quietly closed up.
+
+**THE TRAP, hit THREE times in one session and worth recording as a rule.**
+`AGENTS.md` already records that *a doc comment cannot precede
+`set_option … in theorem`*. It is more general than that entry says: in this
+toolchain **a `/-- -/` doc comment attaches only to a DECLARATION**, so it is a
+parse error before `mutual` (twice) and before `#guard` (six times). The
+`#guard` case is the expensive one because a guards file is nothing but
+`#guard`s. **Rule: comment a `mutual` block or a `#guard` with a plain `/- -/`,
+never `/-- -/`.**
+
+**And a `partial` def is invisible to a `#guard`.** `Node.kinds` and
+`Node.unsupportedTypes` were written `partial` first; a `partial` definition is
+an opaque constant to the KERNEL, so every `#guard` stated through one would
+have elaborated and proved nothing. They are structural now, with the list arms
+spelled out because `List.flatMap` over a recursive lambda is not something the
+equation compiler sees through. The JSON parsers stay `partial` and that is
+correct — they run only at elaboration time inside `load_es_program`, never
+inside a `#guard`.
+
+**Ast.lean is CORE-ONLY**: it imported `LeanModels.Core.Basic` for a `Span` it
+never used, and dropping both makes the tier's type layer depend on nothing at
+all — which is also what let it be verified outside the build lock.
+
+**VERIFICATION, stated precisely because it is not a `lake build`.** All four
+modules and the guards were compiled from scratch with the pinned `lean` under
+`nice -n 19` against a private `LEAN_PATH` — the protocol's rule-3 scratch
+route — because the machine-wide lock was held for the whole session (by this
+lane's own queued triad, which was still on `lake build` when these inches
+landed). That verifies every line of the new Lean and every `#guard`; what it
+does NOT verify is the interaction with the rest of the tree, which is what
+`lake build` adds and what the `Examples.+` glob makes real. **The full-tree
+build is OWED for these inches too**, and the next lane to hold the lock should
+run it.
+
 ## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
 
 The owner ruled all six of §L60's decisions the same day, and the SV lane's

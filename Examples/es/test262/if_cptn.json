@@ -1,0 +1,503 @@
+{
+  "frontend": {
+    "name": "acorn-estree",
+    "version": "acorn-8"
+  },
+  "language": "ecmascript",
+  "language_version": "ES2026",
+  "lean_blocks": [],
+  "parse": {
+    "status": "ok"
+  },
+  "program": {
+    "body": [
+      {
+        "expression": {
+          "arguments": [
+            {
+              "arguments": [
+                {
+                  "kind": "Literal",
+                  "raw": "'1; if (true) { } else { }'",
+                  "span": {
+                    "col": 22,
+                    "end": 699,
+                    "end_col": 49,
+                    "end_line": 20,
+                    "line": 20,
+                    "start": 672
+                  },
+                  "value": "1; if (true) { } else { }",
+                  "value_type": "string"
+                }
+              ],
+              "callee": {
+                "kind": "Identifier",
+                "name": "eval",
+                "span": {
+                  "col": 17,
+                  "end": 671,
+                  "end_col": 21,
+                  "end_line": 20,
+                  "line": 20,
+                  "start": 667
+                }
+              },
+              "kind": "CallExpression",
+              "optional": false,
+              "span": {
+                "col": 17,
+                "end": 700,
+                "end_col": 50,
+                "end_line": 20,
+                "line": 20,
+                "start": 667
+              }
+            },
+            {
+              "kind": "Identifier",
+              "name": "undefined",
+              "span": {
+                "col": 52,
+                "end": 711,
+                "end_col": 61,
+                "end_line": 20,
+                "line": 20,
+                "start": 702
+              }
+            }
+          ],
+          "callee": {
+            "computed": false,
+            "kind": "MemberExpression",
+            "object": {
+              "kind": "Identifier",
+              "name": "assert",
+              "span": {
+                "col": 0,
+                "end": 656,
+                "end_col": 6,
+                "end_line": 20,
+                "line": 20,
+                "start": 650
+              }
+            },
+            "optional": false,
+            "property": {
+              "kind": "Identifier",
+              "name": "sameValue",
+              "span": {
+                "col": 7,
+                "end": 666,
+                "end_col": 16,
+                "end_line": 20,
+                "line": 20,
+                "start": 657
+              }
+            },
+            "span": {
+              "col": 0,
+              "end": 666,
+              "end_col": 16,
+              "end_line": 20,
+              "line": 20,
+              "start": 650
+            }
+          },
+          "kind": "CallExpression",
+          "optional": false,
+          "span": {
+            "col": 0,
+            "end": 712,
+            "end_col": 62,
+            "end_line": 20,
+            "line": 20,
+            "start": 650
+          }
+        },
+        "kind": "ExpressionStatement",
+        "span": {
+          "col": 0,
+          "end": 713,
+          "end_col": 63,
+          "end_line": 20,
+          "line": 20,
+          "start": 650
+        }
+      },
+      {
+        "expression": {
+          "arguments": [
+            {
+              "arguments": [
+                {
+                  "kind": "Literal",
+                  "raw": "'2; if (true) { 3; } else { }'",
+                  "span": {
+                    "col": 22,
+                    "end": 766,
+                    "end_col": 52,
+                    "end_line": 21,
+                    "line": 21,
+                    "start": 736
+                  },
+                  "value": "2; if (true) { 3; } else { }",
+                  "value_type": "string"
+                }
+              ],
+              "callee": {
+                "kind": "Identifier",
+                "name": "eval",
+                "span": {
+                  "col": 17,
+                  "end": 735,
+                  "end_col": 21,
+                  "end_line": 21,
+                  "line": 21,
+                  "start": 731
+                }
+              },
+              "kind": "CallExpression",
+              "optional": false,
+              "span": {
+                "col": 17,
+                "end": 767,
+                "end_col": 53,
+                "end_line": 21,
+                "line": 21,
+                "start": 731
+              }
+            },
+            {
+              "kind": "Literal",
+              "raw": "3",
+              "span": {
+                "col": 55,
+                "end": 770,
+                "end_col": 56,
+                "end_line": 21,
+                "line": 21,
+                "start": 769
+              },
+              "value": "3",
+              "value_type": "number"
+            }
+          ],
+          "callee": {
+            "computed": false,
+            "kind": "MemberExpression",
+            "object": {
+              "kind": "Identifier",
+              "name": "assert",
+              "span": {
+                "col": 0,
+                "end": 720,
+                "end_col": 6,
+                "end_line": 21,
+                "line": 21,
+                "start": 714
+              }
+            },
+            "optional": false,
+            "property": {
+              "kind": "Identifier",
+              "name": "sameValue",
+              "span": {
+                "col": 7,
+                "end": 730,
+                "end_col": 16,
+                "end_line": 21,
+                "line": 21,
+                "start": 721
+              }
+            },
+            "span": {
+              "col": 0,
+              "end": 730,
+              "end_col": 16,
+              "end_line": 21,
+              "line": 21,
+              "start": 714
+            }
+          },
+          "kind": "CallExpression",
+          "optional": false,
+          "span": {
+            "col": 0,
+            "end": 771,
+            "end_col": 57,
+            "end_line": 21,
+            "line": 21,
+            "start": 714
+          }
+        },
+        "kind": "ExpressionStatement",
+        "span": {
+          "col": 0,
+          "end": 772,
+          "end_col": 58,
+          "end_line": 21,
+          "line": 21,
+          "start": 714
+        }
+      },
+      {
+        "expression": {
+          "arguments": [
+            {
+              "arguments": [
+                {
+                  "kind": "Literal",
+                  "raw": "'4; if (true) { } else { 5; }'",
+                  "span": {
+                    "col": 22,
+                    "end": 825,
+                    "end_col": 52,
+                    "end_line": 22,
+                    "line": 22,
+                    "start": 795
+                  },
+                  "value": "4; if (true) { } else { 5; }",
+                  "value_type": "string"
+                }
+              ],
+              "callee": {
+                "kind": "Identifier",
+                "name": "eval",
+                "span": {
+                  "col": 17,
+                  "end": 794,
+                  "end_col": 21,
+                  "end_line": 22,
+                  "line": 22,
+                  "start": 790
+                }
+              },
+              "kind": "CallExpression",
+              "optional": false,
+              "span": {
+                "col": 17,
+                "end": 826,
+                "end_col": 53,
+                "end_line": 22,
+                "line": 22,
+                "start": 790
+              }
+            },
+            {
+              "kind": "Identifier",
+              "name": "undefined",
+              "span": {
+                "col": 55,
+                "end": 837,
+                "end_col": 64,
+                "end_line": 22,
+                "line": 22,
+                "start": 828
+              }
+            }
+          ],
+          "callee": {
+            "computed": false,
+            "kind": "MemberExpression",
+            "object": {
+              "kind": "Identifier",
+              "name": "assert",
+              "span": {
+                "col": 0,
+                "end": 779,
+                "end_col": 6,
+                "end_line": 22,
+                "line": 22,
+                "start": 773
+              }
+            },
+            "optional": false,
+            "property": {
+              "kind": "Identifier",
+              "name": "sameValue",
+              "span": {
+                "col": 7,
+                "end": 789,
+                "end_col": 16,
+                "end_line": 22,
+                "line": 22,
+                "start": 780
+              }
+            },
+            "span": {
+              "col": 0,
+              "end": 789,
+              "end_col": 16,
+              "end_line": 22,
+              "line": 22,
+              "start": 773
+            }
+          },
+          "kind": "CallExpression",
+          "optional": false,
+          "span": {
+            "col": 0,
+            "end": 838,
+            "end_col": 65,
+            "end_line": 22,
+            "line": 22,
+            "start": 773
+          }
+        },
+        "kind": "ExpressionStatement",
+        "span": {
+          "col": 0,
+          "end": 839,
+          "end_col": 66,
+          "end_line": 22,
+          "line": 22,
+          "start": 773
+        }
+      },
+      {
+        "expression": {
+          "arguments": [
+            {
+              "arguments": [
+                {
+                  "kind": "Literal",
+                  "raw": "'6; if (true) { 7; } else { 8; }'",
+                  "span": {
+                    "col": 22,
+                    "end": 895,
+                    "end_col": 55,
+                    "end_line": 23,
+                    "line": 23,
+                    "start": 862
+                  },
+                  "value": "6; if (true) { 7; } else { 8; }",
+                  "value_type": "string"
+                }
+              ],
+              "callee": {
+                "kind": "Identifier",
+                "name": "eval",
+                "span": {
+                  "col": 17,
+                  "end": 861,
+                  "end_col": 21,
+                  "end_line": 23,
+                  "line": 23,
+                  "start": 857
+                }
+              },
+              "kind": "CallExpression",
+              "optional": false,
+              "span": {
+                "col": 17,
+                "end": 896,
+                "end_col": 56,
+                "end_line": 23,
+                "line": 23,
+                "start": 857
+              }
+            },
+            {
+              "kind": "Literal",
+              "raw": "7",
+              "span": {
+                "col": 58,
+                "end": 899,
+                "end_col": 59,
+                "end_line": 23,
+                "line": 23,
+                "start": 898
+              },
+              "value": "7",
+              "value_type": "number"
+            }
+          ],
+          "callee": {
+            "computed": false,
+            "kind": "MemberExpression",
+            "object": {
+              "kind": "Identifier",
+              "name": "assert",
+              "span": {
+                "col": 0,
+                "end": 846,
+                "end_col": 6,
+                "end_line": 23,
+                "line": 23,
+                "start": 840
+              }
+            },
+            "optional": false,
+            "property": {
+              "kind": "Identifier",
+              "name": "sameValue",
+              "span": {
+                "col": 7,
+                "end": 856,
+                "end_col": 16,
+                "end_line": 23,
+                "line": 23,
+                "start": 847
+              }
+            },
+            "span": {
+              "col": 0,
+              "end": 856,
+              "end_col": 16,
+              "end_line": 23,
+              "line": 23,
+              "start": 840
+            }
+          },
+          "kind": "CallExpression",
+          "optional": false,
+          "span": {
+            "col": 0,
+            "end": 900,
+            "end_col": 60,
+            "end_line": 23,
+            "line": 23,
+            "start": 840
+          }
+        },
+        "kind": "ExpressionStatement",
+        "span": {
+          "col": 0,
+          "end": 901,
+          "end_col": 61,
+          "end_line": 23,
+          "line": 23,
+          "start": 840
+        }
+      }
+    ],
+    "kind": "Program",
+    "sourceType": "script",
+    "span": {
+      "col": 0,
+      "end": 902,
+      "end_col": 0,
+      "end_line": 24,
+      "line": 1,
+      "start": 0
+    }
+  },
+  "schema_version": "es-0.1",
+  "source_file": "test/language/statements/if/cptn-else-true-nrml.js",
+  "source_sha256": "240a23b9a9fde3972e093d1aeb21b07d4128da031efbaa6c2408749be7913edc",
+  "source_type": "script",
+  "spec_revision": "es2026-errata",
+  "stats": {
+    "node_kinds": {
+      "CallExpression": 8,
+      "ExpressionStatement": 4,
+      "Identifier": 14,
+      "Literal": 6,
+      "MemberExpression": 4,
+      "Program": 1
+    },
+    "unsupported": 0,
+    "unsupported_types": []
+  }
+}

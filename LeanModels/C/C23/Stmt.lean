@@ -441,6 +441,132 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
 
 end
 
+/-! ## §6.5.3.3 — function calls: inch 5
+
+**The call graph is almost entirely acyclic, and the census is the
+decision-relevant fact.** Of 58 defined functions, exactly **one is
+directly self-recursive** (`bound`, the search) and there is **one mutual
+cycle of size two** (`bound` ↔ `score_move`). Everything else is a DAG.
+
+So fuel, which arrived at inch 4 for loops, arrives here for a call graph
+whose cyclic part is two functions wide. It is still needed — a model
+cannot know the graph is acyclic without proving it — but the measurement
+says the fuel-consuming surface is small, and it names exactly which
+functions a termination argument would have to be about.
+
+Where the 320 call sites go:
+
+| | sites |
+| --- | ---: |
+| to one of the 58 DEFINED functions | **155** |
+| to one of the 27 libc externals — cause `libc` | **146** |
+| INDIRECT, every one through `movecb` | **19** |
+
+Nearly half of all calls leave the tier, and they refuse as `libc` — the
+cause that retires by widening the slice, never pooled with the others. -/
+
+/-- The functions a call can reach, with the layout and enumeration
+constants they need. -/
+structure Program where
+  fns : List LeanModels.C.FunctionDefn
+  layout : Layout := Layout.unknown
+  enums : List (String × Int) := []
+
+def Program.find? (p : Program) (name : String) : Option LeanModels.C.FunctionDefn :=
+  p.fns.find? (·.name == name)
+
+/-- §6.5.3.3p4 — evaluate the arguments, LEFT TO RIGHT.
+
+**Left-to-right is the CANONICAL order, not the claim.** §6.5.3.3p10
+leaves the order indeterminately sequenced, and Thomas's ruling makes
+correctness a `∀ order` property; this function is how a witness is
+extracted, and the obligation is discharged per-site over the 7 sites the
+census found (`docs/c23-spec-mirror.md` §5.3). Structural on the list, so
+no fuel enters here. -/
+def evalArgsLR (ev : LeanModels.C.Expr → EvalM CVal) : List LeanModels.C.Expr → ExecM (List CVal)
+  | [] => pure []
+  | e :: es => do
+      let v ← ev e
+      let vs ← evalArgsLR ev es
+      pure (v :: vs)
+
+/-- §6.5.3.3p4 / §6.9.2p7 — give each parameter its own automatic object
+and store the argument into it.
+
+A parameter IS an object (§6.9.2p7: "the parameters are declared as if by
+declaration in the compound statement"), which is why 1 of the corpus's
+31 `&`-of-automatic sites takes the address of one. Measured parameter
+counts: 0-9, and 39 of 58 functions take two or fewer. -/
+def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal → ExecM Ctx
+  | ctx, [], [] => pure ctx
+  | _, [], _ :: _ => refuseUnsupported "more arguments than parameters"
+  | _, _ :: _, [] => refuseUnsupported "fewer arguments than parameters"
+  | ctx, d :: ps, v :: vs =>
+    match d with
+    | .param n ty _ =>
+        match lay.size ty with
+        | none => refuseUnsupported s!"no layout for parameter type '{ty}'"
+        | some sz => do
+            let m ← get
+            let (m', o) := m.alloc .automatic sz (some ty)
+            set m'
+            liftEval (storeAt (Ptr.toObject o) ty v)
+            bindParams lay { ctx with env := (n, o) :: ctx.env } ps vs
+    | _ => refuseUnsupported "non-parameter in a parameter list"
+
+/-- §6.5.3.3 — call a defined function with already-evaluated arguments.
+
+The handler the callee's frame carries is built HERE, closing over the
+decremented fuel: that is the whole recursion, and it is why fuel is a
+parameter of this function rather than of `evalExpr`.
+
+A `void` function answers `.undef`, not a fabricated zero — the value of
+a `void` call may not be used (§6.5.3.3p3), and `.undef` is the value
+every consumer already refuses. Returning `0` would have been a number
+somebody could read. -/
+def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → ExecM CVal
+  | 0, _, _, _ => exhausted
+  | fuel + 1, prog, f, args =>
+    match f.body with
+    | none => refuseUnsupported s!"'{f.name}' is a prototype, not a definition"
+    | some body => do
+        -- The callee's own call handler: one fuel less, so the recursion
+        -- terminates on the fuel and on nothing else.
+        let handler : CallHandler := fun ev callee cargs =>
+          let nm := calleeNameOf callee
+          if nm == "<indirect>" then
+            -- 19 sites, every one through `movecb`. The callback protocol
+            -- needs a function POINTER value, which the value model does
+            -- not carry yet — named, not silently mishandled.
+            refuseUnsupported "indirect call through a function pointer (movecb)"
+          else
+            match prog.find? nm with
+            -- one of the 27 externals: cause `libc`, which retires by
+            -- widening the slice, and never pools with the other two.
+            | none => throw (.libc nm)
+            | some g => do
+                let vs ← evalArgsLR ev cargs
+                callFn fuel prog g vs
+        let ctx0 : Ctx :=
+          { env := [], enums := prog.enums, layout := prog.layout, call := handler }
+        let ctx ← bindParams prog.layout ctx0 f.params args
+        let flow ← execStmt fuel ctx body
+        match flow with
+        | .ret (some v) => pure v
+        | .ret none => pure .undef
+        -- §5.1.2.3.4: falling off the end of a non-void function is
+        -- undefined ONLY if the caller uses the value; `main` is the
+        -- exception and returns 0. Neither is decided here.
+        | .normal => pure .undef
+        | _ => refuseUnsupported "break, continue or goto escaped a function body"
+
+/-- Call by NAME — the entry point a scoreboard uses. -/
+def callByName (fuel : Nat) (prog : Program) (name : String) (args : List CVal) :
+    ExecM CVal :=
+  match prog.find? name with
+  | some f => callFn fuel prog f args
+  | none => refuseUnsupported s!"no definition for '{name}'"
+
 /-! ## `fuelMono` — still an obligation, and now with a known technique
 
 The lemma every `∃ n, ∀ fuel ≥ n` argument rests on

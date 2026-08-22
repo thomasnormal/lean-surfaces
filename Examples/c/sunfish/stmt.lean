@@ -296,4 +296,85 @@ private def boxPartial : Except Refusal Ptr :=
         | .unsupported w => w | _ => "did not refuse")
   == "more initializers than array elements"
 
+/-! ## §6.5.3.3 — inch 5: the tier CALLS a function by name
+
+Everything above ran a body with its frame prepared by hand. This runs
+the call itself: parameters allocated, arguments stored, the body
+executed, the return value handed back — which is what a scoreboard does
+to a test program's `main`. -/
+
+/-- The corpus's functions, with a layout that knows what an `int` is. -/
+private def prog : Program :=
+  { fns := sunfishC.unit.functionDefns, layout := intLayout }
+
+/-- `pyfloordiv(a, b)`, called the way C calls it. -/
+private def callPfd (a b : Int) : Outcome CVal :=
+  ExecM.verdict Mem.empty
+    (callByName 64 prog "pyfloordiv" [.int IntTy.int_ a, .int IntTy.int_ b])
+
+private def called (a b : Int) : Option Int :=
+  match callPfd a b with
+  | .ok (.int _ n) => some n
+  | _ => none
+
+-- The call agrees with Python, through the whole calling sequence.
+#guard called 7 2 == some 3
+#guard called (-7) 2 == some (-4)
+#guard called 7 (-2) == some (-4)
+#guard called (-7) (-2) == some 3
+#guard called (-1) 5 == some (-1)
+#guard called 0 5 == some 0
+
+-- …and it agrees with `Int.fdiv` on every pair, as the direct run did.
+#guard [(7,2), (6,3), (-7,2), (7,-2), (-7,-2), (1,1), (0,5), (-1,5)].all
+  (fun q => called q.1 q.2 == some (pythonFloorDiv q.1 q.2))
+
+-- The UB inside the callee still reaches the caller as a refusal.
+#guard callPfd 1 0 == .refused (.valueUB (.divideByZero "/"))
+
+/-! ### The calling sequence's own refusals -/
+
+-- §6.5.3.3p2 — the argument count must match the prototype.
+#guard (match ExecM.verdict Mem.empty
+          (callByName 64 prog "pyfloordiv" [.int IntTy.int_ 1]) with
+        | .unsupported w => w | _ => "did not refuse") == "fewer arguments than parameters"
+#guard (match ExecM.verdict Mem.empty (callByName 64 prog "pyfloordiv"
+          [.int IntTy.int_ 1, .int IntTy.int_ 2, .int IntTy.int_ 3]) with
+        | .unsupported w => w | _ => "did not refuse") == "more arguments than parameters"
+
+-- A name with no definition in the program refuses, and names itself.
+#guard (match ExecM.verdict Mem.empty (callByName 64 prog "no_such_fn" []) with
+        | .unsupported w => w | _ => "did not refuse") == "no definition for 'no_such_fn'"
+
+-- Fuel exhaustion is a TIMEOUT, not a refusal — even at a call.
+#guard ExecM.verdict Mem.empty
+  (callByName 0 prog "pyfloordiv" [.int IntTy.int_ 7, .int IntTy.int_ 2])
+  == (.timeout : Outcome CVal)
+
+/-! ### The 146 libc calls refuse with cause `libc`, not `unsupported`
+
+Nearly half of all 320 call sites leave the tier. They must NOT pool with
+the out-of-tier constructs: `libc` retires by widening the slice,
+`unsupported` by climbing a rung. -/
+
+/-- A synthetic caller whose body is `return abort();` — the corpus has no
+one-line libc caller, and the point is the CAUSE, not the callee. -/
+private def libcCaller : LeanModels.C.FunctionDefn :=
+  { name := "calls_libc", ty := "int (void)", storage := none, params := [],
+    body := some (.compound
+      [.ret (some (.call (.declRef "abort" "FunctionDecl" "void (void)" noSpan)
+                         [] "void" noSpan)) noSpan] noSpan),
+    span := noSpan }
+
+private def progL : Program := { prog with fns := libcCaller :: prog.fns }
+
+#guard ExecM.verdict Mem.empty (callByName 64 progL "calls_libc" [])
+  == .refused (.libc "abort")
+#guard (Outcome.refused (α := CVal) (.libc "abort")).cause? == some Cause.libc
+-- …and `libc` is NOT the cause an out-of-tier construct gets.
+#guard (Outcome.refused (α := CVal) (.libc "abort")).cause?
+    != (Outcome.unsupported (α := CVal) "x").cause?
+-- `libc` carries no J.2 index, because an unmodelled library call is not UB.
+#guard (Refusal.libc "abort").j2 == none
+
 end Examples.c.sunfish.stmt

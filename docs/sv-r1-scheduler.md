@@ -180,6 +180,53 @@ starting position than this rung had any right to expect, and it is why
 the region upgrade is an extension rather than a rewrite.
 
 ---
+### 2.4 DETERMINISM IS A PREDICATE, AND IT IS RELATIVE TO THE TRACE
+
+Two corrections that R1 must carry, the first to this lane's own prose and
+the second to its design.
+
+**(a) `Deterministic d` is a per-design predicate, not a law.** IEEE 1800
+leaves same-region ordering unspecified (§4.7-4.8), so a racy design has
+no single outcome and *cannot* be made to have one by a modelling choice.
+The tier is already correct about this — `Deterministic (d : Design) :
+Prop`, proved for five designs and **refuted** for the sixth by
+`race_blk_not_deterministic : ¬ Deterministic raceBlkDesign` — and no
+proof anywhere consumes an unrestricted `∀ d, Deterministic d`. Only
+`docs/sv-charter.md`'s wording overclaimed, and it is corrected there.
+
+**The empirical evidence sits in this lane's own harness run.**
+`race_blk_one_edge` matched **`sigma_rev`**, not `sigma_src`: the racy
+design produced a *different* trace under the reversed schedule. That is
+the race-free boundary showing itself on real hardware semantics, and it
+is why the schedule oracle is load-bearing rather than decorative.
+
+**(b) Determinism is relative to WHAT IS OBSERVABLE — and R1 changes
+that.** `Deterministic` quantifies over agreement of the *trace*, so its
+meaning moves with the trace type. **A coarser trace makes MORE designs
+deterministic**; a finer one makes fewer.
+
+This is not abstract for R1. §4.3 chose `Slot` to record `time`,
+`sampled` and `final` and deliberately **not** the intermediate region
+states, on the argument that nothing outside the slot can observe them.
+That argument is also what keeps the existing determinism results
+meaningful: expose per-region states in the trace and designs that are
+race-free *at cycle granularity* would become non-deterministic at region
+granularity, because the schedule reorders within a region by
+construction (§2.2).
+
+**So the five `_det` theorems are NOT automatically inherited by R1.**
+They are statements about the cycle trace. Under the region semantics
+each must be re-established through `cycleOf` — which is exactly what the
+adequacy lemma (§5.3) delivers, and is a second reason that lemma is the
+rung's centre rather than a formality. **And `sampled` is the one field
+that could break this**: it is genuinely observable (clocking blocks and
+assertions read it), so a design whose Preponed sample is
+schedule-sensitive would be non-deterministic under R1 while deterministic
+today. Whether any of the six is such a design is an R1 check, not an
+assumption — added to inch 7's re-establishment list.
+
+---
+
 ## 3 THE CORPUS PRICE — which regions actually matter
 
 Which regions to build first is a measurement, not a preference.
@@ -502,11 +549,15 @@ Adequacy makes the 156 transfer, but three things need real work:
    for `slotStep` and `runRegion`. They follow the definition tree
    mechanically — the existing ladder (`evalExpr_le` → … → `run_le`)
    is the template and gains one rung per new loop.
-2. **`Sv.Deterministic` becomes sharper and must be re-examined.** It
-   currently says all schedules give the same trace. Under regions, the
-   same statement is *stronger* (more schedules exist), which is
-   correct — but the `race_blk` witnesses must be re-checked to confirm
-   they still separate, now as region-tagged schedules.
+2. **`Sv.Deterministic` becomes sharper and must be re-examined**, per
+   §2.4(b). It is a per-design predicate over the *trace*, so widening
+   the trace changes its meaning: under regions there are strictly more
+   schedules, so the statement is **harder to satisfy**, and the five
+   designs that satisfy it today must be re-established through `cycleOf`
+   rather than inherited. The `race_blk` witnesses must also be
+   re-checked to confirm they still separate, now as region-tagged
+   schedules — and `sampled` is the field most likely to flip a verdict,
+   since it is observable and schedule-sensitive.
 3. **The surface notations** (`⊨`, `⇓[σ]`, `⊑@clk`) elaborate to the
    cycle judgment. `⊑@clk` in particular is *defined* in cycles, and
    under regions "cycle" is derived — so it should be re-defined

@@ -177,11 +177,49 @@ chosen before this policy was written, which is the useful kind of
 corroboration: the ladder is describing what the family already does when
 it is thinking clearly.
 
-**The prices are being measured.** The structures-census lane is building
-the **width-crossover table** — where rung 1's effort stops beating rung
-3's runtime — and this section should cite it when it lands. Until then the
-ladder is an ordering, not a threshold, and a lane that needs a threshold
-should say so rather than guess one.
+**THE CROSSOVER TABLE HAS LANDED** — `docs/lean-structures-census.md`, and
+the ladder is now an ordering *with prices* rather than an ordering alone:
+
+| rung | measured |
+| --- | --- |
+| **1. symbolic, width-parametric** | **6–18 lines**, 2–3 iterations, covers **all widths**, clean axioms |
+| **2. kernel `decide`** | dies around **10⁵ cases** |
+| **3. `bv_decide`** | 128-bit De Morgan in **11 s** — but **TIMES OUT** on 12-bit multiplier commutativity |
+
+**Thomas's informativeness argument is confirmed by measurement, not just
+endorsed.** The parametric proof forced out a **`w = 1` edge case that no
+fixed-width run could surface** (`intMin 1 = 1#1`, breaking a side
+condition that holds for every `1 < w`). Rung 3 cannot find that class of
+bug *in principle*: it answers about the width you asked, and the width you
+did not think to ask about is exactly where the bug was. That is a
+correctness argument for rung 1, not merely an elegance one.
+
+**AND RUNG 3 IS NOT UNIFORM — the trust cost splits, verified here.**
+`bv_decide` closes some goals by **normalization** and others through the
+**SAT backend**, and only the second carries an axiom:
+
+```
+-- (illustrative — probes against the pinned toolchain, not tree files)
+bvA (x : BitVec 8) : x + 0#8 = x                  -- normalizer
+  depends on axioms: [propext]
+bvB (x y : BitVec 8) : (x &&& y) = (y &&& x)      -- SAT backend
+  depends on axioms: [propext, Classical.choice, Quot.sound,
+                     bvB._native.bv_decide.ax_1_5]
+```
+
+Core's `nativeEqTrue` docstring names that mechanism as the basis for
+**both** `native_decide` and `bv_decide` — **same mechanism, different
+axiom name**. So "we use `bv_decide`, not `native_decide`" is **not** a
+statement about trust; the receipts rule (above) is what distinguishes
+them, and it distinguishes them per-theorem because the *same tactic* lands
+on either side of the line depending on the goal.
+
+**The fairness caveat, recorded because the distinction is real.** What
+`bv_decide` evaluates is a **verified LRAT certificate checker** with a
+soundness theorem — materially smaller and better-understood than bare
+`native_decide` evaluating an arbitrary `Decidable` instance. The two are
+the same *mechanism* and not the same *risk*, and a lane choosing rung 3
+should say which of the two it means.
 
 **III. HARDNESS IS A SIGNAL TO THE PROGRAM, not to the definition.** When a
 proof will not come, the framework owes the user a next step, and there are
@@ -980,6 +1018,19 @@ established platform would be describing something that does not exist.
 4. **The census / verdict / instrument METHOD** — census before pricing;
    the instrument lands beside the claim; double-run determinism; every
    refusal path RUN and not admired; no whitelist that silences a mismatch.
+
+   **"Core only, no packages" is a PER-TIER discipline, not a repo-wide
+   fact**, and the doc should stop implying otherwise. Measured: **Mathlib
+   is a required dependency in `lakefile.toml`** and **26 files import it**
+   — 23 under `LeanModels/` plus 3 under `Examples/`. But the breakdown is
+   the point: **Spice 11, Circuit 11, Verilog-A 1, and ZERO in Python, C,
+   SystemVerilog and RISC-V.** The analog lanes need real analysis
+   (`Mathlib.Data.Real.Basic`, `Analysis.Calculus.Deriv`,
+   `MeasureTheory.*`) and take it; the proof tiers claim core-only and
+   *are* core-only. So a founding lane states its own dependency posture in
+   its charter — "this tier depends on no package" is a claim about that
+   tier, checkable per tier, and false if read as a claim about the
+   repository.
 5. **The envelope discipline** — `schema_version`, `language`,
    **`language_version`** (§1.5), `frontend` FAMILY, `source_file`,
    `source_sha256`, `Unsupported` leaves for anything outside a pinned
@@ -1078,6 +1129,17 @@ that reason. The difference is visible in the `PostShape` barrel:
 one. **The wrong order cannot state the tier's own error postcondition.**
 One line, load-bearing for every tier written against the sketch, and
 verified here independently before propagating.
+
+**AND THE SUBSTRATE KEEPS ITS EXPLICIT SPELLING — adopted by SHAPE, not by
+spelling.** `Run σ α` could be spelled as core's `EStateM`, and the
+isomorphism is available. It is **not taken**: kernel `rfl` measured
+**1.4× slower on `EStateM` at fuel 4096**, and kernel reduction is
+load-bearing here — `#guard`/`#py_check` and every captured run are kernel
+`rfl`, which is what makes *run-not-admired* affordable at all. So the
+family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
+`WPMonad` instance, its laws) while keeping its own spelling, and records
+the iso as available rather than mandatory. A tier with no kernel-reducible
+runs to protect may spell it either way.
 
 **`Run σ α` IS that stack — proved, not asserted.** The pilot's
 `ofRun`/`toRun` are mutually inverse in 22 lines, and both stacks `#synth`
@@ -2227,7 +2289,12 @@ exactly that:
 * the **altitude lemmas** — prove it once at the chain with every operand
   symbolic — and their price tag, 259+ VCs unfolded against 12;
 * **computed-shape / residue-spelling**: index premises must be spelled in
-  the interpreter's own residue, not in the reader's preferred normal form;
+  the interpreter's own residue, not in the reader's preferred normal form.
+  **`cbv` is the tactic for that residue** — a core tactic on the pinned
+  toolchain (verified) that closes computed-shape goals which `grind`,
+  `simp`, and `unfold`-then-`grind` all fail on, in **one token**. Its
+  bound is `maxRecDepth` on heap-walking residues, so it is the right first
+  attempt and not a universal one;
 * the **vacuity catches** — a carried-over receiver shape makes every
   statement about it vacuous and cannot break a build;
 * `Bracket.SubtreeWrites`, whose docstring records an arm **"UNINHABITABLE

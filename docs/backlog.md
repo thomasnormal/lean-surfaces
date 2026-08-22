@@ -15163,6 +15163,58 @@ rather than notice them. Same instinct as *every refusal path RUN, not admired*,
 pointed at the evidence instead of the code. All three earlier sites now
 cross-reference the named law.
 
+### THE STRUCTURES CENSUS LANDS — the owed crossover table, and rung 3 SPLITS
+
+**1. THE TABLE EXISTS** (`docs/lean-structures-census.md`), so §0.1 II(a)'s ladder
+is now an ordering *with prices*: symbolic **6–18 lines**, 2–3 iterations, all
+widths, clean axioms; kernel `decide` dies around **10⁵ cases**; `bv_decide` does
+128-bit De Morgan in **11 s** but **TIMES OUT** on 12-bit multiplier
+commutativity.
+
+**Thomas's informativeness argument is CONFIRMED BY MEASUREMENT.** The parametric
+proof forced out a **`w = 1` edge case no fixed-width run could surface**
+(`intMin 1 = 1#1`, breaking a side condition that holds for every `1 < w`). Rung
+3 cannot find that class *in principle* — it answers about the width you asked,
+and the width you did not think to ask about is where the bug was. That makes
+rung 1 a correctness argument, not an elegance one.
+
+**AND RUNG 3 IS NOT UNIFORM — verified here before writing it in.** `bv_decide`
+splits by whether the normalizer or the SAT backend closes the goal:
+
+    x + 0#8 = x           -> [propext]                                    CLEAN
+    (x &&& y) = (y &&& x) -> [… , bvB._native.bv_decide.ax_1_5]           AXIOM
+
+Core's `nativeEqTrue` docstring names that mechanism as the basis for **both**
+`native_decide` and `bv_decide` — same mechanism, different axiom name. So *"we
+use bv_decide, not native_decide"* is **not a statement about trust**; the
+per-theorem receipts rule is what distinguishes them, and it must, because the
+SAME TACTIC lands on either side of the line depending on the goal. Fairness
+caveat recorded: what `bv_decide` evaluates is a **verified LRAT checker** with a
+soundness theorem, materially smaller than bare `native_decide` on an arbitrary
+`Decidable` instance — same mechanism, not the same risk.
+
+**2. `cbv`** — a core tactic on the pin (verified) that closes the computed-shape
+residue `grind`/`simp`/`unfold`+`grind` all fail on, in **one token**. Added
+beside the computed-shape law with its bound: `maxRecDepth` on heap-walking
+residues, so it is the right first attempt and not a universal one.
+
+**3. `EStateM` — ADOPTED BY SHAPE, NOT BY SPELLING.** The iso is available and is
+**not taken**: kernel `rfl` measured **1.4× slower on `EStateM` at fuel 4096**,
+and kernel reduction is load-bearing — `#guard`/`#py_check` and every captured
+run are kernel `rfl`, which is what makes *run-not-admired* affordable. The
+family takes the monad's SHAPE (`ExceptT ρ (StateT W Halt)`, its `WPMonad`
+instance, its laws) and keeps its own spelling. A tier with no kernel-reducible
+runs to protect may spell it either way.
+
+**4. "CORE ONLY, NO PACKAGES" IS A PER-TIER DISCIPLINE, not a repo-wide fact.**
+Measured: Mathlib is a required `lakefile.toml` dependency and **26 files import
+it** — 23 under `LeanModels/`, 3 under `Examples/`. The breakdown is the point:
+**Spice 11, Circuit 11, Verilog-A 1, and ZERO in Python, C, SystemVerilog and
+RISC-V.** The analog lanes need real analysis and take it; the proof tiers claim
+core-only and *are* core-only. A founding lane states its own dependency posture
+in its charter — the claim is checkable per tier and false if read as a claim
+about the repository.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

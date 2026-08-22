@@ -150,34 +150,48 @@ hidden optimization:
    contains none — the trunk is 0-failed at its default fuel, so it never times
    out there — but the gate reports one if it ever appears.
 
-### 2.2 A FINDING THE FUEL-FREE SHAPE FORCED — the dict display
+### 2.2 THE ONE ARCHITECTURAL DEBT — found, priced, PAID
 
-`evalDictItemsM` walks **two parallel expression lists** in lockstep, because
-CPython's `BUILD_MAP` order is k₁, v₁, k₂, v₂, …. The trunk does this freely
-because its measure is fuel. **A structural measure cannot**: whichever list is
-chosen, the other list's head is not a subterm of it, and Lean answers
+CPython's `BUILD_MAP` evaluates k₁, v₁, k₂, v₂, …, so a dict display must walk
+**two parallel expression lists in lockstep**. The trunk does that freely because
+its measure is fuel. A structural measure cannot: whichever list is chosen, the
+other list's head is not a subterm of it, and Lean answers
 
     failed to eliminate recursive application
       evalOpen K m v
 
-(bisected to a two-parallel-list member; every other member of the block is
-fine). Interleaving the lists first would preserve the order but the interleaving
-is a function **application**, not a projection of the node, so it is not a
-subterm either.
+(bisected to a two-parallel-list member; every other member of the block is fine).
+Interleaving first would preserve the order but the interleaving is a function
+APPLICATION, not a projection of the node, so it is not a subterm either.
 
-Three ways out, none free, and this is the plan's top open item:
+**Three exits were priced and the third is taken.**
 
-* a **paired AST field** (`Array (Expr × Expr)` on `.dict`) — an ingestion change
-  that makes the lockstep structural, and the cleanest;
-* **one well-founded member** — rejected while the block is mutual, since a
-  mutual block shares ONE strategy and well-founded costs every kernel `rfl`;
-* **splitting the block** so the dict walk is its own well-founded definition
-  outside it — plausible, and cheapest to try first.
+| exit | price | verdict |
+|---|---|---|
+| a paired AST field, `Array (Expr × Expr)` on `.dict` | edits `Ast.lean`, `Json.lean`, the trunk's `evalExpr` and four walkers — **it changes the TRUNK**, which this rebuild may not do | REJECTED |
+| one well-founded member inside the block | a mutual block shares ONE strategy, so it makes the WHOLE block well-founded and costs every kernel `rfl` — the mergeSort trap | REJECTED |
+| **split the block: route the walk through `Kont`** | **one `Kont` field, one ordinary structural definition, one fuel level** | **TAKEN** |
 
-Until then `.dict` refuses through `notYet`. A second instance of the same
-obstacle was already avoided by restructuring: `.boolOp` originally destructured
-`values.toList` at the call site (the trunk's shape) and had to be changed to
-pass the list **whole**, since destructuring severs the subterm chain.
+`evalOpen`'s `.dict` arm calls `K.dictItems` — a record field, so from the block's
+point of view it is not a recursive call at all. The walk (`dictItemsAt`) is
+defined BELOW the block, where `evalOpen` is an ordinary constant, so its own
+recursion is plainly structural on its own first list and nothing constrains the
+second.
+
+**The price, exactly: one fuel level per dict display**, because `kont m (fuel+1)`
+must build the field from `kont m fuel`. That is **precisely what the trunk
+charges** (`evalExpr m (fuel+1)` on a `.dict` calls `evalDictItems m fuel`), so
+this arm is the one place the rebuild's fuel accounting is *identical* to the
+trunk's rather than more generous. Nothing else is given up — the walk stays
+kernel-reducible like the rest of the file.
+
+**The generalisable lesson**, and it is why `Kont` was worth having before it was
+needed: *the fuel record is not only a fuel boundary. It is a **recursion-knot
+boundary**, and anything a structural measure cannot express can be cut out of
+the block through it at the cost of one field.* A second instance of the same
+obstacle was avoided by restructuring instead — `.boolOp` originally destructured
+`values.toList` at the call site (the trunk's shape) and had to pass the list
+WHOLE, since destructuring severs the subterm chain.
 
 ### 2.3 THE FREE-SCRUTINEE DISCIPLINE, earning its keep twice
 
@@ -195,15 +209,49 @@ the paths that then raise `TypeError: … is not callable`. `preRefuse` /
 
 ---
 
-## §3 THE SUBSTRATE, AND THE FOUR LAWS ADOPTED
+## §3 THE SUBSTRATE — now in `LeanModels/Core/`, and shared
+
+**THE STACK WAS EXTRACTED TO THE FAMILY** (`LeanModels/Core/Outcome.lean`),
+because a second lane arrived needing it. §3.8 lists three candidates for the
+"move `Run` / land `SemM`" trigger and says whichever lands first fires it; the
+SystemVerilog lane blocked on the canonical spelling rather than defining an
+SV-local stack, which is §3.8's rule — *"a second interpreter landing with its own
+copy is a defect, not a design"* — working as intended.
+
+In `LeanModels/Core/Outcome.lean` (language-neutral) and then
+`LeanModels/Python/Monadic/Substrate.lean` (Python's instantiation):
 
 ```lean
-inductive Halt where | timeout | unsupported (msg : String)
-abbrev SemM (W ρ : Type) := ExceptT ρ (StateT W (Except Halt))
+-- (illustrative — the two files' shapes, quoted together)
+inductive Loud where | timeout | unsupported (msg : String)
+abbrev Halt := Except Loud
+abbrev SemM (W ρ : Type) := ExceptT ρ (StateT W Halt)
+abbrev SemPS (W ρ : Type) : PostShape := .except ρ (.arg W (.except Loud .pure))
+
 abbrev PyM (σ : Type) := SemM σ PyErr
 abbrev SemF := PyM FrameState        -- statements and expressions
 abbrev SemW := PyM World             -- a nested call
 ```
+
+The naming is the family doc's own: `Loud` is the state-DISCARDING outcome,
+`Halt` the base monad it lives in. The two failure channels are not
+interchangeable — `ρ` is the LANGUAGE's raise and retains state; `Loud` is the
+MODEL giving up and discards it, and is never a claim about the program.
+
+**What did NOT move: `Run`.** §3.8's destination clause also wants Python's `Run`
+in Core with `Runtime.lean` re-exporting. That half is deliberately excluded, and
+the reason is measured: `Run` lives in `LeanModels/Python/Runtime.lean`, under the
+umbrella that **65 files under `Examples/` import**, and moving it re-founds an
+import graph the sunfish campaign is mid-flight in. **The substance of the rule is
+satisfied anyway** — the family has ONE stack, in one file, and `Run` is *proved*
+to be a view of it. A lane arriving by either route finds one artifact. Moving the
+datatype is an erosion item, payable when those files are being touched anyway.
+
+**The landing was measured before it was made:** all nine new `LeanModels.*`
+names (`Loud`, `Halt`, `SemM`, `SemPS`, `refuse`, `exhausted`, `raiseIn`,
+`zoomIn`, `zoomOut`) were checked against every declaration in `LeanModels/` and
+`Examples/` — **zero collisions**, so the landing is additive and cannot break a
+consumer.
 
 The layer order is the pilot's **correction** to §3.4's first draft and it is
 load-bearing: `StateT` outside `ExceptT` discards the state on a raise, and the
@@ -237,9 +285,28 @@ program the differential gate does not run, and the honest version of it is
 larger by more than three orders of magnitude.
 
 This is **not** a reason to keep a shallow twin — a twin is a second thing to
-keep true, and §8.5's `twinAgrees` is the bill for it. It is a reason to expect
-the altitude layer to have to grow: the fix is more `@[spec]` lemmas at the
-`evalOpen`-arm level, not fewer premises in the statement.
+keep true, and §8.5's `twinAgrees` is the bill for it. The prescription was *more
+`@[spec]` lemmas at the `evalOpen`-arm level, not fewer premises in the
+statement*.
+
+**THE PRESCRIPTION WAS THEN TESTED, AND IT DOES NOT SUFFICE — for a nameable
+reason.** Two arm-level lemmas land (`evalOpen_name_local`, `evalOpen_const`).
+The one that would actually bind — `evalOpen_name_global`, the static-globals-fold
+arm, which GATE 3 exercises twice for `pst` — **cannot be stated at all**:
+`mvcgen` splits the inner `match lookupG …` into one verification condition per
+branch **without retaining the discriminant equation**, so the two unreachable
+branches arrive as bare `⊢ False` with nothing available to refute them. Feeding
+the hypothesis to `mvcgen`'s simp set does not help; the split has already
+happened. Re-measured with both landed lemmas in the registry: the four-deep gate
+**still does not close, at 4M heartbeats / ~10 minutes**.
+
+So the blocker is not lemma COUNT — it is a specific tactic limitation, which is
+a far more useful thing to know than "needs more altitude". **It is the third
+`mvcgen` defect this lane has recorded**, after the `Spec.throw_Except`
+metavariable bug and the no-op `mvcgen?`, and it sharpens the standing risk note:
+a tactic whose authors call it experimental is being asked to carry a family-wide
+substrate, and the family should expect to work around it by shape rather than by
+volume.
 
 ### 3.2 A TRAP IN THE `#print axioms` LAW, worth recording
 
@@ -471,20 +538,44 @@ alias — which is precisely what lets its generator arm drain unguarded.
 attribute, all-name tuple, attribute-bearing tuple, generic — with the trunk's
 evaluation ORDER), `.augAssign` (name and attribute, with the load-before-value
 order), `.whileLoop`, `.forStmt` (all six iterable dispatches), `.ifStmt`,
-`.exprStmt`, `.pass`, `.brk`, `.cont`, `.yieldStmt`/`.yieldFromStmt` (refusals),
-`.unsupported` (refusal). `execOpenList` stops at the first non-`next` flow.
+`.exprStmt`, `.pass`, `.brk`, `.cont`, `.raiseStmt`, `.assertStmt`, `.delStmt`,
+`.tryStmt`, `.yieldStmt`/`.yieldFromStmt` (refusals), `.unsupported` (refusal).
+`execOpenList` stops at the first non-`next` flow.
+
+**Method calls, all three receivers** — heap referents through
+`attrCallPlan`/`applyAttrPlan` (instance methods, `dict.get`/`.clear`,
+`list.append`/`.pop`/`.insert`), namedtuple subclasses through `ntupleCallPlan`,
+and strings through `strCallPlan`/`applyStrMethod`. Each forks on the trunk's own
+pure plan, and each preserves WHEN the arguments evaluate: a missing attribute,
+an instance ATTRIBUTE in call position, a plan refusal and a dangling reference
+all decide **before** any argument runs.
+
+**Class instantiation and namedtuple construction** — `Obj.instance` allocation
+plus `__init__` through the ordinary call path with `self` as an ordinary first
+argument; the value-like SUBCLASS (`class Position(namedtuple(…))`) collapsing
+into the same immediate-value arm as a plain namedtuple. All seven admission
+guards fire before the arguments, as the trunk's do, and the no-`__init__` arity
+error fires **before** the allocation so the failing run's world is the caller's
+untouched.
 
 **The knot** — `callInM` (guard order: parameter features, static-locals rule,
 arity, generator fork), `whileLoop`, `forSeq`, `forList` (the LIVE index cursor,
-referent re-read every step, with the trunk's six referent arms).
+referent re-read every step, with the trunk's six referent arms), and
+`dictItems` (§2.2).
 
-**Not yet, and each is a named bucket** — the dict display (§2.2), keyword
-arguments, method calls, class instantiation, namedtuple construction, closures,
-generators (all five operations), `del`/`assert`/`raise`/`try`/`import`, the
-remaining ten builtins, and the whole **script executor** (`runScript`,
-`Script.lean`, ~900 lines) on which the script-corpus half of the gate depends.
+### 6.1 THE EXCEPTIONS TIER IS WHERE THE SUBSTRATE PAYS FOR ITSELF
 
----
+`try`/`except` is the arm that would have been fiddliest by hand and is close to
+free here. `tryCatch` on `ExceptT PyErr …` catches **exactly** the language's
+raise and lets `Loud` — the model giving up — propagate untouched, which is the
+trunk's hand-written three-way fork over `.exn` / `.timeout` / `.unsupported`
+obtained from the type. And the RETAINED-STATE covenant — the handler runs from
+the state the raise happened in, with no rollback — **is** the layer order,
+because `StateT` sits inside `ExceptT`.
+
+Neither property is coded in the arm. Both are consequences of the stack the
+pilot's `rfl` picked, which is the strongest available argument that the layer
+order was worth getting right.
 
 ## §6.5 THE BUILD, AND WHY `lake build leanmodels-run` IS THE WHOLE GATE
 

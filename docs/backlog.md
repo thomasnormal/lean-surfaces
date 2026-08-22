@@ -21048,3 +21048,179 @@ Their working tree was otherwise untouched and the commit is docs-only.
 not create.** A clone that answers to `origin` is not thereby *your* clone, and
 on this box at least one lane's `origin` points at a backup bundle — so a push
 can "succeed" against a file and never reach master.
+
+## L89 — THE DUPLICATION AUDIT: the census contract is written 14 times and 3 copies CANNOT FAIL, the build protocol is prose that six lanes implemented 24 ways, and the 42 GB of duplicated cache is ONE PINNED MATHLIB (2026-08-22)
+
+Thomas's brief: *"look for duplicated work, that might inspire better overall
+design."* Measured against `76cd043` in a fresh clone (`~/repos/lean-audit`),
+**with no Lean executed** — every number is git, grep, `ps`, `du` or
+`python3 -c`, and the reproducing command is printed beside it in
+[docs/duplication-audit.md](duplication-audit.md).
+
+Landing with it: **`tools/triad.sh`** — the build protocol as code, 381 lines,
+`bash -n` clean, `--self-test` green (12 checks), exercised end to end in a
+sandbox. **Wired into no lane's flow.** Adoption is per-lane on dispatch.
+
+### The three findings that changed a recommendation
+
+**1. `--compare` cannot fail in 3 of the 14 instruments that have it.**
+`c_construct_census.py`, `wasm_spec_census.py` and `wasm_suite_census.py` print
+the delta and `return 0` — so §5.4's *"staleness must be mechanically
+detectable rather than merely possible"* is, in those three, detectable only by
+a human reading stdout. The first of them is the instrument §5.4 names as the
+one that **fixed the contract**. Four incompatible `--compare` dialects exist
+(Lean lane: missing baseline → exit 2, drift → 1; Ada and ES: traceback on a
+missing baseline; C and Wasm: 0 on drift). **Fix the three exit codes as a bug,
+ahead of any refactor** — three one-line changes.
+
+**2. §5.4's double-run byte-identity clause is implemented ZERO times.**
+`grep -rlnE '\-\-twice|double_run|run_twice' harness/ extractors/ tools/`
+returns nothing, against four instrument docstrings and eight doc sites that
+assert the property. It is the cheapest clause in the contract and the only one
+nobody wrote.
+
+**3. The build lock was being violated LIVE while this was measured.** At 17:38
+`/tmp/ls-build.lock/owner` read `es-lane 87905`, two tickets were queued, and
+**two `lake build` processes were running concurrently** — pid 87633 under
+`ctier-triad.sh` (85836, elapsed 49:03) in `lean-ctier2`, pid 90763 under
+`es-build.sh` (87905, 47:12) in `lean-es`. §7.1 rule 1 says ONE, machine-wide.
+The mechanism the script text supports — stated as **inference**, not
+measurement — is an exiting script with an unconditional release removing a
+lock it did not own, which is the failure amendment 7 exists to prevent, and
+**two of the six lane scripts release unconditionally**.
+
+### The protocol is prose, and prose does not run
+
+`grep -rln 'ls-build.lock\|ls-build-queue\|LEAN_NUM_THREADS'` over the tree
+returns **three markdown files and no code**; `tools/ci.sh` runs `lake build` at
+line 21 with no lock acquisition at all. The implementations live in the
+scratchpad — the place §7.1a says a protocol must not live — as six scripts,
+**382 lines**, with **24 amendment violations across 63 applicable cells (38%)**:
+
+* `leantier-inch2.sh` writes an owner whose last field is `lean4lean)` — the
+  exact parse defect §7.1 rule 5 documents as the Go lane's, reproduced by a
+  different lane *after* the rule was written down;
+* `es-build.sh`'s RSS guard watches `pgrep -P $BUILD_PID lean` where
+  `BUILD_PID` is the pid of `tail` — **the guard cannot fire**, and the same
+  line means `wait` returns `tail`'s status so the 143 retry cannot trigger
+  either. Both read as present;
+* `pyc_triad.sh` writes the *child stage's* pid as the owner — amendment 10's
+  exact wording, the same day it was recorded.
+
+And **§7.1a's register is already one amendment behind its own birth**: the
+register commit (`76cd043`, 16:48) landed two minutes after amendment 11's
+commit (`13eff7f`, 16:46) and does not carry it; amendment 11 survives only in
+a `docs/backlog.md` paragraph and `docs/lean-tier-charter.md:896`. With 1, 3
+and 8 marked LOST, the durable home carries **8 of 12** rules. A prose register
+can be one amendment behind and look complete. A script cannot: a missing
+amendment in a script is a diff.
+
+### THE 42 GB IS ONE PINNED DEPENDENCY, AND THE MEASUREMENT CHANGED THE DESIGN
+
+The coordinator asked whether a single shared build workspace, granted with the
+ticket, should replace six warm caches. Measured first:
+
+* 13 clones, **≈48.8 GB apparent**, of which `.lake` is **47.97 GB**;
+* a source-only clone is **40 MB**;
+* per cache: `.lake/build` (this repo's own oleans) is **0.43 GB**;
+  `.lake/packages/mathlib` is **7.02 GB — 89%**;
+* all six caches are `mathlib @ 79d0395a18` at `v4.33.0-rc1`: **the revision
+  `lake-manifest.json` pins**. Byte-identical by construction, never written by
+  any lane.
+* and CoW works — measured here, not quoted: `cp -Rpc` of a **6.42 GB** mathlib
+  `.lake` took **27 s** and consumed **29 MB** of real disk (`df` delta,
+  **0.4%**).
+
+So the duplication is an immutable pinned dependency copied six times, and the
+lanes' own divergent output is 0.43 GB each. **Recommendation: (A) mandatory
+CoW seeding now — 99.6% of the disk back, 27 s a clone, no protocol change and
+no new risk; (B) a shared `.lake/packages` next, since amendment 11 already
+makes Lean single-tenant so the ticket IS the writer serialization (needs one
+Lean run to confirm Lake accepts it — not taken, A11); (C) the shared build
+workspace NOT yet** — over (B) it buys 0.43 GB per lane and charges a checkout
+inside the tenure (the adjacency §7.2's torn-tree rule forbids), spine-touch
+invalidation (`LeanModels.lean` moved 8 times in 60 commits and it imports every
+tier), and edit-feedback latency coupled to queue depth. Revisit when
+`.lake/build` passes ~2 GB.
+
+**The branch trap is current state, not folklore:** `lean-es` and `lean-pyc2`
+are both sitting on `pyrebuild-monadic` right now (244 and 238 commits from
+`origin/master`), and `~/repos/lean-ada`'s remote-tracking ref is 242 commits
+stale. One correction to §L86 for the record: `~/repos/lean-surfaces`'s `origin`
+is **no longer** a stale bundle — both remotes point at the real repository
+today. That half of the incident is fixed; the branch half is not.
+
+### Backlog contention: the incident count is UNMEASURABLE, and that is the finding
+
+**58% of all commits touch `docs/backlog.md`** (251 of 432), three times the
+next file; **66 landed on 2026-08-22 alone**, growing the file from 796 KB to
+**1,260 KB (+58%) in one day**. A scripted scan for renumber events —
+same heading title, changed `L`-number — across all 251 commits finds **zero**,
+and that is structural: §7.2's rule makes the renumber happen *before* the push,
+so **the fix erases its own evidence**. What is measurable: one out-of-order
+landing (L30 after L31/L32), no duplicate numbers, no gaps, 0 of 77 `§Lnn`
+cross-references dangling — the lanes are paying the tax correctly — **but the
+id scheme collides with itself**: `## L2`, `## L3` and `## L4` each appear more
+than once, because a 2026-08-16 ledger numbering and a 2026-08-17 milestone
+numbering share the letter. Proposal: **per-lane files** `docs/backlog/<lane>.md`
+with date-based ids (`2026-08-22-ada-1`) and a **generated** index, migrating
+append-only — the current file is renamed to an archive, every `§Lnn` reference
+keeps resolving, one landing.
+
+### The rest, priced
+
+* **`harness/censuskit.py`** (+160) against ~520 lines of strictly-generic
+  plumbing across 21 instruments (argparse 138, `--compare` 226, output 83,
+  8 copies of a 2-line refusal class, 4 copies of one 6-line `git_rev` — **all
+  four of which swallow the failure and stamp `null`**, §5.4a inverted). Net
+  ≈ −300, **migrate on touch**, the test being that the committed JSON does not
+  move. Also: 26 committed censuses, 12 with a `schema` key, **5 with no
+  provenance key at all**, and nine spellings of "which revision".
+* **`LeanModels/Core/Json.lean` + `Core/Load.lean`** (+105, −210). The `elab`
+  bodies of `load_c_program` and `load_es_program` differ by **14 lines out of
+  46** once the tier name is normalised away, and those 14 are the refusal list.
+  `withCtx`/`getField` are written five times; the optional-string accessor has
+  three names. **`deriving FromJson` is the wrong tool** and is not proposed —
+  the tiers want refusals in their own vocabulary, which is the whole value.
+* **Span, the finding that inspires a design.** §3.7 measured three span types;
+  there are now **six**, and `LeanModels.Span` is used by **Python only** while
+  its docstring still leads with CPython provenance — the correction §3.7
+  ordered has not landed. But three lanes independently chose
+  `line/col/endLine/endCol`: **that agreement is a measurement of what the
+  neutral names should be.** Rename `Core.Span` to them and Ada's type has
+  nothing left in it. Not taken here (it touches every Python span literal).
+* **Verdict rows: honest split.** A shared full row is NOT warranted — Ada's
+  ACATS marking classes, ES's not-throwing, C's `outside_vocab` are genuinely
+  different, and §5.1's membership ruling makes the permitted set a per-tier
+  datum. A shared **vocabulary** is warranted and is *already law*: three of
+  seven emitters use none of §5.1's four names for the failure case, and one
+  emits both `DIVERGE` and `DIVERGED`. That is a conformance gap, not a design
+  question.
+
+### THIS LANE'S OWN VIOLATION, self-reported
+
+Exercising `tools/triad.sh`'s ownership-trap path, this lane ran it **without
+`--dry-run`** and it ran `lake build` in the audit clone for ~2 minutes before
+the harness timed the command out. It held no real ticket and no real lock
+(`LS_LOCK`/`LS_QUEUE` pointed at a temp directory), so that is Lean outside the
+machine-wide lock — **an Amendment 11 violation by this lane**. The clone had no
+cache, so the time went to fetching mathlib sources, not elaboration. Cleanup
+verified: the accidental `.lake` (**634 MB**) removed, `pgrep -fl triad.sh`
+shows no process of this lane's, and the four `*triad*.sh` processes on the box
+are other lanes' and were not touched. The consequence for the artifact: the A7
+ownership-trap path is the **one** path in `--self-test` asserted structurally
+rather than executed, and closing it is the first thing to do when the script is
+next opened.
+
+### Top three, by leverage
+
+1. **Adopt `tools/triad.sh`, lane by lane.** It is the only law whose violation
+   takes the machine down, it was being violated live, and the shared
+   implementation now exists — only adoption remains.
+2. **`tools/workspace.sh check`, then CoW seeding.** ~20 lines flags two lanes'
+   branch trap today; seeding turns 42 GB into ~30 MB per lane. The data volume
+   is at 91%.
+3. **Fix the three `--compare` exit codes TODAY; `censuskit` on touch after.**
+   The kit's leverage is not the −300 lines — it is that `--twice` becomes real
+   everywhere, provenance stops degrading silently in four places, and §5.1's
+   vocabulary gets somewhere to be enforced instead of remembered.

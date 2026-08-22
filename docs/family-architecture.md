@@ -148,6 +148,9 @@ its author thinks, and the axiom line arrives to reassure them. So:
 > Every quoted axiom line is paired with the file's clean-elaboration
 > status, or it is not evidence.
 
+This is the first of three instances of §5.4a's provenance law, and the
+one that reads cleanest when it lies.
+
 This is the §5.4 instrument contract applied to the receipts themselves —
 *every refusal path RUN, not admired* — and it generalizes past this
 policy: any triad line, coverage count or `#guard` batch quoted from a file
@@ -1155,6 +1158,8 @@ treat 120 lines as the entry fee.
 
 > **A PERFORMANCE NUMBER MEASURED ON A TWIN IS A CLAIM ABOUT THE TWIN.**
 
+(§5.4a's provenance law, second instance.)
+
 That is the exact twin of §3.4 clause (b)'s adequacy warning, and the two
 should be read together: a second semantics owes an **adequacy** theorem
 before its *correctness* transfers, and owes a **re-measurement** before
@@ -2071,16 +2076,36 @@ instrument copies it:
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
 * **double-run byte-identical**, verified;
-* **every quoted number is paired with the elaboration status of the file
-  it came from** (§0.1 II(a)): a triad line, coverage count, `#guard` batch
-  or axiom print taken from a file that did not elaborate cleanly is
-  quoting the error recovery, not the tree — and at least one such line
-  reads *cleaner* than the truth rather than dirtier;
+* **every quoted number is paired with the STATE it was taken from**, per
+  the provenance law below;
 * it stamps the frontend FAMILY and the profile, because both are INPUTS
   to the result and not decoration;
 * **not wired into CI when its corpus is out-of-tree** — a gate that is a
   permanent SKIP is a check pretending. `maybe` is where it belongs once
   the corpus is in-tree.
+
+#### 5.4a THE PROVENANCE LAW — a measurement is only as good as the state it was taken from
+
+Three lanes hit this independently, in three different disguises, which is
+why it is stated once rather than three times:
+
+| instance | the trap | found by |
+| --- | --- | --- |
+| **`#print axioms` on a failed declaration** | a statement-elaboration error prints *"does not depend on any axioms"* — **cleaner than the truth** — even when the proof is `sorry` (§0.1 II(a)) | rebuild lane |
+| **a timing measured on a twin** | 568 ms against the shallow twin; the faithful interpreter does not close at ~14 minutes (§3.4) | rebuild lane |
+| **a red from a torn tree** | a rebase under a running build yields `Unknown constant` against a healthy master (§7.2) | Go lane |
+
+> **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
+> neither.**
+
+Every instrument output, triad line, coverage count, `#guard` batch, axiom
+print and timing is reported **with the state that produced it** — clean
+elaboration, faithful subject, untorn tree. The failure mode is not that
+these numbers are noisy; it is that **at least two of the three read
+CLEANER than the truth**, so the error is silent and flattering, and a lane
+that trusts them stops looking. This is the same instinct as §5.4's *every
+refusal path RUN, not admired*, pointed at the evidence instead of at the
+code.
 
 ### 5.5 Coverage by clause — the manifest
 
@@ -2346,6 +2371,30 @@ own backlog section at push time rather than at draft time, because the
 section number you reserved may have been taken while you worked. After
 any rebase that touches `.lean`, re-run the build and the differential
 before pushing — a rebase is a merge, and a merge is not a measurement.
+
+**NEVER FETCH-REBASE WHILE A BUILD RUNS IN THE SAME CLONE** (protocol
+amendment 6, from the Go lane's torn-tree incident). The build reads
+**rebased files against a pre-rebase build graph** and dies with spurious
+`Unknown constant` errors that look **exactly** like a broken master. The
+cheap part is the failure; the expensive part is the investigation cycle
+that ends by proving master was fine all along — theirs did, with all four
+"missing" constants present and the diff empty.
+
+**The order is `stage → build → rebase`, or `rebase → build`.** Never both
+at once, and note that this is a *same-clone* hazard: it is not prevented
+by the §7.1 build lock, because the lock serializes builds against each
+other and a rebase is not a build.
+
+> **"A red from a torn tree is not evidence of anything."**
+
+(§5.4a's provenance law, third instance — and the only one where the
+misleading number reads *dirtier* than the truth rather than cleaner.)
+
+It **discharges nothing** — an owed build stays owed, and the debt survives
+until a clean run. And it **convicts nothing** — it is not grounds to call
+master broken. Both directions matter: the same non-evidence must not be
+laundered into a green either, on the theory that the red was spurious.
+Re-run clean; that is the only thing that settles it.
 
 ---
 

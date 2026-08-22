@@ -15117,6 +15117,52 @@ short-circuit with the `ExceptT` layer is **one `@[spec]` lemma that deletes a
 check from every statement case** — a tier-sized instance of §3.4's altitude law,
 and the cheapest possible first step for the SV consolidation lane.
 
+### BUILD PROTOCOL AMENDMENT 6 — never fetch-rebase while a build runs in the same clone
+
+From the Go lane's torn-tree incident, verified by them against master (all four
+"missing" constants present, diff empty). Confirmed the amendment text in the
+protocol file; the incident itself is **attributed rather than reproduced** — the
+only way to reproduce it is to deliberately tear a tree under a running build,
+which would burn the machine to observe something already established.
+
+The build reads **rebased files against a pre-rebase build graph** and dies with
+spurious `Unknown constant` errors that look **exactly** like a broken master.
+The cheap part is the failure; the expensive part is the investigation cycle that
+ends by proving master was fine. **Order: `stage → build → rebase`, or
+`rebase → build`.** Noted in §7.2: this is a **same-clone** hazard and the §7.1
+build lock does NOT prevent it, because the lock serializes builds against each
+other and a rebase is not a build.
+
+> **"A red from a torn tree is not evidence of anything."**
+
+Both directions written in, since the protocol file carries the second half and
+it is the easier one to lose: it **discharges nothing** (an owed build stays
+owed until a clean run) and it **convicts nothing** (not grounds to call master
+broken) — and it must not be **laundered into a green** either, on the theory
+that the red was spurious. Re-run clean; nothing else settles it.
+
+### THE PROVENANCE LAW — three lanes, three disguises, now stated once (§5.4a)
+
+Three independent findings turned out to be one law, so §5.4a names it rather
+than leaving three scattered warnings:
+
+| instance | the trap | found by |
+| --- | --- | --- |
+| `#print axioms` on a failed declaration | a STATEMENT-elaboration error prints *"does not depend on any axioms"* — cleaner than the truth — even when the proof is `sorry` | rebuild lane |
+| a timing measured on a twin | 568 ms on the shallow twin; the faithful interpreter does not close at ~14 min | rebuild lane |
+| a red from a torn tree | `Unknown constant` against a demonstrably healthy master | Go lane |
+
+> **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
+> neither.**
+
+**The sharp part is the asymmetry**: **two of the three read CLEANER than the
+truth**, so the error is silent and flattering and a lane that trusts them stops
+looking. The torn-tree red is the only one that reads dirtier — which is why it
+got investigated at all, and why the other two needed a lane to trip over them
+rather than notice them. Same instinct as *every refusal path RUN, not admired*,
+pointed at the evidence instead of the code. All three earlier sites now
+cross-reference the named law.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

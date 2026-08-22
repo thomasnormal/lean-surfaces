@@ -160,3 +160,31 @@ SHAPE with the adoption note, per the ES lane's precedent — `W` = the
 envelope's store shape, `ρ` = panic, refusals in `Halt`, `lang_version`
 per file per the envelope design. Statement discipline from theorem one:
 spec half separate from interpreter half (STMT-65, cookbook §6).
+
+---
+
+## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-4` (Go lane's to triage)
+
+*Filed by the SoftFloat lane during its consumer census
+(`docs/softfloat-charter.md` §2.4). Id kept in the SoftFloat namespace.*
+
+### §3.5.3 LISTS GO AS A SOFTFLOAT CONSUMER; NO GO ARTIFACT MENTIONS FLOATS
+
+`docs/family-architecture.md` line 1772:
+
+| Go | `float32`/`float64` | same component, no new work. |
+
+**Measured — zero occurrences of `float`, case-insensitive, in every Go
+artifact in the tree:** `docs/go-charter.md`, `docs/backlog/go.md`,
+`docs/go-construct-census.json`, `docs/go-rung1-census.json`,
+`docs/go-reach-ladder.json`. And `LeanModels/Go/` does not exist.
+
+The row is an architecture-lane inference, and *"same component, no new
+work"* is probably true when Go arrives — the point is only that **it is a
+prediction, not a demand**, and SoftFloat's priorities are set from demand.
+
+**What this lane needs from you, when convenient:** whether `float32`/`float64`
+are in your rung-1 scope. If they are, Go is a second consumer of
+`LeanModels.SoftFloat` — which is also §3.8's named trigger for moving the
+component into `LeanModels/Core/`, so your answer has a structural consequence
+beyond your own tier.

@@ -437,24 +437,151 @@ lost it there. **Layer 2's `√` obligation is stated by comparing squares** —
 `y = round(√q)` iff the neighbours' squares bracket `q` — which stays in `Int`
 and stays reducible. That is not a workaround; it is IEEE's own characterization.
 
-### 3.5 Rounding modes — all five from the first commit
+### 3.5 ROUNDING MODES — the design, because core has none to inherit
 
-IEEE 754-2019 §4.3 names five rounding-direction attributes. **Core implements
-one** (`Accuracy.roundToNearestEven`). Layer 2 carries all five
-(`RoundingMode`), for the same reason the format is a parameter: *a spec that
-names one mode has hard-coded the default exactly the way a spec that names one
-width hard-codes binary64.* Where core cannot serve a mode, the component
-**flags it** — §3.5.1 clause (3)'s "flag, do not absorb" — rather than defining
-the mode away.
+IEEE 754-2019 §4.3 names five rounding-direction attributes; **core implements
+one**, `Accuracy.roundToNearestEven`, and it is not a parameter anywhere — it is
+called directly from `roundedMantissa`, which `roundWithAccuracy` calls, which
+every arithmetic operation calls. There is nothing to configure and nothing to
+inherit. **The mode layer is ours to define**, and this is its design.
 
-### 3.6 Exceptions — a payload, never silent
+**The pivot is that core already computes the right DATUM.** `Accuracy`
+(`Unpacked/Round.lean`) records *exact*, or *inexact together with an
+`Ordering` comparing the infinitely precise value against the approximation
+plus half an ulp*. That is **exactly the information all five modes need** — it
+is the round bit and the sticky bit in a nicer suit. Core then throws four
+modes' worth of it away by hard-coding one consumer. So layer 2 does not
+reimplement rounding; it supplies **the four missing consumers of a datum core
+already produces**:
 
-IEEE §7's five exceptions (`invalid`, `divideByZero`, `overflow`, `underflow`,
-`inexact`) are carried as a **verdict-class payload** (§5.2), not raised. A tier
-that does not model flags must be able to ignore them without the model
-pretending they did not occur. **No tier in the family has asked for flags
-yet** — recorded, so that this is understood as design headroom rather than
-demand.
+```
+-- (illustrative — the mode layer's shape, not yet a tree declaration)
+def RoundingMode.apply (mode : RoundingMode) (sign : Sign)
+    (mantissa : Nat) : Accuracy → Nat
+  | .exact          => mantissa                            -- every mode agrees
+  | .inexact ord    => match mode, ord with
+    | .nearestTiesToEven,  .lt => mantissa                 -- core's, IEEE §4.3.1
+    | .nearestTiesToEven,  .eq => mantissa + mantissa % 2
+    | .nearestTiesToEven,  .gt => mantissa + 1
+    | .nearestTiesToAway,  .eq => mantissa + 1             -- §4.3.1, differs ONLY here
+    | .towardZero,         _   => mantissa                 -- §4.3.2 truncate
+    | .towardPositive,     _   => if sign matches then mantissa + 1 else mantissa
+    | .towardNegative,     _   => if sign matches then mantissa else mantissa + 1
+    | _, _ => …
+```
+
+Three consequences worth stating before the code exists, because each is a
+place this could go wrong quietly:
+
+* **The directed modes need the SIGN, and core's rounding does not take it into
+  the mantissa step.** `roundToNearestEven` is sign-blind, correctly — ties-to-
+  even is symmetric. `towardPositive` and `towardNegative` are **not**, so the
+  mode layer's signature takes `sign` where core's does not. A mode layer that
+  copied core's signature would be unable to express two of the five, and it
+  would typecheck.
+* **`towardZero` is truncation, which is the ONE mode core already implements
+  elsewhere** — `roundToInt` (`Operations/ToNat.lean`) rounds toward zero, and
+  §4's `toInt_eq_truncate` is already its correctness theorem. So the mode
+  layer lands with one of its four new rows already proved, from the other
+  direction.
+* **Overflow interacts with the mode and IEEE says how** (§7.4): rounding a
+  value too large for the format gives ±∞ under roundTiesToEven, but the
+  *directed* modes give the format's largest finite magnitude in one direction
+  and ±∞ in the other. Core's `pack` overflows unconditionally to infinity.
+  **This is a genuine per-mode divergence at the packing step**, not just at the
+  mantissa step, and it is flagged here so it is designed rather than
+  discovered.
+
+**Where core cannot serve a mode, the component FLAGS it** (§3.5.1 clause 3's
+"flag, do not absorb"): the mode is defined in our algebra, our `op_correct`
+quantifies over it, and the *bridge* theorem to core's operations is stated
+**only for `nearestTiesToEven`**, with the other four recorded as serving no
+core operation until core grows one.
+
+### 3.6 EXCEPTION FLAGS — the design, and it is a signature question
+
+IEEE §7's five exceptions: `invalid` (§7.2), `divideByZero` (§7.3), `overflow`
+(§7.4), `underflow` (§7.5), `inexact` (§7.6). **Core has none** — the file
+named `Status.lean` is `isFinite`/`isInf`/`isNaN`, three predicates about a
+value, not flags raised by an operation.
+
+**The design decision is where the flags LIVE, and there are two shapes.** A
+result-and-flags pair (`op : … → UnpackedFloat × Flags`) changes every
+operation's type and would fork the component away from core's signatures,
+making the §3.8 transfer impossible to state. So: **flags are a SEPARATE
+PREDICATE over the inputs**, never a second return value —
+
+```
+-- (illustrative — the flag layer's shape, not yet a tree declaration)
+def raises (fmt : Format) (mode : RoundingMode)
+    (op : Op) (x y : UnpackedFloat) : Exception → Prop
+```
+
+— which keeps `op`'s type identical to core's, makes each flag independently
+provable, and means **a tier that ignores flags pays nothing** while a tier
+that wants them gets a statement rather than a plumbing change. It is the same
+move §3.8 of the family document makes for `Run`'s payload: parameterize rather
+than pool.
+
+**`inexact` is the one with teeth**, and it is already computable from the
+datum: an operation is inexact exactly when its `Accuracy` is not `.exact`, so
+`raises … .inexact` is decidable from the same value the mode layer consumes.
+The other four are readable off the special-value tables layer 2 already proves
+(§4's `div_by_zero`, `div_zero_zero`, `add_inf_opposite`, `sqrt_neg` are
+literally the `divideByZero` and `invalid` conditions).
+
+**No tier in the family has asked for flags** — recorded so this is understood
+as design headroom, and so it is built *after* the transfer layer rather than
+before it (§7 item 4).
+
+### 3.8 LAYER 3 — TRANSFER, and its price is MEASURED
+
+Core's instruction (§0.2) is *prove the operations equivalent, then transfer
+lemmas to `Float` and `Float32`*. §3.5.1 clause (3) makes this look expensive:
+the packed types are **per-width duplicates**, so the fear is one transfer
+lemma per operation **per width**.
+
+**Measured, and the fear is unfounded.** `harness/softfloat/probe_transfer.lean`,
+zero errors:
+
+```
+Float.Model.add a b   = pack (UnpackedFloat.add binary64 a.unpack b.unpack)   -- rfl
+Float32.Model.add a b = pack (UnpackedFloat.add binary32 a.unpack b.unpack)   -- rfl
+Float.Model.toInt64 a = a.unpack.toInt64                                      -- rfl
+(a + b : Float)       = Float.ofModel (a.toModel.add b.toModel)               -- rfl
+```
+
+Every packed operation is **definitionally** `pack ∘ (the parametric op at its
+format) ∘ unpack`. So a parametric layer-2 theorem transfers in **one line**,
+and — the part that matters — **the same line at both widths**:
+
+```
+theorem model_add_nan   (a b : Float.Model)   (h : a.unpack = .notANumber) : … := by
+  show Float.Model.pack (UnpackedFloat.add Format.binary64 a.unpack b.unpack) = _
+  rw [h, add_nan_left]
+
+theorem model32_add_nan (a b : Float32.Model) (h : a.unpack = .notANumber) : … := by
+  show Float32.Model.pack (UnpackedFloat.add Format.binary32 a.unpack b.unpack) = _
+  rw [h, add_nan_left]
+```
+
+and it reaches the user-facing `Float` with one more `show`
+(`float_add_nan`, same file). Axioms on all three:
+`[propext, Classical.choice, Quot.sound]`.
+
+**THE DESIGN CONSEQUENCE: layer 3 is a TACTIC, not a body of lemmas.** The
+per-width cost is a mechanical `show` that names the format, which means the
+transfer should be **generated** — a macro that takes a parametric theorem and
+a width and emits the packed corollary — rather than written twice per fact.
+That is the difference between paying clause (3)'s price once and paying it on
+every theorem forever, and it is available because core made the packed
+operations definitional rather than opaque.
+
+**What layer 3 cannot do**, and it is the boundary to state: it cannot reach
+the `opaque` declarations. `Float.toInt64`, `Float.toString`, `ceil`, `floor`,
+`round`, `frExp`, `scaleB` and the transcendentals have no Lean body, so no
+theorem transfers to them at all. **Consumers must route through `.toModel`**
+(§2.1) — which is exactly the ES unblock, restated as a general rule.
 
 ### 3.7 NaN — the decision this lane cannot take alone
 
@@ -537,17 +664,66 @@ SV divider's `1/8` row at binary32 and binary16, `decide`-closed at binary16;
 and the instance corollaries of `add_nan_left` at binary16 / binary32 /
 binary64 / binary128 — three of which core does not ship as formats.
 
+### 4.2 THE CONSUMER TABLE'S FIRST REAL DELIVERY — ES's integer conversion
+
+The consumer census exists to be *spent*, and this is the first row it buys.
+ES's need is float→int truncation (`ToIntegerOrInfinity`, ECMA-262 §7.1.5, and
+the exact-integer arm of `Number::toString`, §6.1.6.1.20). The delivery has
+**three parts and they are already all in hand**:
+
+1. **The route.** `Float.toInt64` is `opaque` and does not reduce; `.toModel`
+   reaches `Float.Model.toInt64`, which is a plain `def` and does. Measured on
+   the ES function verbatim (§2.1): every arm moves from `#guard` strength — the
+   host C runtime — to `rfl` **and** `decide` strength.
+2. **The theorem that makes the route trustworthy.** Without §4's
+   `toInt_eq_truncate`, routing through `.toModel` only swaps one unexamined
+   implementation for another. With it, the route is justified: core's
+   conversion **is** truncation-toward-zero of the exact value, so ES's
+   `ToIntegerOrInfinity` is not merely computable in the kernel, it is
+   *specified* — and specified in IEEE's terms (§5.8), not in core's.
+3. **The transfer.** §3.8 shows the parametric fact reaches `Float.Model` and
+   `Float` in one line each, so ES can state its own obligations at whichever
+   level its semantics uses.
+
+**What ES must still decide, and this lane flags it rather than guessing.**
+Core's `toInt` **clamps** out-of-range values to the destination's extremes and
+sends NaN to `0`. ECMA-262's integer conversions do **not** all clamp:
+`ToInt32`/`ToUint32` (§7.1.6-7.1.7) reduce **modulo 2³²**, and
+`ToIntegerOrInfinity` (§7.1.5) yields a mathematical value that may be
+infinite. So `Float.Model.toInt64` is the right primitive for the *exact-integer
+`toString` arm* — where the value is known in range and the two agree — and is
+the **wrong** primitive for `ToInt32`. `toInt_eq_truncate` is stated over the
+exact value precisely so ES can build the modular conversions on top of it
+without inheriting the clamp: truncate first, then reduce.
+
+**Delivery boundary.** The Lean edit is `LeanModels/Es/Convert.lean`'s and the
+ES lane owns it. What this lane owes and has now discharged is the measurement,
+the theorem, and the warning about the clamp.
+
 ### 4.1 What inch 1 did NOT do, stated as obligations
 
-* **`op_correct` for `+ − × ÷`** — the round-of-exact bridge. Inch 2. It needs
-  the `roundQ` interpreter and a real proof about core's `normalize` /
-  `roundWithAccuracy`, with **no help from core** (§0.2).
-* **`roundQ` itself** — the computable correctly-rounded rounding of a `Q` to a
-  `Format` under a `RoundingMode`, and its declarative characterization
-  `IsCorrectlyRounded`, proved equivalent. The spec/interpreter split one level
-  down.
-* **Layer 3** — equivalence and transfer to `Float`/`Float32`.
-* Decimal printing (plan step 3), `fma` (step 4), transcendentals (step 5).
+**Ordered as ruled, not as convenient:**
+
+1. **Layer 3, the TRANSFER layer** — core commissioned it in its own words
+   (§0.2) and §3.8 has measured its price at one generated line per
+   (theorem, width). It comes **before** `op_correct` because it is what makes
+   every later parametric theorem reach a consumer, and because it is cheap.
+2. **`roundQ` + `IsCorrectlyRounded`** — the computable correctly-rounded
+   rounding of a `Q` to a `Format` under a `RoundingMode`, with its declarative
+   characterization proved equivalent. The spec/interpreter split one level
+   down, and the mode layer of §3.5 lands with it.
+3. **`op_correct` for `+ − × ÷`** — the round-of-exact bridge. Needs (2), and a
+   real proof about core's `normalize`/`roundWithAccuracy` with **no help from
+   core**.
+4. **The flag layer** (§3.6) — after (1)-(3), because `inexact` is read off the
+   `Accuracy` that (2) consumes and the other four off the special-value rows
+   §4 already proved.
+5. Decimal printing (plan step 3 — the largest single item), `fma` (step 4),
+   transcendentals (step 5, and no tier has asked).
+
+**Unblocked by Thomas's NaN ruling, and everything above proceeds without it**
+(§7 item 1): none of (1)-(5) touches the payload question, so the ruling gates
+only the Wasm rows.
 
 ---
 

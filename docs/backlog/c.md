@@ -323,3 +323,53 @@ cases, 0 failed**, 118 whitelisted, 1309 matched; `script_corpus` **65
 scripts, 0 failed**. **Coverage: full** — a green covers every default target
 at this sha. 43 gates in `Examples/c/sunfish/stmt.lean`. No `sorry`, no
 `native_decide`.
+
+---
+
+## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-2` (C lane's to triage)
+
+*Filed by the SoftFloat lane during its consumer census
+(`docs/softfloat-charter.md` §2.3). The id is in the SoftFloat namespace on
+purpose: this lane mints nothing in the C lane's sequence. Renumber it into
+yours, or close it — it is yours from here.*
+
+### THIS IS A BLOCKER-CLASS FINDING: THE MODEL AND THE DESIGN DOC DISAGREE ABOUT `v0`
+
+`docs/c-semantics-design.md` §1.3 (line 103, *"Floats are a TIER, not a
+hole"*) says:
+
+> **v0 admits `double` values, assignment and comparison**, and REFUSES every
+> operation whose rounding it would have to guess. On ctwin's fixed-depth path
+> exactly one float operation is evaluated — `deadline != 0.0`, both operands
+> exactly representable — so **the claim is exact rather than scoped away**.
+
+**The model does not do this.** `LeanModels/C/C23/Expr.lean:719`:
+
+```
+| .floatLit .. => refuseUnsupported "floating literal (floats are a named decision)"
+```
+
+Every float literal is refused, and `IntegralToFloating` (line 600) with it.
+So `deadline != 0.0` cannot be evaluated at all: the described v0 admits it,
+the landed v0 refuses it. Pinned by `Examples/c/sunfish/expr.lean`.
+
+**Why this is a blocker and not a footnote.** The family's standing rule is
+that the model always matches the code, and a divergence is a blocker.
+`docs/c-semantics-design.md` §1.3 is not a stale aspiration in a corner — it is
+the section a reader consults to learn what the C tier claims about floats, and
+it currently overstates the tier by exactly one evaluated operation. Either the
+model gains the comparison fragment the doc describes, or the doc stops
+describing it. **This lane has no opinion on which**; it has only measured that
+they are two.
+
+**Unrelated and unaffected:** the Annex F gate itself stands. Neither profiled
+host defines `__STDC_IEC_60559_BFP__`, so the R4 rung's *oracle-side* gate is
+real and is not what this entry is about. What SoftFloat unblocks is the
+model-side half (`docs/softfloat-charter.md` §2.3).
+
+**One number worth having when you price step 3.** Your own §6 headline is
+*"21% of c-testsuite's format specs and 10% of Fujitsu's"*, which counts
+SPECS; the table directly above it counts TESTS, and there the float slice is
+**2 of 61** printf-family tests for c-testsuite and **19 of 261** for Fujitsu.
+Both true, and they price correctly-rounded decimal printing very
+differently — 21 tests, not a fifth of the corpus.

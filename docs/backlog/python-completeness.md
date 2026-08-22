@@ -144,3 +144,57 @@ was the right tell.
 emission; normalized anyway so the vocabulary is single-valued in `harness/`.
 `docs/duplication-audit.md`'s row is updated to record the fix rather than
 left asserting a defect that no longer exists.
+
+---
+
+## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-6` (Python lane's to triage)
+
+*Filed by the SoftFloat lane during its core census
+(`docs/softfloat-charter.md` §2.5). Id kept in the SoftFloat namespace.*
+
+### `docs/completeness.md` §6's FLOAT RUNG IS DEFERRED ON A LEAN-SIDE PREMISE THAT IS FALSE AT THE PIN
+
+Lines 368-373:
+
+> * **`float`** — the largest gap by value and by price simultaneously. Four
+>   grammar rows depend on it … but a DECISION: **Lean's `Float` is not
+>   kernel-reducible**, so `#py_check` and every captured `rfl` run would break
+>   on it — the same family as **the mergeSort trap**. It needs an owner-gated
+>   design (an exact-rational …)
+
+**Measured on `leanprover/lean4:v4.33.0-rc1`, and the premise no longer
+holds.** `Float` is a plain structure over `Float.Model`, which is a structure
+over a `BitVec` with a validity proof, and the arithmetic is ordinary Lean.
+`((0.1 : Float) + 0.2 == 0.30000000000000004) = true` closes by **`rfl`**;
+`+ − × ÷` all close by `rfl` and by `decide`, at binary16, binary32, binary64,
+binary128 and binary256.
+
+**The mergeSort intuition was right about the FAMILY and wrong about the
+SCOPE.** There *is* a well-founded-recursion wall, and it costs exactly one
+operation: **`sqrt`**, because `Nat.sqrt` is defined with
+`termination_by guess` (`Init/Data/Nat/Sqrt/Basic.lean`). Isolated,
+`Nat.sqrt 49 = 7` fails both `rfl` and `decide`. Everything else reduces.
+
+**Two of your four grammar rows change price accordingly:** `const.float` and
+`op.Div` are unblocked on the Lean side today. `op.Pow` with a negative
+exponent is too. **`str`/`repr` of a float is NOT** — `Float.toString` is
+`opaque` and core ships no decimal-printing model at all, so shortest-round-trip
+printing is a real algorithm someone has to write. It is SoftFloat plan step 3
+(`docs/softfloat-charter.md` §3), and this lane will build it; you do not need
+to.
+
+**And your own instinct was the right design.** §6 asks for *"an exact-rational
+…"* design, and that is precisely what SoftFloat layer 2 is:
+`LeanModels/SoftFloat/Basic.lean` defines `Q` — an unnormalized rational whose
+comparison is cross-multiplication — because every finite float's value is
+dyadic and every `+ − × ÷ √` result on finite inputs is rational. **ℝ never
+appears.**
+
+**One warning that applies directly to `#py_check`.** `#guard` runs Lean's
+**untrusted evaluator** (`unsafe evalExpr`; core's own docstring: *"this uses
+the untrusted evaluator, so `#guard` passing is not a proof"*). It honours
+`@[extern]`, so on a float row it attests **the host C runtime, not Lean** —
+and it passes identically whether the declaration reduces or is `opaque` with
+no body. Measured three ways in `harness/softfloat/probe_walls.lean`. If
+`#py_check` is `#guard`-shaped, its float rows will go green on facts the
+kernel cannot check. A reduction gate is `rfl` or `decide`.

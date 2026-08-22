@@ -166,15 +166,28 @@ what lets rung 2 close the base cases at all.
   `docs/completeness.md` §6 still defers floats on the false Lean-side premise.
   The two C documents are oracle-side only and have nothing to correct.
 
-### NEXT
+### NEXT — ORDERED AS RULED
 
-1. **`roundQ` + `IsCorrectlyRounded`** — the computable correctly-rounded
+1. **Layer 3, the TRANSFER layer, FIRST.** Core commissioned it in its own
+   words, and its price is now measured rather than feared:
+   `harness/softfloat/probe_transfer.lean` (zero errors) shows every packed
+   operation is **definitionally** `pack ∘ (the parametric op at its format) ∘
+   unpack`, so a parametric theorem transfers in **one line — and the same line
+   at both widths**, reaching `Float` itself with one more. **So layer 3 is a
+   TACTIC, not a body of lemmas**: the per-width cost is a mechanical `show`
+   that names the format, and it should be generated. That is the difference
+   between paying §3.5.1 clause (3)'s price once and paying it on every theorem
+   forever. Boundary: it cannot reach the `opaque` declarations at all —
+   consumers route through `.toModel` (which is the ES unblock as a general
+   rule).
+2. **`roundQ` + `IsCorrectlyRounded`** — the computable correctly-rounded
    rounding of a `Q` to a `Format` under a `RoundingMode`, with its declarative
    characterization proved equivalent. The spec/interpreter split one level down.
-2. **`op_correct` for `+ − × ÷`** — the round-of-exact bridge, from scratch,
+3. **`op_correct` for `+ − × ÷`** — the round-of-exact bridge, from scratch,
    with no help from core.
-3. **Layer 3** — equivalence and transfer to `Float`/`Float32`.
-4. **Decimal printing** (plan step 3) — the largest single item, and what
+4. **The flag layer** — `inexact` is read off the same `Accuracy` datum (2)
+   consumes; the other four off the special-value rows already proved.
+5. **Decimal printing** (plan step 3) — the largest single item, and what
    unblocks ES's `Number::toString` and, on the C side, **21 printf-family tests**
    (2 of 61 c-testsuite + 19 of 261 sampled Fujitsu). The C tier's headline
    "21% of format specs / 10% of Fujitsu's" counts SPECS; its own table counts
@@ -218,3 +231,58 @@ is §3.8's own rule rather than a preference: a thing moves into `Core` when a
 (ES is blocked, SV is dormant). **The trigger is the second tier that imports
 `LeanModels.SoftFloat`.** ES importing it for the truncation family would be the
 first; SV's divider the likely second.
+
+### A CONVENTION CHOICE, NAMED RATHER THAN MADE SILENTLY
+
+The five doc corrections above were filed **into their owners' backlog files**
+on the coordinator's routing (`docs/backlog/{c,sv,go,ada,python-completeness}.md`,
+plus one to `es.md`). Those files each say *"appended only by the <lane> lane"*,
+and a survey found **no precedent** for a cross-lane append anywhere in
+`docs/backlog/`.
+
+So the entries are shaped to honour what that rule protects — id collisions and
+a lane losing control of its own record — while still reaching the owner:
+each is headed **INBOUND FROM THE SOFTFLOAT LANE**, carries an id in the
+**SoftFloat** namespace so nothing is minted in the owner's sequence, and says
+in its own first lines that the owner should renumber it or close it.
+
+**If §9.5 means the stricter thing, this is the wrong shape and these six
+entries are the ones to fix.** Naming it here is cheaper than discovering it in
+an audit.
+
+### TWO PROCESS FINDINGS FROM FILING THEM, both recorded because they cost something
+
+**1. THE CROSS-LANE APPEND RE-INTRODUCED THE EXACT RACE §9.5 RETIRED.** Per-lane
+backlog files exist because *"at ~66 landings a day every lane appends to the
+same tail"*. Appending to six other lanes' files put this lane back in six tails
+at once, and it collided immediately: rebasing onto a master that had moved 24
+commits produced a conflict in `docs/backlog/es.md` — the ES lane had appended
+while this lane was writing. **The per-lane rule is not bureaucratic; it is the
+merge strategy**, and a cross-lane filing convention has to carry the cost the
+rule was avoiding. `docs/backlog/INDEX.md` conflicted too, but that one is free:
+it is GENERATED, so the resolution is `tools/backlog-index.sh`, never a hand
+merge (§5.5).
+
+**2. THE ROUTING BEAT THE FILE, AND THE FILE ARRIVED 90% REDUNDANT.** By the
+time this lane's `es.md` entry landed, the ES lane had already published
+`2026-08-22-es-4` accepting **both** findings — re-measured independently on
+their own expression, retracting their own three-times-repeated phrase, and
+**sharpening the second past what was reported** by separating *detecting* a
+non-integer (now provable) from *rendering* one (still blocked). The agent-to-
+agent routing carried the finding faster than the durable file did.
+
+So the entry was cut down to the one thing their landing does not carry — **the
+clamp**: core's `toInt` clamps, ECMA-262's `ToInt32`/`ToUint32` reduce modulo
+2³², and the projection that unblocked `toString` is wrong for `ToInt32` in the
+quiet way, passing every in-range test. **The lesson for cross-lane filing:
+check what the owner has already landed before filing, and file the residue,
+not the report.**
+
+**3. A SLOPPY LIVENESS CHECK, caught by looking twice.** This lane's pre-rebase
+"is a build running in my clone" probe was a `pgrep | while read | grep -c`
+pipeline that returned **2** when the true answer was **0** — the one live
+`lake` was another lane's, in another clone. It failed toward caution, which is
+the safe direction, but §7.1 rule 5's warning is that a broken liveness check
+*"does not fall back to caution, it falls forward into reclaiming a lock
+somebody is holding"*. The fix is the one the rule already states: print the
+processes and read them, rather than counting them.

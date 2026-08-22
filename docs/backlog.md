@@ -21443,3 +21443,73 @@ carries, rather than two separate war stories.
 hyphens (`[A-Za-z0-9_.]+`), and the reason is Amendment 9's own ticket format —
 a ticket is `<epoch>-<pid>-<lane>`, so a hyphen in the lane tag breaks the field
 parse the FIFO queue depends on. Lane tags are bare words.
+
+### DESIGN RULING — `unsupported` stays in `Halt`, with a structured PAYLOAD
+
+Ruled before a third lane invented a third `Halt`. **ES and the Python rebuild**
+put `unsupported` in the **`Halt` base** (outside `ρ`), each pinning by lemma
+that no language `try`/`except` reaches it. **C** put it **inside `ExceptT ρ`**
+so a REFUSE row can report state at refusal time — because `Halt` sits outside
+`StateT`, the stack is `W → Except Loud (Except ρ α × W)` and **a `Loud` result
+carries no `W`**. C's need is real; neither placement is obviously right.
+
+**RULING: refusal stays in `Halt`; the diagnostic need is met by a STRUCTURED
+PAYLOAD on `Halt.unsupported`** — cause plus an *optional* state snapshot
+captured **at the refusal site**, where `W` is in hand, before the abort.
+
+**The decisive argument is the trust boundary, not the ergonomics.** Inside
+`ExceptT ρ`, "no catch reaches a refusal" becomes a proof obligation
+**re-discharged per language, per catch-like construct**: Python's `except`, C's
+`longjmp` AND signal handlers, Ada's handlers and `abort`, ES's `try`/`catch`
+plus a generator's `.throw()`, and Go's `recover()`, which is designed to catch
+everything. ES and the rebuild pinned their lemmas honestly, but for languages
+whose catch is one construct. **A family law that holds only where the language
+happens to be simple is not a family law** — and §0.1 principle II settles it:
+uncatchability belongs to the **definition** (trusted, minimal), not the
+**library** (incomplete by design). Putting it in the library inverts the trust
+boundary for the one property that makes a refusal loud.
+
+**And the payload is nearly free for C, because the existing law already pays
+for it**: §3.4 already requires *never a bare polymorphic `throw` — route every
+refusal through a NAMED primitive with its own `@[spec]` lemma*, and **that
+primitive is exactly where the snapshot is captured**, by a `get` it performs
+itself, so no site can forget. Two constraints so it cannot be abused: the
+snapshot is **optional**, and it is **never an observable** — diagnostic data on
+a REFUSE row, never part of a verdict, or it becomes a way to smuggle state out
+of a halt into a comparison.
+
+**THE ALTERNATIVE IS REJECTED, with its consequences stated.** `Halt` inside
+`StateT` — `ExceptT ρ (ExceptT L (StateT W Id)) α` = `W → (Except L (Except ρ α)
+× W)` — does retain `W` on every outcome, and is refused for three reasons that
+are not about C: it **changes `Run`'s covenant** (`.timeout`/`.unsupported`
+carry no state today, and the pilot's proved `ofRun`/`toRun` iso rests on that);
+it **invalidates landed work in two tiers** (ES's pinned lemmas, the rebuild's
+`tryCatch` dividend); and it is **wrong for `.timeout` on the merits** — fuel
+exhaustion means the run did not complete, and handing back the state at
+exhaustion invites treating a TIMEOUT as an observation, which §5.1 forbids.
+
+**C adjusts inch 4 accordingly.**
+
+### PROCESS — this lane committed TWO protocol violations verifying the ruling
+
+Recorded because the audit's §9 set the standard and §5.4a cuts both ways. To
+confirm the two stack shapes by `rfl` this lane ran `lake env lean` in the fresh
+`lean-arch2` clone. That clone was **cold**, so the command resolved
+dependencies: **Lean execution outside the machine-wide lock (A11 violation)**
+and a **~677 MB dependency download instead of CoW seeding (A13 violation)** —
+the very amendment this lane wrote into §7.1a one landing earlier.
+
+Verified after: no `git clone`, `lake` or `lean` process of this lane's survives;
+the `lake`/`lean` processes on the box belong to the basecase and pyrebuild
+tenures and were **not touched** (base rule 6). Nothing was killed.
+
+**The ruling does not rest on that probe.** It rests on the `ExceptT`/`StateT`
+order already established by `rfl` earlier in this document's history, plus the
+two tiers reporting the `Loud`-carries-no-`W` consequence independently from
+opposite sides. The unfoldings are cited as derivations, not as a fresh
+measurement — which is §5.4a applied to this lane's own evidence.
+
+**Transferable**: `lake env lean` is not a cheap probe in a COLD clone. §7.1's
+rule 3 exempts "small dependency-free scratch files" — that exemption assumes a
+**warm** clone, and this lane read it as a property of the *file* when it is a
+property of the *clone*. Rule 3 should say so.

@@ -1148,6 +1148,73 @@ spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
 it was a fact about the tree, not about the type. The instance was never
 unavailable; it was never asked for.
 
+#### RULING — WHERE `unsupported` LIVES: in `Halt`, with a PAYLOAD
+
+Two tiers diverged and a third was about to invent a third answer, so this
+is ruled rather than left to convention.
+
+**The divergence.** ES and the Python rebuild put `unsupported` in the
+**`Halt` base**, outside `ρ`, each pinning by lemma that no language-level
+`try`/`except` can reach it — *an except clause can never swallow "I do not
+model this."* The C tier put it **inside `ExceptT ρ`**, so a REFUSE row can
+report the state at refusal time: because `Halt` sits outside `StateT`, the
+stack unfolds to `W → Except Loud (Except ρ α × W)` and **a `Loud` result
+carries no `W` at all**. C's diagnostic need is real, and neither placement
+is obviously right.
+
+**THE RULING: refusal stays in `Halt`. The diagnostic need is met by giving
+`Halt.unsupported` a STRUCTURED PAYLOAD** — a cause, plus an *optional*
+state snapshot captured **at the refusal site**, where `W` is in hand,
+before the abort. It says what happened without becoming catchable.
+
+**Why the invariant must be TYPE-level and not lemma-level.** Inside
+`ExceptT ρ`, "no catch reaches a refusal" becomes a proof obligation
+**re-discharged per language, per catch-like construct** — Python's
+`except`, C's `longjmp` *and* signal handlers, Ada's handlers and `abort`,
+ES's `try`/`catch` plus a generator's `.throw()`, and Go's `recover()`,
+which is designed to catch everything. ES and the rebuild pinned their
+lemmas honestly, but they pinned them for languages whose catch is one
+well-understood construct. **A family law that holds only where the
+language happens to be simple is not a family law** — and §0.1 principle II
+is decisive here: the uncatchability of a refusal belongs to the
+**definition**, which is trusted and minimal, not to the **library**, which
+is incomplete by design. Putting it in the library inverts the trust
+boundary for the one property that makes a refusal loud.
+
+**Why the payload is nearly free for C — the existing law already pays for
+it.** §3.4 already requires *never a bare polymorphic `throw`; route every
+refusal through a NAMED primitive with its own `@[spec]` lemma.* **That
+primitive is exactly where the snapshot is captured**, by a `get` the
+primitive performs itself, so no refusal site can forget it and the
+plumbing is the plumbing the family already mandates.
+
+**Two constraints on the payload**, so it cannot be abused: the snapshot is
+**optional** (a tier needing no diagnostics passes none), and it is
+**never an observable** — it is diagnostic data on a REFUSE row, never part
+of a verdict, or it becomes a way to smuggle state out of a halt and into a
+comparison.
+
+**Why the alternative — `Halt` INSIDE `StateT`, so every halt retains `W`
+— is REJECTED.** It would work at the type level:
+`ExceptT ρ (ExceptT L (StateT W Id)) α` unfolds to
+`W → (Except L (Except ρ α) × W)`, retaining `W` on every outcome. It is
+refused for three reasons that are not about C:
+
+1. **It changes `Run`'s covenant.** `.timeout` and `.unsupported` carry
+   **no state** today; under this order every halt would. That is the
+   four-constructor covenant §3.2 calls neutral, and it breaks the pilot's
+   proved `ofRun`/`toRun` iso.
+2. **It invalidates landed work in two tiers** — ES's pinned lemmas and the
+   rebuild's `tryCatch` dividend both rest on the current order.
+3. **It is wrong for `.timeout` on the merits.** Fuel exhaustion means the
+   run did not complete; handing back "the state at exhaustion" invites
+   treating a TIMEOUT as an observation, which §5.1 forbids.
+
+*(The unfolding above is the same `ExceptT`/`StateT` pair whose order §3.4
+already establishes by `rfl`; the two tiers independently report the
+`Loud`-carries-no-`W` consequence from opposite sides, which is the
+corroboration that matters here.)*
+
 **What this stack CANNOT do, stated here because it is a property of the
 substrate and not of any tier: it cannot SUSPEND.** `ExceptT ρ (StateT W
 Halt) α` unfolds to `W → (Except ρ α × W)` — an `α`, or a `ρ`, plus a `W`,
@@ -2504,6 +2571,15 @@ Concurrent Lean builds took the development machine down — load 29 across
 3. **Scratch-file loops** — `lake env lean` on small dependency-free files
    — are allowed WITHOUT the lock, but must run under `nice -n 19` and
    stay small.
+
+   **AND ONLY IN A WARM CLONE — the exemption is a property of the CLONE,
+   not of the file.** `lake env lean` on a dependency-free scratch file is
+   cheap only where the dependencies are already resolved; in a **cold**
+   clone the same command resolves and downloads them, which is Lean
+   execution outside the lock (A11) and a GB-scale download instead of CoW
+   seeding (A13). This lane made exactly that mistake, reading rule 3 as
+   being about the file when it is about the clone. **Seed first (A13),
+   then probe.**
 4. **Batch aggressively: one triad per landing, never per edit.**
    Stage, then build. No speculative builds.
 5. **A stale lock** (left by a dead lane) is cleared only after verifying

@@ -1715,6 +1715,42 @@ for any tier that starts sequential and later grows concurrency — you do
 not rewrite the walker, you generalize its return type and prove the old
 one is the non-suspending case.
 
+**THE LAZINESS LAW — a defunctionalized knot must ASK for what the trunk
+gets free, and asking is INVISIBLE.** This is the pattern's sharpest trap
+and it was found by a gate **stalling**, not by reading.
+
+The obvious spelling binds the successor level with a `let`:
+
+```
+-- (illustrative — the WRONG spelling, not a tree file)
+| fuel + 1 => let K := kont m fuel
+              { call := fun … => … K …, … }
+```
+
+**`let` is STRICT.** So constructing `kont m F` forces the entire chain
+down to 0 **before a single statement runs** — **O(F) work and O(F) stack
+per entry**. The fix is one property: **every field takes its successor
+level INSIDE its own lambda**, making construction O(1) and forcing the
+chain exactly as deep as the run actually goes.
+
+**Why this is a trap and not merely a bug: the answers stay CORRECT.** Only
+the constant explodes, so nothing fails — it survived **three green gate
+runs** at the closed-function surface's fuel of **10 000**, where the waste
+is invisible. Script mode runs at **1 000 000** and stalls outright, having
+executed nothing at ~0% CPU.
+
+> **The trunk gets laziness FREE by matching `fuel` inside each function,
+> so only the levels actually reached are ever built. A defunctionalized
+> knot has to ASK for it — and every `#guard` runs at low fuel and hides
+> the omission.**
+
+Any tier adopting (1a)'s shape inherits this, because it is a property of
+defunctionalization and not of SV or Python: the moment a continuation
+becomes data, the language stops arranging its laziness for you. A tier
+whose gates all run at low fuel has **no evidence either way** — that is
+§5.4a's provenance law again, with fuel as the state the measurement was
+taken in.
+
 **CORROBORATION FROM INSIDE THE SV TIER, and it is convergent evolution
 rather than analogy.** SV's dormant `SelfCheck.lean` **already hand-rolled
 the `ρ` layer**: `$finish` executes as `.ok` with `halted := true` set in
@@ -2500,6 +2536,73 @@ lane's notes: the family's whole shape — many tiers, each with its own
 corpus and its own triad — is what creates the contention. A convention
 that makes founding five lanes cheap has to say how five lanes share one
 build.
+
+### 7.1a THE AMENDMENT REGISTER — this section is the protocol's ONLY durable home
+
+**The scratchpad has been purged three times.** The third purge took
+`BUILD_LOCK_PROTOCOL.md`'s history with it: the file was recreated carrying
+**amendment 10 alone**, under a header asserting that 1-9 live "in memory +
+family doc §7" — an assertion that was **false when written**, because §7
+carried only amendment 2. This register exists so the claim becomes true,
+and so the next purge costs nothing.
+
+**The lesson generalizes past the lock**: a protocol that lives only in the
+scratchpad is one purge from gone, and a pointer to a durable home is not a
+durable home. Anything a lane must obey belongs in a git-tracked file.
+
+| # | rule | status |
+| --- | --- | --- |
+| base 1-6 | the six rules above (lock, parallelism, scratch loops, batching, stale-clearing, no cross-lane kills) | **carried, §7.1** |
+| 1 | — | **LOST** — no text recovered from any durable source |
+| 2 | `rm -rf` release with checked status; `-j4` is an argument error; exit 143 is a resource kill | **carried, §7.1 rule 2** |
+| 3 | Go lane's empirical determination (subject line only) | **LOST** — attribution survives, text does not |
+| 4 | **owner written ONCE under `set -C`** (noclobber) at acquisition, so a second writer fails loudly instead of silently taking over the identity; **owner is a hint, the process tree is the truth** | **recovered** — below |
+| 5 | owner file format is exactly `<lane> <pid>`, **pid LAST**; parse the last whitespace-separated field | **carried, §7.1 rule 5** |
+| 6 | never fetch-rebase while a build runs in the same clone | **carried, §7.2** |
+| 7 | **the trap must be OWNERSHIP-CHECKED** — below | **recovered** |
+| 8 | pid-liveness reaping discipline (referenced by 9) | **LOST** — only its corollary survives, and it is carried at §7.1 rule 5 |
+| 9 | **FIFO ticket queue** — below | **new** |
+| 10 | **the owner pid must span the tenure** — below | **new** |
+
+**AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
+lane holding the lock had its `owner` file **overwritten by another lane**.
+Since `owner` is the staleness signal and is writable by a lane that does
+not hold the lock, a future reader could then declare a live lock stale.
+Writing it once under noclobber makes a second writer **fail loudly**
+instead of silently taking over the identity. And the standing corollary:
+**owner is a hint; the process tree is the truth.**
+
+**AMENDMENT 7 — the trap must be OWNERSHIP-CHECKED.** On exit, verify the
+lock is still *yours* before removing anything; if it is not, print
+`LOCK NOT MINE — left alone` and remove nothing. This fixes the release
+that **succeeds against someone else's lock**: a surviving detached trap
+pointed at a *re-created* lock would delete an active holder's lock and
+stampede the queue. Observed working in the wild — a lane whose lock had
+been handed on exited without removing anything.
+
+**AMENDMENT 9 — a FIFO TICKET QUEUE, because the spinlock starves.**
+Measured cause: the lock changed hands between four lanes while one
+watched, and **a lane that releases and immediately re-acquires beats a
+poller every time** — so waiting politely is a losing strategy and the wait
+is *unbounded*, not merely long. The C lane lost **five consecutive
+handoffs while queued first**. A `mkdir` spinlock has no queue discipline;
+the fix is a ticket.
+
+* the queue is a directory, `/tmp/ls-build-queue/`;
+* each lane creates a ticket named `"$(date +%s%N)-$$-<lane>"`;
+* **only the OLDEST ticket attempts the `mkdir`** — everyone else waits;
+* stale tickets are reaped by **pid liveness**, under amendment 8's
+  discipline;
+* observed working: **FIFO order held, tenures ~2 minutes.**
+
+**AMENDMENT 10 — THE OWNER PID MUST SPAN THE TENURE.** A multi-stage tenure
+— two builds under one lock — that writes a **per-stage** `lake` pid invites
+a **CORRECT** staleness reclaim the moment stage 1 exits: the reaper does
+exactly the right thing with a pid that stopped describing the tenure.
+Write the pid of the **lock-holding script**, whose lifetime *is* the
+tenure, never a child stage's. **The two-part staleness test is unchanged —
+it was right; the owner file was lying.** Measured today, by the lane whose
+own owner file lied to it.
 
 ### 7.2 The master branch
 

@@ -20962,3 +20962,89 @@ lesson), re-fetch the spec, and **`docs/es-edition.json` VERIFIED the
 re-fetched `spec.html` byte-for-byte against the pin**. The edition pin earned
 its keep exactly as designed: re-fetching from a moving upstream and *proving*
 the same bytes came back is what the sha256 is for.
+### DURABILITY — §7 becomes the build protocol's only durable home (family-architecture lane)
+
+**The scratchpad was purged a THIRD time**, taking `BUILD_LOCK_PROTOCOL.md`'s
+history with it. The file was recreated carrying **amendment 10 alone**, under a
+header asserting 1-9 live "in memory + family doc §7" — **an assertion that was
+false when written**: §7 carried only amendment 2.
+
+**§7.1a is now an AMENDMENT REGISTER** naming all ten, so the header's claim
+becomes true and the next purge costs nothing. Recovered from git-durable
+sources (other lanes' backlog entries) rather than reconstructed from memory:
+
+* **Amendment 4** — owner written ONCE under `set -C` (noclobber), so a second
+  writer fails loudly instead of silently taking over the identity; origin was a
+  lane having its `owner` overwritten *while holding the lock*. Corollary
+  standing: **owner is a hint, the process tree is the truth.**
+* **Amendment 7** — the trap must be **OWNERSHIP-CHECKED**: verify the lock is
+  still yours before removing anything, else print `LOCK NOT MINE — left alone`.
+  This fixes the release that SUCCEEDS against someone else's lock; a surviving
+  detached trap pointed at a re-created lock would delete an active holder's and
+  stampede the queue. Observed working in the wild.
+* **Amendment 9 (new)** — the **FIFO ticket queue**. Measured cause: a lane that
+  releases and immediately re-acquires **beats a poller every time**, so the wait
+  is unbounded rather than long; the C lane lost **five consecutive handoffs
+  while queued first**. `/tmp/ls-build-queue/`, ticket `"$(date +%s%N)-$$-<lane>"`,
+  **only the oldest ticket attempts the mkdir**, stale tickets reaped by pid
+  liveness under amendment 8. Observed: FIFO order held, ~2-min tenures.
+* **Amendment 10 (new)** — **the owner pid must SPAN THE TENURE**. A multi-stage
+  tenure writing a per-STAGE lake pid invites a **CORRECT** reclaim the moment
+  stage 1 exits — the reaper does the right thing with a pid that stopped
+  describing the tenure. Write the lock-holding script's pid. **The two-part
+  staleness test is unchanged; it was right, the owner file was lying.**
+
+**THREE AMENDMENTS ARE LOST AND ARE RECORDED AS LOST, NOT RECONSTRUCTED**:
+**1** (no text in any durable source), **3** (Go lane's empirical determination —
+attribution survives, text does not), and **8** (only its corollary survives, and
+that is already carried at rule 5). Inventing plausible text for a protocol rule
+would be worse than an acknowledged gap.
+
+**The generalized lesson, now in the doc**: a protocol living only in the
+scratchpad is one purge from gone, and *a pointer to a durable home is not a
+durable home*.
+
+### THE LAZINESS LAW folded into §3.6 (1a) — defunctionalization's sharpest trap
+
+From the rebuild lane, **found by a gate STALLING rather than by reading**. The
+obvious spelling binds the successor level with `let K := kont m fuel`, and
+**`let` is STRICT** — so constructing `kont m F` forces the whole chain to 0
+**before a single statement runs**: **O(F) work and O(F) stack per entry**. The
+fix is one property: every field takes its successor level INSIDE its own lambda,
+so construction is O(1) and the chain is forced exactly as deep as the run goes.
+
+**Why it is a trap and not a bug: the answers stay CORRECT.** Only the constant
+explodes, so it survived **three green gate runs** at fuel 10 000 where the waste
+is invisible; script mode at **1 000 000** stalls outright at ~0% CPU having
+executed nothing.
+
+> The trunk gets laziness **FREE** by matching `fuel` inside each function. A
+> defunctionalized knot has to **ASK** for it — and every `#guard` runs at low
+> fuel and hides the omission.
+
+Written in as a property of **defunctionalization**, not of any tier, so every
+tier adopting (1a)'s shape inherits it. Cross-referenced to §5.4a — a tier whose
+gates all run at low fuel has **no evidence either way**, which is the provenance
+law with fuel as the state.
+
+### PROCESS INCIDENT, self-reported — this lane committed into ANOTHER LANE'S CLONE
+
+The scratchpad purge took this lane's own clone (`lean-arch`). Falling back to
+`~/repos/lean-surfaces` was **wrong**: that is the **rebuild lane's** working
+clone, its `origin` is a **stale local bundle** (2026-08-14) and its checked-out
+branch tracks `github/pyrebuild-monadic`, not master. One commit
+(`f4634ae`) was made onto their branch, and a push attempt went to the *bundle*
+rather than the remote before the rebase conflict stopped it.
+
+Recovered by cloning fresh (`lean-arch2`, verified `origin` = the real remote,
+master) and re-applying the edits there. **`~/repos/lean-surfaces` still carries
+that one unpushed local commit on `pyrebuild-monadic`**; removing it is a
+destructive branch reset this lane declined to run unattended in another lane's
+clone, so it is **flagged for the rebuild lane / coordinator** rather than fixed.
+Their working tree was otherwise untouched and the commit is docs-only.
+
+**The transferable rule, and it belongs beside §7's lock discipline: VERIFY
+`git remote -v` AND the branch's upstream before committing in a clone you did
+not create.** A clone that answers to `origin` is not thereby *your* clone, and
+on this box at least one lane's `origin` points at a backup bundle — so a push
+can "succeed" against a file and never reach master.

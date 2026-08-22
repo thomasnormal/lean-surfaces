@@ -862,7 +862,10 @@ established platform would be describing something that does not exist.
 13. **Component #3 — the concurrency pattern** (§3.6). Schedule as an
     explicit parameter, executable counterexample schedules, the DRF-SC
     fence, three proof-burden tiers. One pattern, one citation per
-    language.
+    language. **The monad carries one process's step; `W` carries the
+    concurrency** — a language whose processes suspend defunctionalizes the
+    continuation into `W` (§3.6 (1a)), because the stack has no suspension
+    case and cannot be given one.
 
 **PER-LANGUAGE — never shared, and the C tier measured why for the first
 three:**
@@ -923,6 +926,15 @@ a `WPMonad` with **zero instances written**. That **retires the 2026-08-13
 spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
 it was a fact about the tree, not about the type. The instance was never
 unavailable; it was never asked for.
+
+**What this stack CANNOT do, stated here because it is a property of the
+substrate and not of any tier: it cannot SUSPEND.** `ExceptT ρ (StateT W
+Halt) α` unfolds to `W → (Except ρ α × W)` — an `α`, or a `ρ`, plus a `W`,
+and no third case. `StateT` is run-to-completion. A language whose
+processes pause mid-body must defunctionalize, putting the continuation in
+`W` and making suspension a return value; **§3.6 (1a) is the pattern and
+SystemVerilog is the worked example.** A tier that plans a suspension
+*effect* is planning something the types do not admit.
 
 Two design constraints make this work and both are load-bearing:
 
@@ -1307,6 +1319,61 @@ changes. Correctness is then the ordinary shape:
 
 The ∀ lives at theorem level, where this family already puts every
 resolution of nondeterminism.
+
+#### (1a) `SemM` CANNOT SUSPEND — and the pattern survives only because the
+process table lives in W
+
+**The claim above is true and its stated reason was wrong**, which the SV
+lane's scheduler-first assessment found by trying to build on it. The
+sentence *"nothing about the monad changes"* invites the reading that **the
+monad carries the concurrency. It does not. `W` does.**
+
+**The structural fact, verified by `rfl` on this substrate:**
+`ExceptT ρ (StateT W Halt) α` unfolds to `W → (Except ρ α × W)`. A
+computation therefore returns **an `α`, or a `ρ`, plus a `W` — and there is
+no third case.** `StateT` is **run-to-completion**: there is nowhere in the
+monad to put *"paused here, resume at this point."* No arrangement of these
+transformers gains a suspension case, because none of them has one.
+
+So any language whose processes **pause mid-body** — SystemVerilog's
+`@`/`#`/`wait`, and eventually goroutines blocked on a channel — cannot
+express suspension as an *effect*. It must **DEFUNCTIONALIZE**:
+
+* **the continuation becomes DATA in `W`.** SV's form is
+  `ProcState.residual`: the remaining statement list. This is **sound
+  because suspension points are SYNTACTIC** — a process can only pause at a
+  construct the grammar names, so "where it paused" is a position in the
+  program text and not an arbitrary closure. A language that could suspend
+  at an arbitrary point would need a real continuation and this trick would
+  not be available.
+* **the interpreter becomes a SCHEDULER LOOP** over the process table,
+  rather than a walk down one process's body.
+* **suspension is a RETURN VALUE, not an effect** — the step function
+  answers *"finished"* or *"suspended, with this residual"*, and the
+  scheduler decides who runs next.
+
+**The worked example, and its shape is the reusable part.** SV's
+`stepProcess` **subsumes `execStmts` by one field** plus an
+adequacy-shaped lemma: the ordinary statement walker is the special case
+where nothing suspends, and the lemma says so. That is the migration path
+for any tier that starts sequential and later grows concurrency — you do
+not rewrite the walker, you generalize its return type and prove the old
+one is the non-suspending case.
+
+**What this costs the pattern: nothing — and that is the test it passed.**
+Schedule-as-parameter survives, `fuelMono` survives, the ∃-fuel form
+survives, `mvcgen` survives. But they survive **because the process table
+is World data**, so the scheduler loop is an ordinary state-threading
+program over it. Stated precisely: **the monad carries one process's step;
+`W` carries the concurrency.** A tier that reads §3.6 as "the monad handles
+threads" will design a suspension effect, discover it cannot exist, and pay
+for the discovery.
+
+**For the Go tier specifically: goroutine parking takes this exact shape**
+— a blocked goroutine's continuation becomes data in `W`, the runtime
+becomes a scheduler loop, and parking is a return value. Go's charter
+should **cite this section rather than re-derive it**; the only thing that
+differs is which syntactic constructs are the suspension points.
 
 **(2) THE COUNTEREXAMPLE IS FIRST-CLASS, and this is a capability worth
 naming.** Because the interpreter is deterministic per schedule, a

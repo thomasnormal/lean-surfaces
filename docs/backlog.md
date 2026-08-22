@@ -14819,6 +14819,51 @@ mode am I?" from its own bytes is one whose consumers will disagree about it —
 the same failure `language_version` fixes for editions and `profile_id` for the
 C ABI.
 
+### FAMILY FINDING from the SV scheduler-first assessment — `SemM` CANNOT SUSPEND
+
+Found by the SV lane trying to BUILD on §3.6, which is the only way this class of
+error surfaces. Verified here by `rfl` on the substrate before folding in, since
+`SemM` is this document's own specification.
+
+**The structural fact.** `ExceptT ρ (StateT W Halt) α` unfolds to
+`W → (Except ρ α × W)`: a computation returns **an `α`, or a `ρ`, plus a `W` —
+and there is no third case.** `StateT` is run-to-completion; there is nowhere in
+the monad to put *"paused here, resume at this point"*, and no rearrangement of
+these transformers gains a suspension case because none of them has one.
+
+**The correction to §3.6, and it is to my framing.** Piece (1) said *"nothing
+about the monad changes"*, which invites the reading that **the monad carries the
+concurrency. It does not — `W` does.** The schedule-as-parameter claim SURVIVES
+the test, but it survives **because the process table is World data**, so the
+scheduler loop is an ordinary state-threading program over it. Stated precisely
+and now written in: **the monad carries one process's step; `W` carries the
+concurrency.** A tier reading the old wording would design a suspension effect,
+discover it cannot exist, and pay for the discovery.
+
+**DEFUNCTIONALIZATION is the pattern**, added as §3.6 (1a): the continuation
+becomes DATA in `W` (SV: `ProcState.residual`, the remaining statement list),
+the interpreter becomes a SCHEDULER LOOP over the process table, and suspension
+is a RETURN VALUE rather than an effect. **Sound because suspension points are
+SYNTACTIC** — a process pauses only at a construct the grammar names, so "where
+it paused" is a position in the program text, not an arbitrary closure. A
+language that could suspend anywhere would need a real continuation and this
+trick would not be available; that condition is now stated rather than assumed.
+
+**The worked example and its reusable shape**: SV's `stepProcess` **subsumes
+`execStmts` by one field** plus an adequacy-shaped lemma — the ordinary
+statement walker is the non-suspending special case, and the lemma says so.
+That is the migration path for any tier that starts sequential and grows
+concurrency later: generalize the return type, prove the old walker is the
+special case, do not rewrite it.
+
+**GO: cite, do not re-derive.** Goroutine parking takes this exact shape — a
+blocked goroutine's continuation becomes data in `W`, the runtime becomes a
+scheduler loop, parking is a return value. Only the syntactic suspension points
+differ. Go's charter should cite §3.6 (1a).
+
+The constraint is also stated at §3.4, where `SemM` is specified, because it is a
+property of the substrate and not of any one tier.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

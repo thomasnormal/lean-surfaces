@@ -1477,14 +1477,32 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
 
 /-- The fueled operations at each fuel level. `kont m 0` is `Kont.bottom` —
 every operation `.timeout`s — which is what makes fuel exhaustion loud rather
-than wrong, and makes "the rebuild's only `.timeout` source" a checkable claim. -/
+than wrong, and makes "the rebuild's only `.timeout` source" a checkable claim.
+
+**THE KNOT MUST BE BUILT LAZILY, and this is a MEASURED correctness-of-cost
+requirement rather than a style note.** The obvious spelling binds the successor
+level once —
+
+    | fuel + 1 => let K := kont m fuel
+                  { call := fun … => … K …, … }
+
+— and `let` is STRICT, so constructing `kont m F` forces the entire chain down to
+`0` before a single statement runs: **O(F) work and O(F) stack, per entry**. At
+the closed-function surface's fuel of 10 000 that is merely wasteful; at script
+mode's **1 000 000** it stalls outright (measured: one script pinned a runner at
+~0 % CPU for minutes, having executed nothing).
+
+So every field takes its successor level INSIDE its own lambda. Construction is
+then O(1) and the chain is forced exactly as deep as the run actually goes —
+which is the behaviour the trunk gets for free by matching `fuel` lazily inside
+each function, and which a defunctionalized knot has to ask for. -/
 def kont (m : Module) : Nat → Kont
   | 0 => Kont.bottom
   | fuel + 1 =>
-    let K := kont m fuel
     { fuel := fuel
-      call := fun fname args => callInM K m fname args
+      call := fun fname args => callInM (kont m fuel) m fname args
       callClo := fun locals a args => do
+          let K := kont m fuel
           let w ← get
           match Heap.get? w.heap a with
           | some (.cell _) => refuse cellInternal
@@ -1494,9 +1512,10 @@ def kont (m : Module) : Nat → Kont
           -- Constant message on purpose: `typeNameH` here whnf-storms symbolic
           -- proofs (the recorded H2 finding), and the CLASS is what is compared.
           | _ => raisePy (.typeError "'dict' object is not callable")
-      dictItems := dictItemsAt K m
-      kwArgs := kwArgsAt K m
+      dictItems := fun ks vs => dictItemsAt (kont m fuel) m ks vs
+      kwArgs := fun kws => kwArgsAt (kont m fuel) m kws
       whileLoop := fun test body orelse => do
+          let K := kont m fuel
           let t ← evalOpen K m test
           let b ← truthyM t
           if b then
@@ -1506,6 +1525,7 @@ def kont (m : Module) : Nat → Kont
             | .ret v => pure (.ret v)
           else execOpenList K m orelse
       forSeq := fun target xs body =>
+          let K := kont m fuel
           match xs with
           | [] => pure .next
           | x :: rest => do
@@ -1515,6 +1535,7 @@ def kont (m : Module) : Nat → Kont
               | .brk => pure .next
               | .ret v => pure (.ret v)
       forList := fun target a i body => do
+          let K := kont m fuel
           -- THE LIVE INDEX CURSOR: the referent is re-read EVERY step, so body
           -- mutation, growth and `pop`-shrinkage are observed exactly as
           -- CPython's listiterator observes them.
@@ -1535,11 +1556,11 @@ def kont (m : Module) : Nat → Kont
           | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
           | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
           | Option.none => refuse danglingMsg
-      stepIter := stepIterAt K
-      execGen := execGenAt K m
-      forGen := forGenAt K m
-      drainIter := drainIterAt K
-      anyAllIter := anyAllIterAt K }
+      stepIter := fun a => stepIterAt (kont m fuel) a
+      execGen := fun k => execGenAt (kont m fuel) m k
+      forGen := fun t a b => forGenAt (kont m fuel) m t a b
+      drainIter := fun a => drainIterAt (kont m fuel) a
+      anyAllIter := fun a b => anyAllIterAt (kont m fuel) a b }
   termination_by structural fuel => fuel
 
 

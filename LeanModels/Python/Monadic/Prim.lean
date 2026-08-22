@@ -136,6 +136,11 @@ structure Kont where
   through the record breaks the recursive knot and lets the walk be an ordinary
   structural definition below the block. -/
   dictItems : List Expr → List Expr → SemF (List (RVal × RVal))
+  /-- `f(…, k=v, …)` — the call site's KEYWORD values, paired back with their
+  names. Here for the SAME reason as `dictItems`: `kwargs.toList.map (·.2)` is a
+  function APPLICATION, not a projection of the call node, so a block member
+  cannot recurse on it. The knot boundary pays a third time. -/
+  kwArgs : List (String × Expr) → SemF (List (String × RVal))
   /-- `while test: body else: orelse` — the non-structural statement. -/
   whileLoop : Expr → List Stmt → List Stmt → SemF RFlow
   /-- `for target in xs: body` over an already-materialized value sequence. -/
@@ -165,6 +170,7 @@ def Kont.bottom : Kont where
   call        := fun _ _   => exhausted
   callClo     := fun _ _ _ => exhausted
   dictItems   := fun _ _   => exhausted
+  kwArgs      := fun _     => exhausted
   whileLoop   := fun _ _ _ => exhausted
   forSeq      := fun _ _ _ => exhausted
   forList     := fun _ _ _ _ => exhausted

@@ -151,3 +151,81 @@ nothing, takes **no tenure**, and owes exactly `python3 tools/docs_check.py`
 Lean sketches in the cookbook carry no path markers, so they are
 `illustrative` by the marker convention rather than checked against a tree
 they do not live in. **No Lean was executed.**
+
+---
+
+## 2026-08-22-qol-3 — `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it
+
+The expensive part of a red is almost never the red. A stale `olean` cost one
+lane **roughly two hours and survived four plausible diagnoses** (§L62). A
+torn-tree rebase cost the Go lane a hunt for four constants that were on
+master all along (§7.2). Every one of those has a **literal string in the
+log**, and every one is written down in this repository — just not next to
+the log. The decoder puts the record next to the log: give it a build or
+elaboration log (file or stdin) and it annotates the lines it recognizes with
+**CAUSE, FIX, and THE LAW'S HOME**.
+
+The home is the point. An annotation with a pointer can be checked, and it
+does not become the fourteenth copy of a rule — which is the defect
+`docs/duplication-audit.md` measured across the census contract.
+
+### The signature set, and what it is worth
+
+22 signatures. The ones that pay for the tool are the ones that **read
+cleaner than the truth**, per §5.4a:
+
+* `axioms-clean-lie` — *"does not depend on any axioms"* printed for a
+  declaration whose **STATEMENT** failed. §0.1 II(a)'s mode table is carried
+  in the annotation: three failure modes print `[sorryAx]` honestly and only
+  the fourth lies.
+* `whnf-timeout` — **four** distinct recorded causes wear this one face, so
+  the annotation is a *discriminator ladder*, cheapest first: `#check @thm`
+  (the two-hour stale-olean case), then a fresh abstract frame, then symbolic
+  fuel, then altitude lemmas — **the budget knob is the wrong knob.**
+* `unknown-constant` — a torn tree or a stale olean, never evidence that
+  master is broken. It discharges nothing and convicts nothing.
+* `resource-kill` (137/143), `unknown-option`, and the whole-log verdict
+  `build-did-not-happen` — the three ways a log can carry **no line the
+  failure greps look for**, which is why the tool asserts success
+  **positively** and says so when neither a success line nor an error line is
+  present.
+
+The rest: `mvcgen-bare-false` (the splitter dropped the discriminant — and
+`+jp` may be the source of the lossiness rather than its cure),
+`lock-release-failed`, `worker-sigtrap`, `omega-no-constraints` (ascription
+does **not** unbrand, and the restated hypothesis prints identically — *no
+visible difference is the tell*), `max-rec-depth` (three causes, and raising
+the option is right for exactly one), `vacuous-match`, `kernel-type-mismatch`,
+`doc-comment-before-command`, `universe-metavariables`, `split-failed`,
+`spec-proof-twin`, `py-loop-context`, `sorry-warning`, `census-drift`,
+`null-provenance`, `queue-gave-up`, `seeded-clone-identity`.
+
+### One signature the dispatch asked for is NOT here
+
+**`E999` on a generated artifact does not exist in this repository.** It was
+searched for properly before being dropped: `grep` over the working tree,
+`git log -S` and `-G` over all branches, and a `git grep` sweep over 400
+revisions — **zero hits at any revision** — and the repo has no numbered-code
+linter that could emit one (`docs_check.py` and `es_lean_lint.py` are the
+only linters, and neither emits `E`-codes). Recorded as an empty row rather
+than shipped as a plausible rule: a decoder that guesses is one more thing to
+distrust.
+
+### Honest misses are LOUD
+
+When nothing matches, the tool says so and refuses to be read as a clean
+bill: *"A decoder that says nothing must not be read as a decoder that found
+nothing wrong."* That is §5.3's *VACUOUS is not a verdict* pointed at this
+instrument, and it is the reason the no-match branch is in the self-test.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **51 ok, 0 failed** — **every one of the 22
+signatures EXECUTED against its own fixture** through the same matcher the
+live path uses (a fixture is the real log line wherever the record quoted
+one), plus a completeness check that each carries all four annotation fields,
+a benign progress line that must fire **nothing**, a green log, the silent-log
+whole-log verdict, and a multi-line count that must not dedupe. Live path
+exercised on a mixed log, a green log, an unrecognized error, `--list`,
+`--explain` and its refusal. **No Lean was executed** — the tool reads text,
+so it is safe outside a tenure (A11).

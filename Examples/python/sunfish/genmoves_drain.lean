@@ -323,4 +323,71 @@ lowered generator EXPRESSION. All three landed at §L8
 cannot ENTER a `forList` loop whose iterable allocates — and each is gated on
 the shipped program in `Examples/python/sf_order/proof.lean`. -/
 
+
+/-! ## The drain as a JUDGMENT, and its STEP-INDEXED reading (2026-08-22)
+
+`gen_moves_drains_ref` above concludes a raw `∃ w' t, ∀ F ≥ t, … ∧ …`. Its
+second conjunct IS `IterDrains`, but not in those words — and until it is, the
+inverses next door (`IterDrains.uncons`/`.exhausts`, VCGen.lean §L6) cannot be
+applied to it. This bridge is that rename, and it is what unblocks the two
+consumers that were waiting: R2a's `hdrain` (order_genexp.lean §10) and R3c's
+interpreter half, neither of which can name a concrete round list without a
+per-round `IterSteps` on this generator.
+
+**The census, before the statement** (the exit law, and the drain law's question
+asked and answered): `drainIter` is a FULL drain, not a short-circuiting one, so
+its out-world IS a function of its inputs and the world may be written into the
+conclusion. What is NOT uniform is the per-STEP world, and the numbers below are
+why `uncons` hands the intermediate world over existentially rather than
+computing it. -/
+
+/-- **`gen_moves_drains_ref`, as the judgment the loop rules consume.** -/
+theorem gen_moves_iterDrains (w : World) (dad : Addr)
+    (b : String) (score ep kp : Int) (wc0 wc1 bc0 bc1 : Bool) (rf : Nat)
+    (ms : List Ref.RefMove)
+    (hg : Env.lookup w.globals "directions" = some (.ref dad))
+    (hdirs : Heap.get? w.heap dad = some dirsObj)
+    (href : Ref.refMoves b.toList wc0 wc1 ep kp rf = .ok ms) :
+    ∃ w', IterDrains sunfish (gmWorld w (posOf b score wc0 wc1 bc0 bc1 ep kp))
+      w.heap.size (ms.map moveVal) w' := by
+  obtain ⟨w', t, ht⟩ := gen_moves_drains_ref w dad b score ep kp wc0 wc1 bc0 bc1 rf ms
+    hg hdirs href
+  exact ⟨w', IterDrains.of_drain (ht t (Nat.le_refl t)).2⟩
+
+/-! ### The per-step worlds, MEASURED on the opening board
+
+Twenty yields and then exhaustion, with the heap after each step. -/
+
+private def stepTrace (n : Nat) : Option (Nat × List (Nat × Bool)) :=
+  match callIn sunfish 64 (initWorld sunfish) "Position.gen_moves" #[posH 0] with
+  | .ok w0 (RVal.ref a) =>
+    let rec go : Nat → World → List (Nat × Bool) → List (Nat × Bool)
+      | 0, _, acc => acc.reverse
+      | k + 1, w, acc =>
+        match stepIter sunfish 4096 w a with
+        | .ok w' r => go k w' ((w'.heap.size, r.isSome) :: acc)
+        | _ => acc.reverse
+    some (w0.heap.size, go n w0 [])
+  | _ => Option.none
+
+/-! **The steps are NOT uniform, and that is the whole reason `uncons`'
+intermediate world is existential.** From 67 the twenty yields land at
+69, 70, 73, 74, 77, 78, 81, 82, 85, 86, 89, 90, 93, 94, 97, 98, 105, 112, 137,
+144 — deltas of **1 to 25 objects**, because a step runs however much of the
+board scan the next move happens to need. Step 21 reports exhaustion at 148 and
+step 22 repeats it: the drain is idempotent once done. -/
+#guard stepTrace 22 == some (67,
+  [(69, true), (70, true), (73, true), (74, true), (77, true), (78, true),
+   (81, true), (82, true), (85, true), (86, true), (89, true), (90, true),
+   (93, true), (94, true), (97, true), (98, true), (105, true), (112, true),
+   (137, true), (144, true), (148, false), (148, false)])
+
+/-! **And the whole drain is 81 objects** (67 → 148) — §L29's own number for the
+ORDERING LINE's drain, which is the point: the outer genexp yields `(v, m)`
+TUPLES, and a tuple is an immediate value. **The genexp's drain allocates
+nothing of its own; every object it costs is this generator's.** -/
+#guard 148 - 67 == 81
+
+#print axioms gen_moves_iterDrains
+
 end Examples.python.sunfish.genmoves_drain

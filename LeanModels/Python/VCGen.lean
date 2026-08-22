@@ -1705,6 +1705,78 @@ theorem cons {m : Module} {w w₁ w' : World} {a : Addr} {v : RVal}
   rw [drainIter]
   simp only [ht₁ F' (by omega), Run.ok_bind, ht₂ F' (by omega)]
 
+/-! ### The INVERSES — reading a drain back as steps
+
+`nil`/`cons` BUILD a drain out of steps. Every consumer that walks a generator
+one round at a time (`execForGen`, and therefore `GenEmits.forGenRound`) needs
+the other direction, and `IterDrains` is a threshold DEFINITION rather than an
+inductive — so this is a theorem and not a `cases`. It is what lets a
+whole-drain agreement theorem (the shape every generator spec in this tier
+concludes) be consumed by a round-by-round loop rule.
+
+Both go through one fuel: instantiate the threshold once, destructure the
+interpreter's own `match`, and re-introduce with `of_step`/`of_drain`. Nothing
+needs the two sides to agree on a threshold, which is exactly what makes the
+inversion cheap. -/
+
+/-- **A drain that yielded NOTHING is one exhaustion step.** -/
+theorem exhausts {m : Module} {w w' : World} {a : Addr}
+    (h : IterDrains m w a [] w') : IterSteps m w a Option.none w' := by
+  obtain ⟨t, ht⟩ := h
+  have hd := ht (t + 1) (by omega)
+  rw [drainIter] at hd
+  cases hs : stepIter m t w a with
+  | ok w₁ r =>
+    rw [hs] at hd
+    cases r with
+    | none =>
+      simp only [Run.ok_bind] at hd
+      cases hd
+      exact IterSteps.of_step hs
+    | some v =>
+      simp only [Run.ok_bind] at hd
+      cases hdd : drainIter m t w₁ a with
+      | ok w₂ vs => rw [hdd] at hd; simp only [Run.ok_bind] at hd; exact absurd hd (by simp)
+      | exn w₂ e => rw [hdd] at hd; simp at hd
+      | timeout => rw [hdd] at hd; simp at hd
+      | unsupported msg => rw [hdd] at hd; simp at hd
+  | exn w₁ e => rw [hs] at hd; simp at hd
+  | timeout => rw [hs] at hd; simp at hd
+  | unsupported msg => rw [hs] at hd; simp at hd
+
+/-- **A drain that yielded `v :: vs` is one step and a shorter drain** —
+`cons`' inverse, and the round-by-round reading a `forGen` loop consumes. The
+intermediate world is EXISTENTIAL and has to be: §the drain law, and here the
+measurement is blunt — the sunfish move generator's twenty steps move the heap
+by between 1 and 25 objects each. -/
+theorem uncons {m : Module} {w w' : World} {a : Addr} {v : RVal} {vs : List RVal}
+    (h : IterDrains m w a (v :: vs) w') :
+    ∃ w₁, IterSteps m w a (some v) w₁ ∧ IterDrains m w₁ a vs w' := by
+  obtain ⟨t, ht⟩ := h
+  have hd := ht (t + 1) (by omega)
+  rw [drainIter] at hd
+  cases hs : stepIter m t w a with
+  | ok w₁ r =>
+    rw [hs] at hd
+    cases r with
+    | none => simp only [Run.ok_bind] at hd; exact absurd hd (by simp)
+    | some u =>
+      simp only [Run.ok_bind] at hd
+      cases hdd : drainIter m t w₁ a with
+      | ok w₂ us =>
+        rw [hdd] at hd
+        simp only [Run.ok_bind] at hd
+        obtain ⟨hw, hl⟩ := Run.ok.inj hd
+        obtain ⟨hu, hus⟩ := List.cons.inj hl
+        subst hw; subst hu; subst hus
+        exact ⟨w₁, IterSteps.of_step hs, IterDrains.of_drain hdd⟩
+      | exn w₂ e => rw [hdd] at hd; simp at hd
+      | timeout => rw [hdd] at hd; simp at hd
+      | unsupported msg => rw [hdd] at hd; simp at hd
+  | exn w₁ e => rw [hs] at hd; simp at hd
+  | timeout => rw [hs] at hd; simp at hd
+  | unsupported msg => rw [hs] at hd; simp at hd
+
 end IterDrains
 
 /-- The pairs a drained `enumerate` object hands over, from index `i` — the

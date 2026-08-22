@@ -902,30 +902,40 @@ body at a kept and at a dropped move, `gx_call` is the object's creation, and R1
 four `value_runs_*` theorems discharge `ValueAnswers`. What is missing is the
 CHAIN, and its three premises are these, in computed shape:
 
-1. **Per-round `IterSteps` on the INNER generator.** `GenEmits.forGenRound` takes
-   `IterSteps sunfish st.world (w.heap.size) (some mv) w₁` — one step of
-   `pos.gen_moves()`'s object, at the world the round starts from. What exists is
-   `gen_moves_drains_ref` (§L8), a WHOLE drain (`IterDrains`). The chain needs it
-   decomposed the other way: `IterDrains.cons` builds a drain from steps, so what
-   is owed is the inverse — a step-indexed reading of `gen_moves_yields_ref`. That
-   is the single real piece of work left in R2, and it is genmoves_scan.lean's
-   material rather than this file's.
-2. **The per-round world.** Each round's `Position.value` call is heap-free (R1,
-   measured), the binding is heap-free and the yield allocates the pair — so the
-   round's world moves by exactly the tuple, and `Heap.get?_append` carries the
-   inner generator's own slot. §6 measured the total at 81 objects for twenty
-   moves; nothing in the chain has to name that number.
+1. **Per-round `IterSteps` on the INNER generator. LANDED (2026-08-22).**
+   `GenEmits.forGenRound` takes `IterSteps sunfish st.world (w.heap.size)
+   (some mv) w₁` — one step of `pos.gen_moves()`'s object, at the world the round
+   starts from. What existed was `gen_moves_drains_ref` (§L8), a WHOLE drain.
+   `IterDrains.cons` builds a drain from steps; the inverses `IterDrains.uncons`
+   and `IterDrains.exhausts` (VCGen.lean §L6) read one back OUT, and
+   `gen_moves_iterDrains` (genmoves_drain.lean) is the rename that lets them
+   apply. `IterDrains` is a threshold DEFINITION, not an inductive, so those
+   inverses are theorems rather than a `cases` — which is why nobody had them.
+2. **The per-round world — and this premise was WRONG as written.** It said *"the
+   yield allocates the pair — so the round's world moves by exactly the tuple"*.
+   **A tuple is an immediate value and allocates nothing.** What the round's world
+   actually moves by is the INNER STEP's own allocation, measured in
+   genmoves_drain.lean as **1 to 25 objects per step**, non-uniform, because a
+   step runs however much of the board scan the next move needs. The 81 objects §6
+   measured for the whole drain are ALL the inner generator's; the genexp
+   contributes none. So the chain must thread the inner step's world OPAQUELY —
+   which is exactly what `uncons` hands over — rather than compute it. The repair
+   costs nothing because the inverse was going to be existential anyway; the
+   record needed correcting all the same.
 3. **The invariant across rounds.** `gxEnvAt env z` is `Env.set env "v" _`, so the
    frame's SHAPE is stable and the next round's premises are the previous round's
    with one `Env.set` in front — the same "assign_again" step `moves_loop_cuts`
    needs, and `Env.lookup_set_ne` is the whole of it.
 
-**Price.** One session for the step-indexed reading of the inner drain, then the
-chain itself is `GenEmits.forGenRound` iterated with `GenEmits.forGenDone` at the
-end — there is no `forGenRounds` batch lemma because, as VCGen.lean's own note
-says, an infinite inner generator has no remainder list to induct on; here it is
-finite and the caller's induction is on the reference move list, which
-`gen_moves_drains_ref` already produces.
+**Price, re-quoted after the fact.** The step-indexed reading was priced at one
+session and cost two theorems and a rename — `IterDrains.uncons`/`.exhausts` are
+fifteen lines each and go through a single fuel, because neither side has to
+agree on a threshold. What is LEFT is the chain: `GenEmits.forGenRound` iterated
+with `GenEmits.forGenDone` at the end, the induction running on the reference
+move list `gen_moves_iterDrains` now hands over as a judgment. There is no
+`forGenRounds` batch lemma because, as VCGen.lean's own note says, an infinite
+inner generator has no remainder list to induct on; here it is finite, so the
+caller's induction is the one to write.
 
 **And R3 is not blocked on this.** `ord_stmt_emits` is stated over a free `vs`,
 so the fold's schedule can be chosen against it now: what the fold consumes is a

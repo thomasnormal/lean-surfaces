@@ -14182,3 +14182,84 @@ pattern that worked for M1.
 failed, 118 whitelisted, 1276 matched**; `script_corpus` **65 scripts, 0
 failed, 50 matched, 15 loud**; the M1 `#guard`s still pass. The C lane declares
 no theorems, so no axioms moved; no `sorry`, no `native_decide`.
+
+## L58 — THE HDRAIN SESSION: `IterDrains` gets its INVERSES, and §L31's premise 2 was wrong about who allocates (2026-08-22)
+
+The long-filed remainder. `ord_stmt_emits` (§L31) carries the ordering statement
+from source text to emitted stream with **one** non-bookkeeping hypothesis —
+`hdrain` — and §L31 §10 scoped what it needs: a step-indexed reading of the inner
+generator, *"the single real piece of work left in R2"*. It is landed, and it is
+smaller than the scoping thought and in a different place.
+
+### The piece: `IterDrains` is a threshold DEFINITION, so its inverses are theorems
+
+`IterDrains.nil`/`.cons` BUILD a drain out of steps. Every consumer that walks a
+generator one round at a time — `execForGen`, and so `GenEmits.forGenRound` —
+needs the other direction. Because `IterDrains` is
+`∃ t, ∀ F ≥ t, drainIter … = .ok w' vs` and **not an inductive**, that direction
+is a theorem and not a `cases`, which is exactly why nobody had it:
+
+* **`IterDrains.exhausts`** — a drain that yielded nothing is one exhaustion step;
+* **`IterDrains.uncons`** — a drain of `v :: vs` is one step and a shorter drain.
+
+Both go through a SINGLE fuel: instantiate the threshold once, destructure the
+interpreter's own `match`, re-introduce with `of_step`/`of_drain`. Neither side
+has to agree on a threshold, and that is what makes the inversion fifteen lines
+instead of an induction. They live in **`LeanModels/Python/VCGen.lean` beside
+`nil`/`cons`** — by §L55's own rule, general plumbing goes where the thing it is
+about lives, and this is the lane applying that to itself.
+
+`gen_moves_iterDrains` (genmoves_drain.lean) is the third piece and the smallest:
+`gen_moves_drains_ref` concludes a raw `∃ w' t, ∀ F ≥ t, … ∧ …` whose second
+conjunct IS `IterDrains` but not in those words. Renaming it is what lets the
+inverses apply.
+
+### THE CENSUS, and it CORRECTS §L31's premise 2
+
+The drain law's question, asked first: `drainIter` is a FULL drain, not a
+short-circuiting one, so its out-world IS a function of its inputs and may be
+written into a conclusion. **The per-STEP worlds are the ones that are not
+uniform.** Traced on the opening board, `pos.gen_moves()` from heap 67:
+
+    69 70 73 74 77 78 81 82 85 86 89 90 93 94 97 98 105 112 137 144   then 148 (exhausted)
+
+**Deltas of 1 to 25 objects per step** — a step runs however much of the board
+scan the next move happens to need. Step 21 reports exhaustion and step 22
+repeats it: the drain is idempotent once done. All `#guard`ed.
+
+§L31 §10's premise 2 said: *"the yield allocates the pair — so the round's world
+moves by exactly the tuple."* **Both halves are wrong.** A tuple is an immediate
+value and allocates NOTHING; what the round's world moves by is the inner step's
+own allocation, which is the non-uniform 1–25. And the arithmetic proves it: the
+whole drain is **81 objects** (67 → 148), which is precisely the number §L29
+measured for the ORDERING LINE's drain. **The genexp contributes none of it;
+every object that drain costs belongs to the generator underneath.**
+
+The repair costs nothing — `uncons` hands the intermediate world over
+existentially, which is what a non-uniform step forces anyway — but the record
+was wrong and is now corrected in place.
+
+### What this unblocks, and what is still owed
+
+Unblocked: R2a's `hdrain` and R3c's interpreter half, neither of which could name
+a concrete round list without a per-round `IterSteps` on this generator.
+
+**Still owed — the CHAIN, and it is named rather than started.** With the
+inverses in hand the remaining work is `GenEmits.forGenRound` iterated with
+`GenEmits.forGenDone` at the end, the induction running on the reference move
+list that `gen_moves_iterDrains` now hands over as a judgment. There is no
+`forGenRounds` batch lemma and there should not be — VCGen's own note explains
+that an infinite inner generator has no remainder list to induct on; here it is
+finite, so the induction belongs to the caller. That is order_genexp.lean's
+material and a session of its own. §10 is updated to say so, with the price
+re-quoted after the fact rather than before.
+
+### Triad
+
+`lake build` **3693 jobs green**; `docs_check` 73/73, 15 illustrative-exempt;
+`diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched;
+`script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud. The three new
+declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
+`sorry`, no `native_decide`. This is a `LeanModels` change, so the whole tree
+rebuilt — twice, the second time after rebasing onto §L57's own `LeanModels/C`
+work.

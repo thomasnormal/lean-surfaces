@@ -1,6 +1,7 @@
 {
   "acquisition": {
     "binary_release": "alr-<ver>-bin-aarch64-macos.zip and siblings; prebuilt, no Ada compiler needed to run it",
+    "build_cost_note": "The long pole is the generated `libadalang-implementation.adb`, a single very large unit.  Budget for a long compile and nice it; it is gprbuild, not lake, so the machine-wide build lock does not cover it and courtesy is the lane's own job.",
     "frontend_command": "alr -n with libadalang  (inside an alr crate)",
     "index_crates": {
       "gnat_native": "16.1.0",
@@ -8,6 +9,13 @@
       "libadalang": "26.0.0"
     },
     "settings_dir_env": "ALIRE_SETTINGS_DIR \u2014 point it at a scratch dir to keep a probe out of the home directory",
+    "shared_library_externals": [
+      "-XLIBRARY_TYPE=relocatable",
+      "-XLIBADALANG_LIBRARY_TYPE=relocatable",
+      "-XGPR2_LIBRARY_TYPE=relocatable",
+      "-XXMLADA_BUILD=relocatable"
+    ],
+    "shared_library_note": "The Python bindings are ctypes over a SHARED library, and a relocatable libadalang cannot import a static dependency \u2014 the whole closure must be built relocatable together, hence the externals above.  `-XGNATCOLL_BUILD_MODE=prod` is NOT one of them: gnatcoll_iconv.gpr rejects `prod` as an illegal value for its `build` typed string.",
     "tool": "alr (Alire)",
     "toolchain_command": "alr -n toolchain --select gnat_native gprbuild"
   },
@@ -92,7 +100,7 @@
       {
         "check": "C-test reports PASSED",
         "expected": "PASSED",
-        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:02:17\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
+        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:13:18\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
         "passed": true
       },
       {

@@ -82,6 +82,22 @@ ACQUISITION = {
                      "libadalang": "26.0.0"},
     "settings_dir_env": "ALIRE_SETTINGS_DIR — point it at a scratch dir to "
                         "keep a probe out of the home directory",
+    # Two facts a second attempt needs, both learned the expensive way.
+    "shared_library_externals": [
+        "-XLIBRARY_TYPE=relocatable", "-XLIBADALANG_LIBRARY_TYPE=relocatable",
+        "-XGPR2_LIBRARY_TYPE=relocatable", "-XXMLADA_BUILD=relocatable"],
+    "shared_library_note":
+        "The Python bindings are ctypes over a SHARED library, and a "
+        "relocatable libadalang cannot import a static dependency — the "
+        "whole closure must be built relocatable together, hence the "
+        "externals above.  `-XGNATCOLL_BUILD_MODE=prod` is NOT one of them: "
+        "gnatcoll_iconv.gpr rejects `prod` as an illegal value for its "
+        "`build` typed string.",
+    "build_cost_note":
+        "The long pole is the generated `libadalang-implementation.adb`, a "
+        "single very large unit.  Budget for a long compile and nice it; it "
+        "is gprbuild, not lake, so the machine-wide build lock does not "
+        "cover it and courtesy is the lane's own job.",
 }
 
 # `adaparse` is on PATH on at least one development host and is the `ada-url`

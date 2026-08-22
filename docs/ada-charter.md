@@ -1200,7 +1200,7 @@ cannot silently stop being needed. (The ACAA also ships a `.tar.Z` delivery,
 which is the likely LF-clean route; the census records the workaround because
 it works on either.)
 
-**What is NOT done: the frontend.** `libadalang` **26.0.0** deploys through
+**What is NOT done: the frontend — in flight, and priced.** `libadalang` **26.0.0** deploys through
 Alire with its whole dependency closure (`gnatcoll`, `libgpr2`,
 `langkit_support`, `adasat`, `vss`, `xmlada`, `prettier_ada`) and **ships its
 Python bindings in-tree** (`python/libadalang/__init__.py`), so the API §4.2
@@ -1208,10 +1208,20 @@ verified from the repository is present. What is not yet built is the
 **shared** library the ctypes bindings load. Diagnosed precisely rather than
 left as "it didn't work": a relocatable `libadalang` cannot import a static
 dependency, so the whole closure has to be built relocatable together, and
-the census records the exact `-X` externals. **`needs.frontend` is therefore
-still `met: false`, and the instrument says so** — which is the point of
-having it. The oracle and the grader are met; the frontend is inch 2's
-remaining half.
+the census records the exact `-X` externals, and one that is NOT among them:
+`-XGNATCOLL_BUILD_MODE=prod` is rejected by `gnatcoll_iconv.gpr` as an
+illegal value for its `build` typed string. The long pole is the generated
+`libadalang-implementation.adb`, a single very large unit, and the build is
+in flight under `nice -n 19` — it is `gprbuild`, not `lake`, so the
+machine-wide lock does not cover it and the courtesy is this lane's own job,
+declared in `scratchpad/build-lock-log.md` with the rule that kills go by
+ppid chain and never by path.
+
+**`needs.frontend` is therefore still `met: false`, and the instrument says
+so** — which is the point of having it. The oracle and the grader are met;
+the frontend is inch 2's remaining half, and inches 5 and 7 are blocked
+behind it by construction. Inch 4 was not (§5.3), which is why the order run
+is 2 → 4 → 5 → 3.
 
 ### 5.3 Inch 3 — the profile. **DEFERRED behind inch 4, deliberately.**
 

@@ -130,3 +130,69 @@ the same inch**: the ruling said what the legacy layer was allowed to do, the
 counting law said how much it would cost, and **neither the number nor the shape
 moved on contact.** Recorded in the erosion clause as the ruling's first
 measured instance rather than left as a claim.
+
+### `#guard` IS NOT A KERNEL ORACLE — reproduced here, and it corrects this document
+
+From the SoftFloat lane, **verified by this lane before propagating** (warm clone,
+`nice -n 19`, rule 3 satisfied this time). Three propositions, all **`#guard`-PASS
+and kernel-FAIL** on the pinned toolchain:
+
+    #guard Nat.sqrt 49 == 7                -- PASSES
+    example : Nat.sqrt 49 = 7 := by rfl    -- FAILS (unsolved goals)
+    example : Nat.sqrt 49 = 7 := by decide -- FAILS
+    #guard (2.75 : Float).toInt64 == 2     -- PASSES
+    example : (2.75:Float).toInt64 = 2 := by rfl  -- FAILS
+
+`#guard` runs unsafe `evalExpr`, honours `@[extern]`/`@[implemented_by]`/`opaque`,
+and **passes identically whether a declaration reduces or has no body at all**.
+
+**CONSEQUENCE 1 — "run, not admired" via `#guard` is RUNTIME attestation.** For
+pure extern-free code the VALUE agrees with the kernel, but
+**kernel-reducibility is certified only by `rfl`/`decide`** (or `#guard_expr`
+with `=~`). **This document made the overstated claim** and it is corrected:
+§3.4 said *"`#guard`/`#py_check` and every captured run are kernel `rfl`"*. They
+are not. **The EStateM ruling itself stands** — its reason was that kernel
+reduction is load-bearing, and its 1.4x figure was measured on kernel `rfl`;
+what was wrong was the list of artifacts named as certifying it.
+
+**CONSEQUENCE 2 — THE PAIR IS A DIFFERENTIAL**, and this is the constructive
+half: `#guard` attests the **C runtime**, `rfl`/`decide` attest **core's model**,
+so a float-touching row carries **both** and **disagreement is a FINDING** — two
+oracles genuinely diverging, which is what a family of language models exists to
+surface rather than average away.
+
+**PLACEMENT vs the decide ladder**: the ladder's rungs are **KERNEL** tactics.
+**`#guard` is BENEATH the ladder, not on it** — not a cheaper rung 2, but a
+different kind of evidence, and the receipts rule applies: a row attested by
+`#guard` says so.
+
+**Re-attestation owed, cheaply**: the rebuild's *"9 `#guard`s decide real runs in
+the kernel"* (one run per half with `decide`); the **~50 ES `#guard`s** under
+`Examples/es`, FPU-attested today; and `harness/es/float_probe.lean`, which
+**mis-describes `#guard` as kernel evaluation** (ES lane's fix).
+
+**§5.4a gains a fifth instance**: a `#guard` batch quoted as kernel evidence —
+and it reads CLEAN, which is the flattering direction again.
+
+### SoftFloat LAYER 3 — TRANSFER, commissioned by core itself
+
+Core's `UnpackedFloat` docstring disclaims the role outright: it is **not a goal
+of that development** to be the basis of a general-purpose float library *"or to
+have any direct lemmas written about it at all"*; users should **develop such a
+library completely separately, prove the operations equivalent, and transfer
+lemmas** to `Float`/`Float32`.
+
+**So §3.5 has a third layer and it is commissioned, not optional.** This sharpens
+"layer 1 is free": core supplies the *executable* model for free and **explicitly
+declines to be a proof basis**. Layer 2 is the separate library core asks for;
+**layer 3 is the equivalence-and-transfer bridge** — and without it a theorem
+about our `Format`-parametric algebra says nothing about the `Float` an
+interpreter observes, while a `#guard` on that `Float` attests only the runtime.
+**Layer 3 is what joins the two oracles the differential pair names.**
+
+**AND THE NaN PAYLOAD IS UNSATISFIABLE OVER CORE'S MODEL — open Thomas
+decision.** §3.5.4 routes NaN payload/sign to ∀-resolution. Core states: *"There
+is no payload attached to a NaN in this format."* **You cannot quantify over a
+payload the type does not have.** The options — carry our own NaN representation
+in layer 2, restrict claims to payload-independent facts, or accept core's
+payload-free NaN as the family's answer — are **Thomas's**. Registered as open.

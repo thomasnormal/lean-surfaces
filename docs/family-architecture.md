@@ -260,7 +260,7 @@ Seven language lanes exist today. Measured (`.lean` lines under
 
 | lane | lines | authority | outcome type | source spans |
 | --- | ---: | --- | --- | --- |
-| Python | 32331 | CPython 3.9 (extraction) | `Run σ α` | `LeanModels.Span` |
+| Python | 32331 | CPython 3.9 (extraction) | **`Core.SemM`** (definition); `Run σ α` legacy, under the erosion contract | `LeanModels.Span` |
 | Spice | 23366 | ngspice (extraction) | none — contracts | `Circuit.Spice.SourceSpan` |
 | SystemVerilog | 8166 | IEEE 1800 (spec) + pyslang | `Sv.Res α` | none |
 | Circuit | 4309 | physical law | none — enclosures | `Circuit.Spice.SourceSpan` |
@@ -326,7 +326,7 @@ mislabelled.
 | language | `<Lang>` | authority | edition tokens | oracle | corpus | state |
 | --- | --- | --- | --- | --- | --- | --- |
 | C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
-| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — mid-campaign |
+| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — **definition is the MONADIC interpreter**; the deep interpreter is the legacy layer under §3.4(c)'s erosion contract |
 | SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, **98 theorems**, dormant but verified working |
 | WebAssembly | `Wasm` | spec-mirror — W3C core **+ official suite** | **PROPOSED** | the reference interpreter **and the `.wast` runner** | the official `.wast` suite | founding |
 | ECMAScript | `Es` | spec-mirror — ECMA-262 **+ official suite** | **PROPOSED** | an engine **and test262's harness** | test262 | founding — blocked on SoftFloat (§3.5.3) |
@@ -1122,7 +1122,7 @@ this document it says so.
 **Layer 1 — one monad family, and the layer ORDER is load-bearing.**
 
 ```lean
--- (illustrative — the substrate shape, not yet in the tree)
+-- (illustrative — the substrate shape; LANDED as LeanModels/Core/Outcome.lean)
 abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
 ```
 
@@ -1141,8 +1141,11 @@ verified here independently before propagating.
 spelling.** `Run σ α` could be spelled as core's `EStateM`, and the
 isomorphism is available. It is **not taken**: kernel `rfl` measured
 **1.4× slower on `EStateM` at fuel 4096**, and kernel reduction is
-load-bearing here — `#guard`/`#py_check` and every captured run are kernel
-`rfl`, which is what makes *run-not-admired* affordable at all. So the
+load-bearing here. **(That reason stands; the ATTESTATION named for it was
+wrong — `#guard`/`#py_check` are RUNTIME attestation, not kernel `rfl`.
+See §5.4's instrument contract. The 1.4× measurement was on kernel `rfl`
+and is unaffected; what needs re-attesting is which artifacts certify
+kernel-reducibility.)** So the
 family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
 `WPMonad` instance, its laws) while keeping its own spelling, and records
 the iso as available rather than mandatory. A tier with no kernel-reducible
@@ -1222,8 +1225,7 @@ import** — that is the cheap, mechanical majority — **and the two
 theorems said re-established over the real stack. Filing them under
 "rename" would be the quiet way to lose two facts.
 
-**`Core.SemM` becomes the one spelling once the rebuild's extraction lands
-on master** — imminent, in its post-merge triad as this is written.
+**`Core.SemM` IS the one spelling — LANDED** — imminent, in its post-merge triad as this is written.
 
 **And the SV verdict softens accordingly.** §3.6's hybrid reading — *a
 dormant tier that will not be rebuilt* — becomes **migrates when touched**,
@@ -1673,6 +1675,41 @@ Per-operation correctness, proved once, in IEEE form:
 op_correct (fmt : Format) :
     bitOp fmt x y  =  round fmt mode (exactRational (val x ∘ val y))
 ```
+
+##### LAYER 3 — TRANSFER, and core COMMISSIONS it explicitly
+
+The two layers above are not the whole component, and core says so in its
+own words. `UnpackedFloat`'s docstring disclaims the role outright: it is
+**not a goal of that development** to be the basis of a general-purpose
+float library *"or to have any direct lemmas written about it at all."*
+Users wanting such a library should
+
+> develop it **completely separately**, prove the operations **equivalent**
+> to core's, and then **transfer lemmas** to `Float` and `Float32`.
+
+**So the third layer is TRANSFER, and it is commissioned rather than
+optional.** This sharpens §3.5.1's "layer 1 is free": core supplies the
+*executable* model for free and **explicitly declines to be a proof
+basis**. The family's layer 2 is the separate library core asks for; layer
+3 is the equivalence-and-transfer bridge that makes layer 1's reduction
+usable in a proof about `Float`.
+
+It also explains the shape of the work: without transfer, a theorem about
+our `Format`-parametric algebra says nothing about the `Float` an
+interpreter actually observes, and a `#guard` on that `Float` attests only
+the runtime (§5.4). **Layer 3 is what joins the two oracles the differential
+pair names.**
+
+**AND THE NaN PAYLOAD IS UNSATISFIABLE OVER CORE'S MODEL — an open Thomas
+decision.** §3.5.4 routes NaN payload and sign to ∀-resolution, quantifying
+over the admissible payloads. Core's `UnpackedFloat` states plainly:
+*"There is no payload attached to a NaN in this format."* **You cannot
+quantify over a payload the type does not have.** So the routing §3.5.4
+prescribes is not available on core's model as it stands, and the choices —
+carry our own NaN representation in layer 2, restrict the claims to
+payload-independent facts, or accept core's payload-free NaN as the
+family's answer — are **Thomas's**, not this document's. Registered as
+open.
 
 ##### WIDTH-PARAMETRICITY IS A REQUIREMENT, not a description
 
@@ -2136,7 +2173,7 @@ candidates**:
 | candidate | status | would it trigger? |
 | --- | --- | --- |
 | **C's M2 inch 4** — statements + `CWorld` | planned; C is at inch 1 and uses its own `CRes` at the value layer | yes — the first C code that needs a world |
-| **the rebuild lane's `SemM`** | in flight; **`SemM` is not in the tree** (checked) | yes — and it arrives as the stack, not as bare `Run` |
+| **the rebuild lane's `SemM`** | **LANDED — this was the first-arriving trigger** | **FIRED** — and it arrived as the stack, not as bare `Run` |
 | a third tier adopting the outcome type | none proposed | yes |
 
 **Whichever lands first is the trigger**, and the rule is unchanged in
@@ -2489,6 +2526,45 @@ instrument copies it:
   reproduced the lesson: its first answer was a plausible table produced
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
+* **`#guard` IS NOT A KERNEL ORACLE — it attests the RUNTIME.** It runs
+  unsafe `evalExpr`, honours `@[extern]` / `@[implemented_by]` / `opaque`,
+  and **passes identically whether a declaration reduces or has no body at
+  all.** Measured here on the pinned toolchain, three propositions, all
+  `#guard`-PASS and kernel-FAIL:
+
+  ```
+  -- (illustrative — probes, not tree files)
+  #guard Nat.sqrt 49 == 7                  -- PASSES
+  example : Nat.sqrt 49 = 7 := by rfl      -- FAILS: unsolved goals
+  example : Nat.sqrt 49 = 7 := by decide   -- FAILS
+  #guard (2.75 : Float).toInt64 == 2       -- PASSES
+  example : (2.75:Float).toInt64 = 2 := by rfl     -- FAILS
+  ```
+
+  So **"run, not admired" via `#guard` is RUNTIME attestation** — a claim
+  about the *compiled* semantics. For pure, extern-free code the **value**
+  agrees with the kernel; but **KERNEL-REDUCIBILITY is certified only by
+  `rfl` / `decide`** (or `#guard_expr` with `=~`). **Any claim of
+  "kernel-reducible runs" resting on `#guard` alone is overstated**, and
+  this document made one (§3.4, now corrected).
+
+  **THE PAIR IS A DIFFERENTIAL, and that is the constructive half.**
+  `#guard` attests the **C runtime**; `rfl`/`decide` attest **core's
+  model**. A float-touching row therefore carries **both**, and
+  **disagreement between them is a FINDING** — the two oracles have
+  genuinely diverged, which is exactly the kind of fact a family of
+  language models exists to surface rather than to average away.
+
+  **Placement relative to the decide ladder (§0.1 II(a)): the ladder's
+  rungs are KERNEL tactics. `#guard` is BENEATH the ladder, not on it.**
+  It is not a cheaper rung-2; it is a different kind of evidence, and the
+  receipts rule applies to it too — a row attested by `#guard` says so.
+
+  **Re-attestation owed, cheaply**: the rebuild's *"9 `#guard`s decide real
+  runs in the kernel"* (re-attest **one run per half with `decide`**); the
+  **~50 ES `#guard`s** under `Examples/es`, FPU-attested today; and
+  `harness/es/float_probe.lean`, which **mis-describes `#guard` as kernel
+  evaluation** — the ES lane's fix.
 * **double-run byte-identical**, verified;
 * **every quoted number is paired with the STATE it was taken from**, per
   the provenance law below;
@@ -2508,6 +2584,7 @@ why it is stated once rather than three times:
 | **`#print axioms` on a failed declaration** | a statement-elaboration error prints *"does not depend on any axioms"* — **cleaner than the truth** — even when the proof is `sorry` (§0.1 II(a)) | rebuild lane |
 | **a timing measured on a twin** | 568 ms against the shallow twin; the faithful interpreter does not close at ~14 minutes (§3.4) | rebuild lane |
 | **a red from a torn tree** | a rebase under a running build yields `Unknown constant` against a healthy master (§7.2) | Go lane |
+| **a `#guard` batch quoted as KERNEL evidence** | `#guard` attests the runtime and passes where the kernel cannot reduce at all (§5.4) — so a batch cited for kernel-reducibility is quoting the wrong oracle | SoftFloat lane |
 
 > **A NUMBER CARRIES THE STATE IT WAS MEASURED IN. Quote both, or quote
 > neither.**

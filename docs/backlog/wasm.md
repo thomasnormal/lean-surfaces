@@ -179,3 +179,111 @@ base rule 4 (one triad per landing, never per edit), a full triad here would
 be a ~35-minute no-op on a contended machine. **Recorded OWED and runnable on
 demand**; §L71's triad (3693 jobs, 73/73, 1394/0/118/1276, 65/0/50/15) is this
 lane's last full green.
+
+---
+
+## 2026-08-22-wasm-2 — INCH 1, STEP 1: the four branches are **ISABELLE**, none is merged, and they prove the **ENTIRE LADDER** — so the engagement is a PORT, not a discovery
+
+`2026-08-22-wasm-1` closed by naming a check that had to come first: read the
+fork's `aaron/*` and `antanas/*` branches before attempting any obligation, or
+risk re-proving landed work. **Done, and it changes the shape of the
+engagement for the third time.** No upstream contact of any kind; reading
+public branches only.
+
+**FINDING 1 — they are ISABELLE branches, not Lean.** Measured: **0 `.lean`
+files, 7-10 `.thy` files** on each. So they **cannot be consumed** by a Lean
+lane the way the dispatch's option (1) imagined — there is nothing to take
+with attribution, because there is no Lean there.
+
+**FINDING 2 — none of the six is merged into the pin.** `git merge-base
+--is-ancestor origin/<b> b399351f` fails for all six. They are all
+**June-July 2026**; the `lean-backend` pin is **2026-08-20**. So this is not
+work the Lean lane inherited and moved past — it is a parallel effort in
+another assistant, on a branch the Lean line never took.
+
+| branch | last commit | author | content |
+| --- | --- | --- | --- |
+| `aaron/preservation/admin_instructions` | 2026-06-05 | Aaron Lee | 10 `.thy` |
+| `antanas/subtyping` | 2026-06-02 | Antanas Kalkauskas | 7 `.thy` |
+| `aaron/subtyping/inversion_lemmas` | 2026-06-19 | Aaron Lee | 7 `.thy` |
+| `aaron/subtyping/instr_ok2_inversion_lemmas` | 2026-06-26 | Aaron Lee | — |
+| `inversion_instr_ok` | 2026-06-28 | Aaron Lee | — |
+| `aaron/store_extension/reduction` | 2026-07-21 | Aaron Lee | — |
+
+**FINDING 3 — and it is the one that matters: `isabelle_type_safety_proof/Subtyping_Properties.thy`
+PROVES THE WHOLE LADDER.** 189 lines. Its lemma list, read against this
+lane's five obligations:
+
+| this lane's obligation | Isabelle counterpart | size |
+| --- | --- | ---: |
+| **O1** `instrtype_sub_refl` | **`instr_subtyping_refl`** | **3 lines** |
+| **O3** `instrtype_sub_trans` | **`instr_subtyping_trans`** | **64 lines**, structured `proof -` |
+| **the missing split** | **`Resulttype_sub_split_left`** | **3 lines** |
+| **the split's MIRROR** | **`Resulttype_sub_split_right`** | **3 lines** |
+| (already proved in Lean) | `Valtype_sub_refl`, `Resulttype_sub_refl`, `Valtype_sub_trans`, `Resulttype_sub_trans`, `Resulttype_sub_append` | 2-5 each |
+| (extra, no Lean counterpart yet) | `instr_subtyping_sub_rule`, `instr_subtyping_frame_rule`, `func_sub_app_single`, `Resulttype_sub_empty` | — |
+
+**Every difficulty class in `2026-08-22-wasm-1` §2 is CONFIRMED by an
+independent implementation.** O1 really is the cheapest (3 lines there). O3
+really is the biggest of O1-O4 (64 lines, the only one needing a structured
+proof). The split really is the shared key.
+
+**FINDING 4 — a flagged uncertainty is RESOLVED, and against the guess.** The
+census wrote that Mathlib's orientation splits the right argument and *"at
+least one of O2/O4 needs the mirrored orientation, obtainable by symmetry but
+NOT verified here."* Aaron needed **both** and proved them as **two separate
+lemmas** — `Resulttype_sub_split_left` (closing `by (metis list_all2_append2)`)
+and `Resulttype_sub_split_right` (closing `by (metis list_all2_append1)`).
+**So the mirror is a real second obligation, not a free symmetry.** The
+ladder's inch 2 is two lemmas, not one.
+
+**FINDING 5 — the Mathlib route is INDEPENDENTLY CONFIRMED.** Isabelle's
+proofs close on **`list_all2_append2` / `list_all2_append1`** — the exact
+analogues of Mathlib's `forall₂_take_append` / `forall₂_drop_append` that
+`2026-08-22-wasm-1` identified by reading. Two implementations, two libraries,
+the same factoring. That is as much corroboration as a read can give.
+
+**FINDING 6 — the supply-chain question the dispatch raised is ANSWERED, and
+the answer is "no cost".** `spectec/test-lean/lakefile.lean` reads
+`require mathlib from git ".../mathlib4" @ "v4.32.0"`, the manifest pins
+mathlib `81a5d257c8e4` alongside aesop/batteries/Qq/plausible, and
+`typing_lemmas.lean:1` is `import Mathlib.Tactic`. **The fork's Lean project
+already depends on Mathlib**, so citing `forall₂_take_append` adds **nothing**.
+The fallback of proving the two witnesses locally is not needed.
+
+**WHAT THIS DOES TO THE ENGAGEMENT — it shrinks again.** `2026-08-22-wasm-1`
+found the ledger was one corner rather than five feature gaps. This entry
+finds that **that corner is already proved, in another assistant, by the same
+project**. The Lean ladder is therefore a **PORT with a known-good proof
+structure and confirmed difficulty ordering** — not a discovery, and not
+open metatheory. The remaining Lean-side work is translation plus whatever
+Lean/Isabelle automation gap shows up (Isabelle's `metis`/`fastforce` closers
+have no one-to-one Lean equivalent; `grind`/`aesop` are the candidates, and
+the file already uses both).
+
+**Attribution, recorded now rather than at contribution time**: any Lean proof
+this lane writes for O1, O3 or the split lemmas follows the structure of
+Aaron Lee's `Subtyping_Properties.thy` on
+`origin/aaron/subtyping/inversion_lemmas` (`e75dad778`, 2026-06-19), in the
+same repository, Apache-2.0.
+
+**BUILD FEASIBILITY (dispatch step 2) — PRICED, NOT YET RUN, and it is not
+cheap.** `spectec/test-lean/lean-toolchain` pins **`leanprover/lean4:v4.32.0`**
+and **that toolchain is NOT installed** on this box (present: 4.12.0,
+4.27.0-rc1, 4.33.0-rc1, 4.33.0-rc2). So verifying the tree builds requires a
+**new elan toolchain download plus a fresh Mathlib v4.32.0 cache** — a
+different Lean version from lean-surfaces' own, so **amendment 13's
+"clone a warm peer's `.lake`" does not apply**: no peer holds a v4.32.0
+cache. Disk checked per A11 rule 6: **205 GB free, 78% used** — space is fine.
+Load at the time of writing was **27.8**. Recorded as the next gated step
+rather than started, because a multi-GB download for a different toolchain
+onto a load-28 machine is a coordinator-visible commitment, not a detail.
+**The census's read-only findings stand independently of it** — the count,
+the ledger, the dependency graph and every finding above are properties of
+text, not of a build.
+
+### Triad
+
+**Not run; not applicable.** This landing edits **one file**
+(`docs/backlog/wasm.md`) and adds none. No Lean was executed anywhere in this
+lane this session. `docs_check` passes.

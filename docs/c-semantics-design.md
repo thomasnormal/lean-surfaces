@@ -523,6 +523,93 @@ touches it and is decided then — never silently.**
 
 ---
 
+## 4.6 Inch 4's shape, decided from its census
+
+The statement census, run while queued for the build lock:
+
+| kind | sites | | kind | sites |
+| --- | ---: | --- | --- | ---: |
+| **(expression statement)** | **297** | | `DoStmt` | 29 |
+| `IfStmt` | 253 | | `BreakStmt` | 8 |
+| `DeclStmt` | 228 | | `GotoStmt` | 7 |
+| `CompoundStmt` | 224 | | `ContinueStmt` | 6 |
+| `ReturnStmt` | 103 | | `WhileStmt` | 5 |
+| `ForStmt` | 50 | | `LabelStmt` | 3 |
+| | | | **TOTAL** | **1213** |
+
+### 4.6.1 Fuel arrives HERE, and the census is why
+
+§4.1b established that expressions are fuel-free. Statements are not:
+**84 loops** (50 `for`, 29 `do`, 5 `while`), and an iteration count is
+not structurally bounded. **20 of the 84 contain no call at all**, so it
+is the loop, not the call, that forces fuel — which is what corrects the
+inch-3 draft's "fuel arrives at inch 5".
+
+So `execStmt` takes fuel and recurses on it at exactly one place: the
+loop step. Everything else stays structural on `Stmt`. The
+`∃ n, ∀ fuel ≥ n` threshold form (§4.2) is assembled around `execStmt`,
+and `fuelMono` is owed for it.
+
+### 4.6.2 TIMEOUT is not a refusal, so it does not live in `Except`
+
+`docs/c23-goal.md` §3 is explicit: *"TIMEOUT — fuel exhausted. The only
+exhaustion outcome; never conflated with REFUSE."* And the Python tier's
+`Run` agrees structurally — `.ok` and `.exn` carry state, **`.timeout`
+carries none**, because a timeout is not an observation of anything.
+
+That is precisely what the family stack's `Halt` base is for:
+
+```
+ExecM α := ExceptT Refusal (StateT Mem Halt) α
+```
+
+with `Halt` carrying fuel exhaustion and nothing else. A timeout
+discards the memory, correctly: there is no world to report because
+nothing was observed.
+
+**One deliberate divergence from Python, recorded rather than drifted
+into.** Python's `Run.unsupported` carries no state either; C's
+`Refusal.unsupported` **does**, because it rides in `ExceptT` with the
+other refusals. That is wanted: the inch-6 scoreboard's REFUSE rows are
+worth more when they can say what had happened by the time the model
+declined, and "out-of-tier construct" is a refusal the reader wants
+located. Only TIMEOUT loses its world.
+
+### 4.6.3 What the completion type has to carry
+
+A C statement does not simply finish. `execStmt` answers a `Flow`:
+
+| constructor | from | sites |
+| --- | --- | ---: |
+| `normal` | falling off the end | — |
+| `brk` | §6.8.7.3 `break` | 8 |
+| `cont` | §6.8.7.2 `continue` | 6 |
+| `ret` | §6.8.7.4 `return`, with an optional value | 103 |
+| `goto` | §6.8.7.1 `goto` | 7 |
+
+**`goto` is the one that is not free.** Measured: the 7 `goto`s reach
+exactly **3 labels** (`after_moves` ×3, `out` ×3, `reset_ok` ×1), every
+one of them a FORWARD jump to a label in the same function and at the
+same or an enclosing block level. That is the shape a `Flow.goto`
+propagating outward to a labelled statement can serve; a general
+`goto` needs a CFG, and the census says this corpus does not.
+
+### 4.6.4 The rows that price the rest
+
+* **51 of 253 `if`s have an `else`** — the else-less arm is the common
+  path and gets the first gate.
+* **All 50 `for`s carry all three clauses** (48 `init`, 49 `cond`, 50
+  `inc`), so the "omitted clause" cases are 3 sites, not a third of them.
+  An omitted `cond` means *true* (§6.8.6.3p2), which is one line and one
+  gate.
+* **98 of 103 returns carry a value.**
+* **273 of 321 `VarDecl`s have an initializer, and 34 are
+  `InitListExpr`** — so **aggregate initialization is inch 4's work, not
+  a corner to defer**. It is also the first construct that needs the
+  layout table for *writing* rather than reading.
+* `DeclStmt` carries up to **5** declarators (212 of 228 carry one), and
+  C23 §6.7p5 sequences them left to right, each fully before the next.
+
 ## 5 `abort` and `exit` — rung 1's entire scorer
 
 ```

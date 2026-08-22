@@ -20286,6 +20286,14 @@ so the tree-build delta is exactly those eleven files. `diff_test` and
 all three theorems: `[propext, Classical.choice, Quot.sound]`. No `sorry`, no
 `native_decide`.
 
+> **TRIAD ADDENDUM (2026-08-22, later the same day).** The gap above is
+> CLOSED. Run once under a ticket: `lake build` **3711 jobs exit 0**;
+> `docs_check` **83/83**; `diff_test` **1394 cases, 0 failed**, 118
+> whitelisted, 1276 matched; `script_corpus` **65 scripts, 0 failed**, 50
+> matched, 15 loud. Details, and the standing-strategy adoption, are
+> `docs/backlog/c.md` § `2026-08-22-c-1` — this lane's landings move to a
+> per-lane file from here (§9.5).
+
 **LOCK FINDING — THE SPINLOCK HAS NO QUEUE DISCIPLINE, AND IT STARVES.** The
 lock changed hands between the ada, go, es and sv lanes while this lane
 watched: a lane that releases and immediately re-acquires beats a 60-second

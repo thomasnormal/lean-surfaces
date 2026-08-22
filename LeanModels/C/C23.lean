@@ -2,6 +2,7 @@ import LeanModels.C.Ast
 import LeanModels.C.C23.Value
 import LeanModels.C.C23.Memory
 import LeanModels.C.C23.Expr
+import LeanModels.C.C23.Stmt
 
 /-!
 # The C23 surface (`LeanModels.C.C23`)

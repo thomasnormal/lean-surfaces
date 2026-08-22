@@ -35,13 +35,39 @@
 #           a child stage's
 #   A11     the lock covers ALL Lean execution; LEAN_NUM_THREADS=2, nice 19,
 #           and a 3 GB RSS kill line over THIS SCRIPT'S OWN descendants
+#   A12     traps kill descendants RECURSIVELY — a BFS over `ps -eo pid,ppid`,
+#           never `pkill -P`, which misses grandchildren
 #
 # NOT YET WIRED INTO ANY LANE'S FLOW.  Adoption is per-lane, on dispatch.
+#
+# --classify — THE SCOPE OF A GREEN, AND WHAT IT COVERS (§5.4a, §7.1 rule 4).
+# base rule 4 says one triad per landing; it does not say every landing owes
+# the same triad.  A docs-only landing that pays for a full build is paying
+# a tenure the machine does not owe it, and — worse — a SCOPED green that
+# does not say what it covers is exactly §5.4a's failure mode: a number
+# quoted without the state it was taken in.  So `--classify` reads the
+# landing's own diff, picks the smallest build that can still convict it,
+# and PRINTS the coverage statement alongside the verdict.
+#
+#   docs   nothing in the diff can change elaboration -> `tools/docs_check.py`
+#          only, and NO TENURE: docs_check shells out to nothing, so there is
+#          no Lean execution for A11's lock to cover.
+#   tier   LeanModels/<tier>/ and its Examples/ -> a SCOPED `lake build` of
+#          the touched modules (plus the tier root module where one exists).
+#   spine  LeanModels.lean, LeanModels/Core/, the shared harness, the
+#          lakefile -> the full build.  Anything UNRECOGNIZED lands here too.
+#
+# The classification is a FLOOR, never a ceiling: a lane that passes its own
+# --gates keeps them and keeps the tenure, because this script cannot know
+# whether a lane's gate runs Lean.  A lane can always run more.
 #
 # USAGE
 #   tools/triad.sh --lane <name> [--dir <clone>] [--gates "cmd; cmd"] [...]
 #   tools/triad.sh --self-test          # exercises the queue logic, NO Lean
 #   tools/triad.sh --lane x --dry-run   # takes a real tenure, runs no Lean
+#   tools/triad.sh --lane x --classify  # scope the triad from the diff
+#   tools/triad.sh --classify-only      # print the classification, run nothing
+#   tools/triad.sh --classify --against <ref>    # default: github/master
 #
 # The lock and queue paths are overridable (LS_LOCK / LS_QUEUE) so the logic
 # can be exercised in a sandbox.  A live run always uses the real paths.
@@ -61,8 +87,13 @@ STALE_AFTER="${LS_STALE_AFTER:-1800}"          # only then consider a reclaim
 DRY_RUN=0
 SELF_TEST=0
 GATES=""
+CLASSIFY=0
+CLASSIFY_ONLY=0
+AGAINST=""                                     # merge target; default below
 
-usage() { sed -n '1,60p' "${BASH_SOURCE[0]}" >&2; exit 2; }
+# The header IS the usage text, so print it whole — a `sed -n '1,60p'` goes
+# stale the first time somebody documents a flag.
+usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -72,10 +103,15 @@ while [ $# -gt 0 ]; do
     --rss-limit) RSS_LIMIT_KB="${2:-}"; shift 2 ;;
     --dry-run)   DRY_RUN=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
+    --classify)  CLASSIFY=1; shift ;;
+    --classify-only) CLASSIFY=1; CLASSIFY_ONLY=1; shift ;;
+    --against)   AGAINST="${2:-}"; shift 2 ;;
     -h|--help)   usage ;;
     *)           echo "triad.sh: unknown argument '$1'" >&2; usage ;;
   esac
 done
+
+LANE_GATES="$GATES"                            # what the LANE asked for, kept
 
 say() { echo "[$(date +%H:%M:%S)] $*"; }
 die() { echo "triad.sh: $*" >&2; exit 2; }
@@ -168,6 +204,212 @@ sweep_stale_tickets() {
   done
 }
 
+# =================================================== THE DIFF CLASSIFIER
+# Pure functions over PATHS — no git, no filesystem except the one lookup
+# `tier_targets` needs — so `--self-test` exercises every branch without a
+# repository and without Lean.
+#
+# The direction of every doubt is fixed: an unrecognized path ESCALATES.  A
+# classifier that guesses "probably docs" and is wrong ships an unbuilt
+# landing; one that guesses "probably spine" and is wrong costs a build.
+# Those are not symmetric, and lean-tier's own corner table minted the rule
+# the expensive way: a path-based classifier filed all seven `TrProj.*`
+# lemmas as "other" because they lived in a generically-named file, and the
+# census's largest cluster went invisible in its own summary
+# (docs/backlog/lean-tier.md 2026-08-22-lean-tier-2).  A path rule that does
+# not recognize something must SAY SO, not absorb it into a bucket.
+
+CLASS_RANK=0            # 1 docs, 2 tier, 3 spine — the MAX over the diff
+CLASS_TIERS=""          # tier keys touched, normalised across the two trees
+CLASS_UNKNOWN=""        # paths no rule matched (escalated to spine, listed)
+CLASS_NOTES=""          # one line per thing the lane should know
+BUILD_TARGETS=""        # empty == full `lake build` (every default target)
+
+class_name() {          # rank -> word
+  case "${1:-0}" in
+    3) echo spine ;;
+    2) echo tier ;;
+    1) echo docs ;;
+    *) echo none ;;
+  esac
+}
+
+add_build_target() {    # UNION, never replace — a lane can always build more
+  local t
+  for t in $BUILD_TARGETS; do [ "$t" = "$1" ] && return 0; done
+  BUILD_TARGETS="${BUILD_TARGETS:+$BUILD_TARGETS }$1"
+}
+
+add_note() { case "$CLASS_NOTES" in *"$1"*) ;; *) CLASS_NOTES="${CLASS_NOTES}${1}
+" ;; esac; }
+
+# ---- what can change elaboration, and what cannot
+classify_path() {       # path -> docs | tier | spine
+  case "$1" in
+    # The spine: everything that invalidates the whole graph.
+    LeanModels.lean|Main.lean|lakefile.toml|lake-manifest.json|lean-toolchain) echo spine ;;
+    LeanModels/Core/*|vendor/*)                     echo spine ;;
+    # The SHARED harness — the differential every tier is judged by.
+    harness/diff_test.py|harness/cases.json)        echo spine ;;
+    # Tier-local: a model directory, or the Examples that exercise it.
+    LeanModels/*|Examples/*)                        echo tier ;;
+    # Prose, instruments and tooling: none of it reaches the elaborator.
+    docs/*|notebooks/*|tools/*|harness/*|.github/*) echo docs ;;
+    .gitignore|*.md)                                echo docs ;;
+    # A `.lean` file that belongs to no library still is not nothing.
+    *.lean)                                         echo spine ;;
+    # UNRECOGNIZED.  Escalate and name it; never absorb it.
+    *)                                              echo spine ;;
+  esac
+}
+
+is_recognized() {       # 0 when a rule (not the catch-all) matched the path
+  case "$1" in
+    LeanModels.lean|Main.lean|lakefile.toml|lake-manifest.json|lean-toolchain) return 0 ;;
+    LeanModels/*|Examples/*|vendor/*|docs/*|notebooks/*|tools/*|harness/*) return 0 ;;
+    .github/*|.gitignore|*.md|*.lean) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# `Examples/<dir>` and `LeanModels/<Tier>` are two names for one tier, and the
+# classifier must not report them as two.  The map is explicit because it is
+# not derivable: `system-verilog` -> `Sv`, and `mixed-signal` spans two tiers
+# (its proofs import both `LeanModels.Circuit.MixedSignal` and
+# `LeanModels.Python.Surface`).
+example_dir_tiers() {   # Examples/<dir> -> zero or more LeanModels tier keys
+  case "$1" in
+    ada)            echo Ada ;;
+    c)              echo C ;;
+    es)             echo Es ;;
+    python)         echo Python ;;
+    spice)          echo Spice ;;
+    system-verilog) echo Sv ;;
+    verilog-a)      echo VerilogA ;;
+    mixed-signal)   echo Circuit Python ;;
+    *)              echo "" ;;        # a corpus with no model tier yet (go)
+  esac
+}
+
+tiers_of() {            # path -> the tier keys it belongs to ('' = not tier-local)
+  local d
+  case "$1" in
+    LeanModels/Core/*) echo "" ;;
+    LeanModels/*/*)    d="${1#LeanModels/}"; echo "${d%%/*}" ;;
+    LeanModels/*.lean) d="${1#LeanModels/}"; echo "${d%.lean}" ;;
+    Examples/*/*)      d="${1#Examples/}";  example_dir_tiers "${d%%/*}" ;;
+    *)                 echo "" ;;
+  esac
+}
+
+module_of() {           # path.lean -> dotted module, or '' if any component
+                        # is not a plain Lean identifier (`«mixed-signal»`
+                        # needs guillemets, and this script does not guess a
+                        # target spelling it cannot verify without Lean).
+  local p="${1%.lean}" c out=""
+  local oldifs="$IFS"; IFS=/
+  for c in $p; do
+    IFS="$oldifs"
+    case "$c" in
+      ''|*[!A-Za-z0-9_]*) echo ""; return 1 ;;
+      [0-9]*)             echo ""; return 1 ;;
+    esac
+    out="${out:+$out.}$c"
+    IFS=/
+  done
+  IFS="$oldifs"
+  echo "$out"
+}
+
+path_targets() {        # path -> build targets it makes owed ('' = none)
+  local m
+  case "$1" in
+    LeanModels/*.lean)
+      m="$(module_of "$1")"
+      if [ -n "$m" ]; then echo "$m"; else echo "__ESCALATE__"; fi ;;
+    Examples/*.lean)
+      m="$(module_of "$1")"
+      # A hyphenated example directory is a real module with a real name —
+      # `Examples.«system-verilog».toggle.proof` — but this script would be
+      # GUESSING the CLI spelling, and A11 forbids running Lean to find out.
+      # Widen to the library instead: less scope, zero invention.
+      if [ -n "$m" ]; then echo "$m"; else echo "Examples"; fi ;;
+    # `[[input_dir]]` in lakefile.toml: these files ARE build inputs.
+    Examples/spice/*.cir)                       echo "Examples" ;;
+    Examples/verilog-a/*.va|Examples/verilog-a/*.json) echo "Examples" ;;
+    *) echo "" ;;
+  esac
+}
+
+tier_targets() {        # tier key -> its root module, when the tier has one
+  [ -f "$CLONE/LeanModels/$1.lean" ] && echo "LeanModels.$1"
+  return 0
+}
+
+classify_list() {       # reads paths on stdin; sets the CLASS_* globals
+  CLASS_RANK=0; CLASS_TIERS=""; CLASS_UNKNOWN=""; CLASS_NOTES=""; BUILD_TARGETS=""
+  local p c rank t tt seen
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    c="$(classify_path "$p")"
+    case "$c" in spine) rank=3 ;; tier) rank=2 ;; *) rank=1 ;; esac
+    [ "$rank" -gt "$CLASS_RANK" ] && CLASS_RANK="$rank"
+    is_recognized "$p" || CLASS_UNKNOWN="${CLASS_UNKNOWN:+$CLASS_UNKNOWN }$p"
+    for t in $(tiers_of "$p"); do
+      seen=0
+      for tt in $CLASS_TIERS; do [ "$tt" = "$t" ] && seen=1; done
+      [ "$seen" = "0" ] && CLASS_TIERS="${CLASS_TIERS:+$CLASS_TIERS }$t"
+    done
+    for t in $(path_targets "$p"); do
+      if [ "$t" = "__ESCALATE__" ]; then
+        CLASS_RANK=3
+        add_note "a module name could not be derived from '$p' — escalated to a FULL build"
+      else
+        add_build_target "$t"
+      fi
+    done
+    case "$p" in
+      docs/*.lean|harness/*.lean|tools/*.lean)
+        add_note "'$p' is Lean but no lake target — running it is still Lean execution (A11): pass --gates" ;;
+    esac
+  done
+  # A tier's root module imports its submodules, so building it covers the
+  # tier's DEPENDENTS as well as the touched module's dependencies.  Tiers
+  # without a root (`Sv`, `Rv`, `Core`) have no such module and get none.
+  for t in $CLASS_TIERS; do
+    for tt in $(tier_targets "$t"); do add_build_target "$tt"; done
+  done
+  [ "$CLASS_RANK" = "3" ] && BUILD_TARGETS=""    # spine == every default target
+  return 0
+}
+
+gate_floor() {          # class -> the gates this landing owes at minimum
+  case "$1" in
+    docs) echo 'python3 tools/docs_check.py' ;;
+    *)    echo 'python3 tools/docs_check.py; python3 harness/diff_test.py' ;;
+  esac
+}
+
+tenure_needed() {       # class, lane's own --gates -> yes | no
+  # A11: the lock covers ALL Lean execution.  docs_check runs none — it
+  # shells out to nothing — so a docs-only landing owes no tenure.  A lane
+  # that brought its OWN gates keeps the tenure, because this script cannot
+  # know whether one of them starts a Lean process.  Never downgrade.
+  case "$1" in
+    docs) if [ -n "$2" ]; then echo yes; else echo no; fi ;;
+    *)    echo yes ;;
+  esac
+}
+
+coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
+  case "$1" in
+    docs) echo "docs-only: NO Lean was elaborated, so a green here is evidence about the prose, its citations and its paths — and about NOTHING in the model." ;;
+    tier) echo "scoped: a green covers the modules named above and everything they IMPORT. It does NOT cover modules that import THEM, nor any untouched tier, and it is not evidence about master beyond that scope." ;;
+    spine) echo "full: a green covers every default target at this sha." ;;
+    *)    echo "no files classified — this run measured nothing." ;;
+  esac
+}
+
 # --------------------------------------------------------------- self-test
 # §5.4's law, pointed at this script: every refusal path RUN, not admired.
 # No Lean, no lock, no queue outside the temp dir it creates.
@@ -217,13 +459,82 @@ if [ "$SELF_TEST" = "1" ]; then
 
   check "descendants(self) excludes self" "$(descendants $$ | grep -c "^$$\$")" "0"
 
+  # ------------------------------------------------- the diff classifier
+  # Every class EXECUTED against a real path list, not described.  These run
+  # in THIS shell (never under `$( )`), because `classify_list` reports
+  # through globals and a subshell would swallow them.
+  echo "  -- classifier"
+  cls() { classify_list <<< "$(printf '%s\n' "$@")"; }
+
+  cls docs/backlog/qol.md README.md tools/diagnose.sh
+  check "docs-only diff -> docs"            "$(class_name "$CLASS_RANK")" "docs"
+  check "docs-only builds nothing"          "$BUILD_TARGETS" ""
+  check "docs-only owes NO tenure"          "$(tenure_needed docs "")" "no"
+  check "docs-only gates: docs_check alone" "$(gate_floor docs)" "python3 tools/docs_check.py"
+
+  cls LeanModels/Sv/Obs.lean Examples/system-verilog/toggle/proof.lean
+  check "tier-local diff -> tier"           "$(class_name "$CLASS_RANK")" "tier"
+  check "the two trees name ONE tier"       "$CLASS_TIERS" "Sv"
+  check "the touched module is a target"    "$BUILD_TARGETS" "LeanModels.Sv.Obs Examples"
+  check "a rootless tier adds no root"      "$(tier_targets Sv)" ""
+  check "tier owes a tenure"                "$(tenure_needed tier "")" "yes"
+
+  cls LeanModels/Python/Surface.lean
+  check "a tier WITH a root adds it"        "$BUILD_TARGETS" "LeanModels.Python.Surface LeanModels.Python"
+
+  cls LeanModels/Core/Basic.lean
+  check "Core -> spine"                     "$(class_name "$CLASS_RANK")" "spine"
+  check "spine builds EVERY default target" "$BUILD_TARGETS" ""
+  check "Core belongs to no tier"           "$CLASS_TIERS" ""
+
+  cls harness/diff_test.py
+  check "the SHARED harness -> spine"       "$(class_name "$CLASS_RANK")" "spine"
+  cls harness/wasm_sorry_census.py
+  check "a lane instrument -> docs"         "$(class_name "$CLASS_RANK")" "docs"
+  cls lakefile.toml
+  check "the lakefile -> spine"             "$(class_name "$CLASS_RANK")" "spine"
+
+  cls docs/family-architecture.md LeanModels/C/Eval.lean
+  check "MIXED docs+tier -> tier"           "$(class_name "$CLASS_RANK")" "tier"
+  cls docs/family-architecture.md LeanModels/C/Eval.lean LeanModels.lean
+  check "MIXED docs+tier+spine -> spine"    "$(class_name "$CLASS_RANK")" "spine"
+
+  cls LeanModels/C/Eval.lean LeanModels/Ada/Eval.lean
+  check "two tiers stay tier"               "$(class_name "$CLASS_RANK")" "tier"
+  check "two tiers, both in scope"          "$CLASS_TIERS" "C Ada"
+
+  cls Makefile
+  check "an UNRECOGNIZED path -> spine"     "$(class_name "$CLASS_RANK")" "spine"
+  check "and it is NAMED, not absorbed"     "$CLASS_UNKNOWN" "Makefile"
+
+  cls Examples/spice/rc/net.cir
+  check "an input_dir file is a build input" "$BUILD_TARGETS" "Examples LeanModels.Spice"
+
+  check "module_of refuses a hyphen"        "$(module_of Examples/system-verilog/x.lean)" ""
+  check "module_of derives a plain path"    "$(module_of LeanModels/Sv/Obs.lean)" "LeanModels.Sv.Obs"
+  cls LeanModels/Py-thon/x.lean
+  check "an underivable module escalates"   "$(class_name "$CLASS_RANK")" "spine"
+
+  cls docs/mvcgen-pilot.lean
+  check "a doc's .lean is still docs"       "$(class_name "$CLASS_RANK")" "docs"
+  case "$CLASS_NOTES" in *A11*) n=said ;; *) n=silent ;; esac
+  check "  ...but A11 is said out loud"     "$n" "said"
+
+  check "NEVER DOWNGRADE: lane gates keep the tenure" "$(tenure_needed docs 'python3 x.py')" "yes"
+  check "tier gates include the differential" \
+        "$(gate_floor tier)" "python3 tools/docs_check.py; python3 harness/diff_test.py"
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
 fi
 
 # ------------------------------------------------------------ preconditions
-[ -n "$LANE" ] || die "--lane <name> is required (it goes in the owner file)"
+# --classify-only takes no tenure and writes no owner file, so it needs no
+# lane tag.  Everything else does.
+if [ "$CLASSIFY_ONLY" = "0" ]; then
+  [ -n "$LANE" ] || die "--lane <name> is required (it goes in the owner file)"
+fi
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 cd "$CLONE" || die "cannot cd '$CLONE'"
@@ -235,6 +546,100 @@ cd "$CLONE" || die "cannot cd '$CLONE'"
 for d in .git/rebase-merge .git/rebase-apply .git/MERGE_HEAD .git/CHERRY_PICK_HEAD; do
   [ -e "$d" ] && die "a rebase/merge is in progress ($d) — finish it BEFORE the build (A6, §7.2)"
 done
+
+# ------------------------------------------------------- run the gate list
+# Factored out because the docs-only path runs gates WITHOUT a tenure and the
+# normal path runs them INSIDE one.  One implementation, two callers.
+rc=0
+run_gates() {                         # "cmd; cmd" -> sets rc
+  local g old_ifs
+  old_ifs="$IFS"; IFS=';'
+  for g in $1; do
+    IFS="$old_ifs"
+    g="$(printf '%s' "$g" | sed -e 's/^ *//' -e 's/ *$//')"
+    [ -n "$g" ] || { IFS=';'; continue; }
+    say "=== gate: $g ==="
+    nice -n "$NICE" sh -c "$g" || { rc=1; say "  GATE FAILED: $g"; }
+    IFS=';'
+  done
+  IFS="$old_ifs"
+}
+
+# ------------------------------------------------------- --classify (§5.4a)
+merge_target_ref() {
+  # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
+  # peer's REMOTES, so `origin` can be a stale local bundle and
+  # `origin/master` reads days back while `git rev-list HEAD..origin/master`
+  # cheerfully reports 0.  Prefer `github/master`; either way, SAY which ref
+  # the classification was taken against.
+  local r
+  for r in github/master origin/master; do
+    if git rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
+  done
+  echo ""
+}
+
+CLASS=""
+if [ "$CLASSIFY" = "1" ]; then
+  BASE="$AGAINST"
+  [ -n "$BASE" ] || BASE="$(merge_target_ref)"
+  [ -n "$BASE" ] || die "no merge target (neither github/master nor origin/master) — pass --against <ref>"
+  git rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 || die "--against '$BASE' is not a ref in this clone"
+  BASE_SHA="$(git rev-parse --short "$BASE" 2>/dev/null || echo unknown)"
+  BASE_REMOTE="${BASE%%/*}"
+  BASE_URL="$(git remote get-url "$BASE_REMOTE" 2>/dev/null || echo "")"
+  case "$BASE_URL" in
+    /*|file:*|*.bundle)
+      echo "A13 WARNING: remote '$BASE_REMOTE' is a LOCAL path ($BASE_URL) — a seeded clone's" >&2
+      echo "             origin is a stale bundle, and comparing against it reads days back." >&2
+      echo "             Add the real remote and re-run with --against github/master." >&2 ;;
+  esac
+
+  CHANGED="$( { git diff --name-only "$BASE...HEAD" 2>/dev/null
+                git diff --name-only --cached 2>/dev/null; } | sort -u )"
+  N_CHANGED="$(printf '%s' "$CHANGED" | grep -c . || true)"
+  N_UNSTAGED_LEAN="$(git diff --name-only 2>/dev/null | grep -c '\.lean$' || true)"
+
+  classify_list <<< "$CHANGED"
+  CLASS="$(class_name "$CLASS_RANK")"
+
+  # A census with nothing to say must not be answered quietly.  An empty diff
+  # is not a docs-only landing; it is a classification that MEASURED NOTHING,
+  # and the safe direction is the full build.
+  if [ "$N_CHANGED" = "0" ]; then
+    echo "CLASSIFY: NOTHING STAGED OR COMMITTED against $BASE — this measured nothing." >&2
+    [ "$CLASSIFY_ONLY" = "1" ] || { CLASS="spine"; BUILD_TARGETS=""; echo "          falling back to the FULL build (never downgrade)." >&2; }
+  fi
+
+  say "CLASSIFICATION: $CLASS"
+  printf '  base      %s @ %s%s\n' "$BASE" "$BASE_SHA" "${BASE_URL:+  ($BASE_REMOTE -> $BASE_URL)}"
+  printf '  files     %s staged/committed%s\n' "$N_CHANGED" \
+         "$( [ "$N_UNSTAGED_LEAN" = "0" ] || printf ' (+%s UNSTAGED .lean NOT classified — stage them or they are not in this green)' "$N_UNSTAGED_LEAN" )"
+  printf '  tiers     %s\n' "${CLASS_TIERS:-none}"
+  case "$CLASS" in
+    docs) printf '  build     none (no Lean)\n' ;;
+    none) printf '  build     n/a — nothing was classified\n' ;;
+    *)    printf '  build     lake build %s\n' "${BUILD_TARGETS:-<all default targets>}" ;;
+  esac
+  [ -n "$CLASS_UNKNOWN" ] && printf '  UNKNOWN   %s  <- no path rule matched; escalated, not absorbed\n' "$CLASS_UNKNOWN"
+  printf '%s' "$CLASS_NOTES" | while IFS= read -r n; do [ -n "$n" ] && printf '  note      %s\n' "$n"; done
+
+  FLOOR="$(gate_floor "$CLASS")"
+  if [ -n "$LANE_GATES" ]; then GATES="$FLOOR; $LANE_GATES"; else GATES="$FLOOR"; fi
+  printf '  gates     %s\n' "$GATES"
+  [ -n "$LANE_GATES" ] && printf '  %s\n' "(the floor, then the lane's own --gates: a classification never REMOVES a gate)"
+  printf '  COVERAGE (§5.4a)  %s\n' "$(coverage_statement "$CLASS")"
+
+  if [ "$CLASSIFY_ONLY" = "1" ]; then exit 0; fi
+
+  if [ "$(tenure_needed "$CLASS" "$LANE_GATES")" = "no" ]; then
+    say "docs-only: NO TENURE TAKEN — nothing here starts a Lean process (A11)"
+    run_gates "$GATES"
+    say "TRIAD DONE (docs-only, no build; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
+    say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+    exit "$rc"
+  fi
+fi
 
 # ------------------------------------------------------------------ enqueue
 mkdir -p "$QUEUE" || die "cannot create the queue at $QUEUE"
@@ -336,8 +741,12 @@ fi
 BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 BUILD_EXIT=1
 for attempt in 1 2; do
-  say "=== lake build (attempt $attempt) ==="
-  nice -n "$NICE" lake build > "$BUILD_LOG" 2>&1
+  say "=== lake build ${BUILD_TARGETS:-<all default targets>} (attempt $attempt) ==="
+  # UNQUOTED on purpose: BUILD_TARGETS is a target LIST, and every element was
+  # validated as a plain Lean identifier path before it got here.  Empty means
+  # the full build, which is exactly `lake build` with no arguments.
+  # shellcheck disable=SC2086
+  nice -n "$NICE" lake build $BUILD_TARGETS > "$BUILD_LOG" 2>&1
   BUILD_EXIT=$?
   say "build exit=$BUILD_EXIT"
   # base rule 2: 143/137 is the OS terminating an oversubscribed job.  It is
@@ -367,15 +776,10 @@ fi
 if [ -z "$GATES" ]; then
   GATES='python3 tools/docs_check.py; python3 harness/diff_test.py'
 fi
-rc=0
-old_ifs="$IFS"; IFS=';'
-for g in $GATES; do
-  g="$(printf '%s' "$g" | sed -e 's/^ *//' -e 's/ *$//')"
-  [ -n "$g" ] || continue
-  say "=== gate: $g ==="
-  nice -n "$NICE" sh -c "$g" || { rc=1; say "  GATE FAILED: $g"; }
-done
-IFS="$old_ifs"
+run_gates "$GATES"
 
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
+# §5.4a: the verdict carries the state it was taken in.  A scoped green that
+# does not say what it covers is a number without its state.
+[ -n "$CLASS" ] && say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
 exit "$rc"

@@ -16814,6 +16814,44 @@ does NOT verify is the interaction with the rest of the tree, which is what
 build is OWED for these inches too**, and the next lane to hold the lock should
 run it.
 
+### ADDENDUM — the OWED triad reports, and it does NOT cover this lane (2026-08-22)
+
+The queued triad finished after 51 minutes, having waited 11 for the lock.
+**`lake build` 3694 jobs, "Build completed successfully", exit 0, zero errors**
+(the two long poles were `pins_bound` 1776 s and `pins_clock` 1842 s, both
+slower than §L13's baseline because the box was carrying sibling builds);
+**`docs_check` 75/75** marked blocks, 20 illustrative-exempt; **`diff_test`
+1394 cases, 0 failed, 118 whitelisted, 1276 matched**; **`script_corpus` 65
+scripts, 0 failed, 50 completed-and-matched, 15 loud-blocked**. Every number
+unmoved from the §L54/§L57 baselines, which is what a docs-and-instruments
+landing must leave behind.
+
+**AND IT DOES NOT COVER THE ES LANE — measured, not assumed.** That build was
+enumerated at 11:56, before `LeanModels/Es/` and `Examples/es/` existed, and
+**zero `LeanModels.Es` or `Examples.es` targets appear anywhere in its log**
+(3694 jobs against §L57's 3693 is a sibling's single addition, not this
+lane's five modules). So the Lean of inches 5-6 remains verified by the
+rule-3 scratch route only — every module and all 21 `#guard`s compiled from
+scratch with the pinned `lean`, non-vacuity checked four ways — and a
+full-tree build covering it is queued behind the lock. Recording the gap
+precisely is the point: a triad that ran on a tree without this lane's files
+is not evidence about this lane's files, and reporting its green as though it
+were would be the overclaim this document exists to prevent.
+
+**One instrumentation defect, self-inflicted and worth the line.** The
+triad script piped each step through `tail -2`, which for `script_corpus`
+captured two lines of deprecation noise instead of its summary — the count
+had to be recovered by re-running it and grepping. **Do not `tail -N` a
+harness whose summary is not its last line**; capture to a file and grep for
+the summary.
+
+**Lock hygiene, on the coordinator's check.** While this build ran, the lock
+was handed on to other lanes and its `owner` file no longer named this one.
+The trap is ownership-checked by construction — it greps for its own marker
+before removing anything — so on exit it printed **"LOCK NOT MINE"** and
+removed nothing, leaving the holder's lock intact. That is the amendment-2
+behaviour working on the exact case it was written for.
+
 ## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
 
 The owner ruled all six of §L60's decisions the same day, and the SV lane's

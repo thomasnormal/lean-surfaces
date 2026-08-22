@@ -18,8 +18,14 @@ paraphrases and cites rather than transcribing.
 
 **Warning to anyone carrying a citation in from C17: §6.5 was
 RENUMBERED.** A new §6.5.1 "General" shifts all seventeen operator
-subclauses down by one, so division is §6.5.6 (not §6.5.5) and shifts are
-§6.5.8 (not §6.5.7). The full table is `docs/c23-spec-mirror.md` §4.2.
+subclauses down by one, so division is §6.5.6 (C17 §6.5.5) and shifts are
+§6.5.8 (C17 §6.5.7). The full table is `docs/c23-spec-mirror.md` §4.2.
+
+Citations to a SUPERSEDED edition always carry the edition tag
+immediately before the section sign (`C17 §x.y.z`), never bare. An
+untagged `§` in this namespace is C23 (N3220) by
+construction, so a scanner can classify every citation without parsing
+the prose around it.
 
 **THE DECISION THIS FILE EXISTS FOR: unsigned WRAPS, signed REFUSES —
 and the corpus needs both in adjacent operands.** Measured
@@ -126,7 +132,7 @@ one place, wrong (`docs/c23-spec-mirror.md` §3.3). -/
 inductive UB where
   /-- **`J.2(35)`**, §6.5.1p5: an exceptional condition occurs during the
   evaluation of an expression — the result is not in the range of
-  representable values for its type. (C17 numbered this §6.5p5.) -/
+  representable values for its type. (C17 §6.5p5.) -/
   | signedOverflow (op : String) (ty : IntTy) (v : Int)
   /-- **`J.2(41)`**, §6.5.6p6: the second operand of `/` or `%` is zero. -/
   | divideByZero (op : String)
@@ -218,8 +224,8 @@ representable, so §6.5.1p5's exceptional condition applies
 Getting the truncation wrong is the `pyfloordiv` divergence class the
 ctwin README names as #1, met here from the C side.
 
-*(Citation note: this is §6.5.5 in C17. C23's inserted §6.5.1 "General"
-shifted it.)* -/
+*(Citation note: C17 §6.5.5. C23's inserted §6.5.1 "General" shifted
+it.)* -/
 def divOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b == 0 then .ub (.divideByZero "/")
   else if t.signed && a == t.minVal && b == -1 then .ub .divideOverflow
@@ -234,7 +240,7 @@ def modOp (t : IntTy) (a b : Int) : CRes CVal :=
   else if t.signed && a == t.minVal && b == -1 then .ub .divideOverflow
   else close "%" t (Int.tmod a b)
 
-/-- `<<`, C23 §6.5.8 (C17: §6.5.7).
+/-- `<<`, C23 §6.5.8 (C17 §6.5.7).
 
 §6.5.8p3 — the count must be non-negative and less than the width of the
 promoted left operand, else undefined (**`J.2(48)`**).

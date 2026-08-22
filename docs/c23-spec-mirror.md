@@ -43,6 +43,30 @@ do not appear in this repository, and no part of N3220 is vendored.
    (§3). A refusal that cannot name its J.2 index is a refusal nobody can
    check against the standard's own checklist.
 
+### 1.1a The edition tag — so a scanner can classify without reading prose
+
+A surface that documents a renumbering necessarily CONTAINS superseded
+numbers, and a citation instrument that cannot tell them apart will
+report the documentation as drift. Two rules make every citation
+machine-classifiable:
+
+1. **An untagged `§` inside `LeanModels/C/C23/` is C23 (N3220)** by
+   construction.
+2. **A citation to a superseded edition carries the edition tag
+   immediately before the section sign** — `C17 §6.5.5`, never a bare
+   `§6.5.5` and never `C17: §6.5.5` with punctuation between.
+
+A third case is not an ISO citation at all: `docs/c23-spec-mirror.md §4.2`
+and the like are INTERNAL document references, and they are always
+preceded by the document's filename or an explicit "the design's". An
+instrument should exclude a `§` whose line carries a `docs/….md` token
+before it.
+
+This matters concretely: `LeanModels/C/C23/Value.lean` states the C17
+numbers for division and shift *on purpose*, in the warning that tells a
+reader carrying a citation in from C17 what moved. Those are correct
+documentation, not stale citations, and the tag is what says so.
+
 ### 1.2 What becomes what
 
 | in the standard | in the surface |

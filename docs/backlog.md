@@ -21795,3 +21795,71 @@ settled centrally**, and the ES charter's *"where does `RVal` live"* question
 was never going to be shared. Folded into §3.4 beside the `Run.exn` payload
 deferral, which it effectively resolves in the parameterize direction. The same
 move rules `RefusalCause`: **the two rulings are one idea applied twice.**
+
+### §7.1a WAS THREE AMENDMENTS BEHIND AGAIN — A14/A15/A16 land, plus the A6 corollary
+
+Audit #2 found the register three behind. **The cause is worth recording because
+it is structural, not careless**: the amendments were made to the *scratchpad*
+file and never relayed. That is the second time the durable home fell behind its
+own ephemeral source, and it is exactly what §7.1a was created to stop —
+**a register only stays current if amendments are written to it FIRST.**
+
+* **A14 — full-tree builds are QUIET-MACHINE-ONLY.** Lake has **no
+  process-count cap**, so a full build fans out freely and is **the first thing
+  jetsam takes on a box in swap**. Exit 137 never red; **ONE** retry, then
+  **SCOPED** builds (`--build-target`) carrying a **§5.4a coverage statement**
+  (what was built, what was not, what the green covers); the **full triad stays
+  OWED** until **load < 5 and swap < 1 GB**. A scoped green is a real green about
+  a smaller claim — reporting it as a full triad is the flattering direction.
+* **A15 — `pkill -f <path>` does NOT kill a `lake build`.** Its RSS number is
+  superseded by A16; **this rule is the surviving half**. `lake`'s cmdline
+  carries **no path**, so `-f <path>` matches only workers; kill them and the
+  **parent respawns them**, and a parent that has lost its lock leaves an
+  **unlocked orphan** with nobody's name on it. **Kill by CWD, then by tree.**
+  Same lesson as A12 from the matching side.
+* **A16 — RSS is PER-PROCESS 5 GB / chain 10 GB**, raising A11's single 3 GB
+  chain line. **One honest worker measured 3 251 MB** — a legitimate process
+  above the old *chain* limit. **Neither lane raised its own limit**, which is
+  why the number is trustworthy: set by a third party after the fact, not by the
+  lanes that kept hitting it. Two single-shot defects fixed: the guard **excludes
+  itself** (a watchdog counting its own RSS eventually kills the watcher) and
+  **restarts per attempt** (the original fired once, so retries ran unguarded).
+* **A16.2 — RETIRING A RUNNER.** **SIGKILL** superseded scripts: `SIGTERM` runs
+  **EXIT traps**, and a **pre-A7 trap deleted a third lane's lock** on its way
+  out — the retiring script's last act broke the amendment that replaced it. And
+  **delete the file in the same breath**, or the next person to find it runs it.
+
+  > **Adoption is the most dangerous moment**, and **an amendment takes effect
+  > when the last script predating it is dead.**
+
+  That is sharper than §9.2's by-touch discipline and worth the distinction:
+  by-touch tolerates a slow migration because the old artifact is **inert**. A
+  superseded **runner is not inert** — it holds locks, kills processes, runs
+  traps — so its migration window is a **hazard**, not merely a delay.
+* **A6 COROLLARY** (was missing): **never rebase while holding a queued ticket
+  that could acquire mid-operation.** A6 forbids rebasing under a running build;
+  the A9 queue adds a second window with the same shape and it is easier to miss
+  because nothing is running yet — if the ticket reaches the head while `git` is
+  rewriting the tree, the tenure opens on a torn tree and holds the machine-wide
+  lock while failing. A13's branch+remotes caveat was already in.
+
+### AUDIT #2's TWO DOC ITEMS
+
+**(a) THE SemM RECONCILIATION TABLE, into §3.4 — and two sites are a SEMANTICS
+FIX, not a rename.** Measured: **13 sites across 5 spellings.** Eleven are
+genuine spelling variants an import absorbs. **Two use `Except Loud` where the
+stack requires `Halt`**, and they are **not interchangeable by this document's
+own `rfl`**: `Halt` sits outside `StateT`, so a `Loud` result carries **no `W`**.
+An `Except Loud` in a `Halt` position is a *different type*, and whatever those
+sites prove, they prove about a stack that retains state where the family's does
+not. **Rule at `Core`'s landing: by-shape definitions are REPLACED by import
+(mechanical, by touch), and the two `Loud` sites are opened as a semantics fix.**
+Filing them under "rename" would be the quiet way to lose two facts.
+
+**(b) C's `libc` is the last code-level obstacle to the cause vocabulary.** C's
+type is `valueUB` / `memUB` / `libc`; the first two are cause-2 refinements that
+fit the payload rule cleanly. **`libc` is the outlier** — it is cause 3,
+`environment`, under a name saying *which* environment rather than *that* it is
+one. Recorded as **C's next-touch item**: mechanical rename, payload keeps the
+distinction, and it is the last place a cause class in the tree does not carry a
+family name.

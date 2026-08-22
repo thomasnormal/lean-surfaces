@@ -1199,6 +1199,29 @@ behind.
   (§3.4 clause b), which is a different thing entirely. Re-spelling: cheap,
   by touch. Second semantics: gated.
 
+**THE RECONCILIATION, measured — and two of the sites are a SEMANTICS FIX,
+not a rename.** Audit #2 counted the by-shape adoptions actually in the
+tree: **13 sites across 5 spellings.** Most are genuine spelling variants
+that an import will absorb. **Two are not:**
+
+| finding | consequence |
+| --- | --- |
+| 11 sites: the stack's shape, spelled differently | **rename on import** — mechanical, by touch |
+| **2 sites: `Except Loud` where the stack requires `Halt`** | **NOT interchangeable** — a semantics fix |
+
+The two are not interchangeable **by this document's own `rfl`**: `Halt`
+sits outside `StateT`, so a `Loud` result carries **no `W`**; an
+`Except Loud` in a position the stack types as `Halt` is a *different
+type*, not a different name for one. Whatever those two sites currently
+prove, they prove about a stack that retains state where the family's does
+not.
+
+**So the rule at `Core`'s landing:** by-shape definitions are **REPLACED by
+import** — that is the cheap, mechanical majority — **and the two
+`Except Loud` sites are opened as a semantics fix**, with whatever their
+theorems said re-established over the real stack. Filing them under
+"rename" would be the quiet way to lose two facts.
+
 **`Core.SemM` becomes the one spelling once the rebuild's extraction lands
 on master** — imminent, in its post-merge triad as this is written.
 
@@ -2319,6 +2342,15 @@ scoreboard unreadable.
 4. **`order-dependence` — the language admits several orders and the
    model cannot show the observable invariant under all of them.**
 
+**THE LAST CODE-LEVEL OBSTACLE TO THE VOCABULARY IS C's `libc`.** C's cause
+type is `valueUB` / `memUB` / `libc`, and the first two are refinements of
+cause 2 (`undefined`) that fit the payload rule (§5.2's ruling above)
+cleanly. **`libc` is the outlier**: it is §5.2's cause 3, `environment`,
+under a name that says *which* environment rather than *that* it is one.
+Recorded as **C's next-touch item** — the rename is mechanical, the payload
+keeps the `libc` distinction, and it is the last place a cause class in the
+tree does not carry a family name.
+
 **Cause 4 is new at the family level, and the C tier is the evidence that
 it is needed.** `docs/c-semantics-design.md` §3.1 fixes three causes;
 §4.4 then rules "REFUSE where a static census cannot show the order
@@ -2832,7 +2864,10 @@ durable home. Anything a lane must obey belongs in a git-tracked file.
 | 10 | **the owner pid must span the tenure** — below | **carried** |
 | 11 | **the lock covers ALL Lean execution** — below | **new** |
 | 12 | **traps kill descendants RECURSIVELY** — below | **new** |
-| 13 | **mandatory CoW cache seeding** — below | **new** |
+| 13 | **mandatory CoW cache seeding** — below | **carried** |
+| 14 | **full-tree builds are QUIET-MACHINE-ONLY** — below | **new** |
+| 15 | `pkill -f <path>` does NOT kill a `lake build` — below | **new** (its RSS number is SUPERSEDED by 16) |
+| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **new** |
 
 **AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
 lane holding the lock had its `owner` file **overwritten by another lane**.
@@ -2964,6 +2999,61 @@ density** across the applicable protocol cells, and a prose register can
 sit one amendment behind its own birth — as §7.1a's did, by two minutes —
 while **a missing amendment in a script is a diff.**
 
+**AMENDMENT 14 — A FULL-TREE BUILD IS QUIET-MACHINE-ONLY.** Lake has **no
+process-count cap**, so a full build fans out as wide as it likes — and on
+a box already in swap it is **the first thing jetsam takes**. The rules:
+
+* **exit 137 is never red** (base rule 2, and now with a named cause);
+* **ONE retry**, then stop retrying and switch strategy;
+* fall back to **SCOPED builds** (`--build-target`), and when you do, the
+  landing carries a **§5.4a coverage statement** — *what was built, what
+  was not, and therefore what the green covers*;
+* the **full triad stays OWED**, discharged when the box is quiet:
+  **load < 5 and swap < 1 GB**.
+
+A scoped green is a real green about a smaller claim. Reporting it as a
+full triad is the flattering direction §5.4a exists to catch.
+
+**AMENDMENT 15 — `pkill -f <path>` DOES NOT KILL A `lake build`.** Its RSS
+number is superseded by A16; **this rule survives and is the important
+half.** `lake`'s command line **contains no path**, so a `-f <path>` match
+finds only the *workers*. Kill them and the **parent respawns them** — and
+if the parent has by then lost its lock, the result is an **unlocked
+orphan** eating the box with nobody's name on it. **Kill by CWD, then by
+tree** (A12's recursive descent). This is the same lesson as A12 from the
+matching side: identify the chain correctly *before* killing anything.
+
+**AMENDMENT 16 — THE RSS LINE IS PER-PROCESS 5 GB / CHAIN 10 GB**, raising
+A11's single 3 GB chain line. The number comes from a measurement, not a
+concession: **one honest worker measured 3 251 MB** — a single legitimate
+process above the old *chain* limit. **Neither lane raised its own limit**,
+which is why the number is trustworthy: it was set by a third party after
+the fact, not by the lanes that kept hitting it.
+
+Two implementation defects the amendment fixes, both single-shot bugs:
+
+* **the guard EXCLUDES ITSELF** — a watchdog that counts its own RSS
+  eventually kills the thing doing the watching;
+* **it RESTARTS PER ATTEMPT** — the original fired once and then stopped
+  watching, so a retry ran unguarded.
+
+**16.2 — RETIRING A RUNNER: `SIGKILL` superseded scripts, and delete the
+file in the same breath.** `SIGTERM` runs **EXIT traps**, and a
+**pre-A7 trap deleted a third lane's lock** on its way out — the retiring
+script's last act was to break the amendment that replaced it. So a
+superseded runner is **SIGKILL**ed and its file removed immediately, or the
+next person to find it will run it.
+
+> **Adoption is the most dangerous moment**, and **an amendment takes
+> effect when the last script predating it is dead** — not when it is
+> written, not when it is landed, and not when the first lane adopts it.
+
+That is the protocol's own version of §9.2's by-touch discipline, and it is
+sharper: by-touch tolerates a slow migration because the old artifact is
+*inert*. A superseded **runner is not inert** — it holds locks, kills
+processes and runs traps — so its migration window is a hazard rather than
+merely a delay.
+
 ### 7.2 The master branch
 
 Many lanes push the same master. Fetch-rebase before every push; read your
@@ -2979,6 +3069,15 @@ amendment 6, from the Go lane's torn-tree incident). The build reads
 cheap part is the failure; the expensive part is the investigation cycle
 that ends by proving master was fine all along — theirs did, with all four
 "missing" constants present and the diff empty.
+
+**COROLLARY — never rebase while HOLDING A QUEUED TICKET that could acquire
+mid-operation.** A6 forbids rebasing under a running build; the ticket
+queue (A9) adds a second window with the same shape, and it is easier to
+miss because nothing is running yet. If your ticket reaches the head of the
+queue and takes the lock while `git` is rewriting the tree, the tenure
+opens on a torn tree — a build that was never going to be meaningful,
+holding the machine-wide lock while it fails. Drop the ticket or finish the
+rebase first.
 
 **The order is `stage → build → rebase`, or `rebase → build`.** Never both
 at once, and note that this is a *same-clone* hazard: it is not prevented

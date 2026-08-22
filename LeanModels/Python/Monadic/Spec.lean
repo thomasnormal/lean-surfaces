@@ -37,10 +37,10 @@ set_option linter.unusedSimpArgs false
 
 namespace LeanModels.Python.Monadic
 
-/-- The substrate's `PostShape`. No `WPMonad` instance is written for it
-anywhere: `ExceptT.instWPMonad` composes with `StateT`'s and `Except`'s, and the
-whole stack synthesizes with zero instances. -/
-abbrev PS (σ : Type) : PostShape := .except PyErr (.arg σ (.except Halt .pure))
+/-- Python's `PostShape`, which is Core's `SemPS` at `ρ := PyErr`. No `WPMonad`
+instance is written for it anywhere — `Core/Outcome.lean` records the `inferInstance`
+that proves the whole stack synthesizes with zero instances written. -/
+abbrev PS (σ : Type) : PostShape := SemPS σ PyErr
 
 /-- The frame-level `PostShape`. -/
 abbrev FS : PostShape := PS FrameState
@@ -151,6 +151,41 @@ does not leak into the proof layer. -/
         st = { st0 with locals := e }⌝⦄ := by
   mvcgen [assignM, envPut, liftRes]; all_goals grind
 
+/-! ## §1.5 ARM-LEVEL ALTITUDE — the fidelity finding's prescription, and its LIMIT
+
+The four-deep GATE 3 shape does not close against the faithful interpreter, and
+the diagnosis was that `mvcgen` must re-split `evalOpen`'s nine-step `.name`
+resolution chain at every occurrence. The prescription — *more `@[spec]` lemmas
+at the ARM level* — is right in principle, and here are the two that work.
+
+**And here is the measured LIMIT, which is the more useful half.** The lemma that
+would actually bind, `evalOpen_name_global` (the static-globals-fold arm, which
+GATE 3 exercises twice for `pst`), **cannot be stated**: `mvcgen` splits the inner
+`match lookupG …` into one VC per branch **without retaining the discriminant
+equation**, so the two unreachable branches arrive as bare `⊢ False` with nothing
+to refute them. Passing the hypothesis into `mvcgen`'s simp set does not help,
+because the split has already happened. Re-measured with the two lemmas below in
+the registry: the four-deep gate still does not close, now at **4M heartbeats /
+~10 minutes**.
+
+So the blocker is not "not enough lemmas" — it is a specific, nameable tactic
+limitation, and that is a better thing to know. It is the third `mvcgen` defect
+this lane has recorded, after the `Spec.throw_Except` metavariable bug and the
+no-op `mvcgen?`. -/
+
+@[spec] theorem evalOpen_name_local (K : Kont) (M : Module) (id : String)
+    (sp : Span) (v : RVal) (st0 : FrameState)
+    (h : Env.lookup st0.locals id = some v) :
+    ⦃fun st => ⌜st = st0⌝⦄ evalOpen K M (.name id sp)
+    ⦃⇓ r => fun st => ⌜r = v ∧ st = st0⌝⦄ := by
+  mvcgen [evalOpen]; all_goals simp_all [h]
+
+@[spec] theorem evalOpen_const (K : Kont) (M : Module) (c : Const) (sp : Span)
+    (st0 : FrameState) :
+    ⦃fun st => ⌜st = st0⌝⦄ evalOpen K M (.constant c sp)
+    ⦃⇓ r => fun st => ⌜r = Const.toRVal c ∧ st = st0⌝⦄ := by
+  mvcgen [evalOpen]; all_goals simp_all
+
 /-! ## §2 THE DEMONSTRATION GATES — `mvcgen` on the REBUILT interpreter
 
 Two, and the second is the point.
@@ -180,11 +215,11 @@ theorem assign_binop_M (K : Kont) (M : Module) (w : World) (e : REnv)
   have hassign : assignToH w.heap e (.name "z" sp) (.int (a + b))
       = .ok (Env.set e "z" (.int (a + b))) := by simp [assignToH, assignTo]
   -- THE ALTITUDE LAW: only the INTERPRETER unfolds. The primitives stay behind
-  -- their triples, which is what keeps the VC count in single digits.
+  -- their triples, which is what keeps the VC count in single digits — and with
+  -- `grind` wired into `mvcgen_trivial_extensible` (Core/Outcome.lean §0) the
+  -- closing script is gone entirely. The four `have`s above are still load-bearing:
+  -- they are the computed-shape residues `grind` is given, not decoration.
   mvcgen [execOpen, evalOpen]
-  all_goals intros
-  all_goals subst_vars
-  all_goals simp_all [hx, hy, hadd, hassign]
 
 /-- **The gate that closes the pilot's fidelity gap.** `row = pst[p]`, where the
 receiver resolves through the STATIC GLOBALS FOLD — the arm the shallow twin did
@@ -208,9 +243,6 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
   have hassign : assignToH w.heap e (.name "row" sp) (.tuple xs)
       = .ok (Env.set e "row" (.tuple xs)) := by simp [assignToH, assignTo]
   mvcgen [execOpen, evalOpen]
-  all_goals intros
-  all_goals subst_vars
-  all_goals simp_all [hnp, hgp, hp, hrowIdx, hassign]
 
 #print axioms refuse_spec
 #print axioms envGet_spec
@@ -227,6 +259,8 @@ theorem subscript_global_M (K : Kont) (M : Module) (w : World) (e : REnv)
 #print axioms truthyM_spec
 #print axioms lenM_spec
 #print axioms assignM_spec
+#print axioms evalOpen_name_local
+#print axioms evalOpen_const
 #print axioms assign_binop_M
 #print axioms subscript_global_M
 

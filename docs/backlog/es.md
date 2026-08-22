@@ -106,3 +106,62 @@ fails with the expression printed.
 `es-build.sh`** (validated at `--lane es`; note `--lane` rejects hyphens, so
 the old `es-lane` tag would not have parsed), and the lane is on **`master`**
 after the A13 seeding branch trap recorded in §L88.
+
+### Triad — GREEN, and `triad.sh`'s DEFAULT GATE SET is narrower than this lane's was
+
+`lake build` **3723 jobs, exit 0**; `docs_check` **83/83**, 29
+illustrative-exempt; `diff_test` **1427 cases, 0 failed, 118 whitelisted, 1309
+matched** (1394 → 1427 is sibling growth, not this lane's — the ES lane still
+adds no rows to either Python harness). Coverage VERIFIED by olean timestamp,
+not assumed: `Env.olean`, `Function.olean` and `functions/guards.olean` are all
+stamped **21:45**, inside the tenure.
+
+**THE RSS GUARD FIRED ON ITS OWN CHAIN, AND THE RETRY WAS RIGHT.** Attempt 1
+died at **exit 137** — `tools/triad.sh`'s own kill line, reaping *our* chain
+when it crossed the limit, exactly as amendment 11 specifies and by parentage
+only. The script recognised 137 as a RESOURCE KILL rather than a red build and
+re-ran; attempt 2 went green. **A shared script implementing the amendment
+correctly is worth more than six lanes each reading it**: this lane's retired
+`es-build.sh` had the same guard, and would have had to get the 137-vs-red
+distinction right on its own.
+
+**A GAP THIS LANE OWES ITSELF, found by reading the log rather than trusting
+it.** `tools/triad.sh`'s DEFAULT gates are `docs_check; diff_test` — and
+**`script_corpus` is not among them**, though the retired `es-build.sh` ran it.
+The default is not wrong (gates are a lane's business, and the script takes
+`--gates`), but a lane migrating to it inherits a NARROWER gate set silently.
+Re-run under its own ticket with `--gates` naming all three; recorded here
+because the failure mode is a landing that reads green against fewer checks
+than the one before it, which no amount of care at the build itself would
+catch.
+
+### ADOPTION OWED — `RefusalCause π` (family-architecture `14bdd7a`), by touch
+
+Read, and **not applied mid-inch**: `LeanModels/Es/Completion.lean` is
+untouched by this landing and adopts at its next touch, per §9.2.
+
+The ruling: `Core` carries the FOUR §5.2 classes as `RefusalCause π`,
+parameterized by a tier payload. For this lane π is **the host-hook name**.
+Concretely, at next touch:
+
+* **GAIN two constructors, both PRESENT AND GATED EXPECTED-EMPTY** —
+  `undefined` and `order-dependence`. This is the part of the ruling aimed at
+  this lane, and it is the right correction: omitting `undefined` because
+  ECMAScript has none made the emptiness *a fact about the type, invisible to
+  the scoreboard*, which cannot then tell **"this language has no UB"** from
+  **"this tier did not model that column."** §4.3's Wasm prescription —
+  *expect the bucket empty, and gate it* — needs a constructor to be about.
+  **Both gates are the scoreboard-visible form of measurements this lane
+  already published**: §L66 measured "undefined behaviour" occurring ONCE in
+  3.08 MB in a sentence asserting there is none, and ZERO occurrences of all
+  five order-latitude phrasings. The gates make those two headline findings
+  checkable instead of quotable.
+* **`unsupportedConstruct` → class `unsupported`**; **`unmodeledIntrinsic` and
+  `environment` both → class `environment`**, with the split moving into the
+  payload.
+* **The split is PRESERVED and registered as a candidate FIFTH class.** It was
+  not flattened: inspection found it tracks §5.2's own criterion — a built-in
+  outside the slice retires by widening the slice, a host facility does not
+  retire by building more language. If a second tier independently makes the
+  same split, §9.3's convergence standard promotes it. *One tier's distinction
+  is a payload; two tiers' identical distinction is a class.*

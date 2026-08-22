@@ -932,7 +932,10 @@ who also owns SpecTec's Isabelle backend. **Last commit 2026-08-20, ≥100
 commits since June, near-daily.** Its generated output, counted: `wasm1.0.lean`
 3051 lines, `wasm2.0.lean` 7179, **`wasm3.0.lean` 11 289 lines / 544
 `inductive`s** — all with **0 `sorry`, 0 `axiom`**. Its proof lane,
-`test-lean/typing_lemmas.lean`, is **1865 lines, 26 theorems, 13 `sorry`**,
+`test-lean/typing_lemmas.lean`, is **1865 lines, 26 theorems, 13 `sorry`**
+— **a figure since CORRECTED to 5 live obligations by
+`docs/wasm-soundness-census.md` §1; 8 of the 13 are inside `--` comments,
+and this count came from a textual grep** —
 and its contents are unmistakably type-soundness scaffolding
 (`instr_typing_inversion`, `valtype_sub_refl/trans`,
 `ainstrs_ok_context_store_wf`). It imports the **2.0** model — which is
@@ -992,7 +995,8 @@ SpecTec itself, Youn et al., **PLDI 2024**.
 > specification is willing to cite** — the appendix's footnotes scope its
 > proofs to **1.0**. In Lean specifically, **no proof of type soundness
 > exists at all**: the generated definitions are there (11 289 lines for
-> 3.0), and the proof is 26 theorems and 13 `sorry`s deep.
+> 3.0), and the proof is 26 theorems and **5** `sorry`s deep (this
+> charter first wrote 13; see `docs/wasm-soundness-census.md` §1 and §5).
 
 And the spec's soundness appendix is **theorem statements without proofs**:
 11 named results with full formal statements (Preservation, Progress,
@@ -1071,7 +1075,8 @@ Concretely, and it changes three things in the plan above:
    outcomes than a private re-derivation.
 
 **Two honest risks, recorded.** (i) The `lean-backend` lane could close its
-13 `sorry`s and land upstream, at which point this tier's proof
+5 live obligations (§8.1's "13" corrected in
+`docs/wasm-soundness-census.md` §1) and land upstream, at which point this tier's proof
 contribution is redundant — that is a *good* outcome for the world and
 should be checked for before M2 starts, not after. (ii) AGPL-3.0 on Talos
 means its code cannot be borrowed into this repository at all; it is

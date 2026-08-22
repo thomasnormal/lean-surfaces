@@ -1,0 +1,542 @@
+# The Python monadic rebuild — the plan, and the first parity run
+
+**Thomas's ruling** (2026-08-22): *"Rather than spending time debugging 5000
+lines of python interpretation, I would rather rebuild the 'correct' version
+from the start."*
+
+This document is the rebuild's plan and its running gate report. The subject is
+a **second Python semantics** written on the family substrate
+(`docs/family-architecture.md` §3.4) in do-notation, whose acceptance test is
+**parity with the trunk interpreter on the trunk's own differential battery**.
+
+**Nothing here retires anything.** `LeanModels/Python/Semantics.lean` stays
+authoritative and untouched, the campaign's files are untouched, no proof
+migrates, and `LeanModels/Python.lean` does not import the rebuild. §0.1
+principle I forbids swapping a validated definition for an unvalidated one; the
+gate below is what would eventually earn that right, and `twinAgrees` (§8.5) is
+what would earn it in a theorem.
+
+---
+
+## §0 THE VERDICT SO FAR, first
+
+**The architecture is validated, the instrument is built, and the interpreter is
+a slice that agrees with the trunk everywhere it reaches.** 846 of 1394 rows at
+byte-identical parity, 548 rows refused with a "not yet" naming their arm, and
+**zero divergences** — no row where the two interpreters disagree for any reason
+other than the rebuild not having been written that far.
+
+| | measured |
+|---|---|
+| substrate + iso + zooms | **landed, proved**, `#print axioms` clean |
+| the fuel ruling | **taken, and it is a NEW design** — see §2 |
+| kernel reducibility of the rebuilt interpreter | **holds** — 9 `#guard`s, incl. a `while` through the fueled knot |
+| the shim | **landed** — one runner flag, three harnesses, **zero harness forks** |
+| the `@[spec]` layer | **17 triples**, output-determined and state-framed, axioms clean |
+| `mvcgen` on the REBUILT interpreter | **two gates close** (~11 s, ~10 s); the second closes the pilot's own fidelity gap. The full four-deep gate does **not** close at 8M heartbeats — §3.1 prices that |
+| the trunk's baseline (re-measured, not quoted) | diff_test **1394 / 0 failed / 118 whitelisted / 1276 matched**; script_corpus **65 / 0 failed / 50 matched / 15 loud** |
+| **the first parity run** | **846 / 1394 rows at parity (60.7 %), 548 frontier in 19 arms, ZERO divergences** |
+
+**This is not the gate PASSING.** Acceptance is 1394/1394 with the trunk's own
+match/whitelist split, and the script half cannot be scored at all until
+`runScript` is rebuilt. It is the gate *existing*, with an honest first reading,
+zero divergences on everything the slice reaches, and a burn-down list — measured,
+not guessed — that ranks exactly what closes the rest.
+
+The three things a later session inherits and does not have to invent: the fuel
+architecture, the gate command, and a frontier that is **bucketed by arm** rather
+than being one number.
+
+---
+
+## §1 THE LAYOUT, AND THE BOUNDARY
+
+    LeanModels/Python/Monadic.lean             -- the umbrella; ONLY `Main.lean` imports it
+    LeanModels/Python/Monadic/Substrate.lean   -- SemM, the Run iso, named refusals, the zooms
+    LeanModels/Python/Monadic/Prim.lean        -- the @[spec]-shaped primitives, and `Kont`
+    LeanModels/Python/Monadic/Eval.lean        -- the interpreter, the fueled knot, the boundary
+    LeanModels/Python/Monadic/Spec.lean        -- 17 @[spec] triples + the demonstration gates
+    harness/monadic_gate.py                    -- the gate: parity, frontier-by-arm, divergences
+
+Namespace `LeanModels.Python.Monadic`.
+
+**`Monadic/` is a PRESENTATION sibling, not a VERSION sibling, and the
+distinction is load-bearing** because §1.1's convention reads
+`LeanModels/<Lang>/<Ver>/` as an edition. This directory claims the **same**
+edition as the trunk (CPython 3.9), the same oracle, the same corpus and the same
+authority; what differs is how the semantics is *written*. When the Python lane
+earns `LeanModels/Python/Py39/`, that is an orthogonal axis — a monadic Py311
+would be `Monadic/`'s own sibling, not this one's parent. The name was chosen so
+no reader can mistake it for an edition token.
+
+**The trunk is shared to the maximum.** Every pure worker of `Semantics.lean` is
+REUSED verbatim: `evalBinOp`, `evalUnaryOpH`, `indexValH`, `sliceVal`, `truthyH`,
+`assignToH`, `unpackSeq`, `unpackStoreH`, `heapStore`, `heapAttrStore`,
+`attrReadResult`, `ntupleAttr`, `strOfArgs`, `strOfValH`, `rangeMake`,
+`rangeVals`, `strCharVals`, `sortedValH`, `extremumValH`, `absVal`,
+`intCastVal`, `ordVal`, `chrVal`, `lenValH`, `dictBuild`, `evalCompareOpH`,
+`mkCallEnv`, `arityOk`, `arityErrorMsg`, `paramArity`, `findFunction`,
+`findClass`, `findNamedTuple`, `lookupG`, `moduleGlobals`, `isBuiltinName`,
+`isPyBuiltinName`, `isModuleDunder`, `unmodelledBuiltinMsg`. **The rebuild owns
+the CONTROL; the trunk owns the arithmetic.** A second `evalBinOp` would be a
+second thing to keep true, and the thin-siblings instinct applies to code as much
+as to editions.
+
+Every **refusal string** is likewise the trunk's, copied verbatim, because the
+refusal messages *are* the specification — `script_corpus.py` and
+`refusal_census.py` compare them.
+
+---
+
+## §2 THE FUEL RULING — decided BEFORE the interpreter was written
+
+§3.4 makes this a founding-checklist item. The measurement behind the decision is
+the pilot's: fuel as a monad **layer** does not typecheck; fuel as an explicit
+**argument** (the trunk's shape) is definable but `mvcgen` returns the goal
+unchanged after 1 m 31 s at a symbolic fuel; only the **fuel-free** fragment is
+one `mvcgen` walks.
+
+**THE DECISION: split the interpreter at the fuel boundary.**
+
+| half | recursion | measure |
+|---|---|---|
+| `evalOpen` / `execOpen` (+ list/chain companions) | **fuel-free**, open | `termination_by structural` on `Expr` / `Stmt` |
+| `kont m : Nat → Kont` | the fueled knot | `termination_by structural` on **fuel** |
+
+`Kont` (`Prim.lean`) is the **defunctionalized fuel boundary**: the record of the
+operations whose recursion is bounded by fuel rather than by syntax — `call`,
+`whileLoop`, `forSeq`, `forList`, and the generator steppers. The fuel-free half
+takes it as a parameter, which is exactly what makes it structural.
+
+**Two structural blocks instead of one, and BOTH stay kernel-reducible.** That
+is the property everything rests on and it is **measured, not assumed**: nine
+`#guard`s in `Eval.lean` §5 decide real runs — arithmetic, a retained-state
+`NameError`, `and` answering its deciding operand, a short-circuiting comparison
+chain, an allocating list display, an assignment, a `while` loop summing 1..4
+through the fueled knot, a fuel-exhausted `while` timing out, and `print`
+appending a chunk. `#guard` is `Decidable.decide` plus `rfl`, so a well-founded
+fallback fails them outright. Well-founded recursion on a lexicographic
+`(fuel, sizeOf e)` was the obvious alternative and is **rejected** for that
+reason — it is the mergeSort trap, and it would silently delete every kernel
+`rfl` in the tier.
+
+**A recorded non-finding, because it wasted time once.** `#print axioms` on the
+rebuilt `evalOpen` reports `[propext, Classical.choice, Quot.sound]` — and so
+does the **trunk's** `evalExpr`. `Classical.choice` in the axiom print is **not**
+a well-founded-recursion tell here; the operational test is `#guard`/`rfl`, and
+that is the one to run.
+
+### 2.1 THE ONE DELIBERATE DIVERGENCE, and its argument
+
+The trunk decrements fuel at **every** expression and statement node. The rebuild
+spends fuel only at the non-structural points. Stated exactly:
+
+> At any fixed `F`, the rebuild is **at least as decisive** as the trunk: every
+> run the trunk decides at `F`, the rebuild decides at `F`, with the same value.
+> Only `.timeout` moves, and it moves in one direction.
+
+Three consequences, and they are why this is a recorded decision rather than a
+hidden optimization:
+
+1. **The refusal surface is UNCHANGED.** `.unsupported` is fuel-independent by
+   the loudness doctrine. `refusal_census.py` parity is a claim about exactly
+   this, and the ruling leaves it untouched by construction — never wider, never
+   narrower.
+2. **Under the ∃-threshold form the two are EQUIVALENT.** Every landed theorem is
+   `∃ t, ∀ F ≥ t, …`; a claim holding of the trunk at threshold `t` holds of the
+   rebuild at `t`. The inequality points the safe way.
+3. **It is observable, so it is measured.** A row where the trunk answers
+   `.timeout` and the rebuild answers a value is a genuine difference. The corpus
+   contains none — the trunk is 0-failed at its default fuel, so it never times
+   out there — but the gate reports one if it ever appears.
+
+### 2.2 A FINDING THE FUEL-FREE SHAPE FORCED — the dict display
+
+`evalDictItemsM` walks **two parallel expression lists** in lockstep, because
+CPython's `BUILD_MAP` order is k₁, v₁, k₂, v₂, …. The trunk does this freely
+because its measure is fuel. **A structural measure cannot**: whichever list is
+chosen, the other list's head is not a subterm of it, and Lean answers
+
+    failed to eliminate recursive application
+      evalOpen K m v
+
+(bisected to a two-parallel-list member; every other member of the block is
+fine). Interleaving the lists first would preserve the order but the interleaving
+is a function **application**, not a projection of the node, so it is not a
+subterm either.
+
+Three ways out, none free, and this is the plan's top open item:
+
+* a **paired AST field** (`Array (Expr × Expr)` on `.dict`) — an ingestion change
+  that makes the lockstep structural, and the cleanest;
+* **one well-founded member** — rejected while the block is mutual, since a
+  mutual block shares ONE strategy and well-founded costs every kernel `rfl`;
+* **splitting the block** so the dict walk is its own well-founded definition
+  outside it — plausible, and cheapest to try first.
+
+Until then `.dict` refuses through `notYet`. A second instance of the same
+obstacle was already avoided by restructuring: `.boolOp` originally destructured
+`values.toList` at the call site (the trunk's shape) and had to be changed to
+pass the list **whole**, since destructuring severs the subterm chain.
+
+### 2.3 THE FREE-SCRUTINEE DISCIPLINE, earning its keep twice
+
+The tier records three times that referent dispatch must fork on a **pure plan**
+(`attrCallPlan`, `strCallPlan`, `genPlan`) because a `match` nested under the
+receiver's binder is invisible to `cases`/`rw`. The rebuild's `callNamePlan`
+follows it — and here it is also a **termination** requirement: a mutual member
+taking the SAME `List Expr` as its caller is not a decrease, so folding the whole
+call arm into the recursive block does not elaborate. The plan additionally makes
+**when the arguments evaluate** explicit, which is observable: the trunk refuses
+`input()`, module dunders, unmodelled builtins and the tail `NameError` *before*
+touching the arguments, and evaluates them first everywhere else — including on
+the paths that then raise `TypeError: … is not callable`. `preRefuse` /
+`preNameError` are that split.
+
+---
+
+## §3 THE SUBSTRATE, AND THE FOUR LAWS ADOPTED
+
+```lean
+inductive Halt where | timeout | unsupported (msg : String)
+abbrev SemM (W ρ : Type) := ExceptT ρ (StateT W (Except Halt))
+abbrev PyM (σ : Type) := SemM σ PyErr
+abbrev SemF := PyM FrameState        -- statements and expressions
+abbrev SemW := PyM World             -- a nested call
+```
+
+The layer order is the pilot's **correction** to §3.4's first draft and it is
+load-bearing: `StateT` outside `ExceptT` discards the state on a raise, and the
+tier's `.exn` **retains** it. `Halt` is deliberately a named `inductive` rather
+than the pilot's `Unit ⊕ String` — a refusal is a first-class notion here. **It
+is a `LeanModels/Core/` candidate** once a second tier wants it; recorded, not
+moved (§3.8's trigger discipline).
+
+`Run σ α` **is** this stack, proved both ways (`toRun_ofRun`, `ofRun_toRun`), and
+the two frame/world adapters are proved to agree with the trunk's own
+(`inFrame_toRun` = `Run.withLocals`, `inWorld_toRun` = `Run.toWorld`). So the
+rebuild's call boundary is the *same* boundary, not a similar one — which is what
+lets `callInMono` have `callIn`'s type and the harnesses compare them directly.
+
+### 3.1 THE PRICE OF FIDELITY, measured — and it is not free
+
+The pilot's shallow twin closed GATE 3's **full four-deep** shape
+(`score = pst[p][j] - pst[p][i]`) with an `mvcgen` step of **568 ms**. The same
+statement against the **faithful** interpreter was attempted here and **does not
+close at 8 000 000 heartbeats** (~14 minutes, `timeout at whnf`). Two smaller
+gates against the faithful interpreter *do* close — `assign_binop_M` in ~11 s and
+`subscript_global_M` (the one carrying the static-globals-fold premise the twin
+dropped) in ~10 s.
+
+**That gap IS the fidelity gap, priced.** What the twin's `resolve` left out —
+the nine-step resolution chain with its `findFunction`/`findClass`/namedtuple/
+builtin/dunder forks, and `execOpen`'s five-way assignment target fork — is
+exactly what `mvcgen` must now split on, and the splits multiply through a
+four-deep expression tree. So the pilot's headline number was measured on a
+program the differential gate does not run, and the honest version of it is
+larger by more than three orders of magnitude.
+
+This is **not** a reason to keep a shallow twin — a twin is a second thing to
+keep true, and §8.5's `twinAgrees` is the bill for it. It is a reason to expect
+the altitude layer to have to grow: the fix is more `@[spec]` lemmas at the
+`evalOpen`-arm level, not fewer premises in the statement.
+
+### 3.2 A TRAP IN THE `#print axioms` LAW, worth recording
+
+The failed `value_scores_M` printed
+
+    'value_scores_M' does not depend on any axioms
+
+which is **the cleanest possible axiom line and it means the opposite**: the
+declaration errored, and the constant Lean left behind carries no axioms because
+it carries no proof. `#print axioms` on a file with errors is not evidence of
+anything. **Read the errors first; an axiom print is only meaningful in a file
+that elaborated clean.** Every axiom line quoted in this document comes from a
+run with zero errors, and the two landed gates were re-checked that way.
+
+### 3.3 The pilot's four zero-cost laws, all adopted:
+
+1. **Named refusals, never a bare polymorphic `throw`** — `refuse`, `exhausted`,
+   `raisePy`, `liftRes`, `liftRunAt`, plus `notYet` (§4).
+2. **Output-determined specs** — every `@[spec]` lemma binds its answer with the
+   result binder.
+3. **`Triple` does not frame the state** — read-only primitives pin the
+   pre-state.
+4. **`@[spec]` is the altitude registry** — primitives behind spec lemmas, never
+   unfolded into the walker.
+
+---
+
+## §4 THE FRONTIER IS SPELLED DIFFERENTLY FROM THE TIER'S
+
+An arm the rebuild has not yet transliterated refuses through `notYet`, whose
+message carries the prefix
+
+    monadic-rebuild: arm not yet transliterated: <arm>
+
+**This is never a claim about Python.** A trunk refusal is a statement about the
+language; a `notYet` is a statement about the rebuild's progress. They are
+spelled differently so no report can conflate them, and so the gate is a
+**burn-down list bucketed by arm** rather than a single number. The same
+distinction is kept at the runner: `--monadic --script` exits **2** (a capability
+error), never 3 (the loud semantic code), because the script executor is not
+rebuilt and answering 3 would score a missing module as a tier boundary.
+
+---
+
+## §5 THE GATE
+
+    # trunk baseline
+    python3 harness/diff_test.py --no-build --runner ./.lake/build/bin/leanmodels-run
+    python3 harness/script_corpus.py --no-build --runner ./.lake/build/bin/leanmodels-run
+
+    # the rebuild, same corpus, same oracle, same canonical JSON
+    python3 harness/diff_test.py --no-build --monadic \
+        --runner ./.lake/build/bin/leanmodels-run
+
+**No harness is forked.** All three already accept `--runner`; `--monadic` is a
+one-line addition to each that appends the flag, and the runner's `splitMonadic`
+strips it before mode dispatch. Each harness now also PRINTS which interpreter it
+measured, for the same reason it prints the oracle version.
+
+**Acceptance, unchanged:** diff_test 1394 / 0 failed with the same 118/1276
+match/whitelist split, script_corpus 65 / 0 failed with the same 50/15 split, and
+`refusal_census.py` the same MATCH/REFUSE per witness.
+
+### 5.1 `diff_test --monadic` IS NOT THE GATE, and the reason is a real defect
+
+`harness/diff_test.py` compares an `expect: "unsupported"` row **by status
+alone** — `lean.get("status") == "unsupported"` — which is exactly right for its
+own job (the whitelist records that the *tier* refuses, not which words it uses)
+and **wrong for measuring the rebuild**: a `notYet` landing on a whitelisted row
+scores WHITELISTED. That is a **false pass**, and it can flatter the rebuild by
+up to the whole 118-row whitelist.
+
+So the gate proper is **`harness/monadic_gate.py`**, which runs the corpus
+through **both** interpreters and compares them to each other, message included:
+
+    python3 harness/monadic_gate.py --no-build \
+        --runner ./.lake/build/bin/leanmodels-run --json /tmp/gate.json
+
+It reports three numbers that cannot be conflated — **PARITY** (rows where the
+two answer identically), **FRONTIER** (rows the rebuild refuses with a
+`monadic-rebuild:` message, bucketed by arm and ranked), and **DIVERGENCES**
+(rows where they disagree and the rebuild is *not* saying "not yet"). Only the
+third is alarming, and each is printed with CPython's answer beside both so it
+can be adjudicated on the spot.
+
+One bug was found in this tool by reading before it ever ran: it imports
+`diff_test`, which **re-execs itself** into the pinned 3.9 oracle at import time,
+so the import would have handed the process to `diff_test.py` and silently
+abandoned the gate. `monadic_gate.py` therefore does the same re-exec *first*.
+Invisible on a 3.9 box, fatal anywhere else.
+
+### 5.2 PRE-REGISTERED, so it can be wrong
+
+Written **before** the first run, because a prediction recorded afterwards is a
+story:
+
+* **PARITY: 30–45 %** of 1394 rows. The slice covers arithmetic, control flow,
+  the full name-resolution chain, all five assignment target shapes, module-level
+  calls, and twelve builtins; it does not cover the dict/class/namedtuple/
+  generator/closure tiers, which is where most of the corpus's labs live.
+* **TOP BUCKET: method calls** (`call: method call '.…'`), because `.get`,
+  `.append`, `.pop` and the flattened `Class.method` dispatch run through
+  `execAttrCall`, and that is one arm carrying many rows.
+* **DIVERGENCES: 0.** This is the real prediction and the one worth being wrong
+  about. Every rebuilt arm was transliterated from the trunk arm-for-arm and
+  message-for-message, so a divergence means the transliteration slipped — or
+  the trunk has a bug the rebuild does not. **Either way it is a finding**, and
+  the gate prints CPython beside both so it can be adjudicated where it is
+  found.
+
+### 5.3 THE FIRST PARITY RUN — MEASURED
+
+`lake build leanmodels-run` **green** (26 jobs). Oracle CPython 3.9.19.
+
+```
+MONADIC REBUILD GATE  (harness/monadic_gate.py)
+------------------------------------------------------------------------------
+rows                      1394
+PARITY with the trunk      846  (60.7%)
+frontier (`notYet`)        548  in 19 arms
+DIVERGENCES                  0
+------------------------------------------------------------------------------
+THE BURN-DOWN LIST — rows blocked, by arm:
+    111  call: class instantiation …
+     88  call: generator function (H4)
+     78  call: method call …
+     53  expression: dict display (parallel key/value walk)
+     36  call: keyword arguments (H6)
+     34  statement: nested def / closure (H7)
+     33  call: namedtuple construction …
+     24  statement: try/except (exceptions tier)
+     22  builtin: enumerate()
+     21  statement: assert
+     16  builtin: set()
+     11  statement: del
+      5  statement: raise (exceptions tier)
+      5  builtin: count()
+      4  builtin: all()
+      2  builtin: next()
+      2  builtin: any()
+      2  call: statically-poisoned module binding …
+      1  builtin: max() over a heap referent
+```
+
+Alongside: `script_corpus --monadic` **65 / 65 failed**, which is the expected
+and correct reading — the script executor is not rebuilt, so the runner exits 2
+(capability) on every row and the corpus scores every one a mismatch. It will
+stay 65/65 until `runScript` exists; it is not a semantic result and the exit
+code is what keeps it from being mistaken for one.
+
+`refusal_census --whitelist` : **118 rows in 46 classes, 0 drifts — on BOTH
+interpreters.** So refusal-surface parity holds *at the verdict level*: every
+whitelisted row still refuses under the rebuild. See §5.5 for what that does and
+does not claim.
+
+### 5.4 THE PRE-REGISTRATION SCORECARD — one of three
+
+Scored against §5.2, written before the run.
+
+| prediction | measured | verdict |
+|---|---|---|
+| PARITY 30–45 % | **60.7 %** | **MISS** — too pessimistic by ~16 points |
+| top bucket = method calls | **class instantiation, 111**; method calls **third**, 78 | **MISS** |
+| DIVERGENCES 0 | **0** | **HIT** |
+
+**The two misses are cheap and the hit is the expensive one.** Parity and bucket
+order only rank the next session's work — and the ranking is now measured rather
+than guessed, which is the whole point of writing the buckets down. **Zero
+divergences is the claim that the transliteration is faithful**: 846 rows on
+which the rebuilt interpreter and the trunk return byte-identical canonical JSON,
+including the exception classes and the verbatim refusal messages, and not one
+row where they disagree for any reason other than the rebuild saying "not yet".
+
+The parity miss has an identifiable cause worth keeping: `iterValues` was added
+late (§6), and `sum`/`tuple`/`list` reach further into the corpus than expected
+because so many rows are sequence arithmetic over already-supported values.
+
+### 5.5 THREE INSTRUMENTS, TWO OF THEM BLIND — measured, not argued
+
+**`diff_test --monadic` over-reports by exactly 56 rows.** It answers
+902 "not failed" (784 matched + 118 whitelisted) where the gate finds 846 rows of
+real parity. The 56-row gap is precisely the false pass predicted in §5.1: a
+`notYet` landing on an `expect: "unsupported"` row, which diff_test scores
+WHITELISTED because it compares those rows **by status alone**. Predicted from
+reading the source, then measured.
+
+**`refusal_census --whitelist` exits 0 on both interpreters while 66 lines of its
+own output differ.** Its job is drift against a RECORDED class table, not parity
+against the trunk, so a `monadic-rebuild:` refusal satisfies it silently. What
+its 0-drift result legitimately claims is that every whitelisted row still
+**refuses** — verdict-level parity, which matters and which held. What it cannot
+see is *which* refusal, and the whole point of the rebuild's separate message
+prefix is that those are different questions.
+
+**A census diff is not a row diff, and one line in it looked alarming.** The
+census prints one representative witness and one message per class; when other
+rows in a class change message the representative moves, so `del_lab::read_after`
+appeared to change from a `del` refusal to a static-locals refusal. Run directly
+through both interpreters that row returns the **same message on both**. The gate
+was right; the display was misleading. Row-level comparison is
+`monadic_gate.py`'s job and nothing else's.
+
+**Net: neither existing harness can score this rebuild on its own.** That is why
+`harness/monadic_gate.py` exists, and it is the number to quote.
+
+---
+
+## §6 WHAT IS REBUILT, ARM BY ARM
+
+**Expressions** — `.constant`, `.name` (the full nine-step resolution chain
+verbatim, including both live-view consults), `.namedExpr`, `.binOp`,
+`.unaryOp`, `.boolOp`, `.compare`, `.list`, `.tuple`, `.subscript`,
+`.attribute`, `.ifExp`, `.slice`, `.genExp` (refusal), `.unsupported`
+(refusal). `.call` on a NAME callee through `callNamePlan`, with **15 of the 22
+builtins** `isBuiltinName` claims: `len`, `abs`, `int`, `ord`, `chr`, `str`,
+`print`, `range`, `max`, `min`, `sorted`, `input`, `sum`, `tuple`, `list`.
+
+The last three share `iterValues`, and that consolidation is worth naming. The
+trunk spells the same eight-arm iterable dispatch out **three times**, because
+its arms differ only in the builtin NAME its refusals interpolate and in one
+generator policy. Here it is one function taking both as parameters, with the
+trunk's messages verbatim — the maximal-trunk instinct applied to the rebuild's
+own code. The generator policy is the `moduleGenFree` fork: `sum` and `tuple`
+stay INSIDE the heap-free fragment and must refuse a generator when the module
+owns no generator defs, while `list` ALLOCATES — CPython's `list(x)` is never an
+alias — which is precisely what lets its generator arm drain unguarded.
+
+**Statements** — `.ret`, `.assign` (all five target shapes: subscript,
+attribute, all-name tuple, attribute-bearing tuple, generic — with the trunk's
+evaluation ORDER), `.augAssign` (name and attribute, with the load-before-value
+order), `.whileLoop`, `.forStmt` (all six iterable dispatches), `.ifStmt`,
+`.exprStmt`, `.pass`, `.brk`, `.cont`, `.yieldStmt`/`.yieldFromStmt` (refusals),
+`.unsupported` (refusal). `execOpenList` stops at the first non-`next` flow.
+
+**The knot** — `callInM` (guard order: parameter features, static-locals rule,
+arity, generator fork), `whileLoop`, `forSeq`, `forList` (the LIVE index cursor,
+referent re-read every step, with the trunk's six referent arms).
+
+**Not yet, and each is a named bucket** — the dict display (§2.2), keyword
+arguments, method calls, class instantiation, namedtuple construction, closures,
+generators (all five operations), `del`/`assert`/`raise`/`try`/`import`, the
+remaining ten builtins, and the whole **script executor** (`runScript`,
+`Script.lean`, ~900 lines) on which the script-corpus half of the gate depends.
+
+---
+
+## §6.5 THE BUILD, AND WHY `lake build leanmodels-run` IS THE WHOLE GATE
+
+Measured: **`Main.lean` is the only file in the tree that imports the rebuild.**
+Nothing under `Examples/`, nothing under `LeanModels/` outside `Monadic/` — so
+`lake build leanmodels-run` compiles 100 % of this change's blast radius, and a
+full `lake build` would only re-verify other lanes' work.
+
+That distinction mattered on this clone: rebasing onto master brought a
+38-line change to `LeanModels/Python/DictCalc.lean`, which sits under the
+`LeanModels` umbrella that **65 files under `Examples/` import** — including the
+expensive sunfish proofs. A full build here is hours of re-proving that has
+nothing to do with the rebuild, and under the machine-wide build lock those
+hours are charged to eleven other lanes. Building the runner is both the honest
+gate and the neighbourly one.
+
+**And the lock is expensive, so the constructs that could waste it were checked
+first**, in a dependency-free scratch file with no lock taken: the `if mono then
+Monadic.callInMono else callIn` unification (they share a type by construction,
+but "by construction" is a claim), and the early-`return` inside `main`'s guarded
+match. `splitMonadic` carries three `#guard`s pinning that it strips the flag
+from any position and leaves the positional order alone.
+
+---
+
+## §7 THE ORDER OF THE REMAINING WORK
+
+**Ranked by §5.3's measurement, not by taste.** The pre-registered guess put
+method calls first; the buckets put class instantiation first and method calls
+third, which is exactly why the ranking is a measurement.
+
+1. **Class instantiation — 111 rows.** The single biggest bucket, and it comes
+   with `execAttrCall`'s `.instMethod` path, so it and item 2 share most of their
+   work. Do them together.
+2. **Method calls — 78 rows.** The `attrCallPlan` fork lifts nearly verbatim and
+   the free-scrutinee discipline is already in place for it (§2.3).
+3. **Generators — 88 rows** (plus `enumerate` 22, `count` 5, `next` 2 = **117**
+   once the five `Kont` fields exist). The largest single piece and the only one
+   that grows the fueled knot; ranked third because items 1–2 are cheaper per row.
+4. **The dict display — 53 rows** (§2.2). The only *architectural* debt in the
+   list; try the block split first. Everything else here is transliteration.
+5. **Keyword arguments — 36 rows.** `mergeKwArgs` exists; the arm is a fork.
+6. **Closures — 34 rows**, then the statement tail: `try`/`except` 24,
+   `assert` 21, `del` 11, `raise` 5.
+7. **The remaining builtins — 23 rows** (`set` 16, `all` 4, `any` 2, `max` over a
+   referent 1). Mechanical; the workers all exist.
+8. **The script executor.** Until `runScript` is rebuilt the script half of the
+   gate reads 65/65 failed and cannot be scored at all. Sequence it once the
+   closed-function surface is mostly green — its value is gated on that.
+
+Items 1–3 alone are **306 of the 548 frontier rows**, and none of them is
+architectural.
+
+Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
+and does not need in order to be measured.

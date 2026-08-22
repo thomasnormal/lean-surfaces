@@ -347,10 +347,15 @@ def main(argv=None):
         "--runner", default="lake exe leanmodels-run",
         help="runner command (default: %(default)r)",
     )
+    parser.add_argument(
+        "--monadic", action="store_true", help='target the MONADIC REBUILD (LeanModels/Python/Monadic/) instead of the trunk interpreter - appends --monadic to the runner command. The acceptance gate is parity with the trunk on this same corpus.',
+    )
     opts = parser.parse_args(argv)
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
+    if opts.monadic:
+        runner_cmd = runner_cmd + ["--monadic"]
 
     if not opts.no_build:
         build = subprocess.run(["lake", "build"], cwd=REPO_ROOT)
@@ -432,6 +437,9 @@ def main(argv=None):
     print("-" * len(header))
     print("oracle: Python %s (the model's tier is specified against 3.9)"
           % (sys.version.split()[0],))
+    print("interpreter: %s"
+          % ("MONADIC REBUILD (LeanModels/Python/Monadic/)" if opts.monadic
+             else "trunk (LeanModels/Python/Semantics.lean)"))
     print("%d cases: %d failed, %d whitelisted-unsupported, %d matched"
           % (len(rows), failures, whitelisted,
              len(rows) - failures - whitelisted))

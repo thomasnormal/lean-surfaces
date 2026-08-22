@@ -16945,3 +16945,108 @@ build-lock amendment 2 a speculative build is exactly what the lock prevents.
 are `rg -l` over read-only checkouts; nothing in `~/repos/mox` or
 `~/repos/sv-tests` was modified. No axioms moved; no `sorry`, no
 `native_decide`.
+
+## L69 — ADA: THOMAS RULES THE MENU, and M1 inch 2's toolchain half LANDS — the ACAA's own grader runs, and it fails correctly (2026-08-22)
+
+§L63's charter presented a five-item menu. Thomas ruled all of it the same
+day. [docs/ada-charter.md](ada-charter.md) is updated to the rulings — §6 is
+now "THE RULINGS" rather than "STILL OWED" — and M1 inch 2's toolchain half
+is landed with `harness/ada_toolchain_census.py` +
+`docs/ada-toolchain-census.json`.
+
+**THE RULINGS.** (1) **ENDGAME = BOTH**: the SPEC LADDER *and* differential
+grounding against a real implementation. (2) **Bounded errors =
+MATCH-BY-MEMBERSHIP**, adopted. (3) **GRADER = the ACAA's own `GRADE`**, via
+the event-trace CSV, scoreboard designed as a trace emitter from day one.
+(4) **FETCH-pinned**, implemented. (5) **The Ada sunfish twin is DEAD.**
+
+**THE ENDGAME RULING'S REAL CONTENT: (a) and (b) were never alternatives.**
+A paragraph-granular coverage map is a claim about the STANDARD and is
+worthless without evidence; ACATS tests are evidence and are worthless
+without a claim they support. Joined, they are one artifact — **each ARM
+paragraph carries its status and the tests that witness it.** Three
+consequences, all now in the charter: the manifest goes to **PARAGRAPH**
+granularity against §L59 §5.5's per-CLAUSE spec (denominator **14,262**, or
+5,927 scoped to clauses 1-13, keyed by the ARM's own citation form
+`<clause>(<para>)`); *"readable beside the ARM"* is a requirement on the
+ARTIFACT, so the map renders in the standard's own order; and **GNAT is the
+behavior oracle**, which is §L59 §4.2's precedence rule taken at face value.
+**No other tier in the family could take this ruling** — it is affordable
+only because the ARM numbers its own paragraphs and `docs/ada-spec-census.json`
+already carries all 14,262 with their rule categories. Filed back to §L59 as
+a third amendment: `clause` becomes `<clause>(<para>)` and every other tier's
+rows are unaffected, a clause-granular row being the degenerate case.
+
+**THE TWIN'S DEATH HAS A CONSEQUENCE, stated rather than buried: this tier
+will never have a second independent model of the same program.** The C
+tier's square exists to catch a misreading shared by a model and its oracle,
+and Ada now has no structural defense of that kind. What it has instead is
+ruling (3): **an oracle nobody in this project wrote.**
+
+**M1 INCH 2, TOOLCHAIN HALF: DONE, and the charter's "there is no Ada
+compiler on this host" is no longer true.** Measured, not described: `alr`
+**2.1.1** (a prebuilt `aarch64-macos` binary that needs no Ada compiler to
+run) → `alr -n toolchain --select gnat_native gprbuild` → **GNAT 16.1.0** and
+**gprbuild 26.0.1**, with `ALIRE_SETTINGS_DIR` pointed at a scratch dir so the
+whole install stays out of the home directory.
+
+**AND THE RULED GROUNDING LOOP RUNS END TO END. Nine checks, all green**
+(`ada_toolchain_census.py --verify <acats> <workdir>`): a real class-C test
+(`C324001`) **builds and prints `PASSED`** through the shipped `Report`
+package; the ACAA's **`GRADE` and `SUMMARY` build** from the suite's own
+sources; a C-test event trace grades to *"passed execution"*; **a B-test
+trace with a `CERR` at every `-- ERROR:` location grades to "passed by
+detecting all expected errors"**; and **the two NEGATIVE cases fire** — drop
+one expected error and `GRADE` says *"failed by not reporting an error for an
+ERROR item at line 259"*, flag an error on a line marked `-- OK` and it says
+*"failed by having an error for an OK item at line 105"*. **A grader that
+always said PASSED would be worthless, so non-vacuity is checked rather than
+assumed.** The ruled grounding move is not a plan: it runs, it is re-runnable,
+and it fails correctly. The one thing between here and a real scoreboard is a
+Lean tier that can emit those rows.
+
+**THE CRLF TRAP, and it would have cost a later lane a day.** The ZIP
+delivery ships CRLF and the ACAA's `SUMMARY` tool **dies with an unhandled
+Ada exception on every CRLF source**. Measured: **0 of 120 files summarized
+as shipped, 150 of 150 after `\r` removal**. WHICH exception varies with the
+input — `SUMMARY.PARSE_ERROR` and `ADA.STRINGS.LENGTH_ERROR` both observed —
+so the check asserts that it raised and not which. `--verify` converts before
+summarizing **and asserts the trap on an unconverted copy**, so the
+workaround cannot silently stop being needed.
+
+**TWO INSTRUMENT DEFECTS, both found by RUNNING the checks and both worth the
+line.** (1) The build check compared gnatmake's stderr against empty and
+FAILED a clean build — gnatmake prints warnings on stderr at exit 0, so the
+exit status is the signal and the diagnostics are context. (2) The CRLF check
+looked for `PARSE_ERROR` specifically and missed the `LENGTH_ERROR` path.
+Both were green-looking assertions that would have been wrong in one
+direction each; both were caught because the fixture was executed.
+
+**WHAT IS NOT DONE: the frontend, and it is diagnosed rather than shrugged
+at.** `libadalang` **26.0.0** deploys through Alire with its whole closure
+(`gnatcoll`, `libgpr2`, `langkit_support`, `adasat`, `vss`, `xmlada`,
+`prettier_ada`) and **ships its Python bindings in-tree**
+(`python/libadalang/__init__.py`), so the API the charter verified from the
+repository is present. What is not yet built is the SHARED library the ctypes
+bindings load: **a relocatable `libadalang` cannot import a static
+dependency**, so the whole closure must be built relocatable together. The
+census records the exact `-X` externals and **`needs.frontend` stays
+`met: false`** — which is the point of having an instrument that names which
+of the tier's three toolchain needs are met. Oracle: met. Grader: met.
+Frontend: not yet.
+
+**Also recorded**: the `adaparse`-on-`PATH` impostor (`ada-url`'s WHATWG URL
+parser, nothing to do with Ada) is now checked for BY NAME, so a later
+census cannot report a parser that is not one.
+
+### Triad — PARTIAL, same shape as §L63 and for the same reason
+
+`docs_check` **74/74**, 20 illustrative-exempt. All three instruments pass
+`--self-test`; the two census instruments are byte-identical on a double run;
+every refusal path in all three was EXECUTED, including `--verify`'s nine
+checks against the real ACATS delivery. **`lake build`, `diff_test` and
+`script_corpus` were NOT re-run**: this landing is docs plus three standalone
+`harness/*.py` files, **no Lean and no Python any Lean or existing harness
+imports**, and the build lock protects a machine that other lanes are
+building on. The debt is unchanged and still owed at the first Ada-lane
+landing that touches Lean.

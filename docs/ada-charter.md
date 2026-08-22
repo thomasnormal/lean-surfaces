@@ -644,10 +644,12 @@ the sign flipped, and it is why the instrument matches the operative verb and
 reports the grantor by name, with an `other` bucket that is listed rather
 than swallowed.
 
-**Recommendation: fetch, pin by version, vendor nothing — unchanged from
+**RULED (§6.4): fetch, pin by version, vendor nothing — unchanged from
 [docs/c23-goal.md](c23-goal.md) §2, and for a different reason.** Here the
-licence would permit vendoring outright. The reason not to is the one that
-policy already had: uniformity across the family, a 41 MB corpus kept out of
+licence would permit vendoring outright, so **Ada is the one tier where
+vendoring stays a legal one-command option**; the c-testsuite trap that forced
+the policy elsewhere does not exist. The reason to fetch anyway is the one
+that policy already had: uniformity across the family, a 41 MB corpus kept out of
 the repository, and a pinned artifact that the `--compare` mode makes
 staleness-detectable. The ACAA's own Notice adds a second reason to be
 careful with wording rather than with copying: the suite *"should not be used
@@ -725,6 +727,14 @@ amendments in bold:
 > invariant — **with `NOT_APPLICABLE` a fourth first-class verdict, and with
 > the B and L classes graded on rejection-with-location rather than on an
 > observable.**
+
+**And §6.3 ruled the last four words of that literally**: the grade is
+assigned by the ACAA's own rules because it is assigned by the ACAA's own
+TOOL. The tier emits an event trace and `GRADE` issues the verdict (§4.4).
+Under §6.1 the score is then joined to a paragraph-granular coverage map of
+the ARM itself (§5.8), so the two halves of the goal are: *what does the
+standard say, clause by clause and paragraph by paragraph*, and *what does
+the official suite, graded by its owner, say we got right*.
 
 ---
 
@@ -980,29 +990,87 @@ would be a pleasing kind of self-application. `Report` at 591 lines is the
 obvious first ingest: small, sequential, and every executable test depends on
 it, so it is on the critical path anyway.
 
-**(b) An Ada twin of sunfish — the ctwin analogue, and a genuine proposal.**
-The family's flagship is sunfish; the C tier turned the Python↔C pair into a
-square. A hand-written Ada transcription would make it a triangle and would
-give the Ada tier what the C tier's method actually rests on: one program,
-two independent models, a differential gate. The sunfish repository's
-`tools/ctwin/` already fixes the fidelity contract — *same position in, same
-chosen move, same node count, same score out* — and a third twin would be
-graded by the same `make gate`.
+**(b) An Ada twin of sunfish — RULED OUT by Thomas (§6.5), and the charter
+records the reasoning rather than the option.** A hand-written Ada
+transcription of `sunfish.c` would have made the Python↔C square a triangle
+and bought the tier a cross-language differential claim. It was priced as a
+from-scratch transcription of a 1,458-line program, nobody had volunteered,
+and **it is dead**: the driver artifact is the corpus, not a bespoke program.
 
-**Priced honestly: this is a from-scratch transcription of a 1,458-line C
-program into Ada by someone, and nobody has volunteered.** It is not
-charter work, it is not milestone-1 work, and it is listed in §6 as a
-question rather than proposed as a plan.
+That decision has a consequence worth stating plainly, because it is what
+makes §4.4 load-bearing rather than convenient: **the Ada tier will never
+have a second independent model of the same program.** The C tier's §5.4
+capstone exists to catch a misreading shared by a model and its oracle, and
+Ada now has no structural defense of that kind. What it has instead is an
+oracle nobody in this project wrote — the ACAA's grader (§2.4, §4.4) — which
+is a different and, for a spec-mirror tier, arguably better answer to the
+same worry: the entity that decides whether we passed is neither our model
+nor our reading of the standard.
 
 **(c) Nothing else.** The charter deliberately does not go shopping for a
 third-party Ada program. The family's method is census-then-price, and a
 corpus nobody has censused is not a candidate.
 
-**The charter's reading, stated but not chosen:** (a) is available now, costs
-nothing, and covers milestone 1 completely; (b) buys the square and is
-expensive. They are not alternatives — (a) is the driver artifact, and (b) is
-a separate question about whether the Ada tier ever gets a cross-language
-claim.
+**So the driver artifact is (a), and it is not a placeholder.** `Report` is
+the first ingest — small, sequential, and on the critical path regardless —
+and the ACATS's own tools are the corpus behind it.
+
+### 4.4 THE GROUNDING MOVE — Thomas ruled the grader, and it defines the tier
+
+> **RULED (§6.3): the scoreboard is a TRACE EMITTER from day one. Verdicts
+> for B-class tests and every other class come from the ACAA's own `GRADE`
+> tool, consuming the event-trace CSV of §2.4.**
+
+This is the tier's defining decision and it deserves to be stated where a
+reader meets it rather than buried in a milestone list. Every other tier in
+this family grades itself. The Ada tier does not.
+
+**What it means concretely.** The Lean tier's job is not to decide MATCH or
+DIVERGE. Its job is to *process a test and report what happened* in the
+ACAA's published vocabulary — `CSTART`/`CEND`/`CERR` when it accepts or
+rejects a compilation unit and at which line, `BSTART`/`BEND`/`BERR` for the
+post-compilation rules, `EXSTART`/`EXEND`/`EXFAIL`/`EXNA` for a run and what
+`Report` said. Those rows go into a CSV; `GRADE` reads the CSV beside the
+suite's test summaries and issues the verdict.
+
+**Four things this buys, each of which the charter would otherwise have had
+to build and defend:**
+
+1. **The B-test grading rules stop being ours.** §2.3 measured them: location
+   only and never message text, 16,404 `-- ERROR:` marks, `POSSIBLE ERROR:`
+   as a disjunction over locations, `OPTIONAL ERROR:` as a don't-care, 7,568
+   `-- OK` false-positive guards, and 289 tests where one mark degenerates to
+   "rejected for any reason passes". That is a small constraint language, and
+   **we do not implement it.** The suite's own tool does.
+2. **Self-generous scoring becomes structurally impossible.** The single
+   largest failure mode for a self-scored conformance claim is a scorer
+   tuned, however innocently, until the board is green. A scorer we cannot
+   edit removes the temptation rather than resisting it.
+3. **`NOT_APPLICABLE` arrives for free**, as a graded result rather than as a
+   configuration flag — the verdict §2.6 identified as the one the family has
+   no word for.
+4. **The interface is designed to be implementation-neutral.** The User's
+   Guide says the events are *"abstract representations of the processes of
+   an implementation"* and that *"it should be possible to map the processes
+   of any Ada implementation into an event trace file"*. A Lean definitional
+   interpreter is an unusual Ada implementation, and it is exactly the kind
+   the format was written to admit.
+
+**What it costs, stated honestly.** `GRADE` is an Ada program (2,825 lines,
+plus `GRD_DATA`, `TRACE`, `SPECIAL`, `VERSION` — 4,879 in total). Running it
+requires an Ada compiler. **So the toolchain is load-bearing twice** — once
+for libadalang as the frontend, once for `GRADE` as the scorer — which is why
+§5.2 is the critical path and why §5.2's GNAT census is an M1 item rather
+than a footnote. Grading with the ACAA's tool is optional for ACATS 4.2 and
+the ACAA has said it will use experience with the tools to decide whether it
+becomes required; this tier is choosing the stricter road while it is still
+the optional one.
+
+**And the corollary for M1's design.** A trace emitter is not something to
+retrofit. The envelope (§5.4) must carry the spans a `CERR` row needs — a
+line and a position per rejection — and the ingester must preserve the
+ACATS's `-- ERROR:` markings, which live in comments an AST discards. Both
+are listed in §5.4 as forced fields, and the ruling is why.
 
 ---
 
@@ -1012,6 +1080,17 @@ claim.
 round-trips source → envelope → Lean AST literal → `#guard`.** No semantics,
 no memory model, no interpreter — the family template, and the same milestone
 the C tier's M1 was.
+
+**M1 was drafted endgame-NEUTRAL and §6's rulings did not change its
+shape — they changed what three of its inches must carry.** Recorded so the
+difference is visible rather than assumed: inch 2 gains the **GNAT toolchain
+census**, because the ruling makes an Ada compiler load-bearing for the
+behavior oracle and for the grader, not only for the frontend (§5.2); inch 4
+gains **`CERR`-grade spans**, because a trace emitter cannot be retrofitted
+onto an envelope that dropped them (§5.4); and inch 8's manifest goes to
+**paragraph granularity** and is promoted from someday to planned (§5.8).
+Everything else stands as drafted, which is what "endgame-neutral by
+construction" was supposed to buy.
 
 The inches follow [docs/family-architecture.md](family-architecture.md) §8's
 founding checklist **in its order**, which is the C lane's measured order.
@@ -1036,26 +1115,103 @@ discovered.
 `docs/ada-charter.md`, and `docs/backlog.md` §L63. Zero Lean, zero risk to
 any existing lane, and the artifact every later inch cites.
 
-### 5.2 Inch 2 — THE FRONTEND, and it is the critical path
+### 5.2 Inch 2 — THE TOOLCHAIN, and §6's rulings made it load-bearing THREE times
 
-Build libadalang and its Python bindings via Alire on at least one
-development host, and land a `harness/ada_construct_census.py` — the §5.4
-instrument contract, named to the family convention — that reports the
-toolchain identity, the libadalang version, and the concrete node-kind list
-the built frontend actually has, replacing §3.1's grammar-derived 316 with a
-measured number.
+**Sequenced first because everything after it is blocked on it**, and the
+rulings raised the stakes rather than lowering them. An Ada toolchain is now
+needed for three separate reasons, and a plan that discovered that at inch 5
+would be a bad plan:
+
+| need | what for | ruled where |
+| --- | --- | --- |
+| **libadalang** | the frontend that emits the envelope | §4.2 |
+| **GNAT** | the **behavior oracle** for differential grounding | §6.1 |
+| **GNAT** | building the ACAA's `GRADE`, which issues our verdicts | §6.3, §4.4 |
+
+The first half of the inch is therefore a census, not a build:
+**`harness/ada_toolchain_census.py`** — what Ada compilers exist on each
+development host, what Alire offers, and what it costs to get from here to a
+working `gnatmake` and a working `import libadalang`. **At charter time the
+answer on this host was NOTHING** (§4.2), and the census is what turns that
+into a priced path rather than an impression. It is the M1 item the ruling
+explicitly asked for.
+
+The second half is `harness/ada_construct_census.py` — the §5.4 instrument
+contract, named to the family convention — reporting the toolchain identity,
+the libadalang version, and the concrete node-kind list the built frontend
+actually has, replacing §3.1's grammar-derived 316 with a measured number.
 
 **It also draws the version-neutral boundary** (§1.1's commitment above), the
 same way the C lane drew its own: census the node kinds each edition's corpus
 reaches and report the INTERSECTION. The C lane's evidence was *"zero of the
 45 AST node kinds the tier ingests is post-C99"*; Ada's answer is unknown and
 will be measured, and the interesting number is how many of the 316 kinds
-exist only for Ada 2022.
+exist only for Ada 2022. **The version pair is forced (§1.3), so
+`LeanModels/Ada/Ada2012/` exists from commit one and the only open question
+is what stays in the trunk above it.**
 
-**This is the inch that can fail**, and the failure mode is a from-source
-build on a host with no Ada compiler. The fallback is named in §4.2. It is
-sequenced first because everything after it is blocked on it, and because a
-milestone plan that discovered this at inch 5 would be a bad plan.
+**This is the inch that can fail.** The failure mode is a from-source build
+on a host with no Ada compiler; the fallback for the census half is
+tree-sitter-ada (§4.2), and there is **no fallback for the oracle or the
+grader** — those need a real GNAT. Which is precisely why the toolchain
+census comes before anything that assumes one.
+
+#### 5.2.1 THE TOOLCHAIN HALF IS DONE — the oracle and the grader are ALIVE
+
+**`harness/ada_toolchain_census.py` + `docs/ada-toolchain-census.json`,
+landed.** The charter said this host had no Ada compiler. It has one now, and
+the acquisition path is measured rather than described:
+
+| step | measured |
+| --- | --- |
+| `alr` | **2.1.1**, a prebuilt `aarch64-macos` binary — needs no Ada compiler to run |
+| `alr -n toolchain --select gnat_native gprbuild` | **GNAT 16.1.0** and **gprbuild 26.0.1**, installed |
+| `ALIRE_SETTINGS_DIR` pointed at a scratch dir | the whole install stays out of the home directory |
+
+**And `--verify` drives §4.4's ruled grounding loop end to end, on the real
+suite. All nine checks pass:**
+
+1. a real class-C test (`C324001`) **builds and prints `PASSED`** through the
+   shipped `Report` package — the oracle is alive;
+2. the ACAA's **`GRADE` builds** from the suite's own sources;
+3. the ACAA's **`SUMMARY` builds**;
+4. **the CRLF trap fires** (below);
+5. a C-test event trace grades to *"passed execution"*;
+6. a B-test trace with a `CERR` at every `-- ERROR:` location grades to
+   ***"passed by detecting all expected errors"***;
+7. **NON-VACUITY, both ways** — drop one expected error and `GRADE` says
+   *"failed by not reporting an error for an ERROR item at line 259"*; flag an
+   error on a line marked `-- OK` and it says *"failed by having an error for
+   an OK item at line 105"*. A grader that always said PASSED would be
+   worthless, so this is checked rather than assumed.
+
+> **The ruled grounding move is not a plan. It runs, it is re-runnable, and
+> it fails correctly.** The one thing standing between here and a real
+> scoreboard is a Lean tier that can emit those trace rows.
+
+**THE CRLF TRAP, and it would have cost a later lane a day.** The ZIP
+delivery ships CRLF, and the ACAA's `SUMMARY` tool **dies with an unhandled
+Ada exception on every CRLF source**. Measured: **0 of 120 files summarized
+as shipped; 150 of 150 after `\r` removal.** Which exception varies with the
+input — `SUMMARY.PARSE_ERROR` and `ADA.STRINGS.LENGTH_ERROR` both observed —
+so the check asserts that it raised, not which. `--verify` converts before
+summarizing *and* asserts the trap on an unconverted copy, so the workaround
+cannot silently stop being needed. (The ACAA also ships a `.tar.Z` delivery,
+which is the likely LF-clean route; the census records the workaround because
+it works on either.)
+
+**What is NOT done: the frontend.** `libadalang` **26.0.0** deploys through
+Alire with its whole dependency closure (`gnatcoll`, `libgpr2`,
+`langkit_support`, `adasat`, `vss`, `xmlada`, `prettier_ada`) and **ships its
+Python bindings in-tree** (`python/libadalang/__init__.py`), so the API §4.2
+verified from the repository is present. What is not yet built is the
+**shared** library the ctypes bindings load. Diagnosed precisely rather than
+left as "it didn't work": a relocatable `libadalang` cannot import a static
+dependency, so the whole closure has to be built relocatable together, and
+the census records the exact `-X` externals. **`needs.frontend` is therefore
+still `met: false`, and the instrument says so** — which is the point of
+having it. The oracle and the grader are met; the frontend is inch 2's
+remaining half.
 
 ### 5.3 Inch 3 — the profile
 
@@ -1082,15 +1238,27 @@ Schema `ada-0.1`, mirroring [docs/c-envelope-schema.md](c-envelope-schema.md).
 than chosen**, with a check that the schema lists exactly the kinds the
 census found and nothing extra.
 
-Three things this envelope needs that its siblings do not, each forced by a
-measurement above: `language_version` as a first-class field alongside
-`profile_id` (§1.3); a representation of the ACATS's own **markings** —
-`ERROR:`, `OK`, `POSSIBLE ERROR:`, `OPTIONAL ERROR:`, `ANX-C RQMT` — with
-their line numbers, because they are the expected result of 1,484 tests
-(§2.3) and they live in comments the AST discards; and a **compilation-unit
-list**, because Ada tests are multi-unit (248 of 4,188 tests span more than
-one file) and compilation ORDER is part of the test, encoded in the eighth
-character of the file name.
+**Four things this envelope needs that its siblings do not**, each forced by
+a measurement above or by a §6 ruling:
+
+1. **`language_version` as a first-class field** alongside `profile_id`
+   (§1.3, and [docs/family-architecture.md](family-architecture.md) §1.5).
+2. **The ACATS's own markings, with line AND column** — `ERROR:`, `OK`,
+   `POSSIBLE ERROR:`, `OPTIONAL ERROR:`, `ANX-C RQMT`. They are the expected
+   result of 1,484 tests (§2.3) and they live in comments an AST discards, so
+   the extractor must carry them out of the source itself.
+3. **A compilation-unit list with ORDER.** Ada tests are multi-unit — 248 of
+   4,188 span more than one file — and the compilation order is part of the
+   test, encoded in the eighth character of the file name. The trace's
+   `CSTART` rows are per compilation unit, so this is not bookkeeping.
+4. **Spans sufficient to emit a `CERR` row** — a line and a position for
+   every construct the tier could reject. **This is §6.3's ruling reaching
+   back into the envelope**: the scoreboard is a trace emitter from day one
+   (§4.4), a `CERR` record carries `line` and `position`, the User's Guide
+   calls the line *"critical to the correct operation of the grading tool"*,
+   and a span the ingester dropped is a verdict we cannot produce. A trace
+   emitter is not something to retrofit, which is why this lands in the
+   schema rather than in the scoreboard inch.
 
 ### 5.5 Inch 5 — `extractors/ada/extract.py`
 
@@ -1141,106 +1309,173 @@ rather than post-hoc: the unit's kind and name, 15 subprogram declarations,
 the way the C lane checks it: flip a count and Lean must report the failing
 expression.
 
-### 5.8 Inch 8 — the clause manifest, started the day semantics is
+### 5.8 Inch 8 — THE PARAGRAPH MAP, and §6.1's ruling promoted it
 
 [docs/family-architecture.md](family-architecture.md) §5.5 requires one
-manifest per (language, edition), `docs/ada-2012-clause-manifest.json`, with
-a row per claimed clause carrying `clause`, `title`, `status`, `declarations`,
-`gates` and `layer`, **generated and checked, never hand-maintained**.
+manifest per (language, edition) with a row per claimed CLAUSE.
+**§6.1's ruling needs one row per PARAGRAPH**, and the artifact must be
+*readable beside the ARM*. So:
 
-Ada supplies the row skeleton for free and nobody else in the family gets
-that: `docs/ada-spec-census.json` already carries **all 477 subclauses with
-the standard's own numbers, the standard's own titles, and the set of rule
-categories each one contains.** So the manifest generator's input exists
-before its first row does, and `status` is the only column that needs
-filling. **The generator is a one-inch job whenever it is wanted**, and the
-coverage denominator is the standard's, not ours.
+    docs/ada-2022-paragraph-map.json     the rows
+    docs/ada-2022-paragraph-map.md       the same rows, in the ARM's order
 
-It is listed as inch 8 rather than folded into M1 because §5.5 ties it to the
-tier that STATES rules, and M1 states none.
+One row per paragraph the tier claims, keyed by the standard's own citation
+form `<clause>(<para>)` — `4.1(9/3)`, exactly as the ARM cites itself —
+carrying the paragraph's rule CATEGORY (§1.4's sixteen), `status`,
+`declarations`, `gates` and `layer`. Coverage is
+`stated / (stated + refused + out-of-tier)`, **generated and checked, never
+hand-maintained**, and reportable per category — which is the number the
+ruling actually wants, because "we cover 61% of Dynamic Semantics and 4% of
+Bounded Errors" says something a single percentage cannot.
+
+**Ada supplies the row skeleton for free and nobody else in the family
+gets that.** `docs/ada-spec-census.json` already carries all 477 subclauses
+with the standard's own numbers and titles, the paragraph COUNT of each, and
+the rule categories each contains. The denominator is the standard's — 14,262
+paragraphs, or 5,927 scoped to clauses 1-13 — and it is not ours to choose.
+
+**Promoted from "someday" to inch 8 by the ruling**, and the reason it is
+still inch 8 rather than inch 3 is unchanged: a map of stated rules needs
+stated rules, and M1 states none. What M1 owes it is the *generator's input
+format*, which the census already is.
 
 ### 5.9 What M1 deliberately does NOT decide
 
-The bounded-error verdict class (§1.5.1). Whether B-test grading is done by
-emitting an event trace for the ACAA's grader or by a scorer of our own
-(§2.4). Whether an Ada sunfish twin is ever written (§4.3(b)). And the
-endgame, which is §6's question and which M1 is endgame-neutral about by
-construction: every option needs a frontend, a profile, an envelope and an
-ingester, and nothing in `LeanModels/Ada/` presupposes any of them.
+**Shorter than it was, because §6 closed four of the five things that used to
+be here.** What remains open at M1:
+
+* **The neutral/scoped split's contents** — `LeanModels/Ada/` versus
+  `LeanModels/Ada/Ada2012/`. The directory LEVEL exists from commit one
+  because §1.3's version pair is forced; what lives at each level is inch 2's
+  intersection census to decide, and stating it before measuring it is the
+  mistake §1.3 of the family charter exists to prevent.
+* **Which of Annex M.2's 202 implementation-defined characteristics the
+  corpus depends on** — inch 3 measures it.
+* **The paragraph map's `status` vocabulary beyond §5.5's four values** —
+  whether a membership-MATCH site (§6.2) needs a fifth. Do not invent it
+  before a bounded-error paragraph is actually claimed.
 
 ---
 
-## 6 STILL OWED BY THOMAS
+## 6 THE RULINGS, and what is still open
 
-1. **THE ENDGAME.** The C tier was given three options and Thomas ruled (c),
-   the completeness ladder scored against a suite. The Ada tier's options are
-   NOT the same three, because the artifacts differ:
-   * **(a) the ACATS ladder** — the direct analogue of the C ruling, scored
-     against an official corpus with a published denominator and a supplied
-     grader. §3.3's core reaches 81.7%; §3.4's first scoreboard is 1,374
-     tests.
-   * **(b) the SPEC ladder** — score against ARM paragraphs rather than
-     tests, using §1.4's table as the denominator and the suite as evidence.
-     This is the option no other tier in the family could even state, because
-     no other spec classifies its own paragraphs. It is also the option with
-     no precedent and no tooling.
-   * **(c) the TRIANGLE** — write an Ada sunfish twin and pursue the
-     cross-language claim (§4.3(b)). Most expensive; the only one that buys a
-     square.
+**Thomas ruled the whole menu on 2026-08-22, the day the charter landed.**
+The items below are recorded as decided rather than as asked, because the
+charter's job was to present the fork and the fork is closed. §5 is updated
+to the rulings; this section is the record of what was chosen and why it
+changes the plan.
 
-   **The charter recommends none.** They share the whole of §5, so the choice
-   binds after M1, not now.
+1. **THE ENDGAME — RULED: BOTH, and they are not alternatives.**
 
-2. **THE BOUNDED-ERROR VERDICT (§1.5.1)** — and this one is the family
-   charter's own open question, answered as far as a census can answer it.
-   [docs/family-architecture.md](family-architecture.md) §4.3 asks whether
-   Ada needs a fifth REFUSE cause. **It does not.** A bounded error fits none
-   of the four causes, but the reason is that it is not a refusal question at
-   all: the DIVERGE test at a bounded-error site is **membership in a
-   spec-enumerated set, not equality**, because two conforming
-   implementations may legitimately produce different members. So the fork
-   is: **MATCH-by-membership** (the scoreboard gains a per-site permitted
-   set, and MATCH stops meaning "equals the oracle" at those sites) or
-   **REFUSE with a new cause** (cheap, honest, forfeits every such site). 104
-   paragraphs over 40 subclauses are affected — 57 over 16 in clauses 1-13 —
-   so either is affordable. This is a change to the family's VERDICT
-   vocabulary rather than to its refusal taxonomy, and it is not one lane's
-   to take.
+   > **The SPEC LADDER *and* differential grounding against a real
+   > implementation.** The coverage instrument generalizes to ARM-PARAGRAPH
+   > granularity and the map is *readable beside the ARM*; GNAT is the
+   > behavior oracle.
 
-3. **THE GRADER (§2.4).** Emit an event trace and run the ACAA's `GRADE`
-   tool, or implement scoring ourselves? Using theirs removes the largest
-   source of self-generous grading and makes the B-test location rules
-   somebody else's problem; it also puts an Ada program in the scoring path,
-   which means the frontend build (§5.2) is load-bearing twice.
+   The charter had presented (a) the ACATS ladder, (b) the spec ladder and
+   (c) a triangle. **(c) is dead (§6.5). (a) and (b) are the same program**,
+   and the ruling is what makes that visible: a paragraph-granular coverage
+   map is a claim about the STANDARD, and it is worthless without evidence,
+   while ACATS tests are evidence that is worthless without a claim they
+   support. Joined, the two are one artifact — **each ARM paragraph carries
+   its status and the tests that witness it.**
 
-4. **VENDORED VERSUS FETCHED — recommendation: fetched, as everywhere else**
-   (§2.5), even though the ACATS licence would permit vendoring outright.
-   Worth a ruling precisely because the usual reason not to vendor does not
-   apply here.
+   **Three things follow immediately, and §5 now carries all three.**
 
-5. **AN ADA SUNFISH TWIN — yes or no?** (§4.3(b)). Nobody has volunteered and
-   nothing is proposed. Recorded because it is the only route to a
-   cross-language claim for this tier.
+   * **The manifest goes to PARAGRAPH granularity, not clause.**
+     [docs/family-architecture.md](family-architecture.md) §5.5 specifies one
+     row per CLAUSE. Ada's ruling needs one row per **paragraph**, and the
+     denominator is §1.2's **14,262** — or, scoped to the language, clauses
+     1-13's **5,927**. This is a generalization of the family contract rather
+     than a departure from it, and it is only affordable because the ARM
+     numbers its own paragraphs and `docs/ada-spec-census.json` already
+     carries every one of them with its rule category. **No other tier in the
+     family could take this ruling**, and §5.8 is now an M1-adjacent inch
+     rather than a someday.
+   * **"Readable beside the ARM" is a requirement on the ARTIFACT.** The map
+     is ordered by the standard's own numbering so a reader can hold the two
+     side by side, paragraph for paragraph. That is a rendering obligation,
+     and it is cheap only because the census is already keyed the ARM's way.
+   * **GNAT is the behavior oracle**, which is
+     [docs/family-architecture.md](family-architecture.md) §4.2's precedence
+     rule taken at face value: the SPEC is the target, the IMPLEMENTATION is
+     the oracle, a divergence between them is a FINDING with both citations
+     and blocks neither side. **There was no Ada compiler on this host at
+     charter time (§4.2), so censusing GNAT's availability and
+     installability is an M1 item** — §5.2.
 
-6. **TWO AMENDMENTS BACK TO [docs/family-architecture.md](family-architecture.md)**,
-   found by this census and not the Ada lane's to make:
-   * **§1.2's `oracle` column is one column short for Ada.** For every other
-     spec-mirror tier the oracle is an implementation. Ada has a third
-     authority — an **official suite** with published grading rules and a
-     shipped grading tool, owned by neither the standards body nor an
-     implementer — so §4.2's precedence rule wants one more clause: *the SPEC
-     is the target, the IMPLEMENTATION is the oracle for behavior, and the
-     SUITE OWNER is the authority for the expected VERDICT* (§0.1, §2.4).
-   * **§4.3's Ada row is now fillable**, and §1.5 fills it. The row's
-     prediction that a fifth REFUSE cause would show here is answered in
-     §1.5.1 — it does not, and what shows instead is one level up.
+2. **THE BOUNDED-ERROR VERDICT — MATCH-BY-MEMBERSHIP, adopted.** §1.5.1's
+   analysis stands and the recommendation is taken as family law unless
+   Thomas overrides: at a bounded-error site the DIVERGE test is **membership
+   in the spec-enumerated permitted set**, not equality, because two
+   conforming implementations may legitimately produce different members.
+   This answers [docs/family-architecture.md](family-architecture.md) §4.3's
+   standing question — **no fifth REFUSE cause is needed**; what was missing
+   was a verdict, one level up from the refusal taxonomy. The obligations
+   that come with adopting it: the site carries its permitted set, and MATCH
+   stops meaning "equals the oracle" there, so **membership-MATCHes are
+   reported as their own column** or the headline number quietly weakens.
+   Scale, so the cost is known: 104 paragraphs over 40 subclauses; 57 over 16
+   in clauses 1-13.
 
-   *(The `∀`-resolution ruling the founding dispatch cited by name is
-   [docs/family-architecture.md](family-architecture.md) §3.6, which landed
-   three commits before this charter did. §1.5.3 cites it. This item stood
-   open in draft as "not in this repository" and is closed by the landing
-   rather than by an answer, which is worth one line so the next lane does
-   not go looking.)*
+3. **THE GRADER — RULED: the ACAA's own `GRADE`, via the event-trace CSV, and
+   the scoreboard is a trace emitter from day one.** This is the tier's
+   defining grounding move and it is stated in full at **§4.4** rather than
+   here. In one line: **we do not decide our own verdicts.** The B-class
+   grading rules §2.3 measured — location-only, `POSSIBLE`/`OPTIONAL`
+   disjunctions, 7,568 `-- OK` false-positive guards — are the ACAA's tool's
+   problem, not ours, and self-generous scoring becomes structurally
+   impossible rather than merely discouraged. Its cost is that the toolchain
+   is load-bearing twice (frontend *and* scorer), which is why §5.2 is the
+   critical path.
+
+4. **VENDORED VERSUS FETCHED — FETCH-PINNED, implemented now.** It is the
+   default and the uniform family policy (§2.5), so nothing waits on a
+   further word. Recorded for completeness: **vendoring stays a
+   one-command option and Ada is the one tier where it would be
+   unambiguously legal** — every one of the 4,945 Ada files carries a grant
+   of unlimited rights (§2.5), so the c-testsuite trap that forced the policy
+   elsewhere does not exist here. The reasons to fetch anyway are uniformity,
+   keeping a 41 MB corpus out of the repository, and `--compare` making
+   staleness mechanically detectable.
+
+5. **THE ADA SUNFISH TWIN — RULED: NO.** Dead, and removed from the endgame
+   menu. The driver artifact is the corpus (§4.3(a)), consistent with the
+   family driver policy. §4.3(b) records the consequence rather than the
+   option: **this tier will never have a second independent model of the same
+   program**, and the ACAA's grader (§4.4) is the structural defense that
+   replaces it.
+
+**STILL OPEN — two amendments back to
+[docs/family-architecture.md](family-architecture.md)**, found by this census
+and not the Ada lane's to make:
+
+* **§1.2's `oracle` column is one column short for Ada.** For every other
+  spec-mirror tier the oracle is an implementation. Ada has a third
+  authority — an **official suite** with published grading rules and a
+  shipped grading tool, owned by neither the standards body nor an
+  implementer — so §4.2's precedence rule wants one more clause: *the SPEC
+  is the target, the IMPLEMENTATION is the oracle for behavior, and the
+  SUITE OWNER is the authority for the expected VERDICT* (§0.1, §2.4). The
+  ruling in §6.1 makes this concrete rather than theoretical: Ada now has an
+  implementation oracle (GNAT) AND a suite owner (the ACAA) in the same
+  pipeline, and they answer different questions.
+* **§4.3's Ada row is now fillable**, and §1.5 fills it. The row's
+  prediction that a fifth REFUSE cause would show here is answered in
+  §1.5.1 — it does not, and what shows instead is one level up. §6.2 adopts
+  the answer.
+* **§5.5's manifest is one row per CLAUSE, and §6.1's ruling needs one row
+  per PARAGRAPH.** Stated as a generalization the Ada lane is taking, not a
+  departure it is making unilaterally: `clause` becomes `<clause>(<para>)`,
+  which is the ARM's own citation form, and every other tier's rows are
+  unaffected because a clause-granular row is the degenerate case.
+
+*(The `∀`-resolution ruling the founding dispatch cited by name is
+[docs/family-architecture.md](family-architecture.md) §3.6, which landed
+three commits before this charter did. §1.5.3 cites it. This item stood open
+in draft as "not in this repository" and is closed by the landing rather than
+by an answer, which is worth one line so the next lane does not go
+looking.)*
 
 ---
 
@@ -1265,6 +1500,15 @@ ingester, and nothing in `LeanModels/Ada/` presupposes any of them.
 * `docs/ada-charter.md` — this document.
 * `docs/backlog.md` §L63 — the record.
 
+**Landed after Thomas's rulings, as M1 inch 2's first half (§5.2.1):**
+
+* `harness/ada_toolchain_census.py` — the toolchain probe, with `--verify`,
+  which drives §4.4's ruled grounding loop end to end and asserts the two
+  NEGATIVE grader cases. `--self-test` covers the probe's own decision logic.
+* `docs/ada-toolchain-census.json` — this host, measured: GNAT 16.1.0 and
+  gprbuild 26.0.1 present via Alire 2.1.1, `libadalang` not yet importable,
+  and the unmet need named.
+
 **No Lean, and no change to any existing file** other than `docs/backlog.md`.
 Both instruments meet
 [docs/family-architecture.md](family-architecture.md) §5.4's contract —
@@ -1279,10 +1523,10 @@ that a gate which is a permanent SKIP is a check pretending.
 
 **What was verified, and what was NOT — stated plainly, because a charter
 that claimed a green it had not seen would fail its own covenant in its last
-paragraph.** `python3 tools/docs_check.py` is green at **73/73 marked blocks,
-15 illustrative-exempt** — unchanged. Both instruments pass `--self-test`,
-both produce byte-identical output on a double run, and every refusal path in
-both was executed rather than described.
+paragraph.** `python3 tools/docs_check.py` is green — unchanged. All three instruments pass `--self-test`,
+the two census instruments produce byte-identical output on a double run, and
+every refusal path in all three was executed rather than described — including
+`--verify`'s nine checks against the real ACATS delivery, which pass.
 
 `lake build`, `harness/diff_test.py` and `harness/script_corpus.py` were
 **NOT re-run**, and the reason is a machine-wide build-lock protocol in force

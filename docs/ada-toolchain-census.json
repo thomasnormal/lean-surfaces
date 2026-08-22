@@ -1,0 +1,143 @@
+{
+  "acquisition": {
+    "binary_release": "alr-<ver>-bin-aarch64-macos.zip and siblings; prebuilt, no Ada compiler needed to run it",
+    "frontend_command": "alr -n with libadalang  (inside an alr crate)",
+    "index_crates": {
+      "gnat_native": "16.1.0",
+      "gprbuild": "26.0.1",
+      "libadalang": "26.0.0"
+    },
+    "settings_dir_env": "ALIRE_SETTINGS_DIR \u2014 point it at a scratch dir to keep a probe out of the home directory",
+    "tool": "alr (Alire)",
+    "toolchain_command": "alr -n toolchain --select gnat_native gprbuild"
+  },
+  "all_needs_met": false,
+  "extra_path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin",
+  "impostors_on_path": {
+    "adaparse": {
+      "actually": "ada-url (a WHATWG URL parser), NOT the Ada language",
+      "path": "/opt/homebrew/bin/adaparse"
+    }
+  },
+  "instrument": "harness/ada_toolchain_census.py",
+  "language": "Ada",
+  "libadalang": {
+    "error": "ModuleNotFoundError: No module named 'libadalang'",
+    "importable": false
+  },
+  "needs": {
+    "frontend": {
+      "met": false,
+      "needs": "libadalang \u2014 emits the envelope",
+      "ruled_in": "docs/ada-charter.md \u00a74.2"
+    },
+    "grader": {
+      "met": true,
+      "needs": "gnatmake \u2014 builds the ACAA's GRADE, which issues our verdicts",
+      "ruled_in": "docs/ada-charter.md \u00a76.3, \u00a74.4"
+    },
+    "oracle": {
+      "met": true,
+      "needs": "gnatmake \u2014 the BEHAVIOR oracle for differential grounding",
+      "ruled_in": "docs/ada-charter.md \u00a76.1"
+    }
+  },
+  "tools": {
+    "alr": {
+      "present": false
+    },
+    "gcc": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gcc",
+      "present": true,
+      "version_line": "gcc (GNAT-FSF-builds) 16.1.0"
+    },
+    "gnat": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gnat",
+      "present": true,
+      "version_line": "GNAT 16.1.0"
+    },
+    "gnatbind": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gnatbind",
+      "present": true,
+      "version_line": "GNATBIND 16.1.0"
+    },
+    "gnatchop": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gnatchop",
+      "present": true,
+      "version_line": "GNATCHOP 16.1.0"
+    },
+    "gnatls": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gnatls",
+      "present": true,
+      "version_line": "GNATLS 16.1.0"
+    },
+    "gnatmake": {
+      "path": "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/adatools/alire-settings/cache/toolchains/gnat_native_16.1.0_657cf254/bin/gnatmake",
+      "present": true,
+      "version_line": "GNATMAKE 16.1.0"
+    },
+    "gprbuild": {
+      "present": false
+    }
+  },
+  "verify": {
+    "acats": "acats42",
+    "checks": [
+      {
+        "check": "C-test builds",
+        "expected": "exit=0",
+        "got": "exit=0 c324001.adb:40:21: warning: check will fail at run time [-gnatw.a]\nreport.adb:382:30: warning: index for \"Nam\" may assume lower bound of 1 [-gnatww]\nreport.adb:382:30: warning: suggested replacement:",
+        "passed": true
+      },
+      {
+        "check": "C-test reports PASSED",
+        "expected": "PASSED",
+        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:02:17\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
+        "passed": true
+      },
+      {
+        "check": "ACAA GRADE builds",
+        "expected": "built",
+        "got": "built",
+        "passed": true
+      },
+      {
+        "check": "ACAA SUMMARY builds",
+        "expected": "built",
+        "got": "built",
+        "passed": true
+      },
+      {
+        "check": "CRLF source KILLS the ACAA's SUMMARY tool (the trap)",
+        "expected": "raised ",
+        "got": "ACATS Test Summary Tool - version 1.0\n\nraised ADA.STRINGS.LENGTH_ERROR : a-strfix.adb:364",
+        "passed": true
+      },
+      {
+        "check": "GRADE: C test passes execution",
+        "expected": "passed execution",
+        "got": "ACATS Grading Tool - version 1.0\n  Compile Checks: CHECK_ALL\n  Make checks of time stamps in event log\n  Use positions of error messages when grading\n  Report verbosity: NORMAL\n  10 event trace records read from /tmp/ada-verify/c.csv\n  39 test summary trace records read from /tmp/ada-verify/C324001.",
+        "passed": true
+      },
+      {
+        "check": "GRADE: B test passes on all expected errors",
+        "expected": "passed by detecting all expected errors",
+        "got": "ACATS Grading Tool - version 1.0\n  Compile Checks: CHECK_ALL\n  Make checks of time stamps in event log\n  Use positions of error messages when grading\n  Report verbosity: NORMAL\n  31 event trace records read from /tmp/ada-verify/b.csv\n  32 test summary trace records read from /tmp/ada-verify/B324001.",
+        "passed": true
+      },
+      {
+        "check": "GRADE FAILS a missing error (non-vacuity)",
+        "expected": "failed by not reporting an error",
+        "got": "ACATS Grading Tool - version 1.0\n  Compile Checks: CHECK_ALL\n  Make checks of time stamps in event log\n  Use positions of error messages when grading\n  Report verbosity: NORMAL\n  30 event trace records read from /tmp/ada-verify/b.csv\n  32 test summary trace records read from /tmp/ada-verify/B324001.",
+        "passed": true
+      },
+      {
+        "check": "GRADE FAILS an error in an OK area (non-vacuity)",
+        "expected": "failed by having an error for an OK item",
+        "got": "ACATS Grading Tool - version 1.0\n  Compile Checks: CHECK_ALL\n  Make checks of time stamps in event log\n  Use positions of error messages when grading\n  Report verbosity: NORMAL\n  32 event trace records read from /tmp/ada-verify/b.csv\n  32 test summary trace records read from /tmp/ada-verify/B324001.",
+        "passed": true
+      }
+    ],
+    "passed": true
+  }
+}

@@ -20569,3 +20569,87 @@ rule 5's requirement to verify a running build before touching another lane's
 lock. Released with `rm -rf` under a trap that reports failure, and the owner
 file is checked to be ours before release so a spin-then-timeout cannot delete
 somebody else's lock.
+
+## L85 — LEAN TIER M1 COMPLETE: six inches, and three of them corrected something this lane had already written (2026-08-22)
+
+M1's six option-neutral inches are landed. Every one is useful under all four
+endgame options (§L79), so none of it presumes Thomas's decision.
+
+| inch | artifact | headline |
+| --- | --- | --- |
+| 1 | `lean_kernel_census.py` | 12 Expr / 6 Level / 16 rules / 15 Nat ops / 7 axioms |
+| 2 | — | **lean4lean builds GREEN in 98s**; Init.Core 1035 decls in 4s |
+| 3 | `lean_spec_census.py` | 167 typeset rules, **71 kernel-relevant** across 12 families |
+| 4 | `lean_rule_correspondence.py` | **24% of the spec maps onto a 7-line stub** |
+| 5 | `lean_axiom_census.py` | flagship tier **0 native-dependent, 0 sorry-dependent** |
+| 6 | `lean_independent_check.py` | **8 modules, 8 MATCH, 0 DIVERGE** |
+
+### Three corrections, all to this lane's own prior work
+
+The instruments were built to check claims, and the first thing each one checked
+was a claim this lane had already published. That is the argument for landing
+them beside the prose rather than after it.
+
+* **Inch 3 corrected the charter's rule table.** The charter said 72
+  kernel-relevant rules with a per-family split; the instrument says 71 with a
+  materially different split. Neither is a counting error — the hand table
+  attributed each rule to the judgment it CONCLUDES, the instrument attributes by
+  POSITION. Both defensible, one reproducible. **The generalizable rule now in
+  §7.1: the chapter TOTAL is robust, the per-family SPLIT is an artifact of the
+  attribution rule and must never be quoted without saying which rule produced
+  it.**
+* **Inch 2 refuted a census claim by running it.** The census recorded, from
+  lean4lean's CI comment and its open issue 17, that modules importing `Lean`
+  fail on loose bound variables — the standing blocker limiting any scoreboard to
+  core `Init`. Measured at HEAD: **fixed.** `Lean.Elab.Command` checks green.
+  The issue is still open upstream, so the artifact was stale rather than wrong,
+  and the corpus available to a rung-0 scoreboard is materially larger than the
+  charter concluded.
+* **Inch 6 found a bug in itself, of the worst kind available here.** A bogus
+  module name scored **DIVERGE**, because the checker exits non-zero when it
+  cannot find an `.olean` and the classifier read any unrecognized non-zero exit
+  as disagreement. **That manufactures a DIVERGE** — §5.1's named failure, which
+  either halts a lane chasing a non-bug or trains it to tolerate the row. A
+  module the checker cannot locate is a bad module list, not a verdict; the run
+  now REFUSES as an input fault. The fixture is kept.
+
+### What inch 4 is, because it is the one nobody else has
+
+A cited, drift-guarded correspondence between the thesis's rules and lean4lean's
+`Theory/`. **17 of 71 kernel-relevant rules — one in four — map onto
+`Theory/Inductive.lean`, which is 7 lines with two `sorry`s.** Coverage is
+deliberately NOT a percentage and the instrument says so in its own output: the
+two artifacts are not 1:1, because typing and defeq are FUSED into one inductive,
+delta/iota/quot enter as ENVIRONMENT DATA rather than rules, and the 15 level
+rules are replaced by a SEMANTIC relation.
+
+The mechanical/declared split is explicit — Theory/'s constructor lists are
+re-derived every run; the judgment→inductive map is editorial, cited per row, and
+guarded three ways so it cannot rot silently.
+
+### Corroboration worth recording
+
+Inch 2's build output emitted `Verify/Environment.lean:225:8: declaration uses
+'sorry'` — and the charter's §6.3 table, written from source days earlier, names
+line 225 as `addDecl.WF`, the top-level soundness theorem whose `inductDecl`
+case is sorry'd. The toolchain confirmed the census independently.
+
+### Still owed
+
+**The inch-6 gate over our OWN `.olean`s.** The instrument is written,
+calibrated and green on core; pointing it at `LeanModels.*` is a `--modules`
+argument, not new code. It needs the tree built, and the scratchpad tree was
+destroyed by a harness restart mid-dispatch — rebuilding it is a multi-hour job
+that would have held the machine-wide lock for no proportionate gain.
+
+### Lock discipline
+
+The build ran under the **AMENDMENT 9 ticket queue**, and this lane was a live
+demonstration of why A9 exists: its previous bare-spinning waiter **lost five
+consecutive handoffs over 53 minutes** (ada → go → sv → pyrebuild → one more),
+never once winning the mkdir. Converted to a ticket, it reached the head and
+built immediately. Total lock tenure: **~2 minutes**, released promptly.
+
+Everything else this dispatch needed no lock: the instruments are Python over
+out-of-tree corpora, plus single niced dependency-free `lean` processes under
+protocol rule 3.

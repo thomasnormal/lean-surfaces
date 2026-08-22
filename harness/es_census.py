@@ -851,6 +851,9 @@ def main():
     ap.add_argument("-o", "--out", help="write JSON here")
     ap.add_argument("--compare", help="compare against a previous JSON; nonzero on drift")
     ap.add_argument("--self-test", action="store_true", help="run the refusal paths")
+    ap.add_argument("--check-schema", metavar="MD",
+                    help="assert docs/es-envelope-schema.md's node table is DERIVED from "
+                         "this census: every kind listed, nothing extra, every count exact")
     ap.add_argument("--edition", help="path to docs/es-edition.json; verifies --spec "
                                       "is the pinned edition and stamps language_version")
     ap.add_argument("--write-edition", metavar="OUT",
@@ -914,6 +917,38 @@ def main():
     except Refusal as e:
         print(f"REFUSED: {e}", file=sys.stderr)
         return 2
+
+    if args.check_schema:
+        # "What the ingester accepts" and "what the corpus contains" must not
+        # be able to drift apart.  The C lane states this as a property; here
+        # it is a CHECK, because a table of 66 rows is exactly the size where
+        # a hand edit goes unnoticed.
+        if "frontend" not in result:
+            print("REFUSED: --check-schema needs the frontend census "
+                  "(pass --tests and --acorn)", file=sys.stderr)
+            return 2
+        doc = Path(args.check_schema).read_text(encoding="utf-8")
+        listed = dict((m.group(1), int(m.group(2)))
+                      for m in re.finditer(r"`([A-Z][A-Za-z]+)` (\d+)", doc))
+        actual = result["frontend"]["node_types"]
+        missing = sorted(set(actual) - set(listed))
+        extra = sorted(set(listed) - set(actual))
+        wrong = sorted((k, listed[k], actual[k]) for k in set(listed) & set(actual)
+                       if listed[k] != actual[k])
+        if missing or extra or wrong:
+            print(f"REFUSED: {args.check_schema} has DRIFTED from the census",
+                  file=sys.stderr)
+            for k in missing:
+                print(f"  missing from the doc: {k} ({actual[k]})", file=sys.stderr)
+            for k in extra:
+                print(f"  in the doc but not the corpus: {k}", file=sys.stderr)
+            for k, d_, a_ in wrong:
+                print(f"  count differs: {k} doc={d_} census={a_}", file=sys.stderr)
+            return 1
+        print(f"{args.check_schema}: {len(actual)} node kinds, all listed, "
+              f"all counts exact")
+        if not (args.out or args.compare):
+            return 0
 
     blob = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.compare:

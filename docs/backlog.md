@@ -16518,6 +16518,70 @@ taxonomy movement at all.
 Census re-run is byte-identical on a double `--compare`; `docs_check` 75/75.
 No Lean, so the build lock was not taken.
 
+### ADDENDUM — M1 INCH 3: the envelope schema, and the node table is a CHECK not a claim (2026-08-22)
+
+[docs/es-envelope-schema.md](es-envelope-schema.md), schema **`es-0.1`**, on the
+family template. **Every vocabulary table is DERIVED from
+`docs/es262-census.json`** — and, unlike the sibling lanes which state that as a
+property, here it is ENFORCED: `es_census.py --check-schema` asserts that every
+one of the 66 node kinds is listed, nothing extra is listed, and **every count
+is exact**. Verified non-vacuous both ways: changing `Identifier` 442415 to
+442416 refuses with the diff, and deleting `MetaProperty` refuses naming it. A
+66-row table is exactly the size at which a hand edit goes unnoticed.
+
+**FOUR things this envelope has that its three siblings do not, each forced by a
+measurement rather than a preference.**
+
+1. **`language_version` is an INPUT to the AST, not a stamp.** The grammar a
+   parser accepts is a function of the edition: **106 of 18,114 core-slice tests
+   parse under the living draft and not under a ratified edition** (decorators,
+   `import.defer`, source-phase imports). Same source, different edition,
+   different program — the C lane's `profile_id` argument, arriving for a
+   different reason.
+2. **A REJECTED PARSE IS A VALID ENVELOPE, not a missing one**, and this has no
+   analogue in the other three lanes. **4,248 of the core slice's 18,114 tests
+   declare `negative: {phase: parse}`** — 23% of the corpus asserts the source
+   must NOT parse. A schema representing only successful parses would make a
+   quarter of its own corpus unrepresentable and would force the extractor to
+   signal those tests by FAILING, which the never-fail contract forbids. So
+   `parse.status` has exactly two values, `"error"` carries its reason and its
+   span, `program` is `null`, and **the extractor exits 0**. `error_kind` is
+   always `SyntaxError`, and the suite agrees to the digit: of 4,732 negative
+   tests suite-wide, **4,696 name `SyntaxError`**.
+3. **`source_type` is a parse INPUT, not a property of the text.** The same
+   bytes are a different program as Script or Module (`await` is an identifier
+   in one, an operator in the other), test262 says which via metadata the
+   frontend never sees, and **5 core-slice files parse only as `module`**. It
+   joins the cache key, which is therefore
+   `(source, extractor, EDITION, SOURCETYPE)`.
+4. **`parse.status: "ok"` is a claim about the FRONTEND, never about validity** —
+   acorn accepts **285** core-slice tests test262 says must be rejected. §8
+   states that limit rather than letting a reader infer the stronger claim.
+
+**Three things the corpus said that a reading of ESTree would not have.**
+`PrivateIdentifier` is the **third-largest node kind in the slice at 119,243**,
+ahead of `MemberExpression` and `CallExpression`, because the private
+class-field feature tags sum to 3,455 tests — a tier treating private names as
+an advanced corner would be wrong about its own corpus, the §L35 lesson in a new
+language. `SwitchStatement`/`SwitchCase` are present from the start (40/84),
+where the C flagship had **zero** `switch` and had to make it rung R1 — so the
+same construct is v0 here and a rung there, decided by corpus and not by
+language. And the three module nodes appear **once each in 18,114 tests**, which
+is the measured confirmation that excluding the module system removes
+essentially all of it rather than leaving a residue.
+
+**One opinionated call, stated as such**: a numeric `Literal` is carried as its
+RAW TEXT, never as a host double. The extractor runs under CPython whose float
+is also binary64, so a round-trip would *probably* be exact — and "probably
+exact" is how a silent wrong answer enters. Correctly-rounded decimal→binary is
+a real algorithm the family has already scheduled (family-architecture §3.5.5
+step 3); the envelope hands Lean the digits the programmer wrote. RegExp bodies
+are recorded as `pattern` + `flags` and NOT parsed — §22.2 is its own
+sub-language.
+
+`docs_check` 75/75; `--check-schema` green and non-vacuous; census unchanged.
+No Lean, so the build lock was not taken.
+
 ## L67 — SV-M1 CONSOLIDATION: all six rulings taken, the 18th envelope was NEVER BROKEN, and the census hang was a frontend CRASH (2026-08-22)
 
 The owner ruled all six of §L60's decisions the same day, and the SV lane's

@@ -67,21 +67,31 @@ the fact changes. Facts that are merely true are recorded anyway, because
 the argument that they are NOT depended on is itself a claim that should
 be re-checkable when the corpus moves.
 
-| fact | expression | dep? | witness / why |
-| --- | --- | :-: | --- |
-| `char_bit_8` | `CHAR_BIT == 8` | **yes** | `pos_seal` memcpy's the 120-byte board into `uint64_t w[15]`; 120 bytes is 15 words only at 8-bit bytes (L199-201) |
-| `int_32` | `sizeof(int) == 4` | **yes** | `PACK_VM` packs `(uint32_t)(int)` into a `uint64_t`'s high half; the move-ordering key is exact only at 32 bits (L649-652) |
-| `long_64` | `sizeof(long) == 8` | **yes** | `TABLE_SIZE` and the node counters are `long` (L83, L496-497) |
-| `twos_complement` | `INT_MIN == -INT_MAX - 1` | **yes** | C23 §6.2.6.2 mandates it; the signed-overflow UB boundary is stated against it |
-| `char_signed` | `(char)-1 < 0` | **yes** | see §4.1 — the in-bounds argument, not the values |
-| `unsigned_wraps` | `(unsigned)-1 == UINT_MAX` | **yes** | `mix64`'s `x *= 0xff51…ULL` is deliberate defined wraparound (L192-193) |
-| `int_to_uint32_modulo` | `(uint32_t)(-1) == 0xFFFFFFFFu` | **yes** | `PACK_VM` biases by `(uint32_t)(val) ^ 0x80000000u` (L649) |
-| `uint_to_int_wraps` | `(int)0x80000000u == INT_MIN` | **yes** | see §4.2 — the `-std=c23` pin is load-bearing here |
-| `little_endian` | `__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__` | no | see §4.3 — measured, deliberately not depended on |
-| `arithmetic_right_shift` | `(-1 >> 1) == -1` | no | see §4.4 — the corpus has ZERO signed right shifts |
-| `pointer_64` | `sizeof(void *) == 8` | no | 0 integer↔pointer casts, so no observable depends on the width |
-| `long_long_64` | `sizeof(long long) == 8` | no | reached only through `uint64_t`, which `<stdint.h>` fixes exactly |
-| `short_16` | `sizeof(short) == 2` | no | unused by the corpus |
+**Every fact names the Annex J.3 item it answers.** J.3 is C23's own
+numbered list of implementation-defined behavior, and a profile fact is
+this implementation's ANSWER to one of its questions — so the column is
+what makes the profile checkable against the standard rather than only
+against the corpus. Where a fact answers no J.3 question the column says
+so and why; `unsigned_wraps`, for instance, is standard-GUARANTEED
+(§6.3.1.3p2) and is recorded only so the tier does not refuse it while
+refusing signed overflow. (C23 also inserted a J.3.1 "General", shifting
+C17's J.3.1-J.3.13 up by one — `docs/c23-spec-mirror.md` §6.)
+
+| fact | expression | dep? | J.3 item | witness / why |
+| --- | --- | :-: | --- | --- |
+| `char_bit_8` | `CHAR_BIT == 8` | **yes** | **J.3.5(1)** | `pos_seal` memcpy's the 120-byte board into `uint64_t w[15]`; 120 bytes is 15 words only at 8-bit bytes (L199-201) |
+| `int_32` | `sizeof(int) == 4` | **yes** | **J.3.14(1)** | `PACK_VM` packs `(uint32_t)(int)` into a `uint64_t`'s high half; the move-ordering key is exact only at 32 bits (L649-652) |
+| `long_64` | `sizeof(long) == 8` | **yes** | **J.3.14(1)** | `TABLE_SIZE` and the node counters are `long` (L83, L496-497) |
+| `twos_complement` | `INT_MIN == -INT_MAX - 1` | **yes** | **none — C23 DELETED it** | §6.2.6.2p6 NOTE 2 mandates it, and the deletion from J.3 is the mandate's auditable trace (C17's integers list had 5 entries, C23's `J.3.6` has 4). The signed-overflow UB boundary is stated against it |
+| `char_signed` | `(char)-1 < 0` | **yes** | **J.3.5(5)** | see §4.1 — the in-bounds argument, not the values |
+| `unsigned_wraps` | `(unsigned)-1 == UINT_MAX` | **yes** | — defined, §6.3.1.3p2 | `mix64`'s `x *= 0xff51…ULL` is deliberate defined wraparound (L192-193) |
+| `int_to_uint32_modulo` | `(uint32_t)(-1) == 0xFFFFFFFFu` | **yes** | — defined, §6.3.1.3p2 | `PACK_VM` biases by `(uint32_t)(val) ^ 0x80000000u` (L649) |
+| `uint_to_int_wraps` | `(int)0x80000000u == INT_MIN` | **yes** | **J.3.6(3)**, §6.3.1.3p3 | see §4.2 — implementation-defined in C23 exactly as in C17, so THIS profile is the pin |
+| `little_endian` | `__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__` | no | — not in J.3 | see §4.3 — measured, deliberately not depended on |
+| `arithmetic_right_shift` | `(-1 >> 1) == -1` | no | **J.3.6(4)**, §6.5.8p5 | see §4.4 — the corpus has ZERO signed right shifts |
+| `pointer_64` | `sizeof(void *) == 8` | no | J.3.8 | 0 integer↔pointer casts, so no observable depends on the width |
+| `long_long_64` | `sizeof(long long) == 8` | no | **J.3.14(1)** | reached only through `uint64_t`, which `<stdint.h>` fixes exactly |
+| `short_16` | `sizeof(short) == 2` | no | **J.3.14(1)** | unused by the corpus |
 
 Also recorded, on both hosts: `__STDC_VERSION__` is `202311L`, and
 **`__STDC_IEC_60559_BFP__` is NOT defined** — neither host claims Annex F.
@@ -112,7 +122,7 @@ UNSIGNED `char`, which is exactly the divergence the architecture memo
 flagged. It is not one of the two development hosts, and §5 shows the
 guard rejecting it by name.
 
-### 4.2 `uint_to_int_wraps` — the `-std=c23` pin is load-bearing, not a formality
+### 4.2 `uint_to_int_wraps` — the standard does NOT guarantee this, so the profile must
 
 `VM_VAL` recovers the signed move value from the packed key:
 
@@ -121,18 +131,36 @@ guard rejecting it by name.
 ```
 
 The `(int)` conversion receives an out-of-range `uint32_t` for every
-negative move value. **C23 §6.3.1.3 mandates the two's-complement
-result. Under C17 it was implementation-defined** — the implementation
-was permitted to raise a signal. So the corpus's move ordering, which is
-the thing the fidelity gate compares first, rests on a guarantee that
-arrived in the very standard version the tier pins. Both hosts already
-did the C23 thing before C23 required it, which is why nobody noticed;
-the profile records it so that a future `-std=c17` build is a caught
-error rather than a silent re-interpretation.
+negative move value.
+
+> **CORRECTED at M2 inch 2.** This section previously said *"C23 §6.3.1.3
+> mandates the two's-complement result; under C17 it was
+> implementation-defined,"* and concluded that the `-std=c23` pin was
+> load-bearing for the move ordering. **Both halves were wrong.**
+> Verified against N3220: **§6.3.1.3p3 is word-for-word identical to C11
+> and C17** — "either the result is implementation-defined or an
+> implementation-defined signal is raised" — and **`J.3.6(3)` still lists
+> the behavior as implementation-defined.** C23 changed signed
+> REPRESENTATION (§6.2.6.2p6 NOTE 2), not this conversion rule.
+
+So the corpus's move ordering — the thing the fidelity gate compares
+first — rests on **implementation-defined behavior that no standard
+version guarantees.** That does not make it fragile; it makes it exactly
+the kind of fact this profile exists for. Both hosts wrap, the fact is
+`depended_on`, and a third host that raised a signal instead would fail
+`harness/c_profile_probe.py --check` loudly.
+
+**The correction makes the pin MORE important, not less.** Under the old
+(false) reading, `-std=c23` was the guarantee and the profile entry was a
+belt-and-braces record. Under the true reading the profile entry is the
+ONLY thing standing between the move ordering and a host that answers
+J.3.6(3) differently. An appeal to the standard here would have silently
+withdrawn the check.
 
 Note the asymmetry with `int_to_uint32_modulo` one row above: conversion
-TO an unsigned type has been defined by modulo arithmetic since C89. Only
-the conversion back was ever in question.
+TO an unsigned type has been defined by modulo arithmetic since C89
+(§6.3.1.3p2) and has no J.3 entry at all. Only the conversion back was
+ever in question — and it still is.
 
 ### 4.3 `little_endian` is measured and deliberately NOT depended on
 

@@ -11,6 +11,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "char_bit_8",
+      "j3": "J.3.5(1) \u2014 the number of bits in a byte (3.7)",
       "required": true,
       "why": "pos_seal memcpy's the 120-byte board into uint64_t w[15]; 120 bytes is 15 words only if a byte is 8 bits (sunfish.c L199-201)"
     },
@@ -23,6 +24,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "int_32",
+      "j3": "J.3.14(1) \u2014 the values of the <limits.h>/<stdint.h> macros (5.2.5.3, 7.22).  J.3.6 has no entry for integer SIZES",
       "required": true,
       "why": "PACK_VM packs (uint32_t)(int) into the high half of a uint64_t and VM_VAL unpacks it; the move-ordering key is exact only at 32 bits (L649-652)"
     },
@@ -35,6 +37,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "long_64",
+      "j3": "J.3.14(1) \u2014 as int_32",
       "required": true,
       "why": "TABLE_SIZE and the node counters are long (L83, L496-497)"
     },
@@ -47,6 +50,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "long_long_64",
+      "j3": "J.3.14(1) \u2014 as int_32",
       "required": true,
       "why": "reached only through uint64_t, which <stdint.h> fixes exactly"
     },
@@ -59,6 +63,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "pointer_64",
+      "j3": "J.3.8 (Arrays and pointers) \u2014 but its entries are about integer<->pointer conversion, which the corpus never does",
       "required": true,
       "why": "no integer<->pointer cast in the corpus (0 sites), so no observable depends on the width; the model needs it for sizeof only"
     },
@@ -71,6 +76,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "short_16",
+      "j3": "J.3.14(1) \u2014 as int_32",
       "required": true,
       "why": "unused by the corpus"
     },
@@ -83,8 +89,9 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "twos_complement",
+      "j3": "NONE \u2014 C23 REMOVED it from J.3.  C17's integers list had five entries and C23's J.3.6 has four; the deleted sign-representation item is the auditable trace of the two's-complement mandate",
       "required": true,
-      "why": "C23 6.2.6.2 mandates it; the signed-overflow UB boundary the tier arms is stated against it"
+      "why": "C23 6.2.6.2p6 NOTE 2 mandates it; the signed-overflow UB boundary the tier arms is stated against it.  This is the one place -std=c23 IS load-bearing for the value model: C17 permitted sign-magnitude and ones' complement too"
     },
     {
       "agreed": true,
@@ -95,6 +102,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "char_signed",
+      "j3": "J.3.5(5) \u2014 which of signed char / unsigned char has the same range, representation and behavior as plain char (6.2.5, 6.3.1.1)",
       "required": true,
       "why": "the board is char b[120] and CLS[(int)p->b[j]] indexes a 128-entry table by it (L346); every board byte is ASCII < 128, so no VALUE changes \u2014 but the in-bounds ARGUMENT is a function of the sign"
     },
@@ -107,6 +115,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "unsigned_wraps",
+      "j3": "NONE \u2014 this is DEFINED behavior (6.3.1.3p2), not implementation-defined.  Recorded as a fact so the wrap/refuse split stays checkable",
       "required": true,
       "why": "mix64's x *= 0xff51afd7ed558ccdULL is deliberate defined wraparound (L192-193); standard-guaranteed, recorded because the tier must NOT refuse it while refusing signed overflow"
     },
@@ -119,6 +128,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "int_to_uint32_modulo",
+      "j3": "NONE \u2014 conversion TO an unsigned type is defined modulo (6.3.1.3p2), and has been since C89",
       "required": true,
       "why": "PACK_VM biases a signed val by (uint32_t)(val) ^ 0x80000000u (L649)"
     },
@@ -131,8 +141,9 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "uint_to_int_wraps",
+      "j3": "J.3.6(3) \u2014 the result of, or the signal raised by, converting an integer to a signed type when the value cannot be represented (6.3.1.3p3)",
       "required": true,
-      "why": "VM_VAL converts the unbiased key back with (int)(... ^ 0x80000000u) (L652).  C23 6.3.1.3 MANDATES the two's-complement result; under C17 this was implementation-defined, so the -std=c23 pin is load-bearing for the move ordering, not a formality"
+      "why": "VM_VAL converts the unbiased key back with (int)(... ^ 0x80000000u) (L652).  CORRECTED at M2 inch 2: this entry previously claimed C23 6.3.1.3 MANDATES the two's-complement result and that -std=c23 was load-bearing for it.  It does not.  N3220 6.3.1.3p3 is word-for-word identical to C11/C17 \u2014 'either the result is implementation-defined or an implementation-defined signal is raised' \u2014 and J.3.6(3) still lists it.  So this is DEPENDED-ON IMPLEMENTATION-DEFINED behavior, which is exactly what this profile exists to pin, and the pin is the measurement below rather than a sentence in the standard"
     },
     {
       "agreed": true,
@@ -143,6 +154,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "little_endian",
+      "j3": "NONE \u2014 byte order is not in J.3; it is a consequence of the object-representation rules (6.2.6.1) that the standard leaves unspecified rather than implementation-defined",
       "required": true,
       "why": "pos_seal hashes the board THROUGH uint64_t words, so h is endian-dependent \u2014 but h is never observable: pos_eq uses it only as a fast reject in front of a full memcmp (L209-217) and the bucket layout it induces is unobservable by the file's own argument (L403-405).  Measured, deliberately NOT depended on"
     },
@@ -155,6 +167,7 @@
         "x86_64-unknown-linux-gnu": true
       },
       "id": "arithmetic_right_shift",
+      "j3": "J.3.6(4) \u2014 'the results of some bitwise operations on signed integers' (6.5.1), a catch-all that does NOT name shifts; the precise citation is normative 6.5.8p5",
       "required": true,
       "why": "the corpus has ZERO signed right shifts \u2014 all 6 >> sites are on uint64_t (L192-194, L652-653).  Measured so the claim stays checkable"
     }

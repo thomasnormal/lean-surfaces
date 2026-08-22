@@ -1,13 +1,25 @@
 import LeanModels.Core.Basic
 
 /-!
-# The C value model (`LeanModels.C`) — M2 inch 1
+# §6.2.5 / §6.2.6 / §6.3.1 — values and integer arithmetic — M2 inch 1
 
 Fixed-width integer values and the arithmetic on them, per
 `docs/c-semantics-design.md` §1. **This file has no world, no memory and
 no interpreter**: it is the value layer alone, so the one decision that
 cannot be retrofitted can be landed and gated before anything is built on
 it.
+
+**Every rule below cites C23 (N3220) by clause and paragraph, and every
+refusal names its Annex J.2 index.** The convention, and the layout law
+that puts this file where the standard puts types and conversions, is
+`docs/c23-spec-mirror.md`. N3220 is the freely available final working
+draft; its numbering is the published standard's, and this repository
+paraphrases and cites rather than transcribing.
+
+**Warning to anyone carrying a citation in from C17: §6.5 was
+RENUMBERED.** A new §6.5.1 "General" shifts all seventeen operator
+subclauses down by one, so division is §6.5.6 (not §6.5.5) and shifts are
+§6.5.8 (not §6.5.7). The full table is `docs/c23-spec-mirror.md` §4.2.
 
 **THE DECISION THIS FILE EXISTS FOR: unsigned WRAPS, signed REFUSES —
 and the corpus needs both in adjacent operands.** Measured
@@ -28,11 +40,20 @@ than conventional, and every rule below re-establishes it.
 
 namespace LeanModels.C.C23
 
-/-! ## Integer types -/
+/-! ## §6.2.5 Types -/
 
-/-- A C integer type: signedness and width in bits. `char`'s signedness
-is a PROFILE fact (`char_signed`), depended on because
-`CLS[(int)p->b[j]]` indexes a 128-entry table by a board byte. -/
+/-- A C integer type: signedness and width in bits.
+
+C23 (N3220) §6.2.5p4-p9: the standard signed integer types and their
+corresponding unsigned types. This surface carries the pair
+(signedness, width) because §6.2.6.2 makes width and signedness the only
+things the value rules depend on.
+
+`char`'s signedness is a PROFILE fact — `char_signed`, answering
+**`J.3.5(5)`** ("which of `signed char` or `unsigned char` has the same
+range, representation and behavior as plain `char`", §6.2.5, §6.3.1.1).
+It is depended on because `CLS[(int)p->b[j]]` indexes a 128-entry table
+by a board byte. -/
 structure IntTy where
   signed : Bool
   bits : Nat
@@ -40,8 +61,11 @@ deriving Repr, Inhabited, BEq, DecidableEq
 
 namespace IntTy
 
-/-- The profile's widths (`docs/c-profile.json`: `char_bit_8`, `int_32`,
-`long_64`). The corpus's 10 integer types collapse onto these. -/
+/-- The profile's widths (`docs/c-profile.json`: `char_bit_8` answering
+**`J.3.5(1)`**, and `int_32`/`long_64` answering **`J.3.14(1)`** — the
+values of the `<limits.h>`/`<stdint.h>` macros; C23's J.3.6 has no entry
+for integer SIZES at all). The corpus's 10 integer types collapse onto
+these. -/
 def char_ : IntTy := ⟨true, 8⟩          -- signed on both hosts, and depended on
 def uchar : IntTy := ⟨false, 8⟩
 def short_ : IntTy := ⟨true, 16⟩
@@ -54,6 +78,12 @@ def ulong : IntTy := ⟨false, 64⟩
 /-- `2 ^ bits`, the modulus. -/
 def modulus (t : IntTy) : Int := (2 : Int) ^ t.bits
 
+/-- C23 §6.2.6.2p2-p3 with §6.2.6.2p6 NOTE 2: a signed type's minimum is
+`-2^(N-1)` because **C23 mandates two's complement** — the one place the
+`-std=c23` pin is genuinely load-bearing for this file, since C17
+permitted sign-magnitude and ones' complement as well. The auditable
+trace of the mandate is that C17's J.3 integers list had five entries and
+C23's `J.3.6` has four: the deleted one is the sign-representation item. -/
 def minVal (t : IntTy) : Int :=
   if t.signed then -((2 : Int) ^ (t.bits - 1)) else 0
 
@@ -64,10 +94,15 @@ def maxVal (t : IntTy) : Int :=
 def inRange (t : IntTy) (v : Int) : Bool :=
   t.minVal ≤ v && v ≤ t.maxVal
 
-/-- Reduce into range modulo 2^bits, two's-complement. This is C's
-DEFINED behavior for unsigned types, and — since C23 §6.3.1.3 — for
-conversion into a signed type as well. It is NOT how signed arithmetic
-overflow behaves; that refuses. -/
+/-- Reduce into range modulo `2^bits`, two's complement.
+
+C23 §6.3.1.3p2: conversion TO an unsigned type is defined as reduction
+modulo `2^N`, and has been since C89. That direction needs no profile
+fact and is not in Annex J at all.
+
+The SIGNED direction is a different question and this function is not the
+place it is answered — see `convert`. And neither direction is how signed
+arithmetic OVERFLOW behaves: that refuses (`close`). -/
 def wrap (t : IntTy) (v : Int) : Int :=
   let m := t.modulus
   let r := v % m
@@ -80,14 +115,35 @@ end IntTy
 
 /-- The UB classes this layer can raise. Each is a REFUSAL, never a
 value, and — per `docs/c-semantics-design.md` §3.1 — **it never
-retires: it is the product.** -/
+retires: it is the product.**
+
+Every constructor names its **Annex J.2 index**. In C23 J.2 is a NUMBERED
+list, entries `(1)`-`(221)`; in C17 and C11 it was unnumbered bullets, so
+`J.2(35)` is a citation form this version of the standard made possible.
+The index is the checklist coordinate and the clause is where the rule
+lives — both are given because Annex J is informative and, in at least
+one place, wrong (`docs/c23-spec-mirror.md` §3.3). -/
 inductive UB where
+  /-- **`J.2(35)`**, §6.5.1p5: an exceptional condition occurs during the
+  evaluation of an expression — the result is not in the range of
+  representable values for its type. (C17 numbered this §6.5p5.) -/
   | signedOverflow (op : String) (ty : IntTy) (v : Int)
+  /-- **`J.2(41)`**, §6.5.6p6: the second operand of `/` or `%` is zero. -/
   | divideByZero (op : String)
+  /-- **`J.2(35)`**, §6.5.1p5 again, reached through §6.5.6p6's remark
+  that `INT_MIN / -1` is not representable. A DISTINCT constructor
+  because the two arms retire the same way but diagnose differently. -/
   | divideOverflow            -- `INT_MIN / -1`: the quotient is unrepresentable
+  /-- **`J.2(48)`**, §6.5.8p3: shifted by an amount ≥ the width of the
+  promoted left operand. -/
   | shiftCountTooLarge (count : Int) (bits : Nat)
+  /-- **`J.2(48)`**, §6.5.8p3: shifted by a negative amount. -/
   | shiftCountNegative (count : Int)
+  /-- **`J.2(49)`**, §6.5.8p4: `<<` whose promoted left operand has
+  signed type and negative value. -/
   | shiftNegativeOperand (v : Int)
+  /-- **`J.2(49)`**, §6.5.8p4: `<<` whose result is not representable in
+  the promoted signed type. -/
   | shiftOverflow (v : Int) (count : Int) (ty : IntTy)
 deriving Repr, Inhabited, BEq
 
@@ -121,13 +177,25 @@ inductive CVal where
   | undef
 deriving Repr, Inhabited, BEq
 
-/-! ## Arithmetic — where the split lives
+/-! ## §6.5.6-§6.5.8 Arithmetic — where the split lives
 
 Each operation computes the MATHEMATICAL result first, then decides by
-signedness: unsigned reduces modulo, signed refuses out of range. -/
+signedness: unsigned reduces modulo (§6.2.5p11), signed refuses out of
+range (§6.5.1p5). Additive and multiplicative operators are §6.5.6 and
+§6.5.7; shifts are §6.5.8. -/
 
 /-- Close a mathematical result into `t`: wrap if unsigned, refuse if
-signed and out of range. **This function IS the decision.** -/
+signed and out of range. **This function IS the decision.**
+
+C23 §6.5.1p5 — "if an exceptional condition occurs during the evaluation
+of an expression (that is, if the result is not mathematically defined or
+not in the range of representable values for its type), the behavior is
+undefined" — is the hook the signed arm hangs on (**`J.2(35)`**). The
+unsigned arm never reaches it: §6.2.5p11 makes unsigned arithmetic
+modular by definition, so no exceptional condition arises and there is
+nothing to refuse.
+
+**The asymmetry is the standard's, not a modeling choice.** -/
 def close (op : String) (t : IntTy) (v : Int) : CRes CVal :=
   if t.inRange v then .ok (.int t v)
   else if t.signed then .ub (.signedOverflow op t v)
@@ -138,23 +206,44 @@ def subOp (t : IntTy) (a b : Int) : CRes CVal := close "-" t (a - b)
 def mulOp (t : IntTy) (a b : Int) : CRes CVal := close "*" t (a * b)
 def negOp (t : IntTy) (a : Int) : CRes CVal := close "-" t (-a)
 
-/-- C truncates toward zero (§6.5.5), which is `Int.tdiv`, NOT Lean's
-`/` on `Int` (that floors). Getting this wrong is the `pyfloordiv`
-divergence class the ctwin README names as #1, from the other side. -/
+/-- C23 §6.5.6p7: the quotient is "the algebraic quotient with any
+fractional part discarded" — footnote 104 calls this *truncation toward
+zero*. That is `Int.tdiv`, NOT Lean's `/` on `Int`, which FLOORS.
+
+§6.5.6p6: a zero second operand is undefined (**`J.2(41)`**), and the
+same paragraph is why `INT_MIN / -1` refuses — its quotient is not
+representable, so §6.5.1p5's exceptional condition applies
+(**`J.2(35)`**).
+
+Getting the truncation wrong is the `pyfloordiv` divergence class the
+ctwin README names as #1, met here from the C side.
+
+*(Citation note: this is §6.5.5 in C17. C23's inserted §6.5.1 "General"
+shifted it.)* -/
 def divOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b == 0 then .ub (.divideByZero "/")
   else if t.signed && a == t.minVal && b == -1 then .ub .divideOverflow
   else close "/" t (Int.tdiv a b)
 
-/-- The remainder pairs with `tdiv`: `a % b` has the sign of `a`. -/
+/-- C23 §6.5.6p7: the remainder pairs with the truncating quotient, so
+`(a/b)*b + a%b == a` and `a % b` takes the sign of `a`. Same two UB arms
+as `divOp` — **`J.2(41)`** for the zero divisor, **`J.2(35)`** for
+`INT_MIN % -1`. -/
 def modOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b == 0 then .ub (.divideByZero "%")
   else if t.signed && a == t.minVal && b == -1 then .ub .divideOverflow
   else close "%" t (Int.tmod a b)
 
-/-- `<<`: the count must be in `[0, bits)`, the left operand must be
-non-negative when signed, and a signed result must be representable
-(C23 §6.5.7). All four failures are distinct causes. -/
+/-- `<<`, C23 §6.5.8 (C17: §6.5.7).
+
+§6.5.8p3 — the count must be non-negative and less than the width of the
+promoted left operand, else undefined (**`J.2(48)`**).
+§6.5.8p4 — if the promoted left operand has signed type, its value must
+be non-negative AND the result must be representable, else undefined
+(**`J.2(49)`**).
+
+All four failures are distinct causes, because a refusal a human cannot
+act on is a refusal that has not done its job. -/
 def shlOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b < 0 then .ub (.shiftCountNegative b)
   else if b ≥ (t.bits : Int) then .ub (.shiftCountTooLarge b t.bits)
@@ -164,27 +253,63 @@ def shlOp (t : IntTy) (a b : Int) : CRes CVal :=
     if t.signed && !t.inRange r then .ub (.shiftOverflow a b t)
     else close "<<" t r
 
-/-- `>>`: the count is constrained the same way. On a non-negative
-operand this is division by a power of two; the corpus has **zero signed
-right shifts** (measured), so the negative-operand arm is
-implementation-defined territory the profile records and nothing
-depends on — it is arithmetic here, matching both hosts. -/
+/-- `>>`, C23 §6.5.8. The count is constrained exactly as for `<<`
+(§6.5.8p3, **`J.2(48)`**).
+
+§6.5.8p5: on a non-negative signed value, or an unsigned one, the result
+is the quotient by `2^count`. **On a NEGATIVE signed value the result is
+implementation-defined** — not undefined — so it is a profile question,
+not a refusal. The profile answers it with `arithmetic_right_shift`,
+whose Annex J home is **`J.3.6(4)`** ("the results of some bitwise
+operations on signed integers"), a catch-all that does not name shifts;
+§6.5.8p5 is the precise citation.
+
+The corpus has **zero signed right shifts** (measured: all 6 `>>` sites
+are on `uint64_t`), so the fact is recorded and deliberately NOT depended
+on. `Int.fdiv` floors, which is the arithmetic-shift answer both hosts
+give. -/
 def shrOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b < 0 then .ub (.shiftCountNegative b)
   else if b ≥ (t.bits : Int) then .ub (.shiftCountTooLarge b t.bits)
   else close ">>" t (Int.fdiv a ((2 : Int) ^ b.toNat))
 
-/-- Integer conversion. **Always defined**, both directions: to unsigned
-by modulo since C89, to signed by two's-complement wrap since C23
-§6.3.1.3. Under C17 the second was implementation-defined, which is why
-the `-std=c23` pin is load-bearing rather than a formality — `VM_VAL`
-(sunfish.c L652) depends on it for the move ordering. -/
+/-- Integer conversion, C23 §6.3.1.3.
+
+**§6.3.1.3p2 — to an unsigned type**: defined as reduction modulo `2^N`,
+and has been since C89. Not in Annex J; nothing to pin.
+
+**§6.3.1.3p3 — to a signed type, when the value is not representable**:
+"either the result is implementation-defined or an implementation-defined
+signal is raised." This is **`J.3.6(3)`**.
+
+> **CORRECTED at M2 inch 2.** This docstring previously said C23
+> *mandates* the two's-complement result and that the `-std=c23` pin was
+> therefore load-bearing here. **It does not.** N3220 §6.3.1.3p3 is
+> word-for-word identical to C11 and C17, and `J.3.6(3)` still lists the
+> behavior as implementation-defined. What C23 *did* change is signed
+> REPRESENTATION (§6.2.6.2p6 NOTE 2, and see `minVal`) — representation
+> mandated, conversion rule untouched.
+
+So the wrap below is **not the standard's answer; it is the profile's.**
+The fact is `uint_to_int_wraps` in `docs/c-profile.json`, expression
+`(int)0x80000000u == INT_MIN`, measured true on both development hosts
+and marked `depended_on` — because `VM_VAL` (sunfish.c L652) needs it for
+the move ordering. A third host that raised a signal instead would fail
+`harness/c_profile_probe.py --check`, loudly, which is exactly the
+service the profile exists to provide and which a false appeal to the
+standard would have silently withdrawn.
+
+Modeling the signal arm is not owed: no host in the profile raises one,
+and inventing an unraised signal would be inventing behavior. -/
 def convert (to : IntTy) (v : Int) : CVal := .int to (to.wrap v)
 
 /-! ## Gates
 
 The boundary cases `docs/c-semantics-design.md` §7 names for this inch.
-They are the decision, executed. -/
+They are the decision, executed.
+
+Each block names the clause it gates, so a reader holding N3220 can check
+the gate against the paragraph rather than against this file's prose. -/
 
 -- unsigned WRAPS: UINT_MAX + 1 = 0, defined
 #guard mulOp IntTy.uint 1 1 == .ok (.int IntTy.uint 1)
@@ -217,11 +342,16 @@ They are the decision, executed. -/
 #guard shlOp IntTy.int_ 1 12 == .ok (.int IntTy.int_ 4096)      -- `1 << 12`, sunfish.c L411
 #guard shlOp IntTy.uint 1 31 == .ok (.int IntTy.uint 2147483648)
 
--- conversion is ALWAYS defined, both directions
-#guard convert IntTy.int_ 0x80000000 == .int IntTy.int_ (-2147483648)  -- C23 §6.3.1.3; VM_VAL
-#guard convert IntTy.uint (-1) == .int IntTy.uint 4294967295           -- since C89
-#guard convert IntTy.char_ 200 == .int IntTy.char_ (-56)               -- signed char, per the profile
+-- conversion TO UNSIGNED is defined by the standard (§6.3.1.3p2, since C89)
+#guard convert IntTy.uint (-1) == .int IntTy.uint 4294967295
 #guard convert IntTy.uchar (-56) == .int IntTy.uchar 200
+
+-- conversion TO SIGNED out of range is IMPLEMENTATION-DEFINED (§6.3.1.3p3,
+-- J.3.6(3)) and these two gates are the PROFILE's answer, not the standard's.
+-- `uint_to_int_wraps` in docs/c-profile.json: `(int)0x80000000u == INT_MIN`,
+-- measured true on both hosts and depended on by VM_VAL (sunfish.c L652).
+#guard convert IntTy.int_ 0x80000000 == .int IntTy.int_ (-2147483648)
+#guard convert IntTy.char_ 200 == .int IntTy.char_ (-56)               -- char_signed, J.3.5(5)
 
 -- the range invariant the whole model rests on
 #guard IntTy.int_.minVal == -2147483648 && IntTy.int_.maxVal == 2147483647

@@ -35,51 +35,92 @@ import sys
 
 STD = "-std=c23"
 
-# (id, C constant expression that must hold, depends?, witness / why)
+# (id, C constant expression that must hold, depends?, witness / why,
+#  Annex J.3 item this is the implementation's answer to)
+#
+# THE J.3 COLUMN IS THE POINT OF THE PROFILE.  C23 Annex J.3 is the
+# standard's own numbered list of implementation-defined behavior; a profile
+# fact is this implementation's ANSWER to one of its questions.  Where a fact
+# answers no J.3 question the column says so and why — `unsigned_wraps` is
+# standard-GUARANTEED (6.3.1.3p2), not implementation-defined, and is recorded
+# only so the tier does not refuse it while refusing signed overflow.
 FACTS = [
     ("char_bit_8", "CHAR_BIT == 8", True,
      "pos_seal memcpy's the 120-byte board into uint64_t w[15]; 120 bytes is "
-     "15 words only if a byte is 8 bits (sunfish.c L199-201)"),
+     "15 words only if a byte is 8 bits (sunfish.c L199-201)",
+     "J.3.5(1) — the number of bits in a byte (3.7)"),
     ("int_32", "sizeof(int) == 4", True,
      "PACK_VM packs (uint32_t)(int) into the high half of a uint64_t and "
      "VM_VAL unpacks it; the move-ordering key is exact only at 32 bits "
-     "(L649-652)"),
+     "(L649-652)",
+     "J.3.14(1) — the values of the <limits.h>/<stdint.h> macros (5.2.5.3, "
+     "7.22).  J.3.6 has no entry for integer SIZES"),
     ("long_64", "sizeof(long) == 8", True,
-     "TABLE_SIZE and the node counters are long (L83, L496-497)"),
+     "TABLE_SIZE and the node counters are long (L83, L496-497)",
+     "J.3.14(1) — as int_32"),
     ("long_long_64", "sizeof(long long) == 8", False,
-     "reached only through uint64_t, which <stdint.h> fixes exactly"),
+     "reached only through uint64_t, which <stdint.h> fixes exactly",
+     "J.3.14(1) — as int_32"),
     ("pointer_64", "sizeof(void *) == 8", False,
      "no integer<->pointer cast in the corpus (0 sites), so no observable "
-     "depends on the width; the model needs it for sizeof only"),
-    ("short_16", "sizeof(short) == 2", False, "unused by the corpus"),
+     "depends on the width; the model needs it for sizeof only",
+     "J.3.8 (Arrays and pointers) — but its entries are about "
+     "integer<->pointer conversion, which the corpus never does"),
+    ("short_16", "sizeof(short) == 2", False, "unused by the corpus",
+     "J.3.14(1) — as int_32"),
     ("twos_complement", "INT_MIN == -INT_MAX - 1", True,
-     "C23 6.2.6.2 mandates it; the signed-overflow UB boundary the tier "
-     "arms is stated against it"),
+     "C23 6.2.6.2p6 NOTE 2 mandates it; the signed-overflow UB boundary the "
+     "tier arms is stated against it.  This is the one place -std=c23 IS "
+     "load-bearing for the value model: C17 permitted sign-magnitude and "
+     "ones' complement too",
+     "NONE — C23 REMOVED it from J.3.  C17's integers list had five entries "
+     "and C23's J.3.6 has four; the deleted sign-representation item is the "
+     "auditable trace of the two's-complement mandate"),
     ("char_signed", "(char)-1 < 0", True,
      "the board is char b[120] and CLS[(int)p->b[j]] indexes a 128-entry "
      "table by it (L346); every board byte is ASCII < 128, so no VALUE "
-     "changes — but the in-bounds ARGUMENT is a function of the sign"),
+     "changes — but the in-bounds ARGUMENT is a function of the sign",
+     "J.3.5(5) — which of signed char / unsigned char has the same range, "
+     "representation and behavior as plain char (6.2.5, 6.3.1.1)"),
     ("unsigned_wraps", "(unsigned)-1 == UINT_MAX", True,
      "mix64's x *= 0xff51afd7ed558ccdULL is deliberate defined wraparound "
      "(L192-193); standard-guaranteed, recorded because the tier must NOT "
-     "refuse it while refusing signed overflow"),
+     "refuse it while refusing signed overflow",
+     "NONE — this is DEFINED behavior (6.3.1.3p2), not implementation-"
+     "defined.  Recorded as a fact so the wrap/refuse split stays checkable"),
     ("int_to_uint32_modulo", "(uint32_t)(-1) == 0xFFFFFFFFu", True,
-     "PACK_VM biases a signed val by (uint32_t)(val) ^ 0x80000000u (L649)"),
+     "PACK_VM biases a signed val by (uint32_t)(val) ^ 0x80000000u (L649)",
+     "NONE — conversion TO an unsigned type is defined modulo (6.3.1.3p2), "
+     "and has been since C89"),
     ("uint_to_int_wraps", "(int)0x80000000u == INT_MIN", True,
      "VM_VAL converts the unbiased key back with (int)(... ^ 0x80000000u) "
-     "(L652).  C23 6.3.1.3 MANDATES the two's-complement result; under C17 "
-     "this was implementation-defined, so the -std=c23 pin is load-bearing "
-     "for the move ordering, not a formality"),
+     "(L652).  CORRECTED at M2 inch 2: this entry previously claimed C23 "
+     "6.3.1.3 MANDATES the two's-complement result and that -std=c23 was "
+     "load-bearing for it.  It does not.  N3220 6.3.1.3p3 is word-for-word "
+     "identical to C11/C17 — 'either the result is implementation-defined or "
+     "an implementation-defined signal is raised' — and J.3.6(3) still lists "
+     "it.  So this is DEPENDED-ON IMPLEMENTATION-DEFINED behavior, which is "
+     "exactly what this profile exists to pin, and the pin is the "
+     "measurement below rather than a sentence in the standard",
+     "J.3.6(3) — the result of, or the signal raised by, converting an "
+     "integer to a signed type when the value cannot be represented "
+     "(6.3.1.3p3)"),
     ("little_endian",
      "__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__", False,
      "pos_seal hashes the board THROUGH uint64_t words, so h is "
      "endian-dependent — but h is never observable: pos_eq uses it only as "
      "a fast reject in front of a full memcmp (L209-217) and the bucket "
      "layout it induces is unobservable by the file's own argument "
-     "(L403-405).  Measured, deliberately NOT depended on"),
+     "(L403-405).  Measured, deliberately NOT depended on",
+     "NONE — byte order is not in J.3; it is a consequence of the "
+     "object-representation rules (6.2.6.1) that the standard leaves "
+     "unspecified rather than implementation-defined"),
     ("arithmetic_right_shift", "(-1 >> 1) == -1", False,
      "the corpus has ZERO signed right shifts — all 6 >> sites are on "
-     "uint64_t (L192-194, L652-653).  Measured so the claim stays checkable"),
+     "uint64_t (L192-194, L652-653).  Measured so the claim stays checkable",
+     "J.3.6(4) — 'the results of some bitwise operations on signed "
+     "integers' (6.5.1), a catch-all that does NOT name shifts; the precise "
+     "citation is normative 6.5.8p5"),
 ]
 
 # Facts read off the preprocessor rather than folded.
@@ -135,16 +176,17 @@ def probe(target):
         "target": target or "<native>",
         "std": STD,
         "macros": probe_macros(target),
-        "facts": {f: probe_fact(target, expr) for f, expr, _, _ in FACTS},
+        "facts": {f: probe_fact(target, expr) for f, expr, _, _, _ in FACTS},
     }
 
 
 def build_profile(targets):
     hosts = [probe(t) for t in targets]
     facts = []
-    for fid, expr, depends, why in FACTS:
+    for fid, expr, depends, why, j3 in FACTS:
         holds = {h["target"]: h["facts"][fid] for h in hosts}
         facts.append({"id": fid, "expr": expr, "depended_on": depends,
+                      "j3": j3,
                       "why": why, "holds": holds,
                       "agreed": len(set(holds.values())) == 1,
                       "required": all(holds.values())})

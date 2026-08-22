@@ -16,6 +16,19 @@ memory.
 (`docs/c23-goal.md` §4.1): the exit-status corpora at rung-0 vocabulary,
 which need no output modeling at all.
 
+> **THE SPEC-MIRROR LAW, adopted at inch 2** (Thomas): *"our lean surface
+> for C will read like a Lean translation of the C23 spec — one might read
+> the two documents side by side and everything makes sense."* The
+> convention — which draft is cited (N3220), the citation form, the
+> clause-mirroring layout, and Annex J's three roles — is
+> **`docs/c23-spec-mirror.md`**, and it governs every file below.
+>
+> Adopting it cost three published claims, all corrected in place: C23 did
+> NOT define out-of-range conversion to a signed type (§1.2 below), C23
+> renumbered every §6.5 operator subclause, and the library clauses moved
+> such that C17's `7.24` (`<string.h>`) is C23's `7.24` (`<stdlib.h>`).
+> The surface is now namespaced `LeanModels.C.C23` for that reason.
+
 ---
 
 ## 1 The value model
@@ -54,8 +67,19 @@ behaviors **in adjacent operands**.
   unsigned wraparound, which C **defines**, at both `*=` sites.
 * `PACK_VM` (L649) biases a signed value by `(uint32_t)(val) ^
   0x80000000u`, and `VM_VAL` (L652) converts it back with `(int)(…)` —
-  an out-of-range unsigned→signed conversion that **C23 §6.3.1.3
-  mandates** and C17 left implementation-defined.
+  an out-of-range unsigned→signed conversion.
+
+  > **This bullet used to say C23 §6.3.1.3 MANDATES the two's-complement
+  > result and that C17 left it implementation-defined. Both halves were
+  > wrong.** N3220 §6.3.1.3p3 is word-for-word identical to C11 and C17
+  > — "either the result is implementation-defined or an
+  > implementation-defined signal is raised" — and `J.3.6(3)` still lists
+  > it. What C23 changed is signed REPRESENTATION (§6.2.6.2p6 NOTE 2);
+  > the deleted J.3 sign-representation entry is the mandate's auditable
+  > trace. So this is **depended-on implementation-defined behavior**,
+  > which is precisely what `docs/c-profile.md` exists to pin, and the
+  > pin is a measurement on every host rather than a sentence in the
+  > standard. `docs/c23-spec-mirror.md` §4.1.
 
 So:
 
@@ -64,7 +88,7 @@ So:
 | unsigned `+ - *` out of range | **wraps**, modulo 2^bits — defined, never refused |
 | signed `+ - *`, unary `-`, `++`/`--` out of range | **REFUSE** (`ub.signedOverflow`) |
 | signed → unsigned conversion | modulo, defined since C89 |
-| unsigned → signed out of range | **two's-complement wrap**, C23-mandated; the `-std=c23` pin is load-bearing here, not a formality |
+| unsigned → signed out of range | **two's-complement wrap — by the PROFILE, not the standard.** §6.3.1.3p3 leaves it implementation-defined (`J.3.6(3)`), in C23 exactly as in C17; the fact is `uint_to_int_wraps`, measured on both hosts and depended on by `VM_VAL` |
 | `/` or `%` by zero, and `INT_MIN / -1` | **REFUSE** (`ub.divide`) |
 | shift count ≥ width, negative count, negative left operand, signed left-shift overflow | **REFUSE** (`ub.shift`) |
 
@@ -229,6 +253,13 @@ interpreter that must DETECT undefined behavior does strictly more work
 than a compiler that may assume its absence, and that extra work is the
 whole thesis of the lane.
 
+**Annex J.2 is this taxonomy made official, and in C23 it is NUMBERED** —
+entries `(1)`-`(221)`, where C17 and C11 had unnumbered bullets. Every
+refusal names its J.2 index and its normative clause; the index-to-class
+map is `docs/c23-spec-mirror.md` §3, along with the three places the
+annex has no entry for something the model refuses (`realloc(p, 0)` among
+them) and the one place N3220's own cross-reference is wrong.
+
 ### 3.2 The eleven armed classes, and where each fires
 
 | class | detected by | corpus sites |
@@ -274,6 +305,38 @@ charter and now due: either `Run` gains an error parameter (`Run σ ε α`)
 or C's terminal outcome rides in `α`. **The decision belongs to the inch
 that first needs it** (§7, inch 4), not before.
 
+### 4.1a The evaluator is MONADIC — architecture directive, inch 3 onward
+
+The family is converging on one monad stack plus Lean's `Std.Do`
+(WP/`Triple`) machinery with per-language `Spec` lemmas, and the C tier
+is to be its first native citizen rather than its second retrofit. So the
+evaluator is written in **do-notation over a fuel-indexed
+`StateT CWorld (Except Refusal)`**, not as a hand-rolled
+`evalExpr`-returning-`Result` in the Python lane's style.
+
+Three consequences, all of which the inches below are shaped to:
+
+1. **Primitive operations are named functions with Spec-lemma-shaped
+   contracts** — memory read/write, conversion, the short-circuit step.
+   The SHAPE is what makes the comparison possible whether or not
+   `mvcgen` is invoked yet.
+2. **The drain amendment survives intact.** A short-circuiting
+   construct's out-world rides in the monad's state, and §4.3's
+   hypothesis-side discipline becomes a WP precondition — the same rule,
+   expressed where the tooling can use it.
+3. **The stack's definition may live in this tier for now**; lifting it
+   to shared substrate belongs to the architecture lane.
+
+**Toolchain check, measured:** `Std.Do` is present in the pinned
+toolchain (`v4.33.0-rc1` ships `Std/Do/{WP,Triple,SPred,PredTrans}.olean`),
+so nothing here is blocked on a bump. The monadic structure stands
+regardless of the `mvcgen` pilot's verdict — it is better structure even
+if the verification conditions stay hand-generated.
+
+**Inch 2 is unaffected**, and deliberately so: the memory model's
+operations are PURE functions over `Mem`, which is what lets them be
+lifted into whatever stack the family settles on without being rewritten.
+
 ### 4.2 The ∃-fuel threshold form transfers unchanged
 
 Every spliced run is stated as *"∃ n, ∀ fuel ≥ n, … = .ok …"*, with
@@ -317,6 +380,54 @@ inspection** (an assignment's store is sequenced after the whole right
 operand), leaving **20 for the may-alias check** — against the
 architecture memo's estimate of 32. Four-effect full expressions are the
 worst shape, at 20 sites.
+
+### 4.5 Unspecified behavior: the J.1 register, and Thomas's ∀-order ruling
+
+§4.4's canonical-order decision is superseded in its CLAIM, though not in
+its implementation. Thomas ruled:
+
+> **"A program is only correct if it would be correct under any argument
+> evaluation order. Since you don't know which the hardware is going to
+> choose."**
+
+So the evaluation order becomes an explicit PARAMETER of the semantics —
+declared like the profile, never ambient — the interpreter stays
+deterministic given the parameter (the ∃-fuel threshold form is
+untouched), and **correctness theorems quantify: ∀ order, the same
+observable.** Left-to-right remains the canonical order for extracting
+witnesses and for scoring suites; it is simply no longer the claim.
+
+**The partition does half the work, and it is spec work.** §6.5.1p2's
+*unsequenced* conflicting side effects are already UB — `J.2(34)`,
+REFUSE, not a quantifier. §6.5.3.3p10's *indeterminately sequenced*
+argument evaluations are the actual ∀ domain — `J.1(16)`. Getting that
+line right is what keeps the quantifier small.
+
+**And it is small. Measured** (`harness/c_construct_census.py`):
+
+| row | value |
+| --- | ---: |
+| call sites with ≥2 args and an effect in any of them — the whole `J.1(16)` domain | **7** of 320 |
+| call sites with TWO effectful arguments | **0** |
+| binary operators with an effect in BOTH operands (of 891 unsequenced) | **0** |
+
+The seven are `map_find_h:L428`, `fmt_move:L978`, `printf:L1301` and four
+`set_knob` sites; at every one the effectful argument is a nested call
+and its siblings are address computations or plain scalar reads. So the
+per-site obligation is "can this callee write what these siblings read" —
+an effect-summary question, priced at 7 sites rather than 320, and owed
+at the calls inch.
+
+**Scoring gains a class**: a suite test whose expected output depends on
+one particular order is, under this ruling, an INCORRECT PROGRAM — not a
+MATCH even when the reference compiler's order agrees. Whether any
+reachable test is in that class is a measurement owed at inch 6, not an
+assumption.
+
+The full register, with the pick-and-declare / refuse / measure
+disposition of every J.1 item the tier touches, is
+`docs/c23-spec-mirror.md` §5. **An item enters the register when an inch
+touches it and is decided then — never silently.**
 
 ---
 
@@ -395,18 +506,24 @@ measured record and to M1's actuals (M1's seven inches were ~2 sessions).
 
 | # | inch | what it lands | price |
 | ---: | --- | --- | ---: |
-| **1** | **the value model** | `LeanModels/C/Value.lean`: `IntTy` from the profile, `CVal`, the wrap/refuse arithmetic of §1.2, with `#guard`s on the boundary cases (`INT_MAX+1` refuses, `UINT_MAX+1` wraps, `INT_MIN/-1` refuses, `(int)0x80000000u` = `INT_MIN`) | 1 |
-| 2 | the memory model | `Memory.lean`: `Ptr`, `CByte`, `CObj`, `Mem`, `alloc`/`free`/`load`/`store` + WF lemmas. No interpreter | 2-3 |
-| 3 | the expression semantics | `Semantics.lean` part 1: literals, `declRef`, the conversion lattice's 8 `castKind`s, arithmetic, **the §4.3 short-circuit rules** | 3-4 |
-| 4 | statements + `CWorld` | the 11 statement kinds, `Run CWorld`, the `Run.exn` payload decision (§4.1), `abort`/`exit` terminals | 3-4 |
-| 5 | calls and the frame | function calls, parameters, the 19 indirect sites through `movecb` | 2 |
+| **1** | **the value model** | `LeanModels/C/C23/Value.lean`: `IntTy` from the profile, `CVal`, the wrap/refuse arithmetic of §1.2, with `#guard`s on the boundary cases (`INT_MAX+1` refuses, `UINT_MAX+1` wraps, `INT_MIN/-1` refuses, `(int)0x80000000u` = `INT_MIN`) | 1 |
+| 2 | the memory model | `C23/Memory.lean`: `Ptr`, `CByte`, `CObj`, `Mem`, `alloc`/`free`/`load`/`store` + WF lemmas, stated around DECAY and `->` per §2.2a. Pure functions, no monad, no interpreter | 2-3 |
+| 3 | the expression semantics | `C23/Expr.lean`, §6.5 subclause by subclause: literals, `declRef`, the conversion lattice's 8 `castKind`s, arithmetic, **the §4.3 short-circuit rules at §6.5.14/§6.5.15** — in do-notation over the §4.1a stack | 3-4 |
+| 4 | statements + `CWorld` | `C23/Stmt.lean` at §6.8: the 11 statement kinds, `Run CWorld`, the `Run.exn` payload decision (§4.1), `abort`/`exit` terminals | 3-4 |
+| 5 | calls and the frame | §6.5.3.3: function calls, parameters, the 19 indirect sites through `movecb`, and the **7-site `J.1(16)` discharge** (§4.5) | 2 |
 | 6 | **rung-1 scorer** | `harness/c_refusal_census.py` per `docs/c23-goal.md` §4.2, run on the gcc-torture exit-status subset — **the first real score** | 2 |
-| 7 | the libc slice, integer `printf` | §6's measured subset; scores c-testsuite's 49 + Fujitsu's 242 | 2 |
+| 6a | **clause coverage** | `harness/c_clause_coverage.py` (`docs/c23-spec-mirror.md` §7): scan the surface's citations, emit the conformance map against N3220's own table of contents. Cheap, and it is the scoreboard to read BESIDE the suite score | 1 |
+| 7 | the libc slice, integer `printf` | §7.23.6.1's measured subset; scores c-testsuite's 49 + Fujitsu's 242 | 2 |
 
 **~15-20 sessions to a first scoreboard**, with the first score arriving
 at inch 6 rather than at the end. Inches 1-2 are the un-retrofittable
 half and are worth doing slowly; 3-5 are mechanical against a fixed
 vocabulary; 6-7 are harness work the Python lane has already solved once.
+
+**Two scoreboards, not one.** Inch 6 says "agrees with what these
+compiler projects test"; inch 6a says "and here is which of N3220 the
+surface has actually spoken about". Neither substitutes for the other,
+and publishing only the first would be the more flattering half.
 
 **The target the ladder climbs toward** is `docs/c23-goal.md` §4.1's rung
 1: the 196 reachable torture tests in the 300-test sample, scored on exit
@@ -417,7 +534,14 @@ status with no output modeling. Rung 2 (inch 7) adds 291 more.
 ## 8 What this design does NOT decide
 
 * **The `Run.exn` error payload** — deferred to inch 4, the first inch
-  that needs it (§4.1).
+  that needs it (§4.1). Note §4.1a narrows the choice: the stack is
+  `StateT CWorld (Except Refusal)`, so the question is what `Refusal`
+  carries, not whether the outcome type is parametric.
+* **Whether a C17 surface is a copy or a delta of the C23 one.** The
+  version namespace exists (`LeanModels.C.C23`) and
+  `LeanModels/C/C23.lean` records the measured differences; deciding what
+  a second version costs belongs to the architecture lane, with its own
+  C17→C23 delta census.
 * **Where `Run` lives.** `docs/c-tier-charter.md` §2.4 priced the move to
   `LeanModels/Core/` at 149 lines / 24 files / 1251 sites and deferred
   it. Inch 4 is when a second consumer finally exists, so inch 4 is when

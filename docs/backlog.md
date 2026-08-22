@@ -14971,6 +14971,56 @@ family-architecture §0.1 II(a). `sorry`/`admit` correctly stay absolute.
 §0.1 II(a) rather than left to drift — the two documents now say the same thing
 in the same order, which is the only state in which having both is safe.
 
+### TWO CORRECTIONS FROM THE REBUILD LANE
+
+**1. THE PILOT'S ELABORATION ECONOMICS WERE MEASURED ON THE TWIN.** The 568 ms
+`mvcgen` step against a 24 s real-interpreter gate was the **SHALLOW TWIN**. The
+identical statement against the **FAITHFUL interpreter does not close at 8 M
+heartbeats (~14 min)**, and the gap is not overhead — it is **exactly the
+fidelity the twin dropped**: the nine-step name-resolution chain and the
+five-way assign fork. Two smaller faithful gates do close, at ~10–11 s.
+
+The economics survive but their GRANULARITY changes: **mvcgen's advantage holds
+at ARM-LEVEL granularity given sufficient `@[spec]` coverage.** So §3.4's
+per-language *"≈2 type declarations + 2 `abbrev`s + ~14 `@[spec]` lemmas ≈ 120
+lines"* is now stated as a **floor that grows toward per-arm lemma sets** — 14
+lemmas is what the SHAPE costs, not what a faithful interpreter's every arm
+costs. A founding lane prices its `@[spec]` set per interpreter arm and treats
+120 lines as the entry fee.
+
+> **A PERFORMANCE NUMBER MEASURED ON A TWIN IS A CLAIM ABOUT THE TWIN.**
+
+Written in as the exact twin of the adequacy warning: **a second semantics owes
+an ADEQUACY theorem before its correctness transfers, and a RE-MEASUREMENT
+before its performance transfers.** The twin was built to be fast precisely
+where the real interpreter is slow, so its timings describe the simplification.
+
+**2. `#print axioms` CAN LIE — reproduced here, with the MODE PINNED.** The
+reported claim is right and the measurement sharpens it. On the pinned
+toolchain, four failure modes:
+
+| failure | `#print axioms` says |
+| --- | --- |
+| unsolved goals | `[sorryAx]` — honest |
+| body type error | `[sorryAx]` — honest |
+| explicit `sorry` | `[sorryAx]` — honest |
+| **error in the STATEMENT** | **`does not depend on any axioms`** — LIES |
+
+**Three of four are honest**, and the one that lies is the most dangerous case:
+a mis-elaborated STATEMENT means the theorem does not say what its author
+thinks, and the clean axiom line arrives to reassure them. Verified that it
+prints the clean line **even when the proof is literally `sorry`**, because the
+declaration is recovered before the proof is ever checked against the statement.
+
+> **An axiom print is meaningful ONLY from a zero-error elaboration.**
+
+Folded into §0.1 II(a)'s receipts discipline and generalized into §5.4's
+instrument contract, because it is not specific to axiom lines: **any triad
+line, coverage count or `#guard` batch quoted from a file that did not elaborate
+cleanly is quoting the error recovery, not the tree** — and at least one such
+line reads CLEANER than the truth rather than dirtier, which is the direction
+that does damage.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

@@ -119,6 +119,41 @@ its full trust cost without leaving the file — which is principle II's
 whole point, applied to the one place the library can widen what the kernel
 is asked to believe.
 
+**AND THE RECEIPT ITSELF CAN LIE — measured, with the mode pinned.**
+`#print axioms` on a declaration whose **STATEMENT** failed to elaborate
+prints
+
+    'foo' does not depend on any axioms
+
+— **the cleanest possible line, meaning the opposite of what it says.**
+Reproduced on the pinned toolchain: a theorem whose statement is ill-typed
+prints exactly that **even when its proof is literally `sorry`**, because
+the declaration was recovered before the proof was ever checked against it.
+
+The mode matters, so it is recorded rather than generalized. Measured, four
+failure modes:
+
+| failure | `#print axioms` says |
+| --- | --- |
+| unsolved goals | `[sorryAx]` — honest |
+| body type error | `[sorryAx]` — honest |
+| explicit `sorry` | `[sorryAx]` — honest |
+| **error in the STATEMENT** | **`does not depend on any axioms`** — lies |
+
+Three of four are honest, and **the one that lies is the most dangerous
+case**: a mis-elaborated *statement* means the theorem does not say what
+its author thinks, and the axiom line arrives to reassure them. So:
+
+> **An axiom print is meaningful ONLY from a zero-error elaboration.**
+> Every quoted axiom line is paired with the file's clean-elaboration
+> status, or it is not evidence.
+
+This is the §5.4 instrument contract applied to the receipts themselves —
+*every refusal path RUN, not admired* — and it generalizes past this
+policy: any triad line, coverage count or `#guard` batch quoted from a file
+that did not elaborate cleanly is quoting the error recovery, not the
+tree.
+
 **THE HISTORICAL CONTRACT STANDS AS RECORDED FACT.** `AGENTS.md` states
 *"Never `sorry`, `admit`, or `native_decide` — anywhere, ever"*, and the
 tree honors it: **zero real uses**, verified — all twelve occurrences of
@@ -1038,6 +1073,33 @@ The three never-pooled refusal causes (§5.2) cost nothing — one `.except`
 layer each, free by composition — and **C's drain amendment at its 181
 short-circuit sites IS the altitude law, at 3 `@[spec]` lemmas.**
 
+**THE ASTERISK ON THAT PRICE, measured by the rebuild lane, and it is the
+difference between a demo and an estimate.** The pilot's headline
+elaboration economics — a `mvcgen` step in **568 ms** against a gate whose
+real-interpreter counterpart takes 24 s — were measured against the
+**SHALLOW TWIN**. Run the *identical statement* against the **FAITHFUL
+interpreter** and it **does not close at 8 M heartbeats (~14 minutes)**.
+The gap is not overhead; it is **exactly the fidelity the twin dropped** —
+the nine-step name-resolution chain and the five-way assign fork. Two
+smaller faithful gates do close, at **~10–11 s**.
+
+So the economics are real but their granularity is different:
+**mvcgen's advantage holds at ARM-LEVEL granularity, given sufficient
+`@[spec]` coverage.** The per-language estimate above should therefore be
+read as a floor that **grows toward per-arm lemma sets** — ~14 lemmas is
+what the *shape* costs, not what a faithful interpreter's every arm costs.
+A founding lane should price its `@[spec]` set per interpreter arm and
+treat 120 lines as the entry fee.
+
+> **A PERFORMANCE NUMBER MEASURED ON A TWIN IS A CLAIM ABOUT THE TWIN.**
+
+That is the exact twin of §3.4 clause (b)'s adequacy warning, and the two
+should be read together: a second semantics owes an **adequacy** theorem
+before its *correctness* transfers, and owes a **re-measurement** before
+its *performance* transfers. The twin was built to be fast in precisely the
+places the real interpreter is slow, so its timings describe the
+simplification, not the tier.
+
 **THE BOUND, and it corrects this document.** §3.2 item 11 said *"no
 language writes a vcgen."* That is **true on the fuel-free fragment and
 false at the fuel-recursive points.** At a symbolic fuel `F`, `mvcgen`
@@ -1916,6 +1978,11 @@ instrument copies it:
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
 * **double-run byte-identical**, verified;
+* **every quoted number is paired with the elaboration status of the file
+  it came from** (§0.1 II(a)): a triad line, coverage count, `#guard` batch
+  or axiom print taken from a file that did not elaborate cleanly is
+  quoting the error recovery, not the tree — and at least one such line
+  reads *cleaner* than the truth rather than dirtier;
 * it stamps the frontend FAMILY and the profile, because both are INPUTS
   to the result and not decoration;
 * **not wired into CI when its corpus is out-of-tree** — a gate that is a

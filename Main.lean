@@ -363,20 +363,6 @@ private def splitFuel : List String → Except String (List String × Option Nat
       let (pos, fuel) ← splitFuel rest
       return (a :: pos, fuel)
 
-/-- Split `--monadic` off the argument list (anywhere), keeping the positional
-arguments in order.
-
-**THE SHIM, and it is one flag.** `--monadic` routes the run through
-`LeanModels/Python/Monadic/` — the MONADIC REBUILD — instead of the trunk
-interpreter. Both answer the same `Run World RVal`, so nothing downstream
-changes: the three harnesses (`diff_test.py`, `script_corpus.py`,
-`refusal_census.py`) already take a `--runner` command, and pointing that at
-`… leanmodels-run --monadic` is the whole of the acceptance gate's plumbing. No
-harness is forked and no harness learns what the flag means. -/
-private def splitMonadic : List String → List String × Bool
-  | [] => ([], false)
-  | "--monadic" :: rest => let (pos, _) := splitMonadic rest; (pos, true)
-  | a :: rest => let (pos, mono) := splitMonadic rest; (a :: pos, mono)
 
 def parseCli (argv : List String) : Except String Cli := do
   let (positional, fuel?) ← splitFuel argv
@@ -405,12 +391,8 @@ and map the outcome to the process exit status (docs/memory-model.md
   differential driver must never read it as agreement;
 * `timeout` → 4 (loud likewise).
 -/
-def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) (mono : Bool) :
-    IO UInt32 := do
-  -- THE SAME SWAP as the batch surface: `runScriptClockMono` has
-  -- `runScriptClock`'s type by construction, so `script_corpus.py` compares the
-  -- two script executors through its own `--runner` flag and learns nothing.
-  match (if mono then Monadic.runScriptClockMono else runScriptClock) m clock fuel with
+def runScriptMode (m : Module) (clock : List Int) (fuel : Nat) : IO UInt32 := do
+  match Monadic.runScriptClockMono m clock fuel with
   | .ok w () =>
       for line in w.stdout do IO.println line
       return 0
@@ -510,8 +492,7 @@ def parseJob (line : String) : Except String BatchJob := do
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
 `runner-error` lines PLUS a nonzero exit. -/
-def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
-    (mono : Bool) : IO UInt32 := do
+def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --batch: cannot read '{jobsPath}': {toString e}"
@@ -556,12 +537,10 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
             -- `Run.toPublic` erases and `batchObs` reports.
             let fuel := job.fuel.getD defaultFuel
             let thawed := RVal.thawArgs job.args
-            -- THE ONE SWAP. `callInMono` has `callIn`'s type by construction
-            -- (`Monadic/Eval.lean` §4), so the differential battery compares the
-            -- two interpreters at the same boundary, on the same rows, through
-            -- the same canonical JSON.
-            let entry := if mono then Monadic.callInMono else callIn
-            let run := entry m fuel
+            -- THE INTERPRETER. `callInMono` had `callIn`'s type by construction
+            -- (`Monadic/Eval.lean` §4), which is what let the two be compared
+            -- row for row; the gate passed and the dual mode is gone.
+            let run := Monadic.callInMono m fuel
               { initWorld m with clock := job.clock.getD [] } job.fname thawed
             stdout.putStrLn (if obs then batchResJson fuel job.args thawed run
                              else resJson (Run.toPublic fuel run))
@@ -612,8 +591,7 @@ it is produced. Envelopes are deliberately NOT cached (each program runs
 once; a corpus sweep must not accumulate every module it has seen).
 Runner-level failures are per-row `runner-error` lines PLUS a nonzero exit
 — LOUD, never absorbed into the stream as agreement. -/
-def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) (mono : Bool) :
-    IO UInt32 := do
+def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --script-batch: cannot read '{jobsPath}': {toString e}"
@@ -652,13 +630,11 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) (mono : Bool) :
               ++ ",\"exit\":1,\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
             stdout.putStrLn (scriptJson job.path m.topLevel.size
-              ((if mono then Monadic.runScriptClockMono else runScriptClock)
-                m (job.clock.getD []) (job.fuel.getD defaultFuel)))
+              (Monadic.runScriptClockMono m (job.clock.getD []) (job.fuel.getD defaultFuel)))
         stdout.flush
       return (if hadError then 1 else 0)
 
 def main (argv : List String) : IO UInt32 := do
-  let (argv, mono) := splitMonadic argv
   match argv with
   | "--batch" :: rest =>
     match splitFuel rest with
@@ -680,7 +656,7 @@ def main (argv : List String) : IO UInt32 := do
             IO.eprintln
               "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N] [--observations]"
             return 2
-      runBatchMode jobsPath (fuel?.getD 10000) obs mono
+      runBatchMode jobsPath (fuel?.getD 10000) obs
   | "--script-batch" :: rest =>
     match splitFuel rest with
     | .error e =>
@@ -688,7 +664,7 @@ def main (argv : List String) : IO UInt32 := do
         return 2
     | .ok (positional, fuel?) =>
       match positional with
-      | [jobsPath] => runScriptBatchMode jobsPath (fuel?.getD 1000000) mono
+      | [jobsPath] => runScriptBatchMode jobsPath (fuel?.getD 1000000)
       | _ =>
           IO.eprintln "usage: leanmodels-run --script-batch <jobs.jsonl> [--fuel N]"
           return 2
@@ -719,7 +695,7 @@ def main (argv : List String) : IO UInt32 := do
             unless envl.language == "python" do
               IO.eprintln s!"leanmodels-run --script: '{path}' has language '{envl.language}', expected 'python'"
               return 1
-            runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000) mono
+            runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000)
   | _ =>
   match parseCli argv with
   | .error e =>
@@ -741,5 +717,10 @@ def main (argv : List String) : IO UInt32 := do
             IO.eprintln
               s!"leanmodels-run: '{cli.path}' has language '{envl.language}', expected 'python'"
             return 1
-          IO.println (resJson (callFunction envl.module cli.fname cli.args cli.fuel))
+          -- The single-call surface runs the same interpreter as the batteries:
+          -- `callFunction` was `Run.toPublic ∘ callIn ∘ thaw` over a fresh world,
+          -- and this is that with the rebuilt entry point.
+          IO.println (resJson (Run.toPublic cli.fuel
+            (Monadic.callInMono envl.module cli.fuel (initWorld envl.module)
+              cli.fname (RVal.thawArgs cli.args))))
           return 0

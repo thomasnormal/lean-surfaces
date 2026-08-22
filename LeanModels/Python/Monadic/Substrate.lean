@@ -62,7 +62,9 @@ def ofRun (r : σ → Run σ α) : PyM σ α := fun s =>
   | .ok s' a       => .ok (.ok a, s')
   | .exn s' e      => .ok (.error e, s')
   | .timeout       => .error .timeout
-  | .unsupported m => .error (.unsupported m)
+  -- `Run` has no class field, so ingesting one classifies it `unsupported` —
+  -- the only honest default when the source does not say.
+  | .unsupported m => .error (.unsupported (.unsupported ()) m none)
 
 /-- A `PyM σ α` as a `Run σ α`. This is the RUNNER's boundary. -/
 def toRun (x : PyM σ α) : σ → Run σ α := fun s =>
@@ -70,21 +72,91 @@ def toRun (x : PyM σ α) : σ → Run σ α := fun s =>
   | .ok (.ok a, s')         => .ok s' a
   | .ok (.error e, s')      => .exn s' e
   | .error .timeout         => .timeout
-  | .error (.unsupported m) => .unsupported m
+  -- THE MESSAGE IS PRESERVED EXACTLY, which is what keeps the differential
+  -- gate meaningful: the harnesses compare refusal PROSE, and the §5.2 class
+  -- is additional structure rather than a change of answer.
+  | .error (.unsupported _ m _) => .unsupported m
 
 theorem toRun_ofRun (r : σ → Run σ α) : toRun (ofRun r) = r := by
   funext s; simp only [toRun, ofRun]; cases r s <;> rfl
 
-theorem ofRun_toRun (x : PyM σ α) : ofRun (toRun x) = x := by
-  funext s
+/-- **`Run` IS A RETRACT OF `PyM`, NOT AN ISOMORPHISM — and the `RefusalCause`
+landing is what broke the other direction.**
+
+Before the ruling, `Loud.unsupported` carried a bare `String` and the two types
+were genuinely isomorphic; `ofRun_toRun` was a theorem here. It is now FALSE,
+and saying so precisely is more useful than weakening it until it typechecks:
+
+`Run.unsupported` has **one** field. `Loud.unsupported` has **three** — the
+§5.2 class, the prose, and the diagnostic snapshot. So a round trip through
+`Run` can only return the class it can represent, which is `unsupported`, and
+the snapshot it can represent, which is `none`. An `orderDependence` refusal
+goes in and an `unsupported` one comes out.
+
+The direction that survives is the one that matters for the boundary: `Run`
+EMBEDS into `PyM` faithfully, so a trunk-shaped outcome is never corrupted by
+being lifted. -/
+theorem toRun_ofRun' (r : σ → Run σ α) : toRun (ofRun r) = r := toRun_ofRun r
+
+/-- The retract's exact residue: the round trip is the identity on values,
+exceptions and timeouts, and on refusals it NORMALISES the class to
+`unsupported` and drops the snapshot. Stated so the loss is a theorem rather
+than a caveat. -/
+theorem ofRun_toRun_normalises (x : PyM σ α) (s : σ) :
+    ofRun (toRun x) s
+      = (match x s with
+         | .ok (v, s') => .ok (v, s')
+         | .error .timeout => .error .timeout
+         | .error (.unsupported _ m _) => .error (.unsupported (.unsupported ()) m none)) := by
+  simp only [toRun, ofRun]
   rcases h : x s with l | ⟨v, s'⟩
-  · rcases l with _ | m <;> simp [toRun, ofRun, h]
-  · rcases v with a | e <;> simp [toRun, ofRun, h]
+  · rcases l with _ | ⟨c, m, sn⟩ <;> simp
+  · rcases v with a | e <;> simp
+
+/-- And the round trip IS the identity exactly on the payload-free refusals —
+which is every refusal this tier builds, because its three refusal helpers fix
+the class and never attach a snapshot. -/
+theorem ofRun_toRun_of_plain (x : PyM σ α) (s : σ)
+    (h : ∀ c m sn, x s = .error (.unsupported c m sn) →
+           c = .unsupported () ∧ sn = none) :
+    ofRun (toRun x) s = x s := by
+  rw [ofRun_toRun_normalises]
+  rcases hx : x s with l | ⟨v, s'⟩
+  · rcases l with _ | ⟨c, m, sn⟩
+    · simp
+    · obtain ⟨hc, hsn⟩ := h c m sn hx; simp [hc, hsn]
+  · simp
 
 /-! ## §2 PYTHON'S NAMED REFUSALS
 
-`refuse` and `exhausted` come from Core unchanged. Two more are Python's: its
+`exhausted` comes from Core unchanged. `refuse` is Python's ONE-ARGUMENT
+wrapper over Core's classified refusal — see below. Two more are Python's: its
 own raise, and the door every reused trunk worker comes through. -/
+
+/-- **Python's refusal, and its §5.2 CLASS.**
+
+Core's `refuse` takes a `RefusalCause π` and prose. Python's payload is `Unit`
+(`PyM = SemM σ PyErr`, the payload-free spelling), so the prose IS the detail and
+the only thing a site must decide is its CLASS. The overwhelming majority are
+`unsupported` — out-of-tier constructs that retire by climbing a rung — so that
+is what this wrapper fixes, and **the 168 existing call sites are unchanged**.
+
+The two classes that are NOT the default get their own spellings below, because
+a refusal filed under the wrong class is invisible to the scoreboard in exactly
+the way §5.2 exists to prevent. Python has **no `undefined`**: the language has
+no undefined behaviour, and per the ruling the class is PRESENT AND GATED rather
+than absent — the gate is `no_undefined_refusals` in `Spec.lean`. -/
+def refuse (msg : String) : PyM σ α := LeanModels.refuse (.unsupported ()) msg
+
+/-- The run needs something outside the modelled slice — an unmodelled builtin,
+a runner-boundary effect like stdin. Retires by WIDENING the slice, which is a
+different schedule from `unsupported`'s "climb a rung". -/
+def refuseEnv (msg : String) : PyM σ α := LeanModels.refuse (.environment ()) msg
+
+/-- The language admits several orders and the model cannot show the observable
+invariant under all of them: Python's hash-order refusals. **Never retires by
+building more language**, which is why it is not `unsupported`. -/
+def refuseOrder (msg : String) : PyM σ α := LeanModels.refuse (.orderDependence ()) msg
 
 /-- A faithful Python exception. State is RETAINED — that is the layer order. -/
 def raisePy (e : PyErr) : PyM σ α := raiseIn e

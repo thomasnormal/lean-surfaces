@@ -1,3 +1,10 @@
+-- PARTLY LEGACY, and the split matters: this file holds BOTH the pre-rebuild
+-- INTERPRETER (evalExpr/execStmt/callIn/execGen…) — legacy, the statement
+-- target of pre-rebuild theorems, no new consumers, deleted when re-founded —
+-- AND every PURE WORKER (evalBinOp, indexValH, sliceVal, truthyH, assignToH,
+-- the string/render/sort workers). The workers are NOT legacy: the monadic
+-- interpreter imports them, deliberately, so the rebuild owns the control and
+-- the trunk owns the arithmetic. Marking the whole file legacy would be false.
 import LeanModels.Python.Runtime
 
 /-!

@@ -347,18 +347,18 @@ def main(argv=None):
         "--runner", default="lake exe leanmodels-run",
         help="runner command (default: %(default)r)",
     )
-    parser.add_argument(
-        "--monadic", action="store_true", help='target the MONADIC REBUILD (LeanModels/Python/Monadic/) instead of the trunk interpreter - appends --monadic to the runner command. The acceptance gate is parity with the trunk on this same corpus.',
-    )
     opts = parser.parse_args(argv)
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
-    if opts.monadic:
-        runner_cmd = runner_cmd + ["--monadic"]
 
-    if not opts.no_build:
-        build = subprocess.run(["lake", "build"], cwd=REPO_ROOT)
+    # THE AMENDMENT 14 CONTRACT (tools/triad.sh 4d32526): the TENURE builds the
+    # runner and exports LS_RUNNER_PREBUILT=1. A gate must never build the tree
+    # — it defeats --build-target narrowing and surfaces an unrelated build
+    # failure as a GATE failure, attributing the number to the wrong thing
+    # (§5.4a). Unset, build ONLY the runner.
+    if not opts.no_build and not os.environ.get("LS_RUNNER_PREBUILT"):
+        build = subprocess.run(["lake", "build", "leanmodels-run"], cwd=REPO_ROOT)
         if build.returncode != 0:
             print("error: `lake build` failed (exit %d)" % build.returncode,
                   file=sys.stderr)
@@ -437,9 +437,7 @@ def main(argv=None):
     print("-" * len(header))
     print("oracle: Python %s (the model's tier is specified against 3.9)"
           % (sys.version.split()[0],))
-    print("interpreter: %s"
-          % ("MONADIC REBUILD (LeanModels/Python/Monadic/)" if opts.monadic
-             else "trunk (LeanModels/Python/Semantics.lean)"))
+    print("interpreter: LeanModels/Python/Monadic/ (the only one)")
     print("%d cases: %d failed, %d whitelisted-unsupported, %d matched"
           % (len(rows), failures, whitelisted,
              len(rows) - failures - whitelisted))

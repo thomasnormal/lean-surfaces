@@ -236,7 +236,7 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
       | some (.dict _ _) =>
           refuse s!"{fname}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
       | some (.pyset _) =>
-          refuse s!"{fname}() over a set is outside the tier (hash order; docs/memory-model.md)"
+          refuseOrder s!"{fname}() over a set is outside the tier (hash order; docs/memory-model.md)"
       | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
       | some (.cell _) => refuse cellInternal
       | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
@@ -283,7 +283,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     match strOfArgs (← frameHeap) vs with
     | some line => do emit line; pure .none
     | Option.none =>
-        refuse "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects"
+        refuseOrder "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects"
   else if fname == "dict" then
     -- `dict()` is the empty mapping and `dict(d)` is CPython's shallow COPY (a
     -- fresh object, never an alias — the whole point of writing it). A pairs
@@ -644,7 +644,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
             match Env.lookup (← frameGlobals) id with
             | some v => pure v
             | Option.none =>
-              if isPyBuiltinName id then refuse (unmodelledBuiltinMsg id)
+              if isPyBuiltinName id then refuseEnv (unmodelledBuiltinMsg id)
               else if (moduleGlobals m).2 then raisePy (.nameError id)
               else refuse s!"name '{id}' may be bound by an out-of-tier module-level statement"
   | .binOp l op r _ => do
@@ -1141,7 +1141,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
             match printOne (← frameHeap) v with
             | some rendered => raisePy (.assertionError (some rendered))
             | Option.none =>
-                refuse "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement"
+                refuseOrder "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement"
   | .delStmt names _ => do
       -- `delNames` threads the locals left to right, so the PARTIAL effect is
       -- kept: earlier removals are already applied when a later target misses.
@@ -1371,7 +1371,7 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
               | some (.cell _) => refuse cellInternal
               | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
               | some (.pyset _) =>
-                  refuse "'for' over a set is outside the tier (iteration is hash order — never guessed; docs/memory-model.md)"
+                  refuseOrder "'for' over a set is outside the tier (iteration is hash order — never guessed; docs/memory-model.md)"
               | Option.none => refuse danglingMsg
           | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
       | .refuse msg => refuse msg
@@ -1794,7 +1794,8 @@ indices of a 3-element tuple gives 0+1+2 = 3, and the pair unpacks. -/
 #print axioms kont
 #print axioms callInMono
 #print axioms toRun_ofRun
-#print axioms ofRun_toRun
+#print axioms ofRun_toRun_normalises
+#print axioms ofRun_toRun_of_plain
 #print axioms inFrame_toRun
 #print axioms inWorld_toRun
 

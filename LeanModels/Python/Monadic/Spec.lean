@@ -45,6 +45,28 @@ abbrev PS (σ : Type) : PostShape := SemPS σ PyErr
 /-- The frame-level `PostShape`. -/
 abbrev FS : PostShape := PS FrameState
 
+/-! ## §0.9 THE `undefined` GATE — present, and expected EMPTY
+
+`docs/family-architecture.md` §5.2's ruling: an expected-empty class is PRESENT
+AND GATED, never absent, because omitting it makes the emptiness a fact about
+the TYPE, invisible to a scoreboard — which then cannot tell *"this language has
+no UB"* from *"this tier did not model that column."*
+
+**Python has no undefined behaviour**, so its `undefined` bucket is expected
+empty and is gated here.
+
+**HOW IT IS ENFORCED, stated exactly, because the theorem below is the weaker
+half.** The real gate is STRUCTURAL: this tier's refusal API is three
+zero-cause entry points — `refuse`, `refuseEnv`, `refuseOrder` — none of which
+takes a `RefusalCause`. `undefined` is therefore unreachable without calling
+`LeanModels.refuse` directly, which nothing in the tier does. The theorem
+records the expectation the structure enforces; it does not enforce it. Saying
+so is the point — a gate that is really a naming convention should admit it. -/
+theorem python_emits_no_undefined :
+    (RefusalCause.unsupported ()).isUndefined = false
+  ∧ (RefusalCause.environment ()).isUndefined = false
+  ∧ (RefusalCause.orderDependence ()).isUndefined = false := by decide
+
 /-! ## §1 THE PRIMITIVE TRIPLES -/
 
 /-- A refusal is unreachable from a satisfiable precondition: `refuse` proves any

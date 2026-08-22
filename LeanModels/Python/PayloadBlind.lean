@@ -1,3 +1,5 @@
+-- LEGACY: statement target of pre-rebuild theorems; compiles, refuses what
+-- it does not implement, gains no consumers; deleted when re-founded.
 import LeanModels.Python.VC2
 
 /-! # Payload blindness — the interpreter cannot see a RUNNING generator's payload

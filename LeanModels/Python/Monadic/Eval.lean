@@ -136,7 +136,17 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
     match lookupG (moduleGlobals m).1 fname with
     | some (some (.ref _)) => .notCallable "dict"
     | some (some v) => .notCallable v.typeName
-    | some Option.none => .notYetArm s!"call: statically-poisoned module binding '{fname}'"
+    | some Option.none =>
+        -- The poisoned-arm LIVE view: a module-level lambda (an exec-bound
+        -- closure) is callable through it, with the locals-arm dispatch
+        -- verbatim and the same heap-free guard.
+        match Env.lookup globals fname with
+        | some (.ref a) =>
+            if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
+            else .callClosure a
+        | some v => .notCallable v.typeName
+        | Option.none =>
+            .preRefuse s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
     | Option.none =>
       if (findFunction m fname).isSome then
         if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
@@ -271,13 +281,28 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     liftRes (rangeMake (← frameHeap) vs)
   else if fname == "max" || fname == "min" then
     match vs with
-    | [.ref _] => notYet s!"builtin: {fname}() over a heap referent"
+    | [.ref a] => do
+        match Heap.get? (← frameHeap) a with
+        | some (.generator ..) =>
+            -- The `moduleGenFree` guard: `max`/`min` stay INSIDE the heap-free
+            -- fragment, so a module owning no generator defs must refuse rather
+            -- than drain.
+            if moduleGenFree m then
+              refuse s!"{fname}() over a generator DRAINS it (a stateful read) — outside the tier"
+            else do
+              let vals ← inFrame (K.drainIter a)
+              liftRes (extremumVal (fname == "max") [.listV vals.toArray])
+        | _ => do liftRes (extremumValH (← frameHeap) (fname == "max") [.ref a])
     | vs => do liftRes (extremumValH (← frameHeap) (fname == "max") vs)
   else if fname == "sorted" then
     match vs with
     | [.ref a] => do
         match Heap.get? (← frameHeap) a with
-        | some (.generator ..) => notYet "builtin: sorted() over a generator (H6)"
+        | some (.generator ..) => do
+            let vals ← inFrame (K.drainIter a)
+            let sorted_ ← liftRes (sortByLt false vals)
+            let ad ← heapPush (.list sorted_.toArray)
+            pure (.ref ad)
         | _ => do
             let hr ← liftRes (sortedValH (← frameHeap) (.ref a))
             heapPut hr.1; pure hr.2
@@ -619,6 +644,28 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                   let vs ← evalOpenList K m args.toList
                   applyCallPlan K m plan vs
           | .attribute recv attr _ => do
+              -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed
+              -- benign-import clock name consumes the next reading of the
+              -- world's trace, and an EMPTY trace is the loud underrun refusal —
+              -- fuel-independent, because it is a spec error in the run's INPUT
+              -- and never a silent 0. Decided BEFORE the receiver evaluates,
+              -- since evaluating the receiver is itself the poisoned refusal.
+              -- `time.time(args…)` refuses loudly: CPython would evaluate the
+              -- args then raise TypeError, and the model never fakes what it can
+              -- refuse. =====
+              let st0 ← get
+              if isClockCall m st0 recv attr then
+                match args.toList with
+                | [] =>
+                    match st0.world.clock with
+                    | [] =>
+                        refuse "clock trace underrun: time.time() has no next reading (the trace is an INPUT — docs/memory-model.md §the trace clock)"
+                    | t :: ts => do
+                        set { st0 with world := { st0.world with clock := ts } }
+                        pure (.int t)
+                | _ :: _ =>
+                    refuse "time.time() with arguments is outside the trace-clock tier (docs/memory-model.md §the trace clock)"
+              else do
               let r ← evalOpen K m recv
               match r with
               | .ref a => do

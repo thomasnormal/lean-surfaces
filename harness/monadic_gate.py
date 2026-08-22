@@ -142,9 +142,18 @@ def main(argv=None):
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
 
-    if not opts.no_build:
-        if subprocess.run(["lake", "build"], cwd=REPO_ROOT).returncode != 0:
-            print("error: `lake build` failed", file=sys.stderr)
+    # THE AMENDMENT 14 CONTRACT (tools/triad.sh, 4d32526): the TENURE builds the
+    # runner explicitly and exports LS_RUNNER_PREBUILT=1 to its gates. A gate must
+    # therefore never build the tree itself. Building it here defeated
+    # `--build-target` narrowing outright, and — worse — surfaced an unrelated
+    # build failure as a GATE failure, which is the flattering-direction lie
+    # §5.4a names: the number would have been attributed to the wrong thing.
+    # Unset (a bare invocation outside a tenure) builds ONLY the runner, never
+    # the tree.
+    if not opts.no_build and not os.environ.get("LS_RUNNER_PREBUILT"):
+        if subprocess.run(["lake", "build", "leanmodels-run"],
+                          cwd=REPO_ROOT).returncode != 0:
+            print("error: `lake build leanmodels-run` failed", file=sys.stderr)
             return 2
 
     with open(opts.cases, "r", encoding="utf-8") as f:
@@ -194,6 +203,12 @@ def main(argv=None):
     print("MONADIC REBUILD GATE  (harness/monadic_gate.py)")
     print(bar)
     print("rows                      %d" % total)
+    if not total:
+        # An EMPTY corpus is not a pass. A gate that divides by its own row
+        # count crashes here, and a gate that printed "100%" would be worse —
+        # it would report vacuous agreement as the acceptance number.
+        print("NO ROWS — the corpus is empty; this is not a result", file=sys.stderr)
+        return 2
     print("PARITY with the trunk     %d  (%.1f%%)" % (same, 100.0 * same / total))
     print("frontier (`notYet`)       %d  in %d arms" % (sum(buckets.values()),
                                                         len(buckets)))

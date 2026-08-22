@@ -20,11 +20,15 @@ what would earn it in a theorem.
 
 ## §0 THE VERDICT SO FAR, first
 
-**The architecture is validated, the instrument is built, and the interpreter is
-a slice that agrees with the trunk everywhere it reaches.** 846 of 1394 rows at
-byte-identical parity, 548 rows refused with a "not yet" naming their arm, and
-**zero divergences** — no row where the two interpreters disagree for any reason
-other than the rebuild not having been written that far.
+**THE ACCEPTANCE GATE PASSES.** Measured under `tools/triad.sh` with a FULL
+`lake build` green: **1394 / 1394 closed-function rows at byte-identical
+parity, zero frontier, zero divergences**, and the script corpus **identical
+row-for-row** on both interpreters — 65 scripts, 0 failed, the same 50 matched
+and the same 15 loud, the same file on each row. Equal totals would not have
+proved the same rows matched, so the comparison is per row.
+
+The runner was rebuilt inside that same tenure, which matters: a stale binary
+would have reported pre-fix numbers as real.
 
 | | measured |
 |---|---|
@@ -37,16 +41,18 @@ other than the rebuild not having been written that far.
 | the trunk's baseline (re-measured, not quoted) | diff_test **1394 / 0 failed / 118 whitelisted / 1276 matched**; script_corpus **65 / 0 failed / 50 matched / 15 loud** |
 | run 1 — the first parity run | 846 / 1394 (60.7 %), 548 frontier in 19 arms, zero divergences |
 | run 2 — after eleven buckets | 1374 / 1394 (98.6 %), 10 frontier in 4 arms, 10 divergences — all ONE missing arm (§5.3.1) |
-| **run 3 — closed-function surface** | **1394 / 1394 (100.0 %), zero frontier, zero divergences** |
+| run 3 — closed-function surface | 1394 / 1394 (100.0 %), zero frontier, zero divergences |
+| **THE GATE — full triad, both corpora, one tenure** | **build green; diff_test 1394/0; parity 1394/1394; script_corpus 65/0 IDENTICAL row-for-row** |
 | the SCRIPT surface | found three arms the closed-function corpus cannot reach (§5.3.3); frontier now empty on both |
 | memory at fuel 10⁶ | **flat and equal to the trunk** after the lazy-knot fix (§5.3.2) |
 
-**The frontier is now EMPTY on both surfaces**: all 22 names in
-`isBuiltinName`'s implemented set are handled, and `CallPlan.notYetArm` is
-declared but never constructed — the remaining `notYet` sites are unreachable
-defensive arms. **Acceptance is still not claimed here**: it requires both
-corpora green in the SAME run, and §5.3.3 is the reason that phrasing is not
-pedantry.
+**The frontier is EMPTY on both surfaces**: all 22 names in `isBuiltinName`'s
+implemented set are handled, and `CallPlan.notYetArm` is declared but never
+constructed — the remaining `notYet` sites are unreachable defensive arms.
+
+**Both corpora were green in the SAME run**, which §5.3.3 is the reason for
+insisting on. **The rebuild is NOT merged**: the branch remains its home per the
+standing ruling, and the merge is the coordinator's call.
 
 The three things a later session inherits and does not have to invent: the fuel
 architecture, the gate command, and a frontier that is **bucketed by arm** rather

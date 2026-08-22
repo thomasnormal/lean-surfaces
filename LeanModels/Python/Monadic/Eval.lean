@@ -650,7 +650,141 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               | r =>
                   refuse s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
           | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
-        else notYet "call: keyword arguments (H6)"
+        else
+          -- ===== H6 KEYWORD TIER. Keywords resolve to a COMPLETE positional
+          -- array at the call site (`mergeKwArgs`), so the call boundary's
+          -- signature never changes. Positionals evaluate first, then keyword
+          -- VALUES, left to right — source order, since Python forbids a
+          -- positional after a keyword. =====
+          match f with
+          | .name fname _ => do
+              let st ← get
+              match callNamePlan m st.locals st.world.globals fname with
+              | .preRefuse msg => refuse msg
+              | .preNameError n => raisePy (.nameError n)
+              | .notCallable t => do
+                  let _ ← evalOpenList K m args.toList
+                  let _ ← K.kwArgs kwargs.toList
+                  raisePy (.typeError s!"'{t}' object is not callable")
+              | .instantiate _ cname _ =>
+                  refuse s!"instantiating class '{cname}' with keyword arguments is outside the H6 tier"
+              | .ntMake .. =>
+                  refuse s!"constructing namedtuple '{fname}' with keyword arguments is outside the H6 tier (a wrong field-order guess would be silent corruption)"
+              | .callClosure _ =>
+                  refuse "keyword arguments on a closure call are outside the tier (docs/memory-model.md §nested defs and closures)"
+              | .notYetArm arm => notYet s!"{arm} + keyword arguments"
+              | .builtin name =>
+                  if name == "dict" then
+                    -- `dict(k=v, …)` is the ONLY way to build a mapping whose
+                    -- keys are identifiers, and CPython keeps the CALL's own
+                    -- order (duplicate keywords are a SyntaxError, so no insert
+                    -- can collide). A positional alongside keywords stays loud.
+                    if !args.isEmpty then
+                      refuse "dict(<iterable>, k=v, …) mixing a positional argument with keywords is outside the tier"
+                    else do
+                      let kvs ← K.kwArgs kwargs.toList
+                      let entries := (kvs.map (fun kv => (RVal.str kv.1, kv.2))).toArray
+                      let a ← heapPush (.dict entries 0)
+                      pure (.ref a)
+                  else if name == "sorted" then
+                    -- `reverse=` is accepted (truthiness decides the direction,
+                    -- and descending is a STABLE descending insertion — never
+                    -- sort-then-reverse). `key=` gates on a FIRST-CLASS callable
+                    -- value and stays loud. Any other keyword is CPython's
+                    -- faithful TypeError, raised AFTER the arguments evaluate.
+                    if kwargs.toList.any (·.1 == "key") then
+                      refuse "sorted(key=…) is outside the tier — the key callable is a first-class function value (bound methods are loud under H3; docs/backlog.md)"
+                    else
+                      match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
+                      | some (k, _) => do
+                          let _ ← evalOpenList K m args.toList
+                          let _ ← K.kwArgs kwargs.toList
+                          raisePy (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
+                      | Option.none => do
+                          let vs ← evalOpenList K m args.toList
+                          let kvs ← K.kwArgs kwargs.toList
+                          match vs, kvs.map (·.2) with
+                          | [v], [rv] => do
+                              let desc ← truthyM rv
+                              match v with
+                              | .ref a => do
+                                  match Heap.get? (← frameHeap) a with
+                                  | some (.generator ..) => do
+                                      let vals ← inFrame (K.drainIter a)
+                                      let sorted_ ← liftRes (sortByLt desc vals)
+                                      let ad ← heapPush (.list sorted_.toArray)
+                                      pure (.ref ad)
+                                  | _ => do
+                                      let hr ← liftRes (sortedValH (← frameHeap) (.ref a) desc)
+                                      heapPut hr.1; pure hr.2
+                              | v => do
+                                  let hr ← liftRes (sortedValH (← frameHeap) v desc)
+                                  heapPut hr.1; pure hr.2
+                          | [_], _ =>
+                              refuse "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
+                          | vs, _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
+                  else refuse s!"builtin '{name}' with keyword arguments is outside the H6 tier"
+              | .modFun qname =>
+                  match findFunction m qname with
+                  | Option.none => refuse "internal: modFun plan without a definition (report this)"
+                  | some fdefn =>
+                      if !fdefn.argsOk then
+                        -- The merge would read an UNTRUSTED parameter table, so
+                        -- the loud refusal must win over any binding TypeError.
+                        refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                      else do
+                        let vs ← evalOpenList K m args.toList
+                        let kvs ← K.kwArgs kwargs.toList
+                        let full ← liftRes (mergeKwArgs qname fdefn.params vs kvs)
+                        inFrame (K.call qname full)
+          | .attribute recv attr _ => do
+              let r ← evalOpen K m recv
+              match r with
+              | .ref a => do
+                  match attrCallPlan m (← frameHeap) a attr with
+                  | .instMethod qname =>
+                      match findFunction m qname with
+                      | Option.none =>
+                          refuse "internal: instance method plan without a definition (report this)"
+                      | some fdefn =>
+                          if !fdefn.argsOk then
+                            refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                          else do
+                            let vs ← evalOpenList K m args.toList
+                            let kvs ← K.kwArgs kwargs.toList
+                            let full ← liftRes (mergeKwArgs qname fdefn.params (RVal.ref a :: vs) kvs)
+                            inFrame (K.call qname full)
+                  | .instAttrValue =>
+                      refuse s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
+                  | .attrMissing => raisePy .attributeError
+                  | .dictGet => refuse "dict.get() with keyword arguments is outside the tier (get is positional-only in CPython)"
+                  | .dictClear => refuse "dict.clear() with keyword arguments is outside the tier (clear takes no keyword arguments in CPython)"
+                  | .listAppend => refuse "list.append() with keyword arguments is outside the tier (append is positional-only in CPython)"
+                  | .listPop => refuse "list.pop() with keyword arguments is outside the tier (pop is positional-only in CPython)"
+                  | .listInsert => refuse "list.insert() with keyword arguments is outside the tier (insert is positional-only in CPython)"
+                  | .refuse msg => refuse msg
+                  | .dangling => refuse danglingMsg
+              | .ntuple tn fs xs =>
+                  match ntupleCallPlan m tn fs attr with
+                  | .instMethod qname =>
+                      match findFunction m qname with
+                      | Option.none =>
+                          refuse "internal: namedtuple method plan without a definition (report this)"
+                      | some fdefn =>
+                          if !fdefn.argsOk then
+                            refuse s!"function '{qname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
+                          else do
+                            let vs ← evalOpenList K m args.toList
+                            let kvs ← K.kwArgs kwargs.toList
+                            let full ← liftRes
+                              (mergeKwArgs qname fdefn.params (RVal.ntuple tn fs xs :: vs) kvs)
+                            inFrame (K.call qname full)
+                  | .attrMissing => raisePy .attributeError
+                  | .refuse msg => refuse msg
+                  | _ => refuse "internal: namedtuple call plan out of range (report this)"
+              | r => do
+                  refuse s!"method call '.{attr}' with keyword arguments on '{RVal.typeNameH (← frameHeap) r}' is outside the H6 tier"
+          | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
   | .list elts _ => do
       -- H2: a list display ALLOCATES per display; the fresh address is the old
       -- heap size.
@@ -1016,6 +1150,18 @@ what the trunk charges** (`evalExpr m (fuel+1)` on a `.dict` calls
 accounting is *identical* to the trunk's rather than more generous. Nothing else
 is given up: the walk is kernel-reducible like everything else in the file. -/
 
+/-- The call site's KEYWORD values, paired back with their names. Same shape and
+same reason as `dictItemsAt`: defined below the block, so `evalOpen` is an
+ordinary constant and the recursion is plainly structural on its own list. -/
+def kwArgsAt (K : Kont) (m : Module) :
+    List (String × Expr) → SemF (List (String × RVal))
+  | [] => pure []
+  | (n, e) :: rest => do
+      let v ← evalOpen K m e
+      let vs ← kwArgsAt K m rest
+      pure ((n, v) :: vs)
+  termination_by structural kws => kws
+
 /-- The LOCKSTEP walk. Structural on `ks`; `evalOpen` is not mutual with it, so
 the second list is unconstrained — that is the whole trick. -/
 def dictItemsAt (K : Kont) (m : Module) :
@@ -1302,6 +1448,7 @@ def kont (m : Module) : Nat → Kont
           -- proofs (the recorded H2 finding), and the CLASS is what is compared.
           | _ => raisePy (.typeError "'dict' object is not callable")
       dictItems := dictItemsAt K m
+      kwArgs := kwArgsAt K m
       whileLoop := fun test body orelse => do
           let t ← evalOpen K m test
           let b ← truthyM t

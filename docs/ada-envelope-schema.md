@@ -290,6 +290,28 @@ And it obeys §L67's two behavioural rules: it **never writes into the repo**,
 and an envelope it cannot reproduce is reported **with the missing path**
 rather than passing silently.
 
+**It carries a FIFTH check that no sibling lane could**: the extractor's
+`markings` are cross-checked against **the ACAA's own `SUMMARY` tool**, so
+the half of the envelope that decides 37.1% of the suite's verdicts is
+validated by the suite owner's software rather than by our reading of its
+User's Guide. Measured on the first multi-file fixture: **12 markings across
+4 source files agree exactly**, range-indicator arithmetic included.
+
+A comparison with nothing on either side is reported **VACUOUS, never
+MATCH** — `docs/family-architecture.md` §5.3's rule that a run which
+executed nothing must never score as agreement, applied to a gate.
+
+**Three traps in the ACAA's tools, all measured, all of which make it fail
+QUIETLY while printing normal progress messages.** They are recorded here
+because a harness that assumes otherwise reports confident wrong answers,
+which is exactly what happened twice while this gate was being written:
+
+| trap | symptom | rule |
+| --- | --- | --- |
+| CRLF input | `SUMMARY.PARSE_ERROR` | convert before summarizing (§1's `line_endings`) |
+| a basename over **12** characters | `ADA.STRINGS.LENGTH_ERROR` | keep the ORIGINAL basename; give each copy its own directory. `B3710011XY.A` (12) works, `lf-B3710011.A` (13) raises |
+| an output path that already exists | the tool leaves the STALE file and exits without complaint | a unique output path per call, removed first |
+
 ## 6 What the ingester will check, and why the census is its oracle
 
 `LeanModels/Ada/Json.lean` (inch 6) ingests this envelope into a Lean AST

@@ -310,18 +310,41 @@ def verify(acats, workdir, extra_path=None):
         r = _run([summary, lf, csvp], workdir, env)
         return (csvp, r) if os.path.exists(csvp) else (None, r)
 
-    # The CRLF trap, asserted rather than described.
-    raw = os.path.join(workdir, "crlf-" + os.path.basename(ctest))
+    # THE CRLF TRAP, asserted rather than described — and asserted on the
+    # RIGHT exception, which took a correction.
+    #
+    # The first version of this check copied the source to `crlf-<basename>`
+    # and asserted only that the tool "raised".  It passed, and it passed for
+    # the WRONG REASON: a basename longer than 12 characters raises
+    # `ADA.STRINGS.LENGTH_ERROR` all by itself (the ACATS convention is 8
+    # characters plus a 1-3 character extension, and the tool has a fixed
+    # buffer).  Measured exactly: `B3710011XY.A` (12) works, `lf-B3710011.A`
+    # (13) raises.  So that check would have passed on an LF file too, which
+    # makes it worse than no check.
+    #
+    # Fixed two ways: the copy KEEPS the original basename in a subdirectory
+    # of its own, and the assertion names `SUMMARY.PARSE_ERROR` specifically
+    # so the filename trap cannot satisfy it.
+    crlfdir = os.path.join(workdir, "crlf")
+    os.makedirs(crlfdir, exist_ok=True)
+    raw = os.path.join(crlfdir, os.path.basename(ctest))
     shutil.copyfile(ctest, raw)
     with open(raw, "rb") as fh:
         had_crlf = b"\r\n" in fh.read()
     if had_crlf:
-        r = _run([summary, raw, os.path.join(workdir, "crlf.csv")], workdir, env)
-        # It dies with an UNHANDLED Ada exception, and WHICH one varies with
-        # the input (`SUMMARY.PARSE_ERROR` and `ADA.STRINGS.LENGTH_ERROR`
-        # both observed).  So the check is that it raised at all, not which.
+        r = _run([summary, raw, os.path.join(crlfdir, "crlf.csv")],
+                 crlfdir, env)
         check("CRLF source KILLS the ACAA's SUMMARY tool (the trap)",
-              r.stdout + r.stderr, "raised ")
+              r.stdout + r.stderr, "SUMMARY.PARSE_ERROR")
+        # And the OTHER trap, so neither can be mistaken for the other.
+        longdir = os.path.join(workdir, "longname")
+        os.makedirs(longdir, exist_ok=True)
+        long_name = os.path.join(longdir, "toolong-" + os.path.basename(ctest))
+        _delf(ctest, long_name)
+        r2 = _run([summary, long_name, os.path.join(longdir, "l.csv")],
+                  longdir, env)
+        check("a >12-character basename raises LENGTH_ERROR (the other trap)",
+              r2.stdout + r2.stderr, "ADA.STRINGS.LENGTH_ERROR")
 
     # 3. a C test grades to `passed execution`.
     csum, _ = summarize(ctest, "C324001.A")

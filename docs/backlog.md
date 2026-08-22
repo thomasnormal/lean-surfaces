@@ -18403,3 +18403,93 @@ document says so rather than pretending.
 checks still pass. **No Lean, no Python any Lean or existing harness
 imports.** The Lean third's debt is unchanged and still owed at the first
 Ada-lane landing that touches Lean — which is inch 6, now unblocked.
+
+## L75 — ADA M1 INCH 5: the extractor and the round-trip gate, and the ACAA's own SUMMARY tool validates our markings — after three traps that all fail QUIETLY (2026-08-22)
+
+`extractors/ada/extract.py` (envelope `ada-0.1`) and
+`harness/ada_round_trip.py`, with the first three fixtures in
+`Examples/ada/`. **No Lean.** Round-trip **MATCH 2, DIFFER 0, ERROR 0,
+SKIP 0**; markings **MATCH 1, VACUOUS 1, DIFFER 0**.
+
+**THE HEADLINE: the ACAA'S OWN `SUMMARY` TOOL VALIDATES OUR MARKINGS.**
+§L70 put the ACATS markings in the envelope because they are the expected
+result of 37.1% of the suite and live in comments an AST discards. The gate
+now cross-checks them against the SUITE OWNER'S OWN SOFTWARE rather than
+against our reading of its User's Guide: on the four-file `B371001` fixture,
+**12 markings across 4 sources agree exactly**, range-indicator arithmetic
+included. No sibling lane has an oracle of that kind for its envelope.
+
+**THE RANGE INDICATOR was implemented FROM THE SPEC and checked BEFORE the
+code was written.** User's Guide 6.3.2: `{[sl:]sp[;[el:]ep]}`, where `sl`/`el`
+are offsets BEFORE the current line, `sp` is an absolute position in that
+line, and `ep` is an offset **back from the last significant character** (the
+last non-white character not in a comment). Predicted against the ACAA tool's
+own output on `B324001.A`: **10 of 10 exact**, `{12;3}` forms included. The
+un-indicated case is the whole code on the line.
+
+**THE FIXTURES ARE THE HAZARD CENSUS MADE CONCRETE.** `Report` gives **2
+compilation units in ONE file** — §L70's one-envelope-is-one-COMPILATION
+point met in the tier's first artifact. `B371001` gives four files, six
+units, and **child units**: `B3710010.A` holds `B371001_1`,
+`B371001_1.Child_1` and `B371001_0`, and its own name is none of them. A
+path-derived top would have failed on the very first multi-file fixture.
+
+**THREE TRAPS IN THE ACAA'S TOOLS, all measured, all of which fail QUIETLY
+while printing normal progress messages.** Two of them bit this session:
+
+1. **CRLF input → `SUMMARY.PARSE_ERROR`** (§L69, known).
+2. **A basename over 12 characters → `ADA.STRINGS.LENGTH_ERROR`.** The ACATS
+   convention is 8 characters plus a 1-3 character extension and the tool has
+   a fixed buffer. Measured exactly: `B3710011XY.A` (12) works,
+   `lf-B3710011.A` (13) raises.
+3. **An output path that already exists → the tool leaves the STALE file**
+   and exits without complaint, so one output path across a multi-file
+   envelope reads the FIRST file's rows for every later file.
+
+**AND TRAP 2 HAD ALREADY PRODUCED A FALSE GREEN, which is the finding worth
+carrying.** §L69's CRLF check copied the source to `crlf-<basename>` and
+asserted only that the tool "raised". It passed — **for the wrong reason**:
+the 15-character name raised `LENGTH_ERROR` all by itself, so **that check
+would have passed on an LF file too.** A check that passes for the wrong
+reason is worse than no check. Fixed two ways: the copy keeps the ORIGINAL
+basename in a directory of its own, and the assertion now names
+`SUMMARY.PARSE_ERROR` specifically so the filename trap cannot satisfy it —
+plus a NEW check that asserts `LENGTH_ERROR` on a long name, so neither trap
+can ever again be mistaken for the other. The verify battery is 9 checks →
+**10, all green**.
+
+**A VACUOUS PASS, caught by the family's own law.** The markings check first
+compared only `file == 0` and reported `MATCH  0 marking(s) agree` on a
+four-file envelope carrying twelve — nothing was compared and it scored as
+agreement. §L59 §5.3: a run that executed nothing must never score as
+agreement. The gate now checks EVERY source file and reports **VACUOUS** when
+both sides are empty, which is why `report.json`'s markings line reads
+VACUOUS rather than MATCH: `Report` genuinely has no markings, and the gate
+says so instead of taking credit.
+
+**THE GATE'S SELF-TEST BREAKS EACH EDGE IN TURN**, because a gate that cannot
+fail is decoration: a wrong `schema_version`, a missing `language_version`, a
+node kind outside the census vocabulary, an `Unsupported` leaf (which must
+NOT count as a violation), and an ABSOLUTE recorded path (SKIP, named). The
+extractor's self-test pins the two libadalang shape traps from §L74 as its
+first two cases, plus the CRLF sha256 being taken over the ORIGINAL bytes.
+
+**ONE ARITHMETIC ERROR CAUGHT IN THE RIGHT DIRECTION.** The extractor's
+self-test expectations for the range indicator were wrong on the first write
+— the author's arithmetic, not the code's — and the self-test said so. The
+corrected values carry a comment recording which way the correction went, so
+nobody later reads them as the code having been fitted to the test.
+
+**ONE DELIBERATE NON-DEVIATION.** `docs/ada-envelope-schema.md` §2 fixes
+spans as an OBJECT with four named keys, roughly three times the cost of a
+4-element array. The extractor honours it and says so in a header note
+instead: deviating from a schema this lane landed two hours earlier is
+exactly the drift the schema's own gate exists to catch.
+
+### Triad — PARTIAL, unchanged reason
+
+`docs_check` **75/75**, 20 illustrative-exempt. Six instruments now pass
+`--self-test`; the round-trip gate is green on both fixtures; the toolchain
+census's verify battery is 10/10. **No Lean.** The Lean third's debt is
+unchanged and owed at inch 6, which is next and is the first Lean the lane
+writes.

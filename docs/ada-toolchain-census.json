@@ -100,7 +100,7 @@
       {
         "check": "C-test reports PASSED",
         "expected": "PASSED",
-        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:39:33\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
+        "got": ",.,. C324001 ACATS 4.2  26-08-22 12:49:09\n---- C324001 Check predicate checks are performed for static and dynamic\n                subtype predicates.\n==== C324001 PASSED ============================.",
         "passed": true
       },
       {
@@ -117,7 +117,13 @@
       },
       {
         "check": "CRLF source KILLS the ACAA's SUMMARY tool (the trap)",
-        "expected": "raised ",
+        "expected": "SUMMARY.PARSE_ERROR",
+        "got": "ACATS Test Summary Tool - version 1.0\nProcess ACATS Test C324001.A   \nWriting pack spec starting at line 61; with name=C324001_0\n\nraised SUMMARY.PARSE_ERROR : function unit without is, ;, or renames on line 146",
+        "passed": true
+      },
+      {
+        "check": "a >12-character basename raises LENGTH_ERROR (the other trap)",
+        "expected": "ADA.STRINGS.LENGTH_ERROR",
         "got": "ACATS Test Summary Tool - version 1.0\n\nraised ADA.STRINGS.LENGTH_ERROR : a-strfix.adb:364",
         "passed": true
       },

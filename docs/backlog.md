@@ -19117,27 +19117,60 @@ The envelope's version field is `docs/c-envelope-schema.md`'s `profile_id`
 generalized — **and Go makes it PER FILE**, which is the one place the Go
 envelope must be structurally different from C's.
 
-### Triad — and the build arm is a RECORDED DEBT, not a claimed green
+### Triad — the build debt is DISCHARGED, and the interim red was self-inflicted
 
-`docs_check` **75/75 marked blocks, 20 illustrative-exempt** — run after the
-rebase, so the totals include sibling lanes' new blocks; this lane's own blocks
-are Go/shell/JSON and sit in the 319 unmarked. `gofmt -l` clean on
+`docs_check` **83/83 marked blocks, 23 illustrative-exempt** — re-run after the
+final rebase, so the totals include sibling lanes' new blocks; this lane's own
+blocks are Go/shell/JSON and sit in the unmarked 328. `gofmt -l` clean on
 both new Go artifacts; `go vet` clean. The instrument's own gate re-run after
 every edit: double run **byte-identical**, `--compare` against the committed
 JSON **exit 0**, and every reachable exit path re-verified on the final binary.
 
-**`lake build` is OWED, and this entry says so rather than implying otherwise.**
-This landing contains **zero `.lean` files** — the whole change set is `docs/`,
-one Go program, one shell script and one JSON, none of it reachable from
-`lakefile.toml`'s globs, so it cannot move the Lean tree. The first build of this
-clone predated the lock broadcast, was allowed to finish per instruction, and
-died at **3,678 of 3,693 jobs** with **exit 143 (SIGTERM)** on three heavy
-Python-tier files (`pins_clock`, `pins_bound`, `genmoves_ray`) during the
-concurrent-build overload — load average peaked at **40.3** with five lanes
-building. Exit 143 is a resource kill, not a proof failure. The completion build
-was then queued under the machine-wide lock and **starved across roughly ninety
-minutes and four handoffs**; it is unrun. Following the ES lane's precedent, the
-charter lands on the non-build arms with the build **recorded as debt**.
+**THE BUILD ARM IS NOW GREEN, and it took three attempts — the first two failed
+for reasons worth recording, neither of them the change.** This landing contains
+**zero `.lean` files**: the whole change set is `docs/`, one Go program, one
+shell script and one JSON, none of it reachable from `lakefile.toml`'s globs.
+
+*Attempt 1 — resource kill.* The first build predated the lock broadcast and was
+allowed to finish per instruction. It died at **3,678 of 3,693 jobs** with
+**exit 143 (SIGTERM)** on three heavy Python-tier files (`pins_clock`,
+`pins_bound`, `genmoves_ray`) during the concurrent-build overload — load average
+peaked at **40.3** with five lanes building. Exit 143 is a resource kill, not a
+proof failure. The charter was pushed on the non-build arms with the build
+recorded as debt, following the ES lane's precedent.
+
+*Attempt 2 — SELF-INFLICTED, and the lesson is the point.* The queued completion
+build won the lock at 12:57:26 after a 23-minute spin; its parent spinner was then
+killed, correctly releasing the lock, while the `lake build` child survived
+reparented to init. **At 13:07:58 this lane fetch-rebased WHILE THAT BUILD WAS
+RUNNING**, so lake read `Examples/python/sunfish/basecase_depth0.lean` from the
+newly rebased tree against a build graph computed on the old one. It failed with
+four `Unknown constant` errors — `Bracket.sw_push`, `Bracket.sw_append`,
+`Heap.lt_size_push`, `Heap.lt_size_append`. **Those were chased as a possible red
+master and master was never broken**: all four exist on `github/master` in
+`LeanModels/Python/DictCalc.lean`, added by `a218092` (§L65, *"the four allocation
+lemmas lifted"* — exactly four), all four were present in this working tree, and
+`git diff github/master -- LeanModels/Python/DictCalc.lean` was **empty**. A red
+from a torn tree is evidence of nothing, so it was not reported as a failure and
+not laundered into a pass.
+
+**The transferable lesson, because it will bite other lanes in a rebase-heavy
+cycle: never fetch-rebase while a build is running in the same clone.** Stage,
+build, then rebase — or rebase first and build after. The failure mode is silent
+and looks *exactly* like a broken master, which is the expensive part: it cost a
+full investigation cycle to prove master was fine.
+
+*Attempt 3 — clean, locked, green.* Re-queued under the machine-wide lock,
+acquired after a further 1,070 s spin, run at `nice -n 10` with
+`LEAN_NUM_THREADS=4` on a tree nothing touched for the duration:
+
+* `lake build` **3,702 jobs, BUILD_EXIT=0**, zero failed targets;
+* `diff_test` **1,394 cases, 0 failed** (1,276 matched, 118 whitelisted-unsupported);
+* `script_corpus` **65 scripts, 0 failed** (50 completed-and-matched, 15 loud-blocked);
+* `docs_check` **75/75**.
+
+The Python tier is unmoved at every one of those numbers, which is the result a
+zero-Lean landing must produce and is now measured rather than asserted.
 
 **Two protocol defects were found by running it, and both are fixed in the
 broadcast rather than left in this lane's script.** First, `rmdir

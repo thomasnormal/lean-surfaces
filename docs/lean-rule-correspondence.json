@@ -1,0 +1,337 @@
+{
+  "coverage_is_not_a_percentage": "The two artifacts are not in a 1:1 relation \u2014 typing and defeq are fused, delta/iota/quot enter as environment data, and the level rules are replaced by a semantic order. A percentage would assert a correspondence that does not exist.",
+  "inductive_stub": {
+    "file": "Lean4Lean/Theory/Inductive.lean",
+    "nonblank_lines": 4,
+    "sorry_lines": [
+      "def VInductDecl.WF (env : VEnv) (decl : VInductDecl) : Prop := sorry",
+      "def VEnv.addInduct (env : VEnv) (decl : VInductDecl) : Option VEnv := sorry"
+    ],
+    "total_lines": 7
+  },
+  "isDefEq_constructors": 13,
+  "lean4lean_commit": "e0e3f6bcccb840cb0ea6f11c2b274ada93a12e00",
+  "method": "MECHANICAL: Theory/ inductive constructor lists, and rule counts joined from lean-spec-census.json. DECLARED: the judgment\u2192inductive map in MAP, one cited row per family, which the instrument refuses to let rot.",
+  "rows": [
+    {
+      "judgment": "\\Gamma\\vdash e:\\alpha",
+      "name": "Typing",
+      "note": "Typing is not a separate judgment in Theory/. `HasType` is DEFINED as the diagonal of IsDefEq (`IsDefEq env U \u0393 e e A`, Typing/Basic.lean), so the thesis's typing and defeq rules share one inductive.",
+      "relation": "FUSED",
+      "targets": [
+        {
+          "constructors": 13,
+          "file": "Lean4Lean/Theory/Typing/Basic.lean",
+          "inductive": "IsDefEq",
+          "names": [
+            "bvar",
+            "symm",
+            "trans",
+            "sortDF",
+            "constDF",
+            "appDF",
+            "lamDF",
+            "forallEDF",
+            "defeqDF",
+            "beta",
+            "eta",
+            "proofIrrel",
+            "extra"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 7,
+      "thesis_section": "2.1"
+    },
+    {
+      "judgment": "\\Gamma\\vdash e\\equiv e'",
+      "name": "Definitional equality",
+      "note": "Same inductive as Typing; see that row.",
+      "relation": "FUSED",
+      "targets": [
+        {
+          "constructors": 13,
+          "file": "Lean4Lean/Theory/Typing/Basic.lean",
+          "inductive": "IsDefEq",
+          "names": [
+            "bvar",
+            "symm",
+            "trans",
+            "sortDF",
+            "constDF",
+            "appDF",
+            "lamDF",
+            "forallEDF",
+            "defeqDF",
+            "beta",
+            "eta",
+            "proofIrrel",
+            "extra"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 10,
+      "thesis_section": "2.2"
+    },
+    {
+      "judgment": "\\Gamma\\vdash\\alpha\\type",
+      "name": "Is-a-type",
+      "note": "`IsType` is a def (`\u2203 u, HasType \u0393 A (.sort u)`), not an inductive. The thesis's single rule is the definition, so there is nothing to count.",
+      "relation": "DEFINED-NOT-INDUCTIVE",
+      "targets": [],
+      "thesis_elided": false,
+      "thesis_rules": 1,
+      "thesis_section": "2.1"
+    },
+    {
+      "judgment": "\\vdash\\Gamma\\ok",
+      "name": "Context well-formedness",
+      "note": "Theory/ carries no `\u22a2 \u0393 ok` judgment. Contexts are `List VExpr` and their discipline is carried by `Lookup` plus the lifting/instantiation family, so the thesis's 2 rules have no direct counterpart.",
+      "relation": "RESHAPED",
+      "targets": [
+        {
+          "constructors": 2,
+          "file": "Lean4Lean/Theory/Typing/Lemmas.lean",
+          "inductive": "Ctx.LiftN",
+          "names": [
+            "zero",
+            "succ"
+          ]
+        },
+        {
+          "constructors": 2,
+          "file": "Lean4Lean/Theory/Typing/Basic.lean",
+          "inductive": "Lookup",
+          "names": [
+            "zero",
+            "succ"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 2,
+      "thesis_section": "2.1"
+    },
+    {
+      "judgment": "\\ell\\equiv\\ell'",
+      "name": "Level equality",
+      "note": "Theory/ defines level equivalence SEMANTICALLY (`\u2248` via evaluation into \u2115 under all substitutions) rather than by the thesis's algorithmic rules. This is a deliberate and documented divergence, not a gap.",
+      "relation": "SEMANTIC",
+      "targets": [
+        {
+          "constructors": 5,
+          "file": "Lean4Lean/Theory/VLevel.lean",
+          "inductive": "VLevel",
+          "names": [
+            "zero",
+            "succ",
+            "max",
+            "imax",
+            "param"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 1,
+      "thesis_section": "2.2"
+    },
+    {
+      "judgment": "\\ell\\le \\ell'+n",
+      "name": "Level order",
+      "note": "The thesis's 14 algorithmic inequality rules are replaced by the semantic order. The 14 rules are what an IMPLEMENTATION needs; Theory/ specifies the relation they are meant to decide.",
+      "relation": "SEMANTIC",
+      "targets": [
+        {
+          "constructors": 5,
+          "file": "Lean4Lean/Theory/VLevel.lean",
+          "inductive": "VLevel",
+          "names": [
+            "zero",
+            "succ",
+            "max",
+            "imax",
+            "param"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 14,
+      "thesis_section": "2.2"
+    },
+    {
+      "judgment": "\\Gamma\\vdash e\\Leftrightarrow e'",
+      "name": "Algorithmic defeq",
+      "note": "The thesis's algorithmic judgment is the checker's spec. Theory/'s nearest artifact is `IsDefEqStrong` (Typing/Strong.lean); the executable checker's correctness is stated in Verify/, against IsDefEq rather than against a mirrored algorithmic judgment.",
+      "relation": "PARTIAL",
+      "targets": [
+        {
+          "constructors": 13,
+          "file": "Lean4Lean/Theory/Typing/Strong.lean",
+          "inductive": "IsDefEqStrong",
+          "names": [
+            "bvar",
+            "symm",
+            "trans",
+            "sortDF",
+            "constDF",
+            "appDF",
+            "lamDF",
+            "forallEDF",
+            "defeqDF",
+            "beta",
+            "eta",
+            "proofIrrel",
+            "extra"
+          ]
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 9,
+      "thesis_section": "2.3"
+    },
+    {
+      "judgment": "e\\rightsquigarrow e'",
+      "name": "Head reduction",
+      "note": "Theory/Typing/HeadReduction.lean carries WHRed and StRed. The thesis family is ELIDED in the source (ends in `...`), so a faithful mirror must reconstruct the missing congruence rules from prose before comparing.",
+      "relation": "RESHAPED",
+      "targets": [
+        {
+          "constructors": 4,
+          "file": "Lean4Lean/Theory/Typing/HeadReduction.lean",
+          "inductive": "WHRed",
+          "names": [
+            "app",
+            "major",
+            "beta",
+            "extra"
+          ]
+        },
+        {
+          "constructors": 6,
+          "file": "Lean4Lean/Theory/Typing/HeadReduction.lean",
+          "inductive": "StRed",
+          "names": [
+            "bvar",
+            "sort",
+            "const",
+            "app",
+            "lam",
+            "forallE"
+          ]
+        }
+      ],
+      "thesis_elided": true,
+      "thesis_rules": 10,
+      "thesis_section": "2.3"
+    },
+    {
+      "judgment": "\\Gamma;t:F\\vdash K\\spec",
+      "name": "Inductive specification",
+      "note": "THE SEAM. `Theory/Inductive.lean` is 8 lines: `VInductDecl.WF` and `VEnv.addInduct` are both `sorry`. The abstract specification of inductive types has not been written.",
+      "relation": "STUB",
+      "targets": [
+        {
+          "constructors": 0,
+          "file": "Lean4Lean/Theory/Inductive.lean",
+          "inductive": "VInductDecl",
+          "names": [],
+          "note": "stub \u2014 see inductive_stub"
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 1,
+      "thesis_section": "2.6.1"
+    },
+    {
+      "judgment": "\\Gamma;t:F\\vdash \\alpha\\ctor",
+      "name": "Constructor",
+      "note": "Same stub; and the thesis family is ELIDED besides.",
+      "relation": "STUB",
+      "targets": [
+        {
+          "constructors": 0,
+          "file": "Lean4Lean/Theory/Inductive.lean",
+          "inductive": "VInductDecl",
+          "names": [],
+          "note": "stub \u2014 see inductive_stub"
+        }
+      ],
+      "thesis_elided": true,
+      "thesis_rules": 5,
+      "thesis_section": "2.6.1"
+    },
+    {
+      "judgment": "\\Gamma;t:F\\vdash K\\LE",
+      "name": "Large elimination",
+      "note": "Same stub.",
+      "relation": "STUB",
+      "targets": [
+        {
+          "constructors": 0,
+          "file": "Lean4Lean/Theory/Inductive.lean",
+          "inductive": "VInductDecl",
+          "names": [],
+          "note": "stub \u2014 see inductive_stub"
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 3,
+      "thesis_section": "2.6.2"
+    },
+    {
+      "judgment": "\\Gamma;t:F\\vdash \\alpha\\LEctor",
+      "name": "Subsingleton constructor",
+      "note": "Same stub.",
+      "relation": "STUB",
+      "targets": [
+        {
+          "constructors": 0,
+          "file": "Lean4Lean/Theory/Inductive.lean",
+          "inductive": "VInductDecl",
+          "names": [],
+          "note": "stub \u2014 see inductive_stub"
+        }
+      ],
+      "thesis_elided": false,
+      "thesis_rules": 8,
+      "thesis_section": "2.6.2"
+    }
+  ],
+  "rules_by_relation": {
+    "DEFINED-NOT-INDUCTIVE": 1,
+    "FUSED": 17,
+    "PARTIAL": 9,
+    "RESHAPED": 12,
+    "SEMANTIC": 15,
+    "STUB": 17
+  },
+  "schema": "lean-rule-correspondence/1",
+  "spec_commit": "0ba178704380d2fad751f020d461b293f47e36d5",
+  "structural_divergences": [
+    {
+      "consequence": "Per-family rule counts CANNOT be compared 1:1. This is the single biggest reason coverage is not a percentage here.",
+      "id": "typing-defeq-fusion",
+      "what": "The thesis states typing and definitional equality as two judgments; Theory/ fuses them into one inductive `IsDefEq \u0393 e e' A`, with typing recovered as the diagonal `HasType \u0393 e A := IsDefEq \u0393 e e A`."
+    },
+    {
+      "consequence": "Thesis rules for delta/iota/quot have no constructor to match. They are discharged when a declaration is ADMITTED, not when a term is checked.",
+      "id": "environment-carried-defeqs",
+      "what": "`IsDefEq.extra` admits any equation the ENVIRONMENT declares (`env.defeqs`). Delta reduction and the iota/quotient computation rules enter the theory as environment data rather than as inference rules."
+    },
+    {
+      "consequence": "21% of the thesis's kernel-relevant rules describe an ALGORITHM whose specification in Theory/ is a different kind of object. Mirroring them means proving the algorithm decides the semantic relation.",
+      "id": "levels-semantic-not-algorithmic",
+      "what": "The thesis gives 15 algorithmic level rules (equality + order); Theory/ defines the relation semantically by evaluation into \u2115."
+    },
+    {
+      "consequence": "The tier's hard center: unspecified in the thesis AND unmodelled in Theory/, while being kernel-primitive and the site of four live soundness bugs.",
+      "id": "proj-absent",
+      "what": "`VExpr` has 6 constructors; Lean's `Expr` has 12. `proj` has no abstract counterpart at all, and the thesis's grammar does not contain it either."
+    }
+  ],
+  "theory_inductives_total": 33,
+  "thesis_kernel_rules": 71,
+  "vexpr_constructors": 6
+}

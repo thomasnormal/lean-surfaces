@@ -946,6 +946,82 @@ prose is a human judgement nobody has instrumented.** That gap — a
 census-backed, cited correspondence between the thesis's rules and a Lean
 surface — is a contribution this family's apparatus is unusually well suited to
 make, and §8 option (b) is where it lives.
+
+### 7.4 THE CORRESPONDENCE MANIFEST — built, and 24% of the spec maps onto a stub
+
+**Landed as M1 inch 4:** `harness/lean_rule_correspondence.py` →
+`docs/lean-rule-correspondence.json`. This is §5.5's coverage manifest with the
+clause replaced by the rule, and **nobody in the field has one** — the
+correspondence between Carneiro's thesis and Carneiro's formalization is, today,
+a human judgement recorded nowhere.
+
+**The honest split, because a manifest that blurred it would be the drift it
+exists to catch.** MECHANICAL: `Theory/`'s inductive constructor lists, and the
+rule counts joined from `docs/lean-spec-census.json` — both re-derived every run,
+and a change in either is DRIFT. DECLARED: the map from a thesis judgment to a
+`Theory/` inductive, one cited row per family, living in the instrument where a
+reviewer can argue with it. **The instrument refuses if a declared target
+vanishes, if the map and the spec census disagree about which families exist, or
+if the map fails to cover exactly the kernel-relevant rules** — so it cannot rot
+silently.
+
+| thesis family | rules | relation | realized by |
+| --- | ---: | --- | --- |
+| Typing | 7 | **FUSED** | `IsDefEq` (13 ctors) |
+| Definitional equality | 10 | **FUSED** | `IsDefEq` (same inductive) |
+| Is-a-type | 1 | defined, not inductive | `IsType` is a `def` |
+| Context well-formedness | 2 | reshaped | `Lookup`, `Ctx.LiftN` |
+| Level equality | 1 | **SEMANTIC** | `VLevel` |
+| Level order | 14 | **SEMANTIC** | `VLevel` |
+| Algorithmic defeq | 9 | partial | `IsDefEqStrong` |
+| Head reduction | 10 **(elided)** | reshaped | `WHRed` (4), `StRed` (6) |
+| Inductive specification | 1 | **STUB** | `VInductDecl` — 0 |
+| Constructor | 5 **(elided)** | **STUB** | `VInductDecl` — 0 |
+| Large elimination | 3 | **STUB** | `VInductDecl` — 0 |
+| Subsingleton constructor | 8 | **STUB** | `VInductDecl` — 0 |
+
+**Rules by relation, and this is the headline:**
+
+| relation | rules | share |
+| --- | ---: | ---: |
+| **STUB** — no abstract specification exists | **17** | **24%** |
+| FUSED into one inductive | 17 | 24% |
+| SEMANTIC — replaced by a semantic relation | 15 | 21% |
+| RESHAPED | 12 | 17% |
+| PARTIAL | 9 | 13% |
+| defined, not inductive | 1 | 1% |
+
+> **Seventeen of the thesis's 71 kernel-relevant rules — one in four — map onto
+> a file that is 7 lines long and contains two `sorry`s.** Measured, not
+> characterized: `Theory/Inductive.lean` has 4 non-blank lines, and both of them
+> that matter are `def VInductDecl.WF … := sorry` and
+> `def VEnv.addInduct … := sorry`.
+
+**COVERAGE IS DELIBERATELY NOT A PERCENTAGE**, and the instrument says so in its
+own output. The two artifacts are not in a 1:1 relation, for three structural
+reasons the manifest records separately from any row:
+
+1. **Typing/defeq fusion.** `HasType` is *defined* as the diagonal of `IsDefEq`.
+   Two thesis judgments, one inductive — so per-family counts cannot be compared
+   directly, and any "N of 71 rules covered" figure would be arithmetic on
+   incomparable things.
+2. **Environment-carried defeqs.** `IsDefEq.extra` admits whatever equations the
+   *environment* declares. **Delta, iota and quotient computation enter the
+   theory as environment data rather than as inference rules** — so those thesis
+   rules have no constructor to match, and are discharged when a declaration is
+   *admitted* rather than when a term is *checked*. This is a genuinely elegant
+   design and it makes naive rule-counting meaningless.
+3. **Levels are semantic, not algorithmic.** The thesis's 15 level rules describe
+   an algorithm; `Theory/` defines the relation that algorithm is meant to
+   decide. Mirroring them means *proving the algorithm decides it* — which is a
+   theorem, not a transcription, and it is why HEAD's coNP-hardness result
+   (§6.2) is in this area.
+
+**What the manifest is FOR, stated so it is not mistaken for a scoreboard.** It
+does not say lean4lean is 24% incomplete — it says *where the specification
+work is*, in the spec's own units, with a citation per row and a drift guard.
+That is the artifact option (b) needs on day one and the one this tier can build
+before writing a line of semantics.
 ---
 
 ## 8 THE CONVERGENCE: four measurements, one construct
@@ -1303,7 +1379,7 @@ start before Thomas decides:
 | **1** | **the kernel-vocabulary census + instrument. LANDED** (this dispatch) | the vocabulary is the vocabulary under every option |
 | 2 | **the toolchain reconciliation, measured**: install `v4.33.0-rc2`, build `lean4lean` under the lock, run its own test suite. Report buildability — currently **NOT MEASURED** | every option needs a working checker on this box |
 | 3 | **the spec-rule instrument** — `harness/lean_spec_census.py` over the thesis LaTeX at pinned `master 0ba1787`, emitting the **71 kernel-relevant rules** with `--compare`. **LANDED** (this dispatch) | item 3 of option (b) and §5.5's manifest; the only artifact that makes any spec-mirror claim checkable |
-| 4 | **the correspondence gate** — map the 71 rules onto `Theory/`'s definitions and publish the coverage. The hard part is named in §7.1: with only 5 rules named in the source, the mapping is a cited manifest, not a name match | the deliverable nobody in the field has |
+| 4 | **the correspondence gate** — map the 71 rules onto `Theory/`'s definitions and publish the coverage. **LANDED** (this dispatch, §7.4): 24% of the spec maps onto a 7-line stub | the deliverable nobody in the field has |
 | 5 | **the axiom-dependency instrument** — for a given environment, report which theorems depend on a native computation and which one. Option (d)'s first artifact | a `#print axioms` refinement; useful under every option, and it is the receipt §0.1 II(a) asks a rung-3 use to carry |
 | 6 | **the reflexive gate** — run an independent checker over this repository's own `.olean`s in CI, `maybe`-guarded | §10.5's cheapest honest form; pure gain, no theorem required |
 
@@ -1369,6 +1445,14 @@ no ISO editions, no ECMA years. The honest options are a release-pinned token
 
 ## 13 WHAT LANDED WITH THIS CHARTER
 
+* **`harness/lean_rule_correspondence.py`** — the spec-mirror correspondence
+  manifest (M1 inch 4): §5.5's coverage artifact with the clause replaced by the
+  rule. Mechanical on both sides, with the editorial map declared in-instrument
+  and guarded three ways. `--compare`, double-run byte-identical, **five refusal
+  paths RUN**.
+* **`docs/lean-rule-correspondence.json`** — its output. **17 of 71
+  kernel-relevant rules (24%) map onto a stub**; coverage deliberately not
+  reported as a percentage, with the three structural reasons recorded.
 * **`harness/lean_spec_census.py`** — the spec-rule instrument (M1 inch 3).
   Pinned-commit enforcement with a deliberate `--allow-unpinned` override,
   `--compare`, double-run byte-identical, **six refusal paths RUN**. Declares its

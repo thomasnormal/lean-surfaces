@@ -20807,3 +20807,79 @@ rebuilt here — so its incremental cost is near zero, and it will only start
 consuming real blocks when that build runs. No downloads were made; the
 ACATS and ARM copies died with the scratchpad and are re-fetchable, and
 under A11's `df` rule they will not be re-fetched without checking first.
+## L87 — 4a STEP 1: `SStmt` GAINS THE THREE SUSPENSION FORMS, and the stepper is HELD OUT OF THE BUILD because its subsumption lemma is not closed (2026-08-22)
+
+R1 inch 4a, first step. `SelfCheck.SStmt` gains `delay`/`waitEvent`/`waitCond`
+plus a new `Edge` type, per the measured extend-don't-invent decision of
+[docs/sv-r1-scheduler.md](sv-r1-scheduler.md) §9.11.
+
+**Why `SStmt` and not `Ast.Stmt`, measured rather than asserted.** `Ast.Stmt`
+has five constructors matched EXHAUSTIVELY by the M0 interpreter and by the
+156-declaration trace-shaped estate; adding a case breaks every match at once.
+`SStmt` is referenced in **exactly one file** (`grep -rl SStmt LeanModels/
+Examples/` → `SelfCheck.lean` alone), carries **zero** proof-carrying
+declarations and 22 match arms. So extending `Stmt` is catastrophic and
+extending `SStmt` is one file with nothing to re-prove — and `SStmt` already
+carries the two things 4a needs most, `.sysCall` (`$display`/`$write`, **92.7%**
+of the corpus) and `.finish` (**97.0%**).
+
+**The three forms are deliberately NOT executable by `execSStmt`** — they
+return `.unsupported` naming the reason. That is not a stub: the self-check
+tier runs at time 0 with no scheduler, so reaching one really is out of tier,
+which is exactly the contract this module's docstring already stated for
+`#delay`. Behaviour of every existing test is unchanged.
+
+**`Edge` is a NEW TYPE, not a new constructor** — and it had to be, because the
+M0 tier has no notion of an edge at all: `Process.alwaysFF (clock : String)`
+hardcodes posedge and the extractor rejects anything else. Verified no name
+clash anywhere in `LeanModels/` or `Examples/`.
+
+**THE STEPPER IS WRITTEN, COMPILES, AND IS DELIBERATELY NOT IN THE BUILD.**
+`docs/sv-step-wip.lean` carries `Trigger`, `StepOutcome` and the mutually
+recursive `stepSStmt`/`stepSStmts` — suspension as a RETURN VALUE with the
+defunctionalized continuation (the residual statement list) as data, per §9.3.
+The definitions elaborate cleanly. **The subsumption lemma does not close yet**,
+and this lane's own rule (§9.3: *"the two must not both exist unreconciled"*)
+says a second interpreter over `SStmt` must not enter the built tree without
+it. The repo also bans `sorry`. So the file lives under `docs/`, which
+`lakefile.toml`'s globs (the `LeanModels` lib root and `Examples.+`)
+deliberately exclude — the same device `docs/mvcgen-pilot.lean` uses. **Written
+down rather than lost, and out of the build rather than half-landed.**
+
+The obligation is stated in the file: *whenever the stepper finishes without
+suspending, it agrees with the executor that was already there*, so
+`execSStmts` is RECOVERED as the non-suspending case rather than superseded.
+Notably it needs no syntactic `isTriggerFree` predicate — "did not suspend" is
+a fact about the RUN, weaker to assume and stronger to conclude than "contains
+no suspension syntax" (a body may carry a `#delay` on a branch not taken and
+the lemma still applies).
+
+**Where the proof stands, so the next session resumes from the real state.**
+Both directions go by `match fuel`, then `rw [stepSStmt.eq_def] at h` **with the
+goal left FOLDED** — unfolding `execSStmt` up front is wrong, because the leaf
+case delegates to `execSStmt (fuel + 1)` and needs the goal still applied. The
+six branches split as: `h_1`-`h_3` suspension (contradictory), `h_4` `ifStmt`
+(case `evalSExpr`, `by_cases` on `condTrue`, then the IH), `h_5` `block` (the
+other IH directly), `h_6` the delegating leaves. **The residual obstacle is
+bind-reduction bookkeeping**: `Res`'s `Monad` bind is an anonymous instance
+field, not a named constant, so `simp only [bind, Res.bind]` does not exist and
+plain `simp` oscillates between "no progress" and over-reducing the `do` block.
+**The fix is to land a small set of `@[simp]` lemmas for `Res`'s bind on
+`.ok`/`.timeout`/`.unsupported` in `Semantics.lean` first**; both directions
+should then be routine. That is the next inch.
+
+### Triad
+
+**NOT RUN, and deliberately so.** Amendment 11 landed mid-session: the lock now
+covers ALL Lean execution, and the machine was at **load 40.9** with Thomas's
+training holding absolute priority. This lane ran **zero** Lean processes after
+the amendment (verified by `ps`: the live `lean` processes belong to
+`lean-basecase` and `ada-lane`, none to `lean-sv`).
+
+What IS verified, before the amendment, under `nice -n 19` and
+`LEAN_NUM_THREADS=2`: `lake env lean LeanModels/Sv/SelfCheck.lean` **exit 0**
+with all **50** `#guard`s elaborating, and `lake env lean docs/sv-step-wip.lean`
+**exit 0**. **The full-tree triad is OWED** and is the first thing this lane
+takes a ticket for. The tree-level risk is argued, not assumed: `SStmt` is
+named in one file only, so no dependent matches on it, and `Edge` clashes with
+nothing.

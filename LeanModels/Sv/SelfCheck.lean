@@ -150,6 +150,17 @@ def SExpr.mkConcat (parts : Array SExpr) : SExpr :=
 
 /-! ## Self-check statements -/
 
+/-- Edge sensitivity for event control (`@`).
+
+Introduced for R1's scheduler (`docs/sv-r1-scheduler.md` §9.11). The M0
+tier has no notion of an edge at all: `Process.alwaysFF (clock : String)`
+hardcodes `posedge` and the extractor rejects anything else. So this is a
+NEW type rather than a new constructor of an existing one, and nothing
+existing matches on it. -/
+inductive Edge where
+  | pos | neg | any
+deriving Repr, BEq, DecidableEq, Inhabited
+
 /-- Self-check statements: M0 `Stmt` embedded as a leaf (`.m0`, executed by
 the existing `execStmt`; statement-level `Unsupported` arrives as
 `.m0 (.unsupported …)`) plus the §f extensions. `sysCall` args carry the
@@ -164,6 +175,27 @@ inductive SStmt where
   | sysCall (write : Bool) (format : Option String) (args : Array (SExpr × Bool))
   | finish  -- `$finish` and `$stop`: halt the run cleanly
   | skip    -- `;` (Empty)
+  /-- `#d` — delay control; suspends until `amount` time units pass.
+
+  R1 SUSPENSION FORM. These three constructors are the points at which an
+  IEEE 1800 process can pause mid-body. They live on `SStmt` rather than
+  on `Ast.Stmt` because `Ast.Stmt` is matched EXHAUSTIVELY by the M0
+  interpreter and by the 156-declaration trace-shaped estate, whereas
+  `SStmt` is matched in this file alone and carries no proofs
+  (`docs/sv-r1-scheduler.md` §9.11).
+
+  They are deliberately NOT executable by `execSStmt`: the self-check tier
+  runs at time 0 with no scheduler, so reaching one is out of tier and is
+  LOUD — exactly the contract this module's docstring already states for
+  `#delay`. The resumable stepper that DOES handle them is
+  `LeanModels/Sv/Step.lean`. -/
+  | delay (amount : Nat)
+  /-- `@(posedge sig)` / `@(negedge sig)` / `@(sig)` — event control.
+  R1 suspension form; see `delay`. -/
+  | waitEvent (sig : String) (edge : Edge)
+  /-- `wait (cond)` — level-sensitive wait. R1 suspension form; see
+  `delay`. -/
+  | waitCond (cond : SExpr)
 deriving Repr, BEq, Inhabited
 
 def SStmt.mkAssign (nonblocking : Bool) (target : String) : SExpr → SStmt
@@ -426,6 +458,12 @@ def execSStmt (fuel : Nat) (st : SvState) (nba : NbaQueue) (out : Out)
             | some s => execSStmt fuel st nba out s
             | none => .ok (st, nba, out)
       | .block body => execSStmts fuel st nba out body.toList
+      | .delay _ =>
+          .unsupported "#delay: the self-check tier runs at time 0 (no scheduler)"
+      | .waitEvent _ _ =>
+          .unsupported "@(event): the self-check tier runs at time 0 (no scheduler)"
+      | .waitCond _ =>
+          .unsupported "wait(cond): the self-check tier runs at time 0 (no scheduler)" 
       | .localDecl name width twoState init => do
           let v ← match init with
             | none => pure (if twoState then LVec.ofNat width 0 else LVec.xVec width)

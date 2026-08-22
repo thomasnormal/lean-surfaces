@@ -125,8 +125,11 @@ structure Kont where
   fuel : Nat
   /-- Call a module-level function or method by qualified name. -/
   call : String → Array RVal → SemW RVal
-  /-- Call a closure/nested def by its heap representation. -/
-  callClo : Addr → Array RVal → SemW RVal
+  /-- Call a closure/nested def by its heap address. Takes the CALLER's locals
+  because `cellsFor` resolves the snapshot's cell directory against them — the
+  trunk passes `st.locals` here and dropping it would silently resolve captures
+  against an empty frame. -/
+  callClo : REnv → Addr → Array RVal → SemW RVal
   /-- `{k₁: v₁, k₂: v₂, …}` — the LOCKSTEP walk of two parallel expression
   lists. It rides here not because it needs fuel but because no single
   STRUCTURAL measure covers two parallel lists (Eval.lean §0.5); routing it
@@ -141,6 +144,14 @@ structure Kont where
   forList : Expr → Addr → Nat → List Stmt → SemF RFlow
   /-- Advance a generator one yield. -/
   stepIter : Addr → SemW (Option RVal)
+  /-- THE CONTINUATION WALKER: run a generator body from its defunctionalized
+  continuation to the next `yield`. Mutually fuel-recursive with `stepIter` — a
+  generator consuming a generator re-enters through a `forGen` frame — so both
+  ride the record and both step down one fuel level per re-entry, which is
+  exactly the trunk's `execGen m fuel` / `stepIter m fuel` re-expressed. -/
+  execGen : GenCont → SemF (Option (RVal × GenCont))
+  /-- `for target in <generator>: body` — the LAZY cursor. -/
+  forGen : Expr → Addr → List Stmt → SemF RFlow
   /-- Drain a generator to exhaustion (`sorted`/`max`/`min`/`sum`/`list`). -/
   drainIter : Addr → SemW (List RVal)
   /-- `any`/`all` over a generator: short-circuits, leaves it SUSPENDED. -/
@@ -152,12 +163,14 @@ which is exactly the property the plan's fuel ruling turns into a theorem. -/
 def Kont.bottom : Kont where
   fuel        := 0
   call        := fun _ _   => exhausted
-  callClo     := fun _ _   => exhausted
+  callClo     := fun _ _ _ => exhausted
   dictItems   := fun _ _   => exhausted
   whileLoop   := fun _ _ _ => exhausted
   forSeq      := fun _ _ _ => exhausted
   forList     := fun _ _ _ _ => exhausted
   stepIter    := fun _     => exhausted
+  execGen     := fun _     => exhausted
+  forGen      := fun _ _ _ => exhausted
   drainIter   := fun _     => exhausted
   anyAllIter  := fun _ _   => exhausted
 

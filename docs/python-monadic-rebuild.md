@@ -580,8 +580,33 @@ untouched.
 
 **The knot** — `callInM` (guard order: parameter features, static-locals rule,
 arity, generator fork), `whileLoop`, `forSeq`, `forList` (the LIVE index cursor,
-referent re-read every step, with the trunk's six referent arms), and
-`dictItems` (§2.2).
+referent re-read every step, with the trunk's six referent arms), `dictItems`
+(§2.2), and the whole GENERATOR engine.
+
+**Generators (H4), complete.** `Obj.generator` carries a DEFUNCTIONALIZED
+continuation — a stack of `GenFrame`s, each a structural suffix of the body plus
+that loop's residual state — so the frame stack replaces the Lean call stack and
+`yield` is admitted in statement position. `stepIter`, `execGen`, `forGen`,
+`drainIter` and `anyAllIter` are all ORDINARY non-recursive functions of `K`:
+every continuation step goes through a `Kont` field, i.e. one fuel level down,
+which is precisely the trunk's `execGen m fuel` recursion re-expressed. **That is
+§2.2's block-split trick reused on a genuinely fuel-bounded knot** rather than a
+structural one — the same mechanism paying twice.
+
+Two details are worth naming because they are observable. An exception
+propagating out of a resume **closes** the generator (CPython marks the frame
+finished, so every later `next()` is exhaustion) — never `suspended`, never stuck
+`running`; in the trunk that needs a bespoke `Run.bindE` combinator, and here it
+is `tryCatch`. And `any`/`all` over a generator short-circuit and leave it
+**suspended**, so they are routed away from the shared drain: a later `next()`
+sees the partial consumption, and draining instead would be a wrong answer about
+state rather than a missing feature.
+
+**Closures (H7).** `defStmt` snapshots the captures, allocates `Obj.closure` and
+binds the name; the call path resolves the cell directory through `cellsFor`
+against the **caller's** locals — threaded explicitly through `Kont.callClo`,
+because the world-typed field alone would have resolved captures against an empty
+frame.
 
 ### 6.1 THE EXCEPTIONS TIER IS WHERE THE SUBSTRATE PAYS FOR ITSELF
 
@@ -627,27 +652,23 @@ from any position and leaves the positional order alone.
 method calls first; the buckets put class instantiation first and method calls
 third, which is exactly why the ranking is a measurement.
 
-1. **Class instantiation — 111 rows.** The single biggest bucket, and it comes
-   with `execAttrCall`'s `.instMethod` path, so it and item 2 share most of their
-   work. Do them together.
-2. **Method calls — 78 rows.** The `attrCallPlan` fork lifts nearly verbatim and
-   the free-scrutinee discipline is already in place for it (§2.3).
-3. **Generators — 88 rows** (plus `enumerate` 22, `count` 5, `next` 2 = **117**
-   once the five `Kont` fields exist). The largest single piece and the only one
-   that grows the fueled knot; ranked third because items 1–2 are cheaper per row.
-4. **The dict display — 53 rows** (§2.2). The only *architectural* debt in the
-   list; try the block split first. Everything else here is transliteration.
-5. **Keyword arguments — 36 rows.** `mergeKwArgs` exists; the arm is a fork.
-6. **Closures — 34 rows**, then the statement tail: `try`/`except` 24,
-   `assert` 21, `del` 11, `raise` 5.
-7. **The remaining builtins — 23 rows** (`set` 16, `all` 4, `any` 2, `max` over a
-   referent 1). Mechanical; the workers all exist.
-8. **The script executor.** Until `runScript` is rebuilt the script half of the
-   gate reads 65/65 failed and cannot be scored at all. Sequence it once the
-   closed-function surface is mostly green — its value is gated on that.
+**Ten of the nineteen buckets are closed**, covering ~475 of the 548 frontier
+rows: class instantiation (111), generators (88 + `enumerate` 22 + `count` 5 +
+`next` 2), method calls (78), dict displays (53), closures (34), namedtuple
+construction (33), try/except (24), assert (21), set (16), del (11), raise (5),
+any/all (6). What is left, in measured order:
 
-Items 1–3 alone are **306 of the 548 frontier rows**, and none of them is
-architectural.
+1. **Keyword arguments — 36 rows.** `mergeKwArgs` exists; the arm is a fork, and
+   it touches every callee kind (module def, method, class, namedtuple, builtin).
+2. **The small tail — ~5 rows.** Statically-poisoned module bindings (2), live
+   module bindings, `max`/`min` over a heap referent (1).
+3. **The script executor.** Until `runScript` is rebuilt the script half of the
+   gate reads 65/65 failed and cannot be scored at all. It is ~900 lines and it
+   is now the single largest remaining artifact — and with the closed-function
+   surface nearly green, its sequencing gate has been met.
+
+Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
+and does not need in order to be measured.
 
 Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
 and does not need in order to be measured.

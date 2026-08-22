@@ -184,7 +184,7 @@ var builtinNames = map[string]bool{
 
 func main() {
 	var paths []string
-	var out, compare, root string
+	var out, compare, root, ladder, kindsets string
 	args := os.Args[1:]
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -206,12 +206,24 @@ func main() {
 				die(2, "--compare needs a path")
 			}
 			compare = args[i]
+		case "--kindsets":
+			i++
+			if i >= len(args) {
+				die(2, "--kindsets needs an output path")
+			}
+			kindsets = args[i]
+		case "--ladder":
+			i++
+			if i >= len(args) {
+				die(2, "--ladder needs a baseline census JSON")
+			}
+			ladder = args[i]
 		default:
 			paths = append(paths, args[i])
 		}
 	}
 	if len(paths) == 0 {
-		die(2, "usage: construct_census.go <path>... [-o out.json] [--compare ref.json]")
+		die(2, "usage: construct_census.go <path>... [-o out.json] [--compare ref.json] [--ladder base.json]")
 	}
 
 	files, err := collect(paths)
@@ -220,6 +232,15 @@ func main() {
 	}
 	if len(files) == 0 {
 		die(2, fmt.Sprintf("no .go files found under %v", paths))
+	}
+
+	if kindsets != "" {
+		runKindSets(files, kindsets, root)
+		return
+	}
+	if ladder != "" {
+		runLadder(files, ladder)
+		return
 	}
 
 	c := newCensus()
@@ -509,4 +530,176 @@ func contains(xs []string, s string) bool {
 func die(code int, msg string) {
 	fmt.Fprintf(os.Stderr, "construct_census: %s\n", msg)
 	os.Exit(code)
+}
+
+// ---------------------------------------------------------------- ladder
+//
+// THE REACH LADDER.  Which node kinds unlock the most real code?
+//
+// The census aggregates kinds across a corpus, which answers "what is in
+// there" but NOT "what would I have to build next".  A file is reachable
+// only when EVERY kind it uses is modelled, so reach is a property of a
+// file's whole kind SET, and adding a kind unlocks a file only when it was
+// that file's LAST missing one.  This mode computes the greedy ladder: at
+// each step add the single kind that unblocks the most still-blocked files.
+//
+// It mirrors docs/c23-goal.md §4, which computed the same curve for C and
+// found the decision-relevant result there too — the ladder above the
+// baseline is SHORT.  The baseline is read from a census JSON so the rung-0
+// driver's own vocabulary is the starting point rather than a guess.
+
+type ladderStep struct {
+	Kind          string `json:"kind"`
+	NewlyCovered  int    `json:"newly_covered"`
+	CumulativeHit int    `json:"cumulative_covered"`
+	FilesUsing    int    `json:"files_using_kind"`
+}
+
+func runLadder(files []string, baselinePath string) {
+	blob, err := os.ReadFile(baselinePath)
+	if err != nil {
+		die(2, fmt.Sprintf("cannot read baseline %s: %v", baselinePath, err))
+	}
+	var base struct {
+		NodeKinds map[string]int `json:"node_kinds"`
+	}
+	if err := json.Unmarshal(blob, &base); err != nil {
+		die(2, fmt.Sprintf("baseline %s is not a census JSON: %v", baselinePath, err))
+	}
+	if len(base.NodeKinds) == 0 {
+		die(4, "baseline census lists ZERO node kinds — that is an instrument fault, not a finding")
+	}
+	have := map[string]bool{}
+	for k := range base.NodeKinds {
+		have[k] = true
+	}
+
+	// Per-file kind sets. A file that does not parse is SKIPPED and
+	// counted, never silently treated as an empty (and therefore
+	// trivially reachable) file — that would flatter every number below.
+	var sets []map[string]bool
+	unparsed := 0
+	for _, f := range files {
+		ks, err := fileKindSet(f)
+		if err != nil {
+			unparsed++
+			continue
+		}
+		sets = append(sets, ks)
+	}
+	if len(sets) == 0 {
+		die(4, "no file yielded a kind set")
+	}
+
+	blocked := func(known map[string]bool) (covered int, missing map[string]int) {
+		missing = map[string]int{}
+		for _, ks := range sets {
+			var miss []string
+			for k := range ks {
+				if !known[k] {
+					miss = append(miss, k)
+				}
+			}
+			if len(miss) == 0 {
+				covered++
+				continue
+			}
+			// Only a file's LAST missing kind can be unlocked by one
+			// addition, so a file with two or more gaps votes for none.
+			if len(miss) == 1 {
+				missing[miss[0]]++
+			}
+		}
+		return
+	}
+
+	usage := map[string]int{}
+	for _, ks := range sets {
+		for k := range ks {
+			usage[k]++
+		}
+	}
+
+	known := map[string]bool{}
+	for k := range have {
+		known[k] = true
+	}
+	cov0, _ := blocked(known)
+
+	var steps []ladderStep
+	for {
+		_, miss := blocked(known)
+		best, bestN := "", 0
+		for k, n := range miss {
+			if n > bestN || (n == bestN && k < best) {
+				best, bestN = k, n
+			}
+		}
+		if best == "" || bestN == 0 {
+			break
+		}
+		known[best] = true
+		cov, _ := blocked(known)
+		steps = append(steps, ladderStep{best, bestN, cov, usage[best]})
+	}
+
+	out := struct {
+		Schema        string       `json:"schema"`
+		Baseline      string       `json:"baseline"`
+		BaselineKinds int          `json:"baseline_kind_count"`
+		Files         int          `json:"files"`
+		Unparsed      int          `json:"files_unparsed_skipped"`
+		BaselineCover int          `json:"baseline_files_covered"`
+		Steps         []ladderStep `json:"ladder"`
+	}{"go-ladder-0.1", filepath.ToSlash(baselinePath), len(have), len(sets), unparsed, cov0, steps}
+
+	b, _ := json.MarshalIndent(out, "", "  ")
+	os.Stdout.Write(append(b, '\n'))
+}
+
+func fileKindSet(path string) (map[string]bool, error) {
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, src, parser.ParseComments|parser.SkipObjectResolution)
+	if err != nil {
+		return nil, err
+	}
+	ks := map[string]bool{}
+	ast.Inspect(f, func(n ast.Node) bool {
+		if n != nil {
+			ks[kindOf(n)] = true
+		}
+		return true
+	})
+	return ks, nil
+}
+
+// runKindSets dumps one line per file: "<path>\t<kind>,<kind>,...".
+// The ladder answers one question; this lets any candidate scope be
+// SCORED without re-parsing 5,419 files, which is what makes a rung's
+// boundary a measurement rather than a preference.
+func runKindSets(files []string, outPath, root string) {
+	c := &Census{root: root}
+	var b strings.Builder
+	skipped := 0
+	for _, f := range files {
+		ks, err := fileKindSet(f)
+		if err != nil {
+			skipped++
+			continue
+		}
+		names := make([]string, 0, len(ks))
+		for k := range ks {
+			names = append(names, k)
+		}
+		sort.Strings(names)
+		fmt.Fprintf(&b, "%s\t%s\n", c.name(f), strings.Join(names, ","))
+	}
+	if err := os.WriteFile(outPath, []byte(b.String()), 0o644); err != nil {
+		die(1, err.Error())
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s (%d files, %d unparsed skipped)\n", outPath, len(files)-skipped, skipped)
 }

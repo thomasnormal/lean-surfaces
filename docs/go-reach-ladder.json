@@ -1,0 +1,154 @@
+{
+  "schema": "go-ladder-0.1",
+  "baseline": "docs/go-construct-census.json",
+  "baseline_kind_count": 28,
+  "files": 5419,
+  "files_unparsed_skipped": 0,
+  "baseline_files_covered": 512,
+  "ladder": [
+    {
+      "kind": "ReturnStmt",
+      "newly_covered": 97,
+      "cumulative_covered": 609,
+      "files_using_kind": 3743
+    },
+    {
+      "kind": "StarExpr",
+      "newly_covered": 147,
+      "cumulative_covered": 756,
+      "files_using_kind": 3820
+    },
+    {
+      "kind": "IfStmt",
+      "newly_covered": 171,
+      "cumulative_covered": 927,
+      "files_using_kind": 3910
+    },
+    {
+      "kind": "ArrayType",
+      "newly_covered": 115,
+      "cumulative_covered": 1042,
+      "files_using_kind": 3437
+    },
+    {
+      "kind": "CompositeLit",
+      "newly_covered": 89,
+      "cumulative_covered": 1131,
+      "files_using_kind": 2981
+    },
+    {
+      "kind": "KeyValueExpr",
+      "newly_covered": 91,
+      "cumulative_covered": 1222,
+      "files_using_kind": 1931
+    },
+    {
+      "kind": "DeclStmt",
+      "newly_covered": 96,
+      "cumulative_covered": 1318,
+      "files_using_kind": 2578
+    },
+    {
+      "kind": "IndexExpr",
+      "newly_covered": 139,
+      "cumulative_covered": 1457,
+      "files_using_kind": 2547
+    },
+    {
+      "kind": "ParenExpr",
+      "newly_covered": 131,
+      "cumulative_covered": 1588,
+      "files_using_kind": 1732
+    },
+    {
+      "kind": "SliceExpr",
+      "newly_covered": 117,
+      "cumulative_covered": 1705,
+      "files_using_kind": 1686
+    },
+    {
+      "kind": "DeferStmt",
+      "newly_covered": 123,
+      "cumulative_covered": 1828,
+      "files_using_kind": 1057
+    },
+    {
+      "kind": "StructType",
+      "newly_covered": 148,
+      "cumulative_covered": 1976,
+      "files_using_kind": 2391
+    },
+    {
+      "kind": "TypeSpec",
+      "newly_covered": 621,
+      "cumulative_covered": 2597,
+      "files_using_kind": 2223
+    },
+    {
+      "kind": "BranchStmt",
+      "newly_covered": 310,
+      "cumulative_covered": 2907,
+      "files_using_kind": 1605
+    },
+    {
+      "kind": "MapType",
+      "newly_covered": 253,
+      "cumulative_covered": 3160,
+      "files_using_kind": 926
+    },
+    {
+      "kind": "TypeAssertExpr",
+      "newly_covered": 244,
+      "cumulative_covered": 3404,
+      "files_using_kind": 1065
+    },
+    {
+      "kind": "Ellipsis",
+      "newly_covered": 211,
+      "cumulative_covered": 3615,
+      "files_using_kind": 578
+    },
+    {
+      "kind": "InterfaceType",
+      "newly_covered": 143,
+      "cumulative_covered": 3758,
+      "files_using_kind": 378
+    },
+    {
+      "kind": "LabeledStmt",
+      "newly_covered": 61,
+      "cumulative_covered": 3819,
+      "files_using_kind": 232
+    },
+    {
+      "kind": "IndexListExpr",
+      "newly_covered": 40,
+      "cumulative_covered": 3859,
+      "files_using_kind": 64
+    },
+    {
+      "kind": "SwitchStmt",
+      "newly_covered": 2,
+      "cumulative_covered": 3861,
+      "files_using_kind": 1442
+    },
+    {
+      "kind": "CaseClause",
+      "newly_covered": 1212,
+      "cumulative_covered": 5073,
+      "files_using_kind": 1557
+    },
+    {
+      "kind": "TypeSwitchStmt",
+      "newly_covered": 342,
+      "cumulative_covered": 5415,
+      "files_using_kind": 342
+    },
+    {
+      "kind": "EmptyStmt",
+      "newly_covered": 4,
+      "cumulative_covered": 5419,
+      "files_using_kind": 4
+    }
+  ]
+}

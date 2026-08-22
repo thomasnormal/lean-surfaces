@@ -21654,3 +21654,49 @@ a definition wholesale owes `twinAgrees` exactly as before.
 — the point past which a single statement is too entangled with the interpreter
 to transport. Until that number exists, "likely never" is a measured expectation
 and not a closure, so the item stays **registered rather than retired**.
+
+### THE BORROWED-CLONE RULE COMPLETES — seeding inherits the REMOTES too
+
+The pycomplete lane paid a full tenure for the half this lane had only noted in
+passing. `cp -Rpc` seeding inherits **both remotes**, and in the seeded clones
+**`origin` points at a stale local BUNDLE (2026-08-14)**. Consequences, all
+silent:
+
+* `git reset --hard origin/master` **lands a tree eight days back**;
+* `git rev-list HEAD..origin/master` reports **0** — nothing to pull, because it
+  is comparing against the bundle;
+* a feature branch reads **"238 commits ahead"**.
+
+**That last one EXPLAINS the audit's branch-hygiene observation — same root
+cause.** What looked like several lanes drifting onto feature branches was one
+seeding defect wearing three different faces. This is the second time in this
+document's history that several apparent problems collapsed to one; it is worth
+naming as a habit: **when three lanes report three symptoms in the same week,
+check whether they are one cause before fixing three things.**
+
+> **A seeded or borrowed clone's identity — BRANCH AND REMOTES BOTH — is
+> INHERITED, not chosen.**
+
+After seeding: `git remote -v` **and** `git branch --show-current`, and
+compare/reset **only against `github/master`** — never `origin`, which in a
+seeded clone is not what the name implies. **Four lanes, one root cause**, this
+lane's own §7.2 incident among them.
+
+### §7.1a — TWO AMENDMENTS OBSERVED FIRING (an amendment that never fires is a design, not a control)
+
+* **A7's owner-conditional trap refused to release a taken-over lock TWICE**,
+  printing *"NOT RELEASING: not my lock"* — the exact scenario A7 exists for, a
+  surviving trap pointed at a lock somebody else now holds. Attributed
+  accurately: observed in a lane's **own** A7 implementation; checked that
+  `tools/triad.sh` implements the same rule but does not carry that wording.
+* **The 143/137 resource-kill retry came back GREEN on attempt 2.** Verified in
+  `tools/triad.sh` (lines 343-348): those exits are treated as a resource kill
+  and the build re-runs once — base rule 2 firing as designed, rather than a
+  lane deciding a red was spurious.
+
+**And a detail worth carrying beyond §7**: the wrapper **asserts success
+POSITIVELY**, grepping for `Build completed successfully` rather than grepping
+for errors, because *an argument error and a resource kill both emit no line the
+failure greps look for, and "no error found" must never read as "the build
+happened".* That is **§5.4a implemented rather than described** — the provenance
+law living in a script instead of in prose, which is exactly the audit's thesis.

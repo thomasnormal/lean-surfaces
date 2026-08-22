@@ -2738,6 +2738,25 @@ pointed at a *re-created* lock would delete an active holder's lock and
 stampede the queue. Observed working in the wild — a lane whose lock had
 been handed on exited without removing anything.
 
+**OBSERVED WORKING, this session** — recorded because an amendment that has
+never fired is a design, not a control:
+
+* **A7's owner-conditional trap refused to release a taken-over lock
+  TWICE**, printing *"NOT RELEASING: not my lock"*. That is the exact
+  scenario A7 exists for — a surviving trap pointed at a lock somebody else
+  now holds — and it declined, twice. (Observed in a lane's own A7
+  implementation; `tools/triad.sh` implements the same rule.)
+* **The 143/137 resource-kill retry came back GREEN on attempt 2.**
+  `tools/triad.sh` treats those exits as a resource kill rather than a red
+  build and re-runs once, which is base rule 2 firing as designed rather
+  than a lane deciding a red was spurious.
+
+**And the wrapper asserts success POSITIVELY**, which is §5.4a implemented
+rather than described: it greps for `Build completed successfully` instead
+of grepping for errors, because — in its own words — *an argument error and
+a resource kill both emit no line the failure greps look for, and "no error
+found" must never read as "the build happened".*
+
 **AMENDMENT 9 — a FIFO TICKET QUEUE, because the spinlock starves.**
 Measured cause: the lock changed hands between four lanes while one
 watched, and **a lane that releases and immediately re-acquires beats a
@@ -2798,11 +2817,29 @@ compares **HEAD**, not the ref you are about to push. So:
 * **push `HEAD:master`**, never bare `master`, which pushes the local ref
   rather than the work in hand.
 
-This lane hit the same trap independently and from the other direction
-(§7.2's clone incident): a clone whose `origin` was a stale bundle and
-whose branch tracked `pyrebuild-monadic`. Three lanes, one root cause —
-**a seeded or borrowed clone's identity is inherited, not chosen, so it
-must be verified rather than assumed.**
+**AND SEEDING INHERITS THE REMOTES TOO — the rule's complete form.** A
+fourth lane paid a full tenure for the other half: in the seeded clones
+**`origin` points at a stale local BUNDLE** (2026-08-14), so
+
+* `git reset --hard origin/master` **silently lands a tree eight days
+  back**, and
+* `git rev-list HEAD..origin/master` reports **0** — nothing to pull,
+  because it is comparing against the bundle, and
+* a feature branch reads **"238 commits ahead"**, which looks like a
+  branch-hygiene problem and is not.
+
+**That last line explains the audit's branch-hygiene observation: same root
+cause.** What looked like several lanes drifting onto feature branches was
+one seeding defect wearing three different faces.
+
+> **A seeded or borrowed clone's identity — BRANCH AND REMOTES BOTH — is
+> INHERITED, not chosen.**
+
+After seeding: run **`git remote -v`** *and* **`git branch --show-current`**,
+and **compare or reset only against `github/master`** — never against
+`origin`, which in a seeded clone is not what the name implies. This lane
+hit the same trap from the third direction (§7.2's clone incident), and the
+count is now **four lanes, one root cause.**
 
 **One operational note on the wrapper**: `--lane` rejects hyphens
 (`[A-Za-z0-9_.]+`), and the reason is Amendment 9's ticket format — a

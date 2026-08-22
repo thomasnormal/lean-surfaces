@@ -101,3 +101,53 @@ file that is a real build input, the rootless tier (`Sv` has no
 `LeanModels/Sv.lean`), and the never-downgrade rule. The four live classes
 were exercised with `--classify-only`, which takes **no tenure and runs no
 Lean**. **No Lean was executed by this lane at any point.**
+
+---
+
+## 2026-08-22-qol-2 — `docs/statement-cookbook.md`: 21 claim shapes, each with the incident that minted it
+
+A proof that closes is not the same as a claim that means something, and this
+repository has the receipts: `BoundRefines` **refuted** at every depth for
+every value function (§L26); a fuel numeral in a *hypothesis* that made a
+whole chain vacuous (§L24); a `⊕` at a membership site that would have
+silently converted a **permission into an obligation** and made every Ada
+verdict a falsehood (`docs/proof-framework-research.md` §5.4). None of those
+announced themselves — §0.1 II(a) is why: a failed *statement* prints *"does
+not depend on any axioms"*, **cleaner than the truth**.
+
+So the cookbook is a record, not advice. **One page per shape: the canonical
+form, the trap, and the real incident that minted it**, cited to a durable
+home. 21 entries: the ten shapes the lane was dispatched with, plus eleven
+more found in the same sweep — well-formedness premises, partial correctness,
+short-circuit out-worlds, residue spelling, existentials, read-only framing,
+statability under `rfl` vs `#guard`, refinement's ∀∃, the refusal-cause
+quantifier flip, invariant altitude, and the re-proving discipline.
+
+### Two things it deliberately does NOT contain
+
+**Totality** and **decidability-in-statements** are listed as **empty rows**.
+Both were searched for and neither has a minting incident: totality appears
+only as the total judgment subsuming the partial one by monotonicity, and the
+decide-ladder is a *tactic and trust* policy, not a statement shape. An entry
+gets written when an incident mints it; **until then the honest thing is an
+empty row, not a plausible rule.** This is §5.3's *VACUOUS is not a verdict*
+pointed at a document.
+
+### One correction to the dispatch
+
+There is **no `docs/python-refounding-plan.md`** in the tree, at any path —
+the re-founding material lives in `docs/backlog/sunfish-rtrack.md` (entries
+`-3` and `-4`) and in `docs/backlog.md`'s *"THE SPEC/INTERPRETER SPLIT HAS A
+PRICE TAG"*. The 65% law is mined from those. Recorded rather than quietly
+worked around, because a pointer to a durable home is not a durable home
+(§7.1a).
+
+### Triad
+
+Docs-only landing, and it was classified by the tool that landed an hour
+before it: `tools/triad.sh --classify-only` reports **`docs`**, builds
+nothing, takes **no tenure**, and owes exactly `python3 tools/docs_check.py`
+— which passes: **83 marked blocks (83 ok), 29 illustrative-exempt**. The
+Lean sketches in the cookbook carry no path markers, so they are
+`illustrative` by the marker convention rather than checked against a tree
+they do not live in. **No Lean was executed.**

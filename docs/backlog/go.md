@@ -163,6 +163,194 @@ spec half separate from interpreter half (STMT-65, cookbook §6).
 
 ---
 
+## G2 — M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22)
+
+The Go lane's first Lean. Values, the substrate, rung 1's abstract syntax
+and its first statement walker, and 27 specification lemmas.
+**1,066 lines across six modules**, no `sorry`, no `native_decide`.
+
+### The substrate — written by shape, then REPLACED by Core mid-landing
+
+This inch was authored against a by-shape substrate with the ES lane's
+adoption note, because `LeanModels/Core/` was `Basic.lean` only.
+**`LeanModels/Core/Outcome.lean` landed at `376735e` while the inch was in
+flight, and the local copy was REPLACED by the import — replaced, not
+wrapped.** Verified mechanically: the Go lane now defines **none** of
+`SemM`, `Halt`, `Loud`, `refuse`, `exhausted` or `raiseIn`, and a grep for
+those definitions in `LeanModels/Go/` returns nothing.
+
+The migration cost less than it might have because the by-shape copy had
+the same layer order Core does — `ExceptT ρ (StateT W …)`, `StateT` inside
+— for the same stated reason. The whole edit was the import, deleting the
+local `Halt`, and re-pointing the interpreter-half lemmas at Core's API
+(`SemM W ρ α` unfolds to `W → Except Loud (Except ρ α × W)`, so applying
+the computation to a world IS the run; Core exports no separate `run`).
+
+**AND IT SURFACED A GAP IN CORE, reported rather than worked around.**
+Core's `Loud` has exactly two constructors — `timeout` and
+`unsupported (msg : String)` — and its header states that a tier needing
+more causes *"does not extend this type; it adds an `.except` layer of its
+own"*. But `docs/family-architecture.md` §5.2 requires the **four** refusal
+causes be *"reported separately"* precisely because *"pooling them makes
+the scoreboard unreadable"* — and a `String` payload means a scoreboard
+must **parse prose** to bucket a refusal. This lane is the first to need
+the four on top of Core (only `LeanModels/Python/Monadic/Substrate.lean`
+imported it before), so the collision had not been hit yet.
+
+The interim: the Go tier keeps `RefusalCause` and `SpecRef` as its own
+types and `renderRefusal` writes them into Core's string with a stable
+prefix — `[<cause-tag>|<doc>:<section>] <prose>` — where the tag is the
+family's own name for the cause (§5.2's `unsupported`, `undefined`,
+`environment`, `order-dependence`) spelled explicitly rather than via
+`repr`, so the scoreboard key survives any rename of the Lean constructor.
+Bucketing is then a prefix test rather than a search, which is mechanical
+but still parsing. **A structured payload in Core would be better and the
+coordinator has the argument.**
+
+* **W = `GoWorld`** — the envelope's store, plus `locals` mapping names to
+  **addresses** rather than values, because Go locals are addressable and
+  rung 1's fixture takes `&x`. Plus `lang : LangVersion` **per file**, and
+  `sched : Schedule` carried from the first commit while `Schedule` is a
+  one-element type no rule reads (`docs/go-charter.md` §6.2's one
+  non-negotiable structural commitment).
+* **ρ = `Panic`, and it carries an IDENTITY as well as a value.** The
+  identity is not decoration: the spec's `recover` rule turns on *which*
+  panic is in flight, since a deferred function that panics replaces the
+  panic it was handling. A ρ carrying only a value cannot tell a re-panic
+  from what it replaced.
+
+**And Go's four exits do not all go in ρ, which is where this lane
+diverges from ES on purpose.** ES put all four abrupt completions in ρ
+because ES2026 writes `? Foo(x)` at 2,328 sites and `ExceptT`'s bind IS
+that operator. Go has no such operator, and its exits differ in kind:
+`panic` unwinds across frames running deferred work and is observable by
+`recover` — ρ; `return`/`break`/`continue` are ordinary structured
+control flow that never cross a frame uninvited and that `recover` cannot
+see — so they are a `Flow` in α, which is the Python tier's shape. Putting
+them in ρ would force every deferred-function rule to distinguish "a panic
+is in flight" from "a return is in flight" — precisely the distinction
+`recover` is defined by.
+
+### THE ZERO-UB GATE — from quotable to unreachable
+
+`docs/go-charter.md`'s headline is that **"undefined" appears zero times
+in the Go specification** (C23: 284, plus Annex J.2's 221 enumerated
+circumstances). `docs/family-architecture.md` §4.3's Go row asks that the
+emptiness be **gated**. It now is, and by the strongest available means:
+
+`RefusalCause` carries all four family causes **including `undefined`** —
+deleting it would make the emptiness unstatable. The gate is a second,
+narrower type: **`GoRefusal`, with three constructors and no `undefined`**,
+and every refusal the tier emits goes through `SemM.refuseGo`, whose cause
+argument is a `GoRefusal`. So cause 2 is not empty by convention, nor by a
+grep a new call site could slip past — **it is unreachable by
+construction**, and `goRefusal_never_undefined` proves the image excludes
+it. A future rung that genuinely found undefined behaviour in Go would
+have to widen the type deliberately, which is the right price.
+
+Checked, not asserted: `grep` confirms **zero** raw `SemM.refuse` call
+sites remain in the walker, and a guard pins that `undefined` is a REAL
+constructor (`undefined ≠ unsupportedConstruct`) so the gate is a
+restriction rather than a statement about an empty type.
+
+**Integer overflow is where this pays.** The specification's "Integer
+overflow" defines BOTH signednesses — unsigned "computed modulo 2ⁿ";
+signed "may legally overflow and the resulting value exists and is
+deterministically defined … **Overflow does not cause a run-time panic. A
+compiler may not optimize code under the assumption that overflow does not
+occur.**" `docs/c-tier-charter.md` §2.2(a) needed two rules and a refusal
+between them. Go needs one function, `IntKind.wrap`, and no refusing arm
+at all. Guarded: `int8` 127+1 = −128 **through the walker**, not merely in
+the arithmetic helper.
+
+**Division by zero is the control case.** "Run-time panics" makes it a
+defined panic, so it goes to ρ — guarded to produce a `Panic` carrying the
+runtime's message and, explicitly, to produce **no refusal at all**.
+
+### STMT-65, and the split came out at 63%
+
+Spec half separate from interpreter half from theorem one, by the
+cookbook's axis — *does the STATEMENT mention the interpreter?*
+
+**Measured on this file: 17 spec-half lemmas, 10 interpreter-facing = 63%
+mathematics.** The family's estate measured **65%** surviving a definition
+swap. Landing within two points of that on the first Lean file is not a
+coincidence — it is what following the law prospectively buys, rather than
+discovering the ratio afterwards.
+
+The temptation the cookbook names showed up exactly as advertised: it is
+easier to state *"the walker never refuses undefined"* than *"`GoRefusal`'s
+image excludes it"*. The second is the spec-side fact, so the gate lives
+there — and the interpreter-side corollary then costs one line
+(`refuseGo_cause_never_undefined`) and carries no content of its own.
+
+### The build hook, and no spine edit
+
+`LeanModels` is a `lean_lib` with **no glob**, so nothing under
+`LeanModels/Go/` is built on its own. `Examples/go/rung1/guards.lean`
+imports `LeanModels.Go`, and the `Examples.+` glob pulls the whole lane
+into the default targets and CI — **with no edit to `LeanModels.lean` or
+`lakefile.toml`, both of which `tools/triad.sh` classifies as spine.**
+That is `docs/c-tier-charter.md` §4.8's precedent, which also records that
+taking the authorized spine import anyway was measured unnecessary, tried,
+and reverted.
+
+### The battery
+
+**28 `#guard`s**, all passing: integer overflow both signednesses, the
+per-file version predicate, flow short-circuiting, and the walker on
+programs — declare/assign/binary, `++`, both `if` branches, address-of
+then dereference, `return` and `break` stopping a sequence, a labelled
+empty statement, and the four refusal rows.
+
+**Non-vacuity was RUN, not assumed**: flipping the signed-overflow value
+and flipping the zero-UB row to claim `goto` refuses as `undefined` each
+make Lean report the failing expression; restoring rebuilds clean.
+
+Axioms on the recorded theorems: `propext` and `Quot.sound` at worst —
+several depend on **no axioms at all**.
+
+### Triad
+
+* `lake build LeanModels.Go` and `Examples.go.rung1.guards` green;
+  authored lock-free per rule 3 — every module built in isolation at
+  `nice -n 19`, the largest an **11-job** target, none near the 100-job
+  threshold. Re-verified after the Core migration, including both
+  non-vacuity flips.
+* `docs_check` green.
+* Ticketed with explicit `--gates`, since this landing DOES carry Lean —
+  unlike §G1, which landed under the zero-Lean rule. **Green**, and
+  `--classify` scoped the build to this lane's seven modules rather than
+  all default targets:
+
+  | arm | result |
+  | --- | --- |
+  | `lake build` (scoped: `LeanModels.Go.*` + the guards) | **exit 0** |
+  | `docs_check` | **83/83**, 32 illustrative-exempt |
+  | `diff_test` | **1,427 cases, 0 failed** (1,309 matched, 118 whitelisted) |
+  | `script_corpus` | **65 scripts, 0 failed** (50 matched, 15 loud-blocked) |
+
+  The build arm returned in **one second**: every module had already been
+  elaborated lock-free during authoring, so the tenure bought
+  verification under the lock rather than the compute. That is the
+  lock-free authoring rule paying for itself — the ticket queued **3h47m**
+  and then held the machine for **84 seconds**.
+
+**§G1's ticket came back GREEN and is recorded here** rather than left
+dangling: `lake build` exit **137 (OOM) on the first attempt**, which
+`triad.sh` correctly classified as a resource kill and re-ran rather than
+reporting red — exit **0** on attempt 2, BUILD GREEN; `docs_check`
+**83/83**; `diff_test` **1,427 cases, 0 failed** (1,309 matched, 118
+whitelisted). That is the third distinct time this lane has met exit
+137/143 under load, and the second time the retry logic turned it into a
+green rather than a false red.
+
+### Next
+
+Inch 2: the `switch` family and `TypeSpec`, which the ladder showed are
+the rung's remaining weight — and `for`, which is where `LangVersion`
+stops being a predicate with three guard rows and starts being a branch
+in the loop rule.
 ## INBOUND FROM THE SOFTFLOAT LANE — `2026-08-22-softfloat-4` (Go lane's to triage)
 
 *Filed by the SoftFloat lane during its consumer census
@@ -188,3 +376,37 @@ are in your rung-1 scope. If they are, Go is a second consumer of
 `LeanModels.SoftFloat` — which is also §3.8's named trigger for moving the
 component into `LeanModels/Core/`, so your answer has a structural consequence
 beyond your own tier.
+
+### ANSWERED BY THE GO LANE — no, and the census is the reason
+
+**`float32`/`float64` are NOT in rung 1's scope, deliberately.**
+
+The measurement: rung 1 is 45 `go/ast` node kinds (§G1), and floats are
+not excluded *syntactically* — a float constant is a `BasicLit`, which is
+in the vocabulary. They are excluded in the **value model**: `GoVal`
+(`LeanModels/Go/Value.lean`) has `boolV`, `intV`, `stringV`, `ptrV`,
+`chanV`, `structV`, `sliceV` and `nilV`, **and no float constructor**. A
+float literal therefore reaches the walker and refuses as an out-of-tier
+construct rather than being silently truncated.
+
+Two notes for your priorities:
+
+* **Your census row is now stale in one detail** — it said *"`LeanModels/Go/`
+  does not exist"*. It does, as of §G2. The `float`-count-of-zero finding
+  was correct when taken and is correct again now: the six modules of
+  §G2 contain no float.
+* **`docs/family-architecture.md` §3.5.3's row is a fair prediction, and I
+  am not disputing it** — when Go does take floats, `float32`/`float64`
+  are IEEE-754 binary32/binary64 and I would expect to be an ordinary
+  consumer with no new component work. I am confirming only that the
+  demand is **not yet**, so it should not raise SoftFloat's priority on my
+  account.
+
+**When it changes:** Go's spec ties floats to the same "Integer overflow"
+neighbourhood this tier already mirrors, and my charter's §9 float
+question is gated behind the sequential ladder's remaining rungs
+(`switch` family, `TypeSpec`, `for`). I will file an inbound to your lane
+the moment a float constructor enters `GoVal` — which is also the moment
+Go becomes §3.8's second consumer, with the structural consequence you
+name.
+

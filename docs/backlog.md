@@ -16041,6 +16041,13 @@ one touches the GENERAL layer, which is why the blast radius was grepped and bot
 files were compiled against each other before the push rather than after.
 
 
+
+**ADDENDUM (post-rebase triad, as promised).** The queued full pass completed
+under the machine-wide lock: `lake build` **3694 jobs green**, `diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched,
+`docs_check` **74/74 marked blocks**, 20 illustrative-exempt, `script_corpus` **65 scripts, 0 failed**, 50 matched, 15 loud — confirming §L62's F1, §L64's
+F2 and this section's two asks against the rebased tree, not only against the
+base each was proved on.
+
 ## L66 — THE ECMASCRIPT TIER'S FOUNDING CHARTER: the spec is a definitional interpreter with twelve exceptions, and "undefined behaviour" occurs ONCE — asserting there is none (2026-08-22)
 *(§L59–§L65 were taken by sibling lanes while this pass ran — the family
 architecture, the SystemVerilog and Ada charters, the mvcgen pilot and F1 —
@@ -17948,3 +17955,163 @@ depended-on facts. **Axioms printed for all six new theorems**:
 `loadBytes_storeBytes` `[propext, Quot.sound]`; `resolve_kill`
 `[propext, Classical.choice, Quot.sound]`. No `sorryAx` anywhere. No `sorry`, no
 `native_decide`.
+
+## L73 — F3b CLOSES: the cut exit's `Report`, and the census REFUTED two things the plan believed (2026-08-22)
+
+F1 and F2 opened F3b, and F3b is the arm that consumes them: it is the only exit
+where a CHILD report enters, which is the only place the induction hypothesis is
+spent. It closes here, together with `qs_fold_report` — the depth-0 node's
+contract with no hypothesis about which way the fold left.
+
+### CENSUS FIRST, and it corrected the plan twice
+
+`harness/qs_cut_census.py` traces a real 6 667-node search, and for every depth-0
+node runs a SHADOW FOLD built from the model's own round classification —
+`standPat :: killer? :: sortedRounds`, the four branch kinds, `foldFrom`'s rule —
+against the same table the engine saw. On **845 folding nodes it reproduced the
+engine's answer at every one: zero mismatches.** That is the §L30 discipline —
+measure, then check the model reproduces the engine, before a premise is written.
+
+**Correction 1 — half of the depth-0 traffic never folds at all.** 861 depth-0
+entries were answered by the TABLE PROBE against 845 that reached the loop. The
+stale-table leaf (`bound_probe_hit`) is not an edge case, it is the other half of
+the node budget. Any "share of nodes" figure for this arm is therefore a share of
+the *folding* half, and the plan's framing of the cut as "48% of nodes" was a
+share of depth-0 ENTRIES — a different denominator.
+
+**Correction 2 — the cut is NOT the plurality.** Among folding nodes:
+
+| exit | share | owner |
+|---|---|---|
+| `settled` | **51.0 %** | F3a |
+| `cut` | **36.8 %** | F3b (this section) |
+| `ran` | 12.2 % | F3a |
+
+F3a's two exits are 63.2 % together. This arm is the smaller one — and the
+expensive one, because it is the only one that pays for a child.
+
+**And the shape that decided the statement:** **84 % of cuts fire on round 1, the
+FIRST searched move** (262 of 311); 3.5 % on the stand-pat alone; the deepest in
+the sample was round 3. So the arm spends ONE child report in the overwhelming
+majority of cases — and the statement still has to admit a list, which is why
+`QSRoundOK` is a per-round predicate and not a special case for the head.
+
+The four round kinds the census actually saw: `standPat` 845, `searched` 706,
+`settle` 431, `mateBand` 7. **Nothing else occurred**, which is what licenses
+`QSRoundOK`'s four disjuncts being exhaustive in practice rather than by
+construction.
+
+### What landed
+
+* **`fold_report_cut`** — the general half, the mirror of §L36's
+  `fold_report_failLow`: at the cut the answer is at or above the window
+  (`foldFrom_cut_ge`) and `fold_failHigh` makes it a lower bound. No
+  exhaustiveness, no futility. **The entire cost of this arm is `hrs`, and `hrs`
+  is the IH.**
+* **`QSRoundOK`** — the per-round obligation, itemised by the census's own four
+  kinds: `standPat` needs `sc ≤ value`, `intrinsicMate` needs
+  `mateUpper ≤ value`, `settledCap` needs `cap < gamma` (branch 5a's own guard,
+  so it is FREE), and `searchedMove` needs the child's `Report` at the
+  complementary window plus the negamax step. `qsRoundOK_sound` discharges each
+  by the lemma written for it — `report_sound`, `settledCap_sound`,
+  `searchedMove_sound`.
+* **`qs_fold_report_cut`** — the depth-0 cut `Report`, end to end. The
+  accumulator's `Sound` is free (`-mateUpper < gamma` is the window assumption),
+  so the whole statement reduces to the child reports inside `QSRoundOK`.
+* **`qs_fold_report`** — **BOTH ARMS, ONE STATEMENT.** F3a and F3b joined by the
+  trichotomy on the exit: the depth-0 node's `Report` with no hypothesis about
+  how the fold left. This is the shape `boundRefinesW_zero` consumes.
+
+### THE FINDING: the two arms' stand-pat premises meet at EQUALITY, and that is calmness
+
+`qs_fold_report` carries both `value ≤ sc` (§L36's `hqsV`) and `sc ≤ value`, so
+at a depth-0 node it asserts **`V pos 0 = pos.score`**.
+
+That is not a weakening bolted on to make the join typecheck. **It is what
+calmness MEANS** — a quiescent node's value IS its static evaluation, which is
+the whole premise the QS floor exists to establish. §L30's ledger entered `hqsV`
+as a named model-side premise and stopped there; what this section adds is that
+the fail-HIGH arm needs its exact converse, and that the PAIR is the calmness
+statement itself rather than two unrelated bounds.
+
+The direction split is forced by the definitions and worth naming: `Sound` is
+`x < gamma ∨ x ≤ value` and wants the value from BELOW; `fold_failLow` wants it
+from ABOVE. The two arms could not have shared a premise even in principle.
+
+A consumer that cannot supply both has a node that is not calm — and the honest
+route there is `qs_fold_report_cut` and `qs_fold_report_failLow` separately, each
+with only the direction it needs. Both stay exported for exactly that reason.
+
+**And the join DEGENERATES, which this section states rather than lets a reader
+discover.** Under both premises `value = sc`, so every round is `Sound` only by
+being `< gamma` or `≤ sc`; `foldFrom_sound` then bounds the fold's answer by
+`max(-mateUpper, sc)`, and `foldFrom_cut_ge` says a cut needs `gamma ≤ answer`.
+Together: **`qs_fold_report`'s cut branch can only fire when `gamma ≤ sc`** — the
+stand-pat met the window by itself, which is `fold_standpat`'s territory and the
+3.5 % the census measured, not the 84 % that cut on a searched move.
+
+So the joint statement is true but it is not the general arm. **The arm F3's
+induction needs is `qs_fold_report_cut`**, which takes only `sc ≤ value` and
+leaves `value` free to exceed the stand-pat — which is exactly the situation a
+searched capture creates and the reason the child report is spent at all.
+Turning the degeneracy into a theorem (`gamma ≤ sc` from the two premises plus
+`foldFrom_sound`/`foldFrom_cut_ge`) is a four-line follow-up and is recorded as
+owed rather than claimed here.
+
+### What F3 still owes — F3c, and it is unchanged
+
+F3c is the RUN at many rounds: §L16's `Hands` at a real schedule,
+`PyStmtTriple.forGen`, the round lemma §L29 shaped, and `TableAt`/`SubtreeWrites`
+threaded per child — plus the depth-0 twin of §L32's `moves_prologue`, where the
+stand-pat's `yield None, None` is LIVE rather than dead. §L30 priced it at two to
+three sessions and nothing here shortens that. **F3b is the spec half; F3c is the
+interpreter half**, and only when both land does `hfall` discharge and
+`boundRefinesW_zero` go unconditional.
+
+The census does hand F3c one gift: the schedule lengths are SMALL — 2 to 4 rounds
+at 87 % of folding nodes, 8 at the sample's maximum — so the round lemma will be
+exercised at realistic lengths by a fixture rather than only in the abstract.
+
+### Findings worth carrying
+
+1. **A census that reproduces the engine is worth more than one that counts it.**
+   The first run of this census showed 40 mismatches on 4 779 nodes, and the
+   mismatch was the finding: the shadow fold was comparing against nodes the
+   TABLE PROBE had answered without folding at all. Separating the three answer
+   paths — king check, table probe, fold — took the mismatches to zero and
+   produced Correction 1. **A census that only tallies would have reported the
+   wrong denominator and never noticed.**
+2. **Replay-after-the-fact is a measurement artifact.** The first version
+   replayed the shadow fold after the search finished, against a table that had
+   moved on. Running it at TRACE TIME, before the real call, is what makes the
+   comparison mean anything — a same-`gamma` table hit returns the very number
+   the child's fold produced, so warming the table is benign but replaying into a
+   *different* table is not.
+3. **The cheap half of a two-arm split is not the one the plan expects.** F3a was
+   priced as the hard arm and F3b as the one gated on F1/F2; the census says F3a
+   covers 63 % of folding nodes and F3b 37 %. The gating was right; the sizing
+   was backwards.
+
+### Triad
+
+Run under the machine-wide lock (`LEAN_NUM_THREADS=4 nice -n 10 lake build`,
+`rm -rf` release). `lake build` **3694 jobs green** — `bound_depth` rebuilt in
+247 s with F3b's four printed declarations, and `qs_rank` and `move_gate` rebuilt
+with it, so this one pass confirms §L62's F1 and §L64's F2 against the rebased
+tree as well; `docs_check` **74/74 marked blocks**, 20 illustrative-exempt;
+`diff_test` **1394 cases, 0 failed**, 118 whitelisted, 1276 matched;
+`script_corpus` **65 scripts, 0 failed**, 50 matched, 15 loud. No `sorry`, no
+`native_decide`, no linter warning. Every new declaration depends on
+`[propext, Classical.choice, Quot.sound]` or less.
+
+**A build-lock note, banked in `scratchpad/build-lock-log.md` rather than here.**
+This lane found the lock held since 11:23 by a **dead** owner (2965), verified
+staleness BY PARENTAGE — the one live `lake build` was pid 84154 with ppid 1, a
+different clone, not a descendant — reclaimed it under rule 5, and logged it.
+Later, while this lane HELD the lock, its `owner` file was overwritten by another
+lane. That is worth a protocol hardening: `owner` is now the only staleness
+signal and it is writable by a lane that does not hold the lock, so a future
+reader can declare a live lock stale. Writing it once under `set -C` (noclobber)
+at acquisition would make a second writer fail loudly instead of silently taking
+over the identity.
+

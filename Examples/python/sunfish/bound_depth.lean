@@ -3639,6 +3639,126 @@ theorem cappedPass_sound {gamma value cap : Int} (h : cap < gamma) :
 theorem settledCap_sound {gamma value cap : Int} (h : cap < gamma) :
     Sound gamma value (settledCap cap).score := Or.inl h
 
+/-! ## F3b — THE CUT EXIT'S `Report`, and where the IH enters
+
+**Censused before it was stated** (§L30's discipline). On 845 depth-0 nodes that
+actually FOLD, reached from a real 6 667-node search, a shadow fold built from
+the round classification below reproduced the engine's answer at **every one**
+(zero mismatches), and the shape came out:
+
+| | share of FOLDING nodes |
+|---|---|
+| `cut` (this arm) | **36.8 %** |
+| `settled` (F3a) | 51.0 % |
+| `ran` (F3a) | 12.2 % |
+
+Two corrections to the plan fell out of that table and are recorded rather than
+smoothed over:
+
+* **Half of the depth-0 traffic never folds at all.** 861 entries were answered
+  by the TABLE PROBE against 845 that folded — the stale-table leaf
+  (`bound_probe_hit`, §5) is not an edge case, it is the other half of the node
+  budget. A "share of nodes" figure for this arm is therefore a share of the
+  folding half, not of depth-0 entries.
+* **The cut is not the plurality; `settled` is.** F3a's two exits together are
+  63.2 % of folding nodes. This arm is the smaller one — and the expensive one,
+  because it is the only one that consumes a child.
+
+**Where the cut fires** is the shape that decides the statement: **84 % of cuts
+happen on round 1 — the FIRST searched move** (262 of 311), 3.5 % on the
+stand-pat alone, and the deepest in the sample was round 3. So the arm consumes
+ONE child report in the overwhelming majority of cases, and the statement must
+still admit a list. -/
+
+/-- **F3b's general half — the fail-HIGH `Report`.** Mirror of
+`fold_report_failLow`: at the cut the answer is at or above the window by
+`foldFrom_cut_ge`, and `fold_failHigh` makes it a lower bound. No exhaustiveness,
+no futility — the whole cost of this arm is `hrs`, and `hrs` is the IH. -/
+theorem fold_report_cut {gamma value best : Int} {live : Bool} {rs : List Round}
+    (hb : Sound gamma value best) (hrs : ∀ r ∈ rs, Sound gamma value r.score)
+    (hcut : (foldFrom gamma best live rs).2.2 = Exit.cut) :
+    Report gamma (foldFrom gamma best live rs).1 value :=
+  Or.inr ⟨foldFrom_cut_ge rs best live hcut,
+    fold_failHigh hb hrs (foldFrom_cut_ge rs best live hcut)⟩
+
+/-- **THE CUT ARM'S PER-ROUND OBLIGATION, itemised by the census's own kinds.**
+Every round a depth-0 schedule can contain, with what pays for it:
+
+* `standPat sc` — `sc ≤ value`: standing pat is an option, so the node's value
+  is at least its static score. A MODEL clause, and the companion of §L36's
+  `hqsV` rather than its contradiction: `hqsV` bounds the value ABOVE at a QS
+  node, this bounds it BELOW, and the fail-low and fail-high arms need opposite
+  directions because `Sound` and `Report` do.
+* `intrinsicMate` — `mateUpper ≤ value`: the king really is capturable.
+* `settledCap cap` — `cap < gamma`, which is branch 5a's own classifying guard,
+  so this kind is **free**.
+* `searchedMove cap cr` — the CHILD's `Report` at the complementary window plus
+  the negamax step. **This is the induction hypothesis, and it is the only
+  place it enters.**
+
+The four kinds are the four the census measured (`standPat` 845, `searched` 706,
+`settle` 431, `mateBand` 7); nothing else occurred. -/
+def QSRoundOK (gamma value : Int) (r : Round) : Prop :=
+  (∃ sc, r = standPat sc ∧ sc ≤ value)
+  ∨ (r = intrinsicMate ∧ mateUpper ≤ value)
+  ∨ (∃ cap, r = settledCap cap ∧ cap < gamma)
+  ∨ (∃ cap cr cv, r = searchedMove cap cr ∧ Report (1 - gamma) cr cv ∧ -cv ≤ value)
+
+/-- …and each kind discharges `Sound`, by the lemma written for it. -/
+theorem qsRoundOK_sound {gamma value : Int} {r : Round} (h : QSRoundOK gamma value r) :
+    Sound gamma value r.score := by
+  rcases h with ⟨sc, rfl, hle⟩ | ⟨rfl, hle⟩ | ⟨cap, rfl, hlt⟩ | ⟨cap, cr, cv, rfl, hch, hneg⟩
+  · exact report_sound hle
+  · exact report_sound hle
+  · exact settledCap_sound hlt
+  · exact searchedMove_sound hch hneg
+
+/-- **F3b — THE DEPTH-0 CUT `Report`, end to end.** The schedule is the shipped
+one: the stand-pat at its HEAD (branch 1, the virtual yield every depth-0 node
+takes) and whatever `moves()` produces after it, each round classified by
+`QSRoundOK`. The accumulator's `Sound` is free — `-mateUpper < gamma` is the
+window assumption — so the entire cost of the arm is the child reports inside
+`QSRoundOK`, which is exactly what the census predicted: one of them, usually. -/
+theorem qs_fold_report_cut {gamma sc value : Int} {live : Bool} {rs : List Round}
+    (hwin : -mateUpper < gamma)
+    (hpat : sc ≤ value)
+    (hrs : ∀ r ∈ rs, QSRoundOK gamma value r)
+    (hcut : (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).2.2 = Exit.cut) :
+    Report gamma (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).1 value := by
+  refine fold_report_cut (Or.inl hwin) ?_ hcut
+  intro r hr
+  rcases List.mem_cons.mp hr with h | h
+  · subst h; exact report_sound hpat
+  · exact qsRoundOK_sound (hrs r h)
+
+/-- **BOTH ARMS, ONE STATEMENT.** F3a's fail-low and F3b's cut, joined by the
+trichotomy on the exit — the depth-0 node's `Report` with no hypothesis about
+WHICH way the fold left. This is the shape `boundRefinesW_zero` consumes. -/
+theorem qs_fold_report {gamma sc value : Int} {live : Bool} {rs : List Round}
+    (hwin : -mateUpper < gamma)
+    (hqsV : value ≤ sc)
+    (hpat : sc ≤ value)
+    (hrs : ∀ r ∈ rs, QSRoundOK gamma value r)
+    (hcaps : ∀ cap, Round.settle cap ∈ rs → ∃ val, 40 ≤ val ∧ cap = moveCap 0 sc val)
+    (hsettle : ∀ cap, Round.settle cap ∈ rs → cap < gamma) :
+    Report gamma (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).1 value := by
+  by_cases hcut : (foldFrom gamma (-mateUpper) live (standPat sc :: rs)).2.2 = Exit.cut
+  · exact qs_fold_report_cut hwin hpat hrs hcut
+  · exact qs_fold_report_failLow hwin hqsV hcaps hsettle hcut
+
+/-! **The two arms' stand-pat premises meet at equality, and that is a FINDING
+rather than a defect.** `qs_fold_report` carries both `value ≤ sc` and
+`sc ≤ value`, so at a depth-0 node it is asserting `V pos 0 = pos.score`. That is
+not a weakening bolted on to make the join typecheck — it is what CALMNESS
+MEANS: a quiescent node's value IS its static evaluation, which is the whole
+premise the QS floor exists to establish. §L30's ledger entered `hqsV` as a named
+model-side premise; this section records that the fail-high arm needs its
+converse, and that the pair is the calmness statement itself.
+
+A consumer that cannot supply both has a node that is not calm — and the honest
+route there is `qs_fold_report_cut` and `qs_fold_report_failLow` separately, each
+with only the direction it needs. Both are exported for exactly that reason. -/
+
 /-! ### The table, threaded through the whole body -/
 
 /-- **The body's table effect, end to end**: the children write, then the node
@@ -4130,6 +4250,10 @@ object's shape. The decoder agrees with the interpreter on it. -/
 #print axioms fold_report_failLow
 #print axioms qs_cap_gt
 #print axioms qs_fold_report_failLow
+#print axioms fold_report_cut
+#print axioms qsRoundOK_sound
+#print axioms qs_fold_report_cut
+#print axioms qs_fold_report
 #print axioms qs_report_fixture
 #print axioms qs_report_fixture_four
 #print axioms searchedMove_sound

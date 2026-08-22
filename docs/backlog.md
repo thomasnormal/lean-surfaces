@@ -17650,7 +17650,7 @@ hard way and written up in `scratchpad/build-lock-log.md`:
 
 Both are now amendments in the protocol. Lane process count verified **0** by
 cwd/parentage at release.
-## L72 — M2 INCH 2's CENSUS: the `&`-of-automatic evidence is a THIRD the size it was published at, and the guard could not see storage duration (2026-08-22)
+## L72 — M2 INCH 2, and the SPEC-MIRROR TURN: the `&`-of-automatic evidence is a THIRD its published size, and C23 does NOT define the conversion `VM_VAL` depends on (2026-08-22)
 
 *(C-tier lane, M2 build. §L57 is the design this executes; §L54 is the goal it
 is scored against.)*
@@ -17730,11 +17730,221 @@ computations or plain scalar reads, so the per-site discharge is "can this
 callee write what these siblings read" — inch 5's material, priced at 7 sites
 rather than 320.
 
-### Triad
+---
 
-`lake build` **3693 jobs green** (no Lean changed here); `docs_check` 73/73, 15
-illustrative-exempt; `diff_test` **1394 cases, 0 failed**, 118 whitelisted,
-1276 matched; `script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud.
-`c_construct_census --selftest` passes and the census is byte-identical on a
-double run. No Lean declarations moved, so no axioms moved; no `sorry`, no
+## The spec-mirror turn, and what verifying the citations cost
+
+Mid-session Thomas ruled: *"our lean surface for C will read like a Lean
+translation of the C23 spec — one might read the two documents side by side
+and everything makes sense."* The convention is
+[docs/c23-spec-mirror.md](c23-spec-mirror.md): cite **N3220** by clause and
+paragraph, paraphrase and never transcribe (the CompCert/Cerberus convention,
+and a licensing constraint — clause numbers are not copyrighted, the text is),
+mirror the clause structure in the file layout, and give every refusal its
+Annex J.2 index.
+
+**The citations were verified against the fetched N3220 text rather than
+written from memory, and that cost three published claims.**
+
+**1. C23 does NOT define out-of-range conversion to a signed type.**
+`Value.lean`, `docs/c-semantics-design.md` §1.2 and `docs/c-profile.md` §4.2
+all said §6.3.1.3 *mandates* the two's-complement result, that C17 left it
+implementation-defined, and that the `-std=c23` pin was therefore load-bearing
+for the move ordering. **N3220 §6.3.1.3p3 is word-for-word identical to C11
+and C17** — "either the result is implementation-defined or an
+implementation-defined signal is raised" — and **`J.3.6(3)` still lists it**.
+What C23 changed is signed REPRESENTATION (§6.2.6.2p6 NOTE 2), and the
+auditable trace is that C17's J.3 integers list had five entries where C23's
+`J.3.6` has four: the deleted item is the sign-representation one.
+
+So `VM_VAL` (sunfish.c L652), whose result the fidelity gate compares first,
+rests on **implementation-defined behavior no standard version guarantees**.
+The profile already MEASURED it correctly (`uint_to_int_wraps`, true on both
+hosts, `depended_on`); only the reason was wrong. **The correction makes the
+profile entry more important, not less** — under the old reading `-std=c23`
+was the guarantee and the profile was belt-and-braces; under the true reading
+the profile is the only thing standing between the move ordering and a host
+that answers J.3.6(3) differently. An appeal to the standard would have
+silently withdrawn the check.
+
+**2. C23 RENUMBERED §6.5 and §6.8.** A new §6.5.1 "General" absorbs the old
+preamble and shifts all seventeen operator subclauses: division is **§6.5.6p7**
+(not §6.5.5p6), shifts are **§6.5.8**, short-circuits are **§6.5.14p4 /
+§6.5.15p4**. Same pattern at §6.8, §6.7, §5.1.2 and Annex J.3.
+
+**3. The library clauses moved, and one move is a trap.** stdio 7.21→**7.23**,
+stdlib 7.22→**7.24**, string 7.24→**7.26**. **C17's §7.24 is `<string.h>`;
+C23's §7.24 is `<stdlib.h>`** — a stale citation does not fail, it silently
+retargets. `malloc` also moved inside its own subclause (§7.24.3.6, because
+C23 added `free_sized` and `free_aligned_sized`). `fprintf` = §7.23.6.1 is the
+one number this project already had right.
+
+**Annex J is now the taxonomy, and in C23 it is NUMBERED** — J.1 `(1)`-`(63)`,
+J.2 `(1)`-`(221)`, J.3 restarting per subclause — where C17 had unnumbered
+bullets. So `J.2(35)` is a citation form C23 made possible. Three coverage
+gaps are recorded rather than papered over, each established by exhaustive
+search of all 221 entries: **`realloc(p, 0)` is undefined by §7.24.3.7p3 and
+has NO J.2 entry**; `aligned_alloc`'s uninitialized storage has none either;
+and a pointer's representation after its object dies is not J.1 at all. Plus
+one **defect in N3220**: `J.2(125)` cross-references §7.13.2.1, but the rule
+lives at §7.13.1.1p4/p5.
+
+**The surface is now namespaced `LeanModels.C.C23`**, with the version-neutral
+envelope substrate left at `LeanModels.C`. The table above is why that
+boundary is a directory and not a flag.
+
+---
+
+## Thomas's J.1 ruling: correctness quantifies over evaluation order
+
+> *"A program is only correct if it would be correct under any argument
+> evaluation order. Since you don't know which the hardware is going to
+> choose."*
+
+The evaluation order becomes an explicit PARAMETER of the semantics, declared
+like the profile and never ambient; the interpreter stays deterministic given
+it, so the ∃-fuel threshold form is untouched; and correctness theorems
+quantify — **∀ order, the same observable**. Left-to-right remains the
+canonical order for extracting witnesses and scoring suites; it is simply no
+longer the claim. Scoring gains a class: a suite test whose expected output
+depends on one order is an INCORRECT PROGRAM, not a MATCH.
+
+**The spec partition does half the work.** §6.5.1p2's *unsequenced*
+conflicting side effects are already UB — `J.2(34)`, REFUSE, not a quantifier.
+§6.5.3.3p10's *indeterminately sequenced* argument evaluations are the actual
+∀ domain, `J.1(16)`. The register is `docs/c23-spec-mirror.md` §5.
+
+---
+
+## Inch 2 LANDED: `LeanModels/C/C23/Memory.lean`
+
+`Ptr` as `(Option ObjId, Int)` with `none` as the null pointer, the three-state
+`CByte` lattice, `CObj`, `Mem`, and the operations — organized in the census's
+order rather than the textbook's, so **decay (§6.3.2.1p3) and `member`
+(§6.5.3.4) are stated first** and `*` gets its treatment because the standard
+defines it that way, not because the corpus leans on it.
+
+**`resolve` is the one place C's three structural undefined behaviors are
+decided** — indirection through an invalid value (§6.5.4.2p4), an object
+outside its lifetime (§6.2.4p2), and an access leaving the object (§6.5.7p9) —
+so every load and store inherits all three from one function.
+
+**Eleven J.2-indexed fault classes, and the annex gap is in the TYPE.**
+`MemFault.j2` returns `Option String`; `reallocZero` returns `none`, because
+§7.24.3.7p3 is undefined and Annex J has no entry. A reader trips over that
+where a comment would be skimmed. `Refusal.cause` keeps
+`docs/c23-goal.md` §3.1's three causes structural, so the inch-6 scorer reads
+them off rather than parsing a string.
+
+**`CObj.size` is COMPUTED, not carried.** An object storing its size beside
+its representation could disagree with itself, and every lemma would have
+needed a well-formedness side condition saying it does not. `List.length` is
+that invariant, discharged by construction.
+
+**Four theorems, and every one is INSTANTIATED** in
+`Examples/c/sunfish/memory.lean` on the corpus's own numbers — `get?_alloc`,
+`resolve_alloc`, `resolve_ok` (the inversion every later lemma wants),
+`resolve_kill`, and `loadBytes_storeBytes`, the round trip that makes the byte
+lattice a memory rather than a filter. The store's success is a HYPOTHESIS in
+that last one, never a conclusion — a store that refused has no out-memory to
+speak about, which is the drain amendment's discipline applied to memory.
+
+**The three scenarios the design named as its reasons, executed:**
+
+1. **`Pos p; memcpy(p.b, board, 120);`** (L1130). `p.b[0]` and `p.b[119]` read
+   back; **`p.score` REFUSES with `J.2(11)`**, and so do `p.ep` and `p.h`.
+   That is why the lattice is per-BYTE, and **no sanitizer on either
+   development host detects it.**
+2. **`struct kcctx c = {…}; gen_moves(p, kc_cb, &c);`** (L369-370). The
+   callee writes through `&c`; the block ends; the pointer is still a
+   well-formed VALUE and using it refuses with `J.2(9)`. Only expressible
+   because a dead object becomes a tombstone instead of a reused slot.
+3. **`realloc` MOVES the transposition table** (L453-454). The bytes arrive at
+   a genuinely different object, the new pointer reads 1234, and **the old
+   pointer refuses with `J.2(10)`** — provenance transfer, which `Addr := Nat`
+   cannot express. Freshly `malloc`ed storage refuses with `J.2(185)`, NOT the
+   automatic `J.2(11)`: the annex separates them and so does the model.
+
+**50 `#guard`s, and they are NON-VACUOUS by measurement, not by assertion.**
+Three were perturbed to claim the opposite — that the indeterminate `p.score`
+read succeeds, that the old `realloc` pointer still reads 1234, that `<` across
+unrelated objects is defined — and all three fail loudly with the expression
+printed.
+
+Plus the asymmetry a tidy model gets wrong: **`==` across unrelated objects is
+DEFINED (§6.5.10p7) while `<` is UNDEFINED (§6.5.9p6)** — neighbouring clauses,
+opposite verdicts. And §6.5.7p9's own split: one-past-the-end is a legal VALUE
+and an illegal ACCESS, gated in both directions.
+
+**Struct layout is implementation-defined (`J.3.10`)**, so the fixture's
+offsets are MEASURED — `_Static_assert` on both profile hosts, which agree:
+`Pos` 144 with `score` at 120, `Move` 12, `kcctx` 24. The field names and
+types they rest on are `#guard`ed against the ingested envelope, so a corpus
+that changed shape breaks the file rather than silently invalidating its
+arithmetic. Deriving offsets inside Lean is the layout inch's job.
+
+**Two Mathlib-only tactics were caught by the core-only law** while proving
+these: `set` and `by_contra`. Both replaced.
+
+### What inch 2 does NOT do, and the layer order it did NOT get wrong
+
+No interpreter, no world, no fuel. Every operation is a PURE function over
+`Mem`, taking and returning it explicitly.
+
+That turned out to matter within the session. The architecture doc's
+first monad stack was `StateT W (ExceptT ρ Halt)`; the `mvcgen` pilot then
+proved by `rfl` that **the state-outside order DISCARDS THE WORLD ON A
+RAISE**, and the correct substrate is the state-RETAINING
+`ExceptT ρ (StateT W Halt)` — which is exactly why `Run.exn` carries a
+state field. Because inch 2 threads `Mem` explicitly instead of living in
+a state monad, **the correction cost this inch nothing**: `MRes :=
+Except Refusal` is the corrected stack's error half either way, and
+lifting these operations at inch 3 is a lift rather than a rewrite.
+
+Also adopted for inch 3, from the pilot: **fuel is not a monad layer** (it
+does not typecheck as one; it stays an explicit argument at calls and
+loops, which makes the fuel-free fragment `mvcgen`-native); **`@[spec]` is
+the altitude-lemma registry** (measured: unfolded primitives 259 VCs and
+FAILED, four spec triples 12 and closed); specs must be output-determined;
+and a bare polymorphic `throw` is unusable, so every refusal routes
+through a NAMED primitive with its own `@[spec]` — the same discipline as
+"never pool the three causes", arrived at from the tooling's side.
+
+**Measured: `Std.Do` (`WP`, `Triple`, `SPred`, `PredTrans`) ships in the
+pinned `v4.33.0-rc1`**, so nothing is blocked on a toolchain bump.
+
+### Triad — and an honest gap
+
+**`docs_check` 75/75**, 20 illustrative-exempt. `c_construct_census
+--selftest` passes, the census is byte-identical on a double run, and
+`c_profile_probe --check` passes all 8 depended-on facts.
+
+**The full-tree `lake build`, `diff_test` and `script_corpus` did NOT
+run.** The machine-wide build lock (`scratchpad/BUILD_LOCK_PROTOCOL.md`)
+was held continuously by sibling lanes for over an hour; this lane queued
+for it, spun correctly, and never reached the front. What was verified
+instead, and it is the whole of this lane's delta:
+
+**every file of the delta compiles from a FRESH olean root** with the
+pinned `v4.33.0-rc1` — `C/Ast`, `C/C23/Value`, `C/C23/Memory`, `C/Json`,
+`C/Load`, `C/C23`, `C`, `Examples/c/sunfish/guards`, and
+`Examples/c/sunfish/memory` with all 50 gates. That is not a substitute
+for the tree build in general, but here it is close to one: **nothing
+outside the C lane imports `LeanModels.C`** (measured — the lane reaches
+`lake build` only through `Examples/c/sunfish/guards.lean`), so the
+tree-build delta is exactly the nine files above. `diff_test` and
+`script_corpus` exercise the Python lane, which this landing does not
+touch.
+
+Two lock defects were found and reported along the way: a **stale lock**
+whose owner PID was dead (cleared after verifying no live `lake`
+descended from it, logged in `scratchpad/build-lock-log.md`), and — found
+by a peer — that the documented `rmdir` release could never succeed once
+an `owner` file was written inside the lock, which is how stale locks
+were being born. `c_construct_census --selftest` passes; the census is
+byte-identical on a double run; `c_profile_probe --check` passes all 8
+depended-on facts. **Axioms printed for all six new theorems**:
+`get?_set_self` `[propext]`; `get?_alloc`, `resolve_alloc`, `resolve_ok`,
+`loadBytes_storeBytes` `[propext, Quot.sound]`; `resolve_kill`
+`[propext, Classical.choice, Quot.sound]`. No `sorryAx` anywhere. No `sorry`, no
 `native_decide`.

@@ -74,9 +74,12 @@ behaviors **in adjacent operands**.
   > wrong.** N3220 §6.3.1.3p3 is word-for-word identical to C11 and C17
   > — "either the result is implementation-defined or an
   > implementation-defined signal is raised" — and `J.3.6(3)` still lists
-  > it. What C23 changed is signed REPRESENTATION (§6.2.6.2p6 NOTE 2);
-  > the deleted J.3 sign-representation entry is the mandate's auditable
-  > trace. So this is **depended-on implementation-defined behavior**,
+  > it. What C23 changed is signed REPRESENTATION — normatively at
+  > §6.2.6.2p2, whose C17 counterpart offered three representations;
+  > §6.2.6.2p6 NOTE 2 is the change-history note. The deleted J.3
+  > sign-representation entry is the mandate's auditable trace, and the
+  > edition-sensitive definition in `Value.lean` is therefore
+  > `IntTy.minVal`, not `convert`. So this is **depended-on implementation-defined behavior**,
   > which is precisely what `docs/c-profile.md` exists to pin, and the
   > pin is a measurement on every host rather than a sentence in the
   > standard. `docs/c23-spec-mirror.md` §4.1.
@@ -202,8 +205,16 @@ cannot express that; `(obj, off)` can.
 ### 2.4 The byte lattice, and why per-byte
 
 ```
-inductive CByte | conc (b : UInt8) | ptr (p : Ptr) (k : Fin 8) | indet
+inductive CByte | conc (b : UInt8) | ptrByte (p : Ptr) (k : Nat) | indet
 ```
+
+*(Landed at inch 2 with `k : Nat`, not the `Fin 8` this section first
+proposed. `Fin 8` would carry the bound in the type and then need
+`Fin.mk` proofs at every construction site, including inside `#guard`s;
+the bound is instead enforced where it is actually checked — `loadPtr`
+accepts a run only if it is exactly `(List.range 8).map (.ptrByte q)`, in
+order, so a torn or short run refuses. Recorded here because the model
+and the code land together.)*
 
 Needed per-BYTE and not per-object because `setup_fen` declares `Pos p;`
 then `memcpy(p.b, board, 120)` (L1130), leaving `p.score`, `p.h`, `p.ep`,
@@ -310,32 +321,61 @@ that first needs it** (§7, inch 4), not before.
 The family is converging on one monad stack plus Lean's `Std.Do`
 (WP/`Triple`) machinery with per-language `Spec` lemmas, and the C tier
 is to be its first native citizen rather than its second retrofit. So the
-evaluator is written in **do-notation over a fuel-indexed
-`StateT CWorld (Except Refusal)`**, not as a hand-rolled
+evaluator is written in do-notation, not as a hand-rolled
 `evalExpr`-returning-`Result` in the Python lane's style.
 
-Three consequences, all of which the inches below are shaped to:
+**THE LAYER ORDER, and it is not the obvious one:**
+
+```
+SemM ρ α := ExceptT ρ (StateT CWorld Halt) α        -- state-RETAINING
+```
+
+**NOT `StateT CWorld (ExceptT ρ Halt)`.** The `mvcgen` pilot proved by
+`rfl` that the state-outside order **DISCARDS THE WORLD ON A RAISE** — a
+refusal would forget everything the program had already written, which is
+precisely what `Run.exn`'s state field exists to prevent (`Run.exn (state
+: σ)`, §4.1). The C tier needs the retaining order for the same reason
+Python's `Run` carries state on its error constructor: a refusal must be
+able to say *what had happened by the time it refused*, and the
+scoreboard's REFUSE rows are worth much less if they cannot.
+
+**Fuel is NOT a monad layer.** It stays an explicit argument threaded at
+calls and loops. The pilot's finding is blunt — as a layer it does not
+typecheck — and the consequence is welcome: a fuel-free fragment
+(everything below a call, which is most of §6.5) is `mvcgen`-native, and
+fuel appears only where recursion does. **Decide fuel's fate before
+writing each interpreter piece**, not after.
+
+Four consequences, all of which the inches below are shaped to:
 
 1. **Primitive operations are named functions with Spec-lemma-shaped
    contracts** — memory read/write, conversion, the short-circuit step.
    The SHAPE is what makes the comparison possible whether or not
    `mvcgen` is invoked yet.
-2. **The drain amendment survives intact.** A short-circuiting
+2. **`@[spec]` IS the altitude-lemma registry.** Same idea the Python
+   lane learned the hard way, with the pilot's measurement attached:
+   unfolded primitives produced **259 VCs and failed**; four `spec`
+   triples produced **12 and closed**. An expensive-operand chain wants a
+   spec lemma for exactly the reason it wants an altitude lemma.
+3. **Specs must be output-determined, and a bare polymorphic `throw` is
+   forbidden** — a `Std` bug makes it unusable, so every refusal routes
+   through a NAMED primitive carrying its own `@[spec]`. That is the same
+   discipline as "never pool the three causes", arrived at from the
+   tooling's side.
+4. **The drain amendment survives intact.** A short-circuiting
    construct's out-world rides in the monad's state, and §4.3's
    hypothesis-side discipline becomes a WP precondition — the same rule,
    expressed where the tooling can use it.
-3. **The stack's definition may live in this tier for now**; lifting it
-   to shared substrate belongs to the architecture lane.
 
 **Toolchain check, measured:** `Std.Do` is present in the pinned
 toolchain (`v4.33.0-rc1` ships `Std/Do/{WP,Triple,SPred,PredTrans}.olean`),
-so nothing here is blocked on a bump. The monadic structure stands
-regardless of the `mvcgen` pilot's verdict — it is better structure even
-if the verification conditions stay hand-generated.
+so nothing here is blocked on a bump.
 
 **Inch 2 is unaffected**, and deliberately so: the memory model's
-operations are PURE functions over `Mem`, which is what lets them be
-lifted into whatever stack the family settles on without being rewritten.
+operations are PURE functions over `Mem`, taking and returning it
+explicitly. That is what lets them be lifted into the stack above without
+one of them being rewritten — and it is why the layer-order correction
+arrived at no cost to work already landed.
 
 ### 4.2 The ∃-fuel threshold form transfers unchanged
 
@@ -506,8 +546,8 @@ measured record and to M1's actuals (M1's seven inches were ~2 sessions).
 
 | # | inch | what it lands | price |
 | ---: | --- | --- | ---: |
-| **1** | **the value model** | `LeanModels/C/C23/Value.lean`: `IntTy` from the profile, `CVal`, the wrap/refuse arithmetic of §1.2, with `#guard`s on the boundary cases (`INT_MAX+1` refuses, `UINT_MAX+1` wraps, `INT_MIN/-1` refuses, `(int)0x80000000u` = `INT_MIN`) | 1 |
-| 2 | the memory model | `C23/Memory.lean`: `Ptr`, `CByte`, `CObj`, `Mem`, `alloc`/`free`/`load`/`store` + WF lemmas, stated around DECAY and `->` per §2.2a. Pure functions, no monad, no interpreter | 2-3 |
+| **1** | **the value model** | `LeanModels/C/C23/Value.lean`: `IntTy` from the profile, `CVal`, the wrap/refuse arithmetic of §1.2, with `#guard`s on the boundary cases (`INT_MAX+1` refuses, `UINT_MAX+1` wraps, `INT_MIN/-1` refuses, `(int)0x80000000u` = `INT_MIN`) — **LANDED** | 1 |
+| **2** | **the memory model** | `C23/Memory.lean`: `Ptr`, `CByte`, `CObj`, `Mem`, `alloc`/`free`/`load`/`store` + WF lemmas, stated around DECAY and `->` per §2.2a. Pure functions, no monad, no interpreter — **LANDED**, 4 WF theorems, 50 gates | 2-3 |
 | 3 | the expression semantics | `C23/Expr.lean`, §6.5 subclause by subclause: literals, `declRef`, the conversion lattice's 8 `castKind`s, arithmetic, **the §4.3 short-circuit rules at §6.5.14/§6.5.15** — in do-notation over the §4.1a stack | 3-4 |
 | 4 | statements + `CWorld` | `C23/Stmt.lean` at §6.8: the 11 statement kinds, `Run CWorld`, the `Run.exn` payload decision (§4.1), `abort`/`exit` terminals | 3-4 |
 | 5 | calls and the frame | §6.5.3.3: function calls, parameters, the 19 indirect sites through `movecb`, and the **7-site `J.1(16)` discharge** (§4.5) | 2 |

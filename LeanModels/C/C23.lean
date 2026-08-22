@@ -1,5 +1,6 @@
 import LeanModels.C.Ast
 import LeanModels.C.C23.Value
+import LeanModels.C.C23.Memory
 
 /-!
 # The C23 surface (`LeanModels.C.C23`)
@@ -45,7 +46,14 @@ on these ones; deciding whether that surface is a copy or a delta is a
 separate architecture question with its own census.
 
 Milestone M2 builds this namespace inch by inch
-(`docs/c-semantics-design.md` §7). Inch 1 — the value model — is landed.
+(`docs/c-semantics-design.md` §7).
+
+* **Inch 1 — `C23/Value.lean`**: §6.2.5 types, §6.3.1 conversions, and
+  the arithmetic where unsigned wraps and signed refuses.
+* **Inch 2 — `C23/Memory.lean`**: §6.2.4 storage durations, §6.2.6.1 the
+  byte lattice, §6.3.2 pointers and decay, §6.5.3-§6.5.4 the operators
+  that make and use them, §7.24.3 allocation. Instantiated on the shipped
+  corpus in `Examples/c/sunfish/memory.lean`.
 -/
 
 namespace LeanModels.C.C23

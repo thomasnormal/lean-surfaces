@@ -89,7 +89,14 @@ def modulus (t : IntTy) : Int := (2 : Int) ^ t.bits
 `-std=c23` pin is genuinely load-bearing for this file, since C17
 permitted sign-magnitude and ones' complement as well. The auditable
 trace of the mandate is that C17's J.3 integers list had five entries and
-C23's `J.3.6` has four: the deleted one is the sign-representation item. -/
+C23's `J.3.6` has four: the deleted one is the sign-representation item.
+
+**This is THE edition-sensitive definition in this file** — 1 of 11 in
+the value layer. `docs/family-architecture.md` §1.3 previously nominated
+`convert` for that role; `convert` is implementation-defined in every
+edition and pinned by the profile, whereas `minVal`'s `-2^(N-1)` is
+simply WRONG for two of the three representations C17 permitted. Both
+lanes verified the swap against the drafts before propagating it. -/
 def minVal (t : IntTy) : Int :=
   if t.signed then -((2 : Int) ^ (t.bits - 1)) else 0
 

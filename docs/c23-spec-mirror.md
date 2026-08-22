@@ -195,12 +195,23 @@ C17**: "either the result is implementation-defined or an
 implementation-defined signal is raised." Confirmed twice over by
 **J.3.6(3)**, which still lists it as implementation-defined.
 
-What C23 *did* change is signed **representation**: §6.2.6.2p6 NOTE 2
-records that two's complement is now the only permitted sign
-representation, and the auditable trace is that **C17's J.3.5 integers
-list had five entries and C23's J.3.6 has four** — the deleted item is
-the sign-representation one. Representation mandated; the conversion rule
-untouched.
+What C23 *did* change is signed **representation**, and the NORMATIVE
+sentence is **§6.2.6.2p2**: C23 fixes the sign bit's value, where C17's
+same paragraph offered three representations (sign-and-magnitude, ones'
+complement, two's complement). §6.2.6.2p6 NOTE 2 is the confirming
+change-history note, not the rule. The auditable trace is that **C17's
+integers list in J.3 had five entries and C23's J.3.6 has four** — the
+deleted item is the sign-representation one. Representation mandated; the
+conversion rule untouched.
+
+**Consequence for the version boundary, and it is the reason this
+correction was worth chasing:** the edition-sensitive definition in
+`Value.lean` is **`IntTy.minVal`**, not `convert`. `minVal`'s
+`-(2^(bits-1))` is a C23 commitment; under C17 it is wrong for two of the
+three permitted representations. `convert` is implementation-defined in
+every edition and is pinned by the profile. *(The family-architecture
+lane verified this independently against both drafts and corrected its
+§1.3 to match.)*
 
 **Consequence for the model, and it is a real one.** `convert` is not
 implementing a standard mandate. It is resolving an

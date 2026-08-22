@@ -25,6 +25,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-sunfish-rtrack-5` | the lock hypothesis is CONFIRMED, and two numbers close two arguments | sunfish-rtrack |
 | `2026-08-22-qol-5` | `--classify` reachability: the Go lane's correction, and the measurement that widened it | qol |
 | `2026-08-22-lean-tier-5` | `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work | lean-tier |
+| `2026-08-22-es-5` | SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling | es |
 | `2026-08-22-sunfish-rtrack-4` | THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism | sunfish-rtrack |
 | `2026-08-22-qol-4` | `docs/law-index.md`: 315 laws, and every one is a POINTER | qol |
 | `2026-08-22-lean-tier-4` | the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor" | lean-tier |

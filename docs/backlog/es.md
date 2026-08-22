@@ -384,3 +384,39 @@ before writing "no substitute exists."
 
 Still owed, and NOT done here (by-touch, and this touch was Convert/Spec/
 float_probe): the `Core.Outcome` substrate replacement — see the next entry.
+
+## 2026-08-22-es-5 — SUBSTRATE ADOPTION ON HOLD: this lane's `Halt` is the RICHER shape, and importing Core now would DELETE the ruling
+
+Recorded so the next reader does not "helpfully" perform the import.
+
+**HOLD, at the coordinator's correction.** The earlier note said adopt
+`Core.Outcome` by import at the next substrate touch. The arch lane measured
+otherwise: `Completion.lean`'s `inductive Halt α` has **Core's exact shape
+with a RICHER payload**. Core's `Loud.unsupported` carries a bare `String`;
+this lane's carries `(cause : EsRefusal) (message : String)` — **which IS the
+`RefusalCause π` ruling implemented.** Importing today would replace a
+structured cause with prose and silently undo §L88's own rule that a refusal
+*carries its CAUSE as data, not as prose, so a scoreboard need not parse
+English*.
+
+**This is why the last landing flagged rather than guessed.** The reconciliation
+was reported as "a real design step, not a mechanical import swap" — Core's own
+text says a tier needing more causes adds its own `.except` layer rather than
+extending the base, which is a third shape again. Guessing between three would
+have been a coin flip on a semantics-visible field.
+
+**What happens instead**: the rebuild lane is landing Core's `RefusalCause π`
+plus a **subsuming** `Loud` payload, lifting THIS lane's shape as the closest
+existing one. When it lands the adoption is a **substitution**, not a
+redesign, and the two expected-empty gate theorems
+(`es_never_undefined`, `es_never_orderDependent`) **transfer unchanged** —
+they are stated about `esRefusal`, this tier's only cause constructor, not
+about the base.
+
+**Verified and unchanged by the hold**: this lane's base is structurally
+correct against Core's — `ok | timeout | unsupported` ≅ `Except Loud`, and
+**state-discarding on both loud arms**, which is Core's stated requirement. So
+this is not one of the family's two wrong-base sites; it is the site the
+correct shape is being lifted FROM.
+
+Inch 4(b) proceeds on this lane's own `Halt`.

@@ -239,3 +239,59 @@ ruling. **Core carries neither.**
 and the `RefusalCause` ruling (four classes, tier payload). **Until that lands,
 the eleven mechanical sites converge by import and the two payload-bearing tiers
 HOLD** — importing them now trades two implemented rulings for a `String`.
+
+### THE DUAL LAW — an obstruction that is only ENCOUNTERED is not measured either
+
+Minted by the ES lane from **two of its own retracted claims**, and placed beside
+the refusal-path law it duals. That law covers one direction — a path you never
+walked is not evidence. This covers **negative claims**:
+
+> **AN OBSTRUCTION THAT IS ONLY ENCOUNTERED IS NOT MEASURED EITHER.**
+
+The two retractions, both generalized from a **single attempt**:
+
+* *"`rfl` failed, so no kernel-reducible substitute exists"* — a failed attempt
+  turned into a non-existence claim;
+* *"`#guard` passed, so the kernel accepted it"* — a passing attempt turned into
+  a claim about a **different oracle** (the §5.4 correction).
+
+**Neither was measured against an ALTERNATIVE**, which is the whole defect. The
+SoftFloat lane got both right by **replicating the function with core-only
+imports and DIFFING THE TACTICS** — candidates side by side, rather than the
+first outcome reported.
+
+**Practical form**: before writing *"no X exists"* or *"X is unprovable"*, **try
+the nearest alternative formulation and record the tactic diff.** A negative
+needs a measurement too, and that measurement is a **comparison**, not an
+attempt.
+
+Recorded honestly in the doc: this lane's own `#guard` probe happens to have the
+prescribed shape — `#guard`, `rfl` and `decide` on the **same** propositions —
+which is the only reason it could support a claim about the difference between
+them. **Had it run only the failing half, it would have produced exactly the
+retracted claim.** Not a virtue this lane can claim credit for; a form worth
+copying.
+
+### THE HELD mvcgen DEFECT RESOLVES — the ceiling stands, and the tier routes around it
+
+Recording defect and outcome together, as instructed when the edit was held.
+
+**The defect stands**: per-arm `@[spec]` lemmas do **not** suffice for
+**nested-match** arms, because the binding lemma cannot be *stated* — `mvcgen`
+splits the inner match **without retaining the discriminant**, so unreachable
+branches arrive as bare `⊢ False`. The grind-seam retry did not close it.
+
+**The outcome**: the generator proof layer on the monadic interpreter is founded
+as **judgments with discriminant premises — the trunk's method — NOT `mvcgen`
+triples.** The nested-match ceiling decided it.
+
+**And the reason the trunk's method transports is exact and worth carrying**: the
+computed-shape law **never relied on a tactic retaining discriminant equations**
+— the premise carries the discriminant explicitly, so nothing is lost when a
+tactic declines to. **A method that depends on what a tactic happens to preserve
+is fragile in precisely the way the harvest rule warns about; a method that
+carries its own premises is not.**
+
+So §3.4's *"mvcgen on the fuel-free fragment"* gains a measured boundary **inside**
+the fragment: **arm-level `@[spec]` where the match is flat,
+judgments-with-premises where it nests.**

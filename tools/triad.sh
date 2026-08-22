@@ -560,6 +560,61 @@ gate_floor() {          # class -> the gates this landing owes at minimum
   esac
 }
 
+# ---- THE GATE PHASE BUILDS TOO, AND THAT DEFEATED THE NARROWING
+# Found by the R-track running a narrowed build: `harness/diff_test.py` runs
+# an UNCONDITIONAL `lake build` before its cases, and every runner-driven gate
+# (`diff_test`, `script_corpus`, a lane's `monadic_gate`) invokes
+# `lake exe leanmodels-run`, which BUILDS.  So a narrowed tenure got a full
+# build anyway — inside the GATE phase, where it is accounted as a gate.
+#
+# Two costs, and the second is the one that matters.  The build/gate
+# accounting is misleading; and an unrelated build failure surfaces as a GATE
+# failure, which makes the coverage statement false IN THE FLATTERING
+# DIRECTION (§5.4a).  A narrowed run that says "scoped: covers these modules"
+# while having quietly built the tree is claiming less than it did — and a
+# tree failure it caused is filed against a gate that was innocent.
+#
+# So the tenure builds what the gates need, EXPLICITLY, before invoking them,
+# and NAMES it in the coverage statement.  Then it tells the gates the runner
+# is ready: `--no-build` for `diff_test` (its own documented flag), and
+# `LS_RUNNER_PREBUILT=1` in the environment for every other harness.
+lake_exe_names() {      # -> the [[lean_exe]] names, read from the lakefile
+  local f="$CLONE/lakefile.toml"
+  [ -f "$f" ] || return 0
+  awk '
+    /^\[\[lean_exe\]\]/ { sec = 1; next }
+    /^\[\[/               { sec = 0; next }
+    sec && /^[ \t]*name[ \t]*=/ {
+      sub(/^[^=]*=[ \t]*/, ""); gsub(/["\047 \t\r]/, ""); print }
+  ' "$f"
+}
+
+gate_runner_targets() { # gate list -> the exe targets those gates will invoke
+  local g="$1" e out=""
+  for e in $(lake_exe_names); do
+    case "$g" in *"$e"*) out="${out:+$out }$e" ;; esac
+  done
+  # These harnesses take the runner from a DEFAULT, so the name never appears
+  # in the gate string: `diff_test`'s is `lake exe leanmodels-run`.
+  if [ -z "$out" ]; then
+    case "$g" in
+      *diff_test*|*script_corpus*|*monadic_gate*|*"lake exe"*)
+        out="$(lake_exe_names | head -1)" ;;
+    esac
+  fi
+  echo "$out"
+}
+
+announce_prebuilt() {   # gate list -> the same list, told the runner is ready
+  # ONLY `diff_test`'s own documented flag is added.  Another harness gets the
+  # environment variable instead — inventing a flag it does not have would
+  # turn a build defect into a gate crash.
+  # Idempotent: a lane that already passes --no-build must not get it twice.
+  printf '%s' "$1" \
+    | sed 's|harness/diff_test\.py|harness/diff_test.py --no-build|g' \
+    | sed 's|--no-build  *--no-build|--no-build|g'
+}
+
 # ---- THE DEFAULT GATE SET IS NARROWER THAN SOME RETIRED LANE SCRIPTS
 # The ES lane found this by READING ITS OWN LOG rather than trusting it: this
 # script's default gates are `docs_check; diff_test`, and `script_corpus` is
@@ -719,6 +774,28 @@ if [ "$SELF_TEST" = "1" ]; then
   watchdog_stop
   check "watchdog_stop clears it"           "$WATCHDOG" ""
   check "  ...and the process is gone"      "$(sleep 1; kill -0 "$w2" 2>/dev/null && echo live)" ""
+
+  # ---- the gate phase's own build (the R-track's finding)
+  echo "  -- gate-phase build"
+  check "exe names are READ from the lakefile" \
+        "$(lake_exe_names | tr '\n' ' ' | sed 's/ *$//')" "leanmodels-run circuit-dc-runner"
+  check "the tier floor needs the runner"      "$(gate_runner_targets "$(gate_floor tier)")" "leanmodels-run"
+  check "the docs floor needs NO runner"       "$(gate_runner_targets "$(gate_floor docs)")" ""
+  check "script_corpus needs it too"           "$(gate_runner_targets 'python3 harness/script_corpus.py')" "leanmodels-run"
+  check "a NAMED exe is taken literally"       "$(gate_runner_targets 'sh -c "lake exe circuit-dc-runner"')" "circuit-dc-runner"
+  check "an unrelated gate needs nothing"      "$(gate_runner_targets 'python3 tools/docs_check.py')" ""
+  # PROPERTY: after the gate-phase build, the gates must not build the tree.
+  # `--no-build` is diff_test's own documented flag, and it is the mechanism
+  # by which a narrowed run's log carries NO full-build lines from the gates.
+  check "diff_test is told the runner is ready" \
+        "$(announce_prebuilt "$(gate_floor tier)")" \
+        "python3 tools/docs_check.py; python3 harness/diff_test.py --no-build"
+  check "  ...and it is said exactly once"     \
+        "$(announce_prebuilt "$(gate_floor tier)" | grep -o -- '--no-build' | grep -c .)" "1"
+  check "  ...idempotently"                    \
+        "$(announce_prebuilt "$(announce_prebuilt "$(gate_floor tier)")" | grep -o -- '--no-build' | grep -c .)" "1"
+  check "a non-diff_test gate is left ALONE"   \
+        "$(announce_prebuilt 'python3 harness/script_corpus.py')" "python3 harness/script_corpus.py"
 
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
@@ -1101,6 +1178,33 @@ fi
 if [ -z "$GATES" ]; then
   GATES='python3 tools/docs_check.py; python3 harness/diff_test.py'
 fi
+
+# The gate phase's own build, paid HERE so it is accounted as a build.  Only a
+# NARROWED tenure needs it: after a full build the runner is already up to
+# date, and the gates' own `lake build` is a no-op that cannot fail.
+GATE_BUILT=""
+if [ -n "$BUILD_TARGETS" ]; then
+  GATE_TARGETS="$(gate_runner_targets "$GATES")"
+  if [ -n "$GATE_TARGETS" ]; then
+    say "=== gate-phase build: $GATE_TARGETS (the gates invoke it; built HERE, not inside a gate) ==="
+    # shellcheck disable=SC2086
+    nice -n "$NICE" lake build $GATE_TARGETS >> "$BUILD_LOG" 2>&1
+    gate_build_exit=$?
+    if [ "$gate_build_exit" -ne 0 ]; then
+      # This is a BUILD failure.  Letting it reach the gates is exactly the
+      # misattribution this block exists to stop.
+      say "GATE-PHASE BUILD FAILED (exit $gate_build_exit) — this is a BUILD failure, NOT a gate failure"
+      grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
+      say "full log: $BUILD_LOG"
+      exit 1
+    fi
+    GATE_BUILT="$GATE_TARGETS"
+    export LS_RUNNER_PREBUILT=1
+    GATES="$(announce_prebuilt "$GATES")"
+    say "gate-phase build done; LS_RUNNER_PREBUILT=1 and diff_test gets --no-build"
+  fi
+fi
+
 gate_notice "$GATES" "$LANE_GATES"
 run_gates "$GATES"
 
@@ -1108,4 +1212,5 @@ say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green ||
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that
 # does not say what it covers is a number without its state.
 [ -n "$CLASS" ] && say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
+[ -n "$GATE_BUILT" ] && say "COVERAGE (§5.4a): gate phase additionally built: $GATE_BUILT" 
 exit "$rc"

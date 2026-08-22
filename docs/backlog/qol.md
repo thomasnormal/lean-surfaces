@@ -591,3 +591,74 @@ per-process outranking chain, an excluded pid never being the victim and never
 counting toward the chain while its siblings still are, guard restart
 replacing the old pid, the pidfile the exclusion reads, stop clearing it, and
 the banner naming the protocol level. **No Lean was executed.**
+
+---
+
+## 2026-08-22-qol-10 — the GATE PHASE was building the tree, and it defeated every narrowing
+
+Found by the R-track running a narrowed build. `harness/diff_test.py` runs an
+**unconditional `lake build`** before its cases (line 355), and every
+runner-driven gate — `diff_test`, `script_corpus`, a lane's `monadic_gate` —
+invokes `lake exe leanmodels-run`, **which builds**. So a narrowed tenure got
+a full build anyway, *inside the gate phase*, where it is accounted as a gate.
+
+Two costs, and the second is the one that matters:
+
+1. the build/gate accounting is misleading — the tenure reports a scoped build
+   and then quietly builds the tree;
+2. **an unrelated build failure surfaces as a GATE failure**, which makes the
+   coverage statement false **in the flattering direction** (§5.4a). A run
+   that says *"scoped: covers these modules"* while having built the whole
+   tree is claiming **less than it did**, and a tree failure it caused is
+   filed against a gate that was innocent.
+
+### The fix: pay for it where it is accounted
+
+A narrowed tenure now builds what the gates need **explicitly, before
+invoking them**, and names it:
+
+```
+[HH:MM:SS] === gate-phase build: leanmodels-run (the gates invoke it; built HERE, not inside a gate) ===
+[HH:MM:SS] gate-phase build done; LS_RUNNER_PREBUILT=1 and diff_test gets --no-build
+[HH:MM:SS] COVERAGE (§5.4a): gate phase additionally built: leanmodels-run
+```
+
+If that build fails it is reported as a **BUILD failure and the run stops** —
+letting it reach the gates is precisely the misattribution the block exists to
+stop. The exe names are **read from `lakefile.toml`**, and `diff_test` and
+`script_corpus` are recognised as runner-drivers even though the runner's name
+never appears in their gate string, because it is their **default**.
+
+Then the gates are told the runner is ready: **`--no-build`** for `diff_test`
+— its own documented flag, added idempotently — and **`LS_RUNNER_PREBUILT=1`**
+in the environment for every other harness. No flag is invented for a harness
+that does not have one; that would turn a build defect into a gate crash.
+
+Only a **narrowed** tenure does this. After a full build the runner is already
+current and the gates' own `lake build` is a no-op that cannot fail.
+
+### One part of the dispatch is NOT actionable here, and that is the finding
+
+`harness/monadic_gate.py` **is not on master**. It exists only in commit
+`6a15cf2` on a feature branch; `git grep` over the working tree finds nothing.
+So its unconditional `lake build` at line 146 **cannot be fixed from here** —
+I will not edit a file that is not in the tree, and I will not report a
+one-line change I did not make.
+
+**OWED TO THE R-TRACK, as a contract rather than a diff:** when
+`monadic_gate.py` lands, it must (a) drop the unconditional `lake build`, and
+(b) honour **`LS_RUNNER_PREBUILT=1`** by skipping any build of its own — the
+same shape `diff_test --no-build` already has. `triad.sh` exports it today, so
+the harness side is the only missing half.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **88 ok, 0 failed** (78 → 88, **10 new**) — exe
+names read from the lakefile, the tier floor needing the runner and the docs
+floor not, `script_corpus` recognised by its default, a named exe taken
+literally, the `--no-build` rewrite exact, said **once**, **idempotent**, and a
+non-`diff_test` gate left untouched. That last group is property (4) stated as
+a mechanism: `--no-build` is *how* a narrowed run's log carries no full-build
+lines from the gate phase. **No Lean was executed** — this lane holds no
+ticket, so the gate-phase build itself is exercised by its decision functions,
+not by running it.

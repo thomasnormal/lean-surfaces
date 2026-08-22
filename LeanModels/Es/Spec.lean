@@ -271,24 +271,25 @@ caller REFUSES rather than emitting the host's rendering. -/
 true of both zeros) rather than `sameValue`. -/
 @[es_spec] theorem numberToString_neg_zero : numberToString (-0.0) = some "0" := rfl
 
-/- **The INTEGER path is deliberately unlemmatized, and that is a
-measured boundary rather than an omission.** `numberToString`'s
-exact-integer test goes through `Float.toInt64`, which is `@[extern]`:
-`rfl`, `decide` and `with_unfolding_all rfl` all fail on BOTH directions
-(`numberToString 42.0 = some "42"` and `numberToString 0.5 = none`),
-while `#guard` evaluates both. So this tier now has TWO verification
-strengths, and the arms above are exactly the ones in the stronger class
-— they short-circuit before reaching `toInt64`.
+/-! ### The exact-integer arm — PROVABLE, after a correction
 
-This is §L88's asymmetry again (`#guard` is a weaker oracle than `rfl`)
-but with the opposite resolution, and the difference is the point: there,
-a pure-Lean reformulation existed (`List Char`) so the DEFINITION moved.
-Here the obstruction is an extern primitive with no kernel-reducible
-substitute short of the bit-level model, and correctly-rounded decimal
-conversion is already scheduled and owned elsewhere
-(`docs/family-architecture.md` §3.5.5 step 3). Claiming a lemma we cannot
-prove would be worse than naming the gap; weakening the definition until
-`String(42)` refuses would be worse than both. -/
+An earlier version of this file recorded these as unprovable and named a
+"second verification strength" for them. **That was wrong by one
+projection**: `numberToString` went through `Float.toInt64`/`Float.toFloat`,
+which are `@[extern]`, and the substitute is core's own `Float.Model` —
+`n.toModel.toInt64` and `Float.ofModel (Float.Model.ofInt64 t)` reduce
+where the extern pair does not. Measured by the SoftFloat lane and
+re-checked here; the split is gone and these are ordinary `rfl` lemmas. -/
+
+@[es_spec] theorem numberToString_int : numberToString 42.0 = some "42" := rfl
+@[es_spec] theorem numberToString_neg_int : numberToString (-7.0) = some "-7" := rfl
+@[es_spec] theorem numberToString_thousand : numberToString 1000.0 = some "1000" := rfl
+
+/-- A non-integer answers `none`, so the caller refuses instead of
+guessing — and this direction is provable too, now. What stays blocked is
+the RENDERING of a non-integer, which needs correctly-rounded decimal
+conversion (SoftFloat step 3), not the DETECTION of one. -/
+@[es_spec] theorem numberToString_half : numberToString 0.5 = none := rfl
 
 /-! ## Property-key text — §6.2.5's environment references use it -/
 

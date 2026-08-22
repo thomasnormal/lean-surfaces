@@ -9,7 +9,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**39 entries across 13 lanes.** Regenerate with
+**40 entries across 13 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -27,6 +27,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-sunfish-rtrack-4` | THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism | sunfish-rtrack |
 | `2026-08-22-qol-4` | `docs/law-index.md`: 315 laws, and every one is a POINTER | qol |
 | `2026-08-22-lean-tier-4` | the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor" | lean-tier |
+| `2026-08-22-es-4` | TWO CORRECTIONS ACCEPTED: `#guard` is NOT a kernel oracle, and the "no substitute" claim was wrong by ONE PROJECTION | es |
 | `2026-08-22-wasm-3` | INCH 1, STEP 2: **the pin does NOT build** — six errors, all in the hand-written proof file, and the model itself is FINE | wasm |
 | `2026-08-22-sunfish-rtrack-3` | TRANSPORT CLASSIFICATION for the re-founding | sunfish-rtrack |
 | `2026-08-22-qol-3` | `tools/diagnose.sh`: 22 failure signatures, each with the incident that minted it | qol |

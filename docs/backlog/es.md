@@ -316,3 +316,71 @@ Three mechanical notes for the next lane: **`try` is a reserved keyword**
 `String.Slice`** with no `.toList`, so char-list forms are both the portable
 and the kernel-reducible choice; and a multi-line `SemM.refuseHost\n "msg"`
 parses as two terms, not an application.
+
+## 2026-08-22-es-4 — TWO CORRECTIONS ACCEPTED: `#guard` is NOT a kernel oracle, and the "no substitute" claim was wrong by ONE PROJECTION
+
+Both came from the SoftFloat lane, both were **re-measured here before being
+accepted**, and both refute something this lane wrote down.
+
+### 1. `#guard` IS NOT A KERNEL ORACLE — and this lane said it was, three times
+
+Measured here, on **one expression**:
+
+    #guard (42.0 : Float).toInt64 == 42          -- PASSES  (exit 0)
+    example : ((42.0:Float).toInt64 == 42) = true := by rfl     -- FAILS
+    example : ((42.0:Float).toInt64 == 42) = true := by decide  -- FAILS
+
+`#guard` runs through `evalExpr`, which honours `@[extern]`, so it passes
+**identically whether a declaration reduces in the kernel or is opaque to
+it**. A `#guard` over floats is attested by the **host FPU**, not by Lean.
+
+**This retracts a phrase this lane repeated in §L82, §L88 and in
+`harness/es/float_probe.lean`'s own docstring** — "every `#guard` is decided
+by the KERNEL". It is not. The docstring was ours and is fixed in this
+landing.
+
+**The float finding itself SURVIVES, and the reason is worth stating rather
+than glossed.** §L66's conclusion — core `Float` is kernel-reducible on the
+pin — never rested on the guards: it rested on the `example … := by rfl`
+lines, including `(0.1 : Float) + 0.2 = 0.30000000000000004`. Those ARE
+kernel claims and they pass. The guards beside them were misdescribed, not
+load-bearing. **A file that had used only `#guard` would have proved nothing
+and looked identical**, which is the whole lesson, and it is why the guards
+are kept as the DIFFERENTIAL half — host answer beside kernel answer — rather
+than deleted.
+
+### 2. "No kernel-reducible substitute short of the bit model" — wrong by one projection
+
+Inch 4(a) recorded the exact-integer arm of `numberToString` as
+guard-verified-only, and reasoned that no substitute existed "short of the
+bit-level model." **The bit model IS core's `Float.Model`, one projection
+away.** Two expressions change:
+
+    n.toInt64   →   n.toModel.toInt64
+    t.toFloat   →   Float.ofModel (Float.Model.ofInt64 t)
+
+Re-checked here: `numberToString 42.0 = some "42"`, `-7.0`, `1000.0` and
+`0.5 = none` all close by **`rfl`** now, where the extern pair closed under
+neither `rfl` nor `decide`. **The "two verification strengths" note is
+withdrawn — there is one.** Four lemmas that had been dropped as unprovable
+are restored (81 `@[es_spec]` in the lane, from 77).
+
+**What stays blocked is narrower and correctly stated**: RENDERING a
+non-integer needs correctly-rounded shortest-round-trip decimal conversion,
+`Float.toString` is opaque, and core ships no decimal printer — SoftFloat step
+3. **DETECTING** a non-integer is now provable; only rendering one is not. The
+earlier note conflated the two.
+
+### The shape of both mistakes is the same, and it is worth naming
+
+Each was a **negative claim made from a failed attempt** — "`rfl` failed, so
+nothing can prove this" and "`#guard` passed, so the kernel accepted it."
+Neither was measured against an alternative. The house law covers the first
+direction (*a refusal path that is only designed is not one*); these are the
+second: **an obstruction that is only encountered is not measured either.**
+The SoftFloat lane measured both by replicating the function with core-only
+imports and diffing the tactics, which is what this lane should have done
+before writing "no substitute exists."
+
+Still owed, and NOT done here (by-touch, and this touch was Convert/Spec/
+float_probe): the `Core.Outcome` substrate replacement — see the next entry.

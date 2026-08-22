@@ -52,6 +52,11 @@ being written.
    Reproduce the shape (not the moment):
    `cat /tmp/ls-build.lock/owner; ls /tmp/ls-build-queue; ps -eo pid,ppid,etime,args | grep '[l]ake build'`
 
+> **FINDINGS 1 AND 2's exit codes are FIXED — see §10, landed the same day.**
+> The seven implementations were corrected and verified in both directions;
+> the *contract* duplication they came from is untouched, and stays
+> migrate-on-touch for the owning lanes.
+
 Findings 1 and 3 have the same cause, and it is the subject of this
 document: **the contract lives in prose, and each lane hand-implements
 it.** Prose cannot be run, so a lane's implementation is only as good as
@@ -319,6 +324,14 @@ more amendments (1, 3, 8) are marked LOST.
 So the durable home carries **8 of 12** rules. A prose register can be one
 amendment behind and look complete; **a script cannot** — a missing
 amendment in a script is a diff.
+
+> **SINCE FIXED, and by the mechanism this section argues for.** The
+> family-architecture lane completed the register at `cd0a722`: thirteen
+> amendments, none LOST — and **amendment 8's text was RECOVERED FROM
+> `tools/triad.sh`'s header**, the script landed with this audit. A rule
+> that no prose source retained was read back out of the code that
+> implements it. That is the whole case for "the doc describes, the script
+> IS", made by the register itself within the hour.
 
 ### 2.4 PROPOSAL — `tools/triad.sh`, LANDED WITH THIS DOCUMENT
 
@@ -903,3 +916,86 @@ path is consequently the **one** path in `tools/triad.sh --self-test` that
 is asserted structurally rather than executed end-to-end; closing it needs
 a tenure that runs no Lean, and is the first thing to do when the script is
 next opened.
+
+
+---
+
+## 10 THE BUG FIX — seven implementations, verified 2 x 7
+
+Dispatched by the coordinator as *bug before refactor*, from §8's own
+recommendation. **Pure Python, no Lean, no ticket.** The censuskit refactor
+(§1.3) was NOT started: it stays migrate-on-touch for the owning lanes.
+
+**(a) `--compare` must exit 1 on drift.** Three instruments printed the
+delta and returned 0.
+
+**(b) A failed revision lookup must refuse, never stamp null.** Four copies
+of one `git rev-parse` swallowed every failure. They now raise the file's
+own refusal class, which the existing `main` catches and reports as exit 2
+— and, verified below, **no artifact reaches disk on that path**, so a
+null-stamped census can no longer be committed.
+
+One extra hole was found while verifying (a) and had to be closed for the
+mandated test to mean anything: `c_construct_census.compare()` returned
+early on a matching **source sha256**, so a census that differed for the
+same input — a moved frontend, a changed instrument, a hand-edited artifact
+— printed `UNCHANGED` and exited 0. The early return now fires only on a
+byte-identical census, and a same-source/different-census pair is reported
+as drift in its own right.
+
+### The verification table
+
+Fixtures (built fresh, `<V>` = the scratchpad's `verify/`): a 3-line C
+translation unit; a git checkout with `specification/wasm-3.0/a.spectec`; a
+git checkout with `test/core/a.wast`; a git checkout with `src/**/*.mts`; a
+lake package with a **stub `lake` on `PATH`** so the Lean instrument's own
+path runs with **zero Lean executed**. The `-nogit` variants are copies with
+`.git` removed.
+
+| # | fix | direction | command (abbreviated) | before | after |
+| --- | --- | --- | --- | :-: | :-: |
+| A1 | `c_construct_census.py` `--compare` | agree | `… fixture.c --compare c-base.json` | 0 | **0** ✓ |
+| A1 | | **drift** | `… fixture.c --compare c-bad.json` | **0** ✗ | **1** ✓ |
+| A2 | `wasm_spec_census.py` `--compare` | agree | `… <V>/wspec --compare ws-base.json` | 0 | **0** ✓ |
+| A2 | | **drift** | `… <V>/wspec --compare ws-bad.json` | **0** ✗ | **1** ✓ |
+| A3 | `wasm_suite_census.py` `--compare` | agree | `… <V>/wsuite --compare wt-base.json` | 0 | **0** ✓ |
+| A3 | | **drift** | `… <V>/wsuite --compare wt-bad.json` | **0** ✗ | **1** ✓ |
+| B1 | `wasm_spec_census.py` `git_rev` | resolvable | `… <V>/wspec -o b1.json` | 0 | **0**, `revision=7b854e86…` ✓ |
+| B1 | | **unresolvable** | `… <V>/wspec-nogit -o b1x.json` | **0**, `revision=None` ✗ | **2**, REFUSED, no file ✓ |
+| B2 | `wasm_suite_census.py` `git_rev` | resolvable | `… <V>/wsuite -o b2.json` | 0 | **0**, `revision=11614693…` ✓ |
+| B2 | | **unresolvable** | `… <V>/wsuite-nogit -o b2x.json` | **0**, `revision=None` ✗ | **2**, REFUSED, no file ✓ |
+| B3 | `es_census.py` `rev` | resolvable | `… --engine <V>/esfix -o b3.json` | 0 | **0**, `engine262=c1e558cc…` ✓ |
+| B3 | | **unresolvable** | `… --engine <V>/esfix-nogit -o b3x.json` | **0**, `sources={'engine262': ''}` ✗ | **2**, REFUSED, no file ✓ |
+| B4 | `lean_independent_check.py` `checker_commit` | resolvable | `… --checker-dir <V>/leanfix --modules Init.Core` | 0 | **0**, `checker_commit=702e8110…` ✓ |
+| B4 | | **unresolvable** | `… --checker-dir <V>/leanfix-nogit --modules Init.Core` | **0**, `checker_commit=""` ✗ | **2**, REFUSED, no file ✓ |
+
+The `before` column is not reconstructed from reading — the pre-fix files
+were extracted with `git show HEAD:harness/<f>.py` and run against the same
+fixtures and the same perturbed JSONs.
+
+**The B3 row is the one that was never hypothetical.**
+`docs/es262-census.json` on master carries
+
+    "sources": {"ecma262": "", "engine262": "c7939eaf…", "test262": "3655e746…"}
+
+Two thirds provenanced, one third silently blank, from exactly this code
+path. That is §5.4a's failure reading *cleaner than the truth*, sitting in a
+committed artifact. **The fix does not repair that file** — re-deriving it
+needs the ES corpora, which are not on this machine; the next `es_census
+--spec` run will now refuse until the spec is censused from a checkout, and
+that refusal is the finding, not a regression.
+
+### Not changed, deliberately
+
+* The **missing-baseline** dialect split stays: the Lean lane refuses with
+  exit 2, Ada/ES/C/Wasm let `open()` traceback. That is one contract with
+  four spellings and it belongs to §1.3's kit, not to a bug fix.
+* No committed census JSON was touched (`git status` after the fix lists
+  five `.py` files and nothing else).
+* No instrument's output schema changed, so `--compare` against every
+  committed artifact still agrees — the three `--compare` fixes move only
+  the **exit status**.
+
+Regression checks after the fix:
+`c_construct_census.py --selftest` ok (6 stubs, `&automatic=2 &static=1`);
+`es_census.py --self-test` ok (7 paths); `tools/docs_check.py` 83/83.

@@ -99,13 +99,23 @@ def run(checker_dir: Path, modules: list[str], timeout: int, lean_path: str | No
     env = dict(os.environ)
     if lean_path: env["LEAN_PATH"] = lean_path + ":" + env.get("LEAN_PATH", "")
 
-    rev = ""
+    # §5.4a — the checker's commit is not decoration: `checker_commit` is what
+    # makes a verdict re-derivable, and lean4lean's agreement means nothing
+    # without saying WHICH lean4lean.  The previous version swallowed every
+    # failure and stamped `""`, which reads cleaner than the truth.  A checker
+    # whose revision cannot be recovered is an INPUT FAULT (§5.2).
     try:
         r = subprocess.run(["git", "-C", str(checker_dir), "rev-parse", "HEAD"],
                            capture_output=True, text=True, timeout=30)
-        if r.returncode == 0: rev = r.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        pass
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise CensusRefusal(f"cannot run git in {checker_dir}: {exc} — the checker "
+                            f"revision is part of the result (§5.4a), not a stamp on it")
+    if r.returncode != 0 or not r.stdout.strip():
+        raise CensusRefusal(f"no git revision for --checker-dir {checker_dir} "
+                            f"(exit {r.returncode}): {(r.stderr or '').strip()[:200]} — "
+                            f"§5.4a forbids reporting verdicts against a checker whose "
+                            f"commit cannot be named")
+    rev = r.stdout.strip()
 
     rows = []
     for m in modules:

@@ -769,12 +769,32 @@ def census_engine(root, spec_clause_ids):
 # ---------------------------------------------------------------------------
 
 def rev(path):
+    """The corpus revision, REFUSED rather than stamped empty.
+
+    §5.4a — quote the number and the state, or quote neither.  The previous
+    version returned `""` on any failure, and `docs/es262-census.json` records
+    the result: `"sources": {"ecma262": "", "engine262": "c7939eaf…",
+    "test262": "3655e746…"}`.  Two thirds provenanced and one third silently
+    blank is the trap the law names — the artifact looks complete, and the
+    empty string reads CLEANER than "this measurement has no recoverable
+    state".
+
+    A corpus whose revision cannot be recovered is an INPUT FAULT (§5.2), so
+    it refuses.  To census a spec that is not in a checkout, put it in one —
+    the edition pin in `docs/es-edition.json` carries the sha256, but the
+    sha256 of a file is not the revision of the corpus it came from.
+    """
     try:
         out = subprocess.run(["git", "-C", str(path), "log", "-1", "--format=%H %cI"],
                              capture_output=True, text=True, timeout=30)
-        return out.stdout.strip() if out.returncode == 0 else ""
-    except Exception:
-        return ""
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise Refusal(f"cannot run git in {path}: {exc} — the corpus revision is part "
+                      f"of the result (§5.4a), so it is refused, not stamped empty")
+    if out.returncode != 0 or not out.stdout.strip():
+        raise Refusal(f"no git revision for {path} "
+                      f"(exit {out.returncode}): {(out.stderr or '').strip()[:200]} — "
+                      f"census a git CHECKOUT of the corpus; §5.4a forbids stamping this blank")
+    return out.stdout.strip()
 
 
 def self_test():

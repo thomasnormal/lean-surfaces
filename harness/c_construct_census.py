@@ -492,15 +492,34 @@ def census(path):
 
 
 def compare(new, old):
-    """Print the delta between two census runs.  Kinds first: a NEW node kind
-    is a tier decision, a bigger count is only a bigger corpus."""
+    """Print the delta between two census runs, and RETURN 1 WHEN IT DRIFTED.
+    Kinds first: a NEW node kind is a tier decision, a bigger count is only a
+    bigger corpus.
+
+    The exit status is the point.  family-architecture.md §5.4 asks for
+    `--compare` "because corpora that live in other repositories move on their
+    own schedule and staleness must be mechanically detectable rather than
+    merely possible" — and a mode that always exits 0 is detectable only by a
+    human reading stdout.  It cannot gate, it cannot run under `set -e`, and
+    this instrument is the one §5.4 names as having fixed the contract.
+    0 = the committed census still describes the corpus, 1 = it does not."""
     print("source   %s" % new["source"])
     print("sha256   %s -> %s" % (old["sha256"][:16], new["sha256"][:16]))
-    if old["sha256"] == new["sha256"]:
-        print("UNCHANGED — same bytes, nothing to compare")
+    if new == old:
+        print("UNCHANGED — byte-identical census, nothing to compare")
         return 0
+    drift = 0
+    if old["sha256"] == new["sha256"]:
+        # The second staleness hole, and it was hiding behind the first: the
+        # old early return keyed on the SOURCE sha, so a census that differed
+        # for the same input — a moved frontend, a changed instrument, a
+        # hand-edited artifact — reported UNCHANGED and exited 0.
+        print("SAME SOURCE BYTES, DIFFERENT CENSUS — the frontend or this "
+              "instrument moved, or the committed artifact was edited by hand")
+        drift += 1
     added = sorted(set(new["node_kinds"]) - set(old["node_kinds"]))
     gone = sorted(set(old["node_kinds"]) - set(new["node_kinds"]))
+    drift += len(added) + len(gone)
     print("node kinds  %d -> %d   added: %s   dropped: %s"
           % (len(old["node_kinds"]), len(new["node_kinds"]),
              ", ".join(added) or "none", ", ".join(gone) or "none"))
@@ -508,11 +527,14 @@ def compare(new, old):
     print("libc names  %d -> %d   added: %s   dropped: %s"
           % (len(ox), len(nx), ", ".join(sorted(nx - ox)) or "none",
              ", ".join(sorted(ox - nx)) or "none"))
+    drift += len(nx - ox) + len(ox - nx)
     for key in sorted(new):
         a, b = old.get(key), new[key]
         if isinstance(b, int) and isinstance(a, int) and a != b:
             print("  %-34s %6d -> %6d  (%+d)" % (key, a, b, b - a))
-    return 0
+            drift += 1
+    print("compare: %d difference(s) — the committed census is STALE" % drift)
+    return 1
 
 
 SELFTEST_C = """static int g;

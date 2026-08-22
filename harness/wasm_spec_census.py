@@ -204,26 +204,43 @@ def splice_check(root, version_rules):
     }
 
 
-def git_rev(root):
+def _git(root, *args):
+    """`git -C root <args>`, REFUSED loudly when git cannot answer.
+
+    §5.4a — a number carries the state it was measured in; quote both, or
+    quote neither.  The previous version swallowed every failure and returned
+    `None`, so the census kept its `revision` key and filled it with null: the
+    artifact still LOOKS provenanced and the null reads CLEANER than the
+    truth, which is the exact silent-and-flattering failure §5.4a names.  It
+    is not hypothetical — `docs/es262-census.json` carries
+    `"sources": {"ecma262": ""}` from the same defect in the ES lane's copy.
+
+    A corpus whose revision cannot be recovered is an INPUT FAULT, so this is
+    a §5.2 refusal, never a finding.
+    """
     try:
-        r = subprocess.run(["git", "-C", str(root), "rev-parse", "HEAD"],
+        r = subprocess.run(["git", "-C", str(root), *args],
                            capture_output=True, text=True, timeout=30)
-        if r.returncode == 0:
-            return r.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        pass
-    return None
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise Refusal(f"cannot run git in {root}: {exc} — the corpus revision is "
+                      f"part of the result (§5.4a), so it is refused, not stamped null")
+    if r.returncode != 0:
+        raise Refusal(f"`git {' '.join(args)}` failed in {root} (exit {r.returncode}): "
+                      f"{(r.stderr or '').strip()[:200]} — census a git CHECKOUT of the "
+                      f"corpus; the revision is an input to the result, not a stamp on it (§5.4a)")
+    out = r.stdout.strip()
+    if not out:
+        raise Refusal(f"`git {' '.join(args)}` returned nothing in {root} — refusing an "
+                      f"empty provenance stamp (§5.4a)")
+    return out
+
+
+def git_rev(root):
+    return _git(root, "rev-parse", "HEAD")
 
 
 def git_describe(root):
-    try:
-        r = subprocess.run(["git", "-C", str(root), "describe", "--tags", "--always"],
-                           capture_output=True, text=True, timeout=30)
-        if r.returncode == 0:
-            return r.stdout.strip()
-    except (OSError, subprocess.SubprocessError):
-        pass
-    return None
+    return _git(root, "describe", "--tags", "--always")
 
 
 def census(root):
@@ -326,7 +343,12 @@ def main(argv=None):
             if a != b:
                 print(f"{v}: {a} -> {b}")
                 drift += 1
-        print("no drift" if not drift else f"{drift} version(s) drifted")
+        # §5.4: staleness must be MECHANICALLY detectable.  Nonzero on drift,
+        # or `--compare` is a report and not a check.
+        if drift:
+            print(f"{drift} version(s) drifted — the committed census is STALE")
+            return 1
+        print("no drift")
         return 0
 
     if not args.quiet:

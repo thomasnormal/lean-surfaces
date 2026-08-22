@@ -21287,3 +21287,55 @@ Also carried into §9.7: the audit recording **its own** Amendment-11 violation.
 That practice is worth copying more than any single item — *the refusal path that
 is only designed is not one, and the incident that is only regretted is not
 measured.*
+### L89 addendum — THE BUG FIX LANDED: seven implementations, verified 2 x 7 (2026-08-22)
+
+Coordinator-dispatched *bug before refactor*, from this section's own
+recommendation 3. Pure Python, no Lean, no ticket. **The censuskit refactor was
+NOT started** — it stays migrate-on-touch for the owning lanes.
+
+**(a) `--compare` now exits 1 on drift** in `c_construct_census.py`,
+`wasm_spec_census.py` and `wasm_suite_census.py`. **(b) A failed revision lookup
+now REFUSES loudly** in `wasm_spec_census.py`, `wasm_suite_census.py`,
+`es_census.py` and `lean_independent_check.py`, raising each file's own refusal
+class — and **no artifact reaches disk on that path**, so a null-stamped census
+can no longer be committed.
+
+**An eighth hole was found while verifying (a)** and had to be closed for the
+mandated test to mean anything: `c_construct_census.compare()` returned early on
+a matching **source sha256**, so a census that differed for the same input — a
+moved frontend, a changed instrument, a hand-edited artifact — printed
+`UNCHANGED` and exited 0. The early return now fires only on a byte-identical
+census.
+
+Verified in **both directions for all seven**, against fresh fixtures, with the
+`before` column produced by extracting the pre-fix files (`git show
+HEAD:harness/<f>.py`) and running them on the same inputs — not by reading:
+
+| fix | agree / resolvable | drift / unresolvable |
+| --- | --- | --- |
+| A1 `c_construct_census --compare` | 0 → **0** | **0 → 1** |
+| A2 `wasm_spec_census --compare` | 0 → **0** | **0 → 1** |
+| A3 `wasm_suite_census --compare` | 0 → **0** | **0 → 1** |
+| B1 `wasm_spec_census` revision | 0, `7b854e86…` | **0 + `revision=None` → 2, REFUSED, no file** |
+| B2 `wasm_suite_census` revision | 0, `11614693…` | **0 + `revision=None` → 2, REFUSED, no file** |
+| B3 `es_census` sources | 0, `c1e558cc…` | **0 + `{'engine262': ''}` → 2, REFUSED, no file** |
+| B4 `lean_independent_check` checker_commit | 0, `702e8110…` | **0 + `""` → 2, REFUSED, no file** |
+
+B4's pass direction ran with a **stub `lake` on `PATH`**, so the Lean
+instrument's own code path was exercised with **zero Lean executed** (its
+`DIVERGE` verdict is the stub's exit 3 being classified, not a result).
+
+**The B3 row was never hypothetical.** `docs/es262-census.json` on master
+carries `"sources": {"ecma262": "", "engine262": "c7939eaf…", "test262":
+"3655e746…"}` — two thirds provenanced, one third silently blank, from exactly
+this path: §5.4a's failure reading *cleaner than the truth*, in a committed
+artifact. **The fix does not repair that file** (the ES corpora are not on this
+machine); the ES lane's next `--spec` run will REFUSE until the spec is censused
+from a checkout, and that refusal is the finding, not a regression.
+
+Left alone deliberately: the **missing-baseline** dialect split (Lean lane
+refuses with exit 2; Ada/ES/C/Wasm traceback) — one contract, four spellings,
+and it belongs to the kit. No committed census JSON was touched; no output
+schema changed, so `--compare` against every committed artifact still agrees and
+only the exit status moved. Regressions checked: `c_construct_census --selftest`
+ok, `es_census --self-test` ok (7 paths), `docs_check` 83/83.

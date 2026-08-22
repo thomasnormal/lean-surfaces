@@ -31,9 +31,30 @@
 # The lake libraries are READ FROM lakefile.toml, not hardcoded here — a
 # hardcoded glob is a second copy of the lakefile that goes stale silently.
 #
+# --iterate — THE PROOF-ITERATION CASE.  The loop above is the whole job, and
+# paying a TENURE PER COMPILE makes it unaffordable: the C lane measured
+# ~85 MINUTES PER COMPILE for a 300-line proof, which is not a slow loop, it
+# is no loop at all.  So `--iterate` runs a single-shot `lake env lean` on a
+# LIBRARY file without a ticket — the one case rule 3 does not cover — and it
+# is permitted only while FOUR conditions hold, CHECKED ON EVERY RUN:
+#
+#   1. at most ONE iterate per lane (a pidfile, staleness by the TWO-PART test)
+#   2. load average below 10          — refused by number, not by feel
+#   3. swap below 50%                 — likewise
+#   4. every project import already has an olean (the warm-clone rule again)
+#
+# Conditions 2 and 3 are the ones that make this safe to do lock-free: the
+# lock exists because concurrent builds took the machine down at load 29, and
+# a single-file elaboration on a quiet machine is not that.  A11 is not being
+# weakened — it is being given the one exemption its own rationale allows, and
+# the exemption is CONDITIONAL AND MEASURED rather than asserted.  Every run
+# prints the numbers it was permitted by, so a green carries its own
+# provenance (§5.4a).
+#
 # USAGE
 #   tools/check.sh path/to/file.lean        # decide, then elaborate
 #   tools/check.sh --explain path/to/f.lean # decide and PRINT, run nothing
+#   tools/check.sh --iterate --lane <you> path/to/file.lean
 #   tools/check.sh --self-test              # every refusal path RUN, no Lean
 #
 # EXIT  0 elaborated clean (or --explain)   1 Lean reported errors
@@ -51,6 +72,12 @@ NICE="${LS_NICE:-19}"
 EXPLAIN=0
 SELF_TEST=0
 TARGET=""
+ITERATE=0
+LANE=""
+ITER_DIR="${LS_ITERATE_DIR:-${TMPDIR:-/tmp}}"
+MAX_LOAD="${LS_ITERATE_MAX_LOAD:-10}"
+MAX_SWAP_PCT="${LS_ITERATE_MAX_SWAP_PCT:-50}"
+THREADS="${LEAN_NUM_THREADS:-2}"
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "check.sh: $*" >&2; exit 2; }
@@ -59,6 +86,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --explain)   EXPLAIN=1; shift ;;
+    --iterate)   ITERATE=1; shift ;;
+    --lane)      LANE="${2:-}"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     -*)          die "unknown argument '$1'" ;;
@@ -137,6 +166,99 @@ lock_is_ours() {
     p="$(ps -o ppid= -p "$p" 2>/dev/null | tr -d ' ')"
   done
   return 1
+}
+
+# ------------------------------------------------- the machine, measured
+# Every reader is MOCKABLE, because a guard whose refusal path cannot be
+# executed is a guard nobody has tested.  The self-test drives all three.
+read_load() {                   # 1-minute load average
+  [ -n "${LS_MOCK_LOAD:-}" ] && { printf '%s\n' "$LS_MOCK_LOAD"; return 0; }
+  if [ -r /proc/loadavg ]; then awk '{print $1}' /proc/loadavg; return 0; fi
+  sysctl -n vm.loadavg 2>/dev/null | awk '{ gsub(/[{}]/, ""); print $1 }'
+}
+
+read_swap_pct() {               # swap in use, as a percentage of total
+  [ -n "${LS_MOCK_SWAP:-}" ] && { printf '%s\n' "$LS_MOCK_SWAP"; return 0; }
+  if [ -r /proc/meminfo ]; then
+    awk '/^SwapTotal:/{t=$2} /^SwapFree:/{f=$2}
+         END{ if (t+0 <= 0) print 0; else printf "%.1f", (t-f)*100/t }' /proc/meminfo
+    return 0
+  fi
+  sysctl -n vm.swapusage 2>/dev/null | awk '{
+      for (i = 1; i <= NF; i++) {
+        if ($i == "total") { v = $(i+2); gsub(/[^0-9.]/, "", v); t = v }
+        if ($i == "used")  { v = $(i+2); gsub(/[^0-9.]/, "", v); u = v }
+      }
+      if (t+0 <= 0) print 0; else printf "%.1f", u*100/t }'
+}
+
+over() {                        # over A B -> 0 when A > B, in floating point
+  awk -v a="$1" -v b="$2" 'BEGIN { exit !(a+0 > b+0) }'
+}
+
+descendants() {                 # BFS over ps, never `pgrep -P` (A12's lesson)
+  ps -eo pid,ppid 2>/dev/null | awk -v root="$1" '
+    NR > 1 { child[$2] = child[$2] " " $1 }
+    END { n = 1; q[1] = root
+          for (i = 1; i <= n; i++) {
+            split(child[q[i]], kids, " ")
+            for (k in kids) if (kids[k] != "") { n++; q[n] = kids[k]; print kids[k] } } }'
+}
+
+has_lean_descendant() {
+  [ -n "${LS_MOCK_LEAN_CHILD:-}" ] && { [ "$LS_MOCK_LEAN_CHILD" = "1" ]; return $?; }
+  local kid
+  for kid in $(descendants "$1"); do
+    case "$(ps -o comm= -p "$kid" 2>/dev/null)" in *lean*|*lake*) return 0 ;; esac
+  done
+  return 1
+}
+
+iterate_pidfile() { printf '%s/ls-iterate-%s.pid\n' "$ITER_DIR" "$LANE"; }
+
+# The TWO-PART test again (§7.1 rule 5), and the failure direction is the same:
+# an unparseable holder is treated as LIVE, so a bad file refuses a second
+# iterate rather than reclaiming one that is running.
+iterate_holder_live() {         # 0 = a live iterate holds this lane's slot
+  local f owner pid
+  f="$(iterate_pidfile)"
+  [ -f "$f" ] || return 1
+  owner="$(cat "$f" 2>/dev/null)"; [ -n "$owner" ] || return 1
+  pid="$(printf '%s' "$owner" | awk '{print $NF}')"     # A5: pid LAST
+  case "$pid" in ''|*[!0-9]*) return 0 ;; esac          # unparseable => live
+  kill -0 "$pid" 2>/dev/null || return 1                # part 1: dead => stale
+  has_lean_descendant "$pid" || return 1                # part 2: no Lean => stale
+  return 0
+}
+
+ITER_LOAD=""; ITER_SWAP=""
+decide_iterate() {              # sets VERDICT / WHY / MISSING, and the numbers
+  VERDICT=""; WHY=""; MISSING=""
+  ITER_LOAD="$(read_load)"; ITER_SWAP="$(read_swap_pct)"
+  if iterate_holder_live; then
+    VERDICT="refuse-concurrent"
+    WHY="lane '$LANE' already has an iterate running ($(cat "$(iterate_pidfile)" 2>/dev/null)). One per lane: two single-file elaborations are the shape that took the machine down at load 29, just smaller"
+    return 0
+  fi
+  if over "$ITER_LOAD" "$MAX_LOAD"; then
+    VERDICT="refuse-load"
+    WHY="load average is $ITER_LOAD, over the line of $MAX_LOAD. Lock-free iteration is permitted on a QUIET machine and this one is not quiet"
+    return 0
+  fi
+  if over "$ITER_SWAP" "$MAX_SWAP_PCT"; then
+    VERDICT="refuse-swap"
+    WHY="swap is ${ITER_SWAP}% in use, over the line of ${MAX_SWAP_PCT}%. A swapping machine turns one elaboration into everybody's slowdown"
+    return 0
+  fi
+  MISSING="$(missing_oleans "$CLONE/$1" 2>/dev/null || true)"
+  if [ -n "$MISSING" ]; then
+    VERDICT="refuse-cold"
+    WHY="this clone is COLD for $(printf '%s\n' "$MISSING" | grep -c .) of the file's imports — resolving them here is Lean execution outside the lock (A11) and a GB-scale download (A13). Seed first, then iterate"
+    return 0
+  fi
+  VERDICT="iterate"
+  WHY="conditions met — lock-free per A17: load $ITER_LOAD < $MAX_LOAD, swap ${ITER_SWAP}% < ${MAX_SWAP_PCT}%, imports warm, one iterate for lane '$LANE'"
+  return 0
 }
 
 # ------------------------------------------------------------- the verdict
@@ -252,6 +374,52 @@ TOML
   decide scratch/warm.lean
   check "no lock at all is not our tenure"        "$VERDICT" "scratch"
 
+  # ---- --iterate: the four conditions, every refusal EXECUTED
+  echo "  -- iterate"
+  ITER_DIR="$tmp"; LANE="testlane"; ITERATE=1
+  export LS_MOCK_LOAD=1.0 LS_MOCK_SWAP=5.0
+  rm -f "$(iterate_pidfile)"
+
+  decide_iterate LeanModels/Core/New.lean
+  check "a quiet machine + warm clone -> iterate" "$VERDICT" "iterate"
+  check "  ...and the WHY cites A17"              "$(printf '%s' "$WHY" | grep -c 'lock-free per A17')" "1"
+  check "  ...naming the load it passed on"       "$(printf '%s' "$WHY" | grep -c 'load 1.0 < 10')" "1"
+  check "  ...on a LIBRARY file, which the ticket path refuses" \
+        "$(decide LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-library"
+
+  LS_MOCK_LOAD=42.5 decide_iterate LeanModels/Core/New.lean
+  check "high load refuses"                       "$VERDICT" "refuse-load"
+  check "  ...naming the NUMBER"                  "$(printf '%s' "$WHY" | grep -c '42.5')" "1"
+  LS_MOCK_LOAD=10 decide_iterate LeanModels/Core/New.lean
+  check "load exactly AT the line is allowed"     "$VERDICT" "iterate"
+
+  LS_MOCK_SWAP=87.3 decide_iterate LeanModels/Core/New.lean
+  check "high swap refuses"                       "$VERDICT" "refuse-swap"
+  check "  ...naming the NUMBER"                  "$(printf '%s' "$WHY" | grep -c '87.3')" "1"
+
+  decide_iterate scratch/cold.lean
+  check "a cold clone refuses"                    "$VERDICT" "refuse-cold"
+  check "  ...naming A13"                         "$(printf '%s' "$WHY" | grep -c 'A13')" "1"
+
+  # One iterate per lane, staleness by the TWO-PART test.
+  printf 'testlane %s\n' "$$" > "$(iterate_pidfile)"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "a SECOND concurrent iterate refuses"     "$VERDICT" "refuse-concurrent"
+  check "  ...and it outranks the load check"     "$(LS_MOCK_LOAD=99 LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean; echo "$VERDICT")" "refuse-concurrent"
+  LS_MOCK_LEAN_CHILD=0 decide_iterate LeanModels/Core/New.lean
+  check "part 2: a live pid with no Lean is STALE" "$VERDICT" "iterate"
+  printf 'testlane 999999\n' > "$(iterate_pidfile)"
+  LS_MOCK_LEAN_CHILD=1 decide_iterate LeanModels/Core/New.lean
+  check "part 1: a DEAD holder is reclaimed"      "$VERDICT" "iterate"
+  printf 'go-lane lake pid 43341 (cwd /x)\n' > "$(iterate_pidfile)"
+  decide_iterate LeanModels/Core/New.lean
+  check "an UNPARSEABLE holder is never reclaimed" "$VERDICT" "refuse-concurrent"
+  rm -f "$(iterate_pidfile)"
+  check "the pidfile is keyed by LANE"            "$(iterate_pidfile)" "$tmp/ls-iterate-testlane.pid"
+
+  unset LS_MOCK_LOAD LS_MOCK_SWAP LS_MOCK_LEAN_CHILD
+  ITERATE=0; LANE=""
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
@@ -269,22 +437,51 @@ case "$ABS" in /*) ;; *) ABS="$(pwd)/$TARGET" ;; esac
 REL="${ABS#"$CLONE"/}"
 case "$REL" in /*) die "'$TARGET' is outside the clone '$CLONE'" ;; esac
 
-decide "$REL"
+if [ "$ITERATE" = "1" ]; then
+  [ -n "$LANE" ] || die "--iterate requires --lane <name>: the one-per-lane slot is a pidfile keyed by it"
+  case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+" ;; esac
+  decide_iterate "$REL"
+else
+  decide "$REL"
+fi
+
 CMD="nice -n $NICE lake env lean $REL"
 echo "check.sh: $REL"
-echo "  CASE   $VERDICT"
+if [ "$VERDICT" = "iterate" ]; then
+  echo "  CASE   iterate: conditions met — lock-free per A17"
+else
+  echo "  CASE   $VERDICT"
+fi
 echo "  WHY    $WHY"
+# §5.4a: the numbers this run was PERMITTED BY ride the run.
+[ "$ITERATE" = "1" ] && printf '  STATE  load %s (line %s), swap %s%% (line %s%%), lane %s\n' \
+  "$ITER_LOAD" "$MAX_LOAD" "$ITER_SWAP" "$MAX_SWAP_PCT" "$LANE"
 case "$VERDICT" in
-  refuse-library|refuse-cold)
+  refuse-*)
     [ -n "$MISSING" ] && printf '  MISSING %s\n' "$(printf '%s' "$MISSING" | tr '\n' ' ')"
     echo "  REFUSED — nothing was run."
     exit 2 ;;
 esac
+# The citation checks itself: A17 is being drafted, and a pointer to a rule
+# that is not yet written is the thing this repository keeps paying for.
+if [ "$ITERATE" = "1" ] && ! grep -q '^| 17 \|AMENDMENT 17' "$CLONE/docs/family-architecture.md" 2>/dev/null; then
+  echo "  NOTE   A17 has no row in §7.1a yet — it is in DRAFT. This run's permission"
+  echo "         rests on the four conditions above, which were CHECKED, not on the"
+  echo "         register. When A17 lands, this note disappears on its own."
+fi
 echo "  RUN    $CMD"
 if [ "$EXPLAIN" = "1" ]; then
   echo "  --explain: nothing was run."
   exit 0
 fi
 cd "$CLONE" || die "cannot cd '$CLONE'"
+if [ "$ITERATE" = "1" ]; then
+  # A5's format, and the pid SPANS the run (A10's shape at a smaller scale).
+  PIDFILE="$(iterate_pidfile)"
+  printf '%s %s\n' "$LANE" "$$" > "$PIDFILE" || die "cannot write '$PIDFILE'"
+  trap 'rm -f "$PIDFILE" 2>/dev/null' EXIT INT TERM
+  export LEAN_NUM_THREADS="$THREADS"
+  echo "  RUN    LEAN_NUM_THREADS=$THREADS $CMD"
+fi
 # shellcheck disable=SC2086
 nice -n "$NICE" lake env lean "$REL"

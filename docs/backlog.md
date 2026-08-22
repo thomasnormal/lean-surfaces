@@ -21700,3 +21700,43 @@ for errors, because *an argument error and a resource kill both emit no line the
 failure greps look for, and "no error found" must never read as "the build
 happened".* That is **§5.4a implemented rather than described** — the provenance
 law living in a script instead of in prose, which is exactly the audit's thesis.
+
+### DETERMINISM IS OBSERVATION-INDEXED — assumption 5's sibling, from the SV false-theorem audit
+
+**The audit's outcome first, because it went the good way: the Lean was never
+wrong.** `Deterministic` was **design-indexed all along**, with the racy design's
+**negation proved**. Only the surrounding prose overclaimed, and the prose was
+fixed. That is the §9 thesis demonstrating itself from the pleasant side — the
+part that could be run was correct, and the part that could not be run was the
+part that drifted.
+
+**The family-level law, landed beside §6's five assumptions as the sibling of
+(5).** Assumption 5 says a claim needs a final answer to be indexed *by*; this
+one says a claim about *sameness* needs an observable to be indexed *over*:
+
+> **Determinism quantifies over the TRACE, so its meaning MOVES WITH THE TRACE
+> TYPE.**
+
+A **coarser** observation makes **more** programs deterministic; exposing
+**finer** state (per-region internals) makes designs non-deterministic **by
+construction** at that granularity. Neither answer is wrong — they answer
+different questions, and only the trace type says which was asked.
+
+**Consequence, now family law: every determinism/agreement claim is
+OBSERVATION-INDEXED, and a tier changing its trace or observable type DOES NOT
+INHERIT its determinism theorems.** Measured instance: SV's **five `_det`
+theorems must be re-established through `cycleOf`** — they were never false, they
+were about a different trace.
+
+**And it refined this document's own wording at the source.** §3.4/§3.6 said the
+interpreter is *"deterministic per (program, schedule)"* — true and incomplete.
+It is deterministic per (program, schedule, **observable**), and §3.6 now says
+so. A tier that later exposes more state in `W` has not broken the claim; it has
+asked a new one and owes new proofs.
+
+**THE ANTI-TAUTOLOGY RULE**, from the same audit: *"RaceFree → determinism"* is
+**vacuous wherever the two are one predicate** — easy to arrange by accident, and
+it reads as a real theorem. Correct family phrasing:
+
+> **Determinism is a PREMISE or a PER-DESIGN THEOREM — never a tier-wide
+> conclusion.**

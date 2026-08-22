@@ -1794,7 +1794,8 @@ architecture. Four pieces.
 **(1) INTERLEAVING SEMANTICS — the schedule is a parameter.** A schedule is
 an explicit input: a thread-choice stream, exactly the shape §3.5.4 gives
 a NaN payload and §6.2 gives an entropy stream. The interpreter is
-**deterministic per (program, schedule)**, so `SemM`, `fuelMono`, the
+**deterministic per (program, schedule)** — and, precisely, per observable
+(§6's determinism-indexing sibling) — so `SemM`, `fuelMono`, the
 ∃-fuel threshold form and `mvcgen` are all untouched — a threaded step
 function is `sched → Nat → SemM W ρ α`, and nothing about the monad
 changes. Correctness is then the ordinary shape:
@@ -2531,6 +2532,47 @@ the observable state is **finitely representable**; (3) behavior is
 parameters; (4) per-run claims are **quantified over those parameters**;
 (5) observation is **termination-indexed** — the ∃-fuel threshold form
 needs a final answer to index.
+
+**AND (5) HAS A SIBLING THAT IS EASIER TO MISS: observation is also
+DETERMINISM-INDEXING.** Assumption 5 says a claim needs a final answer to
+be indexed *by*; this one says a claim about *sameness* needs an observable
+to be indexed *over*.
+
+> **Determinism quantifies over the TRACE, so its meaning MOVES WITH THE
+> TRACE TYPE.**
+
+A **coarser** observation makes **more** programs deterministic; exposing
+**finer** state — per-region internals, intermediate scheduler structure —
+makes designs non-deterministic **by construction** at that granularity.
+Neither answer is wrong; they are answers to different questions, and only
+the trace type says which was asked.
+
+**So every determinism and agreement claim in this family is
+OBSERVATION-INDEXED, and a tier that changes its trace or observable type
+DOES NOT INHERIT its determinism theorems.** They must be re-established
+over the new observable. The measured instance: the SV tier's **five
+`_det` theorems must be re-proved through `cycleOf`** — the theorems were
+never false, they were about a different trace.
+
+**This refines §3.4's and §3.6's own wording.** Those sections say the
+interpreter is *"deterministic per (program, schedule)"*, which is true and
+incomplete: it is deterministic per (program, schedule, **observable**). A
+tier that later exposes more state in `W` has not broken that claim — it
+has asked a new one, and owes new proofs.
+
+**THE ANTI-TAUTOLOGY RULE, from the same audit.** *"RaceFree → determinism"*
+is **vacuous wherever the two are one predicate**, which is easy to arrange
+by accident and reads as a real theorem. The correct family phrasing:
+
+> **Determinism is a PREMISE or a PER-DESIGN THEOREM — never a tier-wide
+> conclusion.**
+
+The audit that produced this is worth its outcome being stated, because it
+went the good way: **the Lean was never wrong.** `Deterministic` was
+design-indexed all along, and the racy design's **negation** was proved.
+Only the surrounding prose overclaimed — and prose is the part §9's whole
+strategy is about moving into things that can be run. The fix was to the
+prose, and the theorems stood.
 
 ### 6.1 The misfits
 

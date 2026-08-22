@@ -15781,3 +15781,73 @@ sibling clones on the machine. Landing a verified leaf now rather than holding i
 behind a shared lock is the §L61 lesson applied: unpushed work is the only kind
 this campaign loses.
 
+
+## L65 — TWO ASKS ANSWERED: `store_runs_low_d`, and the four allocation lemmas LIFTED to the general layer (2026-08-22)
+
+### R3d-ii's ask (§L57), answered on its own ground
+
+`fold_depth1.lean`'s R3d-ii asked for `store_runs_low` at a free depth, and asked
+precisely: *"`depth`'s value enters in exactly two places — the `hd` premise
+handed to `py_simp`, and `tpKey pv 0` inside `sbStoredLow`"*. **The reading was
+right and the prediction held**: `store_runs_low_d` is `store_runs_low`'s proof
+line for line with `0` freed to `d`, and it went through on the first run.
+
+Landed in `basecase_depth0.lean` (this lane's ground, where the requester said it
+lives): `sbStoredLowAt`, `store_runs_low_d`, `sbStoredLow_eq` (the receipt that
+`store_runs_low` is the `d := 0` instance and nothing was restated), and
+`store_bridge_low_d` — the `heapStore` bridge at a free depth, added unasked so
+the consumer's calculus side joins without a second derivation, exactly as
+`store_bridge_low` serves the `d = 0` case.
+
+**A request written to this standard costs one pass.** §L57 named the two places
+the depth enters, checked them against the fail-HIGH precedent rather than
+assuming, and wrote the target signature out. That is the difference between an
+ask and a gesture, and it is worth copying.
+
+### The four allocation lemmas, LIFTED to the general layer
+
+`sw_push`, `lt_size_push`, `lt_size_append` and `sw_append` were proved in
+`basecase_depth0.lean` because that is where the first consumer was. They mention
+**no engine, no fixture and no depth** — `push` and `++` are the two heap growths
+every interpreter gate produces, and neither is a `Heap.update`, so neither enters
+`SubtreeWrites` without them. A second consumer asked for them by name, which is
+the trigger the §L48 note named for promoting a local lemma.
+
+They now live in `LeanModels/Python/DictCalc.lean`, **beside `Bracket` itself**,
+as `Bracket.sw_push`, `Heap.lt_size_push`, `Heap.lt_size_append` and
+`Bracket.sw_append` — namespaced to the structure each is about. The four local
+names survive in `basecase_depth0.lean` as one-line re-exports, so **every proof
+in that file reads unchanged** and the lift is provably a move rather than a
+rewrite.
+
+**The trigger is worth stating as a rule**, because §L48 got it wrong in the
+other direction and said so: *"all six belong beside `compare_one` in
+`bound_depth.lean` once a second file wants them"* — and then left them local
+because touching the general layer rebuilds the whole tree. That reasoning was
+about COST, not about correctness, and the cost is real: this lift alone
+invalidates every `olean` in the repository. The rule that survives both
+sections: **a lemma with no engine, no fixture and no depth in its statement
+belongs at the general layer, and the second consumer is when you pay for it.**
+
+### Verification state, named precisely
+
+Both touched files were type-checked **against each other**:
+`lake build LeanModels.Python.DictCalc` (14 jobs, clean, every printed
+declaration at `[propext]` or `[propext, Quot.sound]`), then
+`lake env lean Examples/python/sunfish/basecase_depth0.lean` against that fresh
+`olean` — clean but for one pre-existing `hroom` linter warning that predates this
+edit. The blast radius was checked by grep: `sw_push`/`lt_size_push`/
+`lt_size_append`/`sw_append` have exactly one consumer file
+(`basecase_depth0.lean`, whose call sites read unchanged through the
+re-exports — `fold_depth1.lean` mentions them in PROSE only), and the four new
+qualified names collide with nothing in the tree.
+
+**The full `lake build` + `diff_test` + `docs_check` + `script_corpus` pass is
+QUEUED, not skipped.** `/tmp/ls-build.lock` has been held since 11:23 by a live
+niced build (owner verified alive, 16+ minutes in, so NOT stale under rule 5) with
+three sibling clones on the machine. This lane's spinner is waiting on it and the
+result is this lane's to fix forward. Landing verified work rather than holding it
+behind a shared lock is the §L61/§L62 lesson applied — with the caveat that this
+one touches the GENERAL layer, which is why the blast radius was grepped and both
+files were compiled against each other before the push rather than after.
+

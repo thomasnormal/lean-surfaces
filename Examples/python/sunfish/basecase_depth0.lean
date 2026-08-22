@@ -1164,35 +1164,22 @@ is where `SubtreeWrites`' `.alloc` arm is finally spent and where §L20's join
 Six links, three constructors, and the `.store` link is legal at every `e > 0`
 because the key's depth is `0`. -/
 
-/-- One `push` is one `alloc` step. -/
+/-! **These four moved to the general layer** (`LeanModels/Python/DictCalc.lean`,
+beside `Bracket` itself) once `fold_depth1.lean` asked for them by name: they
+mention no engine, no fixture and no depth. The local names survive as
+abbreviations so every proof below reads unchanged. -/
+
 theorem sw_push {S : Bracket} {a : Addr} {e : Int} {h : Heap} {o : Obj}
-    (hlt : a < h.size) : S.SubtreeWrites a e h (h.push o) :=
-  .alloc (h := h) (o := o) (b := h.size) rfl (Nat.ne_of_lt hlt) .nil
+    (hlt : a < h.size) : S.SubtreeWrites a e h (h.push o) := Bracket.sw_push hlt
 
-/-- A push keeps a live slot live. -/
 theorem lt_size_push {a : Addr} {h : Heap} {o : Obj} (hlt : a < h.size) :
-    a < (h.push o).size := by
-  rw [Array.size_push]; exact Nat.lt_succ_of_lt hlt
+    a < (h.push o).size := Heap.lt_size_push hlt
 
-/-- So does an append. -/
 theorem lt_size_append {a : Addr} {h ext : Heap} (hlt : a < h.size) :
-    a < (h ++ ext).size := by
-  rw [Array.size_append]; exact Nat.lt_of_lt_of_le hlt (Nat.le_add_right _ _)
+    a < (h ++ ext).size := Heap.lt_size_append hlt
 
-/-- **An arbitrary APPEND is a run of allocations.** `sbW3`'s `++ ext` (§L24's
-repair for the calm genexp) is not a `Heap.update` and not one `Heap.alloc` — it
-is `ext.size` of them, and this is the induction that says so. Without it the
-genexp's world change cannot enter `SubtreeWrites` at all. -/
-theorem sw_append {S : Bracket} {a : Addr} {e : Int} :
-    ∀ (ext : Array Obj) {h : Heap}, a < h.size → S.SubtreeWrites a e h (h ++ ext)
-  | ⟨[]⟩, h, _ => by simpa using Bracket.SubtreeWrites.nil
-  | ⟨o :: os⟩, h, hlt => by
-      have hstep : S.SubtreeWrites a e h (h.push o) := sw_push hlt
-      have hrest : S.SubtreeWrites a e (h.push o) ((h.push o) ++ ⟨os⟩) :=
-        sw_append ⟨os⟩ (lt_size_push hlt)
-      have hcat : (h.push o) ++ (⟨os⟩ : Array Obj) = h ++ (⟨o :: os⟩ : Array Obj) := by
-        apply Array.ext'; simp [Array.push]
-      exact hcat ▸ hstep.trans hrest
+theorem sw_append {S : Bracket} {a : Addr} {e : Int} (ext : Array Obj) {h : Heap}
+    (hlt : a < h.size) : S.SubtreeWrites a e h (h ++ ext) := Bracket.sw_append ext hlt
 
 /-- **The store, as `heapStore` rather than as the computed `.set`.** §L20's law
 says a store gate must CONCLUDE with the computed heap, and §6's calculus is
@@ -2185,6 +2172,70 @@ theorem store_runs_low (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr
     sbStoredLow, dif_pos hlt]
   rfl
 
+/-! ### The depth, freed — R3d-ii's ask (§L57), answered on its own ground
+
+`fold_depth1.lean`'s R3d-ii needs this gate at the MATE arm, where `depth` is not
+`0`. The requesting section checked the pin rather than assuming it, and it was
+right: `depth`'s value enters in exactly two places — the `hd` premise handed to
+`py_simp`, and `tpKey pv 0` inside `sbStoredLow` — which are the same two places
+`store_runs_d` had to change to free the depth in the fail-HIGH twin. The proof
+below is `store_runs_low`'s, line for line, with `0` freed to `d`, and
+`store_runs_low` survives as its `d := 0` instance. -/
+
+/-- `sbStoredLow` at an arbitrary depth. -/
+def sbStoredLowAt (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (d lo sc : Int) : Obj :=
+  .dict (dictStore es.toList (tpKey pv d) (entryOf lo sc)).1.toArray
+    (if (dictStore es.toList (tpKey pv d) (entryOf lo sc)).2 = true then sv + 1 else sv)
+
+theorem sbStoredLow_eq (es : Array (RVal × RVal)) (sv : Nat) (pv : RVal) (lo sc : Int) :
+    sbStoredLow es sv pv lo sc = sbStoredLowAt es sv pv 0 lo sc := rfl
+
+/-- **GATE — the store's FAIL-LOW arm at an ARBITRARY DEPTH.** -/
+theorem store_runs_low_d (w : World) (e : REnv) (ci : ClassId) (sa ts tm hs : Addr)
+    (n dl sf sc gamma lo up d : Int) (pv : RVal) (es : Array (RVal × RVal)) (sv : Nat)
+    (hslf : Env.lookup e "self" = some (.ref sa))
+    (hpos : Env.lookup e "pos" = some pv)
+    (hd : Env.lookup e "depth" = some (.int d))
+    (hb : Env.lookup e "best" = some (.int sc))
+    (hg : Env.lookup e "gamma" = some (.int gamma))
+    (hen : Env.lookup e "entry" = some (entryOf lo up))
+    (hroot : Env.lookup e "root" = some (.bool false))
+    (hnoe : Env.lookup e "Entry" = Option.none)
+    (hobj : Heap.get? w.heap sa = some (searcherObj ci ts tm hs n dl sf))
+    (hdict : Heap.get? w.heap ts = some (.dict es sv))
+    (hlt : ts < w.heap.size)
+    (hfl : sc < gamma) (hk : hashableKey pv = true) :
+    execStmt sunfish 20 ⟨w, e⟩ sbStore
+      = .ok ⟨{ w with heap := w.heap.set ts (sbStoredLowAt es sv pv d lo sc) hlt }, e⟩ .next := by
+  obtain ⟨p0,p1,p2,p3,p4,p5,p6,p7,p8,p9,p10,p11,p12,p13,p14,p15,p16,p17,p18,p19,p20,p21,p22,p23,
+    hs'⟩ := sbStore_lit
+  obtain ⟨sp, hnt⟩ := entryNTAux
+  simp only [Heap.get?] at hobj hdict
+  have hc : evalExpr sunfish 19 ⟨w, e⟩ (.unaryOp .not (.name "root" p0) p1)
+      = .ok ⟨w, e⟩ (.bool true) := by
+    py_simp [-globalsFold, -globalsStep, hroot]
+  rw [hs', execStmt_if_true hc rfl]
+  simp only [execStmts]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredLowAt, dif_pos hlt]
+  rw [if_neg (show ¬ (gamma ≤ sc) by omega)]
+  py_simp [-globalsFold, -globalsStep, -heapStore, hk, hslf, hpos, hd, hb, hg, hen, hnoe,
+    entryG, entryNotFun, entryClsAux, hnt, hobj, hdict, searcherObj, entryOf, tpKey,
+    sbStoredLowAt, dif_pos hlt]
+  rfl
+
+/-- The `heapStore` bridge at an arbitrary depth, so the consumer's calculus side
+joins without a second derivation. -/
+theorem store_bridge_low_d {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
+    {pv : RVal} {d lo sc : Int} (hlt : ts < w4.heap.size)
+    (hdict : Heap.get? w4.heap ts = some (.dict es sv)) (hk : hashableKey pv = true) :
+    heapStore w4.heap ts (tpKey pv d) (entryOf lo sc)
+      = .ok ({ w4 with heap := w4.heap.set ts (sbStoredLowAt es sv pv d lo sc) hlt }).heap := by
+  have hkk : hashableKey (tpKey pv d) = true := by
+    simp [tpKey, hashableKey, hashableKeyList, hk]
+  simp only [heapStore, hdict, if_pos hkk, sbStoredLowAt, Heap.update, dif_pos hlt]
+
 /-- The `heapStore` bridge for the fail-low arm, so §6's calculus can consume it
 the moment F3 supplies the report. -/
 theorem store_bridge_low {w4 : World} {ts : Addr} {es : Array (RVal × RVal)} {sv : Nat}
@@ -2299,6 +2350,9 @@ board; the window decides which bound the node has improved. -/
 #print axioms dictStore_length_le
 #print axioms room_after_store
 #print axioms store_runs_low
+#print axioms sbStoredLow_eq
+#print axioms store_runs_low_d
+#print axioms store_bridge_low_d
 #print axioms store_bridge_low
 #print axioms sf_store_low
 

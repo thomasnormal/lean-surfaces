@@ -728,6 +728,44 @@ theorem Bracket.SubtreeWrites.trans {S : Bracket} {a : Addr} {e : Int} :
   | _, _, _, .other hb hu rest, k => .other hb hu (trans rest k)
   | _, _, _, .alloc ha hab rest, k => .alloc ha hab (trans rest k)
 
+/-! ### Allocation runs, at the general layer
+
+`push` and `++` are the two heap growths every interpreter gate produces, and
+neither is a `Heap.update` — so neither enters `SubtreeWrites` without these.
+They were proved in `Examples/python/sunfish/basecase_depth0.lean` and lifted
+here, where `Bracket` is defined and every consumer can reach them: they mention
+no engine, no fixture and no depth, and a second consumer (`fold_depth1.lean`)
+asked for them by name. -/
+
+/-- One `push` is one `alloc` step. -/
+theorem Bracket.sw_push {S : Bracket} {a : Addr} {e : Int} {h : Heap} {o : Obj}
+    (hlt : a < h.size) : S.SubtreeWrites a e h (h.push o) :=
+  .alloc (h := h) (o := o) (b := h.size) rfl (Nat.ne_of_lt hlt) .nil
+
+/-- A push keeps a live slot live. -/
+theorem Heap.lt_size_push {a : Addr} {h : Heap} {o : Obj} (hlt : a < h.size) :
+    a < (h.push o).size := by
+  rw [Array.size_push]; exact Nat.lt_succ_of_lt hlt
+
+/-- So does an append. -/
+theorem Heap.lt_size_append {a : Addr} {h ext : Heap} (hlt : a < h.size) :
+    a < (h ++ ext).size := by
+  rw [Array.size_append]; exact Nat.lt_of_lt_of_le hlt (Nat.le_add_right _ _)
+
+/-- **An arbitrary APPEND is a run of allocations.** A `++ ext` is not a
+`Heap.update` and not one `Heap.alloc` — it is `ext.size` of them, and this is
+the induction that says so. -/
+theorem Bracket.sw_append {S : Bracket} {a : Addr} {e : Int} :
+    ∀ (ext : Array Obj) {h : Heap}, a < h.size → S.SubtreeWrites a e h (h ++ ext)
+  | ⟨[]⟩, h, _ => by simpa using Bracket.SubtreeWrites.nil
+  | ⟨o :: os⟩, h, hlt => by
+      have hstep : S.SubtreeWrites a e h (h.push o) := Bracket.sw_push hlt
+      have hrest : S.SubtreeWrites a e (h.push o) ((h.push o) ++ ⟨os⟩) :=
+        Bracket.sw_append ⟨os⟩ (Heap.lt_size_push hlt)
+      have hcat : (h.push o) ++ (⟨os⟩ : Array Obj) = h ++ (⟨o :: os⟩ : Array Obj) := by
+        apply Array.ext'; simp [Array.push]
+      exact hcat ▸ hstep.trans hrest
+
 /-! ## §9 Non-vacuity -/
 
 private def kA : RVal := .tuple #[.str "posA", .int 1]

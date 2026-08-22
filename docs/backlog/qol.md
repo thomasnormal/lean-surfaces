@@ -517,3 +517,77 @@ that predicted a number rather than admiring an output. Double-run
 byte-identical is asserted on the scanner itself (§5.4).
 
 **No Lean was executed by any of this.**
+
+---
+
+## 2026-08-22-qol-9 — AMENDMENT 16: the 3 GB chain cap was killing honest builds, and the guard was in its own kill set
+
+Audit #2 measured **one honest `lean` worker at 3251 MB** against A11's single
+**3 GB line over the whole chain**. A chain cap below the size of a single
+legitimate worker is not a resource guard, it is a coin flip — and it is
+expensive twice, because the kill lands mid-build and the log reads as a
+resource kill rather than as a policy error.
+
+Three defects, one amendment, all three now implemented in `tools/triad.sh`:
+
+1. **PER-PROCESS, 5 GB**, chain kept as a secondary at **10 GB**. The
+   per-process line kills *the offending process*, not the chain.
+2. **THE GUARD EXCLUDES ITSELF.** The old kill set was `descendants $$`, which
+   **contains the watchdog**; the guard reaped itself along with the chain.
+3. **RESTARTED PER ATTEMPT.** Because the guard died with its own kill, base
+   rule 2's retry ran **attempt 2 completely unguarded** — the attempt most
+   likely to need one, since attempt 1 had just exhausted the machine.
+
+The decision is now a **pure function** (`rss_verdict`: rows in, verdict out)
+for one reason: the old guard's logic lived inside a background subshell where
+it could not be exercised, and it was wrong in three ways at once. What cannot
+be run cannot be checked, and this is what that costs.
+
+### The regression is a test row, not a note
+
+`printf '4242 3329024' | rss_verdict` — the measured 3251 MB worker — returns
+**`ok`** under A16 and **`proc`** under the old 3 GB numbers. Both directions
+are asserted, so the amendment cannot be silently reverted by a future edit.
+
+### The banner, and why /tmp copies exist at all
+
+Audit #2 found **two drifted copies in `/tmp`**. Copying before editing is
+*legitimate*: bash reads a script **incrementally**, so editing one that is
+running corrupts it. But a copy whose diffs never land is a private script
+again, at the 38% violation density §7.1a already prices. Every run now prints
+`tools/triad.sh — protocol base 1-6 + A4-A13 + A16 (2026-08-22), <sha>`, and
+`--version` prints it alone. Drift becomes visible in the log.
+
+### The model landed first, from the other side, and that is the good case
+
+This lane wrote the register row and the paragraph — and hit a **conflict**:
+the calmness lane had already landed **rows 14, 15 and 16** with a fuller A16
+than mine, naming the same two implementation defects (self-exclusion, restart
+per attempt) plus a **16.2** on retiring a runner that I did not have. So my
+paragraph was **dropped, not merged**: theirs says it better and says more,
+and a second copy of one amendment is the defect
+`docs/duplication-audit.md` measured. What I kept is the one thing theirs
+lacks — the **protocol banner** — as a short paragraph in the same section.
+
+Model and code still land together; they arrived from opposite directions,
+one tenure apart. **The doc specifies A16 and this script now implements it**,
+which is the only sense in which "together" is checkable.
+
+### One thing this lane got wrong, recorded
+
+While verifying the banner I ran `--dry-run`, which **takes a real tenure** —
+the header says so plainly. It queued behind the `ada` lane's live lock and
+had to be killed. **A no-Lean lane has no business in the ticket queue**, and
+the release trap did exactly its job on the way out: my ticket was removed,
+and A7 left the `ada` lane's lock alone because it was not mine. The refusal
+paths held; the operator did not.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **78 ok, 0 failed** (61 → 78, **17 new**) —
+the 3251 MB regression in both directions, the per-process line and its
+boundary, the chain line firing at four workers and not at three,
+per-process outranking chain, an excluded pid never being the victim and never
+counting toward the chain while its siblings still are, guard restart
+replacing the old pid, the pidfile the exclusion reads, stop clearing it, and
+the banner naming the protocol level. **No Lean was executed.**

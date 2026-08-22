@@ -37,6 +37,19 @@
 #           and a 3 GB RSS kill line over THIS SCRIPT'S OWN descendants
 #   A12     traps kill descendants RECURSIVELY — a BFS over `ps -eo pid,ppid`,
 #           never `pkill -P`, which misses grandchildren
+#   A16     the RSS line is PER-PROCESS (5 GB) with a CHAIN line (10 GB) as a
+#           secondary; the guard EXCLUDES ITSELF from the kill set and is
+#           RESTARTED PER ATTEMPT.  A11's single 3 GB chain cap killed honest
+#           builds — one worker was measured at 3251 MB — and, because the
+#           kill set included the guard, the guard died with the chain it
+#           reaped and ATTEMPT 2 RAN UNGUARDED.
+#
+# THE BANNER.  Every run prints the protocol level it implements.  Audit #2
+# found TWO DRIFTED COPIES of this script in /tmp: lanes copy before editing
+# because bash reads a script INCREMENTALLY and editing a running script
+# corrupts it.  That is legitimate staging — but a copy whose diffs never land
+# is a private script again, at 38% violation density.  A banner makes the
+# drift visible in the log.
 #
 # NOT YET WIRED INTO ANY LANE'S FLOW.  Adoption is per-lane, on dispatch.
 #
@@ -86,7 +99,12 @@ LANE=""
 CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOCK="${LS_LOCK:-/tmp/ls-build.lock}"
 QUEUE="${LS_QUEUE:-/tmp/ls-build-queue}"
-RSS_LIMIT_KB="${LS_RSS_LIMIT_KB:-3145728}"     # 3 GB, amendment 11
+# A16.  Two lines, and the PER-PROCESS one is the real guard: a single honest
+# `lean` worker was measured at 3251 MB, so a 3 GB CHAIN cap convicted a build
+# that was behaving.  The chain line stays as a secondary, at a height no
+# healthy tenure reaches.
+RSS_PROC_LIMIT_KB="${LS_RSS_PROC_LIMIT_KB:-5242880}"    # 5 GB, per process
+RSS_CHAIN_LIMIT_KB="${LS_RSS_LIMIT_KB:-10485760}"       # 10 GB, whole chain
 THREADS="${LEAN_NUM_THREADS:-2}"               # amendment 11
 NICE="${LS_NICE:-19}"                          # amendment 11
 MAX_WAIT="${LS_MAX_WAIT:-14400}"               # 4 h, then give up LOUDLY
@@ -100,14 +118,23 @@ AGAINST=""                                     # merge target; default below
 
 # The header IS the usage text, so print it whole — a `sed -n '1,60p'` goes
 # stale the first time somebody documents a flag.
+# The protocol level this file implements.  Bump it in the same commit as the
+# amendment, so a /tmp copy that predates one is identifiable from its output.
+TRIAD_PROTOCOL="base 1-6 + A4-A13 + A16"
+TRIAD_PROTOCOL_DATE="2026-08-22"
+
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
+banner() { echo "tools/triad.sh — protocol $TRIAD_PROTOCOL ($TRIAD_PROTOCOL_DATE), \
+$( (git -C "$CLONE" rev-parse --short HEAD 2>/dev/null) || echo 'no git' )"; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --lane)      LANE="${2:-}"; shift 2 ;;
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --gates)     GATES="${2:-}"; shift 2 ;;
-    --rss-limit) RSS_LIMIT_KB="${2:-}"; shift 2 ;;
+    --rss-limit)      RSS_CHAIN_LIMIT_KB="${2:-}"; shift 2 ;;
+    --rss-proc-limit) RSS_PROC_LIMIT_KB="${2:-}"; shift 2 ;;
+    --version)        banner; exit 0 ;;
     --dry-run)   DRY_RUN=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
     --classify)  CLASSIFY=1; shift ;;
@@ -160,15 +187,67 @@ descendants() {                       # descendants <root-pid>  -> pids, one per
     }'
 }
 
-own_rss_kb() {                        # summed RSS of this script's descendants
-  local pids total=0 r
-  pids="$(descendants $$)"
-  for p in $pids; do
+rss_rows() {                          # -> "<pid> <rss_kb>" for our descendants
+  local p r
+  for p in $(descendants $$); do
     r="$(ps -o rss= -p "$p" 2>/dev/null | tr -d ' ')"
     case "$r" in ''|*[!0-9]*) continue ;; esac
-    total=$((total + r))
+    echo "$p $r"
   done
-  echo "$total"
+}
+
+# A16, and the reason it is a FUNCTION: the old guard's decision lived inside
+# a background subshell, where it could not be tested and was wrong in three
+# ways at once.  This is pure — rows on stdin, a verdict on stdout — so
+# `--self-test` exercises the exact code the tenure runs.
+rss_verdict() {                       # proc_limit chain_limit " excl pids "  < rows
+  awk -v pl="$1" -v cl="$2" -v excl="$3" '
+    { if (index(excl, " " $1 " ") > 0) next          # never judge ourselves
+      total += $2
+      if ($2 > worst) { worst = $2; wpid = $1 } }
+    END {
+      if (worst > pl) { printf "proc %s %d\n", wpid, worst; exit }
+      if (total > cl) { printf "chain %d\n", total; exit }
+      print "ok" }'
+}
+
+WATCHDOG=""
+GUARD_PIDFILE=""
+watchdog_stop() {
+  [ -n "$WATCHDOG" ] || return 0
+  kill "$WATCHDOG" 2>/dev/null
+  WATCHDOG=""
+}
+
+# A16: RESTARTED PER ATTEMPT.  The old guard was single-shot — it killed the
+# chain INCLUDING ITSELF, so a resource kill left attempt 2 running with no
+# guard at all.
+watchdog_start() {
+  watchdog_stop
+  (
+    while kill -0 $$ 2>/dev/null; do
+      sleep 20
+      self="$(cat "$GUARD_PIDFILE" 2>/dev/null)"
+      case "$self" in ''|*[!0-9]*) self=0 ;; esac
+      excl=" $self $(descendants "$self" 2>/dev/null | tr '\n' ' ') "
+      verdict="$(rss_rows | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" "$excl")"
+      case "$verdict" in
+        proc\ *)
+          vp="$(printf '%s' "$verdict" | awk '{print $2}')"
+          vr="$(printf '%s' "$verdict" | awk '{print $3}')"
+          echo "RSS KILL LINE (A16, per-process): pid $vp at $((vr / 1024)) MB > $((RSS_PROC_LIMIT_KB / 1024)) MB — killing THAT process" >&2
+          kill -9 "$vp" 2>/dev/null ;;
+        chain\ *)
+          vt="$(printf '%s' "$verdict" | awk '{print $2}')"
+          echo "RSS KILL LINE (A16, chain): own chain at $((vt / 1024)) MB > $((RSS_CHAIN_LIMIT_KB / 1024)) MB — killing OUR chain" >&2
+          for p in $(descendants $$); do
+            case "$excl" in *" $p "*) continue ;; esac
+            kill -9 "$p" 2>/dev/null
+          done ;;
+      esac
+    done
+  ) & WATCHDOG=$!
+  printf '%s\n' "$WATCHDOG" > "$GUARD_PIDFILE" 2>/dev/null
 }
 
 kill_own_chain() {                    # SIGTERM then SIGKILL, ours only
@@ -594,6 +673,56 @@ if [ "$SELF_TEST" = "1" ]; then
 
   check "descendants(self) excludes self" "$(descendants $$ | grep -c "^$$\$")" "0"
 
+  # ---- A16: the RSS lines, and the three properties the old guard lacked
+  echo "  -- rss guard (A16)"
+  # THE REGRESSION THAT MINTED THE AMENDMENT.  One honest `lean` worker was
+  # measured at 3251 MB.  Under A11's single 3 GB CHAIN cap that build was
+  # killed for behaving; under A16 it survives, and this row is the test.
+  check "a 3251 MB honest worker SURVIVES" \
+        "$(printf '4242 3329024\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " ")" "ok"
+  check "  ...and would have died under the old 3 GB chain cap" \
+        "$(printf '4242 3329024\n' | rss_verdict 3145728 3145728 " " | awk '{print $1}')" "proc"
+
+  # PROPERTY 1 — the line is PER-PROCESS.
+  check "one process over 5 GB is killed BY ITSELF" \
+        "$(printf '10 1000\n11 5242881\n12 2000\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " ")" "proc 11 5242881"
+  check "a process exactly AT the line is not over it" \
+        "$(printf '11 5242880\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " ")" "ok"
+
+  # PROPERTY 2 — the CHAIN line is the secondary, and it still fires.
+  check "four honest workers over 10 GB trip the chain" \
+        "$(printf '10 3000000\n11 3000000\n12 3000000\n13 3000000\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " ")" "chain 12000000"
+  check "three of the same do NOT" \
+        "$(printf '10 3000000\n11 3000000\n12 3000000\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " ")" "ok"
+  check "per-process outranks chain when both trip" \
+        "$(printf '10 9000000\n11 9000000\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " " | awk '{print $1}')" "proc"
+
+  # PROPERTY 3 — THE GUARD IS NOT IN ITS OWN KILL SET.  The old guard killed
+  # the chain including itself, so attempt 2 ran unguarded.
+  check "an EXCLUDED pid is never the victim" \
+        "$(printf '99 9999999\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " 99 ")" "ok"
+  check "an excluded pid does not count toward the chain" \
+        "$(printf '99 9999999\n10 100\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " 99 ")" "ok"
+  check "but its SIBLINGS are still judged" \
+        "$(printf '99 9999999\n10 5242881\n' | rss_verdict "$RSS_PROC_LIMIT_KB" "$RSS_CHAIN_LIMIT_KB" " 99 ")" "proc 10 5242881"
+
+  # PROPERTY 3b — restartability, and the pidfile the exclusion reads.
+  GUARD_PIDFILE="$tmp/guard.pid"
+  RSS_PROC_LIMIT_KB=999999999 RSS_CHAIN_LIMIT_KB=999999999 watchdog_start
+  w1="$WATCHDOG"
+  check "watchdog_start yields a live pid"  "$(kill -0 "$w1" 2>/dev/null && echo live)" "live"
+  check "  ...published for its own exclusion" "$(cat "$GUARD_PIDFILE")" "$w1"
+  RSS_PROC_LIMIT_KB=999999999 RSS_CHAIN_LIMIT_KB=999999999 watchdog_start
+  w2="$WATCHDOG"
+  check "a RESTART replaces the guard"      "$( [ "$w1" != "$w2" ] && echo new)" "new"
+  check "  ...and the old one is gone"      "$(kill -0 "$w1" 2>/dev/null && echo live)" ""
+  watchdog_stop
+  check "watchdog_stop clears it"           "$WATCHDOG" ""
+  check "  ...and the process is gone"      "$(sleep 1; kill -0 "$w2" 2>/dev/null && echo live)" ""
+
+  check "the banner names the protocol level" \
+        "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
+
   # ------------------------------------------------- the diff classifier
   # Every class EXECUTED against a real path list, not described.  These run
   # in THIS shell (never under `$( )`), because `classify_list` reports
@@ -854,6 +983,7 @@ release() {
   sleep 1
   kill_own_chain KILL
   rm -f "$QUEUE/$TICKET" 2>/dev/null
+  [ -n "$GUARD_PIDFILE" ] && rm -f "$GUARD_PIDFILE" 2>/dev/null
   if [ "$HELD" = "1" ]; then
     # A7: verify the lock is still OURS before removing anything.  A
     # surviving detached trap pointed at a RE-CREATED lock would delete an
@@ -913,23 +1043,18 @@ while :; do
 done
 
 # ---------------------------------------------------------- RSS kill line
-# A11, and base rule 6: OUR descendants only, recursively.  A guard rooted at
-# a pipeline's last stage (`pgrep -P $!` where $! is `tail`) can never see the
-# build — two of the six measured scripts shipped exactly that.
-(
-  while kill -0 $$ 2>/dev/null; do
-    sleep 20
-    tot="$(own_rss_kb)"
-    if [ "$tot" -gt "$RSS_LIMIT_KB" ]; then
-      echo "RSS KILL LINE: own chain at $((tot / 1024)) MB > $((RSS_LIMIT_KB / 1024)) MB — killing OUR chain" >&2
-      for p in $(descendants $$); do kill -9 "$p" 2>/dev/null; done
-    fi
-  done
-) & WATCHDOG=$!
+# A11 and base rule 6: OUR descendants only, recursively — a guard rooted at a
+# pipeline's last stage (`pgrep -P $!` where $! is `tail`) can never see the
+# build, and two of the six measured scripts shipped exactly that.  A16 adds
+# the three properties the single-shot version got wrong: the line is
+# PER-PROCESS, the guard is NOT IN ITS OWN KILL SET, and it is restarted for
+# every attempt.  `watchdog_start` is called inside the build loop.
+GUARD_PIDFILE="$(mktemp "${TMPDIR:-/tmp}/triad-guard.XXXXXX")" || die "no temp dir for the guard pid"
 
 # ----------------------------------------------------------------- the work
 export LEAN_NUM_THREADS="$THREADS"    # A11.  NEVER `-j` — base rule 2.
-say "tenure open: LEAN_NUM_THREADS=$THREADS nice -n $NICE rss<=$((RSS_LIMIT_KB / 1024))MB dir=$CLONE"
+banner
+say "tenure open: LEAN_NUM_THREADS=$THREADS nice -n $NICE rss<=$((RSS_PROC_LIMIT_KB / 1024))MB/proc, $((RSS_CHAIN_LIMIT_KB / 1024))MB/chain dir=$CLONE"
 
 if [ "$DRY_RUN" = "1" ]; then
   say "DRY RUN: tenure taken, no Lean executed, releasing"
@@ -940,12 +1065,14 @@ BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 BUILD_EXIT=1
 for attempt in 1 2; do
   say "=== lake build ${BUILD_TARGETS:-<all default targets>} (attempt $attempt) ==="
+  watchdog_start                      # A16: a fresh guard for EVERY attempt
   # UNQUOTED on purpose: BUILD_TARGETS is a target LIST, and every element was
   # validated as a plain Lean identifier path before it got here.  Empty means
   # the full build, which is exactly `lake build` with no arguments.
   # shellcheck disable=SC2086
   nice -n "$NICE" lake build $BUILD_TARGETS > "$BUILD_LOG" 2>&1
   BUILD_EXIT=$?
+  watchdog_stop
   say "build exit=$BUILD_EXIT"
   # base rule 2: 143/137 is the OS terminating an oversubscribed job.  It is
   # a resource kill, never a red build, and must never be recorded as one.

@@ -2988,6 +2988,15 @@ and **compare or reset only against `github/master`** — never against
 hit the same trap from the third direction (§7.2's clone incident), and the
 count is now **four lanes, one root cause.**
 
+**AND THE SCRIPT PRINTS ITS PROTOCOL LEVEL.** Audit #2 found **two drifted
+copies of `tools/triad.sh` in `/tmp`**. Copying before editing is legitimate —
+bash reads a script **incrementally**, so editing one that is running corrupts
+it — but a copy whose diffs never land is a private script again, at the 38%
+violation density this section already prices. `tools/triad.sh --version`, and
+one line at tenure open, name the protocol level implemented
+(`base 1-6 + A4-A13 + A16`) and the sha. Drift becomes visible in the log
+instead of invisible in a temp directory.
+
 **One operational note on the wrapper**: `--lane` rejects hyphens
 (`[A-Za-z0-9_.]+`), and the reason is Amendment 9's ticket format — a
 ticket is `<epoch>-<pid>-<lane>`, so a hyphen in the lane tag breaks the

@@ -580,9 +580,24 @@ bytes/line, was **order-of-magnitude 1–5 GB of NDJSON**.
 outcome: the method is sound and a lane can trust it to within a factor of ~2.
 The honest reading is that a full export is a **multi-gigabyte, hundred-million-
 line artifact**, and the binding constraint is **peak RAM rather than time** —
-`visitedExprs` holds every unique `Expr` in the library as a live key. Nobody
-should schedule that run off this paragraph; they should run it under the build
-lock and measure.
+`visitedExprs` holds every unique `Expr` in the library as a live key.
+
+> **A FULL MATHLIB EXPORT IS BLOCKED, and not merely discouraged.** The machine
+> runs a **3 GB RSS kill line** per process chain (BUILD_LOCK_PROTOCOL amendment
+> 11), and an exporter that holds every unique `Expr` in Mathlib as a live
+> hashmap key is the textbook way to cross it — this charter's own §5 pricing
+> says the constraint is peak RAM, which is exactly what that line governs.
+> **Requires the coordinator's sign-off AND Thomas's training run finished,
+> before it is attempted at all.** Nobody should schedule it off this paragraph.
+
+The wider rule this tier now works under, recorded because it changes how every
+future inch is planned: **the machine-wide lock covers ALL Lean execution, not
+just builds** — `lake build`, `lake env lean`, checker runs and export runs
+alike. One ticket is the machine's entire Lean allowance, at
+`LEAN_NUM_THREADS=2` and `nice -n 19`. That retires this charter's earlier
+reliance on protocol rule 3 for single niced `lean` processes: **§5's corpus
+ladder and §10.5.1's axiom census were measured under the older rule and are
+still valid measurements, but re-running either now needs a ticket.**
 
 **And Mathlib's declaration count now has a citable number**, which §5's table
 records as NOT MEASURED by us: **308 129 declarations** across 7 563 modules,
@@ -871,11 +886,16 @@ agreement with a from-scratch checker would be stronger evidence.
 absent => SKIP loudly and exit 0. Verified.
 
 **Still owed, and it is the half that matters most to this repository:** running
-this over **our own** `.olean`s. That needs the tree built, and the scratchpad
-tree was destroyed by a harness restart mid-dispatch; rebuilding it is a
-multi-hour job that would have held the machine-wide lock for no proportionate
-gain. The instrument is written, calibrated and green on core — pointing it at
-`LeanModels.*` is a `--modules` argument, not new code.
+this over **our own** `.olean`s. The instrument is written, calibrated and green
+on core — pointing it at `LeanModels.*` is a `--modules` argument, not new code —
+but it needs the tree built, and the scratchpad tree was destroyed by a harness
+restart mid-dispatch.
+
+**That rebuild is now explicitly deferred rather than merely unscheduled.** It is
+a multi-hour, ~3 700-job build, it would hold the machine's entire Lean
+allowance under amendment 11, and Thomas's training run has absolute priority.
+The right moment is after the training completes, on a quiet machine, under a
+ticket.
 
 ---
 

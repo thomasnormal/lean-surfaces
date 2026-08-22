@@ -21863,3 +21863,44 @@ fit the payload rule cleanly. **`libc` is the outlier** — it is cause 3,
 one. Recorded as **C's next-touch item**: mechanical rename, payload keeps the
 distinction, and it is the last place a cause class in the tree does not carry a
 family name.
+
+### A16.2 ADDENDUM — SIGKILL orphans the TICKET, so retiring a runner is a THREE-step act
+
+Measured by the Lean tier on its own migration, and landed doc-first per the new
+rule. **The trap `SIGKILL` skips is the trap that removes the ticket**
+(`rm -f "$QUEUE/$TICKET"`, verified in `tools/triad.sh`). So a retired
+**ticket-holding** script leaves a **phantom at the queue head** — and because
+A9 hands the lock to the *oldest* ticket, that phantom blocks every lane behind
+it until a human reaps it.
+
+**Retiring a runner, in one breath:** (1) **`SIGKILL`** — never `SIGTERM`, per
+the trap hazard; (2) **delete the file**, or the next person to find it runs it;
+(3) **remove its ticket by hand**, `/tmp/ls-build-queue/<ts>-<pid>-<lane>`.
+
+**Step 3 exists BECAUSE of step 1**, and that is the shape worth naming: the fix
+for one hazard *creates* another. `SIGTERM` would clean the ticket up and might
+delete a third lane's lock; `SIGKILL` protects the lock and orphans the ticket.
+**No signal does both**, so the manual step is not an oversight — it is the
+amendment's price, and leaving it implicit is how the two-step version of this
+rule shipped incomplete.
+
+### §7 — `tools/triad.sh --classify` IS OUR-REPO-ONLY BY CONSTRUCTION
+
+A lane pointing it at a foreign checkout gets a **confident wrong answer rather
+than an error**. Two structural reasons: the **class floor hard-wires our gates**
+(`docs_check` / `diff_test`, which a foreign project does not have), and
+**classification diffs against `github/master`** — the flag's default `--against`
+ref, which names OUR master.
+
+**One precision worth keeping**, given how much §7.1a work went into the
+origin-vs-github distinction: the script's default is **`github/master`, not
+`origin/master`** — the script is *right* about which remote to trust in a seeded
+clone. Its limitation is not the remote, it is that `github/master` names our
+master, which a foreign checkout either lacks or resolves to something else
+entirely.
+
+**Until `--foreign` lands** (QoL lane holds the request), a foreign checkout —
+`lean4lean`, `spectec` — is built with **plain `--gates` under the FULL tenure
+discipline**: lock, queue, RSS line and A14's quiet-machine rule all still apply.
+What does not apply is the *scoping*, so those tenures run the full gate set the
+lane names explicitly and their landings carry a §5.4a coverage statement.

@@ -3044,6 +3044,27 @@ script's last act was to break the amendment that replaced it. So a
 superseded runner is **SIGKILL**ed and its file removed immediately, or the
 next person to find it will run it.
 
+**AND SIGKILL BYPASSES THE EXIT TRAP — WHICH IS ALSO WHAT REMOVES THE
+TICKET.** Measured by the Lean tier on its own migration. The trap that
+`SIGKILL` skips is the trap that does `rm -f "$QUEUE/$TICKET"`, so a
+retired **ticket-holding** script leaves its ticket behind: a **phantom at
+the queue head**, blocking every lane behind it (A9 gives the lock to the
+oldest ticket) until a human reaps it.
+
+**So retiring a runner is a THREE-step act, in one breath:**
+
+1. **`SIGKILL`** the process — never `SIGTERM`, per the trap hazard above;
+2. **delete the file**, or the next person to find it runs it;
+3. **remove its ticket by hand** — `/tmp/ls-build-queue/<ts>-<pid>-<lane>`.
+
+**The third step exists BECAUSE of the first**, and that is the shape worth
+noticing: the fix for one hazard *creates* another. `SIGTERM` would have
+cleaned the ticket up and might have deleted a third lane's lock;
+`SIGKILL` protects the lock and orphans the ticket. There is no signal that
+does both, so the manual step is not an oversight in the amendment — it is
+the amendment's price, and leaving it implicit is how the two-step version
+of this rule shipped incomplete.
+
 > **Adoption is the most dangerous moment**, and **an amendment takes
 > effect when the last script predating it is dead** — not when it is
 > written, not when it is landed, and not when the first lane adopts it.
@@ -3053,6 +3074,26 @@ sharper: by-touch tolerates a slow migration because the old artifact is
 *inert*. A superseded **runner is not inert** — it holds locks, kills
 processes and runs traps — so its migration window is a hazard rather than
 merely a delay.
+
+**`tools/triad.sh --classify` IS OUR-REPO-ONLY BY CONSTRUCTION**, and a
+lane pointing it at a foreign checkout will get a confident wrong answer
+rather than an error. Two reasons, both structural:
+
+* **the class floor hard-wires our gates** — `docs_check` / `diff_test` are
+  named in the classifier's floor and in the default gate set, and a
+  foreign project has neither;
+* **classification diffs against `github/master`** (the flag's default
+  `--against` ref), which names **our** master. A foreign checkout either
+  has no such ref or has one that means something entirely different — and
+  §7.1a's seeding caveat is the reminder that a remote's *name* is not its
+  identity.
+
+**Until a `--foreign` flag lands** (the QoL lane holds the request), a
+foreign checkout — `lean4lean`, `spectec` — is built with **plain
+`--gates` under the full tenure discipline**: the lock, the queue, the RSS
+line and A14's quiet-machine rule all still apply. What does not apply is
+the *scoping*, so those tenures run the full gate set the lane names
+explicitly, and their landings carry a §5.4a coverage statement saying so.
 
 ### 7.2 The master branch
 

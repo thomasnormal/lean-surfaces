@@ -335,3 +335,45 @@ duplicate its sender cannot see**, and it costs the owner the read. The practica
 form is identical in all three: **look at the thing itself before reporting about
 it.** For a cross-lane finding that means reading the owner's file first — which
 also keeps the INBOUND entry short enough to be cheap to renumber.
+
+### CORE'S `.except`-LAYER ALTERNATIVE IS CLOSED BY THE COVENANT (Go lane, third finding of the gap)
+
+Core's header suggests that *"a tier that needs more than two causes does **not**
+extend this type; it adds an `.except` layer of its own, which composes for
+free."* Verified verbatim at `LeanModels/Core/Outcome.lean:87-88`. The Go lane —
+**the third independent finding of this same gap** — named why it cannot be the
+answer, and it is decisive on the family's own terms:
+
+> **An extra `.except` layer is, BY CONSTRUCTION, a CATCHABLE channel.**
+
+`ρ` is the program's channel **precisely because** `ExceptT` is where catch
+constructs are instantiated (§3.4's speaker split). Putting refusal causes in
+another `.except` layer puts **refusal in a catchable position** — the exact
+thing the `Halt` ruling forbids, and it would be re-forbidden per language by the
+N lemmas that ruling rejected. **Composing "for free" is free only if you do not
+need uncatchability, and refusal is the one thing that does.**
+
+So **the payload goes INTO `Loud`, not beside it**, and Core's alternative is now
+closed **by the covenant rather than by preference** — which is the difference
+between a ruling that holds and one that gets relitigated.
+
+### BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — as the STRONGER form
+
+The `RefusalCause` ruling said an expected-empty class is **present and gated,
+never absent**. Go's `GoRefusal` has no `undefined` constructor at all. That is
+**not** an exception to the rule; the two live at different levels:
+
+* the tier's local refusal type **maps into Core's four-class cause**;
+* **the gate is the THEOREM that the image excludes the class.**
+
+**The scoreboard sees the constructor** — Core's vocabulary is complete, the
+column exists, and *"this language has no UB"* stays distinguishable from *"this
+tier did not model that column"*. **The tier cannot construct it**, provably,
+rather than by a check that might not fire. A by-construction gate is therefore
+**better** than a runtime one, for exactly the reason §3.4 prefers type-level
+invariants to N lemmas: **nothing has to fire.**
+
+Two instances, different mechanisms and the same shape — **ES's
+`es_never_undefined`** (a theorem, beside `es_never_orderDependent`; ES's own
+file already records both as *"PRESENT and GATED"*) and **Go's build-breaking
+guard**. The class is **nameable by the family and unconstructible by the tier.**

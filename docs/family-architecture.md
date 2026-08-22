@@ -1236,6 +1236,26 @@ ruling. **Core carries neither.**
 > other direction: not two tiers to be fixed, but **a trunk too poor to
 > absorb them.**
 
+**AND CORE'S OWN HEADER OFFERS AN ALTERNATIVE THAT THE COVENANT CLOSES.**
+It suggests that *"a tier that needs more than two causes does **not**
+extend this type; it adds an `.except` layer of its own, which composes for
+free."* The Go lane — **the third independent finding of this gap** — named
+why that cannot be the answer, and it is decisive on the family's own
+terms:
+
+> **An extra `.except` layer is, BY CONSTRUCTION, a CATCHABLE channel.**
+
+`ρ` is the program's channel precisely because `ExceptT` is where catch
+constructs are instantiated (§3.4's speaker split). Putting refusal causes
+in another `.except` layer therefore puts **refusal in a catchable
+position** — the exact thing the `Halt` ruling forbids, and it would be
+re-forbidden per language by the N lemmas that ruling rejected. Composing
+"for free" is free only if you do not need uncatchability, and refusal is
+the one thing that does.
+
+**So the payload goes INTO `Loud`, not beside it** — and Core's header
+alternative is closed by the covenant rather than by preference.
+
 **The fix is in CORE, not in C or ES**: parameterize `Loud.unsupported`'s
 payload, exactly as the `Halt` ruling (cause + optional snapshot) and the
 `RefusalCause` ruling (four classes, tier payload `π`) already prescribe.
@@ -2524,6 +2544,27 @@ opposite for WebAssembly: *expect the bucket to be empty, and gate it — a
 tier emitting `undefined` has a bug.* A gate needs a constructor to be
 about. **ES converges by touch** (§9.2), gaining the two constructors it
 omits and gating both.
+
+**AND BY-CONSTRUCTION GATES RECONCILE WITH "PRESENT AND GATED" — they are
+the STRONGER form, not an exception to it.** A tier-local refusal type may
+legitimately lack a class outright (Go's `GoRefusal` has no `undefined`).
+That is not a divergence from the rule, because the two live at different
+levels:
+
+* the tier's local type **maps into Core's four-class cause**;
+* the **gate is the THEOREM that the image excludes the class**.
+
+So **the scoreboard sees the constructor** — Core's vocabulary is complete
+and the column exists — while **the tier cannot construct it**, provably,
+rather than by a check that might not fire. A by-construction gate is
+*better* than a runtime one for exactly the reason §3.4 prefers type-level
+invariants to N lemmas: nothing has to fire.
+
+The two instances: **ES's `es_never_undefined`** (a theorem, beside
+`es_never_orderDependent`, and ES's own file already records both as
+*"PRESENT and GATED"*) and **Go's build-breaking guard**. Different
+mechanisms, same shape — the class is nameable by the family and
+unconstructible by the tier.
 
 **AND ES'S OWN REFINEMENT IS PRESERVED, because it is a real finding.** ES
 did not merely drop a class — it **split `environment` in two by

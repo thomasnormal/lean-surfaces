@@ -13424,12 +13424,24 @@ Thomas.
 
 ### Triad
 
-`lake build` **3691 jobs green** — the five new C modules (`LeanModels.C`,
+Measured at the commit, then RE-MEASURED on the merged tip after rebasing onto
+eight sibling commits that changed 14 `.lean` files. Both green; the merged-tip
+numbers are the ones that count:
+
+`lake build` **3692 jobs green** — the five new C modules (`LeanModels.C`,
 `.C.Ast`, `.C.Json`, `.C.Load`, `Examples.c.sunfish.guards`) included;
-`docs_check` **73/73**, 15 illustrative-exempt; `diff_test` **1315 cases, 0
-failed, 113 whitelisted, 1202 matched**; `script_corpus` **64 scripts, 0 failed,
-50 matched, 14 loud**. The Python tier is unmoved at every number. No `sorry`,
-no `native_decide`; the C lane declares no theorems, so no axioms moved.
+
+`docs_check` **73/73**, 15 illustrative-exempt; `diff_test` **1372 cases, 0
+failed, 114 whitelisted, 1258 matched**; `script_corpus` **64 scripts, 0 failed,
+50 matched, 14 loud**. No `sorry`, no `native_decide`; the C lane declares no
+theorems, so no axioms moved.
+
+`diff_test` moved 1315 → 1372 between the commit and the tip: **that is §L49's
+Rung 1 adding 57 cases, not this lane** — the C lane adds no `diff_test` rows at
+all, because M1 has no interpreter to differentially test. The C lane's own
+gates were re-run on the tip too: all **19 `#guard`s** pass, the envelope
+re-extracts byte-identically, `c_construct_census --compare` reports UNCHANGED,
+and the profile guard reports all 8 depended-on facts satisfied.
 
 ## L51 — RUNG 2 LANDS: `AnnAssign` in function bodies, and the census found the one shape that must NOT be narrowed (2026-08-21)
 

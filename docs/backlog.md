@@ -15282,3 +15282,330 @@ this lane's to fix forward.
   promotion configurations reuse the same chain with one gate swapped, which is
   what the two-gates-per-`if` factoring was for; none of them is new mathematics,
   and none of them is claimed here.
+## L63 — THE ADA TIER'S FOUNDING CHARTER: the only OFFICIAL suite in the family, and the standard classifies its own paragraphs (2026-08-22)
+
+Thomas's family directive (versioned, spec-mirrored surfaces) chartered an Ada
+lane. The charter is [docs/ada-charter.md](ada-charter.md): a spec map, an
+ACATS census, an honest scale statement, a driver-artifact census and a first
+milestone. **No Lean, no semantics, no change to any existing file** except
+this one. Two instruments land with it —
+`harness/ada_spec_census.py` + `docs/ada-spec-census.json` and
+`harness/ada_suite_census.py` + `docs/ada-suite-census.json`.
+
+**WRITTEN TO §L59'S FAMILY ARCHITECTURE, which landed mid-census.** The
+charter fills the two rows [docs/family-architecture.md](family-architecture.md)
+left marked PROPOSED for Ada. **The registry row (§1.2) is ratified**: tag
+`Ada`, authority spec-mirror ISO/IEC 8652, oracle a GNAT toolchain (**and
+there is none on this host**), corpus ACATS 4.2 — and **two edition tokens,
+`Ada2022` and `Ada2012`**, making Ada the first tier in the family to declare
+two at founding, which §L59's own §1.3 rule ("state the boundary before
+writing the second edition's first line") turns from ambition into an
+obligation on day one. **The §4.3 mapping row is filled** (see below).
+**Two amendments go back**, both found by measurement and neither this lane's
+to make: (i) §1.2's `oracle` column is one column short for Ada — every other
+spec-mirror tier's oracle is an implementation, but Ada has a THIRD authority,
+an **official suite with published grading rules and a shipped grading tool**,
+owned by neither the standards body nor an implementer, so §4.2's precedence
+rule wants one more clause — *the SPEC is the target, the IMPLEMENTATION is
+the oracle for behavior, and the SUITE OWNER is the authority for the expected
+VERDICT*; (ii) §4.3's prediction that a fifth REFUSE cause would surface here
+is answered, and the answer is no.
+
+**THE HORIZONTAL DATUM: Ada is the only language in the family whose
+conformance suite is OFFICIAL.** [docs/c23-goal.md](c23-goal.md) had to open
+by recording that *"there is no official ISO conformance suite"* for C and
+that a high score there means "agrees with what these projects test". Ada has
+**ISO/IEC 18009** — a standard for testing Ada processors — and the ACATS is
+the corpus that instantiates it, published by the ACAA. §2.6 of the charter
+states exactly what that changes, and it is a sharp two-sided answer: the
+DENOMINATOR stops being a judgment call (4188 tests, 3996 core, and the User's
+Guide says all core tests must pass for core conformity assessment); the
+EXPECTED RESULT ships with each test in graded form; and `NOT_APPLICABLE`
+becomes a first-class verdict the family has no word for. But it does **not**
+license the word "conformant" — the ACAA's Notice sits at the top of every
+test file and says the suite *"should not be used to make claims of
+conformance unless used in accordance with ISO/IEC 18009 and any applicable
+ACAA procedures"*, which involves an accredited laboratory. **Running the
+ACATS here produces a SCORE, never a conformance claim**, and every Ada-lane
+document is bound to that wording. That disclaimer is the corpus owner's, not
+ours — stricter than the C tier's, which we wrote for ourselves.
+
+**THE VERSION PAIR IS FORCED, NOT CHOSEN.** Measured: the ARM is **Ada 2022 =
+ISO/IEC 8652:2023** (consolidated with the 2025 Amendment 1, read out of the
+text rather than assumed), while **ACATS 4.2 (2024-06-28) is the baseline for
+Ada 2012**; its own modification list says so, and the string "Ada 2022"
+appears nowhere on the ACAA's ACATS page. **The official suite is two editions
+behind the current standard.** So the directive's version sibling is
+Ada 2012 = ACATS 4.2 with Ada 2022 as the spec head — the opposite shape to
+the C tier, where the standard moved and the suites followed. Consequences:
+an "Ada 2022 conformance" claim can never be scored against ACATS, and
+`language_version` is a first-class envelope field, not a stamp. Corroborated
+in the data: the Ada 2022 keyword `parallel` is used by **0** of 4188 tests.
+
+**THE SPEC CLASSIFIES ITS OWN PARAGRAPHS — the richest behavior taxonomy in
+the family, and it is now counted.** ARM 1.1.2 labels every subclause's text
+under a fixed heading set. Measured over 28 clause/annex files, 477
+subclauses, **14262 paragraphs** (core 11156; clauses 1-13 alone 5927):
+Static Semantics 6973, Dynamic Semantics 1340, Legality Rules 953, Examples
+963, Syntax 572, Implementation Advice 387, Implementation Requirements 343,
+Implementation Permissions 275, Name Resolution 248, **Erroneous Execution
+115 over 47 subclauses**, **Bounded (Run-Time) Errors 104 over 40**,
+Post-Compilation 67, Documentation Requirements 68, Metrics 61. Static
+Semantics dominates the DOCUMENT but not the LANGUAGE — 1707 of it in clauses
+1-13, the rest almost all Annex A's 102 subclauses / 4507 paragraphs of
+library specs, so any "how big is Ada's static semantics" number that does not
+say which is meant is not a number.
+
+**§4.3'S QUESTION ANSWERED: a fifth REFUSE cause is NOT what Ada needs.**
+§L59 predicts *"Ada is the stress test of whether four causes are enough; if a
+fifth is needed, Ada is where it will show."* Mapping ARM 1.1.5's four error
+categories onto §L59 §5.2's four causes: compile-time-detected errors are a
+**verdict**, not a refusal (see below); run-time-detected errors are the
+predefined exceptions, an ordinary `.exn`-shaped outcome; **Erroneous
+Execution is cause 2, `undefined`, exactly** — no language-specified bound on
+the effect, never retires, it is the product; and **Bounded (Run-Time) Errors
+fit NONE of the four.** Walk them: the construct is in the vocabulary (not
+cause 1); the standard describes the behavior fully — *"the possible effects
+of a given bounded error are specified for each such error"* — so calling it
+`undefined` would be a FALSE STATEMENT about the language, and false in the
+expensive direction, since the refusal is then indistinguishable on the
+scoreboard from a tier gap (not cause 2); nothing is missing from the slice
+(not cause 3); and it is about OUTCOMES, not ORDERS — cause 4's obligation is
+that *every* admissible order agrees (a ∀), a bounded error's is that the
+model's outcome is *some* permitted one (an ∃) (not cause 4). **So the gap is
+one level up from the refusal taxonomy: the DIVERGE test is not equality at
+every site.** §L59 §3.6's ∀-parameter shape handles the PROOF side of this
+perfectly — make the choice a parameter, quantify ∀ at theorem level — and
+does **not** handle the SCOREBOARD side, because a differential score compares
+one observable to one oracle's, and at a bounded-error site **two conforming
+implementations may disagree and both be right**. Byte-equality there
+manufactures DIVERGEs against the family's zero-tolerance invariant. Two ways
+to close it, **charter takes neither**: MATCH-by-membership (the site carries
+its permitted set; MATCH stops meaning "equals the oracle" there and must be
+reported separately) or REFUSE with a new cause (cheap, honest, forfeits every
+such site). Scale makes either affordable: 104 paragraphs over 40 subclauses;
+57 over 16 in clauses 1-13 — and the standard has already done the
+enumeration, which is the whole reason Ada could surface this and C could not.
+The other two variabilities are already decided elsewhere and inherited:
+**implementation-defined → the profile** (and Ada ENUMERATES its own — Annex
+M.2 lists **202** implementation-defined characteristics, M.1 53 further
+documentation requirements, M.3 174 advice items, against the C tier's 13
+hand-derived facts), **unspecified → cause 4 `order-dependence` plus §L59
+§3.6's ∀-parameter shape** (128 occurrences whole-doc, 109 core; the count
+against a corpus needs a frontend and is milestone work).
+
+**37.1% OF THE OFFICIAL SUITE IS SCORED ON A REJECTION, and the family has no
+verdict for it.** Measured: **1484 class-B tests** (must be rejected at
+compile time, at the lines marked `-- ERROR:`, with nothing else flagged) plus
+**71 class-L** (must fail to BIND, must not begin execution) = **1555 of
+4188**. A B test is not a refusal — it asks the model to ASSERT that a
+construct is illegal Ada, a positive claim about the 953 Legality-Rule
+paragraphs. REFUSE-vs-expected-illegal must never be pooled: a tier that
+mapped "my Legality Rules said no" onto `.unsupported` would score B tests as
+agreement by declining to have an opinion. The grading rules are finer than a
+binary, and the census counted the fineness: **16404 `-- ERROR:` marks** over
+1474 tests (median 6, max 251), **7568 `-- OK`** marks over 748 tests (the
+false-positive guard), **584 `-- POSSIBLE ERROR:`** over 43 tests (a
+disjunction over locations), **313 `-- OPTIONAL ERROR:`** over 84 (a
+don't-care), and **167 `-- ANX-C RQMT`** (profile-parameterized expected
+results). **Only the LOCATION of an error is graded, never its text** — the
+User's Guide is explicit that *"the ACATS must not prevent innovation in error
+handling"* — and **289 B tests carry exactly one mark**, for which the rule
+degenerates to "rejected for any reason passes".
+
+**THE ORACLE HAS TWO LAYERS AND THE SECOND IS MACHINE-READABLE — nobody else
+in the family got one.** Layer one is the `Report` package: 15 subprograms in
+591 shipped lines, `Test`/`Failed`/`Result` plus optimizer-defeating `Ident_*`
+functions; measured usage `Test` 2707, `Result` 2707, `Failed` 2586,
+`Ident_Int` 959, `Not_Applicable` 308. (A detector looking only for
+`Report.Test` finds **819**, not 2707 — legacy tests write `USE REPORT;` and
+call `TEST (...)` unqualified. The census looks for both and the self-test
+pins it.) Layer two: **ACATS 4.2 ships a GRADER and an implementation-neutral
+trace format** — `GRADE` 2825 lines + `GRD_DATA` 1139 + `TRACE` 247 +
+`SPECIAL` 603 + `VERSION` 65, plus `SUMMARY` 2899 + `TST_SUM` 447 — consuming
+an **event trace CSV** over 14 event kinds (`CSTART/CEND/CERR/CWARN`,
+`BSTART/BEND/BERR/BWARN`, `EXSTART/EXEND/EXFAIL/EXNA/EXSACT`, `UNKN`),
+designed so that *"it should be possible to map the processes of any Ada
+implementation into an event trace file"*. **The Ada scoreboard should EMIT a
+trace and run the ACAA's grader, not re-implement grading** — which makes the
+B-test location rules and the POSSIBLE/OPTIONAL disjunctions the ACAA's
+problem and removes the largest source of self-generous scoring. Filed as
+Thomas's decision.
+
+**SCALE, honestly: 316 concrete node kinds against C's 45.** Measured from
+libadalang's grammar: 315 declared node classes (294 `class`, 47 of them
+abstract, + 21 `enum class` of which 14 are qualifiers expanding to
+Present/Absent pairs, plus 41 other enum alternatives) = **316 concrete
+kinds**, a 7x multiplier on the C tier's v0 vocabulary. **The measured viable
+core is SEQUENTIAL ADA — the language minus tasking — reaching 3420 of 4188
+tests (81.7%) and 3321 of 3996 core tests (83.1%).** Dropping tasking costs
+**18%**, which was not predictable. (Aside worth nothing and recorded anyway:
+§L54's C rung 0 cleared 83% too, on a different language, corpus and core
+definition.) But the ladder says something sharper than "sequential is 82%":
+an empty core clears only 755 (18.0%), and the first four rungs — exceptions
+(1187), access types (1437), separate compilation (1753), generic
+instantiation (2072) — take it to 49.5% and none of the four is optional in
+realistic Ada. So **v0 = sequential Ada with exceptions, access types,
+separate compilation and generic instantiation = 2072 tests, 49.5%**, with
+generics (2647), real types (3048) and tagged types (3390) the three rungs to
+81%.
+
+**THE LIBRARY SURFACE IS `Report`, and it is a stronger finding than §L54's
+"libc is printf".** **3025 of 4188 tests — 72.2% — `with` NO predefined
+language unit at all**; their entire library dependence is `Report` (plus
+`ImpDef`/`TCTouch`), all shipped in source. Only 222 tests `with` `Text_IO` or
+`Ada.Text_IO` directly. `Report`'s own body needs exactly two predefined units
+(`Ada.Text_IO`, `Ada.Calendar`), and a model may implement `Report` natively
+rather than execute it. **THE CHEAPEST FIRST SCOREBOARD, measured**: 2633
+executable tests → 2194 without tasking → **1374 that also need no predefined
+library** (1364 core, 1322 class C); of those, 322 use no feature bucket at
+all, 517 at most exceptions, 812 within {exceptions, access, separate
+compilation}.
+
+**THE INSTRUMENTS VALIDATE THEMSELVES AGAINST THE ARTIFACTS' OWN
+BOOKKEEPING**, which is what turned three near-misses into findings. (1) The
+spec census reads the subclause list out of the ARM's **table of contents**,
+because at column 0 a heading (`9.1 Task Units`) and a dotted paragraph number
+(`28.1  Storage_Error is propagated...`) are the same shape and both occur —
+then REFUSES if a clause file does not contain exactly the headings the TOC
+promised, in order. (2) The suite census reproduces the User's Guide's own
+§4.1 table exactly — 4188 tests / 3996 core / 192 SNA / 70 foundation files /
+208 docs / 28 other — and it took two reconciliations to get there, both
+findings: the four `CZ` tests are counted by the UG as *Other*, and `FCNDECL`
+begins with F but is a customization package, not a foundation. Miscounting it
+is off by exactly the amount that breaks agreement, **which is how it was
+found**. (3) The suite census cross-checks the delivery against its own
+`ACATS42.LST` manifest and REFUSES on a missing file — an incomplete unpack
+would shrink every number with no symptom. Measured: 5263 listed, 5264 on
+disk, the extra being `DIRS.BAT`.
+
+**EVERY REFUSAL PATH WAS RUN, NOT ADMIRED**, in both instruments (missing
+directory, wrong directory, missing TOC, TOC/heading disagreement, manifest
+shortfall exercised by deleting a file from a copy, zero-paragraph and
+zero-test runs). Both are deterministic — double runs byte-identical,
+verified — and both carry a `--self-test` built from the shapes that would
+produce a WRONG answer rather than no answer: for the ARM, the dotted-
+paragraph ambiguity; for ACATS, a `-- ERROR:` inside a string literal, a `'"'`
+character literal against Ada's attribute tick, a legacy `USE REPORT;` test, a
+foundation, and `type T is new S` (not an instantiation) beside
+`package P is new Q` (one).
+
+**THE LICENCE IS PER FILE AND THE CENSUS FOUND THREE GRANTORS.** All **4945**
+Ada test files carry a *Grant of Unlimited Rights*: **U.S. Government 4165**
+(older tests, under named DoD contracts), **ACAA 730**, **AdaCore 50**, none
+missing. Two near-misses recorded: keying on the HEADING finds 4931 of 4945 —
+**14 files carry the operative sentence under no heading** — and keying on the
+ACAA's wording alone would have reported 85% of the official suite
+*unlicensed*. That is §L54's c-testsuite trap with the sign flipped, which is
+why the instrument matches the operative verb and reports the grantor by name
+with a listed `other` bucket. **Recommendation unchanged: fetch, pin by
+version, vendor nothing** — even though this licence would permit vendoring
+outright, which is precisely why the ruling is worth taking rather than
+assuming.
+
+**THE DRIVER ARTIFACT: there is no ctwin analogue, and there is a name trap.**
+Nothing in either repository is Ada. Measured on this host: no `gnat`,
+`gnatmake`, `gnatls`, `gprbuild` or `alr`; `gcc` reports no Ada; Homebrew has
+no `gnat` or `alire` formula; `libadalang` is not importable and not on PyPI.
+**But `adaparse` IS on `PATH` — and it is `ada-url`'s WHATWG URL parser, with
+nothing whatever to do with the Ada language.** A frontend census that grepped
+`PATH` for `ada` would have reported a parser that is not one. Candidates
+censused with licences verified from the repositories: **libadalang,
+Apache-2.0 WITH LLVM-exception, is the extractor** — its documented Python API
+is `AnalysisContext()` / `get_from_file` / `unit.root` / `finditer`, the same
+shape `extractors/c/extract.py` gets from clang; libadalang-tools and
+ada_language_server are GPL-3.0 tools, not frontends; **`gnat2xml`/ASIS is
+GONE** (measured: no sources remain in libadalang-tools); tree-sitter-ada
+(MIT) is a CST with no semantics and is named as the FALLBACK for the census
+half only. Acquisition is a from-source build via Alire (`gnat_native` to
+16.1.0, `libadalang` to 26.0.0, depending on gnatcoll/libgpr2/langkit_support
+at `^26`) **on a host with no Ada compiler — which is milestone 1's critical
+path and is sequenced FIRST for that reason.** For a corpus, the ACATS's own
+tools are in hand, licensed identically, and measured **sequential**: the
+grading tool 4879 lines (access types, exceptions, `goto`, one instantiation),
+the summary tool 3346, `MACROSUB` 548, `Report` 591, `TCTouch` 376 — all
+inside the viable core, with `Report` the obvious first ingest since every
+executable test depends on it anyway. An Ada sunfish twin (the triangle) is
+recorded as a question, priced as a from-scratch transcription, and NOT
+proposed.
+
+**M1 IS PLANNED, endgame-neutral, on the family template**: (1) the
+instruments + charter, LANDED; (2) **the frontend** — build libadalang via
+Alire and land a probe that replaces §3.1's grammar-derived 316 with a
+measured node-kind list; this is the inch that can fail and it is first for
+that reason; (3) the profile, inheriting [docs/c-profile.md](c-profile.md)'s
+schema-not-a-machine ruling, with Annex M.2's 202 characteristics as the
+explicit denominator and `language_version` landing here; (4)
+`docs/ada-envelope-schema.md` (`ada-0.1`), needing three fields its siblings
+do not — `language_version` beside `profile_id`, the ACATS **markings** with
+their line numbers (they are the expected result of 1484 tests and they live
+in comments the AST discards), and a compilation-unit list with ORDER, since
+248 tests span more than one file and the order is encoded in the eighth
+character of the file name; (5) `extractors/ada/extract.py`; (6)
+`LeanModels/Ada/{Ast,Json}.lean`, a SIBLING of `LeanModels/Python` and
+`LeanModels/C` on §L35's architecture decision — with its warning inherited
+verbatim, *if an Ada interpreter ever lands with its own copy of `Run` that is
+a defect*, and the note that a third consumer makes §L35's deferred
+`LeanModels/Core/` move overdue rather than premature; (7) **`Report`'s
+specification round-tripped** with `#guard`s fixed in advance by the schema —
+15 subprogram declarations, 6 procedures and 9 functions, `File_Num`'s range
+`1 .. 5`, `Generate_Event_Trace_File`, `Report.Test`'s parameter names, zero
+unsupported nodes.
+
+**DECISION POINTS BACK TO THOMAS** (charter §6): (1) **the endgame** — and
+the three options are NOT the C tier's three, because the artifacts differ:
+(a) the ACATS ladder (the direct analogue of the §L54 ruling, now with an
+official denominator and a supplied grader), (b) the **SPEC ladder**, scoring
+against ARM paragraphs using the §1.4 table as the denominator — the option no
+other tier in the family could even state, and the one with no precedent and
+no tooling — or (c) the **triangle**, an Ada sunfish twin for a cross-language
+claim. Charter recommends none; they share the whole of M1, so the choice
+binds after it. (2) **The bounded-error verdict** — a new verdict class for
+"the outcome is in the permitted set", or REFUSE at bounded-error sites with
+its own cause? This changes the family's verdict vocabulary and is not one
+lane's to take. (3) **The grader** — emit an event trace for the ACAA's
+`GRADE`, or score ourselves? (4) **Vendored vs fetched** — recommendation
+fetched, worth an explicit ruling because the usual reason not to vendor does
+not apply here. (5) **An Ada sunfish twin, yes or no?** (6) **Two amendments
+back to §L59's family charter**, stated at the top of this entry: the `oracle`
+column's third authority, and §4.3's fifth-cause prediction, answered.
+(The `∀`-resolution ruling the founding dispatch cited by name is §L59
+§3.6, which landed three commits before this one; the charter cites it. It
+stood open in the draft as "not in this repository" and is closed by the
+landing rather than by an answer — recorded so the next lane does not go
+looking.)
+
+**Honest scale, stated in the charter and repeated here**: the buckets are a
+LEXICAL census (there is no Ada frontend on this host), so they say what a
+test WRITES, not that any semantics would run it — and there is no semantics
+and none is designed. Representation clauses and aspect specifications are NOT
+reserved words and are left UNMEASURED rather than approximated by regex; the
+one shape-based exception is generic instantiation, taken because a test can
+instantiate the whole predefined generic library without ever writing
+`generic`, and pinned in both directions by the self-test. Two-thirds of the
+official suite (2788 of 4188) is LEGACY, named on an *Ada 83* chapter scheme
+the User's Guide itself says *"sometimes will not correspond"* to the current
+clause — so legacy tests' chapters are reported as AIG chapters and never as
+ARM clauses, and only the 1400 modern tests are clause-indexed.
+
+### Triad — PARTIAL, and the omission is stated rather than papered over
+
+`docs_check` **73/73**, 15 illustrative-exempt — unchanged. Both new
+instruments pass `--self-test`, both are byte-identical on a double run
+(verified), and every refusal path in both was EXECUTED, not described.
+
+**`lake build`, `diff_test` and `script_corpus` were NOT re-run.** The
+machine-wide build-lock protocol came into force today because concurrent
+Lean builds were taking the machine down; at landing time the lock was HELD
+and three `lake` processes were already running. This landing touches only
+`docs/` and two standalone `harness/*.py` files — **no Lean, and no Python
+that any Lean or existing harness imports** — so the Lean third has nothing
+to say that §L58's run did not already say, while re-running it in a
+freshly-checked-out tree would have been a full 51-file rebuild: the most
+expensive build available, for zero information, and the exact behavior the
+protocol exists to stop. Recorded as owed: **the first Ada-lane landing that
+touches Lean owes a full triad under the lock**, and M1 inch 2 is it — under
+the protocol's AMENDED form (`rm -rf` release inside a failure-reporting
+trap, since `rmdir` refuses the non-empty lock dir and fails silently; and
+`nice -n 10 lake build` with **no** `-j` flag, which is an argument error on
+v4.33.0-rc1 and exits 1 in a way that masquerades as a build failure).

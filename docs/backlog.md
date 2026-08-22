@@ -15087,6 +15087,36 @@ lane without having read them. Two lanes meeting the same two failures is the
 signal that they belong in a shared document rather than in each lane's notes,
 and that is now recorded at the amendment.
 
+### CORROBORATION FROM INSIDE THE SV TIER — the `ρ` layer was hand-rolled a month early
+
+Verified in the tree before citing. SV's dormant `SelfCheck.lean` **already
+hand-rolled `ExceptT ρ` as state**: `$finish` executes as `.ok` with
+`halted := true` set in the output record (line 439), output preserved, and
+**every downstream statement short-circuits on the flag** — `if out.halted then
+.ok (st, nba, out)` at the statement walker (410) and again at the process fold
+(502). The flag lives in the `Out` record (190) beside the output lines, so the
+halt is state, not an effect.
+
+**Dated, because the timing is the point**: `halted` landed **2026-07-21**; this
+substrate was specified **2026-08-22** — **thirty-two days later**, by which time
+the SV lane had long been dormant. Convergent evolution from INSIDE a tier, not
+an analogy drawn from outside.
+
+**A pattern a tier REINVENTED under pressure is stronger evidence than a pattern
+a document prescribed**, so it earns a paragraph in §3.6 (1a) rather than a
+footnote.
+
+**And it locates the boundary precisely**, which is the part worth keeping: the
+tier reached for state-plus-short-circuit for an effect the substrate **does**
+supply (`ExceptT`) — which is exactly why (1a) can be confident the same
+technique is right for the one it **cannot** (suspension). The same move, one
+layer the substrate gives you and one it never will.
+
+**Smallest worked migration example**: replacing the `halted` flag and its manual
+short-circuit with the `ExceptT` layer is **one `@[spec]` lemma that deletes a
+check from every statement case** — a tier-sized instance of §3.4's altitude law,
+and the cheapest possible first step for the SV consolidation lane.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

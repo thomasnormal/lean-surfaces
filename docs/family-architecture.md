@@ -1597,6 +1597,30 @@ for any tier that starts sequential and later grows concurrency — you do
 not rewrite the walker, you generalize its return type and prove the old
 one is the non-suspending case.
 
+**CORROBORATION FROM INSIDE THE SV TIER, and it is convergent evolution
+rather than analogy.** SV's dormant `SelfCheck.lean` **already hand-rolled
+the `ρ` layer**: `$finish` executes as `.ok` with `halted := true` set in
+the output record, output preserved, and **every downstream statement
+short-circuits on the flag** (`if out.halted then .ok …`, at the statement
+walker and again at the process fold). That is `ExceptT ρ`
+**defunctionalized into the state** — the same move (1a) prescribes for
+suspension, applied to termination — and it was written **2026-07-21,
+thirty-two days before this substrate was specified**, by a lane that had
+no substrate to read.
+
+**A pattern a tier REINVENTED under pressure is stronger evidence than a
+pattern a document prescribed**, which is why it earns a paragraph here
+rather than a footnote. And it locates the boundary precisely: the tier
+reached for state-plus-short-circuit for an effect the substrate **does**
+supply (`ExceptT`), which is exactly why (1a) can be confident the same
+technique is the right answer for the one it **cannot** (suspension).
+
+**It also hands the migration its smallest worked example.** Replacing the
+`halted` flag and its manual short-circuit with the `ExceptT` layer is
+**one `@[spec]` lemma that deletes a check from every statement case** — a
+tier-sized version of §3.4's altitude law, and the cheapest possible first
+step for the SV consolidation lane.
+
 **What this costs the pattern: nothing — and that is the test it passed.**
 Schedule-as-parameter survives, `fuelMono` survives, the ∃-fuel form
 survives, `mvcgen` survives. But they survive **because the process table

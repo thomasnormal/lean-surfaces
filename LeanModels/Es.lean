@@ -8,6 +8,7 @@ import LeanModels.Es.Ordinary
 import LeanModels.Es.Env
 import LeanModels.Es.Function
 import LeanModels.Es.Convert
+import LeanModels.Es.Eval
 import LeanModels.Es.SpecAttr
 import LeanModels.Es.Spec
 

@@ -9,12 +9,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**41 entries across 13 lanes.** Regenerate with
+**43 entries across 13 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
 | `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
 | `2026-08-22-qol-11` | §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated | qol |
 | `2026-08-22-qol-10` | the GATE PHASE was building the tree, and it defeated every narrowing | qol |

@@ -420,3 +420,72 @@ this is not one of the family's two wrong-base sites; it is the site the
 correct shape is being lifted FROM.
 
 Inch 4(b) proceeds on this lane's own `Halt`.
+
+## 2026-08-23-es-1 — M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier
+
+`LeanModels/Es/Eval.lean` + `Examples/es/eval/guards.lean`. **198 `#guard`s in
+the lane** (from 165), 81 `@[es_spec]` lemmas, six guard files, lint clean.
+
+**Structurally recursive on FUEL, never `partial`** — the walk decreases fuel
+at every subexpression, so the whole evaluator stays kernel-reducible. That
+matters more since 2026-08-22-es-4: `#guard` is not a kernel oracle either, so
+a `partial` evaluator would be a thing *nothing* could check.
+
+**The inch-1 `Node` shape paid off.** Splitting a node's properties into
+SCALARS and CHILDREN — done then to keep `Node` off the mutual-inductive
+`deriving` path — is exactly the split an evaluator wants: `operator` and
+`computed` are read as flags, `left`/`object`/`callee` are recursed into. A
+decision taken for a compile-time reason turned out to be the semantic one.
+
+**Two guards are worth more than the rest, and both are about what did NOT
+run.** Short-circuiting is pinned with a right operand that THROWS if
+evaluated (`false && <undeclared>`), so a pass proves the right operand's
+world never existed — not that a pair was computed and one selected. And the
+converse is pinned too (`true && <undeclared>` DOES throw), so the first set
+is not passing merely because the right side is unreachable. `typeof
+undeclared` is `"undefined"` while READING the same name throws — the one
+operator that tolerates an unresolvable reference, and it only works because
+`evalRef` builds the reference without reading it.
+
+**One bug the guards caught immediately**: `typeof` routed *every* argument
+through `evalRef`, so `typeof 1` refused as a "non-assignment-target". The
+reference path exists only for the unresolvable-name case; everything else is
+an ordinary value.
+
+### THE CLAMP WARNING FOUND A LIVE INSTANCE HERE — `%` is WITHDRAWN
+
+The SoftFloat lane's warning was preventive for `ToInt32`/`ToUint32` (this
+tier has not built them). **It was not preventive for `%`.** `applyBinary`
+carried
+
+    | "%" => return .num (a - b * (a / b).toInt64.toFloat)
+
+and `Float.toInt64` **CLAMPS** out of range — so a large quotient silently
+produced a wrong remainder that **every in-range test would have passed**.
+That is the flattering direction, which is the one this tier exists to refuse.
+`%` now REFUSES, naming the reason, until it can be built on the exact-value
+route.
+
+**Both `toInt64` sites were audited, not just the reported one.**
+`numberToString`'s is guarded by `n.abs < 1e15` — far inside Int64 — so the
+clamp cannot fire there, which is why the model route is right for that arm
+and wrong for a modular one. The distinction the warning draws is exactly the
+distinction the guard makes.
+
+### OWED — `ToInt32`/`ToUint32` on the exact-value route
+
+Not built here; recorded so it cannot be built the wrong way later. ES's
+`ToInt32`/`ToUint32` (§7.1.6/§7.1.7) reduce **modulo 2^32**, while
+`Float.Model.toInt64` **clamps**, so the model route that fixed
+`numberToString` is WRONG here. They go on SoftFloat's `toInt_eq_truncate`,
+which is stated over the EXACT value precisely so a modular conversion can take
+`mod 2^32` of the truncated exact integer without inheriting the clamp.
+
+**Two out-of-range witnesses to pin in both directions** when they land:
+`ToUint32(2^32 + 5) = 5` and `ToUint32(-1) = 4294967295`. An in-range-only
+battery would pass under the clamped implementation, which is the whole point
+of writing the witnesses down before the code.
+
+Checked for SoftFloat's `INBOUND` entry and `toInt_eq_truncate` at
+`92fcfcb`: **neither is on master yet**, so there is nothing to renumber or
+close today. This entry is the standing obligation until it is.

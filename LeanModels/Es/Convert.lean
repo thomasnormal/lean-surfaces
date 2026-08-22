@@ -312,7 +312,16 @@ def applyBinary (fuel : Nat) (lval : Val) (op : String) (rval : Val) : EsW Val :
       | "-" => return .num (a - b)
       | "*" => return .num (a * b)
       | "/" => return .num (a / b)
-      | "%" => return .num (a - b * (a / b).toInt64.toFloat)
+      | "%" =>
+        -- WITHDRAWN, on the SoftFloat lane's clamp warning.  This was
+        -- `a - b * (a / b).toInt64.toFloat`, and `Float.toInt64` CLAMPS
+        -- out of range — so a large quotient silently produced a wrong
+        -- remainder that every in-range test would have passed.  That is
+        -- the flattering direction, which is the one this tier refuses.
+        -- §6.1.6.1.6 `Number::remainder` returns the truncated-quotient
+        -- remainder, and doing it correctly needs the exact-value route
+        -- (SoftFloat's `toInt_eq_truncate`), not a clamping conversion.
+        SemM.refuseConstruct "`%` needs a non-clamping truncation (SoftFloat's toInt_eq_truncate); refusing rather than clamping"
       | _ => SemM.refuseConstruct s!"binary operator '{op}' is not modeled yet"
     | _, _ => throwError "TypeError" "Cannot mix BigInt and other types"
 

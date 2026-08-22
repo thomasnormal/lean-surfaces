@@ -377,6 +377,51 @@ explicitly. That is what lets them be lifted into the stack above without
 one of them being rewritten — and it is why the layer-order correction
 arrived at no cost to work already landed.
 
+### 4.1b Fuel's fate, decided at inch 3 — the expression layer is FUEL-FREE
+
+The family checklist's step 7 (`docs/family-architecture.md` §8.4) makes
+this a decision about the interpreter's TYPE, taken before the
+interpreter is written. **Taken: `evalExpr` is structurally recursive on
+`Expr` and carries no fuel.** Calls — the one expression that can recurse
+into an arbitrary body — are delegated to a `CallHandler` that takes the
+argument expressions UNEVALUATED, so the recursion needing fuel lives
+where fuel will live.
+
+**And that is TWO places, which inch 4's census corrected**: fuel arrives
+at **inch 4 with LOOPS** (84 of them — 50 `for`, 29 `do`, 5 `while`; an
+iteration count is not structurally bounded, and **20 of the 84 contain
+no call at all**, so calls are not what makes them need it) and again at
+**inch 5 with CALLS**. Expressions are fuel-free because neither
+construct is an expression.
+
+Measured on the shipped corpus: of **1169 full expressions, 871 (74.5%)
+contain no call at all.** So the fuel-free fragment — the half the
+checklist says gets the shared `mvcgen` and ~120 lines of `@[spec]` — is
+the majority of what the corpus is made of, and the cut maximizes it.
+Kernel-reducible `#guard` runs come free with structural recursion, which
+inch 6's scorer needs and inch 2 already shipped 50 of.
+
+### 4.1c The type-spelling trap, found by inch 3's census
+
+`CType` is clang's unparsed `qualType` string (`docs/c-envelope-schema.md`
+§3), so **type equality is SPELLING equality** — and the corpus has **19
+binary-operator sites whose operands spell the same type differently**
+(`uint64_t` vs `unsigned long long`, `uint32_t` vs `unsigned int`). A
+model that compared spellings would see conversions that are not there.
+
+The evaluator therefore RESOLVES rather than compares, through a table
+that is the census's own list of the integer spellings that occur, with
+widths from the profile. The qualified spellings are tabled too rather
+than stripped, because a table refuses an unmeasured spelling where
+string surgery would quietly accept one.
+
+**This also validates §4.1's "conversions arrive PRE-SOLVED" claim, which
+had never been checked**: of 563 arithmetic and comparison sites, **542
+have operand types that resolve equal**, and the 21 that do not are the
+19 spelling aliases plus 2 pointer arithmetic. Shifts are excluded on
+purpose — §6.5.8p3 promotes each operand separately, so their operands
+legitimately differ (17 sites).
+
 ### 4.2 The ∃-fuel threshold form transfers unchanged
 
 Every spliced run is stated as *"∃ n, ∀ fuel ≥ n, … = .ok …"*, with
@@ -391,6 +436,13 @@ recursion.
 **A short-circuiting construct's out-world is a function of its ANSWER;
 the world goes in the hypothesis, not the conclusion.** C makes this
 load-bearing at three constructs the census counts precisely:
+
+**Landed at inch 3, as three theorems** (`and_shortCircuits`,
+`or_shortCircuits`, `cond_takesOneArm`). Read what they do NOT say: the
+unevaluated operand appears in no hypothesis and in no part of any
+conclusion, and the out-memory named is the one the HYPOTHESIS introduced
+for the operand that ran. A statement of the other shape is unprovable
+there, which is the point.
 
 | construct | sites | why it matters |
 | --- | ---: | --- |
@@ -548,7 +600,7 @@ measured record and to M1's actuals (M1's seven inches were ~2 sessions).
 | ---: | --- | --- | ---: |
 | **1** | **the value model** | `LeanModels/C/C23/Value.lean`: `IntTy` from the profile, `CVal`, the wrap/refuse arithmetic of §1.2, with `#guard`s on the boundary cases (`INT_MAX+1` refuses, `UINT_MAX+1` wraps, `INT_MIN/-1` refuses, `(int)0x80000000u` = `INT_MIN`) — **LANDED** | 1 |
 | **2** | **the memory model** | `C23/Memory.lean`: `Ptr`, `CByte`, `CObj`, `Mem`, `alloc`/`free`/`load`/`store` + WF lemmas, stated around DECAY and `->` per §2.2a. Pure functions, no monad, no interpreter — **LANDED**, 4 WF theorems, 50 gates | 2-3 |
-| 3 | the expression semantics | `C23/Expr.lean`, §6.5 subclause by subclause: literals, `declRef`, the conversion lattice's 8 `castKind`s, arithmetic, **the §4.3 short-circuit rules at §6.5.14/§6.5.15** — in do-notation over the §4.1a stack | 3-4 |
+| **3** | **the expression semantics** | `C23/Expr.lean`, §6.5: the conversion lattice's 8 `castKind`s, `evalLValue`'s five census-chosen cases, arithmetic, **the §4.3 short-circuit rules at §6.5.14/§6.5.15** — do-notation over the §4.1a stack, **FUEL-FREE** — **LANDED**, 3 drain theorems, 37 gates | 3-4 |
 | 4 | statements + `CWorld` | `C23/Stmt.lean` at §6.8: the 11 statement kinds, `Run CWorld`, the `Run.exn` payload decision (§4.1), `abort`/`exit` terminals | 3-4 |
 | 5 | calls and the frame | §6.5.3.3: function calls, parameters, the 19 indirect sites through `movecb`, and the **7-site `J.1(16)` discharge** (§4.5) | 2 |
 | 6 | **rung-1 scorer** | `harness/c_refusal_census.py` per `docs/c23-goal.md` §4.2, run on the gcc-torture exit-status subset — **the first real score** | 2 |

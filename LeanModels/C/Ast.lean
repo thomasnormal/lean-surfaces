@@ -200,6 +200,47 @@ These exist so the ingester can be checked against
 `harness/c_construct_census.py` — two instruments, two paths, one answer.
 They are counts over the TERM, not claims about C. -/
 
+/-- The type the frontend assigned to this expression.
+
+Version-neutral: it reads a field the `c-0.1` envelope already carries
+(`docs/c-envelope-schema.md` §3), and every semantic layer needs it. An
+`unsupported` leaf has no type, and `""` resolves to nothing, so a
+consumer refuses rather than inventing one. -/
+def Expr.ty : Expr → CType
+  | .intLit _ t _ | .charLit _ t _ | .strLit _ t _ | .floatLit _ t _ => t
+  | .declRef _ _ t _ => t
+  | .member _ _ _ t _ | .index _ _ t _ | .call _ _ t _ => t
+  | .binop _ _ _ t _ | .compoundAssign _ _ _ t _ => t
+  | .unop _ _ _ t _ | .cond _ _ _ t _ | .paren _ t _ => t
+  | .implicitCast _ _ t _ | .cast _ _ t _ => t
+  | .initList _ t _ | .compoundLit _ t _ => t
+  | .typeTrait _ _ _ t _ | .constExpr _ _ t _ => t
+  | .unsupported .. => ""
+
+/-- clang's own class name for this node, for diagnostics. A refusal a
+human cannot act on is a refusal that has not done its job. -/
+def Expr.kindName : Expr → String
+  | .intLit .. => "IntegerLiteral"
+  | .charLit .. => "CharacterLiteral"
+  | .strLit .. => "StringLiteral"
+  | .floatLit .. => "FloatingLiteral"
+  | .declRef .. => "DeclRefExpr"
+  | .member .. => "MemberExpr"
+  | .index .. => "ArraySubscriptExpr"
+  | .call .. => "CallExpr"
+  | .binop .. => "BinaryOperator"
+  | .compoundAssign .. => "CompoundAssignOperator"
+  | .unop .. => "UnaryOperator"
+  | .cond .. => "ConditionalOperator"
+  | .paren .. => "ParenExpr"
+  | .implicitCast .. => "ImplicitCastExpr"
+  | .cast .. => "CStyleCastExpr"
+  | .initList .. => "InitListExpr"
+  | .compoundLit .. => "CompoundLiteralExpr"
+  | .typeTrait .. => "UnaryExprOrTypeTraitExpr"
+  | .constExpr .. => "ConstantExpr"
+  | .unsupported k _ _ => k
+
 /-- Sub-expressions, including the expression itself. -/
 def Expr.subexprs : Expr → List Expr
   | e@(.member b _ _ _ _) => e :: b.subexprs

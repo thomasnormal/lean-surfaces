@@ -20155,3 +20155,144 @@ Lock discipline: acquired after **43 minutes** behind ada-lane and go-lane,
 owner written `es-lane <pid>` (pid last, Amendment 5). By exit the lock had
 been handed on, so the ownership-checked trap printed **"LOCK NOT MINE — left
 alone"** and removed nothing.
+## L83 — M2 INCH 3: the expression evaluator, FUEL-FREE by decision, and the drain amendment becomes THREE THEOREMS (2026-08-22)
+
+*(C-tier lane, M2 build. §L72 is inch 2; §L57 the design; §L54 the goal.)*
+
+**FUEL'S FATE, DECIDED BEFORE THE INTERPRETER WAS WRITTEN** — the family
+checklist's step 7, which exists because the two routes differ in the
+interpreter's TYPE. **Taken: this layer is FUEL-FREE.** `evalExpr` is
+structurally recursive on `Expr`; calls are delegated to a `CallHandler` that
+takes the argument expressions **unevaluated**, so the one recursion that needs
+fuel lives where fuel will live — inch 5.
+
+The measurement that decided it: of **1169 full expressions, 871 (74.5%)
+contain no call at all.** The fuel-free fragment — the half the checklist gives
+the shared `mvcgen` and ~120 lines of `@[spec]` — is most of the corpus. And
+kernel-reducible `#guard` runs come free with structural recursion, which inch
+6's scorer needs and inch 2 already shipped 50 of.
+
+**THE CENSUS ORDERED THE FILE**, per §L72's finding. Decay (405) and `->` (226)
+are gated before `&` (106) and `*` (24), and `evalLValue` has **exactly five
+cases because the census says so**: the 1837 lvalue conversions take their
+operand from `DeclRefExpr` 1406, `MemberExpr` 248, `ArraySubscriptExpr` 169,
+`UnaryOperator` 13 and `CompoundLiteralExpr` 1 — and the 287 assignments plus
+63 increments target the same kinds. **One function serves both.**
+
+**THE DRAIN AMENDMENT IS NOW THREE THEOREMS**, not a convention:
+`and_shortCircuits`, `or_shortCircuits`, `cond_takesOneArm`. Read what they do
+NOT say — the unevaluated operand appears in no hypothesis and nowhere in any
+conclusion, and the out-memory named is the one the HYPOTHESIS introduced for
+the operand that ran. The other shape is unprovable there.
+
+**And it is DEMONSTRATED, not just asserted.** `pyfloordiv`'s own condition
+(sunfish.c L162, pulled out of the ingested term) is
+`r != 0 && ((r < 0) != (b < 0))`. Leave `b` **indeterminate** — reading it is
+`J.2(11)` — and run the same term twice:
+
+* `r = 0` → the left is false, the right never runs, the expression **answers
+  0**;
+* `r = 1` → the right runs, reads `b`, and **REFUSES**.
+
+One term, one uninitialised object, opposite outcomes, and the difference is
+exactly the short circuit. The out-memory of the refused run still holds `r`,
+which is the `ExceptT`-outside-`StateT` layer order doing its job.
+
+**THE CENSUS FOUND A TRAP THE DESIGN HAD NOT.** `CType` is clang's unparsed
+`qualType` string, so **type equality is SPELLING equality** — and the corpus
+has **19 binary-operator sites whose operands spell the same type differently**
+(`uint64_t` vs `unsigned long long`, `uint32_t` vs `unsigned int`). A model
+comparing spellings would see conversions that are not there. The evaluator
+RESOLVES instead, through a table that is the census's own list; qualified
+spellings are tabled rather than stripped, because a table refuses an
+unmeasured spelling where string surgery quietly accepts one.
+
+**This also validated §4.1's "conversions arrive PRE-SOLVED" claim, which had
+never been checked**: of 563 arithmetic and comparison sites, **542 have
+operand types that resolve equal**; the 21 that do not are the 19 aliases plus
+2 pointer arithmetic. Shifts are excluded on purpose — §6.5.8p3 promotes each
+operand separately (17 sites).
+
+**Two smaller measurements that changed code.** Every one of the corpus's **63
+increment sites is POSTFIX** — it never writes `++i` — and postfix yields the
+value BEFORE the update, which a tidy model gets wrong. And **`Ptr` moved into
+`Value.lean`**: a pointer IS a value, `docs/c-semantics-design.md` §1.1 always
+said `CVal` had three constructors, and inch 3 is the first consumer that must
+*produce* one (decay, 405 sites).
+
+**Layout is a PARAMETER, not a constant.** `sizeof` and `offsetof` are
+implementation-defined (`J.3.10`), so they arrive the way integer widths do —
+facts a profile supplies, keyed on the type spelling exactly as the AST carries
+it. Deriving them inside Lean would mean writing the C type parser the envelope
+schema exists to avoid.
+
+**37 gates, NON-VACUOUS by measurement**: four were perturbed — claiming the
+short circuit does not happen, that the right operand runs anyway, that C
+division floors, that postfix `++` yields the new value — and all four fail
+loudly at exactly their lines.
+
+### INCH 4's CENSUS, run while queued for the build lock — and it corrected this inch
+
+| statement kind | sites | | | |
+| --- | ---: | --- | --- | ---: |
+| **(expression statement)** | **297** | | `DoStmt` | 29 |
+| `IfStmt` | 253 | | `BreakStmt` | 8 |
+| `DeclStmt` | 228 | | `GotoStmt` | 7 |
+| `CompoundStmt` | 224 | | `ContinueStmt` | 6 |
+| `ReturnStmt` | 103 | | `WhileStmt` | 5 |
+| `ForStmt` | 50 | | `LabelStmt` | 3 |
+| | | | **TOTAL** | **1213** |
+
+**THE CORRECTION: fuel arrives at inch 4, not inch 5.** This inch's first
+draft said the recursion needing fuel "lives where fuel will live, at inch 5"
+— with calls. The statement census says otherwise: the corpus has **84 loops**
+and an iteration count is not structurally bounded, so the statement evaluator
+needs fuel whether or not a call is involved. **20 of the 84 loops contain no
+call at all.** So fuel arrives TWICE — at inch 4 with loops, and again at
+inch 5 with calls — and expressions are fuel-free because neither construct is
+an expression. Corrected in `Expr.lean` and in the design doc.
+
+Four more rows inch 4 will want: only **51 of 253 `if`s have an `else`**, so
+the else-less arm is the common path; **all 50 `for`s carry all three
+clauses** (48/49/50 — two omit `init`, one omits `cond`); **98 of 103 returns
+carry a value**; and the 7 `goto`s reach exactly **3 labels**, all paired
+(`after_moves` ×3, `out` ×3, `reset_ok` ×1). Initializers are the real work:
+**273 of 321 `VarDecl`s have one**, and **34 are `InitListExpr`** — aggregate
+initialization is inch 4's, not a corner.
+
+### What inch 3 does NOT do
+
+No calls (the handler refuses, cause `unsupported`), no string literals or
+initializer lists (they need objects — inch 4), no floats. `@[spec]` lemmas are
+stated at **arm granularity** in `Triple` SHAPE but as plain rewrite lemmas;
+wiring them to `mvcgen` waits for inch 4, when `CWorld` fixes the state type.
+§L61 measured why arm-level matters: unfolded primitives gave **259 VCs and
+failed**, four triples gave **12 and closed**.
+
+### Triad — and the honest gap, with a lock finding
+
+**`docs_check` 75/75**, 22 illustrative-exempt, run on the final tree.
+
+**The full-tree `lake build`, `diff_test` and `script_corpus` did NOT run.**
+This lane queued for the machine-wide lock for **50 minutes** across two
+attempts and never reached the front. What was verified instead is the whole
+of the delta: **all eleven modules compile from a FRESH olean root** on the
+pinned `v4.33.0-rc1`, post-rebase — `C/Ast`, `C/C23/{Value,Memory,Expr}`,
+`C/{Json,Load,C23}`, `C`, and `Examples/c/sunfish/{guards,memory,expr}` with
+all 37 gates. **Nothing outside the C lane imports `LeanModels.C`** (measured;
+the lane reaches `lake build` only through `Examples/c/sunfish/guards.lean`),
+so the tree-build delta is exactly those eleven files. `diff_test` and
+`script_corpus` exercise the Python lane, untouched here. Axioms printed for
+all three theorems: `[propext, Classical.choice, Quot.sound]`. No `sorry`, no
+`native_decide`.
+
+**LOCK FINDING — THE SPINLOCK HAS NO QUEUE DISCIPLINE, AND IT STARVES.** The
+lock changed hands between the ada, go, es and sv lanes while this lane
+watched: a lane that releases and immediately re-acquires beats a 60-second
+poller every time, so waiting politely is a losing strategy and the wait is
+unbounded rather than merely long. Two mitigations, one applied: **poll at 2s,
+not 60s** (applied here — it is the only fairness the primitive offers), and
+**a real fix would be a ticket, not a `mkdir`** — an ordered queue directory
+where each lane creates a numbered entry and waits for its turn. Recorded in
+`scratchpad/build-lock-log.md` for the other lanes, since every one of them is
+paying this cost.

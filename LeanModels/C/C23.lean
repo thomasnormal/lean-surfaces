@@ -1,6 +1,7 @@
 import LeanModels.C.Ast
 import LeanModels.C.C23.Value
 import LeanModels.C.C23.Memory
+import LeanModels.C.C23.Expr
 
 /-!
 # The C23 surface (`LeanModels.C.C23`)
@@ -54,6 +55,11 @@ Milestone M2 builds this namespace inch by inch
   byte lattice, §6.3.2 pointers and decay, §6.5.3-§6.5.4 the operators
   that make and use them, §7.24.3 allocation. Instantiated on the shipped
   corpus in `Examples/c/sunfish/memory.lean`.
+* **Inch 3 — `C23/Expr.lean`**: §6.5 the expression evaluator, §6.3 the
+  conversion lattice, and the drain amendment at §6.5.14/§6.5.15. Written
+  in the census's order — decay and `->` before `&` and `*`. FUEL-FREE by
+  decision: calls enter through a handler, which is where fuel arrives at
+  inch 5. Instantiated in `Examples/c/sunfish/expr.lean`.
 -/
 
 namespace LeanModels.C.C23

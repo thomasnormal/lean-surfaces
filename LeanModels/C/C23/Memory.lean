@@ -69,40 +69,11 @@ inductive Duration where
   | allocated
 deriving Repr, Inhabited, BEq, DecidableEq
 
-/-! ## §6.3.2.3 Pointers -/
+/-! ## §6.3.2.3 Pointers
 
-/-- The identity of an object. An index into `Mem.objs`, but NEVER an
-address: nothing converts it to an integer, which is what keeps
-provenance un-loseable. Measured: the corpus has **zero** integer↔pointer
-casts, so the PNVI-vs-PVI question is deferred at zero cost. -/
-abbrev ObjId := Nat
-
-/-- A pointer value: which object, and how many bytes into it.
-
-C23 §6.3.2.3p3: a null pointer constant converts to a null pointer, which
-"is guaranteed to compare unequal to a pointer to any object or
-function". Here `obj = none` **IS** the null pointer — not offset 0 of a
-distinguished object, so no arithmetic can accidentally reach one. -/
-structure Ptr where
-  obj : Option ObjId
-  off : Int
-deriving Repr, Inhabited, BEq, DecidableEq
-
-namespace Ptr
-
-/-- C23 §6.3.2.3p3: the null pointer. -/
-def null : Ptr := ⟨none, 0⟩
-
-def isNull (p : Ptr) : Bool := p.obj.isNone
-
-/-- C23 §6.5.4.2p3 and §6.3.2.1p3 produce the SAME value for an object:
-`&x` and the decay of `x` both designate its first byte. Recorded as one
-definition with two spellings, because the standard defines them that way
-(§6.5.4.2p3's `&*p == p` identity) and because pretending they differ
-would double every lemma below. -/
-def toObject (o : ObjId) : Ptr := ⟨some o, 0⟩
-
-end Ptr
+`ObjId`, `Ptr`, `Ptr.null` and `Ptr.toObject` now live in `Value.lean`: a
+pointer is a VALUE, and inch 3 is the first consumer that must produce
+one. `docs/c-semantics-design.md` §1.1 always said so. -/
 
 /-! ## §6.2.6.1 Representations of types — the byte lattice -/
 

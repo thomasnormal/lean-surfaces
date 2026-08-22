@@ -182,11 +182,52 @@ end CRes
 
 /-! ## Values -/
 
-/-- A C value at this layer. Pointers arrive with the memory model
-(inch 2); `undef` is an indeterminate value that reached a use, which
-every consumer refuses. -/
+/-! ### §6.2.5p20 — pointer values
+
+A pointer is a VALUE, so it lives here rather than in the memory model.
+`docs/c-semantics-design.md` §1.1 always said `CVal` had three
+constructors; inch 2 built the object store first and inch 3 is the first
+consumer that must actually *produce* a pointer (array-to-pointer decay,
+405 sites), so this is where the constructor arrives. -/
+
+/-- The identity of an object. An index into the memory model's store,
+but NEVER an address: nothing converts it to an integer, which is what
+keeps provenance un-loseable. Measured: the corpus has zero
+integer↔pointer casts. -/
+abbrev ObjId := Nat
+
+/-- A pointer value: which object, and how many bytes into it.
+
+C23 §6.3.2.3p3: a null pointer constant converts to a null pointer, which
+"is guaranteed to compare unequal to a pointer to any object or
+function". Here `obj = none` **IS** the null pointer — not offset 0 of a
+distinguished object, so no arithmetic can accidentally reach one. -/
+structure Ptr where
+  obj : Option ObjId
+  off : Int
+deriving Repr, Inhabited, BEq, DecidableEq
+
+namespace Ptr
+
+/-- C23 §6.3.2.3p3: the null pointer. -/
+def null : Ptr := ⟨none, 0⟩
+
+def isNull (p : Ptr) : Bool := p.obj.isNone
+
+/-- C23 §6.5.4.2p3 and §6.3.2.1p3 produce the SAME value for an object:
+`&x` and the decay of `x` both designate its first byte. One definition
+with two spellings, because the standard defines them that way
+(§6.5.4.2p3's `&*p == p` identity) and because pretending they differ
+would double every lemma about them. -/
+def toObject (o : ObjId) : Ptr := ⟨some o, 0⟩
+
+end Ptr
+
+/-- A C value. `undef` is an indeterminate value that reached a use,
+which every consumer refuses. -/
 inductive CVal where
   | int (ty : IntTy) (v : Int)
+  | ptr (p : Ptr)
   | undef
 deriving Repr, Inhabited, BEq
 
@@ -286,6 +327,29 @@ def shrOp (t : IntTy) (a b : Int) : CRes CVal :=
   else if b ≥ (t.bits : Int) then .ub (.shiftCountTooLarge b t.bits)
   else close ">>" t (Int.fdiv a ((2 : Int) ^ b.toNat))
 
+/-! ### §6.5.11-§6.5.13 — the bitwise operators
+
+`&`, `^` and `|` act on the OBJECT REPRESENTATION, so they are defined
+through the unsigned residue and closed back into the type. Under C23
+this is fully determined: §6.2.6.2p2 mandates two's complement, so a
+signed operand has exactly one representation. *(`J.3.6(4)` — "the
+results of some bitwise operations on signed integers" — is the
+implementation-defined catch-all, and the two's-complement mandate is
+what empties it for these three. It still covers `>>` of a negative
+value, which is why `shrOp` cites the profile.)*
+
+Measured: 35 sites — `&` 13, `|` 15, `^` 7. No arm can overflow, because
+an N-bit pattern combined with an N-bit pattern is an N-bit pattern. -/
+
+/-- The value's object representation, as a natural number. -/
+def IntTy.residue (t : IntTy) (v : Int) : Nat :=
+  let m := t.modulus
+  (((v % m) + m) % m).toNat
+
+def bitAnd (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a &&& t.residue b : Nat))
+def bitOr (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a ||| t.residue b : Nat))
+def bitXor (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a ^^^ t.residue b : Nat))
+
 /-- Integer conversion, C23 §6.3.1.3.
 
 **§6.3.1.3p2 — to an unsigned type**: defined as reduction modulo `2^N`,
@@ -365,6 +429,15 @@ the gate against the paragraph rather than against this file's prose. -/
 -- measured true on both hosts and depended on by VM_VAL (sunfish.c L652).
 #guard convert IntTy.int_ 0x80000000 == .int IntTy.int_ (-2147483648)
 #guard convert IntTy.char_ 200 == .int IntTy.char_ (-56)               -- char_signed, J.3.5(5)
+
+-- bitwise: on the representation, and closed back into the type
+#guard bitAnd IntTy.int_ 12 10 == 8            -- 1100 & 1010 = 1000
+#guard bitOr IntTy.int_ 12 10 == 14
+#guard bitXor IntTy.int_ 12 10 == 6
+#guard bitAnd IntTy.int_ (-1) 255 == 255       -- -1 is all-ones under two's complement
+#guard bitXor IntTy.int_ (-1) (-1) == 0
+#guard bitOr IntTy.uint 0 4294967295 == 4294967295
+#guard bitAnd IntTy.char_ (-1) 255 == -1       -- 8-bit: all-ones closes back to -1
 
 -- the range invariant the whole model rests on
 #guard IntTy.int_.minVal == -2147483648 && IntTy.int_.maxVal == 2147483647

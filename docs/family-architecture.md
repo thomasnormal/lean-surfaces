@@ -237,6 +237,13 @@ and the founding checklist (§8) now carries it at step 0. And **a corpus
 that vendors the standard it tests against is disqualified by our own
 law**, however convenient it is.
 
+*The consolidation order.* The SV lane is §2.4's pattern applied a second
+time, and it should run in the pattern's order: **census the IEEE
+1800-2017 → 2023 delta FIRST**, then let the numbers place the files. The
+expectation, recorded before the measurement so it can be wrong, is a
+**thick trunk** with 2023's additions in a thin `SV2023/` that does not
+disturb it — the same shape C measured at 933 trunk lines of 934.
+
 *The maturity.* The SV tier is **not greenfield**: `LeanModels/Sv/` is
 **8 166 lines** (measured) with a differential harness recorded green
 against Icarus, dormant rather than absent. Labelling it "founding" would
@@ -258,6 +265,11 @@ The neutral layer is the **measured INTERSECTION** of the editions the
 tier claims. It is not "the oldest edition" and it is not "the part that
 felt general". It is a claim with an instrument behind it, and when the
 claim stops holding the construct moves down.
+
+This is the trunk of §2.4's **thin siblings over a thick shared trunk**,
+and the placement rule is that section's first clause: **a file moves into
+a sibling only when a measurement convicts it.** The default is the trunk,
+and the burden of proof is on the sibling.
 
 **C — measured.** `LeanModels/C/{Ast,Json,Load}.lean` are version-neutral,
 and the evidence is `docs/c-construct-census.json`: **zero of the 45 AST
@@ -582,12 +594,61 @@ Measured: **3.11 and 3.12 split it three ways**, and 3.14 collapses it to
 two rewritten ones. A 3.11 surface therefore needs a different
 **constructor arity**, not a different string.
 
-### 2.4 THE RULING: shared substrate, SIBLING editions
+### 2.4 THE RULING: THIN SIBLINGS OVER A THICK SHARED TRUNK
 
 **Mechanism: the measured INTERSECTION lives once, in the version-neutral
 layer; everything an edition decides lives WHOLE in that edition's own
 directory. Editions are siblings. Neither is the base of the other, and
 no definition takes a version parameter.**
+
+**The pattern has a name so that tiers apply it uniformly: THIN SIBLINGS
+OVER A THICK SHARED TRUNK.** The trunk is `LeanModels/<Lang>/`; the
+siblings are `LeanModels/<Lang>/<Ver>/`, and they should be **small** —
+if a sibling is thick, either the editions really do differ that much
+(measure and prove it) or the census was not run. Three clauses make it
+operational.
+
+**(1) CENSUS-GATED PLACEMENT. A file enters a sibling directory only when a
+MEASUREMENT convicts it of edition-sensitivity — never prophylactically.**
+The C tier supplies *both* halves of the precedent, and the failed half is
+the more instructive one. This document originally convicted `convert` of
+being C23-mandated; had that been acted on, a file would have moved into
+`C23/` **for nothing**, since §6.3.1.3p3 is word-for-word identical across
+the editions (§1.3). The verified conviction — `IntTy.minVal`, on C23
+§6.2.6.2p2 — moves **exactly one definition**, and **933 of 934 lines stay
+in the trunk**. Prophylactic siblings are how a thick trunk silently
+becomes two thin ones.
+
+**(2) THEOREMS PROVE ONCE ON THE TRUNK** and serve every edition that
+imports it. A sibling carries a theorem only when the FACT it states is
+edition-decided. This is where the pattern pays: the expensive artifact in
+this repository is not the definition but the proof estate, and a trunk
+theorem is proved once for all editions rather than re-proved per sibling.
+
+**(3) THE ONE HONEST FORK — stated as a boundary so nobody engineers around
+it.** When a shared DATATYPE changes SHAPE between editions, the type and
+its consumers **must** fork. The measured instance is `PyErr`: 3.9 encodes
+zero-division as two nullary constructors, 3.11 splits it three ways, and
+that is a change of ARITY, not of a value. No sharing mechanism is sound
+there — a delta layer cannot override a constructor list, and a version
+parameter would infect every consumer's type. **Duplication is correct
+exactly where no sharing mechanism is sound**, and this is that place. A
+clever workaround at this boundary is a bug being introduced, not avoided.
+
+**What was refuted stays refuted.** This is not base+delta layering
+readmitted under a friendlier name, and it is not version-parameterization.
+**The sharing comes from TRUNK PLACEMENT — from where a file lives — not
+from a mechanism that relates two files.** Nothing inherits, nothing
+overrides, nothing takes an edition argument; a sibling that needs a trunk
+definition imports it, and that is the whole of the coupling.
+
+**The SV cleanup is the pattern's second application**, and it should be
+run in the pattern's order: **census the IEEE 1800-2017 → 2023 delta
+first**, on the model of §2.1's clause instrument, and let the numbers place
+the files. The expectation — worth recording *before* the measurement so it
+can be wrong — is a **thick trunk**, with 2023's additions living in a thin
+`SV2023/` that does not disturb it. If the census says otherwise, the
+census wins.
 
 The three mechanisms the charter was asked to price, and why each fails
 as stated:

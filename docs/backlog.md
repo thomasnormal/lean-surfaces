@@ -14715,6 +14715,49 @@ it cannot state one, it does not need an exemplar yet and its suite is enough.
 This is doctrine §0.1's library-grows-by-demand clause given a selection rule,
 and §8 step 1 now carries it.
 
+### NAMING THE PATTERN — THIN SIBLINGS OVER A THICK SHARED TRUNK
+
+Thomas: *"hopefully a lot of what's in V2017/ and V2023/ is shared, without
+duplication."* §2.4's ruling already delivers that; what it lacked was a NAME,
+so tiers apply it uniformly rather than each re-deriving it. Named, with three
+operational clauses.
+
+**(1) CENSUS-GATED PLACEMENT — a file enters a sibling only when a MEASUREMENT
+convicts it of edition-sensitivity, never prophylactically.** The C tier gives
+both halves and the FAILED half is the instructive one: this doc originally
+convicted `convert`, and acting on that would have moved a file into `C23/`
+**for nothing**, since §6.3.1.3p3 is word-for-word identical across editions.
+The verified conviction — `minVal`, on C23 §6.2.6.2p2 — moves **exactly one
+definition**, leaving **933 of 934 lines in the trunk**. Prophylactic siblings
+are how a thick trunk silently becomes two thin ones. **The default is the
+trunk; the burden of proof is on the sibling.**
+
+**(2) THEOREMS PROVE ONCE ON THE TRUNK** and serve every importing edition;
+siblings carry a theorem only when the FACT is edition-decided. This is where
+the pattern pays — the expensive artifact here is the proof estate, not the
+definition, and a trunk theorem is proved once for all editions.
+
+**(3) THE ONE HONEST FORK, stated as a boundary so nobody engineers around it.**
+A shared DATATYPE changing SHAPE between editions forces the type AND its
+consumers to fork. The measured instance is `PyErr`'s constructor ARITY (two
+nullary zero-division constructors at 3.9, three at 3.11). No sharing mechanism
+is sound there: a delta layer cannot override a constructor list and a version
+parameter would infect every consumer's type. **Duplication is correct exactly
+where no sharing mechanism is sound.** A clever workaround at this boundary
+introduces a bug rather than avoiding one.
+
+**WHAT WAS REFUTED STAYS REFUTED.** This is not base+delta readmitted under a
+friendlier name, and not version-parameterization. **The sharing comes from
+TRUNK PLACEMENT — from where a file lives — not from a mechanism relating two
+files.** Nothing inherits, nothing overrides, nothing takes an edition argument;
+a sibling imports what it needs from the trunk and that is the whole coupling.
+
+**The SV cleanup is the pattern's second application** and should run in the
+pattern's order: **census the IEEE 1800-2017 → 2023 delta FIRST**, then let the
+numbers place the files. Expectation recorded before the measurement so it can
+be wrong: a **thick trunk**, with 2023's additions in a thin `SV2023/` that does
+not disturb it. If the census says otherwise, the census wins.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

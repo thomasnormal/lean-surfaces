@@ -145,3 +145,88 @@ should share the type. Recorded here rather than resolved unilaterally,
 because a third lane will otherwise invent a third `Halt`.
 
 `execStmt` itself is the next landing.
+
+
+---
+
+## 2026-08-22-c-2 — INCH 4: the tier RUNS a function, and refusal moves to `Halt` on the §3.4 ruling
+
+### The tier executes `pyfloordiv`, and agrees with Python
+
+Inches 1-3 evaluated expressions. **This is the first time the C semantics
+runs a whole function body taken out of the ingested term** — `pyfloordiv`
+(sunfish.c L160-164), three statements: a two-declarator declaration, an `if`
+over the corpus's own `&&`, and a `return`.
+
+The point is not that it runs. It is that **it agrees with Python where C
+alone would not**, at the site the ctwin README names as the #1 place C clones
+silently diverge:
+
+| | C's `/` alone | `pyfloordiv`, run by this model | Python |
+| --- | ---: | ---: | ---: |
+| `-7 / 2` | -3 | **-4** | -4 |
+| `7 / -2` | -3 | **-4** | -4 |
+| `-1 / 5` | 0 | **-1** | -1 |
+| `-7 / -2` | 3 | **3** | 3 |
+
+Gated against `Int.fdiv` over all eight pairs, so the agreement is a claim
+about two definitions rather than a table of numbers someone typed. And
+`pyfloordiv 1 0` **REFUSES** with `J.2(41)` rather than answering.
+
+### The §3.4 ruling, adopted — and this lane's census is why it went the other way
+
+This lane had argued `unsupported` should ride in `ExceptT` so a REFUSE row
+could say what had happened. **The ruling put it in `Halt`, and the corpus
+this lane censused is part of the reason**: putting a refusal in `ExceptT`
+makes it catchable in principle, and the implicit defence was that nothing in
+C intercepts control flow — but the corpus has **`setjmp` 2, `longjmp` 2 and 5
+`jmp_buf` objects**, and the language has signal handlers besides. Inside `ρ`,
+"no catch reaches a refusal" is a per-language, per-construct proof
+obligation. **Uncatchability belongs to the definition.**
+
+The diagnostic need is met the better way: `Halt.unsupported` carries a
+structured payload — the cause plus an **optional** memory snapshot captured
+AT the refusal site — and §3.4's existing law pays for it, because every
+refusal already routes through a NAMED primitive and `refuseUnsupported`
+performs the `get` itself, so no call site can forget.
+
+**Both guards are STRUCTURAL, not advisory.** `Halt`'s `BEq` is hand-written
+to ignore the snapshot, so two refusals of the same construct reached through
+different memories compare EQUAL; and `Outcome` — the verdict a scoreboard
+reads — has nowhere to put a `Mem` at all. Gates check both directions,
+including that the CAUSE is still compared, so the guard has not quietly
+disabled the gate.
+
+Consequences: `Refusal` narrows to the two catchable causes (`ub`, `libc`),
+the third reaching a scoreboard through `Outcome.cause?`; and **`ExecM` is now
+literally `EvalM`** — one stack for both layers, which is what the ruling
+bought — so `liftEval` is the identity, kept only to name the boundary.
+
+### `execStmt`
+
+The eleven statement kinds. Fuel decreases on every recursive call, not only
+at loops — stricter than §4.6.1 needs, but it makes the recursion structural
+on `Nat` with no measure to justify. `execBlock` threads the environment
+declarations extend; `execLoop` runs `for`'s increment **after a `continue`**
+(§6.8.6.4p2 — the detail a model gets wrong by treating `continue` as
+`break`, and the gate is that the loop terminates with `a = 3`). `goto` is
+served by a forward label search, which the census says is enough: 7 gotos, 3
+labels, every one a forward jump inside one function.
+
+**Held, and named rather than silently missing**: aggregate initializers (34
+`InitListExpr` sites) refuse rather than initialize partially, and `fuelMono`
+is STATED as an obligation, not proved. Both are the next landing.
+
+### Triad
+
+`lake build` **3721 jobs exit 0**; `docs_check` **83/83**, 24
+illustrative-exempt; `diff_test` **1394 cases, 0 failed**, 118 whitelisted,
+1276 matched; `script_corpus` green. Axioms unchanged for the nine C-lane
+theorems (`[propext, Quot.sound]` or less, three also `Classical.choice`). No
+`sorry`, no `native_decide`.
+
+**The lock cost 5304 seconds — 88 minutes — of FIFO queueing**, and that is
+the honest number: the ticket queue is fair but the machine is saturated, so
+fairness converts starvation into a long, *bounded* wait. Work was pushed to a
+branch while queued so a purge could not take it, and merged to master only
+once green.

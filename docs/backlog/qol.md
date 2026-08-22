@@ -784,3 +784,70 @@ where every number comes from, and a figure written from intent rather than
 from output is the failure mode in its cheapest form. The commit message
 carrying `99` is already on master and is **not rewritten** — shared history
 does not get rebased to hide an error; it gets a correction that points at it.
+
+---
+
+## 2026-08-23-qol-13 — `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD
+
+Three fixes, all from one 78-minute Ada tenure.
+
+### 1. `--gates` adds, `--gates-only` replaces
+
+Without `--classify`, `--gates` **silently replaced** the default set:
+`--gates "docs_check"` dropped the differential and the run went green against
+fewer checks than the default it thought it was extending. That is the **exact
+mirror** of the narrower-default trap the ES lane found (`qol-6`) — a gate set
+that shrinks without saying so — and the two now have one answer:
+
+* **`--gates` ADDS to the floor** (the class floor under `--classify`, the
+  default floor without it). This script cannot tell "also run mine" from
+  "instead of yours", so it takes the reading that **cannot silently shrink a
+  gate set**.
+* **`--gates-only` REPLACES**, and announces which floor gates it is skipping.
+  Replacement is now a flag you have to type.
+* **`--foreign` implies `--gates-only`**, because there is no applicable floor
+  in a foreign checkout.
+
+### 2. Unstaged Lean under a lake glob is a REFUSAL
+
+A tenure verifies the **staged** tree. Spending one on a tree whose Lean is
+not staged verifies something nobody is landing — those files get compiled but
+not landed, or landed but not compiled. The check counts **untracked** files
+too, because Ada's `Value.lean` was untracked rather than merely unstaged.
+Live: exit **2** with the files named. Under `--classify-only` it is reported
+and **not** refused — no tenure is at stake there, so a refusal would be
+theatre.
+
+### 3. Lean that nothing imports gets a loud line
+
+`Value.lean` was untracked **and unimported**. The `LeanModels` library
+declares **no `globs`** in `lakefile.toml`, so lake builds `LeanModels.lean`
+and its transitive imports **only**: a new module nobody imports is never
+compiled, and a green build is **green about nothing** where it is concerned.
+
+It is loud but **not** a refusal — the file may be landing together with the
+import that will reach it. Two exemptions, both read from the lakefile rather
+than assumed: **`LeanModels.lean` itself** (the library root, imported by
+nothing by design), and **everything under `Examples/`**, which declares
+`globs = ["Examples.+"]` and is therefore a target whether or not anything
+imports it.
+
+### The collision that did not happen
+
+This landing rebased onto the rebuild lane's `--build-target`, which arrived
+while this work was in flight. **They compose**: their flag unions into
+`BUILD_TARGETS` through the same `add_build_target` the classifier uses, and
+their own self-test asserts "UNION with the classifier's floor, never
+replacement". Nothing had to be reconciled — the union was designed for this
+in `qol-1`, and it held.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **119 ok, 0 failed** (102 → 119, **17 new**;
+102 already included the rebuild lane's four). Gate composition in all four
+combinations plus the announcement; lake-glob detection distinguishing a doc's
+`.lean` and a non-`.lean` path; import detection against a real fixture tree,
+with the orphan reported, the imported one silent, and both exemptions
+asserted. Live on this tree: the refusal exits **2**, `--classify-only` exits
+**0** and reports, and the unimported line fires on a staged orphan. **No Lean
+was executed.**

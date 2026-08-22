@@ -76,6 +76,16 @@
 # --gates keeps them and keeps the tenure, because this script cannot know
 # whether a lane's gate runs Lean.  A lane can always run more.
 #
+# --gates ADDS; --gates-only REPLACES.  The Ada lane paid a 78-MINUTE TENURE
+# for the old spelling, in which `--gates` silently REPLACED the default set:
+# `--gates "docs_check"` dropped the differential, and the run went green
+# against fewer checks than the default it thought it was extending.  That is
+# the exact mirror of the narrower-default trap the ES lane found, and it has
+# the same shape — a gate set that shrinks without saying so.  So the additive
+# reading is the DEFAULT, replacement is a flag you have to type, and
+# --gates-only ANNOUNCES which floor gates it is skipping.  --foreign implies
+# --gates-only, because there is no applicable floor in a foreign checkout.
+#
 # USAGE
 #   tools/triad.sh --lane <name> [--dir <clone>] [--gates "cmd; cmd"] [...]
 #   tools/triad.sh --self-test          # exercises the queue logic, NO Lean
@@ -90,7 +100,8 @@
 #   — e.g. a loaded machine where amendment 14 makes a full build a
 #   quiet-machine-only operation — and then the lane OWES the coverage
 #   statement §5.4a asks for.
-#   tools/triad.sh --lane x --gates "a; b"   # YOUR gates, and no default warning
+#   tools/triad.sh --lane x --gates "a; b"      # the floor PLUS your gates
+#   tools/triad.sh --lane x --gates-only "a; b" # your gates INSTEAD of the floor
 #   tools/triad.sh --lane x --foreign --gates "..."   # a FOREIGN checkout
 #
 # --foreign — A CHECKOUT THAT IS NOT THIS REPOSITORY.  The Lean tier works in
@@ -137,6 +148,7 @@ GATES=""
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
+GATES_ONLY=0
 AGAINST=""                                     # merge target; default below
 
 # The header IS the usage text, so print it whole — a `sed -n '1,60p'` goes
@@ -164,7 +176,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --lane)      LANE="${2:-}"; shift 2 ;;
     --dir)       CLONE="${2:-}"; shift 2 ;;
-    --gates)     GATES="${2:-}"; shift 2 ;;
+    --gates)      GATES="${2:-}"; shift 2 ;;
+    --gates-only) GATES="${2:-}"; GATES_ONLY=1; shift 2 ;;
     --rss-limit)      RSS_CHAIN_LIMIT_KB="${2:-}"; shift 2 ;;
     --rss-proc-limit) RSS_PROC_LIMIT_KB="${2:-}"; shift 2 ;;
     --version)        banner; exit 0 ;;
@@ -593,6 +606,60 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
   return 0
 }
 
+# ---- UNSTAGED LEAN, AND LEAN NOTHING IMPORTS
+# The Ada lane spent a 78-minute tenure on a tree whose `Value.lean` was
+# UNTRACKED and UNIMPORTED — so the build was green about a file it never
+# compiled, twice over.  Two different checks, and they fail differently:
+#   * unstaged Lean under a lake glob is a REFUSAL.  A tenure verifies the
+#     STAGED tree; spending one on a tree whose Lean is not staged verifies
+#     something nobody is landing.
+#   * Lean that NOTHING IMPORTS is a loud line.  The `LeanModels` library has
+#     no `globs` in the lakefile, so only `LeanModels.lean` and its transitive
+#     imports are built: a new module nobody imports is not compiled at all,
+#     and a green that never touched it is green about nothing.
+# `Examples` is exempt from the second check BY THE LAKEFILE — it declares
+# `globs = ["Examples.+"]`, so every module under it is a target whether or
+# not anything imports it.
+lean_glob_offenders() { # stdin: paths -> the .lean ones inside a lake glob
+  local p
+  while IFS= read -r p; do
+    [ -n "$p" ] || continue
+    case "$p" in *.lean) ;; *) continue ;; esac
+    [ "$(classify_path "$p")" = "docs" ] && continue
+    echo "$p"
+  done
+}
+
+module_is_imported() {  # module -> 0 when some .lean in the tree imports it
+  local m="$1" root esc rc
+  root="${LS_GREP_ROOT:-$CLONE}"
+  [ -d "$root" ] || return 0          # nothing to search: stay quiet, say nothing
+  esc="$(printf '%s' "$m" | sed 's/\./\\./g')"
+  if git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
+    git -C "$root" grep -qE --untracked "^[[:space:]]*import[[:space:]]+$esc([[:space:]]|\$)" \
+        -- '*.lean' >/dev/null 2>&1
+    rc=$?
+  else
+    grep -rqE "^[[:space:]]*import[[:space:]]+$esc([[:space:]]|\$)" --include='*.lean' "$root" 2>/dev/null
+    rc=$?
+  fi
+  [ "$rc" = "0" ]
+}
+
+unimported_new_modules() {  # stdin: changed paths -> LeanModels modules nobody imports
+  local p m
+  while IFS= read -r p; do
+    case "$p" in
+      LeanModels.lean)   continue ;;    # the library ROOT, imported by nothing BY DESIGN
+      LeanModels/*.lean) ;;
+      *) continue ;;
+    esac
+    m="$(module_of "$p")"
+    [ -n "$m" ] || continue
+    module_is_imported "$m" || echo "$p"
+  done
+}
+
 gate_floor() {          # class -> the gates this landing owes at minimum
   case "$1" in
     docs) echo 'python3 tools/docs_check.py' ;;
@@ -683,6 +750,25 @@ gate_names() {          # a gate list -> the script names in it, for reading
     }
     print (out == "" ? $0 : out)
   }'
+}
+
+gates_compose() {       # floor, lane's gates, gates_only -> the list to run
+  # ADDITIVE BY DEFAULT.  A lane that types --gates is asking for MORE, and
+  # this script cannot tell the difference between "also run mine" and
+  # "instead of yours" — so it takes the reading that cannot silently shrink
+  # a gate set, and makes the other one explicit.
+  if [ "$3" = "1" ]; then printf '%s' "$2"; return 0; fi
+  if [ -n "$2" ]; then printf '%s; %s' "$1" "$2"; else printf '%s' "$1"; fi
+}
+
+gates_only_notice() {   # floor, gates_only -> announce what is NOT running
+  [ "$2" = "1" ] || return 0
+  echo ""
+  echo "  !! --gates-only: THE CLASS FLOOR IS NOT RUNNING.  Skipped: $(gate_names "$1")."
+  echo "     Replacement is the spelling you typed; --gates would have ADDED to"
+  echo "     the floor instead.  The Ada lane paid a 78-minute tenure for the"
+  echo "     old semantics, in which --gates replaced silently."
+  echo ""
 }
 
 gate_notice() {         # $1 = the gate list in use, $2 = the lane's own --gates
@@ -836,6 +922,42 @@ if [ "$SELF_TEST" = "1" ]; then
         "$(announce_prebuilt "$(announce_prebuilt "$(gate_floor tier)")" | grep -o -- '--no-build' | grep -c .)" "1"
   check "a non-diff_test gate is left ALONE"   \
         "$(announce_prebuilt 'python3 harness/script_corpus.py')" "python3 harness/script_corpus.py"
+
+  # ---- --gates ADDS, --gates-only REPLACES (the Ada lane's 78-minute tenure)
+  echo "  -- gate composition"
+  fl='python3 tools/docs_check.py; python3 harness/diff_test.py'
+  check "no lane gates -> the floor alone" "$(gates_compose "$fl" "" 0)" "$fl"
+  check "--gates ADDS to the floor"        "$(gates_compose "$fl" 'python3 harness/script_corpus.py' 0)" \
+        "$fl; python3 harness/script_corpus.py"
+  check "  ...so the differential SURVIVES" \
+        "$(gates_compose "$fl" 'python3 tools/docs_check.py' 0 | grep -c diff_test)" "1"
+  check "--gates-only REPLACES"            "$(gates_compose "$fl" 'python3 tools/docs_check.py' 1)" \
+        "python3 tools/docs_check.py"
+  check "  ...and it is ANNOUNCED"         "$(gates_only_notice "$fl" 1 | grep -c 'THE CLASS FLOOR IS NOT RUNNING')" "1"
+  check "  ...naming what is skipped"      "$(gates_only_notice "$fl" 1 | grep -c 'docs_check, diff_test')" "1"
+  check "additive mode announces nothing"  "$(gates_only_notice "$fl" 0)" ""
+
+  # ---- unstaged Lean, and Lean nothing imports (the Ada lane's Value.lean)
+  echo "  -- unstaged / unimported Lean"
+  offend="$(printf 'docs/mvcgen-pilot.lean\nLeanModels/Ada/Value.lean\nExamples/python/x/proof.lean\ntools/x.sh\nREADME.md\n' | lean_glob_offenders | tr '\n' ' ' | sed 's/ *$//')"
+  check "lake-glob Lean is an offender"    "$offend" "LeanModels/Ada/Value.lean Examples/python/x/proof.lean"
+  check "a doc's .lean is NOT"             "$(printf 'docs/mvcgen-pilot.lean\n' | lean_glob_offenders)" ""
+  check "a non-.lean path is NOT"          "$(printf 'LeanModels/Ada/notes.md\n' | lean_glob_offenders)" ""
+
+  imp="$tmp/improot"
+  mkdir -p "$imp/LeanModels/Ada" "$imp/Examples/python/x"
+  printf 'import LeanModels.Ada.Used\n' > "$imp/LeanModels.lean"
+  : > "$imp/LeanModels/Ada/Used.lean"
+  : > "$imp/LeanModels/Ada/Value.lean"
+  : > "$imp/Examples/python/x/proof.lean"
+  LS_GREP_ROOT="$imp"
+  check "an imported module is imported"   "$(module_is_imported LeanModels.Ada.Used && echo yes)" "yes"
+  check "an orphan module is NOT"          "$(module_is_imported LeanModels.Ada.Value && echo yes)" ""
+  check "the orphan is REPORTED"           "$(printf 'LeanModels/Ada/Value.lean\n' | unimported_new_modules)" "LeanModels/Ada/Value.lean"
+  check "the imported one is not"          "$(printf 'LeanModels/Ada/Used.lean\n' | unimported_new_modules)" ""
+  check "the library ROOT is never flagged" "$(printf 'LeanModels.lean\n' | unimported_new_modules)" ""
+  check "Examples is exempt (lakefile globs)" "$(printf 'Examples/python/x/proof.lean\n' | unimported_new_modules)" ""
+  LS_GREP_ROOT=""
 
   # ---- --foreign (the Lean tier's lean4lean, the Wasm lane's spectec fork)
   echo "  -- foreign checkouts"
@@ -1023,6 +1145,7 @@ if [ "$FOREIGN" = "1" ]; then
   fi
   [ -n "$LANE_GATES" ] || \
     die "--foreign requires --gates: the class floor is not applicable in a foreign checkout, so without your own gates there would be NOTHING TO RUN. Naming a gate that does not exist there is the failure this refusal prevents."
+  GATES_ONLY=1            # there is no applicable floor to add to
 fi
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
@@ -1069,6 +1192,7 @@ merge_target_ref() {
 }
 
 CLASS=""
+FLOOR_USED=""
 if [ "$CLASSIFY" = "1" ]; then
   BASE="$AGAINST"
   [ -n "$BASE" ] || BASE="$(merge_target_ref)"
@@ -1087,7 +1211,11 @@ if [ "$CLASSIFY" = "1" ]; then
   CHANGED="$( { git diff --name-only "$BASE...HEAD" 2>/dev/null
                 git diff --name-only --cached 2>/dev/null; } | sort -u )"
   N_CHANGED="$(printf '%s' "$CHANGED" | grep -c . || true)"
-  N_UNSTAGED_LEAN="$(git diff --name-only 2>/dev/null | grep -c '\.lean$' || true)"
+  UNSTAGED_ALL="$( { git diff --name-only 2>/dev/null
+                     git ls-files --others --exclude-standard 2>/dev/null; } | sort -u )"
+  N_UNSTAGED_LEAN="$(printf '%s\n' "$UNSTAGED_ALL" | grep -c '\.lean$' || true)"
+  UNSTAGED_LEAN_GLOB="$(printf '%s\n' "$UNSTAGED_ALL" | lean_glob_offenders)"
+  UNIMPORTED_NEW="$(printf '%s\n' "$CHANGED" | unimported_new_modules)"
 
   classify_list <<< "$CHANGED"
   CLASS="$(class_name "$CLASS_RANK")"
@@ -1114,17 +1242,42 @@ if [ "$CLASSIFY" = "1" ]; then
   printf '%s' "$CLASS_NOTES" | while IFS= read -r n; do [ -n "$n" ] && printf '  note      %s\n' "$n"; done
 
   FLOOR="$(gate_floor "$CLASS")"
-  if [ -n "$LANE_GATES" ]; then GATES="$FLOOR; $LANE_GATES"; else GATES="$FLOOR"; fi
+  FLOOR_USED="$FLOOR"
+  GATES="$(gates_compose "$FLOOR" "$LANE_GATES" "$GATES_ONLY")"
   printf '  gates     %s\n' "$GATES"
   printf '  gate set  %s   (the CLASS FLOOR for `%s`)\n' "$(gate_names "$FLOOR")" "$CLASS"
-  [ -n "$LANE_GATES" ] && printf '  %s\n' "(the floor, then the lane's own --gates: a classification never REMOVES a gate)"
+  [ -n "$LANE_GATES" ] && [ "$GATES_ONLY" = "0" ] && printf '  %s\n' "(the floor, then the lane's own --gates: --gates ADDS, it never replaces)"
+  gates_only_notice "$FLOOR" "$GATES_ONLY"
   printf '  COVERAGE (§5.4a)  %s\n' "$(coverage_statement "$CLASS")"
   gate_notice "$GATES" "$LANE_GATES"
+
+  # Lean nothing imports: LOUD, but not a refusal — the file may be landing
+  # together with the import that will reach it.
+  if [ -n "$UNIMPORTED_NEW" ]; then
+    echo "  !! IMPORTED BY NOTHING — these are in the diff and in no import graph:" >&2
+    printf '%s\n' "$UNIMPORTED_NEW" | sed 's/^/       /' >&2
+    echo "     The LeanModels library has no globs in lakefile.toml, so lake builds" >&2
+    echo "     LeanModels.lean and its transitive imports ONLY.  A green build never" >&2
+    echo "     compiled these, and is green about nothing where they are concerned." >&2
+    echo "     Add the import in this landing, or say why it is deliberate." >&2
+  fi
+
+  # Unstaged Lean inside a lake glob: a REFUSAL when a tenure is at stake.
+  if [ -n "$UNSTAGED_LEAN_GLOB" ]; then
+    echo "  UNSTAGED LEAN UNDER A LAKE GLOB:" >&2
+    printf '%s\n' "$UNSTAGED_LEAN_GLOB" | sed 's/^/       /' >&2
+    if [ "$CLASSIFY_ONLY" = "1" ]; then
+      echo "     (--classify-only: reported, not refused — no tenure is being taken)" >&2
+    else
+      die "REFUSING to spend a tenure on a tree whose Lean is not staged. A tenure verifies the STAGED tree, so these files would be compiled but not landed — or landed but not compiled. Stage them, or stash them, then re-run. (The Ada lane spent 78 minutes on exactly this.)"
+    fi
+  fi
 
   if [ "$CLASSIFY_ONLY" = "1" ]; then exit 0; fi
 
   if [ "$(tenure_needed "$CLASS" "$LANE_GATES")" = "no" ]; then
     say "docs-only: NO TENURE TAKEN — nothing here starts a Lean process (A11)"
+    gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
     gate_notice "$GATES" "$LANE_GATES"
     run_gates "$GATES"
     say "TRIAD DONE (docs-only, no build; gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
@@ -1267,11 +1420,14 @@ fi
 # The gates.  Default is this repo's triad (AGENTS.md); a lane overrides with
 # --gates to add its own, INSIDE the same tenure — batching is base rule 4,
 # and under A11 a second Lean invocation outside the tenure is a violation.
-if [ -z "$GATES" ]; then
-  if [ "$FOREIGN" = "1" ]; then
-    die "--foreign with no gates reached the gate phase — this is a bug in triad.sh's own preconditions"
-  fi
-  GATES='python3 tools/docs_check.py; python3 harness/diff_test.py'
+if [ "$FOREIGN" = "1" ]; then
+  [ -n "$GATES" ] || die "--foreign with no gates reached the gate phase — a bug in triad.sh's own preconditions"
+elif [ "$CLASSIFY" = "0" ]; then
+  # THE ADA TRAP.  This used to be `if [ -z "$GATES" ]; then GATES=default; fi`,
+  # under which `--gates "docs_check"` REPLACED the default and silently
+  # dropped the differential.  --gates adds; --gates-only replaces, loudly.
+  FLOOR_USED='python3 tools/docs_check.py; python3 harness/diff_test.py'
+  GATES="$(gates_compose "$FLOOR_USED" "$LANE_GATES" "$GATES_ONLY")"
 fi
 
 # The gate phase's own build, paid HERE so it is accounted as a build.  Only a
@@ -1300,6 +1456,7 @@ if [ -n "$BUILD_TARGETS" ]; then
   fi
 fi
 
+gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
 gate_notice "$GATES" "$LANE_GATES"
 run_gates "$GATES"
 

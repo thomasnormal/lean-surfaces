@@ -231,3 +231,66 @@ monadic source, and the `GenFrame` count is read off the seven walkers. The
 run will additionally extend the acceptance gate's trunk/monadic parity claim
 from the 1394 differential rows to the census's 105 grammar witnesses, which
 is worth having on the record either way.
+
+## 2026-08-23-pycomplete-4 — THE CENSUS CORRECTS ITSELF: the price is ~9 arms, not ~35, and the recommendation REVERSES
+
+§2026-08-23-pycomplete-3 priced inch 3a's shared-datatype cost at "~35 arms"
+and recommended deferring the inch until after the monadic merge on that
+basis. **The number was wrong by roughly 4x, the error was mine, and it was
+the exact mistake this lane has now made twice.**
+
+### What went wrong
+
+The count came from `grep -c countFrom` per file — **mentions, not match
+arms.** `VCGen.lean`'s 26 mentions, which supplied "the bulk" of the estimate,
+are LEMMA NAMES and per-frame statements (`genSteps_countFrom`,
+`genYieldsPrefix_countFrom`), not exhaustive matches. VCGen proves facts about
+*particular* frames; a new frame simply has no lemma until someone wants one.
+
+Counting actual pattern positions
+(`grep -cE '(\| *\.?countFrom|case +\.?countFrom)'`) gives:
+
+| file | real arms | what they are |
+| --- | --- | --- |
+| `VCGen.lean` | **0** | per-frame lemmas, not a walk |
+| `Runtime.lean` | 2 | the constructor, and one `GenFrame` predicate arm |
+| `Semantics.lean` | 3 | two GROUPED catch arms (`\| .enumSeq .. :: _ \| .enumList .. :: _ \| .countFrom .. :: _`) and the trunk `execGen` arm |
+| `ClockErase.lean` / `Obs.lean` / `PayloadBlind.lean` | 1 each | one line each, of the shape `simp only [execGen]; exact …` |
+| `Monadic/Eval.lean` | 1 | **the capability** |
+
+**≈9 arms total**, of which one is the capability, three are one-line proof
+arms, and the rest is declaration and bookkeeping. Under the ruling the
+trunk's `execGen` arm is a `refuse` — the capability does not open there — so
+it is one line, not an implementation.
+
+### This is §L49's law, recurring, and the third time is not a coincidence
+
+* §L49: a `\.usub` grep found every `match` position and missed every
+  `cases op with \| usub =>` arm — **one character**.
+* §L53/§2026-08-22-pycomplete-1: the walker price was predicted from the
+  `.list` arms and came in at 19, because catch-alls were load-bearing.
+* Here: mention-count read as arm-count, **4x high**, and the inflated number
+  was about to move a date.
+
+The rule this lane now writes down for itself: **a count that prices a
+decision must come from the pattern position, never from the identifier.**
+`grep -c <ctor>` answers "who talks about it"; only `grep -cE '\| *\.?<ctor>'`
+answers "who must gain a case". The upstream commit title from the same day —
+*"a grep that agrees with you is the one to re-run"* — is the same finding
+arriving from another lane, and it should be read as a family law.
+
+### The recommendation, reversed
+
+**Inch 3a is affordable now and does not need to wait for the merge.** ~9
+arms, one of them the capability and three of them one-liners, is an inch, not
+a campaign. §2026-08-23-pycomplete-3's scheduling conclusion is WITHDRAWN;
+its static surface map (four refusal sites, the snapshot-vs-cursor argument
+for why a new constructor is unavoidable, and `shapeVersion` already existing
+in `Obj.dict`) stands unchanged, because those were read off pattern positions
+and source text rather than off a counter.
+
+The one substantive point that survives from the earlier entry: **`GenFrame`
+is shared, so this capability cannot be opened on the monadic definition
+alone** — the trunk gains a `refuse` arm and three walkers gain a line each.
+That is a fact about the type's home, and it is worth a ruling, but it is a
+9-line fact rather than a 35-line one.

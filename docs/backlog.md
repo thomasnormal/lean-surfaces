@@ -20768,3 +20768,42 @@ Three corrections taken, and they are the transferable part:
 
 The restored files were re-verified rather than assumed: all four modules
 typecheck and **all 30 guards pass in 5.6 s**.
+
+### The confirming triad was WITHDRAWN, not run — machine overload
+
+Thomas reported load 34 and 27 GB swap, with `/System/Volumes/Data` at 98%
+(22 GiB free), and Amendment 11 followed: **the lock now covers ALL Lean
+execution** — builds, `lake env lean`, runners — one ticket is the machine's
+entire Lean allowance, `LEAN_NUM_THREADS=2`, `nice 19`, a 3 GB RSS kill line
+against one's own chain, and gprbuild-class compiles ticketed too.
+
+This lane's confirming triad was **queued third and had not acquired the
+lock**, so it was withdrawn cleanly rather than fixed and re-queued: its
+ticket removed itself through the trap, the lock was never held and is
+untouched, and no Lean or gprbuild process of this lane remains. **The
+allowance went back to the three lanes ahead of it.**
+
+The judgement, stated so it can be disagreed with: **this landing is already
+pushed and already verified**, and the triad in question is a CONFIRMATION of
+a green obtained at 13:46 on byte-identical content, re-verified after
+restoration by a full typecheck and all 30 guards. Spending a ~37-minute
+rebuild of a fresh clone on a machine at load 34 to re-confirm it, while
+Thomas's training has absolute priority, is the wrong trade. The triad is
+re-queued when the machine recovers; `.ada-triad.sh` is updated to Amendment
+11 and deliberately NOT started.
+
+**One practice of this lane's is now retired by Amendment 11 and is worth
+naming**, because it was legitimate when used and is not any more: inches 6
+and its restoration typechecked the Ada modules with `lake env lean` OUTSIDE
+the lock, which the protocol then explicitly permitted for small
+dependency-free files under `nice -n 19`. A11 covers all Lean execution, so
+that path is ticketed from now on — the updated script keeps every Lean
+invocation inside one critical section.
+
+**Disk, measured rather than assumed**: this lane holds one clone at
+`~/repos/lean-ada`, which `du` reports as 6.1 G but which is an APFS
+copy-on-write clone of `~/repos/lean-surfaces` whose `.lake` has never been
+rebuilt here — so its incremental cost is near zero, and it will only start
+consuming real blocks when that build runs. No downloads were made; the
+ACATS and ARM copies died with the scratchpad and are re-fetchable, and
+under A11's `df` rule they will not be re-fetched without checking first.

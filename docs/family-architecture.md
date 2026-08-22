@@ -16,7 +16,7 @@ the lanes implement. It carries **no Lean restructuring** of its own: every
 ruling below is a rule the lane that next touches the code obeys.
 
 **Everything decision-relevant here was measured.** Two instruments landed
-with this charter (§10) and their outputs are cited inline; nothing is
+with this charter (§11) and their outputs are cited inline; nothing is
 quoted from memory, and §2's central question — copies, deltas, or
 parameters — is decided by numbers rather than by taste.
 
@@ -356,7 +356,7 @@ the level later.
 copying `docs/sv-corpus-coverage.md`. It cannot stand: that corpus sits in
 a clone with **no license**, 21 631 files, and an **embedded IEEE 1800-2023
 PDF** — 9.4 MB of vendored IEEE text, against this repository's own
-no-vendoring law (§2.1, §10) — and its provenance names a private
+no-vendoring law (§2.1, §11) — and its provenance names a private
 organization, which the no-private-hostnames rule covers. The clean anchor
 is the **public `sv-tests`**: uniform ISC, per-file SPDX, `tests/**` only
 (`generated/` reaches GPL ivtest), and **already clause-mirrored** — 326
@@ -2560,9 +2560,12 @@ durable home. Anything a lane must obey belongs in a git-tracked file.
 | 5 | owner file format is exactly `<lane> <pid>`, **pid LAST**; parse the last whitespace-separated field | **carried, §7.1 rule 5** |
 | 6 | never fetch-rebase while a build runs in the same clone | **carried, §7.2** |
 | 7 | **the trap must be OWNERSHIP-CHECKED** — below | **recovered** |
-| 8 | pid-liveness reaping discipline (referenced by 9) | **LOST** — only its corollary survives, and it is carried at §7.1 rule 5 |
+| 8 | **a staleness verdict comes from ONE atomic re-read immediately before the removal**, never from an earlier read | **RECOVERED** — from `tools/triad.sh`'s header |
 | 9 | **FIFO ticket queue** — below | **new** |
-| 10 | **the owner pid must span the tenure** — below | **new** |
+| 10 | **the owner pid must span the tenure** — below | **carried** |
+| 11 | **the lock covers ALL Lean execution** — below | **new** |
+| 12 | **traps kill descendants RECURSIVELY** — below | **new** |
+| 13 | **mandatory CoW cache seeding** — below | **new** |
 
 **AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
 lane holding the lock had its `owner` file **overwritten by another lane**.
@@ -2603,6 +2606,37 @@ Write the pid of the **lock-holding script**, whose lifetime *is* the
 tenure, never a child stage's. **The two-part staleness test is unchanged —
 it was right; the owner file was lying.** Measured today, by the lane whose
 own owner file lied to it.
+
+**AMENDMENT 11 — THE LOCK COVERS ALL LEAN EXECUTION, not just `lake build`.**
+Any Lean process is Lean execution: `lake env lean` on a real module, a
+`--self-test` that elaborates, an instrument that shells out. Under a
+tenure: **`LEAN_NUM_THREADS=2`**, **`nice -n 19`**, and a **3 GB RSS kill
+line** measured over *this script's own descendants* — never over the box,
+which would let one lane kill another's chain. **Thomas's own processes
+have absolute priority**; a training run outranks every tenure, and a lane
+that would hold the machine's whole Lean allowance waits for a quiet
+machine and a ticket.
+
+**AMENDMENT 12 — TRAPS KILL DESCENDANTS RECURSIVELY, and never bare-kill a
+wrapper.** `pkill -P` reaches children and **misses grandchildren**, which
+is how orphaned `lake` processes survive a lane's exit and go on eating the
+box outside anyone's tenure. The kill walks `ps -eo pid,ppid` as a BFS over
+the *own* chain. Killing a wrapper without its descendants is the specific
+mistake: the wrapper dies, its build does not, and the survivor is now
+parentless and invisible to every staleness test that works by parentage.
+
+**AMENDMENT 13 — CACHE SEEDING IS MANDATORY, and it is copy-on-write.** A
+new clone is seeded `cp -Rpc` from a **warm, idle** peer — measured at
+**27 s and 29 MB of real disk**, against GB-scale downloads for the same
+result. The `-c` is the whole point (APFS clones the blocks); `-p`
+preserves the timestamps Lake's staleness checks read. Seed only from a
+peer with **no build running** (verify by parentage) and an untorn tree.
+
+**`tools/triad.sh` is the canonical wrapper**, and adoption is the point of
+having it: private per-lane scripts were measured at a **38% violation
+density** across the applicable protocol cells, and a prose register can
+sit one amendment behind its own birth — as §7.1a's did, by two minutes —
+while **a missing amendment in a script is a diff.**
 
 ### 7.2 The master branch
 
@@ -2720,7 +2754,140 @@ Named here so it is a scheduled artifact rather than a standing caveat.
 
 ---
 
-## 9 WHAT THIS DOCUMENT DOES NOT DECIDE
+## 9 THE STANDING STRATEGY — what every lane does next
+
+Thomas's standing directive: **audit the learnings regularly, define the
+updated strategy, share it with the agents.** This section is that
+strategy. It is sourced entirely from `docs/duplication-audit.md` and is
+the thing the coordinator broadcasts; when the next audit lands, this
+section is what it revises.
+
+**The one-line diagnosis behind all six items:** *the contract lives in
+prose, and each lane hand-implements it.* **Prose cannot be run**, so a
+lane's implementation is only as good as its reading, and a defect in one
+reading is invisible to every other lane. Every item below moves a rule
+from prose into something executable.
+
+### 9.1 BUG BEFORE REFACTOR
+
+Fix the defects **today**, ahead of any consolidation, because they are
+independent of it and cheap:
+
+* **Three `--compare` implementations exit 0 on drift** —
+  `c_construct_census`, `wasm_spec_census`, `wasm_suite_census`. A
+  `--compare` that cannot exit nonzero cannot gate, cannot run under
+  `set -e`, and cannot be the staleness detector §5.4 requires. **A drift
+  guard that cannot fail is §5.4a's cleanest instance**: the instrument
+  reads green because it cannot read anything else. Sharpest detail — the
+  first of the three is the very instrument §5.4 cites as having *fixed*
+  the contract.
+* **Four copies of a 6-line `git_rev` that all swallow their failure** and
+  stamp `null` provenance. Same law, same direction: silent, flattering.
+
+Three one-line changes and one shared helper. **Not gated on the kit.**
+
+### 9.2 CONSOLIDATION BY TOUCH, never big-bang
+
+The rule for all of it: **a lane converts its own artifact the next time it
+opens that artifact for any other reason, in the same landing** — no
+deadline, no sweep, and the test is that the committed output is
+**byte-identical before and after**.
+
+| shared thing | what it replaces | adopted when |
+| --- | --- | --- |
+| `harness/censuskit.py` (~160 lines) | ~520 generic lines across **14** instruments; net ≈ −300 | a lane next touches its instrument |
+| `tools/triad.sh` (landed) | 6 hand-rolled triad scripts, **38%** violation density | a lane's next build |
+| `Core` loader utilities | 32 of 46 common lines across four tiers' loaders | a lane next touches its loader |
+
+**Why on-touch and not a sweep**: a sweep is a spine-touch that invalidates
+every lane's build at once, and the audit's own §9 records this lane taking
+a two-minute unlocked Lean run while merely *exercising* the new script.
+The migration must never cost more than the defect it removes.
+
+### 9.3 SPAN NAMING — RATIFIED BY CONVERGENCE
+
+**Three lanes independently chose `line / col / endLine / endCol`** (C,
+Ada, ES). That agreement is **a measurement of what the neutral names are,
+not a taste** — the same standard of evidence §3.6 applies to the SV tier
+reinventing the `ρ` layer. The audit also corrects §3.7's count: **six**
+span types across the lanes, not three.
+
+`Core.Span` is renamed to those four fields on next touch, its docstring
+loses *"Field names mirror CPython's `ast` attributes"* (a correction §3.7
+ordered and which has not landed), C's `macroLine?`/`macroCol?` pair is the
+named model for **extension**, and Ada's type then has nothing left in it.
+
+### 9.4 VERDICT VOCABULARY — a CONFORMANCE gap, not a design question
+
+§5.1's four names — `MATCH | REFUSE | DIVERGE | TIMEOUT` — plus §5.2's four
+REFUSE causes and §5.3's `live` flag are **already law**. Three of seven
+emitters have drifted from it; they conform **on next touch**, and
+`DIVERGED` dies. `censuskit.row()` is where the law gets enforced instead
+of remembered: it rejects an unknown verdict, requires a `cause` on
+`REFUSE`, and carries `live` so a vacuous run cannot serialize as
+agreement.
+
+**A shared full ROW is REJECTED, and the reasons are the audit's own.** The
+per-tier extensions are different *in kind* — Ada grades by membership in
+ACATS marking classes, ES's pass condition is *not throwing* over 4 248
+negative tests, C carries `outside_vocab`, and §5.1's membership ruling
+makes the permitted set *a per-site datum the tier carries*. Flattening
+those into one schema is exactly the thick-trunk mistake §2.4 forbids.
+**Vocabulary shared, row per tier.** The `MISMATCH`/`PASS`/`FAIL` emitters
+predate the law, so their conversion carries a whitelist-semantics decision
+that belongs to the Python lane and is **not** taken here.
+
+### 9.5 BACKLOG V2 — per-lane files
+
+`docs/backlog.md` is one file that **collides with itself**: `L2`, `L3` and
+`L4` each appear **twice**, and at ~66 landings a day every lane appends to
+the same tail. New scheme: **`docs/backlog/<lane>.md`**, appended only by
+its own lane, with ids `YYYY-MM-DD-<lane>-<n>` that need **no reservation**
+because the lane name makes them unique; `docs/backlog.md` becomes a
+**generated index**, which is §5.5's "generated and checked, never
+hand-maintained" applied to the repository's own record.
+
+**Migration is append-only and rewrites no history**: the current file is
+renamed to an archive, every existing `§Lnn` reference keeps resolving, and
+**new landings use per-lane files from that commit on.** It also retires the
+race §7.2's push-time re-read rule exists to survive.
+
+### 9.6 WORKSPACE
+
+* **NOW — amendment 13 CoW seeding** (§7.1a). 27 s and 29 MB per clone
+  against GB-scale downloads; no protocol change, no new risk. The
+  `workspace.sh check` piece is worth having first: ~20 lines, no network,
+  and it flags two lanes' branch trap today.
+* **NEXT — a shared `.lake/packages`**, pending **one ticketed
+  confirmation** of Lake's behaviour with a shared packages directory.
+  Amendment 11 already makes Lean execution single-tenant, which is what
+  makes this safe to try.
+* **REJECTED for now — a shared build workspace.** It buys ~0.43 GB a lane
+  and costs torn-tree adjacency, edit-latency coupling, and **spine-touch
+  invalidation** — measured at **8 spine moves in 60 commits**. Revisit
+  only if `.lake/build` passes ~2 GB per lane, the number at which the
+  arithmetic changes.
+
+### 9.7 THE AUDIT CADENCE ITSELF
+
+* **LIGHT — every keeper tick**: the three live checks (lock owner, queue,
+  concurrent `lake build` by parentage). The audit found the build lock
+  being violated by two lanes for 48 minutes *while it was being written*,
+  so this is the check that pays.
+* **FULL — about every 10 landings**, and the next full audit **re-measures
+  its own headline numbers**: the **38%** violation density, and whether
+  the three `--compare` exit codes and four `git_rev` stamps are actually
+  fixed. An audit that does not re-measure what it reported is prose again.
+
+**And the audit records what it got wrong**, which is the practice worth
+copying more than any item above: it ran Lean outside the lock while
+exercising its own new script, and wrote that down — *the refusal path that
+is only designed is not one, and the incident that is only regretted is not
+measured.*
+
+---
+
+## 10 WHAT THIS DOCUMENT DOES NOT DECIDE
 
 * **Whether any of the three new spec tiers is founded, or in what
   order.** The registry rows are PROPOSED and §4.3's observation that
@@ -2745,7 +2912,7 @@ Named here so it is a scheduled artifact rather than a standing caveat.
 
 ---
 
-## 10 WHAT LANDED WITH THIS CHARTER
+## 11 WHAT LANDED WITH THIS CHARTER
 
 * **`docs/family-architecture.md`** — this document.
 * **`harness/c_clause_delta.py`** — the C17→C23 clause instrument (§2.1).

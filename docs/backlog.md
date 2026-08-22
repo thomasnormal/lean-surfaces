@@ -21224,3 +21224,66 @@ next opened.
    The kit's leverage is not the −300 lines — it is that `--twice` becomes real
    everywhere, provenance stops degrading silently in four places, and §5.1's
    vocabulary gets somewhere to be enforced instead of remembered.
+
+### §7.1a COMPLETED and §9 THE STANDING STRATEGY lands (family-architecture lane)
+
+Sourced from `docs/duplication-audit.md`, read before writing.
+
+**THE REGISTER IS COMPLETE, and the audit was right that it was behind.** §7.1a
+listed base 1-6 and amendments 1-10; the register commit landed **two minutes
+after** amendment 11's and did not carry it. Now added: **A11** (the lock covers
+ALL Lean execution — `LEAN_NUM_THREADS=2`, `nice -n 19`, a **3 GB RSS kill line
+over the script's OWN descendants** rather than over the box, and **Thomas's
+processes have absolute priority**), **A12** (traps kill descendants
+**RECURSIVELY** — `pkill -P` misses grandchildren, and bare-killing a wrapper
+leaves a parentless survivor invisible to every parentage-based staleness test),
+and **A13** (CoW seeding is **mandatory**: `cp -Rpc` from a warm idle peer,
+**27 s / 29 MB** against GB-scale downloads; `-c` clones blocks, `-p` preserves
+the timestamps Lake's staleness checks read).
+
+**AND AMENDMENT 8 IS RECOVERED**, no longer LOST: `tools/triad.sh`'s header
+carries it — *a staleness verdict comes from ONE atomic re-read immediately
+before the removal, never from an earlier read.* That is the audit's own thesis
+demonstrating itself: **the script was a better durable home than the prose
+register**, and recovered a rule the prose had lost. Amendments 1 and 3 remain
+LOST and stay marked so.
+
+**§9 IS THE STANDING STRATEGY**, per Thomas's directive to audit regularly,
+define the updated strategy and share it. Six items plus the cadence, all with
+the same one-line diagnosis: **the contract lives in prose, and prose cannot be
+run**, so a lane's implementation is only as good as its reading and a defect in
+one reading is invisible to every other lane.
+
+* **9.1 BUG BEFORE REFACTOR** — three `--compare`s exit 0 on drift and four
+  `git_rev` copies stamp `null` silently. **A drift guard that cannot fail is
+  §5.4a's cleanest instance**, and the first of the three is the instrument §5.4
+  cites as having *fixed* the contract. Not gated on the kit.
+* **9.2 CONSOLIDATION BY TOUCH** — censuskit (~520 generic lines → shared, net
+  ≈ −300), `triad.sh` at each lane's next build, loaders' 32/46 common lines.
+  Test: committed output byte-identical before and after. Never a sweep — a
+  sweep is a spine-touch that invalidates every lane at once.
+* **9.3 SPAN NAMING RATIFIED BY CONVERGENCE** — three lanes independently chose
+  `line/col/endLine/endCol`, which is **a measurement, not a taste**; the audit
+  also corrects §3.7's count to **six** span types, not three.
+* **9.4 VERDICT VOCABULARY** — a **conformance** gap, not a design question;
+  3/7 emitters conform on touch, `DIVERGED` dies. **Full-row unification
+  REJECTED** with the audit's reasons: Ada grades by ACATS marking membership,
+  ES passes by *not throwing* over 4 248 negative tests, C carries
+  `outside_vocab` — flattening them is the thick-trunk mistake §2.4 forbids.
+* **9.5 BACKLOG V2** — per-lane files + generated index, ids
+  `YYYY-MM-DD-<lane>-<n>` needing no reservation. The current scheme **collides
+  with itself** (`L2`/`L3`/`L4` each appear twice). Append-only migration, no
+  history rewrite, new landings per-lane from that commit on.
+* **9.6 WORKSPACE** — A13 now; shared `.lake/packages` next pending one ticketed
+  confirmation; shared build workspace **rejected** (spine-touch invalidation,
+  **8 moves in 60 commits**).
+* **9.7 CADENCE** — light per keeper tick (the three live lock checks, which
+  caught two lanes building concurrently for 48 minutes *during* the audit);
+  full per ~10 landings, and **the next full audit re-measures the 38% violation
+  density and the exit-code fixes**. An audit that does not re-measure what it
+  reported is prose again.
+
+Also carried into §9.7: the audit recording **its own** Amendment-11 violation.
+That practice is worth copying more than any single item — *the refusal path that
+is only designed is not one, and the incident that is only regretted is not
+measured.*

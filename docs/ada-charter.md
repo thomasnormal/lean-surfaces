@@ -1348,13 +1348,38 @@ Anchored: the Python extractor is 1,913 lines, SV's 2,495, C's rides on
 clang. libadalang does the hard work here, so the low end — but Ada's 316
 node kinds against C's 45 argue against assuming C's cost.
 
-### 5.6 Inch 6 — `LeanModels/Ada/{Ast,Json,Load}.lean`
+### 5.6 Inch 6 — `LeanModels/Ada/{Ast,Json,Load}.lean`. **LANDED.**
 
-The deep-embedded AST for the vocabulary inch 2 measures, and the ingester
-that builds it at elaboration time. No semantics: the inch produces a Lean
-TERM and nothing evaluates it. It lives in the version-NEUTRAL layer if and
-only if inch 2's intersection census says it may — the same rule and the same
-evidence standard the C lane's `Ast.lean`/`Json.lean`/`Load.lean` met.
+The lane's first Lean. No semantics: the inch produces a Lean TERM and
+nothing evaluates it.
+
+**PLACEMENT: trunk, and the argument is structural rather than merely
+measured.** [docs/family-architecture.md](family-architecture.md) §1.3
+requires the neutral/scoped boundary to be a claim with an instrument behind
+it. The C lane had to measure that none of its 45 node kinds was post-C99;
+this lane has nothing to measure, because **`Node` carries `kind : String`,
+not one constructor per kind.** Two hundred and eighty hand-written
+constructors would have been a transcription, and
+[docs/ada-envelope-schema.md](ada-envelope-schema.md) §3 had already refused
+that transcription in its own text. The consequence is that the type
+**cannot** be edition-sensitive: Ada 2022's `ParallelLoopStmt` adds a string
+to a census file, not a constructor to an inductive.
+
+The corroborating evidence, and it corrected a guess: the census contains no
+Ada-2022-only construct, which follows from ACATS 4.2 being an Ada 2012 suite
+by its own version constant. **Three kinds were flagged as suspects and all
+three were cleared by measurement rather than argument** — `IterTypeOf` is
+Ada 2012's `for ... of`, and `ConcatOp`/`ConcatOperand` are libadalang's
+representation of `&` chains, which is Ada 83. Parsing a file containing both
+produced exactly those kinds with zero diagnostics. What WILL be
+version-scoped is MEANING, which is where the C lane's boundary fell too.
+
+**Everything derived; nothing hand-rolled.** `Repr`, `Inhabited`, `BEq` and
+`DecidableEq` on the flat structures, `Repr`/`Inhabited` on the nested
+inductive, and — the one that could have failed — **`deriving instance
+Lean.ToExpr for Node` on a nested inductive over `Array`**, which is what
+makes the elaboration-time literal possible at all. No fallback was needed
+and none is recorded, because there is nothing to record.
 
 The architecture decision [docs/c-tier-charter.md](c-tier-charter.md) §2 took
 applies unchanged and is inherited rather than re-argued: **own semantic
@@ -1376,13 +1401,26 @@ ingester must get right first — a package specification, subprogram
 declarations with parameters and defaults, a subtype with a range constraint,
 and a deferred-free constant.
 
-The `#guard`s, fixed in advance by inch 4's schema so they are checkable
-rather than post-hoc: the unit's kind and name, 15 subprogram declarations,
-6 of them procedures and 9 functions, `File_Num`'s range `1 .. 5`,
-`Generate_Event_Trace_File`'s type and default, the parameter names of
-`Report.Test`, and zero unsupported nodes in the unit. Non-vacuity is checked
-the way the C lane checks it: flip a count and Lean must report the failing
-expression.
+**LANDED, and M1 IS COMPLETE.** `Examples/ada/report/guards.lean` ingests
+both fixtures and passes **30 `#guard`s in 7.5 s** with no semantics in the
+repository.
+
+Two fixtures, and the hazard census chose them rather than convenience:
+`report` — one FILE holding TWO compilation units, §0.3's point met in the
+tier's first artifact — and **`b371001`**, a four-file class-B test whose
+first file holds `B371001_1`, `B371001_1.Child_1` and `B371001_0` and whose
+own name is **none of them**. The one-in-seven top-unit hazard, in the first
+multi-file fixture.
+
+**`load_ada_program` READS `docs/ada-construct-census.json` at elaboration
+time and refuses any kind outside it**, so the two load commands succeeding
+is itself the same-set vocabulary check §3 promised — enforced by the
+ingester, not only by a harness.
+
+**Non-vacuity was RUN, not asserted.** Four counts were flipped in turn — the
+`SubpDecl` count, the marking count, the node count, and the top-unit name to
+the FILE name `B3710010` — and Lean reported the failing expression by name
+every time. The last of those is the hazard guard proving it does its job.
 
 ### 5.8 Inch 8 — THE PARAGRAPH MAP, and §6.1's ruling promoted it
 

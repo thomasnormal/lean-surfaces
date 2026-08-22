@@ -20653,3 +20653,118 @@ built immediately. Total lock tenure: **~2 minutes**, released promptly.
 Everything else this dispatch needed no lock: the instruments are Python over
 out-of-tree corpora, plus single niced dependency-free `lean` processes under
 protocol rule 3.
+## L86 — ADA M1 INCH 6: the lane's first Lean, the node is KIND-AGNOSTIC — and a scratchpad purge ate the commit, so this entry is also a durability finding (2026-08-22)
+
+`LeanModels/Ada/{Ast,Json,Load}.lean` + `LeanModels/Ada.lean`, and
+`Examples/ada/report/guards.lean` — **30 `#guard`s over two fixtures**. No
+semantics, and none exists.
+
+**THE DESIGN DECISION, and it is the whole entry: `Node` carries
+`kind : String`, not one constructor per node kind.** The C lane enumerates
+its 45 (§L35). Ada's census measured **280** reached by the ACATS corpus
+(§L74), and 280 hand-written constructors would have been exactly the
+transcription `docs/ada-envelope-schema.md` §3 had already refused in its own
+text. The rule is the same one level down:
+
+> **If the TYPE enumerated the kinds, the type would BE the vocabulary claim
+> — and it would drift from the census the moment the corpus moved, with a
+> rebuild rather than a gate as the only way to notice.**
+
+The cost is NAMED rather than hidden: a `kind` is not checked by Lean's type
+system, so an M2 semantics must match on strings with a loud default. M2 will
+have the census to enumerate against.
+
+**PLACEMENT: TRUNK, and the argument is STRUCTURAL rather than measured** —
+a stronger position than the C precedent, not a weaker one. §L59 §1.3
+requires the neutral/scoped boundary to be a claim with an instrument behind
+it, and the C lane had to MEASURE that none of its 45 kinds was post-C99.
+This lane has nothing to measure: **the type cannot be edition-sensitive**,
+because Ada 2022's `ParallelLoopStmt` adds a string to a census file, not a
+constructor to an inductive. The directory level `Ada2012/` still exists from
+commit one — the version pair is forced (§L63) — but what will live there is
+MEANING, which is where the C boundary fell too: the ARM has 953
+Legality-Rule paragraphs against 572 Syntax paragraphs, and it is the first
+number that differs between editions.
+
+**AND THE CORROBORATING CHECK CORRECTED A GUESS.** The census holds no
+Ada-2022-only construct, which follows from ACATS 4.2 being an Ada 2012 suite
+by its own version constant. Three kinds were flagged as suspects from a
+hand-written candidate list and **all three were cleared by measurement
+rather than by argument**: `IterTypeOf` is Ada 2012's `for ... of`, and
+`ConcatOp`/`ConcatOperand` are libadalang's representation of `&` chains,
+which is Ada 83. Parsing one file containing both produced exactly those
+kinds with zero diagnostics. The candidate list was wrong and the
+verification is what said so.
+
+**EVERYTHING DERIVED; nothing hand-rolled.** `Repr`, `Inhabited`, `BEq`,
+`DecidableEq` on the flat structures; `Repr`/`Inhabited` on the nested
+inductive; and the one that could have failed — **`deriving instance
+Lean.ToExpr for Node`, a nested inductive over `Array`** — which is what
+makes the elaboration-time literal possible at all. **No fallback was needed
+and none is recorded, because there is nothing to record.**
+
+**THE VOCABULARY GATE MOVED INTO THE INGESTER.** `load_ada_program` READS
+`docs/ada-construct-census.json` at elaboration time and refuses any kind
+outside it, so **the two load commands succeeding IS the same-set check**
+`docs/ada-envelope-schema.md` §3 promised. A Lean-side copy of the 280 kinds
+would have been precisely the second source of truth §3 refuses; there is
+none. The Lean side cannot drift from the census without the build failing.
+
+**THE FIXTURES ARE THE HAZARD CENSUS, NOT CONVENIENCE.** `report` is one FILE
+holding TWO compilation units — §L70's one-envelope-is-one-COMPILATION point
+met in the tier's first artifact. `b371001` is a four-file class-B test whose
+first file holds `B371001_1`, `B371001_1.Child_1` and `B371001_0` and whose
+own name is **none of them**: the one-in-seven top-unit hazard, guarded.
+
+**NON-VACUITY WAS RUN, not asserted.** Four counts flipped in turn —
+`SubpDecl` 15→16, markings 12→13, nodes 398→399, and **the top-unit name
+flipped to the FILE name `B3710010`** — and Lean named the failing expression
+every time. The last is the hazard guard proving it does its job.
+
+**`Node.flatten` counts an `absent` node, and the guards are EXACT because of
+it.** An absent optional field is a VALUE in Ada — a missing default
+expression is not the same program as a present one — so `absent` is a
+constructor rather than an `Option`, and the node counts are 81 and 13 higher
+than a walker that skipped nulls would report. Guarding the exact numbers is
+what makes that difference impossible to lose silently.
+
+**TWO SMALL TRAPS, both already in AGENTS.md, both hit anyway.** A `/-- … -/`
+doc comment cannot precede a `#guard` — commands do not carry doc comments,
+and the error never mentions the doc comment (AGENTS.md records that both
+2026-07-31 cold provers lost their only failed compile here; add one more).
+And a 2 MB envelope needs `set_option maxRecDepth` for the LITERAL, exactly
+as `Examples/c/sunfish/guards.lean` records for its 5.5 MB one.
+
+### A DURABILITY FINDING, and it cost this inch twice
+
+**The scratchpad was purged mid-inch and took the commit with it.** This lane
+was working in `scratchpad/lean-ada` per its founding brief. The triad had
+gone GREEN at 13:46 — `lake build` **3707 jobs**, `docs_check` **75/75**,
+`diff_test` **1394 cases 0 failed / 118 whitelisted / 1276 matched**,
+`script_corpus` **65 scripts 0 failed / 50 matched / 15 loud**, with all five
+Ada modules built — and the push was HELD for that green. Claude Code then
+exited, the scratchpad was purged, and commit `b3c4683` ceased to exist.
+
+**Everything through inch 5 survived because it had been PUSHED.** Inch 6 was
+the one thing held back, and it was the one thing lost. Also lost: the GNAT
+and libadalang builds (~15 min + 814 s) and the ACATS/ARM downloads.
+
+Three corrections taken, and they are the transferable part:
+
+1. **The lane's clone moved to `~/repos/lean-ada`**, a durable sibling of
+   `~/repos/lean-surfaces`. The memory note already warned that a clone in
+   `/private/tmp` is a data-loss risk after a 2026-08-13 purge; this is the
+   second, and the warning is now acted on rather than recorded.
+2. **PUSH IS THE DURABILITY BOUNDARY, not the triad.** "Hold the push for
+   green" is correct when the risk is a bad landing and wrong when the risk
+   is losing the work. This entry lands on a typecheck plus the full guard
+   run, with the triad numbers above carried from the pre-purge run **on
+   byte-restored identical content**, and a re-run queued under Amendment 9
+   to confirm. That is stated rather than glossed, because a triad reported
+   from a previous run is a weaker claim than one reported from this one.
+3. **Nothing that survives only in `/tmp` is a deliverable.** The fixtures
+   and the census JSON were already committed, which is why the restoration
+   needed no toolchain at all — the Lean rebuild required only the repo.
+
+The restored files were re-verified rather than assumed: all four modules
+typecheck and **all 30 guards pass in 5.6 s**.

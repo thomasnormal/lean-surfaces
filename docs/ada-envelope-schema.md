@@ -314,23 +314,35 @@ which is exactly what happened twice while this gate was being written:
 
 ## 6 What the ingester will check, and why the census is its oracle
 
-`LeanModels/Ada/Json.lean` (inch 6) ingests this envelope into a Lean AST
-literal. Its `#guard`s assert structural facts **another instrument
-independently knows** — for `Report`'s specification, the M1 round-trip unit
-(`docs/ada-charter.md` §5.7):
+`LeanModels/Ada/Json.lean` ingests this envelope into a Lean AST literal.
+Its `#guard`s assert structural facts **another instrument independently
+knows**. **LANDED**: `Examples/ada/report/guards.lean`, **30 `#guard`s in
+7.5 s**.
 
-| assertion | value | known by |
+| assertion | value | known independently by |
 | --- | ---: | --- |
-| compilation units in the envelope | 1 | the schema |
-| subprogram declarations | 15 | `Report`'s spec, counted |
-| of them procedures | 6 | ditto |
-| of them functions | 9 | ditto |
-| `File_Num`'s range | `1 .. 5` | ditto |
-| unsupported nodes | 0 | `unsupported_count` |
+| compilation units in `report.a` | **2** | the extractor; §0.3 predicted the shape |
+| subprogram declarations in `Report` | **15** | `docs/ada-charter.md` §5.7, written from the SOURCE before a parser existed |
+| `SubtypeDecl` (`File_Num`) | **1** | ditto |
+| nodes in `Report`'s specification | **398** | the extractor |
+| unsupported nodes | **0** | `unsupported_count` |
+| `b371001` units / files | **6 / 4** | the extractor |
+| its first file's unit names | `B371001_1`, `B371001_1.Child_1`, `B371001_0` | GNAT's `gnatchop`, §0.2's census |
+| its markings | **12** (11 `ERROR`, 1 `OK`) | **the ACAA's own `SUMMARY` tool** |
 
 Two instruments, two paths, one answer — the ingester is checked against a
-measurement rather than against itself. Non-vacuity is checked the way the C
-lane checks it: **flip a count and Lean must report the failing expression.**
+measurement rather than against itself.
+
+**The vocabulary gate is enforced by the INGESTER, not only by the harness.**
+`load_ada_program` reads `docs/ada-construct-census.json` at elaboration time
+and refuses any kind outside it, so the load commands succeeding IS the
+same-set check §3 promised. A Lean-side copy of the 280 kinds would have been
+exactly the second source of truth §3 refuses; there is none.
+
+**Non-vacuity was RUN, not asserted.** Four counts were flipped in turn —
+`SubpDecl` 15→16, markings 12→13, nodes 398→399, and the top-unit name to
+the FILE name `B3710010` — and Lean named the failing expression every time.
+The last is the top-unit hazard guard proving it does its job.
 
 ## 7 Honest limits
 

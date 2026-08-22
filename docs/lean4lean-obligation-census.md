@@ -661,3 +661,130 @@ encodings with reasons, and identifies the crux. Writing the definition is the
 next inch, and §9.4's question is the thing to settle first — it is a
 specification decision, not an implementation one.
 
+---
+
+## 10 THE CRUX IS RULED — and inch 2 is blocked one level deeper than M2 measured
+
+The crux (§9.4) was ruled: **`TrProj` models the SOUND rule, not the kernel's
+behaviour.** Before writing it, two things were verified. The first confirmed the
+ruling. The second stopped the work.
+
+### 10.1 The sound rule, verified — and lean4lean already implements it
+
+The arena's own mechanism note for `proj-of-stuck-prop` names the defect
+precisely, and it is **two** bugs, not one: a hash-gated defeq cache that closes
+a non-transitive relation, **and** — the part that matters here — *"they do not
+see a proposition and permit projecting out the `Bool` field."* The
+`is_prop` test did not require the inferred type to **reduce to a sort**, so a
+*stuck* sort read as "not a Prop". Upstream fixed the projection half in
+`leanprover/lean4#14807` and the cache half in `#14806`. The arena notes that
+`proj-of-subst-prop` is **the same projection reached without the cache** — so
+the projection defect is real on its own, not an artifact of the cache.
+
+**So the sound rule is exactly:**
+
+> A projection out of a structure whose type's sort is **stuck** must be
+> REFUSED, not silently treated as non-`Prop`; and where the structure is a
+> proposition, a non-`Prop` field may not be projected.
+
+**Verified at source: lean4lean already implements it**, which is the cross-check
+the ruling asked for:
+
+```lean
+def getSortLevel (e : Expr) : RecM Level := do
+  let .sort u ← ensureSortCore (← inferType e) e | unreachable!
+def ensureSortCore (e s : Expr) : RecM Expr := do
+  if e.isSort then return e
+  let e ← whnf e
+  if e.isSort then return e
+  throw <| .typeExpected (← getEnv) (← getLCtx) s   -- ← REFUSES a stuck sort
+```
+
+`isProp` is `(getSortLevel e).isAlwaysZero`, and `inferProj` calls `getSortLevel`
+on the structure type before permitting anything. A stuck sort **throws** rather
+than reading as non-`Prop`. **The artifact we are extending already implements
+the rule the ruling selected**, independently of the C++ kernel — which is why it
+scores 67/67 where our pinned kernel scores 63/67.
+
+### 10.2 THE BLOCKER: the model cannot say "constructor"
+
+`TrProj Γ S i e v` must relate a structure to its **i-th field**. That requires
+knowing S's constructor, its parameter count, and its field types. Measured:
+
+```lean
+@[ext] structure VEnv where
+  constants : Name → Option VConstant     -- VConstant = { uvars, type }
+  defeqs    : VDefEq → Prop
+```
+
+**A `VEnv` holds a NAME→TYPE map and a set of definitional equations. Nothing
+else.** There is no constructor table, no inductive table, no field information.
+
+`VInductDecl` *does* carry the data (`VInductiveType extends VConstVal` with
+`ctors : List VConstVal`) — but the **only** route from a `VInductDecl` into a
+`VEnv` is:
+
+```lean
+def VEnv.addInduct (env : VEnv) (decl : VInductDecl) : Option VEnv := sorry
+```
+
+and `VDecl.WF.induct` (`Theory/Typing/Env.lean:43-46`) requires
+`env.addInduct decl = some env'`. So **a well-formed environment containing an
+inductive is not currently constructible in the model**, and nothing can be
+proved about what an inductive contributes to it.
+
+> **`TrProj` is therefore NOT a peer of the inductive stubs. It is DOWNSTREAM of
+> them.** M2's §2 listed three independent definitional stubs; measured, there is
+> **one root** — the inductive specification — and `TrProj` sits below it.
+
+**The corrected dependency structure**, and it is materially worse than M2's:
+
+| root | gates |
+| --- | ---: |
+| **`VEnv.addInduct` / `VInductDecl.WF`** | the 2 inductive obligations, **plus `TrProj`, plus the 11 `TrProj` gates** |
+
+That is **13 of 21 proof obligations behind a single root** — and that root is
+**PR #43's territory**, which the ruling excludes.
+
+### 10.3 The consequence, and the conflict it exposes
+
+The ruling's two constraints — *take the untouched complement* and *do not touch
+PR #43/#32 territory* — **cannot both be satisfied for `TrProj`**, because the
+untouched item turns out to be downstream of the in-flight one. That is not a
+defect in the ruling; it is a fact the census had not yet measured when the
+ruling was made, and it is reported rather than worked around.
+
+**No definition was written.** Writing `TrProj` against a model that cannot
+express "constructor" would mean either inventing an inductive interface (PR
+#43's job, done worse and in parallel) or characterising constructors
+structurally from their types alone — which is **unsound**, since any function
+into `S` would qualify.
+
+### 10.4 What IS available — the forward-compatible option
+
+One option preserves both constraints and is worth putting to Thomas:
+
+> **Write `TrProj` PARAMETRICALLY — against an assumed constructor interface
+> (the `VConstVal` and `nparams`), not against `addInduct`'s implementation.**
+
+It touches none of PR #43's files, composes with whatever `addInduct` becomes,
+and carries the §10.1 side condition — which is the genuinely novel part and is
+independent of the inductive representation. If PR #43 lands, the parametric
+definition is instantiated; if it stalls, the definition still states the rule.
+
+**This is a recommendation, not a start.** It changes what the ruling authorised
+(`TrProj` as an untouched item) into something adjacent to in-flight work, so it
+needs Thomas's confirmation before any Lean is written.
+
+### 10.5 Status
+
+**Inch 2 not started, and the reason is a measurement, not an estimate.** Two
+withdrawals in one dispatch — §8 (no model rule) and §10.2 (no model
+constructors) — share one cause and it is now the tier's central fact:
+
+> **lean4lean's model is further from Lean's kernel than its executable checker
+> is.** The checker handles projections, unit-like types and structure eta
+> correctly today. The *model* has no projections, no unit-like rule, no struct
+> eta, and no inductives. Every obligation that needs one of those is a
+> specification gap wearing a proof obligation's clothes.
+

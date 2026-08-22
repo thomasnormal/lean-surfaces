@@ -310,3 +310,86 @@ sorry-counter run there reports an improvement that did not happen.
 No Lean run, no build, no ticket taken this dispatch: the finding is a source
 measurement, and the C++ kernel side was taken from our own committed
 `lean-kernel-census.json` rather than re-fetching a wiped corpus.
+
+---
+
+## 2026-08-22-lean-tier-4 — the crux ruling CONFIRMED, and inch 2 blocked one level deeper: the model cannot say "constructor"
+
+The crux was ruled: `TrProj` models the SOUND rule. Two verifications were run
+before writing. The first confirmed the ruling. **The second stopped the work.**
+
+### The sound rule is verified, and lean4lean already implements it
+
+The arena's own mechanism note for `proj-of-stuck-prop` names **two** defects: a
+hash-gated defeq cache, and — the part that matters — the `is_prop` test not
+requiring the inferred type to **reduce to a sort**, so a *stuck* sort read as
+"not a Prop" and a `Bool` field was projected out of a proposition. Upstream
+fixed the projection half in lean4#14807 and the cache half in #14806;
+`proj-of-subst-prop` is the same projection **reached without the cache**, so the
+projection defect stands alone.
+
+Cross-checked at source, which is what the ruling asked for: lean4lean's
+`getSortLevel` goes through `ensureSortCore`, which whnfs and then **throws
+`.typeExpected`** if the result is not a sort. `isProp` is
+`(getSortLevel e).isAlwaysZero`, and `inferProj` calls it on the structure type
+before permitting anything. **A stuck sort refuses rather than reading as
+non-Prop — the artifact we are extending already implements the rule the ruling
+selected**, which is why it scores 67/67 where our pinned kernel scores 63/67.
+
+### The blocker: `VEnv` holds no constructor information
+
+`TrProj` must relate a structure to its i-th field, which needs S's constructor,
+parameter count and field types. Measured, `VEnv` has exactly two fields:
+`constants : Name → Option VConstant` (and `VConstant` is `{uvars, type}` — a
+type, nothing more) and `defeqs : VDefEq → Prop`. **No constructor table, no
+inductive table, no fields.**
+
+`VInductDecl` does carry the data (`VInductiveType extends VConstVal` with
+`ctors`), but the ONLY route into a `VEnv` is `VEnv.addInduct`, which is `sorry`,
+and `VDecl.WF.induct` (Theory/Typing/Env.lean:43-46) requires it. **A well-formed
+environment containing an inductive is not currently constructible in the model.**
+
+**So `TrProj` is not a peer of the inductive stubs — it is DOWNSTREAM of them.**
+M2 recorded three independent definitional stubs; measured, there is ONE root,
+the inductive specification, and TrProj sits below it. Corrected structure:
+`addInduct`/`VInductDecl.WF` gates the 2 inductive obligations **plus TrProj plus
+TrProj's 11** — **13 of 21 behind a single root**, and that root is PR #43's.
+
+### The conflict this exposes
+
+The ruling's two constraints — take the untouched complement, do not touch PR
+#43/#32 territory — **cannot both hold for TrProj**, because the untouched item
+is downstream of the in-flight one. Not a defect in the ruling; a fact the census
+had not yet measured when it was made.
+
+**No definition was written.** Doing so against a model that cannot express
+"constructor" would mean either inventing an inductive interface (PR #43's job,
+done worse and in parallel) or characterising constructors structurally from
+their types — which is **unsound**, since any function into S would qualify.
+
+### What is available — for Thomas, not started
+
+Write `TrProj` **parametrically**, against an assumed constructor interface (the
+`VConstVal` and `nparams`) rather than against `addInduct`'s implementation. It
+touches none of PR #43's files, composes with whatever `addInduct` becomes, and
+carries the §10.1 side condition — the genuinely novel part, independent of the
+inductive representation. Needs confirmation first, because it converts an
+"untouched item" into work adjacent to something in flight.
+
+### The tier's central fact, now stated
+
+Two withdrawals in one dispatch — no model rule (§8), no model constructors
+(§10.2) — share one cause:
+
+**lean4lean's MODEL is further from Lean's kernel than its EXECUTABLE CHECKER
+is.** The checker handles projections, unit-like types and structure eta
+correctly today. The model has none of them, and no inductives. Every obligation
+needing one is a specification gap wearing a proof obligation's clothes.
+
+### Discipline
+
+Work stayed on a local branch `lean-surfaces/trproj` with no upstream tracking;
+no PR, no comment, no contact. The arena's test corpus was sparse-fetched
+(3.4 MB, `df` first per A11: 199Gi free) and read only. No Lean run, no build, no
+ticket taken — both verifications were source measurements, so the queued rebuild
+was never needed and the machine (queue depth 5) was left alone.

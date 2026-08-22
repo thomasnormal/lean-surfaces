@@ -1,4 +1,4 @@
-import LeanModels.Es.Ordinary
+import LeanModels.Es.Function
 import LeanModels.Es.SpecAttr
 
 /-!
@@ -183,5 +183,57 @@ string key, not index 1, so it enumerates with the string keys. -/
 `OrdinaryOwnPropertyKeys`'s creation order depends on. -/
 
 @[es_spec] theorem find_empty (k : PropKey) : Obj.find? {} k = none := rfl
+
+/-! ## Environment bindings — ES2026 §9.1.1.1
+
+The TDZ is the distinction worth arms: an UNINITIALIZED binding is not a
+binding holding `undefined`, and `Binding.value : Option Val` is what
+keeps them apart. -/
+
+@[es_spec] theorem binding_fresh_is_uninitialized :
+    (Binding.value { mutable := true }) = none := rfl
+@[es_spec] theorem binding_undefined_is_initialized :
+    (Binding.value { value := some .undef, mutable := true }) = some .undef := rfl
+
+@[es_spec] theorem env_find_empty (n : String) : EnvRec.find? {} n = none := rfl
+
+/-! ## `[[ThisBindingStatus]]` — §9.1.1.3, §9.1.2.4
+
+A fresh declarative record is `lexical` — it has no `this` at all, which is
+what makes `GetThisEnvironment` walk THROUGH it. -/
+
+@[es_spec] theorem fresh_env_is_lexical : (EnvRec.thisStatus {}) = ThisStatus.lexical := rfl
+
+/-- The three statuses are distinct — `GetThisBinding` branches on
+`uninitialized` and `BindThisValue` on `initialized`, so conflating any
+two would silently change both. -/
+@[es_spec] theorem thisStatus_distinct₁ :
+    (ThisStatus.lexical == ThisStatus.uninitialized) = false := rfl
+@[es_spec] theorem thisStatus_distinct₂ :
+    (ThisStatus.uninitialized == ThisStatus.initialized) = false := rfl
+
+/-! ## `IsCallable` / `IsConstructor` are SLOT TESTS — §7.2.3, §7.2.4
+
+Neither inspects a value's shape: a non-object is never callable, and a
+callable is not automatically a constructor. -/
+
+@[es_spec] theorem thisMode_lexical_ne_strict :
+    (ThisMode.lexical == ThisMode.strict) = false := rfl
+
+/-- A plain function has `[[Call]]` and NOT `[[Construct]]` until
+`MakeConstructor` runs — §10.2.5 is what adds the slot. -/
+@[es_spec] theorem plain_function_is_not_constructor (b : Body) :
+    (FuncData.constructorDerived { body := b }) = none := rfl
+
+@[es_spec] theorem plain_object_is_not_callable : (Obj.callable {}) = none := rfl
+
+/-! ## `Body` — the one boundary inch 3 leaves
+
+A `builtin` runs; an `ecmascript` body is `OrdinaryCallEvaluateBody`, which
+is the statement evaluator. Distinct constructors, so the arm cannot be
+taken by accident. -/
+
+@[es_spec] theorem body_builtin_ne_ecmascript (n : String) :
+    (Body.builtin n == Body.ecmascript) = false := rfl
 
 end LeanModels.Es

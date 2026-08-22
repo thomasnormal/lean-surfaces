@@ -111,6 +111,107 @@ def complete (d : PropDesc) : PropDesc :=
 
 end PropDesc
 
+/-! ## Function objects — the slots ES2026 §10.2 gives them
+
+Declared here rather than in `Function.lean` because `Obj` carries them:
+an ECMAScript function object IS an ordinary object with extra internal
+slots, and modelling it as a separate type would make `[[Get]]` on a
+function a different operation than `[[Get]]` on anything else. -/
+
+/-- A reference to an Environment Record — §9.1. The records live in
+`EsWorld.envs`, the same index-into-an-array shape as `ObjRef`. -/
+abbrev EnvRef := Nat
+
+/-- `[[ThisMode]]` — §10.2, and the three values the spec names. `lexical`
+is an arrow function: it has no `this` of its own and does not get one
+bound. -/
+inductive ThisMode where
+  | lexical
+  | strict
+  | global
+  deriving DecidableEq, Repr, Inhabited
+
+/--
+What a callable object's `[[Call]]` actually runs.
+
+**A builtin is named, not embedded.** Storing a `List Val → …` closure in
+`Obj` would cost `Repr`, `Inhabited` and every kernel `#guard` over a
+heap — the whole first-order discipline the Python tier keeps for the same
+reason. So a builtin carries its NAME and a table dispatches it.
+
+`ecmascript` carries no body: evaluating one is `OrdinaryCallEvaluateBody`
+(§10.2.1.4), which needs the statement evaluator — inch 5. That arm
+refuses, which is a boundary and not a gap, and it is a SHARPER refusal
+than inch 2's: an accessor whose getter is a BUILTIN now works.
+-/
+inductive Body where
+  | builtin (name : String)
+  | ecmascript
+  deriving DecidableEq, Repr, Inhabited
+
+/-- The internal slots §10.2 gives an ECMAScript function object. -/
+structure FuncData where
+  body : Body
+  /-- `[[Environment]]` — the scope the function closes over. -/
+  env : Option EnvRef := none
+  /-- `[[ThisMode]]`. -/
+  thisMode : ThisMode := .strict
+  /-- `[[Strict]]`. -/
+  strict : Bool := true
+  /-- Non-`none` exactly when the object has `[[Construct]]`; the value is
+  `[[ConstructorKind]]`'s `base`/`derived` distinction as a Bool
+  (`true` = derived). §10.2.2. -/
+  constructorDerived : Option Bool := none
+  /-- `[[HomeObject]]`, for `super`. -/
+  homeObject : Option ObjRef := none
+  deriving Repr, Inhabited
+
+/-! ## Environment Records — ES2026 §9.1 -/
+
+/-- One binding in a Declarative Environment Record — §9.1.1.1.
+
+`value = none` is the UNINITIALIZED state, which is not a niche: it is the
+temporal dead zone. `let x; x` before the declaration must throw a
+`ReferenceError`, and a record that defaulted the value to `undefined`
+could not tell that apart from `let x = undefined`. -/
+structure Binding where
+  value : Option Val := none
+  mutable : Bool := true
+  deletable : Bool := false
+  /-- A `const` in strict code: assigning throws rather than silently
+  failing (§9.1.1.1.5 step 5). -/
+  strictImmutable : Bool := false
+  deriving Repr, Inhabited
+
+/-- `[[ThisBindingStatus]]` — §9.1.1.3. -/
+inductive ThisStatus where
+  | lexical
+  | uninitialized
+  | initialized
+  deriving DecidableEq, Repr, Inhabited
+
+/--
+An Environment Record — §9.1.
+
+ONE structure covers the declarative and function kinds, because the
+spec's Function Environment Record *is* a Declarative Environment Record
+plus four fields (§9.1.1.3). A sum type would duplicate all seven
+declarative operations to no benefit. The Object and Global kinds are NOT
+here: both need the global object, which needs intrinsics (inch 6+).
+-/
+structure EnvRec where
+  bindings : List (String × Binding) := []
+  /-- `[[OuterEnv]]` — `none` only for the topmost record. -/
+  outer : Option EnvRef := none
+  /-- `[[ThisValue]]`, meaningful when `thisStatus ≠ .lexical`. -/
+  thisValue : Val := .undef
+  thisStatus : ThisStatus := .lexical
+  /-- `[[FunctionObject]]`. -/
+  functionObject : Option ObjRef := none
+  /-- `[[NewTarget]]`. -/
+  newTarget : Val := .undef
+  deriving Repr, Inhabited
+
 /-! ## Ordinary objects and the heap -/
 
 /--
@@ -127,11 +228,19 @@ structure Obj where
   proto : Option ObjRef := none
   /-- `[[Extensible]]`. -/
   extensible : Bool := true
+  /-- The `[[Call]]`/`[[Construct]]` slots, when this object is callable.
+  `none` for a plain object — which is what makes `IsCallable` a field test
+  rather than a guess (§7.2.3). -/
+  callable : Option FuncData := none
   deriving Repr, Inhabited
 
 /-- The realm's heap. `ObjRef` is the index, the Python tier's shape. -/
 structure EsWorld where
   heap : Array Obj := #[]
+  /-- The Environment Records — §9.1. Kept beside the heap rather than
+  inside it: an environment is a SPECIFICATION type (§6.2), not a value a
+  program can hold, so it must not be reachable as an `ObjRef`. -/
+  envs : Array EnvRec := #[]
   deriving Repr, Inhabited
 
 /-- The tier's monad at its usual instantiation. -/

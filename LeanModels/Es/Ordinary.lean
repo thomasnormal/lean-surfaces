@@ -178,8 +178,11 @@ def ordinaryHasProperty : Nat → ObjRef → PropKey → EsW Bool
 /--
 `OrdinaryGet(O, P, Receiver)` — ES2026 §10.1.8.1, 10 steps.
 
-Step 8 invokes the getter, which needs `[[Call]]` — inch 4 — so an
-ACCESSOR property refuses here rather than inventing a value. A data
+Step 8 invokes the getter, which needs `[[Call]]`.  **SUPERSEDED as of
+inch 3 by `Function.getV`**, which is the complete §10.1.8.1; this
+remains its DATA-PROPERTY fragment, because Lean forbids `Ordinary.lean`
+importing `Function.lean` (the import would cycle).  An accessor refuses
+HERE and succeeds through `getV`. A data
 property is complete, and step 7's "if the getter is `undefined` return
 `undefined`" is honoured before the refusal, because that arm needs no
 call.

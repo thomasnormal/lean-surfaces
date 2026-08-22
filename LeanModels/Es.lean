@@ -5,6 +5,8 @@ import LeanModels.Es.Value
 import LeanModels.Es.Completion
 import LeanModels.Es.Object
 import LeanModels.Es.Ordinary
+import LeanModels.Es.Env
+import LeanModels.Es.Function
 import LeanModels.Es.SpecAttr
 import LeanModels.Es.Spec
 

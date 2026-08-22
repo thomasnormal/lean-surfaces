@@ -870,3 +870,73 @@ cheap version of this failure worth two corrections rather than one shrug.
 
 Neither commit message is rewritten. `4d32526` and `92fcfcb` carry the wrong
 figures on master, and this line is how they resolve.
+
+---
+
+## 2026-08-23-qol-14 — the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket
+
+§9.5 moved the backlog's rebase collision off the §-numbers — where `L2`, `L3`
+and `L4` each appeared twice — and onto one generated file. The ES lane hit
+it: two lanes appending on the same day both regenerate `INDEX.md`, and the
+diffs overlap. **Merging a generated file is always wrong**; the merged result
+is a *third* version matching neither tree. The correct resolution is take
+either side and regenerate, and that is now mechanical.
+
+### `.gitattributes`, and the half that is easy to ship broken
+
+`docs/backlog/INDEX.md merge=ours` — so a rebase resolves without a conflict,
+leaving the index **stale-but-valid** until regenerated.
+
+**But the attribute alone does nothing.** `ours` is **not** one of git's
+built-in merge drivers — those are `text`, `binary` and `union` — so each
+clone must also define `merge.ours.driver`. Measured both ways before
+shipping: without the config the same merge **still conflicts** (markers in
+the file); with it, it resolves to our side. Both directions are self-test
+rows, so the day someone deletes the config line the test says which half
+broke. `tools/backlog-index.sh --install-merge-driver` sets it, and the header
+of the generated page now opens with **"CONFLICT? REGENERATE with
+`tools/backlog-index.sh` — never merge."**
+
+### One correction to the dispatch: the docs_check rule did NOT exist
+
+The brief said a docs_check rule refusing a stale index "already exists". It
+does not — `qol-11` shipped a **NOTE**, deliberately non-fatal, and said so.
+That gap matters more now, because `merge=ours` makes a stale index the
+**routine** post-rebase state: a driver that resolves quietly plus a check
+that only whispers is a mechanism for landing stale artifacts.
+
+So the refusal now exists — **in `tools/triad.sh`'s preconditions, not at the
+docs_check gate**, and the placement is the point. Base rule 4 makes a triad
+**one per landing**, so a red at gate 2 costs the whole tenure; a refusal
+before the ticket costs **one command**. Same refusal, one tenure cheaper —
+and this lane has watched a tenure cost 78 minutes. It is scoped to landings
+that **touch `docs/backlog/`**: another lane's stale index is not this lane's
+refusal to eat. Under `--classify-only` it reports and does not refuse, since
+no tenure is at stake. The `docs_check` notice stays for runs outside the
+triad, and `--check` remains the standalone gate: three layers, each at its
+own cost.
+
+### The installer shipped a bug that the self-tests did not cover
+
+`--install-merge-driver` worked and printed `ours: command not found` — a
+backtick inside a double-quoted `echo`, so the shell ran `ours` as a command.
+The config was set correctly, so **every behavioural test passed**; what was
+broken was the part only a human reads. There is now a check that the
+installer's output contains **no shell error text**, which is the same lesson
+this repo keeps paying for in different costumes: a test that asserts the
+effect and never reads the output is a test with a blind spot exactly the
+width of the message.
+
+### Triad
+
+`bash -n` clean. `tools/triad.sh --self-test`: **122 ok, 0 failed** (118 →
+122, **4 new**: a freshly generated index is not stale, an un-regenerated one
+is, regenerating clears it, and no generator means nothing to be stale about).
+`tools/backlog-index.sh --self-test`: **25 ok, 0 failed** (15 → 25, **10
+new**: the shipped attribute resolving to `ours` on `INDEX.md` and
+`unspecified` on an ordinary doc, the merge conflicting **without** the config
+and succeeding **with** it, our side kept, no third version, the config set,
+the installer's success line, its silence on shell errors, and the header's
+conflict instruction). `docs_check` **83/83**. Live: the refusal exits **2**
+naming the file, and a regenerated index passes. Tools-only: **no tenure, no
+Lean executed.**

@@ -4,16 +4,23 @@
 index generated rather than maintained, which is §5.5's *"generated and
 checked, never hand-maintained"* applied to the repository's own record.
 
+**CONFLICT? REGENERATE with `tools/backlog-index.sh` — never merge.** A
+merged generated file is a third version that matches neither tree;
+`.gitattributes` marks this file `merge=ours` so a rebase resolves without
+one (install the driver once with
+`tools/backlog-index.sh --install-merge-driver`).
+
 Entries live in `docs/backlog/<lane>.md`, appended only by their own lane,
 with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**43 entries across 13 lanes.** Regenerate with
+**44 entries across 13 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
 | `2026-08-23-es-1` | M2 INCH 4(b): the expression walk, and a clamp warning found a LIVE bug in this tier | es |
 | `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |

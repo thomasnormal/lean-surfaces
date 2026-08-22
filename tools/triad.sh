@@ -660,6 +660,24 @@ unimported_new_modules() {  # stdin: changed paths -> LeanModels modules nobody 
   done
 }
 
+# ---- A STALE GENERATED INDEX, refused BEFORE the ticket
+# `docs/backlog/INDEX.md` is generated (§9.5).  `.gitattributes` marks it
+# `merge=ours` so a rebase resolves without a conflict — which means the
+# post-rebase index is routinely STALE-BUT-VALID, by design.  Something has to
+# force the regeneration, or the driver just makes staleness quiet.
+#
+# That check belongs HERE and not at the docs_check gate.  Base rule 4 makes a
+# triad ONE PER LANDING, so a red at gate 2 costs the whole tenure; a refusal
+# before the ticket costs one command.  Same refusal, one tenure cheaper — and
+# this lane has watched a tenure cost 78 minutes.
+index_is_stale() {      # [clone] -> 0 when the generated index is stale
+  local root="${1:-$CLONE}" gen
+  gen="$root/tools/backlog-index.sh"
+  [ -x "$gen" ] || return 1           # no generator: nothing to be stale about
+  "$gen" --dir "$root" --check >/dev/null 2>&1 && return 1
+  return 0
+}
+
 gate_floor() {          # class -> the gates this landing owes at minimum
   case "$1" in
     docs) echo 'python3 tools/docs_check.py' ;;
@@ -922,6 +940,21 @@ if [ "$SELF_TEST" = "1" ]; then
         "$(announce_prebuilt "$(announce_prebuilt "$(gate_floor tier)")" | grep -o -- '--no-build' | grep -c .)" "1"
   check "a non-diff_test gate is left ALONE"   \
         "$(announce_prebuilt 'python3 harness/script_corpus.py')" "python3 harness/script_corpus.py"
+
+  # ---- a stale generated index (§9.5's collision, moved off the §-numbers)
+  echo "  -- stale index"
+  idx="$tmp/idxclone"
+  mkdir -p "$idx/tools" "$idx/docs/backlog"
+  cp "$CLONE/tools/backlog-index.sh" "$idx/tools/" 2>/dev/null
+  printf '# a lane\n\n## 2026-08-23-a-1 — first\n' > "$idx/docs/backlog/a.md"
+  "$idx/tools/backlog-index.sh" --dir "$idx" >/dev/null 2>&1
+  check "a freshly generated index is not stale" "$(index_is_stale "$idx" && echo stale)" ""
+  printf '\n## 2026-08-23-a-2 — appended, not regenerated\n' >> "$idx/docs/backlog/a.md"
+  check "an un-regenerated index IS stale"       "$(index_is_stale "$idx" && echo stale)" "stale"
+  "$idx/tools/backlog-index.sh" --dir "$idx" >/dev/null 2>&1
+  check "regenerating clears it"                 "$(index_is_stale "$idx" && echo stale)" ""
+  check "no generator means nothing to be stale about" \
+        "$(index_is_stale "$tmp/nonexistent" && echo stale)" ""
 
   # ---- --gates ADDS, --gates-only REPLACES (the Ada lane's 78-minute tenure)
   echo "  -- gate composition"
@@ -1260,6 +1293,18 @@ if [ "$CLASSIFY" = "1" ]; then
     echo "     LeanModels.lean and its transitive imports ONLY.  A green build never" >&2
     echo "     compiled these, and is green about nothing where they are concerned." >&2
     echo "     Add the import in this landing, or say why it is deliberate." >&2
+  fi
+
+  # A stale generated index, when THIS landing touches the backlog.  Scoped to
+  # the landing on purpose: another lane's stale index is not this lane's
+  # refusal to eat.
+  if printf '%s\n' "$CHANGED" | grep -q '^docs/backlog/.*\.md$' && index_is_stale; then
+    echo "  STALE GENERATED INDEX: docs/backlog/INDEX.md" >&2
+    if [ "$CLASSIFY_ONLY" = "1" ]; then
+      echo "     (--classify-only: reported, not refused — no tenure is being taken)" >&2
+    else
+      die "this landing touches docs/backlog/ and the generated index is stale. Run tools/backlog-index.sh and re-stage. Refused HERE rather than at the docs_check gate because base rule 4 makes a triad one-per-landing: a red at the gate would cost the whole tenure, this costs one command. (A rebase leaves the index stale BY DESIGN — .gitattributes resolves it to one side rather than merging a generated file.)"
+    fi
   fi
 
   # Unstaged Lean inside a lake glob: a REFUSAL when a tenure is at stake.

@@ -49,6 +49,19 @@ AST_FLAGS = PROFILE_FLAGS + ["-fsyntax-only", "-Xclang", "-ast-dump=json"]
 # census reports the count both ways and says which is which.
 SYNTHESIZED_ATTRS = re.compile(r"Attr$")
 
+# The printf family, and which argument carries the format string.
+FORMAT_FUNCS = {"printf": 0, "fprintf": 1, "sprintf": 1, "snprintf": 2,
+                "dprintf": 1, "vprintf": 0, "puts": 0, "fputs": 0}
+# C23 7.23.6.1: a conversion specification is % [flags] [width] [.prec]
+# [length] conversion.  Captured in parts so the model can be scoped to the
+# parts that ACTUALLY appear rather than to the whole mini-language.
+CONV_SPEC = re.compile(
+    r"%(?P<flags>[-+ #0]*)"
+    r"(?P<width>\*|[0-9]+)?"
+    r"(?:\.(?P<prec>\*|[0-9]*))?"
+    r"(?P<length>hh|h|ll|l|j|z|t|L|w[0-9]+|wf[0-9]+)?"
+    r"(?P<conv>[diouxXeEfFgGaAcspn%])")
+
 FREESTANDING = {
     "float.h", "iso646.h", "limits.h", "stdalign.h", "stdarg.h", "stdbit.h",
     "stdbool.h", "stdckdint.h", "stddef.h", "stdint.h", "stdnoreturn.h",
@@ -72,6 +85,7 @@ def clang_kinds(path):
     # libc rung.  A header a test includes is not a function it needs.
     externs = set()
     defined = set()
+    formats = []
     target = os.path.basename(path)
     state = {"file": None}
 
@@ -92,12 +106,28 @@ def clang_kinds(path):
             d = n.get("referencedDecl") or {}
             if d.get("kind") == "FunctionDecl" and d.get("name"):
                 externs.add(d["name"])
+        if mine and n.get("kind") == "CallExpr":
+            kids = [c for c in (n.get("inner") or []) if isinstance(c, dict)]
+            head = kids[0] if kids else {}
+            while head.get("kind") in ("ImplicitCastExpr", "ParenExpr"):
+                sub = [c for c in (head.get("inner") or []) if isinstance(c, dict)]
+                head = sub[0] if sub else {}
+            nm = (head.get("referencedDecl") or {}).get("name")
+            idx = FORMAT_FUNCS.get(nm)
+            if idx is not None and len(kids) > idx + 1:
+                arg = kids[idx + 1]
+                while arg.get("kind") in ("ImplicitCastExpr", "ParenExpr"):
+                    sub = [c for c in (arg.get("inner") or []) if isinstance(c, dict)]
+                    arg = sub[0] if sub else {}
+                if arg.get("kind") == "StringLiteral" and arg.get("value"):
+                    formats.append((nm, arg["value"]))
         for s in ("inner", "args"):
             for c in n.get(s) or []:
                 if isinstance(c, dict):
                     walk(c)
     walk(tu)
     kinds.externs = sorted(externs - defined)
+    kinds.formats = formats
     return kinds, "ok"
 
 
@@ -156,8 +186,37 @@ def census(paths, vocab, want_tags):
             row["outside_vocab_written"] = written
             row["in_vocab_written"] = not written
             row["libc_calls"] = getattr(kinds, "externs", [])
+            row["format_strings"] = sorted({v for _, v in
+                                            getattr(kinds, "formats", [])})
         rows.append(row)
     return rows, kinds_union
+
+
+def _conversions(ok):
+    """Tally the printf conversion machinery the corpus ACTUALLY uses.
+    Scoped in parts, because the model has to implement the parts that
+    appear -- not the whole of C23 7.23.6.1."""
+    conv, flags, length, width, prec = (collections.Counter() for _ in range(5))
+    n_specs = 0
+    for r in ok:
+        for f in r.get("format_strings") or []:
+            for m in CONV_SPEC.finditer(f):
+                n_specs += 1
+                conv[m.group("conv")] += 1
+                for ch in (m.group("flags") or ""):
+                    flags[ch] += 1
+                if m.group("length"):
+                    length[m.group("length")] += 1
+                if m.group("width"):
+                    width["*" if m.group("width") == "*" else "digits"] += 1
+                if m.group("prec") is not None:
+                    prec["*" if m.group("prec") == "*" else "digits"] += 1
+    return {"specs_total": n_specs,
+            "conversions": dict(conv.most_common()),
+            "flags": dict(flags.most_common()),
+            "length_modifiers": dict(length.most_common()),
+            "width_forms": dict(width.most_common()),
+            "precision_forms": dict(prec.most_common())}
 
 
 def summarize(rows, kinds_union, vocab):
@@ -187,6 +246,7 @@ def summarize(rows, kinds_union, vocab):
         "kinds_outside_vocab": len(set(kinds_union) - vocab) if vocab else None,
         "outside_vocab_by_kind": dict(outside.most_common()),
         "outside_vocab_written_by_kind": dict(outside_w.most_common()),
+        "format_conversions": _conversions(ok),
         "libc_calls_by_name": dict(collections.Counter(
             f for r in ok for f in (r.get("libc_calls") or [])).most_common(30)),
         "distinct_libc_calls": len({f for r in ok

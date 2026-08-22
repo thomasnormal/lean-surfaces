@@ -14094,3 +14094,91 @@ work added cases, and **1394/0 is the new baseline**; `script_corpus` **64 scrip
 0 failed, 50 matched, 14 loud**. No `sorry`, no `native_decide`, no linter
 warning. All **64** printed declarations depend on
 `[propext, Classical.choice, Quot.sound]` or less.
+## L57 — M2's DESIGN, and inch 1: `printf` is EIGHT conversions and `*` never appears (2026-08-22)
+
+The semantic model's plan, census-first under the §L25 law, plus its first
+inch. The design is [docs/c-semantics-design.md](c-semantics-design.md); the
+goal it is scored against is §L54's. **No interpreter is built here** — inch 1
+is the value layer alone, deliberately, because the one decision that cannot
+be retrofitted should be landed and gated before anything rests on it.
+
+**THE CENSUS THE DISPATCH ASKED FOR: the format strings that ACTUALLY appear.**
+`harness/c_suite_census.py` now extracts every format string from the printf
+family and tallies C23 §7.23.6.1's parts separately. Measured across
+c-testsuite (202 specs) and Fujitsu (997):
+
+| part | c-testsuite | Fujitsu | C23 has |
+| --- | --- | --- | --- |
+| conversions | `d`106 `s`43 `f`42 `c`6 `x`2 `X`1 `i`1 `u`1 | `x`580 `d`320 `f`97 | 16 |
+| flags | `0` x2 | none | 5 |
+| length | `L`16 `l`6 `ll`1 | `ll`126 `l`110 `L`8 | 11 |
+| width / precision | literal digits only | none | digits or `*` |
+
+**Eight of sixteen conversions, one of five flags, three of eleven length
+modifiers, and `*` NEVER APPEARS** — not for width, not for precision, in 1199
+specs across two corpora. Entirely absent: `o e E g G a A p n %`. So the
+`printf` obligation is not "the format mini-language"; it is a measured
+fragment of it.
+
+**And the integer-only subset is worth a great deal.** Tests whose libc calls
+are all printf-family and whose conversions avoid `eEfFgGaA`: **c-testsuite 59
+of 61** (49 in-vocab), **Fujitsu 242 of 261** (all 242 in-vocab). Float
+conversions are 21% of c-testsuite's specs and 10% of Fujitsu's, and they wait
+behind the float decision. Rung 2 is therefore priced at one function
+restricted to `d i u x X c s` with literal width/precision.
+
+**The design's six pieces.** (1) **Value model**: fixed-width integers whose
+widths come from the ABSTRACT profile, storing the mathematical value always
+in range — the invariant that makes "did this overflow?" decidable rather than
+conventional. (2) **Memory model**: a pointer IS `(obj, offset)` with
+provenance and no integer address to lose it to; locals are OBJECTS because
+**86 `&`-of-automatic and 20 `&`-of-subobject sites** say so, and `realloc`
+MOVES the hot table so provenance transfer is v0. (3) **UB as REFUSE-with-
+cause**, three causes never pooled because they retire on different schedules
+— and **UB-refused never retires: it is the product**. (4) **The judgment**:
+`Run σ α` verbatim with σ = `CWorld`, the ∃-fuel threshold form unchanged, and
+**the drain amendment honored at C's 181 short-circuit sites** (`&&` 111, `||`
+28, `?:` 42): a short-circuiting construct's out-world is a function of its
+ANSWER, so the right operand's world never exists to be spoken about when the
+left decides. (5) **`abort`/`exit` as distinguished terminals** — which is
+rung 1's entire scorer, needing no output modeling. (6) **`printf`, scoped by
+the census above.**
+
+**Inch 1 LANDED: `LeanModels/C/Value.lean`.** `IntTy` from the profile's
+widths, `CVal`, `UB` as named causes, and the arithmetic where the split
+lives. `close` is the decision in one function: in range → the value; out of
+range and unsigned → wrap; out of range and signed → REFUSE. **30 `#guard`s**,
+non-vacuous (claiming signed wraps, or that C division floors, both fail with
+the expression printed).
+
+Three of them are worth naming. `mulOp` on `0x9e3779b97f4a7c15 *
+0xff51afd7ed558ccd` succeeds — that is `mix64`'s deliberate wraparound, and a
+model that refused it would be wrong about the corpus. `divOp (-7) 2 = -3`,
+because **C truncates toward zero and Lean's `/` on `Int` floors to -4** — the
+`pyfloordiv` divergence class the ctwin README calls #1, met from the C side
+this time and pinned by a gate. And `convert IntTy.int_ 0x80000000 = INT_MIN`,
+the C23-mandated conversion `VM_VAL` depends on, which C17 left
+implementation-defined.
+
+**The M2 ladder, priced**: value model (1 session, landed) → memory model
+(2-3) → expression semantics incl. the short-circuit rules (3-4) → statements
++ `CWorld` + terminals (3-4) → calls and the frame (2) → **the rung-1 scorer,
+the first real score (2)** → integer `printf` (2). **~15-20 sessions, with the
+first score at inch 6 rather than at the end**, targeting §L54's 196 reachable
+torture tests scored on exit status.
+
+**Deferred on purpose, each to the inch that first needs it**: the `Run.exn`
+error payload and whether `Run` moves to `LeanModels/Core/` (both inch 4 —
+§L35 priced the move at 149 lines / 24 files / 1251 sites and it stays
+deferred until a second consumer exists); floats; `switch`.
+
+**M2's build proper goes to a fresh lane on this document** — the handoff
+pattern that worked for M1.
+
+### Triad
+
+`lake build` **3693 jobs green** (`LeanModels.C.Value` included);
+`docs_check` **73/73**, 15 illustrative-exempt; `diff_test` **1394 cases, 0
+failed, 118 whitelisted, 1276 matched**; `script_corpus` **65 scripts, 0
+failed, 50 matched, 15 loud**; the M1 `#guard`s still pass. The C lane declares
+no theorems, so no axioms moved; no `sorry`, no `native_decide`.

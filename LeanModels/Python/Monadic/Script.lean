@@ -322,4 +322,42 @@ fuel-independent underrun, never a fabricated reading. -/
 def runScriptMono (m : Module) (fuel : Nat) : Run World Unit :=
   runScriptClockMono m [] fuel
 
+/-! ## §4 NON-VACUITY — the pipeline RUNS, and the kernel decides it -/
+
+private def spS : Span := ⟨0, 0, 0, 0⟩
+
+private def pipeProg : Module :=
+  { functions := #[], classes := #[], namedtuples := #[]
+    topLevel := #[
+      .assign #[.name "x" spS] (.constant (.int 1) spS) spS,
+      .assign #[.name "y" spS] (.binOp (.name "x" spS) .add (.constant (.int 2) spS) spS) spS,
+      .exprStmt (.call (.name "print" spS) #[.name "y" spS] #[] Option.none spS) spS ] }
+
+/- THE ONE PIPELINE, end to end: three top-level statements, the second READING
+what the first published, and `print` appending to the world's stdout. -/
+#guard (match runScriptMono pipeProg 4096 with
+        | .ok w _ => w.stdout == ["3"] && Env.lookup w.globals "y" == some (.int 3)
+        | _ => false)
+
+private def forProg : Module :=
+  { functions := #[], classes := #[], namedtuples := #[]
+    topLevel := #[
+      .assign #[.name "t" spS] (.constant (.int 0) spS) spS,
+      .forStmt (.name "i" spS)
+        (.tuple #[.constant (.int 1) spS, .constant (.int 2) spS,
+                  .constant (.int 3) spS] spS)
+        #[ .augAssign (.name "t" spS) .add (.name "i" spS) spS ] #[] spS ] }
+
+/- A top-level `for` runs through its CONTROL SHELL, so the loop variable is a
+module global on EVERY iteration — which is exactly what the per-statement
+publish granularity buys, and what delegating the statement wholesale would
+lose. -/
+#guard (match runScriptMono forProg 4096 with
+        | .ok w _ => Env.lookup w.globals "t" == some (.int 6)
+                     && Env.lookup w.globals "i" == some (.int 3)
+        | _ => false)
+
+#print axioms runScriptMono
+#print axioms skont
+
 end LeanModels.Python.Monadic

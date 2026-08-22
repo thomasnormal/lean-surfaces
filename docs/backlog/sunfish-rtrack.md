@@ -138,3 +138,151 @@ round as what each round runs. The calmness lane's F3c is the same shape at
 depth 0 (`qs_stream.lean`, `QSRoundOK`, `qs_fold_report`); the grounds do not
 overlap (§L32) but the round-classification vocabulary should be SHARED rather
 than mirrored, and that is worth settling before either side states its `Inv`.
+
+## 2026-08-22-sunfish-rtrack-2 — PROPOSAL: one round vocabulary for both folds
+
+**Addressed to the calmness/F3c lane, and to be answered before either side
+states its `Inv`.** Both lanes are about to write a fold invariant — F3c at
+depth 0, R3c at depth 1 — and we already have two half-overlapping vocabularies.
+Settling which is PRIMITIVE and which is DERIVED costs one exchange now and a
+migration later if we skip it.
+
+### What exists today
+
+| name | lane | file | level |
+|---|---|---|---|
+| `QSRoundOK gamma value r` | calmness | `bound_depth.lean` §3 | **one round**, a four-way disjunction over the round kinds, each with its own side condition; the `searchedMove` arm is where the IH enters |
+| `qsRoundOK_sound` | calmness | same | `QSRoundOK → Sound gamma value r.score` |
+| `RanInv gamma value best rs` | R-track | `fold_depth1.lean` §10 | **one schedule**: `sound` (accumulator), `rounds : ∀ r ∈ rs, Sound …`, `attain` |
+
+They are not competitors — **they are at different levels**, and that is exactly
+why they should be layered rather than merged.
+
+### The proposal, in three lines
+
+1. **PRIMITIVE — the per-round classification.** `QSRoundOK` is it. It is the
+   only place a child report enters, and it is depth-agnostic already: its four
+   kinds are the fold's own branches, not QS's. **Proposed name: `RoundOK`** —
+   the `QS` prefix is the one thing about it that is depth-0-flavoured, and it is
+   misleading at depth 1 where the same four kinds occur. *(If the calmness lane
+   would rather not pay a rename, keeping `QSRoundOK` is acceptable; the SHAPE
+   decision below is what actually matters.)*
+2. **DERIVED — `Sound`.** Via `roundOK_sound`, unchanged in content.
+3. **SCHEDULE-LEVEL — one invariant, stated over the primitive.** `RanInv`'s
+   `rounds` field should read `∀ r ∈ rs, RoundOK gamma value r` rather than
+   `∀ r ∈ rs, Sound gamma value r.score`, with `Sound` recovered by (2). Then
+   BOTH folds carry the same three fields over the same classification.
+   **Proposed name: `FoldInv`** — `RanInv` is misnamed, because the invariant is
+   not about the `ran` exit; it is the accumulator invariant that every exit
+   consumes. My `fold_report_ran` is then one of its three exit corollaries, next
+   to the calmness lane's `qs_fold_report_cut`.
+
+### Where it should live
+
+`bound_depth.lean` §3, where `QSRoundOK` already is: it is the lowest common
+ancestor both `fold_depth1.lean` and `qs_stream.lean` import. This is the same
+argument that just retired the duplicated `branchFalseSilent` — **the general
+layer is the only place two lanes can both look.**
+
+### What I will do if there is no objection
+
+State R3c's `Inv` as `FoldInv` over `RoundOK`, and migrate `RanInv`'s three
+lemmas (`step`, `nil`, `run`) to it in the same landing — a rename plus one field
+restatement, no proof content moves. I will **not** touch `QSRoundOK`'s name
+without the calmness lane's word.
+
+### What I am asking for
+
+One of: *agreed*, *agreed but keep `QSRoundOK`*, or *counter*. Any of the three
+unblocks R3c; silence does not, because the migration cost doubles once both
+`Inv`s are written against different primitives.
+
+## 2026-08-22-sunfish-rtrack-3 — TRANSPORT CLASSIFICATION for the re-founding
+
+Thomas ruled the monadic interpreter is THE Python interpreter and the campaign
+re-proves on it rather than bridging. This entry classifies **every theorem this
+lane has pushed** by what it actually depends on, so the re-founding plan can
+sequence rather than survey. The axis that matters is not "old vs new" but **what
+vocabulary the STATEMENT is written in** — a proof can be interpreter-heavy and
+still transport untouched if its statement never mentions the interpreter.
+
+### Class 1 — SPEC-SIDE. No interpreter, no AST. Transport UNCHANGED.
+
+These mention only `Round`, `foldFrom`, `Report`, `Sound`, `Exit`, `Env`, `Int`.
+Nothing in them can break, because nothing in them is about how a program runs.
+
+`foldFrom_ran_no_settle`, `fold_report_ran`, `RanInv` + `.step` / `.nil` / `.run`,
+`search_agrees`, `search_sound`, `settle_folds`, `settle_report`, `settle_agrees`,
+`envSettle`, `envSearched`.
+
+**This is where the shared `Inv` vocabulary with the calmness lane lives** — which
+is why that proposal (entry -2) survives the re-founding intact and should still
+be settled on its own timetable. `QSRoundOK`/`qs_fold_report` are class 1 too.
+
+### Class 2 — HEAP / FRAME FACTS. Interpreter-adjacent, statement-independent.
+
+These mention `World`, `Heap`, `Env` and nothing else. They survive any interpreter
+that keeps the memory model — which the parity gate says it does.
+
+`PstAt` + `.push` / `.append` / `.update_ne`, `valueRuns_quiet_of_pstAt` (its
+CONCLUSION is `callIn`-shaped, so it is class 3 at the boundary — but the
+predicate and its three stability lemmas are pure class 2 and are the reusable
+part), `sbStoredAt`, `kmStored`.
+
+**This is the class the coordinator flagged, and the reason to flag it is real:**
+`PstAt` was invented precisely to move a world question out of the interpreter's
+vocabulary and into the heap's. That is what makes it transport. The lesson
+generalises — *an altitude lemma that names what the world contributes is
+re-founding-proof, and a gate that inlines the same fact is not.*
+
+### Class 3 — AST PINS. Depend on `Stmt`/`Expr` and on ingestion, not on execution.
+
+`sbSearch_sharp`, `sbMoveDepth_sharp`, `sbLive_sharp`, `corrBody_split`,
+`sbCorr_sharp`, `sbKillB_split`, `sbKillEvict_lit`, `sbMB_four`,
+`sbKiller_test_lit`.
+
+**Transport iff the AST and the extractor are unchanged** — they are statements
+about the shipped program's shape, not about its meaning. The `*_plan` pins
+(`sbNull_plan`, `sbStand_plan`, `sbKiller_plan`, `gxPlan_*`) are the EXCEPTION:
+`genPlan` is the generator walker's notion, so those are class 4.
+
+### Class 4 — INTERPRETER-BOUND. Re-prove.
+
+Everything `execStmt`/`evalExpr`/`callIn`/`GenEmits`/`GenSilent`/`IterSteps`-shaped:
+
+* the statement gates — `cap_line_low`, `break_fires`, `break_skips`,
+  `move_depth_low`, `live_updates`, `search_line`, `settle_round`,
+  `corr_skips_live`, `corr_fires`, `mate_line`, `best_line`, `store_runs_d`,
+  `killer_stores`, `km_evict_dead`, `kill_fires`, `tail_runs_live`,
+  `branch5_searches`, `ran_live_answers`;
+* the generator chain — `GxRun`, `gx_chain`, `gx_drains`, `ord_stmt_emits_run`,
+  `moves_prologue`, `moves_emits_ordered`;
+* the general-layer pieces this lane lifted — `IterDrains.uncons` / `.exhausts`,
+  `genSilent_branchFalse`.
+
+**But the general-layer three are worth re-proving FIRST, not last.** Their
+statements are one line each and their proofs are a single-fuel destructuring;
+they are what every consumer above needs, and the technique — *instantiate a
+threshold definition once, destructure the interpreter's own match, re-introduce*
+— is interpreter-agnostic even though the statement is not.
+
+### Class 5 — MEASUREMENTS. Transport by KIND, not wholesale.
+
+The censuses are facts about the shipped program obtained THROUGH an interpreter,
+and they split:
+
+| kind | example | transports? |
+|---|---|---|
+| semantic answers | the exhaustion band, `bound()` = −47938 at the mate fixture, 2-node cut, 1-node settle | **yes** — the parity gate is exactly the claim that these are interpreter-independent |
+| heap-size ledgers | the 176/177 decomposition, 84 + 88, the 1–25 per-step spread | **only if allocation is unchanged** — re-measure before citing |
+| fuel thresholds | 32 for `pos.move`, 512 for the child, 256/128 | **no** — fuel is an interpreter artifact and every one of these must be re-measured |
+
+**The 176/177 ledger is the one to re-run first**: it closed to the object, so if
+it still closes on the new interpreter that is a strong independent check on the
+new allocation strategy, and if it does not, the difference is exactly what the
+re-founding changed.
+
+### Clean edge
+
+No new statements against the old interpreter from this entry onward. The lift
+(entry above) is the last old-interpreter landing this lane makes.

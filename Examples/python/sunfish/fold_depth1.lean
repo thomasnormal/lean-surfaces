@@ -155,20 +155,6 @@ theorem sbStand_plan : ∃ p0 p1 p2 bd, genPlan sbStand =
 theorem sbKiller_plan : ∃ (e₂ e₃ : Expr) (p q : Span) (bd : List Stmt), genPlan sbKiller =
     .branch (.boolOp .and #[.name "killer" p, e₂, e₃] q) bd [] := ⟨_, _, _, _, _, rfl⟩
 
-/-- A `.branch` whose test is FALSY and whose `else` is empty is two silent
-steps and no emission — the shape all three prologue statements take. -/
-theorem branch_false_silent {s : Stmt} {test : Expr} {bd : List Stmt} {ss : List Stmt}
-    {w : World} {e : REnv} {tv : RVal}
-    (hplan : genPlan s = .branch test bd [])
-    (hv : EvalsTo sunfish ⟨w, e⟩ test tv)
-    (hb : truthyH w.heap tv = .ok false) :
-    ∀ k : GenCont, GenSilent sunfish ⟨w, e⟩ (.block (s :: ss) :: k) ⟨w, e⟩
-      (.block ss :: k) := by
-  intro k
-  refine GenSilent.trans (genSilent_branch (m := sunfish) (s := s) (ss := ss) (k := k)
-    (st := ⟨w, e⟩) (b := false) hplan hv hb) ?_
-  simpa using genSilent_blockNil (m := sunfish) (st := ⟨w, e⟩) (k := .block ss :: k)
-
 /-- **The prologue, in one silent transition.** From the generator's whole body
 to the ordering line alone, at `1 ≤ depth ≤ 2` with the killer absent. -/
 theorem moves_prologue (w : World) (e : REnv) (d : Int)
@@ -185,7 +171,7 @@ theorem moves_prologue (w : World) (e : REnv) (d : Int)
       (.compare (.constant (.int 2) p0) #[.lt, .lt]
         #[.name "depth" p1, .constant (.int 6) p2] p3) = .ok ⟨w, e⟩ (.bool false) := by
     py_simp [-globalsFold, -globalsStep, hd, if_neg (show ¬ (2 : Int) < d by omega)]
-  have hs1 := branch_false_silent (s := sbNull) (ss := [sbStand, sbKiller, ordFor])
+  have hs1 := genSilent_branchFalse (s := sbNull) (ss := [sbStand, sbKiller, ordFor])
     hpl1 (EvalsTo.of_eval (fuel := 8)
       (by rw [evalExpr]; exact boolChain_and_falsy (F := 6) h1e rfl)) rfl k
   have hda : evalExpr sunfish 7 ⟨w, e⟩ (.name "depth" q0) = .ok ⟨w, e⟩ (.int d) := by
@@ -197,11 +183,11 @@ theorem moves_prologue (w : World) (e : REnv) (d : Int)
   have h2 : EvalsTo sunfish ⟨w, e⟩
       (.compare (.name "depth" q0) #[.eq] #[.constant (.int 0) q1] q2) (.bool false) :=
     EvalsTo.of_eval (fuel := 8) (compare_one (F := 5) hda hzero hop)
-  have hs2 := branch_false_silent (s := sbStand) (ss := [sbKiller, ordFor])
+  have hs2 := genSilent_branchFalse (s := sbStand) (ss := [sbKiller, ordFor])
     hpl2 h2 rfl k
   have h3e : evalExpr sunfish 4 ⟨w, e⟩ (.name "killer" kp) = .ok ⟨w, e⟩ .none := by
     py_simp [-globalsFold, -globalsStep, hk]
-  have hs3 := branch_false_silent (s := sbKiller) (ss := [ordFor])
+  have hs3 := genSilent_branchFalse (s := sbKiller) (ss := [ordFor])
     hpl3 (EvalsTo.of_eval (fuel := 6)
       (by rw [evalExpr]; exact boolChain_and_falsy (F := 4) h3e rfl)) rfl k
   rw [sbMB_four]
@@ -238,7 +224,6 @@ theorem moves_emits_ordered (w : World) (e : REnv) (d : Int)
 #print axioms sbNull_plan
 #print axioms sbStand_plan
 #print axioms sbKiller_plan
-#print axioms branch_false_silent
 #print axioms moves_prologue
 #print axioms moves_emits_ordered
 

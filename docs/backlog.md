@@ -21054,6 +21054,62 @@ not create.** A clone that answers to `origin` is not thereby *your* clone, and
 on this box at least one lane's `origin` points at a backup bundle — so a push
 can "succeed" against a file and never reach master.
 
+
+
+### Triad — GREEN, and Amendment 9 turned 43 minutes into 58 SECONDS
+
+`lake build` **3719 jobs, "Build completed successfully", exit 0** (3708 → 3719
+since §L82, this inch's three new modules among them); `docs_check` **83/83**,
+23 illustrative-exempt; `diff_test` **1394 cases, 0 failed, 118 whitelisted,
+1276 matched**; `script_corpus` **65 scripts, 0 failed, 50 matched, 15 loud**.
+The Python-tier numbers are unmoved, as a landing that touches no Python file
+must leave them.
+
+**Coverage VERIFIED, not assumed** — §L82's correction does not get inherited:
+`LeanModels/Es/{Object,Ordinary}.olean` and
+`Examples/es/objects/guards.olean` are all stamped **16:53-16:54**, inside the
+16:51 tenure.
+
+**AMENDMENT 9's TICKET QUEUE IS WORTH A NUMBER.** The lock came in **58
+seconds**. The same lane's previous build, spinning bare under the same
+contention, waited **43 minutes** and lost five consecutive handoffs. Same
+machine, same queue depth, one FIFO ticket: **~45x**. The owner-conditional
+trap also fired correctly again — by exit the lock had been handed on, so the
+release printed "NOT RELEASING: not my lock" and removed nothing.
+
+**THE BLANK-PROVENANCE FINDING IS THIS LANE'S, and the cause is confirmed.**
+`docs/es262-census.json` on master carries `"ecma262": ""` — the `git_rev`
+swallow the instrument-fix pass (28b9f5e) just patched. Diagnosed here rather
+than guessed: `sources.test262` and `sources.engine262` stamped REAL revisions
+because both were censused from git checkouts, while `--spec` pointed at a
+LOOSE extracted file (`es-editions/es2026-errata-spec.html`), whose directory
+is *"not a git repository"*. **The blank was the path, not the parser** — and
+the patched instrument now refuses instead of stamping `null`, which is the
+finding working.
+
+The heal is verified and mechanical, for the next census touch: check the
+ecma262 clone out AT THE PINNED TAG and census its working tree, so the same
+path carries both the bytes and the provenance —
+
+    git -C <ecma262> checkout es2026-errata     # HEAD d89c03f
+    …/es_census.py --spec <ecma262>/spec.html --edition docs/es-edition.json
+
+Confirmed today: at that tag the working-tree `spec.html` is **byte-identical
+to `docs/es-edition.json`'s pin** (`032ecc74…`), so the edition check and the
+provenance stamp are satisfied by one checkout. Not done in this landing
+because regenerating the JSON needs test262, engine262 and acorn re-fetched
+(the scratchpad wipe took them) and a partial regeneration would DROP three
+sections to heal one field — a worse artifact than the one it fixes.
+
+**One branch trap, worth broadcasting.** This clone was seeded `cp -Rpc` from
+the home checkout (A13) and inherited its branch — `pyrebuild-monadic`, 244
+commits stale. `git push github master` therefore pushed a STALE LOCAL REF
+while reporting a plain non-fast-forward, and five "races" in a row were
+actually that. **`git rev-list --count HEAD..github/master` said 0 throughout,
+because it compares HEAD and not the ref being pushed.** `push HEAD:master` is
+what got the work out. Any lane seeding from a peer inherits that peer's
+branch: check `git branch --show-current` after seeding. This lane is now on
+`master` and the stale branch is deleted.
 ## L89 — THE DUPLICATION AUDIT: the census contract is written 14 times and 3 copies CANNOT FAIL, the build protocol is prose that six lanes implemented 24 ways, and the 42 GB of duplicated cache is ONE PINNED MATHLIB (2026-08-22)
 
 Thomas's brief: *"look for duplicated work, that might inspire better overall

@@ -28,6 +28,18 @@ filter the census measures libc's headers.  A run that attributes ZERO
 nodes to the source EXITS NON-ZERO — an empty census is an instrument
 fault, never a finding.
 
+STORAGE DURATION IS RESOLVED BY `id`, NOT BY THE REFERENCE.  Measured on
+this host: clang's `referencedDecl` stub carries `id`, `kind`, `name` and
+`type` and **never `storageClass`** — so a guard written as
+`decl.get("storageClass") != "static"` cannot see the fact it tests and
+admits every object designator.  That guard is why `addr_of_automatic`
+read 86 when the automatic sites are 31; the other 55 are `&` of a
+file-scope object (M2 inch 2's census).  The fix is a PRE-PASS that maps
+every `VarDecl`/`ParmVarDecl` `id` to its storage duration, so `&x` is
+classified by resolving the id rather than by reading a field that is not
+there.  `--selftest` asserts the stub still lacks the field, so the day
+clang starts emitting it the instrument says so instead of drifting.
+
 Python >= 3.9, stdlib only.  Deterministic: every mapping is emitted in
 sorted order, so a double run is byte-identical.
 """
@@ -102,6 +114,18 @@ def _file_of(node):
     return None
 
 
+def _line_seen(node):
+    """The line clang spells on a node, across its three slots.  STICKY: a
+    node that repeats its predecessor's line omits the field entirely."""
+    for slot in ((node.get("range") or {}).get("begin") or {}, node.get("loc") or {}):
+        if slot.get("line"):
+            return slot["line"]
+        for nested in ("expansionLoc", "spellingLoc"):
+            if (slot.get(nested) or {}).get("line"):
+                return slot[nested]["line"]
+    return None
+
+
 def _strip(node):
     """Peel the wrappers clang inserts around an operand."""
     while isinstance(node, dict) and node.get("kind") in ("ParenExpr", "ImplicitCastExpr"):
@@ -109,11 +133,90 @@ def _strip(node):
     return node if isinstance(node, dict) else {}
 
 
+def durations(node, out, par=None):
+    """Pre-pass: map every object declaration's `id` to its STORAGE DURATION.
+
+    C23 §6.2.4: an object declared at file scope, or with `static`/`extern`,
+    has static storage duration; every other declared object is automatic.
+    The map is keyed by clang's `id` because the reference site cannot answer
+    the question — see the module docstring.  Runs over the WHOLE AST, not
+    just the censused file, so a reference into a header still resolves.
+
+    The value is `(duration, scope)`: SCOPE is where it was declared and
+    DURATION is how long it lives, and they are different questions — a
+    block-scope `static` has block scope and static duration, which is
+    exactly the case the memory model's frame discipline must not assume
+    away.  Measured on the corpus: zero of them.
+    """
+    if isinstance(node, list):
+        for child in node:
+            durations(child, out, par)
+        return
+    if not isinstance(node, dict):
+        return
+    kind = node.get("kind")
+    if kind in ("VarDecl", "ParmVarDecl") and node.get("id"):
+        at_file_scope = kind == "VarDecl" and par == "TranslationUnitDecl"
+        static = at_file_scope or (
+            kind == "VarDecl" and node.get("storageClass") in ("static", "extern"))
+        out[node["id"]] = ("static" if static else "automatic",
+                           "file" if at_file_scope else "block")
+    for child in node.get("inner") or []:
+        durations(child, out, kind or par)
+
+
+def _dur(st, node_id):
+    """The storage DURATION recorded for a declaration id, or None."""
+    return (st["durations"].get(node_id) or (None, None))[0]
+
+
+def _root_designator(node):
+    """Walk a subobject designator down to the object it names."""
+    for _ in range(64):                       # depth-bounded: no cycles in an AST
+        node = _strip(node)
+        kind = node.get("kind")
+        if kind == "MemberExpr":
+            node = (node.get("inner") or [{}])[0]
+        elif kind == "ArraySubscriptExpr":
+            node = (node.get("inner") or [{}])[0]
+        else:
+            return node
+    return {}
+
+
+def _callee_name(call):
+    """The name a call's callee resolves to, or `<indirect>`."""
+    head = _strip((call.get("inner") or [{}])[0])
+    return ((head.get("referencedDecl") or {}).get("name")
+            or ("<indirect>" if head else "?"))
+
+
+def _line_of(node):
+    """The EXPANSION line, as stamped on the node by `walk`.
+
+    clang's `line` is STICKY exactly like `loc.file` — a node omits it when
+    it repeats its predecessor's — so reading it off one node in isolation
+    yields 0 for most of the AST.  `walk` carries the last-seen line forward
+    and stamps it; this only reads the stamp.
+    """
+    return node.get("_census_line", 0)
+
+
+def _is_ptr(node):
+    """Does this node have a POINTER type, as clang spells it?"""
+    q = (node.get("type") or {}).get("qualType") or ""
+    return q.endswith("*") or "*" in q.split("(")[0]
+
+
 def walk(node, st, parent=None):
     """Walk in document order, carrying clang's sticky `loc.file` forward."""
     seen = _file_of(node)
     if seen:
         st["file"] = seen
+    line = _line_seen(node)
+    if line:
+        st["line"] = line
+    node["_census_line"] = st["line"]
     kind = node.get("kind")
     if kind and st["file"] and os.path.basename(st["file"]) == st["target"]:
         st["hits"].append(node)
@@ -132,14 +235,39 @@ def walk(node, st, parent=None):
         if kind == "UnaryOperator" and node.get("opcode") == "&":
             tgt = _strip((node.get("inner") or [{}])[0])
             decl = tgt.get("referencedDecl") or {}
+            # Storage duration comes from the DECLARATION, resolved by id: the
+            # reference stub carries no `storageClass` (module docstring).
+            dur = _dur(st, decl.get("id"))
             if tgt.get("kind") == "DeclRefExpr" \
-                    and decl.get("kind") in ("VarDecl", "ParmVarDecl") \
-                    and decl.get("storageClass") != "static":
+                    and decl.get("kind") in ("VarDecl", "ParmVarDecl"):
                 # The address of an AUTOMATIC object is observable, which is
                 # why a C local cannot be an environment binding (charter §2).
-                st["addr_automatic"] += 1
+                # `&` of a file-scope object is common too and proves nothing
+                # about locals, so the two are counted APART.
+                st["addr_static" if dur == "static" else "addr_automatic"] += 1
             elif tgt.get("kind") in ("MemberExpr", "ArraySubscriptExpr"):
                 st["addr_subobject"] += 1
+                root = _root_designator(tgt)
+                rdur = _dur(st, (root.get("referencedDecl") or {}).get("id"))
+                st["addr_sub_static" if rdur == "static" else "addr_sub_automatic"] += 1
+        if kind == "UnaryOperator" and node.get("opcode") == "*":
+            # C23 §6.5.3.2: the indirection operator.  `->` is the OTHER
+            # spelling and outnumbers it; both are counted (memory §2).
+            st["deref_shapes"][_strip((node.get("inner") or [{}])[0]).get("kind")] += 1
+        if kind == "MemberExpr":
+            st["member_arrow" if node.get("isArrow") else "member_dot"] += 1
+        if kind == "ArraySubscriptExpr":
+            base = _strip((node.get("inner") or [{}])[0])
+            bk = base.get("kind")
+            if bk == "DeclRefExpr":
+                bdur = _dur(st, (base.get("referencedDecl") or {}).get("id"))
+                st["subscript_bases"]["DeclRefExpr/%s" % (bdur or "?")] += 1
+            else:
+                st["subscript_bases"][bk] += 1
+        if kind == "BinaryOperator":
+            kids = [_strip(c) for c in (node.get("inner") or [])]
+            if _is_ptr(node) or any(_is_ptr(k) for k in kids):
+                st["pointer_binops"][node.get("opcode")] += 1
         qual = (node.get("type") or {}).get("qualType")
         if qual:
             st["types"][qual] += 1
@@ -161,11 +289,19 @@ def census(path):
     if not ast.stdout:
         sys.exit("c_construct_census: clang produced no AST for %s\n%s"
                  % (path, ast.stderr[:2000]))
+    tree = json.loads(ast.stdout)
+    durs = {}
+    durations(tree, durs)
     st = {"file": None, "target": os.path.basename(path), "hits": [],
           "member_on_call": 0, "full_exprs": 0, "multi_effect": [],
           "file_scope": 0, "file_scope_init": 0, "addr_automatic": 0,
-          "addr_subobject": 0, "types": collections.Counter()}
-    walk(json.loads(ast.stdout), st)
+          "addr_static": 0, "addr_subobject": 0, "addr_sub_automatic": 0,
+          "addr_sub_static": 0, "member_arrow": 0, "member_dot": 0,
+          "deref_shapes": collections.Counter(),
+          "subscript_bases": collections.Counter(),
+          "pointer_binops": collections.Counter(),
+          "line": 0, "durations": durs, "types": collections.Counter()}
+    walk(tree, st)
     if not st["hits"]:
         sys.exit("c_construct_census: ZERO nodes attributed to %s — the "
                  "loc.file filter is wrong, not the corpus" % path)
@@ -184,6 +320,37 @@ def census(path):
             callees[decl.get("name")] += 1
         else:
             indirect += 1
+
+    # ---- J.1 interference census -------------------------------------------
+    # C23 §6.5.2.2p10: the evaluations of a call's arguments are INDETERMINATELY
+    # SEQUENCED with respect to one another — no interleaving, but either order.
+    # Thomas's ruling makes the order a PARAMETER and correctness a `∀ order`
+    # claim, so the cheap discharge is a census: where two argument expressions
+    # could interfere, and how many such sites there are at all.
+    # (§6.5p2's UNSEQUENCED conflicting side effects are a different question —
+    # those are UB and REFUSE, not a quantifier.  The partition matters.)
+    argc = collections.Counter()
+    order_domain, two_effects = [], []
+    for call in of("CallExpr"):
+        args = (call.get("inner") or [])[1:]
+        argc[len(args)] += 1
+        if len(args) < 2:
+            continue
+        neff = sum(1 for a in args if effects(a))
+        if neff >= 1:
+            order_domain.append(call)
+        if neff >= 2:
+            two_effects.append(call)
+    # The same question for operands of the operators C leaves unsequenced —
+    # everything but `&&`, `||`, `?:` and `,`, which are sequence points.
+    seqpoints = {"&&", "||", ","}
+    unseq_both = 0
+    for b in of("BinaryOperator") + of("CompoundAssignOperator"):
+        if b.get("opcode") in seqpoints:
+            continue
+        kids = (b.get("inner") or [])
+        if len(kids) == 2 and effects(kids[0]) and effects(kids[1]):
+            unseq_both += 1
 
     bodies = [n for n in of("FunctionDecl")
               if any((i or {}).get("kind") == "CompoundStmt" for i in (n.get("inner") or []))]
@@ -254,8 +421,59 @@ def census(path):
         # `&x` on an automatic object, and `&x.f` / `&x[i]` on a subobject.
         # Both are zero in Python by construction; both are why the C tier's
         # locals live in MEMORY and not in an environment (charter §2).
+        # STORAGE DURATION IS RESOLVED BY id — see the module docstring; the
+        # static split is reported because only the AUTOMATIC count bears on
+        # the locals-are-objects decision, and it is the smaller number.
         "addr_of_automatic": st["addr_automatic"],
+        "addr_of_static": st["addr_static"],
         "addr_of_subobject": st["addr_subobject"],
+        "addr_of_subobject_automatic": st["addr_sub_automatic"],
+        "addr_of_subobject_static": st["addr_sub_static"],
+        "addr_of_sites": (st["addr_automatic"] + st["addr_static"]
+                          + st["addr_subobject"]),
+        # M2 inch 2's memory census: how POINTERS are made, and how they are
+        # used.  `&` is not the corpus's main pointer producer — decay is.
+        "ptr_produced": {
+            "address_of": st["addr_automatic"] + st["addr_static"] + st["addr_subobject"],
+            "array_to_pointer_decay": castkinds("ImplicitCastExpr").get("ArrayToPointerDecay", 0),
+            "function_to_pointer_decay": castkinds("ImplicitCastExpr").get("FunctionToPointerDecay", 0),
+            "null_to_pointer": (castkinds("ImplicitCastExpr").get("NullToPointer", 0)
+                                + castkinds("CStyleCastExpr").get("NullToPointer", 0)),
+            "void_bitcast": castkinds("ImplicitCastExpr").get("BitCast", 0),
+        },
+        "ptr_consumed": {
+            "deref_star": opcodes("UnaryOperator").get("*", 0),
+            "member_arrow": st["member_arrow"],
+            "member_dot": st["member_dot"],
+            "subscript": kinds.get("ArraySubscriptExpr", 0),
+            "lvalue_to_rvalue": castkinds("ImplicitCastExpr").get("LValueToRValue", 0),
+        },
+        "deref_operand_shapes": dict(sorted(
+            (k or "?", v) for k, v in st["deref_shapes"].items())),
+        "subscript_bases": dict(sorted(
+            (k or "?", v) for k, v in st["subscript_bases"].items())),
+        "pointer_binops": dict(sorted(
+            (k or "?", v) for k, v in st["pointer_binops"].items())),
+        # Every block-scope object's storage duration.  ZERO static locals is
+        # what lets a frame be created and destroyed as a unit (memory §2.2).
+        "block_scope_objects": sum(
+            1 for n in of("VarDecl")
+            if (st["durations"].get(n.get("id")) or (None, None))[1] == "block"),
+        # A block-scope `static` has block SCOPE and static DURATION, so it
+        # outlives its frame.  ZERO in the corpus, which is what lets a frame
+        # be created and destroyed as a unit (memory §2.2).
+        "block_scope_static": sum(
+            1 for n in of("VarDecl")
+            if (st["durations"].get(n.get("id")) or (None, None)) == ("static", "block")),
+        # The J.1 register's evidence (docs/c-semantics-design.md §4.5): the
+        # `∀ order` obligation's DOMAIN, and the two shapes that would make it
+        # expensive.  Both of those measure ZERO on this corpus.
+        "call_sites_by_argc": {str(k): v for k, v in sorted(argc.items())},
+        "call_arg_order_domain": len(order_domain),
+        "call_arg_two_effects": len(two_effects),
+        "call_arg_order_sites": sorted(
+            "%s:L%d" % (_callee_name(c), _line_of(c)) for c in order_domain),
+        "unsequenced_operands_both_effectful": unseq_both,
         "full_expr_convention": "C23 6.8 — includes declarator initializers",
         "full_exprs": st["full_exprs"],
         "full_exprs_multi_effect": len(st["multi_effect"]),
@@ -297,13 +515,85 @@ def compare(new, old):
     return 0
 
 
+SELFTEST_C = """static int g;
+int f(int prm) { int loc; int *a = &g, *b = &loc, *c = &prm; return *a + *b + *c; }
+"""
+
+
+def selftest():
+    """Assert the FRONTEND FACT the storage-duration pre-pass exists for.
+
+    The old guard read `storageClass` off the reference stub, where clang
+    does not put it, so it classified `&g` on a file-scope object as
+    automatic.  This checks BOTH halves: the field is still absent, and the
+    id-resolved classification still separates the three cases.  If clang
+    ever starts emitting the field, this fails LOUDLY rather than letting
+    the census drift back to a number nobody re-derived.
+    """
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "selftest.c")
+        with open(src, "w") as fh:
+            fh.write(SELFTEST_C)
+        ast = run(["clang"] + AST_FLAGS + [src])
+        if ast.returncode != 0 or not ast.stdout:
+            sys.exit("c_construct_census --selftest: clang failed\n%s" % ast.stderr[:800])
+        tree = json.loads(ast.stdout)
+        durs = {}
+        durations(tree, durs)
+        st = {"file": None, "target": "selftest.c", "hits": [], "member_on_call": 0,
+              "full_exprs": 0, "multi_effect": [], "file_scope": 0,
+              "file_scope_init": 0, "addr_automatic": 0, "addr_static": 0,
+              "addr_subobject": 0, "addr_sub_automatic": 0, "addr_sub_static": 0,
+              "member_arrow": 0, "member_dot": 0,
+              "deref_shapes": collections.Counter(),
+              "subscript_bases": collections.Counter(),
+              "pointer_binops": collections.Counter(),
+              "line": 0, "durations": durs, "types": collections.Counter()}
+        walk(tree, st)
+        stubs = []
+
+        def find(n):
+            if isinstance(n, dict):
+                if n.get("kind") == "DeclRefExpr" and n.get("referencedDecl"):
+                    stubs.append(n["referencedDecl"])
+                for v in n.values():
+                    find(v)
+            elif isinstance(n, list):
+                for v in n:
+                    find(v)
+
+        find(tree)
+        bad = [s for s in stubs if "storageClass" in s]
+        fails = []
+        if bad:
+            fails.append("referencedDecl NOW carries `storageClass` (%d stubs) — the "
+                         "pre-pass is no longer the only way to answer, and the "
+                         "docstring's measured claim is stale" % len(bad))
+        if (st["addr_automatic"], st["addr_static"]) != (2, 1):
+            fails.append("&-classification is (automatic=%d, static=%d), expected (2, 1): "
+                         "`&loc` and `&prm` are automatic, `&g` is not"
+                         % (st["addr_automatic"], st["addr_static"]))
+        if fails:
+            sys.exit("c_construct_census --selftest FAILED:\n  " + "\n  ".join(fails))
+        print("c_construct_census --selftest ok: referencedDecl carries no "
+              "storageClass (%d stubs checked); &automatic=2 &static=1" % len(stubs))
+        return 0
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("source", help="the C translation unit to census")
+    ap.add_argument("source", nargs="?", help="the C translation unit to census")
+    ap.add_argument("--selftest", action="store_true",
+                    help="check the frontend facts the census depends on, and exit")
     ap.add_argument("-o", "--output", help="write the census JSON here")
     ap.add_argument("--compare", metavar="JSON",
                     help="print the delta against a previous run and exit")
     args = ap.parse_args()
+    if args.selftest:
+        return selftest()
+    if not args.source:
+        ap.error("a source file is required (or --selftest)")
     if not os.path.exists(args.source):
         sys.exit("c_construct_census: no such file: %s" % args.source)
     data = census(args.source)

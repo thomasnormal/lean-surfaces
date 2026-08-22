@@ -194,7 +194,7 @@ libc names  27 -> 27   added: none   dropped: none
   call_sites                            290 ->    320  (+30)
   external_call_sites                   124 ->    146  (+22)
   array_subscripts                      295 ->    328  (+33)
-  addr_of_automatic                      67 ->     86  (+19)
+  addr_of_automatic                      67 ->     86  (+19)   [both stale; see §2.2(b)]
   overflow_capable_sites                292 ->    327  (+35)
   float_literals                         10 ->     15  (+5)
   string_literals                        96 ->    126  (+30)
@@ -383,9 +383,15 @@ locals are `REnv := List (String × RVal)` — a binding with no address at
 all; its heap is `Heap := Array Obj` where `Addr := Nat` and the address
 IS the array index. Measured against that:
 
-* **86 sites take `&` of an automatic object**, and **20 take `&` of a
-  subobject**. An environment binding has nothing to take the address
-  of. `struct kcctx c = { … }; gen_moves(p, kc_cb, &c);` (L369-370) is
+* **31 sites take `&` of an automatic object**, and **20 take `&` of a
+  subobject** (9 of an automatic one). An environment binding has nothing
+  to take the address of. *(Corrected at M2 inch 2: this bullet read "86
+  automatic" from a guard that could not see storage duration —
+  `referencedDecl` carries no `storageClass`, so every object designator
+  passed. 55 of the 86 are `&` of a FILE-SCOPE object. The decision is
+  unchanged and the number is smaller;
+  `harness/c_construct_census.py --selftest` now pins the frontend fact.)*
+  `struct kcctx c = { … }; gen_moves(p, kc_cb, &c);` (L369-370) is
   not an exotic corner — it is the corpus's CALLBACK PROTOCOL, the
   mechanism behind all **19 indirect calls** and every one of the six
   `*ctx` structs (L360, L655, L683, L706, L1005, L1296). The very first structural choice differs, and the

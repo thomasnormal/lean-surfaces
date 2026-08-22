@@ -1,6 +1,10 @@
 {
-  "addr_of_automatic": 86,
+  "addr_of_automatic": 31,
+  "addr_of_sites": 106,
+  "addr_of_static": 55,
   "addr_of_subobject": 20,
+  "addr_of_subobject_automatic": 9,
+  "addr_of_subobject_static": 11,
   "array_subscripts": 328,
   "binary_op_sites": 1007,
   "binary_ops": {
@@ -25,7 +29,30 @@
     "|": 15,
     "||": 28
   },
+  "block_scope_objects": 250,
+  "block_scope_static": 0,
+  "call_arg_order_domain": 7,
+  "call_arg_order_sites": [
+    "fmt_move:L978",
+    "map_find_h:L428",
+    "printf:L1301",
+    "set_knob:L1317",
+    "set_knob:L1331",
+    "set_knob:L1363",
+    "set_knob:L1369"
+  ],
+  "call_arg_two_effects": 0,
   "call_sites": 320,
+  "call_sites_by_argc": {
+    "0": 18,
+    "1": 87,
+    "2": 147,
+    "3": 46,
+    "4": 6,
+    "5": 13,
+    "6": 1,
+    "9": 2
+  },
   "callee_counts": {
     "abort": 1,
     "apply_uci_moves": 2,
@@ -134,6 +161,10 @@
   "cstyle_casts": {
     "IntegralCast": 38,
     "NullToPointer": 57
+  },
+  "deref_operand_shapes": {
+    "DeclRefExpr": 20,
+    "MemberExpr": 4
   },
   "enum_constants": 11,
   "enum_decls": 3,
@@ -260,6 +291,14 @@
   "node_kinds_distinct": 45,
   "object_like_macros": 3,
   "overflow_capable_sites": 327,
+  "pointer_binops": {
+    "!=": 4,
+    "&&": 5,
+    "+": 8,
+    "-": 4,
+    "=": 20,
+    "||": 3
+  },
   "preprocessed_lines": 3335,
   "profile": {
     "flags": [
@@ -267,6 +306,20 @@
       "-D_FORTIFY_SOURCE=0"
     ],
     "frontend": "apple-clang-17"
+  },
+  "ptr_consumed": {
+    "deref_star": 24,
+    "lvalue_to_rvalue": 1837,
+    "member_arrow": 226,
+    "member_dot": 184,
+    "subscript": 328
+  },
+  "ptr_produced": {
+    "address_of": 106,
+    "array_to_pointer_decay": 405,
+    "function_to_pointer_decay": 307,
+    "null_to_pointer": 110,
+    "void_bitcast": 52
   },
   "record_decls": 13,
   "scalar_types": {
@@ -316,6 +369,12 @@
   "sizeof_sites": 12,
   "source": "sunfish.c",
   "string_literals": 126,
+  "subscript_bases": {
+    "ArraySubscriptExpr": 18,
+    "DeclRefExpr/automatic": 139,
+    "DeclRefExpr/static": 98,
+    "MemberExpr": 73
+  },
   "typedefs": 7,
   "unary_op_sites": 311,
   "unary_ops": {
@@ -325,5 +384,6 @@
     "++": 58,
     "-": 38,
     "--": 5
-  }
+  },
+  "unsequenced_operands_both_effectful": 0
 }

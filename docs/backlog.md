@@ -17650,3 +17650,91 @@ hard way and written up in `scratchpad/build-lock-log.md`:
 
 Both are now amendments in the protocol. Lane process count verified **0** by
 cwd/parentage at release.
+## L72 — M2 INCH 2's CENSUS: the `&`-of-automatic evidence is a THIRD the size it was published at, and the guard could not see storage duration (2026-08-22)
+
+*(C-tier lane, M2 build. §L57 is the design this executes; §L54 is the goal it
+is scored against.)*
+
+Inch 2's census, run before its model was stated, and it began by refuting a
+number the C tier has quoted since §L35.
+
+**THE CORRECTION.** `docs/c-tier-charter.md` §2.2(b) and
+`docs/c-semantics-design.md` §2.2 both said **86 sites take `&` of an automatic
+object**. The real number is **31**. The other 55 are `&` of a FILE-SCOPE
+object, which proves nothing about locals.
+
+The cause is the §L25 law's own named failure mode — *a guard that cannot see
+its numbers is decoration.* `harness/c_construct_census.py` classified a target
+with
+
+    decl.get("storageClass") != "static"
+
+on the `referencedDecl` stub, and **clang's `referencedDecl` carries no
+`storageClass` at all** — measured, not guessed: a three-line probe over `&g`,
+`&loc` and `&prm` shows the field absent from every stub. So the test was
+vacuously true and counted every object designator, static duration included.
+The fix is a PRE-PASS that maps each declaration's `id` to its storage
+duration, and `--selftest` now asserts the frontend fact (the field is still
+absent; `&automatic=2, &static=1` on the probe) so the guard cannot go blind
+again. **Fixes live in gates**: the census is regenerated, not annotated.
+
+The decision is untouched — 31 is still 31 more sites than an environment
+binding can support, and `struct kcctx c = …; gen_moves(p, kc_cb, &c)` is still
+the callback protocol. The evidence is a third the size, and it is now the
+right evidence.
+
+| `&` sites, resolved by id | count |
+| --- | ---: |
+| automatic object | **31** |
+| file-scope object | 55 |
+| subobject (`&x.f`, `&x[i]`) | 20 — 9 automatic, 11 static |
+| **total** | **106** |
+
+**AND THE CENSUS REORDERED THE INCH.** It asked a question the design had not:
+which operations PRODUCE a pointer, and which CONSUME one.
+
+| produces | sites | | consumes | sites |
+| --- | ---: | --- | --- | ---: |
+| **array-to-pointer decay** | **405** | | lvalue→rvalue load | 1837 |
+| function-to-pointer decay | 307 | | `p->f` | **226** |
+| `&` (all forms) | 106 | | `a[i]` | 328 |
+| null pointer constant | 110 | | `x.f` | 184 |
+| `void*` ↔ `T*` bitcast | 52 | | `*p` | **24** |
+
+**`&` is the third-largest producer, behind decay by 4×, and the explicit `*`
+is the smallest consumer — `->` outnumbers it 226 to 24.** A memory model
+written around `&` and `*` would have been written around this corpus's rare
+cases. Decay and `->` carry the traffic, so they are what the inch states
+first.
+
+Two more rows the frame discipline rests on: **250 block-scope objects, of
+which 0 are `static`** — the census now reports SCOPE and DURATION separately,
+because a block-scope `static` outlives its frame and assuming none exist is
+different from measuring that none do. And subscript bases split 139
+automatic / 98 file-scope / 73 through a member / 18 nested: every one an array
+object reached by decay, never an integer address.
+
+**THE J.1 INTERFERENCE CENSUS** (Thomas's ruling: *"a program is only correct
+if it would be correct under any argument evaluation order"*) is measured here
+because it is cheap and it sizes the obligation:
+
+* **7** call sites of 320 have ≥2 arguments with an effect in any argument —
+  the entire `∀ order` domain: `map_find_h:L428`, `fmt_move:L978`,
+  `printf:L1301`, `set_knob:L1317/1331/1363/1369`.
+* **0** call sites have TWO effectful arguments.
+* **0** binary operators have an effect in both operands (891 with unsequenced
+  operands, excluding `&&`/`||`/`,`).
+
+At all 7 the effectful argument is a nested call and the siblings are address
+computations or plain scalar reads, so the per-site discharge is "can this
+callee write what these siblings read" — inch 5's material, priced at 7 sites
+rather than 320.
+
+### Triad
+
+`lake build` **3693 jobs green** (no Lean changed here); `docs_check` 73/73, 15
+illustrative-exempt; `diff_test` **1394 cases, 0 failed**, 118 whitelisted,
+1276 matched; `script_corpus` 65 scripts, 0 failed, 50 matched, 15 loud.
+`c_construct_census --selftest` passes and the census is byte-identical on a
+double run. No Lean declarations moved, so no axioms moved; no `sorry`, no
+`native_decide`.

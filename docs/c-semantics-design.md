@@ -109,15 +109,62 @@ un-retrofittable.
 
 The Python tier's locals are `REnv := List (String × RVal)` — bindings
 with no address. C cannot do that, and the census says so numerically:
-**86 sites take `&` of an automatic object and 20 take `&` of a
-subobject.** `struct kcctx c = { … }; gen_moves(p, kc_cb, &c);`
-(L369-370) is not a corner — it is the corpus's callback protocol, the
-mechanism behind all **19 indirect calls** and every one of its six
-`*ctx` structs.
+**31 sites take `&` of an automatic object and 20 take `&` of a
+subobject** (9 of them rooted in an automatic). `struct kcctx c = { … };
+gen_moves(p, kc_cb, &c);` (L369-370) is not a corner — it is the corpus's
+callback protocol, the mechanism behind all **19 indirect calls** and
+every one of its six `*ctx` structs.
+
+> **Correction, made at this inch.** This section previously read "86
+> sites take `&` of an automatic object", and so did
+> `docs/c-tier-charter.md` §2.2(b) and `docs/backlog.md` §L35/§L57. The
+> number came from a guard that could not see the fact it tested:
+> `harness/c_construct_census.py` classified a target by
+> `referencedDecl.storageClass != "static"`, and **clang's
+> `referencedDecl` stub carries no `storageClass` at all** — so the test
+> was vacuously true and counted every object designator. Resolving the
+> declaration by `id` instead splits the 106 `&` sites into **31
+> automatic, 55 file-scope, 20 subobject**. The decision is untouched — 31
+> is still 31 more than an environment binding can support — but the
+> evidence is a third the size, and `--selftest` now pins the frontend
+> fact so the guard cannot go blind again. It is the §L25 law's own
+> failure mode: *a guard that cannot see its numbers is decoration.*
 
 So every automatic variable is allocated as an object on block entry with
 all bytes indeterminate, and killed on block exit. A pointer to a dead
 automatic is a well-formed VALUE; dereferencing it refuses.
+
+### 2.2a Where pointers actually come from — and it is not `&`
+
+The re-census asked a question §2.2 had not: which operations in the
+corpus PRODUCE a pointer, and which CONSUME one. The answer reorders the
+inch's work.
+
+| produces a pointer | sites | | consumes a pointer | sites |
+| --- | ---: | --- | --- | ---: |
+| **array-to-pointer decay** | **405** | | lvalue→rvalue load | 1837 |
+| function-to-pointer decay | 307 | | `p->f` | **226** |
+| `&` (all forms) | 106 | | `x.f` | 184 |
+| null-pointer constant | 110 | | `a[i]` | 328 |
+| `void*` ↔ `T*` bitcast | 52 | | `*p` | **24** |
+
+**`&` is the third-largest pointer producer, behind decay by 4×**, and
+the explicit `*` is the *smallest* consumer — `->` outnumbers it 226 to
+24. A memory model built around `&`/`*` would have been built around the
+corpus's rare cases. Decay (C23 §6.3.2.1) and `->` (§6.5.2.3, defined as
+`(*p).f`) are the operations that carry the traffic, so they are the ones
+the inch states first and gates hardest.
+
+Two more rows the model rests on, both measured:
+
+* **250 block-scope objects, of which 0 are `static`.** A block-scope
+  `static` has block SCOPE and static DURATION, so it outlives its frame;
+  the corpus has none, which is what lets a frame be created and
+  destroyed as a unit. The census now reports scope and duration
+  separately so this stays a measurement rather than an assumption.
+* **Subscript bases**: 139 automatic, 98 file-scope, 73 through a member,
+  18 nested. Every one is an array object reached by decay, not an
+  integer address — so `(obj, off)` is the shape the corpus indexes in.
 
 ### 2.3 Why the allocator is v0, measured
 

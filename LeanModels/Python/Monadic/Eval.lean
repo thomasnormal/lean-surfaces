@@ -193,8 +193,15 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       else if isModuleDunder fname then
         .preRefuse s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
       else
+        -- The absent-arm LIVE view (prefix views during init; the full table
+        -- post-init). A live CLOSURE dispatches — a module-level lambda is an
+        -- exec-bound closure — anything else is the faithful not-callable
+        -- TypeError, and only a genuine MISS may be the NameError.
         match Env.lookup globals fname with
-        | some _ => .notYetArm s!"call: live module binding '{fname}'"
+        | some (.ref a) =>
+            if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
+            else .callClosure a
+        | some v => .notCallable v.typeName
         | Option.none =>
           if isPyBuiltinName fname then .preRefuse (unmodelledBuiltinMsg fname)
           else if (moduleGlobals m).2 then .preNameError fname
@@ -277,6 +284,34 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | some line => do emit line; pure .none
     | Option.none =>
         refuse "print() of a value the tier cannot render EXACTLY: a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §effects"
+  else if fname == "dict" then
+    -- `dict()` is the empty mapping and `dict(d)` is CPython's shallow COPY (a
+    -- fresh object, never an alias — the whole point of writing it). A pairs
+    -- ITERABLE stays loud: rebuilding it needs the per-insert hashability and
+    -- duplicate-key rules, and guessing them would be silent corruption. The
+    -- keyword form `dict(k=v, …)` lives in the kwargs arm.
+    match vs with
+    | [] => do let a ← heapPush (.dict #[] 0); pure (.ref a)
+    | [v] =>
+      match v with
+      | .ref ad => do
+          match Heap.get? (← frameHeap) ad with
+          | some (.dict entries _) => do
+              let a ← heapPush (.dict entries 0); pure (.ref a)
+          | some (.list _) =>
+              refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+          | some (.generator ..) =>
+              refuse "dict() over a generator of pairs is outside the tier (docs/memory-model.md)"
+          | some (.pyset _) =>
+              raisePy (.typeError "cannot convert dictionary update sequence element #0 to a sequence")
+          | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
+          | some (.cell _) => refuse cellInternal
+          | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
+          | Option.none => refuse danglingMsg
+      | .listV _ =>
+          refuse "dict() over a sequence of key/value pairs is outside the tier (the per-insert hashability and duplicate-key rules are not guessed; a dict display or dict(k=v, …) is in tier)"
+      | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+    | vs => raisePy (.typeError s!"dict expected at most 1 argument, got {vs.length}")
   else if fname == "range" then
     liftRes (rangeMake (← frameHeap) vs)
   else if fname == "max" || fname == "min" then
@@ -1154,7 +1189,15 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                   | .user cid _ =>
                       if cid == ci then execOpenList K m handler.toList else raisePy e
                   | e => raisePy e)
-  | .importFrom mod _ _ _ => notYet s!"statement: from {mod} import …"
+  | .importFrom mod _ _ _ =>
+      -- Pass 0 (§import forms): the importable universe is EMPTY, so every
+      -- admitted from-import RAISES — fuel-free, state unchanged, never `.ok`.
+      -- The EXTRACTOR's admission is what makes the raise faithful: either the
+      -- module is absent from the pinned platform inventory (so the raise IS
+      -- CPython's own `ModuleNotFoundError`), or the statement sits in
+      -- import-guard position and the raise is caught by construction, the
+      -- fallback branch then running from the RETAINED state.
+      raisePy (.importError mod)
   termination_by structural s => s
 
 /-- A block stops at the first non-`next` flow. -/

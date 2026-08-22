@@ -229,3 +229,60 @@ whole-log verdict, and a multi-line count that must not dedupe. Live path
 exercised on a mixed log, a green log, an unrecognized error, `--list`,
 `--explain` and its refusal. **No Lean was executed** — the tool reads text,
 so it is safe outside a tenure (A11).
+
+---
+
+## 2026-08-22-qol-4 — `docs/law-index.md`: 315 laws, and every one is a POINTER
+
+The page a lane loads at session start. **315 rows across five buckets** —
+measurement 63, statement 100, proof-engineering 55, build+ops 64,
+clone-identity 33 — swept from `docs/family-architecture.md` (including the
+§7.1a register), `AGENTS.md`, every `docs/backlog/<lane>.md`, the `§Lnn`
+archive, `docs/duplication-audit.md`, and the three scripts that carry laws
+as code (`tools/triad.sh`, `tools/ci.sh`, `tools/docs_check.py`).
+
+**It restates nothing.** Each row is a hook phrase — the project's own words
+wherever possible — and a pointer to the durable home. That is not modesty,
+it is §7.1a's lesson applied to itself: a summary would be a fourteenth copy
+of each rule, which is exactly the defect `docs/duplication-audit.md`
+measured across the census contract. Read the law where it lives; use this
+page to find it.
+
+### The index's own ids are NOT amendment numbers
+
+`MEAS-`, `STMT-`, `PROOF-`, `OPS-`, `CLONE-`. A second `A1..An` numbering
+over the same letters would collide with §7.1a's amendments — `A4` already
+means "the owner file is written once under `set -C`" — and a citation trap
+in the index of citations is the last place it belongs.
+
+### Three traps in the citations themselves, recorded on the page
+
+1. **Two register rows are LOST at source.** §7.1a carries no recovered text
+   for amendments 1 and 3. Any claim that the protocol is fully written down
+   is **false by the register's own admission**, and the index says so rather
+   than quietly listing eleven amendments as though they were thirteen.
+2. **`docs/backlog.md`'s bare "law N" numbering has drifted** — §L41 records
+   *"the FIFTH renumber this lane has taken today"*, and later entries cite a
+   "law 5" of an entry whose own list has three. Cite by the `§Lnn` that
+   houses the law, never by a bare law number.
+3. **`§5.1`/`§5.2` resolve differently depending on which file you stand in**:
+   `docs/duplication-audit.md` has its own, unrelated to the family doc's.
+   Always carry the filename — the same collision class the audit flagged for
+   `L2`/`L3`/`L4`.
+
+### The one rule the index adds
+
+**Append the row when you append the backlog entry, in the same landing.** An
+index a lane has to remember to update is an index that goes stale, and a
+pointer to a durable home is not a durable home.
+
+### Triad
+
+Docs-only landing: `--classify-only` reports `docs`, no build, no tenure,
+`python3 tools/docs_check.py` green (**83 marked blocks, 83 ok**). Every
+cited per-lane backlog id was verified to resolve in the tree at push time
+(`es-1`, `c-1`, `ada-1`, `sv-1`, `sunfish-rtrack-4/-5`, `lean-tier-2/-4`,
+`wasm-1`, `research-1`), and the family-doc subsection numbers were checked
+against the heading list rather than remembered — §5.4a's retrieval clause:
+**a grep that agrees with your prior is the one to re-run.** No Lean was
+executed.

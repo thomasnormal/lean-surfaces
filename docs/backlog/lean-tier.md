@@ -393,3 +393,93 @@ no PR, no comment, no contact. The arena's test corpus was sparse-fetched
 (3.4 MB, `df` first per A11: 199Gi free) and read only. No Lean run, no build, no
 ticket taken — both verifications were source measurements, so the queued rebuild
 was never needed and the machine (queue depth 5) was left alone.
+
+---
+
+## 2026-08-22-lean-tier-5 — `TrProj` written PARAMETRICALLY, under explicit approval to take adjacent-to-in-flight work
+
+### The rule that bends here, and why it is said rather than smoothed
+
+The endgame ruling gave this lane two constraints: **take the untouched
+complement**, and **do not touch PR #43/#32 territory**. Entry 4 measured that
+they conflict for `TrProj` — the untouched item is *downstream* of the in-flight
+one, because a projection needs constructor data and `VEnv.addInduct` is the
+only route to it.
+
+**This landing takes adjacent-to-in-flight work under explicit coordinator
+approval.** The untouched-complement rule bends because the census found a
+conflict the ruling did not know about when it was made. Recording that plainly
+is the point: a lane that quietly widened its remit and called it the complement
+would have been doing something else than what was authorised.
+
+### What was written — `docs/lean4lean-trproj-parametric.lean`, 148 lines, 0 sorries
+
+Verified sorry-free **by this lane's own obligation instrument**, which is the
+right use of it: raw 3, **real 0**, all three hits prose in the docstring
+explaining that `TrProj` is `sorry` upstream.
+
+**The minimal assumed interface** is `ProjIface`, and it is exactly two fields —
+`nparams` and `nfields` per structure name. Deliberately excluded, because a
+projection does not consume them: the constructor's name, its type, the universe
+parameters, the inductive's indices. Anything more would be a guess about how
+`addInduct` will represent things. The file marks it in-line as **AN ASSUMPTION
+TO RECONCILE**, and states that reconciliation is a **substitution** — swap in
+the real environment lookup and re-instantiate — never a redesign. Every theorem
+is proved for an *arbitrary* `ProjIface`, which is what makes that true.
+
+**The sound side condition is the definition's centre**, as required, and it is
+the genuinely novel, representation-independent part:
+
+* `structSortReduces` — the structure's type must **reduce to a sort**. A stuck
+  sort is a refusal, never a silent "not a `Prop`".
+* `propSquash` — where the structure is a proposition, the projected field must
+  be one too.
+
+**Witnesses cited in-file**: the arena's `proj-of-stuck-prop` and
+`proj-of-subst-prop`, proofs of `False` accepted by the official kernel at
+v4.28.0, v4.29.1, **v4.33.0 (our pin)** and nightly; and the upstream fix split —
+**#14807** (the projection half: `is_prop` must require the inferred type to
+reduce to a sort) and **#14806** (the defeq-cache half). The file records that
+`proj-of-subst-prop` reaches the same projection *without* the cache, which is
+why the projection defect stands alone, and that lean4lean's executable already
+enforces the rule via `ensureSortCore` — which is why it scores 67/67 where our
+pinned kernel scores 63/67.
+
+**The computational half** mirrors lean4lean's own `reduceProjCore` (which
+selects `args[numParams + idx]`), indexed from the right of the `.app` spine.
+That is not a convenience: `lift`, `inst` and `instL` all distribute over `.app`,
+so the seven open `TrProj.*` obligations — all of which are structural
+(commutation with substitution, plus functionality) — become near-mechanical
+against this shape. **None of the seven needs the constructor table**, which is
+precisely why they can be validated before the reconciliation lands.
+
+### Validation
+
+`ArgFromRight.det` and `ProjField.det` — the computational half is **functional**,
+proved outright by a two-case induction rather than up to definitional equality.
+Its consumer is `TrProj.uniq`, the cheapest of the seven.
+
+**Typechecking is QUEUED, not done.** The ticketed build (A9 FIFO; A11, since all
+Lean execution is now locked; A14 scoped rather than full-tree; A15's
+per-process line) sat 6th in a six-deep queue at the end of this dispatch and had
+not reached the head. The definition is therefore **written and
+instrument-verified sorry-free, but NOT yet typechecked**, and that is stated
+rather than implied. The build script is `scratchpad/leantier-m3.sh` and its log
+`scratchpad/leantier-m3.log`.
+
+### Hygiene
+
+Work is on the local branch `lean-surfaces/trproj` with no upstream tracking, and
+the artifact is copied into **our** repo because the clone is scratch. No PR, no
+comment, no contact — engagement remains Thomas's call. The file carries an
+Apache-2.0 header matching the project it is written against.
+
+### The central fact is now on the charter's front page
+
+**lean4lean's model is further from Lean's kernel than its executable checker
+is** — the checker is 67/67 on the arena's soundness suite while the model it is
+proved against has no projections, no unit-like rule, no structure eta and no
+inductives. A large share of the open work is **specification gaps wearing proof
+obligations' clothes**, and the triage rule that catches them — *before asking
+whether a proof is hard, ask whether the model can conclude it at all* — is now
+stated at the top of the charter.

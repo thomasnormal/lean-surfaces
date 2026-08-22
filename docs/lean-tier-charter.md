@@ -1,8 +1,27 @@
 # The LEAN tier: Lean 4's kernel language as a versioned surface
 
-**Status: founding charter. No semantics. No Lean.** Thomas chartered this
-tier on 2026-08-22: *"Adding Lean as another language to lean-surfaces. This
-would allow us to prove correctness of lean itself, similar to lean4lean."*
+**Status: founding charter, plus M1-M3.** Thomas chartered this tier on
+2026-08-22: *"Adding Lean as another language to lean-surfaces. This would allow
+us to prove correctness of lean itself, similar to lean4lean."* The endgame is
+**RULED — option (b), consume-and-extend** (§10.2).
+
+> ## THE TIER'S CENTRAL FACT
+>
+> **lean4lean's MODEL is further from Lean's kernel than its EXECUTABLE CHECKER
+> is.** The checker handles projections, unit-like types and structure eta
+> correctly today — it scores 67/67 on the Lean Kernel Arena's soundness suite
+> where our own pinned C++ kernel scores 63/67. The *model* it is proved against
+> has **no projections, no unit-like rule, no structure eta, and no inductives**:
+> `VExpr` has 6 constructors to Lean's 12, and `VEnv` holds a name→type map and a
+> set of equations, nothing more.
+>
+> **So a large share of the open work is not proof effort. It is SPECIFICATION
+> GAPS WEARING PROOF OBLIGATIONS' CLOTHES** — theorems that cannot be proved
+> because the model contains no rule that could conclude them, and definitions
+> that cannot be written because the model cannot express their subject. M3
+> withdrew two targets on exactly this ground (§8, §10.2), and the triage rule
+> that catches it is now family-wide: **before asking whether a proof is hard,
+> ask whether the model can conclude it at all.**
 
 This document is the census and the positioning. Everything numeric in it was
 **measured at our pin** by an instrument that ships with it

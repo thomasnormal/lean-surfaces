@@ -278,15 +278,15 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
 def skont (m : Module) : Nat → SKont
   | 0 => SKont.bottom
   | fuel + 1 =>
-    let S := skont m fuel
-    let K := kont m fuel
-    { stmts   := scriptStmtsAt S m
-      one     := scriptOneAt S K m
-      items   := scriptItemsAt S m
-      forSeq  := scriptForAt S m
-      forList := scriptForListAt S m
-      forGen  := scriptForGenAt S K m
-      whileL  := scriptWhileAt S K m }
+    -- LAZY, for the reason `kont` documents at length: a strict `let` here makes
+    -- construction O(fuel), and script mode runs at fuel 1 000 000.
+    { stmts   := fun ss => scriptStmtsAt (skont m fuel) m ss
+      one     := fun s => scriptOneAt (skont m fuel) (kont m fuel) m s
+      items   := fun a n i t b => scriptItemsAt (skont m fuel) m a n i t b
+      forSeq  := fun t xs b => scriptForAt (skont m fuel) m t xs b
+      forList := fun t a i b => scriptForListAt (skont m fuel) m t a i b
+      forGen  := fun t a b => scriptForGenAt (skont m fuel) (kont m fuel) m t a b
+      whileL  := fun t b o => scriptWhileAt (skont m fuel) (kont m fuel) m t b o }
   termination_by structural fuel => fuel
 
 /-! ## §3 THE BOUNDARY — same type as the trunk's `runScriptClock` -/

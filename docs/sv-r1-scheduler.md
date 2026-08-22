@@ -180,85 +180,148 @@ starting position than this rung had any right to expect, and it is why
 the region upgrade is an extension rather than a rewrite.
 
 ---
-
 ## 3 THE CORPUS PRICE — which regions actually matter
 
-Which regions to build first is a measurement, not a preference. Counted
-with `rg -l` over both corpora (file counts; a construct is counted once
-per file). `sv-tests-2` figures are over its 21 186 `chapter-*` files.
+Which regions to build first is a measurement, not a preference.
 
-| construct | drives region | sv-tests-2 files | % |
-| --- | --- | ---: | ---: |
-| **`initial`** | **Active (+ time)** | **20 939** | **98.8%** |
-| `#<n>` delay | time advance / Inactive | 9 903 | 46.7% |
-| `assert property` | **Observed** | 1 777 | 8.4% |
-| `event` | Active (suspension) | 1 181 | 5.6% |
-| `clocking` | **Preponed** | 827 | 3.9% |
-| `##` cycle delay | Preponed | 698 | 3.3% |
-| `fork` | Active (interleaving) | 642 | 3.0% |
-| `program` | **Reactive** | 548 | 2.6% |
-| `#0` | **Inactive** | 356 | 1.7% |
-| `final` | Postponed-adjacent | 235 | 1.1% |
-| `always_ff` | Active/NBA | 229 | 1.1% |
-| `always_comb` | Active | 222 | 1.0% |
-| `join_none` | Active | 264 | 1.2% |
-| `wait(` | Active (suspension) | 96 | 0.5% |
-| `always_latch` | Active | 56 | 0.3% |
-| `$monitor` | **Postponed** | 47 | 0.2% |
-| `$strobe` | **Postponed** | 40 | 0.2% |
+**Method, and a correction to this section's first draft.** The counts
+below strip `//` and `/* */` comments with a character scanner, blank
+out string-literal bodies (so `$display("always @…")` cannot match), and
+drop surviving `:key:` metadata lines. **This section first published
+raw `rg -l` counts, flagged as upper bounds; several were materially
+off** — `final` by 1.8x, `event` by 3.3x, `$monitor` by 2.9x, `clocking`
+by 1.17x. The 98.8% headline survived unchanged, but the caveat was
+doing real work and the filtered numbers replace the raw ones here.
+Corpus A is all **21 631** `.sv` files; B is **1 034**.
 
-### 3.1 THE HEADLINE: the anchor corpus is 99.2% out of reach
+One corpus fact governs everything below: **A is 85.2% runtime tests**
+(18 426 files tagged `:type: simulation`), where **B is 33.4%** and 418
+of its files (40.4%) contain no process of any kind. A is a simulation
+suite; B is largely a parser suite.
 
-Files containing **none** of `initial`, `#<n>`, `fork`, `clocking`,
-`assert property`, `program`, `wait(`, `##`, `final` — i.e. files the
-present cycle model could in principle execute:
+### 3.1 Ranked, corpus A (21 631 files)
 
-| corpus | total | cycle-fragment-only | share |
+| construct | files | % | region |
+| --- | ---: | ---: | --- |
+| **`initial`** | 21 382 | **98.8** | Active + time |
+| **`$finish`** | 20 973 | **97.0** | Active |
+| **`$display`** | 20 056 | **92.7** | Active |
+| **`#` delay** (nonzero) | 10 033 | **46.4** | time wheel |
+| standalone `@(…)` | 3 063 | 14.2 | Active (suspend) |
+| blocking `=` in `always` | 3 173 | 14.7 ±1pp | Active |
+| `always #d` clock-gen | 2 731 | 12.6 | time wheel |
+| `assign` | 2 080 | 9.6 | Active |
+| `class` | 2 040 | 9.4 | *(not a region)* |
+| `assert property` | 1 796 | 8.3 | Observed |
+| **nonblocking `<=`** | **1 091** | **5.0** | **NBA** |
+| `covergroup` | 808 | 3.7 | Preponed |
+| `clocking` | 705 | 3.3 | Preponed |
+| `##` cycle delay | 690 | 3.2 | Preponed |
+| `fork` | 629 | 2.9 | Active (interleave) |
+| `program` | 467 | 2.2 | Reactive |
+| `event` decl / `->` trigger | 360 / 260 | 1.7 / 1.2 | Active |
+| `#0` | 283 | 1.3 | Inactive |
+| `always_ff` / `always_comb` / `always_latch` | 206 / 177 / 32 | 1.0 / 0.8 / 0.1 | Active + NBA |
+| `final` | 130 | 0.6 | Postponed-adjacent |
+| `wait(` | 94 | 0.4 | Active (suspend) |
+| `$strobe` / `$monitor` | 29 / 16 | 0.1 / 0.1 | **Postponed** |
+
+### 3.2 Rollup by region — union of files needing it
+
+| region | corpus A | corpus B |
+| --- | ---: | ---: |
+| **Active** | **21 438 (99.1%)** | 618 (59.8%) |
+| *(time wheel — not a region)* | **10 443 (48.3%)** | 134 (13.0%) |
+| Preponed | 3 285 (15.2%) | 46 (4.4%) |
+| Reactive | 2 870 (13.3%) | 46 (4.4%) |
+| Observed | 2 038 (9.4%) | 57 (5.5%) |
+| **NBA** | **1 091 (5.0%)** | 53 (5.1%) |
+| Inactive | 283 (1.3%) | 4 (0.4%) |
+| Re-NBA | 258 (1.2%) | 2 (0.2%) |
+| Re-Inactive | 38 (0.2%) | 0 |
+| Postponed | 43 (0.2%) | 2 (0.2%) |
+
+**The surprise, and it corrects an assumption this tier was built on:
+NBA is a LONG-TAIL region, not a core one.** Only **5.0%** of corpus A
+and 5.1% of B contain any nonblocking assignment. Only **15.6%** of A
+contains an RTL process (`always*`/`assign`) of any kind. **These are
+language-semantics suites, not RTL corpora** — and the M0 tier was
+designed around `always_ff`/`always_comb`/NBA, which together reach
+about one file in twenty. The cycle model is not merely incomplete; it
+is specialised for the *rarest* shape in the corpus.
+
+### 3.3 THE ACTIONABLE NUMBER: 0.7% → 68.0% in one capability
+
+Nested tiers, each relaxing the previous (a file is "handled" if it
+contains none of the out-of-scope groups):
+
+| tier | corpus A | of which have RTL | corpus B |
 | --- | ---: | ---: | ---: |
-| **sv-tests-2** (anchor) | 21 186 | **171** | **0.80%** |
-| public `sv-tests` | 1 034 | 451 | 43.6% |
+| **T0** strict Active+NBA only (no `initial`, no time, no output tasks, no fork/clocking/assertion/program/class) | **154 (0.7%)** | 15 | 310 (30.0%) |
+| T1 = T0 + `$display`/`$finish`/`$stop` | 159 (0.7%) | 19 | 311 (30.1%) |
+| T2 = T1 + `initial`/`final` | 8 280 (**38.3%**) | 174 | 667 (64.5%) |
+| **T3** = T2 + `#` delays and `always #d` clock-gen | **14 703 (68.0%)** | 2 917 | 685 (66.2%) |
 
-**Four fifths of one percent.** The tier's current scheduler can reach
-almost nothing in the corpus every coverage claim is measured against.
+*(T0 = 154 here vs the 171 this section first published; the difference
+is comment/string filtering plus the wider file set.)*
 
-**Why the two corpora differ so sharply** is itself the finding, and it
-is not a discrepancy: `sv-tests-2` is a *simulation* corpus — its tests
-are self-checking, so nearly every file drives stimulus from an
-`initial` block and prints a verdict. The public suite carries a large
-population of parse- and elaborate-only tests that never run, which is
-why 43.6% of it contains no scheduling construct at all. **A corpus of
-runnable tests is an `initial`-shaped corpus.** Any conformance ladder
-scored on simulation is therefore gated on `initial` before anything
-else.
+**Corpus B's 30% at T0 is inflated and should not be quoted**: 263 of
+those 310 files contain no process at all. Only **47 files (4.5%)** are
+both T0-clean and contain RTL.
 
-### 3.2 What this re-orders
+**Items 1-6 of the ranked table are ONE capability — a procedural
+process with a time wheel** (`initial` + `#` + standalone `@` +
+`$display`/`$finish`). That single addition takes corpus A from **0.7%
+to 68.0%**, in two steps worth **+37.6pp** (`initial`) and **+29.7pp**
+(delays). Nothing else on the ladder comes close.
 
-The charter framed the expensive half of clause 4 as the *reactive*
-family (Observed/Reactive/Re-NBA — clocking blocks, program blocks,
-assertions). The corpus disagrees about priority, though not about cost:
+The second capability is the **Preponed/Observed/Reactive cluster**
+(clocking + concurrent assertions + program blocks), worth roughly
+another 15pp — and Preponed 15.2% and Reactive 13.3% are essentially
+*one workload*, not two, concentrated in chapters 14/16/17/24/39.
 
-* **`initial` alone unlocks 98.8%** and needs only the **Active** region
-  plus the ability to advance time. It is one process kind and a time
-  loop, not a new region family.
-* **`#<n>` delays reach 46.7%** and need time advancement — the same
-  machinery.
-* The reactive family is a **long tail by file count**: assertions 8.4%,
-  clocking 3.9%, programs 2.6%. Expensive *and* rarer.
-* **Postponed is nearly unused** — `$strobe` 0.2%, `$monitor` 0.2% —
-  which is why §4.4 can implement it as a write-prohibited no-op and be
-  right about essentially the whole corpus.
+### 3.4 The regions are CHAPTER-LOCAL, which makes staging easy
 
-**So inch 4's internal order is decided by measurement**: Active with a
-time loop first (`initial`, `#`), Inactive next (`#0`, 1.7%), and the
-reactive family last — which is exactly what §7 inch 9 already defers,
-now with a number behind it rather than an intuition.
+| chapter | files | concentration |
+| --- | ---: | --- |
+| **4** (scheduling) | 430 | 85.3% delay, 34.2% NBA, 29.3% standalone `@`, **16.5% `#0`**, **7.7% `$strobe`/`$monitor`** |
+| **14** (clocking) | 463 | **100% clocking**, 99.6% standalone `@`, 36.1% NBA |
+| **16/17/39** (assertions/checkers) | 2 131 | 84.4% / 79.2% / 93.4% concurrent assertions |
+| **24** (programs) | 347 | **98.3% `program`** |
+| 9 (processes) | 563 | 38.0% `fork` |
+| 8/18 (classes/random) | 1 681 | 99.0% / 81.7% `class`, **~0% scheduling** |
+| 40 | 80 | 85% NBA, 85% RTL — the densest RTL chapter |
 
-One caution on the method: these are **lexical** counts. `\binitial\b`
-does not distinguish an `initial` block from the word in a comment, and
-the metadata headers were not stripped for this table. The counts are
-therefore upper bounds — but at 98.8% the conclusion is not sensitive to
-the error bar, and the independent M0 census agrees in direction: only
-**806 of 21 186 files (3.8%)** extract with zero `Unsupported` nodes.
+**Chapter 4 is the only place Inactive and Postponed matter at all**
+(`#0` 16.5% vs 1.3% corpus-wide; `$strobe`/`$monitor` 7.7% vs 0.2%).
+That is convenient and slightly circular — the chapter that tests the
+scheduler is the chapter that exercises its rare regions — but it means
+those two regions can be built *for chapter 4* rather than for the
+corpus, and scored there.
+
+**Chapters 8 and 18 (1 681 files) need object semantics, not event
+regions.** No scheduling work will move them, and ruling §6.3 puts them
+in scope — so they are a separate capability that R1 must not be
+measured against.
+
+### 3.5 What this re-orders
+
+The charter framed the expensive half of clause 4 as the **reactive**
+family. The corpus agrees about cost but inverts the priority:
+
+* **Active + a time wheel is the whole rung.** `initial` (98.8%),
+  `$finish` (97.0%) and `$display` (92.7%) are the universal
+  self-checking harness — a model that cannot run them cannot run the
+  suite, whatever else it supports.
+* **NBA, which the cycle model already has, is a 5% region.**
+* **Postponed can ship as a write-prohibited no-op** and be right about
+  99.8% of the corpus.
+* **Inactive is chapter-4-local** at 1.3% corpus-wide.
+
+So inch 4's internal order is settled by measurement: **Active with a
+time loop and the output tasks first**, Inactive next (cheap, and
+chapter 4 needs it), the reactive cluster last — which is what §7 inch 9
+already defers, now with numbers rather than intuition behind it.
 
 ---
 
@@ -487,16 +550,29 @@ document.
 | 1 | **This document** — region census, determinism boundary, corpus price | LANDED |
 | 2 | `Region`, the widened `ScheduleOracle`, `Slot`/`RegionTrace`, `isCycleFragment`, `cycleOf` — **types only**, no semantics | small; ~80 lines, no proofs |
 | 3 | The `cycleOf` stub + the divider statement shape (§6), against today's cycle semantics | small; unblocks rung A immediately |
-| 4 | `slotStep`: Preponed sample, Active/Inactive/NBA loop, Postponed write-prohibition. **Reactive family stubbed as empty, refusing loudly if reached** | the bulk of the rung |
+| **4a** | **`initial` + the TIME WHEEL + `$display`/`$finish`** — a procedural process, `#` delay, standalone `@`, and the two output tasks. **This is the +67pp inch** (§3.3): corpus A goes 0.7% → 68.0% | the bulk of the rung, and the payload |
+| 4b | `slotStep` proper: Preponed sample, the Active/Inactive/NBA loop, Postponed as a **write-prohibited no-op** (right about 99.8% of the corpus, §3.5). **Reactive family stubbed, refusing loudly if reached** | structural; mostly wiring 4a into the region ladder |
 | 5 | **The adequacy lemma** `cycleOf_runRegion` on the fragment | the hard theorem; the rung's centre |
 | 6 | Re-prove the 23 plumbing lemmas against `slotStep`/`runRegion` | mechanical, follows the definition tree |
 | 7 | Transfer the 156: rewrite `run` → `cycleOf ∘ runRegion`, re-check `Deterministic` and the `race_blk` witnesses, re-define `⊑@clk` through `cycleOf` | mostly mechanical *given* inch 5 |
 | 8 | Extractor + envelope: stop emitting `Process.unsupported` for `initial` and `#`; `language_version` first-class (charter §7.2 retrofit 3) | one function each; **21 envelope regens, gated by `sv_round_trip.py`** |
-| 9 | The Reactive family for real — program blocks, clocking blocks, assertions | a rung of its own; explicitly deferred past R1 |
+| 9 | The Preponed/Observed/Reactive cluster for real — clocking blocks, concurrent assertions, program blocks. **One workload, not three** (§3.3), worth ~15pp | a rung of its own; explicitly deferred past R1 |
+| — | *(not R1 at all)* Object semantics for chapters 8/18 — 1 681 files, ~0% scheduling constructs. **No scheduling work moves them and R1 must not be scored against them** | a separate capability |
 
 **Inches 2 and 3 are trivially landable now** and are worth landing
-before inch 4, precisely because they let rung A's divider statement be
+before inch 4a, precisely because they let rung A's divider statement be
 written in its final form while the semantics is still being built.
+
+**The corpus moved the payload from 4b to 4a.** This document's first
+draft put `slotStep` and its region ladder at the centre of the rung.
+The filtered census says the region *machinery* is not what buys
+coverage — a procedural process with a time wheel and two output tasks
+is. `initial` at 98.8%, `$finish` at 97.0% and `$display` at 92.7% are
+the suite's universal self-checking harness, and **a model that cannot
+run them cannot run the suite whatever else it supports.** 4b is still
+required — it is what makes 4a *correct* rather than merely useful, and
+it is what the adequacy lemma is stated against — but it is the frame,
+not the payload.
 
 ---
 

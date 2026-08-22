@@ -16835,15 +16835,20 @@ the divider's statement shape, and nine priced inches. Census-first per ruling
 §6.4. **No Lean lands with it** — inches 2-3 are ready but need a locked full
 build, and a speculative build is what the lock exists to prevent.
 
-**THE CORPUS HEADLINE, and it re-orders the rung's internals.** Counted with
-`rg -l` over both corpora: **`initial` appears in 20 939 of 21 186 sv-tests-2
-files — 98.8%**; `#<n>` delays in 46.7%; while `always_comb` is **1.0%** and
-`always_ff` **1.1%**. The anchor corpus is not RTL, it is **self-checking
-testbench code**. Files containing NONE of {`initial`, `#<n>`, `fork`,
-`clocking`, `assert property`, `program`, `wait(`, `##`, `final`} — i.e. what
-the present cycle model could in principle execute — number **171 of 21 186 =
-0.80%**. The public suite scores 43.6% on the same test, and the gap is itself
-the finding rather than a discrepancy: **a corpus of RUNNABLE tests is an
+**THE CORPUS HEADLINE, and it re-orders the rung's internals.** *(Numbers in
+this paragraph were first published as raw `rg -l` counts flagged as upper
+bounds; they are now REPLACED by comment/string-filtered counts over the full
+21 631-file corpus. The 98.8% headline survived unchanged, but `final` was off
+by 1.8x, `event` by 3.3x and `$monitor` by 2.9x — the caveat was doing real
+work.)* **`initial` appears in 21 382 of 21 631 sv-tests-2 files — 98.8%**;
+`$finish` **97.0%**; `$display` **92.7%**; `#<n>` delays **46.4%**; while
+`always_comb` is **0.8%** and `always_ff` **1.0%**. The anchor corpus is not RTL, it is **self-checking
+testbench code**. Files the present cycle model could in principle execute number **154 of
+21 631 = 0.7%**, of which only **15 contain an RTL process at all**. The public
+suite scores 30.0% on the same test — but **that number is inflated and should
+not be quoted**: 263 of its 310 files contain no process whatsoever, leaving
+**47 files (4.5%)** that are both clean and contain RTL. The gap is itself the
+finding rather than a discrepancy: **a corpus of RUNNABLE tests is an
 `initial`-shaped corpus**, where the public suite carries a large population of
 parse/elaborate-only tests that never run. Any conformance ladder scored on
 simulation is gated on `initial` before anything else. (Lexical counts, so
@@ -16857,10 +16862,31 @@ framed the expensive half of clause 4 as the REACTIVE family
 about cost but disagrees about priority: **`initial` alone unlocks 98.8% and
 needs only the Active region plus time advancement** — one process kind and a
 time loop, not a new region family — with `#<n>` at 46.7% needing the same
-machinery. The reactive family is a long tail BY FILE COUNT: assertions 8.4%,
-clocking 3.9%, programs 2.6%. **Postponed is nearly unused** (`$strobe` 0.2%,
-`$monitor` 0.2%), which is why it can ship as a write-prohibited no-op and be
-right about essentially the whole corpus.
+machinery. The reactive family is a long tail BY FILE COUNT: assertions 8.3%,
+clocking 3.3%, programs 2.2%. **Postponed is nearly unused** (`$strobe` 0.1%,
+`$monitor` 0.1%), which is why it can ship as a write-prohibited no-op and be
+right about **99.8%** of the corpus.
+
+**TWO FINDINGS THE RAW COUNTS MISSED ENTIRELY, and both matter.** (1) **NBA is
+a LONG-TAIL region, not a core one**: only **5.0%** of corpus A contains any
+nonblocking assignment, and only **15.6%** contains an RTL process of any kind.
+These are language-semantics suites, not RTL corpora — and the M0 tier was
+built around `always_ff`/`always_comb`/NBA, i.e. **specialised for the rarest
+shape in the corpus**, about one file in twenty. (2) **`$finish` (97.0%) and
+`$display` (92.7%) are the suite's universal self-checking harness** and were
+absent from the first table altogether; a model that cannot run them cannot run
+the suite whatever else it supports. Together with `initial` and `#` they are
+ONE capability — a procedural process with a time wheel — and the tiered
+measurement prices it exactly: **T0 strict Active+NBA 0.7% → +`$display`/
+`$finish` 0.7% → +`initial` 38.3% → +`#` delays 68.0%.** Two steps worth
+**+37.6pp** and **+29.7pp**. Nothing else on the ladder comes close, so the
+design's inch 4 was re-cut into **4a (the payload: `initial` + time wheel +
+output tasks)** and **4b (the region ladder: the frame that makes 4a correct)**.
+Regions also turn out **chapter-local**, which makes staging easy: chapter 4 is
+the only place Inactive (16.5% vs 1.3%) and Postponed (7.7% vs 0.2%) matter,
+chapter 14 is 100% clocking, 16/17/39 carry the assertions, 24 is 98.3%
+`program` — while **chapters 8/18 (1 681 files) need OBJECT semantics and ~0%
+scheduling, so R1 must not be scored against them.**
 
 **THE ESTATE METRIC WAS WRONG BY 3x — the fourth self-correction.** §L67
 published *"50 of 98 proof-carrying declarations (51%) are trace-shaped"* as

@@ -843,7 +843,7 @@ in `qol-1`, and it held.
 
 ### Triad
 
-`bash -n` clean. `--self-test`: **119 ok, 0 failed** (102 → 119, **17 new**;
+`bash -n` clean. `--self-test`: **118 ok, 0 failed** (102 → 118, **16 new**;
 102 already included the rebuild lane's four). Gate composition in all four
 combinations plus the announcement; lake-glob detection distinguishing a doc's
 `.lean` and a non-`.lean` path; import detection against a real fixture tree,
@@ -851,3 +851,22 @@ with the orphan reported, the imported one silent, and both exemptions
 asserted. Live on this tree: the refusal exits **2**, `--classify-only` exits
 **0** and reports, and the unimported line fires on a staged orphan. **No Lean
 was executed.**
+
+### The count was wrong AGAIN, and twice is a process defect
+
+`qol-12` reported a predicted 99 against a measured 98, and was corrected.
+This entry then did the identical thing: **119 written, 118 measured**. One
+slip is a slip; the same slip twice in three landings is a **process defect**,
+and the process was "write the entry, then run the self-test, then don't
+re-read the number."
+
+**The fix is ordering, not care.** The measured line is now pasted from the
+run into the entry — the self-test is run *first*, its last line copied, and
+the entry written around it. A number that is typed from intent has no
+provenance at all, which is §5.4a's subject exactly: *a number carries the
+state it was measured in.* Both wrong figures were attached to green runs, in
+entries whose whole purpose is to be citable later — which is what makes the
+cheap version of this failure worth two corrections rather than one shrug.
+
+Neither commit message is rewritten. `4d32526` and `92fcfcb` carry the wrong
+figures on master, and this line is how they resolve.

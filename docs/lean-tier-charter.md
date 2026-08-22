@@ -1355,6 +1355,46 @@ job, and it does not require any theorem at all. **Option (b) then upgrades the
 checker's warrant over time**, which is the right order — the gate first, the
 proof after.
 
+#### 10.5.1 THE FIRST HALF IS BUILT AND IT PASSES — M1 inch 5, measured
+
+`harness/lean_axiom_census.py` + `harness/lean_axiom_deps.lean` →
+`docs/lean-axiom-census.json`. It walks a module set, computes each
+declaration's full axiom closure, and classifies it against the three trust
+extensions §2.4 measured. **This is §0.1 II(a)'s receipt computed for a whole
+tier at once instead of one constant at a time — the difference between a
+property that is reviewed and one that is GATED.**
+
+**Measured over this repository's flagship tier** — `LeanModels.Python.*`, 21
+modules, **4 281 non-internal declarations** scanned in 2m11s:
+
+> **0 native-dependent. 0 sorry-dependent.**
+
+And over a wider sweep of 39 modules (Python + Sv + C), **7 475 declarations:
+the same, zero and zero.**
+
+**The instrument is calibrated in both directions**, because a gate that has
+only ever returned green is not known to work: run against `Init.Core` it
+**fails**, exit 1, reporting **5 native-dependent declarations** — and those five
+are `Lean.ofReduceBool`, `Lean.ofReduceNat`, `Lean.trustCompiler` and the two
+`reduceBool`/`reduceNat` opaques, i.e. *exactly the native-computation
+primitives themselves and nothing else.* A positive control that lands on
+precisely the right five constants is the strongest evidence available that the
+closure computation is correct.
+
+**What this does and does not establish.** It establishes that the flagship
+tier's theorems rest on no compiler-trusting axiom and contain no `sorry` — a
+real, mechanical, re-checkable property of the estate, and the half of §10.5
+that needs no theorem. It does **not** establish that the kernel checked them
+correctly; that is the other half, and it is what an independent checker (M1
+inch 6) buys. `sorryAx` is tracked separately from the trust extensions
+throughout, because an incomplete proof and a compiler-trusting proof are
+different failures and pooling them would misreport both.
+
+**Cost, so the gate is scheduled honestly:** ~2 minutes for 21 modules on one
+niced `lean` process, no `lake`, no build lock. That is a periodic or
+`maybe`-guarded check, not a per-PR one — the same call Mathlib's CI already
+makes about `leanchecker` (§9.1).
+
 ### 10.6 The recommendation, and its first milestone
 
 **Take (b), with (d) as its natural companion, (a)'s drift guard as a free
@@ -1380,7 +1420,7 @@ start before Thomas decides:
 | 2 | **the toolchain reconciliation, measured**: install `v4.33.0-rc2`, build `lean4lean` under the lock, run its own test suite. Report buildability — currently **NOT MEASURED** | every option needs a working checker on this box |
 | 3 | **the spec-rule instrument** — `harness/lean_spec_census.py` over the thesis LaTeX at pinned `master 0ba1787`, emitting the **71 kernel-relevant rules** with `--compare`. **LANDED** (this dispatch) | item 3 of option (b) and §5.5's manifest; the only artifact that makes any spec-mirror claim checkable |
 | 4 | **the correspondence gate** — map the 71 rules onto `Theory/`'s definitions and publish the coverage. **LANDED** (this dispatch, §7.4): 24% of the spec maps onto a 7-line stub | the deliverable nobody in the field has |
-| 5 | **the axiom-dependency instrument** — for a given environment, report which theorems depend on a native computation and which one. Option (d)'s first artifact | a `#print axioms` refinement; useful under every option, and it is the receipt §0.1 II(a) asks a rung-3 use to carry |
+| 5 | **the axiom-dependency instrument** — which declarations depend on a native computation, and which one. Option (d)'s first artifact. **LANDED** (this dispatch, §10.5.1): flagship tier **0 native-dependent, 0 sorry-dependent** over 4 281 declarations | a `#print axioms` refinement; the receipt §0.1 II(a) asks a rung-3 use to carry, computed for a whole tier at once |
 | 6 | **the reflexive gate** — run an independent checker over this repository's own `.olean`s in CI, `maybe`-guarded | §10.5's cheapest honest form; pure gain, no theorem required |
 
 **Inch 2 is the first real fork** and should be reported before inch 3 starts:
@@ -1445,6 +1485,14 @@ no ISO editions, no ECMA years. The honest options are a release-pinned token
 
 ## 13 WHAT LANDED WITH THIS CHARTER
 
+* **`harness/lean_axiom_census.py`** + **`harness/lean_axiom_deps.lean`** — the
+  axiom-dependency instrument (M1 inch 5). One niced `lean` process on a
+  dependency-free file: no `lake`, no build lock. `--gate`, `--compare`,
+  double-run byte-identical, **six refusal paths RUN**, and calibrated in BOTH
+  directions — green on our estate, red on `Init.Core` with exactly the five
+  native-computation primitives named.
+* **`docs/lean-axiom-census.json`** — its output. The flagship tier's 4 281
+  declarations: **0 native-dependent, 0 sorry-dependent**.
 * **`harness/lean_rule_correspondence.py`** — the spec-mirror correspondence
   manifest (M1 inch 4): §5.5's coverage artifact with the clause replaced by the
   rule. Mechanical on both sides, with the editorial map declared in-instrument

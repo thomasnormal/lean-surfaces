@@ -110,10 +110,21 @@ ORACLE = os.environ.get("LEANPY_CPYTHON") or leanpy_survey.default_oracle()
 
 W = []
 
+# Which expectation column `--grammar` checks; set from --target in main().
+EXPECT_KEY = "expect"
 
-def w(wid, src, expect, note):
+
+def w(wid, src, expect, note, mono=None):
+    """`mono` is the expectation under `--target monadic`, when it DIFFERS.
+
+    The rebuild is not required to be a clone: inch 3a opens the live dict
+    cursor on the monadic definition ONLY (the trunk gains a refuse arm by
+    the no-backwards-compat ruling), so a witness may legitimately refuse on
+    one interpreter and run on the other. Encoding that here keeps the census
+    a scoreboard for BOTH rather than a parity check that has to be switched
+    off the moment the two diverge on purpose."""
     W.append({"id": wid, "src": src.lstrip("\n"), "expect": expect,
-              "note": note})
+              "expect_mono": mono or expect, "note": note})
 
 
 # --- stmt (25 productions) -------------------------------------------------
@@ -379,7 +390,8 @@ w("dict.for", """
 d = {2: 'b', 1: 'a'}
 for k in d:
     print(k)
-""", "REFUSE", "the live cursor — inch 3a")
+""", "REFUSE",
+  "the live cursor — inch 3a, monadic-only by the ruling", mono="MATCH")
 w("dict.list", """
 print(list({2: 'b', 1: 'a'}))
 """, "MATCH", "a DRAINING consumer: no mutation window — landed by §L53 rung 3b")
@@ -399,6 +411,23 @@ w("dict.star", """
 d = {2: 'b', 1: 'a'}
 print([*d])
 """, "MATCH", "landed by §L53 rung 3b")
+w("dict.for-in-function", """
+def f():
+    d = {2: 'b', 1: 'a', 5: 'c'}
+    out = []
+    for k in d:
+        if k == 1:
+            continue
+        out.append(k)
+        if len(out) == 2:
+            break
+    return tuple(out)
+print(f())
+""", "REFUSE",
+  "the cursor at FUNCTION scope — execGen's arm, and it exercises `break` "
+  "and `continue` through the new frame (which is why `genBreak`/"
+  "`genContinue` had to treat `forDict` as a LOOP frame, not bookkeeping)",
+  mono="MATCH")
 w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
@@ -449,7 +478,7 @@ for k in d:
 print(d[1], d[2])
 """, "REFUSE",
   "MEASURED admissible: updating an EXISTING key's value during iteration "
-  "is fine in CPython — the regime inch 3a must reproduce exactly")
+  "is fine in CPython — the regime inch 3a reproduces exactly", mono="MATCH")
 w("dict.grow-during-iter", """
 d = {1: 1}
 for k in d:
@@ -457,7 +486,7 @@ for k in d:
 print('unreachable')
 """, "REFUSE",
   "MEASURED: CPython raises RuntimeError('dictionary changed size during "
-  "iteration') at the NEXT step — inch 3a must reproduce THAT, not refuse")
+  "iteration') at the NEXT step — inch 3a reproduces THAT, not refuses it", mono="MATCH")
 w("dict.churn-during-iter", """
 d = {1: 1, 2: 2, 3: 3}
 for k in d:
@@ -756,7 +785,7 @@ def grammar_census(runner_cmd, keep, results):
             f.write(item["src"])
         env = leanpy.envelope_for(p, cache)
         if env is None:
-            results.append((item["id"], "EXTRACT", "", item["expect"]))
+            results.append((item["id"], "EXTRACT", "", item[EXPECT_KEY]))
             continue
         paths.append(p)
         jobs.append(json.dumps({"path": env}, separators=(",", ":")))
@@ -765,8 +794,8 @@ def grammar_census(runner_cmd, keep, results):
     drift = 0
     for item, path, model in zip(live, paths, models):
         got, detail = verdict_of(oracle_run(path), model)
-        results.append((item["id"], got, detail, item["expect"]))
-        if got != item["expect"]:
+        results.append((item["id"], got, detail, item[EXPECT_KEY]))
+        if got != item[EXPECT_KEY]:
             drift += 1
     return drift, work
 
@@ -905,6 +934,9 @@ def main(argv=None):
              "lines of this tool's own output differed. Row-level, "
              "message-included parity is harness/monadic_gate.py's job.")
     p.add_argument("--json", default=None)
+    p.add_argument("--target", choices=("trunk", "monadic"), default=None,
+                   help="which expectation set to check (default: inferred "
+                        "from --runner containing --monadic)")
     p.add_argument("--keep", default=None,
                    help="write the grammar witnesses here and keep them")
     opts = p.parse_args(argv)
@@ -915,9 +947,17 @@ def main(argv=None):
     runner_cmd = opts.runner.split()
     if opts.monadic:
         runner_cmd = runner_cmd + ["--monadic"]
+    # ONE FLAG PICKS BOTH: `--monadic` selects the runner AND the expectation
+    # column, so the two can never disagree. (`--target` overrides, for the
+    # deliberate cross-run: "what does the trunk column say about the
+    # rebuild?" is a real question, but it must be asked on purpose.)
+    target = opts.target or ("monadic" if "--monadic" in runner_cmd else "trunk")
+    global EXPECT_KEY
+    EXPECT_KEY = "expect_mono" if target == "monadic" else "expect"
     print("interpreter: %s"
           % ("MONADIC REBUILD (LeanModels/Python/Monadic/)" if opts.monadic
              else "trunk (LeanModels/Python/Semantics.lean)"))
+    print("expectation column: %s" % EXPECT_KEY)
     if not opts.no_build:
         if subprocess.run(["lake", "build"], cwd=REPO_ROOT).returncode != 0:
             print("error: `lake build` failed", file=sys.stderr)

@@ -131,6 +131,25 @@ def run_side(runner_cmd, jobs, label):
     return out
 
 
+# CAPABILITY OPENINGS — divergences the no-backwards-compat RULING CREATED.
+#
+# The rebuild is not required to be a clone. When a capability opens on the
+# monadic definition only, the trunk keeps a refuse arm and the two
+# interpreters answer differently ON PURPOSE. Without this table the gate
+# would call that a finding and exit non-zero, so a ruled inch could not land
+# green — and the fix must not be to switch the gate off.
+#
+# THE TABLE CANNOT SILENCE A BUG, and that is its whole design: a row counts
+# as OPENED only when the rebuild's answer MATCHES CPYTHON. If the rebuild
+# diverges from CPython the row is a FINDING no matter what is written here,
+# because the adjudicator is the oracle, never this dict.
+OPENED = {
+    "iter_dict": "inch 3a — the live dict cursor opens on the monadic "
+                 "definition only (docs/backlog/python-completeness.md, "
+                 "2026-08-23-pycomplete-5)",
+}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="monadic_gate.py")
     ap.add_argument("--cases", default=os.path.join("harness", "cases.json"))
@@ -187,6 +206,7 @@ def main(argv=None):
     same = 0
     buckets = collections.Counter()
     diverged = []
+    opened = []
     for call, cpy, t, m in zip(calls, oracle, trunk, mono):
         if t == m:
             same += 1
@@ -194,6 +214,9 @@ def main(argv=None):
         arm = arm_of(m)
         if arm is not None:
             buckets[arm] += 1
+        elif call.split("(", 1)[0] in OPENED and m == cpy:
+            # A RULED CAPABILITY OPENING, not a finding — see OPENED.
+            opened.append((call, cpy, t, m))
         else:
             diverged.append((call, cpy, t, m))
 
@@ -212,6 +235,8 @@ def main(argv=None):
     print("PARITY with the trunk     %d  (%.1f%%)" % (same, 100.0 * same / total))
     print("frontier (`notYet`)       %d  in %d arms" % (sum(buckets.values()),
                                                         len(buckets)))
+    print("capability OPENINGS       %d  (ruled; monadic agrees with CPython)"
+          % len(opened))
     print("DIVERGENCES               %d%s" % (len(diverged),
                                               "   <-- FINDINGS" if diverged else ""))
     print(bar)
@@ -219,6 +244,14 @@ def main(argv=None):
         print("THE BURN-DOWN LIST — rows blocked, by arm:")
         for arm, n in buckets.most_common():
             print("  %5d  %s" % (n, arm))
+        print(bar)
+    if opened:
+        print("CAPABILITY OPENINGS — the trunk refuses, the rebuild runs, and")
+        print("CPython agrees with the rebuild:")
+        for call, cpy, t, m in opened:
+            print("  %-34s %s" % (call, OPENED[call.split("(", 1)[0]]))
+            print("      cpython/monadic : %s" % show(cpy))
+            print("      trunk           : %s" % show(t))
         print(bar)
     if diverged:
         print("DIVERGENCES — adjudicated by CPython, which is printed first:")
@@ -235,6 +268,8 @@ def main(argv=None):
         with open(opts.json, "w", encoding="utf-8") as f:
             json.dump({"rows": total, "parity": same,
                        "frontier": dict(buckets),
+                       "opened": [{"call": c, "cpython": p, "trunk": t,
+                                   "monadic": m} for c, p, t, m in opened],
                        "divergences": [{"call": c, "cpython": p,
                                         "trunk": t, "monadic": m}
                                        for c, p, t, m in diverged]},

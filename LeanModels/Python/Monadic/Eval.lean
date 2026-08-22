@@ -1365,8 +1365,11 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
               match Heap.get? (← frameHeap) ad with
               | some (.list _) => K.execGen (.forList target ad 0 body :: .block ss :: k')
               | some (.generator ..) => K.execGen (.forGen target ad body :: .block ss :: k')
-              | some (.dict _ _) =>
-                  refuse "'for' over a dict is outside the tier (live dict iteration is deliberately NOT in the inventory; docs/memory-model.md)"
+              -- §3a: the LIVE dict cursor. The size and shapeVersion the loop
+              -- STARTS with ride in the frame, because that is what lets the
+              -- next step tell CPython's two mutation regimes apart.
+              | some (.dict es sv) =>
+                  K.execGen (.forDict target ad 0 es.size sv body :: .block ss :: k')
               | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
               | some (.cell _) => refuse cellInternal
               | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
@@ -1397,6 +1400,27 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
       | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
       | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
       | Option.none => refuse danglingMsg
+  -- §3a THE LIVE DICT CURSOR (docs/memory-model.md §dict iteration). Three
+  -- regimes, measured against CPython 3.9.19 before this was written:
+  --   * no mutation, or a value UPDATE of an existing key -> exact;
+  --   * a SIZE change -> CPython's faithful RuntimeError, raised at the NEXT
+  --     step (including when the change happens on the last iteration, where
+  --     StopIteration would otherwise have ended the loop);
+  --   * a same-size KEY-SET change -> LOUD. CPython either raises a SECOND,
+  --     different RuntimeError ("dictionary keys changed during iteration")
+  --     or answers a sequence that depends on its entries-array layout and
+  --     compaction schedule, so neither answer is guessable. `shapeVersion`
+  --     is what detects it; it is bumped by `dictStore` on growth only, so a
+  --     value update slips past it exactly as it should.
+  | .forDict target ad i n sv body :: k' => do
+      match ← dictStepM ad i n sv with
+      | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+      | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+      | some (.yieldKey kv) => do
+          assignM target kv
+          K.execGen (.block body :: .forDict target ad (i + 1) n sv body :: k')
+      | some .done => K.execGen k'
+      | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
   | .forGen target ad body :: k' => do
       match ← inFrame (K.stepIter ad) with
       | Option.none => K.execGen k'

@@ -412,3 +412,108 @@ unchanged (a comment, not a signature). Live: exercised on a tier diff with
 and without `--gates`, and end-to-end on a real **docs-only landing** — notice
 printed once, `docs_check` green 83/83, **no tenure taken**. Tools-only
 change: **no Lean executed**.
+
+---
+
+## 2026-08-22-qol-7 — `tools/check.sh`: rule 3's warm-clone amendment, CHECKED instead of guessed
+
+The edit-check loop is the proof writer's inner loop, and §7.1 rule 3 allows
+exactly one cheap form of it — `lake env lean` on a small file, without the
+lock. Then the rule amends itself, because a lane got it wrong in the obvious
+way: **"AND ONLY IN A WARM CLONE — the exemption is a property of the CLONE,
+not of the file."** In a cold clone the same command resolves and downloads
+dependencies: Lean execution outside the lock (**A11**) and a GB-scale
+download instead of CoW seeding (**A13**).
+
+**A rule whose precondition cannot be seen is a rule that gets guessed.** So
+the script does not ask the lane to know whether the clone is warm — it
+checks, names the case, and refuses when the case is not one rule 3 covers.
+It always prints which of three cases it is in:
+
+| case | meaning |
+| --- | --- |
+| `tenure` | the lock owner's pid **is us or an ancestor** — we are inside a ticket |
+| `scratch` | outside every lake glob **and** every project import has an olean |
+| `refuse-library` | inside a lake glob — that is the build's own graph; take a ticket |
+| `refuse-cold` | an import has no olean — seed first (A13), then probe |
+
+Two details that are laws rather than choices. **The lake libraries are READ
+FROM `lakefile.toml`**, not hardcoded — a hardcoded glob is a second copy of
+the lakefile that goes stale silently, and this lane already shipped one
+classifier that had to learn that (`qol-5`). And **ownership is decided by
+process ANCESTRY, not by matching a lane tag**: A4's corollary is that the
+owner file is a *hint* and the process tree is the truth, so a stale owner
+file cannot talk this script into running.
+
+Core modules (`Init`, `Std`, `Lean`, `Lake`) are deliberately **not**
+olean-checked: probing them would mean starting a Lean process to ask where
+they live, which is the thing the script exists to gate.
+
+### Verified by its refusals, and that is the honest boundary
+
+`--self-test`: **26 ok, 0 failed**, against a fake clone built with the real
+one's shape — the lakefile's libs are read not hardcoded, all four glob
+classes, import parsing, guillemet stripping, package oleans, core imports
+exempt, and every one of the four verdicts including a tenure that outranks
+both refusals, another lane's lock, an unparseable owner, and no lock at all.
+
+Live on this clone — which has **no `.lake` at all** — the tool **refused
+twice**: `LeanModels/Core/Basic.lean` → `refuse-library`,
+`docs/mvcgen-pilot.lean` → `refuse-cold` naming the missing import. Its happy
+path executes `lake env lean` and was therefore **not run**: this lane holds
+no ticket, and `--explain` prints the exact command instead. That boundary is
+stated rather than papered over — **the refusal paths are RUN; the execution
+path is the one thing a no-Lean lane cannot certify.**
+
+---
+
+## 2026-08-22-qol-8 — `tools/new-proof.sh` and `tools/analogues.sh`: the laws at the moment they are cheap
+
+### `new-proof.sh <kind> <name>` — four scaffolds, laws inline
+
+Four shapes recur, and each has a trap a lane rediscovers expensively:
+`BoundRefines` **refuted** at every depth for every value function (§L26); a
+fuel numeral in a hypothesis making a chain **vacuous** twice over (§L24); a
+joined `FoldInv` nearly shipped as a headline while being about **3.5% of
+cuts** (`2026-08-22-sunfish-rtrack-4`). None announced themselves. So the laws
+travel **with the shape, at the moment the statement is written** — the only
+moment they are cheap. `gate` carries the exit law, *measure before you
+premise*, the same-commit consumer, and *record the `jp` setting with the
+numbers, both ways*. `altitude` carries output-determined specs, the operand
+selection rule, `Triple` not framing the state, and named refusals. `frame`
+carries the `PstAt` shape and re-founding-proof vs inlined. `fold` carries
+never-both-directions and the flat `∧`-chain.
+
+**The placeholder is an unknown tactic on purpose.** `sorry` is forbidden
+outright, and *a scaffold that elaborates is a scaffold that can be committed
+unfinished* — `proof_goes_here` fails loudly, which is the failure direction
+this repo asks for everywhere else.
+
+### `analogues.sh <shape>` — the Lean lane's tractability estimate, as a tool
+
+The M2 census picked its first proof target on evidence about the
+**neighbourhood**, not the subject: *"26 proved analogues around it at a
+median of 15 lines"* (`2026-08-22-lean-tier-2`). A shape with 26 neighbours at
+15 lines is routine work; the same shape with 2 at 200 lines is a research
+project wearing a theorem's clothes. Twelve named shapes — the cookbook's
+entries, so a lane that read one can measure it without inventing a regex —
+plus any ERE. Live: `frame` → **7 analogues, median 8, range 4..23**, the
+shortest being `PstAt.push` itself; `triple` → **12, median 5.5**.
+
+It reports **what tree and sha it was measured at** (MEAS-10), and a zero
+result is stated as *a finding about the shape or the regex, not evidence
+that the proof is hard* — §5.4's empty-census law pointed at a grep.
+
+### Both self-tests caught a real defect in their own instrument
+
+`new-proof.sh --self-test`: **31 ok, 0 failed** — but its first version failed
+three templates for containing a law **twice**, because the helper used
+`grep -c` (a *line* count) where it meant presence. `analogues.sh
+--self-test`: **16 ok, 0 failed** — its first version predicted a median of
+2.5 and measured **3.5**, because block length ran to the next construct and
+so **added the trailing blank line to every entry**: a constant bias on every
+number the tool would ever report. Both are fixed; both were found by a test
+that predicted a number rather than admiring an output. Double-run
+byte-identical is asserted on the scanner itself (§5.4).
+
+**No Lean was executed by any of this.**

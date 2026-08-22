@@ -3203,7 +3203,8 @@ durable home. Anything a lane must obey belongs in a git-tracked file.
 | 13 | **mandatory CoW cache seeding** — below | **carried** |
 | 14 | **full-tree builds are QUIET-MACHINE-ONLY** — below | **new** |
 | 15 | `pkill -f <path>` does NOT kill a `lake build` — below | **new** (its RSS number is SUPERSEDED by 16) |
-| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **new** |
+| 16 | **RSS line is PER-PROCESS 5 GB / chain 10 GB**, and **16.2 retiring a runner** — below | **carried** |
+| 17 | **the single-file ITERATION loop**, ticket-free under conditions — below | **DRAFT — five tightenings flagged** |
 
 **AMENDMENT 4 — the owner file is written ONCE, under `set -C`.** Origin: a
 lane holding the lock had its `owner` file **overwritten by another lane**.
@@ -3439,6 +3440,65 @@ foreign checkout — `lean4lean`, `spectec` — is built with **plain
 line and A14's quiet-machine rule all still apply. What does not apply is
 the *scoping*, so those tenures run the full gate set the lane names
 explicitly, and their landings carry a §5.4a coverage statement saying so.
+
+**AMENDMENT 17 (DRAFT) — PROOF ITERATION IS A DIFFERENT SHAPE FROM BUILD
+VERIFICATION.** The measured problem: **a 300-line proof at one compile per
+tenure is not a session's work** — roughly **80–88 minutes per compile**
+under the queue. A11 made the lock cover all Lean execution and subsumed
+old rule 3's exemption; that **fixed the starvation of BUILDS and, in the
+same move, priced ITERATION out.** A17 re-licenses a narrow slice, with the
+conditions rule 3 was missing when it was abused.
+
+**A single-file iteration loop** — `lake env lean <file>`, which **writes no
+oleans** — is permitted **without a ticket** under **all** of:
+
+* **(a)** machine **load < 10 AND swap < 50%**, checked **immediately
+  before each run** (A8's atomic-re-read discipline, applied per
+  iteration);
+* **(b)** at most **ONE such process per lane**, `nice -n 19`,
+  `LEAN_NUM_THREADS=2`;
+* **(c)** the file's imports' **oleans are WARM** — otherwise it silently
+  becomes a dependency build, which is §7.1's cold-clone trap;
+* **(d)** it **YIELDS**: the loop pauses while any build tenure is in its
+  build phase on a memory-tight box, and **swap > 50% = stop**.
+
+**Tools side:** `check.sh` gains an **`--iterate`** case implementing
+(a)–(c), so the conditions are **checked, not guessed** — which is the
+whole difference between this and the rule-3 exemption it replaces.
+
+**FIVE TIGHTENINGS FLAGGED FOR RULING**, in the order I would apply them:
+
+1. **THE PER-LANE CAP DOES NOT COMPOSE — this is the load-bearing one.**
+   (b) caps one process *per lane*; N lanes each obeying it is N
+   unticketed Lean processes, which is the hazard the lock exists for.
+   **The check should count ALL iteration processes machine-wide, not the
+   lane's own** — the same class of error as measuring RSS over the box
+   instead of over your own chain, with the scope inverted.
+2. **NO RSS CEILING.** (b) bounds count and niceness but not memory, and
+   A16 exists because **one honest worker measured 3 251 MB**. An
+   unticketed, unsupervised process needs an explicit line — I would set
+   it **below** A16's 5 GB precisely because nothing is watching it, and
+   make exceeding it a kill rather than a pause.
+3. **(d) SHOULD MIRROR (a) ON BOTH CONDITIONS.** (a) starts on *load < 10
+   AND swap < 50%*; (d) stops only on swap. A loop that starts at load 9
+   keeps running as load climbs, since swap alone gates it. **Pause on
+   `load ≥ 10` OR `swap ≥ 50%`.**
+4. **A11's THOMAS-PRIORITY CLAUSE IS UNTOUCHED, and should be said.** A
+   training run outranks every tenure — and therefore outranks an
+   iteration loop, which stops for it and not merely for swap.
+5. **THE CHECK IS PER-ITERATION AND THE YIELD IS BEST-EFFORT.** There is a
+   window between passing (a) and a tenure starting, so A17 is a
+   *courtesy* protocol, not a guarantee — which is the strongest argument
+   for tightening 2: the RSS ceiling is the backstop that does not depend
+   on anyone observing anything in time.
+
+**AND A SECOND DATA POINT ON THE A15 → A16 CHAIN FIGURE.** The C lane's
+**stale watchdog killed a HEALTHY build at 6 171 MB against the superseded
+6 144 MB line.** That is A15's number doing active harm after it was
+superseded — a retired limit still enforcing — and it confirms both halves
+of A16: the raise was right, and **canon's 10 GB chain line is the correct
+one.** It is also A16.2 in miniature: **an amendment takes effect when the
+last script predating it is dead**, and this watchdog was not.
 
 ### 7.2 The master branch
 

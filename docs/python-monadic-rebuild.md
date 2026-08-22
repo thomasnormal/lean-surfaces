@@ -658,8 +658,13 @@ rows: class instantiation (111), generators (88 + `enumerate` 22 + `count` 5 +
 construction (33), try/except (24), assert (21), set (16), del (11), raise (5),
 any/all (6). What is left, in measured order:
 
-1. **Keyword arguments — 36 rows.** `mergeKwArgs` exists; the arm is a fork, and
-   it touches every callee kind (module def, method, class, namedtuple, builtin).
+1. ~~Keyword arguments — 36 rows.~~ **DONE.** `mergeKwArgs` resolves keywords to
+   a COMPLETE positional array at the call site, so the call boundary's signature
+   never changes; module defs, instance methods and namedtuple-subclass methods
+   all bind through it, plus `dict(k=v, …)` and `sorted(reverse=)`. The keyword
+   VALUES needed the knot boundary a **third** time — `kwargs.toList.map (·.2)`
+   is a function application, not a projection, so no block member can recurse on
+   it (`Kont.kwArgs`).
 2. **The small tail — ~5 rows.** Statically-poisoned module bindings (2), live
    module bindings, `max`/`min` over a heap referent (1).
 3. **The script executor.** Until `runScript` is rebuilt the script half of the

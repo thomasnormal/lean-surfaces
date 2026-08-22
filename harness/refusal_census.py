@@ -370,6 +370,110 @@ w("expr.Slice", """
 print("abcd"[1:3])
 """, "MATCH", "str receivers; list/tuple slices allocate and refuse")
 
+# --- dict iteration: rung 3's surface, one witness per consumer ------------
+# All REFUSE today. They are written as the ACCEPTANCE BATTERY for the rung:
+# each flips to MATCH as its consumer lands, and the two live-cursor rows
+# below carry the semantics the census measured (docs/memory-model.md
+# paragraph "dict iteration").
+w("dict.for", """
+d = {2: 'b', 1: 'a'}
+for k in d:
+    print(k)
+""", "REFUSE", "the live cursor — inch 3a")
+w("dict.list", """
+print(list({2: 'b', 1: 'a'}))
+""", "REFUSE", "a DRAINING consumer: no mutation window — inch 3b")
+w("dict.tuple", """
+print(tuple({2: 'b', 1: 'a'}))
+""", "REFUSE", "inch 3b")
+w("dict.sorted", """
+print(sorted({2: 'b', 1: 'a'}))
+""", "REFUSE", "inch 3b")
+w("dict.sum", """
+print(sum({2: 20, 1: 10}))
+""", "REFUSE", "inch 3b")
+w("dict.max", """
+print(max({2: 'b', 1: 'a'}))
+""", "REFUSE", "inch 3b")
+w("dict.star", """
+d = {2: 'b', 1: 'a'}
+print([*d])
+""", "REFUSE", "inch 3b")
+w("dict.enumerate", """
+d = {2: 'b', 1: 'a'}
+for i, k in enumerate(d):
+    print(i, k)
+""", "REFUSE", "inch 3c")
+w("dict.keys", """
+print(list({2: 'b', 1: 'a'}.keys()))
+""", "REFUSE", "the view methods — inch 3c")
+w("dict.items", """
+d = {2: 'b', 1: 'a'}
+for k, v in d.items():
+    print(k, v)
+""", "MATCH",
+  "MEASURED CORRECTION — the live cursor is already BUILT at MODULE scope "
+  "(the script executor's `.items()` shell). Rung 3 is an EXTENSION, not a "
+  "construction")
+w("dict.items-in-function", """
+def f():
+    d = {2: 'b', 1: 'a'}
+    t = 0
+    for k, v in d.items():
+        t = t + k
+    return t
+print(f())
+""", "REFUSE",
+  "the SAME loop inside a function: the shell belongs to the script "
+  "executor, so the closed-function surface has no cursor — inch 3a's real "
+  "content")
+w("dict.items-grow", """
+d = {1: 1}
+for k, v in d.items():
+    d[k + 5] = 0
+print('unreachable')
+""", "MATCH",
+  "MEASURED: the module-scope shell already raises CPython's RuntimeError "
+  "VERBATIM ('dictionary changed size during iteration') — the size guard "
+  "is faithful TODAY, so inch 3a inherits it rather than inventing it")
+w("dict.items-update", """
+d = {1: 1, 2: 2}
+for k, v in d.items():
+    d[k] = v * 100
+print(d[1], d[2])
+""", "MATCH", "the admissible regime, already exact at module scope")
+w("dict.update-value-during-iter", """
+d = {1: 1, 2: 2}
+for k in d:
+    d[k] = d[k] * 100
+print(d[1], d[2])
+""", "REFUSE",
+  "MEASURED admissible: updating an EXISTING key's value during iteration "
+  "is fine in CPython — the regime inch 3a must reproduce exactly")
+w("dict.grow-during-iter", """
+d = {1: 1}
+for k in d:
+    d[k + 10] = 0
+print('unreachable')
+""", "REFUSE",
+  "MEASURED: CPython raises RuntimeError('dictionary changed size during "
+  "iteration') at the NEXT step — inch 3a must reproduce THAT, not refuse")
+w("dict.churn-during-iter", """
+d = {1: 1, 2: 2, 3: 3}
+for k in d:
+    if k == 2:
+        del d[1]
+        d[99] = 9
+print('unreachable')
+""", "REFUSE",
+  "MEASURED, and a CROSS-RUNG dependency: this witness reports `del d[k]`, "
+  "which refuses FIRST, so the hazard is unreachable today — and the day "
+  "dict deletion lands it becomes required. A SAME-SIZE key-set change is "
+  "storage-layout dependent: CPython raises a SECOND, different "
+  "RuntimeError('dictionary keys changed during iteration') here, and "
+  "moving the deletion ahead of the cursor "
+  "makes it answer [1, 2, 99] with no error at all. Permanently LOUD.")
+
 # --- Constant payloads the extractor forks on ------------------------------
 w("const.float", """
 print(1.5)

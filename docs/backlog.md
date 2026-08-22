@@ -13661,3 +13661,115 @@ declarations depend on `[propext, Classical.choice, Quot.sound]` or less. No
 this section was being written — 1315 → 1372 → 1394 cases — and §L51 touched
 `Ast.lean` and `Semantics.lean`, so the whole subtree was rebuilt. These are the
 numbers at the merged tip, re-run after the last rebase.)*
+
+## L53 — RUNG 3's CENSUS: the cursor is ALREADY BUILT, and the regime the plan meant to support turns out to be unmodellable (2026-08-21)
+
+*(python-completeness lane; §L39 census, §L49 rung 1, §L51 rung 2. This
+lane claims §L53 — §L52 was taken by the campaign while this was being
+written. The sunfish campaign and the C tier hold the rest and win every
+conflict.)*
+
+Rung 3 — live dict iteration — was priced in §L39 as "MEDIUM, the
+highest value per unit: ten interpreter refusal messages ride on one
+missing cursor." The census ran before the cursor was written, and
+**both halves of that sentence were wrong in opposite directions.** The
+cursor is not missing, and the ten messages are not one thing.
+docs/memory-model.md §dict iteration is the model side; the 16 `dict.*`
+witnesses in `harness/refusal_census.py` are the runnable claims and the
+rung's acceptance battery.
+
+Grammar census **89 → 105 witnesses, 65 → 68 MATCH** — the three new
+MATCHes are the correction, not a landing.
+
+### CORRECTION 1 — the cursor is already BUILT, and its guard is already exact
+
+| witness | model | CPython 3.9.19 |
+| --- | --- | --- |
+| `dict.items` — `for k, v in d.items():` at MODULE scope | **MATCH** | insertion order |
+| `dict.items-update` — value update mid-loop | **MATCH** | allowed, no error |
+| `dict.items-grow` — insert mid-loop | **MATCH** | `RuntimeError: dictionary changed size during iteration`, and the model produces that message VERBATIM |
+| `dict.items-in-function` — the SAME loop inside a `def` | **REFUSE** | runs |
+
+The script executor's `.items()` shell (and `initItemsLoop` beside it)
+already does the live re-read per step and the faithful size guard, and
+`Obj.dict` already carries the `shapeVersion` this document specified for
+the purpose, maintained by `dictStore`. **So rung 3 is an EXTENSION of a
+working cursor to the closed-function surface and the bare-key form, not
+a construction** — and the `RuntimeError` it must raise is inherited,
+not invented. That is a materially cheaper rung than §L39 priced, and
+nothing but running the thing would have said so.
+
+### CORRECTION 2 — the regime `shapeVersion` was future-proofed FOR cannot be modelled
+
+This document recorded `shapeVersion` as "future-proofs
+deletion/reinsertion". Measured, deletion-and-reinsertion during
+iteration is not a feature to be built later — it is unmodellable:
+
+| probe, size unchanged throughout | CPython 3.9.19 |
+| --- | --- |
+| `del` a key BEHIND the cursor, then insert | `RuntimeError: dictionary keys changed during iteration` — a SECOND, different message |
+| `del` a key AHEAD of the cursor, then insert | **no error**, answers `[1, 2, 99]` |
+| bulk churn: delete 7, insert 7 | **no error**, answers with the NEW keys |
+
+The three differ only by where the deletion sits relative to the cursor
+and whether the insert forced compaction. Reproducing them means
+modelling the tombstoned entries array and CPython's resize schedule. So
+a same-size key-set change during iteration is **PERMANENTLY LOUD** —
+and specifically it must NOT be given either `RuntimeError`, since which
+one (if any) fires is exactly the layout question.
+
+### The cross-rung dependency, recorded at the gate that needs it
+
+The churn hazard is unreachable TODAY, and only by accident of another
+gap: the sole way to shrink a dict mid-iteration is `del d[k]`, which
+refuses first — `dict.churn-during-iter` reports `unsupported statement
+'Delete'`, not an iteration error. **The day dict deletion lands, the
+churn guard becomes REQUIRED**, or the tier acquires a silent wrong
+answer. Written at the inch that will need it rather than as a general
+note, which is the §L25 shape.
+
+### The rung re-scoped into four inches, and the cheapest is not the one named
+
+* **3b — the DRAINING consumers** (`list`/`tuple`/`sorted`/`sum`/`max`/
+  `min`/`set`/`[*d]`/unpacking): **eight of the ten messages, and NOT ONE
+  of them can meet the hazard the refusal cites.** They drain the keys
+  with no user code running in between, so no mutation window exists;
+  they need only "the keys, in insertion order", which the model already
+  stores. Each is a one-line arm beside an existing `.list` arm in the
+  same `match`. Cheapest inch, largest reduction in the refusal surface.
+* **3a — the cursor at function scope and the bare `for k in d`**: a
+  mutual-block member and its four walker arms. The semantics are
+  settled and already exercised at module scope.
+* **3c — the view methods as first-class iterables** and `enumerate(d)`.
+* **3d — `DictComp`**, which rides 3a.
+
+**The finding to carry**: eight of the ten messages were written citing
+"live dict iteration; docs/memory-model.md" — a blanket doctrine applied
+to consumers that structurally cannot reach the hazard. A refusal
+inherits its REASON as readily as its text, and only running each one
+separately separates them.
+
+### Order needs no doctrine
+
+Insertion order, measured: `{3: 'c', 1: 'a', 2: 'b'}` iterates `[3, 1,
+2]`; `del`-then-re-add moves the key to the END; an overwrite keeps its
+ORIGINAL position. This is not the hash-order question that keeps sets
+permanently out — it is specified behaviour (3.7+) that the model
+already stores and `reprVal` already renders.
+
+### Owed before 3b is written
+
+One risk is named and not yet priced: `PayloadBlind`'s swap-blindness
+lemmas must be shown to hold for the new dict arms, since those arms READ
+`entries` from the heap where the `.list` arms read `xs`. The `.list`
+precedent sits beside each one, but §L49's `evalUnaryOpH_swapAt` is the
+standing reminder that an exhaustive `cases` can hide behind a grep.
+**Grep the constructors without the leading dot.**
+
+### Triad
+
+No Lean file touched — census and docs only. `lake build` unaffected;
+`docs_check` 73/73, 15 illustrative-exempt; `diff_test` **1394 cases, 0
+failed, 118 whitelisted, 1276 matched**; `script_corpus` **65 scripts, 0
+failed, 50 matched, 15 loud**; `refusal_census` **105 + 118 + 15 rows, 0
+drifts**.

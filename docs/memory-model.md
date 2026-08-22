@@ -1646,6 +1646,100 @@ guaranteed to be short by however many `cases` sites exist.
 3.9.19 over a 95481-pair XOR grid and a 24720-pair shift grid (plus the
 `~`/`+` identities and the bool-type rules), 0 mismatches.
 
+## Dict iteration — the census, and the tier it forces (§L51 rung 3)
+
+The H1 inventory left `for k in d` out with "no snapshot shortcut", and
+ten interpreter refusal messages ride on that decision. The census
+(`harness/refusal_census.py --grammar`, the `dict.*` witnesses) measured
+what CPython 3.9.19 actually does and **corrected the plan twice: once
+about what is missing, once about what is modellable at all.**
+
+### CORRECTION 1 — the cursor is already BUILT
+
+`for k, v in d.items():` at MODULE scope runs today, and its guard is
+already exact:
+
+| witness | model | CPython |
+| --- | --- | --- |
+| `dict.items` (module scope) | **MATCH** | insertion order |
+| `dict.items-update` (value update mid-loop) | **MATCH** | allowed |
+| `dict.items-grow` (insert mid-loop) | **MATCH** | `RuntimeError: dictionary changed size during iteration`, VERBATIM |
+| `dict.items-in-function` (same loop in a `def`) | **REFUSE** | runs |
+
+So the script executor's `.items()` shell (and `initItemsLoop` beside it)
+already implements the live cursor, the re-read per step and the faithful
+size guard. **Rung 3 is an EXTENSION of a working cursor to the
+closed-function surface and to the bare-key form — not the construction
+of one**, and the `RuntimeError` it must produce is inherited rather than
+invented. The `shapeVersion` field this document specified for the
+purpose is in `Obj.dict` and `dictStore` maintains it (bumped on growth,
+not on value update).
+
+### CORRECTION 2 — a same-size key-set change is NOT modellable, ever
+
+The recorded design treated `shapeVersion` as future-proofing for
+"deletion/reinsertion". The census says deletion/reinsertion during
+iteration cannot be modelled at all, because CPython's answer depends on
+its entries-array layout:
+
+| probe (size unchanged throughout) | CPython 3.9.19 |
+| --- | --- |
+| `del` a key BEHIND the cursor, then insert | `RuntimeError: dictionary keys changed during iteration` — a SECOND, different message |
+| `del` a key AHEAD of the cursor, then insert | no error: `[1, 2, 99]` |
+| bulk churn: delete 7, insert 7 | no error: `[0, 100, 101, …, 106]` |
+
+The three differ only in where the deletion sits relative to the cursor
+and whether the insert triggered compaction. Reproducing them means
+modelling the tombstoned entries array AND CPython's resize schedule.
+**So: a same-size key-set change during iteration is PERMANENTLY LOUD** —
+refused, never guessed, and never given either RuntimeError, because
+which one (if any) CPython raises is exactly the layout question.
+
+**A cross-rung dependency falls out of this, and it is the census's most
+useful product.** The hazard is unreachable TODAY only because the sole
+way to shrink a dict mid-iteration — `del d[k]` — refuses first (the
+`dict.churn-during-iter` witness reports `unsupported statement
+'Delete'`, not an iteration error). **The day dict deletion lands, the
+churn guard becomes REQUIRED**, or the tier acquires a silent wrong
+answer. Recorded here at the gate that needs it.
+
+### The tier this forces
+
+Three regimes, and only three:
+
+* **No mutation, or value updates of EXISTING keys only** — exact,
+  insertion order, live re-read per step.
+* **Size changes** — the faithful `RuntimeError: dictionary changed size
+  during iteration`, raised at the NEXT step (measured: including when
+  the change happens on the last iteration, where `StopIteration` would
+  otherwise have ended the loop).
+* **Same-size key-set changes** — LOUD.
+
+Order itself is settled and needs no doctrine: insertion order,
+`del`-then-re-add moves the key to the END, an overwrite keeps its
+ORIGINAL position (all measured). This is not the hash-order question
+that keeps sets out — it is specified behaviour the model already
+stores.
+
+### The inches, ordered by price
+
+* **3b — the DRAINING consumers** (`list(d)`, `tuple(d)`, `sorted(d)`,
+  `sum(d)`, `max`/`min(d)`, `set(d)`, `[*d]`, unpacking). **These have no
+  mutation window at all**: they drain the keys with no user code running
+  in between, so not one of the three regimes above can arise. They need
+  only "the keys, in insertion order". Eight of the ten refusal messages
+  are here, each a one-line arm beside an existing `.list` arm in the
+  same `match` — which makes it the cheapest inch and the largest single
+  reduction in the refusal surface. *The recorded refusals cite "live
+  dict iteration" for all of them: eight of the ten messages guard a
+  hazard only two of them can meet.*
+* **3a — the cursor at function scope, and the bare `for k in d` form.**
+  The semantics are settled and already exercised at module scope; the
+  work is a mutual-block member and its four walker arms.
+* **3c — the view methods as first-class iterables** (`.keys()`,
+  `.values()`, `.items()` outside the shell) and `enumerate(d)`.
+* **3d — `DictComp`**, which rides 3a.
+
 ## Annotated assignment (`AnnAssign`, §L49 rung 2)
 
 `x: int = 1` in a FUNCTION BODY is an ordinary assignment, rewritten to

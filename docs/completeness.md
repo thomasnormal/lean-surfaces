@@ -59,13 +59,15 @@ forks on and two measured edge rows.
 | edge rows (2) | 1 | `Pow-negative` |
 | `cmpop` (10), `boolop` (2) | 0 | — |
 
-**Then rungs 1 and 2 landed**, so the table above is the census AS TAKEN
-and the current numbers are **89 witnesses, 65 MATCH, 24 REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
+**Then rungs 1 and 2 landed and rung 3's battery was added**, so the
+table above is the census AS TAKEN and the current numbers are **105
+witnesses, 68 MATCH, 37 REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
 `RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` joined
 as a MATCH and `AnnAssign-novalue` as a refusal, with `stmt.AnnAssign`
-itself staying REFUSE because its witness is module-scope (rung 2). The
-taken-table is kept rather than overwritten — it is what the ladder was
-priced against.
+itself staying REFUSE because its witness is module-scope (rung 2); and
+sixteen `dict.*` rows joined as rung 3's acceptance battery, three of
+which measured MATCH and re-scoped the rung. The taken-table is kept
+rather than overwritten — it is what the ladder was priced against.
 
 **25 of the 26 are gaps; one is faithful.** `1 @ 2` is a `TypeError` in
 CPython too, so `op.MatMult` costs a program nothing — no operand type in
@@ -281,25 +283,47 @@ measured order), because `__annotations__` is unobservable in tier. Not
 taken here because one-statement-into-two moves `Module.topLevel`
 indices that the proof campaign's pins are stated against.
 
-### Rung 3 — live dict iteration. Price: MEDIUM. Value: the highest per unit.
+### Rung 3 — live dict iteration. **CENSUSED; re-scoped into four inches.**
 
-Ten interpreter refusal messages ride on one missing cursor: `for k in
-d`, `list(d)`, `tuple(d)`, `sorted(d)`, `sum(d)`, `set(d)`,
-`enumerate(d)`, unpacking a dict, `[*d]`, and `.keys`/`.values`/`.items`
-outside the init shell.
+Ten interpreter refusal messages ride on this, and the census corrected
+the rung twice before a line of it was written.
+docs/memory-model.md §dict iteration carries the measurements.
 
-**The census's finding is that this is NOT a hash-order refusal.**
-CPython 3.7+ SPECIFIES dict iteration order as insertion order; the
-model already stores dicts in insertion order (`reprVal` renders them in
-it) and the module-init shell already runs a live items cursor
-(`initItemsLoop`, re-reading entries per step with a faithful
-`RuntimeError` on size change). So the doctrine does not forbid this —
-it is unbuilt, and the recorded reason ("no snapshot shortcut") is about
-the LIVE iterator's mutation semantics, which `execForList` already
-solved for lists as an index cursor. Same shape, one heap kind over.
+**CORRECTION 1 — the cursor is already BUILT.** `for k, v in d.items():`
+at MODULE scope runs today, in insertion order, allowing value updates
+and raising CPython's `RuntimeError: dictionary changed size during
+iteration` VERBATIM on a mid-loop insert. The same loop inside a `def`
+refuses. So rung 3 is an EXTENSION of a working cursor to the
+closed-function surface, not a construction, and its `RuntimeError` is
+inherited rather than invented.
 
-**Unblocks**: dict iteration, which is one of the two or three most
-common idioms in Python; and `DictComp` behind it.
+**CORRECTION 2 — a same-size key-set change is not modellable, ever.**
+Deleting a key BEHIND the cursor and inserting one raises a SECOND,
+different `RuntimeError: dictionary keys changed during iteration`;
+moving the same deletion AHEAD of the cursor answers `[1, 2, 99]` with no
+error; bulk churn that restores the size answers with the NEW keys. The
+three differ only by entries-array layout and compaction, so that regime
+is permanently LOUD. **The cross-rung dependency**: it is unreachable
+today only because `del d[k]` refuses first, and it becomes REQUIRED the
+day dict deletion lands.
+
+**The inches, ordered by price:**
+
+* **3b — the draining consumers** (`list`/`tuple`/`sorted`/`sum`/`max`/
+  `min`/`set`/`[*d]`/unpacking). **No mutation window exists** — they
+  drain with no user code in between — so none of the hazards can arise
+  and they need only "the keys, in insertion order". Eight of the ten
+  messages, each a one-line arm beside an existing `.list` arm in the
+  same `match`. Cheapest inch, largest reduction. *The recorded refusals
+  cite "live dict iteration" for all eight: they guard a hazard only two
+  of them can meet.*
+* **3a — the cursor at function scope and the bare `for k in d` form**:
+  a mutual-block member plus its four walker arms.
+* **3c — the view methods as iterables** and `enumerate(d)`.
+* **3d — `DictComp`**, which rides 3a.
+
+**Unblocks**: dict iteration, one of the two or three most common idioms
+in Python.
 
 ### Rung 4 — exceptions, the remainder. Price: MEDIUM-LARGE.
 

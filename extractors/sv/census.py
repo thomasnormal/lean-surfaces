@@ -46,19 +46,59 @@ the stored census.json and asserts identical classification.
 import argparse
 import json
 import os
+import platform
 import random
 import re
 import signal
 import sys
 import time
 from collections import Counter
-from multiprocessing import Pool
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures.process import BrokenProcessPool
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-DEFAULT_CORPUS = "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests"
+
+# ---------------------------------------------------------------------------
+# THE CORPUS REGISTRY — no hard-coded default, and no silent fallback.
+#
+# This module used to carry
+#     DEFAULT_CORPUS = "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests"
+# an absolute path on ANOTHER machine, used whenever --corpus was omitted --
+# which is exactly how the documented reproduce-block came to be unrunnable
+# on any host but one (docs/sv-charter.md §1.3).  A census that cannot say
+# which corpus it measured is not a measurement.
+#
+# Now: a corpus is chosen by NAME from the registry below, or by explicit
+# --corpus PATH.  Each name lists candidate locations in preference order;
+# the first that exists wins, and if none exists the run REFUSES and prints
+# every path it tried.  Nothing is ever assumed to be present.
+#
+# 'sv-tests-2'  the corpus every landed SV coverage claim was measured on
+#               (docs/sv-corpus-coverage.md).  ~21.6k files, IEEE 1800-2023
+#               chapters 3-40.  PENDING OWNER DECISION (docs/sv-charter.md
+#               §8.1): it is employer-internal, carries no LICENSE, and
+#               embeds the IEEE standard PDF, so it cannot anchor a public
+#               claim.  Left in place and unrenamed until that is decided.
+#
+# 'sv-tests'    public chipsalliance/sv-tests.  1028 tests, uniformly ISC
+#               with per-file SPDX, vendorable (tests/** only).  Wired here
+#               so that switching anchors is a FLAG, not a project.
+# ---------------------------------------------------------------------------
+KNOWN_CORPORA = {
+    "sv-tests-2": [
+        os.path.expanduser("~/repos/mox/sv-conformance/sv-tests-2/tests"),
+        "/home/thomas-ahle/mox/sv-conformance/sv-tests-2/tests",
+    ],
+    "sv-tests": [
+        os.path.expanduser("~/repos/sv-tests/tests"),
+    ],
+}
+
 OUT_DIR = os.path.join(REPO, "harness", "sv", "conformance")
 CENSUS_JSON = os.path.join(OUT_DIR, "census.json")
 UNLOCKABLE_TXT = os.path.join(OUT_DIR, "unlockable.txt")
+# The committed, machine-readable half (docs/<lang>-<subject>-census.json).
+SUMMARY_JSON = os.path.join(REPO, "docs", "sv-construct-census.json")
 
 SEED = 20260721
 SAMPLE_SIZE = 200
@@ -354,30 +394,141 @@ def classify(relpath):
 # Orchestration
 # ---------------------------------------------------------------------------
 
-def find_files(corpus):
+class CorpusError(Exception):
+    """No corpus could be resolved. Always fatal, never defaulted around."""
+
+
+def resolve_corpus(explicit, name):
+    """Return (abs corpus path, corpus name). REFUSES rather than guessing.
+
+    --corpus PATH wins; otherwise the registry entry for `name` is searched
+    in order. A missing corpus is a hard error naming every candidate tried,
+    because the alternative -- silently censusing nothing, or censusing a
+    different corpus than the one the caller believes -- is the failure this
+    function exists to prevent.
+    """
+    if explicit:
+        path = os.path.abspath(os.path.expanduser(explicit))
+        if not os.path.isdir(path):
+            raise CorpusError("--corpus %s: not a directory" % explicit)
+        return path, (name or "explicit")
+
+    if name not in KNOWN_CORPORA:
+        raise CorpusError("unknown corpus name %r (known: %s)"
+                          % (name, ", ".join(sorted(KNOWN_CORPORA))))
+    tried = KNOWN_CORPORA[name]
+    for cand in tried:
+        if os.path.isdir(cand):
+            return os.path.abspath(cand), name
+    raise CorpusError(
+        "corpus %r not found on this host. Tried:\n  %s\n"
+        "Pass --corpus PATH explicitly, or check out the corpus."
+        % (name, "\n  ".join(tried)))
+
+
+def find_files(corpus, all_dirs=False):
+    """Corpus-relative .sv paths.
+
+    Default walk is `<corpus>/chapter-*/`, one level deep -- the layout the
+    landed census used, kept so its numbers stay comparable. --all-dirs
+    additionally walks every other subdirectory (the public suite keeps 311
+    of its 1028 tests in `generic/`, `testbenches/` and `uvm/`, which the
+    chapter walk cannot see).
+    """
     paths = []
     for entry in sorted(os.listdir(corpus)):
-        if not entry.startswith("chapter-"):
-            continue
         d = os.path.join(corpus, entry)
         if not os.path.isdir(d):
             continue
-        for fn in sorted(os.listdir(d)):
-            if fn.endswith(".sv"):
-                paths.append(entry + "/" + fn)
-    return paths
+        if entry.startswith("chapter-"):
+            for fn in sorted(os.listdir(d)):
+                if fn.endswith(".sv"):
+                    paths.append(entry + "/" + fn)
+        elif all_dirs:
+            for root, _dirs, files in os.walk(d):
+                for fn in sorted(files):
+                    if fn.endswith(".sv"):
+                        rel = os.path.relpath(os.path.join(root, fn), corpus)
+                        paths.append(rel)
+    return sorted(paths)
+
+
+def _crash_record(relpath, detail):
+    """An extractor crash, recorded as a FINDING with the file's name."""
+    return {
+        "path": relpath,
+        "chapter": relpath.split("/")[0],
+        "status": "error",
+        "reason": detail,
+        "type": None,
+        "kinds": [],
+        "blockers": [],
+        "unlockable": False,
+    }
+
+
+def _run_batch(paths, corpus, jobs, results, done):
+    """Pooled pass. Returns True if the pool broke (some paths unprocessed)."""
+    todo = [p for p in paths if p not in done]
+    if not todo:
+        return False
+    ex = ProcessPoolExecutor(max_workers=jobs, initializer=_init_worker,
+                             initargs=(corpus,))
+    futs = {ex.submit(classify, p): p for p in todo}
+    broke = False
+    try:
+        for fut in as_completed(futs):
+            p = futs[fut]
+            try:
+                results.append(fut.result())
+                done.add(p)
+            except BrokenProcessPool:
+                broke = True
+                break
+            except Exception as exc:                      # noqa: BLE001
+                results.append(_crash_record(p, "worker exception: %s" % exc))
+                done.add(p)
+            if len(done) % 2000 == 0:
+                print("  ... %d/%d" % (len(done), len(paths)), flush=True)
+    finally:
+        ex.shutdown(wait=False, cancel_futures=True)
+    return broke
 
 
 def run_pool(paths, corpus, jobs):
-    results = []
-    with Pool(jobs, initializer=_init_worker, initargs=(corpus,),
-              maxtasksperchild=500) as pool:
-        n = len(paths)
-        for i, rec in enumerate(
-                pool.imap_unordered(classify, paths, chunksize=32)):
-            results.append(rec)
-            if (i + 1) % 2000 == 0:
-                print("  ... %d/%d" % (i + 1, n), flush=True)
+    """Census every path, surviving a frontend that hard-crashes.
+
+    WHY THIS IS NOT A PLAIN Pool.  pyslang 11.0.0 aborts the interpreter
+    with SIGTRAP (rc 133, no diagnostic) on at least one real conformance
+    input -- `chapter-22/22.9--unconnected_drive-invalid-2.sv`, whose whole
+    body is ```unconnected_drive pull2``.  multiprocessing.Pool has no
+    answer to a worker that dies mid-task: it waits forever for a result
+    that can never arrive, so the census HUNG with no exit code, no message
+    and no failing file name (docs/sv-charter.md §1.6).  A hang is strictly
+    worse than a crash, and the 90s per-file SIGALRM cannot help because the
+    process carrying the alarm is the one that dies.
+
+    So: ProcessPoolExecutor, which reports BrokenProcessPool instead of
+    hanging. On a break the unfinished files are re-tried ONE AT A TIME
+    until the crasher is identified and recorded as an `error` row naming
+    it; pooled throughput then resumes for the rest. A crash costs one
+    isolation pass, never the run.
+    """
+    results, done = [], set()
+    while True:
+        if not _run_batch(paths, corpus, jobs, results, done):
+            break
+        remaining = [p for p in paths if p not in done]
+        print("  pool broke; isolating %d unfinished file(s)" % len(remaining),
+              flush=True)
+        for p in remaining:
+            # max_workers=1, one task: a break here blames exactly this file.
+            if _run_batch([p], corpus, 1, results, done):
+                results.append(_crash_record(
+                    p, "extractor CRASHED (worker killed by signal)"))
+                done.add(p)
+                print("  CRASH: %s" % p, flush=True)
+                break   # crasher found; resume pooled work on the rest
     results.sort(key=lambda r: r["path"])
     return results
 
@@ -475,9 +626,85 @@ def do_recheck(corpus, jobs):
     return 0
 
 
+# Volatile per-run values that must NEVER reach the committed artifact:
+# they are facts about this machine's afternoon, not about the corpus, and
+# a committed census that changes on every run cannot detect staleness.
+# (Measured: leaving `elapsed_seconds` in made two consecutive runs differ,
+# which is precisely the drift the --compare mode exists to catch.)
+VOLATILE_SUMMARY_KEYS = ("elapsed_seconds",)
+
+
+def committed_payload(provenance, summary):
+    """Exactly what gets written -- normalized through JSON.
+
+    Normalizing matters for --compare: the in-memory summary holds Counters
+    and tuples that do NOT compare equal to their deserialized list/dict
+    forms, so comparing live objects against a loaded file reports drift
+    that does not exist. Compare what would be WRITTEN, not what is held.
+    """
+    lean = {k: v for k, v in summary.items() if k not in VOLATILE_SUMMARY_KEYS}
+    payload = {"schema": "sv-census-1", "provenance": provenance,
+               "summary": lean}
+    return json.loads(json.dumps(payload, sort_keys=True))
+
+
+def write_summary(provenance, summary):
+    """Write the committed summary census, deterministically."""
+    with open(SUMMARY_JSON, "w", encoding="utf-8", newline="\n") as f:
+        json.dump(committed_payload(provenance, summary), f,
+                  indent=1, sort_keys=True)
+        f.write("\n")
+
+
+def do_compare(provenance, summary):
+    """--compare: is the committed summary still what the corpus yields?
+
+    The corpus lives OUTSIDE this repository and moves on its own schedule,
+    so staleness has to be mechanically detectable rather than merely
+    possible.  Reports every differing key and exits non-zero.
+    """
+    if not os.path.exists(SUMMARY_JSON):
+        print("compare: REFUSED — no committed census at %s" % SUMMARY_JSON,
+              file=sys.stderr)
+        return 2
+    with open(SUMMARY_JSON, encoding="utf-8") as f:
+        old = json.load(f)
+
+    fresh = committed_payload(provenance, summary)
+    diffs = []
+    for label, new_d, old_d in (("provenance", fresh["provenance"], old.get("provenance", {})),
+                                ("summary", fresh["summary"], old.get("summary", {}))):
+        for k in sorted(set(new_d) | set(old_d)):
+            a, b = old_d.get(k), new_d.get(k)
+            if a != b:
+                diffs.append((label, k, a, b))
+
+    if not diffs:
+        print("compare: IDENTICAL (%d files, corpus %s)"
+              % (provenance["corpus_files"], provenance["corpus_name"]))
+        return 0
+    print("compare: %d DIFFERENCE(S) vs %s"
+          % (len(diffs), os.path.relpath(SUMMARY_JSON, REPO)))
+    for label, k, a, b in diffs:
+        sa, sb = repr(a), repr(b)
+        if len(sa) > 90: sa = sa[:87] + "..."
+        if len(sb) > 90: sb = sb[:87] + "..."
+        print("  %s.%s\n    committed: %s\n    now:       %s" % (label, k, sa, sb))
+    return 1
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="census.py", description=__doc__)
-    ap.add_argument("--corpus", default=DEFAULT_CORPUS)
+    ap.add_argument("--corpus", default=None, metavar="PATH",
+                    help="explicit corpus path; overrides --corpus-name")
+    ap.add_argument("--corpus-name", default="sv-tests-2",
+                    choices=sorted(KNOWN_CORPORA),
+                    help="corpus to resolve from the registry "
+                         "(default: sv-tests-2, the corpus every landed "
+                         "coverage claim was measured on)")
+    ap.add_argument("--all-dirs", action="store_true",
+                    help="also walk non-chapter subdirectories (the public "
+                         "suite keeps 311 of 1028 tests outside chapter-*)")
     ap.add_argument("--jobs", type=int, default=32)
     ap.add_argument("--limit", type=int, default=0,
                     help="only the first N files (smoke runs; no outputs "
@@ -485,17 +712,31 @@ def main(argv=None):
     ap.add_argument("--write", action="store_true",
                     help="write outputs even with --limit")
     ap.add_argument("--recheck", action="store_true")
+    ap.add_argument("--compare", action="store_true",
+                    help="compare against the committed summary census and "
+                         "exit non-zero on any drift (staleness check)")
     args = ap.parse_args(argv)
 
+    try:
+        corpus, corpus_name = resolve_corpus(args.corpus, args.corpus_name)
+    except CorpusError as exc:
+        print("census: REFUSED — %s" % exc, file=sys.stderr)
+        return 2
+
     if args.recheck:
-        return do_recheck(args.corpus, args.jobs)
+        return do_recheck(corpus, args.jobs)
 
     t0 = time.time()
-    paths = find_files(args.corpus)
+    paths = find_files(corpus, all_dirs=args.all_dirs)
+    if not paths:
+        print("census: REFUSED — no .sv files under %s (an empty census is "
+              "an instrument fault, never a finding)" % corpus, file=sys.stderr)
+        return 2
+    print("census: corpus %s at %s" % (corpus_name, corpus), flush=True)
     if args.limit:
         paths = paths[:args.limit]
     print("census: %d files, %d jobs" % (len(paths), args.jobs), flush=True)
-    records = run_pool(paths, args.corpus, args.jobs)
+    records = run_pool(paths, corpus, args.jobs)
     summary = summarize(records)
     elapsed = time.time() - t0
     summary["elapsed_seconds"] = round(elapsed, 1)
@@ -514,15 +755,50 @@ def main(argv=None):
               % (chap, d["simulation_tests"], d["clean"], d["partial"],
                  d["unlockable"], d["blocked_by_more"]))
 
+    # PROVENANCE IS PART OF THE MEASUREMENT, not decoration.  The landed
+    # census recorded none, so when its `unlockable` set failed to reproduce
+    # here there was no way to tell a corpus change from a host change from
+    # an instrument change -- the three had to be separated by hand
+    # (docs/sv-charter.md §1.8).  Every run now stamps what it measured and
+    # what measured it.  The frontend is stamped by FAMILY, never by point
+    # release, per docs/family-architecture.md.
+    try:
+        import pyslang
+        frontend = {"name": "pyslang",
+                    "family": "pyslang-%s" % pyslang.__version__.split(".")[0]}
+    except Exception:                                       # noqa: BLE001
+        frontend = {"name": "pyslang", "family": None}
+    provenance = {
+        "corpus_name": corpus_name,
+        "corpus_path": corpus,
+        "corpus_files": len(paths),
+        "walk": "chapter-* + all subdirs" if args.all_dirs else "chapter-* only",
+        "frontend": frontend,
+        "platform": "%s-%s" % (platform.system().lower(), platform.machine()),
+        "python": "%d.%d" % sys.version_info[:2],
+    }
+
+    if args.compare:
+        return do_compare(provenance, summary)
+
     if args.limit and not args.write:
         print("(smoke run: outputs not written)")
         return 0
 
     os.makedirs(OUT_DIR, exist_ok=True)
     with open(CENSUS_JSON, "w", encoding="utf-8", newline="\n") as f:
-        json.dump({"schema": "sv-census-1", "summary": summary,
-                   "records": records}, f, indent=1)
+        json.dump({"schema": "sv-census-1", "provenance": provenance,
+                   "summary": summary, "records": records},
+                  f, indent=1, sort_keys=True)
         f.write("\n")
+
+    # The COMMITTABLE half.  The per-file records are ~12 MB over 21k files,
+    # far outside this repository's census range (6 KB - 773 KB in docs/),
+    # so they stay regenerable-but-uncommitted; provenance + summary is
+    # ~20 KB and is what every claim in docs/sv-corpus-coverage.md actually
+    # cites.  Sorted and indent-stable, so a double run is byte-identical
+    # and --compare can detect staleness mechanically.
+    write_summary(provenance, summary)
     unlock = sorted(
         r["path"] for r in records
         if r["unlockable"] and r["type"] == "simulation"

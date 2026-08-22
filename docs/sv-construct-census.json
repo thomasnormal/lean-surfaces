@@ -1,0 +1,1446 @@
+{
+ "provenance": {
+  "corpus_files": 21186,
+  "corpus_name": "sv-tests-2",
+  "corpus_path": "/Users/ahle/repos/mox/sv-conformance/sv-tests-2/tests",
+  "frontend": {
+   "family": "pyslang-11",
+   "name": "pyslang"
+  },
+  "platform": "darwin-arm64",
+  "python": "3.12",
+  "walk": "chapter-* only"
+ },
+ "schema": "sv-census-1",
+ "summary": {
+  "blocker_files": [
+   [
+    "TimedStatement:DelayControl",
+    8626
+   ],
+   [
+    "AssignmentExpression:target",
+    7217
+   ],
+   [
+    "NamedValueExpression:signed",
+    5734
+   ],
+   [
+    "VariableSymbol:signed",
+    4634
+   ],
+   [
+    "InstanceSymbol:Instance",
+    3625
+   ],
+   [
+    "VariableSymbol:2state",
+    3555
+   ],
+   [
+    "ExpressionStatement:CallExpression",
+    2900
+   ],
+   [
+    "CallExpression",
+    2485
+   ],
+   [
+    "VariableDeclStatement:signed",
+    2448
+   ],
+   [
+    "VariableDeclStatement:2state",
+    2392
+   ],
+   [
+    "NamedValueExpression:2state",
+    1404
+   ],
+   [
+    "SubroutineSymbol:Subroutine",
+    1403
+   ],
+   [
+    "RepeatLoopStatement",
+    1345
+   ],
+   [
+    "ProceduralBlockSymbol:NoEventControl",
+    1285
+   ],
+   [
+    "InvalidStatement",
+    1277
+   ],
+   [
+    "ClassType",
+    1268
+   ],
+   [
+    "TimedStatement:SignalEventControl",
+    1088
+   ],
+   [
+    "ElementSelectExpression",
+    1062
+   ],
+   [
+    "PrimitiveInstanceSymbol:PrimitiveInstance",
+    1011
+   ],
+   [
+    "MemberAccessExpression",
+    1000
+   ],
+   [
+    "HierarchicalValueExpression",
+    906
+   ],
+   [
+    "ConversionExpression:width",
+    854
+   ],
+   [
+    "TypeAliasType:TypeAlias",
+    793
+   ],
+   [
+    "PackageSymbol",
+    733
+   ],
+   [
+    "VariableSymbol:type",
+    700
+   ],
+   [
+    "RealLiteral",
+    688
+   ],
+   [
+    "CovergroupType:CovergroupType",
+    652
+   ],
+   [
+    "CheckerSymbol",
+    563
+   ],
+   [
+    "ClockingBlockSymbol:ClockingBlock",
+    548
+   ],
+   [
+    "CheckerInstanceSymbol:CheckerInstance",
+    534
+   ],
+   [
+    "ParameterSymbol:Parameter",
+    513
+   ],
+   [
+    "ClassType:ClassType",
+    502
+   ],
+   [
+    "PropertySymbol:Property",
+    464
+   ],
+   [
+    "WildcardImportSymbol:WildcardImport",
+    371
+   ],
+   [
+    "PrimitiveSymbol",
+    371
+   ],
+   [
+    "ForLoopStatement",
+    302
+   ],
+   [
+    "BlockStatement:JoinAll",
+    298
+   ],
+   [
+    "ConfigBlockSymbol",
+    270
+   ],
+   [
+    "SequenceSymbol:Sequence",
+    259
+   ],
+   [
+    "GenerateBlockArraySymbol:GenerateBlockArray",
+    255
+   ],
+   [
+    "GenerateBlockSymbol:GenerateBlock",
+    249
+   ],
+   [
+    "TransparentMemberSymbol:TransparentMember",
+    239
+   ],
+   [
+    "NamedValueExpression:Parameter",
+    237
+   ],
+   [
+    "NullLiteral",
+    230
+   ],
+   [
+    "CaseStatement",
+    213
+   ],
+   [
+    "TypeAliasType",
+    204
+   ],
+   [
+    "RangeSelectExpression",
+    201
+   ],
+   [
+    "GenvarSymbol:Genvar",
+    194
+   ],
+   [
+    "BlockStatement:JoinNone",
+    192
+   ],
+   [
+    "NamedValueExpression:EnumValue",
+    187
+   ],
+   [
+    "InstanceArraySymbol:InstanceArray",
+    180
+   ],
+   [
+    "ForeachLoopStatement",
+    171
+   ],
+   [
+    "ExpressionStatement:UnaryExpression",
+    169
+   ],
+   [
+    "ImmediateAssertionStatement",
+    169
+   ],
+   [
+    "NamedValueExpression:ClockVar",
+    161
+   ],
+   [
+    "NamedValueExpression:type",
+    159
+   ],
+   [
+    "SignalEventControl:None_",
+    149
+   ],
+   [
+    "TimedStatement:CycleDelayControl",
+    142
+   ],
+   [
+    "GenericClassDefSymbol",
+    135
+   ],
+   [
+    "VariableSymbol:range",
+    122
+   ],
+   [
+    "SubroutineSymbol",
+    118
+   ],
+   [
+    "AssignmentExpression:timing",
+    109
+   ],
+   [
+    "ConversionExpression:Explicit",
+    107
+   ],
+   [
+    "ExplicitImportSymbol:ExplicitImport",
+    104
+   ],
+   [
+    "ProceduralAssignStatement",
+    103
+   ],
+   [
+    "VariableDeclStatement:type",
+    93
+   ],
+   [
+    "ProceduralBlockSymbol:Final",
+    83
+   ],
+   [
+    "ProceduralDeassignStatement",
+    78
+   ],
+   [
+    "WhileLoopStatement",
+    77
+   ],
+   [
+    "VariableSymbol",
+    76
+   ],
+   [
+    "AssignmentExpression:compound",
+    69
+   ],
+   [
+    "EventTriggerStatement",
+    68
+   ],
+   [
+    "ConcurrentAssertionStatement",
+    68
+   ],
+   [
+    "ForeverLoopStatement",
+    66
+   ],
+   [
+    "NamedValueExpression:range",
+    66
+   ],
+   [
+    "NetSymbol:Tri",
+    64
+   ],
+   [
+    "InsideExpression",
+    60
+   ],
+   [
+    "NetSymbol:Supply1",
+    56
+   ],
+   [
+    "ConversionExpression:StreamingConcat",
+    55
+   ],
+   [
+    "WaitStatement",
+    54
+   ],
+   [
+    "NetSymbol:TriReg",
+    53
+   ],
+   [
+    "NetSymbol:WAnd",
+    52
+   ],
+   [
+    "EmptyMemberSymbol:EmptyMember",
+    52
+   ],
+   [
+    "NamedValueExpression:ClassProperty",
+    51
+   ],
+   [
+    "TransparentMemberSymbol",
+    50
+   ],
+   [
+    "NetSymbol:WOr",
+    49
+   ],
+   [
+    "RandSequenceStatement",
+    49
+   ],
+   [
+    "TimedStatement:ImplicitEventControl",
+    49
+   ],
+   [
+    "SpecifyBlockSymbol:SpecifyBlock",
+    49
+   ],
+   [
+    "NetSymbol:Supply0",
+    47
+   ],
+   [
+    "PortSymbol:2state",
+    41
+   ],
+   [
+    "GenericClassDefSymbol:GenericClassDef",
+    39
+   ],
+   [
+    "NetSymbol:UserDefined",
+    38
+   ],
+   [
+    "DefParamSymbol:DefParam",
+    37
+   ],
+   [
+    "TimedStatement:EventListControl",
+    36
+   ],
+   [
+    "BlockStatement:JoinAny",
+    35
+   ],
+   [
+    "NetType",
+    34
+   ],
+   [
+    "BinaryExpression:Multiply",
+    34
+   ],
+   [
+    "WaitForkStatement",
+    34
+   ],
+   [
+    "LetDeclSymbol:LetDecl",
+    33
+   ],
+   [
+    "DoWhileLoopStatement",
+    32
+   ],
+   [
+    "NetAliasSymbol:NetAlias",
+    31
+   ],
+   [
+    "DisableForkStatement",
+    30
+   ],
+   [
+    "DisableStatement",
+    29
+   ],
+   [
+    "NetSymbol:delay",
+    27
+   ],
+   [
+    "BinaryExpression:LogicalShiftLeft",
+    25
+   ],
+   [
+    "ReplicationExpression",
+    25
+   ],
+   [
+    "ParameterSymbol",
+    25
+   ],
+   [
+    "BinaryExpression:WildcardEquality",
+    24
+   ],
+   [
+    "VariableDeclStatement:range",
+    22
+   ],
+   [
+    "UnaryExpression:BitwiseXor",
+    21
+   ],
+   [
+    "BinaryExpression:LogicalShiftRight",
+    20
+   ],
+   [
+    "SignalEventControl:NegEdge",
+    20
+   ],
+   [
+    "NetSymbol:Tri0",
+    20
+   ],
+   [
+    "ContinuousAssignSymbol:delay",
+    19
+   ],
+   [
+    "ConditionalStatement:Unique",
+    19
+   ],
+   [
+    "NetSymbol:Tri1",
+    18
+   ],
+   [
+    "ForwardingTypedefSymbol",
+    18
+   ],
+   [
+    "BinaryExpression:ArithmeticShiftRight",
+    15
+   ],
+   [
+    "UnaryExpression:BitwiseAnd",
+    15
+   ],
+   [
+    "NetSymbol:type",
+    15
+   ],
+   [
+    "ProceduralBlockSymbol:AlwaysLatch",
+    15
+   ],
+   [
+    "AnonymousProgramSymbol",
+    15
+   ],
+   [
+    "ForwardingTypedefSymbol:ForwardingTypedef",
+    15
+   ],
+   [
+    "NetSymbol:Interconnect",
+    13
+   ],
+   [
+    "PatternCaseStatement",
+    13
+   ],
+   [
+    "NetSymbol:UWire",
+    13
+   ],
+   [
+    "BinaryExpression:LogicalImplication",
+    12
+   ],
+   [
+    "BinaryExpression:Divide",
+    12
+   ],
+   [
+    "ConditionalStatement:pattern",
+    12
+   ],
+   [
+    "NetSymbol:range",
+    12
+   ],
+   [
+    "BinaryExpression:Mod",
+    11
+   ],
+   [
+    "UnaryExpression:BitwiseNor",
+    11
+   ],
+   [
+    "ConditionalStatement:Priority",
+    11
+   ],
+   [
+    "NetSymbol:signed",
+    11
+   ],
+   [
+    "NetSymbol:TriAnd",
+    11
+   ],
+   [
+    "NetSymbol:TriOr",
+    11
+   ],
+   [
+    "PortSymbol:InOut",
+    10
+   ],
+   [
+    "ContinuousAssignSymbol:InvalidExpression",
+    10
+   ],
+   [
+    "UnaryExpression:BitwiseNand",
+    10
+   ],
+   [
+    "UnaryExpression:BitwiseXnor",
+    10
+   ],
+   [
+    "UnaryExpression:BitwiseOr",
+    10
+   ],
+   [
+    "RandCaseStatement",
+    9
+   ],
+   [
+    "CheckerSymbol:Checker",
+    9
+   ],
+   [
+    "ConversionExpression:BitstreamCast",
+    8
+   ],
+   [
+    "BinaryExpression:Power",
+    8
+   ],
+   [
+    "SignalEventControl:clock",
+    7
+   ],
+   [
+    "NetType:NetType",
+    6
+   ],
+   [
+    "BinaryExpression:WildcardInequality",
+    6
+   ],
+   [
+    "BinaryExpression:BinaryXnor",
+    6
+   ],
+   [
+    "InvalidExpression",
+    6
+   ],
+   [
+    "WildcardImportSymbol",
+    6
+   ],
+   [
+    "MinTypMaxExpression",
+    5
+   ],
+   [
+    "UnaryExpression:Plus",
+    5
+   ],
+   [
+    "CovergroupType",
+    5
+   ],
+   [
+    "SysCall:format",
+    5
+   ],
+   [
+    "EmptyMemberSymbol",
+    5
+   ],
+   [
+    "ConditionalStatement:Unique0",
+    4
+   ],
+   [
+    "ProceduralCheckerStatement",
+    4
+   ],
+   [
+    "TypeParameterSymbol:TypeParameter",
+    4
+   ],
+   [
+    "BinaryExpression:ArithmeticShiftLeft",
+    3
+   ],
+   [
+    "ConditionalStatement:multi",
+    3
+   ],
+   [
+    "SignalEventControl:iff",
+    3
+   ],
+   [
+    "EmptyArgumentExpression",
+    3
+   ],
+   [
+    "InterfacePortSymbol:InterfacePort",
+    3
+   ],
+   [
+    "ArbitrarySymbolExpression",
+    3
+   ],
+   [
+    "UninstantiatedDefSymbol:UninstantiatedDef",
+    3
+   ],
+   [
+    "WaitOrderStatement",
+    3
+   ],
+   [
+    "UnaryExpression:Postincrement",
+    2
+   ],
+   [
+    "UnaryExpression:Preincrement",
+    2
+   ],
+   [
+    "LetDeclSymbol",
+    2
+   ],
+   [
+    "PortSymbol:signed",
+    2
+   ],
+   [
+    "PackageSymbol:Package",
+    2
+   ],
+   [
+    "PrimitiveSymbol:Primitive",
+    2
+   ],
+   [
+    "GenerateBlockSymbol",
+    2
+   ],
+   [
+    "TimedStatement:OneStepDelayControl",
+    2
+   ],
+   [
+    "NamedValueExpression:Specparam",
+    2
+   ],
+   [
+    "SimpleAssignmentPatternExpression",
+    1
+   ],
+   [
+    "UnaryExpression:Postdecrement",
+    1
+   ],
+   [
+    "BinaryExpression:LogicalEquivalence",
+    1
+   ],
+   [
+    "InstanceSymbol",
+    1
+   ],
+   [
+    "ClockingBlockSymbol",
+    1
+   ],
+   [
+    "SequenceSymbol",
+    1
+   ],
+   [
+    "ConfigBlockSymbol:ConfigBlock",
+    1
+   ],
+   [
+    "MultiPortSymbol:MultiPort",
+    1
+   ],
+   [
+    "PortSymbol:Ref",
+    1
+   ],
+   [
+    "TimeLiteral",
+    1
+   ],
+   [
+    "ExplicitImportSymbol",
+    1
+   ],
+   [
+    "SpecifyBlockSymbol",
+    1
+   ],
+   [
+    "SpecparamSymbol:Specparam",
+    1
+   ],
+   [
+    "DefParamSymbol",
+    1
+   ],
+   [
+    "TypeReferenceExpression",
+    1
+   ],
+   [
+    "NetSymbol",
+    1
+   ],
+   [
+    "SignalEventControl:BothEdges",
+    1
+   ]
+  ],
+  "by_status": {
+   "clean": 806,
+   "partial": 20351,
+   "skip_include": 29
+  },
+  "clean_by_type": {
+   "(none)": [
+    53,
+    1365
+   ],
+   "compilation": [
+    0,
+    1
+   ],
+   "compile": [
+    0,
+    25
+   ],
+   "compile fail": [
+    2,
+    10
+   ],
+   "compile_diagnostic": [
+    3,
+    25
+   ],
+   "compile_error": [
+    93,
+    1759
+   ],
+   "compile_fail": [
+    0,
+    4
+   ],
+   "compile_warning": [
+    2,
+    7
+   ],
+   "must error or warn": [
+    0,
+    1
+   ],
+   "negative": [
+    0,
+    15
+   ],
+   "runtime_diagnostic": [
+    0,
+    21
+   ],
+   "runtime_error": [
+    0,
+    39
+   ],
+   "shell": [
+    52,
+    52
+   ],
+   "simulation": [
+    601,
+    17856
+   ],
+   "simulation elaboration": [
+    0,
+    4
+   ],
+   "syntax": [
+    0,
+    2
+   ]
+  },
+  "corpus": null,
+  "deep_dive": {
+   "chapter-11": {
+    "blocked_by_more": 815,
+    "clean": 147,
+    "partial": 815,
+    "simulation_tests": 962,
+    "top_residual_blockers": [
+     [
+      "AssignmentExpression:target",
+      519
+     ],
+     [
+      "NamedValueExpression:signed",
+      291
+     ],
+     [
+      "VariableDeclStatement:2state",
+      268
+     ],
+     [
+      "VariableSymbol:signed",
+      140
+     ],
+     [
+      "VariableDeclStatement:signed",
+      84
+     ],
+     [
+      "VariableSymbol:2state",
+      82
+     ],
+     [
+      "NamedValueExpression:2state",
+      80
+     ],
+     [
+      "ElementSelectExpression",
+      60
+     ],
+     [
+      "RangeSelectExpression",
+      54
+     ],
+     [
+      "ConversionExpression:width",
+      53
+     ],
+     [
+      "CallExpression",
+      52
+     ],
+     [
+      "InsideExpression",
+      48
+     ],
+     [
+      "ConversionExpression:StreamingConcat",
+      47
+     ],
+     [
+      "SubroutineSymbol:Subroutine",
+      46
+     ],
+     [
+      "RealLiteral",
+      44
+     ],
+     [
+      "TypeAliasType:TypeAlias",
+      41
+     ],
+     [
+      "BinaryExpression:WildcardEquality",
+      24
+     ],
+     [
+      "LetDeclSymbol:LetDecl",
+      22
+     ],
+     [
+      "MemberAccessExpression",
+      21
+     ],
+     [
+      "BinaryExpression:LogicalShiftLeft",
+      20
+     ]
+    ],
+    "unlockable": 0
+   },
+   "chapter-4": {
+    "blocked_by_more": 418,
+    "clean": 1,
+    "partial": 418,
+    "simulation_tests": 419,
+    "top_residual_blockers": [
+     [
+      "TimedStatement:DelayControl",
+      345
+     ],
+     [
+      "AssignmentExpression:target",
+      137
+     ],
+     [
+      "VariableSymbol:signed",
+      136
+     ],
+     [
+      "NamedValueExpression:signed",
+      120
+     ],
+     [
+      "InstanceSymbol:Instance",
+      51
+     ],
+     [
+      "TimedStatement:SignalEventControl",
+      37
+     ],
+     [
+      "SignalEventControl:None_",
+      36
+     ],
+     [
+      "AssignmentExpression:timing",
+      30
+     ],
+     [
+      "StringLiteral:encoding",
+      27
+     ],
+     [
+      "VariableSymbol:2state",
+      24
+     ],
+     [
+      "PrimitiveInstanceSymbol:PrimitiveInstance",
+      24
+     ],
+     [
+      "Call:$strobe",
+      23
+     ],
+     [
+      "VariableSymbol:type",
+      22
+     ],
+     [
+      "ElementSelectExpression",
+      22
+     ],
+     [
+      "SubroutineSymbol:Subroutine",
+      18
+     ],
+     [
+      "ProceduralAssignStatement",
+      17
+     ],
+     [
+      "ProceduralDeassignStatement",
+      16
+     ],
+     [
+      "ExpressionStatement:UnaryExpression",
+      15
+     ],
+     [
+      "BlockStatement:JoinAll",
+      15
+     ],
+     [
+      "VariableDeclStatement:2state",
+      14
+     ]
+    ],
+    "unlockable": 0
+   },
+   "chapter-6": {
+    "blocked_by_more": 972,
+    "clean": 33,
+    "partial": 972,
+    "simulation_tests": 1005,
+    "top_residual_blockers": [
+     [
+      "AssignmentExpression:target",
+      514
+     ],
+     [
+      "NamedValueExpression:signed",
+      328
+     ],
+     [
+      "VariableSymbol:signed",
+      268
+     ],
+     [
+      "VariableSymbol:2state",
+      258
+     ],
+     [
+      "VariableDeclStatement:2state",
+      221
+     ],
+     [
+      "CallExpression",
+      215
+     ],
+     [
+      "TypeAliasType:TypeAlias",
+      214
+     ],
+     [
+      "ConversionExpression:width",
+      189
+     ],
+     [
+      "NamedValueExpression:2state",
+      177
+     ],
+     [
+      "TimedStatement:DelayControl",
+      168
+     ],
+     [
+      "TransparentMemberSymbol:TransparentMember",
+      136
+     ],
+     [
+      "ConversionExpression:Explicit",
+      85
+     ],
+     [
+      "NamedValueExpression:EnumValue",
+      77
+     ],
+     [
+      "MemberAccessExpression",
+      76
+     ],
+     [
+      "ElementSelectExpression",
+      73
+     ],
+     [
+      "InstanceSymbol:Instance",
+      65
+     ],
+     [
+      "RealLiteral",
+      47
+     ],
+     [
+      "TypeAliasType",
+      37
+     ],
+     [
+      "SubroutineSymbol:Subroutine",
+      36
+     ],
+     [
+      "VariableSymbol:type",
+      32
+     ]
+    ],
+    "unlockable": 0
+   }
+  },
+  "extractor_internal_files": [],
+  "per_chapter": {
+   "chapter-10": {
+    "clean": 29,
+    "error": 0,
+    "partial": 599,
+    "skip_include": 0,
+    "total": 628,
+    "unlockable": 0
+   },
+   "chapter-11": {
+    "clean": 149,
+    "error": 0,
+    "partial": 856,
+    "skip_include": 0,
+    "total": 1005,
+    "unlockable": 0
+   },
+   "chapter-12": {
+    "clean": 1,
+    "error": 0,
+    "partial": 594,
+    "skip_include": 0,
+    "total": 595,
+    "unlockable": 0
+   },
+   "chapter-13": {
+    "clean": 0,
+    "error": 0,
+    "partial": 593,
+    "skip_include": 0,
+    "total": 593,
+    "unlockable": 0
+   },
+   "chapter-14": {
+    "clean": 1,
+    "error": 0,
+    "partial": 462,
+    "skip_include": 0,
+    "total": 463,
+    "unlockable": 0
+   },
+   "chapter-15": {
+    "clean": 0,
+    "error": 0,
+    "partial": 521,
+    "skip_include": 0,
+    "total": 521,
+    "unlockable": 0
+   },
+   "chapter-16": {
+    "clean": 0,
+    "error": 0,
+    "partial": 1511,
+    "skip_include": 0,
+    "total": 1511,
+    "unlockable": 0
+   },
+   "chapter-17": {
+    "clean": 0,
+    "error": 0,
+    "partial": 510,
+    "skip_include": 0,
+    "total": 510,
+    "unlockable": 0
+   },
+   "chapter-18": {
+    "clean": 0,
+    "error": 0,
+    "partial": 816,
+    "skip_include": 0,
+    "total": 816,
+    "unlockable": 0
+   },
+   "chapter-19": {
+    "clean": 0,
+    "error": 0,
+    "partial": 696,
+    "skip_include": 0,
+    "total": 696,
+    "unlockable": 0
+   },
+   "chapter-20": {
+    "clean": 11,
+    "error": 0,
+    "partial": 761,
+    "skip_include": 0,
+    "total": 772,
+    "unlockable": 0
+   },
+   "chapter-21": {
+    "clean": 1,
+    "error": 0,
+    "partial": 804,
+    "skip_include": 0,
+    "total": 805,
+    "unlockable": 0
+   },
+   "chapter-22": {
+    "clean": 296,
+    "error": 0,
+    "partial": 234,
+    "skip_include": 27,
+    "total": 557,
+    "unlockable": 2
+   },
+   "chapter-23": {
+    "clean": 16,
+    "error": 0,
+    "partial": 795,
+    "skip_include": 0,
+    "total": 811,
+    "unlockable": 0
+   },
+   "chapter-24": {
+    "clean": 7,
+    "error": 0,
+    "partial": 340,
+    "skip_include": 0,
+    "total": 347,
+    "unlockable": 0
+   },
+   "chapter-25": {
+    "clean": 8,
+    "error": 0,
+    "partial": 446,
+    "skip_include": 0,
+    "total": 454,
+    "unlockable": 0
+   },
+   "chapter-26": {
+    "clean": 1,
+    "error": 0,
+    "partial": 560,
+    "skip_include": 0,
+    "total": 561,
+    "unlockable": 0
+   },
+   "chapter-27": {
+    "clean": 0,
+    "error": 0,
+    "partial": 348,
+    "skip_include": 0,
+    "total": 348,
+    "unlockable": 0
+   },
+   "chapter-28": {
+    "clean": 0,
+    "error": 0,
+    "partial": 718,
+    "skip_include": 0,
+    "total": 718,
+    "unlockable": 0
+   },
+   "chapter-29": {
+    "clean": 1,
+    "error": 0,
+    "partial": 351,
+    "skip_include": 0,
+    "total": 352,
+    "unlockable": 0
+   },
+   "chapter-3": {
+    "clean": 11,
+    "error": 0,
+    "partial": 217,
+    "skip_include": 1,
+    "total": 229,
+    "unlockable": 0
+   },
+   "chapter-30": {
+    "clean": 0,
+    "error": 0,
+    "partial": 427,
+    "skip_include": 0,
+    "total": 427,
+    "unlockable": 0
+   },
+   "chapter-31": {
+    "clean": 0,
+    "error": 0,
+    "partial": 499,
+    "skip_include": 0,
+    "total": 499,
+    "unlockable": 0
+   },
+   "chapter-32": {
+    "clean": 0,
+    "error": 0,
+    "partial": 285,
+    "skip_include": 0,
+    "total": 285,
+    "unlockable": 0
+   },
+   "chapter-33": {
+    "clean": 1,
+    "error": 0,
+    "partial": 265,
+    "skip_include": 0,
+    "total": 266,
+    "unlockable": 0
+   },
+   "chapter-34": {
+    "clean": 64,
+    "error": 0,
+    "partial": 162,
+    "skip_include": 1,
+    "total": 227,
+    "unlockable": 0
+   },
+   "chapter-35": {
+    "clean": 0,
+    "error": 0,
+    "partial": 256,
+    "skip_include": 0,
+    "total": 256,
+    "unlockable": 0
+   },
+   "chapter-36": {
+    "clean": 0,
+    "error": 0,
+    "partial": 720,
+    "skip_include": 0,
+    "total": 720,
+    "unlockable": 0
+   },
+   "chapter-37": {
+    "clean": 0,
+    "error": 0,
+    "partial": 417,
+    "skip_include": 0,
+    "total": 417,
+    "unlockable": 0
+   },
+   "chapter-38": {
+    "clean": 26,
+    "error": 0,
+    "partial": 314,
+    "skip_include": 0,
+    "total": 340,
+    "unlockable": 0
+   },
+   "chapter-39": {
+    "clean": 0,
+    "error": 0,
+    "partial": 61,
+    "skip_include": 0,
+    "total": 61,
+    "unlockable": 0
+   },
+   "chapter-4": {
+    "clean": 1,
+    "error": 0,
+    "partial": 422,
+    "skip_include": 0,
+    "total": 423,
+    "unlockable": 0
+   },
+   "chapter-40": {
+    "clean": 4,
+    "error": 0,
+    "partial": 76,
+    "skip_include": 0,
+    "total": 80,
+    "unlockable": 0
+   },
+   "chapter-5": {
+    "clean": 131,
+    "error": 0,
+    "partial": 478,
+    "skip_include": 0,
+    "total": 609,
+    "unlockable": 0
+   },
+   "chapter-6": {
+    "clean": 39,
+    "error": 0,
+    "partial": 1111,
+    "skip_include": 0,
+    "total": 1150,
+    "unlockable": 0
+   },
+   "chapter-7": {
+    "clean": 6,
+    "error": 0,
+    "partial": 761,
+    "skip_include": 0,
+    "total": 767,
+    "unlockable": 0
+   },
+   "chapter-8": {
+    "clean": 0,
+    "error": 0,
+    "partial": 804,
+    "skip_include": 0,
+    "total": 804,
+    "unlockable": 0
+   },
+   "chapter-9": {
+    "clean": 2,
+    "error": 0,
+    "partial": 561,
+    "skip_include": 0,
+    "total": 563,
+    "unlockable": 0
+   }
+  },
+  "seed": 20260721,
+  "unlockable_simulation": 2,
+  "unlockable_total": 2
+ }
+}

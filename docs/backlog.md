@@ -196,3 +196,46 @@ is no payload attached to a NaN in this format."* **You cannot quantify over a
 payload the type does not have.** The options — carry our own NaN representation
 in layer 2, restrict claims to payload-independent facts, or accept core's
 payload-free NaN as the family's answer — are **Thomas's**. Registered as open.
+
+### `Core.SemM` LANDED — the §3.8 trigger fired, and the reconciliation INVERTS
+
+`LeanModels/Core/Outcome.lean` is on master. **§3.8's single landing has
+occurred** and the **rebuild lane was the first-arriving trigger** of the three
+candidates. Verified in the file: `SemM W ρ := ExceptT ρ (StateT W Halt)` — the
+ruled layer order — plus `refuse` as a **named primitive** (§3.4's never-a-bare-
+throw law), `raiseIn` for the ρ channel, `exhausted` for timeout, and `SemPS`.
+Registry and inventory rows updated: **Python's definition is the monadic
+interpreter**, the deep interpreter is the legacy layer under §3.4(c)'s erosion
+contract. `Run` stays with its proved iso (65 example files import its umbrella).
+**Full triad is OWED under A14**, with the coverage statement in the merge commit.
+
+**THE TWO SITES, NAMED — and the dispatch's framing inverts.** They are **C**
+(`C23/Memory.lean:739`) and **ES** (`Es/Completion.lean:174`), each an
+`inductive Halt α` rather than `Except Loud`. But there are **no literal
+`Except Loud` sites** outside Core, and the real finding is different:
+
+| site | its `Halt` | `unsupported` payload |
+| --- | --- | --- |
+| **Core** | `abbrev Halt := Except Loud` | **`msg : String`** |
+| **C** | `inductive Halt α` | `(what : String) (snapshot : Option Mem)` |
+| **ES** | `inductive Halt α` | `(cause : EsRefusal) (message : String)` |
+
+**All three agree on the SHAPE** (`ok`/`timeout`/`unsupported`) — the covenant
+holds. **The entire divergence is the `unsupported` PAYLOAD, and CORE'S IS THE
+POOREST.**
+
+**Both tiers implement rulings this document made.** C's `snapshot` is the `Halt`
+ruling's structured payload **with the never-an-observable guard made
+STRUCTURAL** — its `BEq` ignores the snapshot and `Outcome` drops it, which is
+exactly the two constraints §3.4 imposed. ES's `cause` is the `RefusalCause`
+ruling. **Core carries neither.**
+
+> **Convergence-by-import would DELETE both payloads** — a regression, and *"the
+> quiet way to lose facts"* arriving from the other direction: **not two tiers to
+> fix, but a trunk too poor to absorb them.**
+
+**DISPATCH ANSWER: the fix is in CORE, not in C or ES.** Parameterize
+`Loud.unsupported`'s payload per the `Halt` ruling (cause + optional snapshot)
+and the `RefusalCause` ruling (four classes, tier payload). **Until that lands,
+the eleven mechanical sites converge by import and the two payload-bearing tiers
+HOLD** — importing them now trades two implemented rulings for a `String`.

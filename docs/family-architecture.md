@@ -1210,7 +1210,38 @@ that an import will absorb. **Two are not:**
 | finding | consequence |
 | --- | --- |
 | 11 sites: the stack's shape, spelled differently | **rename on import** — mechanical, by touch |
-| **2 sites: `Except Loud` where the stack requires `Halt`** | **NOT interchangeable** — a semantics fix |
+| **2 sites: a tier-local `inductive Halt α`** | **NOT interchangeable** — but see the correction below: the fix is in CORE |
+
+**THE TWO SITES, NAMED — and the finding inverts.** Measured on master
+after `Core/Outcome.lean` landed:
+
+| site | its `Halt` | `unsupported` payload |
+| --- | --- | --- |
+| **Core** `Outcome.lean` | `abbrev Halt := Except Loud` | **`msg : String`** |
+| **C** `C23/Memory.lean:739` | `inductive Halt α` | `(what : String) (snapshot : Option Mem)` |
+| **ES** `Es/Completion.lean:174` | `inductive Halt α` | `(cause : EsRefusal) (message : String)` |
+
+**All three agree on the SHAPE** — `ok` / `timeout` / `unsupported` — so
+the covenant holds everywhere. **The whole divergence is the `unsupported`
+PAYLOAD, and Core's is the POOREST of the three.**
+
+**Both tiers implement rulings this document made.** C's `snapshot` is the
+`Halt` ruling's structured payload, with the never-an-observable guard made
+**structural** (its `BEq` ignores the snapshot; `Outcome` drops it) — the
+exact two constraints §3.4 imposed. ES's `cause` is the `RefusalCause`
+ruling. **Core carries neither.**
+
+> **So convergence-by-import would DELETE both payloads.** That is a
+> regression, and it is *"the quiet way to lose facts"* arriving from the
+> other direction: not two tiers to be fixed, but **a trunk too poor to
+> absorb them.**
+
+**The fix is in CORE, not in C or ES**: parameterize `Loud.unsupported`'s
+payload, exactly as the `Halt` ruling (cause + optional snapshot) and the
+`RefusalCause` ruling (four classes, tier payload `π`) already prescribe.
+Until that lands, **the eleven mechanical sites converge by import and the
+two payload-bearing tiers HOLD** — importing them now would trade two
+implemented rulings for a `String`.
 
 The two are not interchangeable **by this document's own `rfl`**: `Halt`
 sits outside `StateT`, so a `Loud` result carries **no `W`**; an

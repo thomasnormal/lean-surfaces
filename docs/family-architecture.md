@@ -3649,6 +3649,55 @@ renamed to an archive, every existing `§Lnn` reference keeps resolving, and
 **new landings use per-lane files from that commit on.** It also retires the
 race §7.2's push-time re-read rule exists to survive.
 
+#### 9.5a THE INBOUND CONVENTION — filing into a lane that is not yours
+
+Per-lane files answer *"where do I append?"* only while every entry has an
+obvious owner. One lane filing a finding into **another lane's** file needs
+a convention, or it mints ids in a sequence it does not own:
+
+* the entry is **headed `INBOUND`**;
+* it carries a **SENDER-namespace id** — `YYYY-MM-DD-<sender>-<n>` — so
+  **nothing is minted in the owner's sequence**;
+* it tells the owner explicitly to **renumber it or close it**; the entry
+  is a *proposal to the owner's record*, not a fact already in it;
+* the **generated index renders `INBOUND` as its own class**, listed
+  against each owning lane, so an owner sees what is queued for them
+  without reading their own file for surprises.
+
+**AND THE MEASURED COST, which is the part worth flagging: cross-lane
+appends REINTRODUCE the tail race §9.5 just retired.** `es.md` conflicted
+on rebase because the owner appended to it concurrently — exactly the
+contention per-lane files exist to remove, arriving through the one door
+they left open.
+
+**Contingency, and it is a WATCH ITEM rather than a change**: if the race
+recurs, INBOUND entries move to **`docs/backlog/inbound/<owner>.md`** — a
+file the owner reads and drains but never appends to, which restores the
+single-writer property. Not done now, because one conflict is an incident
+and not yet a rate; §9.7's light tick is where it would show up as one.
+
+#### 9.5b THE ROUTING LAW — file the RESIDUE, not the REPORT
+
+> **CHECK WHAT THE OWNER ALREADY LANDED, AND FILE THE RESIDUE, NOT THE
+> REPORT.**
+
+Measured: an ES entry arrived **90% redundant**, because the ES lane had
+already **accepted, re-measured and sharpened** both findings before the
+report was written. **The residue — the `ToInt32` clamp — was the only
+thing worth filing**, and it was the part the report buried under the
+nine-tenths the owner already had.
+
+This is the retrieval laws' third face (§5.4a). *A grep that agrees with
+your prior is the one to re-run* is about searching; *count the pattern
+position* is about pricing; **this is about FILING — a report sent without
+checking what landed is a duplicate its sender cannot see**, and it costs
+the owner the read.
+
+The practical form is the same in all three: **look at the thing itself
+before reporting about it.** For a cross-lane finding that means reading
+the owner's file first and filing only what is not already in it — which
+also makes the INBOUND entry short enough to be cheap to renumber.
+
 ### 9.6 WORKSPACE
 
 * **NOW — amendment 13 CoW seeding** (§7.1a). 27 s and 29 MB per clone

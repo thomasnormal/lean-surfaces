@@ -295,3 +295,43 @@ carries its own premises is not.**
 So §3.4's *"mvcgen on the fuel-free fragment"* gains a measured boundary **inside**
 the fragment: **arm-level `@[spec]` where the match is flat,
 judgments-with-premises where it nests.**
+
+### §9.5 GAINS THE INBOUND CONVENTION AND THE ROUTING LAW
+
+**(a) INBOUND — filing into a lane that is not yours.** Per-lane files answer
+*"where do I append?"* only while every entry has an obvious owner. One lane
+filing into **another's** file needs a convention or it mints ids in a sequence
+it does not own. So: headed **`INBOUND`**, carrying a **SENDER-namespace id**
+(`YYYY-MM-DD-<sender>-<n>`, nothing minted in the owner's sequence), telling the
+owner explicitly to **renumber or close** — the entry is a *proposal to* the
+owner's record, not a fact already in it — and the **generated index renders
+`INBOUND` as its own class** against each owning lane, so an owner sees what is
+queued without reading their own file for surprises.
+
+**THE MEASURED COST, and it is the part worth flagging: cross-lane appends
+REINTRODUCE the tail race §9.5 just retired.** `es.md` conflicted on rebase
+because the owner appended concurrently — the exact contention per-lane files
+exist to remove, arriving through the one door they left open.
+
+**Contingency, recorded as a WATCH ITEM rather than a change**: if the race
+recurs, INBOUND entries move to **`docs/backlog/inbound/<owner>.md`** — a file
+the owner drains but never appends to, restoring the single-writer property. Not
+done now, because **one conflict is an incident and not yet a rate**, and §9.7's
+light tick is where it would show up as one.
+
+**(b) THE ROUTING LAW.**
+
+> **CHECK WHAT THE OWNER ALREADY LANDED, AND FILE THE RESIDUE, NOT THE REPORT.**
+
+Measured: an ES entry arrived **90% redundant** because the ES lane had already
+**accepted, re-measured and sharpened** both findings before the report was
+written. **The residue — the `ToInt32` clamp — was the only thing worth filing**,
+and the report buried it under the nine-tenths the owner already had.
+
+**This is the retrieval laws' third face.** *A grep that agrees with your prior
+is the one to re-run* is about searching; *count the pattern position* is about
+pricing; **this is about FILING — a report sent without checking what landed is a
+duplicate its sender cannot see**, and it costs the owner the read. The practical
+form is identical in all three: **look at the thing itself before reporting about
+it.** For a cross-lane finding that means reading the owner's file first — which
+also keeps the INBOUND entry short enough to be cheap to renumber.

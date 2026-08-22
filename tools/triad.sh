@@ -82,6 +82,19 @@
 #   tools/triad.sh --lane x --dry-run   # takes a real tenure, runs no Lean
 #   tools/triad.sh --lane x --classify  # scope the triad from the diff
 #   tools/triad.sh --lane x --gates "a; b"   # YOUR gates, and no default warning
+#   tools/triad.sh --lane x --foreign --gates "..."   # a FOREIGN checkout
+#
+# --foreign — A CHECKOUT THAT IS NOT THIS REPOSITORY.  The Lean tier works in
+# `lean4lean`; the Wasm lane works in a `spectec` fork.  Both need the tenure
+# — the lock, the ticket, the RSS discipline are about THE MACHINE, not about
+# the repository — and neither can use anything else this script assumes.
+# §7.1a says why in as many words: `--classify` is OUR-REPO-ONLY BY
+# CONSTRUCTION, and a lane pointing it at a foreign checkout gets a confident
+# wrong answer rather than an error, because the class floor hard-wires our
+# gates and classification diffs against `github/master`.  So --foreign takes
+# the tenure, runs ONLY the lane's --gates, skips classification entirely, and
+# says what its green covers.  It REFUSES without --gates: there would be
+# nothing to run.
 #
 # GATES.  Without --gates the default set is `docs_check; diff_test`, which is
 # NARROWER than some retired lane scripts.  A run that did not choose its own
@@ -114,6 +127,7 @@ SELF_TEST=0
 GATES=""
 CLASSIFY=0
 CLASSIFY_ONLY=0
+FOREIGN=0
 AGAINST=""                                     # merge target; default below
 
 # The header IS the usage text, so print it whole — a `sed -n '1,60p'` goes
@@ -124,8 +138,18 @@ TRIAD_PROTOCOL="base 1-6 + A4-A13 + A16"
 TRIAD_PROTOCOL_DATE="2026-08-22"
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
-banner() { echo "tools/triad.sh — protocol $TRIAD_PROTOCOL ($TRIAD_PROTOCOL_DATE), \
+banner() { echo "tools/triad.sh — protocol $TRIAD_PROTOCOL ($TRIAD_PROTOCOL_DATE)\
+$( [ "${FOREIGN:-0}" = "1" ] && printf ' [FOREIGN]' ), \
 $( (git -C "$CLONE" rev-parse --short HEAD 2>/dev/null) || echo 'no git' )"; }
+
+foreign_remote() {      # the checkout's identity, for the coverage statement
+  git -C "$CLONE" remote get-url origin 2>/dev/null \
+    || git -C "$CLONE" remote -v 2>/dev/null | awk 'NR==1{print $2}' \
+    || echo 'no remote'
+}
+foreign_coverage() {
+  echo "foreign checkout $(foreign_remote); gates as given; class floor not applicable — this green is evidence about THAT tree and those gates, and about nothing in this repository."
+}
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -138,6 +162,7 @@ while [ $# -gt 0 ]; do
     --dry-run)   DRY_RUN=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
     --classify)  CLASSIFY=1; shift ;;
+    --foreign)   FOREIGN=1; shift ;;
     --classify-only) CLASSIFY=1; CLASSIFY_ONLY=1; shift ;;
     --against)   AGAINST="${2:-}"; shift 2 ;;
     -h|--help)   usage ;;
@@ -797,6 +822,29 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a non-diff_test gate is left ALONE"   \
         "$(announce_prebuilt 'python3 harness/script_corpus.py')" "python3 harness/script_corpus.py"
 
+  # ---- --foreign (the Lean tier's lean4lean, the Wasm lane's spectec fork)
+  echo "  -- foreign checkouts"
+  SELF="${BASH_SOURCE[0]}"
+  fdir="$tmp/foreign"; mkdir -p "$fdir"
+  out="$(bash "$SELF" --lane x --foreign --dir "$fdir" 2>&1)"; rc=$?
+  check "--foreign WITHOUT --gates refuses"      "$rc" "2"
+  check "  ...saying there is nothing to run"    "$(printf '%s' "$out" | grep -c 'requires --gates')" "1"
+  out="$(bash "$SELF" --lane x --foreign --classify --gates 'true' --dir "$fdir" 2>&1)"; rc=$?
+  check "--foreign + --classify is an error"     "$rc" "2"
+  check "  ...and the contradiction is STATED"   "$(printf '%s' "$out" | grep -c 'CONTRADICT')" "1"
+  # Accepted: it must get PAST the preconditions and take a tenure.  Sandboxed
+  # lock and queue, and --dry-run, so no real ticket and no Lean.
+  out="$(LS_LOCK="$tmp/flock" LS_QUEUE="$tmp/fqueue" \
+         bash "$SELF" --lane x --foreign --gates 'true' --dir "$fdir" --dry-run 2>&1)"; rc=$?
+  check "--foreign WITH --gates is accepted"     "$rc" "0"
+  check "  ...and it takes the full tenure"      "$(printf '%s' "$out" | grep -c 'tenure taken')" "1"
+  check "  ...marked FOREIGN in the banner"      "$(printf '%s' "$out" | grep -c '\[FOREIGN\]')" "1"
+  check "  ...leaving no ticket behind"          "$(ls "$tmp/fqueue" 2>/dev/null | grep -c .)" "0"
+  FOREIGN=1
+  check "the coverage says the floor is N/A"     "$(foreign_coverage | grep -c 'class floor not applicable')" "1"
+  check "  ...and claims nothing about US"       "$(foreign_coverage | grep -c 'about nothing in this repository')" "1"
+  FOREIGN=0
+
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
 
@@ -935,6 +983,15 @@ fi
 # lane tag.  Everything else does.
 if [ "$CLASSIFY_ONLY" = "0" ]; then
   [ -n "$LANE" ] || die "--lane <name> is required (it goes in the owner file)"
+fi
+
+# --foreign's two refusals, stated before a ticket is ever written.
+if [ "$FOREIGN" = "1" ]; then
+  if [ "$CLASSIFY" = "1" ]; then
+    die "--foreign and --classify CONTRADICT: classification diffs against github/master and its class floor names OUR gates (docs_check, diff_test), neither of which means anything in a foreign checkout (§7.1a). Pick one."
+  fi
+  [ -n "$LANE_GATES" ] || \
+    die "--foreign requires --gates: the class floor is not applicable in a foreign checkout, so without your own gates there would be NOTHING TO RUN. Naming a gate that does not exist there is the failure this refusal prevents."
 fi
 case "$LANE" in *[!A-Za-z0-9_.]*) die "--lane must be [A-Za-z0-9_.]+ — '-' would break the ticket parse" ;; esac
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
@@ -1176,6 +1233,9 @@ fi
 # --gates to add its own, INSIDE the same tenure — batching is base rule 4,
 # and under A11 a second Lean invocation outside the tenure is a violation.
 if [ -z "$GATES" ]; then
+  if [ "$FOREIGN" = "1" ]; then
+    die "--foreign with no gates reached the gate phase — this is a bug in triad.sh's own preconditions"
+  fi
   GATES='python3 tools/docs_check.py; python3 harness/diff_test.py'
 fi
 
@@ -1211,6 +1271,7 @@ run_gates "$GATES"
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that
 # does not say what it covers is a number without its state.
+[ "$FOREIGN" = "1" ] && say "COVERAGE (§5.4a): $(foreign_coverage)"
 [ -n "$CLASS" ] && say "COVERAGE (§5.4a): $(coverage_statement "$CLASS")"
 [ -n "$GATE_BUILT" ] && say "COVERAGE (§5.4a): gate phase additionally built: $GATE_BUILT" 
 exit "$rc"

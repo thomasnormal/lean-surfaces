@@ -9,11 +9,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**37 entries across 12 lanes.** Regenerate with
+**38 entries across 12 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-22-qol-12` | `--foreign`: the tenure is about THE MACHINE, the gates are about the tree | qol |
 | `2026-08-22-qol-11` | §9.5 FINISHED: the monolith is frozen, the index is generated, and the id drifter is dated | qol |
 | `2026-08-22-qol-10` | the GATE PHASE was building the tree, and it defeated every narrowing | qol |
 | `2026-08-22-qol-9` | AMENDMENT 16: the 3 GB chain cap was killing honest builds, and the guard was in its own kill set | qol |

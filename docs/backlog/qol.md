@@ -720,3 +720,55 @@ first with **10 outranking 2 numerically**, a drifter flagged and sorted last,
 `INDEX.md` excluded from its own input, **double-run byte-identical** (§5.4),
 and `--check` verified in **both** directions (MEAS-42). `docs_check`
 **83/83**. Docs-and-tools landing: no build, **no tenure**, no Lean executed.
+
+---
+
+## 2026-08-22-qol-12 — `--foreign`: the tenure is about THE MACHINE, the gates are about the tree
+
+The Lean tier works in `lean4lean`; the Wasm lane works in a `spectec` fork.
+Both need the tenure — **the lock, the ticket and the RSS discipline are
+properties of the machine, not of the repository** — and neither can use
+anything else this script assumes.
+
+§7.1a already states the hazard: **`--classify` is our-repo-only by
+construction**, and a lane pointing it at a foreign checkout gets *a confident
+wrong answer rather than an error*, because the class floor hard-wires
+`docs_check`/`diff_test` and classification diffs against `github/master` —
+which, in a foreign clone, is **upstream's** master. So `--foreign` takes the
+full tenure, runs **only the lane's `--gates`**, skips classification
+entirely, and states what its green covers:
+
+```
+COVERAGE (§5.4a): foreign checkout <remote>; gates as given; class floor not
+applicable — this green is evidence about THAT tree and those gates, and about
+nothing in this repository.
+```
+
+### Two refusals, stated before a ticket is ever written
+
+* **`--foreign` without `--gates` REFUSES.** The floor does not apply, so
+  there would be *nothing to run* — and naming a gate that does not exist
+  there is exactly the failure the refusal prevents.
+* **`--foreign` with `--classify` is an error**, with the contradiction
+  spelled out rather than silently resolved in someone's favour.
+
+Both fire in the precondition phase, so a contradictory invocation never
+reaches the queue. The banner marks the run `[FOREIGN]`, so a foreign tenure
+is identifiable in a log at a glance.
+
+Two facts this builds on, both verified rather than assumed: **`--dir` already
+relocates the build correctly**, and **elan resolves the toolchain per
+directory** — so a foreign checkout's own pin is honoured without this script
+doing anything about it.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **99 ok, 0 failed** (88 → 99, **11 new**).
+Both refusals are exercised **by invoking the script itself** and asserting
+exit 2 plus the message; the accepted path runs end to end under a
+**sandboxed lock and queue** with `--dry-run`, proving it reaches the tenure,
+prints `[FOREIGN]`, and **leaves no ticket behind**. The gate phase is
+unreachable without Lean, so what is asserted there is the decision — the
+coverage statement names the remote, says the floor is not applicable, and
+**claims nothing about this repository**. No real lock was taken and **no Lean
+was executed**.

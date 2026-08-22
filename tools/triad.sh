@@ -39,7 +39,15 @@
 # NOT YET WIRED INTO ANY LANE'S FLOW.  Adoption is per-lane, on dispatch.
 #
 # USAGE
-#   tools/triad.sh --lane <name> [--dir <clone>] [--gates "cmd; cmd"] [...]
+#   tools/triad.sh --lane <name> [--dir <clone>] [--gates "cmd; cmd"]
+#                  [--build-target "<lake target>..."] [...]
+#
+#   --build-target narrows the build to named lake targets (repeatable, or
+#   space-separated).  Default is the FULL build and should stay that way:
+#   under amendment 14 a full build is a quiet-machine-only operation, so a
+#   loaded box is the one honest reason to narrow, and the lane then OWES the
+#   coverage statement — which targets were built, what was therefore NOT
+#   rebuilt, and why that cannot affect the result.
 #   tools/triad.sh --self-test          # exercises the queue logic, NO Lean
 #   tools/triad.sh --lane x --dry-run   # takes a real tenure, runs no Lean
 #
@@ -61,6 +69,11 @@ STALE_AFTER="${LS_STALE_AFTER:-1800}"          # only then consider a reclaim
 DRY_RUN=0
 SELF_TEST=0
 GATES=""
+# Amendment 14 (quiet-machine-only full builds): a lane may narrow the build to
+# named lake targets.  EMPTY means the full `lake build`, which stays the
+# default — narrowing is a deliberate act with a coverage cost the lane must
+# then state (§5.4a: quote the state the numbers were measured in).
+BUILD_TARGETS=""
 
 usage() { sed -n '1,60p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 
@@ -69,6 +82,7 @@ while [ $# -gt 0 ]; do
     --lane)      LANE="${2:-}"; shift 2 ;;
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --gates)     GATES="${2:-}"; shift 2 ;;
+    --build-target) BUILD_TARGETS="${BUILD_TARGETS:+$BUILD_TARGETS }${2:-}"; shift 2 ;;
     --rss-limit) RSS_LIMIT_KB="${2:-}"; shift 2 ;;
     --dry-run)   DRY_RUN=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
@@ -171,6 +185,18 @@ sweep_stale_tickets() {
 # --------------------------------------------------------------- self-test
 # §5.4's law, pointed at this script: every refusal path RUN, not admired.
 # No Lean, no lock, no queue outside the temp dir it creates.
+# THE POSITIVE SUCCESS ASSERTION, as a function so the self-test can exercise
+# it directly.  This is the load-bearing line of the whole script: a resource
+# kill and an argument error both produce a log with no error marker, so
+# "nothing matched the failure grep" must NEVER be read as "the build happened".
+# Only lake's own completion line proves a build ran.
+build_completed() {
+  # 2>/dev/null: a MISSING log is a legitimate outcome (the build was killed
+  # before lake wrote anything), and it must answer "not green" quietly rather
+  # than emit a grep error that reads like a script fault.
+  grep -q 'Build completed successfully' "${1:-/dev/null}" 2>/dev/null
+}
+
 if [ "$SELF_TEST" = "1" ]; then
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/triad-selftest.XXXXXX")" || die "no temp dir"
   trap 'rm -rf "$tmp"' EXIT
@@ -216,6 +242,28 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a live lane's ticket survives"  "$(ls "$QUEUE")" "00000000000000000002-$$-live"
 
   check "descendants(self) excludes self" "$(descendants $$ | grep -c "^$$\$")" "0"
+
+  # --- --build-target (amendment 14) ---------------------------------------
+  # The POSITIVE assertion must hold PER TARGET, so it is tested directly on
+  # logs rather than inferred from an exit code.  These are the four shapes a
+  # narrowed build can produce, and only the first may be read as success.
+  printf 'stuff\nBuild completed successfully.\n' > "$tmp/log.ok"
+  printf 'stuff\nerror: boom\n'                   > "$tmp/log.err"
+  : >                                                "$tmp/log.empty"
+  printf 'unknown short option -j\n'               > "$tmp/log.argerr"
+  check "a completed build is GREEN"                "$(build_completed "$tmp/log.ok" && echo green)"     "green"
+  check "an errored build is NOT green"             "$(build_completed "$tmp/log.err" && echo green)"    ""
+  check "an EMPTY log is NOT green (resource kill)" "$(build_completed "$tmp/log.empty" && echo green)"  ""
+  check "an ARGUMENT error is NOT green"            "$(build_completed "$tmp/log.argerr" && echo green)" ""
+  check "a missing log is NOT green"                "$(build_completed "$tmp/nope" && echo green)"       ""
+
+  # Target-list accumulation: repeatable AND space-separated, order preserved.
+  bt=""; for a in "LeanModels" "leanmodels-run"; do bt="${bt:+$bt }$a"; done
+  check "--build-target accumulates in order" "$bt" "LeanModels leanmodels-run"
+  n=0; for t in $bt; do n=$((n+1)); done
+  check "a two-target list iterates twice"    "$n" "2"
+  n=0; for t in ${bt_empty:-}; do n=$((n+1)); done
+  check "an EMPTY target list means one full build" "$n" "0"
 
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
@@ -335,30 +383,55 @@ fi
 
 BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 BUILD_EXIT=1
-for attempt in 1 2; do
-  say "=== lake build (attempt $attempt) ==="
-  nice -n "$NICE" lake build > "$BUILD_LOG" 2>&1
-  BUILD_EXIT=$?
-  say "build exit=$BUILD_EXIT"
-  # base rule 2: 143/137 is the OS terminating an oversubscribed job.  It is
-  # a resource kill, never a red build, and must never be recorded as one.
-  if [ "$BUILD_EXIT" -eq 143 ] || [ "$BUILD_EXIT" -eq 137 ]; then
-    say "exit $BUILD_EXIT = RESOURCE KILL, not a red build — re-running once"
-    continue
-  fi
-  break
-done
 
-# Assert success POSITIVELY.  An argument error and a resource kill both emit
-# no line the failure greps look for, and "no error found" must never read as
-# "the build happened".
-if grep -q 'Build completed successfully' "$BUILD_LOG"; then
-  say "BUILD GREEN"
+# Build ONE target (empty = the full build), with base rule 2's resource-kill
+# retry.  Sets BUILD_EXIT.  Returns 0 only if the log POSITIVELY says the build
+# completed — see `build_completed`.
+build_one() {
+  _t="${1:-}"
+  for _attempt in 1 2; do
+    say "=== lake build ${_t:-<full>} (attempt $_attempt) ==="
+    # shellcheck disable=SC2086
+    nice -n "$NICE" lake build $_t > "$BUILD_LOG" 2>&1
+    BUILD_EXIT=$?
+    say "build exit=$BUILD_EXIT"
+    # base rule 2: 143/137 is the OS terminating an oversubscribed job.  It is
+    # a resource kill, never a red build, and must never be recorded as one.
+    if [ "$BUILD_EXIT" -eq 143 ] || [ "$BUILD_EXIT" -eq 137 ]; then
+      say "exit $BUILD_EXIT = RESOURCE KILL, not a red build — re-running once"
+      continue
+    fi
+    break
+  done
+  build_completed "$BUILD_LOG"
+}
+
+# Assert success POSITIVELY, PER TARGET.  An argument error and a resource kill
+# both emit no line the failure greps look for, and "no error found" must never
+# read as "the build happened".  With --build-target this must hold for EVERY
+# target: a narrowed build that green-lights on one target while another died
+# would be the same lie in a new place.
+if [ -z "$BUILD_TARGETS" ]; then
+  if build_one ""; then
+    say "BUILD GREEN (full)"
+  else
+    say "BUILD DID NOT COMPLETE (exit $BUILD_EXIT) — first failures:"
+    grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
+    say "full log: $BUILD_LOG"
+    exit 1
+  fi
 else
-  say "BUILD DID NOT COMPLETE (exit $BUILD_EXIT) — first failures:"
-  grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
-  say "full log: $BUILD_LOG"
-  exit 1
+  say "NARROWED BUILD: $BUILD_TARGETS  (amendment 14 — the lane owes a coverage statement)"
+  for _target in $BUILD_TARGETS; do
+    if build_one "$_target"; then
+      say "BUILD GREEN ($_target)"
+    else
+      say "BUILD DID NOT COMPLETE ($_target, exit $BUILD_EXIT) — first failures:"
+      grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
+      say "full log: $BUILD_LOG"
+      exit 1
+    fi
+  done
 fi
 
 # The gates.  Default is this repo's triad (AGENTS.md); a lane overrides with

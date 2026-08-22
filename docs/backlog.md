@@ -15684,3 +15684,100 @@ the protocol's AMENDED form (`rm -rf` release inside a failure-reporting
 trap, since `rmdir` refuses the non-empty lock dir and fails silently; and
 `nice -n 10 lake build` with **no** `-j` flag, which is an argument error on
 v4.33.0-rc1 and exits 1 in a way that masquerades as a build failure).
+
+## L64 — F2 CLOSES: the rank is F1's pair with a WINDOW, and the window is a premise on purpose (2026-08-22)
+
+§L30 priced F2 as *"one sitting, ~30 lines, the cheapest thing left"* and named
+its shape exactly. `Examples/python/sunfish/qs_rank.lean` is that file. It
+states `RefinesAtQ`, proves the two facts that make the strengthening sound, and
+instantiates both — and it does **not** prove any `RefinesAtQ`, because §L30's
+words for F2 are *"the strengthened statement"*, not the strengthened proof.
+
+### THE COLLAPSE NEEDS A WINDOW, and that is the section's one real finding
+
+§L30 wrote *"`qsRank` the `Nat` collapse of F1's pair"* as if the collapse were
+free. **It is not.** F1's measure is `(pieceCount b, -pstTotal b) : Nat × Int`
+under a lexicographic order, and **lex on `Nat × Int` is not well-founded** —
+`Int` has no floor, so an infinite descent through the second component is
+available to the order even though no board realises one. A `Nat` rank therefore
+needs `pstTotal` BOUNDED, and the bound is not derivable from anything F1 proved:
+§L37 made `cellSum` deliberately blind to `pst` so the table could be re-pinned
+without touching the calculus, and proving `|pstTotal| ≤ B` would put the table
+straight back in.
+
+So the bound is a **stated side condition**, `PstInWindow`, with a `Bool` mirror
+on `plainBoardB_iff`'s template (§L41) so a fixture can answer it. `qsHi` is
+`8 000 000` — `120 ×` the king's `pst` entry, rounded up — and the shipped board
+sits at `127 158`, inside it by five orders of magnitude.
+
+**`qsRank` itself is TOTAL** (`Int.toNat` clamps), which is what makes §3's
+closure work; the window is needed only for the DESCENT. That split is the design:
+a partial rank would have made the `∃ k` closure partial too, and the closure
+being total is the whole reason the strengthening costs the consumer nothing.
+
+### What landed
+
+* **`qsRank b = pieceCount b * qsSpan + (qsHi - pstTotal b).toNat`** — mixed
+  radix, piece count as the high digit. `qsSpan = 16 000 001` is one more than
+  the window's full width, so a tie-break can never carry into the high digit.
+* **`qsRank_lt_of_qsLt`** — where F1's lexicographic measure falls, the `Nat`
+  rank falls. Two arms, one per disjunct of `qsLt`, and they are genuinely
+  different arguments: the capture arm needs `(n+1) * s = n * s + s`
+  (`Nat.succ_mul` — `omega` treats the two products as unrelated atoms without
+  it), the quiet arm needs the piece counts SUBSTITUTED before `omega` will see
+  one atom instead of two.
+* **`RefinesAtQ V k d w sa ts gamma pos`** — `qsRank (boardOf pos) ≤ k →
+  RefinesAt …`. §L26's trap is avoided by construction: `RefinesAt` already names
+  its world, and nothing here reintroduces an `∃ w'`.
+* **`refinesAt_iff_forallQ`** — the receipt that the strengthening restates
+  nothing. The forward direction is `fun _ _ => h`; the backward one is
+  `h (qsRank (boardOf pos)) (Nat.le_refl _)`, **one line**, and it is exactly
+  §L30's *"the closure is TOTAL because the measure is a total function of the
+  board"*.
+
+### Instantiated — §L30's two asks, plus a third
+
+§L30 asked for *"`#guard` the rank finite on the fixture, and that the two
+children's ranks are strictly below the parent's."* Both, on the live boards:
+`qsRank board0 = 519 872 874` (pinned as a literal AND as the radix expression),
+and `1. d4` / `1. e4` rank below it by **exactly 46 and 42** — the two numbers
+§L37 measured, now visible as the low digit's fall.
+
+The third check is the one the census did not ask for and §L44 earned: **the high
+digit dominates.** A board with one piece FEWER ranks a whole `qsSpan` lower
+whatever the `pst` swing does, so a capture can never be outranked by table
+movement. The board is synthetic (the opening position with the `b1` knight
+lifted off) and the file says so — the point is about the RADIX, not about a legal
+move.
+
+### Findings worth carrying
+
+1. **"Collapse the pair to a `Nat`" is not a free move.** Lex on `Nat × Int` is
+   not well-founded; the collapse needs a bound on the `Int` component, and
+   whether that bound is proved or assumed is a design decision with consequences
+   (proving it re-couples the measure to the `pst` table). Assuming it, with a
+   `Bool` mirror and a fixture `#guard`, keeps §L37's blindness intact.
+2. **Make the rank total and the DESCENT conditional, not the other way round.**
+   `Int.toNat` clamping means `qsRank` is defined on every string; only
+   `qsRank_lt_of_qsLt` carries `PstInWindow`. Had the window been baked into the
+   definition, `refinesAt_of_forallQ` — the one-line totality proof that is F2's
+   whole point — would have needed the window as a hypothesis too, and the
+   strengthening would no longer be free for the consumer.
+3. **`omega` does not know that `(n+1) * s` mentions `n * s`.** Two separate
+   arms of one theorem failed for the same reason in two disguises: an unexpanded
+   `Nat.succ_mul`, and an unsubstituted equation between the two multiplicands.
+   Both look like arithmetic failures and are atom-identity failures.
+
+### Triad
+
+`qs_rank.lean` is a NEW LEAF: nothing imports it, so it cannot break another
+lane, and it was type-checked standalone against the current `olean`s (`lake env
+lean`, clean, all `#guard`s passing, every printed declaration at
+`[propext, Classical.choice, Quot.sound]` or less, no `sorry`, no
+`native_decide`). The full `lake build` + `diff_test` + `docs_check` +
+`script_corpus` pass for it runs in the NEXT landing's triad, which is queued
+behind `/tmp/ls-build.lock` — held since 11:23 by a live niced build, with three
+sibling clones on the machine. Landing a verified leaf now rather than holding it
+behind a shared lock is the §L61 lesson applied: unpushed work is the only kind
+this campaign loses.
+

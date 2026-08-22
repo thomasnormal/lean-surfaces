@@ -14864,6 +14864,59 @@ differ. Go's charter should cite §3.6 (1a).
 The constraint is also stated at §3.4, where `SemM` is specified, because it is a
 property of the substrate and not of any one tier.
 
+### RULING FROM THOMAS — decision procedures get a GRADED POLICY, not a ban
+
+He is *not principally against* `bv_decide`/`native_decide`; the objections are
+**performance** (64/128-bit blowup) and **informativeness** (*"a symbolic proof
+works for all bit widths"*), and we *"should of course support these decide
+operations, just discourage overusing them."* Written into §0.1 as II(a).
+
+**THE PREFERENCE LADDER.** (1) **width-parametric SYMBOLIC proof** — preferred
+because it **mirrors the spec's own generality**, which is the spec-mirror
+principle applied to PROOFS: a tier that mirrors a clause quantified over widths
+and then proves it one width at a time has silently narrowed the claim its own
+clause manifest says it makes. (2) **kernel `decide`** at small fixed widths.
+(3) **`bv_decide`/`native_decide`** where cost/benefit favors them.
+
+Both ends verified on the pin before prescribing: `bv_decide` resolves via
+`import Std.Tactic.BVDecide` and closes `x + 0#8 = x` at width 8, while the
+width-parametric `∀ w, ∀ x : BitVec w, x + 0#w = x` closes symbolically for
+**every** width. Same fact, one line each — the ladder's argument in miniature.
+
+**PERMITTED USES CARRY THEIR RECEIPT AT THE USE SITE**: the `#print axioms` line
+plus a one-line justification naming why rungs 1-2 were not taken, both at the
+theorem and never in a project-wide setting. **The trust boundary is per-theorem
+and visible, never ambient** — a reader auditing one theorem must see its full
+trust cost without leaving the file, which is principle II applied to the one
+place the library can widen what the kernel is asked to believe.
+
+**THE HISTORICAL CONTRACT STANDS AS RECORDED FACT, and it is verifiable.**
+AGENTS.md says *"Never `sorry`, `admit`, or `native_decide` — anywhere, ever"*,
+and the tree honors it: **ZERO real uses**, measured — all twelve occurrences of
+the identifier are prose *recording its absence*. Not weakened retroactively;
+the policy governs NEW work. Where they meet — a new theorem in an existing
+file — **the file's contract wins**, because a file advertising "no
+`native_decide` appears anywhere in this tier" must stay true or stop saying so.
+
+**FLAGGED, NOT SILENTLY OVERRIDDEN**: AGENTS.md:150 is an absolute rule and this
+is a graded one. That line is owned by whoever maintains AGENTS.md and
+reconciling it with the ladder is that owner's edit — named here rather than
+made by a neighbour, the same way the SV private-path violation was.
+
+**ALIGNMENT WORTH NAMING**: SoftFloat's layer 2 IS this preference embodied —
+§3.5.1 specifies `round mode (exactRational …)` over a **width-parametric**
+`Format` covering `binary32` and `binary64` in one statement, rather than
+per-width bit algorithms. That design predates the policy, which is the useful
+kind of corroboration: the ladder describes what the family already does when it
+is thinking clearly. The stale absolute in §3.5 ("no `native_decide`, which
+stays banned") is restated as "rung 1 and rung 2, with none needed and none
+used".
+
+**Owed**: the structures-census lane's **width-crossover table** — where rung 1's
+effort stops beating rung 3's runtime — to be cited here when it lands. Until
+then the ladder is an ORDERING, not a threshold, and a lane needing a threshold
+should say so rather than guess one.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

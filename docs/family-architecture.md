@@ -86,6 +86,65 @@ rule: the demand comes from **one theorem-worthy exemplar per tier**,
 because a library gap is invisible to anything that never asks the library
 for a proof — and suite scoring never does.
 
+#### II(a) DECISION PROCEDURES — a graded policy, not a ban
+
+Thomas's ruling: he is *not principally against* `bv_decide` and
+`native_decide`. The objections are **performance** — 64- and 128-bit goals
+blow up — and **informativeness**: *"a symbolic proof works for all bit
+widths."* So the family **supports** these operations and **discourages
+overusing** them, which is a preference ladder rather than a prohibition.
+
+**THE PREFERENCE LADDER.**
+
+| rung | when | why it is preferred |
+| --- | --- | --- |
+| **1. width-parametric SYMBOLIC proof** | the fact is true at every width | it **mirrors the spec's own generality** — the standard says "for an N-bit type", and so does the proof |
+| **2. kernel `decide`** | small, fixed widths; the goal is genuinely finite and cheap | stays inside the kernel; no extra axiom, no external oracle |
+| **3. `bv_decide` / `native_decide`** | cost/benefit favors them — the symbolic proof is out of reach or disproportionate | fastest to obtain; carries the largest trust and information cost |
+
+**Rung 1 is the spec-mirror principle applied to PROOFS**, which is why it
+heads the ladder rather than merely being tidy. A tier that mirrors a
+clause quantified over widths, and then proves it one width at a time, has
+silently narrowed the claim its own §5.5 manifest says it makes. Both rungs
+are live on the pinned toolchain and the contrast is one line each: `∀ w,
+∀ x : BitVec w, x + 0#w = x` closes symbolically for **every** width, while
+`bv_decide` closes the same fact at width 8 **only**.
+
+**PERMITTED USES CARRY THEIR RECEIPT, AT THE USE SITE.** Any rung-3 use
+carries (a) its `#print axioms` line and (b) a **one-line justification**
+naming why rungs 1 and 2 were not taken. Both live **at the theorem**,
+never in a project-wide setting: **the trust boundary is per-theorem and
+visible, never ambient.** A reader auditing one theorem must be able to see
+its full trust cost without leaving the file — which is principle II's
+whole point, applied to the one place the library can widen what the kernel
+is asked to believe.
+
+**THE HISTORICAL CONTRACT STANDS AS RECORDED FACT.** `AGENTS.md` states
+*"Never `sorry`, `admit`, or `native_decide` — anywhere, ever"*, and the
+tree honors it: **zero real uses**, verified — all twelve occurrences of
+the identifier are prose *recording its absence*. That contract is the
+existing estate's and it is not weakened retroactively; **this policy
+governs NEW work.** Where the two meet — a new theorem in an existing
+file — the file's contract wins, because a file that advertises "no
+`native_decide` appears anywhere in this tier" must stay true or stop
+saying so. `AGENTS.md`'s line is owned by whoever maintains it, and
+reconciling it with this ladder is that owner's edit, flagged here rather
+than made silently.
+
+**THE ALIGNMENT WORTH NAMING: SoftFloat's layer 2 IS this preference
+embodied.** §3.5.1 specifies it as `round mode (exactRational …)` over a
+**width-parametric** `Format` — one statement covering `binary32` and
+`binary64` — rather than as per-width bit algorithms. That design was
+chosen before this policy was written, which is the useful kind of
+corroboration: the ladder is describing what the family already does when
+it is thinking clearly.
+
+**The prices are being measured.** The structures-census lane is building
+the **width-crossover table** — where rung 1's effort stops beating rung
+3's runtime — and this section should cite it when it lands. Until then the
+ladder is an ordering, not a threshold, and a lane that needs a threshold
+should say so rather than guess one.
+
 **III. HARDNESS IS A SIGNAL TO THE PROGRAM, not to the definition.** When a
 proof will not come, the framework owes the user a next step, and there are
 exactly two — both constructive, neither touching the definition:
@@ -1155,7 +1214,8 @@ this reduces, not merely elaborates:
   rounding, which is the fact that matters.
 
 All three depend on `[propext, Classical.choice, Quot.sound]` and nothing
-else. **No `native_decide`, which stays banned.** Core ships **1856 lines**
+else — **rung 1 and rung 2 of §0.1 II(a), with no `native_decide` needed
+and none used.** Core ships **1856 lines**
 of logical model under `Init/Data/Float/Model/` — a width-parametric
 `Format` (`mantissaBitsWithoutImplicit`, `exponentBits`) with **both
 `binary64` and `binary32`**, an unpacked representation, a rounding layer

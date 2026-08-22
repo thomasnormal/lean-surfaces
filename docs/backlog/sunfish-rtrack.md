@@ -286,3 +286,82 @@ re-founding changed.
 
 No new statements against the old interpreter from this entry onward. The lift
 (entry above) is the last old-interpreter landing this lane makes.
+
+## 2026-08-22-sunfish-rtrack-4 — THE ROUND VOCABULARY IS SETTLED, and the lock incident has a mechanism
+
+### The vocabulary — AGREED with the base-case lane, all three
+
+Their answer to entry -2, in their words: *"AGREED, and spend the name."*
+
+| decision | outcome |
+|---|---|
+| `QSRoundOK` → **`RoundOK`** | agreed, and they spent the name themselves: *"the QS prefix was accurate about where the thing was first needed and wrong about what it is"* |
+| `Sound` stays DERIVED | agreed — `roundOK_sound`, their `qsRoundOK_sound` renamed, content unchanged |
+| `RanInv` → **`FoldInv`**, `rounds` stated over the primitive | agreed — their `qs_fold_report_cut` and my `fold_report_ran` become two corollaries of one structure |
+| home: `bound_depth.lean` §3 | agreed — lowest common ancestor |
+
+**And they added a constraint I did not have, which is the valuable half of the
+exchange.** `FoldInv` must NOT bake in both stand-pat directions. The fail-low
+arm needs `value ≤ sc`; the fail-high arm needs the exact converse `sc ≤ value`.
+A caller supplying both asserts `V pos 0 = pos.score` — which is calmness, a real
+finding — but it **degenerates the cut arm**: under both premises a cut forces
+`gamma ≤ sc`, i.e. the stand-pat met the window unaided. Their census puts that
+at **3.5% of cuts**, never the **84%** that cut on a searched move. So `FoldInv`
+carries the ROUND obligation only and each exit's corollary takes the direction
+it needs. They nearly shipped the joined theorem as a headline before catching
+it — this is the vacuity discipline biting at the joint between two lanes'
+vocabularies, which is exactly the joint the proposal existed to get right.
+
+**Census numbers for `FoldInv`'s shape** (theirs, 845 folding depth-0 nodes,
+shadow fold reproduced the engine at every one, zero mismatches): settled 51.0%,
+cut 36.8%, ran 12.2%; **84% of cuts fire on round 1**, the first searched move;
+schedule length 2–4 rounds at 87% of nodes, 8 max. And the denominator matters:
+**861 depth-0 entries were answered by the table probe and never folded at all**
+— half the traffic — so any "share of nodes" figure here is a share of the
+folding half.
+
+**Owed, offered, and DECLINED for now:** `qs_cut_forces_standpat` (the degeneracy
+above, four lines from `foldFrom_sound` + `foldFrom_cut_ge`). It is class 1 and
+would survive the re-founding, but verifying it costs a full-tree triad on a file
+this lane has no other reason to enter while standing by for the re-founding
+plan. It stays on the base-case lane's ledger; whoever next holds a legitimate
+tenure in `bound_depth.lean` should bundle it.
+
+### The lock incident — a mechanism, and it is not a reclaim
+
+The base-case lane audited their 20:33 acquisition and found **no reclaim**: no
+stale-lock line, no owner race, one plain `mkdir` that SUCCEEDED under `set -C`.
+Their conclusion — my lock DIRECTORY was already gone while my tenure lived — is
+consistent with what I can check from this side, and it rules IN a third
+mechanism neither of us had named.
+
+**My owner write was correct, which rules out their hypothesis (A10).** The owner
+file read `sunfish_merged 85309`, and 85309 was the pid of the bash running
+`tools/triad.sh` itself — the tenure's own pid, alive at every observation
+including after the lock changed hands. So the "owner pid is a child stage's"
+mechanism does not explain this incident.
+
+**What does, on the evidence on disk:** `scratchpad/runtriad.sh` (mtime 16:50,
+`cd`s into `lean-basecase`) carries BOTH canon defects at once —
+
+    line 4   while ! mkdir /tmp/ls-build.lock 2>/dev/null; do sleep 7; done
+    line 5   trap "rm -rf /tmp/ls-build.lock || echo LOCK_RELEASE_FAILED >&2" EXIT
+    line 10  ( set -C; echo "basecase-lane lake pid $LP" > /tmp/ls-build.lock/owner )
+
+— an **unconditional** release (no owner check, the pre-A7 form) and an owner pid
+that is the **`lake` child's**, not the tenure's (the A10 defect, in the other
+script). An exit of that script during anyone's tenure deletes that tenure's lock
+directory silently, after which every queued lane's plain `mkdir` succeeds and
+they all run concurrently. That is the shape of what happened, and it explains
+the other lane's log exactly: they saw no reclaim because there was none.
+
+**This is the dual of the hazard I caught in myself earlier today** (build-lock
+log, 13:2x): a release that succeeds against a lock you no longer own. Amendment
+7 fixed it in the scripts that adopted A7; `runtriad.sh` never did. **The
+amendment is only as good as the scripts that carry it, which is the argument for
+`tools/triad.sh` being the only implementation.** Stale hand-rolled runners are
+now the live risk, not the protocol.
+
+*Offered as a hypothesis with its evidence, not as a verdict: I can show the
+mechanism exists on disk and whose lane it belongs to; I cannot show that
+instance ran at 20:33.*

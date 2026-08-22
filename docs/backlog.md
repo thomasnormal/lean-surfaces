@@ -20296,3 +20296,276 @@ not 60s** (applied here — it is the only fairness the primitive offers), and
 where each lane creates a numbered entry and waits for its turn. Recorded in
 `scratchpad/build-lock-log.md` for the other lanes, since every one of them is
 paying this cost.
+## L84 — R1 INCHES 2-3 LAND, and the SUBSTRATE VERDICT TARGETED AT THE SCHEDULER: `SemM` cannot suspend, so the process table goes in `W` — and 62% of the estate is where mvcgen cannot go (2026-08-22)
+
+The SV lane's first Lean landing since the tier went dormant on 2026-07-31.
+`LeanModels/Sv/Regions.lean` carries the type-level half of
+[docs/sv-r1-scheduler.md](sv-r1-scheduler.md): the IEEE 1800-2023 §4.4 event
+regions, the region-aware oracle, the slot-structured trace, and the `cycleOf`
+abstraction. **No semantics** — there is no `slotStep` and no `runRegion`;
+those are inch 4.
+
+**THE MECHANISM, DEMONSTRATED RATHER THAN ASSERTED.** The design claimed that
+routing observations through `cycleOf` would make a theorem's *statement text*
+survive the arrival of the region semantics. That is now a `#guard` pair:
+
+```
+#guard (divResult cyc "ready_o" "result_o").map LVec.toNat == some 7
+#guard (divResult reg "ready_o" "result_o").map LVec.toNat == some 7
+```
+
+`cyc : List SvState` is a cycle trace; `reg : RegionTrace` is a slot-structured
+one. **The call text is character-identical** and both evaluate to the same
+answer, because `divResult` takes any `CycleView` and the class has an instance
+for each — identity on cycle traces (the stub), `tr.map (·.final)` on region
+traces (the real projection). That is exactly the property rung A's divider
+theorem needs: written today against `run`, it will elaborate unchanged against
+`runRegion`, and the adequacy lemma (inch 5) discharges the difference. The
+same pair is guarded again with the REAL CV32E40P handshake names —
+`divResult tr "OutVld_SO" "Res_DO"`, the exact call rung A will make against
+the already-ingested `cv32e40p_alu_div` — so the shape is grounded in the
+target module rather than in illustrative signals. **The
+"cycleOf-from-line-one" discipline cost one class and two instances.**
+
+**ONE DESIGN CHANGE THE INCH TEXT DID NOT SURVIVE, and it is the interesting
+part.** The inch said "the **widened** `ScheduleOracle`". Widening it in place
+would have changed `choose`'s type and broken every existing `∀ σ` theorem **at
+the exact moment none of them could be re-proved** — the semantics they would
+need does not exist until inch 4. So `RegionOracle` lands as a NEW type beside
+the old one, with an embedding whose conservativity is *proved*:
+
+```
+theorem ScheduleOracle.toRegion_choose (σ : ScheduleOracle) (k : Nat)
+    (r : Region) (ready : List Nat) :
+    σ.toRegion.choose k r ready = σ.choose k ready := rfl
+```
+
+That `rfl` turns the design's prose — *"the old oracle embeds as `fun k _ ready
+=> …`"* — into an obligation the compiler checks. The in-place widening happens
+at inch 4, when there is something to widen into. **Additive-first is not
+timidity here; it is the only ordering under which the claim is checkable
+before the thing it protects exists.**
+
+**WHAT THE REGION PARAMETER BUYS, shown not stated.** `RegionOracle.revIn`
+builds a schedule that reorders inside ONE region and nowhere else:
+
+```
+#guard ((RegionOracle.revIn Region.active).choose 0 Region.active [0,1,2]) == [2,1,0]
+#guard ((RegionOracle.revIn Region.nba)   .choose 0 Region.active [0,1,2]) == [0,1,2]
+```
+
+The cycle-level oracle could not state this, and region-local race witnesses
+will need it. It is the determinism boundary (§2.3) made operational: the
+oracle permutes the ready list **within one region** and never chooses the
+region order, the statement order inside a process, or the NBA application
+order — none of which are parameters of the type.
+
+**ALL FIFTEEN REGIONS FROM DAY ONE, and the bookkeeping cannot drift.** Nine
+core + six PLI, with the PLI constructors uninhabited at R1. Naming them now
+costs one constructor each; adding them later would change the type and
+re-open everything a second time. Three `decide` checks pin the partition —
+`Region.all.length = 15`, `Region.all.filter (!·.isPLI) = Region.core`,
+`Region.all.filter isPLI = Region.pli` — so the three lists cannot silently
+disagree. `Region.postponed.isReadOnly` is carried as a flag now so inch 4's
+write-prohibition has something to refuse against (right about **99.8%** of the
+corpus, §L68).
+
+**FOUR-STATE HONESTY IN THE OBSERVABLE.** `sampleAtFirst` triggers only on a
+*known* 1 — an `x`/`z` handshake is not a trigger, because `toNat?` is `none`
+there — so an unknown `done` yields no observation rather than a guessed one.
+Guarded both ways. This is §3's MATCH-verdict rule applied at the point it
+actually bites: the tier refuses to observe rather than observing a default.
+
+**Trace shape, deliberately coarse.** `Slot` records `time`, `sampled` (what
+Preponed saw) and `final` (what the slot closes in) — **not** a per-region
+state sequence. Nothing outside a slot can observe an intermediate region, so a
+richer trace would make every theorem quantify over detail no property can
+mention. `sampled` earns its place only because clocking blocks and concurrent
+assertions genuinely read it.
+
+**THE SUBSTRATE ASSESSMENT (charter §9) — and THOMAS'S SHARPENING CLOSED A
+LOOPHOLE THIS ASSESSMENT HAD ALREADY FALLEN INTO.** The first draft censused
+the fit of `Sv.Res` and of a `W` shaped for the **cycle model**, and concluded
+the types were compatible. True, and nearly useless: it validated the substrate
+against the **projection** rather than the **definition**. Under ruling §6.4 the
+cycle model is a *view* of clause 4, so a `W` designed for it would be
+redesigned at inch 4b — the second rebuild the ladder exists to avoid. *"Target
+SV's scheduler semantics from the start."* **The question is not "does `Sv.Res`
+map onto the substrate" but "does the substrate carry the FULL event
+scheduler".** Gate answer, unchanged but now on the right grounds:
+`Regions.lean` mentions `Res` zero times and `Monad` zero times, and what it
+defines is scheduler-shaped **by construction** — `Region` is all fifteen of
+clause 4's regions, `RegionOracle` is the choice-within-a-region contract, and
+`cycleOf` is explicitly the projection, named as such. Nothing in it is designed
+for the cycle model; the cycle model is what it projects *to*.
+
+**THE SUSPENSION QUESTION — the family-level one, and it decides whether the
+substrate can hold SV at all.** A SV process suspends *mid-body* at `@`, `#` or
+`wait`, others run, and it resumes where it stopped — coroutine behaviour.
+**`SemM` as specified CANNOT suspend**: a `StateT W` computation is
+`W → (α × W)`, run-to-completion, with nowhere to put "paused here". **The
+escape is DEFUNCTIONALIZATION** — the continuation is kept as DATA in `W`
+(`ProcState.residual`, the remainder of the process's statement list) and the
+interpreter becomes a **scheduler loop over the process table**, with suspension
+a RETURN VALUE rather than a monadic effect. It works because SV processes
+suspend only at syntactically identifiable points, so the residual is always a
+statement list. **Verdict: the substrate HOLDS the full scheduler — process
+table inside `W`, interpreter as the loop over it.** The price, stated:
+`stepProcess` is a second interpreter shape over `Stmt`, one that can stop half
+way, and it **must SUBSUME `execStmts` rather than coexist with it** — which is
+also the answer to §7.0's `SelfCheck` duplication risk (one resumable stepper;
+the existing non-resumable one is its trigger-free special case). Flagged, not
+solved: `fork`/`join` (2.9%) creates *dynamic* processes, so `procs` must grow
+at run time and `join` needs a completion barrier — expressible in the same `W`,
+not exercised by 4a, deferred.
+
+**`W`, SCHEDULER-SHAPED — and yes, it is big.** `time`, `signals`, `procs` (per
+process: `residual` + `status`), `regionQ` (ready set per region), `curRegion`,
+`nba` and `reNba` (write-then-commit buffers), `future` (the time wheel), `out`
+(the `$display` buffer), `k`. **That is expected and not a defect: the substrate
+was never meant to shrink the semantics, only to standardise its plumbing and
+proof interface.** A stratified event scheduler has a lot of state because
+clause 4 says it does. The rest of the stack: `Sv.Res α` **is `Except Loud α`
+exactly and already carries a `Monad` instance** — Python's `Run σ α` needed a
+22-line iso to reveal its stack; SV's needs less, having no exception arm to
+reconcile. `ρ` is **empty in M0** and 4a fills it with `$finish`/`$stop`, which
+are **state-PRESERVING** early exit (the `out` buffer IS the test's verdict) —
+exactly the C tier's `abort`/`exit` distinction, and inverting it would discard
+the `PASS`/`FAIL` line **97%** of the corpus depends on.
+
+**`σ` STAYS OUTSIDE, and the scheduler makes that load-bearing rather than
+stylistic**: there are now far more scheduling points, since every region of
+every slot orders its own ready set. `σ` is a parameter of the definitions,
+never a field of `W` — threaded through the state it would become a choice the
+program MAKES rather than one quantified OVER, and every race theorem would
+change meaning.
+
+**THE SV-SPECIFIC TRAP, recorded because it is the likeliest migration mistake:
+`x` IS NOT `ρ`.** Four-state unknown is a **value**; it never short-circuits and
+an x-carrying result is a *successful* run. Reaching for `ExceptT` to model
+x-propagation would convert 4-state semantics into 2-state-plus-errors.
+
+**WHAT DOES NOT MAP — 62% of the estate.** All 98 declarations by the pilot's
+criterion: **50 fuel-recursive + 11 ∃-fuel = 61 (62%) OUTSIDE mvcgen**, against
+**29 statement-shaped** and 16 trace-shaped-but-fuel-free; `Obs.lean` holds 44
+of the 61. **SV's fuel is SEMANTIC where Python's is an artifact**:
+`Res.timeout` means **non-convergence** — a combinational loop today, and under
+the scheduler also a zero-delay loop that never lets time advance — both real
+reportable properties of the design under test. So the pilot's fuel-free Route C
+is not available at `combSettle` and **still not available at the region loop**,
+because non-termination there is precisely what the tier must DETECT rather than
+exclude. The ladder is **intrinsic to the semantics, not incidental to its
+encoding**. *(Flagged, not assumed: fuel as a FIELD OF `W` with `decreasing_by`
+is a third route nobody has measured, and it is more attractive under the
+scheduler design because `W` exists anyway and the loop is already a state
+machine.)*
+
+**THE ECONOMICS: SV HAS NEVER PAID FOR A WALKER.** Python carries **5 343
+lines** of hand-rolled VC machinery (`VC` 546 + `VC2` 939 + `VCTactic` 3 371 +
+`LoopTactic` 487); **SV carries none** — `sv_prove` is a "first-cut tactic" in a
+450-line `Surface.lean`. SV is exactly pilot §4's case, choosing between ~120
+lines of substrate and eventually growing its own walker — and under ruling §6.6
+the scheduler is precisely the growth that would force it.
+
+**VERDICT: (b) HYBRID, with the scheduler as the target.** New code on the
+substrate **and scheduler-shaped from its first commit** — `W` carries the
+process table, per-region ready sets, time wheel and both NBA buffers **even
+though 4a's coverage exercises only part of it**, because reserving the
+structure is cheap now and impossible later (the family's own precedent: Go's
+schedule, C's threads). Dormant tier NOT rebuilt. `Res` unified into `Core`
+because it is an **iso** — integration-checklist item 3, of which only the
+`Span` half ever landed (`Core/Basic.lean` is 13 lines holding `Span` alone) —
+and it is the landing that makes SV a real consumer where the recorded count of
+3 was actually **zero**. **(a) FULL ADOPTION declined**: its rebuild half
+re-proves 61 fuel-shaped theorems mvcgen cannot assist, at the exact moment R1
+changes the trace type underneath anyway — **rebuilding twice is worse than
+rebuilding once, and R1 is the rebuild that has to happen**. **(c) STATUS QUO
+declined**: 4a is new code. **Inch 4a gains a new first sub-step 4a-0**
+(`SvWorld` scheduler-shaped, the stack, `Res`→`Core`, `@[spec]` lemmas for
+`readSignal`/`SvState.set`/NBA push+commit/`$display`/`$finish`/wheel
+insert+pop).
+
+**ONE FINDING GOING OUTWARD to the architecture lane — as a constraint, not a
+failure — AND IT HAS SINCE LANDED THERE.** `SemM`'s run-to-completion shape
+**cannot itself suspend**, so any language whose processes pause mid-body must
+defunctionalize the continuation into `W`. It is now
+`docs/family-architecture.md` §(1a), *"`SemM` CANNOT SUSPEND — and the pattern
+survives only because the process table lives in W"*, which corrects that
+document's earlier *"nothing about the monad changes"* — a sentence that
+invited the reading that the monad carries the concurrency; **it does not, `W`
+does** — and states the fact by `rfl`: `ExceptT ρ (StateT W Halt) α` unfolds to
+`W → (Except ρ α × W)`, an `α` or a `ρ` plus a `W`, **and no third case**. The
+family's generalisation reads back into this lane as the rule 4a must follow:
+defunctionalization is **sound because suspension points are SYNTACTIC**, so
+"where it paused" is a position in the program text rather than an arbitrary
+closure — a language that could suspend anywhere would need a real continuation
+and the trick would be unavailable. **Schedule-as-parameter survives BECAUSE
+the process table went into the World.** Two corrections came back the other
+way: the canonical name is `SemM W ρ := ExceptT ρ (StateT W Halt)` with `Halt`
+the `Except Loud` base, and **the layer ORDER is load-bearing** — `StateT`
+outside `ExceptT` discards state on a raise, which SV needs to avoid for
+exactly C's reason: `$finish` must preserve the output buffer.
+
+**A GATE ON 4a-0 FOUND WHILE PRICING IT, and it prevents a defect rather than
+enabling a task.** Checked today: `LeanModels/Core/` holds **`Basic.lean`
+alone** and `grep -rn 'SemM' LeanModels/` returns **nothing** — `SemM` exists
+as a specification in `family-architecture.md` §3.4 and as work *in flight* in
+the rebuild lane. That document also states the governing rule — *"a second
+interpreter landing with its own copy of `Run` is a defect, not a design"* —
+and collapses two landings into one: *"'move `Run` to `Core`' and 'land the
+`SemM` substrate' are the same landing… the destination should be the stack,
+with `Run` as its established view."* **So 4a-0 must NOT define an SV-local
+copy of the stack.** Three candidates are named for who triggers the `Core`
+landing (C's M2 inch 4, the rebuild lane's `SemM`, a third adopting tier) and
+whichever lands first is the trigger; SV's 4a-0 is exactly such a tier.
+**Options: (i) WAIT and write 4a-0 against `SemM` when it arrives — the
+default, and it costs R1 nothing, since `SvWorld`, `stepProcess`, the time
+wheel and the region loop are all SV-local and only the monad's spelling is
+shared; or (ii) BE the trigger, which is a family-level landing touching
+Python's 1 282 `Run.` sites across 31 files while the rebuild lane is already
+in flight on it — a race, not a contribution. Recommended: (i).** What must not
+happen is 4a-0 quietly defining `SvM := ExceptT ρ (StateT SvWorld (Except
+Loud))` locally: that is the "own copy" the rule names as a defect, and it
+would surface later as drift instead of now as a dependency.
+
+**AND PRICING 4a's STEPPER FOUND ITS FIRST MOVE IS NOT WHAT THE DESIGN SAID.**
+`Ast.Stmt` has **no suspending constructor and cannot get one** — its five cases
+are matched **exhaustively** by the M0 interpreter and its proofs, so adding
+`@`/`#`/`wait` breaks every match at once. That is exactly why `SelfCheck`
+wraps instead of extending (`SStmt` embeds M0 as `.m0` leaves). Which leaves
+**three** candidate statement types, one more than §7.0 warned about — and the
+answer is **EXTEND `SStmt` with `delay`/`waitEvent`/`waitCond`, not invent a
+third `RStmt`**. Strictly better than the sketch, because `SStmt` already
+carries the two things 4a needs most: **`.sysCall` is `$display`/`$write` at
+92.7%** and **`.finish` is `$finish`/`$stop` at 97.0%** — inventing `RStmt`
+would have meant re-deriving both.
+
+**AND `ρ` ALREADY EXISTS IN THE TIER, HAND-ROLLED.** `SelfCheck` executes
+`$finish` as `| .finish => .ok (st, nba, { out with halted := true })` —
+**`.ok`, not a failure, output preserved, with a `halted` flag that downstream
+execution short-circuits on.** That is `ExceptT ρ` **defunctionalized into the
+state**, arrived at independently a month before the substrate was specified.
+It confirms the layer argument from *inside* the tier rather than by analogy
+with C. So the migration gets a concrete, small first target: **replace the
+hand-rolled `halted` flag and its short-circuit with the `ExceptT ρ` layer** —
+one `@[spec]` lemma, deleting a manual check from every statement case. A
+genuine simplification, and the smallest possible demonstration that the
+substrate earns its place here.
+
+### Triad
+
+Verified standalone first with `lake env lean LeanModels/Sv/Regions.lean` —
+**exit 0**, every `#guard` and `example` discharged — which is the cheap
+iteration path that needs no lock. Then the full `lake build` under the
+machine-wide lock: BUILD_RESULT_PLACEHOLDER `docs_check`
+DOCSCHECK_PLACEHOLDER. `sv_round_trip` ROUNDTRIP_PLACEHOLDER.
+`diff_test.py --sim iverilog` DIFFTEST_PLACEHOLDER. No `sorry`, no
+`native_decide`; the file adds **3 theorems** (1 plain + 2 `@[simp]`), 5 `example`s and **16 `#guard`s** across      358 lines.
+
+**Build-lock discipline, as practised.** The lock was found HELD by the ES lane
+(owner pid alive, 28 minutes in, six `lake build` processes machine-wide) —
+**legitimately held, not stale**, so this lane spun rather than reclaimed, per
+rule 5's requirement to verify a running build before touching another lane's
+lock. Released with `rm -rf` under a trap that reports failure, and the owner
+file is checked to be ours before release so a spin-then-timeout cannot delete
+somebody else's lock.

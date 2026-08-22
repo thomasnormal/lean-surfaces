@@ -275,6 +275,21 @@ process with a time wheel** (`initial` + `#` + standalone `@` +
 to 68.0%**, in two steps worth **+37.6pp** (`initial`) and **+29.7pp**
 (delays). Nothing else on the ladder comes close.
 
+> **What the 68% is, and is NOT — two axes, and this table measures one
+> of them.** The tiers above are a **scheduling** measure: a file counts
+> if its *scheduling constructs* are in scope. It is not a claim that
+> 68% of files would run, because a file also has to be in tier on the
+> **vocabulary** axis — its expressions, statements and types. Measured
+> independently by the committed census, only **806 of 21 186 files
+> (3.8%)** extract with **zero `Unsupported` nodes**, and of those only
+> **601 are `:type: simulation`** — 3.4% of the 17 856 runnable tests.
+>
+> So 4a removes the *scheduling* blocker for 68% of the corpus; the
+> vocabulary blocker is a separate axis and is what R2's breadth rungs
+> address (today's top blockers being signedness and range metadata, not
+> exotic constructs). **Total in-tier coverage is gated by both, and no
+> claim should quote 68% as a runnability figure.**
+
 The second capability is the **Preponed/Observed/Reactive cluster**
 (clocking + concurrent assertions + program blocks), worth roughly
 another 15pp — and Preponed 15.2% and Reactive 13.3% are essentially
@@ -545,11 +560,50 @@ R1 is **census → boundary → shape → adequacy → semantics → re-establis
 in that order. The census (§1-3) and the boundary (§2) land with this
 document.
 
+### 7.0 PRIOR ART: `initial` is ALREADY EXECUTED, in a parallel tier
+
+Found while pricing 4a, and it changes its shape. **`LeanModels/Sv/
+SelfCheck.lean` (867 lines) already runs `initial` blocks.** Its
+docstring states the contract: single-module designs whose only
+processes are `initial` blocks computing at time 0 and printing
+`PASS`/`FAIL` via `$display` — with `$display`/`$write`/`$finish`/
+`$stop`, string literals, local declarations, `===`/`!==`, `&&`/`||`,
+signed comparisons, `Resize` and `Squash2` on top of the M0 vocabulary.
+The extractor already emits `{"kind": "Initial", …}` as a real envelope
+node; it is `Json.lean`'s **ingester** that maps it to
+`Process.unsupported`, because `Ast.Process` has no constructor for it.
+
+**So 4a is not "build `initial` from scratch."** Two things are already
+done — executing an `initial` body, and the output tasks — and the
+extractor half of inch 8 is largely done for `initial` too.
+
+**What is actually missing is the part neither tier has: the two are
+MUTUALLY EXCLUSIVE.** `SelfCheck` refuses any process that is not
+`initial`; the M0 cycle core refuses `initial`. A design with both — an
+`always_ff` DUT and an `initial` testbench, which is what a runnable
+test *is* — runs under neither. **4a's real content is the union**, plus
+the time wheel (`#`), which neither tier has: `SelfCheck`'s docstring
+says a `#delay` in a body "arrives as `Unsupported` and is loud when
+reached."
+
+**The reach today, measured:** 806 files (3.8%) extract with zero
+`Unsupported` nodes, of which **601 are `:type: simulation`** — 3.4% of
+the 17 856 runnable tests. That is `SelfCheck`'s ceiling, against the
+cycle core's 171 scheduling-clean files.
+
+**And a duplication risk this section exists to prevent.** `SelfCheck`
+built its own `SExpr`/`SStmt` that *embed* the M0 types as `.m0` leaves
+and delegate to `evalExpr`/`execStmt` — a deliberate wrapper, not a
+rewrite. 4a must extend that pattern or subsume it, **not invent a third
+statement type**. Whether the region semantics absorbs `SelfCheck` or
+sits under it is the first design question of inch 4a, and it should be
+answered by reading that file rather than by starting fresh.
+
 | inch | deliverable | price |
 | ---: | --- | --- |
 | 1 | **This document** — region census, determinism boundary, corpus price | LANDED |
-| 2 | `Region`, the widened `ScheduleOracle`, `Slot`/`RegionTrace`, `isCycleFragment`, `cycleOf` — **types only**, no semantics | small; ~80 lines, no proofs |
-| 3 | The `cycleOf` stub + the divider statement shape (§6), against today's cycle semantics | small; unblocks rung A immediately |
+| 2 | `Region`, the region-aware oracle, `Slot`/`RegionTrace`, `isCycleFragment`, `cycleOf` — **types only**, no semantics | **LANDED** — `LeanModels/Sv/Regions.lean` |
+| 3 | The `cycleOf` stub + the divider statement shape (§6), against today's cycle semantics | **LANDED** — same file |
 | **4a** | **`initial` + the TIME WHEEL + `$display`/`$finish`** — a procedural process, `#` delay, standalone `@`, and the two output tasks. **This is the +67pp inch** (§3.3): corpus A goes 0.7% → 68.0% | the bulk of the rung, and the payload |
 | 4b | `slotStep` proper: Preponed sample, the Active/Inactive/NBA loop, Postponed as a **write-prohibited no-op** (right about 99.8% of the corpus, §3.5). **Reactive family stubbed, refusing loudly if reached** | structural; mostly wiring 4a into the region ladder |
 | 5 | **The adequacy lemma** `cycleOf_runRegion` on the fragment | the hard theorem; the rung's centre |
@@ -562,6 +616,31 @@ document.
 **Inches 2 and 3 are trivially landable now** and are worth landing
 before inch 4a, precisely because they let rung A's divider statement be
 written in its final form while the semantics is still being built.
+
+**One design change inches 2-3 forced, recorded here rather than in a
+commit message.** The inch text said "the **widened** `ScheduleOracle`".
+Widening it in place would have changed `choose`'s type and broken every
+existing `∀ σ` theorem **at the exact moment none of them could be
+re-proved**, because the semantics they would need does not exist until
+inch 4. So `RegionOracle` lands as a *new* type beside the old one, with
+an embedding `ScheduleOracle.toRegion` and the conservativity proved:
+
+```lean
+theorem ScheduleOracle.toRegion_choose (σ : ScheduleOracle) (k : Nat)
+    (r : Region) (ready : List Nat) :
+    σ.toRegion.choose k r ready = σ.choose k ready := rfl
+```
+
+That `rfl` is the design's "the old oracle embeds as `fun k _ ready => …`"
+turned into an obligation the compiler checks. The in-place widening
+happens at inch 4, when there is something to widen *into*.
+
+The same file also proves the region bookkeeping cannot drift —
+`Region.all` really is `Region.core` interleaved with `Region.pli`, by
+`decide` — and `RegionOracle.revIn` demonstrates the new expressive
+power the region parameter buys: **a schedule that reorders inside one
+region and nowhere else**, which the cycle-level oracle could not state
+and which region-local race witnesses will need.
 
 **The corpus moved the payload from 4b to 4a.** This document's first
 draft put `slotStep` and its region ladder at the centre of the rung.
@@ -593,3 +672,438 @@ not the payload.
   rung.
 * **Whether `Sv.Res` moves to `Core/`.** Unchanged from the charter:
   structural, and triggered by the C tier's M2, not by SV.
+
+---
+## 9 THE SHARED-MONAD SUBSTRATE — fit census and verdict
+
+The owner asked whether SV can be rewritten onto the shared monad
+structure, and then sharpened it: *"target SV's scheduler semantics from
+the start when making these decisions, since that will eventually have to
+be done."*
+
+**That sharpening closed a loophole this section had already fallen
+into.** The first draft censused the fit of `Sv.Res` and of a `W` shaped
+for the **cycle model** — and concluded the types were compatible. That
+conclusion was true and nearly useless: it validated the substrate
+against the **projection** rather than against the **definition**. Under
+ruling §6.4 the cycle model is a *view* of clause 4, not a semantics in
+its own right, so a `W` designed for it would have to be redesigned at
+inch 4b — the second rebuild the ladder exists to avoid.
+
+**So the question is not "does `Sv.Res` map onto the substrate" but
+"does the substrate carry the FULL event scheduler".** What follows is
+that census.
+
+### 9.1 The gate's own question, answered
+
+*Are the inch 2-3 types substrate-compatible, and scheduler-shaped?*
+**Yes to both, measured.** `LeanModels/Sv/Regions.lean` mentions `Res`
+zero times and `Monad` zero times (its one `bind` is `Option.bind`), and
+what it *does* define is scheduler-shaped by construction: `Region` is
+all fifteen of clause 4's regions, `RegionOracle` is the choice-within-a-
+region contract, and `cycleOf` is explicitly the **projection**, named as
+such. Nothing in it is designed for the cycle model; the cycle model is
+what it projects *to*.
+
+### 9.2 The stack, with the SCHEDULER as `W`
+
+`Sv.Res α = ok | timeout | unsupported` **is `Except Loud α` exactly**,
+and already carries a `Monad` instance — where Python's `Run σ α` needed
+a 22-line iso to reveal its stack, SV's needs less, because M0 SV has no
+exception arm to reconcile. That part of the first draft survives.
+
+What changes is `W`. Designed for clause 4 rather than for cycles, the
+honest inventory is:
+
+```lean
+-- illustrative: the scheduler-shaped World, not in the tree
+inductive Trigger where            -- why a process is suspended
+  | atEdge  (sig : String) (e : Edge)     -- @(posedge clk)
+  | atTime  (t : Nat)                     -- #d, resolved to absolute time
+  | atEvent (name : String)               -- named event
+  | waitFor (cond : Expr)                 -- wait(expr)
+
+structure ProcState where
+  residual : List Stmt        -- THE DEFUNCTIONALIZED CONTINUATION (§9.3)
+  status   : ProcStatus       -- ready | suspended Trigger | finished
+
+structure SvWorld where
+  time      : Nat                       -- the time wheel's now
+  signals   : SvState                   -- the 4-state signal environment
+  procs     : Array ProcState           -- the process table
+  regionQ   : Region → List Nat         -- ready set per region
+  curRegion : Region                    -- the active-region pointer
+  nba       : NbaQueue                  -- write-then-commit buffer
+  reNba     : NbaQueue                  -- the reactive family's buffer
+  future    : List (Nat × Nat)          -- (wake time, proc) — the wheel
+  out       : List String               -- $display / $write buffer
+  k         : Nat                       -- oracle invocation counter
+```
+
+Canonically (`docs/family-architecture.md` §3.4):
+`SemM W ρ := ExceptT ρ (StateT W Halt)`, in that order — with `Halt` the
+`Except Loud` base. **The order is load-bearing and was corrected there
+by `rfl`**: `StateT` *outside* `ExceptT` discards the state on a raise
+(`W → Except ρ (α × W)`), where the right order keeps it
+(`W → (Except ρ α × W)`). SV needs the right order for the same reason C
+does — `$finish` must preserve the output buffer.
+
+| substrate layer | SV instantiation |
+| --- | --- |
+| `Halt` = `Except Loud` (base) | `Res`'s `timeout` (comb loop / non-convergence) and `unsupported`, both state-discarding — **exists exactly** |
+| `StateT W` | `SvWorld` above. Threaded **manually** today, so a `StateT` presentation is a re-presentation; but the *contents* are new, and they are the scheduler's, not the cycle model's |
+| `ExceptT ρ` | **empty in M0**, filled by `$finish`/`$stop` |
+| the schedule `σ` | **outside**, universally quantified — see §9.4 |
+
+**`$finish` is `ρ`, not `Loud`.** It terminates simulation but the
+`out` buffer **is the test's verdict** and must survive; `timeout` and
+`unsupported` discard state because nothing meaningful remains. This is
+the C tier's `abort`/`exit` distinction, and inverting it would silently
+throw away the `PASS`/`FAIL` line that **97%** of the corpus depends on
+(§3.1).
+
+**Yes, `W` is big.** That is expected and is not a defect: the substrate
+was never meant to shrink the semantics, only to standardise its
+plumbing and its proof interface. A stratified event scheduler has a lot
+of state because clause 4 says it does.
+
+### 9.3 THE SUSPENSION QUESTION — the family-level one, answered
+
+**This is the question that decides whether the substrate can hold SV at
+all.** A SystemVerilog process suspends *mid-body* at `@`, `#` or
+`wait`, other processes run, and it later resumes where it stopped. That
+is coroutine behaviour, and a `StateT W` computation is
+**run-to-completion**: `W → (α × W)` has nowhere to put "paused here".
+
+Stated sharply: **`SemM` as specified cannot suspend.** If a process's
+continuation had to be a *monadic value* held across a scheduling point,
+the substrate would be the wrong shape and this would be a family-level
+finding against the concurrency four-piece pattern.
+
+**It does not have to be, and the escape is defunctionalization.** The
+continuation is kept as **data in `W`** — `ProcState.residual`, the
+remainder of the process's statement list — rather than as a suspended
+computation. The interpreter is then a **scheduler loop over the process
+table**:
+
+```lean
+-- illustrative
+def stepProcess (σ : RegionOracle) (p : Nat) : SvM StepOutcome
+  -- runs procs[p].residual until it completes or hits a Trigger;
+  -- writes the remaining statements back to procs[p].residual.
+  -- SUSPENSION IS A RETURN VALUE, never a monadic effect.
+
+def runRegion (σ : RegionOracle) (r : Region) (fuel : Nat) : SvM Unit
+  -- σ orders the ready set for r; step each; iterate to exhaustion.
+```
+
+**So the verdict on the family question is: the substrate HOLDS the full
+scheduler, with the process table inside `W` and the interpreter as the
+scheduler loop over it** — the outcome the dispatch thought likely, now
+with the mechanism named. Suspension is representable because it is
+*data*, and it is data because SV processes suspend only at syntactically
+identifiable points, so the residual is always a statement list.
+
+**The price, stated plainly — and it is one field.** Defunctionalization
+means the AST's statement list doubles as the continuation type, which is
+cheap; but it also means `stepProcess` is a **second interpreter shape**
+over `Stmt` — one that can stop half way — where today's
+
+```lean
+def execStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (ss : List Stmt) :
+    Res (SvState × NbaQueue)
+```
+
+runs to completion. The resumable form extends that return type by
+exactly one field:
+
+```lean
+inductive StepOutcome where
+  | done
+  | suspended (t : Trigger) (residual : List Stmt)
+
+def stepStmts (fuel : Nat) (st : SvState) (nba : NbaQueue) (ss : List Stmt) :
+    Res (SvState × NbaQueue × StepOutcome)
+```
+
+**The two must not both exist unreconciled**, and the reconciliation is a
+lemma of exactly the adequacy shape:
+
+```lean
+theorem stepStmts_trigger_free (h : ss.all Stmt.isTriggerFree) :
+    stepStmts fuel st nba ss
+      = (fun p => (p.1, p.2, .done)) <$> execStmts fuel st nba ss
+```
+
+So 4a's `stepProcess` *subsumes* `execStmts` — a process with no trigger
+in it **is** the run-to-completion case — which is also the answer to
+§7.0's `SelfCheck` duplication risk: one resumable stepper, with the
+existing non-resumable one as its trigger-free special case, related by a
+theorem rather than by convention.
+
+**One thing this does NOT solve**, flagged rather than buried: `fork`/
+`join` (2.9% of the corpus) creates *dynamic* processes, so `procs` must
+grow at run time and `join` needs a completion barrier. That is
+expressible in the same `W` — a spawned process is another `ProcState` —
+but it is not exercised by 4a and its design is deferred to the rung
+that needs it.
+
+### 9.4 `σ` stays OUTSIDE, and the scheduler makes that load-bearing
+
+Under the cycle model `∀ σ` was already the doctrine. Under the full
+scheduler it becomes the *only* thing standing between the tier and a
+false claim, because there are far more scheduling points: every region
+of every slot orders its own ready set.
+
+`σ` is therefore a **parameter of the definitions** (`runRegion σ …`),
+never a field of `W`. A schedule threaded through the state would become
+a choice the program *makes* rather than one quantified *over*, and every
+race theorem would change meaning. This matches the family's treatment
+of Go's schedule, and it is why `RegionOracle` (landed at inch 2) takes
+the region as an argument rather than reading it from a world.
+
+### 9.5 THE SV-SPECIFIC TRAP: `x` is NOT `ρ`
+
+Four-state unknown is a **value**, not an error. `lx`/`lz` flow through
+the `LVec` operators by tabulated per-operator rules; they never
+short-circuit, and an `x`-carrying result is a **successful** run.
+
+A migration that reached for the `ExceptT` layer to model x-propagation —
+a natural-looking move, since "unknown" reads like "exceptional" — would
+**destroy the value model**, converting 4-state semantics into
+2-state-plus-errors. `ρ` is `$finish` and `$stop`. Nothing else.
+
+### 9.6 What does NOT map: the fuel ladder, 62% of the estate
+
+All 98 proof-carrying declarations, classified by the pilot's
+reachability criterion (`docs/mvcgen-pilot.md` §2):
+
+| class | count | share | `mvcgen` |
+| --- | ---: | ---: | --- |
+| fuel-recursive (`_le`/`_mono` ladder) | **50** | 47% | **outside** |
+| ∃-fuel threshold form | **11** | 10% | **outside** |
+| trace-shaped, fuel-free | 16 | 15% | reachable in principle |
+| statement-shaped | 29 | 27% | **native** |
+
+**62% sits where the pilot measured `mvcgen` returns the goal unchanged
+after 1 m 31 s.** `Obs.lean` alone holds 44 of them.
+
+**And SV's fuel is SEMANTIC where Python's is an artifact.**
+`Res.timeout` does not mean "the model ran out of budget"; it means
+**non-convergence** — a combinational loop today, and under the full
+scheduler also a zero-delay loop that never lets time advance. Both are
+real, reportable properties of the design under test. The pilot's
+Route C (drop fuel, make the loop total by a measure) is therefore **not
+available** at `combSettle`, and **still not available** at the region
+loop, because non-termination there is exactly what the tier must
+detect rather than exclude. The 50-lemma ladder is **intrinsic to the
+semantics, not incidental to its encoding.**
+
+*(One route nobody has measured, flagged not assumed: fuel as a **field
+of `W`** with `decreasing_by` — distinct from both "fuel as a layer"
+(not definable) and "fuel as an argument" (no progress). Under the
+scheduler design this is more attractive than it was, because `W` exists
+anyway and the loop is already a state machine. Cheap experiment; SV has
+the most to gain from the answer.)*
+
+### 9.7 The economic argument: SV has NEVER paid for a walker
+
+| tier | hand-rolled VC machinery |
+| --- | ---: |
+| Python | `VC` 546 + `VC2` 939 + `VCTactic` 3 371 + `LoopTactic` 487 = **5 343 lines** |
+| **SystemVerilog** | **none** — `sv_prove` is a "first-cut tactic" inside a 450-line `Surface.lean` |
+
+SV is exactly pilot §4's case: a tier that has **not paid**, choosing
+between ~120 lines of substrate and eventually growing its own walker.
+Under ruling §6.6 the surface only grows, so "eventually" is not
+hypothetical — and the scheduler is precisely the growth that would
+force it.
+
+### 9.8 THE VERDICT: **(b) HYBRID**, with the scheduler as the target
+
+**New code on the substrate, scheduler-shaped from its first commit.
+Dormant tier NOT rebuilt. `Res` unified into `Core` because it is free.**
+
+**(a) FULL ADOPTION — priced and DECLINED.** Its rebuild half re-proves
+61 fuel-shaped theorems `mvcgen` cannot assist, to reach a presentation
+whose benefit sits in the 29 statement-shaped ones — and it would be paid
+at the exact moment R1 changes the trace type underneath anyway.
+**Rebuilding twice is worse than rebuilding once, and R1 is the rebuild
+that has to happen.**
+
+**(c) STATUS QUO — DECLINED.** 4a is new code; there is no reason to
+write new code off-substrate, and doing so would forfeit SV's chance to
+be the substrate's second real consumer at zero migration price.
+
+**(b) HYBRID — ADOPTED:**
+
+1. **4a's payload is written on the substrate AND scheduler-shaped from
+   commit one.** `W` is `SvWorld` as in §9.2 — the process table, the
+   per-region ready sets, the time wheel and both NBA buffers — **even
+   though 4a's `initial`-blocks-and-delays coverage exercises only part
+   of it.** Reserving the structure now is cheap and impossible later;
+   it is the family's own precedent (Go's schedule, C's threads).
+2. **`Sv.Res` unifies into `Core`** — integration-checklist item 3, of
+   which only the `Span` half ever landed (`Core/Basic.lean` is 13 lines
+   holding `Span` alone). It is an **iso, not a migration**, and it is
+   the landing that makes SV a real `Core` consumer where §7.3's
+   correction found the recorded count of 3 was actually **zero**.
+3. **The dormant tier is bridged where consumed, not rebuilt.** The 50
+   monotonicity lemmas stay; `cycleOf_runRegion` (§5.3) is the bridge and
+   is owed regardless of this question.
+4. **`mvcgen` on the fuel-free fragment only**, with threshold assembly
+   by hand at `combSettle` and the region loop, per the pilot.
+
+**And one finding that went OUTWARD to the architecture lane — not
+loudly as a failure but precisely as a constraint. It has since
+LANDED there**, as `docs/family-architecture.md` §(1a) *"`SemM` CANNOT
+SUSPEND — and the pattern survives only because the process table lives
+in W"*, which corrects that document's earlier *"nothing about the monad
+changes"* and states the structural fact by `rfl`:
+`ExceptT ρ (StateT W Halt) α` unfolds to `W → (Except ρ α × W)` — an
+`α`, or a `ρ`, plus a `W`, **and no third case**.
+
+The generalisation the family drew from SV's case is worth reading back
+into this lane, because it is the rule 4a must follow: defunctionalization
+is **sound because suspension points are SYNTACTIC** — a process pauses
+only at a construct the grammar names, so "where it paused" is a position
+in the program text and not an arbitrary closure. A language that could
+suspend at an arbitrary point would need a real continuation and this
+trick would not be available. **The concurrency pattern's
+schedule-as-parameter claim survives this test — but it survives
+*because* the process table went into the World.**
+
+### 9.9 Consequence for the inch ladder
+
+| inch | change |
+| --- | --- |
+| 2-3 | **unchanged and LANDED** — substrate-neutral and scheduler-shaped (§9.1) |
+| **4a-0** | **NEW**: `SvWorld` **as in §9.2, scheduler-shaped**, the `ExceptT ρ (StateT SvWorld (Except Loud))` presentation, `Res`→`Core`, and `@[spec]` lemmas for the primitives (`readSignal`, `SvState.set`, NBA push/commit, `$display` emit, `$finish`, wheel insert/pop). Est. **~120 lines** of substrate per pilot §4, plus the `W` declaration itself |
+| 4a | `initial` + time wheel + output tasks, written against 4a-0 — and `stepProcess` **subsumes** `execStmts` rather than duplicating it (§9.3, §7.0) |
+| 4b-9 | unchanged in content; the region ladder is state-shaped and rides `W` |
+
+**What this does NOT decide**: whether the fuel-in-`W` route is
+`mvcgen`-walkable (§9.6), and how `fork`/`join`'s dynamic process
+creation is scheduled (§9.3). Neither is on R1's critical path.
+
+### 9.11 THE STATEMENT TYPE — three candidates, and the answer is EXTEND, not invent
+
+Pricing 4a's stepper turned up a fact that changes its first move.
+**`Ast.Stmt` has no suspending constructor and cannot get one.** Its five
+cases are `blockingAssign`, `nbaAssign`, `ifStmt`, `block`,
+`unsupported` — `@`, `#` and `wait` all arrive as `.unsupported` today —
+and it is a closed inductive that the M0 interpreter and its proofs
+**match exhaustively**, so adding cases breaks every match and every
+proof at once.
+
+That is precisely why `SelfCheck` did not add any: it wraps instead,
+with `SStmt` embedding M0 as `.m0` leaves. So there are three candidate
+statement types in play, which is one more than §7.0 warned about:
+
+| type | has | missing for 4a |
+| --- | --- | --- |
+| `Ast.Stmt` | the M0 five | everything; **cannot be extended** |
+| `SelfCheck.SStmt` | `.m0`, `.assign`, `.ifStmt`, `.block`, `.localDecl`, **`.sysCall`** (`$display`/`$write`), **`.finish`**, `.skip` | the three **suspension** forms |
+| a new `RStmt` | — | **would be the third type; do not write it** |
+
+**The extend-versus-wrap choice is settled by MEASUREMENT, and the
+asymmetry is the whole point.** The argument that killed extending
+`Ast.Stmt` — "matched exhaustively by the interpreter and its proofs" —
+does **not** transfer to `SStmt`:
+
+| | `Ast.Stmt` | `SelfCheck.SStmt` |
+| --- | --- | --- |
+| files that mention it | interpreter + proofs + examples | **1** (`SelfCheck.lean`) |
+| proof-carrying declarations over it | part of the **156** trace-shaped estate | **0** |
+| match arms to update | the M0 interpreter and every exhaustive proof | **22**, all in that one file |
+| executable `#guard`s | — | 50, none exercising new cases |
+
+**Extending `Stmt` is catastrophic; extending `SStmt` is one file with no
+proofs to re-prove.** So the answer is to EXTEND `SStmt` with the
+suspension constructors, not to invent a third type:
+
+```lean
+-- illustrative: the three cases 4a adds to SStmt
+  | delay     (amount : Nat)                    -- #d
+  | waitEvent (sig : String) (e : Edge)         -- @(posedge clk)
+  | waitCond  (cond : SExpr)                    -- wait(expr)
+```
+
+**This is strictly better than the `RStmt` sketch §9.3 implied**, because
+`SStmt` *already carries the two things 4a needs most*: `.sysCall` is
+`$display`/`$write` — **92.7%** of the corpus — and `.finish` is
+`$finish`/`$stop` at **97.0%**. Inventing `RStmt` would have meant
+re-deriving both.
+
+**And `ρ` already exists in the tier, hand-rolled.** `SelfCheck`
+executes `$finish` as
+
+```lean
+| .finish => .ok (st, nba, { out with halted := true })
+```
+
+— **`.ok`, not a failure, with the output preserved and a `halted` flag
+that downstream execution short-circuits on.** That is `ExceptT ρ`
+**defunctionalized into the state**, arrived at independently a month
+before the substrate was specified. It confirms §9.2's layer argument
+from inside the tier rather than by analogy with C: `$finish` must
+preserve `out`, and the existing code already makes sure it does.
+
+**So the migration has a concrete, small first target**: replace the
+hand-rolled `halted` flag and its short-circuit with the `ExceptT ρ`
+layer, which is one `@[spec]` lemma and deletes a manual check from
+every statement case. That is a genuine simplification, not a
+re-presentation — and it is the smallest possible demonstration that the
+substrate earns its place in this tier.
+
+**Revised first move for 4a** (superseding §9.9's ordering of 4a-0):
+
+1. extend `SStmt` with `delay`/`waitEvent`/`waitCond`;
+2. `stepSStmts` returning `… × StepOutcome`, with `execSStmts` recovered
+   as the non-suspending case by the adequacy-shaped lemma;
+3. `SvWorld` + the scheduler loop;
+4. adopt `Core`'s `SemM` spelling when the extraction lands (§9.10),
+   replacing `Out.halted` with the `ExceptT` layer at that point.
+
+### 9.10 THE GATE ON 4a-0: `SemM` is NOT IN THE TREE, and SV must not race it
+
+Checked today: `LeanModels/Core/` contains **`Basic.lean` alone**, and
+`grep -rn 'SemM' LeanModels/` returns **nothing**. `SemM` exists as a
+*specification* in `docs/family-architecture.md` §3.4 and as work "in
+flight" in the rebuild lane.
+
+**This turns 4a-0 into a coordination point rather than a coding task**,
+because the family document states the rule that governs it:
+
+> *"a second interpreter landing with its own copy of `Run` is a defect,
+> not a design"*
+
+and collapses two landings into one:
+
+> *"'move `Run` to `Core`' and 'land the `SemM` substrate' are the same
+> landing, not two. The destination should therefore be the stack, with
+> `Run` as its established view."*
+
+So **4a-0 must not define an SV-local copy of the stack.** Three
+candidates are named for who triggers the `Core` landing — C's M2 inch 4,
+the rebuild lane's `SemM`, or a third tier adopting the outcome type —
+and *"whichever lands first is the trigger."* SV's 4a-0 is exactly such a
+tier, which leaves two honest options:
+
+* **(i) WAIT** for the rebuild lane's `SemM`, and write 4a-0 against it.
+  4a's `SvWorld` and its `@[spec]` lemmas are SV-local and unaffected;
+  only the stack's *definition* is shared. This is the default.
+* **(ii) BE the trigger** — SV lands `SemM` into `Core` itself, with
+  `Run` as its established view. This is a **family-level landing that
+  touches Python's 1 282 `Run.` sites across 31 files**, and the rebuild
+  lane is already in flight on it, so taking it unilaterally would be a
+  race, not a contribution.
+
+**Recommendation: (i), and it costs R1 nothing.** Inches 2-3 are landed
+and substrate-neutral; 4a's own content — `SvWorld`, `stepProcess`, the
+time wheel, the region loop — is SV-local and can be written against a
+stack that arrives later, since the only coupling is which `abbrev` the
+monad is spelled with. **What must NOT happen is 4a-0 quietly defining
+`SvM := ExceptT ρ (StateT SvWorld (Except Loud))` locally** — that is
+precisely the "own copy" the family rule names as a defect, and it would
+be discovered later as drift rather than now as a dependency.

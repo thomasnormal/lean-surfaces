@@ -11,6 +11,11 @@ import LeanModels.Sv.ToggleExample
 -- (`load_design_sv2`) — the CV32E40P phase-2 pipeline.
 import LeanModels.Sv.Param
 import LeanModels.Sv.Ingest2
+-- R1 inches 2-3: the IEEE 1800 §4.4 event-region TYPES, the region-aware
+-- oracle (introduced additively, with the conservativity of the widening
+-- proved), the slot-structured trace, and the `cycleOf` abstraction every
+-- observation is stated through. No semantics — see docs/sv-r1-scheduler.md.
+import LeanModels.Sv.Regions
 -- The RISC-V lane: the RV32IMC + machine-mode ISA model (single source of
 -- truth for the CV32E40P projections; Step pulls Priv, Csr, Exec, Decode and
 -- Ast transitively).

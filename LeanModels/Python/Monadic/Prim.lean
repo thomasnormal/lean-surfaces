@@ -127,6 +127,12 @@ structure Kont where
   call : String → Array RVal → SemW RVal
   /-- Call a closure/nested def by its heap representation. -/
   callClo : Addr → Array RVal → SemW RVal
+  /-- `{k₁: v₁, k₂: v₂, …}` — the LOCKSTEP walk of two parallel expression
+  lists. It rides here not because it needs fuel but because no single
+  STRUCTURAL measure covers two parallel lists (Eval.lean §0.5); routing it
+  through the record breaks the recursive knot and lets the walk be an ordinary
+  structural definition below the block. -/
+  dictItems : List Expr → List Expr → SemF (List (RVal × RVal))
   /-- `while test: body else: orelse` — the non-structural statement. -/
   whileLoop : Expr → List Stmt → List Stmt → SemF RFlow
   /-- `for target in xs: body` over an already-materialized value sequence. -/
@@ -147,6 +153,7 @@ def Kont.bottom : Kont where
   fuel        := 0
   call        := fun _ _   => exhausted
   callClo     := fun _ _   => exhausted
+  dictItems   := fun _ _   => exhausted
   whileLoop   := fun _ _ _ => exhausted
   forSeq      := fun _ _ _ => exhausted
   forList     := fun _ _ _ _ => exhausted

@@ -100,6 +100,14 @@ inductive CallPlan where
   | modFun (qname : String)
   /-- A builtin from `isBuiltinName`'s implemented set. -/
   | builtin (name : String)
+  /-- Construct an IMMEDIATE namedtuple value — no allocation. Covers both the
+  plain namedtuple and the value-like SUBCLASS (`class Position(namedtuple(…))`),
+  whose construction IS namedtuple construction; the plan resolves which type
+  NAME the value carries, so the two collapse to one arm here. -/
+  | ntMake (tname : String) (fields : Array String)
+  /-- Instantiate a class: allocate `Obj.instance`, then run `__init__` through
+  the ordinary call path with `self` as an ordinary first argument. -/
+  | instantiate (cid : Nat) (cname : String) (hasInit : Bool)
   /-- An arm the rebuild has not transliterated; the payload names it. -/
   | notYetArm (arm : String)
 deriving Repr, Inhabited, BEq
@@ -125,11 +133,40 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
         if (findClass m fname).isSome || (findNamedTuple m fname).isSome then
           .preRefuse s!"name '{fname}' is bound by both 'def' and 'class'/namedtuple at module level — source-order resolution is outside the tier (ordered ModuleItem representation is the recorded fix)"
         else .modFun fname
-      else if (findClass m fname).isSome then
-        .notYetArm s!"call: class instantiation '{fname}' (H3)"
-      else if (findNamedTuple m fname).isSome then
-        .notYetArm s!"call: namedtuple construction '{fname}'"
-      else if fname == "input" then
+      else
+      match findClass m fname with
+      | some (ci, c) =>
+        -- INSTANTIATION (H3). Every guard below fires BEFORE the arguments
+        -- evaluate, exactly as the trunk's do — which is why they are plan
+        -- constructors and not checks inside `applyCallPlan`.
+        if (findNamedTuple m fname).isSome then
+          .preRefuse s!"name '{fname}' is bound by both 'class' and a namedtuple assignment at module level — source-order resolution is outside the tier"
+        else if c.isExc then
+          .preRefuse s!"calling exception class '{fname}' (an exception INSTANCE as a value) is outside the tier — exception classes are raised and matched by name (docs/memory-model.md §exceptions)"
+        else
+          match c.ntBase with
+          | some nt =>
+            -- The VALUE-LIKE SUBCLASS (sunfish's `class Position(namedtuple(…))`):
+            -- an IMMEDIATE value carrying the SUBCLASS name, no allocation, no
+            -- `__init__` run.
+            if !c.ok then
+              .preRefuse s!"class '{fname}' uses unsupported features besides its namedtuple base — instantiation is outside the tier"
+            else if hasExtraDunder c then
+              .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
+            else if (findFunction m (fname ++ ".__init__")).isSome then
+              .preRefuse s!"'__init__' on the namedtuple subclass '{fname}' (immutable self) is outside the tier"
+            else .ntMake nt.name nt.fields
+          | Option.none =>
+            if !c.ok then
+              .preRefuse s!"class '{fname}' uses unsupported features (bases/metaclass/decorators/class-level statements) — instantiation is outside the H3 tier"
+            else if hasExtraDunder c then
+              .preRefuse s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
+            else .instantiate ci fname (findFunction m (fname ++ ".__init__")).isSome
+      | Option.none =>
+      match findNamedTuple m fname with
+      | some nt => .ntMake nt.tname nt.fields
+      | Option.none =>
+      if fname == "input" then
         -- The ONE builtin that refuses BEFORE its arguments evaluate: stdin is
         -- a runner-boundary effect, and the trunk refuses at the dispatch.
         .preRefuse "input() is outside the tier (stdin is a runner-boundary effect; docs/memory-model.md §effects)"
@@ -169,8 +206,7 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
           if guardGen && moduleGenFree m then
             refuse s!"{fname}() over a generator DRAINS it (a stateful read) — outside the tier"
           else do
-            let st ← get
-            inFrame st.locals (K.drainIter a)
+            inFrame (K.drainIter a)
       | some (.dict _ _) =>
           refuse s!"{fname}() over dict keys is outside the tier (live dict iteration; docs/memory-model.md)"
       | some (.pyset _) =>
@@ -270,6 +306,38 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         let a ← heapPush (.list xs.toArray)
         pure (.ref a)
     | vs => raisePy (.typeError s!"list expected at most 1 argument, got {vs.length}")
+  else if fname == "set" then
+    -- The honest set subset: construction from an iterable, DEDUPLICATED by
+    -- value equality under the dict-key doctrine. It ALLOCATES, so like `list`
+    -- its generator arm drains unguarded.
+    match vs with
+    | [] => do let a ← heapPush (.pyset #[]); pure (.ref a)
+    | [v] => do
+        let xs ← iterValues K m "set" false v
+        let es ← liftRes (setDedup (← frameHeap) K.fuel [] xs)
+        let a ← heapPush (.pyset es.toArray)
+        pure (.ref a)
+    | vs => raisePy (.typeError s!"set expected at most 1 argument, got {vs.length}")
+  else if fname == "any" || fname == "all" then
+    match vs with
+    | [v] => do
+        -- THE GENERATOR ARM IS NOT A DRAIN, and the difference is observable:
+        -- `any`/`all` step only until the answer DECIDES and leave the object
+        -- SUSPENDED, so a later `next` sees the partial consumption. Routing it
+        -- through `iterValues` would fully drain it — a wrong answer to a
+        -- question about state, not a missing feature. It gets its own arm.
+        let isGen ← (match v with
+          | .ref a => do
+              match Heap.get? (← frameHeap) a with
+              | some (.generator ..) => pure true
+              | _ => pure false
+          | _ => pure false)
+        if isGen then notYet s!"builtin: {fname}() over a generator (H6 anyAllIter)"
+        else do
+          let xs ← iterValues K m fname true v
+          let b ← liftRes (anyAllScan (← frameHeap) (fname == "all") xs)
+          pure (.bool b)
+    | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
   else notYet s!"builtin: {fname}()"
 
 /-- Apply a resolved plan to already-evaluated arguments. Not mutual with the
@@ -280,9 +348,134 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
   | .notCallable t,   _  => raisePy (.typeError s!"'{t}' object is not callable")
   | .notYetArm arm,   _  => notYet arm
   | .builtin name,    vs => applyBuiltin K m name vs
-  | .modFun qname,    vs => do
-      let st ← get
-      inFrame st.locals (K.call qname vs.toArray)
+  | .modFun qname,    vs => inFrame (K.call qname vs.toArray)
+  | .ntMake tn flds,  vs =>
+      -- Wrong arity is the faithful TypeError (CPython raises it through
+      -- `tuple.__new__`); nothing allocates, so the world is exactly the
+      -- arguments'.
+      if vs.length == flds.size then pure (.ntuple tn flds vs.toArray)
+      else raisePy (.typeError (ntArityErrorMsg flds vs.length))
+  | .instantiate ci cname hasInit, vs =>
+      if hasInit then do
+        let a ← heapPush (.instance ci #[])
+        let r ← inFrame (K.call (cname ++ ".__init__") ((RVal.ref a :: vs).toArray))
+        match r with
+        | .none => pure (.ref a)
+        -- CPython checks `__init__`'s result: non-None raises.
+        | r => raisePy (.typeError s!"__init__() should return None, not '{r.typeName}'")
+      else
+        match vs with
+        -- The arity error fires BEFORE the allocation, so the failing run's
+        -- world is the caller's untouched — the trunk raises from `st`, not
+        -- from the post-allocation `st'`.
+        | [] => do let a ← heapPush (.instance ci #[]); pure (.ref a)
+        | _ => raisePy (.typeError s!"{cname}() takes no arguments")
+
+
+/-! ## §0.7 METHOD CALLS — three receivers, each forking on its own PURE plan
+
+The trunk already computes each dispatch through a free-scrutinee plan
+(`attrCallPlan`, `ntupleCallPlan`, `strCallPlan`) — the recorded meta-proof
+discipline — so these arms transliterate almost mechanically. The one thing that
+must be preserved exactly is WHEN the arguments evaluate: a missing attribute,
+an instance ATTRIBUTE in call position, a plan refusal and a dangling reference
+all decide **before** any argument runs, and every in-tier method decides after.
+That split is the `evalOpen` side; the functions below are the after-half and
+take VALUES. -/
+
+/-- The heap-receiver method tier: instance methods, `dict.get`/`clear`,
+`list.append`/`pop`/`insert`. Arguments are already values. -/
+def applyAttrPlan (K : Kont) (a : Addr) (attr : String) :
+    AttrPlan → List RVal → SemF RVal
+  | .instMethod qname, vs =>
+      -- The method IS a function (flattened under its qualified name): `self`
+      -- is an ordinary first argument and the call threads the shared world.
+      inFrame (K.call qname ((RVal.ref a :: vs).toArray))
+  | .instAttrValue, _ =>
+      refuse s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
+  | .attrMissing, _ => raisePy .attributeError
+  | .refuse msg, _ => refuse msg
+  | .dangling, _ => refuse danglingMsg
+  | .dictGet, vs => do
+      let h ← frameHeap
+      match vs with
+      | [k] => liftRes (heapGet h a k .none)
+      | [k, d] => liftRes (heapGet h a k d)
+      | vs => raisePy (.typeError s!"get expected at most 2 arguments, got {vs.length}")
+  | .dictClear, vs =>
+      match vs with
+      | [] => do
+          match Heap.get? (← frameHeap) a with
+          | some (.dict _ ver) =>
+              -- entries := #[], SHAPE VERSION bumped: a live `items()` walk
+              -- must see the change.
+              match Heap.update (← frameHeap) a (.dict #[] (ver + 1)) with
+              | some h' => do heapPut h'; pure .none
+              | Option.none => refuse danglingMsg
+          | _ => refuse danglingMsg
+      | vs => raisePy (.typeError s!"clear() takes no arguments ({vs.length} given)")
+  | .listAppend, vs =>
+      match vs with
+      | [v] => do
+          let h' ← liftRes (heapAppend (← frameHeap) a v)
+          heapPut h'; pure .none
+      | vs => raisePy (.typeError s!"append() takes exactly one argument ({vs.length} given)")
+  | .listPop, vs =>
+      match vs with
+      | [] => do
+          let hr ← liftRes (heapPop (← frameHeap) a Option.none)
+          heapPut hr.1; pure hr.2
+      | [i] =>
+          match asInt i with
+          | some n => do
+              let hr ← liftRes (heapPop (← frameHeap) a (some n))
+              heapPut hr.1; pure hr.2
+          | Option.none =>
+              raisePy (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer")
+      | vs => raisePy (.typeError s!"pop expected at most 1 argument, got {vs.length}")
+  | .listInsert, vs =>
+      -- CPython's CLAMPING insert index — never an IndexError. The coercion
+      -- TypeError is decided AFTER the arguments evaluate (pop's rule).
+      match vs with
+      | [i, v] =>
+          match asInt i with
+          | some n => do
+              let h' ← liftRes (heapInsert (← frameHeap) a n v)
+              heapPut h'; pure .none
+          | Option.none =>
+              raisePy (.typeError s!"'{i.typeName}' object cannot be interpreted as an integer")
+      | vs => raisePy (.typeError s!"insert expected 2 arguments, got {vs.length}")
+
+/-- The str method tier. Strings are immutable values, so every in-tier arm is
+arguments plus a pure worker. -/
+def applyStrMethod (sv : String) : StrPlan → List RVal → SemF RVal
+  | .swapcase, vs =>
+      match vs with
+      | [] => liftRes (strSwapcase sv)
+      | vs => raisePy (.typeError s!"swapcase() takes no arguments ({vs.length} given)")
+  | .isupper, vs =>
+      match vs with
+      | [] => liftRes (strIsUpper sv)
+      | vs => raisePy (.typeError s!"isupper() takes no arguments ({vs.length} given)")
+  | .islower, vs =>
+      match vs with
+      | [] => liftRes (strIsLower sv)
+      | vs => raisePy (.typeError s!"islower() takes no arguments ({vs.length} given)")
+  | .upper, vs =>
+      match vs with
+      | [] => liftRes (strUpper sv)
+      | vs => raisePy (.typeError s!"upper() takes no arguments ({vs.length} given)")
+  | .index, vs => do
+      let h ← frameHeap
+      match vs with
+      | [] => raisePy (.typeError "index expected at least 1 argument, got 0")
+      | [.str sub] => liftRes (strIndex sv sub)
+      | [v] => raisePy (.typeError s!"must be str, not {RVal.typeNameH h v}")
+      | vs =>
+          if vs.length ≤ 3 then
+            refuse "str.index() with start/end arguments is outside the tier (docs/memory-model.md §string semantics)"
+          else raisePy (.typeError s!"index expected at most 3 arguments, got {vs.length}")
+  | .refuse msg, _ => refuse msg
 
 /-! ## §1 THE FUEL-FREE EXPRESSION HALF — structural on `Expr` -/
 
@@ -363,7 +556,37 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               | plan => do
                   let vs ← evalOpenList K m args.toList
                   applyCallPlan K m plan vs
-          | .attribute _ attr _ => notYet s!"call: method call '.{attr}'"
+          | .attribute recv attr _ => do
+              let r ← evalOpen K m recv
+              match r with
+              | .ref a => do
+                  -- The plan decides BEFORE the arguments: a missing attribute
+                  -- raises `AttributeError` before any argument runs.
+                  let h ← frameHeap
+                  match attrCallPlan m h a attr with
+                  | .attrMissing => raisePy .attributeError
+                  | .instAttrValue =>
+                      refuse s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
+                  | .refuse msg => refuse msg
+                  | .dangling => refuse danglingMsg
+                  | plan => do
+                      let vs ← evalOpenList K m args.toList
+                      applyAttrPlan K a attr plan vs
+              | .ntuple tn fs xs =>
+                  -- namedtuple SUBCLASS method dispatch: methods ARE functions,
+                  -- `self` is the ntuple VALUE. The plan precedes the arguments.
+                  match ntupleCallPlan m tn fs attr with
+                  | .instMethod qname => do
+                      let vs ← evalOpenList K m args.toList
+                      inFrame (K.call qname ((RVal.ntuple tn fs xs :: vs).toArray))
+                  | .attrMissing => raisePy .attributeError
+                  | .refuse msg => refuse msg
+                  | _ => refuse "internal: namedtuple call plan out of range (report this)"
+              | .str sv => do
+                  let vs ← evalOpenList K m args.toList
+                  applyStrMethod sv (strCallPlan attr) vs
+              | r =>
+                  refuse s!"method call '.{attr}' on '{r.typeName}' is outside the tier (heap receivers only; docs/memory-model.md)"
           | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
         else notYet "call: keyword arguments (H6)"
   | .list elts _ => do
@@ -379,22 +602,15 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       let c ← evalOpen K m v
       let i ← evalOpen K m idx
       indexM c i
-  | .dict _ _ _ =>
-      -- RECORDED OBSTACLE, and it is a finding about the FUEL-FREE architecture
-      -- rather than about Python. CPython's `BUILD_MAP` order is k₁, v₁, k₂, v₂,
-      -- … — the two expression lists must be walked in LOCKSTEP, and the trunk
-      -- does exactly that because its measure is fuel. A structural measure
-      -- cannot: whichever list is chosen, the OTHER list's head is not a subterm
-      -- of it, and Lean answers
-      --     failed to eliminate recursive application   evalOpen K m v
-      -- (bisected to a two-parallel-list member; every other member in the block
-      -- is fine). Interleaving the lists first would fix the order but the
-      -- interleaving is a function APPLICATION, not a projection of the node, so
-      -- it is not a subterm either. The three ways out — a paired AST field
-      -- (`Array (Expr × Expr)`, an ingestion change), one well-founded member
-      -- (rejected: a mutual block shares ONE strategy, and well-founded costs
-      -- every kernel `rfl`), or splitting the block — are the plan's open item.
-      notYet "expression: dict display (parallel key/value walk — see Eval.lean §1)"
+  | .dict keys values _ => do
+      -- CPython `BUILD_MAP`: every key/value expression first (k₁, v₁, k₂, v₂,
+      -- left to right), then the entries insert in order, then the ALLOCATION.
+      -- The LOCKSTEP walk goes out through `K` — see §0.5 for why it cannot be
+      -- a member of this block.
+      let items ← K.dictItems keys.toList values.toList
+      let entries ← dictBuildM items
+      let a ← heapPush (.dict entries.toArray 0)
+      pure (.ref a)
   | .attribute recv attr _ => do
       let r ← evalOpen K m recv
       match r with
@@ -589,10 +805,99 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
   | .yieldFromStmt .. =>
       refuse "un-lowered 'yield from' (the iterable is not an admitted genexp, or the genexp's target occurs elsewhere in the body) — outside the tier (docs/memory-model.md §yield from)"
   | .defStmt .. => notYet "statement: nested def / closure (H7)"
-  | .raiseStmt .. => notYet "statement: raise (exceptions tier)"
-  | .assertStmt .. => notYet "statement: assert"
-  | .delStmt .. => notYet "statement: del"
-  | .tryStmt .. => notYet "statement: try/except (exceptions tier)"
+  | .raiseStmt exc cause _ =>
+      -- The admitted shape is `raise N` of an admitted exception class,
+      -- resolved to its class IDENTITY. The name must resolve UNAMBIGUOUSLY:
+      -- any local/global/def shadow refuses, because CPython would raise the
+      -- shadow's value.
+      match cause with
+      | some _ =>
+          refuse "'raise … from …' (exception chaining) is outside the tier (docs/memory-model.md §exceptions)"
+      | Option.none =>
+        match exc with
+        | Option.none =>
+            refuse "bare 'raise' (re-raise of the active exception) is outside the tier (docs/memory-model.md §exceptions)"
+        | some (.name id _) => do
+            let st ← get
+            if (Env.lookup st.locals id).isSome
+                || (lookupG (moduleGlobals m).1 id).isSome
+                || (Env.lookup st.world.globals id).isSome
+                || (findFunction m id).isSome then
+              refuse s!"'raise {id}': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+            else
+              match findClass m id with
+              | some (ci, c) =>
+                  if c.isExc then raisePy (.user ci c.name)
+                  else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass`) can be raised — outside the tier (docs/memory-model.md §exceptions)"
+              | Option.none =>
+                  refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
+        | some _ =>
+            refuse "'raise <expression>' (anything but an admitted exception class name) is outside the tier (docs/memory-model.md §exceptions)"
+  | .assertStmt test msg _ => do
+      -- CPython's `if not test: raise AssertionError(msg)`. The model runs
+      -- without `-O`, so the test always evaluates; the MESSAGE evaluates only
+      -- on the failing path — CPython's laziness, observable whenever it has an
+      -- effect. The rendering is `printOne`, `print`'s own one-argument `str()`,
+      -- so the two agree by construction.
+      let t ← evalOpen K m test
+      let b ← truthyM t
+      if b then pure .next
+      else
+        match msg with
+        | Option.none => raisePy (.assertionError Option.none)
+        | some e => do
+            let v ← evalOpen K m e
+            match printOne (← frameHeap) v with
+            | some rendered => raisePy (.assertionError (some rendered))
+            | Option.none =>
+                refuse "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement"
+  | .delStmt names _ => do
+      -- `delNames` threads the locals left to right, so the PARTIAL effect is
+      -- kept: earlier removals are already applied when a later target misses.
+      let st ← get
+      match delNames st.locals names.toList with
+      | (env, Option.none) => do envPut env; pure .next
+      | (_, some n) =>
+          refuse s!"'del {n}': the name is not a bound local — CPython raises UnboundLocalError here and the model never invents one (docs/memory-model.md §the del statement)"
+  | .tryStmt body excName handler tryUnsupported _ =>
+      -- THE SUBSTRATE EARNS ITS KEEP HERE. `tryCatch` on `ExceptT PyErr …`
+      -- catches exactly the LANGUAGE's raise and lets `Loud` — the model giving
+      -- up — propagate untouched, which is the trunk's hand-written fork over
+      -- `.exn` / `.timeout` / `.unsupported` obtained for free. And the
+      -- RETAINED-STATE covenant is the layer order: the handler runs from the
+      -- state the raise happened in, with no rollback, because `StateT` is
+      -- INSIDE `ExceptT`. Neither property is coded here; both are the type.
+      match tryUnsupported with
+      | some reason =>
+          refuse s!"try/except uses unsupported features ({reason}) — outside the tier (docs/memory-model.md §exceptions)"
+      | Option.none => do
+        let st ← get
+        if (Env.lookup st.locals excName).isSome
+            || (lookupG (moduleGlobals m).1 excName).isSome
+            || (Env.lookup st.world.globals excName).isSome
+            || (findFunction m excName).isSome then
+          refuse s!"'except {excName}:': the name is shadowed by a local/global/def binding — outside the tier (docs/memory-model.md §exceptions)"
+        else
+          match findClass m excName with
+          | Option.none =>
+              -- The pinned two-name import-error table, consulted only after
+              -- `findClass` missed, so a user class named `ImportError` wins.
+              if importErrorHandlerMatch excName then
+                tryCatch (execOpenList K m body.toList) (fun e =>
+                  match e with
+                  | .importError _ => execOpenList K m handler.toList
+                  | e => raisePy e)
+              else
+                refuse s!"'except {excName}:': only an admitted exception class (`class N(Exception): pass`) or the pinned import-error names (`ImportError`/`ModuleNotFoundError` — docs/memory-model.md §import forms) can be matched — wider builtin-name matching is outside the tier (docs/memory-model.md §exceptions)"
+          | some (ci, c) =>
+              if !c.isExc then
+                refuse s!"'except {excName}:': class '{excName}' is not an admitted exception class — outside the tier (docs/memory-model.md §exceptions)"
+              else
+                tryCatch (execOpenList K m body.toList) (fun e =>
+                  match e with
+                  | .user cid _ =>
+                      if cid == ci then execOpenList K m handler.toList else raisePy e
+                  | e => raisePy e)
   | .importFrom mod _ _ _ => notYet s!"statement: from {mod} import …"
   termination_by structural s => s
 
@@ -606,6 +911,48 @@ def execOpenList (K : Kont) (m : Module) : List Stmt → SemF RFlow
   termination_by structural ss => ss
 
 end
+
+/-! ## §2.5 THE DICT LOCKSTEP — the one walk that could not be a block member
+
+**THE ARCHITECTURAL DEBT OF §0.5, PAID — and this is the choice and its price.**
+
+CPython's `BUILD_MAP` evaluates k₁, v₁, k₂, v₂, … so the two expression lists
+must be walked in LOCKSTEP. Inside the mutual block that is not definable: a
+structural measure can name only ONE list, and the other list's head is then not
+a subterm of it (`failed to eliminate recursive application`). Three exits were
+priced; the third is taken.
+
+| exit | price | verdict |
+|---|---|---|
+| a paired AST field, `Array (Expr × Expr)` on `.dict` | edits `Ast.lean`, `Json.lean`, the trunk's `evalExpr`, and four walkers — **it changes the TRUNK**, which this rebuild may not do | REJECTED |
+| one well-founded member inside the block | a mutual block shares ONE strategy, so it makes the WHOLE block well-founded and costs every kernel `rfl` — the mergeSort trap | REJECTED |
+| **split the block: route the walk through `Kont`** | **one `Kont` field, one ordinary structural definition, one fuel level** | **TAKEN** |
+
+**How the split works.** `evalOpen`'s `.dict` arm calls `K.dictItems` — a record
+field, so from the block's point of view it is not a recursive call at all. The
+walk itself is defined BELOW the block, where `evalOpen` is an ordinary constant,
+so its own recursion is plainly structural on its own first list and nothing
+constrains the second.
+
+**The price, stated exactly: one fuel level per dict display** — because
+`kont m (fuel+1)` must build its field from `kont m fuel`. That is **precisely
+what the trunk charges** (`evalExpr m (fuel+1)` on a `.dict` calls
+`evalDictItems m fuel`), so this arm is the one place the rebuild's fuel
+accounting is *identical* to the trunk's rather than more generous. Nothing else
+is given up: the walk is kernel-reducible like everything else in the file. -/
+
+/-- The LOCKSTEP walk. Structural on `ks`; `evalOpen` is not mutual with it, so
+the second list is unconstrained — that is the whole trick. -/
+def dictItemsAt (K : Kont) (m : Module) :
+    List Expr → List Expr → SemF (List (RVal × RVal))
+  | [], [] => pure []
+  | k :: ks, v :: vs => do
+      let kv ← evalOpen K m k
+      let vv ← evalOpen K m v
+      let rest ← dictItemsAt K m ks vs
+      pure ((kv, vv) :: rest)
+  | _, _ => refuse "Dict with mismatched keys/values"
+  termination_by structural ks _ => ks
 
 /-! ## §3 THE FUELED KNOT — structural on FUEL, and the only place fuel is spent -/
 
@@ -641,6 +988,7 @@ def kont (m : Module) : Nat → Kont
     { fuel := fuel
       call := fun fname args => callInM K m fname args
       callClo := fun _ _ => notYetW "call: closure (H7)"
+      dictItems := dictItemsAt K m
       whileLoop := fun test body orelse => do
           let t ← evalOpen K m test
           let b ← truthyM t
@@ -770,6 +1118,53 @@ answers `.timeout`, so a `while` with no fuel times out rather than deciding. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.call (.name "print" sp0) #[.constant (.str "hi") sp0] #[] Option.none sp0)) st0 with
         | .ok s v => v == .none && s.world.stdout == ["hi"]
+        | _ => false)
+
+/-! ### The EXCEPTIONS tier, pinned — the three claims §6.1 makes about the stack
+
+These are not decoration. §6.1 of the plan claims that `try`/`except` gets two
+properties from the TYPE rather than from the arm's code, and a claim of that
+shape is worth exactly as much as its counterexample test. -/
+
+private def excCls : ClassDefn :=
+  { name := "Stop", ok := true, isExc := true, methods := #[], span := sp0 }
+private def excModule : Module :=
+  { functions := #[], classes := #[excCls], namedtuples := #[], topLevel := #[] }
+private def KE : Kont := kont excModule 64
+private def stE : FrameState := ⟨{ heap := #[], globals := [] }, []⟩
+
+/- 1. A matching user exception IS caught — AND the body's binding SURVIVES into
+the handler. That is the RETAINED-STATE covenant, and it is the layer order:
+`StateT` inside `ExceptT`. The wrong order would lose `seen`. -/
+#guard (match toRun (execOpen KE excModule
+          (.tryStmt #[ .assign #[.name "seen" sp0] (.constant (.int 1) sp0) sp0,
+                       .raiseStmt (some (.name "Stop" sp0)) Option.none sp0 ]
+             "Stop"
+             #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
+             Option.none sp0)) stE with
+        | .ok s _ => Env.lookup s.locals "seen" == some (.int 1)
+                     && Env.lookup s.locals "caught" == some (.int 2)
+        | _ => false)
+
+/- 2. A `Loud` refusal inside the body is NOT caught — it propagates. This is the
+property that keeps a MODEL gap from masquerading as PYTHON behaviour: an
+`except` clause must never be able to swallow "I do not model this". `tryCatch`
+on `ExceptT PyErr …` gives it for free, because `Loud` lives below that layer. -/
+#guard (match toRun (execOpen KE excModule
+          (.tryStmt #[ .unsupported "Global" "global x" sp0 ]
+             "Stop"
+             #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
+             Option.none sp0)) stE with
+        | .unsupported _ => true
+        | _ => false)
+
+/- 3. A NON-matching exception propagates rather than being caught. -/
+#guard (match toRun (execOpen KE excModule
+          (.tryStmt #[ .exprStmt (.name "nope" sp0) sp0 ]
+             "Stop"
+             #[ .assign #[.name "caught" sp0] (.constant (.int 2) sp0) sp0 ]
+             Option.none sp0)) stE with
+        | .exn _ e => e == .nameError "nope"
         | _ => false)
 
 #print axioms evalOpen

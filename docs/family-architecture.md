@@ -740,6 +740,68 @@ from a mechanism that relates two files.** Nothing inherits, nothing
 overrides, nothing takes an edition argument; a sibling that needs a trunk
 definition imports it, and that is the whole of the coupling.
 
+**(4) THE EDITION PARAMETER'S GRANULARITY IS LANGUAGE-DECIDED, and Go
+proves it is not a modelling choice.** The clauses above answer *which
+surface a reader reads*. They silently assume the edition is a property of
+the BUILD. For Go it is a property of the **FILE**, and the Go charter
+demonstrates the consequence with an executable rather than an argument:
+
+* Go's language version is set per module by the `go` line and **overridden
+  per file** by a `//go:build go1.N` constraint — in **both** directions,
+  verified.
+* One package, `go.mod` saying `go 1.21`, two files with **byte-identical
+  loop bodies** tagged `go1.21` and `go1.22`, prints **`[3 3 3]`** and
+  **`[0 1 2]`** — the Go 1.22 loop-variable change — from **ONE compiler
+  invocation** (`compile … -lang=go1.21 … ./main.go ./new_122.go
+  ./old_121.go`). The per-file version is resolved *inside the type
+  checker*, not by a per-invocation flag. The cleanest witness is storage
+  identity: **1 distinct address** for `&i` across iterations under
+  go1.21, **3** under go1.22.
+
+> **A single Go build is a MIXED-EDITION object.**
+
+**So for Go a COPY architecture is not inelegant — it is INCORRECT.** Two
+whole spec-mirrors, one per edition, cannot express a program whose files
+disagree, because there is no single model in which such a program has a
+meaning at all. That is a **correctness** failure, and it is the strongest
+argument in this document against per-version copies, arriving from a
+language none of the earlier censuses covered.
+
+**This does NOT reverse §2.4, and the distinction is worth stating
+exactly**, because "Go needs a version parameter" and "§2.4 refuted
+version-parameterized definitions" sound like a contradiction and are not.
+They answer different questions:
+
+| question | mechanism |
+| --- | --- |
+| *which SURFACE does this reader read?* | **directories** — thin siblings over a thick trunk |
+| *what does THIS FILE mean?* | **data** — the edition is carried by the program |
+
+C's `C17`/`C23` split is the first question: a tier mirrors one document at
+a time. Go's `//go:build go1.22` is the second: the edition is part of the
+program's own text, so it must appear in the model as a **datum**, exactly
+as a C translation unit carries its `profile_id`. A tier can need both —
+Go would still take thin siblings if it ever mirrored two spec editions
+wholesale, and the loop rule would still be a parameter, because one build
+contains both semantics.
+
+**The granularity row, per language, which a founding lane fills at step
+0:**
+
+| language | edition selected | by what |
+| --- | --- | --- |
+| C, Ada | per translation unit | a compiler flag (`-std=`, and Ada's equivalent) |
+| ECMAScript | per source text | the parse goal, per the ES charter |
+| **Go** | **per FILE** | **a build constraint in the source text** |
+| Python | per interpreter | the binary you invoke |
+
+**And the Go delta's shape is the transferable lesson**: it is **local in
+the abstract syntax and non-local in the semantic domain.** Exactly two
+productions change, with no new syntax and no typing-rule change — yet the
+meaning of every closure capturing a loop variable moves. A census that
+counted changed *productions* would have called this delta tiny and been
+right about the syntax and badly wrong about the work.
+
 **The SV cleanup is the pattern's second application**, and it should be
 run in the pattern's order: **census the IEEE 1800-2017 → 2023 delta
 first**, on the model of §2.1's clause instrument, and let the numbers place
@@ -1644,6 +1706,12 @@ Go's bounded races onto C's `undefined` would refuse programs Go fully
 describes, which is the same false-statement-about-the-language error §4.3
 catches at Ada's bounded errors. Same shape, three languages.
 
+The Go charter sharpens what that membership set contains: it is
+**size-stratified**, and **`halt-with-race-report` is always in it** — a
+race detector stopping the program is itself a *permitted* outcome, not a
+divergence from the ones that do not. A scoreboard that treated the
+report as a failure would manufacture exactly the DIVERGE §5.1 forbids.
+
 **THE RESIDUAL TRUE MISFIT, narrowed to one sentence.** What remains
 genuinely outside is **verifying the relaxed-atomics fragment itself** —
 reasoning about programs that deliberately use `memory_order_relaxed` or
@@ -1825,6 +1893,7 @@ row is filled; the rest are the founding lanes' first deliverable.
 | **WebAssembly** | deterministic by design, with a small NAMED nondeterminism set (NaN payloads, resource exhaustion, host behavior); traps are DEFINED outcomes, not UB | **PROPOSED.** Expect cause 2 to be nearly EMPTY, and gate that: a Wasm tier emitting `undefined` has a bug. This is the family's best case and worth founding early for exactly that reason — it calibrates the instrument against a language where coverage can be near-exact. |
 | **ECMAScript** | implementation-defined / implementation-approximated (locale, `Date`, `Math`); host hooks | **PROPOSED.** The spec is ALGORITHMIC — numbered abstract-operation steps — so the mirror is per abstract operation and coverage is per step, not per prose clause. §5.5's manifest is written to allow this. |
 | **Ada** | errors detected before run time; errors detected at run time; **bounded error**; erroneous execution; unspecified; implementation-defined | **FILLED** (`docs/ada-charter.md` §1.5). Run-time errors are an ORDINARY OUTCOME — `Run.exn` already has the shape. **Erroneous execution is cause 2, `undefined`, exactly.** Unspecified is cause 4 plus the ∀-parameter shape. Implementation-defined is the PROFILE, verbatim. **Bounded error fits none of the four**, and pre-run-time errors are not a refusal at all but a VERDICT the family lacked — both below. |
+| **Go** | **no `undefined` class at all** — the string does not appear in the Go specification; data races; `select` choice; map iteration order; goroutine scheduling; implementation restrictions; implementation-defined | **FILLED** (`docs/go-charter.md` §2.6). **Cause 2 is EMPTY and GATED** — a Go tier emitting `undefined` has a bug, per the WebAssembly prescription; this is the family's second near-empty bucket, empty for a *different* reason (Wasm's by design, Go's because the memory model bounds its worst case instead of surrendering it). **Data races are MEMBERSHIP sites (§5.1), not refusals.** `select` is cause 4 with a *specified distribution* rather than a free order — stated, deliberately not sampled. Map order and goroutine scheduling are cause 4 verbatim, the latter at its largest: a schedule is not syntactically bounded, so a **race-freedom census** replaces C's may-alias census. Implementation *restrictions* are permissions to REJECT — frontend, where C's constraint violations land. Implementation-defined is the PROFILE. |
 
 **THE PREDICTION IN THIS ROW WAS ANSWERED, AND IT WAS WRONG.** This
 document predicted that if a fifth REFUSE cause were needed, Ada is where
@@ -2211,7 +2280,10 @@ Concurrent Lean builds took the development machine down — load 29 across
    Release promptly. **Never hold it while thinking or editing.**
 
    **AMENDMENT 2 — the release must be `rm -rf` and its status must be
-   checked.** A `rmdir` release composed with an owner-stamp file inside
+   checked. Independently reproduced by the Go lane**, which hit both this
+   and the `-j4` defect below without having read them — two lanes meeting
+   the same two failures is the signal that they belong in a shared
+   document rather than in each lane's notes. A `rmdir` release composed with an owner-stamp file inside
    the lock directory **fails silently**: `rmdir` refuses a non-empty
    directory, the `trap` swallows the status, and the lock leaks — after
    which every other lane blocks forever on a lock nobody holds. This

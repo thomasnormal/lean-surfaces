@@ -15021,6 +15021,72 @@ cleanly is quoting the error recovery, not the tree** — and at least one such
 line reads CLEANER than the truth rather than dirtier, which is the direction
 that does damage.
 
+### THE GO CHARTER STRESSES SIBLING-EDITIONS — versioning is PER-FILE
+
+The finding, and it is demonstrated by an executable rather than argued. Go's
+language version is set per module by the `go` line and **overridden PER FILE**
+by a `//go:build go1.N` constraint, in **both** directions. One package,
+`go.mod` saying `go 1.21`, two files with **byte-identical loop bodies** tagged
+go1.21 and go1.22, prints **`[3 3 3]`** and **`[0 1 2]`** — the 1.22 loop-var
+change — from **ONE compiler invocation**, the version resolved *inside the type
+checker* rather than by a per-invocation flag. Storage identity is the cleanest
+witness: 1 distinct address for `&i` under go1.21, 3 under go1.22.
+
+> **A single Go build is a MIXED-EDITION object.**
+
+**So for Go a COPY architecture is INCORRECT, not inelegant** — two whole
+spec-mirrors cannot express a program whose files disagree, because there is no
+single model in which such a program has a meaning. That is a **correctness**
+failure and it is now the strongest argument in §2.4 against per-version copies,
+arriving from a language none of the earlier censuses covered.
+
+**AND IT DOES NOT REVERSE §2.4**, which is the part that needed care, because
+"Go needs a version parameter" and "§2.4 refuted version-parameterized
+definitions" sound contradictory and are not. They answer different questions,
+now stated as a two-row table: *which SURFACE does this reader read?* →
+**directories** (thin siblings over a thick trunk); *what does THIS FILE mean?* →
+**data** carried by the program. C's C17/C23 split is the first; Go's build
+constraint is the second, so the edition must appear in the model as a datum
+exactly as a C translation unit carries its `profile_id`. A tier can need both.
+
+**The generalization, added as §2.4 clause (4) with a per-language row that
+founding lanes fill at step 0: THE EDITION PARAMETER'S GRANULARITY IS
+LANGUAGE-DECIDED.** C and Ada per translation unit by flag; ECMAScript per source
+by parse goal; **Go per FILE by a constraint in the source text**; Python per
+interpreter. The clauses above had silently assumed the edition is a property of
+the BUILD.
+
+**The transferable lesson about delta shape**: Go's change is **local in the
+abstract syntax and non-local in the semantic domain** — exactly two productions
+change, no new syntax, no typing-rule change, yet every closure capturing a loop
+variable moves. **A census counting changed PRODUCTIONS would have called this
+delta tiny and been right about the syntax and badly wrong about the work.**
+
+### §4.3's GO ROW — added here, not merged
+
+Checked: the Go lane filled the row **in their own charter** and did not edit
+`docs/family-architecture.md` (the last three commits on it are mine), so there
+was no merge to reconcile — my table simply had no Go row. Added: **cause 2 is
+EMPTY and GATED** (the string "undefined" does not appear in the Go spec) — the
+family's second near-empty bucket, empty for a *different* reason than Wasm's
+(design vs. a memory model that bounds its worst case). **Data races are
+MEMBERSHIP sites, not refusals**; `select` is cause 4 with a *specified
+distribution* rather than a free order; map order and goroutine scheduling are
+cause 4, the latter at its largest — a schedule is not syntactically bounded, so
+a **race-freedom census** replaces C's may-alias census. Implementation
+*restrictions* are permissions to REJECT and land in the frontend where C's
+constraint violations do.
+
+Folded into §3.6: the Go race membership set is **size-stratified** and
+**`halt-with-race-report` is always in it** — a race detector stopping the
+program is a *permitted* outcome, and scoring it as failure would manufacture
+exactly the DIVERGE §5.1 forbids.
+
+**§7.1's rmdir-lock and `-j4` defects were INDEPENDENTLY REPRODUCED** by the Go
+lane without having read them. Two lanes meeting the same two failures is the
+signal that they belong in a shared document rather than in each lane's notes,
+and that is now recorded at the amendment.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

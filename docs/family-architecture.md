@@ -7,10 +7,13 @@ tiers founding now — WebAssembly, ECMAScript, Ada), reference-interpreter-
 extracted where none does (Python per CPython minor). A user chooses the
 proof target by naming a language and a version.
 
-This document exists so that five founding lanes lay down the same
-structure. It **constrains**; the lanes implement. It carries **no Lean
-restructuring** of its own: every ruling below is a rule the lane that
-next touches the code obeys.
+This document exists so that the lanes lay down the same structure — three
+of them **founding** a tier from nothing (WebAssembly, ECMAScript, Ada) and
+three **consolidating** one that already exists and works (SystemVerilog,
+RISC-V, Verilog-A). §1.2 records which is which, because mistaking the
+second for the first prices a rebuild of working code. It **constrains**;
+the lanes implement. It carries **no Lean restructuring** of its own: every
+ruling below is a rule the lane that next touches the code obeys.
 
 **Everything decision-relevant here was measured.** Two instruments landed
 with this charter (§10) and their outputs are cited inline; nothing is
@@ -167,21 +170,64 @@ Rows marked **PROPOSED** are the founding lane's to measure and ratify;
 the lane's first landed artifact is its census, and the census is what
 turns the row from proposed into recorded (§8).
 
-| language | `<Lang>` | authority | edition tokens | oracle | corpus |
-| --- | --- | --- | --- | --- | --- |
-| C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture |
-| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep |
-| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | sv-tests-2 |
-| WebAssembly | `Wasm` | spec-mirror — W3C core | **PROPOSED** | the reference interpreter | the official `.wast` suite |
-| ECMAScript | `Es` | spec-mirror — ECMA-262 | **PROPOSED** | an engine | test262 |
-| Ada | `Ada` | spec-mirror — ISO/IEC 8652 | **PROPOSED** | a compiler | ACATS |
-| RISC-V | `Rv` | spec-mirror — RISC-V ISA | **PROPOSED** | the ISA oracle | `harness/rv` |
-| Verilog-A | `VerilogA` | extraction — OpenVAF | — | OpenVAF | `Examples/verilog-a` |
-| SPICE | `Spice`/`Circuit` | extraction — ngspice | — | ngspice | `Examples/spice` |
+**`state` distinguishes the two jobs a lane can have**, and getting it
+wrong mis-prices the work: *founding* builds a tier from nothing;
+*consolidation* takes an existing body of Lean and gives it the family's
+structure. Three of the rows below are consolidation and were nearly
+mislabelled.
+
+| language | `<Lang>` | authority | edition tokens | oracle | corpus | state |
+| --- | --- | --- | --- | --- | --- | --- |
+| C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
+| Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — mid-campaign |
+| SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, dormant but verified working |
+| WebAssembly | `Wasm` | spec-mirror — W3C core | **PROPOSED** | the reference interpreter | the official `.wast` suite | founding |
+| ECMAScript | `Es` | spec-mirror — ECMA-262 | **PROPOSED** | an engine | test262 | founding — blocked on SoftFloat (§3.5.3) |
+| Ada | `Ada` | spec-mirror — ISO/IEC 8652 | **PROPOSED** | a compiler | ACATS | founding |
+| RISC-V | `Rv` | spec-mirror — RISC-V ISA | **PROPOSED** | the ISA oracle | `harness/rv` | consolidation — 2 041 lines |
+| Verilog-A | `VerilogA` | extraction — OpenVAF | — | OpenVAF | `Examples/verilog-a` | consolidation — 606 lines |
+| SPICE | `Spice`/`Circuit` | extraction — ngspice | — | ngspice | `Examples/spice` | active — 27 675 lines, separate architecture (§6.1) |
 
 The last three carry no edition token today. That is allowed and it is
 what §1.4 rules on: **a language earns version directories when its tier
 claims an edition, not before.**
+
+**The SV row was corrected twice, and both corrections generalize.**
+
+*The corpus.* This document first named **sv-tests-2** as the SV corpus,
+copying `docs/sv-corpus-coverage.md`. It cannot stand: that corpus sits in
+a clone with **no license**, 21 631 files, and an **embedded IEEE 1800-2023
+PDF** — 9.4 MB of vendored IEEE text, against this repository's own
+no-vendoring law (§2.1, §10) — and its provenance names a private
+organization, which the no-private-hostnames rule covers. The clean anchor
+is the **public `sv-tests`**: uniform ISC, per-file SPDX, `tests/**` only
+(`generated/` reaches GPL ivtest), and **already clause-mirrored** — 326
+clause tags against a 482-clause LRM dictionary, which is a coverage-by-
+clause manifest (§5.5) that already exists and did not have to be built.
+**Whether sv-tests-2 may be used at all is an open Thomas decision** and
+nothing should depend on it meanwhile.
+
+Two family rules fall out. **A corpus's LICENSE and PROVENANCE are part of
+its registry row, not a detail discovered later** — the C tier learned this
+when reading 219 `.otag` files split c-testsuite into ISC and LGPL halves,
+and the founding checklist (§8) now carries it at step 0. And **a corpus
+that vendors the standard it tests against is disqualified by our own
+law**, however convenient it is.
+
+*The maturity.* The SV tier is **not greenfield**: `LeanModels/Sv/` is
+**8 166 lines** (measured) with a differential harness recorded green
+against Icarus, dormant rather than absent. Labelling it "founding" would
+have priced a rebuild of work that exists and passes. Its theorem count is
+the SV charter's to state — this document's counting rule gives 93
+`theorem`/`lemma` declarations in the lane where that charter says 86, and
+two counting rules disagreeing is exactly the kind of number a charter
+should own rather than a neighbour quote.
+
+**One standing violation, flagged and not fixed here.**
+`docs/sv-corpus-coverage.md` line 5 records a corpus path under a private
+home directory and organization. That breaches the same rule this
+correction invokes. It is the SV lane's file and their charter is in
+flight, so it is theirs to redact — but it is named here so it is not lost.
 
 ### 1.3 The version-neutral boundary, stated per language
 
@@ -198,12 +244,47 @@ core, with no `_BitInt`, no `GenericSelectionExpr`, no `StaticAssertDecl`,
 no attribute node. A C17 surface would ingest the same 45 kinds through
 the same ingester.
 
-`LeanModels/C/Value.lean` is version-SCOPED, and the evidence is one line.
-`IntTy.wrap`'s signed arm (`Value.lean:75`) is reachable only from
-`convert` — `close` routes a signed out-of-range result to `.ub` before
-`wrap` is ever called — and `convert` is the rule C23 §6.3.1.3 mandates
-and C17 left implementation-defined. **One line of 934 is edition-
-sensitive.**
+`LeanModels/C/Value.lean` is version-SCOPED, and the evidence is **one or
+two lines, and the line is `IntTy.minVal`.**
+
+C23 §6.2.6.2p2 fixes the sign bit's value: *if the sign bit is one, it has
+value −(2^(N−1))* — a single stated value, which is two's complement. C17
+§6.2.6.2p2 instead offers **three** representations — sign-and-magnitude,
+two's complement, ones' complement — and says *"which of these applies is
+implementation-defined."* So `INT_MIN` is `-(2^31)` in C23 and one of two
+values in C17, and **`minVal` is the definition that differs.** The
+confirming change-history note is §6.2.6.2p6 NOTE 2, which names the
+representation and records that prior editions allowed others; the
+**normative** mandate is p2, and the distinction matters here for the same
+reason it matters in §3.6 — a NOTE is informative, and a tier that cited
+one as normative would be overclaiming.
+
+The auditable trace is in Annex J: **C17's implementation-defined integers
+list has FIVE entries and C23's has FOUR**, and the deleted one is exactly
+*"whether signed integer types are represented using sign and magnitude,
+two's complement, or ones' complement …"* (C17 J.3.5; C23's list is J.3.6,
+itself renumbered and item-numbered per §2.1).
+
+**CORRECTION — this section previously cited `convert` and §6.3.1.3, and
+that was wrong.** §6.3.1.3p3 is **word-for-word identical** in C17 and
+C23 — *"either the result is implementation-defined or an
+implementation-defined signal is raised"* — and **C23 J.3.6 item (3) still
+lists it** as implementation-defined. Out-of-range unsigned→signed
+conversion is therefore **not** C23-mandated; it is profile-pinned
+(`uint_to_int_wraps`) in every edition, which is where `docs/c-profile.md`
+already had it. The error was inherited from the tree's own prose and then
+appeared to be confirmed by this charter's instrument, which reported
+clause 6.3.1.3 as *changed* at ratio 0.989 — but that change is `_Bool` →
+`bool` in p1 and a footnote renumbering, not p3. **A similarity ratio says
+a clause MOVED; it never says WHAT moved.** That is the precise failure
+mode §5.5's clause manifest exists to prevent, and it caught the author of
+§5.5. Found and corrected by the C M2 lane; verified here against both
+drafts before being propagated.
+
+**The conclusion survives the evidence swap**, which is why it is worth
+stating twice: 933 of 934 lines are common to both editions, and the
+version-scoped part of the C value tier is one definition — just a
+different one.
 
 **Python — measured.** The AST tier, the ingester, the interpreter and the
 whole proof layer are neutral across 3.9→3.14 on everything the corpus
@@ -244,6 +325,13 @@ all rules an edition decides, so within the priced ~15–20 sessions
 measured their vocabulary neutral (§1.3) and moving them would assert an
 edition-dependence that does not exist. `Value.lean` moves to
 `LeanModels/C/C23/`. The C lane implements; this document does not.
+
+**IMPLEMENTED, and independently confirmed.** The C M2 lane has taken this
+layout, and in doing so verified §2.1's renumbering result and this
+section's split from their own reading of the drafts rather than from this
+document. Two lanes reaching the same clause facts by different routes is
+the only kind of confirmation worth having — and the same exchange
+corrected §1.3's evidence, which is the other kind.
 
 ### 1.5 `language_version` becomes a first-class envelope field
 
@@ -369,8 +457,12 @@ citation drift.**
 | J.3 implementation-defined behavior | 16 | 0 | 13 | 2 | 1 |
 
 **Spot-checked, five clauses, before the table was believed.** 6.3.1.3
-*Signed and unsigned integers* — ratio **0.989**, the small targeted edit
-that is C23's two's-complement mandate, exactly as predicted. 6.2.5
+*Signed and unsigned integers* — ratio **0.989**, a small targeted edit.
+**A spot-check that was itself over-read**, and the lesson is recorded in
+§1.3: the 0.989 is `_Bool` → `bool` in p1 plus a footnote renumbering, and
+this document originally read it as C23's two's-complement mandate. It is
+not — p3 is word-for-word identical across the editions. **A ratio locates
+a change; only reading the clause identifies it.** 6.2.5
 *Types* — **0.245**, large, as predicted. C17 6.5.3 → C23 6.5.4 *Unary
 operators* — **0.986**, the near-unchanged control. C17 6.5.7 → C23 6.5.8
 *Bitwise shift operators* — **0.310**. `7.13.2.1 The longjmp function` —
@@ -393,8 +485,10 @@ Against 21.4% clause-level identity, the tier that mirrors those clauses
 measures:
 
 * **0 of 45** ingested AST node kinds are edition-specific (§1.3).
-* **1 of 11** value-layer definitions is edition-sensitive — `convert`,
-  through `IntTy.wrap`'s signed arm at `Value.lean:75`.
+* **1 of 11** value-layer definitions is edition-sensitive — `IntTy.minVal`,
+  because C23 §6.2.6.2p2 fixes the sign bit's value where C17 §6.2.6.2p2
+  left the choice among three representations implementation-defined
+  (§1.3, which also records the wrong answer this bullet used to give).
 * **933 of 934** lines of `LeanModels/C/` are common to C17 and C23.
 
 **These two measurements are not in conflict and confusing them is the
@@ -529,24 +623,56 @@ family's own source, and §2.5 is what happens without it.
 
 ### 2.5 What the instrument found in the tier that is founding the layout
 
-The C tier models C23. Its three ISO citations, checked against N3220 by
-the census above:
+The C tier models C23, and C23 moved 612 of 933 matched clause numbers
+(§2.1). A C17-era number carried into a C23 document is therefore
+plausible, silent and wrong — so the citations were checked. Found by
+hand first; the hand is now replaced by **`harness/c_citation_check.py`**,
+landed with this charter.
 
 | citation | in the tree | C23's actual number | verdict |
 | --- | --- | --- | --- |
 | `Value.lean:157` — `<<` | "C23 §6.5.7" | **§6.5.8** (§6.5.7 is *Additive operators*) | C17's number, C23's label |
-| `Value.lean:141` — truncating `/` | "§6.5.5" | **§6.5.6** (§6.5.5 is *Cast operators*) | C17's number |
+| `Value.lean:141` — truncating `/` | "§6.5.5" | **§6.5.6** (§6.5.5 is *Cast operators*) | C17's number, untagged |
 | `c-semantics-design.md` §4.4 — sequencing | "5.1.2.3" | **5.1.2.4** *Program semantics* | C17's number |
-| `Value.lean:68,178` — conversions | "C23 §6.3.1.3" | §6.3.1.3 | correct — stable in both |
+| `c-tier-architecture.md` — compound literals | "C23 §6.5.2.5" | **does not exist in C23** | 6.5.2.x was restructured |
+| `c-tier-architecture.md` — struct/union members | "C23 §6.5.2.3" | **does not exist in C23** | same |
+| `Value.lean:68,178,221` — conversions | "C23 §6.3.1.3" | §6.3.1.3 | correct — and stable, see below |
 | `c-semantics-design.md` §6 — `printf` | "C23 §7.23.6.1" | §7.23.6.1 | correct — C17's was 7.21.6.1 |
 
-**Three of five citations in the C23 tier's own semantic file and design
-document are C17 clause numbers wearing a C23 label.** Nothing in the tree
-could have caught it: the numbers are plausible, the titles are not
-written down beside them, and the drafts are not in the repository. This
-is not a criticism of the C lane — it is the strongest available argument
-that clause citations must be *checked data* rather than prose, which is
-what §5.5 makes them. The fix is the C lane's and it is mechanical.
+Nothing in the tree could have caught these: the numbers are plausible,
+the titles are not written down beside them, and the drafts are not in the
+repository and never will be. This is not a criticism of the C lane — it
+is the strongest available argument that clause citations must be
+**checked data** rather than prose, which is what §5.5 makes them. **The C
+lane's retrofit is in flight and will move these rows**; the table records
+the state at the commit that measured it, not a standing accusation.
+
+**And the same instrument caught this document.** §1.3 originally read the
+`§6.3.1.3` row above as evidence that C23 *mandates* two's-complement
+conversion. It does not — p3 is identical across the editions and C23
+J.3.6 (3) still lists it as implementation-defined. The corrected evidence
+and the lesson are in §1.3. **The citation checker cannot catch that class
+by itself**, and it says so: it proves a number RESOLVES in the claimed
+edition, never that it is the number the author meant. `Value.lean:157`
+resolves cleanly to *Additive operators* — only reading the surrounding
+line reveals that the author meant shifts. **That gap is exactly the work
+the clause manifest does**, and it is why §5.5 pairs a resolved citation
+with the declaration it justifies rather than stopping at resolution.
+
+**A fourth exclusion, found by running it.** The C lane's convention
+(untagged inside `LeanModels/C/C23/` = C23; a superseded citation carries
+its tag; a `docs/*.md` token means an internal reference) leaves one case
+undefined, and it is noisy: these documents number their own sections
+§1..§7, colliding with the standard's clauses 5, 6 and 7. Untagged `§5.2`,
+`§5.4`, `§6.1` in the charter are internal cross-references, and resolving
+them as ISO clauses produced four MISSING rows of pure noise — *correct
+documentation reported as drift*, the exact failure the exclusions exist
+to prevent. The rule the instrument adopts: **inside a `.md` file an
+untagged `§` is an internal reference**; a `.lean` file has no section
+structure, so untagged is unambiguous there. Untagged `.md` citations are
+reported as `unclassified` rather than dropped, because that count — **12
+today** — is the size of the convention's blind spot, and tagging them is
+how it shrinks.
 
 ---
 
@@ -1431,7 +1557,17 @@ founding lane produces these in this sequence, and **no step's claim is
 real until an instrument re-derives it.**
 
 0. **The registry row** (§1.2) — tag, edition tokens, authority, oracle,
-   corpus. Proposed until step 1 ratifies it.
+   corpus, and **state (founding vs consolidation)**. Proposed until step 1
+   ratifies it.
+
+   **The corpus entry carries its LICENSE and PROVENANCE, at this step and
+   not later.** Twice now the answer changed the corpus: the C tier's
+   219 `.otag` files split c-testsuite into an ISC half and an LGPL half,
+   and the SV corpus turned out to be unlicensed, privately provenanced,
+   and to **vendor the very standard it tests against** (§1.2). A corpus
+   that fails either test is disqualified before a line is written, and
+   "we can sort the licensing out later" is how a repository acquires
+   something it cannot ship.
 1. **The construct CENSUS and its instrument**, on a real corpus, to the
    §5.4 contract.
 2. **The AUTHORITY declaration** — the spec document and edition, or the
@@ -1491,6 +1627,17 @@ real until an instrument re-derives it.**
   committed: it would be a rendering of the standard's own contents, and
   **no ISO text is vendored in this repository**. Anyone with the public
   drafts re-runs the instrument for the whole table.
+* **`harness/c_citation_check.py`** — resolves every ISO citation in the C
+  tier against the drafts and reports what the cited clause is actually
+  TITLED in the edition claimed (§2.5). Implements the C lane's citation
+  convention plus the fourth exclusion this instrument's own run
+  discovered; verdicts `ok` / `MISSING` / `AMBIGUOUS`; exits non-zero on
+  any problem; refuses loudly when a draft is absent and when it finds
+  zero citations. Deterministic, verified. **Its output is deliberately
+  NOT committed**: the C lane's retrofit is in flight, so a checked-in
+  baseline would be stale within the day and would invite the "fixed
+  documentation reports as drift" failure it exists to prevent. The
+  instrument is the durable artifact; its output is a live check.
 * **`harness/py_version_delta.py`** — the Python version instrument
   (§2.3), in two halves: the `ast` grammar per interpreter, and the
   whole-program corpus executed under each. Missing interpreters are

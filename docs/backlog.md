@@ -14388,6 +14388,112 @@ three. And §6 writes down the model's five assumptions and what does NOT fit �
 with the residual true misfit narrowed to the relaxed-atomics fragment, and
 floats explicitly REMOVED from the misfit list.
 
+### THE CORRECTION FROM THE C M2 LANE — §1.3's evidence was wrong, its conclusion holds
+
+The C M2 lane checked this charter's §1.3 against N3220 and found the evidence
+misattributed. **Verified here against both drafts before propagating**, because
+a correction taken on trust is the same defect as a claim taken on trust:
+
+* **C23 §6.3.1.3p3 is WORD-FOR-WORD IDENTICAL to C17's** — *"either the result
+  is implementation-defined or an implementation-defined signal is raised"* —
+  and **C23 J.3.6 item (3) still lists it**. Out-of-range unsigned→signed
+  conversion is NOT C23-mandated. `convert` is profile-pinned
+  (`uint_to_int_wraps`) in every edition, which is where docs/c-profile.md
+  already had it.
+* **The genuinely edition-sensitive line is `IntTy.minVal`.** C23 §6.2.6.2p2:
+  *"If the sign bit is one, it has value −(2^(N−1))"* — one stated value. C17
+  §6.2.6.2p2 offers THREE (sign-and-magnitude, two's complement, ones'
+  complement) and says *"which of these applies is implementation-defined."*
+* **The auditable trace**: C17's J.3 integers list has **five** entries, C23's
+  has **four**, and the deleted item is exactly the sign-representation one.
+  Verified by reading both lists.
+* **One refinement to the correction, from this doc's own §3.6 discipline**: the
+  normative mandate is **p2**; §6.2.6.2p6 NOTE 2 names the representation and
+  records the change history, and a NOTE is informative. Cite p2.
+
+**HOW THE ERROR HAPPENED, because it is the transferable part.** The claim was
+inherited from the tree's own prose (Value.lean's docstring, c-semantics-design
+§1.2) and then appeared confirmed by this charter's instrument, which reported
+clause 6.3.1.3 as changed at ratio **0.989**. That change is `_Bool` → `bool` in
+p1 plus a footnote renumbering — not p3. **A similarity ratio says a clause
+MOVED; it never says WHAT moved.** That is precisely the failure mode §5.5's
+clause manifest exists to prevent, and it caught the author of §5.5.
+
+### THE CITATION CHECKER, landed — and it found a fourth exclusion by running
+
+`harness/c_citation_check.py` replaces the hand that found the stale citations.
+It resolves every ISO citation in the C tier against the drafts and reports the
+cited clause's actual TITLE in the edition claimed: `ok` / `MISSING` /
+`AMBIGUOUS`, non-zero exit on any problem, loud refusal when a draft is absent or
+zero citations are found. It implements the C lane's convention (untagged inside
+`LeanModels/C/C23/` = C23; a superseded citation carries its tag immediately
+before the §; a `docs/*.md` token means an internal reference).
+
+**The first run reported four MISSING rows that were pure noise** — correct
+documentation reported as drift, the exact failure the exclusions exist to
+prevent. Cause: these documents number their own sections §1..§7, colliding with
+the standard's clauses 5, 6 and 7, so "the memo's §5.4" and "(§5.2)" resolved as
+ISO clauses. **Fourth exclusion, reported back to the C lane: inside a `.md`
+file an untagged § is an internal reference.** A `.lean` file has no section
+structure, so untagged is unambiguous there. Untagged `.md` citations are
+reported as `unclassified` (12 today) rather than dropped — that count is the
+size of the convention's blind spot.
+
+Current state on master, pre-retrofit: **20 ISO citations, 3 problems** —
+`Value.lean:141` §6.5.5 AMBIGUOUS (untagged, version-neutral: C23 *Cast
+operators* vs C17 *Multiplicative operators*), and two tagged `C23 §6.5.2.5` /
+`§6.5.2.3` that **do not exist in C23** at all. Their output is deliberately not
+committed: the retrofit is in flight and a checked-in baseline would be stale
+within the day.
+
+**And the instrument's honest limit is now doc'd**: it proves a number RESOLVES,
+never that it is the number the author meant. `Value.lean:157`'s "C23 §6.5.7"
+resolves cleanly to *Additive operators*; only reading the line reveals the
+author meant shifts. **That gap is the clause manifest's work**, which is why
+§5.5 pairs a resolved citation with the declaration it justifies.
+
+The same exchange **independently CONFIRMED** §2.1's renumbering result and
+§1.4's layout split, reached from the drafts by a different route.
+
+### REGISTRY CORRECTIONS from the SV charter — the corpus, and the maturity
+
+**The corpus.** §1.2 first named **sv-tests-2**, copied from
+docs/sv-corpus-coverage.md. It cannot stand: no license, 21 631 files, an
+**embedded IEEE 1800-2023 PDF** (9.4 MB of vendored IEEE text — against this
+repo's own no-vendoring law), and provenance naming a private organization. The
+row now names the **public `sv-tests`**: uniform ISC, per-file SPDX, `tests/**`
+only (`generated/` reaches GPL ivtest), and **already clause-mirrored** — 326
+clause tags against a 482-clause LRM dictionary, i.e. a §5.5 coverage-by-clause
+manifest that already exists. **Whether sv-tests-2 may be used at all is an open
+Thomas decision** and nothing depends on it meanwhile.
+
+Two family rules fall out, both now at §8 step 0: **a corpus's LICENSE and
+PROVENANCE belong in its registry row, not in a later discovery** — the C tier
+learned this when 219 `.otag` files split c-testsuite into ISC and LGPL halves —
+and **a corpus that vendors the standard it tests against is disqualified by our
+own law**, however convenient.
+
+**The maturity, and it changes how the work is priced.** The SV tier is NOT
+greenfield: `LeanModels/Sv/` is **8 166 lines** (re-derived here, exact match)
+with a differential harness recorded green against Icarus — dormant, not absent.
+The registry gains a **`state`** column: three lanes are FOUNDING (Wasm, ES,
+Ada) and three are CONSOLIDATION (SV, RISC-V 2 041 lines, Verilog-A 606).
+Labelling a consolidation lane "founding" prices a rebuild of working code, so
+the doc's opening paragraph now says which is which too.
+
+**One number NOT adopted.** The SV charter states 86 theorems; this lane's
+counting rule gives **93** `theorem`/`lemma` declarations under `LeanModels/Sv/`
+(81 without private/protected/attributed forms). Two rules disagreeing is the
+SV charter's number to own, not a neighbour's to quote, so the registry cites
+the line count — which both lanes reproduce exactly — and leaves the theorem
+count to them. Recorded rather than silently reconciled.
+
+**One standing violation, flagged and NOT fixed here.**
+`docs/sv-corpus-coverage.md` line 5 records a corpus path under a private home
+directory and organization — the same rule this correction invokes. It is the SV
+lane's file and their charter is in flight, so the redaction is theirs; naming it
+here is what stops it being lost.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

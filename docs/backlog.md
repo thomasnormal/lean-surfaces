@@ -14555,6 +14555,81 @@ re-derives it.
 * **Exit status 143 is a RESOURCE KILL**, not a red build. Never record it as
   one.
 
+### TWO AMENDMENTS FROM THE ADA CHARTER (§L63) — both answering this doc's OWN open questions
+
+**1. THE AUTHORITY TAXONOMY GAINS A THIRD ROW.** §4.1 said two authorities:
+spec-mirror (the document decides) and interpreter-extraction (the
+implementation decides). Ada forces a third: **OFFICIAL-SUITE**, where a
+conformance corpus owned by **neither the standards body nor an implementer**
+ships its own published grading rules and its own grading tool. The obligation
+on such a test is neither "match the document" nor "match an implementation"
+but **"earn the verdict the suite's grader assigns"**.
+
+The family already contained both poles without naming the axis — **C has NO
+official suite** (docs/c23-goal.md's opening line, which is exactly why its goal
+had to be restated as agreement with three compiler projects' regression
+histories) and **Ada has 4 188 tests in six classes with an implementation-
+neutral event-trace format**. test262 and the Wasm `.wast` suite are the same
+shape, and the registry now marks all three. The axis matters because only an
+official-suite tier can say *conformant* and mean what the language's community
+means by it.
+
+§4.2's precedence rule gains its third clause: **the SPEC is the target, the
+IMPLEMENTATION is the oracle for BEHAVIOR, the SUITE OWNER is the authority for
+the expected VERDICT.** Not a restatement of the second — an implementation
+says what happened, a grader says whether that counts as passing, and those
+diverge the moment a test is graded on anything but byte equality (ACATS class C
+passes on `PASSED` **or** `NOT-APPLICABLE`; class D on the exact answer **or** a
+capacity error).
+
+**2. §4.3's PREDICTION IS ANSWERED — AND IT WAS WRONG.** This doc predicted that
+if a fifth REFUSE cause were needed, Ada is where it would show. **It does not
+show. The four causes are complete; the SCOREBOARD was not.**
+
+A bounded-error site fails all four causes for four different reasons: the
+construct is in the vocabulary (not 1); the standard **enumerates the possible
+effects**, so calling it `undefined` is a FALSE STATEMENT ABOUT THE LANGUAGE and
+false in the expensive direction — it refuses a fully-described program and the
+refusal is then indistinguishable from a tier gap, the exact conflation §5.2
+exists to prevent (not 2); nothing is missing from the slice (not 3); and the
+quantifier is the other way round — **cause 4 is a ∀ over ORDERS, a bounded
+error is an ∃ over OUTCOMES** (not 4).
+
+> **The DIVERGE test is not equality at every site. Where the language
+> enumerates several permitted outcomes, MATCH is MEMBERSHIP in that set.**
+
+Two conforming implementations may disagree at such a site and both be right, so
+byte equality there **manufactures DIVERGEs** — and DIVERGE is the
+zero-tolerance invariant, so a manufactured one either halts a lane chasing a
+non-bug or trains it to tolerate DIVERGE rows. Refusing instead is a coverage
+loss the language does not require.
+
+Cheap because: the permitted set is a **per-site datum**, not a new verdict name
+(the vocabulary is unchanged); **equality is the degenerate singleton case**, so
+every existing site is already correct and nothing needs revisiting; and MATCH
+stops meaning "agrees with the oracle" and starts meaning "is permitted" — the
+reading an official-suite tier needs anyway.
+
+**NOT Ada-specific, and the Go contrast is now stated in §3.6.** C says a data
+race is UNDEFINED — no bound — so a racy C program is REFUSE(`undefined`). **Go
+does not**: it bounds what a racy program may observe, so **a racy Go program is
+a MEMBERSHIP site, not a refusal.** Pooling them would refuse programs Go fully
+describes — the same false-statement error, in a third language. C's
+`unspecified`-but-enumerated sites are the same shape a fourth time.
+
+**3. THE ADA REGISTRY ROW — a version pair FORCED at founding, a family first.**
+The ARM is Ada 2022; ACATS 4.2 states in its own modification list that it covers
+**Ada 2012**, and no 5.x exists. So the official suite is two editions behind the
+standard and **"conforms to Ada 2022" can never be scored against the official
+corpus**. Two edition tokens from day one: `Ada2012` is what can be scored,
+`Ada2022` is the spec-side head.
+
+This is **the exact inverse of C's shape**, where the standard moved and the
+suites followed; here the SUITE is pinned and the SPEC moves. §1.1's four laws
+need no amendment to cover it. And it validates §1.4's "pay the directory level
+early" ruling from the other direction: a tier that must carry two editions from
+its first commit never has a cheap moment to add the level later.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

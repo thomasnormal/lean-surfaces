@@ -181,9 +181,9 @@ mislabelled.
 | C | `C` | spec-mirror — ISO/IEC 9899 | `C23` (now), `C17` (if claimed) | clang, pinned family + profile | `ctwin/sunfish.c`; c-testsuite; gcc torture | active — M2 |
 | Python | `Python` | extraction — CPython | `Py39` (now) | CPython 3.9, pinned family | `Examples/python/**`; the stdlib sweep | active — mid-campaign |
 | SystemVerilog | `Sv` | spec-mirror — IEEE 1800 | `SV2017`, `SV2023` — **PROPOSED** | pyslang frontend; a simulator | **public `sv-tests`** (see below) | **CONSOLIDATION** — 8 166 lines, dormant but verified working |
-| WebAssembly | `Wasm` | spec-mirror — W3C core | **PROPOSED** | the reference interpreter | the official `.wast` suite | founding |
-| ECMAScript | `Es` | spec-mirror — ECMA-262 | **PROPOSED** | an engine | test262 | founding — blocked on SoftFloat (§3.5.3) |
-| Ada | `Ada` | spec-mirror — ISO/IEC 8652 | **PROPOSED** | a compiler | ACATS | founding |
+| WebAssembly | `Wasm` | spec-mirror — W3C core **+ official suite** | **PROPOSED** | the reference interpreter **and the `.wast` runner** | the official `.wast` suite | founding |
+| ECMAScript | `Es` | spec-mirror — ECMA-262 **+ official suite** | **PROPOSED** | an engine **and test262's harness** | test262 | founding — blocked on SoftFloat (§3.5.3) |
+| Ada | `Ada` | spec-mirror — ISO/IEC 8652 **+ official suite** | **`Ada2022`** (spec head) **and `Ada2012`** (suite edition) — RATIFIED | a GNAT toolchain **and the ACATS grader** | **ACATS 4.2**, 4 188 tests | founding — **version pair FORCED** |
 | RISC-V | `Rv` | spec-mirror — RISC-V ISA | **PROPOSED** | the ISA oracle | `harness/rv` | consolidation — 2 041 lines |
 | Verilog-A | `VerilogA` | extraction — OpenVAF | — | OpenVAF | `Examples/verilog-a` | consolidation — 606 lines |
 | SPICE | `Spice`/`Circuit` | extraction — ngspice | — | ngspice | `Examples/spice` | active — 27 675 lines, separate architecture (§6.1) |
@@ -191,6 +191,24 @@ mislabelled.
 The last three carry no edition token today. That is allowed and it is
 what §1.4 rules on: **a language earns version directories when its tier
 claims an edition, not before.**
+
+**ADA IS THE FIRST TIER TO DECLARE TWO EDITION TOKENS AT FOUNDING, and it
+did not choose to.** The ARM is **Ada 2022**; the official suite's baseline
+is **ACATS 4.2**, which states in its own modification list that it covers
+**Ada 2012**, and no 5.x exists. So the suite is two editions behind the
+standard, and **a "conforms to Ada 2022" claim can never be scored against
+the official corpus** — any Ada-2022-only feature is outside it by
+construction. The version sibling this document asks for is therefore
+forced: `Ada2012` is what can be scored, `Ada2022` is the spec-side head.
+
+That is **the exact inverse of the C tier's shape**, where the standard
+moved and the suites followed. Here the *suite* is the pinned artifact and
+the *spec* is the moving one — and the family's layout convention has to
+work in both directions, which §1.1's four laws do without amendment
+(`LeanModels/Ada/Ada2012/` says exactly what it is). Ada is also the
+validation of §1.4's "pay the directory level early" ruling: a tier that
+must carry two editions from its first commit has no cheap moment to add
+the level later.
 
 **The SV row was corrected twice, and both corrections generalize.**
 
@@ -1231,6 +1249,17 @@ extension share pieces (1), (2) and (4) verbatim and differ only in which
 document supplies piece (3). Building either builds most of the other, and
 a lane founding one should say so in its charter.
 
+**But they differ sharply on what a RACY program means, and the scoreboard
+must not pool them.** C says a data race is **undefined behavior** — no
+bound at all — so a racy C program is REFUSE(`undefined`), as above. Go
+does **not**: it bounds what a racy program may observe, describing the
+permitted outcomes rather than surrendering. **A racy Go program is
+therefore not a refusal — it is a MEMBERSHIP site**, scored by §5.1's rule:
+the model is right when its outcome is *one of* the permitted ones. Mapping
+Go's bounded races onto C's `undefined` would refuse programs Go fully
+describes, which is the same false-statement-about-the-language error §4.3
+catches at Ada's bounded errors. Same shape, three languages.
+
 **THE RESIDUAL TRUE MISFIT, narrowed to one sentence.** What remains
 genuinely outside is **verifying the relaxed-atomics fragment itself** —
 reasoning about programs that deliberately use `memory_order_relaxed` or
@@ -1300,7 +1329,7 @@ neutral, and naming it here is cheaper than discovering it there.
 
 ## 4 THE AUTHORITY TAXONOMY
 
-### 4.1 Two authorities, and a tier declares which it is
+### 4.1 THREE authorities, and a tier declares which it is
 
 **SPEC-MIRROR.** A published normative document defines the language. The
 model's obligation is **clause coverage**: every clause the tier claims is
@@ -1311,6 +1340,27 @@ WebAssembly, ECMAScript, Ada, RISC-V.
 practice. The model's obligation is **differential agreement**, and the
 differential harness IS the extraction instrument. Python, SPICE,
 Verilog-A.
+
+**OFFICIAL-SUITE — the third, added by the Ada charter.** A conformance
+suite exists that is owned by **neither the standards body nor an
+implementer**, and ships **its own published grading rules and its own
+grading tool**. Then the model's obligation on a suite test is neither
+"match the document" nor "match an implementation" but **"earn the verdict
+the suite's grader assigns"**, and the suite owner is the authority for
+what that verdict is.
+
+This is a genuinely distinct third thing and the family already contained
+both poles without naming the axis. **C has no official suite at all** —
+`docs/c23-goal.md` opens by saying so, which is precisely why its goal had
+to be *restated* as agreement with three compiler projects' regression
+histories, and why its §4.3 has to warn that a high score means "agrees
+with what these projects test", not "conforms to ISO 9899". **Ada has the
+opposite**: ACATS 4.2, 4 188 tests, six named classes, and an
+implementation-neutral event-trace format that makes the grade
+machine-readable rather than a convention. ECMAScript's test262 is the same
+shape. The axis is worth naming because it changes what a tier can honestly
+claim: only an official-suite tier can say "conformant" and mean the word
+the way the language's own community uses it.
 
 The distinction is about where a rule comes from, not about rigor. The
 Python lane's `docs/completeness.md` §5 records five grammar verdicts read
@@ -1324,9 +1374,20 @@ this family that mirrors a spec also runs one: C targets ISO 9899 and runs
 clang; SystemVerilog targets IEEE 1800 and runs pyslang plus a simulator;
 Wasm, ECMAScript and Ada all have reference implementations.
 
-> **The SPEC is the target. The IMPLEMENTATION is the oracle for the
-> suite's expected outputs. A divergence between them is a FINDING — it is
-> recorded with both citations, and it blocks neither side.**
+> **The SPEC is the target. The IMPLEMENTATION is the oracle for
+> behavior. The SUITE OWNER is the authority for the expected VERDICT. A
+> divergence between any two is a FINDING — recorded with both citations,
+> and it blocks none of them.**
+
+The third clause is the Ada charter's amendment, and it is not a
+restatement of the second. An implementation tells you *what happened*; a
+suite's grader tells you *whether that counts as passing*, and those are
+different questions the moment a test is graded on anything but byte
+equality — which ACATS's six classes routinely are (a class-C test passes
+on `PASSED` **or** `NOT-APPLICABLE`; a class-D test passes on the exact
+answer **or** a capacity error). Reading a grader's rule off an
+implementation's behavior would silently substitute one authority for
+another.
 
 Concretely: the model's rules cite the spec's clauses; the harness's
 expected values come from the reference implementation; MATCH means the
@@ -1360,7 +1421,29 @@ row is filled; the rest are the founding lanes' first deliverable.
 | **SystemVerilog** | "shall be an error"; implementation-dependent; and a large SCHEDULING nondeterminism class (the event regions) | **PROPOSED.** The event regions are cause 4's natural home; the schedule is the explicit parameter of §3.4. |
 | **WebAssembly** | deterministic by design, with a small NAMED nondeterminism set (NaN payloads, resource exhaustion, host behavior); traps are DEFINED outcomes, not UB | **PROPOSED.** Expect cause 2 to be nearly EMPTY, and gate that: a Wasm tier emitting `undefined` has a bug. This is the family's best case and worth founding early for exactly that reason — it calibrates the instrument against a language where coverage can be near-exact. |
 | **ECMAScript** | implementation-defined / implementation-approximated (locale, `Date`, `Math`); host hooks | **PROPOSED.** The spec is ALGORITHMIC — numbered abstract-operation steps — so the mirror is per abstract operation and coverage is per step, not per prose clause. §5.5's manifest is written to allow this. |
-| **Ada** | bounded error; erroneous execution; unspecified; implementation-defined | **PROPOSED.** The finest taxonomy in the family and the best fit for REFUSE-with-a-cause. Ada is the stress test of whether four causes are enough; if a fifth is needed, Ada is where it will show. |
+| **Ada** | errors detected before run time; errors detected at run time; **bounded error**; erroneous execution; unspecified; implementation-defined | **FILLED** (`docs/ada-charter.md` §1.5). Run-time errors are an ORDINARY OUTCOME — `Run.exn` already has the shape. **Erroneous execution is cause 2, `undefined`, exactly.** Unspecified is cause 4 plus the ∀-parameter shape. Implementation-defined is the PROFILE, verbatim. **Bounded error fits none of the four**, and pre-run-time errors are not a refusal at all but a VERDICT the family lacked — both below. |
+
+**THE PREDICTION IN THIS ROW WAS ANSWERED, AND IT WAS WRONG.** This
+document predicted that if a fifth REFUSE cause were needed, Ada is where
+it would show. **It does not show. The gap is one level up, in the
+scoreboard** — §5.2's four causes are complete, and §5.1's verdicts were
+not.
+
+Walk a bounded-error site against the four causes and each fails for its
+own reason. The construct is in the vocabulary (not cause 1). The standard
+**describes the behavior fully** — the possible effects of a bounded error
+are enumerated for each such error — so calling it `undefined` would be a
+**false statement about the language**, and false in the expensive
+direction: it refuses a program the standard fully describes, and that
+refusal is then indistinguishable on the scoreboard from a tier gap, which
+is the exact conflation §5.2 exists to prevent. Nothing is missing from the
+slice (not cause 3). And it is **not cause 4**, because the quantifier is
+the other way round: cause 4 is about ORDERS and its obligation is that
+*every* admissible order gives the same observable — a **∀**; a bounded
+error admits several OUTCOMES and its obligation is that the model's
+outcome is *some* permitted one — an **∃**.
+
+That ∀/∃ flip is the whole finding, and it lands in §5.1.
 
 **Extraction tiers have no such table, and that is the point.** Their
 behavior classes are whatever the census DISCOVERS, not what a document
@@ -1381,10 +1464,51 @@ agreement.**
 
 | verdict | meaning |
 | --- | --- |
-| **MATCH** | the model ran to completion and its observable equals the suite's expectation |
+| **MATCH** | the model ran to completion and its observable **satisfies the site's expectation** — see the membership rule below |
 | **REFUSE** | the model declined, loudly and fuel-independently. FOUR disjoint causes (§5.2), reported separately |
-| **DIVERGE** | the model produced an observable and it DISAGREES. The invariant violation. Zero, always |
+| **DIVERGE** | the model produced an observable and it does NOT satisfy the expectation. The invariant violation. Zero, always |
 | **TIMEOUT** | fuel exhausted. The only exhaustion outcome; never conflated with REFUSE |
+
+**THE DIVERGE TEST IS NOT EQUALITY AT EVERY SITE**, and this document said
+it was. The Ada charter's bounded-error analysis (§4.3) forces the
+correction:
+
+> **At a site where the language enumerates several permitted outcomes,
+> MATCH is MEMBERSHIP in that set, not equality with one oracle's
+> observable. Two conforming implementations may disagree there and both
+> be right.**
+
+Scoring byte equality at such a site **manufactures DIVERGEs** — and
+DIVERGE is the family's zero-tolerance invariant, so a manufactured one is
+not a cosmetic error: it either halts a lane chasing a non-bug or, worse,
+trains the lane to tolerate DIVERGE rows. Refusing instead is no better; it
+is a coverage loss the language does not require, at a site the standard
+describes completely.
+
+**Three consequences, and the first two are what make it cheap.** The
+permitted set is a **per-site datum** the tier carries, not a new verdict
+name — the vocabulary above is unchanged. Equality is the **degenerate
+case**, a singleton set, so every existing site is already correct under
+the membership rule and nothing needs revisiting. And MATCH stops meaning
+"agrees with the oracle" and starts meaning "is permitted", which is the
+honest reading and the one an official-suite tier (§4.1) needs anyway,
+since ACATS class C passes on `PASSED` *or* `NOT-APPLICABLE` and class D on
+the exact answer *or* a capacity error.
+
+**This class is not Ada-specific, which is why it belongs here.** It is
+exactly what **Go's racy programs** need (§3.6): Go bounds what a racy
+program may observe instead of surrendering to UB the way C does, so a racy
+Go program is a membership site and not a refusal. C's
+`unspecified`-but-enumerated sites are the same shape again. Ada found it
+because Ada's standard *enumerates* the permitted effects per error where
+other languages leave the enumeration implicit — the finding was always
+there, and Ada's rigor apparatus made it visible.
+
+**Two ways to carry the per-site datum, and neither is chosen here** —
+it is Thomas's, and the Ada charter lists it as an open decision: the site
+carries its permitted set explicitly, or the scoreboard consults a
+predicate supplied by the tier. The architecture only fixes that the test
+IS membership.
 
 ### 5.2 REFUSE has FOUR causes, and the fourth is a finding
 

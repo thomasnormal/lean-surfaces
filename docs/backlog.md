@@ -18936,3 +18936,114 @@ so a lane scripting it gets an instant `BUILD_EXIT=1` that reads like a build
 failure but is an argument error. The control that exists is one level down,
 `lean -j/--threads` and `LEAN_NUM_THREADS`, which caps threads *inside* each
 `lean` process and is not a true `make -j`.
+
+## L77 — F3c INCH 1: the depth-0 STREAM, and the stand-pat yield is live (2026-08-22)
+
+**F3c does not close here, and the heading says so.** What lands is the inch §L30
+named as the gate on everything else in the arm: *"a DEPTH-0 twin of §L32's
+`moves_prologue` — and it is a different theorem, not the same one at another
+depth."* The twin is proved. The fold over the stream it produces is not, and
+`hfall` and `boundRefinesW_zero` wait on that, not on this.
+
+Calling this "F3c" without the qualifier would be the over-claim §L44's own title
+was written to avoid, and it would be a worse one here — because the arm's whole
+point is the base case of the tower, and a reader who saw "F3c lands" would take
+the tower as finished.
+
+### What landed — `Examples/python/sunfish/qs_stream.lean`
+
+`moves_prologue` at depth 1 walks THREE DEAD BRANCHES and hands the ordering line
+over silently. Its depth-0 twin walks **five steps**, and the middle three are
+the difference:
+
+| step | depth 1 | depth 0 |
+|---|---|---|
+| `if 2 < depth < 6 and guard` | dead (`2 < 1`) | dead (`2 < 0`) |
+| `if depth == 0: yield None, None` | dead | **LIVE** — pushes its body |
+| the yield itself | — | **emits `(None, None)`** |
+| the emptied body frame | — | pops |
+| the killer yield | dead (`killer` absent) | dead (`killer` absent) |
+
+So the two prologues converge on the same hand-over — `[.block [ordFor]]` — and
+differ only in what they put on the wire. **`moves_prologue_qs` is stated as a
+TRANSFORMER** (`GenEmits … ws` in, `GenEmits … (standPatPair :: ws)` out) rather
+than as a stand-alone emission, because the stand-pat is not the end of the
+stream: the schedule the fold consumes is `standPat :: rest` and `rest` is R2's.
+
+`moves_emits_qs` then joins it to `ord_stmt_emits` — which needed no change at
+all, because §L31 already stated it at a FREE depth. **That is the R-track gate
+clearing exactly as §L30 predicted it would.**
+
+`standPatPair` is `.tuple #[.none, .none]`: the yielded expression is a TUPLE of
+two `None` constants, the same shape the ordering line's pairs have, which is why
+the consumer needs no special case for the head.
+
+### INSTANTIATED — and the two counts compose exactly
+
+`order_genexp.lean` measured the ordering line ALONE at depth 0 as **2**
+emissions. This file drains the whole shipped generator body at depth 0 on the
+fixture and gets **3**, with the extra one at the HEAD and equal to
+`standPatPair`.
+
+That is `moves_prologue_qs`'s conclusion — `standPatPair :: ws` — read off the
+interpreter rather than off the statement, and it is the strongest instantiation
+this inch admits: **the prologue adds exactly one round, and it adds it at the
+front.** Two independently measured numbers that had to compose, and did.
+
+### Findings worth carrying
+
+1. **A silent-branch lemma and a live-branch lemma are the same theorem twice.**
+   `branchTrueEnters` is `branchFalseSilent` with `b := true` and the `if` in
+   `genSilent_branch`'s conclusion resolved the other way — four lines each, and
+   between them they cover every prologue statement at every depth. The depth-1
+   file has only the falsy one because depth 1 never needs the other; the pair
+   belongs together.
+2. **Stating a prologue as a TRANSFORMER is what makes the two depths compose.**
+   The depth-1 twin could be a plain hand-over because it emits nothing. The
+   depth-0 one cannot — and writing it as
+   `GenEmits(rest) → GenEmits(head :: rest)` means `ord_stmt_emits` is consumed
+   unchanged, at a free depth, with no depth-0 variant of it anywhere.
+3. **`branch_false_silent` now exists twice and that is recorded, not hidden.**
+   `fold_depth1.lean` has it at `m := sunfish`; this file states it at a FREE
+   module because nothing in it is about the engine. The duplicate is deliberate:
+   `fold_depth1.lean` is another lane's active ground and importing it would
+   couple this file's build to that lane's churn, while `order_genexp.lean` (R2,
+   landed) is stable. **The §L65 rule applies — no engine, no fixture, no depth
+   means the general layer — and the two should become one there the next time
+   either file is touched.** Recorded so the next reader finds a decision rather
+   than an accident.
+
+### What F3c still owes
+
+* **`PyStmtTriple.forGen` at this schedule** — the fold over the stream.
+* **The round lemma**, exercised at the census's realistic lengths: §L73 measured
+  2–4 rounds at 87 % of folding nodes, with 8 as the sample maximum, so the
+  stress case is known before the lemma is written.
+* **`TableAt`/`SubtreeWrites` threaded per child.**
+* **The killer arm.** `hk : killer = none` is the census's own measurement (~99 %
+  of depth-0 nodes). When the killer IS present its test is `val >= QS or depth`,
+  and `depth` is falsy at 0 — so the killer round survives only by clearing the
+  QS floor. It inserts ONE extra round between the stand-pat and the sorted
+  stream and is otherwise the same shape.
+
+**Only when those land does `hfall` discharge and `boundRefinesW_zero` go
+unconditional.** The ledger for the calmness campaign is therefore: F1 done
+(§L62), F2 done (§L64), F3a done (§L36), F3b done (§L73), **F3c one inch of four**,
+F5 waiting on F3c.
+
+### Triad
+
+Re-run after a Claude Code restart killed every lane mid-queue. `qs_stream.lean`
+survived as an untracked file and **re-verified clean before anything else was
+done with it** — the restart is exactly why the tree state gets checked first and
+why push-per-landing is law.
+
+Under the machine-wide lock (amendment 4: owner written once under `set -C`;
+owner is a hint, the process tree is the truth). `lake build` **3703 jobs green**
+— 4 seconds, because the landing is one new LEAF that nothing imports;
+`docs_check` **75/75 marked blocks**, 20 illustrative-exempt; `diff_test`
+**1394 cases, 0 failed**, 118 whitelisted, 1276 matched; `script_corpus`
+**65 scripts, 0 failed**, 50 matched, 15 loud. No `sorry`, no `native_decide`, no
+linter warning. All seven printed declarations depend on
+`[propext, Classical.choice, Quot.sound]` or less.
+

@@ -17164,3 +17164,421 @@ uses Alire). The Ada lane has run no `lake build` today and holds no lock.
 plus a charter edit; **no Lean, no Python, no instrument changed**. The Lean
 third's debt is unchanged and still owed at the first Ada-lane landing that
 touches Lean.
+
+## L71 — THE WEBASSEMBLY TIER'S FOUNDING CHARTER: the spec is ALREADY FORMAL, the correspondence is MACHINE-CHECKED, and the suite is NOT normative (2026-08-22)
+
+Thomas's family directive asks for versioned, spec-mirrored language surfaces.
+WebAssembly is the family's **calibration member**: its core spec carries
+genuine small-step reduction rules and a typing judgment, so the
+surface-to-spec distance is minimal, and the charter's job is to say precisely
+how the family's laws apply when the spec is ALREADY formal. The charter is
+[docs/wasm-charter.md](wasm-charter.md); the measurements are in
+`docs/wasm-spec-census.json` and `docs/wasm-suite-census.json`, taken by two
+new instruments on `WebAssembly/spec` at `fc209c5e` (`wg-3.0-313-gfc209c5e`).
+**No Lean, no semantics, no change to any existing file.**
+
+**TWO instruments, and the second one HAS NO SIBLING — which is the whole
+lesson.** `harness/wasm_suite_census.py` is the analogue of
+`harness/c_suite_census.py`. `harness/wasm_spec_census.py` has no analogue
+anywhere in this repository, because `harness/c_construct_census.py` censuses
+a C *program* and **there is nothing to census on ISO 9899's side except
+English**. WebAssembly's spec has a rule count, so the spec is a censusable
+artifact and drift in it is a diff rather than a reading. **Six refusal paths
+were RUN, not admired** (missing tree; no `specification/`; a version dir with
+zero `.spectec`; zero `.wast`; unbalanced parens; unterminated string), all
+exit 2 naming the fault; both instruments are byte-identical on a double run,
+both carry `--compare`, and neither is wired into `tools/ci.sh` for the reason
+its C sibling is not — the corpus is cross-repo, so a gate would be a
+permanent SKIP pretending to be a check.
+
+**THE SPEC MAP, measured.** The working group maintains the formal rules in a
+DSL (SpecTec) under `specification/wasm-{1.0,2.0,3.0,latest}/`, **one
+directory per version, all four present at ONE checkout** — and machine-checked
+per version by the `check-1.0/2.0/3.0/latest` Makefile targets. Relations are
+classified by the SHAPE of the judgment (`~>` reduction, `context |- x : t`
+validation), never by name, because the form is written down and a name would
+be a guess:
+
+| version | files | lines | relations | rules | valid | reduce | aux |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| wasm-1.0 | 10 | 2309 | 35 | **133** | 72 | 58 | 3 |
+| wasm-2.0 | 10 | 4121 | 40 | **259** | 125 | **128** | 6 |
+| wasm-3.0 | 37 | 9351 | 125 | **568** | 306 | 224 | 38 |
+
+`wasm-3.0` and `wasm-latest` are **byte-identical** (`diff -rq` clean). **The
+whole of Wasm 2.0's execution semantics is 128 named reduction rules**, and
+they factor in the spec's own structure: `Step` 22, `Step_pure` 56,
+`Step_read` 47, `Steps` 2, `Eval_expr` 1 — so **56 of 128 (44%) mention no
+state at all**, a stratum the C tier has no analogue for since every C
+statement can touch memory.
+
+**THE CORRESPONDENCE IS MACHINE-CHECKED, and the spec document handed it
+over.** `document/core/**/*.rst` — the published spec — no longer writes its
+rules out; it **splices** them from SpecTec by name (`$${rule:
+Instr_ok/br_table}`). So the census's rule names ARE the names the published
+specification cites. The convention the charter states normatively: **one Lean
+definition per spec rule, named after it, cited by that name** — making
+coverage a SET EQUALITY against the census rather than a judgement call. Its
+prototype lands INSIDE the instrument: `splice_check` resolves every splice
+pattern against the censused rules and **REFUSES if any resolves to nothing**,
+because a pattern with no rule means the census missed a rule. Measured: **410
+patterns, 488/568 rules reached (85%), 0 dead.** Recovering the pattern
+grammar was itself the finding — the first run reported **54 dead patterns and
+every one was a group prefix** (`Step_pure/select` covers `select-true` and
+`select-false`), not a spec defect. An instrument that shipped them as
+findings would have published 54 wrong facts. The 80 never-spliced rules are
+`Instr_ok2`/`Instrs_ok2`/`ImmutReachable`/`Val_ok` — the algorithmic and
+runtime-typing restatements the soundness appendix needs, now enumerated.
+
+**VERSION DELTAS, in the spec's own units** — because every rule has a name,
+"what does upgrading cost" is a set diff: **1.0→2.0 +128 −2 (kept 131);
+2.0→3.0 +345 −36 (kept 223)**. The two names 2.0 drops are `Instr_ok/select`
+and `Step/ctxt-instrs`, both refinements. So 2.0 is nearly a superset of 1.0.
+
+**NO UNDEFINED BEHAVIOR — the spec says so, and the refusal surface COLLAPSES
+FROM THREE CAUSES TO ONE.** `appendix/properties.rst:14` reads *"There is no
+undefined behavior,"* and that is the ONLY occurrence of the phrase in the
+whole `document/core` tree. §L54 insists the C tier's REFUSE has three causes
+that must never be pooled; measured against Wasm, **UB-refused is gone** (no
+UB) and **unmodeled-libc is gone** (Wasm has no stdlib; a missing import is
+`assert_unlinkable`, a specified outcome). Only out-of-tier-construct
+survives, **and it fully retires.** Where C says "decline to invent a
+meaning", Wasm says "step to `TRAP`" — refusal and totality swap places.
+
+**THE ∀-RESOLUTION EXEMPLAR, in the spec's own text.** Measured at
+`wasm-2.0/8-reduction.spectec:183-189`: `rule Step_pure/binop-val` has premise
+`c <- $binop_(nt, binop, c_1, c_2)` — **set MEMBERSHIP** — and
+`Step_pure/binop-trap` fires when that set `= eps`. **One rule pair covers
+three regimes**: singleton (deterministic), multi-element (nondeterministic —
+every element is a correct answer, which is Thomas's J.1 ruling exactly), and
+empty (trap). The NaN set is defined in `exec/numerics.rst:1056-1063` as
+literally *"a set of allowed outputs from a set of inputs"*.
+
+**THE NONDETERMINISM IS ENUMERATED BY THE SPEC, not by the lane.** Wasm 3.0's
+`appendix/profiles.rst` defines a **deterministic profile (DET)** whose
+definition is a list of what it removes and what it admits it cannot. Five
+sources measured: **NaN sign+payload** (DET collapses), **relaxed SIMD** (DET
+collapses), **`memory.grow`/`table.grow`** (**NOT** collapsed — resource
+exhaustion), **host functions** (not collapsed — the embedder's), and a fifth
+of a different kind — **`br_table`'s result type is chosen
+non-deterministically in the TYPING rule** (`valid/instructions.rst:204`),
+nondeterminism in the validation relation rather than in execution. In the DSL
+the whole thing is **one bit**: `def $ND : bool hint(builtin)`, used at exactly
+two sites. So a surface can carry `(nd : Bool)` and get the DET profile as a
+fill-in rather than a refit. Threads/relaxed memory are a separate proposal,
+absent from 3.0 core, and are NOT priced.
+
+**THE VERSIONING DATUM THAT JUSTIFIES THE WHOLE FAMILY DIRECTIVE: the suite's
+own vocabulary for specified nondeterminism CHANGED between versions.**
+Measured across the three tags: **wg-1.0 has `assert_return_canonical_nan`
+933 and `assert_return_arithmetic_nan` 961 — two dedicated ASSERTION FORMS.
+wg-2.0 has ZERO of both and instead `nan:canonical` 3293 / `nan:arithmetic`
+3409 as result PATTERNS inside `assert_return`.** The obligation did not
+change; its encoding was replaced wholesale. A surface pinned to 1.0 that grew
+a verdict system around those two forms would have to **throw it away** at
+2.0, not extend it. A **third** encoding appears only at 3.0: `(either …)`,
+**32 sites across 6 files, ALL of them `relaxed-simd/`**.
+
+**THE CONFORMANCE CORPUS — the family's first suite written by the SPEC'S OWN
+AUTHORS** (and explicitly non-normative — see the correction below). §L54 had to
+concede there is no official ISO suite and scored C against five *proxies*.
+`test/core` is the working group's own, shipped beside the spec it tests: at
+HEAD **258 files, 178 672 lines, 65 296 commands, 62 598 assertions, 2255
+modules** (core-flat 97 files / 20 029 assertions; 7 proposal subdirs 161
+files / 42 569). Per tag: wg-1.0 73 files, wg-2.0 148, wg-3.0 258. **The
+oracle is self-describing** — `assert_return` 52 718, `assert_trap` 4930,
+`assert_invalid` 2723, `assert_malformed` 1940, `assert_unlinkable` 200 — so
+**no external interpreter is needed as an oracle**. And **three of the top
+four assertion classes are NEGATIVE**: `assert_invalid` + `assert_malformed` +
+`assert_unlinkable` = **4863 assertions demanding a REJECTION**, a negative
+battery that arrives pre-built and pre-classified into the three phases that
+reject (decode, validate, link) — which a tier that builds only an interpreter
+can score none of.
+
+**A TRAP THE CENSUS CAUGHT: `assert_trap` IS OVERLOADED.**
+`interpreter/text/parser.mly` has two productions — with a MODULE argument
+(L1465) it builds `AssertUninstantiable`, with an ACTION argument (L1470)
+`AssertTrap` — and **there is no `assert_uninstantiable` keyword in the lexer
+at all** (it has exactly 9 assert keywords). One surface keyword, two distinct
+obligations: "instantiation traps" (exercising the start function and active
+segment init) versus "this call traps". A verdict system keyed on the keyword
+would conflate them. Split by argument shape: **4930 / 54** at HEAD, **458 /
+2** at 1.0.
+
+**LICENSES — the c-testsuite trap was RE-RUN and does NOT fire.** §L54's trap
+was a top-level MIT covering *"testing software, but not individual test
+cases"*, with 69 of 219 cases turning out LGPL-2.1. Here the top-level
+`LICENSE` is **not a license but a MAP**, delegating per directory
+(`document/` W3C Software and Document; `spectec/`, `interpreter/`, **`test/`
+Apache-2.0**; `proposals/` CC0; `papers/` CC BY 4.0). The per-file check —
+first 40 lines of all 258 `.wast` scanned for copyright/SPDX/license — reports
+**0 of 258** carrying any notice. No `.otag` equivalent, no third-party layer.
+**Uniformly Apache-2.0.** Recommendation is still **fetch, don't vendor,
+pinned by revision** for uniformity with the other tiers — but the charter
+records honestly that unlike the C corpora this one **could legally be
+vendored with a notice**, so it is a real choice here where it was not there.
+
+**RUNG 0, and it is the calibration lesson in ONE FUNCTION.** The obvious
+candidate — compiling `tools/ctwin/sunfish.c` (sha256 `7d5e0ff8…`, **the exact
+file §L35 censuses**, re-verified today) — **FAILED, measured**: no wasi
+sysroot on the box (`stdio.h` not found), with ctwin's `setjmp`/`longjmp` 2/2
+a second obstacle recorded as a RISK rather than a measurement since it was
+never reached. Recommended instead: **`pyfloordiv` — the C tier's own M1
+round-trip function (§L50 inch 7) — compiled freestanding.** Measured: **185
+bytes at `-O0`** (code section 122), **99 bytes at `-O1`/`-O2`/`-Os`/`-Oz`**
+(code 36, **11 distinct opcodes**), verified under node at every level to
+agree with `Math.floor(a/b)` on all **574** points of `a ∈ [−20,20] × b ∈
+[−7,7]\{0}`, with **both** trap classes firing. **§L50 chose `pyfloordiv`
+because it carries two of C's ELEVEN ARMED UB CLASSES in three statements —
+`b == 0` and `INT_MIN / -1`. In Wasm those same two inputs are SPECIFIED
+DETERMINISTIC TRAPS**, and the spec says so in the DSL at
+`wasm-2.0/3-numerics.spectec:145-149`, where `$idiv_ : iN(N)?` has exactly
+three `eps` clauses — **the two `eps` clauses ARE the two C UB classes.** One
+function, three tiers: Python raises; **C must REFUSE; Wasm must PRODUCE A
+VALUE.** One honest caveat recorded: at `-O1`+ the compiler eliminated
+`i32.rem_s` entirely (`a - (a/b)*b`) and made the decrement branchless, so
+**the module is a compiled artifact, not a transcription** — its relation to
+`sunfish.c` is the compiler's correctness, not a fidelity contract. Rung 0
+therefore does **not** extend the square, and `-O0` is the better default.
+
+**RECOMMENDATIONS (Thomas's to take).** **Target 2.0**: 1.0's oracle
+vocabulary is obsolete (its 1894 NaN assertions use two forms 2.0 deleted),
+3.0 is 2.2× the rules and 7× the proposal surface with a third nondeterminism
+encoding, and 1.0→2.0 forfeits almost nothing (131 of 133 names survive).
+**Ingest BINARY, against the naive reading** of 2160 text modules vs 88
+binary: measured in the DSL, text is **258 grammar productions over 1815
+lines** against binary's **170 over 1204** — 1.5× — plus folded expressions,
+abbreviations and two hazards the census hit directly (**`inline-module.wast`
+is, entire, `(func) (memory 0) (func (export "f"))`** — a file of module
+FIELDS with the `(module …)` wrapper elided; and **`(@id …)` annotations are
+LEXICAL**, legal anywhere a token is, which a plain s-expression reader sees
+as commands). Text→binary is envelope generation outside Lean, exactly as
+`docs/c-tier-architecture.md` §4 puts translation phases 1-6 in clang — a
+decision taken for another tier paying off again. And `assert_malformed`'s
+1940 assertions are about DECODING, which a text-first frontend can score none
+of.
+
+**M1 PLANNED, mirroring §L50's shape**: one module round-trips binary →
+envelope → Lean AST literal → `#guard`. Six inches: censuses+charter (LANDED);
+`docs/wasm-envelope-schema.md` with vocabulary tables **DERIVED from the spec
+census** and `wasm_version` first-class (the reason `c-0.1` carries
+`profile_id` — it is an INPUT to what the bytes mean); `extractors/wasm/extract.py`
+under the never-fail contract; `LeanModels/Wasm/{Ast,Json}.lean` as a SIBLING
+of the Python and C lanes per §L35 §2.1; `Examples/wasm/pyfloordiv/`; and the
+**correspondence gate prototyped** — trivially true at M1 (the subset is
+empty), existing so M2's first constructor is checked against the spec the day
+it lands rather than retrofitted.
+
+**THE CALIBRATION VERDICT — can M2 state SOUNDNESS early? YES, and
+structurally.** Three things are true here and nowhere else in the family: the
+theorem is **already stated in the spec** (`appendix/properties.rst`, plus
+`7.0-soundness.contexts.spectec` and `7.1-soundness.configurations.spectec` —
+**the soundness section is in the DSL too**); the statement is small and
+standard (progress + preservation, the shape every semantics course states);
+and **44% of the reduction rules need no state**. Contrast §L35 §3.2, where the
+C tier's endgame theorem's whole difficulty was that the observable had to be
+STRENGTHENED ON BOTH SIDES before it meant anything. Priced honestly: **M2
+states the theorem and proves it for a FRAGMENT** (`Step_pure` over numerics
+against `Instr_ok`); a full 2.0 soundness proof is **a program, not a
+milestone**, and is not priced here. **The lesson for the family: when the
+spec is formal the gain is NOT mainly that the semantics is easier to write —
+it is that the TARGET STOPS BEING A DESIGN DECISION. The cost moves from
+specifying to proving, and only the second half is irreducible.**
+
+**Also measured and decision-relevant: SpecTec has NO proof-assistant
+backend.** `spectec/README.md` names *"the Coq and Isabelle definitions for
+mechanisation"* as a goal; `spectec/src/` contains `backend-latex`,
+`backend-prose`, `backend-splice`, `backend-interpreter`, `backend-ast` — and
+**no Coq, Isabelle or Lean backend directory**. There IS a wired
+"run the spec's rules against the spec's tests" loop
+(`spectec/test-interpreter/spec-test-1` = 73 `.wast`, matching the wg-1.0
+tag's 73 exactly; `spec-test-2` = 147; `spec-test-3` a **symlink to
+`../../test/core`**), so a Lean surface can be scored on the same loop against
+the same corpora. **This charter did not build the SpecTec toolchain and
+publishes NO pass-rate number for it.**
+
+**Also measured**: the binary format's **version word has been `1` at every
+language version**, so language versioning is carried by the accepted
+vocabulary and **not** in the header — a version-pinned surface cannot detect
+its own version mismatch from the module header, which is a refusal-design
+constraint. And `specification/` exists **only from `wg-3.0` onward**: the
+1.0 and 2.0 TAGS carry no SpecTec at all, the older versions were back-ported
+into the DSL, so a lane targeting 2.0 reads today's HEAD rather than a 2025
+tag.
+
+**STILL OWED BY THOMAS** (charter §7): (1) the target version — **2.0**
+recommended, from the census and independently corroborated by where the only
+other Lean proof lane stands; (2) the frontend format — **binary** recommended;
+(3) vendored vs fetched — **fetched** recommended, uniformly, though vendoring
+is legal here; (4) **the endgame, and §8 makes the two options ASYMMETRIC** — a
+conformance endgame now means **competing with a 99.4% incumbent**, while a
+soundness endgame targets **ground no one in Lean has taken, on a version no
+assistant has a citable proof for**; M1 stays neutral between them by
+construction, and a **standing check** follows from §8.4's risk: before M2
+starts, re-check whether `zilinc/spectec`'s Lean lane has closed its 13
+`sorry`s — if it has, the soundness contribution is redundant and the tier
+should re-choose rather than proceed on a stale plan, the same cross-repo
+staleness law `--compare` exists for, applied to a competitor instead of a
+corpus; (5) whether `LeanModels/Wasm/` gets a directory and an exe target — the
+same fenced-file question §L35 asked and §L50 found **half unnecessary**, so it
+is sequenced past M1 to be answered concretely.
+
+**THE FIELD SURVEY — AND THIS TIER IS NOT FIRST.** Charter §8. **There are TWO
+LIVE Lean 4 Wasm efforts, both with commits inside the last 72 hours**, and a
+charter that had planned M1 without knowing would have planned against a field
+that already exists. (a) **`zilinc/spectec` branch `lean-backend`** — a
+SpecTec→Lean backend (~227 KB OCaml, flag `--lean`) inside the WG's own
+tooling, by Yong Zheng Yew on Zilin Chen's (NTU) fork, **last commit
+2026-08-20**, ≥100 commits since June. Generated: `wasm3.0.lean` **11 289
+lines / 544 inductives**, `wasm2.0.lean` 7179, `wasm1.0.lean` 3051, all **0
+`sorry` / 0 `axiom`**; its proof lane `typing_lemmas.lean` is **1865 lines, 26
+theorems, 13 `sorry`** of unmistakable type-soundness scaffolding — **and it
+imports the 2.0 model**, which independently corroborates this charter's
+version recommendation, reached from the census alone. (b) **Talos**
+(`cajal-technologies/talos`, YC W26, AGPL-3.0) — **113 263 lines of Lean,
+~2270 theorems, zero `sorry`**, Wasm 3.0, **99.40% on the official suite
+(64 751/65 142 assertions, 257 files)**, last commit 2026-08-21 — proving
+per-program correctness by WP calculus, **not type soundness**. The two are
+complementary and say so publicly: Talos has stated it is *waiting* for the
+SpecTec-generated Lean semantics so it can drop its interpreter from the
+trusted base. (c) The stalled predecessor, Breitner's `lean4-wip` (PR #192,
+*"not meant for merging"*, dead since 2026-02-19), documented **two blockers
+that are LEAN's, not Wasm's** — `lean4#2329` (DecidableEq for nested
+inductives) and `lean4#1964` (nested inductive predicates with indices in
+parameters, *"a kernel issue"*). **A lane deep-embedding Wasm's mutually
+recursive types will meet both**, so that is an M1 AST design input, not a
+footnote.
+
+**THE GAP, and it is what the tier is FOR.** WasmCert-Isabelle (2.0, proves
+progress+preservation, dormant) and WasmCert-Coq (2.0+subtyping, 54 004/54 004
+on a ~15-month-stale submodule, maintenance mode) hold the established ground.
+**But no mechanized soundness proof of Wasm 2.0 or 3.0 exists that the SPEC is
+willing to cite** — the appendix's footnotes scope its proofs to **1.0** — and
+**in Lean no type-soundness proof exists at all.** The spec's soundness
+appendix is **statements without proofs**: measured in its 1578-line source,
+`Theorem` ×10, `Corollary` ×2, **`Lemma` ×0, `sketch` ×0**, the sole "Proof"
+being inside the string *"Certified Programs and Proofs (CPP 2018)"*, and the
+whole justification one sentence — *"Given the definition of valid
+configurations, the standard soundness theorems hold."* **This SHARPENS §6.4's
+calibration lesson rather than softening it**: the target is transcribable
+because someone wrote the statement down, and that the proof is unwritten in
+every assistant for 2.0/3.0 is the honest measure of what the second half
+costs.
+
+**POSITION TAKEN: COMPLEMENT.** Compete is rejected (re-deriving 11 289 lines a
+maintained generator emits with 0 `sorry`, re-fighting two known Lean blockers,
+against a 113 k-line 99.4% incumbent). Consume-wholesale is rejected as a *plan*
+but kept as a dependency (the generated model is the right SOURCE of
+definitions, but it is a personal fork's branch with no release, and this repo's
+standing rule is that a lane depends on no package — the same rule that made
+§L35 §3.2 restate `Report` rather than import it). **The seam: definitions are
+generated and abundant; the PROOF is absent in Lean. This tier builds the proof
+layer and the verdict system around it, mirroring the generated definitions and
+vendoring a pinned SNAPSHOT rather than depending on a branch.** Three
+consequences: M1 is unchanged **and is now also a hedge** (a binary decoder is
+orthogonal to generated semantics — the generator emits rules, not a decoder);
+**§1.4's correspondence gate gets MORE valuable** (with a generator in the
+field, "does this surface cover the spec's rules" is a question about two
+artifacts, and the same rule-name namespace answers it for both); and §6.4's
+fragment proof should aim at **the same statement the `lean-backend` lane is 13
+`sorry`s from, on the same version**, making it either a useful second opinion
+or a direct upstream contribution.
+
+**A CORRECTION THE SURVEY FORCED, recorded loudly rather than buried — and it
+SETTLES a family-level question in §L63's favour.** An earlier draft of §4.1
+called `test/core` an official conformance suite and said "it is not a proxy".
+**That was an overclaim**, and had it landed it would have collided head-on
+with §L63's headline — *"the only OFFICIAL suite in the family"*, the Ada
+lane's claim for ACATS. **§L63 is right and this lane was wrong.** ACATS keeps
+the title; Wasm's suite is the family's first written by the *specification's
+own authors*, which is a different and lesser thing. The W3C WG charter in force
+lists the test suite under *"Other **non-normative** documents"*, and a
+case-insensitive grep of the ENTIRE normative spec source for `test suite` /
+`testsuite` / `conformance` returns **ZERO hits — the specification never
+refers to the suite at all**; the `.wast` script format is not specified in any
+normative document (`interpreter/README.md`: *"purely intended as testing
+infrastructure"*). The honest form, now in the charter: **it is the de-facto
+suite, written by the specification's own authors, and a hard gate in the CG
+phase process — but it is NOT normative.** A better footing than the C tier's
+five third-party proxies, not a qualitatively different one.
+
+**W3C process, measured, with a trap named.** **Wasm 1.0 is a W3C
+Recommendation (2019-12-05) and is the ONLY one.** 2.0 never became a
+Recommendation. **There is no `wasm-core-3` shortname — 3.0 ships under
+`wasm-core-2`** as a Candidate Recommendation Draft (2026-08-12) whose abstract
+reads *"release 3.0"*. **The trap: "current Recommendation" ≠ "current
+standard"** — the WG moved to an evergreen model and states its intent to keep
+the document in CR *"without ever technically moving it to the final
+Recommendation state"*, so citing "the W3C Recommendation" in 2026 cites a 2019
+document predating SIMD, GC, tail calls, exceptions and memory64. **The charter
+therefore never says "the Recommendation"; it says a version number.**
+
+**One instrument reconciliation, and it VALIDATES the census.** The independent
+survey counted 3.0's reduction rules at **221**; this census says **224**. The
+difference is exactly one relation — `NotationReduct` (3 rules, form `~>
+instr*`) in `X.3-notation.execution.spectec`, a notational device rather than a
+semantic relation, which the shape-based classifier catches and a hand count
+drops. **Both are right about different things** (221 semantic reduction rules;
+224 rules whose judgment is a reduction) **and the TOTALS agree exactly at
+568** — which is the agreement that matters. The coverage gate should exclude
+`NotationReduct` by name rather than by taste.
+
+**Surveyed and NOT verified, stated because the rest of the entry is
+measured**: that the `lean-backend` branch's Lean compiles today (the
+`sorry`/`axiom` counts are textual); whether that lane is funded;
+`linobit-corp/wasm-lean`'s 14 342/14 342 claim (read from a README);
+WasmCert-Isabelle's pass rate (no CI, no harness, no published number); and
+whether SpecTec's Rocq soundness proof has advanced past 1.0 since March 2025.
+**No pass-rate number in the charter was produced by this lane**; each is
+attributed to the artifact it was read from.
+
+### Triad
+
+`lake build` **3693 jobs, "Build completed successfully"**; `docs_check`
+**73/73**, 15 illustrative-exempt; `diff_test` **1394 cases, 0 failed, 118
+whitelisted, 1276 matched**; `script_corpus` **65 scripts, 0 failed, 50
+matched, 15 loud**. **Every one of those numbers is identical to §L57's**,
+which is the right result for a landing that changed no Lean: this is research
++ two instruments + docs. No axioms moved; no `sorry`, no `native_decide`. The
+Wasm lane adds no rows to `diff_test` or `script_corpus` and declares no
+theorems.
+
+**Triad ordering, stated precisely rather than glossed.** The full triad above
+ran on this lane's base **before** rebasing onto 25 sibling commits (Ada, ES,
+SV, scheduler). After the rebase, `docs_check` was re-run and passes at
+**75/75** (the count moved 73 → 75 because sibling lanes added two marked
+blocks, not because this lane did). The other three gates were **not** re-run
+post-rebase, and the reason is checkable rather than asserted: this commit adds
+**six files, five of them new**, and its only edit to an existing file is
+`docs/backlog.md`. The two new `harness/*.py` files are **imported and invoked
+by nothing** — verified by grep; they are deliberately not in `tools/ci.sh`,
+following the rule that keeps `harness/c_suite_census.py` out of it. So no
+Lean, no `diff_test` row and no `script_corpus` script can be reached by this
+change, and `docs_check` is the only gate it can move. Given the machine-wide
+build lock and rule 4's *one triad per landing*, a second full triad would have
+been a ~35-minute no-op on a contended machine.
+
+**Build-protocol compliance, and two defects this lane hit and logged.** The
+triad ran under the machine-wide lock (`scratchpad/BUILD_LOCK_PROTOCOL.md`),
+niced, with the build's pid in `owner`. Two protocol defects were found the
+hard way and written up in `scratchpad/build-lock-log.md`:
+
+1. **`lake build -j4` is an ARGUMENT ERROR on this toolchain.** Measured on
+   `Lake 5.0.0-src+62eed1d`: `-j4`, `--jobs=4` and `--jobs 4` all fail with
+   *unknown option*; the global option list has no job flag at all. It exits
+   **1 instantly**, so no build runs — and because `docs_check`, `diff_test`
+   and `script_corpus` all still execute and can all still pass, **a scripted
+   triad looks green while `lake build` never ran.** That is a silent wrong
+   answer of exactly the kind this repository does not ship. This lane's first
+   triad hit it; the fix is to check `BUILD_RC` and abort, which the second
+   one does.
+2. **The documented release was broken as composed, and this lane leaked a
+   lock proving it.** `rmdir` refuses a non-empty directory, so writing
+   `owner/` *inside* the lock made every `trap 'rmdir …'` release fail
+   silently. Verified directly: after the trap ran, the lock directory was
+   still present with `owner` in it. Released with `rm -rf`. **The stale lock a
+   peer lane cleared at ~11:18 was this lane's, and clearing it was correct** —
+   there was genuinely no build behind it (see defect 1).
+
+Both are now amendments in the protocol. Lane process count verified **0** by
+cwd/parentage at release.

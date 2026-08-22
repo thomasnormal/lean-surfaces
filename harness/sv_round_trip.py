@@ -29,22 +29,29 @@ inferred from a path.
 
 NEVER SILENT.  Each envelope ends in exactly one of:
 
-  MATCH   regenerated, byte-identical             (gate passes)
-  DIFFER  regenerated, bytes differ               (gate FAILS)
-  ERROR   extractor crashed / timed out / no out  (gate FAILS)
-  SKIP    recorded sources are not in this tree   (reported, with the
-          reason and the missing path; does NOT fail the gate)
+  MATCH            regenerated, byte-identical          (gate passes)
+  DIVERGE          regenerated, bytes differ            (gate FAILS)
+  REFUSE <cause>   extraction refused, cause named      (gate FAILS if live)
+  TIMEOUT          extractor exceeded its deadline      (gate FAILS)
 
-SKIP exists for the three CV32E40P phase-1 envelopes whose ``source_files``
-are absolute paths into a scratch directory on a DIFFERENT machine, which no
-checkout can reproduce.  A SKIP always prints why, and the summary counts
-them, so the category can never quietly grow.
+plus a `live` flag on every row.  This is the family verdict vocabulary
+(docs/family-architecture.md §5.1-5.3), which this gate now speaks instead
+of its own former MATCH/DIFFER/ERROR/SKIP.
+
+**`live` is the load-bearing part, and it is why the old `SKIP` had to go.**
+Three CV32E40P phase-1 envelopes record ``source_files`` as absolute paths
+into a scratch directory on a DIFFERENT machine, which no checkout can
+reproduce.  Those rows are `REFUSE sources-not-in-tree` with **live=false**:
+the run never happened, so it is neither agreement nor disagreement.  A
+not-live row cannot serialize as a MATCH, which is exactly §5.3's rule that
+a vacuous run must not read as agreement.  The summary reports live and
+not-live separately so the category can never quietly grow.
 
 CRASH-SAFE BY CONSTRUCTION.  The extractor runs as a SUBPROCESS with a
 timeout and an explicit return-code check, because the frontend really does
 die: pyslang 11.0.0 aborts with SIGTRAP (rc 133, no diagnostic) on
 ```unconnected_drive pull2``.  In-process extraction would take this
-gate down with it; here it is one ERROR row naming the file.
+gate down with it; here it is one REFUSE row naming the file.
 
 Requires python3.12 + pyslang 11.x for the extractor subprocess (see
 docs/sv-charter.md §1.1).  Set SV_PYTHON to choose the interpreter;
@@ -195,31 +202,40 @@ def main():
         print("sv_round_trip: FAIL — extractor missing: %s" % EXTRACT)
         return 1
 
-    rows, n_match, n_differ, n_error, n_skip = [], 0, 0, 0, 0
+    rows = []
+    n = {"MATCH": 0, "DIVERGE": 0, "REFUSE": 0, "TIMEOUT": 0}
+    n_notlive = 0
 
     for env_path in found:
         rel = os.path.relpath(env_path, REPO)
         try:
             schema, top, recorded, sources = plan(env_path)
         except Skip as exc:
-            rows.append(("SKIP", rel, "source not in tree: %s" % exc))
-            n_skip += 1
+            rows.append(("REFUSE", False, rel,
+                         "sources-not-in-tree: %s" % exc))
+            n["REFUSE"] += 1; n_notlive += 1
             continue
         except (ValueError, OSError, json.JSONDecodeError) as exc:
-            rows.append(("ERROR", rel, "unreadable envelope: %s" % exc))
-            n_error += 1
+            rows.append(("REFUSE", True, rel,
+                         "unreadable-envelope: %s" % exc))
+            n["REFUSE"] += 1
             continue
 
         if args.list:
-            rows.append((schema, rel, "--top %s" % top if top else "(single-file)"))
+            rows.append((schema, True, rel, "--top %s" % top if top else "(single-file)"))
             continue
 
         workdir = tempfile.mkdtemp(prefix="sv_round_trip.")
         try:
             produced = regenerate(schema, top, recorded, sources, workdir)
         except RuntimeError as exc:
-            rows.append(("ERROR", rel, str(exc)))
-            n_error += 1
+            detail = str(exc)
+            if "timed out" in detail:
+                rows.append(("TIMEOUT", True, rel, detail))
+                n["TIMEOUT"] += 1
+            else:
+                rows.append(("REFUSE", True, rel, "extractor-failed: " + detail))
+                n["REFUSE"] += 1
             continue
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
@@ -227,25 +243,38 @@ def main():
         with open(env_path, "rb") as f:
             committed = f.read()
         if produced == committed:
-            rows.append(("MATCH", rel, "%s%s" % (schema, " --top %s" % top if top else "")))
-            n_match += 1
+            rows.append(("MATCH", True, rel,
+                         "%s%s" % (schema, " --top %s" % top if top else "")))
+            n["MATCH"] += 1
         else:
-            rows.append(("DIFFER", rel,
+            rows.append(("DIVERGE", True, rel,
                          "%d bytes committed vs %d regenerated"
                          % (len(committed), len(produced))))
-            n_differ += 1
+            n["DIVERGE"] += 1
 
-    width = max(len(r[1]) for r in rows)
-    for status, rel, note in rows:
-        print("%-6s %-*s  %s" % (status, width, rel, note))
+    width = max(len(r[2]) for r in rows)
+    for verdict, live, rel, note in rows:
+        # `live=false` is printed, never folded into the verdict: a reader
+        # must be able to see that the row did not exercise anything.
+        flag = "" if live else "  [not live]"
+        print("%-8s %-*s  %s%s" % (verdict, width, rel, note, flag))
 
     if args.list:
-        print("\n%d envelopes, %d skipped (sources not in tree)" % (len(found), n_skip))
+        print("\n%d envelopes, %d with sources not in tree"
+              % (len(found), n_notlive))
         return 0
 
-    print("\nMATCH %d  DIFFER %d  ERROR %d  SKIP %d  (of %d envelopes)"
-          % (n_match, n_differ, n_error, n_skip, len(found)))
-    if n_differ or n_error:
+    live_total = len(rows) - n_notlive
+    print("\nMATCH %d  DIVERGE %d  REFUSE %d  TIMEOUT %d"
+          % (n["MATCH"], n["DIVERGE"], n["REFUSE"], n["TIMEOUT"]))
+    print("%d live of %d envelopes (%d not live: sources not in tree)"
+          % (live_total, len(found), n_notlive))
+
+    # A not-live REFUSE does not fail the gate -- it did not run, so it is
+    # neither agreement nor disagreement.  Everything else that is not a
+    # live MATCH does fail.
+    bad = n["DIVERGE"] + n["TIMEOUT"] + (n["REFUSE"] - n_notlive)
+    if bad:
         print("sv_round_trip: FAIL")
         return 1
     print("sv_round_trip: PASS")

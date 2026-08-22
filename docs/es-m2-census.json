@@ -1,0 +1,636 @@
+{
+  "deliberately_unresolvable": {
+    "distinct": 153,
+    "tests_touching_the_top_name": 424,
+    "top": [
+      [
+        "x",
+        424
+      ],
+      [
+        "w",
+        392
+      ],
+      [
+        "y",
+        232
+      ],
+      [
+        "unresolvableReference",
+        184
+      ],
+      [
+        "u",
+        168
+      ],
+      [
+        "X",
+        112
+      ],
+      [
+        "p1",
+        109
+      ],
+      [
+        "s",
+        56
+      ],
+      [
+        "p2",
+        55
+      ],
+      [
+        "p3",
+        55
+      ],
+      [
+        "p5",
+        54
+      ],
+      [
+        "yield",
+        54
+      ]
+    ]
+  },
+  "includes": [
+    [
+      "propertyHelper.js",
+      1239
+    ],
+    [
+      "compareArray.js",
+      145
+    ],
+    [
+      "tcoHelper.js",
+      34
+    ],
+    [
+      "resizableArrayBufferUtils.js",
+      7
+    ],
+    [
+      "proxyTrapsHelper.js",
+      6
+    ],
+    [
+      "testTypedArray.js",
+      2
+    ],
+    [
+      "decimalToHexString.js",
+      1
+    ],
+    [
+      "fnGlobalObject.js",
+      1
+    ],
+    [
+      "wellKnownIntrinsicObjects.js",
+      1
+    ]
+  ],
+  "intrinsic_surface": {
+    "by_tests_referencing": [
+      [
+        "Object",
+        1957
+      ],
+      [
+        "undefined",
+        1809
+      ],
+      [
+        "TypeError",
+        1218
+      ],
+      [
+        "ReferenceError",
+        1166
+      ],
+      [
+        "eval",
+        1028
+      ],
+      [
+        "Symbol",
+        974
+      ],
+      [
+        "Array",
+        569
+      ],
+      [
+        "String",
+        496
+      ],
+      [
+        "SyntaxError",
+        395
+      ],
+      [
+        "Number",
+        342
+      ],
+      [
+        "Boolean",
+        204
+      ],
+      [
+        "isNaN",
+        177
+      ],
+      [
+        "NaN",
+        155
+      ],
+      [
+        "Infinity",
+        140
+      ],
+      [
+        "Function",
+        106
+      ],
+      [
+        "globalThis",
+        70
+      ],
+      [
+        "parseInt",
+        57
+      ],
+      [
+        "isFinite",
+        54
+      ],
+      [
+        "parseFloat",
+        54
+      ],
+      [
+        "Proxy",
+        36
+      ],
+      [
+        "Error",
+        32
+      ],
+      [
+        "Math",
+        31
+      ],
+      [
+        "Reflect",
+        19
+      ],
+      [
+        "RegExp",
+        19
+      ],
+      [
+        "Promise",
+        16
+      ],
+      [
+        "Date",
+        10
+      ],
+      [
+        "RangeError",
+        10
+      ],
+      [
+        "Map",
+        9
+      ],
+      [
+        "Set",
+        9
+      ],
+      [
+        "ArrayBuffer",
+        8
+      ],
+      [
+        "EvalError",
+        7
+      ],
+      [
+        "URIError",
+        7
+      ],
+      [
+        "Int32Array",
+        6
+      ],
+      [
+        "Uint8Array",
+        5
+      ],
+      [
+        "DataView",
+        4
+      ],
+      [
+        "Float32Array",
+        4
+      ],
+      [
+        "Float64Array",
+        4
+      ],
+      [
+        "Int16Array",
+        4
+      ],
+      [
+        "Int8Array",
+        4
+      ],
+      [
+        "Uint16Array",
+        4
+      ],
+      [
+        "Uint32Array",
+        4
+      ],
+      [
+        "Uint8ClampedArray",
+        4
+      ],
+      [
+        "WeakMap",
+        4
+      ],
+      [
+        "WeakSet",
+        4
+      ],
+      [
+        "AggregateError",
+        2
+      ],
+      [
+        "BigInt64Array",
+        2
+      ],
+      [
+        "BigUint64Array",
+        2
+      ],
+      [
+        "JSON",
+        2
+      ],
+      [
+        "SharedArrayBuffer",
+        2
+      ],
+      [
+        "WeakRef",
+        2
+      ],
+      [
+        "BigInt",
+        1
+      ]
+    ],
+    "distinct_referenced": 51,
+    "not_referenced_by_the_slice": [
+      "Atomics",
+      "FinalizationRegistry",
+      "Float16Array",
+      "Iterator",
+      "decodeURI",
+      "decodeURIComponent",
+      "encodeURI",
+      "encodeURIComponent"
+    ],
+    "source": "ECMA-262 clause 19, read from the pinned spec",
+    "spec_global_names": 59
+  },
+  "ladder": [
+    {
+      "added": null,
+      "cumulative_cleared": 2828,
+      "step": 0
+    },
+    {
+      "added": "ObjectExpression",
+      "clears_alone": 174,
+      "cumulative_cleared": 3002,
+      "step": 1
+    },
+    {
+      "added": "Property",
+      "clears_alone": 725,
+      "cumulative_cleared": 3727,
+      "step": 2
+    },
+    {
+      "added": "AssignmentPattern",
+      "clears_alone": 246,
+      "cumulative_cleared": 3973,
+      "step": 3
+    },
+    {
+      "added": "ObjectPattern",
+      "clears_alone": 577,
+      "cumulative_cleared": 4550,
+      "step": 4
+    },
+    {
+      "added": "EmptyStatement",
+      "clears_alone": 240,
+      "cumulative_cleared": 4790,
+      "step": 5
+    },
+    {
+      "added": "ArrowFunctionExpression",
+      "clears_alone": 211,
+      "cumulative_cleared": 5001,
+      "step": 6
+    },
+    {
+      "added": "ArrayPattern",
+      "clears_alone": 219,
+      "cumulative_cleared": 5220,
+      "step": 7
+    },
+    {
+      "added": "ArrayExpression",
+      "clears_alone": 820,
+      "cumulative_cleared": 6040,
+      "step": 8
+    },
+    {
+      "added": "ForOfStatement",
+      "clears_alone": 456,
+      "cumulative_cleared": 6496,
+      "step": 9
+    },
+    {
+      "added": "RestElement",
+      "clears_alone": 556,
+      "cumulative_cleared": 7052,
+      "step": 10
+    },
+    {
+      "added": "SequenceExpression",
+      "clears_alone": 288,
+      "cumulative_cleared": 7340,
+      "step": 11
+    },
+    {
+      "added": "YieldExpression",
+      "clears_alone": 269,
+      "cumulative_cleared": 7609,
+      "step": 12
+    },
+    {
+      "added": "WithStatement",
+      "clears_alone": 219,
+      "cumulative_cleared": 7828,
+      "step": 13
+    },
+    {
+      "added": "SpreadElement",
+      "clears_alone": 163,
+      "cumulative_cleared": 7991,
+      "step": 14
+    },
+    {
+      "added": "ForInStatement",
+      "clears_alone": 99,
+      "cumulative_cleared": 8090,
+      "step": 15
+    },
+    {
+      "added": "ImportExpression",
+      "clears_alone": 76,
+      "cumulative_cleared": 8166,
+      "step": 16
+    }
+  ],
+  "ladder_final_vocabulary": [
+    "ArrayExpression",
+    "ArrayPattern",
+    "ArrowFunctionExpression",
+    "AssignmentExpression",
+    "AssignmentPattern",
+    "BinaryExpression",
+    "BlockStatement",
+    "CallExpression",
+    "CatchClause",
+    "ConditionalExpression",
+    "EmptyStatement",
+    "ExpressionStatement",
+    "ForInStatement",
+    "ForOfStatement",
+    "ForStatement",
+    "FunctionDeclaration",
+    "FunctionExpression",
+    "Identifier",
+    "IfStatement",
+    "ImportExpression",
+    "Literal",
+    "LogicalExpression",
+    "MemberExpression",
+    "NewExpression",
+    "ObjectExpression",
+    "ObjectPattern",
+    "Program",
+    "Property",
+    "RestElement",
+    "ReturnStatement",
+    "SequenceExpression",
+    "SpreadElement",
+    "SwitchCase",
+    "SwitchStatement",
+    "ThisExpression",
+    "ThrowStatement",
+    "TryStatement",
+    "UnaryExpression",
+    "UpdateExpression",
+    "VariableDeclaration",
+    "VariableDeclarator",
+    "WithStatement",
+    "YieldExpression"
+  ],
+  "language_bindings": {
+    "arguments": 389
+  },
+  "prelude": {
+    "files": [
+      "assert.js",
+      "sta.js"
+    ],
+    "free_identifiers": {
+      "Array": 1,
+      "Infinity": 1,
+      "JSON": 2,
+      "Object": 1,
+      "String": 7,
+      "Test262Error": 8,
+      "undefined": 5
+    },
+    "per_file": {
+      "assert.js": {
+        "kinds": [
+          "AssignmentExpression",
+          "BinaryExpression",
+          "BlockStatement",
+          "CallExpression",
+          "CatchClause",
+          "ConditionalExpression",
+          "ExpressionStatement",
+          "ForStatement",
+          "FunctionDeclaration",
+          "FunctionExpression",
+          "Identifier",
+          "IfStatement",
+          "Literal",
+          "LogicalExpression",
+          "MemberExpression",
+          "NewExpression",
+          "Program",
+          "ReturnStatement",
+          "SwitchCase",
+          "SwitchStatement",
+          "ThrowStatement",
+          "TryStatement",
+          "UnaryExpression",
+          "UpdateExpression",
+          "VariableDeclaration",
+          "VariableDeclarator"
+        ],
+        "nodes": 646
+      },
+      "sta.js": {
+        "kinds": [
+          "AssignmentExpression",
+          "BinaryExpression",
+          "BlockStatement",
+          "ExpressionStatement",
+          "FunctionDeclaration",
+          "FunctionExpression",
+          "Identifier",
+          "IfStatement",
+          "Literal",
+          "LogicalExpression",
+          "MemberExpression",
+          "NewExpression",
+          "Program",
+          "ReturnStatement",
+          "ThisExpression",
+          "ThrowStatement",
+          "UnaryExpression"
+        ],
+        "nodes": 54
+      }
+    },
+    "seed_kinds": [
+      "AssignmentExpression",
+      "BinaryExpression",
+      "BlockStatement",
+      "CallExpression",
+      "CatchClause",
+      "ConditionalExpression",
+      "ExpressionStatement",
+      "ForStatement",
+      "FunctionDeclaration",
+      "FunctionExpression",
+      "Identifier",
+      "IfStatement",
+      "Literal",
+      "LogicalExpression",
+      "MemberExpression",
+      "NewExpression",
+      "Program",
+      "ReturnStatement",
+      "SwitchCase",
+      "SwitchStatement",
+      "ThisExpression",
+      "ThrowStatement",
+      "TryStatement",
+      "UnaryExpression",
+      "UpdateExpression",
+      "VariableDeclaration",
+      "VariableDeclarator"
+    ],
+    "seed_size": 27
+  },
+  "rung0_crossing": {
+    "errors+Object": {
+      "AND_within_the_budget": 1351,
+      "intrinsics_allowed": [
+        "Error",
+        "EvalError",
+        "Object",
+        "RangeError",
+        "ReferenceError",
+        "SyntaxError",
+        "Test262Error",
+        "TypeError",
+        "URIError"
+      ],
+      "tests_in_prelude_vocabulary": 2828
+    },
+    "errors+Object+String+Array+Number+Boolean": {
+      "AND_within_the_budget": 1820,
+      "intrinsics_allowed": [
+        "Array",
+        "Boolean",
+        "Error",
+        "EvalError",
+        "Number",
+        "Object",
+        "RangeError",
+        "ReferenceError",
+        "String",
+        "SyntaxError",
+        "Test262Error",
+        "TypeError",
+        "URIError"
+      ],
+      "tests_in_prelude_vocabulary": 2828
+    },
+    "errors-only": {
+      "AND_within_the_budget": 1289,
+      "intrinsics_allowed": [
+        "Error",
+        "EvalError",
+        "RangeError",
+        "ReferenceError",
+        "SyntaxError",
+        "Test262Error",
+        "TypeError",
+        "URIError"
+      ],
+      "tests_in_prelude_vocabulary": 2828
+    },
+    "none": {
+      "AND_within_the_budget": 1205,
+      "intrinsics_allowed": [],
+      "tests_in_prelude_vocabulary": 2828
+    }
+  },
+  "schema": "es-m2-census-0.1",
+  "slice": {
+    "did_not_parse": 4069,
+    "no_extra_includes": 16702,
+    "of_which_parse_negative": 3963,
+    "parsed": 14045,
+    "runnable_with_prelude_vocabulary_only": 2828,
+    "tests": 18114
+  },
+  "value_globals_referenced": {
+    "Infinity": 140,
+    "NaN": 155,
+    "globalThis": 70,
+    "undefined": 1809
+  }
+}

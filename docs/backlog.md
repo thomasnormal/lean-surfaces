@@ -19113,3 +19113,184 @@ owner is a hint, the process tree is the truth). `lake build` **3703 jobs green*
 linter warning. All seven printed declarations depend on
 `[propext, Classical.choice, Quot.sound]` or less.
 
+
+## L78 — THE ECMASCRIPT M2 DESIGN: the HARNESS sets the floor, and the built-in obligation is seven names (2026-08-22)
+
+M2's plan, census-first under the §L25 law, plus the instrument that took it.
+The design is [docs/es-semantics-design.md](es-semantics-design.md); the
+measurements are `docs/es-m2-census.json`, taken by `harness/es_m2_census.py`.
+**No interpreter, no Lean, and no change to any existing file.**
+
+### THE FLOOR IS SET BY THE HARNESS, NOT BY THE TESTS
+
+Every test262 test evaluates `harness/assert.js` and `harness/sta.js` in its
+realm BEFORE its own source, so the prelude's requirements are mandatory for
+every test and are not a matter of taste. Measured: **27 node kinds**, **`var`
+only** (zero `let`/`const`), and seven free identifiers.
+
+**But the vocabulary UNDERSTATES the floor, and only reading the source shows
+it.** `sta.js` defines `Test262Error` with `this instanceof Test262Error`,
+`new`, `this.message = …` and `Test262Error.prototype.toString = …` — so
+before any test can SIGNAL A FAILURE the evaluator needs function objects with
+`[[Call]]` **and `[[Construct]]`**, `this` binding, ordinary objects, property
+get/set, `[[Prototype]]`, `instanceof` and `throw`. **The ordinary object
+model is rung 0, not a later rung**; there is no arrangement of this corpus in
+which it is deferrable.
+
+**The good news is on the SUCCESS path.** `assert(x)` returns immediately on
+`x === true`; every formatter — `String(value)`, `Object.prototype.toString`,
+`JSON.stringify` — runs ONLY when a test fails, and `assert.js` even guards
+`typeof JSON !== "undefined"`. A PASSING test needs almost none of the
+intrinsic surface the prelude mentions, which is why the first scoreboard is
+far cheaper than reading the prelude suggests.
+
+### THE BUILT-IN OBLIGATION IS SEVEN NAMES
+
+The intrinsic list is **DERIVED FROM THE PINNED SPEC** rather than typed:
+clause 19 (The Global Object) enumerates the realm's names one heading each —
+**59**. Of those, **51 are referenced** by the 18,114-test core slice and 8
+never are (`Atomics`, `FinalizationRegistry`, `Float16Array`, `Iterator`, the
+four URI functions). Ranked: `Object` 1957, `undefined` 1809, `TypeError`
+1218, `ReferenceError` 1166, `eval` 1028, `Symbol` 974, `Array` 569, `String`
+496, `SyntaxError` 395, `Number` 342, `Boolean` 204, `isNaN` 177. **The top 12
+cover 10,335 of 11,248 intrinsic references — 91.9%.**
+
+This is the C lane's *"the libc obligation is not libc, it is `printf`"*
+(§L54) arriving in a second language, **and it is stronger**: three of the top
+names are error constructors the LANGUAGE throws, so they are semantics, not
+library. Strip those and the three value globals, and the genuine library
+obligation at the top of the corpus is **`Object`, `eval`, `Symbol`, `Array`,
+`String`, `Number`, `Boolean` — seven names.**
+
+**A free identifier here is one of THREE things and only one is a built-in**,
+which is why the instrument buckets them: intrinsics; `arguments` (389 tests,
+a language binding); and **153 distinct deliberately-unresolvable names**
+(`X` 112, `p1` 109 …) which are the SUBJECT of ReferenceError tests — the
+tier's job is to throw for them, not supply them. Pooling them ranks
+`unresolvableReference` beside `Object`, and the first version of this
+instrument did exactly that, **and also counted object-literal KEYS** —
+`configurable` appeared 1,327 times as an "intrinsic" — until non-reference
+`Identifier` positions (keys, labels, member names) were excluded. Both
+corrections are pinned in `--self-test`, and a third defect was caught on the
+way out: **a ranking stored as a dict is destroyed by
+`json.dumps(sort_keys=True)`**, which silently re-sorted the intrinsic table
+alphabetically. Rankings are lists now.
+
+### THE MONAD: ρ IS THE WHOLE ABRUPT COMPLETION RECORD
+
+The family's substrate is adopted **by SHAPE, not by spelling** (§3.4's
+`ExceptT ρ (StateT W Halt)`, layer order established by `rfl`), so if the
+structures census moves the base to `EStateM` nothing in the design changes.
+
+**Decision: `ρ = Abrupt`, carrying all four non-normal completion types** —
+`throw`/`return`/`break`/`continue` — not `throw` alone with the rest as a
+flow-sum in `α`. **The argument is the spec's own notation and it is close to
+decisive**: ECMA-262 writes abrupt propagation as an OPERATOR, `? Foo(x)` at
+**2,328 sites** and `! Foo(x)` at **555**, with `ReturnIfAbrupt` at **0**, and
+`?` propagates ANY abrupt completion — which is `ExceptT`'s bind and nothing
+else. The correspondence becomes mechanical: `?` → `←`, `!` → a total variant,
+`UpdateEmpty` → a `catch` that fills an empty value, LabelledEvaluation's
+absorption → a `catch` at exactly the construct the spec names. The
+alternative is the Python tier's shape, right THERE because `Run` predates the
+substrate, and here it would make every statement's `α` a sum and break the
+one-line `?` correspondence. **What the Python precedent does give transfers
+whole — but at the SPECIFICATION layer**: `PyPost`'s flow-aware
+postcondition with one arm per flow shape is exactly what the ES proof layer
+will want against `Abrupt`'s four arms. Precedent at `PyPost`, not at `ρ`.
+
+**`!` is an OBLIGATION, not an assumption.** 555 sites assert a call cannot
+complete abruptly; a tier that implemented that as "assume it didn't" would
+invent a fact the spec merely records. Each such operation gets a total form
+tied to the ordinary one by a lemma, and until the lemma exists the site uses
+the ordinary form and the proof carries the obligation. It is the C lane's UB
+discipline turned around: there refusing is the product, here **`!` is a place
+the spec claims a refusal cannot happen and the model owes a proof.**
+
+**ε is RVal-like, and this tier is the second consumer.** §L66 recorded the
+requirement — a thrown JS value is an arbitrary language value, not a closed
+enum — so `Abrupt.throw` carries a `Val`. Not blocking: `SemM W ρ` is already
+parametric, so the arch lane's answer changes only where `Abrupt` is declared.
+
+### THE DEFERRALS, each with a cause and a number
+
+**The event loop is DEFERRED and the boundary is a HOST HOOK**, which is what
+makes the refusal principled rather than arbitrary:
+`HostEnqueuePromiseJob` and its three siblings are 4 of the spec's 16
+host-defined abstract operations, so a program needing a job to run reaches a
+clause the specification itself defers to the host. **A test requiring a
+drained job REFUSES with cause `environment`** — not `unsupported-construct`;
+the construct is modelled, the HOST is absent. **Measured, the residue is
+tiny**: 26 `AwaitExpression` sites, `Promise` in 16 tests, in 18,114 tests. A
+single-script evaluator is not a crippled one on this corpus.
+
+**GENERATORS ARE THE DEFERRAL THAT IS NOT ONE, and the naive plan is
+impossible.** §3.4 rules that **`SemM` CANNOT SUSPEND** — it unfolds to
+`W → (Except ρ α × W)`, with no third case — and generators are INSIDE the
+core slice at **1,171 `YieldExpression` sites**, arriving at ladder step 12.
+So a generator is a **defunctionalized continuation living in `W`**, and
+resumption is an ordinary call, never a suspension effect. §3.6 (1a) is the
+family's pattern, SV is its worked example, **and the Python tier has already
+done this exact thing for this exact construct** (H4's `Obj.generator` with
+its `GenFrame` stack) — same problem, same language family, solved once in
+this repository, with its recorded findings (`genPlan`'s free scrutinee,
+`termination_by structural fuel`) transferring directly.
+
+**Built-ins are a REFUSAL CAUSE, never a debt**: `unmodeled-intrinsic`,
+reported apart from tier gaps precisely so 23,109 unbuilt built-ins can never
+read as a language-tier failure.
+
+### THE LADDER IS MEASURED, AND ITS SHAPE IS A FINDING
+
+Seeded with the prelude's mandatory 27 kinds, greedily adding the one kind
+that clears the most blocked tests: `ObjectExpression` → `Property` →
+`AssignmentPattern` → `ObjectPattern` → `EmptyStatement` →
+`ArrowFunctionExpression` → `ArrayPattern` → `ArrayExpression` →
+`ForOfStatement` → `RestElement` → … **Sixteen constructs take the reachable
+corpus from 2,828 to 8,166 of 14,045 parsed.** The shape is the finding:
+**steps 2-10 are almost entirely destructuring and object/array literals**,
+matching the charter's `destructuring-binding` at 5,495 tests. **A tier built
+in textbook order — control flow, then operators, then objects — would clear
+far fewer tests per inch.**
+
+### RUNG 0, CROSSED RATHER THAN GUESSED
+
+A test is scoreable only if the evaluator has BOTH its syntax and the realm
+names it reaches, so counting either alone overstates the target:
+
+| intrinsics supplied | in prelude vocabulary | AND within budget |
+| --- | ---: | ---: |
+| none | 2,828 | **1,205** |
+| the error constructors | 2,828 | **1,289** |
+| + `Object` | 2,828 | **1,351** |
+| + `String`/`Array`/`Number`/`Boolean` | 2,828 | **1,820** |
+
+**RUNG 0 = 1,205 core-slice tests** needing only the prelude's 27 kinds and no
+intrinsic beyond what the prelude defines; 1,351 with `Object`; 1,820 with six
+built-ins. Regenerable by the instrument, never stored as rows.
+
+`harness/es_refusal_census.py` is **specced, not built** — it has nothing to
+run until inch 5, and an instrument with no subject is a stub. Its one
+lane-specific rule: **LIVENESS IS LOAD-BEARING HERE IN A WAY IT IS NOT FOR THE
+SIBLINGS.** A test passes by NOT throwing, so **a model that evaluated nothing
+and threw nothing would score MATCH on every positive test.** Every row
+carries a step count and a zero is never agreement.
+
+### The inch ladder, priced
+
+value model (1-2 sessions) → monad + completion records + the correspondence
+manifest checker (1-2) → objects and the prototype chain (3-4, §the floor) →
+environments and functions (3-4, closes the prelude) → statements and
+expressions over the seed vocabulary (3-4) → **THE FIRST SCORE (2)** → the
+measured ladder (2-4 per campaign). **~15-20 sessions with the first score at
+inch 6 rather than at the end** — the shape `docs/c-semantics-design.md` chose,
+for the same reason: a tier that cannot report a number until it is finished
+cannot be steered.
+
+### Checks
+
+`docs_check` **75/75** marked blocks, 22 illustrative-exempt; `es_m2_census
+--self-test` green on three refusal paths plus the two classification bugs it
+was written with; `--compare` **byte-identical** on a double run; the M1
+instruments (`es_census`, `extract.py`) still self-test green. **No Lean, so
+the build lock was not taken.** Forty design assertions were re-checked against
+the census programmatically, including every row of the ladder table.

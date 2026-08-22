@@ -26,7 +26,7 @@ type. That invariant is what makes "did this overflow?" decidable rather
 than conventional, and every rule below re-establishes it.
 -/
 
-namespace LeanModels.C
+namespace LeanModels.C.C23
 
 /-! ## Integer types -/
 
@@ -229,4 +229,4 @@ They are the decision, executed. -/
 #guard IntTy.char_.minVal == -128 && IntTy.char_.maxVal == 127
 #guard IntTy.ulong.maxVal == 18446744073709551615
 
-end LeanModels.C
+end LeanModels.C.C23

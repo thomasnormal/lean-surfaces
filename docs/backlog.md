@@ -73,3 +73,60 @@ layer's capability on a layer that is supposed to be dying — the dead hand of 
 thing being retired. Implementing the arm gives the legacy layer a **new consumer
 and a new reason to live**, which is the opposite of erosion. The one-line refuse
 arm is the unique move that keeps it compiling without giving it a future.
+
+### NEW LAW — a verdict vocabulary that cannot express a legitimate state fails BOTH ways
+
+Third §5.4-family law minted this session (completeness lane, inch 3a). Placed
+beside the grep/pattern-position pair: **those two are about COUNTING, this one
+is about VERDICT VOCABULARIES growing honestly.**
+
+> **A CHECK WHOSE VOCABULARY CANNOT EXPRESS A LEGITIMATE NEW STATE WILL EITHER
+> BLOCK THE STATE OR BE SWITCHED OFF — both wrong. Extend the vocabulary, and
+> make the new word EARN ITS VERDICT FROM THE ORACLE, NEVER FROM THE TABLE.**
+
+**The failure has two exits and a check reaches for one automatically.**
+BLOCKING: the state is legitimate, the gate says no, correct work cannot land.
+SWITCHING OFF: the gate is loosened and nothing is checked. Neither is chosen on
+purpose — both are what happens when a vocabulary runs out of words and nobody
+notices that is what happened.
+
+| instance | the missing word |
+| --- | --- |
+| `DIVERGE`/`DIVERGED` (§9.4) | a display name **drifting with its selector** |
+| the census's `mono=` expectations | a **two-interpreter scoreboard needing a second column** |
+| **`monadic_gate.py`** | non-zero on **ANY** non-frontier divergence — so a **RULED** divergence (trunk refuses, rebuild returns 1, **CPython AGREES with the rebuild**) **could not land green** |
+
+**The fix and its guard**: `monadic_gate.py` gained **`OPENED`, counted only when
+the rebuild matches CPython.** That qualifier is the whole rule —
+
+> **The adjudicator is the ORACLE, never the TABLE.**
+
+A new verdict word is not a place to record what you have decided is acceptable;
+it records **what the oracle says**, under a name the old vocabulary could not
+pronounce. Without that guard, "extend the vocabulary" is **whitelisting with
+better manners** — which is why this is the standing ban on `"expect":
+"unsupported"` rows that silence a mismatch, generalized from one harness to
+every check.
+
+**The wrong fix was NAMED AND REFUSED, not merely not taken**: switching the gate
+off converts a vocabulary problem into a **coverage hole, and a coverage hole
+reads green** — §5.4a's flattering direction, reached by a route that feels like
+pragmatism.
+
+**And §5.1's membership ruling was this law before it was named**: *the DIVERGE
+test is not equality at every site* extended a vocabulary so it could express two
+conforming implementations disagreeing — a legitimate state the old vocabulary
+could only call DIVERGE. Recognized late and recorded as such.
+
+### THE `GenFrame` RULING EXECUTED — first measured instance, and two laws paid off together
+
+Inch 3a executed the erosion ruling **exactly**: the shared type grew, **the
+trunk took exactly one refuse arm**, and the change landed at **9 arms — the
+number the pattern-position law had just rescued from an identifier count of
+35.**
+
+A ruling and a counting law, both minted within a day, **paying off together in
+the same inch**: the ruling said what the legacy layer was allowed to do, the
+counting law said how much it would cost, and **neither the number nor the shape
+moved on contact.** Recorded in the erosion clause as the ruling's first
+measured instance rather than left as a claim.

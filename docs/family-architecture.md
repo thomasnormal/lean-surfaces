@@ -1526,6 +1526,15 @@ standing rule with a named blocker.**
    the opposite of erosion. The one-line refuse arm is the unique move that
    keeps the legacy layer compiling without giving it a future.
 
+   **EXECUTED, and the first measured instance: the completeness lane's
+   inch 3a.** The shared type grew; **the trunk took exactly one refuse
+   arm**; and the change landed at **9 arms — the number the
+   pattern-position law had just rescued from an identifier count of 35**
+   (§5.4a). A ruling and a counting law, both minted within a day, paying
+   off together in the same inch: the ruling said what the legacy layer was
+   allowed to do, and the counting law said how much it would cost. Neither
+   number nor shape moved on contact.
+
    **The SEQUENCING rationale, which is about risk and not about Python.**
    `mvcgen` warns on every invocation that it is experimental, and one Std
    bug surfaced in twenty lines of probing (§3.4). **New tiers should
@@ -2552,6 +2561,55 @@ The practical form: **price a change by enumerating the positions the
 change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
+
+#### AND THE THIRD OF THE FAMILY — when a VERDICT VOCABULARY must grow
+
+The two rules above are about **counting**. This one is about **verdict
+vocabularies**, and it is the third instance minted this session:
+
+> **A CHECK WHOSE VOCABULARY CANNOT EXPRESS A LEGITIMATE NEW STATE WILL
+> EITHER BLOCK THE STATE OR BE SWITCHED OFF — both wrong. Extend the
+> vocabulary, and make the new word EARN ITS VERDICT FROM THE ORACLE,
+> NEVER FROM THE TABLE.**
+
+The failure has two exits and a check reaches for one of them
+automatically. **Blocking**: the state is legitimate, the gate says no, and
+correct work cannot land. **Switching off**: the gate is disabled or
+loosened, and now nothing is checked. Neither is a decision anyone makes on
+purpose; both are what happens when a vocabulary runs out of words and
+nobody notices that is what happened.
+
+Three instances, and the third is the sharp one:
+
+| instance | the missing word |
+| --- | --- |
+| `DIVERGE` / `DIVERGED` (§9.4) | a **display name drifting with its selector** — the same state under two spellings |
+| the census's `mono=` expectations | a **two-interpreter scoreboard needing a second column**, and reporting one |
+| **`monadic_gate.py`** | exits non-zero on **ANY** non-frontier divergence — so a **RULED** divergence (trunk refuses, rebuild returns `1`, **CPython AGREES with the rebuild**) **literally could not land green** |
+
+**The fix, and the guard that makes it safe.** `monadic_gate.py` gained
+`OPENED` — **counted only when the rebuild matches CPython.** That
+qualifier is the whole rule:
+
+> **The adjudicator is the ORACLE, never the TABLE.**
+
+A new verdict word is not a place to record what you have decided is
+acceptable; it is a place to record **what the oracle says**, under a name
+the old vocabulary could not pronounce. Without that guard, "extend the
+vocabulary" is just whitelisting with better manners — which is why this
+is the same prohibition as the standing ban on `"expect": "unsupported"`
+rows that silence a mismatch, generalized from one harness to every check.
+
+**And the wrong fix was named and refused rather than merely not taken**:
+switching the gate off would have turned a vocabulary problem into a
+coverage hole, and a coverage hole reads green. That is §5.4a's flattering
+direction, reached by a route that feels like pragmatism.
+
+**This is also what §5.1's membership ruling was**, recognized late: *the
+DIVERGE test is not equality at every site* extended a verdict vocabulary
+so it could express a legitimate state — two conforming implementations
+disagreeing — that the old one could only call DIVERGE. Same law, applied
+before it was named.
 
 Every instrument output, triad line, coverage count, `#guard` batch, axiom
 print and timing is reported **with the state that produced it** — clean

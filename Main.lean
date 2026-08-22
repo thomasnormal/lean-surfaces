@@ -1,6 +1,17 @@
 import LeanModels.Python.Json
 import LeanModels.Python.Semantics
 import LeanModels.Python.Script
+-- THE MONADIC REBUILD (docs/python-monadic-rebuild.md), pulled in through its
+-- umbrella so `lake build` CHECKS the whole rebuild — interpreter, `@[spec]`
+-- layer and demonstration gates — as a side effect of building the runner that
+-- the acceptance gate drives.
+--
+-- WHY HERE AND NOT FROM `LeanModels.lean`: measured, 65 files under `Examples/`
+-- import the `LeanModels` umbrella, including the expensive sunfish proofs. An
+-- import there would invalidate every one of them for zero benefit, and would
+-- charge that rebuild to the eleven other lanes sharing this master. The runner
+-- is the one target that must know about the rebuild anyway.
+import LeanModels.Python.Monadic
 
 /-!
 # `leanmodels-run` — CLI runner for the differential harness
@@ -352,6 +363,21 @@ private def splitFuel : List String → Except String (List String × Option Nat
       let (pos, fuel) ← splitFuel rest
       return (a :: pos, fuel)
 
+/-- Split `--monadic` off the argument list (anywhere), keeping the positional
+arguments in order.
+
+**THE SHIM, and it is one flag.** `--monadic` routes the run through
+`LeanModels/Python/Monadic/` — the MONADIC REBUILD — instead of the trunk
+interpreter. Both answer the same `Run World RVal`, so nothing downstream
+changes: the three harnesses (`diff_test.py`, `script_corpus.py`,
+`refusal_census.py`) already take a `--runner` command, and pointing that at
+`… leanmodels-run --monadic` is the whole of the acceptance gate's plumbing. No
+harness is forked and no harness learns what the flag means. -/
+private def splitMonadic : List String → List String × Bool
+  | [] => ([], false)
+  | "--monadic" :: rest => let (pos, _) := splitMonadic rest; (pos, true)
+  | a :: rest => let (pos, mono) := splitMonadic rest; (a :: pos, mono)
+
 def parseCli (argv : List String) : Except String Cli := do
   let (positional, fuel?) ← splitFuel argv
   match positional with
@@ -480,7 +506,8 @@ def parseJob (line : String) : Except String BatchJob := do
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
 `runner-error` lines PLUS a nonzero exit. -/
-def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt32 := do
+def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
+    (mono : Bool) : IO UInt32 := do
   match ← (IO.FS.readFile ⟨jobsPath⟩).toBaseIO with
   | .error e =>
       IO.eprintln s!"leanmodels-run --batch: cannot read '{jobsPath}': {toString e}"
@@ -525,7 +552,12 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool) : IO UInt3
             -- `Run.toPublic` erases and `batchObs` reports.
             let fuel := job.fuel.getD defaultFuel
             let thawed := RVal.thawArgs job.args
-            let run := callIn m fuel
+            -- THE ONE SWAP. `callInMono` has `callIn`'s type by construction
+            -- (`Monadic/Eval.lean` §4), so the differential battery compares the
+            -- two interpreters at the same boundary, on the same rows, through
+            -- the same canonical JSON.
+            let entry := if mono then Monadic.callInMono else callIn
+            let run := entry m fuel
               { initWorld m with clock := job.clock.getD [] } job.fname thawed
             stdout.putStrLn (if obs then batchResJson fuel job.args thawed run
                              else resJson (Run.toPublic fuel run))
@@ -620,6 +652,22 @@ def runScriptBatchMode (jobsPath : String) (defaultFuel : Nat) : IO UInt32 := do
       return (if hadError then 1 else 0)
 
 def main (argv : List String) : IO UInt32 := do
+  let (argv, mono) := splitMonadic argv
+  -- A MODE THE REBUILD HAS NOT BUILT REFUSES AS A CAPABILITY ERROR (exit 2),
+  -- never as a semantic refusal (exit 3). Conflating "the rebuild has not got
+  -- here yet" with "Python says no" is exactly what the `monadic-rebuild:`
+  -- refusal prefix exists to prevent, and the exit code has to keep the same
+  -- distinction or the script corpus would score a missing module as a tier
+  -- boundary.
+  if mono then
+    match argv with
+    | "--script" :: _ | "--script-batch" :: _ => do
+        IO.eprintln
+          "leanmodels-run --monadic: the script executor is NOT rebuilt yet \
+           (Monadic/ covers the call surface; `runScript` is the plan's next \
+           milestone). Refusing rather than silently answering with the trunk."
+        return 2
+    | _ => pure ()
   match argv with
   | "--batch" :: rest =>
     match splitFuel rest with
@@ -641,7 +689,7 @@ def main (argv : List String) : IO UInt32 := do
             IO.eprintln
               "usage: leanmodels-run --batch <jobs.jsonl> [--fuel N] [--observations]"
             return 2
-      runBatchMode jobsPath (fuel?.getD 10000) obs
+      runBatchMode jobsPath (fuel?.getD 10000) obs mono
   | "--script-batch" :: rest =>
     match splitFuel rest with
     | .error e =>

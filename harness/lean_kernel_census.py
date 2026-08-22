@@ -133,6 +133,11 @@ def _axioms(lean_src: Path) -> list[dict]:
             m = _AXIOM.match(line)
             if m:
                 local = m.group(1)
+                # Upstream is RETIRING in-kernel native reduction: the whole
+                # ofReduceBool family carries a dated @[deprecated ...] attribute.
+                # That is a moving target, so the census date-stamps it from the
+                # source rather than letting the charter assert it.
+                dep = _deprecation_above(text, n)
                 rows.append(
                     {
                         "name": ".".join(ns + [local]) if ns else local,
@@ -141,9 +146,39 @@ def _axioms(lean_src: Path) -> list[dict]:
                         "file": str(path.relative_to(lean_src)),
                         "line": n,
                         "signature": stripped,
+                        "deprecated": dep,
                     }
                 )
     return rows
+
+
+_DEPRECATED = re.compile(r'@\[deprecated\s+"([^"]*)"\s*(?:\(since\s*:=\s*"([^"]*)"\))?')
+
+
+def _deprecation_above(text: str, line_no: int) -> dict | None:
+    """The `@[deprecated ...]` attribute immediately preceding a declaration.
+
+    Attributes may be separated from the declaration by a docstring, so this
+    scans upward past `/-- ... -/` blocks and `set_option ... in` lines.
+    """
+    lines = text.splitlines()
+    i = line_no - 2  # 0-based index of the line above the declaration
+    seen_doc_end = False
+    while i >= 0:
+        s = lines[i].strip()
+        if not s:
+            i -= 1; continue
+        if m := _DEPRECATED.search(s):
+            return {"message": m.group(1), "since": m.group(2)}
+        if s.endswith("-/"):
+            seen_doc_end = True; i -= 1; continue
+        if seen_doc_end:
+            if s.startswith("/--") or s.startswith("/-"): seen_doc_end = False
+            i -= 1; continue
+        if s.endswith(" in") or s.startswith("set_option") or s.startswith("@["):
+            i -= 1; continue
+        return None
+    return None
 
 
 # --------------------------------------------------------------------------
@@ -333,6 +368,7 @@ def census(lean_src: Path, kernel_src: Path) -> dict:
             "sound": [a["name"] for a in axioms if a["class"] == "sound"],
             "trust_extensions": [a["name"] for a in axioms if a["class"] == "trust-extension"],
             "unsoundness_markers": [a["name"] for a in axioms if a["class"] == "unsoundness-marker"],
+            "deprecated": {a["name"]: a["deprecated"] for a in axioms if a["deprecated"]},
             "rows": axioms,
         },
         "reduction_rules": {"total": len(rules), "rules": rules},

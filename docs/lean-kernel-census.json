@@ -1,8 +1,23 @@
 {
   "axioms": {
+    "deprecated": {
+      "Lean.ofReduceBool": {
+        "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+        "since": "2026-02-01"
+      },
+      "Lean.ofReduceNat": {
+        "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+        "since": "2026-02-01"
+      },
+      "Lean.trustCompiler": {
+        "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+        "since": "2026-02-01"
+      }
+    },
     "rows": [
       {
         "class": "sound",
+        "deprecated": null,
         "file": "Init/Core.lean",
         "line": 1591,
         "local_name": "propext",
@@ -12,6 +27,7 @@
       },
       {
         "class": "sound",
+        "deprecated": null,
         "file": "Init/Core.lean",
         "line": 1787,
         "local_name": "sound",
@@ -21,6 +37,10 @@
       },
       {
         "class": "trust-extension",
+        "deprecated": {
+          "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+          "since": "2026-02-01"
+        },
         "file": "Init/Core.lean",
         "line": 2378,
         "local_name": "trustCompiler",
@@ -30,6 +50,10 @@
       },
       {
         "class": "trust-extension",
+        "deprecated": {
+          "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+          "since": "2026-02-01"
+        },
         "file": "Init/Core.lean",
         "line": 2436,
         "local_name": "ofReduceBool",
@@ -39,6 +63,10 @@
       },
       {
         "class": "trust-extension",
+        "deprecated": {
+          "message": "in-kernel native reduction is deprecated; assert native evaluations with axioms instead",
+          "since": "2026-02-01"
+        },
         "file": "Init/Core.lean",
         "line": 2449,
         "local_name": "ofReduceNat",
@@ -48,6 +76,7 @@
       },
       {
         "class": "unsoundness-marker",
+        "deprecated": null,
         "file": "Init/Prelude.lean",
         "line": 747,
         "local_name": "sorryAx",
@@ -57,6 +86,7 @@
       },
       {
         "class": "sound",
+        "deprecated": null,
         "file": "Init/Prelude.lean",
         "line": 818,
         "local_name": "Classical.choice",

@@ -35,7 +35,8 @@ other than the rebuild not having been written that far.
 | the `@[spec]` layer | **17 triples**, output-determined and state-framed, axioms clean |
 | `mvcgen` on the REBUILT interpreter | **two gates close** (~11 s, ~10 s); the second closes the pilot's own fidelity gap. The full four-deep gate does **not** close at 8M heartbeats — §3.1 prices that |
 | the trunk's baseline (re-measured, not quoted) | diff_test **1394 / 0 failed / 118 whitelisted / 1276 matched**; script_corpus **65 / 0 failed / 50 matched / 15 loud** |
-| **the first parity run** | **846 / 1394 rows at parity (60.7 %), 548 frontier in 19 arms, ZERO divergences** |
+| run 1 — the first parity run | 846 / 1394 (60.7 %), 548 frontier in 19 arms, zero divergences |
+| **run 2 — after eleven buckets** | **1374 / 1394 (98.6 %)**, 10 frontier in 4 arms, 10 divergences — all ONE missing arm (§5.3.1) |
 
 **This is not the gate PASSING.** Acceptance is 1394/1394 with the trunk's own
 match/whitelist split, and the script half cannot be scored at all until
@@ -365,9 +366,11 @@ message carries the prefix
 language; a `notYet` is a statement about the rebuild's progress. They are
 spelled differently so no report can conflate them, and so the gate is a
 **burn-down list bucketed by arm** rather than a single number. The same
-distinction is kept at the runner: `--monadic --script` exits **2** (a capability
-error), never 3 (the loud semantic code), because the script executor is not
-rebuilt and answering 3 would score a missing module as a tier boundary.
+distinction was kept at the runner while the script executor did not exist:
+`--monadic --script` exited **2** (a capability error), never 3 (the loud
+semantic code), because answering 3 would have scored a missing module as a tier
+boundary. **That exit is now gone — the script executor is rebuilt** (§6.2), so
+both surfaces answer for real.
 
 ---
 
@@ -481,6 +484,41 @@ code is what keeps it from being mistaken for one.
 interpreters.** So refusal-surface parity holds *at the verdict level*: every
 whitelisted row still refuses under the rebuild. See §5.5 for what that does and
 does not claim.
+
+### 5.3.1 RUN 2 — 98.6 %, and the ten divergences were ONE bug
+
+After eleven buckets landed (dict displays, class instantiation, namedtuples,
+method calls, generators, closures, keyword arguments, try/except, assert, del,
+raise, set, any/all):
+
+```
+rows                      1394
+PARITY with the trunk     1374  (98.6%)
+frontier (`notYet`)         10  in 4 arms
+DIVERGENCES                 10   <-- FINDINGS
+```
+
+**All ten divergences were the same missing arm: the TRACE CLOCK.** The rebuild
+refused `time.time()` as an out-of-G1-tier module value where the trunk pops the
+next reading of the world's trace. That is a refusal surface **wider** than the
+trunk's — the one direction §2.1 forbids — and it is worth being precise about
+why the gate caught it rather than the frontier report:
+
+> the arm reused a **trunk-shaped** refusal message, so it did *not* carry the
+> `monadic-rebuild:` prefix and could not be bucketed as "not yet". It could only
+> appear as a DIVERGENCE. **A gate that compared statuses would have scored all
+> ten as agreement** — both sides answer `unsupported` on three of the rows —
+> and the remaining seven would have read as ordinary missing coverage.
+
+That is §5.5's instrument argument, paid off on a real bug rather than in
+principle. It also sharpens the `notYet` discipline: a genuinely-not-yet arm must
+say so **in its message**, and an arm that borrows a trunk message is claiming
+the trunk's semantics for itself.
+
+Fixed in the same session, along with the four remaining frontier arms —
+`max`/`min` over a heap referent (with the `moduleGenFree` guard that keeps them
+inside the heap-free fragment), `sorted` over a generator, and statically-poisoned
+module bindings consulting the live view.
 
 ### 5.4 THE PRE-REGISTRATION SCORECARD — one of three
 
@@ -608,6 +646,31 @@ against the **caller's** locals — threaded explicitly through `Kont.callClo`,
 because the world-typed field alone would have resolved captures against an empty
 frame.
 
+### 6.2 THE SCRIPT EXECUTOR — and 530 of its 893 lines were never rebuilt
+
+`runScript` executes EVERY top-level statement from an EMPTY world and PUBLISHES
+the frame's locals into `World.globals` after each one, because a module frame's
+locals ARE its globals. That per-statement publish is the whole reason the script
+layer is not just `execOpenList`: every compound statement needs a CONTROL SHELL
+that runs its body through the publishing loop instead of delegating the
+statement wholesale.
+
+**The admission machinery is reused WHOLE, and that is most of the file.**
+`classesCreationPure`, `defsBoundBefore`, `scriptFlushCoherent`, `scriptView`,
+`publishScriptGlobals`, `scriptRebindMsg`, `benignImportBinds`,
+`benignImportNames`, `dunderShaped` — roughly **530 of the trunk's 893 script
+lines** — are pure, and are imported rather than rebuilt. The rebuild owns the
+~320 lines of CONTROL, exactly as it owns `evalOpen`'s control and none of
+`evalBinOp`'s arithmetic. That ratio is the maximal-trunk principle showing up as
+a number.
+
+**A SECOND knot record, `SKont`.** Every shell is fuel-recursive — a `while`
+re-tests, a cursor re-reads — so none can be a member of a structural block. The
+device is the one `Kont` already is: each shell is an ordinary non-recursive
+function of `S`, and every loop step goes through a field, i.e. one fuel level
+down. That is the trunk's `execScriptStmts m fuel` recursion re-expressed, and it
+is the **fourth** distinct job the recursion-knot boundary has done.
+
 ### 6.1 THE EXCEPTIONS TIER IS WHERE THE SUBSTRATE PAYS FOR ITSELF
 
 `try`/`except` is the arm that would have been fiddliest by hand and is close to
@@ -667,10 +730,7 @@ any/all (6). What is left, in measured order:
    it (`Kont.kwArgs`).
 2. **The small tail — ~5 rows.** Statically-poisoned module bindings (2), live
    module bindings, `max`/`min` over a heap referent (1).
-3. **The script executor.** Until `runScript` is rebuilt the script half of the
-   gate reads 65/65 failed and cannot be scored at all. It is ~900 lines and it
-   is now the single largest remaining artifact — and with the closed-function
-   surface nearly green, its sequencing gate has been met.
+3. ~~The script executor.~~ **DONE** — see §6.2.
 
 Then, and only then, `twinAgrees` (§8.5) — which this rebuild does not attempt
 and does not need in order to be measured.

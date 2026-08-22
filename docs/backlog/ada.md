@@ -105,3 +105,34 @@ correctly blocked on `Core.Span` anyway.
 
 `docs_check` **83/83**, 23 illustrative-exempt. `ada_round_trip --self-test`
 **6/6**. `tools/triad.sh --self-test` **12/12**, no Lean.
+
+### Three corrections to this entry, found by checking rather than assuming
+
+**1. This entry's own commit message was MANGLED, by this lane's own habit.**
+The message described the compare fix as ending `with .` — the code snippet
+had been eaten. Cause: `git commit -m "…`code`…"` in a double-quoted string
+**command-substitutes the backticks**, which also produced a stray
+`return: too many arguments` that was easy to read past. Measured: 82
+backticks survive across the last 40 commits from other lanes, so this is
+**not** a shared trap — those lanes use a heredoc or `-F`, and this lane used
+`-m "…"`. Fixed by practice, not by force-push: rewriting pushed history to
+repair a commit message would disrupt every lane rebasing onto master, which
+is a real cost for a cosmetic gain. **Commit messages go through a
+single-quoted heredoc from here on.**
+
+**2. `28b9f5e` fixed SEVEN instruments, not §9.1's three — and it correctly
+did not touch this lane's.** Verified by reading the commit's own file list:
+no Ada file appears, and all three Ada censuses still end their compare path
+with a nonzero return. Checking this mattered because a sweep that "fixed"
+an instrument which was not broken is how a working gate acquires someone
+else's semantics.
+
+**3. This lane stamps NO git revision, and that is correct rather than a
+fourth defect.** §9.1's other finding is four `git_rev` helpers that swallow
+their failure and stamp `null`. The Ada instruments have none, because the
+corpora are **cross-repo and not git-tracked**: ACATS is pinned by its own
+`ACATS_Version` constant plus a per-file `sha256`, and the ARM by the edition
+read out of its own front matter. Content pinning is strictly stronger than a
+revision stamp for an artifact that lives outside the repository, so there is
+nothing here to fix — but "we have no `git_rev`" would have looked like the
+defect if it had not been explained.

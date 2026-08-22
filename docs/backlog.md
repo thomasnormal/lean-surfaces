@@ -15936,3 +15936,500 @@ behind a shared lock is the §L61/§L62 lesson applied — with the caveat that 
 one touches the GENERAL layer, which is why the blast radius was grepped and both
 files were compiled against each other before the push rather than after.
 
+
+## L66 — THE ECMASCRIPT TIER'S FOUNDING CHARTER: the spec is a definitional interpreter with twelve exceptions, and "undefined behaviour" occurs ONCE — asserting there is none (2026-08-22)
+*(§L59–§L65 were taken by sibling lanes while this pass ran — the family
+architecture, the SystemVerilog and Ada charters, the mvcgen pilot and F1 —
+so this lane takes §L66. The sunfish campaign wins every conflict.)*
+
+A new lane, chartered under Thomas's family directive: **ECMAScript in Lean**
+— the family's largest spec-having member, and Python's scientific twin. Same
+dynamic-language shape, opposite authority: Python's is a reference
+INTERPRETER you can ask, ECMAScript's is a DOCUMENT you must read. The
+charter is [docs/es-charter.md](es-charter.md); the measurements are in
+`docs/es262-census.json`, taken by `harness/es_census.py` on pinned
+revisions. **No semantics built, no Lean written, no existing file changed.**
+
+Pinned: `tc39/ecma262` `ed463bc1` (2026-08-20), `tc39/test262` `3655e746`
+(2026-08-10), `engine262` `c7939eaf` (2026-08-09).
+
+**THE FAMILY ROW IS RATIFIED (charter §0).** §L59's
+[docs/family-architecture.md](family-architecture.md) landed while this census
+ran and already carries an ECMAScript row with its edition tokens **PROPOSED**
+— the founding lane's to measure and ratify. Ratified: `<Lang>` = **`Es`**;
+authority **SPEC-MIRROR (ECMA-262) + OFFICIAL-SUITE (test262)**, the second
+half earned by measurement (§the corpus); **edition token `ES2026`**, with the
+**`es2026-errata` tag** as the pinned artifact — the token and the revision are
+deliberately different strings, because `es2026-errata` fails edition-token law
+1 (not a Lean identifier) while `ES2026` satisfies all four. Layout per §1.1:
+`LeanModels/Es/` version-neutral, `LeanModels/Es/ES2026/` created only when
+this edition first decides something for itself, which on the measured delta
+the syntax layer does not. Per §1.5 the envelope carries
+`"language_version": "ES2026"` — this charter's earlier drafts called it
+`edition_id` by analogy with `profile_id`; **the family's name wins**.
+
+**AND THE REGISTRY'S "blocked on SoftFloat" IS DOWNGRADED TO A SATISFIED
+DEPENDENCY.** §3.5.3 lists this tier as BLOCKING, correctly reasoning that a
+float-free JS core slice is nearly empty and that this lane must state
+SoftFloat as a DEPENDENCY rather than defer it. Stated, and answered in that
+document's own terms: §3.5.1's **Layer 1 (executable bit-level operations) is
+already supplied by core Lean on the pin**, so the ES tier depends on it
+deliberately — pinned interface, `#guard`s, no `native_decide` — rather than
+deferring or re-implementing; **Layer 2 (the spec algebra) is a dependency of
+this tier's PROOF layer**, which M1 does not reach, and this tier is a consumer
+not a builder of the commissioned lane's step 1; and **M1 is not blocked at
+all**, its rung 0 being the PARSE verdict over 18,114 tests, which evaluates
+nothing. One mapping adopted wholesale from §3.5.4: ECMAScript's
+**implementation-approximated** surface routes to **REFUSE(`environment`)**.
+The charter also fills §4.3's behaviour-class mapping row for this tier, and
+its headline is that **the undefined-behaviour cell is EMPTY** where C's arms
+eleven classes that never retire.
+
+### The instrument, and the two defects it found in itself
+
+`harness/es_census.py` — four modes (spec / suite / engine / frontend), a
+`--compare` mode because **three** upstream repositories move on their own
+schedules (one more than the C lane had), and `--self-test` running all three
+refusal paths: missing path, zero attribution, and unparseable frontmatter
+named BY FILE. ECMA-262's source is ecmarkup, so the normative content is
+machine-tagged and "how many definitions would a
+one-per-abstract-operation tier owe?" is a COUNT, not an estimate.
+
+Both self-inflicted defects were silent-wrong-answer shaped. (1) **The first
+step counter reported 0 steps across 2,301 algorithms** — it counted `<li>`,
+but `<emu-alg>` bodies are markdown ordered lists, so every algorithm looked
+empty and the charter's central claim had no number under it. A zero where a
+count belongs is now a REFUSAL. (2) The restricted YAML reader refused one
+real file, `language/statements/function/13.2-30-s.js`, whose whole
+frontmatter mapping is indented one space — legal YAML. It now de-indents by
+the common prefix and **counts the normalization: exactly 1 of 53,578**.
+Widening the parser until nothing refuses is how a census silently
+mis-buckets a corpus.
+
+### THE SPEC, measured
+
+**3,082,799 bytes / 55,131 lines of ecmarkup; 2,340 id-bearing sections
+(2,266 clauses + 73 annexes + 1 intro); 2,301
+numbered-step algorithms carrying 14,470 STEPS; 1,545 grammar blocks; 621
+`Assert:` steps.** The 1,417 TYPED clauses are the tier's definition count:
+548 built-in function, **500 abstract operation**, 206 sdo, 59 internal
+method, 48 concrete method, 36 numeric method, **16 host-defined AO, 4
+implementation-defined AO**.
+
+**THE STYLE FINDING, and it is not our reading — TC39 mechanizes it in its
+own repository.** The abrupt-completion plumbing is an OPERATOR, not prose:
+`? Foo(x)` at **2,405 sites**, `! Foo(x)` at 567, while `ReturnIfAbrupt` —
+the ES5 spelling they abbreviate — appears **0 times**. And `tc39/ecma262`
+runs **ESMeta — which mechanically EXTRACTS an executable interpreter from
+`spec.html` — in two workflows, both on EVERY pull request**: `esmeta
+tycheck` over the extracted definitions with an explicit twelve-entry ignore
+list (`esmeta-ignore.json`, out of 2,301 algorithms), and `esmeta yet-check`
+between base and head, flagging **newly-introduced prose the extractor cannot
+yet interpret**. A specification whose CI reviews every change for whether
+its automatic interpreter-extractor can still read it is, in substance, code
+— and that is the lane's best single argument: the extraction target already
+exists and is maintained; what does not exist is an extraction into a
+language where the result can be a THEOREM rather than a test pass.
+**The correspondence convention follows without
+argument: one Lean definition per typed clause, cited by `(edition,
+clause-id, step)`** — a TRIPLE, because clause ids are not stable (below).
+
+**engine262 is the same experiment already run once, and it is measurable**:
+68,429 lines of JavaScript over 364 files whose directory names are the
+spec's own (`abstract-ops`, `runtime-semantics`, `static-semantics`,
+`intrinsics`, `host-defined`), writing **1,782 distinct `#sec-…` anchors**
+over 1,868 sites, **1,152 of which resolve to a clause the pinned spec still
+defines**. A Lean-implements-the-spec tier is that experiment in a language
+where the result can be a theorem instead of a test pass.
+
+### VERSIONING: the pin recommendation, and the measurement that settles it
+
+The tip of `tc39/ecma262` calls itself **ECMAScript 2027, `status: draft`** —
+**the repository tip is never a published edition.** Editions are git TAGS
+and they exist: `es2024`, `es2025`, `es2026`, `es2026-errata`.
+
+**CITATION ROT IS MEASURED, not feared: 6,776 test262 rows over 239 distinct
+ids carry an `esid` naming a `sec-…` clause the pinned draft does not
+define.** The largest is
+`sec-for-in-and-for-of-statements-runtime-semantics-labelledevaluation` at
+1,819 rows — consolidated into `sec-runtime-semantics-labelledevaluation`
+when the syntax-directed operations were gathered into clause 8. **The
+semantics did not move; the CITATION rotted.** A tier citing ids against a
+moving `main` rots the same way, continuously, and finds out when a proof
+stops matching a section that no longer exists.
+
+**RECOMMENDATION: pin `es2026-errata`, pin test262 separately by revision,
+filter by `features:`.** A ratified edition makes "conformance"
+mean something that is not a moving target (the `-std=c23` reasoning); a tag
+is a `--compare`-checkable pin; pinning `main` makes every re-clone a
+different specification. **Honest cost, measured: test262 has no per-edition
+branch, so a pinned edition and a pinned suite always disagree about the
+newest material — exactly 106 of 18,114 core-slice tests, every one
+feature-tagged and filterable** (§the frontend, below).
+
+**AND THE RECOMMENDATION IS PRICED, NOT MERELY MADE — the `es2026` and
+`es2026-errata` tags were fetched and censused with the same instrument.**
+Draft to `es2026`: bytes 3,082,799 to 2,978,793, clauses 2,266 to 2,189,
+algorithms 2,301 to 2,239, **steps 14,470 to 14,221 (-1.7%)**, abstract
+operations 500 to 489, built-in functions 548 to 527, sdo 206 to 202. **And
+the TAXONOMY does not move at all: internal methods 59, concrete 48, numeric
+36, host-defined AOs 16, implementation-defined AOs 4,
+implementation-approximated mentions 47, "undefined behaviour" occurrences 1
+— every one UNCHANGED.** This is §L35's C-lane headline arriving
+independently in a second language — *the corpus grew and the SURFACE did
+not move* — and it means **the whole taxonomy this charter builds its refusal
+system around is edition-INVARIANT across the one boundary available to test
+it.** The core slice goes 924/1,406/6,375 to 907/1,365/6,216.
+**`es2026-errata` is free**: 764 bytes from `es2026` and **zero** in every
+structural count, so the "check the errata first" caveat is discharged by
+measurement rather than left as diligence. **One trap, and it would have been
+silent: the `es2026` tag's own ecmarkup metadata still reads `status:
+draft`** — the field is not flipped at tag time, so a lane identifying an
+edition by reading `status:` out of the document would conclude no edition
+exists. The TAG is the edition marker; the metadata block is not.
+
+### THE TAXONOMY IS LOPSIDED, AND THE LOPSIDEDNESS IS THE FINDING
+
+**"Undefined behaviour" occurs exactly ONCE in 3.08 MB of ECMA-262, and the
+sentence containing it asserts that there is none** (clause 29, the Memory
+Model: the model defines both sequential consistency and the values readable
+from races, *to wit, there is no undefined behaviour*). "Unspecified" occurs
+once, about how agents share memory. `in either order`, `order is not
+specified`, `unspecified order`, `any order`, `evaluated in an
+implementation-defined order`: **zero occurrences, all five.**
+
+This is the completion record, not editorial tidiness — 422 "normal
+completion", 318 "throw completion", 122 "abrupt completion", plus the 2,405
+`?` / 567 `!` sites. There is no third outcome to leave undefined. **And the
+escape hatch is constrained too: the spec requires that a host hook MUST
+return either a normal completion or a throw completion.** Even where the
+document hands definition to somebody else, it does not hand over the OUTCOME
+TYPE.
+
+What latitude exists is enumerable, and the spec's own four-way taxonomy is
+sharper than ours, so the tier adopts it verbatim: **implementation-defined**
+(57 mentions, deferred with no recommendation), **implementation-approximated**
+(47, deferred WITH a recommended ideal — 35 of them in Numbers and Dates,
+i.e. `Math` precision), **host-defined** (52, listed in the Host Layering
+Points annex), **host hook** (16 clauses). Both enumerable sets fit in a
+paragraph: the four implementation-defined AOs are **all time zones**
+(`GetNamedTimeZoneEpochNanoseconds`, `GetNamedTimeZoneOffsetNanoseconds`,
+`AvailableNamedTimeZoneIdentifiers`, `SystemTimeZoneIdentifier`) and the
+sixteen host hooks are named in the charter and the JSON. **The core slice
+barely touches any of it: 16 of 57 implementation-defined mentions and 2 of
+47 implementation-approximated fall in clauses 5-17.**
+
+**THE HORIZONTAL DATUM — ∀-ORDER HAS NOTHING TO RANGE OVER.** Thomas's
+∀-order ruling is the C lane's load-bearing constraint, honoured at C's 181
+short-circuit sites with 20 full expressions left for a may-alias check. In
+ECMAScript evaluation order is not latitude the standard declines to fix; it
+IS the numbered steps. The exception is exactly one clause — **clause 29, the
+Memory Model (28 clauses / 10 algorithms / 69 steps), which replaces the
+state function with a relational constraint system over memory events** —
+which is word for word what the C charter said of rung R6: *"the one rung
+that is not a widening… it replaces a state function with a memory-ORDER
+relation, which would change the interpreter's TYPE."* Two languages, two
+independent censuses, the same shape of obstacle in the same place. So:
+**whether ∀-order quantification is needed is a property of the
+SPECIFICATION'S STYLE, not of the language's dynamism.** C and ECMAScript are
+both imperative, mutable and real; the difference in order-quantification
+cost is entirely a difference in how the two documents are written.
+
+### THE CORPUS: test262, and it is the C lane's exit-status result again
+
+**53,872 `.js` files, 294 `_FIXTURE`, 53,578 tests, ZERO without
+frontmatter.** By area: `language/` 24,007, `built-ins/` 23,815, `intl402/`
+3,357, `staging/` 1,491, `annexB/` 1,086, `harness/` 116. **The
+language-versus-built-ins split is 24,007 to 23,815 — almost exactly even.**
+
+**test262 describes itself as the IMPLEMENTATION CONFORMANCE suite for "the
+latest drafts or the most recent published edition" of THREE Ecma standards —
+ECMA-262, ECMA-402 and ECMA-404** (which is the same fact the slice uses to
+exclude Intl), **and TC39 states plainly that coverage is NOT complete and
+that omissions and errors are possible.** The arbiter is fallible and says
+so, which is why §the oracle inversion makes a model-versus-engine
+disagreement a QUESTION rather than a verdict. It also explains the
+frontend's 106 over-rejects as a MECHANISM rather than an accident: the TC39
+process makes tests a Stage 4 *entrance* requirement, so a proposal's tests
+necessarily land in test262 BEFORE the edition that will contain it. A suite
+ahead of every edition is the process working, and `features:` is the filter
+the process ships with it.
+
+**THE PASS CRITERION IS THE FINDING.** A test passes by NOT throwing;
+`assert.js` throws a `Test262Error`; there is no expected-output file
+anywhere in the suite. `docs/c23-goal.md`'s best result was that its largest
+reachable corpus is scoreable on EXIT STATUS with zero output modeling —
+**test262 is that shape everywhere, all 53,578 of it.** No test in the suite
+compares byte-exact program output. The Python lane compares stdout because
+CPython programs print; this lane never has to. One precise qualification:
+the `async` flag makes `print` the completion SIGNAL (the runner waits for
+`Test262:AsyncTestComplete` or a `Test262:AsyncTestFailure:` prefix) — two
+fixed strings and a prefix match, not formatted output, across 5,624 tests
+the core slice excludes with the event loop anyway.
+
+Metadata, measured: `description` 53,577, `esid` 42,599, `info` 36,674,
+`features` 34,929 (198 distinct tags), `flags` 20,606, `includes` 13,621,
+`negative` 4,732. Flags: `generated` 17,003, `async` 5,624, `noStrict` 2,687,
+`module` 843, `onlyStrict` 678, `raw` 32. **`negative` is overwhelmingly one
+thing: phase `parse` 4,658 vs `runtime` 40 and `resolution` 34; type
+`SyntaxError` 4,696 of 4,732.** The harness is 38 include files / 8,826 lines
+total, and lopsided: `propertyHelper.js` 5,241 uses, `temporalHelpers.js`
+2,809, `testTypedArray.js` 2,084, `compareArray.js` 1,715 — the last two
+outside the core slice by construction, so the slice's harness obligation is
+`assert.js` + `sta.js` + `propertyHelper.js` and very little else.
+
+**LICENSE — verified, not assumed, because the C lane's c-testsuite trap is
+exactly this check.** test262's `LICENSE` is a genuine **BSD 3-clause** grant
+from Ecma International with a patent disclaimer; there is no per-case
+`.otag` layer and no copyleft island, so **test262 COULD be vendored**. It
+should not be: the recommendation stays **fetch-don't-vendor, pinned by
+revision**, for the C lane's reasons plus a new one — **the spec's PROSE is
+not MIT-licensed** (TC39's IP policy puts natural-language text under Ecma's
+alternative copyright notice and only source code under the MIT-style
+software policy), so this lane paraphrases a document it may not
+redistribute. Vendoring the suite while paraphrasing the spec would apply two
+standards to two artifacts from the same committee. engine262 is MIT; acorn
+is MIT and is fetched, never vendored.
+
+### THE CORE SLICE — a measured slicing, on both sides
+
+**ES-core-v0 = ECMA-262 clauses 5-17 minus four things, each excluded with
+its number**: Annex B (52 clauses / 39 algs / 171 steps; 1,086 tests);
+**ECMA-402, which is measured to be NOT IN ECMA-262 AT ALL** — a separate
+standard, 3,357 tests, and 7,760 unresolved `esid` rows pointing outside the
+document (Intl and Temporal); the module system (731 tests plus 843
+`module`-flagged; `HostLoadImportedModule` is a host hook); and jobs/the
+event loop (5,624 `async`-flagged).
+
+**What remains: 924 spec clauses / 1,406 algorithms / 6,375 steps / 1,348
+grammar blocks — 50% of the document's bytes and 44% of its steps — scored
+against 18,114 test262 tests, of which 16,702 need NO harness include at
+all.** Inside it: 13,842 positive, **4,248 negative `phase: parse`**, 24
+negative runtime, 82 feature tags. Built-ins are counted SEPARATELY (23,109
+tests) rather than folded in: they are the libc-analogue, and an unmodeled
+built-in is an **unmodeled-intrinsic REFUSE** that retires by widening the
+slice — never a language-tier gap. **REFUSE has three causes and they are
+never pooled** (out-of-tier construct / unmodeled intrinsic / host- or
+implementation-defined, the last never retiring). **There is no fourth, and
+its absence is the taxonomy result**: the C lane arms eleven UB classes that
+never retire; this lane arms none, because the spec defines every outcome.
+What the C lane spends on detecting meaninglessness, this lane spends on
+volume.
+
+### THE FIRST MILESTONE, and it was MEASURED rather than asserted
+
+M1 is the frontend census, and the census was taken with the charter, because
+a milestone whose feasibility is asserted is not planned.
+`harness/es/acorn_probe.mjs` runs **one node process for the whole batch, one
+row per job, 0 runner errors**, over all 18,114 core-slice tests.
+
+**SIXTY-SIX distinct ESTree node types cover the entire language core.** The
+C lane's rung-0 vocabulary was 45 clang node kinds and that turned out to
+clear 83% of five C suites. A `LeanModels/Es/Ast.lean` is a bounded object,
+and the census says how bounded before anyone writes it.
+
+**THE ROUND-TRIP GUARD, measured in advance.** test262's 4,248 core-slice
+`negative: {phase: parse}` rows are a claim about the PARSER that a parser
+can be scored against directly. acorn agrees with the suite on **17,723 of
+18,114 — 97.8% — before anything is built**, and both disagreement classes
+decompose cleanly rather than being mysteries:
+
+* **All 106 over-rejects are feature-gated proposals**, not parser bugs:
+  `dynamic-import` 84 (import-defer / source-phase variants), `decorators`
+  22, `class` 22. **This is the living-spec-versus-edition question landing
+  in the frontend, costing exactly 106 tests, all filterable by `features:`**
+  — which is the concrete price of the `es2026` recommendation.
+* **The 285 under-rejects are EARLY ERRORS** — static semantics the parser
+  does not carry. By feature: 181 untagged (the ES5/ES2015-era rules),
+  `destructuring-binding` 53, `async-iteration` 17,
+  `destructuring-assignment` 16, `generators` 10. By directory:
+  `statements/variable` 31, `expressions/assignment` 26,
+  `expressions/compound-assignment` 23, `statements/for-in` 22,
+  `expressions/arrow-function` 16, `statements/for-of` 16. **An early-error
+  tier is enumerated and 285 tests wide.**
+
+Six inches, in dependency order: (1) instrument + charter, LANDED; (2) pin
+the edition — **the DELTA draft→`es2026` is published above**, so what waits
+on Thomas is only WHICH tag and recording it as an `edition_id`; (3) `docs/es-envelope-schema.md`
+(`es-0.1`), every vocabulary table DERIVED from the census's 66 types rather
+than chosen, with `edition_id` first-class for the reason `profile_id` is
+first-class in `c-0.1`; (4) `extractors/es/extract.py` under the never-fail
+contract (anchors: Python 1,955 lines, SV 2,495, C 531 — ESTree is JSON
+already, so nearer the C end); (5) `LeanModels/Es/{Ast,Json}.lean`; (6) one
+program round-tripped with `#guard`s, the fixture deliberately paired with a
+parse-negative test **so the tier's first word about ECMAScript includes
+something it must REJECT** — the reasoning that chose `pyfloordiv`.
+
+### THE PYTHON COMPARISON, which is the reason the lane exists
+
+**Transfers, and it is most of the machine**: the whole of
+`docs/c-tier-charter.md` §2.5 (the `#guard`/non-vacuity gate, zero `sorry`,
+zero `native_decide`, envelope discipline with the frontend FAMILY in the
+cache key, the batch protocol, 3-and-4-never-agreement, no silencing
+whitelists); the extractor→envelope→`load_program`→`#guard` pipeline; the
+free-scrutinee dispatch discipline (H3's finding, which is load-bearing here
+immediately because property access is a prototype WALK); the
+frozen-recursion-point technique with `termination_by structural fuel` on
+every mutual member. **And `Run σ α` verbatim — with a bonus C did not get:
+the Completion Record IS `Run`.** `normal`→`.ok`, `throw`→`.exn`, `.timeout`
+is fuel, `.unsupported` is the tier gap. The covenant the C charter called
+"the four constructors, not Python" turns out to be the specification's own
+type.
+
+**Cannot transfer, four, each measured or named.** (a) **The value model,
+because Number is a float** — `1 + 1` is IEEE-754 double arithmetic and there
+is no integer type in the language core besides BigInt, so where the Python
+lane deferred floats for nine rungs this lane meets them on line one. **AND
+THE PYTHON LANE'S RECORDED REASON FOR DEFERRING DOES NOT HOLD ON THE PIN —
+measured, not inherited.** `docs/completeness.md` §6 calls `float` a DECISION
+rather than a work item on the grounds that *"Lean's `Float` is not
+kernel-reducible, so `#py_check` and every captured `rfl` run would break"*.
+Run against `leanprover/lean4:v4.33.0-rc1` with **no imports**:
+`(1.5 : Float) + 2.5 = 4.0` closes **by `rfl`**, and so does
+**`(0.1 : Float) + 0.2 = 0.30000000000000004`** — genuine binary64 rounding
+decided in the KERNEL — with `#guard` firing on Float `==`, `1.0/0.0`,
+`NaN != NaN`, `1.0 + 1e16 == 1e16` and `Float.toString`. Structurally
+`Float` is a structure over `Float.Model`, a `UInt64` of bits plus a proof of
+`Float.Model.Format.binary64.Valid`, with `DecidableEq`, shipped as a
+**27-file / 2,918-line** core tree carrying `round`, `roundToNearestEven`,
+`roundedMantissa`, `roundToInt`, `roundWithAccuracy`. **So the blocker is not
+where the record says and it splits in two: Layer 1 (EVALUATION) is already
+provided by core — the tier can RUN and SCORE Number semantics with no number
+decision taken at all — while Layer 2 (REASONING) is the real gap, and those
+2,918 lines carry THREE theorems.** The definitions of the round-of-exact
+algebra exist and reduce; the algebra about them does not. **This is the §L39
+pattern again — a deferral that outlived its cause, recorded once, never
+re-checked, found by running the thing.** `docs/completeness.md` is stale on
+this point and is **recorded here, not edited**, because the Python campaign
+owns that file (the courtesy §L39 extended to `AGENTS.md`). **On rebase this
+turned out to have been measured independently by §L59's family architecture
+the same day (§3.5, which lands first and is the citable ruling) — two lanes
+refuting a three-times-recorded premise from different directions without
+coordination**, so the probe stays as a replication rather than being deleted
+in favour of the citation. Consequence: the Number question leaves M1 entirely
+and leaves this lane's decision list. (b) **Prototype chains**
+— Python flattens methods into `Module.functions` under qualified names;
+ECMAScript walks `[[Prototype]]` through `[[Get]]`, and clause 10 is 131
+clauses / 124 algorithms / **1,150 steps, the largest step count in the
+language core**, typing 59 internal and 48 concrete methods. The technique
+transfers; the flattening does not. (c) **Completion records as VALUES** —
+`break`/`continue`/`return` carry a `[[Target]]` and are combined by
+`UpdateEmpty`; in Python the flow is in the interpreter, here it is in the
+value the semantics computes, and transplanting the Python arms is the
+near-miss that is right on 90% of a corpus and silently wrong on labelled
+`continue`. (d) **The event loop**, deferred but NOT covered by the Python
+lane's "four productions, near-zero value" ruling: 5,624 tests, clause 27 at
+213 clauses / 1,316 steps, reached through four of the sixteen host hooks.
+
+**THE ORACLE INVERSION — the horizontality lesson, and it changes a DOCTRINE
+rather than a number.** Python's oracle is CPython pinned at 3.9, and under
+that arrangement **DIVERGE means the model is wrong**, definitionally,
+because CPython IS the specification of Python. **ECMAScript has no reference
+implementation.** Any engine — V8/node, JSC, SpiderMonkey, engine262 — is
+itself only a claimant, so a model-versus-engine disagreement has THREE
+causes: the model is wrong, **the engine is wrong** (not hypothetical — it is
+why test262 exists and why engines carry per-test expectation files), or the
+spec under-determines the observable. **Consequence adopted from the start:
+the scoreboard is scored against TEST262'S EXPECTATION, never against an
+engine's behaviour**; an engine is a cross-check, and a disagreement is a
+QUESTION resolved by reading the cited clause. A lane that copied the Python
+lane's DIVERGE rule wholesale would have quietly promoted V8 to the status of
+a standard.
+
+**THE DRIVER ARTIFACT — there is no ctwin-analogue, checked rather than
+assumed: the sunfish repository contains ZERO `.js`, `.mjs` or `.ts` files.**
+Recommended rung 0 is **a test262 slice** — 18,114 tests, already pinned,
+nothing to write or maintain, and the parse rung scoreable immediately, which
+is exactly how `docs/c23-goal.md` chose the torture corpus. **`sunfish.js`, a
+hand-written JS twin, is recorded as an endgame candidate and NOT proposed**:
+it would give the square a third vertex and make the family's central claim
+testable, but the C charter priced the two-vertex twin-bridge at 150+ sessions
+and called it "a program, not a milestone"; a third is not cheaper.
+
+### DECISION POINTS BACK TO THOMAS
+
+1. **THE PINNED EDITION** — recommendation **`es2026-errata`**, test262
+   pinned separately and filtered by `features:`. The alternative is tracking
+   `main`, the ES2027 draft, which moves continuously. **The choice is now
+   PRICED: the taxonomy is edition-invariant, so pinning costs 249 numbered
+   steps of newer built-in material and nothing structural.** Still the one
+   item on M1's critical path — inch 2's MEASUREMENT half is done, its
+   mechanical half (recording the tag as an `edition_id` that both the census
+   and the envelope read) waits on which tag.
+2. **THE NUMBER QUESTION — RESOLVED DOWNWARD, and now SUPERSEDED by §L59's
+   SoftFloat ruling.** Core `Float` on the pin is a kernel-reducible bit-level
+   binary64 model (verified independently here by `rfl` on
+   `0.1 + 0.2 = 0.30000000000000004`), which is §3.5.1's Layer 1 — a
+   dependency this tier states and that is already satisfied. Layer 2 belongs
+   to the commissioned SoftFloat lane and binds only at this tier's first
+   theorem about float arithmetic. **Not a decision this charter asks for, and
+   not blocking M1.** Listed only to record that `docs/completeness.md` §6 is
+   stale on the kernel-reducibility point.
+3. **THE DRIVER ARTIFACT** — test262 slice (recommended) vs a `sunfish.js`
+   twin vs a real JS program Thomas names. Nothing exists in reach.
+4. **`Run σ ε α`** — ECMAScript is the second consumer the C charter said
+   would make this cheap (§L35 priced the move at 149 lines / 24 files /
+   1,251 sites), and its throw payload is an **arbitrary language value**,
+   not a closed enum. Owed at the first evaluation rule, not before.
+
+### Triad — PARTIAL, and the missing third is stated rather than assumed
+
+**What was RUN, and its result:**
+
+* `docs_check` **74/74 marked blocks green**, 15 illustrative-exempt (73 → 74:
+  the charter's `Run` quote is MARKED, so it is gate-enforced against the tree
+  and a drift in it is a red check rather than a stale quotation).
+* `es_census.py --self-test` — **green on all three refusal paths** plus the
+  positive control over the corpus's real frontmatter shapes.
+* `es_census.py --compare` over all four sections — **byte-identical on a
+  double run**.
+* `harness/es/float_probe.lean` under the pinned `lean` (no lake, no imports)
+  — **all nine kernel claims pass, exit 0, silent**; and NON-VACUOUS, checked:
+  flipping one expected string fails with the expression printed.
+
+**What was NOT run, and why — and the FIRST post-mortem here was wrong,
+which is the reason this paragraph is written twice.** `lake build`,
+`diff_test` and `script_corpus` did not run. The machine-wide build lock was
+held continuously by a sibling lane's live build, and **two successive queued
+triads died at exit 144 while still spinning on the lock.** This entry first
+recorded that as the resource-kill signature amendment 2 names — a reasonable
+reading of 144 under a saturated box, and **wrong**. The calmness lane
+self-reported that its orphan cleanup `pkill`ed on the shared *session
+directory* path prefix, which caught this lane's processes: **a path prefix is
+not parentage.** So the deaths were EXTERNAL, not load, and the standing
+"count workers by PARENTAGE" rule has now been paid for by a second lane.
+Recording the corrected cause rather than the plausible one is the point: a
+wrong post-mortem in the ledger is exactly what this document keeps catching
+elsewhere.
+
+**Why that is a defensible landing here, stated precisely rather than waved
+at.** This pass adds no Lean that anything builds: the single `.lean` file is
+`harness/es/float_probe.lean`, which is IMPORT-FREE, lives under `harness/`
+(outside the `Examples` glob), is named by neither `lakefile.toml` nor
+`LeanModels.lean`, and was executed directly by the pinned `lean`. Nothing
+else in the pass is Lean at all, so no axioms moved and there is no `sorry`
+and no `native_decide` to move. **The build third is OWED, not claimed** — and
+writing the numbers a template would have supplied, for a build never
+observed, is exactly the failure the charter's own last paragraph names.
+**Next lane to hold the lock should run the full triad on this commit.**
+
+### What landed
+
+`harness/es_census.py` (spec / suite / engine / frontend modes, `--compare`,
+`--self-test`), `harness/es/acorn_probe.mjs`, `harness/es/float_probe.lean`
+(nine import-free KERNEL claims re-measuring the float deferral — needs no
+build, so it cannot break one; non-vacuous: a flipped expectation fails with
+the expression printed), `docs/es262-census.json`, `docs/es-charter.md`, and
+this §. **The only Lean is an import-free probe that nothing imports and no
+build target names; no existing file changed except this one, append-only.**
+The edition-tag census (§the recommendation) is re-derivable from the same
+instrument rather than stored as a second artifact — it takes any
+`spec.html`.
+
+### One operational note
+
+The frontend probe over 18,114 files takes ~100 s in ONE node process. The
+per-file shape was never tried, for the reason recorded three times in this
+document: 615 differential rows once went from hours to ~11 s by stopping the
+per-row spawn. A new lane's first instrument is exactly where that lesson
+gets re-learned expensively.

@@ -729,8 +729,11 @@ not exist.
 10. **The coverage-by-clause tooling** (§5.5) — neutral SHAPE, per-language
     content.
 11. **Component #1 — the monad and its verification-condition generator**
-    (§3.4). One `SemM`, one `WPMonad` instance, the default `mvcgen`. No
-    language writes a vcgen.
+    (§3.4). One `SemM` — `ExceptT ρ (StateT W Halt)`, in that order — one
+    `WPMonad` instance, the default `mvcgen`. No language writes a vcgen
+    **on the fuel-free fragment**; at the fuel-recursive points each
+    language still assembles its own threshold form, which the pilot
+    measured and §3.4 states as the bound.
 12. **Component #2 — SoftFloat** (§3.5). Layer 1 (executable bit-level
     IEEE 754) is supplied by core Lean on the pinned toolchain; layer 2
     (the round-of-exact spec algebra) is the family's build. Consumed by
@@ -769,33 +772,48 @@ not, and a typeclass with two irreconcilable instances is a decoration.
 
 ### 3.4 ONE MONAD, ONE vcgen — the substrate's centerpiece
 
-**The question: does every language need its own `mvcgen`? No.** Two
-shared layers answer it, and the second is already on the pinned
-toolchain.
+**The question: does every language need its own `mvcgen`?** The answer is
+a SPLIT, measured by the pilot (`docs/mvcgen-pilot.md`, §L61): **no on the
+fuel-free fragment, yes at the fuel-recursive points.** This section states
+the design; every number in it is the pilot's, and where the pilot refuted
+this document it says so.
 
-**Layer 1 — one monad family.** Every interpreter in the family is a
-state-threading, exception-carrying, fuel-indexed step function. Written
-as such:
+**Layer 1 — one monad family, and the layer ORDER is load-bearing.**
 
 ```lean
 -- (illustrative — the substrate shape, not yet in the tree)
-abbrev SemM (W : Type) (ρ : Type) := StateT W (ExceptT ρ Halt)
+abbrev SemM (W : Type) (ρ : Type) := ExceptT ρ (StateT W Halt)
 ```
 
-with `W` the language's World and `ρ` its error payload. `Run σ α` is
-already this shape: σ is a genuine type parameter, `.ok`/`.exn` retain
-state, and `.timeout`/`.unsupported` are the state-discarding halts. The C
-tier reuses it verbatim — `Run CWorld CVal` typechecks against the existing
-definition today — and that is the evidence, not a hope. SystemVerilog and
-a future Go differ from Python only in `W`.
+**This document first wrote `StateT W (ExceptT ρ Halt)`, and that is
+REFUTED BY `rfl`.** `StateT` outside `ExceptT` **discards the state on a
+raise** — the shapes are `W → Except ρ (α × W)` versus
+`W → (Except ρ α × W)`, and only the second keeps `W` on the error branch.
+`Run`'s `.exn` RETAINS state, and `PyPost.err` is state-aware for exactly
+that reason. The difference is visible in the `PostShape` barrel:
+`ρ → ULift Prop` in the wrong order, **`ρ → W → ULift Prop`** in the right
+one. **The wrong order cannot state the tier's own error postcondition.**
+One line, load-bearing for every tier written against the sketch, and
+verified here independently before propagating.
+
+**`Run σ α` IS that stack — proved, not asserted.** The pilot's
+`ofRun`/`toRun` are mutually inverse in 22 lines, and both stacks `#synth`
+a `WPMonad` with **zero instances written**. That **retires the 2026-08-13
+spike's obstacle 1** — *"`Run` is not a monad"* — as a permanent obstacle:
+it was a fact about the tree, not about the type. The instance was never
+unavailable; it was never asked for.
 
 Two design constraints make this work and both are load-bearing:
 
-* **Fuel stays OUT of the monad.** It is an index on the step function
-  (`step : Nat → Stmt → SemM W ρ Unit`), not a reader layer, because
-  `fuelMono` and the ∃-threshold form are theorems about the *family* of
-  monadic programs indexed by fuel. Put fuel in the monad and every triple
-  carries it.
+* **Fuel stays OUT of the monad — and the reason is stronger than this
+  document originally gave.** It is an index on the step function
+  (`step : Nat → Stmt → SemM W ρ Unit`), not a reader layer. The original
+  argument was that `fuelMono` and the ∃-threshold form are theorems about
+  a *family* of programs. The pilot's is harder: **fuel as a monad layer
+  does not typecheck.** Fuel's job is to BE the recursion argument, so
+  hidden in state it is not an argument and the interpreter fails to show
+  termination — *"`loopF` does not take any (non-fixed) arguments"*. The
+  alternative does not merely cost something; it does not exist.
 * **Nondeterminism enters as an explicit PARAMETER**, per the ∀-resolution
   ruling — a schedule, an evaluation order, an entropy stream. The monad
   stays deterministic and the ∀ lives at theorem level. This is what keeps
@@ -810,14 +828,67 @@ properties of the stack, instead of once per language.
 on the pinned toolchain `leanprover/lean4:v4.33.0-rc1`: `Std.Do.Triple`,
 `Std.Do.WP`, `Std.Do.WPMonad`, `Std.Do.PostShape`, `SPred`, `PostCond` and
 the `mvcgen` tactic all resolve, and `Triple.pure` elaborates with its
-`⦃P⦄ … ⦃Q⦄` notation. **No toolchain bump is required** — the caveat is
-retired by measurement rather than left open. (The pilot must still show
-mvcgen can *drive a real goal* here; existence and usability are different
-claims.)
+`⦃P⦄ … ⦃Q⦄` notation. **No toolchain bump is required.** The pilot
+independently confirmed this and sharpened the import boundary: `@[spec]`
+is a BUILTIN attribute needing no import — which is why `Logic.lean`
+already uses it — while the tactic needs `import Std.Do` and
+`import Std.Tactic.Do`, both CORE modules, so `lakefile.toml` and
+`lake-manifest.json` are untouched. **The expensive experiment this
+document anticipated does not exist.**
 
-Per-language work under this scheme is then exactly: **the World type, the
-error type, the primitive step functions, and `@[spec]` lemmas for the
-primitives.** No language writes a vcgen.
+Per-language work under this scheme is then: **the World type, the error
+type, the primitive step functions, and `@[spec]` lemmas for the
+primitives.** Priced by the pilot against C's six design pieces: **≈2 type
+declarations + 2 `abbrev`s + ~14 `@[spec]` lemmas ≈ 120 lines**, against
+the **5 343 lines** of Python-specific walker (`VC` 546 + `VC2` 939 +
+`VCTactic` 3 371 + `LoopTactic` 487) that the shared substrate replaces.
+The three never-pooled refusal causes (§5.2) cost nothing — one `.except`
+layer each, free by composition — and **C's drain amendment at its 181
+short-circuit sites IS the altitude law, at 3 `@[spec]` lemmas.**
+
+**THE BOUND, and it corrects this document.** §3.2 item 11 said *"no
+language writes a vcgen."* That is **true on the fuel-free fragment and
+false at the fuel-recursive points.** At a symbolic fuel `F`, `mvcgen`
+returns the goal **unchanged after 1 m 31 s**: nothing in `Std.Do` relates
+two runs at DIFFERENT fuels, because `Triple` is unary on one program while
+`fuelMono` and the threshold form are about a family. So
+`∃ t, ∀ F ≥ t, run F = .ok w v` is **neither produced nor consumed by
+mvcgen; it is assembled around it**, and each language still writes its own
+threshold assembly at `call`, loop, and generator points. The saving is
+real, it is large, and it is **bounded** — and a tier choosing the
+∃-fuel route is choosing the route mvcgen cannot walk, which is a decision
+to take consciously and with these numbers.
+
+**The fuel-free fragment is nonetheless large**, which is why the saving
+survives the bound: the pilot's `evalM` is structural on `Expr`, and a
+whole real gate's slice carries no fuel numeral anywhere. Fuel is owed only
+at `callIn` / `execWhile` / `execFor` / `heapEq` / generators.
+
+**Four laws to adopt now, at zero cost**, all measured rather than
+proposed:
+
+* **Altitude lemmas persist, and `@[spec]` is their registry.** With the
+  primitives UNFOLDED, `mvcgen` leaves **259+ VCs** and `mvcgen_trivial`
+  fails outright; the same goal with four `@[spec]` triples leaves **12**,
+  all pure, and closes. The family's existing altitude lemmas do not merely
+  resemble `Spec` lemmas — they transliterate.
+* **Specs must be OUTPUT-DETERMINED.** A spec taking the answer as an INPUT
+  made mvcgen unify the result metavariable with a loop ACCUMULATOR — a
+  wrong-but-typechecking instantiation — leaving 23 VCs with dependent
+  metavariables. Restated so the value is determined by the postcondition:
+  3 and 12 VCs, none.
+* **`Triple` does not frame the state.** A read-only primitive must SAY it
+  leaves the state unchanged; Std ships `Triple.observe` for it.
+* **Never a bare polymorphic `throw`** — route every refusal through a
+  NAMED primitive with its own `@[spec]` lemma. This is forced by a real
+  Std bug the pilot found in twenty lines (`Spec.throw_Except` carries
+  binders its conclusion does not determine, yielding universe-level
+  metavariables), and **it is what this family wants anyway**: a refusal is
+  a first-class notion here, and mvcgen rewards making it one.
+
+**Risk, recorded straight:** `mvcgen` warns on every invocation that it is
+experimental and should be avoided in production, and one Std bug surfaced
+in twenty lines of probing.
 
 **And none of this stratum is trusted (§0.1, principle II).** The monad is
 part of the definition — it is how the interpreter is written — but the
@@ -836,27 +907,42 @@ on this toolchain, and `Logic.lean` says so. The migration renames a
 practice that was arrived at independently; that convergence is the
 argument for it.
 
-**Three caveats, stated because they are real.**
+**Three caveats. Two are retired by measurement; the third is now a
+standing rule with a named blocker.**
 
-1. **Deep embedding.** `mvcgen` reasons about Lean programs in a monad.
-   The interpreter is such a program, but its SUBJECT is an AST value, so
-   the triples are about `exec stmt` for a symbolic `stmt` and the vcgen
-   must unfold the interpreter's `match` on a **pinned** program literal —
-   which is exactly what `py_simp`/`py_prove` do today, and why they work.
-   The pilot validates this and nothing in this document assumes it.
-2. **Toolchain.** Retired by measurement above. The pilot re-checks it
-   rather than trusting this paragraph, because a bump would touch every
-   lane.
-3. **Python is MID-CAMPAIGN.** The prescription is asymmetric on purpose:
-   **new tiers are monadic from day one; Python is BRIDGED** — adapter
-   lemmas relating `PyTriple` to `Std.Do.Triple` — until the
-   `RecursionStep` campaign closes. The retrofit is priced then, on the
-   numbers of that day, and it is **never forced**. §3.6 applies the same
-   trigger rule to `Run`.
+1. **Deep embedding — RETIRED.** `mvcgen` reasons about Lean programs in a
+   monad, and the interpreter's SUBJECT is an AST value, so the vcgen must
+   unfold the interpreter's `match` on a **pinned** program literal. The
+   pilot did exactly this on a real gate and it worked, closing the same
+   fact with the gate's own fourteen premises.
+2. **Toolchain — RETIRED**, twice independently (this document's probes and
+   the pilot's census). `Std.Do` is already at the pin.
+3. **Python is MID-CAMPAIGN — and this is now the STANDING RULE, with its
+   blocker named.** **New tiers are monadic from day one; Python BRIDGES,
+   it does not migrate.** The bridge is priced (`pyPostToPostCond` over five
+   `PyPost` arms plus the except layers, with `ret`/`brk`/`cont` riding a
+   flow SUM — core's own `α ⊕ β` idiom — and `PyTriple.of_triple`), and its
+   load-bearing member is **`twinAgrees`: an ADEQUACY theorem**. That is
+   the general law, not a Python quirk:
 
-A pilot lane is running the measured experiment concurrently. **Its report
-is the evidence for this section and its numbers replace these
-paragraphs' estimates**; nothing here should be read as a result.
+   > **Any route that introduces a second semantics owes an adequacy
+   > theorem, and the differential corpus does not discharge it.**
+
+   The pilot's monadic twin is executable and `#guard`ed on a fixture, so
+   it *could* join the differential harness — at the price of a maintained
+   second interpreter, which the model-matches-code law then binds. Its
+   fidelity gap to the real interpreter is exact and stated (name
+   resolution consults the static globals fold first; the twin's does not).
+   **The 5 343-line saving is not collectable without the adequacy theorem
+   Python cannot afford to owe mid-campaign.** Revisit when the campaign
+   closes, on that day's numbers, **never forced.** §3.8 applies the same
+   trigger discipline to `Run`.
+
+**The pilot is landed** (`docs/mvcgen-pilot.md`, §L61) and its numbers
+replace this section's earlier estimates throughout. Its recommendation:
+new tiers adopt the substrate and use mvcgen on the fuel-free fragment,
+**deciding fuel's fate BEFORE writing the interpreter** — which is a
+founding-checklist item, not an afterthought.
 
 ### 3.5 SOFTFLOAT — shared component #2, and the premise it was deferred on is FALSE
 
@@ -1517,11 +1603,27 @@ Concurrent Lean builds took the development machine down — load 29 across
 
    ```
    while ! mkdir /tmp/ls-build.lock 2>/dev/null; do sleep 60; done
-   trap 'rmdir /tmp/ls-build.lock' EXIT
+   trap 'rm -rf /tmp/ls-build.lock || echo "LOCK RELEASE FAILED" >&2' EXIT
    ```
 
    Release promptly. **Never hold it while thinking or editing.**
-2. **Cap parallelism even under the lock**: `lake build -j4`.
+
+   **AMENDMENT 2 — the release must be `rm -rf` and its status must be
+   checked.** A `rmdir` release composed with an owner-stamp file inside
+   the lock directory **fails silently**: `rmdir` refuses a non-empty
+   directory, the `trap` swallows the status, and the lock leaks — after
+   which every other lane blocks forever on a lock nobody holds. This
+   happened. `rm -rf` removes the directory whatever it contains, and the
+   `|| echo` makes a failed release loud instead of invisible.
+2. **Cap parallelism under the lock — but NOT with `-j4` on this lake**,
+   where it is an argument error rather than a flag. Use the environment
+   or the toolchain's accepted spelling, and verify the command runs
+   before relying on it; a build that dies on its own flags is a build
+   that did not happen.
+
+   **Exit status 143 is a RESOURCE KILL**, not a build failure — the OS
+   terminated the job. Re-read it as "the machine was oversubscribed",
+   check the lock discipline, and never record it as a red build.
 3. **Scratch-file loops** — `lake env lean` on small dependency-free files
    — are allowed WITHOUT the lock, but must run under `nice -n 19` and
    stay small.
@@ -1584,7 +1686,14 @@ real until an instrument re-derives it.**
    RUN.
 6. **`LeanModels/<Lang>/`** — the AST, the ingester, and structural
    `#guard`s the census independently knows. No semantics.
-7. **`LeanModels/<Lang>/<Ver>/`** — the semantics, and the manifest
+7. **DECIDE FUEL'S FATE — before writing the interpreter, not after.**
+   The fuel-free fragment gets the shared `mvcgen` for ~120 lines of
+   `@[spec]`; the fuel-recursive points get the tier's own threshold
+   assembly and mvcgen makes no progress there (§3.4). The two routes
+   differ in the interpreter's TYPE, so this is not a proof-layer choice
+   that can be deferred — and a tier that also wants kernel-reducible runs
+   (`#guard` at a fixed fuel) has already chosen fuel.
+8. **`LeanModels/<Lang>/<Ver>/`** — the semantics, and the manifest
    (§5.5) starting the same day.
 
 ---

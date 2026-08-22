@@ -14494,6 +14494,67 @@ directory and organization — the same rule this correction invokes. It is the 
 lane's file and their charter is in flight, so the redaction is theirs; naming it
 here is what stops it being lost.
 
+### THE MVCGEN PILOT'S CORRECTION (§L61) — §3.4's layer order was REFUTED BY RFL
+
+Verified here before propagating, with an independent `rfl` probe:
+`StateT W (ExceptT rho Id) a` unfolds to `W -> Except rho (a x W)` — **no `W` on
+the error branch** — while `ExceptT rho (StateT W Id) a` unfolds to
+`W -> (Except rho a x W)`, where the state survives a raise. `Run`'s `.exn`
+RETAINS state, so **the substrate is `ExceptT ρ (StateT W Halt)`** and the two
+are not interchangeable: the wrong order's `PostShape` barrel is `ρ → ULift
+Prop`, with no `W`, so it **cannot state the tier's own error postcondition**.
+§3.4 is corrected, and the refuted order is left named in the text so nobody
+re-derives it.
+
+**Folded in from the pilot, replacing this section's estimates:**
+
+* **`Run σ α` IS the stack, proved** — `ofRun`/`toRun` mutually inverse in 22
+  lines, both stacks `#synth` a `WPMonad` with zero instances written. This
+  RETIRES the 2026-08-13 spike's obstacle 1 (*"Run is not a monad"*): it was a
+  fact about the tree, not the type.
+* **Fuel is NEVER a monad layer — for a harder reason than §L59 gave.** Not
+  "it would be inconvenient": *it does not typecheck.* Fuel's job is to BE the
+  recursion argument, so hidden in state the interpreter fails to show
+  termination. ∃-fuel family claims stay outside WP.
+* **THE BOUND, and it corrects §L59's own words.** *"No language writes a
+  vcgen"* is TRUE on the fuel-free fragment and **FALSE at the fuel-recursive
+  points**: at symbolic `F`, `mvcgen` returns the goal **unchanged after
+  1 m 31 s**, because `Triple` is unary on one program while `fuelMono` and the
+  threshold form are about a family. `∃ t, ∀ F ≥ t, …` is assembled AROUND
+  mvcgen, never by it. The saving is real, large, and bounded.
+* **The price**: ≈2 type declarations + 2 `abbrev`s + ~14 `@[spec]` lemmas
+  **≈ 120 lines** per language, against **5 343 lines** of Python-specific
+  walker. C's 181 short-circuit sites are 3 `@[spec]` lemmas; the three
+  never-pooled refusal causes are free by composition.
+* **Four zero-cost laws adopted**: altitude lemmas persist and `@[spec]` is
+  their registry (**259+ VCs unfolded vs 12 with four triples**); specs must be
+  OUTPUT-DETERMINED (an answer-as-input spec unified the result metavariable
+  with a loop accumulator); `Triple` does not frame the state; and **never a
+  bare polymorphic `throw`** — route refusals through named primitives, which
+  is what this family wants anyway.
+* **ADEQUACY is now a general law**, not a Python quirk: *any route that
+  introduces a second semantics owes an adequacy theorem, and the differential
+  corpus does not discharge it.* `twinAgrees` is named as the unbuilt member.
+  **Python BRIDGES, does not migrate** — standing rule, revisited when
+  `RecursionStep` closes, never forced.
+* **Founding checklist gains step 7: DECIDE FUEL'S FATE before writing the
+  interpreter.** The two routes differ in the interpreter's TYPE, and a tier
+  wanting kernel-reducible `#guard` runs has already chosen fuel.
+* Risk recorded: mvcgen warns it is experimental on every invocation, and one
+  Std bug surfaced in twenty lines of probing.
+
+### BUILD-LOCK AMENDMENT 2 (§7.1)
+
+* **Release must be `rm -rf` with a CHECKED status.** A `rmdir` release composed
+  with an owner-stamp file inside the lock directory **fails silently** — the
+  trap swallows the status and the lock leaks, after which every lane blocks
+  forever on a lock nobody holds. This happened. `trap 'rm -rf … || echo "LOCK
+  RELEASE FAILED" >&2' EXIT`.
+* **`-j4` is an ARGUMENT ERROR on this lake**, not a flag; verify the command
+  runs before relying on it.
+* **Exit status 143 is a RESOURCE KILL**, not a red build. Never record it as
+  one.
+
 ### THE DOCTRINE — added as the doc's spine, because it governs every tier
 
 Thomas: *"We are not saying it'll be easy to prove correctness of arbitrary

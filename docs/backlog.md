@@ -17076,3 +17076,91 @@ checks against the real ACATS delivery. **`lake build`, `diff_test` and
 imports**, and the build lock protects a machine that other lanes are
 building on. The debt is unchanged and still owed at the first Ada-lane
 landing that touches Lean.
+
+## L70 — ADA M1 INCH 4: the envelope schema, and its node table is a CHECK not a claim — plus a top-unit hazard Ada has BY CONVENTION (2026-08-22)
+
+[docs/ada-envelope-schema.md](ada-envelope-schema.md), schema `ada-0.1`, on
+the family template with §L67's three round-trip edges plus one of Ada's own.
+**No Lean.** Inch order run is **2 → 4 → 5 → 3**, and the re-sequencing is a
+dependency rather than a preference: inch 3's real content is measuring which
+of Annex M.2's 202 implementation-defined characteristics the corpus depends
+on, which needs a frontend that inch 2 has not finished; inch 4 has no such
+dependency because it fixes rules and a gate rather than a vocabulary.
+
+**THE HEADLINE IS WHAT THE SCHEMA DOES NOT CONTAIN: §3 has no node table.**
+§L63 measured **316 concrete node kinds** from libadalang's grammar against
+C's 45. Choosing a subset of 316 here — before any parser has run on any Ada
+— would be an unverified claim about a language written by someone who had
+not run a parser, which is the exact shape the C lane's instrument discipline
+exists to prevent. So the schema fixes the RULE instead: the table is
+**GENERATED** from inch 2's `docs/ada-construct-census.json`, and a check
+asserts schema-table and census-`node_kinds` are the **same SET, neither
+subset nor superset**. Until that lands the document says plainly that **the
+vocabulary is unknown**. Same posture as the ES lane's inch 3 (§L66-67).
+
+**THE TOP-UNIT EDGE, and Ada has it BY CONVENTION where SV had it by
+accident.** §L67 records a `--top` derived from a FILENAME failing to resolve
+`cv32e40p_register_file_ff.sv` (module `cv32e40p_register_file`), and a
+plausible unverified diagnosis surviving a full publication. Ada's User's
+Guide states the hazard as a rule: file names *"may be shorter than the
+software name"*, *"in some cases, the structure of the test requires that the
+file name be different from the Ada unit"*, and **the eighth character of a
+multi-file test's name is a compilation-ORDER digit**, so for every multi-file
+test the file name is systematically not a unit name. **Measured with GNAT
+itself as the oracle** — `gnatchop -w` names each output after the unit it
+contains, so the chopped names ARE the unit names: `B3710010.A` holds
+`b371001_0`, `b371001_1` and the CHILD unit `b371001_1-child_1`;
+`B3710013.A` holds `b371001_1`. **No path-derived top resolves any of them.**
+On a 140-file sample, 4 files have a name that is not among their unit names
+and all 4 are that one multi-file test; 6 declare more than one unit. So
+`compilation_units` is a first-class ORDERED list read from the envelope,
+never derived from a path.
+
+**ONE ENVELOPE IS ONE COMPILATION, NOT ONE FILE** — the C envelope's
+translation unit is a file and Ada's is not. A compilation may hold several
+units, **248 of 4,188 tests span more than one file**, and the compilation
+ORDER is part of the test. `source_files` and `compilation_units` are both
+ordered lists and the order is the extractor's output, never the reader's
+inference.
+
+**THE SOURCE-PATH SPELLING EDGE, inherited whole**: §L67 measured that
+regenerating with absolute paths where the envelope recorded repo-relative
+ones made **all 18 SV envelopes differ by exactly the string-length delta**.
+The path is content, not metadata. Ada needs it more than its siblings —
+its corpus is cross-repo and 41 MB, so `--source-name` exists for the same
+reason `extractors/c/extract.py` has one. And §L67's two behavioural rules
+are adopted verbatim for `harness/ada_round_trip.py`: **never write into the
+repo**, and report an unreproducible envelope **with the missing path**
+rather than passing it silently.
+
+**THE GRADER RULING REACHES BACK TWO INCHES.** §L69 ruled the scoreboard is a
+trace emitter and the ACAA's `GRADE` issues our verdicts. That lands *here*,
+before any scoreboard exists, because a trace emitter cannot be retrofitted
+onto an envelope that threw away what a trace row needs: **every node carries
+`line`, `col`, `end_line`, `end_col`** (a `CERR` record carries a line and a
+position, and the User's Guide calls the line *"critical to the correct
+operation of the grading tool"*), and **the ACATS markings are carried out of
+the COMMENTS an AST discards** — 16,404 `ERROR:`, 7,568 `OK`, 584 `POSSIBLE
+ERROR:`, 313 `OPTIONAL ERROR:`, 167 `ANX-C RQMT`, the expected result of
+37.1% of the suite. They live in a **separate `markings` array, not attached
+to nodes**, because the payload is what the FRONTEND produced and a marking is
+what the SUITE said; attaching them would make the AST depend on the corpus.
+
+**`line_endings` is a recorded field and not decoration**, because §L69
+measured that the ZIP delivery's CRLF kills the ACAA's own `SUMMARY` tool.
+An envelope that did not record which it saw could not explain a byte-count
+discrepancy against the same nominal source.
+
+**MACHINE COURTESY, declared rather than assumed.** The libadalang closure
+build is `gprbuild`, not `lake`, so the build lock does not cover it — it is
+running under `nice -n 19`, single instance, and is **declared in
+`scratchpad/build-lock-log.md`** with the rule that kills go by ppid chain
+and never by path (the toolchain path is shared with anything else that later
+uses Alire). The Ada lane has run no `lake build` today and holds no lock.
+
+### Triad — PARTIAL, unchanged reason
+
+`docs_check` **75/75**, 20 illustrative-exempt. This landing is one document
+plus a charter edit; **no Lean, no Python, no instrument changed**. The Lean
+third's debt is unchanged and still owed at the first Ada-lane landing that
+touches Lean.

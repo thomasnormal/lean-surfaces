@@ -1213,6 +1213,21 @@ still `met: false`, and the instrument says so** — which is the point of
 having it. The oracle and the grader are met; the frontend is inch 2's
 remaining half.
 
+### 5.3 Inch 3 — the profile. **DEFERRED behind inch 4, deliberately.**
+
+**Re-sequenced, and the reason is a dependency rather than a preference.**
+The inch's real content is measuring *which* of Annex M.2's 202
+implementation-defined characteristics the corpus depends on (§1.5.2), and
+that measurement needs a frontend. Inch 2's frontend half is not done
+(§5.2.1), so the profile would be a schema with no measured dependence
+behind it — the shape §1.5.2 says Ada does not have to settle for. Inch 4's
+envelope schema has no such dependency: it fixes RULES and a GATE, and
+§5.4's own headline is that it deliberately fixes no vocabulary.
+
+So the order run is **2 → 4 → 5 → 3**, and `profile_id` is a declared field
+from inch 4 with its VALUE unbound until inch 3 measures one. The original
+plan is below, unchanged.
+
 ### 5.3 Inch 3 — the profile
 
 `docs/ada-profile.md` + `docs/ada-profile.json` + a probe, mirroring
@@ -1231,14 +1246,22 @@ first-class top-level envelope field carrying the registry's edition token,
 and Ada is the tier where the field earns its keep on day one, because §1.3's
 spec/suite gap means the two tokens are BOTH live from the first envelope.
 
-### 5.4 Inch 4 — `docs/ada-envelope-schema.md`
+### 5.4 Inch 4 — `docs/ada-envelope-schema.md`. **LANDED.**
 
-Schema `ada-0.1`, mirroring [docs/c-envelope-schema.md](c-envelope-schema.md).
-**Every vocabulary table DERIVED from the frontend census of inch 2 rather
-than chosen**, with a check that the schema lists exactly the kinds the
-census found and nothing extra.
+Schema `ada-0.1`, mirroring [docs/c-envelope-schema.md](c-envelope-schema.md),
+and its headline is what it does NOT contain: **the node table is a CHECK,
+not a claim.** §3.1 measured 316 concrete node kinds from libadalang's
+grammar; choosing a subset of them here, before any parser has run on any
+Ada, would be exactly the unverified claim the C lane's instrument
+discipline exists to prevent. So the schema fixes the RULE — the table is
+GENERATED from inch 2's census, and a check asserts the two are the same
+SET, neither subset nor superset — and says plainly that until inch 2 lands,
+**the vocabulary is unknown and the document says so.**
 
-**Four things this envelope needs that its siblings do not**, each forced by
+It also carries §L67's three round-trip edges plus one of Ada's own; see
+`docs/ada-envelope-schema.md` §5.
+
+**FIVE things this envelope needs that its siblings do not**, each forced by
 a measurement above or by a §6 ruling:
 
 1. **`language_version` as a first-class field** alongside `profile_id`
@@ -1251,7 +1274,20 @@ a measurement above or by a §6 ruling:
    4,188 span more than one file — and the compilation order is part of the
    test, encoded in the eighth character of the file name. The trace's
    `CSTART` rows are per compilation unit, so this is not bookkeeping.
-4. **Spans sufficient to emit a `CERR` row** — a line and a position for
+4. **A TOP-UNIT rule, because a file name is not a unit name.**
+   `docs/backlog.md` §L67 records the SV lane publishing a wrong diagnosis
+   from a `--top` derived from a FILENAME. Ada has the same hazard **by
+   convention rather than by accident**: the User's Guide says file names
+   *"may be shorter than the software name"* and that *"in some cases, the
+   structure of the test requires that the file name be different from the
+   Ada unit"*, and the eighth character of a multi-file test's name is a
+   compilation-ORDER digit. Measured with GNAT itself as the oracle
+   (`gnatchop -w` names its outputs after the units they contain):
+   `B3710010.A` holds units `b371001_0`, `b371001_1` and the child unit
+   `b371001_1-child_1`; `B3710013.A` holds `b371001_1`. **No path-derived
+   top resolves any of them.** So `compilation_units` is a first-class
+   ORDERED list and the round-trip gate reads it from the envelope.
+5. **Spans sufficient to emit a `CERR` row** — a line and a position for
    every construct the tier could reject. **This is §6.3's ruling reaching
    back into the envelope**: the scoreboard is a trace emitter from day one
    (§4.4), a `CERR` record carries `line` and `position`, the User's Guide

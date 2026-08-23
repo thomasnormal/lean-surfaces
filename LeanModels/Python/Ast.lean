@@ -546,7 +546,13 @@ def isBuiltinName (id : String) : Bool :=
   id == "abs" || id == "int" || id == "print" ||
   id == "str" || id == "input" ||
   id == "ord" || id == "chr" || id == "next" ||
-  id == "enumerate" || id == "count" ||
+  -- §iter: `iter` was in `isPyBuiltinName` and NOT here — the two-table gap
+  -- §pycomplete-14 was caught by. It joins DELIBERATELY: a name in this list
+  -- is one every `NameError` decision treats as bound, and one a bare-name
+  -- read refuses as "referencing builtin '…' as a value" rather than as an
+  -- unmodelled builtin. Both were refusals before and both still are; the
+  -- MESSAGE moves, and it moves to the truer one.
+  id == "enumerate" || id == "count" || id == "iter" ||
   id == "any" || id == "all" || id == "set" ||
   id == "sum" || id == "tuple" || id == "range" || id == "list" ||
   id == "dict"

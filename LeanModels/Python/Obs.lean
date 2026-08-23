@@ -1648,6 +1648,8 @@ theorem fuelMono (fuel : Nat) :
               | pyset zs => exact Run.le_refl _
           -- §3c-i-c: the trunk refuses to STEP `enumDict`; both fuels agree
           | enumDict i ad cur n sv => simp only [execGen]; exact Run.le_refl _
+          -- §iter: the trunk's `iterDict` arm refuses; both fuels agree
+          | iterDict ad cur n sv => simp only [execGen]; exact Run.le_refl _
           -- §3a: the trunk's `forDict` arm refuses; both fuels agree
           | forDict tg ad i n sv kd bd => simp only [execGen]; exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _
@@ -2214,7 +2216,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
             -- it (hfree carries `fname != "sorted"` — the branch is
             -- rewritten away before the ite walk)
             simp only [Expr.heapFree, Bool.and_eq_true] at hfree
-            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, hflE⟩ := hfree
+            -- §iter added a TWELFTH exclusion (`iter` ALLOCATES a key cursor);
+            -- it is discarded here because this interpreter has no `iter` arm,
+            -- so the chain below has no branch for it to rewrite away.
+            obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hkw, hns⟩, hnn⟩, hne⟩, hnc⟩, hna⟩, hnl⟩, hnset⟩, hnpr⟩, hnlst⟩, hndct⟩, _⟩, hflE⟩ := hfree
             have hs : (fname == "sorted") = false := by
               cases hbe : fname == "sorted"
               · rfl

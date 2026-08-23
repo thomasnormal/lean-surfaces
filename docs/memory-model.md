@@ -200,11 +200,13 @@ cycle DETECTION, never by running out of fuel).
 * In tier H1: literals, read (`KeyError` faithful), write (aliasing-
   visible), `len`, `in`/`not in`, `.get(k)`/`.get(k, d)`, `==`/`!=`,
   truthiness, live iteration as above, the three VIEWS in consuming
-  position, `enumerate(d)`, and `del d[k]`. Loud: the views as
+  position, `enumerate(d)`, `del d[k]`, and `iter(d)` + `next` (the bare
+  KEY cursor as a first-class object). Loud: the views as
   FIRST-CLASS values (`k = d.keys()` held across statements, set algebra,
   `reversed`), `.update/.pop/…`, comprehensions, `**kwargs`, `|`,
-  returning a dict through the boundary, and same-size key-set churn
-  during iteration.
+  returning a dict through the boundary, same-size key-set churn
+  during iteration, and `iter` over any NON-dict receiver (CPython has a
+  distinct iterator type per receiver — each is its own inch).
 
 ## List semantics (H2 inventory — the in-world half is BUILT)
 
@@ -1711,6 +1713,60 @@ entries-array layout is what separates them. So the regime stays LOUD,
 and `dict.keyset-churn` is its witness class. The one churn shape that
 MATCHES is `del_churn_then_break`, and not because CPython was silent:
 the loop EXITS before the cursor re-reads, so the guard is never reached.
+
+**AND THE MECHANISM IS NOW NAMED, not merely bounded**
+(§pycomplete-17). Reaching the same regime through an explicit
+`iter`/`next` cursor rather than a `for` shows that "the entries-array
+layout" is two facts, not one. `dictiter_iternextkey` raises *"dictionary
+changed size"* when `di_used != ma_used` — a SIZE check the model has —
+and raises *"dictionary keys changed"* only at the point marked *"We
+found an element, but did not expect it"*: `di_len` has reached ZERO
+while a live entry still lies ahead of the cursor. So the SAME churn
+answers silently one step earlier and raises one step later:
+
+| shape (size unchanged, `d = {1,2,3}`, one `del`, one insert) | CPython 3.9.19 |
+| --- | --- |
+| churn after yielding key 1 | `1, 3, 9` — **silent** |
+| churn after yielding key 2 | `1, 2, 3` then `RuntimeError: dictionary keys changed…` |
+| churn BEFORE any `next` | `2, 3, 9` — **silent** |
+| churn then the iterator RAN OFF the end | `RuntimeError: dictionary keys changed…` |
+
+`di_len` is a REMAINING-COUNT the model does not carry, and carrying it
+would still not be enough: deciding "is a live entry ahead of the cursor"
+needs the tombstoned array. **The refusal is therefore not a coarse
+approximation of one CPython rule; it is the honest answer to two, and
+both would have to be modelled together.** A model that reproduced only
+the counter would answer where CPython is silent, and one that
+reproduced only the layout would be silent where CPython raises.
+
+### The `iter(d)` cursor (§pycomplete-17/18)
+
+`iter(d)` is the same live key cursor as `enumerate(d)`'s, with the index
+taken off — `GenFrame.iterDict (a cur n sv)` beside `enumDict`, stepped
+by the same `dictStep` plan, so the three regimes above cannot drift
+between the two spellings. Two properties are worth stating because they
+are MEASURED rather than conventional:
+
+* **Exhaustion is DISCOVERED, not implied.** An iterator that has yielded
+  its LAST key is still live: growing the dict then raises. One that has
+  been STEPPED PAST the end is dead — CPython clears its `di_dict`, and
+  the model pops the frame on `.done` — so the same growth is silent and
+  `next(it, x)` answers `x`. Both fall out of WHERE the pop happens; no
+  guard states either. `dict.iter-exhausted` is the witness.
+* **`iter` is the THIRD generator allocator.** `Expr.genAllocFree` listed
+  `enumerate` and `count`; `iter(d)` allocates an `Obj.generator` exactly
+  as they do, and a module classified generator-FREE while holding one
+  reports ordinary Python as an internal heap well-formedness violation
+  (the 2026-08-13 incident). `dict.iter-for` is the witness that would
+  have caught it, and `Expr.heapFree` needed the same carve-out for a
+  different reason: `funsHeapFree` is what lets `callNamePlan` conclude
+  that a local holding a `.ref` in a heap-free module is a DICT.
+
+The capability opens on the monadic rebuild ONLY: the trunk has no `iter`
+arm at all, so — unlike `enumerate`, whose `enumFrame` is shared —
+there is no trunk-side capability delta to rule on, and the trunk's
+`iterDict` step arm exists to compile and to refuse, the `forDict`
+arrangement exactly.
 
 ### The tier this forces
 

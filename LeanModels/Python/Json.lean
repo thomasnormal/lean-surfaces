@@ -887,8 +887,8 @@ missing from it costs a loud refusal, never a wrong capture, so the two
 lists may drift safely in the only direction that matters. -/
 private def lowerBuiltins : List String :=
   ["len", "sorted", "max", "min", "abs", "int", "print", "ord", "chr",
-   "next", "range", "enumerate", "count", "all", "any", "sum", "tuple",
-   "list", "dict", "str", "bool", "set", "reversed", "zip", "map",
+   "next", "iter", "range", "enumerate", "count", "all", "any", "sum",
+   "tuple", "list", "dict", "str", "bool", "set", "reversed", "zip", "map",
    "filter", "True", "False", "None"]
 
 /-- Builtins that DRAIN a directly-passed genexp within the enclosing

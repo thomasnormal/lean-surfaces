@@ -580,3 +580,148 @@ def del_churn_middle_key(a):
             d[99] = 9
         t = t + k
     return t
+
+
+# §iter: `iter(d)` + `next` over dict KEYS -- the flagship's key source
+# (`del self.tp_score[next(iter(self.tp_score))]`, sunfish.py:541). The frame
+# is `enumDict` without the index; every row below is CPython 3.9.19's own
+# answer, measured before the design
+# (docs/backlog/python-completeness.md 2026-08-23-pycomplete-17).
+
+
+def iter_next(a):
+    d = {1: a, 2: 5}
+    return next(iter(d))
+
+
+def iter_two_steps(a):
+    # ONE cursor, stepped twice: insertion order, not sorted order
+    d = {1: a, 2: 5}
+    it = iter(d)
+    return next(it) + next(it)
+
+
+def iter_empty_default(a):
+    # the 2-argument `next` was already implemented, so this row came free
+    d = {}
+    return next(iter(d), -1)
+
+
+def iter_stop(a):
+    # and the 1-argument form is the faithful StopIteration
+    d = {}
+    return next(iter(d))
+
+
+def iter_alias(a):
+    # an iterator is IDENTITY: two names, one cursor
+    d = {1: a, 2: 5}
+    it = iter(d)
+    jt = it
+    return next(it) * 10 + next(jt)
+
+
+def iter_for_loop(a):
+    d = {1: a, 2: 5}
+    t = 0
+    for k in iter(d):
+        t = t * 10 + k
+    return t
+
+
+def iter_list_drain(a):
+    # a DRAINING consumer over the cursor object -- `iterValues`' generator
+    # arm, which needed no line for this inch
+    d = {1: a, 2: 5}
+    return len(list(iter(d)))
+
+
+def iter_flagship(a):
+    # THE FLAGSHIP'S SHAPE: the cursor is abandoned before `del` runs, so the
+    # mutation never meets a live iterator
+    d = {1: a, 2: 5}
+    del d[next(iter(d))]
+    return len(d)
+
+
+def iter_bind_then_grow(a):
+    # BINDING is silent in CPython -- the guard is on the STEP, never the bind
+    d = {1: a}
+    it = iter(d)
+    d[2] = 9
+    return len(d)
+
+
+def iter_grow_then_step(a):
+    # and STEPPING after that growth raises CPython's RuntimeError verbatim.
+    # The pair with iter_bind_then_grow is what makes the cursor falsifiable:
+    # a bind-time guard passes one and fails the other, a snapshot fails the
+    # other way, and neither passes both by accident.
+    d = {1: a}
+    it = iter(d)
+    d[2] = 9
+    return next(it)
+
+
+def iter_del_then_step(a):
+    # SHRINKING is the same size guard, from the other direction
+    d = {1: a, 2: 5}
+    it = iter(d)
+    del d[1]
+    return next(it)
+
+
+def iter_last_key_then_grow(a):
+    # MEASURED, and it is the half a model gets wrong: having yielded its LAST
+    # key, the iterator is still LIVE, so growing the dict raises. Exhaustion
+    # is DISCOVERED by a step, never implied by the last yield.
+    d = {1: a}
+    it = iter(d)
+    t = next(it)
+    d[2] = 9
+    return next(it, -1)
+
+
+def iter_ran_off_then_grow(a):
+    # the other half: STEPPED PAST the end, the iterator is dead (CPython
+    # clears its `di_dict`), so the same growth is silent and the default
+    # comes back. Same two statements as iter_last_key_then_grow with one
+    # extra step in between.
+    d = {1: a}
+    it = iter(d)
+    t = next(it)
+    u = next(it, -1)
+    d[2] = 9
+    return next(it, -2)
+
+
+def iter_churn_still_loud(a):
+    # THE CHURN GUARD, through the `iter` cursor. CPython answers 4 here,
+    # SILENTLY -- and the same churn one step later raises its second
+    # RuntimeError instead. What separates them is `di_len` reaching zero with
+    # a live entry still ahead of the cursor, a counter this model does not
+    # have, so the regime stays permanently LOUD.
+    d = {1: a, 2: 5, 3: 6}
+    it = iter(d)
+    t = next(it)
+    del d[2]
+    d[9] = 9
+    return t + next(it)
+
+
+def iter_list_recv_still_loud(a):
+    # THE RECEIVER BOUNDARY, falsifiable: CPython answers 7 (a list_iterator).
+    # Every non-dict receiver has its own CPython iterator TYPE with its own
+    # mutation regime, so the tier refuses rather than guess one.
+    xs = [a, 5]
+    it = iter(xs)
+    return next(it)
+
+
+def iter_sentinel_still_loud(a):
+    # the 2-argument SENTINEL form: CPython needs a CALLABLE first argument
+    # and builds a `callable_iterator` (on a dict it raises TypeError). A
+    # second object kind, so the tier refuses.
+    d = {1: a}
+    it = iter(d, 0)
+    return 1

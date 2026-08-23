@@ -258,7 +258,7 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
   | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
 
 /-- The builtin table. `isBuiltinName` (Ast.lean) is the AUTHORITATIVE
-implemented set — 22 names — so a name reaching here is one the tier claims, and
+implemented set — 23 names — so a name reaching here is one the tier claims, and
 a name it does not claim can never fall silently past the table. Arguments are
 already values: `input` is the one builtin that refuses before they evaluate, and
 it is handled in the PLAN, not here. -/
@@ -463,6 +463,26 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
           let fr ← liftRes (enumFrame (← frameHeap) i0 v)
           let a ← heapPush (.generator "<enumerate>" [] [fr] .suspended)
           pure (.ref a)
+  else if fname == "iter" then
+    -- §iter: the flagship's key source (`del d[next(iter(d))]`). A LIVE key
+    -- cursor over the dict, `enumerate`'s frame without the index, allocated
+    -- as a generator object so the ONE stepper serves it — `next`, `for` and
+    -- the draining consumers all reach it through `stepIter` unchanged, and
+    -- none of them needed a line.
+    --
+    -- The 2-argument SENTINEL form refuses: CPython's `iter(v, w)` requires a
+    -- CALLABLE `v` and builds a `callable_iterator`, a second object kind this
+    -- tier does not have. On a dict receiver CPython raises
+    -- `TypeError: iter(v, w): v must be callable`, so the tier is refusing
+    -- where CPython raises — never answering where it raises.
+    match vs with
+    | [] => raisePy (.typeError "iter expected at least 1 argument, got 0")
+    | [v] => do
+        let fr ← liftRes (iterFrame (← frameHeap) v)
+        let a ← heapPush (.generator "<iter>" [] [fr] .suspended)
+        pure (.ref a)
+    | _ =>
+        refuse "the 2-argument sentinel form of iter() is outside the tier (it needs a CALLABLE first argument and builds a callable_iterator; docs/memory-model.md §dict iteration)"
   else if fname == "count" then
     -- `itertools.count` — INFINITE by construction; a consumer's `break` is
     -- what ends it (sunfish's ray loop `for j in count(i + d, d)`).
@@ -1521,6 +1541,26 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
           pure (some (.tuple #[.int i, kv], .enumDict (i + 1) ad (cur + 1) n sv :: k'))
       | some .done => K.execGen k'
       | Option.none => refuse "internal: an enumerate cursor over a non-dict object (report this)"
+  -- §iter: `iter(d)`. The `enumDict` step with the tuple taken OFF — CPython's
+  -- `dict_keyiterator` yields the bare key — so `dictStepM` decides all three
+  -- regimes here too and the view kind is `.keys`.
+  --
+  -- THE EXHAUSTION BOUNDARY IS MEASURED, not conventional. An iterator that has
+  -- yielded its LAST key is still live: growing the dict then raises
+  -- `RuntimeError` (CPython, measured), and it does here because the frame is
+  -- still on the stack and `dictStepM` re-reads. One that has been stepped PAST
+  -- the end is DEAD: CPython clears its `di_dict` and a later `next(it, x)`
+  -- answers `x` silently, and it does here because `.done` pops the frame
+  -- through `K.execGen k'` and the generator closes. Neither is a guard; both
+  -- fall out of WHERE the pop happens.
+  | .iterDict ad cur n sv :: k' => do
+      match ← dictStepM ad cur n sv .keys with
+      | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
+      | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
+      | some (.yieldVal kv) =>
+          pure (some (kv, .iterDict ad (cur + 1) n sv :: k'))
+      | some .done => K.execGen k'
+      | Option.none => refuse "internal: an iter() cursor over a non-dict object (report this)"
   | .countFrom cur step :: k' =>
       -- never exhausts: `count` is the infinite ray of sunfish's move generator,
       -- and a consumer's `break` is what ends it.

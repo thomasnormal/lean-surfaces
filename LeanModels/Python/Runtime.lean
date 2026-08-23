@@ -156,6 +156,21 @@ inductive GenFrame where
   snapshot: an escaped `enumerate(d)` still sees the dict, and CPython
   raises on the STEP after a resize rather than at the bind. -/
   | enumDict (i : Int) (a : Addr) (cur : Nat) (n : Nat) (sv : Nat)
+  /-- §iter `iter(<heap dict>)` at cursor `cur`: `enumDict` WITHOUT the index
+  — CPython's `dict_keyiterator`, which yields the bare KEY. Same two guards
+  (`n`, `sv`) and the same reason for them.
+
+  EXHAUSTION IS DISCOVERED, NOT IMPLIED, and CPython agrees: an iterator that
+  has yielded its LAST key is still live and still raises on a resize
+  (measured), while one that has been stepped PAST the end is dead and
+  answers a `next` default silently. The frame reproduces both because the
+  pop happens at the step that finds `.done`, never at the last yield.
+
+  Constructed only by `LeanModels/Python/Monadic/` — the trunk has no `iter`
+  arm at all, so its step arm exists to compile and to refuse (the `forDict`
+  arrangement, not `enumDict`'s: `enumFrame` is SHARED, `iterFrame` has
+  exactly one caller). -/
+  | iterDict (a : Addr) (cur : Nat) (n : Nat) (sv : Nat)
   /-- `itertools.count(start, step)` — never exhausts. -/
   | countFrom (cur : Int) (step : Int)
 deriving Repr, Inhabited, BEq
@@ -314,6 +329,7 @@ def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .enumSeq _ xs => RVal.WFList h xs
   | .enumList _ a _ => a < h.size
   | .enumDict _ a _ _ _ => a < h.size
+  | .iterDict a _ _ _ => a < h.size
   | .block _ => True
   | .whileLoop .. => True
   | .countFrom .. => True

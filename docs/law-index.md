@@ -136,6 +136,9 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-87 | a probe cannot certify its own definitions — the TREE's green ledger does | `docs/family-architecture.md §5.4a` |
 | MEAS-88 | check whose CLOSURE a file sits in before placing two things side by side | `docs/family-architecture.md §2.4` clause (1a) |
 | MEAS-89 | a table asserting how the interpreter classifies is unfalsifiable until the interpreter confirms it | `docs/family-architecture.md §5.2` |
+| MEAS-90 | a false blanket claim HIDES the real gap — the claim is why nobody looked | `docs/family-architecture.md §5.4` |
+| MEAS-91 | cite by NAME — fixing offsets buys one landing of accuracy | `docs/family-architecture.md §5.4` |
+| MEAS-92 | a row is closed when the CLAIM is true; a substituted remedy must SAY WHICH | `docs/family-architecture.md §9.7` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

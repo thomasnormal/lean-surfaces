@@ -1356,6 +1356,23 @@ fuel-free fragment, yes at the fuel-recursive points.** This section states
 the design; every number in it is the pilot's, and where the pilot refuted
 this document it says so.
 
+**AND THE PYTHON TIER'S CURRENT STATE IN ONE SENTENCE, because this is where a
+newcomer looks first** (pyc lane, staged on its queued ticket; conditional on
+that landing):
+
+> **Executable behaviour is the REBUILD's; proved behaviour is still the
+> TRUNK's; the two are held together by the PURE WORKERS they share — which is
+> why a capability opening reaches the harnesses instantly and the proof layer
+> not at all.**
+
+Read it as a map of where a change lands. A capability added to the rebuild is
+visible to every differential harness the moment it exists, because the
+harnesses run the executable side; the proof estate does not move until the
+shared workers do. **The asymmetry is the design working, not a gap** — but it
+is also why *"the rebuild can do it"* is never an argument that the trunk can,
+and why a capability audit sweeps trunk, presentation **and** the ingestion
+rewrites (`docs/backlog/architecture.md` `2026-08-23-architecture-23`).
+
 **Layer 1 — one monad family, and the layer ORDER is load-bearing.**
 
 ```lean
@@ -3544,7 +3561,34 @@ instrument copies it:
 
   A docstring arguing a case away is doing the job §5.5's manifest exists
   to do — pairing a claim with the clause that settles it — but **without
-  the check**, which is the whole of the difference;
+  the check**, which is the whole of the difference.
+
+  **AND THE SECOND MEASURED INSTANCE ADDS THE WORSE HALF: A FALSE BLANKET
+  CLAIM HIDES THE REAL GAP.** `Examples/python/bench_bisect/spec.lean`
+  asserted that the live CPython oracle **could not take** its cases. It
+  could — since the batch protocol — and the truth was a gap **far smaller
+  than the claim**: nine rows added, and **exactly ONE genuinely
+  unreachable**, now whitelisted **with its reason** (2026-08-23 audit,
+  `## python` HIGH; pyc lane, staged on its queued ticket).
+
+  > **A false blanket claim hides the real gap — the gap was far smaller
+  > than the claim, and THE CLAIM IS WHY NOBODY LOOKED.**
+
+  That is the self-preserving property, and it is what makes this worse
+  than an ordinary wrong docstring: **a gap with a stated cause is not
+  re-measured.** An unexplained gap nags; an explained one is closed
+  business. So the false explanation does not merely misinform — it
+  **removes the incentive to look**, and it goes on doing that for as long
+  as it stands.
+
+  **AND THE CLAIM WAS ABOUT ANOTHER COMPONENT'S CAPABILITY, which is why it
+  rotted without anyone touching it.** *"The oracle cannot take these"* was
+  true when written and false once the harness gained the batch protocol —
+  **a capability claim about a component you do not own is a transcription
+  with a timestamp** (the law below), and it rots the same way, on the same
+  schedule, for the same reason. The remedy is the same too: it must be
+  **checked against the component**, not restated. Nine rows that now run
+  against the oracle *are* that check;
 * **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
   `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
   **measured** set is **`heapEq` + `valContains`** — or so a correction
@@ -3668,7 +3712,22 @@ instrument copies it:
   **The general form, and it is the one to carry away: A TRANSCRIPTION MUST
   LIVE WHERE A GATE CAN REACH IT, OR BRING ITS OWN GATE.** A `.md` block has
   `docs_check`; a comment in a `.lean` has nothing, which is the whole of why
-  this one rotted — and generalizes into §5.4b;
+  this one rotted — and generalizes into §5.4b.
+
+  **AND THE DURABLE FORM OF A CITATION IS A NAME, NOT AN OFFSET** (pyc lane,
+  staged on its queued ticket). Line numbers rot on **every insertion above
+  them**, by anyone, forever — so an audit row asking for the offsets to be
+  corrected was **declined, correctly**:
+
+  > **Fixing offsets buys ONE LANDING of accuracy. The durable fix is lemma
+  > NAMES.**
+
+  A name survives every edit that does not rename the thing, and a rename is
+  loud. Which is also why the `%` row above had to be **re-stated** rather than
+  re-numbered: `Convert.lean:303` was not merely stale, it pointed at a
+  *different arm* — and *"the arm is WITHDRAWN"* is a fact no line number can
+  carry, at any offset. **Cite by name**; cite the line only as a courtesy
+  beside it;
 * **ROWS AND WITNESSES ARE NAMED FOR THE CONSTRUCT, NEVER FOR THE
   VERDICT.**
 
@@ -6356,6 +6415,22 @@ the credibility of every other row beside it.
 
 > **A no-code closure is CLOSED when the audit FILE carries the reason.
 > Anywhere else, it is a lane's private opinion of a public row.**
+
+**A THIRD LEGITIMATE CLOSURE, from the pyc lane's triage (staged on its queued
+ticket): THE REQUESTED FIX IS NOT THE DURABLE ONE.** A row asked for stale
+line-number citations to be re-numbered. Declined, with the reason recorded:
+**fixing offsets buys one landing of accuracy** — the next insertion above them
+rots them again — and the durable remedy is **lemma names** (§5.4).
+
+> **A row is closed when the CLAIM is true, not when the requested edit has
+> been made. An audit prescribes a remedy; the owner may substitute a better
+> one, and must SAY WHICH.**
+
+The must-say is the whole safeguard: a substituted remedy that is not named
+reads, one audit later, exactly like a row nobody acted on. Note that this
+closure and the vacuous one point in **opposite** directions — one refuses to do
+too little, the other refuses to do something useless — and both are available
+only to an owner who **verified the row first** (§5.4a).
 
 **And the audit records what it got wrong**, which is the practice worth
 copying more than any item above: it ran Lean outside the lock while

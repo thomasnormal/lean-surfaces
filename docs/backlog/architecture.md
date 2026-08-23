@@ -2134,3 +2134,76 @@ claim shapes"* and is **left alone**: it is a dated record and it was right as
 taken (`2026-08-23-architecture-26`).
 
 **Index:** MEAS-86 … MEAS-89, STMT-101, STMT-102, PROOF-56.
+
+## 2026-08-23-architecture-31 — A false blanket claim hides the real gap; and cite by name, not by offset
+
+Two from the pyc lane's audit triage (**staged on its queued ticket**; landed
+conditional on that landing and stated so at each site), plus the state
+statement they asked to have somewhere a newcomer reads.
+
+**(1) §5.4 — THE SECOND MEASURED INSTANCE OF *a docstring that argues a case
+away is a claim*, and it carries the worse half.**
+`Examples/python/bench_bisect/spec.lean` asserted the live CPython oracle
+**could not take** its cases. It could — since the batch protocol — and the
+truth was a gap **far smaller than the claim**: nine rows added, **exactly ONE
+genuinely unreachable**, now whitelisted **with its reason** (2026-08-23 audit,
+`## python`, HIGH).
+
+> **A false blanket claim hides the real gap — the gap was far smaller than the
+> claim, and THE CLAIM IS WHY NOBODY LOOKED.**
+
+**The self-preserving property is what I added and what makes it worse than an
+ordinary wrong docstring**: a gap with a stated cause **is not re-measured**. An
+unexplained gap nags; an explained one is closed business. The false
+explanation does not merely misinform — it removes the incentive to look, and
+goes on doing so for as long as it stands.
+
+**And the second addition ties it to the transcription law**: the claim was
+about **another component's capability**, so it rotted with nobody touching it
+— true when written, false once the harness gained the batch protocol. **A
+capability claim about a component you do not own is a transcription with a
+timestamp**, on the same schedule, for the same reason, with the same remedy:
+check it against the component. The nine rows that now run against the oracle
+*are* that check.
+
+**(2) §5.4 + §9.7 — CITE BY NAME, and the third kind of legitimate no-code
+closure.** An audit row asked for stale line-number citations to be re-numbered
+and was **declined, correctly**:
+
+> **Fixing offsets buys ONE LANDING of accuracy. The durable fix is lemma
+> NAMES.**
+
+Line numbers rot on every insertion above them, by anyone, forever. This also
+explains a decision made two landings ago that I had only justified locally:
+the `%` row had to be **re-stated** rather than re-numbered, because *"the arm
+is WITHDRAWN"* is a fact **no line number can carry at any offset**.
+
+So §9.7's no-code closures gain a third kind beside VERIFIED-ALREADY-FIXED and
+WOULD-BE-VACUOUS: **THE REQUESTED FIX IS NOT THE DURABLE ONE.**
+
+> **A row is closed when the CLAIM is true, not when the requested edit has
+> been made. An audit prescribes a remedy; the owner may substitute a better
+> one, and must SAY WHICH.**
+
+The must-say is the safeguard — an unnamed substitution reads, one audit later,
+exactly like a row nobody acted on. And the three kinds do not all point the
+same way: the vacuous closure refuses to do something **useless**, this one
+refuses to do something **temporary**, and both are available only to an owner
+who verified the row first.
+
+**(3) §3.4 — THE PYTHON TIER'S STATE, one sentence, at the top of the section a
+newcomer opens first.**
+
+> **Executable behaviour is the REBUILD's; proved behaviour is still the
+> TRUNK's; the two are held together by the PURE WORKERS they share — which is
+> why a capability opening reaches the harnesses instantly and the proof layer
+> not at all.**
+
+Landed with the reading that makes it usable rather than merely true: **the
+asymmetry is the design working, not a gap** — and it is why *"the rebuild can
+do it"* is never an argument that the trunk can. Cross-referenced to
+`2026-08-23-architecture-23`'s third audit site, since the same asymmetry is why
+a capability audit must sweep the **ingestion rewrites** and not only the two
+walkers.
+
+**Index:** MEAS-90 … MEAS-92.

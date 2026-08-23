@@ -369,14 +369,40 @@ def census_spec(path):
     # extractor can still read it is the premise this whole lane rests on,
     # so it is a row and not a sentence.
     root = Path(path).parent
-    ignore = root / "esmeta-ignore.json"
-    wf = root / ".github" / "workflows"
-    esmeta = {
-        "ignore_file_present": ignore.is_file(),
-        "ignore_entries": (len(json.loads(ignore.read_text(encoding="utf-8")))
-                           if ignore.is_file() else None),
-        "workflows": sorted(w.name for w in wf.glob("esmeta*")) if wf.is_dir() else [],
-    }
+    # §5.4a, and the SAME law `rev()` enforces one field over: a probe of an
+    # ABSENT repository must say it could not look, never report absence.
+    #
+    # Measured 2026-08-23.  With only a fetched `spec.html` on disk this
+    # recorded `{ignore_file_present: false, workflows: []}` — readable as
+    # "ECMA-262 has no ESMeta integration" — when the truth at the pinned
+    # commit is 11 ignore entries and three CI workflows.  `rev()` refusing on
+    # an unrecoverable revision was the LOUD half of this defect; this was the
+    # quiet half, in a field nobody hardened.  It is worse than a wrong number,
+    # because the lane's charter cites TC39's per-PR extractor and this row
+    # looked like the corroboration.
+    #
+    # It is a FIELD rather than a `Refusal` because `--spec` legitimately takes
+    # a spec.html that is not in a checkout — the header documents
+    # `git show es2026:spec.html > f && … --spec f` — and that run should still
+    # census the 2 200 clauses it CAN see.  What it must not do is emit a
+    # `false` that reads like a measurement.
+    if not (root / ".git").exists():
+        esmeta = {
+            "measured": False,
+            "why": "the spec is not in a checkout, so the ESMeta surface "
+                   "cannot be seen from here; absence here is not evidence "
+                   "of absence upstream",
+        }
+    else:
+        ignore = root / "esmeta-ignore.json"
+        wf = root / ".github" / "workflows"
+        esmeta = {
+            "measured": True,
+            "ignore_file_present": ignore.is_file(),
+            "ignore_entries": (len(json.loads(ignore.read_text(encoding="utf-8")))
+                               if ignore.is_file() else None),
+            "workflows": sorted(w.name for w in wf.glob("esmeta*")) if wf.is_dir() else [],
+        }
 
     return {
         "path_name": Path(path).name,

@@ -14,9 +14,18 @@ this is it, in Lean, with no evaluator attached.
 by `rfl`, because `StateT` outside `ExceptT` discards the state on a raise
 and the tier's own error postcondition then cannot be stated.
 
-**ADOPTION NOTE: `LeanModels/Core/` does not yet export a `SemM`, so this
-file defines the family's SHAPE locally and will be replaced by the core
-export when the extraction lands — it is not a variant.**
+**ADOPTED at inch 5 (`eeeb1fd`).** `LeanModels/Core/Outcome.lean` exports
+`SemMWith W ρ π σ`, and this file now instantiates it at `π := EsDetail`,
+`σ := Unit` rather than defining a local shape. The local `Halt`, its
+`bind` and its `Monad` instance are DELETED, not wrapped — there is no
+adapter and no variant.
+
+The note this replaces said Core "does not yet export a `SemM`", and it
+survived the adoption that falsified it: the file below imports Core and
+uses it, so the prose contradicted its own module. Caught by the
+2026-08-23 quality audit, and it is the same law the `Abrupt.updateEmpty`
+correction in this file is about — **a docstring is a claim, and a claim
+outlives the code it described unless something checks it.**
 
 The structures census has since ruled (`docs/backlog.md` §L81): rest the
 substrate's **two-layer core on `EStateM`** — which is §3.4's corrected
@@ -67,10 +76,13 @@ namespace LeanModels.Es
 **`Core` carries the four classes as `RefusalCause π`, parameterized by a
 tier payload. The classes are family law; the payload is the tier's.**
 
-**ADOPTION NOTE: `LeanModels/Core/` does not yet export `RefusalCause`, so
-this file defines the family's SHAPE locally and is replaced by the core
-export when it lands — it is not a variant.** Same treatment as `SemM`
-above, and for the same reason.
+**ADOPTED at inch 5 (`eeeb1fd`).** `RefusalCause π` is
+`LeanModels/Core/Outcome.lean:116` — the shape this file originally
+carried, lifted into Core verbatim — and `EsRefusal := RefusalCause
+EsDetail` below is its instantiation. The local definition is gone.
+
+Same stale-note story as `SemM` above, and the same audit row: the text
+asserted a Core absence that Core had already contradicted.
 
 **This tier GAINED two constructors it had omitted, and that is the point
 of the ruling.** ES has no undefined behaviour and no unspecified

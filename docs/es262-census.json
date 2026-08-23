@@ -262,7 +262,7 @@
   "language_version": "ES2026",
   "schema": "es-census-0.1",
   "sources": {
-    "ecma262": "",
+    "ecma262": "d89c03f2db8a597bc915b363a6518d0cc8acdbc0 2026-07-27T17:02:13-07:00",
     "engine262": "c7939eaf0bcfa292b4a8872e78f4c221bc2477a2 2026-08-09T00:00:00Z",
     "test262": "3655e7464de3d52643ecddd4b5f9f4f3e7f62398 2026-08-10T12:21:58-07:00"
   },
@@ -296,9 +296,14 @@
       "steps": 6216
     },
     "esmeta": {
-      "ignore_entries": null,
-      "ignore_file_present": false,
-      "workflows": []
+      "ignore_entries": 11,
+      "ignore_file_present": true,
+      "measured": true,
+      "workflows": [
+        "esmeta-installer",
+        "esmeta-typecheck.yml",
+        "esmeta-yetcheck.yml"
+      ]
     },
     "grammar_blocks": 1507,
     "host_defined_operations": [
@@ -370,7 +375,7 @@
     },
     "lines": 53845,
     "notes": 711,
-    "path_name": "es2026-errata-spec.html",
+    "path_name": "spec.html",
     "sha256": "032ecc740356b38f6846338d8c44536291a134a6ce60e651f935befb239cfc1a",
     "status": "draft",
     "tables": 95,

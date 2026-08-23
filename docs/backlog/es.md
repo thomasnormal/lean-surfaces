@@ -649,3 +649,108 @@ the sloppy half cannot be scored until this lands.
 and §10.2.11. The observable that separates them is `this.x` at top level, and
 `resolveThisBinding` already refuses without the global object — so no test
 can reach the difference and score a pass. It lands with the realm (inch 6).
+
+---
+
+## 2026-08-23-es-4 — the corpora are BACK, the ecma262 pin was RECOVERED not guessed, and `esmeta` was the QUIET half of the `rev()` defect
+
+All four corpora are on disk again and the census REGENERATES: `ecma262`
+`d89c03f2db8a597bc915b363a6518d0cc8acdbc0` (2026-07-27), `test262`
+`3655e7464de3d52643ecddd4b5f9f4f3e7f62398` (2026-08-10), `engine262`
+`c7939eaf0bcfa292b4a8872e78f4c221bc2477a2` (2026-08-09), plus `acorn` for the
+frontend probe.
+
+### THE ecma262 PIN WAS NEVER RECORDED, AND IT WAS RECOVERED RATHER THAN GUESSED
+
+`docs/es262-census.json` carried `"ecma262": ""` — the exact artifact `rev()`'s
+own docstring quotes as the trap it was hardened against. Deriving a pin from
+the HTML's date header would have been a guess with provenance attached.
+Instead it was recovered and then CHECKED:
+
+1. `git ls-remote tc39/ecma262` carries an annotated tag **`es2026-errata`** —
+   the same token `docs/es-edition.json` already records as `spec_revision` —
+   dereferencing to `d89c03f2…`.
+2. That commit's `spec.html` hashes to `032ecc74…`, **byte-identical** to
+   `spec_sha256`: it is the file the census actually read.
+3. `--edition docs/es-edition.json` re-ran `check_edition` against the checkout
+   and passed.
+
+**It is not a pin with a stated provenance; it is the commit that reproduces the
+recorded hash.**
+
+### THE REPRODUCTION
+
+`test262` 26/26 keys identical, `engine262` 6/6, `frontend` 14/14 (18,114
+attempted / 14,045 parsed / 4,069 rejected / **66 node types**, 0 runner
+errors), `spec` 21/23 with `core_slice` exact. Three leaves in the whole
+artifact differed, all three intended: `sources.ecma262` (was `""`),
+`spec.path_name` (the input's filename), and `spec.esmeta`.
+
+### `esmeta` WAS A MEASUREMENT OF AN ABSENT REPO — and it is now HARDENED
+
+Stored: `{ignore_entries: null, ignore_file_present: false, workflows: []}`.
+Actual at the pinned commit: **11 ignore entries and three CI workflows**
+(`esmeta-installer`, `esmeta-typecheck.yml`, `esmeta-yetcheck.yml`).
+
+With only a bare fetched HTML on disk there is no `esmeta-ignore.json` and no
+`.github/workflows`, so the probe recorded **"ECMA-262 has no ESMeta
+integration"** when the opposite is true. **This is the same defect class
+`rev()` was hardened against, in a field nobody hardened** — a `false`/`null`
+that reads cleaner than "this measurement has no state". `rev()` refusing was
+the LOUD half; this was the quiet half that got through.
+
+It is worse than a wrong number: the charter cites TC39's per-PR extractor as
+the premise the whole lane rests on, and this row looked like the corroboration
+for it. **The conclusion was right and the census was not the evidence.**
+
+`census_spec` now emits `{"measured": false, "why": …}` when the spec is not in
+a checkout. It is a FIELD and not a `Refusal` because `--spec` legitimately
+takes an extracted `spec.html` (the module header documents `git show
+es2026:spec.html > f && … --spec f`), and that run should still census the
+clauses it CAN see — what it must not do is emit a `false` that reads like a
+measurement.
+
+### THE STANDING RULE
+
+**A scoreboard number taken without its corpus present is not a weaker number,
+it is a number about nothing.** Before any scoreboard inch: corpora on disk,
+pins in `sources`, and a `--compare` that reproduces.
+
+---
+
+## 2026-08-23-es-5 — the audit's other two rows: a docstring that outlived its code, and a lint blind to legal Lean
+
+From `docs/quality-audit-2026-08-23.md` (`00fe2dc`), "## es".
+
+### TWO `ADOPTION NOTE`s ASSERTED A CORE ABSENCE CORE HAD ALREADY CONTRADICTED
+
+`LeanModels/Es/Completion.lean` said, twice, that `LeanModels/Core/` "does not
+yet export" a `SemM` / `RefusalCause` and that this file therefore defines the
+shape locally. Both were false as of `eeeb1fd`, and — the sharper part —
+**both survived the very commit that falsified them**: the adoption imports
+Core and instantiates `SemMWith`/`RefusalCause`, so the prose contradicted its
+own module, forty lines above the code doing the opposite.
+
+This is the third instance in two days of one law: **a docstring is a claim,
+and a claim outlives the code it described unless something checks it.** The
+first was `NewFunctionEnvironment` (caught by three guards failing), the second
+`Abrupt.updateEmpty`'s "empty is the only case that arises" (caught only
+because the clause was re-read), and this one was caught by neither — it took
+an external audit. The guards check the code; nothing checks the prose.
+
+### THE LINT COULD NOT SEE A ONE-LINE DOC COMMENT
+
+`harness/es_lean_lint.py`'s scan closed a doc comment with
+`rstrip().endswith("-/")`. `/-- doc -/ def f := 1` is legal Lean and closes on
+the OPENING line with the declaration trailing it, so the scan missed the close
+entirely and ran on to the next line that happened to end in `-/` — **reporting
+an attachment verdict about a different part of the file.**
+
+The fix finds `-/` anywhere on the line and, when text trails it, attaches to
+THAT. Three self-test cases pin it: the legal one-liner is not flagged,
+`/-- doc -/ #guard` is, and — the one that shows the real damage — a one-liner
+followed by a genuinely misattached spanning comment now reports line 2 rather
+than swallowing it.
+
+**Both rows are the lane's own instruments failing quietly rather than loudly**,
+which is the failure mode the whole tier is built to refuse.

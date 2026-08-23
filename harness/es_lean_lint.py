@@ -40,18 +40,36 @@ def offenders(text):
     i = 0
     while i < len(lines):
         if lines[i].lstrip().startswith("/--"):
-            j = i
-            # find the closing `-/` (a one-line doc comment closes on its own line)
-            while j < len(lines) and not lines[j].rstrip().endswith("-/"):
+            # Find the closing `-/`.  It can sit ANYWHERE on a line, not only at
+            # its end: `/-- doc -/ def f := 1` is legal Lean and closes on the
+            # OPENING line with the declaration trailing it.  The first version
+            # tested `rstrip().endswith("-/")`, so it missed that close and ran
+            # on to the next line that happened to end in `-/` — reporting an
+            # attachment point from somewhere else in the file entirely.
+            j, rest = i, None
+            while j < len(lines):
+                # on the opening line, look PAST the `/--` so its own dashes
+                # cannot be mistaken for the close
+                hay = lines[j][lines[j].index("/--") + 3:] if j == i else lines[j]
+                pos = hay.find("-/")
+                if pos != -1:
+                    rest = hay[pos + 2:].strip()
+                    break
                 j += 1
-            k = j + 1
-            # skip blank lines: a doc comment separated by blanks still attaches
-            while k < len(lines) and not lines[k].strip():
-                k += 1
-            if k < len(lines):
-                head = lines[k].lstrip().split(" ")[0].split("(")[0]
-                if head in BAD_FOLLOWERS:
-                    out.append((i + 1, head))
+            if j >= len(lines):
+                i += 1                      # unterminated: not this lint's job
+                continue
+            if rest:
+                # the declaration trails the doc comment on the same line
+                head = rest.split(" ")[0].split("(")[0]
+            else:
+                k = j + 1
+                # skip blank lines: a doc comment separated by blanks still attaches
+                while k < len(lines) and not lines[k].strip():
+                    k += 1
+                head = lines[k].lstrip().split(" ")[0].split("(")[0] if k < len(lines) else None
+            if head in BAD_FOLLOWERS:
+                out.append((i + 1, head))
             i = j + 1
         else:
             i += 1
@@ -97,12 +115,25 @@ def self_test():
     # shipped with once.  Pinned so it cannot come back.
     ok4 = "/-- doc -/\nexample : True := trivial\n"
     assert offenders(ok4) == [], offenders(ok4)
+    # A one-line doc comment with the declaration TRAILING it on the same line.
+    # The `endswith("-/")` scan could not see this close at all.
+    ok5 = "/-- doc -/ def f := 1\n"
+    assert offenders(ok5) == [], offenders(ok5)
+    bad4 = "/-- doc -/ #guard true\n"
+    assert offenders(bad4) == [(1, "#guard")], offenders(bad4)
+    # …and the close-blind scan's real damage: it ran past the one-liner and
+    # attached the verdict to a LATER line's follower.
+    bad5 = "/-- a -/ def f := 1\n/-- b\nspanning -/\nmutual\n"
+    assert offenders(bad5) == [(2, "mutual")], offenders(bad5)
     print("  ok: a doc comment before #guard is caught")
     print("  ok: a doc comment before `mutual` is caught")
     print("  ok: intervening blank lines do not hide it")
     print("  ok: a doc comment before a real declaration is NOT flagged")
     print("  ok: `/- -/` and `/-! -/` are NOT flagged")
     print("  ok: `example` is NOT flagged (it is a legal attachment point)")
+    print("  ok: `/-- doc -/ def f := 1` (one-line, trailing decl) is NOT flagged")
+    print("  ok: `/-- doc -/ #guard` (one-line, trailing #guard) IS caught")
+    print("  ok: a one-liner does not swallow the NEXT doc comment's verdict")
     return 0
 
 

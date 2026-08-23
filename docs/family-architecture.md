@@ -3582,6 +3582,41 @@ The candidate generalization:
 > **A value the spec defines as a VALUE is never a refusal — however much
 > it looks like "we don't know."**
 
+**AND ITS INVERSE, measured on a construct where ANY answer is the defect** (pyc
+successor's 3c-i-c census, branch `pyc-3cib2` at `0014d6d`; **re-gate queued —
+conditional on that landing**). CPython:
+
+```python
+# (illustrative — the shape, not a tree file)
+e = enumerate(d)
+d[2] = 'b'
+list(e)          # RuntimeError: dictionary changed size during iteration
+```
+
+A **snapshot** model prints a value here. It is not printing the *wrong* value:
+
+> **A SNAPSHOT IS WRONG BY ANSWERING, NOT BY ANSWERING WRONGLY.**
+
+**This belongs beside the silent-wrong-answer family as its inverse, and it
+inverts the diagnostic with it.** The usual defect is *the model and the oracle
+disagree about a value*; here **they do not disagree about a value at all —
+they disagree about whether there IS one.** So the ordinary comparison cannot
+see it: the model succeeds, the language raises, and a comparator keyed on
+*"same printed value"* has nothing to compare. **The row is catchable only
+because both harnesses compare the exception CLASS and not merely stdout and
+exit status** (MEAS-52) — a rule that reads like hygiene until a construct
+arrives whose entire specified behaviour is the raise.
+
+**The design consequence, and it is the reason to record this rather than fix
+one model:** a snapshot is not *approximately right* about such a construct, it
+is the **wrong shape**. The mutation guard is a **feature of the iterator**, not
+an accident of an implementation, so a model that cannot express *"observing
+this is an error"* has no correct value to choose. **Check what a candidate
+model does where the language's answer is a REFUSAL, not only where it is a
+value** — that is §5.6's *rows the wrong model CANNOT STATE*, arriving from the
+verdict side.
+
+
 **Stated as a QUESTION for the tiers that would own the answer, not as a
 family fact.** Two shapes look like siblings and neither is ruled here:
 **Python's `NaN`** (a value in IEEE 754, and §3.5 already treats floats as
@@ -4377,6 +4412,37 @@ own"* — which is the honest half and the reason this is a norm rather than a
 reprimand. The residue is `qol-21`'s own table, still reading `6/82`, filed
 back to that lane as INBOUND (§9.5a).
 
+**A FIFTH WRONG UNIT, AND IT IS THE FIRST ONE IN A PRICE FOR WORK NOT YET
+DONE** (pyc successor's 3c-i-c census, branch `pyc-3cib2` at `0014d6d`;
+**re-gate queued**). `for k in d` and `for i, k in enumerate(d)` **look like one
+construct and are two.** The predicted cost — a `Kont`-record maintenance charge
+under the fuelMono rule — **never fires**, because `enumerate` is a **`GenFrame`,
+not a loop cursor**. The census **refuted the prediction outright: "the paying
+case" was free.**
+
+> **A PREDICTED MAINTENANCE COST INHERITS THE UNIT ERROR OF THE CONSTRUCT IT
+> WAS PREDICTED FOR.**
+
+**The other members of this family mis-count things that EXIST; this one
+mis-prices work that does not exist yet**, which is worse in one specific way:
+**there is nothing to re-measure.** A wrong identifier count can be re-run
+against the tree the moment someone doubts it. A wrong cost prediction is
+checkable only by **doing the work** — or by censusing the construct it names,
+which is the cheap half and the one that was skipped.
+
+A cost prediction has the form *"each X costs Y"*, and it is wrong **whenever X
+is the wrong unit, however right Y is for real X's.** So the check is not
+*"is the estimate reasonable?"* but **"is the thing being estimated one
+construct or several?"** — census-first (§9.0a), pointed at a price rather than
+at a lemma.
+
+**Recorded with its provenance, because the direction matters: the refuted
+prediction was the COORDINATOR'S.** A prediction made in the open and killed by
+a census is the cadence working — §9's *a census that could have overturned the
+plan* is evidence when it does **not** overturn, and it is a **result** when it
+does. **The failure mode this avoids is not a wrong estimate; it is an estimate
+nobody could have checked**, which is what an unpublished one always is.
+
 **A FOURTH WRONG UNIT, AND IT WAS HANDED TO THE LANE BY THE PARSER: AN
 UPSTREAM REPRESENTATION'S UNIT IS NOT YOUR UNIT** (Go, `69ea58a`). `[N]T` and
 `[]T` — **fixed array and slice** — are **one `go/ast` kind**, separated only by
@@ -4394,6 +4460,22 @@ are fixed-size — the working assumption ran **the opposite way** from the
 measurement, and the conflated number could not have corrected it, because
 **both objects were inside the one figure that looked like an answer.** When the
 rung comes, **slices are the weight, not the tail.**
+
+**AND THE RULING THAT KEPT THE SAME CENSUS FROM MINTING A SECOND TRUTH — ruling
+(c) on the never-stepped `enumerate` object.** A construct can be **admitted**
+without being **stepped**, and the temptation at that boundary is for the model
+to decide what the opening *should* mean. It does not:
+
+> **An OPENING is WITNESSED with the oracle's expectation — never turned into a
+> second decision site.**
+
+Two decision sites about one behaviour is the shape every law in this section
+exists to prevent: the interpreter decides, and then a table decides again,
+and **nothing fails when they diverge** (§5.2's *one execution, two
+projections*; §5.3's *the oracle writes its own column*). Admitting a construct
+whose semantics the tier has not built is legitimate — **claiming to know what
+it does is not**, and the difference is exactly whether the row's expectation
+came from the oracle or from the lane.
 
 The general form, and it is cheap to apply: **a parser's kinds are a
 convenience of the parser.** Before pricing anything by them, ask **which

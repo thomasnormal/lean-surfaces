@@ -3160,3 +3160,66 @@ hypothesis is redundant, say where its content already lives.**
 
 **Index:** MEAS-118 (retracted, kept), MEAS-118a, MEAS-118b, MEAS-123 …
 MEAS-126, STMT-110, STMT-111.
+
+## 2026-08-23-architecture-43 — Wrong by answering; and a predicted cost inherits its construct's unit error
+
+Two from the pyc successor's 3c-i-c census (branch `pyc-3cib2` at `0014d6d`;
+**re-gate queued**, so both are landed conditional on that landing and say so at
+the site).
+
+**(1) §5.1 — THE INVERSE OF THE SILENT-WRONG-ANSWER FAMILY.** `e =
+enumerate(d); d[2]='b'; list(e)` **raises `RuntimeError`** in CPython where a
+snapshot model prints a value. It is not printing the *wrong* value:
+
+> **A snapshot is WRONG BY ANSWERING, not by answering wrongly.**
+
+**It inverts the diagnostic, which is why it needed its own paragraph rather
+than a row.** The usual defect is *model and oracle disagree about a value*;
+here they **do not disagree about a value at all — they disagree about whether
+there IS one.** A comparator keyed on *"same printed value"* has nothing to
+compare: the model succeeds, the language raises. **The row is catchable only
+because both harnesses compare the exception CLASS** (MEAS-52) — a rule that
+reads like hygiene until a construct arrives whose entire specified behaviour
+*is* the raise.
+
+**And the design consequence is why this is recorded rather than fixed once**: a
+snapshot is not *approximately right* about such a construct, it is the **wrong
+shape** — the mutation guard is a **feature of the iterator**, so a model that
+cannot express *"observing this is an error"* has no correct value to choose.
+Landed as §5.6's *rows the wrong model CANNOT STATE*, arriving from the verdict
+side: **check a candidate model where the language's answer is a REFUSAL, not
+only where it is a value.**
+
+**(2) §5.4a — A FIFTH WRONG UNIT, and the first inside a PRICE.** `for k in d`
+and `for i, k in enumerate(d)` **look like one construct and are two**: the
+predicted `Kont`-record maintenance charge **never fires**, because `enumerate`
+is a **`GenFrame`, not a loop cursor**. *"The paying case" was free.*
+
+> **A predicted maintenance COST inherits the unit error of the construct it was
+> predicted for.**
+
+**What makes this member worse than the others, and it is my addition**: the
+rest of the family mis-counts things that **exist**, and a wrong count can be
+re-run against the tree the moment anyone doubts it. **A wrong cost prediction
+is checkable only by doing the work** — or by censusing the construct it names,
+which is the cheap half and the one that gets skipped. A prediction has the form
+*"each X costs Y"* and is wrong **whenever X is the wrong unit, however right Y
+is for real X's**, so the check is not *"is the estimate reasonable?"* but
+**"is the thing being estimated one construct or several?"**
+
+**Recorded with its provenance, because the direction matters: the refuted
+prediction was the COORDINATOR'S.** §9's *a census that could have overturned
+the plan* is evidence when it does not overturn and a **result** when it does.
+**The failure mode avoided here is not a wrong estimate — it is an estimate
+nobody could have checked**, which is what an unpublished one always is.
+
+**RULING (c), landed beside it: an OPENING IS WITNESSED, NOT DECIDED.** The
+never-stepped `enumerate` object's openings carry **the oracle's expectation**
+and do not become **a second decision site**. Two decision sites about one
+behaviour is the shape §5.2's *one execution, two projections* and §5.3's *the
+oracle writes its own column* both exist to prevent — **nothing fails when they
+diverge.** Admitting a construct the tier has not built is legitimate; **claiming
+to know what it does is not**, and the difference is whether the expectation came
+from the oracle or from the lane.
+
+**Index:** MEAS-127, MEAS-128, STMT-112.

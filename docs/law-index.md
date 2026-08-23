@@ -175,6 +175,8 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-124 | pre-flight a name-collision grep for every name a landing DECLARES | `docs/family-architecture.md §9.0a` |
 | MEAS-125 | attribute staleness to a PHASE — queue and build are different costs | `docs/family-architecture.md §7.2` |
 | MEAS-126 | order work by what is SHARED, not by what is NEXT | `docs/family-architecture.md §9.0b` |
+| MEAS-127 | a predicted maintenance COST inherits the unit error of the construct it prices | `docs/family-architecture.md §5.4a` |
+| MEAS-128 | an OPENING is witnessed with the oracle's expectation, never a second decision site | `docs/family-architecture.md §5.4a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -294,6 +296,7 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-109 | choose the acceptance case that can FAIL under the wrong model, and take it NOW | `docs/family-architecture.md §5.6` |
 | STMT-110 | a guarantee inside an IMPLICATION guarantees nothing when the antecedent fails | `docs/family-architecture.md §8` (the polarity pair) |
 | STMT-111 | THE HONEST SIGNATURE — omit a redundant hypothesis; never accept-and-ignore | `docs/family-architecture.md §8` |
+| STMT-112 | a snapshot is WRONG BY ANSWERING, not by answering wrongly | `docs/family-architecture.md §5.1` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

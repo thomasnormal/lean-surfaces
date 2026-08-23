@@ -530,3 +530,100 @@ the pinned count, both of which are readable rather than runnable.
 **Not run; not applicable.** One file edited, none added, no Lean in this
 repository. `docs_check` passes and `tools/backlog-index.sh` was re-run per
 §9.5.
+
+---
+
+## 2026-08-23-wasm-6 — **O1 IS PROVED**, and both split lemmas with it: the pinned expectation matched EXACTLY, plus O3's census
+
+The orientation fix landed and the tenure ran: `LOCK ACQUIRED after 6049s as
+'wasm 19075'` (16:31:01) → `build exit=1` → `LOCK RELEASED (mine)` (16:31:27).
+
+**MEASURED AGAINST THE PINNED EXPECTATION OF `2026-08-23-wasm-5`, from the FULL
+log rather than the deduplicated summary (§7):**
+
+| pinned | measured | |
+| --- | --- | --- |
+| `SubtypingPort` **GREEN** | `✔ [3001/3003] Built SubtypingPort (12s)` | **MATCH** |
+| `SubtypingPort` errors **0** | **0** | **MATCH** |
+| failing modules **1** | **1** (`typing_lemmas`) | **MATCH** |
+| `typing_lemmas` errors **6** | **6**, byte-for-byte the same six | **MATCH** |
+
+**The pin did exactly the work §5.4b said it would.** The overall exit code is
+`1` in both the regression case and the success case; only the pinned count
+distinguishes them. Without it, "still red, as expected" would have concealed
+this result entirely — the build is red and **the thing that matters went
+green**.
+
+**WHAT IS NOW PROVED IN LEAN — verified by the compiler, not by reading:**
+
+| theorem | Isabelle counterpart | status |
+| --- | --- | --- |
+| `zip_self_eq` | (opens `typing_lemmas.lean`) | proved |
+| `rt_sub_refl` | `Resulttype_sub_refl` | proved |
+| **`instrtype_sub_refl` — OBLIGATION O1** | `instr_subtyping_refl` | **PROVED** |
+| **`rt_sub_split_left`** | `Resulttype_sub_split_left` | **PROVED** |
+| **`rt_sub_split_right`** | `Resulttype_sub_split_right` | **PROVED** |
+
+**Hygiene, per the house laws**: **0 `sorry`**, **0 warnings**, 0 `native_decide`
+— the file emits no diagnostic at all. Checked three ways: the build log
+carries no `SubtypingPort` warning line, the file has zero `sorry` tokens, and
+`harness/wasm_sorry_census.py` reports `0 live / 0 raw` on it.
+
+**So ladder inches 1 AND 2 are done in one landing** — O1, plus the shared
+split lemma in *both* orientations, which `2026-08-22-wasm-2` established is
+two obligations rather than one.
+
+The artifact is vendored at `docs/wasm-port/SubtypingPort.lean` for review.
+**It is deliberately outside `LeanModels` and the `Examples.+` glob** — it
+needs the fork's `wasm2.0` model and toolchain **v4.32.0**, so building it here
+is impossible and gating it here would break this repository's build. It is
+committed in the fork's durable clone at **`8598785c`**, on a detached checkout
+of `lean-backend` `b399351f`. **NOT pushed upstream** — engagement remains
+Thomas's decision.
+
+**Attribution is in the file header**, per the standing law: proof structure
+from Aaron Lee's `Subtyping_Properties.thy`, branch
+`aaron/subtyping/inversion_lemmas`, commit `e75dad778`, Apache-2.0 — with the
+one place the port necessarily diverges (Isabelle's `metis list_all2_*` closers
+have no Lean counterpart, because the model's `Forall₂` is zip-based) written
+out where the next reader meets it.
+
+### O3's CENSUS — `instrtype_sub_trans`, read before any proof is attempted
+
+Per §L25, the census comes first. Read from Aaron Lee's `instr_subtyping_trans`
+(64 lines, the only one of the four needing a structured `proof -`):
+
+**Its shape.** Destructure the three functypes; unfold `instrtype_sub` twice to
+get two frame decompositions; **split the second against the first** — once
+with `split_left` on the domain, once with `split_right` on the range; then
+assemble the composite frame `ts_23 ++ tf1_ts_12` / `ts'_23 ++ tf1_ts'_12` and
+discharge five obligations (`a`–`e`).
+
+**What it needs, exactly:**
+
+| need | status |
+| --- | --- |
+| `rt_sub_split_left` | **PROVED** (this landing) |
+| `rt_sub_split_right` | **PROVED** (this landing) |
+| `rt_sub_trans` (transitivity of `resulttypeSub`) | **NOT YET PORTED** — exists in Isabelle (3 lines) and at `typing_lemmas.lean:127`, which does not build |
+| `rt_sub_app` (the `++` congruence) | **NOT YET PORTED** — Isabelle's `Resulttype_sub_append`; `typing_lemmas.lean:147`, same problem |
+| `List.append_assoc` | Lean core |
+
+**So O3 is gated on exactly two more supporting lemmas**, and both are ones the
+broken file already contains — they must be re-derived in the port for the same
+reason `instrtype_sub` was. Neither is hard: `rt_sub_trans` composes the
+zip-based `Forall₂` pointwise through `Valtype_sub` transitivity, and
+`rt_sub_app` is the `List.zip_append` argument already used twice in this
+landing, run forwards instead of backwards.
+
+**Next inch, therefore: `rt_sub_trans` + `rt_sub_app`, then O3.** Not O2/O4 —
+the census says those need the same two lemmas, so the cheapest order puts the
+shared prerequisites first, exactly as the split lemma preceded everything here.
+
+### Triad
+
+**Not run for lean-surfaces; not applicable.** This landing adds one vendored
+`.lean` outside every build glob and edits `docs/backlog/wasm.md`; no
+`LeanModels` module, no `Examples` module, no gate in this repository can reach
+it. `docs_check` passes and `tools/backlog-index.sh` was re-run per §9.5. The
+Lean execution reported above was in the **fork's** tree under a ticket.

@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**186 entries across 16 lanes.** Regenerate with
+**187 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -99,6 +99,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-lean-tier-7` | `TrProjP.instL` GREEN, and the proof caught a soundness defect in my own definition | lean-tier |
 | `2026-08-23-c-7` | THE TERMINATION REPAIR IS **GREEN**, and it took three tenures to state one measure | c |
 | `2026-08-23-architecture-7` | The blast radius is bounded by DESTRUCTURING sites; and the triad summary locates rather than counts | architecture |
+| `2026-08-23-wasm-6` | **O1 IS PROVED**, and both split lemmas with it: the pinned expectation matched EXACTLY, plus O3's census | wasm |
 | `2026-08-23-pycomplete-6` | THE FIRST TICKET WAS RED, and both reds were findings the witnesses were written to catch | python-completeness |
 | `2026-08-23-lean-tier-6` | `ProjParam.lean` TYPECHECKS GREEN, verified twice; and the private script is retired for the owner-format defect | lean-tier |
 | `2026-08-23-c-6` | STMT-59 answered: **(a), with a named (b) subset already scheduled** | c |

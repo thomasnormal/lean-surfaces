@@ -2527,3 +2527,71 @@ by parentage and by path, never `pkill`.
 Thomas's machine it is not**, and it is shared infrastructure rather than this
 lane's to change unilaterally. Flagged for the coordinator.
 >>>>>>> cc3d9ec (INCIDENT FIX: ci.sh could run itself, 26 deep, each level building Mathlib)
+
+---
+
+## 2026-08-23-qol-37 — CI's build is gated by host, and this clone is seeded at last
+
+### The ruling, implemented
+
+`ci.sh`'s `lake-build` now runs **only on `GITHUB_ACTIONS=true`**. Anywhere else
+it prints the named line and skips:
+
+```
+=== [lake-build] SKIPPED on non-CI host — Lean builds go through tools/triad.sh (A11)
+```
+
+`--require-build` turns that skip into a **failure** for a caller that must not
+proceed without a build — and it is *only* that. **There is no local override
+that reaches bare `lake`:** a local caller who wants a build takes a ticket,
+full stop.
+
+### One extension beyond the letter, flagged rather than smuggled
+
+Auditing for other bare invocations found **two more**: the spice
+`*-adversarial` steps run `lake env lean --run …` directly. A11 says *any Lean
+process is Lean execution*, so the reason applies even though the ruling was
+written about `lake build`. They now go through `maybe_lean`, which carries the
+same host gate. **This extends the ruling; say so if it should not.**
+
+### The rows, and what makes them worth having
+
+*"No lake was invoked"* is asserted, not hoped: the verification stub **records
+being called** by touching a marker, so the absence is checked. `GITHUB_ACTIONS`
+set → the step runs and the stubbed `lake` fails it; unset → the named SKIP,
+recorded as a **skip** not a pass, with **no marker**; `--require-build` → a
+**fail**, still with no marker.
+
+**A subshell defect on the way**, and it is the same one this lane has now hit
+three times: the first cut called `lake_build_step` inside `$( … )`, so the
+`skip+=`/`fail+=` mutations were discarded and three rows read as failures. The
+step is called directly with output to a file. And the `maybe_lean` row failed
+first because I defined the helper **after** the block that tests it — a guard
+tested before it exists is not tested.
+
+### A13, at last — and the number is the argument
+
+The 3.3 GB `.lake` the incident built was **deleted** and the clone **CoW-seeded**
+from an idle, untorn peer. Preconditions checked first, not assumed: no build
+had either peer as its cwd (by `lsof`), both trees clean, and **toolchain,
+`lake-manifest.json` and `lakefile.toml` all identical**.
+
+| | |
+| --- | ---: |
+| seed time | **13 s** |
+| apparent cache | 6.3 G (larger than the accident's) |
+| **free disk** | **144 Gi → 147 Gi** |
+
+**A bigger cache that gave back 3 GB** — that is what `-c` buys, and it is A13's
+"27 s and 29 MB" reproduced. `.git` was not touched, so none of A13's
+branch-or-remote inheritance applies.
+
+**Verified by the tool that had been refusing all session:** `check.sh` on a
+scratch file flips from **`refuse-cold`** to **`scratch` — "warm-clone
+amendment CHECKED"**, and `--iterate` would now be permitted. The clone is no
+longer one accident away from a Mathlib build.
+
+### Triad
+
+`bash -n` clean. `ci.sh --verify-guards`: **14 ok, 0 failed**. The incident
+command still exits **2**. No Lean executed by this lane.

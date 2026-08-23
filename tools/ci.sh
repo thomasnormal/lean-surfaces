@@ -24,36 +24,21 @@ cd "$(dirname "$0")/.."
 #      no-op `lake` that refuses loudly, so a self-test CANNOT reach a real
 #      build even if a future edit re-introduces a call.  A11: any lake
 #      invocation needs a ticket or a stub, and a self-test has no ticket.
-# EXACTLY ONE allowlisted flag, and its handler cannot reach the CI body — an
-# allowlist is not the defect; IGNORING an unknown flag was.  Without this the
-# guards below would be untestable, and an untested refusal path is the thing
-# this whole file now exists to stop.
-if [ "${1:-}" = "--verify-guards" ] && [ "$#" = "1" ]; then
-  vok=0; vbad=0
-  vcheck() { if [ "$2" = "$3" ]; then vok=$((vok+1)); echo "  ok   $1"; \
-             else vbad=$((vbad+1)); echo "  FAIL $1: got '$2' want '$3'"; fi; }
-  out="$(bash "$0" --self-test 2>&1)"; rc=$?
-  vcheck "an unknown flag REFUSES, never runs CI"  "$rc" "2"
-  vcheck "  ...naming the flag it got"             "$(printf '%s' "$out" | grep -c -- 'got: --self-test')" "1"
-  out="$(LS_CI_SELF_TEST=1 bash "$0" 2>&1)"; rc=$?
-  vcheck "the sentinel REFUSES re-entry"           "$rc" "2"
-  vcheck "  ...naming A11"                         "$(printf '%s' "$out" | grep -c 'A11')" "1"
-  stub="$(mktemp -d "${TMPDIR:-/tmp}/ci-vg.XXXXXX")"
-  printf '#!/usr/bin/env bash\nexit 97\n' > "$stub/lake"; chmod +x "$stub/lake"
-  rc=0; ( PATH="$stub:$PATH"; lake build >/dev/null 2>&1 ) || rc=$?
-  vcheck "a stubbed lake cannot build"             "$rc" "97"
-  rm -rf "$stub"
-  echo "verify-guards: $vok ok, $vbad failed"
-  [ "$vbad" = "0" ] || exit 1
-  exit 0
-fi
-
-if [ "$#" -gt 0 ]; then
-  echo "ci.sh: takes NO arguments (got: $*)" >&2
-  echo "  The full CI is the only thing this script runs.  For a tool's own" >&2
-  echo "  refusal paths use 'bash tools/<tool>.sh --self-test' directly." >&2
-  exit 2
-fi
+# An ALLOWLIST, and anything outside it still refuses.  The defect was never
+# that a flag existed; it was that an unknown flag was IGNORED.
+REQUIRE_BUILD=0
+VERIFY_GUARDS=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --require-build) REQUIRE_BUILD=1; shift ;;
+    --verify-guards) VERIFY_GUARDS=1; shift ;;
+    *)
+      echo "ci.sh: unknown argument (got: $*)" >&2
+      echo "  Accepted: --require-build, --verify-guards.  For a tool's own" >&2
+      echo "  refusal paths use 'bash tools/<tool>.sh --self-test' directly." >&2
+      exit 2 ;;
+  esac
+done
 
 if [ -n "${LS_CI_SELF_TEST:-}" ]; then
   echo "ci.sh: REFUSING — LS_CI_SELF_TEST is already set in this environment," >&2
@@ -126,8 +111,98 @@ STUB
   return "$rc"
 }
 
+# THE BUILD IS GATED BY HOST.  On a GitHub runner the build IS the point; on
+# any other machine a bare `lake` is an unticketed Lean invocation (A11) in
+# whatever clone happens to be cwd — which is how 26 recursive ci.sh instances
+# each started one.  There is NO local override that reaches bare lake: a local
+# caller who wants a build takes a ticket, full stop.  `--require-build` only
+# turns the skip into a FAILURE, for a caller that must not proceed without it.
+lake_build_step() {
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    step "lake-build" lake build
+    return
+  fi
+  echo "=== [lake-build] SKIPPED on non-CI host — Lean builds go through tools/triad.sh (A11)"
+  if [ "$REQUIRE_BUILD" = "1" ]; then
+    echo "    --require-build was passed, so a skipped build is a FAILURE here."
+    fail+=("lake-build")
+  else
+    skip+=("lake-build")
+  fi
+}
+
+# THE SAME GATE FOR `lake env lean`.  A11 makes no exception for it — "any
+# Lean process is Lean execution" — and two spice steps ran it directly.  The
+# ruling was written about `lake build`; this applies its reason rather than
+# its letter, and is flagged as an extension rather than smuggled in.
+maybe_lean() { # maybe_lean <name> <required-file> <command...>
+  local name="$1"
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then maybe "$@"; return; fi
+  echo "=== [$name] SKIPPED on non-CI host — Lean builds go through tools/triad.sh (A11)"
+  if [ "$REQUIRE_BUILD" = "1" ]; then fail+=("$name"); else skip+=("$name"); fi
+}
+
+
+# THE GUARDS, VERIFIED — placed after the definitions so it drives the REAL
+# `lake_build_step` rather than a copy of it, and before any step runs.
+if [ "$VERIFY_GUARDS" = "1" ]; then
+  vok=0; vbad=0
+  vcheck() { if [ "$2" = "$3" ]; then vok=$((vok+1)); echo "  ok   $1"; \
+             else vbad=$((vbad+1)); echo "  FAIL $1: got '$2' want '$3'"; fi; }
+
+  out="$(bash "$0" --self-test 2>&1)"; rc=$?
+  vcheck "an unknown flag REFUSES, never runs CI"  "$rc" "2"
+  vcheck "  ...naming what it got"                 "$(printf '%s' "$out" | grep -c -- 'got: --self-test')" "1"
+  out="$(LS_CI_SELF_TEST=1 bash "$0" 2>&1)"; rc=$?
+  vcheck "the sentinel REFUSES re-entry"           "$rc" "2"
+  vcheck "  ...naming A11"                         "$(printf '%s' "$out" | grep -c 'A11')" "1"
+
+  # A stub that RECORDS being called, so "no lake was invoked" is an assertion
+  # rather than a hope.
+  vstub="$(mktemp -d "${TMPDIR:-/tmp}/ci-vg.XXXXXX")"
+  cat > "$vstub/lake" <<VSTUB
+#!/usr/bin/env bash
+touch "$vstub/INVOKED"
+exit 97
+VSTUB
+  chmod +x "$vstub/lake"
+  vpath="$PATH"; PATH="$vstub:$PATH"
+
+  # CALLED DIRECTLY, output to a FILE: `$( … )` is a subshell, so the array
+  # mutations the step records would be discarded — which is exactly what the
+  # first cut measured, reading empty arrays as a failing gate.
+  vout="$vstub/out"
+  rm -f "$vstub/INVOKED"; pass=(); fail=(); skip=()
+  GITHUB_ACTIONS= lake_build_step > "$vout" 2>&1
+  out="$(cat "$vout")"
+  vcheck "off a CI host the build is SKIPPED"      "$(printf '%s' "$out" | grep -c 'SKIPPED on non-CI host')" "1"
+  vcheck "  ...naming triad.sh and A11"            "$(printf '%s' "$out" | grep -c 'tools/triad.sh (A11)')" "1"
+  vcheck "  ...and NO lake was invoked"            "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
+  vcheck "  ...recorded as a skip, not a pass"     "${skip[*]}" "lake-build"
+
+  rm -f "$vstub/INVOKED"; pass=(); fail=(); skip=()
+  REQUIRE_BUILD=1 GITHUB_ACTIONS= lake_build_step > "$vout" 2>&1
+  vcheck "--require-build turns the skip into a FAIL" "${fail[*]}" "lake-build"
+  vcheck "  ...and STILL invokes no lake"          "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
+
+  rm -f "$vstub/INVOKED"; pass=(); fail=(); skip=()
+  GITHUB_ACTIONS=true lake_build_step > "$vout" 2>&1
+  vcheck "on a GitHub runner the step RUNS"        "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "called"
+  vcheck "  ...and a stubbed lake fails it"        "${fail[*]}" "lake-build"
+
+  rm -f "$vstub/INVOKED"; pass=(); fail=(); skip=()
+  GITHUB_ACTIONS= maybe_lean "probe" /etc/hosts lake env lean --run /dev/null > "$vout" 2>&1
+  vcheck "lake env lean is gated the same way"    "$(grep -c 'SKIPPED on non-CI host' "$vout")" "1"
+  vcheck "  ...and invokes no lake either"        "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
+
+  PATH="$vpath"; rm -rf "$vstub"
+  echo "verify-guards: $vok ok, $vbad failed"
+  [ "$vbad" = "0" ] || exit 1
+  exit 0
+fi
+
 step  "tool-self-tests" selftests
-step  "lake-build"      lake build
+lake_build_step
 step  "py-harness"      python3 harness/diff_test.py --no-build
 # leanpy: whole PROGRAMS against CPython. Fails only on a DIVERGENCE (the
 # model ran a file and disagreed) — a loud refusal is a result, and the
@@ -138,9 +213,9 @@ step  "leanpy-cache-tests" python3 tools/test_leanpy.py
 step  "spice-extractor-tests" python3 extractors/spice/test_extract.py
 maybe "spice-dram-bank-256x32-source" Examples/spice/dram_bank_256x32/generate.py \
   python3 Examples/spice/dram_bank_256x32/generate.py --check
-maybe "spice-dram-bank-256x32-adversarial" harness/spice/dram_bank_256x32_source_test.lean \
+maybe_lean "spice-dram-bank-256x32-adversarial" harness/spice/dram_bank_256x32_source_test.lean \
   lake env lean --run harness/spice/dram_bank_256x32_source_test.lean
-maybe "spice-dram-sense-adversarial" harness/spice/dram_sense_amp_source_test.lean \
+maybe_lean "spice-dram-sense-adversarial" harness/spice/dram_sense_amp_source_test.lean \
   lake env lean --run harness/spice/dram_sense_amp_source_test.lean
 maybe "circuit-equation-provenance" harness/spice/equation_provenance_test.py \
   python3 harness/spice/equation_provenance_test.py

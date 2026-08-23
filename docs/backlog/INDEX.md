@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**141 entries across 16 lanes.** Regenerate with
+**142 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-37` | CI's build is gated by host, and this clone is seeded at last | qol |
 | `2026-08-23-qol-36` | INCIDENT: a self-test that ran CI, 26 deep, on a cold clone | qol |
 | `2026-08-23-qol-35` | audit MEDIUM 9-10: a checker with a floor, and a CI that can fail | qol |
 | `2026-08-23-qol-34` | audit MEDIUM 11 and LOW 12: a ledger that can fail, and a map that reads the tree | qol |

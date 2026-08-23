@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**203 entries across 16 lanes.** Regenerate with
+**207 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-architecture-46` | A guard that always fires; a procedure is not a gate; and WAITING names its trigger | architecture |
 | `2026-08-23-architecture-45` | A list is maintained by the attention that wrote the defect; and a new reader under-reads | architecture |
 | `2026-08-23-qol-44` | a flag written last spun forever, in eleven tools | qol |
 | `2026-08-23-architecture-44` | The quirk that blocks direct reuse can fund the crossing | architecture |
@@ -80,10 +81,13 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-16` | the triad summary now says what it knows: counts from the full log, and an aborted triad called one | qol |
 | `2026-08-23-architecture-16` | A generated model's relations are its own; the order lifts but the congruences don't | architecture |
 | `2026-08-23-qol-15` | `check.sh --iterate`: a COURTESY PROTOCOL whose only guarantee is the RSS ceiling | qol |
+| `2026-08-23-lean-tier-15` | WAITING begins, and the first act was fixing the guards that WAITING depends on | lean-tier |
 | `2026-08-23-architecture-15` | A6 covered half the hazard; and the gate line has THREE states | architecture |
 | `2026-08-23-qol-14` | the INDEX collision is mechanical now: a merge driver, and a refusal before the ticket | qol |
+| `2026-08-23-lean-tier-14` | CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING | lean-tier |
 | `2026-08-23-architecture-14` | Flattering errors have a cause; the layer order makes fuelMono mechanical; three Lean tooling hazards | architecture |
 | `2026-08-23-qol-13` | `--gates` ADDS; unstaged Lean under a glob REFUSES; Lean nothing imports is LOUD | qol |
+| `2026-08-23-lean-tier-13` | MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact | lean-tier |
 | `2026-08-23-architecture-13` | The triage rule for what the parity audit finds; and the two-model window has closed on the closed-function surface | architecture |
 | `2026-08-23-softfloat-12` | THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND | softfloat |
 | `2026-08-23-lean-tier-12` | `wf` GREEN and the hoisted `ProjSound` re-proved: 4 of 7; the remaining three are censused and none is ordinary work | lean-tier |

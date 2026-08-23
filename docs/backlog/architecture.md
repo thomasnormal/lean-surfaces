@@ -3396,3 +3396,85 @@ EXPLAINS, it never DOWNGRADES.** A tool that has learned something new tells the
 lane about it **without quietly buying it a cheaper tenure.**
 
 **Index:** MEAS-131 … MEAS-134, OPS-69 … OPS-71.
+
+## 2026-08-23-architecture-46 — A guard that always fires; a procedure is not a gate; and WAITING names its trigger
+
+Three from the Lean tier's standdown (`38766b4`, on master; the tier is WAITING
+with working guards).
+
+**(1) §5.4b — THE VACUOUS GATE'S MIRROR, measured by a lane on its OWN guards.**
+Two of four fired at standdown and **both were self-inflicted**: the baselines
+were pinned to **the lane's own branch commit** (`71829bf`), so **every future
+commit would re-fire them.** The census drifted **raw 138 → 141 with real
+113 → 113** — the movement was the lane's own docstring prose.
+
+> **A guard that ALWAYS fires is exactly as useless as one that never can.
+> Either way the lane learns to ignore it, and the drift it was watching for
+> arrives unnoticed.**
+
+**It is MEAS-35's mirror exactly** — the audit's class was *a `--compare` that
+cannot exit nonzero*; this is *one that cannot exit zero*. The two look nothing
+alike, one silent and one noisy, and they end in the same place: **a gate is a
+channel, and a channel stuck at either value is off.**
+
+**THE FIX NORM, and its second half is what I made sure landed.** Baseline
+against **upstream, never yourself** — a `git worktree` pristine master (2.1 MB)
+without touching the branch, correspondence now based at **`e0e3f6bcccb8`**.
+*The re-baseline corrected WHAT THE GUARD WATCHES, not what we measured.*
+
+> **A re-baseline is complete when it names what the guard now watches AND
+> reports that no published fact moved.**
+
+**Because re-baselining is the one repair that can silently erase the finding it
+was meant to report**: *"we moved the baseline"* and *"we moved the goalposts"*
+produce **identical diffs**, and only a published comparison separates them.
+Here it is published — `rules_by_relation` unchanged (**STUB 17**, so the
+*24%-maps-to-a-stub* headline holds), **113** real, **24** proof-layer.
+
+**AND A THIRD MEMBER OF THE never-executed FAMILY**, beside *a check that has
+never failed is a design, not a control* (§5.4) and *an amendment that has never
+fired…* (§7.1a):
+
+> **A duty that has never been EXECUTED is a plan, not a duty.**
+
+Which is why running the guards was the lane's **first** act on entering
+WAITING — and why running them is what found the defect.
+
+**(2) §5.4b — A VOCABULARY RULE, because this section COUNTS things: A
+PROCEDURE IS NOT A GATE.** The arena check is recomputed **by hand** from a
+downloaded `results.json`, **no `--compare`, no committed baseline**. It caught
+real movement (**66/67 → 67/67**), so it earns its place; calling it a guard
+overstates it.
+
+> **A procedure earns its place by what it CATCHES; a gate earns its name by
+> what it RUNS. Instrument it, or rename it.**
+
+**Not pedantry, because of enumeration**: §5.4b's pointer list is counted, and a
+procedure counted as a gate adds a row **nothing executes** — it does not even
+reach `DECLARED` on the four-state ladder, since there is no declaration for an
+enumerator to find. **A gate set padded with procedures reads as coverage and is
+staffed by memory.**
+
+**And the honest gap recorded beside it**: the spec census **cannot run** (LaTeX
+corpus purged) but its **baseline is committed and its instrument pinned**, so
+re-fetching restores it. *"Armed and not runnable, and here is what restores
+it"* is §5.4a's provenance remedy applied to a gate — **a gate that cannot run
+today is a stated gap; a gate quietly dropped from the list is a coverage
+claim.**
+
+**(3) §9 — WAITING IS A STATE ONLY WITH AN EXECUTABLE TRIGGER**: *a DRIFT in the
+census's `real` count, or `addInduct`/`VInductDecl.WF` leaving
+`definitional_stubs` — which is PR #43 landing, and unblocks 15 of 24.*
+
+> **WAITING names an executable trigger, or it is a euphemism for stopped.**
+
+**The form matters**: *"when upstream is ready"* is unfalsifiable and ages into
+silence; *"when this number moves"* is a check with a verdict the lane can be
+**wrong about in public**. **And the enabling condition is affordability**, which
+is the half a lane skips — the duty is pure Python over out-of-tree corpora, **no
+Lean, no tenure, no ticket**, so it runs at any cadence. **A waiting duty priced
+at a tenure will not be run, and an unrun duty is a plan** — so the two halves
+are one design: name a trigger a cheap command can answer, and keep the command
+cheap enough that nobody has to decide whether to run it.
+
+**Index:** MEAS-135 … MEAS-139.

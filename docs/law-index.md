@@ -183,6 +183,11 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-132 | a newly written READER defaults to UNDER-reading, the direction that reports all clear | `docs/family-architecture.md §5.4b` |
 | MEAS-133 | a fixture is not a TOOL — the mirror of a fixture is not enforcement | `docs/family-architecture.md §5.4b` |
 | MEAS-134 | FLAG a duplicate, never de-dupe — a de-dupe could silently shrink a set | `docs/family-architecture.md §5.4b` |
+| MEAS-135 | a guard that ALWAYS fires is as useless as one that never can — MEAS-35's mirror | `docs/family-architecture.md §5.4b` |
+| MEAS-136 | a re-baseline names what the guard now watches AND reports that no published fact moved | `docs/family-architecture.md §5.4b` |
+| MEAS-137 | a duty that has never been EXECUTED is a plan, not a duty | `docs/family-architecture.md §5.4b` |
+| MEAS-138 | a PROCEDURE is not a GATE — instrument it, or rename it | `docs/family-architecture.md §5.4b` |
+| MEAS-139 | WAITING names an EXECUTABLE trigger, or it is a euphemism for stopped | `docs/family-architecture.md §9` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

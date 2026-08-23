@@ -5168,6 +5168,74 @@ The same rule as *a check that has never failed is a design, not a control*
 its author**, and the two defects it surfaced were both **in the gate**. A gate
 whose first execution is on someone else's landing has been tested by nobody.
 
+**AND THE MIRROR OF THE VACUOUS GATE, measured by a lane on its OWN guards at
+standdown** (Lean tier, `38766b4`, on master). **Two of four fired, and both
+were self-inflicted**: the baselines were pinned to **the lane's own branch
+commit** (`71829bf`), so **every future commit would re-fire them.** The
+obligation census drifted **raw 138 → 141 with real 113 → 113** — the movement
+was the lane's own docstring prose in `ProjParam.lean`.
+
+> **A GUARD THAT ALWAYS FIRES IS EXACTLY AS USELESS AS ONE THAT NEVER CAN.
+> Either way the lane learns to ignore it, and the drift it was watching for
+> arrives unnoticed.**
+
+**It is MEAS-35's mirror, exactly**: the audit's defect class was *a `--compare`
+that cannot exit nonzero*; this is **a `--compare` that cannot exit zero**. The
+two failures look nothing alike — one is silent, one is noisy — and they end in
+**the same place**, because a signal that is constant carries no information in
+either direction. **A gate is a channel, and a channel stuck at one value is
+off.**
+
+**THE FIX NORM, and its second half is the part that keeps re-baselining
+honest.** Baseline against **upstream**, never against yourself: `git worktree
+add` gives a pristine master checkout (**2.1 MB**) without touching the branch,
+and the correspondence now records **`e0e3f6bcccb8`, upstream master**, as its
+base rather than one of the lane's own commits.
+
+> **The re-baseline corrected WHAT THE GUARD WATCHES, not what we measured.**
+
+**State that check as part of the norm, because re-baselining is the one repair
+that can silently erase the finding it was meant to report.** *"We moved the
+baseline"* and *"we moved the goalposts"* produce identical diffs, and only a
+published comparison separates them. Here it is published: **no fact moved** —
+`rules_by_relation` unchanged (**STUB 17**, so the *24%-maps-to-a-stub* headline
+holds), **113** real obligations, **24** proof-layer.
+
+> **A re-baseline is complete when it names what the guard now watches AND
+> reports that no published fact moved. Without the second half it is
+> indistinguishable from making a red go away.**
+
+**AND A THIRD MEMBER OF THE never-executed FAMILY, from the same standdown:**
+*a check that has never failed is a design, not a control* (§5.4); *an amendment
+that has never fired is a design, not a control* (§7.1a); and now —
+
+> **A DUTY THAT HAS NEVER BEEN EXECUTED IS A PLAN, NOT A DUTY.**
+
+Which is why the lane's first act on entering WAITING was to **run** the guards
+its waiting depends on, and why running them is what found the defect.
+
+**AND A VOCABULARY RULE THIS SECTION NEEDS, because it counts things: A
+PROCEDURE IS NOT A GATE.** The tier's arena check is **recomputed by hand** from
+a downloaded `results.json`, with **no `--compare` and no committed baseline**.
+It **caught real movement** (nightly **66/67 → 67/67**), so it earns its place —
+but calling it a guard **overstates it**.
+
+> **A procedure earns its place by what it CATCHES; a gate earns its name by
+> what it RUNS. Instrument it, or rename it.**
+
+**The reason this is not pedantry is enumeration.** §5.4b's pointer list is
+**counted**, and a procedure counted as a gate puts a row in the list that
+**nothing executes** — it does not even reach `DECLARED` on the ladder above,
+because there is no declaration for an enumerator to find. **A gate set padded
+with procedures reads as coverage and is staffed by memory.**
+
+**AND THE HONEST GAP BESIDE IT, recorded rather than glossed**: the spec census
+**cannot run** — its LaTeX corpus was purged — but **its baseline is committed
+and its instrument is pinned, so re-fetching restores it.** *"Armed and not
+runnable, and here is what restores it"* is the provenance remedy (§5.4a)
+applied to a gate: **a gate that cannot run today is a stated gap; a gate
+quietly dropped from the list is a coverage claim.**
+
 **COROLLARY — AN EXPECTED-TO-FAIL ARTIFACT IS THE WEAKEST GATE IN ANY SET**,
 because its verdict is invariant under everything the file says. A file expected
 to error is green while it errs, whatever it errs *about*, and whatever prose
@@ -6992,6 +7060,27 @@ table-driven ones**. So corpus selection both finds the traversable point **and
 names the wall**: the census that picked `bitLen` also priced the next step, and
 it priced it in constructs rather than in effort.
 
+**AND A LANE MAY BE *WAITING*, BUT ONLY WITH AN EXECUTABLE TRIGGER** (Lean
+tier, `38766b4`). The tier is now WAITING, and what makes that a **state**
+rather than a euphemism is that the thing it waits for is **a command's output,
+not a feeling**: *a **DRIFT** in the obligation census's `real` count, or
+`VEnv.addInduct` / `VInductDecl.WF` leaving `proof_layer.definitional_stubs` —
+which is **PR #43 landing**, and unblocks 15 of 24.*
+
+> **WAITING NAMES AN EXECUTABLE TRIGGER, OR IT IS A EUPHEMISM FOR STOPPED.**
+
+**The trigger has to be something a periodic run can ANSWER**, which is why the
+form matters: *"when upstream is ready"* is unfalsifiable and ages into silence;
+*"when this number moves"* is a check with a verdict, and the lane can be wrong
+about it in public.
+
+**AND THE ENABLING CONDITION IS AFFORDABILITY, which is the half a lane skips.**
+The standing duty here is **pure Python over out-of-tree corpora — no Lean, no
+tenure, no ticket** — so it can run at any cadence. **A waiting duty priced at a
+tenure is a duty that will not be run**, and an unrun duty is a plan (§5.4b).
+So the two halves are one design: **name a trigger a cheap command can answer,
+and keep the command cheap enough that nobody has to decide whether to run it.**
+
 ### 9.0a CENSUS-FIRST APPLIES TO THE LEMMA, NOT ONLY THE OBLIGATION
 
 **§9.7's duplication instance for this tick, owned by the lane that paid
@@ -7588,6 +7677,11 @@ with none (`a9f7867`):
   could never fire.
 
 > **A check that cannot fire is the audit's own VACUOUS category.**
+
+**And its MIRROR is in §5.4b** — *a guard that ALWAYS fires is exactly as
+useless as one that never can* — measured by a lane on its own guards. The pair
+is one rule: **a gate is a channel, and a channel stuck at either value is
+off.**
 
 That is §5.3's ruling — *a check must not report sameness where there was no
 content* — arriving at gates instead of at verdicts, and this document had

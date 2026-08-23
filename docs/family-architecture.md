@@ -8947,6 +8947,36 @@ a convention, or it mints ids in a sequence it does not own:
   against each owning lane, so an owner sees what is queued for them
   without reading their own file for surprises.
 
+**AND THIS CONVENTION IS IN TENSION WITH §9.5's ID LAW — found by the guard the
+same day the law landed, and one of the seven offenders is THIS LANE'S.**
+`tools/backlog-index.sh` wants `## <id> — <title>`; §9.5a's heading starts with
+the word `INBOUND`, so the generator **invents `INBOUND` as the id** — which is
+precisely the *five tokens where one belongs* case that *an id is one token*
+(§9.5) calls junk.
+
+**The two rules are both load-bearing and they genuinely conflict**: the index's
+INBOUND *class* is derived from that first token, so the convention is what makes
+the rendering work, and the id law is what makes `--strict` adoptable. **Neither
+can simply give way**, and the resolution is a generator question rather than a
+prose one:
+
+> **Recommended: the ID goes FIRST and `INBOUND` moves into the TITLE, with the
+> generator classing on the title prefix rather than on the id token.** Both
+> laws then hold, and the class survives.
+
+**Routed to the tools lane, not taken unilaterally**, because the generator is
+theirs and re-spelling six other lanes' headings to match a shape I chose would
+be exactly the cross-lane edit §9.5a exists to prevent. **Until it settles, the
+existing INBOUND headings are OLD-VALID — warn, never fail** — which is the
+migration vocabulary from §9.5 doing its job on **this document's own
+convention**, one landing after it was written.
+
+**Recorded rather than quietly fixed, because the shape is the useful part: a
+convention in a charter can be a defect in a tool.** §9.5a was written for
+readers and the generator reads it too; **a rule about how humans write headings
+became an input to a program, and nobody re-checked it against the program's
+grammar.**
+
 **AND THE RULE HAS NOW BEEN TESTED AGAINST A DISPATCH, WHICH IS THE CASE THAT
 DECIDES WHETHER IT IS A RULE.** A coordinator dispatch instructed this lane to
 **annotate another lane's dated entry directly**. It was declined on the

@@ -4689,5 +4689,30 @@ the remote which branch is its HEAD** rather than guess better: *a heuristic
 with a fallback nobody can see should be replaced by a question somebody can
 answer.*
 
+**(7) AND THE NEW GUARD CONVICTED THIS DOCUMENT WITHIN THE HOUR — one of the
+seven malformed headings is THIS LANE'S.** `docs/backlog/wasm.md:634` is my own
+INBOUND, and it is malformed **because §9.5a tells filers to write it that
+way**: the heading starts with `INBOUND`, so the generator invents `INBOUND` as
+the id — *five tokens where one belongs*, the exact case the law I had just
+landed calls junk.
+
+**The two rules are both load-bearing and genuinely conflict**: the index's
+INBOUND **class** is derived from that first token, so §9.5a's spelling is what
+makes the rendering work, while the id law is what makes `--strict` adoptable.
+**Recommended resolution recorded, not taken**: the id goes first, `INBOUND`
+moves into the title, and the generator classes on the **title prefix**.
+**Routed to the tools lane** — the generator is theirs, and re-spelling six
+other lanes' headings to match a shape I chose is the cross-lane edit §9.5a
+exists to prevent.
+
+> **A CONVENTION IN A CHARTER CAN BE A DEFECT IN A TOOL.**
+
+**§9.5a was written for readers, and the generator reads it too** — a rule about
+how humans write headings became **an input to a program**, and nobody
+re-checked it against the program's grammar. Meanwhile the existing headings sit
+at **OLD-VALID — warn, never fail**, which is item (5)'s migration vocabulary
+doing its job **on this document's own convention, one landing after it was
+written.**
+
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
-**91/91**; ids minted here **MEAS-203 … MEAS-208**, and **OPS-79 sunset**.
+**91/91**; ids minted here **MEAS-203 … MEAS-209**, and **OPS-79 sunset**.

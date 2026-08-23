@@ -257,6 +257,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-206 | a TAXONOMY OF ABSENCE belongs at the print statement, where a zero and a non-answer become one | `docs/family-architecture.md §7.2` |
 | MEAS-207 | a failure that only ever costs TIME has no constituency for fixing it | `docs/family-architecture.md §5.4b` |
 | MEAS-208 | AN ID IS ONE TOKEN — a migration-tolerant gate separates old-valid from never-valid | `docs/family-architecture.md §9.5` |
+| MEAS-209 | a CONVENTION in a charter can be a DEFECT in a tool — re-check prose rules against the program that reads them | `docs/family-architecture.md §9.5a` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

@@ -1097,6 +1097,20 @@ established platform would be describing something that does not exist.
    its charter — "this tier depends on no package" is a claim about that
    tier, checkable per tier, and false if read as a claim about the
    repository.
+
+   **AND THE TWO CLAIMS THAT LOOK LIKE ONE — a lane's own correction.**
+   *"Mathlib: no cost"* was **right about DEPENDENCY and wrong about
+   APPLICABILITY**, and those are separate facts:
+
+   * **dependency** — importing it costs nothing new; the paragraph above
+     is about this, and it is true;
+   * **applicability** — its lemmas govern *your* constants. That is a
+     claim about **your definitions**, not about the build, and nothing
+     above supports it.
+
+   Nothing in this section licenses the second. A tier can pay zero to
+   import Mathlib and still find **not one of its lemmas applies**, which
+   is exactly what happened next.
 5. **The envelope discipline** — `schema_version`, `language`,
    **`language_version`** (§1.5), `frontend` FAMILY, `source_file`,
    `source_sha256`, `Unsupported` leaves for anything outside a pinned
@@ -1220,6 +1234,38 @@ family adopts the monad's **shape** (`ExceptT ρ (StateT W Halt)`, its
 `WPMonad` instance, its laws) while keeping its own spelling, and records
 the iso as available rather than mandatory. A tier with no kernel-reducible
 runs to protect may spell it either way.
+
+**THE ORDER LIFTS; THE CONGRUENCES DON'T — ruled, conditional on landing.**
+The monotonicity work below raises the question of what of it belongs in
+`Core`, and the answer splits cleanly:
+
+* **LIFTS.** The flat order itself —
+  `FlatLe (bot : α) (x y : α) : Prop := x = bot ∨ x = y`, with `refl`,
+  `bot_le` and `eq_of_ne_bot`. **Every tier's `Res.le` / `PyLe` is an
+  instance of it**, so it is one definition and three lemmas serving all
+  of them.
+* **DOES NOT LIFT.** The `Res` lemmas themselves, and the **bind / ite
+  congruences**. `Sv.Res` and `Python.Res` are **DIFFERENT TYPES** —
+  Python's carries the `.exn` raise arm — so the congruences are **each
+  about a different monad's `bind`.** They stay per-tier.
+
+> **The ORDER lifts; the CONGRUENCES don't.**
+
+That is §2.4's trunk/sibling split arriving in the proof layer: the trunk
+takes what is genuinely one thing (a two-constructor order on any type
+with a bottom), and the siblings keep what is only *shaped* alike. A
+congruence lifted here would be the thick-trunk mistake — one lemma
+pretending to be about two monads.
+
+**What travels instead is the NAMING**, mirrored across tiers so a reader
+moving between them finds the same shelf: `Res.le`, `le_refl`,
+`timeout_le`, `le_eq`, `le_bind`, `le_ite`, `<worker>FuelMono`.
+**Convention where a definition cannot go** — which is the cheapest form
+of sharing and the only one available when the types genuinely differ.
+
+**Stated conditional on landing**: this rides the successor's `fuelMono`
+ticket, and because it touches `Core` it owes a **full build** (A14).
+Master truth today is that it has not landed.
 
 **AND THE LAYER ORDER PAYS OFF A SECOND TIME — fuel monotonicity becomes
 MECHANICAL.** Measured **in scratch** by the successor's `Monadic.fuelMono`
@@ -1886,6 +1932,20 @@ standing rule with a named blocker.**
    from scoring as agreement; this forbids **two refusals** from scoring as
    agreement. Same shape — a check finding sameness where there was no
    content — and the same fix: anchor the expectation outside the pair.
+
+   **AND THE SAME SHAPE AGAIN, one level further out — applied not to
+   models but to SOURCES.** A claim was supported by reading **two sources
+   that agreed with each other**:
+
+   > **Reading two sources that agree with each other is not verification
+   > when both are about a THIRD THING the model does not use.**
+
+   Two documents concurring tells you they concur. If the model's own
+   constant is not the one they are about, their agreement is a fact about
+   *them* — as unanchored as two interpreters both refusing. **The
+   referent, not the concurrence, is what makes reading into evidence**,
+   which is why the check is *read the model's definition*, not *read more
+   sources*.
 
    **THE RULE:**
 
@@ -3052,6 +3112,16 @@ instrument copies it:
 
 * named `harness/<lang>_<subject>_census.py`, output to
   `docs/<lang>-<subject>-census.json`, sorted and machine-readable;
+* **A DOCSTRING NAMING A REACHABLE SET IS A CLAIM, AND IT DRIFTS.**
+  `Kont.fuel`'s docstring read *"used by `heapEq`, `setDedup`"*; the
+  **measured** set is **`heapEq` + `valContains`**. Nothing failed — a
+  docstring naming the wrong consumers compiles exactly as well as one
+  naming the right ones, and a lane reading it to decide a blast radius
+  (§5.4a) would have grepped for the wrong thing. **A reachable set is
+  measurable, so it is checkable**, and a docstring that asserts one
+  belongs in the same category as a clause citation: **checked data, or
+  else prose that will go stale silently.** Being corrected by the owning
+  lane;
 * **ROWS AND WITNESSES ARE NAMED FOR THE CONSTRUCT, NEVER FOR THE
   VERDICT.**
 
@@ -4440,6 +4510,51 @@ real until an instrument re-derives it.**
 
     Getting the polarity backwards is exactly how a hypothesis-shaped
     condition ends up asserted as a conclusion, which is what happened.
+
+    **AND A TACTIC-MACRO TECHNIQUE that turns a per-arm hand proof into one
+    line — measured on `heapEqFuelMono`, 14 arms, axioms `[propext]`.**
+    Tactic macros are **hygienic**, so **a top-level tactic cannot see
+    induction hypotheses bound inside a proof**, and **`assumption` cannot
+    instantiate a ∀-quantified IH.** The fix is to stop expecting the macro
+    to find them: **pass the IH names in as `ident` arguments.** That is
+    what collapses fourteen hand-written arms into
+    `split <;> auto ihE ihL`. Hygiene is not an obstacle here — it is the
+    reason the macro needs to be *told* what a human reader would have
+    inferred from the goal.
+11. **CONSUMING A GENERATED OR EXTRACTED MODEL: its relations are ITS OWN
+    CONSTANTS.**
+
+    > **Check the definition before importing a library's lemmas about a
+    > same-named relation.**
+
+    Measured on the Wasm tier. Its spec-extracted model defines its own
+    **`Forall₂`** as **zip-based** —
+    `∀ t ∈ xs₁.zip xs₂, P t.1 t.2` — while **Mathlib's `List.Forall₂` is
+    INDUCTIVE and a different constant.** The two are not
+    interchangeable in the way that matters: **zip truncates, so the
+    zip-based relation does not imply equal lengths.** The entire Mathlib
+    `forall₂_*` route cannot apply, and importing it costs a red rather
+    than a shortcut.
+
+    **THE GENERATOR'S EXTRA PREMISES ARE THE TELL, and reading them is the
+    cheap check.** The generator emits `Resulttype_sub` with a **separate
+    explicit length premise** — which is precisely the fact that the
+    relation does *not* carry length equality, written down by the
+    generator itself:
+
+    > **A generated model's extra premises tell you what its relation does
+    > NOT carry.**
+
+    So the premise list is not boilerplate to be discharged; it is a
+    **specification of the gaps**, and a lane that reads it first learns
+    what no library lemma can supply.
+
+    **And what DOES transfer is the FACTORING, not the lemmas.** Aaron
+    Lee's Isabelle `list_all2` is inductive, so his closer has **no
+    counterpart** here — but his **factoring** (reflexivity, both split
+    orientations, transitivity) does. That is the general shape when
+    consuming a generated model: **the proof architecture ports; the proofs
+    do not.**
 
 ---
 

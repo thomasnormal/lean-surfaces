@@ -1061,3 +1061,78 @@ absences is a verdict:
 a red for work never attempted; collapsing it into the first is worse. **The
 discriminator is whether the LOCK was acquired** — which is why the lock line,
 not the gate line, is what a reader checks first.
+
+## 2026-08-23-architecture-16 — A generated model's relations are its own; the order lifts but the congruences don't
+
+Six items across two rounds (Wasm, then the successor's fuelMono work).
+
+**(1) CONSUMING A GENERATED/EXTRACTED MODEL — checklist step 11.** Wasm's
+spec-extracted model defines its own **`Forall₂` as ZIP-BASED**
+(`∀ t ∈ xs₁.zip xs₂, P t.1 t.2`), while **Mathlib's `List.Forall₂` is INDUCTIVE
+and a different constant**. **Zip truncates**, so the zip-based relation **does
+not imply equal lengths**, and the entire Mathlib `forall₂_*` route cannot apply.
+
+> **A generated model's relations are ITS OWN constants — check the definition
+> before importing a library's lemmas about a same-named relation.**
+
+**The generator's extra premises are the tell**: it emits `Resulttype_sub` with a
+**separate explicit length premise**, which is the generator writing down that
+its relation does *not* carry length equality. **A generated model's extra
+premises tell you what its relation does NOT carry** — the premise list is a
+specification of the gaps, not boilerplate. And what transfers is the
+**FACTORING, not the lemmas**: Aaron Lee's Isabelle `list_all2` is inductive so
+his closer has no counterpart, but his factoring (refl, both split orientations,
+trans) does. **The proof architecture ports; the proofs do not.**
+
+**(2) TWO SOURCES AGREEING IS NOT VERIFICATION**, landed beside *agreement
+between two models is not evidence*:
+
+> **Reading two sources that agree with each other is not verification when both
+> are about a THIRD THING the model does not use.**
+
+Two documents concurring tells you they concur; if the model's own constant is
+not the one they are about, their agreement is as unanchored as two interpreters
+both refusing. **The referent, not the concurrence, is what makes reading into
+evidence** — so the check is *read the model's definition*, not *read more
+sources*.
+
+**(3) THE LANE'S OWN CORRECTION, filed**: *"Mathlib: no cost"* was **right about
+DEPENDENCY and wrong about APPLICABILITY** — two separate claims. Importing costs
+nothing new (this doc's own §3.2 note is about that, and is true); whether its
+lemmas govern **your constants** is a claim about **your definitions** and
+nothing about the build supports it. Added to §3.2 so that note cannot be read as
+licensing the second.
+
+**(4) `FlatLe` RULED — conditional on landing.**
+`FlatLe (bot : α) (x y : α) : Prop := x = bot ∨ x = y` with `refl`/`bot_le`/
+`eq_of_ne_bot` **lifts to Core** as the flat order **every tier's `Res.le` /
+`PyLe` is an instance of**. But `Sv.Res` and `Python.Res` are **DIFFERENT TYPES**
+(Python's has the `.exn` raise arm), so the `Res` lemmas are not liftable and the
+**bind/ite congruences stay per-tier** — each is about a **different monad's
+`bind`**.
+
+> **The ORDER lifts; the CONGRUENCES don't.**
+
+§2.4's trunk/sibling split arriving in the proof layer: a congruence lifted here
+would be the thick-trunk mistake, one lemma pretending to be about two monads.
+**What travels instead is the NAMING**, mirrored across tiers (`Res.le`,
+`le_refl`, `timeout_le`, `le_eq`, `le_bind`, `le_ite`, `<worker>FuelMono`) —
+**convention where a definition cannot go**. Rides the successor's `fuelMono`
+ticket and owes a **full build** (A14, `Core` touched); **not landed today**.
+
+**(5) TACTIC MACROS ARE HYGIENIC — pass the IHs in.** Measured on
+`heapEqFuelMono` (14 arms, axioms `[propext]`): a **top-level tactic cannot see
+induction hypotheses bound inside a proof**, and **`assumption` cannot
+instantiate a ∀-quantified IH**. Passing the IH names as **`ident` arguments** is
+what turns fourteen hand-written arms into `split <;> auto ihE ihL`. Hygiene is
+not the obstacle — it is the reason the macro must be *told* what a human reader
+infers from the goal.
+
+**(6) DOCSTRING DRIFT, into §5.4's contract.** `Kont.fuel`'s docstring read
+*"used by `heapEq`, `setDedup`"*; the **measured** set is **`heapEq` +
+`valContains`**. Nothing failed — a docstring naming the wrong consumers compiles
+exactly as well as one naming the right ones, and a lane reading it to decide a
+blast radius would have grepped for the wrong thing. **A reachable set is
+measurable, therefore checkable**, and a docstring asserting one is in the same
+category as a clause citation: **checked data, or prose that goes stale
+silently.**

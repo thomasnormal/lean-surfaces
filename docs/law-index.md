@@ -116,6 +116,12 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-67 | a gate set is audited by ENUMERATION, never by execution | `docs/family-architecture.md §5.4b` |
 | MEAS-68 | an expected-to-fail artifact is the weakest gate in any set — pin the COUNT | `docs/family-architecture.md §5.4b` |
 | MEAS-69 | present-tense prose is FIXED; a dated record is ANNOTATED | `docs/family-architecture.md §5.4b` |
+| MEAS-70 | a pattern position is a position IN A DECLARATION, never a shape in a file | `docs/family-architecture.md §5.4a` |
+| MEAS-71 | a number a gate PUBLISHED is a second artifact — correct it where it was published | `docs/family-architecture.md §5.4a` |
+| MEAS-72 | an instrument selecting by content excludes ITSELF by identity, never by pattern | `docs/family-architecture.md §5.4` |
+| MEAS-73 | a check that cannot fire is the audit's own VACUOUS category | `docs/family-architecture.md §9.7` |
+| MEAS-74 | a no-code closure is closed when the AUDIT FILE carries the reason | `docs/family-architecture.md §9.7` |
+| MEAS-75 | MEAS-28's first consolidation: the Lean lexer once | `docs/family-architecture.md §2.4` — gate: `tools/leanlex.sh` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

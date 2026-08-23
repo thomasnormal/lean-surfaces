@@ -1733,3 +1733,102 @@ ANNOTATED.** Same instinct as §7.1a's register carrying two rows marked **LOST*
 instead of two plausible reconstructions.
 
 **Index:** MEAS-64 … MEAS-69 in `docs/law-index.md`.
+
+## 2026-08-23-architecture-27 — A published number is a second artifact; a check that cannot fire; and an instrument that selected itself
+
+Three from the QoL lane's audit closeout (`12386db`, `ec48c98`, `9162c6b`,
+`a9f7867`), plus the `leanlex` consolidation. Every claim below re-checked
+against the tree here before landing, and **two of them came out different from
+the dispatch.**
+
+**(1) THE PUBLISHED NUMBER — §5.4a, fifth row of the identifier table.**
+`substrate.sh`'s `REF_LOCAL` counted `| unsupported` **match arms inside
+proofs** as declarations: **Python 82 → 4** (~20×), **Sv 17 → 11**, **C 2/6 →
+1/7**, `REF_CORE` **6 → 5**. Two things landed, not one.
+
+The **sharpening** of the pattern-position law, because the position here was
+the right *kind* and the wrong *scope* — a constructor and a match arm are the
+same characters:
+
+> **A pattern position is a position IN A DECLARATION, never a shape in a file.
+> The same characters in a different scope are a different fact.**
+
+And the part the other four instances do not have — **the count had been
+published**, in `docs/backlog/qol.md` `2026-08-23-qol-21`'s live table
+(*"6/82"*):
+
+> **A number a gate PUBLISHED is a SECOND ARTIFACT. Correcting the instrument
+> corrects the next run; the published figure is corrected where it was
+> published, or it stands.**
+
+That is `2026-08-23-architecture-24`'s *the fix is the stamp, not the refresh*
+extended from a hand-written number to a **tool's output**, and the correction
+is made under `2026-08-23-architecture-26`'s annotation norm — annotate the
+published row with the re-measured number and the sha, never silently refresh
+it. **The lane published the correction against itself** (*"the correction is
+large and it is mine to own"*), which is why this is a norm and not a reprimand.
+**The residue — `qol-21`'s table still reads `6/82` — is filed back as INBOUND
+`2026-08-23-architecture-27` in `docs/backlog/qol.md`** (§9.5a, §9.5b: file the
+residue, not the report).
+
+**(2) A CHECK THAT CANNOT FIRE — §9.7, the no-code closure.** QoL closed two
+audit rows with no diff: `triad.sh:497` **verified already fixed** by `4c710e3`
+(earned by re-running the row's own example, not by reading the diff), and the
+`a6-guard` wiring **declined** because `triad.sh` never rewrites the tree.
+
+> **A check that cannot fire is the audit's own VACUOUS category.**
+
+§5.3's ruling aimed at gates instead of verdicts — and **this document had
+already made the move once without naming it**: §2.4's STMT-61 is reported as a
+column (`7/0`) rather than built as a comparison that cannot fire. Wiring the
+guard raises the gate COUNT without raising COVERAGE, which is MEAS-9 and, in
+§5.4b's vocabulary, a gate with no claim at the far end of its pointer.
+
+**The condition is the whole norm, and it is the half a lane will skip:**
+
+> **A no-code closure is CLOSED when the AUDIT FILE carries the reason.
+> Anywhere else it is a lane's private opinion of a public row.**
+
+A row closed only in the lane's ledger is invisible to the next sweep, which
+re-files it — costing an investigation and, worse, the credibility of every
+other row beside it.
+
+**(3) THE INSTRUMENT THAT SELECTED ITSELF — §5.4, with a near-miss note under
+§7.1a A11.** `ci.sh`'s new self-test step selected tools with
+`grep -q -- '--self-test'` and matched **`ci.sh` itself** — the function doing
+the matching names the flag in its own text — so CI re-entered CI and started an
+**unticketed `lake` build**. *"It hung, which is the only reason I looked."*
+
+> **Any content pattern you can select on, you will eventually WRITE DOWN in
+> the selecting file — so the file matches it. Only IDENTITY excludes.**
+
+**The repair is the proof**: narrowed to match a *handler*, the lane's own
+explanatory **comment** then contained the handler string and the pattern
+re-matched, so an explicit `ci.sh` belt is load-bearing. **The narrowing failed
+the same way twice**, which is what makes it structural rather than a sloppy
+regex. And the detection channel is the alarming part — **no error, only a
+hang**: a self-selecting instrument fails by recursion, and recursion is silent
+until it is expensive.
+
+Filed under §7.1a **as an observed near-miss, NOT as a new amendment**, because
+the amendment that governs it already exists: A11 covers all Lean execution, and
+the gap is that **a tool that can start Lean is a lane that never queued** —
+A9's queue disciplines lanes, and tools do not take tickets. The cheap fix is
+the one taken: a per-tool timeout, so a hang cannot become a tenure.
+
+**(4) `tools/leanlex.sh` — MEAS-28's first consolidation, AND THE DISPATCH'S
+NUMBER CORRECTED.** *Four private copies retired* is not what happened, and
+landing it would have put a wrong number in the gate's own ledger — the trap
+minted three paragraphs earlier, one level up. Measured here:
+
+* **two copies were never grown** — `substrate.sh` needed a third and fourth and
+  sourced the shared file instead. That is the consolidation.
+* **two copies are still live** — `sites.sh:160` `code_hits` and
+  `triad.sh:518` `code_mentions`, the latter's own comment calling itself
+  *"third copy of the comment walker in this tree"*. They retire **BY TOUCH**
+  (§9.2), which is this document's rule and not a shortfall.
+
+**Two avoided, two owed.** Only `substrate.sh` sources `leanlex.sh` today
+(`grep -rln leanlex tools/`).
+
+**Index:** MEAS-70 … MEAS-75.

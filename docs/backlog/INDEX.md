@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**137 entries across 16 lanes.** Regenerate with
+**140 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -29,6 +29,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
 | `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
+| `2026-08-23-architecture-27` | A published number is a second artifact; a check that cannot fire; and an instrument that selected itself | architecture |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |
 | `2026-08-23-architecture-26` | A transcription is a copy with a timestamp; and every gate was green while the file lied | architecture |
 | `2026-08-23-qol-25` | the attribution fix: the headline held, the DISPATCH was wrong | qol |
@@ -147,6 +148,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-22-softfloat-6` (Python lane's to triage) | python-completeness |
 | `INBOUND` | `2026-08-22-softfloat-5` (Ada lane's to triage) | ada |
 | `INBOUND` | `2026-08-22-softfloat-4` (Go lane's to triage) | go |
@@ -159,4 +161,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
 
-**11 heading(s) do not use the §9.5 id scheme** and sort last.
+**12 heading(s) do not use the §9.5 id scheme** and sort last.

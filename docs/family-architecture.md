@@ -811,6 +811,31 @@ and one whose helper exists unused is `VIOLATION` (work refused). And the
 honesty clause is in the tool's header: **it cannot see semantic duplication
 under different spellings**, so every count is a floor.
 
+**AND THE GATE HAS PRODUCED ITS FIRST CONSOLIDATION: `tools/leanlex.sh`, the
+Lean lexing primitives ONCE** (`12386db`). Four tools had grown — or were about
+to grow — the same comment walker, and the 2026-08-23 audit found **three
+separate defects that all reduce to "this matcher does not know what a
+comment is"**. The primitive now has one home (`lean_code_lines`,
+`lean_decl_blocks`, `lean_names_both`), sourced rather than executed.
+
+**Counted precisely, because MEAS-28's own scoreboard is what this is about,
+and the dispatch that reached this lane over-stated it.** *Four private copies
+retired* is not what happened and would make the gate's next count wrong:
+
+* **two copies were never grown** — `substrate.sh` needed a third and a fourth
+  and sourced the shared file instead. **That is the consolidation.**
+* **two copies are still live** — `sites.sh`'s `code_hits` and `triad.sh`'s
+  `code_mentions`, the latter's own comment naming itself *"third copy of the
+  comment walker in this tree"*. They retire **BY TOUCH** (§9.2), which is this
+  document's own rule and not a shortfall.
+
+**So the honest figure is two avoided and two owed**, and the reason to state
+it that way is MEAS-28: a duplication law policed by an instrument is worth
+exactly as much as the count it publishes, and a lane that reports the
+consolidation it *intends* rather than the one it *made* has put a wrong number
+into the gate's own ledger — §5.4a's published-number trap, one level up from
+where it was measured.
+
 **The pattern has a name so that tiers apply it uniformly: THIN SIBLINGS
 OVER A THICK SHARED TRUNK.** The trunk is `LeanModels/<Lang>/`; the
 siblings are `LeanModels/<Lang>/<Ver>/`, and they should be **small** —
@@ -3607,6 +3632,31 @@ instrument copies it:
   reproduced the lesson: its first answer was a plausible table produced
   by matching renumbered clauses (§2.1), and it was the spot-checks that
   caught it;
+* **AN INSTRUMENT THAT SELECTS FILES BY CONTENT MUST EXCLUDE ITSELF BY
+  IDENTITY, NEVER BY PATTERN — its own source re-matches the pattern by
+  construction.** Measured in `tools/ci.sh` (`a9f7867`): a new step selected
+  every tool carrying a `--self-test` with `grep -q -- '--self-test'`, and the
+  **selector matched `ci.sh`** — the function doing the matching names the flag
+  in its own text. CI **re-entered itself** and started an **UNTICKETED `lake`
+  build** (§7.1 A9, A11). In the lane's words: ***"it hung, which is the only
+  reason I looked."***
+
+  > **Any content pattern you can select on, you will eventually WRITE DOWN in
+  > the selecting file — so the file matches it. Only IDENTITY excludes.**
+
+  **The proof is in the repair.** The selector was narrowed to match a
+  *handler* rather than the flag — and the lane's own explanatory **comment**
+  then contained the handler string, so the pattern re-matched and an explicit
+  `ci.sh` exclusion had to back it. **The narrowing failed the same way twice,
+  which is what makes this structural rather than a sloppy regex**: a
+  description of the pattern lives in the file that applies it, always.
+
+  **And note the detection channel, because it is the alarming part**: a
+  self-selecting instrument fails by **recursion**, and recursion is silent
+  until it is expensive. Nothing reported an error — the step **hung**. That is
+  §5.4b's topology point arriving from the other side: the gate set had no
+  pointer aimed at *"did this instrument select itself"*, so the only signal
+  left was the clock;
 * **`#guard` IS NOT A KERNEL ORACLE — it attests the RUNTIME.** It runs
   unsafe `evalExpr`, honours `@[extern]` / `@[implemented_by]` / `opaque`,
   and **passes identically whether a declaration reduces or has no body at
@@ -3779,6 +3829,7 @@ plan:
 | §L53's walker price | landed at **19** because **catch-all arms were load-bearing**: the arm count was not the case count | **UNDER**-counted |
 | today's VCGen price | **26 lemma NAMES** priced a **9-arm** change at **35**, and nearly moved a date | **OVER**-counted |
 | the rebuild's `DRAIN` | generator drain vs the short-circuit trick — a name collision confirming a prior | over-counted, and *agreed* |
+| `substrate.sh`'s `REF_LOCAL` | `\| unsupported` **match arms inside proofs** counted as **declarations**: Python **82 → 4** | **OVER**-counted ~20×, and **published** |
 
 **The two directions are both live, which is why the rule names the
 POSITION rather than saying "count carefully."** Identifiers over-count
@@ -3791,6 +3842,41 @@ The practical form: **price a change by enumerating the positions the
 change must visit, and check that enumeration against the thing that
 dispatches** — the `match`, the clause list, the table — not against the
 name index.
+
+**A FIFTH INSTANCE, AND IT CARRIES A DIRECTION THE OTHERS DO NOT: THE COUNT
+HAD BEEN PUBLISHED.** `tools/substrate.sh`'s `REF_LOCAL` matched any line
+beginning `| unsupported` — **including `match` arms inside proofs** — and
+reported them as *locally-declared constructors*. Corrected by tracking the
+inductive block: **Python 82 → 4**, **Sv 17 → 11**, **C 2/6 → 1/7**, and
+`REF_CORE` **6 → 5** (`12386db`; the audit row is
+`docs/quality-audit-2026-08-23.md` `tools/substrate.sh:143`, HIGH).
+
+**The position was the right KIND and the wrong SCOPE**, and that is the
+sharpening this instance adds: a constructor and a match arm are **the same
+characters**, so "count the pattern position" is not yet enough.
+
+> **A pattern position is a position IN A DECLARATION, never a shape in a
+> file. The same characters in a different scope are a different fact.**
+
+**And then the part that is genuinely new: the gate had already PUBLISHED its
+number.** The wrong figure sits in a dated ledger entry —
+`docs/backlog/qol.md` `2026-08-23-qol-21`'s live table, *"6/82"* — and
+**fixing the instrument does not fix that.** The tool corrects the next run;
+the record keeps the number, and every reader of the record keeps copying it.
+
+> **A number a gate PUBLISHED is a SECOND ARTIFACT. Correcting the instrument
+> corrects the next run; the published figure is corrected where it was
+> published, or it stands.**
+
+That is *the fix is the stamp, not the refresh* (`docs/backlog/architecture.md`
+`2026-08-23-architecture-24`, F2) extended from a hand-written number to a
+tool's output, and the correction is made under §5.4b's annotation norm:
+**annotate the published row with the re-measured number and the sha that
+re-measured it**, never silently refresh it. The QoL lane published the
+correction **against itself** — *"the correction is large and it is mine to
+own"* — which is the honest half and the reason this is a norm rather than a
+reprimand. The residue is `qol-21`'s own table, still reading `6/82`, filed
+back to that lane as INBOUND (§9.5a).
 
 **MEASURED AGAINST ITSELF — and it caught a THIRD wrong unit: IMPORTS.**
 A bound on the breakage from a payload change was taken as the count of
@@ -4651,6 +4737,26 @@ which would let one lane kill another's chain. **Thomas's own processes
 have absolute priority**; a training run outranks every tenure, and a lane
 that would hold the machine's whole Lean allowance waits for a quiet
 machine and a ticket.
+
+**A11's FIRST NEAR-MISS CAME FROM AN INSTRUMENT, NOT A LANE (2026-08-23,
+`a9f7867`) — recorded here rather than minted as a new amendment, because the
+amendment that governs it already exists.** A new `tools/ci.sh` step selected
+tools by content and **selected `ci.sh` itself**, so CI re-entered CI and
+started an **unticketed `lake` build**. Every clause of A11 and A9 was in force
+and none was violated *by a lane* — the build was started by a **tool**, and
+tools do not take tickets.
+
+> **A9's queue disciplines LANES. A11 says the lock covers all Lean execution
+> — so a tool that can start Lean is a lane that never queued.**
+
+The root cause is §5.4's self-selection law (an instrument that selects by
+content matches its own source); the reason it belongs in this register is the
+**failure channel**: it produced no error, only a **hang**, which is precisely
+the state the queue's staleness machinery is worst at reading — an unticketed
+build looks to every reaper like a lane whose owner file is simply missing.
+**Any gate step that can invoke Lean is inside the tenure discipline**, and the
+cheap form of that is what the lane did: a per-tool timeout, so a hang cannot
+become a tenure.
 
 **AMENDMENT 12 — TRAPS KILL DESCENDANTS RECURSIVELY, and never bare-kill a
 wrapper.** `pkill -P` reaches children and **misses grandchildren**, which
@@ -5817,6 +5923,39 @@ either the discipline took, or the lens is wrong.
   its own headline numbers**: the **38%** violation density, and whether
   the three `--compare` exit codes and four `git_rev` stamps are actually
   fixed. An audit that does not re-measure what it reported is prose again.
+
+**CLOSING A ROW WITHOUT A CODE CHANGE — two legitimate closures, and the
+condition that makes them legitimate.** An audit creates pressure to answer
+every row with a diff, and two of the QoL lane's rows were answered correctly
+with none (`a9f7867`):
+
+* **VERIFIED-ALREADY-FIXED** — `triad.sh:497` had been fixed by `4c710e3`, and
+  the closure was earned by **re-running the row's own example** rather than by
+  reading the diff that supposedly covered it;
+* **WOULD-BE-VACUOUS** — the row asked for `a6-guard` to be wired into
+  `triad.sh`, and **`triad.sh` never rewrites the tree**, so the guard there
+  could never fire.
+
+> **A check that cannot fire is the audit's own VACUOUS category.**
+
+That is §5.3's ruling — *a check must not report sameness where there was no
+content* — arriving at gates instead of at verdicts, and this document had
+already made the same move once without naming it: **STMT-61 is reported as a
+column (`7/0`) rather than built as a comparison that cannot fire** (§2.4).
+Wiring the guard would have raised the **gate count** without raising
+**coverage**, which is MEAS-9's *a gate that is a permanent SKIP is a check
+pretending* — and, in §5.4b's vocabulary, a gate with no claim at the other
+end of its pointer.
+
+**THE CONDITION, and it is the whole of the norm: THE REASON IS WRITTEN WHERE
+THE ROW IS.** Both closures went into `docs/quality-audit-2026-08-23.md`
+itself, not only into the lane's ledger. A row closed in the lane's ledger
+alone is **invisible to the next sweep**, which re-files it — and a re-filed
+row that was already settled costs twice: once to re-investigate, and again in
+the credibility of every other row beside it.
+
+> **A no-code closure is CLOSED when the audit FILE carries the reason.
+> Anywhere else, it is a lane's private opinion of a public row.**
 
 **And the audit records what it got wrong**, which is the practice worth
 copying more than any item above: it ran Lean outside the lock while

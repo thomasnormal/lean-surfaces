@@ -293,3 +293,91 @@ failing **loudly** with `KeyError: 'version'` — two consumption sites still
 read the old key. The extractor refusing rather than silently emitting a
 half-updated stamp is the never-hide-errors law paying out; my loop hiding
 it was the same law being broken one level up, in the same minute.
+
+---
+
+## 2026-08-23-sv-4 — LANDING B (4a-0): the SV tier joins the family substrate, and both adoptions are `rfl`
+
+`LeanModels/Sv/World.lean` instantiates the four pieces §3.4 asks every
+tier for. **No semantics** — no `slotStep`, no `runRegion`; this is the
+plumbing those get written against.
+
+| piece | SV |
+| --- | --- |
+| `W` | `SvWorld` — process table, per-region ready sets, both NBA buffers, time wheel, `$display` output, oracle counter |
+| `ρ` | `Finish` (`$finish`/`$stop`) — **state-PRESERVING** |
+| `π` | `SvClause` — a citation into IEEE 1800, never a quote |
+| `σ` | `Unit` — no diagnostic snapshot yet |
+
+`abbrev SvM := SemMWith SvWorld Finish SvClause Unit`.
+
+**`ρ` is not `Loud`, and that is load-bearing.** `SvWorld.out` holds the
+`$display` text, which for **97% of the corpus IS the verdict** — the
+`PASS`/`FAIL` line. A `Loud` halt discards the world; `ExceptT ρ` keeps
+it. Putting `$finish` in the wrong layer would silently throw away the
+answer the run exists to produce.
+
+**`orderDependence` is SV's cause, and it was already waiting.** The
+family's four causes arrived in `Core` from ES, Go and Python; the one
+this tier's taxonomy predicted it would need — same-region ordering the
+standard leaves free (§4.7-4.8) — is exactly `orderDependence`.
+`SvRefusal.race` maps onto it.
+
+**And what is deliberately NOT a refusal: x-propagation.** Four-state
+unknown is a **value**. `lx`/`lz` flow through the `LVec` operators by
+tabulated per-operator rules, never short-circuit, and an x-carrying
+result is a *successful* run. Modelling x in the `ExceptT` layer — natural
+enough, since "unknown" reads like "exceptional" — would convert 4-state
+semantics into 2-state-plus-errors. Written into the file so the next
+reader cannot make that move by accident.
+
+**Both adoption facts are `rfl`, which is the point.**
+`Res.le_iff_flatLe : x ⊑ y ↔ FlatLe .timeout x y` makes SV the third
+`FlatLe` instance **by iff**, keeping `Res.le`'s spelling and its `⊑`
+notation, per the `Python/Obs.lean` precedent. `Res.le` carries this
+tier's fuel-monotonicity ladder (`evalExpr_le` → … → `run_le`), so the iff
+makes the adoption free where a rename would have re-opened every one of
+those proofs.
+
+**§9.0 — the tier's standing number, from this entry on.**
+
+  * **envelopes: 18 live / 21 total.** The three not-live are `alu_div`,
+    `ff_one`, `popcnt`, whose `source_files` are absolute paths into a
+    machine that no longer exists; they are `REFUSE sources-not-in-tree`
+    and never byte-compared. *Live* is the honest denominator, because a
+    vacuous row must not read as agreement.
+  * **stepper construct coverage: 11/11 `SStmt` constructors.** Five are
+    matched explicitly in `stepSStmt` — `ifStmt` and `block` recurse
+    because a nested statement may suspend, and `delay`/`waitEvent`/
+    `waitCond` are the suspension points themselves. The other six
+    (`m0`, `assign`, `localDecl`, `sysCall`, `finish`, `skip`) reach
+    `execSStmt` through the single delegating arm, which is *why* they
+    cannot drift: they are not reimplemented, they are forwarded, and
+    `stepSStmts_done_agrees` proves the forwarding agrees.
+
+**A SECOND missing import, same class as Landing A's, caught by the same
+guard.** Landing B's first tenure died on
+`World.lean:140: Unknown identifier 'Region'` — `Region` lives in
+`Regions.lean`, and nothing in `World`'s chain reaches it
+(`Step → SelfCheck/Obs → Semantics → Ast`). One import. Two things worth
+keeping: the error was **loud** only because `set_option autoImplicit
+false` is set in that file — without it Lean would have silently bound
+`Region` as an implicit universe variable and failed later and stranger,
+which is exactly what happened to `Edge` before that guard existed. And
+the clash check does not catch this class, so the pre-flight now has a
+second half: an **import-reachability check** that resolves every
+capitalized identifier a new file uses to its defining module and
+confirms that module is in the file's import closure. Run on the fixed
+`World.lean` it reports one hit, `SpecRef`, which is a false positive
+from a docstring mentioning Go's model — the check needs comment
+stripping, noted.
+
+**The pre-flight clash check paid for itself twice in one landing.**
+Landing A's red was `Res.pure_eq has already been declared`; running the
+same check *before* ticketing this time caught **`Res.timeout_le`, which
+`Obs.lean:258` already declares** — the identical trap, one tenure earlier
+than it would otherwise have cost. It also showed `Res.le_iff_flatLe`
+exists in `LeanModels/Python/Obs.lean` and is **not** a collision, because
+`Sv.Res` and `Python.Res` are different types; that is the precedent, not
+a conflict. `Obs.lean`'s `timeout_le` and `⊑` congruences are therefore
+NOT restated here — they are tier-local by design.

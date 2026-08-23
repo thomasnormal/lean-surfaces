@@ -146,6 +146,11 @@ STALE_AFTER="${LS_STALE_AFTER:-1800}"          # only then consider a reclaim
 DRY_RUN=0
 SELF_TEST=0
 GATES=""
+# THE CLASS FLOOR, NAMED ONCE.  It was a literal inside the gate phase, which
+# is fine until something ELSE has to say what will run — and then the two
+# spellings can drift, and an announcement that drifts lies in the reassuring
+# direction.  One constant, read by the announcement and by the phase.
+DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py'
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
@@ -174,23 +179,24 @@ foreign_coverage() {
   echo "foreign checkout $(foreign_remote); gates as given; class floor not applicable — this green is evidence about THAT tree and those gates, and about nothing in this repository."
 }
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --lane)      LANE="${2:-}"; shift 2 ;;
-    --dir)       CLONE="${2:-}"; shift 2 ;;
-    --gates)      GATES="${2:-}"; shift 2 ;;
-    --gates-only) GATES="${2:-}"; GATES_ONLY=1; shift 2 ;;
-    --rss-limit)      RSS_CHAIN_LIMIT_KB="${2:-}"; shift 2 ;;
-    --rss-proc-limit) RSS_PROC_LIMIT_KB="${2:-}"; shift 2 ;;
+    --lane)      need_val "$#" "$1"; LANE="$2"; shift 2 ;;
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --gates)      need_val "$#" "$1"; GATES="$2"; shift 2 ;;
+    --gates-only) need_val "$#" "$1"; GATES="$2"; GATES_ONLY=1; shift 2 ;;
+    --rss-limit)      need_val "$#" "$1"; RSS_CHAIN_LIMIT_KB="$2"; shift 2 ;;
+    --rss-proc-limit) need_val "$#" "$1"; RSS_PROC_LIMIT_KB="$2"; shift 2 ;;
     --version)        banner; exit 0 ;;
     --dry-run)   DRY_RUN=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
-    --build-target) BUILD_TARGET_ARGS="${BUILD_TARGET_ARGS:+$BUILD_TARGET_ARGS }${2:-}"; shift 2 ;;
+    --build-target) need_val "$#" "$1"; BUILD_TARGET_ARGS="${BUILD_TARGET_ARGS:+$BUILD_TARGET_ARGS }$2"; shift 2 ;;
     --classify)  CLASSIFY=1; shift ;;
     --foreign)   FOREIGN=1; shift ;;
     --build-current-tree) BUILD_CURRENT_TREE=1; shift ;;
     --classify-only) CLASSIFY=1; CLASSIFY_ONLY=1; shift ;;
-    --against)   AGAINST="${2:-}"; shift 2 ;;
+    --against)   need_val "$#" "$1"; AGAINST="$2"; shift 2 ;;
     -h|--help)   usage ;;
     *)           echo "triad.sh: unknown argument '$1'" >&2; usage ;;
   esac
@@ -675,9 +681,20 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
       fi
     done
     fi
+    # ASKED OF THE LAKEFILE, NOT OF A DIRECTORY LIST.  This was
+    # `docs/*.lean|harness/*.lean|tools/*.lean` — three hard-coded prefixes,
+    # which is the hard-coding lakeinfo.sh exists to end: a `.lean` under
+    # `probes/`, or at the repo root, is equally outside every declared root
+    # and got no note at all.
     case "$p" in
-      docs/*.lean|harness/*.lean|tools/*.lean)
-        add_note "'$p' is Lean but no lake target — running it is still Lean execution (A11): pass --gates" ;;
+      *.lean)
+        if [ "$(lake_glob_class "$CLONE" "$p")" != "library" ]; then
+          # THE REBASE LAW, from the Go lane: a file outside every lean_lib
+          # root is never compiled by `lake build`, so a rebase that touches
+          # only such files owes NO re-gate.  The A11 half still holds and is
+          # kept in the same breath — not compiled is not the same as not run.
+          add_note "'$p' is OUTSIDE ALL lean_lib ROOTS ($(lake_lib_roots "$CLONE" | tr '\n' ' ' | sed 's/  *$//')) — \`lake build\` never compiles it, so a rebase touching only it owes no re-gate; but RUNNING it is still Lean execution (A11): pass --gates"
+        fi ;;
     esac
   done
   # A tier's root module imports its submodules, so building it covers the
@@ -865,6 +882,21 @@ gates_compose() {       # floor, lane's gates, gates_only -> the list to run
   # a gate set, and makes the other one explicit.
   if [ "$3" = "1" ]; then printf '%s' "$2"; return 0; fi
   if [ -n "$2" ]; then printf '%s; %s' "$1" "$2"; else printf '%s' "$1"; fi
+}
+
+# WHAT WILL ACTUALLY RUN, SAID AT TENURE OPEN.  The spin this lane just fixed
+# had a NEAR-MISS twin that is worse: a run whose `--gates` value went missing
+# still completed and reported green — on the DEFAULT FLOOR, which is less
+# coverage than the lane believed it had bought, with nothing in the log to
+# say so.  The die-guard closes the path that produced it; this closes the
+# READING of it, because a log should not need a guard to be honest about its
+# own scope.  Composed by the SAME function the gate phase uses, so the line
+# cannot promise a set the phase does not run.
+gates_planned() {       # -> the gate list this tenure will run
+  # A foreign tree and a classify-only pass both run the gates AS GIVEN: there
+  # is no floor to add, because the floor is a claim about THIS repository.
+  if [ "$FOREIGN" = "1" ] || [ "$CLASSIFY" = "1" ]; then printf '%s' "$GATES"; return 0; fi
+  gates_compose "$DEFAULT_FLOOR" "$LANE_GATES" "$GATES_ONLY"
 }
 
 gates_only_notice() {   # floor, gates_only -> announce what is NOT running
@@ -1213,6 +1245,42 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...naming what is skipped"      "$(gates_only_notice "$fl" 1 | grep -c 'docs_check, diff_test')" "1"
   check "additive mode announces nothing"  "$(gates_only_notice "$fl" 0)" ""
 
+  # ---- WHAT WILL RUN, SAID AT TENURE OPEN, and by the SAME composer
+  saved_lg="$LANE_GATES"; saved_go="$GATES_ONLY"; saved_fg="$FOREIGN"
+  saved_cl="$CLASSIFY"; saved_g="$GATES"
+  LANE_GATES=""; GATES_ONLY=0; FOREIGN=0; CLASSIFY=0
+  check "the announced set IS the floor"   "$(gates_planned)" "$DEFAULT_FLOOR"
+  check "  ...and matches the phase's own composer" \
+        "$(gates_planned)" "$(gates_compose "$DEFAULT_FLOOR" "" 0)"
+  LANE_GATES='python3 harness/script_corpus.py'
+  check "a lane's gates are ADDED, and said" \
+        "$(gates_planned)" "$DEFAULT_FLOOR; python3 harness/script_corpus.py"
+  GATES_ONLY=1
+  check "--gates-only is announced as REPLACING" "$(gates_planned)" "python3 harness/script_corpus.py"
+  GATES_ONLY=0; FOREIGN=1; GATES='python3 x.py'
+  check "a foreign tree announces its gates AS GIVEN" "$(gates_planned)" "python3 x.py"
+  FOREIGN=0; CLASSIFY=1
+  check "  ...and so does a classify pass"  "$(gates_planned)" "python3 x.py"
+  LANE_GATES="$saved_lg"; GATES_ONLY="$saved_go"; FOREIGN="$saved_fg"
+  CLASSIFY="$saved_cl"; GATES="$saved_g"
+
+  # ---- A VALUE-TAKING FLAG WRITTEN LAST (the Go lane's 31 silent minutes)
+  echo "  -- argv guards"
+  # BOUNDED, because the bug under test is an INFINITE LOOP: an unguarded
+  # tool would hang this self-test instead of failing it.
+  out="$(timeout 10 bash "$0" --gates 2>&1)"; rc=$?
+  check "a value flag written last REFUSES"  "$rc" "2"
+  check "  ...rather than spinning forever"  "$([ "$rc" = "124" ] && echo spun || echo bounded)" "bounded"
+  check "  ...and NAMES the flag"            "$(printf '%s' "$out" | grep -c -- '--gates needs a value')" "1"
+  out="$(timeout 10 bash "$0" --lane 2>&1)"; rc=$?
+  check "every value flag is guarded, not just --gates" "$rc" "2"
+  # The POSITIVE control: the guard must not refuse a flag that HAS its value.
+  out="$(timeout 20 bash "$0" --lane t --gates 'python3 x.py' --dry-run --classify-only --against HEAD 2>&1)"; rc=$?
+  # Counted unconditionally: an `&&` here short-circuited to the empty string
+  # whenever the run did not exit 2, so the row measured nothing and said so
+  # only because the expected value happened not to be empty.
+  check "a flag WITH a value still parses"   "$(printf '%s' "$out" | grep -c 'needs a value')" "0"
+
   # ---- unstaged Lean, and Lean nothing imports (the Ada lane's Value.lean)
   echo "  -- unstaged / unimported Lean"
   offend="$(printf 'docs/mvcgen-pilot.lean\nLeanModels/Ada/Value.lean\nExamples/python/x/proof.lean\ntools/x.sh\nREADME.md\n' | lean_glob_offenders | tr '\n' ' ' | sed 's/ *$//')"
@@ -1459,6 +1527,22 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a doc's .lean is still docs"       "$(class_name "$CLASS_RANK")" "docs"
   case "$CLASS_NOTES" in *A11*) n=said ;; *) n=silent ;; esac
   check "  ...but A11 is said out loud"     "$n" "said"
+  # THE REBASE LAW (Go lane): outside every lean_lib root, so `lake build`
+  # never compiles it, so a rebase touching only it owes no re-gate.
+  case "$CLASS_NOTES" in *"OUTSIDE ALL lean_lib ROOTS"*) n=said ;; *) n=silent ;; esac
+  check "  ...and WHY: outside all lean_lib roots" "$n" "said"
+  case "$CLASS_NOTES" in *"owes no re-gate"*) n=said ;; *) n=silent ;; esac
+  check "  ...with the consequence spelled out"    "$n" "said"
+  # ASKED OF THE LAKEFILE, not of a directory list: a `.lean` under a prefix
+  # the old hard-coded case never listed gets the same note.
+  cls probes/probe_es_unblock.lean
+  check "an unlisted prefix gets the note too" \
+        "$(case "$CLASS_NOTES" in *"OUTSIDE ALL lean_lib ROOTS"*) echo said ;; *) echo silent ;; esac)" "said"
+  # ...and a real library file does NOT, which is the direction that would
+  # quietly excuse a re-gate that IS owed.
+  cls LeanModels/Sv/Obs.lean
+  check "a library .lean is NOT excused"    \
+        "$(case "$CLASS_NOTES" in *"OUTSIDE ALL lean_lib ROOTS"*) echo said ;; *) echo silent ;; esac)" "silent"
 
   # ---- the Examples reachability probe (the Go lane's measurement)
   # A fixture TREE, so both directions are exercised for real: a `.lean` that
@@ -1784,6 +1868,14 @@ printf '%s\n' "${ENQ_STAMP:-unstampable}" > "$QUEUE/$TICKET" \
   || die "cannot write a ticket into $QUEUE"
 say "enqueued $TICKET (queue depth $(ls "$QUEUE" | wc -l | tr -d ' '))"
 [ -n "$ENQ_STAMP" ] && say "tree at enqueue: $(short_tree "$ENQ_STAMP")"
+# BOTH HALVES, so the transcript answers "did it run what I asked for?" without
+# anyone reconstructing the composition rules from the flags.
+say "gates: $(gates_planned)"
+if [ -n "$LANE_GATES" ]; then
+  say "gates asked by the lane: $LANE_GATES ($([ "$GATES_ONLY" = "1" ] && echo "--gates-only: REPLACES the floor" || echo "--gates: ADDS to the floor"))"
+else
+  say "gates asked by the lane: (none — the class floor only)"
+fi
 
 # --------------------------------------------------------------- wait: FIFO
 # A9: only the OLDEST ticket attempts the mkdir.  A plain spinlock starves —
@@ -1895,7 +1987,7 @@ elif [ "$CLASSIFY" = "0" ]; then
   # THE ADA TRAP.  This used to be `if [ -z "$GATES" ]; then GATES=default; fi`,
   # under which `--gates "docs_check"` REPLACED the default and silently
   # dropped the differential.  --gates adds; --gates-only replaces, loudly.
-  FLOOR_USED='python3 tools/docs_check.py; python3 harness/diff_test.py'
+  FLOOR_USED="$DEFAULT_FLOOR"
   GATES="$(gates_compose "$FLOOR_USED" "$LANE_GATES" "$GATES_ONLY")"
 fi
 

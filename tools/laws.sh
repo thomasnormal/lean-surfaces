@@ -50,12 +50,13 @@ PROGRESS_EVERY="${LS_LAWS_PROGRESS:-50}"
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "laws.sh: $*" >&2; exit 2; }
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dir)       CLONE="${2:-}"; shift 2 ;;
-    --top)       TOP="${2:-}"; shift 2 ;;
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --top)       need_val "$#" "$1"; TOP="$2"; shift 2 ;;
     --verbose)   VERBOSE=1; shift ;;
-    --budget)    BUDGET="${2:-}"; shift 2 ;;
+    --budget)    need_val "$#" "$1"; BUDGET="$2"; shift 2 ;;
     --gate-set)  GATE_SET=1; shift ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;

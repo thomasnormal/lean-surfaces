@@ -245,9 +245,10 @@ fi
 
 [ $# -ge 2 ] || usage
 KIND="$1"; NAME="$2"; shift 2
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --out) OUT="${2:-}"; shift 2 ;;
+    --out) need_val "$#" "$1"; OUT="$2"; shift 2 ;;
     *)     die "unknown argument '$1'" ;;
   esac
 done

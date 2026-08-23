@@ -55,14 +55,15 @@ PROGRESS_EVERY="${LS_SITES_PROGRESS:-40}"
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "sites.sh: $*" >&2; exit 2; }
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dir)       CLONE="${2:-}"; shift 2 ;;
-    --channel)   EXTRA_CHANNELS="${EXTRA_CHANNELS}${2:-}
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --channel)   need_val "$#" "$1"; EXTRA_CHANNELS="${EXTRA_CHANNELS}$2
 "; shift 2 ;;
     --verbose)   VERBOSE=1; shift ;;
-    --arms)      ARMS_FN="${2:-}"; shift 2 ;;
-    --budget)    BUDGET="${2:-}"; shift 2 ;;
+    --arms)      need_val "$#" "$1"; ARMS_FN="$2"; shift 2 ;;
+    --budget)    need_val "$#" "$1"; BUDGET="$2"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     -*)          die "unknown argument '$1'" ;;

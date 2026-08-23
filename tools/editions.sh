@@ -39,9 +39,10 @@ SELF_TEST=0
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "editions.sh: $*" >&2; exit 2; }
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dir)       CLONE="${2:-}"; shift 2 ;;
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     *)           die "unknown argument '$1'" ;;

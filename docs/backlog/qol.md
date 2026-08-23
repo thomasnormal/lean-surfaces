@@ -2986,3 +2986,95 @@ to the gate's author.
 ### Triad
 
 `bash -n` clean, `ci.sh --verify-guards` 26 ok, YAML parses. No Lean executed.
+
+## 2026-08-23-qol-44 — a flag written last spun forever, in eleven tools
+
+The Go lane's defect, reproduced before it was fixed:
+`timeout 3 bash tools/triad.sh --gates` returns **124 with zero bytes of
+output**. Three tolerant parts compose into a hang — `${2:-}` accepts the
+missing value, `shift 2` then fails because one argument is left (and there is
+no `set -e`), and `while [ $# -gt 0 ]` re-enters on the **same** argument. No
+output, no lock taken, nothing to distinguish it from waiting in the queue, so
+the natural response is to wait longer. It cost Go **31 minutes over two
+runs**.
+
+**It was not one arm, it was the shape.** Eleven of this lane's tools carried
+it: triad 8, sites 4, check 3, laws 3, substrate 2, analogues 2, dupes 2,
+backlog-index 2, new-proof 1, editions 1 — **28 flags**, every one of which
+spins if written last. Fixing only the reported one would have left the next
+lane to re-pay the same 31 minutes for `laws.sh --budget`.
+
+One guard, in `tools/argv.sh`, sourced by all eleven — the same "one source"
+rule that ended the check.sh/triad.sh glob disagreement. It **refuses**; it
+never defaults, because the near-miss is worse than the spin.
+
+### The near-miss, and the line that ends it
+
+A run that merely LOST its `--gates` value would **complete and report green
+on the default floor** — less coverage than the lane believes it bought, with
+nothing in the log to say so. The guard closes the path that produced it; it
+should not take a guard for a log to be honest about its own scope. A tenure
+now names both halves at open:
+
+```
+[20:04:56] gates: python3 tools/docs_check.py; python3 harness/diff_test.py; python3 tools/docs_check.py
+[20:04:56] gates asked by the lane: python3 tools/docs_check.py (--gates: ADDS to the floor)
+```
+
+Composed by `gates_planned`, which calls **the same `gates_compose`** the gate
+phase calls, against a `DEFAULT_FLOOR` constant that used to be a literal
+inside the phase — because an announcement that can drift from the phase lies
+in the reassuring direction. Six rows pin the composition and one asserts the
+announced set equals the phase's own composer's output.
+
+Visible in that transcript, and pre-existing: an additive `--gates` naming a
+floor gate lists it **twice**. `gates_compose` is deliberately additive and a
+row already covers it; what is new is that the lane can now SEE it. Named
+rather than changed — it is the SV/Ada lanes' call whether a de-dupe would
+silently shrink anything.
+
+### The gate, discovery-based
+
+`ci.sh` gains `argv-guards`: for every value-taking flag **found by reading
+the tools**, the probe must TERMINATE (not 124 — the spin) and must NOT
+SUCCEED (not 0 — the near-miss). A list would have to be maintained by the
+same attention that wrote the unguarded arm. Live: **28 flags probed, 27
+refused by name, 0 tolerant** (new-proof's `--out` refuses one step earlier,
+at its positional check).
+
+**Two under-reads in my own gate, both the rules I had just written.** The
+first discovery pass matched `--flag).*shift 2` on ONE line and so missed
+`sites.sh --channel`, whose arm spans two lines — the same column-0 anchoring
+that had `--gate-set` reporting 16 gates where the file declares 44, repeated
+within the hour. An arm runs to its `;;`. The second pass then discovered
+`--flag` from the two fixture scripts heredoc-ed into `ci.sh` itself and
+probed `ci.sh --flag`: **a fixture is not a tool**, the same cut `gate_rows`
+already makes.
+
+### The rebase law (Go's third item)
+
+`--classify` said, for `docs/*.lean|harness/*.lean|tools/*.lean`, only that
+running it is Lean execution (A11). Two things were wrong: the list was three
+**hard-coded prefixes** — the hard-coding `lakeinfo.sh` exists to end, so a
+`.lean` under `probes/` or at the repo root got no note at all — and it never
+said the consequence. Now asked of the lakefile, and it says both halves:
+
+> `'probes/x.lean'` is OUTSIDE ALL lean_lib ROOTS (LeanModels Main) —
+> `lake build` never compiles it, so a rebase touching only it owes no
+> re-gate; but RUNNING it is still Lean execution (A11): pass --gates
+
+Classification itself is unchanged: such a file stays `spine` unless it is
+under `docs/`, because probes ARE run by gates. The note explains; it does not
+downgrade. Four rows, including the direction that matters — a library `.lean`
+is **not** excused.
+
+### Triad
+
+`bash -n` clean on all 13 tools. `triad.sh` **196 ok** (181 → 196),
+`ci.sh --verify-guards` **32 ok** (26 → 32), and check 87, laws 45, sites 44,
+diagnose 51, backlog-index 34, new-proof 31, analogues 28, substrate 25,
+editions 12, dupes 10, a6-guard 8 — all unchanged and green after the
+mechanical rewrite. The enqueue line was confirmed end-to-end on an **isolated
+lock and queue** (`LS_LOCK`/`LS_QUEUE` in the scratchpad, `--dry-run`, a
+refusing `lake` stub on PATH): the machine-wide lock was held by another lane
+and was never touched. No Lean executed.

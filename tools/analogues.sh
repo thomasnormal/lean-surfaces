@@ -216,10 +216,11 @@ if [ "${1:-}" = "--list" ]; then
   exit 0
 fi
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dir) CLONE="${2:-}"; shift 2 ;;
-    --top) TOP="${2:-}"; shift 2 ;;
+    --dir) need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --top) need_val "$#" "$1"; TOP="$2"; shift 2 ;;
     -h|--help) usage ;;
     -*)    die "unknown argument '$1'" ;;
     *)     SHAPE="$1"; shift ;;

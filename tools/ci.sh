@@ -164,6 +164,68 @@ conflict_markers() {            # [dir] -> 1 when the TRACKED tree carries any
   return 1
 }
 
+# EVERY VALUE-TAKING FLAG, PROBED.  `tools/triad.sh --gates` written with no
+# value SPUN FOREVER, silently, burning a core: `${2:-}` accepted the missing
+# value, `shift 2` then failed with one argument left, and the `while [ $# ]`
+# loop re-entered on the same argument.  No output, no lock taken, nothing to
+# distinguish it from waiting in the build queue — it cost the Go lane 31
+# minutes across two runs.  Eleven of this lane's tools had the identical arm.
+#
+# DISCOVERY, NOT A LIST.  The arms are found by READING the tools, so a new
+# tool or a new flag is covered without anyone remembering that this gate
+# exists — a list here would have to be maintained by the same attention that
+# wrote the unguarded arm in the first place.
+#
+# The two assertions are the two failure modes, and neither is about wording:
+# the probe must TERMINATE (not 124 — that is the spin) and must NOT SUCCEED
+# (not 0 — that is the near-miss, where the run continues on a DEFAULT scope
+# and reports green against less than the caller asked for).
+argv_guards() { # [dir] -> 1 if any value-taking flag tolerates a missing value
+  local dir="${1:-tools}" stub f fl out rc n=0 bad=0 named=0
+  stub="$(mktemp -d "${TMPDIR:-/tmp}/ci-argv.XXXXXX")" || return 1
+  cat > "$stub/lake" <<'STUB'
+#!/usr/bin/env bash
+echo "lake: REFUSED — an argv probe may not invoke lake (no ticket, A11)." >&2
+exit 97
+STUB
+  chmod +x "$stub/lake"
+  for f in "$dir"/*.sh; do
+    [ -r "$f" ] || continue
+    # READ THE WHOLE ARM, not the first line of it.  A `grep` for
+    # `--flag).*shift 2` on ONE line missed `sites.sh --channel`, whose arm
+    # spans two lines because its value is appended with a newline — the same
+    # under-read that had `laws.sh --gate-set` anchored at column 0 and
+    # reporting 16 gates where the file declares 44.  An arm runs to its `;;`.
+    for fl in $(awk '
+          # A FIXTURE IS NOT A TOOL.  Without this cut the probe discovered
+          # `--flag` from the two fixture scripts heredoc-ed into THIS file
+          # and then probed `ci.sh --flag`, which is not one of its arms.
+          /VERIFY_GUARDS" = "1"/                { fixture = 1 }
+          fixture && /verify-guards: \$vok ok/  { fixture = 0; next }
+          fixture                               { next }
+          /^[ \t]*--[a-z-]+\)/ { flag = $0
+                                 sub(/^[ \t]*/, "", flag); sub(/\).*/, "", flag)
+                                 buf = ""; in_arm = 1 }
+          in_arm            { buf = buf " " $0 }
+          in_arm && /;;/    { if (buf ~ /shift 2/) print flag; in_arm = 0 }
+        ' "$f" | sort -u); do
+      n=$((n + 1))
+      # Bounded, because the defect under test is an INFINITE LOOP: an
+      # unguarded tool would hang this gate instead of failing it.
+      out="$(LS_CI_SELF_TEST=1 PATH="$stub:$PATH" timeout 10 bash "$f" "$fl" 2>&1)"
+      rc=$?
+      case "$rc" in
+        124) echo "    SPINS: ${f##*/} $fl — a value flag written last never returns"; bad=$((bad+1)) ;;
+        0)   echo "    ACCEPTS A MISSING VALUE: ${f##*/} $fl — it continued on a default"; bad=$((bad+1)) ;;
+        *)   printf '%s' "$out" | grep -q 'needs a value' && named=$((named+1)) ;;
+      esac
+    done
+  done
+  rm -rf "$stub"
+  echo "    $n value-taking flags probed, $named refused by name, $bad tolerant"
+  [ "$bad" = "0" ]
+}
+
 # THE SV ROUND-TRIP GATE, WHICH WAS ORPHANED.  `laws.sh --gate-set` enumerated
 # the declared gate sets and found `.sv` as a kind with 21 committed envelopes
 # and ZERO mentions of harness/sv_round_trip.py in this file: the SV lane's own
@@ -281,6 +343,44 @@ VSTUB
   vcheck "a committed marker FAILS the gate"      "$?" "1"
   vcheck "  ...and names the file and line"       "$(grep -c 'a.md:1' "$vout")" "1"
 
+  # THE ARGV GATE, BOTH DIRECTIONS, ON FIXTURES.  Run against the real tools
+  # it would take minutes; run against two three-line scripts it measures the
+  # same two things, and the SPIN direction can be exercised for real —
+  # bounded by the gate's own timeout, which is itself the thing under test.
+  va="$vstub/argv"; mkdir -p "$va"
+  cat > "$va/guarded.sh" <<'GUARD'
+#!/usr/bin/env bash
+set -u
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --flag) [ "$#" -ge 2 ] || { echo "guarded.sh: flag $1 needs a value" >&2; exit 2; }
+            V="$2"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+GUARD
+  cat > "$va/spinner.sh" <<'SPIN'
+#!/usr/bin/env bash
+set -u
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --flag) V="${2:-}"; shift 2 ;;
+    *) shift ;;
+  esac
+done
+SPIN
+  chmod +x "$va/guarded.sh" "$va/spinner.sh"
+  argv_guards "$va" > "$vout" 2>&1
+  vcheck "the argv gate FAILS on a spinner"      "$?" "1"
+  vcheck "  ...naming the tool and the flag"     "$(grep -c 'SPINS: spinner.sh --flag' "$vout")" "1"
+  vcheck "  ...and it TERMINATED rather than hanging" "$(grep -c 'flags probed' "$vout")" "1"
+  rm -f "$va/spinner.sh"
+  argv_guards "$va" > "$vout" 2>&1
+  vcheck "a guarded flag PASSES the same gate"   "$?" "0"
+  vcheck "  ...counted as refused BY NAME"       "$(grep -c '1 refused by name, 0 tolerant' "$vout")" "1"
+  # The discovery half: a flag nobody listed anywhere is still probed.
+  vcheck "arms are DISCOVERED, not listed"       "$(grep -c '1 value-taking flags probed' "$vout")" "1"
+
   # THE SV GATE'S INTERPRETER CHOICE, BOTH WAYS.  Stubbed rather than probed,
   # so the rows read the same on a host that has pyslang and on one that does
   # not — the failure this guards against is a gate that reports a missing
@@ -336,6 +436,7 @@ SVNO
 fi
 
 step  "conflict-markers" conflict_markers
+step  "argv-guards"     argv_guards
 step  "tool-self-tests" selftests
 lake_build_step
 step  "py-harness"      python3 harness/diff_test.py --no-build

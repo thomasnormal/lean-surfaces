@@ -39,10 +39,11 @@ MODE="write"
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "backlog-index.sh: $*" >&2; exit 2; }
 
+. "$(dirname "${BASH_SOURCE[0]}")/argv.sh"   # the value-flag guard (a flag written last used to SPIN)
 while [ $# -gt 0 ]; do
   case "$1" in
-    --dir)       CLONE="${2:-}"; shift 2 ;;
-    --backlog)   DIR="${2:-}"; shift 2 ;;
+    --dir)       need_val "$#" "$1"; CLONE="$2"; shift 2 ;;
+    --backlog)   need_val "$#" "$1"; DIR="$2"; shift 2 ;;
     --stdout)    MODE="stdout"; shift ;;
     --check)     MODE="check"; shift ;;
     --install-merge-driver) MODE="install-driver"; shift ;;

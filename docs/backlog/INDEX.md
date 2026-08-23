@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**194 entries across 16 lanes.** Regenerate with
+**197 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -89,15 +89,18 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-lean-tier-11` | `TrProj.weak'` GREEN (3 of 7); and censusing `TrProj.wf` found a real gap in my own definition | lean-tier |
 | `2026-08-23-architecture-11` | Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal | architecture |
 | `2026-08-23-lean-tier-10` | DECISION BRIEF for Thomas: PR #43 does NOT unblock `TrProj.uniq`, and consuming it buys nothing this lane needs | lean-tier |
+| `2026-08-23-c-10` | THE ADOPTION'S TENURE CAME BACK RED, and the one defect was sitting in its own diff's CONTEXT | c |
 | `2026-08-23-architecture-10` | The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes | architecture |
 | `2026-08-23-sunfish-rtrack-9` | the leaf copies are DELETED, by touch, as contracted | sunfish-rtrack |
 | `2026-08-23-pycomplete-9` | 3c-i CANNOT live in the shared pure workers, and the reason is the doctrine's own trap | python-completeness |
 | `2026-08-23-lean-tier-9` | `TrProjP.instN` GREEN; and the quality audit found four real defects in this lane's instruments, one of which had published wrong citations | lean-tier |
+| `2026-08-23-c-9` | the audit's five rows, all FIXED; two were claims that had never been checked | c |
 | `2026-08-23-architecture-9` | NEVER `git stash` MID-MERGE: it silently destroys MERGE_HEAD | architecture |
 | `2026-08-23-sunfish-rtrack-8` | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
 | `2026-08-23-sunfish-rtrack-8` | R2's generator layer founded: the seam, and the drain | sunfish-rtrack |
 | `2026-08-23-pycomplete-8` | INCH 3c's CENSUS: a view is a LIVE OBJECT, and the three views are not one construct | python-completeness |
 | `2026-08-23-lean-tier-8` | `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost | lean-tier |
+| `2026-08-23-c-8` | CORE ADOPTED: the guard this lane wrote is now enforced for every tier | c |
 | `2026-08-23-architecture-8` | The Core payload LANDED: holds released, and the gate retired the conditional | architecture |
 | `2026-08-23-sunfish-rtrack-7` | `fuelMono` retires the `∀ G` premise: two hops meet at a max | sunfish-rtrack |
 | `2026-08-23-pycomplete-7` | the second ticket: 25 divergences → 1, and the last one was a NAME that stopped being true | python-completeness |

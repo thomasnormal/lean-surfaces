@@ -763,6 +763,28 @@ layer; everything an edition decides lives WHOLE in that edition's own
 directory. Editions are siblings. Neither is the base of the other, and
 no definition takes a version parameter.**
 
+**MEAS-28 HAS A GATE NOW: `tools/dupes.sh`.** This is the one law in the tree
+that literally asks for a tool, and it had none —
+`docs/duplication-audit.md` measured the census contract implemented **14
+times** by hand, every ten landings, and by hand is what the law forbids. The
+instrument reports two channels, because each misses what the other catches:
+**CONTRACTS** (curated shapes — a `git_rev` helper, a `--compare` path) and
+**repeated `def` NAMES** (mechanical, so it finds what the curated list
+forgot). First run, 2026-08-23, over 39 Python files: `--compare` **15**,
+`census` **15**, `double-run` **10**, `self-test` **10**, `git_rev` **8**.
+
+The two channels earn their keep on that last row: the contract channel finds
+**8** files running `git rev-parse`, the name channel finds **3** called
+`def git_rev` — so **five implement the contract under another name**, which
+is precisely the duplication a name-based rule misses and a contract-based one
+catches.
+
+A duplicate is not automatically a violation: §9.2 consolidates **by touch**,
+so a contract with no shared helper landed is `DUPLICATED` (work available)
+and one whose helper exists unused is `VIOLATION` (work refused). And the
+honesty clause is in the tool's header: **it cannot see semantic duplication
+under different spellings**, so every count is a floor.
+
 **The pattern has a name so that tiers apply it uniformly: THIN SIBLINGS
 OVER A THICK SHARED TRUNK.** The trunk is `LeanModels/<Lang>/`; the
 siblings are `LeanModels/<Lang>/<Ver>/`, and they should be **small** —
@@ -4517,6 +4539,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/backlog-index.sh` | generate `docs/backlog/INDEX.md`; `--check` gates its staleness | §9.5, §5.5 |
 | `tools/laws.sh` | which laws have a gate, and which are only prose | §9.7's audit cadence; *fixes live in gates* |
 | `tools/substrate.sh` | the substrate contract per tier, by SHAPE | §3.4 (STMT-19..22), §8.5 (STMT-67) |
+| `tools/dupes.sh` | duplication, counted rather than remembered | §2.4 (MEAS-28) |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor

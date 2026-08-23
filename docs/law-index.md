@@ -74,7 +74,7 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-25 | no ISO text is reproduced anywhere in this repository | `docs/family-architecture.md §2.1`, restated §11 |
 | MEAS-26 | the neutral layer is the measured INTERSECTION | `docs/family-architecture.md §1.3` |
 | MEAS-27 | CENSUS-GATED PLACEMENT — a sibling only when a measurement convicts | `docs/family-architecture.md §2.4` clause (1) |
-| MEAS-28 | duplication policed by an instrument, not by discipline | `docs/family-architecture.md §2.4` |
+| MEAS-28 | duplication policed by an instrument, not by discipline | `docs/family-architecture.md §2.4` — gate: `tools/dupes.sh` |
 | MEAS-29 | clause citations must be checked data, not prose | `docs/family-architecture.md §2.5` |
 | MEAS-30 | inside a `.md` an untagged `§` is an internal reference | `docs/family-architecture.md §2.5` |
 | MEAS-31 | no step's claim is real until an instrument re-derives it | `docs/family-architecture.md §8` preamble |

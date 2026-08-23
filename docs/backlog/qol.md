@@ -1803,3 +1803,64 @@ matching `§9.5` while `§9.5` does, a dated id not matching its longer sibling,
 and an ungateable row recognised with its reason. Doc-first: §9.7 carries the
 correction and says the dispatch moved rather than the headline. `docs_check`
 **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-26 — MEAS-28 gets its instrument: duplication counted, not remembered
+
+The one law in the tree that **literally asks for a tool**, and it had none.
+`docs/duplication-audit.md` measured the census contract implemented **14
+times** — by hand, every ten landings, which is exactly what the law forbids.
+
+### First run, 39 Python files
+
+| contract | count | status |
+| --- | ---: | --- |
+| `--compare` | **15** | DUPLICATED — `censuskit.py` proposed, not landed |
+| `census` main | **15** | DUPLICATED |
+| double-run | **10** | DUPLICATED |
+| self-test | **10** | DUPLICATED (none proposed) |
+| `git_rev` | **8** | DUPLICATED |
+
+### Two channels, and the `git_rev` row proves why both are needed
+
+**CONTRACTS** (curated shapes) finds **8** files running `git rev-parse`.
+**NAMES** (mechanical, every top-level `def` in more than one file) finds **3**
+called `def git_rev`. So **five implement the contract under another name** —
+`_git`, `_read`, inline — which is precisely the duplication a name-based rule
+misses and a contract-based one catches. Each channel finds what the other
+cannot, and neither alone would have reported 8.
+
+The mechanical channel also surfaced rows no curated list had:
+`_reexec_under_pinned_frontend` ×4, `_read` ×4, `classify` ×6.
+
+### A duplicate is not automatically a violation
+
+§9.2 consolidates **by touch**, so the tool separates **`DUPLICATED`** (work
+*available* — no shared helper has landed) from **`VIOLATION`** (work
+*refused* — the helper exists and is not being used). Today every row is
+DUPLICATED, because `harness/censuskit.py` is still a proposal. That means the
+instrument currently reports **opportunity, not debt**, and it will flip to
+VIOLATION the moment the helper lands — which is the right way round: the
+count becomes a red only once ignoring it is a choice.
+
+### The honesty clause is in the header, not the footnote
+
+> **CANNOT SEE semantic duplication under different spellings.** Two envelope
+> loaders doing one job with different function names, argument orders and
+> local variables read here as two different things. The duplication that cost
+> this repository most was found by a human reading four loaders side by side,
+> and that reading is not automated here.
+
+So every count is a **floor**, in the same direction every other instrument in
+this tree errs.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **9 ok, 0 failed** — files found across both
+directories, a contract implemented twice, a contract nobody implements, a
+name in three files and one in two, a unique name correctly *not* reported,
+and the DUPLICATED/VIOLATION flip turning on whether the helper file exists.
+Doc-first: §2.4 names the gate and carries the first run and the two-channel
+argument; the §7 tools list and the law index gain their rows. `docs_check`
+**87/87**. No Lean executed.

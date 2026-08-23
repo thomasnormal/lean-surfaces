@@ -16,6 +16,7 @@
 #   tools/backlog-index.sh --stdout     # print it, write nothing
 #   tools/backlog-index.sh --check      # regenerate and DIFF: exit 1 on drift
 #   tools/backlog-index.sh --install-merge-driver   # see below
+#   tools/backlog-index.sh --ensure-driver          # idempotent; used by gates
 #   tools/backlog-index.sh --self-test
 #
 # THE MERGE DRIVER.  Merging a generated file is always wrong: a merged index
@@ -45,6 +46,7 @@ while [ $# -gt 0 ]; do
     --stdout)    MODE="stdout"; shift ;;
     --check)     MODE="check"; shift ;;
     --install-merge-driver) MODE="install-driver"; shift ;;
+    --ensure-driver)        MODE="ensure-driver"; shift ;;
     --self-test) MODE="self-test"; shift ;;
     -h|--help)   usage ;;
     *)           die "unknown argument '$1'" ;;
@@ -56,6 +58,31 @@ done
 # first em dash is the title.  A heading that is not a dated id is REPORTED,
 # not skipped — §9.5's scheme is `YYYY-MM-DD-<lane>-<n>`, and a drifter that
 # is quietly dropped is a row nobody sees is missing.
+# THE DRIVER NAME COMES FROM .gitattributes, never from a constant here: two
+# places naming one driver is the defect `tools/dupes.sh` exists to count.
+declared_driver() {             # -> the merge driver .gitattributes names, or ''
+  awk '/^docs\/backlog\/INDEX\.md/ {
+         for (i = 1; i <= NF; i++) if ($i ~ /^merge=/) { sub(/^merge=/, "", $i); print $i }
+       }' "$CLONE/.gitattributes" 2>/dev/null | head -1
+}
+
+# CONFIG IS PER-CLONE, AND NOBODY CONFIGURES IT.  Measured: two rebase
+# conflicts in one day for one lane, on a file that is GENERATED — and a fix
+# that needs a human to type it is not a fix.  So the gates call this on their
+# first run in a clone.  0 when it configured something (and said so), 1 when
+# there was nothing to do — silence is the normal case.
+ensure_driver() {
+  local name cur
+  name="$(declared_driver)"
+  [ -n "$name" ] || return 1                    # nothing declared: nothing to do
+  git -C "$CLONE" rev-parse --git-dir >/dev/null 2>&1 || return 1
+  cur="$(git -C "$CLONE" config --get "merge.$name.driver" 2>/dev/null || true)"
+  [ -n "$cur" ] && return 1                     # already set: stay silent
+  git -C "$CLONE" config "merge.$name.driver" true 2>/dev/null || return 1
+  echo "  merge driver: configured merge.$name.driver=true — .gitattributes names it and git does not ship it, so docs/backlog/INDEX.md will resolve instead of conflicting"
+  return 0
+}
+
 rows() {                        # -> "sortkey\tid\ttitle\tlane"
   local f base
   for f in "$DIR"/*.md; do
@@ -178,14 +205,14 @@ MD
   # that line does nothing.
   echo "  -- merge driver"
   check "the shipped .gitattributes targets INDEX.md" \
-        "$(git -C "$CLONE" check-attr merge -- docs/backlog/INDEX.md 2>/dev/null | awk '{print $NF}')" "ours"
+        "$(git -C "$CLONE" check-attr merge -- docs/backlog/INDEX.md 2>/dev/null | awk '{print $NF}')" "backlog-index"
   check "and it is not set on an ordinary doc" \
         "$(git -C "$CLONE" check-attr merge -- docs/law-index.md 2>/dev/null | awk '{print $NF}')" "unspecified"
 
   mr="$tmp/mergerepo"
   mkdir -p "$mr" && git init -q "$mr" 2>/dev/null
   git -C "$mr" config user.email qol@example && git -C "$mr" config user.name qol
-  printf 'docs/backlog/INDEX.md merge=ours\n' > "$mr/.gitattributes"
+  printf 'docs/backlog/INDEX.md merge=backlog-index\n' > "$mr/.gitattributes"
   mkdir -p "$mr/docs/backlog"
   printf 'base\n' > "$mr/docs/backlog/INDEX.md"
   git -C "$mr" add -A && git -C "$mr" commit -qm base
@@ -199,18 +226,18 @@ MD
 
   # WITHOUT the config: the attribute alone does nothing.
   git -C "$mr" merge side >/dev/null 2>&1
-  check "WITHOUT merge.ours.driver it still conflicts" \
+  check "WITHOUT the driver configured it still conflicts" \
         "$(grep -c '<<<<<<<' "$mr/docs/backlog/INDEX.md")" "1"
   git -C "$mr" merge --abort >/dev/null 2>&1
 
   # WITH the config: resolves to ours, no conflict, stale-but-valid.
-  git -C "$mr" config merge.ours.driver true
+  git -C "$mr" config merge.backlog-index.driver true
   git -C "$mr" merge side >/dev/null 2>&1
   check "WITH the driver the merge succeeds"  "$?" "0"
   check "  ...taking OUR side"                "$(tail -1 "$mr/docs/backlog/INDEX.md")" "our entry"
   check "  ...and never a merged THIRD version" \
         "$(grep -c 'a side entry' "$mr/docs/backlog/INDEX.md")" "0"
-  check "the config the driver needs is set"  "$(git -C "$mr" config --get merge.ours.driver)" "true"
+  check "the config the driver needs is set"  "$(git -C "$mr" config --get merge.backlog-index.driver)" "true"
 
   # The installer's OWN output.  Its first version had backticks inside a
   # double-quoted echo, so the shell ran `ours` and printed "command not
@@ -222,6 +249,25 @@ MD
   check "the header says what to do on a conflict" \
         "$(render | grep -c 'CONFLICT? REGENERATE')" "1"
 
+  # ---- the driver the gates auto-configure, because config is per-clone
+  echo "  -- ensure-driver"
+  ed="$tmp/ed"; mkdir -p "$ed"; git init -q "$ed" 2>/dev/null
+  saved="$CLONE"; CLONE="$ed"
+  check "nothing declared -> nothing done"   "$(ensure_driver; echo $?)" "1"
+  printf 'docs/backlog/INDEX.md merge=backlog-index\n' > "$ed/.gitattributes"
+  check "the driver NAME is read from .gitattributes" "$(declared_driver)" "backlog-index"
+  out="$(ensure_driver)"; rc=$?
+  check "declared but unset -> configures it"  "$rc" "0"
+  check "  ...and says so in one line"         "$(printf '%s' "$out" | grep -c 'merge.backlog-index.driver=true')" "1"
+  check "  ...and git really has it"           "$(git -C "$ed" config --get merge.backlog-index.driver)" "true"
+  check "already set -> SILENT"                "$(ensure_driver)" ""
+  check "  ...and reports nothing to do"       "$(ensure_driver; echo $?)" "1"
+  printf 'docs/backlog/INDEX.md merge=other-name\n' > "$ed/.gitattributes"
+  check "a RENAMED driver is followed"         "$(declared_driver)" "other-name"
+  ensure_driver >/dev/null
+  check "  ...and configured under its new name" "$(git -C "$ed" config --get merge.other-name.driver)" "true"
+  CLONE="$saved"
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
@@ -231,6 +277,8 @@ fi
 OUT="$DIR/INDEX.md"
 
 case "$MODE" in
+  ensure-driver)
+    ensure_driver || true ;;
   install-driver)
     git -C "$CLONE" rev-parse --git-dir >/dev/null 2>&1 || die "'$CLONE' is not a git clone"
     git -C "$CLONE" config merge.ours.driver true || die "could not set merge.ours.driver"

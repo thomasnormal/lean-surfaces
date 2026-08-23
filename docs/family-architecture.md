@@ -4661,6 +4661,7 @@ its refusal paths rather than describing them (§5.4).
 | `tools/substrate.sh` | the substrate contract per tier, by SHAPE | §3.4 (STMT-19..22), §8.5 (STMT-67) |
 | `tools/dupes.sh` | duplication, counted rather than remembered | §2.4 (MEAS-28) |
 | `tools/editions.sh` | thin siblings, and no edition-parameterised definition | §2.4 (STMT-59, STMT-60) |
+| `tools/backlog-index.sh --ensure-driver` | configure the generated index's merge driver, once per clone | §9.5; *fixes live in gates* |
 | `tools/docs_check.py` | doc-embedded blocks match the tree | the marker convention |
 
 **AND A RUN IS NOT A MEASUREMENT UNTIL IT HAS BEEN READ.** The successor
@@ -5200,6 +5201,15 @@ its own lane, with ids `YYYY-MM-DD-<lane>-<n>` that need **no reservation**
 because the lane name makes them unique; `docs/backlog.md` becomes a
 **generated index**, which is §5.5's "generated and checked, never
 hand-maintained" applied to the repository's own record.
+
+**AND THE GENERATED INDEX CONFIGURES ITS OWN MERGE DRIVER.** `INDEX.md` is
+generated *and committed*, so it conflicts on every lane's rebase — measured at
+**two conflicts in one day for one lane**, and every lane pays it. A driver is
+declared in `.gitattributes`, but git ships no `ours`-style driver and **config
+is per-clone**, so nobody had one. `tools/triad.sh` and `tools/check.sh` now
+call `tools/backlog-index.sh --ensure-driver` on their first run in a clone:
+one line when they configure it, silence afterwards. **A fix that needs a human
+to type it is not a fix.**
 
 **Migration is append-only and rewrites no history**: the current file is
 renamed to an archive, every existing `§Lnn` reference keeps resolving, and

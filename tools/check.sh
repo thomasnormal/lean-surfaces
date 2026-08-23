@@ -467,7 +467,7 @@ decide() {                      # decide <repo-relative-path>
   cls="$(glob_class "$1")"
   if [ "$cls" = "library" ]; then
     VERDICT="refuse-library"
-    WHY="'$1' is inside a lake library glob — that is the build's own graph, not a scratch file. Rule 3's exemption does not cover it: take a ticket (tools/triad.sh --lane <you>)"
+    WHY="'$1' is inside a lake library glob — that is the build's own graph, not a scratch file. Rule 3's exemption does not cover it: take a ticket (tools/triad.sh --lane <you>). LIBRARY FILE: the in-file '#print axioms' ledger via a tenure is the evidence path — --axioms is for SCRATCH files, and this refusal is by design, not a gap"
     return 0
   fi
   MISSING="$(missing_oleans "$CLONE/$1" 2>/dev/null || true)"
@@ -547,6 +547,8 @@ TOML
   decide LeanModels/Core/New.lean
   check "a LIBRARY file -> refuse-library"    "$VERDICT" "refuse-library"
   check "  ...and it says take a ticket"      "$(printf '%s' "$WHY" | grep -c 'take a ticket')" "1"
+  check "  ...and NAMES the evidence path"    "$(printf '%s' "$WHY" | grep -c "in-file '#print axioms' ledger")" "1"
+  check "  ...saying the refusal is BY DESIGN" "$(printf '%s' "$WHY" | grep -c 'by design, not a gap')" "1"
   decide Examples/python/x/proof.lean
   check "an Examples file -> refuse-library"  "$VERDICT" "refuse-library"
 
@@ -738,6 +740,11 @@ fi
 [ -n "$TARGET" ] || die "a .lean file is required (or --self-test)"
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 case "$TARGET" in *.lean) ;; *) die "'$TARGET' is not a .lean file" ;; esac
+
+# Same one-per-clone merge-driver fix the triad does — a lane that only ever
+# runs check.sh still rebases, and still pays the INDEX.md conflict.
+[ -x "$CLONE/tools/backlog-index.sh" ] && \
+  "$CLONE/tools/backlog-index.sh" --dir "$CLONE" --ensure-driver 2>/dev/null || true
 
 # Normalise to a repo-relative path, so the glob test means what it says.
 ABS="$TARGET"

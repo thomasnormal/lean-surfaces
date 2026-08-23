@@ -826,6 +826,21 @@ coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
   esac
 }
 
+# THE IN-FILE `#print axioms` EVIDENCE IS THE HOUSE STANDARD for library
+# files — it is in the tree, it runs under a tenure, and it is immune to
+# `check.sh --axioms` by design.  But the build writes to a mktemp log that is
+# named only on RED, so on GREEN that evidence was produced and then thrown
+# away: the one outcome in which anybody wants to quote it.  Salvage it into
+# the tenure log, labelled, before the log goes.
+axiom_ledger() {                # log -> the axiom lines, labelled; 1 if none
+  local lines
+  lines="$(grep -E 'depends on axioms|does not depend on any axioms' "$1" 2>/dev/null || true)"
+  [ -n "$lines" ] || return 1
+  echo "axiom ledger, from this build:"
+  printf '%s\n' "$lines" | sed 's/^/    /'
+  return 0
+}
+
 # ------------------------------------------- THE RED-BUILD REPORT (§7)
 # The old block was `grep -E '^error|✖' | sort -u | head -8`, and a lane
 # reported "one error in 839 targets" off it — a number that then travelled up
@@ -1209,6 +1224,18 @@ if [ "$SELF_TEST" = "1" ]; then
   check "unstampable -> proceed, but LOUDLY"  "$rc:$(printf '%s' "$out" | grep -c 'TREE STAMP UNAVAILABLE')" "0:1"
   CLONE="$saved"
 
+  # ---- the axiom ledger, salvaged from a GREEN build's log
+  echo "  -- axiom ledger"
+  printf 'info: building\n%s\n%s\nBuild completed successfully.\n' \
+    "'thm' depends on axioms: [propext, Classical.choice, Quot.sound]" \
+    "'other' does not depend on any axioms" > "$tmp/green.log"
+  check "a green log yields its axiom lines"  "$(axiom_ledger "$tmp/green.log" | grep -c 'propext')" "1"
+  check "  ...both of them"                   "$(axiom_ledger "$tmp/green.log" | grep -c 'axioms')" "2"
+  check "  ...under a label naming the build" "$(axiom_ledger "$tmp/green.log" | head -1)" "axiom ledger, from this build:"
+  printf 'info: building\nBuild completed successfully.\n' > "$tmp/plain.log"
+  check "a log with no axiom line says nothing" "$(axiom_ledger "$tmp/plain.log")" ""
+  check "  ...and reports that it found none"   "$(axiom_ledger "$tmp/plain.log" >/dev/null; echo $?)" "1"
+
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
 
@@ -1385,6 +1412,14 @@ cd "$CLONE" || die "cannot cd '$CLONE'"
 for d in .git/rebase-merge .git/rebase-apply .git/MERGE_HEAD .git/CHERRY_PICK_HEAD; do
   [ -e "$d" ] && die "a rebase/merge is in progress ($d) — finish it BEFORE the build (A6, §7.2)"
 done
+
+# docs/backlog/INDEX.md is GENERATED and committed, so it conflicts on every
+# lane's rebase — measured at two conflicts in one day for one lane, and every
+# lane pays it.  A merge driver is declared in .gitattributes, but git does not
+# ship `ours`-style drivers and CONFIG IS PER-CLONE, so nobody had one.  A fix
+# that needs a human to type it is not a fix: FIXES LIVE IN GATES.
+[ -x "$CLONE/tools/backlog-index.sh" ] && \
+  "$CLONE/tools/backlog-index.sh" --dir "$CLONE" --ensure-driver 2>/dev/null || true
 
 # ------------------------------------------------------- run the gate list
 # Factored out because the docs-only path runs gates WITHOUT a tenure and the
@@ -1704,6 +1739,10 @@ fi
 gates_only_notice "$FLOOR_USED" "$GATES_ONLY"
 gate_notice "$GATES" "$LANE_GATES"
 run_gates "$GATES"
+
+# Before the log is abandoned: a green build's axiom lines are evidence, and
+# they exist only here.
+if led="$(axiom_ledger "$BUILD_LOG")"; then printf '%s\n' "$led" | while IFS= read -r l; do say "$l"; done; fi
 
 say "TRIAD DONE (build exit $BUILD_EXIT, gates $( [ "$rc" = 0 ] && echo green || echo RED ))"
 # §5.4a: the verdict carries the state it was taken in.  A scoped green that

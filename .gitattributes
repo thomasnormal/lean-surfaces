@@ -20,4 +20,14 @@
 #
 #     tools/backlog-index.sh --install-merge-driver
 #
-docs/backlog/INDEX.md merge=ours
+# BUT NOBODY RUNS THAT.  Config is per-clone, and a fix that needs a human to
+# type it is not a fix — measured, two conflicts in one day for one lane, and
+# every lane pays it.  So `tools/triad.sh` and `tools/check.sh` call
+# `tools/backlog-index.sh --ensure-driver` on their first run in a clone: if
+# this file names a driver and the clone has not configured it, they configure
+# it and say so in one line.  FIXES LIVE IN GATES.
+#
+# The driver is named for what it guards rather than `ours`, so a lane reading
+# `git config --get-regexp '^merge\.'` sees WHY it is set.
+#
+docs/backlog/INDEX.md merge=backlog-index

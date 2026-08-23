@@ -1991,3 +1991,75 @@ that used to be silent.** No Lean executed; the guard is a function of
 
 **Owed to every lane:** any `--axioms` verdict quoted since `9dae608`,
 especially a single-name one, should be re-run before it is relied on.
+
+---
+
+## 2026-08-23-qol-29 — the merge driver configures itself, and a green build's axiom ledger survives
+
+Two frictions the R-track lane measured, both mine to fix.
+
+### (1) A driver nobody configured
+
+`docs/backlog/INDEX.md` is **generated and committed**, so it conflicts on
+every lane's rebase — **two conflicts in one day for one lane**, and every lane
+pays it. `qol-14` landed a merge driver for exactly this and then left the last
+step to a human: **git ships no `ours`-style driver, and config is per-clone.**
+So the declaration sat in `.gitattributes` doing nothing, in every clone but
+mine.
+
+**A fix that needs a human to type it is not a fix.** `tools/triad.sh` and
+`tools/check.sh` now call `tools/backlog-index.sh --ensure-driver` on their
+first run in a clone — one line when they configure it, **silence afterwards**:
+
+```
+  merge driver: configured merge.backlog-index.driver=true — .gitattributes names
+  it and git does not ship it, so docs/backlog/INDEX.md will resolve instead of
+  conflicting
+```
+
+Three details worth the words. The driver is **renamed from `ours` to
+`backlog-index`**, so a lane reading `git config --get-regexp '^merge\.'` sees
+*why* it is set rather than a generic take-ours. The name is **read from
+`.gitattributes`**, never from a constant in the script — two places naming one
+driver is the defect `dupes.sh` exists to count, and a self-test row renames
+the attribute and checks the tool follows. And the helper lives in
+`backlog-index.sh` with both gates **calling** it, rather than the same six
+lines pasted into two scripts.
+
+### (2) A green build threw away its own evidence
+
+The in-file `#print axioms` ledger is the **house standard** for library files
+— it is in the tree, it runs under a tenure, and it is immune to
+`check.sh --axioms` by design. But the build writes to a `mktemp` log that is
+named only on **red**, so on **green** that evidence was produced and then
+abandoned: the one outcome in which anybody wants to quote it.
+
+`TRIAD DONE` is now preceded by the salvage, labelled so it is quotable:
+
+```
+[11:56:03] axiom ledger, from this build:
+[11:56:03]     'thm' depends on axioms: [propext, Classical.choice, Quot.sound]
+```
+
+Red is unchanged — the whole log is kept and named, as before.
+
+### (3) And the refusal says which evidence path to use
+
+`check.sh --axioms` is for **scratch files only**, and `refuse-library` is by
+design rather than a gap. After `qol-28` — where that flag's own evidence was
+silently incomplete — a refusal that does not name the alternative invites a
+lane to reach for the flag anyway. It now says: *"LIBRARY FILE: the in-file
+`#print axioms` ledger via a tenure is the evidence path — `--axioms` is for
+SCRATCH files, and this refusal is by design, not a gap."*
+
+### Triad
+
+`bash -n` clean on all three. `triad.sh` **161 ok** (156 → 161: a green log
+yielding its axiom lines under a label, a log with none saying nothing and
+reporting it), `backlog-index.sh` **34 ok** (25 → 34: nothing declared, name
+read from the attribute, declared-but-unset configuring and saying so, already
+set staying silent, and a **renamed** driver followed to its new name),
+`check.sh` **87 ok** (85 → 87: the refusal naming the evidence path and saying
+it is by design). Live: a dry-run configured the driver with one line and the
+next run was silent. Doc-first: §9.5 carries the auto-config; the §7 tools list
+gains the row. No Lean executed.

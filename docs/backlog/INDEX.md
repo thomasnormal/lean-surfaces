@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**119 entries across 16 lanes.** Regenerate with
+**120 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-23-qol-29` | the merge driver configures itself, and a green build's axiom ledger survives | qol |
 | `2026-08-23-qol-28` | `--axioms` dropped the last name, and the absence was silent | qol |
 | `2026-08-23-qol-27` | `tools/editions.sh`: STMT-60 and STMT-59 gated, and STMT-61 has nothing to compare | qol |
 | `2026-08-23-qol-26` | MEAS-28 gets its instrument: duplication counted, not remembered | qol |

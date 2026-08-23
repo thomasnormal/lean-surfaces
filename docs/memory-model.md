@@ -199,9 +199,12 @@ cycle DETECTION, never by running out of fuel).
   value updates (future-proofs deletion/reinsertion).
 * In tier H1: literals, read (`KeyError` faithful), write (aliasing-
   visible), `len`, `in`/`not in`, `.get(k)`/`.get(k, d)`, `==`/`!=`,
-  truthiness, live iteration as above. Loud: `.keys/.values/.items/
-  .update/.pop/…`, `del d[k]`, comprehensions, `**kwargs`, `|`,
-  returning a dict through the boundary.
+  truthiness, live iteration as above, the three VIEWS in consuming
+  position, `enumerate(d)`, and `del d[k]`. Loud: the views as
+  FIRST-CLASS values (`k = d.keys()` held across statements, set algebra,
+  `reversed`), `.update/.pop/…`, comprehensions, `**kwargs`, `|`,
+  returning a dict through the boundary, and same-size key-set churn
+  during iteration.
 
 ## List semantics (H2 inventory — the in-world half is BUILT)
 
@@ -1696,12 +1699,18 @@ refused, never guessed, and never given either RuntimeError, because
 which one (if any) CPython raises is exactly the layout question.
 
 **A cross-rung dependency falls out of this, and it is the census's most
-useful product.** The hazard is unreachable TODAY only because the sole
-way to shrink a dict mid-iteration — `del d[k]` — refuses first (the
-`dict.churn-during-iter` witness reports `unsupported statement
-'Delete'`, not an iteration error). **The day dict deletion lands, the
-churn guard becomes REQUIRED**, or the tier acquires a silent wrong
-answer. Recorded here at the gate that needs it.
+useful product.** The hazard was unreachable while the sole way to shrink
+a dict mid-iteration — `del d[k]` — refused first. **THAT DAY CAME**
+(docs/backlog/python-completeness.md §pycomplete-15/16): dict deletion
+landed, the churn guard is now REQUIRED rather than merely inherited, and
+it is kept. Four shapes were measured before the inch: churning at the
+middle or last key raises CPython's SECOND `RuntimeError` (*"dictionary
+keys changed during iteration"*), while churning at the FIRST key, or
+deleting a key and putting the SAME key back, completes SILENTLY — the
+entries-array layout is what separates them. So the regime stays LOUD,
+and `dict.keyset-churn` is its witness class. The one churn shape that
+MATCHES is `del_churn_then_break`, and not because CPython was silent:
+the loop EXITS before the cursor re-reads, so the guard is never reached.
 
 ### The tier this forces
 
@@ -3949,9 +3958,16 @@ The recorded design (docs/backlog.md §the tail, construct 3) is built as
 written for FUNCTION scope, plus the reconciled MODULE-scope arm
 (docs/backlog.md §`del` RECONCILED with the one pipeline — written and
 committed BEFORE this implementation, with the flip prediction
-pre-registered). The construct is `del name, …` over BARE NAMES only:
-`del d[k]`, `del o.attr`, `del xs[i]` are measured second tables and
-stay `Unsupported` at extraction (clause 4).
+pre-registered). The construct is `del name, …` over BARE NAMES, plus — since
+§pycomplete-16 — a SINGLE SUBSCRIPT target, which extraction admits and
+ingestion rewrites to `<dictdel>(recv, key)` under an `exprStmt` (the
+THIRD decision site, as `list(d.keys())` becomes `list(<dictkeys>(d))`).
+`del` has no value and `exprStmt` discards the value, so the lowering is
+exact and the statement needs no `Stmt` constructor. That admission is
+SYNTACTIC: `del o[k]` lowers for ANY receiver and the receiver's TYPE is
+decided in the evaluator's arm, which refuses a non-dict
+(`del.non-dict-receiver`). `del o.attr`, `del xs[i:j]` and multi-target
+deletes mixing shapes stay `Unsupported` at extraction (clause 4).
 
 **Surface.** One constructor `Stmt.delStmt (names : Array String) sp`;
 `Env.remove` (structural recursion beside `lookup`/`set`) and the pure

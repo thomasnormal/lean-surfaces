@@ -315,6 +315,16 @@ partial def parseStmt (j : Json) : Except String Stmt := do
         -- else as `Unsupported`), so the field is a plain string array.
         let names ← (← (← getField j "names").getArr?).mapM (·.getStr?)
         return .delStmt names span
+    | "DeleteSubscript" =>
+        -- THE REWRITE (docs/backlog/python-completeness.md §pycomplete-15/16):
+        -- `del d[k]` ⇢ `<dictdel>(d, k)` as an `exprStmt`. `del` is a
+        -- statement with NO VALUE and `exprStmt` discards the value, so this
+        -- is exact. The evaluator then meets a call shape it already handles,
+        -- which is why this inch adds no `Stmt` constructor and no walker arm.
+        let recv ← parseExpr (← getField j "recv")
+        let key ← parseExpr (← getField j "key")
+        return .exprStmt
+          (.call (.name dictDelBuiltinName span) #[recv, key] #[] Option.none span) span
     | "Try" =>
         -- exceptions tier: the v0 single-handler fields plus the
         -- `callUnsupported`-style reason (structured-but-loud).

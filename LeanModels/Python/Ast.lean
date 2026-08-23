@@ -629,6 +629,19 @@ def dictViewBuiltinName : String → Option String
   | "items" => some "<dictitems>"
   | _ => Option.none
 
+/-- §3c-i-c/§del: `del d[k]` lowers to `<dictdel>(d, k)` — an `exprStmt` over
+a synthetic call, so the statement needs NO `Stmt` constructor and no walker
+arm. Measured before choosing: a `delSubscript` constructor would have cost
+~25 mechanical sites (`delStmt` has 28 occurrences across 9 files,
+`assertStmt` 22 across 8) against this shape's six, and none of those 25
+decide anything. `del` is a statement with no value and `exprStmt` DISCARDS
+the value, so the lowering is exact rather than approximate.
+
+Like the view names this is unspellable, checked before `isBuiltinName` and
+kept OUT of it, and — the property that licenses it — it can never appear in
+EXPRESSION position, because ingestion emits it only from a `Delete` node. -/
+def dictDelBuiltinName : String := "<dictdel>"
+
 /-- Builtins that CONSUME their argument on the spot, so a view handed to one
 cannot outlive the call — which is what licenses the rewrite's snapshot. -/
 def consumesViewArg : String → Bool

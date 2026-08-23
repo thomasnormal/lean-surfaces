@@ -3,10 +3,10 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.14.5"
   },
   "source_file": "Examples/python/del_lab/del_lab.py",
-  "source_sha256": "78f1a926edb29bf077cf18a33a9a5ca57f4d8c8da1fb28c7cdcf0331b3373d7b",
+  "source_sha256": "14a2f8e815ae3c2d4c83fb5dcc0612e7aebb9fd0b91c55a96f3c20ec6d4c8dd3",
   "module": {
     "kind": "Module",
     "body": [
@@ -1210,7 +1210,7 @@
         "span": {
           "lineno": 113,
           "col_offset": 0,
-          "end_lineno": 117,
+          "end_lineno": 119,
           "end_col_offset": 12
         },
         "name": "del_sub",
@@ -1221,18 +1221,18 @@
           {
             "kind": "Assign",
             "span": {
-              "lineno": 115,
+              "lineno": 117,
               "col_offset": 4,
-              "end_lineno": 115,
+              "end_lineno": 117,
               "end_col_offset": 14
             },
             "targets": [
               {
                 "kind": "Name",
                 "span": {
-                  "lineno": 115,
+                  "lineno": 117,
                   "col_offset": 4,
-                  "end_lineno": 115,
+                  "end_lineno": 117,
                   "end_col_offset": 5
                 },
                 "id": "d"
@@ -1241,18 +1241,18 @@
             "value": {
               "kind": "Dict",
               "span": {
-                "lineno": 115,
+                "lineno": 117,
                 "col_offset": 8,
-                "end_lineno": 115,
+                "end_lineno": 117,
                 "end_col_offset": 14
               },
               "keys": [
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 115,
+                    "lineno": 117,
                     "col_offset": 9,
-                    "end_lineno": 115,
+                    "end_lineno": 117,
                     "end_col_offset": 10
                   },
                   "value": {
@@ -1265,9 +1265,9 @@
                 {
                   "kind": "Constant",
                   "span": {
-                    "lineno": 115,
+                    "lineno": 117,
                     "col_offset": 12,
-                    "end_lineno": 115,
+                    "end_lineno": 117,
                     "end_col_offset": 13
                   },
                   "value": {
@@ -1279,30 +1279,51 @@
             }
           },
           {
-            "kind": "Unsupported",
+            "kind": "DeleteSubscript",
             "span": {
-              "lineno": 116,
+              "lineno": 118,
               "col_offset": 4,
-              "end_lineno": 116,
+              "end_lineno": 118,
               "end_col_offset": 12
             },
-            "py_kind": "Delete",
-            "text": "del d[1]"
+            "recv": {
+              "kind": "Name",
+              "span": {
+                "lineno": 118,
+                "col_offset": 8,
+                "end_lineno": 118,
+                "end_col_offset": 9
+              },
+              "id": "d"
+            },
+            "key": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 118,
+                "col_offset": 10,
+                "end_lineno": 118,
+                "end_col_offset": 11
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
           },
           {
             "kind": "Return",
             "span": {
-              "lineno": 117,
+              "lineno": 119,
               "col_offset": 4,
-              "end_lineno": 117,
+              "end_lineno": 119,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 117,
+                "lineno": 119,
                 "col_offset": 11,
-                "end_lineno": 117,
+                "end_lineno": 119,
                 "end_col_offset": 12
               },
               "value": {
@@ -1316,9 +1337,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 120,
+          "lineno": 122,
           "col_offset": 0,
-          "end_lineno": 123,
+          "end_lineno": 125,
           "end_col_offset": 12
         },
         "name": "del_attr",
@@ -1326,9 +1347,9 @@
           {
             "arg": "o",
             "span": {
-              "lineno": 120,
+              "lineno": 122,
               "col_offset": 13,
-              "end_lineno": 120,
+              "end_lineno": 122,
               "end_col_offset": 14
             }
           }
@@ -1339,9 +1360,9 @@
           {
             "kind": "Unsupported",
             "span": {
-              "lineno": 122,
+              "lineno": 124,
               "col_offset": 4,
-              "end_lineno": 122,
+              "end_lineno": 124,
               "end_col_offset": 14
             },
             "py_kind": "Delete",
@@ -1350,17 +1371,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 123,
+              "lineno": 125,
               "col_offset": 4,
-              "end_lineno": 123,
+              "end_lineno": 125,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 123,
+                "lineno": 125,
                 "col_offset": 11,
-                "end_lineno": 123,
+                "end_lineno": 125,
                 "end_col_offset": 12
               },
               "value": {

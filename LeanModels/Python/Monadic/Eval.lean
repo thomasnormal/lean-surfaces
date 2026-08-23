@@ -194,6 +194,9 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- the pinned CPython `dir(builtins)` and every arm that may decide a
       -- `NameError` consults it, so polluting it would move a real decision.
       else if (dictViewBuiltinKind fname).isSome then .builtin fname
+      -- §del: `del d[k]` lowers to `<dictdel>(d, k)`. Same discipline as the
+      -- view names above: checked BEFORE `isBuiltinName` and kept out of it.
+      else if fname == dictDelBuiltinName then .builtin fname
       else if isBuiltinName fname then .builtin fname
       else if isModuleDunder fname then
         .preRefuse s!"module attribute '{fname}' is bound by the import machinery, not by a statement — outside the G1 tier"
@@ -468,6 +471,22 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | some (start, step) => do
         let a ← heapPush (.generator "<count>" [] [.countFrom start step] .suspended)
         pure (.ref a)
+  else if fname == dictDelBuiltinName then
+    -- §del: the statement's own effect. `del` has NO VALUE in Python and the
+    -- rewrite lowers it under an `exprStmt`, which discards what this answers,
+    -- so `.none` here is the exact lowering rather than a convention.
+    -- `heapDelete` answers `Option.none` for a NON-DICT receiver and this arm
+    -- turns that into the tier's refusal — the type check lands here because
+    -- the rewrite is syntactic.
+    match vs with
+    | [.ref a, k] => do
+        match heapDelete (← frameHeap) a k with
+        | some r => do
+            let h ← liftRes r
+            heapPut h
+            pure .none
+        | Option.none => refuse delRecvMsg
+    | _ => refuse delRecvMsg
   else match dictViewBuiltinKind fname with
     -- §3c-i-b: the view's element sequence. Only ingestion emits this name,
     -- and only in consuming-argument position, so the snapshot cannot outlive

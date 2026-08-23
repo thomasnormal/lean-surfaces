@@ -1276,3 +1276,102 @@ cursor. `del d[next(iter(d))]` answers `{2: 'b'}` and `del d[next(k for k in
 d if k != root)]` answers `{1: 'a'}` — measured. The hazard the guards exist
 for is real but is not on the flagship's path, which is the honest reason
 these are inches rather than walls.
+
+## 2026-08-23-pycomplete-16 — `del d[k]` LANDS as an ingestion rewrite, and the churn guard becomes REQUIRED
+
+`del d[k]` runs, on the flagship's two eviction lines' shared dependency. The
+census (§pycomplete-15) priced a `delSubscript` statement constructor; the
+re-census before building priced the **`Stmt`-constructor tax** and the design
+changed.
+
+### The re-census that changed the shape, and the number that forced it
+
+A new `Stmt` constructor is not one site. **`delStmt` has 28 occurrences
+across 9 files; `assertStmt`, the closest precedent, has 22 across 8** — arms
+in `heapFree`, the size/termination measure, span extraction, kind naming,
+lowering, parsing, plus `Obs`/`PayloadBlind`/`ClockErase`. All mechanical, and
+**none of them decide anything.**
+
+So `del d[k]` lowers to **`<dictdel>(d, k)` under an `exprStmt`** — the THIRD
+DECISION SITE this lane named in §pycomplete-11, reused. Six sites instead of
+twenty-five: the extractor's clause 4, the ingestion arm, the synthetic name,
+`callNamePlan`, `applyBuiltin`, and the two pure workers. **Zero `Stmt`
+constructors, zero walker arms.** `del` is a statement with NO VALUE and
+`exprStmt` DISCARDS the value, so the lowering is exact rather than
+approximate, and the name can never appear in expression position because
+ingestion emits it only from a `Delete` node — the same argument that licenses
+`<dictkeys>`.
+
+*"Re-census when the plan becomes expensive" earned its keep here: the rule
+fired on a 4× price difference and the answer was already in this lane's own
+toolkit.*
+
+### THE CHURN GUARD IS NOW REQUIRED, and a one-probe census would have inverted it
+
+§pycomplete-1 predicted that same-size key-set churn *"becomes REQUIRED the
+day dict deletion lands."* That day is this inch. **The first churn shape
+measured raised** `RuntimeError: dictionary keys changed during iteration` — a
+faithful second message the tier could plausibly reproduce. Three shapes later
+it does not raise at all:
+
+| shape | CPython | tier |
+| --- | --- | --- |
+| churn at MIDDLE key | `RuntimeError: keys changed` | REFUSE |
+| churn at FIRST key | **silent**, answers 102 | REFUSE |
+| `del d[2]; d[2]=9` | **silent**, answers 3 | REFUSE |
+| churn then `break` | silent, answers 1 | **MATCH** |
+
+What separates them is the entries-array layout and compaction schedule, so
+the regime stays LOUD and `dict.keyset-churn` is its class. **The three silent
+shapes are honest REFUSEs**: the model refusing where CPython answers is a
+witnessed capability gap, and CPython's answer is recorded in each row's
+comment so the expectation column stays oracle-written. A MATCH there would
+require answering through an unguessable layout — the snapshot sin again.
+
+**The one MATCH is `del_churn_then_break`, and not because CPython was
+silent.** `dictStepM` runs at the TOP of each iteration, so the guard fires
+only on RE-ENTRY; `break` exits before the cursor re-reads and the guard is
+never reached. *Two rows can agree with CPython for entirely different
+reasons, and the row that says which is the one worth keeping.*
+
+### `shapeVersion` is the load-bearing half
+
+Deletion bumps it UNCONDITIONALLY, where `heapStore` bumps only on growth, and
+the why is in the code: `del d[x]` followed by `d[y] = v` in one loop body
+leaves `es.size` exactly as it was, so SIZE — the only guard that fires today
+— stays silent and the churn would be walked as if nothing happened. Value
+semantics are cheap by comparison: deletion does not hold the slot, so
+reinsertion APPENDS (`del d[2]; d[2]='z'` lists `[1, 3, 2]`) and the entries
+array stays exactly the insertion sequence every cursor in the file reads.
+
+### The boundary is falsifiable
+
+The rewrite is SYNTACTIC — it lowers `del o[k]` for any receiver — so the type
+check lands in the arm, as it does for the view builtins.
+`dict_lab::del_nondict_still_loud` is the witness: CPython DELETES there (list
+item deletion, answers 1), and the tier refuses rather than invent an answer
+for a receiver whose behaviour it has not measured. `del xs[1:]` is excluded
+at extraction: a slice deletes a RANGE, a different operation.
+
+### An inherited wart, named rather than replicated silently
+
+A synthetic name reaching the TRUNK's name resolution is in neither
+`isBuiltinName` nor `isPyBuiltinName`, so at module scope with complete
+globals the trunk would decide a `NameError` CPython never has. This is
+**inherited from §pycomplete-11**, not introduced here — `<dictkeys>` has had
+it since 3c-i-b — and it is unobserved because the trunk is not the runner and
+no proof exercises it. Recorded so the next audit finds it from either end;
+the fix is one arm in the trunk's resolution, and it belongs to whichever inch
+next has reason to open that file.
+
+### Census deltas
+
+* grammar census **117 → 122 witnesses**: `del.dict-key`,
+  `del.dict-missing`, `del.dict-reinsert-order` (MATCH), `del.dict-churn` and
+  `del.non-dict-receiver` (REFUSE).
+* `harness/cases.json` **660 → 670 rows**. `del_lab::del_sub` FLIPS
+  `unsupported → match` and LEAVES `WHITELIST_CLASS`; four new gaps join it —
+  one `del.non-dict-receiver` and three `dict.keyset-churn`.
+* `docs/memory-model.md` updated in three places: the H1 dict inventory, the
+  `del` construct paragraph, and the cross-rung churn note that predicted
+  this inch.

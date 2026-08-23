@@ -1432,3 +1432,116 @@ is the one currently available.
 
 **The TrProj drift guards continue as the background duty** (entry 15); this
 corner is the foreground.
+
+---
+
+## 2026-08-23-lean-tier-17 — EXPORT CORNER, arc 1: re-pinned, 27-obligation manifest landed, round-trip property and index invariant stated
+
+### Re-pin: exact
+
+`lean4export` @ **`af5aa64`**, `lean-toolchain` = **`leanprover/lean4:v4.33.0-rc1`**
+— identical to ours. Diff against upstream master is exactly what the charter
+predicted: **one test expectation and the toolchain line**, nothing else. Format
+version **3.1.0**, spec `format_ndjson.md` 352 lines.
+
+### The manifest: `harness/lean_export_manifest.py` -> `docs/lean-export-manifest.json`
+
+A §5.5 manifest joining **three independent sources** — the spec
+(`format_ndjson.md`), the emitter (`Export.lean`) and the reference parser
+(`Export/Parse.lean`). A round-trip obligation exists exactly where all three
+agree an item kind lives; where they disagree the manifest says so.
+
+**27 obligations, and every one resolves in all three sources:**
+
+| category | obligations |
+| --- | ---: |
+| `expr` | 11 |
+| `declaration` | 9 |
+| `level` | 4 |
+| `name` | 2 |
+| `binderInfo` | 1 |
+| **total** | **27** |
+
+**Undocumented in spec: none. Nested arrays: `types`, `ctors`, `recs`.**
+
+Four constructors are **not emitted by design** and the manifest records why
+rather than scoring them as gaps: `Name.anonymous` and `Level.zero` are
+pre-seeded at index 0; `Expr.fvar` and `Expr.mvar` hit a `panic!` — the same
+10-of-12 kernel-admissible split §4 of the charter measured.
+
+### THE INSTRUMENT CORRECTED ME TWICE, and one was the audit's defect class again
+
+The charter said **26**; the manifest says **27**. I had missed `parseInductive`,
+the wrapper that reads the `types`/`ctors`/`recs` arrays — counting the three
+`*Info` parsers but not the group they sit in. **The instrument's count stands.**
+
+Worse, and worth recording plainly: my first declared table keyed the nested
+kinds as singular `ctor`/`rec`, which produced **two wrong rows**:
+
+* `rec` reported **UNDOCUMENTED** — but the spec documents `"recs"` at
+  `format_ndjson.md:291`. A false gap.
+* `ctor` reported an emit site at `Export.lean:407` — which is
+  `("ctor", ← dumpName rule.ctor)` inside **`dumpRecRule`**, a recursor rule's
+  NAME FIELD, not the constructor declaration at all.
+
+**That is the unanchored / first-hit-wins defect class the 2026-08-23 audit named
+in `lean_kernel_census.py`, recurring in a brand-new instrument written after the
+audit.** It is the third appearance in this lane's tools. Both rows were caught
+by verifying the finding before publishing it — I was one step from writing "the
+export spec does not document recursors", which is false. The instrument now
+declares emit and spec keys per row and **refuses** when a nested kind's key is
+singular, since a singular match there is almost certainly a same-named field.
+
+Contract: sorted JSON, `--compare`, double-run byte-identical, four refusal paths
+RUN (missing dir, non-checkout, missing baseline, drift at exit 1).
+
+### THE ROUND-TRIP PROPERTY, stated
+
+Measured mechanism. The exporter hash-conses through `getIdx`:
+
+```lean
+if let some idx := m[x]? then return idx      -- already emitted: share it
+let s ← rec                                   -- else emit CHILDREN first
+let idx := m.size
+IO.println (s.setObjVal! namespaced idx).compress
+modify fun st => setM st ((getM st).insert x idx)
+```
+
+so the emit tables are **value → index** (`visitedNames`, `visitedLevels`,
+`visitedExprs`) while the parser's are **index → value** (`nameMap`, `levelMap`,
+`exprMap`, `recursorRuleMap`). The property to prove:
+
+> **`parse (dump E) = E`** at the `constMap` level, for every well-formed
+> environment `E`.
+
+**And the invariant that carries it — the arc's real content:**
+
+> **(1) TOPOLOGICAL ORDER.** `getIdx` emits children *before* assigning the
+> parent `idx := m.size`, so every index is strictly greater than the indices of
+> its subterms. Therefore **every index referenced on line *n* was defined on
+> some line < *n***, and the parser can always resolve it.
+>
+> **(2) TABLE INVERSION.** At every point in the line sequence, the parser's
+> index→value map is the inverse of the exporter's value→index map on the
+> indices emitted so far.
+
+Two conventions the invariant must carry rather than assume: index **0** is
+**pre-seeded** on both sides (`.anonymous`, `.zero`) and never emitted; and
+`getIdx`'s sharing means `dump` is **not** injective on syntax trees — the same
+subterm is emitted once — so round-trip holds *through* the sharing, which is
+exactly why the invariant is about tables and not about term structure.
+
+**This is the hash-consing difficulty the charter named prospectively rather than
+at inch 3, now stated precisely enough to prove.**
+
+### Next: `Level`, 4 constructors
+
+`succ`, `max`, `imax`, `param` — the cheapest category with real content:
+`succ`/`max`/`imax` recurse through the index table (so they exercise invariant
+(1)) while `param` bottoms out in a name, and `zero` is the pre-seeded
+convention. Same reach-per-cost move that opened the TrProj corner with `instL`.
+
+### Ledger
+
+* **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers (entries 13–15).
+* **Export corner** — **0 of 27 pairs proved**; manifest landed, property stated.

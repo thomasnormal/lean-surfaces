@@ -1,0 +1,328 @@
+{
+  "commit": "af5aa64bb914c3c2c781f378088dbd38acf4f804",
+  "format_version": "3.1.0",
+  "not_emitted_by_design": {
+    "anonymous": "Name.anonymous \u2014 pre-seeded at index 0 (Export.lean), unreachable! if reached",
+    "fvar": "Expr.fvar \u2014 panic!: cannot export free variables or metavariables",
+    "mvar": "Expr.mvar \u2014 same panic",
+    "zero": "Level.zero \u2014 pre-seeded at index 0, unreachable! if reached"
+  },
+  "obligations": {
+    "by_category": {
+      "aux": 1,
+      "declaration": 9,
+      "expr": 11,
+      "level": 4,
+      "name": 2
+    },
+    "nested": [
+      "ctors",
+      "recs",
+      "types"
+    ],
+    "total": 27,
+    "undocumented_in_spec": []
+  },
+  "rows": [
+    {
+      "category": "aux",
+      "emit_line": 189,
+      "key": "binderInfo",
+      "nested_in": null,
+      "parse_fn": "parseBinderInfo",
+      "parse_line": 151,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 245,
+      "key": "axiom",
+      "nested_in": null,
+      "parse_fn": "parseAxiomInfo",
+      "parse_line": 237,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Axiom"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 358,
+      "key": "ctors",
+      "nested_in": "induct",
+      "parse_fn": "parseCtorInfo",
+      "parse_line": 365,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Inductive Declaration:"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 256,
+      "key": "def",
+      "nested_in": null,
+      "parse_fn": "parseDefnInfo",
+      "parse_line": 249,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Definition"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 369,
+      "key": "induct",
+      "nested_in": null,
+      "parse_fn": "parseInductive",
+      "parse_line": 434,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Inductive Declaration:"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 270,
+      "key": "opaque",
+      "nested_in": null,
+      "parse_fn": "parseOpaqueInfo",
+      "parse_line": 295,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Opaques"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 299,
+      "key": "quot",
+      "nested_in": null,
+      "parse_fn": "parseQuotInfo",
+      "parse_line": 312,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Quotients"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 393,
+      "key": "recs",
+      "nested_in": "induct",
+      "parse_fn": "parseRecInfo",
+      "parse_line": 392,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Inductive Declaration:"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 283,
+      "key": "thm",
+      "nested_in": null,
+      "parse_fn": "parseThmInfo",
+      "parse_line": 280,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Theorems"
+    },
+    {
+      "category": "declaration",
+      "emit_line": 391,
+      "key": "types",
+      "nested_in": "induct",
+      "parse_fn": "parseInductInfo",
+      "parse_line": 331,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Inductive Declaration:"
+    },
+    {
+      "category": "expr",
+      "emit_line": 179,
+      "key": "app",
+      "nested_in": null,
+      "parse_fn": "parseExprApp",
+      "parse_line": 142,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 168,
+      "key": "bvar",
+      "nested_in": null,
+      "parse_fn": "parseExprBVar",
+      "parse_line": 122,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 173,
+      "key": "const",
+      "nested_in": null,
+      "parse_fn": "parseExprConst",
+      "parse_line": 130,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 193,
+      "key": "forallE",
+      "nested_in": null,
+      "parse_fn": "parseExprForallE",
+      "parse_line": 173,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 185,
+      "key": "lam",
+      "nested_in": null,
+      "parse_fn": "parseExprLam",
+      "parse_line": 159,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 201,
+      "key": "letE",
+      "nested_in": null,
+      "parse_fn": "parseExprLetE",
+      "parse_line": 187,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 163,
+      "key": "mdata",
+      "nested_in": null,
+      "parse_fn": "parseExprMdata",
+      "parse_line": 223,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 169,
+      "key": "natVal",
+      "nested_in": null,
+      "parse_fn": "parseExprNatLit",
+      "parse_line": 213,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 210,
+      "key": "proj",
+      "nested_in": null,
+      "parse_fn": "parseExprProj",
+      "parse_line": 202,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 171,
+      "key": "sort",
+      "nested_in": null,
+      "parse_fn": "parseExprSort",
+      "parse_line": 126,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "expr",
+      "emit_line": 170,
+      "key": "strVal",
+      "nested_in": null,
+      "parse_fn": "parseExprStrLit",
+      "parse_line": 219,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Expressions"
+    },
+    {
+      "category": "level",
+      "emit_line": 118,
+      "key": "imax",
+      "nested_in": null,
+      "parse_fn": "parseLevelImax",
+      "parse_line": 113,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Levels"
+    },
+    {
+      "category": "level",
+      "emit_line": 117,
+      "key": "max",
+      "nested_in": null,
+      "parse_fn": "parseLevelMax",
+      "parse_line": 108,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Levels"
+    },
+    {
+      "category": "level",
+      "emit_line": 119,
+      "key": "param",
+      "nested_in": null,
+      "parse_fn": "parseLevelParam",
+      "parse_line": 118,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Levels"
+    },
+    {
+      "category": "level",
+      "emit_line": 116,
+      "key": "succ",
+      "nested_in": null,
+      "parse_fn": "parseLevelSucc",
+      "parse_line": 104,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Levels"
+    },
+    {
+      "category": "name",
+      "emit_line": 107,
+      "key": "num",
+      "nested_in": null,
+      "parse_fn": "parseNameNum",
+      "parse_line": 98,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Names"
+    },
+    {
+      "category": "name",
+      "emit_line": 100,
+      "key": "str",
+      "nested_in": null,
+      "parse_fn": "parseNameStr",
+      "parse_line": 92,
+      "round_trip_obligation": true,
+      "spec_documented": true,
+      "spec_section": "Names"
+    }
+  ],
+  "schema": "lean-export-manifest/1",
+  "source": "leanprover/lean4export",
+  "toolchain": "leanprover/lean4:v4.33.0-rc1"
+}

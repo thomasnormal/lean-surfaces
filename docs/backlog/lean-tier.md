@@ -1762,3 +1762,78 @@ than the defect:** a drift guard must baseline against the artifact it watches,
 which for a foreign corner is the pinned upstream base — **and that must be
 enforced by the instrument, not remembered by the lane.** A guard that fires on
 its owner's commits is one its owner learns to ignore.
+
+---
+
+## 2026-08-23-lean-tier-21 — THE 28th OBLIGATION: the byte-level round-trip rests on a hole in Lean core, and it is stamped OUT OF SCOPE
+
+### The measurement
+
+`emitLine` writes **`Json.compress`** — a `String`. The parser reads it with
+**`parseJsonObj (line : String)`**. So the round-trip actually traverses
+
+```
+value  →  Json  →  String  →  Json  →  value
+```
+
+and the middle hop needs `Json.parse (Json.compress j) = j`, a property of
+**Lean core's own JSON library**. Measured at our pin:
+
+> **`Lean/Data/Json/` contains ZERO theorems** — across all seven files
+> (`Basic`, `Elab`, `FromToJson`, `Parser`, `Printer`, `Stream`, and the
+> `FromToJson/` directory).
+
+There is no round-trip lemma, and nothing to consume.
+
+### The scoping ruling
+
+| layer | obligations | whose | status |
+| --- | ---: | --- | --- |
+| item kinds at the **Json** level — `parseX (dumpXJson v) = v` | **27** | **ours** | the corner's work |
+| the **String** hop — `Json.parse ∘ Json.compress = id` | **1** | **Lean core's** | **OUT OF SCOPE** |
+
+**27 remains the corner's denominator.** The 28th is named, not counted.
+
+**THE CONDITIONAL FORM, to be used wherever the property is quoted from here on**
+— so no reader infers more than the 27 buy:
+
+> **`parse (dump E) = E` at the Json level**, unconditionally once the 27 pairs
+> are proved; **and at the BYTE level only conditionally on
+> `Json.parse (Json.compress j) = j`**, which is unproved in Lean core and is not
+> this corner's obligation.
+
+Earlier quotations of the property (entries 17 and 19) predate this finding and
+should be read with the qualifier attached; the finding is recorded here rather
+than by rewriting them, since what those entries claimed was true of the arc as
+then understood.
+
+### It joins the tier's upstream-facts list
+
+Beside "our pinned kernel accepts four proofs of `False` that every independent
+checker rejects" and "lean4lean's model is further from the kernel than its
+checker is":
+
+> **`Lean/Data/Json` contains zero theorems.** Every Lean tool that serialises
+> through core's JSON — every exporter, every `.olean`-adjacent format, every
+> `ToJson`/`FromJson` derivation — rests on an unverified round-trip.
+
+**If Thomas ever wants the byte-level claim, that is a contribution-sized hole in
+core itself**, not a defect in lean4export. It is also the kind of hole that is
+easy to state and hard to close: `Json.compress` and `Json.parse` are a printer
+and a parser over a real grammar, and their round-trip is a genuine parsing
+theorem, not a transcription.
+
+### Order correction, ruled
+
+**Names before Levels** — dependency order beats stated order. `parseLevelParam`
+consumes a name index, so the two `Name` pairs (`str`, `num`) are the true base
+case and everything else consumes them. This is the `instL` precedent applied
+again: take the obligation the others depend on first.
+
+### Ledger
+
+* **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers.
+* **Export corner** — **0 of 27 pairs proved @ `af5aa64`**. Export pure core
+  GREEN (`a0aa783`); parse pure core **queued, never-acquired at last check**
+  (gate 0, no lock line — the third state, not a red); 28th obligation named and
+  scoped out.

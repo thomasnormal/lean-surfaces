@@ -372,14 +372,83 @@ def check_transcriptions():
     return ok
 
 
+# --- decimal demand (SoftFloat plan step 3) -------------------------------
+# Two directions, and they are asymmetric: PRINT is greenfield (core ships no
+# decimal printer; `Float.toString` is opaque) while PARSE already has a
+# width-parametric kernel-reducible primitive in core's `ofScientific`.
+DECIMAL_SITES = [
+    ("LeanModels/Es/Convert.lean", "print", "correctly-rounded decimal conversion",
+     "Number::toString outside the exact-integer fragment (ECMA-262 §6.1.6.1.20)"),
+    ("LeanModels/Es/Convert.lean", "parse", "outside the decimal-integer fragment",
+     "StringToNumber (ECMA-262 §7.1.4.1 StringNumericLiteral)"),
+]
+# test262 directories a decimal conversion could gate.  THIS IS AN UPPER BOUND
+# and is labelled as one: `built-ins/Number` also holds `isInteger`,
+# `MAX_SAFE_INTEGER` and friends, which need no conversion at all.  The corpus
+# is OUT OF TREE (pinned sha in docs/es262-census.json), so the exact figure is
+# not computable here -- and per §5.4 this mode is NOT wired into CI.
+DECIMAL_T262_DIRS = ["built-ins/Number", "built-ins/parseFloat"]
+
+
+def decimal_demand():
+    """Census the demand for plan step 3.  In-tree exact; suite bound only."""
+    ok = True
+    print("IN-TREE (exact) -- ES refusal sites naming a decimal float conversion:")
+    found = 0
+    for rel, direction, marker, what in DECIMAL_SITES:
+        fp = os.path.join(ROOT, rel)
+        if not os.path.exists(fp):
+            print(f"  FAIL  missing {rel}"); ok = False; continue
+        # NOTE: match the RAW source here, NOT `strip_lean`ed code.  A refusal
+        # MESSAGE lives inside a string literal by construction, and the call-site
+        # scanner blanks string literals on purpose.  Using the stripped text
+        # found ZERO sites and said so loudly rather than reporting 0 as a
+        # finding (§5.4: an empty census is an instrument fault).  To keep prose
+        # out, a hit must sit within 3 lines of a `refuseConstruct` -- the
+        # message and its call are split across lines in the real file.
+        raw = open(fp, encoding="utf-8").read().split("\n")
+        hit = [i + 1 for i, l in enumerate(raw)
+               if marker in l and any("refuseConstruct" in raw[j]
+                                      for j in range(max(0, i - 3), min(len(raw), i + 2)))]
+        if not hit:
+            print(f"  FAIL  {rel}: no {direction} refusal matching {marker!r} "
+                  f"-- either it was fixed (good) or the marker drifted (bad)")
+            ok = False
+        else:
+            found += len(hit)
+            print(f"  ok    {rel}:{hit[0]}  [{direction}]  {what}")
+    print(f"  => {found} refusal site(s), one per direction.")
+
+    cp = os.path.join(ROOT, "docs", "es262-census.json")
+    if not os.path.exists(cp):
+        print("  note  docs/es262-census.json absent -- no suite bound available")
+        return ok
+    t = json.load(open(cp))["test262"]
+    lvl = t.get("built_ins_slice", {}).get("by_second_level", {})
+    total = sum(lvl.values())
+    sub = {d: lvl.get(d, 0) for d in DECIMAL_T262_DIRS}
+    n = sum(sub.values())
+    print("\nOUT-OF-TREE (UPPER BOUND ONLY -- corpus not present, not CI-wired):")
+    for d, c in sorted(sub.items()):
+        print(f"  {c:6d}  {d}")
+    pct = (100.0 * n / total) if total else 0.0
+    print(f"  => at most {n} of {total} built-ins files ({pct:.1f}%).  UPPER BOUND: "
+          f"these directories also hold tests needing no conversion at all.")
+    return ok
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--compare", action="store_true")
     ap.add_argument("--toolchain")
     ap.add_argument("--self-test", action="store_true")
+    ap.add_argument("--decimal-demand", action="store_true",
+                    help="census the demand for plan step 3 (decimal conversion)")
     ap.add_argument("--check-transcriptions", action="store_true",
                     help="assert the probes' transcriptions still match the files they cite")
     a = ap.parse_args()
+    if a.decimal_demand:
+        sys.exit(0 if decimal_demand() else 1)
     if a.check_transcriptions:
         sys.exit(0 if check_transcriptions() else 1)
     if a.self_test:

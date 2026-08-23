@@ -607,3 +607,68 @@ gate was green while the file said the opposite of the truth**, because none of
 them was pointed at the claim that had rotted. That is the §5.4a lesson in its
 sharpest form: the failure was silent AND flattering, and it took an outside
 audit to see it.
+
+---
+
+## 2026-08-23-softfloat-12 — THE DECIMAL INCH'S CENSUS: 2 sites in tree, and the suite figure is a BOUND
+
+`harness/softfloat_consumer_census.py --decimal-demand`. Census-first, before
+any decimal code.
+
+### IN-TREE, EXACT — two refusal sites, one per direction
+
+| site | direction | spec | served by core? |
+| --- | --- | --- | --- |
+| `LeanModels/Es/Convert.lean:251` | **print** | ECMA-262 §6.1.6.1.20 `Number::toString` | **no** — `Float.toString` is `opaque`; core ships no printer |
+| `LeanModels/Es/Convert.lean:168` | **parse** | ECMA-262 §7.1.4.1 `StringNumericLiteral` | **partly** — `UnpackedFloat.ofScientific` is width-parametric and kernel-reducible |
+
+**Reproduced by two independent methods**, which is this repository's standard
+for adopting a number: the consumer-site census (call-site scan) and a refusal
+grep found the same two sites. `LeanModels/Es/Eval.lean:72` is a BigInt literal
+row and involves no float; `Spec.lean:290` is prose.
+
+**The asymmetry is the schedule.** Printing is greenfield; parsing already has a
+core primitive to state an `op_correct` about. **Parse is the cheaper half and
+should go first.**
+
+### OUT-OF-TREE — a BOUND, labelled as one, and NOT CI-wired
+
+`built-ins/Number` 340 + `built-ins/parseFloat` 54 = **at most 394 of 23 109
+built-ins files (1.7%)**. It is an **upper** bound and the mode says so in its
+own output: those directories also hold `Number.isInteger`,
+`MAX_SAFE_INTEGER` and friends, which need no conversion at all.
+
+**The exact figure is not computable here.** test262 is out of tree — the ES
+lane's census pins it at sha `3655e746` and the corpus is not on disk — and
+`docs/es262-census.json` carries only aggregate esid counts (`esid_rows` is an
+`int`, not a per-clause map), so it cannot be refined from the committed data
+either. Per §5.4, a mode whose corpus is out-of-tree is **not wired into CI**: a
+gate that is a permanent SKIP is a check pretending.
+
+**1.7% is deliberately a smaller claim than it could have been.** The C tier's
+analogous headline is "21% of format specs"; this lane has now twice published a
+consumer number that shrank under scrutiny (319 → 170 → 13), both times in the
+flattering direction, so the bound is stated as a bound.
+
+### THE INSTRUMENT FAILED LOUDLY FIRST, AND THAT WAS THE DESIGN WORKING
+
+The mode's first run reported **0 in-tree sites** — because it reused
+`strip_lean`, which blanks string literals on purpose for the call-site scan,
+and **a refusal MESSAGE lives inside a string literal by construction.** It
+printed `FAIL … either it was fixed (good) or the marker drifted (bad)` and
+exited non-zero rather than reporting `0` as a finding. That is §5.4's *"an
+empty census is an instrument fault, never a finding"* firing on its author.
+
+Fixed by matching the RAW source for this mode, with a proximity requirement —
+a hit must sit within three lines of a `refuseConstruct` — because the message
+and its call are split across lines in the real file, so same-line matching
+would have found nothing either.
+
+### WHAT THE INCH MUST COVER, from the census
+
+1. **Parse first** (`ofScientific_correct`): core's primitive already exists, so
+   this is an `op_correct` in the shape already built and it retires
+   `Convert.lean:168`.
+2. **Print second** (the Dragon4-style exact algorithm of
+   `2026-08-23-softfloat-10`): greenfield, fuel-shaped, and it retires
+   `Convert.lean:251` — the only site in the tree that no other lane can fix.

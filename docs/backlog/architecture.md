@@ -3478,3 +3478,128 @@ are one design: name a trigger a cheap command can answer, and keep the command
 cheap enough that nobody has to decide whether to run it.
 
 **Index:** MEAS-135 … MEAS-139.
+
+## 2026-08-23-architecture-47 — The shape set had a fourth member; and duplication is discovered by changing
+
+Five from QoL's `b2150ae` + `ccdc839` (both on master).
+
+**(1) §5.4a — THE ANNOTATE CHANNEL, and it is the sharpest member of the
+position family yet.** `runIndetRaw : … Halt …` names the **type** and **no
+constructor**, so every `sites.sh` channel — all greping `\.$CTOR` — was
+**structurally blind** to it. A lane counted constructors and destructures,
+called the change priced, and **red a tenure on the signature that survived.**
+Live, full scan: **DESTRUCTURE 13, CONSTRUCT 18, ANNOTATE 20 — and all 20 name
+no constructor.**
+
+> **The type has MORE annotation sites than destructure sites, and the old
+> census could see none of them.**
+
+**The failure is one of KIND, not of threshold**, which is what I made the
+paragraph turn on: no cutoff on the old channels could have found these,
+because the thing counted never appears in them. The family's earlier members
+were **wrong counts**; this is a **missing column**, and a missing column is
+invisible to every check that reads the table.
+
+> **A channel that greps the CONSTRUCTOR cannot see the TYPE. Enumerate the
+> KINDS of position — destructure, construct, ANNOTATE — before enumerating the
+> positions.**
+
+**Rider, learned mid-landing: a leading dot and a qualifier are DIFFERENT
+dots.** Excluding every preceding `.` rejects `LeanModels.C.Halt`; allowing
+every dot accepts `.Halt`, an anonymous constructor. **What precedes the dot
+decides** — and a discrimination that fine is the *ordinary* case in a
+positional matcher, which is why *"just grep the name"* produces numbers wrong
+in both directions at once.
+
+**And one cost note against the usual expectation:** the stripper is the
+expensive part and does not depend on the pattern, so the second regex **rides
+the first traversal** — 3 626 → 3 732 files in the same 45 s budget. **The
+channel is free.** Worth checking before a channel is refused on performance
+grounds.
+
+**(2) §7.2 — THE SECOND COPY, found by CHANGING the thing it guards.** Putting
+`refusal_census` in the floor surfaced that `gate_floor` **carried its own
+second copy of the list** — *the classified and unclassified paths could have
+run different gates, silently.*
+
+> **Duplication is discovered by CHANGING, not by reading.** A second copy is
+> invisible while the value is stable; it announces itself the first time the
+> value moves, and only to whoever moves it.
+
+**Landed with the procedure**, so it is usable rather than rueful: when you
+change a constant more than one path consumes, **grep for the OLD VALUE before
+you grep for the name** — the stale copy still carries it, and the name may
+differ. It is also why MEAS-28's instrument reports **contracts** as well as
+names: a second copy of a *list* rarely shares a spelling with the first.
+
+**And the second defect from the same wiring is the more instructive one,
+because it would have WORKED**: `gate_runner_targets` would have succeeded **by
+accident** inside the floor (which also names `diff_test`, supplying the runner)
+and failed under `--gates-only`. **A dependency satisfied by a NEIGHBOUR is not
+a dependency met — it is a dependency hidden, and it surfaces as someone else's
+red.**
+
+**AND THE FLOOR CHANGE REACHED THIS DOCUMENT, correctly, in the same commit.**
+§7.1a **enumerated** the floor's members, so that sentence was wrong the moment
+the floor changed; the QoL lane landed the doc edit with the code — doc-first
+working from the other side. The law I took from having been on the receiving
+end of it:
+
+> **A document that ENUMERATES a set owns that set's maintenance. Enumerate only
+> what you will maintain, or point at the source of truth.**
+
+Stated without absolutism, because this charter does both deliberately: an
+enumeration is **readable** where a pointer is **durable**. The honest framing
+is that **an enumeration is a copy — and a copy in a charter is a copy the code
+cannot see.**
+
+**(3) §7.2 — THE `--classify-default` REJECTION, landed as a ruling.**
+
+> **Classification NARROWS, so default-on makes NARROWING the default — every
+> lane's coverage would depend on the classifier being right without anyone
+> asking.**
+
+The same reading the `--gates` ruling rejected, arriving through a convenience
+instead of a flag: **a default that makes a run cheaper is a default that makes
+a claim smaller**, and nothing in the log records a narrowing nobody requested.
+The advisory resolves it — one enqueue line saying what the diff *would*
+classify as, behaviour unchanged — and it runs **in a subshell** because
+`classify_list` sets `BUILD_TARGETS`:
+
+> **An advisory that leaked would narrow the build it only describes.**
+
+**A description that can change its subject is not a description**, and the
+subshell is what makes *"advisory"* true rather than intended.
+
+**(4) §5.4b — A THIRD WAY A CHECK CAN BE HOLLOW.**
+
+> **A row asserting that something did NOT change passes whenever the code never
+> ran. It needs a sibling asserting the code DID.**
+
+Caught live: the sentinel passed because `class_hint` was defined **after** the
+self-test, so the call was command-not-found — a variable never touched is
+trivially unchanged, and **only the output-expecting siblings failed (rc 127)**,
+which is what exposed it. This is §5.3's vacuity ruling **inside a self-test**:
+a negative assertion is the one row for which **absence of content is
+indistinguishable from success.** So: **pair every "did not change" with a "did
+happen" — the positive row proves the negative row was watching.**
+
+**(5) §7.2 — A BUILD LOG MUST SAY WHOSE IT IS.** 68 logs grepped for a lane tag
+matched **nothing**; every log was on disk and **not one could be attributed.**
+**An artifact with no identity is not evidence — it is storage.** One
+identifying line per attempt, stamped first because the redirect truncates.
+
+**And its inertness is ASSERTED, which is the transferable half:** a header
+riding inside the file whose failures are **counted** changes the input of every
+downstream reader, so **the same red log with and without it yields
+byte-identical error-line, failed-module and axiom-ledger verdicts**, and it
+carries no hostname.
+
+> **A stamp added to a measured artifact owes a DIFFERENTIAL: the same input,
+> with and without it, must produce the same verdicts.**
+
+*"Obviously inert"* holds right up until a counter matches a substring or a
+reader keys on the first line — and **one differential run retires the
+argument.**
+
+**Index:** MEAS-140 … MEAS-144, OPS-72 … OPS-75.

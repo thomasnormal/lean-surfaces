@@ -4616,6 +4616,50 @@ That is the law's own
 prescription arriving in its own calibration: enumerate the positions, and
 expect more than one pattern to be needed.
 
+**AND THE SHAPE SET HAD A FOURTH MEMBER, measured — ANNOTATION** (QoL,
+`b2150ae`, on master). `runIndetRaw : … Halt …` is a **type annotation**: it
+names the **type** and **no constructor**, so every channel in `sites.sh` — all
+of which grep `\.$CTOR` — was **structurally blind to it.** The C successor
+counted value constructors and destructures, called the change priced, and
+**RED A TENURE on the signature that survived.**
+
+**Live on this tree, full scan, no PARTIAL: DESTRUCTURE 13, CONSTRUCT 18,
+ANNOTATE 20 — and all 20 name NO constructor.**
+
+> **The type has MORE ANNOTATION SITES THAN DESTRUCTURE SITES, and the old
+> census could see none of them.**
+
+**The failure is one of KIND, not of threshold**, which is what makes it the
+sharpest instance in this family: *no cutoff on the old channels could have
+found these*, because the thing being counted never appears in them. The
+ladder's earlier members were **wrong counts**; this one was a **missing
+column**, and a missing column is invisible to every check that reads the
+table.
+
+> **A CHANNEL THAT GREPS THE CONSTRUCTOR CANNOT SEE THE TYPE. Enumerate the
+> KINDS of position — destructure, construct, ANNOTATE — before enumerating
+> the positions.**
+
+**RIDER, and it had to be learned mid-landing: A LEADING DOT AND A QUALIFIER
+ARE DIFFERENT DOTS.** Excluding every preceding `.` rejected
+`LeanModels.C.Halt`, the qualified spelling the tool already treats as the
+type; allowing every dot would accept `.Halt`, an **anonymous constructor**.
+
+> **What PRECEDES the dot decides.**
+
+A discrimination this fine is the ordinary case in a positional matcher, not
+the exception — and it is why *"just grep for the name"* keeps producing
+numbers that are wrong in both directions at once (§5.4a's under/over pair).
+
+**And one note on cost, because it cuts against the usual expectation**: the
+first cut called the comment stripper **a second time per file** and went
+PARTIAL at file 5040 of 9825. The stripper is the expensive part and **does not
+depend on the pattern**, so the second regex now **rides the first traversal** —
+same 45 s budget, baseline 3 626 files, two channels **3 732**. **The channel is
+free.** A new *kind* of position usually costs a pass over the corpus; it costs
+nothing when the expensive work is shared, which is worth checking before a
+channel is refused on performance grounds.
+
 **AND THE MOTIVATED-ERROR RULE, from a census that was wrong TWICE before
 it was right — and both errors flattered.** SoftFloat's consumer count ran
 **319 → 170 → 13 candidates → 0 qualified crossings.** The two wrong
@@ -5213,6 +5257,30 @@ that has never fired is a design, not a control* (§7.1a); and now —
 
 Which is why the lane's first act on entering WAITING was to **run** the guards
 its waiting depends on, and why running them is what found the defect.
+
+**AND A THIRD WAY A CHECK CAN BE HOLLOW — THE NEGATIVE ROW THAT PASSES BECAUSE
+NOTHING RAN** (QoL, `ccdc839`; caught live, in the lane's own self-test).
+
+> **A ROW ASSERTING THAT SOMETHING DID **NOT** CHANGE PASSES WHENEVER THE CODE
+> NEVER RAN. It needs a SIBLING asserting the code DID.**
+
+Measured: the sentinel row passed because `class_hint` was defined **after** the
+self-test, so the call was **command-not-found** — and a variable that was never
+touched is, trivially, unchanged. **Only its output-expecting siblings failed
+(rc 127), and that is what exposed it.**
+
+**The shape is §5.3's vacuity ruling inside a self-test**: *a check must not
+report sameness where there was no content* — and a negative assertion is the
+one row for which **absence of content is indistinguishable from success.** So
+negative rows are never landed alone:
+
+> **Pair every "did not change" with a "did happen". The positive row is what
+> proves the negative row was watching.**
+
+Note the ordering hazard that produced it, which is generic to shell: **a helper
+defined below its caller does not exist yet**, and the failure arrives as a
+missing command rather than as a wrong answer — loud in the siblings, silent in
+the row that mattered.
 
 **AND A VOCABULARY RULE THIS SECTION NEEDS, because it counts things: A
 PROCEDURE IS NOT A GATE.** The tier's arena check is **recomputed by hand** from
@@ -6114,6 +6182,103 @@ reader believes, because it arrives first and looks like a summary.
 The `DEFAULT_FLOOR` extraction is the whole of the fix: **a literal inside a
 phase cannot be announced without being copied**, and every copy of a value is a
 place for it to drift.
+
+**AND THE NEXT INCH PROVED THAT SENTENCE BY TRIPPING OVER IT** (QoL, `ccdc839`).
+Putting `refusal_census` in the floor surfaced that **`gate_floor` carried its
+OWN SECOND COPY of the list** — so **the classified and unclassified paths could
+have run different gates, silently.** Both now read `DEFAULT_FLOOR`.
+
+> **DUPLICATION IS DISCOVERED BY CHANGING, NOT BY READING.** A second copy is
+> invisible while the value is stable; it announces itself the first time the
+> value moves, and only to whoever moves it.
+
+**Which is a working procedure, not just an observation**: when you change a
+constant that more than one path consumes, **grep for the OLD value before you
+grep for the name** — the stale copy still carries it, and the name may differ.
+It is also why MEAS-28's instrument reports **contracts** as well as names
+(§2.4): a second copy of a *list* rarely shares a spelling with the first.
+
+**AND A SECOND DEFECT FROM THE SAME WIRING, which is the more instructive one
+because it would have WORKED.** `gate_runner_targets` did not know the census
+invokes `leanmodels-run` through its own `--runner` default: **inside the floor
+it would have worked BY ACCIDENT** (the floor also names `diff_test`, which
+supplies the runner) and **failed under `--gates-only`**, where a lane reaches
+`--no-build` with nothing built and reads a missing runner as a **census
+failure**.
+
+> **A dependency satisfied by a NEIGHBOUR is not a dependency met — it is a
+> dependency HIDDEN, and it surfaces as someone else's red.**
+
+**AND THE FLOOR CHANGE REACHED THIS DOCUMENT, correctly and in the same
+commit.** §7.1a **enumerated the floor's members**, so that sentence was **wrong
+the moment the floor changed** — the QoL lane landed the doc edit with the code,
+which is the doc-first norm working from the other side.
+
+> **A DOCUMENT THAT ENUMERATES A SET OWNS THAT SET'S MAINTENANCE. Enumerate only
+> what you will maintain, or point at the source of truth and let the reader
+> follow it.**
+
+This document does both in different places, deliberately — an enumeration is
+**readable** where a pointer is **durable** — so the rule is not *never
+enumerate*, it is: **an enumeration is a copy (see the law above), and a copy in
+a charter is a copy the code cannot see.** Enumerate when the set is small and
+the sentence is the point; point when the set is a moving part.
+
+**AND THE `--classify-default` REJECTION, landed as a ruling because the
+argument generalizes** (`ccdc839`). `--classify` stays **opt-in**, so a plain
+`--lane X` on a docs-only diff queues a **full** tenure.
+
+> **CLASSIFICATION NARROWS, so default-on makes NARROWING the default — every
+> lane's coverage would depend on the classifier being right WITHOUT ANYONE
+> ASKING.**
+
+That is the same reading the `--gates` ruling rejected, arriving through a
+convenience instead of through a flag: **a default that makes a run cheaper is a
+default that makes a claim smaller**, and the lane never sees the trade because
+nothing in the log records a narrowing that was never requested. (It also turns
+working runs into refusals — no merge target, unstaged Lean, and `--foreign`
+contradicting `--classify` by design.)
+
+**The advisory is the resolution, and its implementation carries the second
+half of the ruling**: the tenure prints one line at enqueue saying what the diff
+**would** classify as and that a full tenure was queued anyway — **behaviour
+unchanged** — and it runs **in a subshell**, because `classify_list` sets
+`BUILD_TARGETS`.
+
+> **An advisory that LEAKED would narrow the build it only describes.**
+
+**A description that can change its subject is not a description.** The subshell
+is what makes *"advisory"* true rather than intended, and it belongs in the same
+family as the announcement rule above: **the safe way to talk about a phase is
+to call its function; the safe way to talk about a phase WITHOUT running it is
+to make leakage impossible.**
+
+
+**AND A BUILD LOG MUST SAY WHOSE IT IS** (QoL, `b2150ae`). `triad-build.*` held
+**only lake output** — no ticket, no lane, no branch, no tree — so a lane
+grepped **68 of them** for its own tag and **matched NOTHING**. **Every log was
+still on disk; not one could be attributed.**
+
+> **An artifact with no identity is not evidence — it is storage.**
+
+Each attempt now stamps **one identifying line first**, per attempt because the
+redirect truncates (`header >`, `lake >>`), keeping one-attempt-per-log exactly
+as before.
+
+**AND ITS INERTNESS IS ASSERTED, NOT REASONED ABOUT — which is the part worth
+copying.** A header riding **inside the file whose failures are COUNTED** is a
+change to the input of every downstream reader, so the claim *"it changes
+nothing"* is checked: **the same red log with and without it yields
+byte-identical error-line, failed-module and axiom-ledger verdicts**, and it
+**carries no hostname**.
+
+> **A stamp added to a measured artifact owes a DIFFERENTIAL: the same input,
+> with and without it, must produce the same verdicts.**
+
+**The temptation is that inertness is obvious** — a comment line, a header, a
+banner — and it is obvious right up until a counter matches on a substring or a
+reader keys on the first line. *"Obviously inert"* is exactly the reasoning
+§5.4a keeps convicting; **one differential run retires it.**
 
 **AND THE SCRIPT PRINTS ITS PROTOCOL LEVEL.** Audit #2 found **two drifted
 copies of `tools/triad.sh` in `/tmp`**. Copying before editing is legitimate —

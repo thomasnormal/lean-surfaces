@@ -335,8 +335,15 @@ def keys_empty():
     return tuple(d)
 
 
-def keys_for_is_still_loud(a):
-    # the LIVE cursor is a separate inch (3a) and stays refused
+def keys_for_live_cursor(a):
+    # THE TRUNK/REBUILD SPLIT ROW. Written in rung 3b as
+    # `keys_for_is_still_loud`, when the live cursor was a separate inch; inch
+    # 3a landed it on the MONADIC definition only, so the name asserted
+    # something that stopped being true. It now names the CONSTRUCT instead of
+    # a verdict, which is the durable choice: the trunk refuses this by the
+    # no-backwards-compat ruling and the rebuild runs it, and
+    # harness/monadic_gate.py's OPENED table is where CPython adjudicates
+    # between them.
     d = {1: a}
     t = 0
     for k in d:

@@ -581,7 +581,7 @@ WHITELIST_CLASS = {
     "dict_lab::ret_tuple_with_dict": "boundary.heap-value",
     "dict_lab::int_is": "op.Is-immediates",
     "dict_lab::iter_dict": "iter.dict",
-    "dict_lab::keys_for_is_still_loud": "iter.dict",
+    "dict_lab::keys_for_live_cursor": "iter.dict",
     "sf_hist::push": "boundary.list-mutation",
     "sf_hist::rotate_scores": "boundary.list-mutation",
     "cls_lab::attr_on_int": "attr.on-scalar",
@@ -688,6 +688,21 @@ WHITELIST_CLASS = {
     "del_lab::double_del": "del.name-set-census",
     "del_lab::del_sub": "del.non-name-target",
     "del_lab::del_attr": "del.non-name-target",
+}
+
+# WHITELISTED ROWS THAT RUN ON THE REBUILD — the whitelist half's `mono`
+# column. A row here is whitelisted (the TRUNK refuses it) and is EXPECTED to
+# answer under `--monadic`, because a ruled capability opened there.
+#
+# This table records INTENT and deliberately does not adjudicate: the census
+# runs one interpreter and never sees CPython's answer for these rows, so
+# proving the rebuild is RIGHT is `harness/monadic_gate.py`'s job (its OPENED
+# bucket counts a row only when the rebuild matches the oracle). Census
+# records, gate adjudicates — and the split is why this table cannot become a
+# silencer.
+MONO_OPENED = {
+    "dict_lab::iter_dict",
+    "dict_lab::keys_for_live_cursor",
 }
 
 SCRIPT_CLASS = {
@@ -866,7 +881,9 @@ def whitelist_census(runner_cmd):
     not_refused = []
     for key, model in zip(keys, models):
         if model.get("status") != "unsupported":
-            not_refused.append((key, model.get("status")))
+            # A ruled opening under `--monadic` is not drift (MONO_OPENED).
+            if not (EXPECT_KEY == "expect_mono" and key in MONO_OPENED):
+                not_refused.append((key, model.get("status")))
         rows.append((WHITELIST_CLASS[key], key, model.get("msg", "")))
     print_buckets("WHITELIST CENSUS — harness/cases.json "
                   "`expect: unsupported` rows", bucket(rows), len(rows))

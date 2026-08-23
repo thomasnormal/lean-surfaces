@@ -1972,7 +1972,8 @@ Acceptance: `itoa` on a middle slice, all four rows above, oracle columns
 `printf`-ed from `gc` as always.
 
 `fallthrough` deferred (4.0%); maps and interfaces at +0 and strictly
-downstream (§G16); MM-oracle untouched.
+downstream (§G16 — **the "at any price" half of that is retracted in
+§G19**); MM-oracle untouched.
 
 ---
 
@@ -2051,3 +2052,237 @@ its own question. Fixed arrays `[N]T` still excluded (14.6%, §G14).
 
 `fallthrough` deferred (4.0%); maps and interfaces at +0 and strictly
 downstream (§G16); MM-oracle untouched.
+
+---
+
+## G19 — RANGE IS NOT A SECOND LOOP; and the census retracts the `+0` law (2026-08-23)
+
+Two halves. The rung is small and closes the slice family. The census is
+not small: re-running the reach measurement to check §G16's promise found
+that the promise could not be re-run at all, and that one of this lane's
+published laws draws an invalid inference.
+
+### THE RUNG: `range` desugars to `for`
+
+`Stmt.rangeS` does not walk. It builds a three-clause `Stmt.forS` and
+calls `execStmt` on it:
+
+```
+for k := range s   ⟿   for k := 0; k < len(s); k++
+for _, v := range s ⟿  … with `v := s[k]` prepended to the body
+```
+
+The range expression is evaluated **once** (the spec's wording) and the
+resulting header is captured as a literal, which is what makes the
+desugaring faithful rather than merely convenient.
+
+Three things come free, and each is a thing not to get wrong twice:
+
+* every iteration runs the `execLoop` the §G15 induction is **proved**
+  about — there is no second loop to keep in step;
+* the go1.22 per-iteration scoping applies to the range variable without
+  a second version branch, because the range variable **is** the init
+  statement's variable;
+* the fuel story is `forS`'s.
+
+A guard asserts the reuse directly: the range loop and the hand-written
+`for` it desugars to must reach the same value **and** the same world. If
+`rangeS` ever forks from `execLoop`, that row breaks.
+
+### THE BUG THE DESUGARING ALMOST SHIPPED
+
+The first implementation used the RANGE VARIABLE as the loop counter —
+`for i := range s` ⟿ `for i := 0; i < len(s); i++` literally. That is
+wrong, and `gc` says so. Body `n++; i = 100` over a 5-element slice:
+
+| | iterations |
+| --- | ---: |
+| `for i := range s` | **5** |
+| `for i := 0; i < len(s); i++` | **1** |
+
+`range` runs the full length however the body maltreats the range
+variable; a hand-written `for` does not. The fix is that **the counter
+gets a name no Go program can write** (`«range»`) and the range variables
+are DECLARED FROM it at the top of each iteration, so an assignment to
+them is discarded by the next iteration's declaration — which is exactly
+Go's behaviour.
+
+That change also dissolves the version question instead of answering it.
+go1.21 shares one `i` across iterations and go1.22 makes it
+per-iteration, but the difference is observable only by capturing `i` in
+a closure, and `FuncLit` is not in this walker's vocabulary — so
+declaring per iteration is correct for both at the constructs this rung
+admits, and `rangeS` needs no version branch of its own.
+
+The guard for it is a **constructed** probe rather than a vendored
+function, and is labelled so: none of the 41 vendored candidates the
+census surfaced assigns to its range variable. A differential fidelity
+question with no corpus witness still deserves a row.
+
+### THE ACCEPTANCE: (function, argument), again
+
+`Examples/go/rangeslice/guards.lean`. Two vendored functions, because the
+desugaring has two arms and an arm without an acceptance case is an
+untested arm:
+
+| form | vendored | why it discriminates |
+| --- | --- | --- |
+| `for i := range dst` | `strconv.digitZero` | writes through the header |
+| `for _, c := range b` | `net.allFF` | reads through the header |
+
+Both are ordinary functions. The discrimination is in the **argument**:
+ranging over `s` touches backing cells `off … off+len-1`, and on a slice
+whose header is the identity both halves of that sentence are invisible.
+
+The decisive pair is `allFF` at two arguments over **one** backing array
+holding a single `0x00` at cell 6:
+
+| call | `gc` | why |
+| --- | --- | --- |
+| `allFF(b[2:6])` | `true` | the `0x00` is OUTSIDE the window |
+| `allFF(b[4:8])` | `false` | the same `0x00` is INSIDE it |
+
+Same code, same array, same length — only `off` differs, and the answer
+flips. **No model that drops the header can produce both**, which is the
+property `Reverse8` had in §G15 and `out[:cap(out)]` had in §G18.
+
+11 guards. Every expected value `printf`-ed from the compiled functions
+(`go1.25.6 darwin/arm64`), never typed by hand (§G13's law). Non-vacuity
+**run, not asserted**: five flips — the written array, both halves of the
+`allFF` pair, the reuse row, and the empty-window row — each produce 3
+errors. The empty window (`len = 0`) is the boundary the desugared
+condition must get right before any iteration, and it comes back with the
+array untouched.
+
+### THE CENSUS: §G16's reach table could not be re-run
+
+§G16 promised the slice family takes reach 41.8% → 74.8%. Checking it
+turned up the first problem before any number: **the reach measurement
+left no instrument behind.** The figures were computed ad hoc and the
+vocabulary they were computed against was recorded nowhere, so they could
+not be re-derived from the repository.
+
+So the measurement is now an instrument — `construct_census.go --reach`
+(`go-reach-0.1`) — and it does two things a kind-set TSV cannot:
+
+1. **It splits `ArrayType`.** go/ast spells `[]T` and `[N]T` with the same
+   node, distinguished only by `Len == nil`. This tier models slices and
+   not fixed arrays, so a census that cannot tell them apart **cannot
+   state this tier's reach at all** — and §G16's headline `ArrayType`
+   figure (+528) is exactly that conflation.
+2. **It keeps the vocabulary as data**, transcribed from `Stmt.lean`, so a
+   rung that widens the walker widens the list in the same commit.
+
+Measured over 3,803 non-test stdlib files:
+
+| vocabulary | files | delta |
+| --- | ---: | ---: |
+| walker baseline | 512 | — |
+| `+ SliceExpr` alone | 514 | **+2** |
+| `+ RangeStmt` alone | 512 | **+0** |
+| `+ ArrayType/slice` alone | 591 | +79 |
+| **+ THE FAMILY** | **604** | **+92** |
+| family minus `RangeStmt` | 595 | (range is worth **+9** inside it) |
+| `+ ArrayType/fixed` too | 680 | +76 |
+
+The conjunctive law reproduces (parts sum to 81; the whole is 92). The
+absolute numbers do **not** reproduce §G16's, and the gap is largely
+`SelectorExpr`: widening the vocabulary to treat selectors as steppable
+moves the baseline from 512 to 1,114, near §G16's 1,289. That is a
+measurement counting as steppable exactly what §G8 ruled is `go/types`
+work and this walker refuses. **§G16's 41.8% → 74.8% is withdrawn**; the
+reproducible figure for the family as landed is 512 → 604 files, and it is
+re-runnable by anyone.
+
+### THE LAW THIS RETRACTS: `+0` does not mean "downstream"
+
+§G16 measured `MapType` and interfaces at +0 and concluded they "cannot be
+a next rung **at any price**; they are strictly downstream of slices."
+That inference is invalid, and the counterexample is in this very rung:
+
+| construct | alone | inside the family |
+| --- | ---: | ---: |
+| `RangeStmt` | **+0** | **+9** |
+| `MapType` | +8 | +14 |
+| interfaces | +4 | +7 |
+
+`RangeStmt` measured +0 alone. By the +0 law it was retirable as strictly
+downstream — and it is a load-bearing member of the family that just
+shipped. **A construct's delta is a function of the current vocabulary,
+not a property of the construct.** A +0 against vocabulary `V` says
+blocked-with-something-else *at* `V`; it ranks nothing at any future `V′`,
+and every one of these deltas grew when `V` widened. The rule survives
+only in its weak form — *+0 means not a rung ON ITS OWN, today* — and the
+"at any price" clause is withdrawn. Maps and interfaces are not
+disqualified; they are merely still small.
+
+This is the second time in three rungs that the corpus corrected this
+lane's own published entry (§G13 was the first), and the first time it
+corrected a **law** rather than a fact.
+
+### NEXT, by the reproducible measure
+
+**Fixed-size arrays `[N]T`.** At +76 files on top of the family they are
+the largest single remaining blocker — larger than switch (+31), maps
+(+14), interfaces (+7) and `FuncLit` (+2) **combined**. §G14 ranked them a
+14.6%-of-`ArrayType` sliver and §G16 excluded them; the split-aware census
+says they are the rung. That they were deferred by the vocabulary law
+remains correct — `itoa` and `digitZero` do not execute them — and it is
+the census, not the law, that now calls them up.
+
+`fallthrough` still deferred (4.0%). MM-oracle untouched — Thomas's.
+
+### A TOOL DEFECT THIS RUNG HIT, and it is every lane's
+
+`tools/triad.sh --classify --gates` — `--gates` written LAST, with no gate
+list after it — **spins forever, silently, burning a core**. Two runs of
+this rung were lost to it (10 and 21 minutes) before it was diagnosed.
+
+The cause is three lines of argument parsing:
+
+```
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --gates)      GATES="${2:-}"; shift 2 ;;
+```
+
+`${2:-}` tolerates the missing value, but `shift 2` with **one**
+positional left fails, shifts NOTHING, and returns non-zero — and with no
+`set -e` on that path the `while` re-enters on the same `--gates` forever.
+`sample(1)` confirms it: `execute_while_or_until` → `execute_case_command`,
+no children, no output, `RN`.
+
+The failure is nasty in a specific way: it produces **zero bytes**, so it
+is indistinguishable from a long queue wait, and the lock is never taken,
+so the queue-depth diagnostics say nothing is wrong. Every value-taking
+flag has the same shape (`--lane`, `--dir`, `--build-target`, `--against`,
+`--rss-limit`, …); `--gates` is merely the one a lane is most likely to
+write last out of habit. Suggested fix, once per flag:
+
+```
+    --gates)  [ $# -ge 2 ] || die "--gates needs a gate list"; GATES="$2"; shift 2 ;;
+```
+
+Routed to the QoL lane. Two notes for other lanes meanwhile: write
+value-taking flags with their value, never last-and-bare; and a triad that
+has printed **nothing** after a minute is not queuing, it is spinning —
+`enqueued …` is the first line of a healthy run.
+
+The near-miss worth naming: `--classify` alone completes and prints
+`gates green`, but on the **default** gate set (`docs_check`, `diff_test`)
+— it does not run `script_corpus`, which this tier's landings do. A run
+that lost its `--gates` argument would therefore still go green, with less
+coverage than the lane believes it has. The tool warns (`!! DEFAULT
+GATES`), and that warning is the thing to read, not skim.
+
+### VERDICT
+
+`tools/triad.sh --lane go --classify --gates 'python3 tools/docs_check.py;
+python3 harness/diff_test.py; python3 harness/script_corpus.py'` —
+**green**. Build exit **0**. `docs_check` **91/91 marked blocks**.
+`diff_test` **1,427 cases, 0 failed** (1,311 matched, 116
+whitelisted-unsupported). `script_corpus` **65 scripts, 0 failed**. Held
+the machine **66 s**.
+
+`census.sh --compare` re-verified as a gate after this rung modified the
+instrument: **exit 0** identical, **exit 5** on drift.

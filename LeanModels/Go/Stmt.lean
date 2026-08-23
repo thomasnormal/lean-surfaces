@@ -9,18 +9,28 @@ the scope has GROWN past the rung it started at. An audit
 (`docs/quality-audit-2026-08-23.md`) caught this header still quoting
 rung 1's figures after three inches had widened it; the current state:
 
-| inch | added | reach |
-| --- | --- | --- |
-| 1 (§G2) | rung 1's 45 `go/ast` kinds | 3,084 of 5,419 stdlib files (56.9%) |
-| 2 (§G5) | struct declarations, the go1.22 loop-var branch, bare-`for` fuel | — |
-| 3 (§G6) | **calls**, compound assignment, shifts | calls appear in 73.3% of those files |
-| 4 (§G7) | — (census + the exemplar's spec half) | — |
+| inch | added |
+| --- | --- |
+| 1 (§G2) | rung 1's 45 `go/ast` kinds |
+| 2 (§G5) | struct declarations, the go1.22 loop-var branch, bare-`for` fuel |
+| 3 (§G6) | **calls**, compound assignment, shifts |
+| 4 (§G7) | — (census + the exemplar's spec half) |
+| 5 (§G15) | string indexing and conversions; strings became BYTES |
+| 6 (§G18) | **slices**: `a[i:j]`, `len`/`cap`, indexed assignment, the header value model |
+| 7 (§G19) | `range` over a slice — desugared to `forS`, not a second loop |
 
-The reach figure is a property of rung 1's INGESTER vocabulary and has
-not moved; what moved is how much of that vocabulary the WALKER steps.
-`docs/backlog/go.md` §G6 measures the difference and is the number to
-quote for the walker: 633 files were entirely within it before calls
-landed. Anything outside is refused by name rather than guessed at.
+**Do not quote a reach figure here.** Two earlier versions of this header
+carried one and both went stale, and §G19 found the second was not even
+reproducible: it was computed against an unrecorded vocabulary that
+counted `SelectorExpr` as steppable, which this walker refuses (§G8).
+Reach is now a RUN, not a docstring —
+
+    harness/go/census.sh --reach $(go env GOROOT)/src
+
+— whose vocabulary list is transcribed from the `Expr`/`Stmt`
+constructors below and must be widened in the same commit that widens
+them. Anything outside that vocabulary is refused by name rather than
+guessed at.
 
 ## Why `return`/`break`/`continue` are in α and only `panic` is in ρ
 
@@ -183,6 +193,17 @@ inductive Stmt where
   fuel stops being a formality. -/
   | forS (init : Option Stmt) (cond : Option Expr) (post : Option Stmt)
          (body : List Stmt)
+  /-- `RangeStmt` over a SLICE — `for k, v := range s`.
+
+  **Desugared to `forS`, not forked.** `docs/backlog/go.md` §G17 sized
+  this rung with the note that `range` should reuse the loop machinery the
+  `bitLen` induction is proved about, and desugaring is the strongest form
+  of that: this arm builds a three-clause `for` and calls `execStmt` on
+  it, so there is no second loop implementation to keep in step and no
+  second version-branch to get wrong — `execLoop`'s go1.22 freshening
+  applies to the range variable for free, because it IS the init
+  statement's variable. -/
+  | rangeS (key : Option String) (val : Option String) (x : Expr) (body : List Stmt)
   /-- Anything in the census that inch 1 does not step. Carries the
   `go/ast` kind name so the refusal can name it — the envelope's
   `Unsupported` leaf, in the syntax rather than beside it. -/
@@ -666,6 +687,50 @@ def execStmt (prog : FuncTable) : Nat → Stmt → GoM Flow
       let r ← execLoop prog f cond post body loopVars
       modify (fun w => { w with locals := saved })
       pure r
+  | f + 1, .rangeS key val x body => do
+      -- "For statements with range clause": the range expression is
+      -- evaluated ONCE. Capturing the header in a literal is that.
+      match ← evalExpr prog f x with
+      | .sliceV b off l c => do
+          -- THE COUNTER IS HIDDEN, and that is not a detail. Desugaring
+          -- to `for i := 0; i < len(s); i++` with the RANGE VARIABLE as
+          -- the counter is wrong, and `gc` says so: a body that assigns
+          -- to `i` ends that loop early, while `range` iterates the full
+          -- length regardless. Measured (go1.25.6 darwin/arm64), body
+          -- `n++; i = 100` over a 5-element slice:
+          --
+          --     for i := range s          -> 5 iterations
+          --     for i := 0; i < len(s); i++ -> 1 iteration
+          --
+          -- So the counter gets a name no Go program can write, and the
+          -- range variables are DECLARED FROM it at the top of each
+          -- iteration. Assignments to them are then discarded by the next
+          -- iteration's declaration, which is exactly Go's behaviour.
+          --
+          -- This also removes the version question rather than answering
+          -- it: go1.21 shares one `i` across iterations and go1.22 makes
+          -- it per-iteration, but the difference is observable only by
+          -- capturing `i` in a closure, and `FuncLit` is not in this
+          -- walker's vocabulary. Declaring per iteration is correct for
+          -- both at the constructs this rung admits.
+          let idx := "«range»"
+          let hdr : GoVal := .sliceV b off l c
+          let bindKey : List Stmt := match key with
+            | none => []
+            | some k => [Stmt.declare k (.ident idx)]
+          let bindVal : List Stmt := match val with
+            | none => []
+            | some v => [Stmt.declare v (.index (.lit hdr) (.ident idx))]
+          let body' := bindKey ++ bindVal ++ body
+          execStmt prog f
+            (.forS (some (.declare idx (.lit (GoVal.mkInt IntKind.int64 0))))
+                   (some (.binary .lt (.ident idx)
+                          (.lit (GoVal.mkInt IntKind.int64 (l : Int)))))
+                   (some (.incDec idx true))
+                   body')
+      | _ =>
+          refuseGo .unsupportedConstruct (SpecRef.spec "For_statements")
+            "range over an operand outside this rung (slices only)"
   | _ + 1, .unmodeled kind =>
       refuseGo .unsupportedConstruct (SpecRef.spec "Statements")
         s!"{kind} is in the census but not stepped yet"

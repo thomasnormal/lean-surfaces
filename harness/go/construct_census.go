@@ -201,6 +201,7 @@ var builtinNames = map[string]bool{
 func main() {
 	var paths []string
 	var out, compare, root, ladder, kindsets string
+	var reach bool
 	args := os.Args[1:]
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
@@ -228,6 +229,8 @@ func main() {
 				die(2, "--kindsets needs an output path")
 			}
 			kindsets = args[i]
+		case "--reach":
+			reach = true
 		case "--ladder":
 			i++
 			if i >= len(args) {
@@ -237,6 +240,10 @@ func main() {
 		default:
 			paths = append(paths, args[i])
 		}
+	}
+	if reach {
+		runReach(paths, root)
+		return
 	}
 	if len(paths) == 0 {
 		die(2, "usage: construct_census.go <path>... [-o out.json] [--compare ref.json] [--ladder base.json]")
@@ -849,4 +856,170 @@ func runKindSets(files []string, outPath, root string) {
 		die(1, err.Error())
 	}
 	fmt.Fprintf(os.Stderr, "wrote %s (%d files, %d unparsed skipped)\n", outPath, len(files)-skipped, skipped)
+}
+
+
+// ---------------------------------------------------------------------------
+// --reach : WHICH FILES THE WALKER COULD STEP ENTIRELY
+//
+// docs/backlog/go.md §G16 published a reach table (baseline 1,289 files;
+// the slice family taking it to 2,308) that was computed AD HOC and left
+// no instrument behind, so its numbers could not be re-derived from the
+// repository. This mode is that instrument. It exists because §G19 had to
+// re-measure the family's promise and found nothing to re-run.
+//
+// TWO THINGS THIS DOES THAT A KIND-SET TSV CANNOT
+//
+//  1. It SPLITS `ArrayType`. go/ast spells `[]T` and `[N]T` with the same
+//     node, distinguished only by `Len == nil`. The walker models slices
+//     and NOT fixed arrays (the vocabulary law: declare only what the rung
+//     executes), so a census that cannot tell them apart cannot state this
+//     tier's reach at all. Emitted as `ArrayType/slice` / `ArrayType/fixed`.
+//
+//  2. It keeps the vocabulary as DATA in one place, versioned below, so a
+//     rung that widens the walker widens this list in the same commit and
+//     the number moves for a reason a reader can see.
+//
+// GO_REACH_ADD=Kind1,Kind2 widens the baseline vocabulary for one run. It
+// is how §G19 established that §G16's unreproducible figures had counted
+// `SelectorExpr` as steppable (baseline 512 -> 1,114, against §G16's 1,289)
+// though §G8 ruled selector resolution `go/types` work that this walker
+// refuses. Use it to ASK what a vocabulary would buy; never to publish a
+// number the walker cannot actually step.
+//
+// The vocabulary is the walker's, transcribed from LeanModels/Go/Stmt.lean.
+// A file is REACHABLE when every kind it uses is in the set — the
+// conjunctive coverage law (§G1): bundles do not compose additively, so
+// membership is `⊆`, never a score.
+// ---------------------------------------------------------------------------
+
+// walkerVocab is the set of go/ast kinds LeanModels/Go/Stmt.lean steps.
+// Keep in step with the Expr/Stmt constructors; §G19 is its baseline.
+var walkerVocab = []string{
+	// file structure and declarations
+	"File", "Comment", "CommentGroup", "FuncDecl", "FuncType", "Field",
+	"FieldList", "GenDecl", "ImportSpec", "ValueSpec", "TypeSpec", "DeclStmt",
+	// expressions
+	"Ident", "BasicLit", "ParenExpr", "BinaryExpr", "UnaryExpr", "StarExpr",
+	"CallExpr", "IndexExpr", "StructType", "CompositeLit", "KeyValueExpr",
+	// statements
+	"BlockStmt", "AssignStmt", "ExprStmt", "IfStmt", "ForStmt", "ReturnStmt",
+	"IncDecStmt", "BranchStmt", "LabeledStmt", "EmptyStmt",
+}
+
+// sliceFamily is what §G17–§G19 landed: `a[i:j]`, `for … range`, and `[]T`.
+// `ArrayType/fixed` is DELIBERATELY ABSENT — see the vocabulary law above.
+var sliceFamily = []string{"SliceExpr", "RangeStmt", "ArrayType/slice"}
+
+// fileKinds returns the kind set of one file, with ArrayType split.
+func fileKinds(path string) (map[string]bool, bool) {
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, nil, parser.SkipObjectResolution)
+	if err != nil {
+		return nil, false
+	}
+	ks := map[string]bool{}
+	ast.Inspect(f, func(n ast.Node) bool {
+		if n == nil {
+			return true
+		}
+		if at, ok := n.(*ast.ArrayType); ok {
+			if at.Len == nil {
+				ks["ArrayType/slice"] = true
+			} else {
+				ks["ArrayType/fixed"] = true
+			}
+			return true
+		}
+		name := strings.TrimPrefix(fmt.Sprintf("%T", n), "*ast.")
+		ks[name] = true
+		return true
+	})
+	return ks, true
+}
+
+func covered(ks map[string]bool, vocab map[string]bool) bool {
+	for k := range ks {
+		if !vocab[k] {
+			return false
+		}
+	}
+	return true
+}
+
+func setOf(xs ...[]string) map[string]bool {
+	m := map[string]bool{}
+	for _, g := range xs {
+		for _, x := range g {
+			m[x] = true
+		}
+	}
+	return m
+}
+
+func runReach(paths []string, root string) {
+	if root == "" && len(paths) > 0 {
+		root = paths[0]
+	}
+	if len(paths) == 0 {
+		die(2, "--reach needs a path")
+	}
+	var all []map[string]bool
+	for _, p := range paths {
+		filepath.WalkDir(p, func(q string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+			if d.IsDir() {
+				n := d.Name()
+				if strings.HasPrefix(n, ".") || n == "testdata" || n == "vendor" {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if !strings.HasSuffix(q, ".go") || strings.HasSuffix(q, "_test.go") {
+				return nil
+			}
+			if ks, ok := fileKinds(q); ok {
+				all = append(all, ks)
+			}
+			return nil
+		})
+	}
+	count := func(vocab map[string]bool) int {
+		n := 0
+		for _, ks := range all {
+			if covered(ks, vocab) {
+				n++
+			}
+		}
+		return n
+	}
+	extra := []string{}
+	if e := os.Getenv("GO_REACH_ADD"); e != "" {
+		extra = strings.Split(e, ",")
+		fmt.Printf("(vocabulary widened by GO_REACH_ADD=%s)\n", e)
+	}
+	walkerVocab = append(walkerVocab, extra...)
+	base := setOf(walkerVocab)
+	b := count(base)
+	fmt.Printf("go-reach-0.1  toolchain %s\n", toolchainFamily())
+	fmt.Printf("files parsed (non-test): %d\n\n", len(all))
+	fmt.Printf("%-34s %6d\n", "BASELINE walker vocabulary", b)
+	fmt.Printf("%-34s %6s %8s\n", "", "files", "delta")
+	for _, k := range sliceFamily {
+		n := count(setOf(walkerVocab, []string{k}))
+		fmt.Printf("  + %-30s %6d %+8d\n", k, n, n-b)
+	}
+	for _, drop := range sliceFamily {
+		var rest []string
+		for _, k := range sliceFamily { if k != drop { rest = append(rest, k) } }
+		n := count(setOf(walkerVocab, rest))
+		fmt.Printf("  %-32s %6d\n", "FAMILY minus "+drop, n)
+	}
+	fam := count(setOf(walkerVocab, sliceFamily))
+	fmt.Printf("  %-32s %6d %+8d\n", "+ THE FAMILY (all three)", fam, fam-b)
+	withFixed := count(setOf(walkerVocab, sliceFamily, []string{"ArrayType/fixed"}))
+	fmt.Printf("  %-32s %6d %+8d\n", "+ ArrayType/fixed too", withFixed, withFixed-fam)
+	fmt.Printf("\nthe fixed-array gap (excluded by the vocabulary law): %d files\n", withFixed-fam)
 }

@@ -164,11 +164,17 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-115 | a PERFORMANCE SYMPTOM is a modelling question — the faithful shape is often the cheap one | `docs/family-architecture.md §5.4a` |
 | MEAS-116 | once PROVED for one implementation, a spec adjudicates its SIBLINGS — a third adjudicator kind | `docs/family-architecture.md §5.6` |
 | MEAS-117 | named single rows beside an exhaustive sweep — so a failure lands BY NAME | `docs/family-architecture.md §5.6` |
-| MEAS-118 | `+0` in a reach census is a PRECEDENCE fact, not a low score | `docs/family-architecture.md §9.0b` |
+| MEAS-118 | ~~`+0` is a precedence fact~~ **RETRACTED** — a construct's delta is a function of the CURRENT VOCABULARY | `docs/family-architecture.md §9.0b` |
+| MEAS-118a | a law minted from a DELTA inherits the delta's baseline — state it, or it is a measurement pretending to be a principle | `docs/family-architecture.md §9.0b` |
+| MEAS-118b | a number from a one-off script can only be WITHDRAWN, never corrected | `docs/family-architecture.md §9.0b` |
 | MEAS-119 | THE CONJUNCTIVE LAW — price a rung against the FAMILY it belongs to, report both numbers | `docs/family-architecture.md §9.0b` |
 | MEAS-120 | decide whether a blocker lives in the VALUE or in the REFERENCE — different owners | `docs/family-architecture.md §5.4a` |
 | MEAS-121 | the discriminating case is `(FUNCTION, ARGUMENT)` — not the function alone | `docs/family-architecture.md §5.6` |
 | MEAS-122 | rows the wrong model PASSES < rows it FAILS < rows it CANNOT STATE | `docs/family-architecture.md §5.6` |
+| MEAS-123 | every symptom of a missing LEMMA is also a symptom of a missing IMPORT — grep the TREE | `docs/family-architecture.md §9.0a` |
+| MEAS-124 | pre-flight a name-collision grep for every name a landing DECLARES | `docs/family-architecture.md §9.0a` |
+| MEAS-125 | attribute staleness to a PHASE — queue and build are different costs | `docs/family-architecture.md §7.2` |
+| MEAS-126 | order work by what is SHARED, not by what is NEXT | `docs/family-architecture.md §9.0b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -286,6 +292,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-107 | a mis-bucketed refusal is MIS-SCHEDULED — the class determines who owes the work | `docs/family-architecture.md §5.2` |
 | STMT-108 | when a fix moves a boundary, guard BOTH sides — a paired guard | `docs/family-architecture.md §5.2` |
 | STMT-109 | choose the acceptance case that can FAIL under the wrong model, and take it NOW | `docs/family-architecture.md §5.6` |
+| STMT-110 | a guarantee inside an IMPLICATION guarantees nothing when the antecedent fails | `docs/family-architecture.md §8` (the polarity pair) |
+| STMT-111 | THE HONEST SIGNATURE — omit a redundant hypothesis; never accept-and-ignore | `docs/family-architecture.md §8` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

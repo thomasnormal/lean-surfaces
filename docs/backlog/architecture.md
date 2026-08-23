@@ -2916,6 +2916,17 @@ it (MEAS-10).
 **(1) §9.0b — NEW SUBSECTION: a reach census does not just RANK, it PARTIALLY
 ORDERS.**
 
+> **ANNOTATION (`5b3602f`; entry NOT rewritten).** The `+0` law below was
+> **RETRACTED by the next measurement**: `RangeStmt` measures `+0` alone and is
+> worth `+9` inside the family it shipped in. **A construct's delta is a
+> function of the current vocabulary, not a property of the construct.** The
+> headline figures here are withdrawn too — *41.8% → 74.8%* counted
+> `SelectorExpr` as steppable, which the walker refuses; the reproducible
+> figure is **512 → 604 of 3 803**. Carried forward in
+> `2026-08-23-architecture-42`; the conjunctive law is untouched and was in
+> fact confirmed by the same evidence.
+
+
 > **`+0` in a reach census means NO REACHABLE FILE IS BLOCKED ONLY BY THAT
 > CONSTRUCT. It cannot be a next rung AT ANY PRICE; it is strictly DOWNSTREAM
 > of whatever co-occurs with it.**
@@ -3019,3 +3030,133 @@ blocker-naming norm in a new place. **An acceptance row you cannot write is a
 specification of what the model is missing.**
 
 **Index:** MEAS-121, MEAS-122.
+
+## 2026-08-23-architecture-42 — My own +0 law, retracted by measurement; and a missing lemma is a missing import
+
+Five landings, and the first is a correction to this lane's `-40`.
+
+**(1) §9.0b — THE `+0` LAW IS RETRACTED, IN PLACE.** I promoted it to family law
+yesterday; `5b3602f` refuted it the next inch. **`RangeStmt` measures `+0` alone
+and is worth `+9` inside the family it shipped in.**
+
+> **A construct's delta is a function of the CURRENT VOCABULARY, not a property
+> of the construct.**
+
+Maps (`+8/+14`) and interfaces (`+4/+7`) are **not disqualified — only still
+small**. The section keeps the retracted text and says what killed it, because
+a law deleted silently teaches nobody.
+
+**WHY IT WAS WRONG IS WORTH MORE THAN THE LAW WAS, and it is my error to own:
+I generalized a DELTA into a PROPERTY.** A `+0` is defined relative to a
+baseline, and the whole content of a delta is the state it was taken against.
+
+> **When a law is minted from a DELTA, the law inherits the delta's baseline.
+> State the baseline in the law, or the law is a measurement pretending to be a
+> principle.**
+
+That is MEAS-10 committed **at the level of a law** rather than a number — easy
+to do, because a construct feels like a fixed thing while a walker feels like a
+moving one. **What survives**: the census does induce a partial order, but **a
+single `+0` cannot establish it**, since the same construct is `+0` alone and
+positive in company. The retracted law was the conjunctive law's **shadow** —
+same fact (deltas are not additive), one true reading and one false one.
+
+**AND THE FIGURES I STAMPED ARE WITHDRAWN.** *41.8% → 74.8%* counted
+`SelectorExpr` as steppable, which §G8 had ruled `go/types` work. Reproducible:
+**512 → 604 of 3 803**. The sharper half is *why the old number could not be
+corrected*:
+
+> **A number produced by a one-off script is a number that can only be
+> WITHDRAWN, never corrected.**
+
+That reach table left **no instrument** and its **vocabulary was unrecorded**.
+MEAS-2/MEAS-3 exist for exactly this — a named instrument at a fixed path with
+`--compare` is what makes a wrong number **fixable** rather than **disposable**.
+It is now `construct_census.go --reach`, keeping the vocabulary as data.
+
+**(2) §9.0a — EVERY SYMPTOM OF A MISSING LEMMA IS ALSO A SYMPTOM OF A MISSING
+IMPORT** (SV's 8-second red, *"the failure was worth more than a green"*).
+§L87's recorded obstacle was **wrong**: the four do-stepping lemmas were in
+`Obs.lean` the whole time — **same namespace, one import away, out of scope**,
+because the wip file imported `SelfCheck`, which does not import `Obs`.
+
+> **Before recording an obstacle as "X does not exist", grep the namespace
+> across the TREE, not the imports in scope.**
+
+**The two failures are indistinguishable at the point of use**, and the
+diagnosis a lane reaches for is the expensive one. **Second time in this tier
+that a lane "needed" what it already had, and both were found by BUILDING** —
+§9.0a's opening instance was the other. I recorded the direction too: the
+failure is **flattering to the plan** — *"the lemma does not exist"* converts a
+five-minute import into a scheduled inch, and the build agrees with it loudly,
+every time.
+
+**Rider landed with it:** the same tree-wide namespace grep, run **forward**, is
+the **pre-flight name-collision check** for every name a landing declares — and
+§9.0a's opening instance had *"`Res.le` … identical, in the same namespace, a
+hard name clash waiting."* **One grep, two defects, opposite directions.**
+
+**(3) §5.4b — THE PINNED COUNT'S CLEANEST LIVE DEMONSTRATION** (Wasm,
+`f657041`; O1 proved, four pinned predictions, four matches).
+
+> **The build is red and the thing that matters went green; only the pinned
+> count separates them.**
+
+Without the pin there are exactly two readings — *"red, so nothing is known"* and
+*"the failures are the expected ones"* — and **no artifact distinguishes them**.
+With it, the red is **partitioned**. That is pinning demonstrated **positively**,
+where §5.4b previously had only the near-miss.
+
+**(4) §9.0b — SHARED PREREQUISITES FIRST.** The census-ordered path takes
+`rt_sub_trans` + `rt_sub_app` **before O3**, because **O2 and O4 need the same
+pair**.
+
+> **Order the work by what is SHARED, not by what is NEXT.**
+
+Landed as **the conjunctive law with the arrow reversed**: there, constructs
+worth little apart and much together; here, **one lemma worth little to its own
+obligation and much to the three behind it.** Both are per-item pricing
+failures with the same fix.
+
+**(5) §7.2 — STALENESS, SPLIT BY PHASE** (Ada). 53 commits behind = **104
+minutes of QUEUE** plus **4 commits during the 78-minute build**.
+
+> **The staleness came from the QUEUE, not the BUILD.**
+
+**This relocates the fix**: *"builds are too slow"* prescribes the expensive
+technical answer, while the measurement prescribes a **scheduling** one. And the
+reason the mis-attribution is the default: **a wait is invisible in the
+artifact** — the build log shows 78 minutes and says nothing about the 104
+before it. **Attribute staleness to a phase before prescribing a fix.**
+
+**AND ADA'S CLOSURE FACT, recorded in §3.1 as an ASSET**: `LeanModels/Ada/`
+imports **zero** `Core` modules — re-verified here by grep. A tier with an empty
+Core closure is the cleanest subject for a **transfer argument**, since anything
+proved about it is proved with the substrate out of scope. **A zero here is a
+fact about the tier** (§5.2's counting rule), not a coverage gap.
+
+**(6) §8 — THE POLARITY ENTRY GAINS ITS PAIR** (Lean tier, `29f868e`; censused
+by READING before a tenure was spent). `TrProj.wf` needs the projected field
+typed unconditionally; `ProjSound` typed it **only inside the Prop case**, so
+*"when the structure's sort is not maybe-Prop, the definition said nothing
+whatever about `v`"* — `wf` is **unprovable** against it. Fix: hoist the typing
+out of the implication, Prop-squash on **levels alone** — strictly stronger,
+identical soundness content, transports unchanged.
+
+> **A definition whose guarantee lives inside an implication guarantees nothing
+> when the antecedent fails. Check what the definition says when its INTERESTING
+> case does NOT apply.**
+
+**The two defects are one shape seen twice**, and the property that earns them
+the same home: **neither was found by the compiler** — one by a proof, one by a
+census, both definitions elaborating perfectly throughout. **A definition cannot
+be type-checked into meaning what you intended.**
+
+**Rider — the honest signature.** Upstream's redundant hypothesis was **omitted
+rather than accepted-and-ignored** (*"`ProjSound` already carries it"*): an
+unused parameter is a **false advertisement of what a definition depends on**,
+and it charges every consumer a premise for nothing. **Take what you use; if a
+hypothesis is redundant, say where its content already lives.**
+
+**Index:** MEAS-118 (retracted, kept), MEAS-118a, MEAS-118b, MEAS-123 …
+MEAS-126, STMT-110, STMT-111.

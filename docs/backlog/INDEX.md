@@ -15,13 +15,14 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**187 entries across 16 lanes.** Regenerate with
+**188 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
 | `2026-08-23-qol-43` | arming a byte-comparing gate arms the pins it does not have | qol |
 | `2026-08-23-qol-42` | the SV round-trip gate joins CI, and qol-40's orphan was half instrument | qol |
+| `2026-08-23-architecture-42` | My own +0 law, retracted by measurement; and a missing lemma is a missing import | architecture |
 | `2026-08-23-qol-41` | two tools that disagreed, and stamps that read the wrong repo | qol |
 | `2026-08-23-architecture-41` | The discriminator lives in the call; and the row a wrong model cannot state | architecture |
 | `2026-08-23-qol-40` | `laws.sh --gate-set`: §5.4b made checkable, and `.sv` has no gate | qol |

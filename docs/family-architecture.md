@@ -1199,6 +1199,14 @@ how it shrinks.
 * `LeanModels/Core/Basic.lean` is **13 lines** and defines `Span`.
 * It is imported by **three** lane files: `Python/Ast.lean`, `C/Ast.lean`,
   `C/Value.lean` (plus the two umbrella modules).
+* **`LeanModels/Ada/` imports ZERO `Core` modules** — verified by
+  `grep -rl 'import LeanModels.Core' LeanModels/Ada/`, which returns nothing.
+  Recorded as an **asset, not a gap**: a tier with an empty Core closure is the
+  cleanest available subject for a **transfer argument**, because anything
+  proved about it is proved without the shared substrate in scope, and a later
+  claim that it *could* adopt Core is a claim about an addition rather than
+  about an entanglement. **A zero here is a fact about the TIER**, in exactly
+  §5.2's sense — the API cannot be reaching for what it never imports.
 * `Run σ α` has **exactly ONE lane consumer: Python** — 15 files under
   `LeanModels/Python/` plus 6 under `Examples/python/`. **SystemVerilog,
   C, RISC-V, Circuit, Spice and Verilog-A are all zero.**
@@ -5008,6 +5016,20 @@ surrounds the failing rows. **So pin the COUNT** — SoftFloat now pins **two** 
 `probe_es_unblock` and **nine** on `probe_walls`, and the count is the only part
 of an expected failure that moves when the file does.
 
+**AND THE CLEANEST LIVE DEMONSTRATION THIS SECTION HAS — a red build in which
+the thing that mattered went GREEN** (Wasm, `f657041`, on master). O1 is proved,
+with **four pinned predictions and four matches**. The build was **red**, and:
+
+> **The build is red and the thing that matters went green; ONLY THE PINNED
+> COUNT SEPARATES THEM.**
+
+Without the pin, that landing has exactly two readings — *"the build is red, so
+nothing is known"* and *"the failures are the expected ones"* — and **no
+artifact distinguishes them.** With the pin, the red is **partitioned**: four
+predictions were made in advance, four matched, and whatever else is red is
+outside the claim. **That is the whole value of pinning a count, demonstrated
+positively rather than as a near-miss.**
+
 **But the count BOUNDS the drift; it does not IDENTIFY it.** Two errors a probe
 was built to have and two it has acquired are the same number, so an
 expected-error file carrying a transcription still owes the transcription
@@ -6128,6 +6150,26 @@ reported **"`instN` green"** for a run that actually built **`instN` +
 > stage — between ENQUEUE and RELEASE. Batch BEFORE enqueue, or after the
 > verdict.**
 
+**AND THE STALENESS HAS NOW BEEN SPLIT, MEASURED — most of it is the QUEUE, not
+the BUILD** (Ada). A tenure came back **53 commits behind**, and the obvious
+reading is that a long build fell behind a fast tree. The split says otherwise:
+**104 minutes of QUEUE** accounted for the bulk, and **4 commits** arrived
+during the **78-minute build**.
+
+> **The staleness came from the QUEUE, not the BUILD.**
+
+**Which relocates the fix.** *"Builds are too slow"* prescribes shrinking the
+build — the expensive, technical answer — while the measurement prescribes
+**shortening the wait or re-reading at the head**, a scheduling change. **A wait
+is invisible in the artifact**: the build's log shows 78 minutes and says
+nothing about the 104 that preceded it, so the only number a lane has to hand
+attributes the whole gap to the one phase it can see.
+
+> **Attribute staleness to a PHASE before prescribing a fix. Enqueue-to-start
+> and start-to-finish are different costs with different owners, and only one of
+> them appears in the build log.**
+
+
 The window is **enqueue → release**, not build-start → build-end, and the
 forbidden act is **any** change, not just a history rewrite. This is
 §5.4a's shape once more and in its most ordinary clothing: **the number
@@ -6443,6 +6485,45 @@ real until an instrument re-derives it.**
     Getting the polarity backwards is exactly how a hypothesis-shaped
     condition ends up asserted as a conclusion, which is what happened.
 
+    **AND ITS PAIR, from the same lane and the same definition — the SECOND
+    defect the obligations caught in the lane's OWN definition rather than in
+    the tree it targets** (`29f868e`, on master; censused by **reading**,
+    before a tenure was spent on it). `TrProj.wf` concludes `VExpr.WF env U Γ
+    e'`, which unfolds to *"`e` has a type"* — so it needs the projected field
+    typed **unconditionally**. `ProjSound` typed it **only inside the Prop
+    case**:
+
+    > **When the structure's sort is not maybe-Prop, the definition said
+    > nothing whatever about `v`.**
+
+    So `wf` is **unprovable against it** — not hard, unprovable. The fix hoists
+    the field's typing **out of the implication**, leaving the Prop-squash as a
+    condition on the **levels alone**: **strictly stronger** (the field is typed
+    in every case, which is what `wf` consumes), **identical soundness
+    content**, and **transports unchanged** — `MaybeZero u → IsAlwaysZero w`
+    under `instL` becomes the same implication on instantiated levels,
+    discharged by proofs already written.
+
+    > **A DEFINITION WHOSE GUARANTEE LIVES INSIDE AN IMPLICATION GUARANTEES
+    > NOTHING WHEN THE ANTECEDENT FAILS. Check what the definition says when
+    > its INTERESTING case does NOT apply.**
+
+    **The two defects are the same shape seen twice** — polarity backwards, and
+    a guarantee trapped under a hypothesis — and both share the property that
+    makes this section worth reading: **neither was found by the compiler.**
+    One was found by a **proof**, one by a **census**, and both definitions
+    elaborated perfectly the entire time. **A definition cannot be type-checked
+    into meaning what you intended**; the only instruments that reach it are the
+    obligation that consumes it and the reading that asks what it says in the
+    boring case.
+
+    > **RIDER — THE HONEST SIGNATURE.** Upstream's redundant hypothesis was
+    > **OMITTED rather than accepted-and-ignored** (*"`ProjSound` already
+    > carries it"*). A parameter a definition does not use is a **false
+    > advertisement of what it depends on**, and it costs every consumer a
+    > premise to discharge for nothing. **Take what you use; if a hypothesis is
+    > redundant, say where its content already lives.**
+
     **A CONGRUENCE WALKER'S COMPLEXITY IS SET BY ITS DISPATCH, and budget
     cannot fix it.** The `mono_with` technique — a walker with a
     **backtracking `first`** at each node — is **LINEAR on bind spines**
@@ -6715,6 +6796,35 @@ about pricing; *file the residue* is about reporting; **this one is about
 starting** — the grep you skip because you already know what you are about
 to build.
 
+**AND THE FAMILY GAINS ITS SHARPEST MEMBER — AN 8-SECOND RED THAT WAS WORTH
+MORE THAN A GREEN** (SV; the lane's own words). §L87 recorded an obstacle: four
+do-stepping lemmas the tier needed did not exist. **They existed in `Obs.lean`
+the whole time — same namespace, one import away, out of scope**, because the
+work-in-progress file imported `SelfCheck`, which does not import `Obs`.
+
+> **EVERY SYMPTOM OF A MISSING LEMMA IS ALSO A SYMPTOM OF A MISSING IMPORT.
+> Before recording an obstacle as "X does not exist", grep the namespace across
+> the TREE, not the imports in scope.**
+
+**The two failures are indistinguishable at the point of use** — an unknown
+identifier reads identically whether nothing defines it or something does, one
+import away — and the diagnosis a lane reaches for is the expensive one. This is
+the **second time in one tier** that a lane "needed" what it already had, and
+**both were found by building**, not by reading: §9.0a's opening instance
+(`heapEqFuelMono`, already in `Obs.lean` with ~15 corollaries) and this one.
+
+**Note the direction, because it is why the section keeps collecting these**:
+the failure is **flattering to the plan**. *"The lemma does not exist"* converts
+a five-minute import into a scheduled inch, and nothing contradicts it — the
+build agrees, loudly, every time.
+
+> **RIDER — the same grep, run FORWARD: pre-flight a name-collision check for
+> every name a landing DECLARES.** The tree-wide namespace grep that finds what
+> you already have is the identical query that finds what you are about to
+> shadow, and §9.0a's opening instance had *"`Res.le` and its congruences —
+> identical, in the same namespace, a hard name clash waiting."* One grep,
+> two defects, opposite directions.
+
 **AND CENSUS-FIRST HAS NOW SHOWN ITS STRONGEST FORM — the census run AFTER a
 plan, refuting the plan's premise before it is paid for** (Go, `69ea58a`). The
 rung was scoped as *"the table functions need array types and indexing"*. They
@@ -6741,35 +6851,75 @@ because that is the last point at which a refutation is free.
 
 ### 9.0b RUNG SCHEDULING — a reach census does not just RANK; it PARTIALLY ORDERS
 
-Two laws from the same measurement (Go, `4618380`, on master; walker at
-**1 289 of 3 084 rung-1-reachable stdlib files, 41.8%**, up from **633** — the
-first time that number moved by more than a rounding, and it moved **by
-construction**, from rungs 3 and 4).
+Two laws from the same measurement (Go, `4618380`) — **and one of them has since
+been RETRACTED BY MEASUREMENT, which is recorded in place rather than deleted
+(`5b3602f`).** Read the retraction first; it changes how the section's own
+numbers are quoted.
 
-**(1) A CONSTRUCT MEASURING `+0` IS NOT CHEAP — IT IS UNREACHABLE.**
+**THE FIGURES THIS SECTION FIRST CARRIED ARE WITHDRAWN.** *"1 289 of 3 084 —
+41.8%, rising to 74.8%"* **counted `SelectorExpr` as steppable**, which §G8 had
+already ruled `go/types` work and the walker refuses. The reproducible figure
+for the family as landed is **512 → 604 of 3 803 files**.
 
-> **`+0` in a reach census means NO REACHABLE FILE IS BLOCKED ONLY BY THAT
-> CONSTRUCT. It cannot be a next rung AT ANY PRICE; it is strictly DOWNSTREAM
-> of whatever co-occurs with it.**
+**And the reason the old number could not simply be re-checked is the sharper
+lesson, and it is §5.4's contract, violated:** that reach table **left no
+instrument** and its **vocabulary was unrecorded**, so it could not be re-run at
+all — only replaced. A table is not a census.
 
-Measured: **`MapType +0` and interfaces `+0`**, both behind slices — every
-reachable file using a map or an interface **also** uses something else the
-walker lacks. So the census is not merely a ranking with a cheap tail: it
-induces a **partial order**, and a `+0` is a **precedence fact**, not a low
-score. **A lane that reads it as "cheap, do it when convenient" will build a
-rung that unblocks nothing** — and will find that out only after paying for it,
-because the construct itself will work perfectly.
+> **A NUMBER PRODUCED BY A ONE-OFF SCRIPT IS A NUMBER THAT CAN ONLY BE
+> WITHDRAWN, NEVER CORRECTED.**
 
-**This is the difference between a ranking and a schedule.** A rank says *what
-is worth most*; a partial order says *what is even available*. The reach census
-answers both questions with one number, and **the two readings of a small number
-are opposite**: `+56` is a genuinely small rung, `+0` is not a rung at all.
+MEAS-2/MEAS-3 exist for exactly this: a named instrument at a fixed path, with a
+`--compare` mode, is what makes a wrong number **fixable** instead of
+**disposable**. It is now `construct_census.go --reach`, which splits
+`ArrayType` (`go/ast` spells `[]T` and `[N]T` with one node) and **keeps the
+vocabulary as data**.
+
+**(1) THE `+0` LAW — STATED HERE, THEN RETRACTED BY THE NEXT MEASUREMENT.
+What it said:** *a construct measuring `+0` is not cheap, it is unreachable —
+not a rung at any price, strictly downstream of whatever co-occurs with it.*
+
+**What refuted it:** `RangeStmt` **measures `+0` alone** and is **worth `+9`
+inside the family it shipped in** (`5b3602f`). The premise was that a `+0` is a
+*property of the construct*. It is not:
+
+> **A CONSTRUCT'S DELTA IS A FUNCTION OF THE CURRENT VOCABULARY, NOT A PROPERTY
+> OF THE CONSTRUCT. A `+0` is a reading of TODAY's walker, and it moves when the
+> walker does.**
+
+So maps (`+8/+14`) and interfaces (`+4/+7`) are **not disqualified** — only
+**still small**. The corrected reading of a `+0` is *"nothing is blocked ONLY by
+this, at this vocabulary"*, which is a fact with a **timestamp**, not a
+precedence fact (MEAS-10, arriving where a law was being minted rather than a
+number).
+
+**WHY THIS ONE WAS WRONG IS WORTH MORE THAN THE LAW WAS.** The error was
+**generalizing a differential to a property**. `+0` is a *delta* — it is defined
+relative to a baseline — and the whole content of a delta is the state it was
+taken against. Reading it as a property of the construct is **the state-stamp
+failure committed at the level of a LAW**, and it is easy precisely because a
+construct feels like a fixed thing while a walker feels like a moving one.
+
+> **When a law is minted from a DELTA, the law inherits the delta's baseline.
+> State the baseline in the law, or the law is a measurement pretending to be a
+> principle.**
+
+**What survives, and it is the part worth keeping**: the census still induces a
+partial order — some constructs really are reachable only behind others — but
+**a single `+0` does not establish it**, because the same construct can be
+`+0` alone and positive in company. That is the conjunctive law below, and the
+retracted law was its shadow: **both readings come from the same fact — deltas
+are not additive — and only one of them is true.**
 
 **(2) THE CONJUNCTIVE LAW — PROMOTED FROM LANE OBSERVATION TO FAMILY LAW, on
 its third independent reproduction.**
 
 > **Some constructs have value only as a FAMILY. Ship any one and almost
 > nothing moves; ship the family and the reach steps.**
+
+**And it is the law that SURVIVED the retraction above, on the same evidence
+that killed the other one** — `RangeStmt` being `+0` alone and `+9` in company
+is the conjunctive law's cleanest possible instance, restated as a refutation.
 
 Measured, in the sharpest instance yet: `ArrayType` alone **+528**, `SliceExpr`
 alone **+27**, `RangeStmt` alone **+29** — **sum of parts 584** — and **all
@@ -6785,6 +6935,21 @@ observation: **price a candidate rung against the FAMILY it belongs to, and
 report both numbers** — alone, and jointly. A per-construct table with no joint
 column is not just incomplete; **it systematically under-prices exactly the
 rungs worth taking.**
+
+**(3) AND THE SAME ORDERING APPLIES TO OBLIGATIONS, NOT ONLY TO CONSTRUCTS —
+SHARED PREREQUISITES FIRST** (Wasm, `f657041`). An obligation list's order is an
+artifact of how it was written; the **census-ordered** path takes
+`rt_sub_trans` + `rt_sub_app` **before O3**, because **O2 and O4 need the same
+pair.**
+
+> **Order the work by what is SHARED, not by what is NEXT. A prerequisite two
+> obligations away is worth more than the obligation in front of you.**
+
+This is the conjunctive law with the arrow reversed: there, several constructs
+were worth little apart and much together; here **one lemma is worth little to
+its own obligation and much to the three that follow.** Both are failures of
+**per-item pricing**, and both are fixed by the same move — **price against the
+set, and let the census say what the set is.**
 
 **And the counterpart, which keeps the law from licensing bundles:** the family
 is what the **census** says co-occurs, not what a lane finds tidy. **Fixed

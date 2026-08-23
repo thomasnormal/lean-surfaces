@@ -635,3 +635,81 @@ a 50 % line** — load was fine both times (7.28, 8.40). I did not override it. 
 machine is swapping persistently rather than being busy, so proof iteration is
 unavailable and every check costs a tenure; both of this round's compiles were
 ticketed.
+
+---
+
+## 2026-08-23-lean-tier-8 — `TrProj.uniq` is plausibly blocked on no-confusion: established by READING, at zero machine cost
+
+I told the coordinator that `ProjField.det` gave `uniq`'s computational half.
+**That was too optimistic and this entry withdraws it.**
+
+### What `uniq` actually needs
+
+```lean
+theorem TrProj.uniq (H1 : TrProj Γ₁ s₁ i e₁ e₁') (H2 : TrProj Γ₂ s₂ i e₂ e₂')
+    (H : env.IsDefEqU U Γ₁ e₁ e₂) : env.IsDefEqU U Γ₁ e₁' e₂'
+```
+
+`ProjField.det` proves *same spine, same index ⇒ same field*. `uniq`'s two
+structures are **merely definitionally equal**, not identical. Concluding the
+fields are defeq requires:
+
+> **defeq of constructor-headed applications ⇒ defeq of the corresponding
+> arguments** — constructor injectivity / no-confusion.
+
+### Absent from the pin, established by PATTERN POSITION rather than by name
+
+Grepping the identifier would prove nothing (the lemma could be named anything).
+So the search was for the **shape**: any lemma in `Lean4Lean/Theory/` taking a
+hypothesis of the form `IsDefEq(U) _ _ (.app …) (.app …)`.
+
+**Zero hits across the whole of `Theory/`.**
+
+Cross-checked against every inversion principle the model does have — 23 of them,
+enumerated. They partition cleanly:
+
+| what is inverted | lemmas | kind |
+| --- | --- | --- |
+| `app`, `lam`, `const`, `bvar` | `HasType.app_inv`, `.lam_inv`, `.const_inv`, `.bvar_inv` (`Strong.lean`) | **TYPING** inversion — extracts pieces from `HasType Γ (.app f a) V`. Says nothing about defeq of arguments |
+| `sort`, `forallE` | `IsDefEqU.sort_inv`, `.forallE_inv`, `.forallE_inv_stratified` (`Injectivity.lean`) | **DEFEQ** inversion — and all three are `sorry` |
+| lifting/weakening | `*.weakU_inv`, `*.weakN_inv` | structural, unrelated |
+
+So the model has defeq-injectivity **only for the type formers** (`sort`,
+`forallE`) — which is exactly what unique typing needs — and **none for
+applications**.
+
+### Why that is a structural fact, not an oversight
+
+App-injectivity is **not valid in general**: `f a ≡ g b` does not give `a ≡ b`.
+It holds when the head is a **constructor**, and the justification is
+no-confusion, which comes from the inductive elimination principles — i.e. from
+`VEnv.addInduct`, the same root entry 4 measured as gating everything else in
+this cluster, and the same root **PR #43** is filling.
+
+### The verdict, stated at the confidence the evidence supports
+
+> **`TrProj.uniq` is PLAUSIBLY BLOCKED on no-confusion (`addInduct`, the PR #43
+> root) — NOT MEASURED.**
+
+Not measured because proving it blocked would cost a tenure, and the coordinator
+ruled — correctly — that a reading-level finding at zero machine cost is worth
+more than a confirmed negative at 90 minutes' queue. **If `instN` or `weak'`
+later hand over the shape cheaply, revisit.**
+
+**Next obligation is `TrProj.weak'`** — lifting, the same two-case induction as
+`instL`/`instN`, since `liftN` also distributes over `.app` without changing
+depth.
+
+### The argument-order trap goes to the family doc
+
+`docs/family-architecture.md` §3.4.2. `HasType` is a `def` over `IsDefEq`, so dot
+notation resolves past it: `hA.instN …` picks `VEnv.IsDefEq.instN`, whose
+argument order is `(henv)(h₀)(W)(H)` against `VEnv.HasType.instN`'s
+`(henv)(W)(H)(h₀)`. Both exist, both typecheck at the call site's arity, and the
+arguments silently mis-bind. This lane's first red was the same hazard's sibling
+— the dot-notation target did not exist in the import closure, and reported as
+`the environment does not contain …`, **a missing import wearing a
+name-resolution error's clothes**. `instL` was green only because its two orders
+happen to agree; that is luck. **Rule: name the lemma explicitly in a foreign
+proof tree** — and in one's own, wherever a `def` sits over another relation
+(this tier's `ProjField` over `ArgFromRight` got the same treatment).

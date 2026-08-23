@@ -1980,6 +1980,49 @@ Lean tier is the second family of misfit, and unlike theirs it was found
 by pricing rather than by inheritance — which is why it is cheap to
 record now and would have been expensive to discover at inch 7.
 
+#### 3.4.2 A TOOLING HAZARD: dot notation unfolds `def`s, and silently re-slots arguments
+
+Found by the Lean tier (`docs/backlog/lean-tier.md`), and it costs a tenure every
+time it fires, so it is recorded where proof authors read rather than in one
+lane's log.
+
+**The mechanism.** Lean resolves `h.foo` by the head constant of `h`'s type. When
+that type is a `def` rather than a structure, elaboration may **unfold it first**
+and resolve against the head underneath. In lean4lean, `HasType` is
+
+```lean
+def HasType (env : VEnv) (U : Nat) (Γ : List VExpr) (e A : VExpr) : Prop :=
+  IsDefEq env U Γ e e A
+```
+
+so `h.instN` on a `HasType` hypothesis resolves to **`VEnv.IsDefEq.instN`**, not
+`VEnv.HasType.instN`. Both exist. Both typecheck at the call site's arity. **They
+take their arguments in different orders:**
+
+| lemma | argument order |
+| --- | --- |
+| `VEnv.HasType.instN` | `(henv) (W) (H) (h₀)` |
+| `VEnv.IsDefEq.instN` | `(henv) (h₀) (W) (H)` |
+
+So `hA.instN henv W h₀` binds `W` where `h₀` is expected. The failure is a type
+error at a *later* argument, or — worse — no error at all when two arguments
+happen to share a type.
+
+**Why it is worth a section.** The Lean tier's first red tenure was this hazard's
+sibling: `hA.instL hls` resolved to `IsDefEq.instL`, which *did not exist in the
+import closure*, and reported as `the environment does not contain
+Lean4Lean.VEnv.IsDefEq.instL` — **a missing import wearing a name-resolution
+error's clothes.** The same call was then green only because `instL`'s two
+orders happen to agree. That is luck, not correctness, and the next lemma in the
+same file does not share it.
+
+**THE RULE: in a foreign proof tree, name the lemma explicitly.** Write
+`VEnv.HasType.instN henv W hA h₀`, never `hA.instN …`. It costs six characters
+and removes an entire class of silent mis-binding. The same applies to a tier's
+*own* definitions the moment one is a `def` over another — the Lean tier's
+`ProjField` (a `def` over `ArgFromRight`) is the same shape and got the same
+treatment.
+
 ### 3.5 SOFTFLOAT — shared component #2, and the premise it was deferred on is FALSE
 
 **The correction first, because the record is wrong.** Three tier documents

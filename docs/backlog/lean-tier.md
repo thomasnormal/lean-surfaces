@@ -1141,3 +1141,106 @@ have touched these numbers, and the re-measure confirms it — `lean_independent
 contains **zero** arena references, and this figure is recomputed directly from
 the arena's published rows. The number moved because **upstream moved**, which is
 the argument for re-measuring rather than re-citing.
+
+---
+
+## 2026-08-23-lean-tier-14 — CONSUME-PATH CENSUS at the new state: everything in reach is blocked, and the tier's next move is WAITING
+
+The question was: with `TrProjP` done in-reach, what is the next obligation
+family on the consume path that is neither inversion-blocked nor
+confluence-blocked? **The honest answer is: there isn't one.** Written down
+rather than worked around, because a lane that keeps looking busy past this
+point is the failure this census exists to prevent.
+
+### The 24 shipped obligations, partitioned by ROOT CAUSE
+
+Re-run against the current fork. Every obligation lands in exactly one bucket and
+the arithmetic closes:
+
+| root | count | share |
+| --- | ---: | ---: |
+| **`addInduct` — the model cannot express "constructor"** | **15** | **63 %** |
+| missing MODEL RULE (spec gap: unit-like / structure eta) | 2 | 8 % |
+| confluence IMPORT CYCLE | 1 | 4 % |
+| IN FLIGHT upstream — do not enter | 6 | 25 % |
+| **total** | **24** | |
+
+**The `addInduct` bucket, itemised**, because 63 % resting on one hole is the
+finding: `TrProj` itself; its seven lemmas (`instL`, `instN`, `weak'`, `wf`,
+`weak'_inv`, `defeqDFC`, `uniq`); the three checker-side proj/recursor lemmas
+(`inferProj.WF`, `reduceProjCore.WF`, `reduceRecursor.WF`); the three
+inductive-types obligations (`VInductDecl.WF`, `VEnv.addInduct`, `addInduct_WF`);
+and `addDecl.WF`.
+
+### The two obligations I had never examined are blocked too — and by inspection
+
+`inferProj.WF` and `reduceProjCore.WF` were the only candidates left unexamined.
+Both take `c.TrExprS (.proj n i e) e'` as a **hypothesis**, and `TrExprS`'s only
+constructor producing a `.proj` is
+
+```lean
+| proj : TrExprS Δ e e' → TrProj Δ.toCtx s i e' e'' → TrExprS Δ (.proj s i e) e''
+```
+
+So inverting either hypothesis yields a `TrProj` fact **about a relation that
+does not exist**. Nothing can be extracted from it. They are blocked at the same
+root as everything else in the cluster, and it cost no machine time to establish.
+
+*(`reduceProjCore.WF` is the closest thing to reachable in the whole census — it
+is the executable counterpart of our `ProjField`, and our `ArgFromRight` is
+exactly its computational content. It is blocked only because it names upstream's
+`TrProj`, not ours. That is the shape of what unblocks the moment a real `TrProj`
+lands.)*
+
+### PROPOSAL: the tier's next state is WAITING, and here is what that means
+
+Not idleness, and not a pause with no exit condition. Concretely:
+
+**1. The trigger is PR #43 landing** (or any upstream commit that gives `VEnv`
+constructor data). At that moment 15 of 24 unblock at once, and this lane's
+`TrProjP` is designed to be substituted in — the minimal interface is
+`nparams`/`nfields`, and reconciliation was specified as a **substitution, not a
+redesign**. The four proved congruences transfer with it.
+
+**2. What we hold meanwhile is drift-guarded, not frozen.** Every census here has
+`--compare`, and the arena re-measure already proved the point: `official-nightly`
+moved 66/67 → 67/67 between two runs on the same day, and our published claim
+went stale. **The number moved because upstream moved.** Re-running the guards is
+the cheap, correct activity for a waiting lane.
+
+**3. Nothing gets shipped over somebody else's hole.** The `weak'_inv` ruling
+generalises: this lane ships lemmas whose dependencies are complete, so a
+`#print axioms` never carries `sorryAx`. That standard is why the answer here is
+"blocked" rather than "four more greens".
+
+### THE UPSTREAM-ENGAGEMENT QUESTION, with the evidence attached
+
+This is now Thomas's to decide, and the census hands him the argument rather than
+a feeling:
+
+* **63 % of the consume path sits behind one artifact** — `VEnv.addInduct` — and
+  **an open PR (#43) fills exactly it.**
+* **Consuming that PR was already priced and declined** (entry 10): it does not
+  supply the no-confusion `uniq` needs, it adds a 14th `IsDefEq` constructor that
+  makes every inversion costlier, and it is 15 commits behind a moving master.
+  **That judgement is unchanged.** The case for engagement is not "take the
+  branch"; it is "the branch's *landing* is our unblock trigger, and we have no
+  visibility into its schedule."
+* **The channel's measured response rate is 0-for-1**: Thomas's own issue #16
+  asked which sorries are unclaimed and has gone unanswered; nine external proof
+  PRs sit unreplied; there is no published open-problems list.
+* **We have something to offer now, which we did not before.** Four green
+  congruence lemmas, a sound-rule side condition validated against the arena's
+  own tests, and a definition explicitly designed to substitute into `TrProj`
+  when constructor data exists. **That is a contribution with a demonstrated
+  green, not a proposal.**
+
+**Recommended framing if Thomas engages:** not "how can we help", which the
+0-for-1 record suggests goes nowhere, but a specific artifact plus a specific
+question — *here is a `TrProj` that compiles with four of its seven lemmas
+proved, parametric in `nparams`/`nfields`; will `addInduct` expose those, and in
+what shape?* That is answerable in one line and is the only thing blocking 63 %
+of the path.
+
+**If Thomas declines to engage, WAITING is still correct** — the drift guards
+catch the landing whenever it comes, and the four proved lemmas keep.

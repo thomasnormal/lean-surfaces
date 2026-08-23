@@ -103,7 +103,7 @@ private def runIndet (r : Int) : Outcome CVal :=
   EvalM.verdict (setInt mem0 0 r) (evalExpr ctx0 cond)
 
 /-- The same run, unwrapped, for the memory-retention gate below. -/
-private def runIndetRaw (r : Int) : Halt (Except Refusal CVal × Mem) :=
+private def runIndetRaw (r : Int) : LeanModels.HaltWith CDetail Mem (Except Refusal CVal × Mem) :=
   EvalM.run (setInt mem0 0 r) (evalExpr ctx0 cond)
 
 -- r = 0: the right operand is NOT evaluated, so the indeterminate `b` is

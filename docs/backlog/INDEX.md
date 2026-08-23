@@ -15,11 +15,12 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**241 entries across 16 lanes.** Regenerate with
+**242 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
+| `2026-08-24-architecture-53` | A goal theorem nobody has typed; and a false premise vacates rather than weakens | architecture |
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
 | `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |

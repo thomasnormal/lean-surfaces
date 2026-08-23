@@ -39,6 +39,7 @@ incident**.
 | 21 | re-proving | never repair a statement to make a proof pass |
 | 22 | opening the monad stack | ONCE, where the stack is DEFINED — and only a STACK needs one |
 | 23 | rewriting past a dependent match | never touch the SCRUTINEE — rewrite the whole BIND from a head equation |
+| 24 | op_correct for a spec'd operation | the statement names NO algorithm; omissions are STATED, not completed |
 
 ---
 
@@ -589,6 +590,45 @@ inside a dependent match discriminant"*) cleared by three rows in `Obs.lean`
 nested-match ceiling (§3.4) is the same Lean fact met from the tactic side:
 **that ceiling stands, and this is the route around it for a tier that owns its
 own lemmas.**
+
+---
+
+## 24 — `op_correct` for a spec'd operation: no algorithm in the statement
+
+**FORM.** State what the operation must **produce**, in terms of the spec's own
+relations, and **mention no algorithm at all**. Where the spec admits a choice —
+ties-to-even versus ties-to-away — the choice is a **PARAMETER**, and each
+convention becomes an **instance** rather than a hard-coded pick. Algorithms are
+written afterwards and **proved to satisfy the statement**.
+
+**TRAP.** Writing the computable version first and stating correctness against
+it. **Any correct implementation is structurally the same finite computation as
+the one being verified**, so a statement phrased in its terms proves almost
+nothing: the two sides agree because they are the same algorithm twice, and the
+theorem's content collapses to *"this computes what this computes."* The tell is
+that the spec file **imports or restates the implementation**; a spec that
+cannot be read without the code is not a spec.
+
+> **A correctness statement that mentions an algorithm has already chosen the
+> answer it will be checked against.**
+
+**AND THE OMISSION HALF, which is the same discipline in the other direction.**
+When the spec genuinely does not fix something, **say so in the file** rather
+than completing it quietly. `ReprQ` carries **no upper exponent bound**, because
+overflow is **mode-dependent** — folding a bound in would silently redefine
+*"nearest representable"* as *"nearest representable **or ±∞**"*, which is a
+different theorem wearing the same name.
+
+> **An omission is STATED in the file, never silently completed.** A definition
+> that quietly absorbs the case it does not cover is §0.1's forbidden move
+> arriving as tidiness.
+
+**INCIDENT.** SoftFloat's `Round.lean` (`ec1e79b`, ticketed; design final) —
+the computable `roundQ` was **deliberately not written** before `op_correct`,
+and the spec file mentions no algorithm anywhere. Related:
+`docs/family-architecture.md` §0.1 principle I (the definition is never weakened
+for provability) and §8's implication rule (a guarantee inside an implication
+guarantees nothing when the antecedent fails).
 
 ---
 

@@ -220,6 +220,13 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-169 | import-REACHABILITY completes the pre-flight pair: names you USE that resolve nowhere | `docs/family-architecture.md §9.0a` |
 | MEAS-170 | a coverage number's DENOMINATOR counts what could have DISAGREED | `docs/family-architecture.md §9.0` |
 | MEAS-171 | a numerator earned by FORWARDING needs the theorem that the forwarding is faithful | `docs/family-architecture.md §9.0` |
+| MEAS-172 | a goal theorem nobody has TYPED is one nobody can typecheck against | `docs/family-architecture.md §9.0` |
+| MEAS-173 | a DECLINED alternative is recorded with the measurement that declined it | `docs/family-architecture.md §9.0` |
+| MEAS-174 | the NUMERATOR counts only what the family's definition ADMITS | `docs/family-architecture.md §9.0` |
+| MEAS-175 | a census that predicts its own gain TO THE UNIT is calibration evidence | `docs/family-architecture.md §9.0` |
+| MEAS-176 | NAMED, NOT COUNTED — a live obligation kept out of the denominator until its premise is proved | `docs/family-architecture.md §9.0` |
+| MEAS-177 | a RE-FOUNDING's size is the count of statements that NAME the interpreter | `docs/family-architecture.md §5.4a` |
+| MEAS-178 | a SECTION CITATION is mechanically checkable — same class as the docs_check anchors | `docs/family-architecture.md §5.4b` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -343,6 +350,9 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-113 | a nonstandard generated relation is not ORPHANED — price the BRIDGE (the crossing IFF) first | `docs/family-architecture.md §8` item 11 |
 | STMT-114 | A RESOLUTION CAN BE WRONG, NOT MERELY MISSING — every resolution rung owes a shadowing row | `docs/family-architecture.md §5.2` |
 | STMT-115 | a correctness gate bounds BOTH error directions — over-refusing is a failure mode | `docs/family-architecture.md §5.2` |
+| STMT-116 | a FALSE PREMISE does not weaken a theorem — it VACATES it, and a vacated theorem PASSES | `docs/family-architecture.md §5.3` |
+| STMT-117 | an `op_correct` statement mentions NO algorithm; the tie rule is a PARAMETER | cookbook §24 |
+| STMT-118 | an OMISSION is stated in the file, never silently completed | cookbook §24 |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

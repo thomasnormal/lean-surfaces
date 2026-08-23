@@ -3770,6 +3770,29 @@ the question.**
 
 A run that executed **nothing** must never score as agreement.
 
+**AND THE SHARPEST FORM IS A THEOREM THAT IS VACUOUSLY TRUE BECAUSE ITS PREMISE
+IS FALSE** (R-track chain document). Plain `BoundRefines` is **FALSE** —
+refuted at `pos := .int 5`, where the shipped `bound()` refuses so the
+∃-conclusion has no witness (cookbook §11). A theorem premised on it is
+therefore **vacuously true**, and the original `RecursionStep` was exactly
+that: **green, elaborating, and about nothing.**
+
+> **A FALSE PREMISE DOES NOT WEAKEN A THEOREM — IT VACATES IT, and a vacated
+> theorem PASSES.**
+
+**Which is why the repair is load-bearing rather than cosmetic**: `BoundRefinesW`
+is the form the chain must use **throughout**, and a single downstream statement
+left on the old premise re-opens the hole silently. **The other vacuity shapes
+in this section announce themselves as empty** — a run that executed nothing, a
+row that never ran. **This one announces itself as a proof**, which is the worst
+available disguise: nothing is missing, the tactic closed, and the artifact is a
+theorem in every respect except subject matter.
+
+**The check is the one §5.3 already prescribes, pointed at the premise**: ask
+what the statement claims **when the interesting case does not apply** (§8's
+implication rule), and if the answer is *"nothing at all"*, the premise is
+carrying the theorem rather than the other way round.
+
 **And the same rule one level up, from a measured master defect (§3.4's
 erosion clause): TWO REFUSALS MUST NEVER SCORE AS AGREEMENT.** A
 differential harness compares the two sides to each other, so when both
@@ -4545,6 +4568,24 @@ case" was free.**
 > **A PREDICTED MAINTENANCE COST INHERITS THE UNIT ERROR OF THE CONSTRUCT IT
 > WAS PREDICTED FOR.**
 
+**AND ITS SECOND INSTANCE NAMES THE UNIT FOR A WHOLE CLASS OF ESTIMATE**
+(R-track chain document). Rung 6's cost was priced at **221** and is **57**,
+because the population was taken as *every statement in the affected files*
+(**558**) rather than the ones a re-founding actually touches (**200 across
+three files**).
+
+> **A RE-FOUNDING'S SIZE IS THE COUNT OF STATEMENTS THAT NAME THE INTERPRETER.**
+
+**That is SV's honest-denominator law pointed at COST rather than at COVERAGE**,
+and the two are the same defect wearing different clothes: a denominator that
+includes rows which could not have disagreed, and a cost estimate that includes
+statements which could not have been affected. **Both inflate while looking
+conservative** — and "conservative" is the word that stops the re-measurement,
+because an over-estimate feels like the safe error to make. **It is not: a 4×
+over-estimate kills the work outright**, which is exactly what it nearly did
+here, and a killed inch produces no correction because nobody measures what was
+never attempted.
+
 **The other members of this family mis-count things that EXIST; this one
 mis-prices work that does not exist yet**, which is worse in one specific way:
 **there is nothing to re-measure.** A wrong identifier count can be re-run
@@ -5231,6 +5272,31 @@ run that merely **lost its `--gates` value completed and reported GREEN on the
 default floor** — *less coverage than the lane believed it bought, with nothing
 in the log to say so.* **A spin costs an hour; a silent floor costs the
 verdict.**
+
+**AND A CHECKABLE CLASS THIS TREE HAS BEEN LEAVING TO READERS: THE SECTION
+CITATION.** `docs/python-monadic-rebuild.md` cites **`§8.5` in four places** and
+**has no §8.5** — verified here. The lane had already noticed and written *"the
+anchor dangles"* at its head, which is honest and is **not a control**: prose
+noting a defect is prose (§5.4).
+
+**And the sharper reading is that an existing law already rules it.** MEAS-30
+says **inside a `.md` an untagged `§` is an INTERNAL reference** — so those four
+citations are not merely dangling, they are **untagged cross-document
+citations**: the intended referent is *this* charter's §8.5, and the spelling
+says *that document's*. **The defect is a missing filename, not a missing
+section**, which is a different fix and a much smaller one.
+
+> **A SECTION CITATION IS MECHANICALLY CHECKABLE — same class as the
+> `docs_check` anchors.** For every `§N.N` in a `.md`: either the same document
+> carries that heading, or the citation names the document it belongs to.
+
+**Why it belongs in the gate set rather than in a reviewer's habits**: a
+citation is the one kind of prose whose referent is **resolvable without
+judgement**, so leaving it unchecked is leaving free coverage on the table —
+and the failure mode is exactly the transcription family's (§5.4), since a
+section number is **a copy of another document's structure** and rots when that
+structure moves. The fix is routed to the owning lane; **the shape is the
+register's.**
 
 **AND THE READER LAW, owned TWICE in one landing by the lane that had just
 written the rules it broke:**
@@ -7596,6 +7662,36 @@ table would mislead:
 denominators or a stated reason there is one, the upper-bound guard wherever the
 measure is syntactic, and the vocabulary the ceiling is taken at.
 
+**AND THE TARGET ITSELF MUST BE TYPED, WHICH IS RUNG 1 OF ANY CHAIN** (R-track,
+`docs/sunfish-flagship-chain.md`). The flagship existed **only in prose**.
+
+> **A GOAL THEOREM NOBODY HAS TYPED IS ONE NOBODY CAN TYPECHECK AGAINST.**
+
+> **A chain document's FIRST RUNG IS THE STATEMENT, and a WAITING lane cannot
+> cite an UNSTATED theorem as its target.**
+
+**This closes a gap in §9's WAITING rule** (`-46`), which required an
+**executable trigger** and said nothing about the **target**. A trigger that
+fires against an unwritten theorem tells the lane to start work it cannot check
+it has finished — so the pair is now complete: **a state names the trigger that
+ends it AND the statement that defines done.** And the failure is quiet, because
+prose about a theorem reads exactly like the theorem right up until someone
+tries to elaborate it.
+
+**AND A DECLINED ALTERNATIVE IS RECORDED WITH THE MEASUREMENT THAT DECLINED
+IT.** The same document declined `twinAgrees` **on the plan's own pricing** —
+transport pays only above **~100 mostly-mechanical theorems in one file**, and
+**no file clears it** on the corrected count (§8.5's re-scoping).
+
+> **Record the fork WITH the computed price, so a later lane finds the price
+> COMPUTED rather than re-deriving it.**
+
+**A declination without its number is a decision that must be re-litigated every
+time someone new reads the plan** — and re-litigating it is expensive precisely
+because the number was expensive to get. This is the provenance law pointed at a
+**road not taken**: the measurement that settled it is the only part that
+survives contact with a lane that disagrees.
+
 **AND SV IS THE SECOND LANE TO LAND ITS STANDING NUMBER, with two disciplines
 the table's shape did not yet name.**
 
@@ -7624,6 +7720,44 @@ theorem that the forwarding is faithful"* is a coverage claim resting on **a
 proof**. Delegation normally *weakens* a coverage number — it is the classic
 place where two implementations drift — and a theorem is exactly what converts
 it from a liability into a legitimate numerator entry.
+
+**AND THE NUMERATOR'S HALF OF THE SAME DISCIPLINE, from SoftFloat — third
+instance, and the lane excluded its own work to get it right.** Its §9.0 number
+is **1/12**, with **21 real, landed theorems EXCLUDED from the numerator**,
+because they are not what the family's definition of that number admits:
+*"counting them would be the flattering direction I have already had to correct
+twice."*
+
+> **The DENOMINATOR counts what could have DISAGREED; the NUMERATOR counts only
+> what the family's own definition ADMITS.**
+
+**Both halves are now stated, and they fail in opposite directions**, which is
+why neither alone is enough: a padded denominator **understates** progress while
+looking rigorous; a padded numerator **overstates** it while looking
+industrious. **The second is the tempting one** — the 21 theorems are real work,
+landed and green, and the only thing wrong with counting them is that they do
+not answer the question the number asks.
+
+**TWO MORE LANES' NUMBERS, and one is calibration evidence in its own right.**
+
+* **ES — 38/66 kinds**, in-vocabulary **2 869 → 4 118**, **+1 249 matching its
+  census prediction EXACTLY.**
+
+  > **A census that predicts its own gain TO THE UNIT is calibration evidence,
+  > not just a number.**
+
+  Every other reach figure in this document is a **measurement**; this one is a
+  **prediction that was then measured**, which is the only way an instrument's
+  accuracy — as opposed to its output — is ever established. **An instrument
+  that has never predicted has never been tested**, and a lane that can hit its
+  own forecast to the unit has earned the right to schedule on forecasts.
+* **Lean tier — the export corner NAMED, NOT COUNTED, its 28th obligation**: a
+  byte-level round-trip conditional on core's unproved `Json.parse ∘ compress`,
+  so **27 stays the denominator.** Same family as the vacuity-in-denominator row
+  above, arriving through the opposite door — **not a dead row inflating the
+  denominator, but a live obligation deliberately kept out of it** until its
+  premise is proved. **Named so it cannot be forgotten; uncounted so it cannot
+  flatter.**
 
 **AND THE RIDER THAT MADE §5.6's SELECTION CRITERION ROUTINE: WHEN THE
 DISCRIMINATOR HAS NO CORPUS WITNESS, IT MOVES INTO THE CALL.** Copy-by-value is

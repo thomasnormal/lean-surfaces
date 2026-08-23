@@ -4054,3 +4054,116 @@ what converts it from a liability into a legitimate numerator entry.
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-165 … MEAS-171, STMT-115, OPS-76, OPS-77**.
+
+## 2026-08-24-architecture-53 — A goal theorem nobody has typed; and a false premise vacates rather than weakens
+
+Eight dispatched from two sources — the R-track chain document (merged in
+`7906a8d`) and SoftFloat's `Round.lean` (`ec1e79b`, ticketed) — plus two table
+additions. **All eight landed; one arrived sharper than dispatched.**
+
+**(1) §9.0 — THE TARGET MUST BE TYPED.** The flagship existed **only in prose**.
+
+> **A goal theorem nobody has TYPED is one nobody can typecheck against.**
+> **A chain document's first rung is the STATEMENT, and a WAITING lane cannot
+> cite an unstated theorem as its target.**
+
+**This closes a gap in `-46`'s WAITING rule**, which required an executable
+**trigger** and said nothing about the **target** — a trigger that fires against
+an unwritten theorem tells a lane to start work it cannot check it has finished.
+The pair is now complete: **a state names the trigger that ends it AND the
+statement that defines done.** The failure is quiet, because prose about a
+theorem reads exactly like the theorem until someone elaborates it.
+
+**(2) §5.4a — THE RE-FOUNDING DENOMINATOR, second instance of MEAS-127.** Rung
+6 priced at **221**, actual **57**: the population was *every statement in the
+affected files* (**558**) rather than the ones a re-founding touches (**200
+across three files**).
+
+> **A re-founding's size is the count of statements that NAME the interpreter.**
+
+**SV's honest-denominator law pointed at COST rather than COVERAGE** — the same
+defect in different clothes, and **both inflate while looking conservative.**
+That word is what stops the re-measurement, and I said why it should not:
+**a 4× over-estimate kills the work outright**, which is what it nearly did
+here, and **a killed inch produces no correction, because nobody measures what
+was never attempted.**
+
+**(3) §9.0 — A DECLINED ALTERNATIVE IS RECORDED WITH THE MEASUREMENT THAT
+DECLINED IT.** `twinAgrees` declined **on the plan's own pricing** — transport
+pays only above ~100 mostly-mechanical theorems in one file, and no file clears
+it.
+
+> **Record the fork WITH the computed price, so a later lane finds it COMPUTED
+> rather than re-derived.**
+
+**A declination without its number must be re-litigated by every new reader**,
+and re-litigating is expensive precisely because the number was. The provenance
+law pointed at a **road not taken**.
+
+**(4) §5.3 — A FALSE PREMISE VACATES RATHER THAN WEAKENS.** Plain `BoundRefines`
+is FALSE (refuted at `.int 5`), so the original `RecursionStep` was **vacuously
+true** — green, elaborating, about nothing.
+
+> **A false premise does not weaken a theorem — it VACATES it, and a vacated
+> theorem PASSES.**
+
+**Which is why `BoundRefinesW` is load-bearing and the chain must use it
+throughout**: one downstream statement left on the old premise re-opens the hole
+silently. **The other vacuity shapes announce themselves as EMPTY** — a run that
+executed nothing, a row that never ran. **This one announces itself as a
+proof**, the worst available disguise: nothing missing, the tactic closed, an
+artifact that is a theorem in every respect except subject matter.
+
+**(5) §5.4b — THE SECTION CITATION IS MECHANICALLY CHECKABLE, and I landed it
+sharper than dispatched.** Verified: `docs/python-monadic-rebuild.md` cites
+`§8.5` four times and has no §8.5 — and the lane had already written *"the
+anchor dangles"* at its head, which is honest and **is not a control**.
+
+**But MEAS-30 already rules it**: *inside a `.md` an untagged `§` is an INTERNAL
+reference*. So these are not dangling anchors, they are **untagged
+cross-document citations** — the intended referent is this charter's §8.5 and
+the spelling says that document's. **The defect is a missing filename, not a
+missing section**, which is a different and much smaller fix. Gate shape landed;
+the fix stays routed to the rebuild lane.
+
+**(6-7) COOKBOOK §24 — `op_correct` MENTIONS NO ALGORITHM, and omissions are
+STATED.** SoftFloat deliberately did not write the computable `roundQ` before
+stating `op_correct`, and the tie rule is a **parameter** (ties-to-even /
+ties-to-away become instances). The trap, stated so it is recognizable:
+**any correct implementation is structurally the same finite computation**, so a
+statement phrased in its terms collapses to *"this computes what this
+computes."* **The tell is that the spec file imports or restates the
+implementation — a spec that cannot be read without the code is not a spec.**
+
+And the omission half: `ReprQ` carries **no upper exponent bound** because
+overflow is mode-dependent — folding one in would silently redefine *"nearest
+representable"* as *"nearest representable **or ±∞**"*. **§0.1's forbidden move
+arriving as tidiness.**
+
+**(8) §9.0 — THE NUMERATOR'S HALF, third instance, and the lane excluded its own
+work to get it right.** SoftFloat's number is **1/12 with 21 real landed
+theorems EXCLUDED**.
+
+> **The DENOMINATOR counts what could have DISAGREED; the NUMERATOR counts only
+> what the family's own definition ADMITS.**
+
+**Both halves fail in opposite directions**, which is why neither alone
+suffices: a padded denominator **understates** while looking rigorous, a padded
+numerator **overstates** while looking industrious — **and the second is the
+tempting one**, because the 21 theorems are real, landed and green, and the only
+thing wrong with counting them is that they do not answer the question the
+number asks.
+
+**TWO MORE LANES' NUMBERS.** **ES: 38/66 kinds, 2 869 → 4 118, +1 249 matching
+its census prediction exactly** — and I recorded why that is more than a number:
+**every other reach figure in this document is a measurement; this one is a
+prediction that was then measured**, which is the only way an instrument's
+ACCURACY is ever established. **An instrument that has never predicted has never
+been tested.** And **the Lean tier NAMED, NOT COUNTED its 28th obligation** —
+the vacuity-in-denominator family through the opposite door: **not a dead row
+inflating the denominator, but a live obligation kept out of it until its
+premise is proved. Named so it cannot be forgotten; uncounted so it cannot
+flatter.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-172 … MEAS-178, STMT-116 … STMT-118**.

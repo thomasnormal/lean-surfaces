@@ -117,9 +117,25 @@
 # says what its green covers.  It REFUSES without --gates: there would be
 # nothing to run.
 #
-# GATES.  Without --gates the default set is `docs_check; diff_test`, which is
-# NARROWER than some retired lane scripts.  A run that did not choose its own
-# gates SAYS WHICH ONES IT IS RUNNING — see the notice by `gate_notice` below.
+# GATES.  Without --gates the floor is, by class (§7 surface — this comment
+# and `gate_floor` are the same statement, and `DEFAULT_FLOOR` is the one
+# spelling both the classified and unclassified paths read):
+#
+#   docs      docs_check
+#   anything  docs_check; diff_test; refusal_census --whitelist --no-build
+#   else
+#
+# REFUSAL_CENSUS JOINED THE FLOOR on 2026-08-23, by ruling.  Its §5.2
+# invariants — every interpreter refusal carries a class, and NO row is
+# undefined — used to fire only when a lane happened to pass --gates, and an
+# unexercised gate is not a gate, it is a claim.  It is the no-UB claim's only
+# external check.  `--no-build` is not optional in that line: the tenure
+# prebuilds `leanmodels-run` in the gate phase, and a gate that builds turns a
+# build defect into a gate failure (see the gate-phase build below).
+#
+# The floor is NARROWER than some retired lane scripts.  A run that did not
+# choose its own gates SAYS WHICH ONES IT IS RUNNING — see `gate_notice`, and
+# the `gates:` line every tenure prints at open.
 #   tools/triad.sh --classify-only      # print the classification, run nothing
 #   tools/triad.sh --classify --against <ref>    # default: github/master
 #
@@ -149,8 +165,15 @@ GATES=""
 # THE CLASS FLOOR, NAMED ONCE.  It was a literal inside the gate phase, which
 # is fine until something ELSE has to say what will run — and then the two
 # spellings can drift, and an announcement that drifts lies in the reassuring
-# direction.  One constant, read by the announcement and by the phase.
-DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py'
+# direction.  One constant, read by the announcement, by the phase, AND by
+# `gate_floor` — which had its own second copy of the same list, so a floor
+# change had to be made twice or the classified and unclassified paths would
+# have run different gates.
+DOCS_FLOOR='python3 tools/docs_check.py'
+DEFAULT_FLOOR='python3 tools/docs_check.py; python3 harness/diff_test.py; python3 harness/refusal_census.py --whitelist --no-build'
+# The label the announcement carries, so the first lane to see a new gate line
+# reads WHY rather than filing a bug against its own tenure.
+FLOOR_LABEL='floor of 2026-08-23: + refusal_census --whitelist (§5.2 — every refusal carries a class; no row undefined)'
 CLASSIFY=0
 CLASSIFY_ONLY=0
 FOREIGN=0
@@ -784,9 +807,12 @@ index_is_stale() {      # [clone] -> 0 when the generated index is stale
 }
 
 gate_floor() {          # class -> the gates this landing owes at minimum
+  # ONE SPELLING.  This used to carry its own copy of the list, so the
+  # classified path and the unclassified path could run different floors and
+  # nothing would say so.
   case "$1" in
-    docs) echo 'python3 tools/docs_check.py' ;;
-    *)    echo 'python3 tools/docs_check.py; python3 harness/diff_test.py' ;;
+    docs) printf '%s\n' "$DOCS_FLOOR" ;;
+    *)    printf '%s\n' "$DEFAULT_FLOOR" ;;
   esac
 }
 
@@ -828,7 +854,13 @@ gate_runner_targets() { # gate list -> the exe targets those gates will invoke
   # in the gate string: `diff_test`'s is `lake exe leanmodels-run`.
   if [ -z "$out" ]; then
     case "$g" in
-      *diff_test*|*script_corpus*|*"lake exe"*)
+      # `refusal_census` takes `--runner "lake exe leanmodels-run"` from its
+      # own default, so the exe name never appears in the gate string either.
+      # It joined the floor beside diff_test, which alone would have kept the
+      # prebuild working BY ACCIDENT — a lane running the census through
+      # --gates-only would have reached `--no-build` with nothing built, and
+      # read a missing runner as a census failure.
+      *diff_test*|*script_corpus*|*refusal_census*|*"lake exe"*)
         out="$(lake_exe_names | head -1)" ;;
     esac
   fi
@@ -1126,6 +1158,66 @@ tree_change_report() {                # enq, now, override -> 0 proceed / 1 refu
 # --------------------------------------------------------------- self-test
 # §5.4's law, pointed at this script: every refusal path RUN, not admired.
 # No Lean, no lock, no queue outside the temp dir it creates.
+# ------------------------------------------------------- --classify (§5.4a)
+merge_target_ref() {
+  # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
+  # peer's REMOTES, so `origin` can be a stale local bundle and
+  # `origin/master` reads days back while `git rev-list HEAD..origin/master`
+  # cheerfully reports 0.  Prefer `github/master`; either way, SAY which ref
+  # the classification was taken against.
+  local r
+  for r in github/master origin/master; do
+    if git -C "$CLONE" rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
+  done
+  echo ""
+}
+# --------------------------------------------- what this diff WOULD classify
+# `--classify` is OPT-IN, so a plain `--lane X` on a docs-only diff queues a
+# FULL tenure — and the fuelMono lane's earlier tickets built far more than
+# their floor without ever knowing there was a floor.  The fix could go two
+# ways and the choice is not close:
+#
+#   (a) classify by DEFAULT, with --no-classify to opt out.  Rejected.
+#       Classification NARROWS the build, so this makes narrowing the default:
+#       every lane's coverage would then depend on the classifier being right,
+#       with nobody having asked it to.  That is the exact reading the --gates
+#       ruling rejected ("it takes the reading that cannot silently shrink a
+#       gate set, and makes the other one explicit").  It also turns WORKING
+#       runs into REFUSALS: --classify dies without a merge target, refuses on
+#       unstaged Lean under a lake glob, and CONTRADICTS --foreign by design —
+#       three hard stops imposed on invocations that asked for none of them.
+#
+#   (b) keep it opt-in and SAY, at enqueue, what the diff would classify as.
+#       Chosen.  It is the note-explains-never-downgrades shape: the tenure
+#       runs exactly as it always has, and the lane learns what it could have
+#       taken instead — in the log, in time to act on the next one.
+#
+# ONE LINE, ALWAYS, INCLUDING WHEN IT CANNOT TELL.  Silence would be
+# ambiguous between "your tenure is right-sized" and "the probe did not run".
+#
+# AND IT RUNS IN A SUBSHELL.  `classify_list` sets CLASS_RANK, CLASS_TIERS and
+# BUILD_TARGETS; an advisory that leaked those would NARROW THE VERY BUILD IT
+# is only supposed to describe.  `$( … )` cannot leak a variable — the trap
+# this lane has been bitten by three times is, for once, precisely the tool.
+class_hint() {                  # -> the advisory text; never refuses, never narrows
+  local base changed cls
+  base="$AGAINST"; [ -n "$base" ] || base="$(merge_target_ref)"
+  [ -n "$base" ] || { printf 'not computed (no merge target: neither github/master nor origin/master) — the tenure is FULL'; return 0; }
+  changed="$( { git -C "$CLONE" diff --name-only "$base...HEAD" 2>/dev/null
+                git -C "$CLONE" diff --name-only --cached 2>/dev/null; } | sort -u )"
+  # An empty diff is not a docs-only landing; it is a measurement of nothing,
+  # and the full tenure is the safe reading — the same rule --classify uses.
+  [ -n "$changed" ] || { printf 'not computed (nothing staged or committed against %s) — the tenure is FULL' "$base"; return 0; }
+  classify_list <<< "$changed"
+  cls="$(class_name "$CLASS_RANK")"
+  case "$cls" in
+    docs)  printf 'this diff classifies DOCS against %s — a FULL tenure was queued anyway. --classify takes the floor, and a docs-only landing owes NO TENURE AT ALL' "$base" ;;
+    spine) printf 'this diff classifies SPINE against %s — a full tenure is what it owes' "$base" ;;
+    *)     printf 'this diff classifies %s against %s (tiers: %s) — a FULL tenure was queued anyway; --classify would build `lake build %s`' \
+                  "$cls" "$base" "${CLASS_TIERS:-none}" "${BUILD_TARGETS:-<all default targets>}" ;;
+  esac
+}
+
 if [ "$SELF_TEST" = "1" ]; then
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/triad-selftest.XXXXXX")" || die "no temp dir"
   trap 'rm -rf "$tmp"' EXIT
@@ -1233,11 +1325,16 @@ if [ "$SELF_TEST" = "1" ]; then
   # by which a narrowed run's log carries NO full-build lines from the gates.
   check "diff_test is told the runner is ready" \
         "$(announce_prebuilt "$(gate_floor tier)")" \
-        "python3 tools/docs_check.py; python3 harness/diff_test.py --no-build"
+        "$(printf '%s' "$DEFAULT_FLOOR" | sed 's|harness/diff_test.py|harness/diff_test.py --no-build|')"
+  # COUNTED ON diff_test's OWN SEGMENT.  A bare count of `--no-build` across
+  # the floor started reading 2 the moment refusal_census joined it carrying
+  # its own — which says nothing about the flag this function adds.
   check "  ...and it is said exactly once"     \
-        "$(announce_prebuilt "$(gate_floor tier)" | grep -o -- '--no-build' | grep -c .)" "1"
+        "$(announce_prebuilt "$(gate_floor tier)" | grep -o -- 'diff_test.py --no-build' | grep -c .)" "1"
   check "  ...idempotently"                    \
-        "$(announce_prebuilt "$(announce_prebuilt "$(gate_floor tier)")" | grep -o -- '--no-build' | grep -c .)" "1"
+        "$(announce_prebuilt "$(announce_prebuilt "$(gate_floor tier)")" | grep -o -- 'diff_test.py --no-build' | grep -c .)" "1"
+  check "  ...and the census keeps its own"    \
+        "$(announce_prebuilt "$(gate_floor tier)" | grep -o -- 'refusal_census.py --whitelist --no-build' | grep -c .)" "1"
   check "a non-diff_test gate is left ALONE"   \
         "$(announce_prebuilt 'python3 harness/script_corpus.py')" "python3 harness/script_corpus.py"
 
@@ -1269,6 +1366,76 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...and it is ANNOUNCED"         "$(gates_only_notice "$fl" 1 | grep -c 'THE CLASS FLOOR IS NOT RUNNING')" "1"
   check "  ...naming what is skipped"      "$(gates_only_notice "$fl" 1 | grep -c 'docs_check, diff_test')" "1"
   check "additive mode announces nothing"  "$(gates_only_notice "$fl" 0)" ""
+
+  # ---- THE FLOOR'S COMPOSITION (the 2026-08-23 ruling)
+  echo "  -- floor composition"
+  check "the non-docs floor carries the census" \
+        "$(gate_floor tier | grep -c 'refusal_census.py --whitelist --no-build')" "1"
+  check "  ...and so does spine"               "$(gate_floor spine | grep -c 'refusal_census')" "1"
+  # A DOCS LANDING OWES NO LEAN, so a gate that runs the model has no place in
+  # its floor — that is the whole reason the docs class exists.
+  check "the DOCS floor does not"              "$(gate_floor docs | grep -c 'refusal_census')" "0"
+  check "  ...and is docs_check alone"         "$(gate_floor docs)" "python3 tools/docs_check.py"
+  # ONE SPELLING: the classified path (gate_floor) and the unclassified path
+  # (DEFAULT_FLOOR) must not be able to run different gates.
+  check "both paths read ONE floor"            "$(gate_floor tier)" "$DEFAULT_FLOOR"
+  # `--no-build` is part of the line, not an afterthought: the tenure prebuilds
+  # the runner, and a gate that builds turns a build defect into a gate failure.
+  check "the census never builds inside a gate" \
+        "$(gate_floor tier | grep -c 'refusal_census.py --whitelist --no-build')" "1"
+  # ...which only works if the tenure KNOWS to prebuild the runner for it.
+  check "a census-only gate list still prebuilds" \
+        "$(gate_runner_targets 'python3 harness/refusal_census.py --whitelist --no-build')" "leanmodels-run"
+  check "  ...and the floor as a whole does"   "$(gate_runner_targets "$DEFAULT_FLOOR")" "leanmodels-run"
+  check "the label says WHY the gate appeared" "$(printf '%s' "$FLOOR_LABEL" | grep -c 'refusal_census')" "1"
+  check "  ...and names the invariant"         "$(printf '%s' "$FLOOR_LABEL" | grep -c '§5.2')" "1"
+
+  # ---- THE CLASS ADVISORY (the fuelMono lane's full tenures on docs diffs)
+  echo "  -- class advisory"
+  ch="$tmp/classhint"; mkdir -p "$ch/docs" "$ch/LeanModels/Core"
+  git init -q "$ch" 2>/dev/null
+  git -C "$ch" config user.email qol@example; git -C "$ch" config user.name qol
+  printf 'name = "x"\n[[lean_lib]]\nname = "LeanModels"\n' > "$ch/lakefile.toml"
+  printf '# d\n' > "$ch/docs/a.md"; printf -- '-- m\n' > "$ch/LeanModels/M.lean"
+  git -C "$ch" add -A; git -C "$ch" commit -qm base
+  git -C "$ch" update-ref refs/remotes/origin/master HEAD
+  saved_cl="$CLONE"; saved_ag="${AGAINST:-}"; CLONE="$ch"; AGAINST=""
+
+  # A repo with a merge target but NOTHING against it: an empty diff measured
+  # nothing, and the full tenure is the safe reading — never "docs-only".
+  check "an empty diff is not a docs landing" "$(class_hint | grep -c 'nothing staged or committed')" "1"
+  check "  ...and says the tenure is FULL"    "$(class_hint | grep -c 'the tenure is FULL')" "1"
+
+  printf '# more\n' >> "$ch/docs/a.md"; git -C "$ch" add -A; git -C "$ch" commit -qm docs
+  out="$(class_hint)"
+  check "a docs-only diff classifies DOCS"    "$(printf '%s' "$out" | grep -c 'classifies DOCS')" "1"
+  check "  ...naming what was queued anyway"  "$(printf '%s' "$out" | grep -c 'a FULL tenure was queued anyway')" "1"
+  check "  ...and that it owes no tenure"     "$(printf '%s' "$out" | grep -c 'owes NO TENURE AT ALL')" "1"
+
+  # THE ROW THIS FEATURE LIVES OR DIES BY.  classify_list sets BUILD_TARGETS;
+  # an advisory that leaked it would NARROW the very build it only describes.
+  BUILD_TARGETS="SENTINEL"; CLASS_RANK=0
+  out="$(class_hint)"
+  check "the advisory cannot narrow the build" "$BUILD_TARGETS" "SENTINEL"
+  check "  ...nor move the class rank"         "$CLASS_RANK" "0"
+  BUILD_TARGETS=""
+
+  printf -- '-- edit\n' >> "$ch/LeanModels/M.lean"; git -C "$ch" add -A; git -C "$ch" commit -qm tier
+  check "a Lean diff does NOT say docs"       "$(class_hint | grep -c 'classifies DOCS')" "0"
+  printf 'name2 = "x2"\n' >> "$ch/lakefile.toml"; git -C "$ch" add -A; git -C "$ch" commit -qm spine
+  check "a lakefile change is SPINE"          "$(class_hint | grep -c 'classifies SPINE')" "1"
+  check "  ...and a full tenure is right"     "$(class_hint | grep -c 'is what it owes')" "1"
+
+  # NO MERGE TARGET IS NOT A REFUSAL.  `--classify` dies here, and that is
+  # correct for a lane that ASKED to classify; an advisory that died would
+  # turn every plain tenure in such a clone into a hard stop.
+  nb="$tmp/nobase"; mkdir -p "$nb"; git init -q "$nb" 2>/dev/null
+  git -C "$nb" config user.email qol@example; git -C "$nb" config user.name qol
+  printf 'x\n' > "$nb/a.txt"; git -C "$nb" add -A; git -C "$nb" commit -qm base
+  CLONE="$nb"
+  check "no merge target is NOT fatal"        "$(class_hint >/dev/null 2>&1; echo $?)" "0"
+  check "  ...and it says so, naming both refs" "$(class_hint | grep -c 'neither github/master nor origin/master')" "1"
+  CLONE="$saved_cl"; AGAINST="$saved_ag"
 
   # ---- WHAT WILL RUN, SAID AT TENURE OPEN, and by the SAME composer
   saved_lg="$LANE_GATES"; saved_go="$GATES_ONLY"; saved_fg="$FOREIGN"
@@ -1662,7 +1829,7 @@ if [ "$SELF_TEST" = "1" ]; then
   LS_GREP_ROOT=""
 
   # ---- the default-gate-set notice (the ES lane's migration finding)
-  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test"
+  check "gate names read as script names" "$(gate_names "$(gate_floor tier)")" "docs_check, diff_test, refusal_census"
   check "the docs floor names one gate"   "$(gate_names "$(gate_floor docs)")" "docs_check"
   GATE_NOTICE_DONE=0
   check "a DEFAULT invocation warns"      "$(gate_notice "$(gate_floor tier)" "" | grep -c 'DEFAULT GATES')" "1"
@@ -1679,7 +1846,7 @@ if [ "$SELF_TEST" = "1" ]; then
 
   check "NEVER DOWNGRADE: lane gates keep the tenure" "$(tenure_needed docs 'python3 x.py')" "yes"
   check "tier gates include the differential" \
-        "$(gate_floor tier)" "python3 tools/docs_check.py; python3 harness/diff_test.py"
+        "$(gate_floor tier)" "$DEFAULT_FLOOR"
 
   # --- --build-target: UNION with the classifier's floor, never replacement ---
   BUILD_TARGETS=""
@@ -1756,19 +1923,6 @@ run_gates() {                         # "cmd; cmd" -> sets rc
   IFS="$old_ifs"
 }
 
-# ------------------------------------------------------- --classify (§5.4a)
-merge_target_ref() {
-  # THE A13 CAVEAT, and it has caught four lanes: a seeded clone inherits the
-  # peer's REMOTES, so `origin` can be a stale local bundle and
-  # `origin/master` reads days back while `git rev-list HEAD..origin/master`
-  # cheerfully reports 0.  Prefer `github/master`; either way, SAY which ref
-  # the classification was taken against.
-  local r
-  for r in github/master origin/master; do
-    if git -C "$CLONE" rev-parse --verify --quiet "$r" >/dev/null 2>&1; then echo "$r"; return 0; fi
-  done
-  echo ""
-}
 
 CLASS=""
 FLOOR_USED=""
@@ -1883,6 +2037,7 @@ if [ "$CLASSIFY" = "1" ]; then
   fi
 fi
 
+
 # ------------------------------------------------------------------ enqueue
 mkdir -p "$QUEUE" || die "cannot create the queue at $QUEUE"
 TS="$(now_ns)" || die "no usable nanosecond clock — tickets would not sort"
@@ -1922,10 +2077,22 @@ say "enqueued $TICKET (queue depth $(ls "$QUEUE" | wc -l | tr -d ' '))"
 # BOTH HALVES, so the transcript answers "did it run what I asked for?" without
 # anyone reconstructing the composition rules from the flags.
 say "gates: $(gates_planned)"
+# THE LABEL RIDES WITH THE LINE.  A floor that grows shows up as a new gate in
+# every lane's tenure at once; without a reason beside it the first lane to
+# see it files a bug against its own run.
+if [ "$GATES_ONLY" = "0" ] && [ "$FOREIGN" = "0" ] && [ "$CLASSIFY" = "0" ]; then
+  say "  ($FLOOR_LABEL)"
+fi
 if [ -n "$LANE_GATES" ]; then
   say "gates asked by the lane: $LANE_GATES ($([ "$GATES_ONLY" = "1" ] && echo "--gates-only: REPLACES the floor" || echo "--gates: ADDS to the floor"))"
 else
   say "gates asked by the lane: (none — the class floor only)"
+fi
+# Not when --classify already ran (it printed the real classification, and a
+# second opinion from the same code is noise), and not for --foreign, where
+# this repository's classes and floor do not apply at all (§7.1a).
+if [ "$CLASSIFY" = "0" ] && [ "$FOREIGN" = "0" ]; then
+  say "class: $(class_hint 2>/dev/null || printf 'not computed (the probe failed) — the tenure is FULL')"
 fi
 
 # --------------------------------------------------------------- wait: FIFO

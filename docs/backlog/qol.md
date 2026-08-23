@@ -3160,3 +3160,97 @@ stubbed `lake` on an isolated lock and queue — the header is line 1 of a real
 207), `ci.sh --verify-guards` 32 ok. No Lean executed: the end-to-end run used
 a `lake` stub and `--gates-only python3 tools/docs_check.py`, on `LS_LOCK`/
 `LS_QUEUE` in the scratchpad; the machine-wide lock was never touched.
+
+## 2026-08-23-qol-46 — the floor grows a gate, and a tenure says what it could have been
+
+Two floor-policy items, taken together because they are the same surface.
+
+### refusal_census joins the non-docs floor (by ruling)
+
+`python3 harness/refusal_census.py --whitelist --no-build` is now in the floor
+for every non-docs class. Its §5.2 invariants — every interpreter refusal
+carries a class, no row is undefined — used to fire only when a lane happened
+to pass `--gates`, and **an unexercised gate is not a gate, it is a claim**.
+It is the no-UB claim's only external check.
+
+Doc-first: triad.sh's §7 surface comment now states the floor by class, and
+`docs/family-architecture.md` §7.1a enumerated its members (`docs_check` /
+`diff_test`) — that sentence was wrong the moment the floor changed, so it
+landed in the same commit. **Model and code together.**
+
+**`--no-build` is not decoration in that line.** The tenure prebuilds
+`leanmodels-run` in the gate phase; a gate that builds turns a build defect
+into a gate failure, which is the misattribution the gate-phase build exists
+to prevent. The census honours `LS_RUNNER_PREBUILT` exactly as `diff_test` and
+`script_corpus` do, so belt and suspenders are both present.
+
+**Two defects found while wiring it, neither in the ruling:**
+
+* `gate_floor` carried its **own second copy** of the floor list, so the
+  classified path and the unclassified path could have run different gates
+  with nothing saying so. Both now read `DEFAULT_FLOOR`. A floor that has to
+  be edited twice gets edited once.
+* `gate_runner_targets` matched `diff_test|script_corpus|"lake exe"`, and the
+  census names its runner through its own `--runner` default. It would have
+  worked **by accident** in the floor (which also contains `diff_test`) and
+  failed under `--gates-only`, where a lane would have reached `--no-build`
+  with nothing built and read a missing runner as a census failure.
+
+Five existing rows asserted the OLD floor and had to be updated — which is
+what a floor change should feel like. One of them was counting `--no-build`
+across the whole floor and started reading 2; it now counts on **diff_test's
+own segment**, since the point of that row is the flag this function adds.
+
+### The class advisory: (b), and why not (a)
+
+`--classify` is opt-in, so a plain `--lane X` on a docs-only diff queues a
+FULL tenure. Two options were on the table; the choice is not close.
+
+**(a) classify by default, `--no-classify` to opt out — rejected.**
+Classification NARROWS the build, so this makes **narrowing the default**:
+every lane's coverage would depend on the classifier being right without
+anyone having asked. That is the exact reading the `--gates` ruling rejected —
+"it takes the reading that cannot silently shrink a gate set". It also turns
+working runs into refusals: `--classify` dies without a merge target, refuses
+on unstaged Lean under a lake glob, and CONTRADICTS `--foreign` by design.
+Three hard stops imposed on invocations that asked for none of them.
+
+**(b) chosen.** One line at enqueue, always, including when it cannot tell:
+
+```
+class: this diff classifies DOCS against origin/master — a FULL tenure was
+       queued anyway. --classify takes the floor, and a docs-only landing
+       owes NO TENURE AT ALL
+```
+
+Behaviour is unchanged; the lane learns what it could have taken, in time to
+act on the next one. Silence would be ambiguous between "right-sized" and
+"the probe did not run", so the line is unconditional.
+
+**It runs in a subshell, and that is the load-bearing part.** `classify_list`
+sets `CLASS_RANK`, `CLASS_TIERS` and `BUILD_TARGETS`; an advisory that leaked
+those would narrow the very build it only describes. `$( … )` cannot leak a
+variable — the trap this lane has been bitten by three times is here exactly
+the right tool. A row sets `BUILD_TARGETS=SENTINEL` and asserts it survives.
+
+**A vacuous pass, caught.** That sentinel row and its neighbour passed on the
+first run for the wrong reason: `class_hint` was defined AFTER the self-test
+block, so the call was `command not found` and `BUILD_TARGETS` stayed
+SENTINEL because nothing had run. Only the rows expecting OUTPUT failed
+(rc 127), which is what exposed it. **A row that asserts a variable did not
+change passes when the code never ran** — such a row needs a sibling that
+asserts the code DID run, and here the docs/spine rows are that sibling.
+Both definitions moved above the self-test.
+
+An empty diff is never read as docs-only: it measured nothing, and the full
+tenure is the safe reading — the same rule `--classify` already applies.
+No merge target is an advisory line, never a refusal.
+
+### Triad
+
+`bash -n` clean. `triad.sh` **230 ok** (207 → 230), `ci.sh --verify-guards`
+32 ok, sites 57 ok. Confirmed end-to-end on an isolated lock and queue with a
+stubbed `lake`: both the floor line with its label and the advisory print, and
+`--classify-only` reports the same floor — one spelling, two paths. The census
+itself was NOT run here: it executes the model, which needs a tenure (A11).
+Its flags were verified from `--help`, which runs nothing.

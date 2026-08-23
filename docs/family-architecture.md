@@ -6310,9 +6310,9 @@ directory lands. Check the scope before the tenure, not after.
 lane pointing it at a foreign checkout will get a confident wrong answer
 rather than an error. Two reasons, both structural:
 
-* **the class floor hard-wires our gates** — `docs_check` / `diff_test` are
-  named in the classifier's floor and in the default gate set, and a
-  foreign project has neither;
+* **the class floor hard-wires our gates** — `docs_check` / `diff_test` /
+  `refusal_census` are named in the classifier's floor and in the default
+  gate set, and a foreign project has none of them;
 * **classification diffs against `github/master`** (the flag's default
   `--against` ref), which names **our** master. A foreign checkout either
   has no such ref or has one that means something entirely different — and

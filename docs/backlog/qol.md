@@ -1024,3 +1024,70 @@ all four staleness states, our own entry never blocking us, the RSS ceiling in
 **both** directions plus the offender it names, and the A17 citation in all
 three states. `triad.sh` **122 ok**, `backlog-index.sh` **25 ok**, `docs_check`
 **83/83**. **No Lean was executed.**
+
+---
+
+## 2026-08-23-qol-16 — the triad summary now says what it knows: counts from the full log, and an aborted triad called one
+
+Measured on the wrapper itself (§7, master `9ade44d`): the "first failures"
+block was `grep -E '^error|✖' | sort -u | head -8`, and **a lane reported "one
+error in 839 targets" off it — a number that then travelled up the chain.**
+
+Three things were wrong at once, and only the third is obvious: the preview is
+**deduplicated**, it is **truncated at eight**, and **`lake` stops at the first
+failing module**, so the log being summarised is already partial. A count
+taken from that block is a **lower bound on sites, never a count.**
+
+### What the wrapper prints now, on any red build
+
+```
+[06:54:14] BUILD DID NOT COMPLETE (exit 1)
+    failed modules   1   (✖ lines)
+    error lines      12 total, 12 distinct
+    targets          502 of 839 when lake stopped — and lake stops at the FIRST failing module
+    first 8 of 13 (summary LOCATES; the full log COUNTS):
+      ...
+    These counts say how far the build GOT, not how much of the tree is broken.
+[06:54:14] GATES NOT RUN (build red — aborted triad)
+```
+
+**The amplification gap is named**, because it is exactly what turns one root
+cause into a frightening number — or a comforting one. Forty identical error
+lines from one bad identifier now read `40 total, 1 distinct — AMPLIFIED
+40.0x`, and the deduped pool is reported as `first 2 of 2` rather than
+silently standing in for forty.
+
+**And `GATES NOT RUN (build red — aborted triad)`** is printed as its own
+line. A red build short-circuits the tenure, so a red triad yields a
+build-error list **and nothing else** — no `docs_check`, no `diff_test`. It is
+not a triad result with one part failing; **reporting it as "triad: 1 failure"
+claims two gates that never executed.** Both red paths get the block: the main
+build and the gate-phase build.
+
+Also removed: the two dead `*monadic_gate*` patterns. That harness was
+**deleted on master in `eeeb1fd`**, which closes `qol-10`'s open item — it was
+recorded there as *owed to the R-track*, and the resolution turned out to be
+deletion rather than a fix.
+
+### Doc-first, and the doc had gone stale in one word
+
+§7's law landed ahead of the code, which is the right order. But its diagnosis
+quotes the old block in the **present tense**, and the code has just made that
+false — so §7 now carries a short `IMPLEMENTED` note marking the quoted block
+as *the defect as found*. Model and code agree again; the incident record is
+untouched.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **142 ok, 0 failed** (122 → 142, **20 new**).
+The summary is the instrument that reports the other instruments, so it is
+tested against two synthetic logs: one with **12 distinct errors and 3 failed
+modules** (asserting the counts, `502 of 839`, the `first 8 of 15` label, that
+the preview really is eight lines, and that **no** amplification is claimed
+when there is none), and one with **40 lines from a single root cause**
+(asserting `40 total, 1 distinct`, the named `40.0x`, and the deduped pool).
+Plus a log with no progress lines (`targets unknown`), a missing log refusing
+honestly, the `GATES NOT RUN` line with its headline and counts intact, and
+the deleted harness no longer matched while the live ones still are.
+`docs_check` **87/87**. Spine edit, no Lean executed — the self-tests drive
+synthetic logs, so no tenure was needed.

@@ -688,7 +688,7 @@ gate_floor() {          # class -> the gates this landing owes at minimum
 # ---- THE GATE PHASE BUILDS TOO, AND THAT DEFEATED THE NARROWING
 # Found by the R-track running a narrowed build: `harness/diff_test.py` runs
 # an UNCONDITIONAL `lake build` before its cases, and every runner-driven gate
-# (`diff_test`, `script_corpus`, a lane's `monadic_gate`) invokes
+# (`diff_test`, `script_corpus`) invokes
 # `lake exe leanmodels-run`, which BUILDS.  So a narrowed tenure got a full
 # build anyway — inside the GATE phase, where it is accounted as a gate.
 #
@@ -723,7 +723,7 @@ gate_runner_targets() { # gate list -> the exe targets those gates will invoke
   # in the gate string: `diff_test`'s is `lake exe leanmodels-run`.
   if [ -z "$out" ]; then
     case "$g" in
-      *diff_test*|*script_corpus*|*monadic_gate*|*"lake exe"*)
+      *diff_test*|*script_corpus*|*"lake exe"*)
         out="$(lake_exe_names | head -1)" ;;
     esac
   fi
@@ -821,6 +821,57 @@ coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
     spine) echo "full: a green covers every default target at this sha." ;;
     *)    echo "no files classified — this run measured nothing." ;;
   esac
+}
+
+# ------------------------------------------- THE RED-BUILD REPORT (§7)
+# The old block was `grep -E '^error|✖' | sort -u | head -8`, and a lane
+# reported "one error in 839 targets" off it — a number that then travelled up
+# the chain.  Three things were wrong at once, and only the third is obvious:
+# the preview is DEDUPLICATED, it is TRUNCATED AT EIGHT, and `lake` STOPS AT
+# THE FIRST FAILING MODULE, so the log being summarised is already partial.
+#
+#   > The triad summary LOCATES; the full log COUNTS.  (§7)
+#
+# So the wrapper now says what it knows: counts taken from the WHOLE log, the
+# preview labelled with how much of the pool it is showing, and the gap
+# between total and distinct error lines named as AMPLIFICATION, because that
+# gap is exactly what turns one root cause into a scary number (or a
+# comforting one).
+build_failure_report() {              # log -> counts, then a LABELLED preview
+  local log="$1" n_mod n_tot n_dis pool m shown amp built
+  [ -f "$log" ] || { echo "    (no log at '$log')"; return 0; }
+  n_mod="$(grep -c '✖' "$log" 2>/dev/null || true)"
+  n_tot="$(grep -cE '^error|error:' "$log" 2>/dev/null || true)"
+  n_dis="$(grep -E '^error|error:' "$log" 2>/dev/null | sort -u | grep -c . || true)"
+  pool="$(grep -E '^error|✖' "$log" 2>/dev/null | sort -u || true)"
+  m="$(printf '%s' "$pool" | grep -c . || true)"
+  shown="$m"; [ "$shown" -gt 8 ] && shown=8
+  built="$(grep -oE '\[[0-9]+/[0-9]+\]' "$log" 2>/dev/null \
+           | tr -d '[]' \
+           | awk -F/ '{ if ($1+0 > k) { k = $1+0; n = $2+0 } } END { if (n) printf "%d of %d", k, n }')"
+  printf '    failed modules   %s   (✖ lines)\n' "$n_mod"
+  amp=""
+  if [ "$n_dis" -gt 0 ] && [ "$n_tot" -gt "$n_dis" ]; then
+    amp="$(awk -v a="$n_tot" -v b="$n_dis" 'BEGIN { printf "  — AMPLIFIED %.1fx: one root cause prints many lines", a/b }')"
+  fi
+  printf '    error lines      %s total, %s distinct%s\n' "$n_tot" "$n_dis" "$amp"
+  printf '    targets          %s when lake stopped — and lake stops at the FIRST failing module\n' \
+         "${built:-unknown}"
+  printf '    first %s of %s (summary LOCATES; the full log COUNTS):\n' "$shown" "$m"
+  printf '%s\n' "$pool" | head -8 | sed 's/^/      /'
+  printf '    These counts say how far the build GOT, not how much of the tree is broken.\n'
+  return 0
+}
+
+# A red build short-circuits the tenure, so a red triad is not a triad result
+# with one part failing — it is an ABORTED triad.  Saying so is the difference
+# between "1 failure" and "two gates that never executed" (§7, §5.4a).
+build_red_report() {                  # log, headline -> the whole red block
+  say "$2"
+  build_failure_report "$1"
+  say "GATES NOT RUN (build red — aborted triad)"
+  say "full log: $1"
+  return 0
 }
 
 # --------------------------------------------------------------- self-test
@@ -1014,6 +1065,62 @@ if [ "$SELF_TEST" = "1" ]; then
   check "the coverage says the floor is N/A"     "$(foreign_coverage | grep -c 'class floor not applicable')" "1"
   check "  ...and claims nothing about US"       "$(foreign_coverage | grep -c 'about nothing in this repository')" "1"
   FOREIGN=0
+
+  # ---- the red-build report: the instrument that reports the other instruments
+  echo "  -- red-build report (§7)"
+  rl="$tmp/red-many.log"
+  { echo "info: [1/839] Building LeanModels.A"
+    echo "info: [312/839] Building LeanModels.B"
+    i=1
+    while [ "$i" -le 12 ]; do
+      echo "error: LeanModels/A.lean:$i:1: unknown constant 'X$i'"
+      i=$((i + 1))
+    done
+    echo "✖ [500/839] Building LeanModels.M1"
+    echo "✖ [501/839] Building LeanModels.M2"
+    echo "✖ [502/839] Building LeanModels.M3"
+  } > "$rl"
+  out="$(build_failure_report "$rl")"
+  check "failed modules counted from the FULL log" "$(printf '%s' "$out" | grep -c 'failed modules   3')" "1"
+  check "error lines: total AND distinct"          "$(printf '%s' "$out" | grep -c 'error lines      12 total, 12 distinct')" "1"
+  check "how far lake GOT is reported"             "$(printf '%s' "$out" | grep -c '502 of 839')" "1"
+  check "  ...with lake's stop-at-first named"     "$(printf '%s' "$out" | grep -c 'FIRST failing module')" "1"
+  check "the preview is LABELLED first 8 of 15"    "$(printf '%s' "$out" | grep -c 'first 8 of 15')" "1"
+  check "  ...and says which one counts"           "$(printf '%s' "$out" | grep -c 'summary LOCATES; the full log COUNTS')" "1"
+  check "the preview really is 8 lines"            "$(printf '%s' "$out" | grep -c '^      ')" "8"
+  check "no amplification claimed when there is none" "$(printf '%s' "$out" | grep -c 'AMPLIFIED')" "0"
+  check "the 'how far' caveat is stated"           "$(printf '%s' "$out" | grep -c 'how far the build GOT')" "1"
+
+  # AMPLIFICATION: one root cause, forty lines.  This is the shape that turned
+  # into "one error in 839 targets" when read off a deduplicated preview.
+  rl2="$tmp/red-amp.log"
+  { echo "info: [7/9] Building Examples.X"
+    i=1
+    while [ "$i" -le 40 ]; do
+      echo "error: Examples/x/proof.lean:3:5: unknown identifier 'foo'"
+      i=$((i + 1))
+    done
+    echo "✖ [8/9] Building Examples.X"
+  } > "$rl2"
+  out2="$(build_failure_report "$rl2")"
+  check "amplification: 40 total, 1 distinct"      "$(printf '%s' "$out2" | grep -c '40 total, 1 distinct')" "1"
+  check "  ...and the ratio is NAMED"              "$(printf '%s' "$out2" | grep -c 'AMPLIFIED 40.0x')" "1"
+  check "  ...the deduped pool is 2, and says so"  "$(printf '%s' "$out2" | grep -c 'first 2 of 2')" "1"
+
+  printf 'error: boom\n' > "$tmp/red-bare.log"
+  check "no progress lines -> targets unknown"     "$(build_failure_report "$tmp/red-bare.log" | grep -c 'targets          unknown')" "1"
+  check "a missing log refuses honestly"           "$(build_failure_report "$tmp/no-such.log" | grep -c 'no log at')" "1"
+
+  # A RED BUILD IS AN ABORTED TRIAD, not a triad with one part failing.
+  out3="$(build_red_report "$rl2" "BUILD DID NOT COMPLETE (exit 1)")"
+  check "the red block says GATES NOT RUN"         "$(printf '%s' "$out3" | grep -c 'GATES NOT RUN (build red — aborted triad)')" "1"
+  check "  ...carries the headline it was given"   "$(printf '%s' "$out3" | grep -c 'BUILD DID NOT COMPLETE (exit 1)')" "1"
+  check "  ...and names the full log"              "$(printf '%s' "$out3" | grep -c 'full log:')" "1"
+  check "  ...and still carries the counts"        "$(printf '%s' "$out3" | grep -c '40 total, 1 distinct')" "1"
+
+  # The deleted harness (master eeeb1fd) is no longer matched.
+  check "the deleted monadic_gate is not matched"  "$(gate_runner_targets 'python3 harness/monadic_gate.py')" ""
+  check "  ...while the live harnesses still are"  "$(gate_runner_targets 'python3 harness/script_corpus.py')" "leanmodels-run"
 
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
@@ -1456,9 +1563,7 @@ done
 if grep -q 'Build completed successfully' "$BUILD_LOG"; then
   say "BUILD GREEN"
 else
-  say "BUILD DID NOT COMPLETE (exit $BUILD_EXIT) — first failures:"
-  grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
-  say "full log: $BUILD_LOG"
+  build_red_report "$BUILD_LOG" "BUILD DID NOT COMPLETE (exit $BUILD_EXIT)"
   exit 1
 fi
 
@@ -1489,9 +1594,8 @@ if [ -n "$BUILD_TARGETS" ]; then
     if [ "$gate_build_exit" -ne 0 ]; then
       # This is a BUILD failure.  Letting it reach the gates is exactly the
       # misattribution this block exists to stop.
-      say "GATE-PHASE BUILD FAILED (exit $gate_build_exit) — this is a BUILD failure, NOT a gate failure"
-      grep -E '^error|✖' "$BUILD_LOG" | sort -u | head -8
-      say "full log: $BUILD_LOG"
+      build_red_report "$BUILD_LOG" \
+        "GATE-PHASE BUILD FAILED (exit $gate_build_exit) — this is a BUILD failure, NOT a gate failure"
       exit 1
     fi
     GATE_BUILT="$GATE_TARGETS"

@@ -3782,6 +3782,14 @@ count taken from it is a **LOWER BOUND on sites, never a count.**
 
 > **The triad summary LOCATES; the full log COUNTS.**
 
+**IMPLEMENTED, 2026-08-23** — the block quoted above is the defect *as found*.
+`tools/triad.sh` now prints, on any red build, counts taken from the **whole**
+log: failed modules (`✖` lines), error lines **total and distinct** with the
+**amplification ratio named** when they differ, and how far `lake` got before
+it stopped. The preview is labelled **`first N of M`** and still only locates.
+The dead `monadic_gate` patterns went with it — that harness was deleted in
+`eeeb1fd`.
+
 **And a red build means THE GATES NEVER RAN.** Build exit 1 short-circuits
 the tenure, so a red triad yields **a build-error list and nothing else** —
 no `docs_check`, no `diff_test`, no census. A red triad is therefore not a

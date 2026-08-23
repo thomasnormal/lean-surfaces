@@ -4753,6 +4753,44 @@ Re-run clean; that is the only thing that settles it.
 
 ---
 
+#### VENDORED FIXTURES — where they live, and what they must carry
+
+Every language lane wants a source file beside its model: a `.go`, a `.c`, a
+`.js` the Lean model is *about*. **They live BESIDE the model** —
+`Examples/<lang>/<case>/<file>.<ext>` next to that case's `guards.lean` — and
+that is now safe to do, which it was not.
+
+**The measured history, because it is the reason the rule can be stated at
+all.** The Go lane vendored `bitlen.go` beside its model and the tenure went
+from **91 seconds to 37 minutes**: a non-Lean file under `Examples/` widened
+the build target to the whole `Examples` library. They worked around it by
+deleting the sibling and quoting the source into the docstring. With the
+classifier's reachability rule the same tenure is **129 seconds**, and the
+workaround is no longer needed.
+
+Two rules make it hold:
+
+* **A PROSE MENTION IS NOT A REFERENCE.** A fixture named only in a docstring
+  or a comment is invisible to `lake` and classifies `docs`; one reached from
+  **code** (`include_str`, `load_c_program … from`, an `[[input_dir]]` member)
+  is a build input and widens the scope, correctly. This matters precisely
+  because an attribution header is what makes a lane name the file in prose —
+  the convention below would otherwise fight the classifier.
+* **THE FIXTURE CARRIES ITS ATTRIBUTION AND LICENCE**, in the file, at the
+  top. The precedent is the Go lane's: `nat.go` from `crypto/internal/fips140`
+  reproduced with **BSD-3-Clause, "Copyright 2009 The Go Authors"**, per
+  `docs/go-charter.md` §1.4's ruling that in-tree copies are taken under the
+  repository's single instrument. This is §8 step 0's *licence and provenance
+  are registry fields, not a detail discovered later*, applied to a single
+  file instead of a corpus.
+
+And the instruments **skip** these fixtures rather than reading them as code:
+`tools/sites.sh` scans `*.lean` only, and `tools/dupes.sh` scans `harness/`
+and `tools/` only — `Examples/` holds 62 `.py` fixtures that are corpus, not
+implementation. Both filters are now explicit and self-tested, because a tool
+that read a Go constructor as one of ours would produce exactly the confident
+wrong number it exists to prevent.
+
 #### THE LANE TOOLS — one line each, and the law each one implements
 
 Every tool below runs **no Lean** unless its own line says otherwise, so it is

@@ -55,6 +55,10 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# `harness/` and `tools/` at depth 1 ONLY, deliberately: `Examples/` holds 62
+# `.py` FIXTURES that are corpus, not implementation.  Counting a fixture's
+# `def main` as a duplicated contract would make the instrument that measures
+# duplication report the corpus as debt.
 py_files() {
   find "$CLONE/harness" "$CLONE/tools" -maxdepth 1 -name '*.py' -type f 2>/dev/null \
     | LC_ALL=C sort
@@ -110,6 +114,10 @@ if [ "$SELF_TEST" = "1" ]; then
   CLONE="$fx"
 
   check "files are found in harness AND tools" "$(py_files | grep -c .)" "4"
+  mkdir -p "$fx/Examples/python/lab"
+  printf 'def census():\n    pass\n' > "$fx/Examples/python/lab/fixture.py"
+  check "an Examples FIXTURE is not scanned as code" "$(py_files | grep -c Examples)" "0"
+
   check "a contract implemented twice is found" \
         "$(contract_files 'rev-parse' | grep -c .)" "2"
   check "a contract nobody implements is empty" \

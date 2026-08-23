@@ -71,6 +71,11 @@ while [ $# -gt 0 ]; do
 done
 
 # ---------------------------------------------------------------- helpers
+# LEAN ONLY, and the filter is the point rather than an accident: every
+# language lane vendors a source fixture beside its model (`rung1.go`,
+# `sunfish.json`), and reading a `.go` file as Lean would count a Go
+# constructor as one of ours — a confident wrong number, which is the
+# failure this whole tool exists to prevent.
 lean_files() { find "$CLONE" -name '*.lean' -type f 2>/dev/null | LC_ALL=C sort; }
 
 # WHICH TYPES DECLARE THIS CONSTRUCTOR.  This is what makes a look-alike
@@ -467,6 +472,15 @@ def real : R := .halt (.unsupported "yes")
    still inside -/
 def real2 : R := .halt (.unsupported "yes")
 LEAN
+  # Vendored fixtures are SKIPPED, not scanned as code.
+  vf="$tmp/vendored"; mkdir -p "$vf/Examples/go/rung1"
+  printf 'package main\nfunc unsupported() {}\n' > "$vf/Examples/go/rung1/rung1.go"
+  printf 'def real : R := .halt (.unsupported "m")\n' > "$vf/Examples/go/rung1/guards.lean"
+  saved_cl="$CLONE"; CLONE="$vf"
+  check "a vendored .go is not in the scan set" "$(lean_files | grep -c '[.]go$')" "0"
+  check "  ...while its .lean sibling is"       "$(lean_files | grep -c 'guards[.]lean')" "1"
+  CLONE="$saved_cl"
+
   check "comments are not sites"        "$(code_hits "$cm/Doc.lean" '\\.unsupported' | grep -c .)" "2"
   check "  ...and the real ones ARE"    "$(code_hits "$cm/Doc.lean" '\\.unsupported' | cut -d: -f1 | tr '\n' ' ' | sed 's/ *$//')" "2 8"
   # `awk -v` strips ONE backslash level: passing `\.` made the dot a WILDCARD,

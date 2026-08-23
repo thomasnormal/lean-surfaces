@@ -493,20 +493,69 @@ module_of() {           # path.lean -> dotted module, or '' if any component
 # root was wrong.  So the root is checked before any status is believed —
 # §7.1 rule 5's lesson in another costume: a broken liveness check does not
 # fall back to caution, it falls FORWARD.
+# A PROSE MENTION IS NOT A REFERENCE.  The Go lane vendored `bitlen.go` beside
+# its model and cited it in the docstring — the only mention of it in any
+# `.lean` — and the tenure went from 91 SECONDS TO 37 MINUTES, because a
+# reachable non-Lean fixture widens the target to the whole `Examples` library.
+# They worked around it by deleting the sibling and quoting the source; the
+# real fix is here.  An attribution header is exactly what makes a lane name
+# the file in prose, so the rule and the convention would otherwise fight.
+#
+# Strip Lean comments before looking for the path — the same discipline
+# `harness/wasm_sorry_census.py` needed for `sorry` and `tools/sites.sh` for
+# constructor sites.  (Third copy of the comment walker in this tree; a shared
+# helper is owed, and `tools/dupes.sh` counts `.py` only, so it will not see
+# it — recorded rather than left for someone to notice.)
+code_mentions() {               # needle, file -> 0 when it appears OUTSIDE comments
+  awk -v NEEDLE="$1" '
+    { line = $0; out = ""; i = 1; n = length(line)
+      while (i <= n) {
+        two = substr(line, i, 2)
+        if (depth == 0 && two == "--") break
+        if (two == "/-") { depth++; i += 2; continue }
+        if (two == "-/") { if (depth > 0) depth--; i += 2; continue }
+        if (depth == 0) out = out substr(line, i, 1)
+        i++ }
+      if (index(out, NEEDLE) > 0) { found = 1; exit } }
+    END { exit(found ? 0 : 1) }' "$2"
+}
+
 example_fixture_is_reachable() {   # path -> 0 reachable, 1 provably invisible
-  local p="$1" base root rc
+  # `hit` is LOCAL and deliberately not named `c`: the caller holds its verdict
+  # in `c`, and the first cut looped `for c in $(git grep -l …)`, silently
+  # overwriting "tier" with a filename — which then fell through the caller's
+  # `case` to `docs`.  A referenced fixture read as invisible, from a variable
+  # name.  Every loop variable in here is local.
+  local p="$1" base root rc hit
   root="${LS_GREP_ROOT:-$CLONE}"
   base="${p##*/}"
   # DOUBT, structurally: no readable root means no probe, and no probe means
   # reachable.  Never infer "unreferenced" from a search that did not happen.
   [ -d "$root" ] && [ -r "$root" ] || return 0
   if git -C "$root" rev-parse --git-dir >/dev/null 2>&1; then
-    git -C "$root" grep -q -I -F --untracked -e "$p" -e "$base" \
-        -- '*.lean' 'harness/*.json' >/dev/null 2>&1
-    rc=$?
+    # The gate corpora are JSON and carry no Lean comments, so a plain grep is
+    # right there; only the `.lean` side needs the comment walk.
+    if git -C "$root" grep -q -I -F --untracked -e "$p" -e "$base" \
+        -- 'harness/*.json' >/dev/null 2>&1; then
+      rc=0
+    else
+      rc=1
+      for hit in $(git -C "$root" grep -l -I -F --untracked -e "$p" -e "$base" \
+                   -- '*.lean' 2>/dev/null); do
+        if code_mentions "$base" "$root/$hit" || code_mentions "$p" "$root/$hit"; then
+          rc=0; break
+        fi
+      done
+    fi
   else
-    grep -rqI -F --include='*.lean' -e "$p" -e "$base" "$root" 2>/dev/null
-    rc=$?
+    # THE FALLBACK BRANCH MUST BE COMMENT-AWARE TOO.  The first cut fixed only
+    # the git-grep path, so a clone without git — and every self-test fixture —
+    # still counted a docstring mention as a reference.  A rule enforced on one
+    # of two paths is a rule with a hole exactly where nobody looks.
+    rc=1
+    for hit in $(grep -rlI -F --include='*.lean' -e "$p" -e "$base" "$root" 2>/dev/null); do
+      if code_mentions "$base" "$hit" || code_mentions "$p" "$hit"; then rc=0; break; fi
+    done
     if [ "$rc" != "0" ] && [ -d "$root/harness" ]; then
       grep -rqI -F --include='*.json' -e "$p" -e "$base" "$root/harness" 2>/dev/null
       rc=$?
@@ -1323,7 +1372,11 @@ if [ "$SELF_TEST" = "1" ]; then
   fx="$tmp/fixroot"
   mkdir -p "$fx/Examples/c/sunfish" "$fx/Examples/go/rung1" \
            "$fx/Examples/python/exc_lab" "$fx/harness"
-  printf 'import LeanModels.C\n-- ingests Examples/c/sunfish/sunfish.json\n' \
+  # A CODE reference, matching the real tree: `guards.lean` ingests the fixture
+  # with `load_c_program … from "…/sunfish.json"`.  The first version wrote the
+  # reference as a `--` COMMENT, and once the probe learned to skip comments
+  # that fixture was asserting the opposite of the tree it stood for.
+  printf 'import LeanModels.C\nload_c_program sunfishC from "Examples/c/sunfish/sunfish.json"\n' \
          > "$fx/Examples/c/sunfish/guards.lean"
   : > "$fx/Examples/c/sunfish/sunfish.json"
   : > "$fx/Examples/go/rung1/rung1.go"
@@ -1345,6 +1398,20 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...and no build target"                      "$BUILD_TARGETS" ""
   case "$CLASS_NOTES" in *"unreferenced by any Lean module or gate corpus"*) n=said ;; *) n=silent ;; esac
   check "  ...and the line SAYS WHY"                    "$n" "said"
+
+  # A VENDORED SOURCE BESIDE THE MODEL — the shape every language lane wants.
+  # The Go lane's tenure went 91s -> 37 MINUTES on exactly this, because the
+  # fixture was named in the model's docstring and a prose mention read as a
+  # reference.
+  : > "$fx/Examples/go/rung1/rung1.go"
+  printf 'import LeanModels.Go\n/-- Source: Examples/go/rung1/rung1.go, BSD-3. -/\ndef g := 1\n' \
+    > "$fx/Examples/go/rung1/guards.lean"
+  cls Examples/go/rung1/rung1.go
+  check "a vendored .go beside a .lean -> docs"         "$(class_name "$CLASS_RANK")" "docs"
+  check "  ...and it does NOT widen the build"          "$BUILD_TARGETS" ""
+  check "  ...even though the docstring NAMES it"       "$(code_mentions rung1.go "$fx/Examples/go/rung1/guards.lean" && echo code)" ""
+  printf 'def d := include_str "Examples/go/rung1/rung1.go"\n' >> "$fx/Examples/go/rung1/guards.lean"
+  check "but a CODE reference is still reachable"       "$(code_mentions rung1.go "$fx/Examples/go/rung1/guards.lean" && echo code)" "code"
 
   cls Examples/c/sunfish/guards.lean
   check "a .lean under Examples is tier, no probe"      "$(class_name "$CLASS_RANK")" "tier"

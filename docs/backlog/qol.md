@@ -2106,3 +2106,80 @@ selecting somebody else's evidence.
 pointer naming the log, saying it was kept rather than deleted, **counting the
 other logs beside it**, and warning off the newest. `docs_check` **87/87**. No
 Lean executed.
+
+---
+
+## 2026-08-23-qol-31 — the vendored-fixture convention, and a prose mention that still cost the whole library
+
+The Go lane asked me to finish the convention my classifier fix started. Doing
+it found the fix was **half done**.
+
+### The gap: an attribution header re-created the 37-minute tenure
+
+`qol-5` made an *unreferenced* non-Lean fixture classify `docs`. But the
+reachability probe grepped the raw `.lean` text — so a fixture named in a
+**docstring** counted as referenced, and a referenced fixture widens the build
+to the whole `Examples` library. Reproduced before fixing:
+
+```
+  build     lake build Examples.go.probe.guards Examples     <- the 37 minutes, back
+```
+
+**And an attribution header is exactly what makes a lane name the file in
+prose**, so the convention I was asked to document would have fought the rule I
+was documenting it against. The probe now **strips Lean comments** before
+looking — the same discipline `wasm_sorry_census.py` needed for `sorry` and
+`sites.sh` for constructor sites. After:
+
+```
+  build     lake build Examples.go.probe.guards
+```
+
+A **code** reference (`include_str`, `load_c_program … from`) still widens,
+verified in the same run.
+
+### Two defects of mine, and the second was live
+
+**The fix was applied to one of two branches.** I made the `git grep` path
+comment-aware and left the plain-`grep` fallback blind — so a clone without
+git, *and every self-test fixture*, still counted prose. A rule enforced on one
+of two paths is a rule with a hole exactly where nobody looks.
+
+**And then variable capture.** My loop was `for c in $(git grep -l …)`, and
+`c` is the name `classify_list` holds its verdict in — not declared local. The
+loop overwrote `"tier"` with a filename, which fell through the caller's
+`case` to `docs`. Live effect: `Examples/c/sunfish/sunfish.json`, which real
+code ingests at `guards.lean:43`, classified **docs** — a referenced fixture
+read as invisible, from a variable name. Caught by running the live case
+rather than trusting 165 green self-tests, which is the only reason it did not
+land.
+
+**A fixture was wrong too.** The `qol-5` self-test wrote its "referenced"
+reference as a `--` comment. Once the probe learned to skip comments, that
+fixture was asserting the opposite of the tree it stood for — it now uses the
+real `load_c_program … from` spelling.
+
+### The convention, now in §7
+
+**Vendored fixtures live BESIDE the model** — `Examples/<lang>/<case>/` next to
+that case's `guards.lean` — and that is safe now: measured **91 s → 37 min →
+129 s**. **The fixture carries its attribution and licence in the file**, on
+the Go lane's precedent: BSD-3-Clause, *"Copyright 2009 The Go Authors"*, per
+`go-charter.md` §1.4. That is §8 step 0's *licence and provenance are registry
+fields* applied to one file instead of a corpus.
+
+### The instruments skip them, explicitly
+
+`sites.sh` scans `*.lean` only; `dupes.sh` scans `harness/` and `tools/` only.
+Both already did **by construction** — I checked before claiming a fix — but
+neither said so, and an accident that holds is one edit from not holding. The
+filters are now commented as deliberate and pinned by self-tests: a `.go`
+beside a `.lean` is not in the scan set, and an `Examples/` `.py` fixture is
+not counted as a duplicated contract.
+
+### Triad
+
+`bash -n` clean. `triad.sh` **169 ok** (165 → 169: a vendored `.go` beside a
+`.lean` classifying docs, **not widening the build**, doing so **even though
+the docstring names it**, and a code reference still reachable). `sites.sh`
+**44 ok**, `dupes.sh` **10 ok**. `docs_check` **87/87**. No Lean executed.

@@ -63,6 +63,18 @@ done
 
 MODELS="$CLONE/LeanModels"
 
+# A `no` THAT DOES NOT SAY WHAT IT LOOKED FOR IS NOT ACTIONABLE.  A tier
+# reading `run NO` can only dispute the VERDICT; a tier reading the PATTERN can
+# dispute the pattern — which is the argument that actually settles it, and the
+# one this lane keeps being right to lose (Ada NONE, applyBuiltin's shape).
+P_MONAD_ADOPT='abbrev <name> ... := ... (SemMWith|HaltWith|SemM )'
+P_MONAD_SHAPE='abbrev ... := ... ExceptT ... StateT ... (Halt|Except)'
+P_MONAD_OWN='inductive (Res|Outcome|Result)'
+P_UNCATCH='(theorem|example|lemma|#guard) ... (tryCatch|catchIn|.catch), or tryCatch within 2 lines of (Loud|Halt|unsupported)'
+P_RUN='^def (toRun|run)\b'
+P_REFUSAL='\.(error|halt|loud) \(\.<ctor>  |  (Halt|Loud)\.<ctor>'
+P_TWINS='two defs, >=3 typed binders, IDENTICAL normalised signature, different files'
+
 tiers() {
   [ -d "$MODELS" ] || return 0
   find "$MODELS" -maxdepth 1 -mindepth 1 -type d 2>/dev/null \
@@ -315,8 +327,11 @@ fi
 echo "substrate.sh — §3.4's contract, per tier, BY SHAPE"
 echo "               measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git')"
 echo
-printf '  %-11s %-9s %-7s %-7s %-6s %s\n' TIER MONAD REFUSALS UNCATCH RUN ADEQUACY
-printf '  %-11s %-9s %-7s %-7s %-6s %s\n' ----------- --------- ------- ------- ------ --------
+echo "  A 'no' names the pattern it looked for, listed under the table:"
+echo "  dispute the PATTERN, not the verdict."
+echo
+printf '  %-11s %-9s %-7s %-9s %-8s %s\n' TIER MONAD REFUSALS UNCATCH RUN ADEQUACY
+printf '  %-11s %-9s %-7s %-9s %-8s %s\n' ----------- --------- ------- --------- -------- --------
 for t in $(tiers); do
   [ -n "$ONLY" ] && [ "$t" != "$ONLY" ] && continue
   tier_monad "$t"; tier_refusals "$t"
@@ -333,21 +348,33 @@ for t in $(tiers); do
   else
     adq="—"
   fi
-  printf '  %-11s %-9s %2s/%-4s %-7s %-6s %s\n' \
+  printf '  %-11s %-9s %2s/%-4s %-9s %-8s %s\n' \
     "$t" "$MONAD_KIND" "$REF_CORE" "$REF_LOCAL" \
-    "$( [ -n "$unc" ] && echo yes || echo no )" \
-    "$( [ -n "$run" ] && echo yes || echo NO )" "$adq"
+    "$( [ -n "$unc" ] && echo yes || echo 'no [U]' )" \
+    "$( [ -n "$run" ] && echo yes || echo 'NO [R]' )" "$adq"
   if [ -n "$ONLY" ]; then
     echo
     printf '    monad     %s\n' "${MONAD_AT:-none}"
     [ -n "$MONAD_TEXT" ] && printf '              %s\n' "$MONAD_TEXT"
     printf '    refusals  %s Core-channel site(s), %s local constructor(s)\n' "$REF_CORE" "$REF_LOCAL"
     printf '    uncatch   %s\n' "${unc:-no statement found}"
+    printf '              looked for: %s\n' "$P_UNCATCH"
     printf '    run       %s\n' "${run:-NONE — the fit boundary (STMT-22) says say so}"
+    printf '              looked for: %s\n' "$P_RUN"
+    printf '    twins     looked for: %s\n' "$P_TWINS"
   fi
 done
 echo
-echo "  REFUSALS is Core-channel sites / locally-declared constructors."
+echo "  THE PATTERNS, so a NO can be disputed on its merits:"
+printf '    [U] uncatch   %s\n' "$P_UNCATCH"
+printf '    [R] run       %s\n' "$P_RUN"
+printf '        monad     ADOPTED  %s\n' "$P_MONAD_ADOPT"
+printf '        monad     BY-SHAPE %s\n' "$P_MONAD_SHAPE"
+printf '        monad     OWN      %s\n' "$P_MONAD_OWN"
+printf '        refusals  %s\n' "$P_REFUSAL"
+printf '        twins     %s\n' "$P_TWINS"
+echo
+echo "  REFUSALS is Core-channel sites / locally-declared constructors." 
 echo "  A row is evidence that nothing CONTRADICTS §3.4 here — never that §3.4"
 echo "  holds. This greps text: BY-SHAPE is a claim about syntax and ADOPTED"
 echo "  about an identifier, neither about a type-checked equality."

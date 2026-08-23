@@ -1508,3 +1508,78 @@ budget in both directions with the stop point named, and `--arms` on a
 synthetic function with a **nested** match and an `if/then`, the block ending
 at the next top-level, a missing function, and a doc comment containing a fake
 arm. `docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-23 — the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern
+
+### (a) `applyBuiltin` — I measured the right definition and read it wrong
+
+**There is exactly one definition** (`grep` over the tree: `Monadic/Eval.lean:257`,
+and one each for `iterValues` and `applyCallPlan`), so we measured the same
+function. The disagreement was about its **shape**, and the successor lane —
+who read the source — was right. Two defects:
+
+1. **The `if/then` detector missed the chain entirely.** My regex required a
+   character after `then`, and in `if fname == "len" then` the `then` is at
+   **end of line**. Zero matches. So a 19-deep chain reported `0 if/then`.
+2. **Nested match arms were counted as top-level.** The "shallowest depth"
+   heuristic finds the shallowest `|`, and in an if-chain the `|` arms live
+   *inside* the branches — so 45 nested arms were reported as the dispatch.
+
+**Why that is not cosmetic**, in the lane's own words: a shape report that
+inverts ite and match **sends a prover to a tactic that cannot apply** —
+`cases` on a `String`. The tool was arguing for the wrong proof.
+
+Now, and matching their verbatim reading exactly:
+
+```
+LeanModels/Python/Monadic/Eval.lean:257  if/else-if chain  19 deep (1 if + 18 else-if), 21 then-tokens in all,
+                                                           15 on `vs` of 30 match block(s), 45 nested arm(s), 213 lines
+```
+
+**The shape is now read from what comes FIRST, not from what is more
+numerous** — reading beat counting, so the tool records the order. And three
+units are kept apart, because they answer different questions: **30** match
+tokens in all, **15** on the dispatch argument `vs` (the successor's number),
+**45** arms nested inside them. A count without its unit is the same ambiguity
+`laws.sh` hit between a law and its home.
+
+**Every definition is printed.** `arms_of` no longer stops at the first hit per
+file, and a name resolving more than once prints `N DEFINITIONS resolve to this
+name — all of them:`. That was the identifier law failing inside the tool
+again, and it is now a self-test row.
+
+The shape is reproduced as a **calibration fixture** — a 19-deep chain with 15
+`match vs with` blocks carrying 45 arms — so the inversion cannot come back.
+
+### (b) substrate.sh: a `no` names its pattern
+
+`Go run NO` was not actionable: a tier could dispute the verdict but not the
+reason. Every `no` now carries a tag, and the patterns are printed under the
+table:
+
+```
+  [U] uncatch   (theorem|example|lemma|#guard) ... (tryCatch|catchIn|.catch), or
+                tryCatch within 2 lines of (Loud|Halt|unsupported)
+  [R] run       ^def (toRun|run)\b
+```
+
+with the header saying **"dispute the PATTERN, not the verdict."** Checking my
+own `Go run NO` against its now-visible pattern: Go has `execStmt` and
+`execSeq`, neither named `run` nor `toRun` — so the NO is a statement about
+the **pattern's** reach, exactly as it should be, and Go can now say so.
+
+### The hang was localized correctly, and I profiled that path
+
+The hang was the **constructor-site mode** (`sites.sh CallPlan builtin`) — which
+is the path I profiled: `scan_sites` **6 s**, `declaring_types` **2 s**, the 357
+awk spawns **~1 s**, the comment stripper **~5 s**, total **5.8 s**. Still not
+reproduced; the two-minute run remains unexplained, and the progress line will
+name the file if it recurs.
+
+### Triad
+
+`bash -n` clean. `sites.sh --self-test`: **42 ok, 0 failed** (36 → 42) —
+including the five calibration rows. `substrate.sh --self-test` **20 ok**.
+`docs_check` **87/87**. No Lean executed.

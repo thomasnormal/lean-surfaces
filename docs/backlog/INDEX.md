@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**172 entries across 16 lanes.** Regenerate with
+**173 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -188,9 +188,10 @@ and every existing `§Lnn` reference still resolves there.
 | `G4` | INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23) | go |
 | `G3` | THE LOCAL `RefusalCause` IS RETIRED: the class was making a round trip through a string (2026-08-23) | go |
 | `G2` | M1 INCH 1: the substrate by shape, and the zero-UB finding becomes UNREACHABLE-BY-CONSTRUCTION (2026-08-22) | go |
+| `G14` | THE ARRAY RUNG IS NOT THE ARRAY RUNG: the tables are STRINGS, and a live mis-bucketing fell out (2026-08-23) | go |
 | `G13` | THE EXEMPLAR IS COMPLETE: the FUNCTION is correct, proved (2026-08-23) | go |
 | `G12` | THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23) | go |
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**20 heading(s) do not use the §9.5 id scheme** and sort last.
+**21 heading(s) do not use the §9.5 id scheme** and sort last.

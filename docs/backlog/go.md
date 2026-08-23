@@ -1613,3 +1613,96 @@ exemplar), `docs_check` **91/91**, `diff_test` **1,427 cases, 0 failed**
 failed**. Held the machine **58 s**.
 
 `fallthrough` deferred (4.0%); MM-oracle untouched.
+
+---
+
+## G14 — THE ARRAY RUNG IS NOT THE ARRAY RUNG: the tables are STRINGS, and a live mis-bucketing fell out (2026-08-23)
+
+Census-first, and the census refuted the inch's premise — including
+**§G13's own sentence**, which said `math/bits`' table functions need
+*"array types and indexing"*. They do not.
+
+### WHAT THE TABLES ACTUALLY ARE
+
+    const len8tab = "" +
+        "\x00\x01\x02\x02\x03\x03\x03\x03…"
+
+All four — `len8tab`, `ntz8tab`, `pop8tab`, `rev8tab` — are **untyped
+string constants**, and the acceptance case is string indexing:
+
+    func Len8(x uint8) int   { return int(len8tab[x]) }
+    func Reverse8(x uint8) uint8 { return rev8tab[x] }
+
+`len8tab[x]` indexes a STRING and yields a byte. `Reverse8` returns it
+directly — no conversion needed, because indexing a string already gives
+`uint8`. So the rung the acceptance case actually needs is **string
+indexing plus type conversions**, and **neither arrays nor slices appear
+in it at all.**
+
+This is the second time the corpus has corrected a rung's definition
+before a line of it was written, and the first time it corrected an entry
+this lane had already published.
+
+### THE ARRAY/SLICE SPLIT, censused anyway — because the rung will come
+
+`[N]T` and `[]T` are the SAME `go/ast` node kind; only `Len` separates
+them, so the 48.0% figure §G6 reported for `ArrayType` was two different
+semantic objects added together. Split:
+
+| shape | n | share |
+| --- | ---: | ---: |
+| slice `[]T` | **46,188** | **85.4%** |
+| fixed array `[N]T` | 7,923 | 14.6% |
+
+**Slices outnumber fixed arrays 6:1.** The coordinator's sizing question
+was whether the tier might skip slice semantics because the tables are
+fixed-size; the answer is that the tables are neither, and when the rung
+does come, **slices are the weight and fixed arrays are the tail** —
+the opposite of the assumption worth checking.
+
+### AND THE CENSUS FOUND A LIVE DEFECT
+
+`int(x)` parses as a `CallExpr` on an `Ident` — syntactically identical
+to a call to a function named `int`. The walker therefore refused every
+conversion as **`environment`**, verified by running it:
+
+    #eval convRefusal   -- some "environment"    (before)
+    #eval convRefusal   -- some "unsupported"    (after)
+
+That is a §5.2 mis-bucketing, and not a cosmetic one: `environment`
+retires by **widening the modelled slice**, `unsupported` by **climbing a
+rung**. They are different work on different schedules, and §5.2 requires
+them reported apart.
+
+**Measured: 51,255 of the standard library's plain-identifier calls are
+conversions to a predeclared type — 26.3% of them, 9.7% of all calls.**
+Every one was in the wrong bucket. The predeclared type names are the one
+case a tier can separate without `go/types`, so the fix is a 21-name list
+and one arm; it is landed, with a **paired guard** — one conversion, one
+genuinely-undefined function — so a regression in either direction shows.
+
+This also sharpens §G8's brief: the ranked worklist it produced was a
+worklist of `environment` refusals, and **a quarter of what would have
+been on it was never an environment problem at all.**
+
+### THE RUNG, REDEFINED
+
+| what | why |
+| --- | --- |
+| **string indexing** (`s[i]` → byte) | the acceptance case *is* this |
+| **type conversions** (`int(…)`, `uint8(…)`) | the other half of `Len8`; 51,255 sites; now correctly bucketed |
+| ~~fixed arrays~~ | not needed by the acceptance case; 14.6% of `ArrayType` |
+| ~~slices~~ | not needed either; 85.4%, and the real weight when the rung comes |
+
+Declaring only what the rung executes is this lane's own vocabulary law
+(§G6: the bitwise operators were left undeclared for exactly this
+reason), and the census is what keeps it honest.
+
+### Triad
+
+**Tenure GREEN**: `lake build` exit 0, `docs_check` **91/91**,
+`diff_test` **1,427 cases, 0 failed** (1,311 matched, 116 whitelisted),
+`script_corpus` **65 scripts, 0 failed**. Held the machine **59 s**.
+80 `#guard`s in the exemplar.
+
+`fallthrough` deferred (4.0%); MM-oracle untouched.

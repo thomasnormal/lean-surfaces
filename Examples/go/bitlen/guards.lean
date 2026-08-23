@@ -633,6 +633,30 @@ and, per the tier's standing gate, never as `undefined`. -/
         | .error (.unsupported c _ _) => c.isUndefined
         | _ => true) == false
 
+/-! ## A CONVERSION is a construct, not a missing function
+
+`int(x)` parses as a `CallExpr` on an `Ident` — indistinguishable from a
+call to a function named `int` without `go/types`. The predeclared type
+names are the one case a tier can separate syntactically, and separating
+them matters: a conversion retires by climbing a rung (`unsupported`),
+a missing function by widening the slice (`environment`), and §5.2
+requires the two be reported apart.
+
+**A census of the standard library found 51,255 conversions to a
+predeclared type — 26.3% of all plain-identifier calls — every one of
+which this tier bucketed as `environment` until now.** These two rows are
+the fix, and they are a pair on purpose: one construct, one environment,
+so a regression in either direction shows. -/
+
+private def refusalClass (st : List Stmt) : Option String :=
+  match (execSeq prog 64 st) ({} : GoWorld) with
+  | .error (.unsupported c _ _) => some c.className
+  | _ => none
+
+#guard refusalClass [.declare "y" (.call "int" [.lit (GoVal.mkInt uintK 7)])]
+       == some "unsupported"
+#guard refusalClass [.declare "y" (.call "notAFunction" [])] == some "environment"
+
 end Examples.go.bitlen
 
 /-! ## Axioms -/

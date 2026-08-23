@@ -258,6 +258,28 @@ def binNum (op : BinOp) (k : IntKind) (x y : Int) : GoM GoVal :=
       refuseGo .unsupportedConstruct (SpecRef.spec "Logical_operators")
         "logical operator applied to integers"
 
+/-- The predeclared TYPE names.
+
+**`int(x)` parses as a `CallExpr` on an `Ident`** — syntactically
+identical to a call to a function named `int` — and only `go/types` can
+tell the two apart in general. The predeclared names are the one case a
+tier can separate without a type checker, and separating them is not
+cosmetic: a conversion is a LANGUAGE CONSTRUCT (retires by climbing a
+rung) while a missing function is `environment` (retires by widening the
+modelled slice), and `docs/family-architecture.md` §5.2 requires the two
+be reported separately.
+
+Measured: **51,255 of the standard library's plain-identifier calls are
+conversions to a predeclared type — 26.3% of them.** Before this list
+they were every one of them bucketed as `environment`. -/
+def isBuiltinTypeName (s : String) : Bool :=
+  s == "bool" || s == "byte" || s == "complex64" || s == "complex128" ||
+  s == "error" || s == "float32" || s == "float64" || s == "int" ||
+  s == "int8" || s == "int16" || s == "int32" || s == "int64" ||
+  s == "rune" || s == "string" || s == "uint" || s == "uint8" ||
+  s == "uint16" || s == "uint32" || s == "uint64" || s == "uintptr" ||
+  s == "any"
+
 /-- Bind a call's parameters in the callee's frame. -/
 def bindParams : List String → List GoVal → GoM Unit
   | [], _ => pure ()
@@ -351,10 +373,16 @@ def evalExpr (prog : FuncTable) : Nat → Expr → GoM GoVal
   | f + 1, .call name args => do
       match prog.find? (fun d => d.1 == name) with
       | none =>
-          -- A call to something the program does not declare is
-          -- ENVIRONMENT, not a language gap: it retires by widening the
-          -- modelled slice, never by climbing a rung.
-          refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
+          if isBuiltinTypeName name then
+            -- A CONVERSION, not a call. A language construct this rung
+            -- does not step yet — so `unsupported`, never `environment`.
+            refuseGo .unsupportedConstruct (SpecRef.spec "Conversions")
+              s!"conversion to '{name}' is not stepped yet"
+          else
+            -- A call to something the program does not declare is
+            -- ENVIRONMENT: it retires by widening the modelled slice,
+            -- never by climbing a rung.
+            refuseGo .environment (SpecRef.spec "Calls") s!"undefined: {name}"
       | some (_, params, body) =>
           if params.length != args.length then
             refuseGo .unsupportedConstruct (SpecRef.spec "Calls")

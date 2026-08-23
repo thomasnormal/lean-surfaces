@@ -181,6 +181,16 @@ func goBuildVersion(src []byte) string {
 	return "(from go.mod)"
 }
 
+// The predeclared TYPE names. A call whose callee is one of these is a
+// conversion, not a call — see the CallExpr arm.
+var builtinTypeNames = map[string]bool{
+	"bool": true, "byte": true, "complex64": true, "complex128": true,
+	"error": true, "float32": true, "float64": true, "int": true,
+	"int8": true, "int16": true, "int32": true, "int64": true, "rune": true,
+	"string": true, "uint": true, "uint8": true, "uint16": true,
+	"uint32": true, "uint64": true, "uintptr": true, "any": true,
+}
+
 var builtinNames = map[string]bool{
 	"append": true, "cap": true, "clear": true, "close": true, "complex": true,
 	"copy": true, "delete": true, "imag": true, "len": true, "make": true,
@@ -594,8 +604,25 @@ func (c *Census) censusFile(path string) error {
 			default:
 				c.Shapes["typespec_other"]++
 			}
+		case *ast.ArrayType:
+			// `[N]T` and `[]T` are the SAME node kind; only `Len` tells
+			// them apart, and they are different semantic objects — a
+			// fixed array is a value, a slice is a header. Counting the
+			// kind alone cannot size the rung.
+			if x.Len == nil {
+				c.Shapes["arraytype_slice"]++
+			} else {
+				c.Shapes["arraytype_fixed"]++
+			}
 		case *ast.CallExpr:
 			c.Shapes["call_total"]++
+			// A CONVERSION `int(e)` parses as a CallExpr on an Ident, and
+			// is indistinguishable from a call to a function named `int`
+			// without go/types. The builtin type names are the one case a
+			// syntactic census CAN separate, and the rung needs them.
+			if id, ok := x.Fun.(*ast.Ident); ok && builtinTypeNames[id.Name] {
+				c.Shapes["call_builtin_type_conversion"]++
+			}
 			switch fn := x.Fun.(type) {
 			case *ast.Ident:
 				if builtinNames[fn.Name] {

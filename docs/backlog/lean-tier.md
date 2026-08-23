@@ -1059,3 +1059,85 @@ relation commutes with substitution — and they went through because `lift`,
 three that remain are exactly the inversions**, and every one of them needs to
 reason backwards out of a `.app` spine. That split was visible in the shapes from
 the start and is now measured rather than guessed.
+
+---
+
+## 2026-08-23-lean-tier-13 — MILESTONE: 4 proved / 3 blocked, `weak'_inv` parked on an IMPORT CYCLE; and the arena re-measure moved a fact
+
+### `weak'_inv`: proving `weakN_iff`'s forward direction ourselves is NOT a bounded induction
+
+The ruling was: don't ship a lemma resting on upstream's `sorry`; instead census
+what it would cost to prove `IsDefEqU.weakN_iff`'s forward direction in the fork.
+Censused by reading. **It is not a bounded induction, and the obstacle is
+architectural rather than mathematical.**
+
+Strengthening's hard case is `trans`: the middle term may mention the very
+variable being stripped, so discharging it needs **confluence** to normalise that
+term. lean4lean HAS confluence — `IsDefEq.church_rosser`,
+`ChurchRosser.lean:1344`. But:
+
+```
+Basic -> Lemmas -> Strong -> Injectivity -> UniqueTyping -> ChurchRosser
+                                 Pattern  ^                 ^
+```
+
+> **`ChurchRosser.lean` imports `UniqueTyping.lean`.** The confluence result that
+> would discharge the obligation lives DOWNSTREAM of the module the obligation
+> sits in. Using it is a module-layering inversion, not a lemma.
+
+Measured, no confluence or normalisation result exists anywhere upstream of
+`UniqueTyping` (`Injectivity`, `Pattern`, `Strong`, `Lemmas` — none). So the
+options are (a) invert upstream's `Theory/` layering, (b) re-derive confluence
+above `UniqueTyping`, duplicating a 1 300-line development — **and (c) neither
+would suffice cleanly anyway, because `ChurchRosser.lean` itself carries two
+`sorry`s** (`:1190`, `:1209`, both the `.extra` case).
+
+**Verdict: park `weak'_inv` beside `uniq` and `defeqDFC`, blocked with a named
+place** — *"the confluence result that discharges it is downstream of the
+obligation."* That is a sharper statement than the other two blockers get, and it
+cost no machine time.
+
+### THE MILESTONE LEDGER — the in-reach obligations are DONE
+
+| # | obligation | status |
+| --- | --- | --- |
+| 1 | `TrProjP.instL` | **PROVED** |
+| 2 | `TrProjP.instN` | **PROVED** |
+| 3 | `TrProjP.weak'` | **PROVED** |
+| 4 | `TrProjP.wf` | **PROVED** |
+| 5 | `weak'_inv` | **BLOCKED** — confluence is downstream of the obligation (import cycle) |
+| 6 | `defeqDFC` | **BLOCKED** — app-structure through defeq; no-confusion. NOT MEASURED |
+| 7 | `uniq` | **BLOCKED** — same. NOT MEASURED |
+
+**4 proved, 3 blocked, 0 sorries, 0 axioms** in 357 lines. The split is exactly
+congruences-proved / inversions-blocked, and every blocker now has a named
+location rather than a shrug.
+
+### The arena re-measure: our number held, upstream's moved
+
+Re-fetched `results.json` (3.0 MB; `df` first, 145Gi) and recomputed. Fresher run
+than the original: **2026-08-22 15:57 UTC rev `f0fe3b37`**, against the
+2026-08-22 10:33 rev `46414771` used before.
+
+| checker | accept | reject (soundness) | vs. previous |
+| --- | ---: | ---: | --- |
+| **`official` (our pin v4.33.0)** | 124/124 | **63/67** | **unchanged** |
+| `official-nightly` | 124/124 | **67/67** | **was 66/67 — CHANGED** |
+| `lean4lean` | 121/124 | 67/67 | unchanged |
+| `mathgraph` | 124/124 | 67/67 | unchanged |
+
+`official` still misses exactly `proj-of-stuck-prop`, `proj-of-subst-prop`,
+`rec-missing-ih`, `rec-of-subst-prop`.
+
+> **A PUBLISHED CLAIM OF OURS IS NOW STALE.** Entry/charter §9.1 says
+> `rec-of-subst-prop` is *"accepted by ALL THREE official builds"*. **Nightly has
+> since fixed it and is now 67/67.** Our pinned `v4.33.0` still fails all four, so
+> the tier's motivating fact — *our own kernel accepts proofs of `False` that
+> independent checkers reject* — stands, but it is now a statement about **our
+> pin**, not about upstream generally. Corrected in the charter.
+
+**On the instrument question, stated precisely:** the substring defect could not
+have touched these numbers, and the re-measure confirms it — `lean_independent_check.py`
+contains **zero** arena references, and this figure is recomputed directly from
+the arena's published rows. The number moved because **upstream moved**, which is
+the argument for re-measuring rather than re-citing.

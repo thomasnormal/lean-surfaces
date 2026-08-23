@@ -1210,11 +1210,17 @@ Named, because a claim this size should be checkable: `proj-of-stuck-prop`,
 `proj-of-subst-prop`, `rec-missing-ih`, `rec-of-subst-prop`. Every one is
 §8's construct.
 
-**Three of the four are fixed on nightly. One is not.** `rec-of-subst-prop` is
-accepted by **all three** official builds the arena scores — `v4.28.0`, our
-`v4.33.0`, and `official-nightly` — and **rejected by all fifteen** other
-checkers (verified by this lane against the raw results; the only other accepter
-is the `parse-only` control, which rejects almost nothing by construction).
+**All four are now fixed on nightly — and our pin still fails all four.**
+Re-measured 2026-08-22 15:57 UTC (arena rev `f0fe3b37`): `official-nightly` is
+**67/67**, having since fixed `rec-of-subst-prop`, which an earlier run showed it
+accepting. **`official` at our pinned `v4.33.0` is unchanged at 63/67.**
+
+> So the tier's motivating fact survives but narrows: it is a statement about
+> **our pin**, not about upstream generally. The kernel this repository actually
+> runs on accepts four proofs of `False` that every independent checker rejects;
+> upstream nightly no longer does. **An earlier version of this section said
+> `rec-of-subst-prop` was accepted by all three official builds. That is now
+> stale**, and is corrected here rather than left to age.
 
 > **That is a live, currently-unfixed divergence in which the independent field
 > is ahead of the C++ kernel, and it is the single strongest empirical argument

@@ -4931,3 +4931,110 @@ tool; **it is a sentence that could be wrong.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-214 … MEAS-220, STMT-120 … STMT-122**.
+
+## 2026-08-24-architecture-62 — The ruling met reality within the hour, and reality had four corrections
+
+Five from the pyc lane's §5.0a implementation design, plus a compliance rider.
+**STATE STAMP: the design is drafted off-repo (`scratchpad/pyc-inch3-handoff.md`)
+and is NOT verifiable from this clone** — landed on its account, **conditional on
+inch 3**, and **owed a re-read at that landing.**
+
+**(1) §5.0a — THE `MODEL` FIELD IS A MEASUREMENT, NOT A READING, and this is the
+hole in my own six-field spec.** The first row's MODEL field was **read from the
+code, not run**, and the lane **flagged its own field as unverified.**
+
+> **A debt row's `MODEL` field is a measurement. The row and its instrument land
+> in ONE COMMIT — they land together, or the row is prose with a schema.**
+
+**A register whose fields are read rather than run is the thing it was built to
+replace.** The whole argument for §5.0a over prose was that prose cannot be
+gated; **a row asserting *the model does X* on someone's reading has imported
+prose into the schema and made it look like data.**
+
+**(2) §5.0a — A DEBT WHOSE PROBE IS BLOCKED BY ANOTHER DEBT, resolved by
+LAYERING.** Observing the stickiness in-tier needs `except RuntimeError:` — **a
+whitelisted refusal**: *the tier's own refusal surface blocks the program-level
+probe of its own divergence.* The probe moves to the **model level** (a Lean
+`#guard` at the frame stepper; **the build is the gate, two-sided** — became-
+sticky fails, any-other-move fails), leaving **one hole the build cannot see**:
+the guard's deletion. **The harness checks the guard's PRESENCE**, and row and
+guard are **deleted together or not at all.**
+
+> **The BUILD gates the CONTENT; the HARNESS gates the EXISTENCE. Each layer's
+> blind spot is the other's subject.**
+
+**Generalized past this row**, because the property is not special: **a check
+strong enough to verify content is usually blind to its own removal** — a
+deleted check produces no output to be wrong. **Pair it with a cheaper check
+that only asks whether it is still there.**
+
+**(3) §5.0a — A RETIREMENT CONDITION IS A CONSTRAINT PAIR.** `except_builtin`
+must **leave the whitelist first** (blocker **named**, not hand-waved), **and**
+`exc_lab::gen_closes` must **stay MATCH** — *closing on exception is correct for
+a user generator, so a fix that flips it has fixed the wrong thing.*
+
+> **A retirement condition names what must CHANGE and what must NOT. The
+> negative half is protection against the FLATTERING REPAIR.**
+
+**Third appearance of that hazard** — §5.4b's paired guard, §5.2's two-sided
+resolution gate, now a debt's retirement — and the pattern is stable: **wherever
+a condition can be satisfied by moving the wrong thing, name the thing that must
+hold still.** A condition with only a positive half is a target, and **a target
+can always be hit from the wrong direction.**
+
+**(4) §5.0a — INHERITED-FROM-SELF IS A REAL CASE.** Upstream is the same lane
+(`enumDict` → `iterDict`, both pyc), and **the field still does its work because
+ORIGIN ≠ SITE.**
+
+> **With no other lane to wait on, the retirement condition gets STRONGER, not
+> weaker.**
+
+**A blank `INHERITED FROM` claims the divergence ORIGINATED here** — a heavier
+claim and a false one — and it **loses the only pointer to the decision that
+created it.** The temptation is real (*"it is us either way"*) and exactly
+backwards: **self-inheritance removes the excuse, not the citation.**
+
+**(5) §5.3 — THE MECHANISM, WHICH SHARPENS YESTERDAY'S ENTRY.** The `room`
+hypothesis's failure mode changed **LOUD → QUIET**: an ∃-quantified body plus **a
+proof that never opens it.**
+
+> **The hypothesis is unchanged and still needed. What changed is that its
+> VIOLATION IS NOW SILENT.**
+
+**That is better than yesterday's *"the meaning moved"*.** The premise did not
+move and the theorem did not move; **the OBSERVABILITY of the premise's failure
+moved**, and observability is not a property any tool in this tree measures —
+caught **only because the lane re-read its own prose.** The repair discharges my
+own prescription exactly: dropping the hypothesis now produces **a wrong world,
+with the exact heap inequality and two named witnesses** — *none of them prose.*
+
+**AND A HYPOTHESIS TAXONOMY, because the retirement move differs by kind**:
+**TIER** (widen the tier), **MODELLING** (model the thing), **BRIDGING** (prove
+the relation). `room` was reclassified **tier → modelling**, and the
+reclassification changed what closing it means:
+
+> **The honest retirement is to MODEL THE EVICTION, not to widen the tier.**
+
+**Misclassification licenses the wrong repair, and the wrong repair is the
+cheaper one** — widening a tier is a declaration, modelling a behaviour is work.
+**So the taxonomy is not bookkeeping: it stops a hypothesis being retired by
+redefining the question**, and a row carrying a hypothesis names its **kind** for
+the same reason a refusal names its **cause**: *the kind determines who owes the
+work and what "done" looks like.*
+
+**RIDER — §7.2, A COMPLIANCE INSTANCE SHOWING THE RULE OBEYED RATHER THAN
+ENFORCED.** The lane read master through an **isolated bare mirror** rather than
+fetching into its frozen worktree, so **the enqueue stamp never came near the
+ticketed tree.**
+
+> **Reading master and BEING on master are different needs.**
+
+**The naive reading of §7.2 is that a lane holding a ticket is blind until it
+releases.** It is not — **the constraint is on the WORKING TREE, not on the
+lane's knowledge** — and **a lane that believes a protocol forbids more than it
+does will either stall or break it.** `-58`'s reputation-versus-mechanism law
+arriving as a **success**: *the lane that reads the mechanism finds the room the
+reputation denied.*
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-221 … MEAS-225, STMT-123, STMT-124**.

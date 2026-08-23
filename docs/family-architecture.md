@@ -3462,6 +3462,74 @@ whoever owns `enumDict`. **A tier that inherits a divergence inherits the
 obligation to cite it, not to fix it** — and an inherited row that has lost its
 upstream citation has become an originated one by neglect.
 
+**THE RULING MET ITS FIRST IMPLEMENTATION WITHIN THE HOUR, and the contact
+changed four things** (pyc lane's inch-3 design; **drafted off-repo and NOT
+verifiable from this clone — landed on the design's account, conditional on that
+inch, and owed a re-read at its landing**).
+
+**(a) THE MODEL FIELD IS A MEASUREMENT, NOT A READING.** The first row's MODEL
+field was **read from the code, not run**, and the lane **flagged its own field
+as unverified until the probe exists.** That is the hole in the six-field spec
+above, and it closes here:
+
+> **A DEBT ROW'S `MODEL` FIELD IS A MEASUREMENT. THE ROW AND ITS INSTRUMENT LAND
+> IN ONE COMMIT — they land together, or the row is prose with a schema.**
+
+**A register whose fields are read rather than run is the thing it was built to
+replace.** The whole argument for §5.0a over prose was that prose cannot be
+gated; a row asserting *the model does X* on the strength of someone's reading
+has **imported prose into the schema** and made it look like data.
+
+**(b) A DEBT WHOSE PROBE IS BLOCKED BY ANOTHER DEBT — and the resolution is a
+LAYERED instrument.** Observing the stickiness **in-tier** needs
+`except RuntimeError:`, which is **a whitelisted refusal**: *the tier's own
+refusal surface blocks the program-level probe of its own divergence.*
+
+The probe therefore moves **to the model level** — a Lean `#guard` at the frame
+stepper, where **THE BUILD IS THE GATE and it is two-sided**: a model that
+*became* sticky fails it, and **any other move fails it too**. That leaves
+exactly one hole the build cannot see — **the guard being deleted** — so **the
+harness checks the guard's PRESENCE**, and **the row and the guard are deleted
+together or not at all.**
+
+> **LAYERED INSTRUMENTS: the BUILD gates the CONTENT; the HARNESS gates the
+> EXISTENCE. Each layer's blind spot is the other's subject.**
+
+**This is §5.4b's pointer question answered for a two-layer instrument**, and it
+generalizes past this row: **a check strong enough to verify content is usually
+blind to its own removal**, because a deleted check produces no output to be
+wrong. **Pair it with a cheaper check that only asks whether it is still
+there.**
+
+**(c) A RETIREMENT CONDITION IS A CONSTRAINT PAIR — ONE POSITIVE, ONE
+NEGATIVE.** The first row's: `except_builtin` **must leave the whitelist
+FIRST** (the blocker **named**, not hand-waved), **and** `exc_lab::gen_closes`
+**must STAY MATCH** — *closing on exception is correct for a user generator, so
+a fix that flips `gen_closes` has fixed the wrong thing.*
+
+> **A retirement condition names what must CHANGE and what must NOT. The
+> negative half is protection against the FLATTERING REPAIR.**
+
+**Third appearance of that hazard** (§5.4b's paired guard, §5.2's two-sided
+resolution gate, and now a debt's own retirement), and the pattern is stable:
+**wherever a condition can be satisfied by moving the wrong thing, name the
+thing that must hold still.** A retirement condition with only a positive half
+is a target, and **a target can always be hit from the wrong direction.**
+
+**(d) INHERITED-FROM-SELF IS A REAL CASE — do not blank the field when the
+debtor is the debtee.** Upstream here is **the same lane** (`enumDict` →
+`iterDict`, both pyc), and **the field still does its work, because ORIGIN ≠
+SITE.** The lane drew the right conclusion, and it is the one worth recording:
+
+> **With no other lane to wait on, the retirement condition gets STRONGER, not
+> weaker.**
+
+**A blank `INHERITED FROM` claims the divergence ORIGINATED at this site**, which
+is a heavier claim and a false one; and an inherited-from-self row that blanks
+the field **loses the only pointer to the decision that created it.** The
+temptation is real — *"it is us either way"* — and it is exactly backwards:
+**self-inheritance removes the excuse, not the citation.**
+
 **WHY NOT THE ALTERNATIVES.** A *whitelist* would put the row inside the
 scoreboard's own vocabulary and invite exactly the reading the invariant
 forbids — *some DIVERGEs are fine* — and a whitelist is a permission, not a
@@ -4059,6 +4127,48 @@ falsifiable witness pairs cover **behaviour**, and a rationale is not behaviour
 until someone writes the counterexample it excludes. **An unwritten rationale
 stays unfalsifiable no matter how good the instruments are** — the fix is not a
 better tool, it is a sentence that could be wrong.
+
+**AND THE MECHANISM HAS NOW BEEN NAMED, WHICH SHARPENS THE WHOLE ENTRY** (pyc
+inch-3 design; off-repo, conditional). The `room` hypothesis's **failure mode
+changed LOUD → QUIET**: the ∃-quantified body, plus **a proof that never opens
+it**, means a violation that used to announce itself no longer does.
+
+> **The hypothesis is UNCHANGED and STILL NEEDED. What changed is that its
+> VIOLATION IS NOW SILENT.**
+
+**That is the transition no instrument can see, stated precisely** — better than
+*"the meaning moved"*, which is where this entry stood yesterday. **The premise
+did not move and the theorem did not move; the OBSERVABILITY of the premise's
+failure moved**, and observability is not a property any tool in this tree
+measures. It was caught **only because the lane re-read its own prose.**
+
+**And the repair is the constructive half**: the rationale is now written so
+that **dropping the hypothesis produces a WRONG WORLD — with the exact heap
+inequality and two named witnesses.** That is *drop the hypothesis and a
+specific named thing must happen*, discharged: **the named thing is a world, an
+inequality and two witnesses, and none of them is prose.**
+
+**AND A HYPOTHESIS TAXONOMY FALLS OUT, because the RETIREMENT MOVE DIFFERS BY
+KIND.** `room` was reclassified from a **TIER** hypothesis to a **MODELLING**
+hypothesis, and the reclassification changed what closing it means:
+
+| kind | what it says | how it retires |
+| --- | --- | --- |
+| **TIER** | the tier does not model this region | **widen the tier** |
+| **MODELLING** | the model represents this region approximately | **model the thing** — here, **model the eviction** |
+| **BRIDGING** | two layers are related only under this condition | **prove the relation**, or make it structural |
+
+> **THE HONEST RETIREMENT IS TO MODEL THE EVICTION, NOT TO WIDEN THE TIER.**
+
+**Misclassifying a modelling hypothesis as a tier hypothesis licenses the wrong
+repair**, and the wrong repair is the *cheaper* one — widening a tier is a
+declaration, modelling a behaviour is work. **So the taxonomy is not
+bookkeeping: it is what stops a hypothesis being retired by redefining the
+question.** A register row carrying a hypothesis should name its **kind**, for
+the same reason a refusal names its **cause** (§5.2): **the kind determines who
+owes the work and what "done" looks like.**
+
+
 
 
 
@@ -7526,6 +7636,24 @@ the sharpening the analog apex supplied (§5.3): **correctly motivated,
 correctly implemented, against the wrong object.** Nothing here is a slip; the
 `write-tree` call does exactly what it says, and what it says is not what the
 build reads.
+
+**AND A COMPLIANCE INSTANCE WORTH THE RIDER, because it shows the rule being
+OBEYED rather than enforced** (pyc lane, inch-3 design). The lane needed to read
+master while holding a ticket on a **frozen worktree**, and **read through an
+isolated BARE MIRROR** rather than fetching into the worktree — so **the enqueue
+stamp never came near the ticketed tree.**
+
+> **READING master and BEING ON master are different needs. A bare mirror
+> satisfies the first without touching the second.**
+
+**The rule §7.2 states is *do not change the tree a ticket will build*, and the
+naive reading is that a lane holding a ticket is simply blind until it
+releases.** It is not: **the constraint is on the WORKING TREE, not on the
+lane's knowledge**, and a separate read-only clone is outside the constraint
+entirely. **A lane that believes a protocol forbids more than it does will
+either stall or break it** — which is `-58`'s reputation-versus-mechanism law
+arriving as a success rather than as a defect: *the lane that reads the
+mechanism finds the room the reputation denied.*
 
 **RESOLVED (`22ed755`, merged `b98b4d0`; verified here — `STAMP_VERSION="v2"`
 at `tools/triad.sh:1192-1208`).** The stamp now hashes the working tree through

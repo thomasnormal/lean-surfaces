@@ -269,6 +269,11 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-218 | an INGESTION REWRITE is available exactly when the construct's meaning is decided by SYNTAX | `docs/family-architecture.md §5.4a` |
 | MEAS-219 | a census sampling from ONE POSITION measures that position's rule, not the construct's | `docs/family-architecture.md §5.4a` |
 | MEAS-220 | a docstring that ENUMERATES is a census no instrument re-runs; a CLOSED LIST argues against its own repair | `docs/family-architecture.md §5.4` |
+| MEAS-221 | a debt row's MODEL field is a MEASUREMENT — the row and its instrument land in one commit | `docs/family-architecture.md §5.0a` |
+| MEAS-222 | LAYERED INSTRUMENTS — the build gates the CONTENT, the harness gates the EXISTENCE | `docs/family-architecture.md §5.0a` |
+| MEAS-223 | a retirement condition names what must CHANGE and what must NOT — the negative half blocks the flattering repair | `docs/family-architecture.md §5.0a` |
+| MEAS-224 | INHERITED-FROM-SELF keeps the field: origin ≠ site, and the condition gets STRONGER | `docs/family-architecture.md §5.0a` |
+| MEAS-225 | reading master and BEING on master are different needs — a bare mirror satisfies the first | `docs/family-architecture.md §7.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 
@@ -399,6 +404,8 @@ The worked forms, with the trap and the incident for each, are in
 | STMT-120 | a goal theorem that only appears as the LAST LINE OF PLANS will never be written | `docs/family-architecture.md §9.0` |
 | STMT-121 | no part of a flagship's difficulty lives in its ASSEMBLY — a hard assembly is an obligation list that lies about its length | `docs/family-architecture.md §9.0` |
 | STMT-122 | a hypothesis's RATIONALE is checkable only as a row: drop it, and a specific named thing must happen | `docs/family-architecture.md §5.3` |
+| STMT-123 | a hypothesis can change LOUD → QUIET while statement and theorem hold still — observability is not measured | `docs/family-architecture.md §5.3` |
+| STMT-124 | hypothesis KINDS — tier / modelling / bridging — determine the retirement move | `docs/family-architecture.md §5.3` |
 
 ## C. PROOF-ENGINEERING LAWS — how proofs are built and kept
 

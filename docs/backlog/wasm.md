@@ -468,3 +468,65 @@ writing the ticket is queued, and the only honest status is *queued*.
 adds none. The Lean execution reported above was in the **fork's** tree under
 a ticket via `tools/triad.sh`, and it was an **aborted triad** (build red, so
 gates never ran) — recorded as such rather than as a triad result.
+
+---
+
+## 2026-08-23-wasm-5 — §5.4b APPLIED TO THIS LANE: the "5 live obligations" claim had **no gate pointed at it**, and the compiler was the missing pointer
+
+`docs/family-architecture.md` §5.4b landed the gate-topology law — *a gate set
+is a set of POINTERS; a claim no gate points at is UNGATED however green the
+neighbourhood; audit by ENUMERATION, never by execution.* The audit notes this
+lane's sorry-census instruments as precedent for two of its laws. **Repaying
+that by running the enumeration on this lane's own gates**, which turns out to
+name the exact defect `2026-08-22-wasm-3` found the hard way.
+
+**THE ENUMERATION.** For each gate, what it CATCHES and what it CANNOT SEE:
+
+| gate | pointed AT | blind to |
+| --- | --- | --- |
+| `wasm_sorry_census.py --compare` | the obligation COUNT and per-file rows, comment-aware | **whether the file ELABORATES** — it is a text scanner, and a `sorry` in a file that does not compile counts the same as one that does |
+| `wasm_spec_census.py` `splice_check` | that every splice pattern in `document/core` resolves to a censused rule | **whether any Lean anywhere mirrors those rules** — it relates two artifacts that are both the spec |
+| `wasm_suite_census.py --compare` | suite shape: files, commands, assertion kinds, per-file licences | **semantics** — nothing it measures depends on any model being correct |
+| the fork build (`tools/triad.sh`) | elaboration of the lakefile's default targets | anything outside those globs; and **when red, every gate behind it** (§7's aborted-triad rule) |
+
+**Four gates, and the claim that mattered sat between all of them.**
+`2026-08-22-wasm-1`'s headline — **"5 live obligations"** — was pointed at by
+the first gate only, and that gate is a *text scanner*. It cannot see
+elaboration. So the claim was **ungated in exactly the dimension that later
+refuted it**: `2026-08-22-wasm-3` ran a compiler and found the file does not
+build, making one of the five unreachable and the ledger not well-defined.
+
+**This is §5.4b's trap in this lane's own history, and the dense-gate-set
+warning applies literally.** Three censuses, all green, all deterministic, all
+with executed refusal paths — a dense and healthy-looking neighbourhood. The
+inference ran from *neighbourhood* to *claim* without touching the pointer.
+**The greenness was real and the coverage was not.**
+
+**THE COROLLARY BITES HERE TOO.** §5.4b: *an expected-to-fail artifact is the
+weakest gate in any set, because its verdict is invariant under everything the
+file says.* This lane now has one — the fork build is **expected red** while
+`typing_lemmas.lean` is broken. It is green-while-erring in exactly the
+prohibited way: it will keep failing whatever `SubtypingPort.lean` says, and a
+future reader could mistake "still red, as expected" for "nothing changed".
+**So pin the COUNT**, per the corollary: at `b399351f` + this lane's port, the
+pinned expectation is **1 failing module (`typing_lemmas`) and 6 errors in
+it**, and **`SubtypingPort` must be GREEN**. A build where `SubtypingPort`
+fails is a regression even though the overall exit code is 1 either way — which
+is precisely the distinction an unpinned expected-to-fail gate cannot make.
+
+**WHAT THIS CHANGES GOING FORWARD.** The obligation ledger is only meaningful
+against a tree that elaborates, so **the count is reported with its state
+attached from here on** — "N live obligations *in a file that builds*" or "…
+*in a file that does not*". Those are different claims and only the first is
+the one the soundness path is scored on.
+
+**No new instrument.** §5.4b is explicit that a gate set is audited by
+enumeration, not by execution, and adding a fourth census to check the third
+would be the dense-neighbourhood error again. The repair is the table above and
+the pinned count, both of which are readable rather than runnable.
+
+### Triad
+
+**Not run; not applicable.** One file edited, none added, no Lean in this
+repository. `docs_check` passes and `tools/backlog-index.sh` was re-run per
+§9.5.

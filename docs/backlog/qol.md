@@ -2183,3 +2183,64 @@ not counted as a duplicated contract.
 `.lean` classifying docs, **not widening the build**, doing so **even though
 the docstring names it**, and a code reference still reachable). `sites.sh`
 **44 ok**, `dupes.sh` **10 ok**. `docs_check` **87/87**. No Lean executed.
+
+---
+
+## 2026-08-23-qol-32 — audit HIGHs 1-3 and MEDIUMs 7-8: the matchers learn what a comment is
+
+Four of my twelve audit rows reduce to one sentence: **this matcher does not
+know what a comment is, or what a whole name is.** So the primitive moved out
+of the tools and into `tools/leanlex.sh`, sourced rather than re-grown —
+`sites.sh` and `triad.sh` had a copy each and `substrate.sh` needed a third and
+fourth, which is exactly what `dupes.sh` counts and MEAS-28 forbids. The
+existing copies retire **by touch** (§9.2), not in this landing.
+
+### HIGH — `laws.sh:104`, a token that could never match its own home
+
+`home_tokens` capped a section at **two levels**, so a law homed at `§3.4.1`
+tokenised to `§3.4` — and `tok_regex`'s boundary excludes a following `.`, so
+the truncated token **could never match the citation it came from** while
+matching every sibling that spells the two-level form. **STMT-22 was credited
+32 citations belonging to §3.4.** Now the full dotted section is the token.
+
+**No parent token is emitted**, deliberately: crediting a `§3.4.1` law for a
+`§3.4` mention is the over-crediting the boundary work exists to remove.
+
+### HIGH — `substrate.sh:249`, two greps that need not agree
+
+`adequacy_for` ran **two independent unanchored greps over a file**: they need
+not land on the same theorem, and with raw names `callIn` is satisfied by
+`callInMono` — so one line could satisfy both halves. Now **one declaration**
+(comments stripped, continuation lines joined) must name **both**, each matched
+as a whole name.
+
+### HIGH — `substrate.sh:143`, match arms counted as declarations
+
+REF_LOCAL reported "locally-declared constructors" while matching **any** line
+starting `| unsupported`, including `match` arms inside proofs — the defect
+`sites.sh`'s `declaring_types` already documents. It now tracks the inductive
+block, and the trailing class is `([ \t(]|$)` so a **nullary** constructor at
+end of line is no longer missed.
+
+**The correction is large and it is mine to own: Python's REF_LOCAL was 82 and
+is 4.** The number I published in `qol-21` was roughly a **20× over-count** of
+match arms. Sv 17 → 11, C 2/6 → 1/7, Python REF_CORE 6 → 5.
+
+### MEDIUM — `substrate.sh:142` and `:154`
+
+REF_CORE now counts **occurrences** (not lines), allows any spacing, strips
+comments, and takes the constructor as a **parameter**, so the report matches
+the documented `P_REFUSAL` instead of a hard-wired copy of it. UNCATCH requires
+the keyword and the catch token in the **same declaration** — the old rule
+accepted any `tryCatch` within two lines of the word `Halt`, which every tier
+built on `ExceptT ρ (StateT W Halt)` writes constantly.
+
+### Triad
+
+`bash -n` clean. `laws.sh` **26 ok** (22 → 26: a three-level section surviving
+tokenising, not truncating to its parent, matching its own home, and a `§3.4`
+tool **not** crediting it). `substrate.sh` **25 ok** (20 → 25: prose about
+uncatchability not counting as a statement, both spacing variants counted while
+prose is not, a nullary declaration counted, and a match arm **not**). The
+uncatchability fixture was a `def` and is now an `example`, because STMT-19
+asks for a **statement**. `docs_check` 87/87. No Lean executed.

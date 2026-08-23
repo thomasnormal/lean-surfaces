@@ -61,6 +61,14 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# The Lean lexing primitives, sourced rather than re-grown here: the audit
+# found three defects in this file that all reduce to "this matcher does not
+# know what a comment is".
+LEANLEX="$(dirname "${BASH_SOURCE[0]}")/leanlex.sh"
+[ -r "$LEANLEX" ] || { echo "substrate.sh: missing $LEANLEX" >&2; exit 2; }
+# shellcheck source=/dev/null
+. "$LEANLEX"
+
 MODELS="$CLONE/LeanModels"
 
 # A `no` THAT DOES NOT SAY WHAT IT LOOKED FOR IS NOT ACTIONABLE.  A tier
@@ -70,9 +78,9 @@ MODELS="$CLONE/LeanModels"
 P_MONAD_ADOPT='abbrev <name> ... := ... (SemMWith|HaltWith|SemM )'
 P_MONAD_SHAPE='abbrev ... := ... ExceptT ... StateT ... (Halt|Except)'
 P_MONAD_OWN='inductive (Res|Outcome|Result)'
-P_UNCATCH='(theorem|example|lemma|#guard) ... (tryCatch|catchIn|.catch), or tryCatch within 2 lines of (Loud|Halt|unsupported)'
+P_UNCATCH='ONE declaration (comments stripped, continuations joined) that is a theorem|example|lemma AND contains tryCatch|catchIn|.catch'
 P_RUN='^def (toRun|run)\b'
-P_REFUSAL='\.(error|halt|loud) \(\.<ctor>  |  (Halt|Loud)\.<ctor>'
+P_REFUSAL='\.(error|halt|loud)[ \t]*\([ \t]*\.<ctor>  |  (Halt|Loud)\.<ctor>   (occurrences, comments stripped)'
 P_TWINS='two defs, >=3 typed binders, IDENTICAL normalised signature, different files'
 
 tiers() {
@@ -135,12 +143,26 @@ tier_monad() {
 
 # (b) REFUSAL SITES: Core's channel vs a local constructor.
 REF_CORE=0; REF_LOCAL=0
-tier_refusals() {
-  local tier="$1" f
+# REF_CORE counts SITES, so it counts occurrences rather than lines, allows any
+# spacing, strips comments, and takes the constructor as a parameter so the
+# report matches the documented P_REFUSAL instead of a hard-wired copy of it.
+# REF_LOCAL counts DECLARATIONS, so it tracks the inductive block: `| unsupported`
+# inside a later `def` is a MATCH ARM, and counting it as a declaration is the
+# defect sites.sh's declaring_types already documents.
+tier_refusals() {               # tier [ctor] -> sets REF_CORE / REF_LOCAL
+  local tier="$1" ctor="${2:-unsupported}" f
   REF_CORE=0; REF_LOCAL=0
   for f in $(tier_lean "$tier"); do
-    REF_CORE=$((REF_CORE + $(grep -cE '\.(error|halt|loud) \(\.unsupported([^A-Za-z0-9_]|$)|(Halt|Loud)\.unsupported([^A-Za-z0-9_]|$)' "$f" 2>/dev/null || true)))
-    REF_LOCAL=$((REF_LOCAL + $(grep -cE '^[ \t]*\|[ \t]*unsupported[ \t(]' "$f" 2>/dev/null || true)))
+    REF_CORE=$((REF_CORE + $(lean_code_lines "$f" 2>/dev/null \
+      | grep -oE "\\.(error|halt|loud)[ \t]*\\([ \t]*\\.$ctor([^A-Za-z0-9_']|$)|(Halt|Loud)\\.$ctor([^A-Za-z0-9_']|$)" \
+      | grep -c . || true)))
+    REF_LOCAL=$((REF_LOCAL + $(lean_code_lines "$f" 2>/dev/null \
+      | awk -v C="$ctor" -F: '
+          { ln = $1; sub(/^[0-9]+:/, ""); code = $0 }
+          code ~ /^[ \t]*(inductive|structure)[ \t]/ { inblk = 1; next }
+          code ~ /^(def|theorem|lemma|abbrev|instance|example|end|namespace|section|open|@\[|#)/ { inblk = 0 }
+          inblk && code ~ ("^[ \t]*\\|[ \t]*" C "([ \t(]|$)") { n++ }
+          END { print n + 0 }' || true)))
   done
 }
 
@@ -150,13 +172,14 @@ tier_refusals() {
 tier_uncatch() {
   local tier="$1" f
   for f in $(tier_lean "$tier"); do
-    if grep -nE '(theorem|example|lemma|#guard)' "$f" 2>/dev/null \
-         | grep -qE 'tryCatch|catchIn|\.catch'; then
-      printf '%s\n' "${f#"$CLONE"/}"; return 0
-    fi
-    # Context in BOTH directions: the sentence that says what the catch must
-    # not swallow sits after the call as often as before it.
-    if grep -C2 -nE 'tryCatch' "$f" 2>/dev/null | grep -qE 'Loud|Halt|unsupported'; then
+    # ONE DECLARATION must carry both the keyword and the catch — not merely
+    # the same line, and not a two-line window around the word `Halt`, which
+    # every tier built on `ExceptT ρ (StateT W Halt)` writes constantly.
+    if lean_decl_blocks "$f" 2>/dev/null \
+         | grep -qE '^[0-9]+:[ \t]*(theorem|example|lemma)[ \t]' \
+         && lean_decl_blocks "$f" 2>/dev/null \
+              | grep -E '^[0-9]+:[ \t]*(theorem|example|lemma)[ \t]' \
+              | grep -qE 'tryCatch|catchIn|\.catch'; then
       printf '%s\n' "${f#"$CLONE"/}"; return 0
     fi
   done
@@ -241,14 +264,24 @@ is_second_impl_pair() {         # "a / b" -> 0 when one name is the other + mark
   return 1
 }
 
-adequacy_for() {                # tier, "a / b" -> a theorem naming both, or ''
-  local tier="$1" a b f
+adequacy_for() {                # tier, "a / b" -> a theorem naming BOTH, or ''
+  local tier="$1" a b f blk
   a="${2%% /*}"; b="${2##*/ }"; b="$(printf '%s' "$b" | tr -d ' ')"
+  a="$(printf '%s' "$a" | tr -d ' ')"
   [ -n "$a" ] && [ -n "$b" ] || { echo ""; return 0; }
   for f in $(tier_lean "$tier"); do
-    grep -nE '^[ \t]*(theorem|lemma)' "$f" 2>/dev/null | grep -q "$a" \
-      && grep -nE '^[ \t]*(theorem|lemma)' "$f" 2>/dev/null | grep -q "$b" \
-      && { printf '%s\n' "${f#"$CLONE"/}"; return 0; }
+    # ONE STATEMENT must name both, each matched as a WHOLE NAME.  Two
+    # independent unanchored greps over a file need not land on the same
+    # theorem — and with raw names, `callIn` is satisfied by `callInMono`, so a
+    # single line could satisfy both halves at once.
+    while IFS= read -r blk; do
+      case "$blk" in *theorem*|*lemma*) ;; *) continue ;; esac
+      if lean_names_both "$blk" "$a" "$b"; then
+        printf '%s\n' "${f#"$CLONE"/}"; return 0
+      fi
+    done <<BLOCKS
+$(lean_decl_blocks "$f" 2>/dev/null)
+BLOCKS
   done
   echo ""
 }
@@ -305,9 +338,29 @@ if [ "$SELF_TEST" = "1" ]; then
         "$(is_second_impl_pair 'envCreateImmutableBinding / envCreateMutableBinding' && echo yes)" ""
   check "a lone def is not a twin"    "$(tier_twins Adoptr)" ""
 
-  printf 'def f (x : TM α) := tryCatch x (fun e => throw e)\n-- Loud must survive\n' \
+  # STMT-19 asks for a STATEMENT exercising uncatchability, so the fixture is
+  # one.  The first version was a `def`, which the old two-line-window rule
+  # accepted — and that rule also accepted any `tryCatch` near the word `Halt`,
+  # which every tier on `ExceptT ρ (StateT W Halt)` writes constantly.
+  printf 'example (x : TM α) :\n    tryCatch x (fun e => throw e) = x := by\n  rfl\n' \
     > "$MODELS/Adoptr/C.lean"
+  printf '/-- prose about tryCatch and Loud, not a statement -/\ndef g := 1\n' \
+    > "$MODELS/Owner/P.lean"
   check "uncatchability is found BY PATTERN" "$(tier_uncatch Adoptr | grep -c 'Adoptr')" "1"
+  check "  ...and PROSE about it is not a statement" "$(tier_uncatch Owner)" ""
+  # A tier of its OWN, so these cannot perturb another fixture's counts — the
+  # first cut added a file to Adoptr and broke its existing refusal check.
+  mkdir -p "$MODELS/Refs"
+  printf 'def a : R := .halt ( .unsupported "m")\ndef b : R := .error (.unsupported "n")\n/-- .halt (.unsupported "prose") -/\ndef p := 1\n' \
+    > "$MODELS/Refs/S.lean"
+  tier_refusals Refs
+  check "spacing variants are BOTH counted"  "$REF_CORE" "2"
+  check "  ...and prose is not a site"       "$(( REF_CORE == 2 ))" "1"
+  printf 'inductive L where\n  | unsupported\n  | ok\ndef arm (x : L) := match x with\n  | unsupported => 1\n  | ok => 2\n' \
+    > "$MODELS/Refs/D.lean"
+  tier_refusals Refs
+  check "a NULLARY declaration is counted"   "$REF_LOCAL" "1"
+  check "  ...and a match ARM is not"        "$(( REF_LOCAL == 1 ))" "1"
   check "  ...and its absence reported"      "$(tier_uncatch Owner)" ""
 
   printf 'def r : X := .halt (.unsupported "m")\n' > "$MODELS/Adoptr/R.lean"

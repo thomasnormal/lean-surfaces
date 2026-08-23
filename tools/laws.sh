@@ -101,7 +101,17 @@ gate_files() {                  # every file that could BE a gate
 home_tokens() {                 # id, home -> one token per line
   local id="$1" home="$2"
   case "$id" in A[0-9]*) printf '%s\n' "$id" "amendment ${id#A}" ;; esac
-  printf '%s' "$home" | grep -oE '§[0-9]+(\.[0-9]+)?[a-z]?' | sort -u
+  # THE FULL DOTTED SECTION, not two levels.  Capping at two turned a law
+  # homed at §3.4.1 into the token `§3.4` — which, once tok_regex appended a
+  # boundary excluding a following '.', could NEVER match the citation it came
+  # from, while matching every unrelated sibling that spells the two-level
+  # form.  STMT-22 was credited 32 citations that belong to §3.4.
+  #
+  # No parent token is emitted.  A law homed at §3.4.1 is gated by a tool that
+  # cites §3.4.1; crediting it for a §3.4 mention is the over-crediting this
+  # boundary work exists to remove, and the strict reading is the one that can
+  # be checked.
+  printf '%s' "$home" | grep -oE '§[0-9]+(\.[0-9]+)*[a-z]?' | sort -u
   printf '%s' "$home" | grep -oE '(tools|harness)/[A-Za-z0-9_.-]+\.(sh|py)' | sort -u
   printf '%s' "$home" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z-]+-[0-9]+' | sort -u
 }
@@ -236,6 +246,16 @@ MD
   # ---- tokens match WHOLE, or a law homed at §9 is credited to every tool
   # that mentions §9.5.
   printf 'set -u\n# implements §9.5 and nothing else\n' > "$fx/tools/nine5.sh"
+  check "a THREE-level section survives tokenising" \
+        "$(home_tokens STMT-22 'docs/family-architecture.md §3.4.1' | tr '\n' ' ' | sed 's/ *$//')" "§3.4.1"
+  check "  ...and is not truncated to its parent" \
+        "$(home_tokens STMT-22 'docs/family-architecture.md §3.4.1' | grep -cx '§3.4')" "0"
+  printf 'set -u\n# implements §3.4.1 exactly\n' > "$fx/tools/three.sh"
+  check "  ...so it matches its OWN home"        "$(printf '§3.4.1\n' | cited_by | grep -c three)" "1"
+  printf 'set -u\n# mentions only §3.4 here\n' > "$fx/tools/two.sh"
+  check "  ...and a §3.4 tool does not credit it" "$(printf '§3.4.1\n' | cited_by | grep -c two)" "0"
+  rm -f "$fx/tools/three.sh" "$fx/tools/two.sh"
+
   check "§9 does NOT match §9.5"        "$(printf '§9\n' | cited_by | grep -c nine5)" "0"
   check "§9.5 DOES match §9.5"          "$(printf '§9.5\n' | cited_by | grep -c nine5)" "1"
   printf 'set -u\n# implements 2026-08-22-qol-10\n' > "$fx/tools/q10.sh"

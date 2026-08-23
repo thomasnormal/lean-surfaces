@@ -130,5 +130,21 @@
   "basic_lit_kinds": {
     "INT": 34,
     "STRING": 5
+  },
+  "shapes": {
+    "branch_labeled_break": 1,
+    "branch_labeled_goto": 1,
+    "case_single_expr": 3,
+    "for_declares_vars": 4,
+    "for_total": 4,
+    "range_declares_vars": 3,
+    "range_total": 3,
+    "range_two_vars": 1,
+    "switch_tagless": 1,
+    "switch_total": 1,
+    "switch_with_4_cases": 1,
+    "switch_with_default": 1,
+    "typespec_struct": 2,
+    "typespec_total": 2
   }
 }

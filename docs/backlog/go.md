@@ -512,3 +512,113 @@ prevent.
 118 whitelisted), `script_corpus` **65 scripts, 0 failed**. The ticket
 queued **3h47m** and held the machine **84 seconds** — lock-free authoring
 meant the tenure bought verification, not compute.
+
+---
+
+## G4 — INCH 2'S CENSUS: `fallthrough` is 4%, the loop-var delta is 21,715 sites, and `for {}` is the commonest loop (2026-08-23)
+
+Census-first, before a line of inch 2's semantics. §G1's reach ladder said
+*which* kinds to add; it could not say what they COST, because a node
+count cannot see a construct's sub-forms. `SwitchStmt: 5,186` says nothing
+about how many carry a `fallthrough`. So the instrument gained a `shapes`
+field and the Go 1.25.6 standard library was re-censused.
+
+**The instrument was cross-validated before it was believed.** The
+counters were first written as a scratch program, then folded into
+`harness/go/construct_census.go`; both produce identical numbers on all
+fifteen counters. Committed censuses regenerated, and all three gates
+re-verified: agree → 0, agree → 0, drift → 5, double-run byte-identical.
+
+*(A summarizer bug was caught and is worth one line, because it is the
+failure mode this project names: an `awk` pass computing the ratios
+matched `switch_total` as a SUBSTRING of `typeswitch_total` and reported
+`fallthrough` at 27.2% and "switch with default" at 320.6%. The raw counts
+were always right; the derived line was not. A ratio above 100% is the
+kind of wrong answer that announces itself — the dangerous version is the
+one that lands at 27% and looks plausible.)*
+
+### The switch family — cheaper than its ladder position suggests
+
+| shape | n | of 5,186 switches |
+| --- | ---: | ---: |
+| **`fallthrough`** | **208** | **4.0%** |
+| with an init clause | 258 | 5.0% |
+| with a `default` | 2,456 | 47.4% |
+| tagless (`switch { case cond: }`) | 1,052 | 20.3% |
+| ≤3 cases | — | **63.8%** |
+| ≤7 cases | — | 91.3% |
+
+Type switches: **766**, of which **4** carry an init clause. Case
+expressions: **22,671 single-expression against 3,297 multi** — 87% of
+non-default cases test exactly one value, with a tail reaching a single
+276-expression case.
+
+**The decision this makes: `fallthrough` is a rung of its own, not part of
+inch 2.** It appears in 4% of switches, and it is the one switch feature
+that breaks the clean reading of a case body as an independent block — it
+makes the body's exit depend on the NEXT clause. Deferring it keeps 96% of
+switch sites reachable and keeps the rule compositional. The init clause
+(5%) defers with it for the same price.
+
+### The loops — where `LangVersion` stops being a predicate
+
+| shape | n | of parent |
+| --- | ---: | ---: |
+| `for` total | 22,853 | — |
+| **bare `for {}`** | **10,733** | **47.0%** |
+| `for` declaring vars (`:=`) | 8,519 | 37.3% |
+| `range` declaring vars | 13,196 | **98.4%** of 13,412 ranges |
+| **loop-var delta sites** | **21,715** | — |
+
+Two findings, and both change inch 2's shape:
+
+**`for {}` is the single commonest loop form at 47%.** It has no
+condition, so termination is entirely the body's business — which makes it
+exactly where **fuel stops being a formality**. `docs/statement-cookbook.md`
+§5's fuel-placement question is not deferrable past this construct, and
+`LeanModels/Core/Outcome.lean`'s header is explicit that fuel is an index
+on the step function and never a monad layer.
+
+**The Go 1.21→1.22 delta touches 21,715 sites in the standard library
+alone.** §G2 landed `LangVersion.perIterationLoopVars` with three guard
+rows and no consumer; inch 2 is where it becomes a branch in a rule. The
+charter's §3.3 acceptance test — the model must produce `[3 3 3]` and
+`[0 1 2]` from byte-identical bodies in one package — is inch 2's, and
+the census says the branch it depends on is not a corner case.
+
+Labelled control flow stays small: **183 labelled `break` (1.1%)** and
+**174 labelled `continue` (2.2%)**. `goto`: 583. The inch-1 walker already
+returns `Flow.broke`/`Flow.continued` carrying an optional label, so
+resolution is a bounded addition rather than a redesign.
+
+### `TypeSpec` — structs, and almost nothing else
+
+**11,264 type declarations: 8,156 structs (72.4%)**, 2,670 other (23.7%),
+**438 interfaces (3.9%)**, 185 aliases, 68 generic. Inch 2's `TypeSpec`
+work is struct declaration; interfaces are a later rung and the census
+says they are 4% of the surface, not a co-equal half.
+
+### Inch 2's scope, derived
+
+1. `TypeSpec` over struct types, and `DeclStmt`'s remaining forms — the
+   `+1,400`-file knee §G1 measured.
+2. `SwitchStmt`/`CaseClause`, **excluding `fallthrough` and init clauses**
+   (96% and 95% of sites respectively).
+3. `ForStmt` including bare `for {}`, which forces the fuel decision, and
+   `RangeStmt` — carrying the go1.22 branch, with §3.3's acceptance test
+   as the gate.
+
+Deferred with a measured price rather than a shrug: `fallthrough` (4%),
+switch init (5%), type switches (766 sites, and they need `go/types`),
+interfaces (3.9%).
+
+**A fixture gap the census found in this lane's own artifact:**
+`Examples/go/rung1/rung1.go` exercises one switch with four cases and a
+default, but **no `fallthrough` and no type switch** — consistent with
+deferring both, and recorded so the rung-2 fixture is written knowing it.
+
+### Triad
+
+Docs and one harness instrument; **no Lean**, so no tenure owed. `gofmt -l`
+clean, `go vet` clean, both committed censuses regenerated and their gates
+re-verified, `docs_check` green.

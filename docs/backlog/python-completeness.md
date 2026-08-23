@@ -672,6 +672,93 @@ as anything that touches control can be. 3c-i-b and 3c-i-c follow separately.
 new witnesses' expectations go in the census's CPython-written column and
 `diff_test`.
 
+## 2026-08-23-pycomplete-10 — 3c-i-b hits a STRUCTURAL wall, and the fix is an ingestion rewrite, not a call-site fusion
+
+3c-i-b was built as designed — fuse the consuming call at the ONE site where a
+named call's args meet its plan, recognising the view BEFORE evaluating it —
+and it does not compile. The verdict is **RED**, the cause is structural, and
+it redesigns the inch. Implementation reverted; this entry is the finding.
+
+### The wall
+
+`Monadic/Eval.lean`'s expression half is **structural on `Expr`**. The fused
+arm has to evaluate the view's RECEIVER, and the receiver arrives out of a
+pure recognizer (`viewArgOf plan args.toList`) — so the equation compiler
+cannot see it as a subterm and the block stops being structurally recursive:
+
+    error: LeanModels/Python/Monadic/Eval.lean:631:0: failed to infer structural recursion
+
+**The file says so itself**, three lines above where the fusion went, and the
+comment predates this inch:
+
+> the free-scrutinee discipline … is load-bearing twice over — it is also what
+> keeps this block structurally recursive, since a mutual member taking the
+> SAME `List Expr` is not a decrease.
+
+Checked rather than assumed: every `evalOpen` in that block is applied to a
+DIRECTLY MATCHED subterm (`recv`, `iter`, `test`), and the file's only
+`match args.toList` — the trace clock's — inspects ARITY and never evaluates a
+matched element. There is no precedent for evaluating an `Expr` pulled out of
+`args`, because there cannot be one.
+
+### The finding, and it is the mirror of the walker law
+
+§3a recorded that `execGen` MUST fork on a pure plan or `simp only` never
+fires. Here the pure plan is what BREAKS the definition: the fuel-free half is
+structural on the syntax, so a plan that HIDES the subterm relation costs
+exactly what a plan that EXPOSES the constructor bought.
+
+**The rule, for both halves at once: a pure plan may decide WHAT to do, but
+never supply a term the definition then RECURSES on.** In the fueled half the
+plan is free because fuel is the measure; in the fuel-free half the measure IS
+the syntax, and the plan erases it.
+
+### The corrected design — fuse at INGESTION, which the repo already does
+
+Rewrite the ARGUMENT, not the call. At ingestion, when a consuming builtin's
+sole argument is syntactically `d.keys()`/`.values()`/`.items()`, rewrite that
+argument to a synthetic builtin call over the receiver:
+
+    list(d.keys())   ⇢   list(<dictkeys>(d))
+
+Then the evaluator's existing path evaluates `d` as an ORDINARY argument —
+structural, because `d` sits in `args` and rides `evalOpenList` — and
+`applyBuiltin` gains one arm answering the element sequence for
+`<dictkeys>`/`<dictvalues>`/`<dictitems>`.
+
+This is the repo's own established mechanism, not a new one: `ListComp`
+desugars to `list(genexp)` and `yield from <genexp>` inlines, both at
+ingestion, both for the same reason — the evaluator should meet a shape it
+already handles.
+
+What it costs, and why it is cheaper than what failed:
+
+* **no new `Expr` constructor** — the rewrite lands inside the existing call
+  shape, so `Ast.lean` and every walker are untouched;
+* **no structural risk** — nothing new is recursed on;
+* **no `Mono.lean` cost** — one arm under an existing shape, which the merge's
+  measured rule says is free;
+* **soundness unchanged** — the rewrite fires only when the view is the
+  argument of a consuming call, so `k = d.keys()` is never rewritten and
+  `dict.view-escapes` still refuses. The snapshot stays licensed by the SHAPE.
+
+### Cost of this red, recorded honestly
+
+Three tickets. Two were my own defect and the same one twice — a declaration
+inserted between a doc comment and its `def`, which Lean reports as a bare
+parse error far from the cause. **I had written a scanner for exactly that
+after the first, and did not run it on the file I had just edited.** The scan
+is now over every changed `.lean` in the diff, not the files I remember
+touching. The third ticket is this finding, which no amount of care at the
+edit would have avoided — only building it.
+
+One process note worth carrying: a triad's enqueue-tree gate correctly refused
+a run after I amended the commit post-enqueue. **Do not touch the tree between
+enqueue and acquire** — the amend cost a full queue slot (83 minutes) for a
+one-line index regeneration that should have preceded the ticket.
+
+**Provenance.** This entry was WRITTEN on 2026-08-23 and never landed: it lived only on the unlanded branch `pyc-3cib` (`4aa12f7`), while the redesign it produced landed as §pycomplete-11 — which cites it. A citation whose target is on a branch is a dangling citation, and the remedy for a provenance gap is provenance. Recovered here VERBATIM; the `Monadic/Eval.lean` comment it quotes still resolves BY CONTENT (*“a mutual member taking the SAME `List Expr` is not a decrease”*).
+
 ## 2026-08-23-pycomplete-11 — 3c-i-b, rebuilt as an INGESTION rewrite, and the third decision site named
 
 `list(d.keys())`, `sorted(d.values())`, `sum(d.values())`, `len(d.keys())`,
@@ -791,3 +878,216 @@ with whoever owns them. Noted, not claimed.
   defect, not the current offset. Worth one pass converting them to lemma
   NAMES, which do not drift; noted for whoever next edits that file, since
   fixing offsets without changing the form buys one landing of accuracy.
+
+## 2026-08-23-pycomplete-13 — INCH 3c-i-c's CENSUS: `enumerate(d)` is a GENERATOR FRAME, so the Kont record is not touched at all
+
+Measured on CPython 3.9.19 before any design, and read against the tree
+before any price. Two findings, and both correct a standing expectation.
+
+### What CPython does — the ORACLE's column, in the SOURCE spelling
+
+| probe | CPython 3.9.19 |
+| --- | --- |
+| `for i, k in enumerate(d):` | `0 x` / `1 y` — the index rides the KEYS |
+| `list(enumerate(d, 5))` | starts at 5 |
+| `list(enumerate(d, -3))` | starts at −3 — the start is an `int`, never a `Nat` |
+| `enumerate(d, 1.5)` | `TypeError: 'float' object cannot be interpreted as an integer` |
+| `list(enumerate(d, start=5))` | works — the KEYWORD spelling is a second shape |
+| `next(enumerate(d))` | `(0, 'x')` — it is an ITERATOR OBJECT, not a sequence |
+| `list(enumerate(d))` | `[(0, 'x'), (1, 'y')]` |
+| `dict(enumerate(d))` | `{0: 'x', 1: 'y'}` |
+| `list(enumerate(d.items()))` | `[(0, ('x', 1)), (1, ('y', 2))]` |
+| `list(enumerate(d.values()))` | `[(0, 1), (1, 2)]` |
+| `len(enumerate(d))` | `TypeError: object of type 'enumerate' has no len()` |
+| `list(reversed(enumerate(d)))` | `TypeError: 'enumerate' object is not reversible` |
+| `enumerate(d) == enumerate(d)` | `False` — identity equality, exactly `d.values()`'s row |
+| `e = enumerate(d)` alone | binds SILENTLY — no output, no error |
+| `print(type(e).__name__)` | `enumerate` |
+| `print(e)` | `<enumerate object at 0x…>` — an ADDRESS, so unusable as an expectation |
+| `e = enumerate(d)`; `d[2]='b'`; nothing | still no error — the guard is on the STEP, not the bind |
+| `e = enumerate(d)`; `list(e)`; `d[2]='b'`; `list(e)` | `[(0, 'a')]` then `[]` — an EXHAUSTED enumerate stops checking |
+
+### THE TRAP, and it is §pycomplete-8's, pointing the other way
+
+    d = {1: 'a'};  e = enumerate(d);  d[2] = 'b';  print(list(e))
+    CPython: RuntimeError: dictionary changed size during iteration
+    a snapshot would print: [(0, 1)]
+
+An escaped `enumerate(d)` **is live**. §pycomplete-8 measured a view answering
+`[1, 2]` where a snapshot answers `[1]` — a wrong VALUE. Here a snapshot
+answers where CPython RAISES — a wrong OUTCOME. Same trap, opposite direction,
+and the second direction is the one a model reaches for first, because
+"enumerate materialises its argument" is the intuitive reading. Growth inside
+the loop and `del d[k]` inside the loop raise the same `RuntimeError`; a value
+update of an existing key is fine (`{1: 'z', 2: 'z'}`) — so all three regimes
+are 3a's, unchanged, and `dictStep` already decides them.
+
+### THE STRUCTURAL FINDING: this inch does not touch `Kont`
+
+The sequencing note expected 3c-i-c to be the PAYING case — "its own `Kont`
+frame", with the four `Kont`-record touch points in `Monadic/Mono.lean` that
+the `fuelMono` maintenance rule charges for a new field. **The code refutes
+it.** `enumerate` in this tier is not a loop cursor: `applyBuiltin`'s
+`enumerate` arm (`Monadic/Eval.lean`) builds a `GenFrame` through `enumFrame`
+and heap-pushes `.generator "<enumerate>" [] [fr] .suspended`, so the object is
+first-class ALREADY and every consumer reaches it through `stepIter`,
+`execGen` and `forGen` — **all three of which are existing `Kont` fields**.
+
+So: no new field, no new `KontLe` conjunct, no growth in the sixteen
+`obtain ⟨…⟩ := hK` destructurings, nothing in `KontLe.bottom` or `kontMono`.
+`Mono.lean` is untouched. The maintenance rule does not fire, and the reason it
+looked like it would is that `for k in d` (§3a) and `for i, k in enumerate(d)`
+LOOK like the same construct and are not: the first is a loop the interpreter
+drives, the second is an object the loop consumes.
+
+### The site is a SHARED pure worker, and this time that is CORRECT
+
+`enumFrame` (`Semantics.lean`) is called by BOTH presentations — the rebuild at
+`Monadic/Eval.lean`'s `enumerate` arm and the trunk at its own — and its dict
+arm is today's refusal (*"enumerate() over a dict iterates its keys — outside
+the tier"*). §pycomplete-9 ruled the shared-worker route a silently wrong
+answer for the VIEWS, and that ruling **does not extend here** — the reason is
+the RETURN TYPE. A pure plan admitting `.keys()` can only answer a VALUE, and
+the only value available is a snapshot. `enumFrame` answers a **`GenFrame`** —
+an address plus a cursor — which *is* the live object. The constraint and
+correctness pointed in opposite directions for 3c-i-b; here they point the
+same way.
+
+### The price, by the `enumList` precedent — the frame it is modelled on
+
+`enumDict (i : Int) (a : Addr) (cur n sv : Nat)` sits beside `enumList`, which
+is already the live-cursor-over-an-address frame, and `n`/`sv` are 3a's two
+guards. `enumList` is not a hypothetical sibling: `gen_lab::enum_list` walks
+`for i, v in enumerate(xs)` over a HEAP LIST today, through `forGen` over a
+heap-pushed `.generator "<enumerate>"`. The dict case is that path with a
+different step decision.
+
+| site | file | what |
+| --- | --- | --- |
+| constructor | `Runtime.lean` §generator continuations | one arm beside `enumList` |
+| well-formedness | `Runtime.lean` `GenFrame` addr guard | `a < h.size` |
+| ingestion | `Semantics.lean` `enumFrame` | the dict arm, replacing the refusal |
+| classifiers ×2 | `Semantics.lean` (the two `Option.none` GenCont rows) | one pattern each |
+| step | `Monadic/Eval.lean` `execGen` | reuse `dictStep … .keys` — all three regimes already decided; the `(i, k)` tuple is the FRAME's, not the cursor's, so `DictViewKind` gains nothing |
+| step (trunk) | `Semantics.lean` `stepIter` | one arm, REFUSING — the `.forDict` template sits directly above it |
+| `PayloadBlind` / `ClockErase` / `Obs` | one arm each | mechanical; the obligations are checked below and all four are free |
+| `VCGen` | `GenSteps` / `GenSilent` | two transition theorems, if `enumList`'s precedent is kept |
+
+**Where the executable capability lands, and where it does not.** The
+rebuild's `execGen` STEPS the frame; the trunk's `stepIter` REFUSES it — the
+arrangement §pycomplete-5 sanctioned for 3a, and the one the current split
+states outright (*executable behaviour is the rebuild's, proved behaviour is
+still the trunk's*). The template is already at the very site the new arm lands
+beside: *"this interpreter never CONSTRUCTS a `forDict` frame … the arm exists
+to compile and to refuse, and gains no consumers"*. One definition of
+`enumFrame`, one place that steps it, and no duplicated decision.
+
+**The trunk-side proof obligations were CHECKED, not assumed**, because
+ruling (c) below makes the trunk BUILD the frame and `enumFrame` is a heap
+reader. Every consumer of `enumFrame` was read, and all four are free:
+
+* `PayloadBlind.enumFrame_swapAt` proves the frame blind, and the new dict arm
+  reads `es.size` and `shapeVersion` out of a heap object — payload, on the
+  face of it. It still closes with the proof it already has: `PayloadTwin o₀ o`
+  requires BOTH sides to be `.generator q _ _ .running`, so
+  `Heap.get?_swapAt_twin`'s twin branch lands on `enumFrame`'s GENERATOR arm on
+  both sides, and the dict arm is reachable only in the branch where the two
+  lookups are literally equal. **The swapped slot can never hold a dict** —
+  §pycomplete-1's rung-3b argument, unchanged, at a different worker.
+* `ClockErase` and `PayloadBlind` reach the `enumerate` arm through
+  `cases … : enumFrame …`, which splits on the `Res` RESULT, not on the
+  receiver's constructor. A new arm returning `.ok` adds no goal; it lands in
+  the `.ok` branch that already exists.
+* `Monadic/Spec.lean` owes nothing either: `dictStepM_spec` is stated for an
+  arbitrary `kind` and arbitrary `(a i n sv)`, so the new frame's step inherits
+  the `@[spec]` lemma — *"a cursor step must not disturb the dict it is
+  walking"* — the moment it is written in terms of `dictStepM`.
+* `Obs` never reaches it at all: `enumerate` is carved out of the `heapFree`
+  fragment SYNTACTICALLY (`(fname == "enumerate") = false`), beside `sorted`,
+  `next`, `count`, `any` and `all`.
+
+So the §pycomplete-1 law does not fire at the CONSTRUCTION site, and the
+reason is worth keeping: the law charges for a refusal OTHER PROOFS WERE
+STANDING ON. These four were standing on the frame's SHAPE (`Res`, and a twin
+that cannot be a dict), not on its refusal — and shape is what the new arm
+preserves. The law WOULD fire at the STEP site, which is exactly why the
+trunk's `stepIter` keeps refusing: three walkers stand on that one.
+
+### THE DECISION THE CENSUS SURFACED — RULED, and the ruling is (c)
+
+`.forDict`'s template is not a perfect fit, and the difference had to be
+settled before a ticket was spent on it. The trunk never BUILDS a `forDict`
+frame; it WOULD build an `.enumDict` one, because `enumFrame` is shared. So a
+trunk `e = enumerate(d)` that is never stepped answers an object where it
+refuses today, and only the first step refuses. Three ways out were on the
+table: (a) decide in the trunk too — the three real proof arms above;
+(b) refuse in the `enumerate` builtin arm BEFORE `enumFrame`; (c) accept the
+delta and WITNESS it.
+
+**Ruled (c).** The reasons, in the order that decides them:
+
+* **The delta is a capability OPENING, not a regression.** CPython answers an
+  object at `e = enumerate(d)` too — measured: binding is silent, `type(e)` is
+  `'enumerate'`, and growing the dict afterwards raises NOTHING until a step.
+  A tier that starts answering there moves TOWARD the oracle. There is nothing
+  to defend against; there is a row to write.
+* **(b) is §pycomplete-9's warned shape.** A refusal placed before
+  `enumFrame` is a SECOND decision site for one construct — the defect that
+  entry exists to name, and the same defect §pycomplete-11 had to name a third
+  decision site to avoid hiding.
+* **(a) buys nothing the oracle does not already answer.** Three trunk proof
+  arms is §pycomplete-1's real price, and it is worth paying for a case where
+  the trunk's answer is the one under proof. Here the oracle answers, the
+  rebuild is what executes, and the arms would certify a decision no runner
+  reaches.
+
+So the delta is DECLARED and CARRIED BY A WITNESS, not suppressed — which is
+the same move `dict.view-escapes` made for 3c-ii and `star_dict` made for
+rung 3b: the boundary is falsifiable rather than asserted.
+
+**The witness cannot be `print(e)`** — CPython answers
+`<enumerate object at 0x109333e00>`, an ADDRESS, and printing a value the tier
+cannot render exactly is already `set.order`'s refusal class. The spellings
+that carry the ruling and are address-free are `print(type(e).__name__)` →
+`enumerate`, and the never-stepped mutation row, which prints its own marker
+and must NOT raise.
+
+### What 3c-i-c does NOT cover, named so it is not silently assumed
+
+* `enumerate(d.items())` / `enumerate(d.values())` — 3c-i-b's
+  `consumesViewArg` deliberately EXCLUDES `enumerate`, because an `enumerate`
+  object outlives its call and the rewrite's snapshot is licensed by the shape.
+  Composing the view kind with this cursor is its own inch.
+* `dict(d.items())` — `dict` is likewise absent from `consumesViewArg`;
+  §pycomplete-8 listed it as a 3c-i target and §pycomplete-11 did not land it.
+* `enumerate(d, start=5)` — the keyword spelling. `enumStart` reads positional
+  arguments only, so this stays `kwargs.callee-kind`.
+* `enumerate(d) == enumerate(d)`, `len`, `reversed` — 3c-ii's first-class
+  territory, and the identity-equality row is `d.values()`'s row again.
+
+### Battery — FIVE rows, named by CONSTRUCT, expectations written by the ORACLE
+
+Every source below is the SPELLING a program would contain, and every
+expectation is CPython 3.9.19's own.
+
+| witness | source | CPython | after the inch |
+| --- | --- | --- | --- |
+| `dict.enumerate` (exists, the marker) | `for i, k in enumerate(d): print(i, k)` | `0 x` / `1 y` | REFUSE → **MATCH** |
+| `dict.enumerate-start` | `print(list(enumerate(d, 5)))`, and `-3` beside it | starts at 5 / at −3 | **MATCH** — the start is an `int` |
+| `dict.enumerate-escapes` | `e = enumerate(d)` / `d[2] = 'b'` / `print(type(e).__name__)` | `enumerate`, and NO error | **MATCH** — this row IS the ruled delta |
+| `dict.enumerate-resize` | `e = enumerate(d)` / `d[2] = 'b'` / `print(next(e))` | `RuntimeError: dictionary changed size during iteration` | **MATCH** — raises, never snapshots |
+| `dict.enumerate-of-items` | `print(list(enumerate(d.items())))` | `[(0, ('x', 1)), (1, ('y', 2))]` | stays **REFUSE** — the excluded composition |
+
+`dict.enumerate-escapes` and `dict.enumerate-resize` are the SAME two
+statements with a different third line, and that is deliberate: the pair is
+what makes the ruling falsifiable. Binding and mutating must be silent;
+STEPPING after the mutation must raise. A model that guarded at bind time
+would pass the second and fail the first, and a model that snapshotted would
+pass the first and fail the second. Neither can pass both by accident.
+
+One further measurement, recorded because it constrains the step arm and is
+satisfied BY CONSTRUCTION rather than by a guard: after exhaustion the size
+check stops applying — `e = enumerate(d); list(e); d[2] = 'b'; list(e)` answers
+`[(0, 'a')]` then `[]`, not a `RuntimeError`. The frame is popped at
+exhaustion, so an exhausted generator never re-reads the dict. A model that
+kept `n` live past the end would raise where CPython answers `[]`.

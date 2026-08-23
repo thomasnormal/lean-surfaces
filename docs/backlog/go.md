@@ -1893,3 +1893,83 @@ lesson that `Reverse8`, not `Len8`, decided the value model.
 
 `fallthrough` deferred (4.0%); maps and interfaces measured at +0 and
 strictly downstream; MM-oracle untouched.
+
+---
+
+## G17 — THE SLICE RUNG'S ACCEPTANCE PICK: the discriminator lives in the CALL (2026-08-23)
+
+Census only. The brief: find a small vendored function exercising **both**
+aliasing and the len/cap distinction, the way `rev8tab` decided strings.
+
+### THE SEARCH
+
+Swept every non-generic, non-method stdlib function for ones using a slice
+expression together with a write through an index, small and free of
+constructs beyond this rung. **60 candidates.** Tightened to require a
+MIDDLE slice `a[i:j]` — the only place `cap` and `len` come apart, since a
+tail slice `a[i:]` has `cap == len` — and it collapses to **8**, every one
+of which needs interfaces, `clear`, `append`, or range-over-struct-slice.
+
+**So no small vendored function exercises both.** That is the census
+result, and the interesting part is what follows from it.
+
+### THE PICK — `runtime.itoa`, and the discriminator is the CALL SITE
+
+    func itoa(buf []byte, val uint64) []byte {
+        i := len(buf) - 1
+        for val >= 10 { buf[i] = byte(val%10 + '0'); i--; val /= 10 }
+        buf[i] = byte(val + '0')
+        return buf[i:]
+    }
+
+`src/runtime/error.go`, 57 nodes, no external calls. It needs `len`, an
+index write, a tail slice, a `byte` conversion (rung 4) and a loop — this
+rung plus what is already built.
+
+**Called on a MIDDLE slice, it discriminates both**, measured against
+`gc`:
+
+    mid := base[2:6]          len=4 cap=6      -- cap and len apart
+    out := itoa(mid, 42)
+    RET  "42"   len=2 cap=4                    -- len != cap in the RESULT
+    BASE "....42.."                            -- writes landed in base
+    out[0]='X'  ->  BASE "....X2.."            -- ALIASING, decisive
+    out[:cap(out)] = "X2.."  len=4             -- reaches PAST mid's end
+
+**The finding: a discriminating acceptance case does not have to be a
+discriminating FUNCTION.** The corpus had none small enough; the vendored
+function plus a chosen call site has the property, and the call site is
+still not a pet program — it is how a caller in the corpus would use it.
+That generalises §G15's rule: *take the case that can fail under a wrong
+model* — and the case is (function, argument), not the function alone.
+
+### WHY EACH ROW KILLS THE NAIVE MODEL
+
+A slice as a list copy passes more than it should, which is the trap:
+
+| row | naive list-copy model |
+| --- | --- |
+| `RET "42"` | **PASSES** — the return value is right |
+| `BASE "....42.."` | fails — the caller's array never saw the writes |
+| `out[0]='X'` → `BASE` | fails — no shared backing array |
+| `out[:cap(out)]` reaching past `mid` | **cannot even be expressed** — a copy has no cap beyond its length |
+
+The last row is the sharpest: a value that reaches *beyond its own length
+into a longer array* has no representation in a copy model. So the value
+model is decided up front, as the brief expected — **backing array +
+offset + len + cap**, not a list.
+
+### THE RUNG, sized
+
+* `[]T`, `a[i:j]`, index read/write through a slice, `len`, `cap`;
+* **`range` over a slice reuses `execLoop`** — the machinery the `bitLen`
+  induction is proved about — rather than forking it;
+* fixed arrays `[N]T` excluded (14.6% of `ArrayType`, §G14);
+* `append` NOT declared: `itoa` does not use it, and its growth rule is
+  its own question. Declare only what the rung executes.
+
+Acceptance: `itoa` on a middle slice, all four rows above, oracle columns
+`printf`-ed from `gc` as always.
+
+`fallthrough` deferred (4.0%); maps and interfaces at +0 and strictly
+downstream (§G16); MM-oracle untouched.

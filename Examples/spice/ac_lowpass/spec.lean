@@ -72,6 +72,23 @@ theorem ac_lowpass_assurance :
           Examples.spice.ac_lowpass.proof.cutoffOutput)
       Examples.spice.ac_lowpass.proof.ACCutoffDomain := by proofs
 
+/-- The outer non-vacuity link: the allowed scenario set is the singleton
+`cutoffScenario`, so it is inhabited and the case above could have failed. -/
+theorem ac_lowpass_grounded :
+    GroundedUnder Examples.spice.ac_lowpass.proof.CutoffAllowed :=
+  ⟨Examples.spice.ac_lowpass.proof.cutoffScenario, rfl⟩
+
+/-- The existential form, which an empty allowed-scenario set would refute. -/
+theorem ac_lowpass_exhibits :
+    ExhibitsUnder
+      (ScalarACBehavior Examples.spice.ac_lowpass.proof.acLowpassLinear)
+      Examples.spice.ac_lowpass.proof.CutoffAllowed
+      (fun _scenario boundary _internal =>
+        boundary.output =
+          Examples.spice.ac_lowpass.proof.cutoffOutput)
+      Examples.spice.ac_lowpass.proof.ACCutoffDomain :=
+  _root_.ac_lowpass_assurance.exhibits _root_.ac_lowpass_grounded
+
 #assurance_report acLowpassSpecDeck using _root_.ac_lowpass_assurance
   [_root_.ac_lowpass_determinate, _root_.ac_lowpass_linearization,
     _root_.ac_lowpass_transfer, _root_.ac_lowpass_stable,

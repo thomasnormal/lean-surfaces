@@ -34,8 +34,25 @@ theorem typed_divider_assurance :
           (node! typedDivider "out") = 10 / 3)
       (fun _world _assignment _internal => True) := by proofs
 
+/-- The outer non-vacuity link: at least one world is allowed. `RealizableDC`
+above closes the empty-behavior hole; this closes the empty-world one. -/
+theorem typed_divider_grounded : GroundedUnder (fun _world : Unit => True) :=
+  ⟨(), trivial⟩
+
+/-- The existential form, which an empty allowed-world set would refute. -/
+theorem typed_divider_exhibits :
+    ExhibitsUnder (NominalDCBehavior typedDivider) (fun _world => True)
+      (fun _world assignment _internal =>
+        assignment.observeVoltage typedDivider
+          (node! typedDivider "out") = 10 / 3)
+      (fun _world _assignment _internal => True) :=
+  typed_divider_assurance.exhibits typed_divider_grounded
+
 #assurance_report typedDivider using typed_divider_assurance
   [typed_divider_wellposed]
+
+#print axioms typed_divider_grounded
+#print axioms typed_divider_exhibits
 
 #print axioms typed_divider_out
 #print axioms typed_divider_realizable

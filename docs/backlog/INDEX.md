@@ -15,13 +15,14 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**241 entries across 16 lanes.** Regenerate with
+**243 entries across 17 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
 | --- | --- | --- |
 | `2026-08-24-architecture-52` | The resolution gate is two-sided; a file needs every function it calls; and a commit cannot contain its own hash | architecture |
 | `2026-08-24-wasm-7` | **O3 IS PROVED**, the bridge lands, and Mathlib turns out to apply after all — through an adapter Mathlib itself supplies | wasm |
+| `2026-08-24-analog-1` | CENSUS-FIRST: non-vacuity is a chain of two links, and the tier closed only the inner one | analog |
 | `2026-08-23-architecture-51` | A row that kills two wrong models; and a minted law caught its own lane's future error | architecture |
 | `2026-08-23-architecture-50` | The goal is COMPLETION, and a milestone is a waypoint | architecture |
 | `2026-08-23-architecture-49` | A full build is its own root; and 27 green rows that could not see the call site | architecture |
@@ -232,6 +233,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-1` | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | `SPEC` | the completion metric (standing; updated every landing) | go |
+| `SPEC` | the completion metric (standing; updated every landing) | analog |
 | `INBOUND` | `2026-08-23-architecture-44` (Wasm lane's to renumber or close) | wasm |
 | `INBOUND` | `2026-08-23-architecture-28` (QoL lane's to renumber or close) | qol |
 | `INBOUND` | `2026-08-23-architecture-27` (QoL lane's to renumber or close) | qol |
@@ -262,4 +264,4 @@ and every existing `§Lnn` reference still resolves there.
 | `G11` | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
 
-**30 heading(s) do not use the §9.5 id scheme** and sort last.
+**31 heading(s) do not use the §9.5 id scheme** and sort last.

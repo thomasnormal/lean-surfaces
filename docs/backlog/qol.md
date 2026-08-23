@@ -2703,3 +2703,61 @@ now drive the cached path directly.
 `bash -n` clean. `laws.sh` **33 ok** (28 → 33), `triad.sh` **176 ok** (174 →
 176), `ci.sh --verify-guards` **17 ok** (14 → 17). `docs_check` **91/91**. The
 marker gate reports the live tree clean. No Lean executed.
+
+---
+
+## 2026-08-23-qol-39 — laws.sh was SPAWN-BOUND, so its runtime was other lanes' load
+
+Ruled first because *a tool that prices enforcement must itself be priced*, and
+**a two-minute audit instrument stops being run** — which is how audit
+instruments die.
+
+### Profiled before optimizing, and the profile refuted my first guess
+
+Phase timings on the real script: `cache 1 s`, then **the ROWS loop is
+everything**. But the same per-law work, measured over a pre-read file, came to
+**13 s** — and three slices (rows 1-30, 150-179, 300-329) were **uniform at
+~1.15 s each**, so no subset of laws is pathological.
+
+The gap is **process spawns**: ~8000 of them, at four-to-six per law, and
+**spawn latency scales with machine load**. That is why the same instrument
+measured 54 s, then 1 m 23 s, then 1 m 55 s, then past two minutes as other
+lanes' builds came and went. **Its runtime was a function of somebody else's
+work** — §5.4a's own subject, pointed at the instrument that audits the
+instruments.
+
+### The fix follows the profile, not a hunch
+
+* `home_tokens`: three `grep -oE | sort -u` pipelines → **one awk**.
+* `ledger_citations`: one recursive grep **per token over fifteen files** → one
+  awk over a corpus concatenated once, for all of a law's tokens together.
+* `$(basename "$f")` inside the per-file loop → `${f##*/}`, no spawn.
+
+**62 s, from over 120 s — and the numbers are byte-identical** (231 cited, 118
+NO GATE, 1 ungateable). That equality is the check that matters: an
+optimization that changes a count has changed the instrument, not its cost.
+
+**The boundary survived, and it has its own row.** Counting with `index()`
+would have been faster still and would have dropped the whole-token rule —
+exactly how `§9` came to match `§9.5`. The awk escapes and anchors each token,
+and a self-test asserts `§9` counts **0** against a ledger that says `§9.5`
+twice, while `§9.5` counts **2**.
+
+### And the budget, because 62 s is not 6 s
+
+`--budget` (default 120 s) with progress every 50 laws, and past it the run
+stops and says so:
+
+```
+  PARTIAL — stopped after 5s at law 24.  Every count below is a FLOOR, not a total.
+            Raise --budget and re-run before quoting any of it.
+```
+
+The subshell writes the verdict to a **file** rather than a variable — the
+same reason `triad.sh`'s watchdog publishes its pid instead of exporting it.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **35 ok, 0 failed** (33 → 35). Full run 62 s
+with unchanged numbers; `--budget 5` stops at law 24 and declares its counts
+floors. No Lean executed.

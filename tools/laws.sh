@@ -29,6 +29,7 @@
 #   tools/laws.sh                 # the report
 #   tools/laws.sh --top 5         # just the NO GATE head
 #   tools/laws.sh --verbose       # every law, with its citing tools
+#   tools/laws.sh --budget 30     # seconds; PARTIAL past it, counts are FLOORS
 #   tools/laws.sh --self-test
 #
 # ZERO Lean execution.  Safe outside a tenure (A11).
@@ -39,6 +40,10 @@ CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TOP=10
 VERBOSE=0
 SELF_TEST=0
+# A TOOL THAT PRICES ENFORCEMENT MUST ITSELF BE PRICED — and a two-minute audit
+# instrument stops being run, which is how audit instruments die.
+BUDGET="${LS_LAWS_BUDGET:-120}"
+PROGRESS_EVERY="${LS_LAWS_PROGRESS:-50}"
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "laws.sh: $*" >&2; exit 2; }
@@ -48,6 +53,7 @@ while [ $# -gt 0 ]; do
     --dir)       CLONE="${2:-}"; shift 2 ;;
     --top)       TOP="${2:-}"; shift 2 ;;
     --verbose)   VERBOSE=1; shift ;;
+    --budget)    BUDGET="${2:-}"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     *)           die "unknown argument '$1'" ;;
@@ -111,9 +117,28 @@ home_tokens() {                 # id, home -> one token per line
   # cites §3.4.1; crediting it for a §3.4 mention is the over-crediting this
   # boundary work exists to remove, and the strict reading is the one that can
   # be checked.
-  printf '%s' "$home" | grep -oE '§[0-9]+(\.[0-9]+)*[a-z]?' | sort -u
-  printf '%s' "$home" | grep -oE '(tools|harness)/[A-Za-z0-9_.-]+\.(sh|py)' | sort -u
-  printf '%s' "$home" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z-]+-[0-9]+' | sort -u
+  # ONE awk for all three shapes.  Profiled first (the stripper-vs-spawn
+  # precedent): the ROWS loop was everything, the same work over a pre-read
+  # file took 13s, and the difference was ~8000 PROCESS SPAWNS whose latency
+  # scales with machine load — so this instrument's runtime was a function of
+  # OTHER LANES' builds (54s -> 83s -> 115s -> past 120s as load grew).  A
+  # number that moves with somebody else's load is §5.4a's own subject.
+  printf '%s' "$home" | awk '
+    function emit(t) { if (!(t in seen)) { seen[t] = 1; print t } }
+    {
+      line = $0
+      while (match(line, /§[0-9]+(\.[0-9]+)*[a-z]?/)) {
+        emit(substr(line, RSTART, RLENGTH)); line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /(tools|harness)\/[A-Za-z0-9_.-]+\.(sh|py)/)) {
+        emit(substr(line, RSTART, RLENGTH)); line = substr(line, RSTART + RLENGTH)
+      }
+      line = $0
+      while (match(line, /[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]-[a-z-]+-[0-9]+/)) {
+        emit(substr(line, RSTART, RLENGTH)); line = substr(line, RSTART + RLENGTH)
+      }
+    }'
 }
 
 # A TOKEN MUST MATCH AS A WHOLE TOKEN.  `grep -F "§9"` matches `§9.5`, `§9.7`
@@ -145,12 +170,13 @@ enforcement_cache_init() {
   local f
   local f
   for f in $(gate_files); do
-    enforcement_text "$f" > "$ENF_CACHE/$(basename "$f")" 2>/dev/null
+    enforcement_text "$f" > "$ENF_CACHE/${f##*/}" 2>/dev/null
   done
   # ONE corpus of every tool's enforcement text.  Most laws are cited by
   # NOTHING, and asking 18 files one at a time is 18 greps to learn that; the
   # corpus answers it in one, and only a HIT pays for the per-file loop.
   cat "$ENF_CACHE"/* > "$ENF_CACHE/.all" 2>/dev/null
+  cat "$LEDGERS"/*.md > "$ENF_CACHE/.ledger" 2>/dev/null
 }
 enforcement_cache_clear() { [ -n "$ENF_CACHE" ] && rm -rf "$ENF_CACHE"; ENF_CACHE=""; }
 
@@ -214,8 +240,8 @@ ANY
       [ -n "$r" ] || continue
       # The cache when it exists, the live strip otherwise — so the function
       # is still correct when called directly (the self-test does).
-      if [ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/$(basename "$f")" ]; then
-        if grep -qE -- "$r" "$ENF_CACHE/$(basename "$f")" 2>/dev/null; then hit=1; break; fi
+      if [ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/${f##*/}" ]; then
+        if grep -qE -- "$r" "$ENF_CACHE/${f##*/}" 2>/dev/null; then hit=1; break; fi
       elif enforcement_text "$f" | grep -qE -- "$r" 2>/dev/null; then hit=1; break; fi
     done <<TOKS
 $res
@@ -228,16 +254,32 @@ TOKS
 }
 
 ledger_citations() {            # tokens on stdin -> how many ledger LINES cite them
-  local toks n=0 t
+  local toks corpus tmpc=""
   toks="$(cat)"
   [ -d "$LEDGERS" ] || { echo 0; return 0; }
-  while IFS= read -r t; do
-    [ -n "$t" ] || continue
-    n=$((n + $(grep -rhE -- "$(tok_regex "$t")" "$LEDGERS"/*.md 2>/dev/null | grep -c . || true)))
-  done <<TOKS
-$toks
-TOKS
-  echo "$n"
+  [ -n "$toks" ] || { echo 0; return 0; }
+  # ONE pass for ALL of a law's tokens over a corpus concatenated once, instead
+  # of a recursive grep per token over fifteen files.  THE BOUNDARY IS KEPT —
+  # awk escapes each token and anchors it, because dropping that is how `§9`
+  # came to match `§9.5`.
+  if [ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/.ledger" ]; then
+    corpus="$ENF_CACHE/.ledger"
+  else
+    tmpc="$(mktemp "${TMPDIR:-/tmp}/laws-ledger.XXXXXX")" || { echo 0; return 0; }
+    cat "$LEDGERS"/*.md > "$tmpc" 2>/dev/null
+    corpus="$tmpc"
+  fi
+  printf '%s\n' "$toks" | awk -v C="$corpus" '
+    function esc(t,   o) { o = t; gsub(/[][(){}.*+?^$|\\\/]/, "\\\\&", o); return o }
+    NF { pats[++n] = "(^|[^0-9.A-Za-z])" esc($0) "([^0-9.A-Za-z]|$)" }
+    END {
+      while ((getline line < C) > 0)
+        for (i = 1; i <= n; i++)
+          if (line ~ pats[i]) { hits++; break }
+      print hits + 0
+    }'
+  [ -n "$tmpc" ] && rm -f "$tmpc"
+  return 0
 }
 
 # --------------------------------------------------------------- self-test
@@ -296,6 +338,13 @@ MD
   check "a law homed IN a script is cited" "$(home_tokens OPS-1 'tools/gated.sh' | cited_by)" "gated.sh"
   check "A9 is cited by the script"    "$(home_tokens A9 'x' | cited_by)" "gated.sh"
   check "A99 is not"                   "$(home_tokens A99 'x' | cited_by)" ""
+
+  # THE REWRITE'S OWN RISK: counting by `index()` would have dropped the
+  # boundary, which is exactly how §9 came to match §9.5.
+  printf '## e\nsee §9.5 twice\n§9.5 again\n' > "$fx/docs/backlog/c.md"
+  check "ledger counting keeps the BOUNDARY" "$(printf '§9\n' | ledger_citations)" "0"
+  check "  ...while the exact section counts" "$(printf '§9.5\n' | ledger_citations)" "2"
+  rm -f "$fx/docs/backlog/c.md"
 
   check "ledger citations are COUNTED" "$(home_tokens MEAS-2 '§9.9' | ledger_citations)" "4"
   check "  ...across ledger files"     "$(home_tokens CLONE-1 '§8.8' | ledger_citations)" "1"
@@ -368,9 +417,19 @@ N_UNGATEABLE="$(printf '%s' "$UNGATEABLE" | grep -c . || true)"
 
 enforcement_cache_init
 ROWS="$(
+  started="$(date +%s)"; scanned=0
   { law_rows; amendment_rows; } | while IFS="$(printf '\t')" read -r id hook home; do
       [ -n "$id" ] || continue
       case "$home" in *[Uu]ngateable:*) continue ;; esac
+      scanned=$((scanned + 1))
+      [ $((scanned % PROGRESS_EVERY)) = 0 ] && printf '  law %s...\r' "$scanned" >&2
+      if [ $(( $(date +%s) - started )) -ge "$BUDGET" ]; then
+        # The subshell cannot set a variable the parent will read, so the
+        # verdict is left as a FILE — the same reason triad.sh's guard writes
+        # its pid rather than exporting it.
+        printf 'stopped after %ss at law %s\n' "$BUDGET" "$scanned" > "$ENF_CACHE/.partial"
+        break
+      fi
       toks="$(home_tokens "$id" "$home")"
       printf '%s\t%s\t%s\t%s\t%s\n' \
         "$(printf '%s' "$toks" | ledger_citations)" \
@@ -378,6 +437,8 @@ ROWS="$(
     done
 )"
 
+LAWS_PARTIAL=""
+[ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/.partial" ] && LAWS_PARTIAL="$(cat "$ENF_CACHE/.partial")"
 enforcement_cache_clear
 NLAW="$(printf '%s' "$ROWS" | grep -c . || true)"
 GATED="$(printf '%s' "$ROWS" | awk -F'\t' '$3 != ""' | grep -c . || true)"
@@ -387,6 +448,10 @@ NNO="$(printf '%s' "$NOGATE" | grep -c . || true)"
 echo "laws.sh — $NLAW laws (index + register), $(tools_list | grep -c . || true) tools in §7's list"
 echo "          measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git')"
 echo
+if [ -n "$LAWS_PARTIAL" ]; then
+  echo "  PARTIAL — $LAWS_PARTIAL.  Every count below is a FLOOR, not a total."
+  echo "            Raise --budget and re-run before quoting any of it."
+fi
 printf '  CITED BY A TOOL   %s\n' "$GATED"
 printf '  UNGATEABLE        %s   (recorded with a reason; not debt)\n' "$N_UNGATEABLE"
 printf '  NO GATE           %s   <- a LOWER BOUND: citation over-credits, so the\n' "$NNO"

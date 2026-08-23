@@ -57,9 +57,10 @@ invariant break the callers refuse loudly rather than guess through.
 It exists as a primitive so the cursor has ONE `@[spec]` lemma
 (`dictStepM_spec`) instead of a heap read and a decision that `mvcgen` must
 re-split at both call sites — `execGen`'s and the script shell's. -/
-def dictStepM (a i n sv : Nat) : SemF (Option DictStep) := do
+def dictStepM (a i n sv : Nat) (kind : DictViewKind) :
+    SemF (Option DictStep) := do
   match Heap.get? (← frameHeap) a with
-  | some (.dict es sv') => pure (some (dictStep es sv' i n sv))
+  | some (.dict es sv') => pure (some (dictStep es sv' i n sv kind))
   | _ => pure Option.none
 
 /-- Read the live module globals out of the frame. -/
@@ -161,7 +162,7 @@ structure Kont where
   forList : Expr → Addr → Nat → List Stmt → SemF RFlow
   /-- `for k in d` in an ORDINARY function body — the LIVE dict cursor,
   carrying the size and `shapeVersion` the loop started with (§3a). -/
-  forDict : Expr → Addr → Nat → Nat → Nat → List Stmt → SemF RFlow
+  forDict : Expr → Addr → Nat → Nat → Nat → DictViewKind → List Stmt → SemF RFlow
   /-- Advance a generator one yield. -/
   stepIter : Addr → SemW (Option RVal)
   /-- THE CONTINUATION WALKER: run a generator body from its defunctionalized
@@ -189,7 +190,7 @@ def Kont.bottom : Kont where
   whileLoop   := fun _ _ _ => exhausted
   forSeq      := fun _ _ _ => exhausted
   forList     := fun _ _ _ _ => exhausted
-  forDict     := fun _ _ _ _ _ _ => exhausted
+  forDict     := fun _ _ _ _ _ _ _ => exhausted
   stepIter    := fun _     => exhausted
   execGen     := fun _     => exhausted
   forGen      := fun _ _ _ => exhausted

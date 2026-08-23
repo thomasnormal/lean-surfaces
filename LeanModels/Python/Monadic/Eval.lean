@@ -1058,20 +1058,32 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
   | .forStmt target iter body orelse _ =>
       match orelse.toList with
       | [] => do
-          let it ← evalOpen K m iter
-          match it with
-          | .listV xs => K.forSeq target xs.toList body.toList
-          | .tuple xs => K.forSeq target xs.toList body.toList
-          | .ntuple _ _ xs => K.forSeq target xs.toList body.toList
-          -- H5 iteration: a str iterates its CODE POINTS; the snapshot IS the
-          -- live semantics (strs are immutable).
-          | .str s => K.forSeq target (strCharVals s) body.toList
-          | .rangeV lo hi step => do
-              let xs ← liftRes (rangeVals lo hi step)
-              K.forSeq target xs body.toList
-          -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR, never a snapshot.
-          | .ref a => K.forList target a 0 body.toList
-          | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+          -- §3c-i-a: the VIEW CALL fuses with the loop here too — this is the
+          -- ORDINARY function-body path, the commonest of the three.
+          match dictViewCall iter with
+          | some (recv, kind) => do
+              let dv ← evalOpen K m recv
+              match dv with
+              | .ref a =>
+                  match Heap.get? (← frameHeap) a with
+                  | some (.dict es sv) => K.forDict target a 0 es.size sv kind body.toList
+                  | _ => refuse viewRecvMsg
+              | _ => refuse viewRecvMsg
+          | Option.none => do
+            let it ← evalOpen K m iter
+            match it with
+            | .listV xs => K.forSeq target xs.toList body.toList
+            | .tuple xs => K.forSeq target xs.toList body.toList
+            | .ntuple _ _ xs => K.forSeq target xs.toList body.toList
+            -- H5 iteration: a str iterates its CODE POINTS; the snapshot IS the
+            -- live semantics (strs are immutable).
+            | .str s => K.forSeq target (strCharVals s) body.toList
+            | .rangeV lo hi step => do
+                let xs ← liftRes (rangeVals lo hi step)
+                K.forSeq target xs body.toList
+            -- H2: `for` over a heap LIST is a LIVE INDEX CURSOR, never a snapshot.
+            | .ref a => K.forList target a 0 body.toList
+            | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
       | _ :: _ => refuse "'for … else' is outside the v0 tier"
   | .ifStmt test body orelse _ => do
       let t ← evalOpen K m test
@@ -1358,31 +1370,44 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
       | .whileHere test body orelse =>
           K.execGen (.whileLoop test body orelse :: .block ss :: k')
       | .forHere target iter body => do
-          let it ← evalOpen K m iter
-          match it with
-          | .listV xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
-          | .tuple xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
-          | .ntuple _ _ xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
-          | .str sv => K.execGen (.forSeq target (strCharVals sv) body :: .block ss :: k')
-          | .rangeV lo hi step => do
-              let xs ← liftRes (rangeVals lo hi step)
-              K.execGen (.forSeq target xs body :: .block ss :: k')
-          | .ref ad =>
-              match Heap.get? (← frameHeap) ad with
-              | some (.list _) => K.execGen (.forList target ad 0 body :: .block ss :: k')
-              | some (.generator ..) => K.execGen (.forGen target ad body :: .block ss :: k')
-              -- §3a: the LIVE dict cursor. The size and shapeVersion the loop
-              -- STARTS with ride in the frame, because that is what lets the
-              -- next step tell CPython's two mutation regimes apart.
-              | some (.dict es sv) =>
-                  K.execGen (.forDict target ad 0 es.size sv body :: .block ss :: k')
-              | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
-              | some (.cell _) => refuse cellInternal
-              | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
-              | some (.pyset _) =>
-                  refuseOrder "'for' over a set is outside the tier (iteration is hash order — never guessed; docs/memory-model.md)"
-              | Option.none => refuse danglingMsg
-          | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
+          -- §3c-i-a: a VIEW CALL fuses with the loop — the view never
+          -- escapes, so no object is needed; only the KIND differs.
+          match dictViewCall iter with
+          | some (recv, kind) => do
+              let dv ← evalOpen K m recv
+              match dv with
+              | .ref ad =>
+                  match Heap.get? (← frameHeap) ad with
+                  | some (.dict es sv) =>
+                      K.execGen (.forDict target ad 0 es.size sv kind body :: .block ss :: k')
+                  | _ => refuse viewRecvMsg
+              | _ => refuse viewRecvMsg
+          | Option.none => do
+            let it ← evalOpen K m iter
+            match it with
+            | .listV xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
+            | .tuple xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
+            | .ntuple _ _ xs => K.execGen (.forSeq target xs.toList body :: .block ss :: k')
+            | .str sv => K.execGen (.forSeq target (strCharVals sv) body :: .block ss :: k')
+            | .rangeV lo hi step => do
+                let xs ← liftRes (rangeVals lo hi step)
+                K.execGen (.forSeq target xs body :: .block ss :: k')
+            | .ref ad =>
+                match Heap.get? (← frameHeap) ad with
+                | some (.list _) => K.execGen (.forList target ad 0 body :: .block ss :: k')
+                | some (.generator ..) => K.execGen (.forGen target ad body :: .block ss :: k')
+                -- §3a: the LIVE dict cursor. The size and shapeVersion the loop
+                -- STARTS with ride in the frame, because that is what lets the
+                -- next step tell CPython's two mutation regimes apart.
+                | some (.dict es sv) =>
+                    K.execGen (.forDict target ad 0 es.size sv .keys body :: .block ss :: k')
+                | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
+                | some (.cell _) => refuse cellInternal
+                | some (.closure ..) => raisePy (.typeError "'function' object is not iterable")
+                | some (.pyset _) =>
+                    refuseOrder "'for' over a set is outside the tier (iteration is hash order — never guessed; docs/memory-model.md)"
+                | Option.none => refuse danglingMsg
+            | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
       | .refuse msg => refuse msg
   | .forSeq target xs body :: k' =>
       match xs with
@@ -1418,13 +1443,13 @@ def execGenAt (K : Kont) (m : Module) : GenCont → SemF (Option (RVal × GenCon
   --     compaction schedule, so neither answer is guessable. `shapeVersion`
   --     is what detects it; it is bumped by `dictStore` on growth only, so a
   --     value update slips past it exactly as it should.
-  | .forDict target ad i n sv body :: k' => do
-      match ← dictStepM ad i n sv with
+  | .forDict target ad i n sv kind body :: k' => do
+      match ← dictStepM ad i n sv kind with
       | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
       | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
-      | some (.yieldKey kv) => do
+      | some (.yieldVal kv) => do
           assignM target kv
-          K.execGen (.block body :: .forDict target ad (i + 1) n sv body :: k')
+          K.execGen (.block body :: .forDict target ad (i + 1) n sv kind body :: k')
       | some .done => K.execGen k'
       | Option.none => refuse "internal: a dict cursor over a non-dict object (report this)"
   | .forGen target ad body :: k' => do
@@ -1625,24 +1650,24 @@ def kont (m : Module) : Nat → Kont
           -- the path a plain `def` takes (execGen's is the GENERATOR one and
           -- the script shell's is module scope) — three entries, and the
           -- `dict.for-in-function` witness is what proved the count.
-          | some (.dict es sv) => K.forDict target a 0 es.size sv body
+          | some (.dict es sv) => K.forDict target a 0 es.size sv .keys body
           | some (.instance _ _) => raisePy (.typeError "'object' object is not iterable")
           | some (.generator ..) => K.forGen target a body
           | some (.cell _) => refuse cellInternal
           | some (.closure ..) => refuse "internal: a list cursor over a function object (report this)"
           | some (.pyset _) => refuse "internal: a list cursor over a set (report this)"
           | Option.none => refuse danglingMsg
-      forDict := fun target a i n sv body => do
+      forDict := fun target a i n sv kind body => do
           let K := kont m fuel
           -- the same three regimes as the other two cursors, forked on the
           -- same pure plan so they cannot drift apart
-          match ← dictStepM a i n sv with
+          match ← dictStepM a i n sv kind with
           | some .resized => raisePy (.runtimeError "dictionary changed size during iteration")
           | some .rekeyed => refuse "the dict's KEY SET changed during iteration without changing its size — CPython's answer depends on its entries-array layout (docs/memory-model.md §dict iteration)"
-          | some (.yieldKey kv) => do
+          | some (.yieldVal kv) => do
               assignM target kv
               match ← execOpenList K m body with
-              | .next | .cont => K.forDict target a (i + 1) n sv body
+              | .next | .cont => K.forDict target a (i + 1) n sv kind body
               | .brk => pure .next
               | .ret v => pure (.ret v)
           | some .done => pure .next

@@ -84,6 +84,13 @@ inductive GenStatus where
   | created | suspended | running | closed
 deriving Repr, Inhabited, BEq, DecidableEq
 
+/-- §3c-i-a: WHICH dict view a cursor is walking. `for k in d` is `.keys`
+(CPython iterates a bare dict by key), and the three view methods pick the
+other two. One cursor serves all four forms; only what it YIELDS differs. -/
+inductive DictViewKind where
+  | keys | values | items
+deriving Repr, Inhabited, BEq, DecidableEq
+
 /-- One frame of a generator's **defunctionalized continuation** (H4,
 docs/memory-model.md §generator semantics — the recorded decision).
 
@@ -114,7 +121,7 @@ inductive GenFrame where
   /-- `for target in <heap list at `a`>` with the LIVE cursor `i` — the
   object is re-read every step, exactly as `execForList` does. -/
   | forList (target : Expr) (a : Addr) (i : Nat) (body : List Stmt)
-  /-- `for target in <dict at `a`>` with the LIVE cursor `i`, carrying the
+/-- `for target in <dict at `a`>` with the LIVE cursor `i`, carrying the
   size `n` and the `shapeVersion` `sv` the loop STARTED with. The object is
   re-read every step, exactly as `forList` does; the two extra fields are
   what let the cursor tell CPython's two mutation regimes apart — a SIZE
@@ -125,7 +132,7 @@ inductive GenFrame where
   Constructed only by `LeanModels/Python/Monadic/` — the trunk interpreter
   refuses it by the no-backwards-compat ruling (it never builds one). -/
   | forDict (target : Expr) (a : Addr) (i : Nat) (n : Nat) (sv : Nat)
-      (body : List Stmt)
+      (kind : DictViewKind) (body : List Stmt)
   /-- `for target in <generator at `a`>` — a generator consuming a
   generator; re-entering the frame steps the inner one. -/
   | forGen (target : Expr) (a : Addr) (body : List Stmt)
@@ -295,7 +302,7 @@ value-iterator frame; loop-frame addresses are checked at the read). -/
 def GenFrame.WF (h : Heap) : GenFrame → Prop
   | .forSeq _ xs _ => RVal.WFList h xs
   | .forList _ a _ _ => a < h.size
-  | .forDict _ a _ _ _ _ => a < h.size
+  | .forDict _ a _ _ _ _ _ => a < h.size
   | .forGen _ a _ => a < h.size
   | .enumSeq _ xs => RVal.WFList h xs
   | .enumList _ a _ => a < h.size

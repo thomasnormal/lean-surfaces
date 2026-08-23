@@ -15,7 +15,7 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**117 entries across 16 lanes.** Regenerate with
+**118 entries across 16 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | title | lane |
@@ -27,6 +27,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-23` | the successor lane was right twice: `--arms` inverted a shape, and a `no` now names its pattern | qol |
 | `2026-08-23-qol-22` | sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce | qol |
 | `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
+| `2026-08-23-architecture-21` | The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard | architecture |
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
 | `2026-08-23-architecture-20` | Six congruence shapes; the walker's real cause was transparency; and a correction inherited its error's scope | architecture |
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |

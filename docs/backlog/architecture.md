@@ -1365,3 +1365,58 @@ right one.
 attached. Inheriting the scope makes the second number as wrong as the first
 **and harder to doubt.** The fuelMono lane fixes the docstring in its landing
 ticket, carrying that sentence in it.
+
+## 2026-08-23-architecture-21 — The versioning exemplar is REALIZED; a falling split is correct; and deferrals need a double guard
+
+Three from Go inch 2.
+
+**(1) THE FAMILY-VERSIONING EXEMPLAR IS REALIZED, NOT PLANNED — the charter's
+acceptance test is DISCHARGED.** One walker, **one world field different**:
+`runUnder go1.21 loopVarProbe = some 1`, `go1.22 = some 3`, with the observable
+being **POINTER IDENTITY** — **the same number the real toolchain gave** (1
+distinct address under go1.21, 3 under go1.22). The model reproduces the
+measurement rather than a story about it.
+
+**This is the whole family-versioning thesis in one artifact**: the edition is a
+**datum in the world**, not a directory; the walker is **shared**, not copied;
+the delta is **one field**. §2.4's thin-siblings ruling and clause (4)'s
+edition-as-data discharge together.
+
+**AND THE NON-VACUITY PAIR IS NOW THE STANDARD.** Gated in **both directions** —
+**go1.21 claiming 3 fails**, and **the counting loop breaking under 1.22 fails**
+— because of a named trap: **freshening without copy-back passes every closure
+test and corrupts ordinary loops.** A wrong implementation satisfying the
+*interesting* half is exactly what a one-directional gate certifies.
+
+> **Every version-delta claim carries a non-vacuity PAIR — the old behaviour must
+> FAIL under the new edition, and the new behaviour must FAIL under the old.**
+
+And the loop-variable set is **read off the init's locals, not hand-listed** —
+the census discipline applied inside the semantics, since a hand-written list is
+a second source of truth that drifts from the construct it describes.
+
+**(2) A FALLING SPLIT IS CORRECT — the metric must not become a target.** Go's
+math/interpreter split moved **63% → 58.6%**, and that is right: **fuel theorems
+do not transport.**
+
+> **A rung that adds fuel-bearing constructs moves the split DOWN. Holding it
+> flat would mean fuel facts were written into spec-shaped statements.**
+
+Goodhart with a specific mechanism: the ratio is a **diagnostic of where
+statements live**, not a score. A lane optimising for a flat 65% would achieve it
+by **smuggling interpreter facts into mathematical statements** — the exact
+interleaving step 9 forbids, with the metric applauding. **Read a falling split
+as evidence the discipline is holding** under a rung that genuinely added
+interpreter surface.
+
+**(3) DEFERRAL HYGIENE — the rule for every deferred construct.** A deferral is
+cause 1 and must **stay** cause 1; the failure is that it **quietly becomes a UB
+claim** (cause 2, which never retires). Go's `fallthrough` is the pattern: the
+**census figure travels IN the refusal message** (4.0% corpus share, so the cost
+is visible **at the point of refusal**), and it is **guarded TWICE — on the CLASS
+and on `isUndefined`** — *so the deferral cannot quietly become a UB claim.*
+
+**The double guard is the load-bearing half**: one guard proves the construct is
+refused, the second proves **which kind of refusal it is** — the property that
+would otherwise erode silently as a tier grows. **A deferral indistinguishable
+from undefined behaviour has given up the one distinction §5.2 exists to keep.**

@@ -1091,3 +1091,78 @@ check stops applying — `e = enumerate(d); list(e); d[2] = 'b'; list(e)` answer
 `[(0, 'a')]` then `[]`, not a `RuntimeError`. The frame is popped at
 exhaustion, so an exhausted generator never re-reads the dict. A model that
 kept `n` live past the end would raise where CPython answers `[]`.
+
+## 2026-08-23-pycomplete-14 — INCH 3c-i-c BUILT: `enumerate(d)` runs, and the census's price held exactly
+
+`for i, k in enumerate(d)`, `enumerate(d, 5)`, `enumerate(d, -3)` and the
+escaped-then-stepped forms all run, on a new `GenFrame.enumDict` frame beside
+`enumList`. §pycomplete-13 priced this at nine sites and ZERO new `Kont`
+machinery; the price held, and two further sites turned out to owe nothing.
+
+### What landed, against the censused site list
+
+| site | what |
+| --- | --- |
+| `Runtime.lean` | `enumDict (i : Int) (a : Addr) (cur n sv : Nat)`, and its `a < h.size` WF arm |
+| `Semantics.lean` `enumFrame` | the dict arm DECIDES — `.ok (.enumDict i a 0 es.size sv)` |
+| `Semantics.lean` ×2 | `genBreak`/`genContinue`: a builtin-iterator frame is never a LOOP frame |
+| `Monadic/Eval.lean` `execGen` | the step: `dictStepM ad cur n sv .keys`, tuple wrapped at the frame |
+| `Semantics.lean` `stepIter` | the trunk REFUSES the step (ruling (c)) |
+| `PayloadBlind` / `ClockErase` / `Obs` | one refusal-is-blind arm each |
+
+### The two sites that owed NOTHING, and why that is the interesting half
+
+* **`Monadic/Script.lean` needs no `SKont` field.** A module-level
+  `for i, k in enumerate(d)` routes `S.forGen → K.stepIter → execGen` and
+  lands on the new arm. §pycomplete-13 said `enumerate` is an OBJECT the loop
+  consumes rather than a loop the interpreter drives; the script shell is the
+  second record that would have paid for the other reading, and it pays
+  nothing. **The finding generalised further than it was stated.**
+* **`VCGen.lean` owes no transition theorem.** `genSteps_enumListCons` and
+  `genSilent_enumListDone` exist because the trunk STEPS an `enumList` frame.
+  The trunk refuses to step `enumDict`, so there is no transition to state —
+  a refusal has no `GenSteps` and no `GenSilent`. The censused "optional" is
+  now decided: not optional, INAPPLICABLE.
+
+### A witness that would have tested the wrong construct
+
+§pycomplete-13's battery spelled the never-stepped row
+`print(type(e).__name__)`. **`type` is in `isPyBuiltinName` and NOT in
+`isBuiltinName`** — CPython binds it, the model does not implement it — so
+that row would have refused at `type` and been recorded as evidence about
+`enumerate`. Caught by reading the two tables before the ticket rather than
+by a red build. Re-spelled as `print('bound')`: reaching the print IS the
+observation, because CPython's guard is on the step and binding is silent.
+**A witness must fail for the reason it names**, and the census's own rule —
+witnesses named by CONSTRUCT — does not by itself guarantee that; the
+spelling has to be in tier too.
+
+For the same reason `enum_dict_grow_is_loud` was renamed
+`enum_dict_grow_then_step` before landing: it named a VERDICT, and the
+verdict it named was wrong — the tier REPRODUCES CPython's `RuntimeError`
+here (as `dict.grow-during-iter` already did for the bare cursor) rather than
+refusing it.
+
+### Census deltas
+
+* grammar census **113 → 117 witnesses**; `dict.enumerate` flips
+  **REFUSE → MATCH**, joined by `dict.enumerate-start`,
+  `dict.enumerate-escapes` and `dict.enumerate-resize` (MATCH) and
+  `dict.enumerate-of-items` (REFUSE — the excluded composition).
+* `harness/cases.json` **655 → 660 rows**, all five `match`, so
+  `diff_test` goes **1456 → 1461 cases** with `119 whitelisted-unsupported`
+  UNCHANGED — this inch adds capability without adding a gap.
+* the whitelist census stays **119 rows in 46 classes** and the script census
+  **15 rows in 10 classes**, for the same reason.
+
+### What did NOT move
+
+`enumerate(d.items())` still refuses: 3c-i-b's `consumesViewArg` excludes
+`enumerate` because the object outlives its call. `dict(d.items())` is still
+unlanded. `enumerate(d, start=5)` is still `kwargs.callee-kind`. The
+first-class rows — `enumerate(d) == enumerate(d)`, `len`, `reversed` — remain
+3c-ii's. And sunfish is untouched: its `enumObj` is `.enumSeq` over a string
+snapshot, a different frame entirely.
+
+**§pycomplete-13's "its dict arm is today's refusal" is superseded by this
+entry**, and the date on each is what separates them.

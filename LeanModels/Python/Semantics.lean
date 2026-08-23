@@ -3855,8 +3855,7 @@ def enumFrame (h : Heap) (i : Int) : RVal → Res GenFrame
   | .ref a =>
     (match Heap.get? h a with
      | some (.list _) => .ok (.enumList i a 0)
-     | some (.dict _ _) =>
-         .unsupported "enumerate() over a dict iterates its keys — outside the tier (live dict iteration; docs/memory-model.md)"
+     | some (.dict es sv) => .ok (.enumDict i a 0 es.size sv)
      | some (.generator ..) =>
          .unsupported "enumerate() over a generator is outside the tier (it would need a stepper inside the stepper; docs/backlog.md)"
      | some (.instance _ _) => .exn (.typeError "'object' object is not iterable")
@@ -3903,7 +3902,8 @@ def genBreak : GenCont → Option GenCont
   -- generator object, so `break`/`continue` can never reach one (they
   -- unwind inside a body, and these frames have no body). Loud, not a
   -- silent pop.
-  | .enumSeq .. :: _ | .enumList .. :: _ | .countFrom .. :: _ => Option.none
+  | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
+  | .countFrom .. :: _ => Option.none
 
 /-- `continue`: drop the pending blocks, KEEP the enclosing loop frame
 (re-entering it takes the next element / re-tests). -/
@@ -3915,7 +3915,8 @@ def genContinue : GenCont → Option GenCont
   | k@(.forDict .. :: _) => some k
   | k@(.forGen ..  :: _) => some k
   | k@(.whileLoop .. :: _) => some k
-  | .enumSeq .. :: _ | .enumList .. :: _ | .countFrom .. :: _ => Option.none
+  | .enumSeq .. :: _ | .enumList .. :: _ | .enumDict .. :: _
+  | .countFrom .. :: _ => Option.none
 
 mutual
   /-- Does this statement contain a `yield` in its own scope? The
@@ -6466,6 +6467,16 @@ def execGen (m : Module) (fuel : Nat) (st : FrameState) (k : GenCont) :
          else execGen m fuel st k'
        | some _ => .unsupported "internal: an enumerate cursor over a non-list object (report this)"
        | Option.none => .unsupported danglingMsg)
+    | .enumDict .. :: _ =>
+      -- §3c-i-c, and the ONE honest difference from the `forDict` arm below:
+      -- this interpreter DOES construct this frame, because `enumFrame` is
+      -- shared and decides for both presentations. So the refusal is on the
+      -- STEP, not the construction, and `e = enumerate(d)` answers an object
+      -- here exactly as CPython does — a capability OPENING, witnessed by
+      -- `dict.enumerate-escapes` rather than suppressed. Stepping is the
+      -- monadic rebuild's (docs/backlog/python-completeness.md
+      -- 2026-08-23-pycomplete-13, ruling (c)).
+      .unsupported "stepping an enumerate() over a dict is outside this interpreter's tier — the live cursor is the monadic rebuild's (docs/memory-model.md §dict iteration)"
     | .forDict .. :: _ =>
       -- THE LEGACY INTERPRETER'S CONTRACT under no-backwards-compat: this
       -- interpreter never CONSTRUCTS a `forDict` frame (only

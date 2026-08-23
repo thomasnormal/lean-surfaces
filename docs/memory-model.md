@@ -1733,10 +1733,18 @@ stores.
   eight of the ten messages guarded a hazard only two of them can meet.*
   See §the draining consumers, as built.
 * **3a — the cursor at function scope, and the bare `for k in d` form.**
-  The semantics are settled and already exercised at module scope; the
-  work is a mutual-block member and its four walker arms.
-* **3c — the view methods as first-class iterables** (`.keys()`,
-  `.values()`, `.items()` outside the shell) and `enumerate(d)`.
+  LANDED (2026-08-23-pycomplete-5), on the monadic definition only.
+* **3c-i — views and `enumerate` in CONSUMING position.** LANDED:
+  `for k in d.keys()`/`.values()`/`.items()` at every scope
+  (§pycomplete-5's cursor plus a view KIND), `list(d.keys())` and its nine
+  siblings through the ingestion rewrite (§pycomplete-11), and
+  `enumerate(d)` on its own `enumDict` frame (§pycomplete-14). The trunk
+  refuses to STEP these; the rebuild runs them.
+* **3c-ii — the views as FIRST-CLASS values.** REMAINING: `k = d.keys()`
+  held across statements, set algebra on keys/items, `==` against a set,
+  `reversed`, and the identity-equality rule that makes
+  `d.values() == d.values()` False. Needs an `Obj.dictView`.
+  `enumerate(d.items())` and `dict(d.items())` are still out here too.
 * **3d — `DictComp`**, which rides 3a.
 
 ### The draining consumers, as built (inch 3b)

@@ -1646,6 +1646,8 @@ theorem fuelMono (fuel : Nat) :
               | cell cv => exact Run.le_refl _
               | closure nm ps ao lo' hg ig bd cap => exact Run.le_refl _
               | pyset zs => exact Run.le_refl _
+          -- §3c-i-c: the trunk refuses to STEP `enumDict`; both fuels agree
+          | enumDict i ad cur n sv => simp only [execGen]; exact Run.le_refl _
           -- §3a: the trunk's `forDict` arm refuses; both fuels agree
           | forDict tg ad i n sv kd bd => simp only [execGen]; exact Run.le_refl _
           | countFrom cur step => simp only [execGen]; exact Run.le_refl _

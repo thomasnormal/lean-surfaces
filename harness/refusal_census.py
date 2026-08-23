@@ -491,7 +491,42 @@ w("dict.enumerate", """
 d = {2: 'b', 1: 'a'}
 for i, k in enumerate(d):
     print(i, k)
-""", "REFUSE", "inch 3c")
+""", "MATCH", "the key cursor with an index — inch 3c-i-c")
+w("dict.enumerate-start", """
+d = {2: 'b', 1: 'a'}
+print(list(enumerate(d, 5)))
+print(list(enumerate(d, -3)))
+""", "MATCH",
+  "the START is an `int`, not a `Nat`: CPython counts from a negative "
+  "start as readily as a positive one — inch 3c-i-c")
+w("dict.enumerate-escapes", """
+d = {1: 'a'}
+e = enumerate(d)
+d[2] = 'b'
+print('bound')
+""", "MATCH",
+  "THE RULED DELTA (2026-08-23-pycomplete-13 (c)): binding an enumerate and "
+  "then GROWING the dict is SILENT in CPython — the guard is on the STEP, "
+  "not the bind, so reaching the print is the whole observation. `print(e)` "
+  "would answer an ADDRESS and `type(e).__name__` leaves the tier at "
+  "`type`, which would test a different construct than this row names")
+w("dict.enumerate-resize", """
+d = {1: 'a'}
+e = enumerate(d)
+d[2] = 'b'
+print(next(e))
+""", "MATCH",
+  "the same two statements as `dict.enumerate-escapes` with a different "
+  "THIRD line, and that pairing is the point: stepping after the growth "
+  "RAISES `RuntimeError`. A bind-time guard passes one and fails the other; "
+  "a snapshot fails the other way; neither passes both by accident")
+w("dict.enumerate-of-items", """
+d = {2: 'b', 1: 'a'}
+print(list(enumerate(d.items())))
+""", "REFUSE",
+  "an enumerate OUTLIVES its call, so 3c-i-b's `consumesViewArg` excludes "
+  "it and the view is not rewritten. Composing the view kind with this "
+  "cursor is its own inch")
 w("dict.keys", """
 print(list({2: 'b', 1: 'a'}.keys()))
 """, "MATCH",

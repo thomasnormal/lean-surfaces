@@ -1724,3 +1724,41 @@ constructors are next, and are now reachable.**
 * **Export corner** — **0 of 27 pairs proved @ `af5aa64`** (one natural
   denominator; the two-denominator template does not apply). The pure core is a
   **precondition, not a pair** — it changes 0/27 into a number that can now move.
+
+---
+
+## 2026-08-23-lean-tier-20 — the guard-pinned-to-our-branch defect RECURRED in the newest instrument, and is now fixed at the root
+
+Immediately after landing the pure core, the export manifest's `--compare` went
+red: **`DRIFT: commit`, `DRIFT: rows`.** Neither was upstream drift. The
+lean4export checkout now sits on `lean-surfaces/pure-core` @ `a0aa783`, so the
+manifest was reading **our fork** — recording our branch head as the base, and
+our shifted line numbers as the emit sites.
+
+**This is exactly the defect entry 15 diagnosed and fixed for the three TrProj
+guards, recurring in the instrument written after it.** The lesson had been
+learned as an *operator habit* ("run guards against the master worktree") and not
+as a *property of the instrument*, so the next instrument was born with it again.
+
+**Fixed at the root: the manifest now reads all three sources at the PINNED
+UPSTREAM BASE via `git show`, never from the working tree.** That is not a
+workaround, it is the correct semantics — the manifest describes the envelope
+FORMAT, which is upstream's artifact, and our pure-core refactor does not change
+it. Our divergence is tracked separately, by `--check-divergence`.
+
+Verified after the fix, with the checkout still on the fork branch:
+
+| check | result |
+| --- | --- |
+| obligations | **27**, unchanged |
+| recorded commit | back to `af5aa64` |
+| rows vs. pre-refactor baseline | **identical** |
+| double-run | byte-identical |
+| `--compare` | ok |
+| `--check-divergence` | ok, 7 touch points intact |
+
+**The generalisable rule, now stated so the next instrument inherits it rather
+than the defect:** a drift guard must baseline against the artifact it watches,
+which for a foreign corner is the pinned upstream base — **and that must be
+enforced by the instrument, not remembered by the lane.** A guard that fires on
+its owner's commits is one its owner learns to ignore.

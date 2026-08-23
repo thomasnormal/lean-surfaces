@@ -68,6 +68,29 @@ def _read(p: Path) -> str:
     return p.read_text(encoding="utf-8", errors="replace")
 
 
+def _read_at_base(root: Path, rel: str) -> str:
+    """Read a file at the PINNED UPSTREAM BASE, never from the working tree.
+
+    The manifest describes the ENVELOPE FORMAT, which is upstream's artifact --
+    our fork's pure-core refactor does not change it.  Reading the working tree
+    made the manifest measure whatever branch happened to be checked out, so it
+    reported DRIFT against our own edits: line numbers moved, the recorded commit
+    became our branch head, and a guard that fires on its owner's commits is one
+    its owner learns to ignore.  This is the SAME defect entry 15 fixed for the
+    TrProj guards, recurring in the newest instrument -- which is the argument
+    for making "baseline against upstream, never against ourselves" a property of
+    the instrument rather than a habit of the operator.
+    """
+    try:
+        r = subprocess.run(["git", "-C", str(root), "show", f"{DIVERGENCE_BASE}:{rel}"],
+                           capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as e:
+        raise CensusRefusal(f"cannot read {rel} at pinned base: {e}") from e
+    if r.returncode != 0:
+        raise CensusRefusal(f"pinned base {DIVERGENCE_BASE[:12]} has no {rel}")
+    return r.stdout
+
+
 # ---------------------------------------------------------------- declared
 # One row per envelope item kind.  `parse` names the `def parse<X>` expected in
 # Export/Parse.lean; `nested_in` marks kinds the exporter does NOT emit at top
@@ -207,12 +230,13 @@ def _rev(d: Path) -> str:
 
 def census(root: Path) -> dict:
     if not root.is_dir(): raise CensusRefusal(f"missing --export directory: {root}")
-    exp, par, spec = root / "Export.lean", root / "Export" / "Parse.lean", root / "format_ndjson.md"
-    rev = _rev(root)
-    toolchain = _read(root / "lean-toolchain").strip()
-
-    emit, parse = _emit_sites(_read(exp)), _parse_sites(_read(par))
-    secs, ver = _spec_sections(_read(spec))
+    # Always at the PINNED BASE -- see _read_at_base.  The manifest is about the
+    # format, not about whatever branch is checked out.
+    emit = _emit_sites(_read_at_base(root, "Export.lean"))
+    parse = _parse_sites(_read_at_base(root, "Export/Parse.lean"))
+    secs, ver = _spec_sections(_read_at_base(root, "format_ndjson.md"))
+    rev = DIVERGENCE_BASE
+    toolchain = _read_at_base(root, "lean-toolchain").strip()
     if not emit: raise CensusRefusal("zero emit sites parsed — an instrument fault, never a finding")
     if not parse: raise CensusRefusal("zero parse sites parsed — an instrument fault, never a finding")
     if not ver: raise CensusRefusal("no format version found in format_ndjson.md")
@@ -248,6 +272,7 @@ def census(root: Path) -> dict:
         "schema": "lean-export-manifest/1",
         "source": "leanprover/lean4export",
         "commit": rev,
+        "measured_at": "pinned upstream base, not the working tree",
         "toolchain": toolchain,
         "format_version": ver,
         "obligations": {

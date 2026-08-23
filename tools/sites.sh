@@ -31,9 +31,19 @@
 #
 # So this tool takes the TYPE, finds where that type rides (the error channel,
 # `Halt`/`Loud` directly, a tier wrapper, or a qualified spelling), and reports
-# THREE buckets: CONSTRUCT sites, DESTRUCTURE sites, and the LOOK-ALIKES it
-# excluded WITH THE REASON — because an exclusion nobody can audit is just a
-# smaller wrong number.
+# FOUR buckets: CONSTRUCT sites, DESTRUCTURE sites, ANNOTATE sites, and the
+# LOOK-ALIKES it excluded WITH THE REASON — because an exclusion nobody can
+# audit is just a smaller wrong number.
+#
+# And the shape set was amended A SECOND TIME, by the C successor's recovery:
+#
+#   * `runIndetRaw : … Halt …` is a TYPE ANNOTATION.  It names the type and no
+#     constructor, so a census built on constructor patterns cannot see it at
+#     any threshold.  It survived the census and RED A TENURE.
+#
+# > A CONSTRUCTOR change is bounded by DESTRUCTURE.  A change to the TYPE
+# > ITSELF is bounded by DESTRUCTURE + ANNOTATE: renaming or deleting a type
+# > breaks every signature that names it, none of which names a constructor.
 #
 # USAGE
 #   tools/sites.sh <Type> <ctor>              # e.g. sites.sh Outcome unsupported
@@ -158,8 +168,14 @@ classify_hit() {                # line -> construct | destructure | both
 # The approximation is `--` inside a string literal; it errs toward excluding,
 # which is stated rather than hidden because for a BOUND the dangerous
 # direction is under-counting.
-code_hits() {                   # file, ere -> "lineno:code" for non-comment hits
-  awk -v RE="$2" '
+# TWO PATTERNS, ONE PASS.  The annotation channel needs the same file read
+# for a DIFFERENT regex, and a second call doubled the scan: the live run went
+# PARTIAL at file 5040 of 9825 where one pass reaches the end.  The comment
+# stripper is the expensive part and it does not depend on the pattern, so the
+# second regex rides the first traversal rather than paying for its own.  With
+# one pattern the output is unchanged, so every existing caller is untouched.
+code_hits() {                   # file, ere [, ere2] -> "[k:]lineno:code", non-comment
+  awk -v RE="$2" -v RE2="${3:-}" '
     {
       line = $0; out = ""; i = 1; n = length(line)
       while (i <= n) {
@@ -170,7 +186,8 @@ code_hits() {                   # file, ere -> "lineno:code" for non-comment hit
         if (depth == 0) out = out substr(line, i, 1)
         i++
       }
-      if (out ~ RE) printf "%d:%s\n", NR, out
+      if (out ~ RE)                  printf "%s%d:%s\n", (RE2 == "" ? "" : "1:"), NR, out
+      if (RE2 != "" && out ~ RE2)    printf "2:%d:%s\n", NR, out
     }' "$1"
 }
 
@@ -179,10 +196,42 @@ code_hits() {                   # file, ere -> "lineno:code" for non-comment hit
 # from "hung" — and it then gets killed, which yields NO number at all.  So the
 # scan carries a time budget and, past it, stops and says PARTIAL.  A partial
 # answer that SAYS SO beats a silent truncation, which is the whole of §5.4a.
+# ---- THE FOURTH MEMBER OF THE SHAPE SET (the C successor's recovery)
+#
+# CONSTRUCT and DESTRUCTURE both name a CONSTRUCTOR.  A TYPE ANNOTATION names
+# only the TYPE — `runIndetRaw : … Halt …` names no constructor at all — so it
+# is invisible to every channel above, which all grep `\.$CTOR`.  The successor
+# lane's census counted value constructors and destructures, called the type
+# change priced, and RED'D A TENURE on the signature that survived it.  A bound
+# a whole syntactic position can walk through is not a bound.
+#
+# > A type change lands wherever the TYPE is NAMED, which includes positions
+# > that name no constructor: signatures, return types, binders, fields.
+#
+# The test is positional, like the rest of this tool: the type stands to the
+# RIGHT of a `:`.  `:=` and `::` are removed first — a definition body and a
+# cons are not annotations — and the check is made on what remains, so a
+# `(x : Halt)` ascription INSIDE a body still counts.  Erring toward counting
+# is deliberate: for a bound, under-counting is the direction that reads as
+# "no work", and that is the direction that cost the tenure.
+is_annotation() {               # line -> 0 when TYPE stands in annotation position
+  local head rest
+  head="$(printf '%s' "$1" | sed 's/:=/  /g; s/::/  /g')"
+  case "$head" in *:*) ;; *) return 1 ;; esac
+  rest="${head#*:}"
+  # A LEADING DOT AND A QUALIFIER ARE DIFFERENT DOTS.  Excluding every
+  # preceding `.` rejected `LeanModels.C.Halt` — the qualified spelling this
+  # tool's own channel list already treats as the type — while allowing every
+  # dot would accept `.Halt`, an anonymous CONSTRUCTOR.  The discriminator is
+  # what precedes the dot: an identifier makes it a namespace path, anything
+  # else makes it constructor notation.
+  printf '%s' "$rest" | grep -qE "(^|[^A-Za-z0-9_'.]|[A-Za-z0-9_']\.)$TYPE([^A-Za-z0-9_']|$)"
+}
+
 PARTIAL=""
 scan_sites() {
   local f rel line n chan hits pat started now scanned=0 total
-  SITES=""; LOOKALIKES=""
+  SITES=""; LOOKALIKES=""; ANNOTS=""
   pat="$(channels | paste -sd'|' -)"
   started="$(date +%s)"
   total="$(lean_files | grep -c . || true)"
@@ -208,6 +257,18 @@ scan_sites() {
       # could audit.  §5.4's law on its own instrument: a zero-row read is an
       # instrument fault, not a finding.
       [ -n "$hits" ] || continue
+      # CHANNEL 2 is the annotation stream, riding the same traversal.  Its
+      # lines do NOT contain the constructor — that is the whole point of it —
+      # so it is dispatched before any of the constructor judgements.
+      case "$hits" in
+        2:*) hits="${hits#2:}"
+             n="${hits%%:*}"; line="${hits#*:}"
+             is_annotation "$line" || continue
+             ANNOTS="${ANNOTS}$rel:$n	annotate	$(printf '%s' "$line" | sed 's/^[ \t]*//' | cut -c1-96)
+"
+             continue ;;
+        1:*) hits="${hits#1:}" ;;
+      esac
       n="${hits%%:*}"; line="${hits#*:}"
       # PREFIX COLLISION: `.unsupportedDevice` is not `.unsupported`.
       if ! printf '%s' "$line" | grep -qE "\\.$CTOR([^A-Za-z0-9_']|\$)"; then
@@ -224,8 +285,19 @@ scan_sites() {
 "
       fi
     done <<EOF
-$(code_hits "$f" "\\\\.$CTOR" 2>/dev/null || true)
+$(code_hits "$f" "\\\\.$CTOR" "$TYPE" 2>/dev/null || true)
 EOF
+  done
+}
+
+# The annotation sites NO constructor channel can see.  This is the number the
+# incident is about: the census was not merely incomplete, it was blind to a
+# position, and a difference of kind does not show up as a smaller count.
+annots_unseen() {               # -> the ANNOTS rows whose file:line is not in SITES
+  local row loc
+  printf '%s' "$ANNOTS" | grep -v '^$' | while IFS= read -r row; do
+    loc="${row%%	*}"
+    printf '%s' "$SITES" | grep -q "^$loc	" || printf '%s\n' "$row"
   done
 }
 
@@ -492,6 +564,51 @@ LEAN
   check "a prefix name is not the ctor" \
         "$(printf '%s' '.error (.unsupportedDevice id)' | grep -cE "\\.unsupported([^A-Za-z0-9_']|\$)")" "0"
 
+  # ---- CASE 4: THE ANNOTATION SHAPE — the C successor's red tenure.
+  # The census counted value constructors and destructures, called the change
+  # priced, and `runIndetRaw`'s SIGNATURE broke: it names `Halt` and no
+  # constructor, so no threshold on the old channels could have found it.
+  echo "  -- annotations (the C successor's calibration)"
+  an="$tmp/annot"; mkdir -p "$an"
+  cat > "$an/Indet.lean" <<'LEAN'
+def runIndetRaw (fuel : Nat) (s : State) : Sum Halt (List State) :=
+  loop fuel s
+def mk : R := .halt (.unsupported "m")
+def use (r : R) : Nat :=
+  match r with
+  | .halt (.unsupported _) => 0
+  | _ => 1
+structure Env where
+  onHalt : Halt → Nat
+def cons (h : Nat) (t : List Nat) : List Nat := h :: t
+def body : Nat := let x := (0 : Nat); x
+LEAN
+  CLONE="$an"; TYPE="Halt"; CTOR="unsupported"; EXTRA_CHANNELS=""; BUDGET=600
+  scan_sites
+  check "the ctor census finds construct + destructure" \
+        "$(printf '%s' "$SITES" | grep -c .)" "2"
+  check "  ...and is BLIND to the signature"  \
+        "$(printf '%s' "$SITES" | grep -c 'runIndetRaw')" "0"
+  check "the annotation channel FINDS it"     \
+        "$(printf '%s' "$ANNOTS" | grep -c 'Indet.lean:1')" "1"
+  check "  ...and a struct field is one too"  \
+        "$(printf '%s' "$ANNOTS" | grep -c 'Indet.lean:9')" "1"
+  check "  ...counted as naming NO constructor" \
+        "$(annots_unseen | grep -c 'runIndetRaw')" "1"
+  # `onHalt` is not `Halt`: the field NAME collides on the left of the colon
+  # and only the right-hand side may answer.
+  check "a colliding field NAME is not a hit" \
+        "$(is_annotation 'def onHalt := 0' && echo annot || echo no)" "no"
+  # The shapes that are NOT annotations, each a direction this could have
+  # over-counted in: a cons, a definition body, an anonymous constructor.
+  check "a cons is not an annotation"         "$(is_annotation 'def f := h :: Halt' && echo annot || echo no)" "no"
+  check "a bare type in a list IS one"        "$(is_annotation 'def f : List Halt := xs' && echo annot || echo no)" "annot"
+  check "an anonymous ctor is not the type"   "$(is_annotation 'def f : R := go .Halt' && echo annot || echo no)" "no"
+  check "a definition body is not a signature" "$(is_annotation 'def m := Halt.unsupported' && echo annot || echo no)" "no"
+  check "an ascription in a body IS one"      "$(is_annotation 'def m := f (x : Halt)' && echo annot || echo no)" "annot"
+  check "a prefix collision is not the type"  "$(is_annotation 'def m : HaltState := s' && echo annot || echo no)" "no"
+  check "a qualified spelling still counts"   "$(is_annotation 'def m : LeanModels.C.Halt := s' && echo annot || echo no)" "annot"
+
   # ---- the BUDGET: a tool that prices a change must itself be priced.
   echo "  -- budget"
   big="$tmp/big"; mkdir -p "$big"
@@ -645,12 +762,24 @@ echo
 printf '  CONSTRUCT    %s site(s)  (a different pattern — no single grep finds both)\n' "$nc"
 printf '%s\n' "$C_LINES" | grep -v '^$' | awk -F'\t' '{ printf "    %-46s %s\n", $1, $3 }'
 echo
+A_LINES="$(annots_unseen)"
+na="$(count_of "$ANNOTS")"; nau="$(count_of "$A_LINES")"
+printf '  ANNOTATE     %s site(s) name `%s` in a TYPE POSITION, %s of them naming\n' "$na" "$TYPE" "$nau"
+printf '               NO constructor — invisible to every count above:\n'
+printf '%s\n' "$A_LINES" | grep -v '^$' | awk -F'\t' '{ printf "    %-46s %s\n", $1, $3 }'
+echo
 printf '  LOOK-ALIKES  %s excluded, with the reason:\n' "$nl"
 if [ "$VERBOSE" = "1" ]; then
   printf '%s\n' "$LOOKALIKES" | grep -v '^$' | awk -F'\t' '{ printf "    %-46s %-9s %s\n", $1, $2, $3 }'
 else
   printf '%s\n' "$LOOKALIKES" | grep -v '^$' | awk -F'\t' '{ c[$2]++ } END { for (k in c) printf "    %-9s %s site(s)   (--verbose to list)\n", k, c[k] }'
 fi
+echo
+echo "  DESTRUCTURE bounds a CONSTRUCTOR change; a change to the TYPE ITSELF"
+echo "  (renamed, deleted, re-parameterised) is bounded by DESTRUCTURE +"
+echo "  ANNOTATE, because a signature naming the type breaks without ever"
+echo "  naming a constructor — one such line red a tenure after a census that"
+echo "  counted only constructors and destructures."
 echo
 echo "  The DESTRUCTURE count bounds the work; the build log LOCATES it. Neither"
 echo "  is a count of causes — see docs/family-architecture.md §5.4a, and"

@@ -3078,3 +3078,85 @@ mechanical rewrite. The enqueue line was confirmed end-to-end on an **isolated
 lock and queue** (`LS_LOCK`/`LS_QUEUE` in the scratchpad, `--dry-run`, a
 refusing `lake` stub on PATH): the machine-wide lock was held by another lane
 and was never touched. No Lean executed.
+
+## 2026-08-23-qol-45 — the shape set's fourth member, and a log that says whose it is
+
+Two items from the C successor's recovery.
+
+### ANNOTATE: a position no threshold could have found
+
+`runIndetRaw : … Halt …` is a **type annotation**. It names the type and no
+constructor, so every channel this tool had — all of which grep `\.$CTOR` —
+was structurally blind to it. The successor's census counted value
+constructors and destructures, called the change priced, and **red a tenure**
+on the signature that survived. A bound a whole syntactic position can walk
+through is not a bound, and the failure is one of KIND: no threshold on the
+old channels would have caught it, because it was never a smaller count.
+
+> A CONSTRUCTOR change is bounded by DESTRUCTURE. A change to the TYPE ITSELF
+> is bounded by DESTRUCTURE + ANNOTATE: renaming or deleting a type breaks
+> every signature that names it, none of which names a constructor.
+
+Live on this tree, `sites.sh Halt unsupported`, full scan, no PARTIAL:
+
+```
+DESTRUCTURE  13 site(s)
+CONSTRUCT    18 site(s)
+ANNOTATE     20 site(s) name `Halt` in a TYPE POSITION, 20 of them naming
+             NO constructor — invisible to every count above
+```
+
+**All 20.** The type has more annotation sites than destructure sites, and the
+old census could see none of them — the priced bound understated the
+type-change surface by twenty sites, which is the incident, reproduced as a
+number.
+
+The test is positional like the rest of the tool: the type stands to the RIGHT
+of a `:`, with `:=` and `::` removed first, so a body-local `(x : Halt)`
+ascription counts and a cons does not. One discrimination had to be learned
+mid-landing: **a leading dot and a qualifier are different dots.** Excluding
+every preceding `.` rejected `LeanModels.C.Halt` — the qualified spelling this
+tool's own channel list already treats as the type — while allowing every dot
+would have accepted `.Halt`, an anonymous constructor. What precedes the dot
+decides. Thirteen rows, including `onHalt` (a field name colliding on the
+WRONG side of the colon) and the three shapes that must not count.
+
+**And I made it twice as slow before I made it fast.** The first cut called
+the comment-stripper a second time per file: the live run went **PARTIAL at
+file 5040 of 9825** where the old one reached the end. The stripper is the
+expensive part and does not depend on the pattern, so the second regex now
+rides the first traversal. Measured, same 45s budget, same tree: baseline
+**3626** files, two channels **3732**. The channel is free.
+
+### A build log must say whose it is
+
+`triad-build.*` held ONLY lake output — no ticket, no lane, no branch, no
+tree. The C successor lost its transcript, grepped **68 of them** for its lane
+tag, and **matched nothing**. Every log was still on disk; not one could be
+attributed. `build_log_pointer` already recovers a log by path and, failing
+that, by content — neither helps when the content itself is anonymous.
+
+Each attempt now stamps one line first:
+
+```
+triad.sh ticket=1787514607204600000-87469-ctwin lane=ctwin branch=master
+tree=a0ca12e46087 head=95849db dir=/Users/ahle/repos/lean-qol attempt=1 at=…
+```
+
+**Per attempt, because the redirect truncates**: a header written once at open
+is erased by attempt 1 and again by the resource-kill retry. Header with `>`,
+lake with `>>`, so one-attempt-per-log is exactly as before.
+
+**A header that rides in the file the failure reports COUNT must be inert**,
+and that is checked rather than reasoned about: the same red log with and
+without it yields byte-identical `error lines`, `failed modules`, and axiom
+ledger verdicts. Also asserted: no hostname. Confirmed end-to-end with a
+stubbed `lake` on an isolated lock and queue — the header is line 1 of a real
+`BUILD_LOG`, `grep -l 'lane=ctwin'` now finds it.
+
+### Triad
+
+`bash -n` clean. `sites.sh` **57 ok** (44 → 57), `triad.sh` **207 ok** (196 →
+207), `ci.sh --verify-guards` 32 ok. No Lean executed: the end-to-end run used
+a `lake` stub and `--gates-only python3 tools/docs_check.py`, on `LS_LOCK`/
+`LS_QUEUE` in the scratchpad; the machine-wide lock was never touched.

@@ -954,6 +954,31 @@ coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
 # axiom lines are echoed too, because they are the half a lane quotes.
 # The pointer a green tenure owes its reader.  It carries the WARNING with it,
 # because the advice is only needed by someone who no longer has the line.
+# A BUILD LOG MUST SAY WHOSE IT IS.  `triad-build.*` carried ONLY lake output
+# — no ticket, no lane, no branch, no tree — so when the C successor lost its
+# transcript it grepped 68 of them for its lane tag and matched NOTHING.  The
+# logs were all still there; not one could be attributed.  The pointer above
+# recovers a log BY PATH, and by content when the path is gone; neither helps
+# when the content itself is anonymous, and "the only path from a lost
+# transcript to a verdict is the lane's own log".
+#
+# WRITTEN PER ATTEMPT, because the build redirect TRUNCATES: a header written
+# once at open would be erased by attempt 1 and again by the resource-kill
+# retry.  Each attempt re-stamps into a freshly truncated file, so the
+# one-attempt-per-log semantics every failure report assumes is unchanged.
+#
+# The fields are the ones a grep is run for: the ticket (unique per tenure),
+# the lane, the branch, the enqueue tree, HEAD, the clone, the attempt.  No
+# hostname — tracked files and shared logs carry none.
+build_log_header() {            # attempt -> the identifying first line
+  printf 'triad.sh ticket=%s lane=%s branch=%s tree=%s head=%s dir=%s attempt=%s at=%s\n' \
+    "$TICKET" "$LANE" \
+    "$(git -C "$CLONE" rev-parse --abbrev-ref HEAD 2>/dev/null || echo none)" \
+    "$(short_tree "${ENQ_STAMP:-unstampable}")" \
+    "$(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo none)" \
+    "$CLONE" "$1" "$(date '+%Y-%m-%dT%H:%M:%S')"
+}
+
 build_log_pointer() {           # log -> the line naming it, and the caveat
   printf 'full log: %s  (kept, not deleted — recover by THIS PATH; failing that by CONTENT, grep -l for a symbol only this build printed; NEVER by clock — %s other triad-build logs share this TMPDIR and three can land within 90s of one tenure)' \
     "$1" "$(( $(ls "$(dirname "$1")"/triad-build.* 2>/dev/null | grep -c . || echo 1) - 1 ))"
@@ -1458,6 +1483,32 @@ if [ "$SELF_TEST" = "1" ]; then
   check "  ...and why the window is unsafe"    "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'within 90s of one tenure')" "1"
   check "  ...and reports that it found none"   "$(axiom_ledger "$tmp/plain.log" >/dev/null; echo $?)" "1"
 
+  # ---- A BUILD LOG SAYS WHOSE IT IS (the C successor grepped 68 and matched none)
+  saved_tk="${TICKET:-}"; saved_ln="$LANE"; saved_es="${ENQ_STAMP:-}"
+  TICKET="1787500000000000000-999-ctwin"; LANE="ctwin"
+  ENQ_STAMP="0123456789abcdef0123456789abcdef01234567 deadbeef"
+  hdr="$(build_log_header 1)"
+  check "the header names the TICKET"         "$(printf '%s' "$hdr" | grep -c 'ticket=1787500000000000000-999-ctwin')" "1"
+  check "  ...the LANE, which is what is grepped" "$(printf '%s' "$hdr" | grep -c 'lane=ctwin')" "1"
+  check "  ...the BRANCH"                     "$(printf '%s' "$hdr" | grep -c 'branch=')" "1"
+  check "  ...the enqueue TREE"               "$(printf '%s' "$hdr" | grep -c 'tree=0123456789ab')" "1"
+  check "  ...the attempt, since each one re-stamps" "$(build_log_header 2 | grep -c 'attempt=2')" "1"
+  check "  ...and it is ONE line"             "$(printf '%s\n' "$hdr" | grep -c .)" "1"
+  # THE HEADER MUST BE INERT.  It rides in the same file the failure reports
+  # count, so it is checked against every consumer rather than reasoned about:
+  # a header that added one error line would inflate every red report.
+  hl="$tmp/hdr.log"
+  build_log_header 1 > "$hl"; cat "$rl" >> "$hl"
+  check "the header is the FIRST line"        "$(head -1 "$hl" | grep -c '^triad.sh ticket=')" "1"
+  check "  ...and changes no failure count"   "$(build_failure_report "$hl" | grep 'error lines')" \
+        "$(build_failure_report "$rl" | grep 'error lines')"
+  check "  ...nor the failed-module count"    "$(build_failure_report "$hl" | grep 'failed modules')" \
+        "$(build_failure_report "$rl" | grep 'failed modules')"
+  check "  ...nor the axiom ledger's verdict" "$(axiom_ledger "$hl" >/dev/null; echo $?)" \
+        "$(axiom_ledger "$rl" >/dev/null; echo $?)"
+  check "  ...and carries no hostname"        "$(printf '%s' "$hdr" | grep -cE "$(uname -n | cut -d. -f1)")" "0"
+  TICKET="$saved_tk"; LANE="$saved_ln"; ENQ_STAMP="$saved_es"
+
   check "the banner names the protocol level" \
         "$(banner | grep -c 'protocol base 1-6 + A4-A13 + A16')" "1"
 
@@ -1944,6 +1995,7 @@ fi
 
 BUILD_LOG="$(mktemp "${TMPDIR:-/tmp}/triad-build.XXXXXX")"
 # Explicit targets UNION onto the classifier's floor (never replace it).
+# (the header is written per attempt, just below — the redirect truncates)
 for _bt in $BUILD_TARGET_ARGS; do add_build_target "$_bt"; done
 [ -n "$BUILD_TARGET_ARGS" ] && say "explicit --build-target: $BUILD_TARGET_ARGS (unioned; lane owes the coverage statement)"
 
@@ -1954,8 +2006,9 @@ for attempt in 1 2; do
   # UNQUOTED on purpose: BUILD_TARGETS is a target LIST, and every element was
   # validated as a plain Lean identifier path before it got here.  Empty means
   # the full build, which is exactly `lake build` with no arguments.
+  build_log_header "$attempt" > "$BUILD_LOG"
   # shellcheck disable=SC2086
-  nice -n "$NICE" lake build $BUILD_TARGETS > "$BUILD_LOG" 2>&1
+  nice -n "$NICE" lake build $BUILD_TARGETS >> "$BUILD_LOG" 2>&1
   BUILD_EXIT=$?
   watchdog_stop
   say "build exit=$BUILD_EXIT"

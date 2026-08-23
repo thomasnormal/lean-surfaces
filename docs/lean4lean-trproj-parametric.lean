@@ -154,9 +154,10 @@ structure ProjSound (env : VEnv) (U : Nat) (Γ : List VExpr) (e v : VExpr) : Pro
   to an uninstantiated one), so it could not be validated by the lemmas below.
   The `∃` shape is also the idiom the model already uses — `IsType` is
   `∃ u, HasType Γ A (.sort u)`. -/
-  sound : ∃ A u, env.HasType U Γ e A ∧ env.HasType U Γ A (.sort u) ∧
-    (VLevel.MaybeZero u →
-      ∃ B w, env.HasType U Γ v B ∧ env.HasType U Γ B (.sort w) ∧ VLevel.IsAlwaysZero w)
+  sound : ∃ A u B w,
+    env.HasType U Γ e A ∧ env.HasType U Γ A (.sort u) ∧
+    env.HasType U Γ v B ∧ env.HasType U Γ B (.sort w) ∧
+    (VLevel.MaybeZero u → VLevel.IsAlwaysZero w)
 
 /-- The parametric `TrProj`.
 
@@ -225,10 +226,36 @@ found. -/
 theorem ProjSound.instL {env : VEnv} {U U' : Nat} {Γ : List VExpr} {e v : VExpr}
     {ls : List VLevel} (hls : ∀ l ∈ ls, l.WF U') (H : ProjSound env U Γ e v) :
     ProjSound env U' (Γ.map (VExpr.instL ls)) (e.instL ls) (v.instL ls) := by
-  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
-  refine ⟨A.instL ls, u.inst ls, hA.instL hls, hu.instL hls, fun h0 => ?_⟩
-  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0.of_inst
-  exact ⟨B.instL ls, w.inst ls, hB.instL hls, hw.instL hls, h0'.inst⟩
+  obtain ⟨A, u, B, w, hA, hu, hB, hw, himp⟩ := H.sound
+  exact ⟨A.instL ls, u.inst ls, B.instL ls, w.inst ls,
+    hA.instL hls, hu.instL hls, hB.instL hls, hw.instL hls,
+    fun h0 => (himp h0.of_inst).inst⟩
+
+/-! ### `wf` — the fourth obligation, and the reason the structure above was restructured
+
+`TrProj.wf` concludes `VExpr.WF env U Γ e'`, and `VExpr.WF` unfolds to
+`IsDefEqU U Γ e e` — *"the field has a type"*.  The first version of `ProjSound`
+typed the field only INSIDE the `Prop` case, so when the structure's sort was not
+maybe-`Prop` the definition said nothing whatever about `v`, and `wf` was simply
+underivable.  Hoisting the typing out of the implication — leaving the
+`Prop`-squash as a condition on the LEVELS alone — makes the definition strictly
+stronger, says exactly the same thing about soundness, and transports
+identically.
+
+Upstream's statement also takes `(H2 : VExpr.WF env U Γ e)`.  This version does
+not need it: `ProjSound` already carries the structure's typing, so the
+hypothesis is redundant here and is omitted rather than accepted and ignored. -/
+
+/-- The projected field is well-formed — unconditionally. -/
+theorem ProjSound.wf {env : VEnv} {U : Nat} {Γ : List VExpr} {e v : VExpr}
+    (H : ProjSound env U Γ e v) : VExpr.WF env U Γ v :=
+  let ⟨_, _, B, _, _, _, hB, _, _⟩ := H.sound; ⟨B, hB⟩
+
+/-- **THE FOURTH VALIDATION LEMMA.**  `TrProj.wf` for the parametric form. -/
+theorem TrProjP.wf {PI : ProjIface} {env : VEnv} {U : Nat} {Γ : List VExpr}
+    {S : Name} {idx : Nat} {e v : VExpr}
+    (H : TrProjP PI env U Γ S idx e v) : VExpr.WF env U Γ v :=
+  H.2.wf
 
 /-! ### `instN` — the second obligation
 
@@ -264,12 +291,10 @@ theorem ProjSound.instN {env : VEnv} {U : Nat} {Γ₀ Γ₁ Γ : List VExpr}
     (henv : env.Ordered) (W : Ctx.InstN Γ₀ e₀ A₀ k Γ₁ Γ)
     (h₀ : env.HasType U Γ₀ e₀ A₀) (H : ProjSound env U Γ₁ e v) :
     ProjSound env U Γ (e.inst e₀ k) (v.inst e₀ k) := by
-  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
-  refine ⟨A.inst e₀ k, u, VEnv.HasType.instN henv W hA h₀,
-    VEnv.HasType.instN henv W hu h₀, fun h0 => ?_⟩
-  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0
-  exact ⟨B.inst e₀ k, w, VEnv.HasType.instN henv W hB h₀,
-    VEnv.HasType.instN henv W hw h₀, h0'⟩
+  obtain ⟨A, u, B, w, hA, hu, hB, hw, himp⟩ := H.sound
+  exact ⟨A.inst e₀ k, u, B.inst e₀ k, w,
+    VEnv.HasType.instN henv W hA h₀, VEnv.HasType.instN henv W hu h₀,
+    VEnv.HasType.instN henv W hB h₀, VEnv.HasType.instN henv W hw h₀, himp⟩
 
 /-! ### `weak'` — the third obligation
 
@@ -299,12 +324,10 @@ theorem ProjField.weak' {PI : ProjIface} {S : Name} {idx : Nat} {e v : VExpr} {l
 theorem ProjSound.weak' {env : VEnv} {U : Nat} {Γ Γ' : List VExpr} {l : Lift} {e v : VExpr}
     (henv : env.Ordered) (W : Ctx.Lift' l Γ Γ') (H : ProjSound env U Γ e v) :
     ProjSound env U Γ' (e.lift' l) (v.lift' l) := by
-  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
-  refine ⟨A.lift' l, u, VEnv.HasType.weak' henv W hA,
-    VEnv.HasType.weak' henv W hu, fun h0 => ?_⟩
-  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0
-  exact ⟨B.lift' l, w, VEnv.HasType.weak' henv W hB,
-    VEnv.HasType.weak' henv W hw, h0'⟩
+  obtain ⟨A, u, B, w, hA, hu, hB, hw, himp⟩ := H.sound
+  exact ⟨A.lift' l, u, B.lift' l, w,
+    VEnv.HasType.weak' henv W hA, VEnv.HasType.weak' henv W hu,
+    VEnv.HasType.weak' henv W hB, VEnv.HasType.weak' henv W hw, himp⟩
 
 /-- **THE THIRD VALIDATION LEMMA.**  `TrProj.weak'` for the parametric form. -/
 theorem TrProjP.weak' {PI : ProjIface} {env : VEnv} {U : Nat} {Γ Γ' : List VExpr}

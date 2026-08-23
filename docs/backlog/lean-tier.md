@@ -972,3 +972,90 @@ sound : ∃ A u B w, HasType e A ∧ HasType A (.sort u)
 | `wf` | blocked on **my own** definition; restructure pre-registered above |
 | `uniq` | **plausibly blocked on no-confusion** — entry 8, narrowed by entry 10: not in `addInduct`, would need the constructor *elimination* principles. NOT MEASURED |
 | `weak'_inv`, `defeqDFC` | uncensused. Both are `∃`-conclusions over a *changed* context, so neither is a congruence like the three proved ones |
+
+---
+
+## 2026-08-23-lean-tier-12 — `wf` GREEN and the hoisted `ProjSound` re-proved: 4 of 7; the remaining three are censused and none is ordinary work
+
+### The batched tenure: GREEN
+
+```
+LOCK  [20:48:23] LOCK ACQUIRED after 5065s as 'leantier 77443'
+      [20:48:32] build exit=0  ->  BUILD GREEN
+GATE  [20:48:32] === gate: lake env lean .../ProjParam.lean ===     PRESENT
+      [20:48:33] TRIAD DONE (build exit 0, gates green)
+```
+
+`tree at enqueue: 967759fafd66`, matching the staged tree. Branch
+`lean-surfaces/trproj` @ **`da9e7b11abefabd5b7f3d53cf1c23f7216f7eac2`**; repo copy
+byte-identical: **357 lines, 0 real sorries, 0 axioms, 18 theorems.**
+
+**Four of seven proved** — `TrProjP.instL`, `.instN`, `.weak'`, `.wf` — with the
+first three re-proved on the hoisted structure in the same tenure, so one tenure
+bought the restructure and the new lemma together (base rule 4).
+
+### Census of the remaining three: none is ordinary work
+
+**`weak'_inv` — provable in FORM, but its only route rests on an upstream
+`sorry`, and on exactly the direction it needs.**
+
+Upstream parks `HasType.skips` immediately above `TrProj.weak'_inv`, which is the
+intended tool. Following it down:
+
+```
+HasType.skips  ->  IsDefEq.skips  ->  (IsDefEqU.weakN_iff henv hΓ W).1
+```
+
+and `IsDefEqU.weakN_iff` (`UniqueTyping.lean:172`) is
+
+```lean
+refine ⟨fun h => have := henv; have := hΓ; sorry, fun h => h.weakN henv W⟩
+```
+
+— the **reverse** direction is proved (`h.weakN`); the **forward** direction is
+`sorry`. `skips` uses `.1`, the sorried one, and forward reflection is precisely
+what `weak'_inv` needs. It is the single `sorry` in that file and one of the 24.
+
+So proving `TrProj.weak'_inv` today yields a lemma that **compiles green while
+resting on somebody else's hole** — a green that carries an upstream `sorry`
+inside it. That is a decision, not a detail, and it is the coordinator's:
+this lane has so far only shipped lemmas whose dependencies are complete.
+
+*The computational half is unaffected and is ours:* `lift'` maps `.app` to `.app`
+and every other constructor to a non-`.app`, so `e.lift' l` being an application
+spine forces `e` to be one. That half needs nothing from upstream.
+
+**`defeqDFC` — same blocker family as `uniq`.**
+
+```lean
+theorem TrProj.defeqDFC (henv) (hΓ : IsDefEqCtx U [] Γ₁ Γ₂)
+    (he : env.IsDefEqU U Γ₁ e₁ e₂) (H : TrProj Γ₁ s i e₁ e') :
+    ∃ e', TrProj Γ₂ s i e₂ e'
+```
+
+`e₂` is only **definitionally equal** to `e₁` — nothing forces it to be a
+syntactic application spine at all. Recovering a field from it needs
+app-structure through defeq, which is the same missing no-confusion entry 8
+established is absent by shape and entry 10 located: not in `addInduct`, but in
+the constructor *elimination* principles. **Plausibly blocked — NOT MEASURED.**
+
+**`uniq` — unchanged**, plausibly blocked on no-confusion.
+
+### The seven, settled
+
+| # | obligation | status |
+| --- | --- | --- |
+| 1 | `instL` | **PROVED** |
+| 2 | `instN` | **PROVED** |
+| 3 | `weak'` | **PROVED** |
+| 4 | `wf` | **PROVED** |
+| 5 | `weak'_inv` | provable in form; typing half rests on the **sorried forward direction** of `IsDefEqU.weakN_iff`. Coordinator's call |
+| 6 | `defeqDFC` | plausibly blocked on no-confusion — NOT MEASURED |
+| 7 | `uniq` | plausibly blocked on no-confusion — NOT MEASURED |
+
+**The four that are proved are exactly the congruences** — the lemmas saying the
+relation commutes with substitution — and they went through because `lift`,
+`inst` and `instL` all distribute over `.app` without touching binder depth. **The
+three that remain are exactly the inversions**, and every one of them needs to
+reason backwards out of a `.app` spine. That split was visible in the shapes from
+the start and is now measured rather than guessed.

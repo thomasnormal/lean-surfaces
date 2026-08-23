@@ -910,3 +910,137 @@ is right to be conservative about it.
 
 The Python tier is unmoved at every gate number, which is what a landing
 confined to `LeanModels/Go/` and `Examples/go/` must produce.
+
+---
+
+## G7 — INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23)
+
+### THE `--build-target` QUESTION, answered mechanically
+
+**It cannot scope down.** `tools/triad.sh`'s own comment is explicit —
+*"UNION, never replace — a lane can always build more"* — so a lane may
+widen its build but never narrow what `--classify` computed.
+
+**The widening's cause was found rather than guessed**, by running
+`path_targets` on each file of the last landing:
+
+    Examples/go/bitlen/guards.lean -> Examples.go.bitlen.guards
+    Examples/go/bitlen/bitlen.go   -> Examples          ← the 37 minutes
+    Examples/go/rung1/guards.lean  -> Examples.go.rung1.guards
+
+`path_targets` maps `Examples/*.lean` to its own precise module, and every
+OTHER `Examples/` path to the whole library. The cost came from the
+**vendored `.go` reference file**, not from the Lean. And it was not a
+build input by any reading: no `[[input_dir]]` covers `Examples/go/` (they
+cover `Examples/spice/*.cir` and `Examples/verilog-a/*.{va,json}` only),
+and the sole mention of it in any `.lean` was prose inside a docstring.
+
+**Fixed at this end rather than escalated**: the source is now quoted in
+`guards.lean`'s docstring — verbatim, comments and all, with the same
+BSD-3 attribution — and the sibling file is deleted. `path_targets` now
+returns the precise module for everything this lane owns. Quoting costs
+nothing and keeps the tenure scoped.
+
+**Still worth a QoL ruling, and it is the coordinator's to route:** the
+`Examples/*` catch-all is correct for fixtures a library reads and
+over-broad for reference material that nothing builds. An extension-aware
+arm, or a way for a lane to declare a path non-input, would fix it for
+every language lane that wants to vendor a source beside its model — which
+is all of them.
+
+### THE CALL CENSUS — and it CORRECTS a reading of §G6
+
+§G6 measured that `CallExpr` appears in **73.3% of rung-1-reachable
+files** and called it the biggest unlock. True, and this census measures
+the other axis — call SITES, of which there are 526,571:
+
+| call shape | n | share |
+| --- | ---: | ---: |
+| **`pkg.F(…)` / `x.M(…)` — selector** | **275,975** | **52.4%** |
+| plain identifier — *what this tier models* | 194,580 | 37.0% |
+| builtin | 45,995 | 8.7% |
+| other (through a value, a literal, …) | 10,021 | 1.9% |
+
+**Both figures are true and they measure different things, which is worth
+being exact about rather than quoting the flattering one.** Calls unlock
+73.3% of FILES; the calls this tier models are 37.0% of call SITES. The
+majority shape is the selector — and a selector call is
+`pkg.F` or `x.M` **indistinguishable without `go/types`**, which is why
+they are one bucket here and why they are the extractor's problem before
+they are the walker's.
+
+Function declarations, 63,697 of them: **44,309 plain, 19,388 methods
+(30.4%)**. Results: 41% return nothing, **47% return exactly one**, 11.5%
+return two or more. Params: 0→15,452, 1→29,503, 2→10,287. Variadic 668,
+generic 387 — both under 1%.
+
+**So inch 4's call work was largely done in inch 3**, and the census says
+so plainly: single-result calls to plain names cover 47% of declarations
+and 37% of sites, and everything beyond needs `go/types`. Multi-result
+returns (11.5%) are the next honest widening; methods and selectors wait
+on the extractor.
+
+### THE THEOREM HALF — `bitLen`'s specification, PROVED
+
+STMT-65's split, applied to a real function.
+
+**§1 SPEC HALF — no interpreter, no world, no fuel.** `bitLenSpec` is
+what the Go loop computes, written as mathematics, and two theorems
+bracket it:
+
+* `bitLenSpec_lt : n < 2 ^ bitLenSpec n`
+* `bitLenSpec_le : 0 < n → 2 ^ (bitLenSpec n - 1) ≤ n`
+
+Together: `2^(k-1) ≤ n < 2^k` for `k = bitLenSpec n`, which **is** the
+definition of bit length — not a restatement of the code. Both by strong
+induction on `n`. Axioms `propext, Quot.sound`; no `sorry`.
+
+**§2 THE BRIDGE — one step, and it is the load-bearing one.**
+`shr_one_is_halving` proves the interpreter's `n >>= 1` on a `uint64` IS
+the spec's `n / 2`, resting on `fdiv_two` (halving a non-negative integer
+is floor division). This is where a width or signedness bug would
+surface, and it is the single place the two halves touch.
+
+**What is still OWED, named rather than implied.** The full interpreter
+half — *the walker, run on `bitLenBody` with enough fuel, leaves `len`
+equal to `bitLenSpec n`* — is an induction over the loop carrying the
+store through each iteration. It is the next theorem. What is proved is
+its arithmetic step; what is CHECKED is the composition. Writing the
+distinction into the file is the point of separating §1 and §2 at all.
+
+### THREE-WAY AGREEMENT
+
+The same 35 inputs are now checked against **two independent standards**:
+what `gc` printed, and `bitLenSpec` — which §1 proved is genuinely the bit
+length. A model agreeing with the compiler but not the mathematics, or the
+reverse, shows up in exactly one block. Non-vacuity run on both: flipping
+an oracle row and flipping a spec row each make Lean report it.
+
+### Battery
+
+**123 `#guard`s** — 77 on the exemplar (35 oracle, 35 spec, plus width,
+fuel, and refusal rows), 46 at rung 1. **6 proved lemmas** in the
+exemplar. Axioms `propext`/`Quot.sound` at worst. No `sorry`, no
+`native_decide`.
+
+### Triad
+
+Authored lock-free per rule 3. **Tenure GREEN**, read from the full log:
+
+| gate | result |
+| --- | --- |
+| `lake build` (scoped: **`Examples.go.bitlen.guards` alone**) | **exit 0** |
+| `docs_check` | **87/87** marked, 35 illustrative-exempt |
+| `diff_test --no-build` | **1,427 cases, 0 failed** — 1,311 matched, 116 whitelisted |
+| `script_corpus --no-build` | **65 scripts, 0 failed** — 50 matched, 15 loud-blocked |
+
+Queued 41 minutes, held the machine **129 seconds** — against the previous
+inch's 37 minutes. **The classifier was fixed upstream between the two
+tenures** and now says so by name: *"'Examples/go/bitlen/bitlen.go' is a
+non-Lean fixture, unreferenced by any Lean module or gate corpus —
+invisible to lake, classified docs."* So the widening is closed at both
+ends: the file is gone from this lane, and the rule that widened on it no
+longer does. The build target is a single module and the class is `tier`
+with `tiers none`.
+
+`fallthrough` stays deferred (4.0%); the MM-oracle is untouched.

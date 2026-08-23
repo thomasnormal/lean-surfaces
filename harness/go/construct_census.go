@@ -418,11 +418,45 @@ func (c *Census) censusFile(path string) error {
 		case *ast.FuncDecl:
 			if x.Recv != nil {
 				c.Decls["method"]++
+				c.Shapes["funcdecl_method"]++
 			} else {
 				c.Decls["func"]++
+				c.Shapes["funcdecl_plain"]++
 			}
 			if x.Body == nil {
 				c.Decls["func_no_body"]++
+			}
+			nres := 0
+			if x.Type.Results != nil {
+				for _, fl := range x.Type.Results.List {
+					if n := len(fl.Names); n > 0 {
+						nres += n
+					} else {
+						nres++
+					}
+				}
+			}
+			c.Shapes[fmt.Sprintf("funcdecl_%d_results", nres)]++
+			npar := 0
+			variadic := false
+			if x.Type.Params != nil {
+				for _, fl := range x.Type.Params.List {
+					if n := len(fl.Names); n > 0 {
+						npar += n
+					} else {
+						npar++
+					}
+					if _, isEll := fl.Type.(*ast.Ellipsis); isEll {
+						variadic = true
+					}
+				}
+			}
+			c.Shapes[fmt.Sprintf("funcdecl_%d_params", npar)]++
+			if variadic {
+				c.Shapes["funcdecl_variadic"]++
+			}
+			if x.Type.TypeParams != nil {
+				c.Shapes["funcdecl_generic"]++
 			}
 		case *ast.GenDecl:
 			c.Decls[x.Tok.String()]++
@@ -561,8 +595,25 @@ func (c *Census) censusFile(path string) error {
 				c.Shapes["typespec_other"]++
 			}
 		case *ast.CallExpr:
-			if id, ok := x.Fun.(*ast.Ident); ok && builtinNames[id.Name] {
-				c.Builtins[id.Name]++
+			c.Shapes["call_total"]++
+			switch fn := x.Fun.(type) {
+			case *ast.Ident:
+				if builtinNames[fn.Name] {
+					c.Builtins[fn.Name]++
+					c.Shapes["call_builtin"]++
+				} else {
+					// The shape this tier models: a call to a plain name.
+					c.Shapes["call_plain_ident"]++
+				}
+			case *ast.SelectorExpr:
+				// `pkg.F(...)` or `x.M(...)` — indistinguishable without
+				// go/types, which is exactly why they are one bucket.
+				c.Shapes["call_selector"]++
+			default:
+				c.Shapes["call_other"]++
+			}
+			if x.Ellipsis.IsValid() {
+				c.Shapes["call_variadic_spread"]++
 			}
 		}
 		return true

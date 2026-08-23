@@ -486,3 +486,19 @@ because the commit fell through as a no-op.
   > `undefined`, which the tier's API cannot build at all, is a fact about the
   > tier. **Same number, different claims** — and a scoreboard that prints them
   > the same way invites the wrong reading.
+
+### Re-sequenced, 2026-08-23
+
+The retirement plan's sequencing was re-derived after `fuelMono`, the ∃F
+collapse, the generator family and the seam landed:
+[docs/python-refounding-plan.md §7](../python-refounding-plan.md#7-re-sequenced-2026-08-23--after-fuelmono-the-f-collapse-the-generator-family-and-the-seam).
+Three results worth knowing before planning against this file:
+
+* **the scope SHRANK while the estate grew** — 334 → **314** interpreter-facing
+  theorems, against 949 → 971 total;
+* **the trunk retires HUB FIRST, not arm by arm** — two arms already have zero
+  estate consumers and still cannot be deleted, because `ClockErase`, `Obs`,
+  `Semantics` and `PayloadBlind` hold essentially every arm between them;
+* **STMT-67's adequacy debt is three files wide** (`Script.lean`,
+  `Monadic/Script.lean`, `Main.lean`), none of them a proof — so it gates the
+  trunk's last step, not the estate's first.

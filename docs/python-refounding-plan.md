@@ -486,3 +486,173 @@ different shape. `genmoves_ray` (20 sites) is the eventual payoff and the right
 * The re-founding order beyond the top three; the buckets will re-rank once the
   spike lands, and ranking before measuring is the error this repository names
   most often.
+
+---
+
+## §7 RE-SEQUENCED (2026-08-23) — after `fuelMono`, the ∃F collapse, the generator family and the seam
+
+Four things landed on master since §4 was written: `Monadic.fuelMono` and its
+`Run`-level corollary, the ∃F collapse composed end to end, the R-track's
+generator family (`monadic_gen.lean`), and the runner seam
+(`Substrate.lean` §4). This section re-sequences the plan against them — and
+**the census was re-run rather than recalled**, which is what moved it.
+
+### 7.1 THE CENSUS, RE-RUN — the scope SHRANK while the estate GREW
+
+Same scope and same symbol list as §2.6, re-measured today:
+
+| | §2.6 (as written) | today | Δ |
+|---|---:|---:|---:|
+| theorems, sunfish estate | 949 | **971** | +22 |
+| mathematics | 615 (65 %) | **657 (68 %)** | +42 |
+| interpreter-facing | **334 (35 %)** | **314 (32 %)** | **−20** |
+
+> **The re-founding scope is 314, not 334 — and it fell while the estate grew
+> by 22.** The campaign has been adding mathematics faster than it adds
+> interpreter coupling. That is the trend line the plan should be sequenced
+> against, and it is the opposite of the usual assumption that a growing estate
+> grows its re-founding debt.
+
+*(Re-measurement, not a recount of the same run: the extractor here is
+`theorem`/`lemma` declaration head to the `:=` that opens the proof. Small
+differences against the original are extractor differences and are not
+material to the direction.)*
+
+**AND THE §2.6 SYMBOL LIST HAS A HOLE, which matters for sequencing rather than
+for size.** It omits `callFunction` — *the public wrapper* — along with the
+generator family (`stepIter`/`execGen`/`drainIter`) and `Raises`/`PartialTo`.
+With today's actual surface added, the whole `Examples/python` estate measures
+**1438 theorems = 1013 mathematics (70 %) + 425 interpreter-facing (30 %)**.
+The omission does not change the 65/35-ish shape; it changes the *order*,
+because `callFunction` turns out to be the symbol with the most consumers of
+all, and the plan could not see it.
+
+### 7.2 THE THREE FATES, decided by which surface a statement names
+
+| fate | surface | how |
+|---|---|---|
+| **transports by import** | `Obs.lean`'s `Res.le`/`Run.le` corollaries and the `_mono` family | `Monadic/Mono.lean` imports them; nothing is restated. Already done for the whole monotonicity layer. |
+| **re-founds as a judgment** | `CallsTo`/`CallsIn`/`GenEmits` and the fuel-family forms | the **R-track pattern**: define the judgment over the MONADIC interpreter and prove its transport lemmas, rather than re-proving the trunk's. Worked examples on master: `monadic_gen.lean`'s `IterStepsM`/`IterDrainsM`/`GenSilentM` with their `at_fuel` lemmas, and `monadic_fold.lean`'s `hop_transport`/`two_hop`/`hop_forall`. |
+| **retires with the trunk** | the tactic files, and every statement naming a trunk arm directly | no successor is owed — a tactic can only appear in a PROOF (§2's (c1) distinction, unchanged and still right). |
+
+### 7.3 THE DELETION ORDER — measured, and it is NOT "cheapest arm first"
+
+Consumers per trunk arm, by symbol mention, scoped to `LeanModels/Python/`
+(excluding `Monadic/`) and `Examples/python/`:
+
+| arm | Examples | trunk modules |
+|---|---:|---:|
+| `evalDictItems` | 0 | 6 |
+| `execForGen` | 0 | 7 |
+| `execAttrCall` | 1 | 6 |
+| `execForList` | 1 | 9 |
+| `anyAllIter` | 2 | 5 |
+| `callClosure` | 4 | 5 |
+| `execFor` | 4 | 10 |
+| `execWhile` | 5 | 10 |
+| `execGen` / `drainIter` | 6 | 6 |
+| `execStmts` | 9 | 10 |
+| `stepIter` | 12 | 7 |
+| `evalExpr` | 12 | 14 |
+| `execStmt` | 14 | 16 |
+| `callIn` | 45 | 15 |
+| `callFunction` | **57** | 13 |
+
+**Two arms have ZERO estate consumers and still cannot be deleted**, and that is
+the finding. Every arm without exception is held by the trunk's OWN modules:
+
+| module | blocks |
+|---|---:|
+| `ClockErase.lean` | **16 of 16 arms** |
+| `Obs.lean` | **16 of 16** |
+| `Semantics.lean` | **16 of 16** |
+| `PayloadBlind.lean` | 15 of 16 |
+| `Logic.lean` | 10 of 16 |
+| `VCGen.lean` | 10 of 16 |
+
+> **THE TRUNK DOES NOT RETIRE ARM BY ARM; IT RETIRES HUB FIRST.** Four modules —
+> `ClockErase`, `Obs`, `PayloadBlind`, `Semantics` — hold essentially every arm,
+> so "delete the zero-consumer arms first" buys nothing: it is a plan against
+> the ESTATE's coupling when the binding constraint is the trunk's INTERNAL
+> coupling. Re-scoping the estate is necessary and nowhere near sufficient.
+
+That reorders §4 into three stages that are actually sequential:
+
+1. **Re-found the estate's 314** onto monadic judgments (fate 2), which removes
+   the `Examples/` column but no arm.
+2. **Retire the hub, in dependency order**: `Obs.lean` first — it is the
+   corollary layer, its monadic counterpart (`Monadic/Mono.lean`) already
+   exists, and its content transports by import rather than re-proving. Then
+   `ClockErase`/`PayloadBlind`, whose theorems are stated over arms and must be
+   re-founded as judgments. `Semantics.lean` is the trunk itself and goes last.
+3. **Then the arms fall in ONE step**, because after the hub there is nothing
+   left holding them.
+
+### 7.4 STMT-67 — the adequacy debt, and its consumers NAMED
+
+`tools/substrate.sh` reports Python **ADOPTED** with adequacy **OWED**, on the
+pair `runScriptClock` / `runScriptClockMono`. Measured, the consumer set of that
+pair is **three files**:
+
+| file | role |
+|---|---|
+| `LeanModels/Python/Script.lean` | the trunk's definition |
+| `LeanModels/Python/Monadic/Script.lean` | the monadic definition |
+| `Main.lean` | the runner that selects between them |
+
+> **Zero `Examples/` consumers.** The adequacy debt is three files wide, not
+> ninety-two, and **not one of them is a proof.** It therefore gates the trunk's
+> LAST step and none of the earlier ones — a debt to pay when `Semantics.lean`
+> goes, not a prerequisite for re-founding the estate.
+
+The theorem owed is the ordinary shape: the two runners agree on every module,
+clock and fuel, at the observable boundary. `Monadic.callInMono_eq_ofHalt` is
+the template — one execution, two projections, and the equality proved rather
+than intended.
+
+### 7.5 WHAT THE SPIKE NUMBERS CHANGED
+
+**`jp`: void → answered, and it CONFIRMS the plan's own caveat.** §2's caveat
+said the four-deep `value_scores` shape does not close even with `grind`, and
+that deep gates fall back to hand proof. Measured against the real tree: both
+arms — control and `mvcgen +jp` — time out at `whnf`, 1 000 000 heartbeats.
+So the ceiling on fate-1 cheapness is now a MEASUREMENT rather than a
+conjecture, **and `+jp` is eliminated as the rescue.** Every estimate keeps the
+hand-proof line for deep gates.
+
+**`mutual_induct`: block-wide facts are one tactic, not 61 proofs.**
+`evalOpen.mutual_induct` and `execOpen.mutual_induct` exist and conclude the
+whole conjunction, so a property of the ENTIRE fuel-free half costs one uniform
+tactic over all arms — measured on `fuelMono`, 61 arms, no arm named by hand.
+This is what makes fate 2 affordable: re-founding a JUDGMENT is block-wide work,
+and block-wide work is now cheap. It is *per-statement* work that is not.
+
+**`FlatLe`: the ORDER is shared, the CONGRUENCES are not.** Core already had the
+flat order (`docs/lean-order-census.md`), and `Core/Order.lean` now bridges to
+it. This settles §3's `twinAgrees` question in the direction §2.6 already
+suspected: the two interpreters can be compared through a shared ORDER without
+a bridge theorem between their congruences, because the congruences are each
+tier's own by §3.4's routing law.
+
+**`fuelMono` + the ∃F collapse: category (b) is no longer "cannot be
+transported".** §2's (b) said the fuel-family files "are hand-proved against the
+NEW interpreter's fuel structure … **these are the expensive ones and they
+cannot be transported.**" That is now false. `exf_collapse_abstract` plus
+`Monadic.fuelMono` collapses `∃ t, ∀ F ≥ t` to `∃ F` for any upward-closed
+predicate, and `monadic_fold.lean`'s `hop_transport` / `two_hop` / `hop_forall`
+are the transport in use. Measured: **14 fuel-family files today (§1.3 said
+13), and 2 of them are already the monadic re-foundings** — so 12 remain, and
+they now have a mechanism instead of a hand proof each.
+
+> **The plan's most expensive category was priced before the lemma that makes it
+> cheap existed.** Re-price (b) before scheduling it: the question is no longer
+> "how many hand proofs" but "how many statements need the collapse applied".
+
+### 7.6 WHAT THIS SECTION STILL DOES NOT DECIDE
+
+The estate's 314 are counted, not classified one by one: this section says which
+FATES exist and what gates them, not which fate each of the 314 takes. That
+classification is per-file work and should be done as each file is re-founded,
+not banked up front — the numbers above moved by 20 in the interval since §2.6
+was written, and a per-statement table would have rotted with them.
+

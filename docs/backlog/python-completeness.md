@@ -724,3 +724,70 @@ it. Two of the ten are the boundary:
 
 **The shape is what licenses the snapshot**, and these two rows are how that
 claim is falsifiable rather than asserted.
+
+## 2026-08-23-pycomplete-12 — the audit's §python triage
+
+`docs/quality-audit-2026-08-23.md` §python, 14 rows. Fixed in this pass, folded
+into 3c-i-b rather than stopping it. Each fix cites the audit.
+
+### The two HIGHs
+
+**`bench_bisect/spec.lean` — the stated reason was FALSE, and it cost the two
+functions their oracle.** The block claimed `cases.json` rows were
+"inexpressible … `leanmodels-run` parses CLI args as ints only". The runner has
+taken canonical typed values for as long as the batch protocol has existed, and
+the whole corpus uses them. **Measured before writing anything**: nine value
+rows across `bisect_left`/`bisect_right` — including every line of the vendored
+docstring's authenticity block — are answered by the model today and agree with
+CPython. They are now `cases.json` rows. The ONE row the oracle cannot reach is
+`lo < 0`, whose `raise ValueError(…)` is outside the exception tier; it is
+whitelisted with that reason. **A false blanket claim was hiding a real,
+one-shape gap** — which is the more interesting half: the gap was smaller than
+the claim, and the claim is why nobody looked.
+
+**`pins_genmoves.lean` — re-labelled, and the real fix delegated.** The
+thirteen boards' expected lists said "Every expected list below IS CPython's
+own answer, in CPython's order", present tense, while `gen_moves` appears in
+ZERO `cases.json` rows — nothing re-derives them. The wording now says what is
+true: TRANSCRIBED from CPython when the reference was written, with a date, and
+nothing regenerates them.
+
+The real fix is a generator that survives — the fourteen boards moved to one
+data file that both the pin and a Python script read. **Not taken here**: the
+boards are defined in the sunfish campaign's own proof files, so it belongs
+with whoever owns them. Noted, not claimed.
+
+### The mediums fixed
+
+* **`Monadic.lean`'s header was stated-vs-actual, inverted by the collapse.**
+  It said the trunk stays authoritative and the rebuild is merely
+  build-checked via a `--monadic` shim. Checked: `Main.lean` now calls
+  `callInMono`/`runScriptClockMono` UNCONDITIONALLY, and `--monadic` and
+  `monadic_gate` are gone — while `LeanModels/Python.lean` still imports
+  `Semantics.lean`. The header now states the actual split: **executable
+  behaviour is the rebuild's, proved behaviour is still the trunk's**, held
+  together by the pure workers they share. That split is worth stating
+  plainly — it is why a capability opening here reaches the harnesses at once
+  and the proof layer not at all.
+* **`refusal_census.py` printed the ROW count as a PRODUCTION count** — "113
+  productions" for a grammar of 81, because edge rows and per-construct
+  witnesses are extra witnesses for productions already counted. It says
+  `witnesses` now, and the header says "a witness per production, plus
+  measured edge rows".
+* **`script_corpus.py`'s `default_oracle` degraded silently** `python3.9` →
+  `python3` → `sys.executable`, which its own docstring calls the trap. The
+  fallbacks stay — a box without the pin should still run it — but each
+  degradation now WARNS in the same voice the re-exec warning uses.
+* **`docs/completeness.md`'s counts are derivable and were stale.** They are
+  marked AS TAKEN, with the instrument named authoritative and the command to
+  get live numbers. The taken-tables are deliberately kept: they are what each
+  rung was PRICED against, and rewriting them would erase the pricing they
+  justify.
+
+### Not fixed, with reasons
+
+* **`PayloadBlind.lean`'s cited line ranges, stale by ~350 lines.** Real, and
+  a line-number citation goes stale on every insertion above it — that is the
+  defect, not the current offset. Worth one pass converting them to lemma
+  NAMES, which do not drift; noted for whoever next edits that file, since
+  fixing offsets without changing the form buys one landing of accuracy.

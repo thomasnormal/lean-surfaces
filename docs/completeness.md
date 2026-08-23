@@ -40,7 +40,17 @@ form — a statement-level `Unsupported` count is not an ingestion verdict,
 because `yield from` a non-genexp is a STRUCTURED node that refuses at
 EVALUATION. Run the thing.
 
-## 2. The grammar census — 86 witnesses, 60 MATCH, 26 REFUSE
+## 2. The grammar census — 86 witnesses, 60 MATCH, 26 REFUSE *(as taken)*
+
+> **These counts are AS TAKEN and are not maintained here.** Every rung moves
+> them, and a document that restates a derivable number goes stale between
+> landings — measured in docs/quality-audit-2026-08-23.md §python, which found
+> exactly that. **The live numbers come from the instrument**:
+>
+>     python3 harness/refusal_census.py --grammar --no-build
+>
+> The taken-tables below are kept deliberately: they are what each rung was
+> PRICED against, and re-writing them would erase the pricing they justify.
 
 One witness per production of CPython 3.9's `ast` grammar: 25
 statements, 27 expressions, 13 binary / 4 unary / 10 comparison / 2
@@ -60,8 +70,8 @@ forks on and two measured edge rows.
 | `cmpop` (10), `boolop` (2) | 0 | — |
 
 **Then rungs 1, 2 and 3b landed**, so the table above is the census AS
-TAKEN and the current numbers are **105 witnesses, 74 MATCH, 31
-REFUSE**: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
+TAKEN; the current numbers come from the instrument (§2's note) and were
+**105 witnesses, 74 MATCH, 31 REFUSE** at that landing: `RShift`, `BitXor`, `UAdd` and `Invert` moved to MATCH and
 `RShift-budget` joined as an edge row (rung 1); `AnnAssign-local` joined
 as a MATCH and `AnnAssign-novalue` as a refusal, with `stmt.AnnAssign`
 itself staying REFUSE because its witness is module-scope (rung 2); and
@@ -95,7 +105,7 @@ model actually produced, against a construct class recorded per row in
 the instrument. A whitelisted row with no class fails the run — the
 census covers the whole whitelist, or it is not one.
 
-**113 whitelisted rows, 44 classes** as taken (118 in 46 classes after
+**113 whitelisted rows, 44 classes** as taken (118 in 46 classes at the time of writing; the instrument is authoritative — after
 rungs 1-2: `>>`'s budget row joined `<<`'s in `op.LShift-budget`, and
 `annassign.no-value` / `annassign.non-simple-target` are new). The head:
 

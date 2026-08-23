@@ -308,3 +308,74 @@ the safe direction, but §7.1 rule 5's warning is that a broken liveness check
 *"does not fall back to caution, it falls forward into reclaiming a lock
 somebody is holding"*. The fix is the one the rule already states: print the
 processes and read them, rather than counting them.
+
+---
+
+## 2026-08-23-softfloat-8 — LAYER 3 LANDED, and it is a CLASS, not a tactic
+
+`LeanModels/SoftFloat/Transfer.lean`. **The priced first item, and the price
+came in lower than the estimate because the estimate was the wrong shape.**
+
+### THE ESTIMATE WAS "A TACTIC". THE ANSWER IS A CLASS, AND IT IS STRICTLY BETTER
+
+`2026-08-22-softfloat-1` measured that every packed operation is definitionally
+`pack ∘ (the parametric op at its format) ∘ unpack`, so a transfer costs one
+mechanical `show` per (theorem, width), and concluded: **generate it** — a macro
+emitting the packed corollary per width.
+
+A bake-off (`harness/softfloat/probe_transfer_class.lean`) put that against a
+`Packed α` class over the wrapper type. **The class wins outright**, and the
+difference is not ergonomic, it is what the theorem SAYS:
+
+| | macro / simp set | `Packed` class |
+| --- | --- | --- |
+| statements per IEEE row | **2** (one per width) | **1** |
+| new widths (`binary16`, `binary128` wrappers) | 1 more per row, forever | **an instance; inherits everything** |
+| what the reader sees | two theorems that must be kept in step | one theorem |
+
+**This is §3.5.1 clause (1)'s own move applied one level up.** The clause says
+`binary32`/`binary64` are instances of a general `Format`, never separate
+definitions. The class says the same of the **wrappers**. Clause (3) observes
+that core's parametricity **stops** at the packed boundary — it does, and this
+file is the finding that **ours does not have to stop there too.**
+
+Landed: `packed_add_nan`, `packed_add_zeros`, `packed_add_inf_opposite`,
+`packed_div_zero_zero`, `packed_div_by_zero`, `packed_sqrt_neg`,
+`packed_compare_nan`, `packed_toInt64_eq_clamped_truncate` — **eight rows, one
+statement each, both widths**. Axioms `[propext]` throughout, or
+`[propext, Quot.sound]` where `toInt_eq_truncate` is used.
+
+### THE ACID TEST, because a class is easily a BARRIER instead of a VIEW
+
+If the class's `pack`/`unpack` stop being definitionally the real ones, `rfl`
+stops closing at the instances and the abstraction buys nothing. Measured:
+`packed_stays_definitional` and `packed32_stays_definitional` both close by
+**`rfl`** through the class. It is a view.
+
+### AND THE BAKE-OFF REPRODUCED §0.1 II(a)'s LYING AXIOM PRINT, LIVE
+
+The class's first version omitted `[Add α]`, so `HAdd α α ?m` could not be
+synthesized and the class fields failed to elaborate. `#print axioms
+packed_add_nan` then printed **`does not depend on any axioms`** — the cleanest
+line the command can emit — about a theorem whose **statement had never
+elaborated**. Twelve errors in the file, and the axiom line read like a
+triumph. The doctrine's most dangerous failure mode, reproduced in this lane
+rather than quoted from the family document.
+
+### THE ES DELIVERY: THE CLAMP IS NOW IN A CONCLUSION, NOT A COMMENT
+
+`packed_toInt64_eq_clamped_truncate` states the packed conversion as
+`Int64.ofIntClamp q.truncate` — **the clamp is in the statement**, deliberately.
+
+The ES lane's `%` bug (`2026-08-23-es-1`) happened because the clamp was
+invisible at the call site. A warning in prose prevented the next one; a
+theorem whose conclusion names `Int64.ofIntClamp` prevents it **in the goal
+state**, where a modular conversion (ECMA-262 §7.1.6 `ToInt32`, mod 2³²) cannot
+silently unify with it. `toInt_eq_truncate` remains stated over the **exact
+value** and is the handle for the modular route — which is now the ES lane's
+`OWED` item, and it has the theorem it needs.
+
+### NEXT, unchanged in order
+
+`roundQ` + `IsCorrectlyRounded` and the mode layer (§3.5), then `op_correct`
+for `+ − × ÷`, then the flag layer, then decimal printing.

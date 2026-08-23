@@ -569,13 +569,46 @@ and it reaches the user-facing `Float` with one more `show`
 (`float_add_nan`, same file). Axioms on all three:
 `[propext, Classical.choice, Quot.sound]`.
 
-**THE DESIGN CONSEQUENCE: layer 3 is a TACTIC, not a body of lemmas.** The
-per-width cost is a mechanical `show` that names the format, which means the
-transfer should be **generated** — a macro that takes a parametric theorem and
-a width and emits the packed corollary — rather than written twice per fact.
-That is the difference between paying clause (3)'s price once and paying it on
-every theorem forever, and it is available because core made the packed
-operations definitional rather than opaque.
+**THE FIRST CONCLUSION WAS "layer 3 is a TACTIC", AND IT IS SUPERSEDED — the
+right answer is a CLASS.** The tactic reading was: the per-width cost is a
+mechanical `show`, so generate it with a macro. True, and beatable. A bake-off
+(`harness/softfloat/probe_transfer_class.lean`) put a macro-shaped simp set
+against a `Packed` class over the wrapper type, and the class wins outright:
+
+> **`LeanModels/SoftFloat/Transfer.lean` restores parametricity ABOVE core's
+> packed boundary.** `Float.Model` and `Float32.Model` become **instances** of
+> `Packed α`, carrying their `Format`, their pack/unpack pair, and the
+> equations saying their operations *are* the parametric ones conjugated. Each
+> IEEE row is then stated **ONCE over `α`** and lands on both widths as a
+> direct application — no macro, no second proof, no second statement.
+
+**This is §3.5.1 clause (1)'s own move applied one level up.** The clause says
+`binary32`/`binary64` are instances of a general `Format`, never separate
+definitions. The class says the same of the *wrappers*. Clause (3) observes
+that core's parametricity stops at the packed boundary; it does, and **ours
+does not have to stop there too**. A future packed width — a `binary16` or
+`binary128` wrapper — becomes an instance and inherits every transferred
+theorem without reproving any of them.
+
+**The acid test, and it is why this was a probe and not an assumption:** a
+class can easily be an abstraction *barrier* rather than a *view*, and then
+`rfl` stops closing at the instances and the whole thing buys nothing.
+Measured — `packed_stays_definitional` and `packed32_stays_definitional`,
+both `rfl`:
+
+```
+-- (illustrative — the acid test's shape; the tree declarations are in Transfer.lean)
+Packed.pack (α := Float.Model)
+  (UnpackedFloat.add Format.binary64 (Packed.unpack a) (Packed.unpack b)) = a.add b
+```
+
+**And the bake-off recorded its own §0.1 II(a) instance.** The class's first
+version omitted `[Add α]`, so `HAdd α α ?m` could not be synthesized and the
+class fields failed to elaborate — whereupon `#print axioms packed_add_nan`
+printed **`does not depend on any axioms`**, the cleanest line available,
+about a theorem whose statement had never elaborated. The lying-axiom-print
+failure mode, reproduced live in this lane rather than quoted from the
+doctrine.
 
 **What layer 3 cannot do**, and it is the boundary to state: it cannot reach
 the `opaque` declarations. `Float.toInt64`, `Float.toString`, `ceil`, `floor`,

@@ -2626,3 +2626,80 @@ has never been able to false-positive on this repository's prose, and it would
 have caught both landings at the moment they were made.
 
 *Renumber into your sequence or close it — the call is yours.*
+
+---
+
+## 2026-08-23-qol-38 — the marker gate I owed, a self-citation I created, and recovery by content
+
+### The inbound: master shipped conflict markers twice, and both were mine
+
+`47544f1` committed `<<<<<<<` / `=======` / `>>>>>>>` into `docs/backlog/qol.md`;
+`a1bb01e` then appended `qol-37` **around** them rather than resolving them.
+Nothing noticed, and the reason is the finding: **no content was lost either
+time**, `docs_check` gates marked code blocks, `backlog-index.sh` gates index
+freshness, and `## ` headings parse fine on **either side** of a marker.
+Nothing was pointed at *"is this markdown structurally intact"*.
+
+`tools/ci.sh` now carries one `git grep` over the **tracked** tree and fails on
+any hit, naming file and line. Verified in both directions against a real
+throwaway repo: a clean tree passes, a committed marker fails and is named. The
+live tree is clean.
+
+**The one false positive it can have is named rather than discovered:** a
+Markdown **setext** underline of exactly seven `=` is legitimate and would trip
+it. The tree has none — measured — and this repository writes `##`, so if it
+ever fires that way the heading is what changes, not the gate.
+
+### A self-citation I created inside the hour
+
+Adding a self-test row naming `A15` made **`laws.sh` credit itself as A15's
+gate** — the instrument that measures enforcement counting its own test data as
+enforcement. That is the audit's self-selection defect, re-created by my own
+fix, and it moved a law out of NO GATE for no reason at all.
+
+**A fixture is not enforcement.** The self-test region is now stripped before
+any attribution grep. Two rows pin it: a token that appears **only** in a
+self-test does not gate, while one outside it still does.
+
+### The amendment rows were unreadable exactly where the ranking points
+
+An amendment's third column is its **status**, not a home, so the top-ranked row
+printed `**new** (its RSS number is SUPERSEDED by 16)` where a location belongs.
+Display now shows `docs/family-architecture.md §7.1a register — <status>`.
+**The token path is deliberately untouched:** giving every amendment the literal
+`§7.1a` home would credit *all* of them to any tool citing that section, which
+is the over-crediting the boundary work exists to remove. A row asserts the
+tokens stay `A15 amendment 15` with no `§`.
+
+### Recovery by CONTENT, not by clock
+
+The R-track lane measured my mtime-window rule wrong: **three `triad-build.*`
+files landed within ninety seconds of one tenure's end** — other lanes'
+gate-phase builds — and the file whose mtime matched was a **gate-phase
+completion, not that tenure's last line**. `grep -l` for a symbol only that
+build could have printed found **exactly one**.
+
+The printed line and §9.5 now say: **recover by the printed path; failing that
+by CONTENT; never by clock.**
+
+### The instrument is outgrowing its own budget, and I have not fixed it
+
+`laws.sh` was 54 s, then 1 m 23 s, and now exceeds **two minutes** — the tree
+has grown to 343 laws and 18 tools, and attribution is a grep per (law × file).
+I cached the stripped text per file and added a corpus short-circuit so a law
+cited by nothing costs one grep instead of eighteen; it is still over budget.
+**It needs the `--budget`/PARTIAL treatment `sites.sh` already has**, and until
+it does, the re-rank runs in the background rather than in a foreground window.
+Recorded as owed rather than left to be rediscovered.
+
+**A coverage hole found on the way:** the cached fast path was **untested** —
+the self-test never initialised the cache, which is why an ordering bug in it
+(the corpus short-circuit running *before* identity attribution, silently
+dropping `MEAS-60`/`OPS-46`'s script homes) passed 30 green rows. Three rows
+now drive the cached path directly.
+
+### Triad
+
+`bash -n` clean. `laws.sh` **33 ok** (28 → 33), `triad.sh` **176 ok** (174 →
+176), `ci.sh --verify-guards` **17 ok** (14 → 17). `docs_check` **91/91**. The
+marker gate reports the live tree clean. No Lean executed.

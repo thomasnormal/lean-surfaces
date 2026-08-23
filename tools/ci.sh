@@ -143,6 +143,27 @@ maybe_lean() { # maybe_lean <name> <required-file> <command...>
 }
 
 
+# IS THE MARKDOWN STRUCTURALLY INTACT?  Master shipped conflict markers TWICE
+# (47544f1 committed them into docs/backlog/qol.md; a1bb01e appended around
+# them rather than resolving them), and nothing noticed: no content was lost,
+# `docs_check` gates marked code blocks, `backlog-index.sh` gates index
+# freshness, and `## ` headings parse fine on either side of a marker.  Nothing
+# was pointed at the question this asks (§5.4b).  Both were mine.
+#
+# THE ONE FALSE POSITIVE IT CAN HAVE, named rather than discovered: a Markdown
+# SETEXT underline of exactly seven `=` is legitimate and would trip this.  The
+# tree has none — measured — and this repository writes `##`, so the fix if it
+# ever fires that way is the heading, not the gate.
+conflict_markers() {            # [dir] -> 1 when the TRACKED tree carries any
+  local d="${1:-.}" hits
+  hits="$(git -C "$d" grep -nE '^(<<<<<<<|>>>>>>>|=======$)' -- . 2>/dev/null || true)"
+  [ -n "$hits" ] || return 0
+  echo "    CONFLICT MARKERS in the tracked tree:"
+  printf '%s\n' "$hits" | head -10 | sed 's/^/      /'
+  echo "    A merge was committed unresolved.  Resolve and re-commit."
+  return 1
+}
+
 # THE GUARDS, VERIFIED — placed after the definitions so it drives the REAL
 # `lake_build_step` rather than a copy of it, and before any step runs.
 if [ "$VERIFY_GUARDS" = "1" ]; then
@@ -195,12 +216,26 @@ VSTUB
   vcheck "lake env lean is gated the same way"    "$(grep -c 'SKIPPED on non-CI host' "$vout")" "1"
   vcheck "  ...and invokes no lake either"        "$( [ -e "$vstub/INVOKED" ] && echo called || echo none )" "none"
 
+  # The marker gate, both directions, against a real tracked file.
+  vrepo="$vstub/repo"; mkdir -p "$vrepo"; git init -q "$vrepo" 2>/dev/null
+  git -C "$vrepo" config user.email v@e; git -C "$vrepo" config user.name v
+  printf '# clean\n' > "$vrepo/a.md"; git -C "$vrepo" add -A
+  git -C "$vrepo" commit -qm base
+  conflict_markers "$vrepo" > "$vout" 2>&1
+  vcheck "a clean tree passes the marker gate"    "$?" "0"
+  printf '<<<<<<< HEAD\nx\n=======\ny\n>>>>>>> other\n' > "$vrepo/a.md"
+  git -C "$vrepo" add -A
+  conflict_markers "$vrepo" > "$vout" 2>&1
+  vcheck "a committed marker FAILS the gate"      "$?" "1"
+  vcheck "  ...and names the file and line"       "$(grep -c 'a.md:1' "$vout")" "1"
+
   PATH="$vpath"; rm -rf "$vstub"
   echo "verify-guards: $vok ok, $vbad failed"
   [ "$vbad" = "0" ] || exit 1
   exit 0
 fi
 
+step  "conflict-markers" conflict_markers
 step  "tool-self-tests" selftests
 lake_build_step
 step  "py-harness"      python3 harness/diff_test.py --no-build

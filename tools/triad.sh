@@ -896,7 +896,7 @@ coverage_statement() {  # class -> what a green from this run is EVIDENCE OF
 # The pointer a green tenure owes its reader.  It carries the WARNING with it,
 # because the advice is only needed by someone who no longer has the line.
 build_log_pointer() {           # log -> the line naming it, and the caveat
-  printf 'full log: %s  (kept, not deleted — recover by THIS PATH; %s other triad-build logs share this TMPDIR, so the NEWEST is probably another lane\x27s)' \
+  printf 'full log: %s  (kept, not deleted — recover by THIS PATH; failing that by CONTENT, grep -l for a symbol only this build printed; NEVER by clock — %s other triad-build logs share this TMPDIR and three can land within 90s of one tenure)' \
     "$1" "$(( $(ls "$(dirname "$1")"/triad-build.* 2>/dev/null | grep -c . || echo 1) - 1 ))"
 }
 
@@ -1347,7 +1347,9 @@ if [ "$SELF_TEST" = "1" ]; then
   check "a green tenure NAMES its log"        "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'full log:')" "1"
   check "  ...saying it was kept, not deleted" "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'kept, not deleted')" "1"
   check "  ...counting the OTHER logs beside it" "$(build_log_pointer "$bl/triad-build.aaa" | grep -c '2 other')" "1"
-  check "  ...and warning off the newest"      "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'NEWEST is probably another')" "1"
+  check "  ...and warning off the CLOCK"       "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'NEVER by clock')" "1"
+  check "  ...naming CONTENT as the fallback"  "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'by CONTENT, grep -l for a symbol')" "1"
+  check "  ...and why the window is unsafe"    "$(build_log_pointer "$bl/triad-build.aaa" | grep -c 'within 90s of one tenure')" "1"
   check "  ...and reports that it found none"   "$(axiom_ledger "$tmp/plain.log" >/dev/null; echo $?)" "1"
 
   check "the banner names the protocol level" \

@@ -5874,12 +5874,15 @@ anywhere in the script. What a green tenure lost was not the file but the
 **path**, and that is enough: measured 2026-08-23, **56 `triad-build.*` files
 coexist in one `TMPDIR`**, from many lanes and many runs.
 
-> **Recover a build log by the PATH the tenure printed, and never by "the
-> newest".** With 56 of them sharing a directory the newest is very likely
-> another lane's, and selecting by mtime means selecting somebody else's
-> evidence. If the line is gone, select by mtime **inside your own tenure's
-> window** — the tenure-open and TRIAD DONE lines bracket it — rather than by
-> recency alone.
+> **Recover a build log by the PATH the tenure printed; failing that, by
+> CONTENT — never by clock.** With 56 of them sharing a directory the newest is
+> very likely another lane's. **And the tenure window is not a safe fallback
+> either**: measured by the R-track lane, **three `triad-build.*` files landed
+> within ninety seconds of one tenure's end** — other lanes' gate-phase builds —
+> and the file whose mtime matched was a **gate-phase completion, not that
+> tenure's last line**. The reliable key is content: `grep -l` for a symbol only
+> that build could have printed (its own theorem name) found **exactly one**
+> file.
 
 The green line carries that caveat with it, because the advice is only needed
 by a reader who no longer has the line.

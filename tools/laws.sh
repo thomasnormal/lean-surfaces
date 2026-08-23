@@ -127,6 +127,40 @@ tok_regex() {                   # token -> an ERE that matches it WHOLE
   printf '%s' "$1" | sed -e 's/[][\.*^$(){}?+|/]/\\&/g' -e 's/$/([^0-9.A-Za-z]|$)/'
 }
 
+# A FIXTURE IS NOT ENFORCEMENT.  Adding a self-test row that names `A15` made
+# `laws.sh` credit ITSELF as A15's gate — the instrument that measures
+# enforcement counting its own test data as enforcement, which is the same
+# self-selection defect the 2026-08-23 audit found elsewhere and which my own
+# fix re-created within the hour.  The self-test region is stripped before any
+# attribution grep: every tool here opens one recognisably and closes it with
+# the "self-test: $ok ok" summary.
+# CACHED PER FILE, not per (law x file).  Stripping inside the attribution loop
+# ran an awk for every law against every tool — ~6000 spawns, and the run went
+# past two minutes.  The stripped text is the same for every law, so it is
+# computed once.  (A tool that prices enforcement has to be priced too, for the
+# third time in this file's history.)
+ENF_CACHE=""
+enforcement_cache_init() {
+  ENF_CACHE="$(mktemp -d "${TMPDIR:-/tmp}/laws-enf.XXXXXX")" || return 1
+  local f
+  local f
+  for f in $(gate_files); do
+    enforcement_text "$f" > "$ENF_CACHE/$(basename "$f")" 2>/dev/null
+  done
+  # ONE corpus of every tool's enforcement text.  Most laws are cited by
+  # NOTHING, and asking 18 files one at a time is 18 greps to learn that; the
+  # corpus answers it in one, and only a HIT pays for the per-file loop.
+  cat "$ENF_CACHE"/* > "$ENF_CACHE/.all" 2>/dev/null
+}
+enforcement_cache_clear() { [ -n "$ENF_CACHE" ] && rm -rf "$ENF_CACHE"; ENF_CACHE=""; }
+
+enforcement_text() {            # file -> its text MINUS the self-test region
+  awk '
+    /SELF_TEST" = "1"|"--self-test"\)|= "--self-test"/ { inst = 1 }
+    inst && /self-test: \$ok ok/ { inst = 0; next }
+    !inst { print }' "$1"
+}
+
 cited_by() {                    # tokens on stdin -> the gate files for a law
   local toks f hit out=""
   toks="$(cat)"
@@ -154,11 +188,35 @@ PRE
   done <<IDENT
 $toks
 IDENT
+  # THE CORPUS, AFTER IDENTITY.  Placed before it, this returned "" for a law
+  # whose home IS a script and which nothing cites — silently dropping the
+  # identity attribution that MEAS-60 and OPS-46 depend on.  The self-test did
+  # not catch it, because it never initialises the cache: the fast path was
+  # untested, which is how a fast path usually breaks.
+  if [ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/.all" ]; then
+    local any=0
+    while IFS= read -r r; do
+      [ -n "$r" ] || continue
+      if grep -qE -- "$r" "$ENF_CACHE/.all" 2>/dev/null; then any=1; break; fi
+    done <<ANY
+$res
+ANY
+    if [ "$any" = "0" ]; then
+      # Identity attribution can still apply even when nothing cites it.
+      [ -n "$out" ] && { echo "$out"; return 0; }
+      echo ""; return 0
+    fi
+  fi
+
   for f in $(gate_files); do
     hit=0
     while IFS= read -r r; do
       [ -n "$r" ] || continue
-      if grep -qE -- "$r" "$f" 2>/dev/null; then hit=1; break; fi
+      # The cache when it exists, the live strip otherwise — so the function
+      # is still correct when called directly (the self-test does).
+      if [ -n "$ENF_CACHE" ] && [ -r "$ENF_CACHE/$(basename "$f")" ]; then
+        if grep -qE -- "$r" "$ENF_CACHE/$(basename "$f")" 2>/dev/null; then hit=1; break; fi
+      elif enforcement_text "$f" | grep -qE -- "$r" 2>/dev/null; then hit=1; break; fi
     done <<TOKS
 $res
 TOKS
@@ -225,6 +283,14 @@ MD
   check "an amendment tokenises to A<n> AND prose" \
         "$(home_tokens A9 'x' | tr '\n' ' ' | sed 's/ *$//')" "A9 amendment 9"
 
+  # THE CACHED FAST PATH, exercised — it is the one the live run uses.
+  enforcement_cache_init
+  check "cached: a cited law still names its tool" "$(printf '§5.4\n' | cited_by)" "gated.sh"
+  check "cached: an uncited law is still NO GATE"  "$(printf '§9.9\n' | cited_by)" ""
+  check "cached: IDENTITY survives the corpus short-circuit" \
+        "$(printf 'tools/gated.sh\n' | cited_by)" "gated.sh"
+  enforcement_cache_clear
+
   check "a cited law names its tool"   "$(home_tokens MEAS-1 '§5.4' | cited_by)" "gated.sh"
   check "an UNCITED law is NO GATE"    "$(home_tokens MEAS-2 '§9.9' | cited_by)" ""
   check "a law homed IN a script is cited" "$(home_tokens OPS-1 'tools/gated.sh' | cited_by)" "gated.sh"
@@ -246,6 +312,19 @@ MD
   # ---- tokens match WHOLE, or a law homed at §9 is credited to every tool
   # that mentions §9.5.
   printf 'set -u\n# implements §9.5 and nothing else\n' > "$fx/tools/nine5.sh"
+  # An amendment's third column is its STATUS; the display must not print it
+  # where a home belongs, and the TOKENS must not gain §7.1a from the fix.
+  # A tool must not gate a law it only NAMES IN ITS OWN TEST.
+  printf 'set -u\n# real: implements §9.9\nif [ "$SELF_TEST" = "1" ]; then\n  check "x" "$(f A77)" "y"\n  echo "self-test: $ok ok, $bad failed"\nfi\n' > "$fx/tools/fixture.sh"
+  check "a token in the SELF-TEST is not enforcement" "$(printf 'A77\n' | cited_by | grep -c fixture)" "0"
+  check "  ...while one outside it still is"          "$(printf '§9.9\n' | cited_by | grep -c fixture)" "1"
+  rm -f "$fx/tools/fixture.sh"
+
+  check "an amendment keeps its id tokens only" \
+        "$(home_tokens A15 '**new** (superseded by 16)' | tr '\n' ' ' | sed 's/ *$//')" "A15 amendment 15"
+  check "  ...and gains no section token"       \
+        "$(home_tokens A15 '**new** (superseded by 16)' | grep -c '§')" "0"
+
   check "a THREE-level section survives tokenising" \
         "$(home_tokens STMT-22 'docs/family-architecture.md §3.4.1' | tr '\n' ' ' | sed 's/ *$//')" "§3.4.1"
   check "  ...and is not truncated to its parent" \
@@ -287,6 +366,7 @@ fi
 UNGATEABLE="$({ law_rows; amendment_rows; } | grep -i 'ungateable:' || true)"
 N_UNGATEABLE="$(printf '%s' "$UNGATEABLE" | grep -c . || true)"
 
+enforcement_cache_init
 ROWS="$(
   { law_rows; amendment_rows; } | while IFS="$(printf '\t')" read -r id hook home; do
       [ -n "$id" ] || continue
@@ -298,6 +378,7 @@ ROWS="$(
     done
 )"
 
+enforcement_cache_clear
 NLAW="$(printf '%s' "$ROWS" | grep -c . || true)"
 GATED="$(printf '%s' "$ROWS" | awk -F'\t' '$3 != ""' | grep -c . || true)"
 NOGATE="$(printf '%s' "$ROWS" | awk -F'\t' '$3 == ""' || true)"
@@ -314,7 +395,9 @@ echo
 printf '  The %s most-cited NO GATE laws — the next inch, by measured demand:\n' "$TOP"
 printf '%s\n' "$NOGATE" | grep -v '^$' | sort -rn \
   | head -n "$TOP" \
-  | awk -F'\t' '{ printf "    %4s  %-9s %-58s %s\n", $1, $2, substr($4, 1, 58), $5 }'
+  | awk -F'\t' '{ home = ($2 ~ /^A[0-9]+$/) \
+        ? "docs/family-architecture.md §7.1a register — " $5 : $5
+      printf "    %4s  %-9s %-58s %s\n", $1, $2, substr($4, 1, 58), substr(home, 1, 76) }'
 echo
 # THE UNIT BEING RANKED IS THE HOME, NOT THE LAW.  Laws that share a § share
 # every token, so they share a count and tie — which is information, not noise:
@@ -322,7 +405,9 @@ echo
 # that legible instead of looking like five separate findings.
 echo "  ...and the same list BY HOME, which is the unit the count actually ranks:"
 printf '%s\n' "$NOGATE" | grep -v '^$' \
-  | awk -F'\t' '{ key = $5; c[key] = $1; n[key]++; ids[key] = ids[key] " " $2 }
+  | awk -F'\t' '{ key = ($2 ~ /^A[0-9]+$/) \
+        ? "docs/family-architecture.md §7.1a register" : $5
+      c[key] = $1; n[key]++; ids[key] = ids[key] " " $2 }
       END { for (k in c) printf "%s\t%s\t%s\t%s\n", c[k], n[k], k, ids[k] }' \
   | sort -rn | head -n "$TOP" \
   | awk -F'\t' '{ printf "    %4s citations  %2s ungated law(s)  %s\n              %s\n", $1, $2, $3, $4 }'

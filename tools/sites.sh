@@ -38,6 +38,8 @@
 # USAGE
 #   tools/sites.sh <Type> <ctor>              # e.g. sites.sh Outcome unsupported
 #   tools/sites.sh <Type> <ctor> --channel 'foo (\.'   # add a tier wrapper
+#   tools/sites.sh --arms <fn>                # how many arms does it destructure?
+#   tools/sites.sh <Type> <ctor> --budget 30  # seconds; PARTIAL past it
 #   tools/sites.sh --self-test
 #
 # ZERO Lean execution: this greps text.  Safe outside a tenure (A11).
@@ -46,6 +48,9 @@ set -u
 
 CLONE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 TYPE=""; CTOR=""; EXTRA_CHANNELS=""; SELF_TEST=0; VERBOSE=0
+ARMS_FN=""
+BUDGET="${LS_SITES_BUDGET:-60}"      # seconds; a tool that prices must be priced
+PROGRESS_EVERY="${LS_SITES_PROGRESS:-40}"
 
 usage() { sed -n '1,/^set -u/p' "${BASH_SOURCE[0]}" >&2; exit 2; }
 die()   { echo "sites.sh: $*" >&2; exit 2; }
@@ -56,6 +61,8 @@ while [ $# -gt 0 ]; do
     --channel)   EXTRA_CHANNELS="${EXTRA_CHANNELS}${2:-}
 "; shift 2 ;;
     --verbose)   VERBOSE=1; shift ;;
+    --arms)      ARMS_FN="${2:-}"; shift 2 ;;
+    --budget)    BUDGET="${2:-}"; shift 2 ;;
     --self-test) SELF_TEST=1; shift ;;
     -h|--help)   usage ;;
     -*)          die "unknown argument '$1'" ;;
@@ -161,12 +168,29 @@ code_hits() {                   # file, ere -> "lineno:code" for non-comment hit
     }' "$1"
 }
 
-SITES=""; LOOKALIKES=""
+# A TOOL THAT PRICES A CHANGE MUST ITSELF BE PRICED.  A pricing run that never
+# returns is worse than a slow one, because the lane cannot tell "expensive"
+# from "hung" — and it then gets killed, which yields NO number at all.  So the
+# scan carries a time budget and, past it, stops and says PARTIAL.  A partial
+# answer that SAYS SO beats a silent truncation, which is the whole of §5.4a.
+PARTIAL=""
 scan_sites() {
-  local f rel line n chan hits pat
+  local f rel line n chan hits pat started now scanned=0 total
   SITES=""; LOOKALIKES=""
   pat="$(channels | paste -sd'|' -)"
+  started="$(date +%s)"
+  total="$(lean_files | grep -c . || true)"
+  PARTIAL=""
   for f in $(lean_files); do
+    scanned=$((scanned + 1))
+    if [ $((scanned % PROGRESS_EVERY)) = 0 ]; then
+      printf '  scanning %s/%s...\r' "$scanned" "$total" >&2
+    fi
+    now="$(date +%s)"
+    if [ $((now - started)) -ge "$BUDGET" ]; then
+      PARTIAL="stopped after ${BUDGET}s at file $scanned of $total"
+      break
+    fi
     rel="${f#"$CLONE"/}"
     # Every occurrence of the bare name, then judged.  Collecting the WIDE set
     # first is what lets the exclusions be reported rather than silently
@@ -200,6 +224,55 @@ EOF
 }
 
 count_of() { printf '%s' "$1" | grep -c . || true; }
+
+# ---- --arms: how many arms does ONE function destructure?
+# The other pricing question lanes keep answering by hand — the successor lane
+# hand-counted `iterValues` at 7 and `applyCallPlan` at 9 before touching
+# either.  Arms are where a constructor change lands, so this is the per-
+# function form of the same law the site census implements per type.
+# Comments are stripped first, for the reason the site census learned: prose
+# about an arm is not an arm.
+arms_of() {                     # fn -> "file:line arms ite lines"
+  local fn="$1" f
+  for f in $(lean_files); do
+    awk -v FN="${f#"$CLONE"/}" -v FN2="$fn" '
+      function strip(line,   out, i, n, two) {
+        out = ""; i = 1; n = length(line)
+        while (i <= n) {
+          two = substr(line, i, 2)
+          if (depth == 0 && two == "--") break
+          if (two == "/-") { depth++; i += 2; continue }
+          if (two == "-/") { if (depth > 0) depth--; i += 2; continue }
+          if (depth == 0) out = out substr(line, i, 1)
+          i++
+        }
+        return out
+      }
+      { code = strip($0) }
+      code ~ ("^[ \t]*(private[ \t]+)?(def|partial def)[ \t]+" FN2 "[ \t(:]") && !inblk {
+        inblk = 1; start = NR; arms = 0; ite = 0; next
+      }
+      inblk && code ~ /^(def|partial def|theorem|lemma|abbrev|instance|structure|inductive|example|end|namespace|section|open|@\[|#)/ {
+        printf "%s:%d %d %d %d %d\n", FN, start, top, arms, ite, NR - start; inblk = 0; exit
+      }
+      inblk {
+        # TOP-LEVEL arms and TOTAL arms are different numbers, and the hand
+        # counts this was calibrated against are the top-level ones: the
+        # principal dispatch.  Nested matches inside an arm destructure too,
+        # so BOTH are reported — an arm count without its depth is the same
+        # ambiguity laws.sh hit between a law and its home.
+        # (No apostrophes in here: this awk program is single-quoted.)
+        if (code ~ /^[ \t]*\|/) {
+          arms++
+          ind = match(code, /\|/) - 1
+          if (minind == 0 || ind < minind) { minind = ind; top = 0 }
+          if (ind == minind) top++
+        }
+        n = gsub(/[^A-Za-z0-9_]then[^A-Za-z0-9_]/, " then ", code); ite += n
+      }
+      END { if (inblk) printf "%s:%d %d %d %d %d\n", FN, start, top, arms, ite, NR - start }' "$f"
+  done
+}
 
 # --------------------------------------------------------------- self-test
 if [ "$SELF_TEST" = "1" ]; then
@@ -376,12 +449,79 @@ LEAN
   check "a prefix name is not the ctor" \
         "$(printf '%s' '.error (.unsupportedDevice id)' | grep -cE "\\.unsupported([^A-Za-z0-9_']|\$)")" "0"
 
+  # ---- the BUDGET: a tool that prices a change must itself be priced.
+  echo "  -- budget"
+  big="$tmp/big"; mkdir -p "$big"
+  i=1; while [ "$i" -le 12 ]; do
+    printf 'def f%s : R := .halt (.unsupported "m")\n' "$i" > "$big/F$i.lean"
+    i=$((i + 1))
+  done
+  CLONE="$big"; TYPE="Halt"; CTOR="unsupported"; EXTRA_CHANNELS=""
+  BUDGET=600; scan_sites
+  check "inside the budget there is no PARTIAL" "$PARTIAL" ""
+  check "  ...and every file was scanned"       "$(printf '%s' "$SITES" | grep -c .)" "12"
+  BUDGET=0; scan_sites
+  check "past the budget it stops"              "$( [ -n "$PARTIAL" ] && echo partial)" "partial"
+  check "  ...saying WHERE it stopped"          "$(printf '%s' "$PARTIAL" | grep -c 'file 1 of 12')" "1"
+  check "  ...and it is never silent"           "$(printf '%s' "$PARTIAL" | grep -c 'stopped after')" "1"
+  BUDGET=600
+
+  # ---- --arms, calibrated against hand counts on the live tree.
+  echo "  -- arms"
+  am="$tmp/arms"; mkdir -p "$am"
+  cat > "$am/A.lean" <<'LEAN'
+def dispatch (x : T) : R :=
+  match x with
+  | .a => 1
+  | .b =>
+      match y with
+      | .p => 2
+      | .q => 3
+  | .c => if z then 4 else 5
+def other : Nat := 0
+LEAN
+  CLONE="$am"
+  set -- $(arms_of dispatch)
+  check "TOP-LEVEL arms are the dispatch width" "$2" "3"
+  check "  ...total counts the NESTED ones too" "$3" "5"
+  check "  ...and if/then is counted apart"     "$4" "1"
+  check "the block ends at the next top-level"  "$5" "8"
+  check "a missing function reports nothing"    "$(arms_of nosuchfn)" ""
+  cat > "$am/B.lean" <<'LEAN'
+/-- A doc comment with | a fake arm inside -/
+def commented (x : T) : R :=
+  match x with
+  | .a => 1
+def z : Nat := 0
+LEAN
+  set -- $(arms_of commented)
+  check "prose about an arm is not an arm"      "$2" "1"
+
   echo "self-test: $ok ok, $bad failed"
   [ "$bad" = "0" ] || exit 1
   exit 0
 fi
 
 # -------------------------------------------------------------------- main
+if [ -n "$ARMS_FN" ]; then
+  [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
+  found="$(arms_of "$ARMS_FN")"
+  if [ -z "$found" ]; then
+    echo "sites.sh --arms $ARMS_FN: no such def found under $CLONE"
+    exit 1
+  fi
+  echo "sites.sh --arms $ARMS_FN   (measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git'))"
+  printf '%s\n' "$found" | while read -r at top arms ite lines; do
+    printf '  %-44s %3s top-level arm(s), %3s total, %3s if/then, %s lines\n' \
+      "$at" "$top" "$arms" "$ite" "$lines"
+  done
+  echo
+  echo "  Arms are where a constructor change LANDS: this is the per-function"
+  echo "  form of what the site census does per type. Comments are stripped —"
+  echo "  prose about an arm is not an arm."
+  exit 0
+fi
+
 [ -n "$TYPE" ] && [ -n "$CTOR" ] || usage
 [ -d "$CLONE" ] || die "--dir '$CLONE' is not a directory"
 
@@ -392,6 +532,10 @@ C_LINES="$(printf '%s' "$SITES" | awk -F'\t' '$2=="construct"||$2=="both"' || tr
 nd="$(count_of "$D_LINES")"; nc="$(count_of "$C_LINES")"; nl="$(count_of "$LOOKALIKES")"
 
 echo "sites.sh — $TYPE.$CTOR   (measured at $(git -C "$CLONE" rev-parse --short HEAD 2>/dev/null || echo 'no git'))"
+if [ -n "$PARTIAL" ]; then
+  echo "  PARTIAL — $PARTIAL. Every count below is a FLOOR, not a bound."
+  echo "            Raise --budget, or narrow --dir, and re-run before quoting it."
+fi
 echo
 printf '  DECLARED BY  %s type(s) using the name `%s` — every one of them a\n' \
        "$(printf '%s' "$DECL" | awk -F'\t' '{print $2}' | sort -u | grep -c . || true)" "$CTOR"

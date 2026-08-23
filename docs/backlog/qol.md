@@ -1433,3 +1433,78 @@ accepting `callIn/callInMono` and rejecting both real false positives,
 uncatchability by pattern, and refusal counting. `laws.sh` **17 ok**,
 `docs_check` **87/87**. Docs-first: §3.4 names the gate and carries the first
 run; the §7 tools list gains its row. No Lean executed.
+
+---
+
+## 2026-08-23-qol-22 — sites.sh gets a budget and `--arms`, and the timeout did NOT reproduce
+
+### The measured cause, and it is not what was guessed
+
+The report was `sites.sh CallPlan builtin` running past two minutes and being
+killed. **On this clone it completes in 5.8 s.** I could not reproduce it, so
+I profiled the phases instead of guessing:
+
+| phase | measured |
+| --- | ---: |
+| `scan_sites` (357 files) | **6 s** |
+| `declaring_types` | **2 s** |
+| the per-file `awk` **spawns** alone (357 of them) | **~1 s** |
+| the character-walking **comment stripper** over 133,147 lines | **~5 s** |
+
+So of the two guesses, **the awk spawn is not the cost (~1 s) and the comment
+stripper is** — it is the dominant term, and it is still only 5 s. `.builtin`
+has **25 hits in 7 files** against `.unsupported`'s 1383 in 105, so hit volume
+is not it either.
+
+**What I cannot rule out is the machine.** This box was at load 19–33 earlier
+today and 8.4 when I measured; a 6 s job at load 30 is plausibly a 20 s job,
+and a slower or larger clone could go further. That is §5.4a exactly — *a
+timing measured on a twin* — so the honest report is: **5.8 s at load 8.4 on
+357 files at `4b595c1`, and the two-minute run is unexplained.** If it recurs,
+the new progress line will say which file it is on.
+
+### What landed anyway, because the fix is right regardless
+
+**A budget.** `--budget` (default 60 s), and past it the scan stops and prints
+`PARTIAL — stopped after Ns at file K of N. Every count below is a FLOOR, not
+a bound.` A pricing run that never returns is worse than a slow one, because
+the lane cannot tell *expensive* from *hung* — and it then gets killed, which
+yields **no number at all**. A partial answer that says so beats a silent
+truncation.
+
+**Progress**, every 40 files to stderr, so a long run names where it is.
+
+**`--arms <fn>`** — the pricing question lanes keep answering by hand. Arms are
+where a constructor change lands, so this is the per-function form of what the
+site census does per type.
+
+### Calibration, and one honest divergence
+
+| function | top-level | total | if/then | lines | hand count |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `iterValues` | **7** | 15 | 0 | 36 | 7 ✓ |
+| `applyCallPlan` | **9** | 13 | 2 | 46 | 9 ✓ |
+| `applyBuiltin` | 45 | 76 | 0 | **213** | "~210-line ite chain" |
+
+My first version reported **15** and **13** — it counted **nested** arms, and
+the hand counts are the **principal dispatch**. Both are real destructuring, so
+both are reported: *an arm count without its depth is the same ambiguity
+`laws.sh` hit between a law and its home.* On `applyBuiltin` the line count
+matches (**213** ≈ "~210") but the shape does not: it is a **45-arm match
+chain with zero `if/then`**, not an `ite` chain. Reported as measured.
+
+### Two defects of my own
+
+An apostrophe inside a comment in a **single-quoted awk program** closed the
+program — bash then parsed awk source. And my first `--arms` self-test read
+fields `$3..$6` of a five-field record; the tool was right and **the test was
+wrong**, which is the second time this lane has had a fixture at fault rather
+than the code.
+
+### Triad
+
+`bash -n` clean. `--self-test`: **36 ok, 0 failed** (25 → 36, **11 new**) — the
+budget in both directions with the stop point named, and `--arms` on a
+synthetic function with a **nested** match and an `if/then`, the block ending
+at the next top-level, a missing function, and a doc comment containing a fake
+arm. `docs_check` **87/87**. No Lean executed.

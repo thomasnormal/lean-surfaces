@@ -281,11 +281,15 @@ callee, and the ARGUMENT EXPRESSIONS, unevaluated.
 
 Two things this signature gets right that the inch-3 draft did not.
 
-**The evaluator is passed in.** §6.5.3.3p4 evaluates the arguments in the
-CALLER's scope, and a handler holding only the expressions had no way to
-do that — inch 3 could not see the gap because it refused every call.
-Passing `evalExpr ctx` as a closure supplies the caller's context without
-`Ctx` having to contain itself.
+**The evaluator is NOT passed in, and the attempt to is recorded.**
+§6.5.3.3p4 evaluates arguments in the CALLER's scope, so inch 5 tried
+`(Expr → EvalM CVal) → …`, handing `evalExpr ctx` to the handler as a
+closure. **That broke termination**: a recursive function passed into an
+OPAQUE callee cannot be shown to terminate, because nothing constrains
+what the callee does with it. Reverted. Supplying the caller's context
+without a closure is inch 5's open problem, and the shape that will
+solve it is an `evalArgs` inside the mutual block below, feeding the
+handler VALUES.
 
 **The ORDER stays the handler's choice**, which is where Thomas's ruling
 lives: §6.5.3.3p10 leaves argument evaluation indeterminately sequenced,
@@ -293,11 +297,11 @@ so `∀ order` is a property of the handler, not of this type.
 
 Taking expressions rather than values is still what keeps this layer
 fuel-free: `evalExpr` hands the list off without recursing through it. -/
-abbrev CallHandler := (Expr → EvalM CVal) → Expr → List Expr → EvalM CVal
+abbrev CallHandler := Expr → List Expr → EvalM CVal
 
 /-- The inch-3 handler: every call refuses as `unsupported`, which is the
 cause that retires by climbing a rung — NOT `libc`, and never silently. -/
-def noCalls : CallHandler := fun _ callee _ =>
+def noCalls : CallHandler := fun callee _ =>
   refuseUnsupported s!"call to '{calleeNameOf callee}' — the call semantics is inch 5"
 
 /-! ## Layout — the implementation-defined surface, PARAMETERIZED
@@ -561,22 +565,10 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
       | none => refuseUnsupported s!"unbound name '{name}'"
   -- §6.5.3.4p4: `p->f` is DEFINED as `(*p).f`, so the two spellings are
   -- ONE rule here. 226 arrow sites, 184 dot.
-  | .member base field arrow _ _ => do
-      let basePtr ← if arrow then (do let v ← evalExpr ctx base; asPtr v)
-                    else evalLValue ctx base
-      match ctx.layout.fieldOff base.ty field with
-      | some off => pure (Mem.member basePtr off)
-      | none => refuseUnsupported s!"no layout for field '{field}'"
+  | .member base field arrow _ _ => memberAddr ctx base field arrow
   -- §6.5.3.2p2: `a[i]` is DEFINED as `*(a + i)`. The base arrives already
   -- decayed (clang inserts ArrayToPointerDecay), so it is a VALUE here.
-  | .index base idx ty _ => do
-      let bv ← evalExpr ctx base
-      let bp ← asPtr bv
-      let iv ← evalExpr ctx idx
-      let (_, i) ← asInt iv
-      match ctx.layout.size ty with
-      | some esz => readMem (fun m => Mem.subscript m bp esz i)
-      | none => refuseUnsupported s!"no size for element type '{ty}'"
+  | .index base idx ty _ => indexAddr ctx base idx ty
   -- §6.5.4.2p4: the operand of unary `*` is a pointer VALUE.
   | .unop op sub _ _ _ =>
       if op == "*" then (do let v ← evalExpr ctx sub; asPtr v)
@@ -719,11 +711,11 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- Clang wraps scalar reads in `LValueToRValue`, so these are the
   -- aggregate-valued cases; evaluating the address and loading is the rule
   -- either way (§6.3.2.1p2).
-  | .member base field arrow ty sp => do
-      let p ← evalLValue ctx (.member base field arrow ty sp)
+  | .member base field arrow ty _ => do
+      let p ← memberAddr ctx base field arrow
       loadAt p ty
-  | .index base idx ty sp => do
-      let p ← evalLValue ctx (.index base idx ty sp)
+  | .index base idx ty _ => do
+      let p ← indexAddr ctx base idx ty
       loadAt p ty
 
   -- ===== §6.4.4 — constants =====
@@ -751,7 +743,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
 
   -- §6.5.3.3 — the call, DELEGATED. This layer is fuel-free precisely
   -- because it does not evaluate the arguments; see `CallHandler`.
-  | .call callee args _ _ => ctx.call (evalExpr ctx) callee args
+  | .call callee args _ _ => ctx.call callee args
 
   -- §6.5.4.4 — `sizeof`, answered by the layout, never computed here.
   | .typeTrait trait argTy sub ty _ =>
@@ -773,7 +765,51 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
 
+/-- §6.5.3.4 — the ADDRESS of `base.field` / `base->field`.
+
+Takes `base` — a strict SUBTERM — rather than the reassembled node. The
+node this replaces was rebuilt as `.member base field arrow ty sp`, which
+is not a subterm of anything, and that is what defeated the recursion. -/
+def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool) : EvalM Ptr := do
+  let basePtr ← if arrow then (do let v ← evalExpr ctx base; asPtr v)
+                else evalLValue ctx base
+  match ctx.layout.fieldOff base.ty field with
+  | some off => pure (Mem.member basePtr off)
+  | none => refuseUnsupported s!"no layout for field '{field}'"
+
+/-- §6.5.3.2p2 — the ADDRESS of `base[idx]`. Same discipline: the parts,
+never the rebuilt node. -/
+def indexAddr (ctx : Ctx) (base idx : Expr) (ty : CType) : EvalM Ptr := do
+  let bv ← evalExpr ctx base
+  let bp ← asPtr bv
+  let iv ← evalExpr ctx idx
+  let (_, i) ← asInt iv
+  match ctx.layout.size ty with
+  | some esz => readMem (fun m => Mem.subscript m bp esz i)
+  | none => refuseUnsupported s!"no size for element type '{ty}'"
+
 end
+
+/-! ### The termination argument, STATED
+
+`docs/backlog/c.md` 2026-08-23-c-5: **a green build is not a termination
+argument.** Inch 3 built green with `evalExpr` REBUILDING its
+`.member`/`.index` nodes — which are not subterms — and it only worked
+because structural inference had slack elsewhere. Inch 5 removed the
+slack and the whole block fell over, exposing a defect that had been
+latent through three landings.
+
+So the measure is written down rather than inferred. `Expr.size` counts
+expression nodes (`Ast.lean`); the main pair carries `2 * size + 1` and
+the address helpers `2 * size + 2`, so a helper is strictly smaller than
+the node that called it and strictly larger than the subterms it
+evaluates. The doubling is what buys room for that middle rung. -/
+termination_by
+  evalLValue _ e => 2 * e.size + 1
+  evalExpr _ e => 2 * e.size + 1
+  memberAddr _ base _ _ => 2 * base.size + 2
+  indexAddr _ base idx _ => 2 * (base.size + idx.size) + 2
+decreasing_by all_goals (simp_wf; omega)
 
 /-! ## Spec lemmas — arm level, and the drain amendment
 

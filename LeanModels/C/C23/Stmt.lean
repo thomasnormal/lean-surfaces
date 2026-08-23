@@ -477,6 +477,10 @@ def Program.find? (p : Program) (name : String) : Option LeanModels.C.FunctionDe
 
 /-- §6.5.3.3p4 — evaluate the arguments, LEFT TO RIGHT.
 
+**Currently unreachable**: the handler's reverted signature gives it no
+evaluator to pass here. Kept because it is the canonical-order half of
+Thomas's `∀ order` ruling and the shape the repair will re-attach to.
+
 **Left-to-right is the CANONICAL order, not the claim.** §6.5.3.3p10
 leaves the order indeterminately sequenced, and Thomas's ruling makes
 correctness a `∀ order` property; this function is how a witness is
@@ -532,7 +536,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
     | some body => do
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
-        let handler : CallHandler := fun ev callee cargs =>
+        let handler : CallHandler := fun callee _ =>
           let nm := calleeNameOf callee
           if nm == "<indirect>" then
             -- 19 sites, every one through `movecb`. The callback protocol
@@ -541,12 +545,17 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             refuseUnsupported "indirect call through a function pointer (movecb)"
           else
             match prog.find? nm with
-            -- one of the 27 externals: cause `libc`, which retires by
-            -- widening the slice, and never pools with the other two.
+            -- One of the 27 externals. Classifiable WITHOUT evaluating the
+            -- arguments, which is why this arm survives the handler's
+            -- reverted signature: cause `libc`, which retires by widening
+            -- the slice and never pools with the other two.
             | none => throw (.libc nm)
-            | some g => do
-                let vs ← evalArgsLR ev cargs
-                callFn fuel prog g vs
+            -- A NESTED call to a defined function needs its arguments
+            -- evaluated in the CALLER's scope, and the handler no longer
+            -- receives a way to do that — see `CallHandler`'s note. This is
+            -- inch 5's open problem, refused by name rather than guessed.
+            | some _ => refuseUnsupported
+                s!"nested call to '{nm}' — argument evaluation is inch 5's open problem"
         let ctx0 : Ctx :=
           { env := [], enums := prog.enums, layout := prog.layout, call := handler }
         let ctx ← bindParams prog.layout ctx0 f.params args

@@ -461,3 +461,68 @@ predicted.
 **Scheduled, not done**: adoption waits behind the inch-5 repair, so the tier
 is not absorbing a substrate change and a termination fix in one unverified
 step.
+
+---
+
+## 2026-08-23-c-5 — **A GREEN BUILD IS NOT A TERMINATION ARGUMENT**
+
+A family-level finding, minted by inch 5's red build and worth more than the
+inch was.
+
+### What happened
+
+`evalExpr`'s aggregate cases REBUILT the node they were dispatching on:
+
+    | .member base field arrow ty sp => do
+        let p ← evalLValue ctx (.member base field arrow ty sp)
+
+A reconstructed node is not a syntactic subterm of anything, so it is not
+structurally smaller. **This was in inch 3, which built green, and in every
+landing since.** It survived three landings because Lean's structural
+inference had enough slack elsewhere to find *some* measure. Inch 5 added one
+more recursive call — a closure passed into an opaque handler — the slack ran
+out, and the whole mutual block failed at once, taking three drain-amendment
+theorems with it as collateral (their `simp` sets need equation lemmas that
+are not generated when termination fails).
+
+### The finding
+
+**A build that goes green tells you a measure EXISTS. It does not tell you
+which one, and it does not tell you that you could have named it.** Inference
+succeeding is a fact about the elaborator's search, not about the program —
+and it degrades non-locally: an unrelated edit elsewhere in the block can
+withdraw it. The failure surfaces far from the defect and long after it was
+introduced, which is exactly the shape of bug this project's laws exist to
+convert into a loud one.
+
+**The rule, adopted here:** *take the parts, never rebuild the node* — and
+**state the measure**. `termination_by` on the whole mutual block, so the
+argument is written down and reviewable, not re-derived by search on every
+build.
+
+### The repair
+
+* `memberAddr ctx base field arrow` and `indexAddr ctx base idx ty` take
+  `base`/`idx`, which ARE subterms. Both `evalLValue` and `evalExpr` call
+  them; the reconstruction is gone from both.
+* An explicit `termination_by` over the four functions: the main pair carries
+  `2 * Expr.size e + 1`, the address helpers `2 * size + 2`. The doubling buys
+  the middle rung — a helper is strictly smaller than the node that called it
+  and strictly larger than the subterms it evaluates.
+* `Expr.size` is defined through the EXISTING `Expr.subexprs`, so it adds no
+  new recursion: the nested `List Expr` pattern that defeats inference is
+  elaborated once, where it already was.
+
+### What was NOT repaired, and is now named
+
+Inch 5's handler is reverted to inch 3's signature. The attempt to pass
+`evalExpr ctx` into the handler as a closure is **why a recursive function
+handed to an opaque callee cannot be shown to terminate** — nothing
+constrains what the callee does with it. Supplying the caller's scope without
+a closure needs an `evalArgs` inside the mutual block feeding the handler
+VALUES; that is inch 5's open problem, and `evalArgsLR` is kept as the shape
+it will re-attach to.
+
+Two changes on one tenure would have been a gamble at 1-3 hours per verdict,
+so this landing repairs the latent defect and lands the finding; the handler
+is a separate ticket.

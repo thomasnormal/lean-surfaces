@@ -259,6 +259,44 @@ def Expr.subexprs : Expr → List Expr
   | e@(.constExpr _ (some s) _ _) => e :: s.subexprs
   | e => [e]
 
+/-! ### A size measure, for STATED termination
+
+`docs/backlog/c.md` (2026-08-23-c-5): a green build is not a termination
+argument. The evaluator's recursion is justified by this measure
+EXPLICITLY rather than left to structural inference, and the measure is
+defined through `subexprs` so it introduces **no new recursion** — the
+nested `List Expr` pattern that defeats inference is elaborated there,
+once, and never again. -/
+
+/-- The number of expression nodes in `e`, itself included. -/
+def Expr.size (e : Expr) : Nat := e.subexprs.length
+
+/-- The same measure over an argument list. -/
+def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
+
+@[simp] theorem Expr.size_pos (e : Expr) : 0 < e.size := by
+  cases e <;> simp [Expr.size, Expr.subexprs]
+
+@[simp] theorem Expr.size_member (b : Expr) (f : String) (a : Bool) (t : CType) (s : CSpan) :
+    (Expr.member b f a t s).size = b.size + 1 := by
+  simp [Expr.size, Expr.subexprs]
+
+@[simp] theorem Expr.size_index (b i : Expr) (t : CType) (s : CSpan) :
+    (Expr.index b i t s).size = b.size + i.size + 1 := by
+  simp [Expr.size, Expr.subexprs]; omega
+
+@[simp] theorem Expr.size_paren (sub : Expr) (t : CType) (s : CSpan) :
+    (Expr.paren sub t s).size = sub.size + 1 := by
+  simp [Expr.size, Expr.subexprs]
+
+@[simp] theorem Expr.size_call (c : Expr) (args : List Expr) (t : CType) (s : CSpan) :
+    (Expr.call c args t s).size = c.size + Expr.sizes args + 1 := by
+  simp [Expr.size, Expr.sizes, Expr.subexprs]; omega
+
+@[simp] theorem Expr.sizes_cons (e : Expr) (es : List Expr) :
+    Expr.sizes (e :: es) = e.size + Expr.sizes es := by
+  simp [Expr.sizes, Expr.size]
+
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr
   | .var _ _ _ (some i) _ => i.subexprs

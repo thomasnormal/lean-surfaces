@@ -468,6 +468,7 @@
     "rules": [
       {
         "definition_line": 341,
+        "definition_sites": 3,
         "file": "type_checker.cpp",
         "note": "application of a lambda, inside whnf_core's App case",
         "rule": "beta",
@@ -475,6 +476,7 @@
       },
       {
         "definition_line": 341,
+        "definition_sites": 3,
         "file": "type_checker.cpp",
         "note": "let-expansion, inside whnf_core's Let case",
         "rule": "zeta",
@@ -482,20 +484,23 @@
       },
       {
         "definition_line": 349,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "expansion of a let-bound free variable",
         "rule": "zeta-fvar",
         "symbol": "whnf_fvar"
       },
       {
-        "definition_line": 488,
+        "definition_line": 523,
+        "definition_sites": 2,
         "file": "type_checker.cpp",
         "note": "definitional unfolding",
         "rule": "delta",
         "symbol": "unfold_definition"
       },
       {
-        "definition_line": 886,
+        "definition_line": 975,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "the defeq loop's lazy unfolding strategy",
         "rule": "delta-lazy",
@@ -503,13 +508,15 @@
       },
       {
         "definition_line": 334,
+        "definition_sites": 2,
         "file": "type_checker.cpp",
         "note": "recursor application to a constructor",
         "rule": "iota",
         "symbol": "reduce_recursor"
       },
       {
-        "definition_line": 359,
+        "definition_line": 378,
+        "definition_sites": 2,
         "file": "type_checker.cpp",
         "note": "structure projection of a constructor",
         "rule": "proj",
@@ -517,6 +524,7 @@
       },
       {
         "definition_line": 780,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "function eta",
         "rule": "eta",
@@ -524,6 +532,7 @@
       },
       {
         "definition_line": 795,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "structure eta",
         "rule": "eta-struct",
@@ -531,6 +540,7 @@
       },
       {
         "definition_line": 838,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "any two proofs of a Prop are equal",
         "rule": "proof-irrelevance",
@@ -538,13 +548,15 @@
       },
       {
         "definition_line": 1046,
+        "definition_sites": 2,
         "file": "type_checker.cpp",
         "note": "eta for unit-like inductive types",
         "rule": "unit-like",
         "symbol": "is_def_eq_unit_like"
       },
       {
-        "definition_line": 539,
+        "definition_line": 611,
+        "definition_sites": 4,
         "file": "type_checker.cpp",
         "note": "GMP-backed Nat literal arithmetic",
         "rule": "nat-lit",
@@ -552,13 +564,15 @@
       },
       {
         "definition_line": 590,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "Nat.pow, guarded separately against blowup",
         "rule": "nat-pow",
         "symbol": "reduce_pow"
       },
       {
-        "definition_line": 1032,
+        "definition_line": 1039,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "String literal vs String.mk expansion",
         "rule": "string-lit",
@@ -566,6 +580,7 @@
       },
       {
         "definition_line": 963,
+        "definition_sites": 1,
         "file": "type_checker.cpp",
         "note": "the Nat-offset fast path (n+k vs m+k)",
         "rule": "offset",
@@ -573,6 +588,7 @@
       },
       {
         "definition_line": 47,
+        "definition_sites": 1,
         "file": "quot.cpp",
         "note": "Quot.lift / Quot.ind computation",
         "rule": "quot",

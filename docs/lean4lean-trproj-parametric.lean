@@ -230,6 +230,55 @@ theorem ProjSound.instL {env : VEnv} {U U' : Nat} {Γ : List VExpr} {e v : VExpr
   obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0.of_inst
   exact ⟨B.instL ls, w.inst ls, hB.instL hls, hw.instL hls, h0'.inst⟩
 
+/-! ### `instN` — the second obligation
+
+`inst` leaves sorts inert (`.sort u, _, _ => .sort u`), so unlike `instL` the
+level predicates need no transport here: the SAME `u` and `w` are reused. The
+spine argument is identical, because `.app` instantiates both subterms at the
+same depth `k` — only `lam`/`forallE` step to `k+1`.
+
+**One trap, recorded because it is invisible at the call site.**
+`VEnv.HasType.instN` takes `(henv) (W) (H) (h₀)` while `VEnv.IsDefEq.instN` takes
+`(henv) (h₀) (W) (H)`. `HasType` is a `def` that unfolds to `IsDefEq`, so DOT
+NOTATION on a `HasType` hypothesis resolves to the `IsDefEq` lemma and silently
+mis-slots the arguments. (`instL` above is safe only by luck: its two orders
+agree.) Every use below therefore names `VEnv.HasType.instN` explicitly. -/
+
+/-- The spine relation commutes with instantiation, at any depth. -/
+theorem ArgFromRight.instN {e₀ : VExpr} {k : Nat} :
+    ∀ {n e v}, ArgFromRight n e v → ArgFromRight n (e.inst e₀ k) (v.inst e₀ k)
+  | _, _, _, .zero => .zero
+  | _, _, _, .succ h => .succ (ArgFromRight.instN h)
+
+/-- The computational half commutes with instantiation. -/
+theorem ProjField.instN {PI S idx e v} {e₀ : VExpr} {k : Nat}
+    (H : ProjField PI S idx e v) : ProjField PI S idx (e.inst e₀ k) (v.inst e₀ k) :=
+  ArgFromRight.instN H
+
+/-- The sound half commutes with instantiation.
+
+The sorts are carried through UNCHANGED — `inst` does not touch `.sort` — so the
+`MaybeZero`/`IsAlwaysZero` obligations transfer without any level lemma. -/
+theorem ProjSound.instN {env : VEnv} {U : Nat} {Γ₀ Γ₁ Γ : List VExpr}
+    {e₀ A₀ : VExpr} {k : Nat} {e v : VExpr}
+    (henv : env.Ordered) (W : Ctx.InstN Γ₀ e₀ A₀ k Γ₁ Γ)
+    (h₀ : env.HasType U Γ₀ e₀ A₀) (H : ProjSound env U Γ₁ e v) :
+    ProjSound env U Γ (e.inst e₀ k) (v.inst e₀ k) := by
+  obtain ⟨A, u, hA, hu, hprop⟩ := H.sound
+  refine ⟨A.inst e₀ k, u, VEnv.HasType.instN henv W hA h₀,
+    VEnv.HasType.instN henv W hu h₀, fun h0 => ?_⟩
+  obtain ⟨B, w, hB, hw, h0'⟩ := hprop h0
+  exact ⟨B.inst e₀ k, w, VEnv.HasType.instN henv W hB h₀,
+    VEnv.HasType.instN henv W hw h₀, h0'⟩
+
+/-- **THE SECOND VALIDATION LEMMA.**  `TrProj.instN` for the parametric form. -/
+theorem TrProjP.instN {PI : ProjIface} {env : VEnv} {U : Nat} {Γ₀ Γ₁ Γ : List VExpr}
+    {S : Name} {idx : Nat} {e₀ A₀ : VExpr} {k : Nat} {e v : VExpr}
+    (henv : env.Ordered) (W : Ctx.InstN Γ₀ e₀ A₀ k Γ₁ Γ)
+    (h₀ : env.HasType U Γ₀ e₀ A₀) (H : TrProjP PI env U Γ₁ S idx e v) :
+    TrProjP PI env U Γ S idx (e.inst e₀ k) (v.inst e₀ k) :=
+  ⟨ProjField.instN H.1, ProjSound.instN henv W h₀ H.2⟩
+
 /-- **THE VALIDATION LEMMA.**  `TrProj.instL` for the parametric definition —
 the cheapest of the seven obligations that `TrProj`'s absence had left as
 statements about nothing. -/

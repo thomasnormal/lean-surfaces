@@ -713,3 +713,102 @@ name-resolution error's clothes**. `instL` was green only because its two orders
 happen to agree; that is luck. **Rule: name the lemma explicitly in a foreign
 proof tree** — and in one's own, wherever a `def` sits over another relation
 (this tier's `ProjField` over `ArgFromRight` got the same treatment).
+
+---
+
+## 2026-08-23-lean-tier-9 — `TrProjP.instN` GREEN; and the quality audit found four real defects in this lane's instruments, one of which had published wrong citations
+
+### `instN`: GREEN, gate line PRESENT
+
+`tools/triad.sh --foreign`, tenure `leantier 96709`, lock after 4454 s.
+`lake build` exit 0 → BUILD GREEN; `=== gate: lake env lean …/ProjParam.lean ===`
+**present**; `TRIAD DONE (build exit 0, gates green)`. Branch
+`lean-surfaces/trproj` @ **`0f85caec154ad4edd9663082ab7b3d7a42d29a85`**.
+`docs/lean4lean-trproj-parametric.lean` is byte-identical: **292 lines, 0 real
+sorries, 0 axioms, 12 theorems.**
+
+**The pre-registered mitigation worked.** `VEnv.HasType.instN` takes
+`(henv)(W)(H)(h₀)`; `VEnv.IsDefEq.instN` takes `(henv)(h₀)(W)(H)`. Naming the
+lemma explicitly avoided the mis-slotting; dot notation would have bound `W`
+where `h₀` was expected.
+
+### The audit's four defects — all real, all fixed, one had shipped wrong numbers
+
+**HIGH — `lean_independent_check.py`: bare `"unsupported"` as an unanchored
+substring over the whole stdout+stderr, tested BEFORE the DIVERGE fall-through.**
+Any rejection whose text merely contained the word was reclassified DIVERGE →
+REFUSE. That is the dangerous direction: DIVERGE is the zero-tolerance invariant
+and REFUSE is never agreement, so the bug could silently downgrade a soundness
+disagreement into a coverage note. Now three anchored, per-line patterns
+(`lean4lean does not support`, `type checker does not support`,
+`unsupported (declaration|construct|feature)`), so a marker cannot be satisfied
+by words drawn from two unrelated lines. Seven classification fixtures run,
+including *the word inside a filename* → **DIVERGE** and *word and rejection on
+different lines* → **DIVERGE**.
+
+> **BLAST RADIUS, measured rather than assumed.** The audit stated the arena
+> soundness numbers flow through this instrument. **They do not.**
+> `lean_independent_check.py` contains **zero** references to arena data — the
+> 63/67 vs 67/67 figures came from this lane recomputing the arena's published
+> `results.json` directly, a path that never touches this file. And every row in
+> `docs/lean-independent-check.json` has `exit_code 0`, while `MATCH` is returned
+> *before* the marker loops — so no published verdict could have been affected.
+> The defect was real and worth fixing; its reach was not what the audit
+> supposed. (The arena corpus has since been purged, so this is settled by code
+> inspection, not by re-running their harness.)
+
+**MEDIUM — `lean_kernel_census.py`: rule presence by unanchored `symbol in line`
+over C++, first hit published as `definition_line`. THIS ONE SHIPPED WRONG
+FACTS.** Re-run after the fix, **5 of 16 rules had been citing a line that is not
+a definition**:
+
+| rule | published | actually was | correct |
+| --- | ---: | --- | ---: |
+| `delta` | 488 | a doc comment: *"…`unfold_definition` will also succeed. */"* | **523** |
+| `nat-lit` | 539 | a global: `static expr * g_lean_reduce_nat = nullptr;` | **611** |
+| `proj` | 359 | a comment: `/* Auxiliary method for reduce_proj */` | **378** |
+| `delta-lazy` | 886 | — | **975** |
+| `string-lit` | 1032 | — | **1039** |
+
+**Every COUNT was unchanged** — 12 `Expr`, 6 `Level`, 16 rules, 15 `Nat` ops,
+7 axioms — so no headline moved; what was wrong were five *citations*, which is
+precisely the "number from a substring census" shape. The matcher now requires a
+definition form, skips comment lines and forward declarations, records
+`definition_sites`, and refuses with the bare-mention count when no definition
+exists.
+
+**LOW ×2 — constructor detection required EXACTLY two leading spaces**
+(`^\s{2}\|`), in both this file and `lean_rule_correspondence.py`, so a
+constructor indented four spaces, with a tab, or inside a nested block matched
+nothing and vanished silently. Now `^\s+\|`, plus a **zero-constructor refusal**
+scoped to blocks that clearly opened a constructor list.
+
+**LOW — `_sorry_stubs` grepped UNSTRIPPED source**, the exact defect
+`wasm_sorry_census.py` was written to fix. Now imports that module's
+`strip_lean` — the family's shared stripper, per §9.2 consolidation-by-touch
+rather than a fourth private copy — and reports the raw/live delta. **This lane
+wrote its own comment stripper for `lean4lean_obligation_census.py`, championed
+it as the Wasm lesson, and then failed to use one here.**
+
+### What did NOT change
+
+`docs/lean-rule-correspondence.json` re-run post-fix: `IsDefEq` 13, `VExpr` 6,
+`Theory/` inductives 33, `rules_by_relation` **identical** — the 24 %-maps-to-a-stub
+headline holds. Stub sorries 2, and the stripper now confirms
+`raw 2 / live 2 / comment-only 0`. Both instruments double-run byte-identical and
+`--compare` clean; refusal paths re-verified at exit 2.
+
+### `weak'` pre-registered, deliberately NOT written yet
+
+Census done: `lift'` takes a `Lift` (not a `Nat`), `.app` keeps depth
+(`| .app fn arg, k => .app (fn.lift' k) (arg.lift' k)`), sorts inert
+(`| .sort u, _ => .sort u`) so no level transport, context relation
+`Ctx.Lift' : Lift → List VExpr → List VExpr → Prop`. **Trap does not fire here**:
+`IsDefEq.weak'` and `HasType.weak'` both take `(henv)(W)(H)`. Named explicitly
+regardless — the rule is not to depend on the orders agreeing.
+
+**A hazard worth §7: a queued tenure reads the source at BUILD time, not at
+ENQUEUE time.** Adding `weak'` while `instN`'s ticket was still queued would have
+silently changed what that tenure tested, and a green would have been reported
+for code that was never the subject. The file was left untouched until `instN`
+reported.

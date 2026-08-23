@@ -63,7 +63,12 @@ def _require_rows(rows: list, what: str, least: int) -> list:
 
 # A constructor line inside an `inductive` block: `  | name (field : T) ...`
 # or the ascription form `  | name : T -> U`.
-_CTOR = re.compile(r"^\s{2}\|\s*([a-zA-Z][A-Za-z0-9_']*)")
+#
+# ANY leading whitespace, not exactly two spaces: a constructor indented four
+# spaces, with a tab, or inside a nested `section`/`namespace` block matched
+# nothing under the old `^\s{2}\|` and was silently dropped from the count.
+# Found by the 2026-08-23 quality audit.
+_CTOR = re.compile(r"^\s+\|\s*([a-zA-Z][A-Za-z0-9_']*)")
 
 
 def _inductive_ctors(text: str, name: str, *, path: str) -> list[dict]:
@@ -217,10 +222,26 @@ def _kernel_rules(kernel_src: Path) -> tuple[list[dict], list[str]]:
     rows = []
     for rule, fname, symbol, note in _RULES:
         text = cache.setdefault(fname, _read(kernel_src / fname))
-        hits = [n for n, line in enumerate(text.splitlines(), start=1) if symbol in line]
+        # A DEFINITION, not any mention.  This used to be `symbol in line`, an
+        # unanchored substring over C++ source, so a comment, a forward
+        # declaration or a call site counted — and the FIRST such line was
+        # published as `definition_line`.  A census that cannot tell a
+        # definition from a comment about one is measuring prose.
+        # Found by the 2026-08-23 quality audit.
+        defn = re.compile(rf"^[^/*]*\b{re.escape(symbol)}\s*\(")
+        lines = text.splitlines()
+        hits = [n for n, line in enumerate(lines, start=1)
+                if defn.search(line) and not line.lstrip().startswith(("//", "*", "/*"))
+                and not line.rstrip().endswith(";")]   # `;` ends a forward declaration
         if not hits:
-            raise CensusRefusal(f"rule {rule!r}: symbol {symbol!r} not found in {fname} — the kernel moved")
-        rows.append({"rule": rule, "file": fname, "symbol": symbol, "definition_line": hits[0], "note": note})
+            mentions = sum(1 for line in lines if symbol in line)
+            raise CensusRefusal(
+                f"rule {rule!r}: no DEFINITION of {symbol!r} in {fname} "
+                f"({mentions} bare mention(s) — comments/forward decls/call sites do not count). "
+                "The kernel moved, or the symbol was renamed."
+            )
+        rows.append({"rule": rule, "file": fname, "symbol": symbol,
+                     "definition_line": hits[0], "definition_sites": len(hits), "note": note})
     tc = cache["type_checker.cpp"]
     body = tc[tc.index("optional<expr> type_checker::reduce_nat") :]
     body = body[: body.index("\n}\n")]

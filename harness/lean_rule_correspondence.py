@@ -39,6 +39,12 @@ import sys
 from pathlib import Path
 
 
+# The family's shared Lean comment stripper (§9.2 consolidation by touch): one
+# implementation, already fixture-tested, rather than a fourth private copy.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from wasm_sorry_census import strip_lean as _strip_lean  # noqa: E402
+
+
 class CensusRefusal(Exception):
     """The instrument declines, loudly.  An input fault, never a finding."""
 
@@ -200,7 +206,9 @@ STRUCTURAL = [
 ]
 
 _IND = re.compile(r"^inductive\s+([A-Za-z_][\w.']*)\b")
-_CTOR = re.compile(r"^\s{2}\|\s*([a-zA-Z_][\w']*)")
+# ANY leading whitespace (see lean_kernel_census.py): `^\s{2}` dropped every
+# constructor indented by four spaces, by a tab, or inside a nested block.
+_CTOR = re.compile(r"^\s+\|\s*([a-zA-Z_][\w']*)")
 
 
 def _read(p: Path) -> str:
@@ -232,6 +240,17 @@ def _inductives(theory: Path) -> dict[str, dict]:
                     if cm: ctors.append(cm.group(1))
                 j += 1
             # A name may be declared once per file; keep the first and record the file.
+            # An `inductive` block that yields NO constructors is an instrument
+            # fault, not a datum: every other input fault in this file refuses,
+            # and a silently-empty constructor list is what the old two-space
+            # regex produced.  (Structures and `inductive ... : Prop := ...`
+            # abbreviation forms legitimately have none, so the refusal is
+            # scoped to blocks that clearly opened a constructor list.)
+            if not ctors and any(l.strip().startswith("|") for l in lines[i + 1:j]):
+                raise CensusRefusal(
+                    f"inductive {name!r} at {path}:{i + 1} has constructor bars but "
+                    "none matched — the constructor pattern is wrong for this file's indentation"
+                )
             found.setdefault(name, {
                 "name": name,
                 "file": str(path.relative_to(theory.parent.parent)),
@@ -247,10 +266,24 @@ def _sorry_stubs(theory: Path) -> dict:
     """The inductive-specification stub, measured rather than asserted."""
     p = theory / "Inductive.lean"
     text = _read(p)
-    body = [l for l in text.splitlines() if l.strip()]
-    sorries = [l.strip() for l in body if re.search(r"\bsorry\b", l)]
-    return {"file": "Lean4Lean/Theory/Inductive.lean", "total_lines": len(text.splitlines()),
-            "nonblank_lines": len(body), "sorry_lines": sorries}
+    # COMMENT-STRIPPED, via the family's shared stripper.  This used to grep
+    # raw source, which is precisely the defect `harness/wasm_sorry_census.py`
+    # was written to fix: a textual grep counts `sorry` inside `--` comments and
+    # docstrings, and an inflated ledger is the kind of wrong fact this
+    # repository does not ship.  This lane wrote its own stripper for
+    # `lean4lean_obligation_census.py` and then failed to use one here.
+    # Found by the 2026-08-23 quality audit.
+    stripped = _strip_lean(text)
+    raw_lines = text.splitlines()
+    st_lines = stripped.splitlines()
+    body = [l for l in raw_lines if l.strip()]
+    live = [i for i, l in enumerate(st_lines) if re.search(r"\bsorry\b", l)]
+    sorries = [raw_lines[i].strip() for i in live]
+    raw_hits = sum(1 for l in raw_lines if re.search(r"\bsorry\b", l))
+    return {"file": "Lean4Lean/Theory/Inductive.lean", "total_lines": len(raw_lines),
+            "nonblank_lines": len(body), "sorry_lines": sorries,
+            "sorry_raw": raw_hits, "sorry_live": len(live),
+            "sorry_comment_only": raw_hits - len(live)}
 
 
 def _l4l_rev(l4l: Path) -> str:

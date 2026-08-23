@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -54,10 +55,24 @@ class CensusRefusal(Exception):
 
 # lean4lean's own refusal texts.  A REFUSE must be distinguished from a DIVERGE
 # by reading what the checker said, never by assuming a nonzero exit is a bug.
-REFUSAL_MARKERS = (
-    "does not support",           # e.g. "lean4lean does not support 'reduceBool' reduction"
-    "loose bound variables",      # the Lean-import limitation of digama0/lean4lean#17
-    "unsupported",
+# ANCHORED on the checker's own refusal phrasing, never on a bare word.
+#
+# This list used to contain the bare token "unsupported", tested as an
+# unanchored substring over the WHOLE concatenated stdout+stderr — and the test
+# runs BEFORE the DIVERGE fall-through, so any rejection whose message merely
+# CONTAINED the word (a filename, a doc line, a quoted declaration) was
+# reclassified from DIVERGE to REFUSE.  That is the dangerous direction: DIVERGE
+# is the family's zero-tolerance invariant (§5.1) and REFUSE is never agreement,
+# so a substring match could silently downgrade a soundness disagreement into a
+# coverage note.  Found by the 2026-08-23 quality audit.
+#
+# Each pattern must match a phrase the CHECKER emits, not a word a message may
+# happen to contain, and matching is per-line so a marker cannot be satisfied by
+# words drawn from two unrelated lines.
+REFUSAL_PATTERNS = (
+    re.compile(r"lean4lean does not support", re.I),
+    re.compile(r"type checker does not support", re.I),
+    re.compile(r"\bunsupported (?:declaration|construct|feature)\b", re.I),
 )
 
 # A module the checker cannot LOCATE is not a verdict about anything — it is a
@@ -76,16 +91,15 @@ INPUT_FAULT_MARKERS = (
 def classify(exit_code: int, out: str, err: str, timed_out: bool) -> tuple[str, str]:
     if timed_out: return "TIMEOUT", "wall-clock exhausted"
     blob = (out + "\n" + err)
-    low = blob.lower()
     if exit_code == 0: return "MATCH", ""
     for m in INPUT_FAULT_MARKERS:
-        if m in low:
-            line = next((l.strip() for l in blob.splitlines() if m in l.lower()), m)
-            raise CensusRefusal(f"the checker could not locate a module: {line[:200]}")
-    for m in REFUSAL_MARKERS:
-        if m in low:
-            line = next((l.strip() for l in blob.splitlines() if m in l.lower()), m)
-            return "REFUSE", line[:300]
+        hit = next((l.strip() for l in blob.splitlines() if m in l.lower()), None)
+        if hit is not None:
+            raise CensusRefusal(f"the checker could not locate a module: {hit[:200]}")
+    for rx in REFUSAL_PATTERNS:
+        hit = next((l.strip() for l in blob.splitlines() if rx.search(l)), None)
+        if hit is not None:
+            return "REFUSE", hit[:300]
     first = next((l.strip() for l in blob.splitlines() if l.strip()), "(no output)")
     return "DIVERGE", first[:300]
 

@@ -4167,3 +4167,81 @@ flatter.**
 
 **Standing number for this lane (§9.0):** no conformance suite — `docs_check`
 **91/91**; ids minted here **MEAS-172 … MEAS-178, STMT-116 … STMT-118**.
+
+## 2026-08-24-architecture-54 — When the ambient verdict is constant, every bit is in the pin
+
+Three from Wasm O3 (`fd96fce`, verified on master) plus a roster fact that
+turned out to be a defect in this document's own registry.
+
+**(1) §5.4b — THE COMPLETE EXHIBIT, and it is stronger than the one this section
+already had.** **Exit code was `1` on ALL FOUR tenures.** Nothing in the exit
+status separated *"the port went green"* from *"the port regressed"* from
+*"unchanged"* — only the pinned shape did, and it caught **both directions
+across consecutive tenures**: **MISS at 85489** (1 error, arity), **MATCH at
+69357** (built, 12 s, 0 errors).
+
+> **When the ambient verdict is CONSTANT, every bit of information is in the
+> pin.**
+
+The O1 landing gave this section its first **positive** demonstration; this is
+the first where the same pin **convicted and then cleared the same artifact
+across successive runs**. **A guard that fires in only one direction is half a
+guard**, and the baseline being `SubtypingPort` built/errors rather than the
+tenure's exit code is the point: **the exit code was constant across every
+outcome the guard exists to distinguish.**
+
+**(2) §8 item 11 — THE BRIDGE IS PAID, and the correction's SHAPE is the law.**
+`rt_bridge` pays it once and `rt_sub_app` **collapsed to `exact
+List.rel_append h1 h2`** — a hand-rolled replacement would have been maintained
+forever to reach the same line, which confirms the ordering I landed in `-44`
+(price the bridge first).
+
+**The new half is that the compiler REFINED the claim rather than refuting
+it.**
+
+> **"Does not apply at all" is a claim about a LIBRARY, and only WRITING THE
+> BRIDGE measures how much weaker the true statement is.**
+
+The finding was **right about the lemmas and wrong about the library**, and
+those are different claims with different evidence: *these lemmas do not fire*
+is settled by a red; *this library cannot reach this model* is settled only by
+**attempting the crossing** — §9.7's rule for negatives is what separates them.
+
+**So the correction is recorded as a REFINEMENT, with both halves, not as an
+erratum.** An erratum deletes the finding and takes its correct half with it; a
+refinement keeps *the lemmas do not apply pointwise* — still true, still useful,
+still the reason the bridge is needed — and adds the quantifier the evidence
+supported.
+
+**(3) THE PRIOR-ENTRY HYGIENE IS THE SAME DISCIPLINE POINTED BACKWARD.** The
+lane flagged its own overstatement **unprompted** and **preserved the correct
+half**; compare the Lean tier's form — *entries 17 and 19 predate the finding
+and should be read with the qualifier attached, rather than rewriting them.*
+
+> **A qualifier may attach to a RANGE of dated entries.**
+
+The annotation norm at a **second scale**: one entry takes an annotation, a
+*range* takes a **standing qualifier** — and both beat the edit that would make
+a ledger read as though the lane had never been wrong.
+
+**(4) §1.2 — THE ROSTER FACT WAS A DEFECT IN THIS DOCUMENT'S TABLE.** The analog
+tier (Spice/Circuit, §6.1) is **staffed as of today**, dormant since July, **22
+`sorry`s**. The registry's status column said **active** — **true of the code
+and false of the staffing.**
+
+> **A tier can be ACTIVE IN THE TREE and DEAD IN THE ROSTER.**
+
+**Both halves were honest readings of one word, which is the whole defect**: a
+reader planning work needs *"is anyone on this?"*, a reader pricing a dependency
+needs *"does it build?"*, and **the column answered whichever question the
+reader brought.** The row now carries both, and the rule generalizes:
+
+> **A status column NAMES WHAT IT MEASURES. In-tree and rostered are separate
+> facts; a single word that can be true of either will be read as both.**
+
+The unit family arriving in a table's **vocabulary** rather than in a count —
+with the same tell: **the word looked like a property of the tier, and it was a
+property of a question.**
+
+**Standing number for this lane (§9.0):** no conformance suite — `docs_check`
+**91/91**; ids minted here **MEAS-179 … MEAS-183**.

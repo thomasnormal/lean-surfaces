@@ -227,6 +227,11 @@ and a second numbering over the same letter would be a citation trap.
 | MEAS-176 | NAMED, NOT COUNTED — a live obligation kept out of the denominator until its premise is proved | `docs/family-architecture.md §9.0` |
 | MEAS-177 | a RE-FOUNDING's size is the count of statements that NAME the interpreter | `docs/family-architecture.md §5.4a` |
 | MEAS-178 | a SECTION CITATION is mechanically checkable — same class as the docs_check anchors | `docs/family-architecture.md §5.4b` |
+| MEAS-179 | when the ambient verdict is CONSTANT, every bit of information is in the pin | `docs/family-architecture.md §5.4b` |
+| MEAS-180 | "does not apply at all" is a claim about a LIBRARY — only writing the bridge measures it | `docs/family-architecture.md §8` item 11 |
+| MEAS-181 | record a correction as a REFINEMENT with both halves, never as an erratum | `docs/family-architecture.md §8` item 11 |
+| MEAS-182 | a qualifier may attach to a RANGE of dated entries — rewriting destroys what was known when | `docs/family-architecture.md §8` item 11 |
+| MEAS-183 | a STATUS COLUMN names what it measures — in-tree and rostered are separate facts | `docs/family-architecture.md §1.2` |
 
 ## B. STATEMENT LAWS — how a claim must be worded to mean something
 

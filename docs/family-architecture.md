@@ -349,11 +349,35 @@ mislabelled.
 | Ada | `Ada` | spec-mirror — ISO/IEC 8652 **+ official suite** | **`Ada2022`** (spec head) **and `Ada2012`** (suite edition) — RATIFIED | a GNAT toolchain **and the ACATS grader** | **ACATS 4.2**, 4 188 tests | founding — **version pair FORCED** |
 | RISC-V | `Rv` | spec-mirror — RISC-V ISA | **PROPOSED** | the ISA oracle | `harness/rv` | consolidation — 2 041 lines |
 | Verilog-A | `VerilogA` | extraction — OpenVAF | — | OpenVAF | `Examples/verilog-a` | consolidation — 606 lines |
-| SPICE | `Spice`/`Circuit` | extraction — ngspice | — | ngspice | `Examples/spice` | active — 27 675 lines, separate architecture (§6.1) |
+| SPICE | `Spice`/`Circuit` | extraction — ngspice | — | ngspice | `Examples/spice` | **in-tree LIVE / roster STAFFED 2026-08-24** — 27 675 lines, **22 `sorry`**, dormant since July, separate architecture (§6.1) |
 
 The last three carry no edition token today. That is allowed and it is
 what §1.4 rules on: **a language earns version directories when its tier
 claims an edition, not before.**
+
+**AND THIS COLUMN CONFLATED TWO DIFFERENT FACTS, which the analog tier's
+staffing exposed (2026-08-24).** *"Active"* was read as one property and is two:
+
+> **A tier can be ACTIVE IN THE TREE and DEAD IN THE ROSTER.** Code that builds,
+> is imported and carries theorems is **in-tree live**; whether a lane is
+> **working it** is a staffing fact, and the two move independently.
+
+The SPICE row said **active** and was true of the **code** — 27 675 lines,
+building — and false of the **staffing**: **dormant since July, 22 `sorry`s**,
+nobody on it. **Both halves were honest readings of one word**, which is the
+whole defect: a reader planning work needs *"is anyone on this?"*, and a reader
+pricing a dependency needs *"does it build?"* — **the column answered whichever
+question the reader brought.**
+
+**The rows now carry both**, and the general rule for this registry:
+
+> **A STATUS COLUMN NAMES WHAT IT MEASURES.** *In-tree* and *rostered* are
+> separate facts; a single word that can be true of either is a word that will
+> be read as both.
+
+This is the unit family (§5.4a) arriving in a table's **vocabulary** rather than
+in a count — and it has the same tell: **the word looked like a property of the
+tier, and it was a property of a question.**
 
 **ADA IS THE FIRST TIER TO DECLARE TWO EDITION TOKENS AT FOUNDING, and it
 did not choose to.** The ARM is **Ada 2022**; the official suite's baseline
@@ -5613,6 +5637,29 @@ predictions were made in advance, four matched, and whatever else is red is
 outside the claim. **That is the whole value of pinning a count, demonstrated
 positively rather than as a near-miss.**
 
+**AND THE COMPLETE EXHIBIT ARRIVED TWO INCHES LATER — the pin catching BOTH
+DIRECTIONS across consecutive tenures** (Wasm O3, `fd96fce`, on master).
+
+**Exit code was `1` on ALL FOUR tenures.** Nothing in the exit status separated
+*"the port went green"* from *"the port regressed"* from *"unchanged"* — only
+the **pinned shape** did:
+
+| tenure | pinned shape | verdict |
+| --- | --- | --- |
+| **85489** | `SubtypingPort` **errors**: 1 (arity) | **MISS** |
+| **69357** | `SubtypingPort` **built**, 12 s, **0 errors** | **MATCH** |
+
+**A guard that fires in only one direction is half a guard**, and this is the
+first exhibit in the tree where the same pin **convicted and then cleared** the
+same artifact across successive runs. If one table is wanted for *a drift guard
+must baseline against the artifact it watches*, it is this one: the baseline is
+`SubtypingPort` built/errors and the failing-module count, **not the tenure's
+exit code**, because **the exit code was constant across every outcome the guard
+exists to distinguish.**
+
+> **When the ambient verdict is constant, EVERY bit of information is in the
+> pin.**
+
 **But the count BOUNDS the drift; it does not IDENTIFY it.** Two errors a probe
 was built to have and two it has acquired are the same number, so an
 expected-error file carrying a transcription still owes the transcription
@@ -7502,6 +7549,46 @@ real until an instrument re-derives it.**
     first. **Price the BRIDGE first** — one `iff`, whose premise you may
     already be holding — because a bridge is bought once and a
     replacement is maintained forever.
+
+    **THE BRIDGE HAS NOW BEEN PAID, and the price confirms the ordering**
+    (Wasm O3, `fd96fce`, on master). `rt_bridge` pays it **once**, and
+    `rt_sub_app` **collapsed to `exact List.rel_append h1 h2`** — a
+    hand-rolled replacement would have been maintained forever to reach
+    the same line.
+
+    **AND THE SHAPE OF THE CORRECTION IS ITSELF A LAW, because the
+    compiler REFINED the claim rather than refuting it.**
+
+    > **"Does not apply at all" is a claim about a LIBRARY, and only
+    > WRITING THE BRIDGE measures how much weaker the true statement is.**
+
+    The original finding was **right about the lemmas and wrong about the
+    library**, and those are different claims with different evidence:
+    *these lemmas do not fire* is settled by a red, while *this library
+    cannot reach this model* is settled only by **attempting the
+    crossing**. §9.7's rule for negatives — *an obstruction that is only
+    encountered is not measured* — is what separates them.
+
+    **So the correction is recorded as a REFINEMENT, with both halves,
+    not as an erratum.** An erratum deletes the finding and takes its
+    correct half with it; a refinement keeps *the lemmas do not apply
+    pointwise* — which is still true, still useful, and still the reason
+    the bridge is needed — and adds the quantifier the evidence actually
+    supported.
+
+    **AND THE LANE'S PRIOR-ENTRY HYGIENE IS THE SAME DISCIPLINE POINTED
+    BACKWARD**: it flagged its own overstatement **unprompted** and
+    **preserved the finding's correct half**. Compare the Lean tier's
+    form — *"entries 17 and 19 predate the finding and should be read
+    with the qualifier attached, rather than rewriting them."*
+
+    > **A qualifier may attach to a RANGE of dated entries. Rewriting
+    > them would destroy the record of what was known when.**
+
+    That is the annotation norm (§5.4b) at a second scale: one entry takes
+    an annotation, a *range* takes a **standing qualifier** — and both
+    beat the edit that would make the ledger read as though the lane had
+    never been wrong.
 
     **THE GENERATOR'S EXTRA PREMISES ARE THE TELL, and reading them is the
     cheap check.** The generator emits `Resulttype_sub` with a **separate

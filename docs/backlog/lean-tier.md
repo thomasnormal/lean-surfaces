@@ -1633,3 +1633,94 @@ here**, per the arch lane's exemption norm.
 * **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers.
 * **Export corner** — **0/27 @ `af5aa64`**; manifest landed, property stated,
   **statability blocker found, refactor proposed**.
+
+---
+
+## 2026-08-23-lean-tier-19 — PURE CORE LANDED: the round-trip property is now statable, and behaviour identity is EVIDENCED by upstream's own 22 golden tests
+
+### The verdict
+
+```
+LOCK  [23:42:11] LOCK ACQUIRED after 0s as 'leantier 71957'
+      [23:42:11] build exit=0  ->  BUILD GREEN
+GATE  [23:42:11] === gate: lake build Test ===              PRESENT
+      ✔ [3/5] Built Export.Parse (1.6s)
+      ⚠ [4/5] Built Test (12s)
+      Build completed successfully (5 jobs).
+      [23:42:25] TRIAD DONE (build exit 0, gates green)
+```
+
+Branch `lean-surfaces/pure-core` @ **`a0aa7836ce1c3875aff4ad13f1cac7378dd37029`**,
+on `af5aa64`. `docs/lean4export-pure-core.lean` is byte-identical to the green
+file.
+
+### Condition 1 — BEHAVIOUR IDENTITY, evidenced rather than asserted
+
+**`lake build Test` green means all 22 `#guard_msgs` passed.** Those tests are
+upstream's, not mine: they record the exact printed NDJSON for `dumpName`,
+`dumpLevel` and `dumpExpr` — e.g.
+
+```
+info: {"in":1,"str":{"pre":0,"str":"foo"}}
+      {"in":2,"str":{"pre":1,"str":"bla"}}  ...
+```
+
+`#guard_msgs` fails elaboration on any mismatch, so **the gate is self-contained
+and needed no separate baseline**: the expectations live in the file, recorded by
+upstream before this fork existed. If `emitLine` had changed a line, an order, or
+a byte, `Test` would be red. **The wrapper IS the old tool, and that is now
+evidence.**
+
+The one warning (`Test.lean:344 functionWithLet is a proposition`) is a
+pre-existing linter note on a test fixture — `Test.lean` is untouched by this
+fork, so it is upstream's by construction.
+
+**An infrastructure detour worth recording:** the first tenure gated on
+`lake env lean Test.lean` and went RED with *"object file `Export/Parse.olean`
+does not exist"* — the lakefile's `defaultTargets` is only the `lean4export` exe,
+which does not pull in `Export.Parse`. **The build was green; the gate was
+mis-aimed.** Corrected to `lake build Test`, which is the lakefile's own
+`testDriver`. A red that is the harness's fault and not the code's still costs a
+tenure, and the lesson is to aim a gate at the target the project declares.
+
+### Condition 2 — the divergence is stamped, with a live tripwire
+
+`Export.lean` carries a header naming the base (`af5aa64`), the four edits, the
+identity claim and its gate. And
+`harness/lean_export_manifest.py --check-divergence` re-reads **7 upstream touch
+points** at the pinned base and refuses if any moved:
+
+```
+ok: 7 upstream touch points intact at af5aa64bb914
+```
+
+Both refusal paths were RUN, not admired: a touch point that no longer exists →
+`UPSTREAM MOVED under this fork's divergence`; a missing base sha → `the
+divergence base is gone; re-pin deliberately`. **If upstream edits those lines
+this fork goes loud, not stale.**
+
+### Condition 3 — recorded as an offer artifact, not offered
+
+Charter §11.4 now records **two green offer artifacts** — the parametric
+`TrProj` (4 of 7 proved) and this pure core — with the note that the pure core is
+**more upstreamable than the code it replaces**: it makes the exporter
+*unit-testable as well as provable*, since `M.runPure` returns the emitted lines
+instead of printing them, so a test can inspect output without capturing stdout.
+**No upstream contact has been made.**
+
+### What this unlocks
+
+The arc-1 property is now statable **exactly as written**:
+
+> `parse (dump E) = E`, where `dump` is `M.runPure` — a function returning
+> `α × Array String`, with no opaque extern anywhere in it.
+
+The index-table invariant becomes a statement about pure state. **`Level`'s four
+constructors are next, and are now reachable.**
+
+### Ledger
+
+* **TrProj slice** — 4 proved / 3 blocked, WAITING with triggers.
+* **Export corner** — **0 of 27 pairs proved @ `af5aa64`** (one natural
+  denominator; the two-denominator template does not apply). The pure core is a
+  **precondition, not a pair** — it changes 0/27 into a number that can now move.

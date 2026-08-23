@@ -1586,6 +1586,23 @@ Named, so they are decisions rather than drift.
 4. **Whether we engage Mario Carneiro directly.** Option (b) is a contribution
    to someone else's project. The repository has no precedent for that posture
    and it should be an explicit decision, not a side effect of a merge.
+
+   **TWO OFFER ARTIFACTS NOW EXIST, both green, neither offered.** If engagement
+   is ever ruled, the approach is a specific artifact plus a one-line question,
+   not "how can we help":
+
+   * **`TrProj`, parametric** — compiles with **4 of its 7 lemmas proved**
+     (`instL`, `instN`, `weak'`, `wf`), 0 sorries, 0 axioms. Question: *will
+     `addInduct` expose `nparams`/`nfields`, and in what shape?*
+   * **`lean4export`'s pure core** — the exporter factored so `M`'s base is `Id`
+     and emission accumulates instead of printing, with a thin `IO` wrapper.
+     **Upstream's own 22 `#guard_msgs` pass unchanged**, so behaviour is
+     evidenced identical. This one is **MORE upstreamable than the code it
+     replaces**, and not because we prefer it: a pure core makes the exporter
+     **unit-testable as well as provable** — `M.runPure` returns the emitted
+     lines, so a test can inspect them without capturing stdout.
+
+   Neither has been sent anywhere; no upstream contact has been made.
 5. **Whether the arena's corpus may be used** despite having no licence — by
    running their harness rather than vendoring their tests. §9.2.
 

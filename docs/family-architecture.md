@@ -794,6 +794,23 @@ because the typed field does not.
 > is paid for N times, in string-building and re-parsing, by lanes that
 > never see each other's version.**
 
+**AND THE EXACT COUNTERPOINT, which is why the diagnosis is the trunk's
+PAYLOAD and not its CLASSES.** SV's own §2.4 taxonomy predicted it would
+need a class for scheduling nondeterminism — and found
+**`RefusalCause.orderDependence` already in `Core`**, arrived from ES, Go
+and Python **without SV asking**. So:
+
+* the **classes** were reached independently **from four directions** and
+  agreed — §9.3's convergence standard, at its strongest showing yet;
+* the **payload** was re-derived independently **three times** and each
+  tier built a different string encoding.
+
+**Convergence validated the taxonomy at the same time re-derivation
+convicted the type.** That is a useful pair to hold: §5.2's four classes
+were right while `Core`'s `Loud` was wrong, and a lane reading only the
+three re-derivations might have concluded the whole design needed
+revisiting. It did not — **one field did.**
+
 That is the direct cost of the gap §3.4 records, and it is why the fix
 belongs in `Core` rather than in any adopter.
 
@@ -1374,6 +1391,17 @@ matches every line above as a subsequence of `Core/Outcome.lean`, so the
 subsumption claim below cannot drift from the definition without a gate
 going red. A prose paragraph would have made the same claim and rotted
 silently.
+
+**AND `σ := Unit` IS THE FAMILY DEFAULT, on ES's reasoning:**
+
+> **Adding a snapshot without a consumer is designing against nothing.**
+
+A tier takes a non-trivial `σ` only when it has **both** a consumer for the
+snapshot **and** the never-an-observable guard to keep it out of verdicts.
+Absent a consumer, the parameter is a field nobody reads, carried through
+every refusal, and it is exactly the kind of speculative generality §2.4's
+census-gated placement rejects one level up. ES takes `Unit`; C takes `Mem`
+**because it has both**.
 
 **It SUBSUMES both payload-bearing tiers, and the subsumption is checked
 against the table above rather than asserted:**
@@ -2806,6 +2834,39 @@ paragraph reference, `undefined` carrying its 1.1.5 erroneous-execution
 citation, and `order-dependence` present and gated until Ada measures
 whether it fires.
 
+**A TIER INVARIANT ON MEMBERSHIP SITES, from SV, and it guards a mistake
+that would be invisible once made.** In SV, **X-propagation must NEVER
+become `orderDependence`, or any refusal.** Unknown (`x`) is a **VALUE of
+the 4-state semantics** — misfiling it as a refusal silently converts
+**4-state into 2-state-plus-errors**, which is a different language
+wearing the same name. Nothing would fail; the tier would simply stop
+modelling SystemVerilog.
+
+The candidate generalization:
+
+> **A value the spec defines as a VALUE is never a refusal — however much
+> it looks like "we don't know."**
+
+**Stated as a QUESTION for the tiers that would own the answer, not as a
+family fact.** Two shapes look like siblings and neither is ruled here:
+**Python's `NaN`** (a value in IEEE 754, and §3.5 already treats floats as
+a component rather than a gap — so the question is only whether any tier
+is tempted to refuse it), and **C's indeterminate-but-NOT-UB reads**, which
+is genuinely open because the C tier currently arms *indeterminate read* as
+one of its eleven UB classes; whether the not-UB subset is a value or a
+refusal is **the C lane's to answer**, and the two cases must not be
+conflated by this document. If two tiers answer the same way
+independently, that is the convergence standard again and the invariant
+gets promoted from tier to family.
+
+**Why it belongs beside membership rather than beside refusal**: both a
+membership site and a misfiled value are cases where *"the model does not
+have one answer"* is true for **completely different reasons** — one
+because the language permits several, one because the language supplies a
+specific value that happens to mean uncertainty. The scoreboard cannot
+tell them apart after the fact, so the distinction has to be made at the
+modelling site.
+
 **Why it is a REFUSAL cause and not a fifth verdict.** A refusal is what
 the model actually emits today, on both boards. The alternative — a
 genuine ORDER-DEPENDENT verdict meaning "the model ran, and the answer is
@@ -3004,6 +3065,61 @@ The calibration, five units on one change:
 > **The blast radius of a constructor change is bounded by the sites that
 > DESTRUCTURE it. Grep the PATTERN POSITION — `.error (.unsupported` —
 > not imports, and not the API's identifiers.**
+
+**AMENDED — the grep MIS-COUNTS IN BOTH DIRECTIONS, and the law as first
+written warned about only one.** Calibrated by the C tier, which had
+already moved `unsupported` **out of `ρ` and into `Halt`**:
+
+* **`.error (.unsupported` returns ZERO there.** The pattern was written
+  for tiers where refusal still rides the **error channel**; a tier that
+  moved it is invisible to the very grep that is supposed to bound it —
+  an **under**-count of the worst kind, because it reads as *"no work to
+  do."*
+* a naive `.unsupported` grep **OVER-counts by 4** — `Ast.lean`'s
+  `Expr`/`Stmt`/`Decl.unsupported` constructors, three unrelated types
+  sharing a constructor name.
+
+So the fix is neither "match the position" nor "match the name" but a step
+before both:
+
+> **The pattern position is the CONSTRUCTOR OF THE TYPE BEING CHANGED,
+> WHEREVER THAT TYPE RIDES. Name the type first, then grep its
+> constructor's pattern.**
+
+The type is the thing that changed; the channel it happens to ride is a
+fact about the tier, and a grep hard-coded to one channel is a grep with a
+tier's design baked into it.
+
+**AND THE COMPLEMENTARY DESIGN LAW — you can SHRINK the blast radius
+before you measure it.** Two tiers priced their Core adoption and both
+found the same mechanism doing the work:
+
+| tier | touch points | actually matched | insulated by |
+| --- | --- | --- | --- |
+| **ES** | **198** "guards" as first framed | **5** destructure + **2** construct | four factored helpers (`yields`/`runs`/`throwsKind`/`refuses*`) — only the `refuses*` family matches `Halt` at all |
+| **C** | **64** touch points | **8** construct + **8** destructure | **53 of 64 INSULATED at zero cost**, because every refusal routes through a **named primitive** |
+
+ES's first framing over-estimated by roughly **40×**. The reason is not
+carelessness; it is that **callers of a helper are not touch points at
+all**, and only inspecting the helper says so.
+
+> **Concentrate outcome-shape knowledge in helpers. A substrate change is
+> then priced by the HELPERS, not by their callers.**
+
+**C's 53-of-64 is §3.4's routing law paying for itself at adoption.** That
+law — *never a bare polymorphic `throw`; route every refusal through a
+NAMED primitive* — was adopted for uncatchability and for `@[spec]`
+registration. It turns out to also be the thing that makes a substrate
+change cheap, which is the useful kind of corroboration: a rule adopted
+for one reason earning its keep in a second.
+
+**One arithmetic note, because the law applies to its own evidence.** ES's
+raw grep returned **8**, of which **3** were name collisions on other
+types — and the honest total is **7**, not 5, because the two
+**construction** sites match a *different* pattern than the destructuring
+ones. **No single grep produced the number.** That is the law's own
+prescription arriving in its own calibration: enumerate the positions, and
+expect more than one pattern to be needed.
 
 **Read the last two rows together, because they are the practical point.**
 The destructure count (11) **over**-estimates real breakage (1) — it is an
@@ -3950,9 +4066,45 @@ real until an instrument re-derives it.**
 
    Concretely: a theorem that can be stated about the mathematics should
    be, and the interpreter-facing statement should be the thin layer that
-   connects it. A tier writes this discipline in on day one because it
+   connects it.
+
+   **MEASURED AT A SUBSTRATE CHANGE — the law paying off with a zero.**
+   ES's `es_never_undefined` and `es_never_orderDependent` transferred
+   across the Core payload landing with **ZERO edits**, because they are
+   stated about **the tier's own cause constructor** and not about `Halt`.
+   The substrate moved underneath them and the statements did not mention
+   it. **A theorem survives a change to the thing it does not name** —
+   which is the same discipline as step 9's spec/interpreter split, applied
+   to the choice of *what a statement is about* rather than to which half
+   of the estate it lives in. A tier writes this discipline in on day one because it
    costs nothing then and cannot be retrofitted cheaply — the 35% is not
    work you can decide to have done differently after the fact.
+10. **A GREEN BUILD IS NOT A TERMINATION ARGUMENT.**
+
+    > **When recursion goes through a RECONSTRUCTED node or an OPAQUE
+    > callee, state the measure — `termination_by` on the whole mutual
+    > block. Take the PARTS; never rebuild the node.**
+
+    Measured, and the way it surfaced is the point. The C tier's inch 5
+    killed termination inference by passing `evalExpr ctx` as a **closure
+    through an opaque `ctx.call`** — and that **exposed a latent defect
+    inch 3 had already built green on**: `evalExpr`'s aggregate cases
+    **reconstruct** the node (`evalLValue ctx (.member base field arrow ty
+    sp)`), which is **not a syntactic subterm**. The earlier green rode on
+    slack elsewhere.
+
+    So the defect was **two inches old and passing** before anything made
+    it visible, which is why this is a **§5.4a** instance and not merely a
+    Lean tip: **the green was never evidence of termination — it was
+    evidence that inference had found some other route.** A rebuilt node
+    looks like the node you matched, and the elaborator's willingness to
+    accept it today is not a property of your definition.
+
+    The discipline is cheap and it is a *statement*, not a tactic: destructure
+    to the parts and pass the parts, and where the recursion genuinely
+    leaves the syntax — an opaque callee, a closure — **say the measure out
+    loud** so the argument lives in the file rather than in the
+    elaborator's mood.
 
 ---
 

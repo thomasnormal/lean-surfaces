@@ -771,3 +771,93 @@ TWO parents.** That is the check this failure mode demands, because **every othe
 signal — the diff, the build, the gates — looks correct.** It is §5.4a's shape in
 git metadata: **the artifact reads clean while the thing that makes it a merge is
 missing**, and only a check aimed at the metadata can see it.
+
+## 2026-08-23-architecture-10 — The pattern-position grep mis-counts BOTH ways; helpers shrink the blast radius; and four tiers converged on the classes
+
+Five findings from ES, C and SV, landed together because three of them calibrate
+the same law.
+
+**(1) THE PATTERN-POSITION LAW MIS-COUNTS IN BOTH DIRECTIONS — it warned about
+one.** Calibrated by the C tier, which had already moved `unsupported` out of `ρ`
+into `Halt`: **`.error (.unsupported` returns ZERO there** — the pattern was
+written for tiers where refusal rides the error channel, so a tier that moved it
+is invisible to the grep meant to bound it, and it reads as *"no work to do."*
+Meanwhile a naive `.unsupported` grep **OVER-counts by 4** (`Ast.lean`'s
+`Expr`/`Stmt`/`Decl.unsupported`, three unrelated types sharing a name).
+
+> **The pattern position is the CONSTRUCTOR OF THE TYPE BEING CHANGED, WHEREVER
+> THAT TYPE RIDES. Name the type first, then grep its constructor's pattern.**
+
+A grep hard-coded to one channel has a tier's design baked into it.
+
+**(2) THE COMPLEMENTARY DESIGN LAW — shrink the blast radius before measuring
+it.** ES: **198** "guards" as first framed → **5 destructure + 2 construct**,
+because the guards route through four factored helpers and only `refuses*`
+matches `Halt` at all — an over-estimate of roughly **40×**. C: **53 of 64 touch
+points INSULATED at zero cost**, because every refusal routes through a **named
+primitive**.
+
+> **Concentrate outcome-shape knowledge in helpers. A substrate change is then
+> priced by the HELPERS, not by their callers.**
+
+**C's 53-of-64 is §3.4's routing law paying for itself at adoption** — a rule
+adopted for uncatchability and `@[spec]` registration turning out to make
+substrate changes cheap. And **one arithmetic note, because the law applies to
+its own evidence**: ES's raw grep returned **8**, three were collisions, and the
+honest total is **7** — not 5 — because the two **construction** sites match a
+*different* pattern. **No single grep produced the number.**
+
+**(3) `σ := Unit` IS THE FAMILY DEFAULT.** *Adding a snapshot without a consumer
+is designing against nothing.* A tier takes a non-trivial `σ` only with **both** a
+consumer **and** the never-an-observable guard. ES takes `Unit`; C takes `Mem`
+because it has both.
+
+**(4) THE STATEMENT-SITE LAW PAYING OFF WITH A ZERO.** `es_never_undefined` and
+`es_never_orderDependent` transferred across the Core payload landing with **ZERO
+edits**, because they are stated about **the tier's own cause constructor**, not
+about `Halt`. **A theorem survives a change to the thing it does not name.**
+
+**(5) A GREEN BUILD IS NOT A TERMINATION ARGUMENT** — landed as founding-checklist
+step 10. C's inch 5 killed termination inference by passing `evalExpr ctx` as a
+closure through an opaque `ctx.call`, which **exposed a latent defect inch 3 had
+built green on**: `evalExpr`'s aggregate cases **reconstruct** the node, which is
+not a syntactic subterm. The defect was **two inches old and passing**.
+
+> **When recursion goes through a RECONSTRUCTED node or an OPAQUE callee, state
+> the measure — `termination_by` on the whole mutual block. Take the PARTS; never
+> rebuild the node.**
+
+A §5.4a instance rather than a Lean tip: **the green was never evidence of
+termination — it was evidence that inference had found some other route.**
+
+## 2026-08-23-architecture-11 — Four tiers converged on the CLASSES while three re-derived the PAYLOAD; and a value is never a refusal
+
+**(1) THE EXACT COUNTERPOINT to the three re-derivations.** SV's §2.4 taxonomy
+predicted it would need a class for scheduling nondeterminism and found
+**`RefusalCause.orderDependence` already in `Core`** — arrived from ES, Go and
+Python **without SV asking**. So the **classes** were reached independently from
+**four directions** and agreed, while the **payload** was re-derived **three
+times** into three different string encodings.
+
+**Convergence validated the taxonomy at the same time re-derivation convicted the
+type.** Worth holding as a pair: §5.2's four classes were right while `Core`'s
+`Loud` was wrong, and a lane reading only the three re-derivations might have
+concluded the whole design needed revisiting. **It did not — one field did.**
+
+**(2) A TIER INVARIANT ON MEMBERSHIP SITES, guarding an invisible mistake.** In
+SV, **X-propagation must NEVER become `orderDependence` or any refusal**: unknown
+(`x`) is a **VALUE of the 4-state semantics**, and misfiling it silently converts
+**4-state into 2-state-plus-errors** — a different language wearing the same
+name, with nothing failing to announce it.
+
+> **A value the spec defines as a VALUE is never a refusal — however much it
+> looks like "we don't know."**
+
+**Stated as a QUESTION, not a family fact.** Two candidate siblings, neither
+ruled here: **Python's `NaN`** (already a value in IEEE 754, so the question is
+only whether a tier is tempted to refuse it) and **C's indeterminate-but-NOT-UB
+reads** — genuinely open, because the C tier currently arms *indeterminate read*
+as one of its eleven UB classes, and whether the not-UB subset is a value or a
+refusal is **the C lane's to answer**. If two tiers answer the same way
+independently, the convergence standard promotes the invariant from tier to
+family.

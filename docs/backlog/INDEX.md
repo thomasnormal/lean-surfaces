@@ -24,6 +24,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-23-qol-21` | `tools/substrate.sh`: §3.4 gets a gate, and it checks by SHAPE | qol |
 | `2026-08-23-qol-20` | `tools/laws.sh`: which laws have a gate, and which are only prose | qol |
 | `2026-08-23-qol-19` | a run is not a measurement until it has been read | qol |
+| `2026-08-23-architecture-19` | Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author | architecture |
 | `2026-08-23-qol-18` | the tree must not move while you queue, and now it cannot silently | qol |
 | `2026-08-23-architecture-18` | Price the TYPE not one constructor; a docstring that argues is a claim; cancelling a ticket is the right move | architecture |
 | `2026-08-23-qol-17` | `tools/sites.sh`: price a constructor change by what DESTRUCTURES it | qol |

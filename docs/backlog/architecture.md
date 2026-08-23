@@ -1230,3 +1230,81 @@ resource** — A9's queue exists because it is — and a green over a known-wron
 tree is **a number about the wrong state**: §5.4a applied to **scheduling**
 rather than to reporting. **Re-ticket after the fix; the queue position is
 cheaper than the tenure.**
+
+## 2026-08-23-architecture-19 — Probes must refuse on absence; the congruence set has five shapes; and row 1 fired on its author
+
+Seven items across two rounds (ES, then the successor's fuelMono work).
+
+**(1) EVERY PROBE THAT READS A CORPUS MUST REFUSE WHEN THE CORPUS IS NOT THE
+RECORDED STATE — not only the revision probe.** ES's census stored
+`{ignore_entries: null, ignore_file_present: false, workflows: []}` — **a
+measurement of an ABSENT REPO**, since a bare fetched `spec.html` has no
+`.esmeta_ignore` and no `.github/workflows`. The truth at the pin is **11 ignore
+entries and 3 CI workflows**. `rev()` had been hardened to refuse exactly this
+and **did**; **`esmeta` was the quiet half nobody had hardened.**
+
+> **A `null`/`false`/`[]` measured on ABSENCE is the flattering direction with
+> the volume off.**
+
+A wrong revision is loud — it names another commit. An empty list is silent and
+**reads as a finding**. **Absence and zero are different, and most encodings
+conflate them**, so the refusal belongs in the probe rather than in the reader;
+hardening one probe and not its siblings leaves the quiet ones as the whole
+remaining exposure.
+
+**(2) RE-PINNING IS RECOVERY, NOT DERIVATION.** The `ecma262` pin was recovered
+by taking annotated tag `es2026-errata` → `d89c03f2` and confirming its
+`spec.html` **sha256 is byte-identical to the recorded `spec_sha256`**. **The
+hash is the anchor**; a tag, date or changelog is a *hint toward* the commit,
+never the pin. **Reconstructing a pin from provenance metadata is a guess that
+looks like a citation.**
+
+**(3) §9.0a's OWN GREP HAS A FALSE POSITIVE, in the tier it was written for.** In
+the monadic Python tier **`Mono` means MONADIC** (`callInMono`, `runScriptMono`).
+**A grep's hits are CANDIDATES TO READ, never findings** — the same discipline
+SoftFloat reached by another route, and a prescribed grep is not exempt from the
+law that prescribed it.
+
+**(4) THE CONGRUENCE SET HAS FIVE SHAPES, two of them CORE's**: `bind`, `ite`,
+`tryCatch` (the monad) **plus `zoomIn`, `zoomOut`** (the **state-zoom seam**,
+verified at `Core/Outcome.lean`). Every tier instantiating `SemMWith` **inherits
+the same two obligations** — and their discharge, once Core carries the lemmas.
+Python's `inFrame`/`inWorld` are instances at **two lines each**.
+
+> **Missing one is not a missing ARM; it is a hole in the SET — and it shows up
+> as a goal no amount of arm-work can close.**
+
+The practically useful part: a missing *arm* looks like more of the same work; a
+missing *shape* looks like an **impossible goal**, and a lane will grind arms
+against it indefinitely. The tell: `iterValues_mono` **closed the moment the seam
+lemmas existed**, with no arm changed. **When a monotonicity goal resists work
+that is succeeding elsewhere, check the SET before checking the proof.**
+
+**(5) A CONGRUENCE WALKER'S COMPLEXITY IS SET BY ITS DISPATCH.** `mono_with`'s
+backtracking `first` at each node is **LINEAR on bind spines, EXPONENTIAL on
+`ite` chains** — **~22 nested `ite`s timed out at 200 000 heartbeats.**
+
+> **Raising heartbeats trades a WRONG answer for a SLOW one.**
+
+The fix is **syntax-directed dispatch on the goal head**, not budget: a
+backtracking `first` is a **search where a case analysis was available**, and the
+exponent is the price of not looking.
+
+**(6) A ~210-LINE `if fname == …` CHAIN DEFEATS EQUATION-THEOREM GENERATION**
+("failed to generate equational theorem"), so **`unfold` is the only door** —
+`simp only` and `rw` cannot open it, both needing equations that were never
+generated. The definition still works; it becomes **unreachable by the tactics
+that rewrite with it.**
+
+**(7) §5.4a's ROW 1 FIRED ON ITS OWN AUTHOR, live.**
+`applyBuiltin_mono does not depend on any axioms` printed **beside a
+heartbeat-timeout error in the same run**. The law is not hard to believe; it is
+hard to **remember at the moment the line scrolls past** — which is why it needs
+a machine. The guard now exists, so the rule upgrades:
+
+> **Quote `tools/check.sh --axioms`'s VERDICT LINE. A bare `#print axioms` is not
+> evidence.**
+
+That moves the check from a discipline a reader must apply to **an artifact a
+lane must produce** — §9's thesis applied to the law most likely to be violated
+by the person who wrote it.

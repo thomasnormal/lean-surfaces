@@ -152,6 +152,22 @@ case**: a mis-elaborated *statement* means the theorem does not say what
 its author thinks, and the axiom line arrives to reassure them. So:
 
 > **An axiom print is meaningful ONLY from a zero-error elaboration.**
+
+**AND ROW 1 HAS NOW FIRED ON ITS OWN AUTHOR, live.**
+`applyBuiltin_mono does not depend on any axioms` printed **beside a
+heartbeat-timeout error in the same run** — the clean line and the failure
+side by side, exactly as this row predicts, in the lane that recorded the
+row. The law is not hard to believe; it is hard to *remember at the moment
+the line scrolls past*, which is why it needs a machine.
+
+**There is now a mechanical guard, so the rule upgrades:**
+
+> **Quote `tools/check.sh --axioms`'s VERDICT LINE. A bare `#print axioms`
+> is not evidence.**
+
+That moves the check from a discipline a reader must apply to an artifact a
+lane must produce — §9's whole thesis, applied to the one law most likely
+to be violated by the person who wrote it.
 > Every quoted axiom line is paired with the file's clean-elaboration
 > status, or it is not evidence.
 
@@ -1302,6 +1318,25 @@ the `Kont` knot and without weakening anything** — and the reason is
 
 > **The layer order chosen for STATE-RETENTION ON RAISE is what makes FUEL
 > MONOTONICITY mechanical.**
+
+**AND THE CONGRUENCE SET HAS FIVE SHAPES, not three — two of them CORE's.**
+A tier's monotonicity obligations over the substrate are **`bind`, `ite`,
+`tryCatch`** (the monad) **plus `zoomIn`, `zoomOut`** (the **state-zoom
+seam**). The two adapters are **`Core`'s own**
+(`LeanModels/Core/Outcome.lean`), so **every tier instantiating `SemMWith`
+inherits the same two obligations** — and, once `Core` carries the seam
+lemmas, inherits their discharge too. Python's `inFrame` / `inWorld` are
+instances at **two lines each**.
+
+> **Missing one is not a missing ARM; it is a hole in the SET — and it
+> shows up as a goal no amount of arm-work can close.**
+
+That distinction is the practically useful part. A missing *arm* looks like
+more of the same work; a missing *shape* looks like an impossible goal, and
+a lane will grind arms indefinitely against it. The tell is that
+`iterValues_mono` **closed the moment the seam lemmas existed** — no arm
+changed. When a monotonicity goal resists work that is succeeding
+elsewhere, **check the SET before checking the proof.**
 
 That is the same shape as C's routing law paying for itself at adoption: a
 decision taken for one reason turning out to buy a second. Here the
@@ -3239,6 +3274,36 @@ instrument copies it:
   **~50 ES `#guard`s** under `Examples/es`, FPU-attested today; and
   `harness/es/float_probe.lean`, which **mis-describes `#guard` as kernel
   evaluation** — the ES lane's fix.
+* **EVERY PROBE THAT READS A CORPUS REFUSES WHEN THE CORPUS IS NOT THE
+  RECORDED STATE — not only the revision probe.** Measured on ES: the
+  census's `esmeta` field stored
+  `{ignore_entries: null, ignore_file_present: false, workflows: []}`.
+  That is not a measurement of the pin; it is **a measurement of an ABSENT
+  REPO** — a bare fetched `spec.html` has no `.esmeta_ignore` and no
+  `.github/workflows`. The truth at the pin is **11 ignore entries and 3 CI
+  workflows.**
+
+  **`rev()` had been hardened to refuse exactly this, and it did.
+  `esmeta` was the quiet half that got through**, because nobody had
+  hardened it:
+
+  > **A `null`/`false`/`[]` measured on ABSENCE is the flattering
+  > direction with the volume off.**
+
+  A wrong revision is loud — it names another commit. An empty list is
+  silent, and it **reads as a finding**: *"this pin has no ignore
+  entries"* is a sentence a reader will believe. **Absence and zero are
+  different, and most encodings conflate them**, so the refusal has to be
+  in the probe rather than in the reader. Hardening one probe and not its
+  siblings leaves the quiet ones as the whole remaining exposure;
+* **RE-PINNING IS RECOVERY, NOT DERIVATION: find the commit that
+  REPRODUCES THE RECORDED HASH.** ES's `ecma262` pin was recovered by
+  taking the annotated tag `es2026-errata` → `d89c03f2` and confirming its
+  `spec.html` **sha256 is byte-identical to the census's recorded
+  `spec_sha256`**. The hash is the anchor; a tag, a date or a changelog is
+  a *hint* toward the commit, never the pin itself. **Reconstructing a pin
+  from provenance metadata is a guess that looks like a citation** — the
+  reproduction is what makes it a fact;
 * **double-run byte-identical**, verified;
 * **every quoted number is paired with the STATE it was taken from**, per
   the provenance law below;
@@ -4591,6 +4656,28 @@ real until an instrument re-derives it.**
     Getting the polarity backwards is exactly how a hypothesis-shaped
     condition ends up asserted as a conclusion, which is what happened.
 
+    **A CONGRUENCE WALKER'S COMPLEXITY IS SET BY ITS DISPATCH, and budget
+    cannot fix it.** The `mono_with` technique — a walker with a
+    **backtracking `first`** at each node — is **LINEAR on bind spines**
+    and **EXPONENTIAL on `ite` chains**. Measured: **~22 nested `ite`s
+    timed out at 200 000 heartbeats.**
+
+    > **Raising heartbeats trades a WRONG answer for a SLOW one.**
+
+    The fix is **syntax-directed dispatch on the goal head**, not a bigger
+    budget: look at what the goal *is* and apply the one lemma for it,
+    instead of trying lemmas until one sticks. A backtracking `first` is a
+    search where a **case analysis** was available, and the exponent is the
+    price of not looking.
+
+    **AND A SHAPE THAT DEFEATS EQUATION THEOREMS ENTIRELY.** A ~210-line
+    `if fname == … else if …` chain produces **"failed to generate
+    equational theorem"** — so **`unfold` is the only door**; `simp only`
+    and `rw` **cannot open it**, because both need the equations that were
+    never generated. Worth knowing before designing a dispatcher that
+    shape: the definition still *works*, but it becomes unreachable by the
+    tactics that rewrite with it.
+
     **AND A TACTIC-MACRO TECHNIQUE that turns a per-arm hand proof into one
     line — measured on `heapEqFuelMono`, 14 arms, axioms `[propext]`.**
     Tactic macros are **hygienic**, so **a top-level tactic cannot see
@@ -4729,7 +4816,19 @@ census-work** precisely when the second question is still unasked.
 
 > **Before proving `X_mono`, grep the tier AND `Core` for
 > `_mono|Mono|\.le\b`. The grep that would find your own work already
-> done is the one most worth running.**
+> done is the one most worth running.
+
+**AND THE GREP THIS SECTION PRESCRIBES HAS ITS OWN FALSE POSITIVE — in the
+tier it was written for.** In the monadic Python tier **`Mono` means
+MONADIC**: `callInMono`, `runScriptMono`. So the recommended pattern
+returns hits that have nothing to do with monotonicity, and the rule that
+governs it is the ladder's, applied to itself:
+
+> **A grep's hits are CANDIDATES TO READ, never findings.**
+
+That is the same discipline SoftFloat's census reached by a different route
+— *candidates kept apart from the count, resolved by reading* (§5.4a). A
+prescribed grep is not exempt from the law that prescribed it.**
 
 It is also the retrieval laws' fourth face (§5.4a): *the search that agrees
 with your prior* is about believing a hit; *count the pattern position* is
